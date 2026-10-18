@@ -6,7 +6,7 @@
 
 #' Infer a pinnable schema from a data frame
 #'
-#' Derives the schema [validate_schema()]
+#' Derives the schema [valsch()]
 #' consumes from data you already trust, so a capsule can be pinned without
 #' writing one by hand. Infer it once from the extract the analysis was run
 #' on, read it, edit it, commit it, and validate every later download
@@ -29,7 +29,7 @@
 #'     \eqn{pad = slack \times (hi - lo)}, or \eqn{slack \times \max(|lo|, 1)} for a
 #'     constant column; a column with no non-missing value gets no range;
 #'   \item value sets: for character, factor and logical columns with at most
-#'     \code{max_levels} distinct non-missing values, those values as sorted text;
+#'     \code{maxlvl} distinct non-missing values, those values as sorted text;
 #'   \item missingness: the observed share of \code{NA} plus \code{slack}
 #'     (added, not multiplied), capped at 1.
 #' }
@@ -45,7 +45,7 @@
 #' from a blank file, not in trusting the output blindly.
 #'
 #' Errors: \code{data} not a data frame or without columns; \code{slack} not
-#' one non-negative number; \code{max_levels} not one positive whole number.
+#' one non-negative number; \code{maxlvl} not one positive whole number.
 #'
 #' @param data A data frame to learn from.
 #' @param slack Headroom, one non-negative number (default 0.1). It is a
@@ -53,7 +53,7 @@
 #'   amount added to each missingness rate (0.1 allows ten more percentage
 #'   points of \code{NA}). \code{0} pins exactly to what was observed, which
 #'   will reject almost any re-release.
-#' @param max_levels Maximum distinct values for a
+#' @param maxlvl Maximum distinct values for a
 #'   categorical column to have its value set recorded, one positive whole
 #'   number (default 50). Above this the column is treated as free text and
 #'   no value set is pinned.
@@ -64,10 +64,10 @@
 #'   list of character vectors), \code{numeric_ranges} (named list of
 #'   \code{c(min =, max =)}) and \code{max_missing_fraction} (named numeric).
 #'   Wrap it as \code{list(schema = <this>)} to hand to
-#'   [validate_schema()].
+#'   [valsch()].
 #' @seealso
-#' [validate_schema()],
-#' [capsule_drift()] for the distributional
+#' [valsch()],
+#' [cpsdrft()] for the distributional
 #' check the schema cannot make.
 #' @examples
 #' set.seed(1)
@@ -79,7 +79,7 @@
 #'   stringsAsFactors = FALSE
 #' )
 #'
-#' sch <- infer_schema(df)
+#' sch <- infsch(df)
 #' sch
 #'
 #' # The categorical column has its levels pinned; the free-text one does
@@ -87,20 +87,20 @@
 #' sch$expected_value_sets
 #'
 #' # It validates the data it was learned from.
-#' length(validate_schema(df, list(schema = sch)))
+#' length(valsch(df, list(schema = sch)))
 #'
 #' # And catches a column that has gone missing, or a new category.
-#' length(validate_schema(df[, -3], list(schema = sch))) > 0
+#' length(valsch(df[, -3], list(schema = sch))) > 0
 #' bad <- df; bad$grade[1] <- "z"
-#' length(validate_schema(bad, list(schema = sch))) > 0
+#' length(valsch(bad, list(schema = sch))) > 0
 #'
 #' # no slack pins the exact observed range
-#' infer_schema(df, slack = 0)$numeric_ranges$score
+#' infsch(df, slack = 0)$numeric_ranges$score
 #'
 #' # a negative slack is refused
-#' try(infer_schema(df, slack = -0.1))
+#' try(infsch(df, slack = -0.1))
 #' @export
-infer_schema <- function(data, slack = 0.1, max_levels = 50L) {
+infsch <- function(data, slack = 0.1, maxlvl = 50L) {
   if (!is.data.frame(data)) {
     stop("`data` must be a data frame", call. = FALSE)
   }
@@ -111,9 +111,9 @@ infer_schema <- function(data, slack = 0.1, max_levels = 50L) {
   if (length(slack) != 1L || is.na(slack) || slack < 0) {
     stop("`slack` must be a single non-negative number", call. = FALSE)
   }
-  max_levels <- .rmbl_num(max_levels, "max_levels", integer = TRUE)
-  if (length(max_levels) != 1L || is.na(max_levels) || max_levels < 1L) {
-    stop("`max_levels` must be a single positive integer", call. = FALSE)
+  maxlvl <- .rmbl_num(maxlvl, "maxlvl", integer = TRUE)
+  if (length(maxlvl) != 1L || is.na(maxlvl) || maxlvl < 1L) {
+    stop("`maxlvl` must be a single positive integer", call. = FALSE)
   }
 
   n <- nrow(data)
@@ -138,7 +138,7 @@ infer_schema <- function(data, slack = 0.1, max_levels = 50L) {
       }
     } else if (is.factor(v) || is.character(v) || is.logical(v)) {
       lv <- unique(as.character(v[!is.na(v)]))
-      if (length(lv) <= max_levels) value_sets[[nm]] <- sort(lv)
+      if (length(lv) <= maxlvl) value_sets[[nm]] <- sort(lv)
     }
   }
 
@@ -193,7 +193,7 @@ format.bricklayer_schema <- function(x, ...) {
   c(lines, rows, .rmbl_rule())
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_schema <- function(x, ...) {
   cat(format(x), sep = "\n")

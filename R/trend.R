@@ -44,40 +44,40 @@
 #' Mann-Kendall's variance places at the chosen level, so it is consistent
 #' with the test rather than derived from a different model. At small
 #' \eqn{n} the slopes may not reach the requested confidence; the bound is
-#' then the most extreme slope and \code{slope_ci_clamped} is \code{TRUE}.
+#' then the most extreme slope and \code{slopecicla} is \code{TRUE}.
 #'
 #' Missing periods are dropped and the series is sorted by \code{x}.
 #' Errors: fewer than three periods; infinite values; \code{x} and \code{y}
 #' of different lengths; a data frame without \code{value} or with a column
 #' not found; more than 20,000 periods (the pairwise slopes would not fit in
-#' memory); a \code{conf_level} outside (0, 1). \code{exact = TRUE} with \eqn{n > 8}
+#' memory); a \code{conflvl} outside (0, 1). \code{exact = TRUE} with \eqn{n > 8}
 #' warns and uses the normal
 #' approximation.
 #'
 #' @param y Numeric vector, the series in period order, or a data frame.
 #' @param x Numeric vector of periods, default \code{NULL}: the position
 #'   \code{1, 2, ...}, which is right for an evenly spaced series. Ignored
-#'   when \code{y} is a data frame and \code{period} is given.
-#' @param value,period Column names (strings), when \code{y} is a data
-#'   frame. \code{value} is required; \code{period} is optional and must be
+#'   when \code{y} is a data frame and \code{prd} is given.
+#' @param value,prd Column names (strings), when \code{y} is a data
+#'   frame. \code{value} is required; \code{prd} is optional and must be
 #'   convertible with \code{as.numeric()}.
 #' @param exact Logical or \code{NULL} (the default). Whether to compute the
 #'   exact null distribution of Mann-Kendall's \eqn{S} by enumeration.
 #'   \code{NULL} uses it up to \code{n = 8} (40,320 orderings); above that
 #'   the normal approximation with the tie and continuity corrections is
 #'   used.
-#' @param alternative \code{"two.sided"} (the default), \code{"increasing"}
+#' @param alt \code{"two.sided"} (the default), \code{"increasing"}
 #'   or \code{"decreasing"}.
-#' @param conf_level Number in (0, 1), default 0.95: the confidence level of
+#' @param conflvl Number in (0, 1), default 0.95: the confidence level of
 #'   the slope interval.
 #' @return A list with \code{S}, \code{tau}, \code{p_value}, \code{slope}
 #'   (Theil-Sen, in units of \code{y} per unit of \code{x}),
-#'   \code{intercept}, \code{slope_lower} and \code{slope_upper} (the
-#'   distribution-free interval), \code{slope_ci_clamped} (\code{TRUE} when
+#'   \code{intercept}, \code{slopelo} and \code{slopeup} (the
+#'   distribution-free interval), \code{slopecicla} (\code{TRUE} when
 #'   the pairwise slopes do not reach the requested confidence on a side, so
 #'   that bound is the extreme slope and the true interval is wider),
 #'   \code{n}, \code{var_S} (the tie-corrected variance of \eqn{S}),
-#'   \code{alternative}, \code{conf_level} and \code{method}.
+#'   \code{alternative}, \code{conflvl} and \code{method}.
 #' @references
 #' Sen, P. K. (1968). Estimates of the regression coefficient based on
 #' Kendall's tau. \emph{Journal of the American Statistical Association}
@@ -89,34 +89,34 @@
 #' methods that carry no normality assumption, which is the reason for
 #' preferring it on a series this short.
 #' @seealso
-#' \code{\link{step_change}}, \code{\link{count_trend}}
+#' \code{\link{stepchg}}, \code{\link{cnttrnd}}
 #' @examples
 #' # Five years of placements.
 #' y <- c(402, 377, 190, 268, 331)
-#' trend_test(y)
+#' trndtst(y)
 #'
 #' # A monotone series is detected even at n = 5, where a regression's
 #' # standard error would be nearly uninformative.
-#' trend_test(c(1, 2, 3, 4, 5))
+#' trndtst(c(1, 2, 3, 4, 5))
 #'
 #' # One aberrant period does not create a trend.
-#' trend_test(c(100, 100, 100, 100, 900))$p_value
+#' trndtst(c(100, 100, 100, 100, 900))$p_value
 #'
 #' # From a data frame, testing for a decrease only.
 #' d <- data.frame(year = 2019:2023, n = y)
-#' trend_test(d, value = "n", period = "year", alternative = "decreasing")$p_value
+#' trndtst(d, value = "n", prd = "year", alt = "decreasing")$p_value
 #'
-#' try(trend_test(c(5, 6)))
+#' try(trndtst(c(5, 6)))
 #' @export
-trend_test <- function(y, x = NULL, value = NULL, period = NULL,
+trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
                        exact = NULL,
-                       alternative = c(
+                       alt = c(
                          "two.sided", "increasing",
                          "decreasing"
                        ),
-                       conf_level = 0.95) {
-  alternative <- .rmbl_arg(alternative)
-  conf_level <- .rmbl_conf_level(conf_level)
+                       conflvl = 0.95) {
+  alt <- .rmbl_arg(alt)
+  conflvl <- .rmbl_conf_level(conflvl)
   if (is.data.frame(y)) {
     if (is.null(value)) {
       stop("`value` is required for a data frame",
@@ -127,13 +127,13 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
     if (!value %in% names(d)) {
       stop(sprintf("`value` column not found: %s", value), call. = FALSE)
     }
-    if (!is.null(period)) {
-      if (!period %in% names(d)) {
-        stop(sprintf("`period` column not found: %s", period),
+    if (!is.null(prd)) {
+      if (!prd %in% names(d)) {
+        stop(sprintf("`prd` column not found: %s", prd),
           call. = FALSE
         )
       }
-      x <- as.numeric(d[[period]])
+      x <- as.numeric(d[[prd]])
     }
     y <- as.numeric(d[[value]])
   }
@@ -160,7 +160,7 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
   if (n > 20000L) {
     stop(sprintf(
       paste0(
-        "trend_test() enumerates all n(n-1)/2 pairwise ",
+        "trndtst() enumerates all n(n-1)/2 pairwise ",
         "slopes for the Sen interval; n = %d would need ",
         "%.1f GB. Aggregate or thin the series first."
       ),
@@ -185,7 +185,7 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
     # p is 0.0222).
     tied <- anyDuplicated(y) > 0L
     null_s <- if (tied) .rmbl_mk_exact_values(y) else .rmbl_mk_exact(n)
-    p <- switch(alternative,
+    p <- switch(alt,
       increasing = mean(null_s >= s),
       decreasing = mean(null_s <= s),
       two.sided = mean(abs(null_s) >= abs(s))
@@ -204,7 +204,7 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
     } else {
       (s - sign(s)) / sqrt(mk$var)
     }
-    p <- switch(alternative,
+    p <- switch(alt,
       increasing = stats::pnorm(z, lower.tail = FALSE),
       decreasing = stats::pnorm(z),
       two.sided = 2 * stats::pnorm(-abs(z))
@@ -215,14 +215,14 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
     p <- min(1, p)
     method <- "Mann-Kendall, normal approximation with tie correction"
   }
-  ci <- .rmbl_sen_ci(x, y, mk$var, conf_level)
+  ci <- .rmbl_sen_ci(x, y, mk$var, conflvl)
   list(
     S = s, tau = tau, p_value = p, slope = ts$slope,
-    intercept = ts$intercept, slope_lower = ci[1L],
-    slope_upper = ci[2L],
-    slope_ci_clamped = isTRUE(any(attr(ci, "clamped"))),
+    intercept = ts$intercept, slopelo = ci[1L],
+    slopeup = ci[2L],
+    slopecicla = isTRUE(any(attr(ci, "clamped"))),
     n = n, var_S = mk$var,
-    alternative = alternative, conf_level = conf_level,
+    alternative = alt, conflvl = conflvl,
     method = method
   )
 }
@@ -309,7 +309,7 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
   # requested confidence on that side (at n = 5 the 95% lower rank is
   # 0.999, at n = 3 both are off). The bound shown is then the extreme
   # slope and the true interval is wider; the result says so through
-  # `slope_ci_clamped` rather than presenting the clamp as an interval.
+  # `slopecicla` rather than presenting the clamp as an interval.
   clamped <- c(lo_rank <= 1, hi_rank >= m)
   lo_rank <- max(1L, min(m, as.integer(lo_rank)))
   hi_rank <- max(1L, min(m, as.integer(hi_rank)))
@@ -331,38 +331,38 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
 #' \eqn{n_b = n - k} periods and means \eqn{\bar y_a}, \eqn{\bar y_b}, the
 #' statistic is the between-segment sum of squares
 #' \deqn{T_k = \frac{n_a n_b}{n} (\bar y_a - \bar y_b)^2,}
-#' over \eqn{k = m, \dots, n - m} with \eqn{m} = \code{min_segment}. The
+#' over \eqn{k = m, \dots, n - m} with \eqn{m} = \code{minseg}. The
 #' observed \eqn{\max_k T_k} is compared with the same maximum over
 #' reorderings of the series, and \eqn{p = (1 + \mathrm{count}(T^*_{\max} \ge
 #' T_{\max}))/(1 + B)} over \eqn{B} random reorderings. When \eqn{n! \le}
-#' \code{n_perm} (with the default, \eqn{n \le 7}) every ordering is
+#' \code{nperm} (with the default, \eqn{n \le 7}) every ordering is
 #' enumerated, the observed one among them, and the p-value is exact:
 #' \eqn{\mathrm{count}(T^*_{\max} \ge T_{\max}) / n!};
-#' otherwise \code{n_perm} random permutations are drawn under \code{seed},
+#' otherwise \code{nperm} random permutations are drawn under \code{seed},
 #' and the caller's random number stream is restored afterwards.
 #'
 #' The test assumes the periods are exchangeable under no change, so it
 #' ignores autocorrelation and smooth trends; a steady trend can produce a
 #' "step". With very few periods even a clean step cannot reach small
 #' p-values (six periods allow only 720 orderings). Missing values are
-#' dropped. Errors: infinite values; fewer than \code{2 * min_segment}
+#' dropped. Errors: infinite values; fewer than \code{2 * minseg}
 #' periods. A progress bar is shown in an interactive session.
 #'
 #' @param y Numeric vector, the series in period order.
 #' @param x Vector of periods, default \code{NULL} (the position). Used only
 #'   to label the break.
-#' @param min_segment Whole number, default 2: the fewest periods allowed on
+#' @param minseg Whole number, default 2: the fewest periods allowed on
 #'   either side of the break.
-#' @param n_perm Whole number, default 9999: the number of random
+#' @param nperm Whole number, default 9999: the number of random
 #'   permutations for the null distribution. The exact enumeration is used
-#'   instead when \eqn{n!} is at most \code{n_perm}.
+#'   instead when \eqn{n!} is at most \code{nperm}.
 #' @param seed Integer, default 1: the seed for the permutations, so the
 #'   p-value is reproducible.
-#' @return A list with \code{break_after} (the period the series changes
+#' @return A list with \code{breakafter} (the period the series changes
 #'   after, from \code{x}), \code{index} (its position), \code{before} and
 #'   \code{after} (the segment means), \code{difference} (after minus
 #'   before), \code{statistic} (\eqn{T_{\max}}), \code{p_value},
-#'   \code{n_perm} (orderings or permutations used) and \code{method}.
+#'   \code{nperm} (orderings or permutations used) and \code{method}.
 #' @references
 #' The permutation distribution of the maximum over splits, rather than the
 #' chosen split's own test, is what makes this a test of whether there is a
@@ -371,22 +371,22 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
 #' Introduction to Statistical Modeling of Extreme Values} (Springer), which
 #' discusses change-point detection alongside the threshold choices that
 #' raise the same multiple-comparison issue.
-#' @seealso \code{\link{trend_test}}, \code{\link{count_trend}}.
+#' @seealso \code{\link{trndtst}}, \code{\link{cnttrnd}}.
 #' @examples
 #' # A step down after the third period. With six periods there are only
 #' # 720 orderings, so even a clean step has p near 0.1.
-#' step_change(c(100, 104, 98, 60, 63, 58), x = 2018:2023)
+#' stepchg(c(100, 104, 98, 60, 63, 58), x = 2018:2023)
 #'
 #' # A longer series with the same step is clearly significant.
-#' step_change(c(100, 104, 98, 101, 97, 60, 63, 58, 61, 59), n_perm = 999)$p_value
+#' stepchg(c(100, 104, 98, 101, 97, 60, 63, 58, 61, 59), nperm = 999)$p_value
 #'
 #' # Pure noise: the best split is still found, and is not significant.
 #' set.seed(2)
-#' step_change(stats::rnorm(12), n_perm = 999)$p_value
+#' stepchg(stats::rnorm(12), nperm = 999)$p_value
 #'
-#' try(step_change(c(1, 2, 3)))
+#' try(stepchg(c(1, 2, 3)))
 #' @export
-step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
+stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
                         seed = 1L) {
   y <- .rmbl_num(y, "y")
   if (is.null(x)) x <- seq_along(y)
@@ -401,12 +401,12 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
   y <- y[ok]
   x <- x[ok]
   n <- length(y)
-  min_segment <- .rmbl_scalar(min_segment, "min_segment", 1, integer = TRUE)
-  n_perm <- .rmbl_scalar(n_perm, "n_perm", 1, integer = TRUE)
-  if (n < 2L * min_segment) {
+  minseg <- .rmbl_scalar(minseg, "minseg", 1, integer = TRUE)
+  nperm <- .rmbl_scalar(nperm, "nperm", 1, integer = TRUE)
+  if (n < 2L * minseg) {
     stop(sprintf(
       "need at least %d periods for a break with %d either side",
-      2L * min_segment, min_segment
+      2L * minseg, minseg
     ), call. = FALSE)
   }
   # The weighted squared mean difference,
@@ -419,7 +419,7 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
   # having to.
   stat <- function(v) {
     n <- length(v)
-    cuts <- seq.int(min_segment, n - min_segment)
+    cuts <- seq.int(minseg, n - minseg)
     vals <- vapply(cuts, function(k) {
       a <- v[seq_len(k)]
       b <- v[(k + 1L):n]
@@ -441,9 +441,9 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
   # same MAXIMUM over splits. Comparing the best split against its own
   # null would find a break in any series.
   nfact <- if (n <= 8L) factorial(n) else Inf
-  pg <- bricklayer_progress("step change", .bl_count(min(nfact, n_perm)))
+  pg <- blprog("step change", .bl_count(min(nfact, nperm)))
   on.exit(pg$done(), add = TRUE)
-  if (nfact <= n_perm) {
+  if (nfact <= nperm) {
     perms <- .rmbl_permutations(n)
     np <- nrow(perms)
     null <- vapply(seq_len(np), function(i) {
@@ -460,9 +460,9 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
     }
     .rmbl_local_seed(seed)
     null <- vapply(
-      seq_len(n_perm),
+      seq_len(nperm),
       function(i) {
-        pg$update(i - 1L, sprintf("permutation %d/%d", i, n_perm))
+        pg$update(i - 1L, sprintf("permutation %d/%d", i, nperm))
         max(stat(sample(y))$vals)
       }, 0
     )
@@ -471,8 +471,8 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
     } else {
       assign(".Random.seed", old, envir = globalenv())
     }
-    method <- sprintf("%d permutations of the maximum over splits", n_perm)
-    np <- n_perm
+    method <- sprintf("%d permutations of the maximum over splits", nperm)
+    np <- nperm
   }
   null <- null[is.finite(null)]
   # an ordering that makes the same split as the observed one scores it to rounding
@@ -481,11 +481,11 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
   # exactly zero is reportable, and no permutation test can support that. Enumerated: the observed
   # ordering is already one of the n!, and counting it again added one (73/721 for 0.1; CRAN stress
   # test of 0.5.14).
-  p <- if (nfact <= n_perm) mean(hit) else (1 + sum(hit)) / (1 + length(null))
+  p <- if (nfact <= nperm) mean(hit) else (1 + sum(hit)) / (1 + length(null))
   list(
-    break_after = x[best], index = best, before = mean(a),
+    breakafter = x[best], index = best, before = mean(a),
     after = mean(b), difference = mean(b) - mean(a),
-    statistic = tmax, p_value = min(1, p), n_perm = np,
+    statistic = tmax, p_value = min(1, p), nperm = np,
     method = method
   )
 }
@@ -517,7 +517,7 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
 #' Missing values are dropped. Errors: negative or fractional counts;
 #' \code{x} and \code{y} of different lengths; infinite \code{x}; every count
 #' zero; an offset of the wrong length or not positive; fewer than three
-#' periods; a \code{conf_level} outside (0, 1). When the counts are zero at
+#' periods; a \code{conflvl} outside (0, 1). When the counts are zero at
 #' one end of the series only (\code{c(0, 0, 5)}) the likelihood rises without
 #' bound and there is no finite trend: a warning says so, the rate ratio is
 #' \code{Inf} (or 0) and the interval and p-value are \code{NA}. There is a
@@ -530,11 +530,11 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
 #' @param offset Optional numeric vector of exposures, one per period -- a
 #'   population, a number of admissions, a number of days. Positive. The
 #'   trend is then in the rate rather than in the count.
-#' @param conf_level Number in (0, 1), default 0.95: the confidence level of
+#' @param conflvl Number in (0, 1), default 0.95: the confidence level of
 #'   the rate-ratio interval.
 #' @return A list of class \code{c("rmbl_count_trend", "list")} with
-#'   \code{rate_ratio} (per period), \code{lower}, \code{upper},
-#'   \code{p_value} (test of no trend), \code{log_slope} (\eqn{\beta_1}),
+#'   \code{rateratio} (per period), \code{lower}, \code{upper},
+#'   \code{p_value} (test of no trend), \code{logslope} (\eqn{\beta_1}),
 #'   \code{se} (its standard error, scaled when overdispersed),
 #'   \code{fitted} (fitted counts), \code{dispersion}, \code{overdispersed}
 #'   (logical), \code{n}, \code{data} (list of the \code{x} and \code{y}
@@ -546,27 +546,27 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
 #' dispersion, which widens the interval while leaving the point estimate
 #' alone. That is the behaviour reported here through \code{dispersion} and
 #' \code{overdispersed}.
-#' @seealso \code{\link{trend_test}}, \code{\link{rate_change}}.
+#' @seealso \code{\link{trndtst}}, \code{\link{ratechg}}.
 #' @examples
 #' # A count falling by about 15% a year.
 #' set.seed(3)
 #' y <- stats::rpois(8, lambda = 200 * 0.85^(0:7))
-#' fit <- count_trend(y)
-#' round(fit$rate_ratio, 3)
+#' fit <- cnttrnd(y)
+#' round(fit$rateratio, 3)
 #' c(fit$lower, fit$upper)
 #'
 #' # With a varying denominator the trend is in the rate.
-#' count_trend(c(20, 25, 30), offset = c(1000, 1500, 2500))$rate_ratio
+#' cnttrnd(c(20, 25, 30), offset = c(1000, 1500, 2500))$rateratio
 #'
 #' # Counts that swing far more than Poisson noise get the wider interval.
-#' wild <- count_trend(c(10, 50, 5, 60, 8, 70))
+#' wild <- cnttrnd(c(10, 50, 5, 60, 8, 70))
 #' wild$dispersion
 #' wild$method
 #'
-#' try(count_trend(c(1.5, 2, 3)))
+#' try(cnttrnd(c(1.5, 2, 3)))
 #' @export
-count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
-  conf_level <- .rmbl_conf_level(conf_level)
+cnttrnd <- function(y, x = NULL, offset = NULL, conflvl = 0.95) {
+  conflvl <- .rmbl_conf_level(conflvl)
   y <- .rmbl_num(y, "y")
   if (is.null(x)) x <- seq_along(y)
   x <- .rmbl_num(x, "x")
@@ -660,12 +660,12 @@ count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
   # of freedom, so its reference distribution is t, not normal: on a
   # four-period series z = 1.96 where t = 4.30 is wanted
   z <- if (over) {
-    stats::qt(1 - (1 - conf_level) / 2, df = n - 2L)
+    stats::qt(1 - (1 - conflvl) / 2, df = n - 2L)
   } else {
-    stats::qnorm(1 - (1 - conf_level) / 2)
+    stats::qnorm(1 - (1 - conflvl) / 2)
   }
   structure(list(
-    rate_ratio = exp(beta[2L]),
+    rateratio = exp(beta[2L]),
     lower = if (is.finite(se_use)) exp(beta[2L] - z * se_use) else NA_real_,
     upper = if (is.finite(se_use)) exp(beta[2L] + z * se_use) else NA_real_,
     p_value = if (is.finite(se_use) && se_use > 0) {
@@ -674,7 +674,7 @@ count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
     } else {
       NA_real_
     },
-    log_slope = beta[2L], se = se_use, fitted = mu,
+    logslope = beta[2L], se = se_use, fitted = mu,
     dispersion = disp, overdispersed = over, n = n,
     data = list(x = x, y = y),
     method = if (over) {

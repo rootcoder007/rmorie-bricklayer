@@ -13,7 +13,7 @@ element per person and a single pre-computed total give the same result.}
 
 \item{t}{Numeric scalar, the length of the period in days; must be
 positive. Default \code{365}. A vector of several values is refused.
-\code{\link{period_days}} turns two dates into this.}
+\code{\link{perdays}} turns two dates into this.}
 }
 \value{
 A numeric scalar: person-days per day, that is the average number
@@ -33,7 +33,7 @@ This is Lakner's \eqn{\bar{X}_{hc} = \sum X_i / t} (1976, p.15), where
 denominator is TIME, which is what makes it a stock. Compare
 \code{\link[=alos]{alos()}}, whose denominator is people: the two are linked by
 \eqn{\mathrm{ADP} = N \times \mathrm{ALOS} / t} (Little's law), so
-\code{\link[=admissions]{admissions()}} and \code{\link[=stock_flow]{stock_flow()}}
+\code{\link[=admits]{admits()}} and \code{\link[=stkflow]{stkflow()}}
 can move between them.
 
 Only days served inside the period should be counted: a stay that began
@@ -52,7 +52,7 @@ adp(13500)
 adp(c(10, 20, 30), t = 30)
 
 # a leap year, with the period length taken from the dates
-adp(13500, t = period_days("2024-01-01", "2024-12-31"))
+adp(13500, t = perdays("2024-01-01", "2024-12-31"))
 
 # negative days are refused
 try(adp(c(10, -2)))
@@ -63,6 +63,6 @@ Corrections Planners}. University of Illinois at Urbana-Champaign.
 }
 \seealso{
 \code{\link[=alos]{alos()}},
-\code{\link[=stock_flow]{stock_flow()}},
-\code{\link[=adp_from_counts]{adp_from_counts()}}
+\code{\link[=stkflow]{stkflow()}},
+\code{\link[=adpcnts]{adpcnts()}}
 }

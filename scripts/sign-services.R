@@ -14,10 +14,10 @@ doc <- if (length(args)) args[[1]] else "inst/services/morie-services.json"
 keyfile <- Sys.getenv("MORIE_SERVICES_KEY",
                       path.expand("~/secrets-backup/morie-services-signing-mldsa44.json"))
 stopifnot(file.exists(doc), file.exists(keyfile))
-k <- bricklayer_json_from_json(paste(readLines(keyfile, warn = FALSE), collapse = "\n"),
+k <- fromjs(paste(readLines(keyfile, warn = FALSE), collapse = "\n"),
                                simplifyVector = TRUE)
 stopifnot(identical(k$scheme, "ML-DSA-44"))
-key <- fips_key("ML-DSA-44", k$public, k$secret)
+key <- fipskey("ML-DSA-44", k$public, k$secret)
 bytes <- readBin(doc, "raw", file.size(doc))
 # the document must parse as what the packages accept before it is signed
 parsed <- rmoriebricklayer:::.rmbl_services_parse(bytes)
@@ -26,7 +26,7 @@ pinned <- rmoriebricklayer:::.rmbl_services_pubkey()
 if (!identical(tolower(k$public), tolower(pinned))) {
   stop("this key is not the one pinned in R/services.R; a key rotation is a package release")
 }
-sig <- capsule_sign(bytes, key, context = "morie-services", deterministic = TRUE)
+sig <- cpssign(bytes, key, ctx = "morie-services", determ = TRUE)
 out <- sprintf('{"scheme":"ML-DSA-44","context":"morie-services","signature":"%s"}\n', sig$signature)
 sigfile <- sub("[.]json$", ".sig", doc)
 cat(out, file = sigfile)

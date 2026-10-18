@@ -6,12 +6,12 @@
 ## data_provenance.json and config.json.
 ##
 ## Provides:
-##   load_provenance(path)                Read pinned URL + SHA256 + schema
-##   resolve_via_ckan(provenance)         Try CKAN package_show + name match
-##   resolve_via_ckan_search(provenance)  Fall back to CKAN package_search
-##   download_data(url, target_path)      utils::download.file() wrapper
-##   verify_sha256(path, expected)        Compare to provenance
-##   validate_schema(df_raw, provenance)  Hard fail / warn on schema drift
+##   loadprov(path)                Read pinned URL + SHA256 + schema
+##   rslvckan(provenance)         Try CKAN package_show + name match
+##   rslvckns(provenance)  Fall back to CKAN package_search
+##   dldata(url, tpath)      utils::download.file() wrapper
+##   vrfsha256(path, expected)        Compare to provenance
+##   valsch(dfraw, provenance)  Hard fail / warn on schema drift
 ##
 ## Licence: AGPL-3.0-or-later
 ## =====================================================================
@@ -23,20 +23,20 @@
 #' the resource name pattern, the expected SHA-256 of the file, a Wayback
 #' Machine snapshot, the schema the data must match and the recipe for a
 #' synthetic stand-in. The resolvers
-#' ([resolve_via_ckan()],
-#' [resolve_via_socrata()],
-#' [resolve_via_arcgis()]) and the checks
-#' ([verify_sha256()],
-#' [validate_schema()]) all take the list this returns.
+#' ([rslvckan()],
+#' [rslvsoc()],
+#' [rslvarc()]) and the checks
+#' ([vrfsha256()],
+#' [valsch()]) all take the list this returns.
 #'
 #' @details
 #' The file is parsed with the package's own JSON codec (see
-#' [bricklayer_json_from_json()]) without
+#' [fromjs()]) without
 #' simplification: JSON arrays stay
 #' lists, so a pinned digest such as \code{"sha256": "abc"} is a length-1
 #' character and an array of column names is a list of strings (use
 #' \code{unlist()} where a vector is needed). Nothing is checked about the
-#' content here; [validate_schema()] reads the
+#' content here; [valsch()] reads the
 #' \code{schema} block.
 #'
 #' A missing file is not an error: it returns \code{NULL}, so a project can
@@ -51,22 +51,22 @@
 #'   named lists, arrays become unnamed lists, strings, numbers and booleans
 #'   become length-1 vectors), or \code{NULL} if the file does not exist.
 #' @examples
-#' prov_file <- tempfile(fileext = ".json")
-#' writeLines('{"dataset": {"title": "demo"}, "sha256": "abc"}', prov_file)
-#' prov <- load_provenance(prov_file)
+#' provfile <- tempfile(fileext = ".json")
+#' writeLines('{"dataset": {"title": "demo"}, "sha256": "abc"}', provfile)
+#' prov <- loadprov(provfile)
 #' prov$dataset$title
-#' load_provenance(file.path(tempdir(), "no-such-file.json")) # NULL
+#' loadprov(file.path(tempdir(), "no-such-file.json")) # NULL
 #'
 #' # arrays stay lists: unlist() them for a vector
-#' writeLines('{"schema": {"expected_columns": ["id", "year"]}}', prov_file)
-#' p <- load_provenance(prov_file)
+#' writeLines('{"schema": {"expected_columns": ["id", "year"]}}', provfile)
+#' p <- loadprov(provfile)
 #' unlist(p$schema$expected_columns)
-#' length(validate_schema(data.frame(id = 1, year = 2020), p))
+#' length(valsch(data.frame(id = 1, year = 2020), p))
 #'
 #' # a directory is not a provenance file
-#' try(load_provenance(tempdir()))
+#' try(loadprov(tempdir()))
 #' @export
-load_provenance <- function(path) {
+loadprov <- function(path) {
   path <- .rmbl_string1(path, "path")
   if (!file.exists(path)) {
     return(NULL)
@@ -98,36 +98,36 @@ load_provenance <- function(path) {
 #' portal lists them. The first resource whose \code{name} matches the
 #' pattern (case-insensitively, with [grepl()]) wins. If the slug
 #' itself has
-#' changed, [resolve_via_ckan_search()] is the
+#' changed, [rslvckns()] is the
 #' fallback.
 #'
-#' \code{NULL} is returned, without an error, when \code{provenance} is
+#' \code{NULL} is returned, without an error, when \code{prov} is
 #' \code{NULL}, when either field is missing or empty, when the request
 #' fails (offline, HTTP error, invalid JSON), when CKAN answers
 #' \code{"success": false}, or when no resource name matches. Errors are
-#' raised for a \code{provenance} that is not a list, for an endpoint that is
+#' raised for a \code{prov} that is not a list, for an endpoint that is
 #' not a public \code{https} URL (plain \code{http} only with
-#' \code{options(rmoriebricklayer.allow_http = TRUE)}; loopback, private and
+#' \code{options(rmoriebricklayer.allowhttp = TRUE)}; loopback, private and
 #' link-local addresses are refused), and for a matched resource URL that
 #' fails the same check. One network request; nothing is written.
 #'
-#' @param provenance A provenance list as returned by
-#'   [load_provenance()], or
+#' @param prov A provenance list as returned by
+#'   [loadprov()], or
 #'   \code{NULL}. It must contain \code{dataset$ckan_api_endpoint} and
 #'   \code{resource$name_match_pattern} for a lookup to be made.
 #' @return The matched resource URL as a length-1 character string, or
 #'   \code{NULL} as described in Details.
 #' @examples
 #' # Missing fields return NULL rather than erroring:
-#' resolve_via_ckan(list())
-#' resolve_via_ckan(NULL)
+#' rslvckan(list())
+#' rslvckan(NULL)
 #'
 #' # the endpoint must be public https, checked before any request
 #' prov <- list(
 #'   dataset = list(ckan_api_endpoint = "http://localhost/api/3/action/package_show?id=x"),
 #'   resource = list(name_match_pattern = "2014")
 #' )
-#' try(resolve_via_ckan(prov))
+#' try(rslvckan(prov))
 #' \dontrun{
 #' # needs the network: asks data.ontario.ca for the current file URL
 #' prov <- list(
@@ -137,16 +137,16 @@ load_provenance <- function(path) {
 #'   )),
 #'   resource = list(name_match_pattern = "2014")
 #' )
-#' resolve_via_ckan(prov)
+#' rslvckan(prov)
 #' }
 #' @export
-resolve_via_ckan <- function(provenance) {
-  if (is.null(provenance)) {
+rslvckan <- function(prov) {
+  if (is.null(prov)) {
     return(NULL)
   }
-  if (!is.list(provenance)) stop("`provenance` must be a provenance list (load_provenance())", call. = FALSE)
-  ds <- provenance$dataset
-  res <- provenance$resource
+  if (!is.list(prov)) stop("`prov` must be a provenance list (loadprov())", call. = FALSE)
+  ds <- prov$dataset
+  res <- prov$resource
   if (is.null(ds$ckan_api_endpoint) || is.null(res$name_match_pattern)) {
     return(NULL)
   }
@@ -176,7 +176,7 @@ resolve_via_ckan <- function(provenance) {
 
 #' Resolve a Download URL via CKAN package_search
 #'
-#' The fallback for [resolve_via_ckan()] when a dataset's
+#' The fallback for [rslvckan()] when a dataset's
 #' slug has changed
 #' and \code{package_show} no longer finds it. It runs a full-text
 #' \code{package_search} on the same CKAN portal and returns the URL of the
@@ -197,14 +197,14 @@ resolve_via_ckan <- function(provenance) {
 #' \code{resource$format} (case-insensitively). A CSV resource is therefore
 #' accepted even when \code{resource$format} asks for another format.
 #'
-#' \code{NULL} is returned when \code{provenance} is \code{NULL}, when no
+#' \code{NULL} is returned when \code{prov} is \code{NULL}, when no
 #' query can be formed, when there is no endpoint to derive the base from,
 #' when the request fails, or when nothing matches. Errors: a
-#' \code{provenance} that is not a list; a search URL or matched resource
+#' \code{prov} that is not a list; a search URL or matched resource
 #' URL that is not public \code{https}. One network request.
 #'
-#' @param provenance A provenance list as returned by
-#'   [load_provenance()], or
+#' @param prov A provenance list as returned by
+#'   [loadprov()], or
 #'   \code{NULL}. Reads \code{dataset$ckan_api_endpoint},
 #'   \code{resource$name_match_pattern} (a regular expression, required for
 #'   a match), \code{resource$search_query} (optional search words) and
@@ -213,13 +213,13 @@ resolve_via_ckan <- function(provenance) {
 #'   \code{NULL}.
 #' @examples
 #' # Missing fields return NULL rather than erroring:
-#' resolve_via_ckan_search(list())
+#' rslvckns(list())
 #'
 #' # no endpoint to derive the portal from: NULL, no request made
-#' resolve_via_ckan_search(list(resource = list(name_match_pattern = "2014")))
+#' rslvckns(list(resource = list(name_match_pattern = "2014")))
 #'
 #' # a provenance must be a list
-#' try(resolve_via_ckan_search("data.ontario.ca"))
+#' try(rslvckns("data.ontario.ca"))
 #' \dontrun{
 #' # needs the network: searches data.ontario.ca
 #' prov <- list(
@@ -232,15 +232,15 @@ resolve_via_ckan <- function(provenance) {
 #'     search_query = "public library statistics"
 #'   )
 #' )
-#' resolve_via_ckan_search(prov)
+#' rslvckns(prov)
 #' }
 #' @export
-resolve_via_ckan_search <- function(provenance) {
-  if (is.null(provenance)) {
+rslvckns <- function(prov) {
+  if (is.null(prov)) {
     return(NULL)
   }
-  if (!is.list(provenance)) stop("`provenance` must be a provenance list (load_provenance())", call. = FALSE)
-  res <- provenance$resource
+  if (!is.list(prov)) stop("`prov` must be a provenance list (loadprov())", call. = FALSE)
+  res <- prov$resource
   q <- res$search_query
   if (is.null(q) || !nzchar(q)) {
     ## Derive a search query from the resource name pattern
@@ -252,7 +252,7 @@ resolve_via_ckan_search <- function(provenance) {
   ## CKAN portal base URL inferred from package_show endpoint
   base <- sub(
     "/api/3/.*$", "",
-    provenance$dataset$ckan_api_endpoint %||% ""
+    prov$dataset$ckan_api_endpoint %||% ""
   )
   if (!nzchar(base)) {
     return(NULL)
@@ -300,23 +300,23 @@ resolve_via_ckan_search <- function(provenance) {
 #' Download a File
 #'
 #' Downloads one file to a path on disk through the package's own transport,
-#' [bricklayer_download()], and returns the path. It is
+#' [bldl()], and returns the path. It is
 #' the plain download
 #' step of a data pipeline: resolve a URL (for example with
-#' [resolve_via_ckan()]), download it with this function,
+#' [rslvckan()]), download it with this function,
 #' then check it with
-#' [verify_sha256()]. Use
-#' [friendly_download()] instead when a person should
+#' [vrfsha256()]. Use
+#' [fdl()] instead when a person should
 #' see advice about the failure and a Wayback Machine fallback.
 #'
 #' @details
 #' Before anything is fetched the URL must be one public \code{https} URL:
-#' plain \code{http} needs \code{options(rmoriebricklayer.allow_http =
-#' TRUE)}, \code{file://} needs \code{allow_file = TRUE}, and loopback,
+#' plain \code{http} needs \code{options(rmoriebricklayer.allowhttp =
+#' TRUE)}, \code{file://} needs \code{allowfile = TRUE}, and loopback,
 #' private, link-local and cloud-metadata addresses are refused. The
 #' transport then resolves the host, pins the connection to the checked
 #' addresses, re-checks every redirect hop, caps the body at 2 GiB and allows
-#' 3600 seconds for the transfer. The file at \code{target_path} is
+#' 3600 seconds for the transfer. The file at \code{tpath} is
 #' overwritten. Errors from the transfer (network, HTTP status, size cap)
 #' propagate as R errors; nothing partial is left behind.
 #'
@@ -324,11 +324,11 @@ resolve_via_ckan_search <- function(provenance) {
 #' \code{morie.quiet} option says, because the value is passed to the
 #' transport explicitly.
 #'
-#' Errors: \code{url} or \code{target_path} not a single non-empty string;
+#' Errors: \code{url} or \code{tpath} not a single non-empty string;
 #' a refused URL; \code{mode} other than \code{"wb"} or \code{"w"}.
 #'
 #' @param url The URL to download, a single string.
-#' @param target_path Destination path on disk, a single string. Its
+#' @param tpath Destination path on disk, a single string. Its
 #'   directory must exist.
 #' @param mode Kept for the signature of \code{utils::download.file()}; only
 #'   \code{"wb"} (the default) or \code{"w"} is accepted. Every transfer is
@@ -337,41 +337,41 @@ resolve_via_ckan_search <- function(provenance) {
 #'   \code{"wb"}.
 #' @param quiet Logical. \code{TRUE} suppresses the progress output;
 #'   \code{FALSE} (the default) shows it.
-#' @param allow_file Logical. Accept a \code{file://} URL (default
+#' @param allowfile Logical. Accept a \code{file://} URL (default
 #'   \code{FALSE}; offline tests and examples pass \code{TRUE}). Every URL
 #'   must otherwise be \code{https} and public.
-#' @return The \code{target_path}, returned invisibly.
+#' @return The \code{tpath}, returned invisibly.
 #' @examples
 #' # offline: a local file through a file:// URL
 #' src <- tempfile(fileext = ".csv")
 #' writeLines(c("id,value", "1,10", "2,20"), src)
-#' dest <- download_data(paste0("file://", src), tempfile(fileext = ".csv"),
-#'   quiet = TRUE, allow_file = TRUE)
+#' dest <- dldata(paste0("file://", src), tempfile(fileext = ".csv"),
+#'   quiet = TRUE, allowfile = TRUE)
 #' read.csv(dest)
 #'
 #' # file:// is refused unless asked for, and so is an append mode
-#' try(download_data(paste0("file://", src), tempfile()))
-#' try(download_data("https://example.org/x.csv", tempfile(), mode = "a"))
+#' try(dldata(paste0("file://", src), tempfile()))
+#' try(dldata("https://example.org/x.csv", tempfile(), mode = "a"))
 #' \dontrun{
 #' # needs the network
-#' dest <- download_data("https://cloud.r-project.org/",
+#' dest <- dldata("https://cloud.r-project.org/",
 #'   tempfile(fileext = ".html"),
 #'   quiet = TRUE
 #' )
 #' file.exists(dest)
 #' }
 #' @export
-download_data <- function(url, target_path, mode = "wb", quiet = FALSE,
-                          allow_file = FALSE) {
+dldata <- function(url, tpath, mode = "wb", quiet = FALSE,
+                          allowfile = FALSE) {
   url <- .rmbl_string1(url, "url")
-  url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
-  target_path <- .rmbl_string1(target_path, "target_path")
+  url <- .rmbl_check_public_url(url, "url", allow_file = allowfile)
+  tpath <- .rmbl_string1(tpath, "tpath")
   if (!identical(mode, "wb") && !identical(mode, "w")) {
     stop("`mode` must be \"wb\" (every transfer is binary)", call. = FALSE)
   }
-  bricklayer_download(url, target_path, quiet = isTRUE(quiet),
-                      allow_file = allow_file)
-  invisible(target_path)
+  bldl(url, tpath, quiet = isTRUE(quiet),
+                      allowfile = allowfile)
+  invisible(tpath)
 }
 
 #' Resolve a Wayback Machine snapshot URL
@@ -381,7 +381,7 @@ download_data <- function(url, target_path, mode = "wb", quiet = FALSE,
 #' fetch failsafe the wider morie package family relies on: callers try the
 #' live source first and fall back to the snapshot when the source is down,
 #' has moved or has been taken offline.
-#' [friendly_download()] uses it
+#' [fdl()] uses it
 #' automatically.
 #'
 #' @details
@@ -400,7 +400,7 @@ download_data <- function(url, target_path, mode = "wb", quiet = FALSE,
 #' Nothing is written.
 #'
 #' @param url The original source URL to look up, a single string.
-#' @param timestamp Optional target time as a string of digits
+#' @param ts Optional target time as a string of digits
 #'   \code{YYYYMMDDhhmmss} (or a prefix such as \code{"2023"} or
 #'   \code{"20230115"}); the API returns the snapshot closest to it.
 #'   \code{NULL} or \code{""} (the default) asks for the most recent.
@@ -409,24 +409,24 @@ download_data <- function(url, target_path, mode = "wb", quiet = FALSE,
 #'   \code{NULL}.
 #' @examples
 #' # argument errors come before any request
-#' try(wayback_snapshot_url(NA))
-#' try(wayback_snapshot_url(c("https://a.org", "https://b.org")))
+#' try(wbsnpurl(NA))
+#' try(wbsnpurl(c("https://a.org", "https://b.org")))
 #' \dontrun{
 #' # needs the network
-#' wayback_snapshot_url("https://www.r-project.org/")
+#' wbsnpurl("https://www.r-project.org/")
 #' # the snapshot nearest to January 2020
-#' wayback_snapshot_url("https://www.r-project.org/", timestamp = "202001")
+#' wbsnpurl("https://www.r-project.org/", ts = "202001")
 #' }
 #' @export
-wayback_snapshot_url <- function(url, timestamp = NULL) {
+wbsnpurl <- function(url, ts = NULL) {
   url <- .rmbl_string1(url, "url")
   # https: over cleartext a MITM chose the fallback snapshot
   api <- paste0(
     "https://archive.org/wayback/available?url=",
     utils::URLencode(url, reserved = TRUE)
   )
-  if (!is.null(timestamp) && nzchar(timestamp)) {
-    api <- paste0(api, "&timestamp=", timestamp)
+  if (!is.null(ts) && nzchar(ts)) {
+    api <- paste0(api, "&timestamp=", ts)
   }
   res <- tryCatch(.rmbl_read_json(api, strict = FALSE), error = function(e) NULL)
   snap <- tryCatch(res$archived_snapshots$closest, error = function(e) NULL)
@@ -442,25 +442,25 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
                          "the Wayback snapshot URL")
 }
 
-# The one transport friendly_download() uses, live and Wayback alike (tests
-# mock it). Inside the package it is bricklayer_download() with its live
+# The one transport fdl() uses, live and Wayback alike (tests
+# mock it). Inside the package it is bldl() with its live
 # progress bar; a staged bundle (which copies this file alone) uses base R.
 .bl_fetch_file <- function(url, dest, allow_file = FALSE) {
   url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
-  if (exists("bricklayer_download", mode = "function")) {
-    bricklayer_download(url, dest, quiet = FALSE, allow_file = allow_file)
+  if (exists("bldl", mode = "function")) {
+    bldl(url, dest, quiet = FALSE, allowfile = allow_file)
   } else {
     utils::download.file(url, dest, mode = "wb", quiet = FALSE)
   }
 }
 
-## ----- friendly_download: wraps bricklayer_download with diagnostic
+## ----- fdl: wraps bldl with diagnostic
 ## error messages for common academic/corporate network failures.
 ## Returns TRUE on success, FALSE on failure.
 
 #' Download a File With Diagnostic Error Messages
 #'
-#' Downloads one file like [download_data()], but never stops
+#' Downloads one file like [dldata()], but never stops
 #' on a network
 #' failure: it returns \code{TRUE} or \code{FALSE}, prints plain-language
 #' advice for the usual academic and corporate network problems, and then
@@ -470,7 +470,7 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
 #' enough to act on.
 #'
 #' @details
-#' The URL is checked first, as in [download_data()]; a
+#' The URL is checked first, as in [dldata()]; a
 #' refused URL is an
 #' error, not \code{FALSE}. The download is then attempted. On failure the
 #' messages name the URL and the error, then the likely causes picked out
@@ -481,64 +481,64 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
 #' a portal that is down. When base R reports the HTTP status only in a
 #' warning, that warning's text is used as the cause.
 #'
-#' The fallback: with \code{attempt_wayback = NULL} a snapshot is looked up
-#' with [wayback_snapshot_url()]; with a URL that URL
+#' The fallback: with \code{attwb = NULL} a snapshot is looked up
+#' with [wbsnpurl()]; with a URL that URL
 #' is used; with
 #' \code{""} or \code{FALSE} the fallback is off. The fallback is fetched
-#' without \code{allow_file}, so it must be a public \code{https} URL even
-#' when \code{allow_file = TRUE}; a refused fallback URL counts as a failed
+#' without \code{allowfile}, so it must be a public \code{https} URL even
+#' when \code{allowfile = TRUE}; a refused fallback URL counts as a failed
 #' fallback (\code{FALSE}), with a message.
 #'
 #' All output goes to the message stream. The transport always draws its
-#' progress (it is called with \code{quiet = FALSE}). \code{target_path} is
+#' progress (it is called with \code{quiet = FALSE}). \code{tpath} is
 #' overwritten on success.
 #'
 #' @param url URL to download, a single string.
-#' @param target_path Destination path on disk, a single string.
-#' @param attempt_wayback The Wayback Machine snapshot URL tried as a
+#' @param tpath Destination path on disk, a single string.
+#' @param attwb The Wayback Machine snapshot URL tried as a
 #'   fallback if the primary download fails. \code{NULL} (the default)
 #'   resolves a snapshot automatically via
-#'   [wayback_snapshot_url()] (one more
+#'   [wbsnpurl()] (one more
 #'   request); a URL string overrides the lookup; \code{""} or \code{FALSE}
 #'   disables the fallback entirely.
-#' @param allow_file Logical. Accept a \code{file://} URL for \code{url}
+#' @param allowfile Logical. Accept a \code{file://} URL for \code{url}
 #'   (default \code{FALSE}; offline tests pass \code{TRUE}). It does not
-#'   apply to \code{attempt_wayback}.
+#'   apply to \code{attwb}.
 #' @return \code{TRUE} if either the primary download or the Wayback
-#'   fallback succeeded (the file is at \code{target_path}), otherwise
+#'   fallback succeeded (the file is at \code{tpath}), otherwise
 #'   \code{FALSE}.
 #' @examples
 #' src <- tempfile(fileext = ".csv")
 #' writeLines(c("id,value", "1,10"), src)
 #'
 #' # a successful download returns TRUE
-#' friendly_download(paste0("file://", src), tempfile(fileext = ".csv"),
-#'   attempt_wayback = "", allow_file = TRUE)
+#' fdl(paste0("file://", src), tempfile(fileext = ".csv"),
+#'   attwb = "", allowfile = TRUE)
 #'
 #' # a failed one returns FALSE with advice, here with the fallback off
-#' friendly_download(paste0("file://", src, "-missing"), tempfile(),
-#'   attempt_wayback = "", allow_file = TRUE)
+#' fdl(paste0("file://", src, "-missing"), tempfile(),
+#'   attwb = "", allowfile = TRUE)
 #'
 #' # a refused URL is an error, not FALSE
-#' try(friendly_download("http://example.org/data.csv", tempfile()))
+#' try(fdl("http://example.org/data.csv", tempfile()))
 #' \dontrun{
 #' # needs the network; the Wayback fallback is looked up on failure
-#' ok <- friendly_download("https://cloud.r-project.org/",
+#' ok <- fdl("https://cloud.r-project.org/",
 #'   tempfile(fileext = ".html"))
 #' ok
 #' }
 #' @export
-friendly_download <- function(url, target_path, attempt_wayback = NULL,
-                              allow_file = FALSE) {
+fdl <- function(url, tpath, attwb = NULL,
+                              allowfile = FALSE) {
   url <- .rmbl_string1(url, "url")
-  url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
-  target_path <- .rmbl_string1(target_path, "target_path")
+  url <- .rmbl_check_public_url(url, "url", allow_file = allowfile)
+  tpath <- .rmbl_string1(tpath, "tpath")
   # base R's url() reports the HTTP status in a warning and then errors with a bare
   # "cannot open the connection": keep the warning's words as the cause, and do not let it leak
   said <- character()
   result <- tryCatch(
     {
-      withCallingHandlers(.bl_fetch_file(url, target_path, allow_file = allow_file), warning = function(w) {
+      withCallingHandlers(.bl_fetch_file(url, tpath, allow_file = allowfile), warning = function(w) {
         said <<- c(said, conditionMessage(w))
         invokeRestart("muffleWarning")
       })
@@ -592,24 +592,24 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL,
       }
       ## Auto-resolve a Wayback snapshot if the caller did not supply one
       ## (NULL = auto; "" = explicitly disabled).
-      if (isFALSE(attempt_wayback) || identical(attempt_wayback, "")) {
-        attempt_wayback <- ""  # switched off by the caller: no lookup was made
+      if (isFALSE(attwb) || identical(attwb, "")) {
+        attwb <- ""  # switched off by the caller: no lookup was made
         message("  The Wayback fallback is switched off; nothing more to try.")
       } else {
-        if (is.null(attempt_wayback)) {
-          attempt_wayback <- tryCatch(wayback_snapshot_url(url), error = function(e) NULL)
+        if (is.null(attwb)) {
+          attwb <- tryCatch(wbsnpurl(url), error = function(e) NULL)
         }
-        if (!is.character(attempt_wayback) || length(attempt_wayback) != 1L || is.na(attempt_wayback) ||
-            !nzchar(attempt_wayback)) {
-          attempt_wayback <- ""  # no usable snapshot
+        if (!is.character(attwb) || length(attwb) != 1L || is.na(attwb) ||
+            !nzchar(attwb)) {
+          attwb <- ""  # no usable snapshot
           message("  The Wayback Machine has no snapshot of it (or did not answer); nothing more to try.")
         }
       }
-      if (!is.null(attempt_wayback) && nzchar(attempt_wayback)) {
+      if (!is.null(attwb) && nzchar(attwb)) {
         message("  Trying Wayback Machine fallback snapshot...")
         tryCatch(
           {
-            .bl_fetch_file(attempt_wayback, target_path)
+            .bl_fetch_file(attwb, tpath)
             message("  [ok] Wayback snapshot retrieved.")
             return(TRUE)
           },
@@ -636,21 +636,21 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL,
 #' different digest.
 #'
 #' @details
-#' The digest is computed by [sha256_file()], the package's own
+#' The digest is computed by [sha256file()], the package's own
 #' compiled
 #' SHA-256 core (FIPS 180-4), reading the file in chunks. The expected
 #' value is normalised before the comparison: a length-1 list (as
-#' [load_provenance()] returns a pinned digest) is
+#' [loadprov()] returns a pinned digest) is
 #' unlisted, surrounding
 #' spaces are trimmed and letters are lower-cased, so an upper-case digest
 #' copied from a web page still matches. The function reports and does not
 #' stop on a mismatch; the caller decides.
 #'
 #' Errors: \code{path} that does not name a readable file;
-#' \code{expected_sha} that is not exactly one non-NA value.
+#' \code{expsha} that is not exactly one non-NA value.
 #'
 #' @param path Path to the file to hash, a single string.
-#' @param expected_sha The expected SHA-256 digest: a hex string (64
+#' @param expsha The expected SHA-256 digest: a hex string (64
 #'   characters, any case), or a length-1 list holding one, as read from
 #'   provenance JSON.
 #' @return A list of three elements: \code{actual} (character, the computed
@@ -662,30 +662,30 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL,
 #' writeLines("hello capsule", f)
 #'
 #' # Matching digest -> match TRUE.
-#' chk <- verify_sha256(f, sha256_file(f))
+#' chk <- vrfsha256(f, sha256file(f))
 #' chk$match # TRUE
 #'
 #' # A wrong expected digest -> match FALSE, with both values reported.
-#' bad <- verify_sha256(f, strrep("0", 64L))
+#' bad <- vrfsha256(f, strrep("0", 64L))
 #' bad$match # FALSE
 #' bad$actual # the real digest
 #'
 #' # case and a list wrapper (as from provenance JSON) do not matter
-#' verify_sha256(f, list(toupper(sha256_file(f))))$match
+#' vrfsha256(f, list(toupper(sha256file(f))))$match
 #'
 #' # a missing file, or more than one expected digest, is an error
-#' try(verify_sha256(file.path(tempdir(), "missing.csv"), strrep("0", 64L)))
-#' try(verify_sha256(f, c("a", "b")))
+#' try(vrfsha256(file.path(tempdir(), "missing.csv"), strrep("0", 64L)))
+#' try(vrfsha256(f, c("a", "b")))
 #' @export
-verify_sha256 <- function(path, expected_sha) {
-  .rmbl_no_fn(expected_sha = expected_sha)
-  actual <- sha256_file(path)
+vrfsha256 <- function(path, expsha) {
+  .rmbl_no_fn(expected_sha = expsha)
+  actual <- sha256file(path)
   # provenance JSON hands the pinned digest over as a length-1 list;
   # identical() on list-vs-character never matched, so every intact
   # capsule reported a mismatch between two identical strings.
-  expected <- tolower(trimws(as.character(unlist(expected_sha))))
+  expected <- tolower(trimws(as.character(unlist(expsha))))
   if (length(expected) != 1L || is.na(expected)) {
-    stop("`expected_sha` must be a single SHA-256 hex string", call. = FALSE)
+    stop("`expsha` must be a single SHA-256 hex string", call. = FALSE)
   }
   list(
     actual = actual, expected = expected,
@@ -708,7 +708,7 @@ verify_sha256 <- function(path, expected_sha) {
 #' record: required columns, row-count bounds, column types, numeric ranges,
 #' missingness and allowed category values. It returns the problems it
 #' finds instead of stopping, so the caller can log them, show them, or pass
-#' the same schema to [apply_schema_validation()],
+#' the same schema to [schval()],
 #' the wrapper that turns
 #' them into errors and warnings. Use it each time a file is re-downloaded,
 #' to catch a re-release that renamed, retyped or recoded a column.
@@ -719,11 +719,11 @@ verify_sha256 <- function(path, expected_sha) {
 #'
 #' This is the STRUCTURAL check -- names, types, bounds, value sets. It
 #' cannot tell you that a column kept its name, type and range while its
-#' distribution moved; [capsule_drift()] answers that. Rules
+#' distribution moved; [cpsdrft()] answers that. Rules
 #' that are
 #' particular to a data set (an age must be non-negative, two dates must be
-#' ordered) belong in [rule()] and
-#' [validate_rules()].
+#' ordered) belong in [rul()] and
+#' [valrules()].
 #'
 #' The checks, and the name of the issue each one adds:
 #' \itemize{
@@ -754,16 +754,16 @@ verify_sha256 <- function(path, expected_sha) {
 #' as another name for \code{expected_types}, and \code{synthetic_recipe} is
 #' a known field that is not checked here.
 #'
-#' Errors: \code{df_raw} that is not a data frame; a \code{schema} that is
-#' not a list. A \code{provenance} that is \code{NULL} or has no
+#' Errors: \code{dfraw} that is not a data frame; a \code{schema} that is
+#' not a list. A \code{prov} that is \code{NULL} or has no
 #' \code{schema} returns an empty list (use
-#' [apply_schema_validation()] to
+#' [schval()] to
 #' make that an error).
 #'
-#' @param df_raw The data frame to validate.
-#' @param provenance A provenance list as returned by
-#'   [load_provenance()], or
-#'   \code{list(schema = infer_schema(df))}. The
+#' @param dfraw The data frame to validate.
+#' @param prov A provenance list as returned by
+#'   [loadprov()], or
+#'   \code{list(schema = infsch(df))}. The
 #'   \code{schema} block may contain:
 #'   * \code{expected_columns} -- required column names (character). A missing
 #'     one is \code{"fatal"}; everything else below is a \code{"warning"}.
@@ -778,16 +778,16 @@ verify_sha256 <- function(path, expected_sha) {
 #'   * \code{max_missing_fraction} -- a named numeric of per-column ceilings
 #'     on the share of \code{NA}, between 0 and 1.
 #'
-#'   [infer_schema()] produces all six from data you already
+#'   [infsch()] produces all six from data you already
 #'   trust.
 #' @return A named list of issues; each issue is a list with
 #'   \code{severity} (\code{"fatal"} or \code{"warning"}) and a
 #'   human-readable \code{message}. The names are those listed in Details. A
 #'   zero-length list means the data frame is clean.
 #' @seealso
-#' [infer_schema()] to derive a schema,
-#' [capsule_drift()] for the distributional
-#' check, [apply_schema_validation()]
+#' [infsch()] to derive a schema,
+#' [cpsdrft()] for the distributional
+#' check, [schval()]
 #' to raise on the issues.
 #' @examples
 #' prov <- list(schema = list(
@@ -796,47 +796,47 @@ verify_sha256 <- function(path, expected_sha) {
 #'   expected_value_sets   = list(year = 2020:2025)
 #' ))
 #' df <- data.frame(id = 1:3, year = c(2020, 2021, 2030))
-#' issues <- validate_schema(df, prov)
+#' issues <- valsch(df, prov)
 #' names(issues) # flags the out-of-set year value
 #'
 #' # A column that silently changed type is caught.
 #' typed <- list(schema = list(expected_types = c(id = "integer")))
-#' validate_schema(data.frame(id = c("1", "2")), typed)[[1]]$message
+#' valsch(data.frame(id = c("1", "2")), typed)[[1]]$message
 #'
 #' # So is a value outside its pinned range, and excess missingness.
 #' ranged <- list(schema = list(numeric_ranges = list(v = c(min = 0, max = 1))))
-#' validate_schema(data.frame(v = c(0.5, 9)), ranged)[[1]]$message
+#' valsch(data.frame(v = c(0.5, 9)), ranged)[[1]]$message
 #'
 #' gappy <- list(schema = list(max_missing_fraction = c(v = 0.1)))
-#' validate_schema(data.frame(v = c(1, NA, NA, 4)), gappy)[[1]]$message
+#' valsch(data.frame(v = c(1, NA, NA, 4)), gappy)[[1]]$message
 #'
 #' # A clean frame produces nothing.
-#' length(validate_schema(data.frame(id = 1:3, year = 2021), prov))
+#' length(valsch(data.frame(id = 1:3, year = 2021), prov))
 #'
 #' # a misspelt schema field is fatal rather than silently ignored
-#' validate_schema(df, list(schema = list(expected_colums = "id")))[[1]]
+#' valsch(df, list(schema = list(expcol = "id")))[[1]]
 #'
 #' # a schema inferred from trusted data, checked against a new release
-#' sch <- infer_schema(data.frame(id = 1:3, year = 2020:2022))
-#' names(validate_schema(data.frame(id = 1:2), list(schema = sch)))
+#' sch <- infsch(data.frame(id = 1:3, year = 2020:2022))
+#' names(valsch(data.frame(id = 1:2), list(schema = sch)))
 #'
 #' # the data must be a data frame
-#' try(validate_schema(list(id = 1), prov))
+#' try(valsch(list(id = 1), prov))
 #' @export
-validate_schema <- function(df_raw, provenance) {
-  if (!is.data.frame(df_raw)) {
-    stop("`df_raw` must be a data frame", call. = FALSE)
+valsch <- function(dfraw, prov) {
+  if (!is.data.frame(dfraw)) {
+    stop("`dfraw` must be a data frame", call. = FALSE)
   }
-  if (!is.null(provenance) && !is.list(provenance)) {
-    stop("`provenance` must be a provenance list (from read_provenance()), or NULL", call. = FALSE)
+  if (!is.null(prov) && !is.list(prov)) {
+    stop("`prov` must be a provenance list (from read_provenance()), or NULL", call. = FALSE)
   }
   issues <- list()
-  if (is.null(provenance) || is.null(provenance$schema)) {
+  if (is.null(prov) || is.null(prov$schema)) {
     return(issues)
   }
-  sch <- provenance$schema
+  sch <- prov$schema
   if (!is.list(sch)) {
-    stop(sprintf("`provenance$schema` must be a list (from infer_schema()), not %s", class(sch)[1L]), call. = FALSE)
+    stop(sprintf("`provenance$schema` must be a list (from infsch()), not %s", class(sch)[1L]), call. = FALSE)
   }
   # a schema with no fields checks nothing: it passed as valid (review of e57fed5, the M2 leftover)
   if (!length(sch)) {
@@ -857,7 +857,7 @@ validate_schema <- function(df_raw, provenance) {
         message = sprintf("unknown schema field '%s' (did you mean '%s'?): it would be ignored", nm, guess))
     } else {
       issues[[paste0("schema_field_", nm)]] <- list(severity = "warning",
-        message = sprintf("schema field '%s' is not one validate_schema() uses: it was not checked", nm))
+        message = sprintf("schema field '%s' is not one valsch() uses: it was not checked", nm))
     }
   }
   inv_known <- c("min_data_rows", "max_data_rows")
@@ -886,7 +886,7 @@ validate_schema <- function(df_raw, provenance) {
 
   ## --- Required columns ---
   if (!is.null(sch$expected_columns)) {
-    missing_cols <- setdiff(sch$expected_columns, colnames(df_raw))
+    missing_cols <- setdiff(sch$expected_columns, colnames(dfraw))
     if (length(missing_cols) > 0L) {
       issues$missing_columns <- list(
         severity = "fatal",
@@ -900,21 +900,21 @@ validate_schema <- function(df_raw, provenance) {
 
   ## --- Row count bounds ---
   inv <- sch$structural_invariants
-  if (!is.null(inv$min_data_rows) && nrow(df_raw) < inv$min_data_rows) {
+  if (!is.null(inv$min_data_rows) && nrow(dfraw) < inv$min_data_rows) {
     issues$row_count_low <- list(
       severity = "warning",
       message = sprintf(
         "Row count %d below expected minimum %d",
-        nrow(df_raw), inv$min_data_rows
+        nrow(dfraw), inv$min_data_rows
       )
     )
   }
-  if (!is.null(inv$max_data_rows) && nrow(df_raw) > inv$max_data_rows) {
+  if (!is.null(inv$max_data_rows) && nrow(dfraw) > inv$max_data_rows) {
     issues$row_count_high <- list(
       severity = "warning",
       message = sprintf(
         "Row count %d above expected maximum %d",
-        nrow(df_raw), inv$max_data_rows
+        nrow(dfraw), inv$max_data_rows
       )
     )
   }
@@ -925,9 +925,9 @@ validate_schema <- function(df_raw, provenance) {
   ## downstream computation while passing a name-only check.
   if (!is.null(sch$expected_types)) {
     for (col in names(sch$expected_types)) {
-      if (!col %in% colnames(df_raw)) next
+      if (!col %in% colnames(dfraw)) next
       want <- sch$expected_types[[col]]
-      got <- class(df_raw[[col]])[1L]
+      got <- class(dfraw[[col]])[1L]
       ## integer and double are both "numeric" for this purpose; a
       ## re-release legitimately widens one to the other.
       numeric_like <- c("integer", "numeric", "double")
@@ -951,8 +951,8 @@ validate_schema <- function(df_raw, provenance) {
   ## --- Numeric ranges ---
   if (!is.null(sch$numeric_ranges)) {
     for (col in names(sch$numeric_ranges)) {
-      if (!col %in% colnames(df_raw)) next
-      v <- df_raw[[col]]
+      if (!col %in% colnames(dfraw)) next
+      v <- dfraw[[col]]
       if (!is.numeric(v)) next
       ok <- v[!is.na(v)]
       if (!length(ok)) next
@@ -975,8 +975,8 @@ validate_schema <- function(df_raw, provenance) {
   ## --- Missingness ---
   if (!is.null(sch$max_missing_fraction)) {
     for (col in names(sch$max_missing_fraction)) {
-      if (!col %in% colnames(df_raw)) next
-      frac <- sum(is.na(df_raw[[col]])) / max(1L, nrow(df_raw))
+      if (!col %in% colnames(dfraw)) next
+      frac <- sum(is.na(dfraw[[col]])) / max(1L, nrow(dfraw))
       cap <- sch$max_missing_fraction[[col]]
       if (frac > cap) {
         issues[[paste0("missing_", col)]] <- list(
@@ -993,8 +993,8 @@ validate_schema <- function(df_raw, provenance) {
   ## --- Categorical value sets ---
   if (!is.null(sch$expected_value_sets)) {
     for (col in names(sch$expected_value_sets)) {
-      if (!col %in% colnames(df_raw)) next
-      actual_vals <- unique(df_raw[[col]])
+      if (!col %in% colnames(dfraw)) next
+      actual_vals <- unique(dfraw[[col]])
       expected_vals <- sch$expected_value_sets[[col]]
       unexpected <- setdiff(actual_vals, expected_vals)
       if (length(unexpected) > 0L) {
@@ -1015,8 +1015,8 @@ validate_schema <- function(df_raw, provenance) {
 
 #' Apply Schema Validation, Stopping on Fatal Issues
 #'
-#' Runs [validate_schema()] (or, for a list of rules,
-#' [validate_rules()]) and
+#' Runs [valsch()] (or, for a list of rules,
+#' [valrules()]) and
 #' acts on the result: the first fatal issue stops with an error, and every
 #' warning-severity issue is raised as an R warning. Put it at the top of an
 #' analysis script so that a re-released file with a missing column stops
@@ -1027,36 +1027,36 @@ validate_schema <- function(df_raw, provenance) {
 #' stops at once, so warnings after it are not raised. With a list of rules
 #' the same contract applies to each rule's \code{severity}.
 #'
-#' Unlike [validate_schema()], this function refuses to
+#' Unlike [valsch()], this function refuses to
 #' check against
 #' nothing, because a validation that checks nothing must not report success.
-#' Errors: \code{df_raw} not a data frame; \code{provenance} a data frame;
-#' \code{provenance} \code{NULL} or an empty list; a list that mixes rules
+#' Errors: \code{dfraw} not a data frame; \code{prov} a data frame;
+#' \code{prov} \code{NULL} or an empty list; a list that mixes rules
 #' with other elements; an unnamed list that is not all rules; something
 #' other than a list; a provenance list with no \code{schema} element (the
 #' message names the elements it has, so a typo such as \code{scheme}
 #' shows); an empty schema (\code{list(schema = list())}).
 #'
-#' @param df_raw The data frame to validate.
-#' @param provenance A provenance list as returned by
-#'   [load_provenance()] (with a \code{schema} element), or
+#' @param dfraw The data frame to validate.
+#' @param prov A provenance list as returned by
+#'   [loadprov()] (with a \code{schema} element), or
 #'   one rule or a list
-#'   of rules from [rule()], run with
-#'   [validate_rules()] under the same
+#'   of rules from [rul()], run with
+#'   [valrules()] under the same
 #'   stop-on-fatal contract.
 #' @return Invisibly, \code{TRUE} if no issues were found and \code{FALSE}
 #'   if only warning-severity issues were found (each raised as a warning).
 #'   Errors if any fatal issue is present.
 #' @examples
 #' prov <- list(schema = list(expected_columns = "id"))
-#' apply_schema_validation(data.frame(id = 1), prov)
+#' schval(data.frame(id = 1), prov)
 #' # A missing required column is fatal:
-#' try(apply_schema_validation(data.frame(x = 1), prov))
+#' try(schval(data.frame(x = 1), prov))
 #'
 #' # a warning-level issue is raised as a warning and the result is FALSE
 #' ranged <- list(schema = list(numeric_ranges = list(v = c(min = 0, max = 1))))
 #' ok <- withCallingHandlers(
-#'   apply_schema_validation(data.frame(v = c(0.5, 3)), ranged),
+#'   schval(data.frame(v = c(0.5, 3)), ranged),
 #'   warning = function(w) {
 #'     message("warning: ", conditionMessage(w))
 #'     invokeRestart("muffleWarning")
@@ -1065,47 +1065,47 @@ validate_schema <- function(df_raw, provenance) {
 #' ok
 #'
 #' # rules work the same way
-#' rules <- list(rule("id_positive", function(v) v > 0, column = "id", severity = "fatal"))
-#' try(apply_schema_validation(data.frame(id = c(1, -2)), rules))
+#' rules <- list(rul("id_positive", function(v) v > 0, col = "id", sev = "fatal"))
+#' try(schval(data.frame(id = c(1, -2)), rules))
 #'
 #' # a provenance without a schema is refused, not passed
-#' try(apply_schema_validation(data.frame(id = 1), list(scheme = list())))
+#' try(schval(data.frame(id = 1), list(scheme = list())))
 #' @export
-apply_schema_validation <- function(df_raw, provenance) {
-  if (!is.data.frame(df_raw)) stop("`df_raw` must be a data frame", call. = FALSE)
-  if (is.data.frame(provenance)) {
-    stop("`provenance` must be a provenance list or a list of rules, not a data frame", call. = FALSE)
+schval <- function(dfraw, prov) {
+  if (!is.data.frame(dfraw)) stop("`dfraw` must be a data frame", call. = FALSE)
+  if (is.data.frame(prov)) {
+    stop("`prov` must be a provenance list or a list of rules, not a data frame", call. = FALSE)
   }
-  is_rule <- vapply(provenance, inherits, logical(1), "bricklayer_rule")
-  is_rule_list <- inherits(provenance, "bricklayer_rule") || (is.list(provenance) && length(provenance) && all(is_rule))
-  if (!is_rule_list && is.list(provenance) && any(is_rule)) {
+  is_rule <- vapply(prov, inherits, logical(1), "bricklayer_rule")
+  is_rule_list <- inherits(prov, "bricklayer_rule") || (is.list(prov) && length(prov) && all(is_rule))
+  if (!is_rule_list && is.list(prov) && any(is_rule)) {
     # a list that mixes rules with anything else (a number, a nested list of rules) would fall
-    # through to validate_schema() and pass silently; it is neither contract, so it is refused
-    stop(sprintf(paste("`provenance` mixes rules with other elements (element %d is not a rule):",
+    # through to valsch() and pass silently; it is neither contract, so it is refused
+    stop(sprintf(paste("`prov` mixes rules with other elements (element %d is not a rule):",
                        "pass rules only, or a provenance list"), which(!is_rule)[[1L]]), call. = FALSE)
   }
-  if (!is_rule_list && is.list(provenance) && length(provenance) && is.null(names(provenance))) {
-    stop("`provenance` must be a named provenance list (with `schema`) or a list of rules", call. = FALSE)
+  if (!is_rule_list && is.list(prov) && length(prov) && is.null(names(prov))) {
+    stop("`prov` must be a named provenance list (with `schema`) or a list of rules", call. = FALSE)
   }
-  if (!is_rule_list && !is.null(provenance) && !is.list(provenance)) {
-    stop("`provenance` must be a provenance list or a list of rules", call. = FALSE)
+  if (!is_rule_list && !is.null(prov) && !is.list(prov)) {
+    stop("`prov` must be a provenance list or a list of rules", call. = FALSE)
   }
   # asked to validate, there must be something to validate against: NULL, an empty list or a
   # provenance without `schema` (a typo such as `scheme`) returned TRUE having checked nothing
   # (review of 02a38be, M2)
-  if (is.null(provenance) || (is.list(provenance) && !length(provenance))) {
-    stop("`provenance` is empty: there is no schema to validate against (infer_schema() makes one)", call. = FALSE)
+  if (is.null(prov) || (is.list(prov) && !length(prov))) {
+    stop("`prov` is empty: there is no schema to validate against (infsch() makes one)", call. = FALSE)
   }
-  if (!is_rule_list && is.list(provenance) && is.null(provenance$schema)) {
-    stop(sprintf("`provenance` has no `schema` element (it has %s): nothing would be validated",
-                 paste(names(provenance), collapse = ", ")), call. = FALSE)
+  if (!is_rule_list && is.list(prov) && is.null(prov$schema)) {
+    stop(sprintf("`prov` has no `schema` element (it has %s): nothing would be validated",
+                 paste(names(prov), collapse = ", ")), call. = FALSE)
   }
   # the same for a schema with no fields: list(schema = list()) returned TRUE (review of e57fed5)
-  if (!is_rule_list && is.list(provenance$schema) && !length(provenance$schema)) {
-    stop("the schema is empty (list()): there is nothing to validate against (infer_schema() makes one)",
+  if (!is_rule_list && is.list(prov$schema) && !length(prov$schema)) {
+    stop("the schema is empty (list()): there is nothing to validate against (infsch() makes one)",
          call. = FALSE)
   }
-  issues <- if (is_rule_list) validate_rules(df_raw, provenance) else validate_schema(df_raw, provenance)
+  issues <- if (is_rule_list) valrules(dfraw, prov) else valsch(dfraw, prov)
   for (nm in names(issues)) {
     iss <- issues[[nm]]
     if (iss$severity == "fatal") stop(iss$message, call. = FALSE)
@@ -1114,7 +1114,7 @@ apply_schema_validation <- function(df_raw, provenance) {
   invisible(length(issues) == 0L)
 }
 
-## ----- Socrata + ArcGIS resolvers (same contract as resolve_via_ckan) -----
+## ----- Socrata + ArcGIS resolvers (same contract as rslvckan) -----
 
 #' Resolve a Download URL via the Socrata Metadata API
 #'
@@ -1131,14 +1131,14 @@ apply_schema_validation <- function(df_raw, provenance) {
 #' portal's export of every row. The id is not checked further, and the
 #' export URL is not fetched.
 #'
-#' \code{NULL} is returned when \code{provenance} is \code{NULL}, when the
+#' \code{NULL} is returned when \code{prov} is \code{NULL}, when the
 #' domain or id is missing, when the request fails (offline, HTTP error,
 #' invalid JSON) or when the metadata has no \code{id}. Errors: a
-#' \code{provenance} that is not a list; a domain that is not a public host
+#' \code{prov} that is not a list; a domain that is not a public host
 #' (\code{localhost}, a private address, a single-label name).
 #'
-#' @param provenance A provenance list as returned by
-#'   [load_provenance()], or
+#' @param prov A provenance list as returned by
+#'   [loadprov()], or
 #'   \code{NULL}. Must contain \code{dataset$socrata_domain} (a host name
 #'   without scheme, e.g. \code{"data.cityofchicago.org"}) and
 #'   \code{dataset$socrata_id} (the four-by-four dataset id, e.g.
@@ -1148,11 +1148,11 @@ apply_schema_validation <- function(df_raw, provenance) {
 #'   error.
 #' @examples
 #' # Missing fields return NULL rather than erroring:
-#' resolve_via_socrata(list())
-#' resolve_via_socrata(list(dataset = list(socrata_domain = "data.cityofchicago.org")))
+#' rslvsoc(list())
+#' rslvsoc(list(dataset = list(socrata_domain = "data.cityofchicago.org")))
 #'
 #' # a local host is refused before any request
-#' try(resolve_via_socrata(list(dataset = list(
+#' try(rslvsoc(list(dataset = list(
 #'   socrata_domain = "localhost", socrata_id = "abcd-1234"))))
 #' \dontrun{
 #' # needs the network
@@ -1160,16 +1160,16 @@ apply_schema_validation <- function(df_raw, provenance) {
 #'   socrata_domain = "data.cityofchicago.org",
 #'   socrata_id = "ijzp-q8t2"
 #' ))
-#' resolve_via_socrata(prov)
+#' rslvsoc(prov)
 #' }
 #' @export
-resolve_via_socrata <- function(provenance) {
-  if (is.null(provenance)) {
+rslvsoc <- function(prov) {
+  if (is.null(prov)) {
     return(NULL)
   }
-  if (!is.list(provenance)) stop("`provenance` must be a provenance list (load_provenance())", call. = FALSE)
-  domain <- provenance$dataset$socrata_domain
-  id <- provenance$dataset$socrata_id
+  if (!is.list(prov)) stop("`prov` must be a provenance list (loadprov())", call. = FALSE)
+  domain <- prov$dataset$socrata_domain
+  id <- prov$dataset$socrata_id
   if (is.null(domain) || is.null(id)) {
     return(NULL)
   }
@@ -1200,13 +1200,13 @@ resolve_via_socrata <- function(provenance) {
 #' needs paging (\code{resultOffset}) by the caller; the URL is not fetched
 #' here.
 #'
-#' \code{NULL} is returned when \code{provenance} is \code{NULL}, when the
+#' \code{NULL} is returned when \code{prov} is \code{NULL}, when the
 #' field is missing, when the request fails or when the metadata reports an
-#' error. Errors: a \code{provenance} that is not a list; a layer URL that is
+#' error. Errors: a \code{prov} that is not a list; a layer URL that is
 #' not public \code{https}.
 #'
-#' @param provenance A provenance list as returned by
-#'   [load_provenance()], or
+#' @param prov A provenance list as returned by
+#'   [loadprov()], or
 #'   \code{NULL}. Must contain \code{dataset$arcgis_layer_url}, a
 #'   FeatureServer layer root such as
 #'   \code{"https://services.arcgis.com/.../Assault_Open_Data/FeatureServer/0"}.
@@ -1215,27 +1215,27 @@ resolve_via_socrata <- function(provenance) {
 #'   metadata reports an error.
 #' @examples
 #' # Missing fields return NULL rather than erroring:
-#' resolve_via_arcgis(list())
+#' rslvarc(list())
 #'
 #' # only https layer URLs are accepted
-#' try(resolve_via_arcgis(list(dataset = list(
+#' try(rslvarc(list(dataset = list(
 #'   arcgis_layer_url = "ftp://example.org/FeatureServer/0"))))
-#' try(resolve_via_arcgis("not a list"))
+#' try(rslvarc("not a list"))
 #' \dontrun{
 #' # needs the network
 #' prov <- list(dataset = list(arcgis_layer_url = paste0(
 #'   "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/",
 #'   "Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0"
 #' )))
-#' resolve_via_arcgis(prov)
+#' rslvarc(prov)
 #' }
 #' @export
-resolve_via_arcgis <- function(provenance) {
-  if (is.null(provenance)) {
+rslvarc <- function(prov) {
+  if (is.null(prov)) {
     return(NULL)
   }
-  if (!is.list(provenance)) stop("`provenance` must be a provenance list (load_provenance())", call. = FALSE)
-  layer <- provenance$dataset$arcgis_layer_url
+  if (!is.list(prov)) stop("`prov` must be a provenance list (loadprov())", call. = FALSE)
+  layer <- prov$dataset$arcgis_layer_url
   if (is.null(layer)) {
     return(NULL)
   }

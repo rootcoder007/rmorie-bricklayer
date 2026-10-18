@@ -25,7 +25,7 @@
 #' p-value and the cut-off.
 #'
 #' `robust = TRUE` centres each column on its median and scales it by its
-#' MAD (\code{core_mad()}, the 1.4826-scaled median absolute deviation;
+#' MAD (\code{cmad()}, the 1.4826-scaled median absolute deviation;
 #' a column whose MAD is zero falls back to its standard deviation), then
 #' takes \eqn{S} as the sample covariance of the standardised data.
 #' `robust = FALSE` uses the column means and the sample covariance. The
@@ -40,7 +40,7 @@
 #' is undefined there, and flooring the covariance's eigenvalues to make it
 #' invertible would return numbers governed by the floor rather than by the
 #' data. Drop the redundant column first --
-#' [top_correlations()] will identify it.
+#' [topcors()] will identify it.
 #'
 #' Errors: `data` neither a data frame nor a matrix; no numeric columns;
 #' no more complete rows than columns; collinear columns (smallest
@@ -57,7 +57,7 @@
 #' `TRUE`) .
 #' @return A data frame of class `bricklayer_outliers` with
 #' `row`, `distance` (the square root of the squared Mahalanobis
-#' distance), `p_value`, `log_p_value` (the log of the chi-square upper
+#' distance), `p_value`, `logpvalue` (the log of the chi-square upper
 #' tail, which keeps its information where `p_value` underflows to 0) and
 #' `outlier` (logical), ordered by descending distance, with skipped rows
 #' (`NA` distance) last. `row` is the row number in `data`. The attributes
@@ -67,8 +67,8 @@
 #' statistics. *Proceedings of the National Institute of Sciences of
 #' India* 2(1), 49--55.
 #' @seealso
-#' [core_tukey_fences()] for the per-column
-#' version, [rule_within_n_mads()] to turn
+#' [ctkyfnc()] for the per-column
+#' version, [rulemad()] to turn
 #' it into a validation rule.
 #' @examples
 #' set.seed(1)
@@ -80,7 +80,7 @@
 #' # short and heavy.
 #' df[1, ] <- list(height = 155, weight = 100)
 #'
-#' out <- mahalanobis_outliers(df)
+#' out <- mahaoutl(df)
 #' head(out, 3)
 #'
 #' # It is flagged, although both values lie inside the other rows' ranges.
@@ -92,16 +92,16 @@
 #' # MAD move less, so the robust distance of such a row is the larger.
 #' bad <- df
 #' bad[2:21, ] <- list(height = 150, weight = 110)
-#' d_classical <- mahalanobis_outliers(bad, robust = FALSE)
-#' d_robust <- mahalanobis_outliers(bad, robust = TRUE)
-#' d_classical$distance[d_classical$row == 2] < d_robust$distance[d_robust$row == 2]
+#' dclassical <- mahaoutl(bad, robust = FALSE)
+#' drobust <- mahaoutl(bad, robust = TRUE)
+#' dclassical$distance[dclassical$row == 2] < drobust$distance[drobust$row == 2]
 #'
 #' # A duplicated column has no distance defined, and is refused.
 #' dup <- df
 #' dup$height2 <- dup$height
-#' try(mahalanobis_outliers(dup))
+#' try(mahaoutl(dup))
 #' @export
-mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
+mahaoutl <- function(data, alpha = 0.001, robust = TRUE) {
   if (is.matrix(data)) data <- as.data.frame(data)
   if (!is.data.frame(data)) {
     stop("`data` must be a data frame or a numeric matrix", call. = FALSE)
@@ -122,13 +122,13 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
          call. = FALSE)
   }
   Xc <- X[ok, , drop = FALSE]
-  pg <- bricklayer_progress("Mahalanobis distances", 0)
+  pg <- blprog("Mahalanobis distances", 0)
   on.exit(pg$done(), add = TRUE)
   pg$update(info = sprintf("centring %s rows", format(nrow(Xc), big.mark = ",")))
 
   if (isTRUE(robust)) {
-    centre <- apply(Xc, 2L, core_median)
-    scales <- apply(Xc, 2L, core_mad)
+    centre <- apply(Xc, 2L, cmed)
+    scales <- apply(Xc, 2L, cmad)
     # A zero MAD means no robust spread to divide by; fall back to the
     # classical scale for that column rather than dividing by zero.
     cls <- apply(Xc, 2L, stats::sd)
@@ -136,7 +136,7 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
     Z <- sweep(sweep(Xc, 2L, centre, "-"), 2L, scales, "/")
     # correlation of the robustly standardised data, so the shape comes
     # from the bulk rather than from the tails
-    S <- core_cov(Z)
+    S <- ccovm(Z)
   } else {
     centre <- colMeans(Xc)
     # the distance is affine invariant, so standardising by the classical
@@ -146,7 +146,7 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
     scales <- apply(Xc, 2L, function(v) diff(range(v)))
     scales <- ifelse(is.finite(scales) & scales > 0, scales, 1)
     Z <- sweep(sweep(Xc, 2L, centre, "-"), 2L, scales, "/")
-    S <- core_cov(Z)
+    S <- ccovm(Z)
   }
   # Check the rank BEFORE repairing the covariance. .rmbl_make_pd floors
   # the eigenvalues, which would make an exactly singular S invertible
@@ -159,8 +159,8 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
   if (is.null(ev) ||
       min(ev) <= 1e-8 * max(abs(ev), .Machine$double.eps)) {
     stop("the columns are collinear, so no Mahalanobis distance is ",
-         "defined. Drop the redundant column(s) -- drop_constant() and ",
-         "top_correlations() will find them.", call. = FALSE)
+         "defined. Drop the redundant column(s) -- drpconst() and ",
+         "topcors() will find them.", call. = FALSE)
   }
   S <- .rmbl_make_pd(S, 1e-8)   # positive definite by construction, so invertible
   S_inv <- solve(S)
@@ -169,14 +169,14 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
 
   out <- data.frame(row = which(ok), distance = sqrt(d2),
                     p_value = stats::pchisq(d2, p, lower.tail = FALSE),
-                    log_p_value = stats::pchisq(d2, p, lower.tail = FALSE,
+                    logpvalue = stats::pchisq(d2, p, lower.tail = FALSE,
                                                 log.p = TRUE),
                     stringsAsFactors = FALSE)
   out$outlier <- out$p_value < alpha
   skipped <- which(!ok)
   if (length(skipped) > 0L) {
     out <- rbind(out, data.frame(row = skipped, distance = NA_real_,
-                                 p_value = NA_real_, log_p_value = NA_real_,
+                                 p_value = NA_real_, logpvalue = NA_real_,
                                  outlier = NA, stringsAsFactors = FALSE))
   }
   out <- out[order(-out$distance, na.last = TRUE), , drop = FALSE]
@@ -231,23 +231,23 @@ print.bricklayer_outliers <- function(x, ...) {
 #' @details
 #' Each column's missingness indicator \code{is.na(x)} is run-length
 #' encoded with \code{rle()}; every run of `TRUE` with length at least
-#' `min_run` is reported. Rows are taken in their current order, so sort
+#' `minrun` is reported. Rows are taken in their current order, so sort
 #' the data by time (or by download order) first. A list column counts an
 #' element as missing only when \code{is.na()} says so. Errors: `data` not a
 #' data frame or without columns, or with duplicated or empty names;
-#' `min_run` not a positive whole number.
+#' `minrun` not a positive whole number.
 #'
 #' @param data A data frame, in the row order that carries meaning.
-#' @param min_run Whole number, default 2: report only runs at least this
+#' @param minrun Whole number, default 2: report only runs at least this
 #' long (a run of 1 is an isolated gap).
 #' @return A data frame of class `bricklayer_runs` with `column`
 #' (character), `start` and `end` (integer row numbers, inclusive) and
 #' `length` (integer), longest first and then by column name. Zero rows
 #' when there are no qualifying runs.
 #' @seealso
-#' [missingness_pattern()] for which
+#' [misspat()] for which
 #' columns are missing together,
-#' [missingness_summary()] for the rates.
+#' [misssmry()] for the rates.
 #' @examples
 #' # One long outage and two isolated gaps, with the same total count.
 #' df <- data.frame(
@@ -256,23 +256,23 @@ print.bricklayer_outliers <- function(x, ...) {
 #' )
 #' sum(is.na(df$outage)) == sum(is.na(df$scattered))
 #'
-#' missing_runs(df)
+#' missruns(df)
 #'
 #' # Isolated gaps too, by lowering the threshold.
-#' missing_runs(df, min_run = 1)
+#' missruns(df, minrun = 1)
 #'
 #' # A complete column has no runs.
-#' missing_runs(data.frame(x = 1:5))
+#' missruns(data.frame(x = 1:5))
 #'
-#' try(missing_runs(df, min_run = 0))
+#' try(missruns(df, minrun = 0))
 #' @export
-missing_runs <- function(data, min_run = 2L) {
+missruns <- function(data, minrun = 2L) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
   if (ncol(data) == 0L) stop("`data` has no columns", call. = FALSE)
-  min_run <- .rmbl_num(min_run, "min_run", integer = TRUE)
-  if (length(min_run) != 1L || is.na(min_run) || min_run < 1L) {
-    stop("`min_run` must be a single positive integer", call. = FALSE)
+  minrun <- .rmbl_num(minrun, "minrun", integer = TRUE)
+  if (length(minrun) != 1L || is.na(minrun) || minrun < 1L) {
+    stop("`minrun` must be a single positive integer", call. = FALSE)
   }
   rows <- list()
   for (nm in names(data)) {
@@ -281,7 +281,7 @@ missing_runs <- function(data, min_run = 2L) {
     r <- rle(na)
     ends <- cumsum(r$lengths)
     starts <- ends - r$lengths + 1L
-    sel <- r$values & r$lengths >= min_run
+    sel <- r$values & r$lengths >= minrun
     if (!any(sel)) next
     rows[[length(rows) + 1L]] <- data.frame(
       column = nm, start = starts[sel], end = ends[sel],
@@ -346,24 +346,24 @@ print.bricklayer_runs <- function(x, ...) {
 #' @return A character vector of the map's lines, invisibly; the map is
 #' printed with \code{cat()} as a side effect.
 #' @seealso
-#' [missingness_pattern()],
-#' [missing_runs()]
+#' [misspat()],
+#' [missruns()]
 #' @examples
 #' set.seed(1)
 #' df <- data.frame(
 #'   complete = 1:100,
 #'   block = c(rep(NA, 30), 31:100),
 #'   scattered = ifelse(stats::runif(100) < 0.3, NA, 1),
-#'   mostly_gone = c(1:10, rep(NA, 90))
+#'   mostlygone = c(1:10, rep(NA, 90))
 #' )
-#' missingness_map(df)
+#' missgrid(df)
 #'
 #' # a coarser map with short labels
-#' missingness_map(df, height = 5, width = 4)
+#' missgrid(df, height = 5, width = 4)
 #'
-#' try(missingness_map(df, height = 0))
+#' try(missgrid(df, height = 0))
 #' @export
-missingness_map <- function(data, height = 20L, width = 12L) {
+missgrid <- function(data, height = 20L, width = 12L) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
   if (ncol(data) == 0L) stop("`data` has no columns", call. = FALSE)

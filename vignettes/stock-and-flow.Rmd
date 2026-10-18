@@ -30,7 +30,7 @@ adp(13500)
 adp(c(10, 20, 30), t = 30)
 ```
 
-`adp_from_counts()` estimates person-days from periodic headcounts (a monthly census) when
+`adpcnts()` estimates person-days from periodic headcounts (a monthly census) when
 daily data are not published.
 
 ## Average length of stay
@@ -49,23 +49,23 @@ admissions = ADP × days / ALOS. Lakner (p. 20) runs it the other way: an averag
 population of 25 and 1,750 admissions in a year imply a stay of 5.2 days, and back again:
 
 ```{r admissions}
-alos_implied <- 25 * 365 / 1750
-round(alos_implied, 1)
-admissions(25, alos_implied)
+alosimplied <- 25 * 365 / 1750
+round(alosimplied, 1)
+admits(25, alosimplied)
 ```
 
 ## Stock and flow together
 
-`stock_flow()` takes detention days and people per period, with an exposure (the population
+`stkflow()` takes detention days and people per period, with an exposure (the population
 at risk) to turn counts into rates, and reports how the stock, the flow and the stay moved
 between periods. The pattern it is built to surface: **fewer people, held longer**, so the
 flow falls while the stock rises.
 
 ```{r stockflow}
-stock_flow(
+stkflow(
   days = c(115674, 126121), people = c(12647, 9608),
-  period = c("2023", "2025"),
-  exposure = c(15495050, 16256538)
+  prd = c("2023", "2025"),
+  expo = c(15495050, 16256538)
 )
 ```
 
@@ -79,11 +79,11 @@ matters is the whole distribution:
 
 ```{r stays}
 stays <- c(rep(1, 40), rep(3, 30), rep(10, 20), 60, 90, 120)
-stay_summary(stays)
-stay_summary(stays)[, c("mean", "median", "max")]
+staysmry(stays)
+staysmry(stays)[, c("mean", "median", "max")]
 ```
 
-`stay_summary()` gives the mean with its interval, the quantiles and the maximum, so a
+`staysmry()` gives the mean with its interval, the quantiles and the maximum, so a
 report can say "half of stays were three days or less, and the longest was 120" instead of
 "the average stay was 9.6 days", which describes almost no one.
 
@@ -92,16 +92,16 @@ report can say "half of stays were three days or less, and the longest was 120" 
 Published series use fiscal years and uneven periods:
 
 ```{r periods}
-period_days("2024-04-01", "2025-03-31")
-fiscal_year_label(2024)
+perdays("2024-04-01", "2025-03-31")
+fylbl(2024)
 ```
 
 ## From a published table
 
-1. `adp()` for the stock from detention days, or `adp_from_counts()` from headcounts.
-2. `alos()` for the stay; `admissions()` to check the implied flow against the published one.
-3. `stock_flow()` across periods, with the population as exposure.
-4. `stay_summary()` whenever per-person stays are available, and report the median.
+1. `adp()` for the stock from detention days, or `adpcnts()` from headcounts.
+2. `alos()` for the stay; `admits()` to check the implied flow against the published one.
+3. `stkflow()` across periods, with the population as exposure.
+4. `staysmry()` whenever per-person stays are available, and report the median.
 
 ## Indigenous examples
 
@@ -109,7 +109,7 @@ Stock and flow measures need counts of people and the days they spend in custody
 The census excerpt bundled with the package counts foster children, a stock on census day:
 
 ```{r indigenous-stock}
-cp <- indigenous_example("census_population")
+cp <- indiex("censuspop")
 fc <- cp[cp$GEO_NAME == "Canada" & cp$AGE_GROUP == "0 to 14 years" &
            cp$RESIDENCE == "Total - Residence on or off reserve", ]
 kids <- fc[grepl("Total - Children in census families", fc$CHARACTERISTIC_NAME),

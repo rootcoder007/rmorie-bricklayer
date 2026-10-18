@@ -4,7 +4,7 @@
 svc_ns <- function(nm) get(nm, envir = asNamespace("rmoriebricklayer"))
 
 # A key of the tests' own, and a document signed with it.
-svc_key <- fips_keygen("ML-DSA-44")
+svc_key <- fipskg("ML-DSA-44")
 svc_doc <- function(issued = "2026-10-06T12:00:00Z", llm_mode = "key", data_mode = "key",
                     base = "https://gw.example.org", version = 1L, data_base = "https://tables.example.org") {
   auth <- if (nzchar(base)) paste0(base, "/auth") else ""
@@ -17,7 +17,7 @@ svc_doc <- function(issued = "2026-10-06T12:00:00Z", llm_mode = "key", data_mode
     version, issued, llm_mode, base, auth, data_mode, data_base)
 }
 svc_sign <- function(doc, key = svc_key, context = "morie-services", scheme = "ML-DSA-44") {
-  sig <- capsule_sign(charToRaw(doc), key, context = context, deterministic = TRUE)
+  sig <- cpssign(charToRaw(doc), key, ctx = context, determ = TRUE)
   sprintf('{"scheme":"%s","context":"%s","signature":"%s"}', scheme, context, sig$signature)
 }
 # Serve `pairs` (url -> file content) through the download seam; anything else is a 404.
@@ -50,7 +50,7 @@ svc_setup <- function(env = parent.frame(), key = svc_key$public) {
 
 test_that("the bundled document verifies with the pinned key and names the data service", {
   td <- svc_setup(key = svc_ns(".rmbl_services_pubkey")())
-  s <- bricklayer_services(offline = TRUE)
+  s <- svcs(offline = TRUE)
   expect_identical(attr(s, "source"), "bundled")
   expect_identical(s$version, 1L)
   # no language model is hosted; the llm block only tells older installs where to sign in
@@ -81,7 +81,7 @@ test_that("a live document is verified, cached, and then served from the cache",
   testthat::local_mocked_bindings(
     .rmbl_net_download = svc_server(stats::setNames(list(doc, svc_sign(doc)), c(svc_url, svc_sig_url))),
     .package = "rmoriebricklayer")
-  s <- bricklayer_services()
+  s <- svcs()
   expect_identical(attr(s, "source"), "live")
   expect_identical(s$llm$base_url, "https://gw.example.org")
   expect_identical(s$llm$models, c("test-model:cloud", "other:cloud"))
@@ -91,7 +91,7 @@ test_that("a live document is verified, cached, and then served from the cache",
   # fresh cache: no fetch at all
   testthat::local_mocked_bindings(.rmbl_net_download = function(...) stop("must not fetch"),
                                   .package = "rmoriebricklayer")
-  s2 <- bricklayer_services()
+  s2 <- svcs()
   expect_identical(attr(s2, "source"), "cache")
   expect_identical(s2$llm, s$llm)
   # the hosted helpers follow the document, not the old constants
@@ -116,7 +116,7 @@ test_that("a stale cache is refreshed; an older live document is a rollback and 
   testthat::local_mocked_bindings(
     .rmbl_net_download = svc_server(stats::setNames(list(newer, svc_sign(newer)), c(svc_url, svc_sig_url))),
     .package = "rmoriebricklayer")
-  s <- bricklayer_services()
+  s <- svcs()
   expect_identical(attr(s, "source"), "live")
   expect_identical(s$llm$base_url, "https://new.example.org")
   # now an "update" that is older than what is held
@@ -124,7 +124,7 @@ test_that("a stale cache is refreshed; an older live document is a rollback and 
   testthat::local_mocked_bindings(
     .rmbl_net_download = svc_server(stats::setNames(list(older, svc_sign(older)), c(svc_url, svc_sig_url))),
     .package = "rmoriebricklayer")
-  s <- bricklayer_services(refresh = TRUE)
+  s <- svcs(refresh = TRUE)
   expect_identical(attr(s, "source"), "cache")
   expect_identical(s$llm$base_url, "https://new.example.org")
   expect_identical(svc_ns(".rmbl_services_read")(file.path(td, "morie-services.json"))$llm$base_url,
@@ -135,7 +135,7 @@ test_that("a document that does not verify is ignored at every step", {
   td <- svc_setup()
   doc <- svc_doc()
   bad <- list(
-    other_key = svc_sign(doc, key = fips_keygen("ML-DSA-44")),
+    other_key = svc_sign(doc, key = fipskg("ML-DSA-44")),
     other_context = svc_sign(doc, context = "morie-services-v2"),
     other_scheme = sub("ML-DSA-44", "ML-DSA-65", svc_sign(doc), fixed = TRUE),
     tampered = svc_sign(sub("gw.example.org", "evil.example.org", doc, fixed = TRUE)),
@@ -148,7 +148,7 @@ test_that("a document that does not verify is ignored at every step", {
       .rmbl_net_download = svc_server(stats::setNames(list(doc, bad[[nm]]), c(svc_url, svc_sig_url))),
       .package = "rmoriebricklayer")
     svc_ns(".rmbl_services_forget")()
-    s <- bricklayer_services(refresh = TRUE)
+    s <- svcs(refresh = TRUE)
     # the bundled copy is signed with the real key, not this test's: nothing is left but "off"
     expect_identical(attr(s, "source"), "off", info = nm)
     expect_identical(s$llm$mode, "off", info = nm)
@@ -195,18 +195,18 @@ test_that("the offline memo is per session and a refresh replaces it", {
   testthat::local_mocked_bindings(
     .rmbl_net_download = svc_server(stats::setNames(list(doc, svc_sign(doc)), c(svc_url, svc_sig_url))),
     .package = "rmoriebricklayer")
-  expect_identical(attr(bricklayer_services(offline = TRUE), "source"), "off")
+  expect_identical(attr(svcs(offline = TRUE), "source"), "off")
   # memoised: still "off" without a refresh ...
-  expect_identical(attr(bricklayer_services(offline = TRUE), "source"), "off")
+  expect_identical(attr(svcs(offline = TRUE), "source"), "off")
   # ... until something asks the site
-  expect_identical(attr(bricklayer_services(), "source"), "live")
-  expect_identical(attr(bricklayer_services(offline = TRUE), "source"), "live")
+  expect_identical(attr(svcs(), "source"), "live")
+  expect_identical(attr(svcs(offline = TRUE), "source"), "live")
   expect_identical(svc_ns(".bl_hosted_base")(), "https://gw.example.org")
 })
 
-test_that("bricklayer_services() argument checks", {
-  expect_error(bricklayer_services(max_age = -1), "`max_age` must be")
-  expect_error(bricklayer_services(timeout = 0), "`timeout` must be")
-  expect_error(bricklayer_services(refresh = NA), "`refresh` must be TRUE or FALSE")
-  expect_error(bricklayer_services(offline = "yes"), "`offline` must be TRUE or FALSE")
+test_that("svcs() argument checks", {
+  expect_error(svcs(maxage = -1), "`maxage` must be")
+  expect_error(svcs(tmout = 0), "`tmout` must be")
+  expect_error(svcs(refresh = NA), "`refresh` must be TRUE or FALSE")
+  expect_error(svcs(offline = "yes"), "`offline` must be TRUE or FALSE")
 })

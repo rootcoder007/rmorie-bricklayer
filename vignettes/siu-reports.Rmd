@@ -20,7 +20,7 @@ parses them into a fixed, panel-reviewed schema with a parser written for hostil
 ## The schema
 
 ```{r schema}
-sch <- bricklayer_siu_schema()
+sch <- siusch()
 head(sch$name, 20)
 nrow(sch)
 ```
@@ -31,7 +31,7 @@ The package ships a synthetic report with the structure of a real one and no rea
 in it:
 
 ```{r parse}
-f <- bricklayer_parse_siu(system.file("extdata", "siu_synthetic_report.html",
+f <- siuprs(system.file("extdata", "siu_synthetic_report.html",
                                       package = "rmoriebricklayer"))
 f[["number_of_subject_officials"]]
 f[["date_of_incident_iso"]]
@@ -42,21 +42,21 @@ f[["date_of_incident_iso"]]
 HTML to plain text, with the layout tags turned into line structure and entities decoded:
 
 ```{r text}
-bricklayer_siu_text("<p>Number of SIU Investigators assigned: 3</p>")
+siutxt("<p>Number of SIU Investigators assigned: 3</p>")
 ```
 
 The subject-official count, resolved from the enumerated list rather than a headline number
 that reports sometimes omit:
 
 ```{r so}
-bricklayer_siu_resolve_so("Subject Officials\nSO #1 Interviewed\nSO #2 Declined interview")
+siuso("Subject Officials\nSO #1 Interviewed\nSO #2 Declined interview")
 ```
 
 Dates in the report's prose, normalised to ISO:
 
 ```{r dates}
-bricklayer_siu_iso_date("March 4, 2024")
-bricklayer_siu_iso_date("not a date")
+siudate("March 4, 2024")
+siudate("not a date")
 ```
 
 ## Written for hostile input
@@ -86,12 +86,12 @@ and tested the following, each pinned by a test over the sources:
 
 ## Fetching live reports
 
-`bricklayer_fetch_siu()` fetches a report by its identifier through the package's checked
+`siufetch()` fetches a report by its identifier through the package's checked
 transport (address validation, redirect policy, resource limits) with an Internet Archive
-fallback, and `bricklayer_fetch_parse_siu()` fetches and parses in one call:
+fallback, and `siufprs()` fetches and parses in one call:
 
 ```{r fetch, eval = FALSE}
-f <- bricklayer_fetch_parse_siu("24-OCI-123")
+f <- siufprs("24-OCI-123")
 ```
 
 The corpus of parsed reports, reviewed round by round, is distributed as a dataset by the
@@ -107,10 +107,10 @@ like any other. The parsed `police_service` field selects their cases (this fetc
 reports, so it is not run here):
 
 ```{r indigenous-siu, eval = FALSE}
-fn_services <- c("Nishnawbe-Aski Police Service", "Anishinabek Police Service",
+fnservices <- c("Nishnawbe-Aski Police Service", "Anishinabek Police Service",
                  "Treaty Three Police Service", "UCCM Anishnaabe Police Service")
-reports <- lapply(report_urls, bricklayer_fetch_parse_siu)
-mine <- Filter(function(r) any(grepl(paste(fn_services, collapse = "|"), r$police_service)),
+reports <- lapply(reporturls, siufprs)
+mine <- Filter(function(r) any(grepl(paste(fnservices, collapse = "|"), r$police_service)),
                reports)
 length(mine)
 ```

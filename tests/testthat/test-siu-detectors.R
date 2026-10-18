@@ -13,7 +13,7 @@
 
 parse_text <- function(body) {
   # the parser accepts raw HTML; wrap the body so html_to_text runs
-  bricklayer_parse_siu(paste0("<html><body><p>", body, "</p></body></html>"))
+  siuprs(paste0("<html><body><p>", body, "</p></body></html>"))
 }
 
 test_that("the police service falls back to the force abbreviations", {
@@ -236,44 +236,44 @@ test_that("the language detector needs two markers to commit", {
 
 test_that("the date parser handles its edges", {
   # the human form
-  expect_equal(bricklayer_siu_iso_date("January 5, 2023"), "2023-01-05")
-  expect_equal(bricklayer_siu_iso_date("December 31, 1999"), "1999-12-31")
+  expect_equal(siudate("January 5, 2023"), "2023-01-05")
+  expect_equal(siudate("December 31, 1999"), "1999-12-31")
   # without the comma
-  expect_equal(bricklayer_siu_iso_date("March 7 2021"), "2021-03-07")
+  expect_equal(siudate("March 7 2021"), "2021-03-07")
   # every month name
   months <- c("January", "February", "March", "April", "May", "June",
               "July", "August", "September", "October", "November",
               "December")
   for (i in seq_along(months)) {
-    expect_equal(bricklayer_siu_iso_date(paste(months[i], "1, 2020")),
+    expect_equal(siudate(paste(months[i], "1, 2020")),
                  sprintf("2020-%02d-01", i))
   }
   # already-ISO input passes through unchanged
-  expect_equal(bricklayer_siu_iso_date("2023-04-28"), "2023-04-28")
+  expect_equal(siudate("2023-04-28"), "2023-04-28")
   # anything unparseable is empty rather than a guess
-  expect_equal(bricklayer_siu_iso_date("sometime last spring"), "")
-  expect_equal(bricklayer_siu_iso_date(""), "")
-  expect_equal(bricklayer_siu_iso_date("2023/04/28"), "")
+  expect_equal(siudate("sometime last spring"), "")
+  expect_equal(siudate(""), "")
+  expect_equal(siudate("2023/04/28"), "")
   # a date embedded in a sentence is still found
-  expect_equal(bricklayer_siu_iso_date("dated at Toronto on May 9, 2022"),
+  expect_equal(siudate("dated at Toronto on May 9, 2022"),
                "2022-05-09")
 })
 
 test_that("html_to_text strips markup and decodes entities", {
-  t <- bricklayer_siu_text(
+  t <- siutxt(
     "<html><head><style>p{color:red}</style></head><body>x</body></html>")
   expect_type(t, "character")
   # tags are removed and text survives
-  plain <- bricklayer_siu_text("<p>Hello <b>there</b></p>")
+  plain <- siutxt("<p>Hello <b>there</b></p>")
   expect_match(plain, "Hello")
   expect_match(plain, "there")
   expect_false(grepl("<", plain, fixed = TRUE))
   # entities are decoded
-  ent <- bricklayer_siu_text("<p>Smith &amp; Jones &lt;note&gt; &nbsp;end</p>")
+  ent <- siutxt("<p>Smith &amp; Jones &lt;note&gt; &nbsp;end</p>")
   expect_match(ent, "&", fixed = TRUE)
   expect_match(ent, "<note>", fixed = TRUE)
   # script and style content is not text
-  noscript <- bricklayer_siu_text(
+  noscript <- siutxt(
     "<p>keep</p><script>var x = 'drop';</script>")
   expect_match(noscript, "keep")
   expect_false(grepl("var x", noscript, fixed = TRUE))
@@ -300,7 +300,7 @@ test_that("the officer and witness counts read their own labels", {
   none <- paste0("The Investigation\n",
                  "Witness Officials\nWO #1 Interviewed\n",
                  "Civilian Witnesses\nCW #1 Interviewed\n")
-  sch <- bricklayer_siu_schema()
+  sch <- siusch()
   expect_true(sch$is_count[sch$name == "number_of_subject_officials"])
   expect_equal(unname(parse_text(none)["number_of_witness_officials"]), "1")
 })
@@ -310,6 +310,6 @@ test_that("SO, subject officer and subject official count the same people", {
   for (txt in c("Subject Officer #1 declined. Subject Officer #2 was interviewed.",
                 "Subject Official #1 declined. Subject Official #2 was interviewed.",
                 "SO #1 declined. SO #2 was interviewed.")) {
-    expect_identical(as.integer(bricklayer_siu_resolve_so(txt)$count), 2L, label = txt)
+    expect_identical(as.integer(siuso(txt)$count), 2L, label = txt)
   }
 })

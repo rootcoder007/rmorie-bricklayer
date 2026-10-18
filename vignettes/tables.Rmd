@@ -25,8 +25,8 @@ counts and a region.
 ## A Statistics Canada table, as published
 
 A Statistics Canada full-table download puts each estimate, its confidence limits (or its
-coefficient of variation), and a quality flag on separate rows. `statcan_tidy()` reads the flags
-and never keeps a suppressed value. `statcan_estimates()` puts each estimate beside its limits,
+coefficient of variation), and a quality flag on separate rows. `sctidy()` reads the flags
+and never keeps a suppressed value. `scests()` puts each estimate beside its limits,
 whatever form the limits take. Here, a table with three measures per cell, and limits that name
 their measure only in part:
 
@@ -38,7 +38,7 @@ pyll <- data.frame(GEO = rep(c("Inuit Nunangat", "Rest of Canada"), each = 5),
                                            "Low 95% confidence interval, potential years of life lost",
                                            "High 95% confidence interval, potential years of life lost"), 2),
                    VALUE = c(5000, 900, 1100, 1000, 1200, 7000, 800, 950, 870, 1030), STATUS = "")
-statcan_estimates(pyll)[, c("GEO", "measure", "estimate", "lower", "upper")]
+scests(pyll)[, c("GEO", "measure", "estimate", "lower", "upper")]
 ```
 
 The limits belong to the age-standardised rate: they are the only pair that contains its estimate
@@ -51,7 +51,7 @@ an assumption about where inside each band the mass sits, and on a
 second assumption about where the open top band ends.
 
 ```{r}
-bands <- parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
+bands <- prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 bands
 ```
 
@@ -63,7 +63,7 @@ which was meant.
 The representative value needs a rule, and the open band needs a cap:
 
 ```{r}
-band_values(bands)
+bandvals(bands)
 ```
 
 The last row is marked `assumed`, because a band with no upper bound has
@@ -72,7 +72,7 @@ how much it matters:
 
 ```{r}
 counts <- c(1200, 430, 110, 38)
-band_sensitivity(bands, counts)
+bandsens(bands, counts)
 ```
 
 Read the span, not the middle row. A statistic that moves by more than a
@@ -85,9 +85,9 @@ The recurring question is whether a few individuals account for most of
 the total.
 
 ```{r}
-placements <- expand_bands(bands, counts, open_upper_cap = 25)
-gini(placements)
-top_share(placements, c(0.01, 0.05, 0.1))
+placements <- expbands(bands, counts, openupcap = 25)
+ginicoef(placements)
+topshr(placements, c(0.01, 0.05, 0.1))
 ```
 
 Gini has a ceiling that depends on the number of units: for `n` units the
@@ -102,7 +102,7 @@ If the tail looks heavy, fit it rather than asserting it -- and read the
 goodness-of-fit distance before the exponent:
 
 ```{r}
-fit <- hill_tail_index(placements, x_min = 1)
+fit <- hilltlidx(placements, xmin = 1)
 c(alpha = round(fit$alpha, 2), ks = round(fit$ks, 3),
   reliable = fit$reliable)
 ```
@@ -120,7 +120,7 @@ not support a model with an autocorrelation structure.
 
 ```{r}
 y <- c(402, 377, 190, 268, 331)
-tt <- trend_test(y)
+tt <- trndtst(y)
 c(tau = tt$tau, p = round(tt$p_value, 4), slope = tt$slope)
 tt$method
 ```
@@ -129,8 +129,8 @@ The p-value is exact, by enumerating all 120 orderings. For counts, the
 trend is better expressed as a multiplicative change per year:
 
 ```{r}
-ct <- count_trend(y)
-c(rate_ratio = round(ct$rate_ratio, 3),
+ct <- cnttrnd(y)
+c(rateratio = round(ct$rateratio, 3),
   lower = round(ct$lower, 3), upper = round(ct$upper, 3),
   dispersion = round(ct$dispersion, 2))
 ```
@@ -142,8 +142,8 @@ being left too narrow.
 ### Did it change when the policy changed?
 
 ```{r}
-sc <- step_change(c(100, 104, 98, 60, 63, 58), x = 2018:2023)
-c(after = sc$break_after, before = sc$before, after_mean = sc$after,
+sc <- stepchg(c(100, 104, 98, 60, 63, 58), x = 2018:2023)
+c(after = sc$breakafter, before = sc$before, aftermean = sc$after,
   p = round(sc$p_value, 4))
 ```
 
@@ -184,13 +184,13 @@ pop <- data.frame(
 )
 ```
 
-`region_map_integrity()` finds the failures that a comparison against
+`rgnmapintg()` finds the failures that a comparison against
 published output cannot, because they would be present on both sides of
 it: a facility assigned two regions, a facility assigned none, a region
 code that belongs to a different province.
 
 ```{r}
-region_map_integrity(cw, "facility", "region", regions = pop$region)
+rgnmapintg(cw, "facility", "region", regs = pop$region)
 ```
 
 Every check is written so that zero is the passing value, which is what
@@ -199,12 +199,12 @@ makes the frame safe to record directly into a manifest.
 ```{r}
 bad <- cw
 bad$region[3] <- "2406"          # a code from another province
-region_map_integrity(bad, "facility", "region", regions = pop$region)
+rgnmapintg(bad, "facility", "region", regs = pop$region)
 ```
 
 ### Recomputing is not the same as checking
 
-`region_map_compare()` matches a recomputed region map against the
+`rgnmapcmp()` matches a recomputed region map against the
 published one and compares them cell by cell. Numeric columns go through
 `all.equal()`, so a coordinate that survived a round trip through text is
 not reported as a change.
@@ -212,7 +212,7 @@ not reported as a change.
 ```{r}
 recomputed <- cw
 recomputed$region[2] <- "3519"
-region_map_compare(cw, recomputed, "facility")
+rgnmapcmp(cw, recomputed, "facility")
 ```
 
 That is worth having, and it is worth being clear about what it
@@ -236,7 +236,7 @@ district.
 ```{r}
 route <- c("North Jail" = "3557", "South Jail" = "3520",
            "Hill Jail" = "3552", "Lake Jail" = "3520")
-region_map_second_route(cw, "facility", "region", route,
+rgnmapalt(cw, "facility", "region", route,
                        known = "Hill Jail")
 ```
 
@@ -248,7 +248,7 @@ that must be zero.
 
 ```{r}
 route["South Jail"] <- "3599"    # an assignment nobody documented
-d <- region_map_second_route(cw, "facility", "region", route,
+d <- rgnmapalt(cw, "facility", "region", route,
                             known = "Hill Jail")
 d
 sum(!d$known)
@@ -263,24 +263,24 @@ disagreement check passing over an empty set.
 length(route)
 ```
 
-`region_map_from_points()` does the geometric recompute, projecting the
+`rgnmappts()` does the geometric recompute, projecting the
 points onto the boundary file's own coordinate system rather than the
 reverse, since reprojecting polygons moves their edges. It needs `sf` and
 a boundary file and returns `NULL` without either, so a verification
 script records the check as unavailable instead of failing over an
-optional dependency. It also returns `n_regions` rather than silently
+optional dependency. It also returns `nreg` rather than silently
 resolving it: any value but 1 means the point fell outside the geography,
 or the boundaries overlap.
 
 ### The coverage share is not a denominator
 
 With the region map checked, the obvious next step is a rate per region.
-`region_coverage()` reports the ingredients and, every time it prints,
+`rgncov()` reports the ingredients and, every time it prints,
 declines to supply that rate.
 
 ```{r}
 units <- vapply(pop$region, function(r) sum(cw$region == r), numeric(1))
-cov <- region_coverage(pop$region, pop$population, units)
+cov <- rgncov(pop$region, pop$population, units)
 cov
 ```
 
@@ -300,8 +300,8 @@ in opposite directions.
 
 ```{r}
 a <- attr(cov, "coverage")
-c(covered = a$covered_population, uncovered = a$uncovered_population,
-  share = round(a$covered_share, 1))
+c(covered = a$covpop, uncovered = a$uncpop,
+  share = round(a$covshr, 1))
 ```
 
 Where the numerator and the denominator have to cover the same people,
@@ -334,7 +334,7 @@ is what each region would have under the overall rate in every age band,
 given its own age composition.
 
 ```{r}
-e <- expected_counts(d$n, d$pop, d$region, strata = d$age)
+e <- expcnts(d$n, d$pop, d$region, strata = d$age)
 e
 ```
 
@@ -350,14 +350,14 @@ normal approximation on a count of six is a decoration rather than an
 interval:
 
 ```{r}
-sir(e$observed, e$expected, e$area)
+stdinc(e$observed, e$expected, e$area)
 ```
 
 And the third problem. A league table of rates ranks the small regions to
 both ends by construction, so borrow strength across regions:
 
 ```{r}
-eb_rates(e$observed, e$expected, e$area)
+ebrates(e$observed, e$expected, e$area)
 ```
 
 `shrinkage` is how far each estimate was pulled toward the overall rate.
@@ -369,7 +369,7 @@ region's ratio could take, given its size, if it were no different from
 anywhere else.
 
 ```{r}
-funnel_limits(c(5, 20, 50, 200))
+fnllim(c(5, 20, 50, 200))
 ```
 
 ### Autocorrelation, if you have a neighbour list
@@ -377,7 +377,7 @@ funnel_limits(c(5, 20, 50, 200))
 ```{r}
 nb <- list(c(2L, 4L), c(1L, 3L), c(2L, 5L), c(1L, 5L), c(3L, 4L))
 set.seed(1)
-mi <- morans_i(e$observed / e$expected, nb, n_perm = 999L)
+mi <- morani(e$observed / e$expected, nb, nperm = 999L)
 c(I = round(mi$I, 3), expectation = round(mi$expectation, 3),
   p = mi$p_value)
 ```
@@ -394,17 +394,17 @@ with five regions, a small negative `I` is what independence looks like.
 
 ## Indigenous examples
 
-Statistics Canada tables on Indigenous health come in several layouts; `statcan_estimates()`
+Statistics Canada tables on Indigenous health come in several layouts; `scests()`
 reads them all into estimate, lower and upper. The bundled excerpts are already in that
-form, and `standardise_prevalence()` and `indigenous_gap()` take them directly; see
+form, and `stdprev()` and `indgap()` take them directly; see
 `vignette("first-nations-metis-inuit-health")`. A trend across the three life expectancy
 periods:
 
 ```{r indigenous-tables}
-le <- indigenous_example("life_expectancy")
+le <- indiex("lifeexp")
 inuit <- le[le$group == "Inuit", ]
 inuit[, c("period", "estimate", "lower", "upper")]
-trend_test(inuit$estimate, x = 1:3)$p_value
+trndtst(inuit$estimate, x = 1:3)$p_value
 ```
 
 Three periods cannot show a trend: the exact Mann-Kendall p-value is 1.

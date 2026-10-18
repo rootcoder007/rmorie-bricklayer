@@ -18,13 +18,13 @@
 #' @details
 #' The checks, in the order they appear in \code{checks}:
 #' \describe{
-#'   \item{\code{provenance_readable}}{\code{provenance_file} is a plain relative path
+#'   \item{\code{provenance_readable}}{\code{provfile} is a plain relative path
 #'     inside
 #'     the capsule (no \code{..}, no absolute path, no symlink out) and parses as JSON.}
-#'   \item{\code{data_present}}{the data file (\code{data_file}, else the provenance's
+#'   \item{\code{data_present}}{the data file (\code{dfile}, else the provenance's
 #'     \code{resource$filename}) is inside the capsule and is a file.}
 #'   \item{\code{data_sha256}}{its SHA-256 equals \code{resource$sha256} (64 hex
-#'     characters), compared by [verify_sha256()].}
+#'     characters), compared by [vrfsha256()].}
 #'   \item{\code{data_size_bytes}}{when \code{resource$size_bytes} is recorded: the size
 #'     on disk matches.}
 #'   \item{\code{data_readable}}{a \code{.csv} file is read with
@@ -35,19 +35,19 @@
 #'     the
 #'     CSV has that many rows.}
 #'   \item{\code{schema_valid}}{when a \code{schema} is recorded:
-#'     [validate_schema()]
+#'     [valsch()]
 #'     finds no fatal issue (warnings are listed in \code{detail} but pass).}
-#'   \item{\code{manifest_consistent}}{when \code{manifest_file} is given, or the capsule
+#'   \item{\code{manifest_consistent}}{when \code{mnffile} is given, or the capsule
 #'     holds \code{manifest.json}: every result with numeric \code{observed} and
 #'     \code{expected}, a \code{tol} and a status of \code{PASS} or \code{DIFFER} still
 #'     gets that status from \eqn{|observed - expected| \le tol}.}
-#'   \item{\code{script_sha256}}{when a script is named (\code{script_file},
-#'     \code{script$filename} in the provenance or \code{meta$script_file} in the
+#'   \item{\code{script_sha256}}{when a script is named (\code{scrfile},
+#'     \code{script$filename} in the provenance or \code{meta$scrfile} in the
 #'     manifest)
 #'     or a script digest is pinned (\code{meta$script_sha256} or \code{script$sha256}):
 #'     the script's SHA-256 matches the pin.}
 #'   \item{\code{data_not_synthetic}}{no \code{<data>.synthetic} sidecar (written by
-#'     [make_synthetic_csv()]), and neither the manifest
+#'     [mksyncsv()]), and neither the manifest
 #'     nor the provenance records
 #'     \code{synthetic = true}.}
 #' }
@@ -60,20 +60,20 @@
 #' script is in play) was made.
 #'
 #' Entirely offline: nothing is downloaded and nothing is written. Error:
-#' \code{capsule_dir} that is not one existing directory. Every other problem
+#' \code{cpsdir} that is not one existing directory. Every other problem
 #' is a failed row, not an error.
 #'
-#' @param capsule_dir Directory containing the capsule, a single string.
-#' @param provenance_file Provenance JSON filename, relative to
-#'   \code{capsule_dir} (default \code{"data_provenance.json"}).
-#' @param data_file Data filename relative to \code{capsule_dir}. \code{NULL}
+#' @param cpsdir Directory containing the capsule, a single string.
+#' @param provfile Provenance JSON filename, relative to
+#'   \code{cpsdir} (default \code{"data_provenance.json"}).
+#' @param dfile Data filename relative to \code{cpsdir}. \code{NULL}
 #'   (the default) uses the provenance's \code{resource$filename}.
-#' @param manifest_file Optional results-manifest JSON (as written by
-#'   [write_manifest_json()]), relative to
-#'   \code{capsule_dir}. \code{NULL}
+#' @param mnffile Optional results-manifest JSON (as written by
+#'   [wrmnfjs()]), relative to
+#'   \code{cpsdir}. \code{NULL}
 #'   (the default) uses \code{manifest.json} when the capsule has one.
-#' @param script_file Optional analysis-script filename relative to
-#'   \code{capsule_dir}; compared against the pinned script digest.
+#' @param scrfile Optional analysis-script filename relative to
+#'   \code{cpsdir}; compared against the pinned script digest.
 #'   \code{NULL} (the default) uses the script named in the provenance or
 #'   the manifest, if any.
 #' @return An object of class \code{c("bricklayer_capsule_check", "list")},
@@ -92,35 +92,35 @@
 #' dir.create(dir, showWarnings = FALSE)
 #' write.csv(data.frame(id = 1:3), file.path(dir, "d.csv"), row.names = FALSE)
 #' prov <- list(resource = list(filename = "d.csv",
-#'                              sha256 = sha256_file(file.path(dir, "d.csv")),
+#'                              sha256 = sha256file(file.path(dir, "d.csv")),
 #'                              row_count_data_rows = 3),
 #'              schema = list(expected_columns = "id"))
-#' writeLines(bricklayer_json_to_json(prov, auto_unbox = TRUE),
+#' writeLines(tojs(prov, auto_unbox = TRUE),
 #'            file.path(dir, "data_provenance.json"))
-#' verify_capsule(dir)$ok
-#' verify_capsule(dir)
+#' vrfcps(dir)$ok
+#' vrfcps(dir)
 #'
 #' # an edited data file fails its digest and its row count
 #' write.csv(data.frame(id = 1:4), file.path(dir, "d.csv"), row.names = FALSE)
-#' chk <- verify_capsule(dir)
+#' chk <- vrfcps(dir)
 #' chk$ok
 #' chk$checks[!chk$checks$ok, c("check", "detail")]
 #'
 #' # a path out of the capsule is a failed check, not a read
-#' verify_capsule(dir, provenance_file = "../elsewhere.json")$ok
+#' vrfcps(dir, provfile = "../elsewhere.json")$ok
 #'
 #' # a missing directory is an error
-#' try(verify_capsule(file.path(tempdir(), "no-such-capsule")))
+#' try(vrfcps(file.path(tempdir(), "no-such-capsule")))
 #' unlink(dir, recursive = TRUE)
 #' @export
-verify_capsule <- function(capsule_dir,
-                           provenance_file = "data_provenance.json",
-                           data_file = NULL,
-                           manifest_file = NULL,
-                           script_file = NULL) {
-  capsule_dir <- .rmbl_string1(capsule_dir, "capsule_dir")
-  if (!dir.exists(capsule_dir)) {
-    stop("`capsule_dir` is not an existing directory: ", capsule_dir,
+vrfcps <- function(cpsdir,
+                           provfile = "data_provenance.json",
+                           dfile = NULL,
+                           mnffile = NULL,
+                           scrfile = NULL) {
+  cpsdir <- .rmbl_string1(cpsdir, "cpsdir")
+  if (!dir.exists(cpsdir)) {
+    stop("`cpsdir` is not an existing directory: ", cpsdir,
          call. = FALSE)
   }
   checks <- list()
@@ -134,12 +134,12 @@ verify_capsule <- function(capsule_dir,
   # The provenance selects the digests everything else is checked against,
   # so it is contained like every other path: a symlink out of the capsule,
   # or a caller-supplied "../evil.json", pinned tampered bytes as intact.
-  ppath <- .rmbl_safe_rel(provenance_file, capsule_dir)
-  prov <- if (is.null(ppath)) NULL else load_provenance(ppath)
+  ppath <- .rmbl_safe_rel(provfile, cpsdir)
+  prov <- if (is.null(ppath)) NULL else loadprov(ppath)
   note("provenance_readable", !is.null(prov),
        if (is.null(ppath))
          sprintf("'%s' is not a plain relative path inside the capsule",
-                 as.character(unlist(provenance_file))[1L])
+                 as.character(unlist(provfile))[1L])
        else ppath)
   # a field that should be one string: a nested object or an array in its
   # place is a different document, not a value to take element 1 of
@@ -162,19 +162,19 @@ verify_capsule <- function(capsule_dir,
 
   df <- NULL
   dpath <- NULL
-  data_file <- data_file %||% scalar(prov$resource$filename)
-  if (is.null(data_file)) {
+  dfile <- dfile %||% scalar(prov$resource$filename)
+  if (is.null(dfile)) {
     note("data_present", FALSE,
          "no data file: the provenance records no resource$filename and none was given")
-  } else if (is.na(data_file)) {
+  } else if (is.na(dfile)) {
     note("data_present", FALSE,
          "resource$filename is not a single string")
   } else {
-    dpath <- .rmbl_safe_rel(data_file, capsule_dir)
+    dpath <- .rmbl_safe_rel(dfile, cpsdir)
     if (is.null(dpath)) {
       note("data_present", FALSE,
            sprintf("'%s' is not a plain relative path inside the capsule",
-                   as.character(unlist(data_file))[1L]))
+                   as.character(unlist(dfile))[1L]))
     } else {
       present <- file.exists(dpath) && !dir.exists(dpath)
       note("data_present", present,
@@ -193,7 +193,7 @@ verify_capsule <- function(capsule_dir,
       note("data_sha256", FALSE,
            "resource$sha256 is not a single 64-character hex digest")
     } else {
-      v <- tryCatch(verify_sha256(dpath, pinned), error = function(e) NULL)
+      v <- tryCatch(vrfsha256(dpath, pinned), error = function(e) NULL)
       if (is.null(v)) {
         note("data_sha256", FALSE, "the data file could not be read")
       } else {
@@ -229,7 +229,7 @@ verify_capsule <- function(capsule_dir,
            sprintf("%d rows on disk", nrow(df)))
     }
     if (!is.null(prov$schema)) {
-      issues <- validate_schema(df, prov)
+      issues <- valsch(df, prov)
       fatal <- vapply(issues, function(i) identical(i$severity, "fatal"),
                       logical(1))
       note("schema_valid", !any(fatal),
@@ -242,20 +242,20 @@ verify_capsule <- function(capsule_dir,
 
   manifest <- NULL
   # a capsule that carries manifest.json is checked against it by default:
-  # verify_capsule(dir) used to open the data and never the manifest
-  if (is.null(manifest_file) &&
-      file.exists(file.path(capsule_dir, "manifest.json"))) {
-    manifest_file <- "manifest.json"
+  # vrfcps(dir) used to open the data and never the manifest
+  if (is.null(mnffile) &&
+      file.exists(file.path(cpsdir, "manifest.json"))) {
+    mnffile <- "manifest.json"
   }
-  if (!is.null(manifest_file)) {
+  if (!is.null(mnffile)) {
     required <- c(required, "manifest_consistent")
-    mpath <- .rmbl_safe_rel(manifest_file, capsule_dir)
+    mpath <- .rmbl_safe_rel(mnffile, cpsdir)
     if (is.null(mpath) || !file.exists(mpath)) {
       note("manifest_consistent", FALSE,
            sprintf("manifest '%s' is missing or outside the capsule",
-                   as.character(manifest_file)[1L]))
+                   as.character(mnffile)[1L]))
     } else {
-      manifest <- load_provenance(mpath)
+      manifest <- loadprov(mpath)
       mismatch <- character(0)
       for (nm in names(manifest$results)) {
         r <- manifest$results[[nm]]
@@ -272,32 +272,32 @@ verify_capsule <- function(capsule_dir,
   }
 
   # A pinned script digest is checked whenever one exists, whether or not
-  # the caller remembered `script_file`: a capsule with a pinned script
+  # the caller remembered `scrfile`: a capsule with a pinned script
   # hash was never script-checked by default before.
   pinned_script <- manifest$meta$script_sha256 %||% prov$script$sha256
-  script_file <- script_file %||% prov$script$filename %||%
+  scrfile <- scrfile %||% prov$script$filename %||%
     manifest$meta$script_file
-  if (!is.null(script_file) || !is.null(pinned_script)) {
+  if (!is.null(scrfile) || !is.null(pinned_script)) {
     required <- c(required, "script_sha256")
-    spath <- if (!is.null(script_file)) .rmbl_safe_rel(script_file, capsule_dir)
+    spath <- if (!is.null(scrfile)) .rmbl_safe_rel(scrfile, cpsdir)
     if (is.null(spath) || !file.exists(spath)) {
       note("script_sha256", FALSE,
-           if (is.null(script_file))
+           if (is.null(scrfile))
              "a script digest is pinned but no script file is named (script_file)"
            else sprintf("script '%s' is missing or outside the capsule",
-                        as.character(unlist(script_file))[1L]))
+                        as.character(unlist(scrfile))[1L]))
     } else if (is.null(pinned_script)) {
       note("script_sha256", FALSE,
            "no script digest is pinned in the manifest or the provenance")
     } else {
-      actual <- sha256_file(spath)
+      actual <- sha256file(spath)
       note("script_sha256", identical(actual, as.character(unlist(pinned_script))[1L]),
            actual)
     }
   }
 
   # Synthetic data is a recorded, required verdict: the sidecar
-  # make_synthetic_csv() writes, the manifest's flag, or the provenance's
+  # mksyncsv() writes, the manifest's flag, or the provenance's
   # own flag. The row exists whether or not any of them is present --
   # deleting the sidecar used to delete the finding with it.
   synth_manifest <- isTRUE(manifest$meta$synthetic)
@@ -343,10 +343,10 @@ print.bricklayer_capsule_check <- function(x, ...) {
 #' result was produced: the R version, platform and operating system, a UTC
 #' timestamp, the random number generator in use and whether it was seeded,
 #' and the versions of the packages involved. Store the result in a results
-#' manifest (for example with [write_manifest_json()])
+#' manifest (for example with [wrmnfjs()])
 #' next to the numbers
 #' it produced, and compare two captures with
-#' [environment_diff()].
+#' [envdiff()].
 #'
 #' @details
 #' Package versions come from \code{utils::packageVersion()}; a package that
@@ -357,7 +357,7 @@ print.bricklayer_capsule_check <- function(x, ...) {
 #' \code{rng_seeded} says whether \code{.Random.seed} exists in the global
 #' environment. Nothing is written and the random state is not touched.
 #'
-#' @param packages Character vector of package names to record. Defaults to
+#' @param pkgs Character vector of package names to record. Defaults to
 #'   every currently loaded namespace (\code{loadedNamespaces()}).
 #' @return A list of seven elements:
 #'   \describe{
@@ -373,24 +373,24 @@ print.bricklayer_capsule_check <- function(x, ...) {
 #'   }
 #' @examples
 #' # Record specific packages' versions alongside the session facts.
-#' env <- capture_environment(c("stats", "utils"))
+#' env <- capenv(c("stats", "utils"))
 #' env$r_version
 #' env$os
 #' env$packages          # named character vector of versions
 #'
 #' # Default captures every currently loaded namespace.
-#' names(capture_environment())
+#' names(capenv())
 #'
 #' # the generator and whether it was seeded
 #' set.seed(42)
-#' capture_environment("stats")[c("rng_kind", "rng_seeded")]
+#' capenv("stats")[c("rng_kind", "rng_seeded")]
 #'
 #' # a package that is not installed is recorded as NA, not an error
-#' capture_environment(c("stats", "notapackage123"))$packages
+#' capenv(c("stats", "notapackage123"))$packages
 #' @export
-capture_environment <- function(packages = loadedNamespaces()) {
-  if (!is.character(packages) || anyNA(packages)) stop("`packages` must be package names", call. = FALSE)
-  packages <- sort(unique(packages))
+capenv <- function(pkgs = loadedNamespaces()) {
+  if (!is.character(pkgs) || anyNA(pkgs)) stop("`pkgs` must be package names", call. = FALSE)
+  pkgs <- sort(unique(pkgs))
   list(
     r_version    = as.character(getRversion()),
     platform     = R.version$platform,
@@ -403,7 +403,7 @@ capture_environment <- function(packages = loadedNamespaces()) {
     rng_kind     = paste(RNGkind(), collapse = ","),
     rng_seeded   = exists(".Random.seed", envir = globalenv(),
                           inherits = FALSE),
-    packages     = vapply(packages, function(p) {
+    packages     = vapply(pkgs, function(p) {
       tryCatch(as.character(utils::packageVersion(p)),
                error = function(e) NA_character_)
     }, character(1))
@@ -435,11 +435,11 @@ capture_environment <- function(packages = loadedNamespaces()) {
 #' The BibTeX key is the package slug with non-alphanumeric characters
 #' removed, followed by the year. In the BibTeX entry the licence is written
 #' in the \code{note} field only when a retrieval date is present. No
-#' character in the fields is escaped for LaTeX. Error: \code{provenance}
+#' character in the fields is escaped for LaTeX. Error: \code{prov}
 #' that is not a list.
 #'
-#' @param provenance A provenance list as returned by
-#'   [load_provenance()],
+#' @param prov A provenance list as returned by
+#'   [loadprov()],
 #'   or \code{NULL}.
 #' @return A list with \code{text} and \code{bibtex}, each a length-1
 #'   character string (the BibTeX entry has embedded newlines), or \code{NULL}
@@ -453,7 +453,7 @@ capture_environment <- function(packages = loadedNamespaces()) {
 #'   resource = list(name = "Restrictive Confinement - Detailed Dataset",
 #'                   direct_url = "https://data.ontario.ca/example.csv")
 #' )
-#' cit <- cite_capsule(prov)
+#' cit <- citecps(prov)
 #'
 #' # Plain-text citation ready to paste.
 #' cat(cit$text)
@@ -463,27 +463,27 @@ capture_environment <- function(packages = loadedNamespaces()) {
 #'
 #' # a recorded DOI replaces the URL
 #' prov$dataset$doi <- "10.5683/SP3/EXAMPLE"
-#' cat(cite_capsule(prov)$text)
+#' cat(citecps(prov)$text)
 #'
 #' # NULL provenance returns NULL (composes safely).
-#' cite_capsule(NULL)
+#' citecps(NULL)
 #'
 #' # anything else that is not a list is an error
-#' try(cite_capsule("data-on-inmates-in-ontario"))
+#' try(citecps("data-on-inmates-in-ontario"))
 #' @export
-cite_capsule <- function(provenance) {
-  if (is.null(provenance)) return(NULL)
-  if (!is.list(provenance)) stop("`provenance` must be a provenance list (load_provenance())", call. = FALSE)
-  ds  <- provenance$dataset
-  res <- provenance$resource
-  year <- substr(provenance$captured_at_utc %||% "", 1, 4)
+citecps <- function(prov) {
+  if (is.null(prov)) return(NULL)
+  if (!is.list(prov)) stop("`prov` must be a provenance list (loadprov())", call. = FALSE)
+  ds  <- prov$dataset
+  res <- prov$resource
+  year <- substr(prov$captured_at_utc %||% "", 1, 4)
   if (!nzchar(year)) year <- format(Sys.Date(), "%Y")
   publisher <- ds$publisher %||% "Unknown publisher"
   title <- res$name %||% ds$package_slug %||% "Untitled dataset"
   url <- res$direct_url %||% ds$catalogue_page %||% ""
   licence <- ds$licence_short %||% ds$licence_name %||% NULL
   doi <- ds$doi %||% NULL
-  retrieved <- substr(provenance$captured_at_utc %||% "", 1, 10)
+  retrieved <- substr(prov$captured_at_utc %||% "", 1, 10)
 
   text <- paste0(
     publisher, " (", year, "). ", title, " [Data set].",

@@ -32,59 +32,61 @@
 #' measures the four directions as the Framework defines them. This function takes the
 #' indicators a user names as proxies for each
 #' (\code{hope = "Always or often has a hopeful outlook"}, ...), reports each direction's
-#' level (the mean of its proxies, their standard errors combined as independent), marks
+#' level (the mean of its proxies, their standard errors combined as independent; the
+#' proxies share respondents, so if they are positively correlated that standard error is
+#' too small), marks
 #' every row as a proxy, and reports a direction given no proxy as missing rather than
 #' filling it from another. One indicator named for two directions (Statistics Canada asks
 #' about "meaning and purpose" together) is used for both and marked \code{shared}.
 #'
-#' The result plots as a \code{\link{wellness_profile}}. For the balance across the
-#' directions, call \code{\link{holistic_balance}} on the rows with a proxy
+#' The result plots as a \code{\link{welprof}}. For the balance across the
+#' directions, call \code{\link{holbal}} on the rows with a proxy
 #' (\code{x[x$domain != "no published proxy", ]}, with \code{"domain"} as its domain
 #' column):
 #' a missing direction otherwise leaves the balance \code{NA}, and a shared proxy counts
 #' once per direction it serves, so give such directions half weight. Other frameworks of
 #' wellness (Te Whare Tapa Wha, the Social and Emotional Wellbeing domains, a Nation's
-#' own) take the same route through \code{\link{wellness_profile}} and
-#' \code{\link{holistic_balance}}, which accept any set of domains.
+#' own) take the same route through \code{\link{welprof}} and
+#' \code{\link{holbal}}, which accept any set of domains.
 #'
 #' @param data A data frame, one row per group and indicator.
-#' @param group,indicator,estimate,lower,upper Column names: the group, the indicator,
+#' @param grp,ind,est,lower,upper Column names: the group, the indicator,
 #'   the estimate (percent) and its published limits.
-#' @param hope,belonging,meaning,purpose The indicators taken as proxies for each
+#' @param hope,belong,meaning,purp The indicators taken as proxies for each
 #'   direction, or \code{NULL} where the tables have none.
-#' @param quality Optional column of quality flags.
-#' @param conf_level Confidence level of the published intervals (default 0.95).
+#' @param qual Optional column of quality flags.
+#' @param conflvl Confidence level of the published intervals (default 0.95).
 #' @return A data frame of classes \code{rmbl_wellness_continuum} and
 #'   \code{rmbl_wellness_profile}: \code{group}, \code{indicator} (the direction),
 #'   \code{side} (\code{"wellness"}), \code{domain} (the proxies), \code{estimate},
-#'   \code{lower}, \code{upper}, \code{use_with_caution}, \code{shared}, \code{proxy}
+#'   \code{lower}, \code{upper}, \code{usewithcau}, \code{shared}, \code{proxy}
 #'   (always \code{TRUE}).
 #' @references Health Canada, Assembly of First Nations (2015). First Nations Mental
 #' Wellness Continuum Framework. Ottawa: Health Canada. Summary report:
 #' \url{https://www.sac-isc.gc.ca/eng/1576093687903/1576093725971}
-#' @seealso \code{\link{wellness_profile}}, \code{\link{holistic_balance}}.
+#' @seealso \code{\link{welprof}}, \code{\link{holbal}}.
 #' @examples
 #' # well-being, 2024 (table 41-10-0082-01): hope, and meaning and purpose (asked
 #' # together);
 #' # this table has no measure of belonging, so that direction is reported as missing
-#' wb <- indigenous_example("wellbeing")
-#' mw <- mental_wellness_continuum(wb, "group", "indicator", "estimate", "lower", "upper",
+#' wb <- indiex("wellbeing")
+#' mw <- mhcont(wb, "group", "indicator", "estimate", "lower", "upper",
 #'         hope = "Always or often has a hopeful outlook",
 #'         meaning = "Sense of meaning and purpose rating of 8, 9 or 10",
-#'         purpose = "Sense of meaning and purpose rating of 8, 9 or 10",
-#'         quality = "quality")
+#'         purp = "Sense of meaning and purpose rating of 8, 9 or 10",
+#'         qual = "quality")
 #' mw
 #' plot(mw)
 #' @export
-mental_wellness_continuum <- function(data, group, indicator, estimate, lower, upper, hope = NULL,
-                                      belonging = NULL, meaning = NULL, purpose = NULL, quality = NULL,
-                                      conf_level = 0.95) {
-  .rmbl_ind_cols(data, group = group, indicator = indicator, estimate = estimate, lower = lower,
-                 upper = upper, quality = quality)
-  conf_level <- .rmbl_conf_level(conf_level)
-  z <- stats::qnorm(1 - (1 - conf_level) / 2)
-  dirs <- list(hope = hope, belonging = belonging, meaning = meaning, purpose = purpose)
-  .rmbl_no_fn(hope = hope, belonging = belonging, meaning = meaning, purpose = purpose)
+mhcont <- function(data, grp, ind, est, lower, upper, hope = NULL,
+                                      belong = NULL, meaning = NULL, purp = NULL, qual = NULL,
+                                      conflvl = 0.95) {
+  .rmbl_ind_cols(data, group = grp, indicator = ind, estimate = est, lower = lower,
+                 upper = upper, quality = qual)
+  conflvl <- .rmbl_conf_level(conflvl)
+  z <- stats::qnorm(1 - (1 - conflvl) / 2)
+  dirs <- list(hope = hope, belonging = belong, meaning = meaning, purpose = purp)
+  .rmbl_no_fn(hope = hope, belonging = belong, meaning = meaning, purpose = purp)
   for (nm in names(dirs)) {
     v <- dirs[[nm]]
     if (!is.null(v) && (!is.character(v) || !length(v) || anyNA(v))) {
@@ -92,18 +94,18 @@ mental_wellness_continuum <- function(data, group, indicator, estimate, lower, u
     }
   }
   if (all(vapply(dirs, is.null, NA))) stop("name a proxy for one direction at least", call. = FALSE)
-  ind <- trimws(as.character(data[[indicator]]))
-  miss <- setdiff(trimws(unlist(dirs)), ind)
+  .ind <- trimws(as.character(data[[ind]]))
+  miss <- setdiff(trimws(unlist(dirs)), .ind)
   if (length(miss)) stop(sprintf("not an indicator of `data`: %s", paste(miss, collapse = ", ")), call. = FALSE)
-  g <- trimws(as.character(data[[group]]))
-  est <- .rmbl_num(data[[estimate]], "estimate")
+  g <- trimws(as.character(data[[grp]]))
+  .est <- .rmbl_num(data[[est]], "est")
   lo <- .rmbl_num(data[[lower]], "lower")
   hi <- .rmbl_num(data[[upper]], "upper")
-  named <- ind %in% trimws(unlist(dirs))
-  est[named] <- .rmbl_contains(est[named], lo[named], hi[named], paste0(g[named], ": ", ind[named]))
+  named <- .ind %in% trimws(unlist(dirs))
+  .est[named] <- .rmbl_contains(.est[named], lo[named], hi[named], paste0(g[named], ": ", .ind[named]))
   se <- (hi - lo) / (2 * z)
-  q <- .rmbl_quality(data, quality)
-  est[q %in% c("F", "x", "..", "...")] <- NA_real_
+  q <- .rmbl_quality(data, qual)
+  .est[q %in% c("F", "x", "..", "...")] <- NA_real_
   used <- table(unlist(lapply(dirs, unique)))
   rows <- list()
   for (gi in unique(g)) {
@@ -112,23 +114,23 @@ mental_wellness_continuum <- function(data, group, indicator, estimate, lower, u
       if (is.null(dirs[[nm]])) {
         rows[[length(rows) + 1L]] <- data.frame(group = gi, indicator = nm, domain = "no published proxy",
                                                 estimate = NA_real_, lower = NA_real_, upper = NA_real_,
-                                                use_with_caution = FALSE, shared = FALSE)
+                                                usewithcau = FALSE, shared = FALSE)
         next
       }
-      i <- which(g == gi & ind %in% p)
-      ok <- length(i) == length(p) && !anyNA(est[i])
-      m <- if (ok) mean(est[i]) else NA_real_
+      i <- which(g == gi & .ind %in% p)
+      ok <- length(i) == length(p) && !anyNA(.est[i])
+      m <- if (ok) mean(.est[i]) else NA_real_
       s <- if (ok) sqrt(sum(se[i]^2)) / length(i) else NA_real_
       rows[[length(rows) + 1L]] <- data.frame(group = gi, indicator = nm, domain = paste(p, collapse = "; "),
                                               estimate = m, lower = m - z * s, upper = m + z * s,
-                                              use_with_caution = any(q[i] == "E"), shared = any(used[p] > 1))
+                                              usewithcau = any(q[i] == "E"), shared = any(used[p] > 1))
     }
   }
   out <- do.call(rbind, rows)
   out <- data.frame(out[c("group", "indicator")], side = "wellness", out[c("domain", "estimate", "lower", "upper",
-                                                                            "use_with_caution", "shared")],
+                                                                            "usewithcau", "shared")],
                     proxy = TRUE, stringsAsFactors = FALSE)
-  attr(out, "conf_level") <- conf_level
+  attr(out, "conflvl") <- conflvl
   class(out) <- c("rmbl_wellness_continuum", "rmbl_wellness_profile", "data.frame")
   out
 }
@@ -167,10 +169,10 @@ mental_wellness_continuum <- function(data, group, indicator, estimate, lower, u
 #' Canadian dollars of its series: for another country, set \code{bounds} in its currency
 #' and read the result as a CWB-style score, not comparable with Canada's.
 #'
-#' @param income_per_capita Income per capita, in the dollars of the series' bounds.
-#' @param high_school_20plus,university_25plus Percentages for education.
-#' @param not_crowded,no_major_repairs Percentages for housing.
-#' @param participation,employment Percentages for labour force activity.
+#' @param incpercap Income per capita, in the dollars of the series' bounds.
+#' @param highsch20p,uni25p Percentages for education.
+#' @param notcro,nomajrep Percentages for housing.
+#' @param partic,empl Percentages for labour force activity.
 #' @param bounds The income bounds (default the 2016 and 2021 series: 2650 and 75000).
 #' @return A data frame, one row per community: \code{income}, \code{education},
 #'   \code{housing}, \code{labour}, \code{cwb}.
@@ -188,16 +190,16 @@ mental_wellness_continuum <- function(data, group, indicator, estimate, lower, u
 #' \url{https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644}
 #' @examples
 #' # made-up profile figures for two communities, to show the computation
-#' cwb_score(income_per_capita = c(18000, 31000), high_school_20plus = c(58, 81),
-#'           university_25plus = c(6, 19), not_crowded = c(71, 95),
-#'           no_major_repairs = c(62, 90),
-#'           participation = c(55, 68), employment = c(78, 92))
+#' cwbscr(incpercap = c(18000, 31000), highsch20p = c(58, 81),
+#'           uni25p = c(6, 19), notcro = c(71, 95),
+#'           nomajrep = c(62, 90),
+#'           partic = c(55, 68), empl = c(78, 92))
 #' @export
-cwb_score <- function(income_per_capita, high_school_20plus, university_25plus, not_crowded, no_major_repairs,
-                      participation, employment, bounds = c(2650, 75000)) {
-  a <- list(income_per_capita = income_per_capita, high_school_20plus = high_school_20plus,
-            university_25plus = university_25plus, not_crowded = not_crowded,
-            no_major_repairs = no_major_repairs, participation = participation, employment = employment)
+cwbscr <- function(incpercap, highsch20p, uni25p, notcro, nomajrep,
+                      partic, empl, bounds = c(2650, 75000)) {
+  a <- list(incpercap = incpercap, highsch20p = highsch20p,
+            uni25p = uni25p, notcro = notcro,
+            nomajrep = nomajrep, participation = partic, employment = empl)
   a <- Map(.rmbl_num, a, names(a))
   n <- max(lengths(a))
   if (!n || any(lengths(a) != n & lengths(a) != 1L)) {
@@ -209,15 +211,15 @@ cwb_score <- function(income_per_capita, high_school_20plus, university_25plus, 
       stop(sprintf("`%s` must be percentages from 0 to 100", nm), call. = FALSE)
     }
   }
-  if (any(a$income_per_capita <= 0, na.rm = TRUE)) stop("`income_per_capita` must be positive", call. = FALSE)
+  if (any(a$incpercap <= 0, na.rm = TRUE)) stop("`incpercap` must be positive", call. = FALSE)
   bounds <- .rmbl_num(bounds, "bounds")
   if (length(bounds) != 2L || anyNA(bounds) || bounds[1L] <= 0 || bounds[2L] <= bounds[1L]) {
     stop("`bounds` must be two increasing positive incomes", call. = FALSE)
   }
-  inc <- 100 * (log(a$income_per_capita) - log(bounds[1L])) / (log(bounds[2L]) - log(bounds[1L]))
+  inc <- 100 * (log(a$incpercap) - log(bounds[1L])) / (log(bounds[2L]) - log(bounds[1L]))
   inc <- pmin(100, pmax(0, inc))
-  edu <- 2 / 3 * a$high_school_20plus + 1 / 3 * a$university_25plus
-  hou <- (a$not_crowded + a$no_major_repairs) / 2
+  edu <- 2 / 3 * a$highsch20p + 1 / 3 * a$uni25p
+  hou <- (a$notcro + a$nomajrep) / 2
   lab <- (a$participation + a$employment) / 2
   out <- data.frame(income = rep_len(inc, n), education = rep_len(edu, n), housing = rep_len(hou, n),
                     labour = rep_len(lab, n))
@@ -240,7 +242,7 @@ cwb_score <- function(income_per_capita, high_school_20plus, university_25plus, 
 #' \eqn{\rho}. Its p-value is exact when there are at most 8 places (over all \eqn{n!}
 #' orderings) and a Monte Carlo estimate otherwise (\eqn{(b + 1)/(R + 1)} for \eqn{b} of
 #' \eqn{R} = \code{reps} random orderings at least as extreme). Each estimate carries
-#' sampling error, so \code{rho_lower} and \code{rho_upper} are the quantiles of
+#' sampling error, so \code{rholo} and \code{rhoup} are the quantiles of
 #' \eqn{\rho} over \code{reps} draws of both indicators from normal distributions with
 #' their published standard errors. That is a sensitivity band, not a confidence interval
 #' for a correlation across places: it shows how much the published sampling error alone
@@ -256,14 +258,14 @@ cwb_score <- function(income_per_capita, high_school_20plus, university_25plus, 
 #' @param data A data frame, one row per place.
 #' @param place Column of place names.
 #' @param x,y Columns of the two indicators.
-#' @param x_lower,x_upper,y_lower,y_upper Optional columns of their published limits (for
+#' @param xlo,xup,ylo,yup Optional columns of their published limits (for
 #'   the interval).
 #' @param reps Draws for the interval and, past 8 places, for the p-value (default
 #'   10,000).
 #' @param seed Seed for the draws (default 1).
-#' @param conf_level Confidence level (default 0.95).
+#' @param conflvl Confidence level (default 0.95).
 #' @return A list of class \code{rmbl_connection}: \code{data} (the places used),
-#'   \code{rho}, \code{p_value}, \code{exact}, \code{rho_lower}, \code{rho_upper},
+#'   \code{rho}, \code{p_value}, \code{exact}, \code{rholo}, \code{rhoup},
 #'   \code{n}.
 #' @section Acknowledgement:
 #' This estimator puts to quantitative use the work of Professor Angela Mashford-Pringle
@@ -277,41 +279,41 @@ cwb_score <- function(income_per_capita, high_school_20plus, university_25plus, 
 #' Mashford-Pringle A (2016). Aboriginal health and Aboriginal education are
 #' interconnected. Research in the Sociology of Health Care 34:85-96.
 #' \href{https://doi.org/10.1108/s0275-495920160000034005}{doi:10.1108/s0275-495920160000034005}
-#' @seealso \code{\link{dual_continuum}}.
+#' @seealso \code{\link{dualcont}}.
 #' @examples
 #' # across regions, 2022 (table 41-10-0067-01): where First Nations people report
 #' # excellent or
 #' # very good mental health, do Metis people living in the same region too?
-#' mh <- indigenous_example("mental_health")
+#' mh <- indiex("mentalhealth")
 #' mh <- mh[mh$rating == "Excellent or very good" & mh$region != "Canada", ]
 #' fn <- mh[mh$group == "First Nations", ]
 #' me <- mh[mh$group == "M\u00e9tis", ]
-#' d <- merge(fn, me, by = "region", suffixes = c("_fn", "_me"))
-#' ca <- connection_association(d, "region", "estimate_fn", "estimate_me", "lower_fn",
-#'                              "upper_fn",
-#'                              "lower_me", "upper_me")
+#' d <- merge(fn, me, by = "region", suffixes = c("fn", "me"))
+#' ca <- connassoc(d, "region", "estimatefn", "estimateme", "lowerfn",
+#'                              "upperfn",
+#'                              "lowerme", "upperme")
 #' ca
 #' plot(ca)
 #' @export
-connection_association <- function(data, place, x, y, x_lower = NULL, x_upper = NULL, y_lower = NULL,
-                                   y_upper = NULL, reps = 10000, seed = 1, conf_level = 0.95) {
-  .rmbl_ind_cols(data, place = place, x = x, y = y, x_lower = x_lower, x_upper = x_upper,
-                 y_lower = y_lower, y_upper = y_upper)
-  if (sum(vapply(list(x_lower, x_upper, y_lower, y_upper), is.null, NA)) %% 4L) {
+connassoc <- function(data, place, x, y, xlo = NULL, xup = NULL, ylo = NULL,
+                                   yup = NULL, reps = 10000, seed = 1, conflvl = 0.95) {
+  .rmbl_ind_cols(data, place = place, x = x, y = y, x_lower = xlo, x_upper = xup,
+                 y_lower = ylo, y_upper = yup)
+  if (sum(vapply(list(xlo, xup, ylo, yup), is.null, NA)) %% 4L) {
     stop("give all four limit columns, or none", call. = FALSE)
   }
   reps <- .rmbl_scalar(reps, "reps", 100, 1e6, integer = TRUE)
-  conf_level <- .rmbl_conf_level(conf_level)
-  z <- stats::qnorm(1 - (1 - conf_level) / 2)
+  conflvl <- .rmbl_conf_level(conflvl)
+  z <- stats::qnorm(1 - (1 - conflvl) / 2)
   xv <- .rmbl_num(data[[x]], "x")
   yv <- .rmbl_num(data[[y]], "y")
   ok <- is.finite(xv) & is.finite(yv)
   if (sum(ok) < 3L) stop("the association needs three places at least with both indicators", call. = FALSE)
   d <- data.frame(place = as.character(data[[place]]), x = xv, y = yv)
-  if (!is.null(x_lower)) {
-    d$x_se <- (.rmbl_num(data[[x_upper]], "x_upper") - .rmbl_num(data[[x_lower]], "x_lower")) / (2 * z)
-    d$y_se <- (.rmbl_num(data[[y_upper]], "y_upper") - .rmbl_num(data[[y_lower]], "y_lower")) / (2 * z)
-    ok <- ok & is.finite(d$x_se) & is.finite(d$y_se)
+  if (!is.null(xlo)) {
+    d$xse <- (.rmbl_num(data[[xup]], "xup") - .rmbl_num(data[[xlo]], "xlo")) / (2 * z)
+    d$yse <- (.rmbl_num(data[[yup]], "yup") - .rmbl_num(data[[ylo]], "ylo")) / (2 * z)
+    ok <- ok & is.finite(d$xse) & is.finite(d$yse)
   }
   d <- d[ok, , drop = FALSE]
   n <- nrow(d)
@@ -330,14 +332,14 @@ connection_association <- function(data, place, x, y, x_lower = NULL, x_upper = 
   hits <- sum(abs(perm) >= abs(r0) - 1e-12)
   p <- if (exact) hits / length(perm) else (hits + 1) / (reps + 1)
   lo <- hi <- NA_real_
-  if (!is.null(x_lower)) {
-    draws <- replicate(reps, rho(stats::rnorm(n, d$x, d$x_se), stats::rnorm(n, d$y, d$y_se)))
-    a <- (1 - conf_level) / 2
+  if (!is.null(xlo)) {
+    draws <- replicate(reps, rho(stats::rnorm(n, d$x, d$xse), stats::rnorm(n, d$y, d$yse)))
+    a <- (1 - conflvl) / 2
     lo <- unname(stats::quantile(draws, a, na.rm = TRUE))
     hi <- unname(stats::quantile(draws, 1 - a, na.rm = TRUE))
   }
-  out <- list(data = d, rho = r0, p_value = p, exact = exact, rho_lower = lo, rho_upper = hi, n = n,
-              labels = c(x = x, y = y), conf_level = conf_level)
+  out <- list(data = d, rho = r0, p_value = p, exact = exact, rholo = lo, rhoup = hi, n = n,
+              labels = c(x = x, y = y), conflvl = conflvl)
   class(out) <- "rmbl_connection"
   out
 }
@@ -353,9 +355,9 @@ connection_association <- function(data, place, x, y, x_lower = NULL, x_upper = 
 print.rmbl_connection <- function(x, ...) {
   cat(sprintf("Rank correlation across %d places: rho = %.2f, %s p = %s", x$n, x$rho,
               if (x$exact) "exact" else "permutation", format.pval(x$p_value, digits = 3)))
-  if (is.finite(x$rho_lower)) {
-    cat(sprintf("; with the published sampling error, %.0f%% interval %.2f to %.2f", 100 * x$conf_level,
-                x$rho_lower, x$rho_upper))
+  if (is.finite(x$rholo)) {
+    cat(sprintf("; with the published sampling error, %.0f%% interval %.2f to %.2f", 100 * x$conflvl,
+                x$rholo, x$rhoup))
   }
   cat("\nAn association across places: it does not show that one causes the other for any person.\n")
   invisible(x)
@@ -375,57 +377,57 @@ print.rmbl_connection <- function(x, ...) {
 #' Canada flags breaks in a series, and a change across one is not a change in the people.
 #'
 #' @param data A data frame, one row per group, indicator and period.
-#' @param group,indicator,period,estimate,lower,upper Column names: the change is in the
+#' @param grp,ind,prd,est,lower,upper Column names: the change is in the
 #'   estimate's own units (percentage points for percentages).
 #' @param from,to The two periods.
-#' @param wellness,distress Optional indicators of wellness (listed first) and of
+#' @param well,distress Optional indicators of wellness (listed first) and of
 #'   distress; with \code{distress} given, any other indicator is marked \code{"other"}.
-#' @param quality Optional column of quality flags.
-#' @param conf_level Confidence level (default 0.95).
+#' @param qual Optional column of quality flags.
+#' @param conflvl Confidence level (default 0.95).
 #' @return A data frame of class \code{rmbl_healing_change}: \code{group},
 #'   \code{indicator}, \code{side}, \code{from}, \code{to}, \code{change}, \code{lower},
-#'   \code{upper}, \code{use_with_caution}.
+#'   \code{upper}, \code{usewithcau}.
 #' @section Acknowledgement:
 #' This estimator puts to quantitative use the framework of Professor Suzanne Stewart
 #' (Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
 #' \code{vignette("first-nations-metis-inuit-health")}.
-#' @references Stewart SL (2008), see \code{\link{holistic_balance}}.
-#' @seealso \code{\link{wellness_profile}}.
+#' @references Stewart SL (2008), see \code{\link{holbal}}.
+#' @seealso \code{\link{welprof}}.
 #' @examples
 #' # 2015/2018 to 2019/2022, adults (table 13-10-0924-01)
-#' h <- indigenous_example("health_indicators")
+#' h <- indiex("health")
 #' belong <- "Sense of belonging to local community, somewhat strong or very strong"
 #' h <- h[h$age == "Total, 18 years and over" & h$indicator %in%
 #'          c("Perceived mental health, very good or excellent", belong,
 #'            "Mood disorder", "Anxiety disorder"), ]
-#' hc <- healing_change(h, "group", "indicator", "period", "estimate", "lower", "upper",
-#'                      from = "2015/2018", to = "2019/2022", quality = "quality",
-#'                      wellness = c("Perceived mental health, very good or excellent",
+#' hc <- healchg(h, "group", "indicator", "period", "estimate", "lower", "upper",
+#'                      from = "2015/2018", to = "2019/2022", qual = "quality",
+#'                      well = c("Perceived mental health, very good or excellent",
 #'                                   belong))
 #' hc
 #' plot(hc)
 #' @export
-healing_change <- function(data, group, indicator, period, estimate, lower, upper, from, to, wellness = NULL,
-                           quality = NULL, conf_level = 0.95, distress = NULL) {
-  .rmbl_ind_cols(data, group = group, indicator = indicator, period = period, estimate = estimate,
-                 lower = lower, upper = upper, quality = quality)
+healchg <- function(data, grp, ind, prd, est, lower, upper, from, to, well = NULL,
+                           qual = NULL, conflvl = 0.95, distress = NULL) {
+  .rmbl_ind_cols(data, group = grp, indicator = ind, period = prd, estimate = est,
+                 lower = lower, upper = upper, quality = qual)
   from <- .rmbl_string1(from, "from")
   to <- .rmbl_string1(to, "to")
-  .rmbl_no_fn(wellness = wellness, distress = distress)
-  conf_level <- .rmbl_conf_level(conf_level)
-  z <- stats::qnorm(1 - (1 - conf_level) / 2)
-  pr <- as.character(data[[period]])
+  .rmbl_no_fn(wellness = well, distress = distress)
+  conflvl <- .rmbl_conf_level(conflvl)
+  z <- stats::qnorm(1 - (1 - conflvl) / 2)
+  pr <- as.character(data[[prd]])
   for (v in c(from, to)) if (!v %in% pr) stop(sprintf("\"%s\" is not a period of `data`", v), call. = FALSE)
-  g <- trimws(as.character(data[[group]]))
-  ind <- trimws(as.character(data[[indicator]]))
-  est <- .rmbl_num(data[[estimate]], "estimate")
+  g <- trimws(as.character(data[[grp]]))
+  .ind <- trimws(as.character(data[[ind]]))
+  .est <- .rmbl_num(data[[est]], "est")
   lo <- .rmbl_num(data[[lower]], "lower")
   hi <- .rmbl_num(data[[upper]], "upper")
-  est <- .rmbl_contains(est, lo, hi, paste0(g, ": ", ind, " (", pr, ")"))
+  .est <- .rmbl_contains(.est, lo, hi, paste0(g, ": ", .ind, " (", pr, ")"))
   se <- (hi - lo) / (2 * z)
-  q <- .rmbl_quality(data, quality)
-  est[q %in% c("F", "x", "..", "...")] <- NA_real_
-  key <- paste(g, ind, sep = "\r")
+  q <- .rmbl_quality(data, qual)
+  .est[q %in% c("F", "x", "..", "...")] <- NA_real_
+  key <- paste(g, .ind, sep = "\r")
   k1 <- which(pr == from)
   k2 <- which(pr == to)
   if (anyDuplicated(key[k1]) || anyDuplicated(key[k2])) {
@@ -436,13 +438,13 @@ healing_change <- function(data, group, indicator, period, estimate, lower, uppe
   if (!length(both)) stop("no group and indicator is in both periods", call. = FALSE)
   i1 <- k1[match(both, key[k1])]
   i2 <- k2[match(both, key[k2])]
-  ch <- est[i2] - est[i1]
+  ch <- .est[i2] - .est[i1]
   s <- sqrt(se[i1]^2 + se[i2]^2)
-  side <- if (is.null(wellness) && is.null(distress)) rep(NA_character_, length(both)) else
-    ifelse(ind[i1] %in% trimws(wellness), "wellness",
-           if (is.null(distress)) "distress" else ifelse(ind[i1] %in% trimws(distress), "distress", "other"))
-  out <- data.frame(group = g[i1], indicator = ind[i1], side = side, from = est[i1], to = est[i2], change = ch,
-                    lower = ch - z * s, upper = ch + z * s, use_with_caution = q[i1] == "E" | q[i2] == "E",
+  side <- if (is.null(well) && is.null(distress)) rep(NA_character_, length(both)) else
+    ifelse(.ind[i1] %in% trimws(well), "wellness",
+           if (is.null(distress)) "distress" else ifelse(.ind[i1] %in% trimws(distress), "distress", "other"))
+  out <- data.frame(group = g[i1], indicator = .ind[i1], side = side, from = .est[i1], to = .est[i2], change = ch,
+                    lower = ch - z * s, upper = ch + z * s, usewithcau = q[i1] == "E" | q[i2] == "E",
                     stringsAsFactors = FALSE)
   o <- order(!(out$side %in% "wellness"), match(out$indicator, unique(out$indicator)))
   out <- out[o, , drop = FALSE]
@@ -470,81 +472,81 @@ healing_change <- function(data, group, indicator, period, estimate, lower, uppe
 #' Nations or communities on their culture. For Inuit regions, use Inuit data only.
 #'
 #' @param data A data frame, one row per group (or place) and indicator.
-#' @param group,indicator,estimate,lower,upper Column names; every indicator must be on
+#' @param grp,ind,est,lower,upper Column names; every indicator must be on
 #'   one scale (percent, for example: a rate per 1,000 beside a percentage makes the
 #'   weights meaningless).
-#' @param weights Named weights, one per indicator used: positive for a protective factor,
+#' @param w Named weights, one per indicator used: positive for a protective factor,
 #'   negative for a risk factor.
-#' @param quality Optional column of quality flags.
-#' @param conf_level Confidence level (default 0.95).
+#' @param qual Optional column of quality flags.
+#' @param conflvl Confidence level (default 0.95).
 #' @return A data frame of class \code{rmbl_community_index}: \code{group}, \code{index},
-#'   \code{lower}, \code{upper}, \code{use_with_caution}; attributes \code{weights} and
-#'   \code{conf_level}. \code{plot()} draws it.
+#'   \code{lower}, \code{upper}, \code{usewithcau}; attributes \code{weights} and
+#'   \code{conflvl}. \code{plot()} draws it.
 #' @references Inuit Tapiriit Kanatami (2016). National Inuit Suicide Prevention Strategy.
 #' Ottawa. \url{https://itk.ca/national-inuit-suicide-prevention-strategy/}
 #'
-#' Carroll SR, et al. (2020), see \code{\link{holistic_balance}}.
+#' Carroll SR, et al. (2020), see \code{\link{holbal}}.
 #' @examples
 #' # weights a community might set for adults, 2019/2022 (table 13-10-0924-01); others
 #' # would differ
-#' h <- indigenous_example("health_indicators")
+#' h <- indiex("health")
 #' h <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over", ]
 #' w <- c(2, 1, -2, -1)
 #' names(w) <- c("Sense of belonging to local community, somewhat strong or very strong",
 #'               "Has a regular healthcare provider",
 #'               "Perceived life stress, most days quite a bit or extremely stressful",
 #'               "Heavy drinking")
-#' ci <- community_index(h, "group", "indicator", "estimate", "lower", "upper",
-#'                       quality = "quality", weights = w)
+#' ci <- commidx(h, "group", "indicator", "estimate", "lower", "upper",
+#'                       qual = "quality", w = w)
 #' ci
 #' # an indicator the table does not publish for the period leaves the index NA, never
 #' # filled: food insecurity is ".." for 2019/2022
 #' w2 <- c(w, "Household food insecure" = -2)
-#' community_index(h, "group", "indicator", "estimate", "lower", "upper",
-#'                 quality = "quality",
-#'                 weights = w2)$index
+#' commidx(h, "group", "indicator", "estimate", "lower", "upper",
+#'                 qual = "quality",
+#'                 w = w2)$index
 #' plot(ci)
 #' @export
-community_index <- function(data, group, indicator, estimate, lower, upper, weights, quality = NULL,
-                            conf_level = 0.95) {
-  .rmbl_ind_cols(data, group = group, indicator = indicator, estimate = estimate, lower = lower,
-                 upper = upper, quality = quality)
-  if (missing(weights)) weights <- NULL
-  .rmbl_no_fn(weights = weights)
-  if (!is.numeric(weights) || is.null(names(weights)) || anyNA(weights) ||
-        all(weights == 0) || anyDuplicated(names(weights))) {
-    stop("`weights` must be numbers named by indicator (positive protective, negative risk), set by the ",
+commidx <- function(data, grp, ind, est, lower, upper, w, qual = NULL,
+                            conflvl = 0.95) {
+  .rmbl_ind_cols(data, group = grp, indicator = ind, estimate = est, lower = lower,
+                 upper = upper, quality = qual)
+  if (missing(w)) w <- NULL
+  .rmbl_no_fn(weights = w)
+  if (!is.numeric(w) || is.null(names(w)) || anyNA(w) ||
+        all(w == 0) || anyDuplicated(names(w))) {
+    stop("`w` must be numbers named by indicator (positive protective, negative risk), set by the ",
          "community: the function does not choose them", call. = FALSE)
   }
-  conf_level <- .rmbl_conf_level(conf_level)
-  z <- stats::qnorm(1 - (1 - conf_level) / 2)
-  ind <- trimws(as.character(data[[indicator]]))
-  miss <- setdiff(names(weights), ind)
+  conflvl <- .rmbl_conf_level(conflvl)
+  z <- stats::qnorm(1 - (1 - conflvl) / 2)
+  .ind <- trimws(as.character(data[[ind]]))
+  miss <- setdiff(names(w), .ind)
   if (length(miss)) stop(sprintf("not an indicator of `data`: %s", paste(miss, collapse = ", ")), call. = FALSE)
-  g <- trimws(as.character(data[[group]]))
-  est <- .rmbl_num(data[[estimate]], "estimate")
+  g <- trimws(as.character(data[[grp]]))
+  .est <- .rmbl_num(data[[est]], "est")
   lo <- .rmbl_num(data[[lower]], "lower")
   hi <- .rmbl_num(data[[upper]], "upper")
-  used <- ind %in% names(weights)
-  est[used] <- .rmbl_contains(est[used], lo[used], hi[used], paste0(g[used], ": ", ind[used]))
+  used <- .ind %in% names(w)
+  .est[used] <- .rmbl_contains(.est[used], lo[used], hi[used], paste0(g[used], ": ", .ind[used]))
   se <- (hi - lo) / (2 * z)
-  q <- .rmbl_quality(data, quality)
-  est[q %in% c("F", "x", "..", "...")] <- NA_real_
-  tot <- sum(abs(weights))
+  q <- .rmbl_quality(data, qual)
+  .est[q %in% c("F", "x", "..", "...")] <- NA_real_
+  tot <- sum(abs(w))
   rows <- lapply(unique(g), function(gi) {
-    i <- which(g == gi & ind %in% names(weights))
-    if (anyDuplicated(ind[i])) stop(sprintf("group \"%s\" has an indicator twice", gi), call. = FALSE)
-    i <- i[match(names(weights), ind[i])]
-    if (anyNA(i) || anyNA(est[i])) {
-      return(data.frame(group = gi, index = NA_real_, lower = NA_real_, upper = NA_real_, use_with_caution = FALSE))
+    i <- which(g == gi & .ind %in% names(w))
+    if (anyDuplicated(.ind[i])) stop(sprintf("group \"%s\" has an indicator twice", gi), call. = FALSE)
+    i <- i[match(names(w), .ind[i])]
+    if (anyNA(i) || anyNA(.est[i])) {
+      return(data.frame(group = gi, index = NA_real_, lower = NA_real_, upper = NA_real_, usewithcau = FALSE))
     }
-    v <- sum(weights * est[i]) / tot
-    s <- sqrt(sum(weights^2 * se[i]^2)) / tot
-    data.frame(group = gi, index = v, lower = v - z * s, upper = v + z * s, use_with_caution = any(q[i] == "E"))
+    v <- sum(w * .est[i]) / tot
+    s <- sqrt(sum(w^2 * se[i]^2)) / tot
+    data.frame(group = gi, index = v, lower = v - z * s, upper = v + z * s, usewithcau = any(q[i] == "E"))
   })
   out <- do.call(rbind, rows)
-  attr(out, "weights") <- weights
-  attr(out, "conf_level") <- conf_level
+  attr(out, "weights") <- w
+  attr(out, "conflvl") <- conflvl
   class(out) <- c("rmbl_community_index", "data.frame")
   out
 }
@@ -560,13 +562,13 @@ community_index <- function(data, group, indicator, estimate, lower, upper, weig
 #' built only of those describe Indigenous peoples as their problems. This audit does not
 #' measure anything about people; it measures the report: the share of its indicators that
 #' are deficit-framed, overall and per group, so a report can be balanced before it is
-#' published. Pair each gap with a strength-framed level (\code{\link{wellness_profile}},
-#' \code{\link{dual_continuum}}).
+#' published. Pair each gap with a strength-framed level (\code{\link{welprof}},
+#' \code{\link{dualcont}}).
 #'
-#' @param x A \code{\link{wellness_profile}}.
-#' @return A list of class \code{rmbl_framing}: \code{by_group} (a data frame of
-#'   \code{group}, \code{wellness}, \code{distress}, \code{share_deficit}),
-#'   \code{share_deficit} overall and \code{deficit_only} (the groups with no wellness
+#' @param x A \code{\link{welprof}}.
+#' @return A list of class \code{rmbl_framing}: \code{bygrp} (a data frame of
+#'   \code{group}, \code{wellness}, \code{distress}, \code{shrdef}),
+#'   \code{shrdef} overall and \code{defonly} (the groups with no wellness
 #'   indicator).
 #' @references Walter M (2016). Data politics and Indigenous representation in Australian
 #' statistics. In Kukutai T, Taylor J (eds), Indigenous Data Sovereignty: Toward an
@@ -575,36 +577,36 @@ community_index <- function(data, group, indicator, estimate, lower, upper, weig
 #' Walter M, Andersen C (2013). Indigenous Statistics: A Quantitative Research
 #' Methodology. Left Coast Press. \doi{10.4324/9781315426570}
 #' @examples
-#' wb <- indigenous_example("wellbeing")
-#' w <- wellness_profile(wb, "group", "indicator", "estimate", "lower", "upper",
-#'                       wellness = "Always or often has a hopeful outlook",
+#' wb <- indiex("wellbeing")
+#' w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
+#'                       well = "Always or often has a hopeful outlook",
 #'                       distress = c("Rarely or never has a hopeful outlook",
 #'                                    "Life satisfaction rating between 0 and 5",
 #'                                    "Fair or poor perceived health"))
-#' framing_audit(w)
+#' frmaud(w)
 #' @export
-framing_audit <- function(x) {
-  if (!inherits(x, "rmbl_wellness_profile")) stop("`x` must come from wellness_profile()", call. = FALSE)
+frmaud <- function(x) {
+  if (!inherits(x, "rmbl_wellness_profile")) stop("`x` must come from welprof()", call. = FALSE)
   groups <- unique(x$group)
   bg <- data.frame(group = groups,
                    wellness = vapply(groups, function(gi) sum(x$group == gi & x$side == "wellness"), 0L),
                    distress = vapply(groups, function(gi) sum(x$group == gi & x$side == "distress"), 0L),
                    stringsAsFactors = FALSE)
-  bg$share_deficit <- bg$distress / (bg$wellness + bg$distress)
+  bg$shrdef <- bg$distress / (bg$wellness + bg$distress)
   rownames(bg) <- NULL
-  out <- list(by_group = bg, share_deficit = sum(bg$distress) / sum(bg$wellness + bg$distress),
-              deficit_only = bg$group[bg$wellness == 0L])
+  out <- list(bygrp = bg, shrdef = sum(bg$distress) / sum(bg$wellness + bg$distress),
+              defonly = bg$group[bg$wellness == 0L])
   class(out) <- "rmbl_framing"
   out
 }
 
 #' @export
 print.rmbl_framing <- function(x, ...) {
-  cat(sprintf("%.0f%% of the indicators reported are deficit-framed.\n", 100 * x$share_deficit))
-  if (length(x$deficit_only)) {
-    cat("Reported on deficits alone:", paste(x$deficit_only, collapse = "; "), "\n")
+  cat(sprintf("%.0f%% of the indicators reported are deficit-framed.\n", 100 * x$shrdef))
+  if (length(x$defonly)) {
+    cat("Reported on deficits alone:", paste(x$defonly, collapse = "; "), "\n")
   }
-  if (x$share_deficit > 0.5) {
+  if (x$shrdef > 0.5) {
     cat("Most of this report measures disparity or deficit; pair each with a strength-framed level.\n")
   }
   invisible(x)
@@ -625,10 +627,10 @@ plot.rmbl_connection <- function(x, ..., main = NULL, col = NULL, palette = NULL
   op <- graphics::par(las = 1, cex = o$cex, bg = o$bg, bty = "n", tcl = -0.2, mgp = c(3, 0.55, 0),
                       col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430", mar = .bl_safe_mar(c(4.2, 4.5, 3, 1)))
   on.exit(graphics::par(op), add = TRUE)
-  z <- stats::qnorm(1 - (1 - x$conf_level) / 2)
-  has <- !is.null(d$x_se)
-  xr <- range(d$x, if (has) d$x + c(-1, 1) * z * rep(d$x_se, each = 2))
-  yr <- range(d$y, if (has) d$y + c(-1, 1) * z * rep(d$y_se, each = 2))
+  z <- stats::qnorm(1 - (1 - x$conflvl) / 2)
+  has <- !is.null(d$xse)
+  xr <- range(d$x, if (has) d$x + c(-1, 1) * z * rep(d$xse, each = 2))
+  yr <- range(d$y, if (has) d$y + c(-1, 1) * z * rep(d$yse, each = 2))
   # room on both sides for the place names printed beside the points
   xr <- xr + c(-1, 1) * 0.12 * diff(xr)
   do.call(graphics::plot, c(list(xr, yr, type = "n", xlab = "", ylab = "", main = ""), dots))
@@ -637,8 +639,8 @@ plot.rmbl_connection <- function(x, ..., main = NULL, col = NULL, palette = NULL
   .bl_ylab(if (is.null(ylab)) x$labels[["y"]] else .rmbl_string1(ylab, "ylab"))
   .bl_grid(NULL, side = "y")
   if (has) {
-    graphics::segments(d$x - z * d$x_se, d$y, d$x + z * d$x_se, d$y, col = grDevices::adjustcolor(cols, 0.5))
-    graphics::segments(d$x, d$y - z * d$y_se, d$x, d$y + z * d$y_se, col = grDevices::adjustcolor(cols, 0.5))
+    graphics::segments(d$x - z * d$xse, d$y, d$x + z * d$xse, d$y, col = grDevices::adjustcolor(cols, 0.5))
+    graphics::segments(d$x, d$y - z * d$yse, d$x, d$y + z * d$yse, col = grDevices::adjustcolor(cols, 0.5))
   }
   graphics::points(d$x, d$y, pch = 21, bg = cols, col = "white", cex = 1.6)
   # neighbouring places labelled on alternating sides, so close points do not print over each other
@@ -653,7 +655,7 @@ plot.rmbl_healing_change <- function(x, ..., main = NULL, col = NULL, palette = 
   .rmbl_plot_check(x, "rmbl_healing_change")
   d <- as.data.frame(x)
   p <- attr(x, "periods")
-  lab <- paste0(.bl_short_label(d$indicator), ": ", d$group, ifelse(d$use_with_caution, " (E)", ""))
+  lab <- paste0(.bl_short_label(d$indicator), ": ", d$group, ifelse(d$usewithcau, " (E)", ""))
   side <- ifelse(is.na(d$side), 1L, ifelse(d$side == "wellness", 2L, 3L))
   cols <- .bl_cols(3L, col, palette)[side]
   .bl_dot_interval(lab, d$change, d$lower, d$upper,
@@ -668,7 +670,7 @@ plot.rmbl_healing_change <- function(x, ..., main = NULL, col = NULL, palette = 
 plot.rmbl_community_index <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   .rmbl_plot_check(x, "rmbl_community_index")
   d <- as.data.frame(x)
-  .bl_dot_interval(paste0(d$group, ifelse(d$use_with_caution, " (E)", "")), d$index, d$lower, d$upper,
+  .bl_dot_interval(paste0(d$group, ifelse(d$usewithcau, " (E)", "")), d$index, d$lower, d$upper,
                    .bl_main(main, "Community-weighted index of protective and risk factors"),
                    "Index under the weights given, with its interval", .bl_cols(nrow(d), col, palette),
                    note = ifelse(is.finite(d$index), NA_character_, "an indicator is suppressed"), ...)

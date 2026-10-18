@@ -1,5 +1,14 @@
 # rmoriebricklayer 1.0.0
 
+## Short names
+
+Every exported function, argument, output column, help topic and option now has a short name without
+underscores (`survey_design()` is `svydes()`, `conf_level` is `conflvl`, `trend_sensitivity()` is
+`tse()`). Each help page gives the full form of every short name. The old names are gone, not kept as
+aliases, so the reference stays one page per method. `rmbl functions` and the help-aware language-model
+tools list the new names. Wire formats (capsule, manifest and service JSON fields, CSV columns from
+published tables) keep their names, so files written by earlier versions still read.
+
 ## First Nations, Metis and Inuit health, mental health and wellness
 
 Methods for the published tables, distinctions-based (First Nations, Metis and Inuit are each
@@ -10,30 +19,30 @@ distinctions and governance", covers them all.
 
 **Reading the tables**
 
-* `statcan_tidy()` reads a Statistics Canada table as published. `VALUE` becomes a number, and the
+* `sctidy()` reads a Statistics Canada table as published. `VALUE` becomes a number, and the
   quality flag is kept beside it. `F`, `x`, `..` and `...` cells are `NA`.
-* `statcan_estimates()` puts each estimate beside its confidence limits and count.
-* `indigenous_tables()` lists the tables the data service mirrors: the 233 Indigenous-titled
+* `scests()` puts each estimate beside its confidence limits and count.
+* `indtabs()` lists the tables the data service mirrors: the 233 Indigenous-titled
   Statistics Canada tables, and the 2021 Census Indigenous Population Profile.
-* `indigenous_example()` bundles four published excerpts (tables 13-10-0924, 41-10-0067, 41-10-0082
+* `indiex()` bundles four published excerpts (tables 13-10-0924, 41-10-0067, 41-10-0082
   and 41-10-0021), so the examples run on real values.
 
 **Comparisons**
 
-* `indigenous_gap()` gives the difference and ratio against a reference group.
-* `distinctions_test()` tests whether the groups differ before they are pooled (Cochran's Q and I²).
-* `ordinal_compare()` compares rated scales, such as perceived mental health or life satisfaction,
+* `indgap()` gives the difference and ratio against a reference group.
+* `dstntst()` tests whether the groups differ before they are pooled (Cochran's Q and I²).
+* `ordcmp()` compares rated scales, such as perceived mental health or life satisfaction,
   as whole distributions: the probability of a higher rating, with an interval from the published
   limits.
-* `age_standardise()` and `rate_gap()` cover counts. `standardise_prevalence()` covers survey
+* `agestd()` and `rategap()` cover counts. `stdprev()` covers survey
   percentages.
-* `generations_exposed()` and `exposure_trend()` cover the intergenerational effects of the
+* `genexpo()` and `exptrnd()` cover the intergenerational effects of the
   residential schools.
-* `trc_indicators()` maps each indicator of Call to Action 19 (health gaps) and Call 55 (children
-  in care, education, income) to the tables that measure it. `trc_health_gaps()` measures every
+* `trcind()` maps each indicator of Call to Action 19 (health gaps) and Call 55 (children
+  in care, education, income) to the tables that measure it. `trchlthgap()` measures every
   gap against non-Indigenous people on one scale, "times worse", with intervals. Life expectancy and
   infant mortality (tables 17-10-0160 and 17-10-0161) are bundled for it.
-* `trc_completions()` and `trc_progress()` track the 94 Calls to Action, as the Yellowhead
+* `trccmpl()` and `trcprog()` track the 94 Calls to Action, as the Yellowhead
   Institute counts them (Jewell and Mosby).
 
 **Estimators built from Indigenous scholarship on mental wellness**
@@ -43,82 +52,82 @@ and are not taken from it as stated methods. Each help page says so, and says wh
 cannot show.
 
 * Prof. Suzanne L. Stewart:
-  * `wellness_profile()` reports wellness beside distress, strengths first (Stewart 2008, 2020).
-  * `holistic_balance()` measures how evenly wellness is held across a person's domains: the ratio
+  * `welprof()` reports wellness beside distress, strengths first (Stewart 2008, 2020).
+  * `holbal()` measures how evenly wellness is held across a person's domains: the ratio
     of the geometric to the arithmetic mean, with community-set weights and Monte Carlo intervals
     (Stewart 2008; Gabriel, Mirza and Stewart 2022).
-  * `dual_continuum()` treats wellness and distress as two axes (with Keyes 2002, 2005).
-  * `healing_change()` reads change between survey periods as healing in process (Stewart 2008).
+  * `dualcont()` treats wellness and distress as two axes (with Keyes 2002, 2005).
+  * `healchg()` reads change between survey periods as healing in process (Stewart 2008).
 * Prof. Angela Mashford-Pringle:
-  * `connection_association()` measures connection to land, community and education across
+  * `connassoc()` measures connection to land, community and education across
     places: Spearman's rho with an exact permutation p-value, and an interval that carries the
     published sampling error (Mashford-Pringle and Stewart 2019, *Akiikaa*; Mashford-Pringle 2016).
 * Other frameworks:
-  * `mental_wellness_continuum()` covers the First Nations Mental Wellness Continuum's four
+  * `mhcont()` covers the First Nations Mental Wellness Continuum's four
     directions (hope, belonging, meaning, purpose) from published proxies. A direction with no
     proxy is said to have none.
-  * `community_index()` combines protective and risk factors with weights the community sets, after
+  * `commidx()` combines protective and risk factors with weights the community sets, after
     the National Inuit Suicide Prevention Strategy. The function never chooses the weights.
-  * `cwb_score()` computes Indigenous Services Canada's Community Well-Being index.
-  * `framing_audit()` gives the share of a report that is deficit-framed (Walter's 5D data).
+  * `cwbscr()` computes Indigenous Services Canada's Community Well-Being index.
+  * `frmaud()` gives the share of a report that is deficit-framed (Walter's 5D data).
 
 **The 2021 Census Indigenous Population Profile**
 
-* `census_profile()` reads the profile. It keeps the characteristic hierarchy, the full-count or 25%
+* `cnsprof()` reads the profile. It keeps the characteristic hierarchy, the full-count or 25%
   sample of each topic, the residence (on or off reserve), and the suppression symbols. Repeated
   labels are told apart by their member number.
-* `profile_share()` gives shares (for example foster children among children, or speakers of an
+* `profshr()` gives shares (for example foster children among children, or speakers of an
   Indigenous language) with intervals that carry the long-form sample and random rounding.
-* `census_standard()` gives an Indigenous standard population for age standardisation.
-* `census_cwb()` computes a Community Well-Being score from the public profile, and says where it
+* `cnsstd()` gives an Indigenous standard population for age standardisation.
+* `cnscwb()` computes a Community Well-Being score from the public profile, and says where it
   departs from the Department's method.
-* Two real excerpts (`indigenous_example("census_population")` and `"census_households"`) make every
+* Two real excerpts (`indiex("census_population")` and `"census_households"`) make every
   example and test run on published values.
 
 Every result draws itself with `plot()`.
 
 **Any agency's table, and the review of every estimator**
 
-* `limits_from()` builds limits from a standard error, a coefficient of variation or a margin of
-  error, and `quality_recode()` maps another agency's flags onto suppressed and use-with-caution.
+* `limfrom()` builds limits from a standard error, a coefficient of variation or a margin of
+  error, and `qltyrcd()` maps another agency's flags onto suppressed and use-with-caution.
   An unknown flag warns and counts as ok.
 * Published limits that miss their own estimate warn, and that estimate is set aside, in every
   estimator.
-* `indigenous_gap()`, `ordinal_compare()` and `distinctions_test()` take `pooled_groups`; the
+* `indgap()`, `ordcmp()` and `dstntst()` take `pooled_groups`; the
   output column `pan_indigenous` is now `pooled_group`. Duplicate groups are refused, and a total
   as the reference warns.
-* `statcan_estimates()` turns a coefficient of variation into log-normal limits, which stay above 0.
-* `holistic_balance()` refuses proportions and gives a bias-corrected interval that holds the
+* `scests()` turns a coefficient of variation into log-normal limits, which stay above 0.
+* `holbal()` refuses proportions and gives a bias-corrected interval that holds the
   estimate.
-* `standardise_prevalence()` takes `scale` (100 by default, `Inf` for rates).
-* `generations_exposed()` takes `partial`: a known attendance beside an unknown one is `NA` by
+* `stdprev()` takes `scale` (100 by default, `Inf` for rates).
+* `genexpo()` takes `partial`: a known attendance beside an unknown one is `NA` by
   default, or 1 as a lower bound.
-* `connection_association()` gives a Monte Carlo p-value of (b + 1) / (R + 1) beyond eight places;
+* `connassoc()` gives a Monte Carlo p-value of (b + 1) / (R + 1) beyond eight places;
   its band is documented as a sensitivity band.
-* `healing_change()` takes `distress`; other indicators are marked `"other"`.
-* `community_index()` keeps its `conf_level`.
-* `profile_share()` takes `rounding_base`; on reserves, where the long form was a full canvass,
+* `healchg()` takes `distress`; other indicators are marked `"other"`.
+* `commidx()` keeps its `conf_level`.
+* `profshr()` takes `rounding_base`; on reserves, where the long form was a full canvass,
   there is no sampling term.
-* `census_cwb()` matches places by DGUID and takes `min_population` (250 by default; the
+* `cnscwb()` matches places by DGUID and takes `min_population` (250 by default; the
   Department uses 65). Its doc says that housing is pooled across Indigenous households.
-* `census_standard()` takes a DGUID where place names repeat.
-* `trc_health_gaps()`: `times_worse` is now `disadvantage_ratio`. It takes `reference`, and
+* `cnsstd()` takes a DGUID where place names repeat.
+* `trchlthgap()`: `times_worse` is now `disadvantage_ratio`. It takes `reference`, and
   warns on duplicate rows.
-* `rate_gap()` refuses a group against itself; `exposure_trend()` refuses an outcome with no
+* `rategap()` refuses a group against itself; `exptrnd()` refuses an outcome with no
   variation.
 * The README, the vignette and the pages of the estimators acknowledge Professors Suzanne
   Stewart and Angela Mashford-Pringle, on whose frameworks they are built.
 
 **Fetching what the Wayback Machine cannot capture**
 
-* `fetch_verified()` fetches a file from its source (with the source's own Wayback fallback) or
+* `fetchvrf()` fetches a file from its source (with the source's own Wayback fallback) or
   from any mirror, and keeps only a copy whose SHA-256 is the one pinned. For servers that refuse
   the Internet Archive's crawler (Statistics Canada does), a capture made elsewhere and published
   as a mirror serves the same verified bytes.
-* `archive_capture()` makes that capture: it fetches each URL from here, records its SHA-256 in a
+* `arccap()` makes that capture: it fetches each URL from here, records its SHA-256 in a
   manifest, timestamps the manifest with an RFC 3161 authority (verified with
-  `timestamp_verify()`), and uploads the files, the manifest and the timestamp as one public
-  archive.org item, streamed from disk with a new libcurl PUT. Given a `wayback_save()` result it
+  `tsvrf()`), and uploads the files, the manifest and the timestamp as one public
+  archive.org item, streamed from disk with a new libcurl PUT. Given a `wbsave()` result it
   takes the URLs whose server refused the Internet Archive.
 
 **Evaluating a policy from administrative panels**
@@ -126,58 +135,58 @@ Every result draws itself with `plot()`.
 New estimators, each checked against the reference implementation (`fixest`, `did`,
 `bacondecomp`) to rounding error, in base R:
 
-* `did_panel()`: difference in differences with two-way fixed effects and CR1 cluster-robust
+* `plndid()`: difference in differences with two-way fixed effects and CR1 cluster-robust
   errors (one-way or two-way), weights, linear combinations with delta-method errors (the
   effect after a phase-in), and the effect relative to the comparison units' pre-period mean.
-* `event_study()`: leads and lags around adoption, with the joint Wald test of the leads.
-* `staggered_att()`: group-time effects for staggered adoption (Callaway and Sant'Anna, with
+* `evstudy()`: leads and lags around adoption, with the joint Wald test of the leads.
+* `stgatt()`: group-time effects for staggered adoption (Callaway and Sant'Anna, with
   not-yet-treated or never-treated comparisons; or Wooldridge's extended two-way regression),
   aggregated overall and by time since adoption, with a cluster bootstrap.
-* `bacon_decomposition()`: the two-way estimate split exactly into its two-group comparisons.
-* `switching_did()`: de Chaisemartin and D'Haultfoeuille's estimator, with its placebo.
-* `permutation_inference()` and `stepdown_pvalues()`: Fisher's test by re-assigning adoption
+* `bacondcmp()`: the two-way estimate split exactly into its two-group comparisons.
+* `swtdid()`: de Chaisemartin and D'Haultfoeuille's estimator, with its placebo.
+* `perminf()` and `stpdnpv()`: Fisher's test by re-assigning adoption
   dates across clusters (every assignment when there are few), and Westfall-Young stepdown
   p-values for several outcomes.
-* `fe_poisson()`: fixed-effects Poisson or negative binomial (NB2, base R) for counts, as rate
+* `plnpois()`: fixed-effects Poisson or negative binomial (NB2, base R) for counts, as rate
   ratios.
-* `synthetic_control()`: one treated unit against a convex combination of donors, with the
+* `synctl()`: one treated unit against a convex combination of donors, with the
   placebo-in-space test.
-* `severity_index()`, `pipeline_rate()`, `cumulative_risk()` and `buffer_assign()`: the
+* `sevidx()`, `piperate()`, `cmlrisk()` and `bufasgn()`: the
   measures these designs take from justice data.
-* `policy_example()` and the vignette "Evaluating a policy from administrative panels". The
+* `polex()` and the vignette "Evaluating a policy from administrative panels". The
   designs are those of Professor Angela Zorro Medina's empirical work.
-* `staggered_att()` takes `covariates`: doubly robust, IPW or regression difference in
+* `stgatt()` takes `covariates`: doubly robust, IPW or regression difference in
   differences per cohort and period (Sant'Anna and Zhao 2020), equal to `did::att_gt()`.
-* `permutation_inference()` and the wild bootstrap take `ties` (`"count"` or `"strict"`).
+* `perminf()` and the wild bootstrap take `ties` (`"count"` or `"strict"`).
 
 **Causal estimation on panels**
 
-* `dml_panel()`: double machine learning with unit and period fixed effects (Clarke and
+* `plndml()`: double machine learning with unit and period fixed effects (Clarke and
   Polselli 2025), cross-fitted by unit, with base-R lasso, ridge or OLS learners or any
   learner function, a second-order basis built before demeaning, repeated splits, and
   cluster-robust errors; equal to DoubleML given the same folds.
-* `aipw_crossfit()`: cross-fitted augmented inverse probability weighting for a binary
+* `aipwcf()`: cross-fitted augmented inverse probability weighting for a binary
   treatment (average effect, or effect on the treated) with survey weights and propensity
   clipping; the average effect equals DoubleML's interactive regression model given the same
-  folds. With `design = survey_design(...)` the standard error comes from the design's
+  folds. With `design = svydes(...)` the standard error comes from the design's
   replicate weights (any replicate type) or strata and PSUs, from one fit: the learners are
   fitted without the weights, so each replicate estimate is the replicate-weighted mean of the
   same cross-fitted scores, equal to re-running on every replicate weight.
-* `matched_did()` and `balance_table()`: matching on pre-treatment trajectories (Mahalanobis,
+* `mtchdid()` and `baltab()`: matching on pre-treatment trajectories (Mahalanobis,
   pooled within-group or full-sample covariance, exact groups, calipers), then the weighted
   difference in differences; matches equal MatchIt's.
-* `synthetic_did()`: synthetic difference in differences (Arkhangelsky et al. 2021) with exact
+* `syndid()`: synthetic difference in differences (Arkhangelsky et al. 2021) with exact
   weights, placebo or jackknife errors.
-* `wild_cluster_bootstrap()`: the restricted wild cluster bootstrap with Rademacher or Webb
+* `wcb()`: the restricted wild cluster bootstrap with Rademacher or Webb
   weights, full enumeration, and an interval by test inversion that is unbounded when the
   design cannot reject.
-* `trend_sensitivity()`: Rambachan and Roth's relative-magnitudes bounds with a conservative
+* `tse()`: Rambachan and Roth's relative-magnitudes bounds with a conservative
   interval and the breakdown value.
-* `panel_power()`: design-based power and the minimum detectable effect on real data.
+* `plnpwr()`: design-based power and the minimum detectable effect on real data.
 * The figures of policy papers: event studies in a Stata style or with the post-period
-  shaded, `plot_event_grid()` for several outcomes, the Goodman-Bacon scatter, permutation
-  distributions, `leave_one_out()` and `cohort_trends()`.
-* `spread()`: the variance, standard deviation and standard error with the correction the
+  shaded, `plotevgrid()` for several outcomes, the Goodman-Bacon scatter, permutation
+  distributions, `loounit()` and `cohtrnd()`.
+* `sprd()`: the variance, standard deviation and standard error with the correction the
   data call for (Bessel's n - 1 for a sample, none for a whole population described as it is,
   the finite-population correction for a sample drawn without replacement, frequency or
   reliability weights), chosen automatically from the population size and explained.
@@ -191,21 +200,21 @@ New estimators, each checked against the reference implementation (`fixest`, `di
   inside a body is thrown and raised by the barrier once the body's objects are destroyed; valgrind
   reports nothing lost on those paths. The barrier generator (`inst/scripts/gen_barrier.R`) writes all
   of it, so regenerating the file keeps it.
-* **`reservoir_indices()` answers Ctrl-C**: 3e9 items ran 37.9 s through a SIGINT.
-* **`step_change()`**: when every ordering is enumerated the observed one is among them, and is no
+* **`rsvidx()` answers Ctrl-C**: 3e9 items ran 37.9 s through a SIGINT.
+* **`stepchg()`**: when every ordering is enumerated the observed one is among them, and is no
   longer counted twice (p = 73/721 for 0.1). Drawn permutations keep the `+1`.
-* **`trend_test()`** on a constant series gives p = 1 at every length (it was NA past n = 8).
-* **`count_trend()`** with zeros at one end only (`c(0, 0, 5)`) warns that the trend has no finite
+* **`trndtst()`** on a constant series gives p = 1 at every length (it was NA past n = 8).
+* **`cnttrnd()`** with zeros at one end only (`c(0, 0, 5)`) warns that the trend has no finite
   estimate and reports a rate ratio of `Inf` (or 0) with no interval; it was 9.7e16 silently.
-* **`validate_rules()`** on a table of no rows fails no row-wise rule (every rule failed).
-* **`online_summary()`** takes each block's sums in two passes, as `var()` does: values near 1e8
+* **`valrules()`** on a table of no rows fails no row-wise rule (every rule failed).
+* **`onlsmry()`** takes each block's sums in two passes, as `var()` does: values near 1e8
   with a spread of 1 lost nine digits of the variance. The help page says "to rounding", not exact.
-* **Seeds**: `knox_test()` takes every seed up to 2^53 - 1 (2^40 was refused, -2^31 called too
-  large), and `capsule_falsify()` records a seed past 2^31 - 1 as given (it became NA).
+* **Seeds**: `knoxtst()` takes every seed up to 2^53 - 1 (2^40 was refused, -2^31 called too
+  large), and `cpsfals()` records a seed past 2^31 - 1 as given (it became NA).
 * **Network**: the URL gate refuses 6to4 addresses that carry a private IPv4 address
   (`[2002:7f00:1::]` is 127.0.0.1), Teredo, the local-use NAT64 prefix and the discard prefix; a
   307 or 308 redirect repeats a POST as a POST, to the same host only (it became a GET);
-  `wayback_save()` does not send the public archive a URL on your own network (`https://10.0.0.7/`,
+  `wbsave()` does not send the public archive a URL on your own network (`https://10.0.0.7/`,
   a `.local` or one-label name); the manifest is read with a 32 MiB cap (a 300 MiB gzip bomb was
   read whole before allocation failed).
 * **JSON**: a well-formed reply is parsed in compiled code (15 MiB took 85 s; 9.4 MiB takes 0.26
@@ -220,15 +229,15 @@ New estimators, each checked against the reference implementation (`fixest`, `di
   with more fields than the header, a quote inside an unquoted field), are now in the help page.
 * **CLI**: a three-letter near miss (`rmbl "dat list"`), a hyphenated one (`"xplain-rror?"`) and a
   short line naming a file (`"urls.txt?"`, `"my urls.txt"`) are not questions; a run of 16 or more
-  letters and digits mixed (an archive.org key) is a key; `--model` and `bricklayer_llm_ask(model =)`
+  letters and digits mixed (an archive.org key) is a key; `--model` and `llmask(model =)`
   refuse a key given as a model name before any route is looked for (it was sent as the model).
-* **`survey_design()`**: a post-stratified JK1 set on a post-stratum subset is accepted (the
+* **`svydes()`**: a post-stratified JK1 set on a post-stratum subset is accepted (the
   replicates that delete a PSU with no row there are the weight); the adjustment is read from the
   replicates that differ from the weight, and for JK1 from the factors across the set (one factor
   n / (n - 1) unadjusted).
 * **Tests on CRAN**: no test renames the installed launcher (it wrote into the library); the wall-
   clock bounds are fifty times wider where CRAN runs the tests (under valgrind they took 19 s against
-  15 and 30 s against 10); the archive.org lookup needs `RMBL_LIVE_TESTS=1`. The `agent_bundle()`
+  15 and 30 s against 10); the archive.org lookup needs `RMBL_LIVE_TESTS=1`. The `agentbndl()`
   example points the settings folder at an empty one, so a saved key cannot make it call a provider.
 * **Undefined behaviour**: a NaN probability in the quantile kernel and a NaN time in the Hawkes
   compensator are no longer cast to an integer.
@@ -236,20 +245,20 @@ New estimators, each checked against the reference implementation (`fixest`, `di
 * **Arguments, again**: a battery of every export with 41 hostile values in every argument (not only
   those the examples set; 38,836 calls over 306 functions) found 1,007 base R errors in 77 functions
   past the fixes above (the stress test counted 1,070 in 180), among them every `yoy_*()` writer's
-  `digits`, `step_change()`, `scan_adjust()` and the plots' `col =`; the battery now finds none, each
+  `digits`, `stepchg()`, `scanadj()` and the plots' `col =`; the battery now finds none, each
   refused in words, naming the argument. Shared checks do most of it: a single
   number in a range (`.rmbl_scalar()`), an environment refused where data goes, a date refused as a
   count (`reps = Sys.Date()` ran 20,000 replications), colours checked before a device sees them (one
-  check for every plot), titles checked once. `morans_i(n_perm = 1)` no longer fails on the spread of
+  check for every plot), titles checked once. `morani(n_perm = 1)` no longer fails on the spread of
   one permutation.
-* **Memory**: `core_hawkes_residuals()` and the fits built a grid of one point a time unit, 32 GB for
+* **Memory**: `chwkres()` and the fits built a grid of one point a time unit, 32 GB for
   a horizon of 2^31 (the process was killed); a constant baseline needs none, a sinusoidal one keeps a
-  point a day and refuses a horizon past 4,194,304 days. `make_synthetic_csv()` refuses more than
-  100 million rows (it builds the table in memory; 2^31 was a process killed). `survey_design()`
+  point a day and refuses a horizon past 4,194,304 days. `mksyncsv()` refuses more than
+  100 million rows (it builds the table in memory; 2^31 was a process killed). `svydes()`
   computes its row keys and their digests in C and its degrees of freedom a block of rows at a time:
   5e6 rows and 20 replicates peak at 2.8 GiB as a matrix and 2.4 GiB by name (3.5 and 3.1), the design
   in 20 s and an estimate in 5 s (52 s each in the stress test).
-* **A time limit ends a loop over your function**: `capsule_falsify()`, `capsule_power()` and the
+* **A time limit ends a loop over your function**: `cpsfals()`, `cpspwr()` and the
   exposure-response bootstrap caught `setTimeLimit()`'s error as one more failed statistic and ran on.
 * The README says 121 C++ entry points behind the barrier (one new, the JSON path) and 13 in plain C.
 
@@ -332,7 +341,7 @@ New estimators, each checked against the reference implementation (`fixest`, `di
   a Ctrl-C in `bricklayer_fetch()` or `wayback_snapshot_url_native()` is raised at once instead of
   running the Wayback lookups on to their timeouts; the Wayback back-off without a terminal sleeps
   a second at a time, so a time limit ends it.
-* **`bricklayer_data_load()`** applies the option `rmoriebricklayer.max_csv_bytes` (1 GiB by
+* **`bricklayer_data_load()`** applies the option `rmoriebricklayer.maxcsvbytes` (1 GiB by
   default) on both of its read paths.
 * **CSV reader parity with `read.csv()`**: a line of NUL bytes is skipped; integers with leading
   zeros past ten characters are integers; a header of `""` alone is a table of no columns; blanks
@@ -401,7 +410,7 @@ New estimators, each checked against the reference implementation (`fixest`, `di
   and on stderr elsewhere. Colours follow the console (24-bit, 256, 8, or none; `NO_COLOR`,
   `R_CLI_NUM_COLORS`, `RSTUDIO_CONSOLE_COLOR`), and so does the width. They never animate
   inside knitr, an R Markdown notebook chunk or a Jupyter kernel, which get the plain lines.
-  `options(rmoriebricklayer.dynamic, rmoriebricklayer.num_colors, rmoriebricklayer.unicode,
+  `options(rmoriebricklayer.dynamic, rmoriebricklayer.numcol, rmoriebricklayer.unicode,
   rmoriebricklayer.width)`, cli's options and `R_CLI_DYNAMIC` override the detection. The bar
   shows the percent, the count (or the bytes), the rate, the time so far and, once the rate
   has settled, the time left; it fits the console's width and cuts the label or stage with an
@@ -1008,7 +1017,7 @@ claims the earlier fixes overstated corrected.
   whole one (status ok). gzip is now inflated in C with zlib, every member's CRC-32 and length
   checked (several members, as `gzip -c a b` and `data.table::fwrite()` write, are read whole);
   a bzip2 file must end with its end-of-stream marker; an xz decoder warning is an error. The
-  decompressed size is capped while it is read (`options(rmoriebricklayer.max_csv_bytes)`,
+  decompressed size is capped while it is read (`options(rmoriebricklayer.maxcsvbytes)`,
   1 GiB): a few megabytes of gzip no longer grow to gigabytes before anything is refused. zlib is
   now a system requirement (it ships with R's own build dependencies).
 * **A baseline rate below one per 100,000 needs `rare_outcome = TRUE`, whatever its unit.** The
@@ -1215,7 +1224,7 @@ claims the earlier fixes overstated corrected.
   `xmss_index.json` under `tools::R_user_dir("rmoriebricklayer", "config")` (the directory CRAN
   policy sets aside for a package's own configuration), so a key reloaded from disk with a
   stale `next_index` is refused on the same machine, in a fresh session too. The option
-  `rmoriebricklayer.xmss_index_file` or `RMBL_XMSS_INDEX_FILE` moves the file; `""` or `FALSE`
+  `rmoriebricklayer.xmssidxfile` or `RMBL_XMSS_INDEX_FILE` moves the file; `""` or `FALSE`
   turns it off. The record does not travel with the key: save the advanced key after every
   signature, as before.
 * `verify_pollution()` with a mean but no prevalence (or the reverse) is an error report (exit
@@ -2271,7 +2280,7 @@ was fixed, and each has a test that fails on 0.5.5).
   are refused). Every URL the resolvers return and every URL
   `bricklayer_download()`, `friendly_download()` and `download_data()`
   fetch must be https (plain http only with
-  `options(rmoriebricklayer.allow_http = TRUE)`), never `file://` (an
+  `options(rmoriebricklayer.allowhttp = TRUE)`), never `file://` (an
   offline test passes `allow_file = TRUE`), and never a loopback,
   link-local, private or metadata address. The Wayback availability API is
   queried over https; the snapshot URL it returns passes the same gate.

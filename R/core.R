@@ -3,7 +3,7 @@
 #' Fast summary statistics (C backend)
 #'
 #' @description
-#' \code{core_mean()}, \code{core_var()} and \code{core_cor()} compute the
+#' \code{cmn()}, \code{cvari()} and \code{ccorr()} compute the
 #' mean, the sample variance and the Pearson correlation in compiled code.
 #' They are thin R wrappers over the kernels in the package's C/C++ core,
 #' the same ones that other packages call through
@@ -31,48 +31,48 @@
 #'
 #' Errors: input that is a character vector, factor, list or data frame
 #' (logical input is accepted and read as 0/1); \code{x} and \code{y} of
-#' different lengths in \code{core_cor()}.
+#' different lengths in \code{ccorr()}.
 #'
-#' @param x,y Numeric (or logical) vectors. \code{core_cor()} needs
+#' @param x,y Numeric (or logical) vectors. \code{ccorr()} needs
 #'   \code{x} and \code{y} of the same length.
-#' @return \code{core_mean()}, \code{core_var()} and \code{core_cor()} each
+#' @return \code{cmn()}, \code{cvari()} and \code{ccorr()} each
 #'   return a length-1 numeric.
-#' @seealso \code{\link{core_normal_pdf}}, \code{\link{core_sha256}}.
+#' @seealso \code{\link{cnormpdf}}, \code{\link{csha256}}.
 #' @examples
-#' ## core_mean(): sample mean (NA/NaN propagate; no na.rm)
-#' core_mean(1:10)                 # 5.5
-#' core_mean(c(1, 2, NA))          # NA -- call stats::na.omit() first if needed
-#' core_mean(stats::na.omit(c(1, 2, NA)))
-#' core_mean(c(1e308, 1e308))      # no overflow
+#' ## cmn(): sample mean (NA/NaN propagate; no na.rm)
+#' cmn(1:10)                 # 5.5
+#' cmn(c(1, 2, NA))          # NA -- call stats::na.omit() first if needed
+#' cmn(stats::na.omit(c(1, 2, NA)))
+#' cmn(c(1e308, 1e308))      # no overflow
 #'
-#' ## core_var(): n-1 (sample) variance, matching stats::var()
-#' core_var(c(2, 4, 4, 4, 5, 5, 7, 9))
-#' all.equal(core_var(1:10), stats::var(1:10))   # agrees with base R
+#' ## cvari(): n-1 (sample) variance, matching stats::var()
+#' cvari(c(2, 4, 4, 4, 5, 5, 7, 9))
+#' all.equal(cvari(1:10), stats::var(1:10))   # agrees with base R
 #'
-#' ## core_cor(): Pearson correlation of two equal-length vectors
-#' core_cor(1:10, (1:10)^2)        # strong positive, near 0.97
-#' core_cor(1:10, 10:1)            # perfect negative: -1
+#' ## ccorr(): Pearson correlation of two equal-length vectors
+#' ccorr(1:10, (1:10)^2)        # strong positive, near 0.97
+#' ccorr(1:10, 10:1)            # perfect negative: -1
 #'
 #' ## refusals
-#' try(core_mean(c("1", "2")))     # character input is not coerced
-#' try(core_cor(1:3, 1:4))         # lengths differ
+#' try(cmn(c("1", "2")))     # character input is not coerced
+#' try(ccorr(1:3, 1:4))         # lengths differ
 #' @useDynLib rmoriebricklayer, .registration = TRUE
-#' @name rmbl_core_stats
+#' @name cstat
 #' @export
-core_mean <- function(x) .Call(C_rmbl_mean, .rmbl_num_input(x, "x"))
+cmn <- function(x) .Call(C_rmbl_mean, .rmbl_num_input(x, "x"))
 
-# The overflow fallback of core_mean(): a running mean that cannot
-# overflow on finite input. core_mean() reaches it only where long double
+# The overflow fallback of cmn(): a running mean that cannot
+# overflow on finite input. cmn() reaches it only where long double
 # is 64-bit, so it is exposed here (internal) to be tested everywhere.
 .core_mean_running <- function(x) .Call(C_rmbl_mean_running, as.numeric(x))
 
-#' @rdname rmbl_core_stats
+#' @rdname cstat
 #' @export
-core_var <- function(x) .Call(C_rmbl_var, .rmbl_num_input(x, "x"))
+cvari <- function(x) .Call(C_rmbl_var, .rmbl_num_input(x, "x"))
 
-#' @rdname rmbl_core_stats
+#' @rdname cstat
 #' @export
-core_cor <- function(x, y) {
+ccorr <- function(x, y) {
   x <- .rmbl_num_input(x, "x")
   y <- .rmbl_num_input(y, "y")
   if (length(x) != length(y)) stop("`x` and `y` must have the same length", call. = FALSE)
@@ -103,25 +103,25 @@ core_cor <- function(x, y) {
 #' @param sd Number, default \code{1}: the standard deviation \eqn{\sigma};
 #'   must be positive for a finite result.
 #' @return A numeric vector the length of \code{x}.
-#' @seealso \code{\link{rmbl_core_stats}}, \code{\link[stats]{dnorm}}.
+#' @seealso \code{\link{cstat}}, \code{\link[stats]{dnorm}}.
 #' @examples
 #' # Standard normal density at a few quantiles.
-#' core_normal_pdf(c(-1, 0, 1))
+#' cnormpdf(c(-1, 0, 1))
 #'
 #' # Peak of the standard normal is 1/sqrt(2*pi) at x = 0.
-#' core_normal_pdf(0)
+#' cnormpdf(0)
 #'
 #' # Shift and scale via mean and sd.
-#' core_normal_pdf(c(0, 5, 10), mean = 5, sd = 2)
+#' cnormpdf(c(0, 5, 10), mean = 5, sd = 2)
 #'
 #' # Identical to stats::dnorm().
-#' all.equal(core_normal_pdf(-2:2, 0, 1), stats::dnorm(-2:2, 0, 1))
+#' all.equal(cnormpdf(-2:2, 0, 1), stats::dnorm(-2:2, 0, 1))
 #'
 #' # a non-positive sd and text are refused
-#' try(core_normal_pdf(0, sd = 0))
-#' try(core_normal_pdf("0"))
+#' try(cnormpdf(0, sd = 0))
+#' try(cnormpdf("0"))
 #' @export
-core_normal_pdf <- function(x, mean = 0, sd = 1) {
+cnormpdf <- function(x, mean = 0, sd = 1) {
   mean <- .rmbl_num(mean, "mean")
   sd <- .rmbl_num(sd, "sd")
   if (length(mean) != 1L || !is.finite(mean)) stop("`mean` must be a single finite number", call. = FALSE)
@@ -152,8 +152,8 @@ core_normal_pdf <- function(x, mean = 0, sd = 1) {
 #' labels.
 #'
 #' For a digest of a whole R object, hash its serialization (see the
-#' examples) or use \code{\link{digest_object}}; for BLAKE2b use
-#' \code{\link{core_blake2b}}.
+#' examples) or use \code{\link{dgstobj}}; for BLAKE2b use
+#' \code{\link{cblake2b}}.
 #'
 #' @param x A character vector, or a raw vector. Other atomic vectors are
 #'   converted with \code{as.character()}.
@@ -162,25 +162,26 @@ core_normal_pdf <- function(x, mean = 0, sd = 1) {
 #'   (\code{character(0)} for an empty character vector).
 #' @references
 #' National Institute of Standards and Technology (2015). Secure Hash
-#' Standard (SHS). FIPS PUB 180-4. \href{https://doi.org/10.6028/NIST.FIPS.180-4}{doi:10.6028/NIST.FIPS.180-4}
+#' Standard (SHS). FIPS PUB 180-4.
+#' \href{https://doi.org/10.6028/NIST.FIPS.180-4}{doi:10.6028/NIST.FIPS.180-4}
 #' @examples
 #' # Hash a character scalar (NIST test vector for "abc").
-#' core_sha256("abc")
+#' csha256("abc")
 #' # ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
 #'
 #' # Vectorised over character input: one digest per element.
-#' core_sha256(c("abc", "def", NA))
+#' csha256(c("abc", "def", NA))
 #'
 #' # Raw input hashes the bytes directly; identical to the character form.
-#' identical(core_sha256("abc"), core_sha256(charToRaw("abc")))
+#' identical(csha256("abc"), csha256(charToRaw("abc")))
 #'
 #' # The empty message.
-#' core_sha256(raw(0))
+#' csha256(raw(0))
 #'
 #' # Fingerprint an arbitrary object via its serialization.
-#' core_sha256(serialize(list(a = 1L, b = "x"), NULL))
+#' csha256(serialize(list(a = 1L, b = "x"), NULL))
 #' @export
-core_sha256 <- function(x) {
+csha256 <- function(x) {
   .rmbl_no_fn(x = x)
   if (is.raw(x)) return(.Call(C_rmbl_sha256, x))
   x <- as.character(x)

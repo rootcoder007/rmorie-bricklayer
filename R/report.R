@@ -15,7 +15,7 @@
 #' the multivariate outliers, a Benford screen on the wide numeric columns,
 #' and the integrity digests. Use it as the first look at a capsule or a fresh
 #' extract, before any analysis, and keep the Markdown version
-#' ([report_markdown()]) with the outputs.
+#' ([rptmd()]) with the outputs.
 #'
 #' Nothing here is new arithmetic. The value is that the answers arrive
 #' together and ordered by severity, because the failure mode this is built
@@ -40,50 +40,50 @@
 #'
 #' # How each check runs
 #'
-#' The drift comparison is [capsule_drift()] at level
+#' The drift comparison is [cpsdrft()] at level
 #' `alpha`. The missing
-#' run is the longest run from [missing_runs()] of at least
+#' run is the longest run from [missruns()] of at least
 #' `max(2, nrow(data) %/% 20)` rows. The outlier scan is
-#' [mahalanobis_outliers()] on the numeric columns
+#' [mahaoutl()] on the numeric columns
 #' that are not constant or
 #' entirely missing, run only when there are at least two of them, at most
-#' `max_rows_outliers` rows and more complete rows than columns. The Benford
-#' screen ([benford_test()]) runs on a numeric column with at
+#' `maxrowsoutl` rows and more complete rows than columns. The Benford
+#' screen ([benfordtst()]) runs on a numeric column with at
 #' least 200
 #' non-zero finite values whose largest absolute value is more than 1,000
 #' times its smallest, and reports p below 0.01. The digest is
-#' [digest_object()] of the data; a signature is checked with
-#' [capsule_verify()] against that digest.
+#' [dgstobj()] of the data; a signature is checked with
+#' [cpsvrf()] against that digest.
 #'
 #' Findings are sorted by severity, then check, then subject. Nothing is
 #' written and nothing is fetched. Errors when `data` is not a data frame or
 #' has no columns, and when `schema` or `rules` are malformed (from
-#' [validate_schema()] and
-#' [validate_rules()]).
+#' [valsch()] and
+#' [valrules()]).
 #'
 #' A clean report is not proof the data is correct. It means these
 #' particular checks found nothing, and every one of them has a stated
-#' blind spot -- see [capsule_drift()] on
-#' statistical power and [benford_test()] on why
+#' blind spot -- see [cpsdrft()] on
+#' statistical power and [benfordtst()] on why
 #' a departure is a screen rather than a verdict.
 #'
 #' @param data The data frame to assess.
-#' @param reference Optional data frame the capsule was
+#' @param ref Optional data frame the capsule was
 #' pinned against. Supplying it enables the drift comparison, which is the
 #' check a digest cannot make.
 #' @param schema Optional schema from
-#' [infer_schema()], or a provenance list
+#' [infsch()], or a provenance list
 #' containing one. Supplying it enables the structural check.
-#' @param rules Optional list of [rule()]
+#' @param rules Optional list of [rul()]
 #' objects.
 #' @param chunks Optional character vector of capsule chunks
-#' (see [chunk_file()]) to pin with a Merkle root.
-#' @param signature,key Optional signature and
-#' verifying key, as from [capsule_sign()],
+#' (see [chnkfile()]) to pin with a Merkle root.
+#' @param sig,key Optional signature and
+#' verifying key, as from [cpssign()],
 #' checked against the data's own digest.
 #' @param alpha Numeric scalar, the significance level passed to
-#' [capsule_drift()]; default `0.01`.
-#' @param max_rows_outliers Integer scalar: skip the outlier scan
+#' [cpsdrft()]; default `0.01`.
+#' @param maxrowsoutl Integer scalar: skip the outlier scan
 #' above this many rows (default 20000), since it factors a covariance per
 #' call.
 #' @return A list of class `c("bricklayer_report", "list")`: `findings` (a
@@ -94,23 +94,23 @@
 #' `detail`), `verdict` (the worst severity: `"fatal"`, `"warn"`,
 #' `"note"`, or
 #' `"clean"` when there is no finding), `profile` (from
-#' [profile_columns()]),
-#' `missingness` (from [missingness_summary()]),
+#' [profcols()]),
+#' `missingness` (from [misssmry()]),
 #' `drift` (the
-#' [capsule_drift()] result, or `NULL` without a
+#' [cpsdrft()] result, or `NULL` without a
 #' reference), `digest` (a list
-#' with `data_digest`, and with `chunks` also `merkle_root`,
+#' with `data_digest`, and with `chunks` also `mrkroot`,
 #' `merkle_scheme`
-#' (the [merkle_root()] hashing scheme, 2) and `n_chunks`,
-#' with a signature and key also logical `signature_valid`), and `n_rows` /
+#' (the [mrkroot()] hashing scheme, 2) and `n_chunks`,
+#' with a signature and key also logical `signature_valid`), and `nrows` /
 #' `n_cols`. `print()` shows the verdict and the findings; `summary()`
 #' gives
 #' the verdict and the count of each severity.
 #' @seealso
-#' [capsule_drift()],
-#' [profile_columns()],
-#' [validate_schema()],
-#' [report_markdown()] to write it out.
+#' [cpsdrft()],
+#' [profcols()],
+#' [valsch()],
+#' [rptmd()] to write it out.
 #' @examples
 #' set.seed(1)
 #' ref <- data.frame(
@@ -123,43 +123,43 @@
 #' # A fresh extract from the same process: nothing to report.
 #' cur <- ref
 #' cur$score <- stats::runif(200, 0, 10)
-#' capsule_report(cur, reference = ref, schema = infer_schema(ref))
+#' cpsrpt(cur, ref = ref, schema = infsch(ref))
 #'
 #' # One rescaled column and a new category: both surface, worst first.
 #' bad <- cur
 #' bad$score <- bad$score * 5
 #' bad$grade[1:80] <- "z"
-#' r <- capsule_report(bad, reference = ref, schema = infer_schema(ref))
+#' r <- cpsrpt(bad, ref = ref, schema = infsch(ref))
 #' r
 #' r$verdict
 #' r$findings[, c("severity", "check", "subject")]
 #'
 #' # A missing column is fatal, because nothing downstream can run.
-#' capsule_report(bad[, c("id", "score")], reference = ref,
-#'                schema = infer_schema(ref))$verdict
+#' cpsrpt(bad[, c("id", "score")], ref = ref,
+#'                schema = infsch(ref))$verdict
 #'
 #' # validation rules join the findings, and chunks are pinned with a Merkle root
-#' r2 <- capsule_report(bad, rules = list(rule_in_set("grade", c("a", "b", "c"))),
+#' r2 <- cpsrpt(bad, rules = list(ruleinset("grade", c("a", "b", "c"))),
 #'                      chunks = c("part one", "part two"))
 #' summary(r2)
-#' r2$digest$merkle_root
+#' r2$digest$mrkroot
 #'
 #' # a data frame is required
-#' try(capsule_report(1:10))
+#' try(cpsrpt(1:10))
 #' @export
-capsule_report <- function(data, reference = NULL, schema = NULL,
-                           rules = NULL, chunks = NULL, signature = NULL,
+cpsrpt <- function(data, ref = NULL, schema = NULL,
+                           rules = NULL, chunks = NULL, sig = NULL,
                            key = NULL, alpha = 0.01,
-                           max_rows_outliers = 20000L) {
+                           maxrowsoutl = 20000L) {
   if (!is.data.frame(data)) {
     stop("`data` must be a data frame", call. = FALSE)
   }
   if (ncol(data) == 0L) {
     stop("`data` has no columns to assess", call. = FALSE)
   }
-  max_rows_outliers <- .rmbl_num(max_rows_outliers, "max_rows_outliers")
-  if (length(max_rows_outliers) != 1L || is.na(max_rows_outliers) || max_rows_outliers < 0) {
-    stop("`max_rows_outliers` must be one non-negative number of rows", call. = FALSE)
+  maxrowsoutl <- .rmbl_num(maxrowsoutl, "maxrowsoutl")
+  if (length(maxrowsoutl) != 1L || is.na(maxrowsoutl) || maxrowsoutl < 0) {
+    stop("`maxrowsoutl` must be one non-negative number of rows", call. = FALSE)
   }
   add <- function(acc, severity, check, subject, detail) {
     rbind(acc, data.frame(severity = severity, check = check,
@@ -170,21 +170,21 @@ capsule_report <- function(data, reference = NULL, schema = NULL,
                   subject = character(0), detail = character(0),
                   stringsAsFactors = FALSE)
 
-  prof <- profile_columns(data)
-  miss <- missingness_summary(data)
+  prof <- profcols(data)
+  miss <- misssmry(data)
 
   # --- structure -------------------------------------------------------
   if (!is.null(schema)) {
     prov <- if (is.list(schema) && !is.null(schema$schema)) schema else
       list(schema = schema)
-    for (nm in names(issues <- validate_schema(data, prov))) {
+    for (nm in names(issues <- valsch(data, prov))) {
       iss <- issues[[nm]]
       f <- add(f, if (identical(iss$severity, "fatal")) "fatal" else "warn",
                "schema", nm, iss$message)
     }
   }
   if (!is.null(rules)) {
-    for (nm in names(riss <- validate_rules(data, rules))) {
+    for (nm in names(riss <- valrules(data, rules))) {
       it <- riss[[nm]]
       f <- add(f, if (identical(it$severity, "fatal")) "fatal" else "warn",
                "rule", nm, it$message)
@@ -193,8 +193,8 @@ capsule_report <- function(data, reference = NULL, schema = NULL,
 
   # --- distribution ----------------------------------------------------
   dr <- NULL
-  if (!is.null(reference)) {
-    dr <- capsule_drift(reference, data, alpha = alpha)
+  if (!is.null(ref)) {
+    dr <- cpsdrft(ref, data, alpha = alpha)
     if (length(dr$removed)) {
       f <- add(f, "fatal", "drift", paste(dr$removed, collapse = ", "),
                "column(s) present in the reference and absent here")
@@ -229,7 +229,7 @@ capsule_report <- function(data, reference = NULL, schema = NULL,
     f <- add(f, "warn", "missing", paste(gappy, collapse = ", "),
              "over half the values missing")
   }
-  runs <- missing_runs(data, min_run = max(2L, nrow(data) %/% 20L))
+  runs <- missruns(data, minrun = max(2L, nrow(data) %/% 20L))
   if (nrow(runs)) {
     f <- add(f, "note", "missing", runs$column[1],
              sprintf(paste0("a contiguous run of %d missing values from ",
@@ -263,11 +263,11 @@ capsule_report <- function(data, reference = NULL, schema = NULL,
                                              logical(1))],
                           c(all_missing, const))
   usable <- length(numeric_cols) >= 2L &&
-    nrow(data) <= max_rows_outliers &&
+    nrow(data) <= maxrowsoutl &&
     sum(stats::complete.cases(data[, numeric_cols, drop = FALSE])) >
       length(numeric_cols)
   if (usable) {
-    mo <- tryCatch(mahalanobis_outliers(data[, numeric_cols, drop = FALSE]),
+    mo <- tryCatch(mahaoutl(data[, numeric_cols, drop = FALSE]),
                    error = function(e) e)
     if (inherits(mo, "error")) {
       # Only collinearity is worth surfacing here, and only because it
@@ -292,7 +292,7 @@ capsule_report <- function(data, reference = NULL, schema = NULL,
     # only meaningful on a column spanning orders of magnitude
     if (length(v) >= 200L && diff(range(abs(v))) > 0 &&
         max(abs(v)) / min(abs(v)) > 1000) {
-      b <- tryCatch(benford_test(v), error = function(e) NULL)
+      b <- tryCatch(benfordtst(v), error = function(e) NULL)
       if (!is.null(b) && !is.na(b$p_value) && b$p_value < 0.01) {
         f <- add(f, "note", "benford", nm,
                  sprintf(paste0("leading digits depart from Benford's law ",
@@ -303,22 +303,22 @@ capsule_report <- function(data, reference = NULL, schema = NULL,
   }
 
   # --- integrity -------------------------------------------------------
-  dig <- list(data_digest = digest_object(data))
+  dig <- list(data_digest = dgstobj(data))
   if (!is.null(chunks)) {
-    dig$merkle_root <- merkle_root(chunks)
+    dig$merkle_root <- mrkroot(chunks)
     dig$merkle_scheme <- 2L
     dig$n_chunks <- length(chunks)
   }
-  if (!is.null(signature)) {
+  if (!is.null(sig)) {
     if (is.null(key)) {
       f <- add(f, "warn", "signature", "-",
                "a signature was supplied with no key to verify it against")
     } else {
-      ok <- isTRUE(tryCatch(capsule_verify(dig$data_digest, signature, key),
+      ok <- isTRUE(tryCatch(cpsvrf(dig$data_digest, sig, key),
                             error = function(e) FALSE))
       dig$signature_valid <- ok
       if (!ok) {
-        f <- add(f, "warn", "signature", signature$scheme,
+        f <- add(f, "warn", "signature", sig$scheme,
                  "did NOT verify against the data's digest")
       }
     }
@@ -384,14 +384,14 @@ format.bricklayer_report <- function(x, ...) {
     rows, .rmbl_rule())
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_report <- function(x, ...) {
   cat(format(x), sep = "\n")
   invisible(x)
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 summary.bricklayer_report <- function(object, ...) {
   c(verdict = object$verdict,
@@ -402,7 +402,7 @@ summary.bricklayer_report <- function(object, ...) {
 
 #' Write a capsule report as Markdown
 #'
-#' Renders a [capsule_report()] as Markdown,
+#' Renders a [cpsrpt()] as Markdown,
 #' so the assessment can travel with the capsule instead of living in a
 #' console someone has since closed. The document renders on GitHub, in
 #' R Markdown and Quarto, and in any Markdown viewer, and reads well as plain
@@ -417,45 +417,45 @@ summary.bricklayer_report <- function(object, ...) {
 #' is proof of correctness. The text of the findings is written as it is: a
 #' `|` in a column name would break the table. An existing file at `path` is
 #' overwritten. Errors when `report` does not come from
-#' [capsule_report()].
+#' [cpsrpt()].
 #'
 #' @param report A `bricklayer_report` from
-#'   [capsule_report()].
+#'   [cpsrpt()].
 #' @param path Optional character scalar, the file to write. Without one
 #' (`NULL`, the default) the lines are returned.
 #' @param title Character scalar, the heading for the document; default
 #' `"Capsule report"`.
 #' @return A character vector of Markdown lines; returned visibly when `path`
 #' is `NULL`, invisibly when written to a file.
-#' @seealso [capsule_report()]
+#' @seealso [cpsrpt()]
 #' @examples
 #' set.seed(1)
 #' df <- data.frame(v = stats::rnorm(100), g = rep("x", 100),
 #'                  stringsAsFactors = FALSE)
-#' r <- capsule_report(df)
+#' r <- cpsrpt(df)
 #'
-#' md <- report_markdown(r)
+#' md <- rptmd(r)
 #' cat(head(md, 8), sep = "\n")
 #'
 #' # Written beside the capsule it describes.
 #' p <- tempfile(fileext = ".md")
-#' report_markdown(r, p)
+#' rptmd(r, p)
 #' file.exists(p)
 #' unlink(p)
 #'
 #' # a report with findings, under its own title
-#' r2 <- capsule_report(transform(df, v = ifelse(seq_along(v) <= 60, NA, v)))
-#' md2 <- report_markdown(r2, title = "Extract of 2024-03-01")
+#' r2 <- cpsrpt(transform(df, v = ifelse(seq_along(v) <= 60, NA, v)))
+#' md2 <- rptmd(r2, title = "Extract of 2024-03-01")
 #' md2[1]
 #' md2[grep("^## Findings", md2) + 0:4]
 #'
-#' # only a capsule_report() result is accepted
-#' try(report_markdown(list(verdict = "clean")))
+#' # only a cpsrpt() result is accepted
+#' try(rptmd(list(verdict = "clean")))
 #' @export
-report_markdown <- function(report, path = NULL,
+rptmd <- function(report, path = NULL,
                             title = "Capsule report") {
   if (!inherits(report, "bricklayer_report")) {
-    stop("`report` must come from capsule_report()", call. = FALSE)
+    stop("`report` must come from cpsrpt()", call. = FALSE)
   }
   if (!is.null(path)) path <- .rmbl_out_file(path, "path")
   title <- .rmbl_text1(title, "title")

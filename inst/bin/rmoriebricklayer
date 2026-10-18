@@ -1,8 +1,8 @@
 #!/bin/sh
-# rmoriebricklayer command-line launcher (installed by rmoriebricklayer::install_cli(), also as rmbl).
+# rmoriebricklayer command-line launcher (installed by rmoriebricklayer::instcli(), also as rmbl).
 # Rscript adds the --args separator itself: passing one makes R 4.6's commandArgs(TRUE) return it.
 export RMBL_PROG=rmoriebricklayer
 # A Ctrl-C that reaches the top level (while the package loads, or one the command's own handler
 # did not see) exits 130 like every other interrupt, not 1 with "Execution halted" (C10 on the
 # release legs of 84840ac).
-exec Rscript --no-save --no-restore -e 'suppressPackageStartupMessages({ q <- tryCatch(rmoriebricklayer::bricklayer_cli(), interrupt = function(e) 130L); quit(status = as.integer(q)) })' "$@"
+exec Rscript --no-save --no-restore -e 'suppressPackageStartupMessages({ q <- tryCatch(rmoriebricklayer::blcli(), interrupt = function(e) 130L); quit(status = as.integer(q)) })' "$@"

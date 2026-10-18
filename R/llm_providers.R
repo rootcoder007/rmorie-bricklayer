@@ -130,7 +130,7 @@
       out$tool_calls <- lapply(m$tool_calls, function(tc) {
         list(id = tc$id, type = "function",
              `function` = list(name = tc$name,
-                               arguments = as.character(bricklayer_json_to_json(.bl_json_object(tc$arguments),
+                               arguments = as.character(tojs(.bl_json_object(tc$arguments),
                                                                                  auto_unbox = TRUE))))
       })
     }

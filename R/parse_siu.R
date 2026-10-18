@@ -4,20 +4,20 @@
 # canonical home; rmorie links to this same core, there is no separate
 # SIU package). Everything here
 # is deterministic and offline; the only network function remains
-# bricklayer_fetch_siu().
+# siufetch().
 
 #' The panel-reviewed SIU report field schema
 #'
 #' Returns the sixteen fields that the package extracts from every Ontario
 #' Special Investigations Unit (SIU) director's report, with a one-line
 #' description of each. Use it to see what
-#' [bricklayer_parse_siu()] returns,
+#' [siuprs()] returns,
 #' to build an empty coding sheet for hand review, or to check which fields
 #' are counts before summing them across reports.
 #'
 #' @details
 #' The schema is held in the native core (src/siu_schema.h) and is the same
-#' list that [bricklayer_parse_siu()] fills. Three
+#' list that [siuprs()] fills. Three
 #' fields are dates in ISO
 #' \code{YYYY-MM-DD} form, five are counts and the rest are free text.
 #' Count-type fields (\code{is_count = TRUE}) count distinct entities, and
@@ -27,11 +27,11 @@
 #'
 #' @return A data.frame with 16 rows and three columns: \code{name}
 #'   (character, the field name used by
-#'   [bricklayer_parse_siu()]),
+#'   [siuprs()]),
 #'   \code{is_count} (logical, \code{TRUE} for the five count fields) and
 #'   \code{description} (character, what the field records).
 #' @examples
-#' s <- bricklayer_siu_schema()
+#' s <- siusch()
 #' s$name
 #'
 #' # only the count fields
@@ -42,7 +42,7 @@
 #'                                  s$name))
 #' ncol(sheet)
 #' @export
-bricklayer_siu_schema <- function() {
+siusch <- function() {
   as.data.frame(.Call(C_rmbl_siu_schema, NULL), stringsAsFactors = FALSE)
 }
 
@@ -51,7 +51,7 @@ bricklayer_siu_schema <- function() {
 #' Strips the markup from one SIU director's report page and returns the
 #' readable text, keeping line breaks so section headings ("Subject
 #' Officials", "Witness Officials") stay on lines of their own. Use it
-#' before [bricklayer_siu_resolve_so()], or to
+#' before [siuso()], or to
 #' read or search a saved report
 #' without a browser.
 #'
@@ -67,7 +67,7 @@ bricklayer_siu_schema <- function() {
 #'
 #' @param html A length-1 character vector holding the raw HTML of one
 #'   report page. A file path is not read here (use
-#'   [bricklayer_parse_siu()], which accepts a path).
+#'   [siuprs()], which accepts a path).
 #' @section Limits:
 #' The input is capped at 2 MiB (a report page is a few hundred KB). Before
 #' the text is read, a line longer than 2000 characters is split at the
@@ -75,17 +75,17 @@ bricklayer_siu_schema <- function() {
 #' many lines were split: a field that spans a split may be incomplete.
 #' @return A length-1 character vector of plain text.
 #' @examples
-#' bricklayer_siu_text("<p>Number of SIU Investigators assigned: 3</p>")
+#' siutxt("<p>Number of SIU Investigators assigned: 3</p>")
 #'
 #' # the bundled synthetic report, as text
 #' f <- system.file("extdata", "siu_synthetic_report.html", package = "rmoriebricklayer")
-#' txt <- bricklayer_siu_text(paste(readLines(f), collapse = "\n"))
+#' txt <- siutxt(paste(readLines(f), collapse = "\n"))
 #' cat(substr(txt, 1, 200))
 #'
 #' # more than one string is refused
-#' try(bricklayer_siu_text(c("<p>a</p>", "<p>b</p>")))
+#' try(siutxt(c("<p>a</p>", "<p>b</p>")))
 #' @export
-bricklayer_siu_text <- function(html) {
+siutxt <- function(html) {
   if (!is.character(html) || length(html) != 1L || is.na(html)) {
     stop("`html` must be a single string (the report page)", call. = FALSE)
   }
@@ -94,7 +94,7 @@ bricklayer_siu_text <- function(html) {
 
 #' Parse an SIU director's report into the schema fields
 #'
-#' Extracts every [bricklayer_siu_schema()] field
+#' Extracts every [siusch()] field
 #' from the HTML of an
 #' Ontario SIU director's report: the police service, the incident,
 #' notification and decision dates, the investigator and witness counts,
@@ -105,13 +105,13 @@ bricklayer_siu_text <- function(html) {
 #'
 #' @details
 #' The text is first converted as in
-#' [bricklayer_siu_text()], then the
+#' [siutxt()], then the
 #' report language is detected from section headings (English or French;
 #' the SIU publishes both) and each field is read by its own rule set in
 #' the native core. Dates are converted with the same rules as
-#' [bricklayer_siu_iso_date()]. The
+#' [siudate()]. The
 #' subject-official count uses the rules
-#' of [bricklayer_siu_resolve_so()]. Fields the
+#' of [siuso()]. Fields the
 #' report does not state come
 #' back as \code{""}; a page that is not a report gives all fields
 #' \code{""} and \code{_language} \code{"unknown"}.
@@ -126,7 +126,7 @@ bricklayer_siu_text <- function(html) {
 #'
 #' @param html A character vector. Each element is either the raw HTML of
 #'   one report or the path to a saved report file (for example one written
-#'   by [bricklayer_fetch_siu()]). With more than one
+#'   by [siufetch()]). With more than one
 #'   element, each is
 #'   parsed and the results are bound into a data frame.
 #' @section Limits:
@@ -142,7 +142,7 @@ bricklayer_siu_text <- function(html) {
 #'   row per input and one character column per field (\code{NA} where a
 #'   field is absent from a row).
 #' @examples
-#' f <- bricklayer_parse_siu(system.file("extdata",
+#' f <- siuprs(system.file("extdata",
 #'                                       "siu_synthetic_report.html",
 #'                                       package = "rmoriebricklayer"))
 #' f[["number_of_subject_officials"]]
@@ -151,13 +151,13 @@ bricklayer_siu_text <- function(html) {
 #' # several reports at once give a data frame, one row each
 #' path <- system.file("extdata", "siu_synthetic_report.html", package = "rmoriebricklayer")
 #' html <- paste(readLines(path), collapse = "\n")
-#' df <- bricklayer_parse_siu(c(html, "<p>not a report</p>"))
+#' df <- siuprs(c(html, "<p>not a report</p>"))
 #' df[, c("_language", "police_service", "number_of_witness_officials")]
 #'
 #' # a mistyped path is an error, not an empty report
-#' try(bricklayer_parse_siu("no-such-report.html"))
+#' try(siuprs("no-such-report.html"))
 #' @export
-bricklayer_parse_siu <- function(html) {
+siuprs <- function(html) {
   .rmbl_no_fn(html = html)
   if (!is.character(html) || anyNA(html) || !length(html)) {
     stop("`html` must be report HTML (or the path of a saved report), not ",
@@ -165,7 +165,7 @@ bricklayer_parse_siu <- function(html) {
   }
   if (length(html) > 1L) {
     # several reports: one row each
-    rows <- lapply(html, bricklayer_parse_siu)
+    rows <- lapply(html, siuprs)
     cols <- unique(unlist(lapply(rows, names)))
     out <- lapply(cols, function(cn) vapply(rows, function(r) if (cn %in% names(r)) r[[cn]] else NA_character_, ""))
     names(out) <- cols
@@ -185,8 +185,8 @@ bricklayer_parse_siu <- function(html) {
 #' Fetch and parse one SIU director's report
 #'
 #' Downloads one director's report from the SIU web site with
-#' [bricklayer_fetch_siu()] and parses it with
-#' [bricklayer_parse_siu()], in
+#' [siufetch()] and parses it with
+#' [siuprs()], in
 #' one call. It is meant for loops over many report ids: a report that
 #' cannot be retrieved gives \code{NULL} and a message instead of stopping
 #' the loop.
@@ -208,33 +208,33 @@ bricklayer_parse_siu <- function(html) {
 #' @param lang Report language: \code{"en"} (default, the English page) or
 #'   \code{"fr"} (the French page). Partial matching is allowed.
 #' @return A named character vector of parsed fields, as from
-#'   [bricklayer_parse_siu()], or \code{NULL} when the
+#'   [siuprs()], or \code{NULL} when the
 #'   fetch fails.
 #' @examples
 #' # argument errors come before any network use
-#' try(bricklayer_fetch_parse_siu("abc"))
-#' try(bricklayer_fetch_parse_siu(648, lang = "de"))
+#' try(siufprs("abc"))
+#' try(siufprs(648, lang = "de"))
 #'
 #' \dontrun{
 #' # needs the network: downloads report 648 from the SIU site
-#' f <- bricklayer_fetch_parse_siu(648)
+#' f <- siufprs(648)
 #' if (!is.null(f)) f[["police_service"]]
-#' fr <- bricklayer_fetch_parse_siu(648, lang = "fr")
+#' fr <- siufprs(648, lang = "fr")
 #' }
 #' @export
-bricklayer_fetch_parse_siu <- function(drid, lang = c("en", "fr")) {
+siufprs <- function(drid, lang = c("en", "fr")) {
   lang <- .rmbl_arg(lang)  # argument errors, before any network
   drid <- .rmbl_drid(drid)
   dest <- tempfile(fileext = ".html")
   on.exit(unlink(dest), add = TRUE)
-  ok <- tryCatch(bricklayer_fetch_siu(drid, dest, lang = lang),
+  ok <- tryCatch(siufetch(drid, dest, lang = lang),
                  error = function(e) {
                    message("bricklayer: could not fetch SIU report ", drid,
                            ": ", conditionMessage(e))
                    NULL
                  })
   if (is.null(ok) || !file.exists(dest)) return(NULL)
-  bricklayer_parse_siu(dest)
+  siuprs(dest)
 }
 
 #' Convert a human-readable SIU report date to ISO format
@@ -261,16 +261,16 @@ bricklayer_fetch_parse_siu <- function(drid, lang = c("en", "fr")) {
 #'   strings, \code{""} for unparseable input and \code{NA} for \code{NA}.
 #'   Unnamed.
 #' @examples
-#' bricklayer_siu_iso_date(c("January 5, 2023", "not a date"))
+#' siudate(c("January 5, 2023", "not a date"))
 #'
 #' # French, day-first and impossible dates
-#' bricklayer_siu_iso_date(c("5 janvier 2023", "5 January 2023", "February 30, 2023", NA))
-#' as.Date(bricklayer_siu_iso_date("April 28, 2023"))
+#' siudate(c("5 janvier 2023", "5 January 2023", "February 30, 2023", NA))
+#' as.Date(siudate("April 28, 2023"))
 #'
 #' # numbers are refused
-#' try(bricklayer_siu_iso_date(20230105))
+#' try(siudate(20230105))
 #' @export
-bricklayer_siu_iso_date <- function(x) {
+siudate <- function(x) {
   .rmbl_no_fn(x = x)
   if (!is.character(x) && !all(is.na(x))) stop("`x` must be a character vector of dates", call. = FALSE)
   x <- as.character(x)
@@ -313,25 +313,25 @@ bricklayer_siu_iso_date <- function(x) {
 #' Error: \code{text} that is not a single non-NA string.
 #'
 #' @param text A length-1 character vector of plain report text
-#'   (see [bricklayer_siu_text()]), not HTML.
+#'   (see [siutxt()]), not HTML.
 #' @return A list with two elements: \code{count} (integer, \code{NA} when
 #'   unresolved) and \code{reason} (character, the rule that fired and its
 #'   evidence, for example \code{"plural cue 'three subject officials'"}).
 #' @examples
-#' bricklayer_siu_resolve_so(
+#' siuso(
 #'   "Subject Officials\nSO #1 Interviewed\nSO #2 Declined interview")
 #'
 #' # witness officials only: zero is the answer
-#' bricklayer_siu_resolve_so("Witness Officials\nWO #1 Interviewed\nWO #2 Interviewed")
+#' siuso("Witness Officials\nWO #1 Interviewed\nWO #2 Interviewed")
 #'
 #' # a spelled-out plural, and an unresolved text
-#' bricklayer_siu_resolve_so("Three subject officials were designated.")$count
-#' bricklayer_siu_resolve_so("No officers are named here.")
+#' siuso("Three subject officials were designated.")$count
+#' siuso("No officers are named here.")
 #'
 #' # HTML or several strings are not text
-#' try(bricklayer_siu_resolve_so(c("a", "b")))
+#' try(siuso(c("a", "b")))
 #' @export
-bricklayer_siu_resolve_so <- function(text) {
+siuso <- function(text) {
   if (!is.character(text) || length(text) != 1L || is.na(text)) {
     stop("`text` must be a single string of report text", call. = FALSE)
   }

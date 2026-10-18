@@ -5,7 +5,7 @@
 # a variable that is set wins over the saved value, so a one-off
 # `OLLAMA_MODEL=x rmbl ask ...` still works. The file is
 # $XDG_CONFIG_HOME/morie/llm.json (private, 0600), next to the shared
-# credentials file, and is only ever written by bricklayer_llm_config() or
+# credentials file, and is only ever written by llmcfg() or
 # `rmbl config`, never by examples or tests.
 
 # The settings table and the provider presets never change in a session: they are built once
@@ -130,7 +130,7 @@
   spec <- .bl_config_spec()
   key <- spec$key[match(env, spec$env)]
   if (is.na(key)) return(NULL)
-  # while bricklayer_llm_config() builds its table the file is read once, not once per setting
+  # while llmcfg() builds its table the file is read once, not once per setting
   v <- (.bl_cfg_state$snap %||% .bl_read_config())[[key]]
   if (is.character(v) && length(v) == 1L && nzchar(trimws(v))) trimws(v) else NULL
 }
@@ -227,9 +227,9 @@
 
 #' Show or save the language-model settings
 #'
-#' Every setting that decides how \code{\link{bricklayer_llm_ask}} reaches a
+#' Every setting that decides how \code{\link{llmask}} reaches a
 #' model, in one place: which route to use; your key and model for each
-#' provider (bring your own key: see \code{\link{bricklayer_llm_providers}});
+#' provider (bring your own key: see \code{\link{llmprvd}});
 #' the address, key and model of your own OpenAI-compatible server; and of a
 #' local or LAN Ollama server. Called with no arguments it only reads: it
 #' returns a table of every setting, its current value, and where that value
@@ -296,9 +296,9 @@
 #'   \code{"saved"} or \code{"default"}), \code{env} (the environment
 #'   variable that overrides it) and \code{help} (what it is for). Returned
 #'   visibly when called with no settings, invisibly after saving.
-#' @seealso \code{\link{bricklayer_llm_providers}} for the providers and
-#'   their variables, \code{\link{bricklayer_llm_status}} for which routes
-#'   are reachable, \code{\link{bricklayer_llm_ask}} which uses these
+#' @seealso \code{\link{llmprvd}} for the providers and
+#'   their variables, \code{\link{llmstat}} for which routes
+#'   are reachable, \code{\link{llmask}} which uses these
 #'   settings.
 #' @examples
 #' # Work in a temporary settings directory so your own settings are
@@ -307,38 +307,38 @@
 #' Sys.setenv(XDG_CONFIG_HOME = tempfile("cfg"))
 #'
 #' # Reading the settings writes nothing.
-#' cfg <- bricklayer_llm_config()
+#' cfg <- llmcfg()
 #' head(cfg[, c("key", "value", "source")])
 #' nrow(cfg)
 #'
 #' # Save a local Ollama model and use it for every request; the key column
 #' # shows where each value now comes from.
-#' bricklayer_llm_config(ollama.model = "qwen3:8b", route = "ollama")
-#' cfg <- bricklayer_llm_config()
+#' llmcfg(ollama.model = "qwen3:8b", route = "ollama")
+#' cfg <- llmcfg()
 #' cfg[cfg$key %in% c("route", "ollama.model"), c("key", "value", "source")]
 #'
 #' # A key is shown only as set or not set.
-#' bricklayer_llm_config(own.url = "http://localhost:1234/v1", own.key = "k-123")
-#' cfg <- bricklayer_llm_config()
+#' llmcfg(own.url = "http://localhost:1234/v1", own.key = "k-123")
+#' cfg <- llmcfg()
 #' cfg$value[cfg$key == "own.key"]
 #'
 #' # Back to the defaults: NULL removes a saved setting.
-#' bricklayer_llm_config(route = NULL, ollama.model = NULL, own.url = NULL,
+#' llmcfg(route = NULL, ollama.model = NULL, own.url = NULL,
 #'                       own.key = NULL)
 #'
 #' # Unknown settings and retired routes are refused.
-#' try(bricklayer_llm_config(colour = "blue"))
-#' try(bricklayer_llm_config(route = "hosted"))
+#' try(llmcfg(colour = "blue"))
+#' try(llmcfg(route = "hosted"))
 #'
 #' if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
 #' \dontrun{
 #' # your Anthropic key and model, and always use them
-#' bricklayer_llm_config(anthropic.key = "sk-ant-...", route = "anthropic")
+#' llmcfg(anthropic.key = "sk-ant-...", route = "anthropic")
 #' # an Ollama server on another machine
-#' bricklayer_llm_config(ollama.url = "http://192.168.1.20:11434", ollama.model = "qwen3:8b")
+#' llmcfg(ollama.url = "http://192.168.1.20:11434", ollama.model = "qwen3:8b")
 #' }
 #' @export
-bricklayer_llm_config <- function(...) {
+llmcfg <- function(...) {
   args <- list(...)
   spec <- .bl_config_spec()
   if (length(args)) {
@@ -423,7 +423,7 @@ bricklayer_llm_config <- function(...) {
   switch(sub_verb,
     show = ,
     list = {
-      show(bricklayer_llm_config())
+      show(llmcfg())
       out(paste0(
         sprintf("\nSaved in %s. ", .bl_config_path()),
         "An environment variable that is set wins over a saved value.\n",
@@ -463,7 +463,7 @@ bricklayer_llm_config <- function(...) {
       v <- if (length(args) >= 2L) paste(args[-1L], collapse = " ") else ""
       if (!nzchar(v) && spec$secret[match(k, spec$key)]) v <- .bl_readline(sprintf("%s: ", k), secret = TRUE)
       if (!nzchar(v)) usage_error(sprintf("usage: %s config set %s VALUE", prog, k))
-      withCallingHandlers(do.call(bricklayer_llm_config, stats::setNames(list(v), k)),
+      withCallingHandlers(do.call(llmcfg, stats::setNames(list(v), k)),
         warning = function(w) {
           out(paste0(prog, ": ", conditionMessage(w), "\n"))
           invokeRestart("muffleWarning")
@@ -472,7 +472,7 @@ bricklayer_llm_config <- function(...) {
     },
     unset = {
       k <- need_key()
-      do.call(bricklayer_llm_config, stats::setNames(list(NULL), k))
+      do.call(llmcfg, stats::setNames(list(NULL), k))
       out(sprintf("%s = %s\n", k, .bl_config_effective(k)))
     },
     path = {
@@ -498,7 +498,7 @@ bricklayer_llm_config <- function(...) {
     a <- .bl_readline(sprintf("%s%s: ", q, if (nzchar(current)) sprintf(" [%s]", current) else ""), secret = secret)
     if (nzchar(a)) a else current
   }
-  set <- function(...) bricklayer_llm_config(...)
+  set <- function(...) llmcfg(...)
   ps <- .bl_llm_presets()
   out("Language-model setup: bring your own key, or run a model locally. Enter keeps the value in [brackets].\n\n")
   out(sprintf("Providers: %s\n", paste(ps$id, collapse = ", ")))
@@ -519,7 +519,7 @@ bricklayer_llm_config <- function(...) {
       if (nzchar(k)) do.call(set, stats::setNames(list(k), paste0(route, ".key")))
     }
     if (!is.null(.bl_preset_key(route))) {
-      have <- tryCatch(bricklayer_llm_models(route), error = function(e) character())
+      have <- tryCatch(llmmdls(route), error = function(e) character())
       if (length(have)) out(sprintf("Models: %s\n", paste(utils::head(have, 30L), collapse = ", ")))
       m <- ask(sprintf("%s model", pr$label), .bl_env1(.bl_preset_model_env(route)) %||%
                  (if (!is.na(pr$default_model)) pr$default_model else ""))
@@ -548,7 +548,7 @@ bricklayer_llm_config <- function(...) {
 
 # `rmbl doctor`: the routes, then the one `ask` would take now.
 .bl_cli_doctor <- function(out) {
-  st <- bricklayer_llm_status()
+  st <- llmstat()
   for (i in seq_len(nrow(st))) {
     out(sprintf("  %-20s %-16s %s\n", st$route[i], st$status[i], st$detail[i]))
   }

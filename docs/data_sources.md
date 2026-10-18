@@ -29,7 +29,7 @@ In `data_provenance.json`, set:
 }
 ```
 
-`lib_data_loader.R::resolve_via_ckan()` handles the rest.
+`lib_data_loader.R::rslvckan()` handles the rest.
 
 ## Not yet supported (PRs welcome)
 
@@ -81,7 +81,7 @@ This is what to do for, e.g., Statistics Canada Research Data Centre extracts.
 The contract:
 
 1. A function `resolve_via_<source>(provenance)` that returns a download URL string or `NULL`.
-2. Wire it into `setup_and_run.R`'s "auto-download" branch (currently calls `resolve_via_ckan()` then `resolve_via_ckan_search()` then falls back to `prov$resource$direct_url`).
+2. Wire it into `setup_and_run.R`'s "auto-download" branch (currently calls `rslvckan()` then `rslvckns()` then falls back to `prov$resource$direct_url`).
 3. Document the required `data_provenance.json` keys for that source in this file.
 
-Keep the function pure: take provenance in, return URL out, no side effects. The downloader (`download_data()`) and SHA256 verifier (`verify_sha256()`) are shared across all sources.
+Keep the function pure: take provenance in, return URL out, no side effects. The downloader (`dldata()`) and SHA256 verifier (`vrfsha256()`) are shared across all sources.

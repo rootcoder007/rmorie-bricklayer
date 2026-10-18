@@ -18,12 +18,12 @@
 #'
 #' @details
 #' The extension is matched case-insensitively: \code{.html} and \code{.htm}
-#' go to [yoy_html()], \code{.pdf} to
-#' [yoy_pdf()], \code{.csv} to
-#' [yoy_csv()], \code{.tsv} and \code{.tab} to
-#' [yoy_tsv()], \code{.json} to
-#' [yoy_json()], \code{.md} and \code{.markdown} to
-#' [yoy_markdown()]. An
+#' go to [yoyhtml()], \code{.pdf} to
+#' [yoypdf()], \code{.csv} to
+#' [yoycsv()], \code{.tsv} and \code{.tab} to
+#' [yoytsv()], \code{.json} to
+#' [yoyjs()], \code{.md} and \code{.markdown} to
+#' [yoymd()]. An
 #' existing file is overwritten. Errors when \code{x} does not come from
 #' [yoy()], when the format cannot be read from the extension (pass
 #' \code{format}), or when \code{format} is not one of the names below; and
@@ -37,31 +37,31 @@
 #' \code{"html"}, \code{"pdf"}, \code{"csv"}, \code{"tsv"}, \code{"json"}
 #' or \code{"markdown"} (case-insensitive).
 #' @param ... Passed to the format's own writer, so the colour,
-#' digit and layout options of [yoy_html()] and
-#' [yoy_pdf()] are available here too.
+#' digit and layout options of [yoyhtml()] and
+#' [yoypdf()] are available here too.
 #' @return \code{file}, invisibly (as returned by the chosen writer).
 #' @seealso
-#' [yoy_html()], [yoy_pdf()],
-#' [yoy_csv()]
+#' [yoyhtml()], [yoypdf()],
+#' [yoycsv()]
 #' @examples
 #' d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
-#' y <- yoy(d, value = "n", period = "year")
+#' y <- yoy(d, value = "n", prd = "year")
 #'
 #' for (ext in c("csv", "tsv", "json", "md", "html")) {
 #'   f <- file.path(tempdir(), paste0("change.", ext))
-#'   yoy_write(y, f)
+#'   yoywr(y, f)
 #'   cat(ext, file.size(f), "bytes\n")
 #'   unlink(f)
 #' }
 #'
 #' # an extension that names no format: say which one
 #' f <- file.path(tempdir(), "change.txt")
-#' yoy_write(y, f, format = "csv", digits = 1)
+#' yoywr(y, f, format = "csv", digits = 1)
 #' readLines(f, n = 3)
 #' unlink(f)
-#' try(yoy_write(y, file.path(tempdir(), "change.xlsx")))
+#' try(yoywr(y, file.path(tempdir(), "change.xlsx")))
 #' @export
-yoy_write <- function(x, file, format = "auto", ...) {
+yoywr <- function(x, file, format = "auto", ...) {
   .rmbl_no_fn(file = file, format = format)
   if (!inherits(x, "rmbl_yoy")) {
     stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
@@ -82,26 +82,26 @@ yoy_write <- function(x, file, format = "auto", ...) {
         basename(file)), call. = FALSE))
   }
   switch(format,
-    html = yoy_html(x, file, ...),
-    pdf = yoy_pdf(x, file, ...),
-    csv = yoy_csv(x, file, ...),
-    tsv = yoy_tsv(x, file, ...),
-    json = yoy_json(x, file, ...),
-    markdown = yoy_markdown(x, file, ...),
+    html = yoyhtml(x, file, ...),
+    pdf = yoypdf(x, file, ...),
+    csv = yoycsv(x, file, ...),
+    tsv = yoytsv(x, file, ...),
+    json = yoyjs(x, file, ...),
+    markdown = yoymd(x, file, ...),
     stop(sprintf("unknown format: %s", format), call. = FALSE))
 }
 
 #' Write a change table as delimited text, JSON or Markdown
 #'
-#' `yoy_csv()` separates fields with a comma and quotes any field that
-#' contains one; `yoy_tsv()` separates with a tab and replaces any tab
+#' `yoycsv()` separates fields with a comma and quotes any field that
+#' contains one; `yoytsv()` separates with a tab and replaces any tab
 #' inside a field, since a tab-separated field cannot contain one and
 #' writing it would shift every column after it.
-#' `yoy_json()` writes an object with `settings` (value, period, grouping,
+#' `yoyjs()` writes an object with `settings` (value, period, grouping,
 #' lag, units, minimum base, confidence level, direction), `summary` (from
-#' [yoy_summary()]) and `rows`, using the package's own
+#' [yoysmry()]) and `rows`, using the package's own
 #' JSON codec.
-#' `yoy_markdown()` writes a pipe table meant for reading: values formatted
+#' `yoymd()` writes a pipe table meant for reading: values formatted
 #' (every numeric column right-aligned),
 #' percentages signed and rounded, the interval as `[lower, upper]`, notes in
 #' the last column, and the settings in an italic line under the table.
@@ -126,11 +126,11 @@ yoy_write <- function(x, file, format = "auto", ...) {
 #' @param digits Integer scalar or `NULL`: decimal places for the percent
 #' columns. For the CSV, TSV and JSON writers `NULL`, the default, writes them
 #' unrounded, which is what a downstream calculation wants; give a number for
-#' a figure meant to be read. For `yoy_markdown()` the default is `1`.
+#' a figure meant to be read. For `yoymd()` the default is `1`.
 #' @param na Character scalar, how to write a missing value (CSV and TSV). The
 #' default empty string is what most readers expect; `"NA"` keeps R's own
 #' spelling.
-#' @param metadata Whether to lead with comment lines
+#' @param meta Whether to lead with comment lines
 #' recording the lag, units, confidence level, base gate and direction. On
 #' by default, because a percent column means different things under
 #' different settings and the file is the only place a later reader can
@@ -145,41 +145,41 @@ yoy_write <- function(x, file, format = "auto", ...) {
 #' character scalar.
 #' @examples
 #' d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
-#' y <- yoy(d, value = "n", period = "year")
+#' y <- yoy(d, value = "n", prd = "year")
 #'
 #' # Straight to text, for inspection.
-#' cat(yoy_csv(y, NULL))
+#' cat(yoycsv(y, NULL))
 #'
 #' # Markdown, for a report.
-#' cat(yoy_markdown(y, NULL))
+#' cat(yoymd(y, NULL))
 #'
 #' # JSON keeps the settings as fields rather than as comments.
-#' substr(yoy_json(y, NULL), 1, 80)
+#' substr(yoyjs(y, NULL), 1, 80)
 #'
 #' # rounded percentages, no metadata line, and R's own NA
-#' cat(yoy_tsv(y, NULL, digits = 1, metadata = FALSE, na = "NA"))
+#' cat(yoytsv(y, NULL, digits = 1, meta = FALSE, na = "NA"))
 #'
 #' # written to a file
 #' f <- tempfile(fileext = ".csv")
-#' yoy_csv(y, f)
-#' read.csv(f, comment.char = "#")[, c("year", "pct_change", "flag")]
+#' yoycsv(y, f)
+#' read.csv(f, comment.char = "#")[, c("year", "pctchg", "flag")]
 #'
 #' # only yoy() results are accepted
-#' try(yoy_csv(d, NULL))
-#' @name yoy_delim
+#' try(yoycsv(d, NULL))
+#' @name yoydelim
 #' @export
-yoy_csv <- function(x, file, digits = NULL, na = "", metadata = TRUE,
+yoycsv <- function(x, file, digits = NULL, na = "", meta = TRUE,
                     comment = "#", ...) {
   .yoy_delim(x, file, sep = ",", digits = digits, na = na,
-             metadata = metadata, comment = comment)
+             metadata = meta, comment = comment)
 }
 
-#' @rdname yoy_delim
+#' @rdname yoydelim
 #' @export
-yoy_tsv <- function(x, file, digits = NULL, na = "", metadata = TRUE,
+yoytsv <- function(x, file, digits = NULL, na = "", meta = TRUE,
                     comment = "#", ...) {
   .yoy_delim(x, file, sep = "\t", digits = digits, na = na,
-             metadata = metadata, comment = comment)
+             metadata = meta, comment = comment)
 }
 
 .yoy_delim <- function(x, file, sep, digits, na, metadata, comment) {
@@ -220,9 +220,9 @@ yoy_tsv <- function(x, file, digits = NULL, na = "", metadata = TRUE,
   invisible(file)
 }
 
-#' @rdname yoy_delim
+#' @rdname yoydelim
 #' @export
-yoy_json <- function(x, file, digits = NULL, pretty = TRUE, ...) {
+yoyjs <- function(x, file, digits = NULL, pretty = TRUE, ...) {
   if (!inherits(x, "rmbl_yoy")) {
     stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
@@ -237,13 +237,13 @@ yoy_json <- function(x, file, digits = NULL, pretty = TRUE, ...) {
   # in particular" rather than "not grouped".
   if (!is.null(m$by)) settings$by <- as.list(m$by)
   settings <- c(settings,
-                list(lag = m$lag, units = m$units, min_base = m$min_base,
-                     conf_level = m$conf_level, direction = m$direction))
+                list(lag = m$lag, units = m$units, minbase = m$minbase,
+                     conflvl = m$conflvl, direction = m$direction))
   obj <- list(
     settings = settings,
-    summary = yoy_summary(x),
+    summary = yoysmry(x),
     rows = d)
-  txt <- as.character(bricklayer_json_to_json(obj, pretty = pretty,
+  txt <- as.character(tojs(obj, pretty = pretty,
                                               auto_unbox = TRUE,
                                               na = "null"))
   if (is.null(file)) return(txt)
@@ -251,9 +251,9 @@ yoy_json <- function(x, file, digits = NULL, pretty = TRUE, ...) {
   invisible(file)
 }
 
-#' @rdname yoy_delim
+#' @rdname yoydelim
 #' @export
-yoy_markdown <- function(x, file, digits = 1L, align = TRUE, ...) {
+yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   if (!inherits(x, "rmbl_yoy")) {
     stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
@@ -261,8 +261,8 @@ yoy_markdown <- function(x, file, digits = 1L, align = TRUE, ...) {
   m <- .yoy_meta(x)
   d <- as.data.frame(x)
   chgcol <- .yoy_change_col(x)
-  pp <- identical(chgcol, "pp_change")
-  vd <- if (is.null(m$value_digits)) 0L else m$value_digits
+  pp <- identical(chgcol, "ppchg")
+  vd <- if (is.null(m$valuedig)) 0L else m$valuedig
   cols <- list()
   if (!is.null(m$by)) {
     for (b in m$by) cols[[b]] <- as.character(d[[b]])
@@ -273,11 +273,11 @@ yoy_markdown <- function(x, file, digits = 1L, align = TRUE, ...) {
   cols[["change"]] <- .yoy_fmt_num(d$change, vd)
   cols[[if (pp) "points" else "change %"]] <-
     .yoy_fmt_pct(d[[chgcol]], digits, pp)
-  if (all(c("pct_lower", "pct_upper") %in% names(d))) {
+  if (all(c("pctlo", "pctup") %in% names(d))) {
     cols[["interval"]] <- ifelse(
-      is.na(d$pct_lower), "",
-      sprintf("[%s, %s]", .yoy_fmt_pct(d$pct_lower, 0L),
-              .yoy_fmt_pct(d$pct_upper, 0L)))
+      is.na(d$pctlo), "",
+      sprintf("[%s, %s]", .yoy_fmt_pct(d$pctlo, 0L),
+              .yoy_fmt_pct(d$pctup, 0L)))
   }
   cols[["note"]] <- ifelse(is.na(d$flag), "", d$flag)
   # a pipe inside a cell would end the cell
@@ -337,14 +337,14 @@ yoy_markdown <- function(x, file, digits = 1L, align = TRUE, ...) {
   if (identical(m$units, "count")) {
     bits <- c(bits,
               sprintf("interval: %.0f%% exact rate ratio",
-                      100 * m$conf_level))
-    if (isTRUE(m$min_base > 0)) bits <- c(bits, sprintf("bases below %g noted", m$min_base))
+                      100 * m$conflvl))
+    if (isTRUE(m$minbase > 0)) bits <- c(bits, sprintf("bases below %g noted", m$minbase))
   }
   if (identical(m$units, "percent")) {
     bits <- c(bits, "change is in percentage points")
   }
   if (!identical(m$direction, "neutral")) {
-    bits <- c(bits, sprintf("direction: %s", gsub("_", " ", m$direction)))
+    bits <- c(bits, sprintf("direction: %s is better", m$direction))
   }
   paste(bits, collapse = "; ")
 }
@@ -357,8 +357,8 @@ yoy_markdown <- function(x, file, digits = 1L, align = TRUE, ...) {
   d <- as.data.frame(x)
   if (!is.null(digits)) {
     digits <- .rmbl_num(digits, "digits", integer = TRUE)[1L]
-    for (nm in intersect(c("pct_change", "pp_change", "pct_lower",
-                           "pct_upper"), names(d))) {
+    for (nm in intersect(c("pctchg", "ppchg", "pctlo",
+                           "pctup"), names(d))) {
       d[[nm]] <- round(d[[nm]], digits)
     }
   }

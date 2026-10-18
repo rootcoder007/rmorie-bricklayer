@@ -7,13 +7,13 @@
 # data.rmorie.com: personal, issued by the GitHub / emailed-code sign-in at
 # data.rmorie.com/auth or on request at https://www.rmorie.com/access, stored
 # in a credentials file the other MORIE packages read as well; its sign-in addresses come from the signed services
-# document (bricklayer_services()). Every request goes through the package's own
+# document (svcs()). Every request goes through the package's own
 # libcurl binding.
 
 # $XDG_CONFIG_HOME/morie/credentials.json, the file the morie (Python)
 # and rmorie (R) packages read and write too, so one sign-in serves all.
 # Reading it is always allowed; it is only ever written by an
-# explicit sign-in (bricklayer_llm_login()), never by examples or tests,
+# explicit sign-in (dlogin()), never by examples or tests,
 # which point XDG_CONFIG_HOME at a temporary directory.
 .bl_credentials_path <- function() {
   base <- trimws(Sys.getenv("XDG_CONFIG_HOME", unset = ""))
@@ -40,7 +40,7 @@
 .bl_credentials_object <- function(p, simplify = TRUE) {
   txt <- .bl_read_text(p)
   if (!startsWith(trimws(txt), "{")) return(NULL)  # an array or a scalar is not the credentials object
-  out <- tryCatch(bricklayer_json_from_json(txt, simplifyVector = simplify, bigint_as_char = TRUE),
+  out <- tryCatch(fromjs(txt, simplifyVector = simplify, bigint_as_char = TRUE),
                   error = function(e) NULL)
   if (!is.list(out)) return(NULL)
   out
@@ -169,7 +169,7 @@
 .bl_credentials_text_ok <- function(txt) {
   mem <- .bl_json_top_members(txt)
   if (is.null(mem)) return(FALSE)
-  obj <- tryCatch(bricklayer_json_from_json(txt, simplifyVector = FALSE, bigint_as_char = TRUE),
+  obj <- tryCatch(fromjs(txt, simplifyVector = FALSE, bigint_as_char = TRUE),
                   error = function(e) NULL)
   if (!is.list(obj) || (length(obj) && is.null(names(obj)))) return(FALSE)
   keys <- vapply(mem, function(m) m$key, "")
@@ -182,7 +182,7 @@
   if (is.null(mem)) stop("the credentials file is not a JSON object", call. = FALSE)
   nch <- nchar(txt)
   hit <- Filter(function(m) identical(m$key, key), mem)
-  lit <- if (is.null(value)) NULL else as.character(bricklayer_json_to_json(value, auto_unbox = TRUE))
+  lit <- if (is.null(value)) NULL else as.character(tojs(value, auto_unbox = TRUE))
   if (length(hit)) {
     m <- hit[[1L]]
     if (is.null(value)) {
@@ -216,7 +216,7 @@
   # through the one private writer: a fresh temporary name each time (a planted llm.json.tmp
   # symlink had its target overwritten with the keys; review of 29a55d8, L5), created empty and
   # made 0600 before a byte is written
-  .bl_write_private_text(p, paste0(bricklayer_json_to_json(data, auto_unbox = TRUE, pretty = TRUE, null = "null"),
+  .bl_write_private_text(p, paste0(tojs(data, auto_unbox = TRUE, pretty = TRUE, null = "null"),
                                    "\n"))
   invisible(p)
 }
@@ -234,7 +234,7 @@
   if (!is.null(user)) new <- .bl_credentials_text_set(new, "hosted_user", user)
   new <- .bl_credentials_text_set(new, "hosted_base_url", .bl_key_address())
   back <- if (.bl_credentials_text_ok(new)) {
-    bricklayer_json_from_json(new, simplifyVector = FALSE, bigint_as_char = TRUE)
+    fromjs(new, simplifyVector = FALSE, bigint_as_char = TRUE)
   } else {
     NULL
   }
@@ -339,7 +339,7 @@
 # How to get a key, in one line.
 .bl_access_hint <- function() {
   sprintf(paste("`%s login` signs in with GitHub or an emailed code; a key you were given:",
-                "`%s login --token` and paste it when asked (R: bricklayer_llm_login(token = )); or ask at %s"),
+                "`%s login --token` and paste it when asked (R: dlogin(token = )); or ask at %s"),
           .bl_prog(), .bl_prog(), .rmbl_services_data()$request_access %||% "https://www.rmorie.com/access")
 }
 
@@ -378,7 +378,7 @@
   if (!.bl_loopback_url(v)) .rmbl_check_public_url(v, "MORIE_LLM_BASE_URL")
   v
 }
-# An environment variable, else the value saved under it by bricklayer_llm_config().
+# An environment variable, else the value saved under it by llmcfg().
 .bl_env1 <- function(name) {
   v <- trimws(Sys.getenv(name, unset = ""))
   if (nzchar(v)) v else .bl_config_value(name)
@@ -585,8 +585,8 @@
 
 #' The language-model route that would answer
 #'
-#' Reports which route \code{\link{bricklayer_llm_ask}} and
-#' \code{\link{bricklayer_llm_chat}} would take right now, without sending a
+#' Reports which route \code{\link{llmask}} and
+#' \code{\link{llmchat}} would take right now, without sending a
 #' prompt anywhere. Use it to check, before asking a question, that the
 #' question would go to the server you expect (your own endpoint, a provider
 #' whose key is set, or a local Ollama server) and which model it would use.
@@ -595,7 +595,7 @@
 #' The automatic order is: an OpenAI-compatible endpoint of your own
 #' (\code{MORIE_LLM_BASE_URL}, or \code{own.url} saved with
 #' \code{rmoriebricklayer config set}); then every provider of
-#' \code{\link{bricklayer_llm_providers}} whose key is set, in the order of
+#' \code{\link{llmprvd}} whose key is set, in the order of
 #' that table; then a local Ollama server (\code{OLLAMA_HOST}, default
 #' \code{http://localhost:11434}) when it answers with at least one pulled model
 #' or \code{OLLAMA_MODEL} is set. A saved route (\code{MORIE_LLM_ROUTE} or
@@ -618,7 +618,7 @@
 #'   uses the saved route, else the automatic order; \code{"auto"} uses the
 #'   automatic order and ignores a saved route; \code{"own"},
 #'   \code{"ollama"} or a provider id from the \code{id} column of
-#'   \code{\link{bricklayer_llm_providers}} (such as \code{"anthropic"})
+#'   \code{\link{llmprvd}} (such as \code{"anthropic"})
 #'   asks about that one route only.
 #' @return \code{NULL} when no route is set up (or the named one is not
 #'   available), else a list of four elements: \code{route} (character, the
@@ -628,8 +628,8 @@
 #'   \code{model} (character, or \code{NULL} when no model is chosen) and
 #'   \code{base} (character, the base address requests go to, without a
 #'   trailing \code{/v1} for your own endpoint).
-#' @seealso \code{\link{bricklayer_llm_status}} for every route at once,
-#'   \code{\link{bricklayer_llm_providers}} for the provider ids.
+#' @seealso \code{\link{llmstat}} for every route at once,
+#'   \code{\link{llmprvd}} for the provider ids.
 #' @examples
 #' # keep the examples away from your real settings and from the network
 #' old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST",
@@ -638,21 +638,21 @@
 #' Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
 #'
 #' # Ollama switched off: that route is not available
-#' bricklayer_llm_route_info("ollama")
+#' llmrte("ollama")
 #'
 #' # an OpenAI-compatible server of your own on this machine (not contacted here)
 #' Sys.setenv(MORIE_LLM_BASE_URL = "http://localhost:8080/v1", MORIE_LLM_MODEL = "llama3")
-#' str(bricklayer_llm_route_info())
+#' str(llmrte())
 #'
 #' # the retired hosted tier, and a route name that does not exist
-#' try(bricklayer_llm_route_info("hosted"))
-#' try(bricklayer_llm_route_info("nope"))
+#' try(llmrte("hosted"))
+#' try(llmrte("nope"))
 #'
 #' for (v in names(old)) {
 #'   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 #' }
 #' @export
-bricklayer_llm_route_info <- function(route = NULL) {
+llmrte <- function(route = NULL) {
   if (identical(route, "hosted")) stop(.bl_hosted_retired(), call. = FALSE)
   if (!is.null(route)) route <- .rmbl_arg(route, c("auto", .bl_llm_route_names()))
   rt <- .bl_llm_route(route)
@@ -663,22 +663,22 @@ bricklayer_llm_route_info <- function(route = NULL) {
 #' A conversation with a language model
 #'
 #' Sends a whole conversation (system, user and earlier assistant turns) to
-#' the route \code{\link{bricklayer_llm_ask}} would take, and returns the
+#' the route \code{\link{llmask}} would take, and returns the
 #' model's next reply. Use it when you manage the conversation yourself, for
 #' example to keep a multi-turn exchange or to give the model earlier answers
-#' as context. Unlike \code{bricklayer_llm_ask()} it adds nothing to the
+#' as context. Unlike \code{llmask()} it adds nothing to the
 #' conversation (no help pages, no tools) and it never reads or writes the
 #' saved-answer cache.
 #'
 #' @details
-#' The route is resolved exactly as in \code{\link{bricklayer_llm_route_info}}.
+#' The route is resolved exactly as in \code{\link{llmrte}}.
 #' The turns are sent in the provider's own wire format (the OpenAI chat
 #' completions format for most providers, your own endpoint and Ollama;
 #' Anthropic's Messages API; Google's Gemini \code{generateContent}). One
 #' request is made, through the package's own libcurl binding, and waits at
-#' most \code{timeout} seconds.
+#' most \code{tmout} seconds.
 #'
-#' Errors, before anything is sent: \code{messages} is not a non-empty list
+#' Errors, before anything is sent: \code{msgs} is not a non-empty list
 #' of turns each with a single \code{role} among \code{"system"},
 #' \code{"user"} and \code{"assistant"} and a single non-missing character
 #' \code{content}; \code{route = "hosted"} or an unknown route; no route is
@@ -687,14 +687,14 @@ bricklayer_llm_route_info <- function(route = NULL) {
 #' rejects the key (HTTP 401 or 403), or answers with an error. The key is
 #' redacted from any error text a server echoes back.
 #'
-#' @param messages A non-empty list of turns, each a list with two
+#' @param msgs A non-empty list of turns, each a list with two
 #'   character scalars: \code{role}, one of \code{"system"}, \code{"user"}
 #'   or \code{"assistant"}, and \code{content}, the text of that turn. The
 #'   last turn is normally a \code{"user"} turn. Other elements of a turn are
 #'   dropped.
-#' @inheritParams bricklayer_llm_ask
+#' @inheritParams llmask
 #' @return A character scalar: the text of the model's reply.
-#' @seealso \code{\link{bricklayer_llm_ask}} for one question with the
+#' @seealso \code{\link{llmask}} for one question with the
 #'   package help at hand.
 #' @examples
 #' old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST"), unset = NA)
@@ -708,10 +708,10 @@ bricklayer_llm_route_info <- function(route = NULL) {
 #' str(turns)
 #'
 #' # a malformed turn is refused before anything is sent
-#' try(bricklayer_llm_chat(list("Name one type of survey weight.")))
+#' try(llmchat(list("Name one type of survey weight.")))
 #'
 #' # with no route set up the error says what to set up
-#' try(bricklayer_llm_chat(turns, route = "ollama"))
+#' try(llmchat(turns, route = "ollama"))
 #'
 #' for (v in names(old)) {
 #'   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
@@ -719,41 +719,41 @@ bricklayer_llm_route_info <- function(route = NULL) {
 #' \dontrun{
 #' # needs a key or a local model, and the network
 #' Sys.setenv(ANTHROPIC_API_KEY = "...")
-#' bricklayer_llm_chat(turns)
-#' bricklayer_llm_chat(c(turns, list(
+#' llmchat(turns)
+#' llmchat(c(turns, list(
 #'   list(role = "assistant", content = "A design weight."),
 #'   list(role = "user", content = "And a second one?")
 #' )))
 #' }
 #' @export
-bricklayer_llm_chat <- function(messages, model = NULL, route = NULL, timeout = 120) {
-  ok <- is.list(messages) && length(messages) && all(vapply(messages, function(m) {
+llmchat <- function(msgs, model = NULL, route = NULL, tmout = 120) {
+  ok <- is.list(msgs) && length(msgs) && all(vapply(msgs, function(m) {
     is.list(m) && is.character(m$role) && length(m$role) == 1L && m$role %in% c("system", "user", "assistant") &&
       is.character(m$content) && length(m$content) == 1L && !is.na(m$content)
   }, logical(1)))
-  if (!ok) stop("`messages` must be a list of list(role = \"system\"|\"user\"|\"assistant\", content = text)",
+  if (!ok) stop("`msgs` must be a list of list(role = \"system\"|\"user\"|\"assistant\", content = text)",
                 call. = FALSE)
   if (identical(route, "hosted")) stop(.bl_hosted_retired(), call. = FALSE)
   if (!is.null(route)) route <- .rmbl_arg(route, c("auto", .bl_llm_route_names()))
-  timeout <- .rmbl_num(timeout, "timeout")
+  tmout <- .rmbl_num(tmout, "tmout")
   rt <- .bl_llm_route(route)
   if (is.null(rt)) stop(.bl_no_route_message(route), call. = FALSE)
   model <- model %||% rt$model
   if (is.null(model) || !nzchar(model)) stop(.bl_no_model_message(rt), call. = FALSE)
-  .bl_llm_chat(rt, model, lapply(messages, function(m) list(role = m$role, content = m$content)),
-               timeout = timeout)$text
+  .bl_llm_chat(rt, model, lapply(msgs, function(m) list(role = m$role, content = m$content)),
+               timeout = tmout)$text
 }
 
 #' Models a language-model route offers
 #'
 #' Asks the provider (or your own server, or a local Ollama server) which
 #' models your key can use, so you can pick one for the \code{model}
-#' argument of \code{\link{bricklayer_llm_ask}} or save it with
+#' argument of \code{\link{llmask}} or save it with
 #' \code{rmoriebricklayer config set PROVIDER.model NAME}. The request goes
 #' through the package's own libcurl binding; no prompt is sent.
 #'
 #' @details
-#' The route is resolved as in \code{\link{bricklayer_llm_route_info}}. The
+#' The route is resolved as in \code{\link{llmrte}}. The
 #' list comes from the provider's model endpoint: \code{GET /models} in the
 #' OpenAI format (own endpoint and most providers), \code{GET /v1/models}
 #' for Anthropic, \code{GET /v1beta/models} for Gemini (only models that
@@ -761,21 +761,21 @@ bricklayer_llm_chat <- function(messages, model = NULL, route = NULL, timeout = 
 #' Ollama. Perplexity publishes no model list, so its route returns an empty
 #' vector. A failed request, a non-200 answer or a reply that is not JSON
 #' also gives an empty vector, not an error, so check
-#' \code{\link{bricklayer_llm_status}} when the list is unexpectedly empty.
+#' \code{\link{llmstat}} when the list is unexpectedly empty.
 #' Names are cleaned of control characters before they are returned.
 #'
 #' Errors only while resolving the route: \code{"hosted"}, an unknown
-#' route, a provider named with no key set, or a \code{timeout} that is not
+#' route, a provider named with no key set, or a \code{tmout} that is not
 #' a single positive number.
 #'
 #' @param route Character scalar or \code{NULL} (the default: the route
-#'   \code{\link{bricklayer_llm_ask}} would take). Otherwise \code{"auto"},
+#'   \code{\link{llmask}} would take). Otherwise \code{"auto"},
 #'   \code{"own"}, \code{"ollama"} or a provider id from
-#'   \code{\link{bricklayer_llm_providers}}.
-#' @param timeout Numeric scalar, seconds to wait for the model list;
+#'   \code{\link{llmprvd}}.
+#' @param tmout Numeric scalar, seconds to wait for the model list;
 #'   default \code{15}.
 #' @return A character vector of model ids (possibly empty) with two
-#'   attributes: \code{"default"}, the model \code{bricklayer_llm_ask()} uses
+#'   attributes: \code{"default"}, the model \code{llmask()} uses
 #'   when \code{model} is not given (character, or \code{NULL} when none is
 #'   chosen), and \code{"route"}, the readable name of the route asked
 #'   (such as \code{"OpenAI"} or \code{"local Ollama"}; \code{NULL} when no
@@ -785,37 +785,37 @@ bricklayer_llm_chat <- function(messages, model = NULL, route = NULL, timeout = 
 #' Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
 #'
 #' # no route set up: an empty vector, nothing contacted
-#' m <- bricklayer_llm_models(route = "ollama")
+#' m <- llmmdls(route = "ollama")
 #' length(m)
 #' attributes(m)
 #'
 #' # a provider named without its key is an error
-#' try(bricklayer_llm_models(route = "anthropic"))
+#' try(llmmdls(route = "anthropic"))
 #'
 #' for (v in names(old)) {
 #'   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 #' }
 #' \dontrun{
 #' # with a key set, the provider is asked (network)
-#' m <- bricklayer_llm_models(route = "openai", timeout = 10)
+#' m <- llmmdls(route = "openai", tmout = 10)
 #' head(m)
 #' attr(m, "default")
 #' }
 #' @export
-bricklayer_llm_models <- function(route = NULL, timeout = 15) {
+llmmdls <- function(route = NULL, tmout = 15) {
   if (!is.null(route) && (!is.character(route) || length(route) != 1L || is.na(route))) {
     stop("`route` must be a single route name, or NULL", call. = FALSE)
   }
-  timeout <- .rmbl_num(timeout, "timeout")
+  tmout <- .rmbl_num(tmout, "tmout")
   rt <- .bl_llm_route(route)
   if (is.null(rt)) return(structure(character(), default = NULL, route = NULL))
-  ids <- .bl_llm_list_models(rt, timeout) %||% character()
+  ids <- .bl_llm_list_models(rt, tmout) %||% character()
   structure(ids, default = rt$model, route = rt$name)
 }
 
 #' The language-model providers a key can be brought for
 #'
-#' Lists every provider \code{\link{bricklayer_llm_ask}} can reach with your
+#' Lists every provider \code{\link{llmask}} can reach with your
 #' own key: the environment variable that holds the key, the address the key
 #' and prompts are sent to, the wire format used, and whether a key is set on
 #' this machine. Use it to find the variable name to set for a provider, or
@@ -840,9 +840,9 @@ bricklayer_llm_models <- function(route = NULL, timeout = 15) {
 #'   none), \code{default_model} (character, the model used when none is
 #'   chosen, \code{NA} when the provider has no default) and \code{key_set}
 #'   (logical, whether a key is set here).
-#' @seealso \code{\link{bricklayer_llm_status}}, \code{\link{bricklayer_llm_route_info}}.
+#' @seealso \code{\link{llmstat}}, \code{\link{llmrte}}.
 #' @examples
-#' p <- bricklayer_llm_providers()
+#' p <- llmprvd()
 #' p[, c("id", "key_env", "key_set")]
 #'
 #' # the providers that use the Anthropic or Gemini wire format
@@ -851,7 +851,7 @@ bricklayer_llm_models <- function(route = NULL, timeout = 15) {
 #' # providers with a default model
 #' p[!is.na(p$default_model), c("id", "default_model")]
 #' @export
-bricklayer_llm_providers <- function() {
+llmprvd <- function() {
   ps <- .bl_llm_presets()
   ps$key_set <- vapply(ps$id, function(i) !is.null(.bl_preset_key(i)), logical(1), USE.NAMES = FALSE)
   ps$models <- NULL
@@ -899,7 +899,7 @@ bricklayer_llm_providers <- function() {
 # parsed reply (NULL when the body is not JSON). `local` is the own-endpoint /
 # Ollama relaxation described above.
 .bl_post_json <- function(url, payload, timeout = 30, headers = NULL, local = FALSE) {
-  raw <- charToRaw(enc2utf8(bricklayer_json_to_json(payload,
+  raw <- charToRaw(enc2utf8(tojs(payload,
     auto_unbox = TRUE
   )))
   res <- if (isTRUE(local)) {
@@ -989,7 +989,7 @@ bricklayer_llm_providers <- function() {
   if (.bl_key_dense(model) || grepl(paste0("^(sk-|sk_|AIza|gsk_|xai-|hf_|r8_|pplx-|fw_|csk-|ghp_|gho_|ghs_|",
                                            "github_pat_|glpat-|nvapi-)[A-Za-z0-9_-]{12,}"), model)) {
     stop(paste("`model` looks like a key, so it is not sent: a model is a name such as gpt-4o-mini;",
-               "a key is saved with bricklayer_llm_config()"), call. = FALSE)
+               "a key is saved with llmcfg()"), call. = FALSE)
   }
   model
 }
@@ -1009,7 +1009,7 @@ bricklayer_llm_providers <- function() {
 #'     network); a host name over plain http is refused. It is not probed, so a
 #'     configured endpoint that is down is an error, not a silent hop elsewhere;
 #'   \item a provider whose key is set (see
-#'     \code{\link{bricklayer_llm_providers}}): OpenAI, Anthropic, Google
+#'     \code{\link{llmprvd}}): OpenAI, Anthropic, Google
 #'     Gemini, OpenRouter, Groq, Together, Fireworks, DeepSeek, Mistral, xAI,
 #'     Cerebras, Perplexity, Hugging Face, OpenCode Zen, Cohere and NVIDIA,
 #'     each through its own documented API with its own key variable
@@ -1018,12 +1018,12 @@ bricklayer_llm_providers <- function() {
 #'     \code{http://localhost:11434}), model \code{OLLAMA_MODEL} or the first
 #'     one pulled; \code{OLLAMA_HOST=off} skips it.
 #' }
-#' \code{\link{bricklayer_llm_status}} shows what is set up and which route
+#' \code{\link{llmstat}} shows what is set up and which route
 #' a question would take.
 #'
 #' @details
 #' With \code{docs = TRUE} (the default) the model is given the help of the
-#' packages named in \code{packages} (read from the help pages installed
+#' packages named in \code{pkgs} (read from the help pages installed
 #' here) and may call five read-only tools before it answers:
 #' \code{search_docs}, \code{get_help}, \code{get_examples},
 #' \code{list_datasets} and \code{get_vignette}. How much help goes into the
@@ -1039,27 +1039,27 @@ bricklayer_llm_providers <- function() {
 #' it answers with code for you to run.
 #'
 #' With \code{docs = TRUE} the whole exchange is given at most three times
-#' \code{timeout}; a lookup round that would start after that is not
+#' \code{tmout}; a lookup round that would start after that is not
 #' started and the call errors. With \code{docs = FALSE} one request is made
-#' with \code{system_prompt} (when given) and \code{prompt}.
+#' with \code{syspro} (when given) and \code{prompt}.
 #'
 #' Saved answers: a person at a terminal (the command line with a terminal
 #' on both stdin and stdout) or in an interactive GUI session gets a saved
 #' answer back at once when the question (spacing aside; case counts),
 #' route, address, model, packages and their versions, and
-#' \code{system_prompt} all match. Answers are kept 30 days
-#' (\code{options(rmoriebricklayer.llm_cache_days)}), at most the 200
-#' newest (\code{options(rmoriebricklayer.llm_cache_max)}), as owner-only
+#' \code{syspro} all match. Answers are kept 30 days
+#' (\code{options(rmoriebricklayer.llmcachedays)}), at most the 200
+#' newest (\code{options(rmoriebricklayer.llmcachemax)}), as owner-only
 #' files under \code{tools::R_user_dir("rmoriebricklayer", "cache")}. The
 #' first save in a session says where answers go. Nothing is saved from a
 #' script, a pipeline, a test run, \code{R CMD check}, or with
 #' \code{options(morie.quiet = TRUE)}; \code{MORIE_LLM_CACHE=off} or
-#' \code{options(rmoriebricklayer.llm_cache = FALSE)} turns saving off.
+#' \code{options(rmoriebricklayer.llmcache = FALSE)} turns saving off.
 #'
 #' Errors: \code{prompt} is not a single non-empty string; \code{fresh} or
 #' \code{docs} is not \code{TRUE} or \code{FALSE}; \code{route = "hosted"}
 #' or an unknown route; no route is set up (the message lists what to set);
-#' no model is chosen for the route; \code{packages} names a package that is
+#' no model is chosen for the route; \code{pkgs} names a package that is
 #' not installed; and, after sending, an unreachable server, a rejected key
 #' (HTTP 401 or 403) or an error reply. The key is redacted from any error
 #' text a server echoes back.
@@ -1070,11 +1070,11 @@ bricklayer_llm_providers <- function() {
 #'   \code{NULL} uses the route's own choice: \code{MORIE_LLM_MODEL}
 #'   for your own endpoint, \code{OLLAMA_MODEL} or the first pulled model
 #'   for Ollama, the saved \code{PROVIDER.model} or the provider's default
-#'   model (see \code{\link{bricklayer_llm_providers}}).
-#' @param timeout Numeric scalar, seconds to wait for each reply; default
+#'   model (see \code{\link{llmprvd}}).
+#' @param tmout Numeric scalar, seconds to wait for each reply; default
 #'   \code{120}. With \code{docs = TRUE} the whole exchange gets at most
 #'   three times this.
-#' @param system_prompt Character scalar or \code{NULL} (the default): extra
+#' @param syspro Character scalar or \code{NULL} (the default): extra
 #'   instructions sent as the system message (added to the package's own
 #'   instructions when \code{docs = TRUE}).
 #' @param route Character scalar or \code{NULL} (the default: the saved
@@ -1084,7 +1084,7 @@ bricklayer_llm_providers <- function() {
 #' @param docs Logical scalar, default \code{TRUE}: give the model the
 #'   packages' help and the lookup tools (see Details). \code{FALSE} sends
 #'   the prompt alone.
-#' @param packages Character vector or \code{NULL} (the default): the
+#' @param pkgs Character vector or \code{NULL} (the default): the
 #'   installed packages whose help the model gets. \code{NULL} means
 #'   \code{"rmoriebricklayer"}, or the comma-separated list in the
 #'   environment variable \code{RMBL_PACKAGES} (which a package built on
@@ -1095,21 +1095,21 @@ bricklayer_llm_providers <- function() {
 #'   new answer in its place.
 #' @return A character scalar with the reply. A saved answer carries the
 #'   time it was saved as attribute \code{cached}.
-#' @seealso \code{\link{bricklayer_llm_chat}} for a conversation without the
-#'   help; \code{\link{bricklayer_llm_status}} and
-#'   \code{\link{bricklayer_llm_route_info}} to see where a question would go.
+#' @seealso \code{\link{llmchat}} for a conversation without the
+#'   help; \code{\link{llmstat}} and
+#'   \code{\link{llmrte}} to see where a question would go.
 #' @examples
 #' old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST"), unset = NA)
 #' Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
 #'
 #' # arguments are checked before any route is resolved
-#' try(bricklayer_llm_ask(c("two", "questions")))
+#' try(llmask(c("two", "questions")))
 #'
 #' # a provider named explicitly without its key
-#' try(bricklayer_llm_ask("What is a capsule?", route = "anthropic"))
+#' try(llmask("What is a capsule?", route = "anthropic"))
 #'
 #' # no route set up: the error lists what to set up
-#' try(bricklayer_llm_ask("What is a capsule?", route = "ollama", docs = FALSE))
+#' try(llmask("What is a capsule?", route = "ollama", docs = FALSE))
 #'
 #' for (v in names(old)) {
 #'   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
@@ -1117,14 +1117,14 @@ bricklayer_llm_providers <- function() {
 #' \dontrun{
 #' # needs your own key or a local model, and the network
 #' Sys.setenv(ANTHROPIC_API_KEY = "...")
-#' bricklayer_llm_ask("What does a SHA-256 provenance record protect against?")
-#' bricklayer_llm_ask("Explain an E-value of 2.1", route = "ollama")
-#' bricklayer_llm_ask("Summarise Benford's law in two lines", docs = FALSE,
-#'                    system_prompt = "You are terse.")
+#' llmask("What does a SHA-256 provenance record protect against?")
+#' llmask("Explain an E-value of 2.1", route = "ollama")
+#' llmask("Summarise Benford's law in two lines", docs = FALSE,
+#'                    syspro = "You are terse.")
 #' }
 #' @export
-bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
-                               system_prompt = NULL, route = NULL, docs = TRUE, packages = NULL,
+llmask <- function(prompt, model = NULL, tmout = 120,
+                               syspro = NULL, route = NULL, docs = TRUE, pkgs = NULL,
                                fresh = FALSE) {
   prompt <- .rmbl_string1(prompt, "prompt")
   .bl_check_flag(fresh, "fresh")
@@ -1137,20 +1137,20 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
   if (is.null(model) || !nzchar(model)) stop(.bl_no_model_message(rt), call. = FALSE)
   .bl_check_flag(docs, "docs")
   if (docs) {
-    pk <- packages %||% .bl_kn_default_packages()
-    if (!is.character(pk) || !length(pk) || anyNA(pk)) stop("`packages` must name installed packages", call. = FALSE)
+    pk <- pkgs %||% .bl_kn_default_packages()
+    if (!is.character(pk) || !length(pk) || anyNA(pk)) stop("`pkgs` must name installed packages", call. = FALSE)
     missing <- pk[!vapply(pk, function(x) nzchar(system.file(package = x)), logical(1))]
     if (length(missing)) stop(sprintf("not installed: %s", paste(missing, collapse = ", ")), call. = FALSE)
   }
-  key <- .bl_answer_key(rt, model, prompt, if (docs) pk, system_prompt)
+  key <- .bl_answer_key(rt, model, prompt, if (docs) pk, syspro)
   if (!fresh && !is.null(hit <- .bl_answer_get(key, prompt))) return(hit)
   ans <- if (docs) {
-    .bl_llm_assist(rt, model, prompt, pk, system_extra = system_prompt, timeout = timeout)
+    .bl_llm_assist(rt, model, prompt, pk, system_extra = syspro, timeout = tmout)
   } else {
     msgs <- list()
-    if (!is.null(system_prompt)) msgs[[1L]] <- list(role = "system", content = system_prompt)
+    if (!is.null(syspro)) msgs[[1L]] <- list(role = "system", content = syspro)
     msgs[[length(msgs) + 1L]] <- list(role = "user", content = prompt)
-    .bl_llm_chat(rt, model, msgs, timeout = timeout)$text
+    .bl_llm_chat(rt, model, msgs, timeout = tmout)$text
   }
   .bl_answer_put(key, prompt, model, ans)
   ans
@@ -1162,11 +1162,11 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
 #' \code{$XDG_CONFIG_HOME/morie/credentials.json} (owner-only; the file
 #' the \code{morie}, \code{rmorie} and \code{rmoriedata} packages read too,
 #' so one sign-in serves all of them). The key opens the curated tables
-#' (\code{\link{bricklayer_data_load}}); it is not used for language models,
-#' which run on your own key or a local model (\code{\link{bricklayer_llm_ask}}).
+#' (\code{\link{dload}}); it is not used for language models,
+#' which run on your own key or a local model (\code{\link{llmask}}).
 #' Keys are personal: the GitHub or emailed-code sign-in issues one, or ask at
 #' \url{https://www.rmorie.com/access/}.
-#' The sign-in addresses come from \code{\link{bricklayer_services}}. Three ways in:
+#' The sign-in addresses come from \code{\link{svcs}}. Three ways in:
 #' \itemize{
 #'   \item \code{token}: a key you already have, from the website or an
 #'     email. It is checked with the service first and stored only when
@@ -1190,11 +1190,11 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
 #' when unset it is \code{~/.config/morie/credentials.json}.
 #'
 #' The sign-in service address is the signed services document's
-#' \code{data.auth_url} (see \code{\link{bricklayer_services}}), or
+#' \code{data.auth_url} (see \code{\link{svcs}}), or
 #' \code{MORIE_HOSTED_AUTH_URL} when set (it must be a public \code{https}
 #' address). The device flow polls every \code{interval} seconds the
 #' service names (5 by default), prints a progress line about every 30
-#' seconds, and stops with an error after \code{poll_max_seconds}.
+#' seconds, and stops with an error after \code{pollmaxsec}.
 #'
 #' Errors: an empty \code{token}; a \code{token} the data service does not
 #' accept, or no answer from it (nothing is stored); an \code{email} that is
@@ -1210,25 +1210,25 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
 #' @param code Character scalar or \code{NULL} (the default): the emailed
 #'   code when you already have it; \code{NULL} sends a new code and asks
 #'   for it at the console. Used only with \code{email}.
-#' @param open_browser Logical scalar, default \code{interactive()}: open
+#' @param openbro Logical scalar, default \code{interactive()}: open
 #'   the GitHub page for the device flow in the system browser (only a
 #'   public \code{https} address is opened).
-#' @param poll_max_seconds Numeric scalar, default \code{600}: how many
+#' @param pollmaxsec Numeric scalar, default \code{600}: how many
 #'   seconds the device flow waits for you to approve the sign-in.
-#' @param accept_terms Logical scalar, default \code{FALSE}: \code{TRUE}
+#' @param accter Logical scalar, default \code{FALSE}: \code{TRUE}
 #'   accepts the data access terms (read them at
 #'   \url{https://data.rmorie.com/terms}) without the console asking. A new
 #'   key is issued only once they are accepted, here or at the prompt.
 #' @param name Character scalar or \code{NULL}: your name (asked for when
 #'   \code{NULL}). Required for a new key.
-#' @param affiliation Character scalar or \code{NULL}: your university,
+#' @param affil Character scalar or \code{NULL}: your university,
 #'   employer or organisation (optional; asked for when \code{NULL}).
-#' @param purpose Character scalar or \code{NULL}: why you need the data, a
+#' @param purp Character scalar or \code{NULL}: why you need the data, a
 #'   sentence or two (asked for when \code{NULL}). Required for a new key.
-#' @param restricted Logical scalar or \code{NULL}: \code{TRUE} also accepts
+#' @param restr Logical scalar or \code{NULL}: \code{TRUE} also accepts
 #'   Schedule B of the terms, which opens the restricted tables (ICPSR, NCVS
 #'   38604, A2AJ case law); \code{NULL} asks at the console.
-#' @param supervisor_name,supervisor_role,supervisor_email Character scalars
+#' @param supnm,suprole,supemail Character scalars
 #'   or \code{NULL}: the supervisor, department chair, director or
 #'   coordinator who knows of your use, their role (one of
 #'   \code{"supervisor"}, \code{"chair"}, \code{"director"},
@@ -1236,34 +1236,34 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
 #'   \code{restricted = TRUE}; asked for when \code{NULL}.
 #' @return The key (character scalar), invisibly. A message names the file
 #'   it was stored in.
-#' @seealso \code{\link{bricklayer_llm_logout}} to remove the key.
+#' @seealso \code{\link{dlogout}} to remove the key.
 #' @examples
 #' old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)
 #' Sys.setenv(XDG_CONFIG_HOME = tempfile())   # never touch your real credentials
 #'
 #' # input checks that need no network
-#' try(bricklayer_llm_login(token = "   "))
-#' try(bricklayer_llm_login(email = "not-an-email"))
+#' try(dlogin(token = "   "))
+#' try(dlogin(email = "not-an-email"))
 #'
 #' if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
 #' \dontrun{
 #' # these contact the sign-in service
-#' bricklayer_llm_login(token = "<key issued at https://www.rmorie.com/access/>")
-#' bricklayer_llm_login(email = "you@example.com")
-#' bricklayer_llm_login(email = "you@example.com", code = "123456")
-#' bricklayer_llm_login() # GitHub device flow; asks for the terms, name and reason
+#' dlogin(token = "<key issued at https://www.rmorie.com/access/>")
+#' dlogin(email = "you@example.com")
+#' dlogin(email = "you@example.com", code = "123456")
+#' dlogin() # GitHub device flow; asks for the terms, name and reason
 #' # everything given up front, for a script
-#' bricklayer_llm_login(accept_terms = TRUE, name = "Ada Lovelace",
-#'                      purpose = "Course project on court delays in Ontario.")
+#' dlogin(accter = TRUE, name = "Ada Lovelace",
+#'                      purp = "Course project on court delays in Ontario.")
 #' }
 #' @export
-bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
-                                 open_browser = interactive(),
-                                 poll_max_seconds = 600,
-                                 accept_terms = FALSE, name = NULL, affiliation = NULL,
-                                 purpose = NULL, restricted = NULL,
-                                 supervisor_name = NULL, supervisor_role = NULL,
-                                 supervisor_email = NULL) {
+dlogin <- function(token = NULL, email = NULL, code = NULL,
+                                 openbro = interactive(),
+                                 pollmaxsec = 600,
+                                 accter = FALSE, name = NULL, affil = NULL,
+                                 purp = NULL, restr = NULL,
+                                 supnm = NULL, suprole = NULL,
+                                 supemail = NULL) {
   if (!is.null(token)) {
     token <- trimws(as.character(token))
     if (length(token) != 1L || !nzchar(token)) {
@@ -1277,14 +1277,14 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
   }
   if (!is.null(email)) .bl_check_email(email)
   # a new key: the terms are accepted, and who is asking and why is said, before any sign-in starts
-  profile <- .bl_signin_profile(accept_terms = accept_terms, name = name, affiliation = affiliation,
-                                purpose = purpose, restricted = restricted,
-                                supervisor_name = supervisor_name, supervisor_role = supervisor_role,
-                                supervisor_email = supervisor_email)
+  profile <- .bl_signin_profile(accept_terms = accter, name = name, affiliation = affil,
+                                purpose = purp, restricted = restr,
+                                supervisor_name = supnm, supervisor_role = suprole,
+                                supervisor_email = supemail)
   if (!is.null(email)) {
     return(.bl_login_email(email, code, profile))
   }
-  .bl_login_device(open_browser, poll_max_seconds, profile)
+  .bl_login_device(openbro, pollmaxsec, profile)
 }
 
 # The email check, before anything is asked or sent.
@@ -1316,7 +1316,7 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
 
 .bl_SUPERVISOR_ROLES <- c("supervisor", "chair", "director", "coordinator", "other")
 
-# Everything a new key needs said first: the terms accepted (y/N at the console, or accept_terms =
+# Everything a new key needs said first: the terms accepted (y/N at the console, or accter =
 # TRUE), the person's name and reason, and for Schedule B a supervisor, chair, director or
 # coordinator. Arguments win; what is missing is asked for; a missing required answer stops here,
 # before any request that could issue a key. The data service checks the same things.
@@ -1460,7 +1460,7 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
 
 #' Forget the MORIE data key
 #'
-#' Removes the MORIE data key that \code{\link{bricklayer_llm_login}}
+#' Removes the MORIE data key that \code{\link{dlogin}}
 #' stored, so this machine can no longer load the curated tables at
 #' data.rmorie.com until you sign in again. Use it on a shared machine, or
 #' to switch to another key. Nothing is contacted.
@@ -1482,28 +1482,28 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
 #'
 #' @return Logical scalar, invisibly: \code{TRUE} when a key was removed,
 #'   \code{FALSE} when none was stored.
-#' @seealso \code{\link{bricklayer_llm_login}}.
+#' @seealso \code{\link{dlogin}}.
 #' @examples
 #' old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)
 #' Sys.setenv(XDG_CONFIG_HOME = tempfile())   # a scratch credentials folder
 #'
 #' # nothing stored yet
-#' bricklayer_llm_logout()
+#' dlogout()
 #'
 #' # a file holding a key and another tool's entry: only the key goes
 #' d <- file.path(Sys.getenv("XDG_CONFIG_HOME"), "morie")
 #' dir.create(d, recursive = TRUE)
 #' writeLines('{"hosted_key": "k-123", "other_tool": 1}', file.path(d, "credentials.json"))
-#' bricklayer_llm_logout()
+#' dlogout()
 #' readLines(file.path(d, "credentials.json"))
 #'
 #' # a damaged file is refused, not overwritten
 #' writeLines("not json", file.path(d, "credentials.json"))
-#' try(bricklayer_llm_logout())
+#' try(dlogout())
 #'
 #' if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
 #' @export
-bricklayer_llm_logout <- function() {
+dlogout <- function() {
   p <- .bl_credentials_path()
   had <- FALSE
   if (file.exists(p)) {
@@ -1532,7 +1532,7 @@ bricklayer_llm_logout <- function() {
 
 #' Report the language-model routes available from this machine
 #'
-#' Shows, in one table, every way \code{\link{bricklayer_llm_ask}} could
+#' Shows, in one table, every way \code{\link{llmask}} could
 #' reach a language model from this machine and whether each is ready: your
 #' own endpoint, each provider whose key is set, and a local Ollama server.
 #' Use it to find out why a question fails with "no route", or which model
@@ -1540,7 +1540,7 @@ bricklayer_llm_logout <- function() {
 #' \code{rmoriebricklayer doctor}.
 #'
 #' @details
-#' Rows come in the order \code{bricklayer_llm_ask()} tries the routes. The
+#' Rows come in the order \code{llmask()} tries the routes. The
 #' providers without a key share one row that names each one with its key
 #' variable. Key values are never shown. Nothing is sent to a provider; the
 #' only network contact is a \code{GET /api/tags} to the Ollama address
@@ -1560,26 +1560,26 @@ bricklayer_llm_logout <- function() {
 #'   shared row; \code{"disabled"}, \code{"not running"},
 #'   \code{"no models"} or \code{"available"} for Ollama) and \code{detail}
 #'   (the address and model, or what to set up).
-#' @seealso \code{\link{bricklayer_llm_route_info}} for the one route a
-#'   question would take; \code{\link{bricklayer_llm_providers}}.
+#' @seealso \code{\link{llmrte}} for the one route a
+#'   question would take; \code{\link{llmprvd}}.
 #' @examples
 #' old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST",
 #'                     "MORIE_LLM_BASE_URL", "MORIE_LLM_MODEL"),
 #'                   unset = NA)
 #' # a scratch settings folder and the local route off: no network at all
 #' Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
-#' st <- bricklayer_llm_status()
+#' st <- llmstat()
 #' st[, c("route", "status")]
 #'
 #' # your own OpenAI-compatible server shows as configured (it is not contacted)
 #' Sys.setenv(MORIE_LLM_BASE_URL = "http://localhost:8080", MORIE_LLM_MODEL = "llama3")
-#' bricklayer_llm_status()[1, ]
+#' llmstat()[1, ]
 #'
 #' for (v in names(old)) {
 #'   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 #' }
 #' @export
-bricklayer_llm_status <- function() {
+llmstat <- function() {
   # a settings file the package cannot read is reported as a row, so `doctor` still answers
   cfg_err <- tryCatch({
     .bl_read_config()

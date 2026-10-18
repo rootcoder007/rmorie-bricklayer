@@ -2,16 +2,16 @@
 ## =====================================================================
 ## lib_manifest.R -- cross-check accounting + SUMMARY.txt + manifest.json
 ##
-## Part of rmorie-bricklayer. Provides the `record()` machinery and the
+## Part of rmorie-bricklayer. Provides the `recrd()` machinery and the
 ## end-of-run summary writers.
 ##
 ## Provides:
-##   make_manifest(meta)                Construct a manifest object
+##   mkmnf(meta)                Construct a manifest object
 ##   record(manifest, name, observed,   Append a cross-check entry; returns
 ##          expected, tol, group,         the mutated manifest
 ##          synthetic)
-##   write_manifest_json: the manifest to a JSON path
-##   write_summary_txt: the manifest summary next to the outputs
+##   wrmnfjs: the manifest to a JSON path
+##   wrsmrytxt: the manifest summary next to the outputs
 ##
 ## Licence: AGPL-3.0-or-later
 ## =====================================================================
@@ -32,13 +32,13 @@
 #'
 #' Creates an empty manifest: the record of one analysis run that collects
 #' the run's metadata, the cross-checks of its results against expected
-#' values (added with [record()]), and optionally a snapshot of the
+#' values (added with [recrd()]), and optionally a snapshot of the
 #' R
 #' environment it ran in. Write it out with
-#' [write_manifest_json()] and
-#' [write_summary_txt()], or hash and sign it with
-#' [manifest_digest()] and
-#' [capsule_attest()], so a reader can later see what was
+#' [wrmnfjs()] and
+#' [wrsmrytxt()], or hash and sign it with
+#' [mnfdgst()] and
+#' [cpsatst()], so a reader can later see what was
 #' run, where, and
 #' whether the numbers matched.
 #'
@@ -50,10 +50,10 @@
 #' than \code{0}, \code{false}, \code{no} or \code{off}, or when the package
 #' generated synthetic data earlier in the session. It is written only when
 #' \code{TRUE}, so a manifest of real data keeps the digest it had before the
-#' flag existed. On a synthetic manifest every [record()] entry is
+#' flag existed. On a synthetic manifest every [recrd()] entry is
 #' \code{INFO}.
 #'
-#' Fields of \code{meta} that [write_summary_txt()]
+#' Fields of \code{meta} that [wrsmrytxt()]
 #' reads: \code{project},
 #' \code{author}, \code{run_at}, \code{os}, \code{r_version} and
 #' \code{r_package_versions} (a named list or vector of versions).
@@ -63,42 +63,42 @@
 #' @param meta A list of run metadata, normally named (for example
 #'   \code{project}, \code{author}, \code{run_at}, \code{synthetic}). May be
 #'   \code{list()}.
-#' @param environment Logical scalar; when \code{TRUE} (the default) the
+#' @param env Logical scalar; when \code{TRUE} (the default) the
 #'   manifest also records the analysis environment via
-#'   [capture_environment()]: R version, platform, OS,
+#'   [capenv()]: R version, platform, OS,
 #'   UTC timestamp, random
 #'   number generator kind and whether it was seeded, and the version of
 #'   every loaded package. Any other value leaves it out.
 #' @return A list with elements \code{meta} (the list given, plus
 #'   \code{synthetic = TRUE} when flagged), \code{results} (an empty list,
-#'   filled by [record()]) and, when \code{environment = TRUE},
+#'   filled by [recrd()]) and, when \code{environment = TRUE},
 #'   \code{environment} (the list from
-#'   [capture_environment()]).
-#' @seealso [record()],
-#'   [write_manifest_json()],
-#'   [write_summary_txt()],
-#'   [manifest_digest()].
+#'   [capenv()]).
+#' @seealso [recrd()],
+#'   [wrmnfjs()],
+#'   [wrsmrytxt()],
+#'   [mnfdgst()].
 #' @examples
 #' # Minimal manifest, no environment capture.
-#' man <- make_manifest(list(project = "demo-study", author = "A. Author"),
-#'   environment = FALSE
+#' man <- mkmnf(list(project = "demo-study", author = "A. Author"),
+#'   env = FALSE
 #' )
 #' names(man) # "meta" "results"
 #' man$meta$project
 #'
 #' # With environment = TRUE it also records R version / platform / packages.
-#' full <- make_manifest(list(project = "demo"), environment = TRUE)
+#' full <- mkmnf(list(project = "demo"), env = TRUE)
 #' names(full) # adds "environment"
 #' full$environment$r_version
 #'
 #' # a run on generated data is flagged, and its checks become INFO
-#' syn <- make_manifest(list(project = "demo", synthetic = TRUE), environment = FALSE)
+#' syn <- mkmnf(list(project = "demo", synthetic = TRUE), env = FALSE)
 #' syn$meta$synthetic
 #'
 #' # meta must be a list
-#' try(make_manifest("demo"))
+#' try(mkmnf("demo"))
 #' @export
-make_manifest <- function(meta, environment = TRUE) {
+mkmnf <- function(meta, env = TRUE) {
   if (!is.list(meta)) stop("`meta` must be a list", call. = FALSE)
   # the package owns the synthetic flag: set here from BRICKLAYER_SYNTHETIC
   # (the reference pipeline sets it for its analysis subprocess), so a
@@ -107,20 +107,20 @@ make_manifest <- function(meta, environment = TRUE) {
   # the digest it had before the flag existed
   if (isTRUE(meta$synthetic) || .rmbl_synthetic_flag()) meta$synthetic <- TRUE
   m <- list(meta = meta, results = list())
-  if (isTRUE(environment)) m$environment <- capture_environment()
+  if (isTRUE(env)) m$environment <- capenv()
   m
 }
 
 #' Record a Cross-Check Result in a Manifest
 #'
 #' Appends one named cross-check to a manifest: a number your analysis
-#' produced (\code{observed}) next to the number it should reproduce
-#' (\code{expected}, for example a published table value). Each entry is
+#' produced (\code{obs}) next to the number it should reproduce
+#' (\code{expd}, for example a published table value). Each entry is
 #' classified \code{PASS}, \code{DIFFER} or \code{INFO}, a one-line report
 #' is shown as a message, and the updated manifest is returned so calls can
 #' be chained. The tallies appear in
-#' [write_summary_txt()] and the entries in
-#' [write_manifest_json()].
+#' [wrsmrytxt()] and the entries in
+#' [wrmnfjs()].
 #'
 #' @details
 #' The status is decided in this order: \code{INFO} when \code{synthetic =
@@ -131,25 +131,25 @@ make_manifest <- function(meta, environment = TRUE) {
 #' logical value, or an \code{NA}). The tolerance is absolute, not relative:
 #' scale it to the size of the quantity.
 #'
-#' \code{observed} and \code{expected} must be single values: a vector of
+#' \code{obs} and \code{expd} must be single values: a vector of
 #' another length (including an empty one) is an error naming the argument;
 #' record a vector's elements under separate names, or a summary of it.
 #' Recording under an existing \code{name} replaces that
 #' entry. The message line is a side effect; wrap the call in
 #' \code{suppressMessages()} to silence it.
 #'
-#' @param manifest A manifest as returned by
-#'   [make_manifest()].
+#' @param man A manifest as returned by
+#'   [mkmnf()].
 #' @param name Character scalar, the name of this cross-check; used as the
 #'   key in \code{manifest$results}, so it should be unique.
-#' @param observed The value the analysis produced: a numeric scalar for a
+#' @param obs The value the analysis produced: a numeric scalar for a
 #'   tolerance check, or any single value to be stored as information.
-#' @param expected The value to compare against, of the same kind.
+#' @param expd The value to compare against, of the same kind.
 #' @param tol Numeric scalar, the absolute tolerance: a numeric pair at most
 #'   \code{tol} apart is \code{PASS}. Default \code{0.0001}.
-#' @param group Character scalar, a grouping label stored with the entry (for
+#' @param grp Character scalar, a grouping label stored with the entry (for
 #'   example the table the number comes from). Default \code{"general"}.
-#' @param synthetic Logical scalar; \code{TRUE} marks this entry \code{INFO}
+#' @param syn Logical scalar; \code{TRUE} marks this entry \code{INFO}
 #'   because a comparison on synthetic data is not meaningful. Default
 #'   \code{FALSE}.
 #' @return The manifest with \code{results[[name]]} set to a list with
@@ -158,59 +158,60 @@ make_manifest <- function(meta, environment = TRUE) {
 #'   \code{status} (\code{"PASS"}, \code{"DIFFER"} or \code{"INFO"}),
 #'   \code{tol} and \code{note} (a sentence for synthetic entries, else
 #'   \code{NULL}).
-#' @seealso [make_manifest()],
-#'   [write_summary_txt()].
+#' @seealso [mkmnf()],
+#'   [wrsmrytxt()].
 #' @examples
-#' man <- make_manifest(list(project = "demo"), environment = FALSE)
+#' man <- mkmnf(list(project = "demo"), env = FALSE)
 #'
 #' # Within tolerance -> PASS.
-#' man <- record(man, "mean_matches",
-#'   observed = 1.0001, expected = 1,
+#' man <- recrd(man, "meanmatches",
+#'   obs = 1.0001, expd = 1,
 #'   tol = 0.001
 #' )
-#' man$results$mean_matches$status # "PASS"
+#' man$results$meanmatches$status # "PASS"
 #'
 #' # Outside tolerance -> DIFFER.
-#' man <- record(man, "sd_matches", observed = 2.5, expected = 2.0, tol = 0.01)
-#' man$results$sd_matches$status # "DIFFER"
+#' man <- recrd(man, "sdmatches", obs = 2.5, expd = 2.0, tol = 0.01)
+#' man$results$sdmatches$status # "DIFFER"
 #'
 #' # Synthetic data -> INFO (comparison not meaningful).
-#' man <- record(man, "synthetic_row",
-#'   observed = 5, expected = 5,
-#'   synthetic = TRUE
+#' man <- recrd(man, "syntheticrow",
+#'   obs = 5, expd = 5,
+#'   syn = TRUE
 #' )
-#' man$results$synthetic_row$status # "INFO"
+#' man$results$syntheticrow$status # "INFO"
 #'
 #' # a non-numeric value is stored as information, silently
-#' man <- suppressMessages(record(man, "country", observed = "CA", expected = "CA",
-#'                                group = "metadata"))
+#' man <- suppressMessages(recrd(man, "country", obs = "CA", expd = "CA",
+#'                                grp = "metadata"))
 #' man$results$country$status # "INFO"
 #'
 #' # Calls chain: record() returns the mutated manifest.
 #' length(man$results) # 4
 #' @export
-record <- function(manifest, name, observed, expected,
-                   tol = 0.0001, group = "general",
-                   synthetic = FALSE) {
-  .rmbl_no_fn(observed = observed, expected = expected)
-  if (!is.list(manifest)) stop("`manifest` must be a manifest from make_manifest()", call. = FALSE)
+recrd <- function(man, name, obs, expd,
+                   tol = 0.0001, grp = "general",
+                   syn = FALSE) {
+  .rmbl_no_fn(observed = obs, expected = expd)
+  if (!is.list(man)) stop("`man` must be a manifest from mkmnf()", call. = FALSE)
   name <- .rmbl_string1(name, "name")
   tol <- .rmbl_scalar(tol, "tol", 0)
   # one value each: a vector made the PASS test `diff <= tol` a vector and
   # failed in R's own words ('length = 2' in coercion to 'logical(1)')
-  lens <- c(observed = length(observed), expected = length(expected))
+  lens <- c(observed = length(obs), expected = length(expd))
   if (any(lens != 1L)) {
     bad <- which(lens != 1L)[1L]
-    stop(sprintf("`%s` must be a single value, got %d", names(lens)[bad], lens[[bad]]), call. = FALSE)
+    arg <- c(observed = "obs", expected = "expd", tol = "tol")
+    stop(sprintf("`%s` must be a single value, got %d", arg[[names(lens)[bad]]], lens[[bad]]), call. = FALSE)
   }
-  diff <- if (is.numeric(observed) && is.numeric(expected)) {
-    abs(observed - expected)
+  diff <- if (is.numeric(obs) && is.numeric(expd)) {
+    abs(obs - expd)
   } else {
     NA_real_
   }
   # a manifest built on synthetic data makes every comparison INFO
-  synthetic <- isTRUE(synthetic) || isTRUE(manifest$meta$synthetic)
-  status <- if (synthetic) {
+  syn <- isTRUE(syn) || isTRUE(man$meta$synthetic)
+  status <- if (syn) {
     "INFO"
   } else if (!is.na(diff) && diff <= tol) {
     "PASS"
@@ -219,14 +220,14 @@ record <- function(manifest, name, observed, expected,
   } else {
     "INFO"
   }
-  manifest$results[[name]] <- list(
-    group = group,
-    observed = observed,
-    expected = expected,
+  man$results[[name]] <- list(
+    group = grp,
+    observed = obs,
+    expected = expd,
     diff = diff,
     status = status,
     tol = tol,
-    note = if (isTRUE(synthetic)) {
+    note = if (isTRUE(syn)) {
       "synthetic data -- comparison not meaningful"
     } else {
       NULL
@@ -235,11 +236,11 @@ record <- function(manifest, name, observed, expected,
   message(sprintf(
     "  %-44s observed = %-12s expected = %-12s [%s]",
     name,
-    if (is.numeric(observed)) sprintf("%.4f", observed) else as.character(observed),
-    if (is.numeric(expected)) sprintf("%.4f", expected) else as.character(expected),
+    if (is.numeric(obs)) sprintf("%.4f", obs) else as.character(obs),
+    if (is.numeric(expd)) sprintf("%.4f", expd) else as.character(expd),
     status
   ))
-  manifest
+  man
 }
 
 #' Write a Manifest to JSON
@@ -248,8 +249,8 @@ record <- function(manifest, name, observed, expected,
 #' cross-checks and environment) can be kept next to the outputs, shared,
 #' and read back by any JSON reader. By default the file is pretty-printed
 #' for people; \code{canonical = TRUE} writes the byte-stable form that
-#' [manifest_digest()] hashes. The package's own JSON codec
-#' ([bricklayer_json_to_json()]) is used; jsonlite
+#' [mnfdgst()] hashes. The package's own JSON codec
+#' ([tojs()]) is used; jsonlite
 #' is not needed.
 #'
 #' @details
@@ -257,7 +258,7 @@ record <- function(manifest, name, observed, expected,
 #' back exactly; \code{NA} and \code{NULL} are written as \code{null}, and
 #' length-one vectors as scalars. When the manifest's \code{meta$synthetic}
 #' is \code{TRUE}, or the session is flagged synthetic (see
-#' [make_manifest()]), \code{meta$synthetic = true} is
+#' [mkmnf()]), \code{meta$synthetic = true} is
 #' written whatever the
 #' list says, so a file written from generated data always says so. An
 #' existing file at \code{path} is overwritten; the folder must exist.
@@ -265,48 +266,48 @@ record <- function(manifest, name, observed, expected,
 #' Errors when \code{path} is not a single non-empty string, and (from base
 #' R) when the file cannot be opened for writing.
 #'
-#' @param manifest A manifest as returned by
-#'   [make_manifest()] and built up
-#'   with [record()].
+#' @param man A manifest as returned by
+#'   [mkmnf()] and built up
+#'   with [recrd()].
 #' @param path Character scalar, the destination file path.
-#' @param canonical Logical scalar, default \code{FALSE}. \code{TRUE} writes
+#' @param canon Logical scalar, default \code{FALSE}. \code{TRUE} writes
 #'   the canonical form instead of the pretty-printed one: one line, keys
-#'   sorted, which is what [manifest_digest()] hashes. Use
+#'   sorted, which is what [mnfdgst()] hashes. Use
 #'   it when the file
 #'   itself has to be byte-stable rather than read by a person.
 #' @return \code{path} (character scalar), invisibly.
-#' @seealso [manifest_canonical()],
-#'   [write_summary_txt()].
+#' @seealso [mnfcanon()],
+#'   [wrsmrytxt()].
 #' @examples
-#' man <- make_manifest(list(project = "demo"), environment = FALSE)
-#' man <- record(man, "row_count", observed = 20, expected = 20)
-#' path <- write_manifest_json(man, tempfile(fileext = ".json"))
+#' man <- mkmnf(list(project = "demo"), env = FALSE)
+#' man <- recrd(man, "rowcount", obs = 20, expd = 20)
+#' path <- wrmnfjs(man, tempfile(fileext = ".json"))
 #' file.exists(path)
 #'
 #' # Round-trips back through the package's own codec.
-#' back <- bricklayer_json_from_json(path, simplifyVector = FALSE)
-#' back$results$row_count$status # "PASS"
+#' back <- fromjs(path, simplifyVector = FALSE)
+#' back$results$rowcount$status # "PASS"
 #'
 #' # the canonical form: one line whose SHA-256 is the manifest digest
-#' cpath <- write_manifest_json(man, tempfile(fileext = ".json"), canonical = TRUE)
-#' identical(readLines(cpath), manifest_canonical(man))
+#' cpath <- wrmnfjs(man, tempfile(fileext = ".json"), canon = TRUE)
+#' identical(readLines(cpath), mnfcanon(man))
 #'
 #' # the path must be one string
-#' try(write_manifest_json(man, c("a.json", "b.json")))
+#' try(wrmnfjs(man, c("a.json", "b.json")))
 #' @export
-write_manifest_json <- function(manifest, path, canonical = FALSE) {
+wrmnfjs <- function(man, path, canon = FALSE) {
   path <- .rmbl_string1(path, "path")
-  if (!is.list(manifest)) stop("`manifest` must be a manifest from make_manifest()", call. = FALSE)
-  # never written without the flag (see make_manifest())
-  if (isTRUE(manifest$meta$synthetic) || .rmbl_synthetic_flag()) {
-    manifest$meta$synthetic <- TRUE
+  if (!is.list(man)) stop("`man` must be a manifest from mkmnf()", call. = FALSE)
+  # never written without the flag (see mkmnf())
+  if (isTRUE(man$meta$synthetic) || .rmbl_synthetic_flag()) {
+    man$meta$synthetic <- TRUE
   }
-  if (isTRUE(canonical)) {
-    writeLines(manifest_canonical(manifest), path, useBytes = TRUE)
+  if (isTRUE(canon)) {
+    writeLines(mnfcanon(man), path, useBytes = TRUE)
     return(invisible(path))
   }
   writeLines(
-    bricklayer_json_to_json(manifest,
+    tojs(man,
       auto_unbox = TRUE,
       pretty = TRUE, na = "null",
       null = "null",
@@ -320,9 +321,9 @@ write_manifest_json <- function(manifest, path, canonical = FALSE) {
 
 #' The canonical serialisation of a manifest, and its digest
 #'
-#' `manifest_canonical()` renders a manifest as one line of JSON with
+#' `mnfcanon()` renders a manifest as one line of JSON with
 #' every object's keys in sorted order and every number at full double
-#' precision. `manifest_digest()` is the SHA-256 of those bytes.
+#' precision. `mnfdgst()` is the SHA-256 of those bytes.
 #'
 #' Why this is needed. Two manifests that record the same thing can easily
 #' differ as bytes: R lists keep insertion order, so building `meta`
@@ -334,7 +335,7 @@ write_manifest_json <- function(manifest, path, canonical = FALSE) {
 #' for a record something will later be checked against, because `1/3`
 #' comes back as `0.3333` and no recomputation can match it.
 #'
-#' Sign [manifest_digest()], not the pretty
+#' Sign [mnfdgst()], not the pretty
 #' JSON. The digest is stable across the assembly order, across
 #' `pretty`, and across a round trip through a file.
 #'
@@ -348,43 +349,43 @@ write_manifest_json <- function(manifest, path, canonical = FALSE) {
 #' manifest written on one machine reads back bit-identically on another,
 #' and a caller does nothing to get that.
 #'
-#' Errors when \code{manifest} is not a list.
+#' Errors when \code{man} is not a list.
 #'
-#' @param manifest A manifest (a list), as from
-#'   [make_manifest()]; any list
+#' @param man A manifest (a list), as from
+#'   [mkmnf()]; any list
 #'   is accepted.
-#' @return \code{manifest_canonical()}: a character scalar, the one-line
-#'   JSON. \code{manifest_digest()}: a character scalar of 64 lower-case
+#' @return \code{mnfcanon()}: a character scalar, the one-line
+#'   JSON. \code{mnfdgst()}: a character scalar of 64 lower-case
 #'   hexadecimal characters, the SHA-256 of the canonical bytes.
 #' @seealso
-#' [make_manifest()],
-#' [write_manifest_json()],
-#' [capsule_attest()].
+#' [mkmnf()],
+#' [wrmnfjs()],
+#' [cpsatst()].
 #' @examples
-#' a <- make_manifest(list(b = 2, a = 1), environment = FALSE)
-#' b <- make_manifest(list(a = 1, b = 2), environment = FALSE)
+#' a <- mkmnf(list(b = 2, a = 1), env = FALSE)
+#' b <- mkmnf(list(a = 1, b = 2), env = FALSE)
 #' # the same content in a different order has the same digest
-#' identical(manifest_digest(a), manifest_digest(b))
+#' identical(mnfdgst(a), mnfdgst(b))
 #'
 #' # full precision, so a recorded number can be checked later
-#' m <- make_manifest(list(x = 1 / 3), environment = FALSE)
-#' grepl("0.33333333333333331", manifest_canonical(m), fixed = TRUE)
+#' m <- mkmnf(list(x = 1 / 3), env = FALSE)
+#' grepl("0.33333333333333331", mnfcanon(m), fixed = TRUE)
 #'
 #' # any change to a recorded value changes the digest
-#' m2 <- record(m, "check", observed = 1, expected = 1)
-#' manifest_digest(m) == manifest_digest(m2)
+#' m2 <- recrd(m, "check", obs = 1, expd = 1)
+#' mnfdgst(m) == mnfdgst(m2)
 #'
 #' # only lists can be serialised this way
-#' try(manifest_digest("not a manifest"))
+#' try(mnfdgst("not a manifest"))
 #' @export
-manifest_canonical <- function(manifest) {
-  if (!is.list(manifest)) stop("`manifest` must be a list", call. = FALSE)
+mnfcanon <- function(man) {
+  if (!is.list(man)) stop("`man` must be a list", call. = FALSE)
   # keep_empty_names: an empty-string key is written as "", not renamed to
   # its position, so two documents differing only there do not share a digest
   # keep_vec_names: a named atomic vector is an object too ({"a":1} is not
   # [1]); the names attribute, present or absent, is what tells an object
   # from an array at every level, so the encoding is one-to-one
-  bricklayer_json_to_json(.rmbl_sort_keys(manifest),
+  tojs(.rmbl_sort_keys(man),
     auto_unbox = TRUE,
     pretty = FALSE, na = "null", null = "null",
     digits = I(17), keep_empty_names = TRUE, keep_vec_names = TRUE,
@@ -392,21 +393,21 @@ manifest_canonical <- function(manifest) {
   )
 }
 
-#' @rdname manifest_canonical
+#' @rdname mnfcanon
 #' @export
-manifest_digest <- function(manifest) {
-  .rmbl_sha256_bytes(charToRaw(manifest_canonical(manifest)))
+mnfdgst <- function(man) {
+  .rmbl_sha256_bytes(charToRaw(mnfcanon(man)))
 }
 
 # Inside the package: the compiled core; sourced standalone in a capsule
 # bundle: the pure-R implementation from sha256_native.R.
 #' @noRd
 .rmbl_sha256_bytes <- function(bytes,
-                               native = exists("core_sha256",
+                               native = exists("csha256",
                                  mode = "function"
                                )) {
   if (native) {
-    return(core_sha256(bytes))
+    return(csha256(bytes))
   }
   .rmbl_sha256_hex(bytes)
 }
@@ -424,7 +425,7 @@ manifest_digest <- function(manifest) {
   }
   # A list with a names attribute is a JSON object, and an empty string is
   # a legal key that sorts first: {"":"X"} and {"1":"X"} are different
-  # documents (the encoder writes "" as "", see manifest_canonical()). That
+  # documents (the encoder writes "" as "", see mnfcanon()). That
   # holds when EVERY name is empty too: {"":"X"} is not ["X"], and 0.5.7's
   # "all names empty is an array" rule made one attestation verify both.
   # The parser sets the names attribute on objects and never on arrays, so
@@ -456,7 +457,7 @@ summarise_counts <- function(manifest) {
 
 ## ----- SUMMARY.txt -----
 ## `paths` is a named list: capsule, input, results, script, provenance
-## `what_was_done` is an optional character vector of bullet points
+## `whatwasdone` is an optional character vector of bullet points
 
 #' Write a Plain-Language Run Summary
 #'
@@ -466,7 +467,7 @@ summarise_counts <- function(manifest) {
 #' synthetic data, the paths it used, the tally of cross-check results, the
 #' files in the folder, and optional notes, contact and licence lines. It is
 #' the human-readable companion of
-#' [write_manifest_json()].
+#' [wrmnfjs()].
 #'
 #' @details
 #' Header fields come from \code{manifest$meta}: \code{project} (default
@@ -477,68 +478,68 @@ summarise_counts <- function(manifest) {
 #' versions. Result counts are tallied from the \code{status} of each entry
 #' of \code{manifest$results} (PASS, DIFFER, WARN, INFO).
 #'
-#' The file list is \code{list.files(output_dir)} at the time of the call,
+#' The file list is \code{list.files(outdir)} at the time of the call,
 #' sorted, so write the summary last. The paths are printed as given (they
 #' are not made absolute). An existing \code{SUMMARY.txt} is overwritten.
 #'
-#' Errors when \code{manifest} is not a list, and (from base R) when
-#' \code{output_dir} does not exist or cannot be written.
+#' Errors when \code{man} is not a list, and (from base R) when
+#' \code{outdir} does not exist or cannot be written.
 #'
-#' @param manifest A manifest as returned by
-#'   [make_manifest()]; its
+#' @param man A manifest as returned by
+#'   [mkmnf()]; its
 #'   \code{meta} supplies the header and its \code{results} the counts.
-#' @param output_dir Character scalar, an existing folder to write
+#' @param outdir Character scalar, an existing folder to write
 #'   \code{SUMMARY.txt} into and to list the files of.
 #' @param paths A named list (or named character vector) of paths to report,
 #'   one line each, labelled by the capitalised name (for example
 #'   \code{capsule}, \code{input}, \code{results}, \code{analysis_script},
 #'   \code{provenance}). \code{list()} reports none.
-#' @param what_was_done Optional character vector, one line each, describing
+#' @param whatwasdone Optional character vector, one line each, describing
 #'   what the run did. Default \code{NULL} (no section).
 #' @param contact Optional character scalar appended as a \code{Contact:}
 #'   line. Default \code{NULL}.
-#' @param licence Optional character scalar appended as a \code{Licence:}
+#' @param lic Optional character scalar appended as a \code{Licence:}
 #'   line. Default \code{NULL}.
 #' @return The path to the written \code{SUMMARY.txt} (character scalar),
 #'   invisibly.
-#' @seealso [make_manifest()],
-#'   [record()],
-#'   [write_manifest_json()].
+#' @seealso [mkmnf()],
+#'   [recrd()],
+#'   [wrmnfjs()].
 #' @examples
-#' man <- make_manifest(list(project = "demo", author = "A. Author"),
-#'   environment = FALSE
+#' man <- mkmnf(list(project = "demo", author = "A. Author"),
+#'   env = FALSE
 #' )
-#' man <- record(man, "row_count", observed = 20, expected = 20)
+#' man <- recrd(man, "rowcount", obs = 20, expd = 20)
 #' out <- file.path(tempdir(), "demo-run")
 #' dir.create(out, showWarnings = FALSE)
-#' s <- write_summary_txt(man, out, paths = list(results = out))
+#' s <- wrsmrytxt(man, out, paths = list(results = out))
 #' readLines(s)[7:8]
 #'
 #' # with notes, contact and licence lines
-#' s <- write_summary_txt(man, out, paths = list(results = out),
-#'   what_was_done = c("- read the extract", "- recomputed table 2"),
-#'   contact = "analyst at example.org", licence = "CC BY 4.0")
+#' s <- wrsmrytxt(man, out, paths = list(results = out),
+#'   whatwasdone = c("- read the extract", "- recomputed table 2"),
+#'   contact = "analyst at example.org", lic = "CC BY 4.0")
 #' tail(readLines(s), 6)
 #'
 #' # the manifest has to be a list
-#' try(write_summary_txt("demo", out, paths = list()))
+#' try(wrsmrytxt("demo", out, paths = list()))
 #' @export
-write_summary_txt <- function(manifest, output_dir, paths,
-                              what_was_done = NULL,
+wrsmrytxt <- function(man, outdir, paths,
+                              whatwasdone = NULL,
                               contact = NULL,
-                              licence = NULL) {
-  if (!is.list(manifest)) stop("`manifest` must be a manifest from make_manifest()", call. = FALSE)
-  counts <- summarise_counts(manifest)
-  output_dir <- .rmbl_string1(output_dir, "output_dir")
-  if (!dir.exists(output_dir)) stop("`output_dir` is not a directory: ", output_dir, call. = FALSE)
-  for (nm in c("what_was_done", "contact", "licence")) {
+                              lic = NULL) {
+  if (!is.list(man)) stop("`man` must be a manifest from mkmnf()", call. = FALSE)
+  counts <- summarise_counts(man)
+  outdir <- .rmbl_string1(outdir, "outdir")
+  if (!dir.exists(outdir)) stop("`outdir` is not a directory: ", outdir, call. = FALSE)
+  for (nm in c("whatwasdone", "contact", "lic")) {
     v <- get(nm)
     if (!is.null(v) && (!is.character(v) || anyNA(v))) {
       stop(sprintf("`%s` must be text (a character vector), or NULL", nm), call. = FALSE)
     }
   }
-  files <- sort(list.files(output_dir))
-  is_synth <- isTRUE(manifest$meta$synthetic)
+  files <- sort(list.files(outdir))
+  is_synth <- isTRUE(man$meta$synthetic)
 
   lines <- c(
     "##########################################################",
@@ -547,12 +548,12 @@ write_summary_txt <- function(manifest, output_dir, paths,
     "#                                                        #",
     "##########################################################",
     "",
-    paste0("Project:   ", manifest$meta$project %||% "(unnamed)"),
-    paste0("Author:    ", manifest$meta$author %||% "(unknown)"),
-    paste0("When:      ", manifest$meta$run_at %||%
+    paste0("Project:   ", man$meta$project %||% "(unnamed)"),
+    paste0("Author:    ", man$meta$author %||% "(unknown)"),
+    paste0("When:      ", man$meta$run_at %||%
       format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")),
-    paste0("OS:        ", manifest$meta$os %||% Sys.info()[["sysname"]]),
-    paste0("R:         ", manifest$meta$r_version %||% R.version.string),
+    paste0("OS:        ", man$meta$os %||% Sys.info()[["sysname"]]),
+    paste0("R:         ", man$meta$r_version %||% R.version.string),
     paste0("Mode:      ", if (is_synth) {
       "SYNTHETIC (not real data -- pipeline check only)"
     } else {
@@ -589,7 +590,7 @@ write_summary_txt <- function(manifest, output_dir, paths,
     "----------------------------------------------------------",
     paste0("  ", files)
   )
-  vers <- manifest$meta$r_package_versions
+  vers <- man$meta$r_package_versions
   if (!is.null(vers) && length(vers) > 0L) {
     lines <- c(
       lines, "",
@@ -604,18 +605,18 @@ write_summary_txt <- function(manifest, output_dir, paths,
       )
     )
   }
-  if (!is.null(what_was_done)) {
+  if (!is.null(whatwasdone)) {
     lines <- c(
       lines, "",
       "----------------------------------------------------------",
       "  WHAT WAS DONE",
       "----------------------------------------------------------",
-      what_was_done
+      whatwasdone
     )
   }
   if (!is.null(contact)) lines <- c(lines, "", paste0("Contact: ", contact))
-  if (!is.null(licence)) lines <- c(lines, paste0("Licence: ", licence))
+  if (!is.null(lic)) lines <- c(lines, paste0("Licence: ", lic))
 
-  writeLines(lines, file.path(output_dir, "SUMMARY.txt"))
-  invisible(file.path(output_dir, "SUMMARY.txt"))
+  writeLines(lines, file.path(outdir, "SUMMARY.txt"))
+  invisible(file.path(outdir, "SUMMARY.txt"))
 }

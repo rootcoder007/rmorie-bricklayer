@@ -3,7 +3,7 @@
 # Pre-registration, multiple testing, and sensitivity to what was never
 # measured.
 #
-# capsule_falsify() asks whether a finding survives its controls. These
+# cpsfals() asks whether a finding survives its controls. These
 # ask three questions that come before and after it: was this the
 # analysis that was planned, how many other analyses were run, and how
 # strong would something unobserved have to be to explain the result
@@ -13,16 +13,16 @@
 #' Declare an analysis before running it
 #'
 #' @description
-#' `prereg_declare()` records, before the analysis is run, the statistics
+#' `prrgdecl()` records, before the analysis is run, the statistics
 #' it intends to report and the claim each one is meant to test, with a UTC
-#' timestamp. `prereg_check()` compares that declaration with what was
+#' timestamp. `prrgchk()` compares that declaration with what was
 #' actually reported and lists the departures in both directions. Seal the
-#' declaration with [capsule_attest()] and it acquires a
+#' declaration with [cpsatst()] and it acquires a
 #' date it cannot be
 #' moved off. Use the pair to make a pre-analysis plan checkable.
 #'
 #' @details
-#' The comparison [prereg_check()] makes is
+#' The comparison [prrgchk()] makes is
 #' asymmetric on purpose, because the two ways of departing from a plan are
 #' different failures:
 #'
@@ -38,95 +38,95 @@
 #' clock at the time of the call, so on its own it proves nothing; the
 #' attestation is what fixes the date. Nothing is written to disk.
 #'
-#' Errors: `hypotheses` not a non-empty character vector with non-empty,
-#' unique names; `prereg` not from `prereg_declare()`.
+#' Errors: `hyps` not a non-empty character vector with non-empty,
+#' unique names; `prereg` not from `prrgdecl()`.
 #'
-#' @param hypotheses Named character vector: one claim
+#' @param hyps Named character vector: one claim
 #' per statistic, named by the statistic's name as it will be recorded.
 #' @param note Optional character string, default `NULL`: free text -- the
 #' design, the data source, what would count as a refutation. Only the first
 #' element is kept.
-#' @param prereg A declaration from `prereg_declare()`.
-#' @param reported Character vector of the statistic names
+#' @param prereg A declaration from `prrgdecl()`.
+#' @param rptd Character vector of the statistic names
 #' actually reported, or a manifest (any list with a named `results`
 #' element, such as a capsule manifest), whose result names are used.
-#' @return `prereg_declare()` returns a list of class `bricklayer_prereg`
+#' @return `prrgdecl()` returns a list of class `bricklayer_prereg`
 #' with `statistics` (the names), `hypotheses` (the claims), `note` and
-#' `declared_utc` (ISO 8601 time). `prereg_check()` returns a list of class
+#' `decutc` (ISO 8601 time). `prrgchk()` returns a list of class
 #' `bricklayer_prereg_check` with `ok` (logical: no departures),
-#' `declared_not_reported` and `reported_not_declared` (character vectors),
+#' `decnotrep` and `repnotdec` (character vectors),
 #' `hypotheses` (a data frame of `statistic`, `hypothesis` and logical
-#' `reported`) and `declared_utc`. Both print a short summary.
+#' `reported`) and `decutc`. Both print a short summary.
 #' @seealso
-#' [capsule_attest()] to seal a declaration,
-#' [capsule_falsify()] for the controls
-#' themselves, [falsify_family()] for the
+#' [cpsatst()] to seal a declaration,
+#' [cpsfals()] for the controls
+#' themselves, [falsfam()] for the
 #' correction that additions make necessary.
 #' @examples
-#' plan <- prereg_declare(c(
+#' plan <- prrgdecl(c(
 #'   ate = "use of force is higher in the exposed division",
-#'   n_rows = "the extract has the row count the source publishes"),
+#'   nrows = "the extract has the row count the source publishes"),
 #'   note = "OTIS 2019-2024, division-level, pre-specified")
 #'
 #' # afterwards, against what was reported
-#' prereg_check(plan, c("ate", "n_rows"))$ok
+#' prrgchk(plan, c("ate", "nrows"))$ok
 #'
 #' # dropping a declared outcome is outcome switching
-#' prereg_check(plan, "n_rows")$declared_not_reported
+#' prrgchk(plan, "nrows")$decnotrep
 #'
 #' # and adding undeclared ones is what makes a nominal p meaningless
-#' prereg_check(plan, c("ate", "n_rows", "ate_by_year",
-#'                      "ate_by_precinct"))$reported_not_declared
+#' prrgchk(plan, c("ate", "nrows", "atebyyear",
+#'                      "atebyprecinct"))$repnotdec
 #'
 #' # the full check prints the departures
-#' prereg_check(plan, c("ate", "ate_by_year"))
+#' prrgchk(plan, c("ate", "atebyyear"))
 #'
-#' try(prereg_declare(c("an unnamed claim")))
+#' try(prrgdecl(c("an unnamed claim")))
 #' @export
-prereg_declare <- function(hypotheses, note = NULL) {
+prrgdecl <- function(hyps, note = NULL) {
   .rmbl_no_fn(note = note)
-  if (!is.character(hypotheses) || !length(hypotheses) ||
-      is.null(names(hypotheses)) || any(!nzchar(names(hypotheses)))) {
-    stop("`hypotheses` must be a named character vector: one claim per ",
+  if (!is.character(hyps) || !length(hyps) ||
+      is.null(names(hyps)) || any(!nzchar(names(hyps)))) {
+    stop("`hyps` must be a named character vector: one claim per ",
          "statistic", call. = FALSE)
   }
-  if (anyDuplicated(names(hypotheses))) {
-    stop("`hypotheses` has duplicate names", call. = FALSE)
+  if (anyDuplicated(names(hyps))) {
+    stop("`hyps` has duplicate names", call. = FALSE)
   }
   out <- list(
-    statistics = names(hypotheses),
-    hypotheses = as.character(hypotheses),
+    statistics = names(hyps),
+    hypotheses = as.character(hyps),
     note = if (is.null(note)) "" else as.character(note)[1L],
-    declared_utc = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
+    decutc = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
   )
   class(out) <- c("bricklayer_prereg", "list")
   out
 }
 
-#' @rdname prereg_declare
+#' @rdname prrgdecl
 #' @export
-prereg_check <- function(prereg, reported) {
-  .rmbl_no_fn(reported = reported)
+prrgchk <- function(prereg, rptd) {
+  .rmbl_no_fn(reported = rptd)
   if (!inherits(prereg, "bricklayer_prereg")) {
-    stop("`prereg` must come from prereg_declare()", call. = FALSE)
+    stop("`prereg` must come from prrgdecl()", call. = FALSE)
   }
-  if (is.list(reported) && !is.null(reported$results)) {
-    reported <- names(reported$results)
+  if (is.list(rptd) && !is.null(rptd$results)) {
+    rptd <- names(rptd$results)
   }
-  reported <- as.character(reported)
+  rptd <- as.character(rptd)
   declared <- prereg$statistics
-  missing <- setdiff(declared, reported)
-  added <- setdiff(reported, declared)
+  missing <- setdiff(declared, rptd)
+  added <- setdiff(rptd, declared)
   df <- data.frame(statistic = declared,
                    hypothesis = prereg$hypotheses,
-                   reported = declared %in% reported,
+                   reported = declared %in% rptd,
                    stringsAsFactors = FALSE)
   rownames(df) <- NULL
   out <- list(ok = length(missing) == 0L && length(added) == 0L,
-              declared_not_reported = missing,
-              reported_not_declared = added,
+              decnotrep = missing,
+              repnotdec = added,
               hypotheses = df,
-              declared_utc = prereg$declared_utc)
+              decutc = prereg$decutc)
   class(out) <- c("bricklayer_prereg_check", "list")
   out
 }
@@ -134,7 +134,7 @@ prereg_check <- function(prereg, reported) {
 #' @export
 format.bricklayer_prereg <- function(x, ...) {
   c(.rmbl_rule("Pre-registration"),
-    sprintf("  declared %s", x$declared_utc),
+    sprintf("  declared %s", x$decutc),
     if (nzchar(x$note)) sprintf("  %s", x$note),
     .rmbl_rule(),
     sprintf("  %-22s %s", x$statistics,
@@ -142,7 +142,7 @@ format.bricklayer_prereg <- function(x, ...) {
     .rmbl_rule())
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_prereg <- function(x, ...) {
   cat(format(x), sep = "\n")
@@ -152,19 +152,19 @@ print.bricklayer_prereg <- function(x, ...) {
 #' @export
 format.bricklayer_prereg_check <- function(x, ...) {
   c(.rmbl_rule(sprintf("Against the declaration of %s: %s",
-                       x$declared_utc,
+                       x$decutc,
                        if (x$ok) "as declared" else "departures below")),
-    if (length(x$declared_not_reported))
+    if (length(x$decnotrep))
       sprintf("  declared but not reported (outcome switching): %s",
-              paste(x$declared_not_reported, collapse = ", ")),
-    if (length(x$reported_not_declared))
+              paste(x$decnotrep, collapse = ", ")),
+    if (length(x$repnotdec))
       sprintf("  reported but not declared (%d addition(s)): %s",
-              length(x$reported_not_declared),
-              paste(x$reported_not_declared, collapse = ", ")),
+              length(x$repnotdec),
+              paste(x$repnotdec, collapse = ", ")),
     .rmbl_rule())
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_prereg_check <- function(x, ...) {
   cat(format(x), sep = "\n")
@@ -175,7 +175,7 @@ print.bricklayer_prereg_check <- function(x, ...) {
 #'
 #' @description
 #' Takes the p-values from several
-#' [capsule_falsify()] runs -- or a plain
+#' [cpsfals()] runs -- or a plain
 #' numeric vector -- and reports which survive once the size of the family
 #' is accounted for.
 #'
@@ -203,7 +203,7 @@ print.bricklayer_prereg_check <- function(x, ...) {
 #' \code{"bonferroni"}. A member survives when its adjusted value is at
 #' most `alpha`.
 #'
-#' For a list of [capsule_falsify()] results the p-value
+#' For a list of [cpsfals()] results the p-value
 #' used is that of
 #' each result's permutation control, and the floor is \eqn{1/(n + 1)} for
 #' its `n` permutations. For a numeric vector there is no floor to check and
@@ -215,20 +215,20 @@ print.bricklayer_prereg_check <- function(x, ...) {
 #'
 #' @param x A named list of `bricklayer_falsification`
 #' objects, or a named numeric vector of p-values.
-#' @param method `"holm"` (the default), `"bh"`,
+#' @param meth `"holm"` (the default), `"bh"`,
 #' `"bonferroni"` or `"none"`.
 #' @param alpha Number, default 0.05: the threshold applied to the adjusted
 #' values.
 #' @return A list of class `bricklayer_falsify_family` with `results` (a data
 #' frame of `name`, `p`, `adjusted` and logical `survives`, sorted by
 #' `p`),
-#' `method`, `family_size` (integer), `alpha`, and `at_floor` (the
+#' `method`, `famsz` (integer), `alpha`, and `atflr` (the
 #' names
 #' whose p-value equals the smallest their permutation count could produce;
 #' empty for a numeric vector). The print method shows the table.
 #' @seealso
-#' [capsule_falsify()],
-#' [prereg_declare()].
+#' [cpsfals()],
+#' [prrgdecl()].
 #' @examples
 #' # four statistics, one of which is real
 #' set.seed(1)
@@ -237,28 +237,28 @@ print.bricklayer_prereg_check <- function(x, ...) {
 #' d$a <- rnorm(150)
 #' d$b <- rnorm(150)
 #' fam <- list(
-#'   real = capsule_falsify(d, function(z) cor(z$x, z$y),
-#'                          treatment = "x", n = 199, seed = 1),
-#'   noise_a = capsule_falsify(d, function(z) cor(z$a, z$y),
-#'                             treatment = "a", n = 199, seed = 2),
-#'   noise_b = capsule_falsify(d, function(z) cor(z$b, z$y),
-#'                             treatment = "b", n = 199, seed = 3))
-#' falsify_family(fam)
+#'   real = cpsfals(d, function(z) cor(z$x, z$y),
+#'                          trt = "x", n = 199, seed = 1),
+#'   noisea = cpsfals(d, function(z) cor(z$a, z$y),
+#'                             trt = "a", n = 199, seed = 2),
+#'   noiseb = cpsfals(d, function(z) cor(z$b, z$y),
+#'                             trt = "b", n = 199, seed = 3))
+#' falsfam(fam)
 #'
 #' # the correction is what stops the smallest of several from being
 #' # read as the finding
-#' falsify_family(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5))$results
+#' falsfam(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5))$results
 #'
 #' # the false-discovery rate is less strict than Holm
-#' falsify_family(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5), method = "bh")$results
+#' falsfam(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5), meth = "bh")$results
 #'
-#' try(falsify_family(c(a = 0.01, b = 1.2)))
+#' try(falsfam(c(a = 0.01, b = 1.2)))
 #' @export
-falsify_family <- function(x, method = c("holm", "bh", "bonferroni",
+falsfam <- function(x, meth = c("holm", "bh", "bonferroni",
                                          "none"),
                            alpha = 0.05) {
   if (!length(x)) stop("`x` must hold at least one falsification result or p-value", call. = FALSE)
-  method <- .rmbl_arg(method)
+  meth <- .rmbl_arg(meth)
   alpha <- .rmbl_conf_level(alpha, "alpha")
   at_floor <- character(0)
   if (is.list(x) && length(x) &&
@@ -289,15 +289,15 @@ falsify_family <- function(x, method = c("holm", "bh", "bonferroni",
   if (any(p < 0 | p > 1)) {
     stop("p-values must lie in [0, 1]", call. = FALSE)
   }
-  adj <- .rmbl_p_adjust(p, method)
+  adj <- .rmbl_p_adjust(p, meth)
   df <- data.frame(name = names(p), p = as.numeric(p),
                    adjusted = as.numeric(adj),
                    survives = as.numeric(adj) <= alpha,
                    stringsAsFactors = FALSE)
   rownames(df) <- NULL
-  out <- list(results = df[order(df$p), ], method = method,
-              family_size = length(p), alpha = alpha,
-              at_floor = at_floor)
+  out <- list(results = df[order(df$p), ], method = meth,
+              famsz = length(p), alpha = alpha,
+              atflr = at_floor)
   rownames(out$results) <- NULL
   class(out) <- c("bricklayer_falsify_family", "list")
   out
@@ -326,19 +326,19 @@ falsify_family <- function(x, method = c("holm", "bh", "bonferroni",
 #' @export
 format.bricklayer_falsify_family <- function(x, ...) {
   c(.rmbl_rule(sprintf("Family of %d, corrected by %s at alpha %.3g",
-                       x$family_size, x$method, x$alpha)),
+                       x$famsz, x$method, x$alpha)),
     sprintf("  %-22s p %-10.4g adjusted %-10.4g %s", x$results$name,
             x$results$p, x$results$adjusted,
             ifelse(x$results$survives, "survives", "")),
-    if (length(x$at_floor))
+    if (length(x$atflr))
       c(.rmbl_rule(),
         sprintf(paste0("  at the permutation floor (more permutations ",
                        "would be needed to say more): %s"),
-                paste(x$at_floor, collapse = ", "))),
+                paste(x$atflr, collapse = ", "))),
     .rmbl_rule())
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_falsify_family <- function(x, ...) {
   cat(format(x), sep = "\n")
@@ -384,35 +384,35 @@ print.bricklayer_falsify_family <- function(x, ...) {
 #' @param true Number, default 1 (the null): the value to move the estimate
 #' to. A value other than 1 asks how much confounding would move the
 #' estimate to `true` instead of to no effect.
-#' @return A named numeric vector: `evalue_point` and, when limits are
-#' given, `evalue_limit`.
+#' @return A named numeric vector: `evlpoint` and, when limits are
+#' given, `evllimit`.
 #' @references VanderWeele, T. J., and Ding, P. (2017). Sensitivity
 #' Analysis in Observational Research: Introducing the E-Value.
 #' *Annals of Internal Medicine* 167(4), 268-274.
 #'   \href{https://doi.org/10.7326/M16-2607}{doi:10.7326/M16-2607}
 #' @seealso
-#' [capsule_falsify()] for controls that use
+#' [cpsfals()] for controls that use
 #' the data, where this uses none.
 #' @examples
 #' # a risk ratio of 2 needs a confounder associated by 3.41 with both
-#' evalue_rr(2)
+#' evlrr(2)
 #'
 #' # a protective effect is inverted, so 0.5 gives the same answer
-#' evalue_rr(0.5)
+#' evlrr(0.5)
 #'
 #' # an interval that already includes the null needs nothing
-#' evalue_rr(2, lo = 0.9, hi = 4.4)
+#' evlrr(2, lo = 0.9, hi = 4.4)
 #'
 #' # and a strong result with a limit well above the null is harder to
 #' # explain away
-#' evalue_rr(3, lo = 2.1, hi = 4.3)
+#' evlrr(3, lo = 2.1, hi = 4.3)
 #'
 #' # how much confounding would bring a risk ratio of 3 down to 1.5
-#' evalue_rr(3, true = 1.5)
+#' evlrr(3, true = 1.5)
 #'
-#' try(evalue_rr(-2))
+#' try(evlrr(-2))
 #' @export
-evalue_rr <- function(rr, lo = NULL, hi = NULL, true = 1) {
+evlrr <- function(rr, lo = NULL, hi = NULL, true = 1) {
   one <- function(v) {
     v <- .rmbl_num(v, "v")[1L]
     if (!is.finite(v) || v <= 0) {
@@ -426,14 +426,14 @@ evalue_rr <- function(rr, lo = NULL, hi = NULL, true = 1) {
   # explain away as a doubling, so a protective effect is inverted.
   if (rr < 1) rr <- 1 / rr
   point <- rr + sqrt(rr * (rr - 1))
-  out <- c(evalue_point = point)
+  out <- c(evlpoint = point)
   if (!is.null(lo) || !is.null(hi)) {
     l <- if (is.null(lo)) NA_real_ else one(lo) / true
     h <- if (is.null(hi)) NA_real_ else one(hi) / true
     # the limit NEARER the null is what has to be moved
     lim <- if (!is.na(l) && l > 1) l else if (!is.na(h) && h < 1) 1 / h else
       NA_real_
-    out <- c(out, evalue_limit =
+    out <- c(out, evllimit =
                if (is.na(lim)) 1 else lim + sqrt(lim * (lim - 1)))
   }
   out

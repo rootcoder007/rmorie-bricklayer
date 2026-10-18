@@ -1,32 +1,32 @@
-# bricklayer_explain_error(): where a message comes from, read from the code itself
+# explerr(): where a message comes from, read from the code itself
 
 ns <- function(x) get(x, envir = asNamespace("rmoriebricklayer"))
 
 test_that("an error of the packages is traced to the code that raises it, without a model", {
   pk <- "rmoriebricklayer"
-  r <- bricklayer_explain_error("Error: `prompt` must be a single non-empty string", packages = pk)
+  r <- explerr("Error: `prompt` must be a single non-empty string", pkgs = pk)
   expect_identical(r$match[1L], "exact")
   expect_identical(r$raised_by[1L], ".rmbl_string1")
-  expect_match(r$exported[1L], "bricklayer_llm_ask")
+  expect_match(r$exported[1L], "llmask")
   expect_identical(r$message[1L], "`...` must be a single non-empty string")
   # a condition, a try-error and the last error all work
-  e <- tryCatch(bricklayer_llm_config(no.such = 1), error = function(e) e)
-  expect_true(any(bricklayer_explain_error(e, packages = pk)$raised_by == "bricklayer_llm_config"))
-  te <- try(bricklayer_llm_config(no.such = 1), silent = TRUE)
-  expect_identical(bricklayer_explain_error(te, packages = pk)$match[1L], "exact")
+  e <- tryCatch(llmcfg(no.such = 1), error = function(e) e)
+  expect_true(any(explerr(e, pkgs = pk)$raised_by == "llmcfg"))
+  te <- try(llmcfg(no.such = 1), silent = TRUE)
+  expect_identical(explerr(te, pkgs = pk)$match[1L], "exact")
   # with no message, the last error of the session
-  expect_identical(bricklayer_explain_error(packages = pk)$match[1L], "exact")
+  expect_identical(explerr(pkgs = pk)$match[1L], "exact")
   # cut short or retyped: matched by its words
-  w <- bricklayer_explain_error("unknown setting 'foo'", packages = pk)
+  w <- explerr("unknown setting 'foo'", pkgs = pk)
   expect_true(nrow(w) >= 1L)
   # R's own errors, and nonsense, are not claimed
-  expect_identical(nrow(bricklayer_explain_error("object 'zz' not found", packages = pk)), 0L)
-  expect_identical(nrow(bricklayer_explain_error("Error: ", packages = pk)), 0L)
-  expect_error(bricklayer_explain_error(NA_character_), "text of an error")
-  expect_error(bricklayer_explain_error("x", n = 0), "whole number")
-  expect_error(bricklayer_explain_error("x", packages = "no.such.pkg.zz"), "not installed")
-  expect_error(bricklayer_explain_error("x", packages = NA_character_), "installed packages")
-  one <- bricklayer_explain_error("`prompt` must be a single non-empty string", packages = pk, n = 1)
+  expect_identical(nrow(explerr("object 'zz' not found", pkgs = pk)), 0L)
+  expect_identical(nrow(explerr("Error: ", pkgs = pk)), 0L)
+  expect_error(explerr(NA_character_), "text of an error")
+  expect_error(explerr("x", n = 0), "whole number")
+  expect_error(explerr("x", pkgs = "no.such.pkg.zz"), "not installed")
+  expect_error(explerr("x", pkgs = NA_character_), "installed packages")
+  one <- explerr("`prompt` must be a single non-empty string", pkgs = pk, n = 1)
   expect_identical(nrow(one), 1L)
 })
 
@@ -50,7 +50,7 @@ test_that("message templates: sprintf, paste, paste0 with sep, and computed part
 
 test_that("the messages table is kept between sessions for a person watching, one copy per version", {
   d <- withr::local_tempdir()
-  withr::local_options(rmoriebricklayer.llm_cache = NULL, rmoriebricklayer.llm_cache_dir = d, morie.progress = TRUE,
+  withr::local_options(rmoriebricklayer.llmcache = NULL, rmoriebricklayer.llmcachedir = d, morie.progress = TRUE,
                        morie.quiet = NULL)
   withr::local_envvar(TESTTHAT = NA, `_R_CHECK_PACKAGE_NAME_` = NA, MORIE_LLM_CACHE = NA)
   # a person watching: the terminal on stdin and stdout (the progress option alone is a script; G4)
@@ -74,7 +74,7 @@ test_that("the messages table is kept between sessions for a person watching, on
 test_that("explain-error from the shell", {
   out <- function(...) {
     b <- character()
-    st <- bricklayer_cli(c(...), out = function(x) b <<- c(b, x))
+    st <- blcli(c(...), out = function(x) b <<- c(b, x))
     list(status = st, text = paste(b, collapse = ""))
   }
   r <- out("explain-error", "`prompt` must be a single non-empty string")

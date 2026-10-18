@@ -8,9 +8,12 @@ test_that("seeded functions leave the caller's stream as a plain seed would", {
   set.seed(2)
   d <- data.frame(a = rnorm(120), b = sample(letters[1:3], 120, TRUE))
   fns <- list(
-    drift_calibrate = function() drift_calibrate(d, n = 4, seed = 3L),
-    capsule_power = function() {
-      capsule_power(d$a, effect = 0.3, n_sim = 30L, seed = 4L)
+    drftcal = function() drftcal(d, n = 4, seed = 3L),
+    cpspwr = function() {
+      cpspwr(d, function(z) mean(z$a), function(z, size) {
+        z$a <- z$a + size
+        z
+      }, sizes = c(0, 0.3), trt = "a", n = 19L, reps = 2L, seed = 4L)
     }
   )
   for (nm in names(fns)) {

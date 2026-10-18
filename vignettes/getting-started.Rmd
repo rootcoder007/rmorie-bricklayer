@@ -33,7 +33,7 @@ otis
 ## One call
 
 ```{r}
-a <- analyse_table(otis, value = "individuals", period = "year",
+a <- anltab(otis, value = "individuals", prd = "year",
                    by = c("table", "group"))
 a
 ```
@@ -46,7 +46,7 @@ the company of the other nine.
 
 ```{r}
 a$change[, c("table", "group", "year", "value", "previous",
-             "pct_change", "pct_lower", "pct_upper", "p_adjusted",
+             "pctchg", "pctlo", "pctup", "padj",
              "significant")]
 ```
 
@@ -58,14 +58,14 @@ and a half of it, and the percent change inherits that. `rounding = 5`
 adds the envelope and a combined interval that is the union of the
 sampling interval and the envelope: the honest range for a number read
 off a rounded table. Suppressed cells (`"x"`, `"<5"`) are handled the
-same way through `suppression_limit`.
+same way through `suplim`.
 
 ```{r}
-b <- analyse_table(otis, value = "individuals", period = "year",
-                   by = c("table", "group"), rounding = 5)
+b <- anltab(otis, value = "individuals", prd = "year",
+                   by = c("table", "group"), rnd = 5)
 b$change[!is.na(b$change$previous),
-         c("group", "year", "pct_change", "pct_lower", "pct_upper",
-           "combined_pct_lower", "combined_pct_upper")]
+         c("group", "year", "pctchg", "pctlo", "pctup",
+           "compctlo", "compctup")]
 ```
 
 ## Trend
@@ -84,11 +84,11 @@ a$trend
 
 Keep the previous release and pass it as `prior`; every column is
 screened. Before trusting a drift verdict, ask how often the screens fire
-on data that has not changed: `drift_calibrate()` splits one release into
+on data that has not changed: `drftcal()` splits one release into
 random halves and reports the false-alarm rate per column.
 
 ```{r}
-drift_calibrate(otis, n = 10)
+drftcal(otis, n = 10)
 ```
 
 ## Stock and flow
@@ -98,18 +98,18 @@ through in a year are a flow. Lakner's decomposition ties them exactly:
 average daily population is person-days over the days in the period,
 average length of stay is person-days over the people served, and the
 identity `adp = admissions * alos / t` means a change in days must
-multiply out of a change in people and a change in stay. `stock_flow()`
+multiply out of a change in people and a change in stay. `stkflow()`
 reports both sides and checks the identity.
 
 ```{r}
-sf <- stock_flow(days = c(21900, 23725, 20440), people = c(300, 325, 280),
-                 period = c(2022, 2023, 2024), t = 365)
+sf <- stkflow(days = c(21900, 23725, 20440), people = c(300, 325, 280),
+                 prd = c(2022, 2023, 2024), t = 365)
 sf
 ```
 
 A population that rose while stays shortened, or fell while stays
 lengthened, reads differently from one where both moved together;
-`adp()`, `alos()` and `admissions()` give the single measures.
+`adp()`, `alos()` and `admits()` give the single measures.
 
 ## Stock and flow
 
@@ -118,36 +118,36 @@ through in a year are a flow. Lakner's decomposition ties them exactly:
 average daily population is person-days over the days in the period,
 average length of stay is person-days over the people served, and the
 identity `adp = admissions * alos / t` means a change in days must
-multiply out of a change in people and a change in stay. `stock_flow()`
+multiply out of a change in people and a change in stay. `stkflow()`
 reports both sides and checks the identity.
 
 ```{r}
-sf <- stock_flow(days = c(21900, 23725, 20440), people = c(300, 325, 280),
-                 period = c(2022, 2023, 2024), t = 365)
+sf <- stkflow(days = c(21900, 23725, 20440), people = c(300, 325, 280),
+                 prd = c(2022, 2023, 2024), t = 365)
 sf
 ```
 
 A population that rose while stays shortened, or fell while stays
 lengthened, reads differently from one where both moved together;
-`adp()`, `alos()` and `admissions()` give the single measures.
+`adp()`, `alos()` and `admits()` give the single measures.
 
 ## Other published tables
 
 The same approach works on any table with an estimate and its interval. The package also bundles
 Statistics Canada estimates of First Nations, Metis and Inuit health and mental health
-(`?indigenous_example`). `vignette("first-nations-metis-inuit-health")` analyses them: by
+(`?indiex`). `vignette("first-nations-metis-inuit-health")` analyses them: by
 distinction, with suppressed cells never imputed, and with wellness reported beside distress.
 
 ## Record it
 
-`report_analysis()` writes the whole analysis as Markdown or a single
-HTML file, and `use_capsule_template()` writes a folder with the
+`rptanl()` writes the whole analysis as Markdown or a single
+HTML file, and `usecpstmpl()` writes a folder with the
 provenance file, an `analysis.R` that pins the source bytes and runs the
 steps above, and a README. The template runs as written against this
 table.
 
 ```{r}
-d <- use_capsule_template(tempfile("capsule-"), example = TRUE)
+d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 list.files(d)
 cat(readLines(file.path(d, "analysis.R"))[1:12], sep = "\n")
 ```
@@ -155,5 +155,5 @@ cat(readLines(file.path(d, "analysis.R"))[1:12], sep = "\n")
 From here, replace the source URL and the column names in
 `data_provenance.json`, run `Rscript analysis.R`, and copy the SHA-256
 it prints back into the provenance file. Later runs refuse to proceed if
-the bytes change, and `manifest_recompute()` compares two runs number by
+the bytes change, and `mnfrcmp()` compares two runs number by
 number.

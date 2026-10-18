@@ -245,13 +245,13 @@ if (INPUT_MODE == "rdata") {
     cat("      Using schema from: ", provenance_path, "\n")
     ## analysis.R runs as its own R process: load the bundled native codec
     ## (json_native.R sits next to this script); jsonlite only as a fallback.
-    if (!exists("bricklayer_json_from_json", mode = "function")) {
+    if (!exists("fromjs", mode = "function")) {
       codec <- file.path(script_dir, "json_native.R")
       if (file.exists(codec)) source(codec) else if (!requireNamespace("jsonlite", quietly = TRUE))
         stop("json_native.R not found next to analysis.R and jsonlite is not installed", call. = FALSE)
     }
-    prov <- if (exists("bricklayer_json_from_json", mode = "function"))
-      bricklayer_json_from_json(provenance_path) else jsonlite::fromJSON(provenance_path)
+    prov <- if (exists("fromjs", mode = "function"))
+      fromjs(provenance_path) else jsonlite::fromJSON(provenance_path)
     if (!is.null(prov$schema$expected_columns))
       expected_cols <- prov$schema$expected_columns
     if (!is.null(prov$schema$expected_value_sets))
@@ -462,7 +462,7 @@ fwrite(orc[, .(unique_individual_id, end_fiscal_year, vm, ac, np,
 ## Descriptive output only: these are NOT cross-checks against
 ## published values, so they add nothing to the PASS/DIFFER counts.
 
-## rate()/rate_change()/share() come from the installed package when
+## rtcalc()/ratechg()/shrs() come from the installed package when
 ## there is one, and from the copies a bundle vendors beside this
 ## script when there is not.
 ## An INSTALLED package is not the same as one that has these
@@ -486,16 +486,16 @@ RATES_AVAILABLE <- FALSE
 ## them, and 3c runs before the stock-and-flow section does. Loading
 ## them there instead left 3c unable to recompute seventeen tables,
 ## which it then reported as differing.
-.rate_fns <- .otis_pkg_fns(c("rate", "share", "rate_change"))
+.rate_fns <- .otis_pkg_fns(c("rtcalc", "shrs", "ratechg"))
 if (!is.null(.rate_fns)) {
-  rate        <- .rate_fns$rate
-  share       <- .rate_fns$share
-  rate_change <- .rate_fns$rate_change
+  rtcalc      <- .rate_fns$rtcalc
+  shrs        <- .rate_fns$shrs
+  ratechg     <- .rate_fns$ratechg
   RATES_AVAILABLE <- TRUE
 }
-.sf_pkg <- .otis_pkg_fns(c("adp", "alos", "stock_flow"))
+.sf_pkg <- .otis_pkg_fns(c("adp", "alos", "stkflow"))
 if (!is.null(.sf_pkg)) {
-  adp <- .sf_pkg$adp; alos <- .sf_pkg$alos; stock_flow <- .sf_pkg$stock_flow
+  adp <- .sf_pkg$adp; alos <- .sf_pkg$alos; stkflow <- .sf_pkg$stkflow
 } else {
   ## Beside the script is where a bundle puts them; ../../R is the
   ## repository layout, for running this file straight from a checkout.
@@ -508,18 +508,18 @@ if (!is.null(.sf_pkg)) {
       }
     }
   }
-  RATES_AVAILABLE <- exists("rate", mode = "function") &&
-    exists("rate_change", mode = "function") &&
-    exists("share", mode = "function")
+  RATES_AVAILABLE <- exists("rtcalc", mode = "function") &&
+    exists("ratechg", mode = "function") &&
+    exists("shrs", mode = "function")
 }
 
 ## The region map checks section 3g uses. Separate from the block above
 ## because a reviewer with the package installed should get the package
 ## copies, and one without should still get 3g rather than losing it to
 ## whether the stock-flow lookup happened to succeed.
-.rm_pkg <- .otis_pkg_fns(c("region_coverage", "region_map_integrity",
-                           "region_map_compare", "region_map_second_route",
-                           "region_map_from_points"))
+.rm_pkg <- .otis_pkg_fns(c("rgncov", "rgnmapintg",
+                           "rgnmapcmp", "rgnmapalt",
+                           "rgnmappts"))
 if (!is.null(.rm_pkg)) {
   for (.n in names(.rm_pkg)) assign(.n, .rm_pkg[[.n]])
 } else {
@@ -543,13 +543,13 @@ if (RATES_AVAILABLE) {
   ## per 1,000 placements, and per 1,000 person-years: two different
   ## denominators for the same events, reported as two columns rather
   ## than one ambiguous "rate"
-  r_placements <- rate(by_year, vm, np, by = "end_fiscal_year", per = "1k")
-  r_personyrs  <- rate(by_year, vm, person_years,
+  r_placements <- rtcalc(by_year, vm, np, by = "end_fiscal_year", per = "1k")
+  r_personyrs  <- rtcalc(by_year, vm, person_years,
                        by = "end_fiscal_year", per = "1k")
   ## share of the period's total movements falling in each year
-  s_year <- share(by_year, vm, by = "end_fiscal_year")
+  s_year <- shrs(by_year, vm, by = "end_fiscal_year")
   ## change in the placement-based rate, year over year
-  rc_year <- rate_change(by_year, vm, np, end_fiscal_year, per = "1k")
+  rc_year <- ratechg(by_year, vm, np, end_fiscal_year, per = "1k")
 
   rates_tbl <- data.frame(
     end_fiscal_year   = r_placements$end_fiscal_year,
@@ -565,10 +565,10 @@ if (RATES_AVAILABLE) {
     share_upper       = s_year$upper,
     stringsAsFactors  = FALSE)
   chg <- data.frame(end_fiscal_year = rc_year$end_fiscal_year,
-                    previous_rate = rc_year$previous_rate,
-                    pct_change = rc_year$pct_change,
-                    pct_lower = rc_year$pct_lower,
-                    pct_upper = rc_year$pct_upper,
+                    previous_rate = rc_year$prerate,
+                    pct_change = rc_year$pctchg,
+                    pct_lower = rc_year$pctlo,
+                    pct_upper = rc_year$pctup,
                     change_flag = rc_year$flag,
                     stringsAsFactors = FALSE)
   rates_tbl <- merge(rates_tbl, chg, by = "end_fiscal_year", all.x = TRUE)
@@ -783,7 +783,7 @@ if (YOY_AVAILABLE) {
 ## Loaded in section 3b with the other measures, because 3c needs them
 ## too and runs first.
 STOCKFLOW_AVAILABLE <- exists("adp", mode = "function") &&
-  exists("alos", mode = "function") && exists("stock_flow", mode = "function")
+  exists("alos", mode = "function") && exists("stkflow", mode = "function")
 
 if (STOCKFLOW_AVAILABLE && nzchar(.yoy_dir) && dir.exists(.yoy_dir)) {
   cat("\n[3e/8] Stock and flow for segregation (Lakner 1976)\n")
@@ -829,10 +829,10 @@ if (STOCKFLOW_AVAILABLE && nzchar(.yoy_dir) && dir.exists(.yoy_dir)) {
     ## Lakner's measures, through the package's own functions
     .ont <- c("2023" = 15495050, "2024" = 16046534, "2025" = 16256538)
     .have <- .yrs[.yrs %in% names(.ont)]
-    sf <- stock_flow(days = as.numeric(.days[.have]),
+    sf <- stkflow(days = as.numeric(.days[.have]),
                      people = as.numeric(.ppl[.have]),
-                     period = .have,
-                     exposure = as.numeric(.ont[.have]))
+                     prd = .have,
+                     expo = as.numeric(.ont[.have]))
     print(sf)
     fwrite(as.data.frame(sf), file.path(OUTPUT_DIR, "12_stock_flow.csv"))
 
@@ -856,27 +856,27 @@ if (STOCKFLOW_AVAILABLE && nzchar(.yoy_dir) && dir.exists(.yoy_dir)) {
     ## it is not, one of the three is wrong.
     if (length(.have) > 1L) {
       i <- length(.have)
-      .p <- sf$people_change[i] / 100
-      .l <- sf$alos_change[i] / 100
+      .p <- sf$peochg[i] / 100
+      .l <- sf$aloschg[i] / 100
       record("lakner_decomposition_exact",
              observed = round((1 + .p) * (1 + .l) - 1, 10),
-             expected = round(sf$days_change[i] / 100, 10), tol = 1e-9,
+             expected = round(sf$dayschg[i] / 100, 10), tol = 1e-9,
              group = "stock_flow",
              note = "days = people x length of stay, so the change must multiply out")
       ## and the finding: the two rates disagree on the sign
       record("lakner_flow_and_stock_disagree",
-             observed = sign(sf$flow_rate_change[i]) !=
-                        sign(sf$stock_rate_change[i]),
+             observed = sign(sf$flowratechg[i]) !=
+                        sign(sf$stkratechg[i]),
              expected = TRUE, force_status = "INFO", group = "stock_flow",
              note = sprintf(paste0("flow rate %+.1f%% against stock rate %+.1f%%: ",
                                    "people %+.1f%%, stay %+.1f%%, days %+.1f%%. ",
                                    "Quoting either alone states the wrong sign ",
                                    "for the other."),
-                            sf$flow_rate_change[i], sf$stock_rate_change[i],
-                            sf$people_change[i], sf$alos_change[i],
-                            sf$days_change[i]))
+                            sf$flowratechg[i], sf$stkratechg[i],
+                            sf$peochg[i], sf$aloschg[i],
+                            sf$dayschg[i]))
       cat(sprintf("      flow %+.1f%% vs stock %+.1f%% -- opposite signs\n",
-                  sf$flow_rate_change[i], sf$stock_rate_change[i]))
+                  sf$flowratechg[i], sf$stkratechg[i]))
     }
 
     ## The measurement trap, recorded so it cannot be rediscovered the
@@ -921,7 +921,7 @@ if (STOCKFLOW_AVAILABLE && nzchar(.yoy_dir) && dir.exists(.yoy_dir)) {
     cat("      skipped: b01/b02 not present\n")
   }
 } else if (!STOCKFLOW_AVAILABLE) {
-  cat("\n[3e/8] Stock and flow: adp()/alos()/stock_flow() not available\n")
+  cat("\n[3e/8] Stock and flow: adp()/alos()/stkflow() not available\n")
 }
 
 
@@ -1101,7 +1101,7 @@ if (nzchar(.loc_f) && file.exists(.loc_f) && nzchar(.yoy_dir) &&
 .rmp_f <- file.path(SCRIPT_DIR, "cd_population_2022.csv")
 .rmv_f <- file.path(SCRIPT_DIR, "otis_region_map_verify.R")
 if (all(file.exists(c(.rm_f, .rmp_f, .rmv_f))) &&
-    exists("region_coverage", mode = "function")) {
+    exists("rgncov", mode = "function")) {
   source(.rmv_f)
   cat("\n[3g/8] Institution to census division region map\n")
   .rm  <- .orm_read(.rm_f)
@@ -1143,7 +1143,7 @@ if (all(file.exists(c(.rm_f, .rmp_f, .rmv_f))) &&
 
   .open <- .rm[grepl("open", .rm$Operating_Status, ignore.case = TRUE), ]
   .units <- vapply(.rmp$cduid, function(u) sum(.open$CDUID == u), numeric(1))
-  .cov <- region_coverage(.rmp$cduid, .rmp$population, .units)
+  .cov <- rgncov(.rmp$cduid, .rmp$population, .units)
   print(.cov, n = 5)
   fwrite(as.data.frame(.cov), file.path(OUTPUT_DIR, "13_cd_coverage.csv"))
   fwrite(.rmchk, file.path(OUTPUT_DIR, "14_region_map_checks.csv"))
@@ -1153,7 +1153,7 @@ if (all(file.exists(c(.rm_f, .rmp_f, .rmv_f))) &&
   ## being quietly available to whoever reads the coverage CSV next.
   record("region_map_covered_share_is_not_a_denominator",
          observed = sprintf("%.1f%% of residents live in a division holding an institution",
-                            attr(.cov, "coverage")$covered_share),
+                            attr(.cov, "coverage")$covshr),
          expected = "context, never an exposure", force_status = "INFO",
          group = "region_map",
          note = paste("institutions serve court catchments, not the division",

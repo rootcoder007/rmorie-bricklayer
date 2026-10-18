@@ -23,7 +23,7 @@ test_that("a cross-host redirect is followed with the credential header left beh
   # r-project.org answers 301 to www.r-project.org: a different host, so the
   # bearer header must not travel (libcurl's own rule, kept by the hand-rolled loop)
   msgs <- utils::capture.output(
-    out <- bricklayer_download("https://r-project.org/", dest,
+    out <- bldl("https://r-project.org/", dest,
                                headers = c(Authorization = "Bearer not-for-www", Accept = "text/html"),
                                label = "r-project", quiet = FALSE, tty = TRUE),
     type = "message")
@@ -33,7 +33,7 @@ test_that("a cross-host redirect is followed with the credential header left beh
   expect_true(any(grepl("r-project:", msgs, fixed = TRUE)))
   # the same through the entry point, with the milestone lines of a non-terminal
   msgs2 <- utils::capture.output(
-    bricklayer_download("https://r-project.org/", dest, label = "again", quiet = FALSE, tty = FALSE),
+    bldl("https://r-project.org/", dest, label = "again", quiet = FALSE, tty = FALSE),
     type = "message")
   expect_true(any(grepl("again: downloading", msgs2, fixed = TRUE)))
   expect_true(any(grepl("again: .* in [0-9]+ s", msgs2)))
@@ -44,20 +44,20 @@ test_that("a 404 and an unresolvable name are errors that leave the destination 
   skip_if_not(online(), "no network")
   dest <- tempfile()
   writeLines("keep me", dest)
-  expect_error(bricklayer_download("https://cloud.r-project.org/this-page-does-not-exist-rmbl", dest, quiet = TRUE),
+  expect_error(bldl("https://cloud.r-project.org/this-page-does-not-exist-rmbl", dest, quiet = TRUE),
                "answered HTTP 404")
   expect_identical(readLines(dest), "keep me")
-  expect_error(bricklayer_download("https://nonexistent.invalid/x", dest, quiet = TRUE),
+  expect_error(bldl("https://nonexistent.invalid/x", dest, quiet = TRUE),
                "could not resolve")
   expect_identical(readLines(dest), "keep me")
-  expect_error(download_data("https://cloud.r-project.org/this-page-does-not-exist-rmbl", dest, quiet = TRUE),
+  expect_error(dldata("https://cloud.r-project.org/this-page-does-not-exist-rmbl", dest, quiet = TRUE),
                "answered HTTP 404")
 })
 
-test_that("bricklayer_json_from_json fetches a URL through the same transport", {
+test_that("fromjs fetches a URL through the same transport", {
   skip_on_cran()
   skip_if_not(online(), "no network")
-  r <- tryCatch(bricklayer_json_from_json("https://rootcoder007.r-universe.dev/api/packages/rmoriebricklayer"),
+  r <- tryCatch(fromjs("https://rootcoder007.r-universe.dev/api/packages/rmoriebricklayer"),
                 error = function(e) e)
   why <- if (inherits(r, "error")) conditionMessage(r) else ""
   # r-universe down, throttling (429), stalling or not answering in time is the third party, not the transport
@@ -65,9 +65,9 @@ test_that("bricklayer_json_from_json fetches a URL through the same transport", 
           paste("r-universe did not answer:", why))
   expect_identical(why, "")
   expect_identical(r$Package, "rmoriebricklayer")
-  expect_error(bricklayer_json_from_json("https://cloud.r-project.org/this-page-does-not-exist-rmbl.json"),
+  expect_error(fromjs("https://cloud.r-project.org/this-page-does-not-exist-rmbl.json"),
                "answered HTTP 404")
-  expect_error(bricklayer_json_from_json("https://nonexistent.invalid/x.json"), "could not resolve")
+  expect_error(fromjs("https://nonexistent.invalid/x.json"), "could not resolve")
 })
 
 test_that("a sized body drives the bar; a failing callback, an interrupt and an unmovable destination are named", {
@@ -76,7 +76,7 @@ test_that("a sized body drives the bar; a failing callback, an interrupt and an 
   url <- "https://cloud.r-project.org/favicon.ico"   # static, with a Content-Length
   dest <- tempfile(fileext = ".ico")
   msgs <- utils::capture.output(
-    bricklayer_download(url, dest, label = "icon", quiet = FALSE, tty = TRUE), type = "message")
+    bldl(url, dest, label = "icon", quiet = FALSE, tty = TRUE), type = "message")
   expect_gt(file.size(dest), 0)
   expect_true(any(grepl("icon:", msgs, fixed = TRUE)))
   # a progress callback that errors ends the transfer and is reported as such
@@ -88,7 +88,7 @@ test_that("a sized body drives the bar; a failing callback, an interrupt and an 
   d <- tempfile()
   dir.create(d)
   writeLines("x", file.path(d, "inner"))
-  expect_error(bricklayer_download(url, d, quiet = TRUE), "cannot move the download into place")
+  expect_error(bldl(url, d, quiet = TRUE), "cannot move the download into place")
   expect_true(file.exists(file.path(d, "inner")))
   expect_length(list.files(dirname(d), pattern = paste0("^", basename(d), "\\.rmbl-part")), 0L)
 })

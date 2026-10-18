@@ -17,7 +17,7 @@ test_that("RStudio outside its console: a terminal tab, a build or render pane, 
 
 test_that("R.app and Rgui get no colour; a console under 20 columns falls back to the R width", {
   withr::local_envvar(R_CLI_NUM_COLORS = NA, NO_COLOR = NA)
-  withr::local_options(rmoriebricklayer.num_colors = NULL, cli.num_colors = NULL, cli.default_num_colors = NULL)
+  withr::local_options(rmoriebricklayer.numcol = NULL, cli.num_colors = NULL, cli.default_num_colors = NULL)
   for (g in c("AQUA", "Rgui")) {
     local_mocked_bindings(.bl_gui = function() g)
     expect_identical(ns$.bl_num_colors(NULL, "", FALSE, FALSE, TRUE, TRUE), 1L, info = g)

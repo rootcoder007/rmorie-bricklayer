@@ -82,105 +82,105 @@ reference:
       drift screen against the prior capsule; then a report and a capsule
       template.
     contents:
-      - analyse_table
-      - report_analysis
-      - published_bounds
-      - change_envelope
-      - yoy_bounds
-      - yoy_pvalues
-      - scan_adjust
-      - drift_calibrate
-      - use_capsule_template
+      - anltab
+      - rptanl
+      - pubbnd
+      - chgenv
+      - yoybnd
+      - yoypv
+      - scanadj
+      - drftcal
+      - usecpstmpl
   - title: Fetch open data
     desc: >
       Resilient downloaders with libcurl + Wayback fallback for pulling public
       datasets over flaky endpoints.
     contents:
-      - bricklayer_fetch
-      - fetch_verified
-      - archive_capture
-      - bricklayer_fetch_siu
-      - download_data
-      - friendly_download
+      - blfetch
+      - fetchvrf
+      - arccap
+      - siufetch
+      - dldata
+      - fdl
   - title: SIU report mining
     desc: >
       Deterministic, offline parse/resolve core for Ontario Special
       Investigations Unit director's reports — schema, parser,
       subject-official resolver.
     contents:
-      - bricklayer_siu_schema
-      - bricklayer_parse_siu
-      - bricklayer_fetch_parse_siu
-      - bricklayer_siu_text
-      - bricklayer_siu_iso_date
-      - bricklayer_siu_resolve_so
+      - siusch
+      - siuprs
+      - siufprs
+      - siutxt
+      - siudate
+      - siuso
   - title: Portal resolvers
     desc: >
       Turn a dataset identifier on a government open-data portal into a direct
       resource URL — CKAN, Socrata, ArcGIS, and Wayback snapshots.
     contents:
-      - resolve_via_ckan
-      - resolve_via_ckan_search
-      - resolve_via_socrata
-      - resolve_via_arcgis
-      - wayback_snapshot_url
-      - wayback_snapshot_url_native
-      - wayback_save
-      - wayback_retry
+      - rslvckan
+      - rslvckns
+      - rslvsoc
+      - rslvarc
+      - wbsnpurl
+      - wbsnpnat
+      - wbsave
+      - wbrtry
   - title: Provenance & reproducibility capsules
     desc: >
       Capture the environment, record a citable data-provenance capsule, and
       verify it later so an analysis reproduces from the same inputs.
     contents:
-      - capture_environment
-      - cite_capsule
-      - verify_capsule
-      - load_provenance
-      - record
-      - make_manifest
-      - manifest_canonical
-      - manifest_recompute
-      - manifest_record_seed
-      - capture_dependencies
-      - write_manifest_json
-      - write_summary_txt
+      - capenv
+      - citecps
+      - vrfcps
+      - loadprov
+      - recrd
+      - mkmnf
+      - mnfcanon
+      - mnfrcmp
+      - mnfrecseed
+      - capdeps
+      - wrmnfjs
+      - wrsmrytxt
   - title: Language model and command line
     desc: >
       Language models you bring (a provider's key, an OpenAI-compatible
       server of your own, or a local Ollama), answering from the MORIE
       packages' help; the rmoriebricklayer shell command.
     contents:
-      - agent_bundle
-      - bricklayer_llm_ask
-      - bricklayer_explain_error
-      - bricklayer_llm_config
-      - bricklayer_llm_login
-      - bricklayer_llm_logout
-      - bricklayer_llm_status
-      - bricklayer_services
-      - bricklayer_llm_models
-      - bricklayer_llm_providers
-      - bricklayer_llm_route_info
-      - bricklayer_llm_chat
-      - bricklayer_data_manifest
-      - bricklayer_download
-      - bricklayer_progress
-      - bricklayer_cli
-      - install_cli
+      - agentbndl
+      - llmask
+      - explerr
+      - llmcfg
+      - dlogin
+      - dlogout
+      - llmstat
+      - svcs
+      - llmmdls
+      - llmprvd
+      - llmrte
+      - llmchat
+      - dmnf
+      - bldl
+      - blprog
+      - blcli
+      - instcli
   - title: JSON (native codec)
     desc: jsonlite's mapping in base R, byte-for-byte; no jsonlite at run time.
     contents:
-      - bricklayer_json_from_json
-      - bricklayer_json_to_json
-      - rmbl_json_serialize
-      - rmbl_json_gzip
-      - rmbl_base64
+      - fromjs
+      - tojs
+      - jsserdoc
+      - jsgz
+      - b64
   - title: Integrity & checksums
     desc: SHA-256 hashing and verification for downloaded files.
     contents:
-      - sha256_file
-      - verify_sha256
-      - core_sha256
+      - sha256file
+      - vrfsha256
+      - csha256
   - title: Categorical integrity
     desc: >
       Labels that cannot be swapped quietly: name-based recodes that refuse
@@ -189,20 +189,20 @@ reference:
       reported odds ratios checked under every relabelling, and a signed
       manifest of the whole chain.
     contents:
-      - guard_recode
-      - decode_codes
-      - guard_levels
-      - audit_categories
-      - verify_recode
-      - verify_marginals
-      - odds_ratio_check
-      - relabel
-      - decode_labelled
-      - transfer_verify
-      - relabel_forensics
-      - guard_binary
-      - recode_manifest
-      - write_recode_manifest
+      - grdrcd
+      - deccodes
+      - grdlvls
+      - audcats
+      - vrfrcd
+      - vrfmrg
+      - orchk
+      - relbl
+      - declbld
+      - xfrvrf
+      - rlblfrns
+      - grdbin
+      - rcdmnf
+      - wrrcdmnf
   - title: Categorical integrity
     desc: >
       Labels that cannot be swapped quietly: name-based recodes that refuse
@@ -211,55 +211,55 @@ reference:
       reported odds ratios checked under every relabelling, and a signed
       manifest of the whole chain.
     contents:
-      - guard_recode
-      - decode_codes
-      - guard_levels
-      - audit_categories
-      - verify_recode
-      - verify_marginals
-      - odds_ratio_check
-      - guard_binary
-      - recode_manifest
-      - write_recode_manifest
+      - grdrcd
+      - deccodes
+      - grdlvls
+      - audcats
+      - vrfrcd
+      - vrfmrg
+      - orchk
+      - grdbin
+      - rcdmnf
+      - wrrcdmnf
   - title: Schema validation & synthetic data
     desc: >
       Validate a data frame against a declared schema, and build typed
       synthetic columns/CSVs for tests and documentation.
     contents:
-      - apply_schema_validation
-      - validate_schema
-      - make_synthetic_column
-      - make_synthetic_csv
+      - schval
+      - valsch
+      - mksyncol
+      - mksyncsv
   - title: Text & encoding utilities
     desc: ASCII transliteration and safe text fallbacks for non-UTF-8 sinks.
     contents:
-      - to_ascii
-      - ascii_fallback
-      - write_text_fallback
+      - toascii
+      - asciifb
+      - wrtxtfb
   - title: Core numeric primitives
     desc: >
       Thin R wrappers over the shared compiled core that the whole ecosystem
       links against via `LinkingTo: rmoriebricklayer`, so every sibling
       package computes with one copy of the arithmetic.
     contents:
-      - rmbl_core_stats
-      - core_normal_pdf
-      - core_normal_logpdf
-      - rmbl_core_spread
-      - core_moments
-      - rmbl_core_robust
-      - rmbl_core_trimmed
-      - core_weighted
-      - rmbl_core_rank
-      - core_cov
-      - core_bootstrap_mean
-      - core_ipw_weights
-      - core_gamma_cdf
-      - core_hawkes_nll
-      - core_hawkes_fit
-      - core_hawkes_residuals
-      - core_uniforms
-      - core_hawkes_jitter
+      - cstat
+      - cnormpdf
+      - cnormlpdf
+      - cspread
+      - cmom
+      - crob
+      - ctrm
+      - cwtd
+      - crank
+      - ccovm
+      - cbootmean
+      - cipw
+      - cgamcdf
+      - chwknll
+      - chwkfit
+      - chwkres
+      - cunif
+      - chwkjit
   - title: Distributional drift
     desc: >
       Whether a freshly fetched column is still the column the capsule was
@@ -267,12 +267,12 @@ reference:
       statistically identical yet differ byte-for-byte, and a column can keep
       its name and type while having been silently rescaled.
     contents:
-      - capsule_drift
-      - drift_ks
-      - drift_psi
-      - drift_chisq
-      - drift_homogeneity
-      - benford_test
+      - cpsdrft
+      - drftks
+      - drftpsi
+      - drftchisq
+      - drfthomog
+      - benfordtst
   - title: Signed provenance
     desc: >
       Authenticated rather than merely checksummed. Keyed digests for a shared
@@ -280,65 +280,65 @@ reference:
       trees to pin a capsule chunk by chunk, and hash chains to make the run
       history itself tamper-evident.
     contents:
-      - capsule_attest
-      - capsule_bundle
-      - capsule_falsify
-      - capsule_power
-      - prereg_declare
-      - falsify_family
-      - evalue_rr
-      - timestamp_verify
-      - cert_parse
-      - cert_chain_verify
-      - revocation_fetch
-      - capsule_sign
-      - xmss_advance
-      - capsule_verify
-      - pqc_keygen
-      - signing_public_key
-      - fips_keygen
-      - fips_key
-      - fips_mu
-      - fips_sizes
-      - kem_keygen
-      - kem_sizes
-      - kem_encapsulate
-      - kem_decapsulate
-      - hqc_keygen
-      - hqc_sizes
-      - hqc_encapsulate
-      - hqc_decapsulate
-      - hqc_compress_key
-      - oqs_keygen
-      - pqc_backends
-      - rmbl_chain
-      - rmbl_merkle
-      - chunk_file
+      - cpsatst
+      - cpsbndl
+      - cpsfals
+      - cpspwr
+      - prrgdecl
+      - falsfam
+      - evlrr
+      - tsvrf
+      - certprs
+      - certchnvrf
+      - rvkfetch
+      - cpssign
+      - xmssadv
+      - cpsvrf
+      - pqckg
+      - signpubkey
+      - fipskg
+      - fipskey
+      - fipsmu
+      - fipssz
+      - kemkg
+      - kemsz
+      - kemencap
+      - kemdecap
+      - hqckg
+      - hqcsz
+      - hqcencap
+      - hqcdecap
+      - hqccmpkey
+      - oqskg
+      - pqcbknd
+      - chn
+      - mrk
+      - chnkfile
   - title: Digests and keys
     desc: >
       The hashes and key-derivation the provenance layer is built on, each
       verified against its published test vectors.
     contents:
-      - core_sha512
-      - core_crc32
-      - core_blake2b
-      - rmbl_keyed_digest
-      - rmbl_file_digest
-      - digest_object
-      - random_bytes
-      - drbg_new
-      - drbg_generate
-      - drbg_reseed
-      - derive_key
+      - csha512
+      - ccrc32
+      - cblake2b
+      - keyeddgst
+      - filedgst
+      - dgstobj
+      - rndbytes
+      - drbgnew
+      - drbggen
+      - drbgrsd
+      - drvkey
   - title: Schema and rules
     desc: >
       Derive a pinnable schema from data you already trust, then declare the
       project-specific checks a generic schema cannot express.
     contents:
-      - infer_schema
-      - rule
-      - validate_rules
-      - rmbl_rule_library
+      - infsch
+      - rul
+      - valrules
+      - rulelib
   - title: Period-over-period change
     desc: >
       Year-over-year change matched on the period's own value rather than on
@@ -349,13 +349,13 @@ reference:
       HTML, PDF, CSV, TSV, JSON or Markdown.
     contents:
       - yoy
-      - yoy_summary
-      - yoy_label
-      - fiscal_year_label
-      - yoy_render
-      - yoy_write
-      - yoy_delim
-      - yoy_palettes
+      - yoysmry
+      - yoylbl
+      - fylbl
+      - yoyren
+      - yoywr
+      - yoydelim
+      - yoypals
   - title: Stock and flow over time
     desc: >
       Person-days are one quantity with two denominators. Divided by TIME they
@@ -367,11 +367,11 @@ reference:
     contents:
       - adp
       - alos
-      - admissions
-      - adp_from_counts
-      - stock_flow
-      - stay_summary
-      - period_days
+      - admits
+      - adpcnts
+      - stkflow
+      - staysmry
+      - perdays
   - title: Rates, shares and rate change
     desc: >
       A count is not comparable across places of different size or years of
@@ -383,9 +383,9 @@ reference:
       corrects for the exposure ratio rather than treating two rates as
       measured numbers.
     contents:
-      - rate
-      - share
-      - rate_change
+      - rtcalc
+      - shrs
+      - ratechg
   - title: Banded categories
     desc: >
       Published categories are intervals -- "2 to 5", "50+" -- and anything
@@ -394,10 +394,10 @@ reference:
       representative-value rule explicit, and measure how far a result moves
       as the open band's assumed cap varies.
     contents:
-      - parse_bands
-      - band_values
-      - expand_bands
-      - band_sensitivity
+      - prsbands
+      - bandvals
+      - expbands
+      - bandsens
   - title: Concentration and association
     desc: >
       Whether a few units account for most of a total, and how strongly two
@@ -408,9 +408,9 @@ reference:
       administrative counts start from.
     contents:
       - concentration
-      - hill_tail_index
-      - hurwitz_zeta
-      - cramers_v
+      - hilltlidx
+      - hurwzeta
+      - cramerv
   - title: Trend in a short series
     desc: >
       An annual extract is five to ten points, which supports a rank test and
@@ -418,9 +418,9 @@ reference:
       The step test takes its p-value from the permutation distribution of the
       maximum over splits, not from the best split's own test.
     contents:
-      - trend_test
-      - step_change
-      - count_trend
+      - trndtst
+      - stepchg
+      - cnttrnd
   - title: Air pollution, dispersion and health burden
     desc: >
       Pasquill-Gifford dispersion and Briggs plume rise, Gaussian plume and puff,
@@ -429,17 +429,17 @@ reference:
       index of exposure by income, a cross-fitted exposure-response estimator, and
       the one-call pipeline with its assumption log.
     contents:
-      - pg_sigmas
-      - crf_pm25
-      - attributable_fraction
-      - mortality_displaced
-      - pollution_burden
-      - pollution_burden_by_area
-      - plr_crossfit
-      - exposure_response_plr
-      - exposure_concentration_index
-      - verify_pollution
-      - plume_field
+      - pgsig
+      - crfpm25
+      - attrfrac
+      - mortdisp
+      - polbrdn
+      - polbrdarea
+      - plrcf
+      - exprspplr
+      - expconcidx
+      - vrfpol
+      - plmfld
   - title: Courts and police-reported crime
     desc: >
       Case flow and clearance through a court, time to disposition from banded
@@ -448,13 +448,13 @@ reference:
       near-repeat space-time clustering; with real Ontario Court of Justice and
       Toronto Police Service data.
     contents:
-      - case_flow
-      - life_table
-      - disposition_mix
-      - clearance_decomposition
-      - crime_density
-      - hotspot_persistence
-      - knox_test
+      - caseflow
+      - lifetbl
+      - dispmix
+      - clrdcmp
+      - crmdens
+      - hotpers
+      - knoxtst
       - justice-data
   - title: Evaluating a policy
     desc: >
@@ -465,23 +465,23 @@ reference:
       severity-weighted crime indices, justice-pipeline rates, cumulative risk of
       a first event, and place-based buffers.
     contents:
-      - did_panel
-      - event_study
-      - staggered_att
-      - bacon_decomposition
-      - switching_did
-      - permutation_inference
-      - stepdown_pvalues
-      - fe_poisson
-      - synthetic_control
-      - severity_index
-      - pipeline_rate
-      - cumulative_risk
-      - buffer_assign
-      - policy_example
-      - plot_event_grid
-      - leave_one_out
-      - cohort_trends
+      - plndid
+      - evstudy
+      - stgatt
+      - bacondcmp
+      - swtdid
+      - perminf
+      - stpdnpv
+      - plnpois
+      - synctl
+      - sevidx
+      - piperate
+      - cmlrisk
+      - bufasgn
+      - polex
+      - plotevgrid
+      - loounit
+      - cohtrnd
   - title: Causal estimation on panels
     desc: >
       Double machine learning with fixed effects (lasso, ridge or any learner,
@@ -489,34 +489,34 @@ reference:
       difference in differences, the wild cluster bootstrap for few clusters,
       sensitivity to departures from parallel trends, and design-based power.
     contents:
-      - dml_panel
-      - aipw_crossfit
-      - matched_did
-      - balance_table
-      - synthetic_did
-      - wild_cluster_bootstrap
-      - trend_sensitivity
-      - panel_power
+      - plndml
+      - aipwcf
+      - mtchdid
+      - baltab
+      - syndid
+      - wcb
+      - tse
+      - plnpwr
   - title: First Nations, Metis and Inuit health
     desc: >
       Statistics Canada tables read as published (suppressed cells never imputed),
       distinctions-based comparisons, age-standardised rates, intergenerational
       exposure, and the Truth and Reconciliation Commission Calls to Action.
     contents:
-      - statcan_tidy
-      - quality_recode
-      - limits_from
-      - indigenous_gap
-      - age_standardise
-      - rate_gap
-      - generations_exposed
-      - exposure_trend
-      - trc_completions
-      - trc_progress
-      - trc_indicators
-      - trc_health_gaps
-      - indigenous_tables
-      - indigenous_example
+      - sctidy
+      - qltyrcd
+      - limfrom
+      - indgap
+      - agestd
+      - rategap
+      - genexpo
+      - exptrnd
+      - trccmpl
+      - trcprog
+      - trcind
+      - trchlthgap
+      - indtabs
+      - indiex
   - title: First Nations, Metis and Inuit mental health and wellness
     desc: >
       Survey estimates taken out of a table with their limits, rated scales compared
@@ -527,29 +527,29 @@ reference:
       weights), the Community Well-Being index, a test before pooling, and an audit
       of deficit framing.
     contents:
-      - statcan_estimates
-      - ordinal_compare
-      - standardise_prevalence
-      - wellness_profile
-      - dual_continuum
-      - holistic_balance
-      - mental_wellness_continuum
-      - healing_change
-      - connection_association
-      - community_index
-      - distinctions_test
-      - cwb_score
-      - framing_audit
+      - scests
+      - ordcmp
+      - stdprev
+      - welprof
+      - dualcont
+      - holbal
+      - mhcont
+      - healchg
+      - connassoc
+      - commidx
+      - dstntst
+      - cwbscr
+      - frmaud
   - title: The 2021 Census Indigenous Population Profile
     desc: >
       The census profile read with its hierarchy, symbols and sample; shares with
       intervals that carry the long-form sample and random rounding; an Indigenous
       standard population; and a Community Well-Being score from public figures.
     contents:
-      - census_profile
-      - profile_share
-      - census_standard
-      - census_cwb
+      - cnsprof
+      - profshr
+      - cnsstd
+      - cnscwb
   - title: Complex survey estimation
     desc: >
       Design-based means, totals, proportions and ratios, overall and by domain,
@@ -557,21 +557,21 @@ reference:
       bootstrap, jackknife, BRR, Fay) or Taylor linearization over strata and
       PSUs, and design-based comparisons between domains.
     contents:
-      - survey_design
-      - survey_estimate
-      - survey_compare
-      - spread
+      - svydes
+      - svyest
+      - svycmp
+      - sprd
   - title: The footprint of the computation
     desc: >
       Electricity and CO2-equivalent of an expression, measured from RAPL energy
       counters where the operating system exposes them, otherwise modelled with the
       Green Algorithms method, against a sourced carbon-intensity table.
     contents:
-      - compute_footprint
-      - carbon_intensity
-      - detect_location
-      - rapl_available
-      - footprint_equivalents
+      - co2fp
+      - co2int
+      - dtctloc
+      - raplok
+      - fpeqv
   - title: Region-coded counts
     desc: >
       A region is an areal unit with a population, not a coordinate. Indirect
@@ -580,11 +580,11 @@ reference:
       to the top or bottom; a funnel plot shows the reader the same thing
       directly.
     contents:
-      - expected_counts
-      - sir
-      - eb_rates
-      - funnel_limits
-      - morans_i
+      - expcnts
+      - stdinc
+      - ebrates
+      - fnllim
+      - morani
   - title: Points, and the regions that contain them
     desc: >
       A region map from point locations to statistical regions is built once and
@@ -598,30 +598,30 @@ reference:
       denominator: units serve catchments, which a point location does not
       state.
     contents:
-      - region_coverage
-      - region_map_integrity
-      - region_map_compare
-      - region_map_second_route
-      - region_map_from_points
+      - rgncov
+      - rgnmapintg
+      - rgnmapcmp
+      - rgnmapalt
+      - rgnmappts
   - title: Describe a capsule
     desc: >
       The summaries worth reading before trusting a capsule: what every column
       looks like, where the gaps are, which values dominate, and which rows do
-      not belong. `capsule_report()` runs the lot and orders the findings by
+      not belong. `cpsrpt()` runs the lot and orders the findings by
       severity.
     contents:
-      - capsule_report
-      - report_markdown
-      - profile_columns
-      - inline_hist
-      - frequency_table
-      - correlation_table
-      - top_correlations
-      - mahalanobis_outliers
-      - duplicate_rows
-      - rmbl_drop
-      - clean_column_names
-      - environment_diff
+      - cpsrpt
+      - rptmd
+      - profcols
+      - inlhist
+      - freqtbl
+      - cortbl
+      - topcors
+      - mahaoutl
+      - duprows
+      - drp
+      - clncolnms
+      - envdiff
   - title: Missingness
     desc: >
       Not just how much is missing, but the shape of it -- which columns go
@@ -629,23 +629,23 @@ reference:
       is related to the data (in which case dropping incomplete rows is
       biased).
     contents:
-      - missingness_summary
-      - missingness_pattern
-      - missing_runs
-      - missingness_map
-      - mcar_test
+      - misssmry
+      - misspat
+      - missruns
+      - missgrid
+      - mcartst
   - title: Large capsules
     desc: >
       One-pass algorithms for members bigger than memory: exact block-wise
       moments, uniform sampling of a stream, and fixed-memory distinct counts.
     contents:
-      - rmbl_online
-      - rmbl_reservoir
-      - rmbl_distinct
+      - onl
+      - rsv
+      - dstn
   - title: Output
     desc: Printed reports for the objects the package returns.
     contents:
-      - rmbl_print_methods
+      - printmeth
   - title: Plots
     desc: >
       Every result draws itself with plot(), on base graphics, with one shared
@@ -653,5 +653,5 @@ reference:
       Lorenz and funnel plots for results that are plain data frames.
     contents:
       - plot-methods
-      - bricklayer_palette
-      - plot_lorenz
+      - blpal
+      - plotlrnz

@@ -11,15 +11,15 @@
 #' system library). From the same entropy, personalization and additional
 #' inputs it returns the same bytes, which is what reproducible key generation
 #' and known-answer tests need; for keys meant to stay secret, seed it from
-#' [random_bytes()] (the default) or use
-#' [random_bytes()] directly.
+#' [rndbytes()] (the default) or use
+#' [rndbytes()] directly.
 #'
 #' It reproduces all 720 AES-256 no-df vectors of NIST's DRBG validation suite
 #' (without reseeding, with reseeding, and with prediction resistance; the
 #' package's tests check a sample of them), and it is the `randombytes()` of
 #' NIST's `rng.c`, with which most post-quantum submissions wrote their
-#' known-answer files: `drbg_new(as.raw(0:47))` followed by
-#' `drbg_generate(d, 48)` gives the `seed` of their vector 0. AES runs in
+#' known-answer files: `drbgnew(as.raw(0:47))` followed by
+#' `drbggen(d, 48)` gives the `seed` of their vector 0. AES runs in
 #' constant time: the S-box is computed (an inversion in GF(2^8) and the affine
 #' map) rather than looked up, and on x86-64 processors with AES-NI the rounds
 #' use those instructions. Both paths are checked under valgrind memcheck with
@@ -27,21 +27,21 @@
 #' `drbg-aesni`).
 #'
 #' The generator is an object that changes as it is used: every
-#' [drbg_generate()] and
-#' [drbg_reseed()] advances it in place.
+#' [drbggen()] and
+#' [drbgrsd()] advances it in place.
 #'
 #' The generator is an environment, so copies share one state. It is not
 #' meant to be saved: a generator restored from \code{saveRDS()} or inherited
 #' by a forked process reseeds itself from the operating system on its next
 #' use, so two processes never replay the same stream (and such a stream is
 #' then no longer reproducible). Errors when \code{entropy} is not exactly 48
-#' bytes or \code{personalization} is longer than 48 bytes, or either is
+#' bytes or \code{person} is longer than 48 bytes, or either is
 #' neither a raw vector nor one hexadecimal string.
 #'
 #' @param entropy Entropy input: exactly 48 bytes, as a raw vector or one
 #'   string of 96 hexadecimal digits. \code{NULL} (the default) draws them from
-#'   the operating system's CSPRNG through [random_bytes()].
-#' @param personalization Optional personalization string of up to 48 bytes,
+#'   the operating system's CSPRNG through [rndbytes()].
+#' @param person Optional personalization string of up to 48 bytes,
 #'   raw or hex; \code{NULL} (the default) is the empty string. Different
 #'   personalization strings give independent streams from the same entropy.
 #' @return An object of class \code{bricklayer_drbg} (an environment holding
@@ -53,25 +53,25 @@
 #'
 #'   NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard (AES).
 #'   \href{https://doi.org/10.6028/NIST.FIPS.197-upd1}{doi:10.6028/NIST.FIPS.197-upd1}
-#' @seealso [drbg_generate()],
-#'   [drbg_reseed()],
-#'   [random_bytes()].
+#' @seealso [drbggen()],
+#'   [drbgrsd()],
+#'   [rndbytes()].
 #' @examples
 #' # NIST's rng.c, as the post-quantum known-answer files use it: vector 0's seed
-#' d <- drbg_new(as.raw(0:47))
-#' drbg_generate(d, 48)
+#' d <- drbgnew(as.raw(0:47))
+#' drbggen(d, 48)
 #'
 #' # the same inputs give the same bytes; a personalization string separates streams
-#' a <- drbg_new(as.raw(1:48), personalization = charToRaw("session 1"))
-#' b <- drbg_new(as.raw(1:48), personalization = charToRaw("session 2"))
-#' identical(drbg_generate(a, 16), drbg_generate(b, 16))
+#' a <- drbgnew(as.raw(1:48), person = charToRaw("session 1"))
+#' b <- drbgnew(as.raw(1:48), person = charToRaw("session 2"))
+#' identical(drbggen(a, 16), drbggen(b, 16))
 #'
 #' # seeded from the operating system
-#' d <- drbg_new()
-#' length(drbg_generate(d, 32))
+#' d <- drbgnew()
+#' length(drbggen(d, 32))
 #'
 #' # the entropy must be exactly 48 bytes
-#' try(drbg_new(as.raw(1:16)))
+#' try(drbgnew(as.raw(1:16)))
 #' @section Security:
 #' A hand-written implementation. The standardised schemes are checked byte
 #' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
@@ -88,11 +88,11 @@
 #' commissioned, and the README's security section lists what each check
 #' does and does not cover.
 #' @export
-drbg_new <- function(entropy = NULL, personalization = NULL) {
+drbgnew <- function(entropy = NULL, person = NULL) {
   # the generator is an environment and is not meant to be serialised:
   # a copy restored in another process reseeds itself on first use
-  entropy <- if (is.null(entropy)) random_bytes(48L) else .rmbl_drbg_input(entropy, "entropy", 48L, exact = TRUE)
-  pers <- .rmbl_drbg_input(personalization, "personalization", 48L)
+  entropy <- if (is.null(entropy)) rndbytes(48L) else .rmbl_drbg_input(entropy, "entropy", 48L, exact = TRUE)
+  pers <- .rmbl_drbg_input(person, "person", 48L)
   st <- .Call(C_rmbl_drbg_instantiate, entropy, pers)
   d <- new.env(parent = emptyenv())
   d$key <- st$key
@@ -107,7 +107,7 @@ drbg_new <- function(entropy = NULL, personalization = NULL) {
 #'
 #' Generates \code{n} bytes (SP 800-90A's Generate function) and advances the
 #' generator. Use it to draw reproducible random bytes from a generator made
-#' by [drbg_new()]: the same seed and the same sequence of calls
+#' by [drbgnew()]: the same seed and the same sequence of calls
 #' give the same
 #' bytes on every platform, which is what known-answer tests and reproducible
 #' key generation need.
@@ -120,55 +120,55 @@ drbg_new <- function(entropy = NULL, personalization = NULL) {
 #' last reseeded in another process (a fork, or a copy restored from a file),
 #' it first reseeds itself from the operating system. After \eqn{2^{48}}
 #' requests since seeding the standard requires a reseed, and the call errors
-#' until [drbg_reseed()] is called.
+#' until [drbgrsd()] is called.
 #'
-#' Errors: \code{drbg} not made by [drbg_new()]; \code{n} not a
+#' Errors: \code{drbg} not made by [drbgnew()]; \code{n} not a
 #' single whole
-#' number from 1 to 65536; \code{additional} longer than 48 bytes or neither raw
+#' number from 1 to 65536; \code{addl} longer than 48 bytes or neither raw
 #' nor hex.
 #'
-#' @param drbg A generator from [drbg_new()].
+#' @param drbg A generator from [drbgnew()].
 #' @param n Integer scalar, the number of bytes, 1 to 65536 (the standard's
 #'   limit per request for AES: 2^19 bits).
-#' @param additional Optional additional input of up to 48 bytes, raw or hex,
+#' @param addl Optional additional input of up to 48 bytes, raw or hex,
 #'   mixed into the state before and after the output. Default \code{NULL}
 #'   (none).
 #' @return A raw vector of \code{n} bytes.
-#' @seealso [drbg_new()],
-#'   [drbg_reseed()].
+#' @seealso [drbgnew()],
+#'   [drbgrsd()].
 #' @examples
-#' d <- drbg_new(as.raw(0:47))
-#' x <- drbg_generate(d, 16)
-#' y <- drbg_generate(d, 16)
+#' d <- drbgnew(as.raw(0:47))
+#' x <- drbggen(d, 16)
+#' y <- drbggen(d, 16)
 #' identical(x, y)  # the state moved on
 #'
 #' # additional input changes the output and the state
-#' e <- drbg_new(as.raw(0:47))
-#' identical(drbg_generate(e, 16, additional = "00ff"), x)
+#' e <- drbgnew(as.raw(0:47))
+#' identical(drbggen(e, 16, addl = "00ff"), x)
 #'
 #' # random integers in 1..6 from the bytes (rejection keeps them uniform)
-#' r <- as.integer(drbg_generate(drbg_new(as.raw(0:47)), 64))
+#' r <- as.integer(drbggen(drbgnew(as.raw(0:47)), 64))
 #' head(r[r < 252] %% 6 + 1, 10)
 #'
 #' # one request is at most 65536 bytes
-#' try(drbg_generate(d, 70000))
+#' try(drbggen(d, 70000))
 #' @export
-drbg_generate <- function(drbg, n, additional = NULL) {
+drbggen <- function(drbg, n, addl = NULL) {
   .rmbl_drbg_check(drbg)
   n <- .rmbl_num(n, "n", integer = TRUE)
   if (length(n) != 1L || is.na(n) || n < 1L || n > 65536L) {
     stop("`n` must be a single integer between 1 and 65536", call. = FALSE)
   }
   if (drbg$reseed_counter > 2^48) {
-    stop("the generator has served 2^48 requests since it was seeded: reseed it (drbg_reseed())",
+    stop("the generator has served 2^48 requests since it was seeded: reseed it (drbgrsd())",
          call. = FALSE)
   }
   # a forked child (parallel::mclapply) inherits the parent's (Key, V) and
   # would replay the parent's stream; so would a generator restored from
   # saveRDS(). A process change reseeds from the operating system first.
-  if (!identical(drbg$pid, Sys.getpid())) drbg_reseed(drbg)
+  if (!identical(drbg$pid, Sys.getpid())) drbgrsd(drbg)
   st <- .Call(C_rmbl_drbg_generate, drbg$key, drbg$v, as.integer(n),
-              .rmbl_drbg_input(additional, "additional", 48L))
+              .rmbl_drbg_input(addl, "addl", 48L))
   drbg$key <- st$key
   drbg$v <- st$v
   drbg$reseed_counter <- drbg$reseed_counter + 1
@@ -187,39 +187,39 @@ drbg_generate <- function(drbg, n, additional = NULL) {
 #' additional input, so the stream after the reseed depends on everything that
 #' went before. The request count is reset to 1 and the generator is marked as
 #' belonging to the current process. Errors: \code{drbg} not made by
-#' [drbg_new()]; \code{entropy} not exactly 48 bytes;
-#' \code{additional} longer
+#' [drbgnew()]; \code{entropy} not exactly 48 bytes;
+#' \code{addl} longer
 #' than 48 bytes; either not raw or hex.
 #'
-#' @inheritParams drbg_generate
+#' @inheritParams drbggen
 #' @param entropy Entropy input: exactly 48 bytes, raw or hex; \code{NULL} (the
 #'   default) draws them from the operating system's CSPRNG.
-#' @param additional Optional additional input of up to 48 bytes, raw or hex;
+#' @param addl Optional additional input of up to 48 bytes, raw or hex;
 #'   default \code{NULL} (none).
 #' @return \code{drbg}, invisibly, reseeded in place.
-#' @seealso [drbg_new()],
-#'   [drbg_generate()].
+#' @seealso [drbgnew()],
+#'   [drbggen()].
 #' @examples
-#' d <- drbg_new(as.raw(0:47))
-#' drbg_reseed(d, as.raw(48:95))
-#' drbg_generate(d, 8)
+#' d <- drbgnew(as.raw(0:47))
+#' drbgrsd(d, as.raw(48:95))
+#' drbggen(d, 8)
 #'
 #' # a reseed with given entropy is reproducible
-#' d2 <- drbg_new(as.raw(0:47))
-#' drbg_reseed(d2, as.raw(48:95))
-#' identical(drbg_generate(d2, 8),
-#'           drbg_generate(drbg_reseed(drbg_new(as.raw(0:47)), as.raw(48:95)), 8))
+#' d2 <- drbgnew(as.raw(0:47))
+#' drbgrsd(d2, as.raw(48:95))
+#' identical(drbggen(d2, 8),
+#'           drbggen(drbgrsd(drbgnew(as.raw(0:47)), as.raw(48:95)), 8))
 #'
 #' # fresh entropy from the operating system, with additional input
-#' drbg_reseed(d, additional = charToRaw("before key generation"))
+#' drbgrsd(d, addl = charToRaw("before key generation"))
 #'
 #' # the entropy must be exactly 48 bytes
-#' try(drbg_reseed(d, as.raw(1:10)))
+#' try(drbgrsd(d, as.raw(1:10)))
 #' @export
-drbg_reseed <- function(drbg, entropy = NULL, additional = NULL) {
+drbgrsd <- function(drbg, entropy = NULL, addl = NULL) {
   .rmbl_drbg_check(drbg)
-  entropy <- if (is.null(entropy)) random_bytes(48L) else .rmbl_drbg_input(entropy, "entropy", 48L, exact = TRUE)
-  st <- .Call(C_rmbl_drbg_reseed, drbg$key, drbg$v, entropy, .rmbl_drbg_input(additional, "additional", 48L))
+  entropy <- if (is.null(entropy)) rndbytes(48L) else .rmbl_drbg_input(entropy, "entropy", 48L, exact = TRUE)
+  st <- .Call(C_rmbl_drbg_reseed, drbg$key, drbg$v, entropy, .rmbl_drbg_input(addl, "addl", 48L))
   drbg$key <- st$key
   drbg$v <- st$v
   drbg$reseed_counter <- 1
@@ -236,7 +236,7 @@ format.bricklayer_drbg <- function(x, ...) {
     .rmbl_rule())
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_drbg <- function(x, ...) {
   cat(format(x), sep = "\n")
@@ -246,7 +246,7 @@ print.bricklayer_drbg <- function(x, ...) {
 .rmbl_drbg_check <- function(drbg) {
   if (!inherits(drbg, "bricklayer_drbg") || !is.environment(drbg) ||
       !is.raw(drbg$key) || length(drbg$key) != 32L || !is.raw(drbg$v) || length(drbg$v) != 16L) {
-    stop("`drbg` must come from drbg_new()", call. = FALSE)
+    stop("`drbg` must come from drbgnew()", call. = FALSE)
   }
 }
 

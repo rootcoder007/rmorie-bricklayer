@@ -70,7 +70,7 @@
 #' \code{"US-CAL-CISO"}), its ISO 3166-1 alpha-3 code (\code{"CAN"}) or its
 #' name (\code{"Canada"}), case-insensitively. An unknown sub-national code
 #' falls back to its country and says so in \code{note}. \code{NULL} detects
-#' the location with \code{\link{detect_location}}.
+#' the location with \code{\link{dtctloc}}.
 #'
 #' @section Provenance and licence of the table:
 #' The country rows are Ember's yearly electricity data as published by Our
@@ -83,13 +83,13 @@
 #' 1000 gCO2e/kWh and Turkmenistan's gas fleet at 1306, and the table does
 #' not round or cap them. Kosovo appears once, under the code \code{XK}.
 #'
-#' @param location A location code, alpha-3 code or name; a number in
+#' @param loc A location code, alpha-3 code or name; a number in
 #'   gCO2e/kWh, returned as a user-supplied value; or \code{NULL} to detect
 #'   the location from the environment, time zone or locale.
-#' @return \code{carbon_intensity()}: a list with \code{g_per_kwh},
+#' @return \code{co2int()}: a list with \code{g_per_kwh},
 #'   \code{location}, \code{name}, \code{year}, \code{basis}, \code{source}
 #'   and \code{note} (a character vector, empty unless a fallback or detection
-#'   was involved). \code{carbon_intensity_table()}: the full table as a data
+#'   was involved). \code{co2inttab()}: the full table as a data
 #'   frame with the same columns plus \code{iso3}.
 #' @references Ember (2026). Yearly Electricity Data, via Our World in Data,
 #'   \url{https://ourworldindata.org/grapher/carbon-intensity-electricity}.
@@ -98,63 +98,63 @@
 #'   Green Algorithms: quantifying the carbon footprint of computation.
 #'   Advanced Science 8(12), 2100707.
 #' @examples
-#' carbon_intensity("CA-ON")
-#' carbon_intensity("Canada")$year
-#' carbon_intensity("CA-XX")$note
-#' carbon_intensity(120)$source
-#' nrow(carbon_intensity_table())
+#' co2int("CA-ON")
+#' co2int("Canada")$year
+#' co2int("CA-XX")$note
+#' co2int(120)$source
+#' nrow(co2inttab())
 #' # the Canadian provinces in the table, lowest intensity first
-#' tab <- carbon_intensity_table()
+#' tab <- co2inttab()
 #' ca <- tab[startsWith(tab$location, "CA-"), c("location", "name", "g_per_kwh", "year")]
 #' head(ca[order(ca$g_per_kwh), ])
 #' # a location the table does not know is an error, not a silent world average
-#' try(carbon_intensity("Atlantis"))
+#' try(co2int("Atlantis"))
 #' @export
-carbon_intensity <- function(location = "WORLD") {
-  if (is.numeric(location)) {
-    if (length(location) != 1L || !is.finite(location) || location < 0) {
-      stop("a numeric `location` must be a single non-negative gCO2e/kWh value", call. = FALSE)
+co2int <- function(loc = "WORLD") {
+  if (is.numeric(loc)) {
+    if (length(loc) != 1L || !is.finite(loc) || loc < 0) {
+      stop("a numeric `loc` must be a single non-negative gCO2e/kWh value", call. = FALSE)
     }
-    return(list(g_per_kwh = as.numeric(location), location = "user", name = "user-supplied",
+    return(list(g_per_kwh = as.numeric(loc), location = "user", name = "user-supplied",
                 year = NA_integer_, basis = "user", source = "user-supplied carbon intensity",
                 note = character(0)))
   }
   note <- character(0)
-  if (is.null(location)) {
-    det <- detect_location()
-    location <- det$location
+  if (is.null(loc)) {
+    det <- dtctloc()
+    loc <- det$location
     note <- c(note, sprintf("location %s via %s", det$location, det$method))
   }
-  if (!is.character(location) || length(location) != 1L || is.na(location)) {
-    stop("`location` must be a single location code or name, a number in gCO2e/kWh, or NULL",
+  if (!is.character(loc) || length(loc) != 1L || is.na(loc)) {
+    stop("`loc` must be a single location code or name, a number in gCO2e/kWh, or NULL",
          call. = FALSE)
   }
   tab <- .rmbl_ci_table()
-  i <- .rmbl_ci_match(location, tab)
-  if (is.na(i) && grepl("-", location, fixed = TRUE)) {
-    country <- sub("-.*$", "", location)
+  i <- .rmbl_ci_match(loc, tab)
+  if (is.na(i) && grepl("-", loc, fixed = TRUE)) {
+    country <- sub("-.*$", "", loc)
     i <- .rmbl_ci_match(country, tab)
     if (!is.na(i)) {
-      note <- c(note, sprintf("no row for zone %s; its country %s used", toupper(location),
+      note <- c(note, sprintf("no row for zone %s; its country %s used", toupper(loc),
                               tab$location[i]))
     }
   }
   if (is.na(i)) {
     stop(sprintf(paste("Unknown location '%s'. Use a code, alpha-3 code or name from",
-                       "carbon_intensity_table(), or pass a number in gCO2e/kWh."), location),
+                       "co2inttab(), or pass a number in gCO2e/kWh."), loc),
          call. = FALSE)
   }
   list(g_per_kwh = tab$g_per_kwh[i], location = tab$location[i], name = tab$name[i],
        year = tab$year[i], basis = tab$basis[i], source = tab$source[i], note = note)
 }
 
-#' @rdname carbon_intensity
+#' @rdname co2int
 #' @export
-carbon_intensity_table <- function() .rmbl_ci_table()
+co2inttab <- function() .rmbl_ci_table()
 
 #' Where is this computation running?
 #'
-#' Finds a location code for \code{\link{carbon_intensity}} without any
+#' Finds a location code for \code{\link{co2int}} without any
 #' network access, in this order: the \code{RMBL_LOCATION} environment
 #' variable (any code or name the table knows); codecarbon's
 #' \code{CODECARBON_COUNTRY_ISO_CODE} (alpha-3), so a machine already
@@ -184,24 +184,24 @@ carbon_intensity_table <- function() .rmbl_ci_table()
 #' (\code{CET}, \code{EST}, \code{WET}) name no country and fall through
 #' to the locale.
 #'
-#' @param env_location,codecarbon_location,tz,locale The inputs, exposed so a
+#' @param envloc,codloc,tz,locale The inputs, exposed so a
 #'   caller or a test can supply them; the defaults read the running session.
 #' @return A list with \code{location} (a code present in
-#'   \code{carbon_intensity_table()}) and \code{method} (how it was found).
+#'   \code{co2inttab()}) and \code{method} (how it was found).
 #' @examples
-#' detect_location()
-#' detect_location(env_location = "", codecarbon_location = "", tz = "Europe/Paris")
-#' detect_location(env_location = "", codecarbon_location = "", tz = "",
+#' dtctloc()
+#' dtctloc(envloc = "", codloc = "", tz = "Europe/Paris")
+#' dtctloc(envloc = "", codloc = "", tz = "",
 #'                 locale = "en_IN.UTF-8")
 #' # an explicit setting wins over everything else
-#' detect_location(env_location = "CA-QC", tz = "Europe/Paris")
+#' dtctloc(envloc = "CA-QC", tz = "Europe/Paris")
 #' # nothing usable: the world average, and the method says so
-#' detect_location(env_location = "", codecarbon_location = "", tz = "UTC", locale = "C")
+#' dtctloc(envloc = "", codloc = "", tz = "UTC", locale = "C")
 #' @export
-detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
-                            codecarbon_location = Sys.getenv("CODECARBON_COUNTRY_ISO_CODE"),
+dtctloc <- function(envloc = Sys.getenv("RMBL_LOCATION"),
+                            codloc = Sys.getenv("CODECARBON_COUNTRY_ISO_CODE"),
                             tz = Sys.timezone(), locale = Sys.getlocale("LC_TIME")) {
-  for (nm in c("env_location", "codecarbon_location", "tz", "locale")) {
+  for (nm in c("envloc", "codloc", "tz", "locale")) {
     v <- get(nm)
     if (!is.null(v) && !(is.character(v) && length(v) <= 1L)) {
       stop(sprintf("`%s` must be one string (or NULL)", nm), call. = FALSE)
@@ -213,13 +213,13 @@ detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
     i <- .rmbl_ci_match(key, tab)
     if (is.na(i)) NA_character_ else tab$location[i]
   }
-  loc <- known(env_location)
+  loc <- known(envloc)
   if (!is.na(loc)) return(list(location = loc, method = "RMBL_LOCATION environment variable"))
-  if (length(env_location) == 1L && !is.na(env_location) && nzchar(env_location)) {
-    warning(sprintf(paste("RMBL_LOCATION='%s' is not a location carbon_intensity_table() knows",
-                          "(code, alpha-3 or name); it is ignored"), env_location), call. = FALSE)
+  if (length(envloc) == 1L && !is.na(envloc) && nzchar(envloc)) {
+    warning(sprintf(paste("RMBL_LOCATION='%s' is not a location co2inttab() knows",
+                          "(code, alpha-3 or name); it is ignored"), envloc), call. = FALSE)
   }
-  loc <- known(codecarbon_location)
+  loc <- known(codloc)
   if (!is.na(loc)) return(list(location = loc, method = "CODECARBON_COUNTRY_ISO_CODE environment variable"))
   if (length(tz) == 1L && !is.na(tz) && nzchar(tz)) {
     tzt <- .rmbl_tz_table()
@@ -307,7 +307,7 @@ detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
 #' with the \code{intel_rapl} powercap driver (Intel and, since kernel 5.8,
 #' AMD), with read permission on \code{energy_uj}. On most systems since
 #' Linux 5.10 that file is readable by root only, so \code{FALSE} is the
-#' common answer for an ordinary user, and \code{\link{compute_footprint}}
+#' common answer for an ordinary user, and \code{\link{co2fp}}
 #' then falls back to its model.
 #'
 #' @details
@@ -316,19 +316,19 @@ detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
 #' the same energy twice) whose \code{name} file starts with
 #' \code{"package"} and whose \code{energy_uj} file holds a number. Every
 #' such domain must be readable: if any is not, the answer is \code{FALSE}.
-#' Only files under \code{rapl_dir} are read; nothing is written. On macOS
+#' Only files under \code{rapldir} are read; nothing is written. On macOS
 #' and Windows there is no such directory and the answer is \code{FALSE}.
-#' Errors when \code{rapl_dir} is not a single non-missing string.
+#' Errors when \code{rapldir} is not a single non-missing string.
 #'
-#' @param rapl_dir Character scalar, the powercap directory; default
+#' @param rapldir Character scalar, the powercap directory; default
 #'   \code{"/sys/class/powercap"}, the Linux location. Another path is useful
 #'   for testing against a copy of the directory tree.
 #' @return A logical scalar: \code{TRUE} when every CPU-package energy counter
-#'   under \code{rapl_dir} is readable, \code{FALSE} otherwise (including
+#'   under \code{rapldir} is readable, \code{FALSE} otherwise (including
 #'   when the directory does not exist).
-#' @seealso \code{\link{compute_footprint}}
+#' @seealso \code{\link{co2fp}}
 #' @examples
-#' rapl_available()
+#' raplok()
 #'
 #' # a fake powercap tree with one readable package domain (Linux names the domain
 #' # "intel-rapl:0"; a colon is not allowed in a Windows file name)
@@ -337,18 +337,18 @@ detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
 #'   dir.create(d, recursive = TRUE)
 #'   writeLines("package-0", file.path(d, "name"))
 #'   writeLines("123456789", file.path(d, "energy_uj"))
-#'   rapl_available(dirname(d))
+#'   raplok(dirname(d))
 #' }
 #'
 #' # a folder that does not exist is simply FALSE; a non-path is an error
-#' rapl_available(file.path(tempdir(), "no-such-dir"))
-#' try(rapl_available(NA_character_))
+#' raplok(file.path(tempdir(), "no-such-dir"))
+#' try(raplok(NA_character_))
 #' @export
-rapl_available <- function(rapl_dir = "/sys/class/powercap") {
-  if (!is.character(rapl_dir) || length(rapl_dir) != 1L || is.na(rapl_dir)) {
-    stop("`rapl_dir` must be a single directory path", call. = FALSE)
+raplok <- function(rapldir = "/sys/class/powercap") {
+  if (!is.character(rapldir) || length(rapldir) != 1L || is.na(rapldir)) {
+    stop("`rapldir` must be a single directory path", call. = FALSE)
   }
-  !is.null(.rapl_read(.rapl_domains(rapl_dir)))
+  !is.null(.rapl_read(.rapl_domains(rapldir)))
 }
 
 # ---- memory and cores ---------------------------------------------------------
@@ -415,10 +415,10 @@ rapl_available <- function(rapl_dir = "/sys/class/powercap") {
 #'
 #' @details
 #' \strong{Measured} (\code{method = "rapl"}): the CPU package energy
-#' counters (RAPL, microjoules, read from \code{rapl_dir}) before and after,
+#' counters (RAPL, microjoules, read from \code{rapldir}) before and after,
 #' with wrap-around handled through \code{max_energy_range_uj}. This is what
 #' codecarbon does on Linux; the counters cover the CPU packages only, so
-#' memory is still modelled. Available when \code{\link{rapl_available}()} is
+#' memory is still modelled. Available when \code{\link{raplok}()} is
 #' \code{TRUE}.
 #'
 #' \strong{Modelled} (\code{method = "model"}): the Green Algorithms formula
@@ -427,7 +427,7 @@ rapl_available <- function(rapl_dir = "/sys/class/powercap") {
 #' with \eqn{t} the running time, \eqn{P_{cpu}} the CPU's thermal design
 #' power in watts, \eqn{u} its utilisation, \eqn{M} the memory in GB,
 #' \eqn{P_{mem} = 0.3725} W/GB and \eqn{PUE} the data-centre overhead. When
-#' the CPU's power is unknown (\code{cpu_power_w = NULL}) the fallback is
+#' the CPU's power is unknown (\code{cpupwrw = NULL}) the fallback is
 #' codecarbon's: 50% of a constant 85 W, that is 42.5 W charged for the whole
 #' running time whatever the measured utilisation (the utilisation is still
 #' reported, but not applied).
@@ -442,23 +442,23 @@ rapl_available <- function(rapl_dir = "/sys/class/powercap") {
 #' question is what the machine drew. Where \code{/proc/stat} is absent the
 #' process figure is used and the assumptions say so. A number between 0 and 1
 #' fixes the utilisation, as the Green Algorithms calculator asks for it.
-#' \code{load_curve} chooses how power scales with that utilisation: linearly
+#' \code{loadcur} chooses how power scales with that utilisation: linearly
 #' (Green Algorithms) or along codecarbon's curves, a floor at 10% of
 #' \eqn{P_{cpu}} for a process and \eqn{0.1 + 0.9 u^3} for a machine, so a
 #' figure can be made comparable with either tool.
 #'
 #' Cross-checked against codecarbon 3.3.1 on one workload with the same forced
 #' inputs: memory energy identical (5.96 W for 16 GB), CPU energy within 8%.
-#' \code{load_curve = "codecarbon"} reproduces its power-from-load curves, so
+#' \code{loadcur = "codecarbon"} reproduces its power-from-load curves, so
 #' what remains of the difference is the load measurement itself (codecarbon
 #' samples the load during the run; this function integrates the CPU time).
 #'
 #' Emissions are \eqn{E \times} the carbon intensity of the location
-#' (\code{\link{carbon_intensity}}: a bundled table of every country at its
+#' (\code{\link{co2int}}: a bundled table of every country at its
 #' latest published year and of sub-national zones, so no network access is
 #' needed anywhere). With \code{location = NULL} the location is detected
 #' from the environment, the time zone or the locale
-#' (\code{\link{detect_location}}) and the detection is recorded. Every
+#' (\code{\link{dtctloc}}) and the detection is recorded. Every
 #' default that stood in for a measurement is listed in \code{assumptions}, so
 #' a report can say what was measured and what was assumed.
 #'
@@ -470,10 +470,10 @@ rapl_available <- function(rapl_dir = "/sys/class/powercap") {
 #'
 #' Every argument is checked, and the carbon intensity looked up, before
 #' \code{expr} is evaluated, so a bad argument never costs the computation.
-#' Errors: an unknown \code{location}; \code{pue} below 1 or not a single
-#' finite number; \code{cpu_power_w} or \code{cores} not a single positive
-#' number (\code{cores} also whole); \code{memory_gb} or
-#' \code{memory_power_w_per_gb} negative; \code{usage} other than
+#' Errors: an unknown \code{loc}; \code{pue} below 1 or not a single
+#' finite number; \code{cpupwrw} or \code{cores} not a single positive
+#' number (\code{cores} also whole); \code{memgb} or
+#' \code{mempwrwpergb} negative; \code{usage} other than
 #' \code{"process"}, \code{"machine"} or one number in \eqn{[0, 1]};
 #' \code{method = "rapl"} where the counters are not readable. An error
 #' inside \code{expr} propagates unchanged. Nothing is written and nothing is
@@ -482,45 +482,45 @@ rapl_available <- function(rapl_dir = "/sys/class/powercap") {
 #' @param expr The expression to evaluate. It is evaluated once, in the
 #'   calling environment, when the function reaches it (lazily, as a
 #'   promise).
-#' @param location Passed to \code{\link{carbon_intensity}}: a location code,
+#' @param loc Passed to \code{\link{co2int}}: a location code,
 #'   alpha-3 code or name, a number in gCO2e/kWh, or \code{NULL} (the
 #'   default) to detect it.
-#' @param method Character scalar: \code{"auto"} (the default; RAPL when
+#' @param meth Character scalar: \code{"auto"} (the default; RAPL when
 #'   readable, else the model), \code{"rapl"} (measured; an error when the
 #'   counters are not readable) or \code{"model"} (always the Green
 #'   Algorithms model).
-#' @param cpu_power_w The CPU's total thermal design power in watts (the
+#' @param cpupwrw The CPU's total thermal design power in watts (the
 #'   model's \eqn{P_{cpu}}); \code{NULL} uses codecarbon's unknown-CPU fallback.
 #' @param usage \code{"process"} (measured from this process's CPU time),
 #'   \code{"machine"} (measured from the whole machine's CPU accounting), or a
 #'   number in between 0 and 1. \code{NULL} means \code{"process"}.
-#' @param load_curve Character scalar: \code{"linear"} (the default; power
+#' @param loadcur Character scalar: \code{"linear"} (the default; power
 #'   proportional to utilisation, as Green Algorithms) or \code{"codecarbon"}
 #'   (codecarbon's curves, see Details). Applies only when
-#'   \code{cpu_power_w} is given.
+#'   \code{cpupwrw} is given.
 #' @param cores Number of logical cores the process utilisation is measured
 #'   against; \code{NULL} detects it.
-#' @param memory_gb Memory charged to the computation in GB; \code{NULL}
+#' @param memgb Memory charged to the computation in GB; \code{NULL}
 #'   detects the machine's total memory where it can, else assumes 8 GB.
-#' @param memory_power_w_per_gb Memory power per GB (default 0.3725 W/GB,
+#' @param mempwrwpergb Memory power per GB (default 0.3725 W/GB,
 #'   Green Algorithms; codecarbon v2 used 0.375).
 #' @param pue Power usage effectiveness: 1 for a laptop or desktop (default);
 #'   1.67 is the Green Algorithms default for a data centre, 1.56 the Uptime
 #'   Institute 2024 global average. Must be a single number of at least 1.
-#' @param rapl_dir Character scalar, the powercap directory holding the RAPL
+#' @param rapldir Character scalar, the powercap directory holding the RAPL
 #'   domains; default \code{"/sys/class/powercap"} (Linux).
-#' @param proc_stat Character scalar, the kernel CPU accounting file read for
+#' @param procstat Character scalar, the kernel CPU accounting file read for
 #'   \code{usage = "machine"}; default \code{"/proc/stat"} (Linux).
 #' @return A list of class \code{rmbl_footprint} with elements \code{value}
-#'   (the result of \code{expr}), \code{duration_s} (numeric, wall seconds),
-#'   \code{cpu_time_s} (numeric, CPU seconds of this process and its
+#'   (the result of \code{expr}), \code{durs} (numeric, wall seconds),
+#'   \code{cputms} (numeric, CPU seconds of this process and its
 #'   children), \code{usage} (numeric in \eqn{[0, 1]}, the utilisation),
-#'   \code{usage_mode} (\code{"process"}, \code{"machine"} or
-#'   \code{"fixed"}), \code{cores} (integer), \code{memory_gb} (numeric),
-#'   \code{energy_kwh} (a list of numerics \code{cpu}, \code{memory} and
-#'   \code{total}, in kWh, PUE included), \code{co2e_g} (numeric, grams of
-#'   CO2-equivalent), \code{carbon_intensity} (the list returned by
-#'   \code{\link{carbon_intensity}}, with its year and source), \code{method}
+#'   \code{usagemode} (\code{"process"}, \code{"machine"} or
+#'   \code{"fixed"}), \code{cores} (integer), \code{memgb} (numeric),
+#'   \code{enekwh} (a list of numerics \code{cpu}, \code{memory} and
+#'   \code{total}, in kWh, PUE included), \code{co2eg} (numeric, grams of
+#'   CO2-equivalent), \code{co2int} (the list returned by
+#'   \code{\link{co2int}}, with its year and source), \code{method}
 #'   (\code{"rapl"} or \code{"model"}, the method actually used),
 #'   \code{assumptions} (character vector of every default or fallback that
 #'   stood in for a measurement) and \code{citations} (character vector).
@@ -533,33 +533,33 @@ rapl_available <- function(rapl_dir = "/sys/class/powercap") {
 #'   Dandres, T. (2019). Quantifying the carbon emissions of machine learning.
 #'   arXiv:1910.09700.
 #' @examples
-#' fp <- compute_footprint(sum(sqrt(seq_len(2e5))), location = "CA-ON")
-#' fp$energy_kwh$total
-#' fp$co2e_g
-#' fp$carbon_intensity$year
+#' fp <- co2fp(sum(sqrt(seq_len(2e5))), loc = "CA-ON")
+#' fp$enekwh$total
+#' fp$co2eg
+#' fp$co2int$year
 #' fp$assumptions
 #' print(fp)
 #' # wherever you are, offline: the location is detected and recorded
-#' compute_footprint(1 + 1, cpu_power_w = 45, memory_gb = 8)$assumptions
+#' co2fp(1 + 1, cpupwrw = 45, memgb = 8)$assumptions
 #' # the whole machine's utilisation, on codecarbon's machine curve
-#' compute_footprint(1 + 1, location = "FR", usage = "machine", load_curve = "codecarbon",
-#'                   cpu_power_w = 45, memory_gb = 8)$usage_mode
+#' co2fp(1 + 1, loc = "FR", usage = "machine", loadcur = "codecarbon",
+#'                   cpupwrw = 45, memgb = 8)$usagemode
 #' # a fixed utilisation and a data-centre PUE, with a carbon intensity given as a number
-#' fp2 <- compute_footprint(sum(sqrt(seq_len(2e5))), location = 30, usage = 0.5,
-#'                          cpu_power_w = 65, memory_gb = 16, pue = 1.67, method = "model")
-#' fp2$energy_kwh
-#' footprint_equivalents(fp2$co2e_g)
+#' fp2 <- co2fp(sum(sqrt(seq_len(2e5))), loc = 30, usage = 0.5,
+#'                          cpupwrw = 65, memgb = 16, pue = 1.67, meth = "model")
+#' fp2$enekwh
+#' fpeqv(fp2$co2eg)
 #' # a bad argument is refused before the expression runs
-#' try(compute_footprint(Sys.sleep(10), pue = 0.9))
+#' try(co2fp(Sys.sleep(10), pue = 0.9))
 #' @export
-compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", "model"),
-                              cpu_power_w = NULL, usage = "process",
-                              load_curve = c("linear", "codecarbon"), cores = NULL,
-                              memory_gb = NULL, memory_power_w_per_gb = 0.3725, pue = 1,
-                              rapl_dir = "/sys/class/powercap", proc_stat = "/proc/stat") {
-  method <- .rmbl_arg(method)
-  load_curve <- .rmbl_arg(load_curve)
-  ci <- carbon_intensity(location)
+co2fp <- function(expr, loc = NULL, meth = c("auto", "rapl", "model"),
+                              cpupwrw = NULL, usage = "process",
+                              loadcur = c("linear", "codecarbon"), cores = NULL,
+                              memgb = NULL, mempwrwpergb = 0.3725, pue = 1,
+                              rapldir = "/sys/class/powercap", procstat = "/proc/stat") {
+  meth <- .rmbl_arg(meth)
+  loadcur <- .rmbl_arg(loadcur)
+  ci <- co2int(loc)
   # every argument is checked before `expr` runs, so a bad argument never costs the computation
   if (!is.numeric(pue) || length(pue) != 1L || !is.finite(pue) || pue < 1) {
     stop("`pue` must be a single number >= 1", call. = FALSE)
@@ -572,16 +572,16 @@ compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", 
     }
     as.numeric(x)
   }
-  cpu_power_w <- num_arg(cpu_power_w, "cpu_power_w", positive = TRUE)
+  cpupwrw <- num_arg(cpupwrw, "cpupwrw", positive = TRUE)
   cores <- num_arg(cores, "cores", positive = TRUE)
   if (!is.null(cores) && cores != round(cores)) stop("`cores` must be a whole number", call. = FALSE)
-  memory_gb <- num_arg(memory_gb, "memory_gb")
-  memory_power_w_per_gb <- num_arg(memory_power_w_per_gb, "memory_power_w_per_gb")
-  if (!is.character(rapl_dir) || length(rapl_dir) != 1L || is.na(rapl_dir)) {
-    stop("`rapl_dir` must be a single path", call. = FALSE)
+  memgb <- num_arg(memgb, "memgb")
+  mempwrwpergb <- num_arg(mempwrwpergb, "mempwrwpergb")
+  if (!is.character(rapldir) || length(rapldir) != 1L || is.na(rapldir)) {
+    stop("`rapldir` must be a single path", call. = FALSE)
   }
-  if (!is.character(proc_stat) || length(proc_stat) != 1L || is.na(proc_stat)) {
-    stop("`proc_stat` must be a single path", call. = FALSE)
+  if (!is.character(procstat) || length(procstat) != 1L || is.na(procstat)) {
+    stop("`procstat` must be a single path", call. = FALSE)
   }
   if (is.null(usage)) usage <- "process"
   if (length(usage) != 1L) {
@@ -600,14 +600,14 @@ compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", 
              sprintf("carbon intensity: %s (%s, %d)", ci$source, ci$name, ci$year))
   if (is.na(ci$year)) cites <- cites[-3L]
 
-  domains <- if (method != "model") .rapl_domains(rapl_dir) else character(0)
-  before <- if (method != "model") .rapl_read(domains) else NULL
-  if (method == "rapl" && is.null(before)) {
-    stop("RAPL energy counters are not readable here (see rapl_available()); use method = \"model\"",
+  domains <- if (meth != "model") .rapl_domains(rapldir) else character(0)
+  before <- if (meth != "model") .rapl_read(domains) else NULL
+  if (meth == "rapl" && is.null(before)) {
+    stop("RAPL energy counters are not readable here (see raplok()); use method = \"model\"",
          call. = FALSE)
   }
   used <- if (is.null(before)) "model" else "rapl"
-  stat0 <- if (usage_mode == "machine") .proc_stat_cpu(proc_stat) else NULL
+  stat0 <- if (usage_mode == "machine") .proc_stat_cpu(procstat) else NULL
   if (usage_mode == "machine" && is.null(stat0)) {
     usage_mode <- "process"
     assumptions <- c(assumptions, "machine CPU accounting unreadable (no /proc/stat); process utilisation used")
@@ -617,7 +617,7 @@ compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", 
   value <- expr
   t1 <- proc.time()
   after <- if (used == "rapl") .rapl_read(domains) else NULL
-  stat1 <- if (usage_mode == "machine") .proc_stat_cpu(proc_stat) else NULL
+  stat1 <- if (usage_mode == "machine") .proc_stat_cpu(procstat) else NULL
 
   wall <- max(unname(t1[["elapsed"]] - t0[["elapsed"]]), 0)
   cpu_t <- .rmbl_cpu_seconds(t0, t1)
@@ -667,44 +667,44 @@ compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", 
     assumptions <- c(assumptions, "RAPL counters became unreadable during the run; modelled instead")
   }
   if (used == "model") {
-    if (is.null(cpu_power_w)) {
-      cpu_power_w <- 85 * 0.5
+    if (is.null(cpupwrw)) {
+      cpupwrw <- 85 * 0.5
       assumptions <- c(assumptions, "CPU power unknown: 85 W x 50% (codecarbon fallback)")
-      e_cpu_kwh <- hours * cpu_power_w / 1000
+      e_cpu_kwh <- hours * cpupwrw / 1000
     } else {
-      # cpu_power_w was checked (single, finite, positive) before `expr` ran
-      e_cpu_kwh <- hours * .cpu_load_power(cpu_power_w, usage, load_curve, usage_mode) / 1000
-      if (load_curve == "codecarbon") {
+      # cpupwrw was checked (single, finite, positive) before `expr` ran
+      e_cpu_kwh <- hours * .cpu_load_power(cpupwrw, usage, loadcur, usage_mode) / 1000
+      if (loadcur == "codecarbon") {
         assumptions <- c(assumptions, sprintf("codecarbon %s load curve applied to the CPU power",
                                               if (usage_mode == "machine") "machine" else "process"))
       }
     }
   }
 
-  if (is.null(memory_gb)) {
-    memory_gb <- .rmbl_total_memory_gb()
-    if (is.na(memory_gb)) {
-      memory_gb <- 8
+  if (is.null(memgb)) {
+    memgb <- .rmbl_total_memory_gb()
+    if (is.na(memgb)) {
+      memgb <- 8
       assumptions <- c(assumptions, "memory size unknown: 8 GB assumed")
     } else {
-      assumptions <- c(assumptions, sprintf("memory charged: the machine's total %.1f GB", memory_gb))
+      assumptions <- c(assumptions, sprintf("memory charged: the machine's total %.1f GB", memgb))
     }
   }
-  e_mem_kwh <- hours * memory_gb * memory_power_w_per_gb / 1000
+  e_mem_kwh <- hours * memgb * mempwrwpergb / 1000
   total <- (e_cpu_kwh + e_mem_kwh) * pue
   if (pue > 1) assumptions <- c(assumptions, sprintf("PUE %.2f applied", pue))
 
   structure(list(
     value = value,
-    duration_s = wall,
-    cpu_time_s = cpu_t,
+    durs = wall,
+    cputms = cpu_t,
     usage = usage,
-    usage_mode = usage_mode,
+    usagemode = usage_mode,
     cores = as.integer(cores),
-    memory_gb = memory_gb,
-    energy_kwh = list(cpu = e_cpu_kwh * pue, memory = e_mem_kwh * pue, total = total),
-    co2e_g = total * ci$g_per_kwh,
-    carbon_intensity = ci,
+    memgb = memgb,
+    enekwh = list(cpu = e_cpu_kwh * pue, memory = e_mem_kwh * pue, total = total),
+    co2eg = total * ci$g_per_kwh,
+    co2int = ci,
     method = used,
     assumptions = assumptions,
     citations = cites
@@ -714,12 +714,12 @@ compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", 
 #' @export
 print.rmbl_footprint <- function(x, ...) {
   cat(sprintf("Computation footprint (%s): %.3f s wall, %.3f s CPU, utilisation %.2f (%s) on %d cores\n",
-              if (x$method == "rapl") "measured, RAPL" else "modelled", x$duration_s, x$cpu_time_s,
-              x$usage, x$usage_mode, x$cores))
-  cat(sprintf("  energy: %.3g kWh (cpu %.3g, memory %.3g)\n", x$energy_kwh$total, x$energy_kwh$cpu,
-              x$energy_kwh$memory))
-  ci <- x$carbon_intensity
-  cat(sprintf("  CO2e:   %.3g g at %.4g gCO2e/kWh (%s%s)\n", x$co2e_g, ci$g_per_kwh, ci$name,
+              if (x$method == "rapl") "measured, RAPL" else "modelled", x$durs, x$cputms,
+              x$usage, x$usagemode, x$cores))
+  cat(sprintf("  energy: %.3g kWh (cpu %.3g, memory %.3g)\n", x$enekwh$total, x$enekwh$cpu,
+              x$enekwh$memory))
+  ci <- x$co2int
+  cat(sprintf("  CO2e:   %.3g g at %.4g gCO2e/kWh (%s%s)\n", x$co2eg, ci$g_per_kwh, ci$name,
               if (is.na(ci$year)) "" else sprintf(", %d", ci$year)))
   if (length(x$assumptions)) cat("  assumed:", paste(x$assumptions, collapse = "; "), "\n")
   invisible(x)
@@ -731,7 +731,7 @@ print.rmbl_footprint <- function(x, ...) {
 #' kilometres driven in an average European passenger car (175 gCO2/km) and
 #' tree-months of carbon sequestration (917 gCO2 per tree per month), the two
 #' comparisons the Green Algorithms calculator prints, with their sources.
-#' Use it to make the \code{co2e_g} of \code{\link{compute_footprint}}
+#' Use it to make the \code{co2eg} of \code{\link{co2fp}}
 #' easier to read in a report.
 #'
 #' @details
@@ -739,35 +739,35 @@ print.rmbl_footprint <- function(x, ...) {
 #' \eqn{\mathrm{tree\ months} = g / 917}. Both factors are averages and the
 #' comparisons are illustrations, not offsets: a tree-month is the carbon one
 #' mature tree takes up in a month, not a promise that planting one cancels
-#' the emission. Errors when \code{co2e_g} is not a single finite,
+#' the emission. Errors when \code{co2eg} is not a single finite,
 #' non-negative number.
 #'
-#' @param co2e_g Numeric scalar, grams of CO2-equivalent; finite and
-#'   non-negative (for example the \code{co2e_g} element of a
-#'   \code{\link{compute_footprint}} result).
-#' @return A list with \code{car_km} (numeric, kilometres),
-#'   \code{tree_months} (numeric) and \code{sources} (named character vector,
+#' @param co2eg Numeric scalar, grams of CO2-equivalent; finite and
+#'   non-negative (for example the \code{co2eg} element of a
+#'   \code{\link{co2fp}} result).
+#' @return A list with \code{carkm} (numeric, kilometres),
+#'   \code{treemon} (numeric) and \code{sources} (named character vector,
 #'   \code{car} and \code{tree}, naming each factor's source).
 #' @references Green Algorithms data v3.1, context.csv: car factor from
 #'   Helmers et al. (2019) Atmospheric Environment and UK BEIS 2019 conversion
 #'   factors; tree sequestration from Bernal et al. (2018) via the same file.
-#' @seealso \code{\link{compute_footprint}}
+#' @seealso \code{\link{co2fp}}
 #' @examples
-#' footprint_equivalents(1200)
+#' fpeqv(1200)
 #'
 #' # the footprint of a small computation, in everyday terms
-#' fp <- compute_footprint(sum(sqrt(seq_len(2e5))), location = "CA-ON",
-#'                         cpu_power_w = 45, memory_gb = 8)
-#' unlist(footprint_equivalents(fp$co2e_g)[c("car_km", "tree_months")])
+#' fp <- co2fp(sum(sqrt(seq_len(2e5))), loc = "CA-ON",
+#'                         cpupwrw = 45, memgb = 8)
+#' unlist(fpeqv(fp$co2eg)[c("carkm", "treemon")])
 #'
 #' # a vector is refused: convert one total at a time
-#' try(footprint_equivalents(c(10, 20)))
+#' try(fpeqv(c(10, 20)))
 #' @export
-footprint_equivalents <- function(co2e_g) {
-  if (!is.numeric(co2e_g) || length(co2e_g) != 1L || !is.finite(co2e_g) || co2e_g < 0) {
-    stop("`co2e_g` must be a single non-negative number", call. = FALSE)
+fpeqv <- function(co2eg) {
+  if (!is.numeric(co2eg) || length(co2eg) != 1L || !is.finite(co2eg) || co2eg < 0) {
+    stop("`co2eg` must be a single non-negative number", call. = FALSE)
   }
-  list(car_km = co2e_g / 175, tree_months = co2e_g / 917,
+  list(carkm = co2eg / 175, treemon = co2eg / 917,
        sources = c(car = "175 gCO2/km, European passenger car (Green Algorithms context.csv)",
                    tree = "917 gCO2 per tree-month (Green Algorithms context.csv)"))
 }

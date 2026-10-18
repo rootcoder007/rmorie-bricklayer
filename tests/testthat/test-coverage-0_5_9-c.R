@@ -3,7 +3,7 @@
 
 test_that("incremental hashing: a digest fed in two pieces equals the one-shot digest at every split", {
   x <- as.raw((1:300) %% 256)
-  one256 <- core_sha256(x)
+  one256 <- csha256(x)
   one512 <- .Call(C_rmbl_sha512, x)
   for (sp in c(0L, 1L, 63L, 64L, 65L, 100L, 127L, 128L, 129L, 200L, 300L, 400L)) {
     two <- .Call(C_rmbl_hash_two_part, x, sp)
@@ -14,9 +14,9 @@ test_that("incremental hashing: a digest fed in two pieces equals the one-shot d
   expect_error(.Call(C_rmbl_hash_two_part, x, -1L), "non-negative")
 })
 
-test_that("core_mean survives a sum that overflows when every value is finite", {
-  expect_equal(core_mean(c(1e308, 1e308)), 1e308)
-  expect_equal(core_mean(c(1e308, 1e308, -1e308)), 1e308 / 3)
+test_that("cmn survives a sum that overflows when every value is finite", {
+  expect_equal(cmn(c(1e308, 1e308)), 1e308)
+  expect_equal(cmn(c(1e308, 1e308, -1e308)), 1e308 / 3)
 })
 
 test_that("Theil-Sen takes the mean of the two middle slopes when their count is even", {
@@ -27,8 +27,8 @@ test_that("Theil-Sen takes the mean of the two middle slopes when their count is
 
 test_that("ECDSA: a verified chain signature, an all-zero digest, a digest longer than the group order", {
   f <- x509_fx()
-  leaf <- cert_parse(f$chain_ecleaf256)
-  ca <- cert_parse(f$chain_ec256)
+  leaf <- certprs(f$chain_ecleaf256)
+  ca <- certprs(f$chain_ec256)
   rs <- .rmbl_ecdsa_rs(leaf$signature)
   dig <- .rmbl_ts_digest("sha256", leaf$tbs)
   key <- ca$key
@@ -44,14 +44,14 @@ test_that("entry guards: headers that are not strings, a missing pre-hash name, 
   expect_error(.Call(C_rmbl_http_download, "https://example.org/", tempfile(), 5L, 1L, NULL, 1e6, FALSE),
                "must be a character vector")
   expect_error(.Call(C_rmbl_prehash_digest, NA_character_, as.raw(1:3)), "must not be NA")
-  key <- fips_keygen("ML-DSA-44")
+  key <- fipskg("ML-DSA-44")
   sk <- .rmbl_hex_to_raw(key$secret)
   expect_error(.Call(C_rmbl_mldsa_sign, 44L, sk, as.raw(1:3), raw(0), raw(32), "none", NA), "TRUE or FALSE")
 })
 
 test_that("XMSS: an index past the tree and a malformed randomiser", {
-  key <- pqc_keygen(height = 2)
-  s <- capsule_sign("hello", key)
+  key <- pqckg(height = 2)
+  s <- cpssign("hello", key)
   args <- list(key$pub_seed, key$root, 2L, s$index, "hello", s$signature, s$auth, s$randomizer)
   expect_true(do.call(.Call, c(list(C_rmbl_xmss_verify), args)))
   args4 <- args
@@ -81,22 +81,22 @@ test_that("SIU reports: a team size given as digits, and the French resolver wit
                "<p>15 enqu\u00eateurs de l'UES et 2 techniciens en identification ont \u00e9t\u00e9 affect\u00e9s.</p>",
                "<p>L'agent impliqué no 2 a participé à une entrevue; deux agents impliqués ont été désignés.</p>",
                "</body></html>")
-  r <- bricklayer_parse_siu(fr)
+  r <- siuprs(fr)
   expect_true(is.character(r))
   expect_equal(unname(r[["siu_investigators"]]), "15")   # a number, not one of the twelve words
   en <- paste0("<html><body><h2>The Investigation</h2><p>Mandate engaged</p><p>Witness Officers</p>",
                "<p>Fifteen SIU investigators and 14 forensic investigators were dispatched.</p></body></html>")
-  r2 <- bricklayer_parse_siu(en)
+  r2 <- siuprs(en)
   expect_equal(unname(r2[["siu_forensics_investigators"]]), "14")
-  so <- bricklayer_siu_resolve_so(fr)
+  so <- siuso(fr)
   expect_true(is.list(so) || is.character(so) || is.numeric(so))
   one <- paste0("<html><body><h2>L'enqu\u00eate</h2><p>Exercice du mandat</p><p>T\u00e9moins civils</p>",
                 "<p>L'agent impliqu\u00e9 no 1 a particip\u00e9 \u00e0 une entrevue.</p></body></html>")
-  so1 <- bricklayer_siu_resolve_so(one)
+  so1 <- siuso(one)
   expect_true(is.list(so1) || is.character(so1) || is.numeric(so1))
   notified <- paste0("<html><body><h2>The Investigation</h2><p>Mandate engaged</p><p>Witness Officers</p>",
                      "<p>On June 3, the Toronto Police Service notified the SIU of an injury.</p></body></html>")
-  expect_match(unname(bricklayer_parse_siu(notified)[["police_service"]]), "Toronto Police Service")
+  expect_match(unname(siuprs(notified)[["police_service"]]), "Toronto Police Service")
 })
 
 online_now <- function() {
@@ -110,14 +110,14 @@ online_now <- function() {
 test_that("live: a Wayback snapshot, a redirect chain that is too long, a download whose size the server announces", {
   skip_on_cran()
   skip_if_not(online_now(), "no network")
-  snap <- wayback_snapshot_url_native("https://www.r-project.org/", timeout = 30L)
+  snap <- wbsnpnat("https://www.r-project.org/", tmout = 30L)
   expect_true(is.null(snap) || grepl("^https://web\\.archive\\.org/", snap))
   dest <- tempfile()
-  expect_error(bricklayer_download("https://httpbin.org/redirect/6", dest, quiet = TRUE, timeout = 60),
+  expect_error(bldl("https://httpbin.org/redirect/6", dest, quiet = TRUE, tmout = 60),
                "redirect")
   dest2 <- tempfile()
   out <- utils::capture.output(
-    res <- bricklayer_download("https://cloud.r-project.org/favicon.ico", dest2, quiet = FALSE, tty = FALSE,
-                               timeout = 60), type = "message")
+    res <- bldl("https://cloud.r-project.org/favicon.ico", dest2, quiet = FALSE, tty = FALSE,
+                               tmout = 60), type = "message")
   expect_true(file.exists(dest2) && file.size(dest2) > 0)
 })

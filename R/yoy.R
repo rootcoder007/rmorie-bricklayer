@@ -36,15 +36,15 @@
 #' `complete = TRUE` the periods missing from a regular grid (numbers, `Date`
 #' or `POSIXct` with a common step) are inserted with `NA` values and flagged
 #' "no data". Each period is then compared with the period `lag` steps
-#' earlier in that grid: `change` is the difference, `pct_change`
+#' earlier in that grid: `change` is the difference, `pctchg`
 #' \eqn{100 (v_t / v_{t-lag} - 1)} (`NA` off a zero base), and for percentages
-#' `pp_change` is the difference in percentage points.
+#' `ppchg` is the difference in percentage points.
 #'
 #' For counts, conditional on their sum \eqn{n = a + b} the current count
 #' \eqn{a} is binomial with probability \eqn{\rho / (1 + \rho)}, \eqn{\rho}
 #' the rate ratio; the Clopper-Pearson interval for that probability,
 #' transformed back, is an exact interval for the ratio, reported as
-#' `pct_lower` and `pct_upper` (percent change). It is the interval
+#' `pctlo` and `pctup` (percent change). It is the interval
 #' `stats::poisson.test()` gives for two counts with equal exposure. A zero
 #' base has no percent change but still an interval (with an infinite upper
 #' end).
@@ -57,13 +57,13 @@
 #' Errors: `x` neither a data frame, a numeric vector nor a `ts`; `value`,
 #' `period` or `by` naming a column that does not exist; a non-numeric or
 #' infinite `value`; for `units = "count"`, negative or fractional values;
-#' `lag` not a positive whole number; `conf_level` outside (0, 1); an unknown
+#' `lag` not a positive whole number; `conflvl` outside (0, 1); an unknown
 #' `units` or `direction`.
 #'
 #' @param x A data frame, a numeric (or integer) vector, or a `ts`.
 #' @param value For a data frame, the column holding the
 #' measure, as a string or a bare name.
-#' @param period For a data frame, the column holding the
+#' @param prd For a data frame, the column holding the
 #' period (a year, a `Date`, a fiscal-year integer, an ordered
 #' factor). For a numeric vector, the periods themselves.
 #' @param by Optional grouping columns, as a character vector.
@@ -84,38 +84,38 @@
 #' its own variability. `"percent"` reports a percentage-POINT change
 #' and withholds the percent change, which for a percentage is a different
 #' quantity.
-#' @param min_base Optional: previous-period values below this get a
+#' @param minbase Optional: previous-period values below this get a
 #' "small base" note. Nothing is withheld either way: every non-zero base gets
 #' its percent change and exact interval, which is as wide as the base is
 #' small. Defaults to 0 (no note); only a zero base has no percent change.
-#' @param conf_level Numeric scalar in (0, 1), the confidence level for the
+#' @param conflvl Numeric scalar in (0, 1), the confidence level for the
 #' count interval; default 0.95.
-#' @param direction Which way is an improvement:
-#' `"higher_is_better"`, `"lower_is_better"` (segregation days,
+#' @param dir Which way is an improvement:
+#' `"higher"`, `"lower"` (segregation days,
 #' deaths in custody, use of force), or `"neutral"`. Affects colour
 #' and the `verdict` column only, never the arithmetic.
 #' @param complete Logical scalar, default `TRUE`: insert the missing periods
 #' in the observed range so that a gap is visible as a gap instead of closing
 #' up.
 #' @param ... Passed between methods: the numeric and `ts` methods pass every
-#' argument of the data-frame method (`units`, `min_base`, `direction`,
+#' argument of the data-frame method (`units`, `minbase`, `direction`,
 #' ...)
 #' through.
 #' @return An `rmbl_yoy` object (a data frame of class
 #' `c("rmbl_yoy", "data.frame")`) with one row per period (and group): the
 #' period column under its own name (`period` for a vector or a `ts`), the
-#' grouping columns, then `value`, `previous`, `change`, `pct_change`
+#' grouping columns, then `value`, `previous`, `change`, `pctchg`
 #' (or
-#' `pp_change` for percentages), `flag` (character: "no comparison period",
+#' `ppchg` for percentages), `flag` (character: "no comparison period",
 #' "no data", "previous period is zero", or a small-base note when
-#' `min_base` is set; `NA` otherwise), `pct_lower` and `pct_upper`
+#' `minbase` is set; `NA` otherwise), `pctlo` and `pctup`
 #' for counts,
 #' and `verdict`. Attribute `"yoy"` records `value`, `period`,
 #' `by`, `lag`,
-#' `units`, `min_base`, `conf_level`, `direction` and the display
+#' `units`, `minbase`, `conflvl`, `direction` and the display
 #' digits;
-#' the writers ([yoy_write()]) and
-#' [yoy_summary()] read it.
+#' the writers ([yoywr()]) and
+#' [yoysmry()] read it.
 #' @references
 #' The exact interval for a ratio of two counts is the conditional-binomial
 #' (Clopper-Pearson) one, which is the construction
@@ -125,18 +125,18 @@
 #' -- reports year-over-year change on exactly this kind of
 #' administrative extract, and is the shape this function is built for.
 #' @seealso
-#' [yoy_html()], [yoy_pdf()],
-#' [yoy_summary()]
+#' [yoyhtml()], [yoypdf()],
+#' [yoysmry()]
 #' @examples
 #' seg <- data.frame(
 #'   EndFiscalYear = rep(2019:2023, each = 2),
 #'   Gender = rep(c("Female", "Male"), 5),
-#'   Number_Of_Placements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
+#'   NumberOfPlacements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
 #' )
 #'
 #' y <- yoy(seg,
-#'   value = "Number_Of_Placements", period = "EndFiscalYear",
-#'   by = "Gender", direction = "lower_is_better"
+#'   value = "NumberOfPlacements", prd = "EndFiscalYear",
+#'   by = "Gender", dir = "lower"
 #' )
 #' y
 #'
@@ -147,14 +147,14 @@
 #' # A percentage is handled as percentage points, not as a percent of a
 #' # percent.
 #' rate <- data.frame(year = 2019:2023, share = c(4.1, 4.6, 5.2, 5.0, 5.4))
-#' yoy(rate, value = "share", period = "year", units = "percent")
+#' yoy(rate, value = "share", prd = "year", units = "percent")
 #'
 #' # a missing year stays a gap; a bare column name works too
-#' yoy(data.frame(year = c(2019, 2021, 2022), n = c(10, 12, 15)), value = n, period = year)
+#' yoy(data.frame(year = c(2019, 2021, 2022), n = c(10, 12, 15)), value = n, prd = year)
 #'
 #' # a quarterly series compares each quarter with the same quarter a year earlier
 #' q <- ts(c(5, 6, 7, 8, 6, 7, 9, 9), frequency = 4, start = c(2020, 1))
-#' as.data.frame(yoy(q))[5:8, c("period", "value", "previous", "pct_change")]
+#' as.data.frame(yoy(q))[5:8, c("period", "value", "previous", "pctchg")]
 #'
 #' # counts must be whole numbers
 #' try(yoy(data.frame(year = 1:3, n = c(1.5, 2, 3)), "n", "year"))
@@ -169,25 +169,25 @@ yoy.default <- function(x, ...) {
 
 #' @rdname yoy
 #' @export
-yoy.data.frame <- function(x, value, period, by = NULL, lag = 1L,
+yoy.data.frame <- function(x, value, prd, by = NULL, lag = 1L,
                            fun = NULL,
                            units = c("count", "continuous", "percent"),
-                           min_base = NULL, conf_level = 0.95,
-                           direction = c(
-                             "neutral", "higher_is_better",
-                             "lower_is_better"
+                           minbase = NULL, conflvl = 0.95,
+                           dir = c(
+                             "neutral", "higher",
+                             "lower"
                            ),
                            complete = TRUE, ...) {
   if (!is.null(by) && (!is.character(by) || !length(by) || anyNA(by))) {
     stop("`by` must be one or more column names, or NULL", call. = FALSE)
   }
   units <- .rmbl_arg(units)
-  direction <- .rmbl_arg(direction)
+  dir <- .rmbl_arg(dir)
   # several rows for one period: counts add up, a rate or a share is averaged
   # (two shares of 53% and 57.9% are not 110.9%)
   if (is.null(fun)) fun <- if (units == "count") sum else mean
   value <- .yoy_col(substitute(value), value, x, "value")
-  period <- .yoy_col(substitute(period), period, x, "period")
+  prd <- .yoy_col(substitute(prd), prd, x, "period")
   if (!is.null(by)) {
     by <- as.character(by)
     miss <- setdiff(by, names(x))
@@ -202,7 +202,7 @@ yoy.data.frame <- function(x, value, period, by = NULL, lag = 1L,
   if (length(lag) != 1L || is.na(lag) || lag < 1L) {
     stop("`lag` must be a positive integer", call. = FALSE)
   }
-  conf_level <- .rmbl_conf_level(conf_level)
+  conflvl <- .rmbl_conf_level(conflvl)
   v <- x[[value]]
   if (!is.numeric(v)) {
     stop(sprintf("`%s` must be numeric, not %s", value, class(v)[1L]),
@@ -225,40 +225,40 @@ yoy.data.frame <- function(x, value, period, by = NULL, lag = 1L,
       )
     }
   }
-  if (is.null(min_base)) min_base <- 0
+  if (is.null(minbase)) minbase <- 0
 
-  agg <- .yoy_aggregate(x, value, period, by, fun)
-  if (isTRUE(complete)) agg <- .yoy_complete(agg, period, by, lag)
+  agg <- .yoy_aggregate(x, value, prd, by, fun)
+  if (isTRUE(complete)) agg <- .yoy_complete(agg, prd, by, lag)
   out <- .yoy_compute(
-    agg, value, period, by, lag, units, min_base,
-    conf_level, direction
+    agg, value, prd, by, lag, units, minbase,
+    conflvl, dir
   )
   structure(out,
     class = c("rmbl_yoy", "data.frame"),
     yoy = list(
-      value = value, period = period, by = by, lag = lag,
-      units = units, min_base = min_base,
-      conf_level = conf_level, direction = direction,
-      value_digits = .yoy_value_digits(v, units)
+      value = value, period = prd, by = by, lag = lag,
+      units = units, minbase = minbase,
+      conflvl = conflvl, direction = dir,
+      valuedig = .yoy_value_digits(v, units)
     )
   )
 }
 
 #' @rdname yoy
 #' @export
-yoy.numeric <- function(x, period = seq_along(x), ...) {
+yoy.numeric <- function(x, prd = seq_along(x), ...) {
   if (any(c("value", "data") %in% names(list(...)))) {
-    stop("for a numeric `x`, `x` is the values: give `period` (and options), not `value`", call. = FALSE)
+    stop("for a numeric `x`, `x` is the values: give `prd` (and options), not `value`", call. = FALSE)
   }
-  if (length(period) != length(x)) stop("`period` must have one entry per value of `x`", call. = FALSE)
-  d <- data.frame(period = period, value = as.numeric(x))
-  yoy.data.frame(d, value = "value", period = "period", ...)
+  if (length(prd) != length(x)) stop("`prd` must have one entry per value of `x`", call. = FALSE)
+  d <- data.frame(period = prd, value = as.numeric(x))
+  yoy.data.frame(d, value = "value", prd = "period", ...)
 }
 
 #' @rdname yoy
 #' @export
-yoy.integer <- function(x, period = seq_along(x), ...) {
-  yoy.numeric(as.numeric(x), period = period, ...)
+yoy.integer <- function(x, prd = seq_along(x), ...) {
+  yoy.numeric(as.numeric(x), prd = prd, ...)
 }
 
 #' @rdname yoy
@@ -271,7 +271,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
   if (is.null(lag)) lag <- max(1L, as.integer(round(f)))
   tt <- stats::time(x)
   d <- data.frame(period = as.numeric(tt), value = as.numeric(x))
-  yoy.data.frame(d, value = "value", period = "period", lag = lag, ...)
+  yoy.data.frame(d, value = "value", prd = "period", lag = lag, ...)
 }
 
 # Resolve a column given either a bare name or a string.
@@ -424,18 +424,18 @@ yoy.ts <- function(x, lag = NULL, ...) {
       # a percentage moves by percentage POINTS; the percent change of a
       # percent is a different quantity and is not reported as "the"
       # change
-      out$pp_change <- v - prev
+      out$ppchg <- v - prev
     } else {
       pct <- 100 * (v - prev) / prev
       pct[!is.finite(pct)] <- NA_real_
-      out$pct_change <- pct
+      out$pctchg <- pct
     }
     flag <- rep(NA_character_, nrow(out))
     flag[is.na(prev)] <- "no comparison period"
     small <- !is.na(prev) & prev < min_base
     if (units != "percent") {
       # a small base is computed like any other: the exact interval carries how little it supports;
-      # the note appears only when the caller set min_base
+      # the note appears only when the caller set minbase
       flag[small] <- sprintf("small base (below %g)", min_base)
       zero <- !is.na(prev) & prev == 0
       flag[zero] <- "previous period is zero"
@@ -444,8 +444,8 @@ yoy.ts <- function(x, lag = NULL, ...) {
     out$flag <- flag
     if (units == "count") {
       ci <- .yoy_ratio_ci(v, prev, conf_level)
-      out$pct_lower <- ci$lower
-      out$pct_upper <- ci$upper
+      out$pctlo <- ci$lower
+      out$pctup <- ci$upper
     }
     # The verdict follows the CHANGE, not the percent: a rise from a zero
     # base has no percent but is still a rise.
@@ -541,7 +541,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
   if (direction == "neutral") {
     out[up] <- "up"
     out[down] <- "down"
-  } else if (direction == "higher_is_better") {
+  } else if (direction == "higher") {
     out[up] <- "better"
     out[down] <- "worse"
   } else {

@@ -76,7 +76,7 @@
   # a large package has thousands of messages: the table is kept between sessions beside the saved answers
   # (same rules: a person watching, removed when the versions change), built once per version
   f <- if (.bl_answer_cache_on()) {
-    file.path(.bl_answer_dir(), paste0("messages-", substr(core_sha256(key), 1L, 16L), ".rds"))
+    file.path(.bl_answer_dir(), paste0("messages-", substr(csha256(key), 1L, 16L), ".rds"))
   }
   if (!is.null(f) && file.exists(f)) {
     tab <- tryCatch(readRDS(f), error = function(e) NULL)
@@ -184,7 +184,7 @@
 #' watching an interactive session and the answer cache is on, also saved as
 #' an \code{.rds} file in the answer-cache directory
 #' (\code{tools::R_user_dir("rmoriebricklayer", "cache")}, or
-#' \code{options(rmoriebricklayer.llm_cache_dir)}); the cache is off under
+#' \code{options(rmoriebricklayer.llmcachedir)}); the cache is off under
 #' \code{options(morie.quiet = TRUE)}, \code{MORIE_LLM_CACHE=off}, tests and
 #' \code{R CMD check}.
 #'
@@ -198,14 +198,14 @@
 #' needed), \eqn{|m|} the words of the message and \eqn{|t|} those of the
 #' template; scores of 0.55 and above are kept.
 #'
-#' Errors: \code{message} that is not character text or a condition;
-#' \code{n} not a whole number of 1 or more; \code{packages} that are not
+#' Errors: \code{msg} that is not character text or a condition;
+#' \code{n} not a whole number of 1 or more; \code{pkgs} that are not
 #' installed.
 #'
-#' @param message The message: the text of an error, as R printed it ("Error
+#' @param msg The message: the text of an error, as R printed it ("Error
 #'   in f(x) : ..." is fine), a condition object, or a \code{try()} result.
 #'   Default: the last error of this session (\code{geterrmessage()}).
-#' @param packages Character vector of installed packages to search; default
+#' @param pkgs Character vector of installed packages to search; default
 #'   \code{NULL}, meaning rmoriebricklayer (or the comma-separated list in the
 #'   environment variable \code{RMBL_PACKAGES}, which a package built on this
 #'   one sets for its own command line).
@@ -219,59 +219,59 @@
 #'   \code{...} where a value goes) and \code{match} (\code{"exact"} or the share
 #'   of its words found, such as \code{"80\% of its words"}). No rows when the
 #'   message is not one of these packages' own: it came from another package
-#'   or from R, and \code{\link{bricklayer_llm_ask}} can help with it.
+#'   or from R, and \code{\link{llmask}} can help with it.
 #' @examples
 #' msg <- "`prompt` must be a single non-empty string"
-#' bricklayer_explain_error(msg, packages = "rmoriebricklayer")
-#' r <- try(bricklayer_llm_config(no.such = 1), silent = TRUE)
-#' bricklayer_explain_error(r, packages = "rmoriebricklayer")
+#' explerr(msg, pkgs = "rmoriebricklayer")
+#' r <- try(llmcfg(no.such = 1), silent = TRUE)
+#' explerr(r, pkgs = "rmoriebricklayer")
 #'
 #' # the message as R prints it, with the call in front
-#' bricklayer_explain_error(
-#'   "Error in merkle_proof(x, 9) : `index` must be between 1 and the number of chunks",
+#' explerr(
+#'   "Error in mrkprf(x, 9) : `index` must be between 1 and the number of chunks",
 #'   n = 1)
 #'
 #' # a condition object, and a message retyped from memory
-#' e <- tryCatch(kem_sizes(3), error = identity)
-#' bricklayer_explain_error(e, n = 1)
-#' bricklayer_explain_error("index between number chunks", n = 1)
+#' e <- tryCatch(kemsz(3), error = identity)
+#' explerr(e, n = 1)
+#' explerr("index between number chunks", n = 1)
 #'
 #' # R's own messages are not in the table: no rows
-#' nrow(bricklayer_explain_error("object 'x' not found"))
+#' nrow(explerr("object 'x' not found"))
 #'
 #' # n must be at least 1
-#' try(bricklayer_explain_error(msg, n = 0))
+#' try(explerr(msg, n = 0))
 #' @export
-bricklayer_explain_error <- function(message = geterrmessage(), packages = NULL, n = 3L) {
-  if (inherits(message, "condition")) message <- conditionMessage(message)
-  if (inherits(message, "try-error")) message <- attr(message, "condition")$message %||% as.character(message)
-  if (!is.character(message) || !length(message) || anyNA(message)) {
-    stop("`message` must be the text of an error (or a condition)", call. = FALSE)
+explerr <- function(msg = geterrmessage(), pkgs = NULL, n = 3L) {
+  if (inherits(msg, "condition")) msg <- conditionMessage(msg)
+  if (inherits(msg, "try-error")) msg <- attr(msg, "condition")$message %||% as.character(msg)
+  if (!is.character(msg) || !length(msg) || anyNA(msg)) {
+    stop("`msg` must be the text of an error (or a condition)", call. = FALSE)
   }
   if (!is.numeric(n) || length(n) != 1L || is.na(n) || n < 1 || n != round(n)) {
     stop("`n` must be a whole number of 1 or more", call. = FALSE)
   }
   n <- as.integer(min(n, .Machine$integer.max))   # Inf: every match (as.integer(Inf) was NA)
-  pk <- packages %||% .bl_kn_default_packages()
+  pk <- pkgs %||% .bl_kn_default_packages()
   if (!is.character(pk) || !length(pk) || anyNA(pk) || !all(nzchar(pk))) {
-    stop("`packages` must name installed packages", call. = FALSE)
+    stop("`pkgs` must name installed packages", call. = FALSE)
   }
   missing <- pk[!vapply(pk, function(x) nzchar(system.file(package = x)), logical(1))]
   if (length(missing)) stop(sprintf("not installed: %s", paste(missing, collapse = ", ")), call. = FALSE)
-  msg <- .bl_ee_clean(message)
+  .msg <- .bl_ee_clean(msg)
   tab <- .bl_ee_table(pk)
   empty <- cbind(tab[0L, c("package", "raised_by", "exported", "kind")], message = character(), match = character())
-  if (!nzchar(msg) || !nrow(tab)) return(empty)
+  if (!nzchar(.msg) || !nrow(tab)) return(empty)
   # exact: the template as a regular expression, its variable parts as wildcards
   rx <- vapply(strsplit(tab$template, "\001", fixed = TRUE), function(p) {
     paste0("^", paste(gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", p), collapse = "(.*?)"))
   }, "")
   rx <- ifelse(endsWith(tab$template, "\001"), paste0(rx, "(.*)"), rx)
-  exact <- vapply(rx, function(r) isTRUE(tryCatch(grepl(r, msg, perl = TRUE), error = function(e) FALSE)), NA)
+  exact <- vapply(rx, function(r) isTRUE(tryCatch(grepl(r, .msg, perl = TRUE), error = function(e) FALSE)), NA)
   lit_len <- nchar(gsub("\001", "", tab$template, fixed = TRUE))
   # otherwise by words: how much of your message the template explains, and how much of the
   # template your message carries (a message cut short, or typed from memory)
-  mw <- .bl_ee_words(msg)
+  mw <- .bl_ee_words(.msg)
   share <- vapply(tab$words, function(tw) {
     hit <- length(intersect(tw, mw))
     if (hit < 2L) return(0)  # one shared word is chance
@@ -285,7 +285,7 @@ bricklayer_explain_error <- function(message = geterrmessage(), packages = NULL,
   # a shared check (.rmbl_string1) is reached from dozens of exports: the ones that take the argument
   # your message names come first, then six at most (the first six by name hid the one that raised it
   # once more functions checked their arguments)
-  arg <- regmatches(msg, regexpr("`[A-Za-z.][A-Za-z0-9._]*`", msg))
+  arg <- regmatches(.msg, regexpr("`[A-Za-z.][A-Za-z0-9._]*`", .msg))
   arg <- if (length(arg)) gsub("`", "", arg, fixed = TRUE) else ""
   out$exported <- vapply(seq_len(nrow(out)), function(i) {
     e <- strsplit(out$exported[[i]], ", ", fixed = TRUE)[[1L]]
@@ -311,7 +311,7 @@ bricklayer_explain_error <- function(message = geterrmessage(), packages = NULL,
     out(sprintf("usage: %s explain-error MESSAGE...   (quote it: %s explain-error \"the error text\")\n", prog, prog))
     return(2L)
   }
-  r <- bricklayer_explain_error(paste(rest, collapse = " "))
+  r <- explerr(paste(rest, collapse = " "))
   if (!nrow(r)) {
     out(paste0("Not a message of these packages (it may come from R or another package). ",
                sprintf("`%s ask \"what does this error mean: ...\"` asks your model.\n", prog)))

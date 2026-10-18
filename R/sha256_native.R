@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
 # SHA-256 in pure R (FIPS 180-4), the fallback for a standalone capsule
-# bundle where the compiled core (core_sha256) is not loaded. Words are
+# bundle where the compiled core (csha256) is not loaded. Words are
 # doubles in [0, 2^32) with XOR/AND on 16-bit halves. Slow but exact; the
-# package itself always routes through core_sha256().
+# package itself always routes through csha256().
 
 #' @noRd
 .rmbl_sha256_raw <- function(bytes) {

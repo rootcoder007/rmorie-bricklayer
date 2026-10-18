@@ -23,10 +23,10 @@ using rmbl_hqc::Scheme4;
 
 int hqc_level(SEXP level) {
     if (TYPEOF(level) != INTSXP || XLENGTH(level) != 1) {
-        RMBL_ARG_ERROR("`level` must be a single integer: 1, 3 or 5");
+        RMBL_ARG_ERROR("`lvl` must be a single integer: 1, 3 or 5");
     }
     int l = INTEGER(level)[0];
-    if (l != 1 && l != 3 && l != 5) RMBL_ARG_ERROR("`level` must be 1, 3 or 5");
+    if (l != 1 && l != 3 && l != 5) RMBL_ARG_ERROR("`lvl` must be 1, 3 or 5");
     return l;
 }
 

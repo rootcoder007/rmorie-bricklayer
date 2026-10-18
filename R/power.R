@@ -3,7 +3,7 @@
 # Positive controls: the half of the argument that falsification cannot
 # make.
 #
-# capsule_falsify() breaks the association on purpose and checks the
+# cpsfals() breaks the association on purpose and checks the
 # statistic collapses. Every control in it can refute and none can
 # confirm: a statistic that is simply insensitive -- too little data,
 # too much noise, a test with no power against the alternative that
@@ -26,7 +26,7 @@
 #'
 #' @details
 #' This is the positive control that
-#' [capsule_falsify()] lacks: its four are
+#' [cpsfals()] lacks: its four are
 #' all negative. Those establish that the finding is not an artefact; this
 #' establishes that a real effect would not have been missed. A study that
 #' passes every falsification control and has no power against the effect
@@ -37,7 +37,7 @@
 #' For each size (0 is always added) and each of \code{reps} repetitions:
 #' the data are passed through \code{inject(data, size)}, the statistic is
 #' computed, and a permutation null is built by shuffling the
-#' \code{treatment} column \code{n} times and recomputing the statistic. The
+#' \code{trt} column \code{n} times and recomputing the statistic. The
 #' two-sided permutation p-value is
 #' \deqn{p = \frac{1 + \#\{|T^*| \ge |T|\}}{1 + n_{ok}}}
 #' over the \eqn{n_{ok}} permutations with a finite statistic (Phipson and
@@ -50,19 +50,19 @@
 #' permutations vary.
 #'
 #' The cost is \eqn{|sizes| \times reps \times (n + 1)} evaluations of
-#' \code{statistic}. A progress bar is drawn on stderr unless
+#' \code{stat}. A progress bar is drawn on stderr unless
 #' \code{options(morie.quiet = TRUE)}. With \code{seed}, R's random number
 #' state is set for the run and restored afterwards; without it, the run
 #' uses and advances the session's generator.
 #'
 #' Errors: \code{data} not a data frame of at least 4 rows;
-#' \code{statistic} or \code{inject} not a function; \code{treatment}
+#' \code{stat} or \code{inject} not a function; \code{trt}
 #' missing or not a column; \code{n} below 9; \code{reps} below 1; \code{n}
 #' so small that \eqn{1/(n+1) > \alpha}, so that nothing could ever be
 #' detected.
 #'
 #' @param data A data frame.
-#' @param statistic A function of one data frame returning
+#' @param stat A function of one data frame returning
 #'   a single finite number (for example a correlation or a difference in
 #'   means).
 #' @param inject A function of \code{(data, size)} returning
@@ -73,8 +73,8 @@
 #'   \code{c(0, 0.2, 0.5)}). \code{0} is added if absent, since the detection
 #'   rate there is the false-positive rate and belongs on the same curve.
 #'   Duplicates are removed and the sizes sorted.
-#' @param treatment Name of the column permuted to build the null, as
-#'   in [capsule_falsify()]. Required.
+#' @param trt Name of the column permuted to build the null, as
+#'   in [cpsfals()]. Required.
 #' @param n Permutations per test, a whole number of at least 9 (default
 #'   99).
 #' @param reps Repetitions per size, a whole number of at least 1 (default
@@ -90,11 +90,11 @@
 #'       \code{detected} (integer), \code{reps} (integer, the usable repetitions)
 #'       and \code{rate} (\code{detected / reps}, \code{NA} when none was usable).}
 #'     \item{\code{alpha}, \code{n}, \code{reps}, \code{treatment}}{the settings used.}
-#'     \item{\code{smallest_detected}}{the smallest positive size found at a rate of
+#'     \item{\code{smadet}}{the smallest positive size found at a rate of
 #'       at least 0.8, or \code{NA} when no size reached it.}
 #'     \item{\code{false_positive_rate}}{the rate at size 0.}
 #'   }
-#' @seealso [capsule_falsify()] for the
+#' @seealso [cpsfals()] for the
 #' negative controls.
 #' @examples
 #' set.seed(1)
@@ -104,8 +104,8 @@
 #'   z$y <- z$y + size * z$x
 #'   z
 #' }
-#' pw <- capsule_power(d, function(z) cor(z$x, z$y), inj,
-#'                     sizes = c(0, 0.3, 0.6), treatment = "x",
+#' pw <- cpspwr(d, function(z) cor(z$x, z$y), inj,
+#'                     sizes = c(0, 0.3, 0.6), trt = "x",
 #'                     n = 99, reps = 5, seed = 42)
 #' pw$curve
 #' pw
@@ -121,30 +121,30 @@
 #'   z$y <- z$y + size * z$x + stats::rnorm(nrow(z), sd = 0.5)
 #'   z
 #' }
-#' capsule_power(d, function(z) cor(z$x, z$y), inj2, sizes = c(0.1, 0.2),
-#'               treatment = "x", n = 49, reps = 4, seed = 7)$smallest_detected
+#' cpspwr(d, function(z) cor(z$x, z$y), inj2, sizes = c(0.1, 0.2),
+#'               trt = "x", n = 49, reps = 4, seed = 7)$smadet
 #'
 #' # too few permutations to ever reach alpha = 0.05
-#' try(capsule_power(d, function(z) cor(z$x, z$y), inj, treatment = "x", n = 9))
+#' try(cpspwr(d, function(z) cor(z$x, z$y), inj, trt = "x", n = 9))
 #' @export
-capsule_power <- function(data, statistic, inject, sizes = c(0, 0.2, 0.5),
-                          treatment = NULL, n = 99L, reps = 10L,
+cpspwr <- function(data, stat, inject, sizes = c(0, 0.2, 0.5),
+                          trt = NULL, n = 99L, reps = 10L,
                           alpha = 0.05, seed = NULL) {
-  .rmbl_no_fn(treatment = treatment)
+  .rmbl_no_fn(treatment = trt)
   if (!is.data.frame(data) || nrow(data) < 4L) {
     stop("`data` must be a data frame with at least 4 rows", call. = FALSE)
   }
-  if (!is.function(statistic) || !is.function(inject)) {
-    stop("`statistic` and `inject` must both be functions", call. = FALSE)
+  if (!is.function(stat) || !is.function(inject)) {
+    stop("`stat` and `inject` must both be functions", call. = FALSE)
   }
-  if (is.null(treatment)) {
-    stop("`treatment` is required: the permutation null is built by ",
+  if (is.null(trt)) {
+    stop("`trt` is required: the permutation null is built by ",
          "shuffling it, and without one there is nothing to detect ",
          "against", call. = FALSE)
   }
-  treatment <- as.character(treatment)[1L]
-  if (!treatment %in% names(data)) {
-    stop("`treatment` is not a column of `data`", call. = FALSE)
+  trt <- as.character(trt)[1L]
+  if (!trt %in% names(data)) {
+    stop("`trt` is not a column of `data`", call. = FALSE)
   }
   sizes <- sort(unique(c(0, .rmbl_num(sizes, "sizes"))))
   n <- .rmbl_num(n, "n", integer = TRUE)[1L]
@@ -162,7 +162,7 @@ capsule_power <- function(data, statistic, inject, sizes = c(0, 0.2, 0.5),
   if (!is.null(seed)) seed <- .rmbl_r_seed(seed)
   if (!is.null(seed)) .rmbl_local_seed(seed)
 
-  pg <- bricklayer_progress("power curve", length(sizes) * reps)
+  pg <- blprog("power curve", length(sizes) * reps)
   on.exit(pg$done(), add = TRUE)
   rows <- lapply(seq_along(sizes), function(si) {
     sz <- sizes[[si]]
@@ -172,13 +172,13 @@ capsule_power <- function(data, statistic, inject, sizes = c(0, 0.2, 0.5),
       pg$update((si - 1L) * reps + r - 1L, sprintf("size %s, rep %d/%d", format(sz), r, reps))
       d <- tryCatch(inject(data, sz), error = .rmbl_or(NULL))
       if (!is.data.frame(d)) next
-      obs <- tryCatch(as.numeric(statistic(d))[1L],
+      obs <- tryCatch(as.numeric(stat(d))[1L],
                       error = .rmbl_or(NA_real_))
       if (!is.finite(obs)) next
       null <- vapply(seq_len(n), function(i) {
         z <- d
-        z[[treatment]] <- sample(z[[treatment]])
-        tryCatch(as.numeric(statistic(z))[1L], error = .rmbl_or(NA_real_))
+        z[[trt]] <- sample(z[[trt]])
+        tryCatch(as.numeric(stat(z))[1L], error = .rmbl_or(NA_real_))
       }, numeric(1))
       ok <- is.finite(null)
       if (!any(ok)) next
@@ -194,8 +194,8 @@ capsule_power <- function(data, statistic, inject, sizes = c(0, 0.2, 0.5),
   rownames(curve) <- NULL
   pos <- curve[curve$size > 0 & !is.na(curve$rate) & curve$rate >= 0.8, ]
   out <- list(curve = curve, alpha = alpha, n = n, reps = reps,
-              treatment = treatment,
-              smallest_detected = if (nrow(pos)) min(pos$size) else
+              treatment = trt,
+              smadet = if (nrow(pos)) min(pos$size) else
                 NA_real_,
               false_positive_rate =
                 curve$rate[curve$size == 0][1L])
@@ -214,23 +214,23 @@ format.bricklayer_power <- function(x, ...) {
             ifelse(is.na(x$curve$rate), "  --",
                    sprintf("%.2f", x$curve$rate))),
     .rmbl_rule(),
-    if (is.na(x$smallest_detected))
+    if (is.na(x$smadet))
       "  no size was detected at a rate of 0.8: this analysis could not"
     else
       sprintf("  smallest size detected at a rate of 0.8: %.4g",
-              x$smallest_detected),
-    if (is.na(x$smallest_detected))
+              x$smadet),
+    if (is.na(x$smadet))
       "  have seen any of the effects tried, so a null result from it"
     else
       "  a null result is informative only about effects at least this",
-    if (is.na(x$smallest_detected))
+    if (is.na(x$smadet))
       "  says nothing about whether an effect is there"
     else
       "  large; smaller ones would have been missed",
     .rmbl_rule())
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_power <- function(x, ...) {
   cat(format(x), sep = "\n")

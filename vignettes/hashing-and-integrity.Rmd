@@ -9,7 +9,7 @@ vignette: >
 
 ```{r, include = FALSE}
 # the one-time index record of this vignette stays out of the reader's configuration directory
-options(rmoriebricklayer.xmss_index_file = tempfile())
+options(rmoriebricklayer.xmssidxfile = tempfile())
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(rmoriebricklayer)
 ```
@@ -21,10 +21,10 @@ get randomness, and how a Merkle tree lets a large file be pinned and partially 
 ## Digests of text and files
 
 ```{r digests}
-core_sha256("hello capsule")
-core_sha512("hello capsule")
-core_blake2b("hello capsule")
-core_crc32("hello capsule")
+csha256("hello capsule")
+csha512("hello capsule")
+cblake2b("hello capsule")
+ccrc32("hello capsule")
 ```
 
 Files are hashed in blocks, so a multi-gigabyte file does not need to fit in memory:
@@ -32,30 +32,30 @@ Files are hashed in blocks, so a multi-gigabyte file does not need to fit in mem
 ```{r files}
 f <- tempfile()
 writeLines("hello capsule", f)
-sha256_file(f)
-sha512_file(f)
-crc32_file(f)
+sha256file(f)
+sha512file(f)
+crc32file(f)
 
-before <- sha256_file(f)
+before <- sha256file(f)
 writeLines("hello capsule (edited)", f)
-sha256_file(f) == before
+sha256file(f) == before
 ```
 
 CRC-32 is a checksum, not a cryptographic hash: it detects accidental corruption and
 nothing more. SHA-256 and SHA-512 (FIPS 180-4) and BLAKE2b are collision-resistant;
-`verify_sha256()` checks a file against a pinned digest.
+`vrfsha256()` checks a file against a pinned digest.
 
 ## Digests of R objects
 
-`digest_object()` serialises an object canonically and hashes the bytes, so attributes,
+`dgstobj()` serialises an object canonically and hashes the bytes, so attributes,
 names and types are part of the identity:
 
 ```{r objects}
-digest_object(list(a = 1L, b = "x"))
-identical(digest_object(1:10), digest_object(1:10))
-digest_object(1:10) == digest_object(1:11)
-digest_object(matrix(1:6, nrow = 2)) == digest_object(1:6)   # dimensions count
-digest_object(data.frame(x = 1:3))
+dgstobj(list(a = 1L, b = "x"))
+identical(dgstobj(1:10), dgstobj(1:10))
+dgstobj(1:10) == dgstobj(1:11)
+dgstobj(matrix(1:6, nrow = 2)) == dgstobj(1:6)   # dimensions count
+dgstobj(data.frame(x = 1:3))
 ```
 
 ## Keyed digests and constant-time comparison
@@ -64,21 +64,21 @@ An HMAC (RFC 2104) is a digest that only the holder of the key can produce, so a
 cannot be re-signed without the key:
 
 ```{r hmac}
-core_hmac_sha256("Jefe", "what do ya want for nothing?")   # RFC 4231 test case 2
-core_hmac_sha256("key-a", "manifest")
-core_hmac_sha256("key-b", "manifest")
+chmac("Jefe", "what do ya want for nothing?")   # RFC 4231 test case 2
+chmac("key-a", "manifest")
+chmac("key-b", "manifest")
 ```
 
 **Never compare a tag with `==`.** A string comparison stops at the first differing
 character, so its running time tells an attacker how many leading characters were right.
-`core_digest_equal()` compares every byte regardless and returns `FALSE` for a length
+`cdgsteq()` compares every byte regardless and returns `FALSE` for a length
 mismatch without erroring:
 
 ```{r ct}
-tag <- core_hmac_sha256("k", "m")
-core_digest_equal(tag, core_hmac_sha256("k", "m"))
-core_digest_equal(tag, core_hmac_sha256("k", "tampered"))
-core_digest_equal(tag, "too-short")
+tag <- chmac("k", "m")
+cdgsteq(tag, chmac("k", "m"))
+cdgsteq(tag, chmac("k", "tampered"))
+cdgsteq(tag, "too-short")
 ```
 
 ## Deriving a key from a passphrase
@@ -87,9 +87,9 @@ A passphrase is not a key: it is short, low-entropy and chosen by a person. PBKD
 8018) stretches it with a salt and an iteration count that makes each guess expensive:
 
 ```{r pbkdf2}
-derive_key("password", "salt", iterations = 1)     # the published test vector
-identical(derive_key("pw", "s", 1000), derive_key("pw", "s", 1000))
-derive_key("pw", "salt-a", 1000) == derive_key("pw", "salt-b", 1000)
+drvkey("password", "salt", iter = 1)     # the published test vector
+identical(drvkey("pw", "s", 1000), drvkey("pw", "s", 1000))
+drvkey("pw", "salt-a", 1000) == drvkey("pw", "salt-b", 1000)
 ```
 
 The salt must be random and stored beside the ciphertext or signature; the default of
@@ -97,15 +97,15 @@ The salt must be random and stored beside the ciphertext or signature; the defau
 symmetrically:
 
 ```{r pbkdf2-sign}
-salt <- paste(format(random_bytes(16)), collapse = "")
-key <- derive_key("correct horse battery staple", salt)
-sig <- capsule_sign("manifest-digest", key, scheme = "hmac")
-capsule_verify("manifest-digest", sig, key)
+salt <- paste(format(rndbytes(16)), collapse = "")
+key <- drvkey("correct horse battery staple", salt)
+sig <- cpssign("manifest-digest", key, scheme = "hmac")
+cpsvrf("manifest-digest", sig, key)
 ```
 
 ## Randomness
 
-`random_bytes()` draws from the operating system (`getrandom` or `/dev/urandom` on Unix,
+`rndbytes()` draws from the operating system (`getrandom` or `/dev/urandom` on Unix,
 `RtlGenRandom` on Windows) and does
 **not** consume R's seeded stream, so a reproducible analysis is unaffected by key
 generation happening beside it:
@@ -114,7 +114,7 @@ generation happening beside it:
 set.seed(1)
 a <- stats::runif(1)
 set.seed(1)
-invisible(random_bytes(32))
+invisible(rndbytes(32))
 identical(stats::runif(1), a)
 ```
 
@@ -123,11 +123,11 @@ For tests that need reproducible "random" bytes, the package's AES-256 CTR_DRBG 
 it; a personalization string separates streams:
 
 ```{r drbg}
-d <- drbg_new(as.raw(0:47))
-drbg_generate(d, 16)
-a <- drbg_new(as.raw(1:48), personalization = charToRaw("session 1"))
-b <- drbg_new(as.raw(1:48), personalization = charToRaw("session 2"))
-identical(drbg_generate(a, 16), drbg_generate(b, 16))
+d <- drbgnew(as.raw(0:47))
+drbggen(d, 16)
+a <- drbgnew(as.raw(1:48), person = charToRaw("session 1"))
+b <- drbgnew(as.raw(1:48), person = charToRaw("session 2"))
+identical(drbggen(a, 16), drbggen(b, 16))
 ```
 
 ## Merkle trees: pin a large file, verify a piece
@@ -138,30 +138,30 @@ holding the others, and a diff of the leaves names exactly which chunk changed.
 
 ```{r merkle}
 chunks <- c("row1,row2", "row3,row4", "row5,row6", "row7,row8")
-root <- merkle_root(chunks)
+root <- mrkroot(chunks)
 root
 
-before <- merkle_leaves(chunks)
-after <- merkle_leaves(c(chunks[1:2], "row5,row6-EDITED", chunks[4]))
+before <- mrklvs(chunks)
+after <- mrklvs(c(chunks[1:2], "row5,row6-EDITED", chunks[4]))
 which(before != after)
 
-pr <- merkle_proof(chunks, 3)
-merkle_verify(chunks[3], pr, root)
-merkle_verify("row5,row6-EDITED", pr, root)
+pr <- mrkprf(chunks, 3)
+mrkvrf(chunks[3], pr, root)
+mrkvrf("row5,row6-EDITED", pr, root)
 ```
 
-`chunk_file()` splits a real file into fixed-size chunks that concatenate back to its bytes:
+`chnkfile()` splits a real file into fixed-size chunks that concatenate back to its bytes:
 
 ```{r chunkfile}
 p <- tempfile()
 writeLines(rep("some capsule content", 50), p)
-ch <- chunk_file(p, chunk_bytes = 128)
+ch <- chnkfile(p, chnkbytes = 128)
 length(ch)
-merkle_root(ch)
+mrkroot(ch)
 identical(unlist(ch), readBin(p, "raw", file.size(p)))
 ```
 
-`capsule_bundle()` pins each data file by one whole-file digest (`sha256_file()`); the
+`cpsbndl()` pins each data file by one whole-file digest (`sha256file()`); the
 Merkle tree is for pinning the parts of a large file, so a mismatch identifies which part of it
 changed rather than only that something did.
 
@@ -181,10 +181,10 @@ include knowing that a copy has not been altered. A digest of the table and a Me
 over its rows let a community check its copy, and check single rows without the rest:
 
 ```{r indigenous-hash}
-d <- indigenous_example("suicidal_ideation")
-digest_object(d)
+d <- indiex("suicide")
+dgstobj(d)
 rows <- apply(d, 1, paste, collapse = ",")
-root <- merkle_root(rows)
-proof <- merkle_proof(rows, 3)
-merkle_verify(rows[3], proof, root)
+root <- mrkroot(rows)
+proof <- mrkprf(rows, 3)
+mrkvrf(rows[3], proof, root)
 ```

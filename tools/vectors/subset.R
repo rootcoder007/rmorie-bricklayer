@@ -6,8 +6,8 @@ args <- commandArgs(trailingOnly = TRUE)
 vec <- args[[1]]
 out <- "tests/testthat/vectors"
 suppressPackageStartupMessages(library(rmoriebricklayer))
-rd <- function(p) bricklayer_json_from_json(paste(readLines(p, warn = FALSE), collapse = "\n"), simplifyVector = FALSE)
-wr <- function(x, p) { dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE); writeLines(bricklayer_json_to_json(x, auto_unbox = TRUE, digits = NA), p) }
+rd <- function(p) fromjs(paste(readLines(p, warn = FALSE), collapse = "\n"), simplifyVector = FALSE)
+wr <- function(x, p) { dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE); writeLines(tojs(x, auto_unbox = TRUE, digits = NA), p) }
 obj <- function(x) if (is.null(x$testGroups)) Filter(function(e) is.list(e) && !is.null(e$testGroups), x)[[1]] else x
 unlink(out, recursive = TRUE)
 for (f in list.files(file.path(vec, "wycheproof"), full.names = TRUE)) {

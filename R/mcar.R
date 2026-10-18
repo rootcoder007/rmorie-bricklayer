@@ -45,7 +45,7 @@
   }
 
   iter <- 0L
-  pg <- bricklayer_progress("EM (normal, missing data)", 0)
+  pg <- blprog("EM (normal, missing data)", 0)
   on.exit(pg$done(), add = TRUE)
   for (it in seq_len(max_iter)) {
     iter <- it
@@ -158,9 +158,9 @@
 #' row on every iteration, so it takes about \eqn{n \times} iterations
 #' small matrix solves: seconds for a few thousand rows and a handful of
 #' columns, longer for large tables. A progress indicator is shown in an
-#' interactive session. If EM has not converged after `max_iter`
+#' interactive session. If EM has not converged after `maxit`
 #' iterations the last estimates are used; `iterations` then equals
-#' `max_iter`.
+#' `maxit`.
 #'
 #' Errors: `data` neither a data frame nor a matrix; fewer than two
 #' numeric columns, or fewer than two usable rows or columns after the
@@ -171,16 +171,16 @@
 #' @param data A data frame or numeric matrix. Non-numeric
 #' columns are dropped with a warning, since the statistic is defined on
 #' moments.
-#' @param max_iter Whole number, default 500: the maximum number of EM
+#' @param maxit Whole number, default 500: the maximum number of EM
 #' iterations.
 #' @param tol Number, default 1e-7: EM stops when the largest absolute
 #' change in any mean or covariance entry between iterations falls below
 #' it.
 #' @return A list of class `bricklayer_mcar`: `statistic`,
-#' `df`, `p_value`, `log_p_value` (the log of `p_value`, finite where
-#' `p_value` underflows to 0), `n_patterns` (distinct missingness
-#' patterns), `n_used` (rows in the patterns that entered the statistic),
-#' `n_vars` (columns used), `iterations` (EM iterations), `mu` (named ML
+#' `df`, `p_value`, `logpvalue` (the log of `p_value`, finite where
+#' `p_value` underflows to 0), `npat` (distinct missingness
+#' patterns), `nused` (rows in the patterns that entered the statistic),
+#' `nvars` (columns used), `iterations` (EM iterations), `mu` (named ML
 #' means), `sigma` (ML covariance matrix), and `note` (a caveat when the
 #' test is degenerate or a pattern was skipped, else `NA`). The print
 #' method gives the verdict in words. With complete data
@@ -195,9 +195,9 @@
 #' incomplete data via the EM algorithm. *Journal of the Royal Statistical
 #' Society B* 39(1), 1--38.
 #' @seealso
-#' [missingness_pattern()] for the
+#' [misspat()] for the
 #' patterns themselves,
-#' [missingness_summary()] for the rates.
+#' [misssmry()] for the rates.
 #' @examples
 #' set.seed(1)
 #' n <- 300
@@ -208,29 +208,29 @@
 #' # should not reject.
 #' mcar <- data.frame(x = x, y = y)
 #' mcar$y[sample(n, 90)] <- NA
-#' mcar_test(mcar)
+#' mcartst(mcar)
 #'
 #' # Missing depending on the OTHER, observed variable: not MCAR, and
 #' # detectable, because the pattern's mean of x is shifted.
 #' mar <- data.frame(x = x, y = y)
 #' mar$y[x > 0.4] <- NA
-#' mcar_test(mar)
+#' mcartst(mar)
 #'
 #' # Complete data has one pattern and nothing to test.
-#' mcar_test(data.frame(a = x, b = y))$df
+#' mcartst(data.frame(a = x, b = y))$df
 #'
 #' # A duplicated column makes the likelihood degenerate, and is refused.
 #' dup <- mcar
 #' dup$x2 <- dup$x
-#' try(mcar_test(dup))
+#' try(mcartst(dup))
 #'
 #' # The EM estimates are the ML ones: with no missingness they are the
 #' # column means and the ML (1/n) covariance.
-#' fit <- mcar_test(data.frame(a = x, b = y))
+#' fit <- mcartst(data.frame(a = x, b = y))
 #' all.equal(fit$mu, c(mean(x), mean(y)), check.attributes = FALSE)
 #' @export
-mcar_test <- function(data, max_iter = 500L, tol = 1e-7) {
-  max_iter <- .rmbl_scalar(max_iter, "max_iter", 1, 1e6, integer = TRUE)
+mcartst <- function(data, maxit = 500L, tol = 1e-7) {
+  maxit <- .rmbl_scalar(maxit, "maxit", 1, 1e6, integer = TRUE)
   tol <- .rmbl_scalar(tol, "tol", 0, 1)
   if (is.matrix(data)) data <- as.data.frame(data)
   if (!is.data.frame(data)) {
@@ -288,11 +288,11 @@ mcar_test <- function(data, max_iter = 500L, tol = 1e-7) {
     stop("the columns are collinear (or one is constant), so the ",
          "multivariate normal likelihood Little's test is built on is ",
          "degenerate. Drop the redundant column(s) first -- ",
-         "top_correlations() and drop_constant() will find them.",
+         "topcors() and drpconst() will find them.",
          call. = FALSE)
   }
 
-  fit <- .rmbl_em_mvn(X, max_iter = max_iter, tol = tol)
+  fit <- .rmbl_em_mvn(X, max_iter = maxit, tol = tol)
   if (is.null(fit)) {
     stop("the EM estimates did not converge to a usable covariance: the ",
          "columns may be collinear, or a pattern may have too few rows",
@@ -340,7 +340,7 @@ mcar_test <- function(data, max_iter = 500L, tol = 1e-7) {
   }
   out <- list(statistic = d2,
               df = df,
-              log_p_value = if (df > 0) {
+              logpvalue = if (df > 0) {
                 stats::pchisq(d2, df, lower.tail = FALSE, log.p = TRUE)
               } else {
                 NA_real_
@@ -350,9 +350,9 @@ mcar_test <- function(data, max_iter = 500L, tol = 1e-7) {
               } else {
                 NA_real_
               },
-              n_patterns = length(patterns),
-              n_used = used,
-              n_vars = p,
+              npat = length(patterns),
+              nused = used,
+              nvars = p,
               iterations = fit$iterations,
               mu = stats::setNames(fit$mu, colnames(X)),
               sigma = fit$sigma,
@@ -378,9 +378,9 @@ format.bricklayer_mcar <- function(x, ...) {
                statistic = formatC(x$statistic, format = "f", digits = 3),
                df = x$df,
                "p-value" = .rmbl_fmt_p(x$p_value),
-               patterns = x$n_patterns,
-               variables = x$n_vars,
-               "rows used" = x$n_used,
+               patterns = x$npat,
+               variables = x$nvars,
+               "rows used" = x$nused,
                "EM iterations" = x$iterations)))
   if (!is.na(x$note)) {
     lines <- c(lines, "", paste0("  ", g$warn, " ", x$note))
@@ -394,7 +394,7 @@ format.bricklayer_mcar <- function(x, ...) {
   c(lines, .rmbl_rule())
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_mcar <- function(x, ...) {
   cat(format(x), sep = "\n")

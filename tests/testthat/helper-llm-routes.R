@@ -20,4 +20,4 @@ if (!identical(Sys.getenv("RMBL_LIVE_LLM"), "1")) {
 
 # answers are kept on this machine only for a person watching (never in a check); the CLI tests turn
 # morie.progress on, so the cache is off here unless a test turns it on
-options(rmoriebricklayer.llm_cache = FALSE)
+options(rmoriebricklayer.llmcache = FALSE)

@@ -105,8 +105,8 @@ PROVENANCE_PATH <- file.path(script_dir, "data_provenance.json")
 if (!file.exists(CONFIG_PATH))
   stop("config.json not found at ", CONFIG_PATH)
 # the bundled native codec (json_native.R): no jsonlite needed
-cfg <- bricklayer_json_from_json(CONFIG_PATH, simplifyVector = FALSE)
-prov <- load_provenance(PROVENANCE_PATH)
+cfg <- fromjs(CONFIG_PATH, simplifyVector = FALSE)
+prov <- loadprov(PROVENANCE_PATH)
 
 PROJECT_NAME    <- cfg$project$name         %||% "bricklayer-project"
 PROJECT_AUTHOR  <- cfg$project$author       %||% "(unknown author)"
@@ -333,7 +333,7 @@ if (!is.null(DATA_ARG)) {
       }
       input_path <- normalizePath(candidate)
       if (!is.null(prov$resource$sha256)) {
-        v <- verify_sha256(input_path, prov$resource$sha256)
+        v <- vrfsha256(input_path, prov$resource$sha256)
         if (v$match) say("  ✓ SHA256 matches pinned provenance.")
         else digest_mismatch(v)
       }
@@ -346,8 +346,8 @@ if (!is.null(DATA_ARG)) {
         script_dir   = script_dir,
         project_name = PROJECT_NAME,
         quick        = QUICK_MODE)
-      url <- resolve_via_ckan(prov)
-      if (is.null(url)) url <- resolve_via_ckan_search(prov)
+      url <- rslvckan(prov)
+      if (is.null(url)) url <- rslvckns(prov)
       if (is.null(url)) url <- prov$resource$direct_url
       if (is.null(url)) {
         say("ERROR: no download URL available — provenance missing.")
@@ -359,8 +359,8 @@ if (!is.null(DATA_ARG)) {
       say("  Downloading: ", url)
       say("  → ", target)
       wb_url <- prov$wayback$csv_snapshot %||% ""
-      if (!friendly_download(url, target,
-                              attempt_wayback = if (nzchar(wb_url)) wb_url else NULL)) {
+      if (!fdl(url, target,
+                              attwb = if (nzchar(wb_url)) wb_url else NULL)) {
         say("  All download paths exhausted. Options:")
         say("    1) Re-run after disabling your VPN")
         say("    2) Download manually from: ", prov$dataset$catalogue_page)
@@ -369,7 +369,7 @@ if (!is.null(DATA_ARG)) {
       }
       input_path <- target
       if (!is.null(prov$resource$sha256)) {
-        v <- verify_sha256(target, prov$resource$sha256)
+        v <- vrfsha256(target, prov$resource$sha256)
         if (v$match) say("  ✓ SHA256 byte-for-byte match.")
         else digest_mismatch(v)
       }
@@ -400,7 +400,7 @@ if (!is.null(DATA_ARG)) {
       }
       target <- file.path(save_dir, "SYNTHETIC_data.csv")
       say("  Generating synthetic dataset...")
-      info <- make_synthetic_csv(synth_schema, target)
+      info <- mksyncsv(synth_schema, target)
       say("  Wrote ", info$rows, " rows (seed = ", info$seed, ") to: ", target)
       input_path <- target
       SYNTHETIC_MODE <- TRUE
@@ -453,7 +453,7 @@ hr()
 say("Step 4/5: Results summary")
 manifest_path <- file.path(output_dir, "manifest.json")
 if (file.exists(manifest_path)) {
-  m <- bricklayer_json_from_json(manifest_path, simplifyVector = FALSE)
+  m <- fromjs(manifest_path, simplifyVector = FALSE)
   counts <- summarise_counts(m)
   say(sprintf("  Total:  %d", counts$total))
   say(sprintf("  PASS:   %d", counts$pass))
@@ -488,7 +488,7 @@ if (file.exists(manifest_path)) {
   m$meta$os        <- OS_KIND
   m$meta$synthetic <- SYNTHETIC_MODE
   m$meta$digest_override <- DIGEST_OVERRIDE
-  write_summary_txt(
+  wrsmrytxt(
     m, output_dir,
     paths = list(
       bundle         = script_dir,
@@ -497,11 +497,11 @@ if (file.exists(manifest_path)) {
       analysis_script = ANALYSIS_R,
       provenance     = PROVENANCE_PATH
     ),
-    what_was_done = unlist(cfg$summary$what_was_done %||%
+    whatwasdone = unlist(cfg$summary$what_was_done %||%
                             list("Ran the project's analysis script.",
                                  "Wrote CSV outputs and manifest.json.")),
     contact = PROJECT_CONTACT,
-    licence = paste0(PROJECT_LICENCE,
+    lic = paste0(PROJECT_LICENCE,
                      if (!is.null(prov$dataset$licence_short))
                        paste0(" (scripts); ",
                               prov$dataset$licence_short, " (data)")

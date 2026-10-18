@@ -92,7 +92,7 @@ test_that("G3: `login --token` checks the key at the signed document's data addr
 # ---- G4, F3: the answer cache --------------------------------------------------------------
 
 test_that("G4: the cache is off from a script, keeps the question's case and checks the stored question", {
-  withr::local_options(rmoriebricklayer.llm_cache = NULL, morie.progress = TRUE, morie.quiet = NULL)
+  withr::local_options(rmoriebricklayer.llmcache = NULL, morie.progress = TRUE, morie.quiet = NULL)
   withr::local_envvar(MORIE_LLM_CACHE = NA, TESTTHAT = NA, `_R_CHECK_PACKAGE_NAME_` = NA)
   local_mocked_bindings(.bl_stdin_tty = function() FALSE, .package = "rmoriebricklayer")
   expect_false(ns(".bl_answer_cache_on")())   # the command line's progress option alone is not a terminal
@@ -168,7 +168,7 @@ test_that("L2: a nameless tool call, a regex filter, an empty reply and a flood 
   # a turn with 40 tool calls: every call is answered, the ones past the cap with "not run"
   flood <- list(choices = list(list(finish_reason = "tool_calls", message = list(content = "", tool_calls = lapply(1:40,
     function(i) list(id = paste0("c", i), `function` = list(name = "get_help", arguments = '{"name":"knox_test"}')))))))
-  done <- list(choices = list(list(finish_reason = "stop", message = list(content = "Use knox_test()."))))
+  done <- list(choices = list(list(finish_reason = "stop", message = list(content = "Use knoxtst()."))))
   n <- 0L
   sent <- list()
   local_mocked_bindings(.bl_post_json = function(url, payload, ...) {
@@ -177,7 +177,7 @@ test_that("L2: a nameless tool call, a regex filter, an empty reply and a flood 
     list(status = 200L, json = if (n == 1L) flood else done, error = "")
   })
   withr::local_envvar(MORIE_LLM_CONTEXT = "200000")
-  expect_match(ns(".bl_llm_assist")(rt, "m", "near repeats", "rmoriebricklayer", max_rounds = 2L), "knox_test")
+  expect_match(ns(".bl_llm_assist")(rt, "m", "near repeats", "rmoriebricklayer", max_rounds = 2L), "knoxtst")
   tool_msgs <- Filter(function(m) identical(m$role, "tool"), sent[[2L]]$messages)
   expect_length(tool_msgs, 12L)   # the rest are dropped from the turn, and the model told
   asst <- Filter(function(m) identical(m$role, "assistant"), sent[[2L]]$messages)
@@ -204,7 +204,7 @@ test_that("L3: CR or LF in a key is refused in R and in C", {
   withr::local_envvar(GEMINI_API_KEY = NA, MORIE_LLM_API_KEY = "k\nX: y")
   expect_error(ns(".bl_key_for")("MORIE_LLM_API_KEY", "MORIE_LLM_BASE_URL"), "line break")
   withr::local_envvar(MORIE_LLM_API_KEY = NA, XDG_CONFIG_HOME = withr::local_tempdir())
-  expect_error(bricklayer_llm_config(gemini.key = "AIza\r\nX: y"), "line break")
+  expect_error(llmcfg(gemini.key = "AIza\r\nX: y"), "line break")
   expect_error(.Call(ns("C_rmbl_http_post"), "https://example.invalid/x", raw(0), "application/json", 1L,
                      "X-A: a\r\nX-B: b", FALSE), "line break")
   expect_error(.Call(ns("C_rmbl_http_get"), "https://example.invalid/x", 1L, "X-A: a\nX-B: b", FALSE), "line break")
@@ -220,7 +220,7 @@ test_that("L5: a planted llm.json.tmp symlink is not followed", {
   target <- file.path(withr::local_tempdir(), "victim")
   writeLines("untouched", target)
   file.symlink(target, paste0(p, ".tmp"))
-  bricklayer_llm_config(openai.key = "sk-secret")
+  llmcfg(openai.key = "sk-secret")
   expect_identical(readLines(target), "untouched")
   expect_true(file.exists(p))
   expect_true(any(grepl("sk-secret", readLines(p))))
@@ -228,21 +228,21 @@ test_that("L5: a planted llm.json.tmp symlink is not followed", {
 
 # ---- the rest of the LOW list ---------------------------------------------------------------
 
-test_that("knox_test drops an incident without a location or time, as its siblings do", {
+test_that("knoxtst drops an incident without a location or time, as its siblings do", {
   set.seed(5)
   x <- c(runif(40, -79.5, -79.3), NA, Inf)
   y <- c(runif(40, 43.6, 43.8), 43.7, 43.7)
   t <- c(1:40, 41, 42)
-  expect_message(k <- knox_test(x, y, t, 500, 3, nsim = 19, seed = 1), "2 incidents without a usable location")
+  expect_message(k <- knoxtst(x, y, t, 500, 3, nsim = 19, seed = 1), "2 incidents without a usable location")
   expect_s3_class(k, "rmbl_knox")
-  expect_error(knox_test(x[1:40], y[1:40], t[1:40], 500, 3, nsim = 19, max_pairs = TRUE), "must be a number")
+  expect_error(knoxtst(x[1:40], y[1:40], t[1:40], 500, 3, nsim = 19, maxprs = TRUE), "must be a number")
 })
 
-test_that("hotspot_persistence says when it drops (0, 0)", {
+test_that("hotpers says when it drops (0, 0)", {
   set.seed(6)
   lon <- c(runif(50, -79.5, -79.3), 0)
   lat <- c(runif(50, 43.6, 43.8), 0)
-  expect_message(hotspot_persistence(lon, lat, rep(1:2, length.out = 51), cell = 1), "1 incident at \\(0, 0\\)")
+  expect_message(hotpers(lon, lat, rep(1:2, length.out = 51), cell = 1), "1 incident at \\(0, 0\\)")
 })
 
 test_that("the planar cell key tells 1e15 from 1e15 + 1, and indices past 2^52 are compared directly", {
@@ -257,31 +257,31 @@ test_that("the planar cell key tells 1e15 from 1e15 + 1, and indices past 2^52 a
   expect_identical(length(ns(".jx_close_pairs")(c(1e12, 1e12 + 1e-7), c(0, 0), 1e-6, 1e6)$i), 1L)
 })
 
-test_that("hotspot_persistence says when it drops an incident without a location or period", {
+test_that("hotpers says when it drops an incident without a location or period", {
   set.seed(7)
   lon <- c(runif(50, -79.5, -79.3), NA)
   lat <- c(runif(50, 43.6, 43.8), 43.7)
-  expect_message(hotspot_persistence(lon, lat, rep(1:2, length.out = 51), cell = 1), "1 incident without a usable")
+  expect_message(hotpers(lon, lat, rep(1:2, length.out = 51), cell = 1), "1 incident without a usable")
 })
 
 test_that("a burden at rate 0 or population 0 draws; the rate message allows an age-specific rate", {
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
-  b0 <- pollution_burden(exposure_mean = 10, exposure_prevalence = 1, baseline_rate = 0, population = 1000,
-                         pollutant = "pm25")
+  b0 <- polbrdn(expomean = 10, expoprev = 1, brate = 0, pop = 1000,
+                         poll = "pm25")
   expect_s3_class(plot(b0), "data.frame")
-  p0 <- pollution_burden(exposure_mean = 10, exposure_prevalence = 1, baseline_rate = 0.01, population = 0,
-                         pollutant = "pm25")
+  p0 <- polbrdn(expomean = 10, expoprev = 1, brate = 0.01, pop = 0,
+                         poll = "pm25")
   expect_s3_class(plot(p0), "data.frame")
-  expect_error(pollution_burden(exposure_mean = 10, exposure_prevalence = 1, baseline_rate = 0.15, population = 1000,
-                                pollutant = "pm25"), "age-specific rate")
+  expect_error(polbrdn(expomean = 10, expoprev = 1, brate = 0.15, pop = 1000,
+                                poll = "pm25"), "age-specific rate")
 })
 
-test_that("survey_compare takes a numeric domain label", {
+test_that("svycmp takes a numeric domain label", {
   d <- data.frame(y = c(rnorm(30, 1), rnorm(30, 2)), yr = rep(c(2022, 2023), each = 30), w = 1)
-  des <- survey_design(d, weights = "w")
-  a <- survey_compare(des, d, "y", by = "yr", ref = 2023)
-  b <- survey_compare(des, d, "y", by = "yr", ref = "2023")
+  des <- svydes(d, w = "w")
+  a <- svycmp(des, d, "y", by = "yr", ref = 2023)
+  b <- svycmp(des, d, "y", by = "yr", ref = "2023")
   expect_equal(a$difference, b$difference)
 })
 
@@ -289,7 +289,7 @@ test_that("an assumption with ok = NA is reported as NA, not a raw error", {
   rep <- list(status = "ok", command = "x", pollutant = "pm25", outcome = "deaths", inputs = list(),
               pipeline = list(),
               assumptions = list(list(assumption = "a", ok = NA, note = "unknown")))
-  expect_match(pollution_report_text(rep), "\\[NA\\] a")
+  expect_match(polrpttxt(rep), "\\[NA\\] a")
 })
 
 test_that("the progress frame takes a NaN time", {
@@ -308,10 +308,10 @@ test_that("H4/H7: the daily-limit default is retried tomorrow; the run cap count
 test_that("H6: a cached answer is made printable on the way out; odd files are a miss", {
   real_on <- ns(".bl_answer_cache_on")
   d <- withr::local_tempdir()
-  withr::local_options(rmoriebricklayer.llm_cache_dir = d)
+  withr::local_options(rmoriebricklayer.llmcachedir = d)
   local_mocked_bindings(.bl_answer_cache_on = function() TRUE, .package = "rmoriebricklayer")
   k <- strrep("a", 64)
-  writeLines(bricklayer_json_to_json(list(question = "q", model = "m", answer = "x\u001b[2Jy\u001b]52;c;Zm9v\u0007z",
+  writeLines(tojs(list(question = "q", model = "m", answer = "x\u001b[2Jy\u001b]52;c;Zm9v\u0007z",
                                           time = "t\u001b[2J"), auto_unbox = TRUE), file.path(d, paste0(k, ".json")))
   got <- ns(".bl_answer_get")(k, "q")
   expect_identical(as.character(got), "xyz")
@@ -321,7 +321,7 @@ test_that("H6: a cached answer is made printable on the way out; odd files are a
   writeLines("[1, 2]", file.path(d, paste0(k, ".json")))
   expect_null(ns(".bl_answer_get")(k, "q"))
   # every spelling of off, and the option as text
-  withr::local_options(rmoriebricklayer.llm_cache = NULL, morie.progress = TRUE, morie.quiet = NULL)
+  withr::local_options(rmoriebricklayer.llmcache = NULL, morie.progress = TRUE, morie.quiet = NULL)
   withr::local_envvar(TESTTHAT = NA, `_R_CHECK_PACKAGE_NAME_` = NA)
   local_mocked_bindings(.bl_answer_cache_on = real_on, .bl_stdin_tty = function() TRUE,
                         .bl_stdout_tty = function() TRUE, .package = "rmoriebricklayer")
@@ -329,8 +329,8 @@ test_that("H6: a cached answer is made printable on the way out; odd files are a
     withr::with_envvar(c(MORIE_LLM_CACHE = v), expect_false(ns(".bl_answer_cache_on")(), label = v))
   }
   withr::local_envvar(MORIE_LLM_CACHE = NA)
-  withr::with_options(list(rmoriebricklayer.llm_cache = "no"), expect_false(ns(".bl_answer_cache_on")()))
-  withr::with_options(list(rmoriebricklayer.llm_cache = TRUE), expect_true(ns(".bl_answer_cache_on")()))
+  withr::with_options(list(rmoriebricklayer.llmcache = "no"), expect_false(ns(".bl_answer_cache_on")()))
+  withr::with_options(list(rmoriebricklayer.llmcache = TRUE), expect_true(ns(".bl_answer_cache_on")()))
 })
 
 test_that("the saved config directory is private; model names from a server print clean", {
@@ -338,7 +338,7 @@ test_that("the saved config directory is private; model names from a server prin
   withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir())
   old <- Sys.umask("000")
   on.exit(Sys.umask(old), add = TRUE)
-  bricklayer_llm_config(openai.model = "gpt\u001b[2J-x")
+  llmcfg(openai.model = "gpt\u001b[2J-x")
   p <- ns(".bl_config_path")()
   expect_identical(as.character(file.info(dirname(p))$mode), "700")
   expect_identical(ns(".bl_config_effective")("openai.model"), "gpt-x")
@@ -361,29 +361,29 @@ test_that("an estimate without a standard error plots without a warning", {
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
   d <- data.frame(y = rnorm(20), g = rep(c("a", "b"), 10), w = 1, s = 1:20, p = 1:20)
-  des <- survey_design(d, weights = "w", strata = "s", psu = "p", lonely_psu = "remove")
-  e <- survey_estimate(des, d, "y", by = "g")
+  des <- svydes(d, w = "w", strata = "s", psu = "p", lonely = "remove")
+  e <- svyest(des, d, "y", by = "g")
   expect_true(all(is.na(e$se)))
   expect_no_warning(plot(e))
-  expect_no_warning(plot(survey_compare(des, d, "y", by = "g")))
+  expect_no_warning(plot(svycmp(des, d, "y", by = "g")))
 })
 
-test_that("drift_psi bins and clearance_decomposition base are refused in words", {
+test_that("drftpsi bins and clrdcmp base are refused in words", {
   x <- rnorm(200)
-  expect_error(drift_psi(x, x, bins = c(2, 3)), "one whole number")
-  expect_error(drift_psi(x, x, bins = 1e9), "at most 1,000,000")
-  expect_error(drift_psi(x, x, bins = 1), "at least 2")
-  expect_error(clearance_decomposition(c(5, 6, 7, 8), c(10, 10, 10, 10), c("a", "b", "a", "b"), c("x", "x", "y", "y"),
+  expect_error(drftpsi(x, x, bins = c(2, 3)), "one whole number")
+  expect_error(drftpsi(x, x, bins = 1e9), "at most 1,000,000")
+  expect_error(drftpsi(x, x, bins = 1), "at least 2")
+  expect_error(clrdcmp(c(5, 6, 7, 8), c(10, 10, 10, 10), c("a", "b", "a", "b"), c("x", "x", "y", "y"),
                                        base = 1i), "one of the two values")
-  expect_error(clearance_decomposition(c(5, 6, 7, 8), c(10, 10, 10, 10), c("a", "b", "a", "b"), c("x", "x", "y", "y"),
+  expect_error(clrdcmp(c(5, 6, 7, 8), c(10, 10, 10, 10), c("a", "b", "a", "b"), c("x", "x", "y", "y"),
                                        base = NA), "one of the two values")
 })
 
 test_that("a choice argument is refused in the package's words, naming what was given", {
   d4 <- data.frame(y = 1:4, w = 1)
-  expect_error(survey_design(d4, weights = "w", replicates = cbind(1:4, 4:1), type = "jackknife"),
+  expect_error(svydes(d4, w = "w", reps = cbind(1:4, 4:1), type = "jackknife"),
                "`type` must be one of \"bootstrap\".*not \"jackknife\"")
-  expect_error(life_table(c(0, 1, 2), 1:2, conf_type = 3), "`conf_type` must be one of")
+  expect_error(lifetbl(c(0, 1, 2), 1:2, conftype = 3), "`conftype` must be one of")
   f <- function(what = c("mean", "total")) ns(".rmbl_arg")(what)
   expect_identical(f(), "mean")
   expect_identical(f("tot"), "total")
@@ -396,13 +396,13 @@ test_that("a choice argument is refused in the package's words, naming what was 
 test_that("a data frame with empty or repeated column names is refused in words", {
   d <- data.frame(y = 1:6, w = 1)
   names(d)[2] <- ""
-  # survey_design() minds only the columns it uses: an unnamed column it does not use is no reason to
+  # svydes() minds only the columns it uses: an unnamed column it does not use is no reason to
   # refuse the data (statistics stress test of 5e1dce5)
-  expect_s3_class(survey_design(d, weights = "y"), "rmbl_svy_design")
+  expect_s3_class(svydes(d, w = "y"), "rmbl_svy_design")
   d2 <- data.frame(a = 1:6, b = 1:6)
   names(d2) <- c("a", "a")
-  expect_error(survey_design(d2, weights = "a"), "two columns named a")
-  expect_error(analyse_table(d2, value = "a", period = "a"), "two columns named a")
+  expect_error(svydes(d2, w = "a"), "two columns named a")
+  expect_error(anltab(d2, value = "a", prd = "a"), "two columns named a")
 })
 
 test_that("the CSV reader gives read.csv's table, byte for byte of meaning", {

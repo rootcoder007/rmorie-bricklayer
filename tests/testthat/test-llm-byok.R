@@ -33,11 +33,11 @@ tool_def <- list(list(name = "get_help", description = "help",
                                         required = I("name"))))
 convo <- list(list(role = "system", content = "be brief"), list(role = "user", content = "hi"),
               list(role = "assistant", content = "", tool_calls = list(list(id = "c1", name = "get_help",
-                                                                             arguments = list(name = "knox_test")))),
+                                                                             arguments = list(name = "knoxtst")))),
               list(role = "tool", tool_call_id = "c1", name = "get_help", content = "Knox test page"))
 
 test_that("the presets are the providers' documented addresses, each with its key variable", {
-  ps <- bricklayer_llm_providers()
+  ps <- llmprvd()
   expect_true(all(c("openai", "anthropic", "gemini", "openrouter", "groq", "together", "fireworks", "deepseek",
                     "mistral", "xai", "cerebras", "perplexity", "huggingface", "opencode", "cohere",
                     "nvidia") %in% ps$id))
@@ -50,9 +50,9 @@ test_that("the presets are the providers' documented addresses, each with its ke
   expect_identical(ps$base[ps$id == "opencode"], "https://opencode.ai/zen/v1")
   expect_identical(ps$api[ps$id == "gemini"], "gemini")
   byok_clean()
-  expect_false(any(bricklayer_llm_providers()$key_set))
+  expect_false(any(llmprvd()$key_set))
   withr::local_envvar(GOOGLE_API_KEY = "g-key")   # Gemini's alternative variable counts too
-  expect_true(bricklayer_llm_providers()$key_set[ps$id == "gemini"])
+  expect_true(llmprvd()$key_set[ps$id == "gemini"])
 })
 
 test_that("OpenAI format: tools as functions, tool results as tool messages, the reply's tool calls read", {
@@ -70,7 +70,7 @@ test_that("OpenAI format: tools as functions, tool results as tool messages, the
   expect_identical(req$payload$tools[[1L]][["function"]]$name, "get_help")
   expect_identical(req$payload$messages[[4L]]$role, "tool")
   expect_identical(req$payload$messages[[4L]]$tool_call_id, "c1")
-  expect_identical(req$payload$messages[[3L]]$tool_calls[[1L]][["function"]]$arguments, "{\"name\":\"knox_test\"}")
+  expect_identical(req$payload$messages[[3L]]$tool_calls[[1L]][["function"]]$arguments, "{\"name\":\"knoxtst\"}")
   expect_identical(out$tool_calls[[1L]]$name, "search_docs")
   expect_identical(out$tool_calls[[1L]]$arguments$query, "replicate weights")
   expect_identical(out$finish, "tool_calls")
@@ -90,7 +90,7 @@ test_that("Anthropic Messages: system apart, tool results in a user turn, x-api-
   reply <- list(id = "msg_1", type = "message", role = "assistant", stop_reason = "tool_use",
                 content = list(list(type = "text", text = "Let me look."),
                                list(type = "tool_use", id = "toolu_1", name = "get_help",
-                                    input = list(name = "survey_design"))))
+                                    input = list(name = "svydes"))))
   s <- fake_post(list(reply))
   local_mocked_bindings(.bl_post_json = s$post)
   out <- ns(".bl_llm_chat")(rt, "claude-opus-5-5", c(convo, list(list(role = "tool", tool_call_id = "c2",
@@ -111,14 +111,14 @@ test_that("Anthropic Messages: system apart, tool results in a user turn, x-api-
   expect_identical(req$payload$messages[[2L]]$content[[1L]]$type, "tool_use")
   expect_identical(out$text, "Let me look.")
   expect_identical(out$tool_calls[[1L]]$id, "toolu_1")
-  expect_identical(out$tool_calls[[1L]]$arguments$name, "survey_design")
+  expect_identical(out$tool_calls[[1L]]$arguments$name, "svydes")
 })
 
 test_that("Gemini generateContent: the model in the path, functionDeclarations, functionResponse, x-goog-api-key", {
   rt <- list(name = "Google Gemini", id = "gemini", api = "gemini", base = "https://generativelanguage.googleapis.com",
              key = "g-key")
   reply <- list(candidates = list(list(finishReason = "STOP", content = list(role = "model", parts = list(
-    list(functionCall = list(name = "get_examples", args = list(name = "knox_test"))))))))
+    list(functionCall = list(name = "get_examples", args = list(name = "knoxtst"))))))))
   s <- fake_post(list(reply))
   local_mocked_bindings(.bl_post_json = s$post)
   out <- ns(".bl_llm_chat")(rt, "models/gemini-x-pro", convo, tools = tool_def)
@@ -132,7 +132,7 @@ test_that("Gemini generateContent: the model in the path, functionDeclarations, 
   expect_identical(req$payload$contents[[2L]]$role, "model")
   expect_identical(req$payload$contents[[3L]]$parts[[1L]]$functionResponse$name, "get_help")
   expect_identical(out$tool_calls[[1L]]$name, "get_examples")
-  expect_identical(out$tool_calls[[1L]]$arguments$name, "knox_test")
+  expect_identical(out$tool_calls[[1L]]$arguments$name, "knoxtst")
   # no key in the address, only in the header
   expect_false(grepl("key=", req$url, fixed = TRUE))
 })
@@ -175,7 +175,7 @@ test_that("the route order: your own endpoint, then a provider with a key, then 
   expect_identical(ns(".bl_llm_route")()$id, "groq")
   expect_error(ns(".bl_llm_route")("openai"), "no key for OpenAI: set OPENAI_API_KEY")
   expect_error(ns(".bl_llm_route")("hosted"), "retired")
-  expect_error(bricklayer_llm_ask("x", route = "hosted"), "retired")
+  expect_error(llmask("x", route = "hosted"), "retired")
   withr::local_envvar(MORIE_LLM_ROUTE = "hosted")
   expect_message(rt2 <- ns(".bl_llm_route")(), "saved route `hosted` is ignored")
   expect_identical(rt2$name, "own endpoint")
@@ -189,10 +189,10 @@ test_that("a provider with no model chosen says how to choose one, listing what 
   local_mocked_bindings(.bl_http_get = function(url, timeout, headers) {
     list(status = 200L, body = charToRaw('{"data":[{"id":"gpt-a"},{"id":"gpt-b"}]}'), error = "")
   })
-  err <- tryCatch(bricklayer_llm_ask("hi", docs = FALSE), error = conditionMessage)
+  err <- tryCatch(llmask("hi", docs = FALSE), error = conditionMessage)
   expect_match(err, "OpenAI has no model to use \\(it offers: gpt-a, gpt-b\\)")
   expect_match(err, "config set openai.model NAME")
-  m <- bricklayer_llm_models()
+  m <- llmmdls()
   expect_identical(as.character(m), c("gpt-a", "gpt-b"))
   expect_identical(attr(m, "route"), "OpenAI")
 })
@@ -218,8 +218,8 @@ test_that("each API's model list is read in its own shape", {
 
 test_that("keys are saved privately per provider, shown only as set, and the variable wins", {
   byok_clean()
-  bricklayer_llm_config(anthropic.key = "sk-ant-saved", anthropic.model = "claude-x")
-  tab <- bricklayer_llm_config()
+  llmcfg(anthropic.key = "sk-ant-saved", anthropic.model = "claude-x")
+  tab <- llmcfg()
   expect_identical(tab$value[tab$key == "anthropic.key"], "set")
   expect_identical(tab$source[tab$key == "anthropic.key"], "saved")
   expect_identical(tab$value[tab$key == "anthropic.model"], "claude-x")
@@ -229,9 +229,9 @@ test_that("keys are saved privately per provider, shown only as set, and the var
   expect_identical(ns(".bl_llm_route")()$key, "sk-ant-saved")
   withr::local_envvar(ANTHROPIC_API_KEY = "sk-ant-env")
   expect_identical(ns(".bl_llm_route")()$key, "sk-ant-env")
-  expect_error(bricklayer_llm_config(route = "hosted"), "retired")
-  expect_error(bricklayer_llm_config(route = "nowhere"), "route must be one of")
-  expect_identical(bricklayer_llm_config(route = "groq")$value[1], "groq")
+  expect_error(llmcfg(route = "hosted"), "retired")
+  expect_error(llmcfg(route = "nowhere"), "route must be one of")
+  expect_identical(llmcfg(route = "groq")$value[1], "groq")
 })
 
 # ---- the help the model gets -------------------------------------------------------------------
@@ -250,26 +250,26 @@ test_that("the index lists every exported function that has a help page of its o
     if ("internal" %in% trimws(kw)) ns(".bl_rd_aliases")(rd)
   }))
   expect_true(all(setdiff(ex[!startsWith(ex, ".")], named) %in% c(internal, "%||%")))
-  expect_true(any(grepl("^survey_design\\(data, weights", idx)))
+  expect_true(any(grepl("^svydes\\(data, w", idx)))
 })
 
 test_that("the help search finds the right page for plain-words questions", {
   pages <- ns(".bl_kn_all_pages")("rmoriebricklayer")
   top <- function(q, k = 3L) vapply(ns(".bl_kn_search")(q, pages, k), function(p) p$name, "")
-  expect_true("survey_design" %in% top("replicate weights bootstrap survey proportion"))
-  expect_true("wayback_save" %in% top("archive many urls in the wayback machine"))
-  expect_true("knox_test" %in% top("near repeat burglary clustering in space and time"))
-  expect_identical(top("crime_density")[1L], "crime_density")
+  expect_true("svydes" %in% top("replicate weights bootstrap survey proportion"))
+  expect_true("wbsave" %in% top("archive many urls in the wayback machine"))
+  expect_true("knoxtst" %in% top("near repeat burglary clustering in space and time"))
+  expect_identical(top("crmdens")[1L], "crmdens")
   expect_length(ns(".bl_kn_search")("", pages), 0L)
 })
 
 test_that("the tools answer in words, never with an error", {
   run <- function(tool, ...) ns(".bl_kn_run_tool")(list(name = tool, arguments = list(...)), "rmoriebricklayer")
-  expect_match(run("search_docs", query = "kernel density of incidents"), "crime_density")
-  expect_match(run("get_help", name = "knox_test"), "Knox test")
+  expect_match(run("search_docs", query = "kernel density of incidents"), "crmdens")
+  expect_match(run("get_help", name = "knoxtst"), "Knox test")
   expect_match(run("get_help", name = "no_such_fn"), "no_such_fn. does not exist in these packages: do not use it")
   expect_match(run("get_examples", name = "no_such_fn"), "does not exist in these packages")
-  expect_match(run("get_examples", name = "knox_test"), "knox_test\\(")
+  expect_match(run("get_examples", name = "knoxtst"), "knoxtst\\(")
   expect_match(run("list_datasets", filter = "tps"), "tps_break_enter_d14_2024.csv")
   expect_match(run("list_datasets", filter = "zzz-nothing"), "no dataset matches")
   expect_type(run("get_vignette"), "character")
@@ -283,17 +283,17 @@ test_that("ask with the help: a tool round trip, then the answer", {
   withr::local_envvar(OPENAI_API_KEY = "sk-o", MORIE_OPENAI_MODEL = "gpt-x")
   first <- list(choices = list(list(finish_reason = "tool_calls", message = list(content = "", tool_calls = list(
     list(id = "call_1", type = "function", `function` = list(name = "get_help",
-                                                            arguments = "{\"name\":\"survey_design\"}")))))))
+                                                            arguments = "{\"name\":\"svydes\"}")))))))
   final <- list(choices = list(list(finish_reason = "stop", message = list(
-    content = "Use survey_design(d, weights = \"w\", replicates = reps, type = \"bootstrap\")."))))
+    content = "Use svydes(d, weights = \"w\", replicates = reps, type = \"bootstrap\")."))))
   s <- fake_post(list(first, final))
   local_mocked_bindings(.bl_post_json = s$post)
-  ans <- bricklayer_llm_ask("how do I use bootstrap replicate weights?")
-  expect_match(ans, "survey_design")
+  ans <- llmask("how do I use bootstrap replicate weights?")
+  expect_match(ans, "svydes")
   expect_length(s$calls, 2L)
   sys <- s$calls[[1L]]$payload$messages[[1L]]$content
   expect_match(sys, "rmoriebricklayer")
-  expect_match(sys, "survey_design(data, weights", fixed = TRUE)
+  expect_match(sys, "svydes(data, w", fixed = TRUE)
   expect_length(s$calls[[1L]]$payload$tools, 5L)
   # the tool's answer (the help page) went back to the model
   back <- s$calls[[2L]]$payload$messages
@@ -303,10 +303,10 @@ test_that("ask with the help: a tool round trip, then the answer", {
   # docs = FALSE sends the prompt alone
   s2 <- fake_post(list(final))
   local_mocked_bindings(.bl_post_json = s2$post)
-  bricklayer_llm_ask("hello", docs = FALSE)
+  llmask("hello", docs = FALSE)
   expect_length(s2$calls[[1L]]$payload$messages, 1L)
   expect_null(s2$calls[[1L]]$payload$tools)
-  expect_error(bricklayer_llm_ask("x", packages = "noSuchPkgXYZ"), "not installed")
+  expect_error(llmask("x", pkgs = "noSuchPkgXYZ"), "not installed")
 })
 
 test_that("a model without tools gets the matching help pages instead; spent rounds still give an answer", {
@@ -315,11 +315,11 @@ test_that("a model without tools gets the matching help pages instead; spent rou
   refuse <- function() {
     list(status = 400L, json = list(error = list(message = "small does not support tools")), error = "")
   }
-  ok <- list(choices = list(list(finish_reason = "stop", message = list(content = "Use knox_test()."))))
+  ok <- list(choices = list(list(finish_reason = "stop", message = list(content = "Use knoxtst()."))))
   s <- fake_post(list(refuse, ok))
   # the 400 asks the provider for its model list: never the real api.openai.com from a test (L4)
   local_mocked_bindings(.bl_post_json = s$post, .bl_http_get = function(...) stop("no network in tests"))
-  expect_match(bricklayer_llm_ask("near repeat burglary in space and time"), "knox_test")
+  expect_match(llmask("near repeat burglary in space and time"), "knoxtst")
   second <- s$calls[[2L]]$payload
   expect_null(second$tools)
   expect_match(second$messages[[1L]]$content, "Help pages that match the question")
@@ -329,8 +329,8 @@ test_that("a model without tools gets the matching help pages instead; spent rou
     list(id = "c", type = "function", `function` = list(name = "search_docs", arguments = "{\"query\":\"x\"}")))))))
   s3 <- fake_post(c(rep(list(loop), 6L), list(ok)))
   local_mocked_bindings(.bl_post_json = s3$post)
-  ans <- bricklayer_llm_ask("anything")
-  expect_match(ans, "knox_test")
+  ans <- llmask("anything")
+  expect_match(ans, "knoxtst")
   expect_length(s3$calls, 7L)
   # the last turn declares the tools (its history holds tool calls) with calls turned off, and the
   # request rides on the last tool result: no two user turns in a row (CRAN stress test of b617a3f)
@@ -341,7 +341,7 @@ test_that("a model without tools gets the matching help pages instead; spent rou
   # another error is not mistaken for a model without tools
   s4 <- fake_post(list(function() list(status = 500L, json = list(error = list(message = "overloaded")), error = "")))
   local_mocked_bindings(.bl_post_json = s4$post)
-  expect_error(bricklayer_llm_ask("x"), "answered 500: overloaded")
+  expect_error(llmask("x"), "answered 500: overloaded")
 })
 
 test_that("an empty turn after the lookups is asked once more, with tool calls off, for the answer", {
@@ -351,10 +351,10 @@ test_that("an empty turn after the lookups is asked once more, with tool calls o
     list(id = "c1", type = "function", `function` = list(name = "get_help", arguments = '{"name":"knox_test"}'))))))
   )
   empty <- list(choices = list(list(finish_reason = "stop", message = list(content = "  \n"))))
-  final <- list(choices = list(list(finish_reason = "stop", message = list(content = "use knox_test()"))))
+  final <- list(choices = list(list(finish_reason = "stop", message = list(content = "use knoxtst()"))))
   s <- fake_post(list(call, empty, final))
   local_mocked_bindings(.bl_post_json = s$post)
-  expect_identical(ns(".bl_llm_assist")(rt, "m", "space-time clustering", "rmoriebricklayer"), "use knox_test()")
+  expect_identical(ns(".bl_llm_assist")(rt, "m", "space-time clustering", "rmoriebricklayer"), "use knoxtst()")
   expect_length(s$calls, 3L)
   expect_identical(s$calls[[3L]]$payload$tool_choice, "none")
   expect_match(s$calls[[3L]]$payload$messages[[length(s$calls[[3L]]$payload$messages)]]$content, "Answer now")
@@ -407,7 +407,7 @@ test_that("the help in the prompt follows the model's capacity: all of it for a 
   }
   small <- index_size("gemma3:4b")
   expect_lte(small$n, 40L)
-  expect_match(small$sys, "survey_design")
+  expect_match(small$sys, "svydes")
   full <- index_size("minimax-m3:cloud")
   every <- length(ns(".bl_kn_index_lines")(Filter(function(p) p$pkg == "rmoriebricklayer",
                                                    ns(".bl_kn_all_pages")("rmoriebricklayer"))))
@@ -422,24 +422,24 @@ test_that("the CLI: models for a route, ask --route with a provider, and the ret
     list(status = 200L, body = charToRaw('{"data":[{"id":"llama-x"},{"id":"other"}]}'), error = "")
   })
   out <- character()
-  st <- bricklayer_cli(c("models", "--route", "groq"), out = function(x) out <<- c(out, x))
+  st <- blcli(c("models", "--route", "groq"), out = function(x) out <<- c(out, x))
   expect_identical(st, 0L)
   expect_true(any(grepl("\\* llama-x", out)))
-  expect_identical(bricklayer_cli(c("models", "--route", "nowhere"), out = function(x) NULL), 2L)
+  expect_identical(blcli(c("models", "--route", "nowhere"), out = function(x) NULL), 2L)
   final <- list(choices = list(list(finish_reason = "stop", message = list(content = "pong"))))
   s <- fake_post(list(final))
   local_mocked_bindings(.bl_post_json = s$post)
   out <- character()
-  expect_identical(bricklayer_cli(c("ask", "--route", "groq", "ping"), out = function(x) out <<- c(out, x)), 0L)
+  expect_identical(blcli(c("ask", "--route", "groq", "ping"), out = function(x) out <<- c(out, x)), 0L)
   expect_true(any(grepl("pong", out)))
   expect_identical(s$calls[[1L]]$url, "https://api.groq.com/openai/v1/chat/completions")
   out <- character()
-  expect_identical(bricklayer_cli(c("ask", "--route", "hosted", "x"), out = function(x) out <<- c(out, x)), 1L)
+  expect_identical(blcli(c("ask", "--route", "hosted", "x"), out = function(x) out <<- c(out, x)), 1L)
   expect_true(any(grepl("retired", out)))
   # no route: models says what to set up
   withr::local_envvar(GROQ_API_KEY = NA)
   out <- character()
-  expect_identical(bricklayer_cli("models", out = function(x) out <<- c(out, x)), 1L)
+  expect_identical(blcli("models", out = function(x) out <<- c(out, x)), 1L)
   expect_true(any(grepl("bring your own key", out)))
 })
 
@@ -449,16 +449,16 @@ test_that("the dataset tool lists the curated tables from the manifest on disk; 
   writeLines('{"datasets":[{"key":"ncvs_38604/incidents","name":"NCVS incidents"}]}', file.path(cache, "manifest.json"))
   local_mocked_bindings(.bl_data_cache_dir = function() cache)
   run <- function(tool, ...) ns(".bl_kn_run_tool")(list(name = tool, arguments = list(...)), "rmoriebricklayer")
-  expect_match(run("list_datasets", filter = "ncvs"), "bricklayer_data_load(\"ncvs_38604/incidents\")", fixed = TRUE)
+  expect_match(run("list_datasets", filter = "ncvs"), "dload(\"ncvs_38604/incidents\")", fixed = TRUE)
   # a manifest that does not parse is passed over
   writeLines("{not json", file.path(cache, "manifest.json"))
   expect_false(grepl("data.rmorie.com", run("list_datasets"), fixed = TRUE))
   docdir <- file.path(withr::local_tempdir(), "rmoriebricklayer", "doc")  # an installed package's doc/
   dir.create(docdir, recursive = TRUE)
-  writeLines(c("---", "title: Survey guide", "---", "Use survey_design()."), file.path(docdir, "survey.Rmd"))
+  writeLines(c("---", "title: Survey guide", "---", "Use svydes()."), file.path(docdir, "survey.Rmd"))
   local_mocked_bindings(.bl_kn_doc_dir = function(p) docdir)
   expect_identical(run("get_vignette"), "survey (rmoriebricklayer)")
-  expect_match(run("get_vignette", name = "survey"), "Use survey_design()", fixed = TRUE)
+  expect_match(run("get_vignette", name = "survey"), "Use svydes()", fixed = TRUE)
   expect_identical(run("get_vignette", name = "nope"), "no vignette 'nope'")
   local_mocked_bindings(.bl_kn_doc_dir = function(p) "")
   expect_identical(run("get_vignette"), "no vignettes are installed with these packages")
@@ -466,9 +466,9 @@ test_that("the dataset tool lists the curated tables from the manifest on disk; 
 
 test_that("help text helpers: comments dropped, a usage without the call, a page without examples", {
   expect_identical(ns(".bl_rd_plain")(structure(list("hidden"), Rd_tag = "COMMENT")), "")
-  expect_identical(ns(".bl_kn_call")("other_fn(x)", "survey_design"), "survey_design")
+  expect_identical(ns(".bl_kn_call")("other_fn(x)", "svydes"), "svydes")
   local_mocked_bindings(.bl_rd_text = function(rd) c("Title", "Description:", "no code here"))
-  out <- ns(".bl_kn_run_tool")(list(name = "get_examples", arguments = list(name = "knox_test")), "rmoriebricklayer")
+  out <- ns(".bl_kn_run_tool")(list(name = "get_examples", arguments = list(name = "knoxtst")), "rmoriebricklayer")
   expect_identical(out, "no examples on that page")
 })
 
@@ -486,8 +486,8 @@ test_that("Ollama's list keeps which models run in its cloud and each one's cont
 test_that("ask with docs refuses packages that are not named or not installed", {
   byok_clean()
   withr::local_envvar(OPENAI_API_KEY = "k", MORIE_OPENAI_MODEL = "m")
-  expect_error(bricklayer_llm_ask("hi", packages = NA_character_), "`packages` must name installed packages")
-  expect_error(bricklayer_llm_ask("hi", packages = "no.such.pkg.zz"), "not installed: no.such.pkg.zz")
+  expect_error(llmask("hi", pkgs = NA_character_), "`pkgs` must name installed packages")
+  expect_error(llmask("hi", pkgs = "no.such.pkg.zz"), "not installed: no.such.pkg.zz")
 })
 
 test_that("the three wire formats: arguments as an object or nothing, text beside tool calls, Gemini schemas", {
@@ -529,33 +529,33 @@ test_that("a package with thousands of help pages is searched, not listed whole"
   # rmoriebricklayer stands in for the big package here: 40 of its pages listed, the rest searched
   expect_match(sys, "rmoriebricklayer has [0-9]+ more functions than are listed below: search_docs")
   expect_lte(length(grep("^[[:alnum:]._]+\\(.*  -- ", strsplit(sys, "\n")[[1L]])), 40L)
-  expect_match(sys, "survey_design")
+  expect_match(sys, "svydes")
 })
 
 test_that("route_info says which route would answer; chat sends a whole conversation as it is", {
   byok_clean()
-  expect_null(bricklayer_llm_route_info())
-  expect_error(bricklayer_llm_route_info("hosted"), "retired")
+  expect_null(llmrte())
+  expect_error(llmrte("hosted"), "retired")
   withr::local_envvar(GROQ_API_KEY = "gsk-x", MORIE_GROQ_MODEL = "llama-x")
-  info <- bricklayer_llm_route_info()
+  info <- llmrte()
   expect_identical(info[c("route", "name", "model")], list(route = "groq", name = "Groq", model = "llama-x"))
   expect_match(info$base, "^https://api.groq.com")
   s <- fake_post(list(list(choices = list(list(finish_reason = "stop", message = list(content = "pong"))))))
   local_mocked_bindings(.bl_post_json = s$post)
   convo <- list(list(role = "system", content = "be brief"), list(role = "user", content = "ping"),
                 list(role = "assistant", content = "?"), list(role = "user", content = "ping again"))
-  expect_identical(bricklayer_llm_chat(convo), "pong")
+  expect_identical(llmchat(convo), "pong")
   sent <- s$calls[[1L]]$payload$messages
   expect_identical(vapply(sent, function(m) m$role, ""), c("system", "user", "assistant", "user"))
   expect_null(s$calls[[1L]]$payload$tools)  # nothing added
-  expect_error(bricklayer_llm_chat(list(list(role = "tool", content = "x"))), "must be a list of")
-  expect_error(bricklayer_llm_chat("ping"), "must be a list of")
-  expect_error(bricklayer_llm_chat(convo, route = "hosted"), "retired")
+  expect_error(llmchat(list(list(role = "tool", content = "x"))), "must be a list of")
+  expect_error(llmchat("ping"), "must be a list of")
+  expect_error(llmchat(convo, route = "hosted"), "retired")
   withr::local_envvar(GROQ_API_KEY = NA)
-  expect_error(bricklayer_llm_chat(convo), "No language-model route")
+  expect_error(llmchat(convo), "No language-model route")
   withr::local_envvar(GROQ_API_KEY = "gsk-x", MORIE_GROQ_MODEL = NA)
   local_mocked_bindings(.bl_http_get = function(...) stop("no network in tests"))  # no api.groq.com (L4)
-  expect_error(bricklayer_llm_chat(convo, route = "groq"), "Groq has no model to use")
+  expect_error(llmchat(convo, route = "groq"), "Groq has no model to use")
 })
 
 test_that("a model's wait draws a spinner with its label and seconds on stderr, and wipes it", {
@@ -633,7 +633,7 @@ test_that("the instructions are the same for every question; the question carrie
   expect_identical(sys[[3L]], sys[[4L]])   # a large model: the whole index, the same text
   expect_false(grepl("Exported functions", sys[[1L]], fixed = TRUE))
   expect_match(sys[[1L]], "the ones nearest the question are listed with it")
-  expect_match(q[[1L]], "Functions nearest this question.*survey_design")
+  expect_match(q[[1L]], "Functions nearest this question.*svydes")
   expect_match(sys[[3L]], "Exported functions (name(arguments)  -- title):", fixed = TRUE)
   # a large model gets the closest pages with the question as well, so it starts from them
   expect_match(q[[3L]], "^survey replicate weights\n\nFunctions nearest this question")
@@ -653,7 +653,7 @@ test_that("Anthropic is asked to keep long instructions; short ones go as they a
 test_that("a repeated question is answered from this machine; --fresh asks again; off and quiet keep nothing", {
   byok_clean()
   d <- withr::local_tempdir()
-  withr::local_options(rmoriebricklayer.llm_cache = NULL, rmoriebricklayer.llm_cache_dir = d, morie.progress = TRUE,
+  withr::local_options(rmoriebricklayer.llmcache = NULL, rmoriebricklayer.llmcachedir = d, morie.progress = TRUE,
                        morie.quiet = NULL)
   withr::local_envvar(TESTTHAT = NA, `_R_CHECK_PACKAGE_NAME_` = NA, MORIE_LLM_CACHE = NA,
                       GROQ_API_KEY = "gsk", MORIE_GROQ_MODEL = "llama-x")
@@ -663,8 +663,8 @@ test_that("a repeated question is answered from this machine; --fresh asks again
     n <<- n + 1L
     list(text = sprintf("answer %d", n), tool_calls = list())
   }, .bl_stdin_tty = function() TRUE, .bl_stdout_tty = function() TRUE, .package = "rmoriebricklayer")
-  expect_message(a1 <- bricklayer_llm_ask("How do I sign?", docs = FALSE), "answers are kept on this machine")
-  a2 <- bricklayer_llm_ask("  How do I   sign? ", docs = FALSE)   # spacing aside, the same question
+  expect_message(a1 <- llmask("How do I sign?", docs = FALSE), "answers are kept on this machine")
+  a2 <- llmask("  How do I   sign? ", docs = FALSE)   # spacing aside, the same question
   expect_identical(as.character(a1), "answer 1")
   expect_identical(as.character(a2), "answer 1")
   expect_null(attr(a1, "cached"))
@@ -673,36 +673,36 @@ test_that("a repeated question is answered from this machine; --fresh asks again
   f <- list.files(d, full.names = TRUE)
   expect_length(f, 1L)
   if (.Platform$OS.type != "windows") expect_identical(as.character(file.info(f)$mode), "600")
-  expect_identical(as.character(bricklayer_llm_ask("How do I sign?", docs = FALSE, fresh = TRUE)), "answer 2")
-  expect_identical(as.character(bricklayer_llm_ask("How do I sign?", docs = FALSE)), "answer 2")  # the new one kept
-  expect_identical(as.character(bricklayer_llm_ask("How do I sign?", model = "other", docs = FALSE)), "answer 3")
+  expect_identical(as.character(llmask("How do I sign?", docs = FALSE, fresh = TRUE)), "answer 2")
+  expect_identical(as.character(llmask("How do I sign?", docs = FALSE)), "answer 2")  # the new one kept
+  expect_identical(as.character(llmask("How do I sign?", model = "other", docs = FALSE)), "answer 3")
   # an answer past its days is asked again
-  withr::local_options(rmoriebricklayer.llm_cache_days = -1)
-  expect_identical(as.character(bricklayer_llm_ask("How do I sign?", docs = FALSE)), "answer 4")
-  withr::local_options(rmoriebricklayer.llm_cache_days = 30)
+  withr::local_options(rmoriebricklayer.llmcachedays = -1)
+  expect_identical(as.character(llmask("How do I sign?", docs = FALSE)), "answer 4")
+  withr::local_options(rmoriebricklayer.llmcachedays = 30)
   expect_length(list.files(d), 0L)  # past its days, even the answer just saved is removed
-  expect_identical(as.character(bricklayer_llm_ask("How do I sign?", docs = FALSE)), "answer 5")
+  expect_identical(as.character(llmask("How do I sign?", docs = FALSE)), "answer 5")
   expect_length(list.files(d), 1L)
   # a damaged file is a miss, not an error
   writeLines("{not json", list.files(d, full.names = TRUE)[1L])
-  expect_true(is.character(bricklayer_llm_ask("How do I sign?", docs = FALSE)))
+  expect_true(is.character(llmask("How do I sign?", docs = FALSE)))
   withr::local_envvar(MORIE_LLM_CACHE = "off")
   before <- n
-  bricklayer_llm_ask("How do I sign?", docs = FALSE)
+  llmask("How do I sign?", docs = FALSE)
   expect_identical(n, before + 1L)
   withr::local_envvar(TESTTHAT = NA, `_R_CHECK_PACKAGE_NAME_` = NA, MORIE_LLM_CACHE = NA)
   # nobody watching (a script, a pipeline `> file`, a check): nothing read or kept
   local_mocked_bindings(.bl_stdout_tty = function() FALSE, .package = "rmoriebricklayer")
   unlink(list.files(d, full.names = TRUE))
-  bricklayer_llm_ask("a script's question", docs = FALSE)
+  llmask("a script's question", docs = FALSE)
   expect_length(list.files(d), 0L)
   local_mocked_bindings(.bl_stdout_tty = function() TRUE, .package = "rmoriebricklayer")
-  expect_error(bricklayer_llm_ask("q", fresh = NA), "fresh")
+  expect_error(llmask("q", fresh = NA), "fresh")
   # the CLI says when an answer was saved, and --fresh asks anew
   withr::local_options(morie.progress = TRUE)
   out <- function(...) {
     b <- character()
-    bricklayer_cli(c(...), out = function(x) b <<- c(b, x))
+    blcli(c(...), out = function(x) b <<- c(b, x))
     paste(b, collapse = "")
   }
   first <- out("ask", "what", "is", "a", "capsule")
@@ -724,14 +724,14 @@ test_that("the answer folder stays small: expired answers and the oldest past th
   Sys.setFileTime(old, Sys.time() - 40 * 86400)
   writeLines("x", tmp <- file.path(d, "half.json.tmp"))
   Sys.setFileTime(tmp, Sys.time() - 7200)
-  withr::local_options(rmoriebricklayer.llm_cache_max = 3L, rmoriebricklayer.llm_cache_days = 30)
+  withr::local_options(rmoriebricklayer.llmcachemax = 3L, rmoriebricklayer.llmcachedays = 30)
   expect_identical(ns(".bl_answer_prune")(d), 4L)
   expect_setequal(list.files(d), c(nm(1), nm(2), nm(3), "notes.json"))
   expect_identical(ns(".bl_answer_prune")(withr::local_tempdir()), 0L)
 })
 
 test_that("no answer is kept during a test run, a package check, or from a script", {
-  withr::local_options(rmoriebricklayer.llm_cache = NULL, morie.progress = TRUE, morie.quiet = NULL)
+  withr::local_options(rmoriebricklayer.llmcache = NULL, morie.progress = TRUE, morie.quiet = NULL)
   withr::local_envvar(MORIE_LLM_CACHE = NA, TESTTHAT = "true", `_R_CHECK_PACKAGE_NAME_` = NA)
   expect_false(ns(".bl_answer_cache_on")())
   withr::local_envvar(TESTTHAT = NA, `_R_CHECK_PACKAGE_NAME_` = "rmorie")
@@ -753,10 +753,10 @@ test_that("the answer key keeps the question's case and the stored question is c
   expect_false(identical(k(rt, "m", "what is df$X?"), k(rt, "m", "what is df$x?")))
   expect_identical(ns(".bl_answer_key")(rt, "m", "what  is\tdf$X? "), ns(".bl_answer_key")(rt, "m", "what is df$X?"))
   d <- withr::local_tempdir()
-  withr::local_options(rmoriebricklayer.llm_cache_dir = d)
+  withr::local_options(rmoriebricklayer.llmcachedir = d)
   key <- k(rt, "m", "q one")
   rec <- list(question = "q one", model = "m", answer = "A", time = "t")
-  writeLines(bricklayer_json_to_json(rec, auto_unbox = TRUE), file.path(d, paste0(key, ".json")))
+  writeLines(tojs(rec, auto_unbox = TRUE), file.path(d, paste0(key, ".json")))
   local_mocked_bindings(.bl_answer_cache_on = function() TRUE, .package = "rmoriebricklayer")
   expect_identical(as.character(ns(".bl_answer_get")(key, "q one")), "A")
   expect_null(ns(".bl_answer_get")(key, "q two"))
@@ -780,11 +780,11 @@ test_that("the conversation's time budget: none left stops at once, a turn past 
     Sys.sleep(1.6)
     list(status = 200L, json = call, error = "")
   }
-  final <- list(choices = list(list(finish_reason = "stop", message = list(content = "use survey_design()"))))
+  final <- list(choices = list(list(finish_reason = "stop", message = list(content = "use svydes()"))))
   s <- fake_post(list(slow_call, final))
   local_mocked_bindings(.bl_post_json = s$post)
   got <- tryCatch(ns(".bl_llm_assist")(rt, "m", "survey replicate weights", "rmoriebricklayer", timeout = 0.5),
                   error = function(e) conditionMessage(e))
-  expect_true(identical(got, "use survey_design()") || grepl("help-page lookups", got), info = got)
+  expect_true(identical(got, "use svydes()") || grepl("help-page lookups", got), info = got)
   expect_lte(length(s$calls), 2L)
 })

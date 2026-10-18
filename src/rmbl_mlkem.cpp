@@ -77,13 +77,13 @@ extern "C" {
         case 512: { namespace M = rmbl_mlkem512; expr; }                 \
         case 768: { namespace M = rmbl_mlkem768; expr; }                 \
         case 1024: { namespace M = rmbl_mlkem1024; expr; }               \
-        default: RMBL_ARG_ERROR("`level` must be 512, 768 or 1024");           \
+        default: RMBL_ARG_ERROR("`lvl` must be 512, 768 or 1024");           \
         }                                                                \
     } while (0)
 
 static int mlkem_level(SEXP level) {
     if (TYPEOF(level) != INTSXP || XLENGTH(level) != 1) {
-        RMBL_ARG_ERROR("`level` must be a single integer: 512, 768 or 1024");
+        RMBL_ARG_ERROR("`lvl` must be a single integer: 512, 768 or 1024");
     }
     return INTEGER(level)[0];
 }
@@ -101,7 +101,7 @@ SEXP C_rmbl_mlkem_sizes_impl(SEXP level) {
         ek = rmbl_mlkem1024::kEkBytes; dk = rmbl_mlkem1024::kDkBytes;
         ct = rmbl_mlkem1024::kCtBytes; break;
     default:
-        RMBL_ARG_ERROR("`level` must be 512, 768 or 1024");
+        RMBL_ARG_ERROR("`lvl` must be 512, 768 or 1024");
     }
     SEXP out = PROTECT(Rf_allocVector(INTSXP, 5));
     INTEGER(out)[0] = ek;

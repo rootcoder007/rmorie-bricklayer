@@ -10,15 +10,15 @@
 #' An accumulator for the count, mean, variance, skewness and kurtosis of a
 #' numeric column that does not fit in memory, or that arrives in pieces
 #' (a file read in chunks, results from several machines). Start one with
-#' \code{online_summary()}, feed it blocks with \code{summary_update()},
-#' combine two with \code{summary_merge()} and read the result with
-#' \code{summary_stats()}.
+#' \code{onlsmry()}, feed it blocks with \code{smryupd()},
+#' combine two with \code{smrymrg()} and read the result with
+#' \code{smrystat()}.
 #'
 #' @details
 #' The merge is exact algebra, not an approximation: it uses Chan, Golub and
 #' LeVeque's parallel combination of central sums, extended to the third and
 #' fourth moments by Terriberry, so accumulating a column in blocks gives the
-#' answer of [core_moments()]
+#' answer of [cmom()]
 #' over the whole column at once, to the rounding of
 #' double arithmetic. Each block's sums are taken in two passes, as
 #' \code{var()} takes them, so values far from zero keep their digits:
@@ -29,7 +29,7 @@
 #' size: memory stays constant in the number of blocks.
 #'
 #' The state is \eqn{(n, \bar{x}, M_2, M_3, M_4)} with
-#' \eqn{M_k = \sum (x_i - \bar{x})^k}. \code{summary_stats()} reports the
+#' \eqn{M_k = \sum (x_i - \bar{x})^k}. \code{smrystat()} reports the
 #' sample variance \eqn{M_2 / (n - 1)}, the moment skewness
 #' \eqn{g_1 = (M_3/n) / (M_2/n)^{3/2}} and the excess kurtosis
 #' \eqn{g_2 = (M_4/n) / (M_2/n)^2 - 3} (the biased moment estimators, without
@@ -39,68 +39,68 @@
 #' \eqn{n < 4}, and both shape statistics for a constant column.
 #'
 #' The object is a plain list and is copied on assignment like any other R
-#' value, so \code{summary_update()} returns the new accumulator and you must
-#' keep it: \code{acc <- summary_update(acc, block)}.
+#' value, so \code{smryupd()} returns the new accumulator and you must
+#' keep it: \code{acc <- smryupd(acc, block)}.
 #'
 #' Errors: a block that is not numeric; an accumulator that does not come
-#' from \code{online_summary()}.
+#' from \code{onlsmry()}.
 #'
 #' @param x Numeric vector: the first block, or \code{NULL} (the default) for
-#'   an empty accumulator; for \code{summary_update()}, the next block.
-#' @param acc,a,b Accumulators from \code{online_summary()}.
-#' @return \code{online_summary()}, \code{summary_update()} and
-#'   \code{summary_merge()} return an object of class
+#'   an empty accumulator; for \code{smryupd()}, the next block.
+#' @param acc,a,b Accumulators from \code{onlsmry()}.
+#' @return \code{onlsmry()}, \code{smryupd()} and
+#'   \code{smrymrg()} return an object of class
 #'   \code{c("bricklayer_online", "list")} (its \code{state} element is the
-#'   numeric vector described in Details); \code{summary_stats()} returns a
+#'   numeric vector described in Details); \code{smrystat()} returns a
 #'   named numeric vector with \code{n}, \code{mean}, \code{variance},
 #'   \code{sd}, \code{skewness} and \code{kurtosis} (excess).
 #' @references Chan TF, Golub GH, LeVeque RJ (1983). Algorithms for
 #' computing the sample variance: analysis and recommendations.
 #'   *The American Statistician* 37(3), 242--247.
 #'   \doi{10.1080/00031305.1983.10483115}
-#' @seealso [core_moments()] for the single-pass
+#' @seealso [cmom()] for the single-pass
 #' batch version.
 #' @examples
 #' set.seed(1)
 #' x <- stats::rnorm(1000)
 #'
 #' # Accumulate in blocks of 100.
-#' acc <- online_summary()
+#' acc <- onlsmry()
 #' for (i in seq(1, 1000, by = 100)) {
-#'   acc <- summary_update(acc, x[i:(i + 99)])
+#'   acc <- smryupd(acc, x[i:(i + 99)])
 #' }
-#' summary_stats(acc)
+#' smrystat(acc)
 #'
 #' # The batch answer to rounding (the formulas are exact; the arithmetic is double):
-#' all.equal(summary_stats(acc)[["variance"]], stats::var(x))
-#' all.equal(summary_stats(acc)[["mean"]], mean(x))
+#' all.equal(smrystat(acc)[["variance"]], stats::var(x))
+#' all.equal(smrystat(acc)[["mean"]], mean(x))
 #'
 #' # Two accumulators built independently can be merged, so blocks can be
 #' # processed in any order or on different machines.
-#' a <- summary_update(online_summary(), x[1:400])
-#' b <- summary_update(online_summary(), x[401:1000])
-#' all.equal(summary_stats(summary_merge(a, b)), summary_stats(acc))
+#' a <- smryupd(onlsmry(), x[1:400])
+#' b <- smryupd(onlsmry(), x[401:1000])
+#' all.equal(smrystat(smrymrg(a, b)), smrystat(acc))
 #'
 #' # An empty accumulator reports nothing rather than zero.
-#' summary_stats(online_summary())
+#' smrystat(onlsmry())
 #'
 #' # NA values are skipped; text is refused
-#' summary_stats(online_summary(c(1, NA, 3)))[c("n", "mean")]
-#' try(online_summary(c("1", "2")))
-#' @name rmbl_online
+#' smrystat(onlsmry(c(1, NA, 3)))[c("n", "mean")]
+#' try(onlsmry(c("1", "2")))
+#' @name onl
 #' @export
-online_summary <- function(x = NULL) {
+onlsmry <- function(x = NULL) {
   acc <- structure(list(state = c(0, 0, 0, 0, 0)),
                    class = c("bricklayer_online", "list"))
   if (is.null(x)) return(acc)
-  summary_update(acc, x)
+  smryupd(acc, x)
 }
 
-#' @rdname rmbl_online
+#' @rdname onl
 #' @export
-summary_update <- function(acc, x) {
+smryupd <- function(acc, x) {
   if (!inherits(acc, "bricklayer_online")) {
-    stop("`acc` must come from online_summary()", call. = FALSE)
+    stop("`acc` must come from onlsmry()", call. = FALSE)
   }
   x <- .rmbl_num(x, "x")
   x <- x[!is.na(x)]
@@ -110,22 +110,22 @@ summary_update <- function(acc, x) {
   acc
 }
 
-#' @rdname rmbl_online
+#' @rdname onl
 #' @export
-summary_merge <- function(a, b) {
+smrymrg <- function(a, b) {
   if (!inherits(a, "bricklayer_online") ||
       !inherits(b, "bricklayer_online")) {
-    stop("both arguments must come from online_summary()", call. = FALSE)
+    stop("both arguments must come from onlsmry()", call. = FALSE)
   }
   a$state <- .Call(C_rmbl_moments_merge, a$state, b$state)
   a
 }
 
-#' @rdname rmbl_online
+#' @rdname onl
 #' @export
-summary_stats <- function(acc) {
+smrystat <- function(acc) {
   if (!inherits(acc, "bricklayer_online")) {
-    stop("`acc` must come from online_summary()", call. = FALSE)
+    stop("`acc` must come from onlsmry()", call. = FALSE)
   }
   s <- acc$state
   n <- s[1L]
@@ -139,7 +139,7 @@ summary_stats <- function(acc) {
 
 #' @export
 print.bricklayer_online <- function(x, ...) {
-  s <- summary_stats(x)
+  s <- smrystat(x)
   cat(.rmbl_rule("Accumulated summary"), "\n")
   cat(.rmbl_kv(list(
     n = format(s[["n"]], big.mark = ","),
@@ -160,9 +160,9 @@ print.bricklayer_online <- function(x, ...) {
 #' take a fair sample of a capsule member you cannot hold, or whose length
 #' you do not know in advance.
 #'
-#' \code{reservoir_indices()} returns the retained positions, so the same
+#' \code{rsvidx()} returns the retained positions, so the same
 #' sample can be applied to a file read line by line.
-#' \code{reservoir_sample()} applies it to a vector in memory.
+#' \code{rsvsmp()} applies it to a vector in memory.
 #'
 #' @details
 #' The first \code{k} items fill the reservoir; item \eqn{i > k} then
@@ -191,8 +191,8 @@ print.bricklayer_online <- function(x, ...) {
 #'   length give the whole stream; 0 gives an empty result.
 #' @param seed Seed for the core's generator, a whole number from 0 to below
 #'   \eqn{2^{53}} (default 42).
-#' @return \code{reservoir_indices()} a sorted numeric (double) vector of
-#'   1-based positions, of length \code{min(k, n)}; \code{reservoir_sample()}
+#' @return \code{rsvidx()} a sorted numeric (double) vector of
+#'   1-based positions, of length \code{min(k, n)}; \code{rsvsmp()}
 #'   the corresponding elements of \code{x}, in their original order.
 #' @references Vitter JS (1985). Random sampling with a reservoir.
 #'   *ACM Transactions on Mathematical Software* 11(1), 37--57.
@@ -203,30 +203,30 @@ print.bricklayer_online <- function(x, ...) {
 #'   \doi{10.1145/3230636}
 #' @examples
 #' # A reproducible sample of 5 from 1000.
-#' reservoir_indices(1000, 5, seed = 1)
-#' reservoir_sample(letters, 4, seed = 2)
+#' rsvidx(1000, 5, seed = 1)
+#' rsvsmp(letters, 4, seed = 2)
 #'
 #' # Reproducible on every platform, and independent of R's own RNG.
-#' identical(reservoir_indices(1000, 5, seed = 1),
-#'           reservoir_indices(1000, 5, seed = 1))
+#' identical(rsvidx(1000, 5, seed = 1),
+#'           rsvidx(1000, 5, seed = 1))
 #'
 #' # Asking for more than the stream holds returns the whole stream.
-#' reservoir_indices(3, 10)
+#' rsvidx(3, 10)
 #'
 #' # Every item is equally likely: over many seeds the retained positions
 #' # are spread uniformly rather than favouring the start or the end.
-#' hits <- unlist(lapply(1:400, function(s) reservoir_indices(50, 5, s)))
+#' hits <- unlist(lapply(1:400, function(s) rsvidx(50, 5, s)))
 #' round(mean(hits))          # near the midpoint, 25.5
 #'
 #' # sample rows of a data frame
 #' df <- data.frame(id = 1:20, v = (1:20)^2)
-#' df[reservoir_indices(nrow(df), 3, seed = 7), ]
+#' df[rsvidx(nrow(df), 3, seed = 7), ]
 #'
 #' # a negative size is refused
-#' try(reservoir_indices(10, -1))
-#' @name rmbl_reservoir
+#' try(rsvidx(10, -1))
+#' @name rsv
 #' @export
-reservoir_indices <- function(n, k, seed = 42L) {
+rsvidx <- function(n, k, seed = 42L) {
   n <- .rmbl_num(n, "n")
   k <- .rmbl_num(k, "k")
   if (length(n) != 1L || is.na(n) || !is.finite(n) || n < 0 || n != floor(n)) {
@@ -240,11 +240,11 @@ reservoir_indices <- function(n, k, seed = 42L) {
   .Call(C_rmbl_reservoir, n, k, seed)
 }
 
-#' @rdname rmbl_reservoir
+#' @rdname rsv
 #' @export
-reservoir_sample <- function(x, k, seed = 42L) {
+rsvsmp <- function(x, k, seed = 42L) {
   .rmbl_no_fn(x = x)
-  idx <- reservoir_indices(length(x), k, seed)
+  idx <- rsvidx(length(x), k, seed)
   x[idx]
 }
 
@@ -255,9 +255,9 @@ reservoir_sample <- function(x, k, seed = 42L) {
 #' -- regardless of the column's length or cardinality. Exact counting
 #' needs memory proportional to the number of distinct values, which is the
 #' thing you cannot afford on a capsule member of unknown size.
-#' \code{distinct_sketch()} builds or extends the registers,
-#' \code{distinct_count()} turns them into an estimate, and
-#' \code{sketch_merge()} combines two sketches.
+#' \code{dstnskch()} builds or extends the registers,
+#' \code{dstncnt()} turns them into an estimate, and
+#' \code{skchmrg()} combines two sketches.
 #'
 #' @details
 #' Each value is hashed and the first \code{p} bits pick one of \eqn{m = 2^p}
@@ -278,11 +278,11 @@ reservoir_sample <- function(x, k, seed = 42L) {
 #' value. Long vectors are processed in blocks of a million with a progress
 #' bar on stderr unless \code{options(morie.quiet = TRUE)}; the registers are
 #' the same as in one pass. Since a register only keeps a maximum, folding
-#' chunks with \code{registers} and merging separate sketches with
-#' \code{sketch_merge()} give the same registers as one sketch of all the
+#' chunks with \code{regstr} and merging separate sketches with
+#' \code{skchmrg()} give the same registers as one sketch of all the
 #' data.
 #'
-#' Errors: \code{p} not a whole number from 4 to 20; \code{registers} not of
+#' Errors: \code{p} not a whole number from 4 to 20; \code{regstr} not of
 #' length \eqn{2^p}; registers that are not whole numbers from 0 to 64; two
 #' sketches of different sizes.
 #'
@@ -291,13 +291,13 @@ reservoir_sample <- function(x, k, seed = 42L) {
 #' @param p Log2 of the register count, a whole number from 4 to 20
 #'   (default 14, so 16,384 registers). Larger \code{p} is more precise and
 #'   uses more memory.
-#' @param registers Registers from a previous call (with the same \code{p}),
+#' @param regstr Registers from a previous call (with the same \code{p}),
 #'   to fold another chunk into the same sketch; \code{NULL} (the default)
-#'   starts a new one. For \code{distinct_count()}, the registers to estimate
+#'   starts a new one. For \code{dstncnt()}, the registers to estimate
 #'   from.
-#' @return \code{distinct_sketch()} an integer vector of \eqn{2^p} registers;
-#'   \code{distinct_count()} a length-1 numeric estimate (0 for an empty or
-#'   \code{NULL} sketch); \code{sketch_merge()} the element-wise maximum of two
+#' @return \code{dstnskch()} an integer vector of \eqn{2^p} registers;
+#'   \code{dstncnt()} a length-1 numeric estimate (0 for an empty or
+#'   \code{NULL} sketch); \code{skchmrg()} the element-wise maximum of two
 #'   register sets, an integer vector.
 #' @references Flajolet P, Fusy E, Gandouet O, Meunier F (2007).
 #' HyperLogLog: the analysis of a near-optimal cardinality estimation
@@ -307,71 +307,71 @@ reservoir_sample <- function(x, k, seed = 42L) {
 #' x <- sample(1:5000, 200000, replace = TRUE)
 #'
 #' # Close to the true 5000 distinct values, in fixed memory.
-#' distinct_count(distinct_sketch(x))
+#' dstncnt(dstnskch(x))
 #' length(unique(x))
 #'
 #' # Small cardinalities are near-exact, via linear counting.
-#' distinct_count(distinct_sketch(c("a", "b", "c", "a", "b")))
+#' dstncnt(dstnskch(c("a", "b", "c", "a", "b")))
 #'
 #' # Chunks fold into one sketch, so a file can be counted block by
 #' # block, and two independent sketches can be merged.
-#' s <- distinct_sketch(x[1:100000])
-#' s <- distinct_sketch(x[100001:200000], registers = s)
-#' distinct_count(s)
+#' s <- dstnskch(x[1:100000])
+#' s <- dstnskch(x[100001:200000], regstr = s)
+#' dstncnt(s)
 #'
-#' a <- distinct_sketch(x[1:100000])
-#' b <- distinct_sketch(x[100001:200000])
-#' distinct_count(sketch_merge(a, b))
+#' a <- dstnskch(x[1:100000])
+#' b <- dstnskch(x[100001:200000])
+#' dstncnt(skchmrg(a, b))
 #'
 #' # An empty input has no distinct values.
-#' distinct_count(distinct_sketch(character(0)))
+#' dstncnt(dstnskch(character(0)))
 #'
 #' # a smaller sketch: less memory, more error
-#' distinct_count(distinct_sketch(x, p = 8))
+#' dstncnt(dstnskch(x, p = 8))
 #'
 #' # sketches of different sizes cannot be merged
-#' try(sketch_merge(distinct_sketch(1:10, p = 4), distinct_sketch(1:10, p = 5)))
-#' @name rmbl_distinct
+#' try(skchmrg(dstnskch(1:10, p = 4), dstnskch(1:10, p = 5)))
+#' @name dstn
 #' @export
-distinct_sketch <- function(x, p = 14L, registers = NULL) {
+dstnskch <- function(x, p = 14L, regstr = NULL) {
   .rmbl_no_fn(x = x)
   p <- .rmbl_num(p, "p", integer = TRUE)
   if (length(p) != 1L || is.na(p) || p < 4L || p > 20L) {
     stop("`p` must be a single integer between 4 and 20", call. = FALSE)
   }
-  if (!is.null(registers)) {
-    registers <- .rmbl_num(registers, "registers", integer = TRUE)
-    if (length(registers) != bitwShiftL(1L, p)) {
-      stop("`registers` must have 2^p entries, from a sketch with the ",
+  if (!is.null(regstr)) {
+    regstr <- .rmbl_num(regstr, "regstr", integer = TRUE)
+    if (length(regstr) != bitwShiftL(1L, p)) {
+      stop("`regstr` must have 2^p entries, from a sketch with the ",
            "same `p`", call. = FALSE)
     }
   }
   # in blocks of a million, so a long vector shows its progress (a register keeps its maximum,
   # so the blocks give exactly the registers of one pass)
   n <- length(x)
-  if (n <= 1e6) return(.Call(C_rmbl_hll_add, as.character(x), p, registers))
-  pg <- bricklayer_progress("distinct sketch", n)
+  if (n <= 1e6) return(.Call(C_rmbl_hll_add, as.character(x), p, regstr))
+  pg <- blprog("distinct sketch", n)
   on.exit(pg$done(), add = TRUE)
   for (s in seq.int(1, n, by = 1e6)) {
     e <- min(n, s + 1e6 - 1)
-    registers <- .Call(C_rmbl_hll_add, as.character(x[s:e]), p, registers)
+    regstr <- .Call(C_rmbl_hll_add, as.character(x[s:e]), p, regstr)
     pg$update(e, sprintf("%s of %s values", .bl_n(e), .bl_n(n)))
   }
-  registers
+  regstr
 }
 
-#' @rdname rmbl_distinct
+#' @rdname dstn
 #' @export
-distinct_count <- function(registers) {
-  if (is.null(registers) || length(registers) == 0L) return(0)
-  registers <- .rmbl_registers(registers, "registers")
-  .Call(C_rmbl_hll_count, registers)
+dstncnt <- function(regstr) {
+  if (is.null(regstr) || length(regstr) == 0L) return(0)
+  regstr <- .rmbl_registers(regstr, "regstr")
+  .Call(C_rmbl_hll_count, regstr)
 }
 
 #' @param a,b Register sets to merge.
-#' @rdname rmbl_distinct
+#' @rdname dstn
 #' @export
-sketch_merge <- function(a, b) {
+skchmrg <- function(a, b) {
   a <- .rmbl_registers(a, "a")
   b <- .rmbl_registers(b, "b")
   if (length(a) != length(b)) {

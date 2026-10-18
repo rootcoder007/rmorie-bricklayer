@@ -40,7 +40,7 @@
 #' (or ASCII where the console cannot render them). The point is density of
 #' information: a mean and a standard deviation cannot tell you a column is
 #' bimodal, skewed or has a gap, and this can, in the width of a table cell.
-#' [profile_columns()] shows one for every numeric column.
+#' [profcols()] shows one for every numeric column.
 #'
 #' @details
 #' Non-finite values (\code{NA}, \code{NaN}, \code{Inf}) are dropped. The
@@ -61,29 +61,29 @@
 #'   number (default 10).
 #' @return A length-1 character vector of \code{bins} characters.
 #' @seealso
-#' [profile_columns()], which includes one
+#' [profcols()], which includes one
 #' per numeric column.
 #' @examples
 #' set.seed(1)
 #' # A symmetric distribution peaks in the middle.
-#' inline_hist(stats::rnorm(1000))
+#' inlhist(stats::rnorm(1000))
 #'
 #' # A skewed one leans left.
-#' inline_hist(stats::rexp(1000))
+#' inlhist(stats::rexp(1000))
 #'
 #' # Bimodality is visible here and in no single summary number.
-#' inline_hist(c(stats::rnorm(500, -3), stats::rnorm(500, 3)))
+#' inlhist(c(stats::rnorm(500, -3), stats::rnorm(500, 3)))
 #'
 #' # A constant column has no spread to show.
-#' inline_hist(rep(5, 10))
+#' inlhist(rep(5, 10))
 #'
 #' # more bins for more detail
-#' inline_hist(stats::rexp(1000), bins = 30)
+#' inlhist(stats::rexp(1000), bins = 30)
 #'
 #' # text is not a distribution
-#' try(inline_hist(c("a", "b")))
+#' try(inlhist(c("a", "b")))
 #' @export
-inline_hist <- function(x, bins = 10L) {
+inlhist <- function(x, bins = 10L) {
   x <- .rmbl_num_input(x, "x")
   bins <- .rmbl_num(bins, "bins", integer = TRUE)
   if (length(bins) != 1L || is.na(bins) || bins < 1L) {
@@ -103,7 +103,7 @@ inline_hist <- function(x, bins = 10L) {
 #' @details
 #' Two percentage columns, because both questions get asked and conflating
 #' them is how missingness gets hidden: \code{pct} is the share of ALL
-#' rows, \code{pct_valid} the share of rows where the value is present.
+#' rows, \code{pctvalid} the share of rows where the value is present.
 #' When a column is 40% missing those two differ enormously, and only the
 #' second describes the values that are actually there.
 #'
@@ -111,75 +111,75 @@ inline_hist <- function(x, bins = 10L) {
 #' factors are counted by their printed value, and factor levels that do not
 #' occur get no row. Rows are sorted by descending count (ties in the order
 #' \code{table()} gives) or kept in sorted value order with
-#' \code{sort = FALSE}. Beyond \code{max_levels} distinct values, the rest are
+#' \code{sort = FALSE}. Beyond \code{maxlvl} distinct values, the rest are
 #' folded into one \code{"(other)"} row so the percentages still sum to 100.
 #' The missing row, when there is one, comes last, with \code{value} \code{NA}
-#' and \code{pct_valid} \code{NA}. An empty input gives a table with no rows.
+#' and \code{pctvalid} \code{NA}. An empty input gives a table with no rows.
 #' The print method adds a bar column.
 #'
-#' Errors: a data frame without \code{column}; a \code{column} that is not
-#' in \code{data}; \code{max_levels} not one positive whole number.
+#' Errors: a data frame without \code{col}; a \code{col} that is not
+#' in \code{data}; \code{maxlvl} not one positive whole number.
 #'
 #' @param data A data frame, or a vector.
-#' @param column Column name (a string), when \code{data} is a data
+#' @param col Column name (a string), when \code{data} is a data
 #'   frame; ignored for a vector.
-#' @param max_levels Maximum value rows to return, most
+#' @param maxlvl Maximum value rows to return, most
 #'   frequent first (default 25). The remainder are folded into one
 #'   \code{"(other)"} row so the percentages still sum to 100.
 #' @param sort Logical: sort by descending count (default \code{TRUE});
 #'   \code{FALSE} keeps the sorted order of the values.
 #' @return A data frame of class \code{c("bricklayer_freq", "data.frame")}
 #'   with columns \code{value} (character), \code{n} (integer count),
-#'   \code{pct} (numeric, percent of all rows) and \code{pct_valid} (numeric,
+#'   \code{pct} (numeric, percent of all rows) and \code{pctvalid} (numeric,
 #'   percent of non-missing rows; \code{NA} on the missing row).
-#' @seealso [profile_columns()] for every
+#' @seealso [profcols()] for every
 #' column at once.
 #' @examples
 #' df <- data.frame(grade = c("a", "b", "b", "c", NA, "b"),
 #'                  stringsAsFactors = FALSE)
-#' frequency_table(df, "grade")
+#' freqtbl(df, "grade")
 #'
 #' # The two percentage columns differ exactly by the missingness.
-#' frequency_table(df, "grade")[, c("pct", "pct_valid")]
+#' freqtbl(df, "grade")[, c("pct", "pctvalid")]
 #'
 #' # A vector works directly.
-#' frequency_table(c(1, 1, 2, 3, 3, 3))
+#' freqtbl(c(1, 1, 2, 3, 3, 3))
 #'
 #' # Sorted value order rather than frequency order.
-#' frequency_table(c("c", "a", "b", "a"), sort = FALSE)
+#' freqtbl(c("c", "a", "b", "a"), sort = FALSE)
 #'
 #' # Long tails are folded so the percentages still total 100.
 #' set.seed(1)
-#' ft <- frequency_table(sample(letters, 500, TRUE), max_levels = 5)
+#' ft <- freqtbl(sample(letters, 500, TRUE), maxlvl = 5)
 #' ft
 #' sum(ft$pct)
 #'
 #' # a data frame needs a column name
-#' try(frequency_table(df))
+#' try(freqtbl(df))
 #' @export
-frequency_table <- function(data, column = NULL, max_levels = 25L,
+freqtbl <- function(data, col = NULL, maxlvl = 25L,
                             sort = TRUE) {
-  .rmbl_no_fn(data = data, column = column)
+  .rmbl_no_fn(data = data, column = col)
   v <- if (is.data.frame(data)) {
-    if (is.null(column)) {
-      stop("`column` is required when `data` is a data frame", call. = FALSE)
+    if (is.null(col)) {
+      stop("`col` is required when `data` is a data frame", call. = FALSE)
     }
-    column <- as.character(column)[1L]
-    if (!column %in% names(data)) {
-      stop(sprintf("no such column: %s", column), call. = FALSE)
+    col <- as.character(col)[1L]
+    if (!col %in% names(data)) {
+      stop(sprintf("no such column: %s", col), call. = FALSE)
     }
-    data[[column]]
+    data[[col]]
   } else {
     data
   }
-  max_levels <- .rmbl_num(max_levels, "max_levels", integer = TRUE)
-  if (length(max_levels) != 1L || is.na(max_levels) || max_levels < 1L) {
-    stop("`max_levels` must be a single positive integer", call. = FALSE)
+  maxlvl <- .rmbl_num(maxlvl, "maxlvl", integer = TRUE)
+  if (length(maxlvl) != 1L || is.na(maxlvl) || maxlvl < 1L) {
+    stop("`maxlvl` must be a single positive integer", call. = FALSE)
   }
   n_all <- length(v)
   if (n_all == 0L) {
     out <- data.frame(value = character(0), n = integer(0),
-                      pct = numeric(0), pct_valid = numeric(0),
+                      pct = numeric(0), pctvalid = numeric(0),
                       stringsAsFactors = FALSE)
     class(out) <- c("bricklayer_freq", "data.frame")
     return(out)
@@ -191,8 +191,8 @@ frequency_table <- function(data, column = NULL, max_levels = 25L,
 
   vals <- names(tab)
   counts <- as.integer(tab)
-  if (length(vals) > max_levels) {
-    keep <- seq_len(max_levels)
+  if (length(vals) > maxlvl) {
+    keep <- seq_len(maxlvl)
     other <- sum(counts[-keep])
     vals <- c(vals[keep], "(other)")
     counts <- c(counts[keep], other)
@@ -205,7 +205,7 @@ frequency_table <- function(data, column = NULL, max_levels = 25L,
     value = vals, n = as.integer(counts),
     pct = 100 * counts / n_all,
     # the missing row has no share of the valid values, by definition
-    pct_valid = ifelse(is.na(vals), NA_real_,
+    pctvalid = ifelse(is.na(vals), NA_real_,
                        if (n_valid > 0L) 100 * counts / n_valid else NA_real_),
     stringsAsFactors = FALSE)
   rownames(out) <- NULL
@@ -215,7 +215,7 @@ frequency_table <- function(data, column = NULL, max_levels = 25L,
 
 #' @export
 print.bricklayer_freq <- function(x, ...) {
-  if (.rmbl_needs_cols(x, c("value", "n", "pct", "pct_valid"))) {
+  if (.rmbl_needs_cols(x, c("value", "n", "pct", "pctvalid"))) {
     return(invisible(x))
   }
   cat(.rmbl_rule("Frequency table"), "\n")
@@ -228,8 +228,8 @@ print.bricklayer_freq <- function(x, ...) {
   g <- .rmbl_glyphs()
   df$value <- ifelse(is.na(df$value), paste0(g$dash, " (missing)"), df$value)
   df$pct <- formatC(df$pct, format = "f", digits = 1)
-  df$pct_valid <- ifelse(is.na(df$pct_valid), g$dash,
-                         formatC(df$pct_valid, format = "f", digits = 1))
+  df$pctvalid <- ifelse(is.na(df$pctvalid), g$dash,
+                         formatC(df$pctvalid, format = "f", digits = 1))
   df$bar <- vapply(x$n, function(k) {
     strrep("#", as.integer(round(20 * k / max(x$n))))
   }, character(1))
@@ -248,73 +248,73 @@ print.bricklayer_freq <- function(x, ...) {
 #' @details
 #' Non-numeric columns are ignored. For each pair, rows where either value is
 #' missing are dropped (pairwise deletion), so different pairs can rest on
-#' different rows; \code{n_pairs} says how many. Spearman's rank correlation
+#' different rows; \code{nprs} says how many. Spearman's rank correlation
 #' (the default) is the Pearson correlation of the ranks, robust to outliers
 #' and to monotone transformations; see
-#' [top_correlations()] for why it is
-#' the default. A pair with fewer than \code{min_pairs} complete rows, or
+#' [topcors()] for why it is
+#' the default. A pair with fewer than \code{minprs} complete rows, or
 #' with a constant column (no variance), gets \code{NA}. The pairs are listed
 #' in column order (\code{utils::combn()}). A progress bar is drawn on stderr
 #' for many pairs unless \code{options(morie.quiet = TRUE)}.
 #'
 #' Errors: \code{data} not a data frame; fewer than two numeric columns;
-#' \code{min_pairs} not a whole number of at least 2; an invalid
-#' \code{method}.
+#' \code{minprs} not a whole number of at least 2; an invalid
+#' \code{meth}.
 #'
 #' @param data A data frame; non-numeric columns are ignored.
-#' @param method \code{"spearman"} (default) or \code{"pearson"}. See
-#'   [top_correlations()] for why the rank correlation is
+#' @param meth \code{"spearman"} (default) or \code{"pearson"}. See
+#'   [topcors()] for why the rank correlation is
 #'   the default.
-#' @param min_pairs Minimum complete pairs required before
+#' @param minprs Minimum complete pairs required before
 #'   a correlation is computed, a whole number of at least 2 (default 3).
 #'   Below it the pair is \code{NA} rather than a number computed from almost
 #'   nothing.
 #' @return A data frame of class \code{c("bricklayer_cortable", "data.frame")}
 #'   with one row per pair of numeric columns and the columns \code{x} and
 #'   \code{y} (character, the column names), \code{correlation} (numeric, in
-#'   \eqn{[-1, 1]} or \code{NA}) and \code{n_pairs} (integer); the method is
+#'   \eqn{[-1, 1]} or \code{NA}) and \code{nprs} (integer); the method is
 #'   in \code{attr(, "method")}.
 #' @seealso
-#' [top_correlations()] for just the
-#' strongest, [core_cov()] for the matrix form.
+#' [topcors()] for just the
+#' strongest, [ccovm()] for the matrix form.
 #' @examples
 #' set.seed(1)
 #' df <- data.frame(a = stats::rnorm(100), b = stats::rnorm(100))
 #' df$c <- df$a + stats::rnorm(100, sd = 0.2)
 #'
-#' correlation_table(df)
+#' cortbl(df)
 #'
 #' # Pearson instead of Spearman
-#' correlation_table(df, method = "pearson")
+#' cortbl(df, meth = "pearson")
 #'
-#' # n_pairs shows how much data each figure rests on.
+#' # nprs shows how much data each figure rests on.
 #' gappy <- df
 #' gappy$a[1:80] <- NA
-#' correlation_table(gappy)
+#' cortbl(gappy)
 #'
 #' # A pair with too little overlap is NA, not a number from nothing.
 #' thin <- df
 #' thin$a[1:99] <- NA
-#' correlation_table(thin)$correlation
+#' cortbl(thin)$correlation
 #'
 #' # one numeric column cannot be correlated
-#' try(correlation_table(data.frame(a = 1:5, b = letters[1:5])))
+#' try(cortbl(data.frame(a = 1:5, b = letters[1:5])))
 #' @export
-correlation_table <- function(data, method = c("spearman", "pearson"),
-                              min_pairs = 3L) {
-  method <- .rmbl_arg(method)
+cortbl <- function(data, meth = c("spearman", "pearson"),
+                              minprs = 3L) {
+  meth <- .rmbl_arg(meth)
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
   num <- names(data)[vapply(data, is.numeric, logical(1))]
   if (length(num) < 2L) {
     stop("need at least two numeric columns to correlate", call. = FALSE)
   }
-  min_pairs <- .rmbl_num(min_pairs, "min_pairs", integer = TRUE)
-  if (length(min_pairs) != 1L || is.na(min_pairs) || min_pairs < 2L) {
-    stop("`min_pairs` must be a single integer of at least 2", call. = FALSE)
+  minprs <- .rmbl_num(minprs, "minprs", integer = TRUE)
+  if (length(minprs) != 1L || is.na(minprs) || minprs < 2L) {
+    stop("`minprs` must be a single integer of at least 2", call. = FALSE)
   }
   pairs <- utils::combn(num, 2L)
-  pg <- bricklayer_progress("correlations", ncol(pairs))
+  pg <- blprog("correlations", ncol(pairs))
   on.exit(pg$done(), add = TRUE)
   rows <- lapply(seq_len(ncol(pairs)), function(j) {
     pg$update(j - 1L, sprintf("pair %d/%d", j, ncol(pairs)))
@@ -322,24 +322,24 @@ correlation_table <- function(data, method = c("spearman", "pearson"),
     b <- data[[pairs[2L, j]]]
     ok <- !is.na(a) & !is.na(b)
     np <- sum(ok)
-    val <- if (np < min_pairs) NA_real_ else if (identical(method, "spearman")) {
-      core_cor_spearman(a[ok], b[ok])
+    val <- if (np < minprs) NA_real_ else if (identical(meth, "spearman")) {
+      cspr(a[ok], b[ok])
     } else {
-      core_cor(a[ok], b[ok])
+      ccorr(a[ok], b[ok])
     }
     data.frame(x = pairs[1L, j], y = pairs[2L, j], correlation = val,
-               n_pairs = np, stringsAsFactors = FALSE)
+               nprs = np, stringsAsFactors = FALSE)
   })
   out <- do.call(rbind, rows)
   rownames(out) <- NULL
-  attr(out, "method") <- method
+  attr(out, "method") <- meth
   class(out) <- c("bricklayer_cortable", "data.frame")
   out
 }
 
 #' @export
 print.bricklayer_cortable <- function(x, ...) {
-  if (.rmbl_needs_cols(x, c("x", "y", "correlation", "n_pairs"))) {
+  if (.rmbl_needs_cols(x, c("x", "y", "correlation", "nprs"))) {
     return(invisible(x))
   }
   cat(.rmbl_rule(paste0("Correlations (", attr(x, "method"), ")")), "\n")
@@ -354,8 +354,8 @@ print.bricklayer_cortable <- function(x, ...) {
 
 #' Drop empty or constant columns and rows
 #'
-#' \code{drop_empty()} removes rows or columns that are entirely missing.
-#' \code{drop_constant()} removes columns that hold a single distinct
+#' \code{drpempty()} removes rows or columns that are entirely missing.
+#' \code{drpconst()} removes columns that hold a single distinct
 #' value. The counterparts of \code{janitor::remove_empty()} and
 #' \code{janitor::remove_constant()}. Use them after reading a spreadsheet
 #' export, which often carries blank padding rows, empty columns and
@@ -366,13 +366,13 @@ print.bricklayer_cortable <- function(x, ...) {
 #' by variance, so it is worth removing -- but it is also a FINDING. A
 #' column that was informative in the pinned capsule and is constant in a
 #' fresh fetch means the source changed, so check
-#' [capsule_drift()] before deleting it and
+#' [cpsdrft()] before deleting it and
 #' moving on.
 #'
-#' \code{drop_empty()} removes all-\code{NA} columns first, then all-\code{NA}
+#' \code{drpempty()} removes all-\code{NA} columns first, then all-\code{NA}
 #' rows among the remaining columns, and resets the row names. An empty
-#' string is a value, not missing. \code{drop_constant()} counts the distinct
-#' non-missing values of each column (with \code{na_as_value = TRUE},
+#' string is a value, not missing. \code{drpconst()} counts the distinct
+#' non-missing values of each column (with \code{naasval = TRUE},
 #' \code{NA} counts as a value), so an all-\code{NA} column is also dropped
 #' by default. Neither function modifies anything in place.
 #'
@@ -382,7 +382,7 @@ print.bricklayer_cortable <- function(x, ...) {
 #' @param data A data frame.
 #' @param which \code{"rows"}, \code{"cols"}, or both (the
 #'   default, \code{c("rows", "cols")}).
-#' @param na_as_value Logical: treat \code{NA} as a distinct
+#' @param naasval Logical: treat \code{NA} as a distinct
 #'   value, so a column of \code{NA}s plus one real value counts as two
 #'   (default \code{FALSE}).
 #' @return The data frame, with the offending rows or columns removed. The
@@ -390,36 +390,36 @@ print.bricklayer_cortable <- function(x, ...) {
 #'   \code{"dropped"} attribute (a character vector, empty when none); dropped
 #'   rows are not listed.
 #' @seealso
-#' [profile_columns()], which reports
+#' [profcols()], which reports
 #' \code{n_distinct} without removing anything.
 #' @examples
 #' df <- data.frame(
 #'   keep = c(1, 2, NA),
-#'   all_na = c(NA, NA, NA),
+#'   allna = c(NA, NA, NA),
 #'   constant = c(7, 7, 7),
 #'   stringsAsFactors = FALSE
 #' )
 #'
-#' drop_empty(df)
-#' attr(drop_empty(df), "dropped")
+#' drpempty(df)
+#' attr(drpempty(df), "dropped")
 #'
-#' drop_constant(df)
-#' attr(drop_constant(df), "dropped")
+#' drpconst(df)
+#' attr(drpconst(df), "dropped")
 #'
 #' # Rows only.
-#' drop_empty(data.frame(a = c(1, NA), b = c(2, NA)), which = "rows")
+#' drpempty(data.frame(a = c(1, NA), b = c(2, NA)), which = "rows")
 #'
 #' # A column of NAs plus one value is constant by default, and not when
 #' # NA is treated as a value of its own.
 #' x <- data.frame(v = c(NA, NA, 5))
-#' ncol(drop_constant(x))
-#' ncol(drop_constant(x, na_as_value = TRUE))
+#' ncol(drpconst(x))
+#' ncol(drpconst(x, naasval = TRUE))
 #'
 #' # only data frames
-#' try(drop_empty(c(1, NA)))
-#' @name rmbl_drop
+#' try(drpempty(c(1, NA)))
+#' @name drp
 #' @export
-drop_empty <- function(data, which = c("rows", "cols")) {
+drpempty <- function(data, which = c("rows", "cols")) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
   which <- .rmbl_arg(which, c("rows", "cols"), several = TRUE)
@@ -438,9 +438,9 @@ drop_empty <- function(data, which = c("rows", "cols")) {
   data
 }
 
-#' @rdname rmbl_drop
+#' @rdname drp
 #' @export
-drop_constant <- function(data, na_as_value = FALSE) {
+drpconst <- function(data, naasval = FALSE) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
   if (ncol(data) == 0L) {
@@ -448,7 +448,7 @@ drop_constant <- function(data, na_as_value = FALSE) {
     return(data)
   }
   const <- vapply(data, function(v) {
-    u <- if (isTRUE(na_as_value)) unique(v) else unique(v[!is.na(v)])
+    u <- if (isTRUE(naasval)) unique(v) else unique(v[!is.na(v)])
     length(u) <= 1L
   }, logical(1))
   dropped <- names(data)[const]
@@ -487,7 +487,7 @@ drop_constant <- function(data, na_as_value = FALSE) {
 #' Record the mapping in the capsule manifest. Cleaning names changes what
 #' a downstream script must refer to, so an unrecorded cleaning is itself a
 #' reproducibility hazard -- the returned object carries the original names
-#' in its \code{"original_names"} attribute for exactly that.
+#' in its \code{"orignms"} attribute for exactly that.
 #'
 #' @param data A data frame, or a character vector of names.
 #' @param case \code{"snake"} (default, \code{total_pop}), \code{"lower_camel"}
@@ -498,31 +498,31 @@ drop_constant <- function(data, na_as_value = FALSE) {
 #'   \code{"screaming_snake"} and \code{"none"}, and before the number that
 #'   disambiguates a duplicate in every case (default \code{"_"}).
 #' @return For a data frame, the data frame with new names and an
-#'   \code{"original_names"} attribute (character, the names before cleaning);
+#'   \code{"orignms"} attribute (character, the names before cleaning);
 #'   for a character vector, the cleaned character vector.
 #' @examples
-#' clean_column_names(c("Total  Population (2021)", "% change",
+#' clncolnms(c("Total  Population (2021)", "% change",
 #'                      "Ville / City", "dup", "dup"))
 #'
 #' # Applied to a data frame, with the original names retained.
 #' df <- data.frame(`Total Pop` = 1:2, `% change` = 3:4,
 #'                  check.names = FALSE)
-#' cleaned <- clean_column_names(df)
+#' cleaned <- clncolnms(df)
 #' names(cleaned)
-#' attr(cleaned, "original_names")
+#' attr(cleaned, "orignms")
 #'
 #' # Other cases.
-#' clean_column_names(c("Total Pop"), case = "lower_camel")
-#' clean_column_names(c("Total Pop"), case = "upper_camel")
-#' clean_column_names(c("Total Pop"), case = "screaming_snake")
+#' clncolnms(c("Total Pop"), case = "lower_camel")
+#' clncolnms(c("Total Pop"), case = "upper_camel")
+#' clncolnms(c("Total Pop"), case = "screaming_snake")
 #'
 #' # a different separator, and a name that starts with a digit
-#' clean_column_names(c("2021 count", "Rate per 1000"), sep = ".")
+#' clncolnms(c("2021 count", "Rate per 1000"), sep = ".")
 #'
 #' # an unknown case is an error
-#' try(clean_column_names("a b", case = "kebab"))
+#' try(clncolnms("a b", case = "kebab"))
 #' @export
-clean_column_names <- function(data, case = c("snake", "lower_camel",
+clncolnms <- function(data, case = c("snake", "lower_camel",
                                               "upper_camel",
                                               "screaming_snake", "none"),
                                sep = "_") {
@@ -573,7 +573,7 @@ clean_column_names <- function(data, case = c("snake", "lower_camel",
   }
   if (is.data.frame(data)) {
     names(data) <- out
-    attr(data, "original_names") <- original
+    attr(data, "orignms") <- original
     return(data)
   }
   out

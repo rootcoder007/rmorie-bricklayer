@@ -45,7 +45,7 @@
 }
 
 .reply <- function(text, status = 200L) {
-  body <- bricklayer_json_to_json(
+  body <- tojs(
     list(choices = list(list(message = list(
       role = "assistant",
       content = text
@@ -57,28 +57,28 @@
 
 test_that("a token is stored owner-only in the shared credentials file", {
   dir <- .sandbox()
-  expect_message(bricklayer_llm_login(token = "  sk-test "), "Token stored")
+  expect_message(dlogin(token = "  sk-test "), "Token stored")
   p <- file.path(dir, "morie", "credentials.json")
   expect_true(file.exists(p))
   if (.Platform$OS.type != "windows") {
     expect_equal(as.character(file.info(p)$mode), "600")
   }
   expect_equal(.bl_hosted_key(), "sk-test")
-  expect_error(bricklayer_llm_login(token = " "), "empty token")
-  expect_message(expect_true(bricklayer_llm_logout()), "Logged out")
+  expect_error(dlogin(token = " "), "empty token")
+  expect_message(expect_true(dlogout()), "Logged out")
   expect_false(file.exists(p))
   expect_null(.bl_hosted_key())
-  expect_message(expect_false(bricklayer_llm_logout()), "No MORIE data key")
+  expect_message(expect_false(dlogout()), "No MORIE data key")
 })
 
 test_that("the environment key wins, off disables the data address, and a data key is no model route", {
   .sandbox()
-  suppressMessages(bricklayer_llm_login(token = "file-key"))
+  suppressMessages(dlogin(token = "file-key"))
   Sys.setenv(MORIE_HOSTED_KEY = "env-key")
   expect_equal(.bl_hosted_key(), "env-key")
   Sys.setenv(MORIE_HOSTED_BASE_URL = "off")
   expect_null(.bl_hosted_base())
-  expect_error(bricklayer_llm_ask("hi"), "No language-model route is set up", fixed = TRUE)
+  expect_error(llmask("hi"), "No language-model route is set up", fixed = TRUE)
   Sys.setenv(MORIE_HOSTED_BASE_URL = "https://gw.example/")
   expect_equal(.bl_hosted_base(), "https://gw.example")
 })
@@ -96,23 +96,23 @@ test_that("the native route posts a bearer-authenticated chat request", {
       .reply("MORIE")
     }
   )
-  expect_equal(bricklayer_llm_ask("say MORIE", docs = FALSE), "MORIE")
+  expect_equal(llmask("say MORIE", docs = FALSE), "MORIE")
   expect_equal(seen$url, "https://api.openai.com/v1/chat/completions")
   expect_equal(seen$headers, "Authorization: Bearer sk-abc")
   expect_equal(seen$ct, "application/json")
-  req <- bricklayer_json_from_json(seen$body, simplifyVector = FALSE)
+  req <- fromjs(seen$body, simplifyVector = FALSE)
   expect_equal(req$model, "gpt-x")
   expect_equal(req$messages[[1]]$content, "say MORIE")
   Sys.setenv(MORIE_OPENAI_MODEL = "gpt-y")
-  bricklayer_llm_ask("again", system_prompt = "be brief", docs = FALSE)
-  req <- bricklayer_json_from_json(seen$body, simplifyVector = FALSE)
+  llmask("again", syspro = "be brief", docs = FALSE)
+  req <- fromjs(seen$body, simplifyVector = FALSE)
   expect_equal(req$model, "gpt-y")
   expect_equal(req$messages[[1]]$role, "system")
 })
 
 test_that("gateway errors are reported with their message", {
   .sandbox()
-  expect_error(bricklayer_llm_ask("hi"), "config setup` walks through it")
+  expect_error(llmask("hi"), "config setup` walks through it")
   Sys.setenv(OPENAI_API_KEY = "sk-abc", MORIE_OPENAI_MODEL = "gpt-x")
   testthat::local_mocked_bindings(
     .bl_http_post = function(...) {
@@ -121,12 +121,12 @@ test_that("gateway errors are reported with their message", {
       ))
     }
   )
-  expect_error(bricklayer_llm_ask("hi"), "429: Rate limit exceeded")
+  expect_error(llmask("hi"), "429: Rate limit exceeded")
   testthat::local_mocked_bindings(.bl_http_post = function(...) NULL)
-  expect_error(bricklayer_llm_ask("hi"), "could not reach OpenAI")
+  expect_error(llmask("hi"), "could not reach OpenAI")
 })
 
-test_that("agent_bundle() uses a provider when its key is set", {
+test_that("agentbndl() uses a provider when its key is set", {
   .sandbox()
   Sys.setenv(OPENAI_API_KEY = "sk-abc", MORIE_OPENAI_MODEL = "gpt-x")
   seen <- NULL
@@ -136,20 +136,20 @@ test_that("agent_bundle() uses a provider when its key is set", {
       .reply("Pin the SHA256 in the manifest.")
     }
   )
-  expect_match(agent_bundle("add provenance"), "Pin the SHA256")
+  expect_match(agentbndl("add provenance"), "Pin the SHA256")
   expect_match(seen, "brick-proof", fixed = TRUE)
   Sys.unsetenv("OPENAI_API_KEY")
-  expect_match(agent_bundle("x"), "No language-model route is set up")
+  expect_match(agentbndl("x"), "No language-model route is set up")
 })
 
-test_that("bricklayer_llm_status() names the providers and which have a key", {
+test_that("llmstat() names the providers and which have a key", {
   .sandbox()
-  st <- bricklayer_llm_status()
+  st <- llmstat()
   expect_equal(st$route, c("own endpoint", "other providers", "local Ollama"))
   expect_equal(st$status[2], "no key")
   expect_match(st$detail[2], "openai (OPENAI_API_KEY), anthropic (ANTHROPIC_API_KEY)", fixed = TRUE)
   Sys.setenv(OPENAI_API_KEY = "sk-abc", MORIE_OPENAI_MODEL = "gpt-x")
-  st <- bricklayer_llm_status()
+  st <- llmstat()
   expect_equal(st$route, c("own endpoint", "OpenAI", "other providers", "local Ollama"))
   expect_equal(st$status[2], "key set")
   expect_match(st$detail[2], "https://api.openai.com/v1  model: gpt-x", fixed = TRUE)
@@ -160,7 +160,7 @@ test_that("the command line dispatches its verbs", {
   .sandbox()
   cap <- function(...) {
     buf <- character()
-    st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s))
+    st <- blcli(c(...), out = function(s) buf <<- c(buf, s))
     list(text = paste(buf, collapse = ""), status = st)
   }
   expect_match(cap("version")$text, paste0("rmoriebricklayer ", utils::packageVersion("rmoriebricklayer")),
@@ -190,18 +190,18 @@ test_that("models lists the route's models and ask --model names one", {
   .sandbox()
   cap <- function(...) {
     buf <- character()
-    st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s))
+    st <- blcli(c(...), out = function(s) buf <<- c(buf, s))
     list(text = paste(buf, collapse = ""), status = st)
   }
   expect_match(cap("models")$text, "No language-model route is set up")
-  expect_length(bricklayer_llm_models(), 0L)
+  expect_length(llmmdls(), 0L)
   Sys.setenv(OPENAI_API_KEY = "sk-models", MORIE_OPENAI_MODEL = "b-model")
   seen <- NULL
   testthat::local_mocked_bindings(.bl_http_get = function(url, timeout, headers) {
     seen <<- list(url = url, headers = headers)
     list(status = 200L, body = charToRaw('{"data":[{"id":"a-model"},{"id":"b-model"}]}'))
   })
-  hm <- bricklayer_llm_models()
+  hm <- llmmdls()
   expect_equal(as.character(hm), c("a-model", "b-model"))
   expect_equal(attr(hm, "default"), "b-model")
   expect_equal(attr(hm, "route"), "OpenAI")
@@ -212,10 +212,10 @@ test_that("models lists the route's models and ask --model names one", {
   expect_match(m$text, "OpenAI; the model in use is marked \\*:\n    a-model\n  \\* b-model\n")
   expect_match(m$text, "config set openai.model NAME", fixed = TRUE)
   testthat::local_mocked_bindings(.bl_http_get = function(...) list(status = 502L, body = raw()))
-  expect_length(bricklayer_llm_models(), 0L)
+  expect_length(llmmdls(), 0L)
   expect_match(cap("models")$text, "OpenAI: no model list to show .*the model in use is b-model")
   asked <- NULL
-  testthat::local_mocked_bindings(bricklayer_llm_ask = function(prompt, model = NULL, ...) {
+  testthat::local_mocked_bindings(llmask = function(prompt, model = NULL, ...) {
     asked <<- model
     "echo"
   })
@@ -246,19 +246,19 @@ test_that("the email sign-in requests a code and exchanges it for a key", {
       )
     }
   )
-  key <- suppressMessages(bricklayer_llm_login(
+  key <- suppressMessages(dlogin(
     email = " Vee@Example.com",
     code = " 123456 "
   ))
   expect_equal(key, "sk-mail")
   expect_length(seen, 1L) # a supplied code skips the request step
   expect_equal(seen[[1]]$url, "https://data.rmorie.com/auth/email/verify")
-  req <- bricklayer_json_from_json(seen[[1]]$body)
+  req <- fromjs(seen[[1]]$body)
   expect_equal(req$email, "vee@example.com")
   expect_equal(req$code, "123456")
   expect_equal(.bl_hosted_key(), "sk-mail")
   expect_equal(.bl_read_credentials()$hosted_user, "mail:abc")
-  expect_error(bricklayer_llm_login(email = "nope"), "email address")
+  expect_error(dlogin(email = "nope"), "email address")
   testthat::local_mocked_bindings(
     .bl_http_post = function(...) {
       list(status = 403L, body = charToRaw(
@@ -267,7 +267,7 @@ test_that("the email sign-in requests a code and exchanges it for a key", {
     }
   )
   expect_error(
-    bricklayer_llm_login(email = "vee@example.com", code = "0"),
+    dlogin(email = "vee@example.com", code = "0"),
     "403: wrong code"
   )
 })
@@ -297,9 +297,9 @@ test_that("the device flow polls until GitHub approval and stores the key", {
     }
   )
   msgs <- testthat::capture_messages(
-    key <- bricklayer_llm_login(
-      open_browser = FALSE,
-      poll_max_seconds = 5
+    key <- dlogin(
+      openbro = FALSE,
+      pollmaxsec = 5
     )
   )
   expect_match(paste(msgs, collapse = ""), "ABCD-1234")
@@ -312,33 +312,33 @@ test_that("the device flow polls until GitHub approval and stores the key", {
 test_that("the command line helps people find their way around the package", {
   cap <- function(...) {
     buf <- character()
-    st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s))
+    st <- blcli(c(...), out = function(s) buf <<- c(buf, s))
     list(text = paste(buf, collapse = ""), status = st)
   }
-  f <- cap("functions", "^bricklayer_json_(to|from)_json$")
+  f <- cap("functions", "^(fromjs|tojs)$")
   expect_equal(f$status, 0L)
   lines <- strsplit(f$text, "\n", fixed = TRUE)[[1]]
   expect_length(lines, 2L)
-  expect_match(lines[1], "^  bricklayer_json_from_json  .+")
+  expect_match(lines[1], "^  fromjs  .+")
   expect_match(cap("functions", "zzz_nothing")$text, "no exported function")
-  d <- cap("describe", "agent_bundle")
+  d <- cap("describe", "agentbndl")
   expect_equal(d$status, 0L)
   expect_match(d$text, "Usage:")
-  expect_match(d$text, "agent_bundle(request", fixed = TRUE)
+  expect_match(d$text, "agentbndl(req", fixed = TRUE)
   expect_match(d$text, "Arguments:")
   expect_match(cap("describe", "no_such_fn")$text, "no help page")
   expect_equal(cap("describe")$status, 2L)  # a missing name is a usage error
-  e <- cap("examples", "bricklayer_llm_status")
-  expect_match(e$text, "bricklayer_llm_status()", fixed = TRUE)
+  e <- cap("examples", "llmstat")
+  expect_match(e$text, "llmstat()", fixed = TRUE)
 })
 
-test_that("the launcher ships and install_cli() links it into a directory", {
+test_that("the launcher ships and instcli() links it into a directory", {
   src <- system.file("bin", "rmoriebricklayer", package = "rmoriebricklayer")
   expect_true(nzchar(src))
   expect_match(readLines(src)[1], "^#!/bin/sh")
-  expect_true(any(grepl("bricklayer_cli", readLines(src), fixed = TRUE)))
+  expect_true(any(grepl("blcli", readLines(src), fixed = TRUE)))
   dir <- tempfile("bin-")
-  target <- suppressMessages(install_cli(dir = dir))
+  target <- suppressMessages(instcli(dir = dir))
   expect_true(file.exists(target))
   if (.Platform$OS.type != "windows") {
     expect_true(file.access(target, 1L) == 0L)
@@ -395,19 +395,19 @@ test_that("a reply without text and a reply with a plain error string are report
       status = 200L, body = charToRaw("{\"choices\":[{\"message\":{\"content\":\"\"}}]}")
     )
   })
-  expect_error(bricklayer_llm_ask("hi"), "returned no text")
+  expect_error(llmask("hi"), "returned no text")
   testthat::local_mocked_bindings(.bl_http_post = function(...) {
     list(
       status = 500L, body = charToRaw("{\"error\":\"boom\"}")
     )
   })
-  expect_error(bricklayer_llm_ask("hi"), "500: boom")
+  expect_error(llmask("hi"), "500: boom")
   testthat::local_mocked_bindings(.bl_http_post = function(...) {
     list(
       status = 502L, body = charToRaw("not json")
     )
   })
-  expect_error(bricklayer_llm_ask("hi"), "answered 502$")
+  expect_error(llmask("hi"), "answered 502$")
 })
 
 test_that("the email flow asks for the code when none is given and reports errors", {
@@ -425,7 +425,7 @@ test_that("the email flow asks for the code when none is given and reports error
   )
   testthat::local_mocked_bindings(.bl_readline = function(prompt, ...) "654321")
   msgs <- testthat::capture_messages(
-    key <- bricklayer_llm_login(email = "vee@example.com")
+    key <- dlogin(email = "vee@example.com")
   )
   expect_match(paste(msgs, collapse = ""), "one-time code")
   expect_equal(key, "sk-typed")
@@ -436,7 +436,7 @@ test_that("the email flow asks for the code when none is given and reports error
     )
   })
   expect_error(
-    bricklayer_llm_login(email = "vee@example.com"),
+    dlogin(email = "vee@example.com"),
     "429: too many codes"
   )
   testthat::local_mocked_bindings(.bl_http_post = function(...) {
@@ -445,7 +445,7 @@ test_that("the email flow asks for the code when none is given and reports error
     )
   })
   expect_error(
-    bricklayer_llm_login(email = "vee@example.com", code = "1"),
+    dlogin(email = "vee@example.com", code = "1"),
     "returned no key"
   )
 })
@@ -471,9 +471,9 @@ test_that("the device flow opens the browser, rejects a hard error and times out
     }
   )
   expect_error(
-    suppressMessages(bricklayer_llm_login(
-      open_browser = TRUE,
-      poll_max_seconds = 5
+    suppressMessages(dlogin(
+      openbro = TRUE,
+      pollmaxsec = 5
     )),
     "400: expired_token"
   )
@@ -487,9 +487,9 @@ test_that("the device flow opens the browser, rejects a hard error and times out
     }
   )
   expect_error(
-    suppressMessages(bricklayer_llm_login(
-      open_browser = FALSE,
-      poll_max_seconds = 0
+    suppressMessages(dlogin(
+      openbro = FALSE,
+      pollmaxsec = 0
     )),
     "timed out"
   )
@@ -498,13 +498,13 @@ test_that("the device flow opens the browser, rejects a hard error and times out
       status = 503L, body = charToRaw("{\"error\":\"down\"}")
     )
   })
-  expect_error(bricklayer_llm_login(open_browser = FALSE), "503: down")
+  expect_error(dlogin(openbro = FALSE), "503: down")
 })
 
 test_that("logout keeps unrelated entries in the shared file", {
   .sandbox()
   .bl_write_credentials(list(hosted_key = "sk-x", other_tool = "keep"))
-  expect_message(expect_true(bricklayer_llm_logout()), "Logged out")
+  expect_message(expect_true(dlogout()), "Logged out")
   expect_equal(.bl_read_credentials(), list(other_tool = "keep"))
 })
 
@@ -513,7 +513,7 @@ test_that("the command line prompts for a token, runs the device flow and checks
   .sandbox()
   cap <- function(...) {
     buf <- character()
-    st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s))
+    st <- blcli(c(...), out = function(s) buf <<- c(buf, s))
     list(text = paste(buf, collapse = ""), status = st)
   }
   testthat::local_mocked_bindings(.bl_readline = function(prompt, ...) "sk-prompted")
@@ -521,7 +521,7 @@ test_that("the command line prompts for a token, runs the device flow and checks
   r <- suppressMessages(cap("login", "--token"))
   expect_equal(r$status, 0L)
   expect_equal(.bl_hosted_key(), "sk-prompted")
-  suppressMessages(bricklayer_llm_logout())
+  suppressMessages(dlogout())
   e <- cap("login", "--email")
   expect_equal(e$status, 2L)  # a flag without its value is a usage error
   expect_match(e$text, "--email needs a value")
@@ -543,7 +543,7 @@ test_that("the command line prompts for a token, runs the device flow and checks
   expect_match(cap("examples", "no_such_fn")$text, "no help page")
 })
 
-test_that("the Rd database falls back to the man directory and install_cli copies when it cannot link", {
+test_that("the Rd database falls back to the man directory and instcli copies when it cannot link", {
   testthat::local_mocked_bindings(
     Rd_db = function(package, dir, ...) {
       if (!missing(package)) stop("no installed help")
@@ -557,7 +557,7 @@ test_that("the Rd database falls back to the man directory and install_cli copie
     .package = "base"
   )
   dir <- tempfile("bin-")
-  target <- suppressMessages(install_cli(dir = dir))
+  target <- suppressMessages(instcli(dir = dir))
   expect_true(file.exists(target))
   if (.Platform$OS.type == "windows") {
     expect_match(readLines(target)[1], "^@echo off") # the .cmd wrapper
@@ -570,7 +570,7 @@ test_that("the Rd database falls back to the man directory and install_cli copie
 
 test_that("the status says when Ollama is off, and an explicit model reaches the provider", {
   .sandbox()
-  st <- bricklayer_llm_status()
+  st <- llmstat()
   expect_identical(st$status[3], "disabled")
   expect_identical(st$detail[3], "OLLAMA_HOST=off")
 
@@ -580,14 +580,14 @@ test_that("the status says when Ollama is off, and an explicit model reaches the
     seen <<- payload
     list(status = 200L, json = list(choices = list(list(message = list(content = "pong")))))
   })
-  expect_identical(bricklayer_llm_ask("ping", model = "custom-model", docs = FALSE), "pong")
+  expect_identical(llmask("ping", model = "custom-model", docs = FALSE), "pong")
   expect_identical(seen$model, "custom-model")
 })
 
-test_that("install_cli() writes both launchers, pinned with .libPaths() and without --args", {
+test_that("instcli() writes both launchers, pinned with .libPaths() and without --args", {
   skip_on_os("windows")
   d <- withr::local_tempdir()
-  primary <- suppressMessages(install_cli(dir = d))
+  primary <- suppressMessages(instcli(dir = d))
   expect_equal(basename(primary), "rmoriebricklayer")
   paths <- file.path(d, c("rmoriebricklayer", "rmbl"))
   expect_true(all(file.exists(paths)))
@@ -601,7 +601,7 @@ test_that("install_cli() writes both launchers, pinned with .libPaths() and with
   # a second install replaces the launchers it finds, links included
   file.remove(paths[[2L]])
   file.symlink(paths[[1L]], paths[[2L]])
-  suppressMessages(install_cli(dir = d))
+  suppressMessages(instcli(dir = d))
   expect_true(is.na(Sys.readlink(paths[[2L]])) || !nzchar(Sys.readlink(paths[[2L]])))
   expect_match(paste(readLines(paths[[2L]]), collapse = "\n"),
                "# rmbl: the rmoriebricklayer command line", fixed = TRUE)
@@ -609,11 +609,11 @@ test_that("install_cli() writes both launchers, pinned with .libPaths() and with
 
 test_that("login --help prints the usage and the usage names rmbl", {
   buf <- character()
-  st <- bricklayer_cli(c("login", "--help"), out = function(x) buf <<- c(buf, x))
+  st <- blcli(c("login", "--help"), out = function(x) buf <<- c(buf, x))
   expect_equal(st, 0L)
   expect_match(paste(buf, collapse = ""), "usage: rmoriebricklayer login")
   buf <- character()
-  bricklayer_cli("help", out = function(x) buf <<- c(buf, x))
+  blcli("help", out = function(x) buf <<- c(buf, x))
   expect_match(paste(buf, collapse = ""), "rmbl is the same command")
 })
 
@@ -630,14 +630,14 @@ test_that("a dropped connection is not retried (the prompt goes once) and is nam
     }
   )
   # one send: a POST that timed out may have been read by the provider (review of 46de6a9)
-  expect_error(bricklayer_llm_ask("hi"), "could not reach OpenAI")
+  expect_error(llmask("hi"), "could not reach OpenAI")
   expect_equal(n, 1L)
   testthat::local_mocked_bindings(
     .bl_http_post = function(url, body, content_type, timeout, headers) {
       list(status = -1L, body = raw(), error = "Recv failure: Connection reset by peer")
     }
   )
-  expect_error(bricklayer_llm_ask("hi"),
+  expect_error(llmask("hi"),
                "could not reach OpenAI .*\\(Recv failure: Connection reset by peer\\)")
 })
 
@@ -647,28 +647,28 @@ test_that("an empty answer names why, and the request leaves room for reasoning 
   seen <- NULL
   testthat::local_mocked_bindings(
     .bl_http_post = function(url, body, content_type, timeout, headers) {
-      seen <<- bricklayer_json_from_json(rawToChar(body), simplifyVector = FALSE)
-      b <- bricklayer_json_to_json(list(choices = list(list(message = list(content = ""), finish_reason = "length"))),
+      seen <<- fromjs(rawToChar(body), simplifyVector = FALSE)
+      b <- tojs(list(choices = list(list(message = list(content = ""), finish_reason = "length"))),
                                    auto_unbox = TRUE)
       list(status = 200L, body = charToRaw(b))
     }
   )
-  expect_error(bricklayer_llm_ask("hi"), "OpenAI returned no text \\(finish reason: length")
+  expect_error(llmask("hi"), "OpenAI returned no text \\(finish reason: length")
   expect_equal(seen$max_tokens, 4096L)
 })
 
-test_that("agent_bundle asks with the package's help at hand, which names every function", {
+test_that("agentbndl asks with the package's help at hand, which names every function", {
   .sandbox()
   Sys.setenv(OPENAI_API_KEY = "sk-abc", MORIE_OPENAI_MODEL = "gpt-x")
   sent <- NULL
-  testthat::local_mocked_bindings(bricklayer_llm_ask = function(prompt, ..., docs = TRUE) {
+  testthat::local_mocked_bindings(llmask = function(prompt, ..., docs = TRUE) {
     sent <<- list(prompt = prompt, docs = docs)
     "plan"
   })
-  expect_equal(agent_bundle("bundle analysis.R"), "plan")
+  expect_equal(agentbndl("bundle analysis.R"), "plan")
   expect_true(sent$docs)
   index <- paste(.bl_kn_index_lines(.bl_kn_all_pages("rmoriebricklayer")), collapse = "\n")
-  for (fn in c("resolve_via_ckan(", "friendly_download(", "make_manifest(", "capsule_bundle(")) {
+  for (fn in c("rslvckan(", "fdl(", "mkmnf(", "cpsbndl(")) {
     expect_true(grepl(fn, index, fixed = TRUE), info = fn)
   }
 })

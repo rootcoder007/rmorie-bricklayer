@@ -88,11 +88,11 @@ r4_json <- function(res) r4(".rmbl_json_text")(res$body, simplifyVector = FALSE)
 test_that("F1: the loopback relaxation is an argument of one call, never a process-wide switch", {
   withr::local_options(rmoriebricklayer.allow_loopback = TRUE)
   # every public-facing entry refuses loopback regardless of the old option
-  expect_error(bricklayer_download("http://127.0.0.1:18081/x", tempfile(), quiet = TRUE), "https://")
-  expect_error(bricklayer_json_from_json("http://127.0.0.1:18084/x"), "https://")
-  expect_error(download_data("https://127.0.0.1/x", tempfile()), "local or private")
-  withr::local_options(rmoriebricklayer.allow_http = TRUE)
-  expect_error(bricklayer_download("http://127.0.0.1:18081/x", tempfile(), quiet = TRUE), "local or private")
+  expect_error(bldl("http://127.0.0.1:18081/x", tempfile(), quiet = TRUE), "https://")
+  expect_error(fromjs("http://127.0.0.1:18084/x"), "https://")
+  expect_error(dldata("https://127.0.0.1/x", tempfile()), "local or private")
+  withr::local_options(rmoriebricklayer.allowhttp = TRUE)
+  expect_error(bldl("http://127.0.0.1:18081/x", tempfile(), quiet = TRUE), "local or private")
   res <- .Call(r4("C_rmbl_http_download"), "http://127.0.0.1:18081/x", tempfile(), 5L, NULL, NULL, NULL, FALSE)
   expect_identical(res$status, -1L)
   expect_match(res$error, "refused")
@@ -186,10 +186,10 @@ test_that("F2/F6: bytes a server sent are parsed as text, never fetched or opene
     files <- list.files(file.path(root, "R"), pattern = "[.]R$", full.names = TRUE)
     code <- unlist(lapply(files, function(f) paste0(basename(f), ": ", readLines(f, warn = FALSE))))
     code <- sub("#.*$", "", code)   # code, not comments
-    expect_identical(grep("bricklayer_json_from_json(rawToChar", code, fixed = TRUE, value = TRUE), character(0))
-    expect_identical(grep("bricklayer_json_from_json(paste(readLines(p", code, fixed = TRUE, value = TRUE),
+    expect_identical(grep("fromjs(rawToChar", code, fixed = TRUE, value = TRUE), character(0))
+    expect_identical(grep("fromjs(paste(readLines(p", code, fixed = TRUE, value = TRUE),
                      character(0))
-    expect_identical(grep("bricklayer_json_from_json(paste(", code, fixed = TRUE, value = TRUE), character(0))
+    expect_identical(grep("fromjs(paste(", code, fixed = TRUE, value = TRUE), character(0))
   }
 })
 
@@ -200,7 +200,7 @@ test_that("F2 live: a body that is a bare URL is returned as text, not followed"
   expect_error(r4(".rmbl_json_text")(res$body), "not JSON")
   # the public parser given the same text as a USER argument would fetch it: that is the
   # documented behaviour for an argument, and it still goes through the validator
-  expect_error(bricklayer_json_from_json(rawToChar(res$body)), "https://")
+  expect_error(fromjs(rawToChar(res$body)), "https://")
 })
 
 test_that("F5: a signed document older than the bundled one is refused, cached or live", {
@@ -214,11 +214,11 @@ test_that("F5: a signed document older than the bundled one is refused, cached o
   expect_type(b$issued, "character")
   # stand in for a historical real signature: a test key, and the bundled document re-signed
   # under it with an older issue date, with the pinned key re-bound to that test key
-  key <- fips_keygen("ML-DSA-44")
+  key <- fipskg("ML-DSA-44")
   old_doc <- sub(b$issued, "2020-01-01T00:00:00Z", rawToChar(readBin(bundled, "raw", file.size(bundled))), fixed = TRUE)
   old_doc <- gsub("https://data.rmorie.com/auth", "https://retired-gw.example.net/auth", old_doc, fixed = TRUE)
   sig <- function(doc, k = key) {
-    s <- capsule_sign(charToRaw(doc), k, context = "morie-services", deterministic = TRUE)
+    s <- cpssign(charToRaw(doc), k, ctx = "morie-services", determ = TRUE)
     sprintf('{"scheme":"ML-DSA-44","context":"morie-services","signature":"%s"}', s$signature)
   }
   # the bundled copy must verify under the test key too, else the floor cannot be read
@@ -233,7 +233,7 @@ test_that("F5: a signed document older than the bundled one is refused, cached o
     .package = "rmoriebricklayer")
   r4(".rmbl_services_write")(file.path(td, "morie-services.json"), charToRaw(old_doc), sig(old_doc))
   Sys.setFileTime(file.path(td, "morie-services.json"), Sys.time() - 1e7)
-  s <- bricklayer_services(offline = TRUE)
+  s <- svcs(offline = TRUE)
   expect_identical(attr(s, "source"), "bundled")
   expect_identical(s$data$auth_url, "https://data.rmorie.com/auth")  # the bundled copy
   expect_false(file.exists(file.path(td, "morie-services.json")))  # the stale cache is gone
@@ -242,7 +242,7 @@ test_that("F5: a signed document older than the bundled one is refused, cached o
   # cache earns its place only by being NEWER than what the package ships)
   r4(".rmbl_services_write")(file.path(td, "morie-services.json"), charToRaw(bund_doc), sig(bund_doc))
   r4(".rmbl_services_forget")()
-  s <- bricklayer_services(offline = TRUE)
+  s <- svcs(offline = TRUE)
   expect_identical(attr(s, "source"), "bundled")
   expect_true(file.exists(file.path(td, "morie-services.json")))
   unlink(file.path(td, c("morie-services.json", "morie-services.sig")))
@@ -252,7 +252,7 @@ test_that("F5: a signed document older than the bundled one is refused, cached o
     writeBin(charToRaw(if (grepl("[.]sig$", url)) sig(old_doc) else old_doc), tmp)
     200L
   }, .package = "rmoriebricklayer")
-  s <- bricklayer_services(refresh = TRUE)
+  s <- svcs(refresh = TRUE)
   expect_identical(attr(s, "source"), "bundled")
   expect_false(file.exists(file.path(td, "morie-services.json")))
   # a newer live document still wins
@@ -261,7 +261,7 @@ test_that("F5: a signed document older than the bundled one is refused, cached o
     writeBin(charToRaw(if (grepl("[.]sig$", url)) sig(new_doc) else new_doc), tmp)
     200L
   }, .package = "rmoriebricklayer")
-  s <- bricklayer_services(refresh = TRUE)
+  s <- svcs(refresh = TRUE)
   expect_identical(attr(s, "source"), "live")
   expect_identical(s$issued, "2099-01-01T00:00:00Z")
 })
@@ -310,7 +310,7 @@ test_that("F8: the sign-in address is validated, and only a public https page is
     }
     list(status = 200L, body = charToRaw('{"api_key":"sk-dev","user":"vee"}'))
   }, .package = "rmoriebricklayer")
-  suppressMessages(bricklayer_llm_login(open_browser = TRUE, poll_max_seconds = 5))
+  suppressMessages(dlogin(openbro = TRUE, pollmaxsec = 5))
   expect_null(opened)
 })
 
@@ -342,19 +342,19 @@ test_that("limits live: a trickle is cut off, an endless reply is dropped, a cap
   expect_true(file.exists(dest))
 })
 
-test_that("limits: bricklayer_download() exposes max_bytes and checks it", {
-  expect_error(bricklayer_download("https://example.org/x", tempfile(), max_bytes = 0, quiet = TRUE),
-               "`max_bytes` must be")
-  expect_error(bricklayer_download("https://example.org/x", tempfile(), max_bytes = "many", quiet = TRUE),
-               "`max_bytes` must be")
+test_that("limits: bldl() exposes maxbytes and checks it", {
+  expect_error(bldl("https://example.org/x", tempfile(), maxbytes = 0, quiet = TRUE),
+               "`maxbytes` must be")
+  expect_error(bldl("https://example.org/x", tempfile(), maxbytes = "many", quiet = TRUE),
+               "`maxbytes` must be")
   src <- tempfile()
   writeLines("abc", src)
   dest <- tempfile()
-  bricklayer_download(paste0("file://", src), dest, quiet = TRUE, allow_file = TRUE, max_bytes = 10)
+  bldl(paste0("file://", src), dest, quiet = TRUE, allowfile = TRUE, maxbytes = 10)
   expect_identical(readLines(dest), "abc")
 })
 
-test_that("the file sink: a chunked body past max_bytes ends the transfer, a non-2xx answer leaves nothing", {
+test_that("the file sink: a chunked body past maxbytes ends the transfer, a non-2xx answer leaves nothing", {
   srv <- r4_server()
   dl <- r4("C_rmbl_http_download")
   dest <- tempfile()

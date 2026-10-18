@@ -22,7 +22,7 @@
 #    stderr otherwise; RStudio and Positron print stderr in their error colour, so in those two
 #    consoles (interactive, nothing sunk) the frames go to stdout, as cli and progress do, and to
 #    stderr everywhere else (a terminal, a script, a log, capture.output(type = "message")).
-#  - colors: the number of colours, 1 for none. An override (rmoriebricklayer.num_colors,
+#  - colors: the number of colours, 1 for none. An override (rmoriebricklayer.numcol,
 #    cli.num_colors, R_CLI_NUM_COLORS, crayon.enabled = FALSE); NO_COLOR (no-color.org: set and not
 #    empty); none inside knitr or into a sunk stream; cli.default_num_colors (set by Positron's
 #    kernel, ark, for its console); none in R.app and Rgui; the RStudio console's
@@ -101,7 +101,7 @@
     x <- suppressWarnings(as.integer(x)[1L])
     if (length(x) != 1L || is.na(x) || x < 1L) 1L else x
   }
-  for (o in c("rmoriebricklayer.num_colors", if (!tty) "cli.num_colors")) {
+  for (o in c("rmoriebricklayer.numcol", if (!tty) "cli.num_colors")) {
     if (!is.null(v <- getOption(o))) return(n(v))
   }
   if (nzchar(e <- Sys.getenv("R_CLI_NUM_COLORS"))) return(n(e))
@@ -219,20 +219,20 @@
   a$mile <- 0L
   # the rate: a moving average over windows of at least half a second
   a$rate <- NA_real_
-  a$r_t <- 0
-  a$r_d <- 0
-  a$r_n <- 0L
+  a$rt <- 0
+  a$rd <- 0
+  a$rn <- 0L
   a
 }
 
 .bl_rate_sample <- function(a, now) {
-  dt <- now - a$r_t
+  dt <- now - a$rt
   if (dt < 0.5) return(invisible(a))
-  inst <- max(0, a$done - a$r_d) / dt
+  inst <- max(0, a$done - a$rd) / dt
   a$rate <- if (is.na(a$rate)) inst else a$rate + 0.3 * (inst - a$rate)
-  a$r_n <- a$r_n + 1L
-  a$r_t <- now
-  a$r_d <- a$done
+  a$rn <- a$rn + 1L
+  a$rt <- now
+  a$rd <- a$done
   invisible(a)
 }
 
@@ -249,7 +249,7 @@
     cnt <- if (bytes) paste0(.bl_fmt_bytes(a$done), "/", .bl_fmt_bytes(a$total)) else
       paste0(.bl_n(a$done), "/", .bl_n(a$total))
     frac <- a$done / a$total
-    eta <- if (a$r_n >= 3L && now >= 2 && frac >= 0.02 && frac < 1 && is.finite(rate) && rate > 0) {
+    eta <- if (a$rn >= 3L && now >= 2 && frac >= 0.02 && frac < 1 && is.finite(rate) && rate > 0) {
       .bl_fmt_eta((a$total - a$done) / rate)
     }
   } else {
@@ -412,7 +412,7 @@
   invisible(a)
 }
 
-# The bars of bricklayer_progress() still running, each as the frame of the function that made
+# The bars of blprog() still running, each as the frame of the function that made
 # it: a bar made while one of these frames is still on the call stack is nested work and stays
 # silent, so one bar shows the outer loop. A frame that has returned (normally, by an error or
 # an interrupt) no longer counts, so a bar whose done() was never called cannot silence the
@@ -431,7 +431,7 @@
 #' Live progress for long-running work
 #'
 #' Makes a progress bar for a loop or a long computation: the animated bar of
-#' \code{\link{bricklayer_download}()}, redrawn in place at no more than 12
+#' \code{\link{bldl}()}, redrawn in place at no more than 12
 #' frames a second, when the console can redraw a line -- a terminal, or the
 #' RStudio, Positron, R.app or RKWard console (never a knitr or Jupyter
 #' notebook; the options \code{rmoriebricklayer.dynamic} or
@@ -458,7 +458,7 @@
 #' after making the bar, so the line is cleared and the bar is released even
 #' when the work fails or is interrupted:
 #' \preformatted{
-#' p <- bricklayer_progress("bootstrap", B)
+#' p <- blprog("bootstrap", B)
 #' on.exit(p$done(), add = TRUE)
 #' for (b in seq_len(B)) {
 #'   ...
@@ -483,7 +483,7 @@
 #'   bar was shown, writes \code{summary} on its own line. Each returns the
 #'   object invisibly.
 #' @examples
-#' p <- bricklayer_progress("squares", 50, delay = 0)
+#' p <- blprog("squares", 50, delay = 0)
 #' for (i in 1:50) {
 #'   x <- sum(seq_len(i)^2)
 #'   p$tick(info = sprintf("step %d/50", i))
@@ -492,7 +492,7 @@
 #'
 #' # work with no count: a spinner and the stage
 #' f <- function() {
-#'   p <- bricklayer_progress("model", 0, delay = 0)
+#'   p <- blprog("model", 0, delay = 0)
 #'   on.exit(p$done(), add = TRUE)
 #'   p$update(info = "fitting")
 #'   p$wait(0.2)
@@ -501,7 +501,7 @@
 #' }
 #' f()
 #' @export
-bricklayer_progress <- function(label, total, quiet = NULL, color = "blue", delay = NULL) {
+blprog <- function(label, total, quiet = NULL, color = "blue", delay = NULL) {
   .rmbl_no_fn(label = label)
   label <- as.character(label)
   if (length(label) != 1L || is.na(label)) stop("`label` must be a single string", call. = FALSE)

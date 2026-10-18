@@ -12,11 +12,11 @@
 
 #' Run falsification controls against a statistic
 #'
-#' Recomputes `statistic` under conditions in which its value is known
+#' Recomputes `stat` under conditions in which its value is known
 #' in advance, and reports whether it behaved. Four controls, each
 #' answering a different way of being wrong:
 #'
-#' * **permutation** -- shuffle `treatment` and the association it
+#' * **permutation** -- shuffle `trt` and the association it
 #' carries is destroyed, so the statistic should fall to its null
 #' distribution. Reports where the observed value sits in that
 #' distribution, and the smallest p-value the number of permutations could
@@ -24,7 +24,7 @@
 #' * **random common cause** -- add a column of noise. It cannot
 #' possibly matter, so a statistic that moves is reading something other
 #' than the data.
-#' * **placebo treatment** -- replace `treatment` with a random draw of
+#' * **placebo treatment** -- replace `trt` with a random draw of
 #' the same shape. The effect should vanish; if it does not, the statistic
 #' is picking up structure that has nothing to do with the exposure.
 #' * **subset stability** -- recompute on random subsets. Wide spread
@@ -46,7 +46,7 @@
 #' standard normal noise changes the statistic by at most
 #' \eqn{10^{-8} \max(1, |s_{obs}|)};
 #' * subset stability -- the observed value lies inside the middle 95% of the
-#' statistic over `n` random subsets of `round(subset_frac * nrow(data))`
+#' statistic over `n` random subsets of `round(subfrac * nrow(data))`
 #' rows (at least two).
 #'
 #' A permutation or subset on which the statistic errors or is not finite is
@@ -55,23 +55,23 @@
 #' `options(morie.progress)` allows it. With `seed` the random number stream
 #' is set for the call and the caller's stream restored afterwards.
 #'
-#' Errors: `data` not a data frame or with fewer than 4 rows; `statistic` not a
+#' Errors: `data` not a data frame or with fewer than 4 rows; `stat` not a
 #' function, or failing or not returning one finite number on the data as
 #' given, the placebo data or the noise-augmented data; `n` below 9;
-#' `subset_frac` not strictly between 0 and 1; `treatment` not a column of
+#' `subfrac` not strictly between 0 and 1; `trt` not a column of
 #' `data`.
 #'
 #' @param data A data frame.
-#' @param statistic A function of one data frame returning
+#' @param stat A function of one data frame returning
 #' a single finite number.
-#' @param treatment Name of the column the finding is
+#' @param trt Name of the column the finding is
 #' about, permuted for the permutation and placebo controls. Optional:
 #' without it those two controls are skipped and reported as such rather
 #' than silently omitted.
 #' @param n Integer scalar, the number of permutations and of subsets, at
 #' least 9; default 199. The permutation p-value cannot be smaller than
 #' `1 / (n + 1)`, which is reported.
-#' @param subset_frac Numeric scalar strictly between 0 and 1, the fraction of
+#' @param subfrac Numeric scalar strictly between 0 and 1, the fraction of
 #' rows kept by the subset control; default 0.8.
 #' @param seed Optional integer seed. Supplied, the result is
 #' reproducible; omitted (`NULL`, the default), the current random number
@@ -88,9 +88,9 @@
 #' given). `print()` shows one line per control; `plot()` draws the
 #' permutation distribution.
 #' @seealso
-#' [capsule_power()] for the positive control
+#' [cpspwr()] for the positive control
 #' -- whether a real effect would have been seen at all;
-#' [capsule_attest()] for the different
+#' [cpsatst()] for the different
 #' question of whether the record is intact rather than whether the finding
 #' survives.
 #' @examples
@@ -98,53 +98,53 @@
 #' d <- data.frame(x = rnorm(200))
 #' d$y <- 0.8 * d$x + rnorm(200)
 #' # a real association survives its controls
-#' real <- capsule_falsify(d, function(z) cor(z$x, z$y),
-#'                         treatment = "x", n = 199, seed = 42)
+#' real <- cpsfals(d, function(z) cor(z$x, z$y),
+#'                         trt = "x", n = 199, seed = 42)
 #' real$controls[, c("control", "passed")]
 #'
 #' # and a statistic that ignores the data fails the ones that can see it
-#' fake <- capsule_falsify(d, function(z) 0.5, treatment = "x",
+#' fake <- cpsfals(d, function(z) 0.5, trt = "x",
 #'                         n = 199, seed = 42)
 #' fake$controls[fake$controls$control == "permutation", "passed"]
 #'
 #' # without a treatment column two controls are skipped, and say so
-#' fit <- capsule_falsify(d, function(z) mean(z$y), n = 49, seed = 1)
+#' fit <- cpsfals(d, function(z) mean(z$y), n = 49, seed = 1)
 #' fit$controls[, c("control", "passed")]
 #'
 #' # the statistic must return one finite number
-#' try(capsule_falsify(d, function(z) c(1, 2), n = 49))
+#' try(cpsfals(d, function(z) c(1, 2), n = 49))
 #' @export
-capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
-                            subset_frac = 0.8, seed = NULL) {
-  .rmbl_no_fn(treatment = treatment)
+cpsfals <- function(data, stat, trt = NULL, n = 199L,
+                            subfrac = 0.8, seed = NULL) {
+  .rmbl_no_fn(treatment = trt)
   if (!is.data.frame(data) || nrow(data) < 4L) {
     stop("`data` must be a data frame with at least 4 rows", call. = FALSE)
   }
-  if (!is.function(statistic)) {
-    stop("`statistic` must be a function of one data frame", call. = FALSE)
+  if (!is.function(stat)) {
+    stop("`stat` must be a function of one data frame", call. = FALSE)
   }
   n <- .rmbl_num(n, "n", integer = TRUE)[1L]
   if (is.na(n) || n < 9L) {
     stop("`n` must be at least 9: fewer permutations cannot produce a ",
          "p-value below 0.1", call. = FALSE)
   }
-  subset_frac <- .rmbl_num(subset_frac, "subset_frac")[1L]
-  if (is.na(subset_frac) || subset_frac <= 0 || subset_frac >= 1) {
-    stop("`subset_frac` must be between 0 and 1", call. = FALSE)
+  subfrac <- .rmbl_num(subfrac, "subfrac")[1L]
+  if (is.na(subfrac) || subfrac <= 0 || subfrac >= 1) {
+    stop("`subfrac` must be between 0 and 1", call. = FALSE)
   }
-  if (!is.null(treatment)) {
-    treatment <- as.character(treatment)[1L]
-    if (!treatment %in% names(data)) {
-      stop("`treatment` is not a column of `data`", call. = FALSE)
+  if (!is.null(trt)) {
+    trt <- as.character(trt)[1L]
+    if (!trt %in% names(data)) {
+      stop("`trt` is not a column of `data`", call. = FALSE)
     }
   }
   if (!is.null(seed)) seed <- .rmbl_r_seed(seed)
   if (!is.null(seed)) .rmbl_local_seed(seed)
 
-  pg <- bricklayer_progress("falsification", 2 * n + 1L)
+  pg <- blprog("falsification", 2 * n + 1L)
   on.exit(pg$done(), add = TRUE)
   pg$update(0, "the data as given")
-  observed <- .rmbl_falsify_eval(statistic, data, "the data as given")
+  observed <- .rmbl_falsify_eval(stat, data, "the data as given")
   rows <- list()
   add <- function(control, passed, value, detail) {
     rows[[length(rows) + 1L]] <<- data.frame(
@@ -153,17 +153,17 @@ capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
   }
 
   perm <- NULL
-  if (is.null(treatment)) {
+  if (is.null(trt)) {
     add("permutation", NA, NA_real_,
-        "skipped: no `treatment` column was named")
+        "skipped: no `trt` column was named")
     add("placebo", NA, NA_real_,
-        "skipped: no `treatment` column was named")
+        "skipped: no `trt` column was named")
   } else {
     perm <- vapply(seq_len(n), function(i) {
       pg$update(i, sprintf("permutation %d/%d", i, n))
       d <- data
-      d[[treatment]] <- sample(d[[treatment]])
-      tryCatch(as.numeric(statistic(d))[1L], error = .rmbl_or(NA_real_))
+      d[[trt]] <- sample(d[[trt]])
+      tryCatch(as.numeric(stat(d))[1L], error = .rmbl_or(NA_real_))
     }, numeric(1))
     ok <- is.finite(perm)
     # The two-sided permutation p-value, with the +1 that keeps it from
@@ -177,8 +177,8 @@ capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
                 p, sum(ok), floor_p))
 
     d <- data
-    d[[treatment]] <- sample(d[[treatment]])
-    placebo <- .rmbl_falsify_eval(statistic, d, "the placebo exposure")
+    d[[trt]] <- sample(d[[trt]])
+    placebo <- .rmbl_falsify_eval(stat, d, "the placebo exposure")
     # A placebo effect should sit inside the permutation null, since
     # that is exactly what it is a draw from.
     inside <- abs(placebo) <= stats::quantile(abs(perm[ok]), 0.95,
@@ -190,7 +190,7 @@ capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
 
   d <- data
   d[[".rmbl_random_common_cause"]] <- stats::rnorm(nrow(data))
-  rcc <- .rmbl_falsify_eval(statistic, d, "an added noise column")
+  rcc <- .rmbl_falsify_eval(stat, d, "an added noise column")
   moved <- abs(rcc - observed)
   tol <- 1e-8 * max(1, abs(observed))
   add("random_common_cause", moved <= tol, rcc,
@@ -199,11 +199,11 @@ capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
                      "the statistic reading its own inputs wrongly"),
               moved, tol))
 
-  k <- max(2L, as.integer(round(subset_frac * nrow(data))))
+  k <- max(2L, as.integer(round(subfrac * nrow(data))))
   subs <- vapply(seq_len(n), function(i) {
     pg$update(n + i, sprintf("subset %d/%d", i, n))
     idx <- sample.int(nrow(data), k)
-    tryCatch(as.numeric(statistic(data[idx, , drop = FALSE]))[1L],
+    tryCatch(as.numeric(stat(data[idx, , drop = FALSE]))[1L],
              error = .rmbl_or(NA_real_))
   }, numeric(1))
   sok <- is.finite(subs)
@@ -224,7 +224,7 @@ capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
   rownames(df) <- NULL
   out <- list(observed = observed, controls = df,
               permutation = perm,
-              n = n, treatment = treatment,
+              n = n, treatment = trt,
               rng_kind = paste(RNGkind(), collapse = ","),
               # as given: as.integer() made a seed past 2^31 - 1 NA
               seed = if (is.null(seed)) NA_integer_ else seed)
@@ -246,7 +246,7 @@ format.bricklayer_falsification <- function(x, ...) {
     .rmbl_rule())
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_falsification <- function(x, ...) {
   cat(format(x), sep = "\n")

@@ -9,25 +9,25 @@
 
 test_that("the percent change is the arithmetic, not the row order", {
   d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
-  y <- yoy(d, value = "n", period = "year")
+  y <- yoy(d, value = "n", prd = "year")
   got <- as.data.frame(y)
   expect_s3_class(y, "rmbl_yoy")
   expect_equal(got$year, 2019:2023)
   expect_equal(got$previous, c(NA, 402, 377, 190, 268))
   expect_equal(got$change, c(NA, -25, -187, 78, 63))
-  expect_equal(got$pct_change,
+  expect_equal(got$pctchg,
                100 * (c(NA, 377, 190, 268, 331) / c(NA, 402, 377, 190, 268) - 1))
   # the first period has nothing to compare with, and says so rather
   # than reporting a change of zero
-  expect_true(is.na(got$pct_change[1L]))
+  expect_true(is.na(got$pctchg[1L]))
   expect_identical(got$flag[1L], "no comparison period")
   # a bare column name works as well as a string
-  expect_equal(as.data.frame(yoy(d, value = n, period = year))$change,
+  expect_equal(as.data.frame(yoy(d, value = n, prd = year))$change,
                got$change)
-  expect_error(yoy(d, value = "nope", period = "year"), "not found")
-  expect_error(yoy(d, value = "n", period = "nope"), "not found")
-  expect_error(yoy(d, value = "n", period = "year", lag = 0), "positive")
-  expect_error(yoy(d, value = "n", period = "year", conf_level = 1),
+  expect_error(yoy(d, value = "nope", prd = "year"), "not found")
+  expect_error(yoy(d, value = "n", prd = "nope"), "not found")
+  expect_error(yoy(d, value = "n", prd = "year", lag = 0), "positive")
+  expect_error(yoy(d, value = "n", prd = "year", conflvl = 1),
                "strictly between 0 and 1")  # the shared message since 0.5.13
 })
 
@@ -36,7 +36,7 @@ test_that("a missing period is a gap, not a shifted comparison", {
   # matching on position would compare 2022 with 2020 and print a
   # confident number for a three-year change labelled as one year.
   d <- data.frame(year = c(2019, 2020, 2022, 2023), n = c(100, 120, 140, 150))
-  got <- as.data.frame(yoy(d, value = "n", period = "year"))
+  got <- as.data.frame(yoy(d, value = "n", prd = "year"))
   expect_equal(got$year, 2019:2023)
   # 2021 is present as a row with no value
   expect_true(is.na(got$value[got$year == 2021]))
@@ -48,7 +48,7 @@ test_that("a missing period is a gap, not a shifted comparison", {
   expect_equal(got$change[got$year == 2023], 10)
   # turning completion off leaves the observed rows alone, and the
   # comparison is STILL matched on the period rather than the row
-  raw <- as.data.frame(yoy(d, value = "n", period = "year",
+  raw <- as.data.frame(yoy(d, value = "n", prd = "year",
                            complete = FALSE))
   expect_equal(nrow(raw), 4L)
   expect_true(is.na(raw$previous[raw$year == 2022]))
@@ -85,42 +85,42 @@ test_that("the count interval is exactly poisson.test's", {
   expect_true(is.na(z$lower) && is.na(z$upper))
   # the interval brackets the point estimate it belongs to
   d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
-  got <- as.data.frame(yoy(d, value = "n", period = "year"))
-  ok <- !is.na(got$pct_change)
-  expect_true(all(got$pct_lower[ok] <= got$pct_change[ok]))
-  expect_true(all(got$pct_upper[ok] >= got$pct_change[ok]))
+  got <- as.data.frame(yoy(d, value = "n", prd = "year"))
+  ok <- !is.na(got$pctchg)
+  expect_true(all(got$pctlo[ok] <= got$pctchg[ok]))
+  expect_true(all(got$pctup[ok] >= got$pctchg[ok]))
 })
 
 test_that("a percent off a small base is computed, with its exact interval", {
   # two placements becoming twenty is a 900% rise; the exact interval
   # carries how little a base of two supports, so nothing is withheld
   d <- data.frame(year = 2019:2021, n = c(2, 20, 25))
-  got <- as.data.frame(yoy(d, value = "n", period = "year"))
-  expect_equal(got$pct_change[got$year == 2020], 900)
+  got <- as.data.frame(yoy(d, value = "n", prd = "year"))
+  expect_equal(got$pctchg[got$year == 2020], 900)
   expect_true(is.na(got$flag[got$year == 2020]))
   # the interval is the exact one: conditional on 22 events, 20 fall in the later period
   ci <- stats::binom.test(20, 22)$conf.int
-  expect_equal(got$pct_lower[got$year == 2020], 100 * (ci[1] / (1 - ci[1]) - 1))
-  expect_equal(got$pct_upper[got$year == 2020], 100 * (ci[2] / (1 - ci[2]) - 1))
+  expect_equal(got$pctlo[got$year == 2020], 100 * (ci[1] / (1 - ci[1]) - 1))
+  expect_equal(got$pctup[got$year == 2020], 100 * (ci[2] / (1 - ci[2]) - 1))
   # wide, as a base of two must be, and it contains the estimate
-  expect_lt(got$pct_lower[got$year == 2020], 900)
-  expect_gt(got$pct_upper[got$year == 2020], 900)
+  expect_lt(got$pctlo[got$year == 2020], 900)
+  expect_gt(got$pctup[got$year == 2020], 900)
   expect_equal(got$change[got$year == 2020], 18)
   expect_identical(got$verdict[got$year == 2020], "up")
   # a minute change off a small base is reported too
-  m <- as.data.frame(yoy(data.frame(y = 1:2, n = c(15, 14)), value = "n", period = "y"))
-  expect_equal(m$pct_change[2L], -100 / 15)
+  m <- as.data.frame(yoy(data.frame(y = 1:2, n = c(15, 14)), value = "n", prd = "y"))
+  expect_equal(m$pctchg[2L], -100 / 15)
   # a note appears only when asked for, and still nothing is withheld
-  noted <- as.data.frame(yoy(d, value = "n", period = "year",
-                             min_base = 20))
-  expect_equal(noted$pct_change[noted$year == 2020], 900)
+  noted <- as.data.frame(yoy(d, value = "n", prd = "year",
+                             minbase = 20))
+  expect_equal(noted$pctchg[noted$year == 2020], 900)
   expect_identical(noted$flag[noted$year == 2020], "small base (below 20)")
   expect_true(is.na(noted$flag[noted$year == 2021]))
   # a previous period of zero has no percent change to report, whatever
   # the gate
   z <- as.data.frame(yoy(data.frame(y = 1:2, n = c(0, 5)),
-                         value = "n", period = "y", min_base = 0))
-  expect_true(is.na(z$pct_change[2L]))
+                         value = "n", prd = "y", minbase = 0))
+  expect_true(is.na(z$pctchg[2L]))
   expect_identical(z$flag[2L], "previous period is zero")
 })
 
@@ -129,17 +129,17 @@ test_that("a percentage changes by points, not by percent", {
   # two are different quantities and reporting the second as "the
   # change" is the standard error
   d <- data.frame(year = 2019:2021, share = c(4.0, 5.0, 5.5))
-  got <- as.data.frame(yoy(d, value = "share", period = "year",
+  got <- as.data.frame(yoy(d, value = "share", prd = "year",
                            units = "percent"))
-  expect_true("pp_change" %in% names(got))
-  expect_false("pct_change" %in% names(got))
-  expect_equal(got$pp_change, c(NA, 1.0, 0.5))
+  expect_true("ppchg" %in% names(got))
+  expect_false("pctchg" %in% names(got))
+  expect_equal(got$ppchg, c(NA, 1.0, 0.5))
   # no count interval either, since these are not counts
-  expect_false("pct_lower" %in% names(got))
+  expect_false("pctlo" %in% names(got))
   # a measured quantity keeps its decimals rather than printing as a
   # count
   out <- utils::capture.output(print(yoy(d, value = "share",
-                                         period = "year",
+                                         prd = "year",
                                          units = "percent"),
                                      color = FALSE))
   expect_true(any(grepl("4.0", out, fixed = TRUE)))
@@ -150,17 +150,17 @@ test_that("count units refuse a measured quantity", {
   # the exact interval is only meaningful for counts, so a fractional
   # value is refused rather than silently rounded into one
   d <- data.frame(year = 2019:2021, x = c(1.5, 2.5, 3.5))
-  expect_error(yoy(d, value = "x", period = "year"), "whole numbers")
+  expect_error(yoy(d, value = "x", prd = "year"), "whole numbers")
   expect_error(yoy(data.frame(y = 1:2, n = c(-1, 2)), value = "n",
-                   period = "y"), "whole numbers")
+                   prd = "y"), "whole numbers")
   # and continuous units accept it, without claiming an interval
-  got <- as.data.frame(yoy(d, value = "x", period = "year",
+  got <- as.data.frame(yoy(d, value = "x", prd = "year",
                            units = "continuous"))
-  expect_equal(got$pct_change, c(NA, 100 * (2.5 / 1.5 - 1),
+  expect_equal(got$pctchg, c(NA, 100 * (2.5 / 1.5 - 1),
                                  100 * (3.5 / 2.5 - 1)))
-  expect_false("pct_lower" %in% names(got))
+  expect_false("pctlo" %in% names(got))
   expect_error(yoy(data.frame(y = 1:2, s = c("a", "b")), value = "s",
-                   period = "y"), "must be numeric")
+                   prd = "y"), "must be numeric")
 })
 
 test_that("groups are compared within themselves", {
@@ -168,20 +168,20 @@ test_that("groups are compared within themselves", {
     year = rep(2019:2021, each = 2),
     gender = rep(c("Female", "Male"), 3),
     n = c(31, 402, 28, 377, 12, 190))
-  got <- as.data.frame(yoy(seg, value = "n", period = "year",
-                           by = "gender", min_base = 0))
+  got <- as.data.frame(yoy(seg, value = "n", prd = "year",
+                           by = "gender", minbase = 0))
   f <- got[got$gender == "Female", ]
   m <- got[got$gender == "Male", ]
   # Female 2020 compares with Female 2019, not with Male 2019
   expect_equal(f$previous, c(NA, 31, 28))
   expect_equal(m$previous, c(NA, 402, 377))
   expect_equal(f$change, c(NA, -3, -16))
-  expect_error(yoy(seg, value = "n", period = "year", by = "nope"),
+  expect_error(yoy(seg, value = "n", prd = "year", by = "nope"),
                "`by` column not found")
   # two grouping columns
   seg$region <- rep(c("N", "S"), 3)
-  two <- as.data.frame(yoy(seg, value = "n", period = "year",
-                           by = c("gender", "region"), min_base = 0))
+  two <- as.data.frame(yoy(seg, value = "n", prd = "year",
+                           by = c("gender", "region"), minbase = 0))
   expect_true(all(c("gender", "region") %in% names(two)))
   expect_equal(nrow(two), 6L)
 })
@@ -191,19 +191,19 @@ test_that("repeated rows inside a period are aggregated first", {
   # measure has to be totalled before it can be compared
   d <- data.frame(year = c(rep(2019, 3), rep(2020, 2)),
                   n = c(10, 20, 30, 25, 35))
-  got <- as.data.frame(yoy(d, value = "n", period = "year"))
+  got <- as.data.frame(yoy(d, value = "n", prd = "year"))
   expect_equal(got$value, c(60, 60))
   expect_equal(got$change, c(NA, 0))
   # another aggregation is available where a total is the wrong summary
-  avg <- as.data.frame(yoy(d, value = "n", period = "year", fun = mean,
+  avg <- as.data.frame(yoy(d, value = "n", prd = "year", fun = mean,
                            units = "continuous"))
   expect_equal(avg$value, c(20, 30))
-  expect_equal(avg$pct_change, c(NA, 50))
+  expect_equal(avg$pctchg, c(NA, 50))
   # the period column keeps its own type through the aggregation
   dd <- data.frame(when = as.Date(c("2019-01-01", "2019-01-01",
                                     "2020-01-01")),
                    n = c(1, 2, 6))
-  a <- as.data.frame(yoy(dd, value = "n", period = "when", min_base = 0))
+  a <- as.data.frame(yoy(dd, value = "n", prd = "when", minbase = 0))
   expect_s3_class(a$when, "Date")
   expect_equal(a$value, c(3, 6))
 })
@@ -212,7 +212,7 @@ test_that("a seasonal series compares with the same season", {
   # the lag for a monthly series is twelve, not one: comparing with the
   # previous OBSERVATION would put January against December
   x <- stats::ts(c(10:21, 20:31), start = c(2021, 1), frequency = 12)
-  got <- as.data.frame(yoy(x, min_base = 0))
+  got <- as.data.frame(yoy(x, minbase = 0))
   expect_equal(nrow(got), 24L)
   # the first twelve have no counterpart a year earlier
   expect_true(all(is.na(got$previous[1:12])))
@@ -222,87 +222,87 @@ test_that("a seasonal series compares with the same season", {
   expect_equal(got$change[13L], 10)
   # a quarterly series takes four
   q <- stats::ts(c(1:4, 5:8), start = c(2021, 1), frequency = 4)
-  gq <- as.data.frame(yoy(q, min_base = 0))
+  gq <- as.data.frame(yoy(q, minbase = 0))
   expect_true(all(is.na(gq$previous[1:4])))
   expect_equal(gq$previous[5L], 1)
   # an explicit lag overrides the frequency
-  g1 <- as.data.frame(yoy(q, lag = 1L, min_base = 0))
+  g1 <- as.data.frame(yoy(q, lag = 1L, minbase = 0))
   expect_equal(g1$previous[2L], 1)
   # a plain vector indexes by position when no periods are given
-  v <- as.data.frame(yoy(c(100, 110, 121), min_base = 0))
-  expect_equal(v$pct_change, c(NA, 10, 10))
+  v <- as.data.frame(yoy(c(100, 110, 121), minbase = 0))
+  expect_equal(v$pctchg, c(NA, 10, 10))
   # and an integer vector goes the same way
-  expect_equal(as.data.frame(yoy(c(100L, 150L), min_base = 0))$change,
+  expect_equal(as.data.frame(yoy(c(100L, 150L), minbase = 0))$change,
                c(NA, 50))
 })
 
 test_that("a longer lag compares with a longer-ago period", {
   d <- data.frame(year = 2015:2023, n = seq(100, 180, by = 10))
-  l3 <- as.data.frame(yoy(d, value = "n", period = "year", lag = 3L))
+  l3 <- as.data.frame(yoy(d, value = "n", prd = "year", lag = 3L))
   expect_true(all(is.na(l3$previous[1:3])))
   expect_equal(l3$previous[4L], 100)
   expect_equal(l3$change[4L], 30)
   # and the footer says which lag produced the column
-  out <- utils::capture.output(print(yoy(d, value = "n", period = "year",
+  out <- utils::capture.output(print(yoy(d, value = "n", prd = "year",
                                          lag = 3L), color = FALSE))
   expect_true(any(grepl("lag 3 periods", out, fixed = TRUE)))
 })
 
 test_that("direction decides what counts as an improvement", {
   d <- data.frame(year = 2019:2020, n = c(100, 150))
-  up <- as.data.frame(yoy(d, value = "n", period = "year"))
+  up <- as.data.frame(yoy(d, value = "n", prd = "year"))
   expect_identical(up$verdict[2L], "up")
-  better <- as.data.frame(yoy(d, value = "n", period = "year",
-                              direction = "higher_is_better"))
+  better <- as.data.frame(yoy(d, value = "n", prd = "year",
+                              dir = "higher"))
   expect_identical(better$verdict[2L], "better")
-  worse <- as.data.frame(yoy(d, value = "n", period = "year",
-                             direction = "lower_is_better"))
+  worse <- as.data.frame(yoy(d, value = "n", prd = "year",
+                             dir = "lower"))
   expect_identical(worse$verdict[2L], "worse")
   # the arithmetic is untouched by the choice
-  expect_equal(up$pct_change, worse$pct_change)
+  expect_equal(up$pctchg, worse$pctchg)
   # and an unchanged period is unchanged under every direction
   flat <- data.frame(year = 2019:2020, n = c(100, 100))
-  for (dir in c("neutral", "higher_is_better", "lower_is_better")) {
-    g <- as.data.frame(yoy(flat, value = "n", period = "year",
-                           direction = dir))
+  for (dir in c("neutral", "higher", "lower")) {
+    g <- as.data.frame(yoy(flat, value = "n", prd = "year",
+                           dir = dir))
     expect_identical(g$verdict[2L], "unchanged")
   }
 })
 
 test_that("the span summary is the compound rate", {
   d <- data.frame(year = 2019:2023, n = c(100, 110, 120, 130, 160))
-  s <- yoy_summary(yoy(d, value = "n", period = "year"))
+  s <- yoysmry(yoy(d, value = "n", prd = "year"))
   expect_equal(s$first, 100)
   expect_equal(s$last, 160)
-  expect_equal(s$total_pct, 60)
+  expect_equal(s$totalpct, 60)
   # four steps from 100 to 160, so the compound rate per period is the
   # fourth root of the total growth
-  expect_equal(s$cagr_pct, 100 * ((160 / 100)^(1 / 4) - 1))
+  expect_equal(s$cagrpct, 100 * ((160 / 100)^(1 / 4) - 1))
   # and compounding it back over the span returns the total
-  expect_equal(100 * ((1 + s$cagr_pct / 100)^4 - 1), s$total_pct)
+  expect_equal(100 * ((1 + s$cagrpct / 100)^4 - 1), s$totalpct)
   expect_equal(s$periods, 5L)
   expect_equal(s$up, 4L)
   expect_equal(s$down, 0L)
   # a compound rate out of zero does not exist
-  z <- yoy_summary(yoy(data.frame(y = 1:3, n = c(0, 5, 10)),
-                       value = "n", period = "y", min_base = 0))
-  expect_true(is.na(z$cagr_pct))
-  expect_true(is.na(z$total_pct))
+  z <- yoysmry(yoy(data.frame(y = 1:3, n = c(0, 5, 10)),
+                       value = "n", prd = "y", minbase = 0))
+  expect_true(is.na(z$cagrpct))
+  expect_true(is.na(z$totalpct))
   # one row per group
   seg <- data.frame(year = rep(2019:2021, each = 2),
                     g = rep(c("a", "b"), 3), n = c(10, 100, 20, 90, 30, 80))
-  sg <- yoy_summary(yoy(seg, value = "n", period = "year", by = "g",
-                        min_base = 0))
+  sg <- yoysmry(yoy(seg, value = "n", prd = "year", by = "g",
+                        minbase = 0))
   expect_equal(nrow(sg), 2L)
   expect_true("g" %in% names(sg))
-  expect_equal(sg$total_pct[sg$g == "a"], 200)
-  expect_equal(sg$total_pct[sg$g == "b"], -20)
+  expect_equal(sg$totalpct[sg$g == "a"], 200)
+  expect_equal(sg$totalpct[sg$g == "b"], -20)
 })
 
 test_that("printing says what the percentages mean", {
   d <- data.frame(year = 2019:2021, n = c(2, 200, 250))
-  out <- utils::capture.output(print(yoy(d, value = "n", period = "year",
-                                         direction = "lower_is_better"),
+  out <- utils::capture.output(print(yoy(d, value = "n", prd = "year",
+                                         dir = "lower"),
                                      color = FALSE))
   txt <- paste(out, collapse = "\n")
   # the settings a reader needs in order to know what the column is
@@ -313,41 +313,41 @@ test_that("printing says what the percentages mean", {
   # a small base prints its percent: 2 to 200 is +9900%
   expect_match(txt, "9900")
   # and the reason a particular percent is absent, on its own row
-  z <- utils::capture.output(print(yoy(data.frame(year = 1:2, n = c(0, 4)), value = "n", period = "year"),
+  z <- utils::capture.output(print(yoy(data.frame(year = 1:2, n = c(0, 4)), value = "n", prd = "year"),
                                    color = FALSE))
   expect_match(paste(z, collapse = "\n"), "note: previous period is zero")
   # colour is off when asked, and the table is still readable
   expect_false(grepl("\033", txt, fixed = TRUE))
   # colour is emitted when asked for
-  col <- utils::capture.output(print(yoy(d, value = "n", period = "year"),
+  col <- utils::capture.output(print(yoy(d, value = "n", prd = "year"),
                                      color = TRUE))
   expect_true(any(grepl("\033[38;2;", col, fixed = TRUE)))
   # the mono palette prints no colour even when colour is on
-  mono <- utils::capture.output(print(yoy(d, value = "n", period = "year"),
+  mono <- utils::capture.output(print(yoy(d, value = "n", prd = "year"),
                                       color = TRUE, palette = "mono"))
   expect_false(any(grepl("\033", mono, fixed = TRUE)))
-  expect_error(print(yoy(d, value = "n", period = "year"),
+  expect_error(print(yoy(d, value = "n", prd = "year"),
                      palette = "neon"), "must be one of")
   # row capping
   big <- data.frame(year = 2000:2050, n = seq(100, 600, by = 10))
   capped <- utils::capture.output(print(yoy(big, value = "n",
-                                            period = "year"),
+                                            prd = "year"),
                                         color = FALSE, n = 5L))
   expect_true(any(grepl("more rows", capped, fixed = TRUE)))
-  expect_true("diverging" %in% yoy_palettes())
+  expect_true("diverging" %in% yoypals())
 })
 
 test_that("the delimited writers round-trip through base R's readers", {
   d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
-  y <- yoy(d, value = "n", period = "year")
+  y <- yoy(d, value = "n", prd = "year")
   ref <- as.data.frame(y)
 
   f <- tempfile(fileext = ".csv")
   on.exit(unlink(f), add = TRUE)
-  yoy_csv(y, f)
+  yoycsv(y, f)
   back <- utils::read.csv(f, comment.char = "#")
   expect_equal(as.numeric(back$value), ref$value)
-  expect_equal(back$pct_change, ref$pct_change)
+  expect_equal(back$pctchg, ref$pctchg)
   # the flag travels with the numbers: a CSV that dropped it would hand
   # on the one figure the table declined to stand behind
   expect_identical(back$flag[1L], "no comparison period")
@@ -359,21 +359,21 @@ test_that("the delimited writers round-trip through base R's readers", {
 
   g <- tempfile(fileext = ".tsv")
   on.exit(unlink(g), add = TRUE)
-  yoy_tsv(y, g)
+  yoytsv(y, g)
   bt <- utils::read.delim(g, comment.char = "#")
   expect_equal(as.numeric(bt$value), ref$value)
   # no metadata when it is not wanted
-  yoy_csv(y, f, metadata = FALSE)
+  yoycsv(y, f, meta = FALSE)
   expect_false(startsWith(readLines(f, n = 1L), "#"))
   # rounding is available for a figure meant to be read
-  yoy_csv(y, f, digits = 1L, metadata = FALSE)
-  expect_equal(utils::read.csv(f)$pct_change, round(ref$pct_change, 1L))
+  yoycsv(y, f, digits = 1L, meta = FALSE)
+  expect_equal(utils::read.csv(f)$pctchg, round(ref$pctchg, 1L))
   # NA spelling is settable
-  yoy_csv(y, f, na = "NA", metadata = FALSE)
+  yoycsv(y, f, na = "NA", meta = FALSE)
   expect_true(any(grepl(",NA,", readLines(f), fixed = TRUE)))
   # text, rather than a file, when no path is given
-  expect_type(yoy_csv(y, NULL), "character")
-  expect_match(yoy_csv(y, NULL), "year,value")
+  expect_type(yoycsv(y, NULL), "character")
+  expect_match(yoycsv(y, NULL), "year,value")
 })
 
 test_that("a separator inside a field cannot break the columns", {
@@ -382,10 +382,10 @@ test_that("a separator inside a field cannot break the columns", {
   d <- data.frame(year = rep(2019:2020, each = 2),
                   region = rep(c("North, Central", "Say \"hi\""), 2),
                   n = c(100, 200, 120, 180))
-  y <- yoy(d, value = "n", period = "year", by = "region")
+  y <- yoy(d, value = "n", prd = "year", by = "region")
   f <- tempfile(fileext = ".csv")
   on.exit(unlink(f), add = TRUE)
-  yoy_csv(y, f)
+  yoycsv(y, f)
   back <- utils::read.csv(f, comment.char = "#")
   # the row count and the labels survive the comma and the quotes
   expect_equal(nrow(back), 4L)
@@ -398,7 +398,7 @@ test_that("a separator inside a field cannot break the columns", {
                    region = c("A\tB", "A\tB"), n = c(100, 120))
   g <- tempfile(fileext = ".tsv")
   on.exit(unlink(g), add = TRUE)
-  yoy_tsv(yoy(d2, value = "n", period = "year", by = "region"), g)
+  yoytsv(yoy(d2, value = "n", prd = "year", by = "region"), g)
   bt <- utils::read.delim(g, comment.char = "#")
   expect_equal(nrow(bt), 2L)
   expect_identical(bt$region[1L], "A B")
@@ -407,13 +407,13 @@ test_that("a separator inside a field cannot break the columns", {
 test_that("the JSON keeps the settings as fields", {
   skip_if_not_installed("jsonlite")
   d <- data.frame(year = 2019:2021, n = c(100, 120, 140))
-  y <- yoy(d, value = "n", period = "year",
-           direction = "lower_is_better")
-  txt <- yoy_json(y, NULL)
+  y <- yoy(d, value = "n", prd = "year",
+           dir = "lower")
+  txt <- yoyjs(y, NULL)
   obj <- jsonlite::fromJSON(txt, simplifyVector = FALSE)
   expect_identical(obj$settings$value, "n")
   expect_identical(obj$settings$units, "count")
-  expect_identical(obj$settings$direction, "lower_is_better")
+  expect_identical(obj$settings$direction, "lower")
   expect_equal(obj$settings$lag, 1L)
   # an absent grouping is an absent key, not an empty object
   expect_null(obj$settings$by)
@@ -423,21 +423,21 @@ test_that("the JSON keeps the settings as fields", {
   # a grouped table names its grouping
   g <- yoy(data.frame(year = rep(2019:2020, each = 2),
                       k = rep(c("a", "b"), 2), n = c(1, 2, 3, 4)),
-           value = "n", period = "year", by = "k", min_base = 0)
-  og <- jsonlite::fromJSON(yoy_json(g, NULL), simplifyVector = FALSE)
+           value = "n", prd = "year", by = "k", minbase = 0)
+  og <- jsonlite::fromJSON(yoyjs(g, NULL), simplifyVector = FALSE)
   expect_identical(unlist(og$settings$by), "k")
   # and it is written with this package's own codec
   f <- tempfile(fileext = ".json")
   on.exit(unlink(f), add = TRUE)
-  yoy_json(y, f)
-  expect_equal(bricklayer_json_from_json(paste(readLines(f),
+  yoyjs(y, f)
+  expect_equal(fromjs(paste(readLines(f),
                                                collapse = "\n"))$rows$change,
                c(NA, 20, 20))
 })
 
 test_that("the Markdown table lines up and escapes its cells", {
   d <- data.frame(year = 2019:2021, n = c(100, 120, 140))
-  md <- yoy_markdown(yoy(d, value = "n", period = "year"), NULL)
+  md <- yoymd(yoy(d, value = "n", prd = "year"), NULL)
   lines <- strsplit(md, "\n", fixed = TRUE)[[1L]]
   tbl <- lines[startsWith(lines, "|")]
   expect_gte(length(tbl), 5L)
@@ -453,13 +453,13 @@ test_that("the Markdown table lines up and escapes its cells", {
   # right-aligned numeric columns are marked as such
   expect_match(tbl[2L], "-:")
   # a pipe inside a label is escaped instead of ending the cell
-  p <- yoy_markdown(
+  p <- yoymd(
     yoy(data.frame(year = rep(2019:2020, each = 1),
                    k = c("a|b", "a|b"), n = c(10, 20)),
-        value = "n", period = "year", by = "k", min_base = 0), NULL)
+        value = "n", prd = "year", by = "k", minbase = 0), NULL)
   expect_match(p, "a\\\\|b")
   # unaligned output is still a valid table
-  u <- yoy_markdown(yoy(d, value = "n", period = "year"), NULL,
+  u <- yoymd(yoy(d, value = "n", prd = "year"), NULL,
                     align = FALSE)
   expect_match(u, "| year |", fixed = TRUE)
 })
@@ -468,10 +468,10 @@ test_that("the HTML is self-contained and escapes its content", {
   d <- data.frame(year = rep(2019:2020, each = 1),
                   region = c("<script>alert(1)</script>", "x"),
                   n = c(100, 120))
-  y <- yoy(d, value = "n", period = "year", by = "region", min_base = 0)
+  y <- yoy(d, value = "n", prd = "year", by = "region", minbase = 0)
   f <- tempfile(fileext = ".html")
   on.exit(unlink(f), add = TRUE)
-  yoy_html(y, f, title = "A & B <report>", notes = "Note <here>")
+  yoyhtml(y, f, title = "A & B <report>", notes = "Note <here>")
   txt <- paste(readLines(f, warn = FALSE), collapse = "\n")
   # a group label comes from open data, so markup in it must not survive
   # as markup
@@ -493,18 +493,18 @@ test_that("the HTML is self-contained and escapes its content", {
   # the summary cards
   expect_true(grepl("Across the span", txt, fixed = TRUE))
   # bars can be turned off
-  yoy_html(y, f, bars = FALSE)
+  yoyhtml(y, f, bars = FALSE)
   expect_false(grepl("class=\"bar", paste(readLines(f, warn = FALSE),
                                           collapse = ""), fixed = TRUE))
-  expect_error(yoy_html(list(), f), "rmbl_yoy")
+  expect_error(yoyhtml(list(), f), "rmbl_yoy")
 })
 
 test_that("the PDF is a PDF, and pages rather than truncates", {
   d <- data.frame(year = 2000:2060, n = seq(100, 700, by = 10))
-  y <- yoy(d, value = "n", period = "year")
+  y <- yoy(d, value = "n", prd = "year")
   f <- tempfile(fileext = ".pdf")
   on.exit(unlink(f), add = TRUE)
-  expect_silent(yoy_pdf(y, f, title = "Long table"))
+  expect_silent(yoypdf(y, f, title = "Long table"))
   # the file really is a PDF
   expect_identical(rawToChar(readBin(f, "raw", 5L)), "%PDF-")
   expect_gt(file.size(f), 1000)
@@ -524,90 +524,90 @@ test_that("the PDF is a PDF, and pages rather than truncates", {
   # a short table needs only one page, and draws without the glyph
   # substitution warnings the device's base fonts would otherwise emit
   short <- yoy(data.frame(year = 2019:2021, n = c(100, 120, 140)),
-               value = "n", period = "year")
-  expect_silent(yoy_pdf(short, f))
-  expect_error(yoy_pdf(list(), f), "rmbl_yoy")
+               value = "n", prd = "year")
+  expect_silent(yoypdf(short, f))
+  expect_error(yoypdf(list(), f), "rmbl_yoy")
 })
 
 test_that("the format follows the file name", {
   d <- data.frame(year = 2019:2021, n = c(100, 120, 140))
-  y <- yoy(d, value = "n", period = "year")
+  y <- yoy(d, value = "n", prd = "year")
   for (ext in c("csv", "tsv", "tab", "json", "md", "markdown", "html",
                 "htm", "pdf")) {
     f <- tempfile(fileext = paste0(".", ext))
-    yoy_write(y, f)
+    yoywr(y, f)
     expect_true(file.exists(f))
     expect_gt(file.size(f), 50)
     unlink(f)
   }
   # an upper-case extension is the same extension
   f <- tempfile(fileext = ".CSV")
-  yoy_write(y, f)
+  yoywr(y, f)
   expect_match(paste(readLines(f), collapse = ""), "year,value")
   unlink(f)
   # an unrecognised name asks rather than guessing
-  expect_error(yoy_write(y, tempfile(fileext = ".xyz")),
+  expect_error(yoywr(y, tempfile(fileext = ".xyz")),
                "cannot tell the format")
   # and an explicit format overrides the name
   f <- tempfile(fileext = ".xyz")
-  yoy_write(y, f, format = "csv")
+  yoywr(y, f, format = "csv")
   expect_match(paste(readLines(f), collapse = ""), "year,value")
   unlink(f)
-  expect_error(yoy_write(y, tempfile(), format = "xml"), "unknown format")
-  expect_error(yoy_write(list(), tempfile(fileext = ".csv")), "rmbl_yoy")
+  expect_error(yoywr(y, tempfile(), format = "xml"), "unknown format")
+  expect_error(yoywr(list(), tempfile(fileext = ".csv")), "rmbl_yoy")
 })
 
 test_that("degenerate input degrades rather than erroring", {
   # one period has nothing to compare with
   one <- as.data.frame(yoy(data.frame(y = 2019, n = 100), value = "n",
-                           period = "y"))
+                           prd = "y"))
   expect_equal(nrow(one), 1L)
   expect_true(is.na(one$previous))
   expect_identical(one$flag, "no comparison period")
-  expect_equal(nrow(yoy_summary(yoy(data.frame(y = 2019, n = 100),
-                                    value = "n", period = "y"))), 1L)
+  expect_equal(nrow(yoysmry(yoy(data.frame(y = 2019, n = 100),
+                                    value = "n", prd = "y"))), 1L)
   # an all-missing value column
   na <- yoy(data.frame(y = 2019:2021, n = c(NA_real_, NA, NA)),
-            value = "n", period = "y")
+            value = "n", prd = "y")
   expect_equal(nrow(as.data.frame(na)), 3L)
-  expect_true(all(is.na(as.data.frame(na)$pct_change)))
-  s <- yoy_summary(na)
+  expect_true(all(is.na(as.data.frame(na)$pctchg)))
+  s <- yoysmry(na)
   expect_equal(s$periods, 0L)
-  expect_true(is.na(s$cagr_pct))
+  expect_true(is.na(s$cagrpct))
   # an empty table prints without erroring
   empty <- yoy(data.frame(y = numeric(0), n = numeric(0)), value = "n",
-               period = "y")
+               prd = "y")
   expect_equal(nrow(as.data.frame(empty)), 0L)
   expect_output(print(empty), "no periods")
   # and writes an empty file with only its header
   f <- tempfile(fileext = ".csv")
   on.exit(unlink(f), add = TRUE)
-  yoy_csv(empty, f, metadata = FALSE)
+  yoycsv(empty, f, meta = FALSE)
   expect_equal(length(readLines(f)), 1L)
   # an irregular period column has no grid, so nothing is compared and
   # nothing is invented
   irr <- as.data.frame(yoy(data.frame(y = c(1, 2, 5, 11), n = c(1, 2, 3, 4)),
-                           value = "n", period = "y", min_base = 0))
+                           value = "n", prd = "y", minbase = 0))
   expect_true(all(c("previous", "change") %in% names(irr)))
 })
 
 test_that("a label changes the printing and nothing else", {
   seg <- data.frame(EndFiscalYear = 2019:2023,
                     n = c(402, 377, 190, 268, 331))
-  y <- yoy(seg, value = n, period = EndFiscalYear)
+  y <- yoy(seg, value = n, prd = EndFiscalYear)
   # 2023 keys the fiscal year 2022/23, so printing it as "2023" names a
   # calendar year the row is not about
-  expect_equal(fiscal_year_label(2019:2023),
+  expect_equal(fylbl(2019:2023),
                c("2018/19", "2019/20", "2020/21", "2021/22", "2022/23"))
-  expect_equal(fiscal_year_label(2023, short = FALSE), "2022/2023")
-  expect_equal(fiscal_year_label(2023, sep = "-"), "2022-23")
-  expect_true(is.na(fiscal_year_label("not a year")))
-  expect_equal(fiscal_year_label(2000), "1999/00")
+  expect_equal(fylbl(2023, short = FALSE), "2022/2023")
+  expect_equal(fylbl(2023, sep = "-"), "2022-23")
+  expect_true(is.na(fylbl("not a year")))
+  expect_equal(fylbl(2000), "1999/00")
 
-  lab <- yoy_label(y, fiscal_year_label)
+  lab <- yoylbl(y, fylbl)
   # the arithmetic already ran on the period's value, so a label cannot
   # move a number
-  expect_equal(as.data.frame(lab)$pct_change, as.data.frame(y)$pct_change)
+  expect_equal(as.data.frame(lab)$pctchg, as.data.frame(y)$pctchg)
   expect_equal(as.data.frame(lab)$previous, as.data.frame(y)$previous)
   expect_equal(as.data.frame(lab)$EndFiscalYear, 2019:2023)
 
@@ -615,37 +615,37 @@ test_that("a label changes the printing and nothing else", {
   out <- paste(utils::capture.output(print(lab, color = FALSE)),
                collapse = "\n")
   expect_match(out, "2022/23", fixed = TRUE)
-  expect_match(yoy_markdown(lab, NULL), "2022/23", fixed = TRUE)
-  expect_match(yoy_csv(lab, NULL), "2022/23", fixed = TRUE)
+  expect_match(yoymd(lab, NULL), "2022/23", fixed = TRUE)
+  expect_match(yoycsv(lab, NULL), "2022/23", fixed = TRUE)
   h <- tempfile(fileext = ".html")
   on.exit(unlink(h), add = TRUE)
-  yoy_html(lab, h)
+  yoyhtml(lab, h)
   expect_match(paste(readLines(h, warn = FALSE), collapse = ""),
                "2022/23", fixed = TRUE)
   pf <- tempfile(fileext = ".pdf")
   on.exit(unlink(pf), add = TRUE)
-  expect_silent(yoy_pdf(lab, pf))
+  expect_silent(yoypdf(lab, pf))
 
   # a plain function
-  f <- yoy_label(y, function(p) paste0("FY", substr(p, 3L, 4L)))
-  expect_match(yoy_csv(f, NULL), "FY19", fixed = TRUE)
+  f <- yoylbl(y, function(p) paste0("FY", substr(p, 3L, 4L)))
+  expect_match(yoycsv(f, NULL), "FY19", fixed = TRUE)
   # a named mapping relabels only what it names
-  n <- as.data.frame(yoy_label(y, c("2020" = "2019/20 (COVID)")))
-  expect_identical(n$period_label[n$EndFiscalYear == 2020],
+  n <- as.data.frame(yoylbl(y, c("2020" = "2019/20 (COVID)")))
+  expect_identical(n$perlbl[n$EndFiscalYear == 2020],
                    "2019/20 (COVID)")
-  expect_identical(n$period_label[n$EndFiscalYear == 2021], "2021")
+  expect_identical(n$perlbl[n$EndFiscalYear == 2021], "2021")
   # an unnamed vector must cover every period
   expect_equal(as.data.frame(
-    yoy_label(y, c("a", "b", "c", "d", "e")))$period_label,
+    yoylbl(y, c("a", "b", "c", "d", "e")))$perlbl,
     c("a", "b", "c", "d", "e"))
-  expect_error(yoy_label(y, c("a", "b")), "distinct periods")
-  expect_error(yoy_label(list(), fiscal_year_label), "rmbl_yoy")
+  expect_error(yoylbl(y, c("a", "b")), "distinct periods")
+  expect_error(yoylbl(list(), fylbl), "rmbl_yoy")
   # labels repeat correctly across groups, which share their periods
   g <- yoy(data.frame(y = rep(2019:2020, each = 2),
                       k = rep(c("a", "b"), 2), n = c(100, 200, 120, 180)),
-           value = "n", period = "y", by = "k")
-  gl <- as.data.frame(yoy_label(g, fiscal_year_label))
-  expect_equal(gl$period_label, fiscal_year_label(gl$y))
+           value = "n", prd = "y", by = "k")
+  gl <- as.data.frame(yoylbl(g, fylbl))
+  expect_equal(gl$perlbl, fylbl(gl$y))
 })
 
 test_that("the period helpers restore every key class and refuse a grid with no step", {
@@ -660,20 +660,20 @@ test_that("the period helpers restore every key class and refuse a grid with no 
 
 test_that("several rows of one period: counts add up, percentages are averaged", {
   d <- data.frame(year = c(2019, 2019, 2020, 2020), share = c(53, 57.9, 60, 62))
-  p <- yoy(d, value = "share", period = "year", units = "percent")
+  p <- yoy(d, value = "share", prd = "year", units = "percent")
   expect_equal(p$value[p$year == 2019], mean(c(53, 57.9)))
   n <- data.frame(year = c(2019, 2019, 2020, 2020), cases = c(53, 58, 60, 62))
-  k <- yoy(n, value = "cases", period = "year", units = "count")
+  k <- yoy(n, value = "cases", prd = "year", units = "count")
   expect_equal(k$value[k$year == 2019], 53 + 58)
-  m <- yoy(d, value = "share", period = "year", units = "percent", fun = max)
+  m <- yoy(d, value = "share", prd = "year", units = "percent", fun = max)
   expect_equal(m$value[m$year == 2019], 57.9)
 })
 
-test_that("the printed footer names a min_base only when one was set", {
+test_that("the printed footer names a minbase only when one was set", {
   d <- data.frame(year = 2019:2021, n = c(2, 20, 25))
-  plain <- paste(utils::capture.output(print(yoy(d, value = "n", period = "year"), color = FALSE)), collapse = "\n")
+  plain <- paste(utils::capture.output(print(yoy(d, value = "n", prd = "year"), color = FALSE)), collapse = "\n")
   expect_false(grepl("bases below", plain, fixed = TRUE))
-  noted <- paste(utils::capture.output(print(yoy(d, value = "n", period = "year", min_base = 20), color = FALSE)),
+  noted <- paste(utils::capture.output(print(yoy(d, value = "n", prd = "year", minbase = 20), color = FALSE)),
                  collapse = "\n")
   expect_match(noted, "bases below 20 noted", fixed = TRUE)
   expect_match(noted, "note: small base (below 20)", fixed = TRUE)
@@ -681,7 +681,7 @@ test_that("the printed footer names a min_base only when one was set", {
 
 test_that("a grouped table prints its group columns first", {
   d <- data.frame(year = rep(2020:2022, 2), g = rep(c("a", "b"), each = 3), n = c(10, 12, 15, 30, 28, 33))
-  out <- utils::capture.output(print(yoy(d, value = "n", period = "year", by = "g"), color = FALSE))
+  out <- utils::capture.output(print(yoy(d, value = "n", prd = "year", by = "g"), color = FALSE))
   hdr <- out[grepl("year", out)][1]
   expect_lt(regexpr("\\bg\\b", hdr), regexpr("year", hdr))
   expect_true(any(grepl("^\\s*b\\s", out)))

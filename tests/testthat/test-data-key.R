@@ -62,8 +62,8 @@ test_that("a restricted table refused with 403 says where to accept the terms", 
   expect_false(dk_ns(".bl_data_restricted")("chicago_crime/incidents"))
   withr::local_envvar(MORIE_DATA_URL = NA)
   local_mocked_bindings(.bl_data_key = function() "sk-x", .bl_data_url = function() "https://data.rmorie.com",
-                        bricklayer_data_manifest = function(...) list(datasets = list()),
-                        bricklayer_download = function(...) stop("https://data.rmorie.com/x answered HTTP 403"))
+                        dmnf = function(...) list(datasets = list()),
+                        bldl = function(...) stop("https://data.rmorie.com/x answered HTTP 403"))
   expect_error(dk_ns(".bl_data_get")("/icpsr_21600/ds0001.csv.gz", tempfile()),
                "icpsr_21600/ds0001 is a restricted table .* https://data.rmorie.com/terms")
   expect_error(dk_ns(".bl_data_get")("/chicago_crime/incidents.csv.gz", tempfile()), "rejected the stored key")

@@ -25,13 +25,13 @@ and a digest anyone can recompute says nothing about who produced the data.
 
 ## What it does
 
-- **One call for a published table** — `analyse_table()` takes a table of
+- **One call for a published table** — `anltab()` takes a table of
   counts by period and group and returns what changed with exact intervals,
   p-values adjusted over the whole scan, the envelope that rounding and
-  suppression in the release imply (`published_bounds()`), trend, rates if
+  suppression in the release imply (`pubbnd()`), trend, rates if
   there is an exposure, and a drift screen against the prior capsule;
-  `report_analysis()` writes it as Markdown or one HTML file and
-  `use_capsule_template()` starts a capsule that runs as written. Start
+  `rptanl()` writes it as Markdown or one HTML file and
+  `usecpstmpl()` starts a capsule that runs as written. Start
   with `vignette("getting-started")`.
   Topic guides: `vignette("post-quantum-signatures")`, `vignette("key-encapsulation")`,
   `vignette("side-channel-assurance")`, `vignette("hawkes-processes")`,
@@ -39,60 +39,60 @@ and a digest anyone can recompute says nothing about who produced the data.
   `vignette("stock-and-flow")`, `vignette("air-pollution-and-health")`,
   `vignette("plotting-results")` and the rest,
   grouped by topic on the package website.
-- **CKAN resolution** — `resolve_via_ckan()` / `resolve_via_ckan_search()`
+- **CKAN resolution** — `rslvckan()` / `rslvckns()`
   locate resources through a portal's `package_show` / `package_search`
   endpoints.
-- **Provenance** — `load_provenance()`, `make_manifest()`, `record()`,
-  `write_manifest_json()`, and `write_summary_txt()` capture every run as a
+- **Provenance** — `loadprov()`, `mkmnf()`, `recrd()`,
+  `wrmnfjs()`, and `wrsmrytxt()` capture every run as a
   manifest plus a plain-language summary.
-- **Integrity** — `sha256_file()` / `verify_sha256()` hash and verify
-  downloads; `download_data()` / `friendly_download()` fetch with a Wayback
+- **Integrity** — `sha256file()` / `vrfsha256()` hash and verify
+  downloads; `dldata()` / `fdl()` fetch with a Wayback
   Machine fallback.
-- **Categorical integrity** — `guard_recode()`, `decode_codes()`,
-  `guard_levels()`, `audit_categories()`, `verify_recode()`,
-  `verify_marginals()`, `odds_ratio_check()`, `relabel()`,
-  `decode_labelled()`, `transfer_verify()`, `relabel_forensics()` and a
-  signed `recode_manifest()`: recodes that refuse anything unmapped or
+- **Categorical integrity** — `grdrcd()`, `deccodes()`,
+  `grdlvls()`, `audcats()`, `vrfrcd()`,
+  `vrfmrg()`, `orchk()`, `relbl()`,
+  `declbld()`, `xfrvrf()`, `rlblfrns()` and a
+  signed `rcdmnf()`: recodes that refuse anything unmapped or
   positional, an SPSS/Stata/SAS import checked against the source code
   book and frequency table, reported odds ratios recomputed under every
   relabelling, and the mechanical step behind a permutation named, so a
   swapped label is fixed on the day, not blamed on the software.
-- **Asking a model** — `bricklayer_llm_ask()` puts a question to a language
+- **Asking a model** — `llmask()` puts a question to a language
   model you bring: a key for any major provider (OpenAI, Anthropic, Gemini,
   OpenRouter, Groq, Mistral, DeepSeek, xAI, Hugging Face, OpenCode and more:
-  `bricklayer_llm_providers()`), an Ollama server, or an OpenAI-compatible
+  `llmprvd()`), an Ollama server, or an OpenAI-compatible
   server of your own. The model is given every function of the installed
   MORIE packages and tools to read their help, as much as it can take in;
-  `bricklayer_llm_status()` shows which route answers, and the
+  `llmstat()` shows which route answers, and the
   `rmoriebricklayer` launcher offers the same as shell verbs.
-- **Schema validation** — `infer_schema()` derives a pinnable schema from
-  data you trust; `validate_schema()` checks names, types, ranges, value
-  sets and missingness against it; `rule()` and the `rule_*()` library
+- **Schema validation** — `infsch()` derives a pinnable schema from
+  data you trust; `valsch()` checks names, types, ranges, value
+  sets and missingness against it; `rul()` and the `rule_*()` library
   express the project-specific checks a generic schema cannot.
-- **Drift detection** — `capsule_drift()` asks whether the *data* moved,
+- **Drift detection** — `cpsdrft()` asks whether the *data* moved,
   not just the bytes, with Kolmogorov-Smirnov, two-sample homogeneity,
   population stability index, Jensen-Shannon divergence and a Benford
   first-digit screen.
-- **Signed provenance** — `capsule_sign()` authenticates a manifest with a
-  keyed digest or a post-quantum hash-based signature; `merkle_root()` pins
+- **Signed provenance** — `cpssign()` authenticates a manifest with a
+  keyed digest or a post-quantum hash-based signature; `mrkroot()` pins
   a capsule chunk by chunk so a mismatch names which chunk moved; and
-  `chain_append()` links manifests so the run *history* is tamper-evident,
+  `chnapp()` links manifests so the run *history* is tamper-evident,
   not only each run.
-- **Description** — `profile_columns()`, `frequency_table()`,
-  `correlation_table()`, `mahalanobis_outliers()`, `missingness_map()` and
-  `mcar_test()` (Little's test, with the EM estimator it requires) describe
+- **Description** — `profcols()`, `freqtbl()`,
+  `cortbl()`, `mahaoutl()`, `missgrid()` and
+  `mcartst()` (Little's test, with the EM estimator it requires) describe
   a capsule before you trust it.
 - **Capsules larger than memory** — exact block-wise moment accumulation,
   reservoir sampling, and HyperLogLog distinct counts, all in one pass.
-- **Synthetic fallback** — `make_synthetic_column()` / `make_synthetic_csv()`
+- **Synthetic fallback** — `mksyncol()` / `mksyncsv()`
   generate schema-driven stand-ins when the real source is down, so a
   pipeline still runs end-to-end.
-- **Rates and shares** — `rate()` gives events per population at any
+- **Rates and shares** — `rtcalc()` gives events per population at any
   denominator (`per = 1000`, `"100k"`, `"1m"`) with the exact Poisson
-  interval; `share()` gives percentage of a total with Wilson's interval.
+  interval; `shrs()` gives percentage of a total with Wilson's interval.
   They are separate functions because a share of a total is not a rate per
   population, and labelling one as the other is the most common error in a
-  published table. `rate_change()` gives the change in a rate between
+  published table. `ratechg()` gives the change in a rate between
   periods, conditioning on the two counts and correcting for the exposure
   ratio rather than treating two rates as measured numbers.
 - **Change tables** — `yoy()` computes period-over-period change matched on
@@ -100,38 +100,38 @@ and a digest anyone can recompute says nothing about who produced the data.
   gap instead of a quietly multi-year comparison. A percent off a small
   base is withheld with its reason; a column already in percent is
   reported in percentage *points*; a ratio of counts carries the exact
-  conditional-binomial interval. `yoy_write()` renders to HTML, PDF, CSV,
+  conditional-binomial interval. `yoywr()` renders to HTML, PDF, CSV,
   TSV, JSON or Markdown, format taken from the file name, with nothing
   outside base R.
-- **Banded categories** — `parse_bands()` reads the interval labels
+- **Banded categories** — `prsbands()` reads the interval labels
   publishers actually use (`"2 to 5"`, `"50+"`, `"under 18"`) and returns
-  bounds; `band_sensitivity()` measures how far a result moves as the open
+  bounds; `bandsens()` measures how far a result moves as the open
   top band's assumed cap varies, which is the dependence every figure
   computed from banded data carries.
-- **Concentration and tails** — `gini()`, `lorenz()`, `top_share()`, and
-  `hill_tail_index()`, which maximises the exact discrete likelihood
+- **Concentration and tails** — `ginicoef()`, `lorenzc()`, `topshr()`, and
+  `hilltlidx()`, which maximises the exact discrete likelihood
   because the closed-form continuity correction is badly biased at the
   small thresholds administrative counts start from.
-- **Short-series trend** — `trend_test()` (Mann-Kendall with Theil-Sen),
-  `step_change()` (permutation scan over splits, not the best split's own
-  test) and `count_trend()` (Poisson rate ratio per period). Meaningful at
+- **Short-series trend** — `trndtst()` (Mann-Kendall with Theil-Sen),
+  `stepchg()` (permutation scan over splits, not the best split's own
+  test) and `cnttrnd()` (Poisson rate ratio per period). Meaningful at
   the five-to-ten annual points an open-data extract actually has.
-- **Region-coded counts** — `expected_counts()` for indirect
-  standardisation, `sir()` with the exact Poisson interval, `eb_rates()`
-  for Clayton-Kaldor shrinkage, `funnel_limits()`, and `morans_i()`.
-- **Points, and the regions that contain them** — `region_map_integrity()`,
-  `region_map_compare()` and `region_map_second_route()` check a
+- **Region-coded counts** — `expcnts()` for indirect
+  standardisation, `stdinc()` with the exact Poisson interval, `ebrates()`
+  for Clayton-Kaldor shrinkage, `fnllim()`, and `morani()`.
+- **Points, and the regions that contain them** — `rgnmapintg()`,
+  `rgnmapcmp()` and `rgnmapalt()` check a
   point-to-region assignment on its own terms, since an error in it
-  reproduces perfectly in every table built on it; `region_map_from_points()`
+  reproduces perfectly in every table built on it; `rgnmappts()`
   recomputes one by point in polygon when `sf` is available; and
-  `region_coverage()` reports the population of the regions holding a unit
+  `rgncov()` reports the population of the regions holding a unit
   while saying, each time it prints, why that share is not a rate
   denominator.
-- **Stock and flow** — `adp()`, `alos()` and `stock_flow()` read the same
+- **Stock and flow** — `adp()`, `alos()` and `stkflow()` read the same
   person-days two ways, per day and per person, after Lakner (1976). When
-  stays lengthen the two move in opposite directions, so `stock_flow()`
+  stays lengthen the two move in opposite directions, so `stkflow()`
   reports both and the exact decomposition between them.
-- **Self-exciting event series (Hawkes)** — `core_hawkes_fit()` fits a
+- **Self-exciting event series (Hawkes)** — `chwkfit()` fits a
   univariate Hawkes process by maximum likelihood: a constant or seasonal
   (sinusoidal) baseline, and an exponential, Weibull, gamma or Lomax
   kernel, maximised in C++ by projected BFGS on the analytic gradient.
@@ -148,12 +148,12 @@ and a digest anyone can recompute says nothing about who produced the data.
   `converged` reports the optimiser's stop and `at_bound` the parameters
   left on the parameter box (a shape driven to its wall by day-dated times,
   or a Lomax at its exponential limit).
-  `core_hawkes_nll()` gives the same likelihood on the same parameters,
-  `core_hawkes_residuals()` the time-rescaling residuals and their
+  `chwknll()` gives the same likelihood on the same parameters,
+  `chwkres()` the time-rescaling residuals and their
   Kolmogorov-Smirnov test. Events at one instant do not excite each other
   (the intensity sums over strictly earlier events); times recorded to a
   resolution, such as daily dates, are spread across their interval with
-  `core_hawkes_jitter()` before the fit (Filimonov & Sornette 2015;
+  `chwkjit()` before the fit (Filimonov & Sornette 2015;
   `horizon =` keeps an event dated on the window's last day inside it), and
   the fit warns when it sees ties.
 - **Every result draws itself** — `plot()` on anything the package returns:
@@ -164,101 +164,101 @@ and a digest anyone can recompute says nothing about who produced the data.
   particle clouds, trends, and a whole-table analysis one panel at a time.
   Base graphics only (no new dependency), one shared look, and the same
   customisation on every method: `main`, `col` or `palette`, `grid`, `...`
-  for the base call, `bricklayer_plot_options()` for the session and
-  `bricklayer_palette()` for colour-blind-safe colours. `plume_field()`
-  evaluates a plume on a grid for the image; `plot_lorenz()` and
-  `plot_funnel()` cover the results that are plain data frames. Every
+  for the base call, `plotopt()` for the session and
+  `blpal()` for colour-blind-safe colours. `plmfld()`
+  evaluates a plume on a grid for the image; `plotlrnz()` and
+  `plotfnl()` cover the results that are plain data frames. Every
   method returns the numbers it drew. `vignette("plotting-results")`.
-- **Archiving in bulk** — `wayback_save()` (and `rmbl wayback FILE`) saves many
+- **Archiving in bulk** — `wbsave()` (and `rmbl wayback FILE`) saves many
   URLs in the Wayback Machine with archive.org's Save Page Now 2 API and your
   S3-like keys: captures in flight at once but started no faster than
   archive.org allows an account (`per_minute`, and a cap per run), every
   slow-down reply and `Retry-After` waited out, recent captures kept, results
   written as they land so a stopped run resumes (captures already started are
-  polled, not sent again), `wayback_retry()` for the failures, and a live
-  animated progress bar (drawn in C, shared with `bricklayer_download()`).
-- **Courts and police-reported crime** — `case_flow()` (clearance rate with
+  polled, not sent again), `wbrtry()` for the failures, and a live
+  animated progress bar (drawn in C, shared with `bldl()`).
+- **Courts and police-reported crime** — `caseflow()` (clearance rate with
   exact intervals, rolling clearance, net flow and months to clear the
-  pending inventory), `life_table()` (actuarial life table with Greenwood
+  pending inventory), `lifetbl()` (actuarial life table with Greenwood
   intervals from banded times such as "disposed within 10 months"),
-  `disposition_mix()` (outcome shares with Goodman simultaneous intervals,
-  homogeneity and Cochran-Armitage trend tests), `clearance_decomposition()`
+  `dispmix()` (outcome shares with Goodman simultaneous intervals,
+  homogeneity and Cochran-Armitage trend tests), `clrdcmp()`
   (Kitagawa's exact split of a change in a clearance rate into rate and
   case-mix effects, a Mantel-Haenszel rate ratio within parts, and a
-  Simpson's-paradox verdict), `crime_density()` (kernel density of incident
+  Simpson's-paradox verdict), `crmdens()` (kernel density of incident
   locations in incidents per square kilometre, with highest-density regions)
-  and `knox_test()` (near-repeat space-time clustering, exact expectations,
+  and `knoxtst()` (near-repeat space-time clustering, exact expectations,
   permutation p-values). Each has a plot. Real Ontario Court of Justice and
   Toronto Police Service excerpts ship in `inst/extdata` (`?justice-data`);
   `vignette("courts-and-crime")`.
-- **Evaluating a policy** — `did_panel()` (two-way fixed effects with
-  cluster-robust errors), `event_study()` (leads, lags and the pre-trend
-  test), `staggered_att()` (Callaway-Sant'Anna and Wooldridge),
-  `bacon_decomposition()`, `switching_did()` (de Chaisemartin-D'Haultfoeuille),
-  `permutation_inference()` with `stepdown_pvalues()` (Westfall-Young),
-  `fe_poisson()`, `synthetic_control()`; and `severity_index()`,
-  `pipeline_rate()`, `cumulative_risk()`, `buffer_assign()` for justice
+- **Evaluating a policy** — `plndid()` (two-way fixed effects with
+  cluster-robust errors), `evstudy()` (leads, lags and the pre-trend
+  test), `stgatt()` (Callaway-Sant'Anna and Wooldridge),
+  `bacondcmp()`, `swtdid()` (de Chaisemartin-D'Haultfoeuille),
+  `perminf()` with `stpdnpv()` (Westfall-Young),
+  `plnpois()`, `synctl()`; and `sevidx()`,
+  `piperate()`, `cmlrisk()`, `bufasgn()` for justice
   data. Each matches the reference implementation;
   `vignette("policy-evaluation")`.
 - **First Nations, Metis and Inuit health, mental health and wellness** —
   distinctions-based methods for Statistics Canada's published tables, with
   suppressed cells never imputed:
-  - `statcan_tidy()` and `statcan_estimates()` read every layout of limit,
+  - `sctidy()` and `scests()` read every layout of limit,
     coefficient of variation and standard error;
-  - `indigenous_gap()`, `distinctions_test()`, `ordinal_compare()`,
-    `age_standardise()` and `standardise_prevalence()` compare groups;
-  - `exposure_trend()` covers the intergenerational effects of the residential
+  - `indgap()`, `dstntst()`, `ordcmp()`,
+    `agestd()` and `stdprev()` compare groups;
+  - `exptrnd()` covers the intergenerational effects of the residential
     schools;
-  - `trc_progress()` tracks the Calls to Action.
+  - `trcprog()` tracks the Calls to Action.
 
   Estimators built from Indigenous scholarship on mental wellness:
-  - Prof. Suzanne L. Stewart's work: `wellness_profile()`,
-    `holistic_balance()`, `dual_continuum()` and `healing_change()`;
-  - Prof. Angela Mashford-Pringle's: `connection_association()`;
-  - the First Nations Mental Wellness Continuum: `mental_wellness_continuum()`;
-  - community-weighted protective and risk factors: `community_index()`;
-  - ISC's Community Well-Being index: `cwb_score()`;
-  - Walter's 5D critique: `framing_audit()`.
+  - Prof. Suzanne L. Stewart's work: `welprof()`,
+    `holbal()`, `dualcont()` and `healchg()`;
+  - Prof. Angela Mashford-Pringle's: `connassoc()`;
+  - the First Nations Mental Wellness Continuum: `mhcont()`;
+  - community-weighted protective and risk factors: `commidx()`;
+  - ISC's Community Well-Being index: `cwbscr()`;
+  - Walter's 5D critique: `frmaud()`.
 
-  Census profile tools: `census_profile()`, `profile_share()`,
-  `census_standard()`, `census_cwb()`; Call to Action 19: `trc_health_gaps()`.
-  Any agency's table works after `limits_from()` and `quality_recode()`.
+  Census profile tools: `cnsprof()`, `profshr()`,
+  `cnsstd()`, `cnscwb()`; Call to Action 19: `trchlthgap()`.
+  Any agency's table works after `limfrom()` and `qltyrcd()`.
 
   Each has a plot. Data governance follows OCAP® and CARE. Eight published
-  excerpts ship in `inst/extdata` (`?indigenous_example`), and
-  `indigenous_tables()` lists the 233 mirrored tables;
+  excerpts ship in `inst/extdata` (`?indiex`), and
+  `indtabs()` lists the 233 mirrored tables;
   `vignette("first-nations-metis-inuit-health")`.
-- **Complex surveys** — `survey_design()` (replicate weights: bootstrap,
+- **Complex surveys** — `svydes()` (replicate weights: bootstrap,
   mean bootstrap, JK1, JKn, BRR and Fay's BRR; or strata, PSUs and a finite
-  population correction for Taylor linearization), `survey_estimate()`
+  population correction for Taylor linearization), `svyest()`
   (means, totals, proportions and ratios by domain, with the whole design kept
   for every subgroup, Wilson intervals at SAS's modified effective sample size,
-  and small domains flagged, not withheld) and `survey_compare()` (domain
+  and small domains flagged, not withheld) and `svycmp()` (domain
   differences with the design covariance). Matches the `survey` package;
   `vignette("survey-estimation")` reproduces Health Canada's published CSUS
   intervals.
-- **Hot spots over time** — `hotspot_persistence()`: how concentrated
+- **Hot spots over time** — `hotpers()`: how concentrated
   incidents are in place, which cells are hot each period (ties counted and
   said), and how much each period's hot spots overlap the last.
 - **Air pollution, from source to burden** — where a plume goes:
-  `pg_sigmas()` (Pasquill-Gifford coefficients with Briggs's fits, rural and
-  urban), `briggs_plume_rise()` (buoyant and stable branches, transitional
-  rise), `gaussian_plume()` and `gaussian_puff()` (ground reflection,
-  mixing-lid images), `advection_diffusion_2d()` and `lagrangian_particles()`
+  `pgsig()` (Pasquill-Gifford coefficients with Briggs's fits, rural and
+  urban), `briggs()` (buoyant and stable branches, transitional
+  rise), `gplume()` and `gspuff()` (ground reflection,
+  mixing-lid images), `advdif2d()` and `lagrprt()`
   (grid and particle models; the walk takes any normal generator). What a
-  concentration costs in lives: `crf_pm25()` and `crf_no2()` (the WHO 2021
+  concentration costs in lives: `crfpm25()` and `crfno2()` (the WHO 2021
   review's pooled estimates, Chen & Hoek 2020 and Huangfu & Atkinson 2020,
   and Burnett et al.'s 2014 integrated exposure-response curves per cause),
-  `attributable_fraction()` (Levin), `mortality_displaced()` (BenMAP),
-  `pollution_burden()` and `pollution_burden_by_area()` (the GBD chain, per
-  area, worst first). Who bears it: `exposure_concentration_index()`
+  `attrfrac()` (Levin), `mortdisp()` (BenMAP),
+  `polbrdn()` and `polbrdarea()` (the GBD chain, per
+  area, worst first). Who bears it: `expconcidx()`
   (Wagstaff, Paci & van Doorslaer 1991). From your own data:
-  `plr_crossfit()` and `exposure_response_plr()` (Chernozhukov et al.'s 2018
+  `plrcf()` and `exprspplr()` (Chernozhukov et al.'s 2018
   partially linear model by cross-fitting, with a percentile bootstrap).
-  All of it in one call with an assumption log: `verify_pollution()` and
-  `pollution_report_text()`. Every coefficient cites its paper and is
+  All of it in one call with an assumption log: `vrfpol()` and
+  `polrpttxt()`. Every coefficient cites its paper and is
   asserted in the tests. `vignette("air-pollution-and-health")`.
-- **The footprint of the computation** — `compute_footprint()` reports
+- **The footprint of the computation** — `co2fp()` reports
   the electricity an expression used and the CO2-equivalent it implies:
   measured from the CPU packages' RAPL energy counters where the operating
   system exposes them (as codecarbon does on Linux; wrap-around handled,
@@ -266,44 +266,44 @@ and a digest anyone can recompute says nothing about who produced the data.
   Algorithms formula (Lannelongue, Grealey & Inouye 2021). Utilisation is
   measured rather than assumed, per process or per whole machine (codecarbon's
   two tracking modes), with Green Algorithms' linear or codecarbon's load
-  curves. `carbon_intensity()` and `carbon_intensity_table()` give the grid's
+  curves. `co2int()` and `co2inttab()` give the grid's
   gCO2e/kWh offline for any country at its latest published year (Ember via
   Our World in Data, 2024-25) and for sub-national zones (Electricity Maps
-  2024), each row with its year and source; `detect_location()` finds where
+  2024), each row with its year and source; `dtctloc()` finds where
   you are from the environment, time zone or locale, no network needed;
-  `rapl_available()` says which method you will get; `footprint_equivalents()`
+  `raplok()` says which method you will get; `fpeqv()`
   turns grams into car-kilometres and tree-months. Every default that stood in
   for a measurement is listed in the result.
-- **Post-quantum keys and signatures** — ML-KEM (`kem_keygen()`,
-  `kem_encapsulate()`, `kem_decapsulate()`); ML-DSA and SLH-DSA keys from
-  `fips_keygen()` and XMSS keys from `pqc_keygen()`, both signing through
-  `capsule_sign()` (an XMSS index never signs twice: carry each
-  key forward with `xmss_advance()`); and HQC-KEM in both revisions:
-  `hqc_keygen(version = "v5")`, the default (specification of
-  2025-08-22, 32-byte shared secret), and `hqc_keygen(version = "round4")`
+- **Post-quantum keys and signatures** — ML-KEM (`kemkg()`,
+  `kemencap()`, `kemdecap()`); ML-DSA and SLH-DSA keys from
+  `fipskg()` and XMSS keys from `pqckg()`, both signing through
+  `cpssign()` (an XMSS index never signs twice: carry each
+  key forward with `xmssadv()`); and HQC-KEM in both revisions:
+  `hqckg(version = "v5")`, the default (specification of
+  2025-08-22, 32-byte shared secret), and `hqckg(version = "round4")`
   (the fourth-round submission of 2023-04-30 — the HQC of liboqs up to
   0.12 and of PQClean — with a 64-byte shared secret). Keys carry their
-  revision and `hqc_encapsulate()` / `hqc_decapsulate()` follow it;
-  `hqc_compress_key()` stores a secret key as its seed alone (v5's
+  revision and `hqcencap()` / `hqcdecap()` follow it;
+  `hqccmpkey()` stores a secret key as its seed alone (v5's
   32-byte `seed_KEM`; round 4's key-generation seed) and
-  `hqc_decapsulate()` expands it. All of it is implemented here, with no
+  `hqcdecap()` expands it. All of it is implemented here, with no
   system library; see
   [Verification](#verification).
-- **Deterministic random bits** — `drbg_new()`, `drbg_generate()` and
-  `drbg_reseed()`: the AES-256 CTR_DRBG of NIST SP 800-90A (no derivation
+- **Deterministic random bits** — `drbgnew()`, `drbggen()` and
+  `drbgrsd()`: the AES-256 CTR_DRBG of NIST SP 800-90A (no derivation
   function), with a table-free AES written to run in constant time, and AES-NI on x86-64. The same entropy
   gives the same bytes, which is what reproducible key generation and
-  known-answer tests need; `random_bytes()` reads the operating system's
+  known-answer tests need; `rndbytes()` reads the operating system's
   generator for keys meant to stay secret.
-- **Ontario SIU director's reports** — `bricklayer_fetch_siu()` fetches a
-  report by its id, in English or French; `bricklayer_parse_siu()` reads
-  it into the 16 fields of `bricklayer_siu_schema()` (the police service;
+- **Ontario SIU director's reports** — `siufetch()` fetches a
+  report by its id, in English or French; `siuprs()` reads
+  it into the 16 fields of `siusch()` (the police service;
   the dates of the incident, the notification and the decision; the SIU
   team's size; the counts of subject officials, witness officials and
   civilian witnesses; the affected person's age and sex; the charges; the
   director; where the call was; the injuries; the legislation);
-  `bricklayer_fetch_parse_siu()` does both.
-  `bricklayer_siu_resolve_so()` counts the subject officials from the text
+  `siufprs()` does both.
+  `siuso()` counts the subject officials from the text
   ("SO", "subject officer" and "subject official" are one quantity).
   `police_service` is the service of the subject officials, read from the
   director's analysis — not the force that notified the SIU, which is
@@ -311,21 +311,21 @@ and a digest anyone can recompute says nothing about who produced the data.
   read: the 2005-2011 legacy pages, the 2012-2019 and 2020-on English
   pages, and the French pages (the SIU publishes each report in both
   languages). rmorie and morie run the same parser.
-- **JSON without jsonlite** — `bricklayer_json_to_json()` and
-  `bricklayer_json_from_json()` are jsonlite's `toJSON()` and
+- **JSON without jsonlite** — `tojs()` and
+  `fromjs()` are jsonlite's `toJSON()` and
   `fromJSON()`, natively: every option, the same defaults and the same
-  bytes out. `bricklayer_json_serialize()` round-trips an R object with its type
+  bytes out. `jsser()` round-trips an R object with its type
   and attributes (exactly, doubles included, with `digits = I(17)`), with
   base64 and base64url codecs beside it.
-- **Curated tables** — `bricklayer_data_tables()` lists the tables served
+- **Curated tables** — `dtabs()` lists the tables served
   at data.rmorie.com (175 databases and 716 tables on 2026-10-13: Google
   BigQuery public datasets and the survey, court and justice data the MORIE
-  ledger uses), and `bricklayer_data_load("db/table")` opens one with your
+  ledger uses), and `dload("db/table")` opens one with your
   MORIE key (`rmoriebricklayer login` signs in with GitHub or an emailed
   code; or ask at <https://www.rmorie.com/access/>), under the terms at
   <https://www.rmorie.com/data-license/>, cached locally. The ICPSR, NCVS
   38604 and a2aj tables open once you accept their terms at
-  <https://data.rmorie.com/terms>. `bricklayer_fetch()` downloads any URL with an Internet Archive
+  <https://data.rmorie.com/terms>. `blfetch()` downloads any URL with an Internet Archive
   fallback (libcurl).
 
 ## Security posture
@@ -428,7 +428,7 @@ round-trips perfectly.
 
 HQC (Hamming Quasi-Cyclic), the code-based KEM NIST selected in March
 2025 to stand beside ML-KEM, is here as well at HQC-1, HQC-3 and HQC-5
-(`hqc_keygen()`, `hqc_encapsulate()`, `hqc_decapsulate()`), in two
+(`hqckg()`, `hqcencap()`, `hqcdecap()`), in two
 revisions. The default, v5, reproduces all 300 of the authors' official
 known-answer vectors (specification of 2025-08-22, reference
 implementation v5.0.0), runs in constant time with respect to secrets
@@ -442,10 +442,10 @@ and parameters and reproduces all 300 of that revision's official
 known-answer vectors on both multipliers. The two are not
 interchangeable: use round 4 to exchange keys with software built on it,
 v5 otherwise. A secret key can be kept as its seed alone:
-`hqc_compress_key()` writes v5's compressed format, `dk = seed_KEM` (32
+`hqccmpkey()` writes v5's compressed format, `dk = seed_KEM` (32
 bytes, defined by the v5 specification), or for round 4 the 96 to 112
 bytes its key generation draws (a convention of this package: round 4
-defines no compressed format), and `hqc_decapsulate()` re-derives the key
+defines no compressed format), and `hqcdecap()` re-derives the key
 pair and refuses a seed that does not give the key's own public half. NIST
 has named the HQC standard FIPS 207 but has not published it or a draft
 of it yet (checked 2026-10-05); v5 already carries the changes NIST
@@ -461,7 +461,7 @@ post-quantum known-answer files were written with.
 The JSON codec is checked against jsonlite itself, output byte for byte
 and parsed values exactly. The Hawkes likelihood, gradient and fit are
 checked on the same inputs as morie's Python tests, so every Hawkes test
-is also a cross-language parity check; `core_uniforms()` is the splitmix64
+is also a cross-language parity check; `cunif()` is the splitmix64
 stream both draw from. The SIU parser's police service agrees with the
 panel-reviewed English corpus on 2,147 of 2,163 French reports and 111 of
 118 English ones.
@@ -531,10 +531,10 @@ The shortest path, on the OTIS table that ships with the package:
 library(rmoriebricklayer)
 otis <- read.csv(system.file("extdata", "otis_a01_individuals.csv",
                              package = "rmoriebricklayer"))
-a <- analyse_table(otis, value = "individuals", period = "year",
+a <- anltab(otis, value = "individuals", period = "year",
                    by = c("table", "group"), rounding = 5)
 a                                   # what changed, how sure, what was withheld
-report_analysis(a, "otis.html")     # one self-contained file
+rptanl(a, "otis.html")     # one self-contained file
 ```
 
 The full capsule, step by step. It runs as written, offline: the
@@ -568,27 +568,27 @@ writeLines('{
     }
   }
 }', prov_path)
-prov <- load_provenance(prov_path)
+prov <- loadprov(prov_path)
 
 # 2. The data. With network: resolve the pinned endpoint to a current URL and
 #    download (Wayback fallback). Without: a reproducible stand-in from the
 #    recipe, marked synthetic all the way through.
-#   url  <- resolve_via_ckan(prov)
-#   path <- friendly_download(url, file.path(tempdir(), "data.csv"))
+#   url  <- rslvckan(prov)
+#   path <- fdl(url, file.path(tempdir(), "data.csv"))
 path <- file.path(tempdir(), "data.csv")
-gen  <- make_synthetic_csv(prov$schema$synthetic_recipe, path)
+gen  <- mksyncsv(prov$schema$synthetic_recipe, path)
 
 # 3. Integrity and schema.
-sha256_file(path)                               # pin this in the provenance
+sha256file(path)                               # pin this in the provenance
 df     <- read.csv(path)
-issues <- validate_schema(df, prov)             # names, types, value sets, rows
+issues <- valsch(df, prov)             # names, types, value sets, rows
 
 # 4. The manifest: named cross-checks, then the two capsule artifacts.
-man <- make_manifest(list(project = "my-study", synthetic = TRUE))
-man <- record(man, "rows", observed = nrow(df), expected = gen$rows,
+man <- mkmnf(list(project = "my-study", synthetic = TRUE))
+man <- recrd(man, "rows", observed = nrow(df), expected = gen$rows,
               synthetic = TRUE)
-write_manifest_json(man, file.path(tempdir(), "manifest.json"))
-write_summary_txt(man, tempdir(),
+wrmnfjs(man, file.path(tempdir(), "manifest.json"))
+wrsmrytxt(man, tempdir(),
                   paths = list(input = path, results = tempdir()),
                   what_was_done = "* validated the schema and recorded the row count")
 ```
@@ -602,28 +602,28 @@ ref  <- data.frame(value = rnorm(300), size = runif(300, 1, 10),
                    grade = sample(c("a", "b", "c"), 300, TRUE))
 same <- data.frame(value = rnorm(300), size = runif(300, 1, 10),
                    grade = sample(c("a", "b", "c"), 300, TRUE))
-capsule_drift(ref, same)$any_drift        # a fresh draw: FALSE
+cpsdrft(ref, same)$any_drift        # a fresh draw: FALSE
 moved <- same
 moved$size <- moved$size * 3              # a silently rescaled column
 moved$grade[1:100] <- "z"                 # and a new category
-capsule_drift(ref, moved)                 # both are caught
+cpsdrft(ref, moved)                 # both are caught
 
 # Authenticate the manifest so a verifier knows who produced it.
-digest <- sha256_file(file.path(tempdir(), "manifest.json"))
-key <- pqc_keygen()                       # post-quantum, hash-based
-sig <- capsule_sign(digest, key)
-capsule_verify(digest, sig, signing_public_key(key))
-key <- xmss_advance(key, sig)            # the next signature must use this
+digest <- sha256file(file.path(tempdir(), "manifest.json"))
+key <- pqckg()                       # post-quantum, hash-based
+sig <- cpssign(digest, key)
+cpsvrf(digest, sig, signpubkey(key))
+key <- xmssadv(key, sig)            # the next signature must use this
 ```
 
 An XMSS index must never sign twice, so the package keeps a record of the highest index each
 key has used (`xmss_used_indices.txt` in `tools::R_user_dir("rmoriebricklayer", "config")`,
 locked by the operating system while a signature reserves its index). A key generated by
-`pqc_keygen()` is entered at birth. A key from another machine, one rebuilt from its seeds, or
+`pqckg()` is entered at birth. A key from another machine, one rebuilt from its seeds, or
 one used in CI or a container with a fresh home directory is unknown to the record and is
-refused at index 0 until `xmss_register_key(key)` vouches that it has never signed; or point
-`options(rmoriebricklayer.xmss_index_file = )` at a record that persists. See
-`?xmss_advance`.
+refused at index 0 until `xmssregkey(key)` vouches that it has never signed; or point
+`options(rmoriebricklayer.xmssidxfile = )` at a record that persists. See
+`?xmssadv`.
 
 See `vignette("drift")` for the distributional checks and
 `vignette("provenance")` for signing, Merkle pinning and manifest chains.
@@ -656,7 +656,7 @@ order, and the first that is set up is used:
 While it works, `rmbl ask` (or `rmbl aye`, `rmbl tellme`) shows a spinner with the seconds so far. The same question again
 is answered from this machine at once (`--fresh` asks the model again; `MORIE_LLM_CACHE=off`
 turns that off), and an error of these packages can be explained without any model:
-`rmbl explain-error "the error text"` (R: `bricklayer_explain_error()`) names the function that
+`rmbl explain-error "the error text"` (R: `explerr()`) names the function that
 raised it, the exported functions it comes from and what the message asks for.
 
 The model gets the packages' help: the name, arguments and title of every
@@ -670,12 +670,12 @@ functions nearest the question and can still look up any other.
 ```r
 library(rmoriebricklayer)
 
-bricklayer_llm_providers()   # the providers, their addresses and key variables
-bricklayer_llm_status()      # which route would answer from this machine, and why
-Sys.setenv(ANTHROPIC_API_KEY = "...")    # or bricklayer_llm_config(anthropic.key = "...")
-bricklayer_llm_ask("How do I estimate a weighted proportion with bootstrap replicate weights?")
-bricklayer_llm_ask("The same question, on the local model.", route = "ollama")
-bricklayer_llm_models(route = "anthropic")   # the models that route offers; attr(, "default")
+llmprvd()   # the providers, their addresses and key variables
+llmstat()      # which route would answer from this machine, and why
+Sys.setenv(ANTHROPIC_API_KEY = "...")    # or llmcfg(anthropic.key = "...")
+llmask("How do I estimate a weighted proportion with bootstrap replicate weights?")
+llmask("The same question, on the local model.", route = "ollama")
+llmmdls(route = "anthropic")   # the models that route offers; attr(, "default")
 ```
 
 ### Choosing the route and model
@@ -686,12 +686,12 @@ environment or the source. Saved settings live in
 set still wins for that session.
 
 ```r
-bricklayer_llm_config()                                        # every setting, its value and source
-bricklayer_llm_config(route = "anthropic")                     # always this provider
-bricklayer_llm_config(anthropic.model = "claude-opus-5-5")     # its model
-bricklayer_llm_config(ollama.url = "http://192.168.1.20:11434", ollama.model = "qwen3:8b")
-bricklayer_llm_config(own.url = "http://localhost:1234/v1", own.model = "my-model", own.key = "sk-...")
-bricklayer_llm_config(route = NULL)                            # back to the automatic order
+llmcfg()                                        # every setting, its value and source
+llmcfg(route = "anthropic")                     # always this provider
+llmcfg(anthropic.model = "claude-opus-5-5")     # its model
+llmcfg(ollama.url = "http://192.168.1.20:11434", ollama.model = "qwen3:8b")
+llmcfg(own.url = "http://localhost:1234/v1", own.model = "my-model", own.key = "sk-...")
+llmcfg(route = NULL)                            # back to the automatic order
 ```
 
 | Setting | What it does | Environment variable |
@@ -704,14 +704,14 @@ bricklayer_llm_config(route = NULL)                            # back to the aut
 With `route = "auto"`, a local Ollama server that has no model pulled is
 passed over.
 
-Signing in (`bricklayer_llm_login()`, `rmbl login`) is for the curated tables
+Signing in (`dlogin()`, `rmbl login`) is for the curated tables
 at data.rmorie.com only; it is never a language model.
 
 The same verbs exist on the command line once the launcher is on your
 `PATH`:
 
 ```sh
-Rscript -e 'rmoriebricklayer::install_cli()'   # links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
+Rscript -e 'rmoriebricklayer::instcli()'   # links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
 rmoriebricklayer help                           # every verb; `help start`, `help llm`, `help config`, `help r`
 rmoriebricklayer doctor                         # which routes answer here, and the one ask will use
 rmoriebricklayer ask "your question"            # own endpoint, a provider with a key, then Ollama
@@ -735,7 +735,7 @@ rmoriebricklayer login --no-browser             # server / SSH: prints a link + 
 rmoriebricklayer logout                         # forget the data key
 rmoriebricklayer data list                      # the curated tables at data.rmorie.com
 rmoriebricklayer data pull db/table --out t.csv # download one (your MORIE key)
-rmoriebricklayer bundle "your request"          # agent_bundle() from the shell
+rmoriebricklayer bundle "your request"          # agentbndl() from the shell
 rmoriebricklayer functions [PATTERN]            # exported functions and their titles
 rmoriebricklayer describe NAME                  # one function's help page
 rmoriebricklayer examples NAME                  # its examples

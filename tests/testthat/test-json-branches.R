@@ -4,7 +4,7 @@
 # serializer's non-vector storage modes, and streaming verbosity. No
 # jsonlite needed; expectations are jsonlite's documented behaviour.
 
-to <- function(x, ...) as.character(bricklayer_json_to_json(x, ...))
+to <- function(x, ...) as.character(tojs(x, ...))
 
 test_that("encoder option paths: keep_vec_names, json_verbatim, force, digits = NULL", {
   expect_message(out <- to(c(a = 1, b = 2), keep_vec_names = TRUE), "keep_vec_names")
@@ -13,7 +13,7 @@ test_that("encoder option paths: keep_vec_names, json_verbatim, force, digits = 
   expect_message(to(c(a = TRUE), keep_vec_names = TRUE), "keep_vec_names")
   expect_message(out <- to(factor(c(a = "u")), keep_vec_names = TRUE), "keep_vec_names")
   expect_identical(out, '{"a":"u"}')
-  j <- bricklayer_json_to_json(list(k = 1))
+  j <- tojs(list(k = 1))
   expect_identical(to(list(inner = j), json_verbatim = TRUE), '{"inner":{"k":[1]}}')
   expect_identical(to(list(inner = j)), '{"inner":["{\\"k\\":[1]}"]}')
   expect_identical(to(0.1 + 0.2, digits = NULL), "[0.30000000000000004]")
@@ -92,16 +92,16 @@ test_that("number formatting reproduces modp_dtoa2 rounding and the sprintf fall
 })
 
 test_that("base64 edge cases", {
-  expect_identical(bricklayer_json_base64_enc(NULL), NA_character_)
-  expect_identical(bricklayer_json_base64_enc(raw(0)), "")
-  expect_identical(bricklayer_json_base64_dec(""), raw(0))
-  expect_identical(bricklayer_json_base64_dec(charToRaw("aGk=")), charToRaw("hi"))
+  expect_identical(jsb64enc(NULL), NA_character_)
+  expect_identical(jsb64enc(raw(0)), "")
+  expect_identical(jsb64dec(""), raw(0))
+  expect_identical(jsb64dec(charToRaw("aGk=")), charToRaw("hi"))
   # a deliberate divergence from jsonlite, which skips foreign bytes: a corrupt
   # body must not decode to a shorter valid-looking one
-  expect_error(bricklayer_json_base64_dec("@@@@"), "alphabet")
-  expect_identical(bricklayer_json_base64url_enc(as.raw(c(251, 255))), "-_8")
-  expect_identical(bricklayer_json_base64url_dec("-_8"), as.raw(c(251, 255)))
-  expect_identical(bricklayer_json_base64url_dec("aGk"), charToRaw("hi"))
+  expect_error(jsb64dec("@@@@"), "alphabet")
+  expect_identical(jsb64uenc(as.raw(c(251, 255))), "-_8")
+  expect_identical(jsb64udec("-_8"), as.raw(c(251, 255)))
+  expect_identical(jsb64udec("aGk"), charToRaw("hi"))
 })
 
 test_that("parser rejects what yajl rejects, with a position", {
@@ -109,44 +109,44 @@ test_that("parser rejects what yajl rejects, with a position", {
     "-", "1.", "1e", "01", ".5", "[1 2]", "[1,]", "{\"a\" 1}", "{\"a\":1 \"b\":2}", "{1:2}",
     "\"abc", "\"a\\qb\"", "\"a\\u12G4\"", "\"a\\u0000\"", "\"tab\tin\"", "tru", "nul", "[1]x", "", "   "
   )
-  for (b in bad) expect_error(bricklayer_json_from_json(b, simplifyVector = FALSE), "at character|end of input", label = b)
+  for (b in bad) expect_error(fromjs(b, simplifyVector = FALSE), "at character|end of input", label = b)
   # the literal lives in a variable: deparsing U+FEFF into a test label is
   # itself a translation warning in a C locale
   bom_txt <- paste0(rawToChar(as.raw(c(0xef, 0xbb, 0xbf))), "[1]")
-  expect_warning(v <- bricklayer_json_from_json(bom_txt), "byte-order-mark")
+  expect_warning(v <- fromjs(bom_txt), "byte-order-mark")
   expect_identical(v, 1L)
-  expect_identical(bricklayer_json_from_json("\x1e[1]"), 1L)
-  expect_identical(bricklayer_json_from_json("\"\\ud83d\\ude00\""), "\U0001F600")
+  expect_identical(fromjs("\x1e[1]"), 1L)
+  expect_identical(fromjs("\"\\ud83d\\ude00\""), "\U0001F600")
   # an unpaired surrogate is not a character: refused, not the text "NA"
-  expect_error(bricklayer_json_from_json("\"\\ud83d x\""), "lone surrogate")
-  expect_identical(bricklayer_json_from_json("[1,2]", simplify = FALSE), list(1L, 2L))
-  expect_identical(bricklayer_json_from_json("[-9007199254740993]", bigint_as_char = TRUE), "-9007199254740993")
-  expect_identical(bricklayer_json_from_json("[123456789012]"), 123456789012)
+  expect_error(fromjs("\"\\ud83d x\""), "lone surrogate")
+  expect_identical(fromjs("[1,2]", simplify = FALSE), list(1L, 2L))
+  expect_identical(fromjs("[-9007199254740993]", bigint_as_char = TRUE), "-9007199254740993")
+  expect_identical(fromjs("[123456789012]"), 123456789012)
   expect_identical(
-    bricklayer_json_from_json("[{\"$date\":\"2024-05-06T07:08:09Z\"}]"),
+    fromjs("[{\"$date\":\"2024-05-06T07:08:09Z\"}]"),
     as.POSIXct("2024-05-06 07:08:09", tz = "UTC")
   )
-  d2 <- bricklayer_json_from_json('[{"$date":"2024-05-06T07:08:09"},{"$date":"2024-05-07T00:00:00"}]')
+  d2 <- fromjs('[{"$date":"2024-05-06T07:08:09"},{"$date":"2024-05-07T00:00:00"}]')
   expect_s3_class(d2, "POSIXct")
   expect_identical(format(d2, "%Y-%m-%d %H:%M:%S"), c("2024-05-06 07:08:09", "2024-05-07 00:00:00")) # local-time strings, tz-agnostic
   # a scalar list of dates collapses to a POSIXct vector (jsonlite's mongo-date rule)
-  expect_identical(bricklayer_json_from_json('{"a":{"$date":1714979289000}}'), structure(1714979289, class = c("POSIXct", "POSIXt")))
-  expect_identical(bricklayer_json_from_json('[{"$date":1714979289000},null]'), structure(c(1714979289, NA), class = c("POSIXct", "POSIXt")))
+  expect_identical(fromjs('{"a":{"$date":1714979289000}}'), structure(1714979289, class = c("POSIXct", "POSIXt")))
+  expect_identical(fromjs('[{"$date":1714979289000},null]'), structure(c(1714979289, NA), class = c("POSIXct", "POSIXt")))
 })
 
 test_that("simplifier edge cases: _row handling, ragged records, empty-record lists", {
-  expect_warning(df <- bricklayer_json_from_json('[{"_row":"a","x":1},{"_row":"a","x":2}]'), "Duplicate names")
+  expect_warning(df <- fromjs('[{"_row":"a","x":1},{"_row":"a","x":2}]'), "Duplicate names")
   expect_identical(row.names(df), c("a", "a.1"))
-  expect_warning(df2 <- bricklayer_json_from_json('[{"_row":1,"x":1},{"_row":1,"x":2}]'), "Duplicate names")
+  expect_warning(df2 <- fromjs('[{"_row":1,"x":1},{"_row":1,"x":2}]'), "Duplicate names")
   expect_identical(row.names(df2), c("1", "2"))
-  df3 <- bricklayer_json_from_json('[{"_row":2.0,"x":1},{"_row":null,"x":2}]')
+  df3 <- fromjs('[{"_row":2.0,"x":1},{"_row":null,"x":2}]')
   expect_identical(row.names(df3), c("2", "NA_1"))
-  expect_identical(bricklayer_json_from_json("[[1,2],[]]"), list(1:2, integer(0)))
-  expect_identical(bricklayer_json_from_json("[{\"a\":1},[]]"), list(list(a = 1L), list()))
-  expect_identical(bricklayer_json_from_json("[[1,2],[[1,2],[3,4]]]", simplifyMatrix = FALSE), list(1:2, list(1:2, 3:4)))
-  expect_identical(dim(bricklayer_json_from_json("[[[1,2]],[[3,4]]]")), c(2L, 1L, 2L))
-  expect_identical(bricklayer_json_from_json('[{"a":1},{"a":"NA"}]')$a, c(1L, NA))
-  expect_identical(bricklayer_json_from_json('[{"a":1},{"a":[1,2]}]')$a, list(1L, 1:2))
+  expect_identical(fromjs("[[1,2],[]]"), list(1:2, integer(0)))
+  expect_identical(fromjs("[{\"a\":1},[]]"), list(list(a = 1L), list()))
+  expect_identical(fromjs("[[1,2],[[1,2],[3,4]]]", simplifyMatrix = FALSE), list(1:2, list(1:2, 3:4)))
+  expect_identical(dim(fromjs("[[[1,2]],[[3,4]]]")), c(2L, 1L, 2L))
+  expect_identical(fromjs('[{"a":1},{"a":"NA"}]')$a, c(1L, NA))
+  expect_identical(fromjs('[{"a":1},{"a":[1,2]}]')$a, list(1L, 1:2))
 })
 
 test_that("prettify/minify report yajl-style errors and handle escapes", {
@@ -167,7 +167,7 @@ test_that("prettify/minify report yajl-style errors and handle escapes", {
 
 test_that("serializer covers every storage mode digest of an R object needs", {
   # code-bearing types need trusted = TRUE; this is JSON this session wrote
-  rt <- function(x) bricklayer_json_unserialize(bricklayer_json_serialize(x), trusted = TRUE)
+  rt <- function(x) jsunser(jsser(x), trusted = TRUE)
   f <- function(a, b = 2) a + b
   g <- rt(f)
   expect_identical(g(1), 3)
@@ -180,15 +180,15 @@ test_that("serializer covers every storage mode digest of an R object needs", {
   expect_identical(rt(structure(1:3, dim = 3L, myattr = "k")), structure(1:3, dim = 3L, myattr = "k"))
   setClass("rmblSerS4", representation(a = "numeric", b = "character"), where = environment())
   s4 <- new("rmblSerS4", a = 1, b = "x")
-  s4j <- bricklayer_json_serialize(s4)
+  s4j <- jsser(s4)
   expect_match(as.character(s4j), '"type":"S4"')
-  expect_warning(bricklayer_json_serialize(quote(`{`)), NA)
-  expect_identical(as.character(bricklayer_json_serialize(NULL)), '{"type":"NULL"}')
+  expect_warning(jsser(quote(`{`)), NA)
+  expect_identical(as.character(jsser(NULL)), '{"type":"NULL"}')
   expect_identical(
-    as.character(bricklayer_json_serialize(list(1, "a"), pretty = TRUE)),
+    as.character(jsser(list(1, "a"), pretty = TRUE)),
     "{\n  \"type\": \"list\",\n  \"attributes\": {},\n  \"value\": [\n    {\n      \"type\": \"double\",\n      \"attributes\": {},\n      \"value\": [1]\n    },\n    {\n      \"type\": \"character\",\n      \"attributes\": {},\n      \"value\": [\"a\"]\n    }\n  ]\n}"
   )
-  expect_error(bricklayer_json_unserialize('{"type":"weird","attributes":{},"value":[]}'), "encode.mode")
+  expect_error(jsunser('{"type":"weird","attributes":{},"value":[]}'), "encode.mode")
 })
 
 test_that("unbox and streaming edge cases", {

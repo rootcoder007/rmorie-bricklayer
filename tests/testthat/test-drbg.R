@@ -21,18 +21,18 @@ drbg_cavp <- function() {
 }
 
 run_cavp <- function(v) {
-  d <- drbg_new(drbg_hex(v$entropy), personalization = drbg_hex(v$pers))
-  if (v$mode == "pr_false") drbg_reseed(d, drbg_hex(v$entropy_reseed), additional = drbg_hex(v$add_reseed))
+  d <- drbgnew(drbg_hex(v$entropy), person = drbg_hex(v$pers))
+  if (v$mode == "pr_false") drbgrsd(d, drbg_hex(v$entropy_reseed), addl = drbg_hex(v$add_reseed))
   n <- nchar(v$returned) / 2
   out <- NULL
   for (i in 1:2) {
     add <- drbg_hex(v[[paste0("add", i)]])
     if (v$mode == "pr_true") {
       # prediction resistance: fresh entropy (with the additional input) before every request
-      drbg_reseed(d, drbg_hex(v[[paste0("epr", i)]]), additional = add)
-      out <- drbg_generate(d, n)
+      drbgrsd(d, drbg_hex(v[[paste0("epr", i)]]), addl = add)
+      out <- drbggen(d, n)
     } else {
-      out <- drbg_generate(d, n, additional = add)
+      out <- drbggen(d, n, addl = add)
     }
   }
   drbg_str(out)
@@ -64,52 +64,52 @@ test_that("NIST's DRBG validation vectors are reproduced in every mode (both cip
 })
 
 test_that("seeded with 0..47 it is NIST's rng.c: vector 0's seed and a KAT key across two requests", {
-  d <- drbg_new(as.raw(0:47))
-  expect_identical(drbg_str(drbg_generate(d, 48)), paste0(
+  d <- drbgnew(as.raw(0:47))
+  expect_identical(drbg_str(drbggen(d, 48)), paste0(
     "061550234d158c5ec95595fe04ef7a25767f2e24cc2bc479d09d86dc9abcfde7",
     "056a8c266f9ef97ed08541dbd2e1ffa1"))
   # XMSS-SHA2_10_256.rsp: sk = idx || SK_SEED || SK_PRF (one 64-byte request) || root || PUB_SEED
   # (a second, 32-byte request)
-  x <- drbg_new(as.raw(0:47))
-  expect_identical(drbg_str(drbg_generate(x, 64)), paste0(
+  x <- drbgnew(as.raw(0:47))
+  expect_identical(drbg_str(drbggen(x, 64)), paste0(
     "061550234d158c5ec95595fe04ef7a25767f2e24cc2bc479d09d86dc9abcfde7",
     "056a8c266f9ef97ed08541dbd2e1ffa19810f5392d076276ef41277c3ab6e94a"))
-  expect_identical(drbg_str(drbg_generate(x, 32)),
+  expect_identical(drbg_str(drbggen(x, 32)),
                    "04562ad35e8ecafaafda16981cdaa147606beea62801342af13c8b5535f72f94")
 })
 
 test_that("the generator advances, hex and raw inputs agree, and OS seeding differs", {
-  a <- drbg_new(as.raw(0:47))
-  b <- drbg_new(drbg_str(as.raw(0:47)))
-  x <- drbg_generate(a, 20)
-  expect_identical(drbg_generate(b, 20), x)
-  expect_false(identical(drbg_generate(a, 20), x))
-  expect_identical(length(drbg_generate(a, 65536)), 65536L)
-  c1 <- drbg_new(as.raw(0:47))
-  expect_false(identical(drbg_generate(c1, 20, additional = "00"), x))
-  expect_false(identical(drbg_generate(drbg_new(), 32), drbg_generate(drbg_new(), 32)))
-  r <- drbg_new(as.raw(0:47))
-  expect_identical(drbg_reseed(r), r)
-  expect_false(identical(drbg_generate(r, 20), x))
+  a <- drbgnew(as.raw(0:47))
+  b <- drbgnew(drbg_str(as.raw(0:47)))
+  x <- drbggen(a, 20)
+  expect_identical(drbggen(b, 20), x)
+  expect_false(identical(drbggen(a, 20), x))
+  expect_identical(length(drbggen(a, 65536)), 65536L)
+  c1 <- drbgnew(as.raw(0:47))
+  expect_false(identical(drbggen(c1, 20, addl = "00"), x))
+  expect_false(identical(drbggen(drbgnew(), 32), drbggen(drbgnew(), 32)))
+  r <- drbgnew(as.raw(0:47))
+  expect_identical(drbgrsd(r), r)
+  expect_false(identical(drbggen(r, 20), x))
 })
 
 test_that("bad inputs are refused with a reason", {
-  d <- drbg_new(as.raw(0:47))
-  expect_error(drbg_new(as.raw(1:47)), "exactly 48 bytes")
-  expect_error(drbg_new("zz"), "exactly 48 bytes")
-  expect_error(drbg_new(as.raw(0:47), personalization = as.raw(0:48)), "at most 48 bytes")
-  expect_error(drbg_new(as.raw(0:47), personalization = 1:3), "at most 48 bytes")
-  expect_error(drbg_generate(d, 0), "between 1 and 65536")
-  expect_error(drbg_generate(d, 65537), "between 1 and 65536")
-  expect_error(drbg_generate(d, c(1, 2)), "between 1 and 65536")
-  expect_error(drbg_generate(d, 4, additional = as.raw(0:48)), "at most 48 bytes")
-  expect_error(drbg_generate(list(), 4), "drbg_new")
-  expect_error(drbg_reseed(d, as.raw(1:3)), "exactly 48 bytes")
-  e <- drbg_new(as.raw(0:47))
+  d <- drbgnew(as.raw(0:47))
+  expect_error(drbgnew(as.raw(1:47)), "exactly 48 bytes")
+  expect_error(drbgnew("zz"), "exactly 48 bytes")
+  expect_error(drbgnew(as.raw(0:47), person = as.raw(0:48)), "at most 48 bytes")
+  expect_error(drbgnew(as.raw(0:47), person = 1:3), "at most 48 bytes")
+  expect_error(drbggen(d, 0), "between 1 and 65536")
+  expect_error(drbggen(d, 65537), "between 1 and 65536")
+  expect_error(drbggen(d, c(1, 2)), "between 1 and 65536")
+  expect_error(drbggen(d, 4, addl = as.raw(0:48)), "at most 48 bytes")
+  expect_error(drbggen(list(), 4), "drbgnew")
+  expect_error(drbgrsd(d, as.raw(1:3)), "exactly 48 bytes")
+  e <- drbgnew(as.raw(0:47))
   e$reseed_counter <- 2^48 + 1
-  expect_error(drbg_generate(e, 4), "reseed it")
-  drbg_reseed(e, as.raw(0:47))
-  expect_length(drbg_generate(e, 4), 4L)
+  expect_error(drbggen(e, 4), "reseed it")
+  drbgrsd(e, as.raw(0:47))
+  expect_length(drbggen(e, 4), 4L)
   expect_error(.Call(C_rmbl_drbg_generate, raw(32), raw(16), 0L, raw(0)), "between 1 and 65536")
   expect_error(.Call(C_rmbl_drbg_instantiate, raw(47), raw(0)), "48 bytes")
   expect_error(.Call(C_rmbl_drbg_reseed, raw(32), raw(16), raw(48), raw(49)), "0 to 48 bytes")
@@ -117,8 +117,8 @@ test_that("bad inputs are refused with a reason", {
 })
 
 test_that("a generator prints without its state", {
-  d <- drbg_new(as.raw(0:47))
-  drbg_generate(d, 4)
+  d <- drbgnew(as.raw(0:47))
+  drbggen(d, 4)
   out <- capture.output(print(d))
   expect_true(any(grepl("CTR_DRBG, AES-256", out, fixed = TRUE)))
   expect_true(any(grepl("requests since seeding +1$", out)))

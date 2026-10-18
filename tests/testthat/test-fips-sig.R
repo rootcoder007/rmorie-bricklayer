@@ -47,17 +47,17 @@ FIPS_SIZES <- list(
 SLOW_TO_SIGN <- character(0)
 
 test_that("every standardised scheme is present in every build", {
-  b <- pqc_backends()
+  b <- pqcbknd()
   expect_true("xmss-sha256" %in% b)
   expect_setequal(setdiff(b, "xmss-sha256"), names(FIPS_SIZES))
   # the list is fixed, not probed: there is no build in which a scheme
   # is missing, which was the whole point of dropping liboqs
-  expect_identical(b, pqc_backends())
+  expect_identical(b, pqcbknd())
 })
 
 test_that("the byte lengths are the ones the standards fix", {
   for (s in names(FIPS_SIZES)) {
-    sz <- fips_sizes(s)
+    sz <- fipssz(s)
     expect_identical(
       unname(sz[c("public_key", "secret_key", "signature", "seed",
                   "opt_rand")]),
@@ -65,19 +65,19 @@ test_that("the byte lengths are the ones the standards fix", {
       info = s)
   }
   # an SLH-DSA key is two n-byte halves and its seed three
-  expect_identical(fips_sizes("SLH-DSA-SHAKE-192s")[["public_key"]],
-                   2L * fips_sizes("SLH-DSA-SHAKE-192s")[["opt_rand"]])
-  expect_identical(fips_sizes("SLH-DSA-SHAKE-192s")[["seed"]],
-                   3L * fips_sizes("SLH-DSA-SHAKE-192s")[["opt_rand"]])
+  expect_identical(fipssz("SLH-DSA-SHAKE-192s")[["public_key"]],
+                   2L * fipssz("SLH-DSA-SHAKE-192s")[["opt_rand"]])
+  expect_identical(fipssz("SLH-DSA-SHAKE-192s")[["seed"]],
+                   3L * fipssz("SLH-DSA-SHAKE-192s")[["opt_rand"]])
   # dropping the lattice assumption costs size: three times over at the
   # smallest setting, ten times at the largest
-  expect_gt(fips_sizes("SLH-DSA-SHAKE-128s")[["signature"]],
-            3 * fips_sizes("ML-DSA-44")[["signature"]])
-  expect_gt(fips_sizes("SLH-DSA-SHAKE-256f")[["signature"]],
-            10 * fips_sizes("ML-DSA-87")[["signature"]])
-  expect_error(fips_sizes("ML-DSA-99"), "unknown scheme")
-  expect_error(fips_sizes("xmss-sha256"), "unknown scheme")
-  expect_error(fips_sizes(character(0)), "non-empty")
+  expect_gt(fipssz("SLH-DSA-SHAKE-128s")[["signature"]],
+            3 * fipssz("ML-DSA-44")[["signature"]])
+  expect_gt(fipssz("SLH-DSA-SHAKE-256f")[["signature"]],
+            10 * fipssz("ML-DSA-87")[["signature"]])
+  expect_error(fipssz("ML-DSA-99"), "unknown scheme")
+  expect_error(fipssz("xmss-sha256"), "unknown scheme")
+  expect_error(fipssz(character(0)), "non-empty")
 })
 
 test_that("this package reproduces OpenSSL's signatures byte for byte", {
@@ -88,35 +88,35 @@ test_that("this package reproduces OpenSSL's signatures byte for byte", {
     pk_hex <- vec[[s]][2L]
     sk_hex <- vec[[s]][3L]
     want <- vec[[s]][4L]
-    sz <- fips_sizes(s)
+    sz <- fipssz(s)
     # OpenSSL's key material is the length this package expects, which
     # is already a claim about the encodings
     expect_identical(nchar(pk_hex) %/% 2L, sz[["public_key"]], info = s)
     expect_identical(nchar(sk_hex) %/% 2L, sz[["secret_key"]], info = s)
-    key <- fips_key(s, pk_hex, sk_hex)
+    key <- fipskey(s, pk_hex, sk_hex)
     if (s %in% SLOW_TO_SIGN) next
-    sig <- capsule_sign(msg, key, context = "release",
-                        deterministic = TRUE)
+    sig <- cpssign(msg, key, ctx = "release",
+                        determ = TRUE)
     # BYTE equality with an implementation sharing no code with this
     # one. Verifying their signature would be weaker: an implementation
     # can verify what it produces and interoperate with nothing.
     #
-    # The digest is over the signature BYTES. core_sha256() on the hex
+    # The digest is over the signature BYTES. csha256() on the hex
     # string would hash the spelling instead, which is self-consistent
     # and compares against nothing external.
-    expect_identical(core_sha256(.rmbl_hex_to_raw(sig$signature)), want,
+    expect_identical(csha256(.rmbl_hex_to_raw(sig$signature)), want,
                      info = s)
     # and those same bytes verify, from the public key alone
-    pub <- fips_key(s, pk_hex)
-    expect_true(capsule_verify(msg, sig, pub, context = "release"),
+    pub <- fipskey(s, pk_hex)
+    expect_true(cpsvrf(msg, sig, pub, ctx = "release"),
                 info = s)
     # the context is bound into the signature, so the same bytes must
     # NOT verify under a different context or none at all
-    expect_false(capsule_verify(msg, sig, pub, context = "staging"),
+    expect_false(cpsvrf(msg, sig, pub, ctx = "staging"),
                  info = s)
-    expect_false(capsule_verify(msg, sig, pub), info = s)
-    expect_false(capsule_verify(as.raw(c(1:32, 0)), sig, pub,
-                                context = "release"), info = s)
+    expect_false(cpsvrf(msg, sig, pub), info = s)
+    expect_false(cpsvrf(as.raw(c(1:32, 0)), sig, pub,
+                                ctx = "release"), info = s)
     # one flipped bit anywhere is a rejection
     flipped <- sig
     n <- nchar(sig$signature)
@@ -124,36 +124,36 @@ test_that("this package reproduces OpenSSL's signatures byte for byte", {
     old <- strtoi(substring(sig$signature, mid, mid + 1L), 16L)
     substring(flipped$signature, mid, mid + 1L) <-
       sprintf("%02x", bitwXor(old, 1L))
-    expect_false(capsule_verify(msg, flipped, pub, context = "release"),
+    expect_false(cpsvrf(msg, flipped, pub, ctx = "release"),
                  info = s)
   }
 })
 
-test_that("key material round-trips through fips_key", {
-  key <- fips_keygen("ML-DSA-44")
-  again <- fips_key("ML-DSA-44", key$public, key$secret)
+test_that("key material round-trips through fipskey", {
+  key <- fipskg("ML-DSA-44")
+  again <- fipskey("ML-DSA-44", key$public, key$secret)
   expect_identical(again$secret, key$secret)
   expect_identical(again$public, key$public)
   expect_s3_class(again, "bricklayer_fips_key")
   # raw and hex are the same material
   expect_identical(
-    fips_key("ML-DSA-44", .rmbl_hex_to_raw(key$public),
+    fipskey("ML-DSA-44", .rmbl_hex_to_raw(key$public),
              .rmbl_hex_to_raw(key$secret))$secret,
     key$secret)
   # a public-only key verifies and cannot sign
-  pub <- fips_key("ML-DSA-44", key$public)
+  pub <- fipskey("ML-DSA-44", key$public)
   expect_s3_class(pub, "bricklayer_fips_public_key")
   expect_null(pub$secret)
-  sig <- capsule_sign("m", again)
-  expect_true(capsule_verify("m", sig, pub))
+  sig <- cpssign("m", again)
+  expect_true(cpsvrf("m", sig, pub))
   # material of the wrong length, or for the wrong scheme, is refused
-  expect_error(fips_key("ML-DSA-65", key$public, key$secret),
+  expect_error(fipskey("ML-DSA-65", key$public, key$secret),
                "must be 1952 bytes")
-  expect_error(fips_key("ML-DSA-44", substring(key$public, 3L)),
+  expect_error(fipskey("ML-DSA-44", substring(key$public, 3L)),
                "must be 1312 bytes")
-  expect_error(fips_key("ML-DSA-44", paste0("zz", substring(key$public, 3L))),
+  expect_error(fipskey("ML-DSA-44", paste0("zz", substring(key$public, 3L))),
                "must be 1312 bytes")
-  expect_error(fips_key("NO-SUCH-42", key$public), "unknown scheme")
+  expect_error(fipskey("NO-SUCH-42", key$public), "unknown scheme")
 })
 
 test_that("a fixed seed reproduces the recorded key and signature", {
@@ -163,23 +163,23 @@ test_that("a fixed seed reproduces the recorded key and signature", {
   vec <- fips_vectors("fips-self-vectors.txt")
   expect_setequal(names(vec), names(FIPS_SIZES))
   for (s in names(vec)) {
-    sz <- fips_sizes(s)
+    sz <- fipssz(s)
     seed <- as.raw(seq_len(sz[["seed"]]) %% 256L)
-    key <- fips_keygen(s, seed = seed)
+    key <- fipskg(s, seed = seed)
     expect_identical(key$public, vec[[s]][2L], info = s)
     expect_identical(key$scheme, s)
     # the same seed twice is the same key: keygen reads nothing else
-    expect_identical(fips_keygen(s, seed = seed)$public, key$public)
+    expect_identical(fipskg(s, seed = seed)$public, key$public)
     if (s %in% SLOW_TO_SIGN) next
-    sig <- capsule_sign("a manifest digest", key, context = "release",
-                        deterministic = TRUE)
-    expect_identical(core_sha256(sig$signature), vec[[s]][3L], info = s)
+    sig <- cpssign("a manifest digest", key, ctx = "release",
+                        determ = TRUE)
+    expect_identical(csha256(sig$signature), vec[[s]][3L], info = s)
     expect_identical(nchar(sig$signature) %/% 2L,
                      as.integer(vec[[s]][4L]), info = s)
     # and the deterministic variant is deterministic
     expect_identical(
-      capsule_sign("a manifest digest", key, context = "release",
-                   deterministic = TRUE)$signature,
+      cpssign("a manifest digest", key, ctx = "release",
+                   determ = TRUE)$signature,
       sig$signature, info = s)
   }
 })
@@ -189,72 +189,72 @@ test_that("a fresh key round-trips, and the hedged variant varies", {
   # check took 11 minutes (CRAN stress test of b617a3f)
   skip_on_cran()
   for (s in setdiff(names(FIPS_SIZES), SLOW_TO_SIGN)) {
-    key <- fips_keygen(s)
-    pub <- fips_public_key(key)
+    key <- fipskg(s)
+    pub <- fipspubkey(key)
     expect_identical(pub$public, key$public)
     expect_identical(pub$scheme, s)
     expect_null(pub$secret)
-    sig <- capsule_sign("payload", key)
-    expect_true(capsule_verify("payload", sig, pub), info = s)
-    expect_true(capsule_verify("payload", sig, key), info = s)
-    expect_false(capsule_verify("payloae", sig, pub), info = s)
+    sig <- cpssign("payload", key)
+    expect_true(cpsvrf("payload", sig, pub), info = s)
+    expect_true(cpsvrf("payload", sig, key), info = s)
+    expect_false(cpsvrf("payloae", sig, pub), info = s)
     # hedged signing draws fresh randomness, so two signatures over one
     # message differ while both verify
-    sig2 <- capsule_sign("payload", key)
+    sig2 <- cpssign("payload", key)
     expect_false(identical(sig$signature, sig2$signature), info = s)
-    expect_true(capsule_verify("payload", sig2, pub), info = s)
+    expect_true(cpsvrf("payload", sig2, pub), info = s)
     # raw and character messages are the same message
-    expect_true(capsule_verify(charToRaw("payload"), sig, pub), info = s)
+    expect_true(cpsvrf(charToRaw("payload"), sig, pub), info = s)
   }
 })
 
 test_that("a key does not verify another scheme's signature", {
-  a <- fips_keygen("ML-DSA-44")
-  b <- fips_keygen("ML-DSA-65")
-  sa <- capsule_sign("m", a)
-  expect_true(capsule_verify("m", sa, a))
+  a <- fipskg("ML-DSA-44")
+  b <- fipskg("ML-DSA-65")
+  sa <- cpssign("m", a)
+  expect_true(cpsvrf("m", sa, a))
   # the scheme is checked before the bytes: a 2420-byte signature would
   # be rejected by ML-DSA-65 on length alone, and an incidental check is
   # one a later change can remove without noticing
-  expect_false(capsule_verify("m", sa, b))
+  expect_false(cpsvrf("m", sa, b))
   mixed <- sa
   mixed$scheme <- "ML-DSA-65"
-  expect_false(capsule_verify("m", mixed, b))
+  expect_false(cpsvrf("m", mixed, b))
   # nor does an XMSS key verify a lattice signature, or the reverse
-  x <- pqc_keygen(height = 2L)
-  expect_false(capsule_verify("m", sa, signing_public_key(x)))
+  x <- pqckg(height = 2L)
+  expect_false(cpsvrf("m", sa, signpubkey(x)))
 })
 
 test_that("bad input is refused rather than silently coerced", {
-  key <- fips_keygen("ML-DSA-44")
-  expect_error(fips_keygen("ML-DSA-44", seed = as.raw(1:31)),
+  key <- fipskg("ML-DSA-44")
+  expect_error(fipskg("ML-DSA-44", seed = as.raw(1:31)),
                "32 bytes")
-  expect_error(fips_keygen("ML-DSA-44", seed = 1:32), "raw vector")
-  expect_error(fips_keygen("SLH-DSA-SHAKE-128s", seed = as.raw(1:32)),
+  expect_error(fipskg("ML-DSA-44", seed = 1:32), "raw vector")
+  expect_error(fipskg("SLH-DSA-SHAKE-128s", seed = as.raw(1:32)),
                "48 bytes")
-  expect_error(capsule_sign(c("a", "b"), key), "length-1")
-  expect_error(capsule_sign("m", key, context = c("a", "b")), "length-1")
-  expect_error(capsule_sign("m", key,
-                            context = strrep("x", 256L)),
+  expect_error(cpssign(c("a", "b"), key), "length-1")
+  expect_error(cpssign("m", key, ctx = c("a", "b")), "length-1")
+  expect_error(cpssign("m", key,
+                            ctx = strrep("x", 256L)),
                "255 bytes")
-  expect_error(fips_public_key(list()), "fips_keygen")
+  expect_error(fipspubkey(list()), "fipskg")
   # a 255-byte context is the largest the one-byte length field allows
-  sig <- capsule_sign("m", key, context = strrep("x", 255L))
-  expect_true(capsule_verify("m", sig, key, context = strrep("x", 255L)))
-  expect_false(capsule_verify("m", sig, key, context = strrep("x", 254L)))
+  sig <- cpssign("m", key, ctx = strrep("x", 255L))
+  expect_true(cpsvrf("m", sig, key, ctx = strrep("x", 255L)))
+  expect_false(cpsvrf("m", sig, key, ctx = strrep("x", 254L)))
 })
 
 test_that("the deprecated liboqs-era names still work", {
-  expect_warning(key <- oqs_keygen("ML-DSA-44"), "fips_keygen")
+  expect_warning(key <- oqskg("ML-DSA-44"), "fipskg")
   expect_identical(key$scheme, "ML-DSA-44")
-  expect_warning(pub <- oqs_public_key(key), "fips_public_key")
+  expect_warning(pub <- oqspubkey(key), "fipspubkey")
   expect_identical(pub$public, key$public)
   # and the old class is still what they carry, so code that tested for
   # it keeps working
   expect_s3_class(key, "bricklayer_oqs_key")
   expect_s3_class(pub, "bricklayer_oqs_public_key")
-  sig <- suppressWarnings(capsule_sign("m", key))
-  expect_true(capsule_verify("m", sig, pub))
+  sig <- suppressWarnings(cpssign("m", key))
+  expect_true(cpsvrf("m", sig, pub))
 })
 
 test_that("every parameter set signs in a time a test can afford", {
@@ -265,20 +265,20 @@ test_that("every parameter set signs in a time a test can afford", {
   # of recompressing the padded seed on every one of millions of calls.
   # If a change makes signing slow again, this is where it shows.
   for (s in c("SLH-DSA-SHAKE-192s", "SLH-DSA-SHA2-256s")) {
-    sz <- fips_sizes(s)
-    key <- fips_keygen(s, seed = as.raw(seq_len(sz[["seed"]]) %% 256L))
+    sz <- fipssz(s)
+    key <- fipskg(s, seed = as.raw(seq_len(sz[["seed"]]) %% 256L))
     t <- system.time(
-      sig <- capsule_sign("a manifest digest", key, context = "release",
-                          deterministic = TRUE))[["elapsed"]]
+      sig <- cpssign("a manifest digest", key, ctx = "release",
+                          determ = TRUE))[["elapsed"]]
     expect_lt(t, wall_limit(20))
-    expect_true(capsule_verify("a manifest digest", sig,
-                               fips_public_key(key), context = "release"),
+    expect_true(cpsvrf("a manifest digest", sig,
+                               fipspubkey(key), ctx = "release"),
                 info = s)
   }
 })
 
 test_that("the print methods say which scheme and withhold the secret", {
-  key <- fips_keygen("ML-DSA-65")
+  key <- fipskg("ML-DSA-65")
   out <- format(key)
   expect_true(any(grepl("FIPS 204", out)))
   expect_true(any(grepl("ML-DSA-65", out, fixed = TRUE)))
@@ -292,7 +292,7 @@ test_that("the print methods say which scheme and withhold the secret", {
   expect_false(any(grepl(tail_of_secret, paste(out, collapse = ""),
                          fixed = TRUE)))
   expect_true(any(grepl("stateless", out)))
-  pub <- format(fips_public_key(key))
+  pub <- format(fipspubkey(key))
   expect_true(any(grepl("ML-DSA-65", pub, fixed = TRUE)))
   expect_false(any(grepl(tail_of_secret, paste(pub, collapse = ""),
                          fixed = TRUE)))

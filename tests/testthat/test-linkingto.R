@@ -324,7 +324,7 @@ test_that("every published kernel compiles and resolves from a consumer", {
   expect_equal(nums[12L], stats::pgamma(1.5, 2))
   expect_equal(nums[14L], mean(x))
   expect_equal(nums[16L], stats::median(x))
-  expect_equal(nums[17L], gini(x))
+  expect_equal(nums[17L], ginicoef(x))
   expect_equal(nums[22L], pi^2 / 6, tolerance = 1e-13)
   expect_equal(nums[23L], stats::mad(x))
   expect_equal(nums[24L], mean(x, trim = 0.2))
@@ -369,7 +369,7 @@ test_that("every published kernel compiles and resolves from a consumer", {
   expect_identical(nums[54L], 1)          # an unknown kernel code is NaN, not a number
   # and the digest kernel still matches its published vector, so a
   # regression in the older shims surfaces here too
-  expect_identical(sha, core_sha256("abc"))
+  expect_identical(sha, csha256("abc"))
   expect_identical(
     sha, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
   )

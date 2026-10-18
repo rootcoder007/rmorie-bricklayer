@@ -3,8 +3,8 @@
 # cross-language parity check.
 
 hk_events <- function(n = 400L) {
-  u <- core_uniforms(n, 7)
-  v <- core_uniforms(n, 8)
+  u <- cunif(n, 7)
+  v <- cunif(n, 8)
   # sequential double additions, as Python's loop (cumsum accumulates in long double)
   t <- Reduce(`+`, -log(1 - u) * ifelse(v < 0.4, 0.05, 1), accumulate = TRUE)
   list(t = t, T = t[[n]] + 0.5)
@@ -29,12 +29,12 @@ hk_nll <- function(t, horizon, kernel, baseline, th, method = 0L, eps = 1e-12) {
 }
 
 test_that("splitmix64 is the stream morie's Python draws", {
-  expect_identical(core_uniforms(3, 42), c(0.7415648787718233, 0.1599103928769201, 0.27860113025513866))
+  expect_identical(cunif(3, 42), c(0.7415648787718233, 0.1599103928769201, 0.27860113025513866))
   e <- hk_events()
   expect_identical(e$t[1:3], c(0.49401725975830246, 0.5109480750755095, 2.82116905344865))
   expect_identical(e$T, 261.98663489850486)
-  expect_error(core_uniforms(-1, 1), "non-negative")
-  expect_error(core_uniforms(2, 2^60), "seed")
+  expect_error(cunif(-1, 1), "non-negative")
+  expect_error(cunif(2, 2^60), "seed")
 })
 
 test_that("the analytic gradient matches finite differences for every kernel and baseline", {
@@ -68,10 +68,10 @@ test_that("fits reproduce the reference morie's Python reaches (same core, same 
   )
   for (key in names(ref)) {
     kb <- strsplit(key, "/")[[1]]
-    f <- core_hawkes_fit(e$t, e$T, kb[[1]], kb[[2]])
+    f <- chwkfit(e$t, e$T, kb[[1]], kb[[2]])
     expect_equal(f$nll, ref[[key]][[1]], tolerance = 1e-10)
     expect_lt(max(abs(f$theta - ref[[key]][[2]])), 1e-6)
-    expect_true(f$ks_pvalue >= 0 && f$ks_pvalue <= 1 && isTRUE(f$converged))
+    expect_true(f$kspva >= 0 && f$kspva <= 1 && isTRUE(f$converged))
   }
 })
 
@@ -88,46 +88,46 @@ test_that("the sum of exponentials stays within n * eps of the exact likelihood"
 
 test_that("EM reaches the direct maximum; INAR is close; truncation is close; bad routes are refused", {
   e <- hk_events(250L)
-  direct <- core_hawkes_fit(e$t, e$T, "exponential")
-  em <- core_hawkes_fit(e$t, e$T, "exponential", method = "em")
+  direct <- chwkfit(e$t, e$T, "exponential")
+  em <- chwkfit(e$t, e$T, "exponential", meth = "em")
   expect_lt(abs(em$nll - direct$nll), 1e-4)
-  inar <- core_hawkes_fit(e$t, e$T, "exponential", method = "inar")
+  inar <- chwkfit(e$t, e$T, "exponential", meth = "inar")
   expect_identical(inar$method, "inar")
-  expect_lt(abs(inar$branching_ratio - direct$branching_ratio), 0.25)
-  tr <- core_hawkes_fit(e$t, e$T, "gamma", method = "truncate", eps = 1e-10)
+  expect_lt(abs(inar$braratio - direct$braratio), 0.25)
+  tr <- chwkfit(e$t, e$T, "gamma", meth = "truncate", eps = 1e-10)
   expect_identical(tr$method, "truncate")
   expect_identical(tr$n, length(e$t[e$t <= e$T]))  # an event at the horizon is part of the record
-  expect_identical(core_hawkes_fit(e$t, e$T, "weibull")$method, "truncate")
-  expect_lt(abs(tr$nll - core_hawkes_fit(e$t, e$T, "gamma", method = "exact")$nll), 1e-3)
-  expect_error(core_hawkes_fit(e$t, e$T, "exponential", "sinusoidal", method = "inar"), "stationary")
-  expect_error(core_hawkes_fit(e$t, e$T, "weibull", method = "soe"), "completely monotone")
-  expect_error(core_hawkes_fit(e$t, e$T, "exponential", method = "newton"), "must be one of")
-  expect_error(core_hawkes_fit(e$t[1:10], e$T, "exponential"), "too few events")
-  expect_error(core_hawkes_fit(rev(e$t), e$T, "exponential"), "sorted")
-  expect_error(core_hawkes_fit(e$t, e$T, "exponential", eps = 2), "eps")
+  expect_identical(chwkfit(e$t, e$T, "weibull")$method, "truncate")
+  expect_lt(abs(tr$nll - chwkfit(e$t, e$T, "gamma", meth = "exact")$nll), 1e-3)
+  expect_error(chwkfit(e$t, e$T, "exponential", "sinusoidal", meth = "inar"), "stationary")
+  expect_error(chwkfit(e$t, e$T, "weibull", meth = "soe"), "completely monotone")
+  expect_error(chwkfit(e$t, e$T, "exponential", meth = "newton"), "must be one of")
+  expect_error(chwkfit(e$t[1:10], e$T, "exponential"), "too few events")
+  expect_error(chwkfit(rev(e$t), e$T, "exponential"), "sorted")
+  expect_error(chwkfit(e$t, e$T, "exponential", eps = 2), "eps")
 })
 
 test_that("residuals are uniform-range and refuse a wrong parameter count", {
   e <- hk_events(150L)
-  U <- core_hawkes_residuals(e$t, e$T, "gamma", hk_theta("gamma", "sinusoidal"), baseline = "sinusoidal")
+  U <- chwkres(e$t, e$T, "gamma", hk_theta("gamma", "sinusoidal"), base = "sinusoidal")
   expect_length(U, 150L)
   expect_true(all(U > 0 & U < 1))
-  expect_error(core_hawkes_residuals(e$t, e$T, "gamma", c(1, 2)), "length")
+  expect_error(chwkres(e$t, e$T, "gamma", c(1, 2)), "length")
 })
 
 
 test_that("a bad horizon, events outside the window and a start outside the model are refused", {
   e <- hk_events(100L)
-  expect_error(core_hawkes_fit(e$t, 0), "single positive finite number")
-  expect_error(core_hawkes_fit(e$t, -1), "single positive finite number")
-  expect_error(core_hawkes_fit(e$t, Inf), "single positive finite number")
-  expect_error(core_hawkes_nll(e$t, Inf, "exponential", c(0, 0.3, 1)), "single positive finite number")
-  expect_error(core_hawkes_residuals(e$t, Inf, "exponential", c(0, 0.3, 1)), "single positive finite number")
-  expect_error(core_hawkes_fit(c(e$t, e$T + 1), e$T), "within \\[0, horizon\\]")
-  expect_error(core_hawkes_fit(c(-1, e$t), e$T), "within \\[0, horizon\\]")
+  expect_error(chwkfit(e$t, 0), "single positive finite number")
+  expect_error(chwkfit(e$t, -1), "single positive finite number")
+  expect_error(chwkfit(e$t, Inf), "single positive finite number")
+  expect_error(chwknll(e$t, Inf, "exponential", c(0, 0.3, 1)), "single positive finite number")
+  expect_error(chwkres(e$t, Inf, "exponential", c(0, 0.3, 1)), "single positive finite number")
+  expect_error(chwkfit(c(e$t, e$T + 1), e$T), "within \\[0, horizon\\]")
+  expect_error(chwkfit(c(-1, e$t), e$T), "within \\[0, horizon\\]")
   # exp(15) events a day over 10^5 days: a compensator past 10^11, where the core reports no likelihood
   far <- seq(1, 1e5, length.out = 100L)
-  expect_error(core_hawkes_fit(far, 1e5 + 1, start = c(15, 0.5, 1)), "not finite at `start`")
+  expect_error(chwkfit(far, 1e5 + 1, start = c(15, 0.5, 1)), "not finite at `start`")
   # the core checks parameter counts itself
   expect_error(.Call(C_rmbl_hawkes_nll_grad, e$t, e$T, 0L, c(0, 1), 0.5, 0L, 1, 0L, 1e-9, 1, 1e-3, TRUE),
                "wrong number of baseline or kernel parameters")
@@ -138,26 +138,26 @@ test_that("a bad horizon, events outside the window and a start outside the mode
 test_that("EM reaches the direct maximum for every kernel and for the sinusoidal baseline", {
   e <- hk_events(300L)
   for (k in c("weibull", "gamma", "lomax")) {
-    em <- core_hawkes_fit(e$t, e$T, k, method = "em")
+    em <- chwkfit(e$t, e$T, k, meth = "em")
     expect_identical(em$method, "em")
-    expect_lt(abs(em$nll - core_hawkes_fit(e$t, e$T, k)$nll), 1e-6)  # measured: at most 8e-12
+    expect_lt(abs(em$nll - chwkfit(e$t, e$T, k)$nll), 1e-6)  # measured: at most 8e-12
     expect_true(em$converged)
   }
-  em <- core_hawkes_fit(e$t, e$T, "exponential", "sinusoidal", method = "em")
-  expect_lt(abs(em$nll - core_hawkes_fit(e$t, e$T, "exponential", "sinusoidal")$nll), 1e-6)  # measured 2.1e-8
+  em <- chwkfit(e$t, e$T, "exponential", "sinusoidal", meth = "em")
+  expect_lt(abs(em$nll - chwkfit(e$t, e$T, "exponential", "sinusoidal")$nll), 1e-6)  # measured 2.1e-8
 })
 
 test_that("truncation at a tiny eps equals the exact likelihood for the exponential and Lomax kernels", {
   e <- hk_events(300L)
-  expect_lt(abs(core_hawkes_fit(e$t, e$T, "exponential", method = "truncate", eps = 1e-12)$nll -
-                  core_hawkes_fit(e$t, e$T, "exponential")$nll), 1e-9)
-  expect_lt(abs(core_hawkes_fit(e$t, e$T, "lomax", method = "truncate", eps = 1e-12)$nll -
-                  core_hawkes_fit(e$t, e$T, "lomax", method = "soe")$nll), 1e-9)
+  expect_lt(abs(chwkfit(e$t, e$T, "exponential", meth = "truncate", eps = 1e-12)$nll -
+                  chwkfit(e$t, e$T, "exponential")$nll), 1e-9)
+  expect_lt(abs(chwkfit(e$t, e$T, "lomax", meth = "truncate", eps = 1e-12)$nll -
+                  chwkfit(e$t, e$T, "lomax", meth = "soe")$nll), 1e-9)
 })
 
 test_that("an event at the horizon is part of the record and adds no compensator", {
   e <- hk_events(200L)
-  f <- core_hawkes_fit(e$t, max(e$t), "weibull")
+  f <- chwkfit(e$t, max(e$t), "weibull")
   expect_identical(f$n, length(e$t))
   expect_true(is.finite(f$nll))
 })
@@ -167,10 +167,10 @@ test_that("INAR fits every kernel without straying outside the parameter box", {
   # evaluated, so no "NaNs produced" warning reaches the caller
   e <- hk_events(300L)
   for (k in c("weibull", "gamma", "lomax")) {
-    expect_no_warning(i <- core_hawkes_fit(e$t, e$T, k, method = "inar"))
+    expect_no_warning(i <- chwkfit(e$t, e$T, k, meth = "inar"))
     expect_identical(i$method, "inar")
     expect_true(is.finite(i$nll))
-    expect_lt(abs(i$branching_ratio - core_hawkes_fit(e$t, e$T, k)$branching_ratio), 0.25)
+    expect_lt(abs(i$braratio - chwkfit(e$t, e$T, k)$braratio), 0.25)
   }
 })
 
@@ -197,21 +197,21 @@ hk_ref_nll <- function(t, horizon, kernel, par) {
   -(sum(log(lam)) - nu * horizon - eta * sum(G(horizon - t)))
 }
 
-test_that("core_hawkes_nll is the likelihood core_hawkes_fit maximises, for every kernel", {
+test_that("chwknll is the likelihood chwkfit maximises, for every kernel", {
   set.seed(4)
   x <- sort(stats::runif(40, 0, 10))
   pars <- list(exponential = c(-0.5, 0.3, 1.2), weibull = c(-0.5, 0.3, 0.9, 1.5),
                gamma = c(-0.5, 0.3, 2, 1.5), lomax = c(-0.5, 0.3, 2, 1.5))
   for (k in names(pars)) {
-    expect_equal(core_hawkes_nll(x, 10, k, pars[[k]]), hk_ref_nll(x, 10, k, pars[[k]]), tolerance = 1e-10, info = k)
+    expect_equal(chwknll(x, 10, k, pars[[k]]), hk_ref_nll(x, 10, k, pars[[k]]), tolerance = 1e-10, info = k)
   }
   # the Lomax is the shape-alpha Lomax the fit reports: its fitted theta gives back its nll
   e <- hk_events(300L)
-  f <- core_hawkes_fit(e$t, e$T, "lomax")
-  expect_equal(core_hawkes_nll(e$t, e$T, "lomax", f$theta), f$nll, tolerance = 1e-9)
+  f <- chwkfit(e$t, e$T, "lomax")
+  expect_equal(chwknll(e$t, e$T, "lomax", f$theta), f$nll, tolerance = 1e-9)
   # the documented sentinel outside the stationary region or the kernel's domain
-  expect_identical(core_hawkes_nll(x, 10, "exponential", c(-0.5, 1.5, 1.2)), 1e12)
-  expect_identical(core_hawkes_nll(x, 10, "lomax", c(-0.5, 0.3, -2, 1.5)), 1e12)
+  expect_identical(chwknll(x, 10, "exponential", c(-0.5, 1.5, 1.2)), 1e12)
+  expect_identical(chwknll(x, 10, "lomax", c(-0.5, 0.3, -2, 1.5)), 1e12)
 })
 
 test_that("events at the same instant do not excite each other, on every route", {
@@ -220,7 +220,7 @@ test_that("events at the same instant do not excite each other, on every route",
   pars <- list(exponential = c(-0.5, 0.3, 1.2), weibull = c(-0.5, 0.3, 0.9, 1.5),
                gamma = c(-0.5, 0.3, 2, 1.5), lomax = c(-0.5, 0.3, 2, 1.5))
   for (k in names(pars)) {
-    expect_equal(core_hawkes_nll(x, 10, k, pars[[k]]), hk_ref_nll(x, 10, k, pars[[k]]), tolerance = 1e-10, info = k)
+    expect_equal(chwknll(x, 10, k, pars[[k]]), hk_ref_nll(x, 10, k, pars[[k]]), tolerance = 1e-10, info = k)
   }
   # the sum-of-exponentials route (Lomax; gamma with shape < 1) and its recursion
   ns <- asNamespace("rmoriebricklayer")
@@ -239,29 +239,29 @@ test_that("events at the same instant do not excite each other, on every route",
   }
   # 100 events at one instant: no self-excitation to reward, so no steep kernel and no
   # likelihood above the Poisson one
-  expect_warning(f <- core_hawkes_fit(rep(5, 100), 200), "99 event\\(s\\) share their time")
+  expect_warning(f <- chwkfit(rep(5, 100), 200), "99 event\\(s\\) share their time")
   expect_equal(f$nll, hk_ref_nll(rep(5, 100), 200, "exponential", f$theta), tolerance = 1e-9)
   expect_gte(f$nll, -(100 * log(100 / 200) - 100) - 1e-6)
 })
 
-test_that("core_hawkes_jitter spreads recorded times across their interval, as rmorie and morie do", {
+test_that("chwkjit spreads recorded times across their interval, as rmorie and morie do", {
   days <- c(3, 0, 0, 1, 3, 0)
-  j <- core_hawkes_jitter(days)
-  # rmorie's TPS conversion: sorted days plus core_uniforms(n, 42), sorted
-  expect_identical(j, sort(sort(days) + core_uniforms(6, 42)))
+  j <- chwkjit(days)
+  # rmorie's TPS conversion: sorted days plus cunif(n, 42), sorted
+  expect_identical(j, sort(sort(days) + cunif(6, 42)))
   expect_false(anyDuplicated(j) > 0)
   expect_true(all(floor(j) %in% days))  # each time stays inside its own day
-  expect_identical(core_hawkes_jitter(days, 0.5, seed = 7), sort(sort(days) + 0.5 * core_uniforms(6, 7)))
-  expect_identical(core_hawkes_jitter(numeric()), numeric())
-  expect_error(core_hawkes_jitter(c(1, NA)), "finite")
-  expect_error(core_hawkes_jitter(c(1, Inf)), "finite")
-  expect_error(core_hawkes_jitter(1, 0), "single positive finite number")
-  expect_error(core_hawkes_jitter(1, c(1, 2)), "single positive finite number")
+  expect_identical(chwkjit(days, 0.5, seed = 7), sort(sort(days) + 0.5 * cunif(6, 7)))
+  expect_identical(chwkjit(numeric()), numeric())
+  expect_error(chwkjit(c(1, NA)), "finite")
+  expect_error(chwkjit(c(1, Inf)), "finite")
+  expect_error(chwkjit(1, 0), "single positive finite number")
+  expect_error(chwkjit(1, c(1, 2)), "single positive finite number")
   # daily data: the jittered times fit without the tie warning
   set.seed(3)
   d <- sort(floor(stats::runif(300, 0, 120)))
-  expect_warning(core_hawkes_fit(d, 121), "share their time")
-  expect_no_warning(core_hawkes_fit(core_hawkes_jitter(d), 121))
+  expect_warning(chwkfit(d, 121), "share their time")
+  expect_no_warning(chwkfit(chwkjit(d), 121))
 })
 
 test_that("auto fits a gamma kernel by soe, which reaches the exact route's maximum", {
@@ -270,8 +270,8 @@ test_that("auto fits a gamma kernel by soe, which reaches the exact route's maxi
   expect_identical(ns$.rmbl_hk_method("auto", "lomax"), "soe")
   expect_identical(ns$.rmbl_hk_method("exact", "gamma"), "exact")
   e <- hk_events(300L)
-  f <- core_hawkes_fit(e$t, e$T, "gamma")
-  x <- core_hawkes_fit(e$t, e$T, "gamma", method = "exact")
+  f <- chwkfit(e$t, e$T, "gamma")
+  x <- chwkfit(e$t, e$T, "gamma", meth = "exact")
   expect_identical(f$method, "soe")
   expect_true(f$converged)
   expect_lt(abs(f$nll - x$nll), 1e-6)

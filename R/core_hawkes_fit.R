@@ -54,7 +54,7 @@
   }
   if (length(times) > 0L && (min(times) < 0 || max(times) > horizon)) {
     stop(sprintf(paste0("`times` must lie within [0, horizon] (they span %g to %g)",
-                        if (max(times) > horizon) "; core_hawkes_jitter(times, horizon = ) keeps them inside" else ""),
+                        if (max(times) > horizon) "; chwkjit(times, horizon = ) keeps them inside" else ""),
                  min(times), max(times)), call. = FALSE)
   }
   list(times = times, horizon = horizon)
@@ -147,14 +147,14 @@
 #' start (branching ratio 0.1 and a decay a quarter of the reciprocal mean
 #' gap), and the better optimum kept: on data with little clustering its
 #' likelihood can have more than one maximum, one of them with the decay on
-#' its bound. A parameter on its bound (see \code{at_bound}) is still a
+#' its bound. A parameter on its bound (see \code{atbound}) is still a
 #' reason to refit from another \code{start} and compare \code{nll}.
 #'
 #' The reported \code{nll} is the exact likelihood at the estimate whatever
 #' the route, so AIC is comparable across routes. An event exactly at
-#' \code{horizon} is part of the record and counted, as in morie's Python
+#' \code{hor} is part of the record and counted, as in morie's Python
 #' fit. The Kolmogorov-Smirnov test compares the time-rescaling residuals of
-#' [core_hawkes_residuals()] with the uniform
+#' [chwkres()] with the uniform
 #' distribution (exact p-value up
 #' to 10,000 events without ties, asymptotic otherwise).
 #'
@@ -165,10 +165,10 @@
 #' as daily dates, carry ties the process itself never makes, and treating
 #' them as exact biases the fit (Filimonov & Sornette 2015), so spread them
 #' uniformly across their interval first with
-#' [core_hawkes_jitter()].
+#' [chwkjit()].
 #'
 #' Errors: \code{times} with \code{NA}, unsorted, or outside
-#' \code{[0, horizon]}; \code{horizon} not one positive finite number; fewer
+#' \code{[0, horizon]}; \code{hor} not one positive finite number; fewer
 #' than 50 events; an event rate \code{n / horizon} outside
 #' \eqn{[e^{-15}, 100 e^{15}]} per unit time (rescale the times);
 #' \code{eps} not in (0, 1); \code{start} of the wrong length or with a
@@ -180,15 +180,15 @@
 #' @param times Numeric vector of event times, sorted increasingly, all in
 #'   \code{[0, horizon]}, in any time unit (days are the natural unit for the
 #'   sinusoidal baseline's yearly cycle). At least 50 events.
-#' @param horizon End of the observation window, one positive number in the
+#' @param hor End of the observation window, one positive number in the
 #'   same unit as \code{times}; the window is \code{[0, horizon]}. With the
 #'   sinusoidal baseline (an annual cycle, \code{times} in days) at most
 #'   4194304 days: that baseline is integrated a day at a time.
 #' @param kernel The triggering kernel: \code{"exponential"} (the default),
 #'   \code{"weibull"}, \code{"gamma"} or \code{"lomax"}.
-#' @param baseline \code{"constant"} (the default) or \code{"sinusoidal"}
+#' @param base \code{"constant"} (the default) or \code{"sinusoidal"}
 #'   (trend plus a 365.25-unit cycle).
-#' @param method One of \code{"auto"} (the default), \code{"exact"}, \code{"soe"},
+#' @param meth One of \code{"auto"} (the default), \code{"exact"}, \code{"soe"},
 #'   \code{"truncate"}, \code{"em"}, \code{"inar"}. \code{"auto"} is
 #'   \code{"exact"} for the exponential kernel, \code{"truncate"} for Weibull
 #'   and \code{"soe"} for Lomax and gamma.
@@ -203,20 +203,20 @@
 #'   \describe{
 #'     \item{\code{theta}}{numeric, all estimates in the order baseline, \code{eta},
 #'       kernel.}
-#'     \item{\code{baseline_params}}{numeric, \code{a0} (constant) or \code{a0..a3}
+#'     \item{\code{basepar}}{numeric, \code{a0} (constant) or \code{a0..a3}
 #'       (sinusoidal), on the log scale.}
-#'     \item{\code{branching_ratio}}{numeric, \eqn{\eta}, the expected number of events
+#'     \item{\code{braratio}}{numeric, \eqn{\eta}, the expected number of events
 #'       each
 #'       event triggers.}
-#'     \item{\code{kernel_params}}{numeric, the kernel parameters (\code{beta};
+#'     \item{\code{kerpar}}{numeric, the kernel parameters (\code{beta};
 #'       \code{alpha, lambda}; \code{alpha, beta}; or \code{alpha, c}).}
 #'     \item{\code{nll}, \code{aic}, \code{bic}}{numeric: the exact negative
 #'       log-likelihood,
 #'       \eqn{2k + 2\,nll} and \eqn{k \log n + 2\,nll}.}
-#'     \item{\code{n}, \code{horizon}, \code{k_params}}{the number of events (integer),
+#'     \item{\code{n}, \code{horizon}, \code{kpar}}{the number of events (integer),
 #'       the
 #'       window end and the number of parameters (integer).}
-#'     \item{\code{ks_stat}, \code{ks_pvalue}}{numeric, the Kolmogorov-Smirnov test of
+#'     \item{\code{ksstat}, \code{kspva}}{numeric, the Kolmogorov-Smirnov test of
 #'       the
 #'       time-rescaling residuals against the uniform.}
 #'     \item{\code{kernel}, \code{baseline}, \code{method}}{character, the choices used
@@ -225,8 +225,8 @@
 #'       \code{NA} otherwise.}
 #'     \item{\code{converged}}{logical, the optimiser stopped at a maximum within the
 #'       parameter box (before its iteration limit, at a finite likelihood). A maximum
-#'       on the box counts: \code{at_bound} names the parameters that lie on it.}
-#'     \item{\code{at_bound}}{character, the names of parameters that lie on the box
+#'       on the box counts: \code{atbound} names the parameters that lie on it.}
+#'     \item{\code{atbound}}{character, the names of parameters that lie on the box
 #'       (\code{character(0)} for an interior maximum).}
 #'   }
 #'   An estimate on the box is not an interior maximum of the likelihood:
@@ -251,48 +251,48 @@
 #'   Hawkes self-excited point process model: application to high-frequency financial
 #'   data.
 #'   \emph{Quant. Finance} 15(8), 1293--1314. \doi{10.1080/14697688.2015.1032544}
-#' @seealso [core_hawkes_jitter()], for times recorded
+#' @seealso [chwkjit()], for times recorded
 #'   to a
-#'   resolution; [core_hawkes_residuals()] for the
+#'   resolution; [chwkres()] for the
 #'   residuals.
 #' @examples
 #' set.seed(1)
 #' times <- sort(stats::runif(400, 0, 100))
-#' fit <- core_hawkes_fit(times, 100, "exponential")
-#' fit$branching_ratio
-#' fit$at_bound # an interior maximum: the better of two starts
+#' fit <- chwkfit(times, 100, "exponential")
+#' fit$braratio
+#' fit$atbound # an interior maximum: the better of two starts
 #' # one start alone can stop with the decay on its bound, at a worse nll
-#' core_hawkes_fit(times, 100, "exponential", start = c(log(2.4), 0.4, 4))$at_bound
+#' chwkfit(times, 100, "exponential", start = c(log(2.4), 0.4, 4))$atbound
 #' fit$nll
-#' core_hawkes_fit(times, 100, "lomax", method = "soe", eps = 1e-8)$nll
-#' core_hawkes_fit(times, 100, "exponential", baseline = "sinusoidal")$aic
+#' chwkfit(times, 100, "lomax", meth = "soe", eps = 1e-8)$nll
+#' chwkfit(times, 100, "exponential", base = "sinusoidal")$aic
 #'
 #' # the fast approximate INAR estimator
-#' core_hawkes_fit(times, 100, method = "inar")$branching_ratio
+#' chwkfit(times, 100, meth = "inar")$braratio
 #'
 #' # daily dates: spread the ties across each day first
 #' days <- floor(times)
-#' jit <- core_hawkes_jitter(days, horizon = 100)
-#' core_hawkes_fit(jit, 100)$converged
+#' jit <- chwkjit(days, hor = 100)
+#' chwkfit(jit, 100)$converged
 #'
 #' # too few events, or times past the horizon, are refused
-#' try(core_hawkes_fit(times[1:20], 100))
-#' try(core_hawkes_fit(times, 50))
+#' try(chwkfit(times[1:20], 100))
+#' try(chwkfit(times, 50))
 #' @export
-core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull", "gamma", "lomax"),
-                            baseline = c("constant", "sinusoidal"), method = "auto", eps = 1e-9,
+chwkfit <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "lomax"),
+                            base = c("constant", "sinusoidal"), meth = "auto", eps = 1e-9,
                             start = NULL) {
   kernel <- .rmbl_arg(kernel)
-  baseline <- .rmbl_arg(baseline)
-  method <- .rmbl_hk_method(method, kernel)
-  chk <- .rmbl_hk_check_times(times, horizon, baseline)
-  horizon <- chk$horizon
-  times <- chk$times[chk$times >= 0 & chk$times <= horizon]
+  base <- .rmbl_arg(base)
+  meth <- .rmbl_hk_method(meth, kernel)
+  chk <- .rmbl_hk_check_times(times, hor, base)
+  hor <- chk$horizon
+  times <- chk$times[chk$times >= 0 & chk$times <= hor]
   n <- length(times)
   if (n < 50L) stop(sprintf("too few events (%d) for the fit", n), call. = FALSE)
   # the baseline is bounded (a0 in [-15, 15], eta <= 0.99), so the event rate it can reach is
   # [e^-15, 100 e^15] per unit time; outside that the optimiser can only return its start
-  rate <- n / horizon
+  rate <- n / hor
   if (!(rate >= exp(-15)) || !(rate <= 100 * exp(15))) {
     stop(sprintf(paste0("the event rate n / horizon = %g is outside what the fit can represent ",
                         "(%g to %g per unit time): express the times in another unit"),
@@ -302,40 +302,40 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
   if (ties) {
     warning(sprintf(paste0("%d event(s) share their time with an earlier one: they do not excite each ",
                            "other (the intensity sums over strictly earlier events). Times rounded to a ",
-                           "resolution (daily dates) should first be spread across it: core_hawkes_jitter()"),
+                           "resolution (daily dates) should first be spread across it: chwkjit()"),
                     ties), call. = FALSE)
   }
   if (!is.numeric(eps) || length(eps) != 1L || is.na(eps) || !(eps > 0) || eps >= 1) {
     stop("`eps` must be a single number in (0, 1)", call. = FALSE)
   }
-  nb <- if (baseline == "constant") 1L else 4L
-  b <- .rmbl_hk_bounds(kernel, baseline)
-  x0 <- if (is.null(start)) .rmbl_hk_x0(kernel, baseline, n, horizon, mean(diff(times))) else .rmbl_num(start, "start")
+  nb <- if (base == "constant") 1L else 4L
+  b <- .rmbl_hk_bounds(kernel, base)
+  x0 <- if (is.null(start)) .rmbl_hk_x0(kernel, base, n, hor, mean(diff(times))) else .rmbl_num(start, "start")
   if (length(x0) != length(b$lower)) stop(sprintf("`start` must have length %d", length(b$lower)), call. = FALSE)
   x0 <- pmin(pmax(x0, b$lower), b$upper)
-  exact_nll <- function(th) .rmbl_hk_call(times, horizon, kernel, baseline, th, "exact", 1e-12, FALSE)[[1]]
+  exact_nll <- function(th) .rmbl_hk_call(times, hor, kernel, base, th, "exact", 1e-12, FALSE)[[1]]
   converged <- TRUE
   # EM is an R loop: a bar with its iterations; the other routes are long native calls: a spinner
   # with the stage
   stage <- function(what, expr) {
     .bl_busy(sprintf("Hawkes fit (%s, %s events): %s", kernel, format(n, big.mark = ","), what), expr)
   }
-  if (method == "em") {
-    pg <- bricklayer_progress(sprintf("Hawkes fit (%s)", kernel), 0)
+  if (meth == "em") {
+    pg <- blprog(sprintf("Hawkes fit (%s)", kernel), 0)
     on.exit(pg$done(), add = TRUE)
     pg$update(info = sprintf("fitting %s events", format(n, big.mark = ",")))
-    em <- .rmbl_hk_em(times, horizon, kernel, baseline, x0, b, pg = pg)
+    em <- .rmbl_hk_em(times, hor, kernel, base, x0, b, pg = pg)
     # EM converges linearly: its steps shrink long before it reaches the maximum, so a small step
     # is not a stop (it ended 1.4e-5 short on macOS x86_64). Finish with the projected BFGS on the
     # exact likelihood from EM's point; it only moves uphill.
     pg$update(info = "polishing the EM point")
-    pol <- .rmbl_hk_pbfgs(times, horizon, kernel, baseline, "exact", 1e-12, b, em$theta)
+    pol <- .rmbl_hk_pbfgs(times, hor, kernel, base, "exact", 1e-12, b, em$theta)
     theta <- if (pol$value <= exact_nll(em$theta)) pol$par else em$theta
     converged <- pol$iterations < 2000
-  } else if (method == "inar") {
-    theta <- stage("INAR approximation", .rmbl_hk_inar(times, horizon, kernel, baseline, b))
+  } else if (meth == "inar") {
+    theta <- stage("INAR approximation", .rmbl_hk_inar(times, hor, kernel, base, b))
   } else {
-    run <- function(st) .rmbl_hk_pbfgs(times, horizon, kernel, baseline, method, eps, b, st)
+    run <- function(st) .rmbl_hk_pbfgs(times, hor, kernel, base, meth, eps, b, st)
     fit <- stage("first start", run(x0))
     if (!is.null(start) && fit$value >= 1e11) {
       # the optimizer cannot move from a point where the likelihood is not finite (it returned
@@ -347,8 +347,8 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
       # a second start with little excitation and a slow decay: on weakly clustered data the
       # likelihood has a second maximum with the decay on its bound, and the data-driven start
       # can stop there (nll -155.02 against -156.46 for runif(400) with seed 1)
-      x1 <- .rmbl_hk_x0(kernel, baseline, n, horizon, mean(diff(times)))
-      x1[[1L]] <- log(max(n / horizon, 1e-3) * 0.9)
+      x1 <- .rmbl_hk_x0(kernel, base, n, hor, mean(diff(times)))
+      x1[[1L]] <- log(max(n / hor, 1e-3) * 0.9)
       x1[[nb + 1L]] <- 0.1
       x1[[length(x1)]] <- x1[[length(x1)]] / 4
       fit2 <- stage("second start", run(pmin(pmax(x1, b$lower), b$upper)))
@@ -358,7 +358,7 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
       # a second, deterministic start at the exponential fit (the shape-1 member of Weibull and
       # gamma), as morie's Python fit: the likelihood is multimodal
       fit2 <- stage("second start, from the exponential fit",
-                    run(.rmbl_hk_warm(times, horizon, kernel, baseline, b)))
+                    run(.rmbl_hk_warm(times, hor, kernel, base, b)))
       if (fit2$value < fit$value) fit <- fit2
     }
     theta <- fit$par
@@ -366,7 +366,7 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
   }
   nll <- exact_nll(theta)
   k <- length(theta)
-  pnames <- c(if (baseline == "constant") "a0" else paste0("a", 0:3), "eta",
+  pnames <- c(if (base == "constant") "a0" else paste0("a", 0:3), "eta",
               switch(kernel, exponential = "beta", weibull = c("alpha", "lambda"), gamma = c("alpha", "beta"),
                      lomax = c("alpha", "c")))
   on_box <- abs(theta - b$lower) <= 1e-6 * pmax(1, abs(b$lower)) |
@@ -374,17 +374,17 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
   # reported, not warned: a Lomax fitted to exponential-like data reaching its exponential limit is
   # an ordinary result; a shape at its wall on day-dated times is the case to look at
   at_bound <- pnames[on_box]
-  U <- core_hawkes_residuals(times, horizon, kernel, theta, baseline = baseline)
+  U <- chwkres(times, hor, kernel, theta, base = base)
   # the exact distribution up to n = 10,000, as morie's Python (and scipy's "auto"); with
   # tied residuals (tied event times) the exact computation is extremely slow and memory-hungry
   # and its distribution does not hold, so the asymptotic one
   ks <- suppressWarnings(stats::ks.test(U, "punif", exact = length(U) <= 10000L && !anyDuplicated(U)))
-  list(theta = theta, baseline_params = theta[seq_len(nb)], branching_ratio = theta[[nb + 1L]],
-       kernel_params = theta[-seq_len(nb + 1L)], nll = nll, aic = 2 * k + 2 * nll, bic = k * log(n) + 2 * nll,
-       n = n, horizon = horizon, k_params = k, ks_stat = unname(ks$statistic), ks_pvalue = ks$p.value,
-       kernel = kernel, baseline = baseline, method = method,
-       eps = if (method %in% c("soe", "truncate")) eps else NA_real_, converged = converged,
-       at_bound = at_bound)
+  list(theta = theta, basepar = theta[seq_len(nb)], braratio = theta[[nb + 1L]],
+       kerpar = theta[-seq_len(nb + 1L)], nll = nll, aic = 2 * k + 2 * nll, bic = k * log(n) + 2 * nll,
+       n = n, horizon = hor, kpar = k, ksstat = unname(ks$statistic), kspva = ks$p.value,
+       kernel = kernel, baseline = base, method = meth,
+       eps = if (meth %in% c("soe", "truncate")) eps else NA_real_, converged = converged,
+       atbound = at_bound)
 }
 
 # the whole fit in the shared C++ core (projected BFGS, morie_core.h hawkes_fit_pbfgs): the routine
@@ -414,7 +414,7 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
 #' uniform on (0, 1) when the fitted Hawkes model is right, by the
 #' time-rescaling theorem. Plot them, or test them against the uniform with
 #' \code{stats::ks.test()}, to check the fit of
-#' [core_hawkes_fit()];
+#' [chwkfit()];
 #' departures show where the model misses clustering or a trend.
 #'
 #' @details
@@ -424,7 +424,7 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
 #' with \eqn{t_0 = 0} (Brown et al. 2002). The rescaled gaps
 #' \eqn{\Lambda(t_i) - \Lambda(t_{i-1})} are unit-rate exponential under the
 #' model, so the \eqn{U_i} are uniform. The model and kernels are those of
-#' [core_hawkes_fit()]; the shared C++ core computes the
+#' [chwkfit()]; the shared C++ core computes the
 #' residuals in O(n)
 #' for the exponential kernel and O(n w) for the others. Tied times give
 #' tied residuals.
@@ -434,9 +434,9 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
 #' parameters for the constant baseline, 5 + kernel parameters for the
 #' sinusoidal one).
 #'
-#' @inheritParams core_hawkes_fit
+#' @inheritParams chwkfit
 #' @param par Numeric vector of parameters (baseline terms, \code{eta},
-#'   kernel parameters), as \code{core_hawkes_fit()} returns them in
+#'   kernel parameters), as \code{chwkfit()} returns them in
 #'   \code{theta}: length 3 for the exponential kernel with a constant
 #'   baseline, one more for a two-parameter kernel, three more for the
 #'   sinusoidal baseline.
@@ -450,29 +450,29 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
 #' @examples
 #' set.seed(2)
 #' times <- sort(stats::runif(200, 0, 50))
-#' U <- core_hawkes_residuals(times, 50, "exponential", c(log(3), 0.2, 2))
+#' U <- chwkres(times, 50, "exponential", c(log(3), 0.2, 2))
 #' stats::ks.test(U, "punif")$p.value
 #'
 #' # residuals of a fitted model, and a quick uniform Q-Q check
-#' fit <- core_hawkes_fit(times, 50, "weibull")
-#' U2 <- core_hawkes_residuals(times, 50, "weibull", fit$theta)
+#' fit <- chwkfit(times, 50, "weibull")
+#' U2 <- chwkres(times, 50, "weibull", fit$theta)
 #' summary(U2)
 #' plot(stats::ppoints(length(U2)), sort(U2), xlab = "uniform quantile", ylab = "residual")
 #' abline(0, 1)
 #'
 #' # par must match the kernel and baseline
-#' try(core_hawkes_residuals(times, 50, "weibull", c(log(3), 0.2, 2)))
+#' try(chwkres(times, 50, "weibull", c(log(3), 0.2, 2)))
 #' @export
-core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "weibull", "gamma", "lomax"), par,
-                                  baseline = c("constant", "sinusoidal")) {
+chwkres <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "lomax"), par,
+                                  base = c("constant", "sinusoidal")) {
   kernel <- .rmbl_arg(kernel)
-  baseline <- .rmbl_arg(baseline)
-  chk <- .rmbl_hk_check_times(times, horizon, baseline)
-  nb <- if (baseline == "constant") 1L else 4L
+  base <- .rmbl_arg(base)
+  chk <- .rmbl_hk_check_times(times, hor, base)
+  nb <- if (base == "constant") 1L else 4L
   np <- if (kernel == "exponential") 1L else 2L
   par <- .rmbl_num(par, "par")
   if (length(par) != nb + 1L + np) stop(sprintf("`par` must have length %d", nb + 1L + np), call. = FALSE)
-  .Call(C_rmbl_hawkes_rescaled, chk$times, chk$horizon, .rmbl_hk_bkind[[baseline]], par[seq_len(nb)],
+  .Call(C_rmbl_hawkes_rescaled, chk$times, chk$horizon, .rmbl_hk_bkind[[base]], par[seq_len(nb)],
         par[[nb + 1L]], .rmbl_hk_kind[[kernel]], par[-seq_len(nb + 1L)])
 }
 
@@ -628,22 +628,22 @@ core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "wei
 #' @references Steele GL, Lea D, Flood CH (2014). Fast splittable pseudorandom number
 #'   generators. \emph{OOPSLA 2014}, 453--472. \doi{10.1145/2660193.2660195}
 #' @examples
-#' core_uniforms(3, 42)
-#' identical(core_uniforms(5, 1), core_uniforms(5, 1))
+#' cunif(3, 42)
+#' identical(cunif(5, 1), cunif(5, 1))
 #'
 #' # a stream is a prefix of a longer one with the same seed
-#' all.equal(core_uniforms(3, 7), core_uniforms(10, 7)[1:3])
+#' all.equal(cunif(3, 7), cunif(10, 7)[1:3])
 #'
 #' # R's own generator is left alone
 #' set.seed(1); a <- runif(1)
-#' set.seed(1); invisible(core_uniforms(100, 9)); b <- runif(1)
+#' set.seed(1); invisible(cunif(100, 9)); b <- runif(1)
 #' identical(a, b)
 #'
 #' # negative counts and seeds past 2^53 are refused
-#' try(core_uniforms(-1, 1))
-#' try(core_uniforms(2, 2^53))
+#' try(cunif(-1, 1))
+#' try(cunif(2, 2^53))
 #' @export
-core_uniforms <- function(n, seed) {
+cunif <- function(n, seed) {
   n <- .rmbl_num(n, "n")
   if (length(n) != 1L || is.na(n) || !is.finite(n) || n < 0 || n != floor(n)) {
     stop("`n` must be a non-negative whole number", call. = FALSE)
@@ -660,7 +660,7 @@ core_uniforms <- function(n, seed) {
 #' fitting the rounded times as exact biases the estimates (Filimonov &
 #' Sornette 2015). This function spreads each recorded time uniformly over
 #' the interval it stands for, so the times can be passed to
-#' [core_hawkes_fit()].
+#' [chwkfit()].
 #'
 #' @details
 #' Each time becomes \code{t + w * U}, with
@@ -668,24 +668,24 @@ core_uniforms <- function(n, seed) {
 #' and the result is sorted; this is the remedy Filimonov and Sornette use.
 #' The times are sorted (radix order) before the uniforms are assigned, so
 #' the result does not depend on the input order. The uniforms are the
-#' splitmix64 stream of [core_uniforms()], so the result is
+#' splitmix64 stream of [cunif()], so the result is
 #' reproducible
 #' and, on daily dates with \code{seed = 42}, the same as the jitter rmorie
 #' and morie (Python) apply before their TPS Hawkes fits. R's random number
 #' generator is not used.
 #'
-#' Errors: \code{times} with \code{NA} or non-finite values; \code{resolution}
-#' not one positive finite number; \code{horizon} not one number; a time
-#' past \code{horizon}.
+#' Errors: \code{times} with \code{NA} or non-finite values; \code{res}
+#' not one positive finite number; \code{hor} not one number; a time
+#' past \code{hor}.
 #'
 #' @param times Numeric event times, each the start of its resolution
 #'   interval (for example whole days since an origin).
-#' @param resolution The width of the interval a recorded time stands for,
+#' @param res The width of the interval a recorded time stands for,
 #'   one positive number in the unit of \code{times}: 1 (the default) for
 #'   daily dates in days, \code{1/24} for hourly times in days.
 #' @param seed Seed of the uniforms, as in
-#'   [core_uniforms()]; default 42.
-#' @param horizon End of the observation window, when it cuts an interval short: an
+#'   [cunif()]; default 42.
+#' @param hor End of the observation window, when it cuts an interval short: an
 #'   event
 #'   recorded at \code{t} is spread over \code{[t, min(t + resolution, horizon)]},
 #'   so a
@@ -696,33 +696,33 @@ core_uniforms <- function(n, seed) {
 #'   calibration issues in the Hawkes self-excited point process model:
 #'   application to high-frequency financial data. \emph{Quant. Finance}
 #'   15(8), 1293--1314. \doi{10.1080/14697688.2015.1032544}
-#' @seealso [core_hawkes_fit()],
-#'   [core_uniforms()]
+#' @seealso [chwkfit()],
+#'   [cunif()]
 #' @examples
 #' days <- c(0, 0, 0, 1, 3, 3)
-#' core_hawkes_jitter(days)
-#' anyDuplicated(core_hawkes_jitter(days))
+#' chwkjit(days)
+#' anyDuplicated(chwkjit(days))
 #'
 #' # a horizon keeps the last day inside the window
-#' core_hawkes_jitter(c(0, 1, 2), horizon = 2)
+#' chwkjit(c(0, 1, 2), hor = 2)
 #'
 #' # hourly resolution, in days, and another seed
-#' core_hawkes_jitter(c(0, 0, 0), resolution = 1 / 24, seed = 7)
+#' chwkjit(c(0, 0, 0), res = 1 / 24, seed = 7)
 #'
 #' # times past the horizon are refused
-#' try(core_hawkes_jitter(c(0, 5), horizon = 3))
+#' try(chwkjit(c(0, 5), hor = 3))
 #' @export
-core_hawkes_jitter <- function(times, resolution = 1, seed = 42, horizon = Inf) {
+chwkjit <- function(times, res = 1, seed = 42, hor = Inf) {
   times <- .rmbl_num(times, "times")
   if (anyNA(times) || any(!is.finite(times))) stop("`times` must be finite numbers", call. = FALSE)
-  resolution <- .rmbl_num(resolution, "resolution")
-  if (length(resolution) != 1L || !is.finite(resolution) || resolution <= 0) {
-    stop("`resolution` must be a single positive finite number", call. = FALSE)
+  res <- .rmbl_num(res, "res")
+  if (length(res) != 1L || !is.finite(res) || res <= 0) {
+    stop("`res` must be a single positive finite number", call. = FALSE)
   }
-  horizon <- .rmbl_num(horizon, "horizon")
-  if (length(horizon) != 1L || is.na(horizon)) stop("`horizon` must be a single number", call. = FALSE)
-  if (any(times > horizon)) stop("`times` must not exceed `horizon`", call. = FALSE)
+  hor <- .rmbl_num(hor, "hor")
+  if (length(hor) != 1L || is.na(hor)) stop("`hor` must be a single number", call. = FALSE)
+  if (any(times > hor)) stop("`times` must not exceed `hor`", call. = FALSE)
   times <- times[order(times, method = "radix")]
-  width <- pmin(resolution, horizon - times)
-  sort(times + width * core_uniforms(length(times), seed))
+  width <- pmin(res, hor - times)
+  sort(times + width * cunif(length(times), seed))
 }

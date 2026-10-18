@@ -19,41 +19,41 @@ table into an estimate of the reform's effect, with honest uncertainty. Each est
 same answer as the reference implementation (`fixest`, `did`, `bacondecomp`) to rounding error,
 and none of them needs a package outside base R.
 
-The examples use `policy_example()`: twenty districts in four regions over 36 months, with a
+The examples use `polex()`: twenty districts in four regions over 36 months, with a
 reform that reaches the regions in three stages (months 13, 19 and 25) and never reaches the
 fourth. The numbers are made up, with a known effect: the reform lowers the crime rate by 3.
 
 ```{r data}
-p <- policy_example()
+p <- polex()
 head(p)
 ```
 
 ## Difference in differences
 
-`did_panel()` fits the two-way fixed-effects regression, with standard errors clustered by unit
+`plndid()` fits the two-way fixed-effects regression, with standard errors clustered by unit
 (or any coarser grouping), and reports the effect relative to the comparison units' mean before
 the reform:
 
 ```{r did}
-did_panel(p, "district", "month", "crime_rate", "reformed")
+plndid(p, "district", "month", "crmrate", "reformed")
 ```
 
 ## Before any model
 
-`cohort_trends()` shows each adoption cohort's outcome around its adoption, scaled to 1 just
+`cohtrnd()` shows each adoption cohort's outcome around its adoption, scaled to 1 just
 before it:
 
 ```{r trends, fig.height = 3.5}
-plot(cohort_trends(p, "district", "month", "crime_rate", "reform_month", window = c(-10, 10)))
+plot(cohtrnd(p, "district", "month", "crmrate", "refmonth", win = c(-10, 10)))
 ```
 
 ## Leads and lags
 
-`event_study()` estimates the effect period by period around adoption. The leads (periods before
+`evstudy()` estimates the effect period by period around adoption. The leads (periods before
 adoption) should be near zero; the joint test of that is printed below the table:
 
 ```{r event, fig.height = 3.5}
-es <- event_study(p, "district", "month", "crime_rate", "reform_month", leads = 4, lags = 6)
+es <- evstudy(p, "district", "month", "crmrate", "refmonth", leads = 4, lags = 6)
 es
 plot(es)
 ```
@@ -61,76 +61,76 @@ plot(es)
 ## Staggered adoption
 
 When districts adopt at different times, the two-way estimate uses districts already treated as
-controls for later ones. `bacon_decomposition()` shows how much weight those comparisons get:
+controls for later ones. `bacondcmp()` shows how much weight those comparisons get:
 
 ```{r bacon, fig.height = 3.5}
-b <- bacon_decomposition(p, "district", "month", "crime_rate", "reformed")
+b <- bacondcmp(p, "district", "month", "crmrate", "reformed")
 tapply(b$weight, b$type, sum)
 plot(b)
 ```
 
-`staggered_att()` avoids them: each cohort is compared only with districts not yet treated
+`stgatt()` avoids them: each cohort is compared only with districts not yet treated
 (Callaway and Sant'Anna), or the regression has a coefficient for every cohort and period
 (Wooldridge). The bootstrap resamples whole districts:
 
 ```{r cs, fig.height = 3.5}
-s <- staggered_att(p, "district", "month", "crime_rate", "reform_month", reps = 99, seed = 1)
+s <- stgatt(p, "district", "month", "crmrate", "refmonth", reps = 99, seed = 1)
 s$overall
 plot(s)
 ```
 
-For a treatment that can switch off as well as on, `switching_did()` compares the units that
+For a treatment that can switch off as well as on, `swtdid()` compares the units that
 switch with those that do not, in the period they switch, with a placebo one period earlier:
 
 ```{r switching}
-switching_did(p, "district", "month", "crime_rate", "reformed", reps = 99, seed = 1)
+swtdid(p, "district", "month", "crmrate", "reformed", reps = 99, seed = 1)
 ```
 
 ## Inference from the assignment
 
 With four regions there are only 24 ways to assign the three stages and the never-treated region.
-`permutation_inference()` tries every one, and gives the share at least as extreme as the real
+`perminf()` tries every one, and gives the share at least as extreme as the real
 assignment. With two outcomes it also gives Westfall and Young's stepdown p-values, which hold the
 chance of any false positive at the nominal level:
 
 ```{r perm, fig.height = 3}
-r <- permutation_inference(p, "district", "month", c("crime_rate", "arrest_rate"), "reform_month",
-                           cluster = "region")
+r <- perminf(p, "district", "month", c("crmrate", "arrrate"), "refmonth",
+                           cl = "region")
 r
 plot(r, type = "histogram")
 ```
 
-`leave_one_out()` checks that no single district drives the estimate:
+`loounit()` checks that no single district drives the estimate:
 
 ```{r loo, fig.height = 3.5}
-plot(leave_one_out(p, "district", "month", "crime_rate", "reformed"))
+plot(loounit(p, "district", "month", "crmrate", "reformed"))
 ```
 
 Several outcomes at once, in the style of a Stata event-study figure:
 
 ```{r grid, fig.height = 3.5}
-plot_event_grid(list(
+plotevgrid(list(
   "Crime rate" = es,
-  "Arrest rate" = event_study(p, "district", "month", "arrest_rate", "reform_month", leads = 4,
+  "Arrest rate" = evstudy(p, "district", "month", "arrrate", "refmonth", leads = 4,
                               lags = 6)), style = "stata")
 ```
 
 ## Counts
 
-For counts, `fe_poisson()` gives the effect as a rate ratio, with the population as exposure:
+For counts, `plnpois()` gives the effect as a rate ratio, with the population as exposure:
 
 ```{r pois}
-fe_poisson(p, "district", "month", "crimes", "reformed", offset = "log_population")
+plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop")
 ```
 
 ## One treated place
 
-`synthetic_control()` builds a weighted average of untreated places that tracks the treated one
+`synctl()` builds a weighted average of untreated places that tracks the treated one
 before the reform, and runs the same method on each untreated place as a placebo:
 
 ```{r synth, fig.height = 3.5}
-p13 <- p[is.na(p$reform_month) | p$district == "D13", ]
-sc <- synthetic_control(p13, "district", "month", "crime_rate", "D13", adoption = 13)
+p13 <- p[is.na(p$refmonth) | p$district == "D13", ]
+sc <- synctl(p13, "district", "month", "crmrate", "D13", adopt = 13)
 sc
 plot(sc)
 ```
@@ -139,23 +139,23 @@ plot(sc)
 
 Three measures prepare the outcomes these designs take:
 
-- `severity_index()` combines offence rates, weighted by each offence's severity (for example its
+- `sevidx()` combines offence rates, weighted by each offence's severity (for example its
   mean statutory sentence);
-- `pipeline_rate()` gives the rate at which one stage of the justice process follows another,
+- `piperate()` gives the rate at which one stage of the justice process follows another,
   with the input's window set before the outcome's, because cases take time;
-- `cumulative_risk()` gives the chance of a first arrest (or conviction, or placement) by each
+- `cmlrisk()` gives the chance of a first arrest (or conviction, or placement) by each
   age, from first events and the population.
 
-For place-based designs, `buffer_assign()` marks places near a site as treated, places near a
+For place-based designs, `bufasgn()` marks places near a site as treated, places near a
 comparison point and far from every site as the comparison, and excludes the rest.
 
 ```{r measures}
 d <- data.frame(city = rep(c("A", "B"), each = 3), year = 2024,
                 offence = rep(c("homicide", "robbery", "burglary"), 2),
                 n = c(5, 120, 300, 2, 90, 410), pop = rep(c(250000, 180000), each = 3))
-severity_index(d, "city", "year", "offence", "n",
-               weights = c(homicide = 25, robbery = 8, burglary = 4), population = "pop")
-cumulative_risk(16:20, c(900, 1400, 1700, 1600, 1400), rep(1e5, 5))
+sevidx(d, "city", "year", "offence", "n",
+               w = c(homicide = 25, robbery = 8, burglary = 4), pop = "pop")
+cmlrisk(16:20, c(900, 1400, 1700, 1600, 1400), rep(1e5, 5))
 ```
 
 ## Doing better than the original designs
@@ -163,47 +163,47 @@ cumulative_risk(16:20, c(900, 1400, 1700, 1600, 1400), rep(1e5, 5))
 Published applications of these designs often share a few weaknesses, and each has a remedy here.
 
 **Few clusters.** A reform assigned to a handful of districts gives cluster-robust tests that
-reject too often. `wild_cluster_bootstrap()` gives an honest p-value and interval; with four
+reject too often. `wcb()` gives an honest p-value and interval; with four
 clusters it says plainly that nothing can be rejected at 5%:
 
 ```{r wild}
-wild_cluster_bootstrap(p, "district", "month", "crime_rate", "reformed", cluster = "region")
+wcb(p, "district", "month", "crmrate", "reformed", cl = "region")
 ```
 
-**Doubts about parallel trends.** `trend_sensitivity()` asks how large a departure from
+**Doubts about parallel trends.** `tse()` asks how large a departure from
 parallel trends, relative to the largest seen before adoption, would make the effect vanish:
 
 ```{r sens}
-trend_sensitivity(es, seed = 1)
+tse(es, seed = 1)
 ```
 
-**Covariates that differ between groups.** `staggered_att()` with `covariates` is doubly robust
+**Covariates that differ between groups.** `stgatt()` with `covariates` is doubly robust
 (use covariates fixed before treatment: one the reform moves, such as arrests, is a bad
-control). `dml_panel()` lets a machine learner fit the confounding with fixed effects, and
-`matched_did()` matches units on their pre-reform paths before differencing:
+control). `plndml()` lets a machine learner fit the confounding with fixed effects, and
+`mtchdid()` matches units on their pre-reform paths before differencing:
 
 ```{r covs}
 set.seed(4)
 p$x1 <- rnorm(20)[match(p$district, unique(p$district))]
-staggered_att(p, "district", "month", "crime_rate", "reform_month", covariates = "x1", reps = 49,
+stgatt(p, "district", "month", "crmrate", "refmonth", covs = "x1", reps = 49,
               seed = 1)$overall
-m <- matched_did(p, "district", "month", "crime_rate", "reform_month", ratio = 2)
+m <- mtchdid(p, "district", "month", "crmrate", "refmonth", ratio = 2)
 m$estimate
 ```
 
-**A single treated place, or a few.** `synthetic_did()` weights both comparison units and
+**A single treated place, or a few.** `syndid()` weights both comparison units and
 pre-periods:
 
 ```{r sdid}
-synthetic_did(p13, "district", "month", "crime_rate", "reform_month", reps = 50, seed = 1)
+syndid(p13, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1)
 ```
 
-**Null results without a measure of power.** `panel_power()` simulates the design on the
+**Null results without a measure of power.** `plnpwr()` simulates the design on the
 untreated data and gives the minimum detectable effect:
 
 ```{r power, fig.height = 3.5}
-pw <- panel_power(p[p$month <= 12, ], "district", "month", "crime_rate", n_treated = 10,
-                  adoption = 7:10, effects = c(0, 0.5, 1, 1.5), reps = 40, seed = 1)
+pw <- plnpwr(p[p$month <= 12, ], "district", "month", "crmrate", ntrt = 10,
+                  adopt = 7:10, eff = c(0, 0.5, 1, 1.5), reps = 40, seed = 1)
 pw
 plot(pw)
 ```
@@ -215,13 +215,14 @@ The bundled Indigenous tables are repeated cross-sections of published estimates
 before-and-after comparison they support is the change in a gap, with its interval:
 
 ```{r indigenous-policy}
-hi <- indigenous_example("health_indicators")
+hi <- indiex("health")
 x <- hi[hi$age == "Total, 18 years and over" &
           hi$indicator == "Perceived mental health, very good or excellent", ]
-gaps <- do.call(rbind, lapply(split(x, x$period), function(p)
+gaps <- do.call(rbind, lapply(split(x, x$period), function(p) {
   cbind(period = p$period[1],
-        indigenous_gap(p, "group", "estimate", "lower", "upper")[
-          , c("group", "difference", "difference_lower", "difference_upper")])))
+        indgap(p, "group", "estimate", "lower", "upper")[
+          , c("group", "difference", "diflo", "difup")])
+}))
 rownames(gaps) <- NULL
 gaps
 ```

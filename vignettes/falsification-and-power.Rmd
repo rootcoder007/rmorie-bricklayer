@@ -22,7 +22,7 @@ write as a function of the data.
 
 ## Falsification controls
 
-`capsule_falsify()` takes the data, a statistic (a function of the data frame) and the name
+`cpsfals()` takes the data, a statistic (a function of the data frame) and the name
 of the treatment column, and runs the controls that a real association must pass:
 
 * **permutation**: shuffle the treatment; the statistic should collapse toward its null;
@@ -34,7 +34,7 @@ set.seed(1)
 d <- data.frame(x = rnorm(200))
 d$y <- 0.8 * d$x + rnorm(200)
 
-real <- capsule_falsify(d, function(z) cor(z$x, z$y), treatment = "x", n = 199, seed = 42)
+real <- cpsfals(d, function(z) cor(z$x, z$y), trt = "x", n = 199, seed = 42)
 real$controls[, c("control", "passed")]
 ```
 
@@ -43,7 +43,7 @@ passes the subset check (it is perfectly stable) and fails the permutation check
 not collapse when the treatment is destroyed):
 
 ```{r falsify-fake}
-fake <- capsule_falsify(d, function(z) 0.5, treatment = "x", n = 199, seed = 42)
+fake <- cpsfals(d, function(z) 0.5, trt = "x", n = 199, seed = 42)
 fake$controls[fake$controls$control == "permutation", "passed"]
 ```
 
@@ -52,7 +52,7 @@ constant is undefined, but its behaviour under permutation is not.
 
 ## Power curves
 
-A null result is only informative if the procedure could have found something. `capsule_power()`
+A null result is only informative if the procedure could have found something. `cpspwr()`
 injects an effect of known size into the data, re-runs the statistic with its permutation
 test, and reports the detection rate at each size:
 
@@ -64,8 +64,8 @@ inj <- function(z, size) {
   z
 }
 
-pw <- capsule_power(d, function(z) cor(z$x, z$y), inj,
-                    sizes = c(0, 0.3, 0.6), treatment = "x",
+pw <- cpspwr(d, function(z) cor(z$x, z$y), inj,
+                    sizes = c(0, 0.3, 0.6), trt = "x",
                     n = 99, reps = 5, seed = 42)
 pw$curve
 ```
@@ -85,7 +85,7 @@ size would you have detected with this data?"
 ## Families of statistics: the multiple-testing correction
 
 When several statistics are examined, the smallest p-value among them is not the finding.
-`falsify_family()` applies a multiple-testing correction across a family of falsification
+`falsfam()` applies a multiple-testing correction across a family of falsification
 results, so one real association is still reported as real and the noise is not:
 
 ```{r family}
@@ -95,18 +95,18 @@ d$y <- 0.6 * d$x + rnorm(150)
 d$a <- rnorm(150)
 d$b <- rnorm(150)
 fam <- list(
-  real    = capsule_falsify(d, function(z) cor(z$x, z$y), treatment = "x", n = 199, seed = 1),
-  noise_a = capsule_falsify(d, function(z) cor(z$a, z$y), treatment = "a", n = 199, seed = 2),
-  noise_b = capsule_falsify(d, function(z) cor(z$b, z$y), treatment = "b", n = 199, seed = 3)
+  real    = cpsfals(d, function(z) cor(z$x, z$y), trt = "x", n = 199, seed = 1),
+  noisea = cpsfals(d, function(z) cor(z$a, z$y), trt = "a", n = 199, seed = 2),
+  noiseb = cpsfals(d, function(z) cor(z$b, z$y), trt = "b", n = 199, seed = 3)
 )
-falsify_family(fam)
+falsfam(fam)
 ```
 
 It also accepts bare p-values, which is what stops the smallest of several from being read
 as the finding:
 
 ```{r family-p}
-falsify_family(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5))$results
+falsfam(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5))$results
 ```
 
 ## Sensitivity to an unmeasured confounder
@@ -116,38 +116,38 @@ of association an unmeasured confounder would need with both treatment and outco
 explain the result away:
 
 ```{r evalue}
-evalue_rr(2)                       # needs a confounder associated by 3.41 with both
-evalue_rr(0.5)                     # a protective effect is inverted; same answer
-evalue_rr(2, lo = 0.9, hi = 4.4)   # an interval that includes the null needs nothing
-evalue_rr(3, lo = 2.1, hi = 4.3)   # a strong result with a limit well above the null
+evlrr(2)                       # needs a confounder associated by 3.41 with both
+evlrr(0.5)                     # a protective effect is inverted; same answer
+evlrr(2, lo = 0.9, hi = 4.4)   # an interval that includes the null needs nothing
+evlrr(3, lo = 2.1, hi = 4.3)   # a strong result with a limit well above the null
 ```
 
 ## Where this fits in a capsule
 
-`capsule_report()` runs the falsification controls alongside the schema, rule and drift
+`cpsrpt()` runs the falsification controls alongside the schema, rule and drift
 checks when a statistic is supplied, so the capsule records not only that the number was
 computed from these bytes but that it survived its controls. A pre-registered hypothesis
-(`prereg_declare()`, `prereg_check()`) pins what was going to be tested before the data were
+(`prrgdecl()`, `prrgchk()`) pins what was going to be tested before the data were
 seen, which is the other half of keeping a finding honest.
 
 ## Several gaps, one family of tests
 
-A report on Indigenous health usually tests many indicators at once. `falsify_family()`
+A report on Indigenous health usually tests many indicators at once. `falsfam()`
 adjusts the family; here the differences from non-Indigenous adults in 2019/2022 for
 First Nations adults, with z statistics from the published 95 percent intervals:
 
 ```{r indigenous-falsify}
-hi <- indigenous_example("health_indicators")
+hi <- indiex("health")
 s <- hi[hi$period == "2019/2022" & hi$age == "Total, 18 years and over" &
           hi$quality == "ok", ]
 fn <- s[s$group == "First Nations", ]
 ni <- s[s$group == "Non-Indigenous", ]
-both <- merge(fn, ni, by = "indicator", suffixes = c("_fn", "_ni"))
+both <- merge(fn, ni, by = "indicator", suffixes = c("fn", "ni"))
 se <- function(l, u) (u - l) / (2 * 1.96)
-z <- (both$estimate_fn - both$estimate_ni) /
-  sqrt(se(both$lower_fn, both$upper_fn)^2 + se(both$lower_ni, both$upper_ni)^2)
+z <- (both$estimatefn - both$estimateni) /
+  sqrt(se(both$lowerfn, both$upperfn)^2 + se(both$lowerni, both$upperni)^2)
 p <- stats::setNames(2 * stats::pnorm(-abs(z)), both$indicator)
-res <- falsify_family(p, method = "holm")
+res <- falsfam(p, meth = "holm")
 head(res)
 ```
 

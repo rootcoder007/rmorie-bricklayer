@@ -50,20 +50,20 @@ test_that("native encoder matches jsonlite::toJSON across the option grid", {
   for (on in names(objs)) {
     for (o in opts) {
       theirs <- run(jsonlite::toJSON, objs[[on]], o)
-      ours <- run(bricklayer_json_to_json, objs[[on]], o)
+      ours <- run(tojs, objs[[on]], o)
       expect_identical(ours, theirs, label = paste0(on, " / ", paste(names(o), unlist(o), collapse = ",")))
     }
   }
   expect_identical(
-    as.character(bricklayer_json_to_json(list(a = bricklayer_json_unbox(1), b = 1:2))),
+    as.character(tojs(list(a = bricklayer_json_unbox(1), b = 1:2))),
     as.character(jsonlite::toJSON(list(a = jsonlite::unbox(1), b = 1:2)))
   )
 })
 
 test_that("a repeated key is refused by default and kept, as jsonlite keeps it, on request", {
   skip_if_not_installed("jsonlite")
-  expect_error(bricklayer_json_from_json('{"a":1,"a":2}'), "duplicate key")
-  expect_equal(bricklayer_json_from_json('{"a":1,"a":2}', duplicate_keys = "keep"),
+  expect_error(fromjs('{"a":1,"a":2}'), "duplicate key")
+  expect_equal(fromjs('{"a":1,"a":2}', duplicate_keys = "keep"),
                jsonlite::fromJSON('{"a":1,"a":2}'))
 })
 
@@ -88,7 +88,7 @@ test_that("native parser + simplifier match jsonlite::fromJSON", {
   run <- function(f, tx, o) tryCatch(do.call(f, c(list(tx), o)), error = function(e) "<<error>>")
   for (tx in texts) {
     for (o in dopts) {
-      expect_equal(run(bricklayer_json_from_json, tx, c(o, list(bigint_warn = FALSE))),
+      expect_equal(run(fromjs, tx, c(o, list(bigint_warn = FALSE))),
                    run(jsonlite::fromJSON, tx, o),
         label = paste0(tx, " / ", paste(names(o), unlist(o), collapse = ","))
       )
@@ -114,22 +114,22 @@ test_that("prettify / minify / base64 / serialize agree with jsonlite", {
     )
   }
   b <- as.raw(0:255)
-  expect_identical(bricklayer_json_base64_enc(b), jsonlite::base64_enc(b))
-  expect_identical(bricklayer_json_base64_dec(jsonlite::base64_enc(b)), b)
-  expect_identical(bricklayer_json_base64url_dec(bricklayer_json_base64url_enc(as.raw(250:255))), as.raw(250:255))
-  expect_identical(bricklayer_json_base64_enc(c("ab", "c")), jsonlite::base64_enc(c("ab", "c")))
+  expect_identical(jsb64enc(b), jsonlite::base64_enc(b))
+  expect_identical(jsb64dec(jsonlite::base64_enc(b)), b)
+  expect_identical(jsb64udec(jsb64uenc(as.raw(250:255))), as.raw(250:255))
+  expect_identical(jsb64enc(c("ab", "c")), jsonlite::base64_enc(c("ab", "c")))
   for (x in list(
     data.frame(a = 1:2, b = c("x", NA)), list(a = 1, b = list(c = "z")), matrix(1:6, 2),
     factor(c("u", "v", "u")), as.Date("2024-05-06"), as.POSIXct("2024-05-06 07:08:09", tz = "UTC"),
     c(1 + 2i, NA), charToRaw("hi"), c(1, NA, NaN, Inf), NULL, TRUE, c(a = 1L)
   )) {
     theirs <- as.character(jsonlite::serializeJSON(x))
-    expect_identical(as.character(bricklayer_json_serialize(x)), theirs)
+    expect_identical(as.character(jsser(x)), theirs)
     # Parity includes the CONDITIONS: a complex vector holding NA warns
     # "NAs introduced by coercion" in jsonlite too, so suppressing it
     # here would hide a divergence rather than a nuisance.
     ours <- withCallingHandlers(
-      bricklayer_json_unserialize(theirs),
+      jsunser(theirs),
       warning = function(w) {
         expect_warning(jsonlite::unserializeJSON(theirs),
           conditionMessage(w),
@@ -140,7 +140,7 @@ test_that("prettify / minify / base64 / serialize agree with jsonlite", {
     )
     expect_equal(ours, suppressWarnings(jsonlite::unserializeJSON(theirs)))
     # complex NA round-trips as NA+0i through jsonlite too; compare with its own result
-    if (!is.complex(x)) expect_equal(bricklayer_json_unserialize(bricklayer_json_serialize(x)), x)
+    if (!is.complex(x)) expect_equal(jsunser(jsser(x)), x)
   }
   nested <- jsonlite::fromJSON('[{"a":{"b":1,"c":{"d":2}}},{"a":{"b":3,"c":{"d":4}}}]', flatten = FALSE)
   expect_identical(bricklayer_json_flatten(nested), jsonlite::flatten(nested))

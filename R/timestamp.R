@@ -25,10 +25,10 @@
 #' @description
 #' A timestamp token is a small file, signed by an independent timestamping
 #' authority, saying that a given set of bytes (for example a manifest of
-#' results) existed at a given time. `timestamp_verify()` checks that a
+#' results) existed at a given time. `tsvrf()` checks that a
 #' token covers the bytes given, reports the time it asserts, and verifies
 #' the timestamping authority's signature under a certificate you supply or
-#' the one the token carries. `timestamp_info()` reads the token's fields
+#' the one the token carries. `tsinfo()` reads the token's fields
 #' without verifying anything. Use them to prove that an analysis output
 #' existed by a certain date.
 #'
@@ -38,7 +38,7 @@
 #' token's imprint), `certificate_source`, `signature`, `attribute_digest`
 #' (the signed attributes commit to the token's contents),
 #' `certificate_trust`, and with `trust` the `chain:` checks of
-#' [cert_chain_verify()]. `ok` is `TRUE` only
+#' [certchnvrf()]. `ok` is `TRUE` only
 #' when every row passes. A token
 #' that cannot be parsed is not an error: it gives `ok = FALSE` and the
 #' rows up to the failure.
@@ -53,7 +53,7 @@
 #' believe that certificate.
 #'
 #' Validity windows are checked at the time the TOKEN asserts, unless
-#' `at_time` says otherwise. A token signed in 2020 under a
+#' `attm` says otherwise. A token signed in 2020 under a
 #' certificate that expired in 2021 was validly signed, and judging it by
 #' today's date would reject it for a reason unconnected to its validity.
 #'
@@ -65,10 +65,10 @@
 #' Revocation data are not fetched: a CRL has to be handed in through
 #' `crls`, and nothing is retrieved over the network (chain checks such as
 #' name constraints and certificate policies are done by
-#' [cert_chain_verify()]). Nothing is written to disk.
+#' [certchnvrf()]). Nothing is written to disk.
 #'
-#' Errors: `token`, `data` or `certificate` neither a raw vector nor the
-#' path of an existing file. `timestamp_info()` errors on a token it cannot
+#' Errors: `token`, `data` or `cert` neither a raw vector nor the
+#' path of an existing file. `tsinfo()` errors on a token it cannot
 #' parse.
 #'
 #' @param token The token: a raw vector, or a path to a
@@ -76,25 +76,25 @@
 #' `TimeStampToken` are both accepted.
 #' @param data The bytes the token should cover: a raw vector,
 #' or a path to a file.
-#' @param certificate The authority's certificate, DER
+#' @param cert The authority's certificate, DER
 #' or PEM, as raw or a path. Optional: when the token embeds a certificate,
 #' that one is used and the fact is reported.
 #' @param trust Trust anchors for validating that certificate
-#' -- see [cert_chain_verify()]. Without
+#' -- see [certchnvrf()]. Without
 #' them the signature is still checked, but nothing vouches for the key
 #' that made it.
 #' @param crls Optional CRLs to check the chain against, as raw
 #' vectors or paths.
-#' @param at_time The time to check certificate validity at.
+#' @param attm The time to check certificate validity at.
 #' Defaults to the time the token asserts, which is usually what is wanted.
-#' @return `timestamp_verify()` returns a list of class
+#' @return `tsvrf()` returns a list of class
 #' `bricklayer_timestamp`: `ok` (logical), `time` (a `POSIXct` in
 #' UTC, or
 #' `NA` when the token could not be read), `serial` and `policy`
 #' (character), `hash_algorithm` (for example `"sha256"`),
 #' `signature_algorithm` (an OID string), and a `checks` data frame with
 #' columns `check`, `ok` and `detail`. The print method lists the checks.
-#' `timestamp_info()` returns a plain list with `time`, `serial`,
+#' `tsinfo()` returns a plain list with `time`, `serial`,
 #' `policy`,
 #' `hash_algorithm`, `imprint` (hex), `signature_algorithm` and
 #' `has_certificate` (logical).
@@ -102,31 +102,31 @@
 #' Internet X.509 Public Key Infrastructure Time-Stamp Protocol (TSP). RFC
 #' 3161.
 #' @seealso
-#' [chain_seal()] for the ordering a timestamp
-#' cannot give, [capsule_attest()] for
+#' [chnseal()] for the ordering a timestamp
+#' cannot give, [cpsatst()] for
 #' authorship.
 #' @examples
 #' # Offline: bytes that are not a timestamp token are reported, not
 #' # thrown, so a batch check can carry on.
-#' bad <- timestamp_verify(as.raw(c(0x30, 0x03, 0x02, 0x01, 0x05)),
+#' bad <- tsvrf(as.raw(c(0x30, 0x03, 0x02, 0x01, 0x05)),
 #'                         data = charToRaw("manifest"))
 #' bad$ok
 #' bad$checks
 #'
-#' # timestamp_info() does refuse an unreadable token
-#' try(timestamp_info(as.raw(1:10)))
+#' # tsinfo() does refuse an unreadable token
+#' try(tsinfo(as.raw(1:10)))
 #'
 #' # Real tokens come from a timestamping authority; this is the shape of
 #' # the call.
 #' \dontrun{
-#' res <- timestamp_verify("response.tsr", data = "manifest.json")
+#' res <- tsvrf("response.tsr", data = "manifest.json")
 #' res$ok
 #' res$time
 #' }
 #' @export
-timestamp_verify <- function(token, data, certificate = NULL,
+tsvrf <- function(token, data, cert = NULL,
                              trust = NULL, crls = list(),
-                             at_time = NULL) {
+                             attm = NULL) {
   token <- .rmbl_as_bytes(token, "token")
   data <- .rmbl_as_bytes(data, "data")
   checks <- list()
@@ -177,14 +177,14 @@ timestamp_verify <- function(token, data, certificate = NULL,
   }
 
   # 2. the signature over the signed attributes, under a key we are given
-  cert <- if (!is.null(certificate)) {
-    .rmbl_as_bytes(certificate, "certificate")
+  .cert <- if (!is.null(cert)) {
+    .rmbl_as_bytes(cert, "cert")
   } else if (!is.null(info$cert_der)) {
     info$cert_der
   } else {
     NULL
   }
-  if (is.null(cert)) {
+  if (is.null(.cert)) {
     note_row(
       "signature", FALSE,
       "no certificate supplied and none embedded in the token"
@@ -192,13 +192,13 @@ timestamp_verify <- function(token, data, certificate = NULL,
   } else {
     note_row(
       "certificate_source", TRUE,
-      if (is.null(certificate)) {
+      if (is.null(cert)) {
         "the token's embedded certificate"
       } else {
         "the certificate supplied by the caller"
       }
     )
-    v <- tryCatch(.rmbl_ts_verify_sig(info, cert), error = function(e) e)
+    v <- tryCatch(.rmbl_ts_verify_sig(info, .cert), error = function(e) e)
     if (inherits(v, "error")) {
       note_row("signature", FALSE, conditionMessage(v))
     } else {
@@ -223,12 +223,12 @@ timestamp_verify <- function(token, data, certificate = NULL,
       # now. A token signed in 2020 under a certificate that expired in
       # 2021 was validly signed, and judging it by today's date would
       # reject it for a reason unconnected to its validity.
-      when <- if (is.null(at_time)) info$time else at_time
+      when <- if (is.null(attm)) info$time else attm
       ch <- tryCatch(
-        cert_chain_verify(cert,
+        certchnvrf(.cert,
           trust = trust,
-          at_time = when,
-          purpose = "timeStamping",
+          attm = when,
+          purp = "timeStamping",
           crls = crls
         ),
         error = function(e) e
@@ -256,9 +256,9 @@ timestamp_verify <- function(token, data, certificate = NULL,
   .rmbl_ts_result(checks, info)
 }
 
-#' @rdname timestamp_verify
+#' @rdname tsvrf
 #' @export
-timestamp_info <- function(token) {
+tsinfo <- function(token) {
   token <- .rmbl_as_bytes(token, "token")
   der <- .Call(C_rmbl_der_parse, token)
   info <- .rmbl_ts_extract(der, token)
@@ -334,7 +334,7 @@ format.bricklayer_timestamp <- function(x, ...) {
   )
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_timestamp <- function(x, ...) {
   cat(format(x), sep = "\n")
@@ -362,7 +362,7 @@ print.bricklayer_timestamp <- function(x, ...) {
       body <- sub(".*-----BEGIN[^-]*-----", "", txt)
       body <- sub("-----END.*", "", body)
       body <- gsub("[\r\n[:space:]]", "", body)
-      return(bricklayer_json_base64_dec(body))
+      return(jsb64dec(body))
     }
     return(b)
   }
@@ -423,9 +423,9 @@ print.bricklayer_timestamp <- function(x, ...) {
 
 .rmbl_ts_digest <- function(alg, bytes) {
   switch(alg,
-    sha256 = .rmbl_hex_to_raw(core_sha256(bytes)),
+    sha256 = .rmbl_hex_to_raw(csha256(bytes)),
     sha384 = .Call(C_rmbl_sha384, bytes),
-    sha512 = .rmbl_hex_to_raw(core_sha512(bytes)),
+    sha512 = .rmbl_hex_to_raw(csha512(bytes)),
     stop(sprintf("digest %s is not available here", alg),
       call. = FALSE
     )
@@ -578,7 +578,7 @@ print.bricklayer_timestamp <- function(x, ...) {
   }
 
   sig <- .rmbl_ts_signature(signer)
-  parsed <- tryCatch(cert_parse(cert), error = function(e) NULL)
+  parsed <- tryCatch(certprs(cert), error = function(e) NULL)
   if (is.null(parsed)) {
     stop("the certificate could not be parsed", call. = FALSE)
   }

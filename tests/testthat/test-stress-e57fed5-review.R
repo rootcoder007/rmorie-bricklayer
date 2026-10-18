@@ -90,80 +90,80 @@ svy_data <- function() {
 test_that("E9: the full weight, the id or a data column is never taken as a replicate", {
   s <- svy_data()
   d <- s$d
-  ok <- survey_design(d, weights = "w", replicates = s$reps)
-  se <- survey_estimate(ok, d, "y")$se
+  ok <- svydes(d, w = "w", reps = s$reps)
+  se <- svyest(ok, d, "y")$se
   # the replicate file with its id and full weight beside the replicates: by name both are dropped
-  with_id <- survey_design(d, weights = "w", replicates = s$rdf, id = "id")
-  expect_equal(survey_estimate(with_id, d, "y")$se, se, tolerance = 1e-14)
+  with_id <- svydes(d, w = "w", reps = s$rdf, id = "id")
+  expect_equal(svyest(with_id, d, "y")$se, se, tolerance = 1e-14)
   # the weight given as a vector cannot be recognised by name: it is refused by value for a jackknife
   # (a bootstrap replicate that draws every PSU once is the full weight, legitimately: accepted)
-  expect_error(survey_design(d, weights = d$w, replicates = s$rdf, id = "id", type = "jk1"), "the full-sample weight")
+  expect_error(svydes(d, w = d$w, reps = s$rdf, id = "id", type = "jk1"), "the full-sample weight")
   # for a bootstrap it is kept, and said when more replicates equal the weight than chance draws
   # (statistics stress test of 5e1dce5)
-  expect_warning(des_w <- survey_design(d, weights = d$w, replicates = cbind(w = d$w, s$reps)),
+  expect_warning(des_w <- svydes(d, w = d$w, reps = cbind(w = d$w, s$reps)),
                  "equal the full-sample weight")
   expect_s3_class(des_w, "rmbl_svy_design")
   # no id: the id column is the row number
-  expect_error(survey_design(d, weights = "w", replicates = s$rdf[, -2]), "the row number")
-  expect_error(survey_design(d, weights = "w", replicates = c("w")), "not a replicate weight")
-  expect_error(survey_design(d, weights = "w", replicates = data.frame(a = s$reps[, 1], b = letters[1:2])),
+  expect_error(svydes(d, w = "w", reps = s$rdf[, -2]), "the row number")
+  expect_error(svydes(d, w = "w", reps = c("w")), "not a replicate weight")
+  expect_error(svydes(d, w = "w", reps = data.frame(a = s$reps[, 1], b = letters[1:2])),
                "not numbers")
   # BRR replicates come in Hadamard orders: a stray column makes 13
-  expect_error(survey_design(d, weights = "w", replicates = s$reps[, 1:13], type = "brr"), "Hadamard")
+  expect_error(svydes(d, w = "w", reps = s$reps[, 1:13], type = "brr"), "Hadamard")
   # a matrix with a class of its own is read as the matrix it is
   m <- structure(s$reps, class = c("repweights", "matrix"))
-  expect_equal(survey_estimate(survey_design(d, weights = "w", replicates = m), d, "y")$se, se, tolerance = 1e-14)
+  expect_equal(svyest(svydes(d, w = "w", reps = m), d, "y")$se, se, tolerance = 1e-14)
   # F1: the replicates taken out of the analysis file itself, by name or as its columns
   dd <- cbind(d, stats::setNames(as.data.frame(s$reps), paste0("bw", 1:20)))
-  by_name <- survey_design(dd, weights = "w", replicates = paste0("bw", 1:20))
-  by_cols <- survey_design(dd, weights = "w", replicates = dd[paste0("bw", 1:20)])
-  expect_equal(survey_estimate(by_cols, dd, "y")$se, survey_estimate(by_name, dd, "y")$se, tolerance = 1e-14)
+  by_name <- svydes(dd, w = "w", reps = paste0("bw", 1:20))
+  by_cols <- svydes(dd, w = "w", reps = dd[paste0("bw", 1:20)])
+  expect_equal(svyest(by_cols, dd, "y")$se, svyest(by_name, dd, "y")$se, tolerance = 1e-14)
   # but a stray column of the file beside them is still refused
-  expect_error(survey_design(dd, weights = "w", replicates = dd[c(paste0("bw", 1:20), "id")]), "the row number")
+  expect_error(svydes(dd, w = "w", reps = dd[c(paste0("bw", 1:20), "id")]), "the row number")
   # the replicates are exactly the columns given: a column of `data` passed under its own name is a
   # replicate because it was asked for (the explicit contract; review of 46de6a9, H1/H5), one passed
   # under another name is refused, and nothing is guessed from values
   dd$meals <- runif(nrow(dd), 0, 100)
   # (a column on another scale than the weight is said: statistics stress test of 5e1dce5)
-  expect_warning(des_m <- survey_design(dd, weights = "w", replicates = dd[c(paste0("bw", 1:20), "meals")]),
+  expect_warning(des_m <- svydes(dd, w = "w", reps = dd[c(paste0("bw", 1:20), "meals")]),
                  "replicate meals is .* times the full-sample weight on a typical row")
   expect_s3_class(des_m, "rmbl_svy_design")
-  expect_error(survey_design(dd, weights = "w", replicates = cbind(dd[paste0("bw", 1:20)], zz = dd$meals)),
+  expect_error(svydes(dd, w = "w", reps = cbind(dd[paste0("bw", 1:20)], zz = dd$meals)),
                "column meals of `data`")
   # an unnamed matrix of the same columns is a replicate set
-  expect_equal(survey_estimate(survey_design(dd, weights = "w", replicates = unname(as.matrix(dd[paste0("bw", 1:20)]))),
-                               dd, "y")$se, survey_estimate(by_name, dd, "y")$se, tolerance = 1e-14)
+  expect_equal(svyest(svydes(dd, w = "w", reps = unname(as.matrix(dd[paste0("bw", 1:20)]))),
+                               dd, "y")$se, svyest(by_name, dd, "y")$se, tolerance = 1e-14)
   # the exact refusals: the row number, the id, the full weight for a jackknife (a bootstrap replicate
   # that draws every PSU once is the weight, legitimately); nothing else is guessed
-  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, seq_len(nrow(d)))), "the row number")
-  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, d$w), type = "jk1"), "the full-sample weight")
-  expect_warning(survey_design(d, weights = "w", replicates = cbind(s$reps, d$w)), "equal the full-sample weight")
-  expect_warning(survey_design(d, weights = "w", replicates = cbind(s$reps, d$w * (1 + 1e-15)), type = "bootstrap"),
+  expect_error(svydes(d, w = "w", reps = cbind(s$reps, seq_len(nrow(d)))), "the row number")
+  expect_error(svydes(d, w = "w", reps = cbind(s$reps, d$w), type = "jk1"), "the full-sample weight")
+  expect_warning(svydes(d, w = "w", reps = cbind(s$reps, d$w)), "equal the full-sample weight")
+  expect_warning(svydes(d, w = "w", reps = cbind(s$reps, d$w * (1 + 1e-15)), type = "bootstrap"),
                  "equal the full-sample weight")
   # genuine sets with a dominant PSU, a jackknife replicate constant on a subset, rounded in a file
   w3 <- rep(c(900, 50, 50), each = 20)
   jk <- sapply(1:3, function(k) w3 * ifelse(rep(1:3, each = 20) == k, 0, 3 / 2))
-  expect_s3_class(survey_design(data.frame(y = d$y, w = w3), weights = "w", replicates = jk, type = "jk1"),
+  expect_s3_class(svydes(data.frame(y = d$y, w = w3), w = "w", reps = jk, type = "jk1"),
                   "rmbl_svy_design")
   sub <- cbind(d$w * 25 / 24, d$w * 25 / 24, d$w * c(rep(0, 30), rep(25 / 24, 30)))
-  expect_s3_class(survey_design(d, weights = "w", replicates = sub, type = "jk1"), "rmbl_svy_design")
-  expect_s3_class(survey_design(d, weights = "w", replicates = round(s$reps, 4)), "rmbl_svy_design")
+  expect_s3_class(svydes(d, w = "w", reps = sub, type = "jk1"), "rmbl_svy_design")
+  expect_s3_class(svydes(d, w = "w", reps = round(s$reps, 4)), "rmbl_svy_design")
   # a second column with the id's name and other values is refused, as one with the weight's name is
   # (it was kept as a replicate; NEWS said refused; statistics stress test of 5e1dce5)
   r_id <- s$rdf
   names(r_id)[3] <- "id"
-  expect_error(survey_design(d, weights = "w", replicates = r_id, id = "id"), "has the id's name but not its values")
+  expect_error(svydes(d, w = "w", reps = r_id, id = "id"), "has the id's name but not its values")
   # F2: a genuine replicate under the weight's name is refused, not dropped; the weight itself is set aside
   r2 <- as.data.frame(s$reps)
   names(r2)[1] <- "w"
-  expect_error(survey_design(d, weights = "w", replicates = r2), "has the full weight's name but not its values")
+  expect_error(svydes(d, w = "w", reps = r2), "has the full weight's name but not its values")
   r3 <- cbind(w = d$w, as.data.frame(s$reps))
-  expect_equal(survey_estimate(survey_design(d, weights = "w", replicates = r3), d, "y")$se, se, tolerance = 1e-14)
+  expect_equal(svyest(svydes(d, w = "w", reps = r3), d, "y")$se, se, tolerance = 1e-14)
 })
 
 test_that("E2: Wilson at 0% and 100% is SRS Wilson at the respondents, not a point", {
   d <- data.frame(y = factor(rep(c("b", "a", "b"), c(40, 20, 20))), g = rep(c("s1", "s2"), each = 40), w = 1)
-  e <- as.data.frame(survey_estimate(survey_design(d, weights = "w"), d, "y", by = "g", stat = "proportion"))
+  e <- as.data.frame(svyest(svydes(d, w = "w"), d, "y", by = "g", stat = "proportion"))
   ref <- stats::prop.test(40, 40, correct = FALSE)$conf.int
   full <- e[e$g == "s1" & e$level == "b", ]
   expect_equal(full$lower, ref[1], tolerance = 1e-12)
@@ -172,7 +172,7 @@ test_that("E2: Wilson at 0% and 100% is SRS Wilson at the respondents, not a poi
   expect_identical(none$lower, 0)
   expect_equal(none$upper, 1 - ref[1], tolerance = 1e-12)
   # the logit interval does not exist at the ends either and takes the same
-  l <- as.data.frame(survey_estimate(survey_design(d, weights = "w"), d, "y", by = "g", stat = "proportion",
+  l <- as.data.frame(svyest(svydes(d, w = "w"), d, "y", by = "g", stat = "proportion",
                                      ci = "logit"))
   expect_equal(l$lower[l$g == "s1" & l$level == "b"], ref[1], tolerance = 1e-12)
 })
@@ -180,8 +180,8 @@ test_that("E2: Wilson at 0% and 100% is SRS Wilson at the respondents, not a poi
 test_that("the Wilson degrees-of-freedom factor is (t_(n-1) / t_df)^2, as SAS documents", {
   set.seed(9)
   d <- data.frame(y = rbinom(40, 1, 0.3), s = rep(1:4, each = 10), p = rep(1:8, each = 5), w = runif(40, 1, 2))
-  des <- survey_design(d, weights = "w", strata = "s", psu = "p")
-  e <- survey_estimate(des, d, "y", stat = "proportion", levels = "1", df = "design")
+  des <- svydes(d, w = "w", strata = "s", psu = "p")
+  e <- svyest(des, d, "y", stat = "proportion", lvls = "1", df = "design")
   p <- e$estimate
   n <- e$n
   deff <- e$se^2 / (p * (1 - p) / (n - 1))
@@ -197,104 +197,104 @@ test_that("JKn and the replicate design's degrees of freedom agree with the surv
   data(api, package = "survey", envir = environment())
   ds <- survey::svydesign(id = ~dnum, strata = ~stype, weights = ~pw, data = apiclus2, nest = TRUE)
   jk <- survey::as.svrepdesign(ds, type = "JKn")
-  ours <- survey_design(apiclus2, weights = "pw", replicates = stats::weights(jk, "analysis"), type = "jkn",
+  ours <- svydes(apiclus2, w = "pw", reps = stats::weights(jk, "analysis"), type = "jkn",
                         rscales = jk$rscales, mse = jk$mse)
-  expect_equal(survey_estimate(ours, apiclus2, "api00")$se, unname(survey::SE(survey::svymean(~api00, jk))),
+  expect_equal(svyest(ours, apiclus2, "api00")$se, unname(survey::SE(survey::svymean(~api00, jk))),
                tolerance = 1e-10)
   expect_identical(as.numeric(ns(".svy_df")(ours)), as.numeric(survey::degf(jk)))
-  expect_error(survey_design(apiclus2, weights = "pw", replicates = stats::weights(jk, "analysis"), type = "jkn"),
+  expect_error(svydes(apiclus2, w = "pw", reps = stats::weights(jk, "analysis"), type = "jkn"),
                "needs `rscales`")
   # BRR needs two PSUs a stratum: the survey package's own scd data (three strata of two)
   data(scd, package = "survey", envir = environment())
   sd <- survey::svydesign(data = scd, prob = ~1, id = ~ambulance, strata = ~ESA, nest = TRUE)
   br <- survey::as.svrepdesign(sd, type = "BRR")
-  ob <- survey_design(scd, weights = rep(1, nrow(scd)), replicates = stats::weights(br, "analysis"), type = "brr")
+  ob <- svydes(scd, w = rep(1, nrow(scd)), reps = stats::weights(br, "analysis"), type = "brr")
   expect_identical(as.numeric(ns(".svy_df")(ob)), as.numeric(survey::degf(br)))
-  expect_equal(survey_estimate(ob, scd, "alive")$se, unname(survey::SE(survey::svymean(~alive, br))), tolerance = 1e-12)
-  expect_identical(ns(".svy_df")(survey_design(scd, weights = rep(1, nrow(scd)),
-                                              replicates = stats::weights(br, "analysis"), type = "brr", degf = 2)), 2)
-  expect_error(survey_design(apiclus2, weights = "pw", strata = "stype", degf = 0), "at least 1")
+  expect_equal(svyest(ob, scd, "alive")$se, unname(survey::SE(survey::svymean(~alive, br))), tolerance = 1e-12)
+  expect_identical(ns(".svy_df")(svydes(scd, w = rep(1, nrow(scd)),
+                                              reps = stats::weights(br, "analysis"), type = "brr", degf = 2)), 2)
+  expect_error(svydes(apiclus2, w = "pw", strata = "stype", degf = 0), "at least 1")
 })
 
 test_that("the data must be the design's rows in the design's order", {
   s <- svy_data()
-  des <- survey_design(s$d, weights = "w", replicates = s$reps)
-  expect_error(survey_estimate(des, s$d[sample(nrow(s$d)), ], "y"), "not the data frame the design was built on")
+  des <- svydes(s$d, w = "w", reps = s$reps)
+  expect_error(svyest(des, s$d[sample(nrow(s$d)), ], "y"), "not the data frame the design was built on")
   # the same rows reordered with their row names reset: caught by the values, not the names
   shuffled <- s$d[sample(nrow(s$d)), ]
   rownames(shuffled) <- NULL
-  expect_error(survey_estimate(des, shuffled, "y"), "not the data frame")
+  expect_error(svyest(des, shuffled, "y"), "not the data frame")
   # a tibble (row names always 1..n) with a vector weight: nothing named to compare, so the columns'
   # values are (review of 46de6a9); a column changed afterwards is not a reorder
   tb <- structure(s$d, class = c("tbl_df", "tbl", "data.frame"))
-  dv <- survey_design(tb, weights = tb$w, replicates = s$reps)
-  se0 <- survey_estimate(dv, tb, "y")$se
+  dv <- svydes(tb, w = tb$w, reps = s$reps)
+  se0 <- svyest(dv, tb, "y")$se
   tb2 <- tb[sample(nrow(tb)), ]
   # a real tibble's row names are 1..n after any reorder: without this the shuffled names caught it
   # and the test passed on builds that never compared the values (statistics stress test of 5e1dce5)
   attr(tb2, "row.names") <- seq_len(nrow(tb2))
   expect_identical(attr(tb2, "row.names"), attr(tb, "row.names"))
-  expect_error(survey_estimate(dv, tb2, "y"), "not the data frame")
+  expect_error(svyest(dv, tb2, "y"), "not the data frame")
   tb3 <- tb
   tb3$y <- tb3$y * 2
-  expect_equal(survey_estimate(dv, tb3, "y")$se, 2 * se0, tolerance = 1e-12)
-  dl <- survey_design(tb, weights = tb$w, strata = tb$g)
-  expect_error(survey_estimate(dl, tb2, "y"), "not the data frame")
+  expect_equal(svyest(dv, tb3, "y")$se, 2 * se0, tolerance = 1e-12)
+  dl <- svydes(tb, w = tb$w, strata = tb$g)
+  expect_error(svyest(dl, tb2, "y"), "not the data frame")
   d2 <- s$d
   d2$w <- rev(d2$w)
-  expect_error(survey_estimate(des, d2, "y"), "not the data frame")
-  expect_error(survey_estimate(des, s$d[-1, ], "y"), "must be the data frame")
+  expect_error(svyest(des, d2, "y"), "not the data frame")
+  expect_error(svyest(des, s$d[-1, ], "y"), "must be the data frame")
 })
 
 test_that("a variance with nothing to estimate it from is flagged, not reported as zero", {
   # one PSU in all: nothing to estimate a variance from, whatever is done with a lonely PSU
   d <- data.frame(y = c(1, 2, 3, 4), s = 1, p = 1, w = 1)
   for (lp in c("remove", "adjust")) {
-    e <- survey_estimate(survey_design(d, weights = "w", strata = "s", psu = "p", lonely_psu = lp), d, "y")
+    e <- svyest(svydes(d, w = "w", strata = "s", psu = "p", lonely = lp), d, "y")
     expect_true(is.na(e$se), info = lp)
     expect_match(e$flag, "no stratum has two PSUs", info = lp)
   }
   # a census (every PSU in every stratum sampled) has no sampling variance: zero is right
-  cen <- survey_design(d, weights = "w", strata = "s", psu = "p", fpc = c(1, 1, 1, 1))
-  expect_identical(survey_estimate(cen, d, "y")$se, 0)
+  cen <- svydes(d, w = "w", strata = "s", psu = "p", fpc = c(1, 1, 1, 1))
+  expect_identical(svyest(cen, d, "y")$se, 0)
   # two strata of one PSU each, adjusted: centred on the mean PSU total, a variance there is
   d2 <- data.frame(y = c(1, 2, 3, 4), s = c(1, 1, 2, 2), p = c(1, 1, 2, 2), w = 1)
-  expect_gt(survey_estimate(survey_design(d2, weights = "w", strata = "s", psu = "p", lonely_psu = "adjust"), d2,
+  expect_gt(svyest(svydes(d2, w = "w", strata = "s", psu = "p", lonely = "adjust"), d2,
                             "y")$se, 0)
   # a certainty stratum with one PSU is not a lonely PSU
   d3 <- data.frame(y = c(1, 2, 3, 4, 5), s = c(1, 2, 2, 2, 2), p = c(1, 2, 2, 3, 3), w = 1,
                    f = c(1, 0.5, 0.5, 0.5, 0.5))
-  expect_silent(survey_estimate(survey_design(d3, weights = "w", strata = "s", psu = "p", fpc = "f"), d3, "y"))
+  expect_silent(svyest(svydes(d3, w = "w", strata = "s", psu = "p", fpc = "f"), d3, "y"))
   # all-zero weights in a domain are said as such
   s <- svy_data()
   dz <- s$d
   dz$w[dz$g == "b"] <- 0
   rz <- s$reps
   rz[dz$g == "b", ] <- 0
-  ez <- survey_estimate(survey_design(dz, weights = "w", replicates = rz), dz, "y", by = "g")
+  ez <- svyest(svydes(dz, w = "w", reps = rz), dz, "y", by = "g")
   expect_match(ez$flag[ez$g == "b"], "weights are all zero")
 })
 
 test_that("survey arguments are refused in words", {
   s <- svy_data()
-  des <- survey_design(s$d, weights = "w", replicates = s$reps)
-  expect_identical(nrow(survey_estimate(des, s$d, "y", by = character(0))), 1L)
-  expect_error(survey_estimate(des, s$d, "y", conf_level = NA), "between 0 and 1")
-  expect_error(survey_compare(des, s$d, "y", by = "g", ref = c("a", "b")), "one domain label")
-  expect_error(survey_estimate(des, s$d, "y", by = 1), "name columns")
+  des <- svydes(s$d, w = "w", reps = s$reps)
+  expect_identical(nrow(svyest(des, s$d, "y", by = character(0))), 1L)
+  expect_error(svyest(des, s$d, "y", conflvl = NA), "between 0 and 1")
+  expect_error(svycmp(des, s$d, "y", by = "g", ref = c("a", "b")), "one domain label")
+  expect_error(svyest(des, s$d, "y", by = 1), "name columns")
 })
 
 # ---- E3 and the location siblings ----------------------------------------------------------
 
-test_that("E3: knox_test drops (0, 0) as crime_density and hotspot_persistence do", {
+test_that("E3: knoxtst drops (0, 0) as crmdens and hotpers do", {
   b <- ext("tps_break_enter_d14_2024.csv")
   t <- as.Date(b$occ_date)
-  k0 <- knox_test(b$lon, b$lat, t, 100, 7, nsim = 99, seed = 1)
+  k0 <- knoxtst(b$lon, b$lat, t, 100, 7, nsim = 99, seed = 1)
   b2 <- b
   b2$lon[1:20] <- 0
   b2$lat[1:20] <- 0
-  expect_message(k1 <- knox_test(b2$lon, b2$lat, t, 100, 7, nsim = 99, seed = 1), "20 incidents at \\(0, 0\\)")
-  k2 <- knox_test(b$lon[-(1:20)], b$lat[-(1:20)], t[-(1:20)], 100, 7, nsim = 99, seed = 1)
+  expect_message(k1 <- knoxtst(b2$lon, b2$lat, t, 100, 7, nsim = 99, seed = 1), "20 incidents at \\(0, 0\\)")
+  k2 <- knoxtst(b$lon[-(1:20)], b$lat[-(1:20)], t[-(1:20)], 100, 7, nsim = 99, seed = 1)
   expect_identical(k1$table, k2$table)
   expect_lt(k1$table$observed[1], k0$table$observed[1] + 1)
   # a brute-force count of the close pairs agrees
@@ -308,7 +308,7 @@ test_that("points across the antimeridian are one place; distances past a contin
   set.seed(4)
   lon <- c(runif(30, 179.9, 180), runif(30, -180, -179.9))
   lat <- runif(60, -17.1, -17)
-  kd <- crime_density(lon, lat, n_grid = 40)
+  kd <- crmdens(lon, lat, ngrid = 40)
   expect_lt(max(kd$bandwidth), 5)
   # one piece, in order, a degree either side of the antimeridian (nodes past 180 keep their
   # continued values so image() can draw them; review of 29a55d8, F4)
@@ -319,7 +319,7 @@ test_that("points across the antimeridian are one place; distances past a contin
   expect_s3_class(plot(kd), "data.frame")
   # F4: incidents near the antimeridian without crossing it, whose grid runs past 180
   set.seed(3)
-  near <- crime_density(runif(60, 179.5, 179.99), runif(60, -17.2, -16.8), n_grid = 40)
+  near <- crmdens(runif(60, 179.5, 179.99), runif(60, -17.2, -16.8), ngrid = 40)
   expect_false(is.unsorted(near$lon))
   expect_s3_class(plot(near), "data.frame")
   # every incident lies on its map: the points are in the grid's own frame (review of 46de6a9)
@@ -327,67 +327,67 @@ test_that("points across the antimeridian are one place; distances past a contin
     expect_true(all(kd_$points$lon >= min(kd_$lon) & kd_$points$lon <= max(kd_$lon)))
     expect_true(all(kd_$points$lat >= min(kd_$lat) & kd_$points$lat <= max(kd_$lat)))
   }
-  h <- hotspot_persistence(lon, lat, rep(1:2, 30), cell = 1)
+  h <- hotpers(lon, lat, rep(1:2, 30), cell = 1)
   expect_true(all(abs(h$cells$x) > 179))
-  k <- knox_test(lon, lat, 1:60, 1000, 3, nsim = 19, seed = 1)
+  k <- knoxtst(lon, lat, 1:60, 1000, 3, nsim = 19, seed = 1)
   expect_gt(k$table$expected[1], 0)
-  expect_warning(crime_density(c(-79, -60, 2, 30), c(43, 45, 48, 50)), "accurate for a city or a region")
-  expect_error(crime_density(lon, lat, bandwidth = 1e6), "half the earth")
-  expect_warning(crime_density(lon, lat, bandwidth = 500, n_grid = 40), "one blur")
+  expect_warning(crmdens(c(-79, -60, 2, 30), c(43, 45, 48, 50)), "accurate for a city or a region")
+  expect_error(crmdens(lon, lat, bw = 1e6), "half the earth")
+  expect_warning(crmdens(lon, lat, bw = 500, ngrid = 40), "one blur")
 })
 
-test_that("knox_test max_pairs is a number of at least one", {
+test_that("knoxtst maxprs is a number of at least one", {
   b <- ext("tps_break_enter_d14_2024.csv")[1:50, ]
   t <- as.Date(b$occ_date)
-  expect_error(knox_test(b$lon, b$lat, t, 100, 7, nsim = 19, max_pairs = NA), "max_pairs")
-  expect_error(knox_test(b$lon, b$lat, t, 100, 7, nsim = 19, max_pairs = "abc"), "numeric")
-  expect_error(knox_test(b$lon, b$lat, t, 100, 7, nsim = 19, max_pairs = 0), "at least 1")
-  expect_s3_class(knox_test(b$lon, b$lat, t, 100, 7, nsim = 19, max_pairs = "1e6"), "rmbl_knox")
+  expect_error(knoxtst(b$lon, b$lat, t, 100, 7, nsim = 19, maxprs = NA), "maxprs")
+  expect_error(knoxtst(b$lon, b$lat, t, 100, 7, nsim = 19, maxprs = "abc"), "numeric")
+  expect_error(knoxtst(b$lon, b$lat, t, 100, 7, nsim = 19, maxprs = 0), "at least 1")
+  expect_s3_class(knoxtst(b$lon, b$lat, t, 100, 7, nsim = 19, maxprs = "1e6"), "rmbl_knox")
 })
 
 test_that("hot spots made by ties are counted and said", {
   set.seed(2)
   x <- runif(200, 0, 10)
   y <- runif(200, 0, 10)
-  h <- hotspot_persistence(x, y, rep(1:2, 100), cell = 0.1, coords = "planar")
+  h <- hotpers(x, y, rep(1:2, 100), cell = 0.1, xy = "planar")
   # every cell holds one incident: a tie that would make all of them hot is left out, and the
   # counts say so (100 of 100 were "hot"; reviews of e57fed5 and 46de6a9)
-  expect_true(all(h$periods$tied_out > 0))
-  expect_true(all(h$periods$hot_cells <= 2 * h$hot_k))   # only cells that stand out above the tie
-  expect_true(all(h$periods$tied_in == 0L))
+  expect_true(all(h$periods$tiedout > 0))
+  expect_true(all(h$periods$hotcells <= 2 * h$hotk))   # only cells that stand out above the tie
+  expect_true(all(h$periods$tiedin == 0L))
   out <- capture.output(print(h))
   expect_true(any(grepl("too even", out, fixed = TRUE)))
-  h2 <- hotspot_persistence(c(rep(1, 50), x[1:10]), c(rep(1, 50), y[1:10]), rep(1:2, 30), cell = 1, coords = "planar")
+  h2 <- hotpers(c(rep(1, 50), x[1:10]), c(rep(1, 50), y[1:10]), rep(1:2, 30), cell = 1, xy = "planar")
   expect_false(any(grepl("too even", capture.output(print(h2)), fixed = TRUE)))
 })
 
 # ---- E4: one rate band for every pollution entry point ---------------------------------------
 
-test_that("E4: pollution_burden, by_area and mortality_displaced keep verify_pollution's rate band", {
-  expect_error(pollution_burden(25, 1, 0.5, 1e6, "PM2.5"), "high_rate = TRUE")
-  expect_error(pollution_burden(25, 1, 8e-8, 1e6, "PM2.5"), "rare_outcome = TRUE")
-  expect_error(pollution_burden(25, 1, 1e-300, 1e6, "PM2.5"), "100 billion")
-  expect_error(pollution_burden(25, 1, 800, 1e6, "PM2.5"), "per 100,000")
-  expect_error(pollution_burden(25, 1, 0.008, 1e6, "PM2.5", rare_outcome = NA), "TRUE or FALSE")
-  common <- pollution_burden(25, 1, 0.5, 1e6, "PM2.5", high_rate = TRUE)
-  expect_equal(common$baseline_cases, 5e5)
-  rare <- pollution_burden(25, 1, 8e-8, 1e6, "PM2.5", rare_outcome = TRUE)
-  expect_equal(rare$baseline_cases, 0.08)
-  expect_identical(pollution_burden(25, 1, 0, 1e6, "PM2.5")$attributable_cases, 0)
-  expect_error(mortality_displaced(10, 1e6, 0.5, 0.01), "high_rate")
-  expect_error(mortality_displaced(10, 1e6, 8e-8, 0.01), "rare_outcome")
-  expect_equal(mortality_displaced(10, 1e6, 0.5, 0.01, high_rate = TRUE), 0.5 * 1e6 * (1 - exp(-0.1)))
-  t <- data.frame(fsa = c("A", "B"), exposure = c(28, 18), population = c(4e4, 6e4), baseline_rate = c(0.008, 0.5))
-  expect_error(pollution_burden_by_area(t), "high_rate")
-  expect_identical(nrow(pollution_burden_by_area(t, high_rate = TRUE)), 2L)
-  # verify_pollution draws the same line on its rate per 100,000
-  args <- list("no2", exposure_mean = 25, exposure_prevalence = 1)
-  hi <- do.call(verify_pollution, c(args, baseline_rate = 5e4))
+test_that("E4: polbrdn, by_area and mortdisp keep vrfpol's rate band", {
+  expect_error(polbrdn(25, 1, 0.5, 1e6, "PM2.5"), "hirate = TRUE")
+  expect_error(polbrdn(25, 1, 8e-8, 1e6, "PM2.5"), "rare = TRUE")
+  expect_error(polbrdn(25, 1, 1e-300, 1e6, "PM2.5"), "100 billion")
+  expect_error(polbrdn(25, 1, 800, 1e6, "PM2.5"), "per 100,000")
+  expect_error(polbrdn(25, 1, 0.008, 1e6, "PM2.5", rare = NA), "TRUE or FALSE")
+  common <- polbrdn(25, 1, 0.5, 1e6, "PM2.5", hirate = TRUE)
+  expect_equal(common$basecases, 5e5)
+  rare <- polbrdn(25, 1, 8e-8, 1e6, "PM2.5", rare = TRUE)
+  expect_equal(rare$basecases, 0.08)
+  expect_identical(polbrdn(25, 1, 0, 1e6, "PM2.5")$attrcases, 0)
+  expect_error(mortdisp(10, 1e6, 0.5, 0.01), "hirate")
+  expect_error(mortdisp(10, 1e6, 8e-8, 0.01), "rare")
+  expect_equal(mortdisp(10, 1e6, 0.5, 0.01, hirate = TRUE), 0.5 * 1e6 * (1 - exp(-0.1)))
+  t <- data.frame(fsa = c("A", "B"), exposure = c(28, 18), population = c(4e4, 6e4), brate = c(0.008, 0.5))
+  expect_error(polbrdarea(t), "hirate")
+  expect_identical(nrow(polbrdarea(t, hirate = TRUE)), 2L)
+  # vrfpol draws the same line on its rate per 100,000
+  args <- list("no2", expomean = 25, expoprev = 1)
+  hi <- do.call(vrfpol, c(args, brate = 5e4))
   expect_identical(hi$status, "assumption_failure")
-  expect_true(any(grepl("high_rate = TRUE", vapply(hi$assumptions, `[[`, "", "note"), fixed = TRUE)))
-  expect_identical(do.call(verify_pollution, c(args, baseline_rate = 5e4, high_rate = TRUE))$status, "ok")
-  expect_identical(do.call(verify_pollution, c(args, high_rate = "yes"))$status, "error")
-  expect_error(pollution_report_text(list(status = "ok", inputs = 1)), "not a complete verify_pollution")
+  expect_true(any(grepl("hirate = TRUE", vapply(hi$assumptions, `[[`, "", "note"), fixed = TRUE)))
+  expect_identical(do.call(vrfpol, c(args, brate = 5e4, hirate = TRUE))$status, "ok")
+  expect_identical(do.call(vrfpol, c(args, hirate = "yes"))$status, "error")
+  expect_error(polrpttxt(list(status = "ok", inputs = 1)), "not a complete vrfpol")
 })
 
 # ---- E5: the bundled data ------------------------------------------------------------------
@@ -420,7 +420,7 @@ test_that("E10: an empty dataset list does not replace a manifest that lists tab
   expect_true(file.exists(f))
   Sys.setFileTime(file.path(d, "manifest.json"), Sys.time() - 3 * 86400)
   local_mocked_bindings(.bl_data_get = function(path, dest, ...) writeLines('{"datasets": []}', dest))
-  expect_error(bricklayer_data_manifest(refresh = TRUE), "lists no tables")
+  expect_error(dmnf(refresh = TRUE), "lists no tables")
   expect_identical(readLines(file.path(d, "manifest.json")), good)
 })
 
@@ -444,7 +444,7 @@ test_that("E12: the lock is released however its holder ends", {
 
 # ---- the 02a38be leftovers -----------------------------------------------------------------
 
-test_that("hurwitz_zeta: accurate beside the trivial zeros and for a huge q", {
+test_that("hurwzeta: accurate beside the trivial zeros and for a huge q", {
   # mpmath zeta() at 60 digits, at the exact doubles z + e (hex floats both ways): the earlier check
   # against a first-order series could not see the loss in sinpi() beside -1 (review of 46de6a9, F5)
   ref <- c("-0x1.fffffffbb47dp+0" = "-0x1.0bd3d5ef008bbp-35", "-0x1.0000000036f9cp+1" = "0x1.ac86230f7688dp-39",
@@ -461,31 +461,31 @@ test_that("hurwitz_zeta: accurate beside the trivial zeros and for a huge q", {
            "-0x1.bfffffffffffap+3" = "-0x1.bffc7be06777fp-49", "-0x1.c000000000001p+3" = "0x1.2aa852959a536p-51")
   for (i in seq_along(ref)) {
     s <- as.numeric(names(ref)[i])   # R reads C99 hex floats exactly
-    expect_equal(hurwitz_zeta(s) / as.numeric(ref[[i]]), 1, tolerance = 1e-12, info = names(ref)[i])
+    expect_equal(hurwzeta(s) / as.numeric(ref[[i]]), 1, tolerance = 1e-12, info = names(ref)[i])
   }
-  expect_identical(hurwitz_zeta(-4), 0)
-  expect_equal(hurwitz_zeta(-11), 691 / 32760, tolerance = 1e-13)
+  expect_identical(hurwzeta(-4), 0)
+  expect_equal(hurwzeta(-11), 691 / 32760, tolerance = 1e-13)
   # -B5(q)/5 with q^5 past the double range while the value is not
-  expect_equal(hurwitz_zeta(-4, 5e61), -exp(5 * log(5e61) - log(5)), tolerance = 1e-12)
-  expect_true(is.finite(hurwitz_zeta(-4, 5e61)))
+  expect_equal(hurwzeta(-4, 5e61), -exp(5 * log(5e61) - log(5)), tolerance = 1e-12)
+  expect_true(is.finite(hurwzeta(-4, 5e61)))
 })
 
 test_that("an empty schema checks nothing and is said; a field of a dataset's own is not a typo", {
   df <- data.frame(a = 1)
-  expect_identical(validate_schema(df, list(schema = list()))$schema_empty$severity, "warning")
-  expect_error(apply_schema_validation(df, list(schema = list())), "schema is empty")
-  iss <- validate_schema(df, list(schema = list(structural_invariants = list(min_data_cols = 1))))
+  expect_identical(valsch(df, list(schema = list()))$schema_empty$severity, "warning")
+  expect_error(schval(df, list(schema = list())), "schema is empty")
+  iss <- valsch(df, list(schema = list(structural_invariants = list(min_data_cols = 1))))
   expect_null(iss$schema_field_min_data_cols)
-  iss2 <- validate_schema(df, list(schema = list(structural_invariants = list(min_data_row = 1))))
+  iss2 <- valsch(df, list(schema = list(structural_invariants = list(min_data_row = 1))))
   expect_identical(iss2$schema_field_min_data_row$severity, "fatal")
-  iss3 <- validate_schema(df, list(schema = list(structural_invariants = list(min_data_rwos = 1))))
+  iss3 <- valsch(df, list(schema = list(structural_invariants = list(min_data_rwos = 1))))
   expect_identical(iss3$schema_field_min_data_rwos$severity, "fatal")
 })
 
-test_that("drift_calibrate needs at least one split", {
+test_that("drftcal needs at least one split", {
   d <- data.frame(a = rnorm(40))
-  expect_error(drift_calibrate(d, n = 0), "at least 1")
-  expect_error(drift_calibrate(d, n = NA), "at least 1")
+  expect_error(drftcal(d, n = 0), "at least 1")
+  expect_error(drftcal(d, n = NA), "at least 1")
 })
 
 test_that("printing keeps joined scripts, emoji forms and flags, and drops what hides text", {
@@ -520,13 +520,13 @@ test_that("replicate columns without names, rscales checked, a design from befor
   s <- svy_data()
   rep_df <- as.data.frame(s$reps)
   names(rep_df) <- rep("", ncol(rep_df))
-  des <- survey_design(s$d, weights = "w", replicates = rep_df)
+  des <- svydes(s$d, w = "w", reps = rep_df)
   expect_length(des$reps, 20L)
-  expect_error(survey_design(s$d, weights = "w", replicates = s$reps, type = "jkn", rscales = rep(1, 3)),
+  expect_error(svydes(s$d, w = "w", reps = s$reps, type = "jkn", rscales = rep(1, 3)),
                "20 finite non-negative numbers")
-  expect_error(survey_design(s$d, weights = "w", replicates = s$reps, rscales = rep(-1, 20)), "non-negative")
+  expect_error(svydes(s$d, w = "w", reps = s$reps, rscales = rep(-1, 20)), "non-negative")
   # an object saved before 0.5.12 carries no data check: it is taken as it is
-  old <- survey_design(s$d, weights = "w", replicates = s$reps)
+  old <- svydes(s$d, w = "w", reps = s$reps)
   old$check <- NULL
-  expect_equal(survey_estimate(old, s$d, "y")$se, survey_estimate(des, s$d, "y")$se)
+  expect_equal(svyest(old, s$d, "y")$se, svyest(des, s$d, "y")$se)
 })

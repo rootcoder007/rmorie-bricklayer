@@ -33,7 +33,7 @@ rmbl_run_vectors <- function(vec, per_group = NA_integer_, verbose = FALSE) {
   `%||%` <- function(a, b) if (is.null(a)) b else a
   ok <- function(expr) !inherits(tryCatch(expr, error = function(e) e), "error")
   readj <- function(path) {
-    x <- bricklayer_json_from_json(paste(readLines(path, warn = FALSE), collapse = "\n"),
+    x <- fromjs(paste(readLines(path, warn = FALSE), collapse = "\n"),
       simplifyVector = FALSE
     )
     if (is.null(x$testGroups)) for (el in x) if (is.list(el) && !is.null(el$testGroups)) {

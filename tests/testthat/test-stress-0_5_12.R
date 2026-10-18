@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # The 0.5.11 stress round (commit a5a4d10, report of 2026-10-12): every finding pinned.
 
-loc_of <- function(z) detect_location("", "", tz = z, locale = "C")$location
+loc_of <- function(z) dtctloc("", "", tz = z, locale = "C")$location
 
 test_that("N1: time-zone aliases map to their own country, generic zones to none", {
   expect_equal(loc_of("Iceland"), "IS")
@@ -30,48 +30,48 @@ test_that("N1: time-zone aliases map to their own country, generic zones to none
 test_that("N2: a run whose work (cells x steps x sub-steps) is out of reach is refused, as is an overflowed count", {
   c0 <- matrix(0, 11, 11)
   c0[6, 6] <- 1
-  expect_error(advection_diffusion_2d(c0, u = 1e10, v = 0, kx = .1, ky = .1, 1, 1, 1, 2), "sub-steps")
+  expect_error(advdif2d(c0, u = 1e10, v = 0, kx = .1, ky = .1, 1, 1, 1, 2), "sub-steps")
   t0 <- proc.time()[["elapsed"]]
-  expect_error(advection_diffusion_2d(c0, u = .5, v = .4, kx = .1, ky = .1, 1, 1, 1e6, 1), "sub-steps")
+  expect_error(advdif2d(c0, u = .5, v = .4, kx = .1, ky = .1, 1, 1, 1e6, 1), "sub-steps")
   expect_lt(proc.time()[["elapsed"]] - t0, wall_limit(5))
   # a mild excursion is still sub-stepped and conserves mass
-  r <- suppressWarnings(advection_diffusion_2d(c0, u = 1.5, v = 0, kx = 0, ky = 0, 1, 1, 1, 1))
+  r <- suppressWarnings(advdif2d(c0, u = 1.5, v = 0, kx = 0, ky = 0, 1, 1, 1, 1))
   expect_equal(r$substeps, 2L)
   expect_equal(r$mass, 1, tolerance = 1e-12)
 })
 
 test_that("N3: no data is an error report, a below-reference exposure a valid zero, the contract enforced", {
-  none <- verify_pollution("no2")
+  none <- vrfpol("no2")
   expect_equal(none$status, "error")
-  expect_equal(attr(none, "exit_status"), 2L)
+  expect_equal(attr(none, "exitstat"), 2L)
   expect_match(none$error, "no exposure data")
-  low <- verify_pollution("pm25", exposure_mean = 3, exposure_prevalence = 0.5)
+  low <- vrfpol("pm25", expomean = 3, expoprev = 0.5)
   expect_equal(low$status, "ok")
   expect_equal(low$pipeline$paf, 0)
-  expect_equal(low$pipeline$burden$attributable_cases, 0)
-  bad <- verify_pollution("pm25", exposure_mean = -3, exposure_prevalence = 0.5)
+  expect_equal(low$pipeline$burden$attrcases, 0)
+  bad <- vrfpol("pm25", expomean = -3, expoprev = 0.5)
   expect_equal(bad$status, "assumption_failure")
-  expect_equal(attr(bad, "exit_status"), 1L)
-  for (args in list(list(demo = NA), list(demo = "yes"), list(exposure_mean = c(20, 30), exposure_prevalence = 0.5),
-                    list(outcome = "bogus", exposure_mean = 20, exposure_prevalence = 0.5),
-                    list(reference = c(1, 2), exposure_mean = 20, exposure_prevalence = 0.5),
-                    list(exposure_csv = tempdir()), list(exposure_csv = c("a", "b")),
-                    list(population = TRUE, exposure_mean = 20, exposure_prevalence = 0.5))) {
-    r <- do.call(verify_pollution, c(list("no2"), args))
+  expect_equal(attr(bad, "exitstat"), 1L)
+  for (args in list(list(demo = NA), list(demo = "yes"), list(expomean = c(20, 30), expoprev = 0.5),
+                    list(y = "bogus", expomean = 20, expoprev = 0.5),
+                    list(ref = c(1, 2), expomean = 20, expoprev = 0.5),
+                    list(expcsv = tempdir()), list(expcsv = c("a", "b")),
+                    list(pop = TRUE, expomean = 20, expoprev = 0.5))) {
+    r <- do.call(vrfpol, c(list("no2"), args))
     expect_equal(r$status, "error", info = paste(names(args), collapse = ","))
-    expect_equal(attr(r, "exit_status"), 2L)
+    expect_equal(attr(r, "exitstat"), 2L)
   }
-  expect_match(verify_pollution("no2", outcome = "bogus", exposure_mean = 20, exposure_prevalence = 0.5)$error,
+  expect_match(vrfpol("no2", y = "bogus", expomean = 20, expoprev = 0.5)$error,
                "Unknown outcome")
-  expect_match(verify_pollution("no2", exposure_csv = tempdir())$error, "directory")
-  ok <- verify_pollution("no2", exposure_mean = 20, exposure_prevalence = 0.5, population = 1e6)
-  expect_match(pollution_report_text(ok), "population:         1,000,000", fixed = TRUE)
+  expect_match(vrfpol("no2", expcsv = tempdir())$error, "directory")
+  ok <- vrfpol("no2", expomean = 20, expoprev = 0.5, pop = 1e6)
+  expect_match(polrpttxt(ok), "population:         1,000,000", fixed = TRUE)
 })
 
-test_that("N4: a rule list handed to apply_schema_validation() is run, not ignored", {
-  expect_error(apply_schema_validation(data.frame(a = 1), list(rule_col_count(6, severity = "fatal"))), "6")
-  expect_true(apply_schema_validation(data.frame(a = 1, b = 2), list(rule_col_count(2, severity = "fatal"))))
-  expect_warning(apply_schema_validation(data.frame(a = 1), rule_col_count(6, severity = "warning")))
+test_that("N4: a rule list handed to schval() is run, not ignored", {
+  expect_error(schval(data.frame(a = 1), list(rulecolcnt(6, sev = "fatal"))), "6")
+  expect_true(schval(data.frame(a = 1, b = 2), list(rulecolcnt(2, sev = "fatal"))))
+  expect_warning(schval(data.frame(a = 1), rulecolcnt(6, sev = "warning")))
 })
 
 test_that("N5: a stripped boilerplate sentence ends its line, so the roster entry after it counts", {
@@ -79,27 +79,27 @@ test_that("N5: a stripped boilerplate sentence ends its line, so the roster entr
                 "AI N'a pas consenti à une entrevue\nAgents témoins\n")
   fr2 <- paste0("UES\nAgents impliqués\nLe nom d'un agent impliqué n'est pas divulgué. ",
                 "AI no 3 A participé\nAI no 1\nAgents témoins\n")
-  expect_equal(as.numeric(bricklayer_siu_resolve_so(fr1)$count), 1)
-  expect_equal(as.numeric(bricklayer_siu_resolve_so(fr2)$count), 3)
+  expect_equal(as.numeric(siuso(fr1)$count), 1)
+  expect_equal(as.numeric(siuso(fr2)$count), 3)
   # the English roster is untouched by the change
   en <- "SIU\nSubject Officials\nSO #1 Interviewed\nSO #2 Declined\nWitness Officials\n"
-  expect_equal(as.numeric(bricklayer_siu_resolve_so(en)$count), 2)
+  expect_equal(as.numeric(siuso(en)$count), 2)
 })
 
 test_that("N6: the concentration index refuses coded incomes and negative exposures; numeric area columns", {
   d <- data.frame(e = c(10, 20, 30), inc = factor(c("high", "low", "mid")))
-  expect_error(exposure_concentration_index(d, "e", "inc"), "must be numeric")
+  expect_error(expconcidx(d, "e", "inc"), "must be numeric")
   d$inc <- c("high", "low", "mid")
-  expect_error(exposure_concentration_index(d, "e", "inc"), "must be numeric")
-  expect_error(exposure_concentration_index(data.frame(e = c(-1, 2, 3), i = 1:3), "e", "i"), "non-negative")
-  r <- exposure_concentration_index(data.frame(e = c(30, 25, 20, 15, 10), i = 1:5), "e", "i")
+  expect_error(expconcidx(d, "e", "inc"), "must be numeric")
+  expect_error(expconcidx(data.frame(e = c(-1, 2, 3), i = 1:3), "e", "i"), "non-negative")
+  r <- expconcidx(data.frame(e = c(30, 25, 20, 15, 10), i = 1:5), "e", "i")
   h <- c(30, 25, 20, 15, 10)
   R <- (rank(1:5) - 0.5) / 5
-  expect_equal(r$concentration_index, 2 * sum((h - mean(h)) * (R - mean(R))) / 5 / mean(h), tolerance = 1e-12)
+  expect_equal(r$concidx, 2 * sum((h - mean(h)) * (R - mean(R))) / 5 / mean(h), tolerance = 1e-12)
   expect_null(r$n_quintiles)
   a <- data.frame(fsa = c("a", "b"), exposure = c(10, 20), population = factor(c("100", "200")),
-                  baseline_rate = c(500, 500))
-  expect_error(pollution_burden_by_area(a), "must be numeric")
+                  brate = c(500, 500))
+  expect_error(polbrdarea(a), "must be numeric")
 })
 
 test_that("L1/L4: an empty local Ollama is no route in the automatic order; a bad route name errors", {
@@ -133,7 +133,7 @@ test_that("L2: a malformed llm.json is an error and never written over", {
   # the review of 0.5.12: an unreadable settings file is an error every time, not a warning
   # once per change that then let the saved route be dropped
   expect_error(rmoriebricklayer:::.bl_read_config(), "not a JSON object")
-  expect_error(bricklayer_llm_config(route = "ollama"), "not a JSON object")
+  expect_error(llmcfg(route = "ollama"), "not a JSON object")
   expect_identical(readLines(cfg), '{"route": "ollama",}')
 })
 
@@ -160,10 +160,10 @@ test_that("L5: addresses are checked when saved as they are when used", {
   dir <- withr::local_tempdir()
   cfg <- file.path(dir, "llm.json")
   testthat::local_mocked_bindings(.bl_config_path = function() cfg, .package = "rmoriebricklayer")
-  expect_error(bricklayer_llm_config(own.url = "http://169.254.169.254"), "own.url")
-  expect_error(bricklayer_llm_config(ollama.url = "ftp://10.0.0.6:11434"), "http")
+  expect_error(llmcfg(own.url = "http://169.254.169.254"), "own.url")
+  expect_error(llmcfg(ollama.url = "ftp://10.0.0.6:11434"), "http")
   expect_false(file.exists(cfg))
-  bricklayer_llm_config(ollama.url = "http://localhost:11434")
+  llmcfg(ollama.url = "http://localhost:11434")
   expect_true(file.exists(cfg))
 })
 
@@ -174,21 +174,21 @@ test_that("L6-L8: plot state survives an error; funnel labels, empty tables and 
                       class = "rmbl_pollution_report")
   try(plot(broken), silent = TRUE)
   expect_false(rmoriebricklayer:::.bl_state$active)
-  expect_error(plot_funnel(c(5, 6, 7), c(5, 5, 5), area = "x"), "one label per point")
-  expect_silent(plot(frequency_table(character(0))))
-  expect_error(plume_field(1, 5, 50, c(3, 1, 2), c(1, 2)), "strictly increasing")
+  expect_error(plotfnl(c(5, 6, 7), c(5, 5, 5), area = "x"), "one label per point")
+  expect_silent(plot(freqtbl(character(0))))
+  expect_error(plmfld(1, 5, 50, c(3, 1, 2), c(1, 2)), "strictly increasing")
 })
 
 test_that("L10: dispersion, zeta, footprint and displaced-mortality inputs are checked", {
-  expect_error(advection_diffusion_2d(c(1, 0, 0), 0, 0, 0, 0, 1, 1, 1, 1), "numeric matrix")
-  expect_error(advection_diffusion_2d(matrix(-1, 3, 3), 0, 0, 0, 0, 1, 1, 1, 1), "non-negative")
-  expect_error(advection_diffusion_2d(matrix(0, 3, 3), 0, 0, 0, 0, 1, 1, 1, 1, source = matrix(NA, 3, 3)), "finite")
-  expect_error(hurwitz_zeta(2, q = c(1, 2)), "single finite")
-  expect_true(is.na(hurwitz_zeta(2, 0)))
-  expect_equal(hurwitz_zeta(2, q = 1), pi^2 / 6, tolerance = 1e-9)
-  expect_error(compute_footprint(1 + 1, cores = 2.5), "whole number")
-  expect_error(mortality_displaced(10, 1e6, 800, 0.01), "per person-year")
-  expect_equal(mortality_displaced(10, 1e6, 0.008, 0.01), 0.008 * 1e6 * (1 - exp(-0.1)))
+  expect_error(advdif2d(c(1, 0, 0), 0, 0, 0, 0, 1, 1, 1, 1), "numeric matrix")
+  expect_error(advdif2d(matrix(-1, 3, 3), 0, 0, 0, 0, 1, 1, 1, 1), "non-negative")
+  expect_error(advdif2d(matrix(0, 3, 3), 0, 0, 0, 0, 1, 1, 1, 1, source = matrix(NA, 3, 3)), "finite")
+  expect_error(hurwzeta(2, q = c(1, 2)), "single finite")
+  expect_true(is.na(hurwzeta(2, 0)))
+  expect_equal(hurwzeta(2, q = 1), pi^2 / 6, tolerance = 1e-9)
+  expect_error(co2fp(1 + 1, cores = 2.5), "whole number")
+  expect_error(mortdisp(10, 1e6, 800, 0.01), "per person-year")
+  expect_equal(mortdisp(10, 1e6, 0.008, 0.01), 0.008 * 1e6 * (1 - exp(-0.1)))
 })
 
 test_that("L12: control characters in the data manifest never reach the terminal", {
@@ -201,87 +201,87 @@ test_that("L12: control characters in the data manifest never reach the terminal
 })
 
 test_that("P5/P9/P12/P13: logical risks, Celsius, recycled references, fractional folds, coded outcomes, grids", {
-  expect_error(attributable_fraction(TRUE, 0.5), "not logical")
-  expect_error(briggs_plume_rise(500, 5, 2, 10, 150, 20), "kelvin")
-  expect_gt(briggs_plume_rise(500, 5, 2, 10, 423, 293)$rise[1], 0)
-  expect_error(crf_pm25(c(10, 20, 30), reference_conc = c(5, 6)), "single finite")
-  expect_error(crf_pm25(10, reference_conc = NA), "single finite")
-  expect_error(crf_pm25(10, reference_conc = TRUE), "not logical")
-  expect_error(crf_no2(10, reference_conc = c(5, 6)), "single finite")
+  expect_error(attrfrac(TRUE, 0.5), "not logical")
+  expect_error(briggs(500, 5, 2, 10, 150, 20), "kelvin")
+  expect_gt(briggs(500, 5, 2, 10, 423, 293)$rise[1], 0)
+  expect_error(crfpm25(c(10, 20, 30), refconc = c(5, 6)), "single finite")
+  expect_error(crfpm25(10, refconc = NA), "single finite")
+  expect_error(crfpm25(10, refconc = TRUE), "not logical")
+  expect_error(crfno2(10, refconc = c(5, 6)), "single finite")
   set.seed(1)
   d <- data.frame(y = rnorm(40), d = rnorm(40), x = rnorm(40))
-  expect_error(plr_crossfit(d, "y", "d", "x", k_folds = 2.7), "whole number")
+  expect_error(plrcf(d, "y", "d", "x", kfol = 2.7), "whole number")
   d$y <- factor(sample(c("a", "b"), 40, TRUE))
-  expect_error(plr_crossfit(d, "y", "d", "x"), "must be numeric")
-  expect_error(lagrangian_particles(50, 0, 0, 1, 0, .1, .1, 1, 5, grid = c(10, -10, -10, 10, 5, 5)), "x_min < x_max")
-  expect_error(lagrangian_particles(50, 0, 0, 1, 0, .1, .1, 1, 5, grid = c(-10, 10, -10, 10, 5.5, 5)), "whole")
-  expect_warning(r <- detect_location(env_location = "Narnia", codecarbon_location = "", tz = "Europe/Paris",
+  expect_error(plrcf(d, "y", "d", "x"), "must be numeric")
+  expect_error(lagrprt(50, 0, 0, 1, 0, .1, .1, 1, 5, grid = c(10, -10, -10, 10, 5, 5)), "xmin < x_max")
+  expect_error(lagrprt(50, 0, 0, 1, 0, .1, .1, 1, 5, grid = c(-10, 10, -10, 10, 5.5, 5)), "whole")
+  expect_warning(r <- dtctloc(envloc = "Narnia", codloc = "", tz = "Europe/Paris",
                                       locale = "C"),
                  "RMBL_LOCATION='Narnia' is not")
   expect_equal(r$location, "FR")
 })
 
 test_that("P14: one world row, from Ember", {
-  ci <- carbon_intensity_table()
+  ci <- co2inttab()
   expect_false("GLOBAL" %in% ci$location)
   expect_equal(sum(ci$location == "WORLD"), 1L)
   expect_true(all(ci$year >= 2009 & ci$year <= 2025))
 })
 
 test_that("tamper: a verifier answers FALSE to edited or malformed signature fields", {
-  k <- pqc_keygen()
-  s <- capsule_sign("m", k)
-  expect_true(capsule_verify("m", s, k))
+  k <- pqckg()
+  s <- cpssign("m", k)
+  expect_true(cpsvrf("m", s, k))
   s2 <- s
   s2$signature <- c(s2$signature, "zz")
-  expect_false(capsule_verify("m", s2, k))
+  expect_false(cpsvrf("m", s2, k))
   s2 <- s
   s2$auth <- character(0)
-  expect_false(capsule_verify("m", s2, k))
+  expect_false(cpsvrf("m", s2, k))
   s2 <- s
   s2$root <- paste0(rev(strsplit(s2$root, "")[[1]]), collapse = "")
-  expect_false(capsule_verify("m", s2, k))
+  expect_false(cpsvrf("m", s2, k))
   s2 <- s
   s2$height <- s2$height + 1L
-  expect_false(capsule_verify("m", s2, k))
+  expect_false(cpsvrf("m", s2, k))
   s2 <- s
   s2$wire <- sub("^.", "f", s2$wire)
-  expect_false(capsule_verify("m", s2, k))
+  expect_false(cpsvrf("m", s2, k))
   s2 <- s
   s2$index <- NA
-  expect_false(capsule_verify("m", s2, k))
-  ok <- fips_keygen("ML-DSA-65")
-  fs <- capsule_sign("m", ok)
-  expect_true(capsule_verify("m", fs, ok))
+  expect_false(cpsvrf("m", s2, k))
+  ok <- fipskg("ML-DSA-65")
+  fs <- cpssign("m", ok)
+  expect_true(cpsvrf("m", fs, ok))
   fs2 <- fs
   fs2$prehash <- "bogus"
-  expect_false(capsule_verify("m", fs2, ok))
+  expect_false(cpsvrf("m", fs2, ok))
   fs2 <- fs
   fs2$signature <- c(fs2$signature, "zz")
-  expect_false(capsule_verify("m", fs2, ok))
+  expect_false(cpsvrf("m", fs2, ok))
 })
 
 test_that("P5: the relative risk's confidence limits propagate through the attributable fraction", {
   p <- 0.4
   levin <- function(r) p * (r - 1) / (1 + p * (r - 1))
-  paf <- attributable_fraction(1.5, p, rr_lower = 1.2, rr_upper = 1.9)
+  paf <- attrfrac(1.5, p, rrlo = 1.2, rrup = 1.9)
   expect_equal(as.numeric(paf), levin(1.5))
   expect_equal(attr(paf, "ci"), c(lower = levin(1.2), upper = levin(1.9)))
-  expect_null(attr(attributable_fraction(1.5, p), "ci"))
-  expect_error(attributable_fraction(1.5, p, rr_lower = 1.2), "go together")
-  expect_error(attributable_fraction(1.5, p, rr_lower = 1.6, rr_upper = 1.9), "between")
+  expect_null(attr(attrfrac(1.5, p), "ci"))
+  expect_error(attrfrac(1.5, p, rrlo = 1.2), "go together")
+  expect_error(attrfrac(1.5, p, rrlo = 1.6, rrup = 1.9), "between")
   # the PM2.5 all-cause curve carries Chen and Hoek's 1.06 to 1.09 per 10 ug/m3
-  crf <- crf_pm25(15.8)
+  crf <- crfpm25(15.8)
   expect_equal(crf$rr, 1.08)
-  expect_equal(crf$rr_lower, 1.06)
-  expect_equal(crf$rr_upper, 1.09)
-  n <- crf_no2(20)
-  expect_equal(c(n$rr_lower, n$rr_upper), c(1.01, 1.04))
-  expect_true(is.na(crf_pm25(20, outcome = "ihd")$rr_lower))
-  r <- verify_pollution("pm25", exposure_mean = 15.8, exposure_prevalence = 0.5)
+  expect_equal(crf$rrlo, 1.06)
+  expect_equal(crf$rrup, 1.09)
+  n <- crfno2(20)
+  expect_equal(c(n$rrlo, n$rrup), c(1.01, 1.04))
+  expect_true(is.na(crfpm25(20, y = "ihd")$rrlo))
+  r <- vrfpol("pm25", expomean = 15.8, expoprev = 0.5)
   expect_equal(r$pipeline$paf, 0.5 * 0.08 / (1 + 0.5 * 0.08))
-  expect_equal(unname(r$pipeline$paf_ci), c(0.5 * 0.06 / (1 + 0.5 * 0.06), 0.5 * 0.09 / (1 + 0.5 * 0.09)))
-  expect_match(pollution_report_text(r), "95% CI", fixed = TRUE)
+  expect_equal(unname(r$pipeline$pafci), c(0.5 * 0.06 / (1 + 0.5 * 0.06), 0.5 * 0.09 / (1 + 0.5 * 0.09)))
+  expect_match(polrpttxt(r), "95% CI", fixed = TRUE)
 })
 
 test_that("D4: the rows a PDF page holds leave room for the title block, the page label and the notes", {
@@ -299,10 +299,10 @@ test_that("D4: the rows a PDF page holds leave room for the title block, the pag
 })
 
 test_that("PBKDF2-HMAC-SHA256 matches the RFC 7914 vectors (ACVP's PBKDF set is SHA2-224 only)", {
-  expect_identical(derive_key("passwd", "salt", 1L, 64L),
+  expect_identical(drvkey("passwd", "salt", 1L, 64L),
                    paste0("55ac046e56e3089fec1691c22544b605f94185216dde0465e68b9d57c20dacbc",
                           "49ca9cccf179b645991664b39d77ef317c71b845b1e30bd509112041d3a19783"))
-  expect_identical(derive_key("Password", "NaCl", 80000L, 64L),
+  expect_identical(drvkey("Password", "NaCl", 80000L, 64L),
                    paste0("4ddcd8f60b98be21830cee5ef22701f9641a4418d04c0414aeff08876b34ab56",
                           "a1d425a1225833549adb841b51c9b3176a272bdebba1d078478f62b397f33c8d"))
 })
@@ -331,19 +331,19 @@ test_that("a secret typed at a terminal is read with echo off and the echo resto
 test_that("ask refuses a repeated --model or --route instead of folding one into the prompt", {
   withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = NA, RMBL_PROG = "rmbl")
   txt <- character()
-  st <- bricklayer_cli(c("ask", "--model", "a", "--model", "b", "hi"), out = function(s) txt <<- c(txt, s))
+  st <- blcli(c("ask", "--model", "a", "--model", "b", "hi"), out = function(s) txt <<- c(txt, s))
   expect_equal(st, 2L)
   expect_match(paste(txt, collapse = ""), "--model may be given once", fixed = TRUE)
   txt <- character()
-  st <- bricklayer_cli(c("ask", "--route", "own", "--route", "hosted", "hi"), out = function(s) txt <<- c(txt, s))
+  st <- blcli(c("ask", "--route", "own", "--route", "hosted", "hi"), out = function(s) txt <<- c(txt, s))
   expect_equal(st, 2L)
   expect_match(paste(txt, collapse = ""), "--route may be given once", fixed = TRUE)
 })
 
-test_that("verify_pollution wants one outcome name, not a vector or a number", {
+test_that("vrfpol wants one outcome name, not a vector or a number", {
   for (bad in list(c("a", "b"), 3, NA_character_)) {
-    r <- verify_pollution("no2", outcome = bad, exposure_mean = 20, exposure_prevalence = 0.5)
-    expect_equal(attr(r, "exit_status"), 2L)
+    r <- vrfpol("no2", y = bad, expomean = 20, expoprev = 0.5)
+    expect_equal(attr(r, "exitstat"), 2L)
     expect_match(r$error, "outcome must be a single outcome name", fixed = TRUE)
   }
 })

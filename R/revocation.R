@@ -23,7 +23,7 @@
 #' revoked by its issuer. It downloads the certificate revocation lists
 #' (CRLs) that the certificates point to, and asks each OCSP responder they
 #' name about the certificate. It is called by
-#' [cert_chain_verify()] when
+#' [certchnvrf()] when
 #' `revocation = "fetch"`; you would call it directly only to inspect the
 #' raw revocation data. Nothing in the package does this unless asked,
 #' because a verifier that goes online stops working offline, can give
@@ -48,7 +48,7 @@
 #' would look like it had happened.
 #'
 #' The fetched CRLs are returned, not checked:
-#' [cert_chain_verify()] checks
+#' [certchnvrf()] checks
 #' the certificates against them. Network: plain http is allowed here,
 #' because CRLs and OCSP answers are signed and RFC 5280 and RFC 6960
 #' distribute them over http, but URLs that point at local or private
@@ -56,12 +56,12 @@
 #' no CRL or OCSP URL produces no request at all.
 #'
 #' Errors: `path` not a non-empty list of parsed certificates (each a list
-#' with a raw `der` element); `timeout` not positive. Network failures are
+#' with a raw `der` element); `tmout` not positive. Network failures are
 #' not errors; they are reported in `ok` and `notes`.
 #'
 #' @param path A certificate path, leaf first, as
-#' [cert_chain_verify()] builds it.
-#' @param timeout Number, default 10: seconds to allow each request.
+#' [certchnvrf()] builds it.
+#' @param tmout Number, default 10: seconds to allow each request.
 #' @return A list with `crls` (a list of raw DER vectors fetched), `ok` (a
 #' logical vector, one element per CRL fetch or OCSP query, `TRUE` for a
 #' success) and `notes` (a named list of character details, named like
@@ -70,33 +70,33 @@
 #' path; a later attempt for the same certificate overwrites an earlier
 #' note of the same name).
 #' @seealso
-#' [cert_chain_verify()],
-#' [timestamp_verify()].
+#' [certchnvrf()],
+#' [tsvrf()].
 #' @examples
 #' # Offline: a path entry that names no CRL or OCSP URL (here, bytes that
 #' # are not a certificate at all) makes no request and returns empty results.
-#' str(revocation_fetch(list(list(der = as.raw(1:3)))))
+#' str(rvkfetch(list(list(der = as.raw(1:3)))))
 #'
 #' # the input checks
-#' try(revocation_fetch(list()))
-#' try(revocation_fetch(list(list(der = as.raw(1:3))), timeout = 0))
+#' try(rvkfetch(list()))
+#' try(rvkfetch(list(list(der = as.raw(1:3))), tmout = 0))
 #'
 #' # Reaches the network, so it is not run here.
 #' \dontrun{
-#' res <- cert_chain_verify("leaf.crt", trust = "ca.crt",
-#'                          revocation = "fetch")
+#' res <- certchnvrf("leaf.crt", trust = "ca.crt",
+#'                          rvk = "fetch")
 #' res$checks
 #' }
 #' @export
-revocation_fetch <- function(path, timeout = 10) {
+rvkfetch <- function(path, tmout = 10) {
   if (!is.list(path) || !length(path) ||
       !all(vapply(path, function(p) is.list(p) && is.raw(p$der), logical(1)))) {
-    stop("`path` must be a non-empty list of parsed certificates (cert_parse())",
+    stop("`path` must be a non-empty list of parsed certificates (certprs())",
          call. = FALSE)
   }
-  timeout <- .rmbl_num(timeout, "timeout")[1L]
-  if (is.na(timeout) || timeout <= 0) stop("`timeout` must be positive", call. = FALSE)
-  .rmbl_revocation_fetch(path, timeout)
+  tmout <- .rmbl_num(tmout, "tmout")[1L]
+  if (is.na(tmout) || tmout <= 0) stop("`tmout` must be positive", call. = FALSE)
+  .rmbl_revocation_fetch(path, tmout)
 }
 
 .rmbl_revocation_fetch <- function(path, timeout = 10) {
@@ -229,7 +229,7 @@ revocation_fetch <- function(path, timeout = 10) {
     body <- sub(".*-----BEGIN[^-]*-----", "", all_txt)
     body <- sub("-----END.*", "", body)
     body <- gsub("[\r\n[:space:]]", "", body)
-    return(tryCatch(bricklayer_json_base64_dec(body),
+    return(tryCatch(jsb64dec(body),
                     error = function(e) NULL))
   }
   b
@@ -343,7 +343,7 @@ revocation_fetch <- function(path, timeout = 10) {
     body <- res$body
   }
   if (is.null(body)) {
-    b64 <- bricklayer_json_base64_enc(req)
+    b64 <- jsb64enc(req)
     full <- paste0(sub("/+$", "", url), "/", .rmbl_url_encode(b64))
     body <- .rmbl_http_der(full, timeout)
   }
@@ -483,7 +483,7 @@ revocation_fetch <- function(path, timeout = 10) {
       for (c2 in c1$children) {
         b <- .rmbl_node_bytes(c2, src)
         if (is.null(b)) next
-        pc <- tryCatch(cert_parse(b), error = function(e) NULL)
+        pc <- tryCatch(certprs(b), error = function(e) NULL)
         if (!is.null(pc)) candidates <- c(list(pc), candidates)
       }
     }

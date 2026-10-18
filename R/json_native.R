@@ -4,8 +4,8 @@
 # option, prettify/minify/validate, serializeJSON, base64, ndjson streaming),
 # pure base R. Ported from the rmorie arm's jsonlt module (same author, same
 # licence); a parity test pins it byte-for-byte to jsonlite whenever that
-# package is installed. Public surface here: bricklayer_json_from_json() and
-# bricklayer_json_to_json(); the rest is internal to the capsule layer.
+# package is installed. Public surface here: fromjs() and
+# tojs(); the rest is internal to the capsule layer.
 
 # jsonlt -- jsonlite's JSON mapping, implemented natively in base R.
 #
@@ -182,7 +182,7 @@
 #' URL-safe variant. Computed in R with no dependency, so a capsule can
 #' embed binary content in a text manifest wherever this package runs.
 #'
-#' `bricklayer_json_base64_enc()` breaks its output into 72-character
+#' `jsb64enc()` breaks its output into 72-character
 #' lines (a newline after each complete block of 54 input bytes), matching
 #' jsonlite's encoder byte for byte; the decoder ignores line breaks, other
 #' white space and \code{=} padding, so either form round trips. Any other
@@ -195,61 +195,61 @@
 #' a URL path, a query string or a filename.
 #'
 #' Base64 is an ENCODING, not encryption or a digest: it hides nothing and
-#' anyone can reverse it. Use [core_sha256()] to
-#' pin content and [core_hmac_sha256()] to
+#' anyone can reverse it. Use [csha256()] to
+#' pin content and [chmac()] to
 #' authenticate it.
 #'
 #' Errors: an encoder given anything but a raw vector, a character vector or
-#' \code{NULL}; \code{bricklayer_json_base64_dec()} given anything but text or
+#' \code{NULL}; \code{jsb64dec()} given anything but text or
 #' raw bytes, or text with a character outside the standard alphabet;
-#' \code{bricklayer_json_base64url_dec()} given anything but character text
+#' \code{jsb64udec()} given anything but character text
 #' (raw bytes are refused), \code{NA}, or a character outside the URL-safe
 #' alphabet.
 #'
 #' @param input For the encoders, a raw vector, or a character vector
 #' (its elements are joined with newlines and encoded as UTF-8 bytes), or
-#' \code{NULL}. For \code{bricklayer_json_base64_dec()}, base64 text (a
+#' \code{NULL}. For \code{jsb64dec()}, base64 text (a
 #' character vector, joined with newlines) or its raw bytes. For
-#' \code{bricklayer_json_base64url_dec()}, URL-safe base64 text, with or
+#' \code{jsb64udec()}, URL-safe base64 text, with or
 #' without \code{=} padding.
 #' @return The encoders return a character scalar (\code{""} for empty input,
 #' \code{NA_character_} for \code{NULL}); the decoders return a raw vector
 #' (use \code{rawToChar()} for text).
 #' @seealso
-#' [json_gzip_encode()], which composes this
+#' [jsgzenc()], which composes this
 #' with gzip.
 #' @examples
 #' # Round trip through the standard alphabet.
-#' b <- bricklayer_json_base64_enc("hello capsule")
+#' b <- jsb64enc("hello capsule")
 #' b
-#' rawToChar(bricklayer_json_base64_dec(b))
+#' rawToChar(jsb64dec(b))
 #'
 #' # Raw input works the same way.
-#' bricklayer_json_base64_enc(charToRaw("abc"))
-#' bricklayer_json_base64_dec(bricklayer_json_base64_enc(charToRaw("abc")))
+#' jsb64enc(charToRaw("abc"))
+#' jsb64dec(jsb64enc(charToRaw("abc")))
 #'
 #' # Padding appears when the length is not a multiple of three.
-#' bricklayer_json_base64_enc("a")
-#' bricklayer_json_base64_enc("ab")
-#' bricklayer_json_base64_enc("abc")
+#' jsb64enc("a")
+#' jsb64enc("ab")
+#' jsb64enc("abc")
 #'
 #' # The URL-safe variant has no "+", "/" or "=" to escape.
-#' bricklayer_json_base64url_enc(as.raw(c(255, 224, 63)))
-#' bricklayer_json_base64_enc(as.raw(c(255, 224, 63)))
-#' bricklayer_json_base64url_dec(
-#'   bricklayer_json_base64url_enc("path/safe?yes")
+#' jsb64uenc(as.raw(c(255, 224, 63)))
+#' jsb64enc(as.raw(c(255, 224, 63)))
+#' jsb64udec(
+#'   jsb64uenc("path/safe?yes")
 #' )
 #'
 #' # Long input is wrapped, and the decoder ignores the breaks.
-#' long <- bricklayer_json_base64_enc(strrep("x", 200))
+#' long <- jsb64enc(strrep("x", 200))
 #' grepl("\n", long)
-#' rawToChar(bricklayer_json_base64_dec(long)) == strrep("x", 200)
+#' rawToChar(jsb64dec(long)) == strrep("x", 200)
 #'
 #' # A character outside the alphabet is refused, not skipped.
-#' try(bricklayer_json_base64_dec("ab$c"))
-#' @name rmbl_base64
+#' try(jsb64dec("ab$c"))
+#' @name b64
 #' @export
-bricklayer_json_base64_enc <- function(input) {
+jsb64enc <- function(input) {
   if (is.null(input)) return(NA_character_)
   if (is.character(input)) input <- charToRaw(paste(input, collapse = "\n"))
   if (!is.raw(input)) stop("`input` must be a raw vector or text", call. = FALSE)
@@ -283,9 +283,9 @@ bricklayer_json_base64_enc <- function(input) {
   out
 }
 
-#' @rdname rmbl_base64
+#' @rdname b64
 #' @export
-bricklayer_json_base64_dec <- function(input) {
+jsb64dec <- function(input) {
   if (is.character(input)) input <- charToRaw(paste(input, collapse = "\n"))
   if (!is.raw(input)) stop("`input` must be a raw vector or text", call. = FALSE)
   s <- rawToChar(input)
@@ -315,25 +315,25 @@ bricklayer_json_base64_dec <- function(input) {
   as.raw(out)
 }
 
-#' @rdname rmbl_base64
+#' @rdname b64
 #' @export
-bricklayer_json_base64url_enc <- function(input) {
-  sub("=+$", "", chartr("+/", "-_", bricklayer_json_base64_enc(input)))
+jsb64uenc <- function(input) {
+  sub("=+$", "", chartr("+/", "-_", jsb64enc(input)))
 }
 
-#' @rdname rmbl_base64
+#' @rdname b64
 #' @export
-bricklayer_json_base64url_dec <- function(input) {
+jsb64udec <- function(input) {
   input <- .rmbl_text_input(input, "input", allow_raw = FALSE)
   if (!is.character(input) || anyNA(input)) stop("`input` must be base64url text", call. = FALSE)
   if (any(grepl("[^A-Za-z0-9_=-]", gsub("[\r\n]", "", input)))) {
     stop("`input` is not base64url text", call. = FALSE)
   }
-  if (!length(input)) return(bricklayer_json_base64_dec(input))
+  if (!length(input)) return(jsb64dec(input))
   text <- paste(gsub("[\r\n]", "", chartr("-_", "+/", input)), collapse = "")
   mod <- nchar(text) %% 4L
   if (mod > 0L) text <- paste0(text, strrep("=", 4L - mod))
-  bricklayer_json_base64_dec(text)
+  jsb64dec(text)
 }
 
 # ================================================================ collapse
@@ -470,7 +470,7 @@ bricklayer_json_base64url_dec <- function(input) {
   }
   if (inherits(x, "blob")) {
     if (identical(o$raw, "base64")) {
-      str <- vapply(x, bricklayer_json_base64_enc, character(1))
+      str <- vapply(x, jsb64enc, character(1))
       return(.rmbl_json_as(str, o, collapse, na, oldna, auto_unbox, indent))
     }
     return(.rmbl_json_as(unclass(as.list(x)), o, collapse, na, oldna, auto_unbox, indent))
@@ -572,7 +572,7 @@ bricklayer_json_base64url_dec <- function(input) {
   raw <- o$raw
   if (raw == "mongo") {
     type <- if (length(attr(x, "type"))) attr(x, "type") else 5
-    return(.rmbl_json_as(list(`$binary` = bricklayer_json_unbox(bricklayer_json_base64_enc(x)),
+    return(.rmbl_json_as(list(`$binary` = bricklayer_json_unbox(jsb64enc(x)),
                            `$type` = bricklayer_json_unbox(as.character(type))), o, indent = NA_integer_))
   }
   if (raw == "hex") return(.rmbl_json_as(as.character.hexmode(x), o, collapse, na, oldna, auto_unbox, indent))
@@ -582,7 +582,7 @@ bricklayer_json_base64url_dec <- function(input) {
     return(paste0("(new Uint8Array(", .rmbl_json_as(as.integer(x), o, collapse = TRUE, na = NULL,
                                                   auto_unbox = FALSE, indent = NA_integer_), "))"))
   }
-  .rmbl_json_as(bricklayer_json_base64_enc(x), o, collapse, na, oldna, auto_unbox, indent)
+  .rmbl_json_as(jsb64enc(x), o, collapse, na, oldna, auto_unbox, indent)
 }
 #' @noRd
 .rmbl_json_as_array <- function(x, o, collapse, na, oldna, auto_unbox, indent, keep_vec_names) {
@@ -680,7 +680,7 @@ bricklayer_json_base64url_dec <- function(input) {
 #' code, so manifests, provenance records and capsules can be written where
 #' jsonlite is not installed and their digests stay the same either way. Use
 #' it to write data for an API or a person; use
-#' [bricklayer_json_serialize()]
+#' [jsser()]
 #' when the JSON must rebuild the exact R object (classes, factor levels,
 #' attributes).
 #'
@@ -699,7 +699,7 @@ bricklayer_json_base64url_dec <- function(input) {
 #' own: \code{keep_empty_names} (an empty-string key is written as
 #' \code{""} rather than replaced by its position) and
 #' \code{quiet_vec_names} (no message when \code{keep_vec_names} is used).
-#' [manifest_canonical()] uses both.
+#' [mnfcanon()] uses both.
 #'
 #' Errors: an option value not among its choices (the message lists them);
 #' an object with no JSON form (a function, a symbol) unless
@@ -727,7 +727,7 @@ bricklayer_json_base64url_dec <- function(input) {
 #' @param null How \code{NULL} inside a list is written: \code{"list"} (the
 #'   default, \code{{}}; a round trip gives an empty list) or \code{"null"}
 #'   (a JSON \code{null}).
-#'   [bricklayer_json_serialize()] round-trips
+#'   [jsser()] round-trips
 #'   \code{NULL} exactly.
 #' @param na How missing values are written: \code{"null"} or
 #'   \code{"string"} (\code{"NA"}). When not given, the per-type default of
@@ -744,27 +744,27 @@ bricklayer_json_base64url_dec <- function(input) {
 #' @param ... Further options of jsonlite's \code{toJSON()} and of this
 #'   package (see Details).
 #' @return A character scalar of class \code{json}, the JSON text.
-#' @seealso [bricklayer_json_from_json()] for the
+#' @seealso [fromjs()] for the
 #'   reverse,
-#'   [bricklayer_json_serialize()] for an exact
+#'   [jsser()] for an exact
 #'   round trip.
 #' @examples
-#' bricklayer_json_to_json(list(a = 1:3, b = "x"), auto_unbox = TRUE)
-#' bricklayer_json_to_json(data.frame(id = 1:2, v = c(1.5, NA)), pretty = TRUE)
+#' tojs(list(a = 1:3, b = "x"), auto_unbox = TRUE)
+#' tojs(data.frame(id = 1:2, v = c(1.5, NA)), pretty = TRUE)
 #'
 #' # a data frame by columns, and a date-time in ISO 8601
 #' df <- data.frame(id = 1:2, v = c(1.5, NA))
-#' bricklayer_json_to_json(df, dataframe = "columns", na = "null")
-#' bricklayer_json_to_json(as.POSIXct("2024-01-02 03:04:05", tz = "UTC"), POSIXt = "ISO8601")
+#' tojs(df, dataframe = "columns", na = "null")
+#' tojs(as.POSIXct("2024-01-02 03:04:05", tz = "UTC"), POSIXt = "ISO8601")
 #'
 #' # digits: decimal places by default, significant digits with I()
-#' bricklayer_json_to_json(pi)
-#' bricklayer_json_to_json(pi, digits = I(17))
+#' tojs(pi)
+#' tojs(pi, digits = I(17))
 #'
 #' # a choice that does not exist is refused
-#' try(bricklayer_json_to_json(df, dataframe = "table"))
+#' try(tojs(df, dataframe = "table"))
 #' @export
-bricklayer_json_to_json <- function(x, dataframe = c("rows", "columns", "values"),
+tojs <- function(x, dataframe = c("rows", "columns", "values"),
                                  matrix = c("rowmajor", "columnmajor"),
                                  Date = c("ISO8601", "epoch"),
                                  POSIXt = c("string", "ISO8601", "epoch", "mongo"),
@@ -1373,28 +1373,28 @@ bricklayer_json_unbox <- function(x) {
 #' @param ... Ignored, for call compatibility with jsonlite.
 #' @return An R object: a list, an atomic vector, a data frame, a matrix or
 #' \code{NULL}, depending on the JSON and the simplification options.
-#' @seealso [bricklayer_json_to_json()] for the
+#' @seealso [tojs()] for the
 #'   reverse.
 #' @examples
-#' bricklayer_json_from_json('[{"a":1,"b":"x"},{"a":2,"b":"y"}]')
-#' bricklayer_json_from_json('[[1,2],[3,4]]')
+#' fromjs('[{"a":1,"b":"x"},{"a":2,"b":"y"}]')
+#' fromjs('[[1,2],[3,4]]')
 #'
 #' # no simplification: nested lists exactly as in the document
-#' str(bricklayer_json_from_json('{"a": [1, 2], "b": {"c": null}}', simplifyVector = FALSE))
+#' str(fromjs('{"a": [1, 2], "b": {"c": null}}', simplifyVector = FALSE))
 #'
 #' # from a file
 #' f <- tempfile(fileext = ".json")
 #' writeLines('[{"a":1},{"a":2,"b":"x"}]', f)
-#' bricklayer_json_from_json(f)
+#' fromjs(f)
 #'
 #' # a large identifier kept exactly, as text
-#' bricklayer_json_from_json('[12345678901234567890]', bigint_as_char = TRUE)
+#' fromjs('[12345678901234567890]', bigint_as_char = TRUE)
 #'
 #' # a repeated key is refused unless asked for
-#' try(bricklayer_json_from_json('{"a": 1, "a": 2}'))
-#' bricklayer_json_from_json('{"a": 1, "a": 2}', duplicate_keys = "keep")
+#' try(fromjs('{"a": 1, "a": 2}'))
+#' fromjs('{"a": 1, "a": 2}', duplicate_keys = "keep")
 #' @export
-bricklayer_json_from_json <- function(txt, simplifyVector = TRUE,
+fromjs <- function(txt, simplifyVector = TRUE,
                                    simplifyDataFrame = simplifyVector,
                                    simplifyMatrix = simplifyVector,
                                    flatten = FALSE, bigint_as_char = FALSE,
@@ -1441,7 +1441,7 @@ bricklayer_json_from_json <- function(txt, simplifyVector = TRUE,
 #' @param json JSON text.
 #' @noRd
 bricklayer_json_parse_json <- function(json, simplifyVector = FALSE, ...) {
-  bricklayer_json_from_json(json, simplifyVector = simplifyVector, ...)
+  fromjs(json, simplifyVector = simplifyVector, ...)
 }
 
 #' Read and write JSON files
@@ -1450,18 +1450,18 @@ bricklayer_json_parse_json <- function(json, simplifyVector = FALSE, ...) {
 #' @param simplifyVector as in jsonlite (
 #' `FALSE` by default for files).
 #' @param ... options of
-#' [bricklayer_json_from_json()] /
-#' [bricklayer_json_to_json()].
+#' [fromjs()] /
+#' [tojs()].
 #' @return `read_json`: the parsed object; `write_json`:
 #' `path`, invisibly.
 #' @noRd
 bricklayer_json_read_json <- function(path, simplifyVector = FALSE, ...) {
-  bricklayer_json_from_json(file(path), simplifyVector = simplifyVector, ...)
+  fromjs(file(path), simplifyVector = simplifyVector, ...)
 }
 #' @param x object to write.
 #' @noRd
 bricklayer_json_write_json <- function(x, path, ...) {
-  json <- bricklayer_json_to_json(x, ...)
+  json <- tojs(x, ...)
   writeLines(json, path, useBytes = TRUE)
   invisible(path)
 }
@@ -1840,7 +1840,7 @@ bricklayer_json_stream_out <- function(x, con = stdout(), pagesize = 500, verbos
   dots$pretty <- NULL
   # each row encodes as "[{...}]"; the record is what sits inside the brackets
   rows <- vapply(seq_len(nrow(page)), function(i) {
-    as.character(do.call(bricklayer_json_to_json, c(list(page[i, , drop = FALSE]), dots)))
+    as.character(do.call(tojs, c(list(page[i, , drop = FALSE]), dots)))
   }, character(1))
   substr(rows, 2L, nchar(rows) - 1L)
 }
@@ -1887,7 +1887,7 @@ bricklayer_json_rbind_pages <- function(pages) {
     environment = NULL, externalptr = NULL,
     namespace = lapply(as.list(getNamespaceInfo(obj, "spec")), bricklayer_json_unbox),
     S4 = list(class = bricklayer_json_unbox(class(obj)), package = bricklayer_json_unbox(attr(class(obj), "package"))),
-    raw = bricklayer_json_unbox(bricklayer_json_base64_enc(unclass(obj))),
+    raw = bricklayer_json_unbox(jsb64enc(unclass(obj))),
     logical = as.vector(unclass(obj), mode = "logical"),
     integer = as.vector(unclass(obj), mode = "integer"),
     numeric = , double = as.vector(unclass(obj), mode = "double"),
@@ -1896,7 +1896,7 @@ bricklayer_json_rbind_pages <- function(pages) {
     list = unname(lapply(unclass(obj), .rmbl_json_pack)),
     pairlist = unname(lapply(as.vector(obj, mode = "list"), .rmbl_json_pack)),
     closure = unname(lapply(obj, .rmbl_json_pack)),
-    builtin = , special = bricklayer_json_unbox(bricklayer_json_base64_enc(serialize(unclass(obj), NULL))),
+    builtin = , special = bricklayer_json_unbox(jsb64enc(serialize(unclass(obj), NULL))),
     language = , name = , symbol = deparse(unclass(obj)),
     expression = deparse(obj[[1L]]),
     {
@@ -1917,10 +1917,10 @@ bricklayer_json_rbind_pages <- function(pages) {
   # data types only
   if (!isTRUE(trusted) && mode %in% c("S4", "namespace", "closure", "special",
                                       "builtin", "language", "expression")) {
-    stop(sprintf(paste0("bricklayer_json_unserialize() refuses to rebuild a '%s' ",
+    stop(sprintf(paste0("jsunser() refuses to rebuild a '%s' ",
                         "from JSON it did not write: that would run code chosen ",
                         "by the file's author. Pass trusted = TRUE only for JSON ",
-                        "produced by bricklayer_json_serialize() in your own session."),
+                        "produced by jsser() in your own session."),
                  mode), call. = FALSE)
   }
   if (identical(mode, "S4")) {
@@ -1932,7 +1932,7 @@ bricklayer_json_rbind_pages <- function(pages) {
     environment = new.env(parent = emptyenv()),
     namespace = getNamespace(obj$value$name),
     externalptr = NULL,
-    raw = bricklayer_json_base64_dec(vals),
+    raw = jsb64dec(vals),
     logical = as.logical(.rmbl_json_list_to_vec(vals)),
     integer = as.integer(.rmbl_json_list_to_vec(vals)),
     numeric = , double = as.double(.rmbl_json_list_to_vec(vals)),
@@ -1942,7 +1942,7 @@ bricklayer_json_rbind_pages <- function(pages) {
     symbol = , name = if (identical(unlist(vals), "")) quote(expr = ) else as.name(unlist(vals)),
     expression = parse(text = unlist(vals)),
     language = as.call(parse(text = unlist(vals)))[[1L]],
-    special = , builtin = unserialize(bricklayer_json_base64_dec(vals)),
+    special = , builtin = unserialize(jsb64dec(vals)),
     stop("Switch falling through for encode.mode: ", mode, call. = FALSE)))
   # a missing formal comes back as the empty symbol; it must not be evaluated
   if (identical(newdata[[1L]], substitute())) return(substitute())
@@ -1966,9 +1966,9 @@ bricklayer_json_rbind_pages <- function(pages) {
 #' package's own codec with no jsonlite dependency.
 #'
 #' Use this, not
-#' [bricklayer_json_to_json()],
+#' [tojs()],
 #' whenever the JSON has to reconstruct the object faithfully.
-#' `bricklayer_json_to_json()` writes the DATA -- which is what an API
+#' `tojs()` writes the DATA -- which is what an API
 #' or a human wants, and which loses factor levels, matrix dimensions,
 #' classes and every other attribute. These two keep them, at the cost of
 #' JSON no other tool will understand.
@@ -1983,62 +1983,62 @@ bricklayer_json_rbind_pages <- function(pages) {
 #' does in jsonlite.
 #' @param pretty Logical scalar, default \code{FALSE}: indent the output.
 #' @param txt Character scalar: JSON produced by
-#' `bricklayer_json_serialize()`.
+#' `jsser()`.
 #' @param trusted `FALSE` (default) rebuilds data types only (vectors,
 #' lists, factors, matrices, data frames, environments, symbols) and
 #' refuses functions, calls, expressions, namespaces and S4 objects:
 #' rebuilding those runs code the JSON's author chose, through
 #' `unserialize()`, `parse()`, `getNamespace()` or an `initialize`
 #' method. Set `TRUE` only for JSON your own session produced.
-#' @return `bricklayer_json_serialize()` returns a length-1 character
-#' vector of class `json`; `bricklayer_json_unserialize()`
+#' @return `jsser()` returns a length-1 character
+#' vector of class `json`; `jsunser()`
 #' returns the original object.
 #' @seealso
-#' [bricklayer_json_to_json()] for
-#' plain data JSON, [core_sha256()] for
+#' [tojs()] for
+#' plain data JSON, [csha256()] for
 #' fingerprinting the result.
 #' @examples
 #' # A factor survives the round trip with its levels intact.
 #' f <- factor(c("b", "a", "b"), levels = c("a", "b", "c"))
-#' back <- bricklayer_json_unserialize(bricklayer_json_serialize(f))
+#' back <- jsunser(jsser(f))
 #' identical(back, f)
 #'
 #' # So does a matrix, with its dimensions.
 #' m <- matrix(1:6, nrow = 2)
-#' identical(bricklayer_json_unserialize(bricklayer_json_serialize(m)), m)
+#' identical(jsunser(jsser(m)), m)
 #'
 #' # Plain data JSON does not keep either, which is the trade-off.
-#' bricklayer_json_to_json(f)
+#' tojs(f)
 #'
 #' # Nested lists, names and NULLs round trip too.
 #' x <- list(a = 1:3, b = list(c = "x", d = NULL), e = TRUE)
-#' identical(bricklayer_json_unserialize(bricklayer_json_serialize(x)), x)
+#' identical(jsunser(jsser(x)), x)
 #'
 #' # Doubles are rounded to `digits`; I(17) keeps them exact.
-#' bricklayer_json_serialize(1/3)
-#' exact <- bricklayer_json_serialize(1/3, digits = I(17))
-#' identical(bricklayer_json_unserialize(exact), 1/3)
+#' jsser(1/3)
+#' exact <- jsser(1/3, digits = I(17))
+#' identical(jsunser(exact), 1/3)
 #'
 #' # The serialised form is JSON, so it can be pinned like any other text.
-#' nchar(core_sha256(bricklayer_json_serialize(m)))
+#' nchar(csha256(jsser(m)))
 #'
 #' # A function is refused unless the JSON is trusted.
-#' try(bricklayer_json_unserialize(bricklayer_json_serialize(function(x) x + 1)))
-#' @name rmbl_json_serialize
+#' try(jsunser(jsser(function(x) x + 1)))
+#' @name jsserdoc
 #' @export
-bricklayer_json_serialize <- function(x, digits = 8, pretty = FALSE) {
-  bricklayer_json_to_json(.rmbl_json_pack(x), digits = digits, pretty = pretty)
+jsser <- function(x, digits = 8, pretty = FALSE) {
+  tojs(.rmbl_json_pack(x), digits = digits, pretty = pretty)
 }
 
-#' @rdname rmbl_json_serialize
+#' @rdname jsserdoc
 #' @export
-bricklayer_json_unserialize <- function(txt, trusted = FALSE) {
+jsunser <- function(txt, trusted = FALSE) {
   if (!is.character(txt) || length(txt) != 1L || is.na(txt)) {
-    stop("`txt` must be one string of JSON from bricklayer_json_serialize()", call. = FALSE)
+    stop("`txt` must be one string of JSON from jsser()", call. = FALSE)
   }
   obj <- .rmbl_json_parse(txt)
   if (!is.list(obj) || is.null(names(obj))) {
-    stop("`txt` is not JSON written by bricklayer_json_serialize() (an object with a type)", call. = FALSE)
+    stop("`txt` is not JSON written by jsser() (an object with a type)", call. = FALSE)
   }
   .rmbl_json_unpack(obj, trusted = isTRUE(trusted))
 }

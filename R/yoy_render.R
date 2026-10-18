@@ -11,11 +11,11 @@
 #'
 #' Writes a change table from [yoy()] to a file for people who will not
 #' run
-#' R: \code{yoy_html()} to a single self-contained web page, \code{yoy_pdf()}
+#' R: \code{yoyhtml()} to a single self-contained web page, \code{yoypdf()}
 #' to a PDF. Each row shows the period, the value, the previous value, the
 #' change and the percent change, coloured by whether it is better or worse,
 #' with the exact interval and any flags; the HTML page also has summary
-#' cards from [yoy_summary()]. Use them to hand a reviewed set
+#' cards from [yoysmry()]. Use them to hand a reviewed set
 #' of
 #' period-over-period changes to a manager, a journalist or a court.
 #'
@@ -27,7 +27,7 @@
 #' \code{"worse"} in the palette's bad colour, \code{"better"} in its good
 #' colour, everything else (including the \code{"up"} and \code{"down"} of
 #' \code{direction = "neutral"}) in its neutral grey. Labels set
-#' with [yoy_label()] replace the period. For percentage units
+#' with [yoylbl()] replace the period. For percentage units
 #' the change is
 #' shown in points. The page ends with the package version that wrote it.
 #'
@@ -36,30 +36,30 @@
 #' (\code{+}, \code{-}). Long tables are split over pages at 0.22 inch per row,
 #' with "page i of n" labels; notes go under the last page's rows when they
 #' fit and on pages of their own otherwise. The interval column appears only
-#' when the table has \code{pct_lower} and \code{pct_upper} (counts).
+#' when the table has \code{pctlo} and \code{pctup} (counts).
 #'
 #' Both overwrite \code{file}. Errors: \code{x} not from [yoy()]; a
-#' \code{palette} not in [yoy_palettes()]; a file that cannot
+#' \code{pal} not in [yoypals()]; a file that cannot
 #' be written.
 #'
 #' @param x An \code{rmbl_yoy} object from [yoy()].
-#' @param file Output path (a string). \code{yoy_html()} writes a single
-#'   self-contained HTML file with no external requests; \code{yoy_pdf()}
+#' @param file Output path (a string). \code{yoyhtml()} writes a single
+#'   self-contained HTML file with no external requests; \code{yoypdf()}
 #'   writes a PDF using R's own device, so neither needs a package beyond
 #'   base R.
 #' @param title Heading for the page (and the HTML page title or PDF title),
 #'   a string; default \code{"Year-over-year change"}.
-#' @param subtitle Optional line under the heading.
+#' @param sub Optional line under the heading.
 #'   Defaults to the table's own settings -- lag, units, interval and base
 #'   gate -- so the reader can see what the percentages mean.
-#' @param palette One of [yoy_palettes()]:
+#' @param pal One of [yoypals()]:
 #'   \code{"diverging"} (the default),
 #'   \code{"safe"} or \code{"mono"}.
 #' @param digits Digits for the percent column, default 1.
 #' @param bars Logical (HTML only): draw an in-cell bar proportional to
 #'   the change, scaled to the largest absolute change in the table
 #'   (default \code{TRUE}).
-#' @param interval Logical: show the exact interval column for counts
+#' @param intv Logical: show the exact interval column for counts
 #'   (default \code{TRUE}).
 #' @param notes Optional character vector of footnotes.
 #' @param width,height PDF page size in inches (default 11 by 8.5,
@@ -70,33 +70,33 @@
 #' d <- data.frame(year = rep(2019:2023, each = 2),
 #'                 region = rep(c("North", "South"), 5),
 #'                 n = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331))
-#' y <- yoy(d, value = "n", period = "year", by = "region",
-#'          direction = "lower_is_better")
+#' y <- yoy(d, value = "n", prd = "year", by = "region",
+#'          dir = "lower")
 #'
 #' h <- file.path(tempdir(), "change.html")
-#' yoy_html(y, h, title = "Placements by region")
+#' yoyhtml(y, h, title = "Placements by region")
 #' file.exists(h)
 #'
 #' p <- file.path(tempdir(), "change.pdf")
-#' yoy_pdf(y, p, title = "Placements by region")
+#' yoypdf(y, p, title = "Placements by region")
 #' file.exists(p)
 #'
 #' # a colour-blind-safe palette, no bars or intervals, and a footnote
-#' yoy_html(y, h, palette = "safe", bars = FALSE, interval = FALSE,
+#' yoyhtml(y, h, pal = "safe", bars = FALSE, intv = FALSE,
 #'          notes = "Counts below 10 are suppressed at source.")
 #' any(grepl("suppressed", readLines(h)))
 #'
 #' # portrait letter pages, with fiscal-year labels
-#' yoy_pdf(yoy_label(y, fiscal_year_label), p, width = 8.5, height = 11)
+#' yoypdf(yoylbl(y, fylbl), p, width = 8.5, height = 11)
 #'
 #' # only yoy() tables can be rendered
-#' try(yoy_html(d, h))
+#' try(yoyhtml(d, h))
 #' unlink(c(h, p))
-#' @name yoy_render
+#' @name yoyren
 #' @export
-yoy_html <- function(x, file, title = "Year-over-year change",
-                     subtitle = NULL, palette = "diverging", digits = 1L,
-                     bars = TRUE, interval = TRUE, notes = NULL, ...) {
+yoyhtml <- function(x, file, title = "Year-over-year change",
+                     sub = NULL, pal = "diverging", digits = 1L,
+                     bars = TRUE, intv = TRUE, notes = NULL, ...) {
   if (!inherits(x, "rmbl_yoy")) {
     stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
@@ -104,19 +104,19 @@ yoy_html <- function(x, file, title = "Year-over-year change",
   if (is.null(file)) stop("`file` must be a file path or a connection", call. = FALSE)
   file <- .rmbl_out_file(file)
   title <- .rmbl_text1(title, "title")
-  if (!is.null(subtitle)) subtitle <- .rmbl_text1(subtitle, "subtitle")
+  if (!is.null(sub)) sub <- .rmbl_text1(sub, "sub")
   if (!is.null(notes) && (!is.character(notes) || anyNA(notes))) {
     stop("`notes` must be text (a character vector), or NULL", call. = FALSE)
   }
   m <- .yoy_meta(x)
-  pal <- .yoy_pal(palette)
+  .pal <- .yoy_pal(pal)
   d <- as.data.frame(x)
   chgcol <- .yoy_change_col(x)
-  pp <- identical(chgcol, "pp_change")
-  if (is.null(subtitle)) subtitle <- .yoy_footer(m)
-  show_ci <- isTRUE(interval) &&
-    all(c("pct_lower", "pct_upper") %in% names(d))
-  vd <- if (is.null(m$value_digits)) 0L else m$value_digits
+  pp <- identical(chgcol, "ppchg")
+  if (is.null(sub)) sub <- .yoy_footer(m)
+  show_ci <- isTRUE(intv) &&
+    all(c("pctlo", "pctup") %in% names(d))
+  vd <- if (is.null(m$valuedig)) 0L else m$valuedig
   scale <- suppressWarnings(max(abs(d[[chgcol]]), na.rm = TRUE))
   if (!is.finite(scale) || scale == 0) scale <- 1
 
@@ -136,9 +136,9 @@ yoy_html <- function(x, file, title = "Year-over-year change",
       .yoy_pct_cell(d[[chgcol]][r], cls, digits, pp, bars, scale)
     )
     if (show_ci) {
-      txt <- if (is.na(d$pct_lower[r])) "\u2014" else sprintf(
-        "[%s, %s]", .yoy_fmt_pct(d$pct_lower[r], 0L),
-        .yoy_fmt_pct(d$pct_upper[r], 0L))
+      txt <- if (is.na(d$pctlo[r])) "\u2014" else sprintf(
+        "[%s, %s]", .yoy_fmt_pct(d$pctlo[r], 0L),
+        .yoy_fmt_pct(d$pctup[r], 0L))
       cells <- c(cells, .yoy_td(txt, "ci"))
     }
     note <- if (is.na(d$flag[r])) "" else sprintf(
@@ -148,16 +148,16 @@ yoy_html <- function(x, file, title = "Year-over-year change",
            "</tr>", note)
   }, "")
 
-  sm <- yoy_summary(x)
+  sm <- yoysmry(x)
   html <- c(
     "<!DOCTYPE html>", "<html lang=\"en\"><head>",
     "<meta charset=\"utf-8\">",
     "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
     paste0("<title>", .yoy_esc(title), "</title>"),
-    paste0("<style>", .yoy_css(pal), "</style>"),
+    paste0("<style>", .yoy_css(.pal), "</style>"),
     "</head><body><main>",
     paste0("<h1>", .yoy_esc(title), "</h1>"),
-    paste0("<p class=\"sub\">", .yoy_esc(subtitle), "</p>"),
+    paste0("<p class=\"sub\">", .yoy_esc(sub), "</p>"),
     "<div class=\"scroll\"><table><thead><tr>",
     paste0(vapply(head_cells, function(h) {
       paste0("<th>", .yoy_esc(h), "</th>")
@@ -206,12 +206,12 @@ yoy_html <- function(x, file, title = "Year-over-year change",
     }
     paste0(
       "<div class=\"card\"><div class=\"lab\">", .yoy_esc(lab),
-      "</div><div class=\"big\">", .yoy_fmt_pct(sm$total_pct[r], 1L),
+      "</div><div class=\"big\">", .yoy_fmt_pct(sm$totalpct[r], 1L),
       "</div><div class=\"cap\">",
       .yoy_esc(sprintf("%s to %s", sm$from[r], sm$to[r])),
       "</div><div class=\"cap\">",
       .yoy_esc(sprintf("compound %s per period",
-                       .yoy_fmt_pct(sm$cagr_pct[r], 1L))),
+                       .yoy_fmt_pct(sm$cagrpct[r], 1L))),
       "</div><div class=\"cap\">",
       .yoy_esc(sprintf("%d up, %d down, %d unchanged",
                        sm$up[r], sm$down[r], sm$flat[r])),
@@ -236,7 +236,7 @@ yoy_html <- function(x, file, title = "Year-over-year change",
 .yoy_css <- function(pal) {
   paste0(
     ":root{--bad:", pal$bad, ";--good:", pal$good, ";--flat:", pal$flat,
-    ";--badbg:", pal$bad_bg, ";--goodbg:", pal$good_bg,
+    ";--badbg:", pal$badbg, ";--goodbg:", pal$goodbg,
     ";--ink:#1a1a1a;--dim:#5c5c5c;--rule:#e0ddd8;--ground:#faf9f7;",
     "--panel:#ffffff}",
     "@media (prefers-color-scheme:dark){:root:not([data-theme=light]){",
@@ -290,11 +290,11 @@ yoy_html <- function(x, file, title = "Year-over-year change",
     "p.gen{color:var(--dim);font-size:.75rem;margin-top:2.5rem}")
 }
 
-#' @rdname yoy_render
+#' @rdname yoyren
 #' @export
-yoy_pdf <- function(x, file, title = "Year-over-year change",
-                    subtitle = NULL, palette = "diverging", digits = 1L,
-                    interval = TRUE, notes = NULL,
+yoypdf <- function(x, file, title = "Year-over-year change",
+                    sub = NULL, pal = "diverging", digits = 1L,
+                    intv = TRUE, notes = NULL,
                     width = 11, height = 8.5, ...) {
   if (!inherits(x, "rmbl_yoy")) {
     stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
@@ -303,22 +303,22 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
   width <- .rmbl_scalar(width, "width", 2, 200)
   height <- .rmbl_scalar(height, "height", 2, 200)
   title <- .rmbl_text1(title, "title")
-  if (!is.null(subtitle)) subtitle <- .rmbl_text1(subtitle, "subtitle")
+  if (!is.null(sub)) sub <- .rmbl_text1(sub, "sub")
   if (!is.null(notes) && (!is.character(notes) || anyNA(notes))) {
     stop("`notes` must be text (a character vector), or NULL", call. = FALSE)
   }
   m <- .yoy_meta(x)
-  pal <- .yoy_pal(palette)
+  .pal <- .yoy_pal(pal)
   d <- as.data.frame(x)
   chgcol <- .yoy_change_col(x)
-  pp <- identical(chgcol, "pp_change")
-  if (is.null(subtitle)) subtitle <- .yoy_footer(m)
-  show_ci <- isTRUE(interval) &&
-    all(c("pct_lower", "pct_upper") %in% names(d))
+  pp <- identical(chgcol, "ppchg")
+  if (is.null(sub)) sub <- .yoy_footer(m)
+  show_ci <- isTRUE(intv) &&
+    all(c("pctlo", "pctup") %in% names(d))
 
   hdr <- c(m$by, m$period, m$value, "previous", "change",
            if (pp) "points" else "change %")
-  vd <- if (is.null(m$value_digits)) 0L else m$value_digits
+  vd <- if (is.null(m$valuedig)) 0L else m$valuedig
   body <- cbind(
     if (!is.null(m$by)) {
       do.call(cbind, lapply(m$by, function(b) as.character(d[[b]])))
@@ -331,11 +331,11 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
   if (show_ci) {
     hdr <- c(hdr, "interval")
     body <- cbind(body, ifelse(
-      is.na(d$pct_lower), "\u2014",
-      sprintf("[%s, %s]", .yoy_fmt_pct(d$pct_lower, 0L),
-              .yoy_fmt_pct(d$pct_upper, 0L))))
+      is.na(d$pctlo), "\u2014",
+      sprintf("[%s, %s]", .yoy_fmt_pct(d$pctlo, 0L),
+              .yoy_fmt_pct(d$pctup, 0L))))
   }
-  cols <- vapply(.yoy_verdict_class(d$verdict), function(k) pal[[k]], "", USE.NAMES = FALSE)
+  cols <- vapply(.yoy_verdict_class(d$verdict), function(k) .pal[[k]], "", USE.NAMES = FALSE)
 
   # Paginate on the rows that fit, so a long table becomes several pages
   # rather than one page with the tail cut off.
@@ -359,7 +359,7 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
   # thing in the encoding the font can actually draw.
   body[] <- .yoy_ascii(body)
   hdr <- .yoy_ascii(hdr)
-  subtitle <- .yoy_ascii(subtitle)
+  sub <- .yoy_ascii(sub)
   if (length(notes)) notes <- .yoy_ascii(notes)
   grDevices::pdf(file, width = width, height = height,
                  title = title, onefile = TRUE)
@@ -373,12 +373,12 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
   npg <- length(pages) + length(note_pages)
   for (pg in seq_along(pages)) {
     .yoy_pdf_page(hdr, body[pages[[pg]], , drop = FALSE],
-                  cols[pages[[pg]]], title, subtitle, pal,
+                  cols[pages[[pg]]], title, sub, .pal,
                   if (npg > 1L) sprintf("page %d of %d", pg, npg) else "",
                   if (pg == length(pages) && !notes_own_pages) notes else NULL, height = height)
   }
   for (k in seq_along(note_pages)) {
-    .yoy_pdf_page(hdr, body[integer(0), , drop = FALSE], character(0), title, subtitle, pal,
+    .yoy_pdf_page(hdr, body[integer(0), , drop = FALSE], character(0), title, sub, .pal,
                   sprintf("page %d of %d", length(pages) + k, npg), note_pages[[k]], height = height,
                   notes_only = TRUE)
   }

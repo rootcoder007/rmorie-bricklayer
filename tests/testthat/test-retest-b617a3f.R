@@ -24,12 +24,12 @@ test_that("finding 1: a time limit during a POST is an error tryCatch() catches,
 test_that("finding 3: a command typed as one argument, tab- or space-joined, is not a question", {
   bq <- ns(".bl_bare_question")
   for (q in c("cnfig\tset\topenai.key", "cnfig set openai.key", "config set openai.key", "logn --token",
-              "doctor now", "descibe survey_design")) {
+              "doctor now", "descibe svydes")) {
     expect_false(bq(q), info = q)
   }
   # questions still are, a verb word in them included
-  for (q in c("how do I set the openai key?", "describe the drift test?", "what does capsule_drift do?",
-              "is this right?", "explain survey_design please")) {
+  for (q in c("how do I set the openai key?", "describe the drift test?", "what does cpsdrft do?",
+              "is this right?", "explain svydes please")) {
     expect_true(bq(q), info = q)
   }
   expect_match(ns(".bl_unknown_verb")("cnfig set openai.key", "rmbl"), "did you mean `rmbl config`", fixed = TRUE)
@@ -39,7 +39,11 @@ test_that("finding 3: a command typed as one argument, tab- or space-joined, is 
 # JK1 on n units, each its own PSU: replicate b zeroes unit b and scales the rest by n / (n - 1)
 jk1 <- function(w) {
   n <- length(w)
-  sapply(seq_len(n), function(b) { r <- w * n / (n - 1); r[b] <- 0; r })
+  sapply(seq_len(n), function(b) {
+    r <- w * n / (n - 1)
+    r[b] <- 0
+    r
+  })
 }
 
 test_that("JK1 on a domain subset: replicates whose PSU is outside are no copy (within 1% from 101 PSUs)", {
@@ -49,15 +53,15 @@ test_that("JK1 on a domain subset: replicates whose PSU is outside are no copy (
   R <- jk1(w)
   keep <- 1:60
   d <- data.frame(y = rnorm(60))
-  expect_silent(des <- survey_design(d, weights = w[keep], replicates = R[keep, ], type = "jk1"))
+  expect_silent(des <- svydes(d, w = w[keep], reps = R[keep, ], type = "jk1"))
   expect_s3_class(des, "rmbl_svy_design")
   # a copy of the weight, exact or jittered, is still refused on the full data
   dd <- data.frame(y = rnorm(n))
-  expect_error(survey_design(dd, weights = w, replicates = cbind(R, w), type = "jk1"), "the full-sample weight")
-  expect_error(survey_design(dd, weights = w, replicates = cbind(R, w * (1 + runif(n, -0.004, 0.004))), type = "jk1"),
+  expect_error(svydes(dd, w = w, reps = cbind(R, w), type = "jk1"), "the full-sample weight")
+  expect_error(svydes(dd, w = w, reps = cbind(R, w * (1 + runif(n, -0.004, 0.004))), type = "jk1"),
                "within 1% on every row")
   # a replicate that leaves no row out and is no k / (k - 1) rescale is said
-  expect_warning(survey_design(dd, weights = w, replicates = cbind(R, w * runif(n, 1.05, 1.5)), type = "jk1"),
+  expect_warning(svydes(dd, w = w, reps = cbind(R, w * runif(n, 1.05, 1.5)), type = "jk1"),
                  "leaves no row out")
 })
 
@@ -74,12 +78,12 @@ test_that("JKn: one replicate equal to the weight is a copy; a left-out stratum'
   })
   rs <- rep(3 / 4, 12)
   d <- data.frame(y = rnorm(12))
-  expect_silent(survey_design(d, weights = w, replicates = R, type = "jkn", rscales = rs))
-  expect_error(survey_design(d, weights = w, replicates = cbind(R, w), type = "jkn", rscales = c(rs, 1)),
+  expect_silent(svydes(d, w = w, reps = R, type = "jkn", rscales = rs))
+  expect_error(svydes(d, w = w, reps = cbind(R, w), type = "jkn", rscales = c(rs, 1)),
                "the full-sample weight")
   # a stratum subset: stratum 3's rows alone, so the replicates of strata 1 and 2 equal the weight
   k <- st == 3
-  expect_silent(survey_design(d[k, , drop = FALSE], weights = w[k], replicates = R[k, ], type = "jkn", rscales = rs))
+  expect_silent(svydes(d[k, , drop = FALSE], w = w[k], reps = R[k, ], type = "jkn", rscales = rs))
 })
 
 test_that("post-stratified or calibrated sets: replicates equal or close to the weight are accepted", {
@@ -93,7 +97,7 @@ test_that("post-stratified or calibrated sets: replicates equal or close to the 
   d <- data.frame(y = rnorm(n))
   for (tp in c("jk1", "brr", "bootstrap")) {
     reps <- if (tp == "brr") R[, 1:28] else R
-    expect_silent(survey_design(d, weights = w, replicates = reps, type = tp))
+    expect_silent(svydes(d, w = w, reps = reps, type = tp))
   }
 })
 
@@ -127,45 +131,52 @@ test_that("CSV reader: a byte-order mark after the header, and a header of blank
   same("\"\"\nx\nb\n")                # a header of "" alone, the same
 })
 
-test_that("survey: a partly named replicate matrix still refuses a column of data; two permuted outcomes are no reorder", {
+test_that("survey: a partly named replicate matrix refuses a data column; permuted outcomes are no reorder", {
   set.seed(14)
   m <- 30
   w <- runif(m, 5, 50)
-  jk <- sapply(seq_len(m), function(j) { f <- rep(m / (m - 1), m); f[j] <- 0; w * f })
+  jk <- sapply(seq_len(m), function(j) {
+    f <- rep(m / (m - 1), m)
+    f[j] <- 0
+    w * f
+  })
   d <- data.frame(y = rnorm(m), y2 = rnorm(m), w = w, z = runif(m) * 40, s = rep(1:3, 10))
   R <- cbind(jk, d$z)
   colnames(R) <- c(paste0("r", 1:m), "")
-  expect_error(survey_design(d, weights = "w", replicates = R, type = "jk1"), "column z of `data`", fixed = TRUE)
-  des <- survey_design(d, weights = "w", replicates = jk, type = "jk1")
+  expect_error(svydes(d, w = "w", reps = R, type = "jk1"), "column z of `data`", fixed = TRUE)
+  des <- svydes(d, w = "w", reps = jk, type = "jk1")
   p <- d
   p$y <- sample(p$y)
   p$y2 <- sample(p$y2)
-  expect_s3_class(survey_estimate(des, p, "y"), "data.frame")
+  expect_s3_class(svyest(des, p, "y"), "data.frame")
   # the rows themselves reordered are still refused
-  expect_error(survey_estimate(des, d[c(2:m, 1), ], "y"), "not the data frame the design was built on")
+  expect_error(svyest(des, d[c(2:m, 1), ], "y"), "not the data frame the design was built on")
 })
 
 test_that("hostile arguments: a data frame, a function or a vector where one value goes is refused in words", {
   df <- data.frame(a = 1:2)
   worded <- function(expr) {
-    e <- tryCatch({ force(expr); NULL }, error = function(e) e)
+    e <- tryCatch({
+      force(expr)
+      NULL
+    }, error = function(e) e)
     expect_s3_class(e, "error")
     expect_null(conditionCall(e))
   }
-  worded(core_gamma_cdf(2, df))
-  worded(core_cor(1:3, 1:4))
-  worded(core_uniforms(Inf, 1))
-  worded(core_bootstrap_mean(1:5, B = 1e10))
-  worded(morans_i(c(1, 2, 3), list(2, c(1, 3), 2), n_perm = NULL))
-  worded(period_days("tomorrow", "2024-01-01"))
-  worded(bricklayer_siu_text(1))
-  worded(core_sha256(function(x) x))
-  worded(survey_estimate(list(), data.frame(), "y", levels = mean))
-  worded(change_envelope(1, 2))
-  worded(record(list(), name = NULL, observed = 1, expected = 1))
-  worded(yoy_csv(structure(list(), class = "rmbl_yoy"), file = 1))
-  worded(bricklayer_palette(n = df))
-  worded(reservoir_indices(10, Inf))
-  worded(use_capsule_template(NA))
-  worded(make_synthetic_column(list(type = "sample"), n = 5))
+  worded(cgamcdf(2, df))
+  worded(ccorr(1:3, 1:4))
+  worded(cunif(Inf, 1))
+  worded(cbootmean(1:5, B = 1e10))
+  worded(morani(c(1, 2, 3), list(2, c(1, 3), 2), nperm = NULL))
+  worded(perdays("tomorrow", "2024-01-01"))
+  worded(siutxt(1))
+  worded(csha256(function(x) x))
+  worded(svyest(list(), data.frame(), "y", lvls = mean))
+  worded(chgenv(1, 2))
+  worded(recrd(list(), name = NULL, obs = 1, expd = 1))
+  worded(yoycsv(structure(list(), class = "rmbl_yoy"), file = 1))
+  worded(blpal(n = df))
+  worded(rsvidx(10, Inf))
+  worded(usecpstmpl(NA))
+  worded(mksyncol(list(type = "sample"), n = 5))
 })

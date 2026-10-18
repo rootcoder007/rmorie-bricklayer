@@ -18,52 +18,52 @@ has_secret <- function(obj, key) {
 }
 
 test_that("Y1: no signature, attestation, bundle or serialisation of any scheme carries private-key bytes", {
-  k <- pqc_keygen()
-  s <- capsule_sign("hello", k, scheme = "xmss")
+  k <- pqckg()
+  s <- cpssign("hello", k, scheme = "xmss")
   expect_null(s$key_state)
   expect_false(has_secret(s, k))
-  expect_false(has_secret(capsule_attest(list(name = "m"), xmss_advance(k, s)), k))
-  renderings <- c(deparse(s), bricklayer_json_to_json(s), rawToChar(serialize(s, NULL, ascii = TRUE)))
+  expect_false(has_secret(cpsatst(list(name = "m"), xmssadv(k, s)), k))
+  renderings <- c(deparse(s), tojs(s), rawToChar(serialize(s, NULL, ascii = TRUE)))
   expect_false(any(grepl(k$sk_seed, renderings, fixed = TRUE)))
-  expect_false(any(grepl(k[["sk_prf"]], bricklayer_json_to_json(unclass(s)), fixed = TRUE)))
+  expect_false(any(grepl(k[["sk_prf"]], tojs(unclass(s)), fixed = TRUE)))
   # the forgery of the report has nothing to work from
-  expect_error(capsule_attest(list(name = "forged"), s$key_state))
-  f <- fips_keygen("ML-DSA-65")
-  fs <- capsule_sign("hello", f)
+  expect_error(cpsatst(list(name = "forged"), s$key_state))
+  f <- fipskg("ML-DSA-65")
+  fs <- cpssign("hello", f)
   expect_false(any(grepl(f$secret %||% "no-secret-field", unlist(fs), fixed = TRUE)))
-  expect_true(capsule_verify("hello", s, signing_public_key(k)))
+  expect_true(cpsvrf("hello", s, signpubkey(k)))
 })
 
-test_that("Y2: xmss_advance() carries the key; one object twice is refused; the index file survives sessions", {
-  withr::local_options(rmoriebricklayer.xmss_index_file = withr::local_tempfile(fileext = ".json"))
-  xmss_forget_used_indices()
-  k <- pqc_keygen(height = 2)
-  a1 <- capsule_attest(list(n = 1), k)
+test_that("Y2: xmssadv() carries the key; one object twice is refused; the index file survives sessions", {
+  withr::local_options(rmoriebricklayer.xmssidxfile = withr::local_tempfile(fileext = ".json"))
+  xmssfgt()
+  k <- pqckg(height = 2)
+  a1 <- cpsatst(list(n = 1), k)
   expect_null(a1$signature$key_state)
-  expect_error(capsule_attest(list(n = 2), k), "already used")
-  k2 <- xmss_advance(k, a1$signature)
+  expect_error(cpsatst(list(n = 2), k), "already used")
+  k2 <- xmssadv(k, a1$signature)
   expect_identical(k2$next_index, 1L)
-  a2 <- capsule_attest(list(n = 2), k2)
+  a2 <- cpsatst(list(n = 2), k2)
   expect_identical(a2$signature$index, 1L)
-  expect_error(xmss_advance(pqc_keygen(height = 2), a1$signature), "not made by this key")
+  expect_error(xmssadv(pqckg(height = 2), a1$signature), "not made by this key")
   # a "fresh session": the in-memory registry is cleared, the file is not, and index 0 is refused
   rm(list = ls(rmoriebricklayer:::.rmbl_xmss_used, all.names = TRUE), envir = rmoriebricklayer:::.rmbl_xmss_used)
-  expect_error(capsule_sign("again", k), "already used")
-  xmss_forget_used_indices()
-  expect_false(file.exists(getOption("rmoriebricklayer.xmss_index_file")))
+  expect_error(cpssign("again", k), "already used")
+  xmssfgt()
+  expect_false(file.exists(getOption("rmoriebricklayer.xmssidxfile")))
 })
 
 test_that("Y3: a mean without a prevalence (or the reverse) is an error report, not zero cases", {
-  r <- verify_pollution("pm25", exposure_mean = 25)
+  r <- vrfpol("pm25", expomean = 25)
   expect_identical(r$status, "error")
-  expect_identical(attr(r, "exit_status"), 2L)
+  expect_identical(attr(r, "exitstat"), 2L)
   expect_match(r$error, "go together")
-  expect_identical(verify_pollution("no2", exposure_prevalence = 1)$status, "error")
-  expect_identical(verify_pollution("pm25")$status, "error")
-  ok <- verify_pollution("pm25", exposure_mean = 25, exposure_prevalence = 1)
+  expect_identical(vrfpol("no2", expoprev = 1)$status, "error")
+  expect_identical(vrfpol("pm25")$status, "error")
+  ok <- vrfpol("pm25", expomean = 25, expoprev = 1)
   expect_identical(ok$status, "ok")
-  expect_gt(ok$pipeline$burden$attributable_cases, 0)
-  expect_identical(verify_pollution("pm25", exposure_mean = 0, exposure_prevalence = 1)$status, "ok")
+  expect_gt(ok$pipeline$burden$attrcases, 0)
+  expect_identical(vrfpol("pm25", expomean = 0, expoprev = 1)$status, "ok")
 })
 
 test_that("Y4: a cue sentence ended by a newline keeps the line break", {
@@ -72,19 +72,19 @@ test_that("Y4: a cue sentence ended by a newline keeps the line break", {
                "AI no 2 N'a pas consenti à une entrevue\nAgents t\u00e9moins\n")
   fb <- paste0(H, "AI no 1 A particip\u00e9 à une entrevue. Le nom d'un agent impliqu\u00e9 est confidentiel\n",
                "Agents t\u00e9moins\nAI no 7 (narrative)\n")
-  expect_equal(as.numeric(bricklayer_siu_resolve_so(fa)$count), 2)
-  expect_equal(as.numeric(bricklayer_siu_resolve_so(fb)$count), 1)
+  expect_equal(as.numeric(siuso(fa)$count), 2)
+  expect_equal(as.numeric(siuso(fb)$count), 1)
   # the property, with the line-end position included
   bp <- "Le nom d'un agent impliqu\u00e9 est confidentiel"
   lines <- c("AI no 1 A particip\u00e9 à une entrevue. AI no 3 \u00e9tait pr\u00e9sent",
              "AI no 2 N'a pas consenti à une entrevue.",
              "AI no 4 A particip\u00e9 à une entrevue; AI no 5 a refus\u00e9. AI no 2 absent")
   for (ln in lines) {
-    base <- as.numeric(bricklayer_siu_resolve_so(paste0(H, ln, "\nAI no 1 absent\nAgents t\u00e9moins\n"))$count)
+    base <- as.numeric(siuso(paste0(H, ln, "\nAI no 1 absent\nAgents t\u00e9moins\n"))$count)
     variants <- c(paste0(bp, ". ", ln), paste0(ln, " ", bp, "."), paste0(ln, "\n", bp), paste0(bp, "\n", ln),
                   paste0(sub("\\. ", paste0(". ", bp, ". "), ln)))
     for (v in variants) {
-      got <- as.numeric(bricklayer_siu_resolve_so(paste0(H, v, "\nAI no 1 absent\nAgents t\u00e9moins\n"))$count)
+      got <- as.numeric(siuso(paste0(H, v, "\nAI no 1 absent\nAgents t\u00e9moins\n"))$count)
       expect_identical(got, base, info = v)
     }
   }
@@ -93,61 +93,61 @@ test_that("Y4: a cue sentence ended by a newline keeps the line break", {
 test_that("Y5 and Z5: one work cap for every run, the same for both spellings of the same physics", {
   c0 <- matrix(0, 301, 301)
   c0[151, 151] <- 1
-  r <- advection_diffusion_2d(c0, u = 0.5, v = 0, kx = 0, ky = 0, 1, 1, 1, 2)
+  r <- advdif2d(c0, u = 0.5, v = 0, kx = 0, ky = 0, 1, 1, 1, 2)
   expect_s3_class(r, "rmbl_field")
   expect_equal(r$mass, 1, tolerance = 1e-12)
-  err <- tryCatch(advection_diffusion_2d(matrix(1, 201, 201), u = 9999, v = 0, kx = 0, ky = 0, 1, 1, 1, 100),
+  err <- tryCatch(advdif2d(matrix(1, 201, 201), u = 9999, v = 0, kx = 0, ky = 0, 1, 1, 1, 100),
                   error = function(e) conditionMessage(e))
-  expect_match(err, "above max_work")
+  expect_match(err, "above maxwork")
   # the hourly run written two ways: sub-stepped by the scheme, or stepped by the caller
   c1 <- matrix(0, 5, 5)
   c1[3, 3] <- 1
-  expect_warning(a <- advection_diffusion_2d(c1, u = 0, v = 0, kx = 50, ky = 50, 10, 10, 3600, 1),
+  expect_warning(a <- advdif2d(c1, u = 0, v = 0, kx = 50, ky = 50, 10, 10, 3600, 1),
                  "outside its stability bound")
-  b <- advection_diffusion_2d(c1, u = 0, v = 0, kx = 50, ky = 50, 10, 10, 0.5, 7200)
+  b <- advdif2d(c1, u = 0, v = 0, kx = 50, ky = 50, 10, 10, 0.5, 7200)
   expect_equal(a$field, b$field, tolerance = 1e-12)
   msg <- function(e) conditionMessage(e)
-  ea <- tryCatch(advection_diffusion_2d(c1, 0, 0, 50, 50, 10, 10, 3600, 1, max_work = 1e5), error = msg)
-  eb <- tryCatch(advection_diffusion_2d(c1, 0, 0, 50, 50, 10, 10, 0.5, 7200, max_work = 1e5), error = msg)
-  expect_match(ea, "above max_work")
-  expect_match(eb, "above max_work")
-  expect_warning(f <- advection_diffusion_2d(c1, 0, 0, 50, 50, 10, 10, 3600, 1, max_work = Inf),
+  ea <- tryCatch(advdif2d(c1, 0, 0, 50, 50, 10, 10, 3600, 1, maxwork = 1e5), error = msg)
+  eb <- tryCatch(advdif2d(c1, 0, 0, 50, 50, 10, 10, 0.5, 7200, maxwork = 1e5), error = msg)
+  expect_match(ea, "above maxwork")
+  expect_match(eb, "above maxwork")
+  expect_warning(f <- advdif2d(c1, 0, 0, 50, 50, 10, 10, 3600, 1, maxwork = Inf),
                  "outside its stability bound")
   expect_s3_class(f, "rmbl_field")
   # a stable run is capped too: no run is unbounded
-  expect_error(advection_diffusion_2d(matrix(1, 3, 3), 0, 0, 0, 0, 1, 1, 0.1, 1e9), "above max_work")
-  expect_error(advection_diffusion_2d(matrix(1, 3, 3), 0, 0, 0, 0, 1, 1, 0.1, 1e300), "max_work|not finite")
+  expect_error(advdif2d(matrix(1, 3, 3), 0, 0, 0, 0, 1, 1, 0.1, 1e9), "above maxwork")
+  expect_error(advdif2d(matrix(1, 3, 3), 0, 0, 0, 0, 1, 1, 0.1, 1e300), "maxwork|not finite")
   expect_false(grepl(", 0", err, fixed = TRUE))
-  expect_match(err, "Pass max_work = Inf")
-  expect_error(lagrangian_particles(n = 1e300, x0 = 0, y0 = 0, u = 1, v = 0, kx = 1, ky = 1, dt = 1, n_steps = 1),
+  expect_match(err, "Pass maxwork = Inf")
+  expect_error(lagrprt(n = 1e300, x0 = 0, y0 = 0, u = 1, v = 0, kx = 1, ky = 1, dt = 1, nsteps = 1),
                "at most 100 million")
-  expect_warning(gaussian_puff(mass = 1, u = 2, h = 10, receptors = cbind(100, 0, -1), t = 10), "below ground")
+  expect_warning(gspuff(mass = 1, u = 2, h = 10, rcpt = cbind(100, 0, -1), t = 10), "below ground")
 })
 
 test_that("Y6: a frequency table with a missing level plots", {
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
-  ft <- frequency_table(data.frame(g = c("a", "b", NA)), "g")
+  ft <- freqtbl(data.frame(g = c("a", "b", NA)), "g")
   expect_silent(d <- plot(ft))
   expect_true(is.data.frame(d))
 })
 
 test_that("H1 and the attestation edges: edited HMAC signatures are FALSE; a missing digest and a key object work", {
-  s <- capsule_sign("m", "secret", scheme = "hmac")
-  expect_true(capsule_verify("m", s, "secret"))
+  s <- cpssign("m", "secret", scheme = "hmac")
+  expect_true(cpsvrf("m", s, "secret"))
   edits <- list(c(s$signature, s$signature), 5, "zz", substr(s$signature, 1, 10), NA_character_, list(s$signature))
   for (bad in edits) {
     t <- s
     t$signature <- bad
-    expect_false(capsule_verify("m", t, "secret"))
+    expect_false(cpsvrf("m", t, "secret"))
   }
-  k <- pqc_keygen(height = 2)
-  at <- capsule_attest(list(name = "m"), k)
-  chk <- capsule_check_attestation(at, list(name = "m"), key_expected = signing_public_key(k))
+  k <- pqckg(height = 2)
+  at <- cpsatst(list(name = "m"), k)
+  chk <- cpschkatst(at, list(name = "m"), keyexp = signpubkey(k))
   expect_true(all(chk$checks$ok))
   at2 <- at
   at2$digest <- NULL
-  chk2 <- capsule_check_attestation(at2, list(name = "m"))
+  chk2 <- cpschkatst(at2, list(name = "m"))
   expect_false(all(chk2$checks$ok))
 })
 
@@ -182,7 +182,7 @@ test_that("L1, L2, L3, L5 residuals: Ollama by model is announced; wrong types a
   expect_match(flat(), '"other":\\["x"\\]')
   expect_match(flat(), '"n":null')
   expect_match(flat(), "9007199254740993")
-  bricklayer_llm_logout()
+  dlogout()
   txt <- flat()
   expect_match(txt, '"other":\\["x"\\]')
   expect_false(grepl("hosted_key", txt, fixed = TRUE))
@@ -193,15 +193,15 @@ test_that("L1, L2, L3, L5 residuals: Ollama by model is announced; wrong types a
   expect_identical(rmoriebricklayer:::.bl_data_key(), "sk-h")
   # a saved address is one address
   for (bad in c("http://local host:1234/v1", "http://host#@evil", "http://user@host:1234/v1")) {
-    expect_error(bricklayer_llm_config(own.url = bad), "plain address")
+    expect_error(llmcfg(own.url = bad), "plain address")
   }
-  expect_error(bricklayer_llm_config(ollama.url = "http://h ost:11434"), "plain address")
+  expect_error(llmcfg(ollama.url = "http://h ost:11434"), "plain address")
 })
 
 test_that("L11 and L12: no `--token [KEY]` anywhere in the help; C1 and bidi characters never print", {
   out <- character()
-  bricklayer_cli("help", out = function(s) out <<- c(out, s))
-  bricklayer_cli(c("login", "--help"), out = function(s) out <<- c(out, s))
+  blcli("help", out = function(s) out <<- c(out, s))
+  blcli(c("login", "--help"), out = function(s) out <<- c(out, s))
   expect_false(any(grepl("--token KEY|--token \\[KEY\\]", out)))
   expect_false(grepl("--token KEY|\\[KEY\\]", rmoriebricklayer:::.bl_access_hint()))
   for (lc in c("C", "en_US.UTF-8")) {
@@ -223,12 +223,12 @@ test_that("D1 gaps and M2, M4, M6, M8 leftovers", {
   con <- gzfile(f, "wb")
   writeLines("a,b\n1,2", con)
   close(con)
-  good <- core_sha256(readBin(f, "raw", file.size(f)))
+  good <- csha256(readBin(f, "raw", file.size(f)))
   man <- function(sha) function(refresh = FALSE) list(datasets = list(list(key = "db/t", sha256 = sha)))
-  testthat::local_mocked_bindings(bricklayer_data_manifest = man(paste0("sha256:", good)),
+  testthat::local_mocked_bindings(dmnf = man(paste0("sha256:", good)),
                                   .package = "rmoriebricklayer")
   expect_true(rmoriebricklayer:::.bl_data_check_sha("db/t", f))
-  testthat::local_mocked_bindings(bricklayer_data_manifest = man("not-a-digest"), .package = "rmoriebricklayer")
+  testthat::local_mocked_bindings(dmnf = man("not-a-digest"), .package = "rmoriebricklayer")
   expect_error(rmoriebricklayer:::.bl_data_check_sha("db/t", f), "not a SHA-256")
   expect_false(file.exists(f))   # the unverified file does not stay in the cache
   con <- gzfile(f, "wb")
@@ -236,49 +236,49 @@ test_that("D1 gaps and M2, M4, M6, M8 leftovers", {
   close(con)
   # a rebuilt table: the first manifest is stale, the refreshed one matches
   calls <- 0L
-  testthat::local_mocked_bindings(bricklayer_data_manifest = function(refresh = FALSE) {
+  testthat::local_mocked_bindings(dmnf = function(refresh = FALSE) {
     calls <<- calls + 1L
     list(datasets = list(list(key = "db/t", sha256 = if (refresh) good else strrep("0", 64))))
   }, .package = "rmoriebricklayer")
   expect_true(rmoriebricklayer:::.bl_data_check_sha("db/t", f))
   expect_gte(calls, 2L)
   # an error since the review of 02a38be (M2): a typo that validates nothing must not pass
-  expect_error(apply_schema_validation(data.frame(a = 1), list(scheme = list(expected_columns = "a"))), "no `schema`")
-  expect_error(apply_schema_validation(data.frame(a = 1), new.env()), "provenance list")
-  r <- verify_pollution("pm25", exposure_mean = 25, exposure_prevalence = 1, baseline_rate = 0.008)
+  expect_error(schval(data.frame(a = 1), list(scheme = list(expected_columns = "a"))), "no `schema`")
+  expect_error(schval(data.frame(a = 1), new.env()), "provenance list")
+  r <- vrfpol("pm25", expomean = 25, expoprev = 1, brate = 0.008)
   expect_identical(r$status, "assumption_failure")
   expect_true(any(grepl("per person-year", vapply(r$assumptions, function(a) a$note, ""))))
-  expect_error(crf_pm25(TRUE), "not logical")
-  expect_error(crf_no2(TRUE), "not logical")
-  vp <- function(...) verify_pollution("pm25", exposure_prevalence = 1, ...)$status
-  expect_identical(vp(exposure_mean = 1e308), "assumption_failure")
-  expect_identical(vp(exposure_mean = 90000), "assumption_failure")
-  expect_identical(vp(exposure_mean = as.Date("2020-01-01")), "error")
+  expect_error(crfpm25(TRUE), "not logical")
+  expect_error(crfno2(TRUE), "not logical")
+  vp <- function(...) vrfpol("pm25", expoprev = 1, ...)$status
+  expect_identical(vp(expomean = 1e308), "assumption_failure")
+  expect_identical(vp(expomean = 90000), "assumption_failure")
+  expect_identical(vp(expomean = as.Date("2020-01-01")), "error")
   bom <- withr::local_tempfile(fileext = ".csv")
   writeBin(c(as.raw(c(0xef, 0xbb, 0xbf)), charToRaw("exposure\n20\n30\n")), bom)
-  expect_identical(verify_pollution("pm25", exposure_csv = bom)$status, "ok")
+  expect_identical(vrfpol("pm25", expcsv = bom)$status, "ok")
   neg <- withr::local_tempfile(fileext = ".csv")
   writeLines(c("exposure", "20", "-5"), neg)
-  r <- verify_pollution("pm25", exposure_csv = neg)
+  r <- vrfpol("pm25", expcsv = neg)
   expect_identical(r$status, "error")
   expect_match(r$error, "negative")
-  expect_error(exposure_concentration_index(data.frame(e = c(1, Inf), i = c(1, 2)), "e", "i"), "finite")
-  expect_equal(hurwitz_zeta(2, q = -0.5), 8.934802200544679, tolerance = 1e-9)
-  expect_true(is.na(hurwitz_zeta(2, q = -1)))
-  expect_error(top_share(c(1, 2, 3), fractions = 1.5), "shares in")
-  expect_identical(top_share(c(1, 2, 3), fractions = 0)$units, 0L)
+  expect_error(expconcidx(data.frame(e = c(1, Inf), i = c(1, 2)), "e", "i"), "finite")
+  expect_equal(hurwzeta(2, q = -0.5), 8.934802200544679, tolerance = 1e-9)
+  expect_true(is.na(hurwzeta(2, q = -1)))
+  expect_error(topshr(c(1, 2, 3), fracs = 1.5), "shares in")
+  expect_identical(topshr(c(1, 2, 3), fracs = 0)$units, 0L)
   # NULL validates nothing: an error since the review of 02a38be (M2), not TRUE
-  expect_error(apply_schema_validation(data.frame(a = 1), NULL), "no schema to validate against")
-  expect_error(hill_tail_index(c(1, 5, 9, 20, 50), x_min = c(1, 2)), "single threshold")
-  expect_error(rapl_available(NA), "single directory")
+  expect_error(schval(data.frame(a = 1), NULL), "no schema to validate against")
+  expect_error(hilltlidx(c(1, 5, 9, 20, 50), xmin = c(1, 2)), "single threshold")
+  expect_error(raplok(NA), "single directory")
 })
 
 test_that("the earlier round's weak tests, sharpened", {
   # D4: the notes went on a page of their own, so the table page keeps every row
   d <- data.frame(year = 2015:2024, n = c(402, 377, 190, 268, 331, 300, 310, 290, 305, 320))
-  y <- yoy(d, value = "n", period = "year")
+  y <- yoy(d, value = "n", prd = "year")
   f <- withr::local_tempfile(fileext = ".pdf")
-  yoy_pdf(y, f, notes = sprintf("note %d", 1:30), height = 5)
+  yoypdf(y, f, notes = sprintf("note %d", 1:30), height = 5)
   bytes <- readBin(f, "raw", file.size(f))
   bytes[bytes == as.raw(0L)] <- as.raw(32L)
   expect_identical(length(gregexpr("/Type /Page[^s]", rawToChar(bytes), useBytes = TRUE)[[1L]]), 2L)
@@ -291,31 +291,31 @@ test_that("the earlier round's weak tests, sharpened", {
 })
 
 test_that("stress battery on 4b4af29: scheme edits on an HMAC secret, recorded FIPS fields, a missing reference", {
-  s <- capsule_sign("m", "secret", scheme = "hmac")
+  s <- cpssign("m", "secret", scheme = "hmac")
   for (bad in list(NULL, "xmss-sha256", "ML-DSA-44", 5, NA)) {
     t <- s
     t$scheme <- bad
-    expect_false(capsule_verify("m", t, "secret"), info = deparse(bad))
+    expect_false(cpsvrf("m", t, "secret"), info = deparse(bad))
   }
-  f <- fips_keygen("ML-DSA-44")
-  fs <- capsule_sign("m", f)
-  expect_true(capsule_verify("m", fs, f))
+  f <- fipskg("ML-DSA-44")
+  fs <- cpssign("m", f)
+  expect_true(cpsvrf("m", fs, f))
   for (bad in list(5, c("a", "b"), list(1), NA_character_)) {
     t <- fs
     t$context <- bad
-    expect_false(capsule_verify("m", t, f), info = deparse(bad))
+    expect_false(cpsvrf("m", t, f), info = deparse(bad))
     t <- fs
     t$prehash <- bad
-    expect_false(capsule_verify("m", t, f), info = deparse(bad))
+    expect_false(cpsvrf("m", t, f), info = deparse(bad))
   }
   for (r in list(NA, NaN)) {
-    v <- verify_pollution("no2", exposure_mean = 25, exposure_prevalence = 1, reference = r)
+    v <- vrfpol("no2", expomean = 25, expoprev = 1, ref = r)
     expect_identical(v$status, "assumption_failure")
   }
 })
 
 test_that("Y2b: the XMSS index record persists by default, in the package config directory", {
-  withr::local_options(rmoriebricklayer.xmss_index_file = NULL)
+  withr::local_options(rmoriebricklayer.xmssidxfile = NULL)
   withr::local_envvar(RMBL_XMSS_INDEX_FILE = NA)
   expect_identical(rmoriebricklayer:::.rmbl_xmss_index_file(),
                    path.expand(file.path(tools::R_user_dir("rmoriebricklayer", "config"), "xmss_used_indices.txt")))
@@ -323,31 +323,31 @@ test_that("Y2b: the XMSS index record persists by default, in the package config
     withr::local_envvar(RMBL_XMSS_INDEX_FILE = "")
     expect_null(rmoriebricklayer:::.rmbl_xmss_index_file())
   }
-  withr::local_options(rmoriebricklayer.xmss_index_file = FALSE)
+  withr::local_options(rmoriebricklayer.xmssidxfile = FALSE)
   expect_null(rmoriebricklayer:::.rmbl_xmss_index_file())
   # the file written by one "session" is read by the next: a reloaded stale key is refused
   f <- withr::local_tempfile(fileext = ".json")
-  withr::local_options(rmoriebricklayer.xmss_index_file = f)
-  k <- pqc_keygen(height = 2)
+  withr::local_options(rmoriebricklayer.xmssidxfile = f)
+  k <- pqckg(height = 2)
   saved <- k
-  a <- capsule_attest(list(n = 1), k)
+  a <- cpsatst(list(n = 1), k)
   expect_true(file.exists(f))
-  xmss_forget_used_indices()   # removes the file too; recreate the record as another session would
+  xmssfgt()   # removes the file too; recreate the record as another session would
   writeLines(paste(paste0(k$root, ":", k$pub_seed), a$signature$index, sep = "\t"), f)
-  expect_error(capsule_attest(list(n = 2), saved), "already used")
-  expect_s3_class(capsule_attest(list(n = 2), xmss_advance(saved, a$signature)), "bricklayer_attestation")
+  expect_error(cpsatst(list(n = 2), saved), "already used")
+  expect_s3_class(cpsatst(list(n = 2), xmssadv(saved, a$signature)), "bricklayer_attestation")
   # a record the package cannot read stops signing, it is not read around
-  xmss_forget_used_indices()
+  xmssfgt()
   writeLines("[1, 2]", f)
-  expect_error(capsule_sign("m", pqc_keygen(height = 2)), "malformed line")
-  xmss_forget_used_indices()
+  expect_error(cpssign("m", pqckg(height = 2)), "malformed line")
+  xmssfgt()
 })
 
 test_that("a stack at ambient temperature has no buoyancy and no rise, a cooler one is refused", {
-  r <- briggs_plume_rise(c(0, 100, 1000), 3, 2, 10, 290, 290)
+  r <- briggs(c(0, 100, 1000), 3, 2, 10, 290, 290)
   expect_identical(r$flux, 0)
   expect_identical(r$rise, c(0, 0, 0))
-  expect_error(briggs_plume_rise(100, 3, 2, 10, 280, 290), "hotter")
+  expect_error(briggs(100, 3, 2, 10, 280, 290), "hotter")
 })
 
 test_that("a line typed at a terminal in a non-interactive session is read by a shell child, so Ctrl-C lands", {
@@ -375,35 +375,35 @@ test_that("a line typed at a terminal in a non-interactive session is read by a 
 })
 
 test_that("an XMSS object that still carries key_state (0.5.9 to 7703a04) is verified with a warning", {
-  k <- pqc_keygen(height = 2)
-  s <- capsule_sign("m", k)
+  k <- pqckg(height = 2)
+  s <- cpssign("m", k)
   s$key_state <- list(sk_seed = k$sk_seed, sk_prf = k[["sk_prf"]], next_index = 1L)
-  expect_warning(ok <- capsule_verify("m", s, signing_public_key(k)), "carries the signer")
+  expect_warning(ok <- cpsvrf("m", s, signpubkey(k)), "carries the signer")
   expect_true(ok)
-  a <- capsule_attest(list(n = 1), xmss_advance(k, s))
+  a <- cpsatst(list(n = 1), xmssadv(k, s))
   a$signature$key_state <- s$key_state
-  expect_warning(capsule_check_attestation(a, list(n = 1)), "carries the signer")
+  expect_warning(cpschkatst(a, list(n = 1)), "carries the signer")
 })
 
 test_that("the refusals of the third pass are exercised: work, keys, credentials, stages", {
   # a step count that overflows the work estimate is refused before any loop runs
-  expect_error(advection_diffusion_2d(matrix(1, 4, 4), 0, 0, 1, 1, 1, 1, 0.1, 1e308), "not finite")
-  # xmss_advance() refuses what is not a key, not an XMSS signature, or has no index
-  k <- pqc_keygen(height = 2)
-  s <- capsule_sign("m", k)
-  expect_error(xmss_advance(list(), s), "signing key")
-  expect_error(xmss_advance(k, "x"), "XMSS signature")
+  expect_error(advdif2d(matrix(1, 4, 4), 0, 0, 1, 1, 1, 1, 0.1, 1e308), "not finite")
+  # xmssadv() refuses what is not a key, not an XMSS signature, or has no index
+  k <- pqckg(height = 2)
+  s <- cpssign("m", k)
+  expect_error(xmssadv(list(), s), "signing key")
+  expect_error(xmssadv(k, "x"), "XMSS signature")
   bad <- s
   bad$index <- NA_integer_
-  expect_error(xmss_advance(k, bad), "no valid index")
+  expect_error(xmssadv(k, bad), "no valid index")
   # with the index file off, signing still works and nothing is saved
-  withr::local_options(rmoriebricklayer.xmss_index_file = FALSE)
-  expect_warning(s2 <- capsule_sign("m2", xmss_advance(k, s)), "record is off")
+  withr::local_options(rmoriebricklayer.xmssidxfile = FALSE)
+  expect_warning(s2 <- cpssign("m2", xmssadv(k, s)), "record is off")
   expect_s3_class(s2, "bricklayer_signature")
   # a FIPS public-key object is compared by its `public` field
-  expect_warning(a <- capsule_attest(list(n = 1), pqc_keygen(height = 2)), "record is off")
+  expect_warning(a <- cpsatst(list(n = 1), pqckg(height = 2)), "record is off")
   fk <- structure(list(public = "abcd"), class = "bricklayer_oqs_public_key")
-  chk <- capsule_check_attestation(a, list(n = 1), key_expected = fk)
+  chk <- cpschkatst(a, list(n = 1), keyexp = fk)
   expect_false(chk$checks$ok[chk$checks$check == "key_as_expected"])
 })
 
@@ -421,16 +421,16 @@ test_that("the data key follows the services document address; a credentials fil
   expect_error(rmoriebricklayer:::.bl_credentials_raw(), "not a JSON object")
 })
 
-test_that("verify_pollution() turns a failure in the attributable fraction or the burden stage into an error report", {
-  testthat::local_mocked_bindings(attributable_fraction = function(...) stop("paf exploded"))
-  v <- verify_pollution("pm25", exposure_mean = 25, exposure_prevalence = 1)
+test_that("vrfpol() turns a failure in the attributable fraction or the burden stage into an error report", {
+  testthat::local_mocked_bindings(attrfrac = function(...) stop("paf exploded"))
+  v <- vrfpol("pm25", expomean = 25, expoprev = 1)
   expect_identical(v$status, "error")
   expect_match(v$error, "paf exploded")
 })
 
-test_that("verify_pollution() turns a failure in the burden stage into an error report", {
-  testthat::local_mocked_bindings(mortality_displaced = function(...) stop("stage exploded"))
-  v <- verify_pollution("pm25", exposure_mean = 25, exposure_prevalence = 1)
+test_that("vrfpol() turns a failure in the burden stage into an error report", {
+  testthat::local_mocked_bindings(mortdisp = function(...) stop("stage exploded"))
+  v <- vrfpol("pm25", expomean = 25, expoprev = 1)
   expect_identical(v$status, "error")
   expect_match(v$error, "stage exploded")
 })

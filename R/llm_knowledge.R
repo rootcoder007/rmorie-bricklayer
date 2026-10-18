@@ -87,7 +87,7 @@
 .bl_kn_all_pages <- function(pkgs) unlist(lapply(pkgs, .bl_kn_pages), recursive = FALSE)
 
 # The call of `fn` in a usage section, its parentheses balanced (an argument default such as
-# c("a", "b") holds its own), spaces inside the brackets dropped: "survey_design(data, weights, ...)".
+# c("a", "b") holds its own), spaces inside the brackets dropped: "svydes(data, weights, ...)".
 .bl_kn_call <- function(usage, fn) {
   at <- regexpr(paste0(fn, "("), usage, fixed = TRUE)
   if (at < 0L) return(fn)
@@ -157,7 +157,7 @@
                                                    "best matching functions with their titles."),
          parameters = obj(list(query = str("what to look for, in plain words")), "query")),
     list(name = "get_help", description = "The full help page of one function: usage, arguments, value, details.",
-         parameters = obj(list(name = str("the function name, e.g. survey_design")), "name")),
+         parameters = obj(list(name = str("the function name, e.g. svydes")), "name")),
     list(name = "get_examples", description = "The runnable examples from one function's help page.",
          parameters = obj(list(name = str("the function name")), "name")),
     list(name = "list_datasets", description = paste("Datasets the packages ship or can load (bundled files and",
@@ -181,7 +181,7 @@
     j <- tryCatch(.rmbl_json_text(paste(readLines(m, warn = FALSE), collapse = "\n"), simplifyVector = FALSE),
                   error = function(e) NULL)
     for (d in j$datasets %||% list()) {
-      out <- c(out, sprintf("data.rmorie.com: bricklayer_data_load(\"%s\")  %s", d$key %||% "",
+      out <- c(out, sprintf("data.rmorie.com: dload(\"%s\")  %s", d$key %||% "",
                             substr(.bl_data_name(d), 1L, 90L)))
     }
   }

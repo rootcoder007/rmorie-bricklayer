@@ -23,18 +23,18 @@ test_that("a credentials file past 1 MB is refused as not one", {
 test_that("route_info takes a named route", {
   withr::local_envvar(GROQ_API_KEY = "gsk-x", MORIE_GROQ_MODEL = "llama-x", OLLAMA_HOST = "off",
                       MORIE_LLM_BASE_URL = NA, XDG_CONFIG_HOME = withr::local_tempdir())
-  ri <- bricklayer_llm_route_info("groq")
+  ri <- llmrte("groq")
   expect_identical(ri$route, "groq")
   expect_identical(ri$model, "llama-x")
-  expect_error(bricklayer_llm_route_info("nowhere"), "must be one of")
+  expect_error(llmrte("nowhere"), "must be one of")
 })
 
-test_that("verify_pollution reports a scalar that is not a number", {
-  expect_match(verify_pollution("no2", reference = list(1))$error, "single number, not list")
-  expect_match(verify_pollution("no2", reference = 1i)$error, "single number, not complex")
-  expect_match(verify_pollution("no2", reference = "abc")$error, "must be a single number")
-  expect_match(verify_pollution("no2", reference = TRUE)$error, "must be a single number")
-  expect_identical(attr(verify_pollution("no2", reference = "abc"), "exit_status"), 2L)
+test_that("vrfpol reports a scalar that is not a number", {
+  expect_match(vrfpol("no2", ref = list(1))$error, "single number, not list")
+  expect_match(vrfpol("no2", ref = 1i)$error, "single number, not complex")
+  expect_match(vrfpol("no2", ref = "abc")$error, "must be a single number")
+  expect_match(vrfpol("no2", ref = TRUE)$error, "must be a single number")
+  expect_identical(attr(vrfpol("no2", ref = "abc"), "exitstat"), 2L)
 })
 
 test_that("a design's degrees of freedom: PSUs less strata, or replicates less one", {
@@ -46,7 +46,7 @@ test_that("a design's degrees of freedom: PSUs less strata, or replicates less o
 
 test_that("the cached manifest gives a listed table's digest", {
   d <- withr::local_tempdir()
-  withr::local_options(rmoriebricklayer.data_cache = d)
+  withr::local_options(rmoriebricklayer.dcache = d)
   sha <- strrep("ab", 32L)
   writeLines(sprintf('{"datasets":[{"key":"a/b","sha256_gz":"%s"},{"key":"c/d"}]}', sha), file.path(d, "manifest.json"))
   expect_identical(ns(".bl_data_cached_digest")("a/b"), sha)

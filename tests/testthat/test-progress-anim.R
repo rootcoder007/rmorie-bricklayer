@@ -76,7 +76,7 @@ test_that("the animation draws one line in place on a terminal, glides, and ends
 test_that("NO_COLOR, a pipe, and quiet each change what is drawn", {
   # R_CLI_NUM_COLORS and this package's option outrank NO_COLOR (as in cli); pkgcheck's check sets one
   withr::local_envvar(c(NO_COLOR = "1", R_CLI_NUM_COLORS = NA))
-  withr::local_options(rmoriebricklayer.num_colors = NULL)
+  withr::local_options(rmoriebricklayer.numcol = NULL)
   a <- rmoriebricklayer:::.bl_anim_new("C", 3, quiet = FALSE, tty = TRUE)
   m <- capture.output(type = "message", rmoriebricklayer:::.bl_anim_update(a, 1, force = TRUE))
   expect_false(any(grepl("\033", m, fixed = TRUE)))
@@ -96,7 +96,7 @@ test_that("a download on a terminal draws the native bar", {
   writeBin(as.raw(rep(1:255, 4000)), src)
   dest <- withr::local_tempfile(fileext = ".bin")
   m <- capture.output(type = "message",
-    bricklayer_download(paste0("file://", src), dest, allow_file = TRUE, label = "anim", size = file.size(src),
+    bldl(paste0("file://", src), dest, allowfile = TRUE, label = "anim", size = file.size(src),
                         tty = TRUE))
   expect_true(any(grepl("anim", m)))
   expect_identical(file.size(dest), file.size(src))

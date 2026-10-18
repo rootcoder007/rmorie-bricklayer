@@ -2,7 +2,7 @@
 #
 # Closing the loop from "the record is intact" to "the record is right".
 #
-# verify_capsule() checks a manifest against itself: that the recorded
+# vrfcps() checks a manifest against itself: that the recorded
 # observed and expected values are consistent with the status recorded
 # beside them. That catches a corrupted or edited manifest and cannot
 # catch a manifest that was wrong when it was written. Re-running the
@@ -12,7 +12,7 @@
 #'
 #' Re-evaluates named statistics against \code{data} and compares each to
 #' what the manifest recorded. This is the check
-#' [verify_capsule()] cannot
+#' [vrfcps()] cannot
 #' make: that one confirms the record is internally consistent, which an
 #' edited-at-the-time manifest also is. Use it when receiving a capsule, or
 #' after a data refresh, to confirm that the numbers in the record still
@@ -24,7 +24,7 @@
 #' re-derives three has seventeen it has not re-derived, and a report that
 #' quietly omitted them would read as a clean bill of health.
 #'
-#' For each function in \code{statistics}, its value on \code{data} is
+#' For each function in \code{stats}, its value on \code{data} is
 #' compared with the \code{observed} value recorded under the same name.
 #' Numeric results match when they are identical (so the same \code{NA},
 #' \code{NaN} or infinite value on both sides matches) or when
@@ -39,15 +39,15 @@
 #' run as given, so they can read files or draw random numbers; nothing else
 #' is changed.
 #'
-#' Errors: \code{manifest} not a list with \code{results}; \code{statistics}
+#' Errors: \code{man} not a list with \code{results}; \code{stats}
 #' not a non-empty fully named list, or with an element that is not a
 #' function.
 #'
-#' @param manifest A manifest, as from [make_manifest()]
-#'   and [record()].
+#' @param man A manifest, as from [mkmnf()]
+#'   and [recrd()].
 #' @param data The data the statistics are computed from (usually a data
 #'   frame); passed unchanged to each function.
-#' @param statistics Named list of functions of \code{data}, each returning
+#' @param stats Named list of functions of \code{data}, each returning
 #'   one value. Names must match the recorded result names.
 #' @param tol Optional numeric tolerance (absolute) overriding each
 #'   result's own recorded \code{tol}. Supply it to check more strictly than
@@ -64,56 +64,56 @@
 #'     \item{\code{unchecked}}{character, the names recorded but not recomputed.}
 #'   }
 #' @seealso
-#' [verify_capsule()],
-#' [capsule_falsify()],
-#' [record()].
+#' [vrfcps()],
+#' [cpsfals()],
+#' [recrd()].
 #' @examples
 #' d <- data.frame(x = 1:10)
-#' m <- make_manifest(list(dataset = "demo"), environment = FALSE)
-#' m <- record(m, "mean_x", observed = mean(d$x), expected = 5.5)
-#' m <- record(m, "n", observed = nrow(d), expected = 10)
+#' m <- mkmnf(list(dataset = "demo"), env = FALSE)
+#' m <- recrd(m, "mean_x", obs = mean(d$x), expd = 5.5)
+#' m <- recrd(m, "n", obs = nrow(d), expd = 10)
 #'
 #' # recomputing both reproduces them
-#' res <- manifest_recompute(m, d, list(mean_x = function(z) mean(z$x),
+#' res <- mnfrcmp(m, d, list(mean_x = function(z) mean(z$x),
 #'                                      n = function(z) nrow(z)))
 #' res$ok
 #' res$results[, c("name", "recorded", "recomputed", "status")]
 #'
 #' # recomputing one leaves the other reported as unchecked
-#' manifest_recompute(m, d, list(n = function(z) nrow(z)))$unchecked
+#' mnfrcmp(m, d, list(n = function(z) nrow(z)))$unchecked
 #'
 #' # and data that no longer matches the record is caught
-#' manifest_recompute(m, data.frame(x = 1:11),
+#' mnfrcmp(m, data.frame(x = 1:11),
 #'                    list(n = function(z) nrow(z)))$ok
 #'
 #' # a stricter tolerance than the recorded one
-#' manifest_recompute(m, d, list(mean_x = function(z) mean(z$x) + 1e-9,
+#' mnfrcmp(m, d, list(mean_x = function(z) mean(z$x) + 1e-9,
 #'                               n = nrow), tol = 0)$results$status
 #'
 #' # a function that fails is reported, not thrown
-#' manifest_recompute(m, d, list(mean_x = function(z) stop("column y is gone"),
+#' mnfrcmp(m, d, list(mean_x = function(z) stop("column y is gone"),
 #'                               n = nrow))$results[, c("name", "status")]
 #'
 #' # statistics must be named
-#' try(manifest_recompute(m, d, list(function(z) nrow(z))))
+#' try(mnfrcmp(m, d, list(function(z) nrow(z))))
 #' @export
-manifest_recompute <- function(manifest, data, statistics, tol = NULL) {
+mnfrcmp <- function(man, data, stats, tol = NULL) {
   if (!is.null(tol)) tol <- .rmbl_scalar(tol, "tol", 0)
-  if (!is.list(manifest) || is.null(manifest$results)) {
-    stop("`manifest` must be a manifest with recorded results",
+  if (!is.list(man) || is.null(man$results)) {
+    stop("`man` must be a manifest with recorded results",
          call. = FALSE)
   }
-  if (!is.list(statistics) || !length(statistics) ||
-      is.null(names(statistics)) || any(!nzchar(names(statistics)))) {
-    stop("`statistics` must be a non-empty named list of functions",
+  if (!is.list(stats) || !length(stats) ||
+      is.null(names(stats)) || any(!nzchar(names(stats)))) {
+    stop("`stats` must be a non-empty named list of functions",
          call. = FALSE)
   }
-  if (!all(vapply(statistics, is.function, logical(1)))) {
-    stop("every element of `statistics` must be a function", call. = FALSE)
+  if (!all(vapply(stats, is.function, logical(1)))) {
+    stop("every element of `stats` must be a function", call. = FALSE)
   }
-  rows <- lapply(names(statistics), function(nm) {
-    rec <- manifest$results[[nm]]
-    got <- tryCatch(statistics[[nm]](data), error = function(e) e)
+  rows <- lapply(names(stats), function(nm) {
+    rec <- man$results[[nm]]
+    got <- tryCatch(stats[[nm]](data), error = function(e) e)
     if (inherits(got, "error")) {
       return(data.frame(name = nm, recorded = NA_real_,
                         recomputed = NA_real_, delta = NA_real_,
@@ -163,7 +163,7 @@ manifest_recompute <- function(manifest, data, statistics, tol = NULL) {
   })
   df <- do.call(rbind, rows)
   rownames(df) <- NULL
-  unchecked <- setdiff(names(manifest$results), names(statistics))
+  unchecked <- setdiff(names(man$results), names(stats))
   out <- list(ok = all(df$status == "MATCH") && length(unchecked) == 0L,
               results = df, unchecked = unchecked)
   class(out) <- c("bricklayer_recompute", "list")
@@ -185,7 +185,7 @@ format.bricklayer_recompute <- function(x, ...) {
     .rmbl_rule())
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_recompute <- function(x, ...) {
   cat(format(x), sep = "\n")
@@ -199,8 +199,8 @@ print.bricklayer_recompute <- function(x, ...) {
 
 #' Record and restore the random number generator state
 #'
-#' \code{manifest_record_seed()} stores the generator's kind and its full
-#' state in the manifest; \code{manifest_restore_seed()} puts both back.
+#' \code{mnfrecseed()} stores the generator's kind and its full
+#' state in the manifest; \code{mnfrstseed()} puts both back.
 #' Together they let a run that used randomness (a bootstrap, a permutation
 #' test, a simulation, a random split) be repeated exactly, even without
 #' knowing what seed was set or how many draws came before.
@@ -219,37 +219,37 @@ print.bricklayer_recompute <- function(x, ...) {
 #' with no randomness in it.
 #'
 #' Side effects: if no generator state exists yet (\code{.Random.seed} is
-#' absent from the global environment), \code{manifest_record_seed()} draws
+#' absent from the global environment), \code{mnfrecseed()} draws
 #' one uniform number to create it, and records \code{was_initialised =
-#' FALSE}. \code{manifest_restore_seed()} calls \code{RNGkind()} with the
+#' FALSE}. \code{mnfrstseed()} calls \code{RNGkind()} with the
 #' recorded kinds and assigns \code{.Random.seed} in the global environment,
 #' replacing the current state.
 #'
-#' Errors: \code{manifest} that is not a list (or is a data frame); for
-#' \code{manifest_restore_seed()}, a manifest without a recorded state or with
+#' Errors: \code{man} that is not a list (or is a data frame); for
+#' \code{mnfrstseed()}, a manifest without a recorded state or with
 #' an empty kind.
 #'
-#' @param manifest A manifest, as from [make_manifest()] (a
+#' @param man A manifest, as from [mkmnf()] (a
 #'   list).
-#' @return \code{manifest_record_seed()}: the manifest with an \code{rng}
+#' @return \code{mnfrecseed()}: the manifest with an \code{rng}
 #'   element, a list of \code{kind} (character, the three \code{RNGkind()}
 #'   values), \code{state} (integer, the \code{.Random.seed} vector) and
 #'   \code{was_initialised} (logical, whether a state existed before the
-#'   call). \code{manifest_restore_seed()}: the manifest, invisibly, having
+#'   call). \code{mnfrstseed()}: the manifest, invisibly, having
 #'   set the generator.
 #' @seealso
-#' [capture_environment()],
-#' [capsule_falsify()].
+#' [capenv()],
+#' [cpsfals()].
 #' @examples
 #' set.seed(42)
-#' m <- manifest_record_seed(make_manifest(list(a = 1),
-#'                                         environment = FALSE))
+#' m <- mnfrecseed(mkmnf(list(a = 1),
+#'                                         env = FALSE))
 #' first <- runif(3)
 #'
 #' # any amount of other work can happen in between
 #' invisible(runif(1000))
 #'
-#' manifest_restore_seed(m)
+#' mnfrstseed(m)
 #' identical(runif(3), first)
 #'
 #' # what is stored
@@ -257,11 +257,11 @@ print.bricklayer_recompute <- function(x, ...) {
 #' length(m$rng$state)
 #'
 #' # a manifest without a recorded state cannot restore one
-#' try(manifest_restore_seed(make_manifest(list(a = 1), environment = FALSE)))
+#' try(mnfrstseed(mkmnf(list(a = 1), env = FALSE)))
 #' @export
-manifest_record_seed <- function(manifest) {
-  if (!is.list(manifest) || is.data.frame(manifest)) {
-    stop("`manifest` must be a manifest from make_manifest()",
+mnfrecseed <- function(man) {
+  if (!is.list(man) || is.data.frame(man)) {
+    stop("`man` must be a manifest from mkmnf()",
          call. = FALSE)
   }
   has <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
@@ -271,24 +271,24 @@ manifest_record_seed <- function(manifest) {
     # restore to.
     stats::runif(1L)
   }
-  manifest$rng <- list(
+  man$rng <- list(
     kind = RNGkind(),
     state = as.integer(get(".Random.seed", envir = globalenv())),
     was_initialised = has
   )
-  manifest
+  man
 }
 
-#' @rdname manifest_record_seed
+#' @rdname mnfrecseed
 #' @export
-manifest_restore_seed <- function(manifest) {
-  if (!is.list(manifest) || is.data.frame(manifest)) {
-    stop("`manifest` must be a manifest from make_manifest()", call. = FALSE)
+mnfrstseed <- function(man) {
+  if (!is.list(man) || is.data.frame(man)) {
+    stop("`man` must be a manifest from mkmnf()", call. = FALSE)
   }
-  rng <- manifest[["rng"]]
+  rng <- man[["rng"]]
   if (is.null(rng) || is.null(rng$state) || is.null(rng$kind)) {
     stop("this manifest carries no recorded generator state; ",
-         "manifest_record_seed() adds one", call. = FALSE)
+         "mnfrecseed() adds one", call. = FALSE)
   }
   # RNGkind() takes up to three names; a record with fewer leaves the
   # rest of the generator settings as they are (NA is not a valid name)
@@ -300,7 +300,7 @@ manifest_restore_seed <- function(manifest) {
   suppressWarnings(do.call(RNGkind, as.list(kind[seq_len(min(3L, length(kind)))])))
   assign(".Random.seed", as.integer(unlist(rng$state)),
          envir = globalenv())
-  invisible(manifest)
+  invisible(man)
 }
 
 #' Where each loaded package came from
@@ -309,7 +309,7 @@ manifest_restore_seed <- function(manifest) {
 #' provenance to find the same one again: the library it was loaded from,
 #' the repository it was installed from, and -- for a package installed
 #' from a remote -- the remote's URL and commit. Store it in a manifest next
-#' to [capture_environment()] when an analysis depends
+#' to [capenv()] when an analysis depends
 #' on packages installed
 #' from GitHub or a local build.
 #'
@@ -326,10 +326,10 @@ manifest_restore_seed <- function(manifest) {
 #' remotes, pak and devtools for packages installed from a Git host) and
 #' \code{Built}. Packages are sorted and de-duplicated. A progress bar is
 #' drawn on stderr for many packages unless \code{options(morie.quiet =
-#' TRUE)}. Nothing is written. Error: \code{packages} that is not a character
+#' TRUE)}. Nothing is written. Error: \code{pkgs} that is not a character
 #' vector.
 #'
-#' @param packages Character vector of package names.
+#' @param pkgs Character vector of package names.
 #'   Defaults to the namespaces currently loaded.
 #' @return A data frame with one row per package and character columns
 #'   \code{package}, \code{version}, \code{library} (the library directory),
@@ -341,36 +341,36 @@ manifest_restore_seed <- function(manifest) {
 #'   data frame with no
 #'   rows and the same columns.
 #' @seealso
-#' [capture_environment()],
-#' [environment_diff()].
+#' [capenv()],
+#' [envdiff()].
 #' @examples
-#' deps <- capture_dependencies(c("stats", "utils"))
+#' deps <- capdeps(c("stats", "utils"))
 #' deps[, c("package", "version")]
 #'
 #' # a package with no repository field records that fact
-#' is.na(capture_dependencies("stats")$repository)
+#' is.na(capdeps("stats")$repository)
 #'
 #' # a package that is not installed is a row of NAs, not an error
-#' capture_dependencies("notapackage123")[, c("package", "version")]
+#' capdeps("notapackage123")[, c("package", "version")]
 #'
 #' # names must be character
-#' try(capture_dependencies(1))
+#' try(capdeps(1))
 #' @export
-capture_dependencies <- function(packages = loadedNamespaces()) {
-  if (!is.null(packages) && !is.character(packages)) {
-    stop("`packages` must be a character vector of package names",
+capdeps <- function(pkgs = loadedNamespaces()) {
+  if (!is.null(pkgs) && !is.character(pkgs)) {
+    stop("`pkgs` must be a character vector of package names",
          call. = FALSE)
   }
-  packages <- sort(unique(as.character(packages)))
+  pkgs <- sort(unique(as.character(pkgs)))
   field <- function(d, nm) {
     if (is.null(d) || !nm %in% names(d)) return(NA_character_)
     v <- d[[nm]]
     if (is.null(v) || !nzchar(as.character(v)[1L])) return(NA_character_)
     as.character(v)[1L]
   }
-  pg <- bricklayer_progress("reading package descriptions", length(packages))
+  pg <- blprog("reading package descriptions", length(pkgs))
   on.exit(pg$done(), add = TRUE)
-  rows <- lapply(packages, function(p) {
+  rows <- lapply(pkgs, function(p) {
     pg$tick(info = p)
     d <- suppressWarnings(tryCatch(utils::packageDescription(p), error = function(e) NULL))  # absent: an NA row
     if (inherits(d, "try-error") || !is.list(d)) d <- NULL

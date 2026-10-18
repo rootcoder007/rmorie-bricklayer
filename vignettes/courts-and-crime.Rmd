@@ -21,22 +21,22 @@ file and its source). Each section uses the excerpt shipped with the package; th
 every edition and every court, load from the data hub:
 
 ```{r hub, eval = FALSE}
-clearance <- bricklayer_data_load("ocj_statistics/clearance_rate_criminal")
-offences  <- bricklayer_data_load("ocj_statistics/offence_based_criminal")
-mci       <- bricklayer_data_load("tps_open_data/major_crime_indicators_open_data_0")
+clearance <- dload("ocj_statistics/clearance_rate_criminal")
+offences  <- dload("ocj_statistics/offence_based_criminal")
+mci       <- dload("tps_open_data/major_crime_indicators_open_data_0")
 ```
 
 ## Is the court keeping up? Case flow and clearance
 
-A court keeps up when it disposes of as many cases as it receives. `case_flow()` turns the
+A court keeps up when it disposes of as many cases as it receives. `caseflow()` turns the
 monthly counts into the clearance rate (disposed per case received) with an exact interval,
 its rolling twelve-month value, and, from the pending count, how many months the inventory
 would take to clear at the recent pace.
 
 ```{r flow}
 f <- ext("ocj_flow_ontario.csv")
-cf <- case_flow(f$received, f$disposed, pending = f$pending, period = f$month)
-cf[c(1, 12, 24), c("period", "received", "disposed", "clearance", "rolling_clearance", "periods_to_clear")]
+cf <- caseflow(f$received, f$disposed, pend = f$pending, prd = f$month)
+cf[c(1, 12, 24), c("period", "received", "disposed", "clearance", "rolclr", "pertoclear")]
 plot(cf)
 ```
 
@@ -48,14 +48,14 @@ interval -- summer months clear less -- which is why the rolling rate is the one
 ## How long do cases take? A life table from banded times
 
 The Court publishes the share of cases disposed within 10 months, 10 to 15, 15 to 18 and over
-18. `life_table()` reads those bands directly and gives the share still open at each band edge,
+18. `lifetbl()` reads those bands directly and gives the share still open at each band edge,
 with a Greenwood interval, and the median.
 
 ```{r life}
 d <- ext("ocj_time_to_disposition.csv")
 last <- nrow(d)
 shares <- unlist(d[last, c("under_10", "m10_15", "m15_18", "over_18")])
-lt <- life_table(c("Under 10 Months", "Between 10-15 Months", "Between 15-18 Months", "Over 18 Months"),
+lt <- lifetbl(c("Under 10 Months", "Between 10-15 Months", "Between 15-18 Months", "Over 18 Months"),
                  events = shares * f$disposed[last])
 lt
 plot(lt)
@@ -70,8 +70,8 @@ case received.
 
 ```{r mix}
 x <- ext("ocj_dispositions.csv")
-mix <- disposition_mix(x[, -(1:2)], period = x$year, scores = x$year)
-mix$trend[, c("outcome", "statistic", "p_holm", "change")]
+mix <- dispmix(x[, -(1:2)], prd = x$year, scores = x$year)
+mix$trend[, c("outcome", "statistic", "pholm", "change")]
 plot(mix)
 ```
 
@@ -86,33 +86,33 @@ An aggregate clearance rate is a weighted average of the rates of its parts -- o
 courts -- weighted by their share of the work. It can fall while most parts improve, if the work
 shifts toward the parts that clear more slowly. Demers and Rossmo (2015) found 210 such
 reversals in fifteen years of clearance rates for Canada's fifty largest police services.
-`clearance_decomposition()` splits a change exactly into the change in the parts' rates and the
+`clrdcmp()` splits a change exactly into the change in the parts' rates and the
 change in the mix (Kitagawa, 1955), and tests the within-part change with a Mantel-Haenszel
 rate ratio.
 
 ```{r simpson, fig.height = 4.8}
 g <- ext("ocj_offence_groups.csv")
 g <- g[g$year %in% c(2014, 2022), ]
-cd <- clearance_decomposition(g$disposed, g$received, g$offence_group, g$year)
+cd <- clrdcmp(g$disposed, g$received, g$offence_group, g$year)
 cd
 plot(cd)
 # a group's share of the cases received in a year, as a percentage
-case_share <- function(group, yr) {
+caseshare <- function(group, yr) {
   sprintf("%.0f%%", 100 * sum(g$received[g$offence_group == group & g$year == yr]) / sum(g$received[g$year == yr]))
 }
 ```
 
 Between 2014 and 2022 the province-wide clearance rate moved by
 `r sprintf("%+.4f", cd$overall$change)`. Held at a fixed mix it moved by
-`r sprintf("%+.4f", cd$overall$rate_effect)`; the shift of work contributed
-`r sprintf("%+.4f", cd$overall$mix_effect)`. Crimes against the person, the group with the lowest
-clearance rate in both years, grew from `r case_share("Crimes Against the Person", 2014)` to
-`r case_share("Crimes Against the Person", 2022)` of the cases received, and federal-statute cases,
-the group with the highest rate in 2022, fell from `r case_share("Federal Statute", 2014)` to
-`r case_share("Federal Statute", 2022)`. `r cd$simpson$up` of the `r cd$simpson$parts` groups cleared a
+`r sprintf("%+.4f", cd$overall$rateeff)`; the shift of work contributed
+`r sprintf("%+.4f", cd$overall$mixeff)`. Crimes against the person, the group with the lowest
+clearance rate in both years, grew from `r caseshare("Crimes Against the Person", 2014)` to
+`r caseshare("Crimes Against the Person", 2022)` of the cases received, and federal-statute cases,
+the group with the highest rate in 2022, fell from `r caseshare("Federal Statute", 2014)` to
+`r caseshare("Federal Statute", 2022)`. `r cd$simpson$up` of the `r cd$simpson$parts` groups cleared a
 larger share in 2022 and `r cd$simpson$down` a smaller one. The crude ratio's interval includes 1;
 the Mantel-Haenszel ratio within offence groups is
-`r sprintf("%.4f (%.4f to %.4f)", cd$rate_ratio$ratio[2], cd$rate_ratio$lower[2], cd$rate_ratio$upper[2])`.
+`r sprintf("%.4f (%.4f to %.4f)", cd$rateratio$ratio[2], cd$rateratio$lower[2], cd$rateratio$upper[2])`.
 Read alone, the aggregate would say nothing changed; within the groups, taken together, clearance
 improved, though not in every group.
 
@@ -124,25 +124,25 @@ c <- ext("ocj_courts.csv")
 c <- aggregate(cbind(received, disposed) ~ year + court_series, c, sum)
 c <- c[c$year %in% c(2012, 2024), ]
 c <- c[c$court_series %in% names(which(table(c$court_series) == 2)), ]
-cc <- clearance_decomposition(c$disposed, c$received, c$court_series, c$year)
+cc <- clrdcmp(c$disposed, c$received, c$court_series, c$year)
 cc$overall
 cc$simpson$type
 ```
 
 Here the aggregate (`r sprintf("%+.4f", cc$overall$change)`) and the rate at a fixed mix
-(`r sprintf("%+.4f", cc$overall$rate_effect)`) move the same way: no reversal, and
+(`r sprintf("%+.4f", cc$overall$rateeff)`) move the same way: no reversal, and
 `r cc$simpson$down` of `r cc$simpson$parts` courts cleared a smaller share in 2024. A
 decomposition does not always find a paradox; it says which way the parts moved and how much
 the mix did.
 
 ## Where do incidents cluster? Kernel density
 
-`crime_density()` estimates the density of incidents in incidents per square kilometre and
+`crmdens()` estimates the density of incidents in incidents per square kilometre and
 outlines the smallest areas holding half and nine-tenths of them.
 
 ```{r density, fig.height = 5.5}
 b <- ext("tps_break_enter_d14_2024.csv")
-kd <- crime_density(b$lon, b$lat, n_grid = 150)
+kd <- crmdens(b$lon, b$lat, ngrid = 150)
 kd
 plot(kd)
 ```
@@ -155,30 +155,30 @@ places; the expectation is exact, and a permutation test gives each cell's p-val
 
 ```{r knox}
 b <- b[!is.na(b$lon), ]
-kn <- knox_test(b$lon, b$lat, as.Date(b$occ_date), space_bands = c(100, 200, 400),
-                time_bands = c(7, 14, 28), nsim = 199, seed = 1)
+kn <- knoxtst(b$lon, b$lat, as.Date(b$occ_date), spcbands = c(100, 200, 400),
+                tmbands = c(7, 14, 28), nsim = 199, seed = 1)
 kn
 plot(kn)
 ```
 
 ## Do the hot spots last?
 
-A hot spot that stays put is a place problem; one that moves is not. `hotspot_persistence()`
+A hot spot that stays put is a place problem; one that moves is not. `hotpers()`
 counts the incidents in grid cells each period, reports the share of places that holds half of
 them, which cells are hot (the busiest 5% of the cells with any incident), and how much each
 period's hot spots overlap the previous period's:
 
 ```{r hotspots, fig.width = 9, fig.height = 4}
-h <- hotspot_persistence(b$lon, b$lat, quarters(as.Date(b$occ_date)), cell = 0.3)
+h <- hotpers(b$lon, b$lat, quarters(as.Date(b$occ_date)), cell = 0.3)
 h
 plot(h)
 ```
 
-The hot set is the busiest `r h$hot_k` cells and every cell tied with the last of them. When a
+The hot set is the busiest `r h$hotk` cells and every cell tied with the last of them. When a
 tie would make more than twice that many cells hot, the counts do not single those cells out, so
-the tied group is left out and counted under `tied_out`: a quarter can then show fewer hot cells
-than `r h$hot_k`, a smaller hot share, and an overlap with its neighbours that cannot be computed
-(left blank)`r if (any(h$periods$tied_out > 0)) sprintf(", as in %s here", paste(h$periods$period[h$periods$tied_out > 0], collapse = " and ")) else ""`.
+the tied group is left out and counted under `tiedout`: a quarter can then show fewer hot cells
+than `r h$hotk`, a smaller hot share, and an overlap with its neighbours that cannot be computed
+(left blank)`r if (any(h$periods$tiedout > 0)) sprintf(", as in %s here", paste(h$periods$period[h$periods$tiedout > 0], collapse = " and ")) else ""`.
 
 
 Pairs of break-ins within 100 metres and a week of each other occur
@@ -186,12 +186,12 @@ Pairs of break-ins within 100 metres and a week of each other occur
 
 ## Indigenous life expectancy
 
-`life_table()` works from counts of events in age intervals. Where only published
+`lifetbl()` works from counts of events in age intervals. Where only published
 summaries exist, as for Indigenous life expectancy, the comparison is made on the
 published estimates and their intervals instead:
 
 ```{r indigenous-courts, eval = TRUE}
-le <- indigenous_example("life_expectancy")
+le <- indiex("lifeexp")
 le[le$period == "2016/2021", c("group", "estimate", "lower", "upper")]
 ```
 

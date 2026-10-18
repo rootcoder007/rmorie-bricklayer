@@ -24,7 +24,7 @@ the same person-days. Use it to say how long a typical admission lasts,
 and together with \code{\link[=adp]{adp()}} to tell whether a change in the population
 held
 came from more people or from longer stays. For the full distribution of
-stays (median, spread, interval) use \code{\link[=stay_summary]{stay_summary()}}.
+stays (median, spread, interval) use \code{\link[=staysmry]{staysmry()}}.
 }
 \details{
 Lakner's \eqn{\bar{X}_t = \sum X_i / N'} (1976, p.16), with a caveat
@@ -55,5 +55,5 @@ Lakner, E. (1976) \emph{A Manual of Statistical Sampling Methods for
 Corrections Planners}. University of Illinois at Urbana-Champaign.
 }
 \seealso{
-\code{\link[=adp]{adp()}}, \code{\link[=stock_flow]{stock_flow()}}
+\code{\link[=adp]{adp()}}, \code{\link[=stkflow]{stkflow()}}
 }

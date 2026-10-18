@@ -17,8 +17,8 @@
 
 #' Standard deviation and Euclidean distance (C backend)
 #'
-#' `core_sd()` returns the standard deviation of a numeric vector and
-#' `core_dist()` the straight-line (Euclidean) distance between two
+#' `csdev()` returns the standard deviation of a numeric vector and
+#' `cdistm()` the straight-line (Euclidean) distance between two
 #' vectors of the same length. Both run in the package's compiled core,
 #' the same code that rmorie and rmoriedata reach through
 #' `LinkingTo: rmoriebricklayer`, so a figure computed here is the figure
@@ -27,11 +27,11 @@
 #' recorded summary statistics against a fresh computation.
 #'
 #' @details
-#' `core_sd()` computes
+#' `csdev()` computes
 #' \deqn{s = \sqrt{\frac{1}{n - \mathrm{ddof}} \sum_{i=1}^n (x_i - \bar x)^2},}
 #' so `ddof = 1` is the sample standard deviation of [stats::sd()]
 #' and
-#' `ddof = 0` the population figure. `core_dist()` computes
+#' `ddof = 0` the population figure. `cdistm()` computes
 #' \eqn{\sqrt{\sum_i (a_i - b_i)^2}}.
 #'
 #' Missing values propagate: there is no `na.rm`, and one `NA` makes the
@@ -42,7 +42,7 @@
 #' or an empty vector). Two empty vectors are at distance 0.
 #'
 #' Refusals: a character, factor, list or data-frame `x`, `a` or `b`
-#' (`"must be numeric"`), and for `core_dist()` vectors of different lengths
+#' (`"must be numeric"`), and for `cdistm()` vectors of different lengths
 #' (`"must have the same length"`). Logical input is accepted and counted
 #' as 0/1. Both run in one pass over the data and allocate nothing beyond
 #' the coerced input.
@@ -55,43 +55,43 @@
 #'   The default `1` gives the sample standard
 #'   deviation, matching [stats::sd()]; `0` gives the population
 #'   figure.
-#' @return `core_sd()`: a length-1 numeric, the standard deviation in the
+#' @return `csdev()`: a length-1 numeric, the standard deviation in the
 #'   units of `x` (`NA` when `x` holds a missing value, `NaN` when
-#'   `length(x) <= ddof`). `core_dist()`: a length-1 non-negative numeric,
+#'   `length(x) <= ddof`). `cdistm()`: a length-1 non-negative numeric,
 #'   the distance in the units of `a` and `b`.
 #' @seealso
-#' [core_moments()] for the mean, variance, skewness and
+#' [cmom()] for the mean, variance, skewness and
 #' kurtosis in a
-#' single pass; [core_mad()] for a spread that one wild value
+#' single pass; [cmad()] for a spread that one wild value
 #' cannot move.
 #' @examples
 #' # Sample standard deviation, matching stats::sd().
-#' core_sd(c(2, 4, 4, 4, 5, 5, 7, 9))
-#' all.equal(core_sd(1:10), stats::sd(1:10))
+#' csdev(c(2, 4, 4, 4, 5, 5, 7, 9))
+#' all.equal(csdev(1:10), stats::sd(1:10))
 #'
 #' # ddof = 0 divides by n instead of n - 1.
-#' core_sd(1:10, ddof = 0)
-#' all.equal(core_sd(1:10, ddof = 0), sqrt(mean((1:10 - mean(1:10))^2)))
+#' csdev(1:10, ddof = 0)
+#' all.equal(csdev(1:10, ddof = 0), sqrt(mean((1:10 - mean(1:10))^2)))
 #'
 #' # Missing values propagate; remove them first if they should be ignored.
-#' core_sd(c(3, NA, 5))
-#' core_sd(stats::na.omit(c(3, NA, 5)))
+#' csdev(c(3, NA, 5))
+#' csdev(stats::na.omit(c(3, NA, 5)))
 #'
 #' # Euclidean distance between two points.
-#' core_dist(c(0, 0), c(3, 4))     # 5
-#' core_dist(1:5, 1:5)             # 0 -- a point is zero from itself
+#' cdistm(c(0, 0), c(3, 4))     # 5
+#' cdistm(1:5, 1:5)             # 0 -- a point is zero from itself
 #'
 #' # Vectors of different lengths are refused rather than recycled.
-#' try(core_dist(1:3, 1:2))
-#' @name rmbl_core_spread
+#' try(cdistm(1:3, 1:2))
+#' @name cspread
 #' @export
-core_sd <- function(x, ddof = 1L) {
+csdev <- function(x, ddof = 1L) {
   .Call(C_rmbl_sd, .rmbl_num_input(x, "x"), as.integer(.rmbl_scalar(ddof, "ddof", 0, integer = TRUE)))
 }
 
-#' @rdname rmbl_core_spread
+#' @rdname cspread
 #' @export
-core_dist <- function(a, b) {
+cdistm <- function(a, b) {
   a <- .rmbl_num_input(a, "a")
   b <- .rmbl_num_input(b, "b")
   if (length(a) != length(b)) {
@@ -120,7 +120,7 @@ core_dist <- function(a, b) {
 #' this is not vectorised over the parameters the way
 #' [stats::dnorm()] is.
 #' A non-finite `mean`, and an `sd` that is not a positive finite number,
-#' are errors, as in [core_normal_pdf()]; a missing
+#' are errors, as in [cnormpdf()]; a missing
 #' `x` gives `NA`. A
 #' character, factor or list `x` is refused (`"must be numeric"`).
 #'
@@ -132,30 +132,30 @@ core_dist <- function(a, b) {
 #' @return A numeric vector the length of `x`: the natural-log density at
 #'   each value (in log units per unit of `x`). Equivalent to
 #'   `stats::dnorm(x, mean, sd, log = TRUE)`.
-#' @seealso [core_moments()] for estimating `mean` and
+#' @seealso [cmom()] for estimating `mean` and
 #'   `sd` from data.
 #' @examples
-#' core_normal_logpdf(c(-1, 0, 1))
+#' cnormlpdf(c(-1, 0, 1))
 #'
 #' # Identical to stats::dnorm(log = TRUE).
-#' all.equal(core_normal_logpdf(-2:2, 0.3, 1.7),
+#' all.equal(cnormlpdf(-2:2, 0.3, 1.7),
 #'           stats::dnorm(-2:2, 0.3, 1.7, log = TRUE))
 #'
 #' # Still finite where the density itself underflows to zero.
 #' stats::dnorm(50)                  # 0
-#' core_normal_logpdf(50)            # about -1251
+#' cnormlpdf(50)            # about -1251
 #'
 #' # A log-likelihood: the sum of the log-densities of a sample.
 #' y <- c(4.8, 5.1, 5.6, 4.9, 5.3)
-#' sum(core_normal_logpdf(y, mean = mean(y), sd = stats::sd(y)))
+#' sum(cnormlpdf(y, mean = mean(y), sd = stats::sd(y)))
 #'
 #' # A standard deviation of zero has no density, and the parameters are
 #' # single numbers.
-#' try(core_normal_logpdf(1, sd = 0))
-#' try(core_normal_logpdf(1, mean = c(0, 1)))
-#' try(core_normal_logpdf("1"))
+#' try(cnormlpdf(1, sd = 0))
+#' try(cnormlpdf(1, mean = c(0, 1)))
+#' try(cnormlpdf("1"))
 #' @export
-core_normal_logpdf <- function(x, mean = 0, sd = 1) {
+cnormlpdf <- function(x, mean = 0, sd = 1) {
   # the core reads only the first element of each parameter, so a vector was used in part
   mean <- .rmbl_num(mean, "mean")
   sd <- .rmbl_num(sd, "sd")
@@ -204,43 +204,44 @@ core_normal_logpdf <- function(x, mean = 0, sd = 1) {
 #'   `variance` (squared units of `x`, `n - 1` denominator),
 #'   `skewness` and
 #'   `kurtosis` (both unitless; kurtosis as excess over the normal's 3).
-#' @seealso [core_sd()],
-#'   [core_quantile()] and
-#'   [core_mad()] for robust
+#' @seealso [csdev()],
+#'   [cqnt()] and
+#'   [cmad()] for robust
 #'   alternatives that one extreme value cannot move.
 #' @references Joanes DN, Gill CA (1998). Comparing measures of sample skewness and
 #' kurtosis. *Journal of the Royal Statistical Society: Series D (The
-#' Statistician)* 47(1), 183--189. \href{https://doi.org/10.1111/1467-9884.00122}{doi:10.1111/1467-9884.00122}
+#' Statistician)* 47(1), 183--189.
+#' \href{https://doi.org/10.1111/1467-9884.00122}{doi:10.1111/1467-9884.00122}
 #' @examples
-#' core_moments(c(2, 4, 4, 4, 5, 5, 7, 9))
+#' cmom(c(2, 4, 4, 4, 5, 5, 7, 9))
 #'
 #' # The first two entries agree with base R.
-#' m <- core_moments(1:10)
+#' m <- cmom(1:10)
 #' all.equal(m[["mean"]], mean(1:10))
 #' all.equal(m[["variance"]], stats::var(1:10))
 #'
 #' # A symmetric sample has no skew; excess kurtosis is near 0 for normal
 #' # data and positive for a heavy-tailed sample.
-#' core_moments(c(-2, -1, 0, 1, 2))[["skewness"]]
-#' core_moments(c(rep(0, 20), -8, 8))[["kurtosis"]] > 0
+#' cmom(c(-2, -1, 0, 1, 2))[["skewness"]]
+#' cmom(c(rep(0, 20), -8, 8))[["kurtosis"]] > 0
 #'
 #' # Too short to define a shape statistic: NaN rather than a guess.
-#' core_moments(c(1, 2))
+#' cmom(c(1, 2))
 #' @export
-core_moments <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
+cmom <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
 
 #' Quantiles, median and robust spread (C backend)
 #'
-#' `core_quantile()` is the type-7 quantile, which is R's default, so
+#' `cqnt()` is the type-7 quantile, which is R's default, so
 #' it agrees with `stats::quantile(x, probs, type = 7)`.
-#' `core_median()` is the 50% point. `core_mad()` is the median
+#' `cmed()` is the 50% point. `cmad()` is the median
 #' absolute deviation, scaled by `constant` so that it estimates the
-#' standard deviation of a normal sample. `core_iqr()` is the
-#' interquartile range and `core_tukey_fences()` the outlier fences
+#' standard deviation of a normal sample. `ciqr()` is the
+#' interquartile range and `ctkyfnc()` the outlier fences
 #' drawn at `k` IQRs beyond the quartiles.
 #'
 #' These are the robust counterparts of
-#' [core_moments()]: a single corrupted row can
+#' [cmom()]: a single corrupted row can
 #' move a mean or a variance arbitrarily far, but moves a median or a MAD
 #' hardly at all -- which is what you want when deciding whether a freshly
 #' fetched column is still the column a capsule was pinned against, or
@@ -259,7 +260,7 @@ core_moments <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
 #' Missing values are not removed: an `NA` or `NaN` anywhere in `x` makes
 #' every result `NaN` (unlike [stats::quantile()], which
 #' stops). An empty
-#' `x` gives `NaN`. `core_quantile()` refuses an empty `probs`
+#' `x` gives `NaN`. `cqnt()` refuses an empty `probs`
 #' (`"probs is empty"`) and any probability outside \eqn{[0, 1]} or missing
 #' (`"must lie in [0, 1]"`); every function refuses a character, factor or
 #' list `x` (`"must be numeric"`). The quantiles sort a copy of `x`, so
@@ -270,7 +271,7 @@ core_moments <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
 #'   [as.numeric()].
 #' @param probs Numeric vector of probabilities, each in \eqn{[0, 1]}
 #'   (default the minimum, quartiles and maximum).
-#' @param constant Scale factor for `core_mad()`. The
+#' @param const Scale factor for `cmad()`. The
 #' default `1.4826` makes the MAD consistent for the standard
 #' deviation under normality, and is the same rounded value
 #' [stats::mad()] uses, so the two agree exactly.
@@ -279,52 +280,52 @@ core_moments <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
 #' `1` for the unscaled median deviation.
 #' @param k Fence width in IQRs, a single non-negative number (default
 #'   1.5, Tukey's convention; 3 is the usual "far out" cutoff).
-#' @return `core_quantile()`: a numeric vector the length of `probs`, in
+#' @return `cqnt()`: a numeric vector the length of `probs`, in
 #'   the units of `x`, named by percentage (`"25%"`, ...) as
-#'   [stats::quantile()] names them. `core_median()`,
-#'   `core_mad()` and
-#'   `core_iqr()`: a length-1 numeric in the units of `x`.
-#'   `core_tukey_fences()`: a named length-2 numeric, `lower` and `upper`.
+#'   [stats::quantile()] names them. `cmed()`,
+#'   `cmad()` and
+#'   `ciqr()`: a length-1 numeric in the units of `x`.
+#'   `ctkyfnc()`: a named length-2 numeric, `lower` and `upper`.
 #' @references Hyndman RJ, Fan Y (1996). Sample quantiles in statistical
 #'   packages. *The American Statistician* 50(4), 361--365.
 #'   \doi{10.1080/00031305.1996.10473566}
 #'
 #' Tukey JW (1977). *Exploratory Data Analysis*. Addison-Wesley.
-#' @seealso [core_moments()] for the non-robust moments,
-#'   [core_trimmed_mean()] for a robust centre that still
+#' @seealso [cmom()] for the non-robust moments,
+#'   [ctrmmean()] for a robust centre that still
 #'   averages.
 #' @examples
 #' x <- c(2, 4, 4, 4, 5, 5, 7, 9)
-#' core_quantile(x, c(0.25, 0.5, 0.75))
-#' all.equal(core_quantile(x, c(0.1, 0.9)),
+#' cqnt(x, c(0.25, 0.5, 0.75))
+#' all.equal(cqnt(x, c(0.1, 0.9)),
 #'           as.numeric(stats::quantile(x, c(0.1, 0.9))))
 #'
-#' core_median(x)
-#' core_mad(x)
-#' all.equal(core_mad(x), stats::mad(x))
-#' core_mad(x, constant = 1)                  # unscaled median deviation
-#' core_mad(x, constant = 1 / stats::qnorm(3/4))  # unrounded constant
+#' cmed(x)
+#' cmad(x)
+#' all.equal(cmad(x), stats::mad(x))
+#' cmad(x, const = 1)                  # unscaled median deviation
+#' cmad(x, const = 1 / stats::qnorm(3/4))  # unrounded constant
 #'
-#' core_iqr(x)
-#' core_tukey_fences(x)
+#' ciqr(x)
+#' ctkyfnc(x)
 #'
 #' # Robustness: one wild value barely moves the median, but moves the
 #' # mean a long way.
 #' wild <- c(x, 1000)
-#' c(mean = mean(wild), median = core_median(wild))
+#' c(mean = mean(wild), median = cmed(wild))
 #'
 #' # Values outside the fences are the candidates to inspect.
-#' f <- core_tukey_fences(wild)
+#' f <- ctkyfnc(wild)
 #' wild[wild < f[["lower"]] | wild > f[["upper"]]]
 #'
 #' # A missing value is not dropped: the answer is NaN.
-#' core_median(c(1, NA, 3))
+#' cmed(c(1, NA, 3))
 #'
 #' # A probability outside [0, 1] is refused.
-#' try(core_quantile(x, 1.5))
-#' @name rmbl_core_robust
+#' try(cqnt(x, 1.5))
+#' @name crob
 #' @export
-core_quantile <- function(x, probs = c(0, 0.25, 0.5, 0.75, 1)) {
+cqnt <- function(x, probs = c(0, 0.25, 0.5, 0.75, 1)) {
   x <- .rmbl_num_input(x, "x")
   probs <- .rmbl_num(probs, "probs")
   if (length(probs) == 0L) stop("`probs` is empty", call. = FALSE)
@@ -336,26 +337,26 @@ core_quantile <- function(x, probs = c(0, 0.25, 0.5, 0.75, 1)) {
   out
 }
 
-#' @rdname rmbl_core_robust
+#' @rdname crob
 #' @export
-core_median <- function(x) .Call(C_rmbl_median, .rmbl_num_input(x, "x"))
+cmed <- function(x) .Call(C_rmbl_median, .rmbl_num_input(x, "x"))
 
-#' @rdname rmbl_core_robust
+#' @rdname crob
 #' @export
-core_mad <- function(x, constant = 1.4826) {
-  .Call(C_rmbl_mad, .rmbl_num_input(x, "x"), .rmbl_scalar(constant, "constant", 0))
+cmad <- function(x, const = 1.4826) {
+  .Call(C_rmbl_mad, .rmbl_num_input(x, "x"), .rmbl_scalar(const, "const", 0))
 }
 
-#' @rdname rmbl_core_robust
+#' @rdname crob
 #' @export
-core_iqr <- function(x) {
+ciqr <- function(x) {
   q <- .Call(C_rmbl_quantile, .rmbl_num_input(x, "x"), c(0.25, 0.75))
   q[2L] - q[1L]
 }
 
-#' @rdname rmbl_core_robust
+#' @rdname crob
 #' @export
-core_tukey_fences <- function(x, k = 1.5) {
+ctkyfnc <- function(x, k = 1.5) {
   k <- .rmbl_scalar(k, "k", 0)
   q <- .Call(C_rmbl_quantile, .rmbl_num_input(x, "x"), c(0.25, 0.75))
   iqr <- q[2L] - q[1L]
@@ -365,9 +366,9 @@ core_tukey_fences <- function(x, k = 1.5) {
 #' Trimmed and winsorized means (C backend)
 #'
 #' Two ways to stop a handful of extreme rows dominating a column's centre.
-#' `core_trimmed_mean()` DISCARDS the `floor(n * trim)` largest
+#' `ctrmmean()` DISCARDS the `floor(n * trim)` largest
 #' and smallest values, matching `mean(x, trim = )`.
-#' `core_winsorized_mean()` instead PULLS THEM IN to the most extreme
+#' `cwinsmean()` instead PULLS THEM IN to the most extreme
 #' surviving values, so every observation still contributes weight --
 #' usually the better choice when the extremes are real measurements rather
 #' than errors.
@@ -393,35 +394,35 @@ core_tukey_fences <- function(x, k = 1.5) {
 #'   number in \eqn{[0, 0.5]} (default 0.1, i.e. 10% at each end). At
 #'   `0.5` both reduce to the median.
 #' @return A length-1 numeric in the units of `x`.
-#' @seealso [core_median()] and
-#'   [core_mad()] for the other robust
-#'   summaries; [core_moments()] for the ordinary mean.
+#' @seealso [cmed()] and
+#'   [cmad()] for the other robust
+#'   summaries; [cmom()] for the ordinary mean.
 #' @examples
 #' x <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 100)
 #'
 #' mean(x)                               # dragged up by the 100
-#' core_trimmed_mean(x, 0.1)             # the 100 and the 1 dropped
-#' core_winsorized_mean(x, 0.1)          # the 100 pulled back to 9
+#' ctrmmean(x, 0.1)             # the 100 and the 1 dropped
+#' cwinsmean(x, 0.1)          # the 100 pulled back to 9
 #'
 #' # Agrees with base R's own trimming.
-#' all.equal(core_trimmed_mean(x, 0.2), mean(x, trim = 0.2))
+#' all.equal(ctrmmean(x, 0.2), mean(x, trim = 0.2))
 #'
 #' # trim = 0 is the plain mean; trim = 0.5 is the median.
-#' all.equal(core_trimmed_mean(x, 0), mean(x))
-#' all.equal(core_trimmed_mean(x, 0.5), core_median(x))
+#' all.equal(ctrmmean(x, 0), mean(x))
+#' all.equal(ctrmmean(x, 0.5), cmed(x))
 #'
 #' # A trim past one half is not a trim.
-#' try(core_winsorized_mean(x, 0.7))
-#' try(core_trimmed_mean(letters))
-#' @name rmbl_core_trimmed
+#' try(cwinsmean(x, 0.7))
+#' try(ctrmmean(letters))
+#' @name ctrm
 #' @export
-core_trimmed_mean <- function(x, trim = 0.1) {
+ctrmmean <- function(x, trim = 0.1) {
   .Call(C_rmbl_trimmed_mean, .rmbl_num_input(x, "x"), .rmbl_trim(trim))
 }
 
-#' @rdname rmbl_core_trimmed
+#' @rdname ctrm
 #' @export
-core_winsorized_mean <- function(x, trim = 0.1) {
+cwinsmean <- function(x, trim = 0.1) {
   .Call(C_rmbl_winsorized_mean, .rmbl_num_input(x, "x"), .rmbl_trim(trim))
 }
 
@@ -467,27 +468,27 @@ core_winsorized_mean <- function(x, trim = 0.1) {
 #'   correction uses them as given.
 #' @return A named length-2 numeric vector: `mean` (units of `x`) and
 #'   `variance` (squared units of `x`).
-#' @seealso [core_moments()] for the unweighted moments,
-#'   [core_ipw_weights()] for inverse-probability weights
+#' @seealso [cmom()] for the unweighted moments,
+#'   [cipw()] for inverse-probability weights
 #'   to feed in here.
 #' @examples
 #' x <- c(10, 20, 30, 40)
 #' w <- c(1, 1, 2, 4)
-#' core_weighted(x, w)
+#' cwtd(x, w)
 #'
 #' # The mean agrees with base R.
-#' all.equal(core_weighted(x, w)[["mean"]], stats::weighted.mean(x, w))
+#' all.equal(cwtd(x, w)[["mean"]], stats::weighted.mean(x, w))
 #'
 #' # Equal weights recover the unweighted variance.
-#' all.equal(core_weighted(x, rep(1, 4))[["variance"]], stats::var(x))
+#' all.equal(cwtd(x, rep(1, 4))[["variance"]], stats::var(x))
 #'
 #' # A single dominant weight pulls the mean onto that observation.
-#' core_weighted(x, c(1, 1, 1, 1000))[["mean"]]
+#' cwtd(x, c(1, 1, 1, 1000))[["mean"]]
 #'
 #' # A negative weight is refused.
-#' try(core_weighted(x, c(1, -1, 1, 1)))
+#' try(cwtd(x, c(1, -1, 1, 1)))
 #' @export
-core_weighted <- function(x, w) {
+cwtd <- function(x, w) {
   x <- .rmbl_num_input(x, "x")
   w <- .rmbl_num_input(w, "w")
   if (length(x) != length(w)) {
@@ -503,10 +504,10 @@ core_weighted <- function(x, w) {
 
 #' Rank correlation and midranks (C backend)
 #'
-#' `core_cor_spearman()` is Spearman's rho: the Pearson correlation of
+#' `cspr()` is Spearman's rho: the Pearson correlation of
 #' the ranks, so it measures monotone association rather than linear
 #' association and is unaffected by any order-preserving transformation of
-#' either variable. `core_midranks()` exposes the ranks themselves;
+#' either variable. `cmidrk()` exposes the ranks themselves;
 #' tied values share the average of the ranks they span, which is what
 #' makes the result agree with [stats::cor()] on
 #' tied data. Use Spearman's rho when two variables rise and fall together
@@ -522,49 +523,49 @@ core_weighted <- function(x, w) {
 #' midranks, the shortcut \eqn{1 - 6 \sum d_i^2 / (n(n^2 - 1))} is NOT what
 #' is computed; the full formula above is, and it stays correct with ties.
 #'
-#' `core_cor_spearman()` does not remove missing values: an `NA` in either
+#' `cspr()` does not remove missing values: an `NA` in either
 #' vector gives `NaN`, and so does a constant vector (its ranks have no
-#' variance). `core_midranks()` leaves an `NA` in place and ranks the rest,
+#' variance). `cmidrk()` leaves an `NA` in place and ranks the rest,
 #' as `rank(x, na.last = "keep")` does. Refusals: vectors of different
 #' lengths (`"must have the same length"`) and a character, factor or list
 #' argument (`"must be numeric"`). Ranking sorts, so the cost is
 #' \eqn{O(n \log n)}.
 #'
 #' @param x,y Numeric (or logical) vectors of the same length.
-#' @return `core_cor_spearman()`: a length-1 numeric in \eqn{[-1, 1]}
-#'   (`NaN` as described above). `core_midranks()`: a numeric vector the
+#' @return `cspr()`: a length-1 numeric in \eqn{[-1, 1]}
+#'   (`NaN` as described above). `cmidrk()`: a numeric vector the
 #'   length of `x`, the rank of each value (1 for the smallest; tied values
 #'   share the mean of their ranks; `NA` kept as `NA`).
 #' @references Spearman C (1904). The proof and measurement of association
 #'   between two things. *The American Journal of Psychology* 15(1),
 #'   72--101. \doi{10.2307/1412159}
-#' @seealso [core_cor()] for the Pearson correlation.
+#' @seealso [ccorr()] for the Pearson correlation.
 #' @examples
 #' x <- c(1, 2, 3, 4, 5)
 #' y <- c(2, 4, 9, 16, 25)
 #'
 #' # Perfectly monotone but not linear: rho is 1 where Pearson is not.
-#' core_cor_spearman(x, y)
-#' core_cor(x, y)
+#' cspr(x, y)
+#' ccorr(x, y)
 #'
 #' # Agrees with stats::cor(), ties included.
 #' xt <- c(1, 2, 2, 2, 5, 5, 7)
 #' yt <- c(3, 1, 1, 4, 4, 9, 2)
-#' all.equal(core_cor_spearman(xt, yt), stats::cor(xt, yt, method = "spearman"))
+#' all.equal(cspr(xt, yt), stats::cor(xt, yt, method = "spearman"))
 #'
 #' # Tied values share the average of the ranks they cover.
-#' core_midranks(xt)
-#' all.equal(core_midranks(xt), rank(xt))
+#' cmidrk(xt)
+#' all.equal(cmidrk(xt), rank(xt))
 #'
 #' # Invariant to any monotone rescaling.
-#' all.equal(core_cor_spearman(x, y), core_cor_spearman(exp(x), log(y)))
+#' all.equal(cspr(x, y), cspr(exp(x), log(y)))
 #'
-#' # Missing values are kept in place by core_midranks().
-#' core_midranks(c(3, NA, 1, 3))
-#' try(core_cor_spearman(1:3, 1:4))
-#' @name rmbl_core_rank
+#' # Missing values are kept in place by cmidrk().
+#' cmidrk(c(3, NA, 1, 3))
+#' try(cspr(1:3, 1:4))
+#' @name crank
 #' @export
-core_cor_spearman <- function(x, y) {
+cspr <- function(x, y) {
   x <- .rmbl_num_input(x, "x")
   y <- .rmbl_num_input(y, "y")
   if (length(x) != length(y)) {
@@ -573,9 +574,9 @@ core_cor_spearman <- function(x, y) {
   .Call(C_rmbl_cor_spearman, x, y)
 }
 
-#' @rdname rmbl_core_rank
+#' @rdname crank
 #' @export
-core_midranks <- function(x) {
+cmidrk <- function(x) {
   x <- .rmbl_num_input(x, "x")
   out <- rep(NA_real_, length(x))
   ok <- !is.na(x)
@@ -613,25 +614,25 @@ core_midranks <- function(x) {
 #' @return A symmetric `ncol(x)` by `ncol(x)` numeric matrix, with the
 #'   column names of `x` (if any) as both row and column names; entry
 #'   units are the product of the two columns' units.
-#' @seealso [core_cor()] for a single Pearson correlation,
-#'   [core_moments()] for one column's variance.
+#' @seealso [ccorr()] for a single Pearson correlation,
+#'   [cmom()] for one column's variance.
 #' @examples
 #' X <- cbind(a = c(1, 2, 3, 4), b = c(2, 4, 7, 8), c = c(5, 3, 2, 1))
-#' core_cov(X)
+#' ccovm(X)
 #'
 #' # Agrees with stats::cov().
-#' all.equal(core_cov(X), stats::cov(X))
+#' all.equal(ccovm(X), stats::cov(X))
 #'
 #' # The diagonal is the column variances.
-#' all.equal(diag(core_cov(X)), apply(X, 2, stats::var))
+#' all.equal(diag(ccovm(X)), apply(X, 2, stats::var))
 #'
 #' # Data frames are accepted.
-#' core_cov(data.frame(u = 1:5, v = c(2, 1, 4, 3, 6)))
+#' ccovm(data.frame(u = 1:5, v = c(2, 1, 4, 3, 6)))
 #'
 #' # A plain vector is not a matrix of variables.
-#' try(core_cov(1:5))
+#' try(ccovm(1:5))
 #' @export
-core_cov <- function(x) {
+ccovm <- function(x) {
   if (is.data.frame(x)) {
     if (!all(vapply(x, is.numeric, logical(1)))) {
       stop("every column of `x` must be numeric", call. = FALSE)
@@ -694,37 +695,37 @@ core_cov <- function(x) {
 #'   units of `x`.
 #' @references Efron B, Tibshirani RJ (1993). *An Introduction to the
 #'   Bootstrap*. Chapman and Hall.
-#' @seealso [exposure_response_plr()] for a bootstrap
+#' @seealso [exprspplr()] for a bootstrap
 #'   of a model estimate.
 #' @examples
 #' set.seed(1)
 #' x <- stats::rnorm(50, mean = 5)
 #'
-#' reps <- core_bootstrap_mean(x, B = 500, seed = 7)
+#' reps <- cbootmean(x, B = 500, seed = 7)
 #' length(reps)
 #'
 #' # The replicates centre on the sample mean, and their spread estimates
 #' # the standard error.
 #' c(sample = mean(x), bootstrap = mean(reps))
-#' c(bootstrap_se = stats::sd(reps),
-#'   formula_se = stats::sd(x) / sqrt(length(x)))
+#' c(bootstrapse = stats::sd(reps),
+#'   formulase = stats::sd(x) / sqrt(length(x)))
 #'
 #' # A percentile confidence interval for the mean.
 #' stats::quantile(reps, c(0.025, 0.975))
 #'
 #' # Reproducible: the same seed gives the same replicates, and R's own
 #' # random stream is not consumed.
-#' identical(core_bootstrap_mean(x, 100, seed = 1),
-#'           core_bootstrap_mean(x, 100, seed = 1))
+#' identical(cbootmean(x, 100, seed = 1),
+#'           cbootmean(x, 100, seed = 1))
 #'
 #' # A longer run continues the same stream.
-#' identical(core_bootstrap_mean(x, 10, seed = 1),
-#'           core_bootstrap_mean(x, 100, seed = 1)[1:10])
+#' identical(cbootmean(x, 10, seed = 1),
+#'           cbootmean(x, 100, seed = 1)[1:10])
 #'
 #' # At least one replicate is needed.
-#' try(core_bootstrap_mean(x, B = 0))
+#' try(cbootmean(x, B = 0))
 #' @export
-core_bootstrap_mean <- function(x, B = 1000L, seed = 42L) {
+cbootmean <- function(x, B = 1000L, seed = 42L) {
   x <- .rmbl_num_input(x, "x")
   B <- .rmbl_num(B, "B")
   if (length(B) != 1L || is.na(B) || !is.finite(B) || B < 1 || B != floor(B)) {
@@ -741,7 +742,7 @@ core_bootstrap_mean <- function(x, B = 1000L, seed = 42L) {
 #'
 #' The inverse-probability-of-treatment weights \eqn{1/e} for the treated
 #' and \eqn{1/(1-e)} for the untreated, with the propensity score clamped
-#' into `[trim_lo, trim_hi]` FIRST. Clamping matters: an untrimmed
+#' into `[trimlo, trimhi]` FIRST. Clamping matters: an untrimmed
 #' score near 0 or 1 produces a weight large enough for one observation to
 #' dominate the entire estimate. These weights reweight a treated and an
 #' untreated group so that each resembles the whole sample on the
@@ -752,7 +753,7 @@ core_bootstrap_mean <- function(x, B = 1000L, seed = 42L) {
 #' @details
 #' For unit \eqn{i} with treatment \eqn{T_i} and propensity \eqn{e_i},
 #' the clamped score is \eqn{\tilde e_i = \min(\max(e_i, l), u)} with
-#' \eqn{l} = `trim_lo` and \eqn{u} = `trim_hi`, and the weight is
+#' \eqn{l} = `trimlo` and \eqn{u} = `trimhi`, and the weight is
 #' \eqn{1 / \tilde e_i} when \eqn{T_i = 1} and \eqn{1 / (1 - \tilde e_i)}
 #' when \eqn{T_i = 0}. With the defaults no weight exceeds 100.
 #'
@@ -765,51 +766,51 @@ core_bootstrap_mean <- function(x, B = 1000L, seed = 42L) {
 #'
 #' @param treat Numeric or logical treatment indicator, coded 0/1
 #'   (`1` / `TRUE` is treated); `NA` allowed.
-#' @param propensity Numeric vector of propensity scores (the estimated
+#' @param ps Numeric vector of propensity scores (the estimated
 #'   probability of treatment), each in \eqn{[0, 1]}, the same length as
 #'   `treat`; `NA` allowed.
-#' @param trim_lo,trim_hi Clamp bounds for the score, single numbers with
-#'   `0 < trim_lo < trim_hi < 1` (defaults 0.01 and 0.99).
+#' @param trimlo,trimhi Clamp bounds for the score, single numbers with
+#'   `0 < trimlo < trimhi < 1` (defaults 0.01 and 0.99).
 #' @return A numeric vector of weights the length of `treat`, each at
-#'   least 1 (and at most `1 / trim_lo` or `1 / (1 - trim_hi)`), `NA`
+#'   least 1 (and at most `1 / trimlo` or `1 / (1 - trimhi)`), `NA`
 #'   where
 #'   the treatment or propensity is missing.
 #' @references Rosenbaum PR, Rubin DB (1983). The central role of the
 #'   propensity score in observational studies for causal effects.
 #'   *Biometrika* 70(1), 41--55. \doi{10.1093/biomet/70.1.41}
-#' @seealso [core_weighted()] to average an outcome with
+#' @seealso [cwtd()] to average an outcome with
 #'   these weights.
 #' @examples
 #' treat <- c(1, 0, 1, 0)
 #' e <- c(0.5, 0.25, 0.02, 0.9)
 #'
-#' core_ipw_weights(treat, e)
+#' cipw(treat, e)
 #'
 #' # A balanced score gives weight 2 to either arm.
-#' core_ipw_weights(c(1, 0), c(0.5, 0.5))
+#' cipw(c(1, 0), c(0.5, 0.5))
 #'
 #' # Without trimming the third observation would carry weight 50; the
 #' # default clamp holds it to 100 at the 0.01 floor, and a looser floor
 #' # tames it further.
-#' core_ipw_weights(treat, e, trim_lo = 0.10)
+#' cipw(treat, e, trimlo = 0.10)
 #'
 #' # Logical treatment indicators work too.
-#' core_ipw_weights(c(TRUE, FALSE), c(0.4, 0.4))
+#' cipw(c(TRUE, FALSE), c(0.4, 0.4))
 #'
 #' # A treatment coded 1/2 is refused rather than read as all-control.
-#' try(core_ipw_weights(c(1, 2), c(0.5, 0.5)))
+#' try(cipw(c(1, 2), c(0.5, 0.5)))
 #' @export
-core_ipw_weights <- function(treat, propensity, trim_lo = 0.01,
-                             trim_hi = 0.99) {
+cipw <- function(treat, ps, trimlo = 0.01,
+                             trimhi = 0.99) {
   treat <- .rmbl_num_input(treat, "treat")
-  propensity <- .rmbl_num_input(propensity, "propensity")
-  if (length(treat) != length(propensity)) {
-    stop("`treat` and `propensity` must have the same length", call. = FALSE)
+  ps <- .rmbl_num_input(ps, "ps")
+  if (length(treat) != length(ps)) {
+    stop("`treat` and `ps` must have the same length", call. = FALSE)
   }
-  trim_lo <- .rmbl_scalar(trim_lo, "trim_lo", 0, 1)
-  trim_hi <- .rmbl_scalar(trim_hi, "trim_hi", 0, 1)
-  if (!(trim_lo > 0 && trim_hi < 1 && trim_lo < trim_hi)) {
-    stop("need 0 < `trim_lo` < `trim_hi` < 1", call. = FALSE)
+  trimlo <- .rmbl_scalar(trimlo, "trimlo", 0, 1)
+  trimhi <- .rmbl_scalar(trimhi, "trimhi", 0, 1)
+  if (!(trimlo > 0 && trimhi < 1 && trimlo < trimhi)) {
+    stop("need 0 < `trimlo` < `trimhi` < 1", call. = FALSE)
   }
   # a 1/2-coded or otherwise non-binary treatment used to send every unit
   # down the control branch, and a propensity outside [0, 1] was clipped
@@ -821,15 +822,15 @@ core_ipw_weights <- function(treat, propensity, trim_lo = 0.01,
          paste(utils::head(unique(treat[ok_t][!(treat[ok_t] %in% c(0, 1))]), 3),
                collapse = ", "), ")", call. = FALSE)
   }
-  ok_p <- !is.na(propensity)
-  if (any(propensity[ok_p] < 0 | propensity[ok_p] > 1)) {
-    stop("`propensity` must lie in [0, 1]", call. = FALSE)
+  ok_p <- !is.na(ps)
+  if (any(ps[ok_p] < 0 | ps[ok_p] > 1)) {
+    stop("`ps` must lie in [0, 1]", call. = FALSE)
   }
   out <- rep(NA_real_, length(treat))
   keep <- ok_t & ok_p
   if (any(keep)) {
-    out[keep] <- .Call(C_rmbl_ipw, treat[keep], propensity[keep], trim_lo,
-                       trim_hi)
+    out[keep] <- .Call(C_rmbl_ipw, treat[keep], ps[keep], trimlo,
+                       trimhi)
   }
   out
 }
@@ -839,8 +840,8 @@ core_ipw_weights <- function(treat, propensity, trim_lo = 0.01,
 #' The lower regularized incomplete gamma function \eqn{P(a, x)}, which is
 #' the CDF of a Gamma distribution with shape `a` and unit rate.
 #' Exposed because it is the building block of the chi-square tail used by
-#' [drift_chisq()] and
-#' [benford_test()]: the p-value of a chi-square statistic
+#' [drftchisq()] and
+#' [benfordtst()]: the p-value of a chi-square statistic
 #' \eqn{q} on
 #' \eqn{k} degrees of freedom is \eqn{1 - P(k/2, q/2)}.
 #'
@@ -862,22 +863,22 @@ core_ipw_weights <- function(treat, propensity, trim_lo = 0.01,
 #'   \eqn{[0, 1]}.
 #' @seealso [stats::pgamma()], the base R equivalent.
 #' @examples
-#' core_gamma_cdf(3.5, c(0.5, 1, 4, 12))
+#' cgamcdf(3.5, c(0.5, 1, 4, 12))
 #'
 #' # Identical to the unit-rate gamma CDF.
-#' all.equal(core_gamma_cdf(3.5, c(0.5, 1, 4, 12)),
+#' all.equal(cgamcdf(3.5, c(0.5, 1, 4, 12)),
 #'           stats::pgamma(c(0.5, 1, 4, 12), shape = 3.5))
 #'
 #' # Shape 1 is the exponential distribution.
-#' all.equal(core_gamma_cdf(1, c(0.5, 2)), stats::pexp(c(0.5, 2)))
+#' all.equal(cgamcdf(1, c(0.5, 2)), stats::pexp(c(0.5, 2)))
 #'
 #' # A chi-square tail on k degrees of freedom is 1 - P(k/2, q/2).
-#' 1 - core_gamma_cdf(2 / 2, 5.99 / 2)      # about 0.05 on 2 df
+#' 1 - cgamcdf(2 / 2, 5.99 / 2)      # about 0.05 on 2 df
 #'
 #' # The shape must be positive.
-#' try(core_gamma_cdf(0, 1))
+#' try(cgamcdf(0, 1))
 #' @export
-core_gamma_cdf <- function(shape, x) {
+cgamcdf <- function(shape, x) {
   shape <- .rmbl_num(shape, "shape")
   if (length(shape) != 1L || is.na(shape) || shape <= 0) {
     stop("`shape` must be a single positive number", call. = FALSE)
@@ -906,7 +907,7 @@ core_gamma_cdf <- function(shape, x) {
 #' `alpha, lambda` (Weibull: shape and scale), `alpha, c` (Lomax: shape
 #' and scale, \eqn{g(u) = \alpha c^\alpha (u + c)^{-(\alpha + 1)}}),
 #' `alpha, beta` (gamma: shape and rate). This is the likelihood
-#' [core_hawkes_fit()] maximises, on the same parameters.
+#' [chwkfit()] maximises, on the same parameters.
 #'
 #' @details
 #' The conditional intensity is
@@ -914,7 +915,7 @@ core_gamma_cdf <- function(shape, x) {
 #' probability density on \eqn{(0, \infty)} (so \eqn{\eta} is the
 #' branching ratio), and the value returned is
 #' \deqn{-\ell = -\sum_i \log \lambda(t_i) + \int_0^T \lambda(t)\,dt,}
-#' with \eqn{T} = `horizon` (Hawkes, 1971). For the exponential kernel
+#' with \eqn{T} = `hor` (Hawkes, 1971). For the exponential kernel
 #' \eqn{g(u) = \beta e^{-\beta u}}. With no events the value is the
 #' compensator alone, \eqn{\nu T}.
 #'
@@ -927,7 +928,7 @@ core_gamma_cdf <- function(shape, x) {
 #' parameter also gives the sentinel.
 #'
 #' Refusals (errors, not the sentinel): `times` with a missing value, not
-#' sorted, or outside \eqn{[0, T]}; a `horizon` that is not a single
+#' sorted, or outside \eqn{[0, T]}; a `hor` that is not a single
 #' positive finite number; a `kernel` not among the four; and a `par` of
 #' the wrong length for the kernel. The quadratic kernels poll for a
 #' Ctrl-C as they run, so a long evaluation can be interrupted.
@@ -935,7 +936,7 @@ core_gamma_cdf <- function(shape, x) {
 #' @param times Numeric vector of event times, sorted increasing, each in
 #'   `[0, horizon]`, in the time unit of your data (days, hours, ...).
 #'   May be empty.
-#' @param horizon End of the observation window, a single positive finite
+#' @param hor End of the observation window, a single positive finite
 #'   number in the same unit; the window starts at 0.
 #' @param kernel The triggering kernel: one of `"exponential"` (the
 #'   default), `"weibull"`, `"lomax"`, `"gamma"`. Partial names are
@@ -959,24 +960,24 @@ core_gamma_cdf <- function(shape, x) {
 #' times <- sort(stats::runif(40, 0, 10))
 #'
 #' # Exponential kernel: log-baseline -0.5, branching 0.3, decay 1.2.
-#' core_hawkes_nll(times, 10, "exponential", c(-0.5, 0.3, 1.2))
+#' chwknll(times, 10, "exponential", c(-0.5, 0.3, 1.2))
 #'
 #' # Lower is better, so this is what an optimiser minimises.
-#' nll <- function(p) core_hawkes_nll(times, 10, "exponential", p)
+#' nll <- function(p) chwknll(times, 10, "exponential", p)
 #' fit <- stats::optim(c(-0.5, 0.3, 1.2), nll)
 #' fit$par
 #'
 #' # A branching ratio at or above 1 is not a stationary process, and is
 #' # reported as the infeasible sentinel rather than a number.
-#' core_hawkes_nll(times, 10, "exponential", c(-0.5, 1.5, 1.2)) == 1e12
+#' chwknll(times, 10, "exponential", c(-0.5, 1.5, 1.2)) == 1e12
 #'
 #' # The heavier-tailed kernels take two shape parameters.
-#' core_hawkes_nll(times, 10, "gamma", c(-0.5, 0.3, 2, 1.5))
+#' chwknll(times, 10, "gamma", c(-0.5, 0.3, 2, 1.5))
 #'
 #' # Unsorted times are an error, not the sentinel.
-#' try(core_hawkes_nll(rev(times), 10, "exponential", c(-0.5, 0.3, 1.2)))
+#' try(chwknll(rev(times), 10, "exponential", c(-0.5, 0.3, 1.2)))
 #' @export
-core_hawkes_nll <- function(times, horizon,
+chwknll <- function(times, hor,
                             kernel = c("exponential", "weibull", "lomax",
                                        "gamma"),
                             par) {
@@ -988,11 +989,11 @@ core_hawkes_nll <- function(times, horizon,
   if (length(times) > 1L && any(diff(times) < 0)) {
     stop("`times` must be sorted in increasing order", call. = FALSE)
   }
-  horizon <- .rmbl_num(horizon, "horizon")
-  if (length(horizon) != 1L || !is.finite(horizon) || horizon <= 0) {
-    stop("`horizon` must be a single positive finite number", call. = FALSE)
+  hor <- .rmbl_num(hor, "hor")
+  if (length(hor) != 1L || !is.finite(hor) || hor <= 0) {
+    stop("`hor` must be a single positive finite number", call. = FALSE)
   }
-  if (length(times) > 0L && (min(times) < 0 || max(times) > horizon)) {
+  if (length(times) > 0L && (min(times) < 0 || max(times) > hor)) {
     stop("`times` must lie within [0, horizon]", call. = FALSE)
   }
   par <- .rmbl_num(par, "par")
@@ -1003,7 +1004,7 @@ core_hawkes_nll <- function(times, horizon,
   }
   # outside the feasible region, the documented sentinel: a stationary branching ratio, a
   # bounded log-baseline and the kernel parameters' ranges (those of the earlier routine;
-  # the Lomax takes core_hawkes_fit()'s)
+  # the Lomax takes chwkfit()'s)
   lo <- switch(kernel, exponential = 0.05, weibull = c(0.05, 1e-3), gamma = c(0.05, 0.05), lomax = c(0.05, 1e-3))
   hi <- switch(kernel, exponential = 30, weibull = c(20, 1e3), gamma = c(20, 30), lomax = c(30, 100))
   psi <- par[-(1:2)]
@@ -1011,7 +1012,7 @@ core_hawkes_nll <- function(times, horizon,
       any(psi < lo) || any(psi > hi)) {
     return(1e12)
   }
-  # the likelihood core_hawkes_fit() maximises (the shared C++ core), so the
+  # the likelihood chwkfit() maximises (the shared C++ core), so the
   # two agree for every kernel; the Lomax is g(u) = alpha c^alpha / (u + c)^(alpha + 1)
-  .rmbl_hk_call(times, horizon, kernel, "constant", par, "exact", 1e-12, FALSE)[[1L]]
+  .rmbl_hk_call(times, hor, kernel, "constant", par, "exact", 1e-12, FALSE)[[1L]]
 }

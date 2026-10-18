@@ -1,4 +1,4 @@
-# Saved language-model settings (bricklayer_llm_config(), `rmbl config`) and
+# Saved language-model settings (llmcfg(), `rmbl config`) and
 # the route `ask` takes with them. Everything is written under a temporary
 # XDG_CONFIG_HOME; nothing leaves the machine.
 
@@ -10,16 +10,16 @@ cf_env <- function(env = parent.frame()) {
                       .local_envir = env)
 }
 cf_reply <- function(text) {
-  list(status = 200L, body = charToRaw(bricklayer_json_to_json(
+  list(status = 200L, body = charToRaw(tojs(
     list(choices = list(list(message = list(role = "assistant", content = text)))), auto_unbox = TRUE)))
 }
 cf_tags <- function(...) {
-  list(status = 200L, body = charToRaw(bricklayer_json_to_json(
+  list(status = 200L, body = charToRaw(tojs(
     list(models = lapply(c(...), function(n) list(name = n))), auto_unbox = TRUE)))
 }
 cf_out <- function(args) {
   buf <- character()
-  st <- bricklayer_cli(args, out = function(s) buf <<- c(buf, s))
+  st <- blcli(args, out = function(s) buf <<- c(buf, s))
   list(status = st, text = paste(buf, collapse = ""))
 }
 
@@ -35,31 +35,31 @@ test_that("a running Ollama with nothing pulled no longer hides a provider's key
     },
     .bl_http_post_local = function(...) stop("an empty Ollama must not be asked"),
     .package = "rmoriebricklayer")
-  expect_identical(bricklayer_llm_ask("hi"), "provider says hi")
+  expect_identical(llmask("hi"), "provider says hi")
   expect_match(sent$url, "^https://api.openai.com/v1/chat/completions")
-  expect_identical(bricklayer_llm_ask("hi", model = "gpt-y"), "provider says hi")
+  expect_identical(llmask("hi", model = "gpt-y"), "provider says hi")
   expect_match(sent$body, "\"model\":\"gpt-y\"", fixed = TRUE)
   # insisting on Ollama still says what is missing
-  expect_error(bricklayer_llm_ask("hi", route = "ollama"), "local Ollama has no model to use")
+  expect_error(llmask("hi", route = "ollama"), "local Ollama has no model to use")
   # and an OLLAMA_MODEL makes the empty server a route again (it may pull on demand)
   withr::local_envvar(c(OLLAMA_MODEL = "qwen3:8b", OPENAI_API_KEY = NA))
   testthat::local_mocked_bindings(.bl_http_post_local = function(url, ...) cf_reply(url),
                                   .package = "rmoriebricklayer")
-  expect_match(bricklayer_llm_ask("hi"), "^http://localhost:11434/")
+  expect_match(llmask("hi"), "^http://localhost:11434/")
 })
 
 test_that("settings are saved privately, shown with their source, and the environment wins", {
   cf_env()
-  tab <- bricklayer_llm_config()
+  tab <- llmcfg()
   expect_identical(tab$key[1:3], c("route", "own.url", "own.key"))
   expect_true(all(tab$source == "default"))
   expect_false(file.exists(rmoriebricklayer:::.bl_config_path()))  # reading writes nothing
-  bricklayer_llm_config(route = "openai", openai.model = "gpt-x",
+  llmcfg(route = "openai", openai.model = "gpt-x",
                         ollama.url = "http://192.168.1.20:11434", own.key = "sk-own-secret-key")
   p <- rmoriebricklayer:::.bl_config_path()
   expect_true(file.exists(p))
   if (.Platform$OS.type == "unix") expect_identical(format(file.mode(p)), "600")
-  tab <- bricklayer_llm_config()
+  tab <- llmcfg()
   row <- function(k) tab[tab$key == k, ]
   expect_identical(row("route")$value, "openai")
   expect_identical(row("route")$source, "saved")
@@ -72,11 +72,11 @@ test_that("settings are saved privately, shown with their source, and the enviro
   # an environment variable that is set wins, and says so
   withr::local_envvar(c(MORIE_OPENAI_MODEL = "gpt-y"))
   expect_identical(rmoriebricklayer:::.bl_provider_route("openai")$model, "gpt-y")
-  expect_identical(bricklayer_llm_config()$source[bricklayer_llm_config()$key == "openai.model"], "environment")
-  expect_warning(bricklayer_llm_config(openai.model = "x"), "MORIE_OPENAI_MODEL is set in the environment")
+  expect_identical(llmcfg()$source[llmcfg()$key == "openai.model"], "environment")
+  expect_warning(llmcfg(openai.model = "x"), "MORIE_OPENAI_MODEL is set in the environment")
   # NULL or "" removes; the file goes when nothing is left
   withr::local_envvar(c(MORIE_OPENAI_MODEL = NA))
-  bricklayer_llm_config(route = NULL, openai.model = "", ollama.url = NULL, own.key = NULL)
+  llmcfg(route = NULL, openai.model = "", ollama.url = NULL, own.key = NULL)
   expect_false(file.exists(p))
 })
 
@@ -88,43 +88,43 @@ test_that("a saved route is the one ask takes; bad settings are refused", {
     .bl_http_post = function(url, ...) cf_reply(url),
     .bl_http_post_local = function(url, ...) cf_reply(url),
     .package = "rmoriebricklayer")
-  expect_match(bricklayer_llm_ask("x"), "^https://api.openai.com/v1/")  # auto: the provider's key first
-  bricklayer_llm_config(route = "ollama")
-  expect_match(bricklayer_llm_ask("x"), "^http://localhost:11434/")
-  bricklayer_llm_config(route = "openai")
-  expect_match(bricklayer_llm_ask("x"), "^https://api.openai.com/v1/")
-  expect_match(bricklayer_llm_ask("x", route = "ollama"), "^http://localhost:11434/")  # the argument wins
+  expect_match(llmask("x"), "^https://api.openai.com/v1/")  # auto: the provider's key first
+  llmcfg(route = "ollama")
+  expect_match(llmask("x"), "^http://localhost:11434/")
+  llmcfg(route = "openai")
+  expect_match(llmask("x"), "^https://api.openai.com/v1/")
+  expect_match(llmask("x", route = "ollama"), "^http://localhost:11434/")  # the argument wins
   withr::local_envvar(c(MORIE_LLM_ROUTE = "ollama"))
-  expect_match(bricklayer_llm_ask("x"), "^http://localhost:11434/")
+  expect_match(llmask("x"), "^http://localhost:11434/")
   withr::local_envvar(c(MORIE_LLM_ROUTE = NA))
-  bricklayer_llm_config(own.url = "http://localhost:1234/v1", own.model = "m", route = "own")
-  expect_match(bricklayer_llm_ask("x"), "^http://localhost:1234/v1/chat")
-  expect_error(bricklayer_llm_config(route = "cloud"), "route must be one of")
-  expect_error(bricklayer_llm_config(own.url = "localhost:1234"), "own.url must be an http")
-  expect_error(bricklayer_llm_config(hosted.url = "http://llm.example.org"), "unknown setting 'hosted.url'")
-  expect_error(bricklayer_llm_config(colour = "red"), "unknown setting 'colour'")
-  expect_error(bricklayer_llm_config("hosted"), "key = value")
+  llmcfg(own.url = "http://localhost:1234/v1", own.model = "m", route = "own")
+  expect_match(llmask("x"), "^http://localhost:1234/v1/chat")
+  expect_error(llmcfg(route = "cloud"), "route must be one of")
+  expect_error(llmcfg(own.url = "localhost:1234"), "own.url must be an http")
+  expect_error(llmcfg(hosted.url = "http://llm.example.org"), "unknown setting 'hosted.url'")
+  expect_error(llmcfg(colour = "red"), "unknown setting 'colour'")
+  expect_error(llmcfg("hosted"), "key = value")
   # a route saved by an older version, hosted, is passed over for auto, said once
-  bricklayer_llm_config(route = NULL)
+  llmcfg(route = NULL)
   cfg <- rmoriebricklayer:::.bl_config_path()
   writeLines('{"route":"hosted"}', cfg)
-  expect_match(suppressMessages(bricklayer_llm_ask("x")), "^https://api.openai.com/v1/")
+  expect_match(suppressMessages(llmask("x")), "^https://api.openai.com/v1/")
 })
 
 test_that("a provider's key is saved privately in llm.json and never shown; hosted.key is gone", {
   cf_env()
-  bricklayer_llm_config(openai.key = "sk-new-openai-key")
+  llmcfg(openai.key = "sk-new-openai-key")
   p <- rmoriebricklayer:::.bl_config_path()
   expect_true(file.exists(p))
   if (.Platform$OS.type == "unix") expect_identical(format(file.mode(p)), "600")
   expect_identical(rmoriebricklayer:::.bl_preset_key("openai"), "sk-new-openai-key")
-  tab <- bricklayer_llm_config()
+  tab <- llmcfg()
   expect_identical(tab$value[tab$key == "openai.key"], "set")
   expect_false(any(grepl("sk-new-openai-key", unlist(tab), fixed = TRUE)))
   expect_identical(tab$source[tab$key == "openai.key"], "saved")
-  bricklayer_llm_config(openai.key = NULL)
+  llmcfg(openai.key = NULL)
   expect_null(rmoriebricklayer:::.bl_preset_key("openai"))
-  expect_error(bricklayer_llm_config(hosted.key = "sk-x"), "unknown setting 'hosted.key'")
+  expect_error(llmcfg(hosted.key = "sk-x"), "unknown setting 'hosted.key'")
 })
 
 test_that("`config` from the shell: show, help, set, get, unset, path; doctor names the route ask takes", {
@@ -180,7 +180,7 @@ test_that("`config setup` walks through the settings and saves the answers", {
     .package = "rmoriebricklayer")
   r <- cf_out(c("config", "setup"))
   expect_equal(r$status, 0L)
-  tab <- bricklayer_llm_config()
+  tab <- llmcfg()
   expect_identical(tab$value[tab$key == "route"], "ollama")
   expect_identical(tab$value[tab$key == "ollama.url"], "http://192.168.1.20:11434")
   expect_identical(tab$value[tab$key == "ollama.model"], "qwen3:8b")
@@ -196,7 +196,7 @@ test_that("`help` lists the verbs and has a page per topic", {
   expect_match(cf_out(c("help", "start"))$text, "Getting started")
   expect_match(cf_out(c("help", "llm"))$text, "config set route anthropic")
   expect_match(cf_out(c("help", "config"))$text, "MORIE_ANTHROPIC_MODEL")
-  expect_match(cf_out(c("help", "r"))$text, "bricklayer_llm_config\\(route = \"anthropic\"")
+  expect_match(cf_out(c("help", "r"))$text, "llmcfg\\(route = \"anthropic\"")
   expect_match(cf_out(c("help", "ask"))$text, "usage: .* ask \\[--route")
   expect_equal(cf_out(c("help", "nonsense"))$status, 2L)
 })
@@ -217,7 +217,7 @@ test_that("`config setup` covers a provider's key and model, and on auto Ollama 
   expect_equal(r$status, 0L)
   expect_match(r$text, "Models: gpt-x", fixed = TRUE)
   expect_false(grepl("sk-typed-key-1234", r$text, fixed = TRUE))
-  tab <- bricklayer_llm_config()
+  tab <- llmcfg()
   val <- function(k) tab$value[tab$key == k]
   expect_identical(val("route"), "openai")
   expect_identical(val("openai.key"), "set")
@@ -225,7 +225,7 @@ test_that("`config setup` covers a provider's key and model, and on auto Ollama 
   expect_match(r$text, "ask uses: OpenAI, model gpt-x")
   answers <- c("auto", "off", "", "http://localhost:1234/v1", "local-model", "sk-own-key-5678")
   r <- cf_out(c("config", "setup"))
-  tab <- bricklayer_llm_config()
+  tab <- llmcfg()
   expect_identical(val("route"), "auto")
   expect_identical(val("ollama.url"), "off")
   expect_identical(val("own.url"), "http://localhost:1234/v1")
@@ -235,15 +235,15 @@ test_that("`config setup` covers a provider's key and model, and on auto Ollama 
   # an unknown route answer falls back to auto
   answers <- c("cloud", "", "", "", "")
   cf_out(c("config", "setup"))
-  expect_identical(bricklayer_llm_config()$value[1], "auto")
+  expect_identical(llmcfg()$value[1], "auto")
 })
 
 test_that("config refuses a malformed Ollama address and names settings it does not know", {
   cf_env()
-  expect_error(bricklayer_llm_config(ollama.url = "local host"), "ollama.url must be")
-  expect_error(bricklayer_llm_config(route = c("a", "b")), "route takes one value")
-  bricklayer_llm_config(route = "OLLAMA")
-  expect_identical(bricklayer_llm_config()$value[1], "ollama")
+  expect_error(llmcfg(ollama.url = "local host"), "ollama.url must be")
+  expect_error(llmcfg(route = c("a", "b")), "route takes one value")
+  llmcfg(route = "OLLAMA")
+  expect_identical(llmcfg()$value[1], "ollama")
   expect_identical(rmoriebricklayer:::.bl_config_value("NOT_A_SETTING"), NULL)
   # a damaged file is an error (the saved route must not be silently dropped); it is never
   # written over, so it is removed before the settings below are saved

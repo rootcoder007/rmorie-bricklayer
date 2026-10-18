@@ -62,7 +62,7 @@
 #'   element per person and a single pre-computed total give the same result.
 #' @param t Numeric scalar, the length of the period in days; must be
 #'   positive. Default \code{365}. A vector of several values is refused.
-#'   \code{\link{period_days}} turns two dates into this.
+#'   \code{\link{perdays}} turns two dates into this.
 #'
 #' @return A numeric scalar: person-days per day, that is the average number
 #'   of people held on any one day of the period.
@@ -73,7 +73,7 @@
 #' denominator is TIME, which is what makes it a stock. Compare
 #' [alos()], whose denominator is people: the two are linked by
 #' \eqn{\mathrm{ADP} = N \times \mathrm{ALOS} / t} (Little's law), so
-#' [admissions()] and [stock_flow()]
+#' [admits()] and [stkflow()]
 #' can move between them.
 #'
 #' Only days served inside the period should be counted: a stay that began
@@ -88,8 +88,8 @@
 #' Corrections Planners}. University of Illinois at Urbana-Champaign.
 #'
 #' @seealso [alos()],
-#'   [stock_flow()],
-#'   [adp_from_counts()]
+#'   [stkflow()],
+#'   [adpcnts()]
 #'
 #' @examples
 #' # Lakner's own worked example (p.15): 3,000 inmates served 13,500
@@ -100,7 +100,7 @@
 #' adp(c(10, 20, 30), t = 30)
 #'
 #' # a leap year, with the period length taken from the dates
-#' adp(13500, t = period_days("2024-01-01", "2024-12-31"))
+#' adp(13500, t = perdays("2024-01-01", "2024-12-31"))
 #'
 #' # negative days are refused
 #' try(adp(c(10, -2)))
@@ -118,7 +118,7 @@ adp <- function(days, t = 365) {
 #' and together with [adp()] to tell whether a change in the population
 #' held
 #' came from more people or from longer stays. For the full distribution of
-#' stays (median, spread, interval) use [stay_summary()].
+#' stays (median, spread, interval) use [staysmry()].
 #'
 #' @param days Numeric vector of person-days served during the period,
 #'   non-negative, no \code{NA} or \code{Inf}; the vector is summed.
@@ -145,7 +145,7 @@ adp <- function(days, t = 365) {
 #' Lakner, E. (1976) \emph{A Manual of Statistical Sampling Methods for
 #' Corrections Planners}. University of Illinois at Urbana-Champaign.
 #'
-#' @seealso [adp()], [stock_flow()]
+#' @seealso [adp()], [stkflow()]
 #'
 #' @examples
 #' # Lakner (p.17): 2,700 inmates admitted and released served 12,150
@@ -196,24 +196,24 @@ alos <- function(days, n) {
 #'
 #' @seealso [adp()],
 #'   [alos()],
-#'   [stock_flow()]
+#'   [stkflow()]
 #'
 #' @examples
 #' # Lakner (p.20) runs this the other way: t = 365, an average daily
 #' # population of 25 and 1,750 admissions imply a stay of 5.2 days.
-#' alos_implied <- 25 * 365 / 1750
-#' round(alos_implied, 1)
+#' alosimplied <- 25 * 365 / 1750
+#' round(alosimplied, 1)
 #'
 #' # and back again
-#' admissions(25, alos_implied)
+#' admits(25, alosimplied)
 #'
 #' # a 90-day quarter with 40 held on average and a 12-day average stay
-#' admissions(40, 12, t = 90)
+#' admits(40, 12, t = 90)
 #'
 #' # an average stay of zero is refused
-#' try(admissions(25, 0))
+#' try(admits(25, 0))
 #' @export
-admissions <- function(adp, alos, t = 365) {
+admits <- function(adp, alos, t = 365) {
   adp <- .rmbl_pos_num(adp, "adp", scalar = TRUE)
   alos <- .rmbl_pos_num(alos, "alos", scalar = TRUE)
   t <- .rmbl_pos_num(t, "t", scalar = TRUE)
@@ -229,7 +229,7 @@ admissions <- function(adp, alos, t = 365) {
 #' is a daily or weekly
 #' count sheet rather than admission and release dates.
 #'
-#' @param counts Numeric vector of headcounts, one per day on which a count
+#' @param cnts Numeric vector of headcounts, one per day on which a count
 #'   was taken; non-negative, no \code{NA} or \code{Inf}. The days need not
 #'   be consecutive.
 #' @param t Numeric scalar, the length of the period in days; must be
@@ -253,20 +253,20 @@ admissions <- function(adp, alos, t = 365) {
 #' @examples
 #' # Lakner (p.21): counts on 255 days summing to 34,935 imply just over
 #' # fifty thousand detention days across the year.
-#' adp_from_counts(rep(34935 / 255, 255))
+#' adpcnts(rep(34935 / 255, 255))
 #'
 #' # weekly counts over a 31-day month, then the average daily population
-#' pd <- adp_from_counts(c(120, 130, 125, 128), t = 31)
+#' pd <- adpcnts(c(120, 130, 125, 128), t = 31)
 #' pd
 #' adp(pd, t = 31)
 #'
 #' # a missing count must be dropped or filled first
-#' try(adp_from_counts(c(120, NA, 125)))
+#' try(adpcnts(c(120, NA, 125)))
 #' @export
-adp_from_counts <- function(counts, t = 365) {
-  counts <- .rmbl_pos_num(counts, "counts", allow_zero = TRUE)
+adpcnts <- function(cnts, t = 365) {
+  cnts <- .rmbl_pos_num(cnts, "cnts", allow_zero = TRUE)
   t <- .rmbl_pos_num(t, "t", scalar = TRUE)
-  mean(counts) * t
+  mean(cnts) * t
 }
 
 #' Stock and flow side by side, with the decomposition
@@ -284,18 +284,18 @@ adp_from_counts <- function(counts, t = 365) {
 #' @param people Numeric vector of the number of people (admissions or
 #'   persons served), one element per period, the same length as
 #'   \code{days}; positive.
-#' @param period Optional labels for the periods (any vector, converted to
+#' @param prd Optional labels for the periods (any vector, converted to
 #'   character), one per period. Default \code{NULL} labels them
 #'   \code{1, 2, ...}.
 #' @param t Numeric, the length of each period in days: one value for all
 #'   periods, or one per period; positive. Default \code{365}.
-#'   [period_days()] turns dates into this.
-#' @param exposure Optional numeric population to express rates against,
+#'   [perdays()] turns dates into this.
+#' @param expo Optional numeric population to express rates against,
 #'   one value or one per period, positive; for example provincial
 #'   residents. Default \code{NULL} (no rate columns).
-#' @param per Numeric scalar, the rate base when \code{exposure} is given:
+#' @param per Numeric scalar, the rate base when \code{expo} is given:
 #'   rates are per \code{per} residents. Default \code{100000}.
-#' @param baseline Character scalar, what the change columns compare
+#' @param base Character scalar, what the change columns compare
 #'   against: \code{"first"} (the default) measures every period against the
 #'   first, which is what a report on a whole window wants;
 #'   \code{"previous"} measures each period against the one before it,
@@ -306,13 +306,13 @@ adp_from_counts <- function(counts, t = 365) {
 #'   one row per period, with columns \code{period} (character),
 #'   \code{people}, \code{days}, \code{alos} (days per person),
 #'   \code{adp} (days divided by \code{t}); when \code{exposure} is given
-#'   also \code{exposure}, \code{flow_rate} (people per \code{per}
-#'   residents) and \code{stock_rate} (\code{adp} per \code{per}
+#'   also \code{exposure}, \code{flowrate} (people per \code{per}
+#'   residents) and \code{stkrate} (\code{adp} per \code{per}
 #'   residents). Then the percentage changes against the baseline:
-#'   \code{people_change}, \code{alos_change}, \code{days_change},
-#'   \code{adp_change}, and with \code{exposure} also
-#'   \code{flow_rate_change} and \code{stock_rate_change}. Attribute
-#'   \code{"stock_flow"} is a list with \code{t} (the period lengths),
+#'   \code{peochg}, \code{aloschg}, \code{dayschg},
+#'   \code{adpchg}, and with \code{exposure} also
+#'   \code{flowratechg} and \code{stkratechg}. Attribute
+#'   \code{"stkflow"} is a list with \code{t} (the period lengths),
 #'   \code{baseline} and \code{per} (\code{NA} without \code{exposure}).
 #'   The print method shows the levels and a footer with the change from the
 #'   baseline to the last period, flagging rates with opposite signs.
@@ -326,12 +326,12 @@ adp_from_counts <- function(counts, t = 365) {
 #'
 #' Changes are percentages: \eqn{100 (v_i / v_b - 1)} with \eqn{b} the
 #' baseline row. Errors when \code{days} and \code{people} differ in length,
-#' when \code{exposure} has a length other than 1 or the number of periods,
+#' when \code{expo} has a length other than 1 or the number of periods,
 #' when \code{t} has a length other than 1 or the number of periods, when
-#' \code{period} has a length other than the number of periods, when
+#' \code{prd} has a length other than the number of periods, when
 #' \code{per} has more than one value, when any input has \code{NA},
 #' \code{Inf}, text, or a value that is negative (\code{days}) or not
-#' positive (the others), and when \code{baseline} is not one of the two
+#' positive (the others), and when \code{base} is not one of the two
 #' choices.
 #'
 #' @references
@@ -342,26 +342,26 @@ adp_from_counts <- function(counts, t = 365) {
 #'
 #' @examples
 #' # Fewer people, held longer: the flow falls while the stock rises.
-#' stock_flow(
+#' stkflow(
 #'   days = c(115674, 126121), people = c(12647, 9608),
-#'   period = c("2023", "2025"),
-#'   exposure = c(15495050, 16256538)
+#'   prd = c("2023", "2025"),
+#'   expo = c(15495050, 16256538)
 #' )
 #'
 #' # a series of three years against the previous year, with leap-year lengths
-#' sf <- stock_flow(
+#' sf <- stkflow(
 #'   days = c(100200, 104000, 99000), people = c(9800, 9500, 9900),
-#'   period = 2023:2025, t = c(365, 366, 365), baseline = "previous"
+#'   prd = 2023:2025, t = c(365, 366, 365), base = "previous"
 #' )
-#' as.data.frame(sf)[, c("period", "alos", "adp", "people_change", "adp_change")]
+#' as.data.frame(sf)[, c("period", "alos", "adp", "peochg", "adpchg")]
 #'
 #' # days and people must line up period by period
-#' try(stock_flow(days = c(100, 120), people = c(10, 12, 14)))
+#' try(stkflow(days = c(100, 120), people = c(10, 12, 14)))
 #' @export
-stock_flow <- function(days, people, period = NULL, t = 365,
-                       exposure = NULL, per = 100000,
-                       baseline = c("first", "previous")) {
-  baseline <- .rmbl_arg(baseline)
+stkflow <- function(days, people, prd = NULL, t = 365,
+                       expo = NULL, per = 100000,
+                       base = c("first", "previous")) {
+  base <- .rmbl_arg(base)
   days <- .rmbl_pos_num(days, "days", allow_zero = TRUE)
   people <- .rmbl_pos_num(people, "people")
   if (length(days) != length(people)) {
@@ -372,75 +372,75 @@ stock_flow <- function(days, people, period = NULL, t = 365,
   if (length(t) != length(days)) {
     stop("`t` must be length 1 or the same length as `days`", call. = FALSE)
   }
-  if (is.null(period)) period <- seq_along(days)
-  if (length(period) != length(days)) {
-    stop("`period` must have one label per period (the length of `days`)", call. = FALSE)
+  if (is.null(prd)) prd <- seq_along(days)
+  if (length(prd) != length(days)) {
+    stop("`prd` must have one label per period (the length of `days`)", call. = FALSE)
   }
   out <- data.frame(
-    period = as.character(period), people = people,
+    period = as.character(prd), people = people,
     days = days, stringsAsFactors = FALSE
   )
   out$alos <- days / people
   out$adp <- days / t
-  if (!is.null(exposure)) {
-    exposure <- .rmbl_pos_num(exposure, "exposure")
-    if (length(exposure) == 1L) exposure <- rep(exposure, length(days))
-    if (length(exposure) != length(days)) {
-      stop("`exposure` must be length 1 or the same length as `days`",
+  if (!is.null(expo)) {
+    expo <- .rmbl_pos_num(expo, "expo")
+    if (length(expo) == 1L) expo <- rep(expo, length(days))
+    if (length(expo) != length(days)) {
+      stop("`expo` must be length 1 or the same length as `days`",
         call. = FALSE
       )
     }
     per <- .rmbl_pos_num(per, "per", scalar = TRUE)
-    out$exposure <- exposure
-    out$flow_rate <- per * people / exposure
-    out$stock_rate <- per * out$adp / exposure
+    out$exposure <- expo
+    out$flowrate <- per * people / expo
+    out$stkrate <- per * out$adp / expo
   }
   ## The change columns are what make the two signs visible beside each
   ## other, so which baseline they use is a reporting decision rather
   ## than a detail: against the first period for a window, against the
   ## previous one for a series.
-  chg <- if (identical(baseline, "first")) {
+  chg <- if (identical(base, "first")) {
     function(v) 100 * (v / v[1L] - 1)
   } else {
     function(v) c(NA_real_, 100 * (v[-1L] / v[-length(v)] - 1))
   }
-  out$people_change <- chg(out$people)
-  out$alos_change <- chg(out$alos)
-  out$days_change <- chg(out$days)
-  out$adp_change <- chg(out$adp)
-  if (!is.null(exposure)) {
-    out$flow_rate_change <- chg(out$flow_rate)
-    out$stock_rate_change <- chg(out$stock_rate)
+  out$peochg <- chg(out$people)
+  out$aloschg <- chg(out$alos)
+  out$dayschg <- chg(out$days)
+  out$adpchg <- chg(out$adp)
+  if (!is.null(expo)) {
+    out$flowratechg <- chg(out$flowrate)
+    out$stkratechg <- chg(out$stkrate)
   }
   structure(out,
     class = c("rmbl_stock_flow", "data.frame"),
-    stock_flow = list(
-      t = t, baseline = baseline,
-      per = if (is.null(exposure)) NA else per
+    stkflow = list(
+      t = t, baseline = base,
+      per = if (is.null(expo)) NA else per
     )
   )
 }
 
 #' @export
 print.rmbl_stock_flow <- function(x, ...) {
-  has_rate <- "stock_rate" %in% names(x)
+  has_rate <- "stkrate" %in% names(x)
   cols <- c("period", "people", "days", "alos", "adp")
-  if (has_rate) cols <- c(cols, "flow_rate", "stock_rate")
+  if (has_rate) cols <- c(cols, "flowrate", "stkrate")
   footer <- NULL
   if (nrow(x) > 1L) {
     i <- nrow(x)
-    base <- attr(x, "stock_flow")$baseline
+    base <- attr(x, "stkflow")$baseline
     from <- if (identical(base, "previous")) x$period[i - 1L] else x$period[1L]
     footer <- sprintf(
       "%s to %s: people %+.1f%%, stay %+.1f%%, days %+.1f%%",
-      from, x$period[i], x$people_change[i],
-      x$alos_change[i], x$days_change[i]
+      from, x$period[i], x$peochg[i],
+      x$aloschg[i], x$dayschg[i]
     )
     if (has_rate) {
       footer <- c(footer, sprintf(
         "flow rate %+.1f%%, stock rate %+.1f%%%s",
-        x$flow_rate_change[i], x$stock_rate_change[i],
-        if (sign(x$flow_rate_change[i]) != sign(x$stock_rate_change[i]))
+        x$flowratechg[i], x$stkratechg[i],
+        if (sign(x$flowratechg[i]) != sign(x$stkratechg[i]))
           "  <- opposite signs: quote both" else ""
       ))
     }
@@ -456,9 +456,9 @@ print.rmbl_stock_flow <- function(x, ...) {
 #'
 #' Counts the days from one date to another, both ends included, so the
 #' result can be passed as the period length \code{t} to [adp()],
-#' [admissions()],
-#' [adp_from_counts()] and
-#' [stock_flow()]. It saves getting
+#' [admits()],
+#' [adpcnts()] and
+#' [stkflow()]. It saves getting
 #' a fiscal year, a quarter or a leap year wrong by a day.
 #'
 #' @param from Start of the period: a single \code{Date}, or a single value
@@ -483,18 +483,18 @@ print.rmbl_stock_flow <- function(x, ...) {
 #' @seealso [adp()]
 #'
 #' @examples
-#' period_days("2024-01-01", "2024-12-31") # a leap year
-#' period_days("2023-01-01", "2023-12-31")
-#' period_days("2025-04-01", "2026-03-31") # a fiscal year
+#' perdays("2024-01-01", "2024-12-31") # a leap year
+#' perdays("2023-01-01", "2023-12-31")
+#' perdays("2025-04-01", "2026-03-31") # a fiscal year
 #'
 #' # a quarter as the period of an average daily population
-#' adp(4200, t = period_days(as.Date("2025-01-01"), as.Date("2025-03-31")))
+#' adp(4200, t = perdays(as.Date("2025-01-01"), as.Date("2025-03-31")))
 #'
 #' # numbers are not dates, and the end cannot come first
-#' try(period_days(1, 31))
-#' try(period_days("2024-12-31", "2024-01-01"))
+#' try(perdays(1, 31))
+#' try(perdays("2024-12-31", "2024-01-01"))
 #' @export
-period_days <- function(from, to) {
+perdays <- function(from, to) {
   if (is.numeric(from) || is.numeric(to)) {
     stop("`from` and `to` must be dates or date strings, not numbers",
       call. = FALSE
@@ -527,13 +527,13 @@ period_days <- function(from, to) {
 #' one value per person and reports the spread as well, because a mean
 #' stay is a poor summary of a distribution that is usually skewed.
 #'
-#' @param days_per_person Numeric vector of days served, one element per
+#' @param daysperper Numeric vector of days served, one element per
 #'   person; non-negative, no \code{NA} or \code{Inf}, at least one value.
-#' @param conf_level Numeric scalar strictly between 0 and 1, the
+#' @param conflvl Numeric scalar strictly between 0 and 1, the
 #'   confidence level for the interval on the mean. Default \code{0.95}.
 #'
 #' @return A one-row data frame with numeric columns \code{n} (people),
-#'   \code{total_days}, \code{mean}, \code{sd} (sample standard
+#'   \code{totaldays}, \code{mean}, \code{sd} (sample standard
 #'   deviation), \code{median}, \code{iqr} (interquartile range, quantile
 #'   type 7), \code{max}, \code{se} (standard error of the mean),
 #'   \code{lower} and \code{upper} (the t interval on the mean). With a
@@ -552,39 +552,39 @@ period_days <- function(from, to) {
 #' person still held has an unfinished stay, so a window shorter than
 #' the longest stay biases the mean DOWNWARD.
 #'
-#' Errors when \code{days_per_person} is not numeric, is empty, or has
-#' \code{NA}, \code{Inf} or negative values, and when \code{conf_level}
+#' Errors when \code{daysperper} is not numeric, is empty, or has
+#' \code{NA}, \code{Inf} or negative values, and when \code{conflvl}
 #' is not strictly inside (0, 1).
 #'
 #' @seealso [alos()],
 #'   [adp()],
-#'   [stock_flow()]
+#'   [stkflow()]
 #'
 #' @examples
 #' # a skewed distribution: most stays short, a few long
 #' stays <- c(rep(1, 40), rep(3, 30), rep(10, 20), 60, 90, 120)
-#' stay_summary(stays)
+#' staysmry(stays)
 #'
 #' # the mean is pulled well above the median by the long tail
-#' stay_summary(stays)[, c("mean", "median", "max")]
+#' staysmry(stays)[, c("mean", "median", "max")]
 #'
 #' # a 90% interval instead of 95%
-#' stay_summary(stays, conf_level = 0.90)[, c("mean", "lower", "upper")]
+#' staysmry(stays, conflvl = 0.90)[, c("mean", "lower", "upper")]
 #'
 #' # a confidence level of 1 is refused
-#' try(stay_summary(stays, conf_level = 1))
+#' try(staysmry(stays, conflvl = 1))
 #' @export
-stay_summary <- function(days_per_person, conf_level = 0.95) {
-  x <- .rmbl_pos_num(days_per_person, "days_per_person", allow_zero = TRUE)
-  conf_level <- .rmbl_conf_level(conf_level)
+staysmry <- function(daysperper, conflvl = 0.95) {
+  x <- .rmbl_pos_num(daysperper, "daysperper", allow_zero = TRUE)
+  conflvl <- .rmbl_conf_level(conflvl)
   n <- length(x)
   m <- mean(x)
   s <- if (n > 1L) stats::sd(x) else NA_real_
   se <- if (n > 1L) s / sqrt(n) else NA_real_
-  tq <- if (n > 1L) stats::qt(1 - (1 - conf_level) / 2, df = n - 1L) else NA_real_
+  tq <- if (n > 1L) stats::qt(1 - (1 - conflvl) / 2, df = n - 1L) else NA_real_
   q <- stats::quantile(x, c(0.25, 0.5, 0.75), names = FALSE, type = 7)
   data.frame(
-    n = n, total_days = sum(x), mean = m, sd = s, median = q[2],
+    n = n, totaldays = sum(x), mean = m, sd = s, median = q[2],
     iqr = q[3] - q[1], max = max(x), se = se,
     lower = if (n > 1L) m - tq * se else NA_real_,
     upper = if (n > 1L) m + tq * se else NA_real_,

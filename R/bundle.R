@@ -12,7 +12,7 @@
 #'
 #' Records a digest of every file named, the manifest's canonical digest,
 #' and an attestation covering both, as a single JSON file.
-#' [capsule_bundle_verify()] re-hashes
+#' [cpsbndlvrf()] re-hashes
 #' the files on disk and checks everything against it.
 #'
 #' The file digests are inside the signed payload, not alongside it. That
@@ -27,108 +27,108 @@
 #' particular, or that the manifest's claims are true.
 #'
 #' How it is built. Each file is hashed with SHA-256
-#' ([sha256_file()]); the
+#' ([sha256file()]); the
 #' payload is the list of `path`, `sha256` and `size_bytes`, the
 #' manifest's
-#' [manifest_digest()] and the UTC time;
-#' [capsule_attest()] signs a manifest
+#' [mnfdgst()] and the UTC time;
+#' [cpsatst()] signs a manifest
 #' whose `meta` is that payload, and the bundle (payload plus attestation) is
 #' written as pretty JSON with doubles at 17 digits. With `files = NULL` every
 #' regular file under `dir` is hashed, recursively and including dot-files
 #' (a `.Rprofile` dropped into a capsule runs code), except the bundle file
 #' itself. A progress bar is shown when `options(morie.progress)` allows it.
 #'
-#' How it is checked. `capsule_bundle_verify()` re-hashes every listed file
+#' How it is checked. `cpsbndlvrf()` re-hashes every listed file
 #' (a path that is absolute or climbs out of `dir` fails its row), reports
 #' every file on disk the bundle does not list (the bundle's own file
 #' excepted), checks the attestation with
-#' [capsule_check_attestation()]
-#' (signature, digest, and `key_expected` when given), and, when `manifest`
+#' [cpschkatst()]
+#' (signature, digest, and `keyexp` when given), and, when `man`
 #' is given, compares its digest with the bundled one. Every check is a row of
 #' `checks`; `ok` is `TRUE` only when all pass. A failed check is a row,
 #' not
 #' an error.
 #'
 #' Errors: `dir` missing or not a directory; no files to bundle, or a named
-#' file not in `dir`; a key [capsule_attest()] cannot
+#' file not in `dir`; a key [cpsatst()] cannot
 #' sign with;
-#' `capsule_bundle_read()` given a file that is not a bundle;
-#' `capsule_bundle_verify()` given something other than a bundle or a path.
+#' `cpsbndlrd()` given a file that is not a bundle;
+#' `cpsbndlvrf()` given something other than a bundle or a path.
 #' Reading a bundle whose signature records a stateful key's state warns (see
-#' [capsule_attest()]).
+#' [cpsatst()]).
 #'
 #' @param dir Character scalar, the directory the capsule lives in. For
-#' `capsule_bundle_verify()`, the directory to check the files in.
-#' @param manifest A manifest, as from [make_manifest()].
+#' `cpsbndlvrf()`, the directory to check the files in.
+#' @param man A manifest, as from [mkmnf()].
 #'   Required by
-#' `capsule_bundle()`; optional for `capsule_bundle_verify()`, where it adds
+#' `cpsbndl()`; optional for `cpsbndlvrf()`, where it adds
 #' a check that the manifest still has the bundled digest.
 #' @param key A signing key from
-#' [fips_keygen()] or
-#' [pqc_keygen()].
+#' [fipskg()] or
+#' [pqckg()].
 #' @param files Character vector of paths relative to `dir`. Defaults to
 #' every regular file in `dir` (recursively, dot-files included), excluding
 #' the bundle itself.
-#' @param context,prehash,note As in
-#' [capsule_attest()].
-#' @param path Character scalar. For `capsule_bundle()`, where to write the
+#' @param ctx,prehash,note As in
+#' [cpsatst()].
+#' @param path Character scalar. For `cpsbndl()`, where to write the
 #' bundle; defaults to `capsule_bundle.json` inside `dir` (an existing file
-#' is overwritten). For `capsule_bundle_read()`, the bundle file to read.
+#' is overwritten). For `cpsbndlrd()`, the bundle file to read.
 #' @param bundle A bundle read back with
-#' `capsule_bundle_read()`, or the path to one.
-#' @param key_expected Optional public key hex the
+#' `cpsbndlrd()`, or the path to one.
+#' @param keyexp Optional public key hex the
 #' bundle's attestation must carry. Supply it when you know which key
 #' should have signed: without it the check confirms the bundle is
 #' internally consistent, which any key's holder could arrange.
-#' @return `capsule_bundle()`: the bundle, invisibly, a list of class
+#' @return `cpsbndl()`: the bundle, invisibly, a list of class
 #' `bricklayer_bundle` with `files` (a list of `path`, `sha256`,
-#' `size_bytes`), `manifest_digest`, `bundled_utc` and `attestation`
+#' `size_bytes`), `mnfdgst`, `bundled_utc` and `attestation`
 #' (from
-#' [capsule_attest()]), and the path it was written to as
+#' [cpsatst()]), and the path it was written to as
 #' attribute
-#' `"path"`. `capsule_bundle_read()`: the same structure read from the file.
-#' `capsule_bundle_verify()`: a list of class `bricklayer_bundle_check` with
+#' `"path"`. `cpsbndlrd()`: the same structure read from the file.
+#' `cpsbndlvrf()`: a list of class `bricklayer_bundle_check` with
 #' `ok` (logical) and `checks` (a data frame of `check`, logical `ok`
 #' and
 #' `detail`: one `file:PATH` row per listed file, `no_unlisted_files`, the
-#' `attestation:` rows and, with a manifest, `manifest_digest`).
+#' `attestation:` rows and, with a manifest, `mnfdgst`).
 #' @seealso
-#' [capsule_attest()],
-#' [verify_capsule()],
-#' [manifest_digest()].
+#' [cpsatst()],
+#' [vrfcps()],
+#' [mnfdgst()].
 #' @examples
 #' dir <- tempfile()
 #' dir.create(dir)
 #' write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"),
 #'           row.names = FALSE)
-#' m <- make_manifest(list(dataset = "demo"), environment = FALSE)
-#' key <- fips_keygen("ML-DSA-44")
+#' m <- mkmnf(list(dataset = "demo"), env = FALSE)
+#' key <- fipskg("ML-DSA-44")
 #'
-#' b <- capsule_bundle(dir, m, key, note = "as published")
-#' capsule_bundle_verify(attr(b, "path"), dir, manifest = m)$ok
+#' b <- cpsbndl(dir, m, key, note = "as published")
+#' cpsbndlvrf(attr(b, "path"), dir, man = m)$ok
 #'
 #' # touch a byte of the data and the bundle no longer holds
 #' write.csv(data.frame(x = 1:4), file.path(dir, "data.csv"),
 #'           row.names = FALSE)
-#' res <- capsule_bundle_verify(attr(b, "path"), dir, manifest = m)
+#' res <- cpsbndlvrf(attr(b, "path"), dir, man = m)
 #' res$ok
 #' res$checks[!res$checks$ok, c("check", "detail")]
 #'
 #' # read back, and checked against the key you expected to have signed
-#' b2 <- capsule_bundle_read(attr(b, "path"))
+#' b2 <- cpsbndlrd(attr(b, "path"))
 #' b2
-#' capsule_bundle_verify(b2, dir, key_expected = "00ff")$ok
+#' cpsbndlvrf(b2, dir, keyexp = "00ff")$ok
 #'
 #' # a file added beside the bundle is reported too
 #' writeLines("x", file.path(dir, "extra.txt"))
-#' capsule_bundle_verify(b2, dir)$checks[, c("check", "ok")]
+#' cpsbndlvrf(b2, dir)$checks[, c("check", "ok")]
 #'
 #' # a directory that does not exist
-#' try(capsule_bundle(file.path(tempdir(), "no-such-capsule"), m, key))
+#' try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))
 #' unlink(dir, recursive = TRUE)
 #' @export
-capsule_bundle <- function(dir, manifest, key, files = NULL,
-                           context = NULL, prehash = "none", note = NULL,
+cpsbndl <- function(dir, man, key, files = NULL,
+                           ctx = NULL, prehash = "none", note = NULL,
                            path = NULL) {
   dir <- .rmbl_string1(dir, "dir")
   if (!dir.exists(dir)) {
@@ -158,29 +158,29 @@ capsule_bundle <- function(dir, manifest, key, files = NULL,
     stop("these files are not in `dir`: ",
          paste(utils::head(missing, 5L), collapse = ", "), call. = FALSE)
   }
-  pg <- bricklayer_progress("bundling", length(files))
+  pg <- blprog("bundling", length(files))
   on.exit(pg$done(), add = TRUE)
   entries <- lapply(seq_along(files), function(i) {
     f <- files[[i]]
     pg$update(i - 1L, sprintf("hashing %s", basename(f)))
     p <- file.path(dir, f)
-    list(path = f, sha256 = sha256_file(p), size_bytes = file.size(p))
+    list(path = f, sha256 = sha256file(p), size_bytes = file.size(p))
   })
   pg$update(length(files), "signing")
   payload <- list(
     files = entries,
-    manifest_digest = manifest_digest(manifest),
+    manifest_digest = mnfdgst(man),
     bundled_utc = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
   )
   # The attestation covers the file digests because they are part of the
   # payload it is taken over -- a bundle whose signature covered only
   # the manifest would leave the file list rewritable.
   inner <- list(meta = payload, results = list())
-  att <- capsule_attest(inner, key, context = context, prehash = prehash,
+  att <- cpsatst(inner, key, ctx = ctx, prehash = prehash,
                         note = note)
   bundle <- c(payload, list(attestation = att))
   class(bundle) <- c("bricklayer_bundle", "list")
-  writeLines(bricklayer_json_to_json(unclass(bundle), auto_unbox = TRUE,
+  writeLines(tojs(unclass(bundle), auto_unbox = TRUE,
                                      pretty = TRUE, na = "null",
                                      null = "null", digits = I(17)),
              path, useBytes = TRUE)
@@ -188,9 +188,9 @@ capsule_bundle <- function(dir, manifest, key, files = NULL,
   invisible(bundle)
 }
 
-#' @rdname capsule_bundle
+#' @rdname cpsbndl
 #' @export
-capsule_bundle_read <- function(path) {
+cpsbndlrd <- function(path) {
   path <- .rmbl_file1(path, "path")
   b <- .rmbl_json_text(paste(readLines(path, warn = FALSE), collapse = "\n"),
                        simplifyVector = FALSE)
@@ -205,14 +205,14 @@ capsule_bundle_read <- function(path) {
   b
 }
 
-#' @rdname capsule_bundle
+#' @rdname cpsbndl
 #' @export
-capsule_bundle_verify <- function(bundle, dir, manifest = NULL,
-                                  key_expected = NULL) {
-  if (is.character(bundle)) bundle <- capsule_bundle_read(bundle)
+cpsbndlvrf <- function(bundle, dir, man = NULL,
+                                  keyexp = NULL) {
+  if (is.character(bundle)) bundle <- cpsbndlrd(bundle)
   if (!inherits(bundle, "bricklayer_bundle")) {
-    stop("`bundle` must come from capsule_bundle() or ",
-         "capsule_bundle_read()", call. = FALSE)
+    stop("`bundle` must come from cpsbndl() or ",
+         "cpsbndlrd()", call. = FALSE)
   }
   checks <- list()
   note_row <- function(check, ok, detail = "") {
@@ -220,7 +220,7 @@ capsule_bundle_verify <- function(bundle, dir, manifest = NULL,
       check = check, ok = isTRUE(ok), detail = as.character(detail),
       stringsAsFactors = FALSE)
   }
-  pg <- bricklayer_progress("verifying bundle", length(bundle$files))
+  pg <- blprog("verifying bundle", length(bundle$files))
   on.exit(pg$done(), add = TRUE)
   for (e in bundle$files) {
     f <- as.character(e$path)[1L]
@@ -235,7 +235,7 @@ capsule_bundle_verify <- function(bundle, dir, manifest = NULL,
       note_row(paste0("file:", f), FALSE, "missing from the directory")
       next
     }
-    got <- sha256_file(p)
+    got <- sha256file(p)
     ok <- identical(got, as.character(e$sha256)[1L])
     note_row(paste0("file:", f), ok,
              if (ok) got else sprintf("expected %s, got %s",
@@ -265,14 +265,14 @@ capsule_bundle_verify <- function(bundle, dir, manifest = NULL,
                             manifest_digest = bundle$manifest_digest,
                             bundled_utc = bundle$bundled_utc),
                 results = list())
-  res <- capsule_check_attestation(bundle$attestation, inner,
-                                   key_expected = key_expected)
+  res <- cpschkatst(bundle$attestation, inner,
+                                   keyexp = keyexp)
   for (i in seq_len(nrow(res$checks))) {
     note_row(paste0("attestation:", res$checks$check[i]),
              res$checks$ok[i], res$checks$detail[i])
   }
-  if (!is.null(manifest)) {
-    got <- manifest_digest(manifest)
+  if (!is.null(man)) {
+    got <- mnfdgst(man)
     note_row("manifest_digest",
              identical(got, as.character(bundle$manifest_digest)[1L]),
              if (identical(got, as.character(bundle$manifest_digest)[1L]))
@@ -297,7 +297,7 @@ format.bricklayer_bundle <- function(x, ...) {
     .rmbl_rule())
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_bundle <- function(x, ...) {
   if (is.list(x$attestation) && is.list(x$attestation$signature) && !is.null(x$attestation$signature$key_state)) {
@@ -316,7 +316,7 @@ format.bricklayer_bundle_check <- function(x, ...) {
     .rmbl_rule())
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_bundle_check <- function(x, ...) {
   cat(format(x), sep = "\n")

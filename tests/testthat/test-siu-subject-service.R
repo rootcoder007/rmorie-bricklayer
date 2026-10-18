@@ -5,7 +5,7 @@
 # case-number letter rule names.
 
 page <- function(...) paste0("<html><body>", paste0("<p>", c(...), "</p>", collapse = ""), "</body></html>")
-service <- function(...) bricklayer_parse_siu(page(...))[["police_service"]]
+service <- function(...) siuprs(page(...))[["police_service"]]
 
 test_that("the subject official's service wins over the notifying force", {
   expect_equal(
@@ -102,5 +102,5 @@ test_that("the OPP has one French name, whether a report spells it out or refers
                 "La Police provinciale de l’Ontario a avisé l’UES.",
                 "Analyse et décision du directeur",
                 "La Police provinciale a avisé l’UES que deux de ses agents, l’AI, étaient impliqués.")
-  expect_identical(bricklayer_parse_siu(short)[["police_service"]], "Police provinciale de l\x27Ontario")
+  expect_identical(siuprs(short)[["police_service"]], "Police provinciale de l\x27Ontario")
 })

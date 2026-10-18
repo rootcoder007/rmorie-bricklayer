@@ -21,22 +21,22 @@ recovers the same secret. The package implements **ML-KEM** (FIPS 203, lattice-b
 ## ML-KEM
 
 ```{r mlkem}
-key <- kem_keygen(768)
-pub <- kem_public_key(key)
+key <- kemkg(768)
+pub <- kempubkey(key)
 
 # the sender holds only the public key
-sent <- kem_encapsulate(pub)
+sent <- kemencap(pub)
 # the recipient recovers the same secret from the ciphertext
-got <- kem_decapsulate(key, sent$ciphertext)
+got <- kemdecap(key, sent$ciphertext)
 identical(sent$shared, got)
 ```
 
 Three parameter sets trade size for security margin:
 
 ```{r sizes}
-kem_sizes(512)
-kem_sizes(768)
-kem_sizes(1024)
+kemsz(512)
+kemsz(768)
+kemsz(1024)
 ```
 
 ### Implicit rejection
@@ -50,7 +50,7 @@ identically either way.
 ```{r reject}
 bad <- sent$ciphertext
 substring(bad, 1L, 2L) <- "00"
-other <- kem_decapsulate(key, bad)
+other <- kemdecap(key, bad)
 nchar(other) == 64L          # a 32-byte secret, as always
 identical(other, got)        # but not the one the sender has
 ```
@@ -65,8 +65,8 @@ comparison of the FO transform is done on shares (the decompressed comparison of
 al., TCHES 2021). The result is byte-identical to the plain computation:
 
 ```{r masked}
-identical(kem_decapsulate(key, sent$ciphertext, masked = FALSE), got)
-identical(kem_decapsulate(key, bad, masked = FALSE), other)
+identical(kemdecap(key, sent$ciphertext, masked = FALSE), got)
+identical(kemdecap(key, bad, masked = FALSE), other)
 ```
 
 `masked = FALSE` is three to four times faster for decapsulation (seven to eleven for ML-DSA
@@ -87,12 +87,12 @@ HQC rests on the hardness of decoding random quasi-cyclic codes, an assumption u
 lattices, which is why NIST selected it as the second KEM. The interface is the same:
 
 ```{r hqc}
-hkey <- hqc_keygen(1)
-hpub <- hqc_public_key(hkey)
+hkey <- hqckg(1)
+hpub <- hqcpubkey(hkey)
 
-hsent <- hqc_encapsulate(hpub)
-identical(hqc_decapsulate(hkey, hsent$ciphertext), hsent$shared)
-hqc_sizes(1)
+hsent <- hqcencap(hpub)
+identical(hqcdecap(hkey, hsent$ciphertext), hsent$shared)
+hqcsz(1)
 ```
 
 Two revisions are implemented: the 2025 specification (`version = "v5"`, the default) and
@@ -101,9 +101,9 @@ derivation. A key made under one does not interoperate with the other, and the v
 recorded in the key:
 
 ```{r hqc-r4}
-old <- hqc_keygen(1, version = "round4")
-cap <- hqc_encapsulate(hqc_public_key(old))
-identical(hqc_decapsulate(old, cap$ciphertext), cap$shared)
+old <- hqckg(1, ver = "round4")
+cap <- hqcencap(hqcpubkey(old))
+identical(hqcdecap(old, cap$ciphertext), cap$shared)
 ```
 
 ### Reproducible keys for tests
@@ -113,18 +113,18 @@ Both KEMs accept a seed so a test can regenerate the same key: 64 bytes for ML-K
 tests: a key derived from a guessable seed is no key at all.
 
 ```{r seed}
-identical(hqc_keygen(1, seed = as.raw(1:32))$public,
-          hqc_keygen(1, seed = as.raw(1:32))$public)
+identical(hqckg(1, seed = as.raw(1:32))$public,
+          hqckg(1, seed = as.raw(1:32))$public)
 ```
 
 ## Using the shared secret
 
 The shared secret is 32 bytes of hex. It is a *key*, not a password: use it directly as the
-key of `core_hmac_sha256()` or to derive further keys, never as text to be stored.
+key of `chmac()` or to derive further keys, never as text to be stored.
 
 ```{r use}
-tag <- core_hmac_sha256(sent$shared, "the capsule manifest")
-core_digest_equal(tag, core_hmac_sha256(got, "the capsule manifest"))
+tag <- chmac(sent$shared, "the capsule manifest")
+cdgsteq(tag, chmac(got, "the capsule manifest"))
 ```
 
 ## How these implementations are checked
@@ -143,11 +143,11 @@ Key encapsulation lets a sender share a table so only the holder of a secret key
 it, for instance a First Nations data steward receiving a release:
 
 ```{r indigenous-kem}
-steward <- kem_keygen(768)
-pub <- kem_public_key(steward)
-sent <- kem_encapsulate(pub)
-msg <- bricklayer_json_to_json(indigenous_example("wellbeing"))
+steward <- kemkg(768)
+pub <- kempubkey(steward)
+sent <- kemencap(pub)
+msg <- tojs(indiex("wellbeing"))
 # the shared secret keys an authentication tag the steward can recompute
-tag <- core_hmac_sha256(msg, sent$shared)
-identical(core_hmac_sha256(msg, kem_decapsulate(steward, sent$ciphertext)), tag)
+tag <- chmac(msg, sent$shared)
+identical(chmac(msg, kemdecap(steward, sent$ciphertext)), tag)
 ```

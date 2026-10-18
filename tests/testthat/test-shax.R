@@ -7,12 +7,12 @@
 
 test_that("SHA-512 matches the FIPS 180-4 vectors", {
   expect_identical(
-    core_sha512("abc"),
+    csha512("abc"),
     paste0("ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55",
            "d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94f",
            "a54ca49f"))
   expect_identical(
-    core_sha512(raw(0)),
+    csha512(raw(0)),
     paste0("cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36c",
            "e9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327a",
            "f927da3e"))
@@ -21,7 +21,7 @@ test_that("SHA-512 matches the FIPS 180-4 vectors", {
   # Getting that branch wrong is invisible on short inputs.
   lens <- c(111L, 112L, 113L, 128L)
   got <- vapply(lens, function(n) {
-    substring(core_sha512(strrep("a", n)), 1L, 16L)
+    substring(csha512(strrep("a", n)), 1L, 16L)
   }, character(1))
   expect_identical(got, c("fa9121c7b32b9e01", "c01d080efd492776",
                           "55ddd8ac210a6e18", "b73d1929aa615934"))
@@ -56,15 +56,15 @@ test_that("MGF1 is its definition, recomputed independently", {
   seed <- charToRaw("seed")
   got <- .Call(C_rmbl_mgf1, 256L, seed, 40L)
   # H(seed || 00000000) || H(seed || 00000001), truncated
-  want <- c(.rmbl_hex_to_raw(core_sha256(c(seed, as.raw(c(0, 0, 0, 0))))),
-            .rmbl_hex_to_raw(core_sha256(c(seed, as.raw(c(0, 0, 0, 1))))))
+  want <- c(.rmbl_hex_to_raw(csha256(c(seed, as.raw(c(0, 0, 0, 0))))),
+            .rmbl_hex_to_raw(csha256(c(seed, as.raw(c(0, 0, 0, 1))))))
   expect_identical(got, want[seq_len(40L)])
   # a length shorter than one block is a plain truncation
   expect_identical(.Call(C_rmbl_mgf1, 256L, seed, 7L), want[seq_len(7L)])
   # and the 512-bit variant walks the same counter
   g5 <- .Call(C_rmbl_mgf1, 512L, seed, 100L)
-  w5 <- c(.rmbl_hex_to_raw(core_sha512(c(seed, as.raw(c(0, 0, 0, 0))))),
-          .rmbl_hex_to_raw(core_sha512(c(seed, as.raw(c(0, 0, 0, 1))))))
+  w5 <- c(.rmbl_hex_to_raw(csha512(c(seed, as.raw(c(0, 0, 0, 0))))),
+          .rmbl_hex_to_raw(csha512(c(seed, as.raw(c(0, 0, 0, 1))))))
   expect_identical(g5, w5[seq_len(100L)])
   # an output spanning exactly one block must not consume a second
   expect_identical(.Call(C_rmbl_mgf1, 256L, seed, 32L), want[seq_len(32L)])

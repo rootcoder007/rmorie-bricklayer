@@ -29,7 +29,7 @@ d <- data.frame(
   n = c(30, 45, 12, 60, 8, 20),
   pop = c(1000, 6000, 900, 9000, 400, 3500)
 )
-expected_counts(d$n, d$pop, d$region)
+expcnts(d$n, d$pop, d$region)
 ```
 
 Adjusting for size **and** age composition is indirect standardisation: each stratum's
@@ -37,7 +37,7 @@ overall rate is applied to the unit's population in that stratum, then summed. T
 comparison that says something about the unit rather than about who lives there:
 
 ```{r expected-strata}
-expected_counts(d$n, d$pop, d$region, strata = d$age)
+expcnts(d$n, d$pop, d$region, strata = d$age)
 ```
 
 ## Direct standardisation, for populations of different ages
@@ -46,27 +46,27 @@ Indirect standardisation asks what each unit would expect at the overall rates. 
 standardisation asks what rate each population would have with one standard age structure. It
 is the comparison to use when the populations' ages differ a great deal. First Nations, Metis and
 Inuit populations, for example, are younger than the non-Indigenous population.
-`age_standardise()` gives the rates with the Fay-Feuer gamma interval, which holds for small
-counts. `rate_gap()` compares two of them. The counts below are made up, to show the computation:
+`agestd()` gives the rates with the Fay-Feuer gamma interval, which holds for small
+counts. `rategap()` compares two of them. The counts below are made up, to show the computation:
 
 ```{r direct}
-r <- age_standardise(events = c(4, 9, 11, 6, 3, 40, 70, 90, 80, 60),
-                     population = c(9000, 8000, 6000, 4000, 2000, 300000, 320000, 350000, 340000, 300000),
-                     standard = c(30, 25, 20, 15, 10),
-                     group = rep(c("Inuit", "Non-Indigenous"), each = 5))
+r <- agestd(events = c(4, 9, 11, 6, 3, 40, 70, 90, 80, 60),
+                     pop = c(9000, 8000, 6000, 4000, 2000, 300000, 320000, 350000, 340000, 300000),
+                     std = c(30, 25, 20, 15, 10),
+                     grp = rep(c("Inuit", "Non-Indigenous"), each = 5))
 r
-rate_gap(r, "Inuit", "Non-Indigenous")
+rategap(r, "Inuit", "Non-Indigenous")
 ```
 
-For survey percentages rather than counts, `standardise_prevalence()` does the same.
+For survey percentages rather than counts, `stdprev()` does the same.
 
 ## Standardised ratios with exact intervals
 
-The ratio of observed to expected is the standardised incidence ratio (SIR). `sir()` gives
+The ratio of observed to expected is the standardised incidence ratio (SIR). `stdinc()` gives
 the exact Poisson interval, which is what makes a small count honest:
 
 ```{r sir}
-sir(observed = c(30, 12, 3), expected = c(20, 14, 5),
+stdinc(obs = c(30, 12, 3), expd = c(20, 14, 5),
     area = c("North", "South", "East"))
 ```
 
@@ -74,7 +74,7 @@ An observed count of three carries almost no information, and the interval says 
 than hiding it:
 
 ```{r sir3}
-sir(3, 5)
+stdinc(3, 5)
 ```
 
 ## Empirical Bayes shrinkage
@@ -86,7 +86,7 @@ is a weighted average of its own ratio and the prior mean, weighted by its expec
 (Clayton and Kaldor 1987).
 
 ```{r eb}
-eb_rates(observed = c(30, 45, 2), expected = c(25, 50, 0.5),
+ebrates(obs = c(30, 45, 2), expd = c(25, 50, 0.5),
          area = c("North", "South", "Tiny"))
 ```
 
@@ -100,12 +100,12 @@ outside the limits are the ones worth a second look; the rest are consistent wit
 common rate.
 
 ```{r funnel}
-funnel_limits(c(2, 20, 200))
+fnllim(c(2, 20, 200))
 ```
 
 ```{r funnel-plot}
 e <- seq(2, 200, length.out = 60)
-lim <- funnel_limits(e)
+lim <- fnllim(e)
 plot(e, lim$upper_95, type = "l", ylim = c(0, 3), xlab = "expected count",
      ylab = "observed / expected", main = "Funnel limits")
 lines(e, lim$lower_95)
@@ -128,10 +128,10 @@ area's adjacent areas:
 nb <- list(2L, c(1L, 3L), c(2L, 4L), c(3L, 5L), c(4L, 6L), 5L)   # six areas in a line
 
 set.seed(1)
-morans_i(c(1, 2, 3, 4, 5, 6), nb, n_perm = 999L)[c("I", "p_value")]   # a gradient
+morani(c(1, 2, 3, 4, 5, 6), nb, nperm = 999L)[c("I", "p_value")]   # a gradient
 
 set.seed(1)
-morans_i(c(1, 6, 1, 6, 1, 6), nb, n_perm = 999L)[c("I", "p_value")]   # alternating
+morani(c(1, 6, 1, 6, 1, 6), nb, nperm = 999L)[c("I", "p_value")]   # alternating
 ```
 
 The null expectation of *I* is not zero but $-1/(n-1)$:
@@ -146,11 +146,11 @@ optimistic.
 
 ## From a published table to a judgement
 
-1. `expected_counts()` with the strata the table publishes.
-2. `sir()` for the ratios and their exact intervals.
-3. `eb_rates()` where small units dominate.
-4. `funnel_limits()` to see which units are outside the common experience.
-5. `morans_i()` on the residuals before trusting independence.
+1. `expcnts()` with the strata the table publishes.
+2. `stdinc()` for the ratios and their exact intervals.
+3. `ebrates()` where small units dominate.
+4. `fnllim()` to see which units are outside the common experience.
+5. `morani()` on the residuals before trusting independence.
 
 ## References
 

@@ -2,23 +2,23 @@
 # small-register bias constants, and the C-level argument guards.
 
 test_that("a failed SIU fetch returns NULL rather than erroring", {
-  # bricklayer_fetch_parse_siu() is the convenience wrapper that fetches
+  # siufprs() is the convenience wrapper that fetches
   # and then parses. A network failure must leave the caller with NULL,
   # not an exception, because a capsule build that cannot reach one
   # report should carry on and record the gap.
   testthat::local_mocked_bindings(
-    bricklayer_fetch_siu = function(...) stop("network unreachable")
+    siufetch = function(...) stop("network unreachable")
   )
-  expect_message(res <- bricklayer_fetch_parse_siu(12),
+  expect_message(res <- siufprs(12),
                  "could not fetch SIU report")
   expect_null(res)
 
   # a fetch that claims success but writes nothing is also NULL, since
   # there is no file to parse
   testthat::local_mocked_bindings(
-    bricklayer_fetch_siu = function(drid, dest, ...) invisible(dest)
+    siufetch = function(drid, dest, ...) invisible(dest)
   )
-  expect_null(bricklayer_fetch_parse_siu(13))
+  expect_null(siufprs(13))
 })
 
 test_that("HyperLogLog uses its published constant at every register size", {
@@ -28,9 +28,9 @@ test_that("HyperLogLog uses its published constant at every register size", {
   set.seed(1)
   x <- as.character(seq_len(500))
   for (p in 4:8) {
-    reg <- distinct_sketch(x, p = p)
+    reg <- dstnskch(x, p = p)
     expect_length(reg, 2^p)
-    est <- distinct_count(reg)
+    est <- dstncnt(reg)
     expect_true(is.finite(est))
     expect_gt(est, 0)
     # a tiny register count is a poor estimator, but it must still be in
@@ -42,22 +42,22 @@ test_that("HyperLogLog uses its published constant at every register size", {
   true_n <- 20000L
   y <- as.character(seq_len(true_n))
   err <- vapply(c(4L, 8L, 14L), function(p) {
-    abs(distinct_count(distinct_sketch(y, p = p)) - true_n) / true_n
+    abs(dstncnt(dstnskch(y, p = p)) - true_n) / true_n
   }, 0)
   expect_lt(err[3], err[1])
   expect_lt(err[3], 0.05)
   # every register set merges with another of the same size
-  a <- distinct_sketch(y[1:10000], p = 6L)
-  b <- distinct_sketch(y[10001:20000], p = 6L)
-  expect_length(sketch_merge(a, b), 64L)
-  expect_true(is.finite(distinct_count(sketch_merge(a, b))))
+  a <- dstnskch(y[1:10000], p = 6L)
+  b <- dstnskch(y[10001:20000], p = 6L)
+  expect_length(skchmrg(a, b), 64L)
+  expect_true(is.finite(dstncnt(skchmrg(a, b))))
   # an all-zero register set is an empty sketch
-  expect_equal(distinct_count(integer(64)), 0, tolerance = 1e-9)
+  expect_equal(dstncnt(integer(64)), 0, tolerance = 1e-9)
 })
 
 test_that("the C-level guards reject malformed arguments", {
   # the moment accumulators must be the five-entry layout
-  acc <- online_summary(stats::rnorm(20))
+  acc <- onlsmry(stats::rnorm(20))
   expect_error(.Call(rmoriebricklayer:::C_rmbl_moments_merge,
                      acc$state, c(1, 2, 3)), "5 entries")
   expect_error(.Call(rmoriebricklayer:::C_rmbl_moments_merge,
@@ -113,13 +113,13 @@ test_that("the C-level guards reject malformed arguments", {
 
 test_that("an empty Merkle tree and sketch degrade rather than error", {
   expect_true(is.na(.Call(rmoriebricklayer:::C_rmbl_merkle_root, list(), 2L)))  # scheme argument since 0.5.13
-  expect_true(is.na(merkle_root(character(0))))
-  expect_equal(distinct_count(integer(0)), 0)
-  expect_length(reservoir_indices(0, 0), 0L)
+  expect_true(is.na(mrkroot(character(0))))
+  expect_equal(dstncnt(integer(0)), 0)
+  expect_length(rsvidx(0, 0), 0L)
   # a single-leaf tree needs no proof
-  expect_length(merkle_proof("solo", 1)$sibling, 0L)
+  expect_length(mrkprf("solo", 1)$sibling, 0L)
   # an accumulator with nothing in it reports nothing rather than zero
-  e <- summary_stats(online_summary())
+  e <- smrystat(onlsmry())
   expect_equal(e[["n"]], 0)
   expect_true(is.nan(e[["mean"]]))
 })

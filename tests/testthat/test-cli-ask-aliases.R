@@ -4,14 +4,14 @@
 ask_via_cli <- function(args) {
   seen <- NULL
   testthat::local_mocked_bindings(
-    bricklayer_llm_ask = function(prompt, model = NULL, route = NULL, fresh = FALSE) {
+    llmask = function(prompt, model = NULL, route = NULL, fresh = FALSE) {
       seen <<- list(prompt = prompt, model = model, route = route, fresh = fresh)
       "the answer"
     },
     .package = "rmoriebricklayer"
   )
   txt <- character()
-  st <- bricklayer_cli(args, out = function(s) txt <<- c(txt, s))
+  st <- blcli(args, out = function(s) txt <<- c(txt, s))
   list(status = st, out = paste(txt, collapse = ""), seen = seen)
 }
 
@@ -68,13 +68,13 @@ test_that("aye and tellme with no prompt say how to ask", {
   }
   # `aye --help` describes ask
   txt <- character()
-  expect_identical(bricklayer_cli(c("aye", "--help"), out = function(s) txt <<- c(txt, s)), 0L)
+  expect_identical(blcli(c("aye", "--help"), out = function(s) txt <<- c(txt, s)), 0L)
   expect_match(paste(txt, collapse = ""), "ask the model", fixed = TRUE)
 })
 
 test_that("help lists the other names of ask", {
   txt <- character()
-  bricklayer_cli("help", out = function(s) txt <<- c(txt, s))
+  blcli("help", out = function(s) txt <<- c(txt, s))
   expect_match(paste(txt, collapse = ""), "aye, tellme", fixed = TRUE)
 })
 
@@ -83,11 +83,11 @@ test_that("every launcher turns a top-level Ctrl-C into exit 130", {
     f <- system.file("bin", nm, package = "rmoriebricklayer")
     skip_if_not(nzchar(f))
     expect_match(paste(readLines(f), collapse = "\n"),
-                 "tryCatch(rmoriebricklayer::bricklayer_cli(), interrupt = function(e) 130L)", fixed = TRUE)
+                 "tryCatch(rmoriebricklayer::blcli(), interrupt = function(e) 130L)", fixed = TRUE)
   }
   skip_on_os("windows")
   d <- withr::local_tempdir()
-  invisible(utils::capture.output(suppressMessages(install_cli(dir = d))))
+  invisible(utils::capture.output(suppressMessages(instcli(dir = d))))
   for (nm in list.files(d)) {
     expect_match(paste(readLines(file.path(d, nm)), collapse = "\n"),
                  "interrupt = function(e) 130L", fixed = TRUE, info = nm)

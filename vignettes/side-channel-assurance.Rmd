@@ -89,14 +89,14 @@ ML-KEM decapsulation and ML-DSA signing are masked by default. The output is byt
 to the unmasked computation, which the full vector suite checks on every vector:
 
 ```{r agree}
-key <- kem_keygen(512)
-sent <- kem_encapsulate(kem_public_key(key))
-identical(kem_decapsulate(key, sent$ciphertext, masked = TRUE),
-          kem_decapsulate(key, sent$ciphertext, masked = FALSE))
+key <- kemkg(512)
+sent <- kemencap(kempubkey(key))
+identical(kemdecap(key, sent$ciphertext, masked = TRUE),
+          kemdecap(key, sent$ciphertext, masked = FALSE))
 
-skey <- fips_keygen("ML-DSA-44")
-sig <- capsule_sign("manifest", skey, deterministic = TRUE)
-capsule_verify("manifest", sig, fips_public_key(skey))
+skey <- fipskg("ML-DSA-44")
+sig <- cpssign("manifest", skey, determ = TRUE)
+cpsvrf("manifest", sig, fipspubkey(skey))
 ```
 
 The gadgets (`src/rmbl_masked.h`) are the published ones: Trichina's two-share AND; a
@@ -170,8 +170,8 @@ power figure above comes from the emulator.
 Masking costs about 2.3 to 3.4 times the plain time on decapsulation (4 ms for ML-KEM-768
 against 1.2 ms on this package's test machine) and 7 to 10 times on signing (17 ms for
 ML-DSA-65 against 2.4 ms), depending on the CPU. Where the threat model has no physical
-attacker, `kem_decapsulate(masked = FALSE)`, `capsule_sign(masked = FALSE)` and
-`fips_sign_mu(masked = FALSE)` keep the plain path, and
+attacker, `kemdecap(masked = FALSE)`, `cpssign(masked = FALSE)` and
+`fipssignmu(masked = FALSE)` keep the plain path, and
 `options(rmoriebricklayer.masked = FALSE)` makes that the default for a session (a chain or
 bundle signs many times). Timing protections cannot be switched off; they are not optional.
 

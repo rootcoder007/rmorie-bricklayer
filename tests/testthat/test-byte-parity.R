@@ -39,21 +39,21 @@ test_that("SHA-256 agrees with digest and openssl at every boundary", {
   skip_if_no("openssl")
   for (n in byte_lengths) {
     b <- rnd(n, 1000L + n)
-    got <- core_sha256(b)
+    got <- csha256(b)
     expect_identical(got, digest::digest(b, algo = "sha256", serialize = FALSE))
     expect_identical(got, paste(openssl::sha256(b), collapse = ""))
   }
   # and on a string, where the bytes hashed must be the string's own
   for (s in c("", "a", "abc", strrep("x", 55), strrep("x", 56),
               strrep("x", 64), strrep("y", 1000))) {
-    expect_identical(core_sha256(s),
+    expect_identical(csha256(s),
                      digest::digest(s, algo = "sha256", serialize = FALSE))
     # a string and its bytes are the same input
-    expect_identical(core_sha256(s), core_sha256(charToRaw(s)))
+    expect_identical(csha256(s), csha256(charToRaw(s)))
   }
   # a megabyte, to catch a length counter that overflows past 2^19 bits
   big <- rnd(1048576L, 7L)
-  expect_identical(core_sha256(big),
+  expect_identical(csha256(big),
                    digest::digest(big, algo = "sha256", serialize = FALSE))
 })
 
@@ -62,15 +62,15 @@ test_that("SHA-512 agrees with digest and openssl at every boundary", {
   skip_if_no("openssl")
   for (n in byte_lengths) {
     b <- rnd(n, 2000L + n)
-    got <- core_sha512(b)
+    got <- csha512(b)
     expect_identical(got, digest::digest(b, algo = "sha512", serialize = FALSE))
     expect_identical(got, paste(openssl::sha512(b), collapse = ""))
   }
   for (s in c("", "abc", strrep("x", 111), strrep("x", 112),
               strrep("x", 128))) {
-    expect_identical(core_sha512(s),
+    expect_identical(csha512(s),
                      digest::digest(s, algo = "sha512", serialize = FALSE))
-    expect_identical(core_sha512(s), core_sha512(charToRaw(s)))
+    expect_identical(csha512(s), csha512(charToRaw(s)))
   }
 })
 
@@ -80,12 +80,12 @@ test_that("CRC-32 agrees with digest as a number", {
   # two must be the same integer, which is what a manifest compares
   for (n in byte_lengths) {
     b <- rnd(n, 3000L + n)
-    expect_identical(core_crc32(b),
+    expect_identical(ccrc32(b),
                      hex_to_num(digest::digest(b, algo = "crc32",
                                                serialize = FALSE)))
   }
   # the checksum stays inside the unsigned 32-bit range
-  vals <- vapply(byte_lengths, function(n) core_crc32(rnd(n, 40L + n)), 0)
+  vals <- vapply(byte_lengths, function(n) ccrc32(rnd(n, 40L + n)), 0)
   expect_true(all(vals >= 0 & vals <= 4294967295))
 })
 
@@ -98,12 +98,12 @@ test_that("HMAC-SHA-256 agrees with openssl across the key-length cases", {
     for (mn in c(0L, 1L, 55L, 56L, 64L, 65L, 1000L)) {
       msg <- rnd(mn, 6000L + mn)
       expect_identical(
-        core_hmac_sha256(key, msg),
+        chmac(key, msg),
         paste(openssl::sha256(msg, key = key), collapse = ""))
     }
   }
   # a string key and message go the same way
-  expect_identical(core_hmac_sha256("key", "message"),
+  expect_identical(chmac("key", "message"),
                    paste(openssl::sha256(charToRaw("message"),
                                          key = charToRaw("key")),
                          collapse = ""))
@@ -111,8 +111,8 @@ test_that("HMAC-SHA-256 agrees with openssl across the key-length cases", {
   k1 <- rnd(32L, 11L)
   k2 <- k1
   k2[1] <- as.raw(bitwXor(as.integer(k2[1]), 1L))
-  expect_false(identical(core_hmac_sha256(k1, "m"),
-                         core_hmac_sha256(k2, "m")))
+  expect_false(identical(chmac(k1, "m"),
+                         chmac(k2, "m")))
 })
 
 test_that("BLAKE2b agrees with openssl at its full digest length", {
@@ -123,13 +123,13 @@ test_that("BLAKE2b agrees with openssl at its full digest length", {
   # truncation
   for (n in c(0L, 1L, 64L, 127L, 128L, 129L, 1000L)) {
     b <- rnd(n, 7000L + n)
-    expect_identical(core_blake2b(b, length = 64L),
+    expect_identical(cblake2b(b, length = 64L),
                      paste(openssl::blake2b(b), collapse = ""))
   }
   # and truncating the 512-bit digest is NOT the 256-bit one
   b <- rnd(100L, 8L)
-  expect_false(identical(core_blake2b(b, length = 32L),
-                         substring(core_blake2b(b, length = 64L), 1L, 64L)))
+  expect_false(identical(cblake2b(b, length = 32L),
+                         substring(cblake2b(b, length = 64L), 1L, 64L)))
 })
 
 test_that("the derived key matches an independent PBKDF2", {
@@ -146,10 +146,10 @@ test_that("the derived key matches an independent PBKDF2", {
                       bitwAnd(bitwShiftR(block, 16L), 255L),
                       bitwAnd(bitwShiftR(block, 8L), 255L),
                       bitwAnd(block, 255L)))
-      u <- hexraw(core_hmac_sha256(pass, c(salt, ctr)))
+      u <- hexraw(chmac(pass, c(salt, ctr)))
       acc <- u
       for (i in seq_len(iter - 1L)) {
-        u <- hexraw(core_hmac_sha256(pass, u))
+        u <- hexraw(chmac(pass, u))
         acc <- as.raw(bitwXor(as.integer(acc), as.integer(u)))
       }
       out <- c(out, acc)
@@ -159,7 +159,7 @@ test_that("the derived key matches an independent PBKDF2", {
   }
   for (iter in c(1L, 2L, 17L)) {
     for (dk in c(1L, 16L, 20L, 32L, 40L, 64L)) {
-      expect_identical(derive_key("password", "salt", iter, dk),
+      expect_identical(drvkey("password", "salt", iter, dk),
                        ref(charToRaw("password"), charToRaw("salt"),
                            iter, dk))
     }
@@ -167,22 +167,22 @@ test_that("the derived key matches an independent PBKDF2", {
   # RFC 6070 is for HMAC-SHA-1, so its digests do not apply, but its
   # structure does: a longer key than one block, and a derived length
   # spanning several blocks, must both come out right
-  expect_identical(derive_key(strrep("p", 100), "NaCl", 3L, 80L),
+  expect_identical(drvkey(strrep("p", 100), "NaCl", 3L, 80L),
                    ref(charToRaw(strrep("p", 100)), charToRaw("NaCl"),
                        3L, 80L))
   # more iterations is a different key, so the count is not ignored
-  expect_false(identical(derive_key("p", "s", 1L, 32L),
-                         derive_key("p", "s", 2L, 32L)))
+  expect_false(identical(drvkey("p", "s", 1L, 32L),
+                         drvkey("p", "s", 2L, 32L)))
   # and a longer request extends the same prefix, block by block
-  expect_identical(substring(derive_key("p", "s", 4L, 64L), 1L, 64L),
-                   derive_key("p", "s", 4L, 32L))
+  expect_identical(substring(drvkey("p", "s", 4L, 64L), 1L, 64L),
+                   drvkey("p", "s", 4L, 32L))
 })
 
 test_that("base64 agrees with openssl over every padding case", {
   skip_if_no("openssl")
   for (n in byte_lengths) {
     b <- rnd(n, 9000L + n)
-    got <- bricklayer_json_base64_enc(b)
+    got <- jsb64enc(b)
     # this codec is a jsonlite-parity codec, so jsonlite is the exact
     # reference -- MIME line wrapping included, which survives inside
     # JSON as an escaped \n
@@ -194,7 +194,7 @@ test_that("base64 agrees with openssl over every padding case", {
                      gsub("\n", "", openssl::base64_encode(b),
                           fixed = TRUE))
     # and decodes back to exactly the bytes
-    expect_identical(bricklayer_json_base64_dec(got), b)
+    expect_identical(jsb64dec(got), b)
   }
   # the URL-safe alphabet differs only in the two characters that are
   # unsafe in a URL, and drops the padding
@@ -204,9 +204,9 @@ test_that("base64 agrees with openssl over every padding case", {
     want <- gsub("=", "", chartr("+/", "-_", std), fixed = TRUE)
     # the URL-safe form carries no line breaks, since it exists to go
     # into a URL
-    expect_identical(bricklayer_json_base64url_enc(b), want)
-    expect_identical(bricklayer_json_base64url_dec(
-      bricklayer_json_base64url_enc(b)), b)
+    expect_identical(jsb64uenc(b), want)
+    expect_identical(jsb64udec(
+      jsb64uenc(b)), b)
   }
   # the line-wrapping rule is driven by the INPUT block, not the output
   # width, so sweep every length across several block boundaries rather
@@ -215,12 +215,12 @@ test_that("base64 agrees with openssl over every padding case", {
   skip_if_no("jsonlite")
   for (n in 0:400) {
     b <- as.raw(rep(65L, n))
-    expect_identical(bricklayer_json_base64_enc(b), jsonlite::base64_enc(b))
+    expect_identical(jsb64enc(b), jsonlite::base64_enc(b))
   }
   # the two bytes that separate the alphabets, so the substitution is
   # actually exercised rather than merely possible
-  expect_identical(bricklayer_json_base64_enc(as.raw(c(0xfb, 0xff))), "+/8=")
-  expect_identical(bricklayer_json_base64url_enc(as.raw(c(0xfb, 0xff))), "-_8")
+  expect_identical(jsb64enc(as.raw(c(0xfb, 0xff))), "+/8=")
+  expect_identical(jsb64uenc(as.raw(c(0xfb, 0xff))), "-_8")
 })
 
 test_that("the JSON writer agrees with jsonlite", {
@@ -237,7 +237,7 @@ test_that("the JSON writer agrees with jsonlite", {
   )
   for (x in cases) {
     expect_identical(
-      as.character(bricklayer_json_to_json(x, auto_unbox = FALSE)),
+      as.character(tojs(x, auto_unbox = FALSE)),
       as.character(jsonlite::toJSON(x, auto_unbox = FALSE, digits = NA)))
   }
   # a data frame, in each of the three orientations jsonlite offers
@@ -245,13 +245,13 @@ test_that("the JSON writer agrees with jsonlite", {
                    s = c("a", "b", "c"), stringsAsFactors = FALSE)
   for (orient in c("rows", "columns", "values")) {
     expect_identical(
-      as.character(bricklayer_json_to_json(df, dataframe = orient)),
+      as.character(tojs(df, dataframe = orient)),
       as.character(jsonlite::toJSON(df, dataframe = orient, digits = NA)))
   }
   # and the round trip returns the same structure
   for (x in cases[-6]) {
-    expect_equal(bricklayer_json_from_json(
-      as.character(bricklayer_json_to_json(x, auto_unbox = FALSE))),
+    expect_equal(fromjs(
+      as.character(tojs(x, auto_unbox = FALSE))),
       jsonlite::fromJSON(
         as.character(jsonlite::toJSON(x, auto_unbox = FALSE, digits = NA))))
   }
@@ -261,30 +261,30 @@ test_that("the gzip codec is real gzip", {
   # a stream is only useful if something else can read it, so decode it
   # with base R's own inflater rather than with the encoder's inverse
   x <- list(a = 1:100, b = strrep("compress me ", 200))
-  enc <- json_gzip_encode(x, raw = TRUE)
+  enc <- jsgzenc(x, raw = TRUE)
   expect_true(is.raw(enc))
   # the gzip magic number and deflate method, per RFC 1952
   expect_identical(enc[1:3], as.raw(c(0x1f, 0x8b, 0x08)))
   txt <- rawToChar(memDecompress(enc, type = "gzip"))
-  expect_identical(json_gzip_decode(enc, raw = TRUE), x)
+  expect_identical(jsgzdec(enc, raw = TRUE), x)
   # and raw bytes are recognised as bytes without having to say so again
-  expect_identical(json_gzip_decode(enc), x)
+  expect_identical(jsgzdec(enc), x)
   # while a character input still has to be base64
-  expect_error(json_gzip_decode("not base64 at all", raw = TRUE),
+  expect_error(jsgzdec("not base64 at all", raw = TRUE),
                "must be a raw vector")
   skip_if_no("jsonlite")
   expect_equal(jsonlite::fromJSON(txt, simplifyVector = FALSE)$a[[1]], 1L)
   # the header records no modification time, so the same input always
   # gives the same bytes and a capsule digest does not move with the
   # clock
-  expect_identical(enc, json_gzip_encode(x, raw = TRUE))
+  expect_identical(enc, jsgzenc(x, raw = TRUE))
   expect_identical(enc[5:8], as.raw(c(0, 0, 0, 0)))
   # the trailer is the CRC-32 and length of the UNCOMPRESSED data, little
   # endian, which is what an external tool checks before it trusts the
   # output
   n <- length(enc)
   le <- function(r) sum(as.integer(r) * 256^(0:3))
-  expect_identical(le(enc[(n - 7):(n - 4)]), core_crc32(charToRaw(txt)))
+  expect_identical(le(enc[(n - 7):(n - 4)]), ccrc32(charToRaw(txt)))
   expect_identical(le(enc[(n - 3):n]), as.numeric(nchar(txt, "bytes")))
   # and an external gzip reads it too, where one is available
   gz <- Sys.which("gzip")
@@ -330,9 +330,9 @@ test_that("the Merkle tree matches a tree rebuilt with digest", {
   # promotion happens -- occur at several depths
   for (k in 1:17) {
     ch <- lapply(seq_len(k), function(i) rnd(10L + i, 300L + i))
-    expect_identical(merkle_root(ch), ref_root(ch))
-    expect_identical(merkle_root(ch, scheme = 1), ref_root(ch, 1L))
-    expect_identical(merkle_leaves(ch),
+    expect_identical(mrkroot(ch), ref_root(ch))
+    expect_identical(mrkroot(ch, scheme = 1), ref_root(ch, 1L))
+    expect_identical(mrklvs(ch),
                      vapply(ch, function(b) {
                        digest::digest(c(as.raw(0L), b), algo = "sha256", serialize = FALSE)
                      }, ""))
@@ -340,11 +340,11 @@ test_that("the Merkle tree matches a tree rebuilt with digest", {
   # promotion, demonstrated: duplicating the last leaf of a three-leaf
   # tree must NOT give the same root as the three-leaf tree
   a <- lapply(1:3, function(i) rnd(8L, i))
-  expect_false(identical(merkle_root(a), merkle_root(c(a, a[3]))))
+  expect_false(identical(mrkroot(a), mrkroot(c(a, a[3]))))
   # a proof verifies at every index, for binary chunks
-  root <- merkle_root(a)
+  root <- mrkroot(a)
   for (i in 1:3) {
-    expect_true(merkle_verify(a[[i]], merkle_proof(a, i), root))
+    expect_true(mrkvrf(a[[i]], mrkprf(a, i), root))
   }
 })
 
@@ -356,75 +356,75 @@ test_that("a file's digest is the digest of its bytes", {
   on.exit(unlink(p), add = TRUE)
   bytes <- rnd(5000L, 77L)
   writeBin(bytes, p)
-  expect_identical(sha256_file(p), core_sha256(bytes))
-  expect_identical(sha512_file(p), core_sha512(bytes))
-  expect_identical(crc32_file(p), core_crc32(bytes))
+  expect_identical(sha256file(p), csha256(bytes))
+  expect_identical(sha512file(p), csha512(bytes))
+  expect_identical(crc32file(p), ccrc32(bytes))
   skip_if_no("digest")
-  expect_identical(sha256_file(p),
+  expect_identical(sha256file(p),
                    digest::digest(file = p, algo = "sha256"))
-  expect_identical(sha512_file(p),
+  expect_identical(sha512file(p),
                    digest::digest(file = p, algo = "sha512"))
   # chunking reproduces the file exactly, and the block size changes only
   # the tree, never the bytes
   for (cb in c(1L, 7L, 512L, 5000L, 10000L)) {
-    ch <- chunk_file(p, chunk_bytes = cb)
+    ch <- chnkfile(p, chnkbytes = cb)
     expect_identical(unlist(ch), bytes)
-    expect_identical(core_sha256(unlist(ch)), sha256_file(p))
+    expect_identical(csha256(unlist(ch)), sha256file(p))
   }
   # a file containing every byte value, including zero
   writeBin(as.raw(0:255), p)
-  ch <- chunk_file(p, chunk_bytes = 64L)
+  ch <- chnkfile(p, chnkbytes = 64L)
   expect_length(ch, 4L)
   expect_identical(unlist(ch), as.raw(0:255))
-  expect_identical(merkle_leaves(ch)[1L], core_sha256(c(as.raw(0L), as.raw(0:63))))  # leaf prefix, scheme 2
+  expect_identical(mrklvs(ch)[1L], csha256(c(as.raw(0L), as.raw(0:63))))  # leaf prefix, scheme 2
   # an empty file has no chunks
   writeBin(raw(0), p)
-  expect_length(chunk_file(p), 0L)
-  expect_true(is.na(merkle_root(chunk_file(p))))
+  expect_length(chnkfile(p), 0L)
+  expect_true(is.na(mrkroot(chnkfile(p))))
 })
 
-test_that("digest_object routes to the same primitives", {
+test_that("dgstobj routes to the same primitives", {
   skip_if_no("digest")
   b <- rnd(300L, 55L)
-  # digest_object fingerprints an R OBJECT, so it hashes the object's
+  # dgstobj fingerprints an R OBJECT, so it hashes the object's
   # serialisation rather than the bytes of a raw vector -- that is the
   # difference between "these bytes" and "this value", and a list and a
   # data frame have no bytes of their own to hash
   ser <- serialize(b, NULL, version = 2L, xdr = TRUE)
-  expect_identical(digest_object(b, "sha256"), core_sha256(ser))
-  expect_identical(digest_object(b, "sha512"), core_sha512(ser))
-  expect_identical(digest_object(b, "blake2b"), core_blake2b(ser))
-  expect_identical(digest_object(b, "crc32"), core_crc32(ser))
+  expect_identical(dgstobj(b, "sha256"), csha256(ser))
+  expect_identical(dgstobj(b, "sha512"), csha512(ser))
+  expect_identical(dgstobj(b, "blake2b"), cblake2b(ser))
+  expect_identical(dgstobj(b, "crc32"), ccrc32(ser))
   # the serialisation is version- and endianness-pinned, so the same
   # value gives the same digest on any machine
-  expect_identical(digest_object(list(a = 1L, b = "x"), "sha256"),
-                   core_sha256(serialize(list(a = 1L, b = "x"), NULL,
+  expect_identical(dgstobj(list(a = 1L, b = "x"), "sha256"),
+                   csha256(serialize(list(a = 1L, b = "x"), NULL,
                                          version = 2L, xdr = TRUE)))
   # a key gives the KEYED digest rather than being accepted and ignored
-  expect_identical(digest_object(b, "sha256", key = "k"),
-                   core_hmac_sha256("k", ser))
-  expect_false(identical(digest_object(b, "sha256", key = "k"),
-                         digest_object(b, "sha256")))
-  expect_identical(digest_object(b, "blake2b", key = "k"),
-                   core_blake2b(ser, key = "k", length = 32L))
-  expect_false(identical(digest_object(b, "blake2b", key = "k"),
-                         digest_object(b, "blake2b")))
+  expect_identical(dgstobj(b, "sha256", key = "k"),
+                   chmac("k", ser))
+  expect_false(identical(dgstobj(b, "sha256", key = "k"),
+                         dgstobj(b, "sha256")))
+  expect_identical(dgstobj(b, "blake2b", key = "k"),
+                   cblake2b(ser, key = "k", length = 32L))
+  expect_false(identical(dgstobj(b, "blake2b", key = "k"),
+                         dgstobj(b, "blake2b")))
   # and an algorithm with no keyed form refuses the key instead of
   # answering an authentication request with a plain checksum
-  expect_error(digest_object(b, "crc32", key = "k"), "not supported")
-  expect_error(digest_object(b, "sha512", key = "k"), "not supported")
+  expect_error(dgstobj(b, "crc32", key = "k"), "not supported")
+  expect_error(dgstobj(b, "sha512", key = "k"), "not supported")
 })
 
 test_that("constant-time comparison still compares", {
   # a comparison that is safe against timing must still be correct
-  a <- core_sha256("x")
-  expect_true(core_digest_equal(a, a))
-  expect_false(core_digest_equal(a, core_sha256("y")))
+  a <- csha256("x")
+  expect_true(cdgsteq(a, a))
+  expect_false(cdgsteq(a, csha256("y")))
   # a length mismatch is unequal, not an error
-  expect_false(core_digest_equal(a, substring(a, 1L, 10L)))
-  expect_false(core_digest_equal(a, ""))
+  expect_false(cdgsteq(a, substring(a, 1L, 10L)))
+  expect_false(cdgsteq(a, ""))
   # differing in the last character only, which a short-circuit compare
   # would get right but a length-only compare would not
   b <- paste0(substring(a, 1L, 63L), if (substring(a, 64L) == "a") "b" else "a")
-  expect_false(core_digest_equal(a, b))
+  expect_false(cdgsteq(a, b))
 })

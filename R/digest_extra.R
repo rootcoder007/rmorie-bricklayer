@@ -11,7 +11,7 @@
 #' 180-4) in the compiled core and returns the digest as hex. A digest is a
 #' fingerprint: any change to the input gives a different value, so it pins
 #' a data file, a code string or a manifest. Use it over
-#' [core_sha256()]
+#' [csha256()]
 #' when a pin has to outlive the capsule by decades: the wider digest leaves
 #' more margin, including against a quantum adversary, for whom Grover's
 #' algorithm halves the effective preimage exponent.
@@ -20,9 +20,9 @@
 #' Character input is hashed element by element, each string as its bytes
 #' (UTF-8 text gives the UTF-8 bytes; no newline is added). \code{NA}
 #' elements give \code{NA}. Other atomic input (numbers, logicals) is first
-#' converted with \code{as.character()}, so \code{core_sha512(1)} is the
+#' converted with \code{as.character()}, so \code{csha512(1)} is the
 #' digest of the text \code{"1"}. A raw vector is hashed as one byte string.
-#' For files use [sha512_file()]. Pure computation; no side
+#' For files use [sha512file()]. Pure computation; no side
 #' effects.
 #'
 #' @param x A character vector (one digest per element) or a raw vector
@@ -31,27 +31,27 @@
 #'   per element for character input (\code{NA} for \code{NA}), length 1 for
 #'   raw input.
 #' @seealso
-#' [core_sha256()],
-#' [core_crc32()],
-#' [sha512_file()]
+#' [csha256()],
+#' [ccrc32()],
+#' [sha512file()]
 #' @examples
 #' # FIPS 180-4 test vector for "abc".
-#' core_sha512("abc")
+#' csha512("abc")
 #'
 #' # Vectorised over character input; NA stays NA.
-#' core_sha512(c("abc", "def", NA))
+#' csha512(c("abc", "def", NA))
 #'
 #' # Raw input hashes the bytes directly, and agrees with the character
 #' # form for the same bytes.
-#' identical(core_sha512("abc"), core_sha512(charToRaw("abc")))
+#' identical(csha512("abc"), csha512(charToRaw("abc")))
 #'
 #' # Twice the digest width of SHA-256.
-#' c(sha256 = nchar(core_sha256("abc")), sha512 = nchar(core_sha512("abc")))
+#' c(sha256 = nchar(csha256("abc")), sha512 = nchar(csha512("abc")))
 #'
 #' # numbers are hashed as their text
-#' identical(core_sha512(1), core_sha512("1"))
+#' identical(csha512(1), csha512("1"))
 #' @export
-core_sha512 <- function(x) {
+csha512 <- function(x) {
   .rmbl_no_fn(x = x)
   if (is.raw(x)) return(.Call(C_rmbl_sha512, x))
   x <- as.character(x)
@@ -73,7 +73,7 @@ core_sha512 <- function(x) {
 #' A CRC is NOT a cryptographic digest: it detects accidental corruption
 #' -- a truncated download, a flipped bit on disk -- but anyone can
 #' construct a different input with the same value, so it must never be
-#' used where [core_sha256()] is meant. It is
+#' used where [csha256()] is meant. It is
 #' here because it is far cheaper than SHA-256 over gigabyte-scale capsule
 #' members, which makes it the right first pass when the question is only
 #' "did this file arrive intact".
@@ -81,7 +81,7 @@ core_sha512 <- function(x) {
 #' Character input is checked element by element, as its bytes, with
 #' \code{NA} giving \code{NA}; other atomic input is converted with
 #' \code{as.character()}. A raw vector gives one checksum. For files use
-#' [crc32_file()].
+#' [crc32file()].
 #'
 #' @param x A character vector (one checksum per element) or a raw vector
 #'   (one checksum of all its bytes).
@@ -89,23 +89,23 @@ core_sha512 <- function(x) {
 #'   for character input, \code{NA} for \code{NA}; length 1 for raw input).
 #'   Returned as \code{double} rather than \code{integer} because values
 #'   above \code{2^31 - 1} are not representable as an R integer.
-#' @seealso [core_sha256()] for integrity against
+#' @seealso [csha256()] for integrity against
 #' tampering rather than accident.
 #' @examples
 #' # The standard check value: CRC-32("123456789") is 0xCBF43926.
-#' core_crc32("123456789")
-#' core_crc32("123456789") == 0xCBF43926
+#' ccrc32("123456789")
+#' ccrc32("123456789") == 0xCBF43926
 #'
 #' # The empty input has checksum zero.
-#' core_crc32("")
+#' ccrc32("")
 #'
 #' # Vectorised, and sensitive to a single changed byte.
-#' core_crc32(c("brick", "brack"))
+#' ccrc32(c("brick", "brack"))
 #'
 #' # Raw bytes work the same way.
-#' core_crc32(charToRaw("123456789"))
+#' ccrc32(charToRaw("123456789"))
 #' @export
-core_crc32 <- function(x) {
+ccrc32 <- function(x) {
   .rmbl_no_fn(x = x)
   if (is.raw(x)) return(.Call(C_rmbl_crc32, x))
   x <- as.character(x)
@@ -117,18 +117,18 @@ core_crc32 <- function(x) {
 
 #' Keyed digest and constant-time comparison (C backend)
 #'
-#' \code{core_hmac_sha256()} computes HMAC-SHA-256 (RFC 2104), a digest of a
-#' message under a secret key, and \code{core_digest_equal()} compares two
+#' \code{chmac()} computes HMAC-SHA-256 (RFC 2104), a digest of a
+#' message under a secret key, and \code{cdgsteq()} compares two
 #' digests without leaking through timing how much of them matched. Use the
 #' pair to sign a manifest or a capsule with a shared secret and to check a
 #' signature someone hands you.
 #'
 #' @details
-#' The difference from a plain [core_sha256()] is
+#' The difference from a plain [csha256()] is
 #' AUTHENTICATION -- anyone
 #' can recompute a SHA-256 and so anyone can forge one after editing a
 #' manifest, but only a holder of the key can produce a matching HMAC. This
-#' is what makes [capsule_sign()]'s \code{"hmac"} scheme
+#' is what makes [cpssign()]'s \code{"hmac"} scheme
 #' meaningful. The
 #' construction is
 #' \deqn{\mathrm{HMAC}(K, m) = H((K' \oplus opad) \| H((K' \oplus ipad) \| m))}
@@ -136,7 +136,7 @@ core_crc32 <- function(x) {
 #' hashed first when longer), \eqn{ipad} = \code{0x36} and \eqn{opad} =
 #' \code{0x5c} repeated. The results match the RFC 4231 test vectors.
 #'
-#' \code{core_digest_equal()} compares two digests in constant time (verified
+#' \code{cdgsteq()} compares two digests in constant time (verified
 #' under valgrind memcheck in CI with both inputs marked secret:
 #' \code{inst/ctcheck}, case \code{digest-equal}). Use it
 #' instead of \code{==} whenever the comparison is against a value an
@@ -146,7 +146,7 @@ core_crc32 <- function(x) {
 #' matters (\code{"ABC"} is not \code{"abc"}): lower-case both first if the
 #' digests may come in either case.
 #'
-#' Errors: \code{key} or \code{message} that is neither one non-NA string nor
+#' Errors: \code{key} or \code{msg} that is neither one non-NA string nor
 #' a raw vector; \code{a} or \code{b} that is not one non-NA string.
 #'
 #' @param key Secret key, as a length-1 character vector or a
@@ -154,40 +154,40 @@ core_crc32 <- function(x) {
 #'   per RFC 2104. Use at least 32 bytes of real entropy; against a quantum
 #'   adversary Grover halves the effective key strength, so a 256-bit key
 #'   retains a 128-bit margin.
-#' @param message Message to authenticate, as a length-1
+#' @param msg Message to authenticate, as a length-1
 #'   character vector (its bytes) or a raw vector.
 #' @param a,b Digests to compare, each a length-1 character vector.
-#' @return \code{core_hmac_sha256()} a length-1 character vector: 64
-#'   lowercase hex characters. \code{core_digest_equal()} a length-1 logical;
+#' @return \code{chmac()} a length-1 character vector: 64
+#'   lowercase hex characters. \code{cdgsteq()} a length-1 logical;
 #'   \code{FALSE} when the two differ in length.
 #' @references Krawczyk H, Bellare M, Canetti R (1997). HMAC: Keyed-Hashing
 #' for Message Authentication. RFC 2104.
 #'   \doi{10.17487/RFC2104}
 #' @examples
 #' # RFC 4231 test case 2.
-#' core_hmac_sha256("Jefe", "what do ya want for nothing?")
+#' chmac("Jefe", "what do ya want for nothing?")
 #'
 #' # The key changes the digest, so a manifest cannot be re-signed
 #' # without it.
-#' core_hmac_sha256("key-a", "manifest")
-#' core_hmac_sha256("key-b", "manifest")
+#' chmac("key-a", "manifest")
+#' chmac("key-b", "manifest")
 #'
 #' # Raw keys and messages are accepted.
-#' core_hmac_sha256(as.raw(rep(0x0b, 20)), "Hi There")
+#' chmac(as.raw(rep(0x0b, 20)), "Hi There")
 #'
 #' # Compare tags in constant time, never with ==.
-#' tag <- core_hmac_sha256("k", "m")
-#' core_digest_equal(tag, core_hmac_sha256("k", "m"))
-#' core_digest_equal(tag, core_hmac_sha256("k", "tampered"))
-#' core_digest_equal(tag, "too-short")
+#' tag <- chmac("k", "m")
+#' cdgsteq(tag, chmac("k", "m"))
+#' cdgsteq(tag, chmac("k", "tampered"))
+#' cdgsteq(tag, "too-short")
 #'
 #' # one message at a time
-#' try(core_hmac_sha256("k", c("m1", "m2")))
-#' @name rmbl_keyed_digest
+#' try(chmac("k", c("m1", "m2")))
+#' @name keyeddgst
 #' @export
-core_hmac_sha256 <- function(key, message) {
+chmac <- function(key, msg) {
   key <- .rmbl_text_input(key, "key")
-  message <- .rmbl_text_input(message, "message")
+  msg <- .rmbl_text_input(msg, "msg")
   if (!is.raw(key)) {
     key <- as.character(key)
     if (length(key) != 1L || is.na(key)) {
@@ -195,19 +195,19 @@ core_hmac_sha256 <- function(key, message) {
            call. = FALSE)
     }
   }
-  if (!is.raw(message)) {
-    message <- as.character(message)
-    if (length(message) != 1L || is.na(message)) {
-      stop("`message` must be a length-1 character vector or a raw vector",
+  if (!is.raw(msg)) {
+    msg <- as.character(msg)
+    if (length(msg) != 1L || is.na(msg)) {
+      stop("`msg` must be a length-1 character vector or a raw vector",
            call. = FALSE)
     }
   }
-  .Call(C_rmbl_hmac_sha256, key, message)
+  .Call(C_rmbl_hmac_sha256, key, msg)
 }
 
-#' @rdname rmbl_keyed_digest
+#' @rdname keyeddgst
 #' @export
-core_digest_equal <- function(a, b) {
+cdgsteq <- function(a, b) {
   .rmbl_no_fn(a = a, b = b)
   a <- as.character(a)
   b <- as.character(b)
@@ -227,11 +227,11 @@ core_digest_equal <- function(a, b) {
 #' a re-released file that differs, or to hand someone one chunk with a
 #' short proof that it is part of the pinned file.
 #'
-#' \code{merkle_root()} reduces the chunks to one root digest.
-#' \code{merkle_leaves()} returns the per-chunk digests the root is built
+#' \code{mrkroot()} reduces the chunks to one root digest.
+#' \code{mrklvs()} returns the per-chunk digests the root is built
 #' from, so two capsules can be diffed chunk by chunk.
-#' \code{merkle_proof()} returns the sibling digests on the path from one
-#' leaf to the root, and \code{merkle_verify()} replays that path.
+#' \code{mrkprf()} returns the sibling digests on the path from one
+#' leaf to the root, and \code{mrkvrf()} replays that path.
 #'
 #' @details
 #' Each leaf is the SHA-256 of the byte 0x00 followed by a chunk's bytes.
@@ -252,18 +252,18 @@ core_digest_equal <- function(a, b) {
 #' child digests, verifies as a "leaf" with the shorter proof from its
 #' parent. Roots and proofs made by 0.5.12 and earlier have no prefixes
 #' (\code{scheme = 1}, the weaker scheme). Pass \code{scheme = 1} to
-#' \code{merkle_root()}, \code{merkle_leaves()} or \code{merkle_proof()} to
-#' recompute such a root. \code{merkle_proof()} records its scheme in the
-#' proof, and \code{merkle_verify()} reads it from there unless
+#' \code{mrkroot()}, \code{mrklvs()} or \code{mrkprf()} to
+#' recompute such a root. \code{mrkprf()} records its scheme in the
+#' proof, and \code{mrkvrf()} reads it from there unless
 #' \code{scheme} is given. A proof with no recorded scheme was made by
 #' 0.5.12 or earlier: it is verified under scheme 1, with a warning. Pass
-#' \code{scheme = 2} to \code{merkle_verify()} to refuse such a proof,
+#' \code{scheme = 2} to \code{mrkvrf()} to refuse such a proof,
 #' since a scheme-1 check still accepts an interior node as a leaf.
 #'
 #' Character chunks are taken as their bytes, so a root computed from
 #' character input equals the root of the same bytes as raw vectors. The
-#' comparison in \code{merkle_verify()} is
-#' [core_digest_equal()]
+#' comparison in \code{mrkvrf()} is
+#' [cdgsteq()]
 #' (constant time, case-sensitive).
 #'
 #' Errors: \code{chunks} that is not character, raw or a list of raw vectors
@@ -275,86 +275,86 @@ core_digest_equal <- function(a, b) {
 #'
 #' @param chunks Chunk contents, in order: a character vector (one chunk per
 #'   element), a single raw vector (one chunk), or a list of raw vectors and
-#'   single strings, such as [chunk_file()] returns.
+#'   single strings, such as [chnkfile()] returns.
 #' @param index The chunk to prove, one whole number from 1 to the number of
 #'   chunks.
 #' @param leaf The chunk whose membership is being verified: one string or
 #'   one raw vector.
-#' @param proof The list returned by \code{merkle_proof()}.
+#' @param proof The list returned by \code{mrkprf()}.
 #' @param root The expected root digest, a 64-character hex string as
-#'   \code{merkle_root()} returns.
+#'   \code{mrkroot()} returns.
 #' @param scheme The hashing scheme: 2 (the default for building, with leaf
 #'   and node prefixes) or 1 (no prefixes, as 0.5.12 and earlier built
-#'   them). For \code{merkle_verify()}, \code{NULL} (the default) reads the
+#'   them). For \code{mrkvrf()}, \code{NULL} (the default) reads the
 #'   scheme from \code{proof}; a number requires that scheme, and a proof
 #'   that records a different one does not verify.
-#' @return \code{merkle_root()} a length-1 character vector (64 lowercase hex
-#'   characters), or \code{NA} for no chunks. \code{merkle_leaves()} a
+#' @return \code{mrkroot()} a length-1 character vector (64 lowercase hex
+#'   characters), or \code{NA} for no chunks. \code{mrklvs()} a
 #'   character vector of per-chunk digests, one per chunk
-#'   (\code{character(0)} for none). \code{merkle_proof()} a list with
+#'   (\code{character(0)} for none). \code{mrkprf()} a list with
 #'   \code{sibling} (character, the sibling digests from the leaf upward),
 #'   \code{side} (character, \code{"left"} or \code{"right"}: the side the
-#'   sibling is on) and \code{scheme} (integer). \code{merkle_verify()} a
+#'   sibling is on) and \code{scheme} (integer). \code{mrkvrf()} a
 #'   length-1 logical.
 #' @examples
 #' chunks <- c("row1,row2", "row3,row4", "row5,row6", "row7,row8")
 #'
-#' root <- merkle_root(chunks)
+#' root <- mrkroot(chunks)
 #' root
 #'
 #' # A single chunk's root is just its own leaf digest.
-#' merkle_root("only") == core_sha256(c(as.raw(0), charToRaw("only")))
+#' mrkroot("only") == csha256(c(as.raw(0), charToRaw("only")))
 #'
 #' # The leaves are the per-chunk digests, so a diff names the culprit.
-#' before <- merkle_leaves(chunks)
-#' after <- merkle_leaves(c(chunks[1:2], "row5,row6-EDITED", chunks[4]))
+#' before <- mrklvs(chunks)
+#' after <- mrklvs(c(chunks[1:2], "row5,row6-EDITED", chunks[4]))
 #' which(before != after)
 #'
 #' # Prove chunk 3 belongs, without holding chunks 1, 2 or 4.
-#' pr <- merkle_proof(chunks, 3)
+#' pr <- mrkprf(chunks, 3)
 #' pr
-#' merkle_verify(chunks[3], pr, root)
+#' mrkvrf(chunks[3], pr, root)
 #'
 #' # The proof fails for a chunk that was not in the tree.
-#' merkle_verify("row5,row6-EDITED", pr, root)
+#' mrkvrf("row5,row6-EDITED", pr, root)
 #'
 #' # Any change to any chunk changes the root.
-#' merkle_root(chunks) == merkle_root(c(chunks[1:3], "row7,row8 "))
+#' mrkroot(chunks) == mrkroot(c(chunks[1:3], "row7,row8 "))
 #'
 #' # an odd count: the last node is promoted, so its proof has one step
-#' merkle_proof(c("a", "b", "c"), 3)
+#' mrkprf(c("a", "b", "c"), 3)
 #'
 #' # an index past the end is refused
-#' try(merkle_proof(chunks, 5))
+#' try(mrkprf(chunks, 5))
 #'
 #' # a root pinned by 0.5.12 or earlier recomputes with scheme = 1, and its
 #' # proofs (which record no scheme) verify with a warning
-#' old <- merkle_proof(chunks, 3, scheme = 1)
+#' old <- mrkprf(chunks, 3, scheme = 1)
 #' old$scheme <- NULL
 #' withCallingHandlers(
-#'   merkle_verify(chunks[3], old, merkle_root(chunks, scheme = 1)),
+#'   mrkvrf(chunks[3], old, mrkroot(chunks, scheme = 1)),
 #'   warning = function(w) invokeRestart("muffleWarning"))
-#' @name rmbl_merkle
+#' @name mrk
 #' @export
-merkle_root <- function(chunks, scheme = 2L) {
+mrkroot <- function(chunks, scheme = 2L) {
   chunks <- .rmbl_chunk_bytes(chunks)
   scheme <- .rmbl_merkle_scheme(scheme)
   if (length(chunks) == 0L) return(NA_character_)
   .Call(C_rmbl_merkle_root, chunks, scheme)
 }
 
-#' @rdname rmbl_merkle
+#' @rdname mrk
 #' @export
-merkle_leaves <- function(chunks, scheme = 2L) {
+mrklvs <- function(chunks, scheme = 2L) {
   chunks <- .rmbl_chunk_bytes(chunks)
   scheme <- .rmbl_merkle_scheme(scheme)
   if (length(chunks) == 0L) return(character(0))
   .Call(C_rmbl_merkle_leaves, chunks, scheme)
 }
 
-#' @rdname rmbl_merkle
+#' @rdname mrk
 #' @export
-merkle_proof <- function(chunks, index, scheme = 2L) {
+mrkprf <- function(chunks, index, scheme = 2L) {
   chunks <- .rmbl_chunk_bytes(chunks)
   scheme <- .rmbl_merkle_scheme(scheme)
   index <- .rmbl_num(index, "index", integer = TRUE)
@@ -367,16 +367,16 @@ merkle_proof <- function(chunks, index, scheme = 2L) {
   out
 }
 
-#' @rdname rmbl_merkle
+#' @rdname mrk
 #' @export
-merkle_verify <- function(leaf, proof, root, scheme = NULL) {
+mrkvrf <- function(leaf, proof, root, scheme = NULL) {
   .rmbl_no_fn(root = root)
   leaf <- .rmbl_chunk_bytes(leaf)
   if (length(leaf) != 1L) {
     stop("`leaf` must be a single chunk", call. = FALSE)
   }
   if (!is.list(proof) || !all(c("sibling", "side") %in% names(proof))) {
-    stop("`proof` must be the list returned by merkle_proof()", call. = FALSE)
+    stop("`proof` must be the list returned by mrkprf()", call. = FALSE)
   }
   sib <- as.character(proof$sibling)
   side <- as.character(proof$side)
@@ -402,16 +402,16 @@ merkle_verify <- function(leaf, proof, root, scheme = NULL) {
   # scheme 2 prefixes a leaf with 0x00 and a node with 0x01 (RFC 6962)
   lp <- if (scheme == 2L) as.raw(0L) else raw(0)
   np <- if (scheme == 2L) as.raw(1L) else raw(0)
-  node <- core_sha256(c(lp, leaf[[1L]]))
+  node <- csha256(c(lp, leaf[[1L]]))
   for (i in seq_along(sib)) {
     pair <- if (identical(side[i], "right")) {
       paste0(node, sib[i])
     } else {
       paste0(sib[i], node)
     }
-    node <- core_sha256(c(np, .rmbl_hex_to_raw(pair)))
+    node <- csha256(c(np, .rmbl_hex_to_raw(pair)))
   }
-  core_digest_equal(node, as.character(root))
+  cdgsteq(node, as.character(root))
 }
 
 # The Merkle hashing scheme: 2 (leaf and node prefixes, 0.5.13 on) or 1
@@ -429,7 +429,7 @@ merkle_verify <- function(leaf, proof, root, scheme = NULL) {
 # A chunk is a byte sequence, and the Merkle functions used to take it as
 # a character vector measured with strlen. That forbade a zero byte in a
 # chunk and, worse, silently accepted a raw vector by coercing it -- a
-# list of raw vectors deparses, so `merkle_root(list(charToRaw("a")))`
+# list of raw vectors deparses, so `mrkroot(list(charToRaw("a")))`
 # hashed the TEXT "as.raw(0x61)" rather than the byte 0x61, and reported
 # a confident digest of the wrong thing.
 #
@@ -474,15 +474,15 @@ merkle_verify <- function(leaf, proof, root, scheme = NULL) {
 #' Split a file into fixed-size chunks
 #'
 #' Reads a file as bytes and returns it as consecutive chunks of a fixed
-#' size, ready for [merkle_root()],
-#' [merkle_leaves()] and
-#' [merkle_proof()]. Use it to pin a large data file as a
+#' size, ready for [mrkroot()],
+#' [mrklvs()] and
+#' [mrkprf()]. Use it to pin a large data file as a
 #' Merkle root, so
 #' that a later change can be traced to the chunk that moved.
 #'
 #' @details
 #' The file is read sequentially with \code{readBin()} in pieces of
-#' \code{chunk_bytes}; every chunk has exactly that many bytes except the
+#' \code{chnkbytes}; every chunk has exactly that many bytes except the
 #' last, which holds the remainder. All chunks are held in memory at once,
 #' so the memory used is about the size of the file. The default 1 MiB
 #' chunk is a compromise: smaller chunks localise a change more precisely
@@ -491,29 +491,29 @@ merkle_verify <- function(leaf, proof, root, scheme = NULL) {
 #' length localise to one chunk.
 #'
 #' Errors: \code{path} that does not name an existing file (or names a
-#' directory); \code{chunk_bytes} that is not a positive whole number.
+#' directory); \code{chnkbytes} that is not a positive whole number.
 #'
 #' @param path Path to an existing file, a single string.
-#' @param chunk_bytes Chunk size in bytes, a positive whole number (default
+#' @param chnkbytes Chunk size in bytes, a positive whole number (default
 #'   1048576, i.e. 1 MiB).
 #' @return A list of raw vectors, in file order. A zero-length file gives
 #'   an empty list. Chunks are returned as bytes rather than strings because
 #'   a file is bytes: an R string cannot hold a zero byte, so a character
 #'   chunk could not represent an arbitrary binary file at all.
 #' @seealso
-#' [merkle_root()],
-#' [sha512_file()]
+#' [mrkroot()],
+#' [sha512file()]
 #' @examples
 #' p <- tempfile()
 #' writeLines(rep("some capsule content", 50), p)
 #'
 #' # One small chunk size to show the splitting.
-#' ch <- chunk_file(p, chunk_bytes = 128)
+#' ch <- chnkfile(p, chnkbytes = 128)
 #' length(ch)
 #' lengths(ch)
 #'
 #' # The chunks pin the file as a Merkle root.
-#' merkle_root(ch)
+#' mrkroot(ch)
 #'
 #' # They are the file's bytes, so they concatenate back to it exactly.
 #' identical(unlist(ch), readBin(p, "raw", file.size(p)))
@@ -523,17 +523,17 @@ merkle_verify <- function(leaf, proof, root, scheme = NULL) {
 #' b[300] <- as.raw(0x58)
 #' q <- tempfile()
 #' writeBin(b, q)
-#' which(merkle_leaves(ch) != merkle_leaves(chunk_file(q, chunk_bytes = 128)))
+#' which(mrklvs(ch) != mrklvs(chnkfile(q, chnkbytes = 128)))
 #'
 #' # a chunk size must be positive
-#' try(chunk_file(p, chunk_bytes = 0))
+#' try(chnkfile(p, chnkbytes = 0))
 #' unlink(c(p, q))
 #' @export
-chunk_file <- function(path, chunk_bytes = 1048576L) {
+chnkfile <- function(path, chnkbytes = 1048576L) {
   path <- .rmbl_file1(path, "path")
-  chunk_bytes <- .rmbl_num(chunk_bytes, "chunk_bytes", integer = TRUE)
-  if (is.na(chunk_bytes) || chunk_bytes < 1L) {
-    stop("`chunk_bytes` must be a positive integer", call. = FALSE)
+  chnkbytes <- .rmbl_num(chnkbytes, "chnkbytes", integer = TRUE)
+  if (is.na(chnkbytes) || chnkbytes < 1L) {
+    stop("`chnkbytes` must be a positive integer", call. = FALSE)
   }
   size <- file.info(path)$size
   if (is.na(size) || size == 0) return(list())
@@ -541,74 +541,74 @@ chunk_file <- function(path, chunk_bytes = 1048576L) {
   on.exit(close(con), add = TRUE)
   out <- list()
   repeat {
-    bytes <- readBin(con, "raw", n = chunk_bytes)
+    bytes <- readBin(con, "raw", n = chnkbytes)
     if (length(bytes) == 0L) break
     out[[length(out) + 1L]] <- bytes
-    if (length(bytes) < chunk_bytes) break
+    if (length(bytes) < chnkbytes) break
   }
   out
 }
 
 #' SHA-512 and CRC-32 of a file
 #'
-#' \code{sha512_file()} returns the SHA-512 digest of a file's bytes and
-#' \code{crc32_file()} its CRC-32 checksum. Use the first to pin a data file
+#' \code{sha512file()} returns the SHA-512 digest of a file's bytes and
+#' \code{crc32file()} its CRC-32 checksum. Use the first to pin a data file
 #' for the long term and the second as a fast check that a large file
 #' arrived intact (it is the checksum zip archives record). The SHA-256
-#' counterpart is [sha256_file()].
+#' counterpart is [sha256file()].
 #'
 #' @details
-#' The file is read in blocks of \code{block_bytes} with \code{readBin()},
+#' The file is read in blocks of \code{blkbytes} with \code{readBin()},
 #' the blocks are joined into one raw vector, and the digest of that vector
-#' is computed with [core_sha512()] or
-#' [core_crc32()]. The whole file is
+#' is computed with [csha512()] or
+#' [ccrc32()]. The whole file is
 #' therefore held in memory once: memory use grows with the file size.
-#' \code{block_bytes} affects only the reading, never the result. An empty
+#' \code{blkbytes} affects only the reading, never the result. An empty
 #' file gives the digest of no bytes (\code{cf83e135...} for SHA-512, 0 for
 #' CRC-32).
 #'
 #' Errors: \code{path} that does not name an existing file (or names a
-#' directory); \code{block_bytes} that is not a positive whole number.
+#' directory); \code{blkbytes} that is not a positive whole number.
 #'
 #' @param path Path to an existing file, a single string.
-#' @param block_bytes Read size in bytes, a positive whole number (default
+#' @param blkbytes Read size in bytes, a positive whole number (default
 #'   1048576). Affects speed only, never the result.
-#' @return \code{sha512_file()}: a length-1 character vector, 128 lowercase hex
-#'   characters. \code{crc32_file()}: a length-1 numeric (double) checksum
+#' @return \code{sha512file()}: a length-1 character vector, 128 lowercase hex
+#'   characters. \code{crc32file()}: a length-1 numeric (double) checksum
 #'   between 0 and \code{2^32 - 1}.
 #' @examples
 #' p <- tempfile()
 #' writeLines("capsule payload", p)
 #'
-#' sha512_file(p)
-#' crc32_file(p)
+#' sha512file(p)
+#' crc32file(p)
 #'
 #' # The block size is a speed knob and cannot change the digest.
-#' identical(sha512_file(p, 16), sha512_file(p, 1048576))
+#' identical(sha512file(p, 16), sha512file(p, 1048576))
 #'
 #' # the same as hashing the bytes directly
-#' identical(sha512_file(p), core_sha512(readBin(p, "raw", file.size(p))))
+#' identical(sha512file(p), csha512(readBin(p, "raw", file.size(p))))
 #'
 #' # a missing file is an error
-#' try(crc32_file(file.path(tempdir(), "no-such-file")))
+#' try(crc32file(file.path(tempdir(), "no-such-file")))
 #' unlink(p)
-#' @name rmbl_file_digest
+#' @name filedgst
 #' @export
-sha512_file <- function(path, block_bytes = 1048576L) {
-  core_sha512(.rmbl_read_all_raw(path, block_bytes))
+sha512file <- function(path, blkbytes = 1048576L) {
+  csha512(.rmbl_read_all_raw(path, blkbytes))
 }
 
-#' @rdname rmbl_file_digest
+#' @rdname filedgst
 #' @export
-crc32_file <- function(path, block_bytes = 1048576L) {
-  core_crc32(.rmbl_read_all_raw(path, block_bytes))
+crc32file <- function(path, blkbytes = 1048576L) {
+  ccrc32(.rmbl_read_all_raw(path, blkbytes))
 }
 
 .rmbl_read_all_raw <- function(path, block_bytes = 1048576L) {
   path <- .rmbl_file1(path, "path")
   block_bytes <- .rmbl_num(block_bytes, "block_bytes", integer = TRUE)
   if (is.na(block_bytes) || block_bytes < 1L) {
-    stop("`block_bytes` must be a positive integer", call. = FALSE)
+    stop("`blkbytes` must be a positive integer", call. = FALSE)
   }
   con <- file(path, "rb")
   on.exit(close(con), add = TRUE)

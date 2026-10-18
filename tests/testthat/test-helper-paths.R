@@ -9,7 +9,7 @@
 # than none, because it is relied on exactly when nothing else works.
 
 test_that("the pure-R SHA-256 agrees with the compiled core", {
-  # sha256_file() uses the compiled core inside the package and this
+  # sha256file() uses the compiled core inside the package and this
   # pure-R FIPS 180-4 implementation when a capsule bundle is sourced
   # standalone. The two MUST agree, or a digest pinned by one would fail
   # to verify under the other.
@@ -18,29 +18,29 @@ test_that("the pure-R SHA-256 agrees with the compiled core", {
                  "café 中文")) {
     bytes <- charToRaw(s)
     expect_equal(rmoriebricklayer:::.rmbl_sha256_hex(bytes),
-                 core_sha256(bytes))
+                 csha256(bytes))
   }
   # the published NIST vector, through the pure-R path
   expect_equal(rmoriebricklayer:::.rmbl_sha256_hex(charToRaw("abc")),
     "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
   # and over a multi-block input, which exercises the padding
   long <- charToRaw(paste(rep("abcdefghij", 30), collapse = ""))
-  expect_equal(rmoriebricklayer:::.rmbl_sha256_hex(long), core_sha256(long))
+  expect_equal(rmoriebricklayer:::.rmbl_sha256_hex(long), csha256(long))
   expect_match(rmoriebricklayer:::.rmbl_sha256_hex(charToRaw("x")),
                "^[0-9a-f]{64}$")
 
-  # sha256_file() routes to one of them and must match either way
+  # sha256file() routes to one of them and must match either way
   p <- tempfile()
   on.exit(unlink(p), add = TRUE)
   writeBin(charToRaw("capsule payload"), p)
-  expect_equal(sha256_file(p), core_sha256(charToRaw("capsule payload")))
-  expect_equal(sha256_file(p),
+  expect_equal(sha256file(p), csha256(charToRaw("capsule payload")))
+  expect_equal(sha256file(p),
                rmoriebricklayer:::.rmbl_sha256_hex(
                  charToRaw("capsule payload")))
 })
 
 test_that("the ASCII transliteration works without stringi", {
-  # to_ascii() prefers stringi and falls back to this when it is absent.
+  # toascii() prefers stringi and falls back to this when it is absent.
   # Both must return pure 7-bit ASCII.
   fb <- rmoriebricklayer:::.to_ascii_fallback
   expect_equal(fb("plain"), "plain")
@@ -51,29 +51,29 @@ test_that("the ASCII transliteration works without stringi", {
   # vectorised, and NA-safe
   expect_length(fb(c("a", "b", NA)), 3L)
 
-  # to_ascii() itself guarantees 7-bit output on whichever path it took
+  # toascii() itself guarantees 7-bit output on whichever path it took
   for (s in c("plain", "café", "中文", "Анг")) {
-    expect_false(grepl("[^ -~]", to_ascii(s)))
+    expect_false(grepl("[^ -~]", toascii(s)))
   }
-  expect_equal(to_ascii("plain name"), "plain name")
+  expect_equal(toascii("plain name"), "plain name")
   # NA becomes empty rather than the string "NA"
-  expect_equal(to_ascii(NA), "")
+  expect_equal(toascii(NA), "")
 
-  # ascii_fallback() leaves valid text alone and transliterates the rest
-  expect_equal(ascii_fallback("plain name"), "plain name")
-  expect_equal(ascii_fallback(c("café", "resume"), force = TRUE)[2],
+  # asciifb() leaves valid text alone and transliterates the rest
+  expect_equal(asciifb("plain name"), "plain name")
+  expect_equal(asciifb(c("café", "resume"), force = TRUE)[2],
                "resume")
   expect_false(grepl("[^ -~]",
-                     ascii_fallback("café", force = TRUE)))
+                     asciifb("café", force = TRUE)))
 
   # INVALID UTF-8: a byte sequence that is not valid text at all. This is
   # the branch that fires on a file whose encoding was mislabelled.
   broken <- rawToChar(as.raw(c(0x61, 0xff, 0xfe, 0x62)))
   expect_false(validUTF8(broken))
-  fixed <- ascii_fallback(broken)
+  fixed <- asciifb(broken)
   expect_false(grepl("[^ -~]", fixed))
   # valid elements beside a broken one are untouched
-  mixed <- ascii_fallback(c("keep me", broken))
+  mixed <- asciifb(c("keep me", broken))
   expect_equal(mixed[1], "keep me")
   expect_false(grepl("[^ -~]", mixed[2]))
 })
@@ -97,7 +97,7 @@ test_that("the JSON reader accepts a path, a string and a URL", {
   # build takes.
   seen <- NULL
   testthat::local_mocked_bindings(
-    bricklayer_fetch = function(url, dest, ...) {
+    blfetch = function(url, dest, ...) {
       seen <<- url
       writeLines('{"from":"url"}', dest)
       invisible(dest)
@@ -107,7 +107,7 @@ test_that("the JSON reader accepts a path, a string and a URL", {
   expect_equal(u$from, "url")
   expect_equal(seen, "https://example.org/x.json")
   # plain http only with the explicit option (the URL gate refuses it otherwise)
-  old <- options(rmoriebricklayer.allow_http = TRUE)
+  old <- options(rmoriebricklayer.allowhttp = TRUE)
   on.exit(options(old), add = TRUE)
   v <- rmoriebricklayer:::.rmbl_read_json("http://example.org/y.json")
   expect_equal(v$from, "url")
@@ -119,10 +119,10 @@ test_that("the run summary includes the package versions when recorded", {
     d <- file.path(tempdir(), paste0("rmbl_sum_", sample.int(1e6, 1)))
     dir.create(d, showWarnings = FALSE)
     on.exit(unlink(d, recursive = TRUE), add = TRUE)
-    m <- make_manifest(meta, environment = FALSE)
+    m <- mkmnf(meta, env = FALSE)
     utils::capture.output({
-      m <- record(m, "a", observed = 1, expected = 1)
-      write_summary_txt(m, d, paths = list(capsule = d))
+      m <- recrd(m, "a", obs = 1, expd = 1)
+      wrsmrytxt(m, d, paths = list(capsule = d))
     })
     f <- list.files(d, pattern = "[.]txt$", full.names = TRUE)
     paste(readLines(f[1], warn = FALSE), collapse = "\n")

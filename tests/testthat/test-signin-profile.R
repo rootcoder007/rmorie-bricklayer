@@ -108,36 +108,36 @@ test_that("the profile goes with the sign-in request, and a bad address stops be
       posted[[length(posted) + 1L]] <<- list(url = url, payload = payload)
       list(status = 503L, json = list(error = "down"), error = "")
     })
-  expect_error(bricklayer_llm_login(email = "not-an-address"), "is not an email address")
+  expect_error(dlogin(email = "not-an-address"), "is not an email address")
   expect_length(posted, 0L)
-  expect_error(bricklayer_llm_login(email = "ada@example.org"), "503")
+  expect_error(dlogin(email = "ada@example.org"), "503")
   expect_identical(posted[[1L]]$payload, list(email = "ada@example.org", accept_terms = "2026-10-16", name = "Ada"))
-  expect_error(bricklayer_llm_login(open_browser = FALSE), "503")
+  expect_error(dlogin(openbro = FALSE), "503")
   expect_match(posted[[2L]]$url, "/device/code$")
   expect_identical(posted[[2L]]$payload, list(accept_terms = "2026-10-16", name = "Ada"))
 })
 
 test_that("rmbl login passes the terms and profile flags through", {
   got <- NULL
-  local_mocked_bindings(bricklayer_llm_login = function(...) {
+  local_mocked_bindings(dlogin = function(...) {
     got <<- list(...)
     invisible("k")
   })
   buf <- character()
-  st <- bricklayer_cli(c("login", "--accept-terms", "--name", "Ada Lovelace", "--affiliation", "Uni",
+  st <- blcli(c("login", "--accept-terms", "--name", "Ada Lovelace", "--affiliation", "Uni",
                          "--reason", "Thesis chapter on court delays.", "--restricted",
                          "--supervisor-name", "Dr B", "--supervisor-role", "chair",
                          "--supervisor-email", "b@uni.example"), out = function(x) buf <<- c(buf, x))
   expect_identical(st, 0L)
-  expect_true(got$accept_terms)
-  expect_identical(got[c("name", "affiliation", "purpose", "supervisor_name", "supervisor_role", "supervisor_email")],
-                   list(name = "Ada Lovelace", affiliation = "Uni", purpose = "Thesis chapter on court delays.",
-                        supervisor_name = "Dr B", supervisor_role = "chair", supervisor_email = "b@uni.example"))
-  expect_true(got$restricted)
-  bricklayer_cli(c("login", "--no-browser"), out = function(x) NULL)
-  expect_false(got$accept_terms)
-  expect_null(got$restricted)
+  expect_true(got$accter)
+  expect_identical(got[c("name", "affil", "purp", "supnm", "suprole", "supemail")],
+                   list(name = "Ada Lovelace", affil = "Uni", purp = "Thesis chapter on court delays.",
+                        supnm = "Dr B", suprole = "chair", supemail = "b@uni.example"))
+  expect_true(got$restr)
+  blcli(c("login", "--no-browser"), out = function(x) NULL)
+  expect_false(got$accter)
+  expect_null(got$restr)
   usage <- character()
-  bricklayer_cli(c("login", "--help"), out = function(x) usage <<- c(usage, x))
+  blcli(c("login", "--help"), out = function(x) usage <<- c(usage, x))
   expect_match(paste(usage, collapse = ""), "--accept-terms")
 })

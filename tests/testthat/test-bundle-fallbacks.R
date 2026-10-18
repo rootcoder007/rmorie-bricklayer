@@ -18,15 +18,15 @@ test_that(".rmbl_column_stats base-R branch matches the compiled kernels", {
   expect_equal(one$median, 3)
 })
 
-test_that(".rmbl_sha256_bytes pure-R branch matches core_sha256", {
+test_that(".rmbl_sha256_bytes pure-R branch matches csha256", {
   bytes <- charToRaw("{\"a\":1,\"b\":[1,2,3]}")
   expect_identical(.rmbl_sha256_bytes(bytes, native = FALSE),
                    .rmbl_sha256_bytes(bytes, native = TRUE))
   expect_identical(.rmbl_sha256_bytes(bytes, native = FALSE),
-                   core_sha256(bytes))
+                   csha256(bytes))
   m <- list(name = "x", version = "1", files = list())
-  expect_identical(manifest_digest(m),
-                   .rmbl_sha256_bytes(charToRaw(manifest_canonical(m)),
+  expect_identical(mnfdgst(m),
+                   .rmbl_sha256_bytes(charToRaw(mnfcanon(m)),
                                       native = FALSE))
 })
 

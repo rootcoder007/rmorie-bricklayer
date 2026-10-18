@@ -1,22 +1,22 @@
 # Review of 02a38be (PR #56, 0.5.12): one test per finding, the reviewer's reproducers as the gate.
 
-# ---- C1, C2: hurwitz_zeta below s = 1 -----------------------------------------------------------
+# ---- C1, C2: hurwzeta below s = 1 -----------------------------------------------------------
 
-test_that("C1: hurwitz_zeta is accurate for s <= -5 (exact Bernoulli values, exact zeros)", {
+test_that("C1: hurwzeta is accurate for s <= -5 (exact Bernoulli values, exact zeros)", {
   # -B_{n+1}/(n+1) for the Riemann zeta at negative integers
-  expect_equal(hurwitz_zeta(-7) / (1 / 240), 1, tolerance = 1e-13)
-  expect_equal(hurwitz_zeta(-11) / (691 / 32760), 1, tolerance = 1e-13)
-  expect_equal(hurwitz_zeta(-15) / (3617 / 8160), 1, tolerance = 1e-13)
+  expect_equal(hurwzeta(-7) / (1 / 240), 1, tolerance = 1e-13)
+  expect_equal(hurwzeta(-11) / (691 / 32760), 1, tolerance = 1e-13)
+  expect_equal(hurwzeta(-15) / (3617 / 8160), 1, tolerance = 1e-13)
   # the trivial zeros stay exact, and zeta(-200, 2) = zeta(-200) - 1 = -1
-  expect_identical(hurwitz_zeta(-60), 0)
-  expect_identical(hurwitz_zeta(-200, 2), -1)
+  expect_identical(hurwzeta(-60), 0)
+  expect_identical(hurwzeta(-200, 2), -1)
   # 20-digit references from mpmath (zeta(s, q), mp.dps = 50)
   ref <- rbind(c(-9.5, 1, -0.0066721722964666407568), c(-5.5, 1, -0.002671458019899224599),
                c(-6, 0.3, -0.0035246000000000000833), c(-7.25, 0.5, -0.0040118264434775960983),
                c(-12.5, 3.7, -247390.33662012577855), c(-20, 0.1, 49.498996835970336185),
                c(-9.5, 57.3, -250558246982887252.3), c(-30.5, 0.9, 209205876.6885998616))
   for (i in seq_len(nrow(ref))) {
-    expect_equal(hurwitz_zeta(ref[i, 1], ref[i, 2]) / ref[i, 3], 1, tolerance = 1e-12,
+    expect_equal(hurwzeta(ref[i, 1], ref[i, 2]) / ref[i, 3], 1, tolerance = 1e-12,
                  info = sprintf("s = %g, q = %g", ref[i, 1], ref[i, 2]))
   }
 })
@@ -28,17 +28,17 @@ test_that("C1: -5 < s < 1 is accurate too (the Euler-Maclaurin shift lost 1e-6 n
                c(-2.5, 0.25, -0.008038096082003843471484853), c(-1, 1, -1 / 12), c(0.5, 1, -1.460354508809586812889499),
                c(0.25, 1.7, -1.536611235751201615426241))
   for (i in seq_len(nrow(ref))) {
-    expect_equal(hurwitz_zeta(ref[i, 1], ref[i, 2]) / ref[i, 3], 1, tolerance = 1e-12,
+    expect_equal(hurwzeta(ref[i, 1], ref[i, 2]) / ref[i, 3], 1, tolerance = 1e-12,
                  info = sprintf("s = %g, q = %g", ref[i, 1], ref[i, 2]))
   }
   # zeta(-n, q) = -B_{n+1}(q) / (n + 1) exactly, small q included: zeta(-4, 1e-8) = q / 30 to first order
-  expect_equal(hurwitz_zeta(-4, 1e-8) / 3.3333333333333333e-10, 1, tolerance = 1e-12)
-  expect_identical(hurwitz_zeta(0, 0.3), 0.5 - 0.3)
+  expect_equal(hurwzeta(-4, 1e-8) / 3.3333333333333333e-10, 1, tolerance = 1e-12)
+  expect_identical(hurwzeta(0, 0.3), 0.5 - 0.3)
 })
 
 test_that("C2: a tiny q keeps its term (q + (n - 1), not (q + n) - 1)", {
-  expect_equal(hurwitz_zeta(0.5, 1e-20) / 9999999998.5396454912, 1, tolerance = 1e-12)
-  expect_equal(hurwitz_zeta(0.5, 1e-12) / 999998.53964549118911, 1, tolerance = 1e-12)
+  expect_equal(hurwzeta(0.5, 1e-20) / 9999999998.5396454912, 1, tolerance = 1e-12)
+  expect_equal(hurwzeta(0.5, 1e-12) / 999998.53964549118911, 1, tolerance = 1e-12)
 })
 
 # ---- C3: compressed exposure files are checked to be complete -------------------------------------
@@ -69,9 +69,9 @@ c3_join <- function(..., ext = ".csv.gz") {
 test_that("C3: a truncated, damaged or padded gzip is refused, a whole one (several members too) is read", {
   rows <- c3_rows()
   gz <- c3_write(gzfile, rows, ".csv.gz")
-  expect_identical(verify_pollution("pm25", exposure_csv = gz)$status, "ok")
+  expect_identical(vrfpol("pm25", expcsv = gz)$status, "ok")
   for (frac in c(0.1, 0.5, 0.9, 0.99)) {
-    v <- verify_pollution("pm25", exposure_csv = c3_cut(gz, frac, ".csv.gz"))
+    v <- vrfpol("pm25", expcsv = c3_cut(gz, frac, ".csv.gz"))
     expect_identical(v$status, "error")
     expect_match(v$error, "is truncated")
   }
@@ -79,14 +79,14 @@ test_that("C3: a truncated, damaged or padded gzip is refused, a whole one (seve
   b[length(b) - 6L] <- xor(b[length(b) - 6L], as.raw(1))
   flip <- tempfile(fileext = ".csv.gz")
   writeBin(b, flip)
-  expect_match(verify_pollution("pm25", exposure_csv = flip)$error, "CRC-32")
-  expect_match(verify_pollution("pm25", exposure_csv = c3_join(gz, charToRaw("tail")))$error, "bytes after the end")
-  expect_identical(verify_pollution("pm25", exposure_csv = c3_join(gz, as.raw(rep(0, 512))))$status, "ok")
+  expect_match(vrfpol("pm25", expcsv = flip)$error, "CRC-32")
+  expect_match(vrfpol("pm25", expcsv = c3_join(gz, charToRaw("tail")))$error, "bytes after the end")
+  expect_identical(vrfpol("pm25", expcsv = c3_join(gz, as.raw(rep(0, 512))))$status, "ok")
   # two members (gzip -c a b > c, data.table::fwrite): read whole, and refused when cut
   two <- c3_join(c3_write(gzfile, rows[1:10001], ".gz"), c3_write(gzfile, rows[10002:20001], ".gz"))
   d <- rmoriebricklayer:::.pollution_read_csv(two)
   expect_identical(nrow(d), 20000L)
-  expect_match(verify_pollution("pm25", exposure_csv = c3_cut(two, 0.97, ".csv.gz"))$error, "is truncated")
+  expect_match(vrfpol("pm25", expcsv = c3_cut(two, 0.97, ".csv.gz"))$error, "is truncated")
   expect_error(rmoriebricklayer:::.rmbl_decompress_checked(c3_join(charToRaw("not gzip"))), NA)
 })
 
@@ -94,11 +94,11 @@ test_that("C3: a truncated bzip2 or xz file is refused, a whole one is read", {
   rows <- c3_rows()
   bz <- c3_write(bzfile, rows, ".csv.bz2")
   xz <- c3_write(xzfile, rows, ".csv.xz")
-  expect_identical(verify_pollution("pm25", exposure_csv = bz)$status, "ok")
-  expect_identical(verify_pollution("pm25", exposure_csv = xz)$status, "ok")
+  expect_identical(vrfpol("pm25", expcsv = bz)$status, "ok")
+  expect_identical(vrfpol("pm25", expcsv = xz)$status, "ok")
   for (frac in c(0.25, 0.99)) {
-    expect_match(verify_pollution("pm25", exposure_csv = c3_cut(bz, frac, ".csv.bz2"))$error, "end-of-stream marker")
-    expect_match(verify_pollution("pm25", exposure_csv = c3_cut(xz, frac, ".csv.xz"))$error, "truncated or damaged")
+    expect_match(vrfpol("pm25", expcsv = c3_cut(bz, frac, ".csv.bz2"))$error, "end-of-stream marker")
+    expect_match(vrfpol("pm25", expcsv = c3_cut(xz, frac, ".csv.xz"))$error, "truncated or damaged")
   }
   short <- tempfile()
   writeBin(charToRaw("BZh9"), short)
@@ -116,11 +116,11 @@ test_that("C3: the decompressed size is capped while it is read", {
     con <- fun(f, "wb")
     for (i in 1:20) writeBin(z, con)
     close(con)
-    withr::with_options(list(rmoriebricklayer.max_csv_bytes = 1e5), {
+    withr::with_options(list(rmoriebricklayer.maxcsvbytes = 1e5), {
       expect_error(rmoriebricklayer:::.rmbl_decompress_checked(f), "more than the size limit")
     })
   }
-  withr::with_options(list(rmoriebricklayer.max_csv_bytes = -1),
+  withr::with_options(list(rmoriebricklayer.maxcsvbytes = -1),
                       expect_error(rmoriebricklayer:::.rmbl_decompress_checked(bomb), "non-negative number"))
   expect_error(.Call(rmoriebricklayer:::C_rmbl_gunzip_checked, "x", 10), "raw vector")
   expect_error(.Call(rmoriebricklayer:::C_rmbl_gunzip_checked, as.raw(1:3), NA_real_), "non-negative number")
@@ -131,22 +131,22 @@ test_that("C3: the decompressed size is capped while it is read", {
 
 # ---- C4: the rate check holds whatever unit the rate came in ----------------------------------
 
-test_that("C4: a rate below one per 100k needs rare_outcome = TRUE, whatever baseline_rate_per is", {
-  args <- list("pm25", exposure_mean = 25, exposure_prevalence = 1)
-  trap <- do.call(verify_pollution, c(args, baseline_rate = 0.008, baseline_rate_per = 1e5))
+test_that("C4: a rate below one per 100k needs rare = TRUE, whatever basrateper is", {
+  args <- list("pm25", expomean = 25, expoprev = 1)
+  trap <- do.call(vrfpol, c(args, brate = 0.008, basrateper = 1e5))
   expect_identical(trap$status, "assumption_failure")
-  expect_match(pollution_report_text(trap), "baseline_rate_per = 1")
+  expect_match(polrpttxt(trap), "basrateper = 1")
   # the person-year reading gives the right burden
-  ok <- do.call(verify_pollution, c(args, baseline_rate = 0.008, baseline_rate_per = 1))
+  ok <- do.call(vrfpol, c(args, brate = 0.008, basrateper = 1))
   expect_identical(ok$status, "ok")
-  expect_gt(ok$pipeline$burden$attributable_cases, 1000)
-  rare <- do.call(verify_pollution, c(args, baseline_rate = 0.5, baseline_rate_per = 1e5, rare_outcome = TRUE))
+  expect_gt(ok$pipeline$burden$attrcases, 1000)
+  rare <- do.call(vrfpol, c(args, brate = 0.5, basrateper = 1e5, rare = TRUE))
   expect_identical(rare$status, "ok")
   # an absurd unit is refused even when the outcome is declared rare
-  absurd <- do.call(verify_pollution, c(args, baseline_rate = 0.008, baseline_rate_per = 1e300, rare_outcome = TRUE))
+  absurd <- do.call(vrfpol, c(args, brate = 0.008, basrateper = 1e300, rare = TRUE))
   expect_identical(absurd$status, "assumption_failure")
-  expect_match(pollution_report_text(absurd), "100 billion")
-  expect_identical(do.call(verify_pollution, c(args, rare_outcome = NA))$status, "error")
+  expect_match(polrpttxt(absurd), "100 billion")
+  expect_identical(do.call(vrfpol, c(args, rare = NA))$status, "error")
 })
 
 # ---- C5: the NAPS value + unit path refuses censored text too -----------------------------------
@@ -154,11 +154,11 @@ test_that("C4: a rate below one per 100k needs rare_outcome = TRUE, whatever bas
 test_that("C5: \"<2\" in a NAPS value column is refused, as it is in an exposure column", {
   f <- tempfile(fileext = ".csv")
   writeLines(c("value,unit", "20,ug/m3", "<2,ug/m3", "<2,ug/m3", "<2,ug/m3", "40,ug/m3"), f)
-  v <- verify_pollution("pm25", exposure_csv = f)
+  v <- vrfpol("pm25", expcsv = f)
   expect_identical(v$status, "error")
   expect_match(v$error, "3 exposure value\\(s\\) are text")
   writeLines(c("value,unit", "20,ug/m3", ",ug/m3", "40,ug/m3"), f)
-  expect_identical(verify_pollution("pm25", exposure_csv = f)$status, "ok")
+  expect_identical(vrfpol("pm25", expcsv = f)$status, "ok")
 })
 
 # ---- C6 and the command-line arguments ------------------------------------------------------------
@@ -166,7 +166,7 @@ test_that("C5: \"<2\" in a NAPS value column is refused, as it is in an exposure
 test_that("C6: --force belongs to config reset only, and stray arguments are refused", {
   withr::local_envvar(R_USER_CONFIG_DIR = tempfile("cfg-"))
   quiet <- function(...) invisible(NULL)
-  code <- function(...) rmoriebricklayer:::bricklayer_cli(c(...), out = quiet)
+  code <- function(...) rmoriebricklayer:::blcli(c(...), out = quiet)
   expect_identical(code("config", "set", "own.key", "--force"), 2L)
   expect_false(file.exists(rmoriebricklayer:::.bl_config_path()))
   for (a in list(c("config", "unset", "route", "--force"), c("config", "show", "--force"),
@@ -203,7 +203,7 @@ test_that("C7: a FIFO or a directory at the legacy record path is refused at onc
 c89_cache <- function(table = NULL, manifest = NULL, age_days = 0) {
   d <- tempfile("dcache-")
   dir.create(d)
-  withr::local_options(list(rmoriebricklayer.data_cache = d), .local_envir = parent.frame())
+  withr::local_options(list(rmoriebricklayer.dcache = d), .local_envir = parent.frame())
   if (!is.null(table)) {
     con <- gzfile(file.path(d, "db__t.csv.gz"), "wb")
     writeBin(table, con)
@@ -230,7 +230,7 @@ test_that("C8: parallel refreshes each use their own temporary file", {
   })
   refresh3 <- function(i) {
     tryCatch({
-      for (k in 1:3) bricklayer_data_manifest(refresh = TRUE)
+      for (k in 1:3) dmnf(refresh = TRUE)
       "ok"
     }, error = function(e) conditionMessage(e))
   }
@@ -246,15 +246,15 @@ test_that("C9: a reply that is not a manifest leaves the cached copy, and a cach
   d <- c89_cache(good, c89_manifest(), age_days = 3)
   for (reply in c("{}", '{"error":"unauthorised"}', '{"datasets":{"key":"db/t"}}', '{"datasets":[1, 2]}')) {
     local_mocked_bindings(.bl_data_get = function(path, dest, ...) writeLines(reply, dest))
-    expect_error(bricklayer_data_manifest(refresh = TRUE), "not a manifest", info = reply)
+    expect_error(dmnf(refresh = TRUE), "not a manifest", info = reply)
     expect_identical(readLines(file.path(d, "manifest.json")), c89_manifest(), info = reply)
   }
   # offline, the stale copy lists the table without a digest: it loads, as it does online
   local_mocked_bindings(.bl_data_get = function(...) stop("could not resolve host"))
-  expect_identical(nrow(bricklayer_data_load("db/t")), 1L)
+  expect_identical(nrow(dload("db/t")), 1L)
   # no manifest anywhere: refused, and the cached table is kept for the next run
   unlink(file.path(d, "manifest.json"))
-  expect_error(bricklayer_data_load("db/t"), "kept unused")
+  expect_error(dload("db/t"), "kept unused")
   expect_true(file.exists(file.path(d, "db__t.csv.gz")))
 })
 
@@ -280,7 +280,7 @@ test_that("LOW: a lock file this user cannot write is named as such, not as a re
   skip_if(identical(Sys.info()[["user"]], "root"))
   d <- tempfile("lk-")
   dir.create(d)
-  withr::local_options(list(rmoriebricklayer.xmss_index_file = file.path(d, "rec.txt")))
+  withr::local_options(list(rmoriebricklayer.xmssidxfile = file.path(d, "rec.txt")))
   writeLines("", file.path(d, "rec.txt.flock"))
   Sys.chmod(file.path(d, "rec.txt.flock"), "0400")
   expect_error(rmoriebricklayer:::.rmbl_xmss_with_lock(file.path(d, "rec.txt"), function() NULL),
@@ -362,11 +362,11 @@ test_that("LOW: a row with the wrong number of fields, or a column name twice, i
 })
 
 test_that("LOW: a next_index past 2^31 - 1 is the damaged-key error, not a raw NA", {
-  k <- pqc_keygen(height = 2)
+  k <- pqckg(height = 2)
   for (bad in list(1e10, 2^31)) {
     k2 <- k
     k2$next_index <- bad
-    expect_error(capsule_sign("m", k2), "not a whole number >= 0 \\(below 2\\^31\\)")
+    expect_error(cpssign("m", k2), "not a whole number >= 0 \\(below 2\\^31\\)")
   }
 })
 
@@ -387,23 +387,23 @@ test_that("L3: a key saved for another hosted address is said once, and the summ
 
 test_that("M2: validation needs a schema, a misspelt field is fatal, and expected_dtypes is checked", {
   df <- data.frame(a = 1:3, b = c("x", "y", "z"))
-  expect_error(apply_schema_validation(df, NULL), "no schema to validate against")
-  expect_error(apply_schema_validation(df, list()), "no schema to validate against")
-  expect_error(apply_schema_validation(df, list(scheme = infer_schema(df))), "no `schema` element \\(it has scheme\\)")
-  expect_error(apply_schema_validation(df, list(schema = list(expected_colums = "a"))),
+  expect_error(schval(df, NULL), "no schema to validate against")
+  expect_error(schval(df, list()), "no schema to validate against")
+  expect_error(schval(df, list(scheme = infsch(df))), "no `schema` element \\(it has scheme\\)")
+  expect_error(schval(df, list(schema = list(expected_colums = "a"))),
                "did you mean 'expected_columns'")
-  expect_error(apply_schema_validation(df, list(schema = list(structural_invariants = list(min_data_row = 1)))),
+  expect_error(schval(df, list(schema = list(structural_invariants = list(min_data_row = 1)))),
                "did you mean 'min_data_rows'")
-  expect_warning(apply_schema_validation(df, list(schema = list(notes = "about this table"))),
-                 "not one validate_schema\\(\\) uses")
+  expect_warning(schval(df, list(schema = list(notes = "about this table"))),
+                 "not one valsch\\(\\) uses")
   # a dataset's own invariant (the OTIS file's) is allowed
   # ...with no warning (the misspelling check compared names of two lengths)
   inv <- list(schema = list(structural_invariants = list(total_placements_sum = 5)))
-  expect_true(expect_no_warning(apply_schema_validation(df, inv)))
+  expect_true(expect_no_warning(schval(df, inv)))
   # expected_dtypes is read; a factor and a character column are one family
-  expect_warning(apply_schema_validation(df, list(schema = list(expected_dtypes = list(a = "character")))),
+  expect_warning(schval(df, list(schema = list(expected_dtypes = list(a = "character")))),
                  "is integer, expected character")
-  expect_true(apply_schema_validation(df, list(schema = list(expected_dtypes = list(b = "factor", a = "integer")))))
+  expect_true(schval(df, list(schema = list(expected_dtypes = list(b = "factor", a = "integer")))))
 })
 
 test_that("LOW: default-ignorable characters are removed from the data list", {
@@ -443,19 +443,19 @@ test_that("B5: a credentials file with a NUL, in Latin-1, or of megabytes is ref
 })
 
 test_that("LOW: numbers must be numbers, steps and grids are capped, and plot() needs a report", {
-  expect_match(verify_pollution("pm25", exposure_mean = as.raw(25), exposure_prevalence = 1)$error,
-               "exposure_mean must be a single number, not raw")
-  expect_match(verify_pollution("pm25", exposure_mean = 25, exposure_prevalence = 1, population = as.raw(9))$error,
-               "population must be a single number")
-  expect_error(lagrangian_particles(10, 0, 0, 1, 0, 1, 1, 1, n_steps = 1e300, max_work = Inf), "at most 2\\^31 - 1")
-  expect_error(advection_diffusion_2d(matrix(0, 3, 3), 0, 0, 0.1, 0.1, 1, 1, 0.1, n_steps = 1e300, max_work = Inf),
+  expect_match(vrfpol("pm25", expomean = as.raw(25), expoprev = 1)$error,
+               "expomean must be a single number, not raw")
+  expect_match(vrfpol("pm25", expomean = 25, expoprev = 1, pop = as.raw(9))$error,
+               "pop must be a single number")
+  expect_error(lagrprt(10, 0, 0, 1, 0, 1, 1, 1, nsteps = 1e300, maxwork = Inf), "at most 2\\^31 - 1")
+  expect_error(advdif2d(matrix(0, 3, 3), 0, 0, 0.1, 0.1, 1, 1, 0.1, nsteps = 1e300, maxwork = Inf),
                "at most 2\\^31 - 1")
-  expect_error(lagrangian_particles(10, 0, 0, 1, 0, 1, 1, 1, n_steps = 1, grid = c(0, 1, 0, 1, 1e6, 1e6)),
-               "above max_work")
+  expect_error(lagrprt(10, 0, 0, 1, 0, 1, 1, 1, nsteps = 1, grid = c(0, 1, 0, 1, 1e6, 1e6)),
+               "above maxwork")
   pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
   for (bad in list("x", list(), structure(list(status = "ok"), class = "rmbl_pollution_report"))) {
-    expect_error(rmoriebricklayer:::plot.rmbl_pollution_report(bad), "must be a report from verify_pollution")
+    expect_error(rmoriebricklayer:::plot.rmbl_pollution_report(bad), "must be a report from vrfpol")
   }
   # the NA bar's label never takes a real level's name
   lab <- NULL

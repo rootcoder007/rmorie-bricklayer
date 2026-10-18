@@ -26,7 +26,7 @@ and by group. A realistic shape:
 seg <- data.frame(
   EndFiscalYear = rep(2019:2023, each = 2),
   Gender = rep(c("Female", "Male"), 5),
-  Number_Of_Placements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
+  NumberOfPlacements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
 )
 ```
 
@@ -35,10 +35,10 @@ That affects colour and the verdict column, never the arithmetic.
 
 ```{r}
 y <- yoy(seg,
-  value = Number_Of_Placements,
-  period = EndFiscalYear,
+  value = NumberOfPlacements,
+  prd = EndFiscalYear,
   by = "Gender",
-  direction = "lower_is_better"
+  dir = "lower"
 )
 y
 ```
@@ -59,7 +59,7 @@ value cannot do that:
 
 ```{r}
 gap <- data.frame(year = c(2019, 2020, 2022, 2023), n = c(100, 120, 140, 150))
-yoy(gap, value = n, period = year)
+yoy(gap, value = n, prd = year)
 ```
 
 2021 appears as a row with no value, and 2022 has no comparison period
@@ -73,16 +73,16 @@ percent is still the right number; what changes is its interval:
 
 ```{r}
 tiny <- data.frame(year = 2019:2021, n = c(2, 20, 25))
-as.data.frame(yoy(tiny, value = n, period = year))[, c("year", "pct_change",
-                                                     "pct_lower", "pct_upper")]
+as.data.frame(yoy(tiny, value = n, prd = year))[, c("year", "pctchg",
+                                                     "pctlo", "pctup")]
 ```
 
 Every non-zero base gets its percent and exact interval, however small
-the base or the change. Set `min_base` to add a note to small-base rows;
+the base or the change. Set `minbase` to add a note to small-base rows;
 nothing is withheld either way:
 
 ```{r}
-as.data.frame(yoy(tiny, value = n, period = year, min_base = 20))$flag
+as.data.frame(yoy(tiny, value = n, prd = year, minbase = 20))$flag
 ```
 
 ## The third failure: a percent of a percent
@@ -92,7 +92,7 @@ If a rate moves from 4% to 5% that is one percentage point. Calling it
 
 ```{r}
 rate <- data.frame(year = 2019:2023, share = c(4.1, 4.6, 5.2, 5.0, 5.4))
-yoy(rate, value = share, period = year, units = "percent")
+yoy(rate, value = share, prd = year, units = "percent")
 ```
 
 The column is named `points`, and no count interval is offered, because
@@ -106,18 +106,18 @@ December:
 
 ```{r}
 m <- stats::ts(c(10:21, 20:31), start = c(2021, 1), frequency = 12)
-head(as.data.frame(yoy(m, min_base = 0))[12:14, c("period", "value",
+head(as.data.frame(yoy(m, minbase = 0))[12:14, c("period", "value",
                                                   "previous", "change")], 3)
 ```
 
 ## Across the span
 
 ```{r}
-yoy_summary(y)
+yoysmry(y)
 ```
 
-`cagr_pct` is the compound rate per period: applying it across the span
-returns `total_pct` exactly.
+`cagrpct` is the compound rate per period: applying it across the span
+returns `totalpct` exactly.
 
 ## Rates, when the denominator moves too
 
@@ -131,7 +131,7 @@ stops <- data.frame(
   stops = c(412, 77, 3),
   residents = c(120000, 41000, 9500))
 
-rate(stops, stops, residents, by = "division", per = "100k")
+rtcalc(stops, stops, residents, by = "division", per = "100k")
 ```
 
 East's interval is wider than its own estimate. That is the honest
@@ -145,7 +145,7 @@ same events, not a population, so shares over a complete grouping sum
 to 100:
 
 ```{r}
-share(stops, stops, by = "division")
+shrs(stops, stops, by = "division")
 ```
 
 "40% of stops" and "40 stops per 1,000 residents" are different claims,
@@ -161,7 +161,7 @@ d <- data.frame(
   stops = c(400, 70, 430, 66, 455, 61),
   residents = c(120000, 41000, 122000, 41500, 125000, 42000))
 
-rate_change(d, stops, residents, year, by = "division", per = "100k")
+ratechg(d, stops, residents, year, by = "division", per = "100k")
 ```
 
 North's count rose, and so did its population, so the rate change is
@@ -178,7 +178,7 @@ The same object writes to six formats. The format follows the file name.
 dir <- tempdir()
 for (ext in c("csv", "tsv", "json", "md", "html", "pdf")) {
   f <- file.path(dir, paste0("placements.", ext))
-  yoy_write(y, f, title = "Placements by gender")
+  yoywr(y, f, title = "Placements by gender")
   cat(sprintf("%-5s %6d bytes\n", ext, file.size(f)))
 }
 ```
@@ -188,13 +188,13 @@ The delimited writers lead with the settings as comments, and carry the
 with it:
 
 ```{r}
-cat(yoy_csv(y, NULL, digits = 1L))
+cat(yoycsv(y, NULL, digits = 1L))
 ```
 
 Markdown, for a report:
 
 ```{r}
-cat(yoy_markdown(yoy(gap, value = n, period = year), NULL))
+cat(yoymd(yoy(gap, value = n, prd = year), NULL))
 ```
 
 The HTML is a single self-contained file: it makes no network request, so
@@ -204,7 +204,7 @@ variant. The PDF is drawn on R's own device and paginates rather than
 truncating, so neither needs a package beyond base R.
 
 ```{r}
-yoy_palettes()
+yoypals()
 ```
 
 `"safe"` is a blue/orange pair that survives both common forms of colour
@@ -222,14 +222,14 @@ Change between survey cycles in percentage points, here the share of adults rati
 or excellent, 2015/2018 to 2019/2022, from the bundled health indicators:
 
 ```{r indigenous-yoy}
-hi <- indigenous_example("health_indicators")
+hi <- indiex("health")
 m <- hi[hi$age == "Total, 18 years and over" &
           hi$indicator == "Perceived mental health, very good or excellent", ]
 # yoy() steps through consecutive periods: number the two survey cycles 1 and 2
 m$cycle <- match(m$period, c("2015/2018", "2019/2022"))
 for (g in unique(m$group)) {
   s <- m[m$group == g, ]
-  print(as.data.frame(yoy(s, value = estimate, period = cycle, units = "percent"))[
-    2, c("value", "previous", "pp_change", "verdict")])
+  print(as.data.frame(yoy(s, value = estimate, prd = cycle, units = "percent"))[
+    2, c("value", "previous", "ppchg", "verdict")])
 }
 ```

@@ -41,7 +41,7 @@ test_that("ECDSA verifies on every curve, and rejects what it must", {
 
 test_that("a certificate parses into the fields a verifier needs", {
   f <- ts_fixtures()
-  cert <- cert_parse(f$rsa_cert)
+  cert <- certprs(f$rsa_cert)
   expect_s3_class(cert, "bricklayer_certificate")
   expect_match(cert$subject, "TSA")
   expect_match(cert$issuer, "CA")
@@ -55,11 +55,11 @@ test_that("a certificate parses into the fields a verifier needs", {
   expect_true(cert$not_after > cert$not_before)
   expect_false(cert$self_signed)
 
-  ec <- cert_parse(f$ecdsa_cert)
+  ec <- certprs(f$ecdsa_cert)
   expect_identical(ec$key$type, "EC")
   expect_identical(ec$key$curve, "P-256")
 
-  ca <- cert_parse(f$ca)
+  ca <- certprs(f$ca)
   expect_true(ca$is_ca)
   expect_true(ca$self_signed)
   expect_output(print(cert), "X.509 certificate")
@@ -67,38 +67,38 @@ test_that("a certificate parses into the fields a verifier needs", {
 
 test_that("a chain verifies to an anchor, and fails every other way", {
   f <- ts_fixtures()
-  leaf <- cert_parse(f$rsa_cert)
-  ca <- cert_parse(f$ca)
+  leaf <- certprs(f$rsa_cert)
+  ca <- certprs(f$ca)
   at <- leaf$not_before + 86400
 
-  ok <- cert_chain_verify(leaf, trust = ca, at_time = at,
-                          purpose = "timeStamping")
+  ok <- certchnvrf(leaf, trust = ca, attm = at,
+                          purp = "timeStamping")
   expect_true(ok$ok)
   expect_length(ok$path, 2L)
   expect_true(all(ok$checks$ok))
 
   # an anchor that did not issue it
-  bad <- cert_chain_verify(leaf, trust = cert_parse(f$other_ca),
-                           at_time = at)
+  bad <- certchnvrf(leaf, trust = certprs(f$other_ca),
+                           attm = at)
   expect_false(bad$ok)
   expect_false(bad$checks$ok[bad$checks$check == "path_to_anchor"])
 
   # outside the validity window, in both directions
-  expect_false(cert_chain_verify(leaf, trust = ca,
-    at_time = leaf$not_before - 86400)$ok)
-  expect_false(cert_chain_verify(leaf, trust = ca,
-    at_time = leaf$not_after + 86400)$ok)
+  expect_false(certchnvrf(leaf, trust = ca,
+    attm = leaf$not_before - 86400)$ok)
+  expect_false(certchnvrf(leaf, trust = ca,
+    attm = leaf$not_after + 86400)$ok)
 
   # a purpose the leaf was not issued for
-  expect_false(cert_chain_verify(leaf, trust = ca, at_time = at,
-                                 purpose = "codeSigning")$ok)
+  expect_false(certchnvrf(leaf, trust = ca, attm = at,
+                                 purp = "codeSigning")$ok)
 
   # the leaf is not a CA, so it cannot stand in as its own issuer
-  self <- cert_chain_verify(leaf, trust = leaf, at_time = at)
+  self <- certchnvrf(leaf, trust = leaf, attm = at)
   expect_false(self$ok)
 
   # a CRL naming the leaf's serial revokes it
-  expect_error(cert_chain_verify(leaf, trust = list()), "at least one")
+  expect_error(certchnvrf(leaf, trust = list()), "at least one")
   expect_output(print(ok), "Certificate chain")
 })
 
@@ -108,14 +108,14 @@ test_that("a token is verified with its trust chain, RSA and ECDSA", {
     tok <- f[[nm]]
     # without an anchor the signature still checks, but trust is
     # reported as not established rather than assumed
-    bare <- timestamp_verify(tok, f$payload)
+    bare <- tsvrf(tok, f$payload)
     expect_true(bare$checks$ok[bare$checks$check == "signature"],
                 info = nm)
     expect_false(bare$checks$ok[bare$checks$check == "certificate_trust"],
                  info = nm)
     expect_false(bare$ok, info = nm)
 
-    full <- timestamp_verify(tok, f$payload, trust = f$ca)
+    full <- tsvrf(tok, f$payload, trust = f$ca)
     expect_true(full$ok, info = nm)
     expect_true(any(startsWith(full$checks$check, "chain:")), info = nm)
     # the chain's validity was judged at the time the token asserts
@@ -124,16 +124,16 @@ test_that("a token is verified with its trust chain, RSA and ECDSA", {
       format(full$time, "%Y-%m-%d", tz = "UTC"), info = nm)
 
     # an anchor that did not issue it
-    expect_false(timestamp_verify(tok, f$payload,
+    expect_false(tsvrf(tok, f$payload,
                                   trust = f$other_ca)$ok, info = nm)
     # and a time the certificate did not cover
-    expect_false(timestamp_verify(tok, f$payload, trust = f$ca,
-      at_time = as.POSIXct("1999-01-01", tz = "UTC"))$ok, info = nm)
+    expect_false(tsvrf(tok, f$payload, trust = f$ca,
+      attm = as.POSIXct("1999-01-01", tz = "UTC"))$ok, info = nm)
   }
   # the ECDSA token really is ECDSA, so the two paths are distinct
-  ec <- timestamp_verify(f$ecdsa_token, f$payload, trust = f$ca)
+  ec <- tsvrf(f$ecdsa_token, f$payload, trust = f$ca)
   expect_match(ec$checks$detail[ec$checks$check == "signature"], "ECDSA")
-  rsa <- timestamp_verify(f$rsa_token, f$payload, trust = f$ca)
+  rsa <- tsvrf(f$rsa_token, f$payload, trust = f$ca)
   expect_match(rsa$checks$detail[rsa$checks$check == "signature"], "RSA")
 })
 
@@ -143,7 +143,7 @@ test_that("tampering is caught on both signature algorithms", {
     tok <- f[[nm]]
     k <- length(tok) - 40L
     tok[k] <- as.raw(bitwXor(as.integer(tok[k]), 1L))
-    r <- timestamp_verify(tok, f$payload, trust = f$ca)
+    r <- tsvrf(tok, f$payload, trust = f$ca)
     expect_false(r$ok, info = nm)
     expect_false(r$checks$ok[r$checks$check == "signature"], info = nm)
   }
@@ -176,8 +176,8 @@ test_that("the positive control finds an injected effect, or says not", {
     z$y <- z$y + size * z$x
     z
   }
-  pw <- capsule_power(d, function(z) stats::cor(z$x, z$y), inj,
-                      sizes = c(0, 0.1, 0.4), treatment = "x",
+  pw <- cpspwr(d, function(z) stats::cor(z$x, z$y), inj,
+                      sizes = c(0, 0.1, 0.4), trt = "x",
                       n = 99L, reps = 6L, seed = 42L)
   expect_s3_class(pw, "bricklayer_power")
   expect_identical(nrow(pw$curve), 3L)
@@ -185,25 +185,25 @@ test_that("the positive control finds an injected effect, or says not", {
   # smallest reliably detected is what a null result can speak to
   expect_identical(pw$curve$rate[pw$curve$size == 0.4], 1)
   expect_lt(pw$curve$rate[pw$curve$size == 0.1], 0.8)
-  expect_identical(pw$smallest_detected, 0.4)
+  expect_identical(pw$smadet, 0.4)
   # the false-positive rate at size 0 must not be large
   expect_lt(pw$curve$rate[pw$curve$size == 0], 0.5)
 
   # A statistic blind to the effect detects nothing at any size. This is
   # the case that every falsification control passes and that matters
   # most: a null result from here is not evidence of absence.
-  blind <- capsule_power(d, function(z) mean(z$x), inj,
-                         sizes = c(0, 0.8), treatment = "x",
+  blind <- cpspwr(d, function(z) mean(z$x), inj,
+                         sizes = c(0, 0.8), trt = "x",
                          n = 99L, reps = 4L, seed = 7L)
-  expect_true(is.na(blind$smallest_detected))
+  expect_true(is.na(blind$smadet))
   expect_output(print(blind), "could not")
 
   # a design whose permutation floor is above alpha could never detect
   # anything, and is refused rather than run
-  expect_error(capsule_power(d, function(z) stats::cor(z$x, z$y), inj,
-                             treatment = "x", n = 9L, alpha = 0.05),
+  expect_error(cpspwr(d, function(z) stats::cor(z$x, z$y), inj,
+                             trt = "x", n = 9L, alpha = 0.05),
                "no size could ever be detected")
-  expect_error(capsule_power(d, function(z) 1, inj), "`treatment` is required")
-  expect_error(capsule_power(d, function(z) 1, "notafunction",
-                             treatment = "x"), "must both be functions")
+  expect_error(cpspwr(d, function(z) 1, inj), "`trt` is required")
+  expect_error(cpspwr(d, function(z) 1, "notafunction",
+                             trt = "x"), "must both be functions")
 })

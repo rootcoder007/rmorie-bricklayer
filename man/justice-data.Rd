@@ -24,7 +24,7 @@ Small excerpts of published court and police statistics, in
 \code{courts-and-crime} vignette. Each is a faithful copy of published
 numbers (no value altered, no row invented); the full tables, every
 edition and location, are on the package's data hub
-(\code{\link{bricklayer_data_load}}, collections \code{ocj_statistics}
+(\code{\link{dload}}, collections \code{ocj_statistics}
 and \code{tps_open_data}).
 }
 \details{
@@ -70,7 +70,7 @@ c <- read.csv(system.file("extdata", "ocj_courts.csv",
 tapply(c$disposed, c$year, sum)
 }
 \seealso{
-\code{\link{case_flow}}, \code{\link{life_table}},
-\code{\link{disposition_mix}}, \code{\link{clearance_decomposition}},
-\code{\link{crime_density}}, \code{\link{knox_test}}.
+\code{\link{caseflow}}, \code{\link{lifetbl}},
+\code{\link{dispmix}}, \code{\link{clrdcmp}},
+\code{\link{crmdens}}, \code{\link{knoxtst}}.
 }

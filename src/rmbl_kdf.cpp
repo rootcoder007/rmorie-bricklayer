@@ -366,9 +366,9 @@ SEXP C_rmbl_blake2b_impl(SEXP x, SEXP key, SEXP outlen) {
 SEXP C_rmbl_pbkdf2_impl(SEXP pass, SEXP salt, SEXP iterations, SEXP dklen) {
     const int iter = Rf_asInteger(iterations);
     const int dk = Rf_asInteger(dklen);
-    if (iter == NA_INTEGER || iter < 1) rmbl::fail("`iterations` must be at least 1");
+    if (iter == NA_INTEGER || iter < 1) rmbl::fail("`iter` must be at least 1");
     /* 2^26 iterations is minutes of work; INT_MAX was days, uninterruptible */
-    if (iter > (1 << 26)) rmbl::fail("`iterations` above 2^26 is refused");
+    if (iter > (1 << 26)) rmbl::fail("`iter` above 2^26 is refused");
     if (dk == NA_INTEGER || dk < 1 || dk > 1024) rmbl::fail("`length` must be between 1 and 1024");
     /* every rmbl::fail() before the std::vectors below exist: a longjmp over a
      * live vector leaks it */

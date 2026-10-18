@@ -18,32 +18,32 @@
 
 #' Event studies for several outcomes in one grid
 #'
-#' Draws a list of \code{\link{event_study}} (or \code{\link{staggered_att}}) results
+#' Draws a list of \code{\link{evstudy}} (or \code{\link{stgatt}}) results
 #' in a grid of panels, one per outcome, with the same style, the way papers show an
 #' effect on several crimes or several groups at once.
 #'
-#' @param x A named list of \code{\link{event_study}} or \code{\link{staggered_att}}
+#' @param x A named list of \code{\link{evstudy}} or \code{\link{stgatt}}
 #'   results; the names title the panels.
 #' @param ncol Panels per row (default up to 3).
 #' @param main Optional overall title.
 #' @param ... Passed to each panel's \code{plot()} (for example
-#'   \code{style = "stata"}, \code{shade_post = TRUE}, \code{ref_line = 0}).
+#'   \code{style = "stata"}, \code{shadepost = TRUE}, \code{refline = 0}).
 #' @return Invisibly, a data frame of every panel's estimates with a column
 #'   \code{panel}.
-#' @seealso \code{\link{event_study}}, \code{\link{plot-methods}}.
+#' @seealso \code{\link{evstudy}}, \code{\link{plot-methods}}.
 #' @examples
-#' p <- policy_example()
+#' p <- polex()
 #' es <- list(
-#'   "Crime rate" = event_study(p, "district", "month", "crime_rate", "reform_month",
+#'   "Crime rate" = evstudy(p, "district", "month", "crmrate", "refmonth",
 #'                              leads = 3, lags = 4),
-#'   "Arrest rate" = event_study(p, "district", "month", "arrest_rate", "reform_month",
+#'   "Arrest rate" = evstudy(p, "district", "month", "arrrate", "refmonth",
 #'                               leads = 3, lags = 4))
-#' plot_event_grid(es, style = "stata")
+#' plotevgrid(es, style = "stata")
 #' @export
-plot_event_grid <- function(x, ncol = NULL, main = NULL, ...) {
+plotevgrid <- function(x, ncol = NULL, main = NULL, ...) {
   if (!is.list(x) || !length(x) || is.null(names(x)) || any(!nzchar(names(x))) ||
       !all(vapply(x, function(e) inherits(e, c("rmbl_event_study", "rmbl_staggered_att")), NA))) {
-    stop("`x` must be a named list of event_study() or staggered_att() results", call. = FALSE)
+    stop("`x` must be a named list of evstudy() or stgatt() results", call. = FALSE)
   }
   n <- length(x)
   if (is.null(ncol)) ncol <- min(3L, n)
@@ -54,7 +54,7 @@ plot_event_grid <- function(x, ncol = NULL, main = NULL, ...) {
   on.exit(graphics::par(op), add = TRUE)
   out <- lapply(names(x), function(nm) {
     d <- graphics::plot(x[[nm]], main = nm, ...)
-    if (is.data.frame(d)) cbind(panel = nm, d[c("event_time", "estimate", "lower", "upper")]) else NULL
+    if (is.data.frame(d)) cbind(panel = nm, d[c("evtm", "estimate", "lower", "upper")]) else NULL
   })
   if (!is.null(main)) graphics::mtext(main, outer = TRUE, font = 2, cex = 1.2)
   invisible(do.call(rbind, out))
@@ -117,31 +117,31 @@ plot.rmbl_permutation <- function(x, ..., main = NULL, col = NULL, palette = NUL
 
 #' Leave-one-out estimates of a difference in differences
 #'
-#' Re-estimates \code{\link{did_panel}} leaving out one treated unit at a time, to
+#' Re-estimates \code{\link{plndid}} leaving out one treated unit at a time, to
 #' show that no single unit drives the result.
 #'
-#' @inheritParams did_panel
+#' @inheritParams plndid
 #' @param units Which units to leave out (default every treated unit).
 #' @return A data frame of class \code{rmbl_loo}: \code{dropped}, \code{estimate},
 #'   \code{se}; attribute \code{full} (the estimate with every unit). \code{plot()}
 #'   draws the histogram with the full-sample estimate and a summary.
 #' @examples
-#' p <- policy_example()
-#' l <- leave_one_out(p, "district", "month", "crime_rate", "reformed")
+#' p <- polex()
+#' l <- loounit(p, "district", "month", "crmrate", "reformed")
 #' range(l$estimate)
 #' plot(l)
 #' @export
-leave_one_out <- function(data, unit, time, outcome, treated, covariates = NULL, cluster = NULL, units = NULL) {
-  full <- did_panel(data, unit, time, outcome, treated, covariates = covariates, cluster = cluster)
-  ever <- tapply(data[[treated]], data[[unit]], max) > 0
+loounit <- function(data, unit, time, y, trtd, covs = NULL, cl = NULL, units = NULL) {
+  full <- plndid(data, unit, time, y, trtd, covs = covs, cl = cl)
+  ever <- tapply(data[[trtd]], data[[unit]], max) > 0
   if (is.null(units)) units <- names(ever)[ever]
   units <- as.character(units)
   if (!length(units) || !all(units %in% as.character(data[[unit]]))) {
     stop("`units` must be units of `data`", call. = FALSE)
   }
   rows <- lapply(units, function(u) {
-    r <- tryCatch(did_panel(data[as.character(data[[unit]]) != u, , drop = FALSE], unit, time, outcome, treated,
-                            covariates = covariates, cluster = cluster), error = function(e) NULL)
+    r <- tryCatch(plndid(data[as.character(data[[unit]]) != u, , drop = FALSE], unit, time, y, trtd,
+                            covs = covs, cl = cl), error = function(e) NULL)
     data.frame(dropped = u, estimate = if (is.null(r)) NA_real_ else r$estimate[1L],
                se = if (is.null(r)) NA_real_ else r$se[1L], stringsAsFactors = FALSE)
   })
@@ -178,25 +178,25 @@ plot.rmbl_loo <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #' moving average and scaled to 1 in the period before adoption: a check, before any
 #' model, that the cohorts moved together before the policy.
 #'
-#' @inheritParams event_study
-#' @param window Periods before and after adoption to show (default -12 to 12).
+#' @inheritParams evstudy
+#' @param win Periods before and after adoption to show (default -12 to 12).
 #' @param ma Width of the trailing moving average (default 3; 1 for none).
-#' @param normalise Scale each cohort to 1 at period -1 (default \code{TRUE}).
+#' @param norm Scale each cohort to 1 at period -1 (default \code{TRUE}).
 #' @return A data frame of class \code{rmbl_cohort_trends}: \code{cohort},
-#'   \code{event_time}, \code{value}. \code{plot()} draws one line per cohort, with
+#'   \code{evtm}, \code{value}. \code{plot()} draws one line per cohort, with
 #'   the period before adoption marked.
 #' @examples
-#' p <- policy_example()
-#' ct <- cohort_trends(p, "district", "month", "crime_rate", "reform_month",
-#'                     window = c(-10, 10))
+#' p <- polex()
+#' ct <- cohtrnd(p, "district", "month", "crmrate", "refmonth",
+#'                     win = c(-10, 10))
 #' plot(ct)
 #' @export
-cohort_trends <- function(data, unit, time, outcome, first_treated, window = c(-12, 12), ma = 3L, normalise = TRUE) {
-  p <- .rmbl_panel(data, unit, time, outcome)
-  g <- .rmbl_first_treated(data, first_treated, p)
-  window <- .rmbl_num(window, "window")
-  if (length(window) != 2L || window[1L] >= -1 || window[2L] < 0) {
-    stop("`window` must be two numbers, the first below -1 and the second 0 or more", call. = FALSE)
+cohtrnd <- function(data, unit, time, y, ftreat, win = c(-12, 12), ma = 3L, norm = TRUE) {
+  p <- .rmbl_panel(data, unit, time, y)
+  g <- .rmbl_first_treated(data, ftreat, p)
+  win <- .rmbl_num(win, "win")
+  if (length(win) != 2L || win[1L] >= -1 || win[2L] < 0) {
+    stop("`win` must be two numbers, the first below -1 and the second 0 or more", call. = FALSE)
   }
   ma <- .rmbl_scalar(ma, "ma", 1, 100, integer = TRUE)
   cohorts <- sort(unique(g[is.finite(g)]))
@@ -208,16 +208,16 @@ cohort_trends <- function(data, unit, time, outcome, first_treated, window = c(-
     v <- as.vector(m)
     if (ma > 1L) v <- as.vector(stats::filter(v, rep(1 / ma, ma), sides = 1))
     e <- tt - cg
-    keep <- e >= window[1L] & e <= window[2L]
-    out <- data.frame(cohort = cg, event_time = e[keep], value = v[keep])
-    if (isTRUE(normalise)) {
-      b <- out$value[out$event_time == -1]
+    keep <- e >= win[1L] & e <= win[2L]
+    out <- data.frame(cohort = cg, evtm = e[keep], value = v[keep])
+    if (isTRUE(norm)) {
+      b <- out$value[out$evtm == -1]
       out$value <- if (length(b) && is.finite(b) && b != 0) out$value / b else NA_real_
     }
     out
   })
   out <- do.call(rbind, rows)
-  attr(out, "normalised") <- isTRUE(normalise)
+  attr(out, "normalised") <- isTRUE(norm)
   attr(out, "ma") <- ma
   class(out) <- c("rmbl_cohort_trends", "data.frame")
   out
@@ -230,7 +230,7 @@ plot.rmbl_cohort_trends <- function(x, ..., main = NULL, col = NULL, palette = N
   d <- as.data.frame(x)
   co <- unique(d$cohort)
   cl <- .bl_cols(length(co), col, palette)
-  graphics::plot(range(d$event_time), range(d$value, na.rm = TRUE), type = "n", xlab = "Periods since adoption",
+  graphics::plot(range(d$evtm), range(d$value, na.rm = TRUE), type = "n", xlab = "Periods since adoption",
                  ylab = if (isTRUE(attr(x, "normalised"))) "Mean outcome (1 = period before adoption)" else
                    "Mean outcome",
                  main = .bl_main(main, "Outcome by adoption cohort"), ...)
@@ -238,9 +238,9 @@ plot.rmbl_cohort_trends <- function(x, ..., main = NULL, col = NULL, palette = N
   graphics::rect(-1.5, u[3L], -0.5, u[4L], col = grDevices::adjustcolor("#9A9A9A", 0.25), border = NA)
   for (i in seq_along(co)) {
     s <- d[d$cohort == co[i], ]
-    graphics::lines(s$event_time, s$value, col = cl[i], lwd = 2)
+    graphics::lines(s$evtm, s$value, col = cl[i], lwd = 2)
   }
-  graphics::legend(.bl_free_corner(d$event_time, d$value), paste("Adopted at", co), col = cl, lwd = 2, bty = "n",
+  graphics::legend(.bl_free_corner(d$evtm, d$value), paste("Adopted at", co), col = cl, lwd = 2, bty = "n",
                    cex = 0.85, bg = "white")
   invisible(d)
 }

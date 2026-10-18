@@ -5,7 +5,7 @@
 library(rmoriebricklayer)
 dir <- Sys.getenv("RMBL_STATCAN_DIR", "~/tmp/indig")
 rd <- function(pid) {
-  statcan_estimates(utils::read.csv(gzfile(file.path(dir, sprintf("tbl_%s.csv.gz", pid))), check.names = FALSE,
+  scests(utils::read.csv(gzfile(file.path(dir, sprintf("tbl_%s.csv.gz", pid))), check.names = FALSE,
                                     stringsAsFactors = FALSE, encoding = "UTF-8"))
 }
 groups <- c("First Nations (North American Indian)" = "First Nations", "Métis" = "Métis",

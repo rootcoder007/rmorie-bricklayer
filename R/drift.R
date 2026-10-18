@@ -17,7 +17,7 @@
 #' download. It needs no assumption about the shape of either distribution,
 #' and it reacts to any kind of change: a shift, a change in spread, or a
 #' change in shape. It is the numeric test that
-#' [capsule_drift()] runs on
+#' [cpsdrft()] runs on
 #' every shared numeric or date column.
 #'
 #' @details
@@ -42,40 +42,40 @@
 #' @param x,y Numeric vectors, the reference and the new sample. Logical
 #'   vectors are read as 0/1.
 #' @return A named length-3 numeric: `statistic` (the KS \eqn{D}) ,
-#' `p_value`, and `n_eff` (the harmonic-style effective size
+#' `p_value`, and `neff` (the harmonic-style effective size
 #'   \eqn{n_xn_y/(n_x+n_y)}).
 #' @seealso
-#' [drift_psi()],
-#' [drift_chisq()],
-#' [capsule_drift()]
+#' [drftpsi()],
+#' [drftchisq()],
+#' [cpsdrft()]
 #' @examples
 #' set.seed(1)
 #' ref <- stats::rnorm(200)
 #'
 #' # The same distribution: a small D and a large p-value.
-#' drift_ks(ref, stats::rnorm(200))
+#' drftks(ref, stats::rnorm(200))
 #'
 #' # A shifted distribution is detected.
-#' drift_ks(ref, stats::rnorm(200, mean = 0.8))
+#' drftks(ref, stats::rnorm(200, mean = 0.8))
 #'
 #' # So is a change in spread alone, which a mean comparison would miss.
-#' drift_ks(ref, stats::rnorm(200, sd = 2.5))
+#' drftks(ref, stats::rnorm(200, sd = 2.5))
 #'
 #' # The statistic agrees with stats::ks.test().
 #' a <- stats::rnorm(60); b <- stats::rnorm(45, 0.6)
-#' all.equal(drift_ks(a, b)[["statistic"]],
+#' all.equal(drftks(a, b)[["statistic"]],
 #'           as.numeric(suppressWarnings(stats::ks.test(a, b))$statistic))
 #'
 #' # Identical samples have nothing to report.
-#' drift_ks(ref, ref)[["statistic"]]
+#' drftks(ref, ref)[["statistic"]]
 #' @export
-drift_ks <- function(x, y) {
+drftks <- function(x, y) {
   x <- .rmbl_finite_input(x, "x", min_n = 1L)
   y <- .rmbl_finite_input(y, "y", min_n = 1L)
-  x <- x[!is.na(x)]   # min_n = 1L above: at least one value remains in each
+  x <- x[!is.na(x)]   # minn = 1L above: at least one value remains in each
   y <- y[!is.na(y)]
   out <- .Call(C_rmbl_ks, x, y)
-  names(out) <- c("statistic", "p_value", "n_eff")
+  names(out) <- c("statistic", "p_value", "neff")
   out
 }
 
@@ -87,7 +87,7 @@ drift_ks <- function(x, y) {
 #' reference's quantiles and the two sets of bin shares are compared. Unlike
 #' a p-value they do not grow with the sample size, so they say how large a
 #' shift is rather than whether it is detectable.
-#' [capsule_drift()] reports
+#' [cpsdrft()] reports
 #' both for every numeric column.
 #'
 #' @details
@@ -121,8 +121,8 @@ drift_ks <- function(x, y) {
 #' empty sample, `bins` not a whole number from 2 to 1,000,000, `eps` not
 #' strictly between 0 and 1. The PSI bands quoted above are heuristics with
 #' no calibrated null distribution; on a few hundred rows binning noise alone
-#' can exceed 0.25 (see `psi_min_n` in
-#' [capsule_drift()]).
+#' can exceed 0.25 (see `psiminn` in
+#' [cpsdrft()]).
 #'
 #' @param x,y Numeric vectors, the reference and the new sample.
 #' Binned on the quantiles of `x`, so the reference defines the bins.
@@ -135,9 +135,9 @@ drift_ks <- function(x, y) {
 #' 0.05) smooths an empty bin toward that share, which dampens the PSI.
 #' Compare runs only at one `eps`.
 #' @return A named length-2 numeric: `psi` (non-negative, unbounded) and
-#' `js_divergence` (in nats, between 0 and \eqn{\log 2 \approx 0.693}).
-#' @seealso [drift_ks()],
-#'   [capsule_drift()].
+#' `jsdiv` (in nats, between 0 and \eqn{\log 2 \approx 0.693}).
+#' @seealso [drftks()],
+#'   [cpsdrft()].
 #' @references Wu D, Olson DL (2010). Enterprise risk management: coping
 #' with model risk in a large bank. *Journal of the Operational Research
 #' Society* 61(2), 179--190. \doi{10.1057/jors.2008.144}
@@ -150,28 +150,28 @@ drift_ks <- function(x, y) {
 #' ref <- stats::rnorm(500)
 #'
 #' # Same distribution: both indices near zero.
-#' drift_psi(ref, stats::rnorm(500))
+#' drftpsi(ref, stats::rnorm(500))
 #'
 #' # A shift both indices register.
-#' drift_psi(ref, stats::rnorm(500, mean = 1))
+#' drftpsi(ref, stats::rnorm(500, mean = 1))
 #'
 #' # A sample compared with itself has moved nowhere at all.
-#' drift_psi(ref, ref)
+#' drftpsi(ref, ref)
 #'
 #' # The Jensen-Shannon divergence is bounded by log(2), whatever the
 #' # shift, which is what makes it comparable across columns.
-#' drift_psi(c(1, 1, 1), c(9, 9, 9))[["js_divergence"]] <= log(2)
+#' drftpsi(c(1, 1, 1), c(9, 9, 9))[["jsdiv"]] <= log(2)
 #'
 #' # a coarser binning, and a larger floor that damps an empty bin
-#' drift_psi(ref, stats::rnorm(500, mean = 1), bins = 4)
-#' drift_psi(ref, stats::rnorm(500, mean = 1), eps = 0.01)
+#' drftpsi(ref, stats::rnorm(500, mean = 1), bins = 4)
+#' drftpsi(ref, stats::rnorm(500, mean = 1), eps = 0.01)
 #'
-#' try(drift_psi(ref, ref, bins = 1))
+#' try(drftpsi(ref, ref, bins = 1))
 #' @export
-drift_psi <- function(x, y, bins = 10L, eps = 1e-6) {
+drftpsi <- function(x, y, bins = 10L, eps = 1e-6) {
   x <- .rmbl_finite_input(x, "x", min_n = 1L)
   y <- .rmbl_finite_input(y, "y", min_n = 1L)
-  x <- x[!is.na(x)]   # min_n = 1L above: at least one value remains in each
+  x <- x[!is.na(x)]   # minn = 1L above: at least one value remains in each
   y <- y[!is.na(y)]
   bins <- .rmbl_num(bins, "bins", integer = TRUE)
   if (length(bins) != 1L || is.na(bins) || bins < 2L) {
@@ -207,7 +207,7 @@ drift_psi <- function(x, y, bins = 10L, eps = 1e-6) {
   px <- as.numeric(table(cut(x, edges))) / length(x)
   py <- as.numeric(table(cut(y, edges))) / length(y)
   out <- .Call(C_rmbl_psi, px, py, as.numeric(eps))
-  names(out) <- c("psi", "js_divergence")
+  names(out) <- c("psi", "jsdiv")
   out
 }
 
@@ -218,14 +218,14 @@ drift_psi <- function(x, y, bins = 10L, eps = 1e-6) {
 #' distribution that is taken as known, such as proportions fixed by a
 #' specification or a published breakdown. It is Pearson's chi-square
 #' goodness-of-fit test. When the reference is itself a sample, use
-#' [drift_homogeneity()], which accounts for the
+#' [drfthomog()], which accounts for the
 #' reference's own sampling
 #' error.
 #'
 #' @details
 #' Pearson's chi-square goodness-of-fit statistic comparing observed
 #' category counts with the proportions a capsule was pinned against. Use
-#' it where [drift_ks()] cannot apply, because the
+#' it where [drftks()] cannot apply, because the
 #' column is a factor or a set of codes rather than a number.
 #'
 #' Categories present in one argument and not the other are aligned by
@@ -238,7 +238,7 @@ drift_psi <- function(x, y, bins = 10L, eps = 1e-6) {
 #' `0`. If a new category is a legitimate possibility rather than a
 #' contradiction -- which it usually is when the reference is itself a
 #' finite sample -- use
-#' [drift_homogeneity()] instead.
+#' [drfthomog()] instead.
 #'
 #' With \eqn{O_j} the observed counts and \eqn{E_j = N e_j / \sum e} the
 #' reference scaled to the observed total \eqn{N},
@@ -255,42 +255,42 @@ drift_psi <- function(x, y, bins = 10L, eps = 1e-6) {
 #' Errors: a numeric vector without names; negative, infinite or missing
 #' counts; a total of zero on either side.
 #'
-#' @param observed Named numeric vector of counts in the
+#' @param obs Named numeric vector of counts in the
 #' new sample, or a factor/character vector to be tabulated.
-#' @param expected Named numeric vector of reference counts
+#' @param expd Named numeric vector of reference counts
 #' or proportions, or a factor/character vector to be tabulated. Rescaled
-#' to the total of `observed`.
+#' to the total of `obs`.
 #' @return A named length-4 numeric: `statistic`, `df`,
-#' `p_value` and `log_p_value`, the natural log of the upper tail, which
+#' `p_value` and `logpvalue`, the natural log of the upper tail, which
 #' keeps its information where `p_value` underflows to 0.
-#' @seealso [drift_homogeneity()],
-#'   [capsule_drift()],
+#' @seealso [drfthomog()],
+#'   [cpsdrft()],
 #' [stats::chisq.test()] for the full test object.
 #' @examples
 #' ref <- c(a = 50, b = 30, c = 20)
 #'
 #' # Counts matching the reference proportions: nothing to report.
-#' drift_chisq(c(a = 100, b = 60, c = 40), ref)
+#' drftchisq(c(a = 100, b = 60, c = 40), ref)
 #'
 #' # A reallocated mix is detected.
-#' drift_chisq(c(a = 40, b = 60, c = 100), ref)
+#' drftchisq(c(a = 40, b = 60, c = 100), ref)
 #'
 #' # Agrees with stats::chisq.test().
 #' o <- c(a = 40, b = 60, c = 100)
-#' all.equal(drift_chisq(o, ref)[["statistic"]],
+#' all.equal(drftchisq(o, ref)[["statistic"]],
 #'           as.numeric(stats::chisq.test(o, p = ref / sum(ref))$statistic))
 #'
 #' # Raw vectors are tabulated for you.
-#' drift_chisq(c("a", "a", "b", "b"), c("a", "b"))
+#' drftchisq(c("a", "a", "b", "b"), c("a", "b"))
 #'
 #' # A category the reference rules out, but which occurs, is a flat
 #' # contradiction rather than a large finite statistic.
-#' drift_chisq(c("a", "a", "b", "d"), c("a", "a", "b", "b"))
+#' drftchisq(c("a", "a", "b", "d"), c("a", "a", "b", "b"))
 #'
 #' # When a new category is legitimate, compare two samples instead.
-#' drift_homogeneity(c("a", "a", "b", "b"), c("a", "a", "b", "d"))
+#' drfthomog(c("a", "a", "b", "b"), c("a", "a", "b", "d"))
 #' @export
-drift_chisq <- function(observed, expected) {
+drftchisq <- function(obs, expd) {
   tab <- function(v) {
     if (is.factor(v) || is.character(v)) {
       t <- table(v)
@@ -298,18 +298,18 @@ drift_chisq <- function(observed, expected) {
     } else {
       nm <- names(v)
       if (is.null(nm)) {
-        stop("a numeric `observed`/`expected` must be named", call. = FALSE)
+        stop("a numeric `obs`/`expd` must be named", call. = FALSE)
       }
       stats::setNames(.rmbl_num(v, "observed / expected"), nm)
     }
   }
-  o <- .rmbl_check_counts(tab(observed), "observed")
-  e <- .rmbl_check_counts(tab(expected), "expected")
+  o <- .rmbl_check_counts(tab(obs), "obs")
+  e <- .rmbl_check_counts(tab(expd), "expd")
   lv <- union(names(o), names(e))
   o <- stats::setNames(ifelse(is.na(o[lv]), 0, o[lv]), lv)
   e <- stats::setNames(ifelse(is.na(e[lv]), 0, e[lv]), lv)
-  if (sum(o) <= 0) stop("`observed` has no counts", call. = FALSE)
-  if (sum(e) <= 0) stop("`expected` has no counts", call. = FALSE)
+  if (sum(o) <= 0) stop("`obs` has no counts", call. = FALSE)
+  if (sum(e) <= 0) stop("`expd` has no counts", call. = FALSE)
   # Reference proportions, scaled to the observed total.
   exp_counts <- sum(o) * e / sum(e)
   keep <- exp_counts > 0   # non-empty: both totals are positive by now
@@ -319,20 +319,20 @@ drift_chisq <- function(observed, expected) {
   # for it diverges. Report that rather than dropping the category and
   # returning a statistic computed as though it had not appeared.
   if (any(o[!keep] > 0)) {
-    return(c(statistic = Inf, df = max(1L, df), p_value = 0, log_p_value = -Inf))
+    return(c(statistic = Inf, df = max(1L, df), p_value = 0, logpvalue = -Inf))
   }
   stat <- sum((o[keep] - exp_counts[keep])^2 / exp_counts[keep])
   if (df < 1L) {
     # one category on both sides: nothing to test, and df = 0 is not a
     # chi-square distribution
-    return(c(statistic = stat, df = 0, p_value = NA_real_, log_p_value = NA_real_))
+    return(c(statistic = stat, df = 0, p_value = NA_real_, logpvalue = NA_real_))
   }
   c(statistic = stat, df = df, p_value = .rmbl_chisq_p(stat, df),
-    log_p_value = .rmbl_chisq_logp(stat, df))
+    logpvalue = .rmbl_chisq_logp(stat, df))
 }
 
 # The upper tail of a chi-square, computed AS the upper tail. The former
-# 1 - core_gamma_cdf(df / 2, stat / 2) underflowed to exactly 0 once the
+# 1 - cgamcdf(df / 2, stat / 2) underflowed to exactly 0 once the
 # lower tail rounded to 1 (stat >= 74.9 at df = 2), and "p = 0" is a
 # number a reader quotes.
 .rmbl_chisq_p <- function(stat, df) {
@@ -340,7 +340,7 @@ drift_chisq <- function(observed, expected) {
 }
 
 # The same tail on the log scale: a double cannot hold exp(-2536), so
-# `p_value` is 0 there while `log_p_value` still says how far below.
+# `p_value` is 0 there while `logpvalue` still says how far below.
 .rmbl_chisq_logp <- function(stat, df) {
   stats::pchisq(stat, df, lower.tail = FALSE, log.p = TRUE)
 }
@@ -353,7 +353,7 @@ drift_chisq <- function(observed, expected) {
 #' the same distribution, by Pearson's chi-square on the 2-by-k contingency
 #' table of their counts. Use it to ask whether the mix of categories has
 #' changed between two samples; it is the categorical test that
-#' [capsule_drift()] runs.
+#' [cpsdrft()] runs.
 #'
 #' @details
 #' With pooled shares \eqn{\hat\pi_j = (x_j + y_j)/(n_x + n_y)} and
@@ -378,9 +378,9 @@ drift_chisq <- function(observed, expected) {
 #' Errors: a numeric vector without names; negative, infinite or missing
 #' counts; an empty sample.
 #'
-#' # Why this and not [drift_chisq()]
+#' # Why this and not [drftchisq()]
 #'
-#' [drift_chisq()] compares observed counts
+#' [drftchisq()] compares observed counts
 #' against a distribution taken as KNOWN -- proportions fixed by a
 #' specification. When the reference is itself a finite sample, that
 #' treatment ignores the reference's own sampling error, understates the
@@ -388,7 +388,7 @@ drift_chisq <- function(observed, expected) {
 #' homogeneity test estimates the shared distribution from the pooled
 #' margins and carries the uncertainty of both samples, which is the right
 #' test when comparing a pinned extract with a fresh fetch.
-#' [capsule_drift()] therefore uses this one.
+#' [cpsdrft()] therefore uses this one.
 #'
 #' Categories present in only one sample are aligned by name and given zero
 #' counts, so an appearing or vanishing level registers.
@@ -396,14 +396,14 @@ drift_chisq <- function(observed, expected) {
 #' @param x,y Factor or character vectors (or named count
 #' vectors) -- the reference and the new sample.
 #' @return A named length-4 numeric: `statistic`, `df`,
-#' `p_value` and `log_p_value`, the natural log of the upper tail, which
+#' `p_value` and `logpvalue`, the natural log of the upper tail, which
 #' keeps its information where `p_value` underflows to 0. On the Monte
 #' Carlo branch (sparse tables) `p_value` is floored at 1/(B+1) and
-#' `log_p_value` is its log, so it carries no extra range there. The
+#' `logpvalue` is its log, so it carries no extra range there. The
 #' attribute `method` names the branch, or says why the test was
 #' inapplicable (one category, no counts).
 #' @seealso
-#' [drift_chisq()] for a known reference
+#' [drftchisq()] for a known reference
 #' distribution, [stats::chisq.test()] for
 #' the full test object.
 #' @examples
@@ -412,32 +412,32 @@ drift_chisq <- function(observed, expected) {
 #' b <- sample(c("x", "y", "z"), 300, TRUE)
 #'
 #' # Two draws from the same distribution: no evidence of a difference.
-#' drift_homogeneity(a, b)
+#' drfthomog(a, b)
 #'
 #' # A reallocated mix is detected.
-#' drift_homogeneity(a, sample(c("x", "y", "z"), 300, TRUE,
+#' drfthomog(a, sample(c("x", "y", "z"), 300, TRUE,
 #'                             prob = c(0.7, 0.2, 0.1)))
 #'
 #' # Agrees with stats::chisq.test() on the 2-by-k table.
 #' tab <- rbind(table(a), table(b))
-#' all.equal(drift_homogeneity(a, b)[["statistic"]],
+#' all.equal(drfthomog(a, b)[["statistic"]],
 #'           as.numeric(stats::chisq.test(tab)$statistic))
 #'
 #' # It is more conservative than treating the reference as known, which
 #' # is exactly the point.
-#' drift_homogeneity(a, b)[["p_value"]] >= drift_chisq(b, a)[["p_value"]]
+#' drfthomog(a, b)[["p_value"]] >= drftchisq(b, a)[["p_value"]]
 #'
 #' # named count vectors, and a small table that takes the Monte Carlo branch
-#' drift_homogeneity(c(a = 30, b = 20), c(a = 25, b = 25))
-#' attr(drift_homogeneity(c(a = 3, b = 1, c = 2), c(a = 1, b = 4, c = 1)), "method")
+#' drfthomog(c(a = 30, b = 20), c(a = 25, b = 25))
+#' attr(drfthomog(c(a = 3, b = 1, c = 2), c(a = 1, b = 4, c = 1)), "method")
 #'
-#' try(drift_homogeneity(c(1, 2), c(a = 3)))
+#' try(drfthomog(c(1, 2), c(a = 3)))
 #' @param seed Integer, default 1: seed for the Monte Carlo branch (small expected
 #'   counts). The
 #'   draw is made under this seed and the caller's RNG stream is restored,
 #'   so the same inputs give the same p-value and nothing downstream moves.
 #' @export
-drift_homogeneity <- function(x, y, seed = 1L) {
+drfthomog <- function(x, y, seed = 1L) {
   tab <- function(v) {
     if (is.factor(v) || is.character(v)) {
       t <- table(as.character(v))
@@ -470,7 +470,7 @@ drift_homogeneity <- function(x, y, seed = 1L) {
     sum((cy[keep] - ey[keep])^2 / ey[keep])
   df <- sum(keep) - 1L
   if (df < 1L) {
-    out <- c(statistic = stat, df = 0, p_value = NA_real_, log_p_value = NA_real_)
+    out <- c(statistic = stat, df = 0, p_value = NA_real_, logpvalue = NA_real_)
     attr(out, "method") <- "inapplicable: one category"
     return(out)
   }
@@ -479,7 +479,7 @@ drift_homogeneity <- function(x, y, seed = 1L) {
   # stat = 800, df = 799, and every table with those margins is the same).
   # No test has power there; the honest answer is "inapplicable", not p = 1.
   if ((nx + ny) / sum(keep) < 2) {
-    out <- c(statistic = stat, df = df, p_value = NA_real_, log_p_value = NA_real_)
+    out <- c(statistic = stat, df = df, p_value = NA_real_, logpvalue = NA_real_)
     attr(out, "method") <- paste0("inapplicable: ", sum(keep), " categories for ",
                                   nx + ny, " observations (fewer than two per category)")
     return(out)
@@ -497,7 +497,7 @@ drift_homogeneity <- function(x, y, seed = 1L) {
     .rmbl_chisq_p(stat, df)
   }
   out <- c(statistic = stat, df = df, p_value = p,
-           log_p_value = if (simulated) log(p) else .rmbl_chisq_logp(stat, df))
+           logpvalue = if (simulated) log(p) else .rmbl_chisq_logp(stat, df))
   attr(out, "method") <- if (simulated) {
     "Monte Carlo permutation (small expected counts)"
   } else {
@@ -539,34 +539,34 @@ drift_homogeneity <- function(x, y, seed = 1L) {
 #' @param x Numeric vector.
 #' @return A list of class `bricklayer_benford`: `counts`
 #' (observed digit frequencies 1--9), `expected`, `proportion`,
-#' `statistic`, `df`, `p_value`, `log_p_value` (the log of the upper
+#' `statistic`, `df`, `p_value`, `logpvalue` (the log of the upper
 #' tail, which keeps its information where `p_value` underflows to 0),
 #' and `n` (the number of values used). `counts`, `expected` and
 #' `proportion` are named numeric vectors with names `"1"` to `"9"`. The
 #' print method shows the verdict and a bar chart of observed against
 #' expected shares.
-#' @seealso [drift_chisq()],
-#'   [capsule_drift()].
+#' @seealso [drftchisq()],
+#'   [cpsdrft()].
 #' @references Benford F (1938). The law of anomalous numbers.
 #'   *Proceedings of the American Philosophical Society* 78(4), 551--572.
 #' @examples
 #' # A quantity spanning several orders of magnitude follows the law.
 #' set.seed(3)
-#' benford_test(10^stats::runif(2000, 0, 6))
+#' benfordtst(10^stats::runif(2000, 0, 6))
 #'
 #' # Digits drawn uniformly do not.
-#' benford_test(as.numeric(paste0(sample(1:9, 2000, TRUE), "000")))
+#' benfordtst(as.numeric(paste0(sample(1:9, 2000, TRUE), "000")))
 #'
 #' # The expected proportions are the closed form.
-#' b <- benford_test(10^stats::runif(500, 0, 5))
+#' b <- benfordtst(10^stats::runif(500, 0, 5))
 #' all.equal(b$expected / b$n, log10(1 + 1 / (1:9)))
 #'
 #' # Zeros carry no leading digit and are excluded from n.
-#' benford_test(c(0, 0, 1, 2, 3))$n
+#' benfordtst(c(0, 0, 1, 2, 3))$n
 #'
-#' try(benford_test(c(0, NA)))
+#' try(benfordtst(c(0, NA)))
 #' @export
-benford_test <- function(x) {
+benfordtst <- function(x) {
   x <- .rmbl_num_input(x, "x")
   x <- x[is.finite(x) & x != 0]
   if (length(x) < 1L) {
@@ -575,7 +575,7 @@ benford_test <- function(x) {
   }
   # in blocks of a million, so a long vector shows its progress (the counts add up exactly)
   starts <- seq.int(1, length(x), by = 1e6)
-  pg <- bricklayer_progress("Benford digits", length(x))
+  pg <- blprog("Benford digits", length(x))
   on.exit(pg$done(), add = TRUE)
   counts <- NULL
   for (s in starts) {
@@ -595,7 +595,7 @@ benford_test <- function(x) {
               proportion = counts / n,
               statistic = stat, df = df,
               p_value = .rmbl_chisq_p(stat, df),
-              log_p_value = .rmbl_chisq_logp(stat, df),
+              logpvalue = .rmbl_chisq_logp(stat, df),
               n = n)
   class(out) <- c("bricklayer_benford", "list")
   out
@@ -612,27 +612,27 @@ benford_test <- function(x) {
 #'
 #' @details
 #' Runs the appropriate drift test on every shared column and collects the
-#' verdicts in one report: [drift_ks()] plus
-#' [drift_psi()] for a numeric column,
-#' [drift_homogeneity()] for a categorical
+#' verdicts in one report: [drftks()] plus
+#' [drftpsi()] for a numeric column,
+#' [drfthomog()] for a categorical
 #' one. Columns that appeared or vanished are listed separately, since no
 #' test applies to them.
 #'
 #' The categorical test is the two-sample homogeneity test, NOT
-#' [drift_chisq()] 's goodness-of-fit against a
+#' [drftchisq()] 's goodness-of-fit against a
 #' known distribution: the reference here is itself a finite sample, and
 #' ignoring its sampling error would report drift too readily.
 #'
 #' This is the check that a byte-level digest cannot make. A re-released
 #' extract legitimately has a different SHA-256 while being the same data
 #' statistically; conversely a column can keep its name, type and row count
-#' while having been silently rescaled. `capsule_drift()` asks whether
+#' while having been silently rescaled. `cpsdrft()` asks whether
 #' the DATA moved.
 #'
 #' Column types: a column numeric on both sides is `"numeric"`; a character
 #' or factor column whose every value is an ISO date (`YYYY-MM-DD`) or
 #' date-time on both sides is converted and tested as `"date"`; a
-#' categorical column with more than `identifier_levels` distinct values, or
+#' categorical column with more than `idelvls` distinct values, or
 #' with at least 20 distinct values that number more than a fifth of the
 #' rows, is an `"identifier"` and is not tested; anything else is
 #' `"categorical"`. Missing values are dropped. For a categorical column the
@@ -640,28 +640,28 @@ benford_test <- function(x) {
 #' value pooled into one extra bin.
 #'
 #' A column is `drifted` when its p-value is below `alpha`, or when its PSI
-#' exceeds `psi_threshold` and both samples have at least `psi_min_n`
-#' values. `any_drift` is also `TRUE` when a column was added or removed.
+#' exceeds `psithr` and both samples have at least `psiminn`
+#' values. `anydrft` is also `TRUE` when a column was added or removed.
 #' Each column runs one or two tests, so with many columns some will fall
-#' below `alpha` by chance; see [scan_adjust()] for a
+#' below `alpha` by chance; see [scanadj()] for a
 #' multiplicity
-#' correction and [drift_calibrate()] for an empirical
+#' correction and [drftcal()] for an empirical
 #' false-alarm rate.
 #' A progress bar is shown in an interactive session for many columns.
 #'
 #' Errors: either argument not a data frame; `alpha` not strictly between
-#' 0 and 1; `psi_min_n` negative; `identifier_levels` below 2.
+#' 0 and 1; `psiminn` negative; `idelvls` below 2.
 #'
-#' @param reference Data frame the capsule was built from.
-#' @param current Data frame just fetched.
+#' @param ref Data frame the capsule was built from.
+#' @param cur Data frame just fetched.
 #' @param alpha Significance level for the `drifted` flag
 #' (default 0.01; deliberately stricter than 0.05 because a wide table runs
 #' many tests).
-#' @param psi_threshold PSI above which a numeric
+#' @param psithr PSI above which a numeric
 #' column is flagged even when its p-value is not significant (default
 #' 0.25, the conventional "material shift" line).
-#' @param psi_min_n Minimum size BOTH samples must reach
-#' before `psi_threshold` is allowed to flag a column on its own
+#' @param psiminn Minimum size BOTH samples must reach
+#' before `psithr` is allowed to flag a column on its own
 #' (default 1000). The PSI bands are large-sample heuristics with no
 #' calibrated null distribution: on a few hundred rows, binning noise alone
 #' routinely pushes the index past 0.25, so applying the threshold there
@@ -669,25 +669,25 @@ benford_test <- function(x) {
 #' Kolmogorov-Smirnov p-value, which is calibrated, and the PSI is still
 #' reported as an effect size.
 #' @param bins Bins passed to
-#' [drift_psi()] (default 10).
+#' [drftpsi()] (default 10).
 #' @return A list of class `bricklayer_drift` with elements:
 #' \describe{
 #'   \item{`columns`}{a data frame, one row per shared column, with
 #'     `column`, `type` (`"numeric"`, `"date"`, `"categorical"`
 #'     or
 #'     `"identifier"`), `statistic` (KS \eqn{D} or chi-square), `p_value`,
-#'     `psi`, `js_divergence`, `unseen_share` (share of current values the
+#'     `psi`, `jsdiv`, `unseen_share` (share of current values the
 #'     reference never had; categorical and identifier columns only),
 #'     `drifted` (logical, `NA` when no test applies) and `note`
 #'     (why a column was not tested, or `""`);}
 #'   \item{`added`, `removed`}{character vectors of column names;}
-#'   \item{`n_reference`, `n_current`}{row counts;}
+#'   \item{`nref`, `ncur`}{row counts;}
 #'   \item{`alpha`}{the level used;}
-#'   \item{`any_drift`}{logical.}
+#'   \item{`anydrft`}{logical.}
 #' }
 #' The print method lists the per-column verdicts, drifted columns first.
 #' @seealso
-#' [validate_schema()] for the structural
+#' [valsch()] for the structural
 #' check, which this complements rather than replaces.
 #' @examples
 #' set.seed(5)
@@ -703,25 +703,25 @@ benford_test <- function(x) {
 #'   size = stats::runif(300, 1, 10),
 #'   grade = sample(c("a", "b", "c"), 300, TRUE)
 #' )
-#' d <- capsule_drift(ref, same)
-#' d$any_drift
+#' d <- cpsdrft(ref, same)
+#' d$anydrft
 #'
 #' # A silently rescaled column, and a new category, are both caught.
 #' moved <- same
 #' moved$size <- moved$size * 3
 #' moved$grade[1:100] <- "z"
-#' capsule_drift(ref, moved)
+#' cpsdrft(ref, moved)
 #'
 #' # The PSI is always reported as an effect size, but on a sample this
 #' # small it is not allowed to raise the flag by itself -- binning noise
-#' # alone would clear 0.25. Lower psi_min_n to override that.
-#' capsule_drift(ref, same)$columns$psi
+#' # alone would clear 0.25. Lower psiminn to override that.
+#' cpsdrft(ref, same)$columns$psi
 #'
 #' # Structural changes are reported rather than tested.
-#' capsule_drift(ref, same[, c("value", "grade")])$removed
+#' cpsdrft(ref, same[, c("value", "grade")])$removed
 #'
-#' try(capsule_drift(ref, as.matrix(same)))
-#' @param identifier_levels A character column with more distinct values
+#' try(cpsdrft(ref, as.matrix(same)))
+#' @param idelvls A character column with more distinct values
 #'   than this (or at least 20 distinct values covering more than a fifth of
 #'   the rows) is an identifier,
 #'   not a distribution: it gets `type = "identifier"`, its `unseen_share`
@@ -729,47 +729,47 @@ benford_test <- function(x) {
 #'   `drifted = NA`. Character columns that parse as dates are compared as
 #'   dates (`type = "date"`).
 #' @param seed Seed for the Monte Carlo branch of the homogeneity test,
-#'   [drift_homogeneity()]. The caller's RNG stream is
+#'   [drfthomog()]. The caller's RNG stream is
 #'   left
 #'   untouched.
 #' @export
-capsule_drift <- function(reference, current, alpha = 0.01,
-                          psi_threshold = 0.25, psi_min_n = 1000L,
-                          bins = 10L, identifier_levels = 100L, seed = 1L) {
-  if (!is.data.frame(reference) || !is.data.frame(current)) {
-    stop("`reference` and `current` must both be data frames", call. = FALSE)
+cpsdrft <- function(ref, cur, alpha = 0.01,
+                          psithr = 0.25, psiminn = 1000L,
+                          bins = 10L, idelvls = 100L, seed = 1L) {
+  if (!is.data.frame(ref) || !is.data.frame(cur)) {
+    stop("`ref` and `cur` must both be data frames", call. = FALSE)
   }
   alpha <- .rmbl_num(alpha, "alpha")
   if (length(alpha) != 1L || is.na(alpha) || alpha <= 0 || alpha >= 1) {
     stop("`alpha` must be a single value strictly inside (0, 1)",
          call. = FALSE)
   }
-  psi_min_n <- .rmbl_num(psi_min_n, "psi_min_n", integer = TRUE)
-  if (length(psi_min_n) != 1L || is.na(psi_min_n) || psi_min_n < 0L) {
-    stop("`psi_min_n` must be a single non-negative integer", call. = FALSE)
+  psiminn <- .rmbl_num(psiminn, "psiminn", integer = TRUE)
+  if (length(psiminn) != 1L || is.na(psiminn) || psiminn < 0L) {
+    stop("`psiminn` must be a single non-negative integer", call. = FALSE)
   }
-  identifier_levels <- .rmbl_num(identifier_levels, "identifier_levels", integer = TRUE)
-  if (length(identifier_levels) != 1L || is.na(identifier_levels) || identifier_levels < 2L) {
-    stop("`identifier_levels` must be a single integer of at least 2", call. = FALSE)
+  idelvls <- .rmbl_num(idelvls, "idelvls", integer = TRUE)
+  if (length(idelvls) != 1L || is.na(idelvls) || idelvls < 2L) {
+    stop("`idelvls` must be a single integer of at least 2", call. = FALSE)
   }
-  shared <- intersect(names(reference), names(current))
-  added <- setdiff(names(current), names(reference))
-  removed <- setdiff(names(reference), names(current))
+  shared <- intersect(names(ref), names(cur))
+  added <- setdiff(names(cur), names(ref))
+  removed <- setdiff(names(ref), names(cur))
 
   row <- function(nm, type, statistic = NA_real_, p_value = NA_real_,
                   psi = NA_real_, js = NA_real_, unseen = NA_real_,
                   drifted = NA, note = "") {
     data.frame(column = nm, type = type, statistic = statistic,
-               p_value = p_value, psi = psi, js_divergence = js,
+               p_value = p_value, psi = psi, jsdiv = js,
                unseen_share = unseen, drifted = drifted, note = note,
                stringsAsFactors = FALSE)
   }
-  pg <- bricklayer_progress("drift screen", length(shared))
+  pg <- blprog("drift screen", length(shared))
   on.exit(pg$done(), add = TRUE)
   rows <- lapply(shared, function(nm) {
     pg$tick(info = nm)
-    a <- reference[[nm]]
-    b <- current[[nm]]
+    a <- ref[[nm]]
+    b <- cur[[nm]]
     numeric_col <- is.numeric(a) && is.numeric(b)
     # a character column of dates is a numeric column in disguise: two
     # disjoint years of daily dates are a shift, not 730 unrelated labels
@@ -790,14 +790,14 @@ capsule_drift <- function(reference, current, alpha = 0.01,
       if (length(av) < 1L || length(bv) < 1L) {
         return(row(nm, type, note = "no non-missing values on one side"))
       }
-      k <- drift_ks(av, bv)
-      p <- drift_psi(av, bv, bins = bins)
+      k <- drftks(av, bv)
+      p <- drftpsi(av, bv, bins = bins)
       # The p-value is calibrated; the PSI band is a heuristic that only
       # means anything once both samples are large.
-      psi_flag <- length(av) >= psi_min_n && length(bv) >= psi_min_n &&
-        p[["psi"]] > psi_threshold
+      psi_flag <- length(av) >= psiminn && length(bv) >= psiminn &&
+        p[["psi"]] > psithr
       return(row(nm, type, statistic = k[["statistic"]], p_value = k[["p_value"]],
-                 psi = p[["psi"]], js = p[["js_divergence"]],
+                 psi = p[["psi"]], js = p[["jsdiv"]],
                  drifted = k[["p_value"]] < alpha || psi_flag))
     }
     av <- as.character(a)
@@ -810,7 +810,7 @@ capsule_drift <- function(reference, current, alpha = 0.01,
     unseen <- mean(!(bv %in% av))
     n_lv <- length(unique(c(av, bv)))
     # An identifier-like column -- a key, a postcode, free text: more
-    # distinct values than `identifier_levels`, or a value for every
+    # distinct values than `idelvls`, or a value for every
     # fifth row -- has no distribution to compare. Two independent
     # samples of the same 5,000 ids share about half their values, so a
     # divergence over the union of categories read 8.8 and fired on every
@@ -821,12 +821,12 @@ capsule_drift <- function(reference, current, alpha = 0.01,
     # no verdict for an ordinary small column, while 0.5.8's hundred-row gate
     # scored an 80-row id column as categorical with a PSI of 5 (its diff
     # review). A column with fewer than 20 distinct values is a factor.
-    if (n_lv > identifier_levels ||
+    if (n_lv > idelvls ||
         (n_lv >= 20L && n_lv > 0.2 * (length(av) + length(bv)))) {
       return(row(nm, "identifier", unseen = unseen, drifted = NA,
                  note = sprintf("%d distinct values: distribution tests do not apply", n_lv)))
     }
-    cs <- drift_homogeneity(av, bv, seed = seed)
+    cs <- drfthomog(av, bv, seed = seed)
     # PSI over the REFERENCE's categories, with every current value the
     # reference lacks pooled into one bin: that is the index's definition
     # (expected bins, actual mass), and it stays near zero when the two
@@ -835,8 +835,8 @@ capsule_drift <- function(reference, current, alpha = 0.01,
     px <- c(as.numeric(table(factor(av, levels = lv))) / length(av), 0)
     py <- c(as.numeric(table(factor(bv, levels = lv))) / length(bv), unseen)
     ps <- .Call(C_rmbl_psi, px, py, 1e-6)
-    psi_flag <- length(av) >= psi_min_n && length(bv) >= psi_min_n &&
-      ps[[1L]] > psi_threshold
+    psi_flag <- length(av) >= psiminn && length(bv) >= psiminn &&
+      ps[[1L]] > psithr
     p_cat <- cs[["p_value"]]
     row(nm, "categorical", statistic = cs[["statistic"]], p_value = p_cat,
         psi = ps[[1L]], js = ps[[2L]], unseen = unseen,
@@ -847,14 +847,14 @@ capsule_drift <- function(reference, current, alpha = 0.01,
   cols <- if (length(rows)) do.call(rbind, rows) else
     data.frame(column = character(0), type = character(0),
                statistic = numeric(0), p_value = numeric(0),
-               psi = numeric(0), js_divergence = numeric(0),
+               psi = numeric(0), jsdiv = numeric(0),
                unseen_share = numeric(0), drifted = logical(0),
                note = character(0), stringsAsFactors = FALSE)
 
   out <- list(columns = cols, added = added, removed = removed,
-              n_reference = nrow(reference), n_current = nrow(current),
+              nref = nrow(ref), ncur = nrow(cur),
               alpha = alpha,
-              any_drift = any(cols$drifted, na.rm = TRUE) ||
+              anydrft = any(cols$drifted, na.rm = TRUE) ||
                 length(added) > 0L || length(removed) > 0L)
   class(out) <- c("bricklayer_drift", "list")
   out

@@ -16,7 +16,7 @@ make_test_capsule <- function() {
       name = "Test Detailed Dataset",
       filename = "data.csv",
       direct_url = "https://example.org/data.csv",
-      sha256 = sha256_file(file.path(dir, "data.csv")),
+      sha256 = sha256file(file.path(dir, "data.csv")),
       size_bytes = file.size(file.path(dir, "data.csv")),
       row_count_data_rows = 6
     ),
@@ -27,10 +27,10 @@ make_test_capsule <- function() {
   )
   jsonlite::write_json(prov, file.path(dir, "data_provenance.json"),
                        auto_unbox = TRUE, digits = NA)
-  m <- make_manifest(list(study = "test"), environment = FALSE)
+  m <- mkmnf(list(study = "test"), env = FALSE)
   capture.output({
-    m <- record(m, "mean_value", observed = mean(df$value), expected = 1.75)
+    m <- recrd(m, "mean_value", obs = mean(df$value), expd = 1.75)
   })
-  write_manifest_json(m, file.path(dir, "manifest.json"))
+  wrmnfjs(m, file.path(dir, "manifest.json"))
   dir
 }

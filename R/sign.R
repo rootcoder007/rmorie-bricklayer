@@ -21,13 +21,13 @@
 #' machine is available on every machine.
 #'
 #' `"xmss-sha256"` is the stateful hash-based scheme of
-#' [pqc_keygen()]. The rest are the NIST
-#' standards, taken with [fips_keygen()]: ML-DSA
+#' [pqckg()]. The rest are the NIST
+#' standards, taken with [fipskg()]: ML-DSA
 #' (FIPS 204) at all three parameter sets, and SLH-DSA (FIPS 205) at all
 #' twelve -- six over SHAKE and six over SHA-2, which are different schemes
 #' and not merely different code paths. Use it to see which names
-#' [fips_keygen()], [fips_sizes()] and
-#' [fips_key()] accept, or to choose a
+#' [fipskg()], [fipssz()] and
+#' [fipskey()] accept, or to choose a
 #' parameter set.
 #'
 #' @details
@@ -44,35 +44,35 @@
 #'   then the three ML-DSA sets, the six SLH-DSA SHA-2 sets and the six
 #'   SLH-DSA SHAKE sets.
 #' @seealso
-#' [fips_keygen()] for the standardised schemes,
-#' [pqc_keygen()] for the stateful one.
+#' [fipskg()] for the standardised schemes,
+#' [pqckg()] for the stateful one.
 #' @examples
-#' pqc_backends()
+#' pqcbknd()
 #'
 #' # Every scheme is present in every build.
 #' all(c("xmss-sha256", "ML-DSA-65", "SLH-DSA-SHAKE-128s") %in%
-#'     pqc_backends())
+#'     pqcbknd())
 #'
 #' # The SLH-DSA sets with fast signing, and their signature sizes in bytes.
-#' fast <- grep("^SLH-DSA-.*f$", pqc_backends(), value = TRUE)
-#' vapply(fast, function(s) fips_sizes(s)[["signature"]], integer(1))
+#' fast <- grep("^SLH-DSA-.*f$", pqcbknd(), value = TRUE)
+#' vapply(fast, function(s) fipssz(s)[["signature"]], integer(1))
 #' @export
-pqc_backends <- function() .Call(C_rmbl_pqc_backends)
+pqcbknd <- function() .Call(C_rmbl_pqc_backends)
 
 #' Generate a standardised post-quantum signing key
 #'
 #' Generates a key for one of the NIST-standardised signature schemes:
 #' ML-DSA (FIPS 204) or SLH-DSA (FIPS 205). Both are implemented in this
 #' package, natively, with no system dependency;
-#' [pqc_backends()] lists the parameter sets. The key signs
+#' [pqcbknd()] lists the parameter sets. The key signs
 #' capsule
-#' manifests, attestations and bundles with [capsule_sign()],
+#' manifests, attestations and bundles with [cpssign()],
 #' and its
-#' public half, from `fips_public_key()`, is what you give to anyone who
+#' public half, from `fipspubkey()`, is what you give to anyone who
 #' should be able to check those signatures with
-#' [capsule_verify()].
+#' [cpsvrf()].
 #'
-#' Unlike [pqc_keygen()] 's hash-based key, these
+#' Unlike [pqckg()] 's hash-based key, these
 #' are STATELESS: one key signs any number of messages, with no index to
 #' track and nothing to persist between signatures.
 #'
@@ -86,7 +86,7 @@ pqc_backends <- function() .Call(C_rmbl_pqc_backends)
 #'
 #' @details
 #' Key generation expands a random seed (the length
-#' [fips_sizes()] reports
+#' [fipssz()] reports
 #' as `seed`: 32 bytes for ML-DSA, three times the security level in bytes
 #' for SLH-DSA) into the key pair exactly as FIPS 204 `ML-DSA.KeyGen` and
 #' FIPS 205 `slh_keygen` do, so the same seed gives the same key as any
@@ -94,30 +94,30 @@ pqc_backends <- function() .Call(C_rmbl_pqc_backends)
 #' keys take from milliseconds (the `f` sets) to about a second (the `s`
 #' sets, which build a larger top tree), with a spinner on stderr after
 #' 0.75 s when a person is watching (see
-#' [bricklayer_progress()]) and
+#' [blprog()]) and
 #' Ctrl-C honoured. Nothing is written to disk: saving the key, and keeping
-#' its `secret` private, is up to you. `fips_public_key()` drops the secret
+#' its `secret` private, is up to you. `fipspubkey()` drops the secret
 #' half, leaving what a verifier needs.
 #'
 #' Refusals: an unknown scheme (the message lists the known ones, and
-#' points to [pqc_keygen()] for XMSS), a `seed` that is not
+#' points to [pqckg()] for XMSS), a `seed` that is not
 #' a raw vector of
-#' the right length, and for `fips_public_key()` a key that did not come
-#' from `fips_keygen()` or [fips_key()].
+#' the right length, and for `fipspubkey()` a key that did not come
+#' from `fipskg()` or [fipskey()].
 #'
 #' @param scheme Scheme name, one of
-#' [pqc_backends()] other than
+#' [pqcbknd()] other than
 #' `"xmss-sha256"`. The default `"ML-DSA-65"` is the FIPS 204
 #' middle security level.
 #' @param seed Optional raw vector of key-generation seed
-#' bytes, of the length [fips_sizes()] reports for
+#' bytes, of the length [fipssz()] reports for
 #' the scheme. Supplying it makes the key reproducible, which is what the
 #' standards' test vectors need; the default draws from the operating
 #' system's CSPRNG.
-#' @return `fips_keygen()`: a list of class `bricklayer_fips_key` (also
+#' @return `fipskg()`: a list of class `bricklayer_fips_key` (also
 #'   `bricklayer_oqs_key`) with `public` and `secret` (the encoded keys as
 #'   lowercase hex strings, in the standards' byte layouts) and `scheme`.
-#'   Printing it never shows the secret. `fips_public_key()`: a list of
+#'   Printing it never shows the secret. `fipspubkey()`: a list of
 #'   class `bricklayer_fips_public_key` (also `bricklayer_oqs_public_key`)
 #'   with `public` and `scheme`.
 #' @references National Institute of Standards and Technology (2024).
@@ -128,32 +128,32 @@ pqc_backends <- function() .Call(C_rmbl_pqc_backends)
 #' Hash-Based Digital Signature Standard. FIPS 205.
 #'   \doi{10.6028/NIST.FIPS.205}
 #' @seealso
-#' [pqc_keygen()] for the stateful hash-based key,
-#' [capsule_sign()] which accepts either,
-#' [fips_sizes()] for the byte lengths.
+#' [pqckg()] for the stateful hash-based key,
+#' [cpssign()] which accepts either,
+#' [fipssz()] for the byte lengths.
 #' @examples
-#' key <- fips_keygen("ML-DSA-65")
+#' key <- fipskg("ML-DSA-65")
 #' key$scheme
 #'
-#' sig <- capsule_sign("a manifest digest", key)
-#' capsule_verify("a manifest digest", sig, fips_public_key(key))
+#' sig <- cpssign("a manifest digest", key)
+#' cpsvrf("a manifest digest", sig, fipspubkey(key))
 #'
 #' # A context string binds the signature to its purpose: the same
 #' # message signed for one context does not verify under another.
-#' sig2 <- capsule_sign("a manifest digest", key, context = "release")
-#' capsule_verify("a manifest digest", sig2, key, context = "release")
-#' capsule_verify("a manifest digest", sig2, key, context = "staging")
+#' sig2 <- cpssign("a manifest digest", key, ctx = "release")
+#' cpsvrf("a manifest digest", sig2, key, ctx = "release")
+#' cpsvrf("a manifest digest", sig2, key, ctx = "staging")
 #'
 #' # A fixed seed reproduces the key (for test vectors only: a guessable
 #' # seed is a guessable key).
 #' seed <- as.raw(1:32)
-#' identical(fips_keygen("ML-DSA-44", seed)$public, fips_keygen("ML-DSA-44", seed)$public)
+#' identical(fipskg("ML-DSA-44", seed)$public, fipskg("ML-DSA-44", seed)$public)
 #'
 #' # The public half carries no secret.
-#' names(fips_public_key(key))
+#' names(fipspubkey(key))
 #'
 #' # An unknown parameter set is refused.
-#' try(fips_keygen("ML-DSA-99"))
+#' try(fipskg("ML-DSA-99"))
 #' @section Security:
 #' A hand-written implementation. The standardised schemes are checked byte
 #' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
@@ -170,11 +170,11 @@ pqc_backends <- function() .Call(C_rmbl_pqc_backends)
 #' models; no third-party security audit has been commissioned, and the
 #' README's security section lists what each check does and does not cover.
 #' @export
-fips_keygen <- function(scheme = "ML-DSA-65", seed = NULL) {
+fipskg <- function(scheme = "ML-DSA-65", seed = NULL) {
   scheme <- .rmbl_fips_scheme(scheme)
-  sz <- fips_sizes(scheme)
+  sz <- fipssz(scheme)
   if (is.null(seed)) {
-    seed <- random_bytes(sz[["seed"]])
+    seed <- rndbytes(sz[["seed"]])
   } else if (!is.raw(seed) || length(seed) != sz[["seed"]]) {
     stop(sprintf("`seed` must be a raw vector of %d bytes for %s",
                  sz[["seed"]], scheme), call. = FALSE)
@@ -187,12 +187,12 @@ fips_keygen <- function(scheme = "ML-DSA-65", seed = NULL) {
   out
 }
 
-#' @rdname fips_keygen
-#' @param key A key from `fips_keygen()`.
+#' @rdname fipskg
+#' @param key A key from `fipskg()`.
 #' @export
-fips_public_key <- function(key) {
+fipspubkey <- function(key) {
   if (!inherits(key, "bricklayer_oqs_key")) {
-    stop("`key` must come from fips_keygen()", call. = FALSE)
+    stop("`key` must come from fipskg()", call. = FALSE)
   }
   out <- list(public = key$public, scheme = key$scheme)
   class(out) <- c("bricklayer_fips_public_key",
@@ -204,8 +204,8 @@ fips_public_key <- function(key) {
 #'
 #' Wraps key bytes that came from somewhere else -- another implementation,
 #' a key store, a file written by an earlier session -- in the object
-#' [capsule_sign()] and
-#' [capsule_verify()] expect. The lengths are
+#' [cpssign()] and
+#' [cpsvrf()] expect. The lengths are
 #' checked against the parameter set, so material for the wrong scheme is
 #' refused here rather than producing a signature nothing can verify.
 #'
@@ -218,7 +218,7 @@ fips_public_key <- function(key) {
 #' @details
 #' Hex input may be upper or lower case and is stored lower case; raw
 #' input is converted to hex. Only the lengths are checked (against
-#' [fips_sizes()]): a secret key that does not belong to the
+#' [fipssz()]): a secret key that does not belong to the
 #' public key is
 #' not detected here, and gives signatures that do not verify under that
 #' public key. Refusals: an unknown scheme, and material that is not hex of
@@ -226,7 +226,7 @@ fips_public_key <- function(key) {
 #' (`"must be N bytes of key material"`).
 #'
 #' @param scheme Scheme name, as in
-#' [fips_keygen()].
+#' [fipskg()].
 #' @param public Public key, hex or raw.
 #' @param secret Secret key, hex or raw. Omit for a
 #' verification-only key.
@@ -235,27 +235,27 @@ fips_public_key <- function(key) {
 #'   `secret` is given, otherwise a `bricklayer_fips_public_key`
 #'   (`public`,
 #'   `scheme`); keys are held as lowercase hex, as
-#'   [fips_keygen()] returns
+#'   [fipskg()] returns
 #'   them.
 #' @seealso
-#' [fips_keygen()],
-#' [fips_sizes()].
+#' [fipskg()],
+#' [fipssz()].
 #' @examples
-#' key <- fips_keygen("ML-DSA-44")
+#' key <- fipskg("ML-DSA-44")
 #' # the round trip through raw material changes nothing
-#' again <- fips_key("ML-DSA-44", key$public, key$secret)
+#' again <- fipskey("ML-DSA-44", key$public, key$secret)
 #' identical(again$secret, key$secret)
 #'
-#' sig <- capsule_sign("m", again)
-#' capsule_verify("m", sig, fips_key("ML-DSA-44", key$public))
+#' sig <- cpssign("m", again)
+#' cpsvrf("m", sig, fipskey("ML-DSA-44", key$public))
 #'
 #' # material of the wrong length is refused
-#' try(fips_key("ML-DSA-65", key$public, key$secret))
+#' try(fipskey("ML-DSA-65", key$public, key$secret))
 #' @export
-fips_key <- function(scheme, public, secret = NULL) {
+fipskey <- function(scheme, public, secret = NULL) {
   .rmbl_no_fn(public = public, secret = secret)
   scheme <- .rmbl_fips_scheme(scheme)
-  sz <- fips_sizes(scheme)
+  sz <- fipssz(scheme)
   pub <- .rmbl_fips_material(public, sz[["public_key"]], "public", scheme)
   if (is.null(secret)) {
     out <- list(public = pub, scheme = scheme)
@@ -292,10 +292,10 @@ fips_key <- function(scheme, public, secret = NULL) {
 
 #' Sign an ML-DSA message digest computed elsewhere
 #'
-#' The external-mu interface. `fips_mu()` reduces a message to the
+#' The external-mu interface. `fipsmu()` reduces a message to the
 #' 64-byte value mu that is the only thing ML-DSA signing actually
-#' consumes; `fips_sign_mu()` signs that value and
-#' `fips_verify_mu()` checks it. Use it when the message and the signing
+#' consumes; `fipssignmu()` signs that value and
+#' `fipsvrfmu()` checks it. Use it when the message and the signing
 #' key are in different places: the machine with the data computes mu from
 #' the public key, and only those 64 bytes travel to the signer.
 #'
@@ -307,7 +307,7 @@ fips_key <- function(scheme, public, secret = NULL) {
 #' key cannot be signed under another to any useful effect.
 #'
 #' The resulting signature is an ordinary ML-DSA signature.
-#' [capsule_verify()] accepts it, given the
+#' [cpsvrf()] accepts it, given the
 #' same message and context.
 #'
 #' @details
@@ -317,29 +317,29 @@ fips_key <- function(scheme, public, secret = NULL) {
 #' the domain byte, the context length and the context (or, with a
 #' `prehash`, the pre-hash's identifier and digest), as in FIPS 204
 #' Algorithm 7. Signing from mu is Algorithm 7 from that point on, and
-#' `fips_verify_mu()` is Algorithm 8 from mu.
+#' `fipsvrfmu()` is Algorithm 8 from mu.
 #'
 #' Refusals: a key that is not an ML-DSA key from
-#' [fips_keygen()] or
-#' [fips_key()] (SLH-DSA keys are refused with
-#' `"external mu is an ML-DSA interface"`), `fips_sign_mu()` with a public
+#' [fipskg()] or
+#' [fipskey()] (SLH-DSA keys are refused with
+#' `"external mu is an ML-DSA interface"`), `fipssignmu()` with a public
 #' key only (`"signing needs a key with its secret half"`) or a `mu` that
-#' is not 64 raw bytes. `fips_verify_mu()` returns `FALSE`, not an error,
+#' is not 64 raw bytes. `fipsvrfmu()` returns `FALSE`, not an error,
 #' for a mismatched scheme, a wrong-length mu or a malformed signature; it
 #' errors only when `signature` is not a `bricklayer_signature` or `key`
 #' is not a list.
 #'
 #' @param key A key from
-#' [fips_keygen()] or
-#' [fips_key()]. An ML-DSA scheme: SLH-DSA has no
+#' [fipskg()] or
+#' [fipskey()]. An ML-DSA scheme: SLH-DSA has no
 #' external-mu interface, because its digest depends on per-signature
 #' randomness that the signer chooses.
-#' @param message Length-1 character vector or raw vector.
-#' @param context Optional context string, as in
-#' [capsule_sign()].
+#' @param msg Length-1 character vector or raw vector.
+#' @param ctx Optional context string, as in
+#' [cpssign()].
 #' @param prehash Pre-hash function, as in
-#' [capsule_sign()].
-#' @param mu The 64 raw bytes from `fips_mu()`.
+#' [cpssign()].
+#' @param mu The 64 raw bytes from `fipsmu()`.
 #' @param masked \code{TRUE} (the default) for the first-order masked ML-DSA
 #'   signer, \code{FALSE} for the plain constant-time one; both give the same
 #'   signature for the same randomness. The option
@@ -351,43 +351,43 @@ fips_key <- function(scheme, public, secret = NULL) {
 #'   the plain time on ML-KEM decapsulation (4 ms for ML-KEM-768 on this
 #'   package's test machine) and 7 to 10 times on ML-DSA signing (26 ms for
 #'   ML-DSA-65), depending on the CPU.
-#' @param deterministic As in
-#' [capsule_sign()].
-#' @param signature A signature from `fips_sign_mu()`
-#' or [capsule_sign()].
-#' @return `fips_mu()`: a raw vector of 64 bytes. `fips_sign_mu()`: a
+#' @param determ As in
+#' [cpssign()].
+#' @param sig A signature from `fipssignmu()`
+#' or [cpssign()].
+#' @return `fipsmu()`: a raw vector of 64 bytes. `fipssignmu()`: a
 #'   list of class `bricklayer_signature` with `scheme` and `signature`
-#'   (hex). `fips_verify_mu()`: `TRUE` or `FALSE`.
+#'   (hex). `fipsvrfmu()`: `TRUE` or `FALSE`.
 #' @references National Institute of Standards and Technology (2024).
 #' Module-Lattice-Based Digital Signature Standard. FIPS 204.
 #'   \doi{10.6028/NIST.FIPS.204}
 #' @seealso
-#' [capsule_sign()],
-#' [fips_keygen()].
+#' [cpssign()],
+#' [fipskg()].
 #' @examples
-#' key <- fips_keygen("ML-DSA-65")
-#' mu <- fips_mu(key, "a manifest digest", context = "release")
+#' key <- fipskg("ML-DSA-65")
+#' mu <- fipsmu(key, "a manifest digest", ctx = "release")
 #' length(mu)
 #'
-#' sig <- fips_sign_mu(key, mu)
-#' fips_verify_mu(key, mu, sig)
+#' sig <- fipssignmu(key, mu)
+#' fipsvrfmu(key, mu, sig)
 #'
 #' # the same signature verifies the ordinary way, from the message
-#' capsule_verify("a manifest digest", sig, key, context = "release")
+#' cpsvrf("a manifest digest", sig, key, ctx = "release")
 #'
 #' # mu is computable from the PUBLIC key alone, which is what lets the
 #' # message stay on the machine that has it
-#' identical(fips_mu(fips_public_key(key), "a manifest digest",
-#'                   context = "release"), mu)
+#' identical(fipsmu(fipspubkey(key), "a manifest digest",
+#'                   ctx = "release"), mu)
 #'
 #' # A different context gives a different mu.
-#' identical(fips_mu(key, "a manifest digest", context = "staging"), mu)
+#' identical(fipsmu(key, "a manifest digest", ctx = "staging"), mu)
 #'
 #' # SLH-DSA has no external-mu interface.
-#' try(fips_mu(fips_keygen("SLH-DSA-SHA2-128f"), "m"))
+#' try(fipsmu(fipskg("SLH-DSA-SHA2-128f"), "m"))
 #' @export
-fips_mu <- function(key, message, context = NULL, prehash = "none") {
-  .rmbl_no_fn(message = message, context = context, prehash = prehash)
+fipsmu <- function(key, msg, ctx = NULL, prehash = "none") {
+  .rmbl_no_fn(message = msg, context = ctx, prehash = prehash)
   scheme <- .rmbl_fips_key_scheme(key)
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (is.na(mode)) {
@@ -396,13 +396,13 @@ fips_mu <- function(key, message, context = NULL, prehash = "none") {
   }
   pk <- .rmbl_hex_or_null(key$public)
   if (is.null(pk)) stop("`key` has no usable public key", call. = FALSE)
-  .Call(C_rmbl_mldsa_mu, mode, pk, .rmbl_sign_message(message),
-        .rmbl_fips_context(context), .rmbl_fips_prehash(prehash))
+  .Call(C_rmbl_mldsa_mu, mode, pk, .rmbl_sign_message(msg),
+        .rmbl_fips_context(ctx), .rmbl_fips_prehash(prehash))
 }
 
-#' @rdname fips_mu
+#' @rdname fipsmu
 #' @export
-fips_sign_mu <- function(key, mu, deterministic = FALSE,
+fipssignmu <- function(key, mu, determ = FALSE,
                          masked = getOption("rmoriebricklayer.masked", TRUE)) {
   masked <- .rmbl_masked_flag(masked)
   scheme <- .rmbl_fips_key_scheme(key)
@@ -415,10 +415,10 @@ fips_sign_mu <- function(key, mu, deterministic = FALSE,
     stop("signing needs a key with its secret half", call. = FALSE)
   }
   if (!is.raw(mu) || length(mu) != 64L) {
-    stop("`mu` must be 64 raw bytes, as returned by fips_mu()",
+    stop("`mu` must be 64 raw bytes, as returned by fipsmu()",
          call. = FALSE)
   }
-  rnd <- if (isTRUE(deterministic)) raw(32L) else random_bytes(32L)
+  rnd <- if (isTRUE(determ)) raw(32L) else rndbytes(32L)
   # masked = TRUE: the first-order masked signer, same bytes for the same rnd
   sg <- .Call(C_rmbl_mldsa_sign_mu, mode, .rmbl_hex_to_raw(key$secret),
               mu, rnd, masked)
@@ -427,24 +427,24 @@ fips_sign_mu <- function(key, mu, deterministic = FALSE,
   out
 }
 
-#' @rdname fips_mu
+#' @rdname fipsmu
 #' @export
-fips_verify_mu <- function(key, mu, signature) {
-  if (!is.list(key)) stop("`key` must come from fips_keygen() or fips_key()", call. = FALSE)
-  if (!inherits(signature, "bricklayer_signature")) {
-    stop("`signature` must come from fips_sign_mu() or capsule_sign()",
+fipsvrfmu <- function(key, mu, sig) {
+  if (!is.list(key)) stop("`key` must come from fipskg() or fipskey()", call. = FALSE)
+  if (!inherits(sig, "bricklayer_signature")) {
+    stop("`sig` must come from fipssignmu() or cpssign()",
          call. = FALSE)
   }
   # a verifier key whose class, scheme or bytes were edited is "not verified", like an edited
-  # signature (capsule_verify's rule): only a key that is plainly of another kind is an error
+  # signature (cpsvrf's rule): only a key that is plainly of another kind is an error
   scheme <- tryCatch(.rmbl_fips_key_scheme(key), error = function(e) NULL)
   if (is.null(scheme)) return(FALSE)
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (is.na(mode)) return(FALSE)
-  if (!identical(signature$scheme, scheme)) return(FALSE)
+  if (!identical(sig$scheme, scheme)) return(FALSE)
   if (!is.raw(mu) || length(mu) != 64L) return(FALSE)
   pk <- .rmbl_hex_or_null(key$public)
-  sg <- .rmbl_hex_or_null(signature$signature)
+  sg <- .rmbl_hex_or_null(sig$signature)
   if (is.null(pk) || is.null(sg)) return(FALSE)
   isTRUE(.Call(C_rmbl_mldsa_verify_mu, mode, pk, mu, sg))
 }
@@ -453,7 +453,7 @@ fips_verify_mu <- function(key, mu, signature) {
 # ours rather than reaching into an arbitrary list.
 .rmbl_fips_key_scheme <- function(key) {
   if (!inherits(key, c("bricklayer_oqs_key", "bricklayer_oqs_public_key"))) {
-    stop("`key` must come from fips_keygen() or fips_key()", call. = FALSE)
+    stop("`key` must come from fipskg() or fipskey()", call. = FALSE)
   }
   .rmbl_fips_scheme(key$scheme)
 }
@@ -462,7 +462,7 @@ fips_verify_mu <- function(key, mu, signature) {
 #'
 #' Reports the sizes fixed by a FIPS 204 or FIPS 205 parameter set, so a
 #' caller never has to hard-code them. Use it to check key material before
-#' [fips_key()], to size storage for signatures, or to compare
+#' [fipskey()], to size storage for signatures, or to compare
 #' parameter
 #' sets: an SLH-DSA signature is 7,856 to 49,856 bytes where an ML-DSA one
 #' is 2,420 to 4,627.
@@ -470,40 +470,40 @@ fips_verify_mu <- function(key, mu, signature) {
 #' @details
 #' The sizes are the standards' tables (FIPS 204 Table 2, FIPS 205 Table 2)
 #' as the compiled code uses them. `seed` is the key-generation input of
-#' [fips_keygen()]; `opt_rand` is the per-signature
+#' [fipskg()]; `opt_rand` is the per-signature
 #' randomness (32 bytes
 #' for ML-DSA's `rnd`, \eqn{n} bytes for SLH-DSA's `opt_rand`), which the
 #' deterministic variants replace with a fixed value. XMSS is not covered:
-#' its sizes follow from the tree height of [pqc_keygen()]. An
+#' its sizes follow from the tree height of [pqckg()]. An
 #' unknown
 #' scheme, or anything but one string, is refused.
 #'
 #' @param scheme Scheme name, as in
-#' [fips_keygen()].
+#' [fipskg()].
 #' @return A named integer vector of five byte counts: `public_key`,
-#'   `secret_key`, `signature`, `seed` and `opt_rand` (the
+#'   `sk`, `signature`, `seed` and `opt_rand` (the
 #'   per-signature
 #'   randomness the scheme consumes).
 #' @seealso
-#' [fips_keygen()],
-#' [pqc_backends()].
+#' [fipskg()],
+#' [pqcbknd()].
 #' @examples
-#' fips_sizes("ML-DSA-65")
-#' fips_sizes("SLH-DSA-SHAKE-128s")
+#' fipssz("ML-DSA-65")
+#' fipssz("SLH-DSA-SHAKE-128s")
 #'
 #' # An SLH-DSA signature is far larger than an ML-DSA one at the same
 #' # security level, which is the price of dropping the lattice
 #' # assumption.
-#' fips_sizes("SLH-DSA-SHAKE-128s")[["signature"]] >
-#'   fips_sizes("ML-DSA-44")[["signature"]]
+#' fipssz("SLH-DSA-SHAKE-128s")[["signature"]] >
+#'   fipssz("ML-DSA-44")[["signature"]]
 #'
 #' # Every standardised set at once.
-#' sapply(setdiff(pqc_backends(), "xmss-sha256"), fips_sizes)["signature", ]
+#' sapply(setdiff(pqcbknd(), "xmss-sha256"), fipssz)["signature", ]
 #'
 #' # XMSS has no fixed sizes here.
-#' try(fips_sizes("xmss-sha256"))
+#' try(fipssz("xmss-sha256"))
 #' @export
-fips_sizes <- function(scheme) {
+fipssz <- function(scheme) {
   scheme <- .rmbl_fips_scheme(scheme)
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (!is.na(mode)) {
@@ -525,11 +525,11 @@ fips_sizes <- function(scheme) {
   if (is.na(scheme) || !nzchar(scheme)) {
     stop("`scheme` must be a non-empty string", call. = FALSE)
   }
-  known <- setdiff(pqc_backends(), "xmss-sha256")
+  known <- setdiff(pqcbknd(), "xmss-sha256")
   if (!scheme %in% known) {
     stop(sprintf(paste0("unknown scheme '%s'. The standardised schemes ",
                         "are: %s. For the stateful hash-based scheme ",
-                        "use pqc_keygen()."),
+                        "use pqckg()."),
                  scheme, paste(known, collapse = ", ")), call. = FALSE)
   }
   scheme
@@ -612,36 +612,36 @@ fips_sizes <- function(scheme) {
 #' Kept so code written against the liboqs-backed version keeps working.
 #' The schemes are no longer reached through liboqs -- they are implemented
 #' in this package -- and the name no longer describes anything, so use
-#' [fips_keygen()] instead. New code should not call these
+#' [fipskg()] instead. New code should not call these
 #' functions.
 #'
 #' @details
-#' `oqs_keygen()` calls [fips_keygen()] (with a fresh
+#' `oqskg()` calls [fipskg()] (with a fresh
 #' random seed) and
-#' `oqs_public_key()` calls [fips_public_key()], each
+#' `oqspubkey()` calls [fipspubkey()], each
 #' after a deprecation
 #' warning from [.Deprecated()]. The keys are the same objects
-#' [fips_keygen()] returns, with the same classes.
+#' [fipskg()] returns, with the same classes.
 #'
 #' @param scheme Scheme name; see
-#' [fips_keygen()].
-#' @param key A key from `oqs_keygen()`.
-#' @return As [fips_keygen()] (a `bricklayer_fips_key`)
+#' [fipskg()].
+#' @param key A key from `oqskg()`.
+#' @return As [fipskg()] (a `bricklayer_fips_key`)
 #'   and
-#'   [fips_public_key()] (a
+#'   [fipspubkey()] (a
 #'   `bricklayer_fips_public_key`).
-#' @seealso [fips_keygen()].
+#' @seealso [fipskg()].
 #' @examples
-#' # Deprecated: use fips_keygen().
-#' key <- suppressWarnings(oqs_keygen("ML-DSA-65"))
+#' # Deprecated: use fipskg().
+#' key <- suppressWarnings(oqskg("ML-DSA-65"))
 #' key$scheme
 #'
 #' # The same as the current name, after a warning.
-#' pub <- suppressWarnings(oqs_public_key(key))
-#' identical(pub, fips_public_key(key))
+#' pub <- suppressWarnings(oqspubkey(key))
+#' identical(pub, fipspubkey(key))
 #'
 #' # The warning names the replacement.
-#' tryCatch(oqs_keygen(), warning = function(w) conditionMessage(w))
+#' tryCatch(oqskg(), warning = function(w) conditionMessage(w))
 #' @section Security:
 #' A hand-written implementation. The standardised schemes are checked byte
 #' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
@@ -658,16 +658,16 @@ fips_sizes <- function(scheme) {
 #' models; no third-party security audit has been commissioned, and the
 #' README's security section lists what each check does and does not cover.
 #' @export
-oqs_keygen <- function(scheme = "ML-DSA-65") {
-  .Deprecated("fips_keygen")
-  fips_keygen(scheme)
+oqskg <- function(scheme = "ML-DSA-65") {
+  .Deprecated("fipskg")
+  fipskg(scheme)
 }
 
-#' @rdname oqs_keygen
+#' @rdname oqskg
 #' @export
-oqs_public_key <- function(key) {
-  .Deprecated("fips_public_key")
-  fips_public_key(key)
+oqspubkey <- function(key) {
+  .Deprecated("fipspubkey")
+  fipspubkey(key)
 }
 
 #' @export
@@ -682,7 +682,7 @@ format.bricklayer_oqs_key <- function(x, ...) {
     .rmbl_rule())
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_oqs_key <- function(x, ...) {
   cat(format(x), sep = "\n")
@@ -699,7 +699,7 @@ format.bricklayer_oqs_public_key <- function(x, ...) {
     .rmbl_rule())
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_oqs_public_key <- function(x, ...) {
   cat(format(x), sep = "\n")
@@ -713,8 +713,8 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #' SHA-256 alone -- no lattice assumption, no elliptic curve, nothing
 #' Shor's algorithm breaks. The key signs a fixed number of messages,
 #' `2^height`, and must be carried forward after each signature (see
-#' [xmss_advance()]); for a key with no such state use
-#' [fips_keygen()].
+#' [xmssadv()]); for a key with no such state use
+#' [fipskg()].
 #'
 #' @details
 #' Key generation walks all `2^height` leaves, so cost doubles with
@@ -722,7 +722,7 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #' few seconds; heights above about 14 are slow enough to be worth avoiding
 #' unless the key really must last that long. A spinner on stderr shows the
 #' work after 0.75 s when a person is watching (see
-#' [bricklayer_progress()]), and Ctrl-C stops it.
+#' [blprog()]), and Ctrl-C stops it.
 #'
 #' The construction is single-tree XMSS with SHA-256, n = 32 and
 #' Winternitz parameter 16 (RFC 8391; at heights 10 and 16 these are its
@@ -733,10 +733,10 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #'
 #' Side effect: a key generated from fresh randomness is entered in the
 #' package's used-index record (the file described under
-#' [xmss_advance()]), so that a stale copy of it can never
+#' [xmssadv()]), so that a stale copy of it can never
 #' sign an index
 #' twice on this machine. A key built from given seeds is NOT entered, and
-#' signs only after [xmss_register_key()] vouches that it
+#' signs only after [xmssregkey()] vouches that it
 #' never has.
 #'
 #' Refusals: a `height` that is not a whole number from 1 to 16, and a
@@ -747,56 +747,56 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #' Each signature consumes one leaf, and **signing two different messages
 #' with the same leaf index breaks the scheme outright** -- between two
 #' signatures at one index an adversary can forge a third message.
-#' [capsule_sign()] therefore tracks
+#' [cpssign()] therefore tracks
 #' `next_index` and refuses to reuse one. Do not hand-edit that field,
 #' and do not copy a key to two machines that sign independently.
 #'
 #' @param height Tree height, 1 to 16 (default 10, i.e. 1024
 #' signatures).
-#' @param sk_seed,pub_seed,sk_prf 64-character hex seeds
+#' @param skseed,pubseed,skprf 64-character hex seeds
 #' (32 bytes each) -- the three secrets RFC 8391's private key carries.
-#' `sk_seed` derives the WOTS+ chains, `pub_seed` masks the
-#' hashes, and `sk_prf` keys the per-signature randomiser. Omit them
+#' `skseed` derives the WOTS+ chains, `pubseed` masks the
+#' hashes, and `skprf` keys the per-signature randomiser. Omit them
 #' and they are drawn from the operating system's CSPRNG via
-#' [random_bytes()], which fails rather than
+#' [rndbytes()], which fails rather than
 #' falling back to R's reproducible generator. Supply them ONLY to
 #' reproduce a key deterministically in a test -- a seed you can guess is a
 #' key you can forge.
 #' @return A list of class `bricklayer_signing_key`: `root` (the
-#'   public verification value, 64 hex characters), `pub_seed`, `sk_seed`
-#'   (SECRET) and `sk_prf` (SECRET), each 64 hex characters, `height` (an
+#'   public verification value, 64 hex characters), `pubseed`, `skseed`
+#'   (SECRET) and `skprf` (SECRET), each 64 hex characters, `height` (an
 #'   integer), `next_index` (the next unused leaf, 0 for a new key),
 #'   `capacity` (`2^height`, the number of signatures), and `scheme`
 #'   (`"xmss-sha256"`).
 #' @section Key format: A key made before the RFC 8391 conformance work
-#' carries no `sk_prf` and cannot sign;
-#' [capsule_sign()] raises rather than producing
+#' carries no `skprf` and cannot sign;
+#' [cpssign()] raises rather than producing
 #' a signature no other implementation could read. Generate a new one.
 #' @seealso
-#' [capsule_sign()],
-#' [capsule_verify()],
-#' [signing_public_key()]
+#' [cpssign()],
+#' [cpsvrf()],
+#' [signpubkey()]
 #' @examples
-#' op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 #' # one-time index record out of your configuration directory; leave the default in use
 #' # A small key, to keep the example quick.
-#' key <- pqc_keygen(height = 3)
+#' key <- pqckg(height = 3)
 #' key$capacity            # 8 signatures
 #' key$next_index          # none used yet
 #'
 #' # The public half is what a verifier needs; it carries no secret.
-#' pub <- signing_public_key(key)
+#' pub <- signpubkey(key)
 #' names(pub)
 #'
 #' # Deterministic seeds reproduce the same key -- for tests only. A key built from given
 #' # seeds is not entered in the used-index record (it may have signed elsewhere): it signs
-#' # only after xmss_register_key() vouches that it never has.
+#' # only after xmssregkey() vouches that it never has.
 #' s1 <- paste(rep("11", 32), collapse = "")
 #' s2 <- paste(rep("22", 32), collapse = "")
-#' identical(pqc_keygen(3, s1, s2)$root, pqc_keygen(3, s1, s2)$root)
+#' identical(pqckg(3, s1, s2)$root, pqckg(3, s1, s2)$root)
 #'
 #' # The height is limited to 16 (65,536 signatures).
-#' try(pqc_keygen(height = 20))
+#' try(pqckg(height = 20))
 #' options(op)
 #' @section Security:
 #' A hand-written implementation. The standardised schemes are checked byte
@@ -814,28 +814,28 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #' commissioned, and the README's security section lists what each check
 #' does and does not cover.
 #' @export
-pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL,
-                       sk_prf = NULL) {
-  .rmbl_no_fn(sk_seed = sk_seed, pub_seed = pub_seed, sk_prf = sk_prf)
+pqckg <- function(height = 10L, skseed = NULL, pubseed = NULL,
+                       skprf = NULL) {
+  .rmbl_no_fn(sk_seed = skseed, pub_seed = pubseed, sk_prf = skprf)
   height <- .rmbl_num(height, "height", integer = TRUE)
   if (length(height) != 1L || is.na(height) || height < 1L || height > 16L) {
     stop("`height` must be a single integer between 1 and 16", call. = FALSE)
   }
   # a key built from given seeds may be one that has signed elsewhere: it is not registered
-  seeded <- !is.null(sk_seed)
-  sk_seed <- if (is.null(sk_seed)) .rmbl_random_seed_hex() else
-    .rmbl_check_seed(sk_seed, "sk_seed")
-  pub_seed <- if (is.null(pub_seed)) .rmbl_random_seed_hex() else
-    .rmbl_check_seed(pub_seed, "pub_seed")
+  seeded <- !is.null(skseed)
+  skseed <- if (is.null(skseed)) .rmbl_random_seed_hex() else
+    .rmbl_check_seed(skseed, "skseed")
+  pubseed <- if (is.null(pubseed)) .rmbl_random_seed_hex() else
+    .rmbl_check_seed(pubseed, "pubseed")
   # SK_PRF is the third secret RFC 8391's private key carries. It keys
   # the per-signature randomiser, and without it the message digest
   # cannot be the one the RFC specifies.
-  sk_prf <- if (is.null(sk_prf)) .rmbl_random_seed_hex() else
-    .rmbl_check_seed(sk_prf, "sk_prf")
+  skprf <- if (is.null(skprf)) .rmbl_random_seed_hex() else
+    .rmbl_check_seed(skprf, "skprf")
   root <- .bl_busy(sprintf("XMSS key: building the tree of %s one-time keys", format(2^height, big.mark = ",")),
-                   .Call(C_rmbl_xmss_keygen, sk_seed, pub_seed, height))
-  out <- list(root = root, pub_seed = pub_seed, sk_seed = sk_seed,
-              sk_prf = sk_prf,
+                   .Call(C_rmbl_xmss_keygen, skseed, pubseed, height))
+  out <- list(root = root, pub_seed = pubseed, sk_seed = skseed,
+              sk_prf = skprf,
               height = height, next_index = 0L,
               capacity = bitwShiftL(1L, height),
               scheme = "xmss-sha256")
@@ -843,7 +843,7 @@ pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL,
   # the record learns a key at birth when the birth is here: fresh randomness cannot have
   # signed anywhere. A key regenerated from given seeds may have (on another machine, or before
   # the record was lost), so it is not entered; it signs from index 0 only after
-  # xmss_register_key() vouches for it (review of 52a8883, A2)
+  # xmssregkey() vouches for it (review of 52a8883, A2)
   if (!seeded) .rmbl_xmss_register(out, fresh = TRUE)
   out
 }
@@ -852,7 +852,7 @@ pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL,
 #'
 #' Strips the secret seeds from an XMSS signing key, leaving only what a
 #' verifier needs. Publish this, or hand it to whoever must check your
-#' signatures; never the object returned by [pqc_keygen()],
+#' signatures; never the object returned by [pqckg()],
 #' which lets its
 #' holder sign in your name. The public key does not change as the signing
 #' key is used, so it is made once.
@@ -860,37 +860,37 @@ pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL,
 #' @details
 #' The public key is the Merkle root and the public seed that masks the
 #' hashes (RFC 8391's `root || SEED`), with the tree height and scheme
-#' name. `sk_seed`, `sk_prf` and `next_index` are dropped. For a
-#' standardised key from [fips_keygen()] use
-#' [fips_public_key()] instead:
+#' name. `skseed`, `skprf` and `next_index` are dropped. For a
+#' standardised key from [fipskg()] use
+#' [fipspubkey()] instead:
 #' this function refuses any key that is not a `bricklayer_signing_key`
-#' (`"key must come from pqc_keygen()"`).
+#' (`"key must come from pqckg()"`).
 #'
 #' @param key A `bricklayer_signing_key` from
-#' [pqc_keygen()].
-#' @return A list of class `bricklayer_public_key`: `root` and `pub_seed`
+#' [pqckg()].
+#' @return A list of class `bricklayer_public_key`: `root` and `pubseed`
 #'   (64 hex characters each), `height` and `scheme`.
-#' @seealso [capsule_verify()], which takes it.
+#' @seealso [cpsvrf()], which takes it.
 #' @examples
-#' op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 #' # one-time index record out of your configuration directory; leave the default in use
-#' key <- pqc_keygen(height = 2)
-#' pub <- signing_public_key(key)
+#' key <- pqckg(height = 2)
+#' pub <- signpubkey(key)
 #'
 #' # The secret seed is gone.
-#' is.null(pub$sk_seed)
+#' is.null(pub$skseed)
 #'
 #' # And verification works from the public half alone.
-#' sig <- capsule_sign("manifest-digest", key)
-#' capsule_verify("manifest-digest", sig, pub)
+#' sig <- cpssign("manifest-digest", key)
+#' cpsvrf("manifest-digest", sig, pub)
 #'
 #' # A standardised key has its own function.
-#' try(signing_public_key(fips_keygen("ML-DSA-44")))
+#' try(signpubkey(fipskg("ML-DSA-44")))
 #' options(op)
 #' @export
-signing_public_key <- function(key) {
+signpubkey <- function(key) {
   if (!inherits(key, "bricklayer_signing_key")) {
-    stop("`key` must come from pqc_keygen()", call. = FALSE)
+    stop("`key` must come from pqckg()", call. = FALSE)
   }
   out <- list(root = key$root, pub_seed = key$pub_seed,
               height = key$height, scheme = key$scheme)
@@ -900,16 +900,16 @@ signing_public_key <- function(key) {
 
 #' Sign a capsule manifest
 #'
-#' Authenticates `message` -- normally a manifest digest, or the whole
+#' Authenticates `msg` -- normally a manifest digest, or the whole
 #' manifest text -- so a verifier can tell that it came from the holder of
 #' the key and has not been altered since. A digest alone shows that data
 #' were not corrupted; a signature also shows who vouched for them, because
 #' only the key holder can make it. Verify with
-#' [capsule_verify()].
+#' [cpsvrf()].
 #'
 #' Three kinds of key are accepted: a shared secret (HMAC), an XMSS key from
-#' [pqc_keygen()], or a standardised ML-DSA or SLH-DSA key from
-#' [fips_keygen()]. For new work the standardised keys are the
+#' [pqckg()], or a standardised ML-DSA or SLH-DSA key from
+#' [fipskg()]. For new work the standardised keys are the
 #' simplest:
 #' they sign any number of messages with no state to keep.
 #'
@@ -927,15 +927,15 @@ signing_public_key <- function(key) {
 #' wrong kind for the scheme; a context over 255 bytes; an unknown pre-hash;
 #' an exhausted XMSS key, an index the used-index record shows as used, a
 #' key whose record cannot be read or written, or an XMSS key the record
-#' does not know (see [xmss_advance()] and
-#' [xmss_register_key()]).
+#' does not know (see [xmssadv()] and
+#' [xmssregkey()]).
 #'
 #' With `scheme = "hmac"` the `key` is a shared secret string and
 #' the result is an HMAC-SHA-256 tag. Symmetric, so anyone who can verify
 #' can also sign.
 #'
 #' With `scheme = "xmss"` the `key` is a
-#' [pqc_keygen()] object and the result is a
+#' [pqckg()] object and the result is a
 #' post-quantum one-time signature under the key's Merkle root. Asymmetric:
 #' a verifier holding only the public root cannot forge.
 #'
@@ -944,25 +944,25 @@ signing_public_key <- function(key) {
 #' An XMSS signature consumes a leaf, and **subsequent signing must use the
 #' advanced key** -- reusing an index breaks the scheme. The signature object
 #' carries no key material (it is what verifiers are handed); the advanced
-#' key is `xmss_advance(key, signature)`, and that is what to save. The key is
-#' an R value, so `capsule_sign()` cannot advance the caller's copy; instead it
+#' key is `xmssadv(key, signature)`, and that is what to save. The key is
+#' an R value, so `cpssign()` cannot advance the caller's copy; instead it
 #' records, in the session and in the index file described under
-#' [xmss_advance()],
+#' [xmssadv()],
 #' the highest index each key has signed with, and
 #' refuses that index or an earlier one. Passing an exhausted key is an error,
 #' not a silent wrap-around.
 #'
-#' @param message Length-1 character vector (or raw vector)
+#' @param msg Length-1 character vector (or raw vector)
 #' to sign.
 #' @param key A shared secret (character/raw) for `"hmac"`,
 #' a `bricklayer_signing_key` from
-#' [pqc_keygen()] for `"xmss"`, or a
+#' [pqckg()] for `"xmss"`, or a
 #' `bricklayer_fips_key` from
-#' [fips_keygen()] for a standardised scheme (in
+#' [fipskg()] for a standardised scheme (in
 #' which case `scheme` is taken from the key and ignored).
 #' @param scheme `"xmss"` (post-quantum, asymmetric) or
 #' `"hmac"` (symmetric). Inferred from `key` when not given.
-#' @param context Optional context string (character or raw,
+#' @param ctx Optional context string (character or raw,
 #' at most 255 bytes) for the standardised schemes, and ignored by the
 #' others. FIPS 204 and FIPS 205 both bind it into the message encoding, so
 #' a signature made under one context does not verify under another --
@@ -978,7 +978,7 @@ signing_public_key <- function(key) {
 #'   the plain time on ML-KEM decapsulation (4 ms for ML-KEM-768 on this
 #'   package's test machine) and 7 to 10 times on ML-DSA signing (26 ms for
 #'   ML-DSA-65), depending on the CPU.
-#' @param deterministic For the standardised schemes,
+#' @param determ For the standardised schemes,
 #' use the deterministic variant rather than drawing fresh randomness per
 #' signature. The signature then depends only on the key, message and
 #' context, which is what the standards' test vectors rely on.
@@ -1002,38 +1002,38 @@ signing_public_key <- function(key) {
 #' implementation produces from the same key material, so it can be handed
 #' to another implementation as bytes.
 #' @seealso
-#' [capsule_verify()],
-#' [core_hmac_sha256()]
+#' [cpsvrf()],
+#' [chmac()]
 #' @examples
-#' op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 #' # one-time index record out of your configuration directory; leave the default in use
 #' # Symmetric: one shared secret.
-#' sig <- capsule_sign("sha256:abc123", key = "shared-secret",
+#' sig <- cpssign("sha256:abc123", key = "shared-secret",
 #'                     scheme = "hmac")
-#' capsule_verify("sha256:abc123", sig, "shared-secret")
-#' capsule_verify("sha256:TAMPERED", sig, "shared-secret")
+#' cpsvrf("sha256:abc123", sig, "shared-secret")
+#' cpsvrf("sha256:TAMPERED", sig, "shared-secret")
 #'
 #' # Post-quantum: the verifier needs only the public root.
-#' key <- pqc_keygen(height = 2)
-#' s1 <- capsule_sign("manifest-1", key)
-#' capsule_verify("manifest-1", s1, signing_public_key(key))
+#' key <- pqckg(height = 2)
+#' s1 <- cpssign("manifest-1", key)
+#' cpsvrf("manifest-1", s1, signpubkey(key))
 #'
 #' # Advance the key past the signature before signing again.
-#' key <- xmss_advance(key, s1)
+#' key <- xmssadv(key, s1)
 #' key$next_index
-#' s2 <- capsule_sign("manifest-2", key)
-#' capsule_verify("manifest-2", s2, signing_public_key(key))
+#' s2 <- cpssign("manifest-2", key)
+#' cpsvrf("manifest-2", s2, signpubkey(key))
 #'
 #' # A signature does not transfer to another message.
-#' capsule_verify("manifest-1", s2, signing_public_key(key))
+#' cpsvrf("manifest-1", s2, signpubkey(key))
 #'
 #' # A standardised key: no state, any number of signatures.
-#' fk <- fips_keygen("ML-DSA-44")
-#' s3 <- capsule_sign("manifest-3", fk, context = "release", deterministic = TRUE)
-#' capsule_verify("manifest-3", s3, fips_public_key(fk), context = "release")
+#' fk <- fipskg("ML-DSA-44")
+#' s3 <- cpssign("manifest-3", fk, ctx = "release", determ = TRUE)
+#' cpsvrf("manifest-3", s3, fipspubkey(fk), ctx = "release")
 #'
 #' # An XMSS signature needs an XMSS key.
-#' try(capsule_sign("manifest-4", "shared-secret", scheme = "xmss"))
+#' try(cpssign("manifest-4", "shared-secret", scheme = "xmss"))
 #' options(op)
 #' @section Security:
 #' A hand-written implementation. The standardised schemes are checked byte
@@ -1051,29 +1051,29 @@ signing_public_key <- function(key) {
 #' models; no third-party security audit has been commissioned, and the
 #' README's security section lists what each check does and does not cover.
 #' @export
-capsule_sign <- function(message, key, scheme = NULL, context = NULL,
-                         deterministic = FALSE, prehash = "none",
+cpssign <- function(msg, key, scheme = NULL, ctx = NULL,
+                         determ = FALSE, prehash = "none",
                          masked = getOption("rmoriebricklayer.masked", TRUE)) {
   masked <- .rmbl_masked_flag(masked)
-  message <- .rmbl_text_input(message, "message")
+  msg <- .rmbl_text_input(msg, "msg")
   if (inherits(key, "bricklayer_oqs_key")) {
-    msg <- .rmbl_sign_message(message)
-    ctx <- .rmbl_fips_context(context)
-    sz <- fips_sizes(key$scheme)
+    .msg <- .rmbl_sign_message(msg)
+    .ctx <- .rmbl_fips_context(ctx)
+    sz <- fipssz(key$scheme)
     # FIPS 204 and 205 both allow either variant. Hedged signing draws
     # fresh bytes per signature and is the default; the deterministic
     # variant substitutes a fixed value, which is what the standards'
     # test vectors use and what makes a signature reproducible.
-    rnd <- if (isTRUE(deterministic)) {
+    rnd <- if (isTRUE(determ)) {
       .rmbl_fips_fixed_rand(key$scheme, key$public, sz[["opt_rand"]])
     } else {
-      random_bytes(sz[["opt_rand"]])
+      rndbytes(sz[["opt_rand"]])
     }
     ph <- .rmbl_fips_prehash(prehash)
-    sg <- .rmbl_fips_sign(key$scheme, .rmbl_hex_to_raw(key$secret), msg, masked = masked,
-                          ctx, rnd, ph)
+    sg <- .rmbl_fips_sign(key$scheme, .rmbl_hex_to_raw(key$secret), .msg, masked = masked,
+                          .ctx, rnd, ph)
     out <- list(scheme = key$scheme, signature = .rmbl_hexlify(sg),
-                context = ctx, prehash = ph)
+                context = .ctx, prehash = ph)
     class(out) <- c("bricklayer_signature", "list")
     return(out)
   }
@@ -1083,14 +1083,14 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
   scheme <- .rmbl_arg(scheme, c("xmss", "hmac"))
 
   if (identical(scheme, "hmac")) {
-    tag <- core_hmac_sha256(key, message)
+    tag <- chmac(key, msg)
     out <- list(scheme = "hmac", signature = tag)
     class(out) <- c("bricklayer_signature", "list")
     return(out)
   }
 
   if (!inherits(key, "bricklayer_signing_key")) {
-    stop("`scheme = \"xmss\"` needs a key from pqc_keygen()", call. = FALSE)
+    stop("`scheme = \"xmss\"` needs a key from pqckg()", call. = FALSE)
   }
   idx <- key$next_index
   if (!is.numeric(idx) || length(idx) != 1L || is.na(idx) || idx < 0 || idx != floor(idx) ||
@@ -1105,17 +1105,17 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
                         "key -- reusing an index would break the signature ",
                         "scheme."), key$height, key$capacity), call. = FALSE)
   }
-  if (!is.raw(message)) {
-    message <- as.character(message)
-    if (length(message) != 1L || is.na(message)) {
-      stop("`message` must be a length-1 character vector or a raw vector",
+  if (!is.raw(msg)) {
+    msg <- as.character(msg)
+    if (length(msg) != 1L || is.na(msg)) {
+      stop("`msg` must be a length-1 character vector or a raw vector",
            call. = FALSE)
     }
   }
   if (is.null(key[["sk_prf"]])) {
     stop(paste0("this signing key predates the RFC 8391 randomiser and ",
                 "cannot produce a conformant signature; generate a new ",
-                "one with pqc_keygen()"), call. = FALSE)
+                "one with pqckg()"), call. = FALSE)
   }
   # an index must never sign twice (RFC 8391; NIST SP 800-208 section 8.1): the key is a
   # copied value, so this session remembers the highest index each key has used and refuses
@@ -1127,15 +1127,15 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
   .rmbl_xmss_reserve(ids, idx)
   res <- .bl_busy(sprintf("XMSS signature %d: rebuilding the tree", idx),
                   .Call(C_rmbl_xmss_sign, key$sk_seed, key[["sk_prf"]], key$pub_seed,
-                        as.integer(key$height), idx, message))
+                        as.integer(key$height), idx, msg))
   if (!identical(tolower(as.character(res$root)), ids$root)) {
     stop(sprintf(paste("this key's `root` does not match its seeds: the key object was edited. No signature",
                        "is returned, and index %d stays retired"), idx), call. = FALSE)
   }
   # the signature carries no key material: the object is what verifiers are handed, and the
-  # 0.5.9-0.5.12 objects carried the advanced key (sk_seed and sk_prf) inside it, so every
+  # 0.5.9-0.5.12 objects carried the advanced key (skseed and skprf) inside it, so every
   # shared XMSS signature, attestation and bundle file handed out the private key. The next
-  # key state is derived from the signature with xmss_advance().
+  # key state is derived from the signature with xmssadv().
   out <- list(scheme = "xmss-sha256", signature = res$wots, auth = res$auth,
               index = idx, root = res$root, height = key$height,
               randomizer = res$randomizer, wire = res$wire)
@@ -1158,16 +1158,16 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
 #' \code{xmss_used_indices.txt} under
 #' \code{tools::R_user_dir("rmoriebricklayer", "config")},
 #' which is where CRAN policy lets a package keep its own configuration. A key is entered
-#' under a fingerprint of its secret seed (\code{sk_seed}), not under the \code{root} it
+#' under a fingerprint of its secret seed (\code{skseed}), not under the \code{root} it
 #' carries, so editing a stale copy's \code{root} does not make it a new key, and a
 #' signature
 #' whose \code{root} does not match the seeds is withheld.
-#' [pqc_keygen()]
+#' [pqckg()]
 #' registers a key it generates from fresh randomness. A key built from given
 #' seeds is not registered, because it may be one that has signed elsewhere: it signs
 #' from
 #' index 0 only after
-#' [xmss_register_key()]
+#' [xmssregkey()]
 #' vouches for it, and the same holds for any key
 #' the record does not know (from another machine, or whose record was deleted).
 #' Every reservation runs under an operating-system file lock (\code{flock} on Unix,
@@ -1181,7 +1181,7 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
 #' the same directory) is read and merged, and kept as \code{xmss_index.json.migrated}
 #' once
 #' the new record has been written.
-#' Another path can be set with the option \code{rmoriebricklayer.xmss_index_file} or the
+#' Another path can be set with the option \code{rmoriebricklayer.xmssidxfile} or the
 #' environment variable \code{RMBL_XMSS_INDEX_FILE}: an absolute path to a regular file,
 #' or
 #' to one that does not exist yet (a device such as \code{/dev/null}, a directory or a
@@ -1197,7 +1197,7 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
 #' container with a fresh home directory, a key that was not generated in that run is
 #' unknown
 #' to the record: register it once with
-#' [xmss_register_key()],
+#' [xmssregkey()],
 #' or point the record at a file that persists. Examples and vignettes point the record
 #' at a temporary file so that checks and builds leave the configuration directory alone.
 #' The record keeps one line per key for good (an exhausted key's line is what stops a
@@ -1206,65 +1206,65 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
 #' laptop; a slower machine takes longer), and longer when several processes sign at once
 #' (each waits its turn for the lock, up to 10 s).
 #'
-#' [xmss_forget_used_indices()]
+#' [xmssfgt()]
 #' resets one key's entry, or removes the whole record, and with it
 #' the protection against re-signing: use it for test keys only.
 #'
-#' @param key The \code{bricklayer_signing_key} that made \code{signature}.
-#' @param signature The XMSS signature it made, from
-#'   [capsule_sign()],
+#' @param key The \code{bricklayer_signing_key} that made \code{sig}.
+#' @param sig The XMSS signature it made, from
+#'   [cpssign()],
 #'   or the attestation, bundle or recode manifest that carries it.
-#' @param message The message the signature was made over; when given, the signature is
+#' @param msg The message the signature was made over; when given, the signature is
 #'   verified against the key first, so an edited or foreign signature cannot advance it.
 #'   Without it, the signature's index is accepted only up to the highest index the
 #'   record
 #'   shows this key has used here, so an edited index cannot burn the key's remaining
 #'   leaves;
-#'   a signature made on another machine needs \code{message}.
+#'   a signature made on another machine needs \code{msg}.
 #' @return The key with \code{next_index} advanced past the signature's index and past
 #'   every index the record knows this key has used.
 #' @examples
-#' op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 #' # one-time index record out of your configuration directory; leave the default in use
-#' key <- pqc_keygen(height = 2)
-#' s1 <- capsule_sign("manifest-1", key)
-#' key <- xmss_advance(key, s1)
+#' key <- pqckg(height = 2)
+#' s1 <- cpssign("manifest-1", key)
+#' key <- xmssadv(key, s1)
 #' key$next_index
-#' s2 <- capsule_sign("manifest-2", key)
-#' capsule_verify("manifest-2", s2, signing_public_key(key))
+#' s2 <- cpssign("manifest-2", key)
+#' cpsvrf("manifest-2", s2, signpubkey(key))
 #'
 #' # With the message, the signature is verified before the key advances.
-#' key <- xmss_advance(key, s2, message = "manifest-2")
+#' key <- xmssadv(key, s2, msg = "manifest-2")
 #' key$next_index
 #'
 #' # A key regenerated from seeds is unknown to the record until registered.
 #' s <- paste(rep("ab", 32), collapse = "")
-#' k2 <- pqc_keygen(height = 1, sk_seed = s, pub_seed = s, sk_prf = s)
-#' try(capsule_sign("m", k2))
-#' invisible(xmss_register_key(k2))
-#' capsule_verify("m", capsule_sign("m", k2), signing_public_key(k2))
+#' k2 <- pqckg(height = 1, skseed = s, pubseed = s, skprf = s)
+#' try(cpssign("m", k2))
+#' invisible(xmssregkey(k2))
+#' cpsvrf("m", cpssign("m", k2), signpubkey(k2))
 #'
 #' # Reset a test key's entry so it may sign from index 0 again.
-#' xmss_forget_used_indices(k2)
+#' xmssfgt(k2)
 #'
 #' # A signature that is not an XMSS signature cannot advance a key.
-#' try(xmss_advance(key, list()))
+#' try(xmssadv(key, list()))
 #' options(op)
-#' @seealso [capsule_sign()],
-#'   [xmss_forget_used_indices()]
+#' @seealso [cpssign()],
+#'   [xmssfgt()]
 #' @export
-xmss_advance <- function(key, signature, message = NULL) {
+xmssadv <- function(key, sig, msg = NULL) {
   if (!inherits(key, "bricklayer_signing_key")) {
-    stop("`key` must be a signing key from pqc_keygen()", call. = FALSE)
+    stop("`key` must be a signing key from pqckg()", call. = FALSE)
   }
-  if (is.list(signature) && is.list(signature$attestation) && is.list(signature$attestation$signature)) {
-    signature <- signature$attestation$signature   # a bundle: the attestation's signature
-  } else if (inherits(signature, "bricklayer_attestation") ||
-               (is.list(signature) && !is.null(signature$signature) && is.list(signature$signature))) {
-    signature <- signature$signature   # an attestation or recode manifest: the signature inside
+  if (is.list(sig) && is.list(sig$attestation) && is.list(sig$attestation$signature)) {
+    sig <- sig$attestation$signature   # a bundle: the attestation's signature
+  } else if (inherits(sig, "bricklayer_attestation") ||
+               (is.list(sig) && !is.null(sig$signature) && is.list(sig$signature))) {
+    sig <- sig$signature   # an attestation or recode manifest: the signature inside
   }
-  if (!is.list(signature) || !identical(signature$scheme, "xmss-sha256")) {
-    stop("`signature` must be an XMSS signature from capsule_sign() (or the attestation, bundle or ",
+  if (!is.list(sig) || !identical(sig$scheme, "xmss-sha256")) {
+    stop("`sig` must be an XMSS signature from cpssign() (or the attestation, bundle or ",
          "recode manifest that carries it)", call. = FALSE)
   }
   nx <- key$next_index
@@ -1273,19 +1273,19 @@ xmss_advance <- function(key, signature, message = NULL) {
                "the key state is damaged; do not hand-edit it"),
          call. = FALSE)
   }
-  if (!identical(tolower(as.character(signature$root)), tolower(as.character(key$root)))) {
+  if (!identical(tolower(as.character(sig$root)), tolower(as.character(key$root)))) {
     stop("this signature was not made by this key (the roots differ)", call. = FALSE)
   }
-  if (!is.null(signature$height) && !identical(as.integer(signature$height), as.integer(key$height))) {
+  if (!is.null(sig$height) && !identical(as.integer(sig$height), as.integer(key$height))) {
     stop("this signature was not made by this key (the heights differ)", call. = FALSE)
   }
-  idx <- suppressWarnings(as.integer(signature$index))
+  idx <- suppressWarnings(as.integer(sig$index))
   leaves <- 2L^as.integer(key$height)
   if (length(idx) != 1L || is.na(idx) || idx < 0L || idx >= leaves ||
-        !isTRUE(all.equal(as.numeric(signature$index), idx))) {
+        !isTRUE(all.equal(as.numeric(sig$index), idx))) {
     stop(sprintf("the signature has no valid index (a whole number below %d)", leaves), call. = FALSE)
   }
-  if (!is.null(message) && !isTRUE(capsule_verify(message, signature, signing_public_key(key)))) {
+  if (!is.null(msg) && !isTRUE(cpsvrf(msg, sig, signpubkey(key)))) {
     stop("the signature does not verify for this key and message: an edited or foreign signature ",
          "cannot advance the key", call. = FALSE)
   }
@@ -1294,7 +1294,7 @@ xmss_advance <- function(key, signature, message = NULL) {
   p <- .rmbl_xmss_index_file()
   rec <- if (is.null(p)) integer(0) else .rmbl_xmss_record_read(p)
   hi <- .rmbl_xmss_highest(ids, rec)
-  if (is.null(message) && idx > hi) {
+  if (is.null(msg) && idx > hi) {
     # every index signed here was reserved first, so an index above the record's is either an
     # edited signature (which would burn the leaves in between) or one made elsewhere
     stop(sprintf(paste("the signature's index %d is above the highest index this key has signed with here (%d):",
@@ -1303,7 +1303,7 @@ xmss_advance <- function(key, signature, message = NULL) {
   }
   key$next_index <- max(as.integer(nx), idx + 1L, hi + 1L)
   if (key$next_index >= leaves) {
-    warning(sprintf("this key has used all %d of its one-time indices: generate a new one with pqc_keygen()",
+    warning(sprintf("this key has used all %d of its one-time indices: generate a new one with pqckg()",
                     leaves), call. = FALSE)
   }
   key
@@ -1311,7 +1311,7 @@ xmss_advance <- function(key, signature, message = NULL) {
 
 #' Verify a capsule manifest signature
 #'
-#' Checks `signature` against `message`. For `"hmac"` the
+#' Checks `sig` against `msg`. For `"hmac"` the
 #' comparison is constant-time (verified under valgrind memcheck in CI:
 #' `inst/ctcheck`, cases `digest-equal` and `hmac-sha256`). For XMSS the
 #' Winternitz chains are walked
@@ -1324,73 +1324,73 @@ xmss_advance <- function(key, signature, message = NULL) {
 #' never as an exception to be caught and ignored.
 #'
 #' @details
-#' `TRUE` means the signature is valid for `message` under `key` (and, for
-#' the standardised schemes, `context` and the pre-hash). Verification
+#' `TRUE` means the signature is valid for `msg` under `key` (and, for
+#' the standardised schemes, `ctx` and the pre-hash). Verification
 #' needs only public material, except for HMAC, where the verifier holds
 #' the same secret as the signer and could therefore also sign. HMAC tags
 #' are compared in constant time.
 #'
-#' Only two inputs are errors rather than `FALSE`: a `signature` that is not
+#' Only two inputs are errors rather than `FALSE`: a `sig` that is not
 #' a `bricklayer_signature` at all, and, for an XMSS signature, a key that
-#' is not a key object (a string, say) or a `message` that is not one
+#' is not a key object (a string, say) or a `msg` that is not one
 #' string or a raw vector. A key or signature whose class, scheme or fields were edited
 #' returns `FALSE`. An XMSS signature object written by 0.5.9 to 0.5.12
 #' (one that carries a `key_state` field) still verifies, with a warning
 #' that it exposed the signer's private key.
 #'
-#' @param message The message the signature is claimed to
+#' @param msg The message the signature is claimed to
 #' cover.
-#' @param signature A `bricklayer_signature` from
-#' [capsule_sign()].
+#' @param sig A `bricklayer_signature` from
+#' [cpssign()].
 #' @param key The shared secret for `"hmac"`, a public key
 #' (or full signing key) for XMSS, or a
-#' [fips_keygen()] key or its
-#' [fips_public_key()] for a standardised
+#' [fipskg()] key or its
+#' [fipspubkey()] for a standardised
 #' scheme. A signature is not verified against a key of a different scheme.
-#' @param context The context string the signature was made
+#' @param ctx The context string the signature was made
 #' under, for the standardised schemes. A signature made under a different
 #' context, or under none, does not verify.
 #' @param prehash The pre-hash the signature was made with.
 #' Taken from the signature when not given, since
-#' [capsule_sign()] records it; supply it to
+#' [cpssign()] records it; supply it to
 #' check a signature that arrived without that field.
 #' @return `TRUE` or `FALSE` (a length-1 logical, never `NA`).
-#' @seealso [capsule_sign()],
-#'   [signing_public_key()],
-#'   [fips_public_key()].
+#' @seealso [cpssign()],
+#'   [signpubkey()],
+#'   [fipspubkey()].
 #' @examples
-#' op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 #' # one-time index record out of your configuration directory; leave the default in use
-#' key <- pqc_keygen(height = 2)
-#' sig <- capsule_sign("pinned-manifest", key)
-#' pub <- signing_public_key(key)
+#' key <- pqckg(height = 2)
+#' sig <- cpssign("pinned-manifest", key)
+#' pub <- signpubkey(key)
 #'
-#' capsule_verify("pinned-manifest", sig, pub)
+#' cpsvrf("pinned-manifest", sig, pub)
 #'
 #' # Every way of being wrong returns FALSE.
-#' capsule_verify("edited-manifest", sig, pub)              # message changed
+#' cpsvrf("edited-manifest", sig, pub)              # message changed
 #' bad <- sig; bad$signature <- paste0("ff", substring(bad$signature, 3))
-#' capsule_verify("pinned-manifest", bad, pub)              # signature edited
-#' capsule_verify("pinned-manifest", sig,
-#'                signing_public_key(pqc_keygen(height = 2)))  # foreign key
+#' cpsvrf("pinned-manifest", bad, pub)              # signature edited
+#' cpsvrf("pinned-manifest", sig,
+#'                signpubkey(pqckg(height = 2)))  # foreign key
 #'
 #' # A truncated signature is not verified, and does not error.
 #' trunc <- sig; trunc$signature <- substring(sig$signature, 1, 64)
-#' capsule_verify("pinned-manifest", trunc, pub)
+#' cpsvrf("pinned-manifest", trunc, pub)
 #'
 #' # HMAC: the verifier holds the same secret.
-#' tag <- capsule_sign("pinned-manifest", "shared-secret", scheme = "hmac")
-#' capsule_verify("pinned-manifest", tag, "shared-secret")
+#' tag <- cpssign("pinned-manifest", "shared-secret", scheme = "hmac")
+#' cpsvrf("pinned-manifest", tag, "shared-secret")
 #'
 #' # Something that is not a signature at all is an error, not FALSE.
-#' try(capsule_verify("pinned-manifest", list(signature = "00"), pub))
+#' try(cpsvrf("pinned-manifest", list(signature = "00"), pub))
 #' options(op)
 #' @export
-capsule_verify <- function(message, signature, key, context = NULL,
+cpsvrf <- function(msg, sig, key, ctx = NULL,
                            prehash = NULL) {
-  .rmbl_no_fn(message = message)
-  if (!inherits(signature, "bricklayer_signature")) {
-    stop("`signature` must come from capsule_sign()", call. = FALSE)
+  .rmbl_no_fn(message = msg)
+  if (!inherits(sig, "bricklayer_signature")) {
+    stop("`sig` must come from cpssign()", call. = FALSE)
   }
   # a key object whose class or scheme was edited is "not verified", like an edited signature;
   # a value that is not a key object at all (a number, a function) stays an error below
@@ -1402,45 +1402,45 @@ capsule_verify <- function(message, signature, key, context = NULL,
   }
   if (inherits(key, c("bricklayer_oqs_key",
                       "bricklayer_oqs_public_key"))) {
-    if (!identical(signature$scheme, key$scheme)) return(FALSE)
-    msg <- .rmbl_sign_message(message)
-    ctx <- .rmbl_fips_context(context)
+    if (!identical(sig$scheme, key$scheme)) return(FALSE)
+    .msg <- .rmbl_sign_message(msg)
+    .ctx <- .rmbl_fips_context(ctx)
     # A key or signature that is not even hex is "not verified", never
     # an error: a verifier treats unparseable input as failure. Decoding
     # it loosely would turn a stray character into a zero byte and hand
     # the C layer something it never received.
     # a signature field that is not exactly one string is not a signature: reading its first
     # element would verify c(valid, "anything")
-    if (!is.character(signature$signature) || length(signature$signature) != 1L) return(FALSE)
-    rec <- signature[["context"]]
+    if (!is.character(sig$signature) || length(sig$signature) != 1L) return(FALSE)
+    rec <- sig[["context"]]
     if (!is.null(rec) && !is.raw(rec) && !(is.character(rec) && length(rec) == 1L && !is.na(rec))) return(FALSE)
-    recp <- signature[["prehash"]]
+    recp <- sig[["prehash"]]
     if (!is.null(recp) && !(is.character(recp) && length(recp) == 1L && !is.na(recp))) return(FALSE)
     pk <- .rmbl_hex_or_null(key$public)
-    sg <- .rmbl_hex_or_null(signature$signature)
+    sg <- .rmbl_hex_or_null(sig$signature)
     if (is.null(pk) || is.null(sg)) return(FALSE)
     # A pre-hashed signature and a pure one over the same message are
     # different signatures, so which was made has to be stated. It
     # travels with the signature, and an explicit argument overrides it.
     ph <- if (is.null(prehash)) {
-      if (is.null(signature[["prehash"]])) "none" else signature$prehash
+      if (is.null(sig[["prehash"]])) "none" else sig$prehash
     } else {
       prehash
     }
     # an unknown pre-hash name in the signature (or asked for) is "not verified", not an error
     ph <- tryCatch(.rmbl_fips_prehash(ph), error = function(e) NULL)
     if (is.null(ph)) return(FALSE)
-    return(.rmbl_fips_verify(key$scheme, pk, msg, ctx, sg, ph))
+    return(.rmbl_fips_verify(key$scheme, pk, .msg, .ctx, sg, ph))
   }
-  if (identical(signature$scheme, "hmac")) {
+  if (identical(sig$scheme, "hmac")) {
     # an edited field (two strings, a number, a short or non-hex digest) is "not verified"
-    sg <- signature$signature
+    sg <- sig$signature
     if (!is.character(sg) || length(sg) != 1L || is.na(sg) || !grepl("^[0-9a-fA-F]{64}$", sg)) return(FALSE)
-    return(tryCatch(core_digest_equal(core_hmac_sha256(key, message), sg), error = function(e) FALSE))
+    return(tryCatch(cdgsteq(chmac(key, msg), sg), error = function(e) FALSE))
   }
   # an XMSS object written by 0.5.9 to 7703a04 carries the signer's private key in `key_state`:
   # whoever holds it can sign under this root, so the reader is told, every time
-  if (!is.null(signature[["key_state"]])) warning(.rmbl_key_state_warning(), call. = FALSE)
+  if (!is.null(sig[["key_state"]])) warning(.rmbl_key_state_warning(), call. = FALSE)
   one_string <- function(x) is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)
   whole <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && is.finite(x) && x == trunc(x) && x >= 0
   # the signature's own shape comes first: an HMAC signature whose scheme was edited to
@@ -1452,43 +1452,43 @@ capsule_verify <- function(message, signature, key, context = NULL,
   # and wire as numbers and strings; an index of 0.5 or "0", a height of 4.5, a field removed
   # or no randomiser (a pre-RFC 8391 signature) is an edited object, and an edited object is
   # not verified
-  if (!one_string(signature$signature) || !one_string(signature$auth) ||
-        !one_string(signature[["randomizer"]]) || !whole(signature$index) ||
-        !whole(signature$height) || !one_string(signature$root) || !one_string(signature$wire)) {
+  if (!one_string(sig$signature) || !one_string(sig$auth) ||
+        !one_string(sig[["randomizer"]]) || !whole(sig$index) ||
+        !whole(sig$height) || !one_string(sig$root) || !one_string(sig$wire)) {
     return(FALSE)
   }
   if (!inherits(key, c("bricklayer_public_key", "bricklayer_signing_key"))) {
-    stop("verifying an XMSS signature needs a key from pqc_keygen() or ",
-         "signing_public_key()", call. = FALSE)
+    stop("verifying an XMSS signature needs a key from pqckg() or ",
+         "signpubkey()", call. = FALSE)
   }
   # Reject a cross-scheme presentation explicitly. Without this the
   # rejection would still happen, but only incidentally, because the
   # other scheme's signature is the wrong length -- and an incidental
   # check is one that a future change can remove without noticing.
-  if (!identical(signature$scheme, key$scheme)) return(FALSE)
-  if (!is.raw(message)) {
-    message <- as.character(message)
-    if (length(message) != 1L || is.na(message)) {
-      stop("`message` must be a length-1 character vector or a raw vector",
+  if (!identical(sig$scheme, key$scheme)) return(FALSE)
+  if (!is.raw(msg)) {
+    msg <- as.character(msg)
+    if (length(msg) != 1L || is.na(msg)) {
+      stop("`msg` must be a length-1 character vector or a raw vector",
            call. = FALSE)
     }
   }
   same <- function(a, b) identical(tolower(as.character(a)), tolower(as.character(b)))
-  if (!same(signature$root, key$root)) return(FALSE)
-  if (!identical(as.integer(signature$height), as.integer(key$height))) return(FALSE)
-  expected_wire <- paste0(sprintf("%08x", as.integer(signature$index)), signature[["randomizer"]],
-                          signature$signature, signature$auth)
-  if (!same(signature$wire, expected_wire)) return(FALSE)
+  if (!same(sig$root, key$root)) return(FALSE)
+  if (!identical(as.integer(sig$height), as.integer(key$height))) return(FALSE)
+  expected_wire <- paste0(sprintf("%08x", as.integer(sig$index)), sig[["randomizer"]],
+                          sig$signature, sig$auth)
+  if (!same(sig$wire, expected_wire)) return(FALSE)
   .Call(C_rmbl_xmss_verify, key$pub_seed, key$root, as.integer(key$height),
-        as.integer(signature$index), message, signature$signature,
-        signature$auth, signature[["randomizer"]])
+        as.integer(sig$index), msg, sig$signature,
+        sig$auth, sig[["randomizer"]])
 }
 
 # 32 seed bytes as hex, from the operating system's CSPRNG.
 #
 # Deliberately NOT R's generator: set.seed() makes that reproducible by
 # design and its state is recoverable from its output, so a key drawn
-# from it is guessable. random_bytes() fails rather than degrading, which
+# from it is guessable. rndbytes() fails rather than degrading, which
 # is the behaviour a key needs.
 # Hex bytes, or NULL if the string is not an even-length run of hex
 # digits. as.raw(strtoi(...)) would quietly map a non-hex pair to 00.
@@ -1526,7 +1526,7 @@ capsule_verify <- function(message, signature, key, context = NULL,
 }
 
 .rmbl_random_seed_hex <- function() {
-  paste(format(random_bytes(32L)), collapse = "")
+  paste(format(rndbytes(32L)), collapse = "")
 }
 
 .rmbl_check_seed <- function(seed, what) {
@@ -1543,7 +1543,7 @@ capsule_verify <- function(message, signature, key, context = NULL,
 .rmbl_key_state_warning <- function() {
   paste0("this XMSS signature carries the signer's private key (`key_state`, written by ",
          "rmoriebricklayer 0.5.9 to 7703a04): treat that key as compromised, generate a new ",
-         "one with pqc_keygen() and sign again")
+         "one with pqckg() and sign again")
 }
 
 # the highest XMSS index each key has signed with in this session, by record id
@@ -1551,7 +1551,7 @@ capsule_verify <- function(message, signature, key, context = NULL,
 
 # A key's ids in the record: `id` a fingerprint of the secret seed the signer actually uses
 # (so a stale copy whose `root` field was edited is still the same key), `legacy` the
-# root:pub_seed id the records of 0.5.12-pre and fcdce03 used, consulted and never written.
+# root:pubseed id the records of 0.5.12-pre and fcdce03 used, consulted and never written.
 .rmbl_xmss_ids <- function(key) {
   sk <- .rmbl_check_seed(key$sk_seed, "sk_seed")
   ps <- .rmbl_check_seed(key$pub_seed, "pub_seed")
@@ -1560,7 +1560,7 @@ capsule_verify <- function(message, signature, key, context = NULL,
     stop("this key's `root` is not 64 hex characters: the key object was edited; do not hand-edit it",
          call. = FALSE)
   }
-  list(id = paste0("k:", tolower(core_sha256(charToRaw(paste0("rmoriebricklayer xmss record\n", sk))))),
+  list(id = paste0("k:", tolower(csha256(charToRaw(paste0("rmoriebricklayer xmss record\n", sk))))),
        legacy = paste0(root, ":", ps), root = root)
 }
 
@@ -1571,8 +1571,8 @@ capsule_verify <- function(message, signature, key, context = NULL,
 # that is not a regular file (a device such as /dev/null, which the rename replaced when run
 # as root, or a directory) are refused (review of 52a8883, B7).
 .rmbl_xmss_index_file <- function() {
-  p <- getOption("rmoriebricklayer.xmss_index_file", NULL)
-  from <- "the option rmoriebricklayer.xmss_index_file"
+  p <- getOption("rmoriebricklayer.xmssidxfile", NULL)
+  from <- "the option rmoriebricklayer.xmssidxfile"
   if (is.null(p)) {
     p <- Sys.getenv("RMBL_XMSS_INDEX_FILE", unset = NA_character_)
     from <- "RMBL_XMSS_INDEX_FILE"
@@ -1607,7 +1607,7 @@ capsule_verify <- function(message, signature, key, context = NULL,
   p
 }
 
-# One line per key, `k:<fingerprint><TAB>highest index used` (or a legacy `root:pub_seed` line
+# One line per key, `k:<fingerprint><TAB>highest index used` (or a legacy `root:pubseed` line
 # from 0.5.12-pre). A line that is not that is an error, not a line to skip: a record that
 # cannot be read cannot be trusted. The fcdce03 record next to it is merged in.
 .rmbl_xmss_record_read <- function(p) {
@@ -1620,7 +1620,7 @@ capsule_verify <- function(message, signature, key, context = NULL,
     if (!all(ok)) {
       stop(sprintf(paste("%s (the XMSS used-index record) has %d malformed line(s), the first at line %d: a record",
                          "that cannot be read cannot be trusted, so no XMSS signature is made until the file is",
-                         "repaired or removed (xmss_forget_used_indices() removes it, and with it the protection",
+                         "repaired or removed (xmssfgt() removes it, and with it the protection",
                          "against re-signing an index)"), p, sum(!ok), which(!ok)[[1L]]), call. = FALSE)
     }
     # split at the one tab the check above guarantees: two regular-expression passes took most of a
@@ -1643,7 +1643,7 @@ capsule_verify <- function(message, signature, key, context = NULL,
   stats::setNames(idx[keep], ids[keep])
 }
 
-# The record of the releases before 0.5.12, `xmss_index.json` (key root:pub_seed -> highest
+# The record of the releases before 0.5.12, `xmss_index.json` (key root:pubseed -> highest
 # index used), in the same directory: read and merged, so an upgrade does not forget which
 # indices were used (review of 52a8883, A3). Unreadable is an error, like the new record.
 .rmbl_xmss_legacy_json <- function(p) {
@@ -1663,7 +1663,7 @@ capsule_verify <- function(message, signature, key, context = NULL,
          call. = FALSE)
   }
   txt <- tryCatch(readChar(j, file.size(j), useBytes = TRUE), error = function(e) NULL)
-  rec <- if (is.null(txt)) NULL else tryCatch(bricklayer_json_from_json(txt, simplifyVector = TRUE),
+  rec <- if (is.null(txt)) NULL else tryCatch(fromjs(txt, simplifyVector = TRUE),
                                                error = function(e) NULL)
   if (!is.list(rec) || (length(rec) && is.null(names(rec)))) bad()
   out <- integer()
@@ -1780,14 +1780,14 @@ capsule_verify <- function(message, signature, key, context = NULL,
   p <- .rmbl_xmss_index_file()
   refuse <- function(hi) {
     stop(sprintf(paste0("index %d of this key was already used: signing it again would break the ",
-                        "scheme. Carry the key forward with xmss_advance(key, signature) after every ",
+                        "scheme. Carry the key forward with xmssadv(key, signature) after every ",
                         "signature (next index %d)."), idx, hi + 1L), call. = FALSE)
   }
   if (is.null(p)) {
     hi <- .rmbl_xmss_highest(ids, integer(0))
     if (idx <= hi) refuse(hi)
     assign(ids$id, idx, envir = .rmbl_xmss_used)
-    warning(paste("the XMSS used-index record is off (rmoriebricklayer.xmss_index_file / RMBL_XMSS_INDEX_FILE):",
+    warning(paste("the XMSS used-index record is off (rmoriebricklayer.xmssidxfile / RMBL_XMSS_INDEX_FILE):",
                   "only this session remembers which indices this key has used, so a stale copy of the key",
                   "reloaded elsewhere will sign a used index again. Turn the record on unless you keep the",
                   "advanced key yourself after every signature"), call. = FALSE)
@@ -1800,9 +1800,9 @@ capsule_verify <- function(message, signature, key, context = NULL,
     if (!.rmbl_xmss_known(ids, rec) && idx == 0L) {
       stop(paste("this XMSS key is not in the used-index record on this machine, and it claims never to have",
                  "signed (next_index 0): it was generated elsewhere or from given seeds, or the record was",
-                 "deleted. If it has never signed, register it with xmss_register_key(key); if it has, carry",
-                 "it forward with xmss_advance(key, its_last_signature, message), or generate a new key with",
-                 "pqc_keygen()"), call. = FALSE)
+                 "deleted. If it has never signed, register it with xmssregkey(key); if it has, carry",
+                 "it forward with xmssadv(key, its_last_signature, message), or generate a new key with",
+                 "pqckg()"), call. = FALSE)
     }
     rec[ids$id] <- idx
     .rmbl_xmss_record_write(p, rec)
@@ -1824,7 +1824,7 @@ capsule_verify <- function(message, signature, key, context = NULL,
     hi <- .rmbl_xmss_highest(ids, rec)
     if (!fresh && hi >= 0L) {
       stop(sprintf(paste("this key is already in the record with index %d used: it has signed here before,",
-                         "so carry it forward with xmss_advance() instead of registering it"), hi),
+                         "so carry it forward with xmssadv() instead of registering it"), hi),
            call. = FALSE)
     }
     if (!ids$id %in% names(rec)) {
@@ -1836,34 +1836,34 @@ capsule_verify <- function(message, signature, key, context = NULL,
   invisible(TRUE)
 }
 
-#' @rdname xmss_advance
-#' @param key_to_register For
-#'   [xmss_register_key()]: a signing key generated on
+#' @rdname xmssadv
+#' @param keytoreg For
+#'   [xmssregkey()]: a signing key generated on
 #'   another
 #'   machine, regenerated from given seeds, or whose record was deleted, that has never
 #'   signed; it is added to the record so that it may sign from \code{next_index}. A key
 #'   the record shows has signed is refused.
 #' @export
-xmss_register_key <- function(key_to_register) {
-  if (!inherits(key_to_register, "bricklayer_signing_key")) {
-    stop("`key_to_register` must be a signing key from pqc_keygen()", call. = FALSE)
+xmssregkey <- function(keytoreg) {
+  if (!inherits(keytoreg, "bricklayer_signing_key")) {
+    stop("`keytoreg` must be a signing key from pqckg()", call. = FALSE)
   }
-  .rmbl_xmss_register(key_to_register, fresh = FALSE)
-  invisible(key_to_register)
+  .rmbl_xmss_register(keytoreg, fresh = FALSE)
+  invisible(keytoreg)
 }
 
-#' @rdname xmss_advance
-#' @param key_to_forget For
-#'   [xmss_forget_used_indices()]:
+#' @rdname xmssadv
+#' @param keytofgt For
+#'   [xmssfgt()]:
 #'   a signing key (the record is keyed by its secret seed) whose
 #'   entry alone is reset to "nothing used" (it may sign from index 0 again); \code{NULL}
 #'   removes the whole record (every key, and the record of the releases before 0.5.12),
 #'   after which only keys generated afterwards, or vouched for by
-#'   [xmss_register_key()], may sign.
+#'   [xmssregkey()], may sign.
 #' @export
-xmss_forget_used_indices <- function(key_to_forget = NULL) {
+xmssfgt <- function(keytofgt = NULL) {
   p <- .rmbl_xmss_index_file()
-  if (is.null(key_to_forget)) {
+  if (is.null(keytofgt)) {
     rm(list = ls(.rmbl_xmss_used, all.names = TRUE), envir = .rmbl_xmss_used)
     if (!is.null(p)) {
       for (f in c(p, file.path(dirname(p), c("xmss_index.json", "xmss_index.json.migrated")))) {
@@ -1872,11 +1872,11 @@ xmss_forget_used_indices <- function(key_to_forget = NULL) {
     }
     return(invisible(NULL))
   }
-  if (!inherits(key_to_forget, "bricklayer_signing_key")) {
-    stop("`key_to_forget` must be the signing key from pqc_keygen() (the record is keyed by its secret seed)",
+  if (!inherits(keytofgt, "bricklayer_signing_key")) {
+    stop("`keytofgt` must be the signing key from pqckg() (the record is keyed by its secret seed)",
          call. = FALSE)
   }
-  ids <- .rmbl_xmss_ids(key_to_forget)
+  ids <- .rmbl_xmss_ids(keytofgt)
   assign(ids$id, -1L, envir = .rmbl_xmss_used)   # known, nothing used: it may sign from index 0 again
   if (!is.null(p)) {
     .rmbl_xmss_with_lock(p, function() {

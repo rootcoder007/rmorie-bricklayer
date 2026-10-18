@@ -16,9 +16,9 @@
 #' cannot move a number.
 #'
 #' @details
-#' The labels are stored in a new \code{period_label} column, and the
+#' The labels are stored in a new \code{perlbl} column, and the
 #' table's \code{yoy} attribute is marked so that \code{print()},
-#' [yoy_html()], [yoy_pdf()] and the
+#' [yoyhtml()], [yoypdf()] and the
 #' delimited writers show the label in
 #' place of the period. The period column itself is unchanged, as are all
 #' values, changes and verdicts.
@@ -40,32 +40,32 @@
 #'   periods, or a named character vector mapping a period (as a string) to
 #'   its label.
 #' @return The object, still of class \code{rmbl_yoy}, with an added
-#'   character column \code{period_label} and \code{attr(x, "yoy")$period_label}
+#'   character column \code{perlbl} and \code{attr(x, "yoy")$perlbl}
 #'   set to \code{TRUE}, so the labels are used by \code{print()},
-#'   [yoy_html()],
-#'   [yoy_pdf()] and the delimited writers.
-#' @seealso [fiscal_year_label()]
+#'   [yoyhtml()],
+#'   [yoypdf()] and the delimited writers.
+#' @seealso [fylbl()]
 #' @examples
 #' seg <- data.frame(EndFiscalYear = 2019:2023,
 #'                   n = c(402, 377, 190, 268, 331))
-#' y <- yoy(seg, value = n, period = EndFiscalYear)
+#' y <- yoy(seg, value = n, prd = EndFiscalYear)
 #'
 #' # 2023 means the fiscal year 2022/23, so say so.
-#' yoy_label(y, fiscal_year_label)
+#' yoylbl(y, fylbl)
 #'
 #' # Any function will do.
-#' yoy_label(y, function(p) paste0("FY", substr(p, 3, 4)))
+#' yoylbl(y, function(p) paste0("FY", substr(p, 3, 4)))
 #'
 #' # Or an explicit mapping, for the periods that need one.
-#' yoy_label(y, c("2020" = "2019/20 (COVID)"))
+#' yoylbl(y, c("2020" = "2019/20 (COVID)"))
 #'
 #' # the numbers are untouched
-#' identical(yoy_label(y, fiscal_year_label)$change, y$change)
+#' identical(yoylbl(y, fylbl)$change, y$change)
 #'
 #' # an unnamed vector must have one label per distinct period
-#' try(yoy_label(y, c("a", "b")))
+#' try(yoylbl(y, c("a", "b")))
 #' @export
-yoy_label <- function(x, labels) {
+yoylbl <- function(x, labels) {
   if (!inherits(x, "rmbl_yoy")) {
     stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
@@ -92,8 +92,8 @@ yoy_label <- function(x, labels) {
   if (length(lab) != nrow(x)) {
     stop("`labels` must produce one label per row", call. = FALSE)
   }
-  x$period_label <- lab
-  attr(x, "yoy")$period_label <- TRUE
+  x$perlbl <- lab
+  attr(x, "yoy")$perlbl <- TRUE
   x
 }
 
@@ -104,21 +104,21 @@ yoy_label <- function(x, labels) {
 #' the fiscal year's end year, so 2023 is the fiscal year running from April
 #' 2022 to March 2023; this renders that as \code{"2022/23"}, which a reader
 #' cannot mistake for the calendar year 2023. Pass it to
-#' [yoy_label()] to
+#' [yoylbl()] to
 #' label a change table.
 #'
 #' @details
-#' Each value is converted with \code{as.integer(as.character(end_year))},
+#' Each value is converted with \code{as.integer(as.character(endyear))},
 #' so a string such as \code{"2023"} works and a fractional number is
 #' truncated (2023.7 gives \code{"2022/23"}). The label is
 #' \code{(y - 1)}, \code{sep}, then \code{y} itself or its last two digits.
 #' Values that cannot be read as a year give \code{NA}. The two-digit form
 #' is unambiguous within a century (2000 gives \code{"1999/00"}).
 #'
-#' Errors: \code{end_year} that is neither numeric nor character (for
+#' Errors: \code{endyear} that is neither numeric nor character (for
 #' example logical); a numeric year below 1.
 #'
-#' @param end_year The fiscal year's end year, as a number
+#' @param endyear The fiscal year's end year, as a number
 #'   or a string; a vector of them.
 #' @param sep Separator between the two years, a string; default
 #'   \code{"/"}.
@@ -126,29 +126,29 @@ yoy_label <- function(x, labels) {
 #'   to two digits (\code{"2022/23"}); \code{FALSE} writes it in full
 #'   (\code{"2022/2023"}).
 #' @return A character vector of labels, the same length as
-#'   \code{end_year}, with \code{NA} where a value is not a year.
+#'   \code{endyear}, with \code{NA} where a value is not a year.
 #' @examples
-#' fiscal_year_label(2019:2023)
+#' fylbl(2019:2023)
 #'
-#' fiscal_year_label(2023, short = FALSE)
+#' fylbl(2023, short = FALSE)
 #'
-#' fiscal_year_label(2023, sep = "-")
+#' fylbl(2023, sep = "-")
 #'
 #' # strings work; something that is not a year gives NA
-#' fiscal_year_label(c("2023", "n/a", NA))
+#' fylbl(c("2023", "n/a", NA))
 #'
 #' # logical input is refused
-#' try(fiscal_year_label(TRUE))
+#' try(fylbl(TRUE))
 #' @export
-fiscal_year_label <- function(end_year, sep = "/", short = TRUE) {
+fylbl <- function(endyear, sep = "/", short = TRUE) {
   sep <- .rmbl_text1(sep, "sep")
-  if (!is.null(end_year) && !is.numeric(end_year) && !is.character(end_year)) {
-    stop("`end_year` must be numeric or character years", call. = FALSE)
+  if (!is.null(endyear) && !is.numeric(endyear) && !is.character(endyear)) {
+    stop("`endyear` must be numeric or character years", call. = FALSE)
   }
-  if (is.numeric(end_year) && any(end_year < 1, na.rm = TRUE)) {
-    stop("`end_year` must be positive years", call. = FALSE)
+  if (is.numeric(endyear) && any(endyear < 1, na.rm = TRUE)) {
+    stop("`endyear` must be positive years", call. = FALSE)
   }
-  y <- suppressWarnings(as.integer(as.character(end_year)))
+  y <- suppressWarnings(as.integer(as.character(endyear)))
   out <- rep(NA_character_, length(y))
   ok <- !is.na(y)
   if (!any(ok)) return(out)
@@ -162,8 +162,8 @@ fiscal_year_label <- function(end_year, sep = "/", short = TRUE) {
 
 # The column a renderer should print for the period.
 .yoy_period_text <- function(x, m) {
-  if (!is.null(m$period_label) && "period_label" %in% names(x)) {
-    return(as.character(x$period_label))
+  if (!is.null(m$perlbl) && "perlbl" %in% names(x)) {
+    return(as.character(x$perlbl))
   }
   as.character(x[[m$period]])
 }

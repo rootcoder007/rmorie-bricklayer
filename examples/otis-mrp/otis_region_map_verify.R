@@ -151,9 +151,9 @@ otis_region_map_name_route <- function(map, population) {
 #' file are both available. NULL otherwise.
 otis_region_map_recompute_sf <- function(map, boundaries) {
   if (!nzchar(boundaries)) return(NULL)
-  obs <- region_map_from_points(
+  obs <- rgnmappts(
     x = map$Longitude, y = map$Latitude,
-    unit = map$Institution, boundaries = boundaries,
+    unit = map$Institution, bounds = boundaries,
     fields = c("CDUID", "CDNAME"))
   if (is.null(obs)) return(NULL)
   ## the package function names the unit column generically; the
@@ -182,28 +182,28 @@ otis_region_map_checks <- function(cw, pop, obs_pop = NULL, otis_inst = NULL,
                     stringsAsFactors = FALSE)
 
   ## --- structure -----------------------------------------------------
-  integ <- region_map_integrity(cw, "Institution", "CDUID",
-                               regions = pop$cduid)
+  integ <- rgnmapintg(cw, "Institution", "CDUID",
+                               regs = pop$cduid)
   for (i in seq_len(nrow(integ)))
     out <- add(out, integ$check[i], integ$observed[i], integ$expected[i])
 
   open <- cw[grepl("open", cw$Operating_Status, ignore.case = TRUE), ]
   units <- vapply(pop$cduid, function(u) sum(open$CDUID == u), numeric(1))
-  cov <- region_coverage(pop$cduid, pop$population, units)
+  cov <- rgncov(pop$cduid, pop$population, units)
   a <- attr(cov, "coverage")
   out <- add(out, "census divisions in the province", a$regions, 49)
   out <- add(out, "open institutions", a$units, 25)
-  out <- add(out, "divisions holding an open institution", a$with_unit, 21)
-  out <- add(out, "provincial population", a$total_population, 15109416,
+  out <- add(out, "divisions holding an open institution", a$withunit, 21)
+  out <- add(out, "provincial population", a$totalpop, 15109416,
              "Statistics Canada 17-10-0139-01, 2022")
   out <- add(out, "population of divisions holding an institution",
-             a$covered_population, 10110752)
+             a$covpop, 10110752)
   out <- add(out, "population of divisions holding none",
-             a$uncovered_population, 4998664)
+             a$uncpop, 4998664)
 
   ## --- the populations, re-derived from Statistics Canada ------------
   if (!is.null(obs_pop)) {
-    cmp <- region_map_compare(pop, obs_pop, "cduid", cols = "population")
+    cmp <- rgnmapcmp(pop, obs_pop, "cduid", cols = "population")
     for (i in seq_len(nrow(cmp)))
       out <- add(out, paste0("cd_population_2022.csv, ", cmp$column[i]),
                  cmp$mismatched[i], 0, cmp$first[i])
@@ -211,7 +211,7 @@ otis_region_map_checks <- function(cw, pop, obs_pop = NULL, otis_inst = NULL,
 
   ## --- the second route ----------------------------------------------
   route <- otis_region_map_name_route(cw, pop)
-  dis <- region_map_second_route(cw, "Institution", "CDUID", route,
+  dis <- rgnmapalt(cw, "Institution", "CDUID", route,
                                 known = OTIS_RM_NAME_KNOWN)
   out <- add(out, "institutions covered by the city-name route",
              length(route), OTIS_RM_NAME_COVERAGE,
@@ -238,8 +238,8 @@ otis_region_map_checks <- function(cw, pop, obs_pop = NULL, otis_inst = NULL,
   ## --- point in polygon, when sf and the boundary file are there ------
   if (!is.null(sf_obs)) {
     out <- add(out, "institutions inside exactly one census division",
-               sum(sf_obs$n_regions == 1L), nrow(sf_obs))
-    scmp <- region_map_compare(cw, sf_obs, "Institution", cols = "CDUID")
+               sum(sf_obs$nreg == 1L), nrow(sf_obs))
+    scmp <- rgnmapcmp(cw, sf_obs, "Institution", cols = "CDUID")
     for (i in seq_len(nrow(scmp)))
       out <- add(out, paste0("point in polygon recompute, ", scmp$column[i]),
                  scmp$mismatched[i], 0, scmp$first[i])

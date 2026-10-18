@@ -5,7 +5,7 @@
 pg <- function(...) paste0("<html><body>", paste0("<p>", c(...), "</p>", collapse = ""), "</body></html>")
 
 test_that("the 2020-on English layout: abbreviated and singular role headings", {
-  p <- bricklayer_parse_siu(pg(
+  p <- siuprs(pg(
     "The Investigation", "Notification of the SIU", "Mandate Engaged",
     "A person sustains a \"serious injury\" if they suffer a fracture to the skull, or to a limb, rib or vertebra.",
     "special constables of the Niagara Parks Commission are officials.",
@@ -27,7 +27,7 @@ test_that("the 2020-on English layout: abbreviated and singular role headings", 
 })
 
 test_that("no civilian witnesses, and no identified subject officer, are not counts of one", {
-  p <- bricklayer_parse_siu(pg(
+  p <- siuprs(pg(
     "The Investigation", "Notification of the SIU", "Civilian Witnesses",
     "No civilian witnesses were identified, nor did any come forward.",
     "Witness Officers", "Witness Officer #1", "Analysis and Director's Decision",
@@ -38,7 +38,7 @@ test_that("no civilian witnesses, and no identified subject officer, are not cou
 })
 
 test_that("French reports: AI / AT / TC, numbered 'no 1' or 'n o 1', and the French team lines", {
-  p <- bricklayer_parse_siu(pg(
+  p <- siuprs(pg(
     "L’enquête", "Mandat de l’UES",
     "Une personne subit une blessure grave si elle souffre d’une fracture du crâne, d’un membre, d’une côte.",
     "L’enquête", "L’équipe",
@@ -63,7 +63,7 @@ test_that("French reports: AI / AT / TC, numbered 'no 1' or 'n o 1', and the Fre
 })
 
 test_that("the legacy layouts: numbered roles in the text and teams in words, English and French", {
-  en <- bricklayer_parse_siu(pg(
+  en <- siuprs(pg(
     "File #: 10-PFD-078 Police service: Lakeshore Incident date: May 9, 2010",
     "A witness officer is a police officer who is involved but is not a subject officer.",
     "Three SIU investigators and two forensic investigators ( FIs ) were dispatched.",
@@ -76,7 +76,7 @@ test_that("the legacy layouts: numbered roles in the text and teams in words, En
   expect_identical(en[["number_of_civilian_witnesses"]], "3")
   expect_identical(en[["number_of_witness_officials"]], "2")
   expect_identical(en[["number_of_subject_officials"]], "1")
-  fr <- bricklayer_parse_siu(pg(
+  fr <- siuprs(pg(
     "Dossier n o : 06-OFD-069", "Service de police : Police régionale de Peel",
     "Date de l’incident : Le 17 avril 2006", "L’enquête",
     "Cinq enquêteurs et trois techniciens en identification médicolégale de l’UES ont été dépêchés.",

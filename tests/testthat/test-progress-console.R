@@ -11,7 +11,7 @@ plain_console <- function(env = parent.frame()) {
   withr::local_options(cli.dynamic = NULL, cli.num_colors = NULL, cli.unicode = NULL, crayon.enabled = NULL,
                        cli.default_num_colors = NULL, cli.width = NULL, knitr.in.progress = NULL,
                        rstudio.notebook.executing = NULL, jupyter.in_kernel = NULL,
-                       rmoriebricklayer.dynamic = NULL, rmoriebricklayer.num_colors = NULL,
+                       rmoriebricklayer.dynamic = NULL, rmoriebricklayer.numcol = NULL,
                        rmoriebricklayer.unicode = NULL, rmoriebricklayer.width = NULL, .local_envir = env)
   withr::local_envvar(RSTUDIO = NA, RSTUDIO_SESSION_PID = NA, RSTUDIO_CHILD_PROCESS_PANE = NA,
                       RSTUDIO_CONSOLE_COLOR = NA, POSITRON = NA, R_GUI_APP_VERSION = NA, R_CLI_DYNAMIC = NA,
@@ -124,7 +124,7 @@ test_that("colours: NO_COLOR, the overrides, and a terminal's TERM and COLORTERM
   withr::with_envvar(c(NO_COLOR = "1"), expect_identical(ns$.bl_console()$colors, 1L))
   withr::with_envvar(c(R_CLI_NUM_COLORS = "8"), expect_identical(ns$.bl_console()$colors, 8L))
   withr::with_options(list(crayon.enabled = FALSE), expect_identical(ns$.bl_console()$colors, 1L))
-  withr::with_options(list(rmoriebricklayer.num_colors = 16777216), {
+  withr::with_options(list(rmoriebricklayer.numcol = 16777216), {
     expect_identical(ns$.bl_console()$colors, 16777216L)
   })
   # a terminal (tty = TRUE): cli's options do not apply, the variables do
@@ -223,7 +223,7 @@ test_that("the bar line: percent, count, rate, time so far, and a time left once
   expect_match(line, " 52% 211/400 \u00b7 84/s \u00b7 2.5s", fixed = TRUE)
   expect_false(grepl("ETA", line, fixed = TRUE))
   a$rate <- 85
-  a$r_n <- 3L
+  a$rn <- 3L
   expect_match(ns$.bl_anim_line(a, 2.5), "85/s \u00b7 2.5s \u00b7 ETA 3s", fixed = TRUE)
   # bytes
   b <- anim("file", 4 * 1048576, unit = "B")
@@ -287,7 +287,7 @@ test_that("the end replaces the bar: a check and the time, a cross when the work
   expect_identical(capture.output(type = "message", ns$.bl_anim_done(q, ok = FALSE)), character())
 })
 
-test_that("bricklayer_progress() ends with a cross when its function fails, a check otherwise", {
+test_that("blprog() ends with a cross when its function fails, a check otherwise", {
   withr::local_options(morie.progress = TRUE, morie.quiet = NULL, rmoriebricklayer.width = NULL, cli.width = NULL)
   withr::local_envvar(COLUMNS = "100", NO_COLOR = "1")
   st <- ns$.bl_progress_state
@@ -295,7 +295,7 @@ test_that("bricklayer_progress() ends with a cross when its function fails, a ch
   st$delay <- 0
   withr::defer(st$delay <- old)
   run <- function(fail) {
-    p <- bricklayer_progress("Boom", 10)
+    p <- blprog("Boom", 10)
     a <- environment(p$update)$a
     a$tty <- TRUE
     a$unicode <- FALSE
@@ -312,7 +312,7 @@ test_that("bricklayer_progress() ends with a cross when its function fails, a ch
   expect_false(grepl("stopped", out, fixed = TRUE))
   # a summary is the caller's whole line
   g <- function() {
-    p <- bricklayer_progress("Sum", 2)
+    p <- blprog("Sum", 2)
     environment(p$update)$a$tty <- TRUE
     on.exit(p$done("Sum: two"), add = TRUE)
     p$tick(2)

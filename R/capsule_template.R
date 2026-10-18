@@ -15,16 +15,16 @@
 #' The files:
 #' \describe{
 #'   \item{\code{data_provenance.json}}{the fields
-#'     \code{\link{load_provenance}} and \code{\link{verify_capsule}} expect:
+#'     \code{\link{loadprov}} and \code{\link{vrfcps}} expect:
 #'     \code{name}, \code{source} (\code{url}, \code{publisher},
 #'     \code{licence}, \code{retrieved}, \code{sha256}) and \code{table}
 #'     (\code{value}, \code{period}, \code{by}, \code{rounding},
-#'     \code{suppression_limit}). Every field that must be filled in is
+#'     \code{suplim}). Every field that must be filled in is
 #'     marked \code{TODO}.}
 #'   \item{\code{analysis.R}}{reads the provenance, downloads the source
-#'     with \code{\link{friendly_download}} (a local path is read directly),
-#'     computes its SHA-256 with \code{\link{sha256_file}} and stops if it no
-#'     longer matches the pinned value, runs \code{\link{analyse_table}},
+#'     with \code{\link{fdl}} (a local path is read directly),
+#'     computes its SHA-256 with \code{\link{sha256file}} and stops if it no
+#'     longer matches the pinned value, runs \code{\link{anltab}},
 #'     and writes \code{results/manifest.json}, \code{results/report.html}
 #'     and \code{results/report.md}.}
 #'   \item{\code{README.md}}{the three steps to fill in and run the capsule.}
@@ -45,28 +45,28 @@
 #'   if it is empty.
 #' @param name Character string: the capsule name written into the
 #'   provenance and README. Defaults to the last part of \code{path}.
-#' @param example Logical, default \code{FALSE}. \code{TRUE} uses the
+#' @param ex Logical, default \code{FALSE}. \code{TRUE} uses the
 #'   shipped OTIS table as the source so the skeleton runs immediately;
 #'   \code{FALSE} leaves a \code{TODO} URL.
 #' @return The directory path, invisibly.
-#' @seealso \code{\link{load_provenance}}, \code{\link{verify_capsule}},
-#'   \code{\link{analyse_table}}.
+#' @seealso \code{\link{loadprov}}, \code{\link{vrfcps}},
+#'   \code{\link{anltab}}.
 #' @examples
-#' d <- use_capsule_template(tempfile("capsule-"), example = TRUE)
+#' d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 #' list.files(d)
 #'
 #' # the provenance file to fill in
 #' cat(readLines(file.path(d, "data_provenance.json")), sep = "\n")
 #'
 #' # a blank template with a chosen name
-#' d2 <- use_capsule_template(tempfile("capsule-"), name = "segregation-2024")
+#' d2 <- usecpstmpl(tempfile("capsule-"), name = "segregation-2024")
 #' grep("TODO", readLines(file.path(d2, "data_provenance.json")), value = TRUE)
 #'
 #' # an existing, non-empty folder is never overwritten
-#' try(use_capsule_template(d))
+#' try(usecpstmpl(d))
 #' @export
-use_capsule_template <- function(path, name = basename(path),
-                                 example = FALSE) {
+usecpstmpl <- function(path, name = basename(path),
+                                 ex = FALSE) {
   path <- .rmbl_string1(path, "path")
   if (file.exists(path) && !dir.exists(path)) stop("`path` is a file, not a directory: ", path, call. = FALSE)
   if (dir.exists(path) && length(list.files(path))) {
@@ -77,8 +77,8 @@ use_capsule_template <- function(path, name = basename(path),
   }
   dir.create(path, recursive = TRUE, showWarnings = FALSE)
   # a JSON string literal for x: quotes, backslashes (Windows paths) and control characters escaped
-  jstr <- function(x) sub("^\\[(.*)\\]$", "\\1", bricklayer_json_to_json(as.character(x)))
-  src <- if (example) {
+  jstr <- function(x) sub("^\\[(.*)\\]$", "\\1", tojs(as.character(x)))
+  src <- if (ex) {
     system.file("extdata", "otis_a01_individuals.csv",
                 package = "rmoriebricklayer")
   } else {
@@ -112,14 +112,14 @@ use_capsule_template <- function(path, name = basename(path),
     "library(rmoriebricklayer)",
     "arg <- grep(\"^--file=\", commandArgs(), value = TRUE)",
     "here <- if (length(arg)) dirname(normalizePath(sub(\"^--file=\", \"\", arg[1]))) else getwd()",
-    "prov <- load_provenance(file.path(here, \"data_provenance.json\"))",
+    "prov <- loadprov(file.path(here, \"data_provenance.json\"))",
     "",
     "# 1. Fetch (a local path is read directly; a URL is downloaded with a",
     "#    Wayback Machine fallback) and pin the bytes.",
     "src <- prov$source$url",
     "local <- if (file.exists(src)) src else",
-    "  friendly_download(src, file.path(here, basename(src)))",
-    "digest <- sha256_file(local)",
+    "  fdl(src, file.path(here, basename(src)))",
+    "digest <- sha256file(local)",
     "if (!grepl(\"^TODO\", prov$source$sha256) && !identical(digest, prov$source$sha256))",
     "  stop(\"the source bytes changed since the capsule was pinned: \", digest)",
     "data <- read.csv(local, check.names = FALSE)",
@@ -127,22 +127,22 @@ use_capsule_template <- function(path, name = basename(path),
     "# 2. Analyse: change with exact intervals and adjusted p-values, trend,",
     "#    publication bounds if the release rounds or suppresses.",
     "tab <- prov$table",
-    "a <- analyse_table(data, value = tab$value, period = tab$period,",
+    "a <- anltab(data, value = tab$value, prd = tab$period,",
     "                   by = unlist(tab$by),",
-    "                   rounding = tab$rounding,",
-    "                   suppression_limit = tab$suppression_limit)",
+    "                   rnd = tab$rounding,",
+    "                   suplim = tab$suppression_limit)",
     "print(a)",
     "",
     "# 3. Record: manifest with the digest and every number, plus the report.",
     "out <- file.path(here, \"results\")",
     "dir.create(out, showWarnings = FALSE)",
-    "man <- make_manifest(list(project = prov$name, source = src,",
+    "man <- mkmnf(list(project = prov$name, source = src,",
     "                          source_sha256 = digest))",
-    "man <- record(man, \"rows\", nrow(data), nrow(data))",
-    "man <- record(man, \"periods\", length(a$meta$periods), length(a$meta$periods))",
-    "write_manifest_json(man, file.path(out, \"manifest.json\"))",
-    "report_analysis(a, file.path(out, \"report.html\"), title = prov$name)",
-    "report_analysis(a, file.path(out, \"report.md\"), title = prov$name)",
+    "man <- recrd(man, \"rows\", nrow(data), nrow(data))",
+    "man <- recrd(man, \"periods\", length(a$meta$periods), length(a$meta$periods))",
+    "wrmnfjs(man, file.path(out, \"manifest.json\"))",
+    "rptanl(a, file.path(out, \"report.html\"), title = prov$name)",
+    "rptanl(a, file.path(out, \"report.md\"), title = prov$name)",
     "cat(\"results in\", out, \"\\n\")")
   writeLines(script, file.path(path, "analysis.R"))
   # nolint end
@@ -157,7 +157,7 @@ use_capsule_template <- function(path, name = basename(path),
     "3. Copy the SHA-256 the first run prints into `data_provenance.json`;",
     "   later runs refuse to proceed if the bytes change.", "",
     "Anyone with this folder and the package can rerun it and compare",
-    "manifests with `manifest_recompute()`.")
+    "manifests with `mnfrcmp()`.")
   writeLines(readme, file.path(path, "README.md"))
   # nolint end
   invisible(path)

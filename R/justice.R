@@ -61,7 +61,7 @@
 #' \code{courts-and-crime} vignette. Each is a faithful copy of published
 #' numbers (no value altered, no row invented); the full tables, every
 #' edition and location, are on the package's data hub
-#' (\code{\link{bricklayer_data_load}}, collections \code{ocj_statistics}
+#' (\code{\link{dload}}, collections \code{ocj_statistics}
 #' and \code{tps_open_data}).
 #'
 #' \describe{
@@ -109,9 +109,9 @@
 #'   into a data frame with \code{read.csv(system.file("extdata", <file>,
 #'   package = "rmoriebricklayer"))}.
 #' @name justice-data
-#' @seealso \code{\link{case_flow}}, \code{\link{life_table}},
-#'   \code{\link{disposition_mix}}, \code{\link{clearance_decomposition}},
-#'   \code{\link{crime_density}}, \code{\link{knox_test}}.
+#' @seealso \code{\link{caseflow}}, \code{\link{lifetbl}},
+#'   \code{\link{dispmix}}, \code{\link{clrdcmp}},
+#'   \code{\link{crmdens}}, \code{\link{knoxtst}}.
 #' @examples
 #' f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",
 #'                           package = "rmoriebricklayer"))
@@ -133,24 +133,24 @@ NULL
 #' periods the current inventory would take to clear at the recent pace of
 #' disposition.
 #'
-#' @param received Cases received (new cases), one per period, in time
+#' @param recv Cases received (new cases), one per period, in time
 #'   order.
-#' @param disposed Cases disposed, one per period.
-#' @param pending Optional cases pending at the end of each period.
-#' @param period Optional period labels: numbers, dates, or
+#' @param disp Cases disposed, one per period.
+#' @param pend Optional cases pending at the end of each period.
+#' @param prd Optional period labels: numbers, dates, or
 #'   \code{"YYYY-MM"} strings (which the plot draws on a date axis).
-#' @param window Periods in the rolling clearance rate and in the pace
-#'   behind \code{periods_to_clear}. Default 12, a year of months.
-#' @param conf_level Confidence level for the intervals. Default 0.95.
+#' @param win Periods in the rolling clearance rate and in the pace
+#'   behind \code{pertoclear}. Default 12, a year of months.
+#' @param conflvl Confidence level for the intervals. Default 0.95.
 #'
 #' @return A data frame of class \code{rmbl_case_flow}, one row per period:
 #'   \code{period}, \code{received}, \code{disposed}, \code{clearance} with
 #'   \code{lower} and \code{upper}, \code{net} (received less disposed:
-#'   positive grows the inventory), \code{rolling_clearance} with
-#'   \code{rolling_lower} and \code{rolling_upper} (\code{NA} until a full
+#'   positive grows the inventory), \code{rolclr} with
+#'   \code{rollo} and \code{rolup} (\code{NA} until a full
 #'   window is available), and either \code{pending},
-#'   \code{pending_change} and \code{periods_to_clear}, or, without
-#'   \code{pending}, \code{cumulative_net} (the inventory change since the
+#'   \code{penchg} and \code{pertoclear}, or, without
+#'   \code{pending}, \code{cumnet} (the inventory change since the
 #'   first period).
 #'
 #' @details
@@ -163,19 +163,19 @@ NULL
 #' received and disposed the same cases, which they are not (a case
 #' disposed this month was usually received months before).
 #'
-#' \code{periods_to_clear} divides the pending inventory by the mean
-#' number disposed over the last \code{window} periods (fewer at the start
+#' \code{pertoclear} divides the pending inventory by the mean
+#' number disposed over the last \code{win} periods (fewer at the start
 #' of the series). The published pending count need not equal the previous
 #' count plus the net flow -- courts reactivate cases on bench warrants and
-#' transfer them -- so \code{pending_change} is reported next to
+#' transfer them -- so \code{penchg} is reported next to
 #' \code{net} rather than derived from it.
 #'
-#' The result carries attribute \code{"case_flow"}: \code{window},
-#' \code{conf_level} and the totals received and disposed. Errors:
-#' \code{received} empty; a count vector that is not numeric, has a missing,
-#' negative or infinite value, or a length other than \code{received}'s;
-#' \code{period} of another length, with missing or repeated values;
-#' \code{window} not a whole number of at least 1; \code{conf_level}
+#' The result carries attribute \code{"caseflow"}: \code{win},
+#' \code{conflvl} and the totals received and disposed. Errors:
+#' \code{recv} empty; a count vector that is not numeric, has a missing,
+#' negative or infinite value, or a length other than \code{recv}'s;
+#' \code{prd} of another length, with missing or repeated values;
+#' \code{win} not a whole number of at least 1; \code{conflvl}
 #' outside (0, 1).
 #'
 #' @references
@@ -189,91 +189,91 @@ NULL
 #' 131(2), 373-375. (Exact limits for a ratio of Poisson counts through the
 #' beta distribution.)
 #'
-#' @seealso \code{\link{life_table}}, \code{\link{disposition_mix}},
-#'   \code{\link{stock_flow}} for custody populations.
+#' @seealso \code{\link{lifetbl}}, \code{\link{dispmix}},
+#'   \code{\link{stkflow}} for custody populations.
 #' @examples
 #' f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",
 #'                           package = "rmoriebricklayer"))
-#' cf <- case_flow(f$received, f$disposed, pending = f$pending, period = f$month)
+#' cf <- caseflow(f$received, f$disposed, pend = f$pending, prd = f$month)
 #' cf
 #' plot(cf)
 #'
 #' # without the pending count, a quarterly rolling window and 90% intervals
-#' cq <- case_flow(f$received, f$disposed, period = f$month, window = 3, conf_level = 0.90)
-#' head(as.data.frame(cq)[, c("period", "clearance", "rolling_clearance", "cumulative_net")])
+#' cq <- caseflow(f$received, f$disposed, prd = f$month, win = 3, conflvl = 0.90)
+#' head(as.data.frame(cq)[, c("period", "clearance", "rolclr", "cumnet")])
 #'
 #' # one value per period in every count
-#' try(case_flow(c(100, 120, 90), c(95, 130)))
+#' try(caseflow(c(100, 120, 90), c(95, 130)))
 #' @export
-case_flow <- function(received, disposed, pending = NULL, period = NULL, window = 12L,
-                      conf_level = 0.95) {
-  received <- .jx_counts(received, "received")
-  n <- length(received)
-  if (!n) stop("`received` is empty", call. = FALSE)
-  disposed <- .jx_counts(disposed, "disposed", n)
-  if (!is.null(pending)) pending <- .jx_counts(pending, "pending", n)
-  period <- .jx_period(period, n)
-  window <- .rmbl_num(window, "window", integer = TRUE)
-  if (length(window) != 1L || is.na(window) || window < 1L) {
-    stop("`window` must be a single whole number of at least 1", call. = FALSE)
+caseflow <- function(recv, disp, pend = NULL, prd = NULL, win = 12L,
+                      conflvl = 0.95) {
+  recv <- .jx_counts(recv, "recv")
+  n <- length(recv)
+  if (!n) stop("`recv` is empty", call. = FALSE)
+  disp <- .jx_counts(disp, "disp", n)
+  if (!is.null(pend)) pend <- .jx_counts(pend, "pend", n)
+  prd <- .jx_period(prd, n)
+  win <- .rmbl_num(win, "win", integer = TRUE)
+  if (length(win) != 1L || is.na(win) || win < 1L) {
+    stop("`win` must be a single whole number of at least 1", call. = FALSE)
   }
-  conf_level <- .rmbl_conf_level(conf_level)
-  ci <- .jx_ratio_ci(disposed, received, conf_level)
-  clearance <- ifelse(received > 0, disposed / received, NA_real_)
+  conflvl <- .rmbl_conf_level(conflvl)
+  ci <- .jx_ratio_ci(disp, recv, conflvl)
+  clearance <- ifelse(recv > 0, disp / recv, NA_real_)
   roll <- function(v) {
     cs <- cumsum(v)
     out <- rep(NA_real_, n)
-    if (n >= window) out[window:n] <- cs[window:n] - c(0, cs)[seq_len(n - window + 1L)]
+    if (n >= win) out[win:n] <- cs[win:n] - c(0, cs)[seq_len(n - win + 1L)]
     out
   }
-  rr <- roll(received)
-  rd <- roll(disposed)
-  rci <- .jx_ratio_ci(rd, rr, conf_level)
-  out <- data.frame(period = period, received = received, disposed = disposed,
+  rr <- roll(recv)
+  rd <- roll(disp)
+  rci <- .jx_ratio_ci(rd, rr, conflvl)
+  out <- data.frame(period = prd, received = recv, disposed = disp,
                     clearance = clearance, lower = ci$lower, upper = ci$upper,
-                    net = received - disposed,
-                    rolling_clearance = ifelse(!is.na(rr) & rr > 0, rd / rr, NA_real_),
-                    rolling_lower = rci$lower, rolling_upper = rci$upper,
+                    net = recv - disp,
+                    rolclr = ifelse(!is.na(rr) & rr > 0, rd / rr, NA_real_),
+                    rollo = rci$lower, rolup = rci$upper,
                     stringsAsFactors = FALSE)
-  if (!is.null(pending)) {
-    pace <- vapply(seq_len(n), function(i) mean(disposed[max(1L, i - window + 1L):i]), numeric(1))
-    out$pending <- pending
-    out$pending_change <- c(NA_real_, diff(pending))
-    out$periods_to_clear <- ifelse(pace > 0, pending / pace, NA_real_)
+  if (!is.null(pend)) {
+    pace <- vapply(seq_len(n), function(i) mean(disp[max(1L, i - win + 1L):i]), numeric(1))
+    out$pending <- pend
+    out$penchg <- c(NA_real_, diff(pend))
+    out$pertoclear <- ifelse(pace > 0, pend / pace, NA_real_)
   } else {
-    out$cumulative_net <- cumsum(out$net)
+    out$cumnet <- cumsum(out$net)
   }
-  attr(out, "case_flow") <- list(window = window, conf_level = conf_level,
-                                 total_received = sum(received), total_disposed = sum(disposed))
+  attr(out, "caseflow") <- list(window = win, conflvl = conflvl,
+                                 totalrec = sum(recv), totaldis = sum(disp))
   class(out) <- c("rmbl_case_flow", "data.frame")
   out
 }
 
 #' @export
 print.rmbl_case_flow <- function(x, ...) {
-  m <- attr(x, "case_flow")
+  m <- attr(x, "caseflow")
   # a subset (x[1:3, ]) keeps the class but not the summary it was printed with
   if (is.null(m)) {
     print(as.data.frame(unclass(x), stringsAsFactors = FALSE), ...)
     return(invisible(x))
   }
-  overall <- m$total_disposed / m$total_received
-  ci <- .jx_ratio_ci(m$total_disposed, m$total_received, m$conf_level)
+  overall <- m$totaldis / m$totalrec
+  ci <- .jx_ratio_ci(m$totaldis, m$totalrec, m$conflvl)
   notes <- sprintf("Over all %d periods: %s received, %s disposed, clearance %.3f (%.3f to %.3f)",
-                   nrow(x), format(m$total_received, big.mark = ","), format(m$total_disposed, big.mark = ","),
+                   nrow(x), format(m$totalrec, big.mark = ","), format(m$totaldis, big.mark = ","),
                    overall, ci$lower, ci$upper)
   if (!is.null(x$pending)) {
     notes <- c(notes, sprintf("Pending at the end: %s, about %.1f periods of disposition at the last %d-period pace",
                               format(utils::tail(x$pending, 1L), big.mark = ","),
-                              utils::tail(x$periods_to_clear, 1L), m$window))
+                              utils::tail(x$pertoclear, 1L), m$window))
   }
   show <- as.data.frame(x)[, intersect(c("period", "received", "disposed", "clearance", "lower", "upper", "net",
-                                          "rolling_clearance", "pending", "periods_to_clear", "cumulative_net"),
+                                          "rolclr", "pending", "pertoclear", "cumnet"),
                                         names(x))]
-  for (v in c("clearance", "lower", "upper", "rolling_clearance")) show[[v]] <- round(show[[v]], 3)
-  if (!is.null(show$periods_to_clear)) show$periods_to_clear <- round(show$periods_to_clear, 1)
+  for (v in c("clearance", "lower", "upper", "rolclr")) show[[v]] <- round(show[[v]], 3)
+  if (!is.null(show$pertoclear)) show$pertoclear <- round(show$pertoclear, 1)
   .rmbl_print_table(sprintf("Case flow, %g%% exact intervals, %d-period rolling window",
-                            100 * m$conf_level, m$window), show, notes = notes, ...)
+                            100 * m$conflvl, m$window), show, notes = notes, ...)
   invisible(x)
 }
 
@@ -359,7 +359,7 @@ plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NU
       graphics::abline(h = 1, lty = 2, col = "#666666")
       graphics::lines(px, x$clearance, col = cols[1L], lwd = 1.5)
       graphics::points(px, x$clearance, pch = 21, bg = cols[1L], col = "white", lwd = 0.8, cex = 0.9)
-      if (any(is.finite(x$rolling_clearance))) graphics::lines(px, x$rolling_clearance, col = cols[2L], lwd = 2.5)
+      if (any(is.finite(x$rolclr))) graphics::lines(px, x$rolclr, col = cols[2L], lwd = 2.5)
     }
     graphics::par(op)
   }
@@ -385,22 +385,22 @@ plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NU
 #'   \code{c(0, 10, 15, 18, Inf)} for the four bands above. The last edge
 #'   may be \code{Inf} (an open band). Or band labels such as
 #'   \code{c("Under 10", "10-15", "15-18", "Over 18")}, read with
-#'   \code{\link{parse_bands}}.
+#'   \code{\link{prsbands}}.
 #' @param events Cases that ended in each band (counts, or expected
 #'   counts such as a published share times the number of cases).
-#' @param censored Cases withdrawn from observation in each band without
+#' @param cens Cases withdrawn from observation in each band without
 #'   the event (still open when the data were drawn); one value or one per
 #'   band. Default 0.
-#' @param conf_level Confidence level. Default 0.95.
-#' @param conf_type Scale of the interval: \code{"log-log"} (the default,
+#' @param conflvl Confidence level. Default 0.95.
+#' @param conftype Scale of the interval: \code{"log-log"} (the default,
 #'   which keeps the limits inside 0 to 1), \code{"log"} or \code{"plain"}.
 #'
 #' @return A data frame of class \code{rmbl_life_table}, one row per band:
 #'   \code{lower}, \code{upper} (the band edges), \code{entering},
-#'   \code{events}, \code{censored}, \code{at_risk} (entering less half the
+#'   \code{events}, \code{censored}, \code{atrisk} (entering less half the
 #'   censored), \code{q} (conditional probability of the event in the
 #'   band), \code{survival} at the end of the band with \code{se},
-#'   \code{conf_lower} and \code{conf_upper}, \code{hazard} (events per
+#'   \code{conflo} and \code{confup}, \code{hazard} (events per
 #'   unit time within the band; \code{NA} for an open band), and the
 #'   attribute \code{median}.
 #'
@@ -427,13 +427,13 @@ plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NU
 #'
 #' The median is attribute \code{"median"} (\code{Inf}, with a \code{note},
 #' when survival never falls to one half or crosses it in the open band), and
-#' attribute \code{"life_table"} records \code{conf_level} and
-#' \code{conf_type}. Errors: band labels that cannot be read, or that are
+#' attribute \code{"lifetbl"} records \code{conflvl} and
+#' \code{conftype}. Errors: band labels that cannot be read, or that are
 #' not contiguous, or with an open band other than the last; fewer than two
 #' increasing edges, or an infinite edge other than the last; \code{events}
-#' or \code{censored} that are not non-negative counts, one per band; no
-#' cases at all; \code{conf_level} outside (0, 1); an unknown
-#' \code{conf_type}.
+#' or \code{cens} that are not non-negative counts, one per band; no
+#' cases at all; \code{conflvl} outside (0, 1); an unknown
+#' \code{conftype}.
 #'
 #' @references
 #' Cutler, S. J. and Ederer, F. (1958). Maximum utilization of the life
@@ -446,7 +446,7 @@ plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NU
 #' Lee, E. T. and Wang, J. W. (2003). \emph{Statistical Methods for
 #' Survival Data Analysis}, 3rd ed. Wiley, Hoboken, NJ. Chapter 4.
 #'
-#' @seealso \code{\link{case_flow}}, \code{\link{parse_bands}}.
+#' @seealso \code{\link{caseflow}}, \code{\link{prsbands}}.
 #' @examples
 #' d <- read.csv(system.file("extdata", "ocj_time_to_disposition.csv",
 #'                           package = "rmoriebricklayer"))
@@ -454,35 +454,35 @@ plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NU
 #'                           package = "rmoriebricklayer"))
 #' last <- nrow(d)
 #' shares <- unlist(d[last, c("under_10", "m10_15", "m15_18", "over_18")])
-#' lt <- life_table(c(0, 10, 15, 18, Inf), events = shares * f$disposed[last])
+#' lt <- lifetbl(c(0, 10, 15, 18, Inf), events = shares * f$disposed[last])
 #' lt
 #' plot(lt)
 #'
 #' # bands given by their labels, with some cases still open, on the log scale
-#' lt2 <- life_table(c("Under 10", "10-15", "15-18", "Over 18"),
-#'                   events = c(600, 150, 60, 90), censored = c(40, 20, 10, 0),
-#'                   conf_type = "log")
-#' as.data.frame(lt2)[, c("lower", "upper", "at_risk", "survival",
-#'                        "conf_lower", "conf_upper")]
+#' lt2 <- lifetbl(c("Under 10", "10-15", "15-18", "Over 18"),
+#'                   events = c(600, 150, 60, 90), cens = c(40, 20, 10, 0),
+#'                   conftype = "log")
+#' as.data.frame(lt2)[, c("lower", "upper", "atrisk", "survival",
+#'                        "conflo", "confup")]
 #' attr(lt2, "median")
 #'
 #' # an open band can only come last
-#' try(life_table(c(0, Inf, 20), events = c(5, 5)))
+#' try(lifetbl(c(0, Inf, 20), events = c(5, 5)))
 #' @export
-life_table <- function(breaks, events, censored = 0, conf_level = 0.95,
-                       conf_type = c("log-log", "log", "plain")) {
-  .rmbl_no_fn(censored = censored)
-  conf_type <- .rmbl_arg(conf_type)
-  conf_level <- .rmbl_conf_level(conf_level)
+lifetbl <- function(breaks, events, cens = 0, conflvl = 0.95,
+                       conftype = c("log-log", "log", "plain")) {
+  .rmbl_no_fn(censored = cens)
+  conftype <- .rmbl_arg(conftype)
+  conflvl <- .rmbl_conf_level(conflvl)
   if (is.character(breaks) || is.factor(breaks)) {
     # times, not head counts: "Under 10" ends at 10, and "Over 18" starts there
-    b <- parse_bands(as.character(breaks), integer_scale = FALSE)
+    b <- prsbands(as.character(breaks), intsca = FALSE)
     lo <- b$lower
     # an open first band ("Under 10") starts at the time origin
-    if (isTRUE(b$open_lower[1L]) && is.na(lo[1L])) lo[1L] <- 0
-    bad <- is.na(lo) | (is.na(b$upper) & !b$open_upper)
+    if (isTRUE(b$openlo[1L]) && is.na(lo[1L])) lo[1L] <- 0
+    bad <- is.na(lo) | (is.na(b$upper) & !b$openup)
     if (any(bad)) stop(sprintf("could not read the band \"%s\"", b$label[bad][1L]), call. = FALSE)
-    if (any(utils::head(b$open_upper, -1L))) stop("only the last band may be open (\"Over ...\")", call. = FALSE)
+    if (any(utils::head(b$openup, -1L))) stop("only the last band may be open (\"Over ...\")", call. = FALSE)
     hi <- ifelse(is.na(b$upper), Inf, b$upper)
     if (any(utils::head(hi, -1L) != lo[-1L])) {
       stop("the bands must be contiguous (each band starts where the one before ends)", call. = FALSE)
@@ -500,9 +500,9 @@ life_table <- function(breaks, events, censored = 0, conf_level = 0.95,
   }
   k <- length(lo)
   d <- .jx_counts(events, "events", k)
-  w <- .jx_counts(if (length(censored) == 1L) rep(censored, k) else censored, "censored", k)
+  w <- .jx_counts(if (length(cens) == 1L) rep(cens, k) else cens, "cens", k)
   total <- sum(d) + sum(w)
-  if (total <= 0) stop("there are no cases (`events` and `censored` are all zero)", call. = FALSE)
+  if (total <= 0) stop("there are no cases (`events` and `cens` are all zero)", call. = FALSE)
   entering <- total - c(0, cumsum(d + w))[seq_len(k)]
   at_risk <- entering - w / 2
   q <- ifelse(at_risk > 0, pmin(d / at_risk, 1), NA_real_)
@@ -512,8 +512,8 @@ life_table <- function(breaks, events, censored = 0, conf_level = 0.95,
   surv <- cumprod(1 - ifelse(is.na(q), 0, q))
   gw <- cumsum(ifelse(at_risk > 0 & q < 1, d / (at_risk * (at_risk - d)), NA_real_))
   se <- surv * sqrt(gw)
-  z <- stats::qnorm(1 - (1 - conf_level) / 2)
-  lims <- switch(conf_type,
+  z <- stats::qnorm(1 - (1 - conflvl) / 2)
+  lims <- switch(conftype,
     plain = list(pmax(surv - z * se, 0), pmin(surv + z * se, 1)),
     log = list(surv * exp(-z * sqrt(gw)), pmin(surv * exp(z * sqrt(gw)), 1)),
     `log-log` = {
@@ -533,28 +533,28 @@ life_table <- function(breaks, events, censored = 0, conf_level = 0.95,
     lo[j] + width[j] * (s0[j] - 0.5) / (s0[j] - surv[j])
   }
   out <- data.frame(lower = lo, upper = hi, entering = entering, events = d, censored = w,
-                    at_risk = at_risk, q = q, survival = surv, se = se,
-                    conf_lower = lims[[1L]], conf_upper = lims[[2L]], hazard = hazard)
+                    atrisk = at_risk, q = q, survival = surv, se = se,
+                    conflo = lims[[1L]], confup = lims[[2L]], hazard = hazard)
   attr(out, "median") <- med
-  attr(out, "life_table") <- list(conf_level = conf_level, conf_type = conf_type)
+  attr(out, "lifetab") <- list(conflvl = conflvl, conftype = conftype)
   class(out) <- c("rmbl_life_table", "data.frame")
   out
 }
 
 #' @export
 print.rmbl_life_table <- function(x, ...) {
-  m <- attr(x, "life_table")
+  m <- attr(x, "lifetab")
   if (is.null(m)) {
     print(as.data.frame(unclass(x), stringsAsFactors = FALSE), ...)
     return(invisible(x))
   }
   med <- attr(x, "median")
   show <- as.data.frame(x)
-  for (v in c("q", "survival", "se", "conf_lower", "conf_upper")) show[[v]] <- round(show[[v]], 4)
+  for (v in c("q", "survival", "se", "conflo", "confup")) show[[v]] <- round(show[[v]], 4)
   show$hazard <- signif(show$hazard, 4)
   medtxt <- if (is.finite(med)) sprintf("Median time: %.3g (linear within its band)", med) else
     paste("Median time:", attr(med, "note"))
-  .rmbl_print_table(sprintf("Life table (actuarial), %g%% %s Greenwood interval", 100 * m$conf_level, m$conf_type),
+  .rmbl_print_table(sprintf("Life table (actuarial), %g%% %s Greenwood interval", 100 * m$conflvl, m$conftype),
                     show, notes = medtxt, ...)
   invisible(x)
 }
@@ -571,8 +571,8 @@ plot.rmbl_life_table <- function(x, ..., main = NULL, col = NULL, palette = NULL
   hi[open] <- x$lower[open] + span
   tx <- c(x$lower[1L], hi)
   sv <- c(1, x$survival)
-  lo <- c(1, x$conf_lower)
-  up <- c(1, x$conf_upper)
+  lo <- c(1, x$conflo)
+  up <- c(1, x$confup)
   op <- .bl_par(c(0, 1))
   on.exit(graphics::par(op), add = TRUE)
   graphics::plot(tx, sv, type = "n", ylim = c(0, 1), xlab = "Time", ylab = "", main = "", ...)
@@ -598,7 +598,7 @@ plot.rmbl_life_table <- function(x, ..., main = NULL, col = NULL, palette = NULL
   if (is.finite(med)) graphics::abline(v = med, lty = 2, col = cols[2L])
   if (any(open)) graphics::arrows(utils::tail(tx, 2L)[1L], 0.02, utils::tail(tx, 1L), 0.02, length = 0.08,
                                   col = "#666666")
-  invisible(data.frame(time = tx, survival = sv, conf_lower = lo, conf_upper = up))
+  invisible(data.frame(time = tx, survival = sv, conflo = lo, confup = up))
 }
 
 # ---- composition: how cases end ------------------------------------------------------------
@@ -611,14 +611,14 @@ plot.rmbl_life_table <- function(x, ..., main = NULL, col = NULL, palette = NULL
 #' whether the mix is the same in every period, and tests each outcome for
 #' a linear trend in its share.
 #'
-#' @param counts A matrix or data frame of non-negative counts, one row per
+#' @param cnts A matrix or data frame of non-negative counts, one row per
 #'   period and one column per outcome. Columns that are not numeric are
 #'   refused; pass only the outcome columns.
-#' @param period Optional period labels (default: the row names, or
+#' @param prd Optional period labels (default: the row names, or
 #'   \code{1:nrow(counts)}).
 #' @param scores Numeric scores for the periods in the trend tests.
 #'   Default: \code{1:nrow(counts)}, i.e. equally spaced.
-#' @param conf_level Confidence level. Default 0.95.
+#' @param conflvl Confidence level. Default 0.95.
 #'
 #' @return A list of class \code{rmbl_disposition_mix}: \code{shares}, a long
 #'   data frame (\code{period}, \code{outcome}, \code{count}, \code{total},
@@ -640,11 +640,11 @@ plot.rmbl_life_table <- function(x, ..., main = NULL, col = NULL, palette = NULL
 #' large, so these tests detect small changes; the shares and their
 #' intervals show whether a change is large enough to matter.
 #'
-#' Errors: \code{counts} not a numeric matrix or data frame, with a
+#' Errors: \code{cnts} not a numeric matrix or data frame, with a
 #' non-numeric column, fewer than one period or two outcomes, or a negative,
 #' missing or infinite count; a period with no cases; \code{scores} not one
-#' finite number per period, or all equal; \code{period} of the wrong length
-#' or with repeats; \code{conf_level} outside (0, 1).
+#' finite number per period, or all equal; \code{prd} of the wrong length
+#' or with repeats; \code{conflvl} outside (0, 1).
 #'
 #' @references
 #' Goodman, L. A. (1965). On simultaneous confidence intervals for
@@ -656,12 +656,12 @@ plot.rmbl_life_table <- function(x, ..., main = NULL, col = NULL, palette = NULL
 #' Holm, S. (1979). A simple sequentially rejective multiple test
 #' procedure. \emph{Scandinavian Journal of Statistics}, 6(2), 65-70.
 #'
-#' @seealso \code{\link{share}} for one period's shares with Wilson
+#' @seealso \code{\link{shrs}} for one period's shares with Wilson
 #'   intervals.
 #' @examples
 #' d <- read.csv(system.file("extdata", "ocj_dispositions.csv",
 #'                           package = "rmoriebricklayer"))
-#' mix <- disposition_mix(d[, -(1:2)], period = d$year)
+#' mix <- dispmix(d[, -(1:2)], prd = d$year)
 #' mix
 #' plot(mix)
 #'
@@ -670,50 +670,50 @@ plot.rmbl_life_table <- function(x, ..., main = NULL, col = NULL, palette = NULL
 #' mix$trend
 #'
 #' # years as trend scores, so the gap where no row exists is respected
-#' disposition_mix(d[, -(1:2)], period = d$year, scores = d$year)$trend[, 1:3]
+#' dispmix(d[, -(1:2)], prd = d$year, scores = d$year)$trend[, 1:3]
 #'
 #' # outcome columns only: a text column is refused
-#' try(disposition_mix(data.frame(year = c("a", "b"), x = 1:2, y = 3:4)))
+#' try(dispmix(data.frame(year = c("a", "b"), x = 1:2, y = 3:4)))
 #' @export
-disposition_mix <- function(counts, period = NULL, scores = NULL, conf_level = 0.95) {
-  if (is.data.frame(counts)) {
-    bad <- names(counts)[!vapply(counts, is.numeric, logical(1))]
+dispmix <- function(cnts, prd = NULL, scores = NULL, conflvl = 0.95) {
+  if (is.data.frame(cnts)) {
+    bad <- names(cnts)[!vapply(cnts, is.numeric, logical(1))]
     if (length(bad)) {
-      stop(sprintf("`counts` has a column that is not numeric (%s); pass only the outcome columns", bad[1L]),
+      stop(sprintf("`cnts` has a column that is not numeric (%s); pass only the outcome columns", bad[1L]),
            call. = FALSE)
     }
-    counts <- as.matrix(counts)
+    cnts <- as.matrix(cnts)
   }
-  if (!is.matrix(counts) || !is.numeric(counts)) stop("`counts` must be a numeric matrix or data frame", call. = FALSE)
-  if (nrow(counts) < 1L || ncol(counts) < 2L) {
-    stop("`counts` needs at least one period and two outcomes", call. = FALSE)
+  if (!is.matrix(cnts) || !is.numeric(cnts)) stop("`cnts` must be a numeric matrix or data frame", call. = FALSE)
+  if (nrow(cnts) < 1L || ncol(cnts) < 2L) {
+    stop("`cnts` needs at least one period and two outcomes", call. = FALSE)
   }
-  .jx_counts(as.vector(counts), "counts")
-  conf_level <- .rmbl_conf_level(conf_level)
-  nt <- nrow(counts)
-  k <- ncol(counts)
-  outcome <- colnames(counts) %||% paste0("outcome_", seq_len(k))
-  if (is.null(period)) period <- rownames(counts) %||% seq_len(nt)
-  period <- .jx_period(period, nt)
-  tot <- rowSums(counts)
-  if (any(tot <= 0)) stop(sprintf("period %s has no cases", format(period[tot <= 0][1L])), call. = FALSE)
-  a <- stats::qchisq(1 - (1 - conf_level) / k, 1)
-  ni <- as.vector(counts)
+  .jx_counts(as.vector(cnts), "cnts")
+  conflvl <- .rmbl_conf_level(conflvl)
+  nt <- nrow(cnts)
+  k <- ncol(cnts)
+  outcome <- colnames(cnts) %||% paste0("outcome_", seq_len(k))
+  if (is.null(prd)) prd <- rownames(cnts) %||% seq_len(nt)
+  prd <- .jx_period(prd, nt)
+  tot <- rowSums(cnts)
+  if (any(tot <= 0)) stop(sprintf("period %s has no cases", format(prd[tot <= 0][1L])), call. = FALSE)
+  a <- stats::qchisq(1 - (1 - conflvl) / k, 1)
+  ni <- as.vector(cnts)
   nn <- rep(tot, times = k)
   half <- sqrt(a * (a + 4 * ni * (nn - ni) / nn))
-  shares <- data.frame(period = rep(period, times = k), outcome = rep(outcome, each = nt), count = ni, total = nn,
+  shares <- data.frame(period = rep(prd, times = k), outcome = rep(outcome, each = nt), count = ni, total = nn,
                        share = ni / nn, lower = (a + 2 * ni - half) / (2 * (nn + a)),
                        upper = (a + 2 * ni + half) / (2 * (nn + a)), stringsAsFactors = FALSE)
   homog <- NULL
   trend <- NULL
   if (nt >= 2L) {
-    keep <- colSums(counts) > 0
-    m <- counts[, keep, drop = FALSE]
+    keep <- colSums(cnts) > 0
+    m <- cnts[, keep, drop = FALSE]
     e <- outer(rowSums(m), colSums(m)) / sum(m)
     x2 <- sum((m - e)^2 / e)
     df <- (nrow(m) - 1L) * (ncol(m) - 1L)
     homog <- data.frame(statistic = x2, df = df, p_value = stats::pchisq(x2, df, lower.tail = FALSE),
-                        cramers_v = sqrt(x2 / (sum(m) * min(nrow(m) - 1L, ncol(m) - 1L))))
+                        cramerv = sqrt(x2 / (sum(m) * min(nrow(m) - 1L, ncol(m) - 1L))))
   }
   if (nt >= 3L) {
     if (is.null(scores)) scores <- seq_len(nt)
@@ -722,18 +722,18 @@ disposition_mix <- function(counts, period = NULL, scores = NULL, conf_level = 0
       stop(sprintf("`scores` must be %d finite numbers, not all equal", nt), call. = FALSE)
     }
     tr <- lapply(seq_len(k), function(j) {
-      if (sum(counts[, j]) == 0 || all(counts[, j] == tot)) return(c(NA_real_, NA_real_))
-      t <- suppressWarnings(stats::prop.trend.test(counts[, j], tot, score = scores))
+      if (sum(cnts[, j]) == 0 || all(cnts[, j] == tot)) return(c(NA_real_, NA_real_))
+      t <- suppressWarnings(stats::prop.trend.test(cnts[, j], tot, score = scores))
       c(unname(t$statistic), t$p.value)
     })
     tr <- do.call(rbind, tr)
     trend <- data.frame(outcome = outcome, statistic = tr[, 1L], p_value = tr[, 2L],
-                        p_holm = stats::p.adjust(tr[, 2L], "holm"),
-                        change = counts[nt, ] / tot[nt] - counts[1L, ] / tot[1L], stringsAsFactors = FALSE)
+                        pholm = stats::p.adjust(tr[, 2L], "holm"),
+                        change = cnts[nt, ] / tot[nt] - cnts[1L, ] / tot[1L], stringsAsFactors = FALSE)
     rownames(trend) <- NULL
   }
-  structure(list(shares = shares, homogeneity = homog, trend = trend, period = period, outcome = outcome,
-                 conf_level = conf_level), class = "rmbl_disposition_mix")
+  structure(list(shares = shares, homogeneity = homog, trend = trend, period = prd, outcome = outcome,
+                 conflvl = conflvl), class = "rmbl_disposition_mix")
 }
 
 #' @export
@@ -747,15 +747,15 @@ print.rmbl_disposition_mix <- function(x, ...) {
   if (!is.null(x$homogeneity)) {
     h <- x$homogeneity
     notes <- sprintf("Same mix in every period: chi-square %.1f on %d df, p %s, Cramer's V %.3f",
-                     h$statistic, h$df, .rmbl_fmt_p(h$p_value), h$cramers_v)
+                     h$statistic, h$df, .rmbl_fmt_p(h$p_value), h$cramerv)
   }
   .rmbl_print_table(sprintf("Outcome shares by period (%g%% Goodman simultaneous intervals in $shares)",
-                            100 * x$conf_level), wide, notes = notes, ...)
+                            100 * x$conflvl), wide, notes = notes, ...)
   if (!is.null(x$trend)) {
     tr <- x$trend
     tr$statistic <- round(tr$statistic, 2)
     tr$p_value <- .rmbl_fmt_p(tr$p_value)
-    tr$p_holm <- .rmbl_fmt_p(tr$p_holm)
+    tr$pholm <- .rmbl_fmt_p(tr$pholm)
     tr$change <- round(tr$change, 4)
     .rmbl_print_table("Cochran-Armitage trend in each share (Holm-adjusted)", tr, ...)
   }
@@ -823,7 +823,7 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
        y = .jx_earth_km * (lat - lat0) * pi / 180)
 }
 
-# The one way crime_density(), knox_test() and hotspot_persistence() put longitudes and latitudes on
+# The one way crmdens(), knoxtst() and hotpers() put longitudes and latitudes on
 # the plane: points across the antimeridian are taken on one side of it (179 and -179 degrees were
 # 358 degrees apart, a 19,240 km bandwidth; review of e57fed5), the centre is the median, and an
 # extent past 2,000 km, where the flat approximation stops being one, is said. Returns the
@@ -887,14 +887,14 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
 #'   dropped with a message; in degrees, points at exactly (0, 0), which
 #'   is how several open-data portals publish an incident with no
 #'   location, are dropped too.
-#' @param weights Optional non-negative weight per incident. Default 1.
-#' @param bandwidth Kernel standard deviation in kilometres: one value for
+#' @param w Optional non-negative weight per incident. Default 1.
+#' @param bw Kernel standard deviation in kilometres: one value for
 #'   both directions or two (east-west, north-south). Default: Scott's
 #'   normal-reference rule, \eqn{\sigma n^{-1/6}} for each direction.
-#' @param n_grid Grid nodes per direction. Default 200.
-#' @param coverage Shares of the incidents whose highest-density regions
+#' @param ngrid Grid nodes per direction. Default 200.
+#' @param cover Shares of the incidents whose highest-density regions
 #'   are reported and outlined. Default \code{c(0.5, 0.9)}.
-#' @param coords \code{"lonlat"} (the default) or \code{"planar"}.
+#' @param xy \code{"lonlat"} (the default) or \code{"planar"}.
 #'
 #' @return A list of class \code{rmbl_density}: \code{field} (incidents per
 #'   square kilometre on the grid), \code{x} and \code{y} (grid coordinates
@@ -902,7 +902,7 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
 #'   grid in degrees, for \code{"lonlat"}), \code{bandwidth}, \code{n},
 #'   \code{dropped}, \code{points} (the projected incidents), and
 #'   \code{regions}: one row per coverage share with the density
-#'   \code{level} that bounds it, its \code{area_km2}, and its share of the
+#'   \code{level} that bounds it, its \code{areakm2}, and its share of the
 #'   mapped area.
 #'
 #' @details
@@ -924,9 +924,9 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
 #' Errors: \code{lon} and \code{lat} of different lengths, or (with
 #' \code{coords = "lonlat"}) a coordinate that is not a longitude and
 #' latitude in degrees; fewer than two located incidents with positive weight;
-#' \code{n_grid} not a whole number from 10 to 2000; \code{coverage} not
+#' \code{ngrid} not a whole number from 10 to 2000; \code{cover} not
 #' shares strictly between 0 and 1; incidents all on one line with no
-#' \code{bandwidth} given; a \code{bandwidth} that is not one or two positive
+#' \code{bw} given; a \code{bw} that is not one or two positive
 #' numbers, or longer than half the earth's circumference. Incidents with a
 #' missing coordinate are dropped.
 #'
@@ -945,36 +945,36 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
 #' mapping for predicting spatial patterns of crime. \emph{Security
 #' Journal}, 21(1-2), 4-28.
 #'
-#' @seealso \code{\link{knox_test}}, \code{\link{plume_field}} (the same
+#' @seealso \code{\link{knoxtst}}, \code{\link{plmfld}} (the same
 #'   kind of surface, for an air pollutant).
 #' @examples
 #' b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
 #'                           package = "rmoriebricklayer"))
-#' kd <- crime_density(b$lon, b$lat, n_grid = 120)
+#' kd <- crmdens(b$lon, b$lat, ngrid = 120)
 #' kd
 #' plot(kd)
 #'
 #' # a fixed 300 m bandwidth on a coarser grid: a sharper surface
-#' kd3 <- crime_density(b$lon, b$lat, bandwidth = 0.3, n_grid = 60)
+#' kd3 <- crmdens(b$lon, b$lat, bw = 0.3, ngrid = 60)
 #' kd3$regions
 #'
 #' # planar coordinates in metres
 #' set.seed(2)
 #' xy <- cbind(rnorm(200, sd = 500), rnorm(200, sd = 500))
-#' crime_density(xy[, 1], xy[, 2], coords = "planar", n_grid = 40)$bandwidth
+#' crmdens(xy[, 1], xy[, 2], xy = "planar", ngrid = 40)$bandwidth
 #'
 #' # longitudes and latitudes are checked
-#' try(crime_density(c(-79.4, 200), c(43.7, 43.8)))
+#' try(crmdens(c(-79.4, 200), c(43.7, 43.8)))
 #' @export
-crime_density <- function(lon, lat, weights = NULL, bandwidth = NULL, n_grid = 200L,
-                          coverage = c(0.5, 0.9), coords = c("lonlat", "planar")) {
-  coords <- .rmbl_arg(coords)
+crmdens <- function(lon, lat, w = NULL, bw = NULL, ngrid = 200L,
+                          cover = c(0.5, 0.9), xy = c("lonlat", "planar")) {
+  xy <- .rmbl_arg(xy)
   lon <- .rmbl_num_input(lon, "lon", allow_null = FALSE)
   lat <- .rmbl_num_input(lat, "lat", allow_null = FALSE)
   if (length(lon) != length(lat)) stop("`lon` and `lat` must have the same length", call. = FALSE)
-  w <- if (is.null(weights)) rep(1, length(lon)) else .jx_counts(weights, "weights", length(lon), allow_na = TRUE)
-  keep <- is.finite(lon) & is.finite(lat) & !is.na(w)
-  if (coords == "lonlat") {
+  .w <- if (is.null(w)) rep(1, length(lon)) else .jx_counts(w, "w", length(lon), allow_na = TRUE)
+  keep <- is.finite(lon) & is.finite(lat) & !is.na(.w)
+  if (xy == "lonlat") {
     bad <- keep & (abs(lat) > 90 | abs(lon) > 180)
     if (any(bad)) {
       stop(sprintf(paste("coordinate %d is not a longitude and latitude in degrees (%g, %g);",
@@ -984,22 +984,22 @@ crime_density <- function(lon, lat, weights = NULL, bandwidth = NULL, n_grid = 2
     keep <- keep & !.jx_null_island(lon, lat)
   }
   dropped <- sum(!keep)
-  if (dropped) message(sprintf("crime_density(): %d incident%s without a usable location dropped", dropped,
+  if (dropped) message(sprintf("crmdens(): %d incident%s without a usable location dropped", dropped,
                                if (dropped == 1L) "" else "s"))
   lon <- lon[keep]
   lat <- lat[keep]
-  w <- w[keep]
-  if (length(lon) < 2L || sum(w) <= 0) stop("need at least two located incidents with positive weight", call. = FALSE)
-  n_grid <- .rmbl_num(n_grid, "n_grid", integer = TRUE)
-  if (length(n_grid) != 1L || is.na(n_grid) || n_grid < 10L || n_grid > 2000L) {
-    stop("`n_grid` must be a whole number from 10 to 2000", call. = FALSE)
+  .w <- .w[keep]
+  if (length(lon) < 2L || sum(.w) <= 0) stop("need at least two located incidents with positive weight", call. = FALSE)
+  ngrid <- .rmbl_num(ngrid, "ngrid", integer = TRUE)
+  if (length(ngrid) != 1L || is.na(ngrid) || ngrid < 10L || ngrid > 2000L) {
+    stop("`ngrid` must be a whole number from 10 to 2000", call. = FALSE)
   }
-  coverage <- .rmbl_num_input(coverage, "coverage", allow_null = FALSE)
-  if (!length(coverage) || anyNA(coverage) || any(coverage <= 0 | coverage >= 1)) {
-    stop("`coverage` must be shares strictly between 0 and 1", call. = FALSE)
+  cover <- .rmbl_num_input(cover, "cover", allow_null = FALSE)
+  if (!length(cover) || anyNA(cover) || any(cover <= 0 | cover >= 1)) {
+    stop("`cover` must be shares strictly between 0 and 1", call. = FALSE)
   }
-  if (coords == "lonlat") {
-    p <- .jx_lonlat_plane(lon, lat, "crime_density")
+  if (xy == "lonlat") {
+    p <- .jx_lonlat_plane(lon, lat, "crmdens")
     lon0 <- p$lon0
     lat0 <- p$lat0
   } else {
@@ -1007,38 +1007,38 @@ crime_density <- function(lon, lat, weights = NULL, bandwidth = NULL, n_grid = 2
     p <- list(x = (lon - stats::median(lon)) / 1000, y = (lat - stats::median(lat)) / 1000)
   }
   n <- length(p$x)
-  if (is.null(bandwidth)) {
-    sx <- sqrt(stats::cov.wt(cbind(p$x, p$y), wt = w / sum(w))$cov[c(1L, 4L)])
+  if (is.null(bw)) {
+    sx <- sqrt(stats::cov.wt(cbind(p$x, p$y), wt = .w / sum(.w))$cov[c(1L, 4L)])
     h <- sx * n^(-1 / 6)
     if (any(!is.finite(h) | h <= 0)) {
-      stop("the incidents do not spread in both directions; give `bandwidth` in kilometres", call. = FALSE)
+      stop("the incidents do not spread in both directions; give `bw` in kilometres", call. = FALSE)
     }
   } else {
-    h <- .rmbl_num_input(bandwidth, "bandwidth", allow_null = FALSE)
+    h <- .rmbl_num_input(bw, "bw", allow_null = FALSE)
     if (!length(h) %in% 1:2 || any(!is.finite(h) | h <= 0)) {
-      stop("`bandwidth` must be one or two positive numbers (kilometres)", call. = FALSE)
+      stop("`bw` must be one or two positive numbers (kilometres)", call. = FALSE)
     }
     h <- rep_len(h, 2L)
     # a bandwidth past half the earth's circumference is not a distance on a map; one far wider than
     # the incidents' spread smooths them into a single blur (1e6 km was taken silently)
-    if (coords == "lonlat" && any(h > 20037.5)) {
-      stop("`bandwidth` is longer than half the earth's circumference (20,037 km)", call. = FALSE)
+    if (xy == "lonlat" && any(h > 20037.5)) {
+      stop("`bw` is longer than half the earth's circumference (20,037 km)", call. = FALSE)
     }
     spread <- max(diff(range(p$x)), diff(range(p$y)))
     if (spread > 0 && any(h > 10 * spread)) {
-      warning(sprintf("`bandwidth` (%.3g km) is over ten times the incidents' spread (%.3g km): the map is one blur",
+      warning(sprintf("`bw` (%.3g km) is over ten times the incidents' spread (%.3g km): the map is one blur",
                       max(h), spread), call. = FALSE)
     }
   }
-  gx <- seq(min(p$x) - 3 * h[1L], max(p$x) + 3 * h[1L], length.out = n_grid)
-  gy <- seq(min(p$y) - 3 * h[2L], max(p$y) + 3 * h[2L], length.out = n_grid)
+  gx <- seq(min(p$x) - 3 * h[1L], max(p$x) + 3 * h[1L], length.out = ngrid)
+  gy <- seq(min(p$y) - 3 * h[2L], max(p$y) + 3 * h[2L], length.out = ngrid)
   dx <- gx[2L] - gx[1L]
   dy <- gy[2L] - gy[1L]
   if (dx > h[1L] || dy > h[2L]) {
-    warning(sprintf("the grid spacing (%.3g km) is wider than the bandwidth (%.3g km); raise `n_grid`",
+    warning(sprintf("the grid spacing (%.3g km) is wider than the bandwidth (%.3g km); raise `ngrid`",
                     max(dx, dy), min(h)), call. = FALSE)
   }
-  cnt <- .jx_linbin(p$x, p$y, w, gx, gy)
+  cnt <- .jx_linbin(p$x, p$y, .w, gx, gy)
   kx <- stats::dnorm(outer(gx, gx, "-"), sd = h[1L])
   ky <- stats::dnorm(outer(gy, gy, "-"), sd = h[2L])
   field <- kx %*% cnt %*% t(ky)
@@ -1046,14 +1046,14 @@ crime_density <- function(lon, lat, weights = NULL, bandwidth = NULL, n_grid = 2
   mass <- field * cell
   o <- order(mass, decreasing = TRUE)
   cm <- cumsum(mass[o]) / sum(mass)
-  regions <- do.call(rbind, lapply(sort(coverage), function(cv) {
+  regions <- do.call(rbind, lapply(sort(cover), function(cv) {
     m <- which(cm >= cv)[1L]
-    data.frame(coverage = cv, level = field[o][m], area_km2 = m * cell, area_share = m / length(field))
+    data.frame(coverage = cv, level = field[o][m], areakm2 = m * cell, areashr = m / length(field))
   }))
-  out <- list(field = field, x = gx, y = gy, bandwidth = h, n = n, total = sum(w), dropped = dropped,
-              points = data.frame(x = p$x, y = p$y), regions = regions, coords = coords,
+  out <- list(field = field, x = gx, y = gy, bandwidth = h, n = n, total = sum(.w), dropped = dropped,
+              points = data.frame(x = p$x, y = p$y), regions = regions, coords = xy,
               centre = c(lon = lon0, lat = lat0))
-  if (coords == "lonlat") {
+  if (xy == "lonlat") {
     out$lon <- p$lon0 + gx / (.jx_earth_km * cos(lat0 * pi / 180)) * 180 / pi
     # the grid is drawn with image(), which needs increasing longitudes: a grid that runs past
     # 180 degrees (incidents near the antimeridian, 179.5 to 179.99) is wrapped only when every
@@ -1076,9 +1076,9 @@ crime_density <- function(lon, lat, weights = NULL, bandwidth = NULL, n_grid = 2
 #' @export
 print.rmbl_density <- function(x, ...) {
   r <- x$regions
-  show <- data.frame(incidents = sprintf("%g%%", 100 * r$coverage), area_km2 = signif(r$area_km2, 4),
-                     share_of_mapped_area = sprintf("%.1f%%", 100 * r$area_share),
-                     density_at_edge = signif(r$level, 4))
+  show <- data.frame(incidents = sprintf("%g%%", 100 * r$coverage), areakm2 = signif(r$areakm2, 4),
+                     shrofmaparea = sprintf("%.1f%%", 100 * r$areashr),
+                     densatedge = signif(r$level, 4))
   notes <- c(sprintf("%s incidents%s; bandwidth %.3g km east-west, %.3g km north-south",
                      format(x$n, big.mark = ","),
                      if (x$dropped) sprintf(" (%d without a location dropped)", x$dropped) else "",
@@ -1102,7 +1102,7 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
   f <- x$field
   # the faintest tail is left blank so the map reads as hot spots on a plain ground
   f[f < 0.02 * max(f)] <- NA
-  cols <- if (!is.null(col)) col else if (!is.null(palette)) bricklayer_palette(palette, 64) else
+  cols <- if (!is.null(col)) col else if (!is.null(palette)) blpal(palette, 64) else
     grDevices::hcl.colors(64, "YlOrRd", rev = TRUE)
   op <- .bl_par(ys)
   on.exit(graphics::par(op), add = TRUE)
@@ -1165,7 +1165,7 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
     if (total > max_pairs) {
       stop(sprintf(paste("%d incidents lie too far out for the largest distance band to index (past 2^52",
                          "bands); comparing them with every other one is more than %s pairs: use a wider",
-                         "band, rescale, or raise `max_pairs`"), length(fi), format(max_pairs, big.mark = ",")),
+                         "band, rescale, or raise `maxprs`"), length(fi), format(max_pairs, big.mark = ",")),
            call. = FALSE)
     }
     for (i in fi) {
@@ -1188,7 +1188,7 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
     total <- total + sum(as.numeric(a[common]) * as.numeric(b[common]))
     if (total > max_pairs) {
       stop(sprintf(paste("more than %s candidate pairs within the largest distance band: use a smaller",
-                         "largest band, fewer incidents, or raise `max_pairs`"), format(max_pairs, big.mark = ",")),
+                         "largest band, fewer incidents, or raise `maxprs`"), format(max_pairs, big.mark = ",")),
            call. = FALSE)
     }
     m <- merge(pts, nb, by = "k")
@@ -1221,18 +1221,18 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
 #'   (\code{coords = "lonlat"}), or planar coordinates in metres.
 #' @param time Times of the incidents: \code{Date}, \code{POSIXct}, or
 #'   numbers in days.
-#' @param space_bands Upper edges of the distance bands in metres,
+#' @param spcbands Upper edges of the distance bands in metres,
 #'   increasing: \code{c(100, 200, 400)} is 0-100, 100-200 and 200-400 m.
-#' @param time_bands Upper edges of the time bands in days, increasing.
+#' @param tmbands Upper edges of the time bands in days, increasing.
 #' @param nsim Monte Carlo permutations. Default 999.
 #' @param seed Optional seed for the permutations, a whole number from
 #'   -2147483647 to 2^53 - 1; the caller's random stream is left as it was.
-#' @param coords \code{"lonlat"} or \code{"planar"}.
-#' @param max_pairs Limit on candidate pairs held in memory. Default 5e7.
+#' @param xy \code{"lonlat"} or \code{"planar"}.
+#' @param maxprs Limit on candidate pairs held in memory. Default 5e7.
 #'
 #' @return A list of class \code{rmbl_knox}: \code{table}, a long data frame
-#'   with one row per distance-by-time cell (\code{space_lower},
-#'   \code{space_upper}, \code{time_lower}, \code{time_upper},
+#'   with one row per distance-by-time cell (\code{spclo},
+#'   \code{spcup}, \code{tmlo}, \code{tmup},
 #'   \code{observed}, \code{expected}, \code{ratio}, \code{p_value}); the
 #'   \code{n} incidents used; \code{nsim}.
 #'
@@ -1258,8 +1258,8 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
 #' patterns also arise when one offender commits a series.
 #'
 #' Errors: \code{x}, \code{y} and \code{time} of different lengths;
-#' \code{space_bands} or \code{time_bands} not positive, finite and
-#' increasing; \code{nsim} below 19; \code{max_pairs} below 1; longitude and
+#' \code{spcbands} or \code{tmbands} not positive, finite and
+#' increasing; \code{nsim} below 19; \code{maxprs} below 1; longitude and
 #' latitude out of range under \code{coords = "lonlat"}; fewer than three
 #' incidents. With \code{seed} the random number stream is set for the call
 #' and restored afterwards.
@@ -1278,33 +1278,33 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
 #' cross national assessment of residential burglary victimization.
 #' \emph{Journal of Quantitative Criminology}, 23(3), 201-219.
 #'
-#' @seealso \code{\link{crime_density}}.
+#' @seealso \code{\link{crmdens}}.
 #' @examples
 #' b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
 #'                           package = "rmoriebricklayer"))
 #' b <- b[!is.na(b$lon), ]
-#' kn <- knox_test(b$lon, b$lat, as.Date(b$occ_date), space_bands = c(100, 200, 400),
-#'                 time_bands = c(7, 14, 28), nsim = 199, seed = 1)
+#' kn <- knoxtst(b$lon, b$lat, as.Date(b$occ_date), spcbands = c(100, 200, 400),
+#'                 tmbands = c(7, 14, 28), nsim = 199, seed = 1)
 #' kn
 #' plot(kn)
 #'
 #' # planar coordinates in metres and times in days, on simulated points
 #' set.seed(5)
 #' n <- 150
-#' kp <- knox_test(runif(n, 0, 2000), runif(n, 0, 2000), runif(n, 0, 365),
-#'                 space_bands = c(200, 400), time_bands = c(14, 28),
-#'                 nsim = 99, seed = 2, coords = "planar")
+#' kp <- knoxtst(runif(n, 0, 2000), runif(n, 0, 2000), runif(n, 0, 365),
+#'                 spcbands = c(200, 400), tmbands = c(14, 28),
+#'                 nsim = 99, seed = 2, xy = "planar")
 #' kp
 #'
 #' # bands must increase
-#' try(knox_test(b$lon, b$lat, as.Date(b$occ_date), c(400, 100), c(7, 14)))
+#' try(knoxtst(b$lon, b$lat, as.Date(b$occ_date), c(400, 100), c(7, 14)))
 #' @export
-knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = NULL,
-                      coords = c("lonlat", "planar"), max_pairs = 5e7) {
-  coords <- .rmbl_arg(coords)
-  max_pairs <- .rmbl_num(max_pairs, "max_pairs")
-  if (length(max_pairs) != 1L || is.na(max_pairs) || max_pairs < 1) {
-    stop("`max_pairs` must be a single number of at least 1", call. = FALSE)
+knoxtst <- function(x, y, time, spcbands, tmbands, nsim = 999L, seed = NULL,
+                      xy = c("lonlat", "planar"), maxprs = 5e7) {
+  xy <- .rmbl_arg(xy)
+  maxprs <- .rmbl_num(maxprs, "maxprs")
+  if (length(maxprs) != 1L || is.na(maxprs) || maxprs < 1) {
+    stop("`maxprs` must be a single number of at least 1", call. = FALSE)
   }
   x <- .rmbl_num_input(x, "x", allow_null = FALSE)
   y <- .rmbl_num_input(y, "y", allow_null = FALSE)
@@ -1318,11 +1318,11 @@ knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = N
   if (length(y) != length(x) || length(tt) != length(x)) {
     stop("`x`, `y` and `time` must have the same length", call. = FALSE)
   }
-  # an incident without a location or a time is dropped and said, as crime_density() and
-  # hotspot_persistence() do (knox_test() alone refused the whole call; review of 29a55d8)
+  # an incident without a location or a time is dropped and said, as crmdens() and
+  # hotpers() do (knoxtst() alone refused the whole call; review of 29a55d8)
   keep <- is.finite(x) & is.finite(y) & is.finite(tt)
   if (!all(keep)) {
-    message(sprintf("knox_test(): %d incident%s without a usable location or time dropped", sum(!keep),
+    message(sprintf("knoxtst(): %d incident%s without a usable location or time dropped", sum(!keep),
                     if (sum(!keep) == 1L) "" else "s"))
     x <- x[keep]
     y <- y[keep]
@@ -1335,22 +1335,22 @@ knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = N
     }
     b
   }
-  sb <- bands(space_bands, "space_bands")
-  tb <- bands(time_bands, "time_bands")
+  sb <- bands(spcbands, "spcbands")
+  tb <- bands(tmbands, "tmbands")
   nsim <- .rmbl_num(nsim, "nsim", integer = TRUE)
   if (length(nsim) != 1L || is.na(nsim) || nsim < 19L) {
     stop("`nsim` must be a whole number of at least 19", call. = FALSE)
   }
-  if (coords == "lonlat") {
+  if (xy == "lonlat") {
     if (any(abs(y) > 90 | abs(x) > 180)) {
       stop("`x` and `y` are not longitudes and latitudes in degrees; planar data take coords = \"planar\"",
            call. = FALSE)
     }
-    # (0, 0) is "no location", as crime_density() and hotspot_persistence() read it: twenty such rows
+    # (0, 0) is "no location", as crmdens() and hotpers() read it: twenty such rows
     # had made the closest space-time cell 163 observed against 33 expected (review of e57fed5, E3)
     nowhere <- .jx_null_island(x, y)
     if (any(nowhere)) {
-      message(sprintf("knox_test(): %d incident%s at (0, 0), the raw exports' \"no location\", dropped",
+      message(sprintf("knoxtst(): %d incident%s at (0, 0), the raw exports' \"no location\", dropped",
                       sum(nowhere), if (sum(nowhere) == 1L) "" else "s"))
       x <- x[!nowhere]
       y <- y[!nowhere]
@@ -1359,15 +1359,15 @@ knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = N
   }
   n <- length(x)
   if (n < 3L) stop("need at least three incidents", call. = FALSE)
-  if (coords == "lonlat") {
-    p <- .jx_lonlat_plane(x, y, "knox_test")
+  if (xy == "lonlat") {
+    p <- .jx_lonlat_plane(x, y, "knoxtst")
     px <- p$x * 1000
     py <- p$y * 1000
   } else {
     px <- x
     py <- y
   }
-  cp <- .jx_close_pairs(px, py, max(sb), max_pairs)
+  cp <- .jx_close_pairs(px, py, max(sb), maxprs)
   ks <- length(sb)
   kt <- length(tb)
   s_idx <- findInterval(cp$d, c(0, sb), left.open = TRUE, rightmost.closed = TRUE)
@@ -1385,7 +1385,7 @@ knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = N
     tabulate(s_idx[ok] + (t_idx[ok] - 1L) * ks, ks * kt)
   }
   obs <- cell_of(tt)
-  pg <- bricklayer_progress("Knox test", nsim)
+  pg <- blprog("Knox test", nsim)
   on.exit(pg$done(), add = TRUE)
   sims <- .rmbl_with_seed_maybe(seed, vapply(seq_len(nsim), function(k) {
     pg$update(k - 1L, sprintf("permutation %d/%d", k, nsim))
@@ -1393,11 +1393,11 @@ knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = N
   }, numeric(ks * kt)))
   sims <- matrix(sims, nrow = ks * kt)
   pv <- (1 + rowSums(sims >= obs)) / (nsim + 1)
-  tab <- data.frame(space_lower = rep(c(0, utils::head(sb, -1L)), times = kt), space_upper = rep(sb, times = kt),
-                    time_lower = rep(c(0, utils::head(tb, -1L)), each = ks), time_upper = rep(tb, each = ks),
+  tab <- data.frame(spclo = rep(c(0, utils::head(sb, -1L)), times = kt), spcup = rep(sb, times = kt),
+                    tmlo = rep(c(0, utils::head(tb, -1L)), each = ks), tmup = rep(tb, each = ks),
                     observed = obs, expected = as.vector(expected),
                     ratio = ifelse(as.vector(expected) > 0, obs / as.vector(expected), NA_real_), p_value = pv)
-  structure(list(table = tab, n = n, nsim = nsim, space_bands = sb, time_bands = tb, close_pairs = length(cp$d)),
+  structure(list(table = tab, n = n, nsim = nsim, spcbands = sb, tmbands = tb, closeprs = length(cp$d)),
             class = "rmbl_knox")
 }
 
@@ -1414,10 +1414,10 @@ print.rmbl_knox <- function(x, ...) {
   t <- x$table
   cell <- sprintf("%.2f%s", t$ratio, ifelse(t$p_value < 0.01, "**", ifelse(t$p_value < 0.05, "*", "")))
   cell[is.na(t$ratio)] <- "-"
-  m <- matrix(cell, nrow = length(x$space_bands))
-  df <- data.frame(distance = sprintf("%g-%g m", c(0, utils::head(x$space_bands, -1L)), x$space_bands), m,
+  m <- matrix(cell, nrow = length(x$spcbands))
+  df <- data.frame(distance = sprintf("%g-%g m", c(0, utils::head(x$spcbands, -1L)), x$spcbands), m,
                    check.names = FALSE)
-  names(df)[-1L] <- sprintf("%g-%g d", c(0, utils::head(x$time_bands, -1L)), x$time_bands)
+  names(df)[-1L] <- sprintf("%g-%g d", c(0, utils::head(x$tmbands, -1L)), x$tmbands)
   .rmbl_print_table(sprintf("Knox ratios, observed / expected pairs (%s incidents, %d permutations)",
                             format(x$n, big.mark = ","), x$nsim), df,
                     footer = "* p < 0.05, ** p < 0.01, one-sided per cell (not adjusted for the number of cells)", ...)
@@ -1429,16 +1429,16 @@ print.rmbl_knox <- function(x, ...) {
 plot.rmbl_knox <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   .rmbl_plot_check(x, "rmbl_knox")
   t <- x$table
-  ks <- length(x$space_bands)
-  kt <- length(x$time_bands)
+  ks <- length(x$spcbands)
+  kt <- length(x$tmbands)
   r <- matrix(t$ratio, nrow = ks)
   lr <- log2(r)
   lim <- max(1, abs(lr[is.finite(lr)]))
   # white at a ratio of 1, blue below, red above (the diverging palette's grey midpoint muddied
   # every cell near 1)
-  cols <- if (!is.null(col)) col else if (!is.null(palette)) bricklayer_palette(palette, 63) else
+  cols <- if (!is.null(col)) col else if (!is.null(palette)) blpal(palette, 63) else
     grDevices::colorRampPalette(c("#2166AC", "#F7F7F7", "#B2182B"))(63)
-  ylabs <- sprintf("%g-%g", c(0, utils::head(x$space_bands, -1L)), x$space_bands)
+  ylabs <- sprintf("%g-%g", c(0, utils::head(x$spcbands, -1L)), x$spcbands)
   op <- .bl_par(labels = ylabs)
   on.exit(graphics::par(op), add = TRUE)
   # room for the axis title outside the band labels
@@ -1447,7 +1447,7 @@ plot.rmbl_knox <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   lr[!is.finite(lr)] <- NA
   graphics::image(seq_len(kt), seq_len(ks), t(lr), col = cols, zlim = c(-lim, lim), axes = FALSE,
                   xlab = "Days apart", ylab = "", main = "", ...)
-  graphics::axis(1, at = seq_len(kt), labels = sprintf("%g-%g", c(0, utils::head(x$time_bands, -1L)), x$time_bands))
+  graphics::axis(1, at = seq_len(kt), labels = sprintf("%g-%g", c(0, utils::head(x$tmbands, -1L)), x$tmbands))
   graphics::axis(2, at = seq_len(ks), labels = ylabs)
   .bl_knox_ylab(ylabs)
   graphics::box()
@@ -1473,30 +1473,30 @@ plot.rmbl_knox <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #' change in the mix, reports the rate standardised to a common mix, tests
 #' the within-part change, and says whether the comparison is a reversal.
 #'
-#' @param numerator Cases disposed (or cleared), one per part and
+#' @param num Cases disposed (or cleared), one per part and
 #'   comparison.
-#' @param denominator Cases received (or reported), one per part and
+#' @param den Cases received (or reported), one per part and
 #'   comparison.
-#' @param group The part each row belongs to: offence group, court, case
+#' @param grp The part each row belongs to: offence group, court, case
 #'   type.
-#' @param compare The comparison each row belongs to: exactly two values,
+#' @param cmp The comparison each row belongs to: exactly two values,
 #'   such as two years or two jurisdictions.
-#' @param base Which value of \code{compare} is the baseline. Default: the
+#' @param base Which value of \code{cmp} is the baseline. Default: the
 #'   first in sorted order.
-#' @param conf_level Confidence level. Default 0.95.
+#' @param conflvl Confidence level. Default 0.95.
 #'
 #' @return A list of class \code{rmbl_clearance_decomposition}:
 #'   \describe{
 #'   \item{\code{groups}}{one row per part: the counts, rates and
 #'     denominator shares (\code{weight}) in both comparisons, the rate
-#'     ratio with its exact interval, and the part's \code{rate_effect} and
-#'     \code{mix_effect}.}
+#'     ratio with its exact interval, and the part's \code{rateeff} and
+#'     \code{mixeff}.}
 #'   \item{\code{overall}}{the aggregate rates, their \code{change}, its
-#'     \code{rate_effect} and \code{mix_effect} (which add to it exactly),
+#'     \code{rateeff} and \code{mixeff} (which add to it exactly),
 #'     the comparison rate standardised to the baseline mix
-#'     (\code{standardised_on_base}) and to the average mix
-#'     (\code{standardised_on_average}).}
-#'   \item{\code{rate_ratio}}{the crude rate ratio and the Mantel-Haenszel
+#'     (\code{staonbase}) and to the average mix
+#'     (\code{staonave}).}
+#'   \item{\code{rateratio}}{the crude rate ratio and the Mantel-Haenszel
 #'     rate ratio over the parts, each with its interval, and the p-value
 #'     for the stratified ratio.}
 #'   \item{\code{simpson}}{\code{"full"} when every part moved one way and
@@ -1554,69 +1554,70 @@ plot.rmbl_knox <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #'
 #' Demers, S. and Rossmo, D. K. (2015). Simpson's paradox in Canadian
 #' police clearance rates. \emph{Canadian Journal of Criminology and
-#' Criminal Justice}, 57(3), 424-434. \href{https://doi.org/10.3138/cjccj.2014-E29}{doi:10.3138/cjccj.2014-E29}
+#' Criminal Justice}, 57(3), 424-434.
+#' \href{https://doi.org/10.3138/cjccj.2014-E29}{doi:10.3138/cjccj.2014-E29}
 #'
-#' @seealso \code{\link{case_flow}} for the clearance rate over time.
+#' @seealso \code{\link{caseflow}} for the clearance rate over time.
 #' @examples
 #' g <- read.csv(system.file("extdata", "ocj_offence_groups.csv",
 #'                           package = "rmoriebricklayer"))
 #' g <- g[g$year %in% c(2014, 2022), ]
-#' cd <- clearance_decomposition(g$disposed, g$received, g$offence_group, g$year)
+#' cd <- clrdcmp(g$disposed, g$received, g$offence_group, g$year)
 #' cd
 #' plot(cd)
 #'
 #' # Simpson's paradox in four numbers: each part clears better in B, yet the
 #' # aggregate falls, because B's workload moved to the part that clears less
-#' toy <- clearance_decomposition(numerator = c(90, 20, 19, 60),
-#'                                denominator = c(100, 50, 20, 140),
-#'                                group = c("minor", "serious", "minor", "serious"),
-#'                                compare = c("A", "A", "B", "B"))
+#' toy <- clrdcmp(num = c(90, 20, 19, 60),
+#'                                den = c(100, 50, 20, 140),
+#'                                grp = c("minor", "serious", "minor", "serious"),
+#'                                cmp = c("A", "A", "B", "B"))
 #' toy
 #'
 #' # every part must appear in both comparisons
-#' try(clearance_decomposition(c(5, 6, 7), c(10, 10, 10), c("x", "y", "x"), c(1, 1, 2)))
+#' try(clrdcmp(c(5, 6, 7), c(10, 10, 10), c("x", "y", "x"), c(1, 1, 2)))
 #' @export
-clearance_decomposition <- function(numerator, denominator, group, compare, base = NULL, conf_level = 0.95) {
-  num <- .jx_counts(numerator, "numerator")
-  n <- length(num)
-  if (!n) stop("`numerator` is empty", call. = FALSE)
-  den <- .jx_counts(denominator, "denominator", n)
-  if (length(group) != n || length(compare) != n) {
-    stop("`numerator`, `denominator`, `group` and `compare` must have the same length", call. = FALSE)
+clrdcmp <- function(num, den, grp, cmp, base = NULL, conflvl = 0.95) {
+  .num <- .jx_counts(num, "num")
+  n <- length(.num)
+  if (!n) stop("`num` is empty", call. = FALSE)
+  .den <- .jx_counts(den, "den", n)
+  if (length(grp) != n || length(cmp) != n) {
+    stop("`num`, `den`, `grp` and `cmp` must have the same length", call. = FALSE)
   }
-  if (anyNA(group) || anyNA(compare)) stop("`group` and `compare` must not have missing values", call. = FALSE)
-  conf_level <- .rmbl_conf_level(conf_level)
-  levs <- sort(unique(compare))
+  if (anyNA(grp) || anyNA(cmp)) stop("`grp` and `cmp` must not have missing values", call. = FALSE)
+  conflvl <- .rmbl_conf_level(conflvl)
+  levs <- sort(unique(cmp))
   if (length(levs) != 2L) {
-    stop(sprintf("`compare` must have exactly two values (two periods or two jurisdictions), got %d", length(levs)),
+    stop(sprintf("`cmp` must have exactly two values (two periods or two jurisdictions), got %d", length(levs)),
          call. = FALSE)
   }
   if (!is.null(base)) {
     if (!is.atomic(base) || is.complex(base) || length(base) != 1L || is.na(base) ||
           !as.character(base) %in% as.character(levs)) {
-      stop("`base` must be one of the two values of `compare`", call. = FALSE)
+      stop("`base` must be one of the two values of `cmp`", call. = FALSE)
     }
     base <- levs[match(as.character(base), as.character(levs))]   # the level itself, in its own type
     levs <- c(base, setdiff(levs, base))
   }
-  key <- paste(group, compare, sep = "\r")
+  key <- paste(grp, cmp, sep = "\r")
   if (anyDuplicated(key)) {
     d <- which(duplicated(key))[1L]
-    stop(sprintf("part \"%s\" appears more than once in %s", group[d], format(compare[d])), call. = FALSE)
+    stop(sprintf("part \"%s\" appears more than once in %s", grp[d], format(cmp[d])), call. = FALSE)
   }
-  ga <- group[compare == levs[1L]]
-  gb <- group[compare == levs[2L]]
+  ga <- grp[cmp == levs[1L]]
+  gb <- grp[cmp == levs[2L]]
   miss <- c(setdiff(ga, gb), setdiff(gb, ga))
   if (length(miss)) {
     stop(sprintf("part \"%s\" is in only one comparison; a rate change needs it in both (merge or drop it first)",
                  miss[1L]), call. = FALSE)
   }
-  g <- sort(unique(group))
+  g <- sort(unique(grp))
   pick <- function(v, l) v[match(paste(g, l, sep = "\r"), key)]
-  na <- pick(num, levs[1L])
-  da <- pick(den, levs[1L])
-  nb <- pick(num, levs[2L])
-  db <- pick(den, levs[2L])
+  na <- pick(.num, levs[1L])
+  da <- pick(.den, levs[1L])
+  nb <- pick(.num, levs[2L])
+  db <- pick(.den, levs[2L])
   if (any(da == 0 | db == 0)) {
     stop(sprintf("part \"%s\" has a zero denominator, so it has no rate", g[da == 0 | db == 0][1L]), call. = FALSE)
   }
@@ -1630,24 +1631,24 @@ clearance_decomposition <- function(numerator, denominator, group, compare, base
   # clears below the average (uncentred, a growing part always looked like a gain)
   centre <- (sum(na) / sum(da) + sum(nb) / sum(db)) / 2
   mix_eff <- ((ra + rb) / 2 - centre) * (wb - wa)
-  ci <- .jx_ratio_ci(nb, na, conf_level)
-  groups <- data.frame(group = g, numerator_a = na, denominator_a = da, rate_a = ra, weight_a = wa,
-                       numerator_b = nb, denominator_b = db, rate_b = rb, weight_b = wb,
-                       rate_ratio = rb / ra, lower = ci$lower * da / db, upper = ci$upper * da / db,
-                       rate_effect = rate_eff, mix_effect = mix_eff, stringsAsFactors = FALSE)
+  ci <- .jx_ratio_ci(nb, na, conflvl)
+  groups <- data.frame(group = g, numa = na, dena = da, ratea = ra, weia = wa,
+                       numb = nb, denb = db, rateb = rb, weib = wb,
+                       rateratio = rb / ra, lower = ci$lower * da / db, upper = ci$upper * da / db,
+                       rateeff = rate_eff, mixeff = mix_eff, stringsAsFactors = FALSE)
   agg_a <- sum(na) / sum(da)
   agg_b <- sum(nb) / sum(db)
-  overall <- data.frame(rate_a = agg_a, rate_b = agg_b, change = agg_b - agg_a, rate_effect = sum(rate_eff),
-                        mix_effect = sum(mix_eff), standardised_on_base = sum(wa * rb),
-                        standardised_on_average = sum((wa + wb) / 2 * rb))
+  overall <- data.frame(ratea = agg_a, rateb = agg_b, change = agg_b - agg_a, rateeff = sum(rate_eff),
+                        mixeff = sum(mix_eff), staonbase = sum(wa * rb),
+                        staonave = sum((wa + wb) / 2 * rb))
   # Mantel-Haenszel rate ratio for person-time data, Greenland-Robins variance of its log
   tt <- da + db
   sa <- sum(nb * da / tt)
   sb <- sum(na * db / tt)
-  z <- stats::qnorm(1 - (1 - conf_level) / 2)
+  z <- stats::qnorm(1 - (1 - conflvl) / 2)
   mh <- sa / sb
   v <- sum((na + nb) * da * db / tt^2) / (sa * sb)
-  cci <- .jx_ratio_ci(sum(nb), sum(na), conf_level)
+  cci <- .jx_ratio_ci(sum(nb), sum(na), conflvl)
   rr <- data.frame(estimate = c("crude", "mantel_haenszel"),
                    ratio = c(agg_b / agg_a, mh),
                    lower = c(cci$lower * sum(da) / sum(db), mh * exp(-z * sqrt(v))),
@@ -1657,10 +1658,10 @@ clearance_decomposition <- function(numerator, denominator, group, compare, base
   down <- sum(rb < ra)
   ch <- overall$change
   type <- if (ch != 0 && ((up == length(g) && ch < 0) || (down == length(g) && ch > 0))) "full" else
-    if (ch != 0 && overall$rate_effect != 0 && sign(ch) != sign(overall$rate_effect)) "mix" else "none"
-  structure(list(groups = groups, overall = overall, rate_ratio = rr,
+    if (ch != 0 && overall$rateeff != 0 && sign(ch) != sign(overall$rateeff)) "mix" else "none"
+  structure(list(groups = groups, overall = overall, rateratio = rr,
                  simpson = list(type = type, up = up, down = down, parts = length(g)),
-                 compare = levs, conf_level = conf_level),
+                 compare = levs, conflvl = conflvl),
             class = "rmbl_clearance_decomposition")
 }
 
@@ -1674,20 +1675,20 @@ print.rmbl_clearance_decomposition <- function(x, ...) {
     full = sprintf("Simpson's paradox: every part moved the other way to the aggregate (%d of %d)",
                    if (o$change < 0) s$up else s$down, s$parts),
     mix = sprintf("Simpson's paradox through the mix: the aggregate %s, but at a fixed mix it %s",
-                  if (o$change < 0) "fell" else "rose", if (o$rate_effect < 0) "fell" else "rose"),
+                  if (o$change < 0) "fell" else "rose", if (o$rateeff < 0) "fell" else "rose"),
     none = "No reversal: the aggregate moved the way the mix-standardised rate did")
   notes <- c(sprintf("%s: %.4f   %s: %.4f   change %+.4f = rate effect %+.4f + mix effect %+.4f",
-                     a, o$rate_a, b, o$rate_b, o$change, o$rate_effect, o$mix_effect),
+                     a, o$ratea, b, o$rateb, o$change, o$rateeff, o$mixeff),
              sprintf("%s standardised to the %s mix: %.4f; to the average mix: %.4f",
-                     b, a, o$standardised_on_base, o$standardised_on_average),
+                     b, a, o$staonbase, o$staonave),
              sprintf("%d of %d parts rose, %d fell. %s", s$up, s$parts, s$down, verdict))
   g <- x$groups
-  show <- data.frame(part = g$group, rate_a = round(g$rate_a, 4), rate_b = round(g$rate_b, 4),
-                     weight_a = round(g$weight_a, 4), weight_b = round(g$weight_b, 4),
-                     ratio = round(g$rate_ratio, 4), lower = round(g$lower, 4), upper = round(g$upper, 4),
-                     rate_effect = signif(g$rate_effect, 3), mix_effect = signif(g$mix_effect, 3))
+  show <- data.frame(part = g$group, ratea = round(g$ratea, 4), rateb = round(g$rateb, 4),
+                     weia = round(g$weia, 4), weib = round(g$weib, 4),
+                     ratio = round(g$rateratio, 4), lower = round(g$lower, 4), upper = round(g$upper, 4),
+                     rateeff = signif(g$rateeff, 3), mixeff = signif(g$mixeff, 3))
   names(show)[2:5] <- c(paste("rate", a), paste("rate", b), paste("share", a), paste("share", b))
-  rr <- x$rate_ratio
+  rr <- x$rateratio
   footer <- sprintf(paste("Rate ratio %s/%s: crude %.4f (%.4f to %.4f);",
                           "within parts (Mantel-Haenszel) %.4f (%.4f to %.4f), p %s"),
                     b, a, rr$ratio[1L], rr$lower[1L], rr$upper[1L], rr$ratio[2L], rr$lower[2L], rr$upper[2L],
@@ -1698,25 +1699,25 @@ print.rmbl_clearance_decomposition <- function(x, ...) {
 }
 
 #' @rdname plot-methods
-#' @param max_parts For \code{rmbl_clearance_decomposition}, the most parts drawn: past
+#' @param maxparts For \code{rmbl_clearance_decomposition}, the most parts drawn: past
 #'   it,
 #'   the parts that moved the aggregate most, and the rest summed into one row.
 #' @usage \method{plot}{rmbl_clearance_decomposition}(x, ..., what = NULL,
-#'   max_parts = 20L, main = NULL, col = NULL, palette = NULL)
+#'   maxparts = 20L, main = NULL, col = NULL, palette = NULL)
 #' @export
-plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, max_parts = 20L, main = NULL, col = NULL,
+plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, maxparts = 20L, main = NULL, col = NULL,
                                               palette = NULL) {
   .rmbl_plot_check(x, "rmbl_clearance_decomposition")
   cols <- .bl_cols(2, col, palette)
-  max_parts <- .rmbl_num(max_parts, "max_parts", integer = TRUE)
-  if (length(max_parts) != 1L || is.na(max_parts) || max_parts < 2L) {
-    stop("`max_parts` must be a whole number of at least 2", call. = FALSE)
+  maxparts <- .rmbl_num(maxparts, "maxparts", integer = TRUE)
+  if (length(maxparts) != 1L || is.na(maxparts) || maxparts < 2L) {
+    stop("`maxparts` must be a whole number of at least 2", call. = FALSE)
   }
   # no more rows than the device has room for (about 0.12 inch each): a 3-inch device shows the
   # parts that moved the aggregate most, the rest summed, instead of 20 rows on top of each other
   din <- tryCatch(graphics::par("din"), error = function(e) c(7, 7))
-  max_parts <- max(2L, min(max_parts, as.integer(floor((din[2L] - 2) / 0.12))))
-  v <- .jx_cd_view(x, max_parts)
+  maxparts <- max(2L, min(maxparts, as.integer(floor((din[2L] - 2) / 0.12))))
+  v <- .jx_cd_view(x, maxparts)
   x$groups <- v$groups
   x$other <- v$other
   # the paradox needs two pictures side by side: the parts' rates (most went one way) and where
@@ -1730,7 +1731,7 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, max_parts = 2
   }
   what <- .rmbl_arg(what, c("rates", "mix", "effects"), several = TRUE)
   o <- x$overall
-  line <- sprintf("Change %+.4f = rates %+.4f + mix %+.4f", o$change, o$rate_effect, o$mix_effect)
+  line <- sprintf("Change %+.4f = rates %+.4f + mix %+.4f", o$change, o$rateeff, o$mixeff)
   op0 <- graphics::par(no.readonly = TRUE)
   on.exit(graphics::par(op0), add = TRUE)
   draw <- list(rates = .jx_cd_rates, mix = .jx_cd_mix, effects = .jx_cd_effects)
@@ -1754,27 +1755,27 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, max_parts = 2
 }
 
 # The parts as drawn: ordered by their average rate (lowest at the bottom), so the colours of
-# the mix panel separate; past `max_parts`, the parts that moved the aggregate most, and the rest
+# the mix panel separate; past `maxparts`, the parts that moved the aggregate most, and the rest
 # summed into one row (its rate from the summed counts, not an average of rates).
 .jx_cd_view <- function(x, max_parts) {
   g <- x$groups
   other <- 0L
   if (nrow(g) > max_parts) {
-    keep <- order(-(abs(g$rate_effect) + abs(g$mix_effect)))[seq_len(max_parts - 1L)]
+    keep <- order(-(abs(g$rateeff) + abs(g$mixeff)))[seq_len(max_parts - 1L)]
     rest <- g[-keep, , drop = FALSE]
     agg <- g[keep[1L], , drop = FALSE]
     agg$group <- sprintf("Other parts (%d)", nrow(rest))
-    for (v in c("numerator_a", "denominator_a", "numerator_b", "denominator_b", "weight_a", "weight_b",
-                "rate_effect", "mix_effect")) agg[[v]] <- sum(rest[[v]])
-    agg$rate_a <- agg$numerator_a / agg$denominator_a
-    agg$rate_b <- agg$numerator_b / agg$denominator_b
-    agg$rate_ratio <- agg$rate_b / agg$rate_a
+    for (v in c("numa", "dena", "numb", "denb", "weia", "weib",
+                "rateeff", "mixeff")) agg[[v]] <- sum(rest[[v]])
+    agg$ratea <- agg$numa / agg$dena
+    agg$rateb <- agg$numb / agg$denb
+    agg$rateratio <- agg$rateb / agg$ratea
     agg$lower <- NA_real_
     agg$upper <- NA_real_
     g <- rbind(g[keep, , drop = FALSE], agg)
     other <- nrow(rest)
   }
-  g <- g[order((g$rate_a + g$rate_b) / 2), , drop = FALSE]
+  g <- g[order((g$ratea + g$rateb) / 2), , drop = FALSE]
   rownames(g) <- NULL
   list(groups = g, other = other)
 }
@@ -1828,8 +1829,8 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, max_parts = 2
   labs <- c(as.character(g$group), "All parts")
   k <- nrow(g)
   y <- c(seq_len(k), k + 1.6)
-  ra <- c(g$rate_a, o$rate_a)
-  rb <- c(g$rate_b, o$rate_b)
+  ra <- c(g$ratea, o$ratea)
+  rb <- c(g$rateb, o$rateb)
   # the panel's text size first: a panel grid lowers par("cex"), and labels measured at the
   # lowered size and drawn at this one ran off the device
   o0 <- .bl_plot_opts()
@@ -1867,10 +1868,10 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, max_parts = 2
   b <- format(x$compare[2L])
   k <- nrow(g)
   y <- seq_len(k)
-  wa <- g$weight_a
-  wb <- g$weight_b
-  centre <- (o$rate_a + o$rate_b) / 2
-  colr <- ifelse((g$rate_a + g$rate_b) / 2 >= centre, cols[1L], cols[2L])
+  wa <- g$weia
+  wb <- g$weib
+  centre <- (o$ratea + o$rateb) / 2
+  colr <- ifelse((g$ratea + g$rateb) / 2 >= centre, cols[1L], cols[2L])
   o0 <- .bl_plot_opts()
   op <- graphics::par(las = o0$las, cex = o0$cex, bg = o0$bg, bty = "n", tcl = -0.2, mgp = c(3, 0.55, 0),
                       col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430")
@@ -1898,7 +1899,7 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, max_parts = 2
 # the change in the aggregate as a waterfall: rate effect, then mix effect, then the total
 .jx_cd_effects <- function(x, cols, main, ...) {
   o <- x$overall
-  vals <- c(o$rate_effect, o$mix_effect)
+  vals <- c(o$rateeff, o$mixeff)
   ends <- cumsum(c(0, vals))
   op <- .bl_par(c(ends, o$change))
   graphics::plot(c(0.4, 3.6), range(c(0, ends, o$change)) + c(-1, 1) * 0.05 * max(abs(c(ends, o$change)), 1e-12),

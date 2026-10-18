@@ -16,8 +16,8 @@ msg <- function(expr) {
 
 test_that("the CRL and OCSP URLs come out of the extensions, http only", {
   f <- x509_fx()
-  leaf <- cert_parse(f$ocsp_good)
-  ca <- cert_parse(f$ocsp_ca)
+  leaf <- certprs(f$ocsp_good)
+  ca <- certprs(f$ocsp_ca)
   # the ldap distribution point is dropped: a verifier that followed it
   # would be following instructions from the thing it is checking
   expect_identical(.rmbl_crl_urls(leaf), "http://crl.example.org/ca.crl")
@@ -56,19 +56,19 @@ test_that("the fetcher takes DER, unwraps PEM, and returns NULL for anything els
 
 test_that("OCSP answers parse, verify under the path, and every refusal is named", {
   f <- x509_fx()
-  leaf <- cert_parse(f$ocsp_good)
-  ca <- cert_parse(f$ocsp_ca)
+  leaf <- certprs(f$ocsp_good)
+  ca <- certprs(f$ocsp_ca)
   path <- list(leaf, ca)
 
   good <- .rmbl_ocsp_parse(f$ocsp_resp_good, leaf, path)
   expect_true(good$ok)
   expect_identical(good$detail, "the responder says good, signed")
 
-  rv <- .rmbl_ocsp_parse(f$ocsp_resp_revoked, cert_parse(f$ocsp_revoked), path)
+  rv <- .rmbl_ocsp_parse(f$ocsp_resp_revoked, certprs(f$ocsp_revoked), path)
   expect_false(rv$ok)
   expect_identical(rv$detail, "the responder says revoked, signed")
 
-  un <- .rmbl_ocsp_parse(f$ocsp_resp_unknown, cert_parse(f$ocsp_unknown), path)
+  un <- .rmbl_ocsp_parse(f$ocsp_resp_unknown, certprs(f$ocsp_unknown), path)
   expect_false(un$ok)
   expect_identical(un$detail, "the responder says unknown, signed")
 
@@ -85,8 +85,8 @@ test_that("OCSP answers parse, verify under the path, and every refusal is named
   dl <- .rmbl_ocsp_parse(f$ocsp_resp_good_delegated, leaf, path)
   expect_true(dl$ok)
   # ECDSA P-256 responder
-  ec <- .rmbl_ocsp_parse(f$ocsp_resp_ec_good, cert_parse(f$ocsp_ecleaf),
-                         list(cert_parse(f$ocsp_ecleaf), cert_parse(f$ocsp_ecca)))
+  ec <- .rmbl_ocsp_parse(f$ocsp_resp_ec_good, certprs(f$ocsp_ecleaf),
+                         list(certprs(f$ocsp_ecleaf), certprs(f$ocsp_ecca)))
   expect_true(ec$ok)
 
   # the status word alone decides whether there is an answer
@@ -116,8 +116,8 @@ test_that("OCSP answers parse, verify under the path, and every refusal is named
 
 test_that("the query POSTs, falls back to GET with the request in the URL, and reports silence", {
   f <- x509_fx()
-  leaf <- cert_parse(f$ocsp_good)
-  ca <- cert_parse(f$ocsp_ca)
+  leaf <- certprs(f$ocsp_good)
+  ca <- certprs(f$ocsp_ca)
   path <- list(leaf, ca)
   url <- "http://ocsp.example.org/"
   posted <- NULL
@@ -140,7 +140,7 @@ test_that("the query POSTs, falls back to GET with the request in the URL, and r
     })
   q <- .rmbl_ocsp_query(leaf, ca, url, path)
   expect_true(q$ok)
-  expect_identical(seen, paste0(url, .rmbl_url_encode(bricklayer_json_base64_enc(f$ocsp_req_good))))
+  expect_identical(seen, paste0(url, .rmbl_url_encode(jsb64enc(f$ocsp_req_good))))
   # nobody answers either way
   testthat::local_mocked_bindings(
     .rmbl_net_post = function(url, body, content_type, timeout) NULL,
@@ -153,10 +153,10 @@ test_that("the query POSTs, falls back to GET with the request in the URL, and r
   expect_identical(q$detail, "could not build an OCSP request")
 })
 
-test_that("revocation_fetch walks the path with one note per URL", {
+test_that("rvkfetch walks the path with one note per URL", {
   f <- x509_fx()
-  leaf <- cert_parse(f$ocsp_good)
-  ca <- cert_parse(f$ocsp_ca)
+  leaf <- certprs(f$ocsp_good)
+  ca <- certprs(f$ocsp_ca)
   testthat::local_mocked_bindings(
     .rmbl_net_post = function(url, body, content_type, timeout) {
       list(status = 200L, body = f$ocsp_resp_good, error = "")
@@ -165,7 +165,7 @@ test_that("revocation_fetch walks the path with one note per URL", {
       writeBin(f$ocsp_crl_der, tmp)
       200L
     })
-  r <- revocation_fetch(list(leaf, ca))
+  r <- rvkfetch(list(leaf, ca))
   expect_identical(names(r$notes), c("crl fetch [1]", "ocsp [1]"))
   expect_identical(r$ok, c(TRUE, TRUE))
   expect_length(r$crls, 1L)
@@ -179,14 +179,14 @@ test_that("revocation_fetch walks the path with one note per URL", {
   expect_false(r2$ok[[1]])
   expect_identical(r2$notes[["crl fetch [1]"]], "could not retrieve http://crl.example.org/ca.crl")
   # the entry point takes a parsed path, nothing else
-  expect_error(revocation_fetch("leaf.crt"), "non-empty list of parsed certificates")
-  expect_error(revocation_fetch(list()), "non-empty list of parsed certificates")
-  expect_error(revocation_fetch(list(leaf), timeout = 0), "`timeout` must be positive")
+  expect_error(rvkfetch("leaf.crt"), "non-empty list of parsed certificates")
+  expect_error(rvkfetch(list()), "non-empty list of parsed certificates")
+  expect_error(rvkfetch(list(leaf), tmout = 0), "`tmout` must be positive")
 })
 
 test_that("ECDSA on P-256 with a digest longer than the order shifts the excess bits off", {
   f <- x509_fx()
-  k <- cert_parse(f$ocsp_ecleaf)$key
+  k <- certprs(f$ocsp_ecleaf)$key
   expect_identical(k$type, "EC")
   m <- charToRaw("ocsp fixture message")
   rs <- .rmbl_ecdsa_rs(f$ocsp_ec_sig512)
@@ -206,9 +206,9 @@ test_that("ECDSA on P-256 with a digest longer than the order shifts the excess 
 
 test_that("series and stats kernels: Bernoulli values, degenerate inputs, argument types", {
   # zeta(-n, 1) = -B_{n+1} / (n + 1): B_4 = -1/30, B_5 = 0, B_6 = 1/42
-  expect_equal(hurwitz_zeta(-3, 1), 1 / 120)
-  expect_equal(hurwitz_zeta(-4, 1), 0)
-  expect_equal(hurwitz_zeta(-5, 1), -1 / 252)
+  expect_equal(hurwzeta(-3, 1), 1 / 120)
+  expect_equal(hurwzeta(-4, 1), 0)
+  expect_equal(hurwzeta(-5, 1), -1 / 252)
   neg <- "concentration measures need non-negative values"
   expect_identical(msg(.Call(C("C_rmbl_gini"), c(1, -1))), neg)
   expect_identical(msg(.Call(C("C_rmbl_lorenz"), c(1, -1))), neg)
@@ -223,7 +223,7 @@ test_that("series and stats kernels: Bernoulli values, degenerate inputs, argume
   mi <- .Call(C("C_rmbl_morans_i"), c(1, 1, 1), c(1L, 0L, 2L, 1L), c(0L, 1L, 3L),
               c(1L, 2L, 1L), rep(1, 4), 0L, NULL)
   expect_identical(mi, list(I = NA_real_, cross = NA_real_, W = 4, null = numeric(0)))
-  # top_share over a long vector of fractions is one pass, not n * m
+  # topshr over a long vector of fractions is one pass, not n * m
   x <- as.numeric(1:1e5)
   t0 <- proc.time()[["elapsed"]]
   ts2 <- .Call(C("C_rmbl_top_share"), x, rep(0.5, 1e5))
@@ -295,9 +295,9 @@ test_that("post-quantum entry points name the argument they refuse", {
   expect_identical(msg(.Call(C("C_rmbl_mldsa_mu"), 44L, kp[[1]], as.raw(1), raw(300), NULL)),
                    "`ctx` must be a raw vector of at most 255 bytes")
   expect_identical(msg(.Call(C("C_rmbl_mldsa_sizes"), 99L)), "`mode` must be 44, 65 or 87")
-  expect_identical(msg(.Call(C("C_rmbl_mlkem_sizes"), 1L)), "`level` must be 512, 768 or 1024")
+  expect_identical(msg(.Call(C("C_rmbl_mlkem_sizes"), 1L)), "`lvl` must be 512, 768 or 1024")
   expect_identical(msg(.Call(C("C_rmbl_mlkem_sizes"), "a")),
-                   "`level` must be a single integer: 512, 768 or 1024")
+                   "`lvl` must be a single integer: 512, 768 or 1024")
   expect_identical(msg(.Call(C("C_rmbl_mlkem_keygen"), 512L, raw(3))),
                    "`seed` must be a raw vector of 64 bytes (d || z)")
   expect_identical(msg(.Call(C("C_rmbl_mlkem_encaps"), 512L, raw(800), raw(3))),
@@ -321,7 +321,7 @@ test_that("post-quantum entry points name the argument they refuse", {
 # ---------------------------------------------------------------- #
 
 test_that("writer: scalars with extra classes, AsIs, class fall-through, force, 1-d arrays", {
-  tj <- function(...) as.character(bricklayer_json_to_json(...))
+  tj <- function(...) as.character(tojs(...))
   expect_identical(tj(structure(1, class = c("scalar", "numeric"))), "1")
   expect_identical(tj(I(5), auto_unbox = TRUE), "[5]")
   expect_identical(tj(structure(list(a = 1), class = c("foo", "list"))), "{\"a\":[1]}")
@@ -383,14 +383,14 @@ test_that("the reformatter names every malformation and decodes surrogate pairs"
 # ---------------------------------------------------------------- #
 
 test_that("drift: empty samples, zero expectations, one category, date detection", {
-  expect_error(drift_ks(c(NA, NA), 1), "non-missing")
-  expect_error(drift_psi(c(NA, NA), 1), "non-missing")
-  expect_error(drift_chisq(c(a = 1, b = 2), c(a = 0, b = 0)), "`expected` has no counts")
-  h <- drift_homogeneity(c("a", "a"), "a")
+  expect_error(drftks(c(NA, NA), 1), "non-missing")
+  expect_error(drftpsi(c(NA, NA), 1), "non-missing")
+  expect_error(drftchisq(c(a = 1, b = 2), c(a = 0, b = 0)), "`expd` has no counts")
+  h <- drfthomog(c("a", "a"), "a")
   expect_identical(attr(h, "method"), "inapplicable: one category")
   expect_true(is.na(h[["p_value"]]))
-  expect_error(capsule_drift(data.frame(a = 1:5), data.frame(a = 1:5), identifier_levels = 1),
-               "`identifier_levels` must be a single integer of at least 2")
+  expect_error(cpsdrft(data.frame(a = 1:5), data.frame(a = 1:5), idelvls = 1),
+               "`idelvls` must be a single integer of at least 2")
   expect_identical(.rmbl_as_dates(as.Date("2020-01-01")), as.Date("2020-01-01"))
   expect_null(.rmbl_as_dates(1))
   dt <- .rmbl_as_dates(c("2020-01-01 10:00", NA))
@@ -400,9 +400,9 @@ test_that("drift: empty samples, zero expectations, one category, date detection
 })
 
 test_that("concentration and contingency guards", {
-  expect_error(gini(c(1, -1)), "`x` must be non-negative")
-  expect_identical(cramers_v(matrix(0, 2, 2))$method, "table too small after dropping empty rows/columns")
-  expect_error(cramers_v(matrix(c(-1, 2, 3, 4), 2)), "finite non-negative counts")
+  expect_error(ginicoef(c(1, -1)), "`x` must be non-negative")
+  expect_identical(cramerv(matrix(0, 2, 2))$method, "table too small after dropping empty rows/columns")
+  expect_error(cramerv(matrix(c(-1, 2, 3, 4), 2)), "finite non-negative counts")
 })
 
 test_that("name constraints: every GeneralName tag, empty inputs, the formatter", {
@@ -442,60 +442,60 @@ test_that("mcar: degenerate inputs and a rejected test", {
   expect_identical(.rmbl_make_pd(matrix(NaN, 2, 2)), matrix(NaN, 2, 2))
   expect_null(.rmbl_em_mvn(matrix(NA_real_, 3, 2)))
   # too few complete rows for a covariance: pairwise moments start the EM
-  r <- mcar_test(data.frame(a = c(NA, NA, 1, 2), b = c(1, 2, NA, NA)))
+  r <- mcartst(data.frame(a = c(NA, NA, 1, 2), b = c(1, 2, NA, NA)))
   expect_identical(r$df, 0)
   set.seed(2)
   d <- data.frame(a = rnorm(40), b = rnorm(40))
   d$b[d$a > 0.3] <- NA
-  m <- mcar_test(d)
+  m <- mcartst(d)
   expect_lt(m$p_value, 0.05)
   expect_true(any(grepl("MCAR rejected", format(m), fixed = TRUE)))
-  expect_error(mahalanobis_outliers(data.frame(a = letters[1:5])), "no numeric columns")
+  expect_error(mahaoutl(data.frame(a = letters[1:5])), "no numeric columns")
 })
 
-test_that("analyse_table and its report: bad inputs, drift against a prior, missing values", {
+test_that("anltab and its report: bad inputs, drift against a prior, missing values", {
   otis <- read.csv(system.file("extdata", "otis_a01_individuals.csv", package = "rmoriebricklayer"))
-  expect_error(analyse_table(1), "`data` must be a data frame")
-  expect_error(analyse_table(otis, value = "individuals", period = "year", prior = 1),
+  expect_error(anltab(1), "`data` must be a data frame")
+  expect_error(anltab(otis, value = "individuals", prd = "year", prior = 1),
                "`prior` must be a data frame")
   prior <- otis
   prior$individuals <- round(prior$individuals * 0.9)
   prior$extra <- 1
   cur <- otis
   cur$individuals[1] <- NA
-  a <- analyse_table(cur, value = "individuals", period = "year", prior = prior)
-  md <- report_analysis(a, format = "markdown")
+  a <- anltab(cur, value = "individuals", prd = "year", prior = prior)
+  md <- rptanl(a, format = "markdown")
   expect_true(grepl("## Drift against the prior capsule", md, fixed = TRUE))
   expect_true(grepl("Columns removed: extra.", md, fixed = TRUE))
   expect_true(grepl("### Missing values", md, fixed = TRUE))
   expect_identical(.md_table(data.frame()), "(no rows)")
   # fewer than three periods: the trend is not tested, and the print says so
   short <- otis[otis$year %in% head(sort(unique(otis$year)), 2), ]
-  out <- capture.output(print(analyse_table(short, value = "individuals", period = "year")))
+  out <- capture.output(print(anltab(short, value = "individuals", prd = "year")))
   expect_true(any(grepl("fewer than three periods", out, fixed = TRUE)))
 })
 
 test_that("rates and shares refuse non-numeric columns, missing groups and impossible totals", {
   d <- data.frame(n = c("1", "2"), pop = c(10, 20), g = c("a", "b"), year = c(2000, 2001))
-  expect_error(rate(d, count = "n", population = "pop"), "`n` must be numeric, not character")
+  expect_error(rtcalc(d, count = "n", pop = "pop"), "`n` must be numeric, not character")
   d$n <- c(1, 2)
   d$pop <- c("10", "20")
-  expect_error(rate(d, count = "n", population = "pop"), "`pop` must be numeric, not character")
+  expect_error(rtcalc(d, count = "n", pop = "pop"), "`pop` must be numeric, not character")
   d$pop <- c(10, 20)
-  expect_error(share(d, count = "n", by = "zz"), "`by` column not found: zz")
+  expect_error(shrs(d, count = "n", by = "zz"), "`by` column not found: zz")
   d2 <- d
   d2$n <- c("1", "2")
-  expect_error(share(d2, count = "n"), "`n` must be numeric, not character")
+  expect_error(shrs(d2, count = "n"), "`n` must be numeric, not character")
   d3 <- d
   d3$n <- c(-1, 2)
-  expect_error(share(d3, count = "n", by = "g"), "`count` must be non-negative")
-  expect_error(share(d, count = "n", total = 0), "the total must be positive")
-  expect_error(rate_change(d, count = "n", population = "pop", period = "year", by = "zz"),
+  expect_error(shrs(d3, count = "n", by = "g"), "`count` must be non-negative")
+  expect_error(shrs(d, count = "n", total = 0), "the total must be positive")
+  expect_error(ratechg(d, count = "n", pop = "pop", prd = "year", by = "zz"),
                "`by` column not found: zz")
   d4 <- d
   d4$pop <- c(0, 20)
-  expect_error(rate_change(d4, count = "n", population = "pop", period = "year"),
-               "`population` must be positive")
+  expect_error(ratechg(d4, count = "n", pop = "pop", prd = "year"),
+               "`pop` must be positive")
   # a pair with no events on either side has no ratio
   ci <- .rate_ratio_ci(c(0, 1), c(0, 1), c(1, 1), c(1, 1), 0.95)
   expect_identical(is.na(ci$lower), c(TRUE, FALSE))
@@ -504,14 +504,14 @@ test_that("rates and shares refuse non-numeric columns, missing groups and impos
 
 test_that("recompute compares labels by identity; seeds are recorded and restored", {
   m <- list(results = list(label = list(observed = "A"), other = list(observed = "B")))
-  r <- manifest_recompute(m, data.frame(x = 1), list(label = function(d) "A", other = function(d) "C"))
+  r <- mnfrcmp(m, data.frame(x = 1), list(label = function(d) "A", other = function(d) "C"))
   expect_identical(r$results$status, c("MATCH", "DIFFER"))
   expect_identical(r$results$detail[2], "recorded 'B', recomputed 'C'")
   # no generator state yet: one draw creates it so the record is real
   if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
     rm(".Random.seed", envir = globalenv())
   }
-  rec <- manifest_record_seed(list())
+  rec <- mnfrecseed(list())
   expect_true(is.list(rec$rng))
   expect_true(exists(".Random.seed", envir = globalenv(), inherits = FALSE))
   # a record that names only the main generator kind restores it
@@ -521,7 +521,7 @@ test_that("recompute compares labels by identity; seeds are recorded and restore
   state <- get(".Random.seed", envir = globalenv())
   short <- list(rng = list(kind = "Mersenne-Twister", state = state))
   runif(5)
-  manifest_restore_seed(short)
+  mnfrstseed(short)
   expect_identical(runif(3), u1)
 })
 
@@ -549,72 +549,72 @@ test_that("power, bounds, scan adjustment and falsification guards", {
     d$y <- d$y + sz * d$t
     d
   }
-  expect_error(capsule_power(d[1:3, ], stat, inj, treatment = "t"), "at least 4 rows")
-  expect_error(capsule_power(d, stat, inj, treatment = "zz"), "`treatment` is not a column")
-  expect_error(capsule_power(d, stat, inj, treatment = "t", n = 5L), "`n` must be at least 9")
-  expect_error(capsule_power(d, stat, inj, treatment = "t", reps = 0L), "`reps` must be at least 1")
+  expect_error(cpspwr(d[1:3, ], stat, inj, trt = "t"), "at least 4 rows")
+  expect_error(cpspwr(d, stat, inj, trt = "zz"), "`trt` is not a column")
+  expect_error(cpspwr(d, stat, inj, trt = "t", n = 5L), "`n` must be at least 9")
+  expect_error(cpspwr(d, stat, inj, trt = "t", reps = 0L), "`reps` must be at least 1")
   # an injector that returns nothing, a statistic that cannot be computed
   # on the data, and one that only answers on the unpermuted data: each
   # replicate is skipped rather than counted
-  p1 <- capsule_power(d, stat, function(d, sz) NULL, treatment = "t", n = 19L, reps = 2L)
-  p2 <- capsule_power(d, function(d) NA_real_, inj, treatment = "t", n = 19L, reps = 2L)
-  p3 <- capsule_power(d, function(x) if (identical(x$t, d$t)) 1 else NA_real_, inj,
-                      treatment = "t", n = 19L, reps = 2L)
+  p1 <- cpspwr(d, stat, function(d, sz) NULL, trt = "t", n = 19L, reps = 2L)
+  p2 <- cpspwr(d, function(d) NA_real_, inj, trt = "t", n = 19L, reps = 2L)
+  p3 <- cpspwr(d, function(x) if (identical(x$t, d$t)) 1 else NA_real_, inj,
+                      trt = "t", n = 19L, reps = 2L)
   for (p in list(p1, p2, p3)) {
     expect_s3_class(p, "bricklayer_power")
     expect_true(all(p$curve$usable == 0L))
     expect_true(all(is.na(p$curve$power)))
   }
-  expect_error(published_bounds(5, rounding = 0), "`rounding` must be a positive number")
-  now <- published_bounds(c(45, 120), rounding = 5)
-  prev <- published_bounds(c(40, 100, 7), rounding = 5)
-  expect_error(change_envelope(now, prev), "same number of rows")
-  e <- change_envelope(now, prev[1:2, ], population = c(1000, 2000), previous_population = c(900, 1900))
-  expect_equal(e$rate_lower, 1000 * now$lower / c(1000, 2000))
-  expect_equal(e$previous_rate_upper, 1000 * prev$upper[1:2] / c(900, 1900))
-  expect_error(yoy_pvalues(1), "`y` must come from yoy()")
-  expect_error(scan_adjust(1), "`x` must be a data frame")
+  expect_error(pubbnd(5, rnd = 0), "`rnd` must be a positive number")
+  now <- pubbnd(c(45, 120), rnd = 5)
+  prev <- pubbnd(c(40, 100, 7), rnd = 5)
+  expect_error(chgenv(now, prev), "same number of rows")
+  e <- chgenv(now, prev[1:2, ], pop = c(1000, 2000), prepop = c(900, 1900))
+  expect_equal(e$ratelo, 1000 * now$lower / c(1000, 2000))
+  expect_equal(e$prerateup, 1000 * prev$upper[1:2] / c(900, 1900))
+  expect_error(yoypv(1), "`y` must come from yoy()")
+  expect_error(scanadj(1), "`x` must be a data frame")
   expect_identical(.exact_ratio_p(c(0, 3), c(0, 3)), c(NA, 1))
-  cal <- structure(list(columns = data.frame(column = c("a", "b"), false_alarm_rate = c(0.5, 0)),
-                        any_flag = 0.5, alpha = 0.01, n = 10L, alpha_familywise = 0.005),
+  cal <- structure(list(columns = data.frame(column = c("a", "b"), falsealarmrate = c(0.5, 0)),
+                        anyflag = 0.5, alpha = 0.01, n = 10L, alphafam = 0.005),
                    class = "rmbl_drift_calibration")
   out <- capture.output(print(cal))
   expect_true(any(grepl("columns that fire on identical data", out, fixed = TRUE)))
   expect_true(any(grepl("a                             50.0%", out, fixed = TRUE)))
   # a statistic that only works on the full table leaves every subset NA
   full <- data.frame(y = rnorm(20))
-  fz <- capsule_falsify(full, function(x) if (nrow(x) < 20L) stop("too small") else mean(x$y), n = 9L)
+  fz <- cpsfals(full, function(x) if (nrow(x) < 20L) stop("too small") else mean(x$y), n = 9L)
   row <- fz$controls[fz$controls$control == "subset_stability", ]
   expect_false(row$passed)
   expect_identical(row$detail, "the statistic could not be computed on any subset")
-  expect_error(falsify_family(list(a = fz, fz)), "NAMED list")
-  fam <- falsify_family(c(0.1, 0.2))
+  expect_error(falsfam(list(a = fz, fz)), "NAMED list")
+  fam <- falsfam(c(0.1, 0.2))
   expect_identical(fam$results$name, c("p1", "p2"))
   expect_identical(fam$results$adjusted, c(0.2, 0.2))
 })
 
 test_that("signing helpers: keys without halves, contexts, pre-hash names", {
-  mk <- fips_keygen("ML-DSA-44")
+  mk <- fipskg("ML-DSA-44")
   nopub <- mk
   nopub$public <- NULL
-  expect_error(fips_mu(nopub, "m"), "`key` has no usable public key")
-  sg <- fips_sign_mu(mk, fips_mu(mk, "m"))
+  expect_error(fipsmu(nopub, "m"), "`key` has no usable public key")
+  sg <- fipssignmu(mk, fipsmu(mk, "m"))
   sg2 <- sg
   sg2$signature <- NULL
-  expect_false(fips_verify_mu(mk, fips_mu(mk, "m"), sg2))
-  slh <- fips_keygen("SLH-DSA-SHAKE-128f")
-  expect_false(fips_verify_mu(slh, raw(64), sg))   # not an ML-DSA key: not verified (review of 52a8883)
+  expect_false(fipsvrfmu(mk, fipsmu(mk, "m"), sg2))
+  slh <- fipskg("SLH-DSA-SHAKE-128f")
+  expect_false(fipsvrfmu(slh, raw(64), sg))   # not an ML-DSA key: not verified (review of 52a8883)
   expect_identical(.rmbl_fips_prehash(NULL), "none")
   expect_identical(.rmbl_fips_context(as.raw(1:3)), as.raw(1:3))
-  kk <- kem_keygen(512L)
+  kk <- kemkg(512L)
   kk$public <- NULL
-  expect_error(kem_encapsulate(kk), "`key` has no usable public key")
-  kk2 <- kem_keygen(512L)
+  expect_error(kemencap(kk), "`key` has no usable public key")
+  kk2 <- kemkg(512L)
   kk2$secret <- NA_character_
-  expect_error(kem_decapsulate(kk2, raw(768)), "`key` has no usable secret key")
+  expect_error(kemdecap(kk2, raw(768)), "`key` has no usable secret key")
   # no operating-system entropy: refuse, never fall back to R's generator
   testthat::local_mocked_bindings(.rmbl_os_random = function(n) NULL)
-  expect_error(random_bytes(4L), "no operating-system random source could be read")
+  expect_error(rndbytes(4L), "no operating-system random source could be read")
 })
 
 test_that("digest helpers: chunk coercion, hex parsing, unknown prefixes", {
@@ -640,52 +640,52 @@ test_that("digest helpers: chunk coercion, hex parsing, unknown prefixes", {
 })
 
 test_that("categorical guards accept factors where they accept characters", {
-  expect_identical(as.vector(decode_codes(factor(c("1", "2")), c("1" = "A", "2" = "B"))), c("A", "B"))
-  expect_identical(guard_levels(factor(c("a", "b")), c("a", "b")), factor(c("a", "b"), levels = c("a", "b")))
-  vr <- verify_recode(factor(c("x", "y")), factor(c("X", "Y")), c(x = "X", y = "Y"))
+  expect_identical(as.vector(deccodes(factor(c("1", "2")), c("1" = "A", "2" = "B"))), c("A", "B"))
+  expect_identical(grdlvls(factor(c("a", "b")), c("a", "b")), factor(c("a", "b"), levels = c("a", "b")))
+  vr <- vrfrcd(factor(c("x", "y")), factor(c("X", "Y")), c(x = "X", y = "Y"))
   expect_s3_class(vr, "data.frame")
   expect_identical(vr$Freq, c(1L, 0L, 0L, 1L))
-  vm <- verify_marginals(factor(c("a", "a", "b")), c(a = 2, b = 1))
+  vm <- vrfmrg(factor(c("a", "a", "b")), c(a = 2, b = 1))
   expect_true(vm$ok)
   expect_identical(vm$counts, c(a = 2, b = 1))
 })
 
 test_that("printing: subsets without the method's columns, drift summaries, public keys, reports", {
-  r <- rate(data.frame(n = c(1, 2), pop = c(10, 20)), count = "n", population = "pop")
+  r <- rtcalc(data.frame(n = c(1, 2), pop = c(10, 20)), count = "n", pop = "pop")
   sub <- r[, 1:2]
   attr(sub, "zz") <- "extra attribute"
   expect_output(print(sub), "n")
   ref <- data.frame(a = 1:20, gone = 1:20)
   cur <- data.frame(a = 1:20, added = 1:20)
-  s <- summary(capsule_drift(ref, cur))
+  s <- summary(cpsdrft(ref, cur))
   out <- capture.output(print(s))
   expect_true(any(grepl("added:   added", out, fixed = TRUE)))
   expect_true(any(grepl("removed: gone", out, fixed = TRUE)))
-  pk <- signing_public_key(pqc_keygen(height = 4L))
+  pk <- signpubkey(pqckg(height = 4L))
   expect_output(print(pk), "scheme  xmss-sha256")
   expect_output(print(pk), "height  4")
-  rep <- capsule_report(data.frame(x = 1:5))
+  rep <- cpsrpt(data.frame(x = 1:5))
   rep$digest$merkle_root <- strrep("ab", 32)
   rep$digest$signature_valid <- FALSE
-  md <- report_markdown(rep)
+  md <- rptmd(rep)
   expect_true(sprintf("| merkle root | `%s` |", strrep("ab", 32)) %in% md)
   expect_true("| signature | **NOT verified** |" %in% md)
-  sch <- infer_schema(data.frame(f = letters[1:6], stringsAsFactors = FALSE))
+  sch <- infsch(data.frame(f = letters[1:6], stringsAsFactors = FALSE))
   expect_true(any(grepl("... (6 levels)", format(sch), fixed = TRUE)))
-  expect_error(correlation_table(1), "`data` must be a data frame")
-  expect_error(expected_counts(c(-1, 2), c(10, 10), c("a", "b")), "`counts` must be non-negative")
-  expect_error(sir(-1, 1), "`observed` must be non-negative")
-  expect_error(falsify_family(1:3), "p-values must lie in")
-  expect_identical(to_ascii("Ångela"), "Angela")
+  expect_error(cortbl(1), "`data` must be a data frame")
+  expect_error(expcnts(c(-1, 2), c(10, 10), c("a", "b")), "`cnts` must be non-negative")
+  expect_error(stdinc(-1, 1), "`obs` must be non-negative")
+  expect_error(falsfam(1:3), "p-values must lie in")
+  expect_identical(toascii("Ångela"), "Angela")
 })
 
 test_that("yoy PDF with groups, verdict colours and notes", {
   y <- yoy(data.frame(year = rep(2000:2003, 2), g = rep(c("a", "b"), each = 4),
-                      n = c(10, 12, 9, 15, 5, 4, 6, 3)), value = "n", period = "year", by = "g")
+                      n = c(10, 12, 9, 15, 5, 4, 6, 3)), value = "n", prd = "year", by = "g")
   expect_setequal(stats::na.omit(unique(as.data.frame(y)$verdict)), c("up", "down"))
   f <- tempfile(fileext = ".pdf")
   on.exit(unlink(f), add = TRUE)
-  yoy_pdf(y, f, notes = c("one", "two"))
+  yoypdf(y, f, notes = c("one", "two"))
   expect_true(file.size(f) > 0)
   expect_identical(readChar(f, 5L, useBytes = TRUE), "%PDF-")
 })

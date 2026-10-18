@@ -15,14 +15,14 @@ test_that("EM reproduces the ML estimates when nothing is missing", {
   y <- x * 0.5 + stats::rnorm(n)
   df <- data.frame(x = x, y = y)
 
-  fit <- mcar_test(df)
+  fit <- mcartst(df)
   # the mean is the column mean
   expect_equal(unname(fit$mu), c(mean(x), mean(y)))
   # the covariance is the ML one, which divides by n rather than n - 1
   expect_equal(unname(fit$sigma), unname(stats::cov(cbind(x, y)) *
                                           (n - 1) / n))
   # complete data is a single pattern, so there is nothing to test
-  expect_equal(fit$n_patterns, 1L)
+  expect_equal(fit$npat, 1L)
   expect_equal(fit$df, 0)
   expect_true(is.na(fit$p_value))
   expect_false(is.na(fit$note))
@@ -39,7 +39,7 @@ test_that("EM recovers the parameters under missingness", {
   df <- data.frame(x = x, y = y)
   df$y[sample(n, 600)] <- NA            # MCAR
 
-  fit <- mcar_test(df)
+  fit <- mcartst(df)
   # the estimates are close to the truth despite 30% of y missing
   expect_equal(unname(fit$mu), c(0, 0), tolerance = 0.1)
   expect_equal(fit$sigma[1, 1], 1, tolerance = 0.1)
@@ -48,7 +48,7 @@ test_that("EM recovers the parameters under missingness", {
   # the covariance is symmetric and positive definite
   expect_equal(fit$sigma, t(fit$sigma))
   expect_true(all(eigen(fit$sigma, symmetric = TRUE)$values > 0))
-  expect_equal(fit$n_patterns, 2L)
+  expect_equal(fit$npat, 2L)
   expect_equal(fit$df, 1)
   expect_true(fit$iterations >= 1L)
 
@@ -72,7 +72,7 @@ test_that("the test is calibrated under true MCAR", {
     b <- a * 0.5 + stats::rnorm(200)
     d <- data.frame(a = a, b = b)
     d$b[sample(200, 60)] <- NA
-    p <- mcar_test(d)$p_value
+    p <- mcartst(d)$p_value
     pvals[s] <- p
     if (!is.na(p) && p < 0.05) rejections <- rejections + 1L
   }
@@ -97,7 +97,7 @@ test_that("the test detects missingness that depends on the data", {
     b <- a * 0.5 + stats::rnorm(300)
     d <- data.frame(a = a, b = b)
     d$b[a > 0.3] <- NA
-    p <- mcar_test(d)$p_value
+    p <- mcartst(d)$p_value
     if (!is.na(p) && p < 0.05) detections <- detections + 1L
   }
   # this is a strong, systematic departure: it should almost always be
@@ -110,7 +110,7 @@ test_that("the statistic is the documented quadratic form", {
   n <- 400
   df <- data.frame(a = stats::rnorm(n), b = stats::rnorm(n))
   df$b[1:120] <- NA
-  fit <- mcar_test(df)
+  fit <- mcartst(df)
 
   # recompute d^2 by hand from the returned estimates: two patterns,
   # one observing only `a` and one observing both
@@ -137,24 +137,24 @@ test_that("the statistic is the documented quadratic form", {
   expect_gte(fit$statistic, 0)
 })
 
-test_that("mcar_test handles the awkward inputs", {
+test_that("mcartst handles the awkward inputs", {
   set.seed(84)
   df <- data.frame(a = stats::rnorm(100), b = stats::rnorm(100),
                    g = sample(letters[1:3], 100, TRUE),
                    stringsAsFactors = FALSE)
   df$b[1:20] <- NA
   # a non-numeric column cannot enter a moment, so it is dropped loudly
-  expect_warning(r <- mcar_test(df), "non-numeric")
-  expect_equal(r$n_vars, 2L)
+  expect_warning(r <- mcartst(df), "non-numeric")
+  expect_equal(r$nvars, 2L)
 
   # three columns and several patterns still works
   z <- data.frame(a = stats::rnorm(300), b = stats::rnorm(300),
                   c = stats::rnorm(300))
   z$b[1:80] <- NA
   z$c[200:260] <- NA
-  r3 <- mcar_test(z)
-  expect_equal(r3$n_vars, 3L)
-  expect_gte(r3$n_patterns, 3L)
+  r3 <- mcartst(z)
+  expect_equal(r3$nvars, 3L)
+  expect_gte(r3$npat, 3L)
   expect_gt(r3$df, 0)
   expect_true(is.finite(r3$p_value))
 
@@ -162,17 +162,17 @@ test_that("mcar_test handles the awkward inputs", {
   w <- data.frame(a = stats::rnorm(50), b = stats::rnorm(50),
                   dead = rep(NA_real_, 50))
   w$b[1:10] <- NA
-  expect_equal(mcar_test(w)$n_vars, 2L)
+  expect_equal(mcartst(w)$nvars, 2L)
   # a wholly missing row belongs to no pattern
   rr <- data.frame(a = c(stats::rnorm(50), NA), b = c(stats::rnorm(50), NA))
   rr$b[1:10] <- NA
-  expect_lte(mcar_test(rr)$n_used, 50L)
+  expect_lte(mcartst(rr)$nused, 50L)
 
   # a matrix is accepted
-  expect_true(is.finite(mcar_test(as.matrix(z))$statistic))
-  expect_output(print(mcar_test(z)), "Little's MCAR test")
-  expect_output(print(mcar_test(z)), "power")
+  expect_true(is.finite(mcartst(as.matrix(z))$statistic))
+  expect_output(print(mcartst(z)), "Little's MCAR test")
+  expect_output(print(mcartst(z)), "power")
 
-  expect_error(mcar_test(data.frame(a = 1:10)), "at least two numeric")
-  expect_error(mcar_test(1:10), "data frame or a numeric matrix")
+  expect_error(mcartst(data.frame(a = 1:10)), "at least two numeric")
+  expect_error(mcartst(1:10), "data frame or a numeric matrix")
 })

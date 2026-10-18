@@ -63,10 +63,10 @@ test_that("N1: hostile text through EVERY one-string SIU entry point returns, in
     expect_identical(sum(grepl("^CASE ", out)), length(inputs), info = e)
   }
   # in-process, the exported wrappers on the reproducer's own input
-  expect_identical(bricklayer_siu_text(strrep(" ", 25000)), " ")
-  expect_type(bricklayer_parse_siu(strrep(" ", 25000)), "character")
+  expect_identical(siutxt(strrep(" ", 25000)), " ")
+  expect_type(siuprs(strrep(" ", 25000)), "character")
   # an absurd tag number is noise, not a count, and the bare mention still counts one
-  f <- bricklayer_parse_siu(paste0("Subject Officials\nSO\n#", strrep("4", 30), "\nCivilian Witnesses\nCW #2\n"))
+  f <- siuprs(paste0("Subject Officials\nSO\n#", strrep("4", 30), "\nCivilian Witnesses\nCW #2\n"))
   expect_identical(unname(f["number_of_subject_officials"]), "1")
   expect_identical(unname(f["number_of_civilian_witnesses"]), "2")
   # the loops give the same text as the regex passes they replaced: the
@@ -117,40 +117,40 @@ test_that("N1: hostile text through EVERY one-string SIU entry point returns, in
                     warn = FALSE, encoding = "UTF-8"), collapse = "\n")
   )
   for (h in samples) {
-    got <- bricklayer_siu_text(h)
+    got <- siutxt(h)
     expect_identical(enc2utf8(got), ref_text(h))
     expect_true(all(nchar(strsplit(got, "\n", fixed = TRUE)[[1]], type = "chars") <= 2000L))
   }
   # a line longer than the cap is broken at a space, so no extractor's regex
   # ever consumes more than kMaxLine characters at once
   long <- paste(rep("word", 1500), collapse = " ")
-  out <- suppressWarnings(bricklayer_siu_text(paste0("<p>", long, "</p>")))  # the split warning is expected
+  out <- suppressWarnings(siutxt(paste0("<p>", long, "</p>")))  # the split warning is expected
   expect_true(all(nchar(strsplit(out, "\n", fixed = TRUE)[[1]]) <= 2000L))
   expect_identical(trimws(gsub("\n", " ", out, fixed = TRUE)), long)
-  expect_error(bricklayer_siu_text(strrep("a", 3e6)), "larger than 2 MiB")
+  expect_error(siutxt(strrep("a", 3e6)), "larger than 2 MiB")
 })
 
-test_that("N2: manifest_canonical is one-to-one over objects and arrays, empty keys included", {
+test_that("N2: mnfcanon is one-to-one over objects and arrays, empty keys included", {
   A <- list(k = stats::setNames(list("X"), ""))
   B <- list(k = list("X"))
-  expect_identical(as.character(manifest_canonical(A)), "{\"k\":{\"\":\"X\"}}")
-  expect_identical(as.character(manifest_canonical(B)), "{\"k\":[\"X\"]}")
-  expect_false(identical(manifest_digest(A), manifest_digest(B)))
-  key <- fips_keygen("ML-DSA-44")
-  att <- capsule_attest(A, key)
-  expect_true(capsule_check_attestation(att, A)$ok)
-  expect_false(capsule_check_attestation(att, B)$ok)
+  expect_identical(as.character(mnfcanon(A)), "{\"k\":{\"\":\"X\"}}")
+  expect_identical(as.character(mnfcanon(B)), "{\"k\":[\"X\"]}")
+  expect_false(identical(mnfdgst(A), mnfdgst(B)))
+  key <- fipskg("ML-DSA-44")
+  att <- cpsatst(A, key)
+  expect_true(cpschkatst(att, A)$ok)
+  expect_false(cpschkatst(att, B)$ok)
   # the 0.5.6 case (mixed empty and non-empty names) stays closed
-  A2 <- bricklayer_json_from_json("{\"meta\":{\"\":\"X\",\"a\":1},\"results\":{}}", simplifyVector = FALSE)
-  B2 <- bricklayer_json_from_json("{\"meta\":{\"1\":\"X\",\"a\":1},\"results\":{}}", simplifyVector = FALSE)
-  expect_false(identical(manifest_digest(A2), manifest_digest(B2)))
+  A2 <- fromjs("{\"meta\":{\"\":\"X\",\"a\":1},\"results\":{}}", simplifyVector = FALSE)
+  B2 <- fromjs("{\"meta\":{\"1\":\"X\",\"a\":1},\"results\":{}}", simplifyVector = FALSE)
+  expect_false(identical(mnfdgst(A2), mnfdgst(B2)))
   # the other door: a named atomic vector is an object, an unnamed one an array
-  expect_identical(as.character(manifest_canonical(list(k = c(a = 1, b = 2)))), "{\"k\":{\"a\":1,\"b\":2}}")
-  expect_identical(as.character(manifest_canonical(list(k = c(1, 2)))), "{\"k\":[1,2]}")
-  expect_false(identical(manifest_digest(list(k = c(a = 1, b = 2))), manifest_digest(list(k = c(1, 2)))))
+  expect_identical(as.character(mnfcanon(list(k = c(a = 1, b = 2)))), "{\"k\":{\"a\":1,\"b\":2}}")
+  expect_identical(as.character(mnfcanon(list(k = c(1, 2)))), "{\"k\":[1,2]}")
+  expect_false(identical(mnfdgst(list(k = c(a = 1, b = 2))), mnfdgst(list(k = c(1, 2)))))
   # what the parser reads back canonicalises to what was written
-  back <- bricklayer_json_from_json("{\"k\":{\"\":\"X\"}}", simplifyVector = FALSE)
-  expect_identical(as.character(manifest_canonical(back)), "{\"k\":{\"\":\"X\"}}")
+  back <- fromjs("{\"k\":{\"\":\"X\"}}", simplifyVector = FALSE)
+  expect_identical(as.character(mnfcanon(back)), "{\"k\":{\"\":\"X\"}}")
 })
 
 test_that("N3: the redirect rule is pure and tested; the download entry refuses before touching the disk", {
@@ -185,16 +185,16 @@ test_that("N3: the redirect rule is pure and tested; the download entry refuses 
   expect_error(.Call(C("C_rmbl_http_download"), "https://a.example.org/x", dest, 5L, 1L, NULL, NULL, FALSE),
                "`headers` must be a character vector or NULL")
   expect_error(.Call(C("C_rmbl_http_download"), "https://a.example.org/x", dest, 5L, NULL, NULL, 0, FALSE),
-               "`max_bytes` must be")
+               "`maxbytes` must be")
   # every R-level entry gates and then uses the C transport: a blocked host
   # is refused before any connection, by name
-  expect_error(bricklayer_json_from_json("http://127.0.0.1:1/secret"), "must be an https:// URL")
-  expect_error(bricklayer_json_from_json("https://127.0.0.1:1/secret"), "local or private")
-  expect_error(download_data("https://10.0.0.1/x", tempfile()), "local or private")
-  expect_error(download_data("https://example.org/x", tempfile(), mode = "a"), "`mode` must be")
-  expect_error(bricklayer_download("https://example.org/x", tempfile(), headers = "Bearer x", quiet = TRUE),
+  expect_error(fromjs("http://127.0.0.1:1/secret"), "must be an https:// URL")
+  expect_error(fromjs("https://127.0.0.1:1/secret"), "local or private")
+  expect_error(dldata("https://10.0.0.1/x", tempfile()), "local or private")
+  expect_error(dldata("https://example.org/x", tempfile(), mode = "a"), "`mode` must be")
+  expect_error(bldl("https://example.org/x", tempfile(), headers = "Bearer x", quiet = TRUE),
                "named character vector")
-  expect_error(bricklayer_download("https://example.org/x", tempfile(), timeout = 0, quiet = TRUE),
+  expect_error(bldl("https://example.org/x", tempfile(), tmout = 0, quiet = TRUE),
                "at least one second")
   # underscores in a deployed hostname are not a refusal
   expect_identical(.Call(C("C_rmbl_url_check"), "https://my_host.example.org/", FALSE, FALSE, FALSE), "")
@@ -205,64 +205,64 @@ test_that("N5: a small ordinary factor gets a verdict; identifiers still do not"
   for (n in c(10L, 20L, 30L, 100L)) {
     a <- data.frame(g = as.character(sample(5, n, TRUE)))
     b <- data.frame(g = as.character(sample(5, n, TRUE)))
-    cd <- capsule_drift(a, b)$columns
+    cd <- cpsdrft(a, b)$columns
     expect_identical(cd$type, "categorical", info = n)
     expect_false(is.na(cd$drifted), info = n)
     expect_true(is.finite(cd$psi), info = n)
   }
-  # more distinct values than identifier_levels: an identifier at any size
+  # more distinct values than idelvls: an identifier at any size
   ids <- data.frame(id = sprintf("id%04d", 1:500))
   ids2 <- data.frame(id = sprintf("id%04d", 251:750))
-  cd <- capsule_drift(ids, ids2)$columns
+  cd <- cpsdrft(ids, ids2)$columns
   expect_identical(cd$type, "identifier")
   expect_true(is.na(cd$drifted))
   # the ratio test needs 20 distinct values behind it: 90 values on 240 rows
   x <- data.frame(g = as.character(rep(1:60, 2)))
   y <- data.frame(g = as.character(rep(31:90, 2)))
-  expect_identical(capsule_drift(x, y)$columns$type, "identifier")
+  expect_identical(cpsdrft(x, y)$columns$type, "identifier")
   # ... and an 80-row near-unique id column is one too (0.5.8's hundred-row gate scored it
   # categorical with a PSI of 5, its diff review)
   a <- data.frame(id = sprintf("id%03d", 1:80))
   b <- data.frame(id = sprintf("id%03d", 21:100))
-  expect_identical(capsule_drift(a, b)$columns$type, "identifier")
+  expect_identical(cpsdrft(a, b)$columns$type, "identifier")
   # ... while a 10-level factor on 40 rows is a categorical column with a verdict
   x <- data.frame(g = as.character(rep(1:10, 2)))
   y <- data.frame(g = as.character(rep(6:15, 2)))
-  cd <- capsule_drift(x, y)$columns
+  cd <- cpsdrft(x, y)$columns
   expect_identical(cd$type, "categorical")
   expect_false(is.na(cd$drifted))
 })
 
-test_that("N6/N7: log_p_value at the fifth chi-square site, and the documented eps bound", {
+test_that("N6/N7: logpvalue at the fifth chi-square site, and the documented eps bound", {
   set.seed(1)
   X <- data.frame(a = rnorm(200), b = rnorm(200))
   X[1, ] <- c(4000, 4000)
-  m <- mahalanobis_outliers(X)
-  expect_true("log_p_value" %in% names(m))
+  m <- mahaoutl(X)
+  expect_true("logpvalue" %in% names(m))
   ok <- !is.na(m$p_value) & m$p_value > 0
-  expect_equal(m$log_p_value[ok], log(m$p_value[ok]))
+  expect_equal(m$logpvalue[ok], log(m$p_value[ok]))
   # the planted row: the robust distance keeps its p-value above zero, and
   # the log column is its exact log
   expect_lt(m$p_value[m$row == 1], 1e-30)
-  expect_equal(m$log_p_value[m$row == 1], log(m$p_value[m$row == 1]))
+  expect_equal(m$logpvalue[m$row == 1], log(m$p_value[m$row == 1]))
   expect_true(all(m$outlier[m$row == 1]))
   # eps is a parameter of the statistic, accepted anywhere in (0, 1) and documented as such
   set.seed(2)
   x <- rnorm(100)
   y <- rnorm(100) + 1
-  expect_true(is.finite(drift_psi(x, y, eps = 0.05)[["psi"]]))
-  expect_lt(drift_psi(x, y, eps = 0.05)[["psi"]], drift_psi(x, y, eps = 1e-6)[["psi"]])
-  expect_error(drift_psi(x, y, eps = 1), "0 < eps < 1")
-  expect_error(drift_psi(x, y, eps = 0), "0 < eps < 1")
+  expect_true(is.finite(drftpsi(x, y, eps = 0.05)[["psi"]]))
+  expect_lt(drftpsi(x, y, eps = 0.05)[["psi"]], drftpsi(x, y, eps = 1e-6)[["psi"]])
+  expect_error(drftpsi(x, y, eps = 1), "0 < eps < 1")
+  expect_error(drftpsi(x, y, eps = 0), "0 < eps < 1")
   rd <- tools::Rd_db("rmoriebricklayer")
   txt <- function(f) {
     paste(utils::capture.output(tools::Rd2txt(rd[[f]], options = list(underline_titles = FALSE))),
           collapse = "\n")
   }
-  expect_match(gsub("\\s+", " ", txt("drift_psi.Rd")), "any value in (0, 1)", fixed = TRUE)
-  # all FIVE sites (0.5.8 listed four and missed mcar_test.Rd, its diff review)
-  for (f in c("drift_chisq.Rd", "drift_homogeneity.Rd", "benford_test.Rd", "mahalanobis_outliers.Rd", "mcar_test.Rd")) {
-    expect_match(txt(f), "log_p_value", info = f)
+  expect_match(gsub("\\s+", " ", txt("drftpsi.Rd")), "any value in (0, 1)", fixed = TRUE)
+  # all FIVE sites (0.5.8 listed four and missed mcartst.Rd, its diff review)
+  for (f in c("drftchisq.Rd", "drfthomog.Rd", "benfordtst.Rd", "mahaoutl.Rd", "mcartst.Rd")) {
+    expect_match(txt(f), "logpvalue", info = f)
   }
 })
 

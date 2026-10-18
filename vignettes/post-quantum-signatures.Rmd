@@ -9,7 +9,7 @@ vignette: >
 
 ```{r, include = FALSE}
 # the one-time index record of this vignette stays out of the reader's configuration directory
-options(rmoriebricklayer.xmss_index_file = tempfile())
+options(rmoriebricklayer.xmssidxfile = tempfile())
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(rmoriebricklayer)
 ```
@@ -18,7 +18,7 @@ A capsule is only as trustworthy as the signature on its manifest. `rmoriebrickl
 implements the three NIST post-quantum signature standards natively, with no system
 cryptography library: **ML-DSA** (FIPS 204, lattice-based), **SLH-DSA** (FIPS 205,
 hash-based, stateless) and **XMSS** (RFC 8391, hash-based, stateful). All three are used
-through the same two calls, `capsule_sign()` and `capsule_verify()`.
+through the same two calls, `cpssign()` and `cpsvrf()`.
 
 ## Why post-quantum, and why three schemes
 
@@ -36,17 +36,17 @@ assumptions, so a break of one does not take the others:
 ## ML-DSA: the default
 
 ```{r mldsa}
-key <- fips_keygen("ML-DSA-65")
+key <- fipskg("ML-DSA-65")
 key$scheme
 
-sig <- capsule_sign("a manifest digest", key)
-capsule_verify("a manifest digest", sig, fips_public_key(key))
+sig <- cpssign("a manifest digest", key)
+cpsvrf("a manifest digest", sig, fipspubkey(key))
 ```
 
 The verifier needs only the public key. Any change to the message is caught:
 
 ```{r mldsa-tamper}
-capsule_verify("a manifest digest (edited)", sig, fips_public_key(key))
+cpsvrf("a manifest digest (edited)", sig, fipspubkey(key))
 ```
 
 ### Context strings bind a signature to its purpose
@@ -56,9 +56,9 @@ same message signed for one purpose does not verify under another, which stops a
 made for "staging" being replayed as a "release" approval:
 
 ```{r context}
-sig2 <- capsule_sign("a manifest digest", key, context = "release")
-capsule_verify("a manifest digest", sig2, key, context = "release")
-capsule_verify("a manifest digest", sig2, key, context = "staging")
+sig2 <- cpssign("a manifest digest", key, ctx = "release")
+cpsvrf("a manifest digest", sig2, key, ctx = "release")
+cpsvrf("a manifest digest", sig2, key, ctx = "staging")
 ```
 
 ### Hedged and deterministic signing
@@ -69,27 +69,27 @@ fault attacks on the nonce). `deterministic = TRUE` gives the variant where the 
 depends only on the key and the message:
 
 ```{r deterministic}
-s1 <- capsule_sign("same message", key, deterministic = TRUE)
-s2 <- capsule_sign("same message", key, deterministic = TRUE)
+s1 <- cpssign("same message", key, determ = TRUE)
+s2 <- cpssign("same message", key, determ = TRUE)
 identical(s1$signature, s2$signature)
 
-h1 <- capsule_sign("same message", key)
-h2 <- capsule_sign("same message", key)
+h1 <- cpssign("same message", key)
+h2 <- cpssign("same message", key)
 identical(h1$signature, h2$signature)
 ```
 
 ### Signing a digest computed elsewhere
 
 ML-DSA signs `mu = H(tr || M')`, a digest of the message that depends on the public key but
-not on the secret. `fips_mu()` computes it from the *public* key, so the machine holding the
+not on the secret. `fipsmu()` computes it from the *public* key, so the machine holding the
 secret never needs to see the message:
 
 ```{r mu}
-mu <- fips_mu(fips_public_key(key), "a manifest digest", context = "release")
-sig3 <- fips_sign_mu(key, mu)
-fips_verify_mu(key, mu, sig3)
+mu <- fipsmu(fipspubkey(key), "a manifest digest", ctx = "release")
+sig3 <- fipssignmu(key, mu)
+fipsvrfmu(key, mu, sig3)
 # the same signature verifies the ordinary way
-capsule_verify("a manifest digest", sig3, key, context = "release")
+cpsvrf("a manifest digest", sig3, key, ctx = "release")
 ```
 
 Since 0.5.10, ML-DSA signing runs **first-order masked** by default (see the
@@ -99,23 +99,23 @@ shares. The signatures are byte-identical to the unmasked computation; only the 
 ## SLH-DSA: hash-based, stateless
 
 ```{r slh}
-fips_sizes("ML-DSA-65")
-fips_sizes("SLH-DSA-SHAKE-128f")
+fipssz("ML-DSA-65")
+fipssz("SLH-DSA-SHAKE-128f")
 ```
 
 The price of dropping the lattice assumption is size: an SLH-DSA signature is far larger
 than an ML-DSA signature at the same security level.
 
 ```{r slh-size}
-fips_sizes("SLH-DSA-SHAKE-128f")[["signature"]] > fips_sizes("ML-DSA-44")[["signature"]]
+fipssz("SLH-DSA-SHAKE-128f")[["signature"]] > fipssz("ML-DSA-44")[["signature"]]
 ```
 
 The calls are identical:
 
 ```{r slh-sign}
-hkey <- fips_keygen("SLH-DSA-SHAKE-128f")
-hsig <- capsule_sign("a manifest digest", hkey)
-capsule_verify("a manifest digest", hsig, fips_public_key(hkey))
+hkey <- fipskg("SLH-DSA-SHAKE-128f")
+hsig <- cpssign("a manifest digest", hkey)
+cpsvrf("a manifest digest", hsig, fipspubkey(hkey))
 ```
 
 ### Pre-hash variants
@@ -126,40 +126,40 @@ function's OID is bound into the signature, so two digests of the same length ne
 verify for each other:
 
 ```{r prehash}
-p <- capsule_sign("a large artifact", key, prehash = "sha512")
-capsule_verify("a large artifact", p, key, prehash = "sha512")
-capsule_verify("a large artifact", p, key, prehash = "sha3_512")
+p <- cpssign("a large artifact", key, prehash = "sha512")
+cpsvrf("a large artifact", p, key, prehash = "sha512")
+cpsvrf("a large artifact", p, key, prehash = "sha3_512")
 ```
 
 ## XMSS: hash-based, stateful
 
 An XMSS key of height *h* signs 2^h messages. The package stores the next index in the key
-and `xmss_advance(key, signature)` gives the advanced key after every signature; reusing an index would break security,
-so always advance the key with `xmss_advance()` and save that:
+and `xmssadv(key, signature)` gives the advanced key after every signature; reusing an index would break security,
+so always advance the key with `xmssadv()` and save that:
 
 ```{r xmss}
-xkey <- pqc_keygen(height = 3)
+xkey <- pqckg(height = 3)
 xkey$capacity
 xkey$next_index
 
-s1 <- capsule_sign("manifest-1", xkey)
-capsule_verify("manifest-1", s1, signing_public_key(xkey))
+s1 <- cpssign("manifest-1", xkey)
+cpsvrf("manifest-1", s1, signpubkey(xkey))
 
-xkey <- xmss_advance(xkey, s1)
+xkey <- xmssadv(xkey, s1)
 xkey$next_index
-s2 <- capsule_sign("manifest-2", xkey)
-capsule_verify("manifest-2", s2, signing_public_key(xkey))
+s2 <- cpssign("manifest-2", xkey)
+cpsvrf("manifest-2", s2, signpubkey(xkey))
 
 # a signature does not transfer to another message
-capsule_verify("manifest-1", s2, signing_public_key(xkey))
+cpsvrf("manifest-1", s2, signpubkey(xkey))
 ```
 
 The key is a value, so an old copy of it still says an old `next_index`. The package therefore
-also keeps a record of the highest index each key has used on this machine (`?xmss_advance`
+also keeps a record of the highest index each key has used on this machine (`?xmssadv`
 says where), and refuses a used index even from a stale copy. A key generated here is entered
 at birth; a key from another machine, one rebuilt from its seeds, or one used in a CI job or a
 container with a fresh home directory is unknown to the record and must be vouched for once
-with `xmss_register_key(key)` before it signs from index 0.
+with `xmssregkey(key)` before it signs from index 0.
 
 ## Every way of being wrong returns FALSE
 
@@ -169,14 +169,14 @@ truncated or edited signature, a foreign key and an edited message all fail the 
 is an error, because that is a programming mistake rather than a tampered artefact.)
 
 ```{r wrong}
-pub <- fips_public_key(key)
+pub <- fipspubkey(key)
 bad <- sig
 bad$signature <- paste0("ff", substring(bad$signature, 3))
-capsule_verify("a manifest digest", bad, pub)
+cpsvrf("a manifest digest", bad, pub)
 trunc <- sig
 trunc$signature <- substring(sig$signature, 1, 64)
-capsule_verify("a manifest digest", trunc, pub)
-capsule_verify("a manifest digest", sig, fips_public_key(fips_keygen("ML-DSA-65")))
+cpsvrf("a manifest digest", trunc, pub)
+cpsvrf("a manifest digest", sig, fipspubkey(fipskg("ML-DSA-65")))
 ```
 
 ## How these implementations are checked
@@ -195,9 +195,9 @@ A signature lets anyone check that a release came from its publisher and has not
 changed:
 
 ```{r indigenous-sign}
-key <- fips_keygen("ML-DSA-65")
-d <- indigenous_example("mental_health")
-msg <- digest_object(d)
-sig <- capsule_sign(msg, key)
-capsule_verify(msg, sig, fips_public_key(key))
+key <- fipskg("ML-DSA-65")
+d <- indiex("mentalhealth")
+msg <- dgstobj(d)
+sig <- cpssign(msg, key)
+cpsvrf(msg, sig, fipspubkey(key))
 ```

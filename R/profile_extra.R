@@ -7,7 +7,7 @@
 #'
 #' Counts the distinct PATTERNS of missingness across rows -- which
 #' combination of columns is missing in each row -- rather than the
-#' per-column rates [profile_columns()] reports. Use it
+#' per-column rates [profcols()] reports. Use it
 #' before deciding how
 #' to handle gaps (drop rows, impute, model separately), because the right
 #' choice depends on whether columns are missing together.
@@ -23,25 +23,25 @@
 #' Each row is coded as a string with one character per column, \code{X}
 #' where \code{is.na()} is true and \code{.} otherwise, and the codes are
 #' tabulated. Patterns are sorted by descending frequency and the first
-#' \code{max_patterns} kept, so \code{pct_rows} may not sum to 100 when
+#' \code{maxpat} kept, so \code{pctrows} may not sum to 100 when
 #' patterns are cut. A frame with no rows gives an empty table. The work is
 #' one pass over the rows; very wide frames give long codes.
 #'
 #' Errors: \code{data} not a data frame, without columns, or with missing or
-#' duplicated names; \code{max_patterns} not one positive whole number.
+#' duplicated names; \code{maxpat} not one positive whole number.
 #'
 #' @param data A data frame.
-#' @param max_patterns Maximum patterns to return, most
+#' @param maxpat Maximum patterns to return, most
 #'   frequent first, one positive whole number (default 20).
 #' @return A data frame of class \code{c("bricklayer_missingness",
 #'   "data.frame")}, one row per pattern: \code{pattern} (character, \code{.}
-#'   for present and \code{X} for missing, in column order), \code{n_rows}
-#'   (integer), \code{pct_rows} (numeric, percent of all rows),
+#'   for present and \code{X} for missing, in column order), \code{nrows}
+#'   (integer), \code{pctrows} (numeric, percent of all rows),
 #'   \code{n_missing} (integer, columns missing in that pattern) and
 #'   \code{columns} (character, their names comma-separated, \code{""} for the
 #'   complete pattern). Carries the column order as the \code{"columns"}
 #'   attribute.
-#' @seealso [profile_columns()] for
+#' @seealso [profcols()] for
 #' per-column rates.
 #' @examples
 #' # Two columns missing in the SAME rows: one structural gap.
@@ -50,7 +50,7 @@
 #'   a = c(rep(NA, 3), 4:10),
 #'   b = c(rep(NA, 3), 4:10)
 #' )
-#' missingness_pattern(structural)
+#' misspat(structural)
 #'
 #' # The same per-column rates, but missing independently.
 #' scattered <- data.frame(
@@ -58,33 +58,33 @@
 #'   a = c(rep(NA, 3), 4:10),
 #'   b = c(1:7, rep(NA, 3))
 #' )
-#' missingness_pattern(scattered)
+#' misspat(scattered)
 #'
 #' # A complete frame has exactly one pattern.
-#' missingness_pattern(data.frame(x = 1:3, y = 4:6))
+#' misspat(data.frame(x = 1:3, y = 4:6))
 #'
 #' # keep only the most common pattern
-#' missingness_pattern(scattered, max_patterns = 1)
+#' misspat(scattered, maxpat = 1)
 #'
 #' # a frame without columns has no patterns
-#' try(missingness_pattern(data.frame()))
+#' try(misspat(data.frame()))
 #' @export
-missingness_pattern <- function(data, max_patterns = 20L) {
+misspat <- function(data, maxpat = 20L) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
   if (ncol(data) == 0L) {
     stop("`data` has no columns", call. = FALSE)
   }
-  max_patterns <- .rmbl_num(max_patterns, "max_patterns", integer = TRUE)
-  if (length(max_patterns) != 1L || is.na(max_patterns) ||
-    max_patterns < 1L) {
-    stop("`max_patterns` must be a single positive integer", call. = FALSE)
+  maxpat <- .rmbl_num(maxpat, "maxpat", integer = TRUE)
+  if (length(maxpat) != 1L || is.na(maxpat) ||
+    maxpat < 1L) {
+    stop("`maxpat` must be a single positive integer", call. = FALSE)
   }
   n <- nrow(data)
   if (n == 0L) {
     out <- data.frame(
       pattern = character(0), n_rows = integer(0),
-      pct_rows = numeric(0), n_missing = integer(0),
+      pctrows = numeric(0), n_missing = integer(0),
       columns = character(0), stringsAsFactors = FALSE
     )
     attr(out, "columns") <- names(data)
@@ -100,14 +100,14 @@ missingness_pattern <- function(data, max_patterns = 20L) {
     )
   })
   tab <- sort(table(codes), decreasing = TRUE)
-  keep <- utils::head(names(tab), max_patterns)
+  keep <- utils::head(names(tab), maxpat)
 
   rows <- lapply(keep, function(code) {
     flags <- strsplit(code, "", fixed = TRUE)[[1L]] == "X"
     data.frame(
       pattern = code,
       n_rows = as.integer(tab[[code]]),
-      pct_rows = 100 * as.integer(tab[[code]]) / n,
+      pctrows = 100 * as.integer(tab[[code]]) / n,
       n_missing = sum(flags),
       columns = if (any(flags)) {
         paste(names(data)[flags], collapse = ", ")
@@ -127,7 +127,7 @@ missingness_pattern <- function(data, max_patterns = 20L) {
 #' @export
 print.bricklayer_missingness <- function(x, ...) {
   if (.rmbl_needs_cols(x, c(
-    "pattern", "n_rows", "pct_rows", "n_missing",
+    "pattern", "n_rows", "pctrows", "n_missing",
     "columns"
   ))) {
     return(invisible(x))
@@ -140,7 +140,7 @@ print.bricklayer_missingness <- function(x, ...) {
   )
   df <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
   attr(df, "columns") <- NULL
-  df$pct_rows <- formatC(df$pct_rows, format = "f", digits = 1)
+  df$pctrows <- formatC(df$pctrows, format = "f", digits = 1)
   print(df, row.names = FALSE)
   cat(.rmbl_rule(), "\n")
   invisible(x)
@@ -164,31 +164,31 @@ print.bricklayer_missingness <- function(x, ...) {
 #' Non-numeric columns are ignored. Each pair uses the rows where both
 #' values are present; a pair with fewer than three such rows, or with a
 #' constant column, has no correlation and is left out. Pairs are ranked by
-#' absolute correlation, those below \code{min_abs} dropped, and the first
-#' \code{n} returned. [correlation_table()] gives every
+#' absolute correlation, those below \code{minabs} dropped, and the first
+#' \code{n} returned. [cortbl()] gives every
 #' pair, with the
 #' number of rows behind each. A progress bar is drawn on stderr for many
 #' pairs unless \code{options(morie.quiet = TRUE)}.
 #'
 #' Errors: \code{data} not a data frame; fewer than two numeric columns;
-#' \code{n} not one positive whole number; \code{min_abs} not one number in
-#' \eqn{[0, 1]}; an invalid \code{method}.
+#' \code{n} not one positive whole number; \code{minabs} not one number in
+#' \eqn{[0, 1]}; an invalid \code{meth}.
 #'
 #' @param data A data frame; non-numeric columns are ignored.
 #' @param n Number of pairs to return, one positive whole number (default
 #'   10).
-#' @param method \code{"spearman"} (default) or \code{"pearson"}.
-#' @param min_abs Report only pairs whose absolute correlation reaches this,
+#' @param meth \code{"spearman"} (default) or \code{"pearson"}.
+#' @param minabs Report only pairs whose absolute correlation reaches this,
 #'   a number in \eqn{[0, 1]} (default 0).
 #' @return A data frame of class \code{c("bricklayer_correlations",
 #'   "data.frame")} with \code{x} and \code{y} (character, column names),
-#'   \code{correlation} (numeric) and \code{abs_correlation} (numeric),
+#'   \code{correlation} (numeric) and \code{abscor} (numeric),
 #'   strongest first, at most \code{n} rows; the method is in
 #'   \code{attr(, "method")}. The print method draws a signed bar per pair.
 #' @seealso
-#' [core_cor_spearman()],
-#' [core_cov()],
-#' [correlation_table()]
+#' [cspr()],
+#' [ccovm()],
+#' [cortbl()]
 #' @examples
 #' set.seed(1)
 #' n <- 200
@@ -200,27 +200,27 @@ print.bricklayer_missingness <- function(x, ...) {
 #' df$c <- df$a * 2 + stats::rnorm(n, sd = 0.1) # strongly related to a
 #' df$d <- exp(df$a) # monotone but curved
 #'
-#' top_correlations(df)
+#' topcors(df)
 #'
 #' # The curved pair is ranked correctly by Spearman and understated by
 #' # Pearson, which is why Spearman is the default.
-#' tc <- top_correlations(df, method = "spearman")
+#' tc <- topcors(df, meth = "spearman")
 #' tc[tc$x == "a" & tc$y == "d", "correlation"]
-#' tp <- top_correlations(df, method = "pearson")
+#' tp <- topcors(df, meth = "pearson")
 #' tp[tp$x == "a" & tp$y == "d", "correlation"]
 #'
 #' # Filter to the pairs worth looking at, and keep the top two.
-#' top_correlations(df, n = 2, min_abs = 0.5)
+#' topcors(df, n = 2, minabs = 0.5)
 #'
 #' # a threshold above 1 is an error
-#' try(top_correlations(df, min_abs = 2))
+#' try(topcors(df, minabs = 2))
 #' @export
-top_correlations <- function(data, n = 10L, method = c(
+topcors <- function(data, n = 10L, meth = c(
                                "spearman",
                                "pearson"
                              ),
-                             min_abs = 0) {
-  method <- .rmbl_arg(method)
+                             minabs = 0) {
+  meth <- .rmbl_arg(meth)
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
   num <- names(data)[vapply(data, is.numeric, logical(1))]
@@ -231,14 +231,14 @@ top_correlations <- function(data, n = 10L, method = c(
   if (length(n) != 1L || is.na(n) || n < 1L) {
     stop("`n` must be a single positive integer", call. = FALSE)
   }
-  min_abs <- .rmbl_num(min_abs, "min_abs")
-  if (length(min_abs) != 1L || is.na(min_abs) || min_abs < 0 ||
-    min_abs > 1) {
-    stop("`min_abs` must be a single value in [0, 1]", call. = FALSE)
+  minabs <- .rmbl_num(minabs, "minabs")
+  if (length(minabs) != 1L || is.na(minabs) || minabs < 0 ||
+    minabs > 1) {
+    stop("`minabs` must be a single value in [0, 1]", call. = FALSE)
   }
 
   pairs <- utils::combn(num, 2L)
-  pg <- bricklayer_progress("correlations", ncol(pairs))
+  pg <- blprog("correlations", ncol(pairs))
   on.exit(pg$done(), add = TRUE)
   vals <- vapply(seq_len(ncol(pairs)), function(j) {
     pg$update(j - 1L, sprintf("pair %d/%d", j, ncol(pairs)))
@@ -248,31 +248,31 @@ top_correlations <- function(data, n = 10L, method = c(
     if (sum(ok) < 3L) {
       return(NA_real_)
     }
-    if (identical(method, "spearman")) {
-      core_cor_spearman(a[ok], b[ok])
+    if (identical(meth, "spearman")) {
+      cspr(a[ok], b[ok])
     } else {
-      core_cor(a[ok], b[ok])
+      ccorr(a[ok], b[ok])
     }
   }, 0)
 
   out <- data.frame(
     x = pairs[1L, ], y = pairs[2L, ], correlation = vals,
-    abs_correlation = abs(vals), stringsAsFactors = FALSE
+    abscor = abs(vals), stringsAsFactors = FALSE
   )
-  out <- out[!is.na(out$correlation) & out$abs_correlation >= min_abs, ,
+  out <- out[!is.na(out$correlation) & out$abscor >= minabs, ,
     drop = FALSE
   ]
-  out <- out[order(-out$abs_correlation), , drop = FALSE]
+  out <- out[order(-out$abscor), , drop = FALSE]
   out <- utils::head(out, n)
   rownames(out) <- NULL
-  attr(out, "method") <- method
+  attr(out, "method") <- meth
   class(out) <- c("bricklayer_correlations", "data.frame")
   out
 }
 
 #' @export
 print.bricklayer_correlations <- function(x, ...) {
-  if (.rmbl_needs_cols(x, c("x", "y", "correlation", "abs_correlation"))) {
+  if (.rmbl_needs_cols(x, c("x", "y", "correlation", "abscor"))) {
     return(invisible(x))
   }
   cat(.rmbl_rule(paste0("Top correlations (", attr(x, "method"), ")")), "\n")
@@ -294,7 +294,7 @@ print.bricklayer_correlations <- function(x, ...) {
     }
   }, character(1))
   df$correlation <- formatC(df$correlation, format = "f", digits = 3)
-  df$abs_correlation <- NULL
+  df$abscor <- NULL
   print(df, row.names = FALSE)
   cat(.rmbl_rule(), "\n")
   invisible(x)
@@ -323,9 +323,9 @@ print.bricklayer_correlations <- function(x, ...) {
 #' Error: \code{a} or \code{b} that is not a list.
 #'
 #' @param a,b Environment records from
-#'   [capture_environment()], or whole
+#'   [capenv()], or whole
 #'   manifests containing an \code{environment} element (such as
-#'   [make_manifest()] returns).
+#'   [mkmnf()] returns).
 #' @return A list of class \code{c("bricklayer_env_diff", "list")}:
 #'   \code{identical} (logical, \code{TRUE} when R version, platform and all
 #'   package versions agree), \code{r_version} (a named length-2 character
@@ -335,32 +335,32 @@ print.bricklayer_correlations <- function(x, ...) {
 #'   where \code{change} is \code{"added"}, \code{"removed"} or
 #'   \code{"changed"}; no rows when nothing differs).
 #' @seealso
-#' [capture_environment()],
-#' [make_manifest()]
+#' [capenv()],
+#' [mkmnf()]
 #' @examples
-#' a <- capture_environment(c("stats", "utils"))
+#' a <- capenv(c("stats", "utils"))
 #' b <- a
 #'
 #' # An environment matches itself.
-#' environment_diff(a, b)$identical
+#' envdiff(a, b)$identical
 #'
 #' # Stage a moved dependency, an added one and a newer R.
 #' b$packages[["stats"]] <- "0.0.0"
 #' b$packages[["tools"]] <- "4.9.0"
 #' b$r_version <- "9.9.9"
-#' d <- environment_diff(a, b)
+#' d <- envdiff(a, b)
 #' d$packages
 #' d$r_version
 #' d
 #'
 #' # Whole manifests are accepted, not just the environment block.
-#' m <- make_manifest(list(run = "demo"))
-#' environment_diff(m, m)$identical
+#' m <- mkmnf(list(run = "demo"))
+#' envdiff(m, m)$identical
 #'
 #' # anything other than a record is refused
-#' try(environment_diff("4.5.1", a))
+#' try(envdiff("4.5.1", a))
 #' @export
-environment_diff <- function(a, b) {
+envdiff <- function(a, b) {
   pull <- function(x, what) {
     if (is.list(x) && !is.null(x$environment)) x <- x$environment
     if (!is.list(x) || is.data.frame(x) || is.null(names(x))) {
@@ -468,7 +468,7 @@ format.bricklayer_env_diff <- function(x, ...) {
   c(lines, rows, .rmbl_rule())
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_env_diff <- function(x, ...) {
   cat(format(x), sep = "\n")

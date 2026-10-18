@@ -34,7 +34,7 @@
 #' is valid, what key it carries, and what that key is allowed to do. Use it
 #' to inspect the certificate of a timestamping authority or a signer before
 #' you decide to trust it, or as the first step of
-#' [cert_chain_verify()]. The
+#' [certchnvrf()]. The
 #' DER decoder is the package's own; no system library or network is used.
 #'
 #' @details
@@ -46,15 +46,15 @@
 #' alternative name, name constraints, certificate policies, policy mappings
 #' and policy constraints, and inhibit any-policy. The signature is not
 #' checked here: that needs the issuer's key, which
-#' [cert_chain_verify()]
+#' [certchnvrf()]
 #' supplies.
 #'
-#' Errors: \code{certificate} neither a raw vector nor the path of an
+#' Errors: \code{cert} neither a raw vector nor the path of an
 #' existing file (a directory is refused); bytes that are not well-formed DER
 #' or carry trailing bytes; a DER structure that is not a certificate or has
 #' no signature.
 #'
-#' @param certificate The certificate, DER or PEM: a raw vector of DER bytes,
+#' @param cert The certificate, DER or PEM: a raw vector of DER bytes,
 #'   or the path of a \code{.der}, \code{.crt}, \code{.cer} or \code{.pem}
 #'   file.
 #' @return A list of class \code{c("bricklayer_certificate", "list")} with
@@ -73,12 +73,12 @@
 #'   \code{self_signed} (logical: issuer equals subject) and \code{der} (the
 #'   bytes). \code{print()} shows a summary.
 #' @seealso
-#' [cert_chain_verify()],
-#' [timestamp_verify()].
+#' [certchnvrf()],
+#' [tsvrf()].
 #' @examples
 #' # A small test chain shipped as hexadecimal DER: a self-signed P-256 root
 #' # and a leaf it issued (a throwaway test authority; trust it for nothing).
-#' root_hex <- paste0(
+#' roothex <- paste0(
 #'   "308201973082013ca003020102021452157dfd900c163c5027372ed4090b9d11748286300a06",
 #'   "082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133011060355",
 #'   "04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3336303932",
@@ -90,7 +90,7 @@
 #'   "2ef598166f5b9e6bb65d3252cf127b2c992348ae300a06082a8648ce3d040302034900304602",
 #'   "21009cd3d7968f65630677b3c7437cae5187021d553c756820d34b6a8a1240e7efb7022100a3",
 #'   "c37f0a8e1f38a5263b14414e6f916962bbd36bcbaca40b07d371352de745c0")
-#' leaf_hex <- paste0(
+#' leafhex <- paste0(
 #'   "308201ae30820154a00302010202142fa99d48ead4c033c568837b2288f9e9bf137068300a06",
 #'   "082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133011060355",
 #'   "04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3331313030",
@@ -106,9 +106,9 @@
 #' hex2raw <- function(h) {
 #'   as.raw(strtoi(substring(h, seq(1, nchar(h), 2), seq(2, nchar(h), 2)), 16L))
 #' }
-#' root <- cert_parse(hex2raw(root_hex))
+#' root <- certprs(hex2raw(roothex))
 #' root
-#' leaf <- cert_parse(hex2raw(leaf_hex))
+#' leaf <- certprs(hex2raw(leafhex))
 #' leaf$subject
 #' leaf$key$curve
 #' c(leaf$not_before, leaf$not_after)
@@ -116,15 +116,15 @@
 #' # the same certificate from a PEM file
 #' pem <- tempfile(fileext = ".pem")
 #' writeLines(c("-----BEGIN CERTIFICATE-----",
-#'              strsplit(bricklayer_json_base64_enc(hex2raw(root_hex)), "\n")[[1]],
+#'              strsplit(jsb64enc(hex2raw(roothex)), "\n")[[1]],
 #'              "-----END CERTIFICATE-----"), pem)
-#' cert_parse(pem)$self_signed
+#' certprs(pem)$self_signed
 #'
 #' # bytes that are not a certificate
-#' try(cert_parse(charToRaw("not a certificate")))
+#' try(certprs(charToRaw("not a certificate")))
 #' @export
-cert_parse <- function(certificate) {
-  der <- .rmbl_as_bytes(certificate, "certificate")
+certprs <- function(cert) {
+  der <- .rmbl_as_bytes(cert, "cert")
   top <- .Call(C_rmbl_der_parse, der)
   if (length(top$children) < 3L) {
     stop("not an X.509 certificate", call. = FALSE)
@@ -229,7 +229,7 @@ format.bricklayer_certificate <- function(x, ...) {
   )
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_certificate <- function(x, ...) {
   cat(format(x), sep = "\n")
@@ -242,7 +242,7 @@ print.bricklayer_certificate <- function(x, ...) {
 #' verifying each signature, each validity window, and the constraints that
 #' stop a certificate being used for something it was not issued for.
 #'
-#' `at_time` is the point the validity windows are checked against,
+#' `attm` is the point the validity windows are checked against,
 #' and it matters which one you pass. For a timestamp token the right
 #' answer is the time the token asserts: a token signed in 2020 by a
 #' certificate that expired in 2021 was validly signed, and checking it
@@ -250,28 +250,28 @@ print.bricklayer_certificate <- function(x, ...) {
 #' are being asked to rely on now, pass now.
 #'
 #' @param leaf The certificate to validate, from
-#' [cert_parse()] or anything
-#' [cert_parse()] accepts.
+#' [certprs()] or anything
+#' [certprs()] accepts.
 #' @param trust A list of trust anchors -- the certificates
 #' you have decided to believe. A chain that does not reach one of these
 #' fails.
-#' @param intermediates Optional further certificates
+#' @param inter Optional further certificates
 #' to build the path through. They are not trusted by being supplied; they
 #' still have to verify.
-#' @param at_time The time to check validity windows at: a \code{POSIXct} or
+#' @param attm The time to check validity windows at: a \code{POSIXct} or
 #' anything \code{as.POSIXct()} reads, taken as UTC. Defaults to now.
-#' @param purpose Optional extended key usage the leaf must
+#' @param purp Optional extended key usage the leaf must
 #' carry, as a name (\code{"timeStamping"}, \code{"codeSigning"}, ...) or
 #' an OID. Default \code{NULL}: no purpose is required.
 #' @param crls Optional list of CRLs, as raw DER or paths, to check
 #' the chain against. Default \code{list()}.
-#' @param policies Optional character vector of acceptable certificate
+#' @param pols Optional character vector of acceptable certificate
 #' policy OIDs; default \code{NULL}.
 #' Supplied, the path must yield at least one of them after policy mapping
 #' and the constraints in RFC 5280 section 6.1; omitted, policies are
 #' processed but only reported as a failure when a certificate in the path
 #' requires an explicit policy.
-#' @param revocation `"supplied"` (the default)
+#' @param rvk `"supplied"` (the default)
 #' checks only the CRLs given in `crls`. `"fetch"` additionally
 #' retrieves CRLs from the distribution points in the certificates and
 #' queries OCSP responders
@@ -282,19 +282,19 @@ print.bricklayer_certificate <- function(x, ...) {
 #' The path is built by following issuer names from the leaf through the
 #' intermediates until a certificate in \code{trust} is reached, at most ten
 #' steps (a cycle among supplied certificates cannot loop). Then every link is
-#' checked: the validity window at \code{at_time}, the signature under the
+#' checked: the validity window at \code{attm}, the signature under the
 #' issuer's key (RSA PKCS#1 v1.5 with SHA-1, SHA-256, SHA-384 or SHA-512;
 #' ECDSA with SHA-256, SHA-384 or SHA-512 on P-256, P-384 and P-521), that
 #' every issuer is a CA with a path length that allows the chain, name
 #' constraints, the policy rules of RFC 5280 section 6.1, the requested
-#' \code{purpose} (extended key usage of the leaf), that the anchor is
-#' self-signed, and revocation as \code{revocation} says. Each
+#' \code{purp} (extended key usage of the leaf), that the anchor is
+#' self-signed, and revocation as \code{rvk} says. Each
 #' check is one row of \code{checks}; \code{ok} is \code{TRUE} only when every
 #' row passed. A failed check is a row, not an error.
 #'
-#' Errors: \code{trust} empty; a certificate that [cert_parse()]
+#' Errors: \code{trust} empty; a certificate that [certprs()]
 #' cannot read;
-#' an unknown \code{revocation}. With \code{revocation = "fetch"} the network
+#' an unknown \code{rvk}. With \code{revocation = "fetch"} the network
 #' is used (distribution points and OCSP responders named in the
 #' certificates); otherwise nothing is fetched.
 #'
@@ -302,15 +302,15 @@ print.bricklayer_certificate <- function(x, ...) {
 #' (logical, the verdict), \code{path} (the list of certificates from the
 #' leaf to the anchor, as built), \code{checks} (a data frame with
 #' \code{check}, logical \code{ok} and \code{detail}, one row per check),
-#' \code{at_time} (the time used) and \code{policies} (the outcome of policy
+#' \code{attm} (the time used) and \code{policies} (the outcome of policy
 #' processing). \code{print()} shows the verdict and the checks.
 #' @seealso
-#' [cert_parse()],
-#' [timestamp_verify()].
+#' [certprs()],
+#' [tsvrf()].
 #' @examples
 #' # A small test chain shipped as hexadecimal DER: a self-signed P-256 root
 #' # and a leaf it issued (a throwaway test authority; trust it for nothing).
-#' root_hex <- paste0(
+#' roothex <- paste0(
 #'   "308201973082013ca003020102021452157dfd900c163c5027372ed4090b9d11748286300a06",
 #'   "082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133011060355",
 #'   "04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3336303932",
@@ -322,7 +322,7 @@ print.bricklayer_certificate <- function(x, ...) {
 #'   "2ef598166f5b9e6bb65d3252cf127b2c992348ae300a06082a8648ce3d040302034900304602",
 #'   "21009cd3d7968f65630677b3c7437cae5187021d553c756820d34b6a8a1240e7efb7022100a3",
 #'   "c37f0a8e1f38a5263b14414e6f916962bbd36bcbaca40b07d371352de745c0")
-#' leaf_hex <- paste0(
+#' leafhex <- paste0(
 #'   "308201ae30820154a00302010202142fa99d48ead4c033c568837b2288f9e9bf137068300a06",
 #'   "082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133011060355",
 #'   "04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3331313030",
@@ -338,44 +338,44 @@ print.bricklayer_certificate <- function(x, ...) {
 #' hex2raw <- function(h) {
 #'   as.raw(strtoi(substring(h, seq(1, nchar(h), 2), seq(2, nchar(h), 2)), 16L))
 #' }
-#' root <- cert_parse(hex2raw(root_hex))
-#' leaf <- cert_parse(hex2raw(leaf_hex))
+#' root <- certprs(hex2raw(roothex))
+#' leaf <- certprs(hex2raw(leafhex))
 #'
 #' # the leaf chains to the root, checked a day after it was issued
-#' res <- cert_chain_verify(leaf, trust = root, at_time = leaf$not_before + 86400)
+#' res <- certchnvrf(leaf, trust = root, attm = leaf$not_before + 86400)
 #' res$ok
 #' res$checks[, c("check", "ok")]
 #'
 #' # after the leaf expired, the same chain fails on validity
-#' cert_chain_verify(leaf, trust = root, at_time = leaf$not_after + 86400)$ok
+#' certchnvrf(leaf, trust = root, attm = leaf$not_after + 86400)$ok
 #'
 #' # a purpose the leaf was not issued for
-#' r <- cert_chain_verify(leaf, trust = root, at_time = leaf$not_before + 86400,
-#'                        purpose = "timeStamping")
+#' r <- certchnvrf(leaf, trust = root, attm = leaf$not_before + 86400,
+#'                        purp = "timeStamping")
 #' r$checks[!r$checks$ok, ]
 #'
 #' # a chain must end at something you trust
-#' try(cert_chain_verify(leaf, trust = list()))
+#' try(certchnvrf(leaf, trust = list()))
 #' \dontrun{
 #' # with revocation looked up on the network
-#' cert_chain_verify("tsa.crt", trust = "ca.crt", purpose = "timeStamping",
-#'                   revocation = "fetch")
+#' certchnvrf("tsa.crt", trust = "ca.crt", purp = "timeStamping",
+#'                   rvk = "fetch")
 #' }
 #' @export
-cert_chain_verify <- function(leaf, trust, intermediates = list(),
-                              at_time = Sys.time(), purpose = NULL,
-                              crls = list(), policies = NULL,
-                              revocation = c(
+certchnvrf <- function(leaf, trust, inter = list(),
+                              attm = Sys.time(), purp = NULL,
+                              crls = list(), pols = NULL,
+                              rvk = c(
                                 "supplied", "fetch",
                                 "none"
                               )) {
-  .rmbl_no_fn(purpose = purpose, policies = policies)
-  if (!(inherits(at_time, c("POSIXt", "Date")) || (is.numeric(at_time) && !is.object(at_time))) ||
-        length(at_time) != 1L || is.na(at_time) || !is.finite(as.numeric(at_time))) {
-    stop("`at_time` must be a single date-time (POSIXct)", call. = FALSE)
+  .rmbl_no_fn(purpose = purp, policies = pols)
+  if (!(inherits(attm, c("POSIXt", "Date")) || (is.numeric(attm) && !is.object(attm))) ||
+        length(attm) != 1L || is.na(attm) || !is.finite(as.numeric(attm))) {
+    stop("`attm` must be a single date-time (POSIXct)", call. = FALSE)
   }
   as_cert <- function(x) {
-    if (inherits(x, "bricklayer_certificate")) x else cert_parse(x)
+    if (inherits(x, "bricklayer_certificate")) x else certprs(x)
   }
   as_list <- function(x) {
     if (is.null(x)) {
@@ -390,7 +390,7 @@ cert_chain_verify <- function(leaf, trust, intermediates = list(),
   }
   leaf <- as_cert(leaf)
   trust <- lapply(as_list(trust), as_cert)
-  intermediates <- lapply(as_list(intermediates), as_cert)
+  inter <- lapply(as_list(inter), as_cert)
   crls <- as_list(crls)
   if (!length(trust)) {
     stop("`trust` must name at least one anchor; a chain that reaches ",
@@ -398,8 +398,8 @@ cert_chain_verify <- function(leaf, trust, intermediates = list(),
       call. = FALSE
     )
   }
-  at_time <- as.POSIXct(at_time, tz = "UTC")
-  revocation <- .rmbl_arg(revocation)
+  attm <- as.POSIXct(attm, tz = "UTC")
+  rvk <- .rmbl_arg(rvk)
 
   checks <- list()
   note_row <- function(check, ok, detail = "") {
@@ -413,7 +413,7 @@ cert_chain_verify <- function(leaf, trust, intermediates = list(),
   # until an anchor is reached. A depth cap because a cycle among
   # supplied certificates would otherwise loop.
   path <- list(leaf)
-  pool <- c(intermediates, trust)
+  pool <- c(inter, trust)
   cur <- leaf
   anchor <- NULL
   for (depth in seq_len(10L)) {
@@ -444,14 +444,14 @@ cert_chain_verify <- function(leaf, trust, intermediates = list(),
   for (i in seq_along(path)) {
     cert <- path[[i]]
     tag <- sprintf("[%d] %s", i, substring(cert$subject, 1L, 24L))
-    within <- at_time >= cert$not_before && at_time <= cert$not_after
+    within <- attm >= cert$not_before && attm <= cert$not_after
     note_row(
       paste("validity", tag), within,
       sprintf(
         "%s to %s, checked at %s",
         format(cert$not_before, "%Y-%m-%d", tz = "UTC"),
         format(cert$not_after, "%Y-%m-%d", tz = "UTC"),
-        format(at_time, "%Y-%m-%d", tz = "UTC")
+        format(attm, "%Y-%m-%d", tz = "UTC")
       )
     )
     if (i > 1L) {
@@ -525,12 +525,12 @@ cert_chain_verify <- function(leaf, trust, intermediates = list(),
     }
   }
 
-  pol <- .rmbl_policy_tree(path, initial = if (is.null(policies)) {
+  pol <- .rmbl_policy_tree(path, initial = if (is.null(pols)) {
     kAnyPolicy
   } else {
-    policies
+    pols
   })
-  if (!is.null(policies) || isTRUE(pol$explicit_required)) {
+  if (!is.null(pols) || isTRUE(pol$explicit_required)) {
     note_row(
       "certificate policies", pol$ok,
       if (pol$ok) {
@@ -549,8 +549,8 @@ cert_chain_verify <- function(leaf, trust, intermediates = list(),
     )
   }
 
-  if (!is.null(purpose)) {
-    want <- .rmbl_eku_oid(purpose)
+  if (!is.null(purp)) {
+    want <- .rmbl_eku_oid(purp)
     have <- leaf$extended_key_usage
     ok <- length(have) == 0L || want %in% .rmbl_eku_oid(have)
     note_row(
@@ -563,7 +563,7 @@ cert_chain_verify <- function(leaf, trust, intermediates = list(),
     )
   }
 
-  if (identical(revocation, "fetch")) {
+  if (identical(rvk, "fetch")) {
     # Fetching is opt-in and never the default. A verifier that reaches
     # out during a check stops working offline, and tells whoever runs
     # the responder which certificates are being checked and when.
@@ -573,8 +573,8 @@ cert_chain_verify <- function(leaf, trust, intermediates = list(),
       note_row(names(fetched$notes)[i], fetched$ok[i], fetched$notes[[i]])
     }
   }
-  if (length(crls) && !identical(revocation, "none")) {
-    rv <- .rmbl_crl_check(path, crls, at_time)
+  if (length(crls) && !identical(rvk, "none")) {
+    rv <- .rmbl_crl_check(path, crls, attm)
     for (i in seq_len(nrow(rv))) {
       note_row(rv$check[i], rv$ok[i], rv$detail[i])
     }
@@ -584,7 +584,7 @@ cert_chain_verify <- function(leaf, trust, intermediates = list(),
   rownames(df) <- NULL
   out <- list(
     ok = all(df$ok), path = path, checks = df,
-    at_time = at_time, policies = pol
+    at_time = attm, policies = pol
   )
   class(out) <- c("bricklayer_certpath_check", "list")
   out
@@ -613,7 +613,7 @@ format.bricklayer_certpath_check <- function(x, ...) {
   )
 }
 
-#' @rdname rmbl_print_methods
+#' @rdname printmeth
 #' @export
 print.bricklayer_certpath_check <- function(x, ...) {
   cat(format(x), sep = "\n")

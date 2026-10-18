@@ -27,14 +27,14 @@
 }
 
 .rmbl_first_treated <- function(data, first_treated, p) {
-  v <- .rmbl_colnames(first_treated, "first_treated")
-  if (!v %in% names(data)) stop(sprintf("`first_treated` (%s) is not a column of `data`", v), call. = FALSE)
+  v <- .rmbl_colnames(first_treated, "ftreat")
+  if (!v %in% names(data)) stop(sprintf("`ftreat` (%s) is not a column of `data`", v), call. = FALSE)
   g <- data[[v]]
   if (is.logical(g) && all(is.na(g))) g <- as.numeric(g)
-  if (!is.numeric(g)) stop("`first_treated` must be numeric (NA, 0 or Inf for never treated)", call. = FALSE)
+  if (!is.numeric(g)) stop("`ftreat` must be numeric (NA, 0 or Inf for never treated)", call. = FALSE)
   g[is.na(g) | g == 0] <- Inf
   per_unit <- tapply(g, p$u, function(z) length(unique(z)))
-  if (any(per_unit > 1L)) stop("`first_treated` must be the same in every row of a unit", call. = FALSE)
+  if (any(per_unit > 1L)) stop("`ftreat` must be the same in every row of a unit", call. = FALSE)
   g
 }
 
@@ -173,40 +173,40 @@
 #' treated (or not yet treated) in the periods before the first treatment, the way an
 #' effect on a rate is usually reported ("a 12\% fall").
 #'
-#' With \code{fixed_effects = "time"} the unit effects are left out, and the model is
+#' With \code{fe = "time"} the unit effects are left out, and the model is
 #' the cross-section with period effects of a comparison between kinds of units (for
 #' example blocks in dynastic and in other wards).
 #'
 #' When treatment starts at different times, this estimator weights earlier-treated
 #' units as controls for later ones, and can be biased if the effect changes over
-#' time: see \code{\link{bacon_decomposition}} for the weights and
-#' \code{\link{staggered_att}} for estimators that avoid them.
+#' time: see \code{\link{bacondcmp}} for the weights and
+#' \code{\link{stgatt}} for estimators that avoid them.
 #'
 #' @param data A data frame, one row per unit and period.
-#' @param unit,time,outcome Column names: the unit, the period (numeric, for example a
+#' @param unit,time,y Column names: the unit, the period (numeric, for example a
 #'   year or a month index) and the outcome.
-#' @param treated Column name of the treatment indicator (0 or 1).
-#' @param covariates Optional column names of time-varying controls.
-#' @param cluster Column name of the clusters (default the unit), or two column names
+#' @param trtd Column name of the treatment indicator (0 or 1).
+#' @param covs Optional column names of time-varying controls.
+#' @param cl Column name of the clusters (default the unit), or two column names
 #'   for two-way clustering (Cameron, Gelbach and Miller 2011):
 #'   \eqn{V_a + V_b - V_{ab}}, each term with the small-sample factor of the dimension
 #'   with fewer clusters, and t on its \eqn{G - 1} degrees of freedom. A composite
 #'   cluster (district by month, say) is one column made with \code{interaction()}.
-#' @param fixed_effects \code{c("unit", "time")} (default) or \code{"time"}.
-#' @param weights Optional column name of non-negative weights (population, or
+#' @param fe \code{c("unit", "time")} (default) or \code{"time"}.
+#' @param w Optional column name of non-negative weights (population, or
 #'   matching weights): weighted least squares, with weighted within-means.
-#' @param combine Optional linear combination of the terms, named by them, reported
+#' @param comb Optional linear combination of the terms, named by them, reported
 #'   with its delta-method standard error as the attribute \code{combined}. For a
 #'   phase-in model with an exposure term \eqn{E_{it} = \min(t - G_i, K)},
 #'   \code{combine = c(treated = 1, exposure = 12)} is the effect after twelve
 #'   periods, with its error, and as a percentage of the comparison units' pre-period
 #'   mean (that mean taken as fixed).
-#' @param conf_level Confidence level (default 0.95).
+#' @param conflvl Confidence level (default 0.95).
 #' @return A data frame of class \code{rmbl_did}, one row per term (the treatment
 #'   first, then the covariates): \code{term}, \code{estimate}, \code{se},
 #'   \code{lower}, \code{upper}, \code{t}, \code{p_value}. Attributes: \code{n},
-#'   \code{clusters}, \code{control_mean} (the pre-period mean of the comparison
-#'   units), \code{relative_effect} (the estimate over it), \code{vcov}, and with
+#'   \code{clusters}, \code{ctlmean} (the pre-period mean of the comparison
+#'   units), \code{releff} (the estimate over it), \code{vcov}, and with
 #'   \code{combine} also \code{combined}.
 #' @references Bertrand M, Duflo E, Mullainathan S (2004). How much should we trust
 #'   differences-in-differences estimates? Quarterly Journal of Economics
@@ -223,59 +223,59 @@
 #' Mejia D, Zorro Medina A (2023). On the tension between due process protection and
 #' public safety: the case of an extensive procedural reform in Colombia.
 #' \doi{10.2139/ssrn.4585682}
-#' @seealso \code{\link{event_study}}, \code{\link{staggered_att}},
-#'   \code{\link{permutation_inference}}, \code{\link{fe_poisson}}.
+#' @seealso \code{\link{evstudy}}, \code{\link{stgatt}},
+#'   \code{\link{perminf}}, \code{\link{plnpois}}.
 #' @examples
-#' p <- policy_example()
-#' did_panel(p, "district", "month", "crime_rate", "reformed")
+#' p <- polex()
+#' plndid(p, "district", "month", "crmrate", "reformed")
 #' # clustered by region instead of district
-#' did_panel(p, "district", "month", "crime_rate", "reformed", cluster = "region")
+#' plndid(p, "district", "month", "crmrate", "reformed", cl = "region")
 #' @export
-did_panel <- function(data, unit, time, outcome, treated, covariates = NULL, cluster = NULL,
-                      fixed_effects = c("unit", "time"), weights = NULL, combine = NULL, conf_level = 0.95) {
-  conf_level <- .rmbl_conf_level(conf_level)
-  fixed_effects <- .rmbl_arg(fixed_effects, c("unit", "time"), several = TRUE)
-  if (!"time" %in% fixed_effects) stop("`fixed_effects` must include \"time\"", call. = FALSE)
-  p <- .rmbl_panel(data, unit, time, outcome)
-  v <- .rmbl_colnames(treated, "treated")
-  if (!v %in% names(data)) stop(sprintf("`treated` (%s) is not a column of `data`", v), call. = FALSE)
+plndid <- function(data, unit, time, y, trtd, covs = NULL, cl = NULL,
+                      fe = c("unit", "time"), w = NULL, comb = NULL, conflvl = 0.95) {
+  conflvl <- .rmbl_conf_level(conflvl)
+  fe <- .rmbl_arg(fe, c("unit", "time"), several = TRUE)
+  if (!"time" %in% fe) stop("`fe` must include \"time\"", call. = FALSE)
+  p <- .rmbl_panel(data, unit, time, y)
+  v <- .rmbl_colnames(trtd, "trtd")
+  if (!v %in% names(data)) stop(sprintf("`trtd` (%s) is not a column of `data`", v), call. = FALSE)
   d <- data[[v]]
   if (is.logical(d)) d <- as.numeric(d)
   if (!is.numeric(d) || anyNA(d) || !all(d %in% c(0, 1))) {
-    stop("`treated` must be 0 or 1 (or FALSE or TRUE), with no NA", call. = FALSE)
+    stop("`trtd` must be 0 or 1 (or FALSE or TRUE), with no NA", call. = FALSE)
   }
-  if (length(unique(d)) < 2L) stop("`treated` never varies: there is no comparison", call. = FALSE)
-  w <- .rmbl_weights(data, weights)
-  cl <- .rmbl_cluster(data, cluster, p)
-  x <- cbind(treated = d, .rmbl_covariates(data, covariates))
+  if (length(unique(d)) < 2L) stop("`trtd` never varies: there is no comparison", call. = FALSE)
+  .w <- .rmbl_weights(data, w)
+  .cl <- .rmbl_cluster(data, cl, p)
+  x <- cbind(treated = d, .rmbl_covariates(data, covs))
   fes <- list(time = as.integer(factor(p$t)))
-  if ("unit" %in% fixed_effects) fes <- c(list(unit = p$u), fes)
-  xd <- .rmbl_demean(x, fes, w = w)
-  yd <- as.vector(.rmbl_demean(p$y, fes, w = w))
-  fit <- .rmbl_ols_cr1(yd, xd, cl, .rmbl_k_fe(fes, cl), w = w)
-  out <- .rmbl_coef_table(fit, colnames(x), conf_level)
+  if ("unit" %in% fe) fes <- c(list(unit = p$u), fes)
+  xd <- .rmbl_demean(x, fes, w = .w)
+  yd <- as.vector(.rmbl_demean(p$y, fes, w = .w))
+  fit <- .rmbl_ols_cr1(yd, xd, .cl, .rmbl_k_fe(fes, .cl), w = .w)
+  out <- .rmbl_coef_table(fit, colnames(x), conflvl)
   ever <- tapply(d, p$u, max)[p$u] > 0
   first <- min(p$t[d == 1])
   pre <- !ever & p$t < first
   if (!any(pre)) pre <- d == 0 & p$t < first
-  cm <- if (any(pre)) sum(w[pre] * p$y[pre]) / sum(w[pre]) else NA_real_
-  if (!is.null(combine)) {
-    if (!is.numeric(combine) || is.null(names(combine)) || !all(names(combine) %in% colnames(x))) {
-      stop("`combine` must be numbers named by the terms (\"treated\" and covariates)", call. = FALSE)
+  cm <- if (any(pre)) sum(.w[pre] * p$y[pre]) / sum(.w[pre]) else NA_real_
+  if (!is.null(comb)) {
+    if (!is.numeric(comb) || is.null(names(comb)) || !all(names(comb) %in% colnames(x))) {
+      stop("`comb` must be numbers named by the terms (\"treated\" and covariates)", call. = FALSE)
     }
     a <- stats::setNames(numeric(ncol(x)), colnames(x))
-    a[names(combine)] <- combine
+    a[names(comb)] <- comb
     est <- sum(a * fit$coef)
     se <- sqrt(as.numeric(t(a) %*% fit$vcov %*% a))
-    tq <- stats::qt(1 - (1 - conf_level) / 2, fit$clusters - 1L)
+    tq <- stats::qt(1 - (1 - conflvl) / 2, fit$clusters - 1L)
     attr(out, "combined") <- data.frame(estimate = est, se = se, lower = est - tq * se, upper = est + tq * se,
-                                        percent = 100 * est / cm, percent_se = 100 * se / abs(cm))
+                                        percent = 100 * est / cm, perse = 100 * se / abs(cm))
   }
   attr(out, "n") <- fit$n
   attr(out, "clusters") <- fit$clusters
-  attr(out, "control_mean") <- cm
-  attr(out, "relative_effect") <- out$estimate[1L] / cm
-  attr(out, "conf_level") <- conf_level
+  attr(out, "ctlmean") <- cm
+  attr(out, "releff") <- out$estimate[1L] / cm
+  attr(out, "conflvl") <- conflvl
   attr(out, "vcov") <- fit$vcov
   class(out) <- c("rmbl_did", "data.frame")
   out
@@ -286,10 +286,10 @@ print.rmbl_did <- function(x, ...) {
   d <- as.data.frame(x)
   cat(sprintf("Difference in differences: %d observations, %d clusters\n", attr(x, "n"), attr(x, "clusters")))
   print(format(d, digits = 4L), row.names = FALSE)
-  cm <- attr(x, "control_mean")
+  cm <- attr(x, "ctlmean")
   if (is.finite(cm) && cm != 0) {
     cat(sprintf("Effect relative to the comparison units' pre-period mean (%.4g): %+.1f%%\n", cm,
-                100 * attr(x, "relative_effect")))
+                100 * attr(x, "releff")))
   }
   invisible(x)
 }
@@ -310,27 +310,27 @@ print.rmbl_did <- function(x, ...) {
 #' the period before adoption) left out. Times beyond the window are binned into its
 #' end points (\code{bin = TRUE}), or dropped. Units never treated have every
 #' indicator 0. The variance and degrees of freedom are those of
-#' \code{\link{did_panel}}. The pre-trend test is the Wald statistic
+#' \code{\link{plndid}}. The pre-trend test is the Wald statistic
 #' \eqn{W = \hat\gamma_{pre}'\hat V_{pre}^{-1}\hat\gamma_{pre}}, reported as
 #' \eqn{F = W/q} on \eqn{q} and \eqn{G - 1} degrees of freedom.
 #'
 #' With staggered adoption and effects that change over time, the lead and lag
 #' coefficients can mix in effects from other periods (Sun and Abraham 2021);
-#' \code{\link{staggered_att}} gives the event-time effects free of that.
+#' \code{\link{stgatt}} gives the event-time effects free of that.
 #'
-#' @inheritParams did_panel
-#' @param first_treated Column name of the period a unit is first treated (\code{NA},
+#' @inheritParams plndid
+#' @param ftreat Column name of the period a unit is first treated (\code{NA},
 #' 0 or \code{Inf} for a unit never treated). Treatment is taken as staying on.
 #' @param leads,lags The number of periods before and after adoption to estimate
 #' (default 4 and 4).
-#' @param reference The period left out (default -1).
+#' @param ref The period left out (default -1).
 #' @param bin Bin the periods beyond the window into its end points (default
 #' \code{TRUE}).
-#' @return A data frame of class \code{rmbl_event_study}: \code{event_time},
+#' @return A data frame of class \code{rmbl_event_study}: \code{evtm},
 #'   \code{estimate}, \code{se}, \code{lower}, \code{upper}, \code{t}, \code{p_value},
 #'   with the reference period as a row of zeros; attributes \code{pretrend} (a list:
 #'   \code{F}, \code{df1}, \code{df2}, \code{p_value}), \code{vcov} (of the estimated
-#'   event times), \code{n}, \code{clusters}, \code{conf_level}. \code{plot()} draws
+#'   event times), \code{n}, \code{clusters}, \code{conflvl}. \code{plot()} draws
 #'   it.
 #' @references Sun L, Abraham S (2021). Estimating dynamic treatment effects in event
 #'   studies with heterogeneous treatment effects. Journal of Econometrics
@@ -339,24 +339,24 @@ print.rmbl_did <- function(x, ...) {
 #' Applied to the effect of donations on police stops, block by quarter: Zorro Medina
 #' A, Hackett D, Green D, Vargas R (2025). Evidence of donor bias in Chicago police
 #' stops. \href{https://arxiv.org/abs/2504.15140}{arXiv:2504.15140}.
-#' @seealso \code{\link{did_panel}}, \code{\link{staggered_att}}.
+#' @seealso \code{\link{plndid}}, \code{\link{stgatt}}.
 #' @examples
-#' p <- policy_example()
-#' es <- event_study(p, "district", "month", "crime_rate", "reform_month", leads = 3,
+#' p <- polex()
+#' es <- evstudy(p, "district", "month", "crmrate", "refmonth", leads = 3,
 #'                   lags = 4)
 #' es
 #' attr(es, "pretrend")$p_value
 #' plot(es)
 #' @export
-event_study <- function(data, unit, time, outcome, first_treated, leads = 4L, lags = 4L, reference = -1L,
-                        bin = TRUE, covariates = NULL, cluster = NULL, conf_level = 0.95) {
-  conf_level <- .rmbl_conf_level(conf_level)
+evstudy <- function(data, unit, time, y, ftreat, leads = 4L, lags = 4L, ref = -1L,
+                        bin = TRUE, covs = NULL, cl = NULL, conflvl = 0.95) {
+  conflvl <- .rmbl_conf_level(conflvl)
   leads <- .rmbl_scalar(leads, "leads", 1, 1000, integer = TRUE)
   lags <- .rmbl_scalar(lags, "lags", 0, 1000, integer = TRUE)
-  reference <- .rmbl_scalar(reference, "reference", -leads, lags, integer = TRUE)
+  ref <- .rmbl_scalar(ref, "ref", -leads, lags, integer = TRUE)
   if (!is.logical(bin) || length(bin) != 1L || is.na(bin)) stop("`bin` must be TRUE or FALSE", call. = FALSE)
-  p <- .rmbl_panel(data, unit, time, outcome)
-  g <- .rmbl_first_treated(data, first_treated, p)
+  p <- .rmbl_panel(data, unit, time, y)
+  g <- .rmbl_first_treated(data, ftreat, p)
   if (all(is.infinite(g))) stop("no unit is ever treated", call. = FALSE)
   k <- p$t - g
   keep <- rep(TRUE, length(k))
@@ -366,28 +366,28 @@ event_study <- function(data, unit, time, outcome, first_treated, leads = 4L, la
   } else {
     keep <- !is.finite(k) | (k >= -leads & k <= lags)
   }
-  ks <- setdiff(seq(-leads, lags), reference)
+  ks <- setdiff(seq(-leads, lags), ref)
   x <- vapply(ks, function(j) as.numeric(is.finite(k) & k == j), numeric(length(k)))
   x <- matrix(x, length(k), dimnames = list(NULL, paste0("k", ks)))
-  cv <- .rmbl_covariates(data, covariates)
+  cv <- .rmbl_covariates(data, covs)
   if (!is.null(cv)) x <- cbind(x, cv)
-  cl <- .rmbl_cluster(data, cluster, p)
+  .cl <- .rmbl_cluster(data, cl, p)
   sub <- function(z) if (is.matrix(z)) z[keep, , drop = FALSE] else z[keep]
   fes <- list(unit = sub(p$u), time = as.integer(factor(sub(p$t))))
-  cl <- sub(cl)
+  .cl <- sub(.cl)
   x <- sub(x)
   present <- colSums(abs(x)) > 0
   if (any(!present[seq_along(ks)])) {
     stop(sprintf("no observation at event time %s: narrow `leads` or `lags`",
                  paste(ks[!present[seq_along(ks)]], collapse = ", ")), call. = FALSE)
   }
-  fit <- .rmbl_ols_cr1(as.vector(.rmbl_demean(sub(p$y), fes)), .rmbl_demean(x, fes), cl, .rmbl_k_fe(fes, cl))
-  tab <- .rmbl_coef_table(fit, paste0("k", ks), conf_level)
-  tab$event_time <- ks
-  ref <- data.frame(term = paste0("k", reference), estimate = 0, se = 0, lower = 0, upper = 0, t = NA_real_,
-                    p_value = NA_real_, event_time = reference, stringsAsFactors = FALSE)
-  out <- rbind(tab, ref)
-  out <- out[order(out$event_time), c("event_time", "estimate", "se", "lower", "upper", "t", "p_value")]
+  fit <- .rmbl_ols_cr1(as.vector(.rmbl_demean(sub(p$y), fes)), .rmbl_demean(x, fes), .cl, .rmbl_k_fe(fes, .cl))
+  tab <- .rmbl_coef_table(fit, paste0("k", ks), conflvl)
+  tab$evtm <- ks
+  .ref <- data.frame(term = paste0("k", ref), estimate = 0, se = 0, lower = 0, upper = 0, t = NA_real_,
+                    p_value = NA_real_, evtm = ref, stringsAsFactors = FALSE)
+  out <- rbind(tab, .ref)
+  out <- out[order(out$evtm), c("evtm", "estimate", "se", "lower", "upper", "t", "p_value")]
   rownames(out) <- NULL
   pre <- paste0("k", ks[ks < 0])
   if (length(pre)) {
@@ -403,7 +403,7 @@ event_study <- function(data, unit, time, outcome, first_treated, leads = 4L, la
   attr(out, "vcov") <- fit$vcov[paste0("k", ks), paste0("k", ks), drop = FALSE]
   attr(out, "n") <- fit$n
   attr(out, "clusters") <- fit$clusters
-  attr(out, "conf_level") <- conf_level
+  attr(out, "conflvl") <- conflvl
   class(out) <- c("rmbl_event_study", "data.frame")
   out
 }
@@ -423,37 +423,37 @@ print.rmbl_event_study <- function(x, ...) {
 #' @param style For an event study: \code{"dot"} (filled points with solid capped
 #'   bars, the default) or \code{"stata"} (hollow points joined by a line, dashed
 #'   capped bars, dashed reference lines).
-#' @param shade_post Shade the periods after adoption (default \code{FALSE}).
-#' @param ref_line Where the vertical reference line goes (default \code{-0.5},
+#' @param shadepost Shade the periods after adoption (default \code{FALSE}).
+#' @param refline Where the vertical reference line goes (default \code{-0.5},
 #'   between the reference period and adoption; \code{0} puts it at adoption).
 #' @export
 plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NULL, style = c("dot", "stata"),
-                                  shade_post = FALSE, ref_line = -0.5) {
+                                  shadepost = FALSE, refline = -0.5) {
   .rmbl_plot_check(x, "rmbl_event_study")
   style <- .rmbl_arg(style)
   d <- as.data.frame(x)
   cl <- .bl_cols(1L, col, palette)
   yl <- range(c(d$lower, d$upper, 0), na.rm = TRUE)
-  graphics::plot(d$event_time, d$estimate, ylim = yl, type = "n", xlab = "Periods since adoption",
+  graphics::plot(d$evtm, d$estimate, ylim = yl, type = "n", xlab = "Periods since adoption",
                  ylab = "Effect, with its interval", main = .bl_main(main, "Event study"), ...)
-  if (isTRUE(shade_post)) {
+  if (isTRUE(shadepost)) {
     u <- graphics::par("usr")
-    graphics::rect(ref_line, u[3L], u[2L], u[4L], col = grDevices::adjustcolor("#9A9A9A", 0.15), border = NA)
+    graphics::rect(refline, u[3L], u[2L], u[4L], col = grDevices::adjustcolor("#9A9A9A", 0.15), border = NA)
   }
   w <- is.finite(d$lower) & is.finite(d$upper) & d$upper > d$lower
   if (style == "stata") {
     graphics::abline(h = 0, lty = 2, col = "#9A9A9A")
-    graphics::abline(v = ref_line, lty = 2, col = "#9A9A9A")
-    graphics::arrows(d$event_time[w], d$lower[w], d$event_time[w], d$upper[w], angle = 90, code = 3,
+    graphics::abline(v = refline, lty = 2, col = "#9A9A9A")
+    graphics::arrows(d$evtm[w], d$lower[w], d$evtm[w], d$upper[w], angle = 90, code = 3,
                      length = 0.03, col = "#7A7A7A", lty = 2)
-    graphics::lines(d$event_time, d$estimate, col = cl)
-    graphics::points(d$event_time, d$estimate, pch = 1, col = cl)
+    graphics::lines(d$evtm, d$estimate, col = cl)
+    graphics::points(d$evtm, d$estimate, pch = 1, col = cl)
   } else {
     graphics::abline(h = 0, col = "#9A9A9A")
-    graphics::abline(v = ref_line, lty = 2, col = "#9A9A9A")
-    graphics::arrows(d$event_time[w], d$lower[w], d$event_time[w], d$upper[w], angle = 90, code = 3,
+    graphics::abline(v = refline, lty = 2, col = "#9A9A9A")
+    graphics::arrows(d$evtm[w], d$lower[w], d$evtm[w], d$upper[w], angle = 90, code = 3,
                      length = 0.03, col = cl)
-    graphics::points(d$event_time, d$estimate, pch = 19, col = cl)
+    graphics::points(d$evtm, d$estimate, pch = 19, col = cl)
   }
   invisible(d)
 }
@@ -470,14 +470,14 @@ plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' @details Let the cohort \eqn{g} be the units first treated in period \eqn{g}, and
 #' \eqn{C} the comparison units: never treated (\code{control = "never"}), or not yet
 #' treated by period \eqn{\max(t, g - 1)} (\code{"notyet"}, the default). For
-#' \code{method = "callaway_santanna"},
+#' \code{method = "csa"},
 #' \deqn{ATT(g, t) = \big(\bar Y_{g,t} - \bar Y_{g,b}\big) - \big(\bar Y_{C,t} - \bar
 #' Y_{C,b}\big),}{ATT(g, t) = (Y_g,t - Y_g,b) - (Y_C,t - Y_C,b),} with base period
 #' \eqn{b = g - 1} for \eqn{t \ge g}, and \eqn{b = t - 1} before (the "varying" base
 #' of the \code{did} package), so a pre-period ATT is a placebo of one period. It
 #' needs a balanced panel.
 #'
-#' With \code{covariates}, parallel trends need only hold conditionally on them, and
+#' With \code{covs}, parallel trends need only hold conditionally on them, and
 #' each \eqn{ATT(g, t)} is the two-period estimator of Sant'Anna and Zhao (2020) on
 #' the cohort and its comparison units, with the covariates taken at the base period
 #' \eqn{b} (use covariates fixed before treatment: one the policy moves is a bad
@@ -488,11 +488,11 @@ plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' \deqn{\widehat{ATT}_{dr} = \frac{\sum D (\Delta Y - \hat m)}{\sum D} - \frac{\sum
 #' w (\Delta Y - \hat m)}{\sum w}, \quad w = \frac{\hat p (1 - D)}{1 - \hat
 #' p};}{ATT_dr = sum D (dY - m) / sum D - sum w (dY - m) / sum w, w = p (1 - D) / (1 -
-#' p);} \code{est_method = "ipw"} drops \eqn{\hat m} (normalised inverse probability
+#' p);} \code{estmeth = "ipw"} drops \eqn{\hat m} (normalised inverse probability
 #' weighting) and \code{"reg"} drops the weights (outcome regression). The doubly
 #' robust form is consistent when either the propensity or the outcome model is right.
 #' Comparison units with \eqn{\hat p \ge 0.995} are trimmed, as the \code{DRDID}
-#' package does. These agree with \code{did::att_gt()} to rounding error.
+#' package does. These agree with \code{did::attgt()} to rounding error.
 #'
 #' For \code{method = "wooldridge"}, the regression of the outcome on unit and period
 #' effects and an indicator for every treated cohort-period cell, with never-treated
@@ -506,20 +506,20 @@ plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' times and everything recomputed; intervals are normal with the bootstrap standard
 #' error.
 #'
-#' @inheritParams event_study
-#' @param control \code{"notyet"} (default) or \code{"never"}.
-#' @param method \code{"callaway_santanna"} (default) or \code{"wooldridge"}.
+#' @inheritParams evstudy
+#' @param ctrl \code{"notyet"} (default) or \code{"never"}.
+#' @param meth \code{"csa"} (default) or \code{"wooldridge"}.
 #' @param reps Bootstrap replications (default 499; 0 for none).
-#' @param covariates Optional column names of covariates for conditional parallel
-#'   trends (\code{method = "callaway_santanna"} only).
-#' @param est_method With covariates: \code{"dr"} (doubly robust, default),
+#' @param covs Optional column names of covariates for conditional parallel
+#'   trends (\code{method = "csa"} only).
+#' @param estmeth With covariates: \code{"dr"} (doubly robust, default),
 #'   \code{"ipw"} or \code{"reg"}.
 #' @param seed Optional seed for the bootstrap.
-#' @return A list of class \code{rmbl_staggered_att}: \code{att_gt} (a data frame:
-#'   \code{cohort}, \code{period}, \code{event_time}, \code{estimate}, \code{se},
-#'   \code{lower}, \code{upper}, \code{n_cohort}), \code{overall} (one row:
+#' @return A list of class \code{rmbl_staggered_att}: \code{attgt} (a data frame:
+#'   \code{cohort}, \code{period}, \code{evtm}, \code{estimate}, \code{se},
+#'   \code{lower}, \code{upper}, \code{ncoh}), \code{overall} (one row:
 #'   \code{estimate}, \code{se}, \code{lower}, \code{upper}), \code{dynamic} (by
-#'   \code{event_time}), \code{method}, \code{control}, \code{conf_level}.
+#'   \code{evtm}), \code{method}, \code{control}, \code{conflvl}.
 #'   \code{plot()} draws the dynamic effects.
 #' @references Callaway B, Sant'Anna PHC (2021). Difference-in-differences with
 #'   multiple time periods. Journal of Econometrics 225(2):200-230.
@@ -532,31 +532,31 @@ plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' difference-in-differences estimators. \doi{10.2139/ssrn.3906345}
 #'
 #' Applied to a reform rolled out in four stages across judicial districts: Acosta,
-#' Mejia and Zorro Medina (2023), see \code{\link{did_panel}}.
-#' @seealso \code{\link{bacon_decomposition}}, \code{\link{event_study}}.
+#' Mejia and Zorro Medina (2023), see \code{\link{plndid}}.
+#' @seealso \code{\link{bacondcmp}}, \code{\link{evstudy}}.
 #' @examples
-#' p <- policy_example()
-#' s <- staggered_att(p, "district", "month", "crime_rate", "reform_month", reps = 99,
+#' p <- polex()
+#' s <- stgatt(p, "district", "month", "crmrate", "refmonth", reps = 99,
 #'                    seed = 1)
 #' s$overall
 #' head(s$dynamic)
 #' plot(s)
 #' @export
-staggered_att <- function(data, unit, time, outcome, first_treated, control = c("notyet", "never"),
-                          method = c("callaway_santanna", "wooldridge"), cluster = NULL, reps = 499L,
-                          seed = NULL, conf_level = 0.95, covariates = NULL,
-                          est_method = c("dr", "ipw", "reg")) {
-  control <- .rmbl_arg(control)
-  method <- .rmbl_arg(method)
-  est_method <- .rmbl_arg(est_method)
-  if (!is.null(covariates) && method == "wooldridge") {
-    stop("covariates are taken by method = \"callaway_santanna\" (doubly robust, IPW or regression)",
+stgatt <- function(data, unit, time, y, ftreat, ctrl = c("notyet", "never"),
+                          meth = c("csa", "wooldridge"), cl = NULL, reps = 499L,
+                          seed = NULL, conflvl = 0.95, covs = NULL,
+                          estmeth = c("dr", "ipw", "reg")) {
+  ctrl <- .rmbl_arg(ctrl)
+  meth <- .rmbl_arg(meth)
+  estmeth <- .rmbl_arg(estmeth)
+  if (!is.null(covs) && meth == "wooldridge") {
+    stop("covariates are taken by method = \"csa\" (doubly robust, IPW or regression)",
          call. = FALSE)
   }
-  conf_level <- .rmbl_conf_level(conf_level)
+  conflvl <- .rmbl_conf_level(conflvl)
   reps <- .rmbl_scalar(reps, "reps", 0, 1e5, integer = TRUE)
-  p <- .rmbl_panel(data, unit, time, outcome)
-  g <- .rmbl_first_treated(data, first_treated, p)
+  p <- .rmbl_panel(data, unit, time, y)
+  g <- .rmbl_first_treated(data, ftreat, p)
   nu <- length(p$ul)
   nt <- length(p$tl)
   if (length(p$y) != nu * nt) stop("`data` must be a balanced panel: every unit in every period", call. = FALSE)
@@ -565,37 +565,37 @@ staggered_att <- function(data, unit, time, outcome, first_treated, control = c(
   gu <- g[o][seq(1L, by = nt, length.out = nu)]
   gu[is.finite(gu) & gu <= p$tl[1L]] <- -Inf  # treated from the first period: never comparable
   if (!any(is.finite(gu))) stop("no unit is first treated within the panel", call. = FALSE)
-  if (control == "never" && !any(gu == Inf)) {
+  if (ctrl == "never" && !any(gu == Inf)) {
     stop("no never-treated unit: use control = \"notyet\"", call. = FALSE)
   }
-  clu <- if (is.null(cluster)) seq_len(nu) else .rmbl_cluster(data, cluster, p)[o][seq(1L, by = nt, length.out = nu)]
+  clu <- if (is.null(cl)) seq_len(nu) else .rmbl_cluster(data, cl, p)[o][seq(1L, by = nt, length.out = nu)]
   xm <- NULL
-  if (!is.null(covariates)) {
-    cv <- .rmbl_covariates(data, covariates)
+  if (!is.null(covs)) {
+    cv <- .rmbl_covariates(data, covs)
     xm <- lapply(colnames(cv), function(v) matrix(cv[o, v], nu, nt, byrow = TRUE))
     names(xm) <- colnames(cv)
   }
   est <- function(idx) {
-    y <- ym[idx, , drop = FALSE]
+    .y <- ym[idx, , drop = FALSE]
     gg <- gu[idx]
-    if (method == "wooldridge") return(.rmbl_etwfe(y, gg, p$tl, control))
-    .rmbl_cs(y, gg, p$tl, control, if (is.null(xm)) NULL else lapply(xm, function(m) m[idx, , drop = FALSE]),
-             est_method)
+    if (meth == "wooldridge") return(.rmbl_etwfe(.y, gg, p$tl, ctrl))
+    .rmbl_cs(.y, gg, p$tl, ctrl, if (is.null(xm)) NULL else lapply(xm, function(m) m[idx, , drop = FALSE]),
+             estmeth)
   }
   agg <- function(a) {
-    post <- a[a$event_time >= 0 & is.finite(a$estimate), ]
-    w <- post$n_cohort
+    post <- a[a$evtm >= 0 & is.finite(a$estimate), ]
+    w <- post$ncoh
     ov <- if (nrow(post)) sum(w * post$estimate) / sum(w) else NA_real_
-    es <- sort(unique(a$event_time))
+    es <- sort(unique(a$evtm))
     dyn <- vapply(es, function(e) {
-      r <- a[a$event_time == e & is.finite(a$estimate), ]
-      if (nrow(r)) sum(r$n_cohort * r$estimate) / sum(r$n_cohort) else NA_real_
+      r <- a[a$evtm == e & is.finite(a$estimate), ]
+      if (nrow(r)) sum(r$ncoh * r$estimate) / sum(r$ncoh) else NA_real_
     }, numeric(1L))
-    list(overall = ov, dynamic = data.frame(event_time = es, estimate = dyn))
+    list(overall = ov, dynamic = data.frame(evtm = es, estimate = dyn))
   }
   a0 <- est(seq_len(nu))
   g0 <- agg(a0)
-  z <- stats::qnorm(1 - (1 - conf_level) / 2)
+  z <- stats::qnorm(1 - (1 - conflvl) / 2)
   se_gt <- rep(NA_real_, nrow(a0))
   se_ov <- NA_real_
   se_dyn <- rep(NA_real_, nrow(g0$dynamic))
@@ -609,7 +609,7 @@ staggered_att <- function(data, unit, time, outcome, first_treated, control = c(
       key <- paste(ab$cohort, ab$period)
       gb <- agg(ab)
       list(gt = ab$estimate[match(paste(a0$cohort, a0$period), key)], ov = gb$overall,
-           dyn = gb$dynamic$estimate[match(g0$dynamic$event_time, gb$dynamic$event_time)])
+           dyn = gb$dynamic$estimate[match(g0$dynamic$evtm, gb$dynamic$evtm)])
     }))
     draws <- Filter(Negate(is.null), draws)
     sdn <- function(m) apply(m, 2L, stats::sd, na.rm = TRUE)
@@ -624,10 +624,10 @@ staggered_att <- function(data, unit, time, outcome, first_treated, control = c(
   dyn$se <- se_dyn
   dyn$lower <- dyn$estimate - z * se_dyn
   dyn$upper <- dyn$estimate + z * se_dyn
-  out <- list(att_gt = a0[c("cohort", "period", "event_time", "estimate", "se", "lower", "upper", "n_cohort")],
+  out <- list(attgt = a0[c("cohort", "period", "evtm", "estimate", "se", "lower", "upper", "ncoh")],
               overall = data.frame(estimate = g0$overall, se = se_ov, lower = g0$overall - z * se_ov,
                                    upper = g0$overall + z * se_ov),
-              dynamic = dyn, method = method, control = control, conf_level = conf_level)
+              dynamic = dyn, method = meth, control = ctrl, conflvl = conflvl)
   class(out) <- "rmbl_staggered_att"
   out
 }
@@ -657,8 +657,8 @@ staggered_att <- function(data, unit, time, outcome, first_treated, control = c(
   }
   if (!length(rows)) stop("no cohort has a comparison group in any period", call. = FALSE)
   m <- do.call(rbind, rows)
-  data.frame(cohort = m[, 1L], period = m[, 2L], event_time = match(m[, 2L], tl) - match(m[, 1L], tl),
-             estimate = m[, 3L], n_cohort = m[, 4L])
+  data.frame(cohort = m[, 1L], period = m[, 2L], evtm = match(m[, 2L], tl) - match(m[, 1L], tl),
+             estimate = m[, 3L], ncoh = m[, 4L])
 }
 
 # The two-period panel DiD with covariates of Sant'Anna and Zhao (2020): outcome regression on the
@@ -703,8 +703,8 @@ staggered_att <- function(data, unit, time, outcome, first_treated, control = c(
   yd <- as.vector(.rmbl_demean(yy[ok], fes))
   b <- qr.coef(qr(xd), yd)
   if (anyNA(b)) stop("a cohort-period cell is collinear with the fixed effects", call. = FALSE)
-  data.frame(cohort = cells$g, period = cells$t, event_time = match(cells$t, tl) - match(cells$g, tl),
-             estimate = unname(b), n_cohort = vapply(cells$g, function(cg) sum(gg == cg), numeric(1L)))
+  data.frame(cohort = cells$g, period = cells$t, evtm = match(cells$t, tl) - match(cells$g, tl),
+             estimate = unname(b), ncoh = vapply(cells$g, function(cg) sum(gg == cg), numeric(1L)))
 }
 
 #' @export
@@ -722,22 +722,22 @@ print.rmbl_staggered_att <- function(x, ...) {
 #' @rdname plot-methods
 #' @export
 plot.rmbl_staggered_att <- function(x, ..., main = NULL, col = NULL, palette = NULL, style = c("dot", "stata"),
-                                    shade_post = FALSE, ref_line = -0.5) {
+                                    shadepost = FALSE, refline = -0.5) {
   .rmbl_plot_check(x, "rmbl_staggered_att")
   d <- x$dynamic
-  es <- structure(data.frame(event_time = d$event_time, estimate = d$estimate, se = d$se,
+  es <- structure(data.frame(evtm = d$evtm, estimate = d$estimate, se = d$se,
                              lower = ifelse(is.finite(d$lower), d$lower, d$estimate),
                              upper = ifelse(is.finite(d$upper), d$upper, d$estimate)),
                   class = c("rmbl_event_study", "data.frame"))
   # the periods before adoption in one colour and after in another, as the did package draws them
   cols <- if (is.null(col)) c("#2C6FBB", "#C0392B") else rep_len(col, 2L)
   plot.rmbl_event_study(es, ..., main = .bl_main(main, "Effect by time since adoption"), col = cols[2L],
-                        palette = palette, style = style, shade_post = shade_post, ref_line = ref_line)
-  pre <- es$event_time < 0
+                        palette = palette, style = style, shade_post = shadepost, ref_line = refline)
+  pre <- es$evtm < 0
   w <- pre & es$upper > es$lower
-  graphics::arrows(es$event_time[w], es$lower[w], es$event_time[w], es$upper[w], angle = 90, code = 3,
+  graphics::arrows(es$evtm[w], es$lower[w], es$evtm[w], es$upper[w], angle = 90, code = 3,
                    length = 0.03, col = cols[1L])
-  graphics::points(es$event_time[pre], es$estimate[pre], pch = 19, col = cols[1L])
+  graphics::points(es$evtm[pre], es$estimate[pre], pch = 19, col = cols[1L])
   invisible(es)
 }
 
@@ -752,7 +752,7 @@ plot.rmbl_staggered_att <- function(x, ..., main = NULL, col = NULL, palette = N
 #' controls).
 #'
 #' @details For a balanced panel with treatment that stays on and no covariates, the
-#' estimate of \code{\link{did_panel}} is exactly
+#' estimate of \code{\link{plndid}} is exactly
 #' \eqn{\hat\beta = \sum_{k} s_{kU}\hat\beta_{kU} + \sum_{k \ne l} s_{kl}\hat\beta_{kl}},
 #' with weights that sum to one and grow with the groups' sizes \eqn{n} and the
 #' variance of their treatment over time \eqn{\bar D(1 - \bar D)} (Goodman-Bacon 2021,
@@ -760,7 +760,7 @@ plot.rmbl_staggered_att <- function(x, ..., main = NULL, col = NULL, palette = N
 #' large weight on "later vs earlier" comparisons, together with effects that grow
 #' over time, is the warning sign that the two-way estimate is biased.
 #'
-#' @inheritParams did_panel
+#' @inheritParams plndid
 #' @return A data frame of class \code{rmbl_bacon}: \code{type}
 #'   (\code{"treated vs never"}, \code{"earlier vs later"},
 #'   \code{"later vs earlier"}), \code{treated}, \code{control} (the adoption periods;
@@ -769,19 +769,19 @@ plot.rmbl_staggered_att <- function(x, ..., main = NULL, col = NULL, palette = N
 #' @references Goodman-Bacon A (2021). Difference-in-differences with variation in
 #'   treatment timing. Journal of Econometrics 225(2):254-277.
 #'   \doi{10.1016/j.jeconom.2021.03.014}
-#' @seealso \code{\link{did_panel}}, \code{\link{staggered_att}}.
+#' @seealso \code{\link{plndid}}, \code{\link{stgatt}}.
 #' @examples
-#' p <- policy_example()
-#' b <- bacon_decomposition(p, "district", "month", "crime_rate", "reformed")
+#' p <- polex()
+#' b <- bacondcmp(p, "district", "month", "crmrate", "reformed")
 #' b
 #' tapply(b$weight, b$type, sum)
 #' @export
-bacon_decomposition <- function(data, unit, time, outcome, treated) {
-  p <- .rmbl_panel(data, unit, time, outcome)
-  v <- .rmbl_colnames(treated, "treated")
-  if (!v %in% names(data)) stop(sprintf("`treated` (%s) is not a column of `data`", v), call. = FALSE)
+bacondcmp <- function(data, unit, time, y, trtd) {
+  p <- .rmbl_panel(data, unit, time, y)
+  v <- .rmbl_colnames(trtd, "trtd")
+  if (!v %in% names(data)) stop(sprintf("`trtd` (%s) is not a column of `data`", v), call. = FALSE)
   d <- as.numeric(data[[v]])
-  if (anyNA(d) || !all(d %in% c(0, 1))) stop("`treated` must be 0 or 1, with no NA", call. = FALSE)
+  if (anyNA(d) || !all(d %in% c(0, 1))) stop("`trtd` must be 0 or 1, with no NA", call. = FALSE)
   nu <- length(p$ul)
   nt <- length(p$tl)
   if (length(p$y) != nu * nt) stop("`data` must be a balanced panel", call. = FALSE)
@@ -868,8 +868,8 @@ print.rmbl_bacon <- function(x, ...) {
 #' come from the cluster bootstrap. Unlike the two-way estimator, \eqn{DID_M} never
 #' uses a unit whose treatment changed as a control in the period it changed.
 #'
-#' @inheritParams did_panel
-#' @inheritParams staggered_att
+#' @inheritParams plndid
+#' @inheritParams stgatt
 #' @return A data frame of class \code{rmbl_switching_did}, two rows (\code{effect},
 #'   \code{placebo}): \code{estimate}, \code{se}, \code{lower}, \code{upper},
 #'   \code{switchers}.
@@ -881,34 +881,34 @@ print.rmbl_bacon <- function(x, ...) {
 #' Vargas R (2024). How political dynasties concentrate advantage within cities.
 #' Social Forces 102(4):1310-1331. \doi{10.1093/sf/soae029}
 #' @examples
-#' p <- policy_example()
-#' switching_did(p, "district", "month", "crime_rate", "reformed", reps = 99, seed = 1)
+#' p <- polex()
+#' swtdid(p, "district", "month", "crmrate", "reformed", reps = 99, seed = 1)
 #' @export
-switching_did <- function(data, unit, time, outcome, treated, cluster = NULL, reps = 499L, seed = NULL,
-                          conf_level = 0.95) {
-  conf_level <- .rmbl_conf_level(conf_level)
+swtdid <- function(data, unit, time, y, trtd, cl = NULL, reps = 499L, seed = NULL,
+                          conflvl = 0.95) {
+  conflvl <- .rmbl_conf_level(conflvl)
   reps <- .rmbl_scalar(reps, "reps", 0, 1e5, integer = TRUE)
-  p <- .rmbl_panel(data, unit, time, outcome)
-  v <- .rmbl_colnames(treated, "treated")
-  if (!v %in% names(data)) stop(sprintf("`treated` (%s) is not a column of `data`", v), call. = FALSE)
+  p <- .rmbl_panel(data, unit, time, y)
+  v <- .rmbl_colnames(trtd, "trtd")
+  if (!v %in% names(data)) stop(sprintf("`trtd` (%s) is not a column of `data`", v), call. = FALSE)
   d <- as.numeric(data[[v]])
-  if (anyNA(d) || !all(d %in% c(0, 1))) stop("`treated` must be 0 or 1, with no NA", call. = FALSE)
+  if (anyNA(d) || !all(d %in% c(0, 1))) stop("`trtd` must be 0 or 1, with no NA", call. = FALSE)
   nu <- length(p$ul)
   nt <- length(p$tl)
   if (length(p$y) != nu * nt) stop("`data` must be a balanced panel", call. = FALSE)
   o <- order(p$u, p$t)
   ym <- matrix(p$y[o], nu, nt, byrow = TRUE)
   dm <- matrix(d[o], nu, nt, byrow = TRUE)
-  clu <- if (is.null(cluster)) seq_len(nu) else .rmbl_cluster(data, cluster, p)[o][seq(1L, by = nt, length.out = nu)]
+  clu <- if (is.null(cl)) seq_len(nu) else .rmbl_cluster(data, cl, p)[o][seq(1L, by = nt, length.out = nu)]
   est <- function(idx) {
-    y <- ym[idx, , drop = FALSE]
+    .y <- ym[idx, , drop = FALSE]
     dd <- dm[idx, , drop = FALSE]
     num <- 0
     ns <- 0
     pnum <- 0
     pns <- 0
     for (j in 2:nt) {
-      dy <- y[, j] - y[, j - 1L]
+      dy <- .y[, j] - .y[, j - 1L]
       jn <- dd[, j - 1L] == 0 & dd[, j] == 1
       s0 <- dd[, j - 1L] == 0 & dd[, j] == 0
       lv <- dd[, j - 1L] == 1 & dd[, j] == 0
@@ -922,7 +922,7 @@ switching_did <- function(data, unit, time, outcome, treated, cluster = NULL, re
         ns <- ns + sum(lv)
       }
       if (j >= 3L) {
-        dp <- y[, j - 1L] - y[, j - 2L]
+        dp <- .y[, j - 1L] - .y[, j - 2L]
         pj <- jn & dd[, j - 2L] == 0
         ps <- s0 & dd[, j - 2L] == 0
         pl <- lv & dd[, j - 2L] == 1
@@ -950,7 +950,7 @@ switching_did <- function(data, unit, time, outcome, treated, cluster = NULL, re
     }, numeric(2L)))
     se <- apply(b, 1L, stats::sd, na.rm = TRUE)
   }
-  z <- stats::qnorm(1 - (1 - conf_level) / 2)
+  z <- stats::qnorm(1 - (1 - conflvl) / 2)
   out <- data.frame(term = c("effect", "placebo"), estimate = e0[1:2], se = se, lower = e0[1:2] - z * se,
                     upper = e0[1:2] + z * se, switchers = e0[3:4], stringsAsFactors = FALSE)
   class(out) <- c("rmbl_switching_did", "data.frame")
@@ -969,7 +969,7 @@ switching_did <- function(data, unit, time, outcome, treated, cluster = NULL, re
 #'
 #' @details The adoption period of each cluster (for example a judicial district's
 #' stage of a reform) is shuffled among the clusters, keeping the number of clusters
-#' adopting at each date, and \code{\link{did_panel}}'s estimate
+#' adopting at each date, and \code{\link{plndid}}'s estimate
 #' (\code{statistic = "estimate"}) or t statistic (\code{"t"}, the default) is
 #' recomputed. With \eqn{b} of \eqn{R} random assignments at least as extreme as
 #' observed, \eqn{p = (b + 1)/(R + 1)}; when every distinct assignment is enumerated
@@ -977,15 +977,15 @@ switching_did <- function(data, unit, time, outcome, treated, cluster = NULL, re
 #' Fisher's: it is valid in any sample when adoption dates were assigned at random
 #' across clusters.
 #'
-#' For several outcomes, the same assignments give \code{\link{stepdown_pvalues}}.
+#' For several outcomes, the same assignments give \code{\link{stpdnpv}}.
 #'
-#' A placebo date is the same analysis with \code{first_treated} moved earlier, on the
+#' A placebo date is the same analysis with \code{ftreat} moved earlier, on the
 #' periods before the real adoption.
 #'
-#' @inheritParams event_study
+#' @inheritParams evstudy
 #' @param unit,time Column names: the unit and the period (numeric).
-#' @param outcome One outcome column, or several.
-#' @param statistic \code{"t"} (default) or \code{"estimate"}.
+#' @param y One outcome column, or several.
+#' @param stat \code{"t"} (default) or \code{"estimate"}.
 #' @param reps The number of random assignments (default 999).
 #' @param seed Optional seed.
 #' @param ties \code{"count"} (default): an assignment whose statistic equals the
@@ -993,61 +993,61 @@ switching_did <- function(data, unit, time, outcome, treated, cluster = NULL, re
 #'   exact p-value is at least \eqn{1/N}); \code{"strict"}: only larger ones count.
 #' @return A data frame of class \code{rmbl_permutation}, one row per outcome:
 #'   \code{outcome}, \code{estimate}, \code{statistic}, \code{p_value},
-#'   \code{p_stepdown}, \code{assignments}, \code{exact}; attribute \code{null} (the
+#'   \code{pstpdn}, \code{assignments}, \code{exact}; attribute \code{null} (the
 #'   matrix of permuted statistics).
 #' @references Fisher RA (1935). The Design of Experiments. Oliver and Boyd,
 #'   Edinburgh.
 #'
 #' Applied with the four stages of a reform permuted across districts: Acosta, Mejia
-#' and Zorro Medina (2023), see \code{\link{did_panel}}.
-#' @seealso \code{\link{stepdown_pvalues}}.
+#' and Zorro Medina (2023), see \code{\link{plndid}}.
+#' @seealso \code{\link{stpdnpv}}.
 #' @examples
-#' p <- policy_example()
-#' permutation_inference(p, "district", "month", c("crime_rate", "arrest_rate"),
-#'                       "reform_month",
-#'                       cluster = "region", reps = 199, seed = 3)
+#' p <- polex()
+#' perminf(p, "district", "month", c("crmrate", "arrrate"),
+#'                       "refmonth",
+#'                       cl = "region", reps = 199, seed = 3)
 #' @export
-permutation_inference <- function(data, unit, time, outcome, first_treated, cluster = NULL,
-                                  statistic = c("t", "estimate"), reps = 999L, seed = NULL,
+perminf <- function(data, unit, time, y, ftreat, cl = NULL,
+                                  stat = c("t", "estimate"), reps = 999L, seed = NULL,
                                   ties = c("count", "strict")) {
-  statistic <- .rmbl_arg(statistic)
+  stat <- .rmbl_arg(stat)
   ties <- .rmbl_arg(ties)
   reps <- .rmbl_scalar(reps, "reps", 9, 1e6, integer = TRUE)
-  outcome <- .rmbl_colnames(outcome, "outcome", several = TRUE)
-  p <- .rmbl_panel(data, unit, time, outcome[1L])
-  g <- .rmbl_first_treated(data, first_treated, p)
-  cl <- .rmbl_cluster(data, cluster, p)
-  gc <- tapply(g, cl, function(z) z[1L])
-  if (any(tapply(g, cl, function(z) length(unique(z))) > 1L)) {
-    stop("`first_treated` must be the same for every unit of a cluster", call. = FALSE)
+  y <- .rmbl_colnames(y, "y", several = TRUE)
+  p <- .rmbl_panel(data, unit, time, y[1L])
+  g <- .rmbl_first_treated(data, ftreat, p)
+  .cl <- .rmbl_cluster(data, cl, p)
+  gc <- tapply(g, .cl, function(z) z[1L])
+  if (any(tapply(g, .cl, function(z) length(unique(z))) > 1L)) {
+    stop("`ftreat` must be the same for every unit of a cluster", call. = FALSE)
   }
-  stat <- function(gvec, oc) {
+  .stat <- function(gvec, oc) {
     dd <- data
-    dd$.rmbl_d <- as.numeric(dd[[time]] >= gvec[cl])
+    dd$.rmbl_d <- as.numeric(dd[[time]] >= gvec[.cl])
     if (length(unique(dd$.rmbl_d)) < 2L) return(NA_real_)
-    r <- tryCatch(did_panel(dd, unit, time, oc, ".rmbl_d", cluster = cluster), error = function(e) NULL)
-    if (is.null(r)) NA_real_ else if (statistic == "t") r$t[1L] else r$estimate[1L]
+    r <- tryCatch(plndid(dd, unit, time, oc, ".rmbl_d", cl = cl), error = function(e) NULL)
+    if (is.null(r)) NA_real_ else if (stat == "t") r$t[1L] else r$estimate[1L]
   }
-  obs <- vapply(outcome, function(oc) stat(gc, oc), numeric(1L))
-  est <- vapply(outcome, function(oc) {
+  obs <- vapply(y, function(oc) .stat(gc, oc), numeric(1L))
+  est <- vapply(y, function(oc) {
     dd <- data
     dd$.rmbl_d <- as.numeric(dd[[time]] >= g)
-    did_panel(dd, unit, time, oc, ".rmbl_d", cluster = cluster)$estimate[1L]
+    plndid(dd, unit, time, oc, ".rmbl_d", cl = cl)$estimate[1L]
   }, numeric(1L))
   tab <- table(gc)
   n_assign <- exp(lfactorial(length(gc)) - sum(lfactorial(tab)))
   exact <- n_assign <= reps
   perms <- if (exact) .rmbl_multiset_perms(as.vector(gc)) else
     .rmbl_with_seed(seed, t(vapply(seq_len(reps), function(r) sample(as.vector(gc)), numeric(length(gc)))))
-  null <- matrix(NA_real_, nrow(perms), length(outcome), dimnames = list(NULL, outcome))
-  for (r in seq_len(nrow(perms))) for (j in seq_along(outcome)) null[r, j] <- stat(perms[r, ], outcome[j])
-  pv <- vapply(seq_along(outcome), function(j) {
+  null <- matrix(NA_real_, nrow(perms), length(y), dimnames = list(NULL, y))
+  for (r in seq_len(nrow(perms))) for (j in seq_along(y)) null[r, j] <- .stat(perms[r, ], y[j])
+  pv <- vapply(seq_along(y), function(j) {
     nz <- null[, j][is.finite(null[, j])]
     b <- if (ties == "count") sum(abs(nz) >= abs(obs[j]) - 1e-12) else sum(abs(nz) > abs(obs[j]) + 1e-12)
     if (exact) b / length(nz) else (b + 1) / (length(nz) + 1)
   }, numeric(1L))
-  out <- data.frame(outcome = outcome, estimate = unname(est), statistic = unname(obs), p_value = pv,
-                    p_stepdown = if (length(outcome) > 1L) stepdown_pvalues(obs, null) else pv,
+  out <- data.frame(outcome = y, estimate = unname(est), statistic = unname(obs), p_value = pv,
+                    pstpdn = if (length(y) > 1L) stpdnpv(obs, null) else pv,
                     assignments = nrow(perms), exact = exact, stringsAsFactors = FALSE)
   attr(out, "null") <- null
   class(out) <- c("rmbl_permutation", "data.frame")
@@ -1076,32 +1076,32 @@ permutation_inference <- function(data, unit, time, outcome, first_treated, clus
 #' \eqn{\tilde p_{(j)} = \max(\tilde p_{(j-1)}, p_{(j)})} (Westfall and Young 1993,
 #' algorithm 2.8).
 #'
-#' @param observed The observed statistics, one per hypothesis.
+#' @param obs The observed statistics, one per hypothesis.
 #' @param null A matrix of statistics under the null: one row per draw, one column per
 #'   hypothesis.
 #' @return The adjusted p-values, in the order of \code{observed}.
 #' @references Westfall PH, Young SS (1993). Resampling-Based Multiple Testing. Wiley,
 #' New York.
-#' @seealso \code{\link{permutation_inference}}.
+#' @seealso \code{\link{perminf}}.
 #' @examples
 #' set.seed(1)
 #' null <- matrix(rnorm(3000), ncol = 3)
-#' stepdown_pvalues(c(2.5, 0.4, -2.1), null)
+#' stpdnpv(c(2.5, 0.4, -2.1), null)
 #' @export
-stepdown_pvalues <- function(observed, null) {
-  observed <- .rmbl_num(observed, "observed")
-  if (!is.matrix(null) || !is.numeric(null) || ncol(null) != length(observed)) {
+stpdnpv <- function(obs, null) {
+  obs <- .rmbl_num(obs, "obs")
+  if (!is.matrix(null) || !is.numeric(null) || ncol(null) != length(obs)) {
     stop("`null` must be a numeric matrix with one column per observed statistic", call. = FALSE)
   }
-  if (anyNA(observed)) stop("`observed` must have no NA", call. = FALSE)
+  if (anyNA(obs)) stop("`obs` must have no NA", call. = FALSE)
   null <- null[stats::complete.cases(null), , drop = FALSE]
   if (!nrow(null)) stop("`null` has no complete draw", call. = FALSE)
-  o <- order(-abs(observed))
+  o <- order(-abs(obs))
   a <- abs(null[, o, drop = FALSE])
   k <- length(o)
   q <- a
   if (k > 1L) for (j in (k - 1L):1L) q[, j] <- pmax(q[, j], q[, j + 1L])
-  p <- colMeans(sweep(q, 2L, abs(observed[o]) - 1e-12, `>=`))
+  p <- colMeans(sweep(q, 2L, abs(obs[o]) - 1e-12, `>=`))
   p <- cummax(p)
   out <- numeric(k)
   out[o] <- p
@@ -1123,7 +1123,7 @@ stepdown_pvalues <- function(observed, null) {
 #' as are periods with no count anywhere. The Poisson likelihood with fixed effects is
 #' consistent for \eqn{\beta} whatever the dispersion (Wooldridge 1999); the variance
 #' is the cluster-robust sandwich, with the small-sample factors of
-#' \code{\link{did_panel}}. The rate ratio is \eqn{e^{\beta}}, with interval
+#' \code{\link{plndid}}. The rate ratio is \eqn{e^{\beta}}, with interval
 #' \eqn{e^{\hat\beta \pm z\,se}}.
 #'
 #' With \code{family = "negbin"} the variance is \eqn{\mu + \mu^2/\theta}: the fit
@@ -1137,15 +1137,15 @@ stepdown_pvalues <- function(observed, null) {
 #' (Allison and Waterman 2002); with few periods per unit prefer the Poisson, which is
 #' consistent whatever the dispersion.
 #'
-#' @inheritParams did_panel
+#' @inheritParams plndid
 #' @param offset Optional column name of the log exposure (for example log
 #'   population).
 #' @param family \code{"poisson"} (default) or \code{"negbin"} (NB2,
 #'   \eqn{Var(Y) = \mu + \mu^2/\theta}, with \eqn{\theta} by maximum likelihood).
 #' @return A data frame of class \code{rmbl_fe_poisson}, one row per term:
-#'   \code{term}, \code{estimate} (log scale), \code{se}, \code{rate_ratio},
+#'   \code{term}, \code{estimate} (log scale), \code{se}, \code{rateratio},
 #'   \code{lower}, \code{upper} (of the rate ratio), \code{p_value}; attributes
-#'   \code{n}, \code{dropped_units}, \code{clusters}, \code{family}, \code{theta}
+#'   \code{n}, \code{drounits}, \code{clusters}, \code{family}, \code{theta}
 #'   (\code{Inf} for the Poisson).
 #' @references Wooldridge JM (1999). Distribution-free estimation of some nonlinear
 #' panel data models. Journal of Econometrics 90(1):77-97.
@@ -1155,46 +1155,47 @@ stepdown_pvalues <- function(observed, null) {
 #' Statistics 88(4):641-658. \doi{10.1162/rest.88.4.641}
 #'
 #' Allison PD, Waterman RP (2002). Fixed-effects negative binomial regression models.
-#' Sociological Methodology 32:247-265. \href{https://doi.org/10.1111/1467-9531.00117}{doi:10.1111/1467-9531.00117}
+#' Sociological Methodology 32:247-265.
+#' \href{https://doi.org/10.1111/1467-9531.00117}{doi:10.1111/1467-9531.00117}
 #' @examples
-#' p <- policy_example()
-#' fe_poisson(p, "district", "month", "crimes", "reformed", offset = "log_population")
-#' fe_poisson(p, "district", "month", "crimes", "reformed", offset = "log_population",
+#' p <- polex()
+#' plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop")
+#' plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop",
 #'            family = "negbin")
 #' @export
-fe_poisson <- function(data, unit, time, outcome, treated, covariates = NULL, offset = NULL, cluster = NULL,
-                       family = c("poisson", "negbin"), conf_level = 0.95) {
+plnpois <- function(data, unit, time, y, trtd, covs = NULL, offset = NULL, cl = NULL,
+                       family = c("poisson", "negbin"), conflvl = 0.95) {
   family <- .rmbl_arg(family)
-  conf_level <- .rmbl_conf_level(conf_level)
-  p <- .rmbl_panel(data, unit, time, outcome)
-  if (any(p$y < 0)) stop("`outcome` must be counts (0 or more)", call. = FALSE)
-  v <- .rmbl_colnames(treated, "treated")
-  if (!v %in% names(data)) stop(sprintf("`treated` (%s) is not a column of `data`", v), call. = FALSE)
+  conflvl <- .rmbl_conf_level(conflvl)
+  p <- .rmbl_panel(data, unit, time, y)
+  if (any(p$y < 0)) stop("`y` must be counts (0 or more)", call. = FALSE)
+  v <- .rmbl_colnames(trtd, "trtd")
+  if (!v %in% names(data)) stop(sprintf("`trtd` (%s) is not a column of `data`", v), call. = FALSE)
   d <- data[[v]]
   if (is.logical(d)) d <- as.numeric(d)
-  if (!is.numeric(d) || anyNA(d)) stop("`treated` must be numeric with no NA", call. = FALSE)
+  if (!is.numeric(d) || anyNA(d)) stop("`trtd` must be numeric with no NA", call. = FALSE)
   off <- if (is.null(offset)) rep(0, length(p$y)) else .rmbl_num(data[[.rmbl_colnames(offset, "offset")]], "offset")
-  cl <- .rmbl_cluster(data, cluster, p)
-  x <- cbind(treated = d, .rmbl_covariates(data, covariates))
+  .cl <- .rmbl_cluster(data, cl, p)
+  x <- cbind(treated = d, .rmbl_covariates(data, covs))
   keep <- (tapply(p$y, p$u, sum) > 0)[p$u] & (tapply(p$y, p$t, sum) > 0)[as.character(p$t)]
   dropped <- length(unique(p$u)) - length(unique(p$u[keep]))
-  y <- p$y[keep]
+  .y <- p$y[keep]
   fu <- factor(p$u[keep])
   ft <- factor(p$t[keep])
   xx <- x[keep, , drop = FALSE]
   X <- cbind(xx, stats::model.matrix(~ fu + ft))
-  fit <- stats::glm.fit(X, y, family = stats::poisson(), offset = off[keep])
+  fit <- stats::glm.fit(X, .y, family = stats::poisson(), offset = off[keep])
   theta <- Inf
   if (family == "negbin") {
     # NB2: Var(Y) = mu + mu^2 / theta. Alternate the IRLS fit at fixed theta with the maximum of the
     # profile likelihood in theta, to convergence
     ll <- function(lt, mu) {
       th <- exp(lt)
-      sum(lgamma(y + th) - lgamma(th) - lgamma(y + 1) + th * log(th / (th + mu)) + y * log(mu / (th + mu)))
+      sum(lgamma(.y + th) - lgamma(th) - lgamma(.y + 1) + th * log(th / (th + mu)) + .y * log(mu / (th + mu)))
     }
     for (it in 1:100) {
       th_new <- exp(stats::optimize(ll, c(-10, 15), mu = fit$fitted.values, maximum = TRUE)$maximum)
-      fit <- stats::glm.fit(X, y, family = .rmbl_negbin_family(th_new), offset = off[keep],
+      fit <- stats::glm.fit(X, .y, family = .rmbl_negbin_family(th_new), offset = off[keep],
                             start = fit$coefficients)
       done <- abs(log(th_new) - log(theta)) < 1e-8
       theta <- th_new
@@ -1209,20 +1210,20 @@ fe_poisson <- function(data, unit, time, outcome, treated, covariates = NULL, of
   mu <- fit$fitted.values
   wt <- if (is.finite(theta)) mu * theta / (theta + mu) else mu
   bread <- solve(crossprod(X * sqrt(wt)))
-  s <- rowsum(X * ((y - mu) * wt / mu), cl[keep])
+  s <- rowsum(X * ((.y - mu) * wt / mu), .cl[keep])
   gn <- nrow(s)
-  ny <- length(y)
-  kk <- ncol(xx) + .rmbl_k_fe(list(as.integer(fu), as.integer(ft)), cl[keep])
+  ny <- length(.y)
+  kk <- ncol(xx) + .rmbl_k_fe(list(as.integer(fu), as.integer(ft)), .cl[keep])
   vc <- bread %*% crossprod(s) %*% bread * gn / (gn - 1) * (ny - 1) / (ny - kk)
   k <- seq_len(ncol(xx))
   b <- fit$coefficients[k]
   se <- sqrt(diag(vc))[k]
-  z <- stats::qnorm(1 - (1 - conf_level) / 2)
-  out <- data.frame(term = colnames(x), estimate = unname(b), se = unname(se), rate_ratio = exp(unname(b)),
+  z <- stats::qnorm(1 - (1 - conflvl) / 2)
+  out <- data.frame(term = colnames(x), estimate = unname(b), se = unname(se), rateratio = exp(unname(b)),
                     lower = exp(unname(b - z * se)), upper = exp(unname(b + z * se)),
                     p_value = 2 * stats::pnorm(-abs(unname(b / se))), stringsAsFactors = FALSE)
-  attr(out, "n") <- length(y)
-  attr(out, "dropped_units") <- dropped
+  attr(out, "n") <- length(.y)
+  attr(out, "drounits") <- dropped
   attr(out, "clusters") <- gn
   attr(out, "family") <- family
   attr(out, "theta") <- theta
@@ -1267,43 +1268,43 @@ fe_poisson <- function(data, unit, time, outcome, treated, covariates = NULL, of
 #'
 #' This version matches on the pre-period outcomes only, not on separate predictors.
 #'
-#' @inheritParams did_panel
-#' @param treated_unit The treated unit (a value of \code{unit}).
-#' @param adoption The first treated period.
-#' @param placebo Run the placebo test (default \code{TRUE}).
+#' @inheritParams plndid
+#' @param treunit The treated unit (a value of \code{unit}).
+#' @param adopt The first treated period.
+#' @param plac Run the placebo test (default \code{TRUE}).
 #' @return A list of class \code{rmbl_synth}: \code{weights} (a named vector over the
 #'   donors), \code{path} (a data frame: \code{time}, \code{treated},
-#'   \code{synthetic}, \code{gap}), \code{rmspe_pre}, \code{rmspe_ratio},
-#'   \code{p_value} (\code{NA} without the placebo), \code{placebo_ratios}.
+#'   \code{synthetic}, \code{gap}), \code{rmspepre}, \code{rmsperatio},
+#'   \code{p_value} (\code{NA} without the placebo), \code{placrat}.
 #'   \code{plot()} draws the two paths and the gap.
 #' @references Abadie A, Diamond A, Hainmueller J (2010). Synthetic control methods
 #'   for comparative case studies. Journal of the American Statistical Association
 #'   105(490):493-505. \doi{10.1198/jasa.2009.ap08746}
 #' @examples
-#' p <- policy_example()
-#' p1 <- p[is.na(p$reform_month) | p$district == "D01", ]
-#' s <- synthetic_control(p1, "district", "month", "crime_rate", treated_unit = "D01",
-#'                        adoption = 13)
+#' p <- polex()
+#' p1 <- p[is.na(p$refmonth) | p$district == "D01", ]
+#' s <- synctl(p1, "district", "month", "crmrate", treunit = "D01",
+#'                        adopt = 13)
 #' round(s$weights, 3)
 #' s$p_value
 #' plot(s)
 #' @export
-synthetic_control <- function(data, unit, time, outcome, treated_unit, adoption, placebo = TRUE) {
-  p <- .rmbl_panel(data, unit, time, outcome)
-  adoption <- .rmbl_scalar(adoption, "adoption")
-  if (!is.logical(placebo) || length(placebo) != 1L || is.na(placebo)) {
-    stop("`placebo` must be TRUE or FALSE", call. = FALSE)
+synctl <- function(data, unit, time, y, treunit, adopt, plac = TRUE) {
+  p <- .rmbl_panel(data, unit, time, y)
+  adopt <- .rmbl_scalar(adopt, "adopt")
+  if (!is.logical(plac) || length(plac) != 1L || is.na(plac)) {
+    stop("`plac` must be TRUE or FALSE", call. = FALSE)
   }
-  tu <- as.character(treated_unit)
-  if (length(tu) != 1L || !tu %in% p$ul) stop("`treated_unit` is not a unit of `data`", call. = FALSE)
+  tu <- as.character(treunit)
+  if (length(tu) != 1L || !tu %in% p$ul) stop("`treunit` is not a unit of `data`", call. = FALSE)
   nu <- length(p$ul)
   nt <- length(p$tl)
   if (length(p$y) != nu * nt) stop("`data` must be a balanced panel", call. = FALSE)
   if (nu < 3L) stop("synthetic control needs two donor units at least", call. = FALSE)
   o <- order(p$u, p$t)
   ym <- matrix(p$y[o], nu, nt, byrow = TRUE, dimnames = list(p$ul, p$tl))
-  pre <- p$tl < adoption
-  if (sum(pre) < 2L || all(pre)) stop("`adoption` must leave two periods before it and one after", call. = FALSE)
+  pre <- p$tl < adopt
+  if (sum(pre) < 2L || all(pre)) stop("`adopt` must leave two periods before it and one after", call. = FALSE)
   fit1 <- function(i, donors) {
     w <- .rmbl_simplex_ls(t(ym[donors, pre, drop = FALSE]), ym[i, pre])
     synth <- as.vector(crossprod(w, ym[donors, , drop = FALSE]))
@@ -1317,7 +1318,7 @@ synthetic_control <- function(data, unit, time, outcome, treated_unit, adoption,
   ratio <- f$post / f$pre
   pr <- NA_real_
   pv <- NA_real_
-  if (placebo) {
+  if (plac) {
     pr <- vapply(donors, function(j) {
       fj <- fit1(j, setdiff(donors, j))
       fj$post / fj$pre
@@ -1327,8 +1328,8 @@ synthetic_control <- function(data, unit, time, outcome, treated_unit, adoption,
   }
   out <- list(weights = f$w, path = data.frame(time = p$tl, treated = ym[it, ], synthetic = f$synth, gap = f$gap,
                                                row.names = NULL),
-              rmspe_pre = f$pre, rmspe_ratio = ratio, p_value = pv, placebo_ratios = pr, adoption = adoption,
-              treated_unit = tu)
+              rmspepre = f$pre, rmsperatio = ratio, p_value = pv, placrat = pr, adoption = adopt,
+              treunit = tu)
   class(out) <- "rmbl_synth"
   out
 }
@@ -1373,14 +1374,14 @@ synthetic_control <- function(data, unit, time, outcome, treated_unit, adoption,
 
 #' @export
 print.rmbl_synth <- function(x, ...) {
-  cat(sprintf("Synthetic control for %s, adoption at %s\n", x$treated_unit, format(x$adoption)))
+  cat(sprintf("Synthetic control for %s, adoption at %s\n", x$treunit, format(x$adoption)))
   w <- sort(x$weights[x$weights > 1e-4], decreasing = TRUE)
   cat("Donor weights:", paste(sprintf("%s %.3f", names(w), w), collapse = ", "), "\n")
   post <- x$path$gap[x$path$time >= x$adoption]
   cat(sprintf("Pre-period RMSPE %.4g; mean gap after adoption %.4g; post/pre RMSPE ratio %.3g\n",
-              x$rmspe_pre, mean(post), x$rmspe_ratio))
+              x$rmspepre, mean(post), x$rmsperatio))
   if (is.finite(x$p_value)) cat(sprintf("Placebo-in-space p = %.3g (%d placebos)\n", x$p_value,
-                                        length(x$placebo_ratios)))
+                                        length(x$placrat)))
   invisible(x)
 }
 
@@ -1392,9 +1393,9 @@ plot.rmbl_synth <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   cl <- .bl_cols(2L, col, palette)
   graphics::matplot(d$time, cbind(d$treated, d$synthetic), type = "l", lty = c(1, 2), col = cl, lwd = 2,
                     xlab = "Period", ylab = "Outcome",
-                    main = .bl_main(main, paste("Synthetic control:", x$treated_unit)), ...)
+                    main = .bl_main(main, paste("Synthetic control:", x$treunit)), ...)
   graphics::abline(v = x$adoption, lty = 3, col = "#9A9A9A")
-  graphics::legend("topleft", c(x$treated_unit, "Synthetic"), lty = c(1, 2), col = cl, lwd = 2, bty = "n")
+  graphics::legend("topleft", c(x$treunit, "Synthetic"), lty = c(1, 2), col = cl, lwd = 2, bty = "n")
   invisible(d)
 }
 
@@ -1416,8 +1417,8 @@ plot.rmbl_synth <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #'
 #' @param data A data frame, one row per unit, period and offence.
 #' @param unit,time,offence,count Column names.
-#' @param weights Named weights, one per offence counted.
-#' @param population Optional column name of the population; without it \code{count}
+#' @param w Named weights, one per offence counted.
+#' @param pop Optional column name of the population; without it \code{count}
 #'   is taken as a rate already.
 #' @param per Rate base (default 100000).
 #' @return A data frame of class \code{rmbl_severity}: \code{unit}, \code{time},
@@ -1427,45 +1428,45 @@ plot.rmbl_synth <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #' 10(3):171-183. \doi{10.1093/police/paw003}
 #'
 #' Applied with weights from the Colombian Penal Code: Acosta, Mejia and Zorro Medina
-#' (2023), see \code{\link{did_panel}}.
+#' (2023), see \code{\link{plndid}}.
 #' @examples
 #' d <- data.frame(city = rep(c("A", "B"), each = 3), year = 2024,
 #'                 offence = rep(c("homicide", "robbery", "burglary"), 2),
 #'                 n = c(5, 120, 300, 2, 90, 410), pop = rep(c(250000, 180000), each
 #' = 3))
-#' severity_index(d, "city", "year", "offence", "n",
-#'                weights = c(homicide = 25, robbery = 8,
-#'                            burglary = 4), population = "pop")
+#' sevidx(d, "city", "year", "offence", "n",
+#'                w = c(homicide = 25, robbery = 8,
+#'                            burglary = 4), pop = "pop")
 #' @export
-severity_index <- function(data, unit, time, offence, count, weights, population = NULL, per = 1e5) {
+sevidx <- function(data, unit, time, offence, count, w, pop = NULL, per = 1e5) {
   .rmbl_df_names(data)
   for (nm in c("unit", "time", "offence", "count")) {
     v <- .rmbl_colnames(get(nm), nm)
     if (!v %in% names(data)) stop(sprintf("`%s` (%s) is not a column of `data`", nm, v), call. = FALSE)
   }
-  if (!is.numeric(weights) || is.null(names(weights)) || anyNA(weights) || any(!nzchar(names(weights)))) {
-    stop("`weights` must be numbers named by offence", call. = FALSE)
+  if (!is.numeric(w) || is.null(names(w)) || anyNA(w) || any(!nzchar(names(w)))) {
+    stop("`w` must be numbers named by offence", call. = FALSE)
   }
   per <- .rmbl_scalar(per, "per", 1e-12)
   off <- trimws(as.character(data[[offence]]))
-  miss <- setdiff(names(weights), off)
+  miss <- setdiff(names(w), off)
   if (length(miss)) stop(sprintf("not an offence of `data`: %s", paste(miss, collapse = ", ")), call. = FALSE)
   r <- .rmbl_num(data[[count]], "count")
-  if (!is.null(population)) r <- r / .rmbl_num(data[[.rmbl_colnames(population, "population")]], "population") * per
-  use <- off %in% names(weights)
+  if (!is.null(pop)) r <- r / .rmbl_num(data[[.rmbl_colnames(pop, "pop")]], "pop") * per
+  use <- off %in% names(w)
   key <- paste(data[[unit]], data[[time]], sep = "\r")
   if (anyDuplicated(paste(key, off)[use])) stop("an offence appears twice for a unit and period", call. = FALSE)
   keys <- unique(key)
   agg <- function(v) {
     s <- tapply(v[use], factor(key[use], levels = keys), function(z) if (anyNA(z)) NA_real_ else sum(z))
     n <- tapply(use[use], factor(key[use], levels = keys), length)
-    s[is.na(n) | n < length(weights)] <- NA_real_
+    s[is.na(n) | n < length(w)] <- NA_real_
     as.vector(s)
   }
   first <- match(keys, key)
   out <- data.frame(unit = data[[unit]][first], time = data[[time]][first], unweighted = agg(r),
-                    weighted = agg(r * unname(weights[off])), stringsAsFactors = FALSE)
-  attr(out, "weights") <- weights
+                    weighted = agg(r * unname(w[off])), stringsAsFactors = FALSE)
+  attr(out, "weights") <- w
   class(out) <- c("rmbl_severity", "data.frame")
   out
 }
@@ -1486,11 +1487,11 @@ severity_index <- function(data, unit, time, offence, count, weights, population
 #' when the denominator is zero. These are administrative counts of every case, so no
 #' sampling interval is given.
 #'
-#' @param numerator,denominator The outcome and input counts, in period order.
-#' @param window The number of periods summed (default 12).
+#' @param num,den The outcome and input counts, in period order.
+#' @param win The number of periods summed (default 12).
 #' @param lag The number of periods the input's window precedes the outcome's (default
 #' 0).
-#' @param group Optional grouping (for example a court or municipality), the counts in
+#' @param grp Optional grouping (for example a court or municipality), the counts in
 #'   period order within it.
 #' @return A data frame: \code{group}, \code{index} (the period's position within its
 #'   group), \code{numerator}, \code{denominator} (the window sums), \code{rate}.
@@ -1499,35 +1500,35 @@ severity_index <- function(data, unit, time, offence, count, weights, population
 #'   CEPEJ Studies 20.
 #'
 #' Applied to the stages of a Colombian criminal-procedure reform: Acosta, Mejia and
-#' Zorro Medina (2023), see \code{\link{did_panel}}.
-#' @seealso \code{\link{case_flow}} for clearance rates and inventories.
+#' Zorro Medina (2023), see \code{\link{plndid}}.
+#' @seealso \code{\link{caseflow}} for clearance rates and inventories.
 #' @examples
 #' set.seed(2)
 #' reports <- rpois(36, 400)
 #' charges <- rpois(36, 90)
-#' pipeline_rate(charges, reports, window = 12, lag = 3)[30:36, ]
+#' piperate(charges, reports, win = 12, lag = 3)[30:36, ]
 #' @export
-pipeline_rate <- function(numerator, denominator, window = 12L, lag = 0L, group = NULL) {
-  numerator <- .rmbl_num(numerator, "numerator")
-  denominator <- .rmbl_num(denominator, "denominator")
-  if (length(numerator) != length(denominator)) {
-    stop("`numerator` and `denominator` must be the same length", call. = FALSE)
+piperate <- function(num, den, win = 12L, lag = 0L, grp = NULL) {
+  num <- .rmbl_num(num, "num")
+  den <- .rmbl_num(den, "den")
+  if (length(num) != length(den)) {
+    stop("`num` and `den` must be the same length", call. = FALSE)
   }
-  if (any(c(numerator, denominator) < 0, na.rm = TRUE)) stop("counts must not be negative", call. = FALSE)
-  window <- .rmbl_scalar(window, "window", 1, 1e6, integer = TRUE)
+  if (any(c(num, den) < 0, na.rm = TRUE)) stop("counts must not be negative", call. = FALSE)
+  win <- .rmbl_scalar(win, "win", 1, 1e6, integer = TRUE)
   lag <- .rmbl_scalar(lag, "lag", 0, 1e6, integer = TRUE)
-  if (is.null(group)) group <- rep("all", length(numerator))
-  if (length(group) != length(numerator)) stop("`group` must be one per count", call. = FALSE)
+  if (is.null(grp)) grp <- rep("all", length(num))
+  if (length(grp) != length(num)) stop("`grp` must be one per count", call. = FALSE)
   roll <- function(x, end) {
-    vapply(end, function(e) if (e - window + 1L < 1L) NA_real_ else sum(x[(e - window + 1L):e]), numeric(1L))
+    vapply(end, function(e) if (e - win + 1L < 1L) NA_real_ else sum(x[(e - win + 1L):e]), numeric(1L))
   }
-  out <- do.call(rbind, lapply(unique(group), function(gr) {
-    i <- which(group == gr)
+  out <- do.call(rbind, lapply(unique(grp), function(gr) {
+    i <- which(grp == gr)
     n <- length(i)
-    num <- roll(numerator[i], seq_len(n))
-    den <- roll(denominator[i], seq_len(n) - lag)
-    data.frame(group = gr, index = seq_len(n), numerator = num, denominator = den,
-               rate = ifelse(is.finite(den) & den > 0, num / den, NA_real_), stringsAsFactors = FALSE)
+    .num <- roll(num[i], seq_len(n))
+    .den <- roll(den[i], seq_len(n) - lag)
+    data.frame(group = gr, index = seq_len(n), numerator = .num, denominator = .den,
+               rate = ifelse(is.finite(.den) & .den > 0, .num / .den, NA_real_), stringsAsFactors = FALSE)
   }))
   rownames(out) <- NULL
   out
@@ -1555,15 +1556,15 @@ pipeline_rate <- function(numerator, denominator, window = 12L, lag = 0L, group 
 #' live in the area, counted against its population, bias the risk upward.
 #'
 #' @param age The ages, in order.
-#' @param first_events First events at each age.
-#' @param population The population at each age.
-#' @param at_risk Optional: the persons at risk at each age, when known, in place of
+#' @param fireve First events at each age.
+#' @param pop The population at each age.
+#' @param atrisk Optional: the persons at risk at each age, when known, in place of
 #'   the synthetic-cohort assumption.
-#' @param death_rate Optional death rates by age (probability of dying within the
+#' @param dthrate Optional death rates by age (probability of dying within the
 #'   age).
-#' @param conf_level Confidence level (default 0.95).
-#' @return A data frame: \code{age}, \code{hazard}, \code{at_risk},
-#'   \code{cumulative_risk}, \code{lower}, \code{upper}.
+#' @param conflvl Confidence level (default 0.95).
+#' @return A data frame: \code{age}, \code{hazard}, \code{atrisk},
+#'   \code{cmlrisk}, \code{lower}, \code{upper}.
 #' @references Bonczar TP (2003). Prevalence of imprisonment in the U.S. population,
 #'   1974-2001. Bureau of Justice Statistics, NCJ 197976.
 #'
@@ -1575,28 +1576,28 @@ pipeline_rate <- function(numerator, denominator, window = 12L, lag = 0L, group 
 #' age <- 16:25
 #' first <- c(900, 1400, 1700, 1600, 1400, 1100, 900, 700, 600, 500)
 #' pop <- rep(100000, 10)
-#' cumulative_risk(age, first, pop)
+#' cmlrisk(age, first, pop)
 #' @export
-cumulative_risk <- function(age, first_events, population, at_risk = NULL, death_rate = NULL,
-                            conf_level = 0.95) {
+cmlrisk <- function(age, fireve, pop, atrisk = NULL, dthrate = NULL,
+                            conflvl = 0.95) {
   age <- .rmbl_num(age, "age")
-  e <- .rmbl_num(first_events, "first_events")
-  pop <- .rmbl_num(population, "population")
-  conf_level <- .rmbl_conf_level(conf_level)
+  e <- .rmbl_num(fireve, "fireve")
+  .pop <- .rmbl_num(pop, "pop")
+  conflvl <- .rmbl_conf_level(conflvl)
   n <- length(age)
-  if (length(e) != n || length(pop) != n) stop("`age`, `first_events` and `population` must match", call. = FALSE)
-  if (anyNA(c(age, e, pop)) || any(e < 0) || any(pop <= 0)) {
+  if (length(e) != n || length(.pop) != n) stop("`age`, `fireve` and `pop` must match", call. = FALSE)
+  if (anyNA(c(age, e, .pop)) || any(e < 0) || any(.pop <= 0)) {
     stop("counts must be 0 or more and populations above 0, with no NA", call. = FALSE)
   }
   if (is.unsorted(age, strictly = TRUE)) stop("`age` must be increasing", call. = FALSE)
-  if (!is.null(at_risk)) {
-    at_risk <- .rmbl_num(at_risk, "at_risk")
-    if (length(at_risk) != n || any(at_risk <= 0)) stop("`at_risk` must be one per age, above 0", call. = FALSE)
+  if (!is.null(atrisk)) {
+    atrisk <- .rmbl_num(atrisk, "atrisk")
+    if (length(atrisk) != n || any(atrisk <= 0)) stop("`atrisk` must be one per age, above 0", call. = FALSE)
   }
-  if (!is.null(death_rate)) {
-    death_rate <- .rmbl_num(death_rate, "death_rate")
-    if (length(death_rate) != n || any(death_rate < 0 | death_rate >= 1)) {
-      stop("`death_rate` must be one per age, from 0 to below 1", call. = FALSE)
+  if (!is.null(dthrate)) {
+    dthrate <- .rmbl_num(dthrate, "dthrate")
+    if (length(dthrate) != n || any(dthrate < 0 | dthrate >= 1)) {
+      stop("`dthrate` must be one per age, from 0 to below 1", call. = FALSE)
     }
   }
   h <- nr <- cr <- v <- numeric(n)
@@ -1605,25 +1606,25 @@ cumulative_risk <- function(age, first_events, population, at_risk = NULL, death
   acc <- 0
   vs <- 0
   for (i in seq_len(n)) {
-    nr[i] <- if (is.null(at_risk)) pop[i] * (1 - (if (i > 1L) cr[i - 1L] else 0)) else at_risk[i]
+    nr[i] <- if (is.null(atrisk)) .pop[i] * (1 - (if (i > 1L) cr[i - 1L] else 0)) else atrisk[i]
     h[i] <- e[i] / nr[i]
     if (h[i] > 1) stop(sprintf("more first events than persons at risk at age %s", format(age[i])), call. = FALSE)
-    if (is.null(death_rate)) {
+    if (is.null(dthrate)) {
       surv <- surv * (1 - h[i])
       cr[i] <- 1 - surv
       vs <- vs + if (h[i] < 1) h[i] / (nr[i] * (1 - h[i])) else Inf
       v[i] <- vs
     } else {
       acc <- acc + l * h[i]
-      l <- l * (1 - h[i] - death_rate[i])
+      l <- l * (1 - h[i] - dthrate[i])
       if (l < 0) stop(sprintf("events and deaths exceed the cohort at age %s", format(age[i])), call. = FALSE)
       cr[i] <- acc
       v[i] <- NA_real_
     }
   }
-  z <- stats::qnorm(1 - (1 - conf_level) / 2)
+  z <- stats::qnorm(1 - (1 - conflvl) / 2)
   s <- 1 - cr
-  data.frame(age = age, hazard = h, at_risk = nr, cumulative_risk = cr,
+  data.frame(age = age, hazard = h, atrisk = nr, cumrisk = cr,
              lower = 1 - s * exp(z * sqrt(v)), upper = 1 - s * exp(-z * sqrt(v)))
 }
 
@@ -1640,8 +1641,8 @@ cumulative_risk <- function(age, first_events, population, at_risk = NULL, death
 #' several times the radius: the design it follows used 330 feet and 990 feet.
 #'
 #' @param x,y Coordinates of the places.
-#' @param site_x,site_y Coordinates of the sites.
-#' @param comparison_x,comparison_y Coordinates of the comparison points (for example
+#' @param sitex,sitey Coordinates of the sites.
+#' @param comx,comy Coordinates of the comparison points (for example
 #' the nearest major intersections).
 #' @param radius The treatment radius.
 #' @param buffer The distance from every site a comparison place must keep (default
@@ -1649,22 +1650,22 @@ cumulative_risk <- function(age, first_events, population, at_risk = NULL, death
 #' @return A data frame: \code{group} (\code{"treated"}, \code{"comparison"} or
 #'   \code{"excluded"}), \code{site_distance}, \code{comparison_distance}.
 #' @references Applied to blocks near donor stores: Zorro Medina, Hackett, Green and
-#'   Vargas (2025), see \code{\link{event_study}}.
+#'   Vargas (2025), see \code{\link{evstudy}}.
 #' @examples
 #' set.seed(4)
 #' x <- runif(200, 0, 5000)
 #' y <- runif(200, 0, 5000)
-#' a <- buffer_assign(x, y, c(1000, 3500), c(1200, 3000), c(2500, 4500), c(500, 4000),
+#' a <- bufasgn(x, y, c(1000, 3500), c(1200, 3000), c(2500, 4500), c(500, 4000),
 #'                    radius = 330)
 #' table(a$group)
 #' @export
-buffer_assign <- function(x, y, site_x, site_y, comparison_x, comparison_y, radius, buffer = 3 * radius) {
+bufasgn <- function(x, y, sitex, sitey, comx, comy, radius, buffer = 3 * radius) {
   x <- .rmbl_num(x, "x")
   y <- .rmbl_num(y, "y")
-  sx <- .rmbl_num(site_x, "site_x")
-  sy <- .rmbl_num(site_y, "site_y")
-  cx <- .rmbl_num(comparison_x, "comparison_x")
-  cy <- .rmbl_num(comparison_y, "comparison_y")
+  sx <- .rmbl_num(sitex, "sitex")
+  sy <- .rmbl_num(sitey, "sitey")
+  cx <- .rmbl_num(comx, "comx")
+  cy <- .rmbl_num(comy, "comy")
   if (length(x) != length(y) || length(sx) != length(sy) || length(cx) != length(cy)) {
     stop("each pair of coordinates must be the same length", call. = FALSE)
   }
@@ -1689,13 +1690,13 @@ buffer_assign <- function(x, y, site_x, site_y, comparison_x, comparison_y, radi
 #'
 #' @param seed The seed (default 20240101).
 #' @return A data frame: \code{district}, \code{region}, \code{month},
-#' \code{reform_month} (\code{NA} for never), \code{reformed} (0 or 1),
-#' \code{population}, \code{log_population}, \code{crimes}, \code{crime_rate},
-#' \code{arrest_rate}.
+#' \code{refmonth} (\code{NA} for never), \code{reformed} (0 or 1),
+#' \code{population}, \code{logpop}, \code{crimes}, \code{crmrate},
+#' \code{arrrate}.
 #' @examples
-#' head(policy_example())
+#' head(polex())
 #' @export
-policy_example <- function(seed = 20240101) {
+polex <- function(seed = 20240101) {
   .rmbl_with_seed(seed, {
     nd <- 20L
     nm <- 36L
@@ -1708,15 +1709,15 @@ policy_example <- function(seed = 20240101) {
     d <- expand.grid(month = seq_len(nm), i = seq_len(nd))
     d$district <- dist[d$i]
     d$region <- paste0("R", (d$i - 1L) %% 4L + 1L)
-    d$reform_month <- stage[d$i]
-    d$reformed <- as.numeric(!is.na(d$reform_month) & d$month >= d$reform_month)
+    d$refmonth <- stage[d$i]
+    d$reformed <- as.numeric(!is.na(d$refmonth) & d$month >= d$refmonth)
     d$population <- pop[d$i]
-    d$log_population <- log(d$population)
+    d$logpop <- log(d$population)
     lam <- pmax(1, a[d$i] + m[d$month] + 0.05 * d$month - 3 * d$reformed)
     d$crimes <- stats::rpois(nrow(d), lam * d$population / 1e5)
-    d$crime_rate <- round(lam + stats::rnorm(nrow(d), 0, 1), 3)
-    d$arrest_rate <- round(0.4 * lam + 1.2 * d$reformed + stats::rnorm(nrow(d), 0, 0.8), 3)
-    d[c("district", "region", "month", "reform_month", "reformed", "population", "log_population", "crimes",
-        "crime_rate", "arrest_rate")]
+    d$crmrate <- round(lam + stats::rnorm(nrow(d), 0, 1), 3)
+    d$arrrate <- round(0.4 * lam + 1.2 * d$reformed + stats::rnorm(nrow(d), 0, 0.8), 3)
+    d[c("district", "region", "month", "refmonth", "reformed", "population", "logpop", "crimes",
+        "crmrate", "arrrate")]
   })
 }

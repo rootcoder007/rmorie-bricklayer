@@ -23,7 +23,7 @@
 .bl_wb_get <- function(path, headers) {
   .Call(C_rmbl_http_get, paste0(.bl_wb_base(), path), 60L, headers, FALSE)
 }
-.bl_wb_lookup <- function(url) tryCatch(wayback_snapshot_url_native(url, timeout = 30L), error = function(e) NULL)
+.bl_wb_lookup <- function(url) tryCatch(wbsnpnat(url, tmout = 30L), error = function(e) NULL)
 .bl_wb_now <- function() proc.time()[["elapsed"]]
 .bl_wb_sleep <- function(seconds) Sys.sleep(seconds)
 
@@ -175,7 +175,7 @@
 #'   on your own network (a private or loopback IP, a \code{.local} or
 #'   one-label name) is refused: the archive cannot reach it, and the
 #'   request would tell it where your intranet is.
-#' @param access_key,secret_key Your archive.org S3-like API
+#' @param ak,sk Your archive.org S3-like API
 #'   keys (\url{https://archive.org/account/s3.php}). By default
 #'   they are read from the environment variables
 #'   \code{IA_S3_ACCESS_KEY} and \code{IA_S3_SECRET_KEY}, or from
@@ -194,15 +194,15 @@
 #'   before anything is sent.
 #' @param poll Seconds between status checks of a capture.
 #'   Default 10.
-#' @param max_wait Seconds a capture may take before it is given
+#' @param maxwait Seconds a capture may take before it is given
 #'   up as failed. Default 600.
-#' @param capture_all Also capture error pages (4xx and 5xx);
+#' @param capall Also capture error pages (4xx and 5xx);
 #'   default \code{FALSE}.
 #' @param quiet \code{TRUE} for no progress output; the default
 #'   shows it while a person is watching.
-#' @param per_minute Captures started per minute, at most; default
+#' @param permin Captures started per minute, at most; default
 #'   6 (archive.org allows an account 7).
-#' @param max_captures The most captures this run starts; default
+#' @param maxcap The most captures this run starts; default
 #'   1000. The rest are left for the next run (with the same
 #'   \code{output}, it carries on from them).
 #'
@@ -215,10 +215,10 @@
 #'   \code{snapshot} (the archived copy's address) and
 #'   \code{message} (archive.org's reason, for a failure). The
 #'   attribute \code{not_sent} lists the URLs this run did not
-#'   start (\code{max_captures}, or archive.org's daily cap for the
+#'   start (\code{maxcap}, or archive.org's daily cap for the
 #'   account).
 #'
-#' @details Captures start no faster than \code{per_minute}. When
+#' @details Captures start no faster than \code{permin}. When
 #'   archive.org asks the run to slow down (HTTP 429, or a reply
 #'   saying the account has too many captures running, inside an
 #'   HTTP 200 as SPN2 sends it), nothing more is submitted until
@@ -242,41 +242,41 @@
 #'   an invisible or control character, or not starting with
 #'   \code{http://} or \code{https://}; missing keys, or keys that are not
 #'   letters and digits; \code{within} not of the form \code{"30d"};
-#'   \code{jobs} outside 1 to 12; \code{poll} below 1; \code{max_wait}
-#'   below \code{poll}; \code{per_minute} outside (0, 60];
-#'   \code{max_captures} below 1; \code{capture_all} not \code{TRUE} or
+#'   \code{jobs} outside 1 to 12; \code{poll} below 1; \code{maxwait}
+#'   below \code{poll}; \code{permin} outside (0, 60];
+#'   \code{maxcap} below 1; \code{capall} not \code{TRUE} or
 #'   \code{FALSE}; an \code{output} whose folder does not exist or that
 #'   cannot be written.
 #'
 #' @references Internet Archive. Save Page Now 2 (SPN2) public
 #'   API.
 #'   \url{https://archive.org/details/spn-2-public-api-page-docs}.
-#' @seealso \code{\link{wayback_snapshot_url_native}} to look up an existing
-#'   capture; \code{\link{wayback_retry}}; \code{\link{archive_capture}} for URLs whose
+#' @seealso \code{\link{wbsnpnat}} to look up an existing
+#'   capture; \code{\link{wbrtry}}; \code{\link{arccap}} for URLs whose
 #'   server refuses the Internet Archive (\code{"cannot find"} although the page is
 #'   there); \code{rmbl wayback FILE}
 #'   runs this from the command line.
 #' @examples
 #' # The checks run before any request, so these need no network or keys:
-#' try(wayback_save("ftp://example.org/report.pdf"))
-#' try(wayback_save("https://example.org/", access_key = "abc", secret_key = "def",
+#' try(wbsave("ftp://example.org/report.pdf"))
+#' try(wbsave("https://example.org/", ak = "abc", sk = "def",
 #'                  jobs = 20))
-#' try(wayback_save("https://example.org/", access_key = "abc", secret_key = "def",
+#' try(wbsave("https://example.org/", ak = "abc", sk = "def",
 #'                  output = file.path(tempdir(), "no-such-folder", "runs.jsonl")))
 #'
 #' # A real run needs archive.org keys and the network.
 #' \dontrun{
 #' Sys.setenv(IA_S3_ACCESS_KEY_FILE = "~/.config/ia/s3_access_key.txt",
 #'            IA_S3_SECRET_KEY_FILE = "~/.config/ia/s3_secret_key.txt")
-#' res <- wayback_save(c("https://www.ontariocourts.ca/ocj/statistics/",
+#' res <- wbsave(c("https://www.ontariocourts.ca/ocj/statistics/",
 #'                       "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"),
 #'                     output = "snapshots.jsonl")
 #' res
 #' }
 #' @export
-wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "30d", jobs = 4L,
-                         output = NULL, poll = 10, max_wait = 600, capture_all = FALSE, quiet = NULL,
-                         per_minute = 6, max_captures = 1000) {
+wbsave <- function(urls, ak = NULL, sk = NULL, within = "30d", jobs = 4L,
+                         output = NULL, poll = 10, maxwait = 600, capall = FALSE, quiet = NULL,
+                         permin = 6, maxcap = 1000) {
   urls <- .rmbl_text_input(urls, "urls", allow_raw = FALSE)
   urls <- unique(trimws(urls[!is.na(urls) & nzchar(trimws(urls))]))
   if (!length(urls)) stop("`urls` has no URLs", call. = FALSE)
@@ -297,16 +297,16 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
     stop(sprintf("not a public address, so it is not sent to archive.org: %s (%s)",
                  .rmbl_printable(urls[[i]]), why[[i]]), call. = FALSE)
   }
-  ak <- if (is.null(access_key)) .bl_ia_key("IA_S3_ACCESS_KEY") else access_key
-  sk <- if (is.null(secret_key)) .bl_ia_key("IA_S3_SECRET_KEY") else secret_key
-  if (!is.character(ak) || !is.character(sk) || length(ak) != 1L || length(sk) != 1L || is.na(ak) || is.na(sk) ||
-        !nzchar(ak) || !nzchar(sk)) {
-    stop(paste("wayback_save() needs your archive.org keys (https://archive.org/account/s3.php):",
+  .ak <- if (is.null(ak)) .bl_ia_key("IA_S3_ACCESS_KEY") else ak
+  .sk <- if (is.null(sk)) .bl_ia_key("IA_S3_SECRET_KEY") else sk
+  if (!is.character(.ak) || !is.character(.sk) || length(.ak) != 1L || length(.sk) != 1L || is.na(.ak) || is.na(.sk) ||
+        !nzchar(.ak) || !nzchar(.sk)) {
+    stop(paste("wbsave() needs your archive.org keys (https://archive.org/account/s3.php):",
                "set IA_S3_ACCESS_KEY and IA_S3_SECRET_KEY, or IA_S3_ACCESS_KEY_FILE and",
                "IA_S3_SECRET_KEY_FILE naming files that hold them"), call. = FALSE)
   }
   # a key goes into a request header: anything but its own alphabet would end the header
-  if (!grepl("^[A-Za-z0-9]+$", ak) || !grepl("^[A-Za-z0-9]+$", sk)) {
+  if (!grepl("^[A-Za-z0-9]+$", .ak) || !grepl("^[A-Za-z0-9]+$", .sk)) {
     stop("the archive.org keys should be letters and digits only; check the values (they are not shown)",
          call. = FALSE)
   }
@@ -319,21 +319,21 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
     stop("`jobs` must be a whole number from 1 to 12", call. = FALSE)
   }
   poll <- .rmbl_num(poll, "poll")
-  max_wait <- .rmbl_num(max_wait, "max_wait")
+  maxwait <- .rmbl_num(maxwait, "maxwait")
   if (length(poll) != 1L || is.na(poll) || poll < 1) stop("`poll` must be at least 1 second", call. = FALSE)
-  if (length(max_wait) != 1L || is.na(max_wait) || max_wait < poll) {
-    stop("`max_wait` must be at least `poll` seconds", call. = FALSE)
+  if (length(maxwait) != 1L || is.na(maxwait) || maxwait < poll) {
+    stop("`maxwait` must be at least `poll` seconds", call. = FALSE)
   }
-  per_minute <- .rmbl_num(per_minute, "per_minute")
-  if (length(per_minute) != 1L || is.na(per_minute) || per_minute <= 0 || per_minute > 60) {
-    stop("`per_minute` must be a number above 0 and at most 60", call. = FALSE)
+  permin <- .rmbl_num(permin, "permin")
+  if (length(permin) != 1L || is.na(permin) || permin <= 0 || permin > 60) {
+    stop("`permin` must be a number above 0 and at most 60", call. = FALSE)
   }
-  max_captures <- .rmbl_num(max_captures, "max_captures", integer = TRUE)
-  if (length(max_captures) != 1L || is.na(max_captures) || max_captures < 1L) {
-    stop("`max_captures` must be a whole number of at least 1", call. = FALSE)
+  maxcap <- .rmbl_num(maxcap, "maxcap", integer = TRUE)
+  if (length(maxcap) != 1L || is.na(maxcap) || maxcap < 1L) {
+    stop("`maxcap` must be a whole number of at least 1", call. = FALSE)
   }
-  if (!is.logical(capture_all) || length(capture_all) != 1L || is.na(capture_all)) {
-    stop("`capture_all` must be TRUE or FALSE", call. = FALSE)
+  if (!is.logical(capall) || length(capall) != 1L || is.na(capall)) {
+    stop("`capall` must be TRUE or FALSE", call. = FALSE)
   }
   # the results file is checked before anything is sent: a missing folder used to fail only after
   # the first capture had started
@@ -356,9 +356,9 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
   resumed <- urls[vapply(urls, function(u) identical(status_of(u), "submitted") && !is.na(prior[[u]]$job_id),
                          logical(1))]
   todo <- setdiff(urls, c(kept, resumed))
-  not_sent <- if (length(todo) > max_captures) todo[-seq_len(max_captures)] else character()
-  queue <- utils::head(todo, max_captures)
-  hdr <- c(sprintf("Authorization: LOW %s:%s", ak, sk), "Accept: application/json")
+  not_sent <- if (length(todo) > maxcap) todo[-seq_len(maxcap)] else character()
+  queue <- utils::head(todo, maxcap)
+  hdr <- c(sprintf("Authorization: LOW %s:%s", .ak, .sk), "Accept: application/json")
   results <- prior[kept]
   counts <- c(saved = 0L, existing = 0L, failed = 0L, submitted = 0L)
   anim <- .bl_anim_new("Wayback", length(queue) + length(resumed), color = "blue", quiet = quiet)
@@ -373,7 +373,7 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
     results[[u]] <<- rec
     counts[[status]] <<- counts[[status]] + 1L
     if (!is.null(output)) {
-      cat(bricklayer_json_to_json(rec, auto_unbox = TRUE), "\n", sep = "", file = output, append = TRUE)
+      cat(tojs(rec, auto_unbox = TRUE), "\n", sep = "", file = output, append = TRUE)
     }
   }
   existing_or_failed <- function(u, msg) {
@@ -387,7 +387,7 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
   form <- function(u) {
     paste0("url=", utils::URLencode(u, reserved = TRUE), "&skip_first_archive=1",
            if (within != "0") paste0("&if_not_archived_within=", within) else "",
-           if (capture_all) "&capture_all=1" else "")
+           if (capall) "&capture_all=1" else "")
   }
   refused <- function(res) {
     if (res$status %in% c(401L, 403L)) {
@@ -405,7 +405,7 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
     finish(u, "submitted", msg = "started; the run stopped before it finished", job_id = inflight[[u]]$id)
   }, add = TRUE)
   attempts <- stats::setNames(integer(length(queue)), queue)
-  spacing <- 60 / per_minute
+  spacing <- 60 / permin
   next_post <- -Inf
   hold_until <- -Inf      # nothing is submitted before this (archive.org asked to slow down)
   throttles <- 0L         # slow-down replies since the last capture that got through
@@ -448,11 +448,11 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
     ra <- .bl_wb_retry_after(res)
     hold_until <<- now + if (!is.na(ra)) max(ra, spacing) else min(600, 15 * 2^(throttles - 1L))
   }
-  # a message that archive.org left empty is written out, so wayback_retry() knows what happened
+  # a message that archive.org left empty is written out, so wbrtry() knows what happened
   said <- function(m, default) if (is.na(m) || !nzchar(m)) default else m
   while ((length(queue) && is.null(stopped)) || length(inflight)) {
     now <- .bl_wb_now()
-    # start captures while there is room, no faster than per_minute and not while held
+    # start captures while there is room, no faster than permin and not while held
     while (is.null(stopped) && length(inflight) < jobs && length(queue) && now >= max(next_post, hold_until)) {
       u <- queue[[1L]]
       queue <- queue[-1L]
@@ -503,8 +503,8 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
         finish(u, "failed", msg = sprintf("archive.org no longer knows capture %s", job$id))
         inflight[[u]] <- NULL
       } else if (res$status < 0 || identical(res$status, 429L) || res$status >= 500L || is.null(j)) {
-        if (now - job$start > max_wait) {
-          finish(u, "failed", msg = sprintf("no answer from archive.org in %g seconds", max_wait))
+        if (now - job$start > maxwait) {
+          finish(u, "failed", msg = sprintf("no answer from archive.org in %g seconds", maxwait))
           inflight[[u]] <- NULL
         } else {
           ra <- .bl_wb_retry_after(res)
@@ -529,8 +529,8 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
         } else {
           finish(u, "failed", msg = .bl_wb_str(j$message) %|NA|% (.bl_wb_str(j$status_ext) %|NA|% "error"))
         }
-      } else if (now - job$start > max_wait) {
-        finish(u, "failed", msg = sprintf("no answer from archive.org in %g seconds", max_wait))
+      } else if (now - job$start > maxwait) {
+        finish(u, "failed", msg = sprintf("no answer from archive.org in %g seconds", maxwait))
         inflight[[u]] <- NULL
       } else {
         inflight[[u]]$fails <- 0L
@@ -600,13 +600,13 @@ print.rmbl_wayback_save <- function(x, ...) {
 #' Retry the failures of a bulk Wayback run
 #'
 #' @description
-#' Picks up where a \code{\link{wayback_save}} run left off: it re-tries
+#' Picks up where a \code{\link{wbsave}} run left off: it re-tries
 #' only the URLs whose captures failed or were still running, after first
 #' checking whether the Wayback Machine already holds a copy of each. Use it
 #' after a run that hit archive.org's limits, typically the next day.
 #'
 #' @details
-#' Reads the results file a \code{\link{wayback_save}} run wrote
+#' Reads the results file a \code{\link{wbsave}} run wrote
 #' and tries again every URL whose latest result is
 #' \code{"failed"} (or \code{"submitted"}: a capture a stopped run
 #' had started, which is polled rather than submitted again), so
@@ -616,9 +616,9 @@ print.rmbl_wayback_save <- function(x, ...) {
 #' since gone, or one made today by another run when the daily
 #' limit refused this one) is recorded as \code{"existing"}
 #' without capturing again. What is left is captured again with
-#' \code{wayback_save()}, appending to the same file. A page its
+#' \code{wbsave()}, appending to the same file. A page its
 #' source no longer has is not sent again unless
-#' \code{include_gone = TRUE}: a new capture would only archive the error.
+#' \code{incgone = TRUE}: a new capture would only archive the error.
 #' "Gone" means the recorded message contains archive.org's report of the
 #' target server's reply ("target server cannot find", "returned 404",
 #' "returned 410", "error:not-found" or "error:gone"); an HTTP 404 from
@@ -626,25 +626,25 @@ print.rmbl_wayback_save <- function(x, ...) {
 #' recorded today (UTC) is not sent again until tomorrow.
 #'
 #' Network: the lookups use the Wayback availability API and the new
-#' captures use \code{wayback_save()}, which needs the archive.org keys.
+#' captures use \code{wbsave()}, which needs the archive.org keys.
 #' When there is nothing left to send, no keys and no network are needed.
 #' Each lookup that finds a capture is appended to \code{output} as an
 #' \code{"existing"} line.
 #'
 #' Errors: \code{output} not a single path to an existing file;
-#' \code{include_gone} or \code{lookup} not \code{TRUE} or \code{FALSE};
-#' any error from \code{wayback_save()}.
+#' \code{incgone} or \code{lookup} not \code{TRUE} or \code{FALSE};
+#' any error from \code{wbsave()}.
 #'
 #' @param output The JSON Lines results file of an earlier
-#'   \code{wayback_save()} run (or of \code{rmbl wayback});
+#'   \code{wbsave()} run (or of \code{rmbl wayback});
 #'   results of the retry are appended to it.
-#' @param include_gone Logical, default \code{FALSE}. Also capture again
+#' @param incgone Logical, default \code{FALSE}. Also capture again
 #'   the pages whose failure says the page is gone.
 #' @param lookup Logical, default \code{TRUE}. Look each failure up in the
 #'   Wayback Machine (one lookup a second) before capturing again.
-#' @param ... Passed to \code{wayback_save()}: \code{jobs},
-#'   \code{within}, the keys, \code{quiet}, \code{per_minute},
-#'   \code{max_captures}.
+#' @param ... Passed to \code{wbsave()}: \code{jobs},
+#'   \code{within}, the keys, \code{quiet}, \code{permin},
+#'   \code{maxcap}.
 #' @return The whole run as it now stands, one row per URL (a
 #'   data frame of class \code{rmbl_wayback_save}), with the
 #'   attribute \code{retry}: how many failures there were, how
@@ -653,7 +653,7 @@ print.rmbl_wayback_save <- function(x, ...) {
 #'   daily limit hit today), as a one-row data frame with integer columns
 #'   \code{failed}, \code{found_by_lookup}, \code{captured_again},
 #'   \code{left_as_gone} and \code{left_for_tomorrow}.
-#' @seealso \code{\link{wayback_save}}; \code{rmbl wayback
+#' @seealso \code{\link{wbsave}}; \code{rmbl wayback
 #'   --retry FILE.jsonl} from the command line.
 #' @examples
 #' # Offline: a results file whose only failure is a page that is gone
@@ -667,24 +667,24 @@ print.rmbl_wayback_save <- function(x, ...) {
 #'   paste0('{"url":"https://example.org/old","status":"failed",',
 #'          '"message":"target server cannot find the page","at":"2026-01-01T12:00:00Z"}')
 #' ), f)
-#' res <- wayback_retry(f, lookup = FALSE)
+#' res <- wbrtry(f, lookup = FALSE)
 #' res
 #' attr(res, "retry")
 #'
-#' try(wayback_retry(tempfile(fileext = ".jsonl")))
+#' try(wbrtry(tempfile(fileext = ".jsonl")))
 #'
 #' # With failures to resend, keys and the network are needed.
 #' \dontrun{
-#' res <- wayback_save(urls, output = "snapshots.jsonl")
+#' res <- wbsave(urls, output = "snapshots.jsonl")
 #' # later, or the next day once the daily capture limits have reset:
-#' res <- wayback_retry("snapshots.jsonl")
+#' res <- wbrtry("snapshots.jsonl")
 #' attr(res, "retry")
 #' }
 #' @export
-wayback_retry <- function(output, include_gone = FALSE, lookup = TRUE, ...) {
+wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
   output <- .rmbl_string1(output, "output")
   if (!file.exists(output)) stop(sprintf("no results file at %s", output), call. = FALSE)
-  for (a in c("include_gone", "lookup")) {
+  for (a in c("incgone", "lookup")) {
     v <- get(a)
     if (!is.logical(v) || length(v) != 1L || is.na(v)) stop(sprintf("`%s` must be TRUE or FALSE", a), call. = FALSE)
   }
@@ -704,18 +704,18 @@ wayback_retry <- function(output, include_gone = FALSE, lookup = TRUE, ...) {
                   timestamp = .bl_wb_ts(sub("^.*/web/([0-9]{14})[^/]*/.*$", "\\1", s)), snapshot = s,
                   message = paste("found on retry;", failed$message[i]),
                   at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"))
-      cat(bricklayer_json_to_json(rec, auto_unbox = TRUE), "\n", sep = "", file = output, append = TRUE)
+      cat(tojs(rec, auto_unbox = TRUE), "\n", sep = "", file = output, append = TRUE)
       found <- found + 1L
       failed$status[i] <- "existing"
     }
   }
   left <- failed[failed$status %in% c("failed", "submitted"), , drop = FALSE]
-  gone <- if (include_gone) rep(FALSE, nrow(left)) else left$status == "failed" & .bl_wb_gone(left$message)
+  gone <- if (incgone) rep(FALSE, nrow(left)) else left$status == "failed" & .bl_wb_gone(left$message)
   today <- format(Sys.time(), "%Y-%m-%d", tz = "UTC")
   at <- vapply(left$url, function(u) substr(recs[[u]]$at %|NA|% "", 1L, 10L), "", USE.NAMES = FALSE)
   later <- !gone & left$status == "failed" & .bl_wb_daily_failure(left$message) & at == today
   todo <- left$url[!gone & !later]
-  if (length(todo)) wayback_save(todo, output = output, ...)
+  if (length(todo)) wbsave(todo, output = output, ...)
   out <- .bl_wb_read(output)
   attr(out, "retry") <- data.frame(failed = nrow(failed), found_by_lookup = found, captured_again = length(todo),
                                    left_as_gone = sum(gone), left_for_tomorrow = sum(later))

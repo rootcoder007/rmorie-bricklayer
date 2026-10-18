@@ -1,39 +1,39 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Synthetic-column generators and the CSV writer: type behaviour,
-# determinism, RNG-state hygiene, row replication, core_normal_pdf.
+# determinism, RNG-state hygiene, row replication, cnormpdf.
 
-test_that("make_synthetic_column honours each documented type", {
+test_that("mksyncol honours each documented type", {
   set.seed(1)
-  s <- make_synthetic_column(list(type = "sample", values = c("a", "b")), 50)
+  s <- mksyncol(list(type = "sample", values = c("a", "b")), 50)
   expect_true(all(s %in% c("a", "b")))
 
-  b <- make_synthetic_column(
+  b <- mksyncol(
     list(type = "bernoulli", p = 1, labels = c("Yes", "No")), 20
   )
   expect_true(all(b == "Yes"))
 
-  p <- make_synthetic_column(list(type = "poisson", lambda = 2, min = 1), 200)
+  p <- mksyncol(list(type = "poisson", lambda = 2, min = 1), 200)
   expect_true(all(p >= 1))
 
-  ids <- make_synthetic_column(
+  ids <- mksyncol(
     list(type = "id_pattern", pattern = "case-{seq:05d}"), 3
   )
   expect_identical(ids, c("case-00001", "case-00002", "case-00003"))
 
   yr_ctx <- list(fy = c(2024, 2024, 2025))
-  ids_yr <- make_synthetic_column(
+  ids_yr <- mksyncol(
     list(type = "id_pattern", pattern = "{year}-{seq:05d}", year_col = "fy"),
     3, ctx = yr_ctx
   )
   expect_identical(ids_yr, c("2024-00001", "2024-00002", "2025-00001"))
 
-  sq <- make_synthetic_column(list(type = "sequence", from = 5L), 3)
+  sq <- mksyncol(list(type = "sequence", from = 5L), 3)
   expect_identical(sq, 5:7)
 
-  expect_error(make_synthetic_column(list(type = "no-such-type"), 3))
+  expect_error(mksyncol(list(type = "no-such-type"), 3))
 })
 
-test_that("make_synthetic_csv is deterministic and restores the caller RNG state", {
+test_that("mksyncsv is deterministic and restores the caller RNG state", {
   schema <- list(
     seed = 42L, n_rows = 25L,
     columns = list(
@@ -47,11 +47,11 @@ test_that("make_synthetic_csv is deterministic and restores the caller RNG state
 
   set.seed(999)
   before <- .Random.seed
-  info <- make_synthetic_csv(schema, f1)
+  info <- mksyncsv(schema, f1)
   expect_identical(.Random.seed, before)
 
-  make_synthetic_csv(schema, f2)
-  expect_identical(sha256_file(f1), sha256_file(f2))
+  mksyncsv(schema, f2)
+  expect_identical(sha256file(f1), sha256file(f2))
   expect_identical(info$rows, 25L)
   expect_identical(info$seed, 42L)
 
@@ -60,7 +60,7 @@ test_that("make_synthetic_csv is deterministic and restores the caller RNG state
   expect_true(all(df$alert %in% c("Yes", "No")))
 })
 
-test_that("make_synthetic_csv row_replication expands person rows", {
+test_that("mksyncsv row_replication expands person rows", {
   schema <- list(
     seed = 7L, n_rows = 10L,
     row_replication = list(values = list(2L), weights = list(1)),
@@ -69,21 +69,21 @@ test_that("make_synthetic_csv row_replication expands person rows", {
     )
   )
   f <- tempfile(fileext = ".csv")
-  info <- make_synthetic_csv(schema, f)
+  info <- mksyncsv(schema, f)
   expect_identical(info$rows, 20L)
 })
 
-test_that("core_normal_pdf agrees with stats::dnorm", {
+test_that("cnormpdf agrees with stats::dnorm", {
   x <- c(-2, -0.5, 0, 1.7)
-  expect_equal(core_normal_pdf(x), stats::dnorm(x), tolerance = 1e-12)
-  expect_equal(core_normal_pdf(x, mean = 3, sd = 2),
+  expect_equal(cnormpdf(x), stats::dnorm(x), tolerance = 1e-12)
+  expect_equal(cnormpdf(x, mean = 3, sd = 2),
                stats::dnorm(x, 3, 2), tolerance = 1e-12)
 })
 
-test_that("agent_bundle validates input and degrades gracefully without a key", {
-  expect_error(agent_bundle(""), "single non-empty string")
-  expect_error(agent_bundle(c("a", "b")))
+test_that("agentbndl validates input and degrades gracefully without a key", {
+  expect_error(agentbndl(""), "single non-empty string")
+  expect_error(agentbndl(c("a", "b")))
   Sys.setenv(XDG_CONFIG_HOME = tempfile("xdg-"))
   on.exit(Sys.unsetenv("XDG_CONFIG_HOME"), add = TRUE)
-  expect_match(agent_bundle("scaffold a capsule"), "No language-model route")
+  expect_match(agentbndl("scaffold a capsule"), "No language-model route")
 })

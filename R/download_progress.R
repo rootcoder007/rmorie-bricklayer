@@ -67,25 +67,25 @@
 #' URL is checked, its host resolved and pinned, and every redirect is
 #' checked again (no switch from https to http; credentials are not passed
 #' to another host). Plain \code{http://} is allowed only with
-#' \code{options(rmoriebricklayer.allow_http = TRUE)}. A transfer slower than
+#' \code{options(rmoriebricklayer.allowhttp = TRUE)}. A transfer slower than
 #' 64 bytes a second for 30 seconds is abandoned. A \code{file://} URL is
 #' copied locally through the same progress display, only with
-#' \code{allow_file = TRUE}.
+#' \code{allowfile = TRUE}.
 #'
 #' Errors: a URL that is not https (or allowed http/file), or that points at
 #' a loopback, link-local or private address; \code{headers} not a named
-#' character vector; \code{timeout} below 1 or above 2147483647;
-#' \code{max_bytes} below 1; a network failure; an HTTP status of 400 or
-#' more; a body larger than \code{max_bytes}. \code{dest} is overwritten.
+#' character vector; \code{tmout} below 1 or above 2147483647;
+#' \code{maxbytes} below 1; a network failure; an HTTP status of 400 or
+#' more; a body larger than \code{maxbytes}. \code{dest} is overwritten.
 #'
 #' @param url The URL: \code{https} (plain \code{http} only with
-#'   \code{options(rmoriebricklayer.allow_http = TRUE)}); a loopback,
+#'   \code{options(rmoriebricklayer.allowhttp = TRUE)}); a loopback,
 #'   link-local or private address is refused.
-#' @param max_bytes Most bytes the body may have (default 2 GiB, the
+#' @param maxbytes Most bytes the body may have (default 2 GiB, the
 #'   transport's ceiling). A body past it, chunked or not, ends the transfer
 #'   with an error and leaves nothing behind: a caller that expects a small
 #'   file should say so.
-#' @param allow_file Logical, default \code{FALSE}: accept a \code{file://}
+#' @param allowfile Logical, default \code{FALSE}: accept a \code{file://}
 #'   URL (for offline tests).
 #' @param dest Character string: the path to write.
 #' @param headers Character vector of request headers, every element named
@@ -93,7 +93,7 @@
 #' @param label Text shown in front of the bar; the file name by default.
 #' @param size Expected size in bytes when known (a percent bar instead of a
 #'   spinner); otherwise the size the server announces is used.
-#' @param timeout Seconds allowed for the whole transfer: a whole number from 1
+#' @param tmout Seconds allowed for the whole transfer: a whole number from 1
 #'   to 2147483647, default 3600. A transfer slower than 64 bytes a second
 #'   for 30 seconds is ended before that.
 #' @param quiet \code{TRUE}, \code{FALSE}, or \code{NULL} (the default) to
@@ -102,36 +102,36 @@
 #'   (\code{FALSE}); \code{NULL} (the default) draws the bar when the
 #'   console redraws a line in place, as described in Details.
 #' @return \code{dest}, invisibly.
-#' @seealso \code{\link{bricklayer_fetch}} for a download with a Wayback
+#' @seealso \code{\link{blfetch}} for a download with a Wayback
 #'   Machine fallback.
 #' @examples
 #' # offline: a local file through the same routine
 #' src <- tempfile(fileext = ".txt")
 #' writeLines("hello", src)
 #' dest <- tempfile(fileext = ".txt")
-#' bricklayer_download(paste0("file://", src), dest, quiet = TRUE,
-#'                     allow_file = TRUE)
+#' bldl(paste0("file://", src), dest, quiet = TRUE,
+#'                     allowfile = TRUE)
 #' readLines(dest)
 #'
 #' # the safety checks run before any connection is made
-#' try(bricklayer_download("http://example.org/table.csv", tempfile()))
-#' try(bricklayer_download("https://127.0.0.1/table.csv", tempfile()))
-#' try(bricklayer_download(paste0("file://", src), tempfile()))
+#' try(bldl("http://example.org/table.csv", tempfile()))
+#' try(bldl("https://127.0.0.1/table.csv", tempfile()))
+#' try(bldl(paste0("file://", src), tempfile()))
 #'
 #' # a real download needs the network
 #' \dontrun{
-#' bricklayer_download("https://www.ontario.ca/some/open-data/table.csv",
-#'                     "table.csv", max_bytes = 50e6)
+#' bldl("https://www.ontario.ca/some/open-data/table.csv",
+#'                     "table.csv", maxbytes = 50e6)
 #' }
 #' @export
-bricklayer_download <- function(url, dest, headers = NULL,
+bldl <- function(url, dest, headers = NULL,
                                 label = basename(dest), size = NULL,
-                                timeout = 3600, quiet = NULL, tty = NULL,
-                                allow_file = FALSE, max_bytes = 2^31) {
+                                tmout = 3600, quiet = NULL, tty = NULL,
+                                allowfile = FALSE, maxbytes = 2^31) {
   .rmbl_no_fn(url = url)
   # the capsule path's transport: https only, never a local or private
   # address, and file:// only when the caller says so (an offline test)
-  url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
+  url <- .rmbl_check_public_url(url, "url", allow_file = allowfile)
   if (is.null(quiet)) quiet <- .bl_dl_quiet()
   dest <- .rmbl_string1(dest, "dest")
   quiet <- .rmbl_flag1(quiet, "quiet")
@@ -151,11 +151,11 @@ bricklayer_download <- function(url, dest, headers = NULL,
     }
     hdr_lines <- paste0(names(headers), ": ", headers)
   }
-  timeout <- .rmbl_num(timeout, "timeout")[1L]
-  if (is.na(timeout) || timeout < 1) stop("`timeout` must be at least one second", call. = FALSE)
-  if (timeout > .Machine$integer.max) stop("`timeout` must be at most 2147483647 seconds", call. = FALSE)
-  max_bytes <- .rmbl_num(max_bytes, "max_bytes")[1L]
-  if (is.na(max_bytes) || max_bytes < 1) stop("`max_bytes` must be a number of bytes, at least one", call. = FALSE)
+  tmout <- .rmbl_num(tmout, "tmout")[1L]
+  if (is.na(tmout) || tmout < 1) stop("`tmout` must be at least one second", call. = FALSE)
+  if (tmout > .Machine$integer.max) stop("`tmout` must be at most 2147483647 seconds", call. = FALSE)
+  maxbytes <- .rmbl_num(maxbytes, "maxbytes")[1L]
+  if (is.na(maxbytes) || maxbytes < 1) stop("`maxbytes` must be a number of bytes, at least one", call. = FALSE)
   t0 <- proc.time()[["elapsed"]]
   mile <- 0L
   anim <- NULL
@@ -209,7 +209,7 @@ bricklayer_download <- function(url, dest, headers = NULL,
     # URL is checked again there, resolved and pinned, every redirect hop is
     # re-checked (no https -> http, credentials dropped across hosts) and the
     # body is capped; base R's url() did none of that (0.5.7 review)
-    res <- .Call(C_rmbl_http_download, url, dest, as.integer(timeout), hdr_lines, draw, max_bytes, FALSE)
+    res <- .Call(C_rmbl_http_download, url, dest, as.integer(tmout), hdr_lines, draw, maxbytes, FALSE)
     if (res$status < 0) {
       stop(sprintf("%s: %s", url, res$error), call. = FALSE)
     }

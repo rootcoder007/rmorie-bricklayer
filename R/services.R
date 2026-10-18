@@ -99,9 +99,9 @@
   }
   obj <- structure(list(scheme = "ML-DSA-44", signature = sig$signature, prehash = "none"),
                    class = c("bricklayer_signature", "list"))
-  key <- tryCatch(fips_key("ML-DSA-44", pubkey), error = function(e) NULL)
+  key <- tryCatch(fipskey("ML-DSA-44", pubkey), error = function(e) NULL)
   if (is.null(key)) return(FALSE)
-  isTRUE(tryCatch(capsule_verify(doc_bytes, obj, key, context = .rmbl_services_context),
+  isTRUE(tryCatch(cpsvrf(doc_bytes, obj, key, ctx = .rmbl_services_context),
                   error = function(e) FALSE))
 }
 
@@ -165,7 +165,7 @@
 #' Every other MORIE package reads the same document through this function,
 #' so one sign-in and one document serve rmorie, rmoriedata and morie alike.
 #' Language models are never hosted: you bring your own key or model
-#' (\code{\link{bricklayer_llm_ask}}). The \code{llm} block of documents
+#' (\code{\link{llmask}}). The \code{llm} block of documents
 #' signed before that change carries the sign-in address only.
 #'
 #' The environment variable \code{MORIE_SERVICES_URL} points the fetch at a
@@ -174,7 +174,7 @@
 #' only serve a document the project signed.
 #'
 #' @details
-#' The order of resolution: a cached copy younger than \code{max_age} (unless
+#' The order of resolution: a cached copy younger than \code{maxage} (unless
 #' \code{refresh}); the live document, fetched through the package's own
 #' checked transport (public https only, at most 1 MiB), verified, and kept
 #' only when it is not older than the copy already held or the bundled copy
@@ -191,15 +191,15 @@
 #' rest of the package makes) return it without checking the signature again.
 #'
 #' Errors: \code{refresh} or \code{offline} not \code{TRUE} or \code{FALSE};
-#' \code{max_age} not a single non-negative number; \code{timeout} not a
+#' \code{maxage} not a single non-negative number; \code{tmout} not a
 #' single finite number of at least 1.
 #'
 #' @param refresh Logical scalar, default \code{FALSE}: \code{TRUE} fetches
 #'   the live document even when the cached copy is fresh.
-#' @param max_age Numeric scalar, the seconds a cached copy is used without
+#' @param maxage Numeric scalar, the seconds a cached copy is used without
 #'   asking the site; default \code{86400} (one day); \code{Inf} keeps a
 #'   cached copy forever.
-#' @param timeout Numeric scalar, the seconds allowed for each of the two
+#' @param tmout Numeric scalar, the seconds allowed for each of the two
 #'   fetches (document and signature); default \code{20}.
 #' @param offline Logical scalar, default \code{FALSE}: \code{TRUE} never
 #'   fetches: the session's copy, the cached copy, then the bundled one (what
@@ -213,11 +213,11 @@
 #'   \code{request_access}, and \code{auth_url} when the document has one),
 #'   with the attribute \code{"source"} set to
 #'   \code{"live"}, \code{"cache"}, \code{"bundled"} or \code{"off"}.
-#' @seealso \code{\link{bricklayer_llm_login}}, \code{\link{bricklayer_data_manifest}}.
+#' @seealso \code{\link{dlogin}}, \code{\link{dmnf}}.
 #' @examples
 #' # Nothing is fetched here: the cached copy if there is one, else the
 #' # document bundled with the package.
-#' s <- bricklayer_services(offline = TRUE)
+#' s <- svcs(offline = TRUE)
 #' s$llm$mode
 #' attr(s, "source")
 #'
@@ -226,27 +226,27 @@
 #' s$issued
 #'
 #' # arguments are checked
-#' try(bricklayer_services(max_age = -1))
+#' try(svcs(maxage = -1))
 #' \dontrun{
 #' # ask the site now (network), and keep the answer for a day
-#' bricklayer_services(refresh = TRUE)
+#' svcs(refresh = TRUE)
 #' }
 #' @export
-bricklayer_services <- function(refresh = FALSE, max_age = 86400, timeout = 20,
+svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20,
                                 offline = FALSE) {
   .bl_check_flag(refresh, "refresh")
   .bl_check_flag(offline, "offline")
-  if (!is.numeric(max_age) || length(max_age) != 1L || is.na(max_age) || max_age < 0) {
-    stop("`max_age` must be a single non-negative number of seconds (Inf keeps a cached copy forever)",
+  if (!is.numeric(maxage) || length(maxage) != 1L || is.na(maxage) || maxage < 0) {
+    stop("`maxage` must be a single non-negative number of seconds (Inf keeps a cached copy forever)",
          call. = FALSE)
   }
-  if (!is.numeric(timeout) || length(timeout) != 1L || !is.finite(timeout) || timeout < 1) {
-    stop("`timeout` must be a single number of seconds, at least one", call. = FALSE)
+  if (!is.numeric(tmout) || length(tmout) != 1L || !is.finite(tmout) || tmout < 1) {
+    stop("`tmout` must be a single number of seconds, at least one", call. = FALSE)
   }
   if (isTRUE(offline) && !isTRUE(refresh) && !is.null(.rmbl_services_memo$doc)) {
     return(.rmbl_services_memo$doc)
   }
-  out <- .rmbl_services_resolve(refresh, max_age, timeout, offline)
+  out <- .rmbl_services_resolve(refresh, maxage, tmout, offline)
   .rmbl_services_memo$doc <- out
   out
 }
@@ -322,9 +322,9 @@ bricklayer_services <- function(refresh = FALSE, max_age = 86400, timeout = 20,
 
 # The one-line answers the rest of the package asks for. Offline inside the
 # package: a sign-in or a table fetch must not block on the site; the daily
-# refresh happens when bricklayer_services() is called for its own sake.
-.rmbl_services_llm <- function() bricklayer_services(offline = TRUE)$llm
-.rmbl_services_data <- function() bricklayer_services(offline = TRUE)$data
+# refresh happens when svcs() is called for its own sake.
+.rmbl_services_llm <- function() svcs(offline = TRUE)$llm
+.rmbl_services_data <- function() svcs(offline = TRUE)$data
 
 
 # The signature sits beside the document: "x.json" -> "x.sig"; a mirror

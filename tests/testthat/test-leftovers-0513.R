@@ -1,6 +1,6 @@
-# The 0.5.13 performance and progress leftovers: SLH-DSA signing and core_bootstrap_mean() poll for
-# a Ctrl-C (and so turn the busy spinner), sha256_file() streams its file, bricklayer_llm_config()
-# builds its tables once, and plr_crossfit() fits its nuisances by normal equations. Each output is
+# The 0.5.13 performance and progress leftovers: SLH-DSA signing and cbootmean() poll for
+# a Ctrl-C (and so turn the busy spinner), sha256file() streams its file, llmcfg()
+# builds its tables once, and plrcf() fits its nuisances by normal equations. Each output is
 # checked against what 0.5.13 returned before the change.
 
 lo_ns <- function(name) get(name, envir = asNamespace("rmoriebricklayer"))
@@ -15,70 +15,70 @@ test_that("SLH-DSA signatures are the bytes 0.5.13 produced (the polls change no
     "SLH-DSA-SHAKE-128s" = "17af79dfccc26fc7154476ac1424bb3690bfb2c0d5a57ee870d74fc23f64119b"
   )
   for (sc in names(pinned)) {
-    sz <- fips_sizes(sc)
-    k <- fips_keygen(sc, seed = as.raw((seq_len(sz[["seed"]]) * 7L) %% 256L))
+    sz <- fipssz(sc)
+    k <- fipskg(sc, seed = as.raw((seq_len(sz[["seed"]]) * 7L) %% 256L))
     sig <- lo_ns(".rmbl_fips_sign")(sc, lo_ns(".rmbl_hex_to_raw")(k$secret), charToRaw("bricklayer leftovers"),
                                     raw(0), as.raw(seq_len(sz[["opt_rand"]])))
-    expect_identical(core_sha256(sig), pinned[[sc]], info = sc)
+    expect_identical(csha256(sig), pinned[[sc]], info = sc)
     expect_true(lo_ns(".rmbl_fips_verify")(sc, lo_ns(".rmbl_hex_to_raw")(k$public),
                                            charToRaw("bricklayer leftovers"), raw(0), sig), info = sc)
   }
 })
 
-test_that("core_bootstrap_mean() gives the 0.5.13 replicates for the same seed", {
+test_that("cbootmean() gives the 0.5.13 replicates for the same seed", {
   # recorded with 0.5.13, before the kernel polled for an interrupt
-  expect_identical(sprintf("%a", core_bootstrap_mean(c(1, 5, 2, 8), 50, seed = 3)[1:6]),
+  expect_identical(sprintf("%a", cbootmean(c(1, 5, 2, 8), 50, seed = 3)[1:6]),
                    c("0x1.4p+1", "0x1.cp+1", "0x1.8p+0", "0x1p+2", "0x1.ap+2", "0x1p+1"))
   set.seed(3)
   x <- stats::rnorm(20000)
-  reps <- core_bootstrap_mean(x, 60L, seed = 11)
+  reps <- cbootmean(x, 60L, seed = 11)
   # the resamples are the same on every platform (Lemire's draw on mt19937_64); the sums run in
   # long double, which is 80-bit on x86 and plain double on arm64, so the means agree to rounding
   expect_equal(reps[1:2], c(-0x1.564a2aa5fd3d7p-6, -0x1.9dbc36011be11p-7), tolerance = 1e-12)
   # a poll falls every 52 replicates at n = 20000: the replicates on both sides of it follow the
   # same stream as a run too short to poll
-  expect_identical(reps[1:40], core_bootstrap_mean(x, 40L, seed = 11))
-  expect_true(all(is.nan(core_bootstrap_mean(numeric(0), 3))))
+  expect_identical(reps[1:40], cbootmean(x, 40L, seed = 11))
+  expect_true(all(is.nan(cbootmean(numeric(0), 3))))
 })
 
-test_that("sha256_file() streams: empty, small, exact chunk multiples and one byte past", {
+test_that("sha256file() streams: empty, small, exact chunk multiples and one byte past", {
   stream <- lo_ns(".rmbl_sha256_stream")
   d <- withr::local_tempdir()
-  whole <- function(f) core_sha256(readBin(f, "raw", n = max(1, file.info(f)$size)))
+  whole <- function(f) csha256(readBin(f, "raw", n = max(1, file.info(f)$size)))
   f0 <- file.path(d, "empty")
   writeBin(raw(0), f0)
-  expect_identical(sha256_file(f0), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+  expect_identical(sha256file(f0), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
   f1 <- file.path(d, "small")
   writeBin(charToRaw("hello capsule\n"), f1)  # bytes, not text: Windows would write \r\n
-  expect_identical(sha256_file(f1), "55d6110230c260319d580bb6274db530b7e751c4f687fc00d0736ec531260a02")
+  expect_identical(sha256file(f1), "55d6110230c260319d580bb6274db530b7e751c4f687fc00d0736ec531260a02")
   set.seed(9)
   bytes <- as.raw(sample.int(256L, 4096L * 3L + 1L, replace = TRUE) - 1L)
   for (len in c(64L, 4096L, 8192L, 4096L * 3L, 4096L * 3L + 1L, 63L, 65L, 1L)) {
     f <- file.path(d, sprintf("f%d", len))
     writeBin(bytes[seq_len(len)], f)
     ref <- whole(f)
-    expect_identical(sha256_file(f), ref, info = len)
+    expect_identical(sha256file(f), ref, info = len)
     # chunks of 64 bytes (a block), 4096 (the file a multiple of it) and 100 (not a block size)
     for (ch in c(64L, 4096L, 100L)) expect_identical(stream(f, chunk = ch), ref, info = paste(len, ch))
   }
   # the default 8 MB chunk: a file of exactly one chunk, and one byte more
   fb <- file.path(d, "eight")
   writeBin(as.raw(rep(1:255, length.out = 8388608L)), fb)
-  expect_identical(sha256_file(fb), whole(fb))
+  expect_identical(sha256file(fb), whole(fb))
   con <- file(fb, "ab")
   writeBin(as.raw(7L), con)
   close(con)
-  expect_identical(sha256_file(fb), whole(fb))
+  expect_identical(sha256file(fb), whole(fb))
   # the state between chunks is checked, not trusted
   expect_error(.Call(lo_ns("C_rmbl_sha256_chunk"), as.raw(1:3), NULL, TRUE), "SHA-256 state")
   expect_error(.Call(lo_ns("C_rmbl_sha256_chunk"), NULL, "text", FALSE), "raw vector or NULL")
   bad <- .Call(lo_ns("C_rmbl_sha256_chunk"), NULL, as.raw(1:10), FALSE)
   bad[65L] <- as.raw(200L)   # datalen past a block
   expect_error(.Call(lo_ns("C_rmbl_sha256_chunk"), bad, NULL, TRUE), "SHA-256 state")
-  expect_error(sha256_file(d), "is not a file")
+  expect_error(sha256file(d), "is not a file")
 })
 
-test_that("sha256_file() shows a byte bar for a file larger than one chunk", {
+test_that("sha256file() shows a byte bar for a file larger than one chunk", {
   stream <- lo_ns(".rmbl_sha256_stream")
   d <- withr::local_tempdir()
   f <- file.path(d, "big.bin")
@@ -91,11 +91,11 @@ test_that("sha256_file() shows a byte bar for a file larger than one chunk", {
   local_mocked_bindings(.bl_stderr_tty = function() FALSE)
   f2 <- function() stream(f, chunk = 1000L)
   msg <- capture.output(h <- f2(), type = "message")
-  expect_identical(h, core_sha256(readBin(f, "raw", 4000L)))
+  expect_identical(h, csha256(readBin(f, "raw", 4000L)))
   expect_true(any(grepl("sha256 big.bin: 4000 of 4000 (100%)", msg, fixed = TRUE)))
 })
 
-# bricklayer_llm_config() before the caches: the settings table and every value rebuilt from the
+# llmcfg() before the caches: the settings table and every value rebuilt from the
 # presets and the settings file on each lookup (0.5.13's .bl_config_spec, .bl_config_value,
 # .bl_config_effective and .bl_config_source, kept here verbatim but for the namespace lookups)
 old_llm_config <- function() {
@@ -141,7 +141,7 @@ old_llm_config <- function() {
              help = spec$help, stringsAsFactors = FALSE)
 }
 
-test_that("bricklayer_llm_config() reads the same table as before its caches", {
+test_that("llmcfg() reads the same table as before its caches", {
   provider_vars <- c(unlist(lo_ns(".bl_llm_presets")()[, c("key_env", "alt_env")]),
                      paste0("MORIE_", toupper(lo_ns(".bl_llm_presets")()$id), "_MODEL"))
   provider_vars <- provider_vars[nzchar(provider_vars)]
@@ -150,49 +150,49 @@ test_that("bricklayer_llm_config() reads the same table as before its caches", {
                         MORIE_LLM_ROUTE = NA, OLLAMA_HOST = NA, OLLAMA_BASE_URL = NA, OLLAMA_MODEL = NA,
                         OLLAMA_API_KEY = NA, XDG_CONFIG_HOME = withr::local_tempdir()))
   # nothing saved, nothing in the environment
-  expect_identical(bricklayer_llm_config(), old_llm_config())
+  expect_identical(llmcfg(), old_llm_config())
   # saved settings
-  suppressMessages(bricklayer_llm_config(route = "anthropic", anthropic.key = "sk-ant-test",
+  suppressMessages(llmcfg(route = "anthropic", anthropic.key = "sk-ant-test",
                                          ollama.url = "http://localhost:11434", ollama.model = "qwen3:8b",
                                          openai.model = "gpt-x", own.url = "http://localhost:1234/v1",
                                          own.key = "k-own"))
-  expect_identical(bricklayer_llm_config(), old_llm_config())
+  expect_identical(llmcfg(), old_llm_config())
   # the environment over the saved values, and an alternative key spelling
   withr::local_envvar(c(MORIE_LLM_MODEL = "env-model", GOOGLE_API_KEY = "g-key", MORIE_LLM_ROUTE = "hosted",
                         MORIE_ANTHROPIC_MODEL = "claude-x"))
-  new <- bricklayer_llm_config()
+  new <- llmcfg()
   expect_identical(new, old_llm_config())
   expect_identical(new$value[new$key == "gemini.key"], "set")
   expect_identical(new$source[new$key == "own.model"], "environment")
   # a saved file that cannot be read stops both the same way
   writeLines("[1]", lo_ns(".bl_config_path")())
-  expect_error(bricklayer_llm_config(), "not a JSON object")
+  expect_error(llmcfg(), "not a JSON object")
   expect_error(old_llm_config(), "not a JSON object")
   # and the snapshot of the file is gone once the call has ended, by an error too
   expect_null(lo_ns(".bl_cfg_state")$snap)
 })
 
-test_that("bricklayer_llm_config() reads its settings in well under a second", {
+test_that("llmcfg() reads its settings in well under a second", {
   withr::local_envvar(c(XDG_CONFIG_HOME = withr::local_tempdir()))
-  bricklayer_llm_config()
-  t <- system.time(for (i in 1:5) bricklayer_llm_config())[["elapsed"]] / 5
+  llmcfg()
+  t <- system.time(for (i in 1:5) llmcfg())[["elapsed"]] / 5
   expect_lt(t, wall_limit(0.5))
 })
 
-# 0.5.13's plr_crossfit(), verbatim but for the namespace lookups and without the progress bar:
+# 0.5.13's plrcf(), verbatim but for the namespace lookups and without the progress bar:
 # two lm.fit() calls per fold on the raw design
-old_plr_crossfit <- function(data, outcome, treatment, covariates, k_folds = 5L, seed = 1L) {
+old_plr_crossfit <- function(data, outcome, treatment, covariates, kfol = 5L, seed = 1L) {
   cols <- c(outcome, treatment, covariates)
   df <- data[stats::complete.cases(data[, cols, drop = FALSE]), cols, drop = FALSE]
   n <- nrow(df)
-  folds <- lo_ns(".rmbl_with_seed")(seed, sample(rep_len(seq_len(k_folds), n)))
+  folds <- lo_ns(".rmbl_with_seed")(seed, sample(rep_len(seq_len(kfol), n)))
   y <- as.numeric(df[[outcome]])
   d <- as.numeric(df[[treatment]])
   X <- cbind(1, as.matrix(df[, covariates, drop = FALSE]))
   storage.mode(X) <- "double"
   U <- numeric(n)
   V <- numeric(n)
-  for (k in seq_len(k_folds)) {
+  for (k in seq_len(kfol)) {
     test <- folds == k
     Xt <- X[!test, , drop = FALSE]
     gy <- stats::lm.fit(Xt, y[!test])$coefficients
@@ -205,11 +205,11 @@ old_plr_crossfit <- function(data, outcome, treatment, covariates, k_folds = 5L,
   denom <- sum(V * V)
   theta <- sum(V * U) / denom
   se <- sqrt(sum(V * V * (U - theta * V)^2)) / denom
-  list(ate = theta, se = se, n = n, k_folds = k_folds,
+  list(ate = theta, se = se, n = n, kfol = kfol,
        method = "partially linear regression, DML2 cross-fitting, OLS nuisances")
 }
 
-test_that("plr_crossfit() gives the 0.5.13 estimates to 1e-10", {
+test_that("plrcf() gives the 0.5.13 estimates to 1e-10", {
   set.seed(1)
   n <- 3000
   d <- data.frame(x1 = stats::rnorm(n), x2 = stats::rnorm(n), x3 = stats::rnorm(n) * 1e5 + 3e6,
@@ -223,11 +223,11 @@ test_that("plr_crossfit() gives the 0.5.13 estimates to 1e-10", {
                 c("x1", "x7"), "x3")
   for (cv in cases) {
     for (k in c(2L, 5L)) {
-      new <- plr_crossfit(d, "asthma", "exposure", cv, k_folds = k, seed = 4L)
-      old <- old_plr_crossfit(d, "asthma", "exposure", cv, k_folds = k, seed = 4L)
+      new <- plrcf(d, "asthma", "exposure", cv, kfol = k, seed = 4L)
+      old <- old_plr_crossfit(d, "asthma", "exposure", cv, kfol = k, seed = 4L)
       expect_equal(new$ate, old$ate, tolerance = 1e-10, info = paste(cv, collapse = "+"))
       expect_equal(new$se, old$se, tolerance = 1e-10, info = paste(cv, collapse = "+"))
-      expect_identical(new[c("n", "k_folds", "method")], old[c("n", "k_folds", "method")])
+      expect_identical(new[c("n", "kfol", "method")], old[c("n", "kfol", "method")])
     }
   }
   # recorded with 0.5.13 at n = 20000 (x3 on a scale of 1e5): 0.3004172919461145
@@ -236,6 +236,6 @@ test_that("plr_crossfit() gives the 0.5.13 estimates to 1e-10", {
   dd <- data.frame(x1 = stats::rnorm(n), x2 = stats::rnorm(n), x3 = stats::rnorm(n) * 1e5 + 3e6)
   dd$exposure <- 20 + 2 * dd$x1 + stats::rnorm(n)
   dd$asthma <- 5 + 0.3 * dd$exposure + dd$x2 + stats::rnorm(n)
-  expect_equal(plr_crossfit(dd, "asthma", "exposure", c("x1", "x2", "x3"))$ate, 0.3004172919461145,
+  expect_equal(plrcf(dd, "asthma", "exposure", c("x1", "x2", "x3"))$ate, 0.3004172919461145,
                tolerance = 1e-10)
 })

@@ -27,22 +27,22 @@ df <- data.frame(id = c(1, 2, 2), age = c(30, -5, 40),
                  start = c(1, 5, 3), end = c(2, 4, 9))
 
 rules <- list(
-  rule("age_non_negative", function(v) v >= 0, column = "age"),
-  rule("id_unique", function(v) !anyDuplicated(v), column = "id", severity = "fatal"),
-  rule("dates_ordered", function(d) all(d$start <= d$end))
+  rul("agenonnegative", function(v) v >= 0, col = "age"),
+  rul("idunique", function(v) !anyDuplicated(v), col = "id", sev = "fatal"),
+  rul("datesordered", function(d) all(d$start <= d$end))
 )
 
-issues <- validate_rules(df, rules)
+issues <- valrules(df, rules)
 names(issues)
-issues$age_non_negative$n_failed
-issues$age_non_negative$rows
+issues$agenonnegative$n_failed
+issues$agenonnegative$rows
 ```
 
 Clean data produces nothing:
 
 ```{r rules-clean}
 clean <- data.frame(id = 1:3, age = c(30, 31, 40), start = 1:3, end = 4:6)
-length(validate_rules(clean, rules))
+length(valrules(clean, rules))
 ```
 
 Two behaviours matter for trust. A rule for an absent column is **skipped**, not failed: a
@@ -50,9 +50,9 @@ missing column is the schema's finding to report. And a rule that *errors* is a 
 never a silent pass:
 
 ```{r rules-edge}
-length(validate_rules(data.frame(id = 1:3), rules[1:2]))
-broken <- list(rule("bad", function(v) stop("boom"), column = "age"))
-validate_rules(clean, broken)$bad$message
+length(valrules(data.frame(id = 1:3), rules[1:2]))
+broken <- list(rul("bad", function(v) stop("boom"), col = "age"))
+valrules(clean, broken)$bad$message
 ```
 
 ### Ready-made rules
@@ -61,27 +61,27 @@ Common checks have constructors so the intent is in the name:
 
 ```{r ready}
 rules2 <- list(
-  rule_not_null("id"),
-  rule_unique("id", severity = "fatal"),
-  rule_between("age", 0, 120),
-  rule_in_set("grade", c("a", "b", "c")),
-  rule_regex("code", "^[A-Z]{2}-[0-9]{4}$"),
-  rule_within_n_mads("score", n = 3),
-  rule_col_count(6, severity = "fatal")
+  rulenull("id"),
+  ruleuniq("id", sev = "fatal"),
+  rulebtw("age", 0, 120),
+  ruleinset("grade", c("a", "b", "c")),
+  rulerx("code", "^[A-Z]{2}-[0-9]{4}$"),
+  rulemad("score", n = 3),
+  rulecolcnt(6, sev = "fatal")
 )
 length(rules2)
 ```
 
-`rule_increasing()`, `rule_distinct_rows()` and `rule_complete_rows()` complete the set.
-`apply_schema_validation(df, rules2)` runs a rule list the same way and stops on any fatal
+`ruleincr()`, `ruledstn()` and `rulecmpl()` complete the set.
+`schval(df, rules2)` runs a rule list the same way and stops on any fatal
 issue, which is the call a pipeline makes (it takes a provenance list or a rule list; until
 0.5.12 a rule list was silently ignored and reported a pass).
 
 ## Inferring a schema
 
-Given a table known to be right, `infer_schema()` pins what can be pinned: column names and
+Given a table known to be right, `infsch()` pins what can be pinned: column names and
 types, numeric ranges with a little slack, and the level set of categorical columns (up to
-`max_levels`, so free text is not mistaken for a code list):
+`maxlvl`, so free text is not mistaken for a code list):
 
 ```{r infer}
 set.seed(1)
@@ -92,7 +92,7 @@ df <- data.frame(
   note = paste0("free text ", 1:100),
   stringsAsFactors = FALSE
 )
-sch <- infer_schema(df)
+sch <- infsch(df)
 sch$expected_value_sets
 ```
 
@@ -100,15 +100,15 @@ It validates the table it was learned from, and catches a vanished column or a n
 category:
 
 ```{r infer-check}
-length(validate_schema(df, list(schema = sch)))
-length(validate_schema(df[, -3], list(schema = sch))) > 0
+length(valsch(df, list(schema = sch)))
+length(valsch(df[, -3], list(schema = sch))) > 0
 bad <- df
 bad$grade[1] <- "z"
-length(validate_schema(bad, list(schema = sch))) > 0
+length(valsch(bad, list(schema = sch))) > 0
 ```
 
-A schema goes into the capsule's provenance record; `validate_schema()` is what
-`verify_capsule()` runs on a fresh download.
+A schema goes into the capsule's provenance record; `valsch()` is what
+`vrfcps()` runs on a fresh download.
 
 ## Synthetic stand-ins
 
@@ -126,7 +126,7 @@ recipe <- list(
   )
 )
 out <- tempfile(fileext = ".csv")
-res <- make_synthetic_csv(recipe, out)
+res <- mksyncsv(recipe, out)
 res$rows
 res$seed
 
@@ -136,24 +136,24 @@ names(df)
 head(df, 3)
 ```
 
-The seed makes the stand-in reproducible; `n_rows` overrides the recipe's own count. A
+The seed makes the stand-in reproducible; `nrows` overrides the recipe's own count. A
 `<path>.synthetic` sidecar file is written beside the CSV (the file itself stays a plain
 table), and the capsule checks read that marker, so a synthetic run can never be mistaken
 for a result:
 
 ```{r synthetic-mark}
-make_synthetic_csv(recipe, tempfile(fileext = ".csv"), n_rows = 5)$rows
+mksyncsv(recipe, tempfile(fileext = ".csv"), nrows = 5)$rows
 ```
 
-`make_synthetic_column()` generates one column from a spec, for building a table piece by
+`mksyncol()` generates one column from a spec, for building a table piece by
 piece or for testing a generator.
 
 ## Putting them together
 
-1. On the first, trusted download: `infer_schema()`, then add the rules the schema cannot
+1. On the first, trusted download: `infsch()`, then add the rules the schema cannot
    express (ordering between columns, cross-table consistency) and pin both.
-2. On every later run: `validate_schema()` and `validate_rules()`; stop on `fatal`.
-3. When the source is unreachable: `make_synthetic_csv()` from the pinned schema, run the
+2. On every later run: `valsch()` and `valrules()`; stop on `fatal`.
+3. When the source is unreachable: `mksyncsv()` from the pinned schema, run the
    pipeline, and let the synthetic marker say what the output is.
 
 
@@ -163,14 +163,14 @@ Rules catch problems in a table before it is used. For an Indigenous health tabl
 estimate inside its interval, a known quality flag, and a known group:
 
 ```{r indigenous-rules}
-d <- indigenous_example("health_indicators")
+d <- indiex("health")
 rules <- list(
-  rule_in_set("quality", c("ok", "E", "F", "x", "..")),
-  rule_in_set("group", c("First Nations", "Métis", "Inuit", "Non-Indigenous")),
-  rule("estimate inside its interval",
+  ruleinset("quality", c("ok", "E", "F", "x", "..")),
+  ruleinset("group", c("First Nations", "Métis", "Inuit", "Non-Indigenous")),
+  rul("estimate inside its interval",
        function(x) is.na(x$estimate) | (x$lower <= x$estimate & x$estimate <= x$upper))
 )
-validate_rules(d, rules)
+valrules(d, rules)
 ```
 
 An empty list means every rule held on every row.

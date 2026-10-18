@@ -151,7 +151,7 @@
 #' \deqn{\hat V = \frac{G}{G - 1} \frac{\sum_g \big(\sum_{i \in g} V_i (U_i - \hat\theta
 #' V_i)\big)^2}{(\sum V^2)^2},}{V = G/(G-1) sum_g (sum V (U - theta V))^2 / (sum
 #' V^2)^2,} with t on \eqn{G - 1} degrees of freedom. Folds are drawn with
-#' \code{seed}; \code{repeats} repeated splits are combined by the median of the
+#' \code{seed}; \code{nrep} repeated splits are combined by the median of the
 #' estimates and of the variances plus the squared deviations from it (Chernozhukov et
 #' al. 2018, section 3.4).
 #'
@@ -167,14 +167,14 @@
 #' approximates a nonlinear confounding less well; the poly2 basis, or a basis of the
 #' user's own as further covariates, is the remedy.
 #'
-#' @inheritParams did_panel
-#' @param treatment Column name of the treatment (continuous, or 0/1).
-#' @param covariates Column names of the time-varying covariates.
-#' @param learner \code{"lasso"} (default), \code{"ridge"}, \code{"ols"}, or a
+#' @inheritParams plndid
+#' @param trt Column name of the treatment (continuous, or 0/1).
+#' @param covs Column names of the time-varying covariates.
+#' @param lrn \code{"lasso"} (default), \code{"ridge"}, \code{"ols"}, or a
 #'   function.
 #' @param basis \code{"linear"} (default) or \code{"poly2"}.
 #' @param folds Cross-fitting folds of units (default 5).
-#' @param repeats Repeated sample splits (default 1).
+#' @param nrep Repeated sample splits (default 1).
 #' @param seed Seed for the folds (default 1).
 #' @return A data frame of class \code{rmbl_dml}: \code{estimate}, \code{se},
 #'   \code{lower}, \code{upper}, \code{t}, \code{p_value}; attributes \code{n},
@@ -186,37 +186,37 @@
 #'
 #' Clarke PS, Polselli A (2025). Double machine learning for static panel models with
 #' fixed effects. The Econometrics Journal 29:69-86. \doi{10.1093/ectj/utaf011}
-#' @seealso \code{\link{plr_crossfit}} (one cross-section),
-#'   \code{\link{staggered_att}} with covariates (doubly robust difference in
+#' @seealso \code{\link{plrcf}} (one cross-section),
+#'   \code{\link{stgatt}} with covariates (doubly robust difference in
 #'   differences).
 #' @examples
-#' p <- policy_example()
+#' p <- polex()
 #' set.seed(9)
 #' p$unemployment <- 6 + sin(p$month / 6) + stats::rnorm(nrow(p), 0, 0.5)
 #' p$patrols <- 0.5 * p$unemployment + p$reformed + stats::rnorm(nrow(p))
-#' dml_panel(p, "district", "month", "crime_rate", "patrols",
-#'           c("unemployment", "arrest_rate"), learner = "ridge")
+#' plndml(p, "district", "month", "crmrate", "patrols",
+#'           c("unemployment", "arrrate"), lrn = "ridge")
 #' @export
-dml_panel <- function(data, unit, time, outcome, treatment, covariates, fixed_effects = c("unit", "time"),
-                      learner = "lasso", basis = c("linear", "poly2"), folds = 5L, repeats = 1L, seed = 1L,
-                      cluster = NULL, conf_level = 0.95) {
-  conf_level <- .rmbl_conf_level(conf_level)
-  fixed_effects <- .rmbl_arg(fixed_effects, c("unit", "time"), several = TRUE)
+plndml <- function(data, unit, time, y, trt, covs, fe = c("unit", "time"),
+                      lrn = "lasso", basis = c("linear", "poly2"), folds = 5L, nrep = 1L, seed = 1L,
+                      cl = NULL, conflvl = 0.95) {
+  conflvl <- .rmbl_conf_level(conflvl)
+  fe <- .rmbl_arg(fe, c("unit", "time"), several = TRUE)
   basis <- .rmbl_arg(basis)
   folds <- .rmbl_scalar(folds, "folds", 2, 100, integer = TRUE)
-  repeats <- .rmbl_scalar(repeats, "repeats", 1, 1000, integer = TRUE)
-  fit_fun <- .rmbl_learner(learner)
-  p <- .rmbl_panel(data, unit, time, outcome)
-  v <- .rmbl_colnames(treatment, "treatment")
-  if (!v %in% names(data)) stop(sprintf("`treatment` (%s) is not a column of `data`", v), call. = FALSE)
-  d <- .rmbl_num(data[[v]], "treatment")
-  x <- .rmbl_covariates(data, covariates)
-  if (is.null(x)) stop("`covariates` must name one column at least", call. = FALSE)
+  nrep <- .rmbl_scalar(nrep, "nrep", 1, 1000, integer = TRUE)
+  fit_fun <- .rmbl_learner(lrn)
+  p <- .rmbl_panel(data, unit, time, y)
+  v <- .rmbl_colnames(trt, "trt")
+  if (!v %in% names(data)) stop(sprintf("`trt` (%s) is not a column of `data`", v), call. = FALSE)
+  d <- .rmbl_num(data[[v]], "trt")
+  x <- .rmbl_covariates(data, covs)
+  if (is.null(x)) stop("`covs` must name one column at least", call. = FALSE)
   if (anyNA(d) || anyNA(x) || anyNA(p$y)) stop("the outcome, treatment and covariates must have no NA", call. = FALSE)
   if (length(unique(p$u)) < folds) stop("fewer units than folds", call. = FALSE)
   fes <- list()
-  if ("unit" %in% fixed_effects) fes$unit <- p$u
-  if ("time" %in% fixed_effects) fes$time <- as.integer(factor(p$t))
+  if ("unit" %in% fe) fes$unit <- p$u
+  if ("time" %in% fe) fes$time <- as.integer(factor(p$t))
   yt <- as.vector(.rmbl_demean(p$y, fes))
   dt <- as.vector(.rmbl_demean(d, fes))
   # the basis is built from the covariates as observed and then demeaned: a confounder g(X) that is
@@ -228,8 +228,8 @@ dml_panel <- function(data, unit, time, outcome, treatment, covariates, fixed_ef
   keep <- apply(xt, 2L, stats::sd) > 1e-10
   if (!any(keep)) stop("no covariate varies within units and periods", call. = FALSE)
   xt <- xt[, keep, drop = FALSE]
-  cl <- .rmbl_cluster(data, cluster, p)
-  if (is.list(cl)) stop("`cluster` names one column for dml_panel()", call. = FALSE)
+  .cl <- .rmbl_cluster(data, cl, p)
+  if (is.list(.cl)) stop("`cl` names one column for plndml()", call. = FALSE)
   uu <- unique(p$u)
   one <- function(r) {
     f <- .rmbl_with_seed(seed + r - 1L, sample(rep_len(seq_len(folds), length(uu))))[match(p$u, uu)]
@@ -248,27 +248,27 @@ dml_panel <- function(data, unit, time, outcome, treatment, covariates, fixed_ef
       stop("the treatment has no variation left after the covariates", call. = FALSE)
     }
     th <- sum(vv * uu_) / den
-    s <- rowsum(vv * (uu_ - th * vv), cl)
+    s <- rowsum(vv * (uu_ - th * vv), .cl)
     g <- nrow(s)
     list(theta = th, var = g / (g - 1) * sum(s^2) / den^2, g = g,
          r2 = c(outcome = 1 - sum(uu_^2) / sum(yt^2), treatment = 1 - sum(vv^2) / sum(dt^2)))
   }
-  runs <- lapply(seq_len(repeats), one)
+  runs <- lapply(seq_len(nrep), one)
   ths <- vapply(runs, `[[`, numeric(1L), "theta")
   th <- stats::median(ths)
   va <- stats::median(vapply(runs, `[[`, numeric(1L), "var") + (ths - th)^2)
   se <- sqrt(va)
   g <- runs[[1L]]$g
-  tq <- stats::qt(1 - (1 - conf_level) / 2, g - 1L)
+  tq <- stats::qt(1 - (1 - conflvl) / 2, g - 1L)
   out <- data.frame(estimate = th, se = se, lower = th - tq * se, upper = th + tq * se, t = th / se,
                     p_value = 2 * stats::pt(-abs(th / se), g - 1L))
   attr(out, "n") <- length(yt)
   attr(out, "clusters") <- g
-  attr(out, "learner") <- if (is.function(learner)) "user function" else learner
+  attr(out, "learner") <- if (is.function(lrn)) "user function" else lrn
   attr(out, "folds") <- folds
-  attr(out, "repeats") <- repeats
+  attr(out, "repeats") <- nrep
   attr(out, "r2") <- runs[[1L]]$r2
-  attr(out, "conf_level") <- conf_level
+  attr(out, "conflvl") <- conflvl
   class(out) <- c("rmbl_dml", "data.frame")
   out
 }
@@ -300,30 +300,30 @@ print.rmbl_dml <- function(x, ...) {
 #' effective sample sizes.
 #'
 #' @param data A data frame, one row per unit.
-#' @param group Column name of the 0/1 group (1 = treated).
-#' @param covariates Column names to compare.
-#' @param weights Optional column name of weights.
+#' @param grp Column name of the 0/1 group (1 = treated).
+#' @param covs Column names to compare.
+#' @param w Optional column name of weights.
 #' @return A data frame of class \code{rmbl_balance}: \code{covariate},
-#'   \code{mean_treated}, \code{mean_control}, \code{smd}, \code{p_value}.
+#'   \code{meantrtd}, \code{meanctl}, \code{smd}, \code{p_value}.
 #' @references Welch BL (1947). The generalization of 'Student's' problem when several
 #'   different population variances are involved. Biometrika 34(1-2):28-35.
 #'   \href{https://doi.org/10.1093/biomet/34.1-2.28}{doi:10.1093/biomet/34.1-2.28}
 #' @examples
 #' d <- data.frame(t = rep(0:1, each = 50),
 #'                 age = c(stats::rnorm(50, 30), stats::rnorm(50, 33)))
-#' balance_table(d, "t", "age")
+#' baltab(d, "t", "age")
 #' @export
-balance_table <- function(data, group, covariates, weights = NULL) {
+baltab <- function(data, grp, covs, w = NULL) {
   .rmbl_df_names(data)
-  g <- .rmbl_num(data[[.rmbl_colnames(group, "group")]], "group")
-  if (anyNA(g) || !all(g %in% c(0, 1)) || length(unique(g)) < 2L) stop("`group` must be 0 and 1", call. = FALSE)
-  x <- .rmbl_covariates(data, covariates)
-  w <- .rmbl_weights(data, weights)
+  g <- .rmbl_num(data[[.rmbl_colnames(grp, "grp")]], "grp")
+  if (anyNA(g) || !all(g %in% c(0, 1)) || length(unique(g)) < 2L) stop("`grp` must be 0 and 1", call. = FALSE)
+  x <- .rmbl_covariates(data, covs)
+  .w <- .rmbl_weights(data, w)
   rows <- lapply(colnames(x), function(v) {
     a <- x[g == 1, v]
     b <- x[g == 0, v]
-    wa <- w[g == 1]
-    wb <- w[g == 0]
+    wa <- .w[g == 1]
+    wb <- .w[g == 0]
     ma <- sum(wa * a) / sum(wa)
     mb <- sum(wb * b) / sum(wb)
     # unbiased with reliability weights; the sample variance (n - 1) when the weights are 1
@@ -334,7 +334,7 @@ balance_table <- function(data, group, covariates, weights = NULL) {
     se <- sqrt(va / na + vb / nb)
     df <- (va / na + vb / nb)^2 / ((va / na)^2 / (na - 1) + (vb / nb)^2 / (nb - 1))
     s1 <- stats::sd(a)
-    data.frame(covariate = v, mean_treated = ma, mean_control = mb,
+    data.frame(covariate = v, meantrtd = ma, meanctl = mb,
                smd = if (s1 > 0) (ma - mb) / s1 else NA_real_,
                p_value = if (se > 0) 2 * stats::pt(-abs((ma - mb) / se), df) else NA_real_)
   })
@@ -360,23 +360,23 @@ balance_table <- function(data, group, covariates, weights = NULL) {
 #' within its \code{exact} group, and only within \code{caliper} (in units of the
 #' distance's standard deviation) if given. A comparison unit's weight is the sum over
 #' the treated units it serves of \eqn{1/\code{ratio}}. The estimate is
-#' \code{\link{did_panel}} on the matched units with those weights, with errors
+#' \code{\link{plndid}} on the matched units with those weights, with errors
 #' clustered by unit; matching on pre-period outcomes makes parallel trends more
 #' credible but can bring in regression to the mean when the treated were chosen for
 #' an unusual pre-period (Daw and Hatfield 2018).
 #'
-#' @inheritParams event_study
-#' @param covariates Optional covariate columns to match on (their pre-period means).
+#' @inheritParams evstudy
+#' @param covs Optional covariate columns to match on (their pre-period means).
 #' @param ratio Comparison units per treated unit (default 1).
 #' @param exact Optional column name: match only within its values (a region, a
 #'   district).
 #' @param caliper Optional maximum distance, in standard deviations of the distances.
-#' @param covariance \code{"pooled"} (default; the pooled within-group covariance) or
+#' @param covm \code{"pooled"} (default; the pooled within-group covariance) or
 #'   \code{"full"} (the whole sample's).
 #' @return A list of class \code{rmbl_matched_did}: \code{estimate} (a
-#'   \code{\link{did_panel}} result), \code{matches} (treated unit, comparison unit,
+#'   \code{\link{plndid}} result), \code{matches} (treated unit, comparison unit,
 #'   distance), \code{weights} (per unit), \code{balance} (a
-#'   \code{\link{balance_table}} of the matching features before and after).
+#'   \code{\link{baltab}} of the matching features before and after).
 #' @references Daw JR, Hatfield LA (2018). Matching and regression to the mean in
 #'   difference-in-differences analysis. Health Services Research 53(6):4138-4156.
 #'   \href{https://doi.org/10.1111/1475-6773.12993}{doi:10.1111/1475-6773.12993}
@@ -385,17 +385,17 @@ balance_table <- function(data, group, covariates, weights = NULL) {
 #' Medina A (2020). The failed war on pre-trial detention: evidence from a
 #' quasi-experimental reform. \doi{10.2139/ssrn.3686855}
 #' @examples
-#' p <- policy_example()
-#' m <- matched_did(p, "district", "month", "crime_rate", "reform_month", ratio = 2)
+#' p <- polex()
+#' m <- mtchdid(p, "district", "month", "crmrate", "refmonth", ratio = 2)
 #' m$estimate
 #' m$balance
 #' @export
-matched_did <- function(data, unit, time, outcome, first_treated, covariates = NULL, ratio = 1L, exact = NULL,
-                        caliper = NULL, covariance = c("pooled", "full"), conf_level = 0.95) {
+mtchdid <- function(data, unit, time, y, ftreat, covs = NULL, ratio = 1L, exact = NULL,
+                        caliper = NULL, covm = c("pooled", "full"), conflvl = 0.95) {
   ratio <- .rmbl_scalar(ratio, "ratio", 1, 100, integer = TRUE)
-  covariance <- .rmbl_arg(covariance)
-  p <- .rmbl_panel(data, unit, time, outcome)
-  g <- .rmbl_first_treated(data, first_treated, p)
+  covm <- .rmbl_arg(covm)
+  p <- .rmbl_panel(data, unit, time, y)
+  g <- .rmbl_first_treated(data, ftreat, p)
   nu <- length(p$ul)
   nt <- length(p$tl)
   if (length(p$y) != nu * nt) stop("`data` must be a balanced panel", call. = FALSE)
@@ -408,8 +408,8 @@ matched_did <- function(data, unit, time, outcome, first_treated, covariates = N
   ym <- matrix(p$y[o], nu, nt, byrow = TRUE)
   feat <- ym[, pre, drop = FALSE]
   colnames(feat) <- paste0("y_", p$tl[pre])
-  if (!is.null(covariates)) {
-    cv <- .rmbl_covariates(data, covariates)[o, , drop = FALSE]
+  if (!is.null(covs)) {
+    cv <- .rmbl_covariates(data, covs)[o, , drop = FALSE]
     pm <- vapply(colnames(cv), function(v) rowMeans(matrix(cv[, v], nu, nt, byrow = TRUE)[, pre, drop = FALSE]),
                  numeric(nu))
     feat <- cbind(feat, matrix(pm, nu, dimnames = list(NULL, colnames(cv))))
@@ -424,7 +424,7 @@ matched_did <- function(data, unit, time, outcome, first_treated, covariates = N
   # covariance of the whole sample
   n1 <- sum(tr)
   n0 <- sum(!tr)
-  sg <- if (covariance == "full") stats::cov(feat) else
+  sg <- if (covm == "full") stats::cov(feat) else
     ((n1 - 1) * stats::cov(feat[tr, , drop = FALSE]) + (n0 - 1) * stats::cov(feat[!tr, , drop = FALSE])) /
       (n1 + n0 - 2)
   sgi <- tryCatch(solve(sg), error = function(e) {
@@ -463,12 +463,12 @@ matched_did <- function(data, unit, time, outcome, first_treated, covariates = N
   d2 <- data[keep, , drop = FALSE]
   d2$.rmbl_w <- wu[keep]
   d2$.rmbl_d <- as.numeric(p$t[keep] >= g[keep])
-  est <- did_panel(d2, unit, time, outcome, ".rmbl_d", weights = ".rmbl_w", conf_level = conf_level)
+  est <- plndid(d2, unit, time, y, ".rmbl_d", w = ".rmbl_w", conflvl = conflvl)
   fd <- data.frame(.rmbl_g = as.numeric(tr), feat, check.names = FALSE)
-  before <- balance_table(fd, ".rmbl_g", colnames(feat))
+  before <- baltab(fd, ".rmbl_g", colnames(feat))
   fd$.rmbl_w <- w
-  after <- balance_table(fd[w > 0, ], ".rmbl_g", colnames(feat), weights = ".rmbl_w")
-  bal <- data.frame(feature = before$covariate, smd_before = before$smd, smd_after = after$smd)
+  after <- baltab(fd[w > 0, ], ".rmbl_g", colnames(feat), w = ".rmbl_w")
+  bal <- data.frame(feature = before$covariate, smdbef = before$smd, smdafter = after$smd)
   out <- list(estimate = est, matches = mt, weights = data.frame(unit = p$ul, weight = w), balance = bal)
   class(out) <- "rmbl_matched_did"
   out
@@ -481,7 +481,7 @@ print.rmbl_matched_did <- function(x, ...) {
   print(x$estimate)
   b <- x$balance
   cat(sprintf("Largest |standardised difference| before matching %.3f, after %.3f\n",
-              max(abs(b$smd_before), na.rm = TRUE), max(abs(b$smd_after), na.rm = TRUE)))
+              max(abs(b$smdbef), na.rm = TRUE), max(abs(b$smdafter), na.rm = TRUE)))
   invisible(x)
 }
 
@@ -523,26 +523,26 @@ print.rmbl_matched_did <- function(x, ...) {
 #' in turn treated as if adopting, weights re-estimated), else the jackknife over
 #' units with the weights held fixed (Arkhangelsky et al. 2021, algorithms 3 and 4).
 #'
-#' @inheritParams event_study
+#' @inheritParams evstudy
 #' @param reps Placebo replications (default 200).
 #' @param seed Optional seed for the placebo draws.
 #' @return A list of class \code{rmbl_synthdid}: \code{estimate}, \code{se},
-#'   \code{lower}, \code{upper}, \code{unit_weights}, \code{time_weights},
+#'   \code{lower}, \code{upper}, \code{unitwts}, \code{tmwts},
 #'   \code{method} (\code{"placebo"} or \code{"jackknife"}), \code{paths} (treated and
 #'   weighted comparison means by period). \code{plot()} draws the paths.
 #' @references Arkhangelsky D, Athey S, Hirshberg DA, Imbens GW, Wager S (2021).
 #'   Synthetic difference-in-differences. American Economic Review 111(12):4088-4118.
 #'   \doi{10.1257/aer.20190159}
 #' @examples
-#' p <- policy_example()
-#' p1 <- p[is.na(p$reform_month) | p$reform_month == 13, ]
-#' synthetic_did(p1, "district", "month", "crime_rate", "reform_month", reps = 50, seed = 1)
+#' p <- polex()
+#' p1 <- p[is.na(p$refmonth) | p$refmonth == 13, ]
+#' syndid(p1, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1)
 #' @export
-synthetic_did <- function(data, unit, time, outcome, first_treated, reps = 200L, seed = NULL, conf_level = 0.95) {
-  conf_level <- .rmbl_conf_level(conf_level)
+syndid <- function(data, unit, time, y, ftreat, reps = 200L, seed = NULL, conflvl = 0.95) {
+  conflvl <- .rmbl_conf_level(conflvl)
   reps <- .rmbl_scalar(reps, "reps", 2, 1e5, integer = TRUE)
-  p <- .rmbl_panel(data, unit, time, outcome)
-  g <- .rmbl_first_treated(data, first_treated, p)
+  p <- .rmbl_panel(data, unit, time, y)
+  g <- .rmbl_first_treated(data, ftreat, p)
   nu <- length(p$ul)
   nt <- length(p$tl)
   if (length(p$y) != nu * nt) stop("`data` must be a balanced panel", call. = FALSE)
@@ -551,7 +551,7 @@ synthetic_did <- function(data, unit, time, outcome, first_treated, reps = 200L,
   gu <- g[o][seq(1L, by = nt, length.out = nu)]
   tr <- is.finite(gu)
   if (length(unique(gu[tr])) != 1L) {
-    stop("synthetic_did() takes one adoption date: keep one cohort and the never-treated units", call. = FALSE)
+    stop("syndid() takes one adoption date: keep one cohort and the never-treated units", call. = FALSE)
   }
   if (sum(!tr) < 2L) stop("need two never-treated units at least", call. = FALSE)
   t0 <- sum(p$tl < gu[tr][1L])
@@ -597,11 +597,11 @@ synthetic_did <- function(data, unit, time, outcome, first_treated, reps = 200L,
     n <- length(jk)
     se <- sqrt((n - 1) / n * sum((jk - mean(jk))^2))
   }
-  z <- stats::qnorm(1 - (1 - conf_level) / 2)
+  z <- stats::qnorm(1 - (1 - conflvl) / 2)
   paths <- data.frame(time = p$tl, treated = colMeans(y1), synthetic = as.vector(crossprod(f$omega, y0)))
   out <- list(estimate = f$tau, se = se, lower = f$tau - z * se, upper = f$tau + z * se,
-              unit_weights = stats::setNames(f$omega, rownames(y0)),
-              time_weights = stats::setNames(f$lambda, p$tl[seq_len(t0)]),
+              unitwts = stats::setNames(f$omega, rownames(y0)),
+              tmwts = stats::setNames(f$lambda, p$tl[seq_len(t0)]),
               method = method, paths = paths, adoption = gu[tr][1L])
   class(out) <- "rmbl_synthdid"
   out
@@ -611,7 +611,7 @@ synthetic_did <- function(data, unit, time, outcome, first_treated, reps = 200L,
 print.rmbl_synthdid <- function(x, ...) {
   cat(sprintf("Synthetic difference in differences: %.4g (%s s.e. %.4g; %.4g to %.4g)\n", x$estimate, x$method,
               x$se, x$lower, x$upper))
-  w <- sort(x$unit_weights[x$unit_weights > 1e-4], decreasing = TRUE)
+  w <- sort(x$unitwts[x$unitwts > 1e-4], decreasing = TRUE)
   cat("Unit weights:", paste(sprintf("%s %.3f", names(w), w), collapse = ", "), "\n")
   invisible(x)
 }
@@ -635,7 +635,7 @@ plot.rmbl_synthdid <- function(x, ..., main = NULL, col = NULL, palette = NULL) 
 #' The wild cluster bootstrap for a difference in differences with few clusters
 #'
 #' A p-value and confidence interval for the treatment effect of
-#' \code{\link{did_panel}} that stay accurate when there are few clusters (a policy
+#' \code{\link{plndid}} that stay accurate when there are few clusters (a policy
 #' assigned to a handful of districts or states), where the cluster-robust t test
 #' over-rejects.
 #'
@@ -653,15 +653,15 @@ plot.rmbl_synthdid <- function(x, ..., main = NULL, col = NULL, palette = NULL) 
 #' weights and \eqn{2^G \le} \code{reps} every sign pattern is enumerated (as
 #' \code{fwildclusterboot} does); with very few clusters (under about 12) Webb's
 #' weights, which have more distinct values, are better. The interval collects the
-#' \eqn{\beta_0} not rejected at \eqn{1 -} \code{conf_level}, found by bisection with
+#' \eqn{\beta_0} not rejected at \eqn{1 -} \code{conflvl}, found by bisection with
 #' the same draws; it is unbounded when no value can be rejected (with Rademacher
 #' weights and \eqn{G} clusters the smallest attainable p-value is \eqn{2/2^G}, so
 #' four clusters can never reject at 5\%: that is the honest answer, not a failure of
 #' the method).
 #'
-#' @inheritParams did_panel
+#' @inheritParams plndid
 #' @param reps Bootstrap replications (default 9999).
-#' @param weights_type \code{"rademacher"} (default) or \code{"webb"}.
+#' @param wtype \code{"rademacher"} (default) or \code{"webb"}.
 #' @param seed Optional seed.
 #' @param ties \code{"count"} (default) or \code{"strict"}: whether a bootstrap
 #'   \eqn{|t^*|} equal to \eqn{|t|} counts against the null.
@@ -679,34 +679,34 @@ plot.rmbl_synthdid <- function(x, ..., main = NULL, col = NULL, palette = NULL) 
 #' inference in Stata using boottest. The Stata Journal 19(1):4-60.
 #' \doi{10.1177/1536867X19830877}
 #' @examples
-#' p <- policy_example()
+#' p <- polex()
 #' # the reform was assigned to four regions: four clusters
-#' wild_cluster_bootstrap(p, "district", "month", "crime_rate", "reformed",
-#'                        cluster = "region", weights_type = "webb", reps = 299,
+#' wcb(p, "district", "month", "crmrate", "reformed",
+#'                        cl = "region", wtype = "webb", reps = 299,
 #'                        seed = 1)
 #' @export
-wild_cluster_bootstrap <- function(data, unit, time, outcome, treated, covariates = NULL, cluster = NULL,
-                                   reps = 9999L, weights_type = c("rademacher", "webb"), seed = NULL,
-                                   ties = c("count", "strict"), conf_level = 0.95) {
-  weights_type <- .rmbl_arg(weights_type)
+wcb <- function(data, unit, time, y, trtd, covs = NULL, cl = NULL,
+                                   reps = 9999L, wtype = c("rademacher", "webb"), seed = NULL,
+                                   ties = c("count", "strict"), conflvl = 0.95) {
+  wtype <- .rmbl_arg(wtype)
   ties <- .rmbl_arg(ties)
-  conf_level <- .rmbl_conf_level(conf_level)
+  conflvl <- .rmbl_conf_level(conflvl)
   reps <- .rmbl_scalar(reps, "reps", 9, 1e6, integer = TRUE)
-  p <- .rmbl_panel(data, unit, time, outcome)
-  v <- .rmbl_colnames(treated, "treated")
+  p <- .rmbl_panel(data, unit, time, y)
+  v <- .rmbl_colnames(trtd, "trtd")
   d <- as.numeric(data[[v]])
-  if (anyNA(d) || !all(d %in% c(0, 1))) stop("`treated` must be 0 or 1", call. = FALSE)
-  cl <- .rmbl_cluster(data, cluster, p)
-  if (is.list(cl)) stop("`cluster` names one column here", call. = FALSE)
+  if (anyNA(d) || !all(d %in% c(0, 1))) stop("`trtd` must be 0 or 1", call. = FALSE)
+  .cl <- .rmbl_cluster(data, cl, p)
+  if (is.list(.cl)) stop("`cl` names one column here", call. = FALSE)
   fes <- list(unit = p$u, time = as.integer(factor(p$t)))
-  x <- cbind(treated = d, .rmbl_covariates(data, covariates))
+  x <- cbind(treated = d, .rmbl_covariates(data, covs))
   xd <- .rmbl_demean(x, fes)
   yd <- as.vector(.rmbl_demean(p$y, fes))
-  kfe <- .rmbl_k_fe(fes, cl)
+  kfe <- .rmbl_k_fe(fes, .cl)
   n <- length(yd)
-  gl <- sort(unique(cl))
+  gl <- sort(unique(.cl))
   G <- length(gl)
-  gi <- match(cl, gl)
+  gi <- match(.cl, gl)
   bread <- solve(crossprod(xd))
   kk <- ncol(xd) + kfe
   adj <- G / (G - 1) * (n - 1) / (n - kk)
@@ -719,11 +719,11 @@ wild_cluster_bootstrap <- function(data, unit, time, outcome, treated, covariate
   }
   t_obs <- tstat(yd, 0)
   b_hat <- (bread %*% crossprod(xd, yd))[1L]
-  enumerate <- weights_type == "rademacher" && 2^G <= reps
+  enumerate <- wtype == "rademacher" && 2^G <= reps
   vmat <- if (enumerate) {
     as.matrix(expand.grid(rep(list(c(-1, 1)), G)))
   } else {
-    vals <- if (weights_type == "webb") c(-sqrt(3 / 2), -1, -sqrt(1 / 2), sqrt(1 / 2), 1, sqrt(3 / 2)) else c(-1, 1)
+    vals <- if (wtype == "webb") c(-sqrt(3 / 2), -1, -sqrt(1 / 2), sqrt(1 / 2), 1, sqrt(3 / 2)) else c(-1, 1)
     .rmbl_with_seed(seed, matrix(sample(vals, reps * G, replace = TRUE), reps, G))
   }
   xr <- xd[, -1L, drop = FALSE]
@@ -736,7 +736,7 @@ wild_cluster_bootstrap <- function(data, unit, time, outcome, treated, covariate
     if (ties == "count") mean(abs(ts) >= abs(t0) - 1e-12) else mean(abs(ts) > abs(t0) + 1e-12)
   }
   pv <- pval(0)
-  alpha <- 1 - conf_level
+  alpha <- 1 - conflvl
   se0 <- abs(b_hat / t_obs)
   find <- function(dir) {
     lo <- b_hat
@@ -770,7 +770,7 @@ wild_cluster_bootstrap <- function(data, unit, time, outcome, treated, covariate
 
 #' How far parallel trends can fail before an effect disappears
 #'
-#' Bounds on the effects of an \code{\link{event_study}} when the trend after adoption
+#' Bounds on the effects of an \code{\link{evstudy}} when the trend after adoption
 #' may depart from parallel by up to \eqn{\bar M} times the largest departure seen
 #' before it (Rambachan and Roth's relative magnitudes), with a conservative interval
 #' and the "breakdown" \eqn{\bar M} at which the interval first includes zero.
@@ -787,36 +787,36 @@ wild_cluster_bootstrap <- function(data, unit, time, outcome, treated, covariate
 #' distribution of the estimates (with the event study's cluster-robust covariance),
 #' computes the bounds for each, and takes the \eqn{\alpha/2} quantile of the lower
 #' bound and the \eqn{1 - \alpha/2} quantile of the upper: by Bonferroni it covers the
-#' identified set, and so the effect, with probability at least \code{conf_level}. It
+#' identified set, and so the effect, with probability at least \code{conflvl}. It
 #' is conservative; Rambachan and Roth's conditional and hybrid intervals (the
 #' \code{HonestDiD} package) are shorter.
 #'
-#' @param x An \code{\link{event_study}} result with one lead at least.
+#' @param x An \code{\link{evstudy}} result with one lead at least.
 #' @param mbar The values of \eqn{\bar M} (default 0, 0.5, 1, 1.5, 2).
 #' @param target \code{"average"} (the mean of the post-period effects, default) or an
 #'   event time.
 #' @param draws Normal draws for the interval (default 5000).
 #' @param seed Optional seed.
 #' @return A data frame of class \code{rmbl_sensitivity}: \code{mbar},
-#'   \code{lower_bound}, \code{upper_bound} (the identified set at the estimates),
+#'   \code{lowerbnd}, \code{upbound} (the identified set at the estimates),
 #'   \code{lower}, \code{upper} (the interval); attribute \code{breakdown} (the
 #'   smallest \eqn{\bar M} whose interval includes 0, found by bisection; \code{Inf}
 #'   if none up to 10).
 #' @references Rambachan A, Roth J (2023). A more credible approach to parallel
 #'   trends. Review of Economic Studies 90(5):2555-2591. \doi{10.1093/restud/rdad018}
 #' @examples
-#' p <- policy_example()
-#' es <- event_study(p, "district", "month", "crime_rate", "reform_month",
+#' p <- polex()
+#' es <- evstudy(p, "district", "month", "crmrate", "refmonth",
 #'                   leads = 3, lags = 4)
-#' trend_sensitivity(es, seed = 1)
+#' tse(es, seed = 1)
 #' @export
-trend_sensitivity <- function(x, mbar = c(0, 0.5, 1, 1.5, 2), target = "average", draws = 5000L, seed = NULL) {
+tse <- function(x, mbar = c(0, 0.5, 1, 1.5, 2), target = "average", draws = 5000L, seed = NULL) {
   if (!inherits(x, "rmbl_event_study") || is.null(attr(x, "vcov"))) {
-    stop("`x` must come from event_study()", call. = FALSE)
+    stop("`x` must come from evstudy()", call. = FALSE)
   }
   if (!is.numeric(mbar) || anyNA(mbar) || any(mbar < 0)) stop("`mbar` must be non-negative numbers", call. = FALSE)
   draws <- .rmbl_scalar(draws, "draws", 100, 1e6, integer = TRUE)
-  et <- x$event_time
+  et <- x$evtm
   ks <- et[x$se > 0]
   v <- attr(x, "vcov")
   b <- x$estimate[match(ks, et)]
@@ -851,7 +851,7 @@ trend_sensitivity <- function(x, mbar = c(0, 0.5, 1, 1.5, 2), target = "average"
       stats::quantile(dr$centre + m * dr$dmax * k, 0.975, names = FALSE))
   }
   tab <- t(vapply(mbar, one, numeric(4L)))
-  out <- data.frame(mbar = mbar, lower_bound = tab[, 1L], upper_bound = tab[, 2L], lower = tab[, 3L], upper = tab[, 4L])
+  out <- data.frame(mbar = mbar, lowerbnd = tab[, 1L], upbound = tab[, 2L], lower = tab[, 3L], upper = tab[, 4L])
   # the interval only widens as Mbar grows, so the breakdown is found by bisection
   covers <- function(m) {
     r <- one(m)
@@ -889,28 +889,28 @@ print.rmbl_sensitivity <- function(x, ...) {
 #'
 #' Simulates the design on real untreated data: assigns adoption at random to units
 #' (or clusters) as the study would, adds an effect of known size, estimates
-#' \code{\link{did_panel}}, and counts rejections; so the serial correlation and the
+#' \code{\link{plndid}}, and counts rejections; so the serial correlation and the
 #' clustering of the real data are carried, as formula-based power calculations do
 #' not.
 #'
-#' @details In each replication, \code{n_treated} units (or clusters, with
-#' \code{cluster}) are drawn at random and given adoption dates drawn from
-#' \code{adoption}; \code{effect} is added to their outcomes from adoption on; the
-#' cluster-robust t test of \code{\link{did_panel}} at level \code{alpha} is counted
+#' @details In each replication, \code{ntrt} units (or clusters, with
+#' \code{cl}) are drawn at random and given adoption dates drawn from
+#' \code{adopt}; \code{effect} is added to their outcomes from adoption on; the
+#' cluster-robust t test of \code{\link{plndid}} at level \code{alpha} is counted
 #' as a rejection. With \code{effect = 0} the rejection rate is the test's actual size
 #' on these data, which should be near \code{alpha}: a larger one means the errors are
 #' understated (too few clusters, say), and the power figures are then optimistic too.
-#' The minimum detectable effect is where the power curve crosses \code{target_power},
+#' The minimum detectable effect is where the power curve crosses \code{power},
 #' by linear interpolation (Burlig, Preonas and Woerman 2020).
 #'
-#' @inheritParams did_panel
-#' @param n_treated Units (or clusters) to treat in each replication.
-#' @param adoption Adoption periods to draw from.
-#' @param effects Effect sizes to try (default a grid from 0 to two standard
+#' @inheritParams plndid
+#' @param ntrt Units (or clusters) to treat in each replication.
+#' @param adopt Adoption periods to draw from.
+#' @param eff Effect sizes to try (default a grid from 0 to two standard
 #'   deviations of the outcome).
 #' @param reps Replications per effect size (default 200).
 #' @param alpha Test level (default 0.05).
-#' @param target_power For the minimum detectable effect (default 0.8).
+#' @param power For the minimum detectable effect (default 0.8).
 #' @param seed Optional seed.
 #' @return A data frame of class \code{rmbl_power}: \code{effect}, \code{power};
 #'   attributes \code{mde} and \code{size} (the rejection rate at effect 0).
@@ -918,54 +918,54 @@ print.rmbl_sensitivity <- function(x, ...) {
 #'   design. Journal of Development Economics 144:102458.
 #'   \doi{10.1016/j.jdeveco.2020.102458}
 #' @examples
-#' p <- policy_example()
+#' p <- polex()
 #' pre <- p[p$month <= 12, ]
-#' pw <- panel_power(pre, "district", "month", "crime_rate", n_treated = 10, adoption = 7:10,
-#'                   effects = c(0, 1, 2, 3), reps = 30, seed = 1)
+#' pw <- plnpwr(pre, "district", "month", "crmrate", ntrt = 10, adopt = 7:10,
+#'                   eff = c(0, 1, 2, 3), reps = 30, seed = 1)
 #' pw
 #' plot(pw)
 #' @export
-panel_power <- function(data, unit, time, outcome, n_treated, adoption, effects = NULL, cluster = NULL,
-                        reps = 200L, alpha = 0.05, target_power = 0.8, seed = NULL) {
-  p <- .rmbl_panel(data, unit, time, outcome)
+plnpwr <- function(data, unit, time, y, ntrt, adopt, eff = NULL, cl = NULL,
+                        reps = 200L, alpha = 0.05, power = 0.8, seed = NULL) {
+  p <- .rmbl_panel(data, unit, time, y)
   reps <- .rmbl_scalar(reps, "reps", 10, 1e5, integer = TRUE)
   alpha <- .rmbl_scalar(alpha, "alpha", 1e-6, 0.5)
-  target_power <- .rmbl_scalar(target_power, "target_power", 0.01, 0.999)
-  adoption <- .rmbl_num(adoption, "adoption")
-  if (!length(adoption) || anyNA(adoption)) stop("`adoption` must be periods", call. = FALSE)
-  if (any(adoption <= min(p$tl) | adoption > max(p$tl))) {
-    stop("`adoption` must leave a period before it and fall within the panel", call. = FALSE)
+  power <- .rmbl_scalar(power, "power", 0.01, 0.999)
+  adopt <- .rmbl_num(adopt, "adopt")
+  if (!length(adopt) || anyNA(adopt)) stop("`adopt` must be periods", call. = FALSE)
+  if (any(adopt <= min(p$tl) | adopt > max(p$tl))) {
+    stop("`adopt` must leave a period before it and fall within the panel", call. = FALSE)
   }
-  cl <- .rmbl_cluster(data, cluster, p)
-  if (is.list(cl)) stop("`cluster` names one column here", call. = FALSE)
-  ucl <- unique(cl)
-  n_treated <- .rmbl_scalar(n_treated, "n_treated", 1, length(ucl) - 1, integer = TRUE)
-  if (is.null(effects)) effects <- seq(0, 2 * stats::sd(p$y), length.out = 6L)
-  effects <- .rmbl_num(effects, "effects")
-  sim <- function(eff) {
+  .cl <- .rmbl_cluster(data, cl, p)
+  if (is.list(.cl)) stop("`cl` names one column here", call. = FALSE)
+  ucl <- unique(.cl)
+  ntrt <- .rmbl_scalar(ntrt, "ntrt", 1, length(ucl) - 1, integer = TRUE)
+  if (is.null(eff)) eff <- seq(0, 2 * stats::sd(p$y), length.out = 6L)
+  eff <- .rmbl_num(eff, "eff")
+  sim <- function(.eff) {
     mean(vapply(seq_len(reps), function(r) {
-      tr <- sample(ucl, n_treated)
-      at <- stats::setNames(if (length(adoption) == 1L) rep(adoption, n_treated) else
-        sample(adoption, n_treated, replace = TRUE), tr)
-      a <- at[as.character(cl)]
+      tr <- sample(ucl, ntrt)
+      at <- stats::setNames(if (length(adopt) == 1L) rep(adopt, ntrt) else
+        sample(adopt, ntrt, replace = TRUE), tr)
+      a <- at[as.character(.cl)]
       dd <- data
       dd$.rmbl_d <- as.numeric(!is.na(a) & p$t >= a)
-      dd[[outcome]] <- p$y + eff * dd$.rmbl_d
-      r1 <- tryCatch(did_panel(dd, unit, time, outcome, ".rmbl_d", cluster = cluster), error = function(e) NULL)
+      dd[[y]] <- p$y + .eff * dd$.rmbl_d
+      r1 <- tryCatch(plndid(dd, unit, time, y, ".rmbl_d", cl = cl), error = function(e) NULL)
       !is.null(r1) && is.finite(r1$p_value[1L]) && r1$p_value[1L] < alpha
     }, logical(1L)))
   }
-  pw <- .rmbl_with_seed(seed, vapply(effects, sim, numeric(1L)))
-  out <- data.frame(effect = effects, power = pw)
+  pw <- .rmbl_with_seed(seed, vapply(eff, sim, numeric(1L)))
+  out <- data.frame(effect = eff, power = pw)
   mde <- NA_real_
-  ok <- which(pw >= target_power)
+  ok <- which(pw >= power)
   if (length(ok)) {
     i <- ok[1L]
-    mde <- if (i == 1L) effects[1L] else
-      effects[i - 1L] + (target_power - pw[i - 1L]) / (pw[i] - pw[i - 1L]) * (effects[i] - effects[i - 1L])
+    mde <- if (i == 1L) eff[1L] else
+      eff[i - 1L] + (power - pw[i - 1L]) / (pw[i] - pw[i - 1L]) * (eff[i] - eff[i - 1L])
   }
   attr(out, "mde") <- mde
-  attr(out, "size") <- if (0 %in% effects) pw[effects == 0][1L] else NA_real_
+  attr(out, "size") <- if (0 %in% eff) pw[eff == 0][1L] else NA_real_
   attr(out, "alpha") <- alpha
   class(out) <- c("rmbl_power", "data.frame")
   out
@@ -996,7 +996,7 @@ plot.rmbl_power <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 
 #' @param threshold For \code{rmbl_balance}: the absolute standardised difference
 #'   drawn as the line of acceptable balance (default 0.1).
-#' @param after For \code{rmbl_balance}: optionally a second \code{\link{balance_table}}
+#' @param after For \code{rmbl_balance}: optionally a second \code{\link{baltab}}
 #'   on the same covariates (after weighting or matching), drawn beside the first.
 #' @rdname plot-methods
 #' @export
@@ -1042,14 +1042,14 @@ plot.rmbl_aipw <- function(x, ..., type = c("overlap", "estimate"), main = NULL,
   if (type == "estimate") {
     graphics::plot(x$estimate, 1, xlim = range(c(0, x$lower, x$upper)), ylim = c(0.5, 1.5), yaxt = "n", pch = 19,
                    col = cl[1L], xlab = sprintf("%s (%g%% confidence interval)", x$estimand,
-                                                100 * attr(x, "conf_level")),
+                                                100 * attr(x, "conflvl")),
                    ylab = "", main = .bl_main(main, "Cross-fitted AIPW estimate"), ...)
     graphics::segments(x$lower, 1, x$upper, 1, lwd = 2, col = cl[1L])
     graphics::abline(v = 0, lty = 2, col = "#9A9A9A")
     return(invisible(as.data.frame(x)))
   }
   p <- attr(x, "propensity", exact = TRUE)
-  if (is.null(p)) stop("this result has no propensities to draw; re-run aipw_crossfit()", call. = FALSE)
+  if (is.null(p)) stop("this result has no propensities to draw; re-run aipwcf()", call. = FALSE)
   dens <- lapply(c(1, 0), function(arm) {
     s <- p[p$treated == arm, ]
     # the bandwidth from the unweighted values (density() picks it so anyway, with a warning)
@@ -1104,11 +1104,11 @@ plot.rmbl_aipw <- function(x, ..., type = c("overlap", "estimate"), main = NULL,
 #' differ slightly.
 #'
 #' The propensity learner is logistic regression on the covariates (with
-#' \code{basis = "poly2"}, on their squares and products too). With \code{weights}
+#' \code{basis = "poly2"}, on their squares and products too). With \code{w}
 #' the point estimate is design-weighted, but the standard error treats the weights as
 #' fixed and the sample as independent.
 #'
-#' For a complex survey, pass the design from \code{\link{survey_design}} instead: its
+#' For a complex survey, pass the design from \code{\link{svydes}} instead: its
 #' weight gives the point estimate and its replicate weights (or strata and primary
 #' sampling units) the standard error, with the variance formula of the replicate
 #' type, the confidence interval on the design's degrees of freedom. The learners are
@@ -1119,23 +1119,23 @@ plot.rmbl_aipw <- function(x, ..., type = c("overlap", "estimate"), main = NULL,
 #' domain (their scores count as zero in every replicate), not dropped from the design.
 #'
 #' @param data A data frame, one row per person.
-#' @param outcome,treatment Column names: the outcome and the 0/1 treatment.
-#' @param covariates Column names of the confounders (numeric; code categories as
+#' @param y,trt Column names: the outcome and the 0/1 treatment.
+#' @param covs Column names of the confounders (numeric; code categories as
 #'   indicators).
-#' @param estimand \code{"ATE"} (default) or \code{"ATT"}.
-#' @param learner The outcome learner (as in \code{\link{dml_panel}}).
+#' @param estd \code{"ATE"} (default) or \code{"ATT"}.
+#' @param lrn The outcome learner (as in \code{\link{plndml}}).
 #' @param basis \code{"linear"} (default) or \code{"poly2"}.
-#' @param weights Optional column name of survey or sampling weights.
-#' @param design Optional survey design from \code{\link{survey_design}}, built on
-#'   \code{data}, in place of \code{weights}: the standard error then comes from its
+#' @param w Optional column name of survey or sampling weights.
+#' @param des Optional survey design from \code{\link{svydes}}, built on
+#'   \code{data}, in place of \code{w}: the standard error then comes from its
 #'   replicate weights or its strata and primary sampling units.
 #' @param folds Cross-fitting folds (default 5).
 #' @param trim Propensity clipping (default 0.01).
 #' @param seed Seed for the folds (default 1).
-#' @param conf_level Confidence level (default 0.95).
+#' @param conflvl Confidence level (default 0.95).
 #' @return A data frame of class \code{rmbl_aipw}: \code{estimand}, \code{estimate},
 #'   \code{se}, \code{lower}, \code{upper}, \code{p_value}; attributes \code{n},
-#'   \code{treated}, \code{propensity_range}, \code{trimmed} (how many propensities
+#'   \code{treated}, \code{psrange}, \code{trimmed} (how many propensities
 #'   were clipped), \code{variance} (\code{"influence"}, or the design's type) and
 #'   \code{propensity} (a data frame of each row's out-of-fold propensity before
 #'   clipping, its treatment and its weight, which \code{plot()} draws).
@@ -1144,9 +1144,9 @@ plot.rmbl_aipw <- function(x, ..., type = c("overlap", "estimate"), main = NULL,
 #'   American Statistical Association 89(427):846-866.
 #'   \doi{10.1080/01621459.1994.10476818}
 #'
-#' Chernozhukov V et al. (2018), see \code{\link{dml_panel}}.
-#' @seealso \code{\link{plr_crossfit}}, \code{\link{dml_panel}},
-#'   \code{\link{balance_table}}.
+#' Chernozhukov V et al. (2018), see \code{\link{plndml}}.
+#' @seealso \code{\link{plrcf}}, \code{\link{plndml}},
+#'   \code{\link{baltab}}.
 #' @examples
 #' set.seed(2)
 #' n <- 800
@@ -1154,46 +1154,46 @@ plot.rmbl_aipw <- function(x, ..., type = c("overlap", "estimate"), main = NULL,
 #' d$belong <- rbinom(n, 1, plogis(-2 + 0.03 * d$age + 0.2 * log(d$income)))
 #' d$wellbeing <- 50 + 5 * d$belong + 0.2 * d$age + 2 * log(d$income) +
 #'   rnorm(n, 0, 8)
-#' aipw_crossfit(d, "wellbeing", "belong", c("age", "income"), learner = "ols")
+#' aipwcf(d, "wellbeing", "belong", c("age", "income"), lrn = "ols")
 #' # with 50 bootstrap replicate weights: one fit, the replicate standard error
 #' d$w <- runif(n, 0.5, 2)
 #' reps <- sapply(1:50, function(b) d$w * rpois(n, 1))
 #' colnames(reps) <- paste0("bsw", 1:50)
 #' d <- cbind(d, reps)
-#' des <- survey_design(d, weights = "w", replicates = colnames(reps))
-#' aipw_crossfit(d, "wellbeing", "belong", c("age", "income"), learner = "ols",
-#'               design = des)
+#' des <- svydes(d, w = "w", reps = colnames(reps))
+#' aipwcf(d, "wellbeing", "belong", c("age", "income"), lrn = "ols",
+#'               des = des)
 #' @export
-aipw_crossfit <- function(data, outcome, treatment, covariates, estimand = c("ATE", "ATT"), learner = "lasso",
-                          basis = c("linear", "poly2"), weights = NULL, design = NULL, folds = 5L, trim = 0.01,
-                          seed = 1L, conf_level = 0.95) {
-  estimand <- .rmbl_arg(estimand)
+aipwcf <- function(data, y, trt, covs, estd = c("ATE", "ATT"), lrn = "lasso",
+                          basis = c("linear", "poly2"), w = NULL, des = NULL, folds = 5L, trim = 0.01,
+                          seed = 1L, conflvl = 0.95) {
+  estd <- .rmbl_arg(estd)
   basis <- .rmbl_arg(basis)
-  conf_level <- .rmbl_conf_level(conf_level)
+  conflvl <- .rmbl_conf_level(conflvl)
   folds <- .rmbl_scalar(folds, "folds", 2, 100, integer = TRUE)
   trim <- .rmbl_scalar(trim, "trim", 0, 0.49)
-  fit_fun <- .rmbl_learner(learner)
+  fit_fun <- .rmbl_learner(lrn)
   .rmbl_df_names(data)
-  y <- .rmbl_num(data[[.rmbl_colnames(outcome, "outcome")]], "outcome")
-  d <- .rmbl_num(data[[.rmbl_colnames(treatment, "treatment")]], "treatment")
-  x <- .rmbl_covariates(data, covariates)
-  if (is.null(x)) stop("`covariates` must name one column at least", call. = FALSE)
-  if (!is.null(design)) {
-    if (!inherits(design, "rmbl_svy_design")) stop("`design` must come from survey_design()", call. = FALSE)
-    if (!is.null(weights)) stop("give `weights` or `design`, not both", call. = FALSE)
-    .svy_check_data(design, data)
-    w <- design$weights
+  .y <- .rmbl_num(data[[.rmbl_colnames(y, "y")]], "y")
+  d <- .rmbl_num(data[[.rmbl_colnames(trt, "trt")]], "trt")
+  x <- .rmbl_covariates(data, covs)
+  if (is.null(x)) stop("`covs` must name one column at least", call. = FALSE)
+  if (!is.null(des)) {
+    if (!inherits(des, "rmbl_svy_design")) stop("`des` must come from svydes()", call. = FALSE)
+    if (!is.null(w)) stop("give `w` or `des`, not both", call. = FALSE)
+    .svy_check_data(des, data)
+    .w <- des$weights
   } else {
-    w <- .rmbl_weights(data, weights)
+    .w <- .rmbl_weights(data, w)
   }
-  ok <- is.finite(y) & is.finite(d) & stats::complete.cases(x) & is.finite(w)
-  y <- y[ok]
+  ok <- is.finite(.y) & is.finite(d) & stats::complete.cases(x) & is.finite(.w)
+  .y <- .y[ok]
   d <- d[ok]
   x <- x[ok, , drop = FALSE]
-  w <- w[ok]
-  if (!all(d %in% c(0, 1)) || length(unique(d)) < 2L) stop("`treatment` must be 0 and 1", call. = FALSE)
+  .w <- .w[ok]
+  if (!all(d %in% c(0, 1)) || length(unique(d)) < 2L) stop("`trt` must be 0 and 1", call. = FALSE)
   if (basis == "poly2") x <- .rmbl_poly2(x)
-  n <- length(y)
+  n <- length(.y)
   if (min(sum(d), sum(1 - d)) < 2L * folds) stop("too few treated or untreated rows for the folds", call. = FALSE)
   f <- .rmbl_with_seed(seed, sample(rep_len(seq_len(folds), n)))
   m1 <- m0 <- e <- numeric(n)
@@ -1203,8 +1203,8 @@ aipw_crossfit <- function(data, outcome, treatment, covariates, estimand = c("AT
       te <- !tr
       t1 <- tr & d == 1
       t0 <- tr & d == 0
-      m1[te] <- fit_fun(x[t1, , drop = FALSE], y[t1], x[te, , drop = FALSE])
-      m0[te] <- fit_fun(x[t0, , drop = FALSE], y[t0], x[te, , drop = FALSE])
+      m1[te] <- fit_fun(x[t1, , drop = FALSE], .y[t1], x[te, , drop = FALSE])
+      m0[te] <- fit_fun(x[t0, , drop = FALSE], .y[t0], x[te, , drop = FALSE])
       g <- suppressWarnings(stats::glm.fit(cbind(1, x[tr, , drop = FALSE]), d[tr], family = stats::binomial()))
       b <- g$coefficients
       b[is.na(b)] <- 0
@@ -1215,40 +1215,40 @@ aipw_crossfit <- function(data, outcome, treatment, covariates, estimand = c("AT
   pr <- e
   nt <- sum(e < trim | e > 1 - trim)
   e <- pmin(pmax(e, trim), 1 - trim)
-  sw <- sum(w)
-  if (estimand == "ATE") {
-    a <- m1 - m0 + d * (y - m1) / e - (1 - d) * (y - m0) / (1 - e)
-    th <- sum(w * a) / sw
+  sw <- sum(.w)
+  if (estd == "ATE") {
+    a <- m1 - m0 + d * (.y - m1) / e - (1 - d) * (.y - m0) / (1 - e)
+    th <- sum(.w * a) / sw
     psi <- a - th
   } else {
-    p1 <- sum(w * d) / sw
-    a <- (d * (y - m0) - e * (1 - d) * (y - m0) / (1 - e)) / p1
-    th <- sum(w * a) / sum(w * d / p1)
+    p1 <- sum(.w * d) / sw
+    a <- (d * (.y - m0) - e * (1 - d) * (.y - m0) / (1 - e)) / p1
+    th <- sum(.w * a) / sum(.w * d / p1)
     psi <- a - d / p1 * th
   }
-  if (is.null(design)) {
-    wn <- w / mean(w)
+  if (is.null(des)) {
+    wn <- .w / mean(.w)
     se <- sqrt(sum((wn * psi)^2) / n^2)
   } else {
     # theta = sum(w num) / sum(w den) over the rows used; the other rows are outside the domain
     num <- den <- numeric(length(ok))
-    num[ok] <- if (estimand == "ATE") a else a * p1
-    den[ok] <- if (estimand == "ATE") 1 else d
-    r <- .svy_core(design, cbind(num), cbind(den))
+    num[ok] <- if (estd == "ATE") a else a * p1
+    den[ok] <- if (estd == "ATE") 1 else d
+    r <- .svy_core(des, cbind(num), cbind(den))
     se <- sqrt(r$V[1L, 1L])
-    df <- .svy_df(design)
+    df <- .svy_df(des)
   }
-  if (is.null(design) || !is.finite(df) || df <= 0) df <- Inf
-  z <- stats::qt(1 - (1 - conf_level) / 2, df)
-  out <- data.frame(estimand = estimand, estimate = th, se = se, lower = th - z * se, upper = th + z * se,
+  if (is.null(des) || !is.finite(df) || df <= 0) df <- Inf
+  z <- stats::qt(1 - (1 - conflvl) / 2, df)
+  out <- data.frame(estimand = estd, estimate = th, se = se, lower = th - z * se, upper = th + z * se,
                     p_value = 2 * stats::pt(-abs(th / se), df), stringsAsFactors = FALSE)
   attr(out, "n") <- n
   attr(out, "treated") <- sum(d)
-  attr(out, "propensity_range") <- rng
+  attr(out, "psrange") <- rng
   attr(out, "trimmed") <- nt
-  attr(out, "conf_level") <- conf_level
-  attr(out, "variance") <- if (is.null(design)) "influence" else design$type
-  attr(out, "propensity") <- data.frame(propensity = pr, treated = d, weight = w)
+  attr(out, "conflvl") <- conflvl
+  attr(out, "variance") <- if (is.null(des)) "influence" else des$type
+  attr(out, "propensity") <- data.frame(propensity = pr, treated = d, weight = .w)
   attr(out, "trim") <- trim
   class(out) <- c("rmbl_aipw", "data.frame")
   out
@@ -1258,7 +1258,7 @@ aipw_crossfit <- function(data, outcome, treatment, covariates, estimand = c("AT
 print.rmbl_aipw <- function(x, ...) {
   cat(sprintf("Cross-fitted AIPW, %s: %d rows, %d treated\n", x$estimand, attr(x, "n"), attr(x, "treated")))
   print(format(as.data.frame(x)[-1L], digits = 4L), row.names = FALSE)
-  r <- attr(x, "propensity_range")
+  r <- attr(x, "psrange")
   cat(sprintf("Propensities from %.3f to %.3f; %d clipped\n", r[1L], r[2L], attr(x, "trimmed")))
   v <- attr(x, "variance")
   if (!is.null(v) && v != "influence") cat(sprintf("Standard error from the survey design (%s), one fit\n", v))

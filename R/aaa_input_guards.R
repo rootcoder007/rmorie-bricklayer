@@ -123,7 +123,7 @@
 }
 
 # a confidence level: one number strictly inside (0, 1); outside it the interval quantiles are NaN
-.rmbl_conf_level <- function(x, what = "conf_level") {
+.rmbl_conf_level <- function(x, what = "conflvl") {
   x <- .rmbl_num(x, what)
   if (length(x) != 1L || is.na(x) || x <= 0 || x >= 1) {
     stop(sprintf("`%s` must be a single number strictly between 0 and 1", what), call. = FALSE)
@@ -153,7 +153,7 @@
     }
     x <- v
   }
-  # a number, not a flag: as.numeric(TRUE) is 1 (max_pairs = TRUE was read as one pair)
+  # a number, not a flag: as.numeric(TRUE) is 1 (maxprs = TRUE was read as one pair)
   if (is.logical(x) && any(!is.na(x))) {
     stop(sprintf("`%s` must be a%s number, not %s", what, if (integer) " whole" else "", format(x[!is.na(x)][1L])),
          call. = FALSE)
@@ -197,7 +197,7 @@
 
 # One number (a whole one with `integer`), finite, in [min, max]: the checks a scalar argument needs,
 # said in words. A list, a data frame, text that is no number, NA, a vector are each refused here, not
-# by the base R call they reached (`if (n < min_tail)`: "missing value where TRUE/FALSE needed"; CRAN
+# by the base R call they reached (`if (n < mintl)`: "missing value where TRUE/FALSE needed"; CRAN
 # stress test of 0.5.14)
 .rmbl_scalar <- function(x, what, min = -Inf, max = Inf, integer = FALSE) {
   v <- .rmbl_num(x, what, integer = integer)
@@ -212,7 +212,7 @@
 
 # An error handler for a user's function called in a loop (a statistic, an injection): the error
 # becomes `default`, except R's own time limits, which must end the call. Caught, they were each an NA,
-# and setTimeLimit() could never stop capsule_power() or capsule_falsify() (CRAN stress test of 0.5.14).
+# and setTimeLimit() could never stop cpspwr() or cpsfals() (CRAN stress test of 0.5.14).
 .rmbl_or <- function(default) {
   force(default)
   function(e) {

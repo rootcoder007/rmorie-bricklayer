@@ -402,11 +402,11 @@ extern "C" {
 SEXP C_rmbl_xmss_keygen_impl(SEXP sk_seed_hex, SEXP pub_seed_hex, SEXP height) {
     std::vector<unsigned char> sks, pubs;
     if (!unhexlify(rmbl_str0(sk_seed_hex, "sk_seed"), rmbl_str0_len(sk_seed_hex, "sk_seed"), sks) || sks.size() != kN) {
-        rmbl::fail("`sk_seed` must be 64 hex characters (32 bytes)");
+        rmbl::fail("`skseed` must be 64 hex characters (32 bytes)");
     }
     if (!unhexlify(rmbl_str0(pub_seed_hex, "pub_seed"), rmbl_str0_len(pub_seed_hex, "pub_seed"), pubs) ||
         pubs.size() != kN) {
-        rmbl::fail("`pub_seed` must be 64 hex characters (32 bytes)");
+        rmbl::fail("`pubseed` must be 64 hex characters (32 bytes)");
     }
     const int h = Rf_asInteger(height);
     if (h < 1 || h > 16) rmbl::fail("`height` must be between 1 and 16");
@@ -422,15 +422,15 @@ SEXP C_rmbl_xmss_sign_impl(SEXP sk_seed_hex, SEXP sk_prf_hex, SEXP pub_seed_hex,
                       SEXP height, SEXP index, SEXP msg) {
     std::vector<unsigned char> sks, prfs, pubs;
     if (!unhexlify(rmbl_str0(sk_seed_hex, "sk_seed"), rmbl_str0_len(sk_seed_hex, "sk_seed"), sks) || sks.size() != kN) {
-        rmbl::fail("`sk_seed` must be 64 hex characters (32 bytes)");
+        rmbl::fail("`skseed` must be 64 hex characters (32 bytes)");
     }
     if (!unhexlify(rmbl_str0(sk_prf_hex, "sk_prf"), rmbl_str0_len(sk_prf_hex, "sk_prf"), prfs) ||
         prfs.size() != kN) {
-        rmbl::fail("`sk_prf` must be 64 hex characters (32 bytes)");
+        rmbl::fail("`skprf` must be 64 hex characters (32 bytes)");
     }
     if (!unhexlify(rmbl_str0(pub_seed_hex, "pub_seed"), rmbl_str0_len(pub_seed_hex, "pub_seed"), pubs) ||
         pubs.size() != kN) {
-        rmbl::fail("`pub_seed` must be 64 hex characters (32 bytes)");
+        rmbl::fail("`pubseed` must be 64 hex characters (32 bytes)");
     }
     const int h = Rf_asInteger(height);
     if (h < 1 || h > 16) rmbl::fail("`height` must be between 1 and 16");

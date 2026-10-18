@@ -12,12 +12,12 @@
   # so that the two are still distinguishable in the common forms of
   # colour blindness
   diverging = list(bad = "#c2492f", good = "#1b7f6b", flat = "#6b6b6b",
-                   bad_bg = "#fbeae6", good_bg = "#e6f4f1"),
+                   badbg = "#fbeae6", goodbg = "#e6f4f1"),
   # blue/orange, safe for deuteranopia and protanopia alike
   safe      = list(bad = "#b8621b", good = "#18567d", flat = "#6b6b6b",
-                   bad_bg = "#fdf0e4", good_bg = "#e7eff6"),
+                   badbg = "#fdf0e4", goodbg = "#e7eff6"),
   mono      = list(bad = "#1a1a1a", good = "#1a1a1a", flat = "#6b6b6b",
-                   bad_bg = "#f0f0f0", good_bg = "#f7f7f7")
+                   badbg = "#f0f0f0", goodbg = "#f7f7f7")
 )
 
 #' Colour palettes for change tables
@@ -28,8 +28,8 @@
 #' news for the series, not whether the number went up or down: the arrow in
 #' the table carries the sign, and the colour carries the
 #' \code{direction} chosen in \code{\link{yoy}}. Use this to see which values
-#' the \code{palette} argument of \code{print()}, \code{\link{yoy_html}} and
-#' \code{\link{yoy_pdf}} takes.
+#' the \code{palette} argument of \code{print()}, \code{\link{yoyhtml}} and
+#' \code{\link{yoypdf}} takes.
 #'
 #' @details
 #' Three palettes are defined:
@@ -52,20 +52,20 @@
 #'
 #' @return A character vector of palette names, currently
 #' \code{c("diverging", "safe", "mono")}.
-#' @seealso \code{\link{yoy}}, \code{\link{yoy_summary}},
-#'   \code{\link{yoy_html}}, \code{\link{yoy_pdf}}.
+#' @seealso \code{\link{yoy}}, \code{\link{yoysmry}},
+#'   \code{\link{yoyhtml}}, \code{\link{yoypdf}}.
 #' @examples
 #' # the palette names
-#' yoy_palettes()
+#' yoypals()
 #'
 #' # use one of them when printing a change table
 #' d <- data.frame(year = 2019:2023, n = c(40, 46, 38, 52, 49))
-#' print(yoy(d, value = "n", period = "year"), palette = "safe", color = FALSE)
+#' print(yoy(d, value = "n", prd = "year"), palette = "safe", color = FALSE)
 #'
 #' # a name that is not a palette is refused
-#' try(print(yoy(d, value = "n", period = "year"), palette = "rainbow"))
+#' try(print(yoy(d, value = "n", prd = "year"), palette = "rainbow"))
 #' @export
-yoy_palettes <- function() names(.YOY_PALETTES)
+yoypals <- function() names(.YOY_PALETTES)
 
 .yoy_pal <- function(palette) {
   palette <- .rmbl_arg(palette, names(.YOY_PALETTES))
@@ -75,7 +75,7 @@ yoy_palettes <- function() names(.YOY_PALETTES)
 .yoy_meta <- function(x) attr(x, "yoy", exact = TRUE)
 
 .yoy_change_col <- function(x) {
-  if ("pp_change" %in% names(x)) "pp_change" else "pct_change"
+  if ("ppchg" %in% names(x)) "ppchg" else "pctchg"
 }
 
 # The colour class of each verdict: good or bad news only when a direction says which is which.
@@ -123,7 +123,7 @@ yoy_palettes <- function() names(.YOY_PALETTES)
 #'   percent (or percentage-point) change column. The interval column is
 #'   always shown to whole percent.
 #' @param palette Character, default \code{"diverging"}. One of
-#'   \code{\link{yoy_palettes}()}; chooses the colours used when
+#'   \code{\link{yoypals}()}; chooses the colours used when
 #'   \code{color = TRUE}. An unknown name is an error.
 #' @param color Logical or \code{NULL} (the default). \code{TRUE} wraps each
 #'   row in 24-bit ANSI colour codes chosen from its verdict; \code{FALSE}
@@ -149,10 +149,10 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
   }
   pal <- .yoy_pal(palette)
   chgcol <- .yoy_change_col(x)
-  pp <- identical(chgcol, "pp_change")
+  pp <- identical(chgcol, "ppchg")
   d <- as.data.frame(x)
   d <- utils::head(d, n)
-  vd <- if (is.null(m$value_digits)) 0L else m$value_digits
+  vd <- if (is.null(m$valuedig)) 0L else m$valuedig
   cols <- list(
     period = .yoy_period_text(d, m),
     value = .yoy_fmt_num(d$value, vd),
@@ -161,11 +161,11 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
     pct = paste0(.yoy_arrow(d[[chgcol]]), " ",
                  .yoy_fmt_pct(d[[chgcol]], digits, pp))
   )
-  if (all(c("pct_lower", "pct_upper") %in% names(d))) {
+  if (all(c("pctlo", "pctup") %in% names(d))) {
     cols$interval <- ifelse(
-      is.na(d$pct_lower), .yg("\u2014"),
+      is.na(d$pctlo), .yg("\u2014"),
       sprintf("[%s, %s]",
-              .yoy_fmt_pct(d$pct_lower, 0L), .yoy_fmt_pct(d$pct_upper, 0L)))
+              .yoy_fmt_pct(d$pctlo, 0L), .yoy_fmt_pct(d$pctup, 0L)))
   }
   if (!is.null(m$by)) {
     for (b in rev(m$by)) {
@@ -220,14 +220,14 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
             sprintf("units: %s", m$units))
   if (m$units == "count") {
     bits <- c(bits, sprintf("%.0f%% exact rate-ratio interval",
-                            100 * m$conf_level))
-    if (isTRUE(m$min_base > 0)) bits <- c(bits, sprintf("bases below %g noted", m$min_base))
+                            100 * m$conflvl))
+    if (isTRUE(m$minbase > 0)) bits <- c(bits, sprintf("bases below %g noted", m$minbase))
   }
   if (m$units == "percent") {
     bits <- c(bits, "percentage-point change, not percent of a percent")
   }
   if (!identical(m$direction, "neutral")) {
-    bits <- c(bits, sub("_", " ", gsub("_", " ", m$direction)))
+    bits <- c(bits, paste(m$direction, "is better"))
   }
   paste(bits, collapse = .yg(" \u00b7 "))
 }
@@ -250,12 +250,12 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
 #' and, with \eqn{s = (T - 1) / \mathrm{lag}} steps of length \code{lag},
 #' \deqn{100 \left( (v_T / v_1)^{1/s} - 1 \right).}
 #' Both are \code{NA} when \eqn{v_1 \le 0}, because a growth rate out of zero
-#' does not exist; \code{cagr_pct} is also \code{NA} for a single period.
+#' does not exist; \code{cagrpct} is also \code{NA} for a single period.
 #' "Annual" in CAGR assumes one period is a year; for monthly or quarterly
 #' data read it as the compound rate per \code{lag} periods.
 #'
 #' The \code{up}, \code{down} and \code{flat} counts are taken from the
-#' percent-change column (\code{pct_change}, or \code{pp_change} for
+#' percent-change column (\code{pctchg}, or \code{ppchg} for
 #' \code{units = "percent"}). A change out of a zero base has no percent
 #' change and is not counted in any of the three. A group with no non-missing
 #' value gives a row of \code{NA} with \code{periods = 0}.
@@ -269,34 +269,34 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
 #' \code{by} columns (character), when \code{yoy()} had \code{by};
 #' \code{from}, \code{to} (the first and last observed period, same type as
 #' the period column); \code{first}, \code{last} (numeric values at those
-#' periods); \code{total_pct}, \code{cagr_pct} (numeric, percent);
+#' periods); \code{totalpct}, \code{cagrpct} (numeric, percent);
 #' \code{periods} (integer, observed periods); \code{up}, \code{down},
 #' \code{flat} (integer counts of period-to-period changes).
-#' @seealso \code{\link{yoy}}, \code{\link{yoy_palettes}}.
+#' @seealso \code{\link{yoy}}, \code{\link{yoypals}}.
 #' @examples
 #' # one series
 #' d <- data.frame(year = 2018:2023, n = c(120, 131, 98, 140, 155, 149))
-#' yoy_summary(yoy(d, value = "n", period = "year"))
+#' yoysmry(yoy(d, value = "n", prd = "year"))
 #'
 #' # one row per group; a zero base gives no percent change
 #' g <- data.frame(year = rep(2019:2022, 2), unit = rep(c("A", "B"), each = 4),
 #'                 n = c(10, 12, 0, 15, 5, 7, 6, 9))
-#' yoy_summary(yoy(g, value = "n", period = "year", by = "unit"))
+#' yoysmry(yoy(g, value = "n", prd = "year", by = "unit"))
 #'
 #' # anything that is not a yoy() result is refused
-#' try(yoy_summary(d))
+#' try(yoysmry(d))
 #' @export
-yoy_summary <- function(object, ...) UseMethod("yoy_summary")
+yoysmry <- function(object, ...) UseMethod("yoysmry")
 
-#' @rdname yoy_summary
+#' @rdname yoysmry
 #' @export
-yoy_summary.default <- function(object, ...) {
+yoysmry.default <- function(object, ...) {
   stop(sprintf("`object` must be a yoy() result, not %s", class(object)[1L]), call. = FALSE)
 }
 
-#' @rdname yoy_summary
+#' @rdname yoysmry
 #' @export
-yoy_summary.rmbl_yoy <- function(object, ...) {
+yoysmry.rmbl_yoy <- function(object, ...) {
   m <- .yoy_meta(object)
   d <- as.data.frame(object)
   chgcol <- .yoy_change_col(object)
@@ -305,8 +305,8 @@ yoy_summary.rmbl_yoy <- function(object, ...) {
     fin <- g[!is.na(g$value), , drop = FALSE]
     if (!nrow(fin)) {
       return(data.frame(from = NA, to = NA, first = NA_real_,
-                        last = NA_real_, total_pct = NA_real_,
-                        cagr_pct = NA_real_, periods = 0L,
+                        last = NA_real_, totalpct = NA_real_,
+                        cagrpct = NA_real_, periods = 0L,
                         up = 0L, down = 0L, flat = 0L,
                         stringsAsFactors = FALSE))
     }
@@ -325,7 +325,7 @@ yoy_summary.rmbl_yoy <- function(object, ...) {
     data.frame(from = fin[[m$period]][1L],
                to = fin[[m$period]][nrow(fin)],
                first = first, last = last,
-               total_pct = total, cagr_pct = cagr,
+               totalpct = total, cagrpct = cagr,
                periods = nrow(fin),
                up = sum(ch > 0, na.rm = TRUE),
                down = sum(ch < 0, na.rm = TRUE),

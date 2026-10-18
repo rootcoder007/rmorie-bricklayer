@@ -12,7 +12,7 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(rmoriebricklayer)
 ```
 
-`plr_crossfit()` estimates the average effect of a treatment on an outcome when the treated and
+`plrcf()` estimates the average effect of a treatment on an outcome when the treated and
 the untreated differ in measured ways (confounders). It fits the partially linear model
 
 \[ Y = \theta D + g(X) + \varepsilon, \qquad D = m(X) + v, \]
@@ -22,7 +22,7 @@ treatment are each predicted from the confounders \(X\) on folds the row was not
 (cross-fitting), and \(\theta\) is the regression of the outcome residuals on the treatment
 residuals (DML2), with a sandwich standard error. When the effect is the same for everyone,
 \(\theta\) is the average treatment effect (ATE); otherwise it is a variance-weighted average of
-the individual effects. `exposure_response_plr()` bootstraps the same estimator for a continuous
+the individual effects. `exprspplr()` bootstraps the same estimator for a continuous
 exposure (see the air-pollution vignette). The nuisances \(g\) and \(m\) are ordinary least
 squares fits, so \(\theta\) is consistent when they are linear in the columns given; add squares,
 interactions or splines as columns where they are not.
@@ -39,7 +39,7 @@ sim <- data.frame(x1 = rnorm(n), x2 = rnorm(n))
 sim$d <- rbinom(n, 1, plogis(1.5 * sim$x1))
 sim$y <- 2 * sim$d + 3 * sim$x1 + sim$x2 + rnorm(n)
 mean(sim$y[sim$d == 1]) - mean(sim$y[sim$d == 0])   # biased by x1
-fit <- plr_crossfit(sim, "y", "d", c("x1", "x2"))
+fit <- plrcf(sim, "y", "d", c("x1", "x2"))
 fit$ate
 fit$ate + c(-1.96, 1.96) * fit$se
 ```
@@ -54,9 +54,9 @@ randomised controls, and 2,490 PSID-1 comparison men. The three files are on dat
 (`rmbl login` once), checked against the SHA-256 the manifest lists:
 
 ```{r nsw-load, eval = FALSE}
-tr <- bricklayer_data_load("nsw_dw/treated")
-ct <- bricklayer_data_load("nsw_dw/control")
-ps <- bricklayer_data_load("nsw_dw/psid_controls")
+tr <- dload("nsw_dw/treated")
+ct <- dload("nsw_dw/control")
+ps <- dload("nsw_dw/psid_controls")
 ```
 
 Or, without signing in, from Rajeev Dehejia's own pages (whitespace-separated text):
@@ -65,7 +65,7 @@ Or, without signing in, from Rajeev Dehejia's own pages (whitespace-separated te
 cols <- c("treat", "age", "educ", "black", "hisp", "married", "nodegree", "re74", "re75", "re78")
 nber <- function(f) {
   dest <- file.path(tempdir(), f)
-  bricklayer_download(paste0("https://users.nber.org/~rdehejia/data/", f), dest)
+  bldl(paste0("https://users.nber.org/~rdehejia/data/", f), dest)
   stats::setNames(utils::read.table(dest), cols)
 }
 tr <- nber("nswre74_treated.txt")
@@ -90,9 +90,9 @@ exp <- rbind(tr, ct)
 obs <- rbind(tr, ps)
 mean(tr$re78) - mean(ct$re78)                 # the experiment
 mean(tr$re78) - mean(ps$re78)                 # treated against the PSID, unadjusted
-plr_crossfit(exp, "re78", "treat", x)
-plr_crossfit(obs, "re78", "treat", x)
-plr_crossfit(obs, "re78", "treat", x, k_folds = 10, seed = 2)
+plrcf(exp, "re78", "treat", x)
+plrcf(obs, "re78", "treat", x)
+plrcf(obs, "re78", "treat", x, kfol = 10, seed = 2)
 ```
 
 Run on 15 October 2026 (1982 US dollars of 1978 earnings):
@@ -100,10 +100,10 @@ Run on 15 October 2026 (1982 US dollars of 1978 earnings):
 | Sample and estimator | Effect | Standard error | 95% interval |
 |---|---|---|---|
 | Experiment, difference in means | 1,794.3 | | |
-| Experiment, `plr_crossfit()` | 1,695.9 | 680.8 | 361.5 to 3,030.2 |
+| Experiment, `plrcf()` | 1,695.9 | 680.8 | 361.5 to 3,030.2 |
 | Treated vs PSID, difference in means | -15,204.8 | | |
-| Treated vs PSID, `plr_crossfit()` | 618.3 | 791.1 | -932.3 to 2,168.9 |
-| Treated vs PSID, `plr_crossfit()`, 10 folds, seed 2 | 748.4 | 777.5 | -775.5 to 2,272.3 |
+| Treated vs PSID, `plrcf()` | 618.3 | 791.1 | -932.3 to 2,168.9 |
+| Treated vs PSID, `plrcf()`, 10 folds, seed 2 | 748.4 | 777.5 | -775.5 to 2,272.3 |
 
 Adjusting for the eight pre-programme covariates turns a fifteen-thousand-dollar penalty into a
 small positive effect whose interval covers the experimental one, though it sits well below it
@@ -112,7 +112,7 @@ gap is adjusted for only as a straight line; and the overlap is thin: most PSID 
 before the programme than almost any treated man, so the comparison rests on the few who look
 like them. Dehejia and Wahba show that trimming the comparison group to the region of common
 support (on an estimated propensity score) brings the observational estimate close to the
-experiment; with `plr_crossfit()`, restrict `obs` to that region before fitting. The cross-fit
+experiment; with `plrcf()`, restrict `obs` to that region before fitting. The cross-fit
 split moves the estimate by about a sixth of a standard error, which is why the seed and the
 number of folds are arguments.
 
@@ -128,14 +128,14 @@ n <- 1500
 d <- data.frame(age = runif(n, 18, 70), income = rnorm(n))
 d$t <- rbinom(n, 1, plogis(-2 + 0.04 * d$age + 0.5 * d$income))
 d$y <- 10 + 3 * d$t + 0.2 * d$age + d$income + rnorm(n)
-fit <- aipw_crossfit(d, "y", "t", c("age", "income"), learner = "ols")
+fit <- aipwcf(d, "y", "t", c("age", "income"), lrn = "ols")
 fit
 plot(fit)
 pr <- attr(fit, "propensity")
 e <- pmin(pmax(pr$propensity, 0.01), 0.99)
 d$ipw <- ifelse(d$t == 1, 1 / e, 1 / (1 - e))
-plot(balance_table(d, "t", c("age", "income")),
-     after = balance_table(d, "t", c("age", "income"), weights = "ipw"))
+plot(baltab(d, "t", c("age", "income")),
+     after = baltab(d, "t", c("age", "income"), w = "ipw"))
 ```
 
 The groups overlap where both curves have mass; after weighting, both covariates fall below the
@@ -145,19 +145,19 @@ The groups overlap where both curves have mass; after weighting, both covariates
 
 The person-level questions this vignette is about (does a strong sense of belonging go
 with better mental health once circumstances are held equal?) need the survey microdata,
-which Statistics Canada distributes as a public use file; `aipw_crossfit()` with
-`design = survey_design(...)` takes its bootstrap weights directly. The published tables
+which Statistics Canada distributes as a public use file; `aipwcf()` with
+`design = svydes(...)` takes its bootstrap weights directly. The published tables
 bundled with the package support the group-level questions; for those see
 `vignette("first-nations-metis-inuit-health")`. A comparison of the published
 estimates themselves:
 
 ```{r indigenous-causal, eval = TRUE}
-hi <- indigenous_example("health_indicators")
+hi <- indiex("health")
 x <- hi[hi$period == "2019/2022" & hi$age == "Total, 18 years and over" &
           hi$indicator == "Perceived mental health, very good or excellent", ]
-indigenous_gap(x, "group", "estimate", "lower", "upper", quality = "quality")[
-  , c("group", "estimate", "reference_estimate", "difference", "difference_lower",
-      "difference_upper")]
+indgap(x, "group", "estimate", "lower", "upper", qual = "quality")[
+  , c("group", "estimate", "refest", "difference", "diflo",
+      "difup")]
 ```
 
 ## References

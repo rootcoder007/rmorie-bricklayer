@@ -6,39 +6,39 @@
 r5 <- function(nm) get(nm, envir = asNamespace("rmoriebricklayer"))
 
 test_that("the reviewers' inputs return in-process: whitespace bytes, boilerplate, glossary, HTML", {
-  expect_type(bricklayer_parse_siu(paste0("SO #1", strrep("\f", 25000), "x")), "character")
-  expect_type(bricklayer_parse_siu(paste0("SO #1", strrep("\v", 25000), "x")), "character")
-  expect_type(bricklayer_siu_resolve_so(paste0("SO #1", strrep("\r", 25000), "x"))$reason, "character")
-  r <- bricklayer_siu_resolve_so(paste0("this information may include", strrep("a b\n", 15000), "affected person."))
+  expect_type(siuprs(paste0("SO #1", strrep("\f", 25000), "x")), "character")
+  expect_type(siuprs(paste0("SO #1", strrep("\v", 25000), "x")), "character")
+  expect_type(siuso(paste0("SO #1", strrep("\r", 25000), "x"))$reason, "character")
+  r <- siuso(paste0("this information may include", strrep("a b\n", 15000), "affected person."))
   expect_type(r$reason, "character")
-  r <- bricklayer_siu_resolve_so(paste0("this information may include", strrep("a b\n", 12500)))
+  r <- siuso(paste0("this information may include", strrep("a b\n", 12500)))
   expect_type(r$reason, "character")
-  r <- bricklayer_siu_resolve_so(paste0("who, in the opinion of the SIU Director, is not a subject officer ",
+  r <- siuso(paste0("who, in the opinion of the SIU Director, is not a subject officer ",
                                         strrep("a b\n", 12500)))
   expect_type(r$reason, "character")
-  f <- bricklayer_parse_siu(paste0("<html><body><p>this information may include</p>",
+  f <- siuprs(paste0("<html><body><p>this information may include</p>",
                                    strrep("<li>a b</li>", 12000), "</body></html>"))
   expect_type(f, "character")
   # the 0.5.7 reproducer stays fixed
-  expect_identical(bricklayer_siu_text(strrep(" ", 25000)), " ")
+  expect_identical(siutxt(strrep(" ", 25000)), " ")
 })
 
 test_that("the boilerplate scans remove what the regexes removed, and only that", {
   # a report with one tagged SO: the privacy paragraph and the glossary sentence, in both
   # phrasings, must not change that verdict (0.5.8's regexes stripped them; the scans do too)
   base <- "Subject Officials\nSO #1 Interviewed.\n"
-  expect_identical(bricklayer_siu_resolve_so(base)$count, 1L)
+  expect_identical(siuso(base)$count, 1L)
   boiler <- paste0("This information may include the name of a subject official, ",
                    "a witness official and the affected person. ")
   glossary <- c(paste("A witness officer is a police officer who, in the opinion of the SIU Director,",
                       "is involved but is not a subject officer."),
                 paste("A witness officer is one who in the SIU Director's opinion is involved",
                       "and is not a subject official. Next."))
-  expect_identical(bricklayer_siu_resolve_so(paste0(boiler, base))$count, 1L)
-  for (g in glossary) expect_identical(bricklayer_siu_resolve_so(paste0(base, g))$count, 1L, info = g)
+  expect_identical(siuso(paste0(boiler, base))$count, 1L)
+  for (g in glossary) expect_identical(siuso(paste0(base, g))$count, 1L, info = g)
   # and with the sentence but no tag at all, the glossary's "not a subject officer" is not a cue
   for (g in glossary) {
-    r <- bricklayer_siu_resolve_so(paste0("Preamble.\n", g, "\nThe Team\nNumber of SIU Investigators assigned: 3\n"))
+    r <- siuso(paste0("Preamble.\n", g, "\nThe Team\nNumber of SIU Investigators assigned: 3\n"))
     expect_false(grepl("glossary|not a subject", r$reason, ignore.case = TRUE), info = g)
   }
 })
@@ -47,7 +47,7 @@ test_that("a split long line is placed at a sentence end and is warned about, ne
   pad <- substr(strrep("word ", 500), 1, 1991)
   s <- paste0("Notification of the SIU\n", pad, "the Toronto Police Service reported the incident.\n")
   w <- NULL
-  f <- withCallingHandlers(bricklayer_parse_siu(s), warning = function(c) {
+  f <- withCallingHandlers(siuprs(s), warning = function(c) {
     w <<- conditionMessage(c)
     invokeRestart("muffleWarning")
   })
@@ -56,43 +56,43 @@ test_that("a split long line is placed at a sentence end and is warned about, ne
   # with a sentence end inside the window the field itself stays whole
   s2 <- paste0("Notification of the SIU\n", substr(strrep("word ", 500), 1, 1900), ". ",
                "On January 5, 2023, the Toronto Police Service reported the incident. More words follow here.\n")
-  f2 <- suppressWarnings(bricklayer_parse_siu(s2))
+  f2 <- suppressWarnings(siuprs(s2))
   expect_identical(unname(f2["police_service"]), "Toronto Police Service")
   # short documents: no warning at all
-  expect_silent(bricklayer_parse_siu(paste0("Notification of the SIU\n",
+  expect_silent(siuprs(paste0("Notification of the SIU\n",
                                             "On January 5, 2023, the Toronto Police Service reported it.\n")))
-  expect_silent(bricklayer_siu_text("<p>short</p>"))
-  expect_warning(bricklayer_siu_text(paste0("<p>", strrep("word ", 1000), "</p>")), "longer than 2000")
-  expect_warning(bricklayer_siu_resolve_so(strrep("word ", 1000)), "longer than 2000")
+  expect_silent(siutxt("<p>short</p>"))
+  expect_warning(siutxt(paste0("<p>", strrep("word ", 1000), "</p>")), "longer than 2000")
+  expect_warning(siuso(strrep("word ", 1000)), "longer than 2000")
 })
 
 test_that("the regex-free passes are linear: unclosed <script> and bare < in bulk", {
-  t1 <- system.time(bricklayer_siu_text(strrep("<script>", 40000)))[["elapsed"]]      # 320 KB
-  t2 <- system.time(bricklayer_siu_text(strrep("<script>", 80000)))[["elapsed"]]      # 640 KB
+  t1 <- system.time(siutxt(strrep("<script>", 40000)))[["elapsed"]]      # 320 KB
+  t2 <- system.time(siutxt(strrep("<script>", 80000)))[["elapsed"]]      # 640 KB
   expect_lt(t1, wall_limit(5))
   expect_lt(t2, wall_limit(5))
-  t3 <- system.time(suppressWarnings(bricklayer_siu_text(strrep("<", 400000))))[["elapsed"]]
+  t3 <- system.time(suppressWarnings(siutxt(strrep("<", 400000))))[["elapsed"]]
   expect_lt(t3, wall_limit(5))
   # a closed element is still stripped, in place
-  out <- bricklayer_siu_text("<p>a</p><script>var x = 1;</script><p>b</p>")
+  out <- siutxt("<p>a</p><script>var x = 1;</script><p>b</p>")
   expect_false(grepl("var x", out, fixed = TRUE))
   expect_match(out, "a\\s+b")
 })
 
 test_that("the smaller divergences: date cap errors, nine-digit tags, zero-padded entities, entity case", {
-  expect_identical(bricklayer_siu_iso_date(paste0("January 5, 2023", strrep(" ", 4081))), "2023-01-05")
-  expect_error(bricklayer_siu_iso_date(paste0("January 5, 2023", strrep(" ", 4082))), "longer than 4096 bytes")
-  f <- bricklayer_parse_siu("Subject Officials\nSO #1234567\n")
+  expect_identical(siudate(paste0("January 5, 2023", strrep(" ", 4081))), "2023-01-05")
+  expect_error(siudate(paste0("January 5, 2023", strrep(" ", 4082))), "longer than 4096 bytes")
+  f <- siuprs("Subject Officials\nSO #1234567\n")
   expect_identical(unname(f["number_of_subject_officials"]), "1234567")
-  f <- bricklayer_parse_siu(paste0("Subject Officials\nSO #", strrep("4", 12), "\n"))
+  f <- siuprs(paste0("Subject Officials\nSO #", strrep("4", 12), "\n"))
   expect_identical(unname(f["number_of_subject_officials"]), "1")
-  expect_identical(trimws(bricklayer_siu_text("<p>caf&#0000000233; &#x00000000E9;</p>")), "café é")
-  expect_identical(trimws(bricklayer_siu_text("<p>&apos;a&apos; &APOS;b&APOS; &hellip; &HELLIP;</p>")),
+  expect_identical(trimws(siutxt("<p>caf&#0000000233; &#x00000000E9;</p>")), "café é")
+  expect_identical(trimws(siutxt("<p>&apos;a&apos; &APOS;b&APOS; &hellip; &HELLIP;</p>")),
                    "'a' &APOS;b&APOS; ... &HELLIP;")
   # a long non-HTML string is parsed: the one warning is the split (a 5000-character line),
   # never file.exists()'s "expanded path length"
   w <- character()
-  withCallingHandlers(bricklayer_parse_siu(strrep("1234567890", 500)), warning = function(c) {
+  withCallingHandlers(siuprs(strrep("1234567890", 500)), warning = function(c) {
     w <<- c(w, conditionMessage(c))
     invokeRestart("muffleWarning")
   })
@@ -120,7 +120,7 @@ test_that("interrupt polling: the SIU core carries a hook the barrier installs",
 })
 
 test_that("the odds and ends: timeout range, single-label message, mirror .sig URL, mode doc", {
-  expect_error(bricklayer_download("https://example.org/x", tempfile(), timeout = 1e18, quiet = TRUE),
+  expect_error(bldl("https://example.org/x", tempfile(), tmout = 1e18, quiet = TRUE),
                "at most 2147483647")
   expect_error(.rmbl_check_public_url("https://metadata/"), "local or private")
   expect_error(.rmbl_check_public_url("https://instance-data/latest"), "local or private")
@@ -132,17 +132,17 @@ test_that("the odds and ends: timeout range, single-label message, mirror .sig U
   rdtxt <- function(nm) {
     paste(utils::capture.output(tools::Rd2txt(rd[[nm]], options = list(underline_titles = FALSE))), collapse = "\n")
   }
-  expect_match(rdtxt("download_data.Rd"), "only.*\"wb\"")
-  expect_match(rdtxt("bricklayer_json_to_json.Rd"), "quiet_vec_names")
-  expect_match(rdtxt("bricklayer_llm_ask.Rd"), "configured")
+  expect_match(rdtxt("dldata.Rd"), "only.*\"wb\"")
+  expect_match(rdtxt("tojs.Rd"), "quiet_vec_names")
+  expect_match(rdtxt("llmask.Rd"), "configured")
   # the docs the diff review found missing
-  expect_match(rdtxt("bricklayer_services.Rd"), "MORIE_SERVICES_URL")
-  expect_match(rdtxt("bricklayer_parse_siu.Rd"), "2000 characters")
-  expect_match(rdtxt("bricklayer_siu_text.Rd"), "2 MiB")
-  expect_match(rdtxt("capsule_drift.Rd"), "20 distinct values")
-  expect_match(rdtxt("bricklayer_download.Rd"), "2147483647")
-  expect_match(rdtxt("bricklayer_llm_ask.Rd"), "192.168/16", fixed = TRUE)
-  # log_p_value carries range p_value cannot: a chi-square of 1e4 on 1 df has p = 0 in
+  expect_match(rdtxt("svcs.Rd"), "MORIE_SERVICES_URL")
+  expect_match(rdtxt("siuprs.Rd"), "2000 characters")
+  expect_match(rdtxt("siutxt.Rd"), "2 MiB")
+  expect_match(rdtxt("cpsdrft.Rd"), "20 distinct values")
+  expect_match(rdtxt("bldl.Rd"), "2147483647")
+  expect_match(rdtxt("llmask.Rd"), "192.168/16", fixed = TRUE)
+  # logpvalue carries range p_value cannot: a chi-square of 1e4 on 1 df has p = 0 in
   # double, and its log tail agrees with the asymptotic -x/2 + log(sqrt(2/(pi x))) to 1e-3
   expect_identical(stats::pchisq(1e4, 1, lower.tail = FALSE), 0)
   lp <- r5(".rmbl_chisq_logp")(1e4, 1)

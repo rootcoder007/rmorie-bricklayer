@@ -31,7 +31,7 @@
 #'
 #' Refusals: anything other than a single string naming an existing
 #' regular file -- a missing path, a directory, `NA`, a number or a vector
-#' of several paths -- stops with `"sha256_file: <path> is not a file"`.
+#' of several paths -- stops with `"sha256file: <path> is not a file"`.
 #'
 #' @param path A single string: the path of the file to hash (`~` is
 #'   expanded as usual by R's file functions).
@@ -40,47 +40,47 @@
 #' @references National Institute of Standards and Technology (2015).
 #'   Secure Hash Standard (SHS). FIPS PUB 180-4.
 #'   \href{https://doi.org/10.6028/NIST.FIPS.180-4}{doi:10.6028/NIST.FIPS.180-4}
-#' @seealso [core_sha256()] for the digest of a string or raw
+#' @seealso [csha256()] for the digest of a string or raw
 #'   vector held
 #'   in memory.
 #' @examples
 #' f <- tempfile()
 #' writeLines("hello capsule", f)
-#' sha256_file(f)
+#' sha256file(f)
 #'
 #' # Deterministic: the same bytes always yield the same digest.
-#' identical(sha256_file(f), sha256_file(f))
+#' identical(sha256file(f), sha256file(f))
 #'
 #' # Any change to the file changes the digest (tamper-evidence).
-#' before <- sha256_file(f)
+#' before <- sha256file(f)
 #' writeLines("hello capsule (edited)", f)
-#' after <- sha256_file(f)
+#' after <- sha256file(f)
 #' before == after      # FALSE
 #'
 #' # Provenance pin: record a digest, verify it later.
-#' pinned <- sha256_file(f)
-#' stopifnot(sha256_file(f) == pinned)
+#' pinned <- sha256file(f)
+#' stopifnot(sha256file(f) == pinned)
 #'
 #' # An empty file has the well-known empty-input digest.
 #' e <- tempfile()
 #' file.create(e)
-#' sha256_file(e)
+#' sha256file(e)
 #'
 #' # The file's bytes and the same bytes in memory hash alike.
-#' identical(sha256_file(f), core_sha256(readBin(f, "raw", file.size(f))))
+#' identical(sha256file(f), csha256(readBin(f, "raw", file.size(f))))
 #'
 #' # A directory or a missing file is refused.
-#' try(sha256_file(tempdir()))
+#' try(sha256file(tempdir()))
 #' @export
-sha256_file <- function(path) {
+sha256file <- function(path) {
   if (!is.character(path) || length(path) != 1L || is.na(path) || !file.exists(path) || dir.exists(path)) {
-    stop(sprintf("sha256_file: %s is not a file", if (is.character(path) && length(path) == 1L) path else "`path`"),
+    stop(sprintf("sha256file: %s is not a file", if (is.character(path) && length(path) == 1L) path else "`path`"),
          call. = FALSE)
   }
   # inside the package: the compiled SHA-256 core over the file read in chunks (identical output
   # to digest::digest(file = path, algo = "sha256")); sourced standalone in a capsule bundle: the
   # pure-R FIPS 180-4 implementation from sha256_native.R, over the whole file at once
-  if (exists("core_sha256", mode = "function")) return(.rmbl_sha256_stream(path))
+  if (exists("csha256", mode = "function")) return(.rmbl_sha256_stream(path))
   .rmbl_sha256_hex(readBin(path, "raw", n = file.info(path)$size))
 }
 
@@ -92,7 +92,7 @@ sha256_file <- function(path) {
   con <- file(path, open = "rb")
   on.exit(close(con), add = TRUE)
   pg <- if (is.finite(size) && size > chunk) {
-    bricklayer_progress(sprintf("sha256 %s", .rmbl_printable(basename(path))), size)
+    blprog(sprintf("sha256 %s", .rmbl_printable(basename(path))), size)
   }
   if (!is.null(pg)) on.exit(pg$done(), add = TRUE)
   state <- NULL
@@ -118,7 +118,7 @@ sha256_file <- function(path) {
 #' example, an accented capital A becomes a plain "A"). Falls back to
 #' dropping any character that has no transliteration. This is the
 #' deterministic "fallback" used by
-#' [ascii_fallback()]. Use it for destinations that accept
+#' [asciifb()]. Use it for destinations that accept
 #' only ASCII --
 #' a package `DESCRIPTION`, a file name, a legacy system -- so a name
 #' written with an accented letter arrives with the plain letter rather
@@ -145,28 +145,28 @@ sha256_file <- function(path) {
 #'   [as.character()]).
 #' @return A character vector the length of `x`, containing only printable
 #'   ASCII characters (bytes 32 to 126); `NA` elements become `""`.
-#' @seealso [ascii_fallback()] to transliterate only when
+#' @seealso [asciifb()] to transliterate only when
 #'   needed,
-#'   [write_text_fallback()] to write text with an
+#'   [wrtxtfb()] to write text with an
 #'   ASCII retry.
 #' @export
 #' @examples
 #' # Latin accents fold to their nearest ASCII letter.
-#' to_ascii("Prof. \u00c1ngela Zorro Medina")  # "Prof. Angela Zorro Medina"
+#' toascii("Prof. \u00c1ngela Zorro Medina")  # "Prof. Angela Zorro Medina"
 #'
 #' # Vectorised over the input.
-#' to_ascii(c("Se\u00e1n", "Zo\u00eb", "na\u00efve"))
+#' toascii(c("Se\u00e1n", "Zo\u00eb", "na\u00efve"))
 #'
 #' # Non-Latin scripts are romanised when stringi is available.
 #' if (requireNamespace("stringi", quietly = TRUE))
-#'   to_ascii("\u041c\u043e\u0441\u043a\u0432\u0430")  # "Moskva" (Cyrillic)
+#'   toascii("\u041c\u043e\u0441\u043a\u0432\u0430")  # "Moskva" (Cyrillic)
 #'
 #' # Either way the result is guaranteed pure 7-bit ASCII (never "?").
-#' all(charToRaw(to_ascii("caf\u00e9")) < 128)
+#' all(charToRaw(toascii("caf\u00e9")) < 128)
 #'
 #' # Missing values become empty strings; line breaks are removed.
-#' to_ascii(c(NA, "two\nlines"))
-to_ascii <- function(x) {
+#' toascii(c(NA, "two\nlines"))
+toascii <- function(x) {
   .rmbl_no_fn(x = x)
   x <- as.character(x)
   # Bytes that are not valid UTF-8 at all (a mislabelled file) are dropped
@@ -248,7 +248,7 @@ to_ascii <- function(x) {
 #'
 #' Returns `x` unchanged when it is valid, well-formed text (so
 #' legitimate UTF-8 such as an accented name is preserved), and only
-#' transliterates to plain ASCII via [to_ascii()]
+#' transliterates to plain ASCII via [toascii()]
 #' when the text is not valid UTF-8 (an encoding error) or when
 #' `force = TRUE` (for ASCII-only destinations such as a package
 #' `DESCRIPTION`) . This lets author and supervisor names keep their
@@ -260,10 +260,10 @@ to_ascii <- function(x) {
 #' outcome
 #' does not depend on the session locale. Valid elements (including plain
 #' ASCII and properly encoded accented text) are returned unchanged;
-#' invalid ones go through [to_ascii()], which drops the bytes
+#' invalid ones go through [toascii()], which drops the bytes
 #' that are
 #' not UTF-8 and transliterates the rest. With `force = TRUE` every
-#' element goes through [to_ascii()]. A missing value is kept as
+#' element goes through [toascii()]. A missing value is kept as
 #' `NA`
 #' unless `force = TRUE`, when it becomes `""`.
 #'
@@ -275,34 +275,34 @@ to_ascii <- function(x) {
 #' @return A character vector the length of `x`: each element unchanged
 #'   when it is valid UTF-8 (and `force` is not `TRUE`), otherwise its
 #'   ASCII transliteration.
-#' @seealso [to_ascii()], which does the transliteration.
+#' @seealso [toascii()], which does the transliteration.
 #' @export
 #' @examples
 #' # By default valid UTF-8 is preserved (accents kept where supported).
-#' ascii_fallback("\u00c1ngela")               # "\u00c1ngela"
+#' asciifb("\u00c1ngela")               # "\u00c1ngela"
 #'
 #' # force = TRUE always transliterates (for ASCII-only destinations
 #' # such as a package DESCRIPTION).
-#' ascii_fallback("\u00c1ngela", force = TRUE)  # "Angela"
+#' asciifb("\u00c1ngela", force = TRUE)  # "Angela"
 #'
 #' # Plain ASCII is returned unchanged either way.
-#' ascii_fallback("plain name")
+#' asciifb("plain name")
 #'
 #' # Vectorised; each element handled independently.
-#' ascii_fallback(c("caf\u00e9", "resume"), force = TRUE)
+#' asciifb(c("caf\u00e9", "resume"), force = TRUE)
 #'
 #' # Bytes that are not UTF-8 (a Latin-1 file read as UTF-8) are repaired.
 #' bad <- rawToChar(as.raw(c(0x63, 0x61, 0x66, 0xe9)))
 #' validUTF8(bad)
-#' ascii_fallback(bad)
-ascii_fallback <- function(x, force = FALSE) {
+#' asciifb(bad)
+asciifb <- function(x, force = FALSE) {
   .rmbl_no_fn(x = x)
   x <- as.character(x)
-  if (isTRUE(force)) return(to_ascii(x))
+  if (isTRUE(force)) return(toascii(x))
   out <- x
-  # Test the bytes, not the locale's opinion of them (see to_ascii()).
+  # Test the bytes, not the locale's opinion of them (see toascii()).
   bad <- !is.na(x) & !validUTF8(x)
-  if (any(bad)) out[bad] <- to_ascii(x[bad])
+  if (any(bad)) out[bad] <- toascii(x[bad])
   out
 }
 
@@ -311,7 +311,7 @@ ascii_fallback <- function(x, force = FALSE) {
 #' Writes `text` to `path` as UTF-8, one element per line. If the write
 #' fails (for example a destination or locale that cannot represent the
 #' characters), it retries with an ASCII transliteration produced by
-#' [to_ascii()], so capsule generation never fails on a non-ASCII
+#' [toascii()], so capsule generation never fails on a non-ASCII
 #' name.
 #' Use it to write generated text files (README, citation, script) whose
 #' content may include names with accents.
@@ -336,21 +336,21 @@ ascii_fallback <- function(x, force = FALSE) {
 #' @param path The destination file, a single non-empty string. Its
 #'   directory must exist.
 #' @return Invisibly, `path`.
-#' @seealso [to_ascii()] for the retry's transliteration.
+#' @seealso [toascii()] for the retry's transliteration.
 #' @examples
-#' p <- write_text_fallback(c("line one", "line two"),
+#' p <- wrtxtfb(c("line one", "line two"),
 #'                          tempfile(fileext = ".txt"))
 #' readLines(p)
 #'
 #' # Accented names are written as UTF-8 bytes, whatever the locale.
-#' q <- write_text_fallback("Author: \u00c1ngela Zorro Medina", tempfile())
+#' q <- wrtxtfb("Author: \u00c1ngela Zorro Medina", tempfile())
 #' readLines(q, encoding = "UTF-8")
 #' readBin(q, "raw", 20)
 #'
 #' # The path must be one string.
-#' try(write_text_fallback("x", c("a.txt", "b.txt")))
+#' try(wrtxtfb("x", c("a.txt", "b.txt")))
 #' @export
-write_text_fallback <- function(text, path) {
+wrtxtfb <- function(text, path) {
   .rmbl_no_fn(text = text)
   path <- .rmbl_string1(path, "path")
   ok <- tryCatch({
@@ -362,7 +362,7 @@ write_text_fallback <- function(text, path) {
     writeBin(charToRaw(paste0(paste(enc2utf8(as.character(text)), collapse = "\n"), "\n")), con)
     TRUE
   }, error = function(e) FALSE)
-  if (!ok) writeLines(to_ascii(text), path) # nocov -- encoding-error retry
+  if (!ok) writeLines(toascii(text), path) # nocov -- encoding-error retry
   invisible(path)
 }
 
@@ -400,9 +400,9 @@ write_text_fallback <- function(text, path) {
 # file is sourced standalone in a capsule bundle.
 #' @noRd
 .rmbl_fetch_url <- function(url, dest,
-                            native = exists("bricklayer_fetch",
+                            native = exists("blfetch",
                                             mode = "function")) {
-  if (native) return(bricklayer_fetch(url, dest))
+  if (native) return(blfetch(url, dest))
   utils::download.file(url, dest, mode = "wb", quiet = TRUE)
   invisible(dest)
 }
@@ -448,7 +448,7 @@ write_text_fallback <- function(text, path) {
 # metadata address -- the SSRF targets.
 #' @noRd
 .rmbl_check_public_url <- function(url, what = "url", allow_file = FALSE,
-                                   allow_http = getOption("rmoriebricklayer.allow_http", FALSE),
+                                   allow_http = getOption("rmoriebricklayer.allowhttp", FALSE),
                                    resolve = FALSE, allow_loopback = FALSE) {
   url <- as.character(unlist(url))[1L]
   if (is.na(url) || !nzchar(url)) stop(sprintf("%s is empty", what), call. = FALSE)
@@ -464,12 +464,12 @@ write_text_fallback <- function(text, path) {
   # resolves, and pins the connection to the addresses it checked.
   # `allow_loopback` is the local-model relaxation (plain http on the loopback host), an
   # argument of this one call and never an option (fourth review)
-  why <- .Call(C_rmbl_url_check, url, isTRUE(allow_http), isTRUE(resolve), isTRUE(allow_loopback))
+  why <- .rmbl_url_why(url, allow_http, resolve, allow_loopback)
   if (!nzchar(why)) return(url)
   scheme <- tolower(sub("^([a-z][a-z0-9+.-]*)://.*$", "\\1", url, ignore.case = TRUE))
   if (startsWith(why, "plain http") || startsWith(why, "scheme ")) {
     stop(sprintf(paste0("%s must be an https:// URL, not %s:// ('%s'); ",
-                        "options(rmoriebricklayer.allow_http = TRUE) admits a ",
+                        "options(rmoriebricklayer.allowhttp = TRUE) admits a ",
                         "trusted plain-http mirror"), what, scheme, url),
          call. = FALSE)
   }
@@ -488,10 +488,42 @@ write_text_fallback <- function(text, path) {
   host <- as.character(host)[1L]
   if (is.na(host) || !nzchar(host)) return(TRUE)
   h <- if (grepl(":", host, fixed = TRUE) && !startsWith(host, "[")) paste0("[", host, "]") else host
-  nzchar(.Call(C_rmbl_url_check, paste0("https://", h, "/"), FALSE, FALSE, FALSE))
+  nzchar(.rmbl_url_why(paste0("https://", h, "/"), FALSE, FALSE, FALSE))
 }
 
-# In-process synthetic state: make_synthetic_csv() sets it, so a manifest
+# The reason a URL is refused ("" when it is accepted). In the package the C validator answers;
+# a lib_*.R file sourced on its own inside a capsule bundle has no compiled code, so a base-R
+# check stands in: https only, and no loopback, private, link-local, metadata, numeric or
+# single-label host (it does not resolve names; the package's fetch layer does).
+#' @noRd
+.rmbl_url_why <- function(url, allow_http = FALSE, resolve = FALSE, allow_loopback = FALSE) {
+  if (exists("C_rmbl_url_check", inherits = TRUE)) {
+    return(.Call(C_rmbl_url_check, url, isTRUE(allow_http), isTRUE(resolve), isTRUE(allow_loopback)))
+  }
+  scheme <- tolower(sub("^([a-z][a-z0-9+.-]*)://.*$", "\\1", url, ignore.case = TRUE))
+  if (!scheme %in% c("https", "http")) return(sprintf("scheme %s is not allowed", scheme))
+  auth <- sub("[/?#].*$", "", sub("^[a-z][a-z0-9+.-]*://", "", url, ignore.case = TRUE))
+  host <- tolower(sub(":[0-9]*$", "", sub("^.*@", "", auth)))
+  loop <- host %in% c("localhost", "127.0.0.1", "[::1]") || startsWith(host, "127.")
+  if (scheme == "http" && !isTRUE(allow_http) && !(isTRUE(allow_loopback) && loop)) {
+    return("plain http is not allowed")
+  }
+  if (loop && isTRUE(allow_loopback)) return("")
+  v4 <- suppressWarnings(as.integer(strsplit(host, ".", fixed = TRUE)[[1L]]))
+  is_v4 <- grepl("^[0-9]+(\\.[0-9]+){3}$", host)
+  private4 <- is_v4 && (v4[1L] %in% c(0L, 10L, 127L) || (v4[1L] == 169L && v4[2L] == 254L) ||
+    (v4[1L] == 172L && v4[2L] >= 16L && v4[2L] <= 31L) || (v4[1L] == 192L && v4[2L] == 168L) ||
+    (v4[1L] == 100L && v4[2L] >= 64L && v4[2L] <= 127L))
+  odd <- grepl("^(0x[0-9a-f]+|[0-9]+)$", host) || (grepl("^[0-9.x]+$", host) && !is_v4)
+  v6 <- startsWith(host, "[")
+  private6 <- v6 && grepl("^\\[(::1?|::ffff:.*|f[cd][0-9a-f]*:.*|fe[89ab][0-9a-f]*:.*)\\]$", host)
+  if (!nzchar(host) || private4 || odd || private6 || loop) return("a local or private address")
+  if (!v6 && !is_v4 && !grepl(".", host, fixed = TRUE)) return("a single-label host")
+  if (grepl("\\.(local|localhost|internal|lan|home|corp|intranet)$", host)) return("a local name")
+  ""
+}
+
+# In-process synthetic state: mksyncsv() sets it, so a manifest
 # built in the same session says synthetic whether or not the environment
 # variable was set.
 #' @noRd
@@ -512,7 +544,7 @@ write_text_fallback <- function(text, path) {
 }
 
 
-# Parse JSON TEXT and nothing else. bricklayer_json_from_json() also accepts a
+# Parse JSON TEXT and nothing else. fromjs() also accepts a
 # URL or a file path, which is right for a user's argument and wrong for bytes a
 # server just sent: a body (or a signature file) that happens to be a bare URL
 # would make the package fetch it, and one that names a local path would open
@@ -528,7 +560,7 @@ write_text_fallback <- function(text, path) {
   if (!shaped) stop("not JSON", call. = FALSE)
   # the parser itself refuses what is not JSON, with its own reasons (a repeated key, a
   # bad escape, 100 levels), under whatever options the caller passes
-  bricklayer_json_from_json(txt, ...)
+  fromjs(txt, ...)
 }
 
 # Fetched or file-supplied text made safe to print: marked as the UTF-8 it is (in a C locale the

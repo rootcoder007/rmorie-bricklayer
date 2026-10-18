@@ -11,7 +11,7 @@
 
 test_that("name constraints are read out of the certificate", {
   f <- x509_fx()
-  ca <- cert_parse(f$nc_ca)
+  ca <- certprs(f$nc_ca)
   nc <- ca$name_constraints
   expect_false(is.null(nc))
   types <- vapply(nc$permitted, `[[`, character(1), "type")
@@ -21,7 +21,7 @@ test_that("name constraints are read out of the certificate", {
     nc$permitted[[which(types == "dns")]]$value, "example.org"
   )
   # the leaf's own names, for the constraint to bite on
-  leaf <- cert_parse(f$nc_leaf_good)
+  leaf <- certprs(f$nc_leaf_good)
   san <- vapply(leaf$san, `[[`, character(1), "type")
   expect_setequal(san, c("dns", "email"))
 })
@@ -73,21 +73,21 @@ test_that("the matching rules differ by name type, as the RFC says", {
 
 test_that("a constrained CA cannot issue outside its name space", {
   f <- x509_fx()
-  ca <- cert_parse(f$nc_ca)
+  ca <- certprs(f$nc_ca)
   at <- ca$not_before + 86400
   # openssl verify accepts this one and rejects the rest
-  good <- cert_chain_verify(f$nc_leaf_good, trust = ca, at_time = at)
+  good <- certchnvrf(f$nc_leaf_good, trust = ca, attm = at)
   expect_true(good$ok)
   expect_true(all(good$checks$ok))
 
   for (nm in c("nc_leaf_outside", "nc_leaf_excluded", "nc_leaf_baddn")) {
-    r <- cert_chain_verify(f[[nm]], trust = ca, at_time = at)
+    r <- certchnvrf(f[[nm]], trust = ca, attm = at)
     expect_false(r$ok, info = nm)
     bad <- r$checks[!r$checks$ok, ]
     expect_true(any(grepl("name constraints", bad$check)), info = nm)
   }
   # the reason is reported, not just the verdict
-  out <- cert_chain_verify(f$nc_leaf_outside, trust = ca, at_time = at)
+  out <- certchnvrf(f$nc_leaf_outside, trust = ca, attm = at)
   expect_match(
     out$checks$detail[grepl(
       "name constraints",
@@ -95,7 +95,7 @@ test_that("a constrained CA cannot issue outside its name space", {
     )],
     "outside every permitted subtree"
   )
-  exc <- cert_chain_verify(f$nc_leaf_excluded, trust = ca, at_time = at)
+  exc <- certchnvrf(f$nc_leaf_excluded, trust = ca, attm = at)
   expect_match(
     exc$checks$detail[grepl(
       "name constraints",
@@ -107,26 +107,26 @@ test_that("a constrained CA cannot issue outside its name space", {
 
 test_that("certificate policies are processed and can be required", {
   f <- x509_fx()
-  ca <- cert_parse(f$pol_ca)
+  ca <- certprs(f$pol_ca)
   at <- ca$not_before + 86400
   want <- "1.2.3.4.100"
 
-  ok <- cert_chain_verify(f$pol_leaf_ok,
-    trust = ca, at_time = at,
-    policies = want
+  ok <- certchnvrf(f$pol_leaf_ok,
+    trust = ca, attm = at,
+    pols = want
   )
   expect_true(ok$ok)
   # anyPolicy asserts whatever is still valid, so it satisfies the ask
-  any_ok <- cert_chain_verify(f$pol_leaf_any,
-    trust = ca, at_time = at,
-    policies = want
+  any_ok <- certchnvrf(f$pol_leaf_any,
+    trust = ca, attm = at,
+    pols = want
   )
   expect_true(any_ok$ok)
   # a different policy does not, and neither does none at all
   for (nm in c("pol_leaf_other", "pol_leaf_none")) {
-    r <- cert_chain_verify(f[[nm]],
-      trust = ca, at_time = at,
-      policies = want
+    r <- certchnvrf(f[[nm]],
+      trust = ca, attm = at,
+      pols = want
     )
     expect_false(r$ok, info = nm)
     expect_false(r$checks$ok[r$checks$check == "certificate policies"],
@@ -134,13 +134,13 @@ test_that("certificate policies are processed and can be required", {
     )
   }
   # with nothing required, policies are not a reason to fail
-  expect_true(cert_chain_verify(f$pol_leaf_other,
+  expect_true(certchnvrf(f$pol_leaf_other,
     trust = ca,
-    at_time = at
+    attm = at
   )$ok)
-  expect_false(any(cert_chain_verify(f$pol_leaf_other,
+  expect_false(any(certchnvrf(f$pol_leaf_other,
     trust = ca,
-    at_time = at
+    attm = at
   )$checks$check ==
     "certificate policies"))
   # the surviving set is reported
@@ -221,8 +221,8 @@ test_that("the policy state machine honours its counters", {
 
 test_that("the OCSP request is the one OpenSSL builds", {
   f <- x509_fx()
-  leaf <- cert_parse(f$nc_aia)
-  ca <- cert_parse(f$nc_ca)
+  leaf <- certprs(f$nc_aia)
+  ca <- certprs(f$nc_ca)
   req <- .rmbl_ocsp_request(leaf, ca)
   # Byte equality with `openssl ocsp -reqout` checks the DER encoder,
   # the CertID structure, and the SHA-1 over the issuer's encoded name
@@ -243,10 +243,10 @@ test_that("the OCSP request is the one OpenSSL builds", {
 
 test_that("a revoked certificate is caught, and fetching is opt-in", {
   f <- x509_fx()
-  ca <- cert_parse(f$nc_ca)
+  ca <- certprs(f$nc_ca)
   at <- ca$not_before + 86400
-  r <- cert_chain_verify(f$nc_leaf_good,
-    trust = ca, at_time = at,
+  r <- certchnvrf(f$nc_leaf_good,
+    trust = ca, attm = at,
     crls = f$nc_crl
   )
   expect_false(r$ok)
@@ -255,20 +255,20 @@ test_that("a revoked certificate is caught, and fetching is opt-in", {
   expect_match(rev$detail[1], "is on a CRL")
 
   # revocation = "none" skips it even with a CRL in hand
-  skipped <- cert_chain_verify(f$nc_leaf_good,
-    trust = ca, at_time = at,
-    crls = f$nc_crl, revocation = "none"
+  skipped <- certchnvrf(f$nc_leaf_good,
+    trust = ca, attm = at,
+    crls = f$nc_crl, rvk = "none"
   )
   expect_true(skipped$ok)
   expect_false(any(grepl("revocation", skipped$checks$check)))
 
   # and the default never reaches the network: with no CRL supplied
   # there is no revocation row at all, rather than a silent pass
-  bare <- cert_chain_verify(f$nc_leaf_good, trust = ca, at_time = at)
+  bare <- certchnvrf(f$nc_leaf_good, trust = ca, attm = at)
   expect_false(any(grepl("revocation|crl fetch|ocsp", bare$checks$check)))
-  expect_error(cert_chain_verify(f$nc_leaf_good,
+  expect_error(certchnvrf(f$nc_leaf_good,
     trust = ca,
-    revocation = "sometimes"
+    rvk = "sometimes"
   ), "must be one of")
 })
 

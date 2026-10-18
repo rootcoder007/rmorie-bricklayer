@@ -44,38 +44,38 @@
 #' not 0. The plot method draws the concentration, the overlap and a map of
 #' the cells.
 #'
-#' Errors: \code{lon}, \code{lat} and \code{period} of different lengths;
+#' Errors: \code{lon}, \code{lat} and \code{prd} of different lengths;
 #' \code{cell} not one positive number; \code{top} not in (0, 1];
 #' coordinates outside the degree ranges with \code{coords = "lonlat"}; fewer
 #' than two usable incidents.
 #'
 #' @param lon,lat Incident coordinates: longitude and latitude
 #'   in degrees, or planar coordinates with \code{coords = "planar"}.
-#' @param period The period of each incident (a year, a month, a
+#' @param prd The period of each incident (a year, a month, a
 #'   date, a label such as \code{"Q1"}); periods are taken in sorted order.
 #' @param cell Side of a grid cell: kilometres for longitude and
 #'   latitude, map units otherwise; one positive number, default 0.25.
 #' @param top Share of the ever-active cells counted as hot in
 #'   each period, in (0, 1]; default 0.05 (the busiest 5%).
-#' @param coords \code{"lonlat"} (the default, degrees) or \code{"planar"}
+#' @param xy \code{"lonlat"} (the default, degrees) or \code{"planar"}
 #'   (projected coordinates, such as metres in a UTM zone).
 #' @return An object of class \code{rmbl_hotspot}, a list:
 #'   \describe{
 #'     \item{\code{periods}}{data frame, one row per period: \code{period}
-#'       (character), \code{incidents}, \code{active_cells}, \code{cells_for_half}
-#'       (fewest cells holding half the incidents), \code{share_for_half}
-#'       (that number over the ever-active cells), \code{hot_cells},
-#'       \code{tied_in} (the cells made hot only by a tie with the k-th busiest),
-#'       \code{tied_out} (the tied cells left out when the tie would have made
+#'       (character), \code{incidents}, \code{actcells}, \code{cellsforhalf}
+#'       (fewest cells holding half the incidents), \code{shrforhalf}
+#'       (that number over the ever-active cells), \code{hotcells},
+#'       \code{tiedin} (the cells made hot only by a tie with the k-th busiest),
+#'       \code{tiedout} (the tied cells left out when the tie would have made
 #'       more than twice \code{k} cells hot, which printing says),
-#'       \code{hot_share} (share of the incidents in hot cells) and
-#'       \code{jaccard_previous} (\code{NA} for the first period). Shares are
+#'       \code{hotshr} (share of the incidents in hot cells) and
+#'       \code{jacpre} (\code{NA} for the first period). Shares are
 #'       proportions in \eqn{[0, 1]}.}
 #'     \item{\code{cells}}{data frame, one row per ever-active cell: \code{x}, \code{y}
 #'       (its centre in the input's units), \code{incidents} and
-#'       \code{periods_hot}.}
+#'       \code{perhot}.}
 #'     \item{\code{cell}, \code{top}, \code{coords}}{the settings.}
-#'     \item{\code{n_cells}, \code{hot_k}}{the number of ever-active cells and
+#'     \item{\code{ncells}, \code{hotk}}{the number of ever-active cells and
 #'       \eqn{k}.}
 #'   }
 #' @examples
@@ -83,31 +83,31 @@
 #'                           package = "rmoriebricklayer"))
 #' b <- b[!is.na(b$lon), ]
 #' q <- quarters(as.Date(b$occ_date))
-#' h <- hotspot_persistence(b$lon, b$lat, q, cell = 0.3)
+#' h <- hotpers(b$lon, b$lat, q, cell = 0.3)
 #' h$periods
 #' plot(h)
 #'
 #' # the cells hot in every quarter
-#' subset(h$cells, periods_hot == 4)
+#' subset(h$cells, perhot == 4)
 #'
 #' # larger cells and a wider hot set
-#' h2 <- hotspot_persistence(b$lon, b$lat, q, cell = 0.5, top = 0.1)
-#' h2$periods[, c("period", "hot_cells", "hot_share", "jaccard_previous")]
+#' h2 <- hotpers(b$lon, b$lat, q, cell = 0.5, top = 0.1)
+#' h2$periods[, c("period", "hotcells", "hotshr", "jacpre")]
 #'
 #' # planar coordinates, here in kilometres
 #' set.seed(3)
-#' hotspot_persistence(stats::runif(200, 0, 10), stats::runif(200, 0, 10),
-#'                     rep(2023:2024, 100), cell = 2, top = 0.2, coords = "planar")
+#' hotpers(stats::runif(200, 0, 10), stats::runif(200, 0, 10),
+#'                     rep(2023:2024, 100), cell = 2, top = 0.2, xy = "planar")
 #'
 #' # a share of zero hot cells is refused
-#' try(hotspot_persistence(b$lon, b$lat, q, top = 0))
+#' try(hotpers(b$lon, b$lat, q, top = 0))
 #' @export
-hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coords = c("lonlat", "planar")) {
-  coords <- .rmbl_arg(coords)
+hotpers <- function(lon, lat, prd, cell = 0.25, top = 0.05, xy = c("lonlat", "planar")) {
+  xy <- .rmbl_arg(xy)
   lon <- .rmbl_num_input(lon, "lon", allow_null = FALSE)
   lat <- .rmbl_num_input(lat, "lat", allow_null = FALSE)
-  if (length(lon) != length(lat) || length(period) != length(lon)) {
-    stop("`lon`, `lat` and `period` must have the same length", call. = FALSE)
+  if (length(lon) != length(lat) || length(prd) != length(lon)) {
+    stop("`lon`, `lat` and `prd` must have the same length", call. = FALSE)
   }
   if (!is.numeric(cell) || length(cell) != 1L || !is.finite(cell) || cell <= 0) {
     stop("`cell` must be a positive number", call. = FALSE)
@@ -115,12 +115,12 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
   if (!is.numeric(top) || length(top) != 1L || !is.finite(top) || top <= 0 || top > 1) {
     stop("`top` must be a share in (0, 1]", call. = FALSE)
   }
-  keep <- is.finite(lon) & is.finite(lat) & !is.na(period)
+  keep <- is.finite(lon) & is.finite(lat) & !is.na(prd)
   if (!all(keep)) {
-    message(sprintf("hotspot_persistence(): %d incident%s without a usable location or period dropped", sum(!keep),
+    message(sprintf("hotpers(): %d incident%s without a usable location or period dropped", sum(!keep),
                     if (sum(!keep) == 1L) "" else "s"))
   }
-  if (coords == "lonlat") {
+  if (xy == "lonlat") {
     bad <- keep & (abs(lat) > 90 | abs(lon) > 180)
     if (any(bad)) {
       stop(sprintf("coordinate %d is not a longitude and latitude in degrees; planar data take coords = \"planar\"",
@@ -128,17 +128,17 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
     }
     nowhere <- keep & .jx_null_island(lon, lat)
     if (any(nowhere)) {
-      message(sprintf("hotspot_persistence(): %d incident%s at (0, 0), the raw exports' \"no location\", dropped",
+      message(sprintf("hotpers(): %d incident%s at (0, 0), the raw exports' \"no location\", dropped",
                       sum(nowhere), if (sum(nowhere) == 1L) "" else "s"))
     }
     keep <- keep & !nowhere
   }
   lon <- lon[keep]
   lat <- lat[keep]
-  period <- period[keep]
+  prd <- prd[keep]
   if (length(lon) < 2L) stop("need at least two located incidents with a period", call. = FALSE)
-  if (coords == "lonlat") {
-    p <- .jx_lonlat_plane(lon, lat, "hotspot_persistence")
+  if (xy == "lonlat") {
+    p <- .jx_lonlat_plane(lon, lat, "hotpers")
     lon0 <- p$lon0
     lat0 <- p$lat0
   } else {
@@ -153,7 +153,7 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
   ukey <- unique(key)
   cid <- match(key, ukey)
   nc <- length(ukey)
-  pf <- factor(period, levels = sort(unique(period)))
+  pf <- factor(prd, levels = sort(unique(prd)))
   np <- nlevels(pf)
   counts <- matrix(0L, nc, np)
   tab <- table(cid, as.integer(pf))
@@ -170,7 +170,7 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
     # the busiest k cells and every cell tied with the k-th, never a cell with no incident. When the
     # tie would make more than twice k cells hot, the counts do not single those cells out: the
     # tied group is left out (cell = 0.1 had made 100 of 100 cells "hot"; review of e57fed5 and
-    # 46de6a9), and tied_out says how many
+    # 46de6a9), and tiedout says how many
     above <- cnt > cut
     tied <- cnt == cut & cnt > 0
     tied_out <- 0L
@@ -189,15 +189,15 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
       u <- sum(h | hot[, j - 1L])
       if (u > 0) jac <- sum(h & hot[, j - 1L]) / u
     }
-    rows[[j]] <- data.frame(period = levels(pf)[j], incidents = tot, active_cells = sum(cnt > 0),
-                            cells_for_half = half, share_for_half = half / nc, hot_cells = sum(h),
-                            tied_in = max(0L, sum(h) - k), tied_out = tied_out,
-                            hot_share = if (tot > 0) sum(cnt[h]) / tot else NA_real_, jaccard_previous = jac,
+    rows[[j]] <- data.frame(period = levels(pf)[j], incidents = tot, actcells = sum(cnt > 0),
+                            cellsforhalf = half, shrforhalf = half / nc, hotcells = sum(h),
+                            tiedin = max(0L, sum(h) - k), tiedout = tied_out,
+                            hotshr = if (tot > 0) sum(cnt[h]) / tot else NA_real_, jacpre = jac,
                             stringsAsFactors = FALSE)
   }
   centre_x <- x0 + (as.numeric(sub(" .*", "", ukey)) + 0.5) * cell
   centre_y <- y0 + (as.numeric(sub(".* ", "", ukey)) + 0.5) * cell
-  if (coords == "lonlat") {
+  if (xy == "lonlat") {
     centre_lon <- lon0 + centre_x / (.jx_earth_km * pi / 180 * cos(lat0 * pi / 180))
     centre_lon <- ((centre_lon + 180) %% 360) - 180
     centre_lat <- lat0 + centre_y / (.jx_earth_km * pi / 180)
@@ -205,32 +205,32 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
     centre_lon <- centre_x
     centre_lat <- centre_y
   }
-  cells <- data.frame(x = centre_lon, y = centre_lat, incidents = rowSums(counts), periods_hot = rowSums(hot))
-  structure(list(periods = do.call(rbind, rows), cells = cells, cell = cell, top = top, coords = coords,
-                 n_cells = nc, hot_k = k),
+  cells <- data.frame(x = centre_lon, y = centre_lat, incidents = rowSums(counts), perhot = rowSums(hot))
+  structure(list(periods = do.call(rbind, rows), cells = cells, cell = cell, top = top, coords = xy,
+                 ncells = nc, hotk = k),
             class = "rmbl_hotspot")
 }
 
 #' @export
 print.rmbl_hotspot <- function(x, ...) {
-  cat(sprintf("Hot spots: %d active cells of side %g %s over %d periods; hot = busiest %d (%g%%)\n", x$n_cells,
-              x$cell, if (x$coords == "lonlat") "km" else "units", nrow(x$periods), x$hot_k, 100 * x$top))
+  cat(sprintf("Hot spots: %d active cells of side %g %s over %d periods; hot = busiest %d (%g%%)\n", x$ncells,
+              x$cell, if (x$coords == "lonlat") "km" else "units", nrow(x$periods), x$hotk, 100 * x$top))
   d <- x$periods
-  d$share_for_half <- sprintf("%.1f%%", 100 * d$share_for_half)
-  d$hot_share <- sprintf("%.1f%%", 100 * d$hot_share)
-  d$jaccard_previous <- ifelse(is.na(d$jaccard_previous), "", sprintf("%.2f", d$jaccard_previous))
+  d$shrforhalf <- sprintf("%.1f%%", 100 * d$shrforhalf)
+  d$hotshr <- sprintf("%.1f%%", 100 * d$hotshr)
+  d$jacpre <- ifelse(is.na(d$jacpre), "", sprintf("%.2f", d$jacpre))
   print(d, row.names = FALSE)
-  chronic <- sum(x$cells$periods_hot >= nrow(x$periods) / 2)
+  chronic <- sum(x$cells$perhot >= nrow(x$periods) / 2)
   cat(sprintf("Cells hot in at least half the periods: %d\n", chronic))
   # a tie with the k-th busiest cell that would have made more than twice k cells hot is left out:
   # the counts are too even (or the cells too small) to single out hot spots
-  tied <- !is.na(d$tied_out) & d$tied_out > 0
+  tied <- !is.na(d$tiedout) & d$tiedout > 0
   if (any(tied)) {
     # one "period p: n cells tied" per period: pasting the periods and the counts as two lists read
     # as one list ("in 1, 2, 100, 100 cells tied")
     cat(sprintf(paste("Note: cells tied with the busiest %d were left out of the hot set (%s); the counts",
                       "are too even (or the cells too small) to single out hot spots\n"),
-                x$hot_k, paste(sprintf("period %s: %d cells tied", d$period[tied], d$tied_out[tied]),
+                x$hotk, paste(sprintf("period %s: %d cells tied", d$period[tied], d$tiedout[tied]),
                                collapse = "; ")))
   }
   invisible(x)
@@ -247,32 +247,32 @@ plot.rmbl_hotspot <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   pal <- .bl_cols(2, col, palette)
   xs <- seq_len(nrow(d))
   graphics::par(mar = .bl_safe_mar(c(4.2, .bl_left_margin(c(0, 100)), 3, 1)))
-  top_y <- max(100 * d$share_for_half, 1, na.rm = TRUE) * 1.15
-  graphics::plot(xs, 100 * d$share_for_half, type = "n", ylim = c(0, top_y),
+  top_y <- max(100 * d$shrforhalf, 1, na.rm = TRUE) * 1.15
+  graphics::plot(xs, 100 * d$shrforhalf, type = "n", ylim = c(0, top_y),
                  xaxt = "n", xlab = "", ylab = "", main = "", ...)
   .bl_grid(NULL)
-  .bl_line(xs, 100 * d$share_for_half, pal[1L])
+  .bl_line(xs, 100 * d$shrforhalf, pal[1L])
   graphics::axis(1, at = xs, labels = d$period)
   .bl_title("Share of places holding half the incidents")
   .bl_ylab("Percent of active cells")
   graphics::par(mar = .bl_safe_mar(c(4.2, .bl_left_margin(c(0, 1)), 3, 1)))
-  graphics::plot(xs, d$jaccard_previous, type = "n", ylim = c(0, 1), xaxt = "n", xlab = "", ylab = "", main = "", ...)
+  graphics::plot(xs, d$jacpre, type = "n", ylim = c(0, 1), xaxt = "n", xlab = "", ylab = "", main = "", ...)
   .bl_grid(NULL)
-  .bl_line(xs[-1L], d$jaccard_previous[-1L], pal[2L])
+  .bl_line(xs[-1L], d$jacpre[-1L], pal[2L])
   graphics::axis(1, at = xs, labels = d$period)
   .bl_title("Hot spots kept from the period before")
   .bl_ylab("Jaccard overlap")
   cl <- x$cells
-  ramp <- grDevices::colorRampPalette(c("#FFF3D6", "#F6B26B", "#D6604D", "#7F1D1D"))(max(1L, max(cl$periods_hot)))
+  ramp <- grDevices::colorRampPalette(c("#FFF3D6", "#F6B26B", "#D6604D", "#7F1D1D"))(max(1L, max(cl$perhot)))
   graphics::par(mar = .bl_safe_mar(c(4.2, 4.5, 3, 1)))
   graphics::plot(cl$x, cl$y, type = "n", asp = if (x$coords == "lonlat") 1 / cos(mean(cl$y) * pi / 180) else 1,
                  xlab = if (x$coords == "lonlat") "Longitude" else "x", ylab = "", main = "", ...)
   .bl_grid(NULL)
-  cool <- cl$periods_hot == 0
+  cool <- cl$perhot == 0
   graphics::points(cl$x[cool], cl$y[cool], pch = 15, cex = 0.5, col = "#C9CFD8")
-  o <- order(cl$periods_hot)
+  o <- order(cl$perhot)
   o <- o[!cool[o]]
-  graphics::points(cl$x[o], cl$y[o], pch = 22, cex = 1.3, bg = ramp[cl$periods_hot[o]], col = "white", lwd = 0.6)
+  graphics::points(cl$x[o], cl$y[o], pch = 22, cex = 1.3, bg = ramp[cl$perhot[o]], col = "white", lwd = 0.6)
   .bl_title(.bl_main(main, "Where the hot spots were"))
   .bl_ylab(if (x$coords == "lonlat") "Latitude" else "y")
   graphics::mtext(sprintf("darker: hot in more of the %d periods", nrow(d)), side = 3, line = 0.15,

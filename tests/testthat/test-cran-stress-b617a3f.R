@@ -19,12 +19,12 @@ test_that("#1: identical genuine replicates passed by name are not each other's 
   colnames(B) <- paste0("rw", seq_len(ncol(B)))
   expect_true(any(duplicated(t(B))))
   d <- cbind(s$d, as.data.frame(B))
-  by_name <- survey_design(d, weights = "w", replicates = colnames(B), type = "jk1")
-  by_matrix <- survey_design(s$d, weights = "w", replicates = unname(B), type = "jk1")
-  expect_equal(survey_estimate(by_name, d, "y")$se, survey_estimate(by_matrix, s$d, "y")$se, tolerance = 1e-14)
+  by_name <- svydes(d, w = "w", reps = colnames(B), type = "jk1")
+  by_matrix <- svydes(s$d, w = "w", reps = unname(B), type = "jk1")
+  expect_equal(svyest(by_name, d, "y")$se, svyest(by_matrix, s$d, "y")$se, tolerance = 1e-14)
   # a column of data that is not among those passed is still refused when passed under another name
   d$copy <- d$rw1
-  expect_error(survey_design(d, weights = "w", replicates = cbind(B[, -1], zz = d$copy), type = "jk1"),
+  expect_error(svydes(d, w = "w", reps = cbind(B[, -1], zz = d$copy), type = "jk1"),
                "column (rw1|copy) of `data`")
 })
 
@@ -39,7 +39,7 @@ test_that("#2: a key anywhere in the line is never taken for a question", {
   # near misses of a verb, with the ? apart, a full-width space or a tab
   for (q in c("doctr ?", "doctr  !?", "　doctr?", "doctr\t?", "\"doctr?\"")) expect_false(bq(q), info = q)
   # real questions, function names in them included, and a CJK question with a full-width mark
-  for (q in c("how do I use bricklayer_json_base64url_dec?", "explain survey_design please",
+  for (q in c("how do I use jsb64udec?", "explain svydes please",
               "how do I estimate survey_design_replicates_weights?",
               "调查权重怎么用？")) {
     expect_true(bq(q), info = q)
@@ -55,23 +55,23 @@ test_that("#3: rows reordered and then a column dropped or one cell edited are r
   st <- data.frame(stype = rep(c("E", "M", "H"), each = 20), y = rnorm(60), a = rnorm(60), b = runif(60),
                    meals = sample(0:100, 60, TRUE))
   w <- rep(c(10, 20, 30), each = 20)
-  des <- survey_design(st, weights = w, strata = "stype")
+  des <- svydes(st, w = w, strata = "stype")
   o <- unlist(lapply(split(seq_len(60), st$stype), rev))
   x <- st[o, ]
   x1 <- x
   x1$meals <- NULL
   x2 <- x
   x2$a[[1L]] <- NA
-  for (z in list(x, x1, x2)) expect_error(survey_estimate(des, z, "y"), "not the data frame the design was built on")
+  for (z in list(x, x1, x2)) expect_error(svyest(des, z, "y"), "not the data frame the design was built on")
   # a permuted outcome (a permutation test) is not a reorder, nor is a row-name reset
   xp <- st
   xp$y <- sample(xp$y)
-  expect_s3_class(survey_estimate(des, xp, "y"), "data.frame")
+  expect_s3_class(svyest(des, xp, "y"), "data.frame")
   sub <- st[st$stype != "H", ]
-  ds <- survey_design(sub, weights = "b", strata = "stype")
+  ds <- svydes(sub, w = "b", strata = "stype")
   s2 <- sub
   rownames(s2) <- NULL
-  expect_equal(survey_estimate(ds, s2, "y")$se, survey_estimate(ds, sub, "y")$se)
+  expect_equal(svyest(ds, s2, "y")$se, svyest(ds, sub, "y")$se)
 })
 
 test_that("#7: JKn replicates of other strata equal the weight on a stratum subset, legitimately", {
@@ -88,13 +88,13 @@ test_that("#7: JKn replicates of other strata equal the weight on a stratum subs
   rs <- rep((nh - 1) / nh, 12)
   keep <- s == 1
   d <- data.frame(y = rnorm(24), w = w)[keep, ]
-  des <- survey_design(d, weights = "w", replicates = reps[keep, ], type = "jkn", rscales = rs)
-  expect_true(is.finite(survey_estimate(des, d, "y")$se))
+  des <- svydes(d, w = "w", reps = reps[keep, ], type = "jkn", rscales = rs)
+  expect_true(is.finite(svyest(des, d, "y")$se))
   # every replicate the weight: no variance to read, refused
-  expect_error(survey_design(d, weights = "w", replicates = matrix(d$w, nrow(d), 4), type = "jkn",
+  expect_error(svydes(d, w = "w", reps = matrix(d$w, nrow(d), 4), type = "jkn",
                              rscales = rep(0.75, 4)), "every replicate is the full-sample weight")
   # under JK1 and BRR the weight itself is still refused
-  expect_error(survey_design(d, weights = "w", replicates = cbind(reps[keep, 1:4], d$w), type = "jk1"),
+  expect_error(svydes(d, w = "w", reps = cbind(reps[keep, 1:4], d$w), type = "jk1"),
                "the full-sample weight")
 })
 
@@ -111,19 +111,19 @@ test_that("#8: a stratified bootstrap with replicates equal to the weight by cha
   })
   eq <- sum(apply(reps, 2, function(r) all(r == w)))
   expect_gt(eq, 3)
-  expect_silent(survey_design(data.frame(y = rnorm(80), w = w), "w", replicates = reps, type = "bootstrap"))
+  expect_silent(svydes(data.frame(y = rnorm(80), w = w), "w", reps = reps, type = "bootstrap"))
   # post-stratified or calibrated jackknife replicates on a subset leave no row out: kept in silence
   s <- jk1_subset()
   g <- 1 + 0.05 * sin(seq_len(nrow(s$reps)))
-  expect_silent(survey_design(s$d, "w", replicates = s$reps * g, type = "jk1"))
+  expect_silent(svydes(s$d, "w", reps = s$reps * g, type = "jk1"))
 })
 
 test_that("#9: a column a tenth of the weight's scale among the replicates is said", {
   s <- jk1_subset(keep = 1:6)
-  expect_warning(survey_design(s$d, "w", replicates = cbind(s$reps, s$d$w / mean(s$d$w)), type = "jk1"),
+  expect_warning(svydes(s$d, "w", reps = cbind(s$reps, s$d$w / mean(s$d$w)), type = "jk1"),
                  "times the full-sample weight on a typical row")
   # the replicates' set-level note comes first, before the per-replicate lines that would hide it
-  expect_warning(survey_design(s$d, "w", replicates = s$reps / s$d$w, type = "jk1"), "^the replicates total")
+  expect_warning(svydes(s$d, "w", reps = s$reps / s$d$w, type = "jk1"), "^the replicates total")
 })
 
 test_that("the survey Rd's recipe for survey's own bootstrap replicates gives survey's SE", {
@@ -134,29 +134,29 @@ test_that("the survey Rd's recipe for survey's own bootstrap replicates gives su
                                type = "bootstrap", replicates = 50, compress = FALSE)
   B <- 50
   m <- 3
-  ours <- survey_design(dd, "w", replicates = weights(bd, "analysis"), type = "bootstrap",
+  ours <- svydes(dd, "w", reps = weights(bd, "analysis"), type = "bootstrap",
                         rscales = rep(B * m / ((m - 1) * (B - 1)), B), mse = FALSE)
-  expect_equal(survey_estimate(ours, dd, "y")$se, as.numeric(survey::SE(survey::svymean(~y, bd))), tolerance = 1e-10)
+  expect_equal(svyest(ours, dd, "y")$se, as.numeric(survey::SE(survey::svymean(~y, bd))), tolerance = 1e-10)
 })
 
-test_that("#6: bricklayer_data_load()'s reader applies rmoriebricklayer.max_csv_bytes on both paths", {
+test_that("#6: dload()'s reader applies rmoriebricklayer.maxcsvbytes on both paths", {
   rd <- ns(".bl_read_csv_gz")
   g <- tempfile(fileext = ".csv.gz")
   con <- gzfile(g, "w")
   writeLines(c("a", rep("1", 2e5)), con)
   close(con)
-  withr::local_options(rmoriebricklayer.max_csv_bytes = 1e5)
+  withr::local_options(rmoriebricklayer.maxcsvbytes = 1e5)
   expect_error(rd(g), "decompresses to more than 100,000 bytes")
   expect_error(rd(g, in_memory = 1e4), "decompresses to more than 100,000 bytes")
-  withr::local_options(rmoriebricklayer.max_csv_bytes = 1e7)
+  withr::local_options(rmoriebricklayer.maxcsvbytes = 1e7)
   expect_identical(nrow(rd(g)), 200000L)
   expect_identical(nrow(rd(g, in_memory = 1e4)), 200000L)   # the streamed path, counted first
   # a plain file under a .gz name, past the limit
   f <- tempfile(fileext = ".csv.gz")
   writeLines(c("a", rep("1", 1000)), f)
-  withr::local_options(rmoriebricklayer.max_csv_bytes = 100)
+  withr::local_options(rmoriebricklayer.maxcsvbytes = 100)
   expect_error(rd(f), "decompresses to more than 100 bytes")
-  withr::local_options(rmoriebricklayer.max_csv_bytes = -1)
+  withr::local_options(rmoriebricklayer.maxcsvbytes = -1)
   expect_error(rd(f), "must be a single non-negative number")
 })
 
@@ -229,12 +229,12 @@ test_that("an SSE error event is said with its message, and the answer cache key
   expect_false(identical(key(rt, "m", "q"), key(utils::modifyList(rt, list(key = "k2")), "m", "q")))
 })
 
-test_that("hurwitz_zeta(s, 1/2) is (2^s - 1) zeta(s), exact beside the trivial zeros", {
+test_that("hurwzeta(s, 1/2) is (2^s - 1) zeta(s), exact beside the trivial zeros", {
   # mpmath, 50 digits: zeta(-32 + 1e-10, 1/2) = -0.377901212258735
-  expect_equal(hurwitz_zeta(-32 + 1e-10, 0.5), -0.377901212258735, tolerance = 1e-12)
-  expect_equal(hurwitz_zeta(-32.5, 0.5), 3883945550.81538, tolerance = 1e-12)
-  expect_equal(hurwitz_zeta(-0.5, 0.5), (2^-0.5 - 1) * hurwitz_zeta(-0.5, 1), tolerance = 1e-13)
-  expect_identical(hurwitz_zeta(0, 0.5), 0)
+  expect_equal(hurwzeta(-32 + 1e-10, 0.5), -0.377901212258735, tolerance = 1e-12)
+  expect_equal(hurwzeta(-32.5, 0.5), 3883945550.81538, tolerance = 1e-12)
+  expect_equal(hurwzeta(-0.5, 0.5), (2^-0.5 - 1) * hurwzeta(-0.5, 1), tolerance = 1e-13)
+  expect_identical(hurwzeta(0, 0.5), 0)
 })
 
 test_that("a point at -1e300 does not wipe out the Knox and hot-spot counts", {
@@ -242,20 +242,20 @@ test_that("a point at -1e300 does not wipe out the Knox and hot-spot counts", {
   x <- runif(40)
   y <- runif(40)
   tt <- sample(1:30, 40, TRUE)
-  base <- knox_test(x, y, tt, space_bands = 0.2, time_bands = 5, nsim = 19, seed = 1, coords = "planar")
-  out <- knox_test(c(x, -1e300), c(y, 0.5), c(tt, 1), space_bands = 0.2, time_bands = 5, nsim = 19, seed = 1,
-                   coords = "planar")
+  base <- knoxtst(x, y, tt, spcbands = 0.2, tmbands = 5, nsim = 19, seed = 1, xy = "planar")
+  out <- knoxtst(c(x, -1e300), c(y, 0.5), c(tt, 1), spcbands = 0.2, tmbands = 5, nsim = 19, seed = 1,
+                   xy = "planar")
   expect_identical(out$table$observed, base$table$observed)
   per <- rep(1:2, 20)
-  h0 <- hotspot_persistence(x, y, per, cell = 0.25, coords = "planar")
-  h1 <- hotspot_persistence(c(x, -1e300), c(y, 0.5), c(per, 1L), cell = 0.25, coords = "planar")
+  h0 <- hotpers(x, y, per, cell = 0.25, xy = "planar")
+  h1 <- hotpers(c(x, -1e300), c(y, 0.5), c(per, 1L), cell = 0.25, xy = "planar")
   expect_identical(nrow(h1$cells), nrow(h0$cells) + 1L)
 })
 
 test_that("hostile seeds, normals and plot arguments are refused in words", {
   for (sv in list(NA, Inf, "a", c(1, 2), 1.5, 2^53, -2^31)) {
     expect_error(ns(".rmbl_with_seed")(sv, 1), "`seed` must be a single whole number", info = deparse(sv))
-    expect_error(make_synthetic_csv(list(a = "integer"), tempfile(fileext = ".csv"), n_rows = 3, seed = sv),
+    expect_error(mksyncsv(list(a = "integer"), tempfile(fileext = ".csv"), nrows = 3, seed = sv),
                  "`seed` must be a single whole number", info = deparse(sv))
   }
   expect_identical(ns(".rmbl_with_seed")(-3, 7), 7)
@@ -280,7 +280,7 @@ test_that("hostile seeds, normals and plot arguments are refused in words", {
   expect_error(draw(2^40), "needs R's default generator")
   RNGkind(old[[1L]])
   lp <- function(...) {
-    lagrangian_particles(n = 3, x0 = 0, y0 = 0, u = 1, v = 0, kx = 1, ky = 1, dt = 1, n_steps = 2, ...)
+    lagrprt(n = 3, x0 = 0, y0 = 0, u = 1, v = 0, kx = 1, ky = 1, dt = 1, nsteps = 2, ...)
   }
   expect_error(lp(normals = "rnorm"), "`normals` must be a function")
   expect_error(lp(normals = function(n, seed, stream) 1), "`normals` must return 3 finite numbers")
@@ -307,7 +307,7 @@ test_that("the SIU name patterns take a long run of letters in linear time", {
 test_that("an argument error inside an entry point is said as before, after its buffers are freed", {
   expect_error(.Call(asNamespace("rmoriebricklayer")$C_rmbl_http_get, "https://example.org/", 5L,
                      "X-A: 1\r\nX-B: 2", FALSE), "^a request header has a line break")
-  expect_error(gini(c(1, -1)), "non-negative")
+  expect_error(ginicoef(c(1, -1)), "non-negative")
 })
 
 test_that("#5: an interrupt in the fetch pipeline's Wayback lookup or snapshot GET is raised (local servers)", {
@@ -334,7 +334,7 @@ test_that("#5: an interrupt in the fetch pipeline's Wayback lookup or snapshot G
   stopped(.Call(ns_$C_rmbl_fetch_fallback, closed, "", tempfile(), 20L, silent))
   # a given snapshot that hangs
   stopped(.Call(ns_$C_rmbl_fetch_fallback, closed, paste0(silent, "/snap"), tempfile(), 20L, silent))
-  # the lookup alone, as wayback_snapshot_url_native() calls it
+  # the lookup alone, as wbsnpnat() calls it
   stopped(.Call(ns_$C_rmbl_wayback, "https://example.org/", 20L, silent))
 })
 
@@ -344,14 +344,14 @@ test_that("the remaining changed lines: an origin past every point, a row check,
   # a column dropped with the rows in order is the same data
   set.seed(2)
   d <- data.frame(y = rnorm(20), a = rnorm(20), b = rnorm(20))
-  des <- survey_design(d, weights = rep(2, 20))
+  des <- svydes(d, w = rep(2, 20))
   d2 <- d
   d2$b <- NULL
-  expect_equal(survey_estimate(des, d2, "y")$se, survey_estimate(des, d, "y")$se)
+  expect_equal(svyest(des, d2, "y")$se, svyest(des, d, "y")$se)
   # the native uniforms' own checks, said as before
   expect_error(.Call(asNamespace("rmoriebricklayer")$C_rmbl_uniforms, -1, 1), "`n` must be a whole number >= 0")
   # a large result goes through the allocation that unwinds (and one too large for memory says so)
-  expect_length(core_uniforms(70000, 1), 70000L)
+  expect_length(cunif(70000, 1), 70000L)
   expect_error(.Call(asNamespace("rmoriebricklayer")$C_rmbl_uniforms, 4e15, 1), "out of memory")
 })
 
@@ -398,19 +398,19 @@ test_that("the Wayback lookup: no snapshot after two failed tries, and a snapsho
 test_that("#3: a reorder with a column dropped is refused when the named columns cannot show it", {
   set.seed(9)
   d <- data.frame(y = rnorm(20), a = rnorm(20), b = rnorm(20))
-  des <- survey_design(d, weights = runif(20, 1, 2))
+  des <- svydes(d, w = runif(20, 1, 2))
   x <- d[c(2:20, 1L), ]
   x$b <- NULL
-  expect_error(survey_estimate(des, x, "y"), "not the data frame the design was built on")
+  expect_error(svyest(des, x, "y"), "not the data frame the design was built on")
 })
 
-test_that("bricklayer_fetch() and wayback_snapshot_url_native() reach the C API's own entries", {
+test_that("blfetch() and wbsnpnat() reach the C API's own entries", {
   skip_on_cran()
   # names that never resolve (RFC 6761), and a snapshot given so archive.org is not asked: an error
-  expect_error(bricklayer_fetch("https://invalid.invalid/a", tempfile(), wayback = "https://invalid.invalid/b",
-                                timeout = 3))
+  expect_error(blfetch("https://invalid.invalid/a", tempfile(), wb = "https://invalid.invalid/b",
+                                tmout = 3))
   # one short lookup at archive.org: a snapshot address or NULL, offline too
   skip_if_not(identical(Sys.getenv("RMBL_LIVE_TESTS"), "1"), "asks archive.org: RMBL_LIVE_TESTS=1")
-  snap <- wayback_snapshot_url_native("https://example.org/", timeout = 1)
+  snap <- wbsnpnat("https://example.org/", tmout = 1)
   expect_true(is.null(snap) || (is.character(snap) && length(snap) == 1L))
 })

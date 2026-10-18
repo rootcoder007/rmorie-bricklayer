@@ -7,7 +7,7 @@
 #' Fetch a file from its source or a mirror, verified by its SHA-256
 #'
 #' Downloads \code{url} to \code{dest}, trying the source first (with its Wayback
-#' Machine snapshot as the source's own fallback, as \code{\link{bricklayer_fetch}}
+#' Machine snapshot as the source's own fallback, as \code{\link{blfetch}}
 #' does) and then each mirror in turn, and keeps the first copy whose SHA-256 is
 #' \code{sha256}. A copy with another digest is never used: a changed or truncated
 #' file is a different file.
@@ -29,24 +29,24 @@
 #' @param sha256 The expected SHA-256, 64 hexadecimal characters, or \code{NULL}.
 #' @param mirrors Further URLs that serve the same file, tried in order after the
 #'   source.
-#' @param timeout Seconds allowed for each download (default 120).
+#' @param tmout Seconds allowed for each download (default 120).
 #' @return Invisibly, a list: \code{source} (\code{"live"}, \code{"wayback"} or
 #'   \code{"mirror"}), \code{url} (the URL that served the kept copy), \code{sha256},
 #'   \code{bytes}, and \code{tried} (a data frame of every attempt: \code{url},
 #'   \code{outcome}).
-#' @seealso \code{\link{bricklayer_fetch}}, \code{\link{sha256_file}},
-#'   \code{\link{wayback_save}}.
+#' @seealso \code{\link{blfetch}}, \code{\link{sha256file}},
+#'   \code{\link{wbsave}}.
 #' @examples
 #' \dontrun{
 #' # a Statistics Canada table the Wayback Machine cannot capture, with the archive.org copy
 #' # made from elsewhere as a mirror
 #' item <- "https://archive.org/download/rmorie-statcan-indigenous-tables-2026-10"
-#' fetch_verified("https://www150.statcan.gc.ca/n1/tbl/csv/41100063-eng.zip",
+#' fetchvrf("https://www150.statcan.gc.ca/n1/tbl/csv/41100063-eng.zip",
 #'                file.path(tempdir(), "41100063-eng.zip"),
 #'                mirrors = paste0(item, "/41100063-eng.zip"))
 #' }
 #' @export
-fetch_verified <- function(url, dest, sha256 = NULL, mirrors = character(), timeout = 120L) {
+fetchvrf <- function(url, dest, sha256 = NULL, mirrors = character(), tmout = 120L) {
   url <- .rmbl_string1(url, "url")
   dest <- .rmbl_string1(dest, "dest")
   if (!is.null(sha256)) {
@@ -65,13 +65,13 @@ fetch_verified <- function(url, dest, sha256 = NULL, mirrors = character(), time
     u <- cands[[i]]
     # the source falls back to its own Wayback snapshot; a mirror is only itself (its own URL as
     # the explicit fallback, so no snapshot lookup is made for it)
-    got <- tryCatch(bricklayer_fetch(u, tmp, wayback = if (i == 1L) "" else u, timeout = timeout),
+    got <- tryCatch(blfetch(u, tmp, wb = if (i == 1L) "" else u, tmout = tmout),
                     error = function(e) structure(conditionMessage(e), class = "rmbl_fail"))
     if (inherits(got, "rmbl_fail")) {
       note(u, paste("failed:", got))
       next
     }
-    h <- sha256_file(tmp)
+    h <- sha256file(tmp)
     if (!is.null(sha256) && !identical(h, sha256)) {
       note(u, sprintf("refused: SHA-256 %s is not the one pinned", h))
       next

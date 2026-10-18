@@ -1,6 +1,6 @@
 # Curated datasets at data.rmorie.com (the address comes from the signed
 # services document), opened by the MORIE key this package stores with
-# bricklayer_llm_login() (GitHub or an emailed code), or one asked for at www.rmorie.com/access/.
+# dlogin() (GitHub or an emailed code), or one asked for at www.rmorie.com/access/.
 # The same tables rmorie and morie pull;
 # a manifest lists every table with its rows, columns, SHA-256 and the
 # BigQuery public dataset it was built from.
@@ -21,7 +21,7 @@
   }
   svc <- .rmbl_services_data()
   if (!identical(svc$mode, "key") || !nzchar(svc$base_url %||% "")) {
-    notice <- bricklayer_services(offline = TRUE)$notice %||% ""
+    notice <- svcs(offline = TRUE)$notice %||% ""
     stop("the curated-data service is not available right now",
          if (nzchar(notice)) paste0(": ", notice) else "",
          sprintf(" (see %s)", svc$request_access %||% "https://www.rmorie.com/access/"), call. = FALSE)
@@ -48,7 +48,7 @@
 }
 
 .bl_data_cache_dir <- function() {
-  d <- getOption("rmoriebricklayer.data_cache", NULL)
+  d <- getOption("rmoriebricklayer.dcache", NULL)
   if (is.null(d) || !nzchar(d)) {
     d <- file.path(tempdir(), "rmoriebricklayer-data")
   }
@@ -66,7 +66,7 @@
                          "document)"), env), call. = FALSE)
     }
     stop("the curated tables need your MORIE key: run ",
-         sprintf("bricklayer_llm_login() (or `%s login`) once; %s.", .bl_prog(), .bl_access_hint()),
+         sprintf("dlogin() (or `%s login`) once; %s.", .bl_prog(), .bl_access_hint()),
          call. = FALSE)
   }
   old <- options(timeout = max(getOption("timeout", 60), timeout))
@@ -77,7 +77,7 @@
   size <- NULL
   if (grepl("\\.csv\\.gz$", path)) {
     label <- sub("\\.csv\\.gz$", "", label)
-    m <- tryCatch(bricklayer_data_manifest(), error = function(e) NULL)
+    m <- tryCatch(dmnf(), error = function(e) NULL)
     for (d in m$datasets %||% list()) {
       if (identical(d$key, label)) {
         size <- d$bytes_gz
@@ -86,8 +86,8 @@
     }
   }
   rc <- tryCatch(
-    bricklayer_download(paste0(.bl_data_url(), path), dest, headers = hdr,
-                        label = label, size = size, timeout = timeout, max_bytes = max_bytes),
+    bldl(paste0(.bl_data_url(), path), dest, headers = hdr,
+                        label = label, size = size, tmout = timeout, maxbytes = max_bytes),
     error = function(e) e, warning = function(w) w
   )
   if (inherits(rc, "condition")) {
@@ -99,7 +99,7 @@
     }
     if (grepl("401|403|Unauthorized|Forbidden", msg)) {
       stop("the curated-data service rejected the stored key; ",
-           sprintf("run bricklayer_llm_login() again (or `%s login --token` and paste the key).", .bl_prog()),
+           sprintf("run dlogin() again (or `%s login --token` and paste the key).", .bl_prog()),
            call. = FALSE)
     }
     stop("data.rmorie.com: ", msg, call. = FALSE)
@@ -114,16 +114,16 @@
 #' NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 #' tables from the edge, under the data access terms at
 #' \url{https://www.rmorie.com/data-license/}. They open with the key
-#' \code{\link{bricklayer_llm_login}} stores, the same key rmorie and morie
+#' \code{\link{dlogin}} stores, the same key rmorie and morie
 #' use; keys are personal: sign in with GitHub or an emailed code, or ask at
 #' \url{https://www.rmorie.com/access/}. The service address comes from
-#' \code{\link{bricklayer_services}}.
-#' \code{bricklayer_data_manifest()} returns the gateway's manifest
+#' \code{\link{svcs}}.
+#' \code{dmnf()} returns the gateway's manifest
 #' (every table with rows, columns, size, SHA-256 and its BigQuery source),
-#' kept for a day; \code{bricklayer_data_tables()} the same as a data frame;
-#' \code{bricklayer_data_load("db/table")} one table as a data frame, cached
+#' kept for a day; \code{dtabs()} the same as a data frame;
+#' \code{dload("db/table")} one table as a data frame, cached
 #' under \code{tempdir()} (or the directory in
-#' \code{options(rmoriebricklayer.data_cache = )}) so later calls are
+#' \code{options(rmoriebricklayer.dcache = )}) so later calls are
 #' local.
 #' From the shell: \code{rmoriebricklayer data list} and
 #' \code{rmoriebricklayer data pull db/table [--out FILE.csv]}.
@@ -135,7 +135,7 @@
 #' each carrying a \code{key}), or one that lists no tables while the cached
 #' copy lists some, is refused and the cached copy kept.
 #'
-#' \code{bricklayer_data_load()} downloads \code{db/table.csv.gz} once into the
+#' \code{dload()} downloads \code{db/table.csv.gz} once into the
 #' cache folder (as \code{db__table.csv.gz}) and checks its SHA-256 against the
 #' manifest before every use, cached or not: a file that does not match is
 #' deleted and refused (after one refresh of the manifest, since a table
@@ -151,7 +151,7 @@
 #' quoted run). Tables that inflate
 #' past 512 MiB are read by \code{read.csv()} itself, a piece at a time. A
 #' table that decompresses to more than the option
-#' \code{rmoriebricklayer.max_csv_bytes} (1 GiB by default) is refused.
+#' \code{rmoriebricklayer.maxcsvbytes} (1 GiB by default) is refused.
 #'
 #' The key is sent only to the address of the signed services document. With
 #' \code{MORIE_DATA_URL} set to another address the key is not sent and the
@@ -167,65 +167,65 @@
 #' accepted.
 #'
 #' @param refresh Logical scalar, default \code{FALSE}: fetch again even when a
-#'   day-old copy (of the manifest, or for \code{bricklayer_data_load()} of the
+#'   day-old copy (of the manifest, or for \code{dload()} of the
 #'   table) is cached.
 #' @param key Character scalar, a \code{db/table} key from the manifest (the
-#'   \code{key} column of \code{bricklayer_data_tables()}).
-#' @return \code{bricklayer_data_manifest()}: the manifest as a list (element
+#'   \code{key} column of \code{dtabs()}).
+#' @return \code{dmnf()}: the manifest as a list (element
 #'   \code{datasets}, one list per table with at least \code{key}, and as the
 #'   service provides them \code{rows}, \code{columns}, sizes, the SHA-256 of
 #'   the compressed file and the BigQuery \code{source});
-#'   \code{bricklayer_data_tables()}: a data frame with \code{key},
+#'   \code{dtabs()}: a data frame with \code{key},
 #'   \code{name} (the description, else the source, else the key), integer
 #'   \code{rows} and \code{source} (class
-#'   \code{bricklayer_data_tables}, which prints one left-aligned line per
+#'   \code{dtabs}, which prints one left-aligned line per
 #'   table, cut to the console width);
-#'   \code{bricklayer_data_load()}: the table as a data frame.
-#' @seealso \code{\link{bricklayer_llm_login}}, \code{\link{bricklayer_services}}.
+#'   \code{dload()}: the table as a data frame.
+#' @seealso \code{\link{dlogin}}, \code{\link{svcs}}.
 #' @examples
 #' # Offline, against a cache folder holding a manifest and one table made
 #' # here (no key is stored and nothing is fetched).
-#' old_env <- Sys.getenv(c("XDG_CONFIG_HOME", "MORIE_HOSTED_KEY"), unset = NA)
+#' oldenv <- Sys.getenv(c("XDG_CONFIG_HOME", "MORIE_HOSTED_KEY"), unset = NA)
 #' Sys.setenv(XDG_CONFIG_HOME = tempfile())
 #' Sys.unsetenv("MORIE_HOSTED_KEY")
 #' cache <- file.path(tempdir(), "data-hub-example")
 #' dir.create(cache)
-#' old <- options(rmoriebricklayer.data_cache = cache)
+#' old <- options(rmoriebricklayer.dcache = cache)
 #' f <- file.path(cache, "demo__counts.csv.gz")
 #' con <- gzfile(f, "w")
 #' write.csv(data.frame(region = c("a", "b"), n = c(3L, 5L)), con, row.names = FALSE)
 #' close(con)
 #' m <- list(datasets = list(list(key = "demo/counts", rows = 2, source = "an example",
 #'                                meta = list(description = "Counts by region"),
-#'                                sha256_gz = core_sha256(readBin(f, "raw", file.size(f))))))
-#' writeLines(bricklayer_json_to_json(m, auto_unbox = TRUE),
+#'                                sha256_gz = csha256(readBin(f, "raw", file.size(f))))))
+#' writeLines(tojs(m, auto_unbox = TRUE),
 #'            file.path(cache, "manifest.json"))
 #'
-#' bricklayer_data_tables()
-#' bricklayer_data_load("demo/counts")
+#' dtabs()
+#' dload("demo/counts")
 #'
 #' # keys are checked against the manifest
-#' try(bricklayer_data_load("counts"))
-#' try(bricklayer_data_load("demo/other"))
+#' try(dload("counts"))
+#' try(dload("demo/other"))
 #'
 #' # a cached file that no longer matches its digest is deleted and refused
 #' writeBin(as.raw(1:10), f)
-#' try(bricklayer_data_load("demo/counts"))
+#' try(dload("demo/counts"))
 #' file.exists(f)
 #'
 #' options(old)
 #' unlink(cache, recursive = TRUE)
-#' for (v in names(old_env)) {
-#'   if (is.na(old_env[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old_env[v]))
+#' for (v in names(oldenv)) {
+#'   if (is.na(oldenv[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(oldenv[v]))
 #' }
 #' \dontrun{
 #' # the real service: needs a key and the network
-#' bricklayer_llm_login(token = "sk-...")  # a key issued at www.rmorie.com/access/
-#' head(bricklayer_data_tables())
-#' df <- bricklayer_data_load("chicago_crime/incidents")
+#' dlogin(token = "sk-...")  # a key issued at www.rmorie.com/access/
+#' head(dtabs())
+#' df <- dload("chicago_crime/incidents")
 #' }
 #' @export
-bricklayer_data_manifest <- function(refresh = FALSE) {
+dmnf <- function(refresh = FALSE) {
   .bl_check_flag(refresh, "refresh")
   p <- file.path(.bl_data_cache_dir(), "manifest.json")
   age <- if (file.exists(p)) {
@@ -283,10 +283,10 @@ bricklayer_data_manifest <- function(refresh = FALSE) {
   ""
 }
 
-#' @rdname bricklayer_data_manifest
+#' @rdname dmnf
 #' @export
-bricklayer_data_tables <- function(refresh = FALSE) {
-  ds <- bricklayer_data_manifest(refresh = refresh)$datasets
+dtabs <- function(refresh = FALSE) {
+  ds <- dmnf(refresh = refresh)$datasets
   if (!length(ds)) {
     return(.bl_data_tables_df(character(), character(), integer(), character()))
   }
@@ -320,11 +320,11 @@ bricklayer_data_tables <- function(refresh = FALSE) {
   NULL
 }
 
-# The digest from the manifest as bricklayer_data_manifest() returns it (re-fetched when the
+# The digest from the manifest as dmnf() returns it (re-fetched when the
 # cached copy is over a day old). A manifest that cannot be had is an error here, never "no
 # digest" (review of 52a8883, B1).
 .bl_data_manifest_sha <- function(key, refresh = FALSE) {
-  .bl_manifest_digest(bricklayer_data_manifest(refresh = refresh)$datasets, key)
+  .bl_manifest_digest(dmnf(refresh = refresh)$datasets, key)
 }
 
 # The digest from the manifest copy on disk, however old: NA when there is no usable copy or it
@@ -374,7 +374,7 @@ bricklayer_data_tables <- function(refresh = FALSE) {
   # no digest: loaded only when the manifest lists the table (without a digest, as some tables are);
   # a manifest that does not list it at all says nothing about the file, which is refused
   if (is.null(want)) {
-    listed <- tryCatch(any(vapply(bricklayer_data_manifest()$datasets,
+    listed <- tryCatch(any(vapply(dmnf()$datasets,
                                   function(d) is.list(d) && identical(d$key, key), NA)),
                        error = function(e) !identical(.bl_data_cached_digest(key), NA))
     if (!isTRUE(listed)) {
@@ -383,7 +383,7 @@ bricklayer_data_tables <- function(refresh = FALSE) {
     }
     return(invisible(TRUE))
   }
-  have <- tolower(core_sha256(readBin(dest, "raw", file.size(dest))))
+  have <- tolower(csha256(readBin(dest, "raw", file.size(dest))))
   if (!identical(have, want)) {
     # a table rebuilt upstream has a new digest in a new manifest: fetch the manifest again
     # before calling the file bad, so a stale cached manifest does not refuse every call
@@ -409,7 +409,7 @@ bricklayer_data_tables <- function(refresh = FALSE) {
 # the width (print.data.frame right-aligned the names and, once a line was wider than the
 # console, put each column in a block of its own). Shared by print() and `rmbl data list`.
 .bl_format_data_tables <- function(tables, width = NULL,
-                                   hint = "bricklayer_data_load(\"KEY\") loads one") {
+                                   hint = "dload(\"KEY\") loads one") {
   if (!nrow(tables)) {
     return("no curated tables are listed at data.rmorie.com right now\n")
   }
@@ -447,17 +447,17 @@ print.bricklayer_data_tables <- function(x, ...) {
   invisible(x)
 }
 
-#' @rdname bricklayer_data_manifest
+#' @rdname dmnf
 #' @export
-bricklayer_data_load <- function(key, refresh = FALSE) {
+dload <- function(key, refresh = FALSE) {
   ok <- is.character(key) && length(key) == 1L &&
     grepl("/", key, fixed = TRUE) &&
     !startsWith(key, "/") && !endsWith(key, "/")
   if (!ok) {
-    stop("key must be db/table (see bricklayer_data_tables())", call. = FALSE)
+    stop("key must be db/table (see dtabs())", call. = FALSE)
   }
   .bl_check_flag(refresh, "refresh")
-  known <- tryCatch(vapply(bricklayer_data_manifest()$datasets, function(d) d$key, ""), error = function(e) NULL)
+  known <- tryCatch(vapply(dmnf()$datasets, function(d) d$key, ""), error = function(e) NULL)
   # an empty list is an answer too: no table is listed, so none is loaded
   if (!is.null(known) && !key %in% known) {
     stop(sprintf("no table %s at data.rmorie.com (`%s data list` shows them)", key, .bl_prog()), call. = FALSE)
@@ -484,13 +484,13 @@ bricklayer_data_load <- function(key, refresh = FALSE) {
 # as read.csv(gzfile()) reads it, a piece at a time: a 2.6 MB file that inflated to 2.5 GiB of blank
 # lines got the process killed for memory (network stress test of 5e1dce5). A file that is not gzip
 # data at all, though its name ends in .gz, is read as the plain CSV it is, as gzfile() did.
-# Either way the table may decompress to at most the option rmoriebricklayer.max_csv_bytes (1 GiB by
+# Either way the table may decompress to at most the option rmoriebricklayer.maxcsvbytes (1 GiB by
 # default), as the pollution readers' tables may: it was not applied here, and a 612 KB gzip asked
 # for 2 GB (CRAN stress test of b617a3f, #6).
 .bl_read_csv_gz <- function(path, in_memory = 512 * 2^20) {
   lim <- .rmbl_max_csv_bytes()
   too_big <- function() {
-    stop(sprintf(paste("%s decompresses to more than %s bytes (option rmoriebricklayer.max_csv_bytes);",
+    stop(sprintf(paste("%s decompresses to more than %s bytes (option rmoriebricklayer.maxcsvbytes);",
                        "raise the option to read it"),
                  basename(path), format(lim, big.mark = ",", scientific = FALSE)), call. = FALSE)
   }

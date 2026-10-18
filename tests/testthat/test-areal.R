@@ -17,7 +17,7 @@ test_that("indirect standardisation conserves the total", {
   # population must reproduce the overall total. If it does not, the
   # expected counts are not a standardisation of anything.
   for (st in list(NULL, d$age)) {
-    e <- expected_counts(d$n, d$pop, d$region, strata = st)
+    e <- expcnts(d$n, d$pop, d$region, strata = st)
     expect_equal(sum(e$expected), sum(d$n))
     expect_equal(sum(e$observed), sum(d$n))
     expect_equal(sum(e$population), sum(d$pop))
@@ -26,13 +26,13 @@ test_that("indirect standardisation conserves the total", {
 
   # without strata the expected count is the area's population times the
   # overall rate, which adjusts for SIZE only
-  size <- expected_counts(d$n, d$pop, d$region)
+  size <- expcnts(d$n, d$pop, d$region)
   overall <- sum(d$n) / sum(d$pop)
   expect_equal(size$expected, size$population * overall)
 
   # with strata it adjusts for COMPOSITION too, and the two differ
   # whenever an area's mix differs from the whole
-  comp <- expected_counts(d$n, d$pop, d$region, strata = d$age)
+  comp <- expcnts(d$n, d$pop, d$region, strata = d$age)
   expect_false(isTRUE(all.equal(size$expected, comp$expected)))
   # recomputed by hand for North, whose rows are the first two
   r_young <- sum(d$n[d$age == "18 to 24"]) / sum(d$pop[d$age == "18 to 24"])
@@ -41,21 +41,21 @@ test_that("indirect standardisation conserves the total", {
                1000 * r_young + 6000 * r_old)
 
   # a single stratum is the same as none
-  expect_equal(expected_counts(d$n, d$pop, d$region,
+  expect_equal(expcnts(d$n, d$pop, d$region,
                                strata = rep("x", 6))$expected,
                size$expected)
   # one area per row still works
-  solo <- expected_counts(c(5, 10), c(100, 400), c("a", "b"))
+  solo <- expcnts(c(5, 10), c(100, 400), c("a", "b"))
   expect_equal(sum(solo$expected), 15)
   expect_equal(solo$expected, c(100, 400) * (15 / 500))
 
-  expect_error(expected_counts(1:3, 1:2, c("a", "b", "c")),
+  expect_error(expcnts(1:3, 1:2, c("a", "b", "c")),
                "same length")
-  expect_error(expected_counts(c(-1, 2), c(1, 2), c("a", "b")),
+  expect_error(expcnts(c(-1, 2), c(1, 2), c("a", "b")),
                "non-negative")
-  expect_error(expected_counts(c(1, 2), c(0, 2), c("a", "b")),
+  expect_error(expcnts(c(1, 2), c(0, 2), c("a", "b")),
                "must be positive")
-  expect_error(expected_counts(c(1, 2), c(1, 2), c("a", "b"),
+  expect_error(expcnts(c(1, 2), c(1, 2), c("a", "b"),
                                strata = "x"), "same length")
 })
 
@@ -64,7 +64,7 @@ test_that("the SIR interval is exactly poisson.test's", {
                     c(1, 1), c(500, 400), c(2, 0.5))) {
     o <- pair[1L]
     e <- pair[2L]
-    got <- sir(o, e)
+    got <- stdinc(o, e)
     ref <- stats::poisson.test(o, e)$conf.int
     expect_equal(got$sir, o / e)
     expect_equal(got$lower, ref[1L], tolerance = 1e-9)
@@ -72,41 +72,41 @@ test_that("the SIR interval is exactly poisson.test's", {
   }
   # an observed count of zero has a lower limit of exactly zero, not a
   # negative one
-  expect_equal(sir(0, 5)$lower, 0)
-  expect_gt(sir(0, 5)$upper, 0)
+  expect_equal(stdinc(0, 5)$lower, 0)
+  expect_gt(stdinc(0, 5)$upper, 0)
   # the interval brackets the ratio
-  s <- sir(c(30, 12, 3), c(20, 14, 5))
+  s <- stdinc(c(30, 12, 3), c(20, 14, 5))
   expect_true(all(s$lower <= s$sir))
   expect_true(all(s$upper >= s$sir))
   # and narrows as the counts grow, which is the whole information story
-  wide <- sir(3, 3)
-  narrow <- sir(300, 300)
+  wide <- stdinc(3, 3)
+  narrow <- stdinc(300, 300)
   expect_gt(wide$upper - wide$lower, narrow$upper - narrow$lower)
   # a ratio of one is never an excess; an extreme one is
-  expect_false(sir(100, 100)$excess)
-  expect_true(sir(100, 50)$excess)
-  expect_false(sir(10, 50)$excess)
-  expect_true(sir(10, 50)$deficit)
-  expect_true(sir(10, 50)$significant)
+  expect_false(stdinc(100, 100)$excess)
+  expect_true(stdinc(100, 50)$excess)
+  expect_false(stdinc(10, 50)$excess)
+  expect_true(stdinc(10, 50)$deficit)
+  expect_true(stdinc(10, 50)$significant)
   # an observed count of three carries almost no information, so its
   # interval spans one
-  expect_false(sir(3, 5)$excess)
+  expect_false(stdinc(3, 5)$excess)
   # a stricter level widens it
-  expect_lt(sir(30, 20, conf_level = 0.99)$lower,
-            sir(30, 20, conf_level = 0.95)$lower)
+  expect_lt(stdinc(30, 20, conflvl = 0.99)$lower,
+            stdinc(30, 20, conflvl = 0.95)$lower)
   # labels and recycling
-  lab <- sir(c(1, 2), 10, area = c("a", "b"))
+  lab <- stdinc(c(1, 2), 10, area = c("a", "b"))
   expect_identical(lab$area, c("a", "b"))
   expect_equal(lab$expected, c(10, 10))
-  expect_error(sir(1:3, 1:2), "same length")
-  expect_error(sir(-1, 5), "non-negative")
-  expect_error(sir(5, 0), "must be positive")
+  expect_error(stdinc(1:3, 1:2), "same length")
+  expect_error(stdinc(-1, 5), "non-negative")
+  expect_error(stdinc(5, 0), "must be positive")
 })
 
 test_that("shrinkage pulls the small areas in and leaves the big alone", {
   o <- c(30, 45, 2)
   e <- c(25, 50, 0.5)
-  r <- eb_rates(o, e, c("North", "South", "Tiny"))
+  r <- ebrates(o, e, c("North", "South", "Tiny"))
   expect_equal(r$sir, o / e)
   # the tiny area's raw ratio of four is almost entirely noise, so it is
   # shrunk nearly to the overall rate
@@ -120,7 +120,7 @@ test_that("shrinkage pulls the small areas in and leaves the big alone", {
   # values for there to be any between-area variation to estimate --
   # with every count equal to its expectation the prior variance is
   # zero and everything collapses to the overall rate.
-  big <- eb_rates(c(12, 90, 1100), c(10, 100, 1000))
+  big <- ebrates(c(12, 90, 1100), c(10, 100, 1000))
   expect_true(all(diff(big$shrinkage) < 0))
   expect_equal(big$shrinkage, 1 - c(10, 100, 1000) /
                  (c(10, 100, 1000) + big$alpha))
@@ -140,7 +140,7 @@ test_that("shrinkage pulls the small areas in and leaves the big alone", {
   # WHEN THERE IS NO EVIDENCE of real variation between areas -- every
   # observed count equal to its expected one -- every estimate is the
   # overall rate and the shrinkage is total, reported rather than hidden
-  none <- eb_rates(c(10, 20, 30), c(10, 20, 30))
+  none <- ebrates(c(10, 20, 30), c(10, 20, 30))
   expect_equal(none$eb, rep(1, 3))
   expect_equal(none$shrinkage, rep(1, 3))
   expect_true(is.na(none$nu[1L]))
@@ -149,16 +149,16 @@ test_that("shrinkage pulls the small areas in and leaves the big alone", {
   set.seed(8)
   ee <- rep(500, 20)
   oo <- stats::rpois(20L, lambda = ee * rep(c(0.7, 1.3), 10))
-  loose <- eb_rates(oo, ee)
+  loose <- ebrates(oo, ee)
   expect_true(all(loose$shrinkage < 0.2))
 
-  expect_error(eb_rates(1:3, 1:2), "same length")
-  expect_error(eb_rates(c(1, 2), c(0, 2)), "must be positive")
-  expect_error(eb_rates(1, 1), "at least two")
+  expect_error(ebrates(1:3, 1:2), "same length")
+  expect_error(ebrates(c(1, 2), c(0, 2)), "must be positive")
+  expect_error(ebrates(1, 1), "at least two")
 })
 
 test_that("the funnel narrows as the expected count grows", {
-  f <- funnel_limits(c(2, 20, 200))
+  f <- fnllim(c(2, 20, 200))
   expect_true(all(c("expected", "level", "lower", "upper") %in% names(f)))
   # the limits are the exact Poisson quantiles on the ratio scale
   for (i in seq_len(nrow(f))) {
@@ -187,11 +187,11 @@ test_that("the funnel narrows as the expected count grows", {
   # the limits bracket the target
   expect_true(all(f$lower <= 1 & f$upper >= 1))
   # a target other than one shifts them
-  t2 <- funnel_limits(20, target = 2)
+  t2 <- fnllim(20, target = 2)
   expect_true(all(t2$lower <= 2 & t2$upper >= 2))
-  expect_error(funnel_limits(0), "must be positive")
-  expect_error(funnel_limits(10, target = 0), "must be positive")
-  expect_error(funnel_limits(10, levels = 1), "strictly inside")
+  expect_error(fnllim(0), "must be positive")
+  expect_error(fnllim(10, target = 0), "must be positive")
+  expect_error(fnllim(10, lvls = 1), "strictly inside")
 })
 
 test_that("Moran's I hits its known extremes on a line of areas", {
@@ -201,19 +201,19 @@ test_that("Moran's I hits its known extremes on a line of areas", {
   # the null expectation is -1/(n-1), NOT zero: a small negative I is
   # what independence looks like in a small set of areas
   set.seed(1)
-  g <- morans_i(c(1, 2, 3, 4, 5, 6), nb, n_perm = 1999L)
+  g <- morani(c(1, 2, 3, 4, 5, 6), nb, nperm = 1999L)
   expect_equal(g$expectation, -1 / 5)
   expect_equal(g$n, 6L)
   # a smooth gradient is strongly positively autocorrelated
   expect_gt(g$I, 0.5)
   expect_lt(g$p_value, 0.05)
   # and the permutation null centres on the expectation
-  expect_equal(g$null_mean, -1 / 5, tolerance = 0.1)
+  expect_equal(g$nullmean, -1 / 5, tolerance = 0.1)
 
   # a perfectly alternating pattern reaches the most negative value the
   # row-standardised statistic can take here
   set.seed(1)
-  a <- morans_i(c(1, 6, 1, 6, 1, 6), nb, n_perm = 1999L)
+  a <- morani(c(1, 6, 1, 6, 1, 6), nb, nperm = 1999L)
   expect_lt(a$I, g$I)
   expect_equal(a$I, -1, tolerance = 1e-9)
 
@@ -230,13 +230,13 @@ test_that("Moran's I hits its known extremes on a line of areas", {
   wb <- matrix(0, 6, 6)
   for (i in seq_len(6)) wb[i, nb[[i]]] <- 1
   set.seed(1)
-  m <- morans_i(x, wb, n_perm = 1999L)
+  m <- morani(x, wb, nperm = 1999L)
   expect_equal(m$I, g$I)
 
   # binary weights give a different statistic, since an area with two
   # neighbours then counts for more than one with a single neighbour
   set.seed(1)
-  b <- morans_i(x, nb, style = "B", n_perm = 999L)
+  b <- morani(x, nb, style = "B", nperm = 999L)
   expect_false(isTRUE(all.equal(b$I, g$I)))
   expect_equal(b$W, sum(lengths(nb)))
   expect_identical(b$style, "B")
@@ -248,22 +248,22 @@ test_that("Moran's I hits its known extremes on a line of areas", {
   # an area is not its own neighbour: including it would put the value
   # on both sides of a product
   set.seed(1)
-  self <- morans_i(x, lapply(seq_len(6), function(i) {
+  self <- morani(x, lapply(seq_len(6), function(i) {
     sort(unique(c(i, nb[[i]])))
-  }), n_perm = 999L)
+  }), nperm = 999L)
   expect_equal(self$I, g$I)
 
   # a constant variable has no variation to correlate: said, not NA
-  expect_error(morans_i(rep(3, 6), nb, n_perm = 99L), "constant")
+  expect_error(morani(rep(3, 6), nb, nperm = 99L), "constant")
 
-  expect_error(morans_i(c(1, 2), nb), "at least three areas")
-  expect_error(morans_i(c(1, 2, NA, 4, 5, 6), nb), "missing values")
-  expect_error(morans_i(x, nb[1:3]), "3 entries for 6 areas")
-  expect_error(morans_i(x, matrix(0, 3, 3)), "6 by 6")
-  expect_error(morans_i(x, "not a list"), "list of neighbour indices")
-  expect_error(morans_i(x, list(7L, 1L, 1L, 1L, 1L, 1L)),
+  expect_error(morani(c(1, 2), nb), "at least three areas")
+  expect_error(morani(c(1, 2, NA, 4, 5, 6), nb), "missing values")
+  expect_error(morani(x, nb[1:3]), "3 entries for 6 areas")
+  expect_error(morani(x, matrix(0, 3, 3)), "6 by 6")
+  expect_error(morani(x, "not a list"), "list of neighbour indices")
+  expect_error(morani(x, list(7L, 1L, 1L, 1L, 1L, 1L)),
                "outside 1\\.\\.6")
-  expect_error(morans_i(x, rep(list(integer(0)), 6L)),
+  expect_error(morani(x, rep(list(integer(0)), 6L)),
                "no area any neighbour")
 })
 
@@ -283,9 +283,9 @@ test_that("the areal functions compose on a region-coded table", {
   # overall rate -- which is the right answer, not a failure, and is
   # reported through total shrinkage.
   d$n <- stats::rpois(nrow(d), lambda = d$pop * 0.01)
-  flat <- expected_counts(d$n, d$pop, d$region, strata = d$age)
+  flat <- expcnts(d$n, d$pop, d$region, strata = d$age)
   expect_equal(sum(flat$expected), sum(d$n))
-  fb <- eb_rates(flat$observed, flat$expected, flat$area)
+  fb <- ebrates(flat$observed, flat$expected, flat$area)
   expect_equal(fb$shrinkage, rep(1, 5L))
   expect_equal(fb$eb, rep(1, 5L))
   # the raw ratios still vary, which is exactly the point: that spread
@@ -299,11 +299,11 @@ test_that("the areal functions compose on a region-coded table", {
   rate <- c(Central = 0.006, Eastern = 0.011, Northern = 0.010,
             Toronto = 0.016, Western = 0.012)
   d$n <- stats::rpois(nrow(d), lambda = d$pop * rate[d$region])
-  e <- expected_counts(d$n, d$pop, d$region, strata = d$age)
+  e <- expcnts(d$n, d$pop, d$region, strata = d$age)
   expect_equal(sum(e$expected), sum(d$n))
-  s <- sir(e$observed, e$expected, e$area)
+  s <- stdinc(e$observed, e$expected, e$area)
   expect_equal(nrow(s), 5L)
-  b <- eb_rates(e$observed, e$expected, e$area)
+  b <- ebrates(e$observed, e$expected, e$area)
   # the shrunk ratios are less spread than the raw ones, which is what
   # borrowing strength does
   expect_lt(stats::sd(b$eb), stats::sd(b$sir))
@@ -317,7 +317,7 @@ test_that("the areal functions compose on a region-coded table", {
                b$area[which.min(b$expected)])
   expect_equal(order(b$shrinkage), order(-b$expected))
   # and the funnel limits cover the expected counts these regions have
-  f <- funnel_limits(e$expected)
+  f <- fnllim(e$expected)
   expect_equal(nrow(f), 10L)
   expect_true(all(is.finite(f$upper)))
 })

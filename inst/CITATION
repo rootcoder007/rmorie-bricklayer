@@ -7,10 +7,10 @@ bibentry(
   bibtype = "Manual",
   key     = "ruhela_rmoriebricklayer_2026",
   title   = "rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback",
-  author  = person("Vansh Singh", "Ruhela",
+  author  = person(c("Vansh", "Singh"), "Ruhela",
                    comment = c(ORCID = "0009-0004-1750-3592")),
   year    = "2026",
   note    = paste("R package version", meta$Version),
   doi     = "10.32614/CRAN.package.rmoriebricklayer",
-  url     = "https://CRAN.R-project.org/package=rmoriebricklayer"
+  url     = "https://rootcoder007.r-universe.dev/rmoriebricklayer"
 )

@@ -2,9 +2,9 @@
 #
 # The rmoriebricklayer command line, shipped inside the package.
 # `inst/bin/rmoriebricklayer` is a two-line launcher that runs
-# bricklayer_cli() through Rscript; install_cli() links it into a
+# blcli() through Rscript; instcli() links it into a
 # directory on PATH (an R package cannot install executables itself,
-# and it only does so when the user calls install_cli()).
+# and it only does so when the user calls instcli()).
 
 # interactive() is a primitive: tests cannot mock it in the installed package, so they mock this
 .bl_interactive <- function() interactive()
@@ -131,7 +131,7 @@
 #'   \item{\code{data list}}{the curated tables at data.rmorie.com}
 #'   \item{\code{data pull db/table}}{download one table as CSV}
 #'   \item{\code{config [setup | set KEY VALUE | unset KEY | get KEY | help]}}{show
-#'     or change the language-model settings (\code{\link{bricklayer_llm_config}}):
+#'     or change the language-model settings (\code{\link{llmcfg}}):
 #'     the route \code{ask} uses and the address, key and model of each route;
 #'     \code{setup} walks through them}
 #'   \item{\code{ask [--route ROUTE] [--model NAME] [--fresh] PROMPT...}}{send
@@ -141,16 +141,16 @@
 #'     \code{aye} and \code{tellme} are the same verb, and a quoted question with no
 #'     verb (\code{rmbl "how do I weight a survey?"}) is asked too}
 #'   \item{\code{explain-error MESSAGE...}}{where an error of these packages comes from
-#'     (\code{\link{bricklayer_explain_error}}), without a model or the network}
-#'   \item{\code{bundle REQUEST...}}{\code{\link{agent_bundle}} from the
+#'     (\code{\link{explerr}}), without a model or the network}
+#'   \item{\code{bundle REQUEST...}}{\code{\link{agentbndl}} from the
 #'     shell}
 #'   \item{\code{wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d]
 #'     [--max N]}}{save every URL listed in FILE (one per line; blank lines and
 #'     \code{#} comments skipped) in the Internet Archive's Wayback Machine
-#'     with \code{\link{wayback_save}}, results in \code{--out} (default
+#'     with \code{\link{wbsave}}, results in \code{--out} (default
 #'     \code{FILE.wayback.jsonl}), so a stopped run carries on;
 #'     \code{wayback --retry FILE.jsonl [--include-gone]} retries the failures
-#'     of an earlier run (\code{\link{wayback_retry}})}
+#'     of an earlier run (\code{\link{wbrtry}})}
 #'   \item{\code{functions [PATTERN]}}{list the exported functions with
 #'     their one-line titles, optionally filtered by a regular expression}
 #'   \item{\code{describe NAME}}{title, usage, arguments and description of
@@ -162,7 +162,7 @@
 #'     \code{--help}, \code{-h}; \code{VERB --help} shows a verb's usage
 #'     without running it)}
 #' }
-#' The launcher installed by \code{\link{install_cli}} calls this function
+#' The launcher installed by \code{\link{instcli}} calls this function
 #' with the shell's arguments and exits with its status. Calling it from R is
 #' the same as typing the command, which is how the examples below work.
 #'
@@ -184,7 +184,7 @@
 #'
 #' Side effects: during the call \code{options(morie.progress = TRUE)} is set,
 #' so downloads draw a progress bar; when \code{RMBL_PROG} is set (the
-#' launcher sets it) and \code{options(rmoriebricklayer.data_cache)} is not,
+#' launcher sets it) and \code{options(rmoriebricklayer.dcache)} is not,
 #' the data.rmorie.com manifest and tables are kept in
 #' \code{tools::R_user_dir("rmoriebricklayer", "cache")} rather than a fresh
 #' temporary folder. The verbs \code{login}, \code{logout} and
@@ -202,35 +202,35 @@
 #'   strings to capture the output.
 #' @return The exit status (integer scalar), invisibly: 0 on success, 1 on
 #'   failure, 2 for a usage error, 130 when interrupted.
-#' @seealso \code{\link{install_cli}} to put the command on your PATH.
+#' @seealso \code{\link{instcli}} to put the command on your PATH.
 #' @examples
-#' bricklayer_cli("version")
-#' bricklayer_cli("help")
-#' bricklayer_cli(c("functions", "json"))
-#' bricklayer_cli(c("describe", "analyse_table"))
+#' blcli("version")
+#' blcli("help")
+#' blcli(c("functions", "json"))
+#' blcli(c("describe", "anltab"))
 #'
 #' # one verb's usage, and the examples of a help page
-#' bricklayer_cli(c("help", "data"))
-#' bricklayer_cli(c("examples", "period_days"))
+#' blcli(c("help", "data"))
+#' blcli(c("examples", "perdays"))
 #'
 #' # capture the output instead of printing it
 #' lines <- character()
-#' status <- bricklayer_cli(c("functions", "^drbg_"),
+#' status <- blcli(c("functions", "^drbg_"),
 #'                          out = function(x) lines <<- c(lines, x))
 #' status
 #' lines
 #'
 #' # an unknown verb is a usage error: status 2, nothing run
-#' bricklayer_cli("nonsense")
+#' blcli("nonsense")
 #' @export
-bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
+blcli <- function(args = commandArgs(trailingOnly = TRUE),
                            out = cat) {
   old_progress <- options(morie.progress = TRUE)  # downloads draw their bar
   on.exit(options(old_progress), add = TRUE)
-  if (nzchar(Sys.getenv("RMBL_PROG")) && is.null(getOption("rmoriebricklayer.data_cache"))) {
+  if (nzchar(Sys.getenv("RMBL_PROG")) && is.null(getOption("rmoriebricklayer.dcache"))) {
     # from the shell every call is a new R session: keep the data.rmorie.com manifest and tables in
     # the user cache (tools::R_user_dir) instead of a fresh tempdir() each time
-    old_cache <- options(rmoriebricklayer.data_cache = tools::R_user_dir("rmoriebricklayer", "cache"))
+    old_cache <- options(rmoriebricklayer.dcache = tools::R_user_dir("rmoriebricklayer", "cache"))
     on.exit(options(old_cache), add = TRUE)
   }
   args <- as.character(args)
@@ -321,7 +321,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
             if (!nzchar(tok)) {
               usage_error("--token needs a key: run `login --token` and paste it when asked")
             }
-            bricklayer_llm_login(token = tok)
+            dlogin(token = tok)
           } else {
             if (has("--code") && is.null(flag("--email"))) {
               usage_error("--code needs --email ADDRESS (the code was sent there)")
@@ -330,15 +330,15 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
             if (!is.null(em) && !grepl("^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$", trimws(em))) {
               usage_error(sprintf("--email: '%s' is not an email address", em))
             }
-            bricklayer_llm_login(
+            dlogin(
               email = flag("--email"), code = flag("--code"),
-              open_browser = !has("--no-browser") &&
+              openbro = !has("--no-browser") &&
                 interactive(),
-              accept_terms = has("--accept-terms"), name = flag("--name"),
-              affiliation = flag("--affiliation"), purpose = flag("--reason"),
-              restricted = if (has("--restricted")) TRUE else NULL,
-              supervisor_name = flag("--supervisor-name"), supervisor_role = flag("--supervisor-role"),
-              supervisor_email = flag("--supervisor-email")
+              accter = has("--accept-terms"), name = flag("--name"),
+              affil = flag("--affiliation"), purp = flag("--reason"),
+              restr = if (has("--restricted")) TRUE else NULL,
+              supnm = flag("--supervisor-name"), suprole = flag("--supervisor-role"),
+              supemail = flag("--supervisor-email")
             )
           }
           out(sprintf("Logged in: the curated tables at %s are open to you\n",
@@ -346,7 +346,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
         },
         logout = {
           if (length(c(rest, tail_args))) usage_error("logout takes no arguments")
-          bricklayer_llm_logout()
+          dlogout()
         },
         doctor = {
           if (length(c(rest, tail_args))) usage_error("doctor takes no arguments")
@@ -391,7 +391,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
               usage_error(sprintf(paste("the prompt is empty (usage: %s ask [--route ROUTE] [--model NAME]",
                                         "[--fresh] PROMPT...)"), prog))
             }
-            ans <- bricklayer_llm_ask(prompt, model = mdl, route = rte, fresh = fresh)
+            ans <- llmask(prompt, model = mdl, route = rte, fresh = fresh)
             out(paste0(ans, "\n"))
             if (!is.null(attr(ans, "cached"))) {
               out(sprintf("(the answer saved on %s for this question; `%s ask --fresh ...` asks the model again)\n",
@@ -407,10 +407,10 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           if (!nzchar(trimws(paste(rest, collapse = " ")))) {
             usage_error(sprintf("the request is empty (usage: %s bundle REQUEST...)", prog))
           }
-          # with no language-model route agent_bundle() explains how to set one up: nothing was
+          # with no language-model route agentbndl() explains how to set one up: nothing was
           # produced, so the command fails
           routed <- !is.null(.bl_llm_route())
-          out(paste0(agent_bundle(paste(rest, collapse = " ")), "\n"))
+          out(paste0(agentbndl(paste(rest, collapse = " ")), "\n"))
           if (!routed) status <- 1L
         },
         functions = {
@@ -612,7 +612,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
     `explain-error` = "explain-error MESSAGE...   where an error of these packages comes from, without a model",
     config = paste("config [show | help | get KEY | set KEY VALUE | unset KEY | setup | path | reset]",
                    "  show or change the language-model settings (route, addresses, keys, models)"),
-    bundle = "bundle REQUEST...   agent_bundle() from the shell",
+    bundle = "bundle REQUEST...   agentbndl() from the shell",
     functions = "functions [PATTERN]   exported functions and their titles",
     describe = "describe NAME   help page of one function",
     examples = "examples NAME   the examples of one function",
@@ -718,14 +718,14 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 #'
 #' Writes small launcher scripts into a directory on your PATH so that
 #' \code{rmoriebricklayer login}, \code{rmbl ask ...} and the other verbs of
-#' \code{\link{bricklayer_cli}} work from any shell. Run it once after
+#' \code{\link{blcli}} work from any shell. Run it once after
 #' installing or upgrading the package. Nothing outside \code{dir} is
 #' touched, and only when you call this.
 #'
 #' @details
 #' On Unix-alikes each launcher is a \code{/bin/sh} script (mode 0755) that
 #' sets \code{RMBL_PROG} to its own name and runs
-#' \code{Rscript -e "rmoriebricklayer::bricklayer_cli()"} with the shell's
+#' \code{Rscript -e "rmoriebricklayer::blcli()"} with the shell's
 #' arguments, exiting with the function's status (130 on Ctrl-C). The library
 #' this copy of the package is installed in is pinned inside R with
 #' \code{.libPaths()}, so an \code{R_LIBS} set in the shell or in
@@ -749,21 +749,21 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 #'   under either).
 #' @return The path of the first launcher written (normally
 #'   \code{rmoriebricklayer}), invisibly; the others are written beside it.
-#' @seealso \code{\link{bricklayer_cli}} for the verbs.
+#' @seealso \code{\link{blcli}} for the verbs.
 #' @examples
 #' # into a scratch folder, so nothing on your PATH changes
 #' d <- file.path(tempdir(), "bin")
-#' p <- install_cli(dir = d)
+#' p <- instcli(dir = d)
 #' list.files(d)
 #' readLines(p)[1:4]
 #'
 #' # one name only
-#' install_cli(dir = d, name = "rmbl")
+#' instcli(dir = d, name = "rmbl")
 #' \dontrun{
-#' install_cli()   # ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
+#' instcli()   # ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
 #' }
 #' @export
-install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
+instcli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
                         name = c("rmoriebricklayer", "rmbl")) {
   # an empty `name` wrote nothing, printed "Installed ;" and failed on targets[[1L]]
   if (!is.character(name) || !length(name) || anyNA(name) || any(!nzchar(name)) ||
@@ -784,7 +784,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
       target <- file.path(dir, paste0(nm, ".cmd"))
       writeLines(sprintf(paste0("@echo off\r\nset RMBL_PROG=", nm, "\r\nRscript --no-save --no-restore -e ",
                                 "\".libPaths(c('%s', .libPaths())); ",
-                                "q <- tryCatch(rmoriebricklayer::bricklayer_cli(), interrupt = function(e) 130L); ",
+                                "q <- tryCatch(rmoriebricklayer::blcli(), interrupt = function(e) 130L); ",
                                 "quit(status = as.integer(q))\" %%*"),
                          lib), target)
       # nocov end
@@ -795,11 +795,11 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
       # a single-quoted shell argument (a quote in the path becomes '\'')
       # a Ctrl-C that reaches the top level exits 130, not 1 (as inst/bin/rmbl)
       body <- paste0("suppressPackageStartupMessages({ .libPaths(c(", deparse(lib), ", .libPaths())); ",
-                     "q <- tryCatch(rmoriebricklayer::bricklayer_cli(), interrupt = function(e) 130L); ",
+                     "q <- tryCatch(rmoriebricklayer::blcli(), interrupt = function(e) 130L); ",
                      "quit(status = as.integer(q)) })")
       body <- gsub("'", "'\\\\''", body)
       writeLines(c("#!/bin/sh",
-                   sprintf("# %s: the rmoriebricklayer command line (written by rmoriebricklayer::install_cli())", nm),
+                   sprintf("# %s: the rmoriebricklayer command line (written by rmoriebricklayer::instcli())", nm),
                    sprintf("# runs the package in %s (pinned with .libPaths() inside R)", lib),
                    sprintf("export RMBL_PROG=%s", nm),
                    sprintf("exec Rscript --no-save --no-restore -e '%s' \"$@\"", body)),
@@ -839,7 +839,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
 }
 
 # The wayback verb: every URL in a file (one per line; blank lines and # comments skipped) saved
-# in the Wayback Machine by wayback_save(), results in --out (default FILE.wayback.jsonl), which
+# in the Wayback Machine by wbsave(), results in --out (default FILE.wayback.jsonl), which
 # also lets a stopped run carry on.
 .bl_cli_wayback <- function(rest, flag, out) {
   pos <- rest
@@ -848,7 +848,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
   }
   cap <- flag("--max") %||% "1000"
-  # --retry FILE.jsonl: the failures of an earlier run, looked up and captured again (wayback_retry)
+  # --retry FILE.jsonl: the failures of an earlier run, looked up and captured again (wbrtry)
   retry <- "--retry" %in% pos
   gone <- "--include-gone" %in% pos
   pos <- setdiff(pos, c("--retry", "--include-gone"))
@@ -858,8 +858,8 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
                   if (length(pos) == 1L) paste("no such file", pos[[1L]]) else "give one FILE.jsonl"))
       return(if (length(pos) == 1L) 1L else 2L)
     }
-    res <- wayback_retry(pos[[1L]], include_gone = gone, jobs = flag("--jobs") %||% "4",
-                         within = flag("--within") %||% "30d", max_captures = cap)
+    res <- wbrtry(pos[[1L]], incgone = gone, jobs = flag("--jobs") %||% "4",
+                         within = flag("--within") %||% "30d", maxcap = cap)
     r <- attr(res, "retry")
     tab <- table(factor(res$status, levels = c("saved", "existing", "failed", "submitted")))
     out(sprintf(paste("%d failures: %d found already archived, %d captured again, %d left as gone,",
@@ -879,8 +879,8 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
   urls <- trimws(readLines(pos[[1L]], warn = FALSE))
   urls <- urls[nzchar(urls) & !startsWith(urls, "#")]
   jobs <- flag("--jobs") %||% "4"
-  res <- wayback_save(urls, jobs = jobs, within = flag("--within") %||% "30d",
-                      output = flag("--out") %||% paste0(pos[[1L]], ".wayback.jsonl"), max_captures = cap)
+  res <- wbsave(urls, jobs = jobs, within = flag("--within") %||% "30d",
+                      output = flag("--out") %||% paste0(pos[[1L]], ".wayback.jsonl"), maxcap = cap)
   tab <- table(factor(res$status, levels = c("saved", "existing", "failed", "submitted")))
   ns <- length(attr(res, "not_sent"))
   out(sprintf("%d saved, %d existing, %d failed%s; results in %s\n", tab[["saved"]], tab[["existing"]],
@@ -902,7 +902,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
   }
   if (identical(sub, "list")) {
     out(.bl_format_data_tables(
-      bricklayer_data_tables(),
+      dtabs(),
       hint = sprintf("`%s data pull KEY` downloads one (your MORIE key)", .bl_prog())
     ))
   } else if (identical(sub, "pull") && length(rest) >= 2L) {
@@ -914,7 +914,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
       out(sprintf("cannot write %s (the directory does not exist, or no permission)\n", dest))
       return(1L)
     }
-    df <- bricklayer_data_load(rest[[2L]])
+    df <- dload(rest[[2L]])
     ok <- tryCatch({
       suppressWarnings(utils::write.csv(df, dest, row.names = FALSE))
       TRUE
@@ -951,7 +951,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     "  config set KEY VALUE | unset KEY          change one (keys: config help)\n",
     "  config reset [--force]                    move an unreadable settings file aside\n",
     "  models [--route R]                        models your provider or server offers\n",
-    "  bundle REQUEST...                         agent_bundle() from the shell\n",
+    "  bundle REQUEST...                         agentbndl() from the shell\n",
     "\nData and functions\n",
     "  login [--token] [--email ADDRESS]         sign in for the curated tables at data.rmorie.com\n",
     "        [--code CODE] [--no-browser]\n",
@@ -1024,19 +1024,19 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
   r_help <- paste0(
     "From R (or Rscript -e '...': single quotes outside, double quotes inside)\n\n",
     "  library(rmoriebricklayer)\n",
-    "  bricklayer_llm_status()                                   # doctor\n",
-    "  bricklayer_llm_providers()                                # every provider, its key variable\n",
-    "  bricklayer_llm_config()                                   # every setting\n",
-    "  Sys.setenv(ANTHROPIC_API_KEY = \"...\")                     # or bricklayer_llm_config(anthropic.key = ...)\n",
-    "  bricklayer_llm_config(route = \"anthropic\", anthropic.model = \"claude-opus-5-5\")\n",
-    "  bricklayer_llm_config(ollama.url = \"http://192.168.1.20:11434\", ollama.model = \"qwen3:8b\")\n",
-    "  bricklayer_llm_config(own.url = \"http://localhost:1234/v1\", own.model = \"m\")\n",
-    "  bricklayer_llm_config(route = NULL)                       # back to auto\n",
-    "  bricklayer_llm_models()\n",
-    "  bricklayer_llm_ask(\"What can a Benford screen show?\")\n",
-    "  bricklayer_llm_login()                                    # the data key, for data.rmorie.com\n\n",
+    "  llmstat()                                   # doctor\n",
+    "  llmprvd()                                # every provider, its key variable\n",
+    "  llmcfg()                                   # every setting\n",
+    "  Sys.setenv(ANTHROPIC_API_KEY = \"...\")                     # or llmcfg(anthropic.key = ...)\n",
+    "  llmcfg(route = \"anthropic\", anthropic.model = \"claude-opus-5-5\")\n",
+    "  llmcfg(ollama.url = \"http://192.168.1.20:11434\", ollama.model = \"qwen3:8b\")\n",
+    "  llmcfg(own.url = \"http://localhost:1234/v1\", own.model = \"m\")\n",
+    "  llmcfg(route = NULL)                       # back to auto\n",
+    "  llmmdls()\n",
+    "  llmask(\"What can a Benford screen show?\")\n",
+    "  dlogin()                                    # the data key, for data.rmorie.com\n\n",
     "From the shell:\n",
-    "  Rscript -e 'cat(rmoriebricklayer::bricklayer_llm_ask(\"What can a Benford screen show?\"), \"\\n\")'\n"
+    "  Rscript -e 'cat(rmoriebricklayer::llmask(\"What can a Benford screen show?\"), \"\\n\")'\n"
   )
   if (!nzchar(topic)) {
     out(verbs)

@@ -2,16 +2,16 @@
 % Please edit documentation in R/concentration.R
 \name{concentration}
 \alias{concentration}
-\alias{gini}
-\alias{lorenz}
-\alias{top_share}
+\alias{ginicoef}
+\alias{lorenzc}
+\alias{topshr}
 \title{Concentration of a total across units}
 \usage{
-gini(x, na.rm = TRUE)
+ginicoef(x, na.rm = TRUE)
 
-lorenz(x, na.rm = TRUE)
+lorenzc(x, na.rm = TRUE)
 
-top_share(x, fractions = c(0.01, 0.05, 0.1, 0.25), na.rm = TRUE)
+topshr(x, fracs = c(0.01, 0.05, 0.1, 0.25), na.rm = TRUE)
 }
 \arguments{
 \item{x}{Numeric vector of non-negative values, one per unit (for example
@@ -23,17 +23,17 @@ errors.}
 argument exists so the call reads the same as base R's. Default
 \code{TRUE}.}
 
-\item{fractions}{Numeric vector of fractions of the units, each in
+\item{fracs}{Numeric vector of fractions of the units, each in
 \code{[0, 1]}: for each one the share of the total held by that fraction
 of units, taking the largest units first. Default
 \code{c(0.01, 0.05, 0.1, 0.25)}.}
 }
 \value{
-\code{gini()}: a numeric scalar in \code{[0, 1 - 1/n]}.
-\code{lorenz()}: a data frame with numeric columns \code{population}
+\code{ginicoef()}: a numeric scalar in \code{[0, 1 - 1/n]}.
+\code{lorenzc()}: a data frame with numeric columns \code{population}
 (cumulative share of units, from 0 to 1) and \code{value} (cumulative
 share of the total, units in ascending order), \code{n + 1} rows
-including the origin. \code{top_share()}: a data frame with columns
+including the origin. \code{topshr()}: a data frame with columns
 \code{fraction} (the requested fraction of units), \code{units} (how
 many of the largest units that fraction is) and \code{share} (the share
 of the total those units hold).
@@ -41,9 +41,9 @@ of the total those units hold).
 \description{
 Measures how unevenly a total is spread across units: whether a few
 people account for most of the placements, or a few regions for most of
-the days. \code{gini()} gives the Gini coefficient, \code{lorenz()} the
+the days. \code{ginicoef()} gives the Gini coefficient, \code{lorenzc()} the
 points of the Lorenz curve (for plotting, for example with
-\code{\link[=plot_lorenz]{plot_lorenz()}}), and \code{top_share()} the share of the
+\code{\link[=plotlrnz]{plotlrnz()}}), and \code{topshr()} the share of the
 total held by
 the largest units ("the top 1\% of people account for 20\% of the
 days"). The three are computed in compiled code from the same sorted
@@ -57,38 +57,38 @@ perfectly even spread; the maximum for \code{n} units is \code{1 - 1/n},
 not 1, so a Gini near 1 requires many units as well as an uneven spread.
 
 A Gini computed from banded or rounded data inherits that coarsening:
-compare with \code{\link[=band_sensitivity]{band_sensitivity()}} when the values are
+compare with \code{\link[=bandsens]{bandsens()}} when the values are
 bands. For a tail
-that a few units dominate, \code{\link[=hill_tail_index]{hill_tail_index()}} says
+that a few units dominate, \code{\link[=hilltlidx]{hilltlidx()}} says
 whether the largest
 values follow a power law.
 
 Errors: \code{x} not numeric, with \code{Inf} or a negative value, or with
-no non-missing value; \code{gini()} when every value is zero (the Gini of
-a zero total is undefined); \code{top_share()} when \code{fractions} is not
+no non-missing value; \code{ginicoef()} when every value is zero (the Gini of
+a zero total is undefined); \code{topshr()} when \code{fractions} is not
 numeric, is empty, has \code{NA} or lies outside \code{[0, 1]}.
 }
 \examples{
 # Ten units holding one each: no concentration.
-gini(rep(1, 10))
+ginicoef(rep(1, 10))
 
 # One unit holding everything: the maximum for ten units.
-gini(c(rep(0, 9), 1))
+ginicoef(c(rep(0, 9), 1))
 1 - 1 / 10
 
 placements <- c(rep(1, 1200), rep(3, 430), rep(8, 110), rep(20, 38))
-gini(placements)
+ginicoef(placements)
 
 # What the most frequent few account for.
-top_share(placements, c(0.01, 0.05, 0.1))
+topshr(placements, c(0.01, 0.05, 0.1))
 
-head(lorenz(placements))
+head(lorenzc(placements))
 
 # missing values are dropped
-gini(c(1, NA, 3))
+ginicoef(c(1, NA, 3))
 
 # a zero total has no Gini coefficient
-try(gini(c(0, 0, 0)))
+try(ginicoef(c(0, 0, 0)))
 }
 \references{
 Hedderich, J. and Sachs, L. (2020). \emph{Applied Statistics: Methods Using
@@ -100,6 +100,6 @@ when p percent of the units account for p percent of the total, and sags
 further the greater the concentration.
 }
 \seealso{
-\code{\link[=hill_tail_index]{hill_tail_index()}},
-\code{\link[=band_sensitivity]{band_sensitivity()}}
+\code{\link[=hilltlidx]{hilltlidx()}},
+\code{\link[=bandsens]{bandsens()}}
 }

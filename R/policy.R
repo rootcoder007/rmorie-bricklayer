@@ -22,7 +22,7 @@ kAnyPolicy <- "2.5.29.32.0"
 #
 # `is.na(NULL)` is logical(0), and `if (logical(0))` is an error, not
 # FALSE -- so reading a counter straight out of a list that happens not
-# to carry it fails rather than defaulting. cert_parse() always sets
+# to carry it fails rather than defaulting. certprs() always sets
 # these, but a certificate built by hand, or one round-tripped through
 # JSON where NA became null, does not.
 .rmbl_na_int <- function(x) {
@@ -36,7 +36,7 @@ kAnyPolicy <- "2.5.29.32.0"
 
 # The policy set valid for a path, working from the anchor down.
 #
-# `path` is leaf-first, as cert_chain_verify() builds it; the algorithm
+# `path` is leaf-first, as certchnvrf() builds it; the algorithm
 # runs root-first, which is why it is reversed. The counters start at
 # the number of certificates and are decremented as the standard says:
 # a value of zero at a certificate means the constraint is in force for
@@ -152,8 +152,8 @@ kAnyPolicy <- "2.5.29.32.0"
   list(valid = valid,
        authorities_constrained_to = wanted,
        explicit_required = explicit_required,
-       any_inhibited = any_inhibited,
-       mapping_inhibited = mapping_inhibited,
+       anyinh = any_inhibited,
+       mapinh = mapping_inhibited,
        mappings = mappings_seen,
        notes = notes,
        # A path satisfies the policy requirement when either nothing was

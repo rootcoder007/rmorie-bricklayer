@@ -20,14 +20,14 @@ against the one assumption that cannot be verified: what the open top band conta
 ## Parsing band labels
 
 ```{r parse}
-parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
-parse_bands(c("18 to 24", "25 to 49", "50+"))
+prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
+prsbands(c("18 to 24", "25 to 49", "50+"))
 ```
 
 An unrecognised label is reported as unparsed, never guessed at:
 
 ```{r parse-bad}
-parse_bands(c("3", "unknown", "not stated"))
+prsbands(c("3", "unknown", "not stated"))
 ```
 
 ## Representative values
@@ -37,38 +37,38 @@ or upper edge, or the geometric mean for skewed quantities. The open top band ha
 edge, so a cap or a factor on its lower edge is supplied explicitly:
 
 ```{r values}
-b <- parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
-band_values(b, rule = "midpoint", open_upper_cap = 20)
-band_values(b, rule = "geometric", open_upper_cap = 20)
+b <- prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
+bandvals(b, rule = "midpoint", openupcap = 20)
+bandvals(b, rule = "geometric", openupcap = 20)
 ```
 
 ## Expanding to per-unit values
 
-With counts per band, `expand_bands()` returns one value per unit, ready for any statistic:
+With counts per band, `expbands()` returns one value per unit, ready for any statistic:
 
 ```{r expand}
-x <- expand_bands(c("1", "2 to 5", "Greater than 5"), counts = c(10, 4, 2),
-                  open_upper_cap = 12)
+x <- expbands(c("1", "2 to 5", "Greater than 5"), cnts = c(10, 4, 2),
+                  openupcap = 12)
 table(x)
-gini(x)
+ginicoef(x)
 ```
 
 ## Concentration
 
 The **Gini coefficient** measures how unequally a total is spread across units: 0 when
-every unit holds the same, approaching 1 when one unit holds everything. `top_share()`
-reports what the most frequent few account for, and `lorenz()` gives the curve behind the
+every unit holds the same, approaching 1 when one unit holds everything. `topshr()`
+reports what the most frequent few account for, and `lorenzc()` gives the curve behind the
 Gini.
 
 ```{r gini}
-gini(rep(1, 10))             # no concentration
-gini(c(rep(0, 9), 1))        # one unit holds everything
+ginicoef(rep(1, 10))             # no concentration
+ginicoef(c(rep(0, 9), 1))        # one unit holds everything
 1 - 1 / 10                   # the maximum for ten units
 
 placements <- c(rep(1, 1200), rep(3, 430), rep(8, 110), rep(20, 38))
-gini(placements)
-top_share(placements, c(0.01, 0.05, 0.1))
-head(lorenz(placements))
+ginicoef(placements)
+topshr(placements, c(0.01, 0.05, 0.1))
+head(lorenzc(placements))
 ```
 
 Here the top 1% of people account for a disproportionate share of placements: the
@@ -78,13 +78,13 @@ substantive finding a banded table hides.
 
 Everything above depends on what the "Greater than 10" band is taken to contain. If the
 statistic barely moves as that assumption varies, it has been measured; if it swings, it
-has not, and the honest report says so. `band_sensitivity()` recomputes a statistic over a
+has not, and the honest report says so. `bandsens()` recomputes a statistic over a
 range of caps:
 
 ```{r sens}
 counts <- c(1200, 430, 110, 38)
-band_sensitivity(b, counts)
-band_sensitivity(b, counts, statistic = mean)
+bandsens(b, counts)
+bandsens(b, counts, stat = mean)
 ```
 
 ## Heavy tails
@@ -98,23 +98,23 @@ k <- 1:10000
 p <- k^(-2.5) / sum(k^(-2.5))
 set.seed(2)
 z <- sample(k, 5000, replace = TRUE, prob = p)
-c(exact = round(hill_tail_index(z, x_min = 1)$alpha, 2),
-  approx = round(hill_tail_index(z, x_min = 1, approx = TRUE)$alpha, 2))
+c(exact = round(hilltlidx(z, xmin = 1)$alpha, 2),
+  approx = round(hilltlidx(z, xmin = 1, approx = TRUE)$alpha, 2))
 ```
 
 A short tail still returns an estimate, marked as not to be leaned on:
 
 ```{r hill-short}
-short <- hill_tail_index(c(3, 4, 5, 9), x_min = 3)
-c(alpha = round(short$alpha, 2), n = short$n_tail, reliable = short$reliable)
+short <- hilltlidx(c(3, 4, 5, 9), xmin = 3)
+c(alpha = round(short$alpha, 2), n = short$ntl, reliable = short$reliable)
 ```
 
 ## Workflow
 
-1. `parse_bands()`; stop if anything is unparsed.
-2. `band_values()` or `expand_bands()` with an explicit cap for the open band.
-3. The statistic: `gini()`, `top_share()`, `lorenz()`, `hill_tail_index()`.
-4. `band_sensitivity()` over the cap, and report the range, not the point.
+1. `prsbands()`; stop if anything is unparsed.
+2. `bandvals()` or `expbands()` with an explicit cap for the open band.
+3. The statistic: `ginicoef()`, `topshr()`, `lorenzc()`, `hilltlidx()`.
+4. `bandsens()` over the cap, and report the range, not the point.
 
 
 ## How unevenly a population is spread
@@ -124,10 +124,10 @@ First Nations people by province and territory (bundled with the package), the G
 coefficient and top shares say how concentrated the population is in a few jurisdictions:
 
 ```{r indigenous-concentration}
-cp <- indigenous_example("census_population")
+cp <- indiex("censuspop")
 tot <- cp[cp$GEO_LEVEL != "Country" & cp$AGE_GROUP == "Total - Age groups" &
             cp$RESIDENCE == "Total - Residence on or off reserve" &
             grepl("^Total - Average age", cp$CHARACTERISTIC_NAME), ]
-gini(tot$FIRST_NATIONS)
-top_share(tot$FIRST_NATIONS, fractions = c(0.25, 0.5))
+ginicoef(tot$FIRST_NATIONS)
+topshr(tot$FIRST_NATIONS, fracs = c(0.25, 0.5))
 ```

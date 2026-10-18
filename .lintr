@@ -17,6 +17,8 @@ exclusions: list(
     # test vectors and JSON fixtures cannot be wrapped
     "tests/testthat/test-json-branches.R" = list(line_length_linter = Inf),
     "tests/testthat/test-json-parity.R" = list(line_length_linter = Inf),
+    # JSON documents are written in single quotes so their double quotes need no escaping
+    "tests/testthat/test-cran-stress-0_5_14.R" = list(quotes_linter = Inf),
     "tests/testthat/test-sha256-native.R" = list(line_length_linter = Inf),
     "inst" = Inf,
     "src" = Inf,

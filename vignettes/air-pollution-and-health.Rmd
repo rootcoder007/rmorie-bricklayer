@@ -29,8 +29,8 @@ parameterisation; rural and urban coefficients differ because cities are rougher
 warmer.
 
 ```{r sigmas}
-pg_sigmas(1000, "D")
-pg_sigmas(1000, "D", setting = "urban")
+pgsig(1000, "D")
+pgsig(1000, "D", set = "urban")
 ```
 
 ### Plume rise
@@ -40,10 +40,10 @@ buoyancy flux, the final rise and the distance at which it is reached; before th
 the plume is still rising:
 
 ```{r rise}
-r <- briggs_plume_rise(c(100, 500, 2000), u = 4, diameter = 1, exit_velocity = 12,
-                       stack_temp = 420, ambient_temp = 285)
+r <- briggs(c(100, 500, 2000), u = 4, diam = 1, exitvel = 12,
+                       stktmp = 420, ambtmp = 285)
 r$flux
-r$final_rise
+r$finalrise
 r$rise
 ```
 
@@ -56,25 +56,25 @@ as it dilutes:
 
 ```{r plume}
 x <- seq(200, 5000, by = 100)
-h <- 30 + r$final_rise
-c_d <- gaussian_plume(q = 100, u = 4, h = h, receptors = cbind(x, 0, 0), stability = "D")
-c_b <- gaussian_plume(q = 100, u = 4, h = h, receptors = cbind(x, 0, 0), stability = "B")
-plot(x, c_d, type = "l", xlab = "downwind distance (m)", ylab = "concentration (g/m^3)",
+h <- 30 + r$finalrise
+cd <- gplume(q = 100, u = 4, h = h, rcpt = cbind(x, 0, 0), stab = "D")
+cb <- gplume(q = 100, u = 4, h = h, rcpt = cbind(x, 0, 0), stab = "B")
+plot(x, cd, type = "l", xlab = "downwind distance (m)", ylab = "concentration (g/m^3)",
      main = "Ground-level centreline concentration")
-lines(x, c_b, col = 2)
+lines(x, cb, col = 2)
 legend("topright", c("class D (neutral)", "class B (unstable)"), col = 1:2, lty = 1, bty = "n")
 ```
 
-`gaussian_puff()` is the instantaneous-release counterpart; `advection_diffusion_2d()` and
-`lagrangian_particles()` are grid and particle models for cases the Gaussian assumptions
+`gspuff()` is the instantaneous-release counterpart; `advdif2d()` and
+`lagrprt()` are grid and particle models for cases the Gaussian assumptions
 (steady wind, flat terrain) do not fit. The particle model is deterministic from its seed and
 takes any normal generator through `normals=`, so another package's random stream can be
 reproduced exactly.
 
 ```{r particles}
-p <- lagrangian_particles(n = 500, x0 = 0, y0 = 0, u = 1, v = 0, kx = 0.5, ky = 0.5,
-                          dt = 1, n_steps = 50, seed = 1, grid = c(0, 100, -30, 30, 20, 12))
-c(mean_x = p$mean_x, mean_y = p$mean_y)
+p <- lagrprt(n = 500, x0 = 0, y0 = 0, u = 1, v = 0, kx = 0.5, ky = 0.5,
+                          dt = 1, nsteps = 50, seed = 1, grid = c(0, 100, -30, 30, 20, 12))
+c(mean_x = p$mean_x, meany = p$meany)
 ```
 
 ## 2. From concentration to deaths
@@ -89,18 +89,18 @@ The cause-specific PM2.5 functions are the Integrated Exposure-Response curves o
 et al. (2014), which saturate at high concentrations:
 
 ```{r crf}
-crf_pm25(12)$rr
+crfpm25(12)$rr
 exp(log(1.08) * (12 - 5.8) / 10)          # the same, by hand
-crf_pm25(12, outcome = "ihd")$rr
-crf_no2(25)$rr
+crfpm25(12, y = "ihd")$rr
+crfno2(25)$rr
 ```
 
 A vector of exposures gives the mean RR and keeps the per-unit values:
 
 ```{r crf-vec}
-v <- crf_pm25(c(6, 10, 15, 22))
+v <- crfpm25(c(6, 10, 15, 22))
 v$rr
-v$extra$rr_per_unit
+v$extra$rrperunit
 ```
 
 ### Attributable fraction and avoided deaths
@@ -110,20 +110,20 @@ into the share of deaths the exposure accounts for; the BenMAP health-impact fun
 the deaths avoided by a counterfactual reduction:
 
 ```{r paf}
-attributable_fraction(crf_no2(25)$rr, exposure_prevalence = 1)
-mortality_displaced(exposure_delta = 10, population = 1e6, baseline_rate = 0.008,
-                    beta_per_unit = log(1.02) / 10)
+attrfrac(crfno2(25)$rr, expoprev = 1)
+mortdisp(expdel = 10, pop = 1e6, brate = 0.008,
+                    betaperunit = log(1.02) / 10)
 ```
 
 ### The burden chain
 
-`pollution_burden()` chains concentration-response, attributable fraction and the baseline
+`polbrdn()` chains concentration-response, attributable fraction and the baseline
 case count, as the Global Burden of Disease risk-factor estimates do:
 
 ```{r burden}
-b <- pollution_burden(exposure_mean = 25, exposure_prevalence = 1, baseline_rate = 0.008,
-                      population = 1e6, pollutant = "NO2")
-c(rr = b$extra$rr, paf = b$paf, attributable = b$attributable_cases)
+b <- polbrdn(expomean = 25, expoprev = 1, brate = 0.008,
+                      pop = 1e6, poll = "NO2")
+c(rr = b$extra$rr, paf = b$paf, attributable = b$attrcases)
 b$citation
 ```
 
@@ -131,8 +131,8 @@ Per area, sorted worst first:
 
 ```{r area}
 areas <- data.frame(fsa = c("M6H", "M5V", "M4W", "M1B"), exposure = c(28, 18, 15, 24),
-                    population = c(40000, 60000, 25000, 70000), baseline_rate = 0.008)
-pollution_burden_by_area(areas)
+                    population = c(40000, 60000, 25000, 70000), brate = 0.008)
+polbrdarea(areas)
 ```
 
 ## 3. Who bears it
@@ -144,8 +144,8 @@ poor bear more.
 
 ```{r equity}
 d <- data.frame(exposure = c(30, 27, 22, 18, 14), income = 1:5)
-e <- exposure_concentration_index(d, "exposure", "income")
-e$concentration_index
+e <- expconcidx(d, "exposure", "income")
+e$concidx
 e$interpretation
 ```
 
@@ -154,7 +154,7 @@ e$interpretation
 When individual or area data with confounders are available, the partially linear model
 of Chernozhukov et al. (2018) estimates the exposure effect with cross-fitted nuisance
 functions, so the confounder adjustment cannot overfit the same rows it is evaluated on.
-`exposure_response_plr()` adds a percentile bootstrap for a sensitivity interval. The default
+`exprspplr()` adds a percentile bootstrap for a sensitivity interval. The default
 estimator uses ordinary-least-squares nuisances; any estimator with the same interface can
 be passed.
 
@@ -163,24 +163,24 @@ set.seed(1)
 n <- 300
 sim <- data.frame(income = rnorm(n), density = rnorm(n))
 sim$no2 <- 20 - 2 * sim$income + 3 * sim$density + rnorm(n)
-sim$asthma_rate <- 5 + 0.3 * sim$no2 - 0.5 * sim$income + rnorm(n)
-fit <- exposure_response_plr(sim, outcome = "asthma_rate", exposure = "no2",
-                             confounders = c("income", "density"), n_bootstrap = 30)
-c(ate = fit$ate, lower = fit$ci_lower_bs, upper = fit$ci_upper_bs)
+sim$asthmarate <- 5 + 0.3 * sim$no2 - 0.5 * sim$income + rnorm(n)
+fit <- exprspplr(sim, y = "asthmarate", expo = "no2",
+                             confs = c("income", "density"), nboot = 30)
+c(ate = fit$ate, lower = fit$cilobs, upper = fit$ciupbs)
 ```
 
 The true coefficient is 0.3 and the interval covers it.
 
 ## 5. The whole pipeline, with an assumption log
 
-`verify_pollution()` runs the chain end to end and records every assumption it checked,
+`vrfpol()` runs the chain end to end and records every assumption it checked,
 so a report says not only the number but the conditions under which it holds. Synthetic
 demo data stand in here:
 
 ```{r verify}
-r <- verify_pollution("no2", demo = TRUE, region = "demo", years = "2024")
+r <- vrfpol("no2", demo = TRUE, reg = "demo", years = "2024")
 r$status
-cat(pollution_report_text(r))
+cat(polrpttxt(r))
 ```
 
 An input that violates an assumption stops the pipeline and says why, with a non-zero exit
@@ -189,12 +189,12 @@ valid run with zero attributable cases, and a call with no exposure data at all 
 error, not a clean zero:
 
 ```{r verify-fail}
-bad <- verify_pollution("pm25", exposure_mean = -3, exposure_prevalence = 0.5)
+bad <- vrfpol("pm25", expomean = -3, expoprev = 0.5)
 bad$status
-attr(bad, "exit_status")
-none <- verify_pollution("pm25")
+attr(bad, "exitstat")
+none <- vrfpol("pm25")
 none$status
-attr(none, "exit_status")
+attr(none, "exitstat")
 ```
 
 A CSV with an `exposure` column (and optionally `income`) replaces the demo data; a NAPS
@@ -202,7 +202,7 @@ pull with `value` in ppb is converted to µg/m³ at 1.88 for NO2.
 
 ## 6. What did this computation cost?
 
-Computation uses electricity, and electricity has a carbon intensity. `compute_footprint()`
+Computation uses electricity, and electricity has a carbon intensity. `co2fp()`
 reports both for any expression, two ways. On Linux with readable RAPL counters it
 *measures* the CPU package energy, as codecarbon does. Everywhere else it *models* energy
 with the Green Algorithms formula (Lannelongue, Grealey and Inouye 2021),
@@ -210,9 +210,9 @@ with the Green Algorithms formula (Lannelongue, Grealey and Inouye 2021),
 for a measurement is listed:
 
 ```{r footprint}
-rapl_available()
-fp <- compute_footprint(sum(sqrt(seq_len(3e5))), location = "CA-ON", cpu_power_w = 45,
-                        memory_gb = 16)
+raplok()
+fp <- co2fp(sum(sqrt(seq_len(3e5))), loc = "CA-ON", cpupwrw = 45,
+                        memgb = 16)
 print(fp)
 fp$assumptions
 ```
@@ -220,25 +220,25 @@ fp$assumptions
 ### Utilisation: measured, per process or per machine
 
 The Green Algorithms calculator asks the user for the utilisation \(u\) and defaults to 1;
-codecarbon measures it in one of two tracking modes. `compute_footprint()` measures it too,
+codecarbon measures it in one of two tracking modes. `co2fp()` measures it too,
 in the same two ways. `usage = "process"` (the default) is this R process's own CPU time,
 children included, over wall time and cores, so an idle wait is not charged as computation.
 `usage = "machine"` is the whole machine's busy share over the run, read from `/proc/stat`
 on Linux, for the case where the computation is all the machine is doing or the question is
 what the machine drew; where there is no `/proc/stat` the process figure is used and the
-assumptions say so. A number fixes it, as the calculator does. `load_curve` chooses how
+assumptions say so. A number fixes it, as the calculator does. `loadcur` chooses how
 power follows utilisation: linearly (Green Algorithms) or along codecarbon's curves, a 10%
 floor for a process and \(0.1 + 0.9u^3\) for a machine, so a figure can be made comparable
 with either tool:
 
 ```{r usage}
 busy <- function() sum(sqrt(seq_len(2e5)))
-a <- compute_footprint(busy(), location = "CA-ON", cpu_power_w = 45, memory_gb = 16)
-b <- compute_footprint(busy(), location = "CA-ON", cpu_power_w = 45, memory_gb = 16,
-                       usage = "machine", load_curve = "codecarbon")
-rbind(process_linear = c(usage = a$usage, cpu_kwh = a$energy_kwh$cpu),
-      machine_codecarbon = c(usage = b$usage, cpu_kwh = b$energy_kwh$cpu))
-b$usage_mode
+a <- co2fp(busy(), loc = "CA-ON", cpupwrw = 45, memgb = 16)
+b <- co2fp(busy(), loc = "CA-ON", cpupwrw = 45, memgb = 16,
+                       usage = "machine", loadcur = "codecarbon")
+rbind(prolin = c(usage = a$usage, cpukwh = a$enekwh$cpu),
+      maccod = c(usage = b$usage, cpukwh = b$enekwh$cpu))
+b$usagemode
 ```
 
 ### The grid: the latest year, every country, offline
@@ -254,10 +254,10 @@ location is matched by code, alpha-3 code or name; an unknown zone falls back to
 country and says so; a number of your own is accepted when you have a better figure:
 
 ```{r ci}
-carbon_intensity("CA-ON")[c("g_per_kwh", "year", "source")]
-carbon_intensity("Kenya")[c("location", "g_per_kwh", "year")]
-carbon_intensity("CA-XX")$note
-tab <- carbon_intensity_table()
+co2int("CA-ON")[c("g_per_kwh", "year", "source")]
+co2int("Kenya")[c("location", "g_per_kwh", "year")]
+co2int("CA-XX")$note
+tab <- co2inttab()
 nrow(tab)
 table(nchar(tab$location) == 2, tab$year)[, c("2024", "2025")]
 ```
@@ -270,21 +270,21 @@ used and the result says so, so one country's grid is never silently applied to 
 computation:
 
 ```{r detect}
-detect_location()
-detect_location(env_location = "", codecarbon_location = "", tz = "Asia/Kolkata")
-compute_footprint(1 + 1, cpu_power_w = 45, memory_gb = 16)$assumptions[1]
+dtctloc()
+dtctloc(envloc = "", codloc = "", tz = "Asia/Kolkata")
+co2fp(1 + 1, cpupwrw = 45, memgb = 16)$assumptions[1]
 ```
 
 For a long analysis the figures become meaningful; the equivalents are the two the Green
 Algorithms calculator prints:
 
 ```{r equiv}
-footprint_equivalents(fp$co2e_g * 1e4)   # if this ran ten thousand times
+fpeqv(fp$co2eg * 1e4)   # if this ran ten thousand times
 ```
 
 **Cross-checked against codecarbon.** On the same 8-second CPU-bound workload with the same
-forced inputs (65 W CPU, 16 GB at 0.3725 W/GB), codecarbon 3.3.1 and `compute_footprint()`
-charged the memory identically (5.96 W) and the CPU within 8%; `load_curve = "codecarbon"`
+forced inputs (65 W CPU, 16 GB at 0.3725 W/GB), codecarbon 3.3.1 and `co2fp()`
+charged the memory identically (5.96 W) and the CPU within 8%; `loadcur = "codecarbon"`
 reproduces codecarbon's power-from-load curves, so what remains of the difference is the load
 measurement itself (codecarbon samples it during the run, this function integrates the CPU
 time). The carbon intensity they applied to Canada differed
@@ -299,8 +299,8 @@ library; this package has no GPU dependency). The modelled mode inherits Green A
 assumptions: memory draws 0.3725 W/GB regardless of how it is populated (codecarbon v3
 moved to a per-DIMM heuristic for the same reason), and the grid intensity is an annual
 average, not the hour's. Embodied emissions of the hardware are excluded, as in both
-reference tools. The place to improve a figure is the inputs: a measured `cpu_power_w` for
-your CPU, the actual `memory_gb` your job used, the data centre's `pue`, and, if you have
+reference tools. The place to improve a figure is the inputs: a measured `cpupwrw` for
+your CPU, the actual `memgb` your job used, the data centre's `pue`, and, if you have
 it, the hour's carbon intensity passed as a number.
 
 ## First Nations, Métis and Inuit populations
@@ -311,7 +311,7 @@ scenarios (the WHO 2021 guideline of 5 µg/m³ against 8 and 12 µg/m³), not me
 any community.
 
 ```{r indigenous-air}
-cp <- indigenous_example("census_population")
+cp <- indiex("censuspop")
 tot <- cp[cp$GEO_LEVEL != "Country" & cp$AGE_GROUP == "Total - Age groups" &
             cp$RESIDENCE == "Total - Residence on or off reserve" &
             grepl("^Total - Average age", cp$CHARACTERISTIC_NAME), ]
@@ -320,8 +320,8 @@ head(pop[order(-pop)], 5)
 # relative risk of all-cause mortality from PM2.5, and the share of deaths attributable to
 # the excess above the guideline if the whole population breathes the scenario level
 sapply(c(8, 12), function(conc) {
-  rr <- crf_pm25(conc, reference_conc = 5)$rr
-  c(pm25 = conc, rr = rr, attributable = attributable_fraction(rr, 1))
+  rr <- crfpm25(conc, refconc = 5)$rr
+  c(pm25 = conc, rr = rr, attributable = attrfrac(rr, 1))
 })
 ```
 

@@ -7,24 +7,24 @@
 # records survives having its association destroyed on purpose.
 
 test_that("the canonical form does not depend on assembly order", {
-  a <- make_manifest(list(b = 2, a = 1), environment = FALSE)
-  b <- make_manifest(list(a = 1, b = 2), environment = FALSE)
-  expect_identical(manifest_digest(a), manifest_digest(b))
-  expect_identical(manifest_canonical(a), manifest_canonical(b))
+  a <- mkmnf(list(b = 2, a = 1), env = FALSE)
+  b <- mkmnf(list(a = 1, b = 2), env = FALSE)
+  expect_identical(mnfdgst(a), mnfdgst(b))
+  expect_identical(mnfcanon(a), mnfcanon(b))
   # nested objects too
   x <- list(meta = list(z = list(q = 1, p = 2), a = 3), results = list())
   y <- list(results = list(), meta = list(a = 3, z = list(p = 2, q = 1)))
-  expect_identical(manifest_digest(x), manifest_digest(y))
+  expect_identical(mnfdgst(x), mnfdgst(y))
   # but an ARRAY's order is content, not presentation, and must survive
   expect_false(identical(
-    manifest_digest(list(v = list(1, 2))),
-    manifest_digest(list(v = list(2, 1)))
+    mnfdgst(list(v = list(1, 2))),
+    mnfdgst(list(v = list(2, 1)))
   ))
   # the digest is 64 hex characters and changes with the content
-  expect_match(manifest_digest(a), "^[0-9a-f]{64}$")
+  expect_match(mnfdgst(a), "^[0-9a-f]{64}$")
   expect_false(identical(
-    manifest_digest(a),
-    manifest_digest(list(meta = list(a = 1, b = 3)))
+    mnfdgst(a),
+    mnfdgst(list(meta = list(a = 1, b = 3)))
   ))
 })
 
@@ -37,24 +37,24 @@ test_that("a recorded number can be recovered from the manifest", {
     1 / 3, pi, 1e-300, 2^-1074, .Machine$double.xmax,
     .Machine$double.eps, 1234567.891011
   )) {
-    m <- make_manifest(list(x = x), environment = FALSE)
-    back <- bricklayer_json_from_json(manifest_canonical(m))
+    m <- mkmnf(list(x = x), env = FALSE)
+    back <- fromjs(mnfcanon(m))
     expect_identical(back$meta$x, x, info = format(x, digits = 17))
     tmp <- tempfile(fileext = ".json")
-    write_manifest_json(m, tmp)
-    got <- bricklayer_json_from_json(paste(readLines(tmp), collapse = "\n"))
+    wrmnfjs(m, tmp)
+    got <- fromjs(paste(readLines(tmp), collapse = "\n"))
     expect_identical(got$meta$x, x, info = format(x, digits = 17))
     unlink(tmp)
   }
   # the canonical file is one line, so it can be hashed without
   # worrying about line endings
-  m <- make_manifest(list(x = 1), environment = FALSE)
+  m <- mkmnf(list(x = 1), env = FALSE)
   tmp <- tempfile(fileext = ".json")
-  write_manifest_json(m, tmp, canonical = TRUE)
+  wrmnfjs(m, tmp, canon = TRUE)
   expect_length(readLines(tmp), 1L)
   expect_identical(
-    core_sha256(charToRaw(readLines(tmp))),
-    manifest_digest(m)
+    csha256(charToRaw(readLines(tmp))),
+    mnfdgst(m)
   )
   unlink(tmp)
 })
@@ -72,14 +72,14 @@ test_that("the extremes survive, because the reader is ours", {
     .Machine$double.xmax, 1e308, 1.5e300, 1e200, 1e100,
     2^-1074, 5e-324, 1e-310
   )) {
-    m <- make_manifest(list(x = x), environment = FALSE)
-    back <- bricklayer_json_from_json(manifest_canonical(m))$meta$x
+    m <- mkmnf(list(x = x), env = FALSE)
+    back <- fromjs(mnfcanon(m))$meta$x
     expect_identical(back, x, info = format(x, digits = 17))
   }
   # and the text is what it should be, which is the writer's half
   expect_match(
-    manifest_canonical(
-      make_manifest(list(x = .Machine$double.xmax), environment = FALSE)
+    mnfcanon(
+      mkmnf(list(x = .Machine$double.xmax), env = FALSE)
     ),
     "1.7976931348623157e+308",
     fixed = TRUE
@@ -145,7 +145,7 @@ test_that("decimal conversion is correctly rounded, not libc's guess", {
 
 
 test_that("the environment record carries the generator", {
-  env <- capture_environment()
+  env <- capenv()
   # Without the generator's identity a stochastic result cannot be
   # reproduced: R has changed its default sample() algorithm before, and
   # a seed means nothing without the kind it was fed to.
@@ -160,84 +160,84 @@ test_that("the environment record carries the generator", {
   old <- RNGkind()
   on.exit(RNGkind(old[1], old[2], old[3]), add = TRUE)
   suppressWarnings(RNGkind("Wichmann-Hill"))
-  expect_match(capture_environment()$rng_kind, "Wichmann-Hill")
+  expect_match(capenv()$rng_kind, "Wichmann-Hill")
 })
 
 test_that("an attestation binds the manifest, the key and the note", {
-  m <- make_manifest(list(dataset = "otis", rows = 1200L),
-    environment = FALSE
+  m <- mkmnf(list(dataset = "otis", rows = 1200L),
+    env = FALSE
   )
   for (sch in c("ML-DSA-44", "SLH-DSA-SHAKE-128f")) {
-    key <- fips_keygen(sch)
-    att <- capsule_attest(m, key,
-      context = "release",
+    key <- fipskg(sch)
+    att <- cpsatst(m, key,
+      ctx = "release",
       note = "counts as published"
     )
     expect_s3_class(att, "bricklayer_attestation")
     expect_identical(att$scheme, sch)
-    expect_identical(att$digest, manifest_digest(m))
-    res <- capsule_check_attestation(att, m)
+    expect_identical(att$digest, mnfdgst(m))
+    res <- cpschkatst(att, m)
     expect_true(res$ok, info = sch)
     expect_true(all(res$checks$ok))
     # naming the key that should have signed is part of the check
-    expect_true(capsule_check_attestation(att, m,
-      key_expected = key$public
+    expect_true(cpschkatst(att, m,
+      keyexp = key$public
     )$ok, info = sch)
-    expect_false(capsule_check_attestation(att, m,
-      key_expected = fips_keygen(sch)$public
+    expect_false(cpschkatst(att, m,
+      keyexp = fipskg(sch)$public
     )$ok, info = sch)
 
     # every field inside the payload is covered by the signature, so
     # editing any of them afterwards is detected
     m2 <- m
     m2$meta$rows <- 1201L
-    expect_false(capsule_check_attestation(att, m2)$ok, info = sch)
+    expect_false(cpschkatst(att, m2)$ok, info = sch)
     for (field in c("note", "context", "prehash", "signed_utc", "digest")) {
       bad <- att
       bad[[field]] <- paste0(bad[[field]], "x")
-      expect_false(capsule_check_attestation(bad, m)$ok,
+      expect_false(cpschkatst(bad, m)$ok,
         info = paste(sch, field)
       )
     }
     # and a signature lifted from another attestation does not fit
-    other <- capsule_attest(m, key, context = "release", note = "other")
+    other <- cpsatst(m, key, ctx = "release", note = "other")
     swapped <- att
     swapped$signature <- other$signature
-    expect_false(capsule_check_attestation(swapped, m)$ok, info = sch)
+    expect_false(cpschkatst(swapped, m)$ok, info = sch)
   }
 })
 
 test_that("an attestation works with the stateful hash-based key too", {
-  m <- make_manifest(list(a = 1), environment = FALSE)
-  key <- pqc_keygen(height = 4L)
-  att <- capsule_attest(m, key, note = "hash-based")
+  m <- mkmnf(list(a = 1), env = FALSE)
+  key <- pqckg(height = 4L)
+  att <- cpsatst(m, key, note = "hash-based")
   expect_identical(att$scheme, "xmss-sha256")
   # the XMSS public key is root and public seed together: both are
   # needed to verify, so both have to be recorded
   expect_identical(nchar(att$public), 128L)
-  expect_true(capsule_check_attestation(att, m)$ok)
+  expect_true(cpschkatst(att, m)$ok)
   m2 <- m
   m2$meta$a <- 2
-  expect_false(capsule_check_attestation(att, m2)$ok)
+  expect_false(cpschkatst(att, m2)$ok)
 })
 
 test_that("the attestation surface refuses what it cannot check", {
-  m <- make_manifest(list(a = 1), environment = FALSE)
-  expect_error(capsule_attest(m, list()), "fips_keygen")
+  m <- mkmnf(list(a = 1), env = FALSE)
+  expect_error(cpsatst(m, list()), "fipskg")
   expect_error(
-    capsule_attest("not a manifest", fips_keygen("ML-DSA-44")),
+    cpsatst("not a manifest", fipskg("ML-DSA-44")),
     "manifest"
   )
-  expect_error(capsule_check_attestation(list(), m), "capsule_attest")
+  expect_error(cpschkatst(list(), m), "cpsatst")
   # an attestation missing a field fails rather than being read around
-  att <- capsule_attest(m, fips_keygen("ML-DSA-44"))
+  att <- cpsatst(m, fipskg("ML-DSA-44"))
   stripped <- att
   stripped$public <- NULL
-  res <- capsule_check_attestation(stripped, m)
+  res <- cpschkatst(stripped, m)
   expect_false(res$ok)
   expect_false(res$checks$ok[res$checks$check == "attestation_complete"])
   expect_output(print(att), "Capsule attestation")
-  expect_output(print(capsule_check_attestation(att, m)), "OK")
+  expect_output(print(cpschkatst(att, m)), "OK")
 })
 
 test_that("the falsification controls can fail, and do", {
@@ -248,8 +248,8 @@ test_that("the falsification controls can fail, and do", {
     r$controls$passed[r$controls$control == ctrl]
   }
 
-  real <- capsule_falsify(d, function(z) stats::cor(z$x, z$y),
-    treatment = "x", n = 199L, seed = 42L
+  real <- cpsfals(d, function(z) stats::cor(z$x, z$y),
+    trt = "x", n = 199L, seed = 42L
   )
   expect_s3_class(real, "bricklayer_falsification")
   expect_true(all(real$controls$passed))
@@ -257,8 +257,8 @@ test_that("the falsification controls can fail, and do", {
 
   # a constant is not an association, and the permutation control is
   # what says so: everything else about a constant is perfectly stable
-  const <- capsule_falsify(d, function(z) 0.5,
-    treatment = "x",
+  const <- cpsfals(d, function(z) 0.5,
+    trt = "x",
     n = 199L, seed = 42L
   )
   expect_false(verdict(const, "permutation"))
@@ -266,20 +266,20 @@ test_that("the falsification controls can fail, and do", {
 
   # nor is noise
   noise <- data.frame(x = stats::rnorm(200), y = stats::rnorm(200))
-  nul <- capsule_falsify(noise, function(z) stats::cor(z$x, z$y),
-    treatment = "x", n = 199L, seed = 7L
+  nul <- cpsfals(noise, function(z) stats::cor(z$x, z$y),
+    trt = "x", n = 199L, seed = 7L
   )
   expect_false(verdict(nul, "permutation"))
 
   # a statistic that reads the injected noise column is caught by the
   # control whose whole point is that the column cannot matter
-  peek <- capsule_falsify(
+  peek <- cpsfals(
     d,
     function(z) {
       stats::cor(z$x, z$y) +
         if (".rmbl_random_common_cause" %in% names(z)) 1 else 0
     },
-    treatment = "x", n = 99L, seed = 3L
+    trt = "x", n = 99L, seed = 3L
   )
   expect_false(verdict(peek, "random_common_cause"))
   expect_true(verdict(peek, "permutation"))
@@ -289,8 +289,8 @@ test_that("the permutation floor is reported rather than implied", {
   set.seed(2)
   d <- data.frame(x = stats::rnorm(60))
   d$y <- 2 * d$x + stats::rnorm(60, sd = 0.1)
-  r <- capsule_falsify(d, function(z) stats::cor(z$x, z$y),
-    treatment = "x", n = 19L, seed = 1L
+  r <- cpsfals(d, function(z) stats::cor(z$x, z$y),
+    trt = "x", n = 19L, seed = 1L
   )
   p <- r$controls$value[r$controls$control == "permutation"]
   # 19 permutations cannot produce a p-value below 1/20, however strong
@@ -301,13 +301,13 @@ test_that("the permutation floor is reported rather than implied", {
     r$controls$detail[r$controls$control == "permutation"],
     "smallest this design can report"
   )
-  expect_error(capsule_falsify(d, function(z) 1, n = 8L), "at least 9")
+  expect_error(cpsfals(d, function(z) 1, n = 8L), "at least 9")
 })
 
 test_that("a skipped control is reported as skipped", {
   set.seed(3)
   d <- data.frame(x = stats::rnorm(50), y = stats::rnorm(50))
-  r <- capsule_falsify(d, function(z) mean(z$y), n = 49L, seed = 1L)
+  r <- cpsfals(d, function(z) mean(z$y), n = 49L, seed = 1L)
   sk <- r$controls[r$controls$control %in% c("permutation", "placebo"), ]
   expect_true(all(is.na(sk$passed)))
   expect_true(all(grepl("skipped", sk$detail)))
@@ -324,26 +324,26 @@ test_that("a skipped control is reported as skipped", {
 
 test_that("falsification input is checked", {
   d <- data.frame(x = 1:10, y = 1:10)
-  expect_error(capsule_falsify(d[1:3, ], function(z) 1), "at least 4 rows")
-  expect_error(capsule_falsify(as.list(d), function(z) 1), "data frame")
-  expect_error(capsule_falsify(d, "notafunction"), "must be a function")
+  expect_error(cpsfals(d[1:3, ], function(z) 1), "at least 4 rows")
+  expect_error(cpsfals(as.list(d), function(z) 1), "data frame")
+  expect_error(cpsfals(d, "notafunction"), "must be a function")
   expect_error(
-    capsule_falsify(d, function(z) c(1, 2), treatment = "x"),
+    cpsfals(d, function(z) c(1, 2), trt = "x"),
     "one finite number"
   )
   expect_error(
-    capsule_falsify(d, function(z) NA_real_, treatment = "x"),
+    cpsfals(d, function(z) NA_real_, trt = "x"),
     "one finite number"
   )
-  expect_error(capsule_falsify(d, function(z) stop("boom"),
-    treatment = "x"
+  expect_error(cpsfals(d, function(z) stop("boom"),
+    trt = "x"
   ), "the statistic failed")
   expect_error(
-    capsule_falsify(d, function(z) 1, treatment = "nope"),
+    cpsfals(d, function(z) 1, trt = "nope"),
     "not a column"
   )
   expect_error(
-    capsule_falsify(d, function(z) 1, subset_frac = 1),
+    cpsfals(d, function(z) 1, subfrac = 1),
     "between 0 and 1"
   )
 })
@@ -406,14 +406,14 @@ test_that("the reader is chosen once, not re-decided per number", {
 })
 
 test_that("a hash-based attestation carries its context, and a damaged key is reported", {
-  m <- make_manifest(list(a = 1), environment = FALSE)
-  key <- pqc_keygen(height = 4L)
-  att <- capsule_attest(m, key, context = "release")
+  m <- mkmnf(list(a = 1), env = FALSE)
+  key <- pqckg(height = 4L)
+  att <- cpsatst(m, key, ctx = "release")
   expect_identical(att$context, "release")
-  expect_true(capsule_check_attestation(att, m)$ok)
+  expect_true(cpschkatst(att, m)$ok)
   bad <- att
   bad$public <- substring(att$public, 1L, 100L)
-  res <- capsule_check_attestation(bad, m)
+  res <- cpschkatst(bad, m)
   expect_false(res$ok)
   expect_match(res$checks$detail[res$checks$check == "signature"], "not usable")
   expect_error(.rmbl_attest_key_from(bad), "64 bytes")

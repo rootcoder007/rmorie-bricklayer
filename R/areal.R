@@ -22,8 +22,8 @@
 #' own population in each stratum. Comparing an area's observed count with
 #' this expected count, rather than comparing raw rates, removes the part of
 #' the difference that is explained by who lives in (or is held in) the
-#' area. The result feeds \code{\link{sir}}, \code{\link{eb_rates}} and
-#' \code{\link{funnel_limits}}.
+#' area. The result feeds \code{\link{stdinc}}, \code{\link{ebrates}} and
+#' \code{\link{fnllim}}.
 #'
 #' @details
 #' With \eqn{O_{as}} and \eqn{P_{as}} the count and population of area
@@ -42,13 +42,13 @@
 #' data, \eqn{\sum_a E_a = \sum_a O_a}.
 #'
 #' Errors: non-numeric, negative or infinite counts or populations; a
-#' population of zero; \code{counts}, \code{population}, \code{area} or
+#' population of zero; \code{cnts}, \code{pop}, \code{area} or
 #' \code{strata} of different lengths.
 #'
-#' @param counts Numeric vector of observed counts (non-negative), one per
+#' @param cnts Numeric vector of observed counts (non-negative), one per
 #'   row of the area-by-stratum table.
-#' @param population Numeric vector of the population at risk (positive),
-#'   the same length as \code{counts}.
+#' @param pop Numeric vector of the population at risk (positive),
+#'   the same length as \code{cnts}.
 #' @param area Vector of area labels, one per row (converted to character).
 #' @param strata Optional vector of stratum labels, one per row: an age
 #'   band, a gender, or their interaction. Default \code{NULL}: one stratum,
@@ -70,7 +70,7 @@
 #' applies the reference's stratum-specific rates to the study population,
 #' and direct standardisation, which does the reverse.
 #' @seealso
-#' \code{\link{sir}}, \code{\link{eb_rates}}, \code{\link{funnel_limits}}
+#' \code{\link{stdinc}}, \code{\link{ebrates}}, \code{\link{fnllim}}
 #' @examples
 #' d <- data.frame(
 #'   region = rep(c("North", "South", "East"), each = 2),
@@ -80,54 +80,54 @@
 #' )
 #'
 #' # Adjusting for size only.
-#' expected_counts(d$n, d$pop, d$region)
+#' expcnts(d$n, d$pop, d$region)
 #'
 #' # Adjusting for size AND age composition, which is the comparison
 #' # that says something about the region.
-#' e <- expected_counts(d$n, d$pop, d$region, strata = d$age)
+#' e <- expcnts(d$n, d$pop, d$region, strata = d$age)
 #' e
 #'
 #' # the expected counts feed the standardised ratio
-#' sir(e$observed, e$expected, area = e$area)
+#' stdinc(e$observed, e$expected, area = e$area)
 #'
 #' # a population of zero has no rate
-#' try(expected_counts(c(1, 2), c(10, 0), c("a", "b")))
+#' try(expcnts(c(1, 2), c(10, 0), c("a", "b")))
 #' @export
-expected_counts <- function(counts, population, area, strata = NULL) {
+expcnts <- function(cnts, pop, area, strata = NULL) {
   .rmbl_no_fn(area = area, strata = strata)
-  counts <- .rmbl_finite_input(counts, "counts", nonneg = TRUE)
-  population <- .rmbl_finite_input(population, "population", nonneg = TRUE)
+  cnts <- .rmbl_finite_input(cnts, "cnts", nonneg = TRUE)
+  pop <- .rmbl_finite_input(pop, "pop", nonneg = TRUE)
   area <- as.character(area)
-  n <- length(counts)
-  if (length(population) != n || length(area) != n) {
-    stop("`counts`, `population` and `area` must be the same length",
+  n <- length(cnts)
+  if (length(pop) != n || length(area) != n) {
+    stop("`cnts`, `pop` and `area` must be the same length",
          call. = FALSE)
   }
-  if (any(population <= 0, na.rm = TRUE)) {
-    stop("`population` must be positive", call. = FALSE)
+  if (any(pop <= 0, na.rm = TRUE)) {
+    stop("`pop` must be positive", call. = FALSE)
   }
   if (is.null(strata)) {
     strata <- rep("all", n)
   } else {
     strata <- as.character(strata)
     if (length(strata) != n) {
-      stop("`strata` must be the same length as `counts`", call. = FALSE)
+      stop("`strata` must be the same length as `cnts`", call. = FALSE)
     }
   }
-  ok <- !is.na(counts) & !is.na(population) & !is.na(area) & !is.na(strata)
-  counts <- counts[ok]
-  population <- population[ok]
+  ok <- !is.na(cnts) & !is.na(pop) & !is.na(area) & !is.na(strata)
+  cnts <- cnts[ok]
+  pop <- pop[ok]
   area <- area[ok]
   strata <- strata[ok]
   # the reference rate in each stratum, over every area at once
-  num <- tapply(counts, strata, sum)
-  den <- tapply(population, strata, sum)
+  num <- tapply(cnts, strata, sum)
+  den <- tapply(pop, strata, sum)
   rate <- num / den
-  expected_row <- population * rate[match(strata, names(rate))]
+  expected_row <- pop * rate[match(strata, names(rate))]
   areas <- sort(unique(area))
   data.frame(area = areas,
-             observed = as.numeric(tapply(counts, area, sum)[areas]),
-             population = as.numeric(tapply(population, area,
+             observed = as.numeric(tapply(cnts, area, sum)[areas]),
+             population = as.numeric(tapply(pop, area,
                                             sum)[areas]),
              expected = as.numeric(tapply(expected_row, area,
                                           sum)[areas]),
@@ -140,7 +140,7 @@ expected_counts <- function(counts, population, area, strata = NULL) {
 #' Divides each area's observed count by its expected count to give the
 #' standardised incidence ratio (SIR), and adds an exact Poisson confidence
 #' interval. A ratio of one is the overall experience; above one is an
-#' excess and below one a deficit. Use it after \code{\link{expected_counts}}
+#' excess and below one a deficit. Use it after \code{\link{expcnts}}
 #' to say which areas differ from the overall rate by more than chance.
 #'
 #' @details
@@ -155,20 +155,20 @@ expected_counts <- function(counts, population, area, strata = NULL) {
 #' an observed count of three is not an interval, it is a decoration.
 #'
 #' Each area's interval is a separate test; with many areas some will
-#' exclude one by chance (see \code{\link{scan_adjust}}). Missing values are
+#' exclude one by chance (see \code{\link{scanadj}}). Missing values are
 #' dropped before the lengths are compared.
 #'
 #' Errors: negative, infinite or non-numeric counts; an expected count of
-#' zero or below; lengths that differ (a single \code{expected} is recycled).
-#' A \code{conf_level} outside (0, 1) is an error.
+#' zero or below; lengths that differ (a single \code{expd} is recycled).
+#' A \code{conflvl} outside (0, 1) is an error.
 #'
-#' @param observed Numeric vector of observed counts (non-negative).
-#' @param expected Numeric vector of expected counts (positive), for example
-#'   from \code{\link{expected_counts}}; the same length as \code{observed},
+#' @param obs Numeric vector of observed counts (non-negative).
+#' @param expd Numeric vector of expected counts (positive), for example
+#'   from \code{\link{expcnts}}; the same length as \code{obs},
 #'   or length one.
 #' @param area Optional vector of area labels, added as the first column.
 #'   Default \code{NULL}.
-#' @param conf_level Number in (0, 1), default \code{0.95}: the two-sided
+#' @param conflvl Number in (0, 1), default \code{0.95}: the two-sided
 #'   confidence level of the interval.
 #' @return A data frame with one row per area: \code{area} (when given),
 #' \code{observed}, \code{expected}, \code{sir}, \code{lower}, \code{upper}
@@ -179,46 +179,46 @@ expected_counts <- function(counts, population, area, strata = NULL) {
 #' Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal Health
 #' Modeling}. Chapman and Hall/CRC, Chapter 1.
 #' @seealso
-#' \code{\link{expected_counts}}, \code{\link{eb_rates}},
-#' \code{\link{funnel_limits}}
+#' \code{\link{expcnts}}, \code{\link{ebrates}},
+#' \code{\link{fnllim}}
 #' @examples
-#' sir(observed = c(30, 12, 3), expected = c(20, 14, 5),
+#' stdinc(obs = c(30, 12, 3), expd = c(20, 14, 5),
 #'     area = c("North", "South", "East"))
 #'
 #' # An observed count of three carries almost no information, and the
 #' # interval says so rather than hiding it.
-#' sir(3, 5)
+#' stdinc(3, 5)
 #'
 #' # a 90 percent interval, and a zero count (lower limit exactly 0)
-#' sir(c(0, 40), c(2, 25), conf_level = 0.90)
+#' stdinc(c(0, 40), c(2, 25), conflvl = 0.90)
 #'
-#' try(sir(c(3, 4), c(5, 0)))
+#' try(stdinc(c(3, 4), c(5, 0)))
 #' @export
-sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
-  observed <- .rmbl_finite_input(observed, "observed", nonneg = TRUE,
+stdinc <- function(obs, expd, area = NULL, conflvl = 0.95) {
+  obs <- .rmbl_finite_input(obs, "obs", nonneg = TRUE,
                                  min_n = 1L)
-  expected <- .rmbl_finite_input(expected, "expected", nonneg = TRUE,
+  expd <- .rmbl_finite_input(expd, "expd", nonneg = TRUE,
                                  min_n = 1L)
-  if (length(expected) == 1L) expected <- rep(expected, length(observed))
-  if (length(observed) != length(expected)) {
-    stop("`observed` and `expected` must be the same length", call. = FALSE)
+  if (length(expd) == 1L) expd <- rep(expd, length(obs))
+  if (length(obs) != length(expd)) {
+    stop("`obs` and `expd` must be the same length", call. = FALSE)
   }
-  if (any(expected <= 0, na.rm = TRUE)) {
-    stop("`expected` must be positive", call. = FALSE)
+  if (any(expd <= 0, na.rm = TRUE)) {
+    stop("`expd` must be positive", call. = FALSE)
   }
-  if (!is.null(area) && (!is.atomic(area) || is.matrix(area) || length(area) != length(observed))) {
-    stop("`area` must be NULL or one label per area (as many as `observed`)", call. = FALSE)
+  if (!is.null(area) && (!is.atomic(area) || is.matrix(area) || length(area) != length(obs))) {
+    stop("`area` must be NULL or one label per area (as many as `obs`)", call. = FALSE)
   }
-  conf_level <- .rmbl_conf_level(conf_level)
-  a <- 1 - conf_level
+  conflvl <- .rmbl_conf_level(conflvl)
+  a <- 1 - conflvl
   # the exact Poisson interval, via the gamma relation: an observed
   # count of zero has a lower limit of exactly zero rather than a
   # negative one
-  lo <- ifelse(observed == 0, 0,
-               stats::qgamma(a / 2, shape = observed)) / expected
-  hi <- stats::qgamma(1 - a / 2, shape = observed + 1) / expected
-  out <- data.frame(observed = observed, expected = expected,
-                    sir = observed / expected, lower = lo, upper = hi,
+  lo <- ifelse(obs == 0, 0,
+               stats::qgamma(a / 2, shape = obs)) / expd
+  hi <- stats::qgamma(1 - a / 2, shape = obs + 1) / expd
+  out <- data.frame(observed = obs, expected = expd,
+                    sir = obs / expd, lower = lo, upper = hi,
                     excess = lo > 1,
                     deficit = hi < 1,
                     significant = lo > 1 | hi < 1,
@@ -237,7 +237,7 @@ sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
 #' function borrows strength across areas: each area's ratio of observed to
 #' expected is pulled toward the overall ratio by an amount that depends on
 #' how little information the area carries. Use the shrunk estimates for
-#' maps and rankings; use \code{\link{sir}} for each area's own evidence.
+#' maps and rankings; use \code{\link{stdinc}} for each area's own evidence.
 #'
 #' @details
 #' The area relative risks \eqn{\theta_a} are taken to come from a gamma
@@ -261,10 +261,10 @@ sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
 #' Errors: lengths that differ; missing, negative or infinite counts;
 #' missing, infinite or non-positive expected counts; fewer than two areas.
 #'
-#' @param observed Numeric vector of observed counts (non-negative, no
+#' @param obs Numeric vector of observed counts (non-negative, no
 #'   \code{NA}).
-#' @param expected Numeric vector of expected counts (positive), the same
-#'   length, for example from \code{\link{expected_counts}}.
+#' @param expd Numeric vector of expected counts (positive), the same
+#'   length, for example from \code{\link{expcnts}}.
 #' @param area Optional vector of area labels, added as the first column.
 #'   Default \code{NULL}.
 #' @return A data frame with one row per area: \code{area} (when given),
@@ -282,64 +282,64 @@ sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
 #' empirical-Bayes approximation in the development of Bayesian disease
 #' mapping.
 #' @seealso
-#' \code{\link{sir}}, \code{\link{funnel_limits}}
+#' \code{\link{stdinc}}, \code{\link{fnllim}}
 #' @examples
 #' # Three areas, one of them tiny. The tiny area's raw ratio is
 #' # extreme; its shrunk one is not.
-#' eb_rates(observed = c(30, 45, 2), expected = c(25, 50, 0.5),
+#' ebrates(obs = c(30, 45, 2), expd = c(25, 50, 0.5),
 #'          area = c("North", "South", "Tiny"))
 #'
 #' # no variation beyond chance: every estimate is the overall ratio
-#' eb_rates(c(10, 11, 9), c(10, 10, 10))
+#' ebrates(c(10, 11, 9), c(10, 10, 10))
 #'
 #' # one area has nothing to borrow from
-#' try(eb_rates(5, 4))
+#' try(ebrates(5, 4))
 #' @export
-eb_rates <- function(observed, expected, area = NULL) {
-  observed <- .rmbl_num(observed, "observed")
-  expected <- .rmbl_num(expected, "expected")
-  if (length(observed) != length(expected)) {
-    stop("`observed` and `expected` must be the same length", call. = FALSE)
+ebrates <- function(obs, expd, area = NULL) {
+  obs <- .rmbl_num(obs, "obs")
+  expd <- .rmbl_num(expd, "expd")
+  if (length(obs) != length(expd)) {
+    stop("`obs` and `expd` must be the same length", call. = FALSE)
   }
-  if (!is.null(area) && (!is.atomic(area) || is.matrix(area) || length(area) != length(observed))) {
-    stop("`area` must be NULL or one label per area (as many as `observed`)", call. = FALSE)
+  if (!is.null(area) && (!is.atomic(area) || is.matrix(area) || length(area) != length(obs))) {
+    stop("`area` must be NULL or one label per area (as many as `obs`)", call. = FALSE)
   }
   # counts: finite and non-negative, as sir() requires of the same inputs
-  if (anyNA(observed) || any(!is.finite(observed)) || any(observed < 0)) {
-    stop("`observed` must be finite, non-negative counts", call. = FALSE)
+  if (anyNA(obs) || any(!is.finite(obs)) || any(obs < 0)) {
+    stop("`obs` must be finite, non-negative counts", call. = FALSE)
   }
-  if (anyNA(expected) || any(!is.finite(expected))) {
-    stop("`expected` must be finite", call. = FALSE)
+  if (anyNA(expd) || any(!is.finite(expd))) {
+    stop("`expd` must be finite", call. = FALSE)
   }
-  if (any(expected <= 0)) {
-    stop("`expected` must be positive", call. = FALSE)
+  if (any(expd <= 0)) {
+    stop("`expd` must be positive", call. = FALSE)
   }
-  n <- length(observed)
+  n <- length(obs)
   if (n < 2L) {
     stop("shrinkage borrows strength across areas, so it needs at least two",
          call. = FALSE)
   }
-  theta <- observed / expected
-  esum <- sum(expected)
+  theta <- obs / expd
+  esum <- sum(expd)
   # the overall relative risk, which is the prior's mean
-  m <- sum(observed) / esum
+  m <- sum(obs) / esum
   # and its variance, by the method of moments; the subtracted term is
   # the part of the spread in theta that the Poisson sampling alone
   # would produce, so what is left is the between-area variation
-  s2 <- sum(expected * (theta - m)^2) / esum - m / (esum / n)
+  s2 <- sum(expd * (theta - m)^2) / esum - m / (esum / n)
   s2 <- max(s2, 0)
   if (s2 <= 0) {
     # no evidence of real variation between areas: every estimate is the
     # overall rate, and the shrinkage is total
-    return(.eb_frame(area, observed, expected, theta,
+    return(.eb_frame(area, obs, expd, theta,
                      rep(m, n), rep(1, n), NA_real_, NA_real_))
   }
   alpha <- m / s2
   nu <- m^2 / s2
-  eb <- (observed + nu) / (expected + alpha)
+  eb <- (obs + nu) / (expd + alpha)
   # the weight the DATA carry, so shrinkage is one minus it
-  w <- expected / (expected + alpha)
-  .eb_frame(area, observed, expected, theta, eb, 1 - w, nu, alpha)
+  w <- expd / (expd + alpha)
+  .eb_frame(area, obs, expd, theta, eb, 1 - w, nu, alpha)
 }
 
 .eb_frame <- function(area, observed, expected, theta, eb, shrink,
@@ -379,12 +379,12 @@ eb_rates <- function(observed, expected, area = NULL) {
 #' values are dropped); a non-positive \code{target}; a level outside
 #' (0, 1).
 #'
-#' @param expected Numeric vector of expected counts (positive) at which to
+#' @param expd Numeric vector of expected counts (positive) at which to
 #'   compute limits, for example a grid from the smallest to the largest
 #'   area.
 #' @param target Number, default \code{1}: the ratio the limits are centred
 #'   on. One is the overall experience.
-#' @param levels Numeric vector of two-sided coverage levels in (0, 1),
+#' @param lvls Numeric vector of two-sided coverage levels in (0, 1),
 #'   default \code{c(0.95, 0.998)}; one pair of limits per level.
 #' @return A data frame with one row per expected count and level, sorted by
 #' level then expected count, with numeric columns \code{expected},
@@ -403,41 +403,41 @@ eb_rates <- function(observed, expected, area = NULL) {
 #' Modeling}. Chapman and Hall/CRC, on the Poisson counts these limits are
 #' built from.
 #' @seealso
-#' \code{\link{sir}}, \code{\link{eb_rates}}
+#' \code{\link{stdinc}}, \code{\link{ebrates}}
 #' @examples
 #' # The funnel narrows as the expected count grows, which is the whole
 #' # point: a ratio of 2 means nothing at an expected count of 2 and a
 #' # great deal at an expected count of 200.
-#' funnel_limits(c(2, 20, 200))
+#' fnllim(c(2, 20, 200))
 #'
 #' # one 90 percent funnel around a target ratio of 1.2
-#' funnel_limits(c(5, 50), target = 1.2, levels = 0.90)
+#' fnllim(c(5, 50), target = 1.2, lvls = 0.90)
 #'
 #' # a funnel drawn with base graphics
 #' e <- c(1, 2, 5, 10, 20, 50, 100, 200)
-#' f <- funnel_limits(e, levels = 0.95)
+#' f <- fnllim(e, lvls = 0.95)
 #' plot(f$expected, f$upper, type = "s", log = "x", ylim = c(0, 4),
 #'      xlab = "expected count", ylab = "ratio")
 #' lines(f$expected, f$lower, type = "s")
 #' abline(h = 1, lty = 2)
 #'
-#' try(funnel_limits(10, levels = 1))
+#' try(fnllim(10, lvls = 1))
 #' @export
-funnel_limits <- function(expected, target = 1,
-                          levels = c(0.95, 0.998)) {
-  expected <- .rmbl_finite_input(expected, "expected", min_n = 1L)
-  if (any(expected <= 0, na.rm = TRUE)) {
-    stop("`expected` must be positive", call. = FALSE)
+fnllim <- function(expd, target = 1,
+                          lvls = c(0.95, 0.998)) {
+  expd <- .rmbl_finite_input(expd, "expd", min_n = 1L)
+  if (any(expd <= 0, na.rm = TRUE)) {
+    stop("`expd` must be positive", call. = FALSE)
   }
   target <- .rmbl_num(target, "target")[1L]
   if (is.na(target) || target <= 0) {
     stop("`target` must be positive", call. = FALSE)
   }
-  levels <- sort(.rmbl_num(levels, "levels"))
-  if (any(levels <= 0 | levels >= 1)) {
-    stop("`levels` must lie strictly inside (0, 1)", call. = FALSE)
+  lvls <- sort(.rmbl_num(lvls, "lvls"))
+  if (any(lvls <= 0 | lvls >= 1)) {
+    stop("`lvls` must lie strictly inside (0, 1)", call. = FALSE)
   }
-  grid <- expand.grid(expected = expected, level = levels)
+  grid <- expand.grid(expected = expd, level = lvls)
   a <- 1 - grid$level
   mu <- target * grid$expected
   # the exact Poisson quantiles at the two tails, on the ratio scale
@@ -483,20 +483,20 @@ funnel_limits <- function(expected, target = 1,
 #' negative weights; no area with any neighbour.
 #'
 #' @param x Numeric vector, one value per area, no missing values.
-#' @param neighbours Either a list with one integer vector of neighbour
+#' @param nbrs Either a list with one integer vector of neighbour
 #'   indices per area (in the order of \code{x}), or a square \eqn{n \times
 #'   n} weight matrix.
 #' @param style \code{"W"} (the default) row-standardises the weights, so
 #'   each area's neighbours carry a total weight of one; \code{"B"} leaves
 #'   them as given (binary for a list). Row standardisation is the usual
 #'   choice, and stops an area with many neighbours from dominating.
-#' @param n_perm Integer, default \code{9999}: the number of random
+#' @param nperm Integer, default \code{9999}: the number of random
 #'   permutations for the null distribution.
 #' @return A list with \code{I} (the statistic), \code{expectation}
-#' (\eqn{-1/(n-1)}), \code{null_mean} and \code{null_sd} (mean and standard
-#' deviation of the permuted values), \code{z} (\code{(I - null_mean) /
-#' null_sd}), \code{p_value}, \code{W} (the total weight), \code{n} (number
-#' of areas), \code{n_perm} (permutations used) and \code{style}.
+#' (\eqn{-1/(n-1)}), \code{nullmean} and \code{nullsd} (mean and standard
+#' deviation of the permuted values), \code{z} (\code{(I - nullmean) /
+#' nullsd}), \code{p_value}, \code{W} (the total weight), \code{n} (number
+#' of areas), \code{nperm} (permutations used) and \code{style}.
 #' @references
 #' Moran, P. A. P. (1950). Notes on continuous stochastic phenomena.
 #' \emph{Biometrika} 37(1/2), 17-23. Laniyonu (2017), on policing practices
@@ -508,11 +508,11 @@ funnel_limits <- function(expected, target = 1,
 #'
 #' # A smooth gradient is strongly positively autocorrelated.
 #' set.seed(1)
-#' morans_i(c(1, 2, 3, 4, 5, 6), nb, n_perm = 999L)[c("I", "p_value")]
+#' morani(c(1, 2, 3, 4, 5, 6), nb, nperm = 999L)[c("I", "p_value")]
 #'
 #' # An alternating pattern is negatively autocorrelated.
 #' set.seed(1)
-#' morans_i(c(1, 6, 1, 6, 1, 6), nb, n_perm = 999L)[c("I", "p_value")]
+#' morani(c(1, 6, 1, 6, 1, 6), nb, nperm = 999L)[c("I", "p_value")]
 #'
 #' # And the null expectation is not zero.
 #' -1 / (6 - 1)
@@ -521,18 +521,18 @@ funnel_limits <- function(expected, target = 1,
 #' w <- matrix(0, 6, 6)
 #' for (i in 1:5) w[i, i + 1] <- w[i + 1, i] <- 1
 #' set.seed(1)
-#' morans_i(c(1, 2, 3, 4, 5, 6), w, style = "B", n_perm = 999L)$I
+#' morani(c(1, 2, 3, 4, 5, 6), w, style = "B", nperm = 999L)$I
 #'
 #' # a constant variable has no autocorrelation to measure
-#' try(morans_i(c(2, 2, 2), list(2L, c(1L, 3L), 2L)))
+#' try(morani(c(2, 2, 2), list(2L, c(1L, 3L), 2L)))
 #' @export
-morans_i <- function(x, neighbours, style = c("W", "B"),
-                     n_perm = 9999L) {
+morani <- function(x, nbrs, style = c("W", "B"),
+                     nperm = 9999L) {
   style <- .rmbl_arg(style)
   x <- .rmbl_num(x, "x")
-  n_perm <- .rmbl_num(n_perm, "n_perm", integer = TRUE)
-  if (length(n_perm) != 1L || is.na(n_perm) || n_perm < 0L) {
-    stop("`n_perm` must be a single non-negative whole number", call. = FALSE)
+  nperm <- .rmbl_num(nperm, "nperm", integer = TRUE)
+  if (length(nperm) != 1L || is.na(nperm) || nperm < 0L) {
+    stop("`nperm` must be a single non-negative whole number", call. = FALSE)
   }
   n <- length(x)
   if (n < 3L) stop("Moran's I needs at least three areas", call. = FALSE)
@@ -543,7 +543,7 @@ morans_i <- function(x, neighbours, style = c("W", "B"),
     stop("`x` is constant: Moran's I is undefined (no variance to autocorrelate)",
          call. = FALSE)
   }
-  nb <- .rmbl_neighbours(neighbours, n)
+  nb <- .rmbl_neighbours(nbrs, n)
   # A weight matrix carries magnitudes (inverse distance, a
   # pre-standardised matrix); they are used as given under style "B" and
   # row-standardised under "W". A neighbour list is binary. Reducing a
@@ -575,10 +575,10 @@ morans_i <- function(x, neighbours, style = c("W", "B"),
   start <- c(0L, cumsum(len)[-n])
   idx <- as.integer(unlist(nb, use.names = FALSE)) - 1L
   if (!length(idx)) {
-    stop("`neighbours` gives no area any neighbour", call. = FALSE)
+    stop("`nbrs` gives no area any neighbour", call. = FALSE)
   }
   r <- .Call(C_rmbl_morans_i, x, idx, as.integer(start), as.integer(len),
-             as.numeric(wts), as.integer(n_perm), NULL)
+             as.numeric(wts), as.integer(nperm), NULL)
   null <- r$null
   null <- null[is.finite(null)]
   expectation <- -1 / (n - 1)
@@ -591,14 +591,14 @@ morans_i <- function(x, neighbours, style = c("W", "B"),
     NA_real_
   }
   list(I = r$I, expectation = expectation,
-       null_mean = if (length(null)) mean(null) else NA_real_,
-       null_sd = if (length(null)) stats::sd(null) else NA_real_,
+       nullmean = if (length(null)) mean(null) else NA_real_,
+       nullsd = if (length(null)) stats::sd(null) else NA_real_,
        z = if (length(null) > 1L && stats::sd(null) > 0) {
          (r$I - mean(null)) / stats::sd(null)
        } else {
          NA_real_
        },
-       p_value = p, W = r$W, n = n, n_perm = length(null), style = style)
+       p_value = p, W = r$W, n = n, nperm = length(null), style = style)
 }
 
 # A neighbour list, from a list or from a weight matrix.

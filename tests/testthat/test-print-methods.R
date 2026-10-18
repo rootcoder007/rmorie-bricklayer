@@ -11,7 +11,7 @@ test_that("the drift report leads with its verdict and shows the tests", {
                     g = sample(c("a", "b"), 200, TRUE),
                     stringsAsFactors = FALSE)
 
-  d <- capsule_drift(ref, cur)
+  d <- cpsdrft(ref, cur)
   txt <- format(d)
   expect_type(txt, "character")
   expect_true(length(txt) > 5L)
@@ -29,17 +29,17 @@ test_that("the drift report leads with its verdict and shows the tests", {
                    capture.output(cat(format(d), sep = "\n")))
 
   # a clean comparison says so instead
-  clean <- capsule_drift(ref, ref)
+  clean <- cpsdrft(ref, ref)
   expect_match(paste(format(clean), collapse = "\n"), "no drift detected")
   expect_false(grepl("DRIFT DETECTED",
                      paste(format(clean), collapse = "\n")))
 
   # added and removed columns are surfaced
-  gone <- capsule_drift(ref, cur[, "v", drop = FALSE])
+  gone <- cpsdrft(ref, cur[, "v", drop = FALSE])
   expect_match(paste(format(gone), collapse = "\n"), "columns removed")
   more <- cur
   more$extra <- 1
-  expect_match(paste(format(capsule_drift(ref, more)), collapse = "\n"),
+  expect_match(paste(format(cpsdrft(ref, more)), collapse = "\n"),
                "columns added")
 
   # the summary is the condensed form
@@ -56,27 +56,27 @@ test_that("the reports fall back to ASCII when told to", {
   Sys.setenv(RMBL_ASCII_ONLY = "1")
 
   set.seed(32)
-  d <- capsule_drift(data.frame(v = stats::rnorm(80)),
+  d <- cpsdrft(data.frame(v = stats::rnorm(80)),
                      data.frame(v = stats::rnorm(80)))
   txt <- paste(format(d), collapse = "\n")
   # every character is representable in ASCII
   expect_false(grepl("[^\x01-\x7f]", txt, useBytes = TRUE))
   expect_match(txt, "no drift detected")
 
-  b <- benford_test(10^stats::runif(300, 0, 5))
+  b <- benfordtst(10^stats::runif(300, 0, 5))
   expect_false(grepl("[^\x01-\x7f]", paste(format(b), collapse = "\n"),
                      useBytes = TRUE))
-  k <- pqc_keygen(height = 2)
+  k <- pqckg(height = 2)
   expect_false(grepl("[^\x01-\x7f]", paste(format(k), collapse = "\n"),
                      useBytes = TRUE))
   expect_false(grepl("[^\x01-\x7f]",
-                     paste(format(capsule_sign("m", k)), collapse = "\n"),
+                     paste(format(cpssign("m", k)), collapse = "\n"),
                      useBytes = TRUE))
 })
 
 test_that("the Benford report shows the digits and its own caveat", {
   set.seed(33)
-  b <- benford_test(10^stats::runif(2000, 0, 6))
+  b <- benfordtst(10^stats::runif(2000, 0, 6))
   txt <- paste(format(b), collapse = "\n")
   expect_match(txt, "Benford first-digit screen")
   expect_match(txt, "consistent with Benford")
@@ -87,7 +87,7 @@ test_that("the Benford report shows the digits and its own caveat", {
   expect_output(print(b), "Benford")
 
   # a failing screen says so, and says it is only a screen
-  flat <- benford_test(as.numeric(paste0(rep(1:9, each = 200), "00")))
+  flat <- benfordtst(as.numeric(paste0(rep(1:9, each = 200), "00")))
   ftxt <- paste(format(flat), collapse = "\n")
   expect_match(ftxt, "departs from Benford")
   expect_match(ftxt, "screen only")
@@ -97,8 +97,8 @@ test_that("the Benford report shows the digits and its own caveat", {
 test_that("keys and signatures print without ever showing the secret", {
   s1 <- paste(rep("11", 32), collapse = "")
   s2 <- paste(rep("22", 32), collapse = "")
-  key <- pqc_keygen(height = 2, sk_seed = s1, pub_seed = s2)
-  xmss_register_key(key)   # a key from given seeds is not registered at birth (review of 52a8883)
+  key <- pqckg(height = 2, skseed = s1, pubseed = s2)
+  xmssregkey(key)   # a key from given seeds is not registered at birth (review of 52a8883)
 
   txt <- paste(format(key), collapse = "\n")
   expect_match(txt, "Signing key")
@@ -110,14 +110,14 @@ test_that("keys and signatures print without ever showing the secret", {
   expect_output(print(key), "Signing key")
 
   # the public key prints its root and nothing secret
-  ptxt <- paste(format(signing_public_key(key)), collapse = "\n")
+  ptxt <- paste(format(signpubkey(key)), collapse = "\n")
   expect_match(ptxt, "Public verification key")
   expect_match(ptxt, key$root, fixed = TRUE)
   expect_false(grepl(s1, ptxt, fixed = TRUE))
 
   # the usage counter advances in the rendering as leaves are consumed
-  sig <- capsule_sign("m", key)
-  expect_match(paste(format(xmss_advance(key, sig)), collapse = "\n"),
+  sig <- cpssign("m", key)
+  expect_match(paste(format(xmssadv(key, sig)), collapse = "\n"),
                "1 of 4 signatures")
 
   # a signature prints its index and an abbreviated body, not 2 KB of hex
@@ -129,12 +129,12 @@ test_that("keys and signatures print without ever showing the secret", {
   expect_true(nchar(stxt) < 1000L)
   expect_false(grepl(s1, stxt, fixed = TRUE))
   # an HMAC signature prints its tag in full, since it is short
-  h <- capsule_sign("m", "k", "hmac")
+  h <- cpssign("m", "k", "hmac")
   expect_match(paste(format(h), collapse = "\n"), h$signature, fixed = TRUE)
   expect_output(print(h), "hmac")
 })
 
-test_that("profile_columns describes each column by its own type", {
+test_that("profcols describes each column by its own type", {
   set.seed(34)
   df <- data.frame(
     clean = stats::rnorm(100),
@@ -144,7 +144,7 @@ test_that("profile_columns describes each column by its own type", {
     allna = rep(NA_real_, 100),
     stringsAsFactors = FALSE
   )
-  p <- profile_columns(df)
+  p <- profcols(df)
   expect_s3_class(p, "bricklayer_profile")
   expect_equal(nrow(p), 5L)
   expect_equal(p$column, names(df))
@@ -159,8 +159,8 @@ test_that("profile_columns describes each column by its own type", {
 
   # the numeric summaries agree with the kernels they come from
   expect_equal(p$mean[p$column == "clean"], mean(df$clean))
-  expect_equal(p$median[p$column == "clean"], core_median(df$clean))
-  expect_equal(p$mad[p$column == "clean"], core_mad(df$clean))
+  expect_equal(p$median[p$column == "clean"], cmed(df$clean))
+  expect_equal(p$mad[p$column == "clean"], cmad(df$clean))
   expect_equal(p$sd[p$column == "clean"], stats::sd(df$clean))
   expect_equal(p$min[p$column == "clean"], min(df$clean))
   # and the NA-bearing column is summarised on its complete cases
@@ -188,12 +188,12 @@ test_that("profile_columns describes each column by its own type", {
 
   # the quantile columns are the ones asked for
   expect_true(all(c("q25", "q50", "q75") %in% names(p)))
-  expect_equal(p$q50[p$column == "clean"], core_median(df$clean))
-  expect_true("q10" %in% names(profile_columns(df, quantiles = 0.1)))
-  expect_false("q25" %in% names(profile_columns(df, quantiles = 0.1)))
+  expect_equal(p$q50[p$column == "clean"], cmed(df$clean))
+  expect_true("q10" %in% names(profcols(df, qnts = 0.1)))
+  expect_false("q25" %in% names(profcols(df, qnts = 0.1)))
 
   expect_output(print(p), "Column profile")
   expect_identical(withVisible(print(p))$visible, FALSE)
-  expect_error(profile_columns(1:5), "data frame")
-  expect_error(profile_columns(data.frame()), "no columns")
+  expect_error(profcols(1:5), "data frame")
+  expect_error(profcols(data.frame()), "no columns")
 })

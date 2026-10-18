@@ -302,8 +302,8 @@ otis_yoy_download <- function(destdir, signatures,
     TRUE
   }, error = function(e) FALSE, warning = function(w) FALSE)
   if (!ok) return(NULL)
-  pkg <- if (exists("bricklayer_json_from_json", mode = "function")) {
-    bricklayer_json_from_json(raw, simplifyVector = FALSE)
+  pkg <- if (exists("fromjs", mode = "function")) {
+    fromjs(raw, simplifyVector = FALSE)
   } else if (requireNamespace("jsonlite", quietly = TRUE)) {
     jsonlite::fromJSON(raw, simplifyVector = FALSE)
   } else {
@@ -437,11 +437,11 @@ otis_rates_table <- function(inp, dimcol, mcol, popkey, ppop) {
   pr <- agg[!is.na(agg$pop) & agg$pop > 0, , drop = FALSE]
   po <- agg[!is.na(agg$ont) & agg$ont > 0, , drop = FALSE]
   list(all = agg,
-       prison = if (nrow(pr)) rate(pr, n, pop, by = c("group", "year"),
+       prison = if (nrow(pr)) rtcalc(pr, n, pop, by = c("group", "year"),
                                    per = OTIS_PER_PRISON) else NULL,
-       ont = if (nrow(po)) rate(po, n, ont, by = c("group", "year"),
+       ont = if (nrow(po)) rtcalc(po, n, ont, by = c("group", "year"),
                                 per = OTIS_PER_ONT) else NULL,
-       change = if (nrow(pr)) rate_change(pr, n, pop, year, by = "group",
+       change = if (nrow(pr)) ratechg(pr, n, pop, year, by = "group",
                                           per = OTIS_PER_PRISON) else NULL)
 }
 
@@ -471,9 +471,9 @@ otis_rates_table <- function(inp, dimcol, mcol, popkey, ppop) {
   if (length(m) == 4L) {
     later <- m[4]
     return(switch(m[2],
-      d = pick(got$change, later, "pct_change"),
-      lo = pick(got$change, later, "pct_lower"),
-      hi = pick(got$change, later, "pct_upper"),
+      d = pick(got$change, later, "pctchg"),
+      lo = pick(got$change, later, "pctlo"),
+      hi = pick(got$change, later, "pctup"),
       NA_real_))
   }
   NA_real_
@@ -586,7 +586,7 @@ otis_headline_rates <- function(dsdir) {
   if (is.null(ppop)) return(NULL)
   years <- intersect(names(ppop$incustody), names(OTIS_ONT_POP))
   mk <- function(label, count, exposure, per) {
-    r <- rate(count, exposure, per = per)
+    r <- rtcalc(count, exposure, per = per)
     data.frame(rate = label, count = count, exposure = exposure, per = per,
                value = r$rate, lower = r$lower, upper = r$upper,
                stringsAsFactors = FALSE)
@@ -665,11 +665,11 @@ otis_rates_table_matched <- function(inp, dimcol, mcol, popkey, gpop) {
   pr <- agg[!is.na(agg$pop) & agg$pop > 0, , drop = FALSE]
   po <- agg[!is.na(agg$ont) & agg$ont > 0, , drop = FALSE]
   list(all = agg,
-       prison = if (nrow(pr)) rate(pr, n, pop, by = c("group", "year"),
+       prison = if (nrow(pr)) rtcalc(pr, n, pop, by = c("group", "year"),
                                    per = OTIS_PER_PRISON) else NULL,
-       ont = if (nrow(po)) rate(po, n, ont, by = c("group", "year"),
+       ont = if (nrow(po)) rtcalc(po, n, ont, by = c("group", "year"),
                                 per = OTIS_PER_ONT) else NULL,
-       change = if (nrow(pr)) rate_change(pr, n, pop, year, by = "group",
+       change = if (nrow(pr)) ratechg(pr, n, pop, year, by = "group",
                                           per = OTIS_PER_PRISON) else NULL)
 }
 

@@ -47,15 +47,15 @@ test_that("all twelve FIPS 204/205 pre-hash digests match OpenSSL on \"abc\"", {
 })
 
 test_that("every pre-hash signs and verifies, and is bound to its own OID", {
-  key <- fips_keygen("ML-DSA-44", seed = as.raw(1:32))
-  pub <- fips_public_key(key)
+  key <- fipskg("ML-DSA-44", seed = as.raw(1:32))
+  pub <- fipspubkey(key)
   for (ph in c("sha224", "sha384", "sha512_224", "sha512_256", "sha3_224", "sha3_256",
                "sha3_384", "sha3_512")) {
-    sig <- capsule_sign("a manifest", key, prehash = ph, deterministic = TRUE)
-    expect_true(capsule_verify("a manifest", sig, pub), info = ph)
+    sig <- cpssign("a manifest", key, prehash = ph, determ = TRUE)
+    expect_true(cpsvrf("a manifest", sig, pub), info = ph)
     # SHA-512/224 and SHA3-224 have the same digest length: the OID keeps them apart
     other <- if (ph == "sha512_224") "sha3_224" else "sha512_224"
-    expect_false(capsule_verify("a manifest", sig, pub, prehash = other), info = ph)
+    expect_false(cpsvrf("a manifest", sig, pub, prehash = other), info = ph)
   }
 })
 
@@ -71,9 +71,9 @@ test_that("ML-KEM decapsulation refuses a key that fails the FIPS 203 hash check
   expect_error(.Call(rmoriebricklayer:::C_rmbl_mlkem_decaps, 768L, bad, ct$ciphertext),
                "FIPS 203 hash check")
   # and through the exported interface
-  key <- kem_keygen(512L, seed = as.raw(rep(3L, 64L)))
-  cap <- kem_encapsulate(key, m = as.raw(rep(5L, 32L)))
-  expect_identical(kem_decapsulate(key, cap$ciphertext), cap$shared)
+  key <- kemkg(512L, seed = as.raw(rep(3L, 64L)))
+  cap <- kemencap(key, m = as.raw(rep(5L, 32L)))
+  expect_identical(kemdecap(key, cap$ciphertext), cap$shared)
 })
 
 test_that("SLH-DSA internal signing is FIPS 205 slh_sign_internal and differs from the public interface", {

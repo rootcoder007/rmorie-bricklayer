@@ -396,7 +396,7 @@ SEXP C_rmbl_ipw_impl(SEXP treat, SEXP propensity, SEXP trim_lo, SEXP trim_hi) {
     R_xlen_t n = XLENGTH(treat);
     if (XLENGTH(propensity) != n) {
         UNPROTECT(2);
-        rmbl::fail("`treat` and `propensity` must have the same length");
+        rmbl::fail("`treat` and `ps` must have the same length");
     }
     SEXP out = PROTECT(rmbl::alloc_vector(REALSXP, n));
     rmbl_ipw_weights(REAL(treat), REAL(propensity), n, Rf_asReal(trim_lo),
@@ -476,7 +476,7 @@ static void rmbl_hk_len(SEXP x, const char *name, R_xlen_t need) {
  * that grid is refused rather than allocated (a horizon of 2^31 was 32 GB) */
 static void rmbl_hk_grid_ok(int bk, double T) {
     if (bk != 0 && !(T <= 4194304.0)) {
-        rmbl::fail("a sinusoidal baseline is integrated day by day: `horizon` must be at most 4194304 days");
+        rmbl::fail("a sinusoidal baseline is integrated day by day: `hor` must be at most 4194304 days");
     }
 }
 

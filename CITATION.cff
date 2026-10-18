@@ -10,7 +10,7 @@ authors:
 version: "1.0.0"
 date-released: "2026-10-18"
 doi: "10.32614/CRAN.package.rmoriebricklayer"
-url: "https://CRAN.R-project.org/package=rmoriebricklayer"
+url: "https://rootcoder007.r-universe.dev/rmoriebricklayer"
 repository-code: "https://github.com/rootcoder007/rmorie-bricklayer"
 identifiers:
   - type: doi

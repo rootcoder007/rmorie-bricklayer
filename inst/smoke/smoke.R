@@ -7,7 +7,7 @@ Sys.setenv(HOME = home, XDG_CONFIG_HOME = file.path(home, "cfg"))
 key <- Sys.getenv("MORIE_SMOKE_KEY", "")
 if (nzchar(key)) Sys.setenv(MORIE_HOSTED_KEY = key) else Sys.unsetenv("MORIE_HOSTED_KEY")
 options(timeout = 600)
-run <- function(...) { buf <- character(); st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s)); list(status = st, text = paste(buf, collapse = "")) }
+run <- function(...) { buf <- character(); st <- blcli(c(...), out = function(s) buf <<- c(buf, s)); list(status = st, text = paste(buf, collapse = "")) }
 check <- function(cond, what) if (!isTRUE(cond)) stop(what, call. = FALSE)
 # a runner has no language model of its own: with none set up, models and ask must say how to bring one
 no_route <- function(r) r$status == 1L && grepl("bring your own key", r$text, fixed = TRUE)
@@ -31,22 +31,22 @@ cases <- list(
     # what inst/bin/rmoriebricklayer does under R 4.6 (which keeps "--args" in commandArgs)
     load <- if (nzchar(tree)) sprintf("pkgload::load_all(%s, quiet = TRUE)", shQuote(tree)) else "library(rmoriebricklayer)"
     r <- suppressWarnings(system2("Rscript", c("--vanilla", "-e",
-      shQuote(sprintf("suppressMessages(%s); q <- bricklayer_cli(); quit(status = as.integer(q))", load)),
+      shQuote(sprintf("suppressMessages(%s); q <- blcli(); quit(status = as.integer(q))", load)),
       "--args", "version"), stdout = TRUE, stderr = TRUE))
-    check(is.null(attr(r, "status")) && any(grepl("rmoriebricklayer 0\\.", r)), paste("launcher:", paste(r, collapse = " | ")))
+    check(is.null(attr(r, "status")) && any(grepl("rmoriebricklayer [0-9]+\\.", r)), paste("launcher:", paste(r, collapse = " | ")))
   },
   login = function() { if (!nzchar(key)) return(message("  login: SKIP")); r <- run("login", "--token", key); check(r$status == 0, r$text) },
   logout = function() { check(run("logout")$status == 0, "logout") },
-  functions = function() { r <- run("functions", "capsule"); check(r$status == 0 && grepl("capsule_sign", r$text), substr(r$text, 1, 200)) },
-  describe = function() { r <- run("describe", "make_manifest"); check(r$status == 0 && grepl("manifest", r$text, ignore.case = TRUE), substr(r$text, 1, 200)) },
-  examples = function() { r <- run("examples", "capsule_bundle"); check(r$status == 0 && nzchar(r$text), r$text) },
+  functions = function() { r <- run("functions", "cps"); check(r$status == 0 && grepl("cpssign", r$text), substr(r$text, 1, 200)) },
+  describe = function() { r <- run("describe", "mkmnf"); check(r$status == 0 && grepl("manifest", r$text, ignore.case = TRUE), substr(r$text, 1, 200)) },
+  examples = function() { r <- run("examples", "cpsbndl"); check(r$status == 0 && nzchar(r$text), r$text) },
   bundle = function() { r <- run("bundle", "validate a csv schema"); check(r$status %in% c(0L, 1L), r$text) },
   data = function() {
     r <- run("data"); check(r$status %in% c(0L, 1L), r$text)
     if (!nzchar(key)) return(message("  data list/pull: SKIP (MORIE_SMOKE_KEY not set)"))
     r <- run("data", "list"); check(r$status == 0 && grepl("chicago_crime", r$text), substr(r$text, 1, 300))
     r <- run("data", "pull", "fec_cm_2020/fec_cm_2020", "--out", "fec.csv"); check(r$status == 0 && nrow(utils::read.csv("fec.csv")) > 1000, r$text)
-    df <- bricklayer_data_load("fec_cm_2020/fec_cm_2020"); check(nrow(df) > 1000, "bricklayer_data_load")
+    df <- dload("fec_cm_2020/fec_cm_2020"); check(nrow(df) > 1000, "dload")
   },
   `explain-error` = function() {
     r <- run("explain-error", "`prompt` must be a single non-empty string")
@@ -76,10 +76,10 @@ cases <- list(
   capsule = function() {
     dir <- file.path(home, "cap"); dir.create(dir)
     utils::write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"), row.names = FALSE)
-    m <- make_manifest(list(dataset = "smoke"), environment = FALSE)
-    keyp <- fips_keygen("ML-DSA-44")
-    b <- capsule_bundle(dir, m, keyp)
-    check(isTRUE(capsule_bundle_verify(attr(b, "path"), dir, manifest = m)$ok), "bundle does not verify")
+    m <- mkmnf(list(dataset = "smoke"), env = FALSE)
+    keyp <- fipskg("ML-DSA-44")
+    b <- cpsbndl(dir, m, keyp)
+    check(isTRUE(cpsbndlvrf(attr(b, "path"), dir, man = m)$ok), "bundle does not verify")
   }
 )
 help_text <- run("help")$text

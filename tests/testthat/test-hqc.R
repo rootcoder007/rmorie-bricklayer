@@ -26,15 +26,15 @@ hex_raw <- function(h) {
 }
 
 run_kat <- function(row) {
-  k <- hqc_sizes(row$level)[["message"]]
+  k <- hqcsz(row$level)[["message"]]
   stream <- .Call(C_rmbl_shake, 256L, c(hex_raw(row$seed), as.raw(0L)),
                   32L + k + 16L)
-  key <- hqc_keygen(row$level, seed = stream[1:32])
-  cap <- hqc_encapsulate(hqc_public_key(key), m = stream[33:(32 + k)],
+  key <- hqckg(row$level, seed = stream[1:32])
+  cap <- hqcencap(hqcpubkey(key), m = stream[33:(32 + k)],
                          salt = stream[(33 + k):(48 + k)])
-  ss <- hqc_decapsulate(key, cap$ciphertext)
+  ss <- hqcdecap(key, cap$ciphertext)
   all <- hex_raw(paste0(key$public, key$secret, cap$ciphertext, cap$shared))
-  c(digest = core_sha256(all), decaps = identical(ss, cap$shared))
+  c(digest = csha256(all), decaps = identical(ss, cap$shared))
 }
 
 # The sizes of the specification's table 6, hard-coded so a change to a
@@ -47,16 +47,16 @@ HQC_SIZES <- list(
 
 test_that("the byte lengths are the ones the specification fixes", {
   for (lv in names(HQC_SIZES)) {
-    sz <- hqc_sizes(as.integer(lv))
+    sz <- hqcsz(as.integer(lv))
     expect_identical(unname(sz), HQC_SIZES[[lv]])
     expect_identical(names(sz), c("encapsulation_key", "decapsulation_key",
                                   "ciphertext", "seed", "message", "salt",
                                   "shared_secret"))
   }
   # the security in bits names the same three sets
-  expect_identical(hqc_sizes(128), hqc_sizes(1))
-  expect_identical(hqc_sizes(192), hqc_sizes(3))
-  expect_identical(hqc_sizes(256), hqc_sizes(5))
+  expect_identical(hqcsz(128), hqcsz(1))
+  expect_identical(hqcsz(192), hqcsz(3))
+  expect_identical(hqcsz(256), hqcsz(5))
 })
 
 test_that("the official known-answer vectors are reproduced (both multipliers)", {
@@ -97,22 +97,22 @@ test_that("the decoder corrects up to its capacity (deterministic self-test)", {
 
 test_that("a round trip agrees at every level and fresh randomness differs", {
   for (lv in c(1L, 3L, 5L)) {
-    key <- hqc_keygen(lv)
+    key <- hqckg(lv)
     expect_s3_class(key, "bricklayer_hqc_key")
-    expect_identical(nchar(key$public), 2L * hqc_sizes(lv)[["encapsulation_key"]])
-    a <- hqc_encapsulate(hqc_public_key(key))
-    b <- hqc_encapsulate(key)
-    expect_identical(hqc_decapsulate(key, a$ciphertext), a$shared)
-    expect_identical(hqc_decapsulate(key, hex_raw(b$ciphertext)), b$shared)
+    expect_identical(nchar(key$public), 2L * hqcsz(lv)[["encapsulation_key"]])
+    a <- hqcencap(hqcpubkey(key))
+    b <- hqcencap(key)
+    expect_identical(hqcdecap(key, a$ciphertext), a$shared)
+    expect_identical(hqcdecap(key, hex_raw(b$ciphertext)), b$shared)
     expect_false(identical(a$shared, b$shared))
-    expect_false(identical(hqc_keygen(lv)$public, key$public))
+    expect_false(identical(hqckg(lv)$public, key$public))
   }
 })
 
 test_that("a tampered ciphertext yields exactly J(H(ek) || sigma || c)", {
-  key <- hqc_keygen(1L, seed = as.raw(1:32))
-  sz <- hqc_sizes(1L)
-  cap <- hqc_encapsulate(key, m = as.raw(1:16), salt = as.raw(16:1))
+  key <- hqckg(1L, seed = as.raw(1:32))
+  sz <- hqcsz(1L)
+  cap <- hqcencap(key, m = as.raw(1:16), salt = as.raw(16:1))
   dk <- hex_raw(key$secret)
   ek <- hex_raw(key$public)
   sigma <- dk[(sz[["encapsulation_key"]] + 33L):(sz[["encapsulation_key"]] + 32L + 16L)]
@@ -123,47 +123,47 @@ test_that("a tampered ciphertext yields exactly J(H(ek) || sigma || c)", {
     bad <- ct
     bad[pos] <- xor(bad[pos], as.raw(4L))
     kbar <- .Call(C_rmbl_shake, 3256L, c(hek, sigma, bad, as.raw(3L)), 32L)
-    got <- hqc_decapsulate(key, bad)
+    got <- hqcdecap(key, bad)
     expect_identical(got, paste(format(as.hexmode(as.integer(kbar)), width = 2L), collapse = ""))
     expect_false(identical(got, cap$shared))
   }
 })
 
 test_that("malformed keys, sizes and levels are refused with a reason", {
-  key <- hqc_keygen(1L, seed = as.raw(1:32))
-  sz <- hqc_sizes(1L)
-  expect_error(hqc_keygen(2L), "1, 3 or 5")
-  expect_error(hqc_keygen("x"), "1, 3 or 5")
-  expect_error(hqc_sizes(512), "1, 3 or 5")
-  expect_error(hqc_keygen(1L, seed = as.raw(1:31)), "32 bytes")
-  expect_error(hqc_keygen(1L, seed = 1:32), "32 bytes")
-  expect_error(hqc_public_key(list()), "hqc_keygen")
-  expect_error(hqc_encapsulate(kem_keygen(512)), "hqc_keygen")
-  expect_error(hqc_encapsulate(key, m = as.raw(1:15)), "16 bytes for HQC-1")
-  expect_error(hqc_encapsulate(key, salt = as.raw(1:15)), "16 bytes")
-  expect_error(hqc_decapsulate(hqc_public_key(key), "00"), "secret half")
-  expect_error(hqc_decapsulate(key, "00"), "4433 bytes for HQC-1")
-  expect_error(hqc_decapsulate(key, "zz"), "4433 bytes")
+  key <- hqckg(1L, seed = as.raw(1:32))
+  sz <- hqcsz(1L)
+  expect_error(hqckg(2L), "1, 3 or 5")
+  expect_error(hqckg("x"), "1, 3 or 5")
+  expect_error(hqcsz(512), "1, 3 or 5")
+  expect_error(hqckg(1L, seed = as.raw(1:31)), "32 bytes")
+  expect_error(hqckg(1L, seed = 1:32), "32 bytes")
+  expect_error(hqcpubkey(list()), "hqckg")
+  expect_error(hqcencap(kemkg(512)), "hqckg")
+  expect_error(hqcencap(key, m = as.raw(1:15)), "16 bytes for HQC-1")
+  expect_error(hqcencap(key, salt = as.raw(1:15)), "16 bytes")
+  expect_error(hqcdecap(hqcpubkey(key), "00"), "secret half")
+  expect_error(hqcdecap(key, "00"), "4433 bytes for HQC-1")
+  expect_error(hqcdecap(key, "zz"), "4433 bytes")
   # a public key with a bit set past the code length
-  pub <- hqc_public_key(key)
+  pub <- hqcpubkey(key)
   substring(pub$public, nchar(pub$public) - 1L) <- "ff"
-  expect_error(hqc_encapsulate(pub), "malformed")
+  expect_error(hqcencap(pub), "malformed")
   short <- pub
   short$public <- substring(short$public, 3L)
-  expect_error(hqc_encapsulate(short), "no usable HQC-1 public key")
+  expect_error(hqcencap(short), "no usable HQC-1 public key")
   # a decapsulation key whose seeds were damaged
-  cap <- hqc_encapsulate(key)
+  cap <- hqcencap(key)
   for (off in c(5L, sz[["encapsulation_key"]] + 3L, sz[["encapsulation_key"]] + 40L,
                 sz[["decapsulation_key"]] - 1L)) {
     bad <- key
     b <- hex_raw(bad$secret)
     b[off] <- xor(b[off], as.raw(1L))
     bad$secret <- paste(format(as.hexmode(as.integer(b)), width = 2L), collapse = "")
-    expect_error(hqc_decapsulate(bad, cap$ciphertext), "corrupt", label = sprintf("byte %d", off))
+    expect_error(hqcdecap(bad, cap$ciphertext), "corrupt", label = sprintf("byte %d", off))
   }
   nosec <- key
   nosec$secret <- "abc"
-  expect_error(hqc_decapsulate(nosec, cap$ciphertext), "no usable HQC-1 secret key")
+  expect_error(hqcdecap(nosec, cap$ciphertext), "no usable HQC-1 secret key")
   # the C layer refuses wrong lengths and levels on its own
   expect_error(.Call(C_rmbl_hqc_keygen, 2L, as.raw(1:32)), "1, 3 or 5")
   expect_error(.Call(C_rmbl_hqc_keygen, 1.0, as.raw(1:32)), "single integer")
@@ -172,14 +172,14 @@ test_that("malformed keys, sizes and levels are refused with a reason", {
 })
 
 test_that("keys and capsules print without revealing the secret", {
-  key <- hqc_keygen(5L, seed = as.raw(32:1))
+  key <- hqckg(5L, seed = as.raw(32:1))
   out <- format(key)
   expect_true(any(grepl("HQC-5", out)))
   expect_true(any(grepl("<withheld>", out)))
   expect_false(any(grepl(substring(key$secret, 4500L, 4540L), out, fixed = TRUE)))
   expect_output(print(key), "code-based")
-  expect_output(print(hqc_public_key(key)), "Public encapsulation key")
-  cap <- hqc_encapsulate(key)
+  expect_output(print(hqcpubkey(key)), "Public encapsulation key")
+  cap <- hqcencap(key)
   expect_output(print(cap), "Encapsulated shared secret")
   expect_false(any(grepl(cap$shared, format(cap), fixed = TRUE)))
 })

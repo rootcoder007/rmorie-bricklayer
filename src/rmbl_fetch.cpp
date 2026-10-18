@@ -1498,7 +1498,7 @@ SEXP C_rmbl_http_download_impl(SEXP url, SEXP path, SEXP timeout, SEXP headers, 
     curl_off_t cap = kMaxDownload;
     if (max_bytes != R_NilValue) {
         const double mb = Rf_asReal(max_bytes);
-        if (!(mb >= 1)) rmbl::fail("`max_bytes` must be a number of bytes, at least one");
+        if (!(mb >= 1)) rmbl::fail("`maxbytes` must be a number of bytes, at least one");
         if (mb < static_cast<double>(kMaxDownload)) cap = static_cast<curl_off_t>(mb);
     }
     curl_off_t written = 0;
