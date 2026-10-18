@@ -994,6 +994,83 @@ plot.rmbl_power <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   invisible(d)
 }
 
+#' @param threshold For \code{rmbl_balance}: the absolute standardised difference
+#'   drawn as the line of acceptable balance (default 0.1).
+#' @param after For \code{rmbl_balance}: optionally a second \code{\link{balance_table}}
+#'   on the same covariates (after weighting or matching), drawn beside the first.
+#' @rdname plot-methods
+#' @export
+plot.rmbl_balance <- function(x, ..., threshold = 0.1, after = NULL, main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_balance")
+  threshold <- .rmbl_scalar(threshold, "threshold", 0)
+  if (!is.null(after)) {
+    .rmbl_plot_check(after, "rmbl_balance")
+    if (!setequal(after$covariate, x$covariate)) stop("`after` must be on the same covariates as `x`", call. = FALSE)
+  }
+  o <- order(abs(x$smd), na.last = FALSE)
+  cv <- x$covariate[o]
+  b <- abs(x$smd[o])
+  a <- if (is.null(after)) NULL else abs(after$smd[match(cv, after$covariate)])
+  cl <- .bl_cols(2L, col, palette)
+  k <- length(cv)
+  lim <- c(0, max(c(b, a, threshold), na.rm = TRUE) * 1.08)
+  op <- graphics::par(mar = c(4.5, max(4, min(16, max(nchar(cv)) * 0.55)), 3, 1))
+  on.exit(graphics::par(op), add = TRUE)
+  graphics::plot(b, seq_len(k), xlim = lim, ylim = c(0.5, k + 0.5), yaxt = "n", pch = 19, col = cl[1L],
+                 xlab = "Absolute standardised difference", ylab = "",
+                 main = .bl_main(main, "Covariate balance"), ...)
+  graphics::axis(2, at = seq_len(k), labels = cv, las = 1, cex.axis = 0.8)
+  graphics::abline(h = seq_len(k), col = "#EEEEEE")
+  graphics::abline(v = threshold, lty = 2, col = "#9A9A9A")
+  if (!is.null(a)) {
+    graphics::segments(b, seq_len(k), a, seq_len(k), col = "#BBBBBB")
+    graphics::points(a, seq_len(k), pch = 17, col = cl[2L])
+    graphics::legend(.bl_free_corner(c(b, a), c(seq_len(k), seq_len(k))), c("before", "after"),
+                     pch = c(19, 17), col = cl, bty = "n", cex = 0.85)
+  }
+  graphics::points(b, seq_len(k), pch = 19, col = cl[1L])
+  invisible(data.frame(covariate = cv, before = b, after = if (is.null(a)) NA_real_ else a))
+}
+
+#' @rdname plot-methods
+#' @export
+plot.rmbl_aipw <- function(x, ..., type = c("overlap", "estimate"), main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_aipw")
+  type <- .rmbl_arg(type)
+  cl <- .bl_cols(2L, col, palette)
+  if (type == "estimate") {
+    graphics::plot(x$estimate, 1, xlim = range(c(0, x$lower, x$upper)), ylim = c(0.5, 1.5), yaxt = "n", pch = 19,
+                   col = cl[1L], xlab = sprintf("%s (%g%% confidence interval)", x$estimand,
+                                                100 * attr(x, "conf_level")),
+                   ylab = "", main = .bl_main(main, "Cross-fitted AIPW estimate"), ...)
+    graphics::segments(x$lower, 1, x$upper, 1, lwd = 2, col = cl[1L])
+    graphics::abline(v = 0, lty = 2, col = "#9A9A9A")
+    return(invisible(as.data.frame(x)))
+  }
+  p <- attr(x, "propensity", exact = TRUE)
+  if (is.null(p)) stop("this result has no propensities to draw; re-run aipw_crossfit()", call. = FALSE)
+  dens <- lapply(c(1, 0), function(arm) {
+    s <- p[p$treated == arm, ]
+    stats::density(s$propensity, weights = s$weight / sum(s$weight), from = 0, to = 1, n = 256)
+  })
+  ymax <- max(dens[[1L]]$y, dens[[2L]]$y)
+  graphics::plot(dens[[1L]]$x, dens[[1L]]$y, type = "n", xlim = c(0, 1), ylim = c(0, ymax * 1.05),
+                 xlab = "Out-of-fold propensity", ylab = "Weighted density",
+                 main = .bl_main(main, "Overlap of the two groups"), ...)
+  for (i in 2:1) {
+    graphics::polygon(c(0, dens[[i]]$x, 1), c(0, dens[[i]]$y, 0), border = cl[i],
+                      col = grDevices::adjustcolor(cl[i], alpha.f = 0.25))
+  }
+  tr <- attr(x, "trim", exact = TRUE)
+  if (is.null(tr)) tr <- 0.01
+  graphics::abline(v = c(tr, 1 - tr), lty = 3, col = "#9A9A9A")
+  graphics::legend(.bl_free_corner(c(dens[[1L]]$x, dens[[2L]]$x), c(dens[[1L]]$y, dens[[2L]]$y)),
+                   c("treated", "untreated"), fill = grDevices::adjustcolor(cl, alpha.f = 0.25), border = cl,
+                   bty = "n", cex = 0.85)
+  invisible(data.frame(arm = rep(c("treated", "untreated"), each = 256L),
+                       propensity = c(dens[[1L]]$x, dens[[2L]]$x), density = c(dens[[1L]]$y, dens[[2L]]$y)))
+}
+
 # ---- augmented inverse probability weighting, cross-fitted -----------------------------------------
 
 #' Cross-fitted augmented inverse probability weighting for a binary treatment
@@ -1056,7 +1133,9 @@ plot.rmbl_power <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #' @return A data frame of class \code{rmbl_aipw}: \code{estimand}, \code{estimate},
 #'   \code{se}, \code{lower}, \code{upper}, \code{p_value}; attributes \code{n},
 #'   \code{treated}, \code{propensity_range}, \code{trimmed} (how many propensities
-#'   were clipped), \code{variance} (\code{"influence"}, or the design's type).
+#'   were clipped), \code{variance} (\code{"influence"}, or the design's type) and
+#'   \code{propensity} (a data frame of each row's out-of-fold propensity before
+#'   clipping, its treatment and its weight, which \code{plot()} draws).
 #' @references Robins JM, Rotnitzky A, Zhao LP (1994). Estimation of regression
 #'   coefficients when some regressors are not always observed. Journal of the
 #'   American Statistical Association 89(427):846-866.
@@ -1130,6 +1209,7 @@ aipw_crossfit <- function(data, outcome, treatment, covariates, estimand = c("AT
     }
   })
   rng <- range(e)
+  pr <- e
   nt <- sum(e < trim | e > 1 - trim)
   e <- pmin(pmax(e, trim), 1 - trim)
   sw <- sum(w)
@@ -1165,6 +1245,8 @@ aipw_crossfit <- function(data, outcome, treatment, covariates, estimand = c("AT
   attr(out, "trimmed") <- nt
   attr(out, "conf_level") <- conf_level
   attr(out, "variance") <- if (is.null(design)) "influence" else design$type
+  attr(out, "propensity") <- data.frame(propensity = pr, treated = d, weight = w)
+  attr(out, "trim") <- trim
   class(out) <- c("rmbl_aipw", "data.frame")
   out
 }

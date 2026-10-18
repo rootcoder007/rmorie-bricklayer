@@ -717,6 +717,12 @@ bricklayer_plot_options <- function(...) {
 #'     comparison over time, adoption marked.}
 #'   \item{\code{rmbl_power}}{(\code{\link{panel_power}}) power against effect size, with
 #'     the 0.8 line and the minimum detectable effect.}
+#'   \item{\code{rmbl_balance}}{(\code{\link{balance_table}}) a love plot: each
+#'     covariate's absolute standardised difference against the \code{threshold} line,
+#'     with a second table (\code{after}, after weighting or matching) beside it.}
+#'   \item{\code{rmbl_aipw}}{(\code{\link{aipw_crossfit}}) the overlap of the two
+#'     groups' out-of-fold propensities (\code{type = "overlap"}) or the estimate with
+#'     its interval (\code{type = "estimate"}).}
 #'   \item{\code{rmbl_event_study}, \code{rmbl_staggered_att}}{also take \code{style =
 #'     "stata"} (hollow points joined by a line, dashed bars) and \code{shade_post};
 #'     \code{\link{plot_event_grid}} puts several in one grid.}

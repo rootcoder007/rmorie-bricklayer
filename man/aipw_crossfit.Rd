@@ -52,7 +52,9 @@ replicate weights or its strata and primary sampling units.}
 A data frame of class \code{rmbl_aipw}: \code{estimand}, \code{estimate},
 \code{se}, \code{lower}, \code{upper}, \code{p_value}; attributes \code{n},
 \code{treated}, \code{propensity_range}, \code{trimmed} (how many propensities
-were clipped), \code{variance} (\code{"influence"}, or the design's type).
+were clipped), \code{variance} (\code{"influence"}, or the design's type) and
+\code{propensity} (a data frame of each row's out-of-fold propensity before
+clipping, its treatment and its weight, which \code{plot()} draws).
 }
 \description{
 The average effect of a binary treatment (on everyone, or on the treated) from one

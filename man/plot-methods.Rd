@@ -27,6 +27,8 @@
 \alias{plot.rmbl_clearance_decomposition}
 \alias{plot.rmbl_synthdid}
 \alias{plot.rmbl_power}
+\alias{plot.rmbl_balance}
+\alias{plot.rmbl_aipw}
 \alias{plot-methods}
 \alias{plot.rmbl_stock_flow}
 \alias{plot.rmbl_yoy}
@@ -128,6 +130,25 @@
 \method{plot}{rmbl_synthdid}(x, ..., main = NULL, col = NULL, palette = NULL)
 
 \method{plot}{rmbl_power}(x, ..., main = NULL, col = NULL, palette = NULL)
+
+\method{plot}{rmbl_balance}(
+  x,
+  ...,
+  threshold = 0.1,
+  after = NULL,
+  main = NULL,
+  col = NULL,
+  palette = NULL
+)
+
+\method{plot}{rmbl_aipw}(
+  x,
+  ...,
+  type = c("overlap", "estimate"),
+  main = NULL,
+  col = NULL,
+  palette = NULL
+)
 
 \method{plot}{rmbl_stock_flow}(
   x,
@@ -272,6 +293,19 @@ over the surface.}
 it,
 the parts that moved the aggregate most, and the rest summed into one row.}
 
+\item{threshold}{For \code{rmbl_balance}: the absolute standardised difference
+drawn as the line of acceptable balance (default 0.1).}
+
+\item{after}{For \code{rmbl_balance}: optionally a second \code{\link{balance_table}}
+on the same covariates (after weighting or matching), drawn beside the first.}
+
+\item{type}{For a permutation test: \code{"density"} (a kernel density of the
+permuted statistics, their 5th and 95th percentiles dashed, the observed one in
+red; the default) or \code{"histogram"}. For a cross-fitted AIPW result:
+\code{"overlap"} (the weighted distribution of the out-of-fold propensity in each
+arm with the clipping bounds; the default) or \code{"estimate"} (the effect with
+its confidence interval).}
+
 \item{period}{For \code{rmbl_rate}, a \code{by} column holding the period: the rate
 is
 drawn over time with its interval band, one panel per group of the other \code{by}
@@ -295,10 +329,6 @@ capped bars, dashed reference lines).}
 
 \item{ref_line}{Where the vertical reference line goes (default \code{-0.5},
 between the reference period and adoption; \code{0} puts it at adoption).}
-
-\item{type}{For a permutation test: \code{"density"} (a kernel density of the
-permuted statistics, their 5th and 95th percentiles dashed, the observed one in
-red; the default) or \code{"histogram"}.}
 }
 \value{
 The data drawn, invisibly.
@@ -410,6 +440,12 @@ period since adoption with its interval, the reference period at zero.}
 comparison over time, adoption marked.}
 \item{\code{rmbl_power}}{(\code{\link{panel_power}}) power against effect size, with
 the 0.8 line and the minimum detectable effect.}
+\item{\code{rmbl_balance}}{(\code{\link{balance_table}}) a love plot: each
+covariate's absolute standardised difference against the \code{threshold} line,
+with a second table (\code{after}, after weighting or matching) beside it.}
+\item{\code{rmbl_aipw}}{(\code{\link{aipw_crossfit}}) the overlap of the two
+groups' out-of-fold propensities (\code{type = "overlap"}) or the estimate with
+its interval (\code{type = "estimate"}).}
 \item{\code{rmbl_event_study}, \code{rmbl_staggered_att}}{also take \code{style =
     "stata"} (hollow points joined by a line, dashed bars) and \code{shade_post};
 \code{\link{plot_event_grid}} puts several in one grid.}

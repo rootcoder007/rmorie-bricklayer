@@ -210,6 +210,34 @@ test_that("aipw_crossfit(): the doubly robust score by hand, for the ATE and the
   expect_error(aipw_crossfit(transform(d, t = 2), "y", "t", "age"), "0 and 1")
 })
 
+test_that("plots of balance and of a cross-fitted AIPW result", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  n <- 400
+  d <- data.frame(age = .rmbl_with_seed(1, stats::runif(n, 18, 70)), inc = .rmbl_with_seed(7, stats::rnorm(n)))
+  d$t <- .rmbl_with_seed(2, stats::rbinom(n, 1, stats::plogis(-2 + 0.04 * d$age)))
+  d$y <- 10 + 3 * d$t + 0.2 * d$age + .rmbl_with_seed(3, stats::rnorm(n))
+  b <- balance_table(d, "t", c("age", "inc"))
+  pb <- plot(b)
+  expect_identical(pb$covariate, b$covariate[order(abs(b$smd))])
+  expect_equal(pb$before, sort(abs(b$smd)))
+  d$w <- ifelse(d$t == 1, 1, 2)
+  b2 <- balance_table(d, "t", c("age", "inc"), weights = "w")
+  pa <- plot(b, after = b2)
+  expect_equal(pa$after, abs(b2$smd[match(pa$covariate, b2$covariate)]))
+  expect_error(plot(b, after = balance_table(d, "t", "age")), "same covariates")
+  r <- aipw_crossfit(d, "y", "t", "age", learner = "ols", seed = 4)
+  pr <- attr(r, "propensity")
+  expect_identical(nrow(pr), as.integer(n))
+  expect_identical(range(pr$propensity), attr(r, "propensity_range"))
+  ov <- plot(r)
+  expect_identical(unique(ov$arm), c("treated", "untreated"))
+  expect_equal(sum(ov$density[ov$arm == "treated"]) * diff(ov$propensity[1:2]), 1, tolerance = 0.05)
+  expect_identical(plot(r, type = "estimate")$estimate, r$estimate)
+  attr(r, "propensity") <- NULL
+  expect_error(plot(r), "no propensities")
+})
+
 test_that("aipw_crossfit(design =): one fit gives the replicate standard error of a refit per replicate", {
   n <- 400
   d <- data.frame(age = .rmbl_with_seed(1, stats::runif(n, 18, 70)))

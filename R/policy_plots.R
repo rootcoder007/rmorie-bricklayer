@@ -82,7 +82,10 @@ plot.rmbl_bacon <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #' @rdname plot-methods
 #' @param type For a permutation test: \code{"density"} (a kernel density of the
 #'   permuted statistics, their 5th and 95th percentiles dashed, the observed one in
-#'   red; the default) or \code{"histogram"}.
+#'   red; the default) or \code{"histogram"}. For a cross-fitted AIPW result:
+#'   \code{"overlap"} (the weighted distribution of the out-of-fold propensity in each
+#'   arm with the clipping bounds; the default) or \code{"estimate"} (the effect with
+#'   its confidence interval).
 #' @export
 plot.rmbl_permutation <- function(x, ..., main = NULL, col = NULL, palette = NULL, type = c("density", "histogram")) {
   .rmbl_plot_check(x, "rmbl_permutation")
