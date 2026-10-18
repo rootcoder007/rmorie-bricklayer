@@ -460,6 +460,8 @@ reference:
       exposure, and the Truth and Reconciliation Commission Calls to Action.
     contents:
       - statcan_tidy
+      - quality_recode
+      - limits_from
       - indigenous_gap
       - age_standardise
       - rate_gap

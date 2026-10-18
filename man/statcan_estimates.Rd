@@ -41,13 +41,15 @@ a name that fits several measures (\code{"potential years of life lost"} in a ta
 with a number, a crude rate and an age-standardised rate of them), is matched to the
 measure with the same unit (\code{UOM}) whose estimates it contains in every cell, and
 left unmatched (said in the attribute \code{unmatched}) if no single measure fits. A
-coefficient of variation \eqn{c} (in percent) gives the limits \eqn{e(1 \mp z c/100)},
-a standard error \eqn{s} the limits \eqn{e \mp z s}; the column \code{ci_source} says
-which (\code{"published"}, \code{"cv"} or \code{"se"}). Published limits that do not
-contain their own estimate (it happens: a 100\\% with limits 85.5 to 98.6 in table
-41-10-0012) are kept as published and marked \code{"inconsistent"}; the comparisons
-warn and leave such a row out. A limit is matched to a measure when it fits 95\\% of the
-cells.
+coefficient of variation \eqn{c} (in percent) gives log-normal limits
+\eqn{e \exp(\mp z \sqrt{\log(1 + (c/100)^2)})}, which stay positive however large
+\eqn{c} is; a standard error \eqn{s} the limits \eqn{e \mp z s}; the column
+\code{ci_source} says which (\code{"published"}, \code{"cv"} or \code{"se"}). Published
+limits that do not contain their own estimate (it happens: a 100\\% with limits 85.5 to
+98.6 in table 41-10-0012) are kept as published and marked \code{"inconsistent"}; every
+comparison of the family warns and leaves such a row out. A limit is matched to a
+measure when it fits 95\\% of the cells. Labels are read in English: use the
+English-language tables.
 
 Every other column but the metadata (\code{VECTOR}, \code{COORDINATE}, \code{UOM}, ...)
 identifies the cell, \code{DGUID} among them (one place name can name several

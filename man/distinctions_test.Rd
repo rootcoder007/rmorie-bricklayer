@@ -2,7 +2,7 @@
 % Please edit documentation in R/indigenous_mental_health.R
 \name{distinctions_test}
 \alias{distinctions_test}
-\title{Do First Nations, Metis and Inuit differ? A test before pooling}
+\title{Do distinct groups differ? A heterogeneity test before pooling}
 \usage{
 distinctions_test(
   data,
@@ -11,7 +11,8 @@ distinctions_test(
   lower,
   upper,
   quality = NULL,
-  conf_level = 0.95
+  conf_level = 0.95,
+  pooled_groups = NULL
 )
 }
 \arguments{
@@ -19,19 +20,26 @@ distinctions_test(
 
 \item{group, estimate, lower, upper}{Column names.}
 
-\item{quality}{Optional column of quality flags; suppressed rows are left out.}
+\item{quality}{Optional column of quality flags; suppressed rows are left out (see
+\code{\link{quality_recode}}).}
 
-\item{conf_level}{Confidence level of the published intervals (default 0.95).}
+\item{conf_level}{Confidence level of the published intervals, and the level of the
+verdict printed (default 0.95).}
+
+\item{pooled_groups}{Optional labels of rows that pool other groups.}
 }
 \value{
 A list of class \code{rmbl_distinctions}: \code{groups} (the estimates used,
-with their standard errors), \code{pooled} (the inverse-variance mean), \code{q},
-\code{df}, \code{p_value}, \code{i2}.
+with their standard errors), \code{pooled} (the inverse-variance mean) and
+\code{pooled_se}, \code{q}, \code{df}, \code{p_value}, \code{i2}, \code{left_out}
+(the rows not used) and \code{conf_level}. \code{print()} and \code{plot()} show it.
 }
 \description{
-Tests whether the First Nations, Metis and Inuit estimates of one indicator differ more
-than their published intervals allow, and says how much of their spread is real: the
-evidence for reporting each distinctly rather than as one pan-Indigenous figure.
+Tests whether the estimates of one indicator for distinct groups (First Nations, Metis
+and Inuit; Aboriginal and Torres Strait Islander people; any groups with published
+intervals) differ more than their intervals allow, and says how much of their spread is
+real: the evidence for reporting each group distinctly rather than as one pooled
+figure.
 }
 \details{
 With estimates \eqn{y_g}, standard errors \eqn{s_g} from the published
@@ -43,7 +51,12 @@ sampling error (Higgins and Thompson 2002). A pooled figure is a weighted mean o
 different populations whenever \eqn{I^2} is large; the population-weighted total
 Statistics Canada publishes also depends on how many people are in each group, so it is
 mostly a First Nations figure where First Nations people are most of the Indigenous
-population. Rows that pool identities are left out (see \code{\link{indigenous_gap}}).
+population. Rows that pool groups are left out (\code{pooled_groups}; see
+\code{\link{indigenous_gap}}); every other row is included, so drop the reference group
+(non-Indigenous people) yourself, and never test overlapping groups ("alone" beside
+"alone or in combination") together: they are not independent. With two or three groups
+the test has little power and \eqn{I^2} is imprecise; a large \eqn{p} is not evidence
+that the groups are the same.
 }
 \examples{
 # perceived mental health very good or excellent, 2019/2022, adults (table
@@ -55,6 +68,11 @@ mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
 dt <- distinctions_test(mh, "group", "estimate", "lower", "upper", quality = "quality")
 dt
 plot(dt)
+# your own table: made-up numbers, with the pooled row named
+own <- data.frame(group = c("Aboriginal", "Torres Strait Islander", "Both"),
+                  est = c(24.0, 31.0, 24.6), lo = c(22.1, 26.2, 22.8), hi = c(25.9,
+                                                                              35.8, 26.4))
+distinctions_test(own, "group", "est", "lo", "hi", pooled_groups = "Both")
 }
 \references{
 Higgins JPT, Thompson SG (2002). Quantifying heterogeneity in a

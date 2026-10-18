@@ -11,53 +11,64 @@ standardise_prevalence(
   standard,
   group = NULL,
   quality = NULL,
-  conf_level = 0.95
+  conf_level = 0.95,
+  scale = 100
 )
 }
 \arguments{
-\item{estimate, lower, upper}{The percentage in each age group (and group) and its
-published limits.}
+\item{estimate, lower, upper}{Numeric vectors (not column names): the estimate in each
+age group (and group) and its published limits.}
 
-\item{standard}{The standard population, one count per age group (its shares are the
-weights).}
+\item{standard}{The standard population, one count (or share) per age group.}
 
-\item{group}{Optional labels: one result per group, each over the same age groups in
-order.}
+\item{group}{Optional labels, one per row: one result per group. Rows are matched to
+\code{standard} by position, so order each group's rows by age in the order of
+\code{standard} (sort by an age order, not alphabetically).}
 
-\item{quality}{Optional quality flags, one per row.}
+\item{quality}{Optional quality flags, one per row (a vector; see
+\code{\link{quality_recode}}).}
 
 \item{conf_level}{Confidence level (default 0.95).}
+
+\item{scale}{The upper bound of the scale: 100 for percentages (the default), 1 for
+proportions, \code{Inf} for rates.}
 }
 \value{
 A data frame of class \code{rmbl_prevalence}: \code{group}, \code{estimate},
-\code{lower}, \code{upper}, \code{se}, \code{use_with_caution}.
+\code{lower}, \code{upper}, \code{se}, \code{use_with_caution}; attribute
+\code{conf_level}. \code{plot()} draws it.
 }
 \description{
-The percentage a group would have with the age structure of a standard population, from
-the percentage and published limits in each age group: for comparing First Nations,
-Metis and Inuit prevalences (suicidal thoughts, mood and anxiety disorders, heavy
-drinking) with each other and with an older population, when the age pattern of the
-outcome is steep.
+The percentage (or proportion, or rate) a group would have with the age structure of a
+standard population, from the estimate and published limits in each age group: for
+comparing First Nations, Metis and Inuit prevalences (suicidal thoughts, mood and
+anxiety disorders, heavy drinking) with each other and with an older population, for
+example, when the age pattern of the outcome is steep.
 }
 \details{
-With percentages \eqn{p_i}, standard errors \eqn{s_i = (u_i - l_i) / (2z)} and
-standard weights \eqn{w_i} (the standard's shares), the standardised percentage is
+With estimates \eqn{p_i}, standard errors \eqn{s_i = (u_i - l_i) / (2z)} and
+standard weights \eqn{w_i} (the standard's shares), the standardised estimate is
 \eqn{\sum w_i p_i} with standard error \eqn{\sqrt{\sum w_i^2 s_i^2}}, the age groups
 being disjoint domains of the survey (treated as independent: see
-\code{\link{indigenous_gap}}). The interval is normal, cut at 0 and 100. A group with a
-suppressed or missing age group has no standardised value: the age group is not
-imputed.
+\code{\link{indigenous_gap}}). The interval is normal, cut at 0 and at \code{scale}. A
+group with a suppressed or missing age group, or one whose published interval misses
+its own estimate, has no standardised value: the age group is not imputed. The standard
+should be the age structure of the population compared, or a common one: for First
+Nations, Metis and Inuit comparisons, the Indigenous population's own
+(\code{\link{census_standard}}; Kumar and Tjepkema 2019).
 }
 \examples{
 # seriously contemplated suicide in the past 12 months, 2017 (table 41-10-0021-01),
-# standardised
-# to one age structure so the three groups compare
+# standardised to the Indigenous population's age structure (2021 Census)
+ages <- c("15 to 24 years", "25 to 34 years", "35 to 44 years", "45 to 54 years",
+          "55 years and over")
 si <- indigenous_example("suicidal_ideation")
 si <- si[si$measure == "Seriously contemplated suicide in the past 12 months" &
-           si$age != "Total, 15 years and over", ]
-si <- si[order(si$group, si$age), ]
-sp <- standardise_prevalence(si$estimate, si$lower, si$upper, standard = c(20, 18, 17,
-                                                                           17, 28),
+           si$age \%in\% ages, ]
+si <- si[order(si$group, match(si$age, ages)), ]
+std <- census_standard(census_profile(indigenous_example("census_population")))
+w <- c(sum(std$population[4:5]), std$population[6:8], sum(std$population[9:11]))
+sp <- standardise_prevalence(si$estimate, si$lower, si$upper, standard = w,
                              group = si$group, quality = si$quality)
 sp
 plot(sp)
@@ -74,5 +85,5 @@ no. 99-011-X2019001.
 }
 \seealso{
 \code{\link{age_standardise}} for counts of events,
-\code{\link{indigenous_gap}}.
+\code{\link{census_standard}}, \code{\link{indigenous_gap}}.
 }

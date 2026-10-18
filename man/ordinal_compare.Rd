@@ -14,7 +14,8 @@ ordinal_compare(
   levels,
   reference,
   quality = NULL,
-  conf_level = 0.95
+  conf_level = 0.95,
+  pooled_groups = NULL
 )
 }
 \arguments{
@@ -23,21 +24,25 @@ ordinal_compare(
 gender).}
 
 \item{group, category, estimate, lower, upper}{Column names: the group, the category, the
-percentage and its published limits.}
+share in it (percent or proportion: only relative shares matter) and its published
+limits on the same scale.}
 
 \item{levels}{The categories, from the lowest (least favourable) to the highest.}
 
-\item{reference}{The label of the reference group.}
+\item{reference}{The label of the reference group (required: any group of \code{data}).}
 
-\item{quality}{Optional column of quality flags.}
+\item{quality}{Optional column of quality flags (see \code{\link{quality_recode}}).}
 
 \item{conf_level}{Confidence level of the published limits and of the result (default
 0.95).}
+
+\item{pooled_groups}{Optional labels of rows that pool other groups (see
+\code{\link{indigenous_gap}}).}
 }
 \value{
 A data frame of class \code{rmbl_ordinal_compare}: \code{group},
 \code{reference}, \code{prob_better}, \code{lower}, \code{upper}, \code{delta},
-\code{n_eff}, \code{n_eff_reference}, \code{use_with_caution}, \code{pan_indigenous};
+\code{n_eff}, \code{n_eff_reference}, \code{use_with_caution}, \code{pooled_group};
 the attribute \code{shares} is the matrix of shares (groups by levels), which
 \code{plot()} draws.
 }
@@ -51,9 +56,10 @@ whole distribution, not of one category cut from it.
 \details{
 With shares \eqn{p_i} in the group and \eqn{q_j} in the reference over
 categories ordered from lowest to highest, the probability of a higher rating, ties
-counted half, is \eqn{A = \sum_i p_i (Q_{i-1} + q_i / 2)} with \eqn{Q} the reference's
-cumulative shares: the Mann-Whitney probability (Agresti 1980's \eqn{\alpha} on the
-probability scale), equal to the mean ridit of the group with the reference as the
+counted half, is \eqn{A = \sum_i p_i (Q_{i-1} + q_i / 2)} with \eqn{Q_i} the
+reference's cumulative shares and \eqn{Q_0 = 0}: the Mann-Whitney probability, equal to
+\eqn{\alpha / (1 + \alpha)} for Agresti's (1980) generalized odds ratio \eqn{\alpha}
+with ties split equally, and to the mean ridit of the group with the reference as the
 standard (Bross 1958). 0.5 is no difference; \eqn{2A - 1} is Cliff's \eqn{\delta}, the
 share rating higher less the share rating lower.
 
@@ -70,7 +76,8 @@ The categories given in \code{levels} are taken as the whole scale: rows for tot
 for combined categories ("Excellent or very good") and for "not specified" are left
 out, and the shares are rescaled to sum to one over the levels. A group with a
 suppressed or missing category is not compared, since its distribution is unknown; one
-with an \code{E} category is compared and marked.
+with an \code{E} category (in the group or the reference) is compared and marked, and
+one whose published interval misses its own estimate is not compared.
 
 A higher rating means better only on a scale that runs that way. Give \code{levels}
 from the least to the most favourable so that \code{prob_better} reads as its name

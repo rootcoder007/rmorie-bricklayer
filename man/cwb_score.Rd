@@ -60,7 +60,9 @@ small community's should be treated as the Department would. The full current
 methodology is available from the Department on request. The index measures
 socio-economic conditions as the census counts them; it says nothing of culture,
 language or relationship to land, and is not a measure of wellness as First Nations and
-Inuit define it.
+Inuit define it. The CWB is Indigenous Services Canada's index, with bounds in the
+Canadian dollars of its series: for another country, set \code{bounds} in its currency
+and read the result as a CWB-style score, not comparable with Canada's.
 }
 \examples{
 # made-up profile figures for two communities, to show the computation

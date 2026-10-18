@@ -24,13 +24,18 @@ A data frame with \code{dose}, \code{cases}, \code{n}, \code{proportion},
 \description{
 For counts of an outcome (suicidal thoughts, distress) among people with 0, 1 or 2
 generations of residential school attendance in their family (or any ordered exposure),
-the odds ratio of each level against the lowest, with Woolf intervals, and the
+the odds ratio of each level against the lowest level, with Woolf intervals, and the
 Cochran-Armitage test for a trend across the levels.
 }
 \details{
-Counts must be unweighted. For a complex survey, take the weighted analysis
-from the survey itself (\code{\link{survey_design}}): this function is for published or
-aggregated counts.
+With \eqn{a_k} cases and \eqn{b_k = n_k - a_k} non-cases at level \eqn{k}, the
+odds ratio against the lowest level is \eqn{(a_k/b_k)/(a_1/b_1)}, with Woolf's interval
+\eqn{\exp\{\log OR \pm z\sqrt{1/a_k + 1/b_k + 1/a_1 + 1/b_1}\}}. When any cell is
+empty, one half is added to every cell of every level (Haldane-Anscombe), so every odds
+ratio is finite. The trend test is the Cochran-Armitage test (\code{prop.trend.test})
+with the levels as scores. Counts must be unweighted. For a complex survey, take the
+weighted analysis from the survey itself (\code{\link{survey_design}}): this function
+is for published or aggregated counts.
 }
 \examples{
 # made-up counts by 0, 1 and 2 generations of attendance, to show the computation

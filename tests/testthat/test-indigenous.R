@@ -50,7 +50,7 @@ test_that("indigenous_gap() works the ratio and difference from the published in
   sl <- sqrt(((log(47.7) - log(43.9)) / (2 * z))^2 + ((log(62) - log(61)) / (2 * z))^2)
   expect_equal(fn$ratio_upper, exp(log(45.8 / 61.5) + z * sl))
   expect_true(r$use_with_caution[r$group == "Inuit"])
-  expect_identical(r$pan_indigenous, c(FALSE, FALSE, TRUE, FALSE))
+  expect_identical(r$pooled_group, c(FALSE, FALSE, TRUE, FALSE))
   d$q[2] <- "F"
   expect_true(is.na(indigenous_gap(d, "g", "est", "lo", "hi", quality = "q")$ratio[2]))
   expect_error(indigenous_gap(d, "g", "est", "lo", "hi", reference = "zz"), "exactly one row")
@@ -109,6 +109,9 @@ test_that("rate_gap(): ratio and difference of two standardised rates", {
 test_that("generations_exposed() codes 0, 1, 2 and keeps what is not known unknown", {
   expect_identical(generations_exposed(c(TRUE, FALSE, TRUE, NA, FALSE, NA, TRUE),
                                        c(TRUE, FALSE, FALSE, TRUE, NA, NA, NA)),
+                   c(2L, 0L, 1L, NA, NA, NA, NA))
+  expect_identical(generations_exposed(c(TRUE, FALSE, TRUE, NA, FALSE, NA, TRUE),
+                                       c(TRUE, FALSE, FALSE, TRUE, NA, NA, NA), partial = "lower_bound"),
                    c(2L, 0L, 1L, 1L, NA, NA, 1L))
   expect_error(generations_exposed(1, TRUE), "`parent` must be TRUE, FALSE or NA")
   expect_error(generations_exposed(TRUE, c(TRUE, FALSE)), "same length")

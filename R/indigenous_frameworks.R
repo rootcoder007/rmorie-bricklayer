@@ -15,8 +15,7 @@
 
 .rmbl_quality <- function(data, quality) {
   q <- if (is.null(quality)) rep("ok", nrow(data)) else as.character(data[[quality]])
-  q[is.na(q) | q == ""] <- "ok"
-  q
+  .rmbl_qflags(q)
 }
 
 #' The four directions of the First Nations Mental Wellness Continuum, from published
@@ -38,11 +37,19 @@
 #' filling it from another. One indicator named for two directions (Statistics Canada asks
 #' about "meaning and purpose" together) is used for both and marked \code{shared}.
 #'
-#' The result plots as a \code{\link{wellness_profile}}; \code{\link{holistic_balance}} on
-#' it gives the balance across the directions.
+#' The result plots as a \code{\link{wellness_profile}}. For the balance across the
+#' directions, call \code{\link{holistic_balance}} on the rows with a proxy
+#' (\code{x[x$domain != "no published proxy", ]}, with \code{"domain"} as its domain
+#' column):
+#' a missing direction otherwise leaves the balance \code{NA}, and a shared proxy counts
+#' once per direction it serves, so give such directions half weight. Other frameworks of
+#' wellness (Te Whare Tapa Wha, the Social and Emotional Wellbeing domains, a Nation's
+#' own) take the same route through \code{\link{wellness_profile}} and
+#' \code{\link{holistic_balance}}, which accept any set of domains.
 #'
 #' @param data A data frame, one row per group and indicator.
-#' @param group,indicator,estimate,lower,upper Column names.
+#' @param group,indicator,estimate,lower,upper Column names: the group, the indicator,
+#'   the estimate (percent) and its published limits.
 #' @param hope,belonging,meaning,purpose The indicators taken as proxies for each
 #'   direction, or \code{NULL} where the tables have none.
 #' @param quality Optional column of quality flags.
@@ -57,7 +64,8 @@
 #' \url{https://www.sac-isc.gc.ca/eng/1576093687903/1576093725971}
 #' @seealso \code{\link{wellness_profile}}, \code{\link{holistic_balance}}.
 #' @examples
-#' # well-being, 2024 (table 41-10-0082-01): hope, and meaning and purpose (asked together);
+#' # well-being, 2024 (table 41-10-0082-01): hope, and meaning and purpose (asked
+#' # together);
 #' # this table has no measure of belonging, so that direction is reported as missing
 #' wb <- indigenous_example("wellbeing")
 #' mw <- mental_wellness_continuum(wb, "group", "indicator", "estimate", "lower", "upper",
@@ -89,7 +97,11 @@ mental_wellness_continuum <- function(data, group, indicator, estimate, lower, u
   if (length(miss)) stop(sprintf("not an indicator of `data`: %s", paste(miss, collapse = ", ")), call. = FALSE)
   g <- trimws(as.character(data[[group]]))
   est <- .rmbl_num(data[[estimate]], "estimate")
-  se <- (.rmbl_num(data[[upper]], "upper") - .rmbl_num(data[[lower]], "lower")) / (2 * z)
+  lo <- .rmbl_num(data[[lower]], "lower")
+  hi <- .rmbl_num(data[[upper]], "upper")
+  named <- ind %in% trimws(unlist(dirs))
+  est[named] <- .rmbl_contains(est[named], lo[named], hi[named], paste0(g[named], ": ", ind[named]))
+  se <- (hi - lo) / (2 * z)
   q <- .rmbl_quality(data, quality)
   est[q %in% c("F", "x", "..", "...")] <- NA_real_
   used <- table(unlist(lapply(dirs, unique)))
@@ -151,7 +163,9 @@ mental_wellness_continuum <- function(data, group, indicator, estimate, lower, u
 #' methodology is available from the Department on request. The index measures
 #' socio-economic conditions as the census counts them; it says nothing of culture,
 #' language or relationship to land, and is not a measure of wellness as First Nations and
-#' Inuit define it.
+#' Inuit define it. The CWB is Indigenous Services Canada's index, with bounds in the
+#' Canadian dollars of its series: for another country, set \code{bounds} in its currency
+#' and read the result as a CWB-style score, not comparable with Canada's.
 #'
 #' @param income_per_capita Income per capita, in the dollars of the series' bounds.
 #' @param high_school_20plus,university_25plus Percentages for education.
@@ -223,12 +237,16 @@ cwb_score <- function(income_per_capita, high_school_20plus, university_25plus, 
 #' (2016) describes Indigenous health and education as interconnected. Across places, that
 #' connection has a testable shadow: where more people are on the land (or belong, or
 #' finish school), do more report wellness? This function measures it by Spearman's
-#' \eqn{\rho}. Its p-value is exact, from all \eqn{n!} orderings when there are at most 8
-#' places and from \code{reps} random orderings otherwise. Each estimate carries sampling
-#' error, so \code{rho_lower} and \code{rho_upper} are the quantiles of \eqn{\rho} over
-#' \code{reps} draws of both indicators from normal distributions with their published
-#' standard errors: a correlation that the published intervals cannot pin down shows a
-#' wide interval.
+#' \eqn{\rho}. Its p-value is exact when there are at most 8 places (over all \eqn{n!}
+#' orderings) and a Monte Carlo estimate otherwise (\eqn{(b + 1)/(R + 1)} for \eqn{b} of
+#' \eqn{R} = \code{reps} random orderings at least as extreme). Each estimate carries
+#' sampling error, so \code{rho_lower} and \code{rho_upper} are the quantiles of
+#' \eqn{\rho} over \code{reps} draws of both indicators from normal distributions with
+#' their published standard errors. That is a sensitivity band, not a confidence interval
+#' for a correlation across places: it shows how much the published sampling error alone
+#' moves \eqn{\rho} for these places, it is pulled toward 0 (noise is added to estimates
+#' that are already noisy), and it ignores the sampling of the places themselves. Quality
+#' flags are not carried: filter suppressed rows out first.
 #'
 #' This is an association across places (an ecological one). It cannot say that connection
 #' to land makes a person well, which needs data on persons; a handful of places gives
@@ -247,6 +265,11 @@ cwb_score <- function(income_per_capita, high_school_20plus, university_25plus, 
 #' @return A list of class \code{rmbl_connection}: \code{data} (the places used),
 #'   \code{rho}, \code{p_value}, \code{exact}, \code{rho_lower}, \code{rho_upper},
 #'   \code{n}.
+#' @section Acknowledgement:
+#' This estimator puts to quantitative use the work of Professor Angela Mashford-Pringle
+#' (Timiskaming First Nation) and Professor Suzanne Stewart (Yellowknives Dene First
+#' Nation), both of the University of Toronto; see the acknowledgements of
+#' \code{vignette("first-nations-metis-inuit-health")}.
 #' @references Mashford-Pringle A, Stewart SL (2019). Akiikaa (it is the land): exploring
 #' land-based experiences with university students in Ontario. Global Health Promotion
 #' 26(3_suppl):64-72. \doi{10.1177/1757975919828722}
@@ -304,7 +327,8 @@ connection_association <- function(data, place, x, y, x_lower = NULL, x_upper = 
   } else {
     replicate(reps, stats::cor(rx, sample(ry)))
   }
-  p <- mean(abs(perm) >= abs(r0) - 1e-12)
+  hits <- sum(abs(perm) >= abs(r0) - 1e-12)
+  p <- if (exact) hits / length(perm) else (hits + 1) / (reps + 1)
   lo <- hi <- NA_real_
   if (!is.null(x_lower)) {
     draws <- replicate(reps, rho(stats::rnorm(n, d$x, d$x_se), stats::rnorm(n, d$y, d$y_se)))
@@ -351,14 +375,20 @@ print.rmbl_connection <- function(x, ...) {
 #' Canada flags breaks in a series, and a change across one is not a change in the people.
 #'
 #' @param data A data frame, one row per group, indicator and period.
-#' @param group,indicator,period,estimate,lower,upper Column names.
+#' @param group,indicator,period,estimate,lower,upper Column names: the change is in the
+#'   estimate's own units (percentage points for percentages).
 #' @param from,to The two periods.
-#' @param wellness Optional indicators of wellness, listed first and marked.
+#' @param wellness,distress Optional indicators of wellness (listed first) and of
+#'   distress; with \code{distress} given, any other indicator is marked \code{"other"}.
 #' @param quality Optional column of quality flags.
 #' @param conf_level Confidence level (default 0.95).
 #' @return A data frame of class \code{rmbl_healing_change}: \code{group},
 #'   \code{indicator}, \code{side}, \code{from}, \code{to}, \code{change}, \code{lower},
 #'   \code{upper}, \code{use_with_caution}.
+#' @section Acknowledgement:
+#' This estimator puts to quantitative use the framework of Professor Suzanne Stewart
+#' (Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
+#' \code{vignette("first-nations-metis-inuit-health")}.
 #' @references Stewart SL (2008), see \code{\link{holistic_balance}}.
 #' @seealso \code{\link{wellness_profile}}.
 #' @examples
@@ -376,12 +406,12 @@ print.rmbl_connection <- function(x, ...) {
 #' plot(hc)
 #' @export
 healing_change <- function(data, group, indicator, period, estimate, lower, upper, from, to, wellness = NULL,
-                           quality = NULL, conf_level = 0.95) {
+                           quality = NULL, conf_level = 0.95, distress = NULL) {
   .rmbl_ind_cols(data, group = group, indicator = indicator, period = period, estimate = estimate,
                  lower = lower, upper = upper, quality = quality)
   from <- .rmbl_string1(from, "from")
   to <- .rmbl_string1(to, "to")
-  .rmbl_no_fn(wellness = wellness)
+  .rmbl_no_fn(wellness = wellness, distress = distress)
   conf_level <- .rmbl_conf_level(conf_level)
   z <- stats::qnorm(1 - (1 - conf_level) / 2)
   pr <- as.character(data[[period]])
@@ -389,7 +419,10 @@ healing_change <- function(data, group, indicator, period, estimate, lower, uppe
   g <- trimws(as.character(data[[group]]))
   ind <- trimws(as.character(data[[indicator]]))
   est <- .rmbl_num(data[[estimate]], "estimate")
-  se <- (.rmbl_num(data[[upper]], "upper") - .rmbl_num(data[[lower]], "lower")) / (2 * z)
+  lo <- .rmbl_num(data[[lower]], "lower")
+  hi <- .rmbl_num(data[[upper]], "upper")
+  est <- .rmbl_contains(est, lo, hi, paste0(g, ": ", ind, " (", pr, ")"))
+  se <- (hi - lo) / (2 * z)
   q <- .rmbl_quality(data, quality)
   est[q %in% c("F", "x", "..", "...")] <- NA_real_
   key <- paste(g, ind, sep = "\r")
@@ -405,8 +438,9 @@ healing_change <- function(data, group, indicator, period, estimate, lower, uppe
   i2 <- k2[match(both, key[k2])]
   ch <- est[i2] - est[i1]
   s <- sqrt(se[i1]^2 + se[i2]^2)
-  side <- if (is.null(wellness)) rep(NA_character_, length(both)) else
-    ifelse(ind[i1] %in% trimws(wellness), "wellness", "distress")
+  side <- if (is.null(wellness) && is.null(distress)) rep(NA_character_, length(both)) else
+    ifelse(ind[i1] %in% trimws(wellness), "wellness",
+           if (is.null(distress)) "distress" else ifelse(ind[i1] %in% trimws(distress), "distress", "other"))
   out <- data.frame(group = g[i1], indicator = ind[i1], side = side, from = est[i1], to = est[i2], change = ch,
                     lower = ch - z * s, upper = ch + z * s, use_with_caution = q[i1] == "E" | q[i2] == "E",
                     stringsAsFactors = FALSE)
@@ -436,14 +470,16 @@ healing_change <- function(data, group, indicator, period, estimate, lower, uppe
 #' Nations or communities on their culture. For Inuit regions, use Inuit data only.
 #'
 #' @param data A data frame, one row per group (or place) and indicator.
-#' @param group,indicator,estimate,lower,upper Column names.
+#' @param group,indicator,estimate,lower,upper Column names; every indicator must be on
+#'   one scale (percent, for example: a rate per 1,000 beside a percentage makes the
+#'   weights meaningless).
 #' @param weights Named weights, one per indicator used: positive for a protective factor,
 #'   negative for a risk factor.
 #' @param quality Optional column of quality flags.
 #' @param conf_level Confidence level (default 0.95).
 #' @return A data frame of class \code{rmbl_community_index}: \code{group}, \code{index},
-#'   \code{lower}, \code{upper}, \code{use_with_caution}; the weights as the attribute
-#'   \code{weights}.
+#'   \code{lower}, \code{upper}, \code{use_with_caution}; attributes \code{weights} and
+#'   \code{conf_level}. \code{plot()} draws it.
 #' @references Inuit Tapiriit Kanatami (2016). National Inuit Suicide Prevention Strategy.
 #' Ottawa. \url{https://itk.ca/national-inuit-suicide-prevention-strategy/}
 #'
@@ -460,9 +496,13 @@ healing_change <- function(data, group, indicator, period, estimate, lower, uppe
 #'               "Heavy drinking")
 #' ci <- community_index(h, "group", "indicator", "estimate", "lower", "upper",
 #'                       quality = "quality", weights = w)
-#' # food insecurity is not published for 2019/2022 (".."): an index that needs it is NA,
-#' # never filled
 #' ci
+#' # an indicator the table does not publish for the period leaves the index NA, never
+#' # filled: food insecurity is ".." for 2019/2022
+#' w2 <- c(w, "Household food insecure" = -2)
+#' community_index(h, "group", "indicator", "estimate", "lower", "upper",
+#'                 quality = "quality",
+#'                 weights = w2)$index
 #' plot(ci)
 #' @export
 community_index <- function(data, group, indicator, estimate, lower, upper, weights, quality = NULL,
@@ -483,7 +523,11 @@ community_index <- function(data, group, indicator, estimate, lower, upper, weig
   if (length(miss)) stop(sprintf("not an indicator of `data`: %s", paste(miss, collapse = ", ")), call. = FALSE)
   g <- trimws(as.character(data[[group]]))
   est <- .rmbl_num(data[[estimate]], "estimate")
-  se <- (.rmbl_num(data[[upper]], "upper") - .rmbl_num(data[[lower]], "lower")) / (2 * z)
+  lo <- .rmbl_num(data[[lower]], "lower")
+  hi <- .rmbl_num(data[[upper]], "upper")
+  used <- ind %in% names(weights)
+  est[used] <- .rmbl_contains(est[used], lo[used], hi[used], paste0(g[used], ": ", ind[used]))
+  se <- (hi - lo) / (2 * z)
   q <- .rmbl_quality(data, quality)
   est[q %in% c("F", "x", "..", "...")] <- NA_real_
   tot <- sum(abs(weights))
@@ -500,6 +544,7 @@ community_index <- function(data, group, indicator, estimate, lower, upper, weig
   })
   out <- do.call(rbind, rows)
   attr(out, "weights") <- weights
+  attr(out, "conf_level") <- conf_level
   class(out) <- c("rmbl_community_index", "data.frame")
   out
 }
@@ -611,7 +656,7 @@ plot.rmbl_healing_change <- function(x, ..., main = NULL, col = NULL, palette = 
   cols <- .bl_cols(3L, col, palette)[side]
   .bl_dot_interval(lab, d$change, d$lower, d$upper,
                    .bl_main(main, sprintf("Change from %s to %s", p[["from"]], p[["to"]])),
-                   "Change in percentage points, with its interval", cols, ref = 0,
+                   "Change, in the estimate's units, with its interval", cols, ref = 0,
                    note = ifelse(is.finite(d$change), NA_character_, "suppressed in one period"), ...)
   invisible(d[c("group", "indicator", "change", "lower", "upper")])
 }

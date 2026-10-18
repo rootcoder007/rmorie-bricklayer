@@ -19,7 +19,9 @@ community_index(
 \arguments{
 \item{data}{A data frame, one row per group (or place) and indicator.}
 
-\item{group, indicator, estimate, lower, upper}{Column names.}
+\item{group, indicator, estimate, lower, upper}{Column names; every indicator must be on
+one scale (percent, for example: a rate per 1,000 beside a percentage makes the
+weights meaningless).}
 
 \item{weights}{Named weights, one per indicator used: positive for a protective factor,
 negative for a risk factor.}
@@ -30,8 +32,8 @@ negative for a risk factor.}
 }
 \value{
 A data frame of class \code{rmbl_community_index}: \code{group}, \code{index},
-\code{lower}, \code{upper}, \code{use_with_caution}; the weights as the attribute
-\code{weights}.
+\code{lower}, \code{upper}, \code{use_with_caution}; attributes \code{weights} and
+\code{conf_level}. \code{plot()} draws it.
 }
 \description{
 Combines published indicators into one index for each group or place, with weights the
@@ -62,9 +64,13 @@ names(w) <- c("Sense of belonging to local community, somewhat strong or very st
               "Heavy drinking")
 ci <- community_index(h, "group", "indicator", "estimate", "lower", "upper",
                       quality = "quality", weights = w)
-# food insecurity is not published for 2019/2022 (".."): an index that needs it is NA,
-# never filled
 ci
+# an indicator the table does not publish for the period leaves the index NA, never
+# filled: food insecurity is ".." for 2019/2022
+w2 <- c(w, "Household food insecure" = -2)
+community_index(h, "group", "indicator", "estimate", "lower", "upper",
+                quality = "quality",
+                weights = w2)$index
 plot(ci)
 }
 \references{

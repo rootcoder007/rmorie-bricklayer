@@ -19,7 +19,8 @@ census_standard(
 
 \item{group}{The group (default \code{"Indigenous identity"}).}
 
-\item{geo}{The geography (default \code{"Canada"}).}
+\item{geo}{The geography: its name (default \code{"Canada"}) or, where names repeat,
+its DGUID.}
 
 \item{ages}{The age groups, as the profile names them.}
 

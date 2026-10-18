@@ -31,10 +31,21 @@ but distinct axes: a person, or a population, can carry distress and also wellne
 That is how Indigenous scholars of mental health describe it too, as wellness and as a
 process of healing rather than as illness alone (Stewart 2008). Plotting the groups on
 both axes keeps a strength visible beside the burden it sits next to. The
-\code{strength_ratio} is wellness over distress with a log-normal interval from the two
-published intervals (independent estimates): above 1, more people report the wellness
-than the distress.
+\code{strength_ratio} is \eqn{R = W / D}, wellness over distress, with the log-normal
+interval \eqn{\exp\{\log R \pm z\sqrt{\sigma_W^2 + \sigma_D^2}\}} from the two
+published intervals: above 1, more people report the wellness than the distress. The
+two estimates come from the same respondents; their covariance is not published, so the
+interval treats them as independent and is too narrow when they are negatively
+correlated, as answers about wellness and distress usually are. Any two indicators on
+one scale can be set against each other.
 }
+\section{Acknowledgement}{
+
+This estimator puts to quantitative use the framework of Professor Suzanne Stewart
+(Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
+\code{vignette("first-nations-metis-inuit-health")}.
+}
+
 \examples{
 wb <- indigenous_example("wellbeing")
 w <- wellness_profile(wb, "group", "indicator", "estimate", "lower", "upper",

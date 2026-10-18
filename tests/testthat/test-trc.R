@@ -19,14 +19,14 @@ test_that("trc_health_gaps(): each gap is indigenous_gap's ratio, turned so that
   d <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" & h$indicator == "Mood disorder", ]
   ig <- indigenous_gap(d, "group", "estimate", "lower", "upper", quality = "quality")
   r <- g[g$measure == "Mood disorder" & g$group == "First Nations", ]
-  expect_equal(r$times_worse, ig$ratio[ig$group == "First Nations"])
+  expect_equal(r$disadvantage_ratio, ig$ratio[ig$group == "First Nations"])
   expect_equal(r$lower, ig$ratio_lower[ig$group == "First Nations"])
   # higher is better: the ratio is inverted, and so is its interval
   le <- indigenous_example("life_expectancy")
   le <- le[le$period == "2016/2021", ]
   il <- indigenous_gap(le, "group", "estimate", "lower", "upper", quality = "quality")
   r2 <- g[g$measure == "Life expectancy at birth" & g$group == "Inuit", ]
-  expect_equal(r2$times_worse, 1 / il$ratio[il$group == "Inuit"])
+  expect_equal(r2$disadvantage_ratio, 1 / il$ratio[il$group == "Inuit"])
   expect_equal(r2$lower, 1 / il$ratio_upper[il$group == "Inuit"])
   expect_identical(r2$period, "2016/2021")
   expect_true(r2$worse)
@@ -43,5 +43,5 @@ test_that("trc_health_gaps(): each gap is indigenous_gap's ratio, turned so that
   expect_error(trc_health_gaps(suicidal_ideation = 1), "`suicidal_ideation` must be a data frame")
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
-  expect_identical(nrow(plot(g)), sum(is.finite(g$times_worse)))
+  expect_identical(nrow(plot(g)), sum(is.finite(g$disadvantage_ratio)))
 })

@@ -144,15 +144,21 @@ census_profile <- function(x) {
 #'     a sampling fraction \eqn{f} (\code{sample_fraction}, 0.25) of a population of
 #'     \eqn{N} (the denominator) and a design effect \eqn{d} (\code{deff}, 1 by default:
 #'     the clustering of people in households raises it, and a value of 1.5 to 2 is
-#'     prudent for characteristics shared within a household);
-#'   \item every count is randomly rounded to a multiple of 5, which adds an error of
-#'     variance about 4 to each count, so \eqn{4 (1 + p^2) / N^2} more (the only error of
-#'     a full-count share).
+#'     prudent for characteristics shared within a household). On reserves (rows whose
+#'     \code{residence} is \code{"On reserve"}) every household got the long form, so
+#'     \eqn{f = 1} there and the sampling term vanishes;
+#'   \item every count is randomly rounded, up or down without bias, to a multiple of
+#'     \eqn{b} (\code{rounding_base}, 5). Averaged over the remainders, that adds variance
+#'     \eqn{c = (b^2 - 1)/6} to each count (4 for \eqn{b = 5}), so \eqn{c (1 + p^2) / N^2}
+#'     to the share (the only error of a full-count share).
 #' }
-#' The interval is Wilson's at the effective sample size \eqn{p(1-p)} over that variance,
-#' so it stays inside 0 and 100. It does not carry non-response (see \code{tnr_lf}) or the
-#' edit and imputation error, so it is narrower than the full error; treat it as a lower
-#' bound on the uncertainty.
+#' In all,
+#' \deqn{V = \frac{d (1 - f) p (1 - p)}{f N} + \frac{c (1 + p^2)}{N^2}.}{V = d (1 - f) p
+#' (1 - p) / (f N) + c (1 + p^2) / N^2.} The interval is Wilson's at the effective sample
+#' size \eqn{n_e = \max(p(1-p), 1/N) / V} (the floor \eqn{1/N} keeps a share of 0 or 100\%
+#' from an infinite \eqn{n_e}), so it stays inside 0 and 100. It does not carry
+#' non-response (see \code{tnr_lf}) or the edit and imputation error, so it is narrower
+#' than the full error; treat it as a lower bound on the uncertainty.
 #'
 #' @param x A \code{\link{census_profile}}.
 #' @param numerator The characteristic counted: its \code{characteristic_id}, or its name
@@ -162,6 +168,8 @@ census_profile <- function(x) {
 #' @param sample_fraction The long-form sampling fraction (default 0.25); full-count
 #'   characteristics use 1 whatever is given.
 #' @param deff Design effect (default 1).
+#' @param rounding_base The base of the random rounding (default 5, Statistics Canada's);
+#'   1 for counts that are not rounded.
 #' @param conf_level Confidence level (default 0.95).
 #' @return A data frame of class \code{rmbl_profile_share}: \code{geo}, \code{dguid},
 #'   \code{residence}, \code{gender}, \code{age}, \code{group}, \code{numerator},
@@ -186,10 +194,12 @@ census_profile <- function(x) {
 #' head(fc)
 #' plot(fc[fc$geo == "Canada", ])
 #' @export
-profile_share <- function(x, numerator, denominator = NULL, sample_fraction = 0.25, deff = 1, conf_level = 0.95) {
+profile_share <- function(x, numerator, denominator = NULL, sample_fraction = 0.25, deff = 1, conf_level = 0.95,
+                          rounding_base = 5) {
   if (!inherits(x, "rmbl_census_profile")) stop("`x` must come from census_profile()", call. = FALSE)
   sample_fraction <- .rmbl_scalar(sample_fraction, "sample_fraction", 0.001, 1)
   deff <- .rmbl_scalar(deff, "deff", 0.1, 100)
+  rounding_base <- .rmbl_scalar(rounding_base, "rounding_base", 1, 1000, integer = TRUE)
   conf_level <- .rmbl_conf_level(conf_level)
   pick <- function(v, what) {
     if (length(v) != 1L || is.na(v)) stop(sprintf("`%s` must be one characteristic id or name", what), call. = FALSE)
@@ -211,8 +221,10 @@ profile_share <- function(x, numerator, denominator = NULL, sample_fraction = 0.
   den <- b$value[m]
   ok <- is.finite(num) & is.finite(den) & den > 0 & num >= 0 & num <= den
   p <- ifelse(ok, num / den, NA_real_)
-  f <- ifelse(a$sample == "25%", sample_fraction, 1)
-  v <- ifelse(ok, deff * (1 - f) * p * (1 - p) / (f * den) + 4 * (1 + p^2) / den^2, NA_real_)
+  # on reserves the long form was a full canvass
+  f <- ifelse(a$sample == "25%" & !a$residence %in% "On reserve", sample_fraction, 1)
+  cr <- (rounding_base^2 - 1) / 6
+  v <- ifelse(ok, deff * (1 - f) * p * (1 - p) / (f * den) + cr * (1 + p^2) / den^2, NA_real_)
   z <- stats::qnorm(1 - (1 - conf_level) / 2)
   ne <- ifelse(ok & v > 0, pmax(p * (1 - p), 1 / den) / v, NA_real_)
   centre <- (p + z^2 / (2 * ne)) / (1 + z^2 / ne)
@@ -249,7 +261,8 @@ profile_share <- function(x, numerator, denominator = NULL, sample_fraction = 0.
 #'
 #' @param x A \code{\link{census_profile}}.
 #' @param group The group (default \code{"Indigenous identity"}).
-#' @param geo The geography (default \code{"Canada"}).
+#' @param geo The geography: its name (default \code{"Canada"}) or, where names repeat,
+#'   its DGUID.
 #' @param ages The age groups, as the profile names them.
 #' @param residence On or off reserve, in the tables that split it (default the total).
 #' @return A data frame: \code{age}, \code{population}, \code{weight} (shares summing to
@@ -274,9 +287,13 @@ census_standard <- function(x, group = "Indigenous identity", geo = "Canada",
   if (!is.character(ages) || !length(ages) || anyNA(ages)) stop("`ages` must name age groups", call. = FALSE)
   first <- min(x$characteristic_id)
   residence <- .rmbl_string1(residence, "residence")
-  d <- x[x$characteristic_id == first & x$group == group & x$geo == geo & x$gender %in% c("Total - Gender", "Total") &
+  d <- x[x$characteristic_id == first & x$group == group & (x$geo == geo | x$dguid == geo) &
+           x$gender %in% c("Total - Gender", "Total") &
            x$residence %in% c(residence, "Total"), ]
   if (!nrow(d)) stop(sprintf("no population for group \"%s\" in \"%s\"", group, geo), call. = FALSE)
+  if (length(unique(d$dguid)) > 1L) {
+    stop(sprintf("\"%s\" names %d places: give its DGUID as `geo`", geo, length(unique(d$dguid))), call. = FALSE)
+  }
   pop <- d$value[match(ages, d$age)]
   if (anyNA(pop)) {
     stop(sprintf("no population for: %s", paste(ages[is.na(pop)], collapse = ", ")), call. = FALSE)
@@ -304,15 +321,20 @@ census_standard <- function(x, group = "Indigenous identity", geo = "Canada",
 #'     (100 less the unemployment rate) of those aged 25 to 64: the CWB uses 20 to 64.}
 #'   \item{housing}{the shares of households with one person or fewer per room and needing
 #'     no major repairs, from the household profile (\code{dwelling}), which splits
-#'     Indigenous from non-Indigenous households only: the CWB counts persons, not
-#'     households. Without \code{dwelling} the housing component and the score are
+#'     Indigenous from non-Indigenous households only, so First Nations, Metis and Inuit
+#'     people all get the pooled Indigenous households' housing: the CWB counts persons,
+#'     not households. Without \code{dwelling} the housing component and the score are
 #'     \code{NA}.}
 #' }
-#' A group of fewer than 250 people in a geography gets no score, as the Department
-#' suppresses communities that small. Read the result as a CWB-style description of
-#' socio-economic conditions, close to but not the Department's index, and never as a
-#' measure of the wellness of First Nations, Metis or Inuit people as they define it (see
-#' \code{\link{cwb_score}}).
+#' A group of fewer than \code{min_population} people in a geography gets no score. The
+#' Department scores communities of 65 people or more; the default here is 250, because
+#' the public profile's counts are rounded to multiples of 5 and its long-form counts rest
+#' on a few dozen households at that size. Geographies are matched by DGUID, so places
+#' that share a name stay apart. The inputs are those of the 2021 profile (98-510-X2021001
+#' to -016): other editions name their characteristics differently. Read the result as a
+#' CWB-style description of socio-economic conditions, close to but not the Department's
+#' index, and never as a measure of the wellness of First Nations, Metis or Inuit people
+#' as they define it (see \code{\link{cwb_score}}).
 #'
 #' @param x A \code{\link{census_profile}} of a population table.
 #' @param dwelling Optional \code{\link{census_profile}} of the matching household table.
@@ -320,8 +342,14 @@ census_standard <- function(x, group = "Indigenous identity", geo = "Canada",
 #'   non-Indigenous people).
 #' @param bounds Income bounds of \code{\link{cwb_score}}.
 #' @param residence On or off reserve, in the tables that split it (default the total).
-#' @return A data frame: \code{geo}, \code{group}, the four components, \code{cwb}, and
-#'   the inputs.
+#' @param min_population The smallest population scored (default 250; the Department uses
+#'   65).
+#' @return A data frame of class \code{rmbl_census_cwb}: \code{geo}, \code{dguid},
+#'   \code{group}; the components \code{income}, \code{education}, \code{housing},
+#'   \code{labour} and the score \code{cwb} (0 to 100, \code{NA} where not scored); and
+#'   the inputs \code{income_per_capita} (dollars), \code{high_school_25plus},
+#'   \code{university_25plus}, \code{population}, \code{participation}, \code{employment},
+#'   \code{no_major_repairs}, \code{not_crowded} (percentages).
 #' @references Indigenous Services Canada (2019). Report on trends in First Nations
 #'   communities, 1981 to 2016 (Community Well-Being index).
 #'   \url{https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644}
@@ -333,13 +361,15 @@ census_standard <- function(x, group = "Indigenous identity", geo = "Canada",
 #'                      "cwb")]
 #' @export
 census_cwb <- function(x, dwelling = NULL, groups = c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"),
-                       bounds = c(2650, 75000), residence = "Total - Residence on or off reserve") {
+                       bounds = c(2650, 75000), residence = "Total - Residence on or off reserve",
+                       min_population = 250) {
   if (!inherits(x, "rmbl_census_profile")) stop("`x` must come from census_profile()", call. = FALSE)
   if (!is.null(dwelling) && !inherits(dwelling, "rmbl_census_profile")) {
     stop("`dwelling` must come from census_profile()", call. = FALSE)
   }
   .rmbl_no_fn(groups = groups)
   residence <- .rmbl_string1(residence, "residence")
+  min_population <- .rmbl_scalar(min_population, "min_population", 0)
   tot_g <- x$gender %in% c("Total - Gender", "Total") & x$residence %in% c(residence, "Total")
   val <- function(name, age, root = NULL) {
     d <- x[tot_g & x$characteristic == name & x$age == age, ]
@@ -347,7 +377,7 @@ census_cwb <- function(x, dwelling = NULL, groups = c("First Nations", "M\u00e9t
     d
   }
   look <- function(d, geo, group) {
-    v <- d$value[d$geo == geo & d$group == group]
+    v <- d$value[d$dguid == geo & d$group == group]
     if (length(v)) v[[1L]] else NA_real_
   }
   pop_id <- min(x$characteristic_id)
@@ -362,14 +392,14 @@ census_cwb <- function(x, dwelling = NULL, groups = c("First Nations", "M\u00e9t
   ba <- val("Bachelor's degree or higher", "25 years and over", unique(edu_tot$characteristic_id))
   part <- val("Participation rate", "25 to 64 years")
   unemp <- val("Unemployment rate", "25 to 64 years")
-  geos <- unique(x$geo)
+  geos <- unique(x$dguid)
   rows <- list()
   for (g in geos) {
     for (gr in groups) {
       inc <- look(rec, g, gr) * look(avg, g, gr) / look(pop, g, gr)
       e_t <- look(edu_tot, g, gr)
       rows[[length(rows) + 1L]] <- data.frame(
-        geo = g, group = gr, income_per_capita = inc,
+        geo = x$geo[match(g, x$dguid)], dguid = g, group = gr, income_per_capita = inc,
         high_school_25plus = 100 * (1 - look(none, g, gr) / e_t), university_25plus = 100 * look(ba, g, gr) / e_t,
         population = look(pop, g, gr),
         participation = look(part, g, gr), employment = 100 - look(unemp, g, gr), stringsAsFactors = FALSE)
@@ -385,13 +415,12 @@ census_cwb <- function(x, dwelling = NULL, groups = c("First Nations", "M\u00e9t
     rep_maj <- hh("Major repairs needed")
     hgroup <- ifelse(d$group == "Non-Indigenous", "Non-Indigenous households", "Indigenous households")
     for (i in seq_len(nrow(d))) {
-      d$not_crowded[i] <- 100 * look(crowd_ok, d$geo[i], hgroup[i]) / look(crowd_t, d$geo[i], hgroup[i])
-      d$no_major_repairs[i] <- 100 * (1 - look(rep_maj, d$geo[i], hgroup[i]) / look(rep_t, d$geo[i], hgroup[i]))
+      d$not_crowded[i] <- 100 * look(crowd_ok, d$dguid[i], hgroup[i]) / look(crowd_t, d$dguid[i], hgroup[i])
+      d$no_major_repairs[i] <- 100 * (1 - look(rep_maj, d$dguid[i], hgroup[i]) / look(rep_t, d$dguid[i], hgroup[i]))
     }
   }
-  # as the Department does: no score for a population under 250 (its components would rest on a few
-  # dozen sampled households)
-  ok <- is.finite(d$income_per_capita) & d$income_per_capita > 0 & is.finite(d$population) & d$population >= 250
+  ok <- is.finite(d$income_per_capita) & d$income_per_capita > 0 & is.finite(d$population) &
+    d$population >= min_population
   sc <- data.frame(income = NA_real_, education = NA_real_, housing = NA_real_, labour = NA_real_, cwb = NA_real_)
   sc <- sc[rep(1L, nrow(d)), ]
   if (any(ok)) {
@@ -404,7 +433,7 @@ census_cwb <- function(x, dwelling = NULL, groups = c("First Nations", "M\u00e9t
     sc[ok, ] <- s
   }
   rownames(sc) <- NULL
-  out <- cbind(d[c("geo", "group")], sc, d[setdiff(names(d), c("geo", "group"))])
+  out <- cbind(d[c("geo", "dguid", "group")], sc, d[setdiff(names(d), c("geo", "dguid", "group"))])
   class(out) <- c("rmbl_census_cwb", "data.frame")
   out
 }

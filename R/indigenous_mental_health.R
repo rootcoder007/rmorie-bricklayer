@@ -35,13 +35,15 @@
 #' with a number, a crude rate and an age-standardised rate of them), is matched to the
 #' measure with the same unit (\code{UOM}) whose estimates it contains in every cell, and
 #' left unmatched (said in the attribute \code{unmatched}) if no single measure fits. A
-#' coefficient of variation \eqn{c} (in percent) gives the limits \eqn{e(1 \mp z c/100)},
-#' a standard error \eqn{s} the limits \eqn{e \mp z s}; the column \code{ci_source} says
-#' which (\code{"published"}, \code{"cv"} or \code{"se"}). Published limits that do not
-#' contain their own estimate (it happens: a 100\% with limits 85.5 to 98.6 in table
-#' 41-10-0012) are kept as published and marked \code{"inconsistent"}; the comparisons
-#' warn and leave such a row out. A limit is matched to a measure when it fits 95\% of the
-#' cells.
+#' coefficient of variation \eqn{c} (in percent) gives log-normal limits
+#' \eqn{e \exp(\mp z \sqrt{\log(1 + (c/100)^2)})}, which stay positive however large
+#' \eqn{c} is; a standard error \eqn{s} the limits \eqn{e \mp z s}; the column
+#' \code{ci_source} says which (\code{"published"}, \code{"cv"} or \code{"se"}). Published
+#' limits that do not contain their own estimate (it happens: a 100\% with limits 85.5 to
+#' 98.6 in table 41-10-0012) are kept as published and marked \code{"inconsistent"}; every
+#' comparison of the family warns and leaves such a row out. A limit is matched to a
+#' measure when it fits 95\% of the cells. Labels are read in English: use the
+#' English-language tables.
 #'
 #' Every other column but the metadata (\code{VECTOR}, \code{COORDINATE}, \code{UOM}, ...)
 #' identifies the cell, \code{DGUID} among them (one place name can name several
@@ -181,7 +183,8 @@ statcan_estimates <- function(x) {
   out <- x[e, dims, drop = FALSE]
   out$measure <- lab[e]
   out$estimate <- x$VALUE[e]
-  out$lower <- out$upper <- NA_real_
+  out$lower <- NA_real_
+  out$upper <- NA_real_
   out$ci_source <- NA_character_
   cv <- se <- rep(NA_real_, length(e))
   for (bl in names(bound_of)) {
@@ -200,8 +203,9 @@ statcan_estimates <- function(x) {
   odd <- pub & is.finite(out$estimate) & (out$lower > out$estimate | out$upper < out$estimate)
   out$ci_source[odd] <- "inconsistent"
   from_cv <- !pub & is.finite(cv) & is.finite(out$estimate)
-  out$lower[from_cv] <- out$estimate[from_cv] * (1 - z * cv[from_cv] / 100)
-  out$upper[from_cv] <- out$estimate[from_cv] * (1 + z * cv[from_cv] / 100)
+  sl <- sqrt(log(1 + (cv[from_cv] / 100)^2))
+  out$lower[from_cv] <- out$estimate[from_cv] * exp(-z * sl)
+  out$upper[from_cv] <- out$estimate[from_cv] * exp(z * sl)
   out$ci_source[from_cv] <- "cv"
   from_se <- !pub & !from_cv & is.finite(se) & is.finite(out$estimate)
   out$lower[from_se] <- out$estimate[from_se] - z * se[from_se]
@@ -227,9 +231,10 @@ statcan_estimates <- function(x) {
 #'
 #' @details With shares \eqn{p_i} in the group and \eqn{q_j} in the reference over
 #' categories ordered from lowest to highest, the probability of a higher rating, ties
-#' counted half, is \eqn{A = \sum_i p_i (Q_{i-1} + q_i / 2)} with \eqn{Q} the reference's
-#' cumulative shares: the Mann-Whitney probability (Agresti 1980's \eqn{\alpha} on the
-#' probability scale), equal to the mean ridit of the group with the reference as the
+#' counted half, is \eqn{A = \sum_i p_i (Q_{i-1} + q_i / 2)} with \eqn{Q_i} the
+#' reference's cumulative shares and \eqn{Q_0 = 0}: the Mann-Whitney probability, equal to
+#' \eqn{\alpha / (1 + \alpha)} for Agresti's (1980) generalized odds ratio \eqn{\alpha}
+#' with ties split equally, and to the mean ridit of the group with the reference as the
 #' standard (Bross 1958). 0.5 is no difference; \eqn{2A - 1} is Cliff's \eqn{\delta}, the
 #' share rating higher less the share rating lower.
 #'
@@ -246,7 +251,8 @@ statcan_estimates <- function(x) {
 #' for combined categories ("Excellent or very good") and for "not specified" are left
 #' out, and the shares are rescaled to sum to one over the levels. A group with a
 #' suppressed or missing category is not compared, since its distribution is unknown; one
-#' with an \code{E} category is compared and marked.
+#' with an \code{E} category (in the group or the reference) is compared and marked, and
+#' one whose published interval misses its own estimate is not compared.
 #'
 #' A higher rating means better only on a scale that runs that way. Give \code{levels}
 #' from the least to the most favourable so that \code{prob_better} reads as its name
@@ -256,15 +262,16 @@ statcan_estimates <- function(x) {
 #'   \code{\link{statcan_estimates}} gives, filtered to one geography, age group and
 #'   gender).
 #' @param group,category,estimate,lower,upper Column names: the group, the category, the
-#'   percentage and its published limits.
+#'   share in it (percent or proportion: only relative shares matter) and its published
+#'   limits on the same scale.
 #' @param levels The categories, from the lowest (least favourable) to the highest.
-#' @param reference The label of the reference group.
-#' @param quality Optional column of quality flags.
+#' @param reference The label of the reference group (required: any group of \code{data}).
+#' @param quality Optional column of quality flags (see \code{\link{quality_recode}}).
 #' @param conf_level Confidence level of the published limits and of the result (default
 #'   0.95).
 #' @return A data frame of class \code{rmbl_ordinal_compare}: \code{group},
 #'   \code{reference}, \code{prob_better}, \code{lower}, \code{upper}, \code{delta},
-#'   \code{n_eff}, \code{n_eff_reference}, \code{use_with_caution}, \code{pan_indigenous};
+#'   \code{n_eff}, \code{n_eff_reference}, \code{use_with_caution}, \code{pooled_group};
 #'   the attribute \code{shares} is the matrix of shares (groups by levels), which
 #'   \code{plot()} draws.
 #' @references Agresti A (1980). Generalized odds ratios for ordinal data. Biometrics
@@ -276,7 +283,8 @@ statcan_estimates <- function(x) {
 #' Brunner E, Munzel U (2000). The nonparametric Behrens-Fisher problem: asymptotic theory
 #' and a small-sample approximation. Biometrical Journal 42(1):17-25.
 #' \doi{10.1002/(SICI)1521-4036(200001)42:1<17::AID-BIMJ17>3.0.CO;2-U}
-
+#' @param pooled_groups Optional labels of rows that pool other groups (see
+#'   \code{\link{indigenous_gap}}).
 #' @seealso \code{\link{statcan_estimates}}, \code{\link{indigenous_gap}}.
 #' @examples
 #' # Self-perceived mental health, 15 years and older, Canada, 2022 (table 41-10-0067-01)
@@ -289,7 +297,7 @@ statcan_estimates <- function(x) {
 #' plot(oc)
 #' @export
 ordinal_compare <- function(data, group, category, estimate, lower, upper, levels, reference,
-                            quality = NULL, conf_level = 0.95) {
+                            quality = NULL, conf_level = 0.95, pooled_groups = NULL) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   for (nm in c("group", "category", "estimate", "lower", "upper")) {
     v <- .rmbl_string1(get(nm), nm)
@@ -312,8 +320,7 @@ ordinal_compare <- function(data, group, category, estimate, lower, upper, level
   est <- .rmbl_num(data[[estimate]], "estimate")
   lo <- .rmbl_num(data[[lower]], "lower")
   hi <- .rmbl_num(data[[upper]], "upper")
-  q <- if (is.null(quality)) rep("ok", length(g)) else as.character(data[[quality]])
-  q[is.na(q) | q == ""] <- "ok"
+  q <- .rmbl_qflags(if (is.null(quality)) rep("ok", length(g)) else data[[quality]])
   if (!reference %in% g) stop(sprintf("\"%s\" is not a group of `data`", reference), call. = FALSE)
   if (!any(cat %in% levels)) stop("no row of `data` has a category in `levels`", call. = FALSE)
   groups <- unique(g)
@@ -326,6 +333,10 @@ ordinal_compare <- function(data, group, category, estimate, lower, upper, level
     if (anyDuplicated(cat[i])) stop(sprintf("group \"%s\" has a category twice", gi), call. = FALSE)
     i <- i[match(levels, cat[i])]
     if (anyNA(i) || any(q[i] %in% c("F", "x", "..", "...")) || !all(is.finite(est[i]))) next
+    if (any(lo[i] > est[i] | hi[i] < est[i], na.rm = TRUE)) {
+      warning(sprintf("an interval of \"%s\" does not contain its estimate; not compared", gi), call. = FALSE)
+      next
+    }
     p <- est[i] / sum(est[i])
     s <- (hi[i] - lo[i]) / (2 * z) / sum(est[i])
     ok <- is.finite(s) & s > 0 & p > 0 & p < 1
@@ -361,7 +372,7 @@ ordinal_compare <- function(data, group, category, estimate, lower, upper, level
                     lower = out$lower, upper = out$upper, delta = 2 * out$prob_better - 1,
                     n_eff = unname(neff[out$group]), n_eff_reference = unname(neff[[reference]]),
                     use_with_caution = unname(caution[out$group]) | caution[[reference]],
-                    pan_indigenous = .rmbl_pan_indigenous(out$group), stringsAsFactors = FALSE)
+                    pooled_group = .rmbl_pan_indigenous(out$group, pooled_groups), stringsAsFactors = FALSE)
   attr(out, "shares") <- sh
   attr(out, "conf_level") <- conf_level
   class(out) <- c("rmbl_ordinal_compare", "data.frame")
@@ -370,30 +381,37 @@ ordinal_compare <- function(data, group, category, estimate, lower, upper, level
 
 #' Age-standardise survey percentages
 #'
-#' The percentage a group would have with the age structure of a standard population, from
-#' the percentage and published limits in each age group: for comparing First Nations,
-#' Metis and Inuit prevalences (suicidal thoughts, mood and anxiety disorders, heavy
-#' drinking) with each other and with an older population, when the age pattern of the
-#' outcome is steep.
+#' The percentage (or proportion, or rate) a group would have with the age structure of a
+#' standard population, from the estimate and published limits in each age group: for
+#' comparing First Nations, Metis and Inuit prevalences (suicidal thoughts, mood and
+#' anxiety disorders, heavy drinking) with each other and with an older population, for
+#' example, when the age pattern of the outcome is steep.
 #'
-#' @details With percentages \eqn{p_i}, standard errors \eqn{s_i = (u_i - l_i) / (2z)} and
-#' standard weights \eqn{w_i} (the standard's shares), the standardised percentage is
+#' @details With estimates \eqn{p_i}, standard errors \eqn{s_i = (u_i - l_i) / (2z)} and
+#' standard weights \eqn{w_i} (the standard's shares), the standardised estimate is
 #' \eqn{\sum w_i p_i} with standard error \eqn{\sqrt{\sum w_i^2 s_i^2}}, the age groups
 #' being disjoint domains of the survey (treated as independent: see
-#' \code{\link{indigenous_gap}}). The interval is normal, cut at 0 and 100. A group with a
-#' suppressed or missing age group has no standardised value: the age group is not
-#' imputed.
+#' \code{\link{indigenous_gap}}). The interval is normal, cut at 0 and at \code{scale}. A
+#' group with a suppressed or missing age group, or one whose published interval misses
+#' its own estimate, has no standardised value: the age group is not imputed. The standard
+#' should be the age structure of the population compared, or a common one: for First
+#' Nations, Metis and Inuit comparisons, the Indigenous population's own
+#' (\code{\link{census_standard}}; Kumar and Tjepkema 2019).
 #'
-#' @param estimate,lower,upper The percentage in each age group (and group) and its
-#'   published limits.
-#' @param standard The standard population, one count per age group (its shares are the
-#'   weights).
-#' @param group Optional labels: one result per group, each over the same age groups in
-#'   order.
-#' @param quality Optional quality flags, one per row.
+#' @param estimate,lower,upper Numeric vectors (not column names): the estimate in each
+#'   age group (and group) and its published limits.
+#' @param standard The standard population, one count (or share) per age group.
+#' @param group Optional labels, one per row: one result per group. Rows are matched to
+#'   \code{standard} by position, so order each group's rows by age in the order of
+#'   \code{standard} (sort by an age order, not alphabetically).
+#' @param quality Optional quality flags, one per row (a vector; see
+#'   \code{\link{quality_recode}}).
 #' @param conf_level Confidence level (default 0.95).
+#' @param scale The upper bound of the scale: 100 for percentages (the default), 1 for
+#'   proportions, \code{Inf} for rates.
 #' @return A data frame of class \code{rmbl_prevalence}: \code{group}, \code{estimate},
-#'   \code{lower}, \code{upper}, \code{se}, \code{use_with_caution}.
+#'   \code{lower}, \code{upper}, \code{se}, \code{use_with_caution}; attribute
+#'   \code{conf_level}. \code{plot()} draws it.
 #' @references Klein RJ, Schoenborn CA (2001). Age adjustment using the 2000 projected
 #' U.S. population. Healthy People 2010 Statistical Notes 20. National Center for Health
 #' Statistics.
@@ -403,28 +421,31 @@ ordinal_compare <- function(data, group, category, estimate, lower, upper, level
 #' (CanCHEC). National Household Survey: Aboriginal Peoples, Statistics Canada catalogue
 #' no. 99-011-X2019001.
 #' @seealso \code{\link{age_standardise}} for counts of events,
-#'   \code{\link{indigenous_gap}}.
+#'   \code{\link{census_standard}}, \code{\link{indigenous_gap}}.
 #' @examples
 #' # seriously contemplated suicide in the past 12 months, 2017 (table 41-10-0021-01),
-#' # standardised
-#' # to one age structure so the three groups compare
+#' # standardised to the Indigenous population's age structure (2021 Census)
+#' ages <- c("15 to 24 years", "25 to 34 years", "35 to 44 years", "45 to 54 years",
+#'           "55 years and over")
 #' si <- indigenous_example("suicidal_ideation")
 #' si <- si[si$measure == "Seriously contemplated suicide in the past 12 months" &
-#'            si$age != "Total, 15 years and over", ]
-#' si <- si[order(si$group, si$age), ]
-#' sp <- standardise_prevalence(si$estimate, si$lower, si$upper, standard = c(20, 18, 17,
-#'                                                                            17, 28),
+#'            si$age %in% ages, ]
+#' si <- si[order(si$group, match(si$age, ages)), ]
+#' std <- census_standard(census_profile(indigenous_example("census_population")))
+#' w <- c(sum(std$population[4:5]), std$population[6:8], sum(std$population[9:11]))
+#' sp <- standardise_prevalence(si$estimate, si$lower, si$upper, standard = w,
 #'                              group = si$group, quality = si$quality)
 #' sp
 #' plot(sp)
 #' @export
 standardise_prevalence <- function(estimate, lower, upper, standard, group = NULL, quality = NULL,
-                                   conf_level = 0.95) {
+                                   conf_level = 0.95, scale = 100) {
   est <- .rmbl_num(estimate, "estimate")
   lo <- .rmbl_num(lower, "lower")
   hi <- .rmbl_num(upper, "upper")
   standard <- .rmbl_num(standard, "standard")
   conf_level <- .rmbl_conf_level(conf_level)
+  if (!identical(scale, Inf)) scale <- .rmbl_scalar(scale, "scale", 0)
   k <- length(standard)
   if (!k || anyNA(standard) || any(standard < 0) || sum(standard) <= 0) {
     stop("`standard` must be non-negative counts, one per age group, not all zero", call. = FALSE)
@@ -438,7 +459,7 @@ standardise_prevalence <- function(estimate, lower, upper, standard, group = NUL
   if (length(group) != length(est)) stop("`group` must have one label per row", call. = FALSE)
   q <- if (is.null(quality)) rep("ok", length(est)) else as.character(quality)
   if (length(q) != length(est)) stop("`quality` must have one flag per row", call. = FALSE)
-  q[is.na(q) | q == ""] <- "ok"
+  q <- .rmbl_qflags(q)
   bad <- is.finite(lo) & is.finite(hi) & is.finite(est) & (lo > est | hi < est)
   if (any(bad)) {
     warning(sprintf("%d interval(s) do not contain their estimate; their groups are not standardised", sum(bad)),
@@ -459,7 +480,7 @@ standardise_prevalence <- function(estimate, lower, upper, standard, group = NUL
     }
     y <- sum(w * est[i])
     se <- sqrt(sum(w^2 * ((hi[i] - lo[i]) / (2 * z))^2))
-    data.frame(group = gi, estimate = y, lower = max(0, y - z * se), upper = min(100, y + z * se), se = se,
+    data.frame(group = gi, estimate = y, lower = max(0, y - z * se), upper = min(scale, y + z * se), se = se,
                use_with_caution = any(q[i] == "E"))
   })
   out <- do.call(rbind, rows)
@@ -508,7 +529,7 @@ plot.rmbl_prevalence <- function(x, ..., main = NULL, col = NULL, palette = NULL
   .rmbl_plot_check(x, "rmbl_prevalence")
   d <- as.data.frame(x)
   .bl_dot_interval(paste0(d$group, ifelse(d$use_with_caution, " (E)", "")), d$estimate, d$lower, d$upper,
-                   .bl_main(main, "Age-standardised percentages"), "Percent, with its interval",
+                   .bl_main(main, "Age-standardised estimates"), "Estimate, with its interval",
                    .bl_cols(nrow(d), col, palette),
                    note = ifelse(is.finite(d$estimate), NA_character_, "an age group is suppressed"), ...)
   invisible(d[c("group", "estimate", "lower", "upper")])
@@ -522,7 +543,7 @@ plot.rmbl_exposure_trend <- function(x, ..., main = NULL, col = NULL, palette = 
   .bl_dot_interval(sprintf("Exposure %s", format(d$dose)), d$odds_ratio, d$lower, d$upper,
                    .bl_main(main, sprintf("Odds ratio by level of exposure (trend p = %s)",
                                           format.pval(attr(x, "trend")$p.value, digits = 2))),
-                   "Odds ratio against no exposure (log scale)", .bl_cols(nrow(d), col, palette), ref = 1,
+                   "Odds ratio against the lowest level (log scale)", .bl_cols(nrow(d), col, palette), ref = 1,
                    log = "x", ...)
   invisible(d[c("dose", "odds_ratio", "lower", "upper")])
 }
@@ -615,8 +636,8 @@ plot.rmbl_ordinal_compare <- function(x, ..., main = NULL, col = NULL, palette =
 #'
 #' @param data A data frame, one row per group and indicator (as
 #'   \code{\link{statcan_estimates}} gives).
-#' @param group,indicator,estimate,lower,upper Column names: the group, the
-#'   indicator, the percentage and its published limits.
+#' @param group,indicator,estimate,lower,upper Column names: the group, the indicator,
+#'   the percentage and its published limits.
 #' @param wellness,distress The indicators that measure wellness or strength, and those
 #'   that measure distress; rows for any other indicator (totals, "not specified") are
 #'   left out.
@@ -627,6 +648,10 @@ plot.rmbl_ordinal_compare <- function(x, ..., main = NULL, col = NULL, palette =
 #'   \code{indicator}, \code{side} (\code{"wellness"} or \code{"distress"}),
 #'   \code{domain}, \code{estimate}, \code{lower}, \code{upper}, \code{use_with_caution},
 #'   wellness rows first; \code{plot()} draws it.
+#' @section Acknowledgement:
+#' This estimator puts to quantitative use the framework of Professor Suzanne Stewart
+#' (Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
+#' \code{vignette("first-nations-metis-inuit-health")}.
 #' @references Stewart SL (2008). Promoting Indigenous mental health: cultural
 #' perspectives on healing from Native counsellors in Canada. International Journal of
 #' Health Promotion and Education 46(2):49-56. \doi{10.1080/14635240.2008.10708129}
@@ -683,15 +708,19 @@ wellness_profile <- function(data, group, indicator, estimate, lower, upper, wel
   }
   est <- .rmbl_num(data[[estimate]], "estimate")
   q <- if (is.null(quality)) rep("ok", length(ind)) else as.character(data[[quality]])
-  q[is.na(q) | q == ""] <- "ok"
+  q <- .rmbl_qflags(q)
   gone <- q %in% c("F", "x", "..", "...")
   est[gone] <- NA_real_
   dom <- if (is.null(domain)) rep(NA_character_, length(ind)) else unname(domain[ind])
   keep <- ind %in% c(wellness, distress)
-  out <- data.frame(group = trimws(as.character(data[[group]])), indicator = ind,
+  lo <- ifelse(gone, NA_real_, .rmbl_num(data[[lower]], "lower"))
+  hi <- ifelse(gone, NA_real_, .rmbl_num(data[[upper]], "upper"))
+  grp <- trimws(as.character(data[[group]]))
+  est[keep] <- .rmbl_contains(est[keep], lo[keep], hi[keep], paste0(grp[keep], ": ", ind[keep]))
+  out <- data.frame(group = grp, indicator = ind,
                     side = ifelse(ind %in% wellness, "wellness", "distress"), domain = dom, estimate = est,
-                    lower = ifelse(gone, NA_real_, .rmbl_num(data[[lower]], "lower")),
-                    upper = ifelse(gone, NA_real_, .rmbl_num(data[[upper]], "upper")),
+                    lower = lo,
+                    upper = hi,
                     use_with_caution = q == "E", stringsAsFactors = FALSE)[keep, , drop = FALSE]
   ilev <- c(wellness, distress)
   o <- order(out$side != "wellness", match(out$indicator, ilev), match(out$group, unique(out$group)))
@@ -726,7 +755,7 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
   xr <- if (length(vals)) range(0, vals) else c(0, 100)
   graphics::plot(xr, c(0.5, length(inds) + 0.5), type = "n", yaxt = "n", xlab = "", ylab = "", main = "", ...)
   .bl_title(.bl_main(main, "Wellness and distress, each group"))
-  .bl_xlab("Percent, with its published interval")
+  .bl_xlab("Estimate, with its published interval")
   .bl_grid(NULL, side = "x")
   nw <- sum(side == "wellness")
   if (nw && nw < length(inds)) graphics::abline(h = length(inds) - nw + 0.5, col = "#8C8C8C", lty = 3)
@@ -778,11 +807,15 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
 #' authority to control, Carroll et al. 2020), and the result says which weights it used.
 #'
 #' Several indicators in one domain are averaged, their standard errors combined as
-#' independent. The intervals come from \code{reps} draws of every domain level from a
+#' independent (they come from the same respondents, so that standard error is too small).
+#' The interval for \eqn{B} comes from \code{reps} draws of every domain level from a
 #' normal distribution on the logit scale with the standard error of its published
-#' interval, the domains independent: \eqn{B} is bounded by 1 and its sampling
-#' distribution is skewed near 1, where the delta method fails. A group with a suppressed
-#' or missing domain has no balance: the domain is not imputed.
+#' interval, the domains independent. \eqn{B} is concave and bounded by 1, so the draws
+#' sit below \eqn{\hat B}: the percentile interval is shifted back by the draws' mean bias
+#' (\eqn{\bar B^* - \hat B}), kept inside \eqn{(0, 1]} and widened if need be to contain
+#' \eqn{\hat B}. The level's interval is normal. A group with a suppressed or missing
+#' domain, or one whose published interval misses its own estimate, has no balance: the
+#' domain is not imputed.
 #'
 #' What the domains mean, and which indicators stand for each, is for the communities to
 #' say; the published tables have few measures of spiritual wellness, and a domain with no
@@ -790,8 +823,10 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
 #'
 #' @param data A data frame, one row per group and indicator (as
 #'   \code{\link{statcan_estimates}} gives).
-#' @param group,domain,estimate,lower,upper Column names: the group, the holistic domain
-#'   of the indicator, the percentage of wellness and its published limits.
+#' @param group,domain,estimate,lower,upper Column names: the group, the domain of the
+#'   indicator (any set of domains: Medicine Wheel, Te Whare Tapa Wha, a Nation's own),
+#'   the percentage of wellness (0 to 100, strictly inside; multiply proportions by 100)
+#'   and its published limits.
 #' @param weights Optional named weights, one per domain (they are rescaled to sum to
 #'   one).
 #' @param quality Optional column of quality flags.
@@ -802,6 +837,10 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
 #'   \code{level_lower}, \code{level_upper}, \code{balance}, \code{balance_lower},
 #'   \code{balance_upper}, \code{weakest_domain}, \code{use_with_caution}; the attributes
 #'   \code{domains} (the matrix of domain levels, groups by domains) and \code{weights}.
+#' @section Acknowledgement:
+#' This estimator puts to quantitative use the framework of Professor Suzanne Stewart
+#' (Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
+#' \code{vignette("first-nations-metis-inuit-health")}.
 #' @references Atkinson AB (1970). On the measurement of inequality. Journal of Economic
 #' Theory 2(3):244-263. \doi{10.1016/0022-0531(70)90039-6}
 #'
@@ -852,11 +891,19 @@ holistic_balance <- function(data, group, domain, estimate, lower, upper, weight
   z <- stats::qnorm(1 - (1 - conf_level) / 2)
   g <- trimws(as.character(data[[group]]))
   dm <- trimws(as.character(data[[domain]]))
-  est <- .rmbl_num(data[[estimate]], "estimate") / 100
-  se <- (.rmbl_num(data[[upper]], "upper") - .rmbl_num(data[[lower]], "lower")) / (2 * z) / 100
+  raw <- .rmbl_num(data[[estimate]], "estimate")
+  lo_raw <- .rmbl_num(data[[lower]], "lower")
+  hi_raw <- .rmbl_num(data[[upper]], "upper")
+  if (any(is.finite(raw)) && all(raw[is.finite(raw)] <= 1)) {
+    stop("the estimates are all at or below 1: are they proportions? give percentages (0 to 100)", call. = FALSE)
+  }
   q <- if (is.null(quality)) rep("ok", length(g)) else as.character(data[[quality]])
-  q[is.na(q) | q == ""] <- "ok"
-  est[q %in% c("F", "x", "..", "...")] <- NA_real_
+  q <- .rmbl_qflags(q)
+  raw[q %in% c("F", "x", "..", "...")] <- NA_real_
+  in_dom <- !is.na(dm) & nzchar(dm)
+  raw[in_dom] <- .rmbl_contains(raw[in_dom], lo_raw[in_dom], hi_raw[in_dom], paste0(g[in_dom], ": ", dm[in_dom]))
+  est <- raw / 100
+  se <- (hi_raw - lo_raw) / (2 * z) / 100
   doms <- unique(dm[!is.na(dm) & nzchar(dm)])
   if (length(doms) < 2L) stop("balance needs two domains at least", call. = FALSE)
   if (is.null(weights)) {
@@ -880,7 +927,7 @@ holistic_balance <- function(data, group, domain, estimate, lower, upper, weight
       lev[gi, dk] <- mean(est[i])
       sem[gi, dk] <- sqrt(sum(se[i]^2)) / length(i)
     }
-    caution[[gi]] <- any(q[g == gi] == "E")
+    caution[[gi]] <- any(q[g == gi & dm %in% doms] == "E")
   }
   if (any(lev <= 0 | lev >= 1, na.rm = TRUE)) {
     stop("domain levels must be percentages strictly between 0 and 100", call. = FALSE)
@@ -902,9 +949,15 @@ holistic_balance <- function(data, group, domain, estimate, lower, upper, weight
     bb <- exp(drop(log(dr) %*% w)) / drop(dr %*% w)
     lv <- sum(w * p)
     lse <- sqrt(sum(w^2 * s^2))
+    # B is concave and at most 1, so the draws sit below B-hat: the percentile interval is shifted
+    # back by the draws' mean bias, kept inside (0, 1], and made to contain B-hat
+    b0 <- bal(p)
+    bias <- mean(bb) - b0
+    b_lo <- min(b0, max(0, unname(stats::quantile(bb, a)) - bias))
+    b_hi <- max(b0, min(1, unname(stats::quantile(bb, 1 - a)) - bias))
     data.frame(group = gi, level = 100 * lv, level_lower = 100 * max(0, lv - z * lse),
-               level_upper = 100 * min(1, lv + z * lse), balance = bal(p),
-               balance_lower = unname(stats::quantile(bb, a)), balance_upper = unname(stats::quantile(bb, 1 - a)),
+               level_upper = 100 * min(1, lv + z * lse), balance = b0,
+               balance_lower = b_lo, balance_upper = b_hi,
                weakest_domain = doms[which.min(p)])
   })
   out <- do.call(rbind, rows)
@@ -927,9 +980,13 @@ holistic_balance <- function(data, group, domain, estimate, lower, upper, weight
 #' That is how Indigenous scholars of mental health describe it too, as wellness and as a
 #' process of healing rather than as illness alone (Stewart 2008). Plotting the groups on
 #' both axes keeps a strength visible beside the burden it sits next to. The
-#' \code{strength_ratio} is wellness over distress with a log-normal interval from the two
-#' published intervals (independent estimates): above 1, more people report the wellness
-#' than the distress.
+#' \code{strength_ratio} is \eqn{R = W / D}, wellness over distress, with the log-normal
+#' interval \eqn{\exp\{\log R \pm z\sqrt{\sigma_W^2 + \sigma_D^2}\}} from the two
+#' published intervals: above 1, more people report the wellness than the distress. The
+#' two estimates come from the same respondents; their covariance is not published, so the
+#' interval treats them as independent and is too narrow when they are negatively
+#' correlated, as answers about wellness and distress usually are. Any two indicators on
+#' one scale can be set against each other.
 #'
 #' @param x A \code{\link{wellness_profile}}.
 #' @param wellness,distress One wellness and one distress indicator of \code{x}.
@@ -939,6 +996,10 @@ holistic_balance <- function(data, group, domain, estimate, lower, upper, weight
 #'   \code{wellness}, \code{wellness_lower}, \code{wellness_upper}, \code{distress},
 #'   \code{distress_lower}, \code{distress_upper}, \code{strength_ratio},
 #'   \code{ratio_lower}, \code{ratio_upper}, \code{use_with_caution}.
+#' @section Acknowledgement:
+#' This estimator puts to quantitative use the framework of Professor Suzanne Stewart
+#' (Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
+#' \code{vignette("first-nations-metis-inuit-health")}.
 #' @references Keyes CLM (2002). The mental health continuum: from languishing to
 #' flourishing in life. Journal of Health and Social Behavior 43(2):207-222.
 #' \doi{10.2307/3090197}
@@ -997,11 +1058,13 @@ dual_continuum <- function(x, wellness, distress, conf_level = 0.95) {
   out
 }
 
-#' Do First Nations, Metis and Inuit differ? A test before pooling
+#' Do distinct groups differ? A heterogeneity test before pooling
 #'
-#' Tests whether the First Nations, Metis and Inuit estimates of one indicator differ more
-#' than their published intervals allow, and says how much of their spread is real: the
-#' evidence for reporting each distinctly rather than as one pan-Indigenous figure.
+#' Tests whether the estimates of one indicator for distinct groups (First Nations, Metis
+#' and Inuit; Aboriginal and Torres Strait Islander people; any groups with published
+#' intervals) differ more than their intervals allow, and says how much of their spread is
+#' real: the evidence for reporting each group distinctly rather than as one pooled
+#' figure.
 #'
 #' @details With estimates \eqn{y_g}, standard errors \eqn{s_g} from the published
 #' intervals and weights \eqn{w_g = 1/s_g^2}, Cochran's
@@ -1012,15 +1075,24 @@ dual_continuum <- function(x, wellness, distress, conf_level = 0.95) {
 #' different populations whenever \eqn{I^2} is large; the population-weighted total
 #' Statistics Canada publishes also depends on how many people are in each group, so it is
 #' mostly a First Nations figure where First Nations people are most of the Indigenous
-#' population. Rows that pool identities are left out (see \code{\link{indigenous_gap}}).
+#' population. Rows that pool groups are left out (\code{pooled_groups}; see
+#' \code{\link{indigenous_gap}}); every other row is included, so drop the reference group
+#' (non-Indigenous people) yourself, and never test overlapping groups ("alone" beside
+#' "alone or in combination") together: they are not independent. With two or three groups
+#' the test has little power and \eqn{I^2} is imprecise; a large \eqn{p} is not evidence
+#' that the groups are the same.
 #'
 #' @param data A data frame, one row per group.
 #' @param group,estimate,lower,upper Column names.
-#' @param quality Optional column of quality flags; suppressed rows are left out.
-#' @param conf_level Confidence level of the published intervals (default 0.95).
+#' @param quality Optional column of quality flags; suppressed rows are left out (see
+#'   \code{\link{quality_recode}}).
+#' @param conf_level Confidence level of the published intervals, and the level of the
+#'   verdict printed (default 0.95).
+#' @param pooled_groups Optional labels of rows that pool other groups.
 #' @return A list of class \code{rmbl_distinctions}: \code{groups} (the estimates used,
-#'   with their standard errors), \code{pooled} (the inverse-variance mean), \code{q},
-#'   \code{df}, \code{p_value}, \code{i2}.
+#'   with their standard errors), \code{pooled} (the inverse-variance mean) and
+#'   \code{pooled_se}, \code{q}, \code{df}, \code{p_value}, \code{i2}, \code{left_out}
+#'   (the rows not used) and \code{conf_level}. \code{print()} and \code{plot()} show it.
 #' @references Higgins JPT, Thompson SG (2002). Quantifying heterogeneity in a
 #'   meta-analysis. Statistics in Medicine 21(11):1539-1558. \doi{10.1002/sim.1186}
 #' @seealso \code{\link{indigenous_gap}}.
@@ -1034,8 +1106,14 @@ dual_continuum <- function(x, wellness, distress, conf_level = 0.95) {
 #' dt <- distinctions_test(mh, "group", "estimate", "lower", "upper", quality = "quality")
 #' dt
 #' plot(dt)
+#' # your own table: made-up numbers, with the pooled row named
+#' own <- data.frame(group = c("Aboriginal", "Torres Strait Islander", "Both"),
+#'                   est = c(24.0, 31.0, 24.6), lo = c(22.1, 26.2, 22.8), hi = c(25.9,
+#'                                                                               35.8, 26.4))
+#' distinctions_test(own, "group", "est", "lo", "hi", pooled_groups = "Both")
 #' @export
-distinctions_test <- function(data, group, estimate, lower, upper, quality = NULL, conf_level = 0.95) {
+distinctions_test <- function(data, group, estimate, lower, upper, quality = NULL, conf_level = 0.95,
+                              pooled_groups = NULL) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   group <- .rmbl_col(data, group, "group")
   estimate <- .rmbl_col(data, estimate, "estimate")
@@ -1046,18 +1124,21 @@ distinctions_test <- function(data, group, estimate, lower, upper, quality = NUL
   z <- stats::qnorm(1 - (1 - conf_level) / 2)
   g <- trimws(as.character(data[[group]]))
   y <- .rmbl_num(data[[estimate]], "estimate")
-  s <- (.rmbl_num(data[[upper]], "upper") - .rmbl_num(data[[lower]], "lower")) / (2 * z)
-  q <- if (is.null(quality)) rep("ok", length(g)) else as.character(data[[quality]])
-  q[is.na(q) | q == ""] <- "ok"
-  use <- !.rmbl_pan_indigenous(g) & !q %in% c("F", "x", "..", "...") & is.finite(y) & is.finite(s) & s > 0
+  lo <- .rmbl_num(data[[lower]], "lower")
+  hi <- .rmbl_num(data[[upper]], "upper")
+  y <- .rmbl_contains(y, lo, hi, g)
+  s <- (hi - lo) / (2 * z)
+  q <- .rmbl_qflags(if (is.null(quality)) rep("ok", length(g)) else data[[quality]])
+  use <- !.rmbl_pan_indigenous(g, pooled_groups) & !q %in% c("F", "x", "..", "...") & is.finite(y) & is.finite(s) &
+    s > 0
   if (sum(use) < 2L) stop("the test needs two groups at least with an estimate and an interval", call. = FALSE)
   if (anyDuplicated(g[use])) stop("a group appears twice", call. = FALSE)
   w <- 1 / s[use]^2
-  pooled <- sum(w * y[use]) / sum(w)
-  qs <- sum(w * (y[use] - pooled)^2)
+  pooled_est <- sum(w * y[use]) / sum(w)
+  qs <- sum(w * (y[use] - pooled_est)^2)
   df <- sum(use) - 1L
   out <- list(groups = data.frame(group = g[use], estimate = y[use], se = s[use], stringsAsFactors = FALSE),
-              pooled = pooled, pooled_se = sqrt(1 / sum(w)), q = qs, df = df,
+              pooled = pooled_est, pooled_se = sqrt(1 / sum(w)), q = qs, df = df,
               p_value = stats::pchisq(qs, df, lower.tail = FALSE), i2 = if (qs > 0) max(0, (qs - df) / qs) else 0,
               left_out = g[!use], conf_level = conf_level)
   class(out) <- "rmbl_distinctions"
@@ -1068,9 +1149,11 @@ distinctions_test <- function(data, group, estimate, lower, upper, quality = NUL
 print.rmbl_distinctions <- function(x, ...) {
   cat(sprintf("Distinctions test across %d groups: Q = %.2f on %d df, p = %s, I^2 = %.0f%%\n",
               nrow(x$groups), x$q, x$df, format.pval(x$p_value, digits = 3), 100 * x$i2))
+  a <- 1 - (if (is.null(x$conf_level)) 0.95 else x$conf_level)
   cat(sprintf("Pooled (inverse-variance) %.2f; %s\n", x$pooled,
-              if (x$p_value < 0.05) "the groups differ: report each one, not the pooled figure" else
-                "no difference shown at the 5% level (which is not evidence that they are the same)"))
+              if (x$p_value < a) "the groups differ: report each one, not the pooled figure" else
+                sprintf("no difference shown at the %g%% level (which is not evidence that they are the same)",
+                        100 * a)))
   if (length(x$left_out)) cat("Left out:", paste(x$left_out, collapse = "; "), "\n")
   invisible(x)
 }

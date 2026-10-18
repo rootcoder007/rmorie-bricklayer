@@ -9,7 +9,8 @@ census_cwb(
   dwelling = NULL,
   groups = c("First Nations", "Métis", "Inuit", "Non-Indigenous"),
   bounds = c(2650, 75000),
-  residence = "Total - Residence on or off reserve"
+  residence = "Total - Residence on or off reserve",
+  min_population = 250
 )
 }
 \arguments{
@@ -23,10 +24,17 @@ non-Indigenous people).}
 \item{bounds}{Income bounds of \code{\link{cwb_score}}.}
 
 \item{residence}{On or off reserve, in the tables that split it (default the total).}
+
+\item{min_population}{The smallest population scored (default 250; the Department uses
+65).}
 }
 \value{
-A data frame: \code{geo}, \code{group}, the four components, \code{cwb}, and
-the inputs.
+A data frame of class \code{rmbl_census_cwb}: \code{geo}, \code{dguid},
+\code{group}; the components \code{income}, \code{education}, \code{housing},
+\code{labour} and the score \code{cwb} (0 to 100, \code{NA} where not scored); and
+the inputs \code{income_per_capita} (dollars), \code{high_school_25plus},
+\code{university_25plus}, \code{population}, \code{participation}, \code{employment},
+\code{no_major_repairs}, \code{not_crowded} (percentages).
 }
 \description{
 Indigenous Services Canada's Community Well-Being (CWB) index (\code{\link{cwb_score}})
@@ -48,15 +56,20 @@ the CWB uses for the first.}
 (100 less the unemployment rate) of those aged 25 to 64: the CWB uses 20 to 64.}
 \item{housing}{the shares of households with one person or fewer per room and needing
 no major repairs, from the household profile (\code{dwelling}), which splits
-Indigenous from non-Indigenous households only: the CWB counts persons, not
-households. Without \code{dwelling} the housing component and the score are
+Indigenous from non-Indigenous households only, so First Nations, Metis and Inuit
+people all get the pooled Indigenous households' housing: the CWB counts persons,
+not households. Without \code{dwelling} the housing component and the score are
 \code{NA}.}
 }
-A group of fewer than 250 people in a geography gets no score, as the Department
-suppresses communities that small. Read the result as a CWB-style description of
-socio-economic conditions, close to but not the Department's index, and never as a
-measure of the wellness of First Nations, Metis or Inuit people as they define it (see
-\code{\link{cwb_score}}).
+A group of fewer than \code{min_population} people in a geography gets no score. The
+Department scores communities of 65 people or more; the default here is 250, because
+the public profile's counts are rounded to multiples of 5 and its long-form counts rest
+on a few dozen households at that size. Geographies are matched by DGUID, so places
+that share a name stay apart. The inputs are those of the 2021 profile (98-510-X2021001
+to -016): other editions name their characteristics differently. Read the result as a
+CWB-style description of socio-economic conditions, close to but not the Department's
+index, and never as a measure of the wellness of First Nations, Metis or Inuit people
+as they define it (see \code{\link{cwb_score}}).
 }
 \examples{
 p <- census_profile(indigenous_example("census_population"))

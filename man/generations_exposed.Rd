@@ -4,10 +4,13 @@
 \alias{generations_exposed}
 \title{Generations of residential school attendance in a family}
 \usage{
-generations_exposed(parent, grandparent)
+generations_exposed(parent, grandparent, partial = c("na", "lower_bound"))
 }
 \arguments{
 \item{parent, grandparent}{Logical vectors: did a parent, did a grandparent attend.}
+
+\item{partial}{What a known attendance with the other generation unknown counts as:
+\code{"na"} (not known, the default) or \code{"lower_bound"} (1).}
 }
 \value{
 An integer vector of 0, 1, 2 or \code{NA}.
@@ -20,12 +23,17 @@ in McQuaid et al. (2017).
 }
 \details{
 Each answer is \code{TRUE} (attended), \code{FALSE} (did not) or \code{NA}
-(not known). A known attendance in one generation is at least one generation whatever
-the other is; otherwise an unknown answer leaves the count unknown (\code{NA}), since
-it may hide an attendance.
+(not known). An unknown answer may hide an attendance, so the count is unknown
+(\code{NA}) whenever an unknown answer could change it: always when the known answer is
+\code{FALSE}, and, with \code{partial = "na"} (the default), also when the known answer
+is \code{TRUE} (the count is 1 or 2). \code{partial = "lower_bound"} codes that case 1,
+a lower bound: it keeps the person but can classify them a level too low, which biases
+a trend toward no effect.
 }
 \examples{
 generations_exposed(c(TRUE, FALSE, TRUE, NA, FALSE), c(TRUE, FALSE, FALSE, TRUE, NA))
+generations_exposed(c(TRUE, FALSE, TRUE, NA, FALSE), c(TRUE, FALSE, FALSE, TRUE, NA),
+                    partial = "lower_bound")
 }
 \references{
 McQuaid RJ, Bombay A, McInnis OA, Humeny C, Matheson K, Anisman H (2017).

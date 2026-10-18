@@ -22,8 +22,10 @@ holistic_balance(
 \item{data}{A data frame, one row per group and indicator (as
 \code{\link{statcan_estimates}} gives).}
 
-\item{group, domain, estimate, lower, upper}{Column names: the group, the holistic domain
-of the indicator, the percentage of wellness and its published limits.}
+\item{group, domain, estimate, lower, upper}{Column names: the group, the domain of the
+indicator (any set of domains: Medicine Wheel, Te Whare Tapa Wha, a Nation's own),
+the percentage of wellness (0 to 100, strictly inside; multiply proportions by 100)
+and its published limits.}
 
 \item{weights}{Optional named weights, one per domain (they are rescaled to sum to
 one).}
@@ -67,16 +69,27 @@ a community that holds its own view of the domains sets its own (the CARE princi
 authority to control, Carroll et al. 2020), and the result says which weights it used.
 
 Several indicators in one domain are averaged, their standard errors combined as
-independent. The intervals come from \code{reps} draws of every domain level from a
+independent (they come from the same respondents, so that standard error is too small).
+The interval for \eqn{B} comes from \code{reps} draws of every domain level from a
 normal distribution on the logit scale with the standard error of its published
-interval, the domains independent: \eqn{B} is bounded by 1 and its sampling
-distribution is skewed near 1, where the delta method fails. A group with a suppressed
-or missing domain has no balance: the domain is not imputed.
+interval, the domains independent. \eqn{B} is concave and bounded by 1, so the draws
+sit below \eqn{\hat B}: the percentile interval is shifted back by the draws' mean bias
+(\eqn{\bar B^* - \hat B}), kept inside \eqn{(0, 1]} and widened if need be to contain
+\eqn{\hat B}. The level's interval is normal. A group with a suppressed or missing
+domain, or one whose published interval misses its own estimate, has no balance: the
+domain is not imputed.
 
 What the domains mean, and which indicators stand for each, is for the communities to
 say; the published tables have few measures of spiritual wellness, and a domain with no
 fitting indicator should be left out rather than filled with another.
 }
+\section{Acknowledgement}{
+
+This estimator puts to quantitative use the framework of Professor Suzanne Stewart
+(Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
+\code{vignette("first-nations-metis-inuit-health")}.
+}
+
 \examples{
 # four domains from table 13-10-0924-01, 2019/2022, adults: which indicator stands for
 # each is a choice for the people whose data these are; this is one reading of it

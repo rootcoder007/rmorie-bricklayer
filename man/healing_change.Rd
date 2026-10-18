@@ -16,17 +16,20 @@ healing_change(
   to,
   wellness = NULL,
   quality = NULL,
-  conf_level = 0.95
+  conf_level = 0.95,
+  distress = NULL
 )
 }
 \arguments{
 \item{data}{A data frame, one row per group, indicator and period.}
 
-\item{group, indicator, period, estimate, lower, upper}{Column names.}
+\item{group, indicator, period, estimate, lower, upper}{Column names: the change is in the
+estimate's own units (percentage points for percentages).}
 
 \item{from, to}{The two periods.}
 
-\item{wellness}{Optional indicators of wellness, listed first and marked.}
+\item{wellness, distress}{Optional indicators of wellness (listed first) and of
+distress; with \code{distress} given, any other indicator is marked \code{"other"}.}
 
 \item{quality}{Optional column of quality flags.}
 
@@ -50,6 +53,13 @@ intervals and the two periods' samples independent (separate cycles of a survey 
 change is only as comparable as the two periods' questions and designs: Statistics
 Canada flags breaks in a series, and a change across one is not a change in the people.
 }
+\section{Acknowledgement}{
+
+This estimator puts to quantitative use the framework of Professor Suzanne Stewart
+(Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
+\code{vignette("first-nations-metis-inuit-health")}.
+}
+
 \examples{
 # 2015/2018 to 2019/2022, adults (table 13-10-0924-01)
 h <- indigenous_example("health_indicators")

@@ -211,7 +211,11 @@ and a digest anyone can recompute says nothing about who produced the data.
   - ISC's Community Well-Being index: `cwb_score()`;
   - Walter's 5D critique: `framing_audit()`.
 
-  Each has a plot. Data governance follows OCAP® and CARE. Four published
+  Census profile tools: `census_profile()`, `profile_share()`,
+  `census_standard()`, `census_cwb()`; Call to Action 19: `trc_health_gaps()`.
+  Any agency's table works after `limits_from()` and `quality_recode()`.
+
+  Each has a plot. Data governance follows OCAP® and CARE. Eight published
   excerpts ship in `inst/extdata` (`?indigenous_example`), and
   `indigenous_tables()` lists the 233 mirrored tables;
   `vignette("first-nations-metis-inuit-health")`.
@@ -749,6 +753,16 @@ rmbl models
 [MORIE](https://github.com/rootcoder007/morie) ecosystem, alongside
 [rmorie](https://github.com/rootcoder007/rmorie) and
 [rmoriedata](https://github.com/rootcoder007/rmoriedata).
+
+## Acknowledgements
+
+The Indigenous mental wellness estimators stand on the work of Professor
+Suzanne Stewart (Yellowknives Dene First Nation), Director of the
+Waakebiness-Bryce Institute for Indigenous Health at the University of
+Toronto's Dalla Lana School of Public Health, and Professor Angela
+Mashford-Pringle (Timiskaming First Nation), its Associate Director. Their
+research made it possible to bring their frameworks into this library as
+estimators. Any error in that translation is ours.
 
 ## Citation
 

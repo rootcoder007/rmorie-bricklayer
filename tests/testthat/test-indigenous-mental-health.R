@@ -37,7 +37,8 @@ test_that("statcan_estimates(): coefficients of variation, standard errors, and 
   z <- stats::qnorm(0.975)
   cv <- statcan_estimates(data.frame(GEO = "Canada", Characteristics = c("Rate", "Coefficient of variation for rate"),
                                      VALUE = c(12.5, 8), STATUS = ""))
-  expect_equal(cv$lower, 12.5 * (1 - z * 0.08))
+  expect_equal(cv$lower, 12.5 * exp(-z * sqrt(log(1 + 0.08^2))))
+  expect_equal(cv$upper, 12.5 * exp(z * sqrt(log(1 + 0.08^2))))
   expect_identical(cv$ci_source, "cv")
   se <- statcan_estimates(data.frame(GEO = "A", Statistics = c("Average score", "Standard error"), VALUE = c(250, 2),
                                      STATUS = ""))

@@ -33,9 +33,11 @@
 #' coordinate: \code{"Without children [3]"} and \code{"Without children [7]"}. Other
 #' labels are left as they are.
 #'
-#' @param x A data frame read from a Statistics Canada table, or a key of the data service
-#'   (\code{"statcan_indigenous/tbl_13100924"}, or the eight-digit table id alone, which
-#'   needs the data service key: see \code{\link{bricklayer_data_load}}).
+#' @param x A data frame read from a Statistics Canada table (English-language full-table
+#'   CSV), or a key of the data service (\code{"statcan_indigenous/tbl_13100924"}, or the
+#'   eight-digit table id alone). A key needs a data service key: sign in once with
+#'   \code{\link{bricklayer_llm_login}} (see \code{\link{bricklayer_data_load}}); a data
+#'   frame you read yourself needs none.
 #' @return The data frame with \code{VALUE} numeric and a factor column \code{quality}
 #'   with levels \code{"ok"}, \code{"E"}, \code{"F"}, \code{"x"}, \code{".."},
 #'   \code{"..."}, of class \code{c("rmbl_statcan", "data.frame")}.
@@ -51,7 +53,7 @@
 #'                 check.names = FALSE)
 #' statcan_tidy(d)
 #' \dontrun{
-#' # needs the data service key (bricklayer_llm_login())
+#' # needs a data service key: sign in once with bricklayer_llm_login()
 #' t924 <- statcan_tidy("13100924")
 #' }
 #' @export
@@ -130,56 +132,190 @@ statcan_tidy <- function(x) {
   x
 }
 
-# a pan-Indigenous total (every identity together), as against First Nations, Metis or Inuit
-.rmbl_pan_indigenous <- function(g) {
+# Rows that pool groups (a pan-Indigenous total, as against First Nations, Metis or Inuit): those
+# named in `pooled_groups`, or by default labels that begin "Total", "Indigenous identity",
+# "Aboriginal identity" or "Indigenous population".
+.rmbl_pan_indigenous <- function(g, pooled_groups = NULL) {
+  if (!is.null(pooled_groups)) {
+    .rmbl_no_fn(pooled_groups = pooled_groups)
+    if (!is.character(pooled_groups) || anyNA(pooled_groups)) {
+      stop("`pooled_groups` must be the labels of the rows that pool other groups", call. = FALSE)
+    }
+    return(trimws(g) %in% trimws(pooled_groups))
+  }
   grepl("^total|^indigenous identity|^aboriginal identity|^total indigenous|^indigenous population",
         trimws(tolower(g)))
 }
 
-#' Compare First Nations, Metis and Inuit estimates with a reference group
+# The package's quality vocabulary: "ok", "E" (use with caution), "F", "x", "..", "..." (no value).
+# A flag outside it is said once and treated as "ok": recode another agency's flags with
+# quality_recode() first.
+.rmbl_qflags <- function(q) {
+  q <- trimws(as.character(q))
+  q[is.na(q) | q == ""] <- "ok"
+  odd <- setdiff(unique(q), c("ok", "E", "F", "x", "..", "..."))
+  if (length(odd)) {
+    warning(sprintf("quality flag(s) %s not recognised: treated as ok; recode them with quality_recode()",
+                    paste0("\"", odd, "\"", collapse = ", ")), call. = FALSE)
+    q[q %in% odd] <- "ok"
+  }
+  q
+}
+
+# Published limits that miss their own estimate (it happens: a 100% with limits 85.5 to 98.6): the
+# estimate is set to NA, so the row is not compared, and the rows are named in one warning.
+.rmbl_contains <- function(est, lo, hi, labels) {
+  bad <- is.finite(lo) & is.finite(hi) & is.finite(est) & (lo > est | hi < est)
+  if (any(bad)) {
+    warning(sprintf("the interval does not contain the estimate for: %s; not compared",
+                    paste(unique(labels[bad]), collapse = ", ")), call. = FALSE)
+    est[bad] <- NA_real_
+  }
+  est
+}
+
+#' Recode another agency's quality flags to the package's
 #'
-#' For published percentages or rates with their confidence intervals (a Statistics Canada
-#' table, a report), the ratio and the difference of each group to a reference group, with
-#' confidence intervals worked from the published ones.
+#' The comparisons of this family read Statistics Canada's quality flags: \code{E} (use
+#' with caution), and \code{F}, \code{x}, \code{..}, \code{...} (no value: too unreliable,
+#' suppressed, not available, not applicable). Other agencies flag otherwise: the
+#' Australian Bureau of Statistics \code{np} (not published) and \code{*} or \code{**}
+#' (relative standard error over 25\% or 50\%), Stats NZ \code{S} (suppressed), the US
+#' Census Bureau \code{(X)}. This maps them to the package's vocabulary, so suppressed
+#' cells are never compared and uncertain ones are marked.
 #'
-#' @details Each published interval gives a standard error, \eqn{(u - l) / (2 z)}, on the
-#' scale of the estimate for the difference and on the log scale,
-#' \eqn{(\log u - \log l) / (2 z)}, for the ratio. The groups are treated as independent
-#' samples, so the standard error of a difference is the root of the sum of the squares.
-#' Disjoint domains of one survey are nearly so, but not exactly (they share the design's
-#' strata and clusters): the intervals are approximations, and the exact ones need the
-#' survey's bootstrap weights, which Statistics Canada holds in its Research Data Centres.
+#' @param x The flags, one per row.
+#' @param suppressed Flags meaning the value must not be used (it becomes \code{"x"}).
+#' @param caution Flags meaning the value may be used with caution (it becomes
+#'   \code{"E"}).
+#' @return A character vector of \code{"ok"}, \code{"E"} and \code{"x"}; empty and missing
+#'   flags are \code{"ok"}.
+#' @seealso \code{\link{limits_from}}, \code{\link{indigenous_gap}}.
+#' @examples
+#' # flags as an Australian table might give them
+#' quality_recode(c("", "np", "*", "**", NA), suppressed = c("np", "**"), caution = "*")
+#' @export
+quality_recode <- function(x, suppressed = c("F", "x", "..", "..."), caution = "E") {
+  .rmbl_no_fn(x = x, suppressed = suppressed, caution = caution)
+  if (!is.atomic(x)) stop("`x` must be a vector of flags", call. = FALSE)
+  for (nm in c("suppressed", "caution")) {
+    v <- get(nm)
+    if (!is.character(v) || anyNA(v)) stop(sprintf("`%s` must be flags (character)", nm), call. = FALSE)
+  }
+  if (length(intersect(suppressed, caution))) stop("a flag cannot be both suppressed and caution", call. = FALSE)
+  f <- trimws(as.character(x))
+  out <- rep("ok", length(f))
+  out[f %in% trimws(caution)] <- "E"
+  out[f %in% trimws(suppressed)] <- "x"
+  out
+}
+
+#' Confidence limits from a standard error, a coefficient of variation or a margin of
+#' error
 #'
-#' Distinctions-based: each group is compared on its own. A row that pools every identity
-#' (\code{"Total Indigenous"}, \code{"Indigenous identity"}) is kept but marked
-#' \code{pan_indigenous = TRUE}, since a pooled figure can hide what differs between First
-#' Nations, Metis and Inuit. A row whose estimate is flagged \code{E} is compared and
-#' marked; one flagged \code{F} or \code{x}, or with no estimate, is not compared.
+#' The comparisons of this family take an estimate and its published confidence limits.
+#' Agencies that publish a standard error, a relative standard error (coefficient of
+#' variation) or a margin of error instead give the same information; this turns it into
+#' limits at the level wanted.
 #'
-#' @param data A data frame, one row per group.
-#' @param group,estimate,lower,upper Column names: the group label, the estimate, and the
-#'   published confidence limits.
+#' @details With an estimate \eqn{e} and \eqn{z = \Phi^{-1}(1 - \alpha/2)} for the level
+#' wanted, a standard error \eqn{s} gives \eqn{e \pm z s}; a coefficient of variation
+#' \eqn{c} (in percent) gives \eqn{s = e c / 100}; a margin of error \eqn{m} at level
+#' \code{moe_level} (the American Community Survey publishes 90\% margins) gives
+#' \eqn{s = m / z_{moe}}. The limits are symmetric on the estimate's scale.
+#'
+#' @param estimate The estimates.
+#' @param se,cv,moe Give one: standard errors, coefficients of variation (relative
+#'   standard errors, in percent), or margins of error.
+#' @param moe_level The confidence level of the margins of error (default 0.90).
+#' @param conf_level The level of the limits returned (default 0.95).
+#' @return A data frame: \code{estimate}, \code{lower}, \code{upper}, \code{se}.
+#' @seealso \code{\link{quality_recode}}, \code{\link{indigenous_gap}}.
+#' @examples
+#' limits_from(c(24.1, 31.5), cv = c(8, 12))
+#' limits_from(1520, moe = 210)                 # a 90% margin of error
+#' @export
+limits_from <- function(estimate, se = NULL, cv = NULL, moe = NULL, moe_level = 0.90, conf_level = 0.95) {
+  estimate <- .rmbl_num(estimate, "estimate")
+  given <- !vapply(list(se, cv, moe), is.null, NA)
+  if (sum(given) != 1L) stop("give one of `se`, `cv` or `moe`", call. = FALSE)
+  conf_level <- .rmbl_conf_level(conf_level)
+  moe_level <- .rmbl_conf_level(moe_level, "moe_level")
+  s <- if (given[1L]) .rmbl_num(se, "se") else if (given[2L]) estimate * .rmbl_num(cv, "cv") / 100 else
+    .rmbl_num(moe, "moe") / stats::qnorm(1 - (1 - moe_level) / 2)
+  if (length(s) != length(estimate) && length(s) != 1L) {
+    stop("the standard errors must be one per estimate", call. = FALSE)
+  }
+  if (any(s < 0, na.rm = TRUE)) stop("standard errors, CVs and margins must not be negative", call. = FALSE)
+  z <- stats::qnorm(1 - (1 - conf_level) / 2)
+  data.frame(estimate = estimate, lower = estimate - z * s, upper = estimate + z * s, se = rep_len(s, length(estimate)))
+}
+
+#' Compare published group estimates with a reference group
+#'
+#' For published estimates with their confidence limits (percentages, rates, years of life
+#' expectancy: any scale, with the limits on the same scale), the ratio and the difference
+#' of each group to a reference group, with confidence intervals worked from the published
+#' ones: First Nations, Metis and Inuit against non-Indigenous people, Aboriginal and
+#' Torres Strait Islander people against non-Indigenous Australians, Maori against
+#' non-Maori, or any groups with published intervals.
+#'
+#' @details Each published interval gives a standard error, \eqn{s = (u - l) / (2 z)}, on
+#' the scale of the estimate for the difference and on the log scale,
+#' \eqn{\sigma = (\log u - \log l) / (2 z)}, for the ratio, with
+#' \eqn{z = \Phi^{-1}(1 - \alpha/2)}. This takes the interval as symmetric on that scale;
+#' for asymmetric (gamma, logit, Wilson) limits it averages the two sides. With a standard
+#' error, a coefficient of variation or a margin of error instead of limits, make limits
+#' with \code{\link{limits_from}} first. The groups are treated as independent samples, so
+#' the standard error of a difference is \eqn{\sqrt{s_g^2 + s_r^2}} and of a log ratio
+#' \eqn{\sqrt{\sigma_g^2 + \sigma_r^2}}. Disjoint domains of one survey are nearly
+#' independent but not exactly (they share the design's strata and clusters): the
+#' intervals are approximations, and the exact ones need the survey's replicate weights
+#' (for Statistics Canada's surveys, in its Research Data Centres). The reference must not
+#' contain the groups: compare with non-Indigenous people, not with a total, whose
+#' covariance with each group is large and positive (the function warns when the reference
+#' looks like a total). A lower limit of 0 (a limit cut at zero) leaves the ratio's
+#' interval \code{NA}.
+#'
+#' Distinctions-based: each group is compared on its own. A row that pools groups is kept
+#' but marked \code{pooled_group = TRUE}, since a pooled figure can hide what differs
+#' between the groups it pools: name such rows in \code{pooled_groups} (by default labels
+#' beginning "Total", "Indigenous identity", "Aboriginal identity" or "Indigenous
+#' population" are taken as pooled). A row flagged \code{E} (in the group or the
+#' reference) is compared and marked; one flagged \code{F}, \code{x}, \code{..} or
+#' \code{...}, with no estimate, or whose published interval does not contain its own
+#' estimate, is not compared. Other agencies' flags: \code{\link{quality_recode}}.
+#'
+#' @param data A data frame, one row per group (filtered to one period, age group, sex and
+#'   place: a group appearing twice is refused).
+#' @param group,estimate,lower,upper Column names: the group label, the estimate, and its
+#'   published confidence limits, on one scale.
 #' @param reference The label of the reference group (default \code{"Non-Indigenous"}).
-#' @param quality Optional column of quality flags (\code{E}, \code{F}, \code{x}, ...), as
-#'   \code{\link{statcan_tidy}} gives them.
+#' @param quality Optional column of quality flags in the package's vocabulary
+#'   (\code{"E"}, \code{"F"}, \code{"x"}, \code{".."}, \code{"..."}; see
+#'   \code{\link{quality_recode}} for other agencies' flags).
 #' @param conf_level The confidence level of the published intervals and of the ones
 #'   returned (default 0.95).
-#' @return A data frame with \code{group}, \code{estimate}, \code{reference_estimate},
-#'   \code{ratio}, \code{ratio_lower}, \code{ratio_upper}, \code{difference},
-#'   \code{difference_lower}, \code{difference_upper}, \code{use_with_caution} and
-#'   \code{pan_indigenous}, of class \code{rmbl_indigenous_gap} (\code{plot()} draws each
-#'   group's difference or ratio).
+#' @param pooled_groups Optional labels of the rows that pool other groups (for example
+#'   \code{"Aboriginal and Torres Strait Islander"} beside its parts, or a "Total
+#'   Indigenous" row); by default the labels described in Details.
+#' @return A data frame of class \code{rmbl_indigenous_gap}, one row per group but the
+#'   reference: \code{group}, \code{estimate}, \code{reference_estimate}, \code{ratio},
+#'   \code{ratio_lower}, \code{ratio_upper}, \code{difference}, \code{difference_lower},
+#'   \code{difference_upper}, \code{use_with_caution} and \code{pooled_group}; attributes
+#'   \code{reference} and \code{conf_level}. \code{plot()} draws each group's difference
+#'   or ratio.
 #' @references Statistics Canada (2025). Health indicators for First Nations adults living
 #' off reserve, Metis and Inuit adults, 2015 to 2022. The Daily, 2025-02-13.
 #' \url{https://www150.statcan.gc.ca/n1/daily-quotidien/250213/dq250213f-eng.htm}
 #'
 #' Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for
 #' Indigenous Data Governance. Data Science Journal 19:43. \doi{10.5334/dsj-2020-043}
-#' @seealso \code{\link{statcan_tidy}}, \code{\link{age_standardise}}.
+#' @seealso \code{\link{distinctions_test}} before pooling, \code{\link{limits_from}},
+#'   \code{\link{quality_recode}}, \code{\link{age_standardise}}.
 #' @examples
-#' # Perceived mental health very good or excellent, adults, 2019/2022: The Daily,
-#' # 2025-02-13
-#' # (table 13-10-0924-01)
+#' # Perceived mental health very good or excellent, adults, 2019/2022 (Statistics Canada,
+#' # table 13-10-0924-01; The Daily, 2025-02-13)
 #' h <- indigenous_example("health_indicators")
 #' mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
 #'           h$indicator == "Perceived mental health, very good or excellent", ]
@@ -187,9 +323,21 @@ statcan_tidy <- function(x) {
 #' g
 #' plot(g)
 #' plot(g, what = "ratio")
+#' # your own table: made-up numbers in another country's layout, with relative standard
+#' # errors instead of limits and that agency's flags
+#' own <- data.frame(group = c("Aboriginal", "Torres Strait Islander",
+#'                             "Aboriginal and Torres Strait Islander",
+#'                             "Non-Indigenous Australians"),
+#'                   pct = c(31.2, 27.5, 30.8, 18.9), rse = c(4.1, 22.0, 3.9, 1.2),
+#'                   flag = c("", "*", "", ""))
+#' own <- cbind(own, limits_from(own$pct, cv = own$rse)[c("lower", "upper")])
+#' own$q <- quality_recode(own$flag, suppressed = c("np", "**"), caution = "*")
+#' indigenous_gap(own, "group", "pct", "lower", "upper",
+#'                reference = "Non-Indigenous Australians",
+#'                quality = "q", pooled_groups = "Aboriginal and Torres Strait Islander")
 #' @export
 indigenous_gap <- function(data, group, estimate, lower, upper, reference = "Non-Indigenous",
-                           quality = NULL, conf_level = 0.95) {
+                           quality = NULL, conf_level = 0.95, pooled_groups = NULL) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   for (nm in c("group", "estimate", "lower", "upper")) {
     v <- .rmbl_string1(get(nm), nm)
@@ -200,14 +348,21 @@ indigenous_gap <- function(data, group, estimate, lower, upper, reference = "Non
     if (!quality %in% names(data)) stop(sprintf("column `%s` not found in `data`", quality), call. = FALSE)
   }
   reference <- .rmbl_string1(reference, "reference")
+  if (grepl("^total", trimws(reference), ignore.case = TRUE) || .rmbl_pan_indigenous(reference, pooled_groups)) {
+    warning("the reference looks like a total that contains the groups: the intervals assume independent samples ",
+            "and are not right for it; compare with the groups' complement (for example non-Indigenous people)",
+            call. = FALSE)
+  }
   conf_level <- .rmbl_conf_level(conf_level)
-  g <- as.character(data[[group]])
+  g <- trimws(as.character(data[[group]]))
   est <- .rmbl_num(data[[estimate]], "estimate")
   lo <- .rmbl_num(data[[lower]], "lower")
   hi <- .rmbl_num(data[[upper]], "upper")
-  q <- if (is.null(quality)) rep("ok", length(g)) else as.character(data[[quality]])
-  q[is.na(q) | q == ""] <- "ok"
-  r <- which(g == reference)
+  q <- .rmbl_qflags(if (is.null(quality)) rep("ok", length(g)) else data[[quality]])
+  if (anyDuplicated(g)) {
+    stop("a group appears twice: filter `data` to one period, age group, sex and place", call. = FALSE)
+  }
+  r <- which(g == trimws(reference))
   if (length(r) != 1L) {
     stop(sprintf("`reference` must name exactly one row of `%s` (\"%s\" names %d)", group, reference, length(r)),
          call. = FALSE)
@@ -243,7 +398,7 @@ indigenous_gap <- function(data, group, estimate, lower, upper, reference = "Non
     difference_lower = ifelse(ok, diff - z * sd, NA_real_),
     difference_upper = ifelse(ok, diff + z * sd, NA_real_),
     use_with_caution = q[use] == "E" | q[r] == "E",
-    pan_indigenous = .rmbl_pan_indigenous(g[use]),
+    pooled_group = .rmbl_pan_indigenous(g[use], pooled_groups),
     stringsAsFactors = FALSE)
   attr(out, "reference") <- reference
   attr(out, "conf_level") <- conf_level
@@ -251,7 +406,7 @@ indigenous_gap <- function(data, group, estimate, lower, upper, reference = "Non
   out
 }
 
-#' Directly age-standardised rates, with exact gamma intervals
+#' Directly age-standardised rates, with Fay-Feuer gamma intervals
 #'
 #' The rate a population would have with the age structure of a standard population, for
 #' one or more groups, with Fay and Feuer's gamma confidence interval.
@@ -262,8 +417,11 @@ indigenous_gap <- function(data, group, estimate, lower, upper, reference = "Non
 #' \eqn{w_M = \max_i w_i / n_i} the limits are
 #' \eqn{\frac{v}{2y} \chi^2_{2y^2/v}(\alpha/2)} and
 #' \eqn{\frac{v + w_M^2}{2(y + w_M)} \chi^2_{2(y + w_M)^2/(v + w_M^2)}(1 - \alpha/2)} (Fay
-#' and Feuer 1997), exact when there are few events, as there are for small communities.
-#' With no events the lower limit is 0. Rates are per \code{per} people.
+#' and Feuer 1997). The interval is conservative (coverage at least nominal in Fay and
+#' Feuer's simulations) and reduces to the exact Garwood interval for a single age group:
+#' suited to the few events of small communities. With no events the lower limit is 0.
+#' Rates are per \code{per} people. Age groups are matched to \code{standard} by position:
+#' order the rows of each group by age, in the order of \code{standard}.
 #'
 #' The choice of standard matters: Statistics Canada's comparisons of First Nations, Metis
 #' and Inuit mortality standardise to the Indigenous population's own age structure (Kumar
@@ -375,6 +533,7 @@ rate_gap <- function(x, group, reference) {
   for (g in c(group, reference)) {
     if (!g %in% x$group) stop(sprintf("\"%s\" is not a group of `x`", g), call. = FALSE)
   }
+  if (group == reference) stop("`group` and `reference` must be two different groups", call. = FALSE)
   per <- attr(x, "per")
   z <- stats::qnorm(1 - (1 - attr(x, "conf_level")) / 2)
   v <- attr(x, "var")
@@ -397,11 +556,16 @@ rate_gap <- function(x, group, reference) {
 #' in McQuaid et al. (2017).
 #'
 #' @details Each answer is \code{TRUE} (attended), \code{FALSE} (did not) or \code{NA}
-#' (not known). A known attendance in one generation is at least one generation whatever
-#' the other is; otherwise an unknown answer leaves the count unknown (\code{NA}), since
-#' it may hide an attendance.
+#' (not known). An unknown answer may hide an attendance, so the count is unknown
+#' (\code{NA}) whenever an unknown answer could change it: always when the known answer is
+#' \code{FALSE}, and, with \code{partial = "na"} (the default), also when the known answer
+#' is \code{TRUE} (the count is 1 or 2). \code{partial = "lower_bound"} codes that case 1,
+#' a lower bound: it keeps the person but can classify them a level too low, which biases
+#' a trend toward no effect.
 #'
 #' @param parent,grandparent Logical vectors: did a parent, did a grandparent attend.
+#' @param partial What a known attendance with the other generation unknown counts as:
+#'   \code{"na"} (not known, the default) or \code{"lower_bound"} (1).
 #' @return An integer vector of 0, 1, 2 or \code{NA}.
 #' @references McQuaid RJ, Bombay A, McInnis OA, Humeny C, Matheson K, Anisman H (2017).
 #' Suicide ideation and attempts among First Nations peoples living on-reserve in Canada:
@@ -414,8 +578,11 @@ rate_gap <- function(x, group, reference) {
 #' @seealso \code{\link{exposure_trend}}.
 #' @examples
 #' generations_exposed(c(TRUE, FALSE, TRUE, NA, FALSE), c(TRUE, FALSE, FALSE, TRUE, NA))
+#' generations_exposed(c(TRUE, FALSE, TRUE, NA, FALSE), c(TRUE, FALSE, FALSE, TRUE, NA),
+#'                     partial = "lower_bound")
 #' @export
-generations_exposed <- function(parent, grandparent) {
+generations_exposed <- function(parent, grandparent, partial = c("na", "lower_bound")) {
+  partial <- .rmbl_arg(partial)
   for (nm in c("parent", "grandparent")) {
     v <- get(nm)
     if (!is.logical(v)) stop(sprintf("`%s` must be TRUE, FALSE or NA for each person", nm), call. = FALSE)
@@ -424,8 +591,9 @@ generations_exposed <- function(parent, grandparent) {
     stop("`parent` and `grandparent` must be the same length", call. = FALSE)
   }
   out <- as.integer(parent %in% TRUE) + as.integer(grandparent %in% TRUE)
-  unknown <- (is.na(parent) & !grandparent %in% TRUE) | (is.na(grandparent) & !parent %in% TRUE)
-  out[unknown & out == 0L] <- NA_integer_
+  either_na <- is.na(parent) | is.na(grandparent)
+  out[either_na & out == 0L] <- NA_integer_
+  if (partial == "na") out[either_na & out == 1L] <- NA_integer_
   out
 }
 
@@ -433,7 +601,7 @@ generations_exposed <- function(parent, grandparent) {
 #'
 #' For counts of an outcome (suicidal thoughts, distress) among people with 0, 1 or 2
 #' generations of residential school attendance in their family (or any ordered exposure),
-#' the odds ratio of each level against the lowest, with Woolf intervals, and the
+#' the odds ratio of each level against the lowest level, with Woolf intervals, and the
 #' Cochran-Armitage test for a trend across the levels.
 #'
 #' @param cases Number with the outcome at each exposure level.
@@ -444,9 +612,14 @@ generations_exposed <- function(parent, grandparent) {
 #' @return A data frame with \code{dose}, \code{cases}, \code{n}, \code{proportion},
 #'   \code{odds_ratio}, \code{lower}, \code{upper}; the trend test is the attribute
 #'   \code{trend} (an \code{htest}).
-#' @details Counts must be unweighted. For a complex survey, take the weighted analysis
-#' from the survey itself (\code{\link{survey_design}}): this function is for published or
-#' aggregated counts.
+#' @details With \eqn{a_k} cases and \eqn{b_k = n_k - a_k} non-cases at level \eqn{k}, the
+#' odds ratio against the lowest level is \eqn{(a_k/b_k)/(a_1/b_1)}, with Woolf's interval
+#' \eqn{\exp\{\log OR \pm z\sqrt{1/a_k + 1/b_k + 1/a_1 + 1/b_1}\}}. When any cell is
+#' empty, one half is added to every cell of every level (Haldane-Anscombe), so every odds
+#' ratio is finite. The trend test is the Cochran-Armitage test (\code{prop.trend.test})
+#' with the levels as scores. Counts must be unweighted. For a complex survey, take the
+#' weighted analysis from the survey itself (\code{\link{survey_design}}): this function
+#' is for published or aggregated counts.
 #' @references McQuaid RJ, et al. (2017), see \code{\link{generations_exposed}}.
 #' @examples
 #' # made-up counts by 0, 1 and 2 generations of attendance, to show the computation
@@ -468,6 +641,9 @@ exposure_trend <- function(cases, n, dose = seq_along(cases) - 1L, conf_level = 
     stop("`cases` and `n` must be whole numbers with 0 <= cases <= n and n > 0", call. = FALSE)
   }
   if (is.unsorted(dose, strictly = TRUE)) stop("`dose` must be strictly increasing", call. = FALSE)
+  if (all(cases == 0) || all(cases == n)) {
+    stop("no level has a case (or every person at every level is one): there is no trend to test", call. = FALSE)
+  }
   z <- stats::qnorm(1 - (1 - conf_level) / 2)
   a <- cases
   b <- n - cases
@@ -534,10 +710,12 @@ trc_completions <- function() {
 #' from the start (\code{start}, the Commission's final report in December 2015) to the
 #' last count: the rate is \eqn{c / T} with the exact (Garwood) interval for \eqn{c}
 #' completed calls, and the projection is the year \eqn{94 - c} more would take at that
-#' rate (at the interval's ends, its range). A constant rate is the simplest model and the
-#' one the Yellowhead Institute's projection uses ("42 years, or until 2065", 2022); the
+#' rate (at the interval's ends, its range). A constant rate is the simplest model, and
+#' the one behind the Yellowhead Institute's projection ("42 years, or until 2065", 2022);
+#' with the counts to the end of 2022 and December 2015 as the start it gives 2067. The
 #' pace has not been constant, so the projection is a description of the pace so far, not
-#' a forecast.
+#' a forecast. Any count of commitments completed over time can be modelled the same way:
+#' set \code{total} and \code{start}.
 #'
 #' @param completed Cumulative number completed at each date (default:
 #'   \code{\link{trc_completions}}).
@@ -559,7 +737,7 @@ trc_completions <- function() {
 #' @export
 trc_progress <- function(completed = trc_completions()$cumulative, year_end = trc_completions()$year_end,
                          total = 94, start = 2015.96, conf_level = 0.95) {
-  completed <- .rmbl_num(completed, "completed")
+  completed <- .rmbl_num(completed, "completed", integer = TRUE)
   year_end <- .rmbl_num(year_end, "year_end")
   total <- .rmbl_scalar(total, "total", 1)
   start <- .rmbl_scalar(start, "start")
@@ -567,6 +745,8 @@ trc_progress <- function(completed = trc_completions()$cumulative, year_end = tr
   if (!length(completed) || length(completed) != length(year_end) || anyNA(c(completed, year_end))) {
     stop("`completed` and `year_end` must be one count per year, with no NA", call. = FALSE)
   }
+  if (any(abs(completed - round(completed)) > 1e-8)) stop("`completed` must be whole numbers", call. = FALSE)
+  if (is.unsorted(year_end, strictly = TRUE)) stop("`year_end` must be increasing", call. = FALSE)
   if (is.unsorted(completed) || any(completed < 0) || any(completed > total)) {
     stop("`completed` must be cumulative counts between 0 and `total`", call. = FALSE)
   }
@@ -601,10 +781,11 @@ trc_progress <- function(completed = trc_completions()$cumulative, year_end = tr
 #' @param refresh Fetch the manifest again (default \code{FALSE}).
 #' @return A data frame: \code{key}, \code{rows}, \code{description}, \code{license},
 #'   \code{source}.
-#' @details Needs the data service key (\code{\link{bricklayer_llm_login}}). Only openly
-#' licensed aggregate tables are mirrored. First Nations Information Governance Centre
-#' data (the First Nations Regional Health Survey and its companions) are governed by the
-#' OCAP(R) principles and are not; ask the Centre (\url{https://fnigc.ca}).
+#' @details Needs a data service key: sign in once with
+#' \code{\link{bricklayer_llm_login}}. Only openly licensed aggregate tables are mirrored.
+#' First Nations Information Governance Centre data (the First Nations Regional Health
+#' Survey and its companions) are governed by the OCAP(R) principles and are not; ask the
+#' Centre (\url{https://fnigc.ca}).
 #' @examples
 #' \dontrun{
 #' indigenous_tables("mental health")

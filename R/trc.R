@@ -84,22 +84,35 @@ trc_indicators <- function() {
 #'
 #' For each health indicator of Call to Action 19 that the published tables measure, each
 #' group's estimate against non-Indigenous people's, with its interval, turned into one
-#' scale: the factor by which the group's outcome is worse (above 1) or better (below 1).
+#' scale, the disadvantage ratio: the factor by which the group's outcome is worse (above
+#' 1) or better (below 1).
 #'
 #' @details The gaps come from \code{\link{indigenous_gap}} on the latest period of each
-#' table, with non-Indigenous people as the reference. To put years, rates and percentages
-#' on one scale, each gap is given as a ratio oriented by the indicator's better direction
-#' (\code{\link{trc_indicators}}): the group's estimate over the reference's where lower
-#' is better (infant mortality, suicidal thoughts, chronic conditions), the reference's
-#' over the group's where higher is better (life expectancy, good mental health, a regular
-#' provider). Above 1 the group fares worse; the interval is the published one carried
-#' through (\code{indigenous_gap}'s log-scale interval, inverted where needed). The
-#' difference on the indicator's own scale is kept beside it.
+#' table, with \code{reference} (non-Indigenous people) as the reference. To put years,
+#' rates and percentages on one scale, each gap is given as a ratio oriented by the
+#' indicator's better direction (\code{\link{trc_indicators}}): the group's estimate over
+#' the reference's where lower is better (infant mortality, chronic conditions), the
+#' reference's over the group's where higher is better (life expectancy, good mental
+#' health, a regular provider):
+#' \deqn{D = \hat\theta_g / \hat\theta_r \ \textrm{(lower is better)}, \qquad
+#' D = \hat\theta_r / \hat\theta_g \ \textrm{(higher is better)}.}{D = g / r (lower is
+#' better), D = r / g (higher is better).} It is a ratio of the published estimates, not a
+#' relative risk: for life expectancy, D = 1.1 means the reference lives 10\% longer, not
+#' that the group's risk is 10\% higher. Above 1 the group fares worse; the interval is
+#' the published one carried through (\code{indigenous_gap}'s log-scale interval, inverted
+#' where needed). The difference on the indicator's own scale is kept beside it.
 #'
 #' This is a description of gaps that Call 19 asks to be closed, measured as the surveys
 #' measure them; it is not a ranking of peoples. Report it with the trends
 #' (\code{\link{healing_change}}) and the strengths (\code{\link{wellness_profile}}) that
 #' sit beside it.
+#'
+#' Each table is in the long layout of \code{\link{statcan_estimates}} (or
+#' \code{indigenous_example()}): columns \code{group}, \code{indicator} or \code{measure},
+#' \code{period}, \code{estimate}, \code{lower}, \code{upper}, \code{quality}, and
+#' \code{age} for the health and suicidal-ideation tables (the all-ages total is used).
+#' The latest period with estimates is taken. Table 41-10-0021 publishes Indigenous groups
+#' only, so it adds a gap only when given a table with \code{reference} rows.
 #'
 #' @param health A health indicators table (default
 #'   \code{indigenous_example("health_indicators")}, table 13-10-0924), or \code{NULL}.
@@ -109,35 +122,45 @@ trc_indicators <- function() {
 #'   \code{indigenous_example("infant_mortality")}, table 17-10-0161), or \code{NULL}.
 #' @param suicidal_ideation Suicidal thoughts (default
 #'   \code{indigenous_example("suicidal_ideation")}, table 41-10-0021), or \code{NULL}.
+#' @param reference The reference group's label (default \code{"Non-Indigenous"}).
 #' @return A data frame of class \code{rmbl_trc_gaps}: \code{indicator}, \code{measure},
 #'   \code{period}, \code{group}, \code{estimate}, \code{reference_estimate},
-#'   \code{difference}, \code{times_worse}, \code{lower}, \code{upper}, \code{worse} (the
-#'   interval above 1), \code{use_with_caution}. \code{plot()} draws it.
+#'   \code{difference} (group minus reference, on the indicator's scale),
+#'   \code{disadvantage_ratio}, \code{lower}, \code{upper}, \code{worse} (the interval
+#'   above 1), \code{use_with_caution}. \code{plot()} draws it.
 #' @references Truth and Reconciliation Commission of Canada (2015), see
 #'   \code{\link{trc_indicators}}.
 #' @seealso \code{\link{trc_indicators}}, \code{\link{indigenous_gap}}.
 #' @examples
 #' g <- trc_health_gaps()
-#' g[g$group == "Inuit", c("indicator", "measure", "period", "times_worse", "lower",
+#' g[g$group == "Inuit", c("indicator", "measure", "period", "disadvantage_ratio",
+#'                         "lower",
 #'                         "upper")]
 #' plot(g)
 #' @export
 trc_health_gaps <- function(health = indigenous_example("health_indicators"),
                             life_expectancy = indigenous_example("life_expectancy"),
                             infant_mortality = indigenous_example("infant_mortality"),
-                            suicidal_ideation = indigenous_example("suicidal_ideation")) {
+                            suicidal_ideation = indigenous_example("suicidal_ideation"),
+                            reference = "Non-Indigenous") {
+  reference <- .rmbl_string1(reference, "reference")
   ti <- trc_indicators()
   ti <- ti[ti$call == "19" & nzchar(ti$better), ]
   pieces <- list()
   one <- function(d, measure, period, indicator, better) {
     d <- d[!is.na(d$group), ]
-    if (!"Non-Indigenous" %in% d$group || anyDuplicated(d$group)) return(NULL)
-    g <- suppressWarnings(indigenous_gap(d, "group", "estimate", "lower", "upper", reference = "Non-Indigenous",
+    if (!reference %in% d$group) return(NULL)
+    if (anyDuplicated(d$group)) {
+      warning(sprintf("%s (%s): more than one row per group, skipped; filter the table to one row each",
+                      measure, period), call. = FALSE)
+      return(NULL)
+    }
+    g <- suppressWarnings(indigenous_gap(d, "group", "estimate", "lower", "upper", reference = reference,
                                          quality = "quality"))
     low <- better == "lower"
     data.frame(indicator = indicator, measure = measure, period = period, group = g$group, estimate = g$estimate,
                reference_estimate = g$reference_estimate, difference = g$difference,
-               times_worse = if (low) g$ratio else 1 / g$ratio,
+               disadvantage_ratio = if (low) g$ratio else 1 / g$ratio,
                lower = if (low) g$ratio_lower else 1 / g$ratio_upper,
                upper = if (low) g$ratio_upper else 1 / g$ratio_lower,
                use_with_caution = g$use_with_caution, stringsAsFactors = FALSE)
@@ -167,11 +190,13 @@ trc_health_gaps <- function(health = indigenous_example("health_indicators"),
     d <- suicidal_ideation[suicidal_ideation$measure == ti$measure[i] &
                              suicidal_ideation$age == "Total, 15 years and over", ]
     # 41-10-0021 has no non-Indigenous rows: Indigenous groups only, so it is not part of the gaps
-    if ("Non-Indigenous" %in% d$group) pieces[[length(pieces) + 1L]] <- one(d, ti$measure[i], "2017", ti$indicator[i],
+    if (reference %in% d$group) pieces[[length(pieces) + 1L]] <- one(d, ti$measure[i], "2017", ti$indicator[i],
                                                                            ti$better[i])
   }
   out <- do.call(rbind, pieces)
-  if (is.null(out)) stop("no table given measures a Call 19 indicator against non-Indigenous people", call. = FALSE)
+  if (is.null(out)) {
+    stop(sprintf("no table given measures a Call 19 indicator against \"%s\"", reference), call. = FALSE)
+  }
   out$worse <- is.finite(out$lower) & out$lower > 1
   rownames(out) <- NULL
   class(out) <- c("rmbl_trc_gaps", "data.frame")
@@ -183,7 +208,7 @@ trc_health_gaps <- function(health = indigenous_example("health_indicators"),
 plot.rmbl_trc_gaps <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   .rmbl_plot_check(x, "rmbl_trc_gaps")
   d <- as.data.frame(x)
-  d <- d[is.finite(d$times_worse), ]
+  d <- d[is.finite(d$disadvantage_ratio), ]
   grp <- unique(d$group)
   cols <- .bl_cols(length(grp), col, palette)[match(d$group, grp)]
   grp_short <- sub("^First Nations \\(Registered or Treaty\\)", "FN registered", d$group)
@@ -192,8 +217,8 @@ plot.rmbl_trc_gaps <- function(x, ..., main = NULL, col = NULL, palette = NULL) 
   meas <- sub("^Infant mortality rate$", "Infant mortality", meas)
   lab <- paste0(.bl_short_label(meas, 24L), ": ", .bl_short_label(grp_short, 26L),
                 ifelse(d$use_with_caution, " (E)", ""))
-  .bl_dot_interval(lab, d$times_worse, d$lower, d$upper,
+  .bl_dot_interval(lab, d$disadvantage_ratio, d$lower, d$upper,
                    .bl_main(main, "Call to Action 19: health gaps against non-Indigenous people"),
-                   "Times worse than non-Indigenous people (log scale; 1 = no gap)", cols, ref = 1, log = "x", ...)
-  invisible(d[c("indicator", "measure", "group", "times_worse", "lower", "upper")])
+                   "Disadvantage ratio against the reference (log scale; 1 = no gap)", cols, ref = 1, log = "x", ...)
+  invisible(d[c("indicator", "measure", "group", "disadvantage_ratio", "lower", "upper")])
 }

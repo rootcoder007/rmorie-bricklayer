@@ -23,10 +23,11 @@ Census Indigenous Population Profile (\code{census2021_ipp}), with their descrip
 row counts and licences, searchable.
 }
 \details{
-Needs the data service key (\code{\link{bricklayer_llm_login}}). Only openly
-licensed aggregate tables are mirrored. First Nations Information Governance Centre
-data (the First Nations Regional Health Survey and its companions) are governed by the
-OCAP(R) principles and are not; ask the Centre (\url{https://fnigc.ca}).
+Needs a data service key: sign in once with
+\code{\link{bricklayer_llm_login}}. Only openly licensed aggregate tables are mirrored.
+First Nations Information Governance Centre data (the First Nations Regional Health
+Survey and its companions) are governed by the OCAP(R) principles and are not; ask the
+Centre (\url{https://fnigc.ca}).
 }
 \examples{
 \dontrun{

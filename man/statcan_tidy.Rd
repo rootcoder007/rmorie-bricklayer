@@ -7,9 +7,11 @@
 statcan_tidy(x)
 }
 \arguments{
-\item{x}{A data frame read from a Statistics Canada table, or a key of the data service
-(\code{"statcan_indigenous/tbl_13100924"}, or the eight-digit table id alone, which
-needs the data service key: see \code{\link{bricklayer_data_load}}).}
+\item{x}{A data frame read from a Statistics Canada table (English-language full-table
+CSV), or a key of the data service (\code{"statcan_indigenous/tbl_13100924"}, or the
+eight-digit table id alone). A key needs a data service key: sign in once with
+\code{\link{bricklayer_llm_login}} (see \code{\link{bricklayer_data_load}}); a data
+frame you read yourself needs none.}
 }
 \value{
 The data frame with \code{VALUE} numeric and a factor column \code{quality}
@@ -51,7 +53,7 @@ d <- data.frame(REF_DATE = "2019/2022", GEO = "Canada",
                 check.names = FALSE)
 statcan_tidy(d)
 \dontrun{
-# needs the data service key (bricklayer_llm_login())
+# needs a data service key: sign in once with bricklayer_llm_login()
 t924 <- statcan_tidy("13100924")
 }
 }

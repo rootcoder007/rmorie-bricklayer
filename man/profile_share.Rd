@@ -10,7 +10,8 @@ profile_share(
   denominator = NULL,
   sample_fraction = 0.25,
   deff = 1,
-  conf_level = 0.95
+  conf_level = 0.95,
+  rounding_base = 5
 )
 }
 \arguments{
@@ -28,6 +29,9 @@ characteristics use 1 whatever is given.}
 \item{deff}{Design effect (default 1).}
 
 \item{conf_level}{Confidence level (default 0.95).}
+
+\item{rounding_base}{The base of the random rounding (default 5, Statistics Canada's);
+1 for counts that are not rounded.}
 }
 \value{
 A data frame of class \code{rmbl_profile_share}: \code{geo}, \code{dguid},
@@ -53,15 +57,21 @@ household in four, so the share has variance \eqn{d (1 - f) p (1 - p) / (f N)} f
 a sampling fraction \eqn{f} (\code{sample_fraction}, 0.25) of a population of
 \eqn{N} (the denominator) and a design effect \eqn{d} (\code{deff}, 1 by default:
 the clustering of people in households raises it, and a value of 1.5 to 2 is
-prudent for characteristics shared within a household);
-\item every count is randomly rounded to a multiple of 5, which adds an error of
-variance about 4 to each count, so \eqn{4 (1 + p^2) / N^2} more (the only error of
-a full-count share).
+prudent for characteristics shared within a household). On reserves (rows whose
+\code{residence} is \code{"On reserve"}) every household got the long form, so
+\eqn{f = 1} there and the sampling term vanishes;
+\item every count is randomly rounded, up or down without bias, to a multiple of
+\eqn{b} (\code{rounding_base}, 5). Averaged over the remainders, that adds variance
+\eqn{c = (b^2 - 1)/6} to each count (4 for \eqn{b = 5}), so \eqn{c (1 + p^2) / N^2}
+to the share (the only error of a full-count share).
 }
-The interval is Wilson's at the effective sample size \eqn{p(1-p)} over that variance,
-so it stays inside 0 and 100. It does not carry non-response (see \code{tnr_lf}) or the
-edit and imputation error, so it is narrower than the full error; treat it as a lower
-bound on the uncertainty.
+In all,
+\deqn{V = \frac{d (1 - f) p (1 - p)}{f N} + \frac{c (1 + p^2)}{N^2}.}{V = d (1 - f) p
+(1 - p) / (f N) + c (1 + p^2) / N^2.} The interval is Wilson's at the effective sample
+size \eqn{n_e = \max(p(1-p), 1/N) / V} (the floor \eqn{1/N} keeps a share of 0 or 100\\%
+from an infinite \eqn{n_e}), so it stays inside 0 and 100. It does not carry
+non-response (see \code{tnr_lf}) or the edit and imputation error, so it is narrower
+than the full error; treat it as a lower bound on the uncertainty.
 }
 \examples{
 p <- census_profile(indigenous_example("census_population"))

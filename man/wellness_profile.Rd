@@ -21,8 +21,8 @@ wellness_profile(
 \item{data}{A data frame, one row per group and indicator (as
 \code{\link{statcan_estimates}} gives).}
 
-\item{group, indicator, estimate, lower, upper}{Column names: the group, the
-indicator, the percentage and its published limits.}
+\item{group, indicator, estimate, lower, upper}{Column names: the group, the indicator,
+the percentage and its published limits.}
 
 \item{wellness, distress}{The indicators that measure wellness or strength, and those
 that measure distress; rows for any other indicator (totals, "not specified") are
@@ -65,6 +65,13 @@ of colonial policy and of structural conditions, not of the people in the groups
 (Gabriel et al. 2022); their interpretation belongs with First Nations, Metis and Inuit
 communities.
 }
+\section{Acknowledgement}{
+
+This estimator puts to quantitative use the framework of Professor Suzanne Stewart
+(Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
+\code{vignette("first-nations-metis-inuit-health")}.
+}
+
 \examples{
 # well-being, 2024 (table 41-10-0082-01)
 wb <- indigenous_example("wellbeing")

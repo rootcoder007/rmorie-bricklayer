@@ -77,6 +77,38 @@ cannot show.
 
 Every result draws itself with `plot()`.
 
+**Any agency's table, and the review of every estimator**
+
+* `limits_from()` builds limits from a standard error, a coefficient of variation or a margin of
+  error, and `quality_recode()` maps another agency's flags onto suppressed and use-with-caution.
+  An unknown flag warns and counts as ok.
+* Published limits that miss their own estimate warn, and that estimate is set aside, in every
+  estimator.
+* `indigenous_gap()`, `ordinal_compare()` and `distinctions_test()` take `pooled_groups`; the
+  output column `pan_indigenous` is now `pooled_group`. Duplicate groups are refused, and a total
+  as the reference warns.
+* `statcan_estimates()` turns a coefficient of variation into log-normal limits, which stay above 0.
+* `holistic_balance()` refuses proportions and gives a bias-corrected interval that holds the
+  estimate.
+* `standardise_prevalence()` takes `scale` (100 by default, `Inf` for rates).
+* `generations_exposed()` takes `partial`: a known attendance beside an unknown one is `NA` by
+  default, or 1 as a lower bound.
+* `connection_association()` gives a Monte Carlo p-value of (b + 1) / (R + 1) beyond eight places;
+  its band is documented as a sensitivity band.
+* `healing_change()` takes `distress`; other indicators are marked `"other"`.
+* `community_index()` keeps its `conf_level`.
+* `profile_share()` takes `rounding_base`; on reserves, where the long form was a full canvass,
+  there is no sampling term.
+* `census_cwb()` matches places by DGUID and takes `min_population` (250 by default; the
+  Department uses 65). Its doc says that housing is pooled across Indigenous households.
+* `census_standard()` takes a DGUID where place names repeat.
+* `trc_health_gaps()`: `times_worse` is now `disadvantage_ratio`. It takes `reference`, and
+  warns on duplicate rows.
+* `rate_gap()` refuses a group against itself; `exposure_trend()` refuses an outcome with no
+  variation.
+* The README, the vignette and the pages of the estimators acknowledge Professors Suzanne
+  Stewart and Angela Mashford-Pringle, on whose frameworks they are built.
+
 ## Fixes from the CRAN stress test of 0.5.14
 
 * **No leak on an argument error in compiled code**: an error raised inside a C++ entry point

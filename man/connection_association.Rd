@@ -52,18 +52,30 @@ of all aspects of Indigenous life including health and well-being"; Mashford-Pri
 (2016) describes Indigenous health and education as interconnected. Across places, that
 connection has a testable shadow: where more people are on the land (or belong, or
 finish school), do more report wellness? This function measures it by Spearman's
-\eqn{\rho}. Its p-value is exact, from all \eqn{n!} orderings when there are at most 8
-places and from \code{reps} random orderings otherwise. Each estimate carries sampling
-error, so \code{rho_lower} and \code{rho_upper} are the quantiles of \eqn{\rho} over
-\code{reps} draws of both indicators from normal distributions with their published
-standard errors: a correlation that the published intervals cannot pin down shows a
-wide interval.
+\eqn{\rho}. Its p-value is exact when there are at most 8 places (over all \eqn{n!}
+orderings) and a Monte Carlo estimate otherwise (\eqn{(b + 1)/(R + 1)} for \eqn{b} of
+\eqn{R} = \code{reps} random orderings at least as extreme). Each estimate carries
+sampling error, so \code{rho_lower} and \code{rho_upper} are the quantiles of
+\eqn{\rho} over \code{reps} draws of both indicators from normal distributions with
+their published standard errors. That is a sensitivity band, not a confidence interval
+for a correlation across places: it shows how much the published sampling error alone
+moves \eqn{\rho} for these places, it is pulled toward 0 (noise is added to estimates
+that are already noisy), and it ignores the sampling of the places themselves. Quality
+flags are not carried: filter suppressed rows out first.
 
 This is an association across places (an ecological one). It cannot say that connection
 to land makes a person well, which needs data on persons; a handful of places gives
 little power; and a correlation is not a measure of the relationship the authors
 describe. It is a description of how the published indicators move together.
 }
+\section{Acknowledgement}{
+
+This estimator puts to quantitative use the work of Professor Angela Mashford-Pringle
+(Timiskaming First Nation) and Professor Suzanne Stewart (Yellowknives Dene First
+Nation), both of the University of Toronto; see the acknowledgements of
+\code{vignette("first-nations-metis-inuit-health")}.
+}
+
 \examples{
 # across regions, 2022 (table 41-10-0067-01): where First Nations people report
 # excellent or

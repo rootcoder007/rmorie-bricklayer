@@ -23,7 +23,8 @@ mental_wellness_continuum(
 \arguments{
 \item{data}{A data frame, one row per group and indicator.}
 
-\item{group, indicator, estimate, lower, upper}{Column names.}
+\item{group, indicator, estimate, lower, upper}{Column names: the group, the indicator,
+the estimate (percent) and its published limits.}
 
 \item{hope, belonging, meaning, purpose}{The indicators taken as proxies for each
 direction, or \code{NULL} where the tables have none.}
@@ -57,11 +58,19 @@ every row as a proxy, and reports a direction given no proxy as missing rather t
 filling it from another. One indicator named for two directions (Statistics Canada asks
 about "meaning and purpose" together) is used for both and marked \code{shared}.
 
-The result plots as a \code{\link{wellness_profile}}; \code{\link{holistic_balance}} on
-it gives the balance across the directions.
+The result plots as a \code{\link{wellness_profile}}. For the balance across the
+directions, call \code{\link{holistic_balance}} on the rows with a proxy
+(\code{x[x$domain != "no published proxy", ]}, with \code{"domain"} as its domain
+column):
+a missing direction otherwise leaves the balance \code{NA}, and a shared proxy counts
+once per direction it serves, so give such directions half weight. Other frameworks of
+wellness (Te Whare Tapa Wha, the Social and Emotional Wellbeing domains, a Nation's
+own) take the same route through \code{\link{wellness_profile}} and
+\code{\link{holistic_balance}}, which accept any set of domains.
 }
 \examples{
-# well-being, 2024 (table 41-10-0082-01): hope, and meaning and purpose (asked together);
+# well-being, 2024 (table 41-10-0082-01): hope, and meaning and purpose (asked
+# together);
 # this table has no measure of belonging, so that direction is reported as missing
 wb <- indigenous_example("wellbeing")
 mw <- mental_wellness_continuum(wb, "group", "indicator", "estimate", "lower", "upper",

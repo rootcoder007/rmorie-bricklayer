@@ -2,7 +2,7 @@
 % Please edit documentation in R/indigenous.R
 \name{age_standardise}
 \alias{age_standardise}
-\title{Directly age-standardised rates, with exact gamma intervals}
+\title{Directly age-standardised rates, with Fay-Feuer gamma intervals}
 \usage{
 age_standardise(
   events,
@@ -43,8 +43,11 @@ weights \eqn{w_i} (the standard population's shares), the rate is
 \eqn{w_M = \max_i w_i / n_i} the limits are
 \eqn{\frac{v}{2y} \chi^2_{2y^2/v}(\alpha/2)} and
 \eqn{\frac{v + w_M^2}{2(y + w_M)} \chi^2_{2(y + w_M)^2/(v + w_M^2)}(1 - \alpha/2)} (Fay
-and Feuer 1997), exact when there are few events, as there are for small communities.
-With no events the lower limit is 0. Rates are per \code{per} people.
+and Feuer 1997). The interval is conservative (coverage at least nominal in Fay and
+Feuer's simulations) and reduces to the exact Garwood interval for a single age group:
+suited to the few events of small communities. With no events the lower limit is 0.
+Rates are per \code{per} people. Age groups are matched to \code{standard} by position:
+order the rows of each group by age, in the order of \code{standard}.
 
 The choice of standard matters: Statistics Canada's comparisons of First Nations, Metis
 and Inuit mortality standardise to the Indigenous population's own age structure (Kumar

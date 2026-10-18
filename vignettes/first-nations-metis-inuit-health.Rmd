@@ -16,7 +16,7 @@ This vignette covers the tools for First Nations, Metis and Inuit health, mental
 wellness data, as Statistics Canada publishes them. It also covers the rules those tools follow,
 because with these data, how you work matters as much as what you compute.
 
-Every example runs on published values. `indigenous_example()` bundles excerpts of four Statistics
+Every example runs on published values. `indigenous_example()` bundles excerpts of eight Statistics
 Canada tables, reproduced under the Statistics Canada Open Licence:
 
 | Excerpt | Table | Survey and period |
@@ -25,6 +25,10 @@ Canada tables, reproduced under the Statistics Canada Open Licence:
 | `"mental_health"` | 41-10-0067-01 | Indigenous Peoples Survey, 2022 |
 | `"wellbeing"` | 41-10-0082-01 | 2024 |
 | `"suicidal_ideation"` | 41-10-0021-01 | Aboriginal Peoples Survey, 2017 |
+| `"life_expectancy"` | 17-10-0160-01 | Projected life expectancy at birth |
+| `"infant_mortality"` | 17-10-0161-01 | Infant mortality |
+| `"census_population"` | 98-510-X2021001 | 2021 Census Indigenous Population Profile, population |
+| `"census_households"` | 98-510-X2021016 | 2021 Census Indigenous Population Profile, households |
 
 The 13-10-0924 excerpt is the table behind The Daily of 2025-02-13. The full tables, and the other
 Indigenous-titled tables, are at the data service: see `indigenous_tables()`.
@@ -120,7 +124,8 @@ plot(dt)
 
 ## The whole scale, not one cut of it
 
-"Very good or excellent" cuts a five-point scale at one place. `ordinal_compare()` compares the
+"Very good or excellent" cuts a five-point scale at one place (the table publishes it in four
+categories, with fair and poor together). `ordinal_compare()` compares the
 whole distribution. It gives the probability that a person in one group rates their mental health
 higher than a person in the reference group, with ties counted half (Agresti 1980). The data are
 from the 2022 Indigenous Peoples Survey, table 41-10-0067-01:
@@ -262,8 +267,9 @@ well-being" (Mashford-Pringle and Stewart 2019). Health and education are interc
 (Mashford-Pringle 2016). Across places, connections of this kind leave a trace: do two indicators
 rise together where people live?
 
-`connection_association()` measures this with Spearman's rho. Its p-value is exact. Its interval
-carries the published sampling error. Here, by region, it asks whether First Nations and Metis
+`connection_association()` measures this with Spearman's rho. Its p-value is exact for up to eight
+places, and a Monte Carlo estimate beyond. Its band is a sensitivity band, not a confidence
+interval: it shows how far the published sampling error alone moves rho for these places. Here, by region, it asks whether First Nations and Metis
 people's mental health rise together, using table 41-10-0067-01:
 
 ```{r connection}
@@ -340,7 +346,8 @@ census_standard(p)
 ```
 
 A Community Well-Being score from the public profile (income, education, housing, labour force), by
-distinction. `?census_cwb` explains where it departs from the Department's own index:
+distinction. The household table splits Indigenous from non-Indigenous households only, so First
+Nations, Metis and Inuit people share the Indigenous households' housing component. `?census_cwb` explains where it departs from the Department's own index:
 
 ```{r census-cwb}
 h <- census_profile(indigenous_example("census_households"))
@@ -375,12 +382,14 @@ Call to Action 19 asks for "measurable goals to identify and close the gaps in h
 between Aboriginal and non-Aboriginal communities", for indicators that include infant mortality,
 suicide, mental health, addictions, life expectancy and chronic diseases. `trc_indicators()` lists
 which published table measures each of them. `trc_health_gaps()` measures every gap against
-non-Indigenous people on one scale: how many times worse the outcome is, with its interval.
+non-Indigenous people on one scale, the disadvantage ratio: the ratio of the two estimates, turned
+so that above 1 means the group fares worse, with its interval. It is a ratio of published
+estimates, not a relative risk.
 
 ```{r trc-gaps, fig.height = 9}
 g <- trc_health_gaps()
 g[g$measure %in% c("Life expectancy at birth", "Infant mortality rate"),
-  c("measure", "period", "group", "estimate", "reference_estimate", "times_worse", "lower", "upper")]
+  c("measure", "period", "group", "estimate", "reference_estimate", "disadvantage_ratio", "lower", "upper")]
 plot(g)
 ```
 
@@ -427,12 +436,33 @@ plot(cc, xlab = "First Nations who know an Indigenous language (%)",
 ```
 
 Across these eight provinces and territories, the rank correlation is positive but far from
-settled: its exact p-value is large and its interval includes zero. That is not evidence for or
+settled: its exact p-value is large and its sensitivity band includes zero. That is not evidence for or
 against the communities' findings.
 Eight places are far too few, a province mixes many communities, and the two measures come from
 different surveys and years. The community-level design needs the census profile of each First
 Nations community (98-510-X2021002 at the data service), and outcomes measured for the same
 communities.
+
+## Your own data
+
+Nothing here is tied to Canada or to these tables. Each estimator takes a data frame with a group
+column, an estimate and its limits. A table from another agency needs two steps first: limits from
+whatever it publishes in their place (`limits_from()` takes a standard error, a coefficient of
+variation or a margin of error), and its quality flags mapped onto suppressed and use-with-caution
+(`quality_recode()`). Here, made-up numbers in an Australian layout, with relative standard errors
+and that agency's flags:
+
+```{r own-data}
+own <- data.frame(group = c("Aboriginal", "Torres Strait Islander", "Non-Indigenous Australians"),
+                  pct = c(31.2, 27.5, 18.9), rse = c(4.1, 22.0, 1.2), flag = c("", "*", ""))
+own <- cbind(own, limits_from(own$pct, cv = own$rse)[c("lower", "upper")])
+own$quality <- quality_recode(own$flag, suppressed = "**", caution = "*")
+indigenous_gap(own, "group", "pct", "lower", "upper", reference = "Non-Indigenous Australians",
+               quality = "quality")
+```
+
+Name the groups as the peoples concerned name themselves, and give `pooled_groups` any row that
+pools several of them, so it is never set beside its own parts.
 
 ## What the package does not compute
 
@@ -445,6 +475,15 @@ Some instruments are individual questionnaires, and aggregate tables cannot repr
 Two-Eyed Seeing (Bartlett, Marshall and Marshall 2012) is a way of bringing knowledges together, not
 a formula. The package follows it by reporting results beside one another without merging them into
 one index (`dual_continuum()`, `wellness_profile()`).
+
+## Acknowledgements
+
+The estimators for holistic balance, wellness beside distress, the four directions, healing as a
+process and connection across places put to quantitative use the frameworks of Professor Suzanne
+Stewart (Yellowknives Dene First Nation), Director of the Waakebiness-Bryce Institute for
+Indigenous Health at the University of Toronto's Dalla Lana School of Public Health, and Professor
+Angela Mashford-Pringle (Timiskaming First Nation), its Associate Director. This work stands on
+theirs. Any error in turning their qualitative work into estimators is the package's, not theirs.
 
 ## References
 
