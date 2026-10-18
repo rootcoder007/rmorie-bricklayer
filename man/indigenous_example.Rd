@@ -6,14 +6,17 @@
 \source{
 Statistics Canada, tables 13-10-0924-01 (\doi{10.25318/1310092401-eng}), 41-10-0067-01
 (\doi{10.25318/4110006701-eng}), 41-10-0082-01 (\doi{10.25318/4110008201-eng}) and 41-10-0021-01
-(\doi{10.25318/4110002101-eng}). Reproduced and distributed on an "as is" basis with the
+(\doi{10.25318/4110002101-eng}); Indigenous Population Profile, 2021 Census of Population,
+catalogue 98-510-X2021001 and 98-510-X2021016. Reproduced and distributed on an "as is" basis with the
 permission of Statistics Canada, under the Statistics Canada Open Licence
 (\url{https://www.statcan.gc.ca/en/terms-conditions/open-licence}). Built by
-\code{data-raw/indigenous_mental_health.R} in the source package.
+\code{data-raw/indigenous_mental_health.R} and \code{data-raw/indigenous_census.R} in the source
+package.
 }
 \usage{
 indigenous_example(
-  name = c("health_indicators", "mental_health", "wellbeing", "suicidal_ideation")
+  name = c("health_indicators", "mental_health", "wellbeing", "suicidal_ideation",
+    "census_population", "census_households")
 )
 }
 \arguments{
@@ -47,9 +50,17 @@ gender, 2024; total of genders. Columns \code{group}, \code{indicator}, \code{es
 thoughts by Aboriginal identity, age group and sex, 2017 (Aboriginal Peoples Survey); Canada,
 both sexes, by age. Columns \code{group}, \code{age}, \code{measure}, \code{estimate},
 \code{lower}, \code{upper}, \code{quality}.}
+\item{\code{"census_population"}}{The Indigenous Population Profile, 2021 Census of Population
+(98-510-X2021001), Canada, the provinces and the territories, total of genders, on and off
+reserve: the population by age group, children and foster children, knowledge of Indigenous
+languages, highest certificate (25 and over), labour force status, income and low income, as
+published (read it with \code{\link{census_profile}}).}
+\item{\code{"census_households"}}{The same profile's households and dwellings (98-510-X2021016),
+Indigenous and non-Indigenous households: persons per room, housing suitability, dwelling
+condition and core housing need.}
 }
 
-The First Nations figures are for First Nations people living off reserve: the surveys do not
+The First Nations figures of the survey excerpts are for First Nations people living off reserve: the surveys do not
 cover reserves, whose data are governed by First Nations (see the First Nations Information
 Governance Centre). Groups are as the tables name them, with "Inuk (Inuit)" written "Inuit".
 }

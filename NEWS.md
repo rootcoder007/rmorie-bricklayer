@@ -58,6 +58,19 @@ cannot show.
   * `cwb_score()` computes Indigenous Services Canada's Community Well-Being index.
   * `framing_audit()` gives the share of a report that is deficit-framed (Walter's 5D data).
 
+**The 2021 Census Indigenous Population Profile**
+
+* `census_profile()` reads the profile. It keeps the characteristic hierarchy, the full-count or 25%
+  sample of each topic, the residence (on or off reserve), and the suppression symbols. Repeated
+  labels are told apart by their member number.
+* `profile_share()` gives shares (for example foster children among children, or speakers of an
+  Indigenous language) with intervals that carry the long-form sample and random rounding.
+* `census_standard()` gives an Indigenous standard population for age standardisation.
+* `census_cwb()` computes a Community Well-Being score from the public profile, and says where it
+  departs from the Department's method.
+* Two real excerpts (`indigenous_example("census_population")` and `"census_households"`) make every
+  example and test run on published values.
+
 Every result draws itself with `plot()`.
 
 ## Fixes from the CRAN stress test of 0.5.14

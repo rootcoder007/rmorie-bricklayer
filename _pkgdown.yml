@@ -492,6 +492,16 @@ reference:
       - distinctions_test
       - cwb_score
       - framing_audit
+  - title: The 2021 Census Indigenous Population Profile
+    desc: >
+      The census profile read with its hierarchy, symbols and sample; shares with
+      intervals that carry the long-form sample and random rounding; an Indigenous
+      standard population; and a Community Well-Being score from public figures.
+    contents:
+      - census_profile
+      - profile_share
+      - census_standard
+      - census_cwb
   - title: Complex survey estimation
     desc: >
       Design-based means, totals, proportions and ratios, overall and by domain,

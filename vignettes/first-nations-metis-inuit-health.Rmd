@@ -301,6 +301,53 @@ plot(ci)
 figures: income, education, housing and labour force activity. The index measures socio-economic
 conditions only. It is not a measure of wellness as First Nations and Inuit define it.
 
+## The 2021 Census
+
+The Indigenous Population Profile of the 2021 Census gives counts for every geography, by gender, age
+group and about two thousand characteristics, with First Nations, Metis, Inuit and non-Indigenous
+people in their own columns. In the provincial table, residence on and off reserve is split out too.
+`census_profile()` reads it with the hierarchy of the characteristics. `profile_share()` takes a
+share with an interval for the 25% long-form sample and the random rounding of the counts.
+
+Foster children among children under 15, Canada, 2021:
+
+```{r census-foster}
+p <- census_profile(indigenous_example("census_population"))
+fc <- profile_share(p, "Foster children", "Total - Children in census families")
+fc <- fc[fc$geo == "Canada" & fc$age == "0 to 14 years" &
+           fc$group %in% c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"), ]
+fc[, c("residence", "group", "numerator", "denominator", "estimate", "lower", "upper")]
+plot(fc[fc$residence == "Total - Residence on or off reserve", ])
+```
+
+The overrepresentation of First Nations, Metis and Inuit children in care is the subject of the
+first five Calls to Action of the Truth and Reconciliation Commission.
+
+Knowledge of an Indigenous language (all ages):
+
+```{r census-language}
+know <- "Total - Knowledge of Indigenous languages for the population in private households - 25% sample data"
+la <- profile_share(p, "Indigenous languages", know)
+la[la$geo == "Canada" & la$age == "Total - Age groups" & la$residence == "Total - Residence on or off reserve" &
+     la$group %in% c("First Nations", "M\u00e9tis", "Inuit"), c("group", "estimate", "lower", "upper")]
+```
+
+The census age structure of the Indigenous population is the standard to use when age-standardising
+First Nations, Metis and Inuit rates (Kumar and Tjepkema 2019):
+
+```{r census-standard}
+census_standard(p)
+```
+
+A Community Well-Being score from the public profile (income, education, housing, labour force), by
+distinction. `?census_cwb` explains where it departs from the Department's own index:
+
+```{r census-cwb}
+h <- census_profile(indigenous_example("census_households"))
+cw <- census_cwb(p, h)
+cw[cw$geo %in% c("Canada", "Nunavut"), c("geo", "group", "income", "education", "housing", "labour", "cwb")]
+```
+
 ## Intergenerational exposure
 
 Studies of the residential schools ask whether harm passes down families. Among them are Bombay,

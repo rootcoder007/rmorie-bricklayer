@@ -685,6 +685,8 @@ bricklayer_plot_options <- function(...) {
 #'     places on the two indicators, with their intervals.}
 #'   \item{\code{rmbl_healing_change}}{(\code{\link{healing_change}}) the change
 #'     in each indicator between the periods, wellness first.}
+#'   \item{\code{rmbl_profile_share}}{(\code{\link{profile_share}}) each group's
+#'     share of a census characteristic with its interval.}
 #'   \item{\code{rmbl_crf}, \code{rmbl_burden}, \code{rmbl_equity},
 #'     \code{rmbl_pollution_report}}{(\code{\link{crf_pm25}},
 #'     \code{\link{pollution_burden}},

@@ -32,3 +32,10 @@ inst/extdata/indigenous_wellbeing.csv, indigenous_suicidal_ideation.csv
   retrieved 2026-10-17 (built by data-raw/indigenous_mental_health.R in the source package).
   Reproduced and distributed on an "as is" basis with the permission of Statistics Canada,
   under the Statistics Canada Open Licence. Values unaltered.
+
+inst/extdata/indigenous_census_population.csv, indigenous_census_households.csv
+  Statistics Canada, Indigenous Population Profile, 2021 Census of Population, catalogue
+  98-510-X2021001 and 98-510-X2021016, released June 21, 2023, retrieved 2026-10-18 (built by
+  data-raw/indigenous_census.R in the source package). Reproduced and distributed on an "as is"
+  basis with the permission of Statistics Canada, under the Statistics Canada Open Licence.
+  Columns and values unaltered.
