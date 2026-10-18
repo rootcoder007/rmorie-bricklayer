@@ -174,3 +174,15 @@ attacker, `kem_decapsulate(masked = FALSE)`, `capsule_sign(masked = FALSE)` and
 `fips_sign_mu(masked = FALSE)` keep the plain path, and
 `options(rmoriebricklayer.masked = FALSE)` makes that the default for a session (a chain or
 bundle signs many times). Timing protections cannot be switched off; they are not optional.
+
+
+## Indigenous examples
+
+Side-channel assurance concerns the cryptography, not the data; the keys it tests are the
+ones that sign and encrypt releases such as the Indigenous tables shown in
+`vignette("post-quantum-signatures")` and `vignette("key-encapsulation")`. The masked
+implementation is used by default:
+
+```{r indigenous-masked}
+getOption("rmoriebricklayer.masked", TRUE)
+```

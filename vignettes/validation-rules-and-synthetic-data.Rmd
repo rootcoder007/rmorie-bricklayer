@@ -155,3 +155,22 @@ piece or for testing a generator.
 2. On every later run: `validate_schema()` and `validate_rules()`; stop on `fatal`.
 3. When the source is unreachable: `make_synthetic_csv()` from the pinned schema, run the
    pipeline, and let the synthetic marker say what the output is.
+
+
+## Rules for a published table
+
+Rules catch problems in a table before it is used. For an Indigenous health table: the
+estimate inside its interval, a known quality flag, and a known group:
+
+```{r indigenous-rules}
+d <- indigenous_example("health_indicators")
+rules <- list(
+  rule_in_set("quality", c("ok", "E", "F", "x", "..")),
+  rule_in_set("group", c("First Nations", "Métis", "Inuit", "Non-Indigenous")),
+  rule("estimate inside its interval",
+       function(x) is.na(x$estimate) | (x$lower <= x$estimate & x$estimate <= x$upper))
+)
+validate_rules(d, rules)
+```
+
+An empty list means every rule held on every row.

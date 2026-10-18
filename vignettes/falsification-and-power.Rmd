@@ -130,6 +130,27 @@ computed from these bytes but that it survived its controls. A pre-registered hy
 (`prereg_declare()`, `prereg_check()`) pins what was going to be tested before the data were
 seen, which is the other half of keeping a finding honest.
 
+## Several gaps, one family of tests
+
+A report on Indigenous health usually tests many indicators at once. `falsify_family()`
+adjusts the family; here the differences from non-Indigenous adults in 2019/2022 for
+First Nations adults, with z statistics from the published 95 percent intervals:
+
+```{r indigenous-falsify}
+hi <- indigenous_example("health_indicators")
+s <- hi[hi$period == "2019/2022" & hi$age == "Total, 18 years and over" &
+          hi$quality == "ok", ]
+fn <- s[s$group == "First Nations", ]
+ni <- s[s$group == "Non-Indigenous", ]
+both <- merge(fn, ni, by = "indicator", suffixes = c("_fn", "_ni"))
+se <- function(l, u) (u - l) / (2 * 1.96)
+z <- (both$estimate_fn - both$estimate_ni) /
+  sqrt(se(both$lower_fn, both$upper_fn)^2 + se(both$lower_ni, both$upper_ni)^2)
+p <- stats::setNames(2 * stats::pnorm(-abs(z)), both$indicator)
+res <- falsify_family(p, method = "holm")
+head(res)
+```
+
 ## References
 
 VanderWeele, Ding (2017). Sensitivity analysis in observational research: introducing the

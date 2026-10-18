@@ -255,3 +255,18 @@ these particular checks found nothing:
 None of them can tell you the data means what you think it means. That
 still requires reading the documentation for the source, which is the
 part `load_provenance()` and the manifest exist to keep attached.
+
+
+## Describing an Indigenous health table
+
+The description functions take any data frame. On the bundled Canadian Community Health
+Survey indicators by Aboriginal identity:
+
+```{r indigenous-describe}
+hi <- indigenous_example("health_indicators")
+profile_columns(hi[, c("estimate", "lower", "upper")])
+table(hi$quality, useNA = "ifany")
+```
+
+The `quality` column carries Statistics Canada's flags: `E` (use with caution), `F` (too
+unreliable to publish), `x` (suppressed) and `..` (not available).

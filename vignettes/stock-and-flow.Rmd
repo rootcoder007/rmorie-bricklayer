@@ -103,6 +103,24 @@ fiscal_year_label(2024)
 3. `stock_flow()` across periods, with the population as exposure.
 4. `stay_summary()` whenever per-person stays are available, and report the median.
 
+## Indigenous examples
+
+Stock and flow measures need counts of people and the days they spend in custody or care.
+The census excerpt bundled with the package counts foster children, a stock on census day:
+
+```{r indigenous-stock}
+cp <- indigenous_example("census_population")
+fc <- cp[cp$GEO_NAME == "Canada" & cp$AGE_GROUP == "0 to 14 years" &
+           cp$RESIDENCE == "Total - Residence on or off reserve", ]
+kids <- fc[grepl("Total - Children in census families", fc$CHARACTERISTIC_NAME),
+           c("FIRST_NATIONS", "NON_IND")]
+fost <- fc[grepl("Foster children", fc$CHARACTERISTIC_NAME), c("FIRST_NATIONS", "NON_IND")]
+round(100 * unlist(fost) / unlist(kids), 2)
+```
+
+Turning that stock into admissions and lengths of stay needs the flow data held by child
+welfare agencies.
+
 ## Reference
 
 Lakner, *A Manual of Correctional Statistics* (the ADP and ALOS worked examples at pp. 15

@@ -142,3 +142,20 @@ All three accept any signing key the package knows: ML-DSA and SLH-DSA (`fips_ke
 or XMSS (`pqc_keygen()`, with the key state carried forward). A shared secret from
 `derive_key()` is for keyed digests (`core_hmac_sha256()`), not for attestations: an
 attestation names a public key, and a shared secret has none.
+
+
+## Releases of Indigenous health tables
+
+A chain fits data a community needs to be able to trust release after release. Here each
+link pins one of the Statistics Canada tables on Indigenous health bundled with the
+package, so a later reader can tell whether any release was altered or dropped:
+
+```{r indigenous-chain}
+ch <- chain_new()
+for (nm in c("health_indicators", "mental_health", "wellbeing")) {
+  d <- indigenous_example(nm)
+  ch <- chain_append(ch, list(table = nm, rows = nrow(d), sha256 = digest_object(d)),
+                     label = nm)
+}
+chain_verify(ch)$valid
+```

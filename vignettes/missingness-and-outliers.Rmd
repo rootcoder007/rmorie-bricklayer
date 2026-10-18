@@ -138,3 +138,17 @@ benford_test(as.numeric(paste0(sample(1:9, 2000, TRUE), "000")))$p_value
 3. `mahalanobis_outliers()` on the numeric columns, robust.
 4. `distinct_sketch()` on identifiers when the table is large.
 5. Then, and only then, the analysis.
+
+
+## Suppression in published tables
+
+In a published table, missing values are usually suppression, and the flag says why. On
+the bundled infant mortality rates by Indigenous identity:
+
+```{r indigenous-missing}
+im <- indigenous_example("infant_mortality")
+missingness_summary(im)
+table(im$period, im$quality)
+```
+
+The 1994/1996 rates are all `..`: not available for that period, not a gap in the file.

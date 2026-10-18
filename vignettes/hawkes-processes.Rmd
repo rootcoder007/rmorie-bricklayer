@@ -135,6 +135,14 @@ of reporting an absurd estimate. Short series carry little information about the
 shape: with a few hundred events, compare kernels by AIC but do not read much into the
 third decimal of a shape parameter.
 
+## Indigenous examples
+
+Self-exciting models need event times (one row per event), which the published
+Indigenous health tables do not contain: they are counts and percentages. The bundled
+tables are used for gaps, trends and standardisation in
+`vignette("first-nations-metis-inuit-health")`; a Hawkes model applies once event-level
+data are available under a community's own data governance.
+
 ## References
 
 Hawkes (1971). Spectra of some self-exciting and mutually exciting point processes.

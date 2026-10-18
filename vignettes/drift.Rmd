@@ -165,3 +165,16 @@ Read what `infer_schema()` produces before committing it. It describes
 one extract, and cannot know that a category which happens not to occur
 is nonetheless legal, or that a range is a physical bound rather than an
 accident of this sample.
+
+
+## Two cycles of the same survey
+
+Drift checks fit a question a re-release raises: did the distribution of a published table
+change between cycles? On the bundled indicators, the 2015/2018 and 2019/2022 estimates:
+
+```{r indigenous-drift}
+hi <- indigenous_example("health_indicators")
+a <- hi$estimate[hi$period == "2015/2018"]
+b <- hi$estimate[hi$period == "2019/2022"]
+drift_ks(a[is.finite(a)], b[is.finite(b)])
+```

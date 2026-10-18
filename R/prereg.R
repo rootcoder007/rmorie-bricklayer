@@ -389,7 +389,7 @@ print.bricklayer_falsify_family <- function(x, ...) {
 #' @references VanderWeele, T. J., and Ding, P. (2017). Sensitivity
 #' Analysis in Observational Research: Introducing the E-Value.
 #' *Annals of Internal Medicine* 167(4), 268-274.
-#'   \doi{10.7326/M16-2607}
+#'   \href{https://doi.org/10.7326/M16-2607}{doi:10.7326/M16-2607}
 #' @seealso
 #' [capsule_falsify()] for controls that use
 #' the data, where this uses none.

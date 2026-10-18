@@ -276,7 +276,7 @@ cwb_score <- function(income_per_capita, high_school_20plus, university_25plus, 
 #'
 #' Mashford-Pringle A (2016). Aboriginal health and Aboriginal education are
 #' interconnected. Research in the Sociology of Health Care 34:85-96.
-#' \doi{10.1108/s0275-495920160000034005}
+#' \href{https://doi.org/10.1108/s0275-495920160000034005}{doi:10.1108/s0275-495920160000034005}
 #' @seealso \code{\link{dual_continuum}}.
 #' @examples
 #' # across regions, 2022 (table 41-10-0067-01): where First Nations people report

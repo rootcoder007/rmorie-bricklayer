@@ -1554,7 +1554,7 @@ plot.rmbl_knox <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #'
 #' Demers, S. and Rossmo, D. K. (2015). Simpson's paradox in Canadian
 #' police clearance rates. \emph{Canadian Journal of Criminology and
-#' Criminal Justice}, 57(3), 424-434. \doi{10.3138/cjccj.2014-E29}
+#' Criminal Justice}, 57(3), 424-434. \href{https://doi.org/10.3138/cjccj.2014-E29}{doi:10.3138/cjccj.2014-E29}
 #'
 #' @seealso \code{\link{case_flow}} for the clearance rate over time.
 #' @examples

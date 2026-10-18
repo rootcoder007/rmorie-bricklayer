@@ -303,6 +303,28 @@ reference tools. The place to improve a figure is the inputs: a measured `cpu_po
 your CPU, the actual `memory_gb` your job used, the data centre's `pue`, and, if you have
 it, the hour's carbon intensity passed as a number.
 
+## First Nations, Métis and Inuit populations
+
+The 2021 Census gives the populations a burden estimate needs. The bundled Indigenous
+Population Profile excerpt has them by province and territory; the concentrations below are
+scenarios (the WHO 2021 guideline of 5 µg/m³ against 8 and 12 µg/m³), not measurements of
+any community.
+
+```{r indigenous-air}
+cp <- indigenous_example("census_population")
+tot <- cp[cp$GEO_LEVEL != "Country" & cp$AGE_GROUP == "Total - Age groups" &
+            cp$RESIDENCE == "Total - Residence on or off reserve" &
+            grepl("^Total - Average age", cp$CHARACTERISTIC_NAME), ]
+pop <- stats::setNames(tot$FIRST_NATIONS, tot$GEO_NAME)
+head(pop[order(-pop)], 5)
+# relative risk of all-cause mortality from PM2.5, and the share of deaths attributable to
+# the excess above the guideline if the whole population breathes the scenario level
+sapply(c(8, 12), function(conc) {
+  rr <- crf_pm25(conc, reference_conc = 5)$rr
+  c(pm25 = conc, rr = rr, attributable = attributable_fraction(rr, 1))
+})
+```
+
 ## References
 
 Briggs (1973). Diffusion estimation for small emissions. ATDL 79. Briggs (1975). Plume rise

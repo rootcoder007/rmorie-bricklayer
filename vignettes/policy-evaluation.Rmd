@@ -208,6 +208,27 @@ pw
 plot(pw)
 ```
 
+## Indigenous examples
+
+The methods here need a panel: units observed over time, some treated at a known date.
+The bundled Indigenous tables are repeated cross-sections of published estimates, so the
+before-and-after comparison they support is the change in a gap, with its interval:
+
+```{r indigenous-policy}
+hi <- indigenous_example("health_indicators")
+x <- hi[hi$age == "Total, 18 years and over" &
+          hi$indicator == "Perceived mental health, very good or excellent", ]
+gaps <- do.call(rbind, lapply(split(x, x$period), function(p)
+  cbind(period = p$period[1],
+        indigenous_gap(p, "group", "estimate", "lower", "upper")[
+          , c("group", "difference", "difference_lower", "difference_upper")])))
+rownames(gaps) <- NULL
+gaps
+```
+
+Perceived mental health fell for every group between the two cycles; whether the gaps
+moved is read from the intervals, not the point estimates.
+
 ## Acknowledgements
 
 These designs are those of the empirical work of Professor Angela Zorro Medina (University of

@@ -40,5 +40,5 @@ balance_table(d, "t", "age")
 \references{
 Welch BL (1947). The generalization of 'Student's' problem when several
 different population variances are involved. Biometrika 34(1-2):28-35.
-\doi{10.1093/biomet/34.1-2.28}
+\href{https://doi.org/10.1093/biomet/34.1-2.28}{doi:10.1093/biomet/34.1-2.28}
 }

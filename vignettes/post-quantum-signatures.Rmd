@@ -187,3 +187,17 @@ and fuzzed differentially against OpenSSL; XMSS, which OpenSSL does not implemen
 checked against the RFC 8391 vectors. Every signer runs under valgrind with the secret key
 marked undefined, a dynamic check that no executed branch or memory address depends on it. `SECURITY.md` in the package
 repository has the full table of what each check catches and what it does not.
+
+
+## Signing a release of Indigenous tables
+
+A signature lets anyone check that a release came from its publisher and has not
+changed:
+
+```{r indigenous-sign}
+key <- fips_keygen("ML-DSA-65")
+d <- indigenous_example("mental_health")
+msg <- digest_object(d)
+sig <- capsule_sign(msg, key)
+capsule_verify(msg, sig, fips_public_key(key))
+```

@@ -390,3 +390,21 @@ with five regions, a small negative `I` is what independence looks like.
 ```{r}
 -1 / (5 - 1)
 ```
+
+
+## Indigenous examples
+
+Statistics Canada tables on Indigenous health come in several layouts; `statcan_estimates()`
+reads them all into estimate, lower and upper. The bundled excerpts are already in that
+form, and `standardise_prevalence()` and `indigenous_gap()` take them directly; see
+`vignette("first-nations-metis-inuit-health")`. A trend across the three life expectancy
+periods:
+
+```{r indigenous-tables}
+le <- indigenous_example("life_expectancy")
+inuit <- le[le$group == "Inuit", ]
+inuit[, c("period", "estimate", "lower", "upper")]
+trend_test(inuit$estimate, x = 1:3)$p_value
+```
+
+Three periods cannot show a trend: the exact Mann-Kendall p-value is 1.

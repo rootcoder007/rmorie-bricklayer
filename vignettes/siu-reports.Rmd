@@ -97,3 +97,20 @@ f <- bricklayer_fetch_parse_siu("24-OCI-123")
 The corpus of parsed reports, reviewed round by round, is distributed as a dataset by the
 companion package `rmoriedata`; this package provides the parser so the corpus can be
 rebuilt and audited.
+
+
+## Indigenous police services
+
+Ontario's First Nations police services, among them the Nishnawbe-Aski Police Service, the
+Anishinabek Police Service and the Treaty Three Police Service, are investigated by the SIU
+like any other. The parsed `police_service` field selects their cases (this fetches live
+reports, so it is not run here):
+
+```{r indigenous-siu, eval = FALSE}
+fn_services <- c("Nishnawbe-Aski Police Service", "Anishinabek Police Service",
+                 "Treaty Three Police Service", "UCCM Anishnaabe Police Service")
+reports <- lapply(report_urls, bricklayer_fetch_parse_siu)
+mine <- Filter(function(r) any(grepl(paste(fn_services, collapse = "|"), r$police_service)),
+               reports)
+length(mine)
+```

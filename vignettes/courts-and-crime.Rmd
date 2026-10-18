@@ -184,6 +184,17 @@ than `r h$hot_k`, a smaller hot share, and an overlap with its neighbours that c
 Pairs of break-ins within 100 metres and a week of each other occur
 `r sprintf("%.2f", kn$table$ratio[1])` times as often as chance would give.
 
+## Indigenous life expectancy
+
+`life_table()` works from counts of events in age intervals. Where only published
+summaries exist, as for Indigenous life expectancy, the comparison is made on the
+published estimates and their intervals instead:
+
+```{r indigenous-courts, eval = TRUE}
+le <- indigenous_example("life_expectancy")
+le[le$period == "2016/2021", c("group", "estimate", "lower", "upper")]
+```
+
 ## References
 
 Demers, S. and Rossmo, D. K. (2015). Simpson's paradox in Canadian police clearance rates.

@@ -172,3 +172,19 @@ sets for SHA-3, SHAKE, HMAC and PBKDF2, and fuzzed differentially against OpenSS
 keyed-digest comparison and PBKDF2 run under valgrind with the key marked undefined to prove
 their timing does not depend on it, and dudect measures the comparison and PBKDF2 on real
 CPUs.
+
+
+## Pinning a community's copy of a table
+
+Ownership and control of data, in the sense of the First Nations principles of OCAP,
+include knowing that a copy has not been altered. A digest of the table and a Merkle root
+over its rows let a community check its copy, and check single rows without the rest:
+
+```{r indigenous-hash}
+d <- indigenous_example("suicidal_ideation")
+digest_object(d)
+rows <- apply(d, 1, paste, collapse = ",")
+root <- merkle_root(rows)
+proof <- merkle_proof(rows, 3)
+merkle_verify(rows[3], proof, root)
+```

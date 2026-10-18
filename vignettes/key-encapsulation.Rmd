@@ -135,3 +135,19 @@ differentially fuzzed against it. Decapsulation's timing is measured on real x86
 arm64 CPUs with dudect, its constant-time property is proved under valgrind, and its masked
 arithmetic is assessed for first-order power leakage in a Cortex-M4 simulation. See
 `SECURITY.md` in the repository.
+
+
+## Sending a table to a community data steward
+
+Key encapsulation lets a sender share a table so only the holder of a secret key can read
+it, for instance a First Nations data steward receiving a release:
+
+```{r indigenous-kem}
+steward <- kem_keygen(768)
+pub <- kem_public_key(steward)
+sent <- kem_encapsulate(pub)
+msg <- bricklayer_json_to_json(indigenous_example("wellbeing"))
+# the shared secret keys an authentication tag the steward can recompute
+tag <- core_hmac_sha256(msg, sent$shared)
+identical(core_hmac_sha256(msg, kem_decapsulate(steward, sent$ciphertext)), tag)
+```

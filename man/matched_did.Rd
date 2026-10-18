@@ -78,7 +78,7 @@ m$balance
 \references{
 Daw JR, Hatfield LA (2018). Matching and regression to the mean in
 difference-in-differences analysis. Health Services Research 53(6):4138-4156.
-\doi{10.1111/1475-6773.12993}
+\href{https://doi.org/10.1111/1475-6773.12993}{doi:10.1111/1475-6773.12993}
 
 Applied with spatial nearest-facility matching within judicial districts: Zorro
 Medina A (2020). The failed war on pre-trial detention: evidence from a

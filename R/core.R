@@ -162,7 +162,7 @@ core_normal_pdf <- function(x, mean = 0, sd = 1) {
 #'   (\code{character(0)} for an empty character vector).
 #' @references
 #' National Institute of Standards and Technology (2015). Secure Hash
-#' Standard (SHS). FIPS PUB 180-4. \doi{10.6028/NIST.FIPS.180-4}
+#' Standard (SHS). FIPS PUB 180-4. \href{https://doi.org/10.6028/NIST.FIPS.180-4}{doi:10.6028/NIST.FIPS.180-4}
 #' @examples
 #' # Hash a character scalar (NIST test vector for "abc").
 #' core_sha256("abc")

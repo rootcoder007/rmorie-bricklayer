@@ -116,6 +116,25 @@ experiment; with `plr_crossfit()`, restrict `obs` to that region before fitting.
 split moves the estimate by about a sixth of a standard error, which is why the seed and the
 number of folds are arguments.
 
+## Indigenous examples
+
+The person-level questions this vignette is about (does a strong sense of belonging go
+with better mental health once circumstances are held equal?) need the survey microdata,
+which Statistics Canada distributes as a public use file; `aipw_crossfit()` with
+`design = survey_design(...)` takes its bootstrap weights directly. The published tables
+bundled with the package support the group-level questions; for those see
+`vignette("first-nations-metis-inuit-health")`. A comparison of the published
+estimates themselves:
+
+```{r indigenous-causal, eval = TRUE}
+hi <- indigenous_example("health_indicators")
+x <- hi[hi$period == "2019/2022" & hi$age == "Total, 18 years and over" &
+          hi$indicator == "Perceived mental health, very good or excellent", ]
+indigenous_gap(x, "group", "estimate", "lower", "upper", quality = "quality")[
+  , c("group", "estimate", "reference_estimate", "difference", "difference_lower",
+      "difference_upper")]
+```
+
 ## References
 
 Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E., Hansen, C., Newey, W. and Robins, J.

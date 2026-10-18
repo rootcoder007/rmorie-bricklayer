@@ -214,3 +214,22 @@ blindness; `"mono"` emits no colour at all, for print.
 unlink(file.path(dir, paste0("placements.",
                              c("csv", "tsv", "json", "md", "html", "pdf"))))
 ```
+
+
+## Indigenous examples
+
+Change between survey cycles in percentage points, here the share of adults rating their mental health very good
+or excellent, 2015/2018 to 2019/2022, from the bundled health indicators:
+
+```{r indigenous-yoy}
+hi <- indigenous_example("health_indicators")
+m <- hi[hi$age == "Total, 18 years and over" &
+          hi$indicator == "Perceived mental health, very good or excellent", ]
+# yoy() steps through consecutive periods: number the two survey cycles 1 and 2
+m$cycle <- match(m$period, c("2015/2018", "2019/2022"))
+for (g in unique(m$group)) {
+  s <- m[m$group == g, ]
+  print(as.data.frame(yoy(s, value = estimate, period = cycle, units = "percent"))[
+    2, c("value", "previous", "pp_change", "verdict")])
+}
+```

@@ -74,7 +74,7 @@ try(evalue_rr(-2))
 VanderWeele, T. J., and Ding, P. (2017). Sensitivity
 Analysis in Observational Research: Introducing the E-Value.
 \emph{Annals of Internal Medicine} 167(4), 268-274.
-\doi{10.7326/M16-2607}
+\href{https://doi.org/10.7326/M16-2607}{doi:10.7326/M16-2607}
 }
 \seealso{
 \code{\link[=capsule_falsify]{capsule_falsify()}} for controls that use

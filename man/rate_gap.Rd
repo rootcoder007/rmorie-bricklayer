@@ -37,5 +37,5 @@ rate_gap(r, "Inuit", "Non-Indigenous")
 \references{
 Anderson I, Robson B, Connolly M, et al. (2016). Indigenous and tribal
 peoples' health (The Lancet-Lowitja Institute Global Collaboration): a population
-study. The Lancet 388(10040):131-157. \doi{10.1016/S0140-6736(16)00345-7}
+study. The Lancet 388(10040):131-157. \href{https://doi.org/10/f3prhx}{doi:10.1016/S0140-6736(16)00345-7}
 }

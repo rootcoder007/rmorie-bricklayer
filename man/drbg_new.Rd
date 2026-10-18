@@ -92,10 +92,10 @@ try(drbg_new(as.raw(1:16)))
 \references{
 NIST SP 800-90A Rev. 1 (2015). Recommendation for Random Number Generation
 Using Deterministic Random Bit Generators, section 10.2.1.
-\doi{10.6028/NIST.SP.800-90Ar1}
+\href{https://doi.org/10.6028/NIST.SP.800-90Ar1}{doi:10.6028/NIST.SP.800-90Ar1}
 
 NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard (AES).
-\doi{10.6028/NIST.FIPS.197-upd1}
+\href{https://doi.org/10.6028/NIST.FIPS.197-upd1}{doi:10.6028/NIST.FIPS.197-upd1}
 }
 \seealso{
 \code{\link[=drbg_generate]{drbg_generate()}},

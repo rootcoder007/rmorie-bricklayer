@@ -123,3 +123,16 @@ linear now), nesting depth, numbers that are not numbers, bytes that are not UTF
 body that is a bare URL, which is "not JSON", never a second fetch. The parser and the
 encoder are R code (see below), so they run under R's own memory management rather than a
 sanitizer; the test suite carries the corpus of malformed inputs the review produced.
+
+
+## Sending a table as JSON
+
+A published table travels well as JSON, with its quality flags kept:
+
+```{r indigenous-json}
+d <- indigenous_example("infant_mortality")
+js <- bricklayer_json_to_json(d[d$period == "2014/2016", ], auto_unbox = TRUE)
+substring(js, 1, 200)
+back <- bricklayer_json_from_json(js)
+all.equal(back$estimate, d$estimate[d$period == "2014/2016"])
+```

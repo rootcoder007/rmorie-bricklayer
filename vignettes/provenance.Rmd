@@ -475,3 +475,18 @@ signature verifies, and every tampering of the message, the signature,
 the authentication path, the leaf index or the key fails. The scheme is
 not *certified*, which is a statement about process rather than about
 the bytes.
+
+
+## Provenance for Indigenous data
+
+The bundled Indigenous tables name their sources (Statistics Canada table numbers, retrieval
+dates and licence) in the package's COPYRIGHTS file:
+
+```{r indigenous-provenance, eval = TRUE}
+cr <- readLines(system.file("COPYRIGHTS", package = "rmoriebricklayer"))
+cat(cr[grep("indigenous_life_expectancy", cr) + 0:4], sep = "\n")
+head(indigenous_tables()[, c("key", "rows")])
+```
+
+`indigenous_tables()` lists the Statistics Canada tables on data.rmorie.com with their
+source, licence and table number, so a result can name the exact table it used.

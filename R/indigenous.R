@@ -310,7 +310,7 @@ limits_from <- function(estimate, se = NULL, cv = NULL, moe = NULL, moe_level = 
 #' \url{https://www150.statcan.gc.ca/n1/daily-quotidien/250213/dq250213f-eng.htm}
 #'
 #' Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for
-#' Indigenous Data Governance. Data Science Journal 19:43. \doi{10.5334/dsj-2020-043}
+#' Indigenous Data Governance. Data Science Journal 19:43. \href{https://doi.org/10/gh6dvb}{doi:10.5334/dsj-2020-043}
 #' @seealso \code{\link{distinctions_test}} before pooling, \code{\link{limits_from}},
 #'   \code{\link{quality_recode}}, \code{\link{age_standardise}}.
 #' @examples
@@ -440,7 +440,7 @@ indigenous_gap <- function(data, group, estimate, lower, upper, reference = "Non
 #'   for \code{\link{rate_gap}}.
 #' @references Fay MP, Feuer EJ (1997). Confidence intervals for directly standardized
 #' rates: a method based on the gamma distribution. Statistics in Medicine 16(7):791-801.
-#' \doi{10.1002/(sici)1097-0258(19970415)16:7<791::aid-sim500>3.0.co;2-#}
+#' \href{https://doi.org/10/c9vfzq}{doi:10.1002/(sici)1097-0258(19970415)16:7<791::aid-sim500>3.0.co;2-#}
 #'
 #' Kumar MB, Tjepkema M (2019). Suicide among First Nations people, Metis and Inuit
 #' (2011-2016): Findings from the 2011 Canadian Census Health and Environment Cohort
@@ -514,7 +514,7 @@ age_standardise <- function(events, population, standard, group = NULL, per = 1e
 #'   with \code{difference_lower}/\code{difference_upper}.
 #' @references Anderson I, Robson B, Connolly M, et al. (2016). Indigenous and tribal
 #' peoples' health (The Lancet-Lowitja Institute Global Collaboration): a population
-#' study. The Lancet 388(10040):131-157. \doi{10.1016/S0140-6736(16)00345-7}
+#' study. The Lancet 388(10040):131-157. \href{https://doi.org/10/f3prhx}{doi:10.1016/S0140-6736(16)00345-7}
 #' @examples
 #' # made-up counts, to show the computation
 #' std <- c(30000, 25000, 20000, 15000, 10000)

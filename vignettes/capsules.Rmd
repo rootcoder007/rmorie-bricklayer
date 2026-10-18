@@ -165,3 +165,21 @@ has moved on.
 its compiled core (`LinkingTo: rmoriebricklayer`) for shared SHA-256 and
 summary-statistic kernels (`core_sha256()`, `core_mean()`, `core_var()`,
 `core_cor()`).
+
+
+## A capsule for an Indigenous health table
+
+The same steps pin a Statistics Canada table: write it, record its digest, and describe
+it in a manifest that names its source and licence.
+
+```{r indigenous-capsule, eval = TRUE}
+d <- indigenous_example("wellbeing")
+f <- file.path(tempdir(), "indigenous_wellbeing.csv")
+utils::write.csv(d, f, row.names = FALSE)
+h <- sha256_file(f)
+m <- make_manifest(list(dataset = "indigenous_wellbeing", rows = nrow(d), sha256 = h,
+                        source = "Statistics Canada, Indigenous Peoples Survey 2022",
+                        licence = "Statistics Canada Open Licence"),
+                   environment = FALSE)
+verify_sha256(f, h)
+```

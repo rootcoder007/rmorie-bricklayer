@@ -115,3 +115,19 @@ c(alpha = round(short$alpha, 2), n = short$n_tail, reliable = short$reliable)
 2. `band_values()` or `expand_bands()` with an explicit cap for the open band.
 3. The statistic: `gini()`, `top_share()`, `lorenz()`, `hill_tail_index()`.
 4. `band_sensitivity()` over the cap, and report the range, not the point.
+
+
+## How unevenly a population is spread
+
+Concentration measures apply to any non-negative counts. With the 2021 Census counts of
+First Nations people by province and territory (bundled with the package), the Gini
+coefficient and top shares say how concentrated the population is in a few jurisdictions:
+
+```{r indigenous-concentration}
+cp <- indigenous_example("census_population")
+tot <- cp[cp$GEO_LEVEL != "Country" & cp$AGE_GROUP == "Total - Age groups" &
+            cp$RESIDENCE == "Total - Residence on or off reserve" &
+            grepl("^Total - Average age", cp$CHARACTERISTIC_NAME), ]
+gini(tot$FIRST_NATIONS)
+top_share(tot$FIRST_NATIONS, fractions = c(0.25, 0.5))
+```

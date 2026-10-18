@@ -39,7 +39,7 @@
 #'   SHA-256 digest of the file's bytes.
 #' @references National Institute of Standards and Technology (2015).
 #'   Secure Hash Standard (SHS). FIPS PUB 180-4.
-#'   \doi{10.6028/NIST.FIPS.180-4}
+#'   \href{https://doi.org/10.6028/NIST.FIPS.180-4}{doi:10.6028/NIST.FIPS.180-4}
 #' @seealso [core_sha256()] for the digest of a string or raw
 #'   vector held
 #'   in memory.

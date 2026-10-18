@@ -1149,13 +1149,13 @@ stepdown_pvalues <- function(observed, null) {
 #'   (\code{Inf} for the Poisson).
 #' @references Wooldridge JM (1999). Distribution-free estimation of some nonlinear
 #' panel data models. Journal of Econometrics 90(1):77-97.
-#' \doi{10.1016/S0304-4076(98)00033-5}
+#' \href{https://doi.org/10.1016/S0304-4076(98)00033-5}{doi:10.1016/S0304-4076(98)00033-5}
 #'
 #' Santos Silva JMC, Tenreyro S (2006). The log of gravity. Review of Economics and
 #' Statistics 88(4):641-658. \doi{10.1162/rest.88.4.641}
 #'
 #' Allison PD, Waterman RP (2002). Fixed-effects negative binomial regression models.
-#' Sociological Methodology 32:247-265. \doi{10.1111/1467-9531.00117}
+#' Sociological Methodology 32:247-265. \href{https://doi.org/10.1111/1467-9531.00117}{doi:10.1111/1467-9531.00117}
 #' @examples
 #' p <- policy_example()
 #' fe_poisson(p, "district", "month", "crimes", "reformed", offset = "log_population")
@@ -1570,7 +1570,7 @@ pipeline_rate <- function(numerator, denominator, window = 12L, lag = 0L, group 
 #' Applied to arrests, convictions and jail in New York City: Hepburn P,
 #' Kohler-Hausmann I, Zorro Medina A (2019). Cumulative risks of multiple criminal
 #' justice outcomes in New York City. Demography 56(3):1161-1171.
-#' \doi{10.1007/s13524-019-00781-7}
+#' \href{https://doi.org/10.1007/s13524-019-00781-7}{doi:10.1007/s13524-019-00781-7}
 #' @examples
 #' age <- 16:25
 #' first <- c(900, 1400, 1700, 1600, 1400, 1100, 900, 700, 600, 500)
