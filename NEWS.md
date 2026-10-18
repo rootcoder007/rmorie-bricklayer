@@ -109,6 +109,18 @@ Every result draws itself with `plot()`.
 * The README, the vignette and the pages of the estimators acknowledge Professors Suzanne
   Stewart and Angela Mashford-Pringle, on whose frameworks they are built.
 
+**Fetching what the Wayback Machine cannot capture**
+
+* `fetch_verified()` fetches a file from its source (with the source's own Wayback fallback) or
+  from any mirror, and keeps only a copy whose SHA-256 is the one pinned. For servers that refuse
+  the Internet Archive's crawler (Statistics Canada does), a capture made elsewhere and published
+  as a mirror serves the same verified bytes.
+* `archive_capture()` makes that capture: it fetches each URL from here, records its SHA-256 in a
+  manifest, timestamps the manifest with an RFC 3161 authority (verified with
+  `timestamp_verify()`), and uploads the files, the manifest and the timestamp as one public
+  archive.org item, streamed from disk with a new libcurl PUT. Given a `wayback_save()` result it
+  takes the URLs whose server refused the Internet Archive.
+
 **Evaluating a policy from administrative panels**
 
 New estimators, each checked against the reference implementation (`fixest`, `did`,

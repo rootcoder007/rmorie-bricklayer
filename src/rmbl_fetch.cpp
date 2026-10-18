@@ -899,6 +899,90 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
     return (rc == CURLE_OK) ? code : -1;
 }
 
+/* PUT a file, streamed from disk (an archive.org item upload can be gigabytes, which a body held
+ * in memory would not survive). Same hardening and Ctrl-C poll as the POST above; the reply body
+ * comes back in `out`. The file is rewound when a redirect makes libcurl send it again. */
+#ifdef _WIN32
+#define RMBL_FSEEK _fseeki64
+#define RMBL_FTELL _ftelli64
+#else
+#define RMBL_FSEEK fseeko
+#define RMBL_FTELL ftello
+#endif
+static size_t put_read(char *buf, size_t sz, size_t n, void *ud) {
+    return fread(buf, 1, sz * n, static_cast<FILE *>(ud));
+}
+static int put_seek(void *ud, curl_off_t off, int origin) {
+    return RMBL_FSEEK(static_cast<FILE *>(ud), off, origin) == 0 ? CURL_SEEKFUNC_OK : CURL_SEEKFUNC_FAIL;
+}
+long http_put_file(const std::string &url, const std::string &path, const std::string &content_type,
+                   std::string &out, long timeout_s, const std::vector<std::string> &extra_headers,
+                   std::string *err = NULL, bool allow_loopback = false,
+                   std::string *retry_after = NULL, bool *interrupted = NULL) {
+    out.clear();
+    FILE *f = fopen(path.c_str(), "rb");
+    if (!f) {
+        if (err) *err = "cannot open the file to upload";
+        return -1;
+    }
+    curl_off_t size = -1;
+    if (RMBL_FSEEK(f, 0, SEEK_END) == 0) size = static_cast<curl_off_t>(RMBL_FTELL(f));
+    if (size < 0 || RMBL_FSEEK(f, 0, SEEK_SET) != 0) {
+        fclose(f);
+        if (err) *err = "cannot read the size of the file to upload";
+        return -1;
+    }
+    CURL *h = curl_easy_init();
+    if (!h) {
+        fclose(f);
+        return -1;
+    }
+    std::string ra_sink;
+    curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, note_retry_after);
+    curl_easy_setopt(h, CURLOPT_HEADERDATA, retry_after ? retry_after : &ra_sink);
+    std::vector<std::string> hdrs;
+    hdrs.push_back("Content-Type: " + content_type);
+    for (size_t i = 0; i < extra_headers.size(); ++i) hdrs.push_back(extra_headers[i]);
+    hdrs.push_back("Expect:");
+    curl_easy_setopt(h, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(h, CURLOPT_UPLOAD, 1L);
+    curl_easy_setopt(h, CURLOPT_READFUNCTION, put_read);
+    curl_easy_setopt(h, CURLOPT_READDATA, f);
+    curl_easy_setopt(h, CURLOPT_SEEKFUNCTION, put_seek);
+    curl_easy_setopt(h, CURLOPT_SEEKDATA, f);
+    curl_easy_setopt(h, CURLOPT_INFILESIZE_LARGE, size);
+    harden(h);
+    curl_easy_setopt(h, CURLOPT_LOW_SPEED_TIME, 0L);
+    curl_easy_setopt(h, CURLOPT_TIMEOUT, timeout_s);
+    curl_easy_setopt(h, CURLOPT_CONNECTTIMEOUT, 30L);
+    curl_easy_setopt(h, CURLOPT_NOSIGNAL, 1L);
+    curl_easy_setopt(h, CURLOPT_USERAGENT, kUA);
+    curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, write_to_string);
+    curl_easy_setopt(h, CURLOPT_WRITEDATA, &out);
+    char errbuf[CURL_ERROR_SIZE] = {0};
+    curl_easy_setopt(h, CURLOPT_ERRORBUFFER, errbuf);
+    Wait wait = {false};
+    curl_easy_setopt(h, CURLOPT_NOPROGRESS, 0L);
+    curl_easy_setopt(h, CURLOPT_XFERINFOFUNCTION, wait_xferinfo);
+    curl_easy_setopt(h, CURLOPT_XFERINFODATA, &wait);
+    std::string refused;
+    CURLcode rc = secure_perform(h, url, [&out, f] { out.clear(); RMBL_FSEEK(f, 0, SEEK_SET); }, &refused, &hdrs,
+                                 allow_loopback, true);
+    if (interrupted) *interrupted = wait.interrupted;
+    if (wait.interrupted) rmbl_kernel_interrupted = 1;
+    long code = -1;
+    if (rc == CURLE_OK) curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
+    else {
+        out.clear();
+        if (err) *err = wait.interrupted ? "interrupted (Ctrl-C)"
+                      : rc == CURLE_WRITE_ERROR ? "the reply is larger than the 16 MiB in-memory limit"
+                      : !refused.empty() ? refused : errbuf[0] ? std::string(errbuf) : curl_easy_strerror(rc);
+    }
+    curl_easy_cleanup(h);
+    fclose(f);
+    return (rc == CURLE_OK) ? code : -1;
+}
+
 /* GET a URL into a string with extra headers (the bearer key of the hosted
  * MORIE tier). Returns HTTP status, -1 on failure. */
 long http_get_string(const std::string &url, std::string &out, long timeout_s,
@@ -1269,6 +1353,43 @@ SEXP C_rmbl_http_post_impl(SEXP url, SEXP body, SEXP content_type,
     if (!out.empty()) {
         std::memcpy(RAW(raw_out), out.data(), out.size());
     }
+    SET_VECTOR_ELT(res, 0, Rf_ScalarInteger(static_cast<int>(code)));
+    SET_VECTOR_ELT(res, 1, raw_out);
+    SET_VECTOR_ELT(res, 2, Rf_mkString(err.c_str()));
+    SET_VECTOR_ELT(res, 3, Rf_mkString(ra.c_str()));
+    SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 4));
+    SET_STRING_ELT(nm, 0, Rf_mkChar("status"));
+    SET_STRING_ELT(nm, 1, Rf_mkChar("body"));
+    SET_STRING_ELT(nm, 2, Rf_mkChar("error"));
+    SET_STRING_ELT(nm, 3, Rf_mkChar("retry_after"));
+    Rf_setAttrib(res, R_NamesSymbol, nm);
+    UNPROTECT(3);
+    return res;
+}
+
+/* PUT a file with headers; reply as list(status, body, error, retry_after), as the POST above. */
+SEXP C_rmbl_http_put_impl(SEXP url, SEXP path, SEXP content_type, SEXP timeout, SEXP headers,
+                          SEXP allow_loopback) {
+    if (TYPEOF(url) != STRSXP || XLENGTH(url) != 1) rmbl::fail("`url` must be a single string");
+    if (TYPEOF(path) != STRSXP || XLENGTH(path) != 1) rmbl::fail("`path` must be a single string");
+    if (TYPEOF(content_type) != STRSXP || XLENGTH(content_type) != 1) {
+        rmbl::fail("`content_type` must be a single string");
+    }
+    const long tmo = (TYPEOF(timeout) == INTSXP && XLENGTH(timeout) == 1)
+        ? static_cast<long>(INTEGER(timeout)[0]) : 3600L;
+    const std::vector<std::string> extra = header_lines(headers);
+    (void) rmbl_str0(url, "url");
+    (void) rmbl_str0(path, "path");
+    (void) rmbl_str0(content_type, "content_type");
+    std::string out, err, ra;
+    bool interrupted = false;
+    const long code = http_put_file(rmbl_str0(url, "url"), rmbl_str0(path, "path"),
+                                    rmbl_str0(content_type, "content_type"), out, tmo, extra, &err,
+                                    Rf_asLogical(allow_loopback) == TRUE, &ra, &interrupted);
+    if (interrupted) rmbl_kernel_interrupted = 1;
+    SEXP res = PROTECT(rmbl::alloc_vector(VECSXP, 4));
+    SEXP raw_out = PROTECT(rmbl::alloc_vector(RAWSXP, static_cast<R_xlen_t>(out.size())));
+    if (!out.empty()) std::memcpy(RAW(raw_out), out.data(), out.size());
     SET_VECTOR_ELT(res, 0, Rf_ScalarInteger(static_cast<int>(code)));
     SET_VECTOR_ELT(res, 1, raw_out);
     SET_VECTOR_ELT(res, 2, Rf_mkString(err.c_str()));

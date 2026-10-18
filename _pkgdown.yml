@@ -97,6 +97,8 @@ reference:
       datasets over flaky endpoints.
     contents:
       - bricklayer_fetch
+      - fetch_verified
+      - archive_capture
       - bricklayer_fetch_siu
       - download_data
       - friendly_download

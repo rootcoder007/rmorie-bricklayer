@@ -153,6 +153,8 @@ API.
 }
 \seealso{
 \code{\link{wayback_snapshot_url_native}} to look up an existing
-capture; \code{\link{wayback_retry}}; \code{rmbl wayback FILE}
+capture; \code{\link{wayback_retry}}; \code{\link{archive_capture}} for URLs whose
+server refuses the Internet Archive (\code{"cannot find"} although the page is
+there); \code{rmbl wayback FILE}
 runs this from the command line.
 }

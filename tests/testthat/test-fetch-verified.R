@@ -1,0 +1,65 @@
+# fetch_verified(): the source, then each mirror, kept only when the digest matches
+
+.fv_stub <- function(serve) {
+  # serve: named list url -> bytes (raw) or NULL (the URL fails)
+  force(serve)
+  function(url, dest, wayback = "", timeout = 120L) {
+    b <- serve[[url]]
+    if (is.null(b)) stop(sprintf("bricklayer_fetch: could not reach %s", url), call. = FALSE)
+    writeBin(b, dest)
+    invisible("live")
+  }
+}
+
+test_that("fetch_verified() keeps the source when it serves the pinned bytes", {
+  good <- charToRaw("a,b\n1,2\n")
+  d <- tempfile(fileext = ".csv")
+  ref <- sha256_file({
+    f <- tempfile()
+    writeBin(good, f)
+    f
+  })
+  local_mocked_bindings(bricklayer_fetch = .fv_stub(list("https://example.org/t.csv" = good)))
+  r <- fetch_verified("https://example.org/t.csv", d, sha256 = ref)
+  expect_identical(r$source, "live")
+  expect_identical(readBin(d, "raw", 100), good)
+  expect_identical(r$tried$outcome, "kept")
+  expect_false(file.exists(paste0(d, ".part")))
+})
+
+test_that("fetch_verified() falls through a failed source and a changed copy to a matching mirror", {
+  good <- charToRaw("a,b\n1,2\n")
+  f <- tempfile()
+  writeBin(good, f)
+  ref <- sha256_file(f)
+  d <- tempfile(fileext = ".csv")
+  local_mocked_bindings(bricklayer_fetch = .fv_stub(list(
+    "https://mirror-one.org/t.csv" = charToRaw("a,b\n1,3\n"),
+    "https://archive.org/download/item/t.csv" = good)))
+  r <- fetch_verified("https://example.org/t.csv", d, sha256 = toupper(ref),
+                      mirrors = c("https://mirror-one.org/t.csv", "https://archive.org/download/item/t.csv"))
+  expect_identical(r$source, "mirror")
+  expect_identical(r$url, "https://archive.org/download/item/t.csv")
+  expect_match(r$tried$outcome[1], "^failed")
+  expect_match(r$tried$outcome[2], "^refused: SHA-256")
+  expect_identical(r$tried$outcome[3], "kept")
+  expect_identical(sha256_file(d), ref)
+})
+
+test_that("fetch_verified() without a digest keeps the first copy and reports its digest", {
+  b <- charToRaw("x")
+  local_mocked_bindings(bricklayer_fetch = .fv_stub(list("https://example.org/x" = b)))
+  d <- tempfile()
+  r <- fetch_verified("https://example.org/x", d)
+  expect_identical(r$sha256, sha256_file(d))
+  expect_identical(r$bytes, 1)
+})
+
+test_that("fetch_verified() says what every source did when none serves the file", {
+  local_mocked_bindings(bricklayer_fetch = .fv_stub(list("https://m.org/x" = charToRaw("y"))))
+  expect_error(fetch_verified("https://example.org/x", tempfile(), sha256 = strrep("a", 64),
+                              mirrors = "https://m.org/x"),
+               "with the pinned SHA-256:\n  https://example.org/x: failed.*\n  https://m.org/x: refused")
+  expect_error(fetch_verified("https://example.org/x", tempfile(), sha256 = "abc"), "64 hexadecimal")
+  expect_error(fetch_verified("https://example.org/x", tempfile(), mirrors = NA_character_), "`mirrors`")
+})

@@ -238,6 +238,7 @@ SEXP C_rmbl_ecdsa_verify_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_ec_mul_impl(SEXP, SEXP);
 SEXP C_rmbl_ec_order_impl(SEXP);
 SEXP C_rmbl_http_post_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+SEXP C_rmbl_http_put_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_http_get_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_wait_label_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_der_parse_impl(SEXP);
@@ -511,6 +512,9 @@ SEXP C_rmbl_ec_order(SEXP a0) {
 }
 SEXP C_rmbl_http_post(SEXP a0, SEXP a1, SEXP a2, SEXP a3, SEXP a4, SEXP a5) {
     return rmbl_guard("C_rmbl_http_post", [&] { return C_rmbl_http_post_impl(a0, a1, a2, a3, a4, a5); });
+}
+SEXP C_rmbl_http_put(SEXP a0, SEXP a1, SEXP a2, SEXP a3, SEXP a4, SEXP a5) {
+    return rmbl_guard("C_rmbl_http_put", [&] { return C_rmbl_http_put_impl(a0, a1, a2, a3, a4, a5); });
 }
 SEXP C_rmbl_http_get(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
     return rmbl_guard("C_rmbl_http_get", [&] { return C_rmbl_http_get_impl(a0, a1, a2, a3); });
