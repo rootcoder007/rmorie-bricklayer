@@ -511,11 +511,15 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   if (length(wordy) < 2L && !endsWith(q, "?")) return(FALSE)
   if (length(wordy) == 1L) {
     w <- tolower(gsub("[[:punct:]]+", "", wordy[[1L]]))
-    if (min(utils::adist(w, .bl_verb_names())) <= 2L) return(FALSE)
+    if (min(utils::adist(w, gsub("-", "", .bl_verb_names(), fixed = TRUE))) <= 2L) return(FALSE)
   }
   # a line that opens with a verb or a near miss of one and is not asked as a question is a command
   # typed as one argument: "cnfig set openai.key" was sent to the first provider
   if (!endsWith(trimws(q), "?") && .bl_verb_near(words[[1L]])) return(FALSE)
+  # a short line naming a file is a command's argument, not a question: `urls.txt?` and `my urls.txt`
+  # were sent (18 of 64 bare file names; CRAN stress test of 0.5.14). A question that names a file in
+  # a sentence is still asked.
+  if (length(wordy) <= 3L && any(grepl("^[^.[:space:]]+\\.[A-Za-z][A-Za-z0-9]{0,4}[?!.,]*$", words))) return(FALSE)
   rest <- args[-1L]
   i <- 1L
   while (i <= length(rest)) {
@@ -538,15 +542,28 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   # short: `sk-` and 20 characters went to a model (re-test of the b617a3f CRAN stress fixes, finding 4)
   pre <- regmatches(x, gregexpr(paste0("(sk-|sk_|AIza|gsk_|xai-|hf_|r8_|pplx-|fw_|csk-|ghp_|gho_|ghs_|",
                                        "github_pat_|glpat-|nvapi-)[A-Za-z0-9_-]{12,}"), x))[[1L]]
-  if (any(grepl("[0-9]", sub("^(sk-|sk_|AIza|gsk_|xai-|hf_|r8_|pplx-|fw_|csk-|ghp_|gho_|ghs_|github_pat_|glpat-|nvapi-)",
-                             "", pre)))) {
+  if (any(grepl("[0-9]", sub(paste0("^(sk-|sk_|AIza|gsk_|xai-|hf_|r8_|pplx-|fw_|csk-|ghp_|gho_|ghs_|",
+                                    "github_pat_|glpat-|nvapi-)"), "", pre)))) {
     return(TRUE)
   }
+  if (.bl_key_dense(x)) return(TRUE)
   runs <- regmatches(x, gregexpr("[A-Za-z0-9_+=.:-]{24,}", x))[[1L]]
   runs <- sub("[.:=-]+$", "", runs)
-  runs <- runs[nchar(runs) >= 24L & !grepl("^[a-z][a-z0-9]{0,14}([_.][a-z0-9]{1,15})+$", runs) &
+  # words joined by _ or . (survey_design_replicates) are a name, not a key; a segment that mixes
+  # letters and digits past a trailing number (k3j9sq2w_...) is a key's, however short each segment
+  named <- vapply(strsplit(runs, "[_.]"), function(seg) all(grepl("^[a-z]+[0-9]*$", seg)), NA)
+  runs <- runs[nchar(runs) >= 24L & !(grepl("^[a-z][a-z0-9]{0,14}([_.][a-z0-9]{1,15})+$", runs) & named) &
                  !runs %in% getNamespaceExports(asNamespace("rmoriebricklayer"))]
   length(runs) > 0L
+}
+
+# TRUE when the text holds a run of 16 or more letters and digits, mixed, that is not a word and a
+# number (population2021): the shape of an archive.org S3 key (16 characters) and of most keys'
+# random parts. They went to a model as words (CRAN stress test of 0.5.14).
+.bl_key_dense <- function(x) {
+  r <- regmatches(x, gregexpr("[A-Za-z0-9]{16,}", x))[[1L]]
+  r <- r[grepl("[0-9]", r) & grepl("[A-Za-z]", r) & !grepl("^([A-Za-z][a-z]+[0-9]{1,4}|[0-9]{1,4}[A-Za-z][a-z]+)$", r)]
+  length(r) > 0L
 }
 
 # Every verb and spelling the command takes, for the bare-question rule and "did you mean".
@@ -559,7 +576,11 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 .bl_verb_near <- function(word) {
   w <- tolower(gsub("[\"'?!.,\uff1f[:punct:]]+", "", word))
   n <- nchar(w)
-  n >= 4L && min(utils::adist(w, .bl_verb_names())) <= (if (n <= 5L) 1L else 2L)
+  # three letters too, one edit away (`dat list` was sent; CRAN stress test of 0.5.14): of the words a
+  # question opens with only "are" is that near a verb (aye); a hyphen is no letter on either side
+  # (`xplain-rror` is two edits from explain-error)
+  if (n < 3L || w == "are") return(FALSE)
+  min(utils::adist(w, gsub("-", "", .bl_verb_names(), fixed = TRUE))) <= (if (n <= 5L) 1L else 2L)
 }
 
 # The line for an unknown verb: the nearest verb when one is close, and how to ask a model.
@@ -689,6 +710,10 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   paste0(paste(txt[-seq_len(start[1L])], collapse = "\n"), "\n")
 }
 
+# the installed launcher, "" when it is missing (a function, so a test can say it is missing without
+# renaming a file in the installed library)
+.bl_launcher <- function() system.file("bin", "rmoriebricklayer", package = "rmoriebricklayer")
+
 #' Install the rmoriebricklayer command-line launcher
 #'
 #' Writes small launcher scripts into a directory on your PATH so that
@@ -746,7 +771,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     stop("`name` must be one or more command names (non-empty, no NA, no directory part)", call. = FALSE)
   }
   dir <- .rmbl_string1(dir, "dir")
-  src <- system.file("bin", "rmoriebricklayer", package = "rmoriebricklayer")
+  src <- .bl_launcher()
   if (!nzchar(src)) stop("the launcher is missing from this installation", call. = FALSE)
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   # the launcher pins the library this copy of the package lives in, inside R with .libPaths(),

@@ -259,6 +259,7 @@ falsify_family <- function(x, method = c("holm", "bh", "bonferroni",
                            alpha = 0.05) {
   if (!length(x)) stop("`x` must hold at least one falsification result or p-value", call. = FALSE)
   method <- .rmbl_arg(method)
+  alpha <- .rmbl_conf_level(alpha, "alpha")
   at_floor <- character(0)
   if (is.list(x) && length(x) &&
       all(vapply(x, inherits, logical(1), "bricklayer_falsification"))) {

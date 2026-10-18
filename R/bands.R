@@ -282,6 +282,10 @@ band_values <- function(bands, rule = c("midpoint", "lower", "upper",
                         open_upper_cap = NULL, open_upper_factor = 2,
                         open_lower_floor = NULL) {
   rule <- .rmbl_arg(rule)
+  open_upper_factor <- .rmbl_num(open_upper_factor, "open_upper_factor")
+  if (length(open_upper_factor) != 1L || !is.finite(open_upper_factor) || open_upper_factor <= 0) {
+    stop("`open_upper_factor` must be one positive number", call. = FALSE)
+  }
   if (!is.data.frame(bands)) bands <- parse_bands(bands)
   need <- c("lower", "upper", "open_lower", "open_upper")
   if (!all(need %in% names(bands))) {
@@ -415,12 +419,13 @@ band_sensitivity <- function(bands, counts, statistic = gini, caps = NULL,
     stop(paste0("no open upper band, so there is nothing to be ",
                 "sensitive to"), call. = FALSE)
   }
+  if (!is.function(statistic)) stop("`statistic` must be a function of the band values", call. = FALSE)
   base <- min(bands$lower[bands$open_upper], na.rm = TRUE)
   if (is.null(caps)) {
     caps <- unique(round(base * exp(seq(log(1.05), log(20),
                                         length.out = 12L)), 6L))
   }
-  caps <- sort(unique(as.numeric(caps)))
+  caps <- sort(unique(.rmbl_num(caps, "caps")))
   vals <- vapply(caps, function(cp) {
     bv <- band_values(bands, rule = rule, open_upper_cap = cp)
     x <- rep(bv$value, times = counts)

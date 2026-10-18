@@ -101,6 +101,8 @@ yoy_palettes <- function() names(.YOY_PALETTES)
 }
 
 .yoy_fmt_pct <- function(v, digits = 1L, pp = FALSE) {
+  # every writer's digits come through here: NA, a vector or text became the format "%+.NAf"
+  digits <- .rmbl_scalar(digits, "digits", 0, 15, integer = TRUE)
   out <- rep(.yg("\u2014"), length(v))
   ok <- !is.na(v) & is.finite(v)
   out[ok] <- sprintf(paste0("%+.", digits, "f%s"), v[ok],

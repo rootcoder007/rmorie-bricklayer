@@ -157,6 +157,10 @@ capsule_report <- function(data, reference = NULL, schema = NULL,
   if (ncol(data) == 0L) {
     stop("`data` has no columns to assess", call. = FALSE)
   }
+  max_rows_outliers <- .rmbl_num(max_rows_outliers, "max_rows_outliers")
+  if (length(max_rows_outliers) != 1L || is.na(max_rows_outliers) || max_rows_outliers < 0) {
+    stop("`max_rows_outliers` must be one non-negative number of rows", call. = FALSE)
+  }
   add <- function(acc, severity, check, subject, detail) {
     rbind(acc, data.frame(severity = severity, check = check,
                           subject = subject, detail = detail,
@@ -453,6 +457,8 @@ report_markdown <- function(report, path = NULL,
   if (!inherits(report, "bricklayer_report")) {
     stop("`report` must come from capsule_report()", call. = FALSE)
   }
+  if (!is.null(path)) path <- .rmbl_out_file(path, "path")
+  title <- .rmbl_text1(title, "title")
   verdict <- switch(report$verdict,
     fatal = "**FATAL** -- the data cannot be used as it stands.",
     warn = "**Warnings** -- something moved.",

@@ -16,7 +16,7 @@ test_that("data hub: key, manifest cache, table cache, CLI verbs", {
     '"source":"bigquery-public-data.chicago_crime.crime",',
     '"meta":{"description":"Chicago Police incidents"}}]}'
   )
-  fake_get <- function(path, dest, timeout = 600) {
+  fake_get <- function(path, dest, timeout = 600, ...) {
     calls <<- c(calls, path)
     if (path == "/manifest.json") {
       writeLines(manifest, dest)

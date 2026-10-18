@@ -18,6 +18,7 @@
  */
 
 #include "rmbl_mlkem_core.h"
+#include "rmbl_entry.h"
 
 #define MLKEM_NS rmbl_mlkem512
 #define MLKEM_K 2
@@ -76,13 +77,13 @@ extern "C" {
         case 512: { namespace M = rmbl_mlkem512; expr; }                 \
         case 768: { namespace M = rmbl_mlkem768; expr; }                 \
         case 1024: { namespace M = rmbl_mlkem1024; expr; }               \
-        default: Rf_error("`level` must be 512, 768 or 1024");           \
+        default: RMBL_ARG_ERROR("`level` must be 512, 768 or 1024");           \
         }                                                                \
     } while (0)
 
 static int mlkem_level(SEXP level) {
     if (TYPEOF(level) != INTSXP || XLENGTH(level) != 1) {
-        Rf_error("`level` must be a single integer: 512, 768 or 1024");
+        RMBL_ARG_ERROR("`level` must be a single integer: 512, 768 or 1024");
     }
     return INTEGER(level)[0];
 }
@@ -100,7 +101,7 @@ SEXP C_rmbl_mlkem_sizes_impl(SEXP level) {
         ek = rmbl_mlkem1024::kEkBytes; dk = rmbl_mlkem1024::kDkBytes;
         ct = rmbl_mlkem1024::kCtBytes; break;
     default:
-        Rf_error("`level` must be 512, 768 or 1024");
+        RMBL_ARG_ERROR("`level` must be 512, 768 or 1024");
     }
     SEXP out = PROTECT(Rf_allocVector(INTSXP, 5));
     INTEGER(out)[0] = ek;
@@ -121,7 +122,7 @@ SEXP C_rmbl_mlkem_sizes_impl(SEXP level) {
 
 SEXP C_rmbl_mlkem_keygen_impl(SEXP level, SEXP seed) {
     if (TYPEOF(seed) != RAWSXP || XLENGTH(seed) != 64) {
-        Rf_error("`seed` must be a raw vector of 64 bytes (d || z)");
+        RMBL_ARG_ERROR("`seed` must be a raw vector of 64 bytes (d || z)");
     }
     RMBL_MLKEM_DISPATCH(mlkem_level(level), {
         SEXP ek = PROTECT(Rf_allocVector(RAWSXP, M::kEkBytes));
@@ -144,11 +145,11 @@ SEXP C_rmbl_mlkem_keygen_impl(SEXP level, SEXP seed) {
  * need; a caller wanting a fresh secret passes fresh bytes. */
 SEXP C_rmbl_mlkem_encaps_impl(SEXP level, SEXP ek, SEXP m) {
     if (TYPEOF(m) != RAWSXP || XLENGTH(m) != 32) {
-        Rf_error("`m` must be a raw vector of 32 bytes");
+        RMBL_ARG_ERROR("`m` must be a raw vector of 32 bytes");
     }
     RMBL_MLKEM_DISPATCH(mlkem_level(level), {
         if (TYPEOF(ek) != RAWSXP || XLENGTH(ek) != M::kEkBytes) {
-            Rf_error("`ek` must be a raw vector of %d bytes", M::kEkBytes);
+            RMBL_ARG_ERROR("`ek` must be a raw vector of %d bytes", M::kEkBytes);
         }
         SEXP ct = PROTECT(Rf_allocVector(RAWSXP, M::kCtBytes));
         SEXP ss = PROTECT(Rf_allocVector(RAWSXP, 32));
@@ -157,7 +158,7 @@ SEXP C_rmbl_mlkem_encaps_impl(SEXP level, SEXP ek, SEXP m) {
             /* the FIPS 203 modulus check: an encapsulation key whose
              * coefficients are not canonical is rejected rather than
              * used */
-            Rf_error("`ek` is not a canonical ML-KEM encapsulation key");
+            RMBL_ARG_ERROR("`ek` is not a canonical ML-KEM encapsulation key");
         }
         SEXP out = PROTECT(Rf_allocVector(VECSXP, 2));
         SET_VECTOR_ELT(out, 0, ct);
@@ -178,17 +179,17 @@ SEXP C_rmbl_mlkem_encaps_impl(SEXP level, SEXP ek, SEXP m) {
 SEXP C_rmbl_mlkem_decaps_masked_impl(SEXP level, SEXP dk, SEXP ct) {
     RMBL_MLKEM_DISPATCH(mlkem_level(level), {
         if (TYPEOF(dk) != RAWSXP || XLENGTH(dk) != M::kDkBytes) {
-            Rf_error("`dk` must be a raw vector of %d bytes", M::kDkBytes);
+            RMBL_ARG_ERROR("`dk` must be a raw vector of %d bytes", M::kDkBytes);
         }
         if (TYPEOF(ct) != RAWSXP || XLENGTH(ct) != M::kCtBytes) {
-            Rf_error("`ct` must be a raw vector of %d bytes", M::kCtBytes);
+            RMBL_ARG_ERROR("`ct` must be a raw vector of %d bytes", M::kCtBytes);
         }
         {
             unsigned char hk[32];
             const unsigned char *ekp = RAW(dk) + M::kDkPkeBytes;
             rmbl_sha3_256(hk, ekp, static_cast<size_t>(M::kEkBytes));
             if (std::memcmp(hk, ekp + M::kEkBytes, 32) != 0) {
-                Rf_error("`dk` failed the FIPS 203 hash check: it is not an ML-KEM decapsulation key");
+                RMBL_ARG_ERROR("`dk` failed the FIPS 203 hash check: it is not an ML-KEM decapsulation key");
             }
         }
         SEXP ss = PROTECT(Rf_allocVector(RAWSXP, 32));
@@ -204,7 +205,7 @@ SEXP C_rmbl_mlkem_decaps_masked_impl(SEXP level, SEXP dk, SEXP ct) {
             delete mr;
         }
         UNPROTECT(1);
-        if (failed) Rf_error("the operating system's random source failed during masked decapsulation");
+        if (failed) RMBL_ARG_ERROR("the operating system's random source failed during masked decapsulation");
         return ss;
     });
 }
@@ -212,10 +213,10 @@ SEXP C_rmbl_mlkem_decaps_masked_impl(SEXP level, SEXP dk, SEXP ct) {
 SEXP C_rmbl_mlkem_decaps_impl(SEXP level, SEXP dk, SEXP ct) {
     RMBL_MLKEM_DISPATCH(mlkem_level(level), {
         if (TYPEOF(dk) != RAWSXP || XLENGTH(dk) != M::kDkBytes) {
-            Rf_error("`dk` must be a raw vector of %d bytes", M::kDkBytes);
+            RMBL_ARG_ERROR("`dk` must be a raw vector of %d bytes", M::kDkBytes);
         }
         if (TYPEOF(ct) != RAWSXP || XLENGTH(ct) != M::kCtBytes) {
-            Rf_error("`ct` must be a raw vector of %d bytes", M::kCtBytes);
+            RMBL_ARG_ERROR("`ct` must be a raw vector of %d bytes", M::kCtBytes);
         }
         /* FIPS 203 section 7.3 input check, on the key (the ciphertext
          * check is its length, above): the key embeds ek and H(ek), and a
@@ -228,7 +229,7 @@ SEXP C_rmbl_mlkem_decaps_impl(SEXP level, SEXP dk, SEXP ct) {
             const unsigned char *ekp = RAW(dk) + M::kDkPkeBytes;
             rmbl_sha3_256(hk, ekp, static_cast<size_t>(M::kEkBytes));
             if (std::memcmp(hk, ekp + M::kEkBytes, 32) != 0) {
-                Rf_error("`dk` failed the FIPS 203 hash check: it is not an ML-KEM decapsulation key");
+                RMBL_ARG_ERROR("`dk` failed the FIPS 203 hash check: it is not an ML-KEM decapsulation key");
             }
         }
         SEXP ss = PROTECT(Rf_allocVector(RAWSXP, 32));

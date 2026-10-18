@@ -171,7 +171,10 @@
 #' bar shows the run while a person is watching.
 #'
 #' @param urls Character vector of \code{http} or \code{https}
-#'   URLs. Duplicates, \code{NA} and empty strings are dropped.
+#'   URLs. Duplicates, \code{NA} and empty strings are dropped. An address
+#'   on your own network (a private or loopback IP, a \code{.local} or
+#'   one-label name) is refused: the archive cannot reach it, and the
+#'   request would tell it where your intranet is.
 #' @param access_key,secret_key Your archive.org S3-like API
 #'   keys (\url{https://archive.org/account/s3.php}). By default
 #'   they are read from the environment variables
@@ -283,6 +286,15 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
   }
   bad <- urls[!grepl("^https?://[^[:space:]]+$", urls, ignore.case = TRUE)]
   if (length(bad)) stop(sprintf("not an http(s) URL: %s", .rmbl_printable(bad[[1L]])), call. = FALSE)
+  # an address on your own network (10.0.0.7, a .local or one-label name, 127.0.0.1) is not archive.org's to
+  # reach, and the request would tell a public archive where your intranet is (CRAN stress test of 0.5.14).
+  # Literal addresses and local names only: the archive resolves public names itself.
+  why <- vapply(urls, function(u) .Call(C_rmbl_url_check, u, TRUE, FALSE, FALSE), "", USE.NAMES = FALSE)
+  if (any(nzchar(why))) {
+    i <- which(nzchar(why))[[1L]]
+    stop(sprintf("not a public address, so it is not sent to archive.org: %s (%s)",
+                 .rmbl_printable(urls[[i]]), why[[i]]), call. = FALSE)
+  }
   ak <- if (is.null(access_key)) .bl_ia_key("IA_S3_ACCESS_KEY") else access_key
   sk <- if (is.null(secret_key)) .bl_ia_key("IA_S3_SECRET_KEY") else secret_key
   if (!is.character(ak) || !is.character(sk) || length(ak) != 1L || length(sk) != 1L || is.na(ak) || is.na(sk) ||

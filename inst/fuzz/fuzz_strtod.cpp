@@ -7,6 +7,9 @@
 #include <cstring>
 #include "../../src/rmbl_strtod.cpp"
 
+/* no barrier in this binary: an argument error is Rf_error() (never reached by convert()) */
+extern "C" int rmbl_barrier_active(void) { return 0; }
+
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char *data, size_t size) {
     if (size == 0 || size > 400) return 0;
     for (size_t i = 0; i < size; ++i) {

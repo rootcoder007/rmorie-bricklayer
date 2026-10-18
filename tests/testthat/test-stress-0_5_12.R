@@ -33,7 +33,7 @@ test_that("N2: a run whose work (cells x steps x sub-steps) is out of reach is r
   expect_error(advection_diffusion_2d(c0, u = 1e10, v = 0, kx = .1, ky = .1, 1, 1, 1, 2), "sub-steps")
   t0 <- proc.time()[["elapsed"]]
   expect_error(advection_diffusion_2d(c0, u = .5, v = .4, kx = .1, ky = .1, 1, 1, 1e6, 1), "sub-steps")
-  expect_lt(proc.time()[["elapsed"]] - t0, 5)
+  expect_lt(proc.time()[["elapsed"]] - t0, wall_limit(5))
   # a mild excursion is still sub-stepped and conserves mass
   r <- suppressWarnings(advection_diffusion_2d(c0, u = 1.5, v = 0, kx = 0, ky = 0, 1, 1, 1, 1))
   expect_equal(r$substeps, 2L)

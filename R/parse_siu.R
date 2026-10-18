@@ -271,6 +271,7 @@ bricklayer_fetch_parse_siu <- function(drid, lang = c("en", "fr")) {
 #' try(bricklayer_siu_iso_date(20230105))
 #' @export
 bricklayer_siu_iso_date <- function(x) {
+  .rmbl_no_fn(x = x)
   if (!is.character(x) && !all(is.na(x))) stop("`x` must be a character vector of dates", call. = FALSE)
   x <- as.character(x)
   vapply(x, function(v) if (is.na(v)) NA_character_ else .Call(C_rmbl_siu_to_iso_date, v), character(1),

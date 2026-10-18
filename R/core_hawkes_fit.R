@@ -41,13 +41,16 @@
         .rmbl_hk_kind[[kernel]], theta[-seq_len(nb + 1L)], code, eps, soe[[1]], soe[[2]], gradient)
 }
 
-.rmbl_hk_check_times <- function(times, horizon) {
+.rmbl_hk_check_times <- function(times, horizon, baseline = "constant") {
   times <- .rmbl_num(times, "times")
   if (anyNA(times)) stop("`times` must not contain NA", call. = FALSE)
   if (length(times) > 1L && any(diff(times) < 0)) stop("`times` must be sorted in increasing order", call. = FALSE)
   horizon <- .rmbl_num(horizon, "horizon")
   if (length(horizon) != 1L || !is.finite(horizon) || horizon <= 0) {
     stop("`horizon` must be a single positive finite number", call. = FALSE)
+  }
+  if (baseline != "constant" && horizon > 4194304) {
+    stop("a sinusoidal baseline is integrated day by day: `horizon` must be at most 4194304 days", call. = FALSE)
   }
   if (length(times) > 0L && (min(times) < 0 || max(times) > horizon)) {
     stop(sprintf(paste0("`times` must lie within [0, horizon] (they span %g to %g)",
@@ -178,7 +181,9 @@
 #'   \code{[0, horizon]}, in any time unit (days are the natural unit for the
 #'   sinusoidal baseline's yearly cycle). At least 50 events.
 #' @param horizon End of the observation window, one positive number in the
-#'   same unit as \code{times}; the window is \code{[0, horizon]}.
+#'   same unit as \code{times}; the window is \code{[0, horizon]}. With the
+#'   sinusoidal baseline (an annual cycle, \code{times} in days) at most
+#'   4194304 days: that baseline is integrated a day at a time.
 #' @param kernel The triggering kernel: \code{"exponential"} (the default),
 #'   \code{"weibull"}, \code{"gamma"} or \code{"lomax"}.
 #' @param baseline \code{"constant"} (the default) or \code{"sinusoidal"}
@@ -280,7 +285,7 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
   kernel <- .rmbl_arg(kernel)
   baseline <- .rmbl_arg(baseline)
   method <- .rmbl_hk_method(method, kernel)
-  chk <- .rmbl_hk_check_times(times, horizon)
+  chk <- .rmbl_hk_check_times(times, horizon, baseline)
   horizon <- chk$horizon
   times <- chk$times[chk$times >= 0 & chk$times <= horizon]
   n <- length(times)
@@ -300,12 +305,12 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
                            "resolution (daily dates) should first be spread across it: core_hawkes_jitter()"),
                     ties), call. = FALSE)
   }
-  if (!is.numeric(eps) || length(eps) != 1L || !(eps > 0) || eps >= 1) {
+  if (!is.numeric(eps) || length(eps) != 1L || is.na(eps) || !(eps > 0) || eps >= 1) {
     stop("`eps` must be a single number in (0, 1)", call. = FALSE)
   }
   nb <- if (baseline == "constant") 1L else 4L
   b <- .rmbl_hk_bounds(kernel, baseline)
-  x0 <- if (is.null(start)) .rmbl_hk_x0(kernel, baseline, n, horizon, mean(diff(times))) else as.numeric(start)
+  x0 <- if (is.null(start)) .rmbl_hk_x0(kernel, baseline, n, horizon, mean(diff(times))) else .rmbl_num(start, "start")
   if (length(x0) != length(b$lower)) stop(sprintf("`start` must have length %d", length(b$lower)), call. = FALSE)
   x0 <- pmin(pmax(x0, b$lower), b$upper)
   exact_nll <- function(th) .rmbl_hk_call(times, horizon, kernel, baseline, th, "exact", 1e-12, FALSE)[[1]]
@@ -462,7 +467,7 @@ core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "wei
                                   baseline = c("constant", "sinusoidal")) {
   kernel <- .rmbl_arg(kernel)
   baseline <- .rmbl_arg(baseline)
-  chk <- .rmbl_hk_check_times(times, horizon)
+  chk <- .rmbl_hk_check_times(times, horizon, baseline)
   nb <- if (baseline == "constant") 1L else 4L
   np <- if (kernel == "exponential") 1L else 2L
   par <- .rmbl_num(par, "par")
@@ -483,7 +488,9 @@ core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "wei
   nb <- if (baseline == "constant") 1L else 4L
   theta <- x0
   Fx <- .rmbl_hk_feats(times, horizon, baseline)
-  m <- max(64L, floor(horizon) + 1L)
+  # a constant baseline is exact on any grid (a point a time unit was 2^31 of them for a horizon of
+  # 2^31; CRAN stress test of 0.5.14); the sinusoidal one keeps a point a day
+  m <- if (baseline == "constant") 64L else max(64L, floor(horizon) + 1L)
   grid <- seq(0, horizon, length.out = m)
   Fg <- .rmbl_hk_feats(grid, horizon, baseline)
   wq <- c(0.5, rep(1, m - 2L), 0.5) * horizon / (m - 1L)

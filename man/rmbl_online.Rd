@@ -6,7 +6,7 @@
 \alias{summary_update}
 \alias{summary_merge}
 \alias{summary_stats}
-\title{Exact summary statistics accumulated in blocks}
+\title{Summary statistics accumulated in blocks}
 \usage{
 online_summary(x = NULL)
 
@@ -39,11 +39,17 @@ combine two with \code{summary_merge()} and read the result with
 \code{summary_stats()}.
 }
 \details{
-The merge is EXACT, not approximate: it uses Chan, Golub and LeVeque's
-parallel combination of central sums, extended to the third and fourth
-moments by Terriberry, so accumulating a column in blocks gives the same
-answer as \code{\link[=core_moments]{core_moments()}} over the whole
-column at once. That is what makes it usable for a capsule member of any
+The merge is exact algebra, not an approximation: it uses Chan, Golub and
+LeVeque's parallel combination of central sums, extended to the third and
+fourth moments by Terriberry, so accumulating a column in blocks gives the
+answer of \code{\link[=core_moments]{core_moments()}}
+over the whole column at once, to the rounding of
+double arithmetic. Each block's sums are taken in two passes, as
+\code{var()} takes them, so values far from zero keep their digits:
+values near \eqn{10^8} with a spread of 1, in blocks of 100, give the
+variance of \code{var()} to a relative \eqn{10^{-11}} (one pass lost
+nine digits).
+That is what makes it usable for a capsule member of any
 size: memory stays constant in the number of blocks.
 
 The state is \eqn{(n, \bar{x}, M_2, M_3, M_4)} with
@@ -74,7 +80,7 @@ for (i in seq(1, 1000, by = 100)) {
 }
 summary_stats(acc)
 
-# Which is exactly the batch answer, not an approximation to it.
+# The batch answer to rounding (the formulas are exact; the arithmetic is double):
 all.equal(summary_stats(acc)[["variance"]], stats::var(x))
 all.equal(summary_stats(acc)[["mean"]], mean(x))
 

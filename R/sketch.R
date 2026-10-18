@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
 # One-pass summaries for capsule members larger than memory. The moment
-# accumulator is EXACT -- chunked accumulation and a single batch pass
-# agree -- while the cardinality sketch trades a bounded relative error
+# accumulator is exact algebra -- chunked accumulation and a single batch pass
+# agree to rounding -- while the cardinality sketch trades a bounded relative error
 # for fixed memory.
 
-#' Exact summary statistics accumulated in blocks
+#' Summary statistics accumulated in blocks
 #'
 #' An accumulator for the count, mean, variance, skewness and kurtosis of a
 #' numeric column that does not fit in memory, or that arrives in pieces
@@ -15,11 +15,17 @@
 #' \code{summary_stats()}.
 #'
 #' @details
-#' The merge is EXACT, not approximate: it uses Chan, Golub and LeVeque's
-#' parallel combination of central sums, extended to the third and fourth
-#' moments by Terriberry, so accumulating a column in blocks gives the same
-#' answer as [core_moments()] over the whole
-#' column at once. That is what makes it usable for a capsule member of any
+#' The merge is exact algebra, not an approximation: it uses Chan, Golub and
+#' LeVeque's parallel combination of central sums, extended to the third and
+#' fourth moments by Terriberry, so accumulating a column in blocks gives the
+#' answer of [core_moments()]
+#' over the whole column at once, to the rounding of
+#' double arithmetic. Each block's sums are taken in two passes, as
+#' \code{var()} takes them, so values far from zero keep their digits:
+#' values near \eqn{10^8} with a spread of 1, in blocks of 100, give the
+#' variance of \code{var()} to a relative \eqn{10^{-11}} (one pass lost
+#' nine digits).
+#' That is what makes it usable for a capsule member of any
 #' size: memory stays constant in the number of blocks.
 #'
 #' The state is \eqn{(n, \bar{x}, M_2, M_3, M_4)} with
@@ -65,7 +71,7 @@
 #' }
 #' summary_stats(acc)
 #'
-#' # Which is exactly the batch answer, not an approximation to it.
+#' # The batch answer to rounding (the formulas are exact; the arithmetic is double):
 #' all.equal(summary_stats(acc)[["variance"]], stats::var(x))
 #' all.equal(summary_stats(acc)[["mean"]], mean(x))
 #'

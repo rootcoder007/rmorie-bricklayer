@@ -103,6 +103,7 @@ decode_codes <- function(x, value_labels, keep_na = TRUE) {
       call. = FALSE
     )
   }
+  keep_na <- .rmbl_flag1(keep_na, "keep_na")
   if (!keep_na && anyNA(codes)) {
     stop("decode_codes: `x` has missing codes and keep_na = FALSE",
       call. = FALSE
@@ -340,7 +341,12 @@ audit_categories <- function(data, cols = NULL) {
     is.factor(v) || is.character(v) ||
       inherits(v, c("haven_labelled", "labelled"))
   }
+  if (!is.null(cols) && (!is.character(cols) || anyNA(cols))) {
+    stop("`cols` must be column names (a character vector), or NULL for every categorical column", call. = FALSE)
+  }
   if (is.null(cols)) cols <- names(data)[vapply(data, is_cat, logical(1))]
+  gone <- setdiff(cols, names(data))
+  if (length(gone)) stop(sprintf("`cols` names no column of `data`: %s", paste(gone, collapse = ", ")), call. = FALSE)
   rows <- lapply(cols, function(cn) {
     v <- data[[cn]]
     hazards <- character(0)
@@ -633,7 +639,9 @@ verify_recode <- function(original, recoded, declared) {
 #' @export
 verify_marginals <- function(x, published, tolerance = 0, strict = TRUE) {
   .rmbl_no_fn(x = x)
-  if (is.factor(x)) x <- as.character(x)
+  # labels are compared as text: a date column was compared through charToDate() and failed on a label
+  if (is.factor(x) || inherits(x, c("Date", "POSIXt"))) x <- as.character(x)
+  tolerance <- .rmbl_scalar(tolerance, "tolerance", 0)
   if (!is.numeric(published) || is.null(names(published)) ||
         !all(nzchar(names(published)))) {
     stop("verify_marginals: `published` must be a named numeric vector",
@@ -761,6 +769,7 @@ odds_ratio_check <- function(counts, reference, reported, tolerance = 0.05) {
   if (!missing(reference) && (!is.atomic(reference) || length(reference) != 1L || is.na(reference))) {
     stop("`reference` must be one group label (a row name of `counts`)", call. = FALSE)
   }
+  tolerance <- .rmbl_scalar(tolerance, "tolerance", 0)
   if (is.null(counts) || !(is.matrix(counts) || is.data.frame(counts) || is.table(counts))) {
     stop("`counts` must be a 2-column matrix or table of counts (rows named)", call. = FALSE)
   }
@@ -1070,6 +1079,7 @@ write_recode_manifest <- function(manifest, path) {
       call. = FALSE
     )
   }
+  if (is.null(path)) stop("`path` must be a file path or a connection", call. = FALSE)
   path <- .rmbl_out_file(path, "path")
   writeLines(bricklayer_json_to_json(unclass(manifest)), path)
   invisible(path)
@@ -1196,7 +1206,7 @@ verify_recode_manifest <- function(path, original, recoded) {
 #' try(relabel(f, c("Black", "Other", "White")))
 #' @export
 relabel <- function(x, mapping, keep = character()) {
-  if (is.null(x) || !is.atomic(x) || is.complex(x)) {
+  if (is.null(x) || !is.atomic(x) || is.complex(x) || is.raw(x)) {
     stop("`x` must be a vector of labels (character, factor or numbers)", call. = FALSE)
   }
   if (is.null(names(mapping)) || !all(nzchar(names(mapping)))) {
@@ -1353,6 +1363,8 @@ decode_labelled <- function(x, value_labels = NULL) {
 #' try(relabel_forensics(vl, c(White = "Black")))
 #' @export
 relabel_forensics <- function(value_labels, observed, counts = NULL) {
+  .rmbl_no_fn(value_labels = value_labels, observed = observed, counts = counts)
+  if (!is.null(counts)) counts <- stats::setNames(.rmbl_num(counts, "counts"), names(counts))   # read by label
   if (is.null(names(value_labels)) || is.null(names(observed))) {
     stop("relabel_forensics: `value_labels` (code = label) and `observed` ",
       "(true = seen) ",
@@ -1515,7 +1527,12 @@ print.bricklayer_relabel_forensics <- function(x, ...) {
 #' @export
 transfer_verify <- function(imported, source_counts, code_book = NULL,
                             tolerance = 0, strict = TRUE) {
-  .rmbl_no_fn(imported = imported)
+  .rmbl_no_fn(imported = imported, code_book = code_book)
+  if (!is.null(code_book) &&
+        (!is.atomic(code_book) || is.null(names(code_book)) || inherits(code_book, c("Date", "POSIXt")))) {
+    stop("`code_book` must be a named vector (code = label), or NULL", call. = FALSE)
+  }
+  tolerance <- .rmbl_scalar(tolerance, "tolerance", 0)
   lab <- attr(imported, "labels", exact = TRUE)
   code_book_ok <- NA
   if (!is.null(lab) && !is.null(code_book)) {

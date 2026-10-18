@@ -262,7 +262,7 @@ test_that("an unknown hosted table is named before anything downloads; refresh m
   got <- character()
   testthat::local_mocked_bindings(
     bricklayer_data_manifest = function(refresh = FALSE) list(datasets = list(list(key = "hib/cpads_cpads"))),
-    .bl_data_get = function(path, dest, timeout = 600) got <<- c(got, path)
+    .bl_data_get = function(path, dest, timeout = 600, ...) got <<- c(got, path)
   )
   expect_error(bricklayer_data_load("hib/nosuch_table"),
                "no table hib/nosuch_table at data.rmorie.com (`rmbl data list` shows them)", fixed = TRUE)

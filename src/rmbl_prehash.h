@@ -25,6 +25,7 @@
 
 #include <R.h>
 #include <Rinternals.h>
+#include "rmbl_entry.h"
 
 extern "C" void rmbl_sha256_raw(const unsigned char *, size_t,
                                 unsigned char[32]);
@@ -143,7 +144,7 @@ inline void apply(const char *name, const unsigned char *m, size_t mlen,
     }
     unsigned char arc = 0;
     if (!digest(name, m, mlen, out->digest, &out->digest_len, &arc)) {
-        Rf_error("`prehash` must be one of " RMBL_PREHASH_NAMES);
+        RMBL_ARG_ERROR("`prehash` must be one of " RMBL_PREHASH_NAMES);
     }
     out->oid = oid_for(arc);
     out->oid_len = 11;
@@ -153,9 +154,9 @@ inline void apply(const char *name, const unsigned char *m, size_t mlen,
 inline const char *name_of(SEXP prehash) {
     if (prehash == R_NilValue) return "";
     if (TYPEOF(prehash) != STRSXP || XLENGTH(prehash) != 1) {
-        Rf_error("`prehash` must be a single string");
+        RMBL_ARG_ERROR("`prehash` must be a single string");
     }
-    if (STRING_ELT(prehash, 0) == NA_STRING) Rf_error("`prehash` must not be NA");
+    if (STRING_ELT(prehash, 0) == NA_STRING) RMBL_ARG_ERROR("`prehash` must not be NA");
     return CHAR(STRING_ELT(prehash, 0));
 }
 

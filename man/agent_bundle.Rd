@@ -53,13 +53,15 @@ agent_bundle("scaffold a bundle for analysis.R from the Toronto CKAN data")
 agent_bundle("sign and verify my capsule", route = "ollama")
 }
 
-# With every route switched off the call returns a setup hint, not an
-# error, and reaches no network -- safe to run anywhere:
-keys <- c("OLLAMA_HOST", "MORIE_LLM_BASE_URL", bricklayer_llm_providers()$key_env,
+# With every route switched off (no key in the environment and no saved
+# settings: the settings folder is pointed at an empty one) the call returns
+# a setup hint, not an error, and reaches no network -- safe to run anywhere:
+keys <- c("OLLAMA_HOST", "MORIE_LLM_BASE_URL", "XDG_CONFIG_HOME",
+          bricklayer_llm_providers()$key_env,
           bricklayer_llm_providers()$alt_env[nzchar(bricklayer_llm_providers()$alt_env)])
 old <- Sys.getenv(keys, unset = NA)
-Sys.setenv(OLLAMA_HOST = "off", MORIE_LLM_BASE_URL = "off")
-Sys.unsetenv(setdiff(keys, c("OLLAMA_HOST", "MORIE_LLM_BASE_URL")))
+Sys.setenv(OLLAMA_HOST = "off", MORIE_LLM_BASE_URL = "off", XDG_CONFIG_HOME = tempfile())
+Sys.unsetenv(setdiff(keys, c("OLLAMA_HOST", "MORIE_LLM_BASE_URL", "XDG_CONFIG_HOME")))
 cat(agent_bundle("hello"))
 for (v in keys) {
   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))

@@ -135,7 +135,10 @@ bricklayer_download <- function(url, dest, headers = NULL,
   if (is.null(quiet)) quiet <- .bl_dl_quiet()
   dest <- .rmbl_string1(dest, "dest")
   quiet <- .rmbl_flag1(quiet, "quiet")
-  size <- suppressWarnings(as.numeric(if (is.null(size)) NA else size[[1L]]))
+  # the size only sizes the bar: text that is no number means no size, as before; a list, a data
+  # frame or a function is refused in words
+  size <- if (is.null(size)) NA_real_ else if (is.character(size)) suppressWarnings(as.numeric(size[1L])) else
+    .rmbl_num(size, "size")[1L]
   if (!is.finite(size) || size <= 0) size <- NA_real_
   # a console that redraws a line in place: a terminal, or the RStudio, Positron or R.app console
   auto_tty <- is.null(tty)
@@ -148,10 +151,10 @@ bricklayer_download <- function(url, dest, headers = NULL,
     }
     hdr_lines <- paste0(names(headers), ": ", headers)
   }
-  timeout <- suppressWarnings(as.numeric(timeout))[1L]
+  timeout <- .rmbl_num(timeout, "timeout")[1L]
   if (is.na(timeout) || timeout < 1) stop("`timeout` must be at least one second", call. = FALSE)
   if (timeout > .Machine$integer.max) stop("`timeout` must be at most 2147483647 seconds", call. = FALSE)
-  max_bytes <- suppressWarnings(as.numeric(max_bytes))[1L]
+  max_bytes <- .rmbl_num(max_bytes, "max_bytes")[1L]
   if (is.na(max_bytes) || max_bytes < 1) stop("`max_bytes` must be a number of bytes, at least one", call. = FALSE)
   t0 <- proc.time()[["elapsed"]]
   mile <- 0L

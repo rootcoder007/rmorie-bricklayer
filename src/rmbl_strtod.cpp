@@ -37,6 +37,7 @@
 
 #include <R.h>
 #include <Rinternals.h>
+#include "rmbl_entry.h"
 
 namespace {
 
@@ -561,12 +562,20 @@ std::string format_g(bool neg, const char *d, int x) {
 
 extern "C" {
 
+/* one decimal number of `len` bytes, for the JSON parser's native path (rmbl_json.cpp) */
+double rmbl_strtod_bytes(const char *s, size_t len, int *ok) {
+    bool b = false;
+    const double v = convert(s, len, &b);
+    *ok = b ? 1 : 0;
+    return v;
+}
+
 /* Convert decimal strings to doubles, correctly rounded, without
  * asking the platform. NA_character_ and unparseable input give
  * NA_real_ rather than an error: this sits in a JSON parser, which
  * reports a bad document its own way. */
 SEXP C_rmbl_strtod_impl(SEXP x) {
-    if (TYPEOF(x) != STRSXP) Rf_error("`x` must be a character vector");
+    if (TYPEOF(x) != STRSXP) RMBL_ARG_ERROR("`x` must be a character vector");
     const R_xlen_t n = XLENGTH(x);
     SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
     double *o = REAL(out);
@@ -591,7 +600,7 @@ SEXP C_rmbl_strtod_impl(SEXP x) {
  * writer renders Inf, -Inf, NaN and NA its own way before it gets
  * here. */
 SEXP C_rmbl_dtoa17_impl(SEXP x) {
-    if (TYPEOF(x) != REALSXP) Rf_error("`x` must be a double vector");
+    if (TYPEOF(x) != REALSXP) RMBL_ARG_ERROR("`x` must be a double vector");
     const R_xlen_t n = XLENGTH(x);
     const double *v = REAL(x);
     SEXP out = PROTECT(Rf_allocVector(STRSXP, n));

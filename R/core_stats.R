@@ -86,7 +86,7 @@
 #' @name rmbl_core_spread
 #' @export
 core_sd <- function(x, ddof = 1L) {
-  .Call(C_rmbl_sd, .rmbl_num_input(x, "x"), as.integer(ddof))
+  .Call(C_rmbl_sd, .rmbl_num_input(x, "x"), as.integer(.rmbl_scalar(ddof, "ddof", 0, integer = TRUE)))
 }
 
 #' @rdname rmbl_core_spread
@@ -343,7 +343,7 @@ core_median <- function(x) .Call(C_rmbl_median, .rmbl_num_input(x, "x"))
 #' @rdname rmbl_core_robust
 #' @export
 core_mad <- function(x, constant = 1.4826) {
-  .Call(C_rmbl_mad, .rmbl_num_input(x, "x"), as.numeric(constant))
+  .Call(C_rmbl_mad, .rmbl_num_input(x, "x"), .rmbl_scalar(constant, "constant", 0))
 }
 
 #' @rdname rmbl_core_robust
@@ -356,6 +356,7 @@ core_iqr <- function(x) {
 #' @rdname rmbl_core_robust
 #' @export
 core_tukey_fences <- function(x, k = 1.5) {
+  k <- .rmbl_scalar(k, "k", 0)
   q <- .Call(C_rmbl_quantile, .rmbl_num_input(x, "x"), c(0.25, 0.75))
   iqr <- q[2L] - q[1L]
   c(lower = q[1L] - k * iqr, upper = q[2L] + k * iqr)
@@ -805,8 +806,8 @@ core_ipw_weights <- function(treat, propensity, trim_lo = 0.01,
   if (length(treat) != length(propensity)) {
     stop("`treat` and `propensity` must have the same length", call. = FALSE)
   }
-  trim_lo <- .rmbl_num(trim_lo, "trim_lo")
-  trim_hi <- .rmbl_num(trim_hi, "trim_hi")
+  trim_lo <- .rmbl_scalar(trim_lo, "trim_lo", 0, 1)
+  trim_hi <- .rmbl_scalar(trim_hi, "trim_hi", 0, 1)
   if (!(trim_lo > 0 && trim_hi < 1 && trim_lo < trim_hi)) {
     stop("need 0 < `trim_lo` < `trim_hi` < 1", call. = FALSE)
   }

@@ -311,12 +311,12 @@ extern "C" {
         if (std::strcmp(name, "SLH-DSA-SHA2-256f") == 0) {   \
             namespace S = rmbl_slhdsa_sha2_256f; expr;                       \
         }                                                 \
-        Rf_error("unknown SLH-DSA parameter set: %s", name);          \
+        RMBL_ARG_ERROR("unknown SLH-DSA parameter set: %s", name);          \
     } while (0)
 
 static const char *slhdsa_set(SEXP set) {
     if (TYPEOF(set) != STRSXP || XLENGTH(set) != 1) {
-        Rf_error("`set` must be a single parameter set name");
+        RMBL_ARG_ERROR("`set` must be a single parameter set name");
     }
     return rmbl_str0(set, "set");
 }

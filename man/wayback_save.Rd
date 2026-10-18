@@ -21,7 +21,10 @@ wayback_save(
 }
 \arguments{
 \item{urls}{Character vector of \code{http} or \code{https}
-URLs. Duplicates, \code{NA} and empty strings are dropped.}
+URLs. Duplicates, \code{NA} and empty strings are dropped. An address
+on your own network (a private or loopback IP, a \code{.local} or
+one-label name) is refused: the archive cannot reach it, and the
+request would tell it where your intranet is.}
 
 \item{access_key, secret_key}{Your archive.org S3-like API
 keys (\url{https://archive.org/account/s3.php}). By default

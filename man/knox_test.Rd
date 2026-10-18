@@ -30,8 +30,8 @@ increasing: \code{c(100, 200, 400)} is 0-100, 100-200 and 200-400 m.}
 
 \item{nsim}{Monte Carlo permutations. Default 999.}
 
-\item{seed}{Optional seed for the permutations; the caller's random
-stream is left as it was.}
+\item{seed}{Optional seed for the permutations, a whole number from
+-2147483647 to 2^53 - 1; the caller's random stream is left as it was.}
 
 \item{coords}{\code{"lonlat"} or \code{"planar"}.}
 

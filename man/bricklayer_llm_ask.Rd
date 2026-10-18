@@ -19,7 +19,8 @@ bricklayer_llm_ask(
 \item{prompt}{Character scalar: the question, in plain text.}
 
 \item{model}{Character scalar or \code{NULL} (the default): the model id
-to use. \code{NULL} uses the route's own choice: \code{MORIE_LLM_MODEL}
+to use (a value shaped like a key is refused, never sent).
+\code{NULL} uses the route's own choice: \code{MORIE_LLM_MODEL}
 for your own endpoint, \code{OLLAMA_MODEL} or the first pulled model
 for Ollama, the saved \code{PROVIDER.model} or the provider's default
 model (see \code{\link{bricklayer_llm_providers}}).}

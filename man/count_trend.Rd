@@ -54,8 +54,11 @@ replaces the normal, and \code{overdispersed} is set.
 Missing values are dropped. Errors: negative or fractional counts;
 \code{x} and \code{y} of different lengths; infinite \code{x}; every count
 zero; an offset of the wrong length or not positive; fewer than three
-periods; a \code{conf_level} outside (0, 1). There is a \code{plot()} method for the
-result.
+periods; a \code{conf_level} outside (0, 1). When the counts are zero at
+one end of the series only (\code{c(0, 0, 5)}) the likelihood rises without
+bound and there is no finite trend: a warning says so, the rate ratio is
+\code{Inf} (or 0) and the interval and p-value are \code{NA}. There is a
+\code{plot()} method for the result.
 }
 \examples{
 # A count falling by about 15\% a year.

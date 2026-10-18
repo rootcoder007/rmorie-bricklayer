@@ -20,7 +20,9 @@ core_hawkes_fit(
 sinusoidal baseline's yearly cycle). At least 50 events.}
 
 \item{horizon}{End of the observation window, one positive number in the
-same unit as \code{times}; the window is \code{[0, horizon]}.}
+same unit as \code{times}; the window is \code{[0, horizon]}. With the
+sinusoidal baseline (an annual cycle, \code{times} in days) at most
+4194304 days: that baseline is integrated a day at a time.}
 
 \item{kernel}{The triggering kernel: \code{"exponential"} (the default),
 \code{"weibull"}, \code{"gamma"} or \code{"lomax"}.}

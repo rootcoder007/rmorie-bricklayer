@@ -37,6 +37,15 @@ typedef struct { size_t start, len; int quoted; size_t pre_start, pre_len, post_
 /* the bytes a field's text can take */
 static size_t rmbl_span_len(const rmbl_span *sp) { return sp->pre_len + sp->len + sp->post_len; }
 
+/* the bytes of the field that are not NUL, read.csv(skipNul = TRUE) dropping those */
+static size_t rmbl_span_len_nonul(const unsigned char *s, const rmbl_span *sp) {
+    size_t k = 0, i;
+    for (i = 0; i < sp->pre_len; i++) k += s[sp->pre_start + i] != 0;
+    for (i = 0; i < sp->len; i++) k += s[sp->start + i] != 0;
+    for (i = 0; i < sp->post_len; i++) k += s[sp->post_start + i] != 0;
+    return k;
+}
+
 /* Scan one record from `pos`: fills `spans` (at most `cap`), returns the field count (which may
  * exceed `cap`: the caller sizes), advances `*pos` past the record's line ending, sets `*empty`
  * when the record was an empty line. `*err` names a malformed record. */
@@ -86,7 +95,17 @@ static size_t rmbl_csv_record(const unsigned char *s, size_t n, size_t *pos, rmb
             /* whatever follows up to the separator is part of the field, as read.csv() appends it
              * (it was refused here; network stress test of 5e1dce5) */
             sp.post_start = p;
-            while (p < n && s[p] != ',' && s[p] != '\n' && s[p] != '\r') p++;
+            /* a quote there opens a quoted run again, as scan() reads it: a comma or a line end inside
+             * it is text ("x"y",z" is the one field xy,z; it ended at the comma here) */
+            int inq = 0;
+            while (p < n && (inq || (s[p] != ',' && s[p] != '\n' && s[p] != '\r'))) {
+                if (s[p] == '"') {
+                    if (inq && p + 1 < n && s[p + 1] == '"') { p += 2; continue; }
+                    inq = !inq;
+                }
+                p++;
+            }
+            if (inq) { *err = "a quoted field never closes"; return 0; }
             sp.post_len = p - sp.post_start;
         } else {
             while (p < n && s[p] != ',' && s[p] != '\n' && s[p] != '\r') {
@@ -107,8 +126,10 @@ static size_t rmbl_csv_record(const unsigned char *s, size_t n, size_t *pos, rmb
         p++;
     }
     *pos = p;
-    /* a line holding only "" is a blank line to read.csv(): skipped, not a row of NA */
-    if (nf == 1 && cap >= 1 && spans[0].quoted && rmbl_span_len(&spans[0]) == 0) {
+    /* a line holding only "" is a blank line to read.csv(): skipped, not a row of NA; so is "" with
+     * NUL bytes inside, which are dropped (it was a row of NA; CRAN stress test of 0.5.14) */
+    if (nf == 1 && cap >= 1 && spans[0].quoted &&
+        (skip_nul ? rmbl_span_len_nonul(s, &spans[0]) : rmbl_span_len(&spans[0])) == 0) {
         *empty = 2;   /* 2: a blank line that was "", which read.csv() still takes as a header */
         return 0;
     }
@@ -141,6 +162,10 @@ static size_t rmbl_csv_field(const unsigned char *s, const rmbl_span *sp, char *
             if (inq && i + 1 < sp->post_len && s[sp->post_start + i + 1] == '"') { buf[o++] = '"'; i++; continue; }
             inq = !inq;
             continue;
+        }
+        if (inq && c == '\r') {   /* a CR or CRLF inside quotes is a newline, as in the quoted part */
+            if (i + 1 < sp->post_len && s[sp->post_start + i + 1] == '\n') continue;
+            c = '\n';
         }
         buf[o++] = (char) c;
     }
@@ -218,6 +243,16 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
     const int skip_nul = asLogical(skip_nul_) == TRUE;
     const unsigned char *s = RAW(bytes);
     size_t n = (size_t) XLENGTH(bytes);
+    /* read.csv(skipNul = TRUE) drops NUL bytes as it reads, before a quote or a line end is seen: a
+     * quote, a NUL and a quote is a doubled quote, a NUL before a byte-order mark leaves the mark at
+     * the start of its line (both read otherwise here; CRAN stress test of 0.5.14) */
+    if (skip_nul && n && memchr(s, 0, n)) {
+        unsigned char *t = (unsigned char *) R_alloc(n, 1);
+        size_t m = 0;
+        for (size_t i = 0; i < n; i++) if (s[i]) t[m++] = s[i];
+        s = t;
+        n = m;
+    }
     size_t start = 0;
     /* a UTF-8 byte-order mark is not a column name, after blank lines too (read.csv() drops it from
      * the first line it reads); a header that is the mark alone is a header of no columns, as a
@@ -302,6 +337,16 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
         while (q < n && (s[q] == '\n' || s[q] == '\r')) q++;
         if (q + 3 <= n && s[q] == 0xEF && s[q + 1] == 0xBB && s[q + 2] == 0xBF) {
             pos = q + 3;
+        } else if (q + 5 <= n && s[q] == '"' && s[q + 1] == '"' && s[q + 2] == 0xEF && s[q + 3] == 0xBB &&
+                   s[q + 4] == 0xBF) {
+            /* after an empty quoted field the field is still empty, and scan() drops the mark there too:
+             * a line of "" and the mark is a blank line (it was a row of the mark; CRAN stress test of
+             * 0.5.14) */
+            unsigned char *c = (unsigned char *) R_alloc(n - 3, 1);
+            memcpy(c, s, q + 2);
+            memcpy(c + q + 2, s + q + 5, n - q - 5);
+            s = c;
+            n -= 3;
         } else if (q + 4 <= n && s[q] == '"' && s[q + 1] == 0xEF && s[q + 2] == 0xBB && s[q + 3] == 0xBF) {
             unsigned char *c = (unsigned char *) R_alloc(n - 3, 1);
             memcpy(c, s, q + 1);

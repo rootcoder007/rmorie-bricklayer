@@ -56,7 +56,7 @@
   d
 }
 
-.bl_data_get <- function(path, dest, timeout = 600) {
+.bl_data_get <- function(path, dest, timeout = 600, max_bytes = 2^31) {
   key <- .bl_data_key()
   if (is.null(key)) {
     env <- trimws(Sys.getenv("MORIE_DATA_URL", unset = ""))
@@ -87,7 +87,7 @@
   }
   rc <- tryCatch(
     bricklayer_download(paste0(.bl_data_url(), path), dest, headers = hdr,
-                        label = label, size = size, timeout = timeout),
+                        label = label, size = size, timeout = timeout, max_bytes = max_bytes),
     error = function(e) e, warning = function(w) w
   )
   if (inherits(rc, "condition")) {
@@ -143,7 +143,12 @@
 #' the last copy on disk, however old, supplies the digest; with none, a fresh
 #' download is not kept and a cached file is kept but not used. The CSV is
 #' read in compiled code with the same result as
-#' \code{read.csv(gzfile(f), stringsAsFactors = FALSE)}; tables that inflate
+#' \code{read.csv(gzfile(f), stringsAsFactors = FALSE)}, two malformed shapes
+#' apart, which are refused with the record they are in where \code{read.csv()}
+#' changes the data without a word: a record with more fields than the header
+#' (\code{read.csv()} turns the first column into row names) and a quote mark
+#' inside an unquoted field (\code{read.csv()} takes the rest of the file as one
+#' quoted run). Tables that inflate
 #' past 512 MiB are read by \code{read.csv()} itself, a piece at a time. A
 #' table that decompresses to more than the option
 #' \code{rmoriebricklayer.max_csv_bytes} (1 GiB by default) is refused.
@@ -237,7 +242,9 @@ bricklayer_data_manifest <- function(refresh = FALSE) {
     dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
     tmp <- tempfile(pattern = "manifest-", tmpdir = dirname(p), fileext = ".part")
     on.exit(unlink(tmp), add = TRUE)
-    .bl_data_get("/manifest.json", tmp, timeout = 60)
+    # the manifest is a list of tables (well under 1 MiB): 32 MiB is far past any real one, and a
+    # 300 MiB reply (a gzip bomb) was read whole, then failed to allocate (CRAN stress test of 0.5.14)
+    .bl_data_get("/manifest.json", tmp, timeout = 60, max_bytes = 32 * 2^20)
     m <- .rmbl_json_text(paste(readLines(tmp, warn = FALSE), collapse = "\n"), simplifyVector = FALSE)
     if (!is.list(m) || (length(m) && is.null(names(m)))) {
       stop("the manifest fetched from data.rmorie.com is not a JSON object", call. = FALSE)

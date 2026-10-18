@@ -1396,8 +1396,11 @@ inline void hawkes_rescaled(const double *t, std::size_t n, double T, int bkind,
             Q[i] = q;
         }
     }
-    // cumulative baseline on the grid, then linear interpolation at the events
-    const std::size_t m = std::max<std::size_t>(256, static_cast<std::size_t>(T) + 1);
+    // cumulative baseline on the grid, then linear interpolation at the events. A constant baseline
+    // is linear and exact on any grid: one point a time unit was 2^31 points for a horizon of 2^31 (a
+    // process killed for memory; CRAN stress test of 0.5.14). The sinusoidal one keeps a point a day,
+    // its horizon capped where it is read.
+    const std::size_t m = bkind == 0 ? 256 : std::max<std::size_t>(256, static_cast<std::size_t>(T) + 1);
     const double step = T / static_cast<double>(m - 1);
     std::vector<double> cum(m, 0.0), val(m);
     for (std::size_t q = 0; q < m; ++q) {
@@ -1408,6 +1411,7 @@ inline void hawkes_rescaled(const double *t, std::size_t n, double T, int bkind,
         if (q) cum[q] = cum[q - 1] + 0.5 * (val[q] + val[q - 1]) * step;
     }
     auto cumB = [&](double x) {
+        if (std::isnan(x)) return x;   /* a NaN cast to size_t is undefined behaviour (UBSan) */
         if (x <= 0.0) return 0.0;
         if (x >= T) return cum[m - 1];
         const double pos = x / step;

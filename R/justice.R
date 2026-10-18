@@ -471,6 +471,7 @@ plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NU
 #' @export
 life_table <- function(breaks, events, censored = 0, conf_level = 0.95,
                        conf_type = c("log-log", "log", "plain")) {
+  .rmbl_no_fn(censored = censored)
   conf_type <- .rmbl_arg(conf_type)
   conf_level <- .rmbl_conf_level(conf_level)
   if (is.character(breaks) || is.factor(breaks)) {
@@ -1224,8 +1225,8 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
 #'   increasing: \code{c(100, 200, 400)} is 0-100, 100-200 and 200-400 m.
 #' @param time_bands Upper edges of the time bands in days, increasing.
 #' @param nsim Monte Carlo permutations. Default 999.
-#' @param seed Optional seed for the permutations; the caller's random
-#'   stream is left as it was.
+#' @param seed Optional seed for the permutations, a whole number from
+#'   -2147483647 to 2^53 - 1; the caller's random stream is left as it was.
 #' @param coords \code{"lonlat"} or \code{"planar"}.
 #' @param max_pairs Limit on candidate pairs held in memory. Default 5e7.
 #'
@@ -1403,9 +1404,9 @@ knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = N
 # the seed is optional here, unlike .rmbl_with_seed()
 .rmbl_with_seed_maybe <- function(seed, expr) {
   if (is.null(seed)) return(expr)
-  seed <- .rmbl_num(seed, "seed", integer = TRUE)
-  if (length(seed) != 1L || is.na(seed)) stop("`seed` must be a single whole number", call. = FALSE)
-  .rmbl_with_seed(seed, expr)
+  # every seed the package takes, up to 2^53 - 1 (2^40 was refused here, and -2^31 called too large;
+  # CRAN stress test of 0.5.14)
+  .rmbl_with_seed(.rmbl_r_seed(seed), expr)
 }
 
 #' @export

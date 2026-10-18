@@ -156,6 +156,20 @@ analyse_table <- function(data, value, period, by = NULL, population = NULL,
     stop("`by` must be one or more column names, or NULL", call. = FALSE)
   }
   conf_level <- .rmbl_conf_level(conf_level)
+  # each a single value, checked here: the inner calls met them as base R did ("the condition has
+  # length > 1", "invalid format '%g'"; CRAN stress test of 0.5.14)
+  if (!is.null(population)) population <- .rmbl_string1(population, "population")
+  alpha <- .rmbl_conf_level(alpha, "alpha")
+  adjust <- .rmbl_arg(adjust, stats::p.adjust.methods)
+  for (nm in c("rounding", "suppression_limit")) {
+    v <- get(nm)
+    if (is.null(v)) next
+    v <- .rmbl_num(v, nm)
+    if (length(v) != 1L || is.na(v) || v < 0) {
+      stop(sprintf("`%s` must be one non-negative number, or NULL", nm), call. = FALSE)
+    }
+    assign(nm, v)
+  }
   units <- .rmbl_arg(units)
   direction <- .rmbl_arg(direction)
   rounding_kind <- .rmbl_arg(rounding_kind)
@@ -392,11 +406,14 @@ report_analysis <- function(x, path = NULL, format = c("markdown", "html"),
   if (!inherits(x, "bricklayer_analysis")) {
     stop("`x` must come from analyse_table()", call. = FALSE)
   }
+  if (!is.null(path)) path <- .rmbl_out_file(path, "path")
   if (!is.null(path) && missing(format)) {
-    format <- if (grepl("\\.html?$", path, ignore.case = TRUE)) "html" else
+    format <- if (is.character(path) && grepl("\\.html?$", path, ignore.case = TRUE)) "html" else
       "markdown"
   }
   format <- .rmbl_arg(format)
+  title <- .rmbl_text1(title, "title")
+  digits <- .rmbl_scalar(digits, "digits", -1, 15, integer = TRUE)
   m <- x$meta
   lines <- character()
   add <- function(...) lines <<- c(lines, ...)

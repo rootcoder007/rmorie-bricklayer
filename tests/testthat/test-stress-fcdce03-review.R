@@ -262,7 +262,7 @@ test_that("Z9 and Z7: hurwitz_zeta() refuses a q below -1e6 at once; the sibling
   t0 <- Sys.time()
   closed <- hurwitz_zeta(2, 0.5) + hurwitz_zeta(2, 0.5) - hurwitz_zeta(2, 1e9 + 0.5)
   expect_equal(hurwitz_zeta(2, q = -1e9 + 0.5), closed, tolerance = 1e-12)
-  expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 2)
+  expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), wall_limit(2))
   expect_equal(hurwitz_zeta(2, q = -0.5), 8.934802200544679, tolerance = 1e-9)
   expect_error(hurwitz_zeta(2, q = TRUE), "logical")
   expect_error(top_share(c(1, 2, 3, 10), factor("0.5")), "numeric")

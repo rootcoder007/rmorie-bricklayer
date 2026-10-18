@@ -244,6 +244,7 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
     v <- get(flag, inherits = FALSE)
     if (!is.logical(v) || length(v) != 1L || is.na(v)) stop(sprintf("`%s` must be TRUE or FALSE", flag), call. = FALSE)
   }
+  min_tail <- .rmbl_scalar(min_tail, "min_tail", 1, integer = TRUE)
   # a factor's level code is not a threshold (x_min = factor("3") fitted from 1, review of 52a8883)
   if (is.logical(x_min) || is.factor(x_min) || is.character(x_min)) {
     stop("`x_min` must be numeric, not logical, a factor or text", call. = FALSE)

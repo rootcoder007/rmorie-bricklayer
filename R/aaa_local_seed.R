@@ -20,7 +20,10 @@
 # neither the function nor the argument (CRAN stress test of b617a3f). 2^53 is where doubles stop
 # holding every whole number, the native kernels' seed range too.
 .rmbl_r_seed <- function(seed) {
-  if (!is.numeric(seed) || length(seed) != 1L || !is.finite(seed) || seed != round(seed) ||
+  if (!is.numeric(seed)) {
+    stop("`seed` must be a single whole number from -2147483647 to 2^53 - 1 (a numeric value)", call. = FALSE)
+  }
+  if (length(seed) != 1L || !is.finite(seed) || seed != round(seed) ||
         seed < -.Machine$integer.max || seed >= 2^53) {
     stop("`seed` must be a single whole number from -2147483647 to 2^53 - 1", call. = FALSE)
   }

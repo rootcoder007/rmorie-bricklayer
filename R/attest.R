@@ -138,7 +138,7 @@
 #' @export
 capsule_attest <- function(manifest, key, context = NULL,
                            prehash = "none", note = NULL) {
-  .rmbl_no_fn(note = note)
+  .rmbl_no_fn(note = note, context = context)
   if (!is.list(manifest)) {
     stop("`manifest` must be a manifest from make_manifest()",
       call. = FALSE
@@ -178,6 +178,7 @@ capsule_attest <- function(manifest, key, context = NULL,
 #' @export
 capsule_check_attestation <- function(attestation, manifest,
                                       key_expected = NULL) {
+  .rmbl_no_fn(key_expected = key_expected)
   checks <- list()
   note_row <- function(check, ok, detail = "") {
     checks[[length(checks) + 1L]] <<- data.frame(

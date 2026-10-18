@@ -510,7 +510,7 @@ bool load_curve(Curve *c, const char *name) {
     if (std::strlen(h->p) != want || std::strlen(h->n) != want ||
         std::strlen(h->b) != want || std::strlen(h->gx) != want ||
         std::strlen(h->gy) != want) {
-        Rf_errorcall(R_NilValue, "curve %s has a parameter of the wrong width", name);
+        RMBL_ARG_ERROR("curve %s has a parameter of the wrong width", name);
     }
     num_from_hex(&c->p, h->p);
     num_from_hex(&c->n, h->n);
@@ -552,16 +552,16 @@ extern "C" {
 SEXP C_rmbl_ecdsa_verify_impl(SEXP curve, SEXP qx, SEXP qy, SEXP r, SEXP s,
                          SEXP digest) {
     if (TYPEOF(curve) != STRSXP || XLENGTH(curve) != 1) {
-        Rf_errorcall(R_NilValue, "`curve` must be \"P-256\", \"P-384\" or \"P-521\"");
+        RMBL_ARG_ERROR("`curve` must be \"P-256\", \"P-384\" or \"P-521\"");
     }
     Curve c;
     if (!load_curve(&c, rmbl_str0(curve, "curve"))) {
-        Rf_errorcall(R_NilValue, "unsupported curve: %s", rmbl_str0(curve, "curve"));
+        RMBL_ARG_ERROR("unsupported curve: %s", rmbl_str0(curve, "curve"));
     }
     if (TYPEOF(qx) != RAWSXP || TYPEOF(qy) != RAWSXP ||
         TYPEOF(r) != RAWSXP || TYPEOF(s) != RAWSXP ||
         TYPEOF(digest) != RAWSXP) {
-        Rf_errorcall(R_NilValue, "the key, signature and digest must be raw vectors");
+        RMBL_ARG_ERROR("the key, signature and digest must be raw vectors");
     }
     Num nqx, nqy, nr, ns, e, one;
     from_bytes(&nqx, RAW(qx), static_cast<size_t>(XLENGTH(qx)));
@@ -638,11 +638,11 @@ SEXP C_rmbl_ecdsa_verify_impl(SEXP curve, SEXP qx, SEXP qy, SEXP r, SEXP s,
  * fails if the order is wrong, whatever else looks right. */
 SEXP C_rmbl_ec_order_impl(SEXP curve) {
     if (TYPEOF(curve) != STRSXP || XLENGTH(curve) != 1) {
-        Rf_errorcall(R_NilValue, "`curve` must be a single string");
+        RMBL_ARG_ERROR("`curve` must be a single string");
     }
     Curve c;
     if (!load_curve(&c, rmbl_str0(curve, "curve"))) {
-        Rf_errorcall(R_NilValue, "unsupported curve: %s", rmbl_str0(curve, "curve"));
+        RMBL_ARG_ERROR("unsupported curve: %s", rmbl_str0(curve, "curve"));
     }
     SEXP out = PROTECT(rmbl::alloc_vector(RAWSXP, c.bytes));
     to_bytes(&c.n, RAW(out), static_cast<size_t>(c.bytes));
@@ -655,13 +655,13 @@ SEXP C_rmbl_ec_order_impl(SEXP curve) {
  * `infinity` means the scalar was a multiple of the order. */
 SEXP C_rmbl_ec_mul_impl(SEXP curve, SEXP k) {
     if (TYPEOF(curve) != STRSXP || XLENGTH(curve) != 1) {
-        Rf_errorcall(R_NilValue, "`curve` must be a single string");
+        RMBL_ARG_ERROR("`curve` must be a single string");
     }
     Curve c;
     if (!load_curve(&c, rmbl_str0(curve, "curve"))) {
-        Rf_errorcall(R_NilValue, "unsupported curve: %s", rmbl_str0(curve, "curve"));
+        RMBL_ARG_ERROR("unsupported curve: %s", rmbl_str0(curve, "curve"));
     }
-    if (TYPEOF(k) != RAWSXP) Rf_errorcall(R_NilValue, "`k` must be a raw vector");
+    if (TYPEOF(k) != RAWSXP) RMBL_ARG_ERROR("`k` must be a raw vector");
     Num nk;
     from_bytes(&nk, RAW(k), static_cast<size_t>(XLENGTH(k)));
     Point q;

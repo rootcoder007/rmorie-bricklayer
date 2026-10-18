@@ -36,7 +36,7 @@ test_that("trend_test scales to thousands of periods, refuses absurd sizes", {
   y <- cumsum(rnorm(3000))
   t0 <- proc.time()[["elapsed"]]
   r <- trend_test(y)
-  expect_lt(proc.time()[["elapsed"]] - t0, 30)
+  expect_lt(proc.time()[["elapsed"]] - t0, wall_limit(30))
   expect_true(is.finite(r$slope_lower) && is.finite(r$slope_upper))
   expect_error(trend_test(seq_len(20001)), "20001")
 })

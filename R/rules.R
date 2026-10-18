@@ -69,7 +69,7 @@
 #' @export
 rule <- function(name, expr, column = NULL, severity = c("warning", "fatal"),
                  message = NULL) {
-  .rmbl_no_fn(name = name, column = column)
+  .rmbl_no_fn(name = name, column = column, message = message)
   severity <- .rmbl_arg(severity)
   name <- as.character(name)[1L]
   if (is.na(name) || !nzchar(name)) {
@@ -111,7 +111,8 @@ rule <- function(name, expr, column = NULL, severity = c("warning", "fatal"),
 #' column is [validate_schema()]'s business, and reporting
 #' it twice buries
 #' the real finding. A rule that ERRORS is reported as a failure naming the
-#' error, never swallowed: a rule that cannot run has not passed.
+#' error, never swallowed: a rule that cannot run has not passed. On a table
+#' of no rows a row-wise rule has no row to fail and passes.
 #'
 #' How a rule's result is read: a result that is not logical, or has length
 #' 0, is a failure (\code{"rule returned <class>, not a logical"}); a single value
@@ -199,6 +200,9 @@ validate_rules <- function(data, rules) {
                           r$message, conditionMessage(res)))
       next
     }
+    # a row-wise rule on a table of no rows has no row to fail (every rule failed on a 0-row frame;
+    # CRAN stress test of 0.5.14)
+    if (is.logical(res) && length(res) == 0L && nrow(data) == 0L) next
     if (!is.logical(res) || length(res) == 0L) {
       issues[[r$name]] <- list(
         severity = r$severity,

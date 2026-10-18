@@ -23,6 +23,7 @@
 #define R_NO_REMAP
 #include <R.h>
 #include <Rinternals.h>
+#include "rmbl_entry.h"
 #include <R_ext/Rdynload.h>
 
 #include <algorithm>
@@ -47,6 +48,9 @@ inline bool has_nan(const double *a, R_xlen_t n) {
 inline double quantile7_sorted(const std::vector<double> &v, double p) {
     const R_xlen_t n = static_cast<R_xlen_t>(v.size());
     if (n == 0) return std::nan("");
+    /* a NaN probability: NaN, as quantile() gives (casting floor(NaN) to an integer is undefined
+     * behaviour; UBSan, CRAN stress test of 0.5.14) */
+    if (std::isnan(p)) return p;
     if (n == 1) return v[0];
     const double h = (static_cast<double>(n) - 1.0) * p;
     double fl = std::floor(h);
@@ -473,7 +477,7 @@ SEXP C_rmbl_weighted_impl(SEXP x, SEXP w) {
     R_xlen_t n = XLENGTH(x);
     if (XLENGTH(w) != n) {
         UNPROTECT(2);
-        Rf_error("`x` and `w` must have the same length");
+        RMBL_ARG_ERROR("`x` and `w` must have the same length");
     }
     SEXP out = PROTECT(Rf_allocVector(REALSXP, 2));
     REAL(out)[0] = rmbl_weighted_mean(REAL(x), REAL(w), n);
@@ -487,7 +491,7 @@ SEXP C_rmbl_cor_spearman_impl(SEXP x, SEXP y) {
     y = PROTECT(Rf_coerceVector(y, REALSXP));
     if (XLENGTH(x) != XLENGTH(y)) {
         UNPROTECT(2);
-        Rf_error("`x` and `y` must have the same length");
+        RMBL_ARG_ERROR("`x` and `y` must have the same length");
     }
     double r = rmbl_cor_spearman(REAL(x), REAL(y), XLENGTH(x));
     UNPROTECT(2);
@@ -508,7 +512,7 @@ SEXP C_rmbl_cov_matrix_impl(SEXP x) {
     SEXP dim = Rf_getAttrib(x, R_DimSymbol);
     if (dim == R_NilValue || XLENGTH(dim) != 2) {
         UNPROTECT(1);
-        Rf_error("`x` must be a matrix");
+        RMBL_ARG_ERROR("`x` must be a matrix");
     }
     R_xlen_t n = INTEGER(dim)[0], p = INTEGER(dim)[1];
     SEXP out = PROTECT(Rf_allocMatrix(REALSXP, static_cast<int>(p),
@@ -540,7 +544,7 @@ SEXP C_rmbl_psi_impl(SEXP p, SEXP q, SEXP eps) {
     q = PROTECT(Rf_coerceVector(q, REALSXP));
     if (XLENGTH(p) != XLENGTH(q)) {
         UNPROTECT(2);
-        Rf_error("`p` and `q` must have the same length");
+        RMBL_ARG_ERROR("`p` and `q` must have the same length");
     }
     SEXP out = PROTECT(Rf_allocVector(REALSXP, 2));
     REAL(out)[0] = rmbl_psi(REAL(p), REAL(q), XLENGTH(p), Rf_asReal(eps));

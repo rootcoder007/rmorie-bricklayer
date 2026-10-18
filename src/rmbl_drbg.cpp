@@ -7,6 +7,7 @@
 #include <cstring>
 #include <R.h>
 #include <Rinternals.h>
+#include "rmbl_entry.h"
 
 #include "rmbl_drbg_core.h"
 
@@ -17,8 +18,8 @@ using rmbl_drbg::SEEDLEN;
 
 void need_raw(SEXP x, R_xlen_t lo, R_xlen_t hi, const char *what) {
     if (TYPEOF(x) != RAWSXP || XLENGTH(x) < lo || XLENGTH(x) > hi) {
-        if (lo == hi) Rf_error("`%s` must be a raw vector of %d bytes", what, static_cast<int>(lo));
-        Rf_error("`%s` must be a raw vector of %d to %d bytes", what, static_cast<int>(lo), static_cast<int>(hi));
+        if (lo == hi) RMBL_ARG_ERROR("`%s` must be a raw vector of %d bytes", what, static_cast<int>(lo));
+        RMBL_ARG_ERROR("`%s` must be a raw vector of %d to %d bytes", what, static_cast<int>(lo), static_cast<int>(hi));
     }
 }
 
@@ -58,7 +59,7 @@ extern "C" {
 SEXP C_rmbl_aes256_encrypt_impl(SEXP key, SEXP blocks) {
     need_raw(key, 32, 32, "key");
     if (TYPEOF(blocks) != RAWSXP || XLENGTH(blocks) % 16 != 0) {
-        Rf_error("`blocks` must be a raw vector whose length is a multiple of 16");
+        RMBL_ARG_ERROR("`blocks` must be a raw vector whose length is a multiple of 16");
     }
     SEXP out = PROTECT(Rf_allocVector(RAWSXP, XLENGTH(blocks)));
     rmbl_drbg::Aes256 aes;
@@ -88,7 +89,7 @@ SEXP C_rmbl_drbg_reseed_impl(SEXP key, SEXP v, SEXP entropy, SEXP add) {
 SEXP C_rmbl_drbg_generate_impl(SEXP key, SEXP v, SEXP n, SEXP add) {
     need_raw(add, 0, SEEDLEN, "additional");
     const int len = Rf_asInteger(n);
-    if (len == NA_INTEGER || len < 1 || len > 65536) Rf_error("`n` must be between 1 and 65536 bytes");
+    if (len == NA_INTEGER || len < 1 || len > 65536) RMBL_ARG_ERROR("`n` must be between 1 and 65536 bytes");
     CtrDrbg d;
     load(d, key, v);
     SEXP out = PROTECT(Rf_allocVector(RAWSXP, len));

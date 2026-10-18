@@ -40,9 +40,21 @@ void rmbl_interrupt_raise_unbarriered(void);
 }
 #endif
 
+/* An argument error. Under the barrier (C++) it is thrown and raised by the barrier once the body's
+ * C++ objects are destroyed: Rf_error() jumped over live std::vectors and strings and leaked them
+ * (merkle chunks, an NA url with headers set, blake2b with an NA element; LSan, CRAN stress test of
+ * 0.5.14). Outside any barrier, and in C, it is Rf_error(). */
+#ifdef __cplusplus
+extern "C" int rmbl_barrier_active(void);
+[[noreturn]] void rmbl_arg_error(const char *fmt, ...);
+#define RMBL_ARG_ERROR rmbl_arg_error
+#else
+#define RMBL_ARG_ERROR Rf_error
+#endif
+
 static inline const char *rmbl_str0(SEXP x, const char *name) {
     if (TYPEOF(x) != STRSXP || XLENGTH(x) < 1 || STRING_ELT(x, 0) == NA_STRING) {
-        Rf_error("`%s` must be a non-missing string", name);
+        RMBL_ARG_ERROR("`%s` must be a non-missing string", name);
     }
     return CHAR(STRING_ELT(x, 0));
 }
@@ -56,10 +68,10 @@ static inline size_t rmbl_str0_len(SEXP x, const char *name) {
 
 static inline const char *rmbl_str_at(SEXP x, R_xlen_t i, const char *name) {
     if (TYPEOF(x) != STRSXP || i < 0 || i >= XLENGTH(x)) {
-        Rf_error("`%s` must be a character vector", name);
+        RMBL_ARG_ERROR("`%s` must be a character vector", name);
     }
     if (STRING_ELT(x, i) == NA_STRING) {
-        Rf_error("`%s` contains a missing string (element %d)", name, (int)(i + 1));
+        RMBL_ARG_ERROR("`%s` contains a missing string (element %d)", name, (int)(i + 1));
     }
     return CHAR(STRING_ELT(x, i));
 }
@@ -90,6 +102,19 @@ struct Fail : std::runtime_error {
     va_end(ap);
     throw Fail(buf);
 }
+}  // namespace rmbl
+
+[[noreturn]] inline void rmbl_arg_error(const char *fmt, ...) {
+    char buf[8192];
+    va_list ap;
+    va_start(ap, fmt);
+    std::vsnprintf(buf, sizeof buf, fmt, ap);
+    va_end(ap);
+    if (rmbl_barrier_active()) throw rmbl::Fail(buf);
+    Rf_error("%s", buf);
+}
+
+namespace rmbl {
 
 /* Rf_allocVector() for a large result, with an allocation failure thrown as std::bad_alloc instead of
  * R's longjmp, so the C++ buffers that hold the result's contents are freed (sen_slopes() leaked 858 MB

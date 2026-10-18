@@ -321,7 +321,7 @@ test_that("limits live: a trickle is cut off, an endless reply is dropped, a cap
   res <- r4(".bl_http_get_local")(paste0(srv$base, "/drip"), 120, NULL)
   expect_identical(as.integer(res$status), -1L)
   expect_match(res$error, "too slow|slow")
-  expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 90)
+  expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), wall_limit(90))
   # an unbounded in-memory reply: status -1 and NO body, with the limit named
   res <- r4(".bl_http_get_local")(paste0(srv$base, "/endless"), 60, NULL)
   expect_identical(as.integer(res$status), -1L)

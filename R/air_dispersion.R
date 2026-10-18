@@ -263,6 +263,7 @@ pg_sigmas <- function(x, stability = "D", setting = "rural") {
 #' @export
 briggs_plume_rise <- function(x, u, diameter, exit_velocity, stack_temp, ambient_temp,
                               stability = "D", dtheta_dz = NULL, g = 9.80616) {
+  .rmbl_no_fn(stability = stability)
   cls <- .ad_class(stability)
   if (!is.numeric(u) || length(u) != 1L || !is.finite(u) || u <= 0) {
     stop("`u` must be a single positive wind speed", call. = FALSE)
@@ -311,7 +312,7 @@ briggs_plume_rise <- function(x, u, diameter, exit_velocity, stack_temp, ambient
 }
 
 .ad_setting <- function(setting) {
-  if (length(setting) != 1L || !setting %in% c("rural", "urban")) {
+  if (!is.character(setting) || length(setting) != 1L || !setting %in% c("rural", "urban")) {
     stop("`setting` must be \"rural\" or \"urban\"", call. = FALSE)
   }
   setting
@@ -410,6 +411,7 @@ gaussian_puff <- function(mass, u, h, receptors, t, stability = "D", setting = "
 #'   empty cells so the plume of interest stays inside the ring.
 #' @export
 advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source = NULL, max_work = 1e8) {
+  .rmbl_no_fn(source = source)
   if (!is.matrix(c0) || !is.numeric(c0)) {
     stop("`c0` must be a numeric matrix (one row per x cell, one column per y cell)", call. = FALSE)
   }
@@ -559,7 +561,11 @@ lagrangian_particles <- function(n, x0, y0, u, v, kx, ky, dt, n_steps, seed = 0,
     .rmbl_normals
   } else if (is.function(normals)) {
     function(n, seed, stream) {
-      z <- normals(n, seed, stream)
+      # called as normals(n, seed, stream): a function that takes other arguments is said so
+      z <- tryCatch(normals(n, seed, stream), error = function(e) {
+        stop(sprintf("`normals` failed when called as normals(n, seed, stream): %s", conditionMessage(e)),
+             call. = FALSE)
+      })
       if (!is.numeric(z) || length(z) != n || any(!is.finite(z))) {
         stop(sprintf("`normals` must return %d finite numbers; it returned %s", n,
                      if (is.numeric(z)) sprintf("%d, %d of them finite", length(z), sum(is.finite(z)))

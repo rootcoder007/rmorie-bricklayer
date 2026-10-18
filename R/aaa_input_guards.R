@@ -140,6 +140,11 @@
                  if (is.data.frame(x)) "a data frame" else if (is.factor(x)) "a factor" else
                    if (is.function(x)) "a function" else class(x)[[1L]]), call. = FALSE)
   }
+  # a date is a number of days, never a count: reps = Sys.Date() ran 20,000 replications (CRAN stress
+  # test of 0.5.14). A period (the x of a trend) may be a date, so only counts refuse it.
+  if (integer && inherits(x, c("Date", "POSIXt", "difftime"))) {
+    stop(sprintf("`%s` must be a whole number, not a %s", what, class(x)[[1L]]), call. = FALSE)
+  }
   if (is.character(x)) {
     v <- suppressWarnings(as.numeric(x))
     bad <- !is.na(x) & is.na(v) & nzchar(trimws(x)) & x != "NA"
@@ -190,6 +195,35 @@
   x
 }
 
+# One number (a whole one with `integer`), finite, in [min, max]: the checks a scalar argument needs,
+# said in words. A list, a data frame, text that is no number, NA, a vector are each refused here, not
+# by the base R call they reached (`if (n < min_tail)`: "missing value where TRUE/FALSE needed"; CRAN
+# stress test of 0.5.14)
+.rmbl_scalar <- function(x, what, min = -Inf, max = Inf, integer = FALSE) {
+  v <- .rmbl_num(x, what, integer = integer)
+  if (length(v) != 1L || is.na(v) || !is.finite(v) || v < min || v > max) {
+    rng <- if (is.finite(min) && is.finite(max)) sprintf(" from %s to %s", format(min), format(max)) else
+      if (is.finite(min)) sprintf(" of at least %s", format(min)) else
+        if (is.finite(max)) sprintf(" of at most %s", format(max)) else ""
+    stop(sprintf("`%s` must be one %s%s", what, if (integer) "whole number" else "number", rng), call. = FALSE)
+  }
+  v
+}
+
+# An error handler for a user's function called in a loop (a statistic, an injection): the error
+# becomes `default`, except R's own time limits, which must end the call. Caught, they were each an NA,
+# and setTimeLimit() could never stop capsule_power() or capsule_falsify() (CRAN stress test of 0.5.14).
+.rmbl_or <- function(default) {
+  force(default)
+  function(e) {
+    m <- conditionMessage(e)
+    lim <- c("reached elapsed time limit", "reached CPU time limit",
+             gettext("reached elapsed time limit", domain = "R"), gettext("reached CPU time limit", domain = "R"))
+    if (any(startsWith(m, lim))) stop(e)
+    default
+  }
+}
+
 # A function where data goes: said in words, before as.character(), match() or `[` refuse it in
 # theirs ("cannot coerce type 'closure' to vector of type 'character'"; 64 such arguments in the
 # re-test of the b617a3f CRAN stress fixes). Called with the arguments named: .rmbl_no_fn(x = x)
@@ -197,6 +231,8 @@
   a <- list(...)
   for (nm in names(a)) {
     if (is.function(a[[nm]])) stop(sprintf("`%s` must be data, not a function", nm), call. = FALSE)
+    # an environment too: as.character() refuses it in its own words (CRAN stress test of 0.5.14)
+    if (is.environment(a[[nm]])) stop(sprintf("`%s` must be data, not an environment", nm), call. = FALSE)
   }
   invisible(TRUE)
 }

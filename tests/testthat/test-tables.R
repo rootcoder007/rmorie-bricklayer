@@ -473,10 +473,12 @@ test_that("the step test uses the scan's own null, not the best split's", {
   # An exact permutation test on six points has a FLOOR. The only
   # orderings that separate three low values from three high ones are
   # the 3! * 3! arrangements within each side, twice for the two
-  # directions, so p cannot fall below (1 + 72) / (1 + 720) however
-  # clear the step is: six points are six points.
+  # directions, so p cannot fall below 72 / 720 however clear the step
+  # is: six points are six points. (The observed ordering is one of the
+  # 720; it was counted a second time, (1 + 72) / (1 + 720); CRAN stress
+  # test of 0.5.14.)
   clear <- step_change(c(1, 2, 1, 100, 101, 99))
-  expect_equal(clear$p_value, (1 + 2 * 36) / (1 + 720), tolerance = 1e-9)
+  expect_equal(clear$p_value, (2 * 36) / 720, tolerance = 1e-9)
   expect_equal(clear$index, 3L)
   # With more periods the floor drops, by the same combinatorial
   # argument: eight points split four and four give 2 * (4!)^2 / 8!,

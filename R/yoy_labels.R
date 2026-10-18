@@ -141,6 +141,7 @@ yoy_label <- function(x, labels) {
 #' try(fiscal_year_label(TRUE))
 #' @export
 fiscal_year_label <- function(end_year, sep = "/", short = TRUE) {
+  sep <- .rmbl_text1(sep, "sep")
   if (!is.null(end_year) && !is.numeric(end_year) && !is.character(end_year)) {
     stop("`end_year` must be numeric or character years", call. = FALSE)
   }

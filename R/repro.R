@@ -98,6 +98,7 @@
 #' try(manifest_recompute(m, d, list(function(z) nrow(z))))
 #' @export
 manifest_recompute <- function(manifest, data, statistics, tol = NULL) {
+  if (!is.null(tol)) tol <- .rmbl_scalar(tol, "tol", 0)
   if (!is.list(manifest) || is.null(manifest$results)) {
     stop("`manifest` must be a manifest with recorded results",
          call. = FALSE)

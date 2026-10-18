@@ -227,7 +227,7 @@ test_that("series and stats kernels: Bernoulli values, degenerate inputs, argume
   x <- as.numeric(1:1e5)
   t0 <- proc.time()[["elapsed"]]
   ts2 <- .Call(C("C_rmbl_top_share"), x, rep(0.5, 1e5))
-  expect_lt(proc.time()[["elapsed"]] - t0, 5)
+  expect_lt(proc.time()[["elapsed"]] - t0, wall_limit(5))
   expect_equal(ts2$share[1], sum(50001:1e5) / sum(x))
   expect_identical(ts2$units[1], 50000L)
   expect_identical(.Call(C("C_rmbl_quantile"), c(1, NaN), 0.5), NaN)

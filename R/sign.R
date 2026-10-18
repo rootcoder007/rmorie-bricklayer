@@ -387,7 +387,7 @@ fips_key <- function(scheme, public, secret = NULL) {
 #' try(fips_mu(fips_keygen("SLH-DSA-SHA2-128f"), "m"))
 #' @export
 fips_mu <- function(key, message, context = NULL, prehash = "none") {
-  .rmbl_no_fn(message = message, context = context)
+  .rmbl_no_fn(message = message, context = context, prehash = prehash)
   scheme <- .rmbl_fips_key_scheme(key)
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (is.na(mode)) {
@@ -816,6 +816,7 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #' @export
 pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL,
                        sk_prf = NULL) {
+  .rmbl_no_fn(sk_seed = sk_seed, pub_seed = pub_seed, sk_prf = sk_prf)
   height <- .rmbl_num(height, "height", integer = TRUE)
   if (length(height) != 1L || is.na(height) || height < 1L || height > 16L) {
     stop("`height` must be a single integer between 1 and 16", call. = FALSE)

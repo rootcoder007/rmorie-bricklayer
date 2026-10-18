@@ -100,8 +100,14 @@ yoy_html <- function(x, file, title = "Year-over-year change",
   if (!inherits(x, "rmbl_yoy")) {
     stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
+  # an HTML page is written to a file or a connection (writeLines(html, NULL) failed in base R's words)
+  if (is.null(file)) stop("`file` must be a file path or a connection", call. = FALSE)
   file <- .rmbl_out_file(file)
   title <- .rmbl_text1(title, "title")
+  if (!is.null(subtitle)) subtitle <- .rmbl_text1(subtitle, "subtitle")
+  if (!is.null(notes) && (!is.character(notes) || anyNA(notes))) {
+    stop("`notes` must be text (a character vector), or NULL", call. = FALSE)
+  }
   m <- .yoy_meta(x)
   pal <- .yoy_pal(palette)
   d <- as.data.frame(x)
@@ -294,7 +300,13 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
     stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
   file <- .rmbl_out_file(file, connection = FALSE)
+  width <- .rmbl_scalar(width, "width", 2, 200)
+  height <- .rmbl_scalar(height, "height", 2, 200)
   title <- .rmbl_text1(title, "title")
+  if (!is.null(subtitle)) subtitle <- .rmbl_text1(subtitle, "subtitle")
+  if (!is.null(notes) && (!is.character(notes) || anyNA(notes))) {
+    stop("`notes` must be text (a character vector), or NULL", call. = FALSE)
+  }
   m <- .yoy_meta(x)
   pal <- .yoy_pal(palette)
   d <- as.data.frame(x)

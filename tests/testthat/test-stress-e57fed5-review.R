@@ -434,7 +434,7 @@ test_that("E12: the lock is released however its holder ends", {
   # released: taken again at once
   t0 <- proc.time()[["elapsed"]]
   expect_identical(with_lock(p, function() "again"), "again")
-  expect_lt(proc.time()[["elapsed"]] - t0, 2)
+  expect_lt(proc.time()[["elapsed"]] - t0, wall_limit(2))
   # the lock is taken and f() run in one C frame whose cleanup is the release: no R-level handler
   # for an interrupt to cut short (review of 29a55d8, G6)
   src <- paste(deparse(with_lock), collapse = "\n")

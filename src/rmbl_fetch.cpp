@@ -201,6 +201,21 @@ bool ipv6_private(const unsigned char b[16]) {
             return ipv4_private(v4);
         }
     }
+    /* 2002::/16 6to4 embeds an IPv4 address in bytes 2..5: [2002:7f00:1::] is 127.0.0.1 (CRAN stress
+     * test of 0.5.14) */
+    if (b[0] == 0x20 && b[1] == 0x02) {
+        const uint32_t v4 = (static_cast<uint32_t>(b[2]) << 24) | (b[3] << 16) | (b[4] << 8) | b[5];
+        return ipv4_private(v4);
+    }
+    /* 2001::/32 Teredo hides its client's IPv4 address (XORed) in the last bytes: never a public host to
+     * fetch from; 64:ff9b:1::/48 is a local-use NAT64 prefix (RFC 8215); 100::/64 discards */
+    if (b[0] == 0x20 && b[1] == 0x01 && b[2] == 0 && b[3] == 0) return true;
+    if (b[0] == 0 && b[1] == 0x64 && b[2] == 0xff && b[3] == 0x9b && b[4] == 0 && b[5] == 1) return true;
+    if (b[0] == 0x01 && b[1] == 0) {
+        bool z = true;
+        for (int i = 2; i < 8; ++i) if (b[i]) z = false;
+        if (z) return true;
+    }
     if ((b[0] & 0xfe) == 0xfc) return true;                  /* fc00::/7 unique local */
     if (b[0] == 0xfe && (b[1] & 0xc0) == 0x80) return true;  /* fe80::/10 link-local */
     if (b[0] == 0xfe && (b[1] & 0xc0) == 0xc0) return true;  /* fec0::/10 site-local */
@@ -521,9 +536,11 @@ CURLcode secure_perform(CURL *h, const std::string &start_url,
             if (err) *err = "too many redirects";
             return CURLE_TOO_MANY_REDIRECTS;
         }
-        /* a redirected POST becomes a GET, as every browser does; the
-         * redirect's own body is not the answer */
-        curl_easy_setopt(h, CURLOPT_HTTPGET, 1L);
+        /* after a 301, 302 or 303 a redirected POST becomes a GET, as every browser does; a 307 or 308
+         * says to repeat the request as it was (RFC 9110 15.4.8-9), so a POST stays a POST with its
+         * body, to the same host only (it became a GET; CRAN stress test of 0.5.14). The redirect's
+         * own body is not the answer either way. */
+        if (code != 307 && code != 308) curl_easy_setopt(h, CURLOPT_HTTPGET, 1L);
         reset();
         url = next;
     }

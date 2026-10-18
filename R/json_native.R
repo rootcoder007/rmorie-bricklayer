@@ -344,7 +344,9 @@ bricklayer_json_base64url_dec <- function(input) {
 .rmbl_json_indent_init <- function(pretty) {
   if (isTRUE(pretty)) pretty <- 2L
   if (is.numeric(pretty)) {
-    stopifnot(abs(pretty) < 20)
+    if (length(pretty) != 1L || is.na(pretty) || abs(pretty) >= 20) {
+      stop("`pretty` must be TRUE, FALSE or one number of spaces below 20", call. = FALSE)
+    }
     structure(0L, indent_spaces = as.integer(pretty))
   } else {
     NA_integer_
@@ -889,16 +891,54 @@ bricklayer_json_unbox <- function(x) {
   }
   s <- enc2utf8(s)
   if (startsWith(s, "\x1e")) s <- substring(s, 2L)
+  # the package's native path for a well-formed document (85 s for a 15 MiB reply here; CRAN stress
+  # test of 0.5.14); it gives up (NULL) on whatever needs this parser's words: an error, a big integer,
+  # a duplicate key, deep nesting. A staged bundle has no native code and parses here.
+  fast <- .rmbl_native$json
+  if (is.null(fast)) {
+    fast <- exists("C_rmbl_json_fast", inherits = TRUE)
+    .rmbl_native$json <- fast
+  }
+  if (fast && validUTF8(s)) {
+    r <- .Call(C_rmbl_json_fast, s, duplicate_keys == "keep")
+    if (!is.null(r)) return(r[[1L]])
+  }
   ch <- strsplit(s, "", fixed = TRUE)[[1]]
   n <- length(ch)
   i <- 1L
+  # The code points once, and the positions the scanner jumps to (the next character that is not
+  # white space, not a digit, or that ends a run of plain string text): one R call per character
+  # took 85 s for a 15 MiB reply (CRAN stress test of 0.5.14).
+  cp <- utf8ToInt(s)
+  if (length(cp) != n || anyNA(cp)) {
+    cp <- vapply(ch, function(c) {
+      v <- utf8ToInt(c)
+      if (length(v) == 1L && !is.na(v)) v else 65533L
+    }, 1L, USE.NAMES = FALSE)
+  }
+  is_ws <- cp == 32L | cp == 9L | cp == 10L | cp == 13L
+  not_ws <- as.double(which(!is_ws))   # double: findInterval() copies an integer vector each call
+  is_dig <- cp >= 48L & cp <= 57L
+  not_dig <- as.double(which(!is_dig))
+  spec <- as.double(which(cp == 34L | cp == 92L | cp < 32L))   # a quote, a backslash or a control character
+  # the first position of `v` at or after `pos`, n + 1 when there is none
+  after <- function(pos, v) {
+    j <- v[findInterval(pos - 1L, v, checkSorted = FALSE, checkNA = FALSE) + 1L]
+    if (is.na(j)) n + 1L else as.integer(j)
+  }
   depth <- 0L          # nesting, capped: 20,000 "[" exhausted the C stack
   big_warned <- FALSE  # one warning per document for integers above 2^53
   bad <- function(msg) stop(sprintf("%s at character %d", msg, i), call. = FALSE)
-  ws <- function() while (i <= n && (ch[i] == " " || ch[i] == "\t" || ch[i] == "\n" || ch[i] == "\r")) i <<- i + 1L
+  ws <- function() if (i <= n && is_ws[i]) i <<- after(i, not_ws)
   str_ <- function() {
     i <<- i + 1L
     st <- i
+    # a string with no escape (nearly every one): its text in one step
+    j <- after(i, spec)
+    if (j <= n && cp[j] == 34L) {
+      i <<- j + 1L
+      return(if (j > st) paste(ch[st:(j - 1L)], collapse = "") else "")
+    }
     # pieces are appended into a doubling buffer: c(parts, ...) per escape
     # was quadratic, and 532 bytes of gzip held 250,000 escapes
     parts <- character(32L)
@@ -909,6 +949,7 @@ bricklayer_json_unbox <- function(x) {
       parts[np] <<- v
     }
     repeat {
+      i <<- after(i, spec)
       if (i > n) bad("unterminated string")
       c0 <- ch[i]
       if (c0 == "\"") break
@@ -940,8 +981,7 @@ bricklayer_json_unbox <- function(x) {
         st <- i
         next
       }
-      if (utf8ToInt(c0) < 32L) bad("control character in string")
-      i <<- i + 1L
+      bad("control character in string")
     }
     if (i > st) push(paste(ch[st:(i - 1L)], collapse = ""))
     i <<- i + 1L
@@ -950,21 +990,21 @@ bricklayer_json_unbox <- function(x) {
   num_ <- function() {
     st <- i
     if (ch[i] == "-") i <<- i + 1L
-    if (i > n || !grepl("[0-9]", ch[i])) bad("invalid number")
-    if (ch[i] == "0") i <<- i + 1L else while (i <= n && grepl("[0-9]", ch[i])) i <<- i + 1L
+    if (i > n || !is_dig[i]) bad("invalid number")
+    if (ch[i] == "0") i <<- i + 1L else i <<- after(i, not_dig)
     isint <- TRUE
     if (i <= n && ch[i] == ".") {
       isint <- FALSE
       i <<- i + 1L
-      if (i > n || !grepl("[0-9]", ch[i])) bad("invalid number")
-      while (i <= n && grepl("[0-9]", ch[i])) i <<- i + 1L
+      if (i > n || !is_dig[i]) bad("invalid number")
+      i <<- after(i, not_dig)
     }
     if (i <= n && (ch[i] == "e" || ch[i] == "E")) {
       isint <- FALSE
       i <<- i + 1L
       if (i <= n && (ch[i] == "+" || ch[i] == "-")) i <<- i + 1L
-      if (i > n || !grepl("[0-9]", ch[i])) bad("invalid number")
-      while (i <= n && grepl("[0-9]", ch[i])) i <<- i + 1L
+      if (i > n || !is_dig[i]) bad("invalid number")
+      i <<- after(i, not_dig)
     }
     t0 <- paste(ch[st:(i - 1L)], collapse = "")
     v <- .rmbl_strtod(t0)
@@ -981,6 +1021,11 @@ bricklayer_json_unbox <- function(x) {
         warning(sprintf(paste0("number %s is a whole number beyond 2^53 and cannot be held ",
                                "exactly in a double"), t0), call. = FALSE)
       }
+    }
+    # fewer than 16 digits cannot pass 2^53: the digit checks are skipped (they were a regex per number)
+    if (isint && nchar(t0) < 16L) {
+      if (v > 2147483647 || v < -2147483647) return(v)
+      return(as.integer(v))
     }
     if (isint) {
       digs <- sub("^0+(?=[0-9])", "", sub("^-", "", t0), perl = TRUE)
@@ -1003,10 +1048,15 @@ bricklayer_json_unbox <- function(x) {
     }
     v
   }
+  # the depth is put back on return; an error ends the parse, so no on.exit() (a cost per value)
   value <- function() {
     depth <<- depth + 1L
     if (depth > 100L) bad("nesting deeper than 100 levels")
-    on.exit(depth <<- depth - 1L)
+    v <- value_()
+    depth <<- depth - 1L
+    v
+  }
+  value_ <- function() {
     ws()
     if (i > n) bad("unexpected end of input")
     c0 <- ch[i]
@@ -1072,19 +1122,19 @@ bricklayer_json_unbox <- function(x) {
       return(lapply(vals, function(w) w[[1L]]))
     }
     if (c0 == "\"") return(str_())
-    if (c0 == "t" && identical(substr(s, i, i + 3L), "true")) {
+    if (c0 == "t" && i + 3L <= n && identical(paste(ch[i:(i + 3L)], collapse = ""), "true")) {
       i <<- i + 4L
       return(TRUE)
     }
-    if (c0 == "f" && identical(substr(s, i, i + 4L), "false")) {
+    if (c0 == "f" && i + 4L <= n && identical(paste(ch[i:(i + 4L)], collapse = ""), "false")) {
       i <<- i + 5L
       return(FALSE)
     }
-    if (c0 == "n" && identical(substr(s, i, i + 3L), "null")) {
+    if (c0 == "n" && i + 3L <= n && identical(paste(ch[i:(i + 3L)], collapse = ""), "null")) {
       i <<- i + 4L
       return(NULL)
     }
-    if (c0 == "-" || grepl("[0-9]", c0)) return(num_())
+    if (c0 == "-" || is_dig[i]) return(num_())
     bad("unexpected character")
   }
   v <- value()
@@ -1358,6 +1408,7 @@ bricklayer_json_from_json <- function(txt, simplifyVector = TRUE,
   if (identical(simplify, FALSE)) simplifyVector <- simplifyDataFrame <- simplifyMatrix <- FALSE
   if (!is.character(txt) && !inherits(txt, "connection"))
     stop("Argument 'txt' must be a JSON string, URL or file.", call. = FALSE)
+  if (is.character(txt) && anyNA(txt)) stop("Argument 'txt' must be a JSON string, not NA.", call. = FALSE)
   if (is.character(txt) && length(txt) == 1L && nchar(txt, type = "bytes") < 2084 &&
       !bricklayer_json_validate(txt)) {
     if (grepl("^https?://", txt, useBytes = TRUE)) {
@@ -1989,7 +2040,11 @@ bricklayer_json_unserialize <- function(txt, trusted = FALSE) {
   if (!is.character(txt) || length(txt) != 1L || is.na(txt)) {
     stop("`txt` must be one string of JSON from bricklayer_json_serialize()", call. = FALSE)
   }
-  .rmbl_json_unpack(.rmbl_json_parse(txt), trusted = isTRUE(trusted))
+  obj <- .rmbl_json_parse(txt)
+  if (!is.list(obj) || is.null(names(obj))) {
+    stop("`txt` is not JSON written by bricklayer_json_serialize() (an object with a type)", call. = FALSE)
+  }
+  .rmbl_json_unpack(obj, trusted = isTRUE(trusted))
 }
 
 

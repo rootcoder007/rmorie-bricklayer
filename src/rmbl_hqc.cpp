@@ -9,6 +9,7 @@
 
 #include <R.h>
 #include <Rinternals.h>
+#include "rmbl_entry.h"
 
 #include "rmbl_hqc_core.h"
 
@@ -22,16 +23,16 @@ using rmbl_hqc::Scheme4;
 
 int hqc_level(SEXP level) {
     if (TYPEOF(level) != INTSXP || XLENGTH(level) != 1) {
-        Rf_error("`level` must be a single integer: 1, 3 or 5");
+        RMBL_ARG_ERROR("`level` must be a single integer: 1, 3 or 5");
     }
     int l = INTEGER(level)[0];
-    if (l != 1 && l != 3 && l != 5) Rf_error("`level` must be 1, 3 or 5");
+    if (l != 1 && l != 3 && l != 5) RMBL_ARG_ERROR("`level` must be 1, 3 or 5");
     return l;
 }
 
 void need_raw(SEXP x, size_t n, const char *what) {
     if (TYPEOF(x) != RAWSXP || static_cast<size_t>(XLENGTH(x)) != n) {
-        Rf_error("`%s` must be a raw vector of %d bytes", what, static_cast<int>(n));
+        RMBL_ARG_ERROR("`%s` must be a raw vector of %d bytes", what, static_cast<int>(n));
     }
 }
 
@@ -68,7 +69,7 @@ SEXP encaps(SEXP ek, SEXP m, SEXP salt) {
     need_raw(m, P::K, "m");
     need_raw(salt, P::SALT, "salt");
     if (!Scheme<P>::ek_ok(RAW(ek))) {
-        Rf_error("the encapsulation key is malformed (bits set past the code length)");
+        RMBL_ARG_ERROR("the encapsulation key is malformed (bits set past the code length)");
     }
     SEXP c = PROTECT(Rf_allocVector(RAWSXP, static_cast<R_xlen_t>(P::CT)));
     SEXP s = PROTECT(Rf_allocVector(RAWSXP, 32));
@@ -83,7 +84,7 @@ SEXP decaps(SEXP dk, SEXP ct) {
     need_raw(dk, P::DK, "dk");
     need_raw(ct, P::CT, "ct");
     if (!Scheme<P>::dk_ok(RAW(dk))) {
-        Rf_error("the decapsulation key is corrupt: its seeds do not derive from each other");
+        RMBL_ARG_ERROR("the decapsulation key is corrupt: its seeds do not derive from each other");
     }
     SEXP ss = PROTECT(Rf_allocVector(RAWSXP, 32));
     Scheme<P>::decaps(RAW(ss), RAW(dk), RAW(ct));
@@ -128,7 +129,7 @@ SEXP encaps4(SEXP ek, SEXP m, SEXP salt) {
     need_raw(m, P::K, "m");
     need_raw(salt, S::SALT, "salt");
     if (!S::ek_ok(RAW(ek))) {
-        Rf_error("the encapsulation key is malformed (bits set past the code length)");
+        RMBL_ARG_ERROR("the encapsulation key is malformed (bits set past the code length)");
     }
     SEXP c = PROTECT(Rf_allocVector(RAWSXP, static_cast<R_xlen_t>(S::CT)));
     SEXP s = PROTECT(Rf_allocVector(RAWSXP, static_cast<R_xlen_t>(S::SS)));
@@ -144,7 +145,7 @@ SEXP decaps4(SEXP dk, SEXP ct) {
     need_raw(dk, S::DK, "dk");
     need_raw(ct, S::CT, "ct");
     if (!S::dk_ok(RAW(dk))) {
-        Rf_error("the decapsulation key is corrupt: its public half is not the one its secret seed makes");
+        RMBL_ARG_ERROR("the decapsulation key is corrupt: its public half is not the one its secret seed makes");
     }
     SEXP ss = PROTECT(Rf_allocVector(RAWSXP, static_cast<R_xlen_t>(S::SS)));
     S::decaps(RAW(ss), RAW(dk), RAW(ct));
@@ -310,7 +311,7 @@ SEXP C_rmbl_hqc_backend_impl(SEXP portable) {
 SEXP C_rmbl_hqc_selftest_impl(SEXP level, SEXP trials, SEXP seed) {
     need_raw(seed, 32, "seed");
     int n = Rf_asInteger(trials);
-    if (n == NA_INTEGER || n < 0) Rf_error("`trials` must be a non-negative integer");
+    if (n == NA_INTEGER || n < 0) RMBL_ARG_ERROR("`trials` must be a non-negative integer");
     int bad = 0;
     switch (hqc_level(level)) {
     case 1: bad = selftest<HQC1>(n, RAW(seed)); break;

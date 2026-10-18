@@ -163,7 +163,7 @@ capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
       pg$update(i, sprintf("permutation %d/%d", i, n))
       d <- data
       d[[treatment]] <- sample(d[[treatment]])
-      tryCatch(as.numeric(statistic(d))[1L], error = function(e) NA_real_)
+      tryCatch(as.numeric(statistic(d))[1L], error = .rmbl_or(NA_real_))
     }, numeric(1))
     ok <- is.finite(perm)
     # The two-sided permutation p-value, with the +1 that keeps it from
@@ -204,7 +204,7 @@ capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
     pg$update(n + i, sprintf("subset %d/%d", i, n))
     idx <- sample.int(nrow(data), k)
     tryCatch(as.numeric(statistic(data[idx, , drop = FALSE]))[1L],
-             error = function(e) NA_real_)
+             error = .rmbl_or(NA_real_))
   }, numeric(1))
   sok <- is.finite(subs)
   if (!any(sok)) {
@@ -226,8 +226,8 @@ capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
               permutation = perm,
               n = n, treatment = treatment,
               rng_kind = paste(RNGkind(), collapse = ","),
-              seed = if (is.null(seed)) NA_integer_ else
-                as.integer(seed)[1L])
+              # as given: as.integer() made a seed past 2^31 - 1 NA
+              seed = if (is.null(seed)) NA_integer_ else seed)
   class(out) <- c("bricklayer_falsification", "list")
   out
 }
@@ -238,7 +238,7 @@ format.bricklayer_falsification <- function(x, ...) {
   c(.rmbl_rule("Falsification controls"),
     sprintf("  observed statistic  %.8g", x$observed),
     sprintf("  permutations        %d%s", x$n,
-            if (is.na(x$seed)) "" else sprintf(" (seed %d)", x$seed)),
+            if (is.na(x$seed)) "" else sprintf(" (seed %s)", format(x$seed, scientific = FALSE))),
     .rmbl_rule(),
     sprintf("  %-22s %-5s %s", x$controls$control,
             vapply(x$controls$passed, verdict, character(1)),

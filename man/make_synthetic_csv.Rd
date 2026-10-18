@@ -14,7 +14,8 @@ list of column specs), and optional \code{n_rows}, \code{seed} and
 \item{out_path}{Character string: the path of the CSV to write.}
 
 \item{n_rows}{Whole number: the number of rows (persons, if replicating)
-to generate. Defaults to \code{schema$n_rows}, then 50000.}
+to generate, from 1 to 100 million (the table is built in memory).
+Defaults to \code{schema$n_rows}, then 50000.}
 
 \item{seed}{Random seed for reproducibility. Defaults to
 \code{schema$seed}, then 91735246.}

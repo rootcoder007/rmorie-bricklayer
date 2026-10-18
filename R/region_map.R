@@ -366,7 +366,7 @@ region_map_integrity <- function(map, unit, region, regions = NULL) {
 #' try(region_map_compare(pub, obs, "inst", cols = "lat"))
 #' @export
 region_map_compare <- function(published, observed, unit, cols = NULL) {
-  .rmbl_no_fn(unit = unit)
+  .rmbl_no_fn(unit = unit, cols = cols)
   pu <- trimws(as.character(.rmbl_rm_col(published, unit, "published")))
   ou <- trimws(as.character(.rmbl_rm_col(observed, unit, "observed")))
   if (is.null(cols)) {

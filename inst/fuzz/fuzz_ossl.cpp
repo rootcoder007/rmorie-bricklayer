@@ -17,6 +17,7 @@
 extern "C" {
 int rmbl_kernel_interrupted = 0;
 int rmbl_interrupt_pending(void) { return 0; }
+int rmbl_barrier_active(void) { return 0; }   /* no barrier: an argument error is Rf_error() */
 void rmbl_interrupt_raise_unbarriered(void) {}
 void rmbl_sha224_raw(const unsigned char *, size_t, unsigned char *);
 void rmbl_sha256_raw(const unsigned char *, size_t, unsigned char *);

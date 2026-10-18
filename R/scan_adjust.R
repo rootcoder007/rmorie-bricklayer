@@ -146,6 +146,10 @@ scan_adjust <- function(x, method = "BH", alpha = 0.05) {
   if (!is.data.frame(x)) {
     stop("`x` must be a data frame", call. = FALSE)
   }
+  # p.adjust()'s methods, and one level in (0, 1): match.arg() and `$<-` refused them in their own
+  # words (CRAN stress test of 0.5.14)
+  method <- .rmbl_arg(method, stats::p.adjust.methods)
+  alpha <- .rmbl_conf_level(alpha, "alpha")
   if (inherits(x, "rmbl_yoy") && is.null(x$p_value)) {
     x <- yoy_pvalues(x)
   } else if (inherits(x, "rmbl_rate_change") && is.null(x$p_value)) {

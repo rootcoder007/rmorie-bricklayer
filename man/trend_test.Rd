@@ -69,7 +69,8 @@ over every ordering of the observed values (with ties kept, so tied data
 get the correct conditional null). Otherwise the normal approximation is
 used, with the tie-corrected variance of \eqn{S} and a continuity
 correction of one unit toward zero. Exact tables are cached in the
-session, up to 32 of them.
+session, up to 32 of them. A series whose values are all tied has
+\eqn{S = 0} in every ordering, so its p-value is 1 at every length.
 
 The slope interval is the standard rank-based one: the pairwise slopes
 are sorted and the interval runs between the order statistics that

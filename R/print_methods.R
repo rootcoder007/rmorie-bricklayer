@@ -427,6 +427,10 @@ profile_columns <- function(data, quantiles = c(0.25, 0.5, 0.75)) {
   if (ncol(data) == 0L) {
     stop("`data` has no columns to profile", call. = FALSE)
   }
+  quantiles <- .rmbl_num(quantiles, "quantiles")
+  if (anyNA(quantiles) || any(quantiles < 0 | quantiles > 1)) {
+    stop("`quantiles` must be probabilities in [0, 1]", call. = FALSE)
+  }
   pg <- bricklayer_progress("profiling columns", ncol(data))
   on.exit(pg$done(), add = TRUE)
   rows <- lapply(names(data), function(nm) {

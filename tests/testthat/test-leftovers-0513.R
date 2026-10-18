@@ -176,7 +176,7 @@ test_that("bricklayer_llm_config() reads its settings in well under a second", {
   withr::local_envvar(c(XDG_CONFIG_HOME = withr::local_tempdir()))
   bricklayer_llm_config()
   t <- system.time(for (i in 1:5) bricklayer_llm_config())[["elapsed"]] / 5
-  expect_lt(t, 0.5)
+  expect_lt(t, wall_limit(0.5))
 })
 
 # 0.5.13's plr_crossfit(), verbatim but for the namespace lookups and without the progress bar:

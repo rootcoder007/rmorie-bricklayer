@@ -270,7 +270,7 @@ test_that("every parameter set signs in a time a test can afford", {
     t <- system.time(
       sig <- capsule_sign("a manifest digest", key, context = "release",
                           deterministic = TRUE))[["elapsed"]]
-    expect_lt(t, 20)
+    expect_lt(t, wall_limit(20))
     expect_true(capsule_verify("a manifest digest", sig,
                                fips_public_key(key), context = "release"),
                 info = s)

@@ -149,7 +149,7 @@ test_that("B4, B7: a lock or record path that cannot be used is reported at once
   withr::local_options(rmoriebricklayer.xmss_index_file = p)
   t0 <- Sys.time()
   expect_error(pqc_keygen(height = 2L), "Is a directory|not a regular file")
-  expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 5)
+  expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), wall_limit(5))
   expect_error(.Call(rmoriebricklayer:::C_rmbl_flock_acquire, file.path(tempfile(), "x"), 0L),
                "cannot open the lock file")
   expect_error(.Call(rmoriebricklayer:::C_rmbl_flock_acquire, NA_character_, 0L), "single file path")

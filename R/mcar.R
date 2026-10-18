@@ -230,6 +230,8 @@
 #' all.equal(fit$mu, c(mean(x), mean(y)), check.attributes = FALSE)
 #' @export
 mcar_test <- function(data, max_iter = 500L, tol = 1e-7) {
+  max_iter <- .rmbl_scalar(max_iter, "max_iter", 1, 1e6, integer = TRUE)
+  tol <- .rmbl_scalar(tol, "tol", 0, 1)
   if (is.matrix(data)) data <- as.data.frame(data)
   if (!is.data.frame(data)) {
     stop("`data` must be a data frame or a numeric matrix", call. = FALSE)

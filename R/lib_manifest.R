@@ -195,6 +195,7 @@ record <- function(manifest, name, observed, expected,
   .rmbl_no_fn(observed = observed, expected = expected)
   if (!is.list(manifest)) stop("`manifest` must be a manifest from make_manifest()", call. = FALSE)
   name <- .rmbl_string1(name, "name")
+  tol <- .rmbl_scalar(tol, "tol", 0)
   # one value each: a vector made the PASS test `diff <= tol` a vector and
   # failed in R's own words ('length = 2' in coercion to 'logical(1)')
   lens <- c(observed = length(observed), expected = length(expected))
@@ -530,6 +531,12 @@ write_summary_txt <- function(manifest, output_dir, paths,
   counts <- summarise_counts(manifest)
   output_dir <- .rmbl_string1(output_dir, "output_dir")
   if (!dir.exists(output_dir)) stop("`output_dir` is not a directory: ", output_dir, call. = FALSE)
+  for (nm in c("what_was_done", "contact", "licence")) {
+    v <- get(nm)
+    if (!is.null(v) && (!is.character(v) || anyNA(v))) {
+      stop(sprintf("`%s` must be text (a character vector), or NULL", nm), call. = FALSE)
+    }
+  }
   files <- sort(list.files(output_dir))
   is_synth <- isTRUE(manifest$meta$synthetic)
 

@@ -301,7 +301,7 @@ test_that("the SIU name patterns take a long run of letters in linear time", {
   t0 <- proc.time()[["elapsed"]]
   invisible(.Call(asNamespace("rmoriebricklayer")$C_rmbl_siu_parse_html, paste0("<p>", strrep("A", 2e5))))
   # 225 microseconds a byte before (45 s here); about 2.4 microseconds now
-  expect_lt(proc.time()[["elapsed"]] - t0, 15)
+  expect_lt(proc.time()[["elapsed"]] - t0, wall_limit(15))
 })
 
 test_that("an argument error inside an entry point is said as before, after its buffers are freed", {
@@ -410,6 +410,7 @@ test_that("bricklayer_fetch() and wayback_snapshot_url_native() reach the C API'
   expect_error(bricklayer_fetch("https://invalid.invalid/a", tempfile(), wayback = "https://invalid.invalid/b",
                                 timeout = 3))
   # one short lookup at archive.org: a snapshot address or NULL, offline too
+  skip_if_not(identical(Sys.getenv("RMBL_LIVE_TESTS"), "1"), "asks archive.org: RMBL_LIVE_TESTS=1")
   snap <- wayback_snapshot_url_native("https://example.org/", timeout = 1)
   expect_true(is.null(snap) || (is.character(snap) && length(snap) == 1L))
 })

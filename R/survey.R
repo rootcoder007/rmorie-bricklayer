@@ -359,7 +359,14 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
     # values within 1e-5 of the largest count), which is the B x B problem: a QR of the n x B matrix
     # took 16 s for CSUS's 36,180 x 1,000
     if (is.null(des$degf)) {
-      ev <- eigen(crossprod(do.call(cbind, reps)), symmetric = TRUE, only.values = TRUE)$values
+      # the cross-product a block of rows at a time: do.call(cbind, reps) was a second copy of every
+      # replicate (800 MB at 5e6 rows and 20 replicates; CRAN stress test of 0.5.14, #8)
+      cp <- matrix(0, length(reps), length(reps))
+      for (st in if (n > 0L) seq(1L, n, by = 262144L)) {
+        idx <- st:min(n, st + 262143L)
+        cp <- cp + crossprod(vapply(reps, function(r) r[idx], numeric(length(idx))))
+      }
+      ev <- eigen(cp, symmetric = TRUE, only.values = TRUE)$values
       des$degf <- sum(ev > max(ev) * 1e-10) - 1L
     }
   } else {
@@ -469,9 +476,8 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
     v <- as.vector(data[[i]])   # a one-dimensional array (apiclus2 has one) is its values
     code <- if (is.double(v)) {
       # the bits of the number: the same value gives the same code wherever its row is, with no
-      # sort or match
-      b <- readBin(writeBin(v, raw()), "integer", n = 2L * n)
-      fold(fold(b[c(TRUE, FALSE)]) * 65599 + b[c(FALSE, TRUE)])
+      # sort or match (in C: the R arithmetic's own result, without its column-long copies)
+      .Call(C_rmbl_svy_dblcode, v)
     } else if (is.integer(v) || is.logical(v)) {
       x <- as.numeric(v)
       x[is.na(x)] <- -1
@@ -482,14 +488,14 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
     }
     k <- fold(k * 1000003 + code)
     code <- as.numeric(code)
-    co[[nm[[i]]]] <- core_sha256(writeBin(code, raw()))
-    cs[[nm[[i]]]] <- core_sha256(writeBin(sort(code, method = "radix"), raw()))
+    co[[nm[[i]]]] <- .Call(C_rmbl_sha256_real, code)
+    cs[[nm[[i]]]] <- .Call(C_rmbl_sha256_real, sort(code, method = "radix"))
     ci[[nm[[i]]]] <- n > 0L && any(code != code[[1L]])
   }
   # each column on its own as well, in order and as a set, and whether it holds more than one
   # value: what .svy_check_data() reads when a column was dropped or edited since
-  list(cols = cols, ordered = core_sha256(writeBin(k, raw())),
-       sorted = core_sha256(writeBin(sort(k, method = "radix"), raw())),
+  list(cols = cols, ordered = .Call(C_rmbl_sha256_real, k),
+       sorted = .Call(C_rmbl_sha256_real, sort(k, method = "radix")),
        col_ordered = unlist(co), col_sorted = unlist(cs), col_informative = unlist(ci))
 }
 
@@ -544,10 +550,46 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
     m <- f / (f - 1)
     any(f <= 1 | abs(m - round(m)) > 1e-6 * abs(m) | round(m) > B)
   }
-  adjusted <- if (type %in% c("jk1", "jkn", "brr")) {
-    sum(vapply(reps, off_lattice, NA)) > B / 2
+  # The vote is among the replicates that differ from the weight: one equal to it says nothing of an
+  # adjustment, and on a post-stratum subset most are (each deletes a PSU with no row there, and
+  # post-stratification brings the rest back to the weight): the set read as unadjusted and was
+  # refused (apiclus1 JK1 post-stratified on stype, rows of H; CRAN stress test of 0.5.14, #5)
+  same <- vapply(reps, function(r) identical(r, w) || all(abs(r - w) < 1e-12 * pmax(w, .Machine$double.xmin)), NA)
+  inf <- reps[!same]
+  # JK1 unadjusted scales every row a replicate keeps by one factor, n / (n - 1), the same in all n
+  # of them (n PSUs): the factor that most replicates share, held by exactly n of them. A
+  # stray column beside them (the weight, a jittered copy) leaves that intact. Post-stratified, the
+  # factor of each replicate is its own: 14/13, 7/6, 7/5 ... on a post-stratum (some look like a
+  # k / (k - 1), but not shared by k replicates), and the set is adjusted (CRAN stress test of
+  # 0.5.14, #5)
+  jk1_unadjusted <- function() {
+    f1 <- vapply(inf, function(r) {
+      k <- head_kept(r)
+      f <- unique(signif(r[k] / w[k], 9))
+      if (length(f) == 1L) f else NA_real_
+    }, 0)
+    u <- unique(f1[!is.na(f1)])
+    if (!length(u)) return(FALSE)
+    cnt <- tabulate(match(f1, u), length(u))
+    c1 <- u[[which.max(cnt)]]
+    nm <- max(cnt)
+    nm > B / 2 && c1 > 1 && abs(c1 / (c1 - 1) - nm) < 1e-6 * nm
+  }
+  # whole-number factors are a bootstrap's counts (a bootstrap set called a jackknife), never an
+  # adjustment's
+  counts <- function() {
+    sum(vapply(inf, function(r) {
+      k <- head_kept(r)
+      f <- r[k] / w[k]
+      all(abs(f - round(f)) < 1e-9)
+    }, NA)) > length(inf) / 2
+  }
+  adjusted <- length(inf) > 0L && if (identical(type, "jk1")) {
+    !jk1_unadjusted() && !counts()
+  } else if (type %in% c("jkn", "brr")) {
+    sum(vapply(inf, off_lattice, NA)) > length(inf) / 2
   } else {
-    sum(vapply(reps, nfac, 0L) > 8L) > B / 2
+    sum(vapply(inf, nfac, 0L) > 8L) > length(inf) / 2
   }
   # a jackknife replicate whose deleted PSU is outside the rows scales every row by one factor
   # k / (k - 1), and 1 elsewhere: JK1 with k the number of replicates (n PSUs), JKn with k the PSUs of
@@ -569,9 +611,8 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
   for (b in seq_along(reps)) {
     pg$update(b - 1L, sprintf("replicate %d/%d", b, length(reps)))
     r <- reps[[b]]
-    rel <- abs(r - w) / pmax(w, .Machine$double.xmin)
     nm <- names(reps)[[b]] %||% as.character(b)
-    if (identical(r, w) || all(rel < 1e-12)) {
+    if (same[[b]]) {
       # a JKn replicate deletes a PSU of one stratum and leaves every other stratum's rows at the
       # weight: on a subset of other strata it is the weight, legitimately (refused on 72% of JKn
       # stratum subsets that survey estimates; CRAN stress test of b617a3f, #7). A stratum has two
@@ -583,6 +624,7 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
     # every row within 1% of the weight, not equal to it: a rounded, jittered or single-precision
     # copy. A jackknife or BRR replicate zeroes the PSUs it leaves out, so there it cannot be one;
     # under a bootstrap or Fay's method it is said
+    rel <- abs(r - w) / pmax(w, .Machine$double.xmin)
     if (all(rel < 0.01)) {
       if (adjusted || (type %in% c("jk1", "jkn") && jk_scale(r))) {
         # genuine: see `adjusted` and jk_scale() above
@@ -1010,6 +1052,7 @@ survey_estimate <- function(design, data, y, by = NULL, stat = c("mean", "total"
   if (!length(by)) by <- NULL
   if (!is.character(by) && !is.null(by)) stop("`by` must name columns of `data`", call. = FALSE)
   conf_level <- .rmbl_conf_level(conf_level)
+  min_n <- .rmbl_scalar(min_n, "min_n", 0)
   if (stat == "ratio" && is.null(denominator)) stop("a ratio needs a `denominator` column", call. = FALSE)
   if (ci == "auto") ci <- if (stat == "proportion") "wilson" else "wald"
   if (identical(df, "design")) {

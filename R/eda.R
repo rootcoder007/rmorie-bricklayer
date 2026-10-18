@@ -528,6 +528,7 @@ clean_column_names <- function(data, case = c("snake", "lower_camel",
                                sep = "_") {
   .rmbl_no_fn(data = data)
   case <- .rmbl_arg(case)
+  sep <- .rmbl_text1(sep, "sep")
   nms <- if (is.data.frame(data)) names(data) else as.character(data)
   if (length(nms) == 0L) {
     if (is.data.frame(data)) return(data)

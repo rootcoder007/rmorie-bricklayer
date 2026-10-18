@@ -150,6 +150,7 @@ capsule_power <- function(data, statistic, inject, sizes = c(0, 0.2, 0.5),
   n <- .rmbl_num(n, "n", integer = TRUE)[1L]
   reps <- .rmbl_num(reps, "reps", integer = TRUE)[1L]
   if (is.na(n) || n < 9L) stop("`n` must be at least 9", call. = FALSE)
+  alpha <- .rmbl_conf_level(alpha, "alpha")
   if (is.na(reps) || reps < 1L) stop("`reps` must be at least 1",
                                      call. = FALSE)
   if (1 / (n + 1) > alpha) {
@@ -169,15 +170,15 @@ capsule_power <- function(data, statistic, inject, sizes = c(0, 0.2, 0.5),
     usable <- 0L
     for (r in seq_len(reps)) {
       pg$update((si - 1L) * reps + r - 1L, sprintf("size %s, rep %d/%d", format(sz), r, reps))
-      d <- tryCatch(inject(data, sz), error = function(e) NULL)
+      d <- tryCatch(inject(data, sz), error = .rmbl_or(NULL))
       if (!is.data.frame(d)) next
       obs <- tryCatch(as.numeric(statistic(d))[1L],
-                      error = function(e) NA_real_)
+                      error = .rmbl_or(NA_real_))
       if (!is.finite(obs)) next
       null <- vapply(seq_len(n), function(i) {
         z <- d
         z[[treatment]] <- sample(z[[treatment]])
-        tryCatch(as.numeric(statistic(z))[1L], error = function(e) NA_real_)
+        tryCatch(as.numeric(statistic(z))[1L], error = .rmbl_or(NA_real_))
       }, numeric(1))
       ok <- is.finite(null)
       if (!any(ok)) next

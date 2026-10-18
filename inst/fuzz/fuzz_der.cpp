@@ -7,6 +7,7 @@
  * is R's; this binary runs with no R session, so nothing is ever pending. */
 extern "C" int rmbl_kernel_interrupted = 0;
 extern "C" int rmbl_interrupt_pending(void) { return 0; }
+extern "C" int rmbl_barrier_active(void) { return 0; }   /* no barrier: an argument error is Rf_error() */
 
 
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char *data, size_t size) {

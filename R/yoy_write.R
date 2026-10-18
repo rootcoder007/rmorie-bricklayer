@@ -62,7 +62,7 @@
 #' try(yoy_write(y, file.path(tempdir(), "change.xlsx")))
 #' @export
 yoy_write <- function(x, file, format = "auto", ...) {
-  .rmbl_no_fn(file = file)
+  .rmbl_no_fn(file = file, format = format)
   if (!inherits(x, "rmbl_yoy")) {
     stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
@@ -188,6 +188,7 @@ yoy_tsv <- function(x, file, digits = NULL, na = "", metadata = TRUE,
   }
   file <- .rmbl_out_file(file)
   na <- .rmbl_text1(na, "na")
+  comment <- .rmbl_text1(comment, "comment")
   m <- .yoy_meta(x)
   d <- .yoy_export_frame(x, digits)
   quoting <- identical(sep, ",")

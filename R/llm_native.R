@@ -979,6 +979,21 @@ bricklayer_llm_providers <- function() {
   if (nzchar(p)) p else "rmoriebricklayer"
 }
 
+# A model name to send, or NULL. The name travels in the request body: a key given as one
+# (`--model sk-...`) went with it (CRAN stress test of 0.5.14).
+.bl_model_name <- function(model) {
+  if (is.null(model)) return(NULL)
+  if (!is.character(model) || length(model) != 1L || is.na(model)) {
+    stop("`model` must be one model name", call. = FALSE)
+  }
+  if (.bl_key_dense(model) || grepl(paste0("^(sk-|sk_|AIza|gsk_|xai-|hf_|r8_|pplx-|fw_|csk-|ghp_|gho_|ghs_|",
+                                           "github_pat_|glpat-|nvapi-)[A-Za-z0-9_-]{12,}"), model)) {
+    stop(paste("`model` looks like a key, so it is not sent: a model is a name such as gpt-4o-mini;",
+               "a key is saved with bricklayer_llm_config()"), call. = FALSE)
+  }
+  model
+}
+
 #' Ask a language model
 #'
 #' Sends one prompt to the first language model that is set up on this
@@ -1051,7 +1066,8 @@ bricklayer_llm_providers <- function() {
 #'
 #' @param prompt Character scalar: the question, in plain text.
 #' @param model Character scalar or \code{NULL} (the default): the model id
-#'   to use. \code{NULL} uses the route's own choice: \code{MORIE_LLM_MODEL}
+#'   to use (a value shaped like a key is refused, never sent).
+#'   \code{NULL} uses the route's own choice: \code{MORIE_LLM_MODEL}
 #'   for your own endpoint, \code{OLLAMA_MODEL} or the first pulled model
 #'   for Ollama, the saved \code{PROVIDER.model} or the provider's default
 #'   model (see \code{\link{bricklayer_llm_providers}}).
@@ -1112,11 +1128,12 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
                                fresh = FALSE) {
   prompt <- .rmbl_string1(prompt, "prompt")
   .bl_check_flag(fresh, "fresh")
+  model <- .bl_model_name(model)   # before a route is looked for: a key given as one is said first
   if (identical(route, "hosted")) stop(.bl_hosted_retired(), call. = FALSE)
   if (!is.null(route)) route <- .rmbl_arg(route, c("auto", .bl_llm_route_names()))
   rt <- .bl_llm_route(route)
   if (is.null(rt)) stop(.bl_no_route_message(route), call. = FALSE)
-  model <- model %||% rt$model
+  model <- .bl_model_name(model %||% rt$model)
   if (is.null(model) || !nzchar(model)) stop(.bl_no_model_message(rt), call. = FALSE)
   .bl_check_flag(docs, "docs")
   if (docs) {

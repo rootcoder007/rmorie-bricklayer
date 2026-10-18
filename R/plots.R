@@ -117,7 +117,18 @@ bricklayer_plot_options <- function(...) {
 
 # colours for n series: `col` wins, then the palette argument, then the option
 .bl_cols <- function(n, col = NULL, palette = NULL) {
-  if (!is.null(col)) return(rep_len(col, n))
+  if (!is.null(col)) {
+    # colours a device can draw, said here: col = "x" failed in col2rgb() or plot.xy() (CRAN stress
+    # test of 0.5.14)
+    # a palette number is a whole number a device can index (1e10 overflowed to -2^31 in plot.xy())
+    ok <- (is.character(col) || (is.numeric(col) && !is.object(col) && all(col >= 0 & col <= .Machine$integer.max &
+                                                                         col == round(col), na.rm = TRUE))) &&
+      length(col) > 0L && !anyNA(col) &&
+      !inherits(tryCatch(grDevices::col2rgb(col, alpha = TRUE), error = function(e) e), "error")
+    if (!ok) stop("`col` must be colours: names such as \"steelblue\", \"#RRGGBB\" codes or palette numbers",
+                  call. = FALSE)
+    return(rep_len(col, n))
+  }
   bricklayer_palette(if (is.null(palette)) .bl_plot_opts()$palette else palette, n)
 }
 
@@ -241,7 +252,14 @@ bricklayer_plot_options <- function(...) {
 .bl_label <- function(x, digits = 3) format(x, digits = digits, big.mark = ",")
 
 # the title: the caller's, or the method's default
-.bl_main <- function(main, default) if (is.null(main)) default else main
+.bl_main <- function(main, default) {
+  if (is.null(main)) return(default)
+  # one title: a string or a plotmath expression
+  if (!(is.language(main) || is.expression(main) || (is.character(main) && length(main) == 1L && !is.na(main)))) {
+    stop("`main` must be one title (a string or an expression), or NULL", call. = FALSE)
+  }
+  main
+}
 
 # Panel state: while a multi-panel method runs, titles that do not fit their panel become
 # letters, and the key (A: full title ...) is printed under the panels at the end.
@@ -1437,7 +1455,8 @@ plot.rmbl_footprint <- function(x, ..., main = NULL, col = NULL, palette = NULL)
             memory = if ("memory" %in% names(parts)) parts[["memory"]] * gpk else NA_real_,
             total = x$co2e_g)
   comp <- comp[is.finite(comp)]
-  scale <- c(kg = 1e3, g = 1, mg = 1e-3, "\u00b5g" = 1e-6)
+  # names given as values: a "\u00b5g" name in c() was stored as "<U+00B5>g" in a non-UTF-8 locale
+  scale <- stats::setNames(c(1e3, 1, 1e-3, 1e-6), c("kg", "g", "mg", "\u00b5g"))
   big <- max(comp, 0)
   unit <- names(scale)[which(big >= scale)[1L]]
   if (is.na(unit)) unit <- "\u00b5g"
@@ -1776,7 +1795,7 @@ plot_funnel <- function(observed, expected, area = NULL, levels = c(0.95, 0.998)
   on.exit(graphics::par(op), add = TRUE)
   graphics::plot(expected, ratio, type = "n", xlab = "Expected count", ylab = "",
                  ylim = range(c(ratio, lim$lower, lim$upper), finite = TRUE),
-                 main = if (is.null(main)) "Funnel plot" else main, ...)
+                 main = .bl_main(main, "Funnel plot"), ...)
   .bl_ylab("Observed / expected")
   .bl_grid(NULL)
   graphics::abline(h = target, col = "#8C8C8C")

@@ -195,7 +195,7 @@ test_that("C7: a FIFO or a directory at the legacy record path is refused at onc
   system2("mkfifo", j)
   t0 <- proc.time()[["elapsed"]]
   expect_error(rmoriebricklayer:::.rmbl_xmss_legacy_json(p), "device or other special file")
-  expect_lt(proc.time()[["elapsed"]] - t0, 2)
+  expect_lt(proc.time()[["elapsed"]] - t0, wall_limit(2))
 })
 
 # ---- C8, C9: the manifest cache -----------------------------------------------------------------

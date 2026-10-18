@@ -130,6 +130,7 @@
 #' try(crf_pm25(12, outcome = "asthma"))
 #' @export
 crf_pm25 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 5.8) {
+  .rmbl_no_fn(outcome = outcome)
   # all-cause: RR 1.08 (95% CI 1.06-1.09) per 10 ug/m3, Chen and Hoek (2020), the WHO 2021 review
   loglinear <- c(all_cause_mortality = log(1.08))
   loglinear_ci <- list(all_cause_mortality = log(c(1.06, 1.09)))
@@ -623,6 +624,7 @@ pollution_burden <- function(exposure_mean, exposure_prevalence, baseline_rate, 
 #' try(plr_crossfit(d, "asthma", "exposure", c("x1", "region")))
 #' @export
 plr_crossfit <- function(data, outcome, treatment, covariates, k_folds = 5L, seed = 1L) {
+  seed <- .rmbl_r_seed(seed)
   .rmbl_colnames(outcome, "outcome")
   .rmbl_colnames(treatment, "treatment")
   .rmbl_colnames(covariates, "covariates", several = TRUE)
@@ -775,14 +777,25 @@ exposure_response_plr <- function(data, outcome, exposure, confounders, n_bootst
   .rmbl_colnames(outcome, "outcome")
   .rmbl_colnames(exposure, "exposure")
   .rmbl_colnames(confounders, "confounders", several = TRUE)
-  estimator <- match.fun(estimator)
+  # a function, or the name of one
+  if (is.character(estimator) && length(estimator) == 1L && !is.na(estimator)) {
+    estimator <- tryCatch(match.fun(estimator), error = function(e) {
+      stop(sprintf("`estimator` names no function: \"%s\"", estimator), call. = FALSE)
+    })
+  }
+  if (!is.function(estimator)) stop("`estimator` must be a function (plr_crossfit() or one like it)", call. = FALSE)
+  random_state <- .rmbl_r_seed(random_state)
   n_bootstrap <- .pollution_scalar(n_bootstrap, "n_bootstrap")
   if (n_bootstrap != round(n_bootstrap)) stop("`n_bootstrap` must be a whole number of resamples", call. = FALSE)
   n_bootstrap <- as.integer(n_bootstrap)
   pg <- bricklayer_progress("exposure-response bootstrap", n_bootstrap + 1L)
   on.exit(pg$done(), add = TRUE)
   pg$update(0, "fitting the full sample")
-  base <- estimator(data, outcome, exposure, confounders)
+  # the full sample: an estimator that cannot take (data, outcome, exposure, confounders) is said so
+  base <- tryCatch(estimator(data, outcome, exposure, confounders), error = function(e) {
+    stop(sprintf(paste("`estimator` failed on the full sample, called as",
+                       "estimator(data, outcome, exposure, confounders): %s"), conditionMessage(e)), call. = FALSE)
+  })
   ate <- as.numeric(base$ate)
   se_analytic <- as.numeric(base$se)
   n <- nrow(data)
@@ -792,7 +805,7 @@ exposure_response_plr <- function(data, outcome, exposure, confounders, n_bootst
       pg$update(b, sprintf("bootstrap %d/%d", b, n_bootstrap))
       idx <- sample.int(n, n, replace = TRUE)
       r <- tryCatch(estimator(data[idx, , drop = FALSE], outcome, exposure, confounders),
-                    error = function(e) NULL)
+                    error = .rmbl_or(NULL))
       if (!is.null(r)) out <- c(out, as.numeric(r$ate))
     }
     out

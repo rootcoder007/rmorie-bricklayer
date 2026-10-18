@@ -369,6 +369,7 @@ cert_chain_verify <- function(leaf, trust, intermediates = list(),
                                 "supplied", "fetch",
                                 "none"
                               )) {
+  .rmbl_no_fn(purpose = purpose, policies = policies)
   if (!(inherits(at_time, c("POSIXt", "Date")) || (is.numeric(at_time) && !is.object(at_time))) ||
         length(at_time) != 1L || is.na(at_time) || !is.finite(as.numeric(at_time))) {
     stop("`at_time` must be a single date-time (POSIXct)", call. = FALSE)

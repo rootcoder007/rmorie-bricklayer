@@ -493,7 +493,7 @@ std::vector<unsigned char> leaves_from_chunks(SEXP x, int scheme) {
     for (R_xlen_t i = 0; i < n; ++i) {
         SEXP e = VECTOR_ELT(x, i);
         if (TYPEOF(e) != RAWSXP) {
-            Rf_error("each chunk must be a raw vector");
+            RMBL_ARG_ERROR("each chunk must be a raw vector");
         }
         unsigned char h[32];
         if (scheme == 2) {
@@ -513,10 +513,10 @@ std::vector<unsigned char> leaves_from_chunks(SEXP x, int scheme) {
  * normalised list of raw chunks. */
 int check_chunk_list(SEXP x, SEXP scheme) {
     if (TYPEOF(x) != VECSXP) {
-        Rf_error("`chunks` must be a list of raw vectors");
+        RMBL_ARG_ERROR("`chunks` must be a list of raw vectors");
     }
     const int sc = Rf_asInteger(scheme);
-    if (sc != 1 && sc != 2) Rf_error("`scheme` must be 1 or 2");
+    if (sc != 1 && sc != 2) RMBL_ARG_ERROR("`scheme` must be 1 or 2");
     return sc;
 }
 

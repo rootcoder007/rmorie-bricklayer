@@ -348,7 +348,7 @@ void conv_cleanup(void *d, Rboolean) {
 SEXP C_rmbl_der_parse_impl(SEXP x) {
     /* errors without a call (Rf_errorcall(R_NilValue, ...)), like the package's R errors with
      * call. = FALSE: a malformed certificate read "Error in cert_parse(...)" */
-    if (TYPEOF(x) != RAWSXP) Rf_errorcall(R_NilValue, "`x` must be a raw vector");
+    if (TYPEOF(x) != RAWSXP) RMBL_ARG_ERROR("`x` must be a raw vector");
     const unsigned char *p = RAW(x);
     const size_t n = static_cast<size_t>(XLENGTH(x));
     /* Two rules at this boundary. No C++ exception may cross it: a
@@ -366,7 +366,7 @@ SEXP C_rmbl_der_parse_impl(SEXP x) {
      * an R longjmp -- the cleanup deletes the tree on that path too, so no
      * destructor is skipped whichever way the block is left. */
     Node *root = new (std::nothrow) Node;
-    if (!root) Rf_errorcall(R_NilValue, "DER parser: out of memory");
+    if (!root) RMBL_ARG_ERROR("DER parser: out of memory");
     {
         size_t pos = 0;
         size_t budget = kMaxNodes;
@@ -388,7 +388,7 @@ SEXP C_rmbl_der_parse_impl(SEXP x) {
     }
     if (err[0] != '\0') {
         delete root;
-        Rf_errorcall(R_NilValue, "%s", err);
+        RMBL_ARG_ERROR("%s", err);
     }
     ConvCtx ctx;
     ctx.root = root;
@@ -403,14 +403,14 @@ SEXP C_rmbl_der_parse_impl(SEXP x) {
 SEXP C_rmbl_rsa_recover_impl(SEXP sig, SEXP modulus, SEXP exponent) {
     if (TYPEOF(sig) != RAWSXP || TYPEOF(modulus) != RAWSXP ||
         TYPEOF(exponent) != RAWSXP) {
-        Rf_errorcall(R_NilValue, "`sig`, `modulus` and `exponent` must be raw vectors");
+        RMBL_ARG_ERROR("`sig`, `modulus` and `exponent` must be raw vectors");
     }
     if (XLENGTH(modulus) == 0 || XLENGTH(exponent) == 0 ||
         XLENGTH(sig) == 0) {
-        Rf_errorcall(R_NilValue, "`sig`, `modulus` and `exponent` must be non-empty");
+        RMBL_ARG_ERROR("`sig`, `modulus` and `exponent` must be non-empty");
     }
     if (XLENGTH(modulus) > 1024) {
-        Rf_errorcall(R_NilValue, "the modulus is implausibly large (%d bytes)",
+        RMBL_ARG_ERROR("the modulus is implausibly large (%d bytes)",
                  static_cast<int>(XLENGTH(modulus)));
     }
     /* modexp is linear in the exponent's bits. A public exponent is 3 or
@@ -418,7 +418,7 @@ SEXP C_rmbl_rsa_recover_impl(SEXP sig, SEXP modulus, SEXP exponent) {
      * them); 64 bytes is already a thousand times that, and a megabyte
      * delivered in a hostile certificate was hours of uninterruptible work. */
     if (XLENGTH(exponent) > 64) {
-        Rf_errorcall(R_NilValue, "the public exponent is implausibly large (%d bytes)",
+        RMBL_ARG_ERROR("the public exponent is implausibly large (%d bytes)",
                  static_cast<int>(XLENGTH(exponent)));
     }
     /* the Big values are std::vectors: no rmbl::fail() while they live */
@@ -446,7 +446,7 @@ SEXP C_rmbl_rsa_recover_impl(SEXP sig, SEXP modulus, SEXP exponent) {
         }
     }
     UNPROTECT(1);
-    if (err) Rf_errorcall(R_NilValue, "%s", err);
+    if (err) RMBL_ARG_ERROR("%s", err);
     return out;
 }
 

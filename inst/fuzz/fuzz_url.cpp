@@ -10,6 +10,7 @@ int rmbl_fuzz_url_check(const char *url, int allow_http, int allow_loopback);
 int rmbl_fuzz_redirect_check(const char *from, const char *to, int allow_http, int allow_loopback);
 int rmbl_kernel_interrupted = 0;
 int rmbl_interrupt_pending(void) { return 0; }
+int rmbl_barrier_active(void) { return 0; }   /* no barrier: an argument error is Rf_error() */
 void rmbl_interrupt_raise_unbarriered(void) {}
 }
 

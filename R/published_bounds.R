@@ -219,6 +219,16 @@ change_envelope <- function(now, previous, population = NULL,
                100 * (now$upper / previous$lower - 1), NA_real_)
   out$pct_lower <- pl
   out$pct_upper <- pu
+  per <- .rmbl_num(per, "per")
+  for (nm in c("population", "previous_population")) {
+    v <- get(nm)
+    if (is.null(v)) next
+    v <- .rmbl_num(v, nm)
+    if (!(length(v) %in% c(1L, nrow(now)))) {
+      stop(sprintf("`%s` must be one number or one per row (%d)", nm, nrow(now)), call. = FALSE)
+    }
+    assign(nm, v)
+  }
   if (!is.null(population)) {
     out$rate_lower <- per * now$lower / population
     out$rate_upper <- per * now$upper / population

@@ -201,6 +201,12 @@ carbon_intensity_table <- function() .rmbl_ci_table()
 detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
                             codecarbon_location = Sys.getenv("CODECARBON_COUNTRY_ISO_CODE"),
                             tz = Sys.timezone(), locale = Sys.getlocale("LC_TIME")) {
+  for (nm in c("env_location", "codecarbon_location", "tz", "locale")) {
+    v <- get(nm)
+    if (!is.null(v) && !(is.character(v) && length(v) <= 1L)) {
+      stop(sprintf("`%s` must be one string (or NULL)", nm), call. = FALSE)
+    }
+  }
   tab <- .rmbl_ci_table()
   known <- function(key) {
     if (is.null(key) || length(key) != 1L || is.na(key) || !nzchar(key)) return(NA_character_)

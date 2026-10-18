@@ -251,7 +251,7 @@ derive_key <- function(passphrase, salt, iterations = 100000L,
 #' try(core_blake2b("abc", length = 65))
 #' @export
 core_blake2b <- function(x, key = NULL, length = 32L) {
-  .rmbl_no_fn(x = x)
+  .rmbl_no_fn(x = x, key = key)
   if (!is.raw(x) && !is.null(x) && any(is.na(x))) {
     x <- as.character(x)
     out <- rep(NA_character_, length(x))

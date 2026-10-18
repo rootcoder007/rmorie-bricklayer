@@ -69,10 +69,10 @@ test_that("a split long line is placed at a sentence end and is warned about, ne
 test_that("the regex-free passes are linear: unclosed <script> and bare < in bulk", {
   t1 <- system.time(bricklayer_siu_text(strrep("<script>", 40000)))[["elapsed"]]      # 320 KB
   t2 <- system.time(bricklayer_siu_text(strrep("<script>", 80000)))[["elapsed"]]      # 640 KB
-  expect_lt(t1, 5)
-  expect_lt(t2, 5)
+  expect_lt(t1, wall_limit(5))
+  expect_lt(t2, wall_limit(5))
   t3 <- system.time(suppressWarnings(bricklayer_siu_text(strrep("<", 400000))))[["elapsed"]]
-  expect_lt(t3, 5)
+  expect_lt(t3, wall_limit(5))
   # a closed element is still stripped, in place
   out <- bricklayer_siu_text("<p>a</p><script>var x = 1;</script><p>b</p>")
   expect_false(grepl("var x", out, fixed = TRUE))

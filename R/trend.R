@@ -36,7 +36,8 @@
 #' get the correct conditional null). Otherwise the normal approximation is
 #' used, with the tie-corrected variance of \eqn{S} and a continuity
 #' correction of one unit toward zero. Exact tables are cached in the
-#' session, up to 32 of them.
+#' session, up to 32 of them. A series whose values are all tied has
+#' \eqn{S = 0} in every ordering, so its p-value is 1 at every length.
 #'
 #' The slope interval is the standard rank-based one: the pairwise slopes
 #' are sorted and the interval runs between the order statistics that
@@ -208,6 +209,9 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
       decreasing = stats::pnorm(z),
       two.sided = 2 * stats::pnorm(-abs(z))
     )
+    # every value tied: S is 0 in every ordering, so p is 1 in every direction, as the exact test
+    # says at n <= 8 (it was NA past 8; CRAN stress test of 0.5.14)
+    if (!is.na(mk$var) && mk$var <= 0) p <- 1
     p <- min(1, p)
     method <- "Mann-Kendall, normal approximation with tie correction"
   }
@@ -330,8 +334,10 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
 #' over \eqn{k = m, \dots, n - m} with \eqn{m} = \code{min_segment}. The
 #' observed \eqn{\max_k T_k} is compared with the same maximum over
 #' reorderings of the series, and \eqn{p = (1 + \mathrm{count}(T^*_{\max} \ge
-#' T_{\max}))/(1 + B)}. When \eqn{n! \le} \code{n_perm} (with the default,
-#' \eqn{n \le 7}) every ordering is enumerated and the p-value is exact;
+#' T_{\max}))/(1 + B)} over \eqn{B} random reorderings. When \eqn{n! \le}
+#' \code{n_perm} (with the default, \eqn{n \le 7}) every ordering is
+#' enumerated, the observed one among them, and the p-value is exact:
+#' \eqn{\mathrm{count}(T^*_{\max} \ge T_{\max}) / n!};
 #' otherwise \code{n_perm} random permutations are drawn under \code{seed},
 #' and the caller's random number stream is restored afterwards.
 #'
@@ -395,7 +401,8 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
   y <- y[ok]
   x <- x[ok]
   n <- length(y)
-  min_segment <- .rmbl_num(min_segment, "min_segment", integer = TRUE)
+  min_segment <- .rmbl_scalar(min_segment, "min_segment", 1, integer = TRUE)
+  n_perm <- .rmbl_scalar(n_perm, "n_perm", 1, integer = TRUE)
   if (n < 2L * min_segment) {
     stop(sprintf(
       "need at least %d periods for a break with %d either side",
@@ -468,10 +475,13 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
     np <- n_perm
   }
   null <- null[is.finite(null)]
-  # the observed value is one of the arrangements, so it counts in its
-  # own null -- without it a p-value of exactly zero is reportable, and
-  # no permutation test can support that
-  p <- (1 + sum(null >= tmax)) / (1 + length(null))
+  # an ordering that makes the same split as the observed one scores it to rounding
+  hit <- null >= tmax - 1e-12 * abs(tmax)
+  # Drawn permutations: the observed arrangement counts in its own null -- without it a p-value of
+  # exactly zero is reportable, and no permutation test can support that. Enumerated: the observed
+  # ordering is already one of the n!, and counting it again added one (73/721 for 0.1; CRAN stress
+  # test of 0.5.14).
+  p <- if (nfact <= n_perm) mean(hit) else (1 + sum(hit)) / (1 + length(null))
   list(
     break_after = x[best], index = best, before = mean(a),
     after = mean(b), difference = mean(b) - mean(a),
@@ -507,8 +517,11 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
 #' Missing values are dropped. Errors: negative or fractional counts;
 #' \code{x} and \code{y} of different lengths; infinite \code{x}; every count
 #' zero; an offset of the wrong length or not positive; fewer than three
-#' periods; a \code{conf_level} outside (0, 1). There is a \code{plot()} method for the
-#' result.
+#' periods; a \code{conf_level} outside (0, 1). When the counts are zero at
+#' one end of the series only (\code{c(0, 0, 5)}) the likelihood rises without
+#' bound and there is no finite trend: a warning says so, the rate ratio is
+#' \code{Inf} (or 0) and the interval and p-value are \code{NA}. There is a
+#' \code{plot()} method for the result.
 #'
 #' @param y Numeric vector of counts (non-negative whole numbers), in period
 #'   order.
@@ -573,7 +586,7 @@ count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
   logoff <- if (is.null(offset)) {
     rep(0, length(y))
   } else {
-    off <- as.numeric(offset)
+    off <- .rmbl_num(offset, "offset")
     if (length(off) != length(y)) {
       stop("`offset` must be the same length as `y`", call. = FALSE)
     }
@@ -594,6 +607,7 @@ count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
   # iteratively reweighted least squares on the two-column design; the
   # model is small enough to solve directly and needs no glm machinery
   beta <- c(log(max(sum(y), 1) / n) - mean(logoff), 0)
+  converged <- FALSE
   for (iter in seq_len(50L)) {
     eta <- beta[1L] + beta[2L] * xc + logoff
     mu <- exp(eta)
@@ -613,18 +627,29 @@ count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
     )
     if (max(abs(nb - beta)) < 1e-10) {
       beta <- nb
+      converged <- TRUE
       break
     }
     beta <- nb
   }
   eta <- beta[1L] + beta[2L] * xc + logoff
   mu <- exp(eta)
+  # Zero counts at one end only (0, 0, 5): the likelihood rises without bound as the slope grows, so
+  # there is no finite estimate and the iterations stop wherever they stop (a rate ratio of 9.7e16,
+  # unwarned; CRAN stress test of 0.5.14). glm() warns "fitted rates numerically 0".
+  diverged <- !converged && any(y == 0 & mu < 1e-8 * max(mu))
+  if (diverged) {
+    warning("the counts are zero at one end of the series, so the trend has no finite estimate: ",
+            "the rate ratio is reported as ", if (beta[2L] > 0) "Inf" else "0", " with no interval",
+            call. = FALSE)
+    beta[2L] <- sign(beta[2L]) * Inf
+  }
   w <- mu
   sw <- sum(w)
   swx <- sum(w * xc)
   swxx <- sum(w * xc * xc)
   det <- sw * swxx - swx^2
-  se <- if (is.finite(det) && det > 0) sqrt(sw / det) else NA_real_
+  se <- if (!diverged && is.finite(det) && det > 0) sqrt(sw / det) else NA_real_
   # Pearson dispersion: the Poisson fit assumes this is one, and when it
   # is not the interval below is too narrow
   resid <- (y - mu) / sqrt(mu)

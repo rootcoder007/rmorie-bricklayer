@@ -45,6 +45,77 @@
   not one string (a number was written as a file named `1`); errors raised in the compiled code no
   longer carry the `.Call()`.
 
+## Fixes from the CRAN stress test of 0.5.14
+
+* **No leak on an argument error in compiled code**: an error raised inside a C++ entry point
+  jumped over the C++ objects alive at that moment (two strings at every error of the barrier,
+  3,200 bytes over 50 calls under valgrind; the Merkle chunks, an NA URL with headers set, BLAKE2b
+  with an NA element). The barrier now holds its message in a fixed buffer, and an argument error
+  inside a body is thrown and raised by the barrier once the body's objects are destroyed; valgrind
+  reports nothing lost on those paths. The barrier generator (`inst/scripts/gen_barrier.R`) writes all
+  of it, so regenerating the file keeps it.
+* **`reservoir_indices()` answers Ctrl-C**: 3e9 items ran 37.9 s through a SIGINT.
+* **`step_change()`**: when every ordering is enumerated the observed one is among them, and is no
+  longer counted twice (p = 73/721 for 0.1). Drawn permutations keep the `+1`.
+* **`trend_test()`** on a constant series gives p = 1 at every length (it was NA past n = 8).
+* **`count_trend()`** with zeros at one end only (`c(0, 0, 5)`) warns that the trend has no finite
+  estimate and reports a rate ratio of `Inf` (or 0) with no interval; it was 9.7e16 silently.
+* **`validate_rules()`** on a table of no rows fails no row-wise rule (every rule failed).
+* **`online_summary()`** takes each block's sums in two passes, as `var()` does: values near 1e8
+  with a spread of 1 lost nine digits of the variance. The help page says "to rounding", not exact.
+* **Seeds**: `knox_test()` takes every seed up to 2^53 - 1 (2^40 was refused, -2^31 called too
+  large), and `capsule_falsify()` records a seed past 2^31 - 1 as given (it became NA).
+* **Network**: the URL gate refuses 6to4 addresses that carry a private IPv4 address
+  (`[2002:7f00:1::]` is 127.0.0.1), Teredo, the local-use NAT64 prefix and the discard prefix; a
+  307 or 308 redirect repeats a POST as a POST, to the same host only (it became a GET);
+  `wayback_save()` does not send the public archive a URL on your own network (`https://10.0.0.7/`,
+  a `.local` or one-label name); the manifest is read with a 32 MiB cap (a 300 MiB gzip bomb was
+  read whole before allocation failed).
+* **JSON**: a well-formed reply is parsed in compiled code (15 MiB took 85 s; 9.4 MiB takes 0.26
+  s). Whatever the R parser has words for (an error, a big integer, a duplicate key, nesting past 100
+  levels) is still parsed by it, so messages and warnings are unchanged, and a staged bundle, which
+  has no compiled code, parses as before (its R parser is twice as fast too).
+* **CSV reader parity with `read.csv(skipNul = TRUE)`**: NUL bytes are dropped before quotes are
+  read (a quote, a NUL and a quote is a doubled quote; a line of `""` with a NUL in it is blank); a
+  quote after a closed quoted field opens a quoted run again, a comma or line end inside it being text
+  (`"x"y",z"` is the one field `xy,z`); a byte-order mark after an empty `""` in the first row is
+  dropped. The two shapes it refuses, where `read.csv()` changes the data without a word (a record
+  with more fields than the header, a quote inside an unquoted field), are now in the help page.
+* **CLI**: a three-letter near miss (`rmbl "dat list"`), a hyphenated one (`"xplain-rror?"`) and a
+  short line naming a file (`"urls.txt?"`, `"my urls.txt"`) are not questions; a run of 16 or more
+  letters and digits mixed (an archive.org key) is a key; `--model` and `bricklayer_llm_ask(model =)`
+  refuse a key given as a model name before any route is looked for (it was sent as the model).
+* **`survey_design()`**: a post-stratified JK1 set on a post-stratum subset is accepted (the
+  replicates that delete a PSU with no row there are the weight); the adjustment is read from the
+  replicates that differ from the weight, and for JK1 from the factors across the set (one factor
+  n / (n - 1) unadjusted).
+* **Tests on CRAN**: no test renames the installed launcher (it wrote into the library); the wall-
+  clock bounds are fifty times wider where CRAN runs the tests (under valgrind they took 19 s against
+  15 and 30 s against 10); the archive.org lookup needs `RMBL_LIVE_TESTS=1`. The `agent_bundle()`
+  example points the settings folder at an empty one, so a saved key cannot make it call a provider.
+* **Undefined behaviour**: a NaN probability in the quantile kernel and a NaN time in the Hawkes
+  compensator are no longer cast to an integer.
+* **`plots.R`**: the "µg" unit is a value, not a name in `c()`, so a non-UTF-8 locale keeps it.
+* **Arguments, again**: a battery of every export with 41 hostile values in every argument (not only
+  those the examples set; 38,836 calls over 306 functions) found 1,007 base R errors in 77 functions
+  past the fixes above (the stress test counted 1,070 in 180), among them every `yoy_*()` writer's
+  `digits`, `step_change()`, `scan_adjust()` and the plots' `col =`; the battery now finds none, each
+  refused in words, naming the argument. Shared checks do most of it: a single
+  number in a range (`.rmbl_scalar()`), an environment refused where data goes, a date refused as a
+  count (`reps = Sys.Date()` ran 20,000 replications), colours checked before a device sees them (one
+  check for every plot), titles checked once. `morans_i(n_perm = 1)` no longer fails on the spread of
+  one permutation.
+* **Memory**: `core_hawkes_residuals()` and the fits built a grid of one point a time unit, 32 GB for
+  a horizon of 2^31 (the process was killed); a constant baseline needs none, a sinusoidal one keeps a
+  point a day and refuses a horizon past 4,194,304 days. `make_synthetic_csv()` refuses more than
+  100 million rows (it builds the table in memory; 2^31 was a process killed). `survey_design()`
+  computes its row keys and their digests in C and its degrees of freedom a block of rows at a time:
+  5e6 rows and 20 replicates peak at 2.8 GiB as a matrix and 2.4 GiB by name (3.5 and 3.1), the design
+  in 20 s and an estimate in 5 s (52 s each in the stress test).
+* **A time limit ends a loop over your function**: `capsule_falsify()`, `capsule_power()` and the
+  exposure-response bootstrap caught `setTimeLimit()`'s error as one more failed statistic and ran on.
+* The README says 121 C++ entry points behind the barrier (one new, the JSON path) and 13 in plain C.
+
 # rmoriebricklayer 0.5.13
 
 * The survey-estimation vignette loads the CSUS 2023 public-use file and its 1,000 mean bootstrap

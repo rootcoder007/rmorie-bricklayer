@@ -81,11 +81,20 @@ extern "C" void rmbl_interrupt_raise_unbarriered(void) {
     if (rmbl_barrier_depth == 0) rmbl_raise_interrupt();
 }
 
+/* is a barrier body on the stack: an argument error there is thrown (rmbl_arg_error) */
+extern "C" int rmbl_barrier_active(void) {
+    return rmbl_barrier_depth > 0;
+}
+
+static void rmbl_set_msg(char *to, const char *m) {
+    std::snprintf(to, 1024, "%s", m);
+}
+
 template <class F>
 struct rmbl_call {
     F *f;
     SEXP r;
-    std::string msg;
+    char msg[1024];   /* not a std::string: Rf_errorcall() below jumps over its destructor */
     int kind;
 };
 
@@ -100,16 +109,16 @@ static SEXP rmbl_body(void *data) {
     } catch (const rmbl::Interrupt &) {
         c->kind = 1;
     } catch (const rmbl::Fail &e) {
-        c->msg = e.what();   /* an argument error: said as Rf_error() said it, without the entry's name */
+        rmbl_set_msg(c->msg, e.what());   /* an argument error: said as Rf_error() said it, without the entry's name */
         c->kind = 3;
     } catch (const std::bad_alloc &) {
-        c->msg = "out of memory";
+        rmbl_set_msg(c->msg, "out of memory");
         c->kind = 2;
     } catch (const std::exception &e) {
-        c->msg = e.what();
+        rmbl_set_msg(c->msg, e.what());
         c->kind = 2;
     } catch (...) {
-        c->msg = "unexpected C++ exception";
+        rmbl_set_msg(c->msg, "unexpected C++ exception");
         c->kind = 2;
     }
     return R_NilValue;
@@ -138,7 +147,6 @@ static SEXP rmbl_guard(const char *name, F f) {
     R_UnwindProtect(rmbl_body<F>, &c, rmbl_unwound, nullptr, cont);
     UNPROTECT(1);
     const int kind = c.kind;
-    const std::string msg = c.msg;
     SEXP r = c.r;
     /* every path leaves the flag clear and the depth balanced BEFORE the
      * longjmp an error or interrupt makes below */
@@ -149,12 +157,13 @@ static SEXP rmbl_guard(const char *name, F f) {
         rmbl_raise_interrupt();
         Rf_errorcall(R_NilValue, "%s: interrupted", name);
     }
-    if (kind == 3) Rf_errorcall(R_NilValue, "%s", msg.c_str());
-    Rf_errorcall(R_NilValue, "%s: %s", name, msg.c_str());
+    if (kind == 3) Rf_errorcall(R_NilValue, "%s", c.msg);
+    Rf_errorcall(R_NilValue, "%s: %s", name, c.msg);
     return R_NilValue;
 }
 
 extern "C" {
+SEXP C_rmbl_json_fast_impl(SEXP, SEXP);
 SEXP C_rmbl_mean_impl(SEXP);
 SEXP C_rmbl_mean_running_impl(SEXP);
 SEXP C_rmbl_var_impl(SEXP);
@@ -278,6 +287,9 @@ SEXP C_rmbl_os_random_impl(SEXP);
 }
 
 extern "C" {
+SEXP C_rmbl_json_fast(SEXP a0, SEXP a1) {
+    return rmbl_guard("C_rmbl_json_fast", [&] { return C_rmbl_json_fast_impl(a0, a1); });
+}
 SEXP C_rmbl_mean(SEXP a0) {
     return rmbl_guard("C_rmbl_mean", [&] { return C_rmbl_mean_impl(a0); });
 }

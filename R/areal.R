@@ -94,7 +94,7 @@
 #' try(expected_counts(c(1, 2), c(10, 0), c("a", "b")))
 #' @export
 expected_counts <- function(counts, population, area, strata = NULL) {
-  .rmbl_no_fn(area = area)
+  .rmbl_no_fn(area = area, strata = strata)
   counts <- .rmbl_finite_input(counts, "counts", nonneg = TRUE)
   population <- .rmbl_finite_input(population, "population", nonneg = TRUE)
   area <- as.character(area)
@@ -433,7 +433,7 @@ funnel_limits <- function(expected, target = 1,
   if (is.na(target) || target <= 0) {
     stop("`target` must be positive", call. = FALSE)
   }
-  levels <- sort(as.numeric(levels))
+  levels <- sort(.rmbl_num(levels, "levels"))
   if (any(levels <= 0 | levels >= 1)) {
     stop("`levels` must lie strictly inside (0, 1)", call. = FALSE)
   }
@@ -593,7 +593,7 @@ morans_i <- function(x, neighbours, style = c("W", "B"),
   list(I = r$I, expectation = expectation,
        null_mean = if (length(null)) mean(null) else NA_real_,
        null_sd = if (length(null)) stats::sd(null) else NA_real_,
-       z = if (length(null) && stats::sd(null) > 0) {
+       z = if (length(null) > 1L && stats::sd(null) > 0) {
          (r$I - mean(null)) / stats::sd(null)
        } else {
          NA_real_

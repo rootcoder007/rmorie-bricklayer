@@ -45,8 +45,10 @@ statistic is the between-segment sum of squares
 over \eqn{k = m, \dots, n - m} with \eqn{m} = \code{min_segment}. The
 observed \eqn{\max_k T_k} is compared with the same maximum over
 reorderings of the series, and \eqn{p = (1 + \mathrm{count}(T^*_{\max} \ge
-T_{\max}))/(1 + B)}. When \eqn{n! \le} \code{n_perm} (with the default,
-\eqn{n \le 7}) every ordering is enumerated and the p-value is exact;
+T_{\max}))/(1 + B)} over \eqn{B} random reorderings. When \eqn{n! \le}
+\code{n_perm} (with the default, \eqn{n \le 7}) every ordering is
+enumerated, the observed one among them, and the p-value is exact:
+\eqn{\mathrm{count}(T^*_{\max} \ge T_{\max}) / n!};
 otherwise \code{n_perm} random permutations are drawn under \code{seed},
 and the caller's random number stream is restored afterwards.
 

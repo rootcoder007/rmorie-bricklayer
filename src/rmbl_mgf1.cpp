@@ -20,6 +20,7 @@
 
 #include <R.h>
 #include <Rinternals.h>
+#include "rmbl_entry.h"
 #include "rmbl_ct.h"
 
 extern "C" void rmbl_sha256_raw(const unsigned char *data, size_t len,
@@ -105,7 +106,7 @@ void rmbl_mgf1_shax(int hashlen, unsigned char *out, size_t outlen,
 /* Exposed so the FIPS 180-4 SHA-1 vectors can be asserted. Used only
  * for OCSP CertID, never for a signature. */
 SEXP C_rmbl_sha1_impl(SEXP x) {
-    if (TYPEOF(x) != RAWSXP) Rf_error("`x` must be a raw vector");
+    if (TYPEOF(x) != RAWSXP) RMBL_ARG_ERROR("`x` must be a raw vector");
     SEXP out = PROTECT(Rf_allocVector(RAWSXP, 20));
     rmbl_sha1_raw(RAW(x), static_cast<size_t>(XLENGTH(x)), RAW(out));
     UNPROTECT(1);
@@ -114,7 +115,7 @@ SEXP C_rmbl_sha1_impl(SEXP x) {
 
 /* Exposed so the FIPS 180-4 SHA-384 vectors can be asserted. */
 SEXP C_rmbl_sha384_impl(SEXP x) {
-    if (TYPEOF(x) != RAWSXP) Rf_error("`x` must be a raw vector");
+    if (TYPEOF(x) != RAWSXP) RMBL_ARG_ERROR("`x` must be a raw vector");
     SEXP out = PROTECT(Rf_allocVector(RAWSXP, 48));
     rmbl_sha384_raw(RAW(x), static_cast<size_t>(XLENGTH(x)), RAW(out));
     UNPROTECT(1);
@@ -123,13 +124,13 @@ SEXP C_rmbl_sha384_impl(SEXP x) {
 
 SEXP C_rmbl_hmac_shax_impl(SEXP bits, SEXP key, SEXP msg) {
     if (TYPEOF(bits) != INTSXP || XLENGTH(bits) != 1) {
-        Rf_error("`bits` must be 256 or 512");
+        RMBL_ARG_ERROR("`bits` must be 256 or 512");
     }
     if (INTEGER(bits)[0] != 256 && INTEGER(bits)[0] != 512) {
-        Rf_error("`bits` must be 256 or 512");
+        RMBL_ARG_ERROR("`bits` must be 256 or 512");
     }
     if (TYPEOF(key) != RAWSXP || TYPEOF(msg) != RAWSXP) {
-        Rf_error("`key` and `msg` must be raw vectors");
+        RMBL_ARG_ERROR("`key` and `msg` must be raw vectors");
     }
     const int n = (INTEGER(bits)[0] == 512) ? 64 : 32;
     SEXP out = PROTECT(Rf_allocVector(RAWSXP, n));
@@ -141,15 +142,15 @@ SEXP C_rmbl_hmac_shax_impl(SEXP bits, SEXP key, SEXP msg) {
 
 SEXP C_rmbl_mgf1_impl(SEXP bits, SEXP seed, SEXP outlen) {
     if (TYPEOF(bits) != INTSXP || XLENGTH(bits) != 1) {
-        Rf_error("`bits` must be 256 or 512");
+        RMBL_ARG_ERROR("`bits` must be 256 or 512");
     }
     if (INTEGER(bits)[0] != 256 && INTEGER(bits)[0] != 512) {
-        Rf_error("`bits` must be 256 or 512");
+        RMBL_ARG_ERROR("`bits` must be 256 or 512");
     }
-    if (TYPEOF(seed) != RAWSXP) Rf_error("`seed` must be a raw vector");
+    if (TYPEOF(seed) != RAWSXP) RMBL_ARG_ERROR("`seed` must be a raw vector");
     if (TYPEOF(outlen) != INTSXP || XLENGTH(outlen) != 1 ||
         INTEGER(outlen)[0] < 1) {
-        Rf_error("`outlen` must be a positive integer");
+        RMBL_ARG_ERROR("`outlen` must be a positive integer");
     }
     const int n = (INTEGER(bits)[0] == 512) ? 64 : 32;
     SEXP out = PROTECT(Rf_allocVector(RAWSXP, INTEGER(outlen)[0]));

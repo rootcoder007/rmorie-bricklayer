@@ -67,7 +67,12 @@ rebuilt upstream has a new digest). When the manifest cannot be fetched,
 the last copy on disk, however old, supplies the digest; with none, a fresh
 download is not kept and a cached file is kept but not used. The CSV is
 read in compiled code with the same result as
-\code{read.csv(gzfile(f), stringsAsFactors = FALSE)}; tables that inflate
+\code{read.csv(gzfile(f), stringsAsFactors = FALSE)}, two malformed shapes
+apart, which are refused with the record they are in where \code{read.csv()}
+changes the data without a word: a record with more fields than the header
+(\code{read.csv()} turns the first column into row names) and a quote mark
+inside an unquoted field (\code{read.csv()} takes the rest of the file as one
+quoted run). Tables that inflate
 past 512 MiB are read by \code{read.csv()} itself, a piece at a time. A
 table that decompresses to more than the option
 \code{rmoriebricklayer.max_csv_bytes} (1 GiB by default) is refused.

@@ -319,6 +319,7 @@ rule_complete_rows <- function(severity = c("warning", "fatal")) {
 rule_distinct_rows <- function(columns = NULL,
                                severity = c("warning", "fatal")) {
   severity <- .rmbl_arg(severity)
+  .rmbl_no_fn(columns = columns)
   rule("distinct_rows",
     function(d) {
       sub <- if (is.null(columns)) {
@@ -418,6 +419,7 @@ duplicate_rows <- function(data, columns = NULL) {
   if (is.null(columns)) {
     pos <- seq_along(data)
   } else {
+    .rmbl_no_fn(columns = columns)
     cols <- as.character(columns)
     missing_cols <- setdiff(cols, names(data))
     if (length(missing_cols) > 0L) {

@@ -251,7 +251,7 @@ bricklayer_explain_error <- function(message = geterrmessage(), packages = NULL,
   if (!is.numeric(n) || length(n) != 1L || is.na(n) || n < 1 || n != round(n)) {
     stop("`n` must be a whole number of 1 or more", call. = FALSE)
   }
-  n <- as.integer(n)
+  n <- as.integer(min(n, .Machine$integer.max))   # Inf: every match (as.integer(Inf) was NA)
   pk <- packages %||% .bl_kn_default_packages()
   if (!is.character(pk) || !length(pk) || anyNA(pk) || !all(nzchar(pk))) {
     stop("`packages` must name installed packages", call. = FALSE)

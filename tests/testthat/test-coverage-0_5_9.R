@@ -102,11 +102,9 @@ test_that("cli: reading a line from a non-interactive stdin, the Rd database sea
 })
 
 test_that("cli: install_cli refuses when the launcher is missing; data pull reports an unwritable table", {
-  src <- system.file("bin", "rmoriebricklayer", package = "rmoriebricklayer")
-  skip_if(!nzchar(src) || file.access(dirname(src), 2L) != 0L, "installed launcher not movable here")
-  bak <- paste0(src, ".bak")
-  expect_true(file.rename(src, bak))
-  on.exit(file.rename(bak, src), add = TRUE)
+  # never by renaming the installed launcher: that wrote into the library on CRAN (CRAN stress test
+  # of 0.5.14)
+  local_mocked_bindings(.bl_launcher = function() "")
   expect_error(install_cli(tempfile("bin")), "launcher is missing")
   # the destination directory is fine but the table cannot be written as CSV
   local_mocked_bindings(bricklayer_data_load = function(key) {

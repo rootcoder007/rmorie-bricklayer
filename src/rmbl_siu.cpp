@@ -39,13 +39,13 @@ static SEXP with_split_attr(SEXP ans) {
 std::string as_string(SEXP x, const char *what) {
     if (TYPEOF(x) != STRSXP || Rf_xlength(x) != 1 ||
         STRING_ELT(x, 0) == NA_STRING) {
-        Rf_error("%s must be a single non-NA character string", what);
+        RMBL_ARG_ERROR("%s must be a single non-NA character string", what);
     }
     /* an SIU report page is a few hundred KB; the parsers run regular
      * expressions over lines of it (normalize_text() caps the lines), and
      * the whole input is copied a dozen times on the way */
     if (LENGTH(STRING_ELT(x, 0)) > (2 << 20)) {
-        Rf_error("%s is larger than 2 MiB: not a report page", what);
+        RMBL_ARG_ERROR("%s is larger than 2 MiB: not a report page", what);
     }
     return std::string(CHAR(STRING_ELT(x, 0)));
 }

@@ -23,7 +23,7 @@ test_that("the RSA public exponent is bounded, so a hostile certificate cannot b
   s <- as.raw(rep(0x42, 128))
   expect_error(.Call(C("C_rmbl_rsa_recover"), s, n, as.raw(c(1, rep(0xff, 1023)))), "exponent is implausibly large")
   t <- system.time(.Call(C("C_rmbl_rsa_recover"), s, n, as.raw(c(1, rep(0xff, 63)))))[["elapsed"]]
-  expect_lt(t, 2)
+  expect_lt(t, wall_limit(2))
 })
 
 test_that("the DER parser refuses BER: non-minimal lengths and padded tags", {
@@ -156,7 +156,7 @@ test_that("JSON strings are assembled in linear time, and the reformatter refuse
   txt <- paste0('["', strrep("\\n", 65536L), '"]')
   t <- system.time(v <- bricklayer_json_from_json(txt))[["elapsed"]]
   expect_identical(nchar(v), 65536L)
-  expect_lt(t, 5)
+  expect_lt(t, wall_limit(5))
   expect_error(bricklayer_json_minify('{"a":"\\ud83d"}'), "surrogate")
   expect_error(bricklayer_json_minify('{"a":"x\\u0000y"}'), "NUL")
   expect_error(bricklayer_json_from_json(paste0(strrep("[", 101), strrep("]", 101))), "100 levels")
@@ -275,7 +275,7 @@ test_that("trend helpers: the clamp flag, zero counts, infinite values, the exac
   expect_error(step_change(c(1, 2, Inf, 4, 5, 6)), "infinite")
   expect_warning(trend_test(c(1, 3, 2, 5, 4, 6, 8, 7, 9, 10), exact = TRUE), "up to n = 8")
   t1 <- system.time(for (i in 1:20) trend_test(c(1, 1, 2, 2, 3, 3, 4, 4), exact = TRUE))[["elapsed"]]
-  expect_lt(t1, 10)
+  expect_lt(t1, wall_limit(10))
 })
 
 test_that("morans_i refuses negative weights and a constant variable", {
@@ -314,7 +314,7 @@ test_that("ML-DSA refuses a corrupt secret key at once instead of looping on it"
   t <- system.time(
     expect_error(.Call(C("C_rmbl_mldsa_sign"), 44L, sk, as.raw(1:3), raw(0), raw(32), NULL, TRUE), "malformed")
   )[["elapsed"]]
-  expect_lt(t, 1)
+  expect_lt(t, wall_limit(1))
   # a sound key signs in well under the attempt cap
   sig <- .Call(C("C_rmbl_mldsa_sign"), 44L, kp[[2]], as.raw(1:3), raw(0), raw(32), NULL, TRUE)
   expect_true(.Call(C("C_rmbl_mldsa_verify"), 44L, kp[[1]], as.raw(1:3), raw(0), sig, NULL))

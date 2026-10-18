@@ -456,19 +456,27 @@ static const bool rmbl_core_hook_installed =
 static int rmbl_hk_int(SEXP x, const char *name, int lo, int hi) {
     const int v = Rf_asInteger(x);
     if (v == NA_INTEGER || v < lo || v > hi) {
-        Rf_error("`%s` must be an integer in %d..%d", name, lo, hi);
+        RMBL_ARG_ERROR("`%s` must be an integer in %d..%d", name, lo, hi);
     }
     return v;
 }
 static double rmbl_hk_real(SEXP x, const char *name) {
     const double v = Rf_asReal(x);
-    if (ISNAN(v)) Rf_error("`%s` must be a number", name);
+    if (ISNAN(v)) RMBL_ARG_ERROR("`%s` must be a number", name);
     return v;
 }
 static void rmbl_hk_len(SEXP x, const char *name, R_xlen_t need) {
     if (XLENGTH(x) < need) {
-        Rf_error("`%s` must have at least %d element(s), has %d", name,
+        RMBL_ARG_ERROR("`%s` must have at least %d element(s), has %d", name,
                  static_cast<int>(need), static_cast<int>(XLENGTH(x)));
+    }
+}
+
+/* the sinusoidal baseline is integrated on a grid of a point a day: past 2^22 days (some 11,000 years)
+ * that grid is refused rather than allocated (a horizon of 2^31 was 32 GB) */
+static void rmbl_hk_grid_ok(int bk, double T) {
+    if (bk != 0 && !(T <= 4194304.0)) {
+        rmbl::fail("a sinusoidal baseline is integrated day by day: `horizon` must be at most 4194304 days");
     }
 }
 
@@ -478,6 +486,7 @@ SEXP C_rmbl_hawkes_nll_grad_impl(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, S
     a = PROTECT(Rf_coerceVector(a, REALSXP));
     psi = PROTECT(Rf_coerceVector(psi, REALSXP));
     const int bk = Rf_asInteger(bkind), k = Rf_asInteger(kind);
+    rmbl_hk_grid_ok(bk, Rf_asReal(T));
     const int nb = morie::core::hawkes_baseline_n(bk), np = rmbl_hk_np(k);
     if (XLENGTH(a) != nb || XLENGTH(psi) != np) {
         UNPROTECT(3);
@@ -498,6 +507,7 @@ SEXP C_rmbl_hawkes_nll_grad_impl(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, S
 SEXP C_rmbl_hawkes_rescaled_impl(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, SEXP kind, SEXP psi) {
     const int bk = rmbl_hk_int(bkind, "bkind", 0, 2), k = rmbl_hk_int(kind, "kind", 0, 3);
     const double Tv = rmbl_hk_real(T, "T"), etav = rmbl_hk_real(eta, "eta");
+    rmbl_hk_grid_ok(bk, Tv);
     t = PROTECT(Rf_coerceVector(t, REALSXP));
     a = PROTECT(Rf_coerceVector(a, REALSXP));
     psi = PROTECT(Rf_coerceVector(psi, REALSXP));
@@ -513,6 +523,7 @@ SEXP C_rmbl_hawkes_rescaled_impl(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, S
 SEXP C_rmbl_hawkes_intensity_impl(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, SEXP kind, SEXP psi) {
     const int bk = rmbl_hk_int(bkind, "bkind", 0, 2), k = rmbl_hk_int(kind, "kind", 0, 3);
     const double Tv = rmbl_hk_real(T, "T"), etav = rmbl_hk_real(eta, "eta");
+    rmbl_hk_grid_ok(bk, Tv);
     t = PROTECT(Rf_coerceVector(t, REALSXP));
     a = PROTECT(Rf_coerceVector(a, REALSXP));
     psi = PROTECT(Rf_coerceVector(psi, REALSXP));
@@ -569,6 +580,7 @@ SEXP C_rmbl_hawkes_fit_pbfgs_impl(SEXP t, SEXP T, SEXP bkind, SEXP kind, SEXP me
     hi = PROTECT(Rf_coerceVector(hi, REALSXP));
     x0 = PROTECT(Rf_coerceVector(x0, REALSXP));
     const int bk = Rf_asInteger(bkind), k = Rf_asInteger(kind);
+    rmbl_hk_grid_ok(bk, Rf_asReal(T));
     const R_xlen_t d = morie::core::hawkes_baseline_n(bk) + 1 + rmbl_hk_np(k);
     if (XLENGTH(lo) != d || XLENGTH(hi) != d || XLENGTH(x0) != d) {
         UNPROTECT(4);

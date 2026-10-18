@@ -302,14 +302,14 @@ static const R_xlen_t kMaxPairwiseN = 20000;
 
 static void need_xy(SEXP x, SEXP y) {
     if (TYPEOF(x) != REALSXP || TYPEOF(y) != REALSXP) {
-        Rf_error("`x` and `y` must be double vectors");
+        RMBL_ARG_ERROR("`x` and `y` must be double vectors");
     }
     if (XLENGTH(x) != XLENGTH(y)) {
-        Rf_error("`x` and `y` must be the same length (%d vs %d)",
+        RMBL_ARG_ERROR("`x` and `y` must be the same length (%d vs %d)",
                  static_cast<int>(XLENGTH(x)), static_cast<int>(XLENGTH(y)));
     }
     if (XLENGTH(x) > kMaxPairwiseN) {
-        Rf_error("n = %d exceeds the %d-point limit of the pairwise-slope enumeration",
+        RMBL_ARG_ERROR("n = %d exceeds the %d-point limit of the pairwise-slope enumeration",
                  static_cast<int>(XLENGTH(x)), static_cast<int>(kMaxPairwiseN));
     }
 }

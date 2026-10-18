@@ -371,6 +371,7 @@ missingness_map <- function(data, height = 20L, width = 12L) {
   if (length(height) != 1L || is.na(height) || height < 1L) {
     stop("`height` must be a single positive integer", call. = FALSE)
   }
+  width <- .rmbl_scalar(width, "width", 1, 10000, integer = TRUE)
   n <- nrow(data)
   shades <- if (.rmbl_unicode_ok()) {
     c(" ", "\u2591", "\u2592", "\u2593", "\u2588")

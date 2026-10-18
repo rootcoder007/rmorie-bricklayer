@@ -254,7 +254,8 @@ make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
 #'   \code{row_replication}.
 #' @param out_path Character string: the path of the CSV to write.
 #' @param n_rows Whole number: the number of rows (persons, if replicating)
-#'   to generate. Defaults to \code{schema$n_rows}, then 50000.
+#'   to generate, from 1 to 100 million (the table is built in memory).
+#'   Defaults to \code{schema$n_rows}, then 50000.
 #' @param seed Random seed for reproducibility. Defaults to
 #'   \code{schema$seed}, then 91735246.
 #' @return Invisibly, an object of class \code{bricklayer_synthetic}: a list
@@ -302,6 +303,15 @@ make_synthetic_csv <- function(schema, out_path,
   if (!is.list(schema)) stop("`schema` must be a schema list (columns = ..., ...)", call. = FALSE)
   if (is.null(seed)) seed <- schema$seed %||% 91735246L
   if (is.null(n_rows)) n_rows <- schema$n_rows %||% 50000L
+  # built in memory: a count of rows, and one a machine can hold (2^31 was a process killed for memory;
+  # CRAN stress test of 0.5.14). Base R only: a staged bundle sources this file on its own.
+  if (!is.numeric(n_rows) || length(n_rows) != 1L || !is.finite(n_rows) || n_rows < 1 ||
+      n_rows != round(n_rows) || inherits(n_rows, c("Date", "POSIXt", "difftime"))) {
+    stop("`n_rows` must be one whole number of rows, at least 1", call. = FALSE)
+  }
+  if (n_rows > 1e8) {
+    stop("`n_rows` above 100 million is refused: the synthetic table is built in memory", call. = FALSE)
+  }
   # CRAN policy: restore the caller's RNG state on exit.
   if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
     old_seed <- get(".Random.seed", envir = globalenv())
