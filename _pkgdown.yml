@@ -64,6 +64,7 @@ articles:
       - falsification-and-power
       - air-pollution-and-health
       - causal-effects
+      - policy-evaluation
       - first-nations-metis-inuit-health
       - courts-and-crime
   - title: Data handling
@@ -453,6 +454,29 @@ reference:
       - hotspot_persistence
       - knox_test
       - justice-data
+  - title: Evaluating a policy
+    desc: >
+      Difference in differences with two-way fixed effects, event studies,
+      staggered adoption (Callaway and Sant'Anna; Wooldridge), the Goodman-Bacon
+      decomposition, switching treatments, permutation inference and
+      Westfall-Young stepdown p-values, fixed-effects Poisson, synthetic control;
+      severity-weighted crime indices, justice-pipeline rates, cumulative risk of
+      a first event, and place-based buffers.
+    contents:
+      - did_panel
+      - event_study
+      - staggered_att
+      - bacon_decomposition
+      - switching_did
+      - permutation_inference
+      - stepdown_pvalues
+      - fe_poisson
+      - synthetic_control
+      - severity_index
+      - pipeline_rate
+      - cumulative_risk
+      - buffer_assign
+      - policy_example
   - title: First Nations, Metis and Inuit health
     desc: >
       Statistics Canada tables read as published (suppressed cells never imputed),

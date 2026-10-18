@@ -109,6 +109,32 @@ Every result draws itself with `plot()`.
 * The README, the vignette and the pages of the estimators acknowledge Professors Suzanne
   Stewart and Angela Mashford-Pringle, on whose frameworks they are built.
 
+**Evaluating a policy from administrative panels**
+
+New estimators, each checked against the reference implementation (`fixest`, `did`,
+`bacondecomp`) to rounding error, in base R:
+
+* `did_panel()`: difference in differences with two-way fixed effects and CR1 cluster-robust
+  errors (one-way or two-way), weights, linear combinations with delta-method errors (the
+  effect after a phase-in), and the effect relative to the comparison units' pre-period mean.
+* `event_study()`: leads and lags around adoption, with the joint Wald test of the leads.
+* `staggered_att()`: group-time effects for staggered adoption (Callaway and Sant'Anna, with
+  not-yet-treated or never-treated comparisons; or Wooldridge's extended two-way regression),
+  aggregated overall and by time since adoption, with a cluster bootstrap.
+* `bacon_decomposition()`: the two-way estimate split exactly into its two-group comparisons.
+* `switching_did()`: de Chaisemartin and D'Haultfoeuille's estimator, with its placebo.
+* `permutation_inference()` and `stepdown_pvalues()`: Fisher's test by re-assigning adoption
+  dates across clusters (every assignment when there are few), and Westfall-Young stepdown
+  p-values for several outcomes.
+* `fe_poisson()`: fixed-effects Poisson or negative binomial (NB2, base R) for counts, as rate
+  ratios.
+* `synthetic_control()`: one treated unit against a convex combination of donors, with the
+  placebo-in-space test.
+* `severity_index()`, `pipeline_rate()`, `cumulative_risk()` and `buffer_assign()`: the
+  measures these designs take from justice data.
+* `policy_example()` and the vignette "Evaluating a policy from administrative panels". The
+  designs are those of Professor Angela Zorro Medina's empirical work.
+
 ## Fixes from the CRAN stress test of 0.5.14
 
 * **No leak on an argument error in compiled code**: an error raised inside a C++ entry point

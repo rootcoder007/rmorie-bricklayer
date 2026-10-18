@@ -191,6 +191,15 @@ and a digest anyone can recompute says nothing about who produced the data.
   permutation p-values). Each has a plot. Real Ontario Court of Justice and
   Toronto Police Service excerpts ship in `inst/extdata` (`?justice-data`);
   `vignette("courts-and-crime")`.
+- **Evaluating a policy** — `did_panel()` (two-way fixed effects with
+  cluster-robust errors), `event_study()` (leads, lags and the pre-trend
+  test), `staggered_att()` (Callaway-Sant'Anna and Wooldridge),
+  `bacon_decomposition()`, `switching_did()` (de Chaisemartin-D'Haultfoeuille),
+  `permutation_inference()` with `stepdown_pvalues()` (Westfall-Young),
+  `fe_poisson()`, `synthetic_control()`; and `severity_index()`,
+  `pipeline_rate()`, `cumulative_risk()`, `buffer_assign()` for justice
+  data. Each matches the reference implementation;
+  `vignette("policy-evaluation")`.
 - **First Nations, Metis and Inuit health, mental health and wellness** —
   distinctions-based methods for Statistics Canada's published tables, with
   suppressed cells never imputed:

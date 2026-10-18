@@ -709,6 +709,11 @@ bricklayer_plot_options <- function(...) {
 #'     with the fitted trend.}
 #'   \item{\code{bricklayer_analysis}}{(\code{\link{analyse_table}}) the
 #'     change, rates and rate change of a published table, one panel each.}
+#'   \item{\code{rmbl_event_study}, \code{rmbl_staggered_att}}{
+#'     (\code{\link{event_study}}, \code{\link{staggered_att}}) the effect at each
+#'     period since adoption with its interval, the reference period at zero.}
+#'   \item{\code{rmbl_synth}}{(\code{\link{synthetic_control}}) the treated unit and
+#'     its synthetic control over time, adoption marked.}
 #'   \item{\code{rmbl_case_flow}}{(\code{\link{case_flow}}) cases received
 #'     and disposed, shaded where the inventory grew or fell, and the
 #'     clearance rate with its interval and rolling value.}
