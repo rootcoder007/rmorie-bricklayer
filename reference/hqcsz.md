@@ -26,10 +26,10 @@ hqcsz(lvl, ver = c("v5", "round4"))
 
 ## Value
 
-A named integer vector: `public` (the encapsulation key), `secret` (the
-decapsulation key), `ciphertext`, `seed` (key generation), `message` and
-`salt` (encapsulation randomness) and `shared` (the shared secret), all
-in bytes, named as
+A named integer vector of byte lengths: `public` (the encapsulation
+key), `secret` (the decapsulation key), `ciphertext`, `seed` (key
+generation), `message` and `salt` (encapsulation randomness) and
+`shared` (the shared secret), named as
 [`hqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqckg.md)
 and
 [`hqcencap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqcencap.md)

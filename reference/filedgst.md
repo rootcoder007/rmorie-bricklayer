@@ -70,6 +70,6 @@ identical(sha512file(p), csha512(readBin(p, "raw", file.size(p))))
 
 # a missing file is an error
 try(crc32file(file.path(tempdir(), "no-such-file")))
-#> Error : `path`: no such file: /tmp/RtmpH6wQpu/no-such-file
+#> Error : `path`: no such file: /tmp/RtmpreTYdW/no-such-file
 unlink(p)
 ```
