@@ -92,8 +92,10 @@ description of how the published indicators move together.
 This estimator puts to quantitative use the work of Professor Angela
 Mashford-Pringle (Timiskaming First Nation) and Professor Suzanne
 Stewart (Yellowknives Dene First Nation), both of the University of
-Toronto; see the acknowledgements of
-[`vignette("first-nations-metis-inuit-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/first-nations-metis-inuit-health.md).
+Toronto.
+
+See the acknowledgements of the `first-nations-metis-inuit-health`
+vignette.
 
 ## References
 

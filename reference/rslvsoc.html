@@ -70,12 +70,11 @@ its portal domain and a four-by-four id such as <code>ijzp-q8t2</code>.</p>
 
 
 <dl><dt id="arg-prov">prov<a class="anchor" aria-label="anchor" href="#arg-prov"></a></dt>
-<dd><p>A provenance list as returned by
-<code><a href="loadprov.html">loadprov()</a></code>, or
-<code>NULL</code>. Must contain <code>dataset$socrata_domain</code> (a host name
-without scheme, e.g. <code>"data.cityofchicago.org"</code>) and
-<code>dataset$socrata_id</code> (the four-by-four dataset id, e.g.
-<code>"ijzp-q8t2"</code>).</p></dd>
+<dd><p>A provenance list as returned by <code><a href="loadprov.html">loadprov()</a></code>, or <code>NULL</code>.
+It must have two fields. The first is <code>dataset$socrata_domain</code>, a
+host name without scheme such as <code>"data.cityofchicago.org"</code>. The
+second is <code>dataset$socrata_id</code>, the four-by-four dataset id such as
+<code>"ijzp-q8t2"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -88,9 +87,9 @@ error.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>One request is made, to <code>https://&lt;domain&gt;/api/views/&lt;id&gt;.json</code>. If
 it answers with JSON that has an <code>id</code> field the dataset is taken to
-exist and the function returns
-<code>https://&lt;domain&gt;/api/views/&lt;id&gt;/rows.csv?accessType=DOWNLOAD</code>, the
-portal's export of every row. The id is not checked further, and the
+exist. The function then returns the portal's export of every row, the URL
+<code>https://&lt;domain&gt;/api/views/&lt;id&gt;/</code> followed by
+<code>rows.csv?accessType=DOWNLOAD</code>. The id is not checked further, and the
 export URL is not fetched.</p>
 <p><code>NULL</code> is returned when <code>prov</code> is <code>NULL</code>, when the
 domain or id is missing, when the request fails (offline, HTTP error,

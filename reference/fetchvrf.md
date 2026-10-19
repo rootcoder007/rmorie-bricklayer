@@ -47,11 +47,12 @@ data frame of every attempt: `url`, `outcome`).
 Some servers refuse the Internet Archive's crawler while serving
 everyone else (Statistics Canada does), so a Wayback snapshot of their
 files may not exist. The remedy is a capture made from elsewhere,
-published as a mirror and pinned by its digest: an Internet Archive item
-(`https://archive.org/download/<item>/<file>`), the data service, an
-institutional repository. Because the digest is checked, a mirror does
-not have to be trusted: a copy that matches is the same bytes the
-analysis used, wherever it came from.
+published as a mirror and pinned by its digest. It can be an Internet
+Archive item, at `https://archive.org/download/` followed by
+`<item>/<file>`; the data service; or an institutional repository.
+Because the digest is checked, a mirror does not have to be trusted: a
+copy that matches is the same bytes the analysis used, wherever it came
+from.
 
 Without `sha256` the first copy that downloads is kept and its digest is
 returned, to be pinned for the next run.

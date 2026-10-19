@@ -2,10 +2,10 @@
 
 `cpsatst()` signs a manifest's canonical digest and records everything a
 verifier needs alongside it: the scheme, the public key, the context
-string, the pre-hash, a note and the signing time. `cpschkatst()` checks
-the result against a manifest without being told anything further. Use
-them to publish a capsule together with proof that its manifest has not
-changed since you signed it.
+string, the pre-hash, a note and the time of signing. `cpschkatst()`
+checks the result against a manifest without being told anything
+further. Use them to publish a capsule together with proof that its
+manifest has not changed since you signed it.
 
 ## Usage
 
@@ -40,8 +40,8 @@ cpschkatst(attest, man, keyexp = NULL)
 - prehash:
 
   Pre-hash, as in
-  [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md):
-  `"none"` (the default) or a hash name such as `"sha256"` or
+  [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md).
+  It is `"none"` (the default) or a hash name such as `"sha256"` or
   `"sha512"`.
 
 - note:
@@ -56,8 +56,8 @@ cpschkatst(attest, man, keyexp = NULL)
 
 - keyexp:
 
-  Optional public key the attestation must carry: hex, or a key object
-  from
+  Optional public key the attestation must carry, as hex or as a key
+  object from
   [`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md),
   [`fipspubkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)
   or
@@ -68,15 +68,15 @@ cpschkatst(attest, man, keyexp = NULL)
 
 ## Value
 
-`cpsatst()` a list of class `c("bricklayer_attestation", "list")` with
-the character fields `digest`, `scheme`, `public` (hex), `context`,
-`prehash`, `note` and `signed_utc` (ISO 8601 UTC time), and `signature`
-(a `bricklayer_signature` from
+`cpsatst()` a list of class `bricklayer_attestation` with the character
+fields `digest`, `scheme`, `public` (hex), `context`, `prehash`, `note`
+and `signed_utc` (ISO 8601 UTC time), and `signature` (a
+`bricklayer_signature` from
 [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)).
-`cpschkatst()` a list of class
-`c("bricklayer_attestation_check", "list")` with `ok` (logical) and
-`checks`, a data frame with columns `check`, `ok` and `detail`, one row
-per check.
+
+`cpschkatst()` a list of class `bricklayer_attestation_check` with `ok`
+(logical) and `checks`, a data frame with columns `check`, `ok` and
+`detail`, one row per check.
 
 ## Details
 
@@ -149,8 +149,8 @@ att
 #>   context     <none>
 #>   prehash     none
 #>   note        counts as published
-#>   signed      2026-10-19T05:09:54Z
-#>   public key  aab24b0933d2a76566f405c2a7aa8cae... (1952 bytes)
+#>   signed      2026-10-19T10:23:43Z
+#>   public key  1ce458506f8a2e069eec66191c6cfaea... (1952 bytes)
 #> ──────────────────────────────────────────────────────────────────
 
 # a verifier needs the attestation and the manifest, nothing else

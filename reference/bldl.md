@@ -28,9 +28,9 @@ bldl(
 
 - url:
 
-  The URL: `https` (plain `http` only with
-  `options(rmoriebricklayer.allowhttp = TRUE)`); a loopback, link-local
-  or private address is refused.
+  The URL, `https`. The option `rmoriebricklayer.allowhttp` set to
+  `TRUE` also allows plain `http`. A loopback, link-local or private
+  address is refused.
 
 - dest:
 
@@ -98,10 +98,11 @@ is set, and suppressed by `options(morie.quiet = TRUE)`.
 Network: the transfer runs in the package's compiled HTTP client. The
 URL is checked, its host resolved and pinned, and every redirect is
 checked again (no switch from https to http; credentials are not passed
-to another host). Plain `http://` is allowed only with
-`options(rmoriebricklayer.allowhttp = TRUE)`. A transfer slower than 64
-bytes a second for 30 seconds is abandoned. A `file://` URL is copied
-locally through the same progress display, only with `allowfile = TRUE`.
+to another host). Plain `http://` is allowed only when
+`rmoriebricklayer.allowhttp`, an option, is `TRUE`. A transfer slower
+than 64 bytes a second for 30 seconds is abandoned. A `file://` URL is
+copied locally through the same progress display, only with
+`allowfile = TRUE`.
 
 Errors: a URL that is not https (or allowed http/file), or that points
 at a loopback, link-local or private address; `headers` not a named
@@ -132,7 +133,7 @@ try(bldl("http://example.org/table.csv", tempfile()))
 try(bldl("https://127.0.0.1/table.csv", tempfile()))
 #> Error : url points at a local or private address ('https://127.0.0.1/table.csv'): refused (a local or private address (127.0.0.1))
 try(bldl(paste0("file://", src), tempfile()))
-#> Error : url must be an https:// URL, not file:// ('file:///tmp/RtmpdFP7Nh/file1ed834f7e301.txt'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror
+#> Error : url must be an https:// URL, not file:// ('file:///tmp/Rtmp2OifJU/file1e8648a553fc.txt'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror
 
 # a real download needs the network
 if (FALSE) { # \dontrun{

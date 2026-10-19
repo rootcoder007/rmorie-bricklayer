@@ -29,18 +29,21 @@ wbsnpurl(url, ts = NULL)
 ## Value
 
 A length-1 character string, the `https` snapshot URL of the form
-`https://web.archive.org/web/<timestamp>/<url>`, or `NULL`.
+`https://web.archive.org/web/` followed by `<timestamp>/<url>`, or
+`NULL`.
 
 ## Details
 
-The function sends one request to the availability API,
-`https://archive.org/wayback/available?url=<url>[&timestamp=<ts>]`, and
-reads `archived_snapshots$closest`. When the API reports an available
-snapshot its URL is returned, with `http://` rewritten to `https://` and
-passed through the same public-URL check as every other URL the package
-fetches. The timestamp is passed to the API as given; the API accepts
-any prefix of `YYYYMMDDhhmmss` and returns the snapshot nearest to it,
-before or after.
+The function sends one request to the availability API,  
+`https://archive.org/wayback/available?url=<url>[&timestamp=<ts>]`,  
+where the timestamp part is sent only when `ts` is given.
+
+The answer's `archived_snapshots$closest` is read. When the API reports
+an available snapshot its URL is returned, with `http://` rewritten to
+`https://` and passed through the same public-URL check as every other
+URL the package fetches. The timestamp is passed to the API as given;
+the API accepts any prefix of `YYYYMMDDhhmmss` and returns the snapshot
+nearest to it, before or after.
 
 `NULL` is returned when the API has no snapshot, when the request fails
 (offline, an HTTP error, invalid JSON) or when the answer has no usable

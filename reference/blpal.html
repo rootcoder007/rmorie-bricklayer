@@ -96,8 +96,8 @@ to colour your own plots so they match the package's.</p>
 
 
 <dl><dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
-<dd><p>Character scalar, the palette: <code>"okabe"</code> (the default),
-<code>"diverging"</code>, <code>"sequential"</code> or <code>"grey"</code>.</p></dd>
+<dd><p>Character scalar, the palette: <code>"okabe"</code> (the default), or one
+of <code>"diverging"</code>, <code>"sequential"</code> and <code>"grey"</code>.</p></dd>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
@@ -125,10 +125,10 @@ options in force (after the change), invisibly when setting.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The palettes: <code>"okabe"</code> is the eight-colour set of Okabe and Ito
 (2008), distinguishable under the common forms of colour-vision
-deficiency; <code>"diverging"</code> has three anchors (blue <code>#2166AC</code>,
+deficiency. <code>"diverging"</code> has three anchors (blue <code>#2166AC</code>,
 grey <code>#8C8C8C</code>, orange-red <code>#D6604D</code>) and is used for changes
-(decrease, no change, increase); <code>"sequential"</code> has five blues from
-light to dark; <code>"grey"</code> five greys from dark to light. With <code>n</code>
+(decrease, no change, increase). The palette <code>"sequential"</code> has five
+blues from light to dark; <code>"grey"</code> five greys from dark to light. With <code>n</code>
 given, <code>"okabe"</code> and <code>"grey"</code> repeat their colours
 (<code><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep_len()</a></code>) and <code>"diverging"</code> and <code>"sequential"</code> are
 interpolated with <code><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">grDevices::colorRampPalette()</a></code>.</p>

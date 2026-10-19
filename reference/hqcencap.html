@@ -107,7 +107,8 @@ shared secret.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The level and version are taken from the key. The randomness is a message
-<code>m</code> of <code>hqcsz(level)[["message"]]</code> bytes and a 16-byte <code>salt</code>,
+<code>m</code> and a 16-byte <code>salt</code>. The length of <code>m</code> in bytes is
+<code>hqcsz(level)[["message"]]</code>. They are
 both
 drawn with <code><a href="rndbytes.html">rndbytes()</a></code> from the operating system's
 generator unless

@@ -69,20 +69,19 @@ nor one hexadecimal string.
 
 ## Security
 
-A hand-written implementation. The standardised schemes are checked byte
-for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
-suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
-operation that touches a secret under valgrind memcheck with the secret
-marked undefined (the ctgrind method), so a branch or a memory address
-that depends on it is a reported error, and afterwards scans the dead
-stack for copies of the secret. Both checks run in CI on every change,
-with GCC and with Clang. Timing is also measured on x86-64 and arm64
-hardware (`inst/dudect`) and power leakage is assessed in simulation
-under the value and the transition models (`inst/tvla`) for the masked
-ML-KEM and ML-DSA kernels; this scheme is not masked. These are checks
-of this code on those compilers; no third-party security audit has been
-commissioned, and the README's security section lists what each check
-does and does not cover.
+The implementation is hand-written. Its standardised schemes are checked
+byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the
+test suite. Side channels are checked, not assumed: `inst/ctcheck` runs
+every operation that touches a secret under valgrind memcheck with the
+secret marked undefined (the ctgrind method), so a branch or a memory
+address that depends on it is a reported error, and afterwards scans the
+dead stack for copies of the secret. Both checks run in CI on every
+change, with GCC and with Clang. Timing is also measured on x86-64 and
+arm64 hardware (`inst/dudect`) and power leakage is assessed in
+simulation under the value and the transition models (`inst/tvla`) for
+the masked ML-KEM and ML-DSA kernels; this scheme is not masked. These
+are checks of this code on those compilers; the README's security
+section lists what each check does and does not cover.
 
 ## References
 
@@ -90,7 +89,8 @@ NIST SP 800-90A Rev. 1 (2015). Recommendation for Random Number
 Generation Using Deterministic Random Bit Generators, section 10.2.1.
 [doi:10.6028/NIST.SP.800-90Ar1](https://doi.org/10.6028/NIST.SP.800-90Ar1)
 
-NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard (AES).
+NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard
+(AES).  
 [doi:10.6028/NIST.FIPS.197-upd1](https://doi.org/10.6028/NIST.FIPS.197-upd1)
 
 ## See also

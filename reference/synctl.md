@@ -61,7 +61,7 @@ predictors.
 
 Abadie A, Diamond A, Hainmueller J (2010). Synthetic control methods for
 comparative case studies. Journal of the American Statistical
-Association 105(490):493-505.
+Association 105(490):493-505.  
 [doi:10.1198/jasa.2009.ap08746](https://doi.org/10.1198/jasa.2009.ap08746)
 
 ## Examples

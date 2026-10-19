@@ -107,18 +107,19 @@ against the effect it was looking for has not found that the effect is
 absent – it has found nothing either way, and the two are routinely
 reported as the same thing.
 
-For each size (0 is always added) and each of `reps` repetitions: the
-data are passed through `inject(data, size)`, the statistic is computed,
-and a permutation null is built by shuffling the `trt` column `n` times
-and recomputing the statistic. The two-sided permutation p-value is
-\$\$p = \frac{1 + \\\\\|T^\*\| \ge \|T\|\\}{1 + n\_{ok}}\$\$ over the
-\\n\_{ok}\\ permutations with a finite statistic (Phipson and Smyth's
-correction, so \\p\\ is never 0), and the effect counts as detected when
-\\p \le \alpha\\. A repetition whose injection or observed statistic
-fails (error or non-finite value) is skipped and not counted in `reps`.
-Since the data are the same in every repetition, `inject` should add
-randomness of its own (new noise, a resampled effect) when repetitions
-are meant to differ; otherwise only the permutations vary.
+For each size (0 is always added) and each of `reps` repetitions, the
+statistic is computed on the data passed through the injector, as
+`inject(data, size)`, and a permutation null is built by shuffling the
+`trt` column `n` times and recomputing the statistic. The two-sided
+permutation p-value is \$\$p = \frac{1 + \\\\\|T^\*\| \ge \|T\|\\}{1 +
+n\_{ok}}\$\$ over the \\n\_{ok}\\ permutations with a finite statistic
+(Phipson and Smyth's correction, so \\p\\ is never 0), and the effect
+counts as detected when \\p \le \alpha\\. A repetition whose injection
+or observed statistic fails (error or non-finite value) is skipped and
+not counted in `reps`. Since the data are the same in every repetition,
+`inject` should add randomness of its own (new noise, a resampled
+effect) when repetitions are meant to differ; otherwise only the
+permutations vary.
 
 The cost is \\\|sizes\| \times reps \times (n + 1)\\ evaluations of
 `stat`. A progress bar is drawn on stderr unless

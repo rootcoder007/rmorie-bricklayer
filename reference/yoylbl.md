@@ -29,8 +29,9 @@ yoylbl(x, labels)
 ## Value
 
 The object, still of class `rmbl_yoy`, with an added character column
-`perlbl` and `attr(x, "yoy")$perlbl` set to `TRUE`, so the labels are
-used by [`print()`](https://rdrr.io/r/base/print.html),
+`perlbl`. Its `yoy` attribute gets `perlbl` set to `TRUE`, as
+`attr(x, "yoy")$perlbl`, so the labels are used by
+[`print()`](https://rdrr.io/r/base/print.html),
 [`yoyhtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoyren.md),
 [`yoypdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoyren.md)
 and the delimited writers.

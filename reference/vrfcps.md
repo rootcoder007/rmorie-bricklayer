@@ -30,8 +30,8 @@ vrfcps(
 
 - provfile:
 
-  Provenance JSON filename, relative to `cpsdir` (default
-  `"data_provenance.json"`).
+  Provenance JSON filename, relative to `cpsdir`.
+  `"data_provenance.json"` is the default.
 
 - dfile:
 
@@ -91,8 +91,8 @@ The checks, in the order they appear in `checks`:
 
 - `data_sha256`:
 
-  its SHA-256 equals `resource$sha256` (64 hex characters), compared by
-  [`vrfsha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfsha256.md).
+  [`vrfsha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfsha256.md)
+  finds that its SHA-256 equals `resource$sha256` (64 hex characters).
 
 - `data_size_bytes`:
 
@@ -125,9 +125,9 @@ The checks, in the order they appear in `checks`:
 
 - `script_sha256`:
 
-  when a script is named (`scrfile`, `script$filename` in the provenance
-  or `meta$scrfile` in the manifest) or a script digest is pinned
-  (`meta$script_sha256` or `script$sha256`): the script's SHA-256
+  when a script is named (by `scrfile`, by `script$filename` in the
+  provenance or by `meta$scrfile` in the manifest) or a script digest is
+  pinned (`meta$script_sha256` or `script$sha256`): the script's SHA-256
   matches the pin.
 
 - `data_not_synthetic`:
@@ -140,10 +140,10 @@ The checks, in the order they appear in `checks`:
 A check that cannot be made because the provenance lacks a field is a
 FAILED row, never skipped: a provenance of
 [`{}`](https://rdrr.io/r/base/Paren.html) verifies nothing. `ok` is
-`TRUE` only when every row passed and every required check
-(`provenance_readable`, `data_present`, `data_sha256`,
-`data_not_synthetic`, plus `manifest_consistent` and `script_sha256`
-when a manifest or a script is in play) was made.
+`TRUE` only when every row passed and every required check was made. The
+required checks are `provenance_readable`, `data_present`, `data_sha256`
+and `data_not_synthetic`, plus `manifest_consistent` and `script_sha256`
+when a manifest or a script is in play.
 
 Entirely offline: nothing is downloaded and nothing is written. Error:
 `cpsdir` that is not one existing directory. Every other problem is a
@@ -165,10 +165,10 @@ vrfcps(dir)$ok
 #> [1] TRUE
 vrfcps(dir)
 #> Capsule verification: intact (7 of 7 checks passed)
-#>   ok    provenance_readable  /tmp/RtmpdFP7Nh/capsule-example/data_provenance.json
-#>   ok    data_present         /tmp/RtmpdFP7Nh/capsule-example/d.csv
+#>   ok    provenance_readable  /tmp/Rtmp2OifJU/capsule-example/data_provenance.json
+#>   ok    data_present         /tmp/Rtmp2OifJU/capsule-example/d.csv
 #>   ok    data_sha256          da4aaa3a009d063f36d0515f2b50a11bcc578264aa7c45504b46fedbbae4f8f7
-#>   ok    data_readable        /tmp/RtmpdFP7Nh/capsule-example/d.csv
+#>   ok    data_readable        /tmp/Rtmp2OifJU/capsule-example/d.csv
 #>   ok    data_row_count       3 rows on disk
 #>   ok    schema_valid         
 #>   ok    data_not_synthetic   no synthetic marker: sidecar, manifest and provenance all say real data
@@ -192,6 +192,6 @@ vrfcps(dir, provfile = "../elsewhere.json")$ok
 
 # a missing directory is an error
 try(vrfcps(file.path(tempdir(), "no-such-capsule")))
-#> Error : `cpsdir` is not an existing directory: /tmp/RtmpdFP7Nh/no-such-capsule
+#> Error : `cpsdir` is not an existing directory: /tmp/Rtmp2OifJU/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```

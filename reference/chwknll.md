@@ -32,8 +32,8 @@ chwknll(
 
 - kernel:
 
-  The triggering kernel: one of `"exponential"` (the default),
-  `"weibull"`, `"lomax"`, `"gamma"`. Partial names are matched.
+  The triggering kernel, one of `"exponential"` (the default),
+  `"weibull"`, `"lomax"` and `"gamma"`. Partial names are matched.
 
 - par:
 

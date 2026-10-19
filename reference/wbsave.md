@@ -137,8 +137,8 @@ or that cannot be written.
 
 ## References
 
-Internet Archive. Save Page Now 2 (SPN2) public API.
-<https://archive.org/details/spn-2-public-api-page-docs>.
+Internet Archive. Save Page Now 2 (SPN2) public API.  
+<https://archive.org/details/spn-2-public-api-page-docs>
 
 ## See also
 
@@ -161,7 +161,7 @@ try(wbsave("https://example.org/", ak = "abc", sk = "def",
 #> Error : `jobs` must be a whole number from 1 to 12
 try(wbsave("https://example.org/", ak = "abc", sk = "def",
                  output = file.path(tempdir(), "no-such-folder", "runs.jsonl")))
-#> Error : the folder for `output` does not exist: /tmp/RtmpdFP7Nh/no-such-folder
+#> Error : the folder for `output` does not exist: /tmp/Rtmp2OifJU/no-such-folder
 
 # A real run needs archive.org keys and the network.
 if (FALSE) { # \dontrun{

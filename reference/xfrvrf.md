@@ -19,8 +19,8 @@ xfrvrf(imported, soucnts, codebook = NULL, tol = 0, strict = TRUE)
 
 - imported:
 
-  The vector as it arrived: a haven-style labelled vector, plain codes
-  (with `codebook`), or already-decoded labels.
+  The vector as it arrived. It is a haven-style labelled vector, plain
+  codes given with `codebook`, or labels already decoded.
 
 - soucnts:
 

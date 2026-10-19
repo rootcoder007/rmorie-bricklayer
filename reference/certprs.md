@@ -23,19 +23,38 @@ certprs(cert)
 
 ## Value
 
-A list of class `c("bricklayer_certificate", "list")` with `version`
-(integer), `serial` (hex), `issuer` and `subject` (distinguished names
-as text), `not_before` and `not_after` (`POSIXct`, UTC),
-`signature_algorithm` (a name such as `"ECDSA-SHA256"`) and
-`signature_oid`, `signature` and `tbs` (raw; the signed part), `key` (a
-list: `type` `"RSA"` or `"EC"`, `bits`, and the key values, with `curve`
-for EC), `is_ca` and `path_len`, `key_usage` and `extended_key_usage`
-(character; EKU as OIDs), `subject_rdns`, `issuer_rdns`, `san`,
-`name_constraints`, the policy fields (`policies`, `policy_mappings`,
-`require_explicit_policy`, `inhibit_policy_mapping`,
-`inhibit_any_policy`), `self_signed` (logical: issuer equals subject)
-and `der` (the bytes). [`print()`](https://rdrr.io/r/base/print.html)
-shows a summary.
+A list of class `bricklayer_certificate` with these elements:
+
+- `version` (integer) and `serial` (hex);
+
+- `issuer` and `subject` (distinguished names as text);
+
+- `not_before` and `not_after` (`POSIXct`, UTC);
+
+- `signature_algorithm` (a name such as `"ECDSA-SHA256"`) and
+  `signature_oid`;
+
+- `signature` and `tbs` (raw; the signed part);
+
+- `key` (a list: `type` `"RSA"` or `"EC"`, `bits`, and the key values,
+  with `curve` for EC);
+
+- `is_ca` and `path_len`;
+
+- `key_usage` and `extended_key_usage` (character; EKU as OIDs);
+
+- `subject_rdns`, `issuer_rdns`, `san` and `name_constraints`;
+
+- the policy fields `policies`, `policy_mappings` and
+  `require_explicit_policy`;
+
+- the policy fields `inhibit_policy_mapping` and `inhibit_any_policy`;
+
+- `self_signed` (logical: issuer equals subject);
+
+- `der` (the bytes).
+
+[`print()`](https://rdrr.io/r/base/print.html) shows a summary.
 
 ## Details
 

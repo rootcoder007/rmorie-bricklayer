@@ -2,13 +2,20 @@
 
 Finds a location code for
 [`co2int`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2int.md)
-without any network access, in this order: the `RMBL_LOCATION`
-environment variable (any code or name the table knows); codecarbon's
-`CODECARBON_COUNTRY_ISO_CODE` (alpha-3), so a machine already configured
-for codecarbon needs nothing more; the system time zone, mapped to its
-country through the IANA zone tables (`America/Toronto` is Canada,
-`Europe/Berlin` Germany); the territory in the locale (`en_CA.UTF-8` is
-Canada). When none of these yields a location in the table the answer is
+without any network access, in this order:
+
+1.  the `RMBL_LOCATION` environment variable (any code or name the table
+    knows);
+
+2.  `CODECARBON_COUNTRY_ISO_CODE` (alpha-3), the codecarbon variable, so
+    a machine already configured for codecarbon needs nothing more;
+
+3.  the system time zone, mapped to its country through the IANA zone
+    tables (`America/Toronto` is Canada, `Europe/Berlin` Germany);
+
+4.  the territory in the locale (`en_CA.UTF-8` is Canada).
+
+When none of these yields a location in the table the answer is
 `"WORLD"`, and the method says so, so a report never silently applies
 one country's grid to another's computation.
 

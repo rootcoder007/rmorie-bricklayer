@@ -25,8 +25,8 @@ A raw vector of length `n`. Print it as hex with
 
 ## Details
 
-Reads the operating system's own random source – `/dev/urandom` on Unix
-and macOS, `RtlGenRandom` on Windows – rather than R's Mersenne Twister.
+Reads the operating system's own random source rather than R's Mersenne
+Twister: `/dev/urandom` on Unix and macOS, `RtlGenRandom` on Windows.
 
 This distinction matters for anything that becomes a key.
 [`set.seed()`](https://rdrr.io/r/base/Random.html) makes R's generator
@@ -53,7 +53,7 @@ which uses this for its seeds.
 
 ``` r
 rndbytes(8)
-#> [1] fe d5 a8 0f 5b 20 13 c1
+#> [1] ca c6 74 88 2a 1b 8a 11
 
 # Independent between calls, unlike a seeded generator.
 identical(rndbytes(16), rndbytes(16))
@@ -69,7 +69,7 @@ identical(stats::runif(1), a)
 
 # As hex, for a seed argument.
 paste(format(rndbytes(4)), collapse = "")
-#> [1] "6057cb4a"
+#> [1] "245defc3"
 
 try(rndbytes(0))
 #> Error : `n` must be a single integer between 1 and 1048576

@@ -28,9 +28,9 @@ mksyncol(spec, n, ctx = list(), basep = NULL)
 
 - ctx:
 
-  Named list of already-generated columns, letting later columns (such
-  as `id_pattern` with a `year_col`) reference earlier ones. Defaults to
-  an empty list.
+  Named list of already-generated columns. Later columns can then
+  reference earlier ones, as `id_pattern` does with a `year_col`.
+  Defaults to an empty list.
 
 - basep:
 

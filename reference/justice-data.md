@@ -20,9 +20,10 @@ Service. See `inst/COPYRIGHTS`.
 
 ## Value
 
-No R object: each file is a CSV in `inst/extdata`, read into a data
-frame with
-`read.csv(system.file("extdata", <file>, package = "rmoriebricklayer"))`.
+No R object: each file is a CSV in `inst/extdata`. Read one into a data
+frame with [`read.csv()`](https://rdrr.io/r/utils/read.table.html) on
+the path that
+`system.file("extdata", <file>, package = "rmoriebricklayer")` gives.
 
 ## Details
 
@@ -67,8 +68,9 @@ frame with
   (508): `event_id`, occurrence date, premises type, the published
   longitude and latitude (which the Service offsets to the nearest
   intersection), and `offence_records`, the number of offence records
-  the Service publishes for the occurrence (five have two). Built by
-  `data-raw/tps_break_enter_d14_2024.R` in the source package.
+  the Service publishes for the occurrence (five have two). The source
+  package builds it with the script `tps_break_enter_d14_2024.R` in its
+  `data-raw` folder.
 
 ## See also
 

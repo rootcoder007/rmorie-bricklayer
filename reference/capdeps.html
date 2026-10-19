@@ -102,8 +102,8 @@ version and differ: one built from CRAN, one from a fork, one from a
 local <code>R CMD INSTALL</code> of a working tree with uncommitted changes. A
 version number identifies an intention; the repository and commit
 identify what was actually loaded.</p>
-<p>The fields are read from each package's installed DESCRIPTION
-(<code><a href="https://rdrr.io/r/utils/packageDescription.html" class="external-link">utils::packageDescription()</a></code>): <code>Repository</code> (for example
+<p>The fields are read with <code><a href="https://rdrr.io/r/utils/packageDescription.html" class="external-link">utils::packageDescription()</a></code> from each
+package's installed DESCRIPTION: <code>Repository</code> (for example
 <code>"CRAN"</code>), <code>RemoteUrl</code> and <code>RemoteSha</code> (written by
 remotes, pak and devtools for packages installed from a Git host) and
 <code>Built</code>. Packages are sorted and de-duplicated. A progress bar is

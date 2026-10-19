@@ -106,8 +106,8 @@ Level 3 matches the category of ML-KEM-768,
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional raw vector: 32 bytes (<code>seed_KEM</code>) for v5; for round 4
-the <code><a href="hqcsz.html">hqcsz()</a></code><code>["seed"]</code> bytes its key generation
+<dd><p>Optional raw vector. For v5 it is the 32 bytes of <code>seed_KEM</code>.
+For round 4 it is the <code><a href="hqcsz.html">hqcsz()</a></code><code>["seed"]</code> bytes its key generation
 draws (<code>skseed</code>, <code>sigma</code>, <code>pk_seed</code>: 96, 104 or 112).
 Supplying it makes the key reproducible, which is what the known-answer
 tests need; the default draws from the operating system's CSPRNG.</p></dd>
@@ -183,8 +183,8 @@ at level 5.</p>
     <h2 id="security">Security<a class="anchor" aria-label="anchor" href="#security"></a></h2>
 
 
-<p>A hand-written implementation. The standardised schemes are checked byte
-for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+<p>The implementation is hand-written. Its standardised schemes are checked
+byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
 suite. Side channels are checked, not assumed: <code>inst/ctcheck</code> runs every
 operation that touches a secret under valgrind memcheck with the secret
 marked undefined (the ctgrind method), so a branch or a memory address
@@ -194,9 +194,8 @@ with GCC and with Clang. Timing is also measured on x86-64 and arm64
 hardware (<code>inst/dudect</code>) and power leakage is assessed in simulation under
 the value and the transition models (<code>inst/tvla</code>) for the masked ML-KEM
 and ML-DSA kernels; this scheme is not masked. These are checks of this
-code on those compilers; no third-party security audit has been
-commissioned, and the README's security section lists what each check
-does and does not cover.</p>
+code on those compilers; the README's security section lists what each
+check does and does not cover.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

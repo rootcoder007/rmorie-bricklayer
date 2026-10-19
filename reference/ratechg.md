@@ -84,9 +84,9 @@ ratechg(
 A data frame of class `c("rmbl_rate_change", "data.frame")` with one row
 per group and period: the grouping columns, the period column, `count`,
 `population`, `rate`, `prerate`, `precnt`, `prepop`, `rateratio`,
-`pctchg`, `pctlo`, `pctup` (numeric) and `flag` (character:
-`"no comparison period"`, `"earlier period is zero"`, a small-count
-note, or `NA`). The `ratechg` attribute records the settings.
+`pctchg`, `pctlo`, `pctup` (numeric) and the character `flag`. The flag
+is `"no comparison period"`, `"earlier period is zero"`, a small-count
+note, or `NA`. The `ratechg` attribute records the settings.
 
 ## Details
 

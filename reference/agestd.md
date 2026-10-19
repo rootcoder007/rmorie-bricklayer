@@ -64,7 +64,7 @@ younger than Canada's.
 
 Fay MP, Feuer EJ (1997). Confidence intervals for directly standardized
 rates: a method based on the gamma distribution. Statistics in Medicine
-16(7):791-801.
+16(7):791-801.  
 [doi:10.1002/(sici)1097-0258(19970415)16:7\<791::aid-sim500\>3.0.co;2-#](https://doi.org/10.1002/(sici)1097-0258(19970415)16:7%3C791::aid-sim500%3E3.0.co;2-%23)
 
 Kumar MB, Tjepkema M (2019). Suicide among First Nations people, Metis

@@ -17,9 +17,10 @@ rslvarc(prov)
 
   A provenance list as returned by
   [`loadprov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md),
-  or `NULL`. Must contain `dataset$arcgis_layer_url`, a FeatureServer
-  layer root such as
-  `"https://services.arcgis.com/.../Assault_Open_Data/FeatureServer/0"`.
+  or `NULL`. It must have the field `dataset$arcgis_layer_url`, a
+  FeatureServer layer root. An example is  
+  `https://services.arcgis.com/.../`  
+  followed by `Assault_Open_Data/FeatureServer/0`.
 
 ## Value
 

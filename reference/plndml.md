@@ -111,10 +111,10 @@ squared deviations from it (Chernozhukov et al. 2018, section 3.4).
 
 Learners, all in base R: `"lasso"` (coordinate descent, penalty by
 5-fold cross-validation), `"ridge"` (penalty by generalised
-cross-validation), `"ols"`, or a function
-`function(x_train, y_train, x_test)` returning predictions (for example
-a random forest from another package). `basis = "poly2"` adds squares
-and pairwise products of the covariates, built from the covariates as
+cross-validation), `"ols"`, or a function returning predictions (for
+example a random forest from another package), called as
+`function(x_train, y_train, x_test)`. `basis = "poly2"` adds squares and
+pairwise products of the covariates, built from the covariates as
 observed and then demeaned, so a confounding that is a combination of
 them is removed exactly. The demeaned features are what the learners
 see: a covariate fixed within a unit is absorbed by the unit effect and

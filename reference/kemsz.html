@@ -83,8 +83,10 @@ no default.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A named integer vector of five elements, all in bytes:
-<code>encapsulation_key</code>, <code>decapsulation_key</code>, <code>ciphertext</code>,
-<code>seed</code> and <code>shared_secret</code>.</p>
+<code>public</code> (the encapsulation key), <code>secret</code> (the
+decapsulation key), <code>ciphertext</code>, <code>seed</code> and <code>shared</code>
+(the shared secret), named as <code><a href="kemkg.html">kemkg()</a></code> and <code><a href="kemencap.html">kemencap()</a></code> name their
+results.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -101,15 +103,13 @@ lengths in characters. Error: <code>lvl</code> other than one whole number
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">kemsz</span><span class="op">(</span><span class="fl">768</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> encapsulation_key decapsulation_key        ciphertext              seed </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>              1184              2400              1088                64 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     shared_secret </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                32 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     public     secret ciphertext       seed     shared </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       1184       2400       1088         64         32 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the shared secret is 32 bytes at every level: the level buys</span></span></span>
 <span class="r-in"><span><span class="co"># security margin, not a longer secret</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">512</span>, <span class="fl">768</span>, <span class="fl">1024</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>       <span class="kw">function</span><span class="op">(</span><span class="va">l</span><span class="op">)</span> <span class="fu">kemsz</span><span class="op">(</span><span class="va">l</span><span class="op">)</span><span class="op">[[</span><span class="st">"shared_secret"</span><span class="op">]</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>       <span class="kw">function</span><span class="op">(</span><span class="va">l</span><span class="op">)</span> <span class="fu">kemsz</span><span class="op">(</span><span class="va">l</span><span class="op">)</span><span class="op">[[</span><span class="st">"shared"</span><span class="op">]</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 32 32 32</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># check a ciphertext's length before sending it</span></span></span>

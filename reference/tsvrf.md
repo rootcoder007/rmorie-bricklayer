@@ -63,12 +63,26 @@ method lists the checks. `tsinfo()` returns a plain list with `time`,
 
 ## Details
 
-Every step is recorded as a row of `checks`: `token_parses`,
-`token_structure`, `message_imprint` (the hash of `data` equals the
-token's imprint), `certificate_source`, `signature`, `attribute_digest`
-(the signed attributes commit to the token's contents),
-`certificate_trust`, and with `trust` the `chain:` checks of
-[`certchnvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/certchnvrf.md).
+Every step is recorded as a row of `checks`:
+
+- `token_parses`;
+
+- `token_structure`;
+
+- `message_imprint` (the hash of `data` equals the token's imprint);
+
+- `certificate_source`;
+
+- `signature`;
+
+- `attribute_digest` (the signed attributes commit to the token's
+  contents);
+
+- `certificate_trust`;
+
+- with `trust`, the `chain:` checks of
+  [`certchnvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/certchnvrf.md).
+
 `ok` is `TRUE` only when every row passes. A token that cannot be parsed
 is not an error: it gives `ok = FALSE` and the rows up to the failure.
 

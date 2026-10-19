@@ -37,14 +37,23 @@ any limits that could not be matched to one measure.
 
 Each label of the statistics column is read as an estimate or as one of
 its measures of precision, in every form the tables use:
-`"Low 95% confidence interval"`,
-`"High 95% confidence interval, age-standardized rate"`,
-`"Confidence interval lower bound of count"`,
-`"95% confidence interval (upper limit)"`,
-`"95% confidence interval lower bound, 2020"`,
-`"Coefficient of variation for percent"`, `"Standard error"`. A limit
-that names its measure is matched to it (ignoring case and spacing); one
-that names none, or a name that fits several measures
+
+- `"Low 95% confidence interval"`;
+
+- `"High 95% confidence interval, age-standardized rate"`;
+
+- `"Confidence interval lower bound of count"`;
+
+- `"95% confidence interval (upper limit)"`;
+
+- `"95% confidence interval lower bound, 2020"`;
+
+- `"Coefficient of variation for percent"`;
+
+- `"Standard error"`.
+
+A limit that names its measure is matched to it (ignoring case and
+spacing); one that names none, or a name that fits several measures
 (`"potential years of life lost"` in a table with a number, a crude rate
 and an age-standardised rate of them), is matched to the measure with
 the same unit (`UOM`) whose estimates it contains in every cell, and

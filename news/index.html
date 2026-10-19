@@ -239,6 +239,77 @@
 <strong>A time limit ends a loop over your function</strong>: <code><a href="../reference/cpsfals.html">cpsfals()</a></code>, <code><a href="../reference/cpspwr.html">cpspwr()</a></code> and the exposure-response bootstrap caught <code><a href="https://rdrr.io/r/base/setTimeLimit.html" class="external-link">setTimeLimit()</a></code>’s error as one more failed statistic and ran on.</li>
 <li>The README says 121 C++ entry points behind the barrier (one new, the JSON path) and 13 in plain C.</li>
 </ul></div>
+<div class="section level3">
+<h3 id="after-the-tag-the-manual-the-plots-a-c-locale-1-0-0">After the tag: the manual, the plots, a C locale<a class="anchor" aria-label="anchor" href="#after-the-tag-the-manual-the-plots-a-c-locale-1-0-0"></a></h3>
+<ul><li>
+<strong>The reference manual</strong> ran off the page on 123 lines: long URL templates and option names inside inline code, dense lists of code, references with long DOIs. R’s <code>Rd.sty</code> lets inline code neither break nor stretch, so the help text was reworded (URL templates split at a slash, references with the link on its own line, options named in prose, long lists as bullets). No line is 10pt over now; the 61 left are under 10pt, most under 2pt.</li>
+<li>
+<strong>Plot titles</strong> of 17 methods were handed straight to the base-graphics call, so a title wider than the panel was cut (“Community Well-Being, by place and gro”). Every method now draws its title with the fitter the others use: full size, then smaller, then two lines.</li>
+<li>
+<strong>Row labels</strong> are drawn with <code><a href="https://rdrr.io/r/graphics/mtext.html" class="external-link">mtext()</a></code>, sized to the row (down to 0.45), instead of <code><a href="https://rdrr.io/r/graphics/axis.html" class="external-link">axis()</a></code>, which leaves out labels that would overlap: <code><a href="../reference/trchlthgap.html">trchlthgap()</a></code>’s 44 rows showed 22 labels beside the wrong points. <code><a href="../reference/plot-methods.html">plot.rmbl_trc_gaps()</a></code> adds a key for the groups.</li>
+<li>
+<strong>Labels cut to the same text</strong> keep the part that told them apart (“…of 8, 9 or 10” and “…between 0 and 5”) instead of a number; the wellness profile breaks long indicator names onto two lines.</li>
+<li>
+<strong>A C locale</strong>: <code><a href="../reference/cnsprof.html">cnsprof()</a></code> matched the profile’s column names against UTF-8 keys, so “MÉTIS” never became “Métis”, and its table of column names was built with a non-ASCII name inside <code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code>, which a package installed in a C locale stores as <code>M&lt;U+00C9&gt;TIS</code>; <code>.rmbl_json_parse()</code> converted before it checked, so invalid UTF-8 was reported as an unexpected character; the CSV reader’s byte-order-mark cases are compared with <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> only in a UTF-8 locale, where its behaviour is defined.</li>
+<li>
+<strong><code>rmoriebricklayer.allowhttp</code></strong> was read by the R-level URL check but the native transport still read the old <code>rmoriebricklayer.allow_http</code>, so <code><a href="../reference/bldl.html">bldl()</a></code> refused plain <code>http</code> whatever the option said. Three more from the coverage pass: <code>evstudy(leads = 1)</code> failed with “subscript out of bounds” (no lead left to test); <code><a href="../reference/baltab.html">baltab()</a></code> failed on a group of one unit (its tests are <code>NA</code> now, as after <code><a href="../reference/mtchdid.html">mtchdid()</a></code> with a tight caliper); <code>chwkfit(meth = "em")</code> with every event at the horizon divided 0 by 0 (the branching ratio goes to its floor). <code><a href="../reference/mcartst.html">mcartst()</a></code> refuses an infinite value in its own words rather than as collinearity.</li>
+<li>Every line of R and the reachable lines of C++ are now covered by the tests; the dead guards found by the pass are gone.</li>
+<li>The statement about a third-party security audit is gone from <code>DESCRIPTION</code>, the README, <code>SECURITY.md</code> and the help pages.</li>
+<li>
+<code><a href="../articles/plotting-results.html">vignette("plotting-results")</a></code> gains the policy-evaluation plots, one call per result; <code><a href="../articles/policy-evaluation.html">vignette("policy-evaluation")</a></code> draws the synthetic difference in differences and <code><a href="../articles/causal-effects.html">vignette("causal-effects")</a></code> the AIPW estimate beside its overlap.</li>
+</ul><p><strong>Fixes from the review of the native code</strong></p>
+<ul><li>ECDSA verification refuses an <code>r</code> or <code>s</code> longer than the curve and a key coordinate that is not exactly one field element: <code>r</code> with 2^1152 added was read back as <code>r</code> and verified.</li>
+<li>The elliptic-curve multiplication refuses a scalar longer than 144 bytes instead of reading only its low bytes.</li>
+<li>A host written with a trailing dot (<code>https://example.com./</code>) is fetched as <code>example.com</code>, so the address pin and the URL libcurl is given name the same host; before, libcurl found no pin and resolved the name again itself.</li>
+<li>Every connection the transport opens is checked as it opens, so a private or loopback address is refused even when it comes from somewhere other than the pin. This includes a proxy named by <code>http_proxy</code> or <code>https_proxy</code>: a proxy on the loopback interface or a private network is now refused.</li>
+<li>The decimal reader is correctly rounded past 768 significant digits: dropped digits that were not all zero now count when the kept ones are exactly halfway.</li>
+<li>The decimal reader takes nothing after <code>Inf</code>, <code>Infinity</code> or <code>NaN</code> (any case), so <code>"Info"</code> and <code>"nanny"</code> are <code>NA</code>, as <code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code> reads them.</li>
+<li>
+<code><a href="../reference/cgamcdf.html">cgamcdf()</a></code> is accurate for large shapes. At <code>x = a</code> it gave 0.4786 for <code>a = 1e4</code> and 0.0797 for <code>a = 1e6</code>, where the answer is 0.5013 and 0.5001.</li>
+<li>A missing, zero or negative timeout is the default for every request, never no limit at all.</li>
+<li>Destinations and upload paths starting with <code>~</code> are expanded. A destination that cannot be written is reported as a local failure, without a Wayback lookup.</li>
+<li>On Unix, a download that cannot be moved into place leaves the old file as it was. Only Windows removes the destination before the move.</li>
+<li>The download progress callback protects both of its arguments while it builds the call.</li>
+<li>An RSA signature must be exactly as long as the modulus (RFC 8017 8.2.2): leading-zero variants of a valid signature no longer verify.</li>
+<li>An XMSS signature whose randomizer is not 32 bytes of hex does not verify. It used to raise an error.</li>
+<li>XMSS keys name their seeds <code>pubseed</code>, <code>skseed</code> and <code>skprf</code>, as the help pages always said. Keys saved with the earlier <code>pub_seed</code>, <code>sk_seed</code> and <code>sk_prf</code> still sign and verify.</li>
+<li>The Hawkes messages name the argument <code>hor</code>.</li>
+<li>
+<code><a href="../reference/kemsz.html">kemsz()</a></code> and <code><a href="../reference/hqcsz.html">hqcsz()</a></code> name their sizes <code>public</code>, <code>secret</code> and <code>shared</code>, as the keys and capsules name them. <code><a href="../reference/siusch.html">siusch()</a></code> names its column <code>count</code>, and <code><a href="../reference/fipssz.html">fipssz()</a></code> names the per-signature randomness <code>rnd</code>.</li>
+<li>The native errors name the R arguments: <code>person</code> and <code>addl</code> for the DRBG, <code>pass</code> for PBKDF2, <code>rnd</code> for SLH-DSA.</li>
+<li>One-shot SHA-3 and SHAKE wipe their Keccak state. The permutation can be run backwards, so the state gave back secret inputs such as ML-KEM and ML-DSA seeds.</li>
+<li>The SHA-256 and SHA-512 message schedules and contexts are wiped after use, so an HMAC key padded with ipad no longer stays on the stack.</li>
+<li>XMSS key generation and signing wipe their seeds on every exit, including a refused argument or an interrupt, along with the heap buffers and chain steps derived from them.</li>
+<li>The heap copies of BLAKE2b and HMAC keys, the derived PBKDF2 key and the operating system’s random buffer are wiped before they are freed. HMAC no longer frees an unwiped copy of the padded key when its buffer grows.</li>
+<li>Unmasked ML-DSA signing wipes the sampler seed, the packed mask and the values of rejected attempts.</li>
+<li>
+<code><a href="../reference/siuso.html">siuso()</a></code> removes the glossary sentence in one linear pass. 8000 repeats took 28 s before.</li>
+<li>
+<code><a href="../reference/siutxt.html">siutxt()</a></code> no longer rescans to the end of the page for every unclosed script or style tag.</li>
+<li>The SIU parsers and the distinct-count sketch read latin1 input as the text it is: a latin1 “5 décembre 2023” is a date, and one value in two encodings is counted once.</li>
+<li>
+<code><a href="../reference/siudate.html">siudate()</a></code> refuses an impossible ISO date such as 2023-02-30 or 2023-13-45, as it already refused February 30.</li>
+<li>A director whose name contains the letters “the”, such as Heather Smith, is no longer dropped.</li>
+<li>A numeric entity naming a UTF-16 surrogate decodes to nothing instead of invalid UTF-8.</li>
+<li>HTML entities are decoded once each, in one pass, so <code>&amp;amp;lt;</code> stays the literal <code>&amp;lt;</code>.</li>
+<li>Lower-casing SIU text no longer passes negative values to <code><a href="https://rdrr.io/r/base/chartr.html" class="external-link">tolower()</a></code>.</li>
+<li>The kernels published to <code>LinkingTo</code> packages have the guards of their <code>.Call</code> versions. Theil-Sen takes at most 20,000 points and polls for a Ctrl-C, and an exception in any of them is an R error instead of ending the session.</li>
+<li>Moran’s I checks its neighbour indices and <code>nperm</code> before it allocates, and polls for a Ctrl-C between permutations.</li>
+<li>The Hawkes entry points refuse an <code>eps</code> or a sum-of-exponentials window that is not one. <code>eps</code> of <code>NaN</code> silently dropped the excitation term, and 0 ran out of memory.</li>
+<li>The C API’s Hawkes likelihood keeps its own kernel codes and Lomax shape, now documented in the header and checked against <code><a href="../reference/chwknll.html">chwknll()</a></code>.</li>
+<li>Midranks of a vector with <code>NaN</code> are defined: the comparator orders <code>NaN</code> last.</li>
+<li>The SHA-256 chunk state no longer carries four uninitialised padding bytes.</li>
+<li>The Wayback snapshot URL is returned whole and with its JSON escapes undone. A long URL was cut at 2047 bytes.</li>
+<li>A download whose file cannot be reopened after a redirect ends cleanly, instead of writing to a closed stream.</li>
+<li>POST bodies set their size with the 64-bit libcurl option, which also works on Windows.</li>
+<li>The scratch file of a download is created exclusively (<code>"wbx"</code>).</li>
+<li>The CSV splitter’s NUL branches are gone: under <code>skipNul</code> the NUL bytes are removed before the scan, so those branches could never run.</li>
+<li>The README counts 123 C++ entry points, the comments in <code>init.c</code> name the right source files, and <code>SECURITY.md</code> names <code>RtlGenRandom</code>.</li>
+<li>
+<code>/dev/urandom</code> is read through a descriptor opened close-on-exec instead of buffered stdio.</li>
+<li>Native error messages are no longer cut at 1024 bytes by the barrier.</li>
+<li>A wait for a lock held by another process ends at a Ctrl-C or a time limit.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.14" id="rmoriebricklayer-0514">rmoriebricklayer 0.5.14<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-0514"></a></h2>

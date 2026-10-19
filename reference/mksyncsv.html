@@ -101,8 +101,8 @@ Defaults to <code>schema$nrows</code>, then 50000.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Invisibly, an object of class <code>bricklayer_synthetic</code>: a list
-with <code>path</code>, <code>sidecar</code> (the <code>&lt;path&gt;.synthetic</code> marker file;
+    <p>Invisibly, a list of class <code>bricklayer_synthetic</code> with
+<code>path</code>, <code>sidecar</code> (the <code>&lt;path&gt;.synthetic</code> marker file;
 <code><a href="vrfcps.html">vrfcps</a></code> treats its presence as a failed check),
 <code>rows</code> (rows written), <code>seed</code> (the seed used) and
 <code>recipe_sha256</code> (the recipe's digest, <code>NA</code> when it could not
@@ -112,7 +112,7 @@ be computed). Its print method labels the file as synthetic.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Columns are produced in declaration order so later columns can reference
 earlier ones. A shared per-person latent propensity, uniform on
-\([0, 1]\), drives every <code>"bernoulli"</code> column through its
+\([0, 1]\), drives every <code>"bernoulli"</code> column through the column's
 <code>p_with_baserate</code> field, so those columns are correlated with each
 other. An optional <code>row_replication</code> block (<code>values</code> and
 <code>weights</code>) draws how many rows each person gets: person-level

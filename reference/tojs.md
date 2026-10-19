@@ -46,8 +46,8 @@ tojs(
 
 - matrix:
 
-  How a matrix is written: `"rowmajor"` (the default, an array of rows)
-  or `"columnmajor"` (an array of columns).
+  How a matrix is written. `"rowmajor"` (the default) gives an array of
+  rows, and `"columnmajor"` an array of columns.
 
 - Date:
 

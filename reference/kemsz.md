@@ -22,9 +22,13 @@ kemsz(lvl)
 
 ## Value
 
-A named integer vector of five elements, all in bytes:
-`encapsulation_key`, `decapsulation_key`, `ciphertext`, `seed` and
-`shared_secret`.
+A named integer vector of five elements, all in bytes: `public` (the
+encapsulation key), `secret` (the decapsulation key), `ciphertext`,
+`seed` and `shared` (the shared secret), named as
+[`kemkg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemkg.md)
+and
+[`kemencap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemencap.md)
+name their results.
 
 ## Details
 
@@ -54,15 +58,13 @@ number 512, 768 or 1024.
 
 ``` r
 kemsz(768)
-#> encapsulation_key decapsulation_key        ciphertext              seed 
-#>              1184              2400              1088                64 
-#>     shared_secret 
-#>                32 
+#>     public     secret ciphertext       seed     shared 
+#>       1184       2400       1088         64         32 
 
 # the shared secret is 32 bytes at every level: the level buys
 # security margin, not a longer secret
 vapply(c(512, 768, 1024),
-       function(l) kemsz(l)[["shared_secret"]], integer(1))
+       function(l) kemsz(l)[["shared"]], integer(1))
 #> [1] 32 32 32
 
 # check a ciphertext's length before sending it

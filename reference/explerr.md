@@ -27,10 +27,10 @@ explerr(msg = geterrmessage(), pkgs = NULL, n = 3L)
 
 - pkgs:
 
-  Character vector of installed packages to search; default `NULL`,
-  meaning rmoriebricklayer (or the comma-separated list in the
-  environment variable `RMBL_PACKAGES`, which a package built on this
-  one sets for its own command line).
+  Character vector of installed packages to search. The default, `NULL`,
+  means this package, or the comma-separated list in `RMBL_PACKAGES`: an
+  environment variable that a package built on this one sets for its own
+  command line.
 
 - n:
 
@@ -40,7 +40,7 @@ explerr(msg = geterrmessage(), pkgs = NULL, n = 3L)
 
 A data frame with at most `n` rows, best match first, and the character
 columns `package`, `raised_by` (the function whose code raises it),
-`exported` (the exported functions that reach it, comma-separated),
+`exported` (the exported functions that reach it, separated by commas),
 `kind` (`"error"` or `"warning"`), `message` (the message as written,
 with `...` where a value goes) and `match` (`"exact"` or the share of
 its words found, such as `"80% of its words"`). No rows when the message
@@ -65,11 +65,14 @@ four calls to the exported functions that reach it (at most six are
 listed). The table is kept in memory for the session (about a second to
 build for this package), and, while a person is watching an interactive
 session and the answer cache is on, also saved as an `.rds` file in the
-answer-cache directory
-(`tools::R_user_dir("rmoriebricklayer", "cache")`, or
-`options(rmoriebricklayer.llmcachedir)`); the cache is off under
-`options(morie.quiet = TRUE)`, `MORIE_LLM_CACHE=off`, tests and
-`R CMD check`.
+answer-cache directory.
+
+The answer-cache directory is the one
+[`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html) gives for
+`"rmoriebricklayer"` and `"cache"`, or the one the
+`rmoriebricklayer.llmcachedir` option names when it is set. The cache is
+off under `options(morie.quiet = TRUE)`, `MORIE_LLM_CACHE=off`, tests
+and `R CMD check`.
 
 The message is cleaned first: an "Error in f(x) :" or "Warning message:"
 prefix is dropped, curly quotes become straight ones and white space is

@@ -55,9 +55,9 @@ profshr(
 
 ## Value
 
-A data frame of class `rmbl_profile_share`: `geo`, `dguid`, `residence`,
-`gender`, `age`, `group`, `numerator`, `denominator`, `estimate`
-(percent), `lower`, `upper`, `quality`; ready for
+A data frame of class `rmbl_profile_share` with `geo`, `dguid`,
+`residence`, `gender`, `age`, `group`, `numerator`, `denominator`,
+`estimate` (percent), `lower`, `upper`, `quality`; ready for
 [`indgap`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indgap.md)
 and
 [`dstntst`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstntst.md).

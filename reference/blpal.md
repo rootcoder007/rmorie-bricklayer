@@ -24,8 +24,8 @@ plotopt(...)
 
 - name:
 
-  Character scalar, the palette: `"okabe"` (the default), `"diverging"`,
-  `"sequential"` or `"grey"`.
+  Character scalar, the palette: `"okabe"` (the default), or one of
+  `"diverging"`, `"sequential"` and `"grey"`.
 
 - n:
 
@@ -51,13 +51,14 @@ when setting.
 ## Details
 
 The palettes: `"okabe"` is the eight-colour set of Okabe and Ito (2008),
-distinguishable under the common forms of colour-vision deficiency;
+distinguishable under the common forms of colour-vision deficiency.
 `"diverging"` has three anchors (blue `#2166AC`, grey `#8C8C8C`,
 orange-red `#D6604D`) and is used for changes (decrease, no change,
-increase); `"sequential"` has five blues from light to dark; `"grey"`
-five greys from dark to light. With `n` given, `"okabe"` and `"grey"`
-repeat their colours ([`rep_len()`](https://rdrr.io/r/base/rep.html))
-and `"diverging"` and `"sequential"` are interpolated with
+increase). The palette `"sequential"` has five blues from light to dark;
+`"grey"` five greys from dark to light. With `n` given, `"okabe"` and
+`"grey"` repeat their colours
+([`rep_len()`](https://rdrr.io/r/base/rep.html)) and `"diverging"` and
+`"sequential"` are interpolated with
 [`grDevices::colorRampPalette()`](https://rdrr.io/r/grDevices/colorRamp.html).
 
 The session options are stored in `options(rmoriebricklayer.plot)`; the

@@ -42,9 +42,9 @@ trcprog(
 
 ## Value
 
-A one-row data frame: `completed`, `remaining`, `years`, `rate`,
-`ratelo`, `rateup`, `cmplby`, `cmplbyearly`, `cmplbylate`, of class
-`rmbl_trc_progress`;
+A one-row data frame of class `rmbl_trc_progress` with the columns
+`completed`, `remaining`, `years`, `rate`, `ratelo`, `rateup`, `cmplby`,
+`cmplbyearly` and `cmplbylate`;
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws the
 completions and the projection, with the band the rate's interval gives.
 

@@ -27,8 +27,8 @@ polbrdn(
 
 - expomean:
 
-  Mean exposure among the exposed (micrograms per cubic metre). With
-  `expoprev = 1` that is the population mean.
+  The mean exposure among the exposed, in micrograms per cubic metre.
+  With `expoprev = 1` that is the population mean.
 
 - expoprev:
 

@@ -107,10 +107,10 @@ dlogin(
 - supnm, suprole, supemail:
 
   Character scalars or `NULL`: the supervisor, department chair,
-  director or coordinator who knows of your use, their role (one of
-  `"supervisor"`, `"chair"`, `"director"`, `"coordinator"`, `"other"`)
-  and their email. Required with `restricted = TRUE`; asked for when
-  `NULL`.
+  director or coordinator who knows of your use, their role and their
+  email. Required with `restricted = TRUE`; asked for when `NULL`. The
+  role is one of `"supervisor"`, `"chair"`, `"director"`,
+  `"coordinator"` or `"other"`.
 
 ## Value
 
@@ -132,10 +132,10 @@ overwritten. `XDG_CONFIG_HOME` moves the file; when unset it is
 The sign-in service address is the signed services document's
 `data.auth_url` (see
 [`svcs`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svcs.md)),
-or `MORIE_HOSTED_AUTH_URL` when set (it must be a public `https`
-address). The device flow polls every `interval` seconds the service
-names (5 by default), prints a progress line about every 30 seconds, and
-stops with an error after `pollmaxsec`.
+or the environment variable `MORIE_HOSTED_AUTH_URL` when set (it must be
+a public `https` address). The device flow polls every `interval`
+seconds the service names (5 by default), prints a progress line about
+every 30 seconds, and stops with an error after `pollmaxsec`.
 
 Errors: an empty `token`; a `token` the data service does not accept, or
 no answer from it (nothing is stored); an `email` that is empty or not

@@ -49,9 +49,9 @@ sprd(
 
 ## Value
 
-A list of class `rmbl_spread`: `n`, `mean`, `variance`, `sd`, `semean`,
-`design` (the rule applied), `denominator`, and `reason` (a sentence).
-The print method shows them.
+A list of class `rmbl_spread` with `n`, `mean`, `variance`, `sd`,
+`semean`, `design` (the rule applied), `denominator`, and `reason` (a
+sentence). The print method shows them.
 
 ## Details
 

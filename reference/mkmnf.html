@@ -124,10 +124,9 @@ generated synthetic data earlier in the session. It is written only when
 <code>TRUE</code>, so a manifest of real data keeps the digest it had before the
 flag existed. On a synthetic manifest every <code><a href="recrd.html">recrd()</a></code> entry is
 <code>INFO</code>.</p>
-<p>Fields of <code>meta</code> that <code><a href="wrsmrytxt.html">wrsmrytxt()</a></code>
-reads: <code>project</code>,
-<code>author</code>, <code>run_at</code>, <code>os</code>, <code>r_version</code> and
-<code>r_package_versions</code> (a named list or vector of versions).</p>
+<p>The fields of <code>meta</code> that <code><a href="wrsmrytxt.html">wrsmrytxt()</a></code> reads are <code>project</code>,
+<code>author</code>, <code>run_at</code>, <code>os</code>, <code>r_version</code> and, as a named
+list or vector of versions, <code>r_package_versions</code>.</p>
 <p>Errors when <code>meta</code> is not a list. Nothing is written.</p>
     </div>
     <div class="section level2">

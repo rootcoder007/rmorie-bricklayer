@@ -27,20 +27,14 @@ Three parameter sets trade size for security margin:
 ``` r
 
 kemsz(512)
-#> encapsulation_key decapsulation_key        ciphertext              seed 
-#>               800              1632               768                64 
-#>     shared_secret 
-#>                32
+#>     public     secret ciphertext       seed     shared 
+#>        800       1632        768         64         32
 kemsz(768)
-#> encapsulation_key decapsulation_key        ciphertext              seed 
-#>              1184              2400              1088                64 
-#>     shared_secret 
-#>                32
+#>     public     secret ciphertext       seed     shared 
+#>       1184       2400       1088         64         32
 kemsz(1024)
-#> encapsulation_key decapsulation_key        ciphertext              seed 
-#>              1568              3168              1568                64 
-#>     shared_secret 
-#>                32
+#>     public     secret ciphertext       seed     shared 
+#>       1568       3168       1568         64         32
 ```
 
 ### Implicit rejection
@@ -111,10 +105,8 @@ hsent <- hqcencap(hpub)
 identical(hqcdecap(hkey, hsent$ciphertext), hsent$shared)
 #> [1] TRUE
 hqcsz(1)
-#> encapsulation_key decapsulation_key        ciphertext              seed 
-#>              2241              2321              4433                32 
-#>           message              salt     shared_secret 
-#>                16                16                32
+#>     public     secret ciphertext       seed    message       salt     shared 
+#>       2241       2321       4433         32         16         16         32
 ```
 
 Two revisions are implemented: the 2025 specification (`version = "v5"`,

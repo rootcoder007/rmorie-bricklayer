@@ -47,8 +47,8 @@ withholds the shared secret.
 ## Details
 
 The level and version are taken from the key. The randomness is a
-message `m` of `hqcsz(level)[["message"]]` bytes and a 16-byte `salt`,
-both drawn with
+message `m` and a 16-byte `salt`. The length of `m` in bytes is
+`hqcsz(level)[["message"]]`. They are both drawn with
 [`rndbytes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rndbytes.md)
 from the operating system's generator unless supplied. With the same
 key, `m` and `salt`, the ciphertext and secret are the same; that is

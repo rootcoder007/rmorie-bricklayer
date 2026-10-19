@@ -17,9 +17,10 @@ rslvsoc(prov)
 
   A provenance list as returned by
   [`loadprov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md),
-  or `NULL`. Must contain `dataset$socrata_domain` (a host name without
-  scheme, e.g. `"data.cityofchicago.org"`) and `dataset$socrata_id` (the
-  four-by-four dataset id, e.g. `"ijzp-q8t2"`).
+  or `NULL`. It must have two fields. The first is
+  `dataset$socrata_domain`, a host name without scheme such as
+  `"data.cityofchicago.org"`. The second is `dataset$socrata_id`, the
+  four-by-four dataset id such as `"ijzp-q8t2"`.
 
 ## Value
 
@@ -29,10 +30,10 @@ fields are missing, the request fails, or the metadata reports an error.
 ## Details
 
 One request is made, to `https://<domain>/api/views/<id>.json`. If it
-answers with JSON that has an `id` field the dataset is taken to exist
-and the function returns
-`https://<domain>/api/views/<id>/rows.csv?accessType=DOWNLOAD`, the
-portal's export of every row. The id is not checked further, and the
+answers with JSON that has an `id` field the dataset is taken to exist.
+The function then returns the portal's export of every row, the URL
+`https://<domain>/api/views/<id>/` followed by
+`rows.csv?accessType=DOWNLOAD`. The id is not checked further, and the
 export URL is not fetched.
 
 `NULL` is returned when `prov` is `NULL`, when the domain or id is

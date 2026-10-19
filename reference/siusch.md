@@ -18,7 +18,7 @@ siusch()
 A data.frame with 16 rows and three columns: `name` (character, the
 field name used by
 [`siuprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siuprs.md)),
-`is_count` (logical, `TRUE` for the five count fields) and `description`
+`count` (logical, `TRUE` for the five count fields) and `description`
 (character, what the field records).
 
 ## Details
@@ -27,7 +27,7 @@ The schema is held in the native core (src/siu_schema.h) and is the same
 list that
 [`siuprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siuprs.md)
 fills. Three fields are dates in ISO `YYYY-MM-DD` form, five are counts
-and the rest are free text. Count-type fields (`is_count = TRUE`) count
+and the rest are free text. Count-type fields (`count = TRUE`) count
 distinct entities, and zero is a real answer: a witness-official-only
 investigation has zero subject officials. The function takes no
 arguments, reads no files and uses no network.
@@ -47,7 +47,7 @@ s$name
 #> [15] "specific_injuries"             "relevant_legislation"         
 
 # only the count fields
-s[s$is_count, c("name", "description")]
+s[s$count, c("name", "description")]
 #>                           name
 #> 5            siu_investigators
 #> 6  siu_forensics_investigators

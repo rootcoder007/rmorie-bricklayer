@@ -76,11 +76,11 @@ only the objects JSON can hold); the rest of a version-2 stream depends
 only on the object.
 
 Entries written by 0.5.12 and earlier carry no `scheme`. Their digest is
-SHA-256 of `"<prev>:<payload>"` (the label not covered, and the payload
-of a non-string entry taken over serialized bytes that include the
-writer's R version). `chnvrf()` and `chnseal()` still accept them under
-those rules, with a warning that they were sealed with the weaker
-scheme. Appending to such a chain adds scheme-2 entries.
+the SHA-256 of the string `"<prev>:<payload>"` (the label not covered,
+and the payload of a non-string entry taken over serialized bytes that
+include the writer's R version). `chnvrf()` and `chnseal()` still accept
+them under those rules, with a warning that they were sealed with the
+weaker scheme. Appending to such a chain adds scheme-2 entries.
 
 `chnvrf()` walks the chain from the start: an entry fails when its
 `prev` is not the previous link, its `scheme` is neither 2 nor absent,

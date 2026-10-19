@@ -32,10 +32,10 @@ kemencap(key, m = NULL)
 
 ## Value
 
-A list of class `c("bricklayer_kem_capsule", "list")` with `ciphertext`
-(character, hex,
+A list of class `bricklayer_kem_capsule` with `ciphertext` (character,
+hex, of the length in bytes that
 [`kemsz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemsz.md)`[["ciphertext"]]`
-bytes: send this), `shared` (character, 64 hex characters, the 32-byte
+gives: send this), `shared` (character, 64 hex characters, the 32-byte
 shared secret: keep this) and `level` (integer). Printing it never shows
 the shared secret.
 

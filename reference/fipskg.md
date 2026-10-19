@@ -25,8 +25,8 @@ fipspubkey(key)
 
   Scheme name, one of
   [`pqcbknd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqcbknd.md)
-  other than `"xmss-sha256"`. The default `"ML-DSA-65"` is the FIPS 204
-  middle security level.
+  other than `"xmss-sha256"`. The default, `"ML-DSA-65"`, is the FIPS
+  204 middle security level.
 
 - seed:
 
@@ -88,20 +88,20 @@ for `fipspubkey()` a key that did not come from `fipskg()` or
 
 ## Security
 
-A hand-written implementation. The standardised schemes are checked byte
-for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
-suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
-operation that touches a secret under valgrind memcheck with the secret
-marked undefined (the ctgrind method), so a branch or a memory address
-that depends on it is a reported error, and afterwards scans the dead
-stack for copies of the secret. Both checks run in CI on every change,
-with GCC and with Clang. Timing is also measured on x86-64 and arm64
-hardware (`inst/dudect`), power leakage is assessed in simulation under
-the value and the transition models (`inst/tvla`), and ML-KEM
+The implementation is hand-written. Its standardised schemes are checked
+byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the
+test suite. Side channels are checked, not assumed: `inst/ctcheck` runs
+every operation that touches a secret under valgrind memcheck with the
+secret marked undefined (the ctgrind method), so a branch or a memory
+address that depends on it is a reported error, and afterwards scans the
+dead stack for copies of the secret. Both checks run in CI on every
+change, with GCC and with Clang. Timing is also measured on x86-64 and
+arm64 hardware (`inst/dudect`), power leakage is assessed in simulation
+under the value and the transition models (`inst/tvla`), and ML-KEM
 decapsulation and ML-DSA signing are first-order masked by default.
 These are checks of this code on those compilers and under those leakage
-models; no third-party security audit has been commissioned, and the
-README's security section lists what each check does and does not cover.
+models; the README's security section lists what each check does and
+does not cover.
 
 ## References
 

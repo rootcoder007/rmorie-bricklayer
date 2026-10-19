@@ -32,9 +32,9 @@ fipskey(scheme, public, secret = NULL)
 
 ## Value
 
-A `bricklayer_fips_key` (`public`, `secret`, `scheme`) when `secret` is
-given, otherwise a `bricklayer_fips_public_key` (`public`, `scheme`);
-keys are held as lowercase hex, as
+When `secret` is given, a `bricklayer_fips_key` with `public`, `secret`
+and `scheme`. Otherwise a key of class `bricklayer_fips_public_key` with
+`public` and `scheme`. Keys are held as lowercase hex, as
 [`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)
 returns them.
 

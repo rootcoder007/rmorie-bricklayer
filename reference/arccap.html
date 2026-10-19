@@ -103,8 +103,8 @@ defaults to <code>"data"</code>.</p></dd>
 
 
 <dt id="arg-tsa">tsa<a class="anchor" aria-label="anchor" href="#arg-tsa"></a></dt>
-<dd><p>The time-stamping authority, or <code>NULL</code> for no timestamp (default
-<code>"https://freetsa.org/tsr"</code>).</p></dd>
+<dd><p>The time-stamping authority. <code>"https://freetsa.org/tsr"</code> is the
+default; <code>NULL</code> means no timestamp.</p></dd>
 
 
 <dt id="arg-ak-sk">ak, sk<a class="anchor" aria-label="anchor" href="#arg-ak-sk"></a></dt>
@@ -138,11 +138,12 @@ size and the time it was fetched. The timestamp (<code>manifest.tsr</code>) is t
 authority's signed statement that the manifest's SHA-256 existed at its time;
 <code><a href="tsvrf.html">tsvrf</a></code> checks it, as does <code>openssl ts -verify</code>. Each
 file's digest in the manifest ties the file to that time.</p>
-<p>The upload uses the Internet Archive's S3-like API: each file is sent with a PUT to
-<code>https://s3.us.archive.org/&lt;item&gt;/&lt;file&gt;</code>, streamed from disk. The first
-request creates the item with the metadata given. The keys are those of
-<code><a href="wbsave.html">wbsave</a></code> (<code>IA_S3_ACCESS_KEY</code> and <code>IA_S3_SECRET_KEY</code>, or
-their <code>_FILE</code> twins); they travel only in the <code>authorization</code> header and
+<p>The upload uses the Internet Archive's S3-like API: each file is sent
+with a PUT, streamed from disk, to<br><code>https://s3.us.archive.org/&lt;item&gt;/&lt;file&gt;</code>.<br> The first
+request creates the item with the metadata given. The keys are the same as
+for <code><a href="wbsave.html">wbsave</a></code>, so they are read from <code>IA_S3_ACCESS_KEY</code> and
+<code>IA_S3_SECRET_KEY</code>, or their <code>_FILE</code> twins. They travel only in the
+<code>authorization</code> header and
 are never written or printed. Publish only what the source's licence lets you
 redistribute.</p>
     </div>

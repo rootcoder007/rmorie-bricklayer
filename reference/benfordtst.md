@@ -26,7 +26,7 @@ benfordtst(x)
 
 ## Value
 
-A list of class `bricklayer_benford`: `counts` (observed digit
+A list of class `bricklayer_benford` with `counts` (observed digit
 frequencies 1–9), `expected`, `proportion`, `statistic`, `df`,
 `p_value`, `logpvalue` (the log of the upper tail, which keeps its
 information where `p_value` underflows to 0), and `n` (the number of

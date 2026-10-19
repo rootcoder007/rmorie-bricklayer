@@ -39,8 +39,8 @@ mksyncsv(schema, outpath, nrows = NULL, seed = NULL)
 
 ## Value
 
-Invisibly, an object of class `bricklayer_synthetic`: a list with
-`path`, `sidecar` (the `<path>.synthetic` marker file;
+Invisibly, a list of class `bricklayer_synthetic` with `path`, `sidecar`
+(the `<path>.synthetic` marker file;
 [`vrfcps`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
 treats its presence as a failed check), `rows` (rows written), `seed`
 (the seed used) and `recipe_sha256` (the recipe's digest, `NA` when it
@@ -50,12 +50,12 @@ could not be computed). Its print method labels the file as synthetic.
 
 Columns are produced in declaration order so later columns can reference
 earlier ones. A shared per-person latent propensity, uniform on \\\[0,
-1\]\\, drives every `"bernoulli"` column through its `p_with_baserate`
-field, so those columns are correlated with each other. An optional
-`row_replication` block (`values` and `weights`) draws how many rows
-each person gets: person-level columns are drawn once per person and
-repeated, while `"bernoulli"` columns are drawn once per row. With
-replication the file therefore has more than `nrows` rows.
+1\]\\, drives every `"bernoulli"` column through the column's
+`p_with_baserate` field, so those columns are correlated with each
+other. An optional `row_replication` block (`values` and `weights`)
+draws how many rows each person gets: person-level columns are drawn
+once per person and repeated, while `"bernoulli"` columns are drawn once
+per row. With replication the file therefore has more than `nrows` rows.
 
 The data are drawn under `seed` and the caller's random number stream is
 restored afterwards, so the same recipe and seed give the same file and

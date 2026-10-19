@@ -87,8 +87,8 @@ fetch a source file and you want a visible, safe transfer.</p>
 
 
 <dl><dt id="arg-url">url<a class="anchor" aria-label="anchor" href="#arg-url"></a></dt>
-<dd><p>The URL: <code>https</code> (plain <code>http</code> only with
-<code>options(rmoriebricklayer.allowhttp = TRUE)</code>); a loopback,
+<dd><p>The URL, <code>https</code>. The option <code>rmoriebricklayer.allowhttp</code>
+set to <code>TRUE</code> also allows plain <code>http</code>. A loopback,
 link-local or private address is refused.</p></dd>
 
 
@@ -158,8 +158,8 @@ is set, and suppressed by <code>options(morie.quiet = TRUE)</code>.</p>
 <p>Network: the transfer runs in the package's compiled HTTP client. The
 URL is checked, its host resolved and pinned, and every redirect is
 checked again (no switch from https to http; credentials are not passed
-to another host). Plain <code>http://</code> is allowed only with
-<code>options(rmoriebricklayer.allowhttp = TRUE)</code>. A transfer slower than
+to another host). Plain <code>http://</code> is allowed only when
+<code>rmoriebricklayer.allowhttp</code>, an option, is <code>TRUE</code>. A transfer slower than
 64 bytes a second for 30 seconds is abandoned. A <code>file://</code> URL is
 copied locally through the same progress display, only with
 <code>allowfile = TRUE</code>.</p>
@@ -192,7 +192,7 @@ Machine fallback.</p></div>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bldl</span><span class="op">(</span><span class="st">"https://127.0.0.1/table.csv"</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : url points at a local or private address ('https://127.0.0.1/table.csv'): refused (a local or private address (127.0.0.1))</span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bldl</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"file://"</span>, <span class="va">src</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : url must be an https:// URL, not file:// ('file:///tmp/RtmpdFP7Nh/file1ed834f7e301.txt'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : url must be an https:// URL, not file:// ('file:///tmp/Rtmp2OifJU/file1e8648a553fc.txt'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a real download needs the network</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>

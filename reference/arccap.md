@@ -49,8 +49,8 @@ arccap(
 
 - tsa:
 
-  The time-stamping authority, or `NULL` for no timestamp (default
-  `"https://freetsa.org/tsr"`).
+  The time-stamping authority. `"https://freetsa.org/tsr"` is the
+  default; `NULL` means no timestamp.
 
 - ak, sk:
 
@@ -93,13 +93,15 @@ checks it, as does `openssl ts -verify`. Each file's digest in the
 manifest ties the file to that time.
 
 The upload uses the Internet Archive's S3-like API: each file is sent
-with a PUT to `https://s3.us.archive.org/<item>/<file>`, streamed from
-disk. The first request creates the item with the metadata given. The
-keys are those of
-[`wbsave`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsave.md)
-(`IA_S3_ACCESS_KEY` and `IA_S3_SECRET_KEY`, or their `_FILE` twins);
-they travel only in the `authorization` header and are never written or
-printed. Publish only what the source's licence lets you redistribute.
+with a PUT, streamed from disk, to  
+`https://s3.us.archive.org/<item>/<file>`.  
+The first request creates the item with the metadata given. The keys are
+the same as for
+[`wbsave`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsave.md),
+so they are read from `IA_S3_ACCESS_KEY` and `IA_S3_SECRET_KEY`, or
+their `_FILE` twins. They travel only in the `authorization` header and
+are never written or printed. Publish only what the source's licence
+lets you redistribute.
 
 ## References
 

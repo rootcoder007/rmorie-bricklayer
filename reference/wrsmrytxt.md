@@ -30,8 +30,8 @@ wrsmrytxt(man, outdir, paths, whatwasdone = NULL, contact = NULL, lic = NULL)
 - paths:
 
   A named list (or named character vector) of paths to report, one line
-  each, labelled by the capitalised name (for example `capsule`,
-  `input`, `results`, `analysis_script`, `provenance`).
+  each, labelled by the capitalised name. Names such as `capsule`,
+  `input`, `results`, `analysis_script` and `provenance` are typical.
   [`list()`](https://rdrr.io/r/base/list.html) reports none.
 
 - whatwasdone:

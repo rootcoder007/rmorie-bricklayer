@@ -49,11 +49,11 @@ A list of class `c("bricklayer_recompute", "list")`:
 
 - `results`:
 
-  data frame, one row per recomputed statistic, with `name` (character),
-  `recorded` and `recomputed` (numeric, `NA` for non-numeric values),
-  `delta` (numeric absolute difference), `tol` (numeric), `status`
-  (`"MATCH"`, `"DIFFER"`, `"NOT_RECORDED"` or `"ERROR"`) and `detail`
-  (character explanation).
+  data frame, one row per recomputed statistic, with the columns `name`
+  (character), `recorded` and `recomputed` (numeric, `NA` for
+  non-numeric values), `delta` (numeric absolute difference), `tol`
+  (numeric), `status` (`"MATCH"`, `"DIFFER"`, `"NOT_RECORDED"` or
+  `"ERROR"`) and `detail` (character explanation).
 
 - `unchecked`:
 

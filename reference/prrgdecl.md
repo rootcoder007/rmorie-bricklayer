@@ -44,11 +44,12 @@ prrgchk(prereg, rptd)
 
 `prrgdecl()` returns a list of class `bricklayer_prereg` with
 `statistics` (the names), `hypotheses` (the claims), `note` and `decutc`
-(ISO 8601 time). `prrgchk()` returns a list of class
-`bricklayer_prereg_check` with `ok` (logical: no departures),
-`decnotrep` and `repnotdec` (character vectors), `hypotheses` (a data
-frame of `statistic`, `hypothesis` and logical `reported`) and `decutc`.
-Both print a short summary.
+(ISO 8601 time).
+
+`prrgchk()` returns a list of class `bricklayer_prereg_check` with `ok`
+(logical: no departures), the character vectors `decnotrep` and
+`repnotdec`, `hypotheses` (a data frame of `statistic`, `hypothesis` and
+logical `reported`) and `decutc`. Both print a short summary.
 
 ## Details
 
@@ -103,7 +104,7 @@ prrgchk(plan, c("ate", "nrows", "atebyyear",
 
 # the full check prints the departures
 prrgchk(plan, c("ate", "atebyyear"))
-#> ── Against the declaration of 2026-10-19T05:10:44Z: departures below 
+#> ── Against the declaration of 2026-10-19T10:24:33Z: departures below 
 #>   declared but not reported (outcome switching): nrows
 #>   reported but not declared (1 addition(s)): atebyyear
 #> ──────────────────────────────────────────────────────────────────

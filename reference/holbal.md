@@ -109,9 +109,10 @@ rather than filled with another.
 ## Acknowledgement
 
 This estimator puts to quantitative use the framework of Professor
-Suzanne Stewart (Yellowknives Dene First Nation, University of Toronto);
-see the acknowledgements of
-[`vignette("first-nations-metis-inuit-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/first-nations-metis-inuit-health.md).
+Suzanne Stewart (Yellowknives Dene First Nation, University of Toronto).
+
+See the acknowledgements of the `first-nations-metis-inuit-health`
+vignette.
 
 ## References
 

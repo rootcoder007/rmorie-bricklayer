@@ -44,12 +44,12 @@ caseflow(recv, disp, pend = NULL, prd = NULL, win = 12L, conflvl = 0.95)
 
 ## Value
 
-A data frame of class `rmbl_case_flow`, one row per period: `period`,
-`received`, `disposed`, `clearance` with `lower` and `upper`, `net`
-(received less disposed: positive grows the inventory), `rolclr` with
-`rollo` and `rolup` (`NA` until a full window is available), and either
-`pending`, `penchg` and `pertoclear`, or, without `pending`, `cumnet`
-(the inventory change since the first period).
+A data frame of class `rmbl_case_flow`, one row per period, with
+`period`, `received`, `disposed`, `clearance` with `lower` and `upper`,
+`net` (received less disposed: positive grows the inventory), `rolclr`
+with `rollo` and `rolup` (`NA` until a full window is available), and
+either `pending`, `penchg` and `pertoclear`, or, without `pending`,
+`cumnet` (the inventory change since the first period).
 
 ## Details
 

@@ -125,8 +125,8 @@ ordered) belong in <code><a href="rul.html">rul()</a></code> and
 <code><a href="valrules.html">valrules()</a></code>.</p>
 <p>The checks, and the name of the issue each one adds:</p><ul><li><p>a missing <code>expected_columns</code> entry: <code>missing_columns</code>,
 <code>"fatal"</code>;</p></li>
-<li><p>fewer than <code>min_data_rows</code> or more than <code>max_data_rows</code>
-rows: <code>row_count_low</code> / <code>row_count_high</code>;</p></li>
+<li><p>fewer than <code>min_data_rows</code> rows: <code>row_count_low</code>;</p></li>
+<li><p>more than <code>max_data_rows</code> rows: <code>row_count_high</code>;</p></li>
 <li><p>a column whose class differs from <code>expected_types</code>:
 <code>type_&lt;col&gt;</code>. <code>integer</code>, <code>numeric</code> and <code>double</code> are
 one family, and so are <code>character</code> and <code>factor</code>;</p></li>
@@ -135,8 +135,8 @@ non-numeric columns are skipped): <code>range_&lt;col&gt;</code>;</p></li>
 <li><p>a share of <code>NA</code> above <code>max_missing_fraction</code>:
 <code>missing_&lt;col&gt;</code>;</p></li>
 <li><p>values not in <code>expected_value_sets</code>: <code>unexpected_&lt;col&gt;</code>.</p></li>
-</ul><p>A column named in a check but absent from the data is skipped by that
-check (only <code>expected_columns</code> reports it). All of these are
+</ul><p>A column that a check names but the data lack is skipped by that check.
+Only the <code>expected_columns</code> check reports such a column. All of these are
 <code>"warning"</code> except <code>missing_columns</code>.</p>
 <p>The schema itself is checked too. An empty schema (<code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>) gives
 one <code>schema_empty</code> warning. An unknown field name within three edits

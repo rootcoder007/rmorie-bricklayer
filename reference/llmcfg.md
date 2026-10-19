@@ -21,13 +21,21 @@ llmcfg(...)
 
 - ...:
 
-  Settings to save, as `key = value`: `route` (`"auto"`, `"own"`,
-  `"ollama"` or a provider id such as `"anthropic"`; case is ignored),
-  `<provider>.key` and `<provider>.model` (e.g. `anthropic.key`,
-  `openai.model`), `own.url`, `own.key`, `own.model`, `ollama.url`,
-  `ollama.model`, `ollama.key`. Each value is a single string (leading
-  and trailing spaces are removed). `NULL`, `NA` or `""` removes a saved
-  setting. With no arguments nothing is written.
+  Settings to save, as `key = value`. The keys are:
+
+  - `route`: `"auto"`, `"own"`, `"ollama"` or a provider id such as
+    `"anthropic"` (case is ignored);
+
+  - `<provider>.key` and `<provider>.model`, for example `anthropic.key`
+    or `openai.model`;
+
+  - `own.url`, `own.key` and `own.model`;
+
+  - `ollama.url`, `ollama.model` and `ollama.key`.
+
+  Each value is a single string (leading and trailing spaces are
+  removed). `NULL`, `NA` or `""` removes a saved setting. With no
+  arguments nothing is written.
 
 ## Value
 
@@ -41,8 +49,8 @@ visibly when called with no settings, invisibly after saving.
 
 ## Details
 
-**Where settings live.** Saved settings are kept in
-`$XDG_CONFIG_HOME/morie/llm.json` (`~/.config/morie/llm.json` when
+**Where settings live.** Saved settings are kept in `llm.json` in the
+folder `$XDG_CONFIG_HOME/morie` (`~/.config/morie` when
 `XDG_CONFIG_HOME` is unset), a private file (mode 0600, in a private
 directory) next to the shared `credentials.json`. The file is written
 only when you pass a setting; only the settings that change are
@@ -53,9 +61,9 @@ empty set of settings removes the file.
 for example `ANTHROPIC_API_KEY` or `OLLAMA_HOST`) wins over a saved
 value, which wins over the built-in default. Saving a setting whose
 variable is set warns that the variable still wins. A provider key is
-also read from the provider's alternative variable where it has one
-(`GOOGLE_API_KEY` for Gemini, `HUGGINGFACE_HUB_TOKEN` for Hugging Face,
-`CO_API_KEY` for Cohere).
+also read from the provider's alternative variable where it has one:
+`GOOGLE_API_KEY` for Gemini, `CO_API_KEY` for Cohere, and for Hugging
+Face `HUGGINGFACE_HUB_TOKEN`.
 
 **Checks when saving.** Names must be among the settings listed in the
 `key` column (`"unknown setting"` otherwise) and every value passed as

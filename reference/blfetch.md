@@ -3,10 +3,10 @@
 The shared data-fetch foundation of the morie ecosystem. Downloads `url`
 to `dest`; if the live download fails (404, network), it retries the
 Wayback Machine snapshot – so a rotated or removed source file (CIHI,
-open-data portals) stays retrievable. Backed by the package's C++
-`rmbl_fetch_with_fallback` kernel (libcurl), which rmorie and morie
-share through `LinkingTo`. The return value says which source served the
-file, so a report can note that it used an archived copy.
+open-data portals) stays retrievable. Backed by the package's C++ kernel
+`rmbl_fetch_with_fallback` (libcurl), which rmorie and morie share
+through `LinkingTo`. The return value says which source served the file,
+so a report can note that it used an archived copy.
 
 ## Usage
 
@@ -43,12 +43,12 @@ Throws on total failure.
 ## Details
 
 Before any network use the arguments are checked: `url` must be one
-`https` URL to a public host (plain `http` only with
-`options(rmoriebricklayer.allowhttp = TRUE)`; loopback, private,
-link-local and metadata addresses are refused), the directory of `dest`
-must exist and be writable, and `tmout` must be at least one second. The
-compiled layer then resolves the host, pins the connection to the
-checked addresses and re-checks every redirect.
+`https` URL to a public host (plain `http` only when the option
+`rmoriebricklayer.allowhttp` is `TRUE`; loopback, private, link-local
+and metadata addresses are refused), the directory of `dest` must exist
+and be writable, and `tmout` must be at least one second. The compiled
+layer then resolves the host, pins the connection to the checked
+addresses and re-checks every redirect.
 
 If the live download fails, the fallback is the `wb` URL when given,
 else a snapshot looked up through the Wayback availability API (as
@@ -73,7 +73,7 @@ try(blfetch("https://127.0.0.1/data.csv", tempfile()))
 #> Error : url points at a local or private address ('https://127.0.0.1/data.csv'): refused (a local or private address (127.0.0.1))
 try(blfetch("https://example.org/data.csv",
                      file.path(tempdir(), "no-such-dir", "data.csv")))
-#> Error : blfetch: cannot write /tmp/RtmpdFP7Nh/no-such-dir/data.csv (its directory does not exist)
+#> Error : blfetch: cannot write /tmp/Rtmp2OifJU/no-such-dir/data.csv (its directory does not exist)
 
 if (FALSE) { # \dontrun{
 # needs the network

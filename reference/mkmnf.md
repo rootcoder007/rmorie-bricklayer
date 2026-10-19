@@ -60,10 +60,10 @@ synthetic manifest every
 [`recrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recrd.md)
 entry is `INFO`.
 
-Fields of `meta` that
+The fields of `meta` that
 [`wrsmrytxt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrsmrytxt.md)
-reads: `project`, `author`, `run_at`, `os`, `r_version` and
-`r_package_versions` (a named list or vector of versions).
+reads are `project`, `author`, `run_at`, `os`, `r_version` and, as a
+named list or vector of versions, `r_package_versions`.
 
 Errors when `meta` is not a list. Nothing is written.
 

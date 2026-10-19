@@ -35,13 +35,22 @@ infsch(data, slack = 0.1, maxlvl = 50L)
 
 ## Value
 
-A list of class `c("bricklayer_schema", "list")` with `expected_columns`
-(character), `expected_types` (named character), `structural_invariants`
-(list of `min_data_rows` and `max_data_rows`, integers),
-`expected_value_sets` (named list of character vectors),
-`numeric_ranges` (named list of `c(min =, max =)`) and
-`max_missing_fraction` (named numeric). Wrap it as
-`list(schema = <this>)` to hand to
+A list of class `bricklayer_schema` with these elements:
+
+- `expected_columns` (character);
+
+- `expected_types` (named character);
+
+- `structural_invariants` (list of `min_data_rows` and `max_data_rows`,
+  integers);
+
+- `expected_value_sets` (named list of character vectors);
+
+- `numeric_ranges` (named list of `c(min =, max =)`);
+
+- `max_missing_fraction` (named numeric).
+
+Wrap it as `list(schema = <this>)` to hand to
 [`valsch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/valsch.md).
 
 ## Details

@@ -92,14 +92,14 @@ automatically.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A length-1 character string, the <code>https</code> snapshot URL of the
-form <code>https://web.archive.org/web/&lt;timestamp&gt;/&lt;url&gt;</code>, or
+form <code>https://web.archive.org/web/</code> followed by <code>&lt;timestamp&gt;/&lt;url&gt;</code>, or
 <code>NULL</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The function sends one request to the availability API,
-<code>https://archive.org/wayback/available?url=&lt;url&gt;[&amp;timestamp=&lt;ts&gt;]</code>,
-and reads <code>archived_snapshots$closest</code>. When the API reports an
+    <p>The function sends one request to the availability API,<br><code>https://archive.org/wayback/available?url=&lt;url&gt;[&amp;timestamp=&lt;ts&gt;]</code>,<br>
+where the timestamp part is sent only when <code>ts</code> is given.</p>
+<p>The answer's <code>archived_snapshots$closest</code> is read. When the API reports an
 available snapshot its URL is returned, with <code>http://</code> rewritten to
 <code>https://</code> and passed through the same public-URL check as every
 other URL the package fetches. The timestamp is passed to the API as

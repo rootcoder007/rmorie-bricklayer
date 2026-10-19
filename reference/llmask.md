@@ -4,14 +4,14 @@ Sends one prompt to the first language model that is set up on this
 machine and returns the reply. Bring your own key, or run a model
 locally: nothing is sent anywhere you did not set up. In order:
 
-1.  an OpenAI-compatible endpoint of your own: `MORIE_LLM_BASE_URL`
-    (with `MORIE_LLM_API_KEY` and `MORIE_LLM_MODEL` when it needs them),
-    e.g. LM Studio, vLLM, llama.cpp or a company gateway. An `https`
-    address, or plain `http` to the loopback host or to a literal
-    private LAN address (`10/8`, `172.16/12`, `192.168/16`, `fc00::/7`:
-    an LM Studio or vLLM box on your own network); a host name over
-    plain http is refused. It is not probed, so a configured endpoint
-    that is down is an error, not a silent hop elsewhere;
+1.  your own OpenAI-compatible endpoint, `MORIE_LLM_BASE_URL` (with
+    `MORIE_LLM_API_KEY` and `MORIE_LLM_MODEL` when it needs them), e.g.
+    LM Studio, vLLM, llama.cpp or a company gateway. An `https` address,
+    or plain `http` to the loopback host or to a literal private LAN
+    address (`10/8`, `172.16/12`, `192.168/16`, `fc00::/7`: an LM Studio
+    or vLLM box on your own network); a host name over plain http is
+    refused. It is not probed, so a configured endpoint that is down is
+    an error, not a silent hop elsewhere;
 
 2.  a provider whose key is set (see
     [`llmprvd`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmprvd.md)):
@@ -21,9 +21,9 @@ locally: nothing is sent anywhere you did not set up. In order:
     documented API with its own key variable (`ANTHROPIC_API_KEY`,
     `OPENAI_API_KEY`, ...);
 
-3.  a local Ollama server: `OLLAMA_HOST` (default
-    `http://localhost:11434`), model `OLLAMA_MODEL` or the first one
-    pulled; `OLLAMA_HOST=off` skips it.
+3.  a local Ollama server at `OLLAMA_HOST`, by default
+    `http://localhost:11434`, with the model `OLLAMA_MODEL` or the first
+    one pulled; `OLLAMA_HOST=off` skips it.
 
 [`llmstat`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmstat.md)
 shows what is set up and which route a question would take.
@@ -125,14 +125,16 @@ Saved answers: a person at a terminal (the command line with a terminal
 on both stdin and stdout) or in an interactive GUI session gets a saved
 answer back at once when the question (spacing aside; case counts),
 route, address, model, packages and their versions, and `syspro` all
-match. Answers are kept 30 days
-(`options(rmoriebricklayer.llmcachedays)`), at most the 200 newest
-(`options(rmoriebricklayer.llmcachemax)`), as owner-only files under
-`tools::R_user_dir("rmoriebricklayer", "cache")`. The first save in a
-session says where answers go. Nothing is saved from a script, a
+match. Answers are kept as owner-only files in the folder that
+[`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html) gives for
+`"rmoriebricklayer"` and `"cache"`: for 30 days, which the option
+`rmoriebricklayer.llmcachedays` changes, and at most the 200 newest,
+which the option `rmoriebricklayer.llmcachemax` changes. The first save
+in a session says where answers go. Nothing is saved from a script, a
 pipeline, a test run, `R CMD check`, or with
-`options(morie.quiet = TRUE)`; `MORIE_LLM_CACHE=off` or
-`options(rmoriebricklayer.llmcache = FALSE)` turns saving off.
+`options(morie.quiet = TRUE)`. Saving is also turned off by
+`MORIE_LLM_CACHE=off`, or by the option `rmoriebricklayer.llmcache` set
+to `FALSE`.
 
 Errors: `prompt` is not a single non-empty string; `fresh` or `docs` is
 not `TRUE` or `FALSE`; `route = "hosted"` or an unknown route; no route

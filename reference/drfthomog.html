@@ -107,7 +107,7 @@ on \(k - 1\) degrees of freedom. Three branches, named in the <code>method</code
 attribute:</p><ul><li><p><code>"chi-square approximation"</code>: every expected count is at least
 5; the p-value is the chi-square upper tail.</p></li>
 <li><p><code>"Monte Carlo permutation (small expected counts)"</code>: some
-expected count is below 5; the p-value comes from
+expected count is below 5; the p-value then comes from
 <code><a href="https://rdrr.io/r/stats/chisq.test.html" class="external-link">stats::chisq.test()</a></code> with <code>simulate.p.value = TRUE</code>
 and
 <code>B = 10000</code> tables with the same margins, drawn under <code>seed</code>.</p></li>

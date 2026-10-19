@@ -87,9 +87,10 @@ as a hex string or a raw vector, of the length for the key's level.</p></dd>
 
 
 <dt id="arg-masked">masked<a class="anchor" aria-label="anchor" href="#arg-masked"></a></dt>
-<dd><p>Logical, <code>TRUE</code> or <code>FALSE</code>. <code>TRUE</code> (the
-default, taken from the option <code>rmoriebricklayer.masked</code> when set)
-runs the first-order masked decapsulation, <code>FALSE</code> the plain one.
+<dd><p>Logical, <code>TRUE</code> or <code>FALSE</code>.</p>
+<p><code>rmoriebricklayer.masked</code>, an option, gives the default when it is set;
+otherwise the default is <code>TRUE</code>.
+<code>TRUE</code> runs the first-order masked decapsulation, <code>FALSE</code> the plain one.
 Both return the same secret.</p></dd>
 
 </dl></div>
@@ -126,9 +127,8 @@ plain constant-time decapsulation, and the option
 <p>Errors (checked before any decapsulation): <code>key</code> not from
 <code><a href="kemkg.html">kemkg()</a></code>, or a public key only ("decapsulation needs a
 key with its
-secret half"); a ciphertext that is not hex or raw of exactly
-<code><a href="kemsz.html">kemsz()</a></code><code>[["ciphertext"]]</code> bytes for the key's
-level (768,
+secret half"); a ciphertext that is not hex or raw of the exact length
+for the key's level, which is <code><a href="kemsz.html">kemsz()</a></code><code>[["ciphertext"]]</code> bytes (768,
 1088 or 1568); <code>masked</code> not <code>TRUE</code> or <code>FALSE</code>.</p>
     </div>
     <div class="section level2">

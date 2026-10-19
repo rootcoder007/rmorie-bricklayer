@@ -38,7 +38,7 @@ The fields used, with their fallbacks:
 - year: the first four characters of `captured_at_utc`, else the current
   year; retrieval date: its first ten characters (omitted if absent);
 
-- link: `https://doi.org/<dataset$doi>` when a DOI is recorded, else
+- link: `https://doi.org/<dataset$doi>` if a DOI is recorded, else
   `resource$direct_url`, else `dataset$catalogue_page`;
 
 - licence: `dataset$licence_short`, else `dataset$licence_name`.

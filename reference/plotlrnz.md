@@ -78,8 +78,8 @@ the widest limits).
 
 ## Details
 
-`plotlrnz()`: from a numeric vector the curve is computed by
-[`lorenzc`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
+`plotlrnz()`: from a numeric vector the curve is computed with
+[`lorenzc`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md),
 and the title carries
 [`ginicoef`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md);
 a data frame is used as given (sorted, with the origin added when

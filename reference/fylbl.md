@@ -27,7 +27,8 @@ fylbl(endyear, sep = "/", short = TRUE)
 - short:
 
   Logical. `TRUE` (the default) abbreviates the second year to two
-  digits (`"2022/23"`); `FALSE` writes it in full (`"2022/2023"`).
+  digits, as in `"2022/23"`; `FALSE` writes it in full, as in
+  `"2022/2023"`.
 
 ## Value
 

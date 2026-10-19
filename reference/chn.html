@@ -143,7 +143,7 @@ payload the same on every R version, for any R object (a canonical JSON
 encoding would cover only the objects JSON can hold); the rest of a
 version-2 stream depends only on the object.</p>
 <p>Entries written by 0.5.12 and earlier carry no <code>scheme</code>. Their
-digest is SHA-256 of <code>"&lt;prev&gt;:&lt;payload&gt;"</code> (the label not covered,
+digest is the SHA-256 of the string <code>"&lt;prev&gt;:&lt;payload&gt;"</code> (the label not covered,
 and the payload of a non-string entry taken over serialized bytes that
 include the writer's R version). <code>chnvrf()</code> and
 <code>chnseal()</code> still accept them under those rules, with a warning

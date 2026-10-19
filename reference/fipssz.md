@@ -22,16 +22,16 @@ fipssz(scheme)
 
 ## Value
 
-A named integer vector of five byte counts: `public_key`, `sk`,
-`signature`, `seed` and `opt_rand` (the per-signature randomness the
-scheme consumes).
+A named integer vector of five byte counts: `public_key`, `secret_key`,
+`signature`, `seed` and `rnd` (the per-signature randomness the scheme
+consumes).
 
 ## Details
 
 The sizes are the standards' tables (FIPS 204 Table 2, FIPS 205 Table 2)
 as the compiled code uses them. `seed` is the key-generation input of
 [`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md);
-`opt_rand` is the per-signature randomness (32 bytes for ML-DSA's `rnd`,
+`rnd` is the per-signature randomness (32 bytes for ML-DSA's `rnd`,
 \\n\\ bytes for SLH-DSA's `opt_rand`), which the deterministic variants
 replace with a fixed value. XMSS is not covered: its sizes follow from
 the tree height of
@@ -47,10 +47,10 @@ An unknown scheme, or anything but one string, is refused.
 
 ``` r
 fipssz("ML-DSA-65")
-#> public_key secret_key  signature       seed   opt_rand 
+#> public_key secret_key  signature       seed        rnd 
 #>       1952       4032       3309         32         32 
 fipssz("SLH-DSA-SHAKE-128s")
-#> public_key secret_key  signature       seed   opt_rand 
+#> public_key secret_key  signature       seed        rnd 
 #>         32         64       7856         48         16 
 
 # An SLH-DSA signature is far larger than an ML-DSA one at the same

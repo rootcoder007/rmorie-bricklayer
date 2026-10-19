@@ -307,6 +307,117 @@ plot(trcprog())
 
 ![](plotting-results_files/figure-html/indigenous-trc-1.png)
 
+## Evaluating a policy
+
+The designs of
+[`vignette("policy-evaluation")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/policy-evaluation.md),
+on its made-up panel of twenty districts where a reform arrives in three
+stages: the outcome by adoption cohort before any model, the event
+study, the Goodman-Bacon weights behind a two-way fixed-effects
+estimate, and the randomisation null of the assignment.
+
+``` r
+
+p <- polex()
+```
+
+``` r
+
+plot(cohtrnd(p, "district", "month", "crmrate", "refmonth", win = c(-10, 10)))
+```
+
+![](plotting-results_files/figure-html/policy-design-1.png)
+
+``` r
+
+es <- evstudy(p, "district", "month", "crmrate", "refmonth", leads = 4, lags = 6)
+plot(es)
+```
+
+![](plotting-results_files/figure-html/policy-design-2.png)
+
+``` r
+
+plot(bacondcmp(p, "district", "month", "crmrate", "reformed"))
+```
+
+![](plotting-results_files/figure-html/policy-design-3.png)
+
+``` r
+
+plot(perminf(p, "district", "month", "crmrate", "refmonth", cl = "region"))
+```
+
+![](plotting-results_files/figure-html/policy-design-4.png)
+
+Whether one district drives the estimate, and a single treated place
+against its synthetic control and its synthetic difference in
+differences:
+
+``` r
+
+plot(loounit(p, "district", "month", "crmrate", "reformed"))
+```
+
+![](plotting-results_files/figure-html/policy-one-1.png)
+
+``` r
+
+p13 <- p[is.na(p$refmonth) | p$district == "D13", ]
+plot(synctl(p13, "district", "month", "crmrate", "D13", adopt = 13))
+```
+
+![](plotting-results_files/figure-html/policy-one-2.png)
+
+``` r
+
+plot(syndid(p13, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1))
+```
+
+![](plotting-results_files/figure-html/policy-one-3.png)
+
+The power of the design on the untreated data, and the cross-fitted AIPW
+estimate of
+[`vignette("causal-effects")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/causal-effects.md)
+with its overlap and balance checks:
+
+``` r
+
+plot(plnpwr(p[p$month <= 12, ], "district", "month", "crmrate", ntrt = 10, adopt = 7:10,
+            eff = c(0, 0.5, 1, 1.5), reps = 40, seed = 1))
+```
+
+![](plotting-results_files/figure-html/policy-checks-1.png)
+
+``` r
+
+set.seed(7)
+n <- 600
+d <- data.frame(age = runif(n, 18, 70), income = rnorm(n))
+d$t <- rbinom(n, 1, plogis(-2 + 0.04 * d$age + 0.5 * d$income))
+d$y <- 10 + 3 * d$t + 0.2 * d$age + d$income + rnorm(n)
+fit <- aipwcf(d, "y", "t", c("age", "income"), lrn = "ols")
+plot(fit)
+```
+
+![](plotting-results_files/figure-html/policy-checks-2.png)
+
+``` r
+
+plot(fit, type = "estimate")
+```
+
+![](plotting-results_files/figure-html/policy-checks-3.png)
+
+``` r
+
+e <- pmin(pmax(attr(fit, "propensity")$propensity, 0.01), 0.99)
+d$ipw <- ifelse(d$t == 1, 1 / e, 1 / (1 - e))
+plot(baltab(d, "t", c("age", "income")), after = baltab(d, "t", c("age", "income"), w = "ipw"))
+```
+
+![](plotting-results_files/figure-html/policy-checks-4.png)
+
 ## Customising
 
 Every method takes `main`, `col` (or a `palette` name), `grid`, and

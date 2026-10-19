@@ -18,9 +18,9 @@ grdrcd(x, map, keep = character())
 
 - x:
 
-  A factor or character vector (other atomic vectors are compared
-  through [`as.character()`](https://rdrr.io/r/base/character.html)
-  matching of their values).
+  A factor or character vector. Other atomic vectors are compared by
+  matching the values that
+  [`as.character()`](https://rdrr.io/r/base/character.html) gives.
 
 - map:
 

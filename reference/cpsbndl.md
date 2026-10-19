@@ -34,8 +34,8 @@ cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL)
 
   A manifest, as from
   [`mkmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkmnf.md).
-  Required by `cpsbndl()`; optional for `cpsbndlvrf()`, where it adds a
-  check that the manifest still has the bundled digest.
+  It is required by `cpsbndl()` and optional for `cpsbndlvrf()`, where
+  it adds a check that the manifest still has the bundled digest.
 
 - key:
 
@@ -57,9 +57,11 @@ cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL)
 
 - path:
 
-  Character scalar. For `cpsbndl()`, where to write the bundle; defaults
-  to `capsule_bundle.json` inside `dir` (an existing file is
-  overwritten). For `cpsbndlrd()`, the bundle file to read.
+  Character scalar. For `cpsbndlrd()`, the bundle file to read. For
+  `cpsbndl()`, where to write the bundle (an existing file is
+  overwritten).
+
+  `capsule_bundle.json` inside `dir` is the default for `cpsbndl()`.
 
 - bundle:
 
@@ -78,12 +80,14 @@ cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL)
 with `files` (a list of `path`, `sha256`, `size_bytes`), `mnfdgst`,
 `bundled_utc` and `attestation` (from
 [`cpsatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)),
-and the path it was written to as attribute `"path"`. `cpsbndlrd()`: the
-same structure read from the file. `cpsbndlvrf()`: a list of class
-`bricklayer_bundle_check` with `ok` (logical) and `checks` (a data frame
-of `check`, logical `ok` and `detail`: one `file:PATH` row per listed
-file, `no_unlisted_files`, the `attestation:` rows and, with a manifest,
-`mnfdgst`).
+and the path it was written to as attribute `"path"`.
+
+`cpsbndlrd()`: the same structure read from the file.
+
+`cpsbndlvrf()`: a list of class `bricklayer_bundle_check` with `ok`
+(logical) and `checks` (a data frame of `check`, logical `ok` and
+`detail`: one `file:PATH` row per listed file, `no_unlisted_files`, the
+`attestation:` rows and, with a manifest, `mnfdgst`).
 
 ## Details
 
@@ -168,7 +172,7 @@ b2
 #> ── Capsule bundle ────────────────────────────────────────────────
 #>   files            1
 #>   manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e4167960781a579
-#>   bundled          2026-10-19T05:09:54Z
+#>   bundled          2026-10-19T10:23:44Z
 #>   scheme           ML-DSA-44
 #> ──────────────────────────────────────────────────────────────────
 cpsbndlvrf(b2, dir, keyexp = "00ff")$ok
@@ -186,6 +190,6 @@ cpsbndlvrf(b2, dir)$checks[, c("check", "ok")]
 
 # a directory that does not exist
 try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))
-#> Error : `dir` does not exist: /tmp/RtmpdFP7Nh/no-such-capsule
+#> Error : `dir` does not exist: /tmp/Rtmp2OifJU/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```

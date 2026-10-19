@@ -73,8 +73,9 @@ The checks, and the name of the issue each one adds:
 
 - a missing `expected_columns` entry: `missing_columns`, `"fatal"`;
 
-- fewer than `min_data_rows` or more than `max_data_rows` rows:
-  `row_count_low` / `row_count_high`;
+- fewer than `min_data_rows` rows: `row_count_low`;
+
+- more than `max_data_rows` rows: `row_count_high`;
 
 - a column whose class differs from `expected_types`: `type_<col>`.
   `integer`, `numeric` and `double` are one family, and so are
@@ -87,9 +88,9 @@ The checks, and the name of the issue each one adds:
 
 - values not in `expected_value_sets`: `unexpected_<col>`.
 
-A column named in a check but absent from the data is skipped by that
-check (only `expected_columns` reports it). All of these are `"warning"`
-except `missing_columns`.
+A column that a check names but the data lack is skipped by that check.
+Only the `expected_columns` check reports such a column. All of these
+are `"warning"` except `missing_columns`.
 
 The schema itself is checked too. An empty schema
 ([`list()`](https://rdrr.io/r/base/list.html)) gives one `schema_empty`

@@ -51,8 +51,8 @@ fromjs(
 
 - flatten:
 
-  Logical scalar, default `FALSE`: expand nested data frame columns into
-  `outer.inner` columns.
+  Logical scalar, default `FALSE`. `TRUE` expands nested data frame
+  columns into columns named `outer.inner`.
 
 - bigint_as_char:
 

@@ -164,9 +164,9 @@ passes every falsification control and has no power against the effect
 it was looking for has not found that the effect is absent – it has
 found nothing either way, and the two are routinely reported as the same
 thing.</p>
-<p>For each size (0 is always added) and each of <code>reps</code> repetitions:
-the data are passed through <code>inject(data, size)</code>, the statistic is
-computed, and a permutation null is built by shuffling the
+<p>For each size (0 is always added) and each of <code>reps</code> repetitions,
+the statistic is computed on the data passed through the injector, as
+<code>inject(data, size)</code>, and a permutation null is built by shuffling the
 <code>trt</code> column <code>n</code> times and recomputing the statistic. The
 two-sided permutation p-value is
 $$p = \frac{1 + \#\{|T^*| \ge |T|\}}{1 + n_{ok}}$$

@@ -19,13 +19,13 @@ none was stored.
 
 ## Details
 
-The shared credentials file (`$XDG_CONFIG_HOME/morie/credentials.json`,
-else `~/.config/morie/credentials.json`) is edited as text: the members
-`hosted_key`, `hosted_user` and `hosted_base_url` are removed and every
-other entry (written by `morie`, `rmorie` or `rmoriedata`) is kept byte
-for byte. When nothing else is left the file is deleted. A key set in
-the environment variable `MORIE_HOSTED_KEY` is not touched. A message
-says whether a key was removed.
+The shared credentials file is `credentials.json` in the folder
+`$XDG_CONFIG_HOME/morie`, else in `~/.config/morie`. It is edited as
+text. Three members are removed: `hosted_key`, `hosted_user` and
+`hosted_base_url`. Every other entry (written by `morie`, `rmorie` or
+`rmoriedata`) is kept byte for byte. When nothing else is left the file
+is deleted. A key set in the environment variable `MORIE_HOSTED_KEY` is
+not touched. A message says whether a key was removed.
 
 Errors when the file is not a JSON object (or not valid JSON, or names a
 member twice), and when the key cannot be removed without damaging the
@@ -57,7 +57,7 @@ readLines(file.path(d, "credentials.json"))
 # a damaged file is refused, not overwritten
 writeLines("not json", file.path(d, "credentials.json"))
 try(dlogout())
-#> Error : /tmp/RtmpdFP7Nh/file1ed818b6fb50/morie/credentials.json is not a JSON object (or not valid JSON, or lists a key twice); fix or remove it (it is shared with morie and rmorie)
+#> Error : /tmp/Rtmp2OifJU/file1e86857b9a4/morie/credentials.json is not a JSON object (or not valid JSON, or lists a key twice); fix or remove it (it is shared with morie and rmorie)
 
 if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
 ```

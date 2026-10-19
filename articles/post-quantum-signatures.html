@@ -186,10 +186,10 @@ byte-identical to the unmasked computation; only the cost differs.</p>
 </h2>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/fipssz.html">fipssz</a></span><span class="op">(</span><span class="st">"ML-DSA-65"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; public_key secret_key  signature       seed   opt_rand </span></span>
+<span><span class="co">#&gt; public_key secret_key  signature       seed        rnd </span></span>
 <span><span class="co">#&gt;       1952       4032       3309         32         32</span></span>
 <span><span class="fu"><a href="../reference/fipssz.html">fipssz</a></span><span class="op">(</span><span class="st">"SLH-DSA-SHAKE-128f"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; public_key secret_key  signature       seed   opt_rand </span></span>
+<span><span class="co">#&gt; public_key secret_key  signature       seed        rnd </span></span>
 <span><span class="co">#&gt;         32         64      17088         48         16</span></span></code></pre></div>
 <p>The price of dropping the lattice assumption is size: an SLH-DSA
 signature is far larger than an ML-DSA signature at the same security

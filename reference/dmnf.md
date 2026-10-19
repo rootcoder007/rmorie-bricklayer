@@ -82,8 +82,8 @@ The key is sent only to the address of the signed services document.
 With `MORIE_DATA_URL` set to another address the key is not sent and the
 download fails with a message saying so. Some tables (ICPSR studies, the
 NCVS 38604 extract, the A2AJ case law) open only after their terms are
-accepted at <https://data.rmorie.com/terms>. Downloads draw a progress
-bar when `options(morie.progress)` allows it.
+accepted on the terms page, <https://data.rmorie.com/terms>. Downloads
+draw a progress bar when `options(morie.progress)` allows it.
 
 Errors: `refresh` not `TRUE` or `FALSE`; no key stored (the message says
 how to sign in); the service unavailable, or the key rejected; a `key`

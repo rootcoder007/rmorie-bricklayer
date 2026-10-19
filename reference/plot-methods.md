@@ -296,8 +296,9 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
 - ...:
 
-  Passed to the base-graphics call (`plot`, `barplot` or `image`); for
-  `bricklayer_analysis`, passed on to each panel's method.
+  Passed to the base-graphics call (`plot`, `barplot` or `image`). They
+  are passed on to each panel's method for a `bricklayer_analysis`
+  object.
 
 - component:
 
@@ -320,12 +321,19 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
 - what:
 
-  For `rmbl_indigenous_gap`, `"difference"` or `"ratio"`. For
-  `rmbl_stock_flow`, the measures to draw (one panel each): any of
-  `"adp"`, `"alos"`, `"people"`, `"days"`, `"flowrate"`, `"stkrate"`.
-  For `rmbl_yoy`, `"pctchg"` or `"value"`. For `rmbl_case_flow`,
-  `"flow"` and/or `"clearance"`; for `rmbl_clearance_decomposition`, any
-  of `"rates"`, `"mix"` and `"effects"` (the default fits the device).
+  Depends on the class:
+
+  - `rmbl_indigenous_gap`: `"difference"` or `"ratio"`;
+
+  - `rmbl_stock_flow`: the measures to draw (one panel each), any of
+    `"adp"`, `"alos"`, `"people"`, `"days"`, `"flowrate"`, `"stkrate"`;
+
+  - `rmbl_yoy`: `"pctchg"` or `"value"`;
+
+  - `rmbl_case_flow`: `"flow"` and/or `"clearance"`;
+
+  - `rmbl_clearance_decomposition`: any of `"rates"`, `"mix"` and
+    `"effects"` (the default fits the device).
 
 - points:
 
@@ -443,7 +451,8 @@ The data drawn, invisibly.
 - `bricklayer_freq`, `bricklayer_missingness`, `rmbl_region_coverage`:
 
   ([`freqtbl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/freqtbl.md),
-  [`misspat`](https://rootcoder007.github.io/rmorie-bricklayer/reference/misspat.md),
+  [`misspat`](https://rootcoder007.github.io/rmorie-bricklayer/reference/misspat.md)
+  and
   [`rgncov`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rgncov.md))
   horizontal bars.
 
@@ -468,16 +477,17 @@ The data drawn, invisibly.
   ([`pubbnd`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pubbnd.md))
   each value inside its published-rounding envelope.
 
-- `rmbl_indigenous_gap`, `rmbl_dsr`, `rmbl_prevalence`,
-  `rmbl_exposure_trend`, `rmbl_community_index`:
+- `rmbl_indigenous_gap`, `rmbl_dsr`, `rmbl_prevalence`:
 
+  each group's difference or ratio, rate, percentage, odds ratio or
+  index with its interval, for these classes and for
+  `rmbl_exposure_trend` and `rmbl_community_index`
   ([`indgap`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indgap.md),
   [`agestd`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agestd.md),
   [`stdprev`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stdprev.md),
   [`exptrnd`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exptrnd.md),
-  [`commidx`](https://rootcoder007.github.io/rmorie-bricklayer/reference/commidx.md))
-  each group's difference or ratio, rate, percentage, odds ratio or
-  index with its interval; `what = "ratio"` draws the ratio of a gap.
+  [`commidx`](https://rootcoder007.github.io/rmorie-bricklayer/reference/commidx.md));
+  `what = "ratio"` draws the ratio of a gap.
 
 - `rmbl_trc_progress`:
 
@@ -492,10 +502,10 @@ The data drawn, invisibly.
 
 - `rmbl_wellness_profile`, `rmbl_wellness_continuum`:
 
-  ([`welprof`](https://rootcoder007.github.io/rmorie-bricklayer/reference/welprof.md),
-  [`mhcont`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mhcont.md))
   wellness indicators above, distress below, each group's estimate and
-  interval.
+  interval
+  ([`welprof`](https://rootcoder007.github.io/rmorie-bricklayer/reference/welprof.md),
+  [`mhcont`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mhcont.md)).
 
 - `rmbl_dual_continuum`:
 
@@ -529,15 +539,16 @@ The data drawn, invisibly.
   ([`profshr`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profshr.md))
   each group's share of a census characteristic with its interval.
 
-- `rmbl_crf`, `rmbl_burden`, `rmbl_equity`, `rmbl_pollution_report`:
+- `rmbl_crf`, `rmbl_burden`, `rmbl_equity`:
 
+  and `rmbl_pollution_report`: in turn, the concentration-response curve
+  with the exposure marked; baseline against attributable cases; the
+  concentration curve of exposure over income rank; and, for a report,
+  all three on one page
   ([`crfpm25`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crfpm25.md),
   [`polbrdn`](https://rootcoder007.github.io/rmorie-bricklayer/reference/polbrdn.md),
   [`expconcidx`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expconcidx.md),
-  [`vrfpol`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfpol.md))
-  the concentration-response curve with the exposure marked; baseline
-  against attributable cases; the concentration curve of exposure over
-  income rank; and, for a report, all three on one page.
+  [`vrfpol`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfpol.md)).
 
 - `rmbl_footprint`:
 

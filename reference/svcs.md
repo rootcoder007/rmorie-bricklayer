@@ -73,11 +73,11 @@ A cached copy no newer than the bundled one is not used, and one that is
 older is deleted. Network failures are not errors: they fall through to
 the next copy.
 
-Side effects: an accepted live document and its signature are written to
-`tools::R_user_dir("rmoriebricklayer", "cache")` as
-`morie-services.json` and `morie-services.sig`. The result is also kept
-for the session, so later `offline = TRUE` calls (which the rest of the
-package makes) return it without checking the signature again.
+Side effects: an accepted live document and its signature are written as
+`morie-services.json` and `morie-services.sig` to the folder
+`tools::R_user_dir("rmoriebricklayer", "cache")`. The result is also
+kept for the session, so later `offline = TRUE` calls (which the rest of
+the package makes) return it without checking the signature again.
 
 Errors: `refresh` or `offline` not `TRUE` or `FALSE`; `maxage` not a
 single non-negative number; `tmout` not a single finite number of at

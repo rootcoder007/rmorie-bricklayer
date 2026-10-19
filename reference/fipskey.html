@@ -91,11 +91,9 @@ verification-only key.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>bricklayer_fips_key</code> (<code>public</code>, <code>secret</code>, <code>scheme</code>)
-when
-<code>secret</code> is given, otherwise a <code>bricklayer_fips_public_key</code>
-(<code>public</code>,
-<code>scheme</code>); keys are held as lowercase hex, as
+    <p>When <code>secret</code> is given, a <code>bricklayer_fips_key</code> with <code>public</code>,
+<code>secret</code> and <code>scheme</code>. Otherwise a key of class
+<code>bricklayer_fips_public_key</code> with <code>public</code> and <code>scheme</code>. Keys are held as lowercase hex, as
 <code><a href="fipskg.html">fipskg()</a></code> returns
 them.</p>
     </div>

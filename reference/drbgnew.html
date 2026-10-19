@@ -124,8 +124,8 @@ neither a raw vector nor one hexadecimal string.</p>
     <h2 id="security">Security<a class="anchor" aria-label="anchor" href="#security"></a></h2>
 
 
-<p>A hand-written implementation. The standardised schemes are checked byte
-for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+<p>The implementation is hand-written. Its standardised schemes are checked
+byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
 suite. Side channels are checked, not assumed: <code>inst/ctcheck</code> runs every
 operation that touches a secret under valgrind memcheck with the secret
 marked undefined (the ctgrind method), so a branch or a memory address
@@ -135,17 +135,15 @@ with GCC and with Clang. Timing is also measured on x86-64 and arm64
 hardware (<code>inst/dudect</code>) and power leakage is assessed in simulation under
 the value and the transition models (<code>inst/tvla</code>) for the masked ML-KEM
 and ML-DSA kernels; this scheme is not masked. These are checks of this
-code on those compilers; no third-party security audit has been
-commissioned, and the README's security section lists what each check
-does and does not cover.</p>
+code on those compilers; the README's security section lists what each
+check does and does not cover.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>NIST SP 800-90A Rev. 1 (2015). Recommendation for Random Number Generation
 Using Deterministic Random Bit Generators, section 10.2.1.
 <a href="https://doi.org/10.6028/NIST.SP.800-90Ar1" class="external-link">doi:10.6028/NIST.SP.800-90Ar1</a></p>
-<p>NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard (AES).
-<a href="https://doi.org/10.6028/NIST.FIPS.197-upd1" class="external-link">doi:10.6028/NIST.FIPS.197-upd1</a></p>
+<p>NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard (AES).<br><a href="https://doi.org/10.6028/NIST.FIPS.197-upd1" class="external-link">doi:10.6028/NIST.FIPS.197-upd1</a></p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -57,16 +57,16 @@ The files:
   [`sha256file`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sha256file.md)
   and stops if it no longer matches the pinned value, runs
   [`anltab`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md),
-  and writes `results/manifest.json`, `results/report.html` and
-  `results/report.md`.
+  and writes `manifest.json`, `report.html` and `report.md` in
+  `results/`.
 
 - `README.md`:
 
   the three steps to fill in and run the capsule.
 
-With `example = TRUE` the source is the OTIS table shipped with the
-package (`extdata/otis_a01_individuals.csv`), so `Rscript analysis.R`
-runs as written. The table settings in the template
+With `example = TRUE` the source is the OTIS table
+`otis_a01_individuals.csv` shipped in the package's `extdata` folder, so
+`Rscript analysis.R` runs as written. The table settings in the template
 (`value = "individuals"`, `period = "year"`, `by = c("table", "group")`)
 fit that example and must be edited for other data.
 
@@ -91,9 +91,9 @@ list.files(d)
 # the provenance file to fill in
 cat(readLines(file.path(d, "data_provenance.json")), sep = "\n")
 #> {
-#>   "name": "capsule-1ed85dc8740",
+#>   "name": "capsule-1e86415b43fc",
 #>   "source": {
-#>     "url": "/tmp/RtmpdFP7Nh/temp_libpath1ed83081b03b/rmoriebricklayer/extdata/otis_a01_individuals.csv",
+#>     "url": "/tmp/Rtmp2OifJU/temp_libpath1e86338334df/rmoriebricklayer/extdata/otis_a01_individuals.csv",
 #>     "publisher": "TODO: who publishes the table",
 #>     "licence": "TODO: e.g. Open Government Licence - Ontario",
 #>     "retrieved": "TODO: YYYY-MM-DD",

@@ -28,9 +28,12 @@ kemdecap(key, ct, masked = getOption("rmoriebricklayer.masked", TRUE))
 
 - masked:
 
-  Logical, `TRUE` or `FALSE`. `TRUE` (the default, taken from the option
-  `rmoriebricklayer.masked` when set) runs the first-order masked
-  decapsulation, `FALSE` the plain one. Both return the same secret.
+  Logical, `TRUE` or `FALSE`.
+
+  `rmoriebricklayer.masked`, an option, gives the default when it is
+  set; otherwise the default is `TRUE`. `TRUE` runs the first-order
+  masked decapsulation, `FALSE` the plain one. Both return the same
+  secret.
 
 ## Value
 
@@ -66,10 +69,10 @@ option `rmoriebricklayer.masked` sets the default for a session.
 Errors (checked before any decapsulation): `key` not from
 [`kemkg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemkg.md),
 or a public key only ("decapsulation needs a key with its secret half");
-a ciphertext that is not hex or raw of exactly
+a ciphertext that is not hex or raw of the exact length for the key's
+level, which is
 [`kemsz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemsz.md)`[["ciphertext"]]`
-bytes for the key's level (768, 1088 or 1568); `masked` not `TRUE` or
-`FALSE`.
+bytes (768, 1088 or 1568); `masked` not `TRUE` or `FALSE`.
 
 ## See also
 

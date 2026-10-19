@@ -47,24 +47,38 @@ rcdmnf(orig, recd, map, pub = NULL, key = NULL, ctx = NULL)
 
 ## Value
 
-A list of class `c("bricklayer_recode_manifest", "list")` with elements
-`context`, `created` (ISO 8601 UTC time), `mapping` (list),
-`mapping_sha256`, `n` (number of rows), `n_missing`, `counts_before` and
-`counts_after` (named lists of counts), `checks` (list of
-`crosstab_is_function`, `missingness_unchanged`, `matches_published`),
-`published` (list or `NULL`), `body_sha256`, and with a key `signature`
-and `public_key`.
+A list of class `bricklayer_recode_manifest` with these elements:
+
+- `context`;
+
+- `created` (ISO 8601 UTC time);
+
+- `mapping` (list) and `mapping_sha256`;
+
+- `n` (number of rows) and `n_missing`;
+
+- `counts_before` and `counts_after` (named lists of counts);
+
+- `checks`, a list: `crosstab_is_function`, `missingness_unchanged` and
+  `matches_published`;
+
+- `published` (list or `NULL`);
+
+- `body_sha256`;
+
+- with a key, `signature` and `public_key`.
 
 ## Details
 
 The function first runs
-[`vrfrcd`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfrcd.md)`(original, recoded, mapping)`
-and, when `pub` is given,
-[`vrfmrg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfmrg.md)`(recoded, published)`
-with the default `strict = TRUE`. Either check failing is an error, so a
-manifest is only produced for a recode that passed;
-`checks$matches_published` is therefore `TRUE` or `NA` (no published
-counts), never `FALSE`.
+[`vrfrcd`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfrcd.md),
+as `vrfrcd(original, recoded, mapping)`. When `pub` is given it then
+runs
+[`vrfmrg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfmrg.md),
+as `vrfmrg(recoded, published)`, with the default `strict = TRUE`.
+Either check failing is an error, so a manifest is only produced for a
+recode that passed. For that reason `checks$matches_published` is `TRUE`
+or `NA` (no published counts), never `FALSE`.
 
 `body_sha256` is
 [`csha256`](https://rootcoder007.github.io/rmorie-bricklayer/reference/csha256.md)

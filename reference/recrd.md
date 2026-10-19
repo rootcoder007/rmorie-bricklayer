@@ -25,8 +25,8 @@ recrd(man, name, obs, expd, tol = 1e-04, grp = "general", syn = FALSE)
 
 - name:
 
-  Character scalar, the name of this cross-check; used as the key in
-  `manifest$results`, so it should be unique.
+  Character scalar, the name of this cross-check. It is the key of the
+  entry in `manifest$results`, so it should be unique.
 
 - obs:
 

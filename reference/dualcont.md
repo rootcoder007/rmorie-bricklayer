@@ -29,9 +29,9 @@ dualcont(x, well, distress, conflvl = 0.95)
 
 ## Value
 
-A data frame of class `rmbl_dual_continuum`: `group`, `wellness`,
+A data frame of class `rmbl_dual_continuum` with `group`, `wellness`,
 `wello`, `welup`, `distress`, `distrlo`, `distrup`, `strratio`,
-`ratiolo`, `ratioup`, `usewithcau`.
+`ratiolo`, `ratioup` and `usewithcau`.
 
 ## Details
 
@@ -53,9 +53,10 @@ be set against each other.
 ## Acknowledgement
 
 This estimator puts to quantitative use the framework of Professor
-Suzanne Stewart (Yellowknives Dene First Nation, University of Toronto);
-see the acknowledgements of
-[`vignette("first-nations-metis-inuit-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/first-nations-metis-inuit-health.md).
+Suzanne Stewart (Yellowknives Dene First Nation, University of Toronto).
+
+See the acknowledgements of the `first-nations-metis-inuit-health`
+vignette.
 
 ## References
 

@@ -47,7 +47,7 @@ welprof(
 - domain:
 
   Optional named character vector giving each indicator's holistic
-  domain (`c("Life satisfaction 8 to 10" = "mental", ...)`).
+  domain, for example `c("Life satisfaction 8 to 10" = "mental", ...)`.
 
 - qual:
 
@@ -55,9 +55,9 @@ welprof(
 
 ## Value
 
-A data frame of class `rmbl_wellness_profile`: `group`, `indicator`,
-`side` (`"wellness"` or `"distress"`), `domain`, `estimate`, `lower`,
-`upper`, `usewithcau`, wellness rows first;
+A data frame of class `rmbl_wellness_profile`, wellness rows first, with
+the columns `group`, `indicator`, `side` (`"wellness"` or `"distress"`),
+`domain`, `estimate`, `lower`, `upper` and `usewithcau`;
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws it.
 
 ## Details
@@ -85,9 +85,10 @@ Inuit communities.
 ## Acknowledgement
 
 This estimator puts to quantitative use the framework of Professor
-Suzanne Stewart (Yellowknives Dene First Nation, University of Toronto);
-see the acknowledgements of
-[`vignette("first-nations-metis-inuit-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/first-nations-metis-inuit-health.md).
+Suzanne Stewart (Yellowknives Dene First Nation, University of Toronto).
+
+See the acknowledgements of the `first-nations-metis-inuit-health`
+vignette.
 
 ## References
 

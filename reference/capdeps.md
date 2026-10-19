@@ -39,14 +39,14 @@ local `R CMD INSTALL` of a working tree with uncommitted changes. A
 version number identifies an intention; the repository and commit
 identify what was actually loaded.
 
-The fields are read from each package's installed DESCRIPTION
-([`utils::packageDescription()`](https://rdrr.io/r/utils/packageDescription.html)):
-`Repository` (for example `"CRAN"`), `RemoteUrl` and `RemoteSha`
-(written by remotes, pak and devtools for packages installed from a Git
-host) and `Built`. Packages are sorted and de-duplicated. A progress bar
-is drawn on stderr for many packages unless
-`options(morie.quiet = TRUE)`. Nothing is written. Error: `pkgs` that is
-not a character vector.
+The fields are read with
+[`utils::packageDescription()`](https://rdrr.io/r/utils/packageDescription.html)
+from each package's installed DESCRIPTION: `Repository` (for example
+`"CRAN"`), `RemoteUrl` and `RemoteSha` (written by remotes, pak and
+devtools for packages installed from a Git host) and `Built`. Packages
+are sorted and de-duplicated. A progress bar is drawn on stderr for many
+packages unless `options(morie.quiet = TRUE)`. Nothing is written.
+Error: `pkgs` that is not a character vector.
 
 ## See also
 

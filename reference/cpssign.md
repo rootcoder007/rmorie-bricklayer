@@ -62,12 +62,14 @@ cpssign(
   For the standardised schemes, sign a digest of the message rather than
   the message itself – HashML-DSA (FIPS 204 section 5.4) or HashSLH-DSA
   (FIPS 205 section 10.2.2). One of `"none"` (the default, the pure
-  variants) or any hash function the two standards approve: `"sha224"`,
-  `"sha256"`, `"sha384"`, `"sha512"`, `"sha512_224"`, `"sha512_256"`,
-  `"sha3_224"`, `"sha3_256"`, `"sha3_384"`, `"sha3_512"`, `"shake128"`
-  (256-bit output) or `"shake256"` (512-bit output). The identifier of
-  the pre-hash is bound into the signature, so a pre-hashed signature is
-  never interchangeable with a pure one over the same digest.
+  variants) or any hash function the two standards approve. The SHA-2
+  hashes are `"sha224"`, `"sha256"`, `"sha384"`, `"sha512"`,
+  `"sha512_224"` and `"sha512_256"`; the SHA-3 hashes are `"sha3_224"`,
+  `"sha3_256"`, `"sha3_384"` and `"sha3_512"`; the SHAKE ones are
+  `"shake128"` (256-bit output) and `"shake256"` (512-bit output). The
+  identifier of the pre-hash is bound into the signature, so a
+  pre-hashed signature is never interchangeable with a pure one over the
+  same digest.
 
 - masked:
 
@@ -147,20 +149,20 @@ wrap-around.
 
 ## Security
 
-A hand-written implementation. The standardised schemes are checked byte
-for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
-suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
-operation that touches a secret under valgrind memcheck with the secret
-marked undefined (the ctgrind method), so a branch or a memory address
-that depends on it is a reported error, and afterwards scans the dead
-stack for copies of the secret. Both checks run in CI on every change,
-with GCC and with Clang. Timing is also measured on x86-64 and arm64
-hardware (`inst/dudect`), power leakage is assessed in simulation under
-the value and the transition models (`inst/tvla`), and ML-KEM
+The implementation is hand-written. Its standardised schemes are checked
+byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the
+test suite. Side channels are checked, not assumed: `inst/ctcheck` runs
+every operation that touches a secret under valgrind memcheck with the
+secret marked undefined (the ctgrind method), so a branch or a memory
+address that depends on it is a reported error, and afterwards scans the
+dead stack for copies of the secret. Both checks run in CI on every
+change, with GCC and with Clang. Timing is also measured on x86-64 and
+arm64 hardware (`inst/dudect`), power leakage is assessed in simulation
+under the value and the transition models (`inst/tvla`), and ML-KEM
 decapsulation and ML-DSA signing are first-order masked by default.
 These are checks of this code on those compilers and under those leakage
-models; no third-party security audit has been commissioned, and the
-README's security section lists what each check does and does not cover.
+models; the README's security section lists what each check does and
+does not cover.
 
 ## See also
 

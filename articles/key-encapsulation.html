@@ -104,20 +104,14 @@ and recovers the same secret. The package implements
 <p>Three parameter sets trade size for security margin:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/kemsz.html">kemsz</a></span><span class="op">(</span><span class="fl">512</span><span class="op">)</span></span>
-<span><span class="co">#&gt; encapsulation_key decapsulation_key        ciphertext              seed </span></span>
-<span><span class="co">#&gt;               800              1632               768                64 </span></span>
-<span><span class="co">#&gt;     shared_secret </span></span>
-<span><span class="co">#&gt;                32</span></span>
+<span><span class="co">#&gt;     public     secret ciphertext       seed     shared </span></span>
+<span><span class="co">#&gt;        800       1632        768         64         32</span></span>
 <span><span class="fu"><a href="../reference/kemsz.html">kemsz</a></span><span class="op">(</span><span class="fl">768</span><span class="op">)</span></span>
-<span><span class="co">#&gt; encapsulation_key decapsulation_key        ciphertext              seed </span></span>
-<span><span class="co">#&gt;              1184              2400              1088                64 </span></span>
-<span><span class="co">#&gt;     shared_secret </span></span>
-<span><span class="co">#&gt;                32</span></span>
+<span><span class="co">#&gt;     public     secret ciphertext       seed     shared </span></span>
+<span><span class="co">#&gt;       1184       2400       1088         64         32</span></span>
 <span><span class="fu"><a href="../reference/kemsz.html">kemsz</a></span><span class="op">(</span><span class="fl">1024</span><span class="op">)</span></span>
-<span><span class="co">#&gt; encapsulation_key decapsulation_key        ciphertext              seed </span></span>
-<span><span class="co">#&gt;              1568              3168              1568                64 </span></span>
-<span><span class="co">#&gt;     shared_secret </span></span>
-<span><span class="co">#&gt;                32</span></span></code></pre></div>
+<span><span class="co">#&gt;     public     secret ciphertext       seed     shared </span></span>
+<span><span class="co">#&gt;       1568       3168       1568         64         32</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="implicit-rejection">Implicit rejection<a class="anchor" aria-label="anchor" href="#implicit-rejection"></a>
 </h3>
@@ -183,10 +177,8 @@ second KEM. The interface is the same:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/hqcdecap.html">hqcdecap</a></span><span class="op">(</span><span class="va">hkey</span>, <span class="va">hsent</span><span class="op">$</span><span class="va">ciphertext</span><span class="op">)</span>, <span class="va">hsent</span><span class="op">$</span><span class="va">shared</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="../reference/hqcsz.html">hqcsz</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; encapsulation_key decapsulation_key        ciphertext              seed </span></span>
-<span><span class="co">#&gt;              2241              2321              4433                32 </span></span>
-<span><span class="co">#&gt;           message              salt     shared_secret </span></span>
-<span><span class="co">#&gt;                16                16                32</span></span></code></pre></div>
+<span><span class="co">#&gt;     public     secret ciphertext       seed    message       salt     shared </span></span>
+<span><span class="co">#&gt;       2241       2321       4433         32         16         16         32</span></span></code></pre></div>
 <p>Two revisions are implemented: the 2025 specification
 (<code>version = "v5"</code>, the default) and the round-4 submission
 (<code>version = "round4"</code>), which differ in their shared-secret

@@ -55,10 +55,10 @@ The `tpath`, returned invisibly.
 ## Details
 
 Before anything is fetched the URL must be one public `https` URL: plain
-`http` needs `options(rmoriebricklayer.allowhttp = TRUE)`, `file://`
-needs `allowfile = TRUE`, and loopback, private, link-local and
-cloud-metadata addresses are refused. The transport then resolves the
-host, pins the connection to the checked addresses, re-checks every
+`http` needs the option `rmoriebricklayer.allowhttp` set to `TRUE`,
+`file://` needs `allowfile = TRUE`, and loopback, private, link-local
+and cloud-metadata addresses are refused. The transport then resolves
+the host, pins the connection to the checked addresses, re-checks every
 redirect hop, caps the body at 2 GiB and allows 3600 seconds for the
 transfer. The file at `tpath` is overwritten. Errors from the transfer
 (network, HTTP status, size cap) propagate as R errors; nothing partial
@@ -86,7 +86,7 @@ read.csv(dest)
 
 # file:// is refused unless asked for, and so is an append mode
 try(dldata(paste0("file://", src), tempfile()))
-#> Error : url must be an https:// URL, not file:// ('file:///tmp/RtmpdFP7Nh/file1ed81300d759.csv'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror
+#> Error : url must be an https:// URL, not file:// ('file:///tmp/Rtmp2OifJU/file1e865b587302.csv'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror
 try(dldata("https://example.org/x.csv", tempfile(), mode = "a"))
 #> Error : `mode` must be "wb" (every transfer is binary)
 if (FALSE) { # \dontrun{

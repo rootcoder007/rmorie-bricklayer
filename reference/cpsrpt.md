@@ -88,8 +88,8 @@ or `"clean"` when there is no finding), `profile` (from
 result, or `NULL` without a reference), `digest` (a list with
 `data_digest`, and with `chunks` also `mrkroot`, `merkle_scheme` (the
 [`mrkroot()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mrk.md)
-hashing scheme, 2) and `n_chunks`, with a signature and key also logical
-`signature_valid`), and `nrows` / `n_cols`.
+hashing scheme, 2) and `n_chunks`, and, with a signature and key, the
+logical `signature_valid`), and `nrows` / `n_cols`.
 [`print()`](https://rdrr.io/r/base/print.html) shows the verdict and the
 findings; [`summary()`](https://rdrr.io/r/base/summary.html) gives the
 verdict and the count of each severity.
@@ -107,8 +107,8 @@ the data is fine.
   rule of severity `"fatal"` failed (for example a required column is
   missing), or a column of the reference is absent from the data.
 
-- `warn` – something moved or is badly incomplete: a schema check or a
-  rule of severity `"warning"` failed (a value left its pinned range, a
+- `warn` – something moved or is badly incomplete: a schema check, or a
+  rule of severity `"warning"`, failed (a value left its pinned range, a
   type changed), a column drifted from the reference, a column is
   entirely missing or more than half missing, or a signature did not
   verify (or came with no key).

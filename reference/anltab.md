@@ -100,8 +100,8 @@ anltab(
 - adjust:
 
   Multiple-comparison method for
-  [`scanadj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scanadj.md),
-  default `"BH"` (Benjamini-Hochberg).
+  [`scanadj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scanadj.md).
+  The default is `"BH"` (Benjamini-Hochberg).
 
 ## Value
 

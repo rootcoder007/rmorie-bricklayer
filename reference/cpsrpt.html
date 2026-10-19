@@ -149,7 +149,7 @@ reference), <code>digest</code> (a list
 with <code>data_digest</code>, and with <code>chunks</code> also <code>mrkroot</code>,
 <code>merkle_scheme</code>
 (the <code><a href="mrk.html">mrkroot()</a></code> hashing scheme, 2) and <code>n_chunks</code>,
-with a signature and key also logical <code>signature_valid</code>), and <code>nrows</code> /
+and, with a signature and key, the logical <code>signature_valid</code>), and <code>nrows</code> /
 <code>n_cols</code>. <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> shows the verdict and the findings; <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>
 gives
 the verdict and the count of each severity.</p>
@@ -167,8 +167,8 @@ the data is fine.</p>
 <ul><li><p><code>fatal</code> – nothing downstream can run as it stands: a schema check or a
 rule of severity <code>"fatal"</code> failed (for example a required column is
 missing), or a column of the reference is absent from the data.</p></li>
-<li><p><code>warn</code> – something moved or is badly incomplete: a schema check or a
-rule of severity <code>"warning"</code> failed (a value left its pinned range, a type
+<li><p><code>warn</code> – something moved or is badly incomplete: a schema check, or a
+rule of severity <code>"warning"</code>, failed (a value left its pinned range, a type
 changed), a column drifted from the reference, a column is entirely
 missing or more than half missing, or a signature did not verify (or came
 with no key).</p></li>

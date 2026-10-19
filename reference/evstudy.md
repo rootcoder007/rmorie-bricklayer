@@ -103,7 +103,7 @@ gives the event-time effects free of that.
 
 Sun L, Abraham S (2021). Estimating dynamic treatment effects in event
 studies with heterogeneous treatment effects. Journal of Econometrics
-225(2):175-199.
+225(2):175-199.  
 [doi:10.1016/j.jeconom.2020.09.006](https://doi.org/10.1016/j.jeconom.2020.09.006)
 
 Applied to the effect of donations on police stops, block by quarter:

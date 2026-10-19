@@ -2,7 +2,7 @@
 
 Two ways to stop a handful of extreme rows dominating a column's centre.
 `ctrmmean()` DISCARDS the `floor(n * trim)` largest and smallest values,
-matching `mean(x, trim = )`. `cwinsmean()` instead PULLS THEM IN to the
+as `mean(x, trim = )` does. `cwinsmean()` instead PULLS THEM IN to the
 most extreme surviving values, so every observation still contributes
 weight – usually the better choice when the extremes are real
 measurements rather than errors.

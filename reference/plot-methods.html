@@ -366,8 +366,8 @@ method returns the data it drew, invisibly, as a data frame.</p>
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Passed to the base-graphics call (<code>plot</code>, <code>barplot</code>
-or <code>image</code>); for <code>bricklayer_analysis</code>, passed on to each
-panel's method.</p></dd>
+or <code>image</code>). They are passed on to each panel's method for a
+<code>bricklayer_analysis</code> object.</p></dd>
 
 
 <dt id="arg-component">component<a class="anchor" aria-label="anchor" href="#arg-component"></a></dt>
@@ -390,14 +390,15 @@ session option.</p></dd>
 
 
 <dt id="arg-what">what<a class="anchor" aria-label="anchor" href="#arg-what"></a></dt>
-<dd><p>For <code>rmbl_indigenous_gap</code>, <code>"difference"</code> or <code>"ratio"</code>.
-For <code>rmbl_stock_flow</code>, the measures to draw (one panel
-each): any of <code>"adp"</code>, <code>"alos"</code>, <code>"people"</code>,
-<code>"days"</code>, <code>"flowrate"</code>, <code>"stkrate"</code>. For
-<code>rmbl_yoy</code>, <code>"pctchg"</code> or <code>"value"</code>. For
-<code>rmbl_case_flow</code>, <code>"flow"</code> and/or <code>"clearance"</code>; for
-<code>rmbl_clearance_decomposition</code>, any of <code>"rates"</code>, <code>"mix"</code> and
-<code>"effects"</code> (the default fits the device).</p></dd>
+<dd><p>Depends on the class:</p><ul><li><p><code>rmbl_indigenous_gap</code>: <code>"difference"</code> or <code>"ratio"</code>;</p></li>
+<li><p><code>rmbl_stock_flow</code>: the measures to draw (one panel each), any
+of <code>"adp"</code>, <code>"alos"</code>, <code>"people"</code>, <code>"days"</code>,
+<code>"flowrate"</code>, <code>"stkrate"</code>;</p></li>
+<li><p><code>rmbl_yoy</code>: <code>"pctchg"</code> or <code>"value"</code>;</p></li>
+<li><p><code>rmbl_case_flow</code>: <code>"flow"</code> and/or <code>"clearance"</code>;</p></li>
+<li><p><code>rmbl_clearance_decomposition</code>: any of <code>"rates"</code>,
+<code>"mix"</code> and <code>"effects"</code> (the default fits the device).</p></li>
+</ul></dd>
 
 
 <dt id="arg-points">points<a class="anchor" aria-label="anchor" href="#arg-points"></a></dt>
@@ -511,8 +512,7 @@ line.</p></dd>
 <dt><code>bricklayer_freq</code>, <code>bricklayer_missingness</code>,
 <code>rmbl_region_coverage</code></dt>
 <dd><p>(<code><a href="freqtbl.html">freqtbl</a></code>,
-<code><a href="misspat.html">misspat</a></code>, <code><a href="rgncov.html">rgncov</a></code>)
-horizontal bars.</p></dd>
+<code><a href="misspat.html">misspat</a></code> and <code><a href="rgncov.html">rgncov</a></code>) horizontal bars.</p></dd>
 
 <dt><code>bricklayer_outliers</code></dt>
 <dd><p>(<code><a href="mahaoutl.html">mahaoutl</a></code>)
@@ -530,13 +530,12 @@ the permutation null distribution with the observed statistic.</p></dd>
 <dd><p>(<code><a href="pubbnd.html">pubbnd</a></code>) each value
 inside its published-rounding envelope.</p></dd>
 
-<dt><code>rmbl_indigenous_gap</code>, <code>rmbl_dsr</code>, <code>rmbl_prevalence</code>,
-<code>rmbl_exposure_trend</code>, <code>rmbl_community_index</code></dt>
-<dd><p>(<code><a href="indgap.html">indgap</a></code>, <code><a href="agestd.html">agestd</a></code>,
-<code><a href="stdprev.html">stdprev</a></code>, <code><a href="exptrnd.html">exptrnd</a></code>,
-<code><a href="commidx.html">commidx</a></code>) each group's difference or ratio, rate,
-percentage, odds ratio or index with its interval; <code>what = "ratio"</code>
-draws the ratio of a gap.</p></dd>
+<dt><code>rmbl_indigenous_gap</code>, <code>rmbl_dsr</code>, <code>rmbl_prevalence</code></dt>
+<dd><p>each group's difference or ratio, rate, percentage, odds ratio or index
+with its interval, for these classes and for <code>rmbl_exposure_trend</code>
+and <code>rmbl_community_index</code> (<code><a href="indgap.html">indgap</a></code>, <code><a href="agestd.html">agestd</a></code>,
+<code><a href="stdprev.html">stdprev</a></code>, <code><a href="exptrnd.html">exptrnd</a></code>, <code><a href="commidx.html">commidx</a></code>);
+<code>what = "ratio"</code> draws the ratio of a gap.</p></dd>
 
 <dt><code>rmbl_trc_progress</code></dt>
 <dd><p>(<code><a href="trcprog.html">trcprog</a></code>) the Calls to
@@ -547,9 +546,8 @@ Action completed, and the pace projected with the band its interval gives.</p></
 group's ratings as one stacked bar, lowest rating on the left.</p></dd>
 
 <dt><code>rmbl_wellness_profile</code>, <code>rmbl_wellness_continuum</code></dt>
-<dd><p>(<code><a href="welprof.html">welprof</a></code>, <code><a href="mhcont.html">mhcont</a></code>)
-wellness indicators above, distress below, each group's estimate and
-interval.</p></dd>
+<dd><p>wellness indicators above, distress below, each group's estimate and
+interval (<code><a href="welprof.html">welprof</a></code>, <code><a href="mhcont.html">mhcont</a></code>).</p></dd>
 
 <dt><code>rmbl_dual_continuum</code></dt>
 <dd><p>(<code><a href="dualcont.html">dualcont</a></code>) each group
@@ -576,15 +574,13 @@ in each indicator between the periods, wellness first.</p></dd>
 <dd><p>(<code><a href="profshr.html">profshr</a></code>) each group's
 share of a census characteristic with its interval.</p></dd>
 
-<dt><code>rmbl_crf</code>, <code>rmbl_burden</code>, <code>rmbl_equity</code>,
-<code>rmbl_pollution_report</code></dt>
-<dd><p>(<code><a href="crfpm25.html">crfpm25</a></code>,
-<code><a href="polbrdn.html">polbrdn</a></code>,
-<code><a href="expconcidx.html">expconcidx</a></code>,
-<code><a href="vrfpol.html">vrfpol</a></code>) the concentration-response curve with
+<dt><code>rmbl_crf</code>, <code>rmbl_burden</code>, <code>rmbl_equity</code></dt>
+<dd><p>and
+<code>rmbl_pollution_report</code>: in turn, the concentration-response curve with
 the exposure marked; baseline against attributable cases; the
 concentration curve of exposure over income rank; and, for a report,
-all three on one page.</p></dd>
+all three on one page (<code><a href="crfpm25.html">crfpm25</a></code>, <code><a href="polbrdn.html">polbrdn</a></code>,
+<code><a href="expconcidx.html">expconcidx</a></code>, <code><a href="vrfpol.html">vrfpol</a></code>).</p></dd>
 
 <dt><code>rmbl_footprint</code></dt>
 <dd><p>(<code><a href="co2fp.html">co2fp</a></code>) the

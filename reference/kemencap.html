@@ -91,10 +91,10 @@ the shared secret, so supply it only deliberately.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of class <code>c("bricklayer_kem_capsule", "list")</code> with
-<code>ciphertext</code> (character, hex,
-<code><a href="kemsz.html">kemsz()</a></code><code>[["ciphertext"]]</code>
-bytes: send this), <code>shared</code> (character, 64 hex characters, the
+    <p>A list of class <code>bricklayer_kem_capsule</code> with
+<code>ciphertext</code> (character, hex, of the length in bytes that
+<code><a href="kemsz.html">kemsz()</a></code><code>[["ciphertext"]]</code> gives: send this), <code>shared</code>
+(character, 64 hex characters, the
 32-byte shared secret: keep this) and <code>level</code> (integer). Printing
 it never shows the shared secret.</p>
     </div>

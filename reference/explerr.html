@@ -88,10 +88,10 @@ Default: the last error of this session (<code><a href="https://rdrr.io/r/base/s
 
 
 <dt id="arg-pkgs">pkgs<a class="anchor" aria-label="anchor" href="#arg-pkgs"></a></dt>
-<dd><p>Character vector of installed packages to search; default
-<code>NULL</code>, meaning rmoriebricklayer (or the comma-separated list in the
-environment variable <code>RMBL_PACKAGES</code>, which a package built on this
-one sets for its own command line).</p></dd>
+<dd><p>Character vector of installed packages to search. The default,
+<code>NULL</code>, means this package, or the comma-separated list in
+<code>RMBL_PACKAGES</code>: an environment variable that a package built on
+this one sets for its own command line.</p></dd>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
@@ -104,7 +104,7 @@ one sets for its own command line).</p></dd>
     <p>A data frame with at most <code>n</code> rows, best match first, and the
 character columns <code>package</code>, <code>raised_by</code>
 (the function whose code raises it), <code>exported</code> (the exported
-functions that reach it, comma-separated), <code>kind</code> (<code>"error"</code> or
+functions that reach it, separated by commas), <code>kind</code> (<code>"error"</code> or
 <code>"warning"</code>), <code>message</code> (the message as written, with
 <code>...</code> where a value goes) and <code>match</code> (<code>"exact"</code> or the share
 of its words found, such as <code>"80% of its words"</code>). No rows when the
@@ -122,9 +122,10 @@ function is traced up to four calls to the exported functions that reach
 it (at most six are listed). The table is kept in memory for the session
 (about a second to build for this package), and, while a person is
 watching an interactive session and the answer cache is on, also saved as
-an <code>.rds</code> file in the answer-cache directory
-(<code>tools::R_user_dir("rmoriebricklayer", "cache")</code>, or
-<code>options(rmoriebricklayer.llmcachedir)</code>); the cache is off under
+an <code>.rds</code> file in the answer-cache directory.</p>
+<p>The answer-cache directory is the one <code><a href="https://rdrr.io/r/tools/userdir.html" class="external-link">tools::R_user_dir()</a></code> gives for
+<code>"rmoriebricklayer"</code> and <code>"cache"</code>, or the one the
+<code>rmoriebricklayer.llmcachedir</code> option names when it is set. The cache is off under
 <code>options(morie.quiet = TRUE)</code>, <code>MORIE_LLM_CACHE=off</code>, tests and
 <code>R CMD check</code>.</p>
 <p>The message is cleaned first: an "Error in f(x) :" or "Warning message:"

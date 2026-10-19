@@ -73,11 +73,10 @@ than an incorporated municipality, a city amalgamated into a larger one,
 a township absorbed by a neighbour. The geometry has no opinion about
 any of that.
 
-Use
 [`rgnmapalt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rgnmapalt.md)
-to check this result against the name route, with those cases named, and
+checks this result against the name route, with those cases named, and
 [`rgnmapcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rgnmapcmp.md)
-to compare it with a published map.
+compares it with a published map.
 
 Errors (when `sf` and the file are present): missing or empty `unit`;
 `x`, `y` and `unit` of different lengths; missing coordinates; a field

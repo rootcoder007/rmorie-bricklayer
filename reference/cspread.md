@@ -27,11 +27,12 @@ cdistm(a, b)
 
 - ddof:
 
-  Delta degrees of freedom, a single number truncated to an integer by
-  [`as.integer()`](https://rdrr.io/r/base/integer.html): the divisor is
-  `n - ddof`. The default `1` gives the sample standard deviation,
-  matching [`stats::sd()`](https://rdrr.io/r/stats/sd.html); `0` gives
-  the population figure.
+  Delta degrees of freedom, a single number;
+  [`as.integer()`](https://rdrr.io/r/base/integer.html) truncates it to
+  an integer. The divisor is `n - ddof`. The default `1` gives the
+  sample standard deviation, matching
+  [`stats::sd()`](https://rdrr.io/r/stats/sd.html); `0` gives the
+  population figure.
 
 ## Value
 

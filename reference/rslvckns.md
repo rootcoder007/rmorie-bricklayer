@@ -19,10 +19,10 @@ rslvckns(prov)
 
   A provenance list as returned by
   [`loadprov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md),
-  or `NULL`. Reads `dataset$ckan_api_endpoint`,
+  or `NULL`. The fields read are `dataset$ckan_api_endpoint`,
   `resource$name_match_pattern` (a regular expression, required for a
-  match), `resource$search_query` (optional search words) and
-  `resource$format` (optional format name such as `"XLSX"`).
+  match), and, both optional, `resource$search_query` (search words) and
+  `resource$format` (a format name such as `"XLSX"`).
 
 ## Value
 
@@ -31,16 +31,17 @@ The matched resource URL as a length-1 character string, or `NULL`.
 ## Details
 
 The portal base is the part of `dataset$ckan_api_endpoint` before
-`/api/3/`; the request is
-`<base>/api/3/action/package_search?q=<query>`. The query is
-`resource$search_query` when given, otherwise the
+`/api/3/`; the request goes to `<base>/api/3/action/` followed by
+`package_search?q=<query>`.
+
+The query is `resource$search_query` when given, otherwise the
 `resource$name_match_pattern` with every character other than a letter,
 digit or space replaced by a space. Datasets are walked in the order
 CKAN ranks them, and their resources in listed order. A resource is
 taken when its `name` matches `resource$name_match_pattern`
 (case-insensitively) and either its format is CSV, or `resource$format`
-is unset, or its format equals `resource$format` (case-insensitively). A
-CSV resource is therefore accepted even when `resource$format` asks for
+is unset, or its format equals `resource$format` (case-insensitively).
+So a CSV resource is accepted even when `resource$format` asks for
 another format.
 
 `NULL` is returned when `prov` is `NULL`, when no query can be formed,

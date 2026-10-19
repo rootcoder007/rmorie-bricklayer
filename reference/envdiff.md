@@ -17,9 +17,9 @@ envdiff(a, b)
 
   Environment records from
   [`capenv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capenv.md),
-  or whole manifests containing an `environment` element (such as
+  or whole manifests (such as
   [`mkmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkmnf.md)
-  returns).
+  returns) that hold an `environment` element.
 
 ## Value
 

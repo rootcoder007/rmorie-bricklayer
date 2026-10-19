@@ -92,8 +92,8 @@ publishing an analysis, or when receiving a capsule from someone else.</p>
 
 
 <dt id="arg-provfile">provfile<a class="anchor" aria-label="anchor" href="#arg-provfile"></a></dt>
-<dd><p>Provenance JSON filename, relative to
-<code>cpsdir</code> (default <code>"data_provenance.json"</code>).</p></dd>
+<dd><p>Provenance JSON filename, relative to <code>cpsdir</code>.
+<code>"data_provenance.json"</code> is the default.</p></dd>
 
 
 <dt id="arg-dfile">dfile<a class="anchor" aria-label="anchor" href="#arg-dfile"></a></dt>
@@ -147,8 +147,8 @@ the capsule (no <code>..</code>, no absolute path, no symlink out) and parses as
 <code>resource$filename</code>) is inside the capsule and is a file.</p></dd>
 
 <dt><code>data_sha256</code></dt>
-<dd><p>its SHA-256 equals <code>resource$sha256</code> (64 hex
-characters), compared by <code><a href="vrfsha256.html">vrfsha256()</a></code>.</p></dd>
+<dd><p><code><a href="vrfsha256.html">vrfsha256()</a></code> finds that its SHA-256 equals
+<code>resource$sha256</code> (64 hex characters).</p></dd>
 
 <dt><code>data_size_bytes</code></dt>
 <dd><p>when <code>resource$size_bytes</code> is recorded: the size
@@ -177,10 +177,9 @@ holds <code>manifest.json</code>: every result with numeric <code>observed</code
 gets that status from \(|observed - expected| \le tol\).</p></dd>
 
 <dt><code>script_sha256</code></dt>
-<dd><p>when a script is named (<code>scrfile</code>,
-<code>script$filename</code> in the provenance or <code>meta$scrfile</code> in the
-manifest)
-or a script digest is pinned (<code>meta$script_sha256</code> or <code>script$sha256</code>):
+<dd><p>when a script is named (by <code>scrfile</code>, by
+<code>script$filename</code> in the provenance or by <code>meta$scrfile</code> in the
+manifest) or a script digest is pinned (<code>meta$script_sha256</code> or <code>script$sha256</code>):
 the script's SHA-256 matches the pin.</p></dd>
 
 <dt><code>data_not_synthetic</code></dt>
@@ -193,10 +192,10 @@ nor the provenance records
 </dl><p>A check that cannot be made because the provenance lacks a field is a
 FAILED row, never skipped: a provenance of <code><a href="https://rdrr.io/r/base/Paren.html" class="external-link">{}</a></code> verifies nothing.
 <code>ok</code> is <code>TRUE</code> only when every row passed and every required
-check (<code>provenance_readable</code>, <code>data_present</code>,
-<code>data_sha256</code>, <code>data_not_synthetic</code>, plus
+check was made. The required checks are <code>provenance_readable</code>,
+<code>data_present</code>, <code>data_sha256</code> and <code>data_not_synthetic</code>, plus
 <code>manifest_consistent</code> and <code>script_sha256</code> when a manifest or a
-script is in play) was made.</p>
+script is in play.</p>
 <p>Entirely offline: nothing is downloaded and nothing is written. Error:
 <code>cpsdir</code> that is not one existing directory. Every other problem
 is a failed row, not an error.</p>
@@ -217,10 +216,10 @@ is a failed row, not an error.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span><span class="fu">vrfcps</span><span class="op">(</span><span class="va">dir</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Capsule verification: intact (7 of 7 checks passed)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ok    provenance_readable  /tmp/RtmpdFP7Nh/capsule-example/data_provenance.json</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ok    data_present         /tmp/RtmpdFP7Nh/capsule-example/d.csv</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ok    provenance_readable  /tmp/Rtmp2OifJU/capsule-example/data_provenance.json</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ok    data_present         /tmp/Rtmp2OifJU/capsule-example/d.csv</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ok    data_sha256          da4aaa3a009d063f36d0515f2b50a11bcc578264aa7c45504b46fedbbae4f8f7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ok    data_readable        /tmp/RtmpdFP7Nh/capsule-example/d.csv</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ok    data_readable        /tmp/Rtmp2OifJU/capsule-example/d.csv</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ok    data_row_count       3 rows on disk</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ok    schema_valid         </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ok    data_not_synthetic   no synthetic marker: sidecar, manifest and provenance all say real data</span>
@@ -244,7 +243,7 @@ is a failed row, not an error.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a missing directory is an error</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">vrfcps</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"no-such-capsule"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `cpsdir` is not an existing directory: /tmp/RtmpdFP7Nh/no-such-capsule</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `cpsdir` is not an existing directory: /tmp/Rtmp2OifJU/no-such-capsule</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

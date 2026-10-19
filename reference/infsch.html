@@ -93,13 +93,14 @@ no value set is pinned.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of class <code>c("bricklayer_schema", "list")</code> with
-<code>expected_columns</code> (character), <code>expected_types</code> (named
-character), <code>structural_invariants</code> (list of <code>min_data_rows</code>
-and <code>max_data_rows</code>, integers), <code>expected_value_sets</code> (named
-list of character vectors), <code>numeric_ranges</code> (named list of
-<code>c(min =, max =)</code>) and <code>max_missing_fraction</code> (named numeric).
-Wrap it as <code>list(schema = &lt;this&gt;)</code> to hand to
+    <p>A list of class <code>bricklayer_schema</code> with these elements:</p><ul><li><p><code>expected_columns</code> (character);</p></li>
+<li><p><code>expected_types</code> (named character);</p></li>
+<li><p><code>structural_invariants</code> (list of <code>min_data_rows</code> and
+<code>max_data_rows</code>, integers);</p></li>
+<li><p><code>expected_value_sets</code> (named list of character vectors);</p></li>
+<li><p><code>numeric_ranges</code> (named list of <code>c(min =, max =)</code>);</p></li>
+<li><p><code>max_missing_fraction</code> (named numeric).</p></li>
+</ul><p>Wrap it as <code>list(schema = &lt;this&gt;)</code> to hand to
 <code><a href="valsch.html">valsch()</a></code>.</p>
     </div>
     <div class="section level2">

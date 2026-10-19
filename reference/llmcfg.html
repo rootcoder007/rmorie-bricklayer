@@ -82,13 +82,13 @@ first. Keys are never printed, only whether one is set.</p>
 
 
 <dl><dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Settings to save, as <code>key = value</code>: <code>route</code>
-(<code>"auto"</code>, <code>"own"</code>, <code>"ollama"</code> or a provider id such as
-<code>"anthropic"</code>; case is ignored), <code>&lt;provider&gt;.key</code> and
-<code>&lt;provider&gt;.model</code> (e.g. <code>anthropic.key</code>,
-<code>openai.model</code>), <code>own.url</code>, <code>own.key</code>,
-<code>own.model</code>, <code>ollama.url</code>, <code>ollama.model</code>,
-<code>ollama.key</code>. Each value is a single string (leading and trailing
+<dd><p>Settings to save, as <code>key = value</code>. The keys are:</p><ul><li><p><code>route</code>: <code>"auto"</code>, <code>"own"</code>, <code>"ollama"</code> or a
+provider id such as <code>"anthropic"</code> (case is ignored);</p></li>
+<li><p><code>&lt;provider&gt;.key</code> and <code>&lt;provider&gt;.model</code>, for example
+<code>anthropic.key</code> or <code>openai.model</code>;</p></li>
+<li><p><code>own.url</code>, <code>own.key</code> and <code>own.model</code>;</p></li>
+<li><p><code>ollama.url</code>, <code>ollama.model</code> and <code>ollama.key</code>.</p></li>
+</ul><p>Each value is a single string (leading and trailing
 spaces are removed). <code>NULL</code>, <code>NA</code> or <code>""</code> removes a
 saved setting. With no arguments nothing is written.</p></dd>
 
@@ -107,7 +107,7 @@ visibly when called with no settings, invisibly after saving.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><strong>Where settings live.</strong> Saved settings are kept in
-<code>$XDG_CONFIG_HOME/morie/llm.json</code> (<code>~/.config/morie/llm.json</code>
+<code>llm.json</code> in the folder <code>$XDG_CONFIG_HOME/morie</code> (<code>~/.config/morie</code>
 when <code>XDG_CONFIG_HOME</code> is unset), a private file (mode 0600, in a
 private directory) next to the shared <code>credentials.json</code>. The file is
 written only when you pass a setting; only the settings that change are
@@ -118,8 +118,8 @@ column, for example <code>ANTHROPIC_API_KEY</code> or <code>OLLAMA_HOST</code>) 
 over a saved value, which wins over the built-in default. Saving a
 setting whose variable is set warns that the variable still wins. A
 provider key is also read from the provider's alternative variable where
-it has one (<code>GOOGLE_API_KEY</code> for Gemini, <code>HUGGINGFACE_HUB_TOKEN</code>
-for Hugging Face, <code>CO_API_KEY</code> for Cohere).</p>
+it has one: <code>GOOGLE_API_KEY</code> for Gemini, <code>CO_API_KEY</code> for Cohere,
+and for Hugging Face <code>HUGGINGFACE_HUB_TOKEN</code>.</p>
 <p><strong>Checks when saving.</strong> Names must be among the settings listed in
 the <code>key</code> column (<code>"unknown setting"</code> otherwise) and every value
 passed as <code>key = value</code> with one value each. <code>route</code> must be

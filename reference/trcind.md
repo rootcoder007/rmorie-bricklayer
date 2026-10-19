@@ -23,8 +23,8 @@ trcind()
 
 ## Value
 
-A data frame: `call`, `indicator` (the Call's words), `table`,
-`measure`, `better` (`"higher"` or `"lower"`), `note`.
+A data frame with `call`, `indicator` (the Call's words), `table`,
+`measure`, `better` (`"higher"` or `"lower"`) and `note`.
 
 ## Details
 

@@ -133,12 +133,15 @@ columns <code>check</code>, <code>ok</code> and <code>detail</code>. The print m
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Every step is recorded as a row of <code>checks</code>: <code>token_parses</code>,
-<code>token_structure</code>, <code>message_imprint</code> (the hash of <code>data</code> equals the
-token's imprint), <code>certificate_source</code>, <code>signature</code>, <code>attribute_digest</code>
-(the signed attributes commit to the token's contents),
-<code>certificate_trust</code>, and with <code>trust</code> the <code>chain:</code> checks of
-<code><a href="certchnvrf.html">certchnvrf()</a></code>. <code>ok</code> is <code>TRUE</code> only
+    <p>Every step is recorded as a row of <code>checks</code>:</p><ul><li><p><code>token_parses</code>;</p></li>
+<li><p><code>token_structure</code>;</p></li>
+<li><p><code>message_imprint</code> (the hash of <code>data</code> equals the token's imprint);</p></li>
+<li><p><code>certificate_source</code>;</p></li>
+<li><p><code>signature</code>;</p></li>
+<li><p><code>attribute_digest</code> (the signed attributes commit to the token's contents);</p></li>
+<li><p><code>certificate_trust</code>;</p></li>
+<li><p>with <code>trust</code>, the <code>chain:</code> checks of <code><a href="certchnvrf.html">certchnvrf()</a></code>.</p></li>
+</ul><p><code>ok</code> is <code>TRUE</code> only
 when every row passes. A token
 that cannot be parsed is not an error: it gives <code>ok = FALSE</code> and the
 rows up to the failure.</p>

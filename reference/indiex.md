@@ -9,32 +9,48 @@ data service key. Values are as published, with their 95\\ cells are
 
 ``` r
 indiex(
-  name = c("health", "mentalhealth", "wellbeing", "suicide", "censuspop", "censushh",
-    "lifeexp", "infantmort")
+  name = c("health", "mentalhealth", "wellbeing", "suicide",
+           "censuspop", "censushh", "lifeexp", "infantmort")
 )
 ```
 
 ## Source
 
-Statistics Canada, tables 13-10-0924-01 (
-[doi:10.25318/1310092401-eng](https://doi.org/10.25318/1310092401-eng)),
-41-10-0067-01 (
-[doi:10.25318/4110006701-eng](https://doi.org/10.25318/4110006701-eng)),
-41-10-0082-01 (
-[doi:10.25318/4110008201-eng](https://doi.org/10.25318/4110008201-eng)),
-41-10-0021-01
-([doi:10.25318/4110002101-eng](https://doi.org/10.25318/4110002101-eng)
-), 17-10-0160-01 (
-[doi:10.25318/1710016001-eng](https://doi.org/10.25318/1710016001-eng))
-and 17-10-0161-01 (
-[doi:10.25318/1710016101-eng](https://doi.org/10.25318/1710016101-eng));
+Statistics Canada tables, each with its DOI:
+
+- 13-10-0924-01,
+  [doi:10.25318/1310092401-eng](https://doi.org/10.25318/1310092401-eng)
+  ;
+
+- 41-10-0067-01,
+  [doi:10.25318/4110006701-eng](https://doi.org/10.25318/4110006701-eng)
+  ;
+
+- 41-10-0082-01,
+  [doi:10.25318/4110008201-eng](https://doi.org/10.25318/4110008201-eng)
+  ;
+
+- 41-10-0021-01,
+  [doi:10.25318/4110002101-eng](https://doi.org/10.25318/4110002101-eng)
+  ;
+
+- 17-10-0160-01,
+  [doi:10.25318/1710016001-eng](https://doi.org/10.25318/1710016001-eng)
+  ;
+
+- 17-10-0161-01,
+  [doi:10.25318/1710016101-eng](https://doi.org/10.25318/1710016101-eng)
+  .
+
 Indigenous Population Profile, 2021 Census of Population, catalogue
 98-510-X2021001 and 98-510-X2021016. Reproduced and distributed on an
 "as is" basis with the permission of Statistics Canada, under the
-Statistics Canada Open Licence
-(<https://www.statcan.gc.ca/en/terms-conditions/open-licence>). Built by
-`data-raw/indigenous_mental_health.R` and `data-raw/indigenous_census.R`
-in the source package.
+Statistics Canada Open Licence:
+
+<https://www.statcan.gc.ca/en/terms-conditions/open-licence>
+
+Built by the scripts `indigenous_mental_health.R` and
+`indigenous_census.R` in the `data-raw` folder of the source package.
 
 ## Arguments
 

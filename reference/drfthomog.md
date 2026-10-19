@@ -49,7 +49,7 @@ Three branches, named in the `method` attribute:
   p-value is the chi-square upper tail.
 
 - `"Monte Carlo permutation (small expected counts)"`: some expected
-  count is below 5; the p-value comes from
+  count is below 5; the p-value then comes from
   [`stats::chisq.test()`](https://rdrr.io/r/stats/chisq.test.html) with
   `simulate.p.value = TRUE` and `B = 10000` tables with the same
   margins, drawn under `seed`.

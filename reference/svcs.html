@@ -138,9 +138,9 @@ copy; the bundled copy; and finally a document with every mode
 <code>"off"</code>. A cached copy no newer than the bundled one is not used, and
 one that is older is deleted. Network failures are not errors: they fall
 through to the next copy.</p>
-<p>Side effects: an accepted live document and its signature are written to
-<code>tools::R_user_dir("rmoriebricklayer", "cache")</code> as
-<code>morie-services.json</code> and <code>morie-services.sig</code>. The result is
+<p>Side effects: an accepted live document and its signature are written as
+<code>morie-services.json</code> and <code>morie-services.sig</code> to the folder
+<code>tools::R_user_dir("rmoriebricklayer", "cache")</code>. The result is
 also kept for the session, so later <code>offline = TRUE</code> calls (which the
 rest of the package makes) return it without checking the signature again.</p>
 <p>Errors: <code>refresh</code> or <code>offline</code> not <code>TRUE</code> or <code>FALSE</code>;

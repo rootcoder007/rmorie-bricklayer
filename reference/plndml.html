@@ -166,8 +166,8 @@ estimates and of the variances plus the squared deviations from it (Chernozhukov
 al. 2018, section 3.4).</p>
 <p>Learners, all in base R: <code>"lasso"</code> (coordinate descent, penalty by 5-fold
 cross-validation), <code>"ridge"</code> (penalty by generalised cross-validation),
-<code>"ols"</code>, or a function <code>function(x_train, y_train, x_test)</code> returning
-predictions (for example a random forest from another package).
+<code>"ols"</code>, or a function returning predictions (for example a random forest
+from another package), called as <code>function(x_train, y_train, x_test)</code>.
 <code>basis = "poly2"</code> adds squares and pairwise products of the covariates, built
 from the covariates as observed and then demeaned, so a confounding that is a
 combination of them is removed exactly. The demeaned features are what the learners

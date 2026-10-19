@@ -2,11 +2,12 @@
 
 Reads a table of the Indigenous Population Profile, 2021 Census of
 Population (Statistics Canada catalogue 98-510-X2021001 to
-98-510-X2021016), as the data service mirrors it under
-`census2021_ipp/`, into one row per geography, gender, age group,
-characteristic and group: First Nations, Metis, Inuit, the other
-identity groups and non-Indigenous people (or, in the household tables,
-Indigenous and non-Indigenous households), each in its own rows.
+98-510-X2021016), as the data service mirrors it, into one row per
+geography, gender, age group, characteristic and group: First Nations,
+Metis, Inuit, the other identity groups and non-Indigenous people (or,
+in the household tables, Indigenous and non-Indigenous households), each
+in its own rows. The data service keeps these tables under
+`census2021_ipp/`.
 
 ## Usage
 

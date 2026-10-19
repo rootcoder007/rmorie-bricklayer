@@ -28,7 +28,7 @@ download one table as CSV
 
 config [setup | set KEY VALUE | unset KEY | get KEY | help]
 show
-or change the language-model settings (llmcfg):
+or change the settings of the language model (llmcfg):
 the route ask uses and the address, key and model of each route;
 setup walks through them
 
@@ -109,7 +109,7 @@ download one table as CSV
 
 config [setup | set KEY VALUE | unset KEY | get KEY | help]
 show
-or change the language-model settings (llmcfg):
+or change the settings of the language model (llmcfg):
 the route ask uses and the address, key and model of each route;
 setup walks through them
 
@@ -238,7 +238,7 @@ server) offers, the one in use marked</p></dd>
 
 <dt><code>config [setup | set KEY VALUE | unset KEY | get KEY | help]</code></dt>
 <dd><p>show
-or change the language-model settings (<code><a href="llmcfg.html">llmcfg</a></code>):
+or change the settings of the language model (<code><a href="llmcfg.html">llmcfg</a></code>):
 the route <code>ask</code> uses and the address, key and model of each route;
 <code>setup</code> walks through them</p></dd>
 
@@ -303,8 +303,8 @@ the same as typing the command, which is how the examples below work.</p>
 
 
 <dl><dt id="arg-args">args<a class="anchor" aria-label="anchor" href="#arg-args"></a></dt>
-<dd><p>Character vector of arguments, verb first; defaults to the
-command line (<code>commandArgs(trailingOnly = TRUE)</code>). An empty vector
+<dd><p>Character vector of arguments, verb first. The default is the
+command line, <code>commandArgs(trailingOnly = TRUE)</code>. An empty vector
 prints the help.</p></dd>
 
 
@@ -469,8 +469,8 @@ only read the installed help.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    alpha: Level for the multiple-comparison decision and the drift</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           screens, default 0.05.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   adjust: Multiple-comparison method for ‘scanadj()’, default ‘"BH"’</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           (Benjamini-Hochberg).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   adjust: Multiple-comparison method for ‘scanadj()’. The default is</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           ‘"BH"’ (Benjamini-Hochberg).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Details:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>

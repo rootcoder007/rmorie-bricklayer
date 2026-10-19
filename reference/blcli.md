@@ -33,7 +33,7 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
 
 - `config [setup | set KEY VALUE | unset KEY | get KEY | help]`:
 
-  show or change the language-model settings
+  show or change the settings of the language model
   ([`llmcfg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmcfg.md)):
   the route `ask` uses and the address, key and model of each route;
   `setup` walks through them
@@ -106,8 +106,8 @@ blcli(args = commandArgs(trailingOnly = TRUE), out = cat)
 
 - args:
 
-  Character vector of arguments, verb first; defaults to the command
-  line (`commandArgs(trailingOnly = TRUE)`). An empty vector prints the
+  Character vector of arguments, verb first. The default is the command
+  line, `commandArgs(trailingOnly = TRUE)`. An empty vector prints the
   help.
 
 - out:
@@ -271,8 +271,8 @@ blcli(c("describe", "anltab"))
 #>    alpha: Level for the multiple-comparison decision and the drift
 #>           screens, default 0.05.
 #> 
-#>   adjust: Multiple-comparison method for ‘scanadj()’, default ‘"BH"’
-#>           (Benjamini-Hochberg).
+#>   adjust: Multiple-comparison method for ‘scanadj()’. The default is
+#>           ‘"BH"’ (Benjamini-Hochberg).
 #> 
 #> Details:
 #> 

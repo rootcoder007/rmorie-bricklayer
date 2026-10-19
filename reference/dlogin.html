@@ -180,10 +180,10 @@ Schedule B of the terms, which opens the restricted tables (ICPSR, NCVS
 <dt id="arg-supnm-suprole-supemail">supnm, suprole, supemail<a class="anchor" aria-label="anchor" href="#arg-supnm-suprole-supemail"></a></dt>
 <dd><p>Character scalars
 or <code>NULL</code>: the supervisor, department chair, director or
-coordinator who knows of your use, their role (one of
-<code>"supervisor"</code>, <code>"chair"</code>, <code>"director"</code>,
-<code>"coordinator"</code>, <code>"other"</code>) and their email. Required with
-<code>restricted = TRUE</code>; asked for when <code>NULL</code>.</p></dd>
+coordinator who knows of your use, their role and their email. Required
+with <code>restricted = TRUE</code>; asked for when <code>NULL</code>. The role is
+one of <code>"supervisor"</code>, <code>"chair"</code>, <code>"director"</code>,
+<code>"coordinator"</code> or <code>"other"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -203,7 +203,7 @@ is not a JSON object, is not valid JSON or names a member twice is
 refused rather than overwritten. <code>XDG_CONFIG_HOME</code> moves the file;
 when unset it is <code>~/.config/morie/credentials.json</code>.</p>
 <p>The sign-in service address is the signed services document's
-<code>data.auth_url</code> (see <code><a href="svcs.html">svcs</a></code>), or
+<code>data.auth_url</code> (see <code><a href="svcs.html">svcs</a></code>), or the environment variable
 <code>MORIE_HOSTED_AUTH_URL</code> when set (it must be a public <code>https</code>
 address). The device flow polls every <code>interval</code> seconds the
 service names (5 by default), prints a progress line about every 30

@@ -20,8 +20,11 @@ rslvckan(prov)
 
   A provenance list as returned by
   [`loadprov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md),
-  or `NULL`. It must contain `dataset$ckan_api_endpoint` and
-  `resource$name_match_pattern` for a lookup to be made.
+  or `NULL`. A lookup is made only when it has both of these fields:
+
+  - `dataset$ckan_api_endpoint`;
+
+  - `resource$name_match_pattern`.
 
 ## Value
 
@@ -30,9 +33,9 @@ described in Details.
 
 ## Details
 
-The function reads `dataset$ckan_api_endpoint` (the full
-`.../api/3/action/package_show?id=<slug>` URL) and
-`resource$name_match_pattern` (a regular expression), fetches the
+The function reads `dataset$ckan_api_endpoint`, the full URL, which ends
+in `/api/3/action/` and `package_show?id=<slug>`. It also reads
+`resource$name_match_pattern`, a regular expression. It fetches the
 endpoint as JSON, and walks `result$resources` in the order the portal
 lists them. The first resource whose `name` matches the pattern
 (case-insensitively, with [`grepl()`](https://rdrr.io/r/base/grep.html))
@@ -44,8 +47,8 @@ is the fallback.
 field is missing or empty, when the request fails (offline, HTTP error,
 invalid JSON), when CKAN answers `"success": false`, or when no resource
 name matches. Errors are raised for a `prov` that is not a list, for an
-endpoint that is not a public `https` URL (plain `http` only with
-`options(rmoriebricklayer.allowhttp = TRUE)`; loopback, private and
+endpoint that is not a public `https` URL (plain `http` only when the
+option `rmoriebricklayer.allowhttp` is `TRUE`; loopback, private and
 link-local addresses are refused), and for a matched resource URL that
 fails the same check. One network request; nothing is written.
 

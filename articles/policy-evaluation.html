@@ -337,9 +337,12 @@ matches units on their pre-reform paths before differencing:</p>
 <p><strong>A single treated place, or a few.</strong>
 <code><a href="../reference/syndid.html">syndid()</a></code> weights both comparison units and pre-periods:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/syndid.html">syndid</a></span><span class="op">(</span><span class="va">p13</span>, <span class="st">"district"</span>, <span class="st">"month"</span>, <span class="st">"crmrate"</span>, <span class="st">"refmonth"</span>, reps <span class="op">=</span> <span class="fl">50</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">sd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/syndid.html">syndid</a></span><span class="op">(</span><span class="va">p13</span>, <span class="st">"district"</span>, <span class="st">"month"</span>, <span class="st">"crmrate"</span>, <span class="st">"refmonth"</span>, reps <span class="op">=</span> <span class="fl">50</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">sd</span></span>
 <span><span class="co">#&gt; Synthetic difference in differences: -2.818 (placebo s.e. 0.5871; -3.969 to -1.668)</span></span>
-<span><span class="co">#&gt; Unit weights: D12 0.207, D20 0.203, D04 0.201, D16 0.195, D08 0.195</span></span></code></pre></div>
+<span><span class="co">#&gt; Unit weights: D12 0.207, D20 0.203, D04 0.201, D16 0.195, D08 0.195</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sd</span><span class="op">)</span></span></code></pre></div>
+<p><img src="policy-evaluation_files/figure-html/sdid-1.png" class="r-plt" alt="" width="432"></p>
 <p><strong>Null results without a measure of power.</strong>
 <code><a href="../reference/plnpwr.html">plnpwr()</a></code> simulates the design on the untreated data and
 gives the minimum detectable effect:</p>

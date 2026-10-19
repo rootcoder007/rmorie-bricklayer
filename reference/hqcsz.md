@@ -26,9 +26,14 @@ hqcsz(lvl, ver = c("v5", "round4"))
 
 ## Value
 
-A named integer vector: `encapsulation_key`, `decapsulation_key`,
-`ciphertext`, `seed` (key generation), `message` and `salt`
-(encapsulation randomness) and `shared_secret`, all in bytes.
+A named integer vector: `public` (the encapsulation key), `secret` (the
+decapsulation key), `ciphertext`, `seed` (key generation), `message` and
+`salt` (encapsulation randomness) and `shared` (the shared secret), all
+in bytes, named as
+[`hqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqckg.md)
+and
+[`hqcencap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqcencap.md)
+name their results.
 
 ## Details
 
@@ -60,29 +65,24 @@ for ML-KEM.
 
 ``` r
 hqcsz(1)
-#> encapsulation_key decapsulation_key        ciphertext              seed 
-#>              2241              2321              4433                32 
-#>           message              salt     shared_secret 
-#>                16                16                32 
+#>     public     secret ciphertext       seed    message       salt     shared 
+#>       2241       2321       4433         32         16         16         32 
 
 # code-based keys and ciphertexts are larger than ML-KEM's at the same
 # category; the shared secret is 32 bytes at every level (64 in round 4)
-rbind(HQC = hqcsz(3)[c("encapsulation_key", "ciphertext")],
-      MLKEM = kemsz(768)[c("encapsulation_key", "ciphertext")])
-#>       encapsulation_key ciphertext
-#> HQC                4514       8978
-#> MLKEM              1184       1088
+rbind(HQC = hqcsz(3)[c("public", "ciphertext")],
+      MLKEM = kemsz(768)[c("public", "ciphertext")])
+#>       public ciphertext
+#> HQC     4514       8978
+#> MLKEM   1184       1088
 rbind(v5 = hqcsz(1), round4 = hqcsz(1, "round4"))
-#>        encapsulation_key decapsulation_key ciphertext seed message salt
-#> v5                  2241              2321       4433   32      16   16
-#> round4              2249              2305       4433   96      16   16
-#>        shared_secret
-#> v5                32
-#> round4            64
+#>        public secret ciphertext seed message salt shared
+#> v5       2241   2321       4433   32      16   16     32
+#> round4   2249   2305       4433   96      16   16     64
 
 # check a stored public key's length
 key <- hqckg(1)
-nchar(key$public) / 2 == hqcsz(1)[["encapsulation_key"]]
+nchar(key$public) / 2 == hqcsz(1)[["public"]]
 #> [1] TRUE
 
 # an unknown level is refused rather than mapped to a default

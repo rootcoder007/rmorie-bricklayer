@@ -148,8 +148,8 @@ a signature no other implementation could read. Generate a new one.</p>
     <h2 id="security">Security<a class="anchor" aria-label="anchor" href="#security"></a></h2>
 
 
-<p>A hand-written implementation. The standardised schemes are checked byte
-for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+<p>The implementation is hand-written. Its standardised schemes are checked
+byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
 suite. Side channels are checked, not assumed: <code>inst/ctcheck</code> runs every
 operation that touches a secret under valgrind memcheck with the secret
 marked undefined (the ctgrind method), so a branch or a memory address
@@ -159,9 +159,8 @@ with GCC and with Clang. Timing is also measured on x86-64 and arm64
 hardware (<code>inst/dudect</code>) and power leakage is assessed in simulation under
 the value and the transition models (<code>inst/tvla</code>) for the masked ML-KEM
 and ML-DSA kernels; this scheme is not masked. These are checks of this
-code on those compilers; no third-party security audit has been
-commissioned, and the README's security section lists what each check
-does and does not cover.</p>
+code on those compilers; the README's security section lists what each
+check does and does not cover.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -184,7 +183,7 @@ does and does not cover.</p>
 <span class="r-in"><span><span class="co"># The public half is what a verifier needs; it carries no secret.</span></span></span>
 <span class="r-in"><span><span class="va">pub</span> <span class="op">&lt;-</span> <span class="fu"><a href="signpubkey.html">signpubkey</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">pub</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "root"     "pub_seed" "height"   "scheme"  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "root"    "pubseed" "height"  "scheme" </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Deterministic seeds reproduce the same key -- for tests only. A key built from given</span></span></span>
 <span class="r-in"><span><span class="co"># seeds is not entered in the used-index record (it may have signed elsewhere): it signs</span></span></span>

@@ -98,11 +98,11 @@ trailing <code>/v1</code> for your own endpoint).</p>
 (<code>MORIE_LLM_BASE_URL</code>, or <code>own.url</code> saved with
 <code>rmoriebricklayer config set</code>); then every provider of
 <code><a href="llmprvd.html">llmprvd</a></code> whose key is set, in the order of
-that table; then a local Ollama server (<code>OLLAMA_HOST</code>, default
-<code>http://localhost:11434</code>) when it answers with at least one pulled model
-or <code>OLLAMA_MODEL</code> is set. A saved route (<code>MORIE_LLM_ROUTE</code> or
-<code>route</code> saved in the settings file) replaces the automatic order
-when <code>route = NULL</code>.</p>
+that table; then a local Ollama server, at <code>OLLAMA_HOST</code> or by default at
+<code>http://localhost:11434</code>, when it answers with at least one pulled model
+or <code>OLLAMA_MODEL</code> is set. A saved route replaces the automatic order
+when <code>route = NULL</code>; it comes from <code>MORIE_LLM_ROUTE</code> or from the
+<code>route</code> saved in the settings file.</p>
 <p>Nothing is sent to a provider. The only network contact is the Ollama
 probe, a <code>GET /api/tags</code> to the Ollama address with a 2 second
 timeout; <code>OLLAMA_HOST=off</code> skips it. Your own endpoint is not probed.</p>

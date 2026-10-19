@@ -27,13 +27,12 @@ misspat(data, maxpat = 20L)
 
 ## Value
 
-A data frame of class `c("bricklayer_missingness", "data.frame")`, one
-row per pattern: `pattern` (character, `.` for present and `X` for
-missing, in column order), `nrows` (integer), `pctrows` (numeric,
-percent of all rows), `n_missing` (integer, columns missing in that
-pattern) and `columns` (character, their names comma-separated, `""` for
-the complete pattern). Carries the column order as the `"columns"`
-attribute.
+A data frame of class `bricklayer_missingness`, one row per pattern:
+`pattern` (character, `.` for present and `X` for missing, in column
+order), `nrows` (integer), `pctrows` (numeric, percent of all rows),
+`n_missing` (integer, columns missing in that pattern) and `columns`
+(character, their names comma-separated, `""` for the complete pattern).
+Carries the column order as the `"columns"` attribute.
 
 ## Details
 

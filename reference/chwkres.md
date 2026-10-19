@@ -42,12 +42,12 @@ chwkres(
 
 - par:
 
-  Numeric vector of parameters (baseline terms, `eta`, kernel
-  parameters), as
+  Numeric vector of parameters, as
   [`chwkfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwkfit.md)
-  returns them in `theta`: length 3 for the exponential kernel with a
-  constant baseline, one more for a two-parameter kernel, three more for
-  the sinusoidal baseline.
+  returns them in `theta`: the baseline terms, `eta` and the kernel
+  parameters. Its length is 3 for the exponential kernel with a constant
+  baseline, one more for a two-parameter kernel, three more for the
+  sinusoidal baseline.
 
 - base:
 

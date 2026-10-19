@@ -115,10 +115,10 @@ unmasked computation; only the cost differs.
 ``` r
 
 fipssz("ML-DSA-65")
-#> public_key secret_key  signature       seed   opt_rand 
+#> public_key secret_key  signature       seed        rnd 
 #>       1952       4032       3309         32         32
 fipssz("SLH-DSA-SHAKE-128f")
-#> public_key secret_key  signature       seed   opt_rand 
+#> public_key secret_key  signature       seed        rnd 
 #>         32         64      17088         48         16
 ```
 

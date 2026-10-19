@@ -50,10 +50,10 @@ mhcont(
 
 ## Value
 
-A data frame of classes `rmbl_wellness_continuum` and
-`rmbl_wellness_profile`: `group`, `indicator` (the direction), `side`
-(`"wellness"`), `domain` (the proxies), `estimate`, `lower`, `upper`,
-`usewithcau`, `shared`, `proxy` (always `TRUE`).
+A data frame with the classes `rmbl_wellness_continuum` and
+`rmbl_wellness_profile`. Its columns are `group`, `indicator` (the
+direction), `side` (`"wellness"`), `domain` (the proxies), `estimate`,
+`lower`, `upper`, `usewithcau`, `shared`, `proxy` (always `TRUE`).
 
 ## Details
 
@@ -91,7 +91,7 @@ which accept any set of domains.
 ## References
 
 Health Canada, Assembly of First Nations (2015). First Nations Mental
-Wellness Continuum Framework. Ottawa: Health Canada. Summary report:
+Wellness Continuum Framework. Ottawa: Health Canada. Summary report:  
 <https://www.sac-isc.gc.ca/eng/1576093687903/1576093725971>
 
 ## See also

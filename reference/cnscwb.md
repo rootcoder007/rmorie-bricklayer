@@ -107,7 +107,7 @@ of First Nations, Metis or Inuit people as they define it (see
 ## References
 
 Indigenous Services Canada (2019). Report on trends in First Nations
-communities, 1981 to 2016 (Community Well-Being index).
+communities, 1981 to 2016 (Community Well-Being index).  
 <https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644>
 
 ## See also

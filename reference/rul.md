@@ -20,7 +20,7 @@ rul(name, expr, col = NULL, sev = c("warning", "fatal"), msg = NULL)
 
 - name:
 
-  Short identifier for the rule, a string; it names the issue in the
+  A short identifier for the rule, a string. It names the issue in the
   result of
   [`valrules()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/valrules.md),
   so give each rule a different name.

@@ -76,8 +76,8 @@ wcb(
 
 ## Value
 
-A data frame of class `rmbl_wild`: `estimate`, `t`, `p_value`, `lower`,
-`upper`, `clusters`, `draws`, `enumerated`.
+A data frame of class `rmbl_wild` with the columns `estimate`, `t`,
+`p_value`, `lower`, `upper`, `clusters`, `draws` and `enumerated`.
 
 ## Details
 

@@ -79,10 +79,10 @@ the project.</p>
 
 
 <dl><dt id="arg-prov">prov<a class="anchor" aria-label="anchor" href="#arg-prov"></a></dt>
-<dd><p>A provenance list as returned by
-<code><a href="loadprov.html">loadprov()</a></code>, or
-<code>NULL</code>. It must contain <code>dataset$ckan_api_endpoint</code> and
-<code>resource$name_match_pattern</code> for a lookup to be made.</p></dd>
+<dd><p>A provenance list as returned by <code><a href="loadprov.html">loadprov()</a></code>, or <code>NULL</code>.
+A lookup is made only when it has both of these fields:</p><ul><li><p><code>dataset$ckan_api_endpoint</code>;</p></li>
+<li><p><code>resource$name_match_pattern</code>.</p></li>
+</ul></dd>
 
 </dl></div>
     <div class="section level2">
@@ -92,10 +92,10 @@ the project.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The function reads <code>dataset$ckan_api_endpoint</code> (the full
-<code>.../api/3/action/package_show?id=&lt;slug&gt;</code> URL) and
-<code>resource$name_match_pattern</code> (a regular expression), fetches the
-endpoint as JSON, and walks <code>result$resources</code> in the order the
+    <p>The function reads <code>dataset$ckan_api_endpoint</code>, the full URL, which
+ends in <code>/api/3/action/</code> and <code>package_show?id=&lt;slug&gt;</code>. It also
+reads <code>resource$name_match_pattern</code>, a regular expression. It fetches
+the endpoint as JSON, and walks <code>result$resources</code> in the order the
 portal lists them. The first resource whose <code>name</code> matches the
 pattern (case-insensitively, with <code><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl()</a></code>) wins. If the slug
 itself has
@@ -106,8 +106,8 @@ fallback.</p>
 fails (offline, HTTP error, invalid JSON), when CKAN answers
 <code>"success": false</code>, or when no resource name matches. Errors are
 raised for a <code>prov</code> that is not a list, for an endpoint that is
-not a public <code>https</code> URL (plain <code>http</code> only with
-<code>options(rmoriebricklayer.allowhttp = TRUE)</code>; loopback, private and
+not a public <code>https</code> URL (plain <code>http</code> only when the option
+<code>rmoriebricklayer.allowhttp</code> is <code>TRUE</code>; loopback, private and
 link-local addresses are refused), and for a matched resource URL that
 fails the same check. One network request; nothing is written.</p>
     </div>

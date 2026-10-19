@@ -280,5 +280,5 @@ chwkfit(jit, 100)$converged
 try(chwkfit(times[1:20], 100))
 #> Error : too few events (20) for the fit
 try(chwkfit(times, 50))
-#> Error : `times` must lie within [0, horizon] (they span 1.30776 to 99.6077); chwkjit(times, horizon = ) keeps them inside
+#> Error : `times` must lie within [0, hor] (they span 1.30776 to 99.6077); chwkjit(times, hor = ) keeps them inside
 ```

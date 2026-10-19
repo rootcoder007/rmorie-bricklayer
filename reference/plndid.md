@@ -57,8 +57,9 @@ plndid(
 
 - w:
 
-  Optional column name of non-negative weights (population, or matching
-  weights): weighted least squares, with weighted within-means.
+  Optional column name of non-negative weights, such as population or
+  matching weights, for weighted least squares with weighted
+  within-means.
 
 - comb:
 

@@ -32,10 +32,9 @@ smrystat(acc)
 ## Value
 
 `onlsmry()`, `smryupd()` and `smrymrg()` return an object of class
-`c("bricklayer_online", "list")` (its `state` element is the numeric
-vector described in Details); `smrystat()` returns a named numeric
-vector with `n`, `mean`, `variance`, `sd`, `skewness` and `kurtosis`
-(excess).
+`bricklayer_online` (its `state` element is the numeric vector described
+in Details); `smrystat()` returns a named numeric vector with `n`,
+`mean`, `variance`, `sd`, `skewness` and `kurtosis` (excess).
 
 ## Details
 
@@ -74,7 +73,7 @@ from `onlsmry()`.
 
 Chan TF, Golub GH, LeVeque RJ (1983). Algorithms for computing the
 sample variance: analysis and recommendations. *The American
-Statistician* 37(3), 242–247.
+Statistician* 37(3), 242–247.  
 [doi:10.1080/00031305.1983.10483115](https://doi.org/10.1080/00031305.1983.10483115)
 
 ## See also

@@ -83,21 +83,25 @@ file.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of class <code>c("bricklayer_certificate", "list")</code> with
-<code>version</code> (integer), <code>serial</code> (hex), <code>issuer</code> and
-<code>subject</code> (distinguished names as text), <code>not_before</code> and
-<code>not_after</code> (<code>POSIXct</code>, UTC), <code>signature_algorithm</code> (a
-name such as <code>"ECDSA-SHA256"</code>) and <code>signature_oid</code>,
-<code>signature</code> and <code>tbs</code> (raw; the signed part), <code>key</code> (a list:
-<code>type</code> <code>"RSA"</code> or <code>"EC"</code>, <code>bits</code>, and the key
-values, with <code>curve</code> for EC), <code>is_ca</code> and <code>path_len</code>,
-<code>key_usage</code> and <code>extended_key_usage</code> (character; EKU as OIDs),
-<code>subject_rdns</code>, <code>issuer_rdns</code>, <code>san</code>,
-<code>name_constraints</code>, the policy fields (<code>policies</code>,
-<code>policy_mappings</code>, <code>require_explicit_policy</code>,
-<code>inhibit_policy_mapping</code>, <code>inhibit_any_policy</code>),
-<code>self_signed</code> (logical: issuer equals subject) and <code>der</code> (the
-bytes). <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> shows a summary.</p>
+    <p>A list of class <code>bricklayer_certificate</code> with these elements:</p><ul><li><p><code>version</code> (integer) and <code>serial</code> (hex);</p></li>
+<li><p><code>issuer</code> and <code>subject</code> (distinguished names as text);</p></li>
+<li><p><code>not_before</code> and <code>not_after</code> (<code>POSIXct</code>, UTC);</p></li>
+<li><p><code>signature_algorithm</code> (a name such as <code>"ECDSA-SHA256"</code>)
+and <code>signature_oid</code>;</p></li>
+<li><p><code>signature</code> and <code>tbs</code> (raw; the signed part);</p></li>
+<li><p><code>key</code> (a list: <code>type</code> <code>"RSA"</code> or <code>"EC"</code>,
+<code>bits</code>, and the key values, with <code>curve</code> for EC);</p></li>
+<li><p><code>is_ca</code> and <code>path_len</code>;</p></li>
+<li><p><code>key_usage</code> and <code>extended_key_usage</code> (character; EKU as
+OIDs);</p></li>
+<li><p><code>subject_rdns</code>, <code>issuer_rdns</code>, <code>san</code> and
+<code>name_constraints</code>;</p></li>
+<li><p>the policy fields <code>policies</code>, <code>policy_mappings</code> and
+<code>require_explicit_policy</code>;</p></li>
+<li><p>the policy fields <code>inhibit_policy_mapping</code> and <code>inhibit_any_policy</code>;</p></li>
+<li><p><code>self_signed</code> (logical: issuer equals subject);</p></li>
+<li><p><code>der</code> (the bytes).</p></li>
+</ul><p><code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> shows a summary.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

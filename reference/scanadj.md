@@ -26,7 +26,7 @@ scanadj(x, meth = "BH", alpha = 0.05)
 
 - meth:
 
-  Character, default `"BH"`: any method of
+  Character, default `"BH"`. It can be any method of
   [`p.adjust`](https://rdrr.io/r/stats/p.adjust.html) (`"BH"`, `"holm"`,
   `"bonferroni"`, `"BY"`, `"hochberg"`, `"hommel"`, `"fdr"`, `"none"`).
 

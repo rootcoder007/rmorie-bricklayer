@@ -18,8 +18,9 @@ wrtxtfb(text, path)
 
 - text:
 
-  A character vector of lines to write (other types are converted with
-  [`as.character()`](https://rdrr.io/r/base/character.html)).
+  A character vector of lines to write;
+  [`as.character()`](https://rdrr.io/r/base/character.html) converts any
+  other type.
 
 - path:
 

@@ -30,9 +30,9 @@ A list of class `rmbl_equity`
 concentration curve) with `concidx` (a number in \\\[-1, 1\]\\),
 `interpretation` (a sentence), `expomean`, `citation` (a string) and
 `extra`, a list with `n` (rows used), `cov_h_R` (the covariance) and
-`curve`, a data frame of the concentration curve (`population`:
-cumulative population share, poorest first; `exposure`: cumulative share
-of total exposure).
+`curve`, a data frame of the concentration curve. Its column
+`population` is the cumulative population share, poorest first, and
+`exposure` the cumulative share of total exposure.
 
 ## Details
 
