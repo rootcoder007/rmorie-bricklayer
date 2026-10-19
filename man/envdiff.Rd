@@ -7,7 +7,8 @@
 envdiff(a, b)
 }
 \arguments{
-\item{a, b}{Environment records from \code{\link[=capenv]{capenv()}}, or whole manifests (such
+\item{a, b}{Environment records from \code{\link[=capenv]{capenv()}}, or whole
+manifests (such
 as \code{\link[=mkmnf]{mkmnf()}} returns) that hold an \code{environment} element.}
 }
 \value{

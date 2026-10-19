@@ -30,7 +30,8 @@ with \code{statistics} (the names), \code{hypotheses} (the claims), \code{note} 
 
 \code{prrgchk()} returns a list of class \code{bricklayer_prereg_check} with \code{ok}
 (logical: no departures), the character vectors \code{decnotrep} and
-\code{repnotdec}, \code{hypotheses} (a data frame of \code{statistic}, \code{hypothesis} and
+\code{repnotdec}, \code{hypotheses} (a data frame of \code{statistic},
+\code{hypothesis} and
 logical \code{reported}) and \code{decutc}. Both print a short summary.
 }
 \description{

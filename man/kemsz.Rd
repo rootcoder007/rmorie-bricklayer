@@ -14,7 +14,8 @@ no default.}
 A named integer vector of five elements, all in bytes:
 \code{public} (the encapsulation key), \code{secret} (the
 decapsulation key), \code{ciphertext}, \code{seed} and \code{shared}
-(the shared secret), named as \code{\link[=kemkg]{kemkg()}} and \code{\link[=kemencap]{kemencap()}} name their
+(the shared secret), named as \code{\link[=kemkg]{kemkg()}} and
+\code{\link[=kemencap]{kemencap()}} name their
 results.
 }
 \description{

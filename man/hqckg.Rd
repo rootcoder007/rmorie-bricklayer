@@ -16,7 +16,8 @@ Level 3 matches the category of ML-KEM-768,
 \code{\link[=kemkg]{kemkg()}}'s default.}
 
 \item{seed}{Optional raw vector. For v5 it is the 32 bytes of \code{seed_KEM}.
-For round 4 it is the \code{\link[=hqcsz]{hqcsz()}}\verb{["seed"]} bytes its key generation
+For round 4 it is the
+\code{\link[=hqcsz]{hqcsz()}}\verb{["seed"]} bytes its key generation
 draws (\code{skseed}, \code{sigma}, \code{pk_seed}: 96, 104 or 112).
 Supplying it makes the key reproducible, which is what the known-answer
 tests need; the default draws from the operating system's CSPRNG.}

@@ -45,7 +45,8 @@ digest of the message rather than the message itself -- HashML-DSA (FIPS
 \code{"none"} (the default, the pure variants) or any hash function the two
 standards approve. The SHA-2 hashes are \code{"sha224"}, \code{"sha256"}, \code{"sha384"},
 \code{"sha512"}, \code{"sha512_224"} and \code{"sha512_256"}; the SHA-3 hashes are
-\code{"sha3_224"}, \code{"sha3_256"}, \code{"sha3_384"} and \code{"sha3_512"}; the SHAKE ones are
+\code{"sha3_224"}, \code{"sha3_256"}, \code{"sha3_384"} and \code{"sha3_512"};
+the SHAKE ones are
 \code{"shake128"} (256-bit output) and \code{"shake256"} (512-bit output). The identifier
 of the pre-hash is bound into the signature, so a pre-hashed signature
 is never interchangeable with a pure one over the same digest.}

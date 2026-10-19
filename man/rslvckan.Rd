@@ -7,7 +7,8 @@
 rslvckan(prov)
 }
 \arguments{
-\item{prov}{A provenance list as returned by \code{\link[=loadprov]{loadprov()}}, or \code{NULL}.
+\item{prov}{A provenance list as returned by
+\code{\link[=loadprov]{loadprov()}}, or \code{NULL}.
 A lookup is made only when it has both of these fields:
 \itemize{
 \item \code{dataset$ckan_api_endpoint};

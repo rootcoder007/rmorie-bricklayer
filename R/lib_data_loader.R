@@ -111,7 +111,8 @@ loadprov <- function(path) {
 #' link-local addresses are refused), and for a matched resource URL that
 #' fails the same check. One network request; nothing is written.
 #'
-#' @param prov A provenance list as returned by [loadprov()], or \code{NULL}.
+#' @param prov A provenance list as returned by
+#'   [loadprov()], or \code{NULL}.
 #'   A lookup is made only when it has both of these fields:
 #'   \itemize{
 #'     \item \code{dataset$ckan_api_endpoint};
@@ -206,7 +207,8 @@ rslvckan <- function(prov) {
 #' \code{prov} that is not a list; a search URL or matched resource
 #' URL that is not public \code{https}. One network request.
 #'
-#' @param prov A provenance list as returned by [loadprov()], or \code{NULL}.
+#' @param prov A provenance list as returned by
+#'   [loadprov()], or \code{NULL}.
 #'   The fields read are \code{dataset$ckan_api_endpoint},
 #'   \code{resource$name_match_pattern} (a regular expression, required for
 #'   a match), and, both optional, \code{resource$search_query} (search
@@ -1141,7 +1143,8 @@ schval <- function(dfraw, prov) {
 #' \code{prov} that is not a list; a domain that is not a public host
 #' (\code{localhost}, a private address, a single-label name).
 #'
-#' @param prov A provenance list as returned by [loadprov()], or \code{NULL}.
+#' @param prov A provenance list as returned by
+#'   [loadprov()], or \code{NULL}.
 #'   It must have two fields. The first is \code{dataset$socrata_domain}, a
 #'   host name without scheme such as \code{"data.cityofchicago.org"}. The
 #'   second is \code{dataset$socrata_id}, the four-by-four dataset id such as
@@ -1208,7 +1211,8 @@ rslvsoc <- function(prov) {
 #' error. Errors: a \code{prov} that is not a list; a layer URL that is
 #' not public \code{https}.
 #'
-#' @param prov A provenance list as returned by [loadprov()], or \code{NULL}.
+#' @param prov A provenance list as returned by
+#'   [loadprov()], or \code{NULL}.
 #'   It must have the field \code{dataset$arcgis_layer_url}, a
 #'   FeatureServer layer root. An example is\cr
 #'   \code{https://services.arcgis.com/.../}\cr

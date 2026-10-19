@@ -7,7 +7,8 @@
 rslvckns(prov)
 }
 \arguments{
-\item{prov}{A provenance list as returned by \code{\link[=loadprov]{loadprov()}}, or \code{NULL}.
+\item{prov}{A provenance list as returned by
+\code{\link[=loadprov]{loadprov()}}, or \code{NULL}.
 The fields read are \code{dataset$ckan_api_endpoint},
 \code{resource$name_match_pattern} (a regular expression, required for
 a match), and, both optional, \code{resource$search_query} (search

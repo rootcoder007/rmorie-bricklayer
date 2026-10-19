@@ -65,7 +65,8 @@ Every step is recorded as a row of \code{checks}:
 \item \code{signature};
 \item \code{attribute_digest} (the signed attributes commit to the token's contents);
 \item \code{certificate_trust};
-\item with \code{trust}, the \verb{chain:} checks of \code{\link[=certchnvrf]{certchnvrf()}}.
+\item with \code{trust}, the \verb{chain:} checks of
+\code{\link[=certchnvrf]{certchnvrf()}}.
 }
 
 \code{ok} is \code{TRUE} only

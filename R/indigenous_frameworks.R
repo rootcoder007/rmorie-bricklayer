@@ -57,7 +57,8 @@
 #' @param qual Optional column of quality flags.
 #' @param conflvl Confidence level of the published intervals (default 0.95).
 #' @return A data frame with the classes \code{rmbl_wellness_continuum} and
-#'   \code{rmbl_wellness_profile}. Its columns are \code{group}, \code{indicator} (the direction),
+#'   \code{rmbl_wellness_profile}. Its columns are \code{group},
+#'   \code{indicator} (the direction),
 #'   \code{side} (\code{"wellness"}), \code{domain} (the proxies), \code{estimate},
 #'   \code{lower}, \code{upper}, \code{usewithcau}, \code{shared}, \code{proxy}
 #'   (always \code{TRUE}).
@@ -279,7 +280,7 @@ cwbscr <- function(incpercap, highsch20p, uni25p, notcro, nomajrep,
 #'
 #' Mashford-Pringle A (2016). Aboriginal health and Aboriginal education are
 #' interconnected. Research in the Sociology of Health Care 34:85-96.
-#' \href{https://doi.org/10.1108/s0275-495920160000034005}{doi:10.1108/s0275-495920160000034005}
+#' \doi{10.1108/s0275-495920160000034005}
 #' @seealso \code{\link{dualcont}}.
 #' @examples
 #' # across regions, 2022 (table 41-10-0067-01): where First Nations people report

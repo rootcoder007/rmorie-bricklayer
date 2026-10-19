@@ -49,7 +49,8 @@ generated synthetic data earlier in the session. It is written only when
 flag existed. On a synthetic manifest every \code{\link[=recrd]{recrd()}} entry is
 \code{INFO}.
 
-The fields of \code{meta} that \code{\link[=wrsmrytxt]{wrsmrytxt()}} reads are \code{project},
+The fields of \code{meta} that \code{\link[=wrsmrytxt]{wrsmrytxt()}} reads are
+\code{project},
 \code{author}, \code{run_at}, \code{os}, \code{r_version} and, as a named
 list or vector of versions, \code{r_package_versions}.
 

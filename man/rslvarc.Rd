@@ -7,7 +7,8 @@
 rslvarc(prov)
 }
 \arguments{
-\item{prov}{A provenance list as returned by \code{\link[=loadprov]{loadprov()}}, or \code{NULL}.
+\item{prov}{A provenance list as returned by
+\code{\link[=loadprov]{loadprov()}}, or \code{NULL}.
 It must have the field \code{dataset$arcgis_layer_url}, a
 FeatureServer layer root. An example is\cr
 \code{https://services.arcgis.com/.../}\cr

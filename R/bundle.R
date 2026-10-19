@@ -59,8 +59,9 @@
 #'
 #' @param dir Character scalar, the directory the capsule lives in. For
 #' `cpsbndlvrf()`, the directory to check the files in.
-#' @param man A manifest, as from [mkmnf()]. It is required by `cpsbndl()`
-#' and optional for `cpsbndlvrf()`, where it adds a check that the manifest
+#' @param man A manifest, as from [mkmnf()]. It is required by
+#' `cpsbndl()` and optional for `cpsbndlvrf()`, where it adds a check
+#' that the manifest
 #' still has the bundled digest.
 #' @param key A signing key from
 #' [fipskg()] or

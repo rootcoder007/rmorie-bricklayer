@@ -10,7 +10,8 @@ fipskg(scheme = "ML-DSA-65", seed = NULL)
 fipspubkey(key)
 }
 \arguments{
-\item{scheme}{Scheme name, one of \code{\link[=pqcbknd]{pqcbknd()}} other than \code{"xmss-sha256"}.
+\item{scheme}{Scheme name, one of \code{\link[=pqcbknd]{pqcbknd()}} other than
+\code{"xmss-sha256"}.
 The default, \code{"ML-DSA-65"}, is the FIPS 204 middle security level.}
 
 \item{seed}{Optional raw vector of key-generation seed

@@ -7,7 +7,8 @@
 rslvsoc(prov)
 }
 \arguments{
-\item{prov}{A provenance list as returned by \code{\link[=loadprov]{loadprov()}}, or \code{NULL}.
+\item{prov}{A provenance list as returned by
+\code{\link[=loadprov]{loadprov()}}, or \code{NULL}.
 It must have two fields. The first is \code{dataset$socrata_domain}, a
 host name without scheme such as \code{"data.cityofchicago.org"}. The
 second is \code{dataset$socrata_id}, the four-by-four dataset id such as

@@ -53,7 +53,8 @@
 #' flag existed. On a synthetic manifest every [recrd()] entry is
 #' \code{INFO}.
 #'
-#' The fields of \code{meta} that [wrsmrytxt()] reads are \code{project},
+#' The fields of \code{meta} that [wrsmrytxt()] reads are
+#' \code{project},
 #' \code{author}, \code{run_at}, \code{os}, \code{r_version} and, as a named
 #' list or vector of versions, \code{r_package_versions}.
 #'

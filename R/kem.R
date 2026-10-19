@@ -163,7 +163,8 @@ kempubkey <- function(key) {
 #' @return A named integer vector of five elements, all in bytes:
 #'   \code{public} (the encapsulation key), \code{secret} (the
 #'   decapsulation key), \code{ciphertext}, \code{seed} and \code{shared}
-#'   (the shared secret), named as [kemkg()] and [kemencap()] name their
+#'   (the shared secret), named as [kemkg()] and
+#'   [kemencap()] name their
 #'   results.
 #' @seealso [kemkg()].
 #' @examples
@@ -301,7 +302,8 @@ kemencap <- function(key, m = NULL) {
 #' [kemkg()], or a public key only ("decapsulation needs a
 #' key with its
 #' secret half"); a ciphertext that is not hex or raw of the exact length
-#' for the key's level, which is [kemsz()]\code{[["ciphertext"]]} bytes (768,
+#' for the key's level, which is
+#' [kemsz()]\code{[["ciphertext"]]} bytes (768,
 #' 1088 or 1568); \code{masked} not \code{TRUE} or \code{FALSE}.
 #'
 #' @param key A key from

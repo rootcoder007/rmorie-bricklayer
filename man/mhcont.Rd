@@ -35,7 +35,8 @@ direction, or \code{NULL} where the tables have none.}
 }
 \value{
 A data frame with the classes \code{rmbl_wellness_continuum} and
-\code{rmbl_wellness_profile}. Its columns are \code{group}, \code{indicator} (the direction),
+\code{rmbl_wellness_profile}. Its columns are \code{group},
+\code{indicator} (the direction),
 \code{side} (\code{"wellness"}), \code{domain} (the proxies), \code{estimate},
 \code{lower}, \code{upper}, \code{usewithcau}, \code{shared}, \code{proxy}
 (always \code{TRUE}).

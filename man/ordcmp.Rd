@@ -102,8 +102,7 @@ Bross IDJ (1958). How to use ridit analysis. Biometrics 14(1):18-38.
 
 Brunner E, Munzel U (2000). The nonparametric Behrens-Fisher problem: asymptotic theory
 and a small-sample approximation. Biometrical Journal 42(1):17-25.
-\href{https://doi.org/10.1002/(SICI)1521-4036(200001)42:1\%3C17::AID-BIMJ17\%3E3.0.CO;2-U}{
-doi:10.1002/(SICI)1521-4036(200001)42:1<17::AID-BIMJ17>3.0.CO;2-U}
+\doi{10.1002/(SICI)1521-4036(200001)42:1<17::AID-BIMJ17>3.0.CO;2-U}
 }
 \seealso{
 \code{\link{scests}}, \code{\link{indgap}}.

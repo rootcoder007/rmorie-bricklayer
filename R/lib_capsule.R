@@ -23,7 +23,8 @@
 #'     the capsule (no \code{..}, no absolute path, no symlink out) and parses as JSON.}
 #'   \item{\code{data_present}}{the data file (\code{dfile}, else the provenance's
 #'     \code{resource$filename}) is inside the capsule and is a file.}
-#'   \item{\code{data_sha256}}{[vrfsha256()] finds that its SHA-256 equals
+#'   \item{\code{data_sha256}}{[vrfsha256()] finds that its
+#'     SHA-256 equals
 #'     \code{resource$sha256} (64 hex characters).}
 #'   \item{\code{data_size_bytes}}{when \code{resource$size_bytes} is recorded: the size
 #'     on disk matches.}
@@ -43,7 +44,8 @@
 #'     gets that status from \eqn{|observed - expected| \le tol}.}
 #'   \item{\code{script_sha256}}{when a script is named (by \code{scrfile}, by
 #'     \code{script$filename} in the provenance or by \code{meta$scrfile} in the
-#'     manifest) or a script digest is pinned (\code{meta$script_sha256} or \code{script$sha256}):
+#'     manifest) or a script digest is pinned (\code{meta$script_sha256}
+#'     or \code{script$sha256}):
 #'     the script's SHA-256 matches the pin.}
 #'   \item{\code{data_not_synthetic}}{no \code{<data>.synthetic} sidecar (written by
 #'     [mksyncsv()]), and neither the manifest

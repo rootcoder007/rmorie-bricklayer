@@ -99,7 +99,7 @@ land-based experiences with university students in Ontario. Global Health Promot
 
 Mashford-Pringle A (2016). Aboriginal health and Aboriginal education are
 interconnected. Research in the Sociology of Health Care 34:85-96.
-\href{https://doi.org/10.1108/s0275-495920160000034005}{doi:10.1108/s0275-495920160000034005}
+\doi{10.1108/s0275-495920160000034005}
 }
 \seealso{
 \code{\link{dualcont}}.

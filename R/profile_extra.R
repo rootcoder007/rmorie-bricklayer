@@ -322,7 +322,8 @@ print.bricklayer_correlations <- function(x, ...) {
 #'
 #' Error: \code{a} or \code{b} that is not a list.
 #'
-#' @param a,b Environment records from [capenv()], or whole manifests (such
+#' @param a,b Environment records from [capenv()], or whole
+#'   manifests (such
 #'   as [mkmnf()] returns) that hold an \code{environment} element.
 #' @return A list of class \code{c("bricklayer_env_diff", "list")}:
 #'   \code{identical} (logical, \code{TRUE} when R version, platform and all

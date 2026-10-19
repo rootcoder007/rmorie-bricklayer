@@ -42,7 +42,8 @@
 #' * `signature`;
 #' * `attribute_digest` (the signed attributes commit to the token's contents);
 #' * `certificate_trust`;
-#' * with `trust`, the `chain:` checks of [certchnvrf()].
+#' * with `trust`, the `chain:` checks of
+#'   [certchnvrf()].
 #'
 #' `ok` is `TRUE` only
 #' when every row passes. A token

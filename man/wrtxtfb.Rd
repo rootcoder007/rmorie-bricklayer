@@ -7,8 +7,8 @@
 wrtxtfb(text, path)
 }
 \arguments{
-\item{text}{A character vector of lines to write; \code{\link[=as.character]{as.character()}}
-converts any other type.}
+\item{text}{A character vector of lines to write;
+\code{\link[=as.character]{as.character()}} converts any other type.}
 
 \item{path}{The destination file, a single non-empty string. Its
 directory must exist.}

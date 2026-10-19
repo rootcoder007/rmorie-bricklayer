@@ -105,7 +105,8 @@ pqcbknd <- function() .Call(C_rmbl_pqc_backends)
 #' the right length, and for `fipspubkey()` a key that did not come
 #' from `fipskg()` or [fipskey()].
 #'
-#' @param scheme Scheme name, one of [pqcbknd()] other than `"xmss-sha256"`.
+#' @param scheme Scheme name, one of [pqcbknd()] other than
+#' `"xmss-sha256"`.
 #' The default, `"ML-DSA-65"`, is the FIPS 204 middle security level.
 #' @param seed Optional raw vector of key-generation seed
 #' bytes, of the length [fipssz()] reports for
@@ -230,7 +231,8 @@ fipspubkey <- function(key) {
 #' verification-only key.
 #' @return When `secret` is given, a `bricklayer_fips_key` with `public`,
 #'   `secret` and `scheme`. Otherwise a key of class
-#'   `bricklayer_fips_public_key` with `public` and `scheme`. Keys are held as lowercase hex, as
+#'   `bricklayer_fips_public_key` with `public` and `scheme`.
+#'   Keys are held as lowercase hex, as
 #'   [fipskg()] returns
 #'   them.
 #' @seealso
@@ -983,7 +985,8 @@ signpubkey <- function(key) {
 #' `"none"` (the default, the pure variants) or any hash function the two
 #' standards approve. The SHA-2 hashes are `"sha224"`, `"sha256"`, `"sha384"`,
 #' `"sha512"`, `"sha512_224"` and `"sha512_256"`; the SHA-3 hashes are
-#' `"sha3_224"`, `"sha3_256"`, `"sha3_384"` and `"sha3_512"`; the SHAKE ones are
+#' `"sha3_224"`, `"sha3_256"`, `"sha3_384"` and `"sha3_512"`;
+#' the SHAKE ones are
 #' `"shake128"` (256-bit output) and `"shake256"` (512-bit output). The identifier
 #' of the pre-hash is bound into the signature, so a pre-hashed signature
 #' is never interchangeable with a pure one over the same digest.

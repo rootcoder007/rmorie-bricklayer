@@ -74,7 +74,8 @@
 #' Level 3 matches the category of ML-KEM-768,
 #' [kemkg()]'s default.
 #' @param seed Optional raw vector. For v5 it is the 32 bytes of `seed_KEM`.
-#' For round 4 it is the [hqcsz()]`["seed"]` bytes its key generation
+#' For round 4 it is the
+#' [hqcsz()]`["seed"]` bytes its key generation
 #' draws (`skseed`, `sigma`, `pk_seed`: 96, 104 or 112).
 #' Supplying it makes the key reproducible, which is what the known-answer
 #' tests need; the default draws from the operating system's CSPRNG.
@@ -205,10 +206,11 @@ hqcpubkey <- function(key) {
 #'   three). There is no default.
 #' @param ver \code{"v5"} (the default) or \code{"round4"}, as in
 #'   [hqckg()].
-#' @return A named integer vector: `public` (the encapsulation key), `secret`
-#' (the decapsulation key), `ciphertext`, `seed` (key generation), `message`
-#' and `salt` (encapsulation randomness) and `shared` (the shared secret), all
-#' in bytes, named as [hqckg()] and [hqcencap()] name their results.
+#' @return A named integer vector of byte lengths: `public` (the encapsulation key),
+#' `secret` (the decapsulation key), `ciphertext`, `seed` (key generation),
+#' `message` and `salt` (encapsulation randomness) and `shared` (the shared secret),
+#' named as [hqckg()] and
+#' [hqcencap()] name their results.
 #' @seealso [hqckg()],
 #'   [kemsz()] for ML-KEM.
 #' @examples

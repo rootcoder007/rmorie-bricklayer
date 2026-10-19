@@ -21,7 +21,8 @@ fetch fails.
 }
 \description{
 In one call, downloads one director's report from the SIU web site with
-\code{\link[=siufetch]{siufetch()}} and parses it with \code{\link[=siuprs]{siuprs()}}. It is meant for loops over many
+\code{\link[=siufetch]{siufetch()}} and parses it with \code{\link[=siuprs]{siuprs()}}.
+It is meant for loops over many
 report ids: a report that
 cannot be retrieved gives \code{NULL} and a message instead of stopping
 the loop.

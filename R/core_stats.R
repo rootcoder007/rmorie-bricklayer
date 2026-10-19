@@ -50,8 +50,9 @@
 #' @param x,a,b Numeric (or logical) vectors; coerced with
 #'   [as.numeric()].
 #'   `a` and `b` must have the same length.
-#' @param ddof Delta degrees of freedom, a single number; [as.integer()]
-#'   truncates it to an integer. The divisor is `n - ddof`.
+#' @param ddof Delta degrees of freedom, a single number;
+#'   [as.integer()] truncates it to an integer.
+#'   The divisor is `n - ddof`.
 #'   The default `1` gives the sample standard
 #'   deviation, matching [stats::sd()]; `0` gives the population
 #'   figure.

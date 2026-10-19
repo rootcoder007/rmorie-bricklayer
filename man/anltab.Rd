@@ -66,8 +66,8 @@ per
 \item{alpha}{Level for the multiple-comparison decision and the drift
 screens, default 0.05.}
 
-\item{adjust}{Multiple-comparison method for \code{\link[=scanadj]{scanadj()}}. The default is
-\code{"BH"} (Benjamini-Hochberg).}
+\item{adjust}{Multiple-comparison method for
+\code{\link[=scanadj]{scanadj()}}. The default is \code{"BH"} (Benjamini-Hochberg).}
 }
 \value{
 A list of class \code{bricklayer_analysis} (with a print method that

@@ -287,8 +287,7 @@ scests <- function(x) {
 #'
 #' Brunner E, Munzel U (2000). The nonparametric Behrens-Fisher problem: asymptotic theory
 #' and a small-sample approximation. Biometrical Journal 42(1):17-25.
-#' \href{https://doi.org/10.1002/(SICI)1521-4036(200001)42:1%3C17::AID-BIMJ17%3E3.0.CO;2-U}{
-#' doi:10.1002/(SICI)1521-4036(200001)42:1<17::AID-BIMJ17>3.0.CO;2-U}
+#' \doi{10.1002/(SICI)1521-4036(200001)42:1<17::AID-BIMJ17>3.0.CO;2-U}
 #' @param pooled Optional labels of rows that pool other groups (see
 #'   \code{\link{indgap}}).
 #' @seealso \code{\link{scests}}, \code{\link{indgap}}.

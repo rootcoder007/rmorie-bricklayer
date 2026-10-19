@@ -185,7 +185,8 @@ siuprs <- function(html) {
 #' Fetch and parse one SIU director's report
 #'
 #' In one call, downloads one director's report from the SIU web site with
-#' [siufetch()] and parses it with [siuprs()]. It is meant for loops over many
+#' [siufetch()] and parses it with [siuprs()].
+#' It is meant for loops over many
 #' report ids: a report that
 #' cannot be retrieved gives \code{NULL} and a message instead of stopping
 #' the loop.

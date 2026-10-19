@@ -25,8 +25,9 @@ cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL)
 \item{dir}{Character scalar, the directory the capsule lives in. For
 \code{cpsbndlvrf()}, the directory to check the files in.}
 
-\item{man}{A manifest, as from \code{\link[=mkmnf]{mkmnf()}}. It is required by \code{cpsbndl()}
-and optional for \code{cpsbndlvrf()}, where it adds a check that the manifest
+\item{man}{A manifest, as from \code{\link[=mkmnf]{mkmnf()}}. It is required by
+\code{cpsbndl()} and optional for \code{cpsbndlvrf()}, where it adds a check
+that the manifest
 still has the bundled digest.}
 
 \item{key}{A signing key from
