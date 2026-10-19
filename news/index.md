@@ -587,7 +587,9 @@ earlier finding)
   there in the same words and at the same character, and any other
   failure in a document past 128 KiB is refused with its reason instead
   of re-read. The direct `.Call` refuses bytes that are not UTF-8 rather
-  than handing back an invalid string.
+  than handing back an invalid string, in a C locale too (R’s
+  translation there rewrote such bytes as `<ff>` before the check saw
+  them).
 - **The command line**: a trailing `?` no longer makes a question of a
   near-miss command (`dat list?`, `conifg set openai.api_key?`);
   zero-width characters are removed before the key check, so a key
