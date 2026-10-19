@@ -84,12 +84,12 @@ plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop",
 \references{
 Wooldridge JM (1999). Distribution-free estimation of some nonlinear
 panel data models. Journal of Econometrics 90(1):77-97.
-\href{https://doi.org/10.1016/S0304-4076(98)00033-5}{doi:10.1016/S0304-4076(98)00033-5}
+\doi{10.1016/S0304-4076(98)00033-5}
 
 Santos Silva JMC, Tenreyro S (2006). The log of gravity. Review of Economics and
 Statistics 88(4):641-658. \doi{10.1162/rest.88.4.641}
 
 Allison PD, Waterman RP (2002). Fixed-effects negative binomial regression models.
 Sociological Methodology 32:247-265.
-\href{https://doi.org/10.1111/1467-9531.00117}{doi:10.1111/1467-9531.00117}
+\doi{10.1111/1467-9531.00117}
 }

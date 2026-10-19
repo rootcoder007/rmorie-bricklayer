@@ -66,7 +66,7 @@ flourishing in life. Journal of Health and Social Behavior 43(2):207-222.
 Keyes CLM (2005). Mental illness and/or mental health? Investigating axioms of the
 complete state model of health. Journal of Consulting and Clinical Psychology
 73(3):539-548.
-\href{https://doi.org/10.1037/0022-006X.73.3.539}{doi:10.1037/0022-006X.73.3.539}
+\doi{10.1037/0022-006X.73.3.539}
 
 Stewart SL (2008), see \code{\link{holbal}}.
 }

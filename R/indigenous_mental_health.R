@@ -64,7 +64,7 @@
 #' @references Statistics Canada (2023). Self-perceived mental health of First Nations
 #'   people living off reserve, Metis and Inuit by age group and gender. Table
 #'   41-10-0067-01.
-#' \href{https://doi.org/10.25318/4110006701-eng}{doi:10.25318/4110006701-eng}
+#' \doi{10.25318/4110006701-eng}
 #' @seealso \code{\link{sctidy}}, \code{\link{indgap}},
 #'   \code{\link{ordcmp}}.
 #' @examples
@@ -865,12 +865,11 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
 #' See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette.
 #' @references Atkinson AB (1970). On the measurement of inequality. Journal of Economic
 #' Theory 2(3):244-263.
-#' \href{https://doi.org/10.1016/0022-0531(70)90039-6}{doi:10.1016/0022-0531(70)90039-6}
+#' \doi{10.1016/0022-0531(70)90039-6}
 #'
 #' Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for
 #' Indigenous Data Governance. Data Science Journal 19:43.
-#' \href{https://doi.org/10.5334/dsj-2020-043}{
-#' doi:10.5334/dsj-2020-043}
+#' \doi{10.5334/dsj-2020-043}
 #'
 #' Gabriel MD, Mirza S, Stewart SL (2022). Exploring mental health and holistic healing
 #' through the life stories of Indigenous youth who have experienced homelessness.
@@ -1034,7 +1033,7 @@ holbal <- function(data, grp, domain, est, lower, upper, w = NULL, qual = NULL,
 #' Keyes CLM (2005). Mental illness and/or mental health? Investigating axioms of the
 #' complete state model of health. Journal of Consulting and Clinical Psychology
 #' 73(3):539-548.
-#' \href{https://doi.org/10.1037/0022-006X.73.3.539}{doi:10.1037/0022-006X.73.3.539}
+#' \doi{10.1037/0022-006X.73.3.539}
 #'
 #' Stewart SL (2008), see \code{\link{holbal}}.
 #' @seealso \code{\link{welprof}}.

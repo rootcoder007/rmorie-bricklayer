@@ -311,8 +311,7 @@ limfrom <- function(est, se = NULL, cv = NULL, moe = NULL, moelev = 0.90, conflv
 #'
 #' Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for
 #' Indigenous Data Governance. Data Science Journal 19:43.
-#' \href{https://doi.org/10.5334/dsj-2020-043}{
-#' doi:10.5334/dsj-2020-043}
+#' \doi{10.5334/dsj-2020-043}
 #' @seealso \code{\link{dstntst}} before pooling, \code{\link{limfrom}},
 #'   \code{\link{qltyrcd}}, \code{\link{agestd}}.
 #' @examples
@@ -517,8 +516,7 @@ agestd <- function(events, pop, std, grp = NULL, per = 1e5, conflvl = 0.95) {
 #' @references Anderson I, Robson B, Connolly M, et al. (2016). Indigenous and tribal
 #' peoples' health (The Lancet-Lowitja Institute Global Collaboration): a population
 #' study. The Lancet 388(10040):131-157.
-#' \href{https://doi.org/10.1016/S0140-6736(16)00345-7}{
-#' doi:10.1016/S0140-6736(16)00345-7}
+#' \doi{10.1016/S0140-6736(16)00345-7}
 #' @examples
 #' # made-up counts, to show the computation
 #' std <- c(30000, 25000, 20000, 15000, 10000)

@@ -126,7 +126,7 @@ parameter from sparse follow-up data. \emph{Biometrics}, 41(1), 55-68.
 Demers, S. and Rossmo, D. K. (2015). Simpson's paradox in Canadian
 police clearance rates. \emph{Canadian Journal of Criminology and
 Criminal Justice}, 57(3), 424-434.
-\href{https://doi.org/10.3138/cjccj.2014-E29}{doi:10.3138/cjccj.2014-E29}
+\doi{10.3138/cjccj.2014-E29}
 }
 \seealso{
 \code{\link{caseflow}} for the clearance rate over time.

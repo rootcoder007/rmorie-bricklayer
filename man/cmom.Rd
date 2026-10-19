@@ -69,7 +69,7 @@ cmom(c(1, 2))
 Joanes DN, Gill CA (1998). Comparing measures of sample skewness and
 kurtosis. \emph{Journal of the Royal Statistical Society: Series D (The
 Statistician)} 47(1), 183--189.
-\href{https://doi.org/10.1111/1467-9884.00122}{doi:10.1111/1467-9884.00122}
+\doi{10.1111/1467-9884.00122}
 }
 \seealso{
 \code{\link[=csdev]{csdev()}},

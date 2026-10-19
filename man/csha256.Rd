@@ -59,5 +59,5 @@ csha256(serialize(list(a = 1L, b = "x"), NULL))
 \references{
 National Institute of Standards and Technology (2015). Secure Hash
 Standard (SHS). FIPS PUB 180-4.
-\href{https://doi.org/10.6028/NIST.FIPS.180-4}{doi:10.6028/NIST.FIPS.180-4}
+\doi{10.6028/NIST.FIPS.180-4}
 }

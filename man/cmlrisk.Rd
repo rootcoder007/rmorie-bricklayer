@@ -59,5 +59,5 @@ Bonczar TP (2003). Prevalence of imprisonment in the U.S. population,
 Applied to arrests, convictions and jail in New York City: Hepburn P,
 Kohler-Hausmann I, Zorro Medina A (2019). Cumulative risks of multiple criminal
 justice outcomes in New York City. Demography 56(3):1161-1171.
-\href{https://doi.org/10.1007/s13524-019-00781-7}{doi:10.1007/s13524-019-00781-7}
+\doi{10.1007/s13524-019-00781-7}
 }

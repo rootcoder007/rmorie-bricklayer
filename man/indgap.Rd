@@ -109,8 +109,7 @@ off reserve, Metis and Inuit adults, 2015 to 2022. The Daily, 2025-02-13.\cr
 
 Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for
 Indigenous Data Governance. Data Science Journal 19:43.
-\href{https://doi.org/10.5334/dsj-2020-043}{
-doi:10.5334/dsj-2020-043}
+\doi{10.5334/dsj-2020-043}
 }
 \seealso{
 \code{\link{dstntst}} before pooling, \code{\link{limfrom}},

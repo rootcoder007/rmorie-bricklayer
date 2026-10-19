@@ -83,7 +83,7 @@ scests(r)
 Statistics Canada (2023). Self-perceived mental health of First Nations
 people living off reserve, Metis and Inuit by age group and gender. Table
 41-10-0067-01.
-\href{https://doi.org/10.25318/4110006701-eng}{doi:10.25318/4110006701-eng}
+\doi{10.25318/4110006701-eng}
 }
 \seealso{
 \code{\link{sctidy}}, \code{\link{indgap}},

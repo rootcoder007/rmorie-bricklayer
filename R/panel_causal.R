@@ -307,7 +307,7 @@ print.rmbl_dml <- function(x, ...) {
 #'   \code{meantrtd}, \code{meanctl}, \code{smd}, \code{p_value}.
 #' @references Welch BL (1947). The generalization of 'Student's' problem when several
 #'   different population variances are involved. Biometrika 34(1-2):28-35.
-#'   \href{https://doi.org/10.1093/biomet/34.1-2.28}{doi:10.1093/biomet/34.1-2.28}
+#'   \doi{10.1093/biomet/34.1-2.28}
 #' @examples
 #' d <- data.frame(t = rep(0:1, each = 50),
 #'                 age = c(stats::rnorm(50, 30), stats::rnorm(50, 33)))
@@ -380,7 +380,7 @@ baltab <- function(data, grp, covs, w = NULL) {
 #'   \code{\link{baltab}} of the matching features before and after).
 #' @references Daw JR, Hatfield LA (2018). Matching and regression to the mean in
 #'   difference-in-differences analysis. Health Services Research 53(6):4138-4156.
-#'   \href{https://doi.org/10.1111/1475-6773.12993}{doi:10.1111/1475-6773.12993}
+#'   \doi{10.1111/1475-6773.12993}
 #'
 #' Applied with spatial nearest-facility matching within judicial districts: Zorro
 #' Medina A (2020). The failed war on pre-trial detention: evidence from a

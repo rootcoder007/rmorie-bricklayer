@@ -6,6 +6,8 @@
 # legacy encodings) are reported, and this verifier rejects them.
 
 wp_read <- function(name) {
+  # the vector files stay out of the CRAN tarball (dev/cran_build.sh); the suite runs on them in CI
+  testthat::skip_if_not(file.exists(test_path(name)), "Wycheproof vectors not bundled")
   utils::read.delim(test_path(name), sep = "|", quote = "", comment.char = "#",
                     header = FALSE, colClasses = "character", fill = TRUE,
                     strip.white = FALSE)

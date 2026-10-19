@@ -212,7 +212,7 @@ cnormlpdf <- function(x, mean = 0, sd = 1) {
 #' @references Joanes DN, Gill CA (1998). Comparing measures of sample skewness and
 #' kurtosis. *Journal of the Royal Statistical Society: Series D (The
 #' Statistician)* 47(1), 183--189.
-#' \href{https://doi.org/10.1111/1467-9884.00122}{doi:10.1111/1467-9884.00122}
+#' \doi{10.1111/1467-9884.00122}
 #' @examples
 #' cmom(c(2, 4, 4, 4, 5, 5, 7, 9))
 #'
