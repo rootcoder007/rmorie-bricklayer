@@ -111,7 +111,9 @@ test_that("no Rd line exceeds 90 characters", {
   long <- character(0)
   for (f in files) {
     lines <- readLines(f, warn = FALSE)
-    w <- which(nchar(lines) > 90L & !startsWith(lines, "\\href{https://doi.org/"))
+    # a line that is one \url{} (an archived copy of a page that refuses scripts) cannot wrap
+    w <- which(nchar(lines) > 90L & !startsWith(lines, "\\href{https://doi.org/") &
+                 !grepl("^\\\\url\\{[^ ]+\\}[.)]*$", lines))
     for (i in w) {
       long <- c(long, sprintf(
         "%s:%d is %d chars", basename(f), i,
