@@ -175,7 +175,7 @@ r <- indiex("mentalhealth")
 r <- r[r$region == "Canada", ]
 oc <- ordcmp(r, "group", "rating", "estimate", "lower", "upper",
                       lvls = c("Fair or poor", "Good", "Very good", "Excellent"),
-                      ref = "Métis", qual = "quality")
+                      ref = "M\u00e9tis", qual = "quality")
 oc
 #>           group reference   probbet     lower     upper      delta     neff
 #> 1 First Nations     Métis 0.4653023 0.4531475 0.4774984 -0.0693954 4021.444
@@ -414,7 +414,7 @@ table 41-10-0067-01:
 
 r <- indiex("mentalhealth")
 r <- r[r$rating == "Excellent or very good" & r$region != "Canada", ]
-pair <- merge(r[r$group == "First Nations", ], r[r$group == "Métis", ], by = "region",
+pair <- merge(r[r$group == "First Nations", ], r[r$group == "M\u00e9tis", ], by = "region",
               suffixes = c("fn", "me"))
 ca <- connassoc(pair, "region", "estimatefn", "estimateme", "lowerfn", "upperfn",
                              "lowerme", "upperme")

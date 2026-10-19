@@ -205,7 +205,7 @@ and a known group:
 d <- indiex("health")
 rules <- list(
   ruleinset("quality", c("ok", "E", "F", "x", "..")),
-  ruleinset("group", c("First Nations", "Métis", "Inuit", "Non-Indigenous")),
+  ruleinset("group", c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous")),
   rul("estimate inside its interval",
        function(x) is.na(x$estimate) | (x$lower <= x$estimate & x$estimate <= x$upper))
 )
