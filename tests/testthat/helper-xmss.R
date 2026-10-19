@@ -18,7 +18,12 @@ rscript_bg <- function(code, wait = FALSE, out = FALSE) {
   lib <- paste(.libPaths(), collapse = .Platform$path.sep)
   pre <- sprintf(paste0(".libPaths(strsplit('%s', '%s', fixed = TRUE)[[1]]); ",
                         "suppressMessages(library(rmoriebricklayer)); "), lib, .Platform$path.sep)
-  system2(rscript, c("-e", shQuote(paste0(pre, code))), wait = wait, stdout = out, stderr = FALSE)
+  # from a file, not -e: R's front-end script on macOS eats one level of backslashes from a -e
+  # argument, so a served body holding "\\/" reached the child as "\/" (an unrecognized escape)
+  # and the server died before answering (the Wayback snapshot test, macOS CI of 1.0.0)
+  f <- tempfile("child-", fileext = ".R")
+  writeLines(paste0(pre, code), f)
+  system2(rscript, shQuote(f), wait = wait, stdout = out, stderr = FALSE)
 }
 
 # wait until every file exists and is not empty
