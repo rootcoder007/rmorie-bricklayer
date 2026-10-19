@@ -118,7 +118,7 @@ vignette.
 
 Atkinson AB (1970). On the measurement of inequality. Journal of
 Economic Theory 2(3):244-263.
-[doi:10.1016/0022-0531(70)90039-6](https://doi.org/10.1016/0022-0531(70)90039-6)
+[doi:10.1016/0022-0531(70)90039-6](https://doi.org/10.1016/0022-0531%2870%2990039-6)
 
 Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE
 Principles for Indigenous Data Governance. Data Science Journal 19:43.

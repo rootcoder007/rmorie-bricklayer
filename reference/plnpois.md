@@ -102,7 +102,7 @@ dispersion.
 
 Wooldridge JM (1999). Distribution-free estimation of some nonlinear
 panel data models. Journal of Econometrics 90(1):77-97.
-[doi:10.1016/S0304-4076(98)00033-5](https://doi.org/10.1016/S0304-4076(98)00033-5)
+[doi:10.1016/S0304-4076(98)00033-5](https://doi.org/10.1016/S0304-4076%2898%2900033-5)
 
 Santos Silva JMC, Tenreyro S (2006). The log of gravity. Review of
 Economics and Statistics 88(4):641-658.

@@ -36,7 +36,7 @@ A one-row data frame: `group`, `reference`, `ratio` with
 Anderson I, Robson B, Connolly M, et al. (2016). Indigenous and tribal
 peoples' health (The Lancet-Lowitja Institute Global Collaboration): a
 population study. The Lancet 388(10040):131-157.
-[doi:10.1016/S0140-6736(16)00345-7](https://doi.org/10.1016/S0140-6736(16)00345-7)
+[doi:10.1016/S0140-6736(16)00345-7](https://doi.org/10.1016/S0140-6736%2816%2900345-7)
 
 ## Examples
 
