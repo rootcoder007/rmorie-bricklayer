@@ -61,7 +61,7 @@ reference), \code{digest} (a list
 with \code{data_digest}, and with \code{chunks} also \code{mrkroot},
 \code{merkle_scheme}
 (the \code{\link[=mrkroot]{mrkroot()}} hashing scheme, 2) and \code{n_chunks},
-with a signature and key also logical \code{signature_valid}), and \code{nrows} /
+and, with a signature and key, the logical \code{signature_valid}), and \code{nrows} /
 \code{n_cols}. \code{print()} shows the verdict and the findings; \code{summary()}
 gives
 the verdict and the count of each severity.
@@ -86,8 +86,8 @@ the data is fine.
 \item \code{fatal} -- nothing downstream can run as it stands: a schema check or a
 rule of severity \code{"fatal"} failed (for example a required column is
 missing), or a column of the reference is absent from the data.
-\item \code{warn} -- something moved or is badly incomplete: a schema check or a
-rule of severity \code{"warning"} failed (a value left its pinned range, a type
+\item \code{warn} -- something moved or is badly incomplete: a schema check, or a
+rule of severity \code{"warning"}, failed (a value left its pinned range, a type
 changed), a column drifted from the reference, a column is entirely
 missing or more than half missing, or a signature did not verify (or came
 with no key).

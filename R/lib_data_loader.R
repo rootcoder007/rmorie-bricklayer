@@ -91,10 +91,10 @@ loadprov <- function(path) {
 #' the project.
 #'
 #' @details
-#' The function reads \code{dataset$ckan_api_endpoint} (the full
-#' \code{.../api/3/action/package_show?id=<slug>} URL) and
-#' \code{resource$name_match_pattern} (a regular expression), fetches the
-#' endpoint as JSON, and walks \code{result$resources} in the order the
+#' The function reads \code{dataset$ckan_api_endpoint}, the full URL, which
+#' ends in \code{/api/3/action/} and \code{package_show?id=<slug>}. It also
+#' reads \code{resource$name_match_pattern}, a regular expression. It fetches
+#' the endpoint as JSON, and walks \code{result$resources} in the order the
 #' portal lists them. The first resource whose \code{name} matches the
 #' pattern (case-insensitively, with [grepl()]) wins. If the slug
 #' itself has
@@ -106,15 +106,17 @@ loadprov <- function(path) {
 #' fails (offline, HTTP error, invalid JSON), when CKAN answers
 #' \code{"success": false}, or when no resource name matches. Errors are
 #' raised for a \code{prov} that is not a list, for an endpoint that is
-#' not a public \code{https} URL (plain \code{http} only with
-#' \code{options(rmoriebricklayer.allowhttp = TRUE)}; loopback, private and
+#' not a public \code{https} URL (plain \code{http} only when the option
+#' \code{rmoriebricklayer.allowhttp} is \code{TRUE}; loopback, private and
 #' link-local addresses are refused), and for a matched resource URL that
 #' fails the same check. One network request; nothing is written.
 #'
-#' @param prov A provenance list as returned by
-#'   [loadprov()], or
-#'   \code{NULL}. It must contain \code{dataset$ckan_api_endpoint} and
-#'   \code{resource$name_match_pattern} for a lookup to be made.
+#' @param prov A provenance list as returned by [loadprov()], or \code{NULL}.
+#'   A lookup is made only when it has both of these fields:
+#'   \itemize{
+#'     \item \code{dataset$ckan_api_endpoint};
+#'     \item \code{resource$name_match_pattern}.
+#'   }
 #' @return The matched resource URL as a length-1 character string, or
 #'   \code{NULL} as described in Details.
 #' @examples
@@ -185,17 +187,18 @@ rslvckan <- function(prov) {
 #'
 #' @details
 #' The portal base is the part of \code{dataset$ckan_api_endpoint} before
-#' \code{/api/3/}; the request is
-#' \code{<base>/api/3/action/package_search?q=<query>}. The query is
-#' \code{resource$search_query} when given, otherwise the
+#' \code{/api/3/}; the request goes to \code{<base>/api/3/action/} followed by
+#' \code{package_search?q=<query>}.
+#'
+#' The query is \code{resource$search_query} when given, otherwise the
 #' \code{resource$name_match_pattern} with every character other than a
 #' letter, digit or space replaced by a space. Datasets are walked in the
 #' order CKAN ranks them, and their resources in listed order. A resource is
 #' taken when its \code{name} matches \code{resource$name_match_pattern}
 #' (case-insensitively) and either its format is CSV, or
 #' \code{resource$format} is unset, or its format equals
-#' \code{resource$format} (case-insensitively). A CSV resource is therefore
-#' accepted even when \code{resource$format} asks for another format.
+#' \code{resource$format} (case-insensitively). So a CSV resource is accepted
+#' even when \code{resource$format} asks for another format.
 #'
 #' \code{NULL} is returned when \code{prov} is \code{NULL}, when no
 #' query can be formed, when there is no endpoint to derive the base from,
@@ -203,12 +206,11 @@ rslvckan <- function(prov) {
 #' \code{prov} that is not a list; a search URL or matched resource
 #' URL that is not public \code{https}. One network request.
 #'
-#' @param prov A provenance list as returned by
-#'   [loadprov()], or
-#'   \code{NULL}. Reads \code{dataset$ckan_api_endpoint},
+#' @param prov A provenance list as returned by [loadprov()], or \code{NULL}.
+#'   The fields read are \code{dataset$ckan_api_endpoint},
 #'   \code{resource$name_match_pattern} (a regular expression, required for
-#'   a match), \code{resource$search_query} (optional search words) and
-#'   \code{resource$format} (optional format name such as \code{"XLSX"}).
+#'   a match), and, both optional, \code{resource$search_query} (search
+#'   words) and \code{resource$format} (a format name such as \code{"XLSX"}).
 #' @return The matched resource URL as a length-1 character string, or
 #'   \code{NULL}.
 #' @examples
@@ -311,8 +313,8 @@ rslvckns <- function(prov) {
 #'
 #' @details
 #' Before anything is fetched the URL must be one public \code{https} URL:
-#' plain \code{http} needs \code{options(rmoriebricklayer.allowhttp =
-#' TRUE)}, \code{file://} needs \code{allowfile = TRUE}, and loopback,
+#' plain \code{http} needs the option \code{rmoriebricklayer.allowhttp} set to
+#' \code{TRUE}, \code{file://} needs \code{allowfile = TRUE}, and loopback,
 #' private, link-local and cloud-metadata addresses are refused. The
 #' transport then resolves the host, pins the connection to the checked
 #' addresses, re-checks every redirect hop, caps the body at 2 GiB and allows
@@ -385,9 +387,11 @@ dldata <- function(url, tpath, mode = "wb", quiet = FALSE,
 #' automatically.
 #'
 #' @details
-#' The function sends one request to the availability API,
-#' \code{https://archive.org/wayback/available?url=<url>[&timestamp=<ts>]},
-#' and reads \code{archived_snapshots$closest}. When the API reports an
+#' The function sends one request to the availability API,\cr
+#' \code{https://archive.org/wayback/available?url=<url>[&timestamp=<ts>]},\cr
+#' where the timestamp part is sent only when \code{ts} is given.
+#'
+#' The answer's \code{archived_snapshots$closest} is read. When the API reports an
 #' available snapshot its URL is returned, with \code{http://} rewritten to
 #' \code{https://} and passed through the same public-URL check as every
 #' other URL the package fetches. The timestamp is passed to the API as
@@ -405,7 +409,7 @@ dldata <- function(url, tpath, mode = "wb", quiet = FALSE,
 #'   \code{"20230115"}); the API returns the snapshot closest to it.
 #'   \code{NULL} or \code{""} (the default) asks for the most recent.
 #' @return A length-1 character string, the \code{https} snapshot URL of the
-#'   form \code{https://web.archive.org/web/<timestamp>/<url>}, or
+#'   form \code{https://web.archive.org/web/} followed by \code{<timestamp>/<url>}, or
 #'   \code{NULL}.
 #' @examples
 #' # argument errors come before any request
@@ -729,8 +733,8 @@ vrfsha256 <- function(path, expsha) {
 #' \itemize{
 #'   \item a missing \code{expected_columns} entry: \code{missing_columns},
 #'     \code{"fatal"};
-#'   \item fewer than \code{min_data_rows} or more than \code{max_data_rows}
-#'     rows: \code{row_count_low} / \code{row_count_high};
+#'   \item fewer than \code{min_data_rows} rows: \code{row_count_low};
+#'   \item more than \code{max_data_rows} rows: \code{row_count_high};
 #'   \item a column whose class differs from \code{expected_types}:
 #'     \code{type_<col>}. \code{integer}, \code{numeric} and \code{double} are
 #'     one family, and so are \code{character} and \code{factor};
@@ -740,8 +744,8 @@ vrfsha256 <- function(path, expsha) {
 #'     \code{missing_<col>};
 #'   \item values not in \code{expected_value_sets}: \code{unexpected_<col>}.
 #' }
-#' A column named in a check but absent from the data is skipped by that
-#' check (only \code{expected_columns} reports it). All of these are
+#' A column that a check names but the data lack is skipped by that check.
+#' Only the \code{expected_columns} check reports such a column. All of these are
 #' \code{"warning"} except \code{missing_columns}.
 #'
 #' The schema itself is checked too. An empty schema (\code{list()}) gives
@@ -1126,9 +1130,9 @@ schval <- function(dfraw, prov) {
 #' @details
 #' One request is made, to \code{https://<domain>/api/views/<id>.json}. If
 #' it answers with JSON that has an \code{id} field the dataset is taken to
-#' exist and the function returns
-#' \code{https://<domain>/api/views/<id>/rows.csv?accessType=DOWNLOAD}, the
-#' portal's export of every row. The id is not checked further, and the
+#' exist. The function then returns the portal's export of every row, the URL
+#' \code{https://<domain>/api/views/<id>/} followed by
+#' \code{rows.csv?accessType=DOWNLOAD}. The id is not checked further, and the
 #' export URL is not fetched.
 #'
 #' \code{NULL} is returned when \code{prov} is \code{NULL}, when the
@@ -1137,12 +1141,11 @@ schval <- function(dfraw, prov) {
 #' \code{prov} that is not a list; a domain that is not a public host
 #' (\code{localhost}, a private address, a single-label name).
 #'
-#' @param prov A provenance list as returned by
-#'   [loadprov()], or
-#'   \code{NULL}. Must contain \code{dataset$socrata_domain} (a host name
-#'   without scheme, e.g. \code{"data.cityofchicago.org"}) and
-#'   \code{dataset$socrata_id} (the four-by-four dataset id, e.g.
-#'   \code{"ijzp-q8t2"}).
+#' @param prov A provenance list as returned by [loadprov()], or \code{NULL}.
+#'   It must have two fields. The first is \code{dataset$socrata_domain}, a
+#'   host name without scheme such as \code{"data.cityofchicago.org"}. The
+#'   second is \code{dataset$socrata_id}, the four-by-four dataset id such as
+#'   \code{"ijzp-q8t2"}.
 #' @return The CSV export URL as a length-1 character string, or \code{NULL}
 #'   if the fields are missing, the request fails, or the metadata reports an
 #'   error.
@@ -1205,11 +1208,11 @@ rslvsoc <- function(prov) {
 #' error. Errors: a \code{prov} that is not a list; a layer URL that is
 #' not public \code{https}.
 #'
-#' @param prov A provenance list as returned by
-#'   [loadprov()], or
-#'   \code{NULL}. Must contain \code{dataset$arcgis_layer_url}, a
-#'   FeatureServer layer root such as
-#'   \code{"https://services.arcgis.com/.../Assault_Open_Data/FeatureServer/0"}.
+#' @param prov A provenance list as returned by [loadprov()], or \code{NULL}.
+#'   It must have the field \code{dataset$arcgis_layer_url}, a
+#'   FeatureServer layer root. An example is\cr
+#'   \code{https://services.arcgis.com/.../}\cr
+#'   followed by \code{Assault_Open_Data/FeatureServer/0}.
 #' @return The layer query URL as a length-1 character string, or
 #'   \code{NULL} if the field is missing, the request fails, or the layer
 #'   metadata reports an error.

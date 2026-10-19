@@ -37,7 +37,8 @@ a full key from
 }
 \details{
 The level and version are taken from the key. The randomness is a message
-\code{m} of \code{hqcsz(level)[["message"]]} bytes and a 16-byte \code{salt},
+\code{m} and a 16-byte \code{salt}. The length of \code{m} in bytes is
+\code{hqcsz(level)[["message"]]}. They are
 both
 drawn with \code{\link[=rndbytes]{rndbytes()}} from the operating system's
 generator unless

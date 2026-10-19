@@ -30,12 +30,16 @@ limits.
 \details{
 Each label of the statistics column is read as an estimate or as one of its
 measures of precision, in every form the tables use:
-\code{"Low 95\% confidence interval"},
-\code{"High 95\% confidence interval, age-standardized rate"},
-\code{"Confidence interval lower bound of count"},
-\code{"95\% confidence interval (upper limit)"},
-\code{"95\% confidence interval lower bound, 2020"},
-\code{"Coefficient of variation for percent"}, \code{"Standard error"}. A limit that
+\itemize{
+\item \code{"Low 95\% confidence interval"};
+\item \code{"High 95\% confidence interval, age-standardized rate"};
+\item \code{"Confidence interval lower bound of count"};
+\item \code{"95\% confidence interval (upper limit)"};
+\item \code{"95\% confidence interval lower bound, 2020"};
+\item \code{"Coefficient of variation for percent"};
+\item \code{"Standard error"}.
+}
+A limit that
 names its measure is matched to it (ignoring case and spacing); one that names none, or
 a name that fits several measures (\code{"potential years of life lost"} in a table
 with a number, a crude rate and an age-standardised rate of them), is matched to the

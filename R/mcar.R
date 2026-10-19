@@ -188,7 +188,7 @@
 #' test.
 #' @references Little RJA (1988). A test of missing completely at random
 #' for multivariate data with missing values. *Journal of the American
-#' Statistical Association* 83(404), 1198--1202.
+#' Statistical Association* 83(404), 1198--1202.\cr
 #'   \doi{10.1080/01621459.1988.10478722}
 #'
 #' Dempster AP, Laird NM, Rubin DB (1977). Maximum likelihood from
@@ -259,6 +259,10 @@ mcartst <- function(data, maxit = 500L, tol = 1e-7) {
 
   n <- nrow(X)
   p <- ncol(X)
+  # an infinite value made the covariance non-finite and the refusal spoke of collinearity
+  if (any(is.infinite(X))) {
+    stop("`x` has infinite values, which Little's test cannot use; set them to NA first", call. = FALSE)
+  }
   if (p < 2L || n < 2L) {
     stop("too few complete columns or rows remain for Little's test",
          call. = FALSE)

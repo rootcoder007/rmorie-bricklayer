@@ -55,8 +55,8 @@
 #' @return A list of class \code{c("bricklayer_recompute", "list")}:
 #'   \describe{
 #'     \item{\code{ok}}{logical, every statistic matched and none was left unchecked.}
-#'     \item{\code{results}}{data frame, one row per recomputed statistic, with
-#'       \code{name} (character), \code{recorded} and \code{recomputed} (numeric,
+#'     \item{\code{results}}{data frame, one row per recomputed statistic, with the
+#'       columns \code{name} (character), \code{recorded} and \code{recomputed} (numeric,
 #'       \code{NA} for non-numeric values), \code{delta} (numeric absolute
 #'       difference), \code{tol} (numeric), \code{status} (\code{"MATCH"},
 #'       \code{"DIFFER"}, \code{"NOT_RECORDED"} or \code{"ERROR"}) and \code{detail}
@@ -320,8 +320,8 @@ mnfrstseed <- function(man) {
 #' version number identifies an intention; the repository and commit
 #' identify what was actually loaded.
 #'
-#' The fields are read from each package's installed DESCRIPTION
-#' (\code{utils::packageDescription()}): \code{Repository} (for example
+#' The fields are read with \code{utils::packageDescription()} from each
+#' package's installed DESCRIPTION: \code{Repository} (for example
 #' \code{"CRAN"}), \code{RemoteUrl} and \code{RemoteSha} (written by
 #' remotes, pak and devtools for packages installed from a Git host) and
 #' \code{Built}. Packages are sorted and de-duplicated. A progress bar is

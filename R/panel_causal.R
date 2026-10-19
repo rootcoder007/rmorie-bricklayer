@@ -157,8 +157,8 @@
 #'
 #' Learners, all in base R: \code{"lasso"} (coordinate descent, penalty by 5-fold
 #' cross-validation), \code{"ridge"} (penalty by generalised cross-validation),
-#' \code{"ols"}, or a function \code{function(x_train, y_train, x_test)} returning
-#' predictions (for example a random forest from another package).
+#' \code{"ols"}, or a function returning predictions (for example a random forest
+#' from another package), called as \code{function(x_train, y_train, x_test)}.
 #' \code{basis = "poly2"} adds squares and pairwise products of the covariates, built
 #' from the covariates as observed and then demeaned, so a confounding that is a
 #' combination of them is removed exactly. The demeaned features are what the learners
@@ -335,8 +335,9 @@ baltab <- function(data, grp, covs, w = NULL) {
     df <- (va / na + vb / nb)^2 / ((va / na)^2 / (na - 1) + (vb / nb)^2 / (nb - 1))
     s1 <- stats::sd(a)
     data.frame(covariate = v, meantrtd = ma, meanctl = mb,
-               smd = if (s1 > 0) (ma - mb) / s1 else NA_real_,
-               p_value = if (se > 0) 2 * stats::pt(-abs((ma - mb) / se), df) else NA_real_)
+               # a group of one unit has no spread: NA, not an error (mtchdid() with a tight caliper)
+               smd = if (isTRUE(s1 > 0)) (ma - mb) / s1 else NA_real_,
+               p_value = if (isTRUE(se > 0)) 2 * stats::pt(-abs((ma - mb) / se), df) else NA_real_)
   })
   out <- do.call(rbind, rows)
   class(out) <- c("rmbl_balance", "data.frame")
@@ -624,7 +625,8 @@ plot.rmbl_synthdid <- function(x, ..., main = NULL, col = NULL, palette = NULL) 
   cl <- .bl_cols(2L, col, palette)
   graphics::matplot(d$time, cbind(d$treated, d$synthetic), type = "l", lty = c(1, 2), col = cl, lwd = 2,
                     xlab = "Period", ylab = "Outcome",
-                    main = .bl_main(main, "Synthetic difference in differences"), ...)
+                    main = "", ...)
+  .bl_title(.bl_main(main, "Synthetic difference in differences"))
   graphics::abline(v = x$adoption, lty = 3, col = "#9A9A9A")
   graphics::legend("topleft", c("Treated", "Weighted comparison"), lty = c(1, 2), col = cl, lwd = 2, bty = "n")
   invisible(d)
@@ -665,9 +667,9 @@ plot.rmbl_synthdid <- function(x, ..., main = NULL, col = NULL, palette = NULL) 
 #' @param seed Optional seed.
 #' @param ties \code{"count"} (default) or \code{"strict"}: whether a bootstrap
 #'   \eqn{|t^*|} equal to \eqn{|t|} counts against the null.
-#' @return A data frame of class \code{rmbl_wild}: \code{estimate}, \code{t},
-#'   \code{p_value}, \code{lower}, \code{upper}, \code{clusters}, \code{draws},
-#'   \code{enumerated}.
+#' @return A data frame of class \code{rmbl_wild} with the columns \code{estimate},
+#'   \code{t}, \code{p_value}, \code{lower}, \code{upper}, \code{clusters},
+#'   \code{draws} and \code{enumerated}.
 #' @references Cameron AC, Gelbach JB, Miller DL (2008). Bootstrap-based improvements
 #'   for inference with clustered errors. Review of Economics and Statistics
 #'   90(3):414-427. \doi{10.1162/rest.90.3.414}
@@ -988,7 +990,8 @@ plot.rmbl_power <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   d <- as.data.frame(x)
   cl <- .bl_cols(1L, col, palette)
   graphics::plot(d$effect, d$power, type = "b", pch = 19, col = cl, ylim = c(0, 1), xlab = "Effect size",
-                 ylab = "Power", main = .bl_main(main, "Power of the design"), ...)
+                 ylab = "Power", main = "", ...)
+  .bl_title(.bl_main(main, "Power of the design"))
   graphics::abline(h = 0.8, lty = 2, col = "#9A9A9A")
   if (is.finite(attr(x, "mde"))) graphics::abline(v = attr(x, "mde"), lty = 3, col = cl)
   invisible(d)
@@ -1020,7 +1023,7 @@ plot.rmbl_balance <- function(x, ..., threshold = 0.1, after = NULL, main = NULL
                  xlab = "", ylab = "", main = "", ...)
   .bl_title(.bl_main(main, "Covariate balance"))
   .bl_xlab("Absolute standardised difference")
-  graphics::axis(2, at = seq_len(k), labels = cv, las = 1, cex.axis = 0.8)
+  .bl_row_labels(seq_len(k), cv, cex = 0.8)
   graphics::abline(h = seq_len(k), col = "#EEEEEE")
   graphics::abline(v = threshold, lty = 2, col = "#9A9A9A")
   if (!is.null(a)) {
@@ -1043,7 +1046,8 @@ plot.rmbl_aipw <- function(x, ..., type = c("overlap", "estimate"), main = NULL,
     graphics::plot(x$estimate, 1, xlim = range(c(0, x$lower, x$upper)), ylim = c(0.5, 1.5), yaxt = "n", pch = 19,
                    col = cl[1L], xlab = sprintf("%s (%g%% confidence interval)", x$estimand,
                                                 100 * attr(x, "conflvl")),
-                   ylab = "", main = .bl_main(main, "Cross-fitted AIPW estimate"), ...)
+                   ylab = "", main = "", ...)
+    .bl_title(.bl_main(main, "Cross-fitted AIPW estimate"))
     graphics::segments(x$lower, 1, x$upper, 1, lwd = 2, col = cl[1L])
     graphics::abline(v = 0, lty = 2, col = "#9A9A9A")
     return(invisible(as.data.frame(x)))
@@ -1059,7 +1063,8 @@ plot.rmbl_aipw <- function(x, ..., type = c("overlap", "estimate"), main = NULL,
   ymax <- max(dens[[1L]]$y, dens[[2L]]$y)
   graphics::plot(dens[[1L]]$x, dens[[1L]]$y, type = "n", xlim = c(0, 1), ylim = c(0, ymax * 1.05),
                  xlab = "Out-of-fold propensity", ylab = "Weighted density",
-                 main = .bl_main(main, "Overlap of the two groups"), ...)
+                 main = "", ...)
+  .bl_title(.bl_main(main, "Overlap of the two groups"))
   for (i in 2:1) {
     graphics::polygon(c(0, dens[[i]]$x, 1), c(0, dens[[i]]$y, 0), border = cl[i],
                       col = grDevices::adjustcolor(cl[i], alpha.f = 0.25))

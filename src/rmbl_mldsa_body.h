@@ -201,12 +201,17 @@ void polyz_unpack(int32_t r[256], const unsigned char *a) {
 
 void poly_uniform_gamma1(int32_t a[256], const unsigned char seed[64],
                          uint16_t nonce) {
+    /* rho'' and the packed y it expands to are secret, as in
+     * poly_uniform_eta() above (review of 1.0.0, M8) */
     unsigned char ext[66];
+    rmbl_ct::Guard ge(ext, sizeof ext);
     std::memcpy(ext, seed, 64);
     ext[64] = static_cast<unsigned char>(nonce & 0xff);
     ext[65] = static_cast<unsigned char>(nonce >> 8);
     unsigned char buf[kPolyZPacked];
+    rmbl_ct::Guard gb(buf, sizeof buf);
     RmblKeccak st;
+    rmbl_ct::Guard gst(&st, sizeof st);
     rmbl_keccak_init(&st, 136, 0x1f);
     rmbl_keccak_absorb(&st, ext, 66);
     rmbl_keccak_finalize(&st);
@@ -929,6 +934,9 @@ int sign_mu(unsigned char *sig, const unsigned char mu[64],
     if (vecl_chknorm(&s1, kEta + 1) || veck_chknorm(&s2, kEta + 1)) return -1;
 
     RmblKeccak st;
+    /* the sponge absorbs K, and h (c s2, c t0) and w1 of a rejected attempt
+     * derive from the secret too: wiped on the way out (review of 1.0.0, M8) */
+    rmbl_ct::Guard gst(&st, sizeof st), gh(&h, sizeof h), gw1(&w1, sizeof w1);
     /* rhoprime = CRH(key, rnd, mu) */
     rmbl_keccak_init(&st, 136, 0x1f);
     rmbl_keccak_absorb(&st, key, 32);

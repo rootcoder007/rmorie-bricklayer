@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include <array>
 #include <map>
 #include <regex>
@@ -31,8 +32,11 @@ static inline void poll_every(size_t i) { if ((i & 0xFFFF) == 0xFFFF) poll_inter
 
 namespace {
 
+// through unsigned char: a UTF-8 byte is negative as a char, and ::tolower on a negative value
+// other than EOF is undefined behaviour (review of 1.0.0)
 std::string lower(std::string s) {
-    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+    std::transform(s.begin(), s.end(), s.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return s;
 }
 
@@ -68,24 +72,6 @@ std::string flatten_ws(const std::string& s) {
     return out;
 }
 
-std::string replace_all(const std::string& s, const std::string& from, const std::string& to) {
-    if (from.empty()) return s;
-    std::string out;
-    out.reserve(s.size());
-    size_t i = 0;
-    while (true) {
-        const size_t j = s.find(from, i);
-        if (j == std::string::npos) {
-            out.append(s, i, std::string::npos);
-            break;
-        }
-        out.append(s, i, j - i);
-        out += to;
-        i = j + from.size();
-    }
-    return out;
-}
-
 // case-insensitive match of `lit` at `pos`
 bool ieq_at(const std::string& s, size_t pos, const std::string& lit) {
     if (pos + lit.size() > s.size()) return false;
@@ -95,32 +81,6 @@ bool ieq_at(const std::string& s, size_t pos, const std::string& lit) {
     }
     return true;
 }
-
-// every occurrence of any of the entity literals in `alts` -> `to`; each one
-// starts with '&', so the scan only tests at ampersands
-// exact-case alternatives (HTML entity names are case-sensitive: &apos; yes, &APOS; no)
-std::string replace_any(const std::string& s, const std::vector<std::string>& alts, const std::string& rep) {
-    std::string out;
-    out.reserve(s.size());
-    size_t i = 0;
-    while (i < s.size()) {
-        poll_every(i);
-        bool hit = false;
-        if (s[i] == '&') {
-            for (const std::string& a : alts) {
-                if (s.compare(i, a.size(), a) == 0) {
-                    out += rep;
-                    i += a.size();
-                    hit = true;
-                    break;
-                }
-            }
-        }
-        if (!hit) out += s[i++];
-    }
-    return out;
-}
-
 
 // <script ...>...</script> and <style ...>...</style>, case-insensitive, to
 // one space. As the regex it replaces: the opening tag ends at the first '>'
@@ -135,6 +95,9 @@ std::string strip_elements(const std::string& s) {
     // rescan to the end each (40 minutes at the 2 MiB cap, the SIU review)
     size_t dead_from[sizeof(kNames) / sizeof(kNames[0])];
     for (size_t d = 0; d < sizeof(kNames) / sizeof(kNames[0]); ++d) dead_from[d] = std::string::npos;
+    // as in strip_tags(): after one opener with no '>' to the end, none later has one either, so
+    // strrep("<script", k) is not k scans to the end (2.9 s at k = 2e5; review of 1.0.0, M9)
+    bool no_gt_left = false;
     while (i < s.size()) {
         bool done = false;
         poll_every(i);
@@ -143,8 +106,8 @@ std::string strip_elements(const std::string& s) {
                 const char* nm = kNames[ni];
                 const std::string open = std::string("<") + nm;
                 if (!ieq_at(s, i, open)) continue;
-                const size_t gt = s.find('>', i + open.size());
-                if (gt == std::string::npos) break;
+                const size_t gt = no_gt_left ? std::string::npos : s.find('>', i + open.size());
+                if (gt == std::string::npos) { no_gt_left = true; break; }
                 if (dead_from[ni] != std::string::npos && gt + 1 >= dead_from[ni]) break;
                 const std::string close = std::string("</") + nm + ">";
                 size_t k = gt + 1;
@@ -711,6 +674,17 @@ std::string detect_charges(const std::string& text, bool fr) {
     return "";
 }
 
+// "the" as a whole word, any case ("The Director", "Office Of The ...")
+bool has_word_the(const std::string& name) {
+    const std::string low = lower(name);
+    for (size_t p = low.find("the"); p != std::string::npos; p = low.find("the", p + 1)) {
+        const bool left = p == 0 || !std::isalpha(static_cast<unsigned char>(low[p - 1]));
+        const bool right = p + 3 == low.size() || !std::isalpha(static_cast<unsigned char>(low[p + 3]));
+        if (left && right) return true;
+    }
+    return false;
+}
+
 std::string detect_directors_name(const std::string& raw) {
     if (raw.find("Direct") == std::string::npos) return "";   // both patterns need Director or Directeur/rice
     const std::string text = cap_runs(raw);
@@ -726,7 +700,10 @@ std::string detect_directors_name(const std::string& raw) {
     for (const auto* re : {&own_line, &comma}) {
         for (auto it = std::sregex_iterator(text.begin(), text.end(), *re); it != std::sregex_iterator(); ++it) {
             const std::string name = trim((*it)[1].str());
-            if (lower(name).find("the") == std::string::npos) return name;
+            // "The Director" and the like are not a name, but a name may contain the letters:
+            // a substring test dropped "Heather Smith" (review of 1.0.0, M11). Refused is a name
+            // with "the" as a word of its own.
+            if (!has_word_the(name)) return name;
         }
     }
     return "";
@@ -792,6 +769,14 @@ static std::string to_iso_date_impl(const std::string& human_in) {
                 w[i + 1] = static_cast<char>(static_cast<unsigned char>(w[i + 1]) + 0x20);
         return w;
     };
+    // "February 30, 2019" is not a date, and neither is "2023-02-30" or "2023-13-45": the ISO form
+    // was passed through unchecked while the spelled-out one was refused (review of 1.0.0, M11)
+    auto real_day = [](int y, int mo, int d) {
+        static const int kDays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+        if (mo < 1 || mo > 12) return false;
+        const bool leap = (y % 4 == 0 && y % 100 != 0) || y % 400 == 0;
+        return d >= 1 && d <= kDays[mo - 1] + (mo == 2 && leap ? 1 : 0);
+    };
     std::smatch m;
     std::string month, day, year;
     if (std::regex_search(human, m, pat) && kMonths.count(key(m[1].str()))) {
@@ -801,65 +786,113 @@ static std::string to_iso_date_impl(const std::string& human_in) {
     } else {
         // already ISO?
         static const std::regex iso(R"(^\d{4}-\d{2}-\d{2}$)");
-        return std::regex_match(human, iso) ? human : "";
+        if (!std::regex_match(human, iso)) return "";
+        return real_day(small_int(human.substr(0, 4)), small_int(human.substr(5, 2)),
+                        small_int(human.substr(8, 2))) ? human : "";
     }
     const auto it = kMonths.find(key(month));
     if (it == kMonths.end()) return "";
-    // "February 30, 2019" is not a date
     const int y = small_int(year), mo = it->second, d = small_int(day);
-    static const int kDays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    const bool leap = (y % 4 == 0 && y % 100 != 0) || y % 400 == 0;
-    if (d < 1 || d > kDays[mo - 1] + (mo == 2 && leap ? 1 : 0)) return "";
+    if (!real_day(y, mo, d)) return "";
     char buf[16];
     std::snprintf(buf, sizeof buf, "%s-%02d-%02d", year.c_str(), it->second, small_int(day));
     return buf;
 }
 
-// "&#233;" / "&#xE9;" -> the character as UTF-8 (any code point the named list misses)
-static std::string decode_numeric_entities(const std::string& s) {
+// "&#233;" / "&#xE9;" at s[i] -> the character as UTF-8 (any code point the named list misses),
+// appended to `out`; returns the entity's length, or 0 when s[i] does not start one. NUL, a
+// surrogate (U+D800 to U+DFFF, which UTF-8 cannot carry: "&#xD800;" made invalid UTF-8; review of
+// 1.0.0, M11) and anything past U+10FFFF are entities that decode to nothing.
+static size_t numeric_entity_at(const std::string& s, size_t i, std::string& out) {
+    if (!(s[i] == '&' && i + 2 < s.size() && s[i + 1] == '#')) return 0;
+    size_t k = i + 2;
+    bool hex = false;
+    if (k < s.size() && s[k] == 'x') {
+        hex = true;
+        ++k;
+    }
+    const size_t d0 = k;
+    while (k < s.size() &&
+           (hex ? std::isxdigit(static_cast<unsigned char>(s[k])) != 0
+                : std::isdigit(static_cast<unsigned char>(s[k])) != 0)) ++k;
+    if (!(k > d0 && k < s.size() && s[k] == ';')) return 0;
+    // more SIGNIFICANT digits than any code point has is not an entity
+    // worth keeping; leading zeros ("&#0000000233;") are not significant
+    size_t d1 = d0;
+    while (d1 + 1 < k && s[d1] == '0') ++d1;
+    const unsigned long cp = (k - d1 > 8) ? 0x110000UL
+        : std::stoul(s.substr(d1, k - d1), nullptr, hex ? 16 : 10);
+    const size_t len = k + 1 - i;
+    if (cp == 0 || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF)) return len;
+    if (cp < 0x80) {
+        out += static_cast<char>(cp);
+    } else if (cp < 0x800) {
+        out += static_cast<char>(0xC0 | (cp >> 6));
+        out += static_cast<char>(0x80 | (cp & 0x3F));
+    } else if (cp < 0x10000) {
+        out += static_cast<char>(0xE0 | (cp >> 12));
+        out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+        out += static_cast<char>(0x80 | (cp & 0x3F));
+    } else {
+        out += static_cast<char>(0xF0 | (cp >> 18));
+        out += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+        out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+        out += static_cast<char>(0x80 | (cp & 0x3F));
+    }
+    return len;
+}
+
+// Every entity in ONE pass, each decoded once: the passes one after another ("&amp;" first) read
+// "&amp;lt;b&amp;gt; &amp;eacute;" as "<b> \xc3\xa9" where the page says the literal text
+// "&lt;b&gt; &eacute;" (review of 1.0.0, M11). The spellings are exact-case, as before (HTML entity
+// names are case-sensitive: &apos; yes, &APOS; no); the markup is already gone, so a decoded "<"
+// cannot be mistaken for a tag by anything downstream.
+static std::string decode_entities(const std::string& s) {
+    static const std::pair<const char*, const char*> kLit[] = {
+        {"&nbsp;", " "}, {"&amp;", "&"}, {"&quot;", "\""}, {"&lt;", "<"}, {"&gt;", ">"},
+        {"&#8217;", "'"}, {"&rsquo;", "'"}, {"&#x2019;", "'"},
+        {"&#8216;", "'"}, {"&lsquo;", "'"}, {"&#x2018;", "'"},
+        {"&#8220;", "\""}, {"&ldquo;", "\""}, {"&#8221;", "\""}, {"&rdquo;", "\""}, {"&#x201c;", "\""},
+        {"&#x201d;", "\""},
+        {"&#39;", "'"}, {"&#039;", "'"}, {"&apos;", "'"},
+        {"&#8211;", "-"}, {"&ndash;", "-"}, {"&#x2013;", "-"},
+        {"&#8212;", "--"}, {"&mdash;", "--"}, {"&#x2014;", "--"},
+        {"&hellip;", "..."}, {"&#8230;", "..."},
+        // accented named entities of the French pages, as UTF-8
+        {"&eacute;", "\xc3\xa9"}, {"&egrave;", "\xc3\xa8"}, {"&ecirc;", "\xc3\xaa"}, {"&euml;", "\xc3\xab"},
+        {"&agrave;", "\xc3\xa0"}, {"&acirc;", "\xc3\xa2"}, {"&ccedil;", "\xc3\xa7"}, {"&icirc;", "\xc3\xae"},
+        {"&iuml;", "\xc3\xaf"}, {"&ocirc;", "\xc3\xb4"}, {"&ouml;", "\xc3\xb6"}, {"&ucirc;", "\xc3\xbb"},
+        {"&ugrave;", "\xc3\xb9"}, {"&uuml;", "\xc3\xbc"}, {"&auml;", "\xc3\xa4"}, {"&copy;", "\xc2\xa9"},
+        {"&reg;", "\xc2\xae"}, {"&Eacute;", "\xc3\x89"}, {"&Agrave;", "\xc3\x80"}, {"&Egrave;", "\xc3\x88"},
+        {"&Ecirc;", "\xc3\x8a"}, {"&Ccedil;", "\xc3\x87"}, {"&Ocirc;", "\xc3\x94"}, {"&Icirc;", "\xc3\x8e"},
+        {"&Acirc;", "\xc3\x82"}, {"&laquo;", "\xc2\xab"}, {"&raquo;", "\xc2\xbb"}, {"&oelig;", "\xc5\x93"},
+        {"&OElig;", "\xc5\x92"}, {"&thinsp;", " "}};
     std::string out;
     out.reserve(s.size());
     size_t i = 0;
     while (i < s.size()) {
-        if (s[i] == '&' && i + 2 < s.size() && s[i + 1] == '#') {
-            size_t k = i + 2;
-            bool hex = false;
-            if (k < s.size() && s[k] == 'x') {
-                hex = true;
-                ++k;
-            }
-            const size_t d0 = k;
-            while (k < s.size() &&
-                   (hex ? std::isxdigit(static_cast<unsigned char>(s[k])) != 0
-                        : std::isdigit(static_cast<unsigned char>(s[k])) != 0)) ++k;
-            if (k > d0 && k < s.size() && s[k] == ';') {
-                // more SIGNIFICANT digits than any code point has is not an entity
-                // worth keeping; leading zeros ("&#0000000233;") are not significant
-                size_t d1 = d0;
-                while (d1 + 1 < k && s[d1] == '0') ++d1;
-                const unsigned long cp = (k - d1 > 8) ? 0x110000UL
-                    : std::stoul(s.substr(d1, k - d1), nullptr, hex ? 16 : 10);
-                i = k + 1;
-                if (cp == 0 || cp > 0x10FFFF) continue;
-                if (cp < 0x80) {
-                    out += static_cast<char>(cp);
-                } else if (cp < 0x800) {
-                    out += static_cast<char>(0xC0 | (cp >> 6));
-                    out += static_cast<char>(0x80 | (cp & 0x3F));
-                } else if (cp < 0x10000) {
-                    out += static_cast<char>(0xE0 | (cp >> 12));
-                    out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
-                    out += static_cast<char>(0x80 | (cp & 0x3F));
-                } else {
-                    out += static_cast<char>(0xF0 | (cp >> 18));
-                    out += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
-                    out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
-                    out += static_cast<char>(0x80 | (cp & 0x3F));
-                }
-                continue;
+        poll_every(i);
+        if (s[i] != '&') {
+            out += s[i++];
+            continue;
+        }
+        bool hit = false;
+        for (const auto& [ent, ch] : kLit) {
+            const size_t n = std::strlen(ent);
+            if (s.compare(i, n, ent) == 0) {
+                out += ch;
+                i += n;
+                hit = true;
+                break;
             }
         }
-        out += s[i++];
+        if (hit) continue;
+        const size_t n = numeric_entity_at(s, i, out);
+        if (n) {
+            i += n;
+        } else {
+            out += s[i++];
+        }
     }
     return out;
 }
@@ -873,32 +906,7 @@ std::string html_to_text(const std::string& html) {
     // Block-level closers become newlines so section headers keep their lines;
     // every other tag is a space.
     t = strip_tags(t);
-    t = replace_all(t, "&nbsp;", " ");
-    t = replace_all(t, "&amp;", "&");
-    t = replace_any(t, {"&#8217;", "&rsquo;", "&#x2019;"}, "'");
-    t = replace_any(t, {"&#8216;", "&lsquo;", "&#x2018;"}, "'");
-    t = replace_any(t, {"&#8220;", "&ldquo;", "&#8221;", "&rdquo;", "&#x201c;", "&#x201d;"}, "\"");
-    t = replace_all(t, "&quot;", "\"");
-    t = replace_any(t, {"&#39;", "&#039;", "&apos;"}, "'");
-    t = replace_any(t, {"&#8211;", "&ndash;", "&#x2013;"}, "-");
-    t = replace_any(t, {"&#8212;", "&mdash;", "&#x2014;"}, "--");
-    // Angle brackets last: the markup is already gone, so a decoded "<"
-    // cannot be mistaken for a tag by anything downstream.
-    // accented named entities of the French pages, as UTF-8
-    static const std::array<std::pair<const char*, const char*>, 30> kNamed = {{
-        {"&eacute;", "\xc3\xa9"}, {"&egrave;", "\xc3\xa8"}, {"&ecirc;", "\xc3\xaa"}, {"&euml;", "\xc3\xab"},
-        {"&agrave;", "\xc3\xa0"}, {"&acirc;", "\xc3\xa2"}, {"&ccedil;", "\xc3\xa7"}, {"&icirc;", "\xc3\xae"},
-        {"&iuml;", "\xc3\xaf"}, {"&ocirc;", "\xc3\xb4"}, {"&ouml;", "\xc3\xb6"}, {"&ucirc;", "\xc3\xbb"},
-        {"&ugrave;", "\xc3\xb9"}, {"&uuml;", "\xc3\xbc"}, {"&auml;", "\xc3\xa4"}, {"&copy;", "\xc2\xa9"},
-        {"&reg;", "\xc2\xae"}, {"&Eacute;", "\xc3\x89"}, {"&Agrave;", "\xc3\x80"}, {"&Egrave;", "\xc3\x88"},
-        {"&Ecirc;", "\xc3\x8a"}, {"&Ccedil;", "\xc3\x87"}, {"&Ocirc;", "\xc3\x94"}, {"&Icirc;", "\xc3\x8e"},
-        {"&Acirc;", "\xc3\x82"}, {"&laquo;", "\xc2\xab"}, {"&raquo;", "\xc2\xbb"}, {"&oelig;", "\xc5\x93"},
-        {"&OElig;", "\xc5\x92"}, {"&thinsp;", " "}}};
-    for (const auto& [ent, ch] : kNamed) t = replace_all(t, ent, ch);
-    t = replace_any(t, {"&hellip;", "&#8230;"}, "...");
-    t = decode_numeric_entities(t);
-    t = replace_all(t, "&lt;", "<");
-    t = replace_all(t, "&gt;", ">");
+    t = decode_entities(t);
     // collapse spaces but keep newlines (section slicing needs them), and cap
     // every line: see normalize_text()
     return normalize_text(t);

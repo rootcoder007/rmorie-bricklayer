@@ -29,8 +29,8 @@ rows are not listed.
 \description{
 \code{drpempty()} removes rows or columns that are entirely missing.
 \code{drpconst()} removes columns that hold a single distinct
-value. The counterparts of \code{janitor::remove_empty()} and
-\code{janitor::remove_constant()}. Use them after reading a spreadsheet
+value. They are the counterparts of the janitor functions
+\code{remove_empty()} and \code{remove_constant()}. Use them after reading a spreadsheet
 export, which often carries blank padding rows, empty columns and
 columns that repeat one value (a year, a jurisdiction) on every row.
 }

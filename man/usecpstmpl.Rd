@@ -43,12 +43,12 @@ marked \code{TODO}.}
 with \code{\link{fdl}} (a local path is read directly),
 computes its SHA-256 with \code{\link{sha256file}} and stops if it no
 longer matches the pinned value, runs \code{\link{anltab}},
-and writes \code{results/manifest.json}, \code{results/report.html}
-and \code{results/report.md}.}
+and writes \code{manifest.json}, \code{report.html} and \code{report.md}
+in \code{results/}.}
 \item{\code{README.md}}{the three steps to fill in and run the capsule.}
 }
-With \code{example = TRUE} the source is the OTIS table shipped with the
-package (\code{extdata/otis_a01_individuals.csv}), so
+With \code{example = TRUE} the source is the OTIS table
+\code{otis_a01_individuals.csv} shipped in the package's \code{extdata} folder, so
 \code{Rscript analysis.R} runs as written. The table settings in the
 template (\code{value = "individuals"}, \code{period = "year"},
 \code{by = c("table", "group")}) fit that example and must be edited for

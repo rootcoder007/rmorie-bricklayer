@@ -87,14 +87,14 @@ extern "C" int rmbl_barrier_active(void) {
 }
 
 static void rmbl_set_msg(char *to, const char *m) {
-    std::snprintf(to, 1024, "%s", m);
+    std::snprintf(to, 8192, "%s", m);   /* the size rmbl::fail() formats to */
 }
 
 template <class F>
 struct rmbl_call {
     F *f;
     SEXP r;
-    char msg[1024];   /* not a std::string: Rf_errorcall() below jumps over its destructor */
+    char msg[8192];   /* not a std::string: Rf_errorcall() below jumps over its destructor */
     int kind;
 };
 
@@ -178,6 +178,7 @@ SEXP C_rmbl_http_download_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_redirect_check_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_wayback_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_url_check_impl(SEXP, SEXP, SEXP, SEXP);
+SEXP C_rmbl_net_probe_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_siu_html_to_text_impl(SEXP);
 SEXP C_rmbl_siu_parse_html_impl(SEXP);
 SEXP C_rmbl_siu_to_iso_date_impl(SEXP);
@@ -332,6 +333,9 @@ SEXP C_rmbl_wayback(SEXP a0, SEXP a1, SEXP a2) {
 }
 SEXP C_rmbl_url_check(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
     return rmbl_guard("C_rmbl_url_check", [&] { return C_rmbl_url_check_impl(a0, a1, a2, a3); });
+}
+SEXP C_rmbl_net_probe(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
+    return rmbl_guard("C_rmbl_net_probe", [&] { return C_rmbl_net_probe_impl(a0, a1, a2, a3); });
 }
 SEXP C_rmbl_siu_html_to_text(SEXP a0) {
     return rmbl_guard("C_rmbl_siu_html_to_text", [&] { return C_rmbl_siu_html_to_text_impl(a0); });

@@ -7,12 +7,11 @@
 rslvsoc(prov)
 }
 \arguments{
-\item{prov}{A provenance list as returned by
-\code{\link[=loadprov]{loadprov()}}, or
-\code{NULL}. Must contain \code{dataset$socrata_domain} (a host name
-without scheme, e.g. \code{"data.cityofchicago.org"}) and
-\code{dataset$socrata_id} (the four-by-four dataset id, e.g.
-\code{"ijzp-q8t2"}).}
+\item{prov}{A provenance list as returned by \code{\link[=loadprov]{loadprov()}}, or \code{NULL}.
+It must have two fields. The first is \code{dataset$socrata_domain}, a
+host name without scheme such as \code{"data.cityofchicago.org"}. The
+second is \code{dataset$socrata_id}, the four-by-four dataset id such as
+\code{"ijzp-q8t2"}.}
 }
 \value{
 The CSV export URL as a length-1 character string, or \code{NULL}
@@ -28,9 +27,9 @@ its portal domain and a four-by-four id such as \code{ijzp-q8t2}.
 \details{
 One request is made, to \code{https://<domain>/api/views/<id>.json}. If
 it answers with JSON that has an \code{id} field the dataset is taken to
-exist and the function returns
-\code{https://<domain>/api/views/<id>/rows.csv?accessType=DOWNLOAD}, the
-portal's export of every row. The id is not checked further, and the
+exist. The function then returns the portal's export of every row, the URL
+\code{https://<domain>/api/views/<id>/} followed by
+\code{rows.csv?accessType=DOWNLOAD}. The id is not checked further, and the
 export URL is not fetched.
 
 \code{NULL} is returned when \code{prov} is \code{NULL}, when the

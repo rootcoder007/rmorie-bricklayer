@@ -42,6 +42,10 @@ extern "C" BOOLEAN NTAPI SystemFunction036(PVOID buffer, ULONG length);
 #include "rmbl_entry.h"
 #include "rmbl_ct.h"
 #include <cerrno>
+#if !defined(_WIN32)
+#include <fcntl.h>
+#include <unistd.h>
+#endif
 #if defined(__linux__) && defined(__GLIBC__) && \
     (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 25))
 #include <sys/random.h>
@@ -120,7 +124,10 @@ void b2b_g(uint64_t *v, int a, int b, int c, int d, uint64_t x, uint64_t y) {
 }
 
 void b2b_compress(blake2b_ctx *c, int last) {
+    /* m is the block (the key block first, for a keyed hash) and v the
+     * state mixed with it: both wiped as the frame ends (review of 1.0.0, M8) */
     uint64_t v[16], m[16];
+    rmbl_ct::Guard gv(v, sizeof v), gm(m, sizeof m);
     for (int i = 0; i < 8; ++i) v[i] = c->h[i];
     for (int i = 0; i < 8; ++i) v[i + 8] = kIV[i];
     v[12] ^= c->t[0];
@@ -202,6 +209,7 @@ int rmbl_blake2b(const unsigned char *msg, size_t msglen,
                  const unsigned char *key, size_t keylen, int outlen,
                  unsigned char *out) {
     blake2b_ctx c;
+    rmbl_ct::Guard gc(&c, sizeof c);   /* the key's block and the keyed state */
     if (b2b_init(&c, outlen, key, keylen) != 0) return -1;
     b2b_update(&c, msg, msglen);
     b2b_final(&c, out);
@@ -264,7 +272,9 @@ static int pbkdf2_inner(const unsigned char *pass, size_t passlen,
 int rmbl_pbkdf2_sha256(const unsigned char *pass, size_t passlen,
                         const unsigned char *salt, size_t saltlen,
                         int iterations, int dklen, unsigned char *out) {
-    const int r = pbkdf2_inner(pass, passlen, salt, saltlen, iterations, dklen, out);
+    int r = -1;
+    /* an allocation failure in the body is an R error, never std::terminate() (M12) */
+    rmbl::kernel_call([&] { r = pbkdf2_inner(pass, passlen, salt, saltlen, iterations, dklen, out); });
     if (r == 1) rmbl_interrupt_raise_unbarriered();   /* no std::vector alive here */
     return r;
 }
@@ -304,10 +314,22 @@ int rmbl_os_random(unsigned char *out, size_t n) {
     }
     return 0;
 #else
-    FILE *f = std::fopen("/dev/urandom", "rb");
-    if (f == NULL) return -1;
-    const size_t got = std::fread(out, 1, n, f);
-    std::fclose(f);
+    /* read(2) on a descriptor opened close-on-exec: stdio buffered up to a
+     * page of random bytes beyond the request in its own heap buffer (freed
+     * unwiped), and the descriptor leaked into any child exec'd meanwhile */
+    int fd;
+    do {
+        fd = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
+    } while (fd < 0 && errno == EINTR);
+    if (fd < 0) return -1;
+    size_t got = 0;
+    while (got < n) {
+        const ssize_t r = read(fd, out + got, n - got);
+        if (r < 0 && errno == EINTR) continue;
+        if (r <= 0) break;
+        got += static_cast<size_t>(r);
+    }
+    close(fd);
     return (got == n) ? 0 : -1;
 #endif
 }
@@ -337,6 +359,9 @@ SEXP C_rmbl_blake2b_impl(SEXP x, SEXP key, SEXP outlen) {
             UNPROTECT(1);
         }
     }
+    /* the heap copy of the key is wiped before the vector frees it; declared after `kb`, the guard
+     * runs first, on every return (review of 1.0.0, M8) */
+    rmbl_ct::Guard gkb(kb.data(), kb.size());
     std::vector<unsigned char> ob(static_cast<size_t>(ol));
     std::string hex;
 
@@ -374,9 +399,9 @@ SEXP C_rmbl_pbkdf2_impl(SEXP pass, SEXP salt, SEXP iterations, SEXP dklen) {
      * live vector leaks it */
     SEXP p = PROTECT(TYPEOF(pass) == RAWSXP ? pass : Rf_coerceVector(pass, STRSXP));
     SEXP s2 = PROTECT(TYPEOF(salt) == RAWSXP ? salt : Rf_coerceVector(salt, STRSXP));
-    const char *ps = TYPEOF(p) == RAWSXP ? NULL : rmbl_str0(p, "password");
+    const char *ps = TYPEOF(p) == RAWSXP ? NULL : rmbl_str0(p, "pass");
     const char *ss = TYPEOF(s2) == RAWSXP ? NULL : rmbl_str0(s2, "salt");
-    const size_t pslen = ps ? rmbl_str0_len(p, "password") : 0;
+    const size_t pslen = ps ? rmbl_str0_len(p, "pass") : 0;
     const size_t sslen = ss ? rmbl_str0_len(s2, "salt") : 0;
 
     std::vector<unsigned char> pb, sb;
@@ -387,10 +412,12 @@ SEXP C_rmbl_pbkdf2_impl(SEXP pass, SEXP salt, SEXP iterations, SEXP dklen) {
     rmbl_ct::Guard gpb(pb.data(), pb.size());
     UNPROTECT(2);
     std::vector<unsigned char> out(static_cast<size_t>(dk));
+    rmbl_ct::Guard gout(out.data(), out.size());   /* the derived key */
     rmbl_pbkdf2_sha256(pb.data(), pb.size(), sb.data(), sb.size(), iter, dk,
                        out.data());
     std::string hex;
     hexlify(out.data(), out.size(), hex);
+    rmbl_ct::Guard ghex(&hex[0], hex.size());      /* and its spelling */
     return Rf_mkString(hex.c_str());
 }
 
@@ -400,6 +427,7 @@ SEXP C_rmbl_os_random_impl(SEXP n) {
         rmbl::fail("`n` must be between 1 and 1048576 bytes");
     }
     std::vector<unsigned char> buf(static_cast<size_t>(nn));
+    rmbl_ct::Guard gbuf(buf.data(), buf.size());   /* key material, often: wiped before the free */
     if (rmbl_os_random(buf.data(), buf.size()) != 0) {
         return R_NilValue;   /* the R layer decides how to react */
     }

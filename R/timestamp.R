@@ -33,12 +33,18 @@
 #' existed by a certain date.
 #'
 #' @details
-#' Every step is recorded as a row of `checks`: `token_parses`,
-#' `token_structure`, `message_imprint` (the hash of `data` equals the
-#' token's imprint), `certificate_source`, `signature`, `attribute_digest`
-#' (the signed attributes commit to the token's contents),
-#' `certificate_trust`, and with `trust` the `chain:` checks of
-#' [certchnvrf()]. `ok` is `TRUE` only
+#' Every step is recorded as a row of `checks`:
+#'
+#' * `token_parses`;
+#' * `token_structure`;
+#' * `message_imprint` (the hash of `data` equals the token's imprint);
+#' * `certificate_source`;
+#' * `signature`;
+#' * `attribute_digest` (the signed attributes commit to the token's contents);
+#' * `certificate_trust`;
+#' * with `trust`, the `chain:` checks of [certchnvrf()].
+#'
+#' `ok` is `TRUE` only
 #' when every row passes. A token
 #' that cannot be parsed is not an error: it gives `ok = FALSE` and the
 #' rows up to the failure.
@@ -584,7 +590,16 @@ print.bricklayer_timestamp <- function(x, ...) {
   }
   key <- parsed$key
   if (identical(key$type, "RSA")) {
-    em <- .Call(C_rmbl_rsa_recover, sig, key$modulus, key$exponent)
+    # a signature of the wrong length (or otherwise not one) is not
+    # verified, as for ECDSA below, rather than an error
+    em <- tryCatch(.Call(C_rmbl_rsa_recover, sig, key$modulus, key$exponent),
+                   error = function(e) e)
+    if (inherits(em, "error")) {
+      return(list(
+        ok = FALSE, detail = conditionMessage(em), content_ok = content_ok,
+        content_detail = content_detail
+      ))
+    }
     ok <- .rmbl_pkcs1_check(em, dalg, signed_bytes)
     return(list(
       ok = ok$ok, detail = ok$detail, content_ok = content_ok,

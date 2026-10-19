@@ -72,8 +72,9 @@ describe. It is a description of how the published indicators move together.
 
 This estimator puts to quantitative use the work of Professor Angela Mashford-Pringle
 (Timiskaming First Nation) and Professor Suzanne Stewart (Yellowknives Dene First
-Nation), both of the University of Toronto; see the acknowledgements of
-\code{vignette("first-nations-metis-inuit-health")}.
+Nation), both of the University of Toronto.
+
+See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette.
 }
 
 \examples{

@@ -28,18 +28,18 @@ test_that("the byte lengths are the ones FIPS 203 fixes", {
   for (lv in names(KEM_SIZES)) {
     sz <- kemsz(as.integer(lv))
     expect_identical(
-      unname(sz[c("encapsulation_key", "decapsulation_key", "ciphertext",
-                  "seed", "shared_secret")]),
+      unname(sz[c("public", "secret", "ciphertext",
+                  "seed", "shared")]),
       KEM_SIZES[[lv]], info = lv)
   }
   # the decapsulation key carries the encapsulation key, its hash and
   # the rejection secret, which is where its size comes from
   expect_identical(
-    kemsz(768)[["decapsulation_key"]],
-    2L * (kemsz(768)[["encapsulation_key"]] - 32L) + 32L + 64L)
+    kemsz(768)[["secret"]],
+    2L * (kemsz(768)[["public"]] - 32L) + 32L + 64L)
   # the shared secret is 32 bytes at every level
   for (lv in c(512, 768, 1024)) {
-    expect_identical(kemsz(lv)[["shared_secret"]], 32L)
+    expect_identical(kemsz(lv)[["shared"]], 32L)
   }
   expect_error(kemsz(256), "512, 768 or 1024")
   expect_error(kemsz("768x"), "512, 768 or 1024")

@@ -23,7 +23,7 @@ behind \code{pertoclear}. Default 12, a year of months.}
 \item{conflvl}{Confidence level for the intervals. Default 0.95.}
 }
 \value{
-A data frame of class \code{rmbl_case_flow}, one row per period:
+A data frame of class \code{rmbl_case_flow}, one row per period, with
 \code{period}, \code{received}, \code{disposed}, \code{clearance} with
 \code{lower} and \code{upper}, \code{net} (received less disposed:
 positive grows the inventory), \code{rolclr} with

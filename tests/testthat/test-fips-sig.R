@@ -60,15 +60,15 @@ test_that("the byte lengths are the ones the standards fix", {
     sz <- fipssz(s)
     expect_identical(
       unname(sz[c("public_key", "secret_key", "signature", "seed",
-                  "opt_rand")]),
+                  "rnd")]),
       FIPS_SIZES[[s]],
       info = s)
   }
   # an SLH-DSA key is two n-byte halves and its seed three
   expect_identical(fipssz("SLH-DSA-SHAKE-192s")[["public_key"]],
-                   2L * fipssz("SLH-DSA-SHAKE-192s")[["opt_rand"]])
+                   2L * fipssz("SLH-DSA-SHAKE-192s")[["rnd"]])
   expect_identical(fipssz("SLH-DSA-SHAKE-192s")[["seed"]],
-                   3L * fipssz("SLH-DSA-SHAKE-192s")[["opt_rand"]])
+                   3L * fipssz("SLH-DSA-SHAKE-192s")[["rnd"]])
   # dropping the lattice assumption costs size: three times over at the
   # smallest setting, ten times at the largest
   expect_gt(fipssz("SLH-DSA-SHAKE-128s")[["signature"]],

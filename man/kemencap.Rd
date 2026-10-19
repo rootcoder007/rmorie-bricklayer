@@ -18,10 +18,10 @@ system's CSPRNG. Reusing it across encapsulations to the same key reuses
 the shared secret, so supply it only deliberately.}
 }
 \value{
-A list of class \code{c("bricklayer_kem_capsule", "list")} with
-\code{ciphertext} (character, hex,
-\code{\link[=kemsz]{kemsz()}}\code{[["ciphertext"]]}
-bytes: send this), \code{shared} (character, 64 hex characters, the
+A list of class \code{bricklayer_kem_capsule} with
+\code{ciphertext} (character, hex, of the length in bytes that
+\code{\link[=kemsz]{kemsz()}}\code{[["ciphertext"]]} gives: send this), \code{shared}
+(character, 64 hex characters, the
 32-byte shared secret: keep this) and \code{level} (integer). Printing
 it never shows the shared secret.
 }

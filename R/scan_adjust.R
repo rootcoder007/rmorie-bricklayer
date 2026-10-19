@@ -114,7 +114,7 @@ yoypv <- function(y) {
 #'
 #' @param x An \code{rmbl_yoy} or \code{rmbl_rate_change} object, or any
 #'   data frame with a \code{p_value} column.
-#' @param meth Character, default \code{"BH"}: any method of
+#' @param meth Character, default \code{"BH"}. It can be any method of
 #'   \code{\link[stats]{p.adjust}} (\code{"BH"}, \code{"holm"},
 #'   \code{"bonferroni"}, \code{"BY"}, \code{"hochberg"}, \code{"hommel"},
 #'   \code{"fdr"}, \code{"none"}).

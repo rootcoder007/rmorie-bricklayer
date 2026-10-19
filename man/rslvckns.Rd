@@ -7,12 +7,11 @@
 rslvckns(prov)
 }
 \arguments{
-\item{prov}{A provenance list as returned by
-\code{\link[=loadprov]{loadprov()}}, or
-\code{NULL}. Reads \code{dataset$ckan_api_endpoint},
+\item{prov}{A provenance list as returned by \code{\link[=loadprov]{loadprov()}}, or \code{NULL}.
+The fields read are \code{dataset$ckan_api_endpoint},
 \code{resource$name_match_pattern} (a regular expression, required for
-a match), \code{resource$search_query} (optional search words) and
-\code{resource$format} (optional format name such as \code{"XLSX"}).}
+a match), and, both optional, \code{resource$search_query} (search
+words) and \code{resource$format} (a format name such as \code{"XLSX"}).}
 }
 \value{
 The matched resource URL as a length-1 character string, or
@@ -28,17 +27,18 @@ pinned pattern.
 }
 \details{
 The portal base is the part of \code{dataset$ckan_api_endpoint} before
-\code{/api/3/}; the request is
-\code{<base>/api/3/action/package_search?q=<query>}. The query is
-\code{resource$search_query} when given, otherwise the
+\code{/api/3/}; the request goes to \code{<base>/api/3/action/} followed by
+\code{package_search?q=<query>}.
+
+The query is \code{resource$search_query} when given, otherwise the
 \code{resource$name_match_pattern} with every character other than a
 letter, digit or space replaced by a space. Datasets are walked in the
 order CKAN ranks them, and their resources in listed order. A resource is
 taken when its \code{name} matches \code{resource$name_match_pattern}
 (case-insensitively) and either its format is CSV, or
 \code{resource$format} is unset, or its format equals
-\code{resource$format} (case-insensitively). A CSV resource is therefore
-accepted even when \code{resource$format} asks for another format.
+\code{resource$format} (case-insensitively). So a CSV resource is accepted
+even when \code{resource$format} asks for another format.
 
 \code{NULL} is returned when \code{prov} is \code{NULL}, when no
 query can be formed, when there is no endpoint to derive the base from,

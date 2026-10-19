@@ -64,12 +64,25 @@ inline double median_sorted(const std::vector<double> &v) {
     return quantile7_sorted(v, 0.5);
 }
 
-/* Midranks: tied values share the average of the ranks they span. */
+/* Midranks: tied values share the average of the ranks they span. A NaN
+ * ranks as NaN: `<` with a NaN is no strict weak ordering, and std::sort
+ * given one has undefined behaviour (review of 1.0.0), so the comparator
+ * puts every NaN last and the ranks of the other values are among them
+ * alone, as rank(na.last = "keep") gives them. */
 inline void midranks(const double *a, R_xlen_t n, double *out) {
     std::vector<R_xlen_t> ord(static_cast<std::size_t>(n));
     for (R_xlen_t i = 0; i < n; ++i) ord[static_cast<std::size_t>(i)] = i;
-    std::sort(ord.begin(), ord.end(),
-              [&](R_xlen_t i, R_xlen_t j) { return a[i] < a[j]; });
+    std::sort(ord.begin(), ord.end(), [&](R_xlen_t i, R_xlen_t j) {
+        const bool ni = std::isnan(a[i]), nj = std::isnan(a[j]);
+        if (ni || nj) return !ni && nj;
+        return a[i] < a[j];
+    });
+    R_xlen_t m = n;
+    while (m > 0 && std::isnan(a[ord[static_cast<std::size_t>(m - 1)]])) {
+        --m;
+        out[ord[static_cast<std::size_t>(m)]] = std::nan("");
+    }
+    n = m;
     R_xlen_t i = 0;
     while (i < n) {
         R_xlen_t j = i;
@@ -139,6 +152,7 @@ void rmbl_moments(const double *a, R_xlen_t n, double *out) {
 /* Type-7 quantiles at arbitrary probabilities. */
 void rmbl_quantile(const double *a, R_xlen_t n, const double *probs,
                    R_xlen_t np, double *out) {
+    rmbl::kernel_call([&] {
     if (n < 1 || has_nan(a, n)) {
         for (R_xlen_t k = 0; k < np; ++k) out[k] = std::nan("");
         return;
@@ -146,18 +160,22 @@ void rmbl_quantile(const double *a, R_xlen_t n, const double *probs,
     std::vector<double> v(a, a + n);
     std::sort(v.begin(), v.end());
     for (R_xlen_t k = 0; k < np; ++k) out[k] = quantile7_sorted(v, probs[k]);
+    });
 }
 
 double rmbl_median(const double *a, R_xlen_t n) {
+    return rmbl::kernel_call([&]() -> double {
     if (n < 1 || has_nan(a, n)) return std::nan("");
     std::vector<double> v(a, a + n);
     std::sort(v.begin(), v.end());
     return median_sorted(v);
+    });
 }
 
 /* Median absolute deviation, scaled to be consistent for the normal
  * standard deviation when `constant` is 1.4826. */
 double rmbl_mad(const double *a, R_xlen_t n, double constant) {
+    return rmbl::kernel_call([&]() -> double {
     if (n < 1 || has_nan(a, n)) return std::nan("");
     std::vector<double> v(a, a + n);
     std::sort(v.begin(), v.end());
@@ -165,12 +183,14 @@ double rmbl_mad(const double *a, R_xlen_t n, double constant) {
     for (R_xlen_t i = 0; i < n; ++i) v[static_cast<std::size_t>(i)] = std::fabs(a[i] - med);
     std::sort(v.begin(), v.end());
     return constant * median_sorted(v);
+    });
 }
 
 
 /* Symmetric trimmed mean: drop floor(n * trim) values from each end,
  * matching base R's mean(x, trim = ). */
 double rmbl_trimmed_mean(const double *a, R_xlen_t n, double trim) {
+    return rmbl::kernel_call([&]() -> double {
     if (n < 1 || has_nan(a, n)) return std::nan("");
     if (!(trim >= 0.0) || trim > 0.5) return std::nan("");
     std::vector<double> v(a, a + n);
@@ -180,11 +200,13 @@ double rmbl_trimmed_mean(const double *a, R_xlen_t n, double trim) {
     double s = 0.0;
     for (R_xlen_t i = k; i < n - k; ++i) s += v[static_cast<std::size_t>(i)];
     return s / static_cast<double>(n - 2 * k);
+    });
 }
 
 /* Winsorized mean: the same tails are pulled in to the surviving
  * extremes rather than discarded, so every observation still counts. */
 double rmbl_winsorized_mean(const double *a, R_xlen_t n, double trim) {
+    return rmbl::kernel_call([&]() -> double {
     if (n < 1 || has_nan(a, n)) return std::nan("");
     if (!(trim >= 0.0) || trim > 0.5) return std::nan("");
     std::vector<double> v(a, a + n);
@@ -201,6 +223,7 @@ double rmbl_winsorized_mean(const double *a, R_xlen_t n, double trim) {
         s += z;
     }
     return s / static_cast<double>(n);
+    });
 }
 
 double rmbl_weighted_mean(const double *a, const double *w, R_xlen_t n) {
@@ -236,6 +259,7 @@ double rmbl_weighted_var(const double *a, const double *w, R_xlen_t n) {
 /* Spearman's rho: Pearson correlation of the midranks, so ties are
  * handled the way stats::cor(method = "spearman") handles them. */
 double rmbl_cor_spearman(const double *x, const double *y, R_xlen_t n) {
+    return rmbl::kernel_call([&]() -> double {
     if (n < 2 || has_nan(x, n) || has_nan(y, n)) return std::nan("");
     std::vector<double> rx(static_cast<std::size_t>(n));
     std::vector<double> ry(static_cast<std::size_t>(n));
@@ -256,15 +280,19 @@ double rmbl_cor_spearman(const double *x, const double *y, R_xlen_t n) {
     const double den = (dn * sxx - sx * sx) * (dn * syy - sy * sy);
     if (den <= 0.0) return std::nan("");
     return num / std::sqrt(den);
+    });
 }
 
 void rmbl_midranks(const double *a, R_xlen_t n, double *out) {
+    rmbl::kernel_call([&] {
     if (n < 1) return;
     midranks(a, n, out);
+    });
 }
 
 /* Column covariance matrix (n - 1 denominator), column-major in and out. */
 void rmbl_cov_matrix(const double *x, R_xlen_t n, R_xlen_t p, double *out) {
+    rmbl::kernel_call([&] {
     if (n < 2) {
         for (R_xlen_t k = 0; k < p * p; ++k) out[k] = std::nan("");
         return;
@@ -287,12 +315,14 @@ void rmbl_cov_matrix(const double *x, R_xlen_t n, R_xlen_t p, double *out) {
             out[j * p + k] = v;
         }
     }
+    });
 }
 
 /* Two-sample Kolmogorov-Smirnov statistic: the largest vertical gap
  * between the two empirical distribution functions. */
 double rmbl_ks_two_sample(const double *x, R_xlen_t nx,
                           const double *y, R_xlen_t ny) {
+    return rmbl::kernel_call([&]() -> double {
     if (nx < 1 || ny < 1 || has_nan(x, nx) || has_nan(y, ny)) {
         return std::nan("");
     }
@@ -311,6 +341,7 @@ double rmbl_ks_two_sample(const double *x, R_xlen_t nx,
         if (gap > d) d = gap;
     }
     return d;
+    });
 }
 
 /* Asymptotic two-sided KS p-value, 1 - K(t) with t = sqrt(n_eff) * D.

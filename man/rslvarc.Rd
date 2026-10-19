@@ -7,11 +7,11 @@
 rslvarc(prov)
 }
 \arguments{
-\item{prov}{A provenance list as returned by
-\code{\link[=loadprov]{loadprov()}}, or
-\code{NULL}. Must contain \code{dataset$arcgis_layer_url}, a
-FeatureServer layer root such as
-\code{"https://services.arcgis.com/.../Assault_Open_Data/FeatureServer/0"}.}
+\item{prov}{A provenance list as returned by \code{\link[=loadprov]{loadprov()}}, or \code{NULL}.
+It must have the field \code{dataset$arcgis_layer_url}, a
+FeatureServer layer root. An example is\cr
+\code{https://services.arcgis.com/.../}\cr
+followed by \code{Assault_Open_Data/FeatureServer/0}.}
 }
 \value{
 The layer query URL as a length-1 character string, or

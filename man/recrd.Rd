@@ -10,8 +10,8 @@ recrd(man, name, obs, expd, tol = 1e-04, grp = "general", syn = FALSE)
 \item{man}{A manifest as returned by
 \code{\link[=mkmnf]{mkmnf()}}.}
 
-\item{name}{Character scalar, the name of this cross-check; used as the
-key in \code{manifest$results}, so it should be unique.}
+\item{name}{Character scalar, the name of this cross-check. It is the key
+of the entry in \code{manifest$results}, so it should be unique.}
 
 \item{obs}{The value the analysis produced: a numeric scalar for a
 tolerance check, or any single value to be stored as information.}

@@ -193,8 +193,8 @@
 #'   with fewer clusters, and t on its \eqn{G - 1} degrees of freedom. A composite
 #'   cluster (district by month, say) is one column made with \code{interaction()}.
 #' @param fe \code{c("unit", "time")} (default) or \code{"time"}.
-#' @param w Optional column name of non-negative weights (population, or
-#'   matching weights): weighted least squares, with weighted within-means.
+#' @param w Optional column name of non-negative weights, such as population or
+#'   matching weights, for weighted least squares with weighted within-means.
 #' @param comb Optional linear combination of the terms, named by them, reported
 #'   with its delta-method standard error as the attribute \code{combined}. For a
 #'   phase-in model with an exposure term \eqn{E_{it} = \min(t - G_i, K)},
@@ -334,7 +334,8 @@ print.rmbl_did <- function(x, ...) {
 #'   it.
 #' @references Sun L, Abraham S (2021). Estimating dynamic treatment effects in event
 #'   studies with heterogeneous treatment effects. Journal of Econometrics
-#'   225(2):175-199. \doi{10.1016/j.jeconom.2020.09.006}
+#'   225(2):175-199.\cr
+#'   \doi{10.1016/j.jeconom.2020.09.006}
 #'
 #' Applied to the effect of donations on police stops, block by quarter: Zorro Medina
 #' A, Hackett D, Green D, Vargas R (2025). Evidence of donor bias in Chicago police
@@ -389,7 +390,9 @@ evstudy <- function(data, unit, time, y, ftreat, leads = 4L, lags = 4L, ref = -1
   out <- rbind(tab, .ref)
   out <- out[order(out$evtm), c("evtm", "estimate", "se", "lower", "upper", "t", "p_value")]
   rownames(out) <- NULL
-  pre <- paste0("k", ks[ks < 0])
+  # with no lead at all paste0() gave "k", not nothing, and the test read past the coefficients
+  # (evstudy(leads = 1) with the reference at -1; coverage pass of 1.0.0)
+  pre <- if (any(ks < 0)) paste0("k", ks[ks < 0]) else character()
   if (length(pre)) {
     gm <- fit$coef[pre]
     w <- as.numeric(t(gm) %*% solve(fit$vcov[pre, pre, drop = FALSE], gm))
@@ -435,7 +438,8 @@ plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NUL
   cl <- .bl_cols(1L, col, palette)
   yl <- range(c(d$lower, d$upper, 0), na.rm = TRUE)
   graphics::plot(d$evtm, d$estimate, ylim = yl, type = "n", xlab = "Periods since adoption",
-                 ylab = "Effect, with its interval", main = .bl_main(main, "Event study"), ...)
+                 ylab = "Effect, with its interval", main = "", ...)
+  .bl_title(.bl_main(main, "Event study"))
   if (isTRUE(shadepost)) {
     u <- graphics::par("usr")
     graphics::rect(refline, u[3L], u[2L], u[4L], col = grDevices::adjustcolor("#9A9A9A", 0.15), border = NA)
@@ -640,7 +644,6 @@ stgatt <- function(data, unit, time, y, ftreat, ctrl = c("notyet", "never"),
     for (j in seq_along(tl)[-1L]) {
       t <- tl[j]
       b <- if (t >= cg) max(which(tl < cg)) else j - 1L
-      if (!length(b) || !is.finite(b)) next
       cut <- max(t, tl[b])
       ic <- if (control == "never") gg == Inf else (gg > cut & gg != cg)
       ic <- ic & gg != -Inf
@@ -1279,7 +1282,8 @@ plnpois <- function(data, unit, time, y, trtd, covs = NULL, offset = NULL, cl = 
 #'   \code{plot()} draws the two paths and the gap.
 #' @references Abadie A, Diamond A, Hainmueller J (2010). Synthetic control methods
 #'   for comparative case studies. Journal of the American Statistical Association
-#'   105(490):493-505. \doi{10.1198/jasa.2009.ap08746}
+#'   105(490):493-505.\cr
+#'   \doi{10.1198/jasa.2009.ap08746}
 #' @examples
 #' p <- polex()
 #' p1 <- p[is.na(p$refmonth) | p$district == "D01", ]
@@ -1393,7 +1397,8 @@ plot.rmbl_synth <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   cl <- .bl_cols(2L, col, palette)
   graphics::matplot(d$time, cbind(d$treated, d$synthetic), type = "l", lty = c(1, 2), col = cl, lwd = 2,
                     xlab = "Period", ylab = "Outcome",
-                    main = .bl_main(main, paste("Synthetic control:", x$treunit)), ...)
+                    main = "", ...)
+  .bl_title(.bl_main(main, paste("Synthetic control:", x$treunit)))
   graphics::abline(v = x$adoption, lty = 3, col = "#9A9A9A")
   graphics::legend("topleft", c(x$treunit, "Synthetic"), lty = c(1, 2), col = cl, lwd = 2, bty = "n")
   invisible(d)
@@ -1647,8 +1652,9 @@ cmlrisk <- function(age, fireve, pop, atrisk = NULL, dthrate = NULL,
 #' @param radius The treatment radius.
 #' @param buffer The distance from every site a comparison place must keep (default
 #'   \code{3 * radius}).
-#' @return A data frame: \code{group} (\code{"treated"}, \code{"comparison"} or
-#'   \code{"excluded"}), \code{site_distance}, \code{comparison_distance}.
+#' @return A data frame with the columns \code{group} (\code{"treated"},
+#'   \code{"comparison"} or \code{"excluded"}), \code{site_distance} and
+#'   \code{comparison_distance}.
 #' @references Applied to blocks near donor stores: Zorro Medina, Hackett, Green and
 #'   Vargas (2025), see \code{\link{evstudy}}.
 #' @examples

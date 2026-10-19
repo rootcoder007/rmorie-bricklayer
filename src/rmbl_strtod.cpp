@@ -204,6 +204,17 @@ struct Parsed {
     size_t sig_digits;
 };
 
+/* does s[0, len) start with `word`, ignoring ASCII case */
+bool ci_prefix(const char *s, size_t len, const char *word) {
+    const size_t n = std::strlen(word);
+    if (len < n) return false;
+    for (size_t k = 0; k < n; ++k) {
+        const char c = (s[k] >= 'A' && s[k] <= 'Z') ? static_cast<char>(s[k] - 'A' + 'a') : s[k];
+        if (c != word[k]) return false;
+    }
+    return true;
+}
+
 /* Read the JSON (and R) number grammar, plus the specials R writes. */
 Parsed parse_decimal(const char *s, size_t len) {
     Parsed p;
@@ -222,16 +233,22 @@ Parsed parse_decimal(const char *s, size_t len) {
         p.negative = (s[i] == '-');
         ++i;
     }
-    if (i + 2 < len + 1 && (len - i) >= 3) {
-        if (std::strncmp(s + i, "Inf", 3) == 0 ||
-            std::strncmp(s + i, "inf", 3) == 0) {
-            p.is_inf = true;
-            p.valid = true;
-            return p;
-        }
-        if (std::strncmp(s + i, "NaN", 3) == 0 ||
-            std::strncmp(s + i, "nan", 3) == 0) {
-            p.is_nan = true;
+    /* the specials, spelled as R reads them (any case, "Inf" or
+     * "Infinity", "NaN"), and nothing after them but white space: "Info"
+     * and "nanny" read as Inf and NaN while as.numeric() gives NA */
+    {
+        size_t k = 0;
+        bool inf = false, nan = false;
+        if (ci_prefix(s + i, len - i, "infinity")) { inf = true; k = 8; }
+        else if (ci_prefix(s + i, len - i, "inf")) { inf = true; k = 3; }
+        else if (ci_prefix(s + i, len - i, "nan")) { nan = true; k = 3; }
+        if (inf || nan) {
+            size_t j = i + k;
+            while (j < len && (s[j] == ' ' || s[j] == '\t' || s[j] == '\n' ||
+                               s[j] == '\r')) ++j;
+            if (j != len) return p;
+            p.is_inf = inf;
+            p.is_nan = nan;
             p.valid = true;
             return p;
         }
@@ -239,6 +256,7 @@ Parsed parse_decimal(const char *s, size_t len) {
 
     bool any_digit = false;
     bool seen_nonzero = false;
+    bool sticky = false;      /* a nonzero digit past the 768 kept */
     int frac_digits = 0;
     /* integer part */
     while (i < len && s[i] >= '0' && s[i] <= '9') {
@@ -257,6 +275,7 @@ Parsed parse_decimal(const char *s, size_t len) {
                 add_small(p.mantissa, d);
                 ++p.sig_digits;
             } else {
+                if (d != 0) sticky = true;
                 ++p.exponent;
             }
         }
@@ -275,6 +294,8 @@ Parsed parse_decimal(const char *s, size_t len) {
                     add_small(p.mantissa, d);
                     ++p.sig_digits;
                     ++frac_digits;
+                } else if (d != 0) {
+                    sticky = true;
                 }
             } else {
                 /* leading zeros after the point still shift the scale */
@@ -285,6 +306,18 @@ Parsed parse_decimal(const char *s, size_t len) {
     }
     if (!any_digit) return p;
     p.exponent -= frac_digits;
+    /* Dropped digits that were not all zero put the value strictly above
+     * the kept mantissa m, and that matters when m is exactly a halfway
+     * point (ties to even would round it down). Appending one digit 1,
+     * m * 10 + 1 at one lower power of ten, is strictly between m and
+     * m + 1 at the old scale; no rounding boundary of a double (at most
+     * 767 significant digits) lies in that open interval, so the result
+     * is the one the full digit string rounds to. */
+    if (sticky) {
+        mul_small(p.mantissa, 10u);
+        add_small(p.mantissa, 1u);
+        p.exponent -= 1;
+    }
     /* exponent */
     if (i < len && (s[i] == 'e' || s[i] == 'E')) {
         ++i;

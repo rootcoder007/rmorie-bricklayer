@@ -15,10 +15,10 @@ dualcont(x, well, distress, conflvl = 0.95)
 0.95).}
 }
 \value{
-A data frame of class \code{rmbl_dual_continuum}: \code{group},
+A data frame of class \code{rmbl_dual_continuum} with \code{group},
 \code{wellness}, \code{wello}, \code{welup}, \code{distress},
 \code{distrlo}, \code{distrup}, \code{strratio},
-\code{ratiolo}, \code{ratioup}, \code{usewithcau}.
+\code{ratiolo}, \code{ratioup} and \code{usewithcau}.
 }
 \description{
 For each group, one wellness indicator against one distress indicator, each with its
@@ -42,8 +42,9 @@ one scale can be set against each other.
 \section{Acknowledgement}{
 
 This estimator puts to quantitative use the framework of Professor Suzanne Stewart
-(Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
-\code{vignette("first-nations-metis-inuit-health")}.
+(Yellowknives Dene First Nation, University of Toronto).
+
+See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette.
 }
 
 \examples{

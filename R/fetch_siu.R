@@ -16,8 +16,8 @@
 #' director's-report corpus yourself.
 #'
 #' @details
-#' The URL fetched is
-#' \code{https://www.siu.on.ca/<lang>/directors_report_details.php?drid=<drid>},
+#' The URL fetched is\cr
+#' \code{https://www.siu.on.ca/<lang>/directors_report_details.php?drid=<drid>}\cr
 #' through \code{\link{blfetch}}, which tries the live page first
 #' and falls back to a Wayback Machine snapshot (the one given in
 #' \code{wb}, or one it looks up).

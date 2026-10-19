@@ -209,6 +209,54 @@ The Truth and Reconciliation Commission's Calls to Action, completed and project
 plot(trcprog())
 ```
 
+## Evaluating a policy
+
+The designs of `vignette("policy-evaluation")`, on its made-up panel of twenty districts
+where a reform arrives in three stages: the outcome by adoption cohort before any model, the
+event study, the Goodman-Bacon weights behind a two-way fixed-effects estimate, and the
+randomisation null of the assignment.
+
+```{r policy-data}
+p <- polex()
+```
+
+```{r policy-design, fig.height = 3.5}
+plot(cohtrnd(p, "district", "month", "crmrate", "refmonth", win = c(-10, 10)))
+es <- evstudy(p, "district", "month", "crmrate", "refmonth", leads = 4, lags = 6)
+plot(es)
+plot(bacondcmp(p, "district", "month", "crmrate", "reformed"))
+plot(perminf(p, "district", "month", "crmrate", "refmonth", cl = "region"))
+```
+
+Whether one district drives the estimate, and a single treated place against its synthetic
+control and its synthetic difference in differences:
+
+```{r policy-one, fig.height = 3.5}
+plot(loounit(p, "district", "month", "crmrate", "reformed"))
+p13 <- p[is.na(p$refmonth) | p$district == "D13", ]
+plot(synctl(p13, "district", "month", "crmrate", "D13", adopt = 13))
+plot(syndid(p13, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1))
+```
+
+The power of the design on the untreated data, and the cross-fitted AIPW estimate of
+`vignette("causal-effects")` with its overlap and balance checks:
+
+```{r policy-checks, fig.height = 3.5}
+plot(plnpwr(p[p$month <= 12, ], "district", "month", "crmrate", ntrt = 10, adopt = 7:10,
+            eff = c(0, 0.5, 1, 1.5), reps = 40, seed = 1))
+set.seed(7)
+n <- 600
+d <- data.frame(age = runif(n, 18, 70), income = rnorm(n))
+d$t <- rbinom(n, 1, plogis(-2 + 0.04 * d$age + 0.5 * d$income))
+d$y <- 10 + 3 * d$t + 0.2 * d$age + d$income + rnorm(n)
+fit <- aipwcf(d, "y", "t", c("age", "income"), lrn = "ols")
+plot(fit)
+plot(fit, type = "estimate")
+e <- pmin(pmax(attr(fit, "propensity")$propensity, 0.01), 0.99)
+d$ipw <- ifelse(d$t == 1, 1 / e, 1 / (1 - e))
+plot(baltab(d, "t", c("age", "income")), after = baltab(d, "t", c("age", "income"), w = "ipw"))
+```
+
 ## Customising
 
 Every method takes `main`, `col` (or a `palette` name), `grid`, and `...` for the

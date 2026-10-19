@@ -32,7 +32,8 @@
 
 namespace {
 
-/* 521 bits needs 17 limbs; one spare for carries during multiply. */
+/* 521 bits needs 17 limbs; a product of two needs 34, and two spare
+ * limbs take the carries during a multiply. */
 const int kMaxLimbs = 36;
 
 struct Num {
@@ -563,6 +564,16 @@ SEXP C_rmbl_ecdsa_verify_impl(SEXP curve, SEXP qx, SEXP qy, SEXP r, SEXP s,
         TYPEOF(digest) != RAWSXP) {
         RMBL_ARG_ERROR("the key, signature and digest must be raw vectors");
     }
+    /* from_bytes keeps only the low kMaxLimbs limbs, so a longer input
+     * would be cut back silently: r' = 2^1152 + r read as r, a second
+     * valid encoding of one signature. The key coordinates are exactly
+     * one field element wide; r and s at most that (DER drops leading
+     * zeros, so shorter is fine). Anything else is not a signature. */
+    const R_xlen_t w = static_cast<R_xlen_t>(c.bytes);
+    if (XLENGTH(qx) != w || XLENGTH(qy) != w || XLENGTH(r) > w ||
+        XLENGTH(s) > w) {
+        return Rf_ScalarLogical(FALSE);
+    }
     Num nqx, nqy, nr, ns, e, one;
     from_bytes(&nqx, RAW(qx), static_cast<size_t>(XLENGTH(qx)));
     from_bytes(&nqy, RAW(qy), static_cast<size_t>(XLENGTH(qy)));
@@ -662,6 +673,9 @@ SEXP C_rmbl_ec_mul_impl(SEXP curve, SEXP k) {
         RMBL_ARG_ERROR("unsupported curve: %s", rmbl_str0(curve, "curve"));
     }
     if (TYPEOF(k) != RAWSXP) RMBL_ARG_ERROR("`k` must be a raw vector");
+    if (XLENGTH(k) > 4 * kMaxLimbs) {
+        RMBL_ARG_ERROR("`k` must be at most %d bytes", 4 * kMaxLimbs);
+    }
     Num nk;
     from_bytes(&nk, RAW(k), static_cast<size_t>(XLENGTH(k)));
     Point q;

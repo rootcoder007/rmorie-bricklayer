@@ -30,9 +30,8 @@
 #' \code{expr} not a function; an empty or \code{NA} \code{col}; a
 #' \code{sev} other than \code{"warning"} or \code{"fatal"}.
 #'
-#' @param name Short identifier for the rule, a string; it names the issue
-#'   in the result of [valrules()], so give each rule
-#'   a different name.
+#' @param name A short identifier for the rule, a string. It names the issue in
+#'   the result of [valrules()], so give each rule a different name.
 #' @param expr A function, as described above.
 #' @param col Name of the column the rule applies to, or \code{NULL} (the
 #'   default) for a table-level rule.

@@ -8,8 +8,8 @@ fixture <- system.file("extdata", "siu_synthetic_report.html",
 test_that("schema is the 16 reviewed fields with count flags", {
   sch <- siusch()
   expect_equal(nrow(sch), 16L)
-  expect_true(sch$is_count[sch$name == "number_of_subject_officials"])
-  expect_false(sch$is_count[sch$name == "directors_name"])
+  expect_true(sch$count[sch$name == "number_of_subject_officials"])
+  expect_false(sch$count[sch$name == "directors_name"])
 })
 
 test_that("parser extracts the key fields from the synthetic report", {

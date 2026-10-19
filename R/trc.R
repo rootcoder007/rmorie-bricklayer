@@ -24,8 +24,8 @@
 #' through proxies. The direction is the direction of better health for the people
 #' measured.
 #'
-#' @return A data frame: \code{call}, \code{indicator} (the Call's words), \code{table},
-#'   \code{measure}, \code{better} (\code{"higher"} or \code{"lower"}), \code{note}.
+#' @return A data frame with \code{call}, \code{indicator} (the Call's words), \code{table},
+#'   \code{measure}, \code{better} (\code{"higher"} or \code{"lower"}) and \code{note}.
 #' @references Truth and Reconciliation Commission of Canada (2015). Truth and
 #' Reconciliation Commission of Canada: Calls to Action. Winnipeg. Government of Canada
 #' catalogue IR4-8/2015E.
@@ -219,6 +219,7 @@ plot.rmbl_trc_gaps <- function(x, ..., main = NULL, col = NULL, palette = NULL) 
                 ifelse(d$usewithcau, " (E)", ""))
   .bl_dot_interval(lab, d$disratio, d$lower, d$upper,
                    .bl_main(main, "Call to Action 19: health gaps against non-Indigenous people"),
-                   "Disadvantage ratio against the reference (log scale; 1 = no gap)", cols, ref = 1, log = "x", ...)
+                   "Disadvantage ratio against the reference (log scale; 1 = no gap)", cols, ref = 1, log = "x",
+                   key = list(legend = grp_short[match(grp, d$group)], col = .bl_cols(length(grp), col, palette)), ...)
   invisible(d[c("indicator", "measure", "group", "disratio", "lower", "upper")])
 }

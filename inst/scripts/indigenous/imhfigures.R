@@ -31,7 +31,7 @@ fig("fig2_ratings", 6.5, 3.6, {
   plot(ordcmp(r, "group", "rating", "estimate", "lower", "upper",
                        lvls = c("Fair or poor", "Good", "Very good", "Excellent"), ref = "M\u00e9tis",
                        qual = "quality"),
-       main = "Self-rated mental health, 2017 Aboriginal Peoples Survey")
+       main = "Self-rated mental health, 2022 Indigenous Peoples Survey")
 })
 
 # Figure 3: wellness beside distress, and the two continua
@@ -107,5 +107,5 @@ cw <- cnscwb(p, cnsprof(indiex("censushh")))
 fig("fig8_cwb", 6.5, 4.4, plot(cw, main = "Community Well-Being, 2021 Census"))
 
 # Figure 9: Call to Action 19 gaps on the disadvantage-ratio scale
-fig("fig9_trc", 6.5, 4.6, plot(trchlthgap(), main = "Call to Action 19: gaps against non-Indigenous people"))
+fig("fig9_trc", 6.5, 7.5, plot(trchlthgap(), main = "Call to Action 19: gaps against non-Indigenous people"))
 cat("FIGURES_DONE\n")

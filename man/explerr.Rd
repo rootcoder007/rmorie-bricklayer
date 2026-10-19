@@ -11,10 +11,10 @@ explerr(msg = geterrmessage(), pkgs = NULL, n = 3L)
 in f(x) : ..." is fine), a condition object, or a \code{try()} result.
 Default: the last error of this session (\code{geterrmessage()}).}
 
-\item{pkgs}{Character vector of installed packages to search; default
-\code{NULL}, meaning rmoriebricklayer (or the comma-separated list in the
-environment variable \code{RMBL_PACKAGES}, which a package built on this
-one sets for its own command line).}
+\item{pkgs}{Character vector of installed packages to search. The default,
+\code{NULL}, means this package, or the comma-separated list in
+\code{RMBL_PACKAGES}: an environment variable that a package built on
+this one sets for its own command line.}
 
 \item{n}{How many matches to return, best first: a whole number, default
 3.}
@@ -23,7 +23,7 @@ one sets for its own command line).}
 A data frame with at most \code{n} rows, best match first, and the
 character columns \code{package}, \code{raised_by}
 (the function whose code raises it), \code{exported} (the exported
-functions that reach it, comma-separated), \code{kind} (\code{"error"} or
+functions that reach it, separated by commas), \code{kind} (\code{"error"} or
 \code{"warning"}), \code{message} (the message as written, with
 \code{...} where a value goes) and \code{match} (\code{"exact"} or the share
 of its words found, such as \code{"80\% of its words"}). No rows when the
@@ -50,9 +50,11 @@ function is traced up to four calls to the exported functions that reach
 it (at most six are listed). The table is kept in memory for the session
 (about a second to build for this package), and, while a person is
 watching an interactive session and the answer cache is on, also saved as
-an \code{.rds} file in the answer-cache directory
-(\code{tools::R_user_dir("rmoriebricklayer", "cache")}, or
-\code{options(rmoriebricklayer.llmcachedir)}); the cache is off under
+an \code{.rds} file in the answer-cache directory.
+
+The answer-cache directory is the one \code{tools::R_user_dir()} gives for
+\code{"rmoriebricklayer"} and \code{"cache"}, or the one the
+\code{rmoriebricklayer.llmcachedir} option names when it is set. The cache is off under
 \code{options(morie.quiet = TRUE)}, \code{MORIE_LLM_CACHE=off}, tests and
 \code{R CMD check}.
 

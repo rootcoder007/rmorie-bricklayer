@@ -131,7 +131,7 @@
 #'   \item{\code{data list}}{the curated tables at data.rmorie.com}
 #'   \item{\code{data pull db/table}}{download one table as CSV}
 #'   \item{\code{config [setup | set KEY VALUE | unset KEY | get KEY | help]}}{show
-#'     or change the language-model settings (\code{\link{llmcfg}}):
+#'     or change the settings of the language model (\code{\link{llmcfg}}):
 #'     the route \code{ask} uses and the address, key and model of each route;
 #'     \code{setup} walks through them}
 #'   \item{\code{ask [--route ROUTE] [--model NAME] [--fresh] PROMPT...}}{send
@@ -194,8 +194,8 @@
 #' \code{examples}, \code{explain-error}, \code{version} and \code{help}
 #' only read the installed help.
 #'
-#' @param args Character vector of arguments, verb first; defaults to the
-#'   command line (\code{commandArgs(trailingOnly = TRUE)}). An empty vector
+#' @param args Character vector of arguments, verb first. The default is the
+#'   command line, \code{commandArgs(trailingOnly = TRUE)}. An empty vector
 #'   prints the help.
 #' @param out Function that receives the output text, one string at a time
 #'   (default \code{cat}, the console). Pass a function that collects the

@@ -90,9 +90,9 @@
 #'   listed in Details. Lists as parsed from JSON (for example
 #'   \code{values = list("a", "b")}) are accepted.
 #' @param n Whole number: how many values to generate.
-#' @param ctx Named list of already-generated columns, letting
-#'   later columns (such as \code{id_pattern} with a \code{year_col})
-#'   reference earlier ones. Defaults to an empty list.
+#' @param ctx Named list of already-generated columns. Later columns can then
+#'   reference earlier ones, as \code{id_pattern} does with a \code{year_col}.
+#'   Defaults to an empty list.
 #' @param basep Optional numeric vector of per-row latent propensities in
 #'   \eqn{[0, 1]}, length \code{n}, used by the \code{"bernoulli"} type to add
 #'   row-level variation. Default \code{NULL}.
@@ -227,7 +227,7 @@ mksyncol <- function(spec, n, ctx = list(), basep = NULL) {
 #' @details
 #' Columns are produced in declaration order so later columns can reference
 #' earlier ones. A shared per-person latent propensity, uniform on
-#' \eqn{[0, 1]}, drives every \code{"bernoulli"} column through its
+#' \eqn{[0, 1]}, drives every \code{"bernoulli"} column through the column's
 #' \code{p_with_baserate} field, so those columns are correlated with each
 #' other. An optional \code{row_replication} block (\code{values} and
 #' \code{weights}) draws how many rows each person gets: person-level
@@ -258,8 +258,8 @@ mksyncol <- function(spec, n, ctx = list(), basep = NULL) {
 #'   Defaults to \code{schema$nrows}, then 50000.
 #' @param seed Random seed for reproducibility. Defaults to
 #'   \code{schema$seed}, then 91735246.
-#' @return Invisibly, an object of class \code{bricklayer_synthetic}: a list
-#'   with \code{path}, \code{sidecar} (the \code{<path>.synthetic} marker file;
+#' @return Invisibly, a list of class \code{bricklayer_synthetic} with
+#'   \code{path}, \code{sidecar} (the \code{<path>.synthetic} marker file;
 #'   \code{\link{vrfcps}} treats its presence as a failed check),
 #'   \code{rows} (rows written), \code{seed} (the seed used) and
 #'   \code{recipe_sha256} (the recipe's digest, \code{NA} when it could not

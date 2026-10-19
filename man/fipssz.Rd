@@ -12,7 +12,7 @@ fipssz(scheme)
 }
 \value{
 A named integer vector of five byte counts: \code{public_key},
-\code{sk}, \code{signature}, \code{seed} and \code{opt_rand} (the
+\code{secret_key}, \code{signature}, \code{seed} and \code{rnd} (the
 per-signature
 randomness the scheme consumes).
 }
@@ -27,7 +27,7 @@ is 2,420 to 4,627.
 \details{
 The sizes are the standards' tables (FIPS 204 Table 2, FIPS 205 Table 2)
 as the compiled code uses them. \code{seed} is the key-generation input of
-\code{\link[=fipskg]{fipskg()}}; \code{opt_rand} is the per-signature
+\code{\link[=fipskg]{fipskg()}}; \code{rnd} is the per-signature
 randomness (32 bytes
 for ML-DSA's \code{rnd}, \eqn{n} bytes for SLH-DSA's \code{opt_rand}), which the
 deterministic variants replace with a fixed value. XMSS is not covered:

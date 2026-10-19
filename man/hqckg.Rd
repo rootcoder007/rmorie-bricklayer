@@ -15,8 +15,8 @@ hqcpubkey(key)
 Level 3 matches the category of ML-KEM-768,
 \code{\link[=kemkg]{kemkg()}}'s default.}
 
-\item{seed}{Optional raw vector: 32 bytes (\code{seed_KEM}) for v5; for round 4
-the \code{\link[=hqcsz]{hqcsz()}}\verb{["seed"]} bytes its key generation
+\item{seed}{Optional raw vector. For v5 it is the 32 bytes of \code{seed_KEM}.
+For round 4 it is the \code{\link[=hqcsz]{hqcsz()}}\verb{["seed"]} bytes its key generation
 draws (\code{skseed}, \code{sigma}, \code{pk_seed}: 96, 104 or 112).
 Supplying it makes the key reproducible, which is what the known-answer
 tests need; the default draws from the operating system's CSPRNG.}
@@ -101,8 +101,8 @@ at level 5.
 }
 \section{Security}{
 
-A hand-written implementation. The standardised schemes are checked byte
-for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+The implementation is hand-written. Its standardised schemes are checked
+byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
 suite. Side channels are checked, not assumed: \code{inst/ctcheck} runs every
 operation that touches a secret under valgrind memcheck with the secret
 marked undefined (the ctgrind method), so a branch or a memory address
@@ -112,9 +112,8 @@ with GCC and with Clang. Timing is also measured on x86-64 and arm64
 hardware (\code{inst/dudect}) and power leakage is assessed in simulation under
 the value and the transition models (\code{inst/tvla}) for the masked ML-KEM
 and ML-DSA kernels; this scheme is not masked. These are checks of this
-code on those compilers; no third-party security audit has been
-commissioned, and the README's security section lists what each check
-does and does not cover.
+code on those compilers; the README's security section lists what each
+check does and does not cover.
 }
 
 \examples{

@@ -17,11 +17,10 @@ data.rmorie.com until you sign in again. Use it on a shared machine, or
 to switch to another key. Nothing is contacted.
 }
 \details{
-The shared credentials file
-(\code{$XDG_CONFIG_HOME/morie/credentials.json}, else
-\code{~/.config/morie/credentials.json}) is edited as text: the members
-\code{hosted_key}, \code{hosted_user} and \code{hosted_base_url} are
-removed and every other entry (written by \code{morie}, \code{rmorie} or
+The shared credentials file is \code{credentials.json} in the folder
+\code{$XDG_CONFIG_HOME/morie}, else in \code{~/.config/morie}. It is edited as
+text. Three members are removed: \code{hosted_key}, \code{hosted_user} and
+\code{hosted_base_url}. Every other entry (written by \code{morie}, \code{rmorie} or
 \code{rmoriedata}) is kept byte for byte. When nothing else is left the
 file is deleted. A key set in the environment variable
 \code{MORIE_HOSTED_KEY} is not touched. A message says whether a key was

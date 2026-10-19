@@ -37,8 +37,8 @@ local \code{R CMD INSTALL} of a working tree with uncommitted changes. A
 version number identifies an intention; the repository and commit
 identify what was actually loaded.
 
-The fields are read from each package's installed DESCRIPTION
-(\code{utils::packageDescription()}): \code{Repository} (for example
+The fields are read with \code{utils::packageDescription()} from each
+package's installed DESCRIPTION: \code{Repository} (for example
 \code{"CRAN"}), \code{RemoteUrl} and \code{RemoteSha} (written by
 remotes, pak and devtools for packages installed from a Git host) and
 \code{Built}. Packages are sorted and de-duplicated. A progress bar is

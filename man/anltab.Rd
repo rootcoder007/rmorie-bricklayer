@@ -66,8 +66,7 @@ per
 \item{alpha}{Level for the multiple-comparison decision and the drift
 screens, default 0.05.}
 
-\item{adjust}{Multiple-comparison method for
-\code{\link[=scanadj]{scanadj()}}, default
+\item{adjust}{Multiple-comparison method for \code{\link[=scanadj]{scanadj()}}. The default is
 \code{"BH"} (Benjamini-Hochberg).}
 }
 \value{

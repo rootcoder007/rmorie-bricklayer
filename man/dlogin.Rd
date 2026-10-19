@@ -59,10 +59,10 @@ Schedule B of the terms, which opens the restricted tables (ICPSR, NCVS
 
 \item{supnm, suprole, supemail}{Character scalars
 or \code{NULL}: the supervisor, department chair, director or
-coordinator who knows of your use, their role (one of
-\code{"supervisor"}, \code{"chair"}, \code{"director"},
-\code{"coordinator"}, \code{"other"}) and their email. Required with
-\code{restricted = TRUE}; asked for when \code{NULL}.}
+coordinator who knows of your use, their role and their email. Required
+with \code{restricted = TRUE}; asked for when \code{NULL}. The role is
+one of \code{"supervisor"}, \code{"chair"}, \code{"director"},
+\code{"coordinator"} or \code{"other"}.}
 }
 \value{
 The key (character scalar), invisibly. A message names the file
@@ -101,7 +101,7 @@ refused rather than overwritten. \code{XDG_CONFIG_HOME} moves the file;
 when unset it is \code{~/.config/morie/credentials.json}.
 
 The sign-in service address is the signed services document's
-\code{data.auth_url} (see \code{\link{svcs}}), or
+\code{data.auth_url} (see \code{\link{svcs}}), or the environment variable
 \code{MORIE_HOSTED_AUTH_URL} when set (it must be a public \code{https}
 address). The device flow polls every \code{interval} seconds the
 service names (5 by default), prints a progress line about every 30

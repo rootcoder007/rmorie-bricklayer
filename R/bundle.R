@@ -59,10 +59,9 @@
 #'
 #' @param dir Character scalar, the directory the capsule lives in. For
 #' `cpsbndlvrf()`, the directory to check the files in.
-#' @param man A manifest, as from [mkmnf()].
-#'   Required by
-#' `cpsbndl()`; optional for `cpsbndlvrf()`, where it adds
-#' a check that the manifest still has the bundled digest.
+#' @param man A manifest, as from [mkmnf()]. It is required by `cpsbndl()`
+#' and optional for `cpsbndlvrf()`, where it adds a check that the manifest
+#' still has the bundled digest.
 #' @param key A signing key from
 #' [fipskg()] or
 #' [pqckg()].
@@ -71,9 +70,11 @@
 #' the bundle itself.
 #' @param ctx,prehash,note As in
 #' [cpsatst()].
-#' @param path Character scalar. For `cpsbndl()`, where to write the
-#' bundle; defaults to `capsule_bundle.json` inside `dir` (an existing file
-#' is overwritten). For `cpsbndlrd()`, the bundle file to read.
+#' @param path Character scalar. For `cpsbndlrd()`, the bundle file to read.
+#' For `cpsbndl()`, where to write the bundle (an existing file is
+#' overwritten).
+#'
+#' `capsule_bundle.json` inside `dir` is the default for `cpsbndl()`.
 #' @param bundle A bundle read back with
 #' `cpsbndlrd()`, or the path to one.
 #' @param keyexp Optional public key hex the
@@ -86,7 +87,10 @@
 #' (from
 #' [cpsatst()]), and the path it was written to as
 #' attribute
-#' `"path"`. `cpsbndlrd()`: the same structure read from the file.
+#' `"path"`.
+#'
+#' `cpsbndlrd()`: the same structure read from the file.
+#'
 #' `cpsbndlvrf()`: a list of class `bricklayer_bundle_check` with
 #' `ok` (logical) and `checks` (a data frame of `check`, logical `ok`
 #' and

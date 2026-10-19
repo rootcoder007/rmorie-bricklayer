@@ -366,7 +366,7 @@ drftchisq <- function(obs, expd) {
 #'   \item `"chi-square approximation"`: every expected count is at least
 #'     5; the p-value is the chi-square upper tail.
 #'   \item `"Monte Carlo permutation (small expected counts)"`: some
-#'     expected count is below 5; the p-value comes from
+#'     expected count is below 5; the p-value then comes from
 #'     [stats::chisq.test()] with `simulate.p.value = TRUE`
 #'     and
 #'     `B = 10000` tables with the same margins, drawn under `seed`.
@@ -537,7 +537,7 @@ drfthomog <- function(x, y, seed = 1L) {
 #' or no finite non-zero value.
 #'
 #' @param x Numeric vector.
-#' @return A list of class `bricklayer_benford`: `counts`
+#' @return A list of class `bricklayer_benford` with `counts`
 #' (observed digit frequencies 1--9), `expected`, `proportion`,
 #' `statistic`, `df`, `p_value`, `logpvalue` (the log of the upper
 #' tail, which keeps its information where `p_value` underflows to 0),

@@ -61,8 +61,8 @@ the funnel plot to judge which areas' rates differ from the target by more
 than chance would allow given their size.
 }
 \details{
-\code{plotlrnz()}: from a numeric vector the curve is computed by
-\code{\link{lorenzc}} and the title carries \code{\link{ginicoef}}; a data
+\code{plotlrnz()}: from a numeric vector the curve is computed with
+\code{\link{lorenzc}}, and the title carries \code{\link{ginicoef}}; a data
 frame is used as given (sorted, with the origin added when missing) and
 the title has no Gini. The dashed diagonal is perfect equality.
 

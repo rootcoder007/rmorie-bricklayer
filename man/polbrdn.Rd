@@ -17,8 +17,8 @@ polbrdn(
 )
 }
 \arguments{
-\item{expomean}{Mean exposure among the exposed (micrograms per cubic
-metre). With \code{expoprev = 1} that is the population mean.}
+\item{expomean}{The mean exposure among the exposed, in micrograms per cubic
+metre. With \code{expoprev = 1} that is the population mean.}
 
 \item{expoprev}{Proportion of the population at that level (1
 for ambient air), in \code{[0, 1]}.}

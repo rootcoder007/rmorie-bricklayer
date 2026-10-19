@@ -450,15 +450,41 @@ SEXP C_rmbl_hurwitz_zeta_impl(SEXP s_, SEXP q_) {
 SEXP C_rmbl_morans_i_impl(SEXP x_, SEXP idx_, SEXP start_, SEXP len_,
                      SEXP wts_, SEXP nperm_, SEXP seed_) {
     (void)seed_;  /* kept for the registered arity: the permutations draw from R's stream, set.seed() governs it */
+    /* every argument checked before the first std::vector exists, as the R wrapper checks them:
+     * the entry is reachable with .Call directly, and an NA `nperm` became a negative length
+     * whose R error jumped over a live vector; an index past the areas read out of bounds
+     * (review of 1.0.0, M12) */
+    if (TYPEOF(x_) != REALSXP || TYPEOF(idx_) != INTSXP || TYPEOF(start_) != INTSXP ||
+        TYPEOF(len_) != INTSXP || TYPEOF(wts_) != REALSXP) {
+        rmbl::fail("Moran's I takes double `x` and `wts` and integer `idx`, `start` and `len`");
+    }
     const R_xlen_t n = XLENGTH(x_);
     const double *x = REAL(x_);
     const int *idx = INTEGER(idx_);
     const int *start = INTEGER(start_);
     const int *len = INTEGER(len_);
     const double *wts = REAL(wts_);
-    const R_xlen_t nperm = static_cast<R_xlen_t>(Rf_asInteger(nperm_));
+    const int np = Rf_asInteger(nperm_);
+    if (np == NA_INTEGER || np < 0) rmbl::fail("`nperm` must be a whole number >= 0");
+    const R_xlen_t nperm = static_cast<R_xlen_t>(np);
 
     if (n < 3) rmbl::fail("Moran's I needs at least three areas");
+    if (XLENGTH(start_) != n || XLENGTH(len_) != n || XLENGTH(wts_) != XLENGTH(idx_)) {
+        rmbl::fail("`start` and `len` must have one element per area and `wts` one per neighbour");
+    }
+    for (R_xlen_t i = 0; i < n; ++i) {
+        if (start[i] == NA_INTEGER || len[i] == NA_INTEGER || start[i] < 0 || len[i] < 0 ||
+            static_cast<R_xlen_t>(start[i]) + len[i] > XLENGTH(idx_)) {
+            rmbl::fail("area %d's neighbour block lies outside `idx`", static_cast<int>(i + 1));
+        }
+        for (int k = 0; k < len[i]; ++k) {
+            const int j = idx[start[i] + k];
+            if (j == NA_INTEGER || j < 0 || j >= n) {
+                rmbl::fail("area %d has a neighbour index outside 0 to %d", static_cast<int>(i + 1),
+                           static_cast<int>(n - 1));
+            }
+        }
+    }
 
     long double total = 0.0L;
     for (R_xlen_t i = 0; i < n; ++i) {
@@ -514,7 +540,13 @@ SEXP C_rmbl_morans_i_impl(SEXP x_, SEXP idx_, SEXP start_, SEXP len_,
          * p-value is reproducible */
         GetRNGstate();
         std::vector<double> p(z);
+        bool stopped = false;
         for (R_xlen_t b = 0; b < nperm; ++b) {
+            /* each permutation re-walks the neighbour list: poll for a Ctrl-C */
+            if ((b & 63) == 0 && rmbl_interrupt_pending()) {
+                stopped = true;
+                break;
+            }
             /* Fisher-Yates over the centred values: the null is that the
              * values are assigned to areas at random, so the sum of
              * squares is invariant and only the cross-product moves */
@@ -528,6 +560,7 @@ SEXP C_rmbl_morans_i_impl(SEXP x_, SEXP idx_, SEXP start_, SEXP len_,
                 (static_cast<long double>(n) / wsum) * cross_of(p) / ss);
         }
         PutRNGstate();
+        if (stopped) throw rmbl::Interrupt();
     }
     SEXP out = PROTECT(rmbl::alloc_vector(VECSXP, 4));
     SET_VECTOR_ELT(out, 0, Rf_ScalarReal(I));
@@ -559,6 +592,7 @@ extern "C" {
  * distribution of nothing to be unequal about -- and when any value is
  * negative, since a share of a total has no meaning then. */
 double rmbl_gini(const double *x, R_xlen_t n) {
+    return rmbl::kernel_call([&]() -> double {
     std::vector<double> v;
     v.reserve(static_cast<size_t>(n));
     for (R_xlen_t i = 0; i < n; ++i) {
@@ -567,6 +601,7 @@ double rmbl_gini(const double *x, R_xlen_t n) {
         v.push_back(x[i]);
     }
     return gini_sorted(v);
+    });
 }
 
 /* Share of the total held by the largest ceil(frac * n) units, and how
@@ -575,6 +610,7 @@ double rmbl_top_share(const double *x, R_xlen_t n, double frac,
                       R_xlen_t *units) {
     if (units != NULL) *units = 0;
     if (ISNAN(frac) || frac < 0 || frac > 1) return NA_REAL;
+    return rmbl::kernel_call([&]() -> double {
     std::vector<double> v;
     v.reserve(static_cast<size_t>(n));
     for (R_xlen_t i = 0; i < n; ++i) {
@@ -595,12 +631,14 @@ double rmbl_top_share(const double *x, R_xlen_t n, double frac,
     for (size_t i = 0; i < k; ++i) run += v[i];
     if (units != NULL) *units = static_cast<R_xlen_t>(k);
     return static_cast<double>(run / total);
+    });
 }
 
 /* Lorenz curve into caller-supplied buffers of length n + 1, including
  * the origin. Returns the number of points written, or 0 on refusal. */
 R_xlen_t rmbl_lorenz(const double *x, R_xlen_t n, double *population,
                      double *value) {
+    return rmbl::kernel_call([&]() -> R_xlen_t {
     std::vector<double> v;
     v.reserve(static_cast<size_t>(n));
     for (R_xlen_t i = 0; i < n; ++i) {
@@ -623,6 +661,7 @@ R_xlen_t rmbl_lorenz(const double *x, R_xlen_t n, double *population,
             ? static_cast<double>(run / total) : NA_REAL;
     }
     return static_cast<R_xlen_t>(m) + 1;
+    });
 }
 
 /* Mann-Kendall S and its tie-corrected variance. The body with its buffers is
@@ -674,7 +713,11 @@ static int mann_kendall_inner(const double *y, R_xlen_t n, double *S,
 
 void rmbl_mann_kendall(const double *y, R_xlen_t n, double *S,
                        double *var, R_xlen_t *used) {
-    if (mann_kendall_inner(y, n, S, var, used) == 1) rmbl_interrupt_raise_unbarriered();
+    *S = NA_REAL;
+    *var = NA_REAL;
+    int stopped = 0;
+    rmbl::kernel_call([&] { stopped = mann_kendall_inner(y, n, S, var, used); });
+    if (stopped == 1) rmbl_interrupt_raise_unbarriered();
 }
 
 /* Hurwitz zeta, the normalising constant of the discrete power law. */
@@ -682,9 +725,19 @@ double rmbl_hurwitz_zeta(double s, double q) {
     return hurwitz_zeta_scalar(s, q);
 }
 
-/* Theil-Sen slope and intercept. */
+/* Theil-Sen slope and intercept, with the .Call version's guards: at most kMaxPairwiseN points (the
+ * n^2 / 2 slopes of more are gigabytes), a poll for a Ctrl-C in the pair loop, and an exception
+ * raised as an R error, never std::terminate() (review of 1.0.0, M12). Both are NA when there is
+ * no slope or the work was interrupted. */
 void rmbl_theil_sen(const double *x, const double *y, R_xlen_t n,
                     double *slope, double *intercept) {
+    *slope = NA_REAL;
+    *intercept = NA_REAL;
+    if (n > kMaxPairwiseN) {
+        rmbl_arg_error("n = %d exceeds the %d-point limit of the pairwise-slope enumeration",
+                       static_cast<int>(n), static_cast<int>(kMaxPairwiseN));
+    }
+    rmbl::kernel_call([&] {
     std::vector<double> xs;
     std::vector<double> ys;
     for (R_xlen_t i = 0; i < n; ++i) {
@@ -696,21 +749,24 @@ void rmbl_theil_sen(const double *x, const double *y, R_xlen_t n,
     const size_t m = xs.size();
     std::vector<double> slopes;
     for (size_t i = 0; i + 1 < m; ++i) {
+        if ((i & 255) == 0) rmbl::check_interrupt();
         for (size_t j = i + 1; j < m; ++j) {
             const double dx = xs[j] - xs[i];
             if (dx == 0.0) continue;
             slopes.push_back((ys[j] - ys[i]) / dx);
         }
     }
-    if (slopes.empty()) { *slope = NA_REAL; *intercept = NA_REAL; return; }
+    if (slopes.empty()) return;
     std::sort(slopes.begin(), slopes.end());
     const size_t k = slopes.size();
-    *slope = (k % 2 == 1) ? slopes[k / 2] : 0.5 * (slopes[k / 2 - 1] + slopes[k / 2]);
+    const double b = (k % 2 == 1) ? slopes[k / 2] : 0.5 * (slopes[k / 2 - 1] + slopes[k / 2]);
     std::vector<double> resid(m);
-    for (size_t i = 0; i < m; ++i) resid[i] = ys[i] - *slope * xs[i];
+    for (size_t i = 0; i < m; ++i) resid[i] = ys[i] - b * xs[i];
     std::sort(resid.begin(), resid.end());
+    *slope = b;
     *intercept = (m % 2 == 1) ? resid[m / 2]
                               : 0.5 * (resid[m / 2 - 1] + resid[m / 2]);
+    });
 }
 
 }  // extern "C"

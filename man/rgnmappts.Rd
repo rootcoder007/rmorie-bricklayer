@@ -58,10 +58,8 @@ rather than an incorporated municipality, a city amalgamated into a
 larger one, a township absorbed by a neighbour. The geometry has no
 opinion about any of that.
 
-Use \code{\link[=rgnmapalt]{rgnmapalt()}}
-to check this result against the name route, with those cases named,
-and \code{\link[=rgnmapcmp]{rgnmapcmp()}} to compare it with a
-published map.
+\code{\link[=rgnmapalt]{rgnmapalt()}} checks this result against the name route, with those cases
+named, and \code{\link[=rgnmapcmp]{rgnmapcmp()}} compares it with a published map.
 
 Errors (when \code{sf} and the file are present): missing or empty
 \code{unit}; \code{x}, \code{y} and \code{unit} of different lengths;

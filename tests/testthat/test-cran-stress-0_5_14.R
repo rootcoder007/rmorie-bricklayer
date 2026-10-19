@@ -142,12 +142,18 @@ test_that("CSV: NUL bytes are dropped before quotes are read, as read.csv(skipNu
   }
   B <- as.raw(c(0xEF, 0xBB, 0xBF))
   z <- as.raw(0)
-  for (b in list(c(charToRaw("a\n\""), z, charToRaw("\"\n")),                 # a line of "" with a NUL: blank
-                 c(charToRaw("a\n\"x\""), z, charToRaw("\"y\"\n")),            # "x"<NUL>"y" is "x""y"
-                 c(charToRaw("a,c\n"), z, B, charToRaw("\n")),                 # a NUL before the mark
-                 c(charToRaw("a\n\"\""), B, charToRaw("\nq\n")),               # the mark after an empty ""
-                 charToRaw("a,b\n\"x\"y\",z\",1\n"),                          # a reopened quote holds the comma
-                 charToRaw("a,b\n\"x\"y\"\r\n\"q,1\n"))) {
+  cases <- list(c(charToRaw("a\n\""), z, charToRaw("\"\n")),                 # a line of "" with a NUL: blank
+                c(charToRaw("a\n\"x\""), z, charToRaw("\"y\"\n")),            # "x"<NUL>"y" is "x""y"
+                c(charToRaw("a,c\n"), z, B, charToRaw("\n")),                 # a NUL before the mark
+                c(charToRaw("a\n\"\""), B, charToRaw("\nq\n")),               # the mark after an empty ""
+                charToRaw("a,b\n\"x\"y\",z\",1\n"),                          # a reopened quote holds the comma
+                charToRaw("a,b\n\"x\"y\"\r\n\"q,1\n"))
+  # read.csv() drops a mark at the start of a line only in a UTF-8 locale; the reader drops it
+  # everywhere, so the two mark cases are compared there (C-locale check of 1.0.0)
+  mark <- c(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE)
+  for (i in seq_along(cases)) {
+    if (mark[i] && !l10n_info()[["UTF-8"]]) next
+    b <- cases[[i]]
     expect_identical(ours(b), ref(b), info = encodeString(rawToChar(b[b != z])))
   }
   expect_error(ours(charToRaw("a\n\"x\"y\"\n")), "never closes")

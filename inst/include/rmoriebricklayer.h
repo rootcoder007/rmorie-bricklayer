@@ -168,6 +168,11 @@ static R_INLINE double rmbl_gamma_cdf(double shape, double x) {
     return fn(shape, x);
 }
 
+/* Hawkes negative log-likelihood, constant baseline. kernel: 0 exponential,
+ * 1 Weibull, 2 Lomax, 3 gamma (the R fitter numbers gamma 2 and Lomax 3);
+ * par = (a0, eta, p1[, p2]). The Lomax p1 is alpha > 1 of the density
+ * (alpha - 1) c^(alpha - 1) / (u + c)^alpha: chwknll()'s Lomax shape is
+ * alpha - 1. */
 static R_INLINE double rmbl_hawkes_nll(const double *t, R_xlen_t n, double T,
                                        int kernel, const double *par,
                                        R_xlen_t npar) {

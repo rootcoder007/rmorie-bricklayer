@@ -20,10 +20,11 @@ A data frame of class \code{rmbl_census_profile}: \code{geo}, \code{dguid},
 \description{
 Reads a table of the Indigenous Population Profile, 2021 Census of Population
 (Statistics Canada catalogue 98-510-X2021001 to 98-510-X2021016), as the data service
-mirrors it under \code{census2021_ipp/}, into one row per geography, gender, age group,
+mirrors it, into one row per geography, gender, age group,
 characteristic and group: First Nations, Metis, Inuit, the other identity groups and
 non-Indigenous people (or, in the household tables, Indigenous and non-Indigenous
-households), each in its own rows.
+households), each in its own rows. The data service keeps these tables under
+\code{census2021_ipp/}.
 }
 \details{
 The profile gives each characteristic in a hierarchy shown only by indentation

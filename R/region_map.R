@@ -576,10 +576,8 @@ rgnmapalt <- function(map, unit, reg, route,
 #' larger one, a township absorbed by a neighbour. The geometry has no
 #' opinion about any of that.
 #'
-#' Use [rgnmapalt()]
-#' to check this result against the name route, with those cases named,
-#' and [rgnmapcmp()] to compare it with a
-#' published map.
+#' [rgnmapalt()] checks this result against the name route, with those cases
+#' named, and [rgnmapcmp()] compares it with a published map.
 #'
 #' Errors (when \code{sf} and the file are present): missing or empty
 #' \code{unit}; \code{x}, \code{y} and \code{unit} of different lengths;

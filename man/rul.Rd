@@ -7,9 +7,8 @@
 rul(name, expr, col = NULL, sev = c("warning", "fatal"), msg = NULL)
 }
 \arguments{
-\item{name}{Short identifier for the rule, a string; it names the issue
-in the result of \code{\link[=valrules]{valrules()}}, so give each rule
-a different name.}
+\item{name}{A short identifier for the rule, a string. It names the issue in
+the result of \code{\link[=valrules]{valrules()}}, so give each rule a different name.}
 
 \item{expr}{A function, as described above.}
 

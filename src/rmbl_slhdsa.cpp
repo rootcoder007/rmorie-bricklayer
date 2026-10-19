@@ -370,7 +370,7 @@ SEXP C_rmbl_slhdsa_sign_impl(SEXP set, SEXP sk, SEXP msg, SEXP ctx,
             rmbl::fail("`sk` must be a raw vector of %d bytes", S::kSkBytes);
         }
         if (TYPEOF(opt_rand) != RAWSXP || XLENGTH(opt_rand) != S::kN) {
-            rmbl::fail("`opt_rand` must be a raw vector of %d bytes", S::kN);
+            rmbl::fail("`rnd` must be a raw vector of %d bytes", S::kN);
         }
         SEXP sig = PROTECT(rmbl::alloc_vector(RAWSXP, S::kSigBytes));
         rmbl_prehash::Result ph;
@@ -401,7 +401,7 @@ SEXP C_rmbl_slhdsa_sign_internal_impl(SEXP set, SEXP sk, SEXP msg, SEXP opt_rand
             rmbl::fail("`sk` must be a raw vector of %d bytes", S::kSkBytes);
         }
         if (TYPEOF(opt_rand) != RAWSXP || XLENGTH(opt_rand) != S::kN) {
-            rmbl::fail("`opt_rand` must be a raw vector of %d bytes", S::kN);
+            rmbl::fail("`rnd` must be a raw vector of %d bytes", S::kN);
         }
         SEXP sig = PROTECT(rmbl::alloc_vector(RAWSXP, S::kSigBytes));
         S::sign(RAW(sig), RAW(msg), static_cast<size_t>(XLENGTH(msg)), NULL, 0,

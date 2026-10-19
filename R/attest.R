@@ -14,7 +14,7 @@
 #'
 #' \code{cpsatst()} signs a manifest's canonical digest and records
 #' everything a verifier needs alongside it: the scheme, the public key, the
-#' context string, the pre-hash, a note and the signing time.
+#' context string, the pre-hash, a note and the time of signing.
 #' \code{cpschkatst()} checks the result against a manifest
 #' without being told anything further. Use them to publish a capsule
 #' together with proof that its manifest has not changed since you signed it.
@@ -72,28 +72,28 @@
 #'   signature for the standardised schemes; see
 #'   [cpssign()].
 #'   \code{NULL} (the default) means none.
-#' @param prehash Pre-hash, as in [cpssign()]:
-#'   \code{"none"} (the
+#' @param prehash Pre-hash, as in [cpssign()]. It is \code{"none"} (the
 #'   default) or a hash name such as \code{"sha256"} or \code{"sha512"}.
 #' @param note Optional free text recorded in the attestation
 #'   -- what the signature is meant to assert, in the signer's own words. It
 #'   is covered by the signature, since it is part of the digest.
 #' @param attest An attestation from \code{cpsatst()}.
-#' @param keyexp Optional public key the attestation must carry: hex,
-#'   or a key object from [fipskg()],
+#' @param keyexp Optional public key the attestation must carry, as hex
+#'   or as a key object from [fipskg()],
 #'   [fipspubkey()] or
 #'   [signpubkey()]. Supply it when you know
 #'   which key should have
 #'   signed: without it the check confirms the attestation is internally
 #'   consistent, which any key's holder could arrange.
-#' @return \code{cpsatst()} a list of class
-#'   \code{c("bricklayer_attestation", "list")} with the character fields
+#' @return \code{cpsatst()} a list of class \code{bricklayer_attestation} with the
+#'   character fields
 #'   \code{digest}, \code{scheme}, \code{public} (hex), \code{context},
 #'   \code{prehash}, \code{note} and \code{signed_utc} (ISO 8601 UTC time), and
 #'   \code{signature} (a \code{bricklayer_signature} from
 #'   [cpssign()]).
-#'   \code{cpschkatst()} a list of class
-#'   \code{c("bricklayer_attestation_check", "list")} with \code{ok} (logical)
+#'
+#'   \code{cpschkatst()} a list of class \code{bricklayer_attestation_check}
+#'   with \code{ok} (logical)
 #'   and \code{checks}, a data frame with columns \code{check}, \code{ok} and
 #'   \code{detail}, one row per check.
 #' @seealso
@@ -214,7 +214,7 @@ cpschkatst <- function(attest, man,
     # a public-key object is accepted as well as the hex it carries: for XMSS the attestation's
     # `public` is root || pubseed, and signpubkey() has both
     expected_hex <- if (inherits(keyexp, c("bricklayer_public_key", "bricklayer_signing_key"))) {
-      paste0(keyexp$root, keyexp$pub_seed)
+      paste0(keyexp$root, .rmbl_xkey(keyexp, "pubseed"))
     } else if (inherits(keyexp, c("bricklayer_oqs_key", "bricklayer_oqs_public_key"))) {
       keyexp$public
     } else {
@@ -342,7 +342,7 @@ print.bricklayer_attestation_check <- function(x, ...) {
   }
   # An XMSS public key is the root plus the public seed: both are needed
   # to verify, so both have to be recorded.
-  paste0(key$root, key$pub_seed)
+  paste0(key$root, .rmbl_xkey(key, "pubseed"))
 }
 
 .rmbl_attest_key_from <- function(attestation) {
@@ -352,7 +352,7 @@ print.bricklayer_attestation_check <- function(x, ...) {
     sig <- attestation$signature
     out <- list(
       root = substring(attestation$public, 1L, 64L),
-      pub_seed = substring(attestation$public, 65L, 128L),
+      pubseed = substring(attestation$public, 65L, 128L),
       height = sig$height, scheme = "xmss-sha256"
     )
     class(out) <- c("bricklayer_public_key", "list")

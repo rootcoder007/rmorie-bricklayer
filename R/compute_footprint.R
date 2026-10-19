@@ -155,13 +155,17 @@ co2inttab <- function() .rmbl_ci_table()
 #' Where is this computation running?
 #'
 #' Finds a location code for \code{\link{co2int}} without any
-#' network access, in this order: the \code{RMBL_LOCATION} environment
-#' variable (any code or name the table knows); codecarbon's
-#' \code{CODECARBON_COUNTRY_ISO_CODE} (alpha-3), so a machine already
-#' configured for codecarbon needs nothing more; the system time zone, mapped
-#' to its country through the IANA zone tables (\code{America/Toronto} is
-#' Canada, \code{Europe/Berlin} Germany); the territory in the locale
-#' (\code{en_CA.UTF-8} is Canada). When none of these yields a location in
+#' network access, in this order:
+#' \enumerate{
+#'   \item the \code{RMBL_LOCATION} environment variable (any code or name the
+#'     table knows);
+#'   \item \code{CODECARBON_COUNTRY_ISO_CODE} (alpha-3), the codecarbon variable,
+#'     so a machine already configured for codecarbon needs nothing more;
+#'   \item the system time zone, mapped to its country through the IANA zone
+#'     tables (\code{America/Toronto} is Canada, \code{Europe/Berlin} Germany);
+#'   \item the territory in the locale (\code{en_CA.UTF-8} is Canada).
+#' }
+#' When none of these yields a location in
 #' the table the answer is \code{"WORLD"}, and the method says so, so a report
 #' never silently applies one country's grid to another's computation.
 #'
@@ -482,8 +486,8 @@ raplok <- function(rapldir = "/sys/class/powercap") {
 #' @param expr The expression to evaluate. It is evaluated once, in the
 #'   calling environment, when the function reaches it (lazily, as a
 #'   promise).
-#' @param loc Passed to \code{\link{co2int}}: a location code,
-#'   alpha-3 code or name, a number in gCO2e/kWh, or \code{NULL} (the
+#' @param loc The location, passed to \code{\link{co2int}}. It is a location
+#'   code, alpha-3 code or name, a number in gCO2e/kWh, or \code{NULL} (the
 #'   default) to detect it.
 #' @param meth Character scalar: \code{"auto"} (the default; RAPL when
 #'   readable, else the model), \code{"rapl"} (measured; an error when the

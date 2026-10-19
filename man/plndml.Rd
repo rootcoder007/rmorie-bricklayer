@@ -87,8 +87,8 @@ al. 2018, section 3.4).
 
 Learners, all in base R: \code{"lasso"} (coordinate descent, penalty by 5-fold
 cross-validation), \code{"ridge"} (penalty by generalised cross-validation),
-\code{"ols"}, or a function \code{function(x_train, y_train, x_test)} returning
-predictions (for example a random forest from another package).
+\code{"ols"}, or a function returning predictions (for example a random forest
+from another package), called as \code{function(x_train, y_train, x_test)}.
 \code{basis = "poly2"} adds squares and pairwise products of the covariates, built
 from the covariates as observed and then demeaned, so a confounding that is a
 combination of them is removed exactly. The demeaned features are what the learners

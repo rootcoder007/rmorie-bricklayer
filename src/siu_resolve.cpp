@@ -5,6 +5,7 @@
 #include "siu_parse.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <vector>
 #include <array>
@@ -80,11 +81,25 @@ static std::string strip_glossary_icase(const std::string& s) {
     std::string out;
     out.reserve(s.size());
     size_t pos = 0;
+    // Each search's next match, kept while it is still ahead of the scan: a
+    // search that finds nothing from one position finds nothing from a later
+    // one, and a match ahead stays the first match until the scan passes it.
+    // Asking again from every head re-scanned to the end each time, quadratic
+    // (4000 repeats of a head 7.2 s, 8000 27.8 s; review of 1.0.0, M9).
+    const size_t kNHeads = sizeof(kHeads) / sizeof(kHeads[0]);
+    const size_t kUnknown = std::string::npos - 1;   // not searched yet
+    size_t head_at[sizeof(kHeads) / sizeof(kHeads[0])];
+    for (size_t k = 0; k < kNHeads; ++k) head_at[k] = kUnknown;
+    size_t tail_at = kUnknown;
+    auto next_from = [&s](size_t& cache, const char* lit, size_t from) {
+        if (cache == kUnknown || (cache != std::string::npos && cache < from)) cache = find_icase(s, lit, from);
+        return cache;
+    };
     while (pos < s.size()) {
         size_t h = std::string::npos, hlen = 0;
-        for (const char* head : kHeads) {
-            const size_t f = find_icase(s, head, pos);
-            if (f != std::string::npos && (h == std::string::npos || f < h)) { h = f; hlen = std::strlen(head); }
+        for (size_t k = 0; k < kNHeads; ++k) {
+            const size_t f = next_from(head_at[k], kHeads[k], pos);
+            if (f != std::string::npos && (h == std::string::npos || f < h)) { h = f; hlen = std::strlen(kHeads[k]); }
         }
         if (h == std::string::npos) break;
         // "who" then an optional comma and spaces, right before the head
@@ -96,7 +111,7 @@ static std::string strip_glossary_icase(const std::string& s) {
         if (!who) { out.append(s, pos, h + hlen - pos); pos = h + hlen; continue; }
         size_t after = h + hlen;
         if (after < s.size() && s[after] == ',') ++after;
-        const size_t tail = find_icase(s, "not a subject offic", after);
+        const size_t tail = next_from(tail_at, "not a subject offic", after);
         if (tail == std::string::npos || tail - after > 120) { out.append(s, pos, h + hlen - pos); pos = h + hlen; continue; }
         size_t end = tail + std::strlen("not a subject offic");
         if (s.compare(end, 3, "ial") == 0 || s.compare(end, 3, "IAL") == 0) end += 3;
@@ -224,7 +239,8 @@ static SoResolution resolve_fr(const std::string& text) {
         {"un", 1}, {"une", 1}, {"deux", 2}, {"trois", 3}, {"quatre", 4}, {"cinq", 5},
         {"six", 6}, {"sept", 7}, {"huit", 8}, {"neuf", 9}, {"dix", 10}};
     auto num = [&](std::string tok) {
-        std::transform(tok.begin(), tok.end(), tok.begin(), ::tolower);
+        std::transform(tok.begin(), tok.end(), tok.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
         const auto w = kFrNum.find(tok);
         return w != kFrNum.end() ? w->second : small_int(tok);
     };
@@ -337,7 +353,8 @@ static SoResolution resolve_subject_officials_impl(const std::string& report_tex
         const std::string tok = m[1].str();
         int n = 0;
         std::string low = tok;
-        std::transform(low.begin(), low.end(), low.begin(), ::tolower);
+        std::transform(low.begin(), low.end(), low.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
         auto wit = kWordNum.find(low);
         n = (wit != kWordNum.end()) ? wit->second : small_int(tok);
         return {n, "plural cue '" + m[0].str() + "'"};

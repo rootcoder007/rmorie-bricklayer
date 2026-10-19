@@ -12,8 +12,10 @@ no default.}
 }
 \value{
 A named integer vector of five elements, all in bytes:
-\code{encapsulation_key}, \code{decapsulation_key}, \code{ciphertext},
-\code{seed} and \code{shared_secret}.
+\code{public} (the encapsulation key), \code{secret} (the
+decapsulation key), \code{ciphertext}, \code{seed} and \code{shared}
+(the shared secret), named as \code{\link[=kemkg]{kemkg()}} and \code{\link[=kemencap]{kemencap()}} name their
+results.
 }
 \description{
 Reports the byte sizes that FIPS 203 fixes for one ML-KEM parameter set:
@@ -44,7 +46,7 @@ kemsz(768)
 # the shared secret is 32 bytes at every level: the level buys
 # security margin, not a longer secret
 vapply(c(512, 768, 1024),
-       function(l) kemsz(l)[["shared_secret"]], integer(1))
+       function(l) kemsz(l)[["shared"]], integer(1))
 
 # check a ciphertext's length before sending it
 key <- kemkg(768)

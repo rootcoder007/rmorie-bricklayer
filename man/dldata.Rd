@@ -41,8 +41,8 @@ see advice about the failure and a Wayback Machine fallback.
 }
 \details{
 Before anything is fetched the URL must be one public \code{https} URL:
-plain \code{http} needs \code{options(rmoriebricklayer.allowhttp =
-TRUE)}, \code{file://} needs \code{allowfile = TRUE}, and loopback,
+plain \code{http} needs the option \code{rmoriebricklayer.allowhttp} set to
+\code{TRUE}, \code{file://} needs \code{allowfile = TRUE}, and loopback,
 private, link-local and cloud-metadata addresses are refused. The
 transport then resolves the host, pins the connection to the checked
 addresses, re-checks every redirect hop, caps the body at 2 GiB and allows

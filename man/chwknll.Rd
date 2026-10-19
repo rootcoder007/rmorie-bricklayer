@@ -19,8 +19,8 @@ May be empty.}
 \item{hor}{End of the observation window, a single positive finite
 number in the same unit; the window starts at 0.}
 
-\item{kernel}{The triggering kernel: one of \code{"exponential"} (the
-default), \code{"weibull"}, \code{"lomax"}, \code{"gamma"}. Partial names are
+\item{kernel}{The triggering kernel, one of \code{"exponential"} (the
+default), \code{"weibull"}, \code{"lomax"} and \code{"gamma"}. Partial names are
 matched.}
 
 \item{par}{Numeric parameter vector, as described above: length 3

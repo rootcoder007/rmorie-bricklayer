@@ -6,15 +6,15 @@
 #' \code{url} to \code{dest}; if the live download fails (404, network),
 #' it retries the Wayback Machine snapshot -- so a rotated or removed
 #' source file (CIHI, open-data portals) stays retrievable. Backed by the
-#' package's C++ \code{rmbl_fetch_with_fallback} kernel (libcurl), which
+#' package's C++ kernel \code{rmbl_fetch_with_fallback} (libcurl), which
 #' \pkg{rmorie} and \pkg{morie} share through \code{LinkingTo}. The return
 #' value says which source served the file, so a report can note that it
 #' used an archived copy.
 #'
 #' @details
 #' Before any network use the arguments are checked: \code{url} must be one
-#' \code{https} URL to a public host (plain \code{http} only with
-#' \code{options(rmoriebricklayer.allowhttp = TRUE)}; loopback, private,
+#' \code{https} URL to a public host (plain \code{http} only when the option
+#' \code{rmoriebricklayer.allowhttp} is \code{TRUE}; loopback, private,
 #' link-local and metadata addresses are refused), the directory of
 #' \code{dest} must exist and be writable, and \code{tmout} must be at
 #' least one second. The compiled layer then resolves the host, pins the
@@ -99,6 +99,11 @@ blfetch <- function(url, dest, wb = "", tmout = 120L) {
                             dest, as.integer(tmout), ""))
   if (code == 0L) return(invisible("live"))
   if (code == 1L) return(invisible("wayback"))
+  # the destination could not be written: a local failure, and no Wayback lookup was made
+  if (code == -2L) {
+    stop(sprintf("blfetch: cannot write %s (the download could not be saved there)", dest),
+         call. = FALSE)
+  }
   v <- -code
   live <- v %/% 10L
   stop(sprintf("blfetch: %s; %s",

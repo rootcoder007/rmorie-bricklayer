@@ -33,8 +33,8 @@
 #' @param data A data frame.
 #' @param maxpat Maximum patterns to return, most
 #'   frequent first, one positive whole number (default 20).
-#' @return A data frame of class \code{c("bricklayer_missingness",
-#'   "data.frame")}, one row per pattern: \code{pattern} (character, \code{.}
+#' @return A data frame of class \code{bricklayer_missingness}, one row per pattern:
+#'   \code{pattern} (character, \code{.}
 #'   for present and \code{X} for missing, in column order), \code{nrows}
 #'   (integer), \code{pctrows} (numeric, percent of all rows),
 #'   \code{n_missing} (integer, columns missing in that pattern) and
@@ -322,10 +322,8 @@ print.bricklayer_correlations <- function(x, ...) {
 #'
 #' Error: \code{a} or \code{b} that is not a list.
 #'
-#' @param a,b Environment records from
-#'   [capenv()], or whole
-#'   manifests containing an \code{environment} element (such as
-#'   [mkmnf()] returns).
+#' @param a,b Environment records from [capenv()], or whole manifests (such
+#'   as [mkmnf()] returns) that hold an \code{environment} element.
 #' @return A list of class \code{c("bricklayer_env_diff", "list")}:
 #'   \code{identical} (logical, \code{TRUE} when R version, platform and all
 #'   package versions agree), \code{r_version} (a named length-2 character

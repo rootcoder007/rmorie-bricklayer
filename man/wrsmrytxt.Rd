@@ -15,9 +15,9 @@ wrsmrytxt(man, outdir, paths, whatwasdone = NULL, contact = NULL, lic = NULL)
 \code{SUMMARY.txt} into and to list the files of.}
 
 \item{paths}{A named list (or named character vector) of paths to report,
-one line each, labelled by the capitalised name (for example
-\code{capsule}, \code{input}, \code{results}, \code{analysis_script},
-\code{provenance}). \code{list()} reports none.}
+one line each, labelled by the capitalised name. Names such as
+\code{capsule}, \code{input}, \code{results}, \code{analysis_script} and
+\code{provenance} are typical. \code{list()} reports none.}
 
 \item{whatwasdone}{Optional character vector, one line each, describing
 what the run did. Default \code{NULL} (no section).}

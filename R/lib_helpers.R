@@ -331,8 +331,8 @@ asciifb <- function(x, force = FALSE) {
 #' that is not a single non-empty string is refused before anything is
 #' written (`"path must be a single non-empty string"`).
 #'
-#' @param text A character vector of lines to write (other types are
-#'   converted with [as.character()]).
+#' @param text A character vector of lines to write; [as.character()]
+#'   converts any other type.
 #' @param path The destination file, a single non-empty string. Its
 #'   directory must exist.
 #' @return Invisibly, `path`.

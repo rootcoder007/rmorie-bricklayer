@@ -18,9 +18,9 @@ concentration curve) with \code{concidx} (a number in
 \eqn{[-1, 1]}), \code{interpretation} (a sentence),
 \code{expomean}, \code{citation} (a string) and \code{extra}, a
 list with \code{n} (rows used), \code{cov_h_R} (the covariance) and
-\code{curve}, a data frame of the concentration curve
-(\code{population}: cumulative population share, poorest first;
-\code{exposure}: cumulative share of total exposure).
+\code{curve}, a data frame of the concentration curve. Its column
+\code{population} is the cumulative population share, poorest first, and
+\code{exposure} the cumulative share of total exposure.
 }
 \description{
 Measures whether exposure to pollution is concentrated among

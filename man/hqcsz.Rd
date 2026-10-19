@@ -14,9 +14,10 @@ three). There is no default.}
 \code{\link[=hqckg]{hqckg()}}.}
 }
 \value{
-A named integer vector: \code{encapsulation_key}, \code{decapsulation_key},
-\code{ciphertext}, \code{seed} (key generation), \code{message} and \code{salt}
-(encapsulation randomness) and \code{shared_secret}, all in bytes.
+A named integer vector: \code{public} (the encapsulation key), \code{secret}
+(the decapsulation key), \code{ciphertext}, \code{seed} (key generation), \code{message}
+and \code{salt} (encapsulation randomness) and \code{shared} (the shared secret), all
+in bytes, named as \code{\link[=hqckg]{hqckg()}} and \code{\link[=hqcencap]{hqcencap()}} name their results.
 }
 \description{
 Reports the byte lengths that the HQC specification fixes for a security
@@ -48,13 +49,13 @@ hqcsz(1)
 
 # code-based keys and ciphertexts are larger than ML-KEM's at the same
 # category; the shared secret is 32 bytes at every level (64 in round 4)
-rbind(HQC = hqcsz(3)[c("encapsulation_key", "ciphertext")],
-      MLKEM = kemsz(768)[c("encapsulation_key", "ciphertext")])
+rbind(HQC = hqcsz(3)[c("public", "ciphertext")],
+      MLKEM = kemsz(768)[c("public", "ciphertext")])
 rbind(v5 = hqcsz(1), round4 = hqcsz(1, "round4"))
 
 # check a stored public key's length
 key <- hqckg(1)
-nchar(key$public) / 2 == hqcsz(1)[["encapsulation_key"]]
+nchar(key$public) / 2 == hqcsz(1)[["public"]]
 
 # an unknown level is refused rather than mapped to a default
 try(hqcsz(2))

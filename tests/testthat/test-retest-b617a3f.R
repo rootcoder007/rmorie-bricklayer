@@ -120,11 +120,15 @@ test_that("CSV reader: a byte-order mark after the header, and a header of blank
     suppressWarnings(utils::read.csv(f, stringsAsFactors = FALSE, skipNul = TRUE))
   }
   same <- function(t) expect_identical(ours(charToRaw(t)), ref(charToRaw(t)), info = encodeString(t))
-  same("b,a\n﻿T\n")             # the mark is no part of the first field
-  same("c\n﻿null\nF\n")
-  same("\"h\"\n﻿\n")             # a line of the mark alone is a blank line
-  same("a\n\n﻿x\n")              # after blank lines too
-  same("a\n\"﻿x\"\n")            # inside the opening quote
+  # read.csv() drops a mark at the start of a line below the header only in a UTF-8 locale; the
+  # reader drops it everywhere, so these five are compared there (C-locale check of 1.0.0)
+  if (l10n_info()[["UTF-8"]]) {
+    same("b,a\n﻿T\n")             # the mark is no part of the first field
+    same("c\n﻿null\nF\n")
+    same("\"h\"\n﻿\n")             # a line of the mark alone is a blank line
+    same("a\n\n﻿x\n")              # after blank lines too
+    same("a\n\"﻿x\"\n")            # inside the opening quote
+  }
   same("a\nx\n﻿\n2\n")           # past the first row it is text
   same("\n \n1\n2\n")                 # a header of blanks: no columns, the rows are row names
   same("\n﻿\nx\nb\n")            # a header of the mark alone, the same

@@ -21,8 +21,7 @@ signature for the standardised schemes; see
 \code{\link[=cpssign]{cpssign()}}.
 \code{NULL} (the default) means none.}
 
-\item{prehash}{Pre-hash, as in \code{\link[=cpssign]{cpssign()}}:
-\code{"none"} (the
+\item{prehash}{Pre-hash, as in \code{\link[=cpssign]{cpssign()}}. It is \code{"none"} (the
 default) or a hash name such as \code{"sha256"} or \code{"sha512"}.}
 
 \item{note}{Optional free text recorded in the attestation
@@ -31,8 +30,8 @@ is covered by the signature, since it is part of the digest.}
 
 \item{attest}{An attestation from \code{cpsatst()}.}
 
-\item{keyexp}{Optional public key the attestation must carry: hex,
-or a key object from \code{\link[=fipskg]{fipskg()}},
+\item{keyexp}{Optional public key the attestation must carry, as hex
+or as a key object from \code{\link[=fipskg]{fipskg()}},
 \code{\link[=fipspubkey]{fipspubkey()}} or
 \code{\link[=signpubkey]{signpubkey()}}. Supply it when you know
 which key should have
@@ -40,21 +39,22 @@ signed: without it the check confirms the attestation is internally
 consistent, which any key's holder could arrange.}
 }
 \value{
-\code{cpsatst()} a list of class
-\code{c("bricklayer_attestation", "list")} with the character fields
+\code{cpsatst()} a list of class \code{bricklayer_attestation} with the
+character fields
 \code{digest}, \code{scheme}, \code{public} (hex), \code{context},
 \code{prehash}, \code{note} and \code{signed_utc} (ISO 8601 UTC time), and
 \code{signature} (a \code{bricklayer_signature} from
 \code{\link[=cpssign]{cpssign()}}).
-\code{cpschkatst()} a list of class
-\code{c("bricklayer_attestation_check", "list")} with \code{ok} (logical)
+
+\code{cpschkatst()} a list of class \code{bricklayer_attestation_check}
+with \code{ok} (logical)
 and \code{checks}, a data frame with columns \code{check}, \code{ok} and
 \code{detail}, one row per check.
 }
 \description{
 \code{cpsatst()} signs a manifest's canonical digest and records
 everything a verifier needs alongside it: the scheme, the public key, the
-context string, the pre-hash, a note and the signing time.
+context string, the pre-hash, a note and the time of signing.
 \code{cpschkatst()} checks the result against a manifest
 without being told anything further. Use them to publish a capsule
 together with proof that its manifest has not changed since you signed it.

@@ -26,9 +26,9 @@ trcprog(
 \item{conflvl}{Confidence level (default 0.95).}
 }
 \value{
-A one-row data frame: \code{completed}, \code{remaining}, \code{years},
-\code{rate}, \code{ratelo}, \code{rateup}, \code{cmplby},
-\code{cmplbyearly}, \code{cmplbylate}, of class \code{rmbl_trc_progress};
+A one-row data frame of class \code{rmbl_trc_progress} with the columns
+\code{completed}, \code{remaining}, \code{years}, \code{rate}, \code{ratelo},
+\code{rateup}, \code{cmplby}, \code{cmplbyearly} and \code{cmplbylate};
 \code{plot()} draws the completions and the projection, with the band the rate's
 interval gives.
 }

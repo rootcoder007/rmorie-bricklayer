@@ -34,7 +34,7 @@ characteristics use 1 whatever is given.}
 1 for counts that are not rounded.}
 }
 \value{
-A data frame of class \code{rmbl_profile_share}: \code{geo}, \code{dguid},
+A data frame of class \code{rmbl_profile_share} with \code{geo}, \code{dguid},
 \code{residence}, \code{gender}, \code{age}, \code{group}, \code{numerator},
 \code{denominator}, \code{estimate} (percent), \code{lower}, \code{upper},
 \code{quality}; ready for \code{\link{indgap}} and

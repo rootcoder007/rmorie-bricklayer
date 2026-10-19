@@ -36,8 +36,8 @@ cluster (district by month, say) is one column made with \code{interaction()}.}
 
 \item{fe}{\code{c("unit", "time")} (default) or \code{"time"}.}
 
-\item{w}{Optional column name of non-negative weights (population, or
-matching weights): weighted least squares, with weighted within-means.}
+\item{w}{Optional column name of non-negative weights, such as population or
+matching weights, for weighted least squares with weighted within-means.}
 
 \item{comb}{Optional linear combination of the terms, named by them, reported
 with its delta-method standard error as the attribute \code{combined}. For a

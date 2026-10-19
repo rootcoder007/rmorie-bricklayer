@@ -421,6 +421,15 @@ SEXP C_rmbl_rsa_recover_impl(SEXP sig, SEXP modulus, SEXP exponent) {
         RMBL_ARG_ERROR("the public exponent is implausibly large (%d bytes)",
                  static_cast<int>(XLENGTH(exponent)));
     }
+    /* RFC 8017 8.2.2 step 1: a signature is exactly k bytes, k the length
+     * of the modulus. Read as a number, 02 and 00 00 02 are the same value,
+     * so without this every leading-zero variant of a valid signature
+     * verified too (a malleable signature; review of 1.0.0, M5). The
+     * modulus is its magnitude, without the DER sign byte. */
+    if (XLENGTH(sig) != XLENGTH(modulus)) {
+        RMBL_ARG_ERROR("the signature is %d bytes, not the modulus length of %d",
+                       static_cast<int>(XLENGTH(sig)), static_cast<int>(XLENGTH(modulus)));
+    }
     /* the Big values are std::vectors: no rmbl::fail() while they live */
     const char *err = NULL;
     const size_t outlen = static_cast<size_t>(XLENGTH(modulus));

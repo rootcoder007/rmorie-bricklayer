@@ -105,10 +105,8 @@ pqcbknd <- function() .Call(C_rmbl_pqc_backends)
 #' the right length, and for `fipspubkey()` a key that did not come
 #' from `fipskg()` or [fipskey()].
 #'
-#' @param scheme Scheme name, one of
-#' [pqcbknd()] other than
-#' `"xmss-sha256"`. The default `"ML-DSA-65"` is the FIPS 204
-#' middle security level.
+#' @param scheme Scheme name, one of [pqcbknd()] other than `"xmss-sha256"`.
+#' The default, `"ML-DSA-65"`, is the FIPS 204 middle security level.
 #' @param seed Optional raw vector of key-generation seed
 #' bytes, of the length [fipssz()] reports for
 #' the scheme. Supplying it makes the key reproducible, which is what the
@@ -155,8 +153,8 @@ pqcbknd <- function() .Call(C_rmbl_pqc_backends)
 #' # An unknown parameter set is refused.
 #' try(fipskg("ML-DSA-99"))
 #' @section Security:
-#' A hand-written implementation. The standardised schemes are checked byte
-#' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+#' The implementation is hand-written. Its standardised schemes are checked
+#' byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
 #' suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
 #' operation that touches a secret under valgrind memcheck with the secret
 #' marked undefined (the ctgrind method), so a branch or a memory address
@@ -167,8 +165,8 @@ pqcbknd <- function() .Call(C_rmbl_pqc_backends)
 #' the value and the transition models (`inst/tvla`), and ML-KEM
 #' decapsulation and ML-DSA signing are first-order masked by default. These
 #' are checks of this code on those compilers and under those leakage
-#' models; no third-party security audit has been commissioned, and the
-#' README's security section lists what each check does and does not cover.
+#' models; the README's security section lists what each check does and
+#' does not cover.
 #' @export
 fipskg <- function(scheme = "ML-DSA-65", seed = NULL) {
   scheme <- .rmbl_fips_scheme(scheme)
@@ -230,11 +228,9 @@ fipspubkey <- function(key) {
 #' @param public Public key, hex or raw.
 #' @param secret Secret key, hex or raw. Omit for a
 #' verification-only key.
-#' @return A `bricklayer_fips_key` (`public`, `secret`, `scheme`)
-#'   when
-#'   `secret` is given, otherwise a `bricklayer_fips_public_key`
-#'   (`public`,
-#'   `scheme`); keys are held as lowercase hex, as
+#' @return When `secret` is given, a `bricklayer_fips_key` with `public`,
+#'   `secret` and `scheme`. Otherwise a key of class
+#'   `bricklayer_fips_public_key` with `public` and `scheme`. Keys are held as lowercase hex, as
 #'   [fipskg()] returns
 #'   them.
 #' @seealso
@@ -470,7 +466,7 @@ fipsvrfmu <- function(key, mu, sig) {
 #' @details
 #' The sizes are the standards' tables (FIPS 204 Table 2, FIPS 205 Table 2)
 #' as the compiled code uses them. `seed` is the key-generation input of
-#' [fipskg()]; `opt_rand` is the per-signature
+#' [fipskg()]; `rnd` is the per-signature
 #' randomness (32 bytes
 #' for ML-DSA's `rnd`, \eqn{n} bytes for SLH-DSA's `opt_rand`), which the
 #' deterministic variants replace with a fixed value. XMSS is not covered:
@@ -481,7 +477,7 @@ fipsvrfmu <- function(key, mu, sig) {
 #' @param scheme Scheme name, as in
 #' [fipskg()].
 #' @return A named integer vector of five byte counts: `public_key`,
-#'   `sk`, `signature`, `seed` and `opt_rand` (the
+#'   `secret_key`, `signature`, `seed` and `rnd` (the
 #'   per-signature
 #'   randomness the scheme consumes).
 #' @seealso
@@ -508,12 +504,12 @@ fipssz <- function(scheme) {
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (!is.na(mode)) {
     sz <- .Call(C_rmbl_mldsa_sizes, mode)
-    return(c(sz, opt_rand = 32L))
+    return(c(sz, rnd = 32L))
   }
   sz <- .Call(C_rmbl_slhdsa_sizes, scheme)
   # SLH-DSA draws its key from three n-byte seeds and its per-signature
   # randomness from one, so n follows from the seed length.
-  c(sz, opt_rand = sz[["seed"]] %/% 3L)
+  c(sz, rnd = sz[["seed"]] %/% 3L)
 }
 
 # The parameter-set name, validated against what the package implements.
@@ -643,8 +639,8 @@ fipssz <- function(scheme) {
 #' # The warning names the replacement.
 #' tryCatch(oqskg(), warning = function(w) conditionMessage(w))
 #' @section Security:
-#' A hand-written implementation. The standardised schemes are checked byte
-#' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+#' The implementation is hand-written. Its standardised schemes are checked
+#' byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
 #' suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
 #' operation that touches a secret under valgrind memcheck with the secret
 #' marked undefined (the ctgrind method), so a branch or a memory address
@@ -655,8 +651,8 @@ fipssz <- function(scheme) {
 #' the value and the transition models (`inst/tvla`), and ML-KEM
 #' decapsulation and ML-DSA signing are first-order masked by default. These
 #' are checks of this code on those compilers and under those leakage
-#' models; no third-party security audit has been commissioned, and the
-#' README's security section lists what each check does and does not cover.
+#' models; the README's security section lists what each check does and
+#' does not cover.
 #' @export
 oqskg <- function(scheme = "ML-DSA-65") {
   .Deprecated("fipskg")
@@ -799,8 +795,8 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #' try(pqckg(height = 20))
 #' options(op)
 #' @section Security:
-#' A hand-written implementation. The standardised schemes are checked byte
-#' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+#' The implementation is hand-written. Its standardised schemes are checked
+#' byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
 #' suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
 #' operation that touches a secret under valgrind memcheck with the secret
 #' marked undefined (the ctgrind method), so a branch or a memory address
@@ -810,13 +806,12 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #' hardware (`inst/dudect`) and power leakage is assessed in simulation under
 #' the value and the transition models (`inst/tvla`) for the masked ML-KEM
 #' and ML-DSA kernels; this scheme is not masked. These are checks of this
-#' code on those compilers; no third-party security audit has been
-#' commissioned, and the README's security section lists what each check
-#' does and does not cover.
+#' code on those compilers; the README's security section lists what each
+#' check does and does not cover.
 #' @export
 pqckg <- function(height = 10L, skseed = NULL, pubseed = NULL,
                        skprf = NULL) {
-  .rmbl_no_fn(sk_seed = skseed, pub_seed = pubseed, sk_prf = skprf)
+  .rmbl_no_fn(skseed = skseed, pubseed = pubseed, skprf = skprf)
   height <- .rmbl_num(height, "height", integer = TRUE)
   if (length(height) != 1L || is.na(height) || height < 1L || height > 16L) {
     stop("`height` must be a single integer between 1 and 16", call. = FALSE)
@@ -834,8 +829,8 @@ pqckg <- function(height = 10L, skseed = NULL, pubseed = NULL,
     .rmbl_check_seed(skprf, "skprf")
   root <- .bl_busy(sprintf("XMSS key: building the tree of %s one-time keys", format(2^height, big.mark = ",")),
                    .Call(C_rmbl_xmss_keygen, skseed, pubseed, height))
-  out <- list(root = root, pub_seed = pubseed, sk_seed = skseed,
-              sk_prf = skprf,
+  out <- list(root = root, pubseed = pubseed, skseed = skseed,
+              skprf = skprf,
               height = height, next_index = 0L,
               capacity = bitwShiftL(1L, height),
               scheme = "xmss-sha256")
@@ -892,7 +887,7 @@ signpubkey <- function(key) {
   if (!inherits(key, "bricklayer_signing_key")) {
     stop("`key` must come from pqckg()", call. = FALSE)
   }
-  out <- list(root = key$root, pub_seed = key$pub_seed,
+  out <- list(root = key$root, pubseed = .rmbl_xkey(key, "pubseed"),
               height = key$height, scheme = key$scheme)
   class(out) <- c("bricklayer_public_key", "list")
   out
@@ -986,10 +981,10 @@ signpubkey <- function(key) {
 #' digest of the message rather than the message itself -- HashML-DSA (FIPS
 #' 204 section 5.4) or HashSLH-DSA (FIPS 205 section 10.2.2). One of
 #' `"none"` (the default, the pure variants) or any hash function the two
-#' standards approve: `"sha224"`, `"sha256"`, `"sha384"`, `"sha512"`,
-#' `"sha512_224"`, `"sha512_256"`, `"sha3_224"`, `"sha3_256"`,
-#' `"sha3_384"`, `"sha3_512"`, `"shake128"` (256-bit output) or
-#' `"shake256"` (512-bit output). The identifier
+#' standards approve. The SHA-2 hashes are `"sha224"`, `"sha256"`, `"sha384"`,
+#' `"sha512"`, `"sha512_224"` and `"sha512_256"`; the SHA-3 hashes are
+#' `"sha3_224"`, `"sha3_256"`, `"sha3_384"` and `"sha3_512"`; the SHAKE ones are
+#' `"shake128"` (256-bit output) and `"shake256"` (512-bit output). The identifier
 #' of the pre-hash is bound into the signature, so a pre-hashed signature
 #' is never interchangeable with a pure one over the same digest.
 #' @return A list of class `bricklayer_signature`: `scheme`,
@@ -1036,8 +1031,8 @@ signpubkey <- function(key) {
 #' try(cpssign("manifest-4", "shared-secret", scheme = "xmss"))
 #' options(op)
 #' @section Security:
-#' A hand-written implementation. The standardised schemes are checked byte
-#' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+#' The implementation is hand-written. Its standardised schemes are checked
+#' byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
 #' suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
 #' operation that touches a secret under valgrind memcheck with the secret
 #' marked undefined (the ctgrind method), so a branch or a memory address
@@ -1048,8 +1043,8 @@ signpubkey <- function(key) {
 #' the value and the transition models (`inst/tvla`), and ML-KEM
 #' decapsulation and ML-DSA signing are first-order masked by default. These
 #' are checks of this code on those compilers and under those leakage
-#' models; no third-party security audit has been commissioned, and the
-#' README's security section lists what each check does and does not cover.
+#' models; the README's security section lists what each check does and
+#' does not cover.
 #' @export
 cpssign <- function(msg, key, scheme = NULL, ctx = NULL,
                          determ = FALSE, prehash = "none",
@@ -1065,9 +1060,9 @@ cpssign <- function(msg, key, scheme = NULL, ctx = NULL,
     # variant substitutes a fixed value, which is what the standards'
     # test vectors use and what makes a signature reproducible.
     rnd <- if (isTRUE(determ)) {
-      .rmbl_fips_fixed_rand(key$scheme, key$public, sz[["opt_rand"]])
+      .rmbl_fips_fixed_rand(key$scheme, key$public, sz[["rnd"]])
     } else {
-      rndbytes(sz[["opt_rand"]])
+      rndbytes(sz[["rnd"]])
     }
     ph <- .rmbl_fips_prehash(prehash)
     sg <- .rmbl_fips_sign(key$scheme, .rmbl_hex_to_raw(key$secret), .msg, masked = masked,
@@ -1112,7 +1107,7 @@ cpssign <- function(msg, key, scheme = NULL, ctx = NULL,
            call. = FALSE)
     }
   }
-  if (is.null(key[["sk_prf"]])) {
+  if (is.null(.rmbl_xkey(key, "skprf"))) {
     stop(paste0("this signing key predates the RFC 8391 randomiser and ",
                 "cannot produce a conformant signature; generate a new ",
                 "one with pqckg()"), call. = FALSE)
@@ -1126,7 +1121,8 @@ cpssign <- function(msg, key, scheme = NULL, ctx = NULL,
   # retire the index before the signature exists (RFC 8391's order), under the record's lock
   .rmbl_xmss_reserve(ids, idx)
   res <- .bl_busy(sprintf("XMSS signature %d: rebuilding the tree", idx),
-                  .Call(C_rmbl_xmss_sign, key$sk_seed, key[["sk_prf"]], key$pub_seed,
+                  .Call(C_rmbl_xmss_sign, .rmbl_xkey(key, "skseed"), .rmbl_xkey(key, "skprf"),
+                        .rmbl_xkey(key, "pubseed"),
                         as.integer(key$height), idx, msg))
   if (!identical(tolower(as.character(res$root)), ids$root)) {
     stop(sprintf(paste("this key's `root` does not match its seeds: the key object was edited. No signature",
@@ -1479,7 +1475,7 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   expected_wire <- paste0(sprintf("%08x", as.integer(sig$index)), sig[["randomizer"]],
                           sig$signature, sig$auth)
   if (!same(sig$wire, expected_wire)) return(FALSE)
-  .Call(C_rmbl_xmss_verify, key$pub_seed, key$root, as.integer(key$height),
+  .Call(C_rmbl_xmss_verify, .rmbl_xkey(key, "pubseed"), key$root, as.integer(key$height),
         as.integer(sig$index), msg, sig$signature,
         sig$auth, sig[["randomizer"]])
 }
@@ -1549,12 +1545,19 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 # the highest XMSS index each key has signed with in this session, by record id
 .rmbl_xmss_used <- new.env(parent = emptyenv())
 
+# An XMSS key field by its name (pubseed, skseed, skprf). Builds of 1.0.0 before the review
+# wrote pub_seed, sk_seed and sk_prf; a key saved by one still reads.
+.rmbl_xkey <- function(key, nm) {
+  old <- c(pubseed = "pub_seed", skseed = "sk_seed", skprf = "sk_prf")[[nm]]
+  key[[nm]] %||% key[[old]]
+}
+
 # A key's ids in the record: `id` a fingerprint of the secret seed the signer actually uses
 # (so a stale copy whose `root` field was edited is still the same key), `legacy` the
 # root:pubseed id the records of 0.5.12-pre and fcdce03 used, consulted and never written.
 .rmbl_xmss_ids <- function(key) {
-  sk <- .rmbl_check_seed(key$sk_seed, "sk_seed")
-  ps <- .rmbl_check_seed(key$pub_seed, "pub_seed")
+  sk <- .rmbl_check_seed(.rmbl_xkey(key, "skseed"), "skseed")
+  ps <- .rmbl_check_seed(.rmbl_xkey(key, "pubseed"), "pubseed")
   root <- if (is.character(key$root) && length(key$root) == 1L) tolower(key$root) else NA_character_
   if (is.na(root) || !grepl("^[0-9a-f]{64}$", root)) {
     stop("this key's `root` is not 64 hex characters: the key object was edited; do not hand-edit it",

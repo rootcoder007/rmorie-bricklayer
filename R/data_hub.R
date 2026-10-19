@@ -157,7 +157,7 @@
 #' \code{MORIE_DATA_URL} set to another address the key is not sent and the
 #' download fails with a message saying so. Some tables (ICPSR studies, the
 #' NCVS 38604 extract, the A2AJ case law) open only after their terms are
-#' accepted at \url{https://data.rmorie.com/terms}. Downloads draw a progress
+#' accepted on the terms page, \url{https://data.rmorie.com/terms}. Downloads draw a progress
 #' bar when \code{options(morie.progress)} allows it.
 #'
 #' Errors: \code{refresh} not \code{TRUE} or \code{FALSE}; no key stored (the

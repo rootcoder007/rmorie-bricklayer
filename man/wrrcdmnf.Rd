@@ -22,7 +22,7 @@ the manifest against.}
 \code{wrrcdmnf()} returns \code{path} invisibly.
 
 \code{vrfrcdmnf()} returns a list with \code{ok}
-(logical), \code{reasons} (character, \code{character(0)} when
+(logical), \code{reasons} (character; empty, \code{character(0)}, when
 \code{ok}), \code{signature_ok} (logical, \code{NA} when the manifest is
 unsigned) and \code{manifest} (the parsed JSON as a list).
 }

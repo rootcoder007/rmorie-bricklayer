@@ -28,15 +28,15 @@ The shared data-fetch foundation of the morie ecosystem. Downloads
 \code{url} to \code{dest}; if the live download fails (404, network),
 it retries the Wayback Machine snapshot -- so a rotated or removed
 source file (CIHI, open-data portals) stays retrievable. Backed by the
-package's C++ \code{rmbl_fetch_with_fallback} kernel (libcurl), which
+package's C++ kernel \code{rmbl_fetch_with_fallback} (libcurl), which
 \pkg{rmorie} and \pkg{morie} share through \code{LinkingTo}. The return
 value says which source served the file, so a report can note that it
 used an archived copy.
 }
 \details{
 Before any network use the arguments are checked: \code{url} must be one
-\code{https} URL to a public host (plain \code{http} only with
-\code{options(rmoriebricklayer.allowhttp = TRUE)}; loopback, private,
+\code{https} URL to a public host (plain \code{http} only when the option
+\code{rmoriebricklayer.allowhttp} is \code{TRUE}; loopback, private,
 link-local and metadata addresses are refused), the directory of
 \code{dest} must exist and be writable, and \code{tmout} must be at
 least one second. The compiled layer then resolves the host, pins the

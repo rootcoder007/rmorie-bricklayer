@@ -49,14 +49,14 @@
 #'   an empty accumulator; for \code{smryupd()}, the next block.
 #' @param acc,a,b Accumulators from \code{onlsmry()}.
 #' @return \code{onlsmry()}, \code{smryupd()} and
-#'   \code{smrymrg()} return an object of class
-#'   \code{c("bricklayer_online", "list")} (its \code{state} element is the
+#'   \code{smrymrg()} return an object of class \code{bricklayer_online} (its
+#'   \code{state} element is the
 #'   numeric vector described in Details); \code{smrystat()} returns a
 #'   named numeric vector with \code{n}, \code{mean}, \code{variance},
 #'   \code{sd}, \code{skewness} and \code{kurtosis} (excess).
 #' @references Chan TF, Golub GH, LeVeque RJ (1983). Algorithms for
 #' computing the sample variance: analysis and recommendations.
-#'   *The American Statistician* 37(3), 242--247.
+#'   *The American Statistician* 37(3), 242--247.\cr
 #'   \doi{10.1080/00031305.1983.10483115}
 #' @seealso [cmom()] for the single-pass
 #' batch version.

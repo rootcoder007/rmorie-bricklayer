@@ -24,8 +24,8 @@ co2fp(
 calling environment, when the function reaches it (lazily, as a
 promise).}
 
-\item{loc}{Passed to \code{\link{co2int}}: a location code,
-alpha-3 code or name, a number in gCO2e/kWh, or \code{NULL} (the
+\item{loc}{The location, passed to \code{\link{co2int}}. It is a location
+code, alpha-3 code or name, a number in gCO2e/kWh, or \code{NULL} (the
 default) to detect it.}
 
 \item{meth}{Character scalar: \code{"auto"} (the default; RAPL when

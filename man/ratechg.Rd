@@ -58,9 +58,9 @@ with one row per group and period: the grouping columns, the period
 column, \code{count}, \code{population}, \code{rate},
 \code{prerate}, \code{precnt},
 \code{prepop}, \code{rateratio}, \code{pctchg},
-\code{pctlo}, \code{pctup} (numeric) and \code{flag} (character:
-\code{"no comparison period"}, \code{"earlier period is zero"}, a
-small-count note, or \code{NA}). The \code{ratechg} attribute records
+\code{pctlo}, \code{pctup} (numeric) and the character \code{flag}. The
+flag is \code{"no comparison period"}, \code{"earlier period is zero"}, a
+small-count note, or \code{NA}. The \code{ratechg} attribute records
 the settings.
 }
 \description{

@@ -91,7 +91,7 @@ test_that("SLH-DSA internal signing is FIPS 205 slh_sign_internal and differs fr
   expect_identical(.Call(rmoriebricklayer:::C_rmbl_slhdsa_sign_internal, set, kp[[2]], mprime, opt), ext)
   expect_false(.Call(rmoriebricklayer:::C_rmbl_slhdsa_verify_internal, set, kp[[1]], msg, ext))
   expect_false(.Call(rmoriebricklayer:::C_rmbl_slhdsa_verify_internal, set, kp[[1]][-1], msg, sig))
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_slhdsa_sign_internal, set, kp[[2]], msg, raw(3)), "opt_rand")
+  expect_error(.Call(rmoriebricklayer:::C_rmbl_slhdsa_sign_internal, set, kp[[2]], msg, raw(3)), "`rnd`")
   expect_error(.Call(rmoriebricklayer:::C_rmbl_slhdsa_sign_internal, set, kp[[2]][-1], msg, opt), "`sk`")
   expect_error(.Call(rmoriebricklayer:::C_rmbl_slhdsa_sign_internal, set, kp[[2]], "x", opt), "raw vector")
 })

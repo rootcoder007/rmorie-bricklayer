@@ -49,9 +49,9 @@ test_that("the byte lengths are the ones the specification fixes", {
   for (lv in names(HQC_SIZES)) {
     sz <- hqcsz(as.integer(lv))
     expect_identical(unname(sz), HQC_SIZES[[lv]])
-    expect_identical(names(sz), c("encapsulation_key", "decapsulation_key",
+    expect_identical(names(sz), c("public", "secret",
                                   "ciphertext", "seed", "message", "salt",
-                                  "shared_secret"))
+                                  "shared"))
   }
   # the security in bits names the same three sets
   expect_identical(hqcsz(128), hqcsz(1))
@@ -99,7 +99,7 @@ test_that("a round trip agrees at every level and fresh randomness differs", {
   for (lv in c(1L, 3L, 5L)) {
     key <- hqckg(lv)
     expect_s3_class(key, "bricklayer_hqc_key")
-    expect_identical(nchar(key$public), 2L * hqcsz(lv)[["encapsulation_key"]])
+    expect_identical(nchar(key$public), 2L * hqcsz(lv)[["public"]])
     a <- hqcencap(hqcpubkey(key))
     b <- hqcencap(key)
     expect_identical(hqcdecap(key, a$ciphertext), a$shared)
@@ -115,7 +115,7 @@ test_that("a tampered ciphertext yields exactly J(H(ek) || sigma || c)", {
   cap <- hqcencap(key, m = as.raw(1:16), salt = as.raw(16:1))
   dk <- hex_raw(key$secret)
   ek <- hex_raw(key$public)
-  sigma <- dk[(sz[["encapsulation_key"]] + 33L):(sz[["encapsulation_key"]] + 32L + 16L)]
+  sigma <- dk[(sz[["public"]] + 33L):(sz[["public"]] + 32L + 16L)]
   hek <- .Call(C_rmbl_shake, 3256L, c(ek, as.raw(1L)), 32L)
   ct <- hex_raw(cap$ciphertext)
   # one bit in u, one in v, one in the salt
@@ -153,8 +153,8 @@ test_that("malformed keys, sizes and levels are refused with a reason", {
   expect_error(hqcencap(short), "no usable HQC-1 public key")
   # a decapsulation key whose seeds were damaged
   cap <- hqcencap(key)
-  for (off in c(5L, sz[["encapsulation_key"]] + 3L, sz[["encapsulation_key"]] + 40L,
-                sz[["decapsulation_key"]] - 1L)) {
+  for (off in c(5L, sz[["public"]] + 3L, sz[["public"]] + 40L,
+                sz[["secret"]] - 1L)) {
     bad <- key
     b <- hex_raw(bad$secret)
     b[off] <- xor(b[off], as.raw(1L))

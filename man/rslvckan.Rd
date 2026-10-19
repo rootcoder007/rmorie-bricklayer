@@ -7,10 +7,12 @@
 rslvckan(prov)
 }
 \arguments{
-\item{prov}{A provenance list as returned by
-\code{\link[=loadprov]{loadprov()}}, or
-\code{NULL}. It must contain \code{dataset$ckan_api_endpoint} and
-\code{resource$name_match_pattern} for a lookup to be made.}
+\item{prov}{A provenance list as returned by \code{\link[=loadprov]{loadprov()}}, or \code{NULL}.
+A lookup is made only when it has both of these fields:
+\itemize{
+\item \code{dataset$ckan_api_endpoint};
+\item \code{resource$name_match_pattern}.
+}}
 }
 \value{
 The matched resource URL as a length-1 character string, or
@@ -26,10 +28,10 @@ stays the same, so this recovers the current download URL without editing
 the project.
 }
 \details{
-The function reads \code{dataset$ckan_api_endpoint} (the full
-\code{.../api/3/action/package_show?id=<slug>} URL) and
-\code{resource$name_match_pattern} (a regular expression), fetches the
-endpoint as JSON, and walks \code{result$resources} in the order the
+The function reads \code{dataset$ckan_api_endpoint}, the full URL, which
+ends in \code{/api/3/action/} and \code{package_show?id=<slug>}. It also
+reads \code{resource$name_match_pattern}, a regular expression. It fetches
+the endpoint as JSON, and walks \code{result$resources} in the order the
 portal lists them. The first resource whose \code{name} matches the
 pattern (case-insensitively, with \code{\link[=grepl]{grepl()}}) wins. If the slug
 itself has
@@ -41,8 +43,8 @@ fallback.
 fails (offline, HTTP error, invalid JSON), when CKAN answers
 \code{"success": false}, or when no resource name matches. Errors are
 raised for a \code{prov} that is not a list, for an endpoint that is
-not a public \code{https} URL (plain \code{http} only with
-\code{options(rmoriebricklayer.allowhttp = TRUE)}; loopback, private and
+not a public \code{https} URL (plain \code{http} only when the option
+\code{rmoriebricklayer.allowhttp} is \code{TRUE}; loopback, private and
 link-local addresses are refused), and for a matched resource URL that
 fails the same check. One network request; nothing is written.
 }

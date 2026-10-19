@@ -5,32 +5,28 @@
 \title{First Nations, Metis and Inuit health and mental health: bundled Statistics Canada
 excerpts}
 \source{
-Statistics Canada, tables 13-10-0924-01 (
-\href{https://doi.org/10.25318/1310092401-eng}{
-doi:10.25318/1310092401-eng}),
-41-10-0067-01 (
-\href{https://doi.org/10.25318/4110006701-eng}{doi:10.25318/4110006701-eng}),
-41-10-0082-01
-(
-\href{https://doi.org/10.25318/4110008201-eng}{
-doi:10.25318/4110008201-eng}), 41-10-0021-01 (\doi{10.25318/4110002101-eng}),
-17-10-0160-01 (
-\href{https://doi.org/10.25318/1710016001-eng}{doi:10.25318/1710016001-eng})
-and 17-10-0161-01
-(
-\href{https://doi.org/10.25318/1710016101-eng}{
-doi:10.25318/1710016101-eng}); Indigenous Population Profile, 2021 Census of
-Population, catalogue 98-510-X2021001 and 98-510-X2021016. Reproduced and distributed
-on an "as is" basis with the permission of Statistics Canada, under the Statistics
-Canada Open Licence
-(\url{https://www.statcan.gc.ca/en/terms-conditions/open-licence}). Built by
-\code{data-raw/indigenous_mental_health.R} and \code{data-raw/indigenous_census.R} in
-the source package.
+Statistics Canada tables, each with its DOI:
+\itemize{
+\item 13-10-0924-01, \doi{10.25318/1310092401-eng};
+\item 41-10-0067-01, \doi{10.25318/4110006701-eng};
+\item 41-10-0082-01, \doi{10.25318/4110008201-eng};
+\item 41-10-0021-01, \doi{10.25318/4110002101-eng};
+\item 17-10-0160-01, \doi{10.25318/1710016001-eng};
+\item 17-10-0161-01, \doi{10.25318/1710016101-eng}.
+}
+Indigenous Population Profile, 2021 Census of Population, catalogue 98-510-X2021001
+and 98-510-X2021016. Reproduced and distributed on an "as is" basis with the
+permission of Statistics Canada, under the Statistics Canada Open Licence:
+
+\url{https://www.statcan.gc.ca/en/terms-conditions/open-licence}
+
+Built by the scripts \code{indigenous_mental_health.R} and \code{indigenous_census.R}
+in the \code{data-raw} folder of the source package.
 }
 \usage{
 indiex(
-  name = c("health", "mentalhealth", "wellbeing", "suicide", "censuspop", "censushh",
-    "lifeexp", "infantmort")
+  name = c("health", "mentalhealth", "wellbeing", "suicide",
+           "censuspop", "censushh", "lifeexp", "infantmort")
 )
 }
 \arguments{

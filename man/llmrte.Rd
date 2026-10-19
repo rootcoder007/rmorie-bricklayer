@@ -36,11 +36,11 @@ The automatic order is: an OpenAI-compatible endpoint of your own
 (\code{MORIE_LLM_BASE_URL}, or \code{own.url} saved with
 \code{rmoriebricklayer config set}); then every provider of
 \code{\link{llmprvd}} whose key is set, in the order of
-that table; then a local Ollama server (\code{OLLAMA_HOST}, default
-\code{http://localhost:11434}) when it answers with at least one pulled model
-or \code{OLLAMA_MODEL} is set. A saved route (\code{MORIE_LLM_ROUTE} or
-\code{route} saved in the settings file) replaces the automatic order
-when \code{route = NULL}.
+that table; then a local Ollama server, at \code{OLLAMA_HOST} or by default at
+\code{http://localhost:11434}, when it answers with at least one pulled model
+or \code{OLLAMA_MODEL} is set. A saved route replaces the automatic order
+when \code{route = NULL}; it comes from \code{MORIE_LLM_ROUTE} or from the
+\code{route} saved in the settings file.
 
 Nothing is sent to a provider. The only network contact is the Ollama
 probe, a \code{GET /api/tags} to the Ollama address with a 2 second

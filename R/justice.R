@@ -93,8 +93,9 @@
 #'   occurrence date, premises type, the published longitude and
 #'   latitude (which the Service offsets to the nearest intersection),
 #'   and \code{offence_records}, the number of offence records the
-#'   Service publishes for the occurrence (five have two). Built by
-#'   \code{data-raw/tps_break_enter_d14_2024.R} in the source package.}
+#'   Service publishes for the occurrence (five have two). The source package
+#'   builds it with the script \code{tps_break_enter_d14_2024.R} in its
+#'   \code{data-raw} folder.}
 #' }
 #'
 #' @source Ontario Court of Justice, court statistics,
@@ -105,9 +106,9 @@
 #'   (retrieved 2026-10-13); contains information licensed under the
 #'   Open Government Licence - Toronto Police Service. See
 #'   \code{inst/COPYRIGHTS}.
-#' @return No R object: each file is a CSV in \code{inst/extdata}, read
-#'   into a data frame with \code{read.csv(system.file("extdata", <file>,
-#'   package = "rmoriebricklayer"))}.
+#' @return No R object: each file is a CSV in \code{inst/extdata}. Read one
+#'   into a data frame with \code{read.csv()} on the path that
+#'   \code{system.file("extdata", <file>, package = "rmoriebricklayer")} gives.
 #' @name justice-data
 #' @seealso \code{\link{caseflow}}, \code{\link{lifetbl}},
 #'   \code{\link{dispmix}}, \code{\link{clrdcmp}},
@@ -143,7 +144,7 @@ NULL
 #'   behind \code{pertoclear}. Default 12, a year of months.
 #' @param conflvl Confidence level for the intervals. Default 0.95.
 #'
-#' @return A data frame of class \code{rmbl_case_flow}, one row per period:
+#' @return A data frame of class \code{rmbl_case_flow}, one row per period, with
 #'   \code{period}, \code{received}, \code{disposed}, \code{clearance} with
 #'   \code{lower} and \code{upper}, \code{net} (received less disposed:
 #'   positive grows the inventory), \code{rolclr} with

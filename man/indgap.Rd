@@ -38,7 +38,7 @@ Indigenous" row); by default the labels described in Details.}
 }
 \value{
 A data frame of class \code{rmbl_indigenous_gap}, one row per group but the
-reference: \code{group}, \code{estimate}, \code{refest}, \code{ratio},
+reference. The columns are \code{group}, \code{estimate}, \code{refest}, \code{ratio},
 \code{ratiolo}, \code{ratioup}, \code{difference}, \code{diflo},
 \code{difup}, \code{usewithcau} and \code{poogrp}; attributes
 \code{reference} and \code{conflvl}. \code{plot()} draws each group's difference
@@ -104,7 +104,7 @@ indgap(own, "group", "pct", "lower", "upper",
 }
 \references{
 Statistics Canada (2025). Health indicators for First Nations adults living
-off reserve, Metis and Inuit adults, 2015 to 2022. The Daily, 2025-02-13.
+off reserve, Metis and Inuit adults, 2015 to 2022. The Daily, 2025-02-13.\cr
 \url{https://www150.statcan.gc.ca/n1/daily-quotidien/250213/dq250213f-eng.htm}
 
 Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for

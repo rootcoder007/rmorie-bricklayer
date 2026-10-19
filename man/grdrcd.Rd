@@ -7,8 +7,8 @@
 grdrcd(x, map, keep = character())
 }
 \arguments{
-\item{x}{A factor or character vector (other atomic vectors are compared
-through \code{as.character()} matching of their values).}
+\item{x}{A factor or character vector. Other atomic vectors are compared
+by matching the values that \code{as.character()} gives.}
 
 \item{map}{Named character vector, \code{c(old_label = "new_label", ...)}.
 Every name must be non-empty.}

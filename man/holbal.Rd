@@ -87,8 +87,9 @@ fitting indicator should be left out rather than filled with another.
 \section{Acknowledgement}{
 
 This estimator puts to quantitative use the framework of Professor Suzanne Stewart
-(Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
-\code{vignette("first-nations-metis-inuit-health")}.
+(Yellowknives Dene First Nation, University of Toronto).
+
+See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette.
 }
 
 \examples{

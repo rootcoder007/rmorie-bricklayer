@@ -7,8 +7,8 @@
 xfrvrf(imported, soucnts, codebook = NULL, tol = 0, strict = TRUE)
 }
 \arguments{
-\item{imported}{The vector as it arrived: a haven-style labelled vector,
-plain codes (with \code{codebook}), or already-decoded labels.}
+\item{imported}{The vector as it arrived. It is a haven-style labelled vector,
+plain codes given with \code{codebook}, or labels already decoded.}
 
 \item{soucnts}{Named numeric vector, label = count, as printed by
 the source program (SPSS FREQUENCIES, Stata tabulate).}

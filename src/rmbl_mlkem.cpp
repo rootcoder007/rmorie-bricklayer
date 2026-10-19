@@ -110,11 +110,11 @@ SEXP C_rmbl_mlkem_sizes_impl(SEXP level) {
     INTEGER(out)[3] = 64;
     INTEGER(out)[4] = 32;
     SEXP nm = PROTECT(Rf_allocVector(STRSXP, 5));
-    SET_STRING_ELT(nm, 0, Rf_mkChar("encapsulation_key"));
-    SET_STRING_ELT(nm, 1, Rf_mkChar("decapsulation_key"));
+    SET_STRING_ELT(nm, 0, Rf_mkChar("public"));
+    SET_STRING_ELT(nm, 1, Rf_mkChar("secret"));
     SET_STRING_ELT(nm, 2, Rf_mkChar("ciphertext"));
     SET_STRING_ELT(nm, 3, Rf_mkChar("seed"));
-    SET_STRING_ELT(nm, 4, Rf_mkChar("shared_secret"));
+    SET_STRING_ELT(nm, 4, Rf_mkChar("shared"));
     Rf_setAttrib(out, R_NamesSymbol, nm);
     UNPROTECT(2);
     return out;

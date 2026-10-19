@@ -20,7 +20,7 @@
 #' list that [siuprs()] fills. Three
 #' fields are dates in ISO
 #' \code{YYYY-MM-DD} form, five are counts and the rest are free text.
-#' Count-type fields (\code{is_count = TRUE}) count distinct entities, and
+#' Count-type fields (\code{count = TRUE}) count distinct entities, and
 #' zero is a real answer: a witness-official-only investigation has zero
 #' subject officials. The function takes no arguments, reads no files and
 #' uses no network.
@@ -28,14 +28,14 @@
 #' @return A data.frame with 16 rows and three columns: \code{name}
 #'   (character, the field name used by
 #'   [siuprs()]),
-#'   \code{is_count} (logical, \code{TRUE} for the five count fields) and
+#'   \code{count} (logical, \code{TRUE} for the five count fields) and
 #'   \code{description} (character, what the field records).
 #' @examples
 #' s <- siusch()
 #' s$name
 #'
 #' # only the count fields
-#' s[s$is_count, c("name", "description")]
+#' s[s$count, c("name", "description")]
 #'
 #' # an empty hand-coding sheet with one column per field
 #' sheet <- as.data.frame(setNames(replicate(nrow(s), character(0), simplify = FALSE),
@@ -184,10 +184,9 @@ siuprs <- function(html) {
 
 #' Fetch and parse one SIU director's report
 #'
-#' Downloads one director's report from the SIU web site with
-#' [siufetch()] and parses it with
-#' [siuprs()], in
-#' one call. It is meant for loops over many report ids: a report that
+#' In one call, downloads one director's report from the SIU web site with
+#' [siufetch()] and parses it with [siuprs()]. It is meant for loops over many
+#' report ids: a report that
 #' cannot be retrieved gives \code{NULL} and a message instead of stopping
 #' the loop.
 #'

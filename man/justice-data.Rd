@@ -14,9 +14,9 @@ Open Government Licence - Toronto Police Service. See
 \code{inst/COPYRIGHTS}.
 }
 \value{
-No R object: each file is a CSV in \code{inst/extdata}, read
-into a data frame with \code{read.csv(system.file("extdata", <file>,
-  package = "rmoriebricklayer"))}.
+No R object: each file is a CSV in \code{inst/extdata}. Read one
+into a data frame with \code{read.csv()} on the path that
+\code{system.file("extdata", <file>, package = "rmoriebricklayer")} gives.
 }
 \description{
 Small excerpts of published court and police statistics, in
@@ -57,8 +57,9 @@ Break and Enter open data, every break and enter that occurred in
 occurrence date, premises type, the published longitude and
 latitude (which the Service offsets to the nearest intersection),
 and \code{offence_records}, the number of offence records the
-Service publishes for the occurrence (five have two). Built by
-\code{data-raw/tps_break_enter_d14_2024.R} in the source package.}
+Service publishes for the occurrence (five have two). The source package
+builds it with the script \code{tps_break_enter_d14_2024.R} in its
+\code{data-raw} folder.}
 }
 }
 \examples{

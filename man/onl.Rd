@@ -24,8 +24,8 @@ an empty accumulator; for \code{smryupd()}, the next block.}
 }
 \value{
 \code{onlsmry()}, \code{smryupd()} and
-\code{smrymrg()} return an object of class
-\code{c("bricklayer_online", "list")} (its \code{state} element is the
+\code{smrymrg()} return an object of class \code{bricklayer_online} (its
+\code{state} element is the
 numeric vector described in Details); \code{smrystat()} returns a
 named numeric vector with \code{n}, \code{mean}, \code{variance},
 \code{sd}, \code{skewness} and \code{kurtosis} (excess).
@@ -100,7 +100,7 @@ try(onlsmry(c("1", "2")))
 \references{
 Chan TF, Golub GH, LeVeque RJ (1983). Algorithms for
 computing the sample variance: analysis and recommendations.
-\emph{The American Statistician} 37(3), 242--247.
+\emph{The American Statistician} 37(3), 242--247.\cr
 \doi{10.1080/00031305.1983.10483115}
 }
 \seealso{

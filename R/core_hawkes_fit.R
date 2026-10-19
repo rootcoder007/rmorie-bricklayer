@@ -45,16 +45,16 @@
   times <- .rmbl_num(times, "times")
   if (anyNA(times)) stop("`times` must not contain NA", call. = FALSE)
   if (length(times) > 1L && any(diff(times) < 0)) stop("`times` must be sorted in increasing order", call. = FALSE)
-  horizon <- .rmbl_num(horizon, "horizon")
+  horizon <- .rmbl_num(horizon, "hor")
   if (length(horizon) != 1L || !is.finite(horizon) || horizon <= 0) {
-    stop("`horizon` must be a single positive finite number", call. = FALSE)
+    stop("`hor` must be a single positive finite number", call. = FALSE)
   }
   if (baseline != "constant" && horizon > 4194304) {
-    stop("a sinusoidal baseline is integrated day by day: `horizon` must be at most 4194304 days", call. = FALSE)
+    stop("a sinusoidal baseline is integrated day by day: `hor` must be at most 4194304 days", call. = FALSE)
   }
   if (length(times) > 0L && (min(times) < 0 || max(times) > horizon)) {
-    stop(sprintf(paste0("`times` must lie within [0, horizon] (they span %g to %g)",
-                        if (max(times) > horizon) "; chwkjit(times, horizon = ) keeps them inside" else ""),
+    stop(sprintf(paste0("`times` must lie within [0, hor] (they span %g to %g)",
+                        if (max(times) > horizon) "; chwkjit(times, hor = ) keeps them inside" else ""),
                  min(times), max(times)), call. = FALSE)
   }
   list(times = times, horizon = horizon)
@@ -435,9 +435,9 @@ chwkfit <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
 #' sinusoidal one).
 #'
 #' @inheritParams chwkfit
-#' @param par Numeric vector of parameters (baseline terms, \code{eta},
-#'   kernel parameters), as \code{chwkfit()} returns them in
-#'   \code{theta}: length 3 for the exponential kernel with a constant
+#' @param par Numeric vector of parameters, as \code{chwkfit()} returns them in
+#'   \code{theta}: the baseline terms, \code{eta} and the kernel parameters.
+#'   Its length is 3 for the exponential kernel with a constant
 #'   baseline, one more for a two-parameter kernel, three more for the
 #'   sinusoidal baseline.
 #' @return A numeric vector of length \code{length(times)}, values in
@@ -534,7 +534,10 @@ chwkres <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
     psi_new <- stats::optim(psi, fk, gk, method = "L-BFGS-B", lower = b$lower[kidx], upper = b$upper[kidx])$par
     e <- .Call(C_rmbl_hawkes_em_pass, times, lam, eta, kind, psi, psi_new)
     s <- .Call(C_rmbl_hawkes_cdf_sum, times, horizon, kind, psi_new)
-    eta_new <- min(max(e[[2]] / s[[1]], b$lower[[nb + 1L]]), b$upper[[nb + 1L]])
+    # no event can have been triggered when every event sits at the horizon (the kernel's
+    # CDF sums to zero): the branching ratio goes to its lower bound rather than 0/0
+    eta_new <- if (s[[1]] > 0) e[[2]] / s[[1]] else b$lower[[nb + 1L]]
+    eta_new <- min(max(eta_new, b$lower[[nb + 1L]]), b$upper[[nb + 1L]])
     theta <- c(a_new, eta_new, psi_new)
     new <- nll_of(theta)
     done <- abs(cur - new) <= tol * max(1, abs(cur))

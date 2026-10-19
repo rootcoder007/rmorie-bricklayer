@@ -20,9 +20,9 @@ nonces. Use it whenever a value must be unguessable; use
 reproducibility is the point.
 }
 \details{
-Reads the operating system's own random source -- \verb{/dev/urandom} on
-Unix and macOS, \code{RtlGenRandom} on Windows -- rather than R's
-Mersenne Twister.
+Reads the operating system's own random source rather than R's
+Mersenne Twister: \verb{/dev/urandom} on Unix and macOS, \code{RtlGenRandom} on
+Windows.
 
 This distinction matters for anything that becomes a key.
 \code{\link[=set.seed]{set.seed()}} makes R's generator reproducible BY

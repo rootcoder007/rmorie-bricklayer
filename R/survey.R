@@ -597,9 +597,8 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
   # With 101 PSUs or more that is within 1% of the weight, and it was refused as a copy on 15 JK1
   # domain subsets (re-test of the b617a3f CRAN stress fixes)
   jk_scale <- function(r) {
+    # both callers reach it with a row of the weight left in, so k is never empty
     k <- r > 0 & w > 0
-    # (both callers reach it only with no row of the weight left out: k is the weight's rows)
-    if (!any(k)) return(FALSE)
     f <- unique(signif(r[k] / w[k], 9))
     f <- f[f != 1]
     if (length(f) != 1L || f <= 1) return(FALSE)

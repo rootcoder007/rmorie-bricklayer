@@ -62,21 +62,28 @@ void rmbl_hmac_shax(int outlen, const unsigned char *key, size_t keylen,
     } else if (keylen > 0) {
         std::memcpy(k.data(), key, keylen);
     }
-    std::vector<unsigned char> inner(block);
+    /* sized for the message before k ^ ipad is written: insert() into a
+     * block-sized vector reallocated it and freed the first copy of the
+     * padded key unwiped (review of 1.0.0, M8); the same for k ^ opad */
+    std::vector<unsigned char> inner;
+    inner.reserve(block + msglen);
+    inner.resize(block);
+    rmbl_ct::Guard gi(inner.data(), block);
     for (size_t i = 0; i < block; ++i) {
         inner[i] = static_cast<unsigned char>(k[i] ^ 0x36);
     }
     inner.insert(inner.end(), msg, msg + msglen);
-    rmbl_ct::Guard gi(inner.data(), block);
     unsigned char ih[64];
     rmbl_ct::Guard gih(ih, sizeof ih);
     shax(outlen, inner.data(), inner.size(), ih);
-    std::vector<unsigned char> outer(block);
+    std::vector<unsigned char> outer;
+    outer.reserve(block + 64);
+    outer.resize(block);
+    rmbl_ct::Guard go(outer.data(), block + static_cast<size_t>(outlen));
     for (size_t i = 0; i < block; ++i) {
         outer[i] = static_cast<unsigned char>(k[i] ^ 0x5c);
     }
     outer.insert(outer.end(), ih, ih + outlen);
-    rmbl_ct::Guard go(outer.data(), block);
     shax(outlen, outer.data(), outer.size(), out);
 }
 

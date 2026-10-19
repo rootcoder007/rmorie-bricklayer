@@ -47,8 +47,8 @@
 #' review (Huangfu and Atkinson 2020: RR 1.02, 95% CI 1.01-1.04, per 10
 #' micrograms per cubic metre for all-cause mortality),
 #' \deqn{RR(z) = \exp(\beta (z - z_{cf}) / 10).}
-#' A vector of exposures gives the mean RR and log-RR, with the per-unit
-#' relative risks under \code{extra$rrperunit}.
+#' A vector of exposures gives the mean RR and log-RR. The per-unit
+#' relative risks are then in \code{extra$rrperunit}.
 #'
 #' Every function has zero excess risk at and below the reference
 #' concentration (\eqn{z \le z_{cf}} gives RR 1). The published 95%
@@ -452,8 +452,8 @@ mortdisp <- function(expdel, pop, brate, betaperunit,
 #' \code{\link{mortdisp}} unless \code{rare} or
 #' \code{hirate} admits it.
 #'
-#' @param expomean Mean exposure among the exposed (micrograms per cubic
-#'   metre). With \code{expoprev = 1} that is the population mean.
+#' @param expomean The mean exposure among the exposed, in micrograms per cubic
+#'   metre. With \code{expoprev = 1} that is the population mean.
 #' @param expoprev Proportion of the population at that level (1
 #'   for ambient air), in \code{[0, 1]}.
 #' @param brate Cases per person-year in the unexposed scenario (a
@@ -859,9 +859,9 @@ exprspplr <- function(data, y, expo, confs, nboot = 100L,
 #'   \eqn{[-1, 1]}), \code{interpretation} (a sentence),
 #'   \code{expomean}, \code{citation} (a string) and \code{extra}, a
 #'   list with \code{n} (rows used), \code{cov_h_R} (the covariance) and
-#'   \code{curve}, a data frame of the concentration curve
-#'   (\code{population}: cumulative population share, poorest first;
-#'   \code{exposure}: cumulative share of total exposure).
+#'   \code{curve}, a data frame of the concentration curve. Its column
+#'   \code{population} is the cumulative population share, poorest first, and
+#'   \code{exposure} the cumulative share of total exposure.
 #' @references Wagstaff, A., Paci, P. and van Doorslaer, E. (1991). On the
 #'   measurement of inequalities in health. Social Science and Medicine 33(5),
 #'   545-557.

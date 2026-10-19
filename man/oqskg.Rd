@@ -38,8 +38,8 @@ warning from \code{\link[=.Deprecated]{.Deprecated()}}. The keys are the same ob
 }
 \section{Security}{
 
-A hand-written implementation. The standardised schemes are checked byte
-for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+The implementation is hand-written. Its standardised schemes are checked
+byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
 suite. Side channels are checked, not assumed: \code{inst/ctcheck} runs every
 operation that touches a secret under valgrind memcheck with the secret
 marked undefined (the ctgrind method), so a branch or a memory address
@@ -50,8 +50,8 @@ hardware (\code{inst/dudect}), power leakage is assessed in simulation under
 the value and the transition models (\code{inst/tvla}), and ML-KEM
 decapsulation and ML-DSA signing are first-order masked by default. These
 are checks of this code on those compilers and under those leakage
-models; no third-party security audit has been commissioned, and the
-README's security section lists what each check does and does not cover.
+models; the README's security section lists what each check does and
+does not cover.
 }
 
 \examples{

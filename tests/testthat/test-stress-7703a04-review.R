@@ -13,8 +13,8 @@ cf_env3 <- function(env = parent.frame()) {
 
 has_secret <- function(obj, key) {
   flat <- unlist(obj)
-  any(grepl("sk_seed|sk_prf|key_state", names(flat))) ||
-    any(grepl(key$sk_seed, flat, fixed = TRUE)) || any(grepl(key[["sk_prf"]], flat, fixed = TRUE))
+  any(grepl("skseed|skprf|sk_seed|sk_prf|key_state", names(flat))) ||
+    any(grepl(key$skseed, flat, fixed = TRUE)) || any(grepl(key[["skprf"]], flat, fixed = TRUE))
 }
 
 test_that("Y1: no signature, attestation, bundle or serialisation of any scheme carries private-key bytes", {
@@ -24,8 +24,8 @@ test_that("Y1: no signature, attestation, bundle or serialisation of any scheme 
   expect_false(has_secret(s, k))
   expect_false(has_secret(cpsatst(list(name = "m"), xmssadv(k, s)), k))
   renderings <- c(deparse(s), tojs(s), rawToChar(serialize(s, NULL, ascii = TRUE)))
-  expect_false(any(grepl(k$sk_seed, renderings, fixed = TRUE)))
-  expect_false(any(grepl(k[["sk_prf"]], tojs(unclass(s)), fixed = TRUE)))
+  expect_false(any(grepl(k$skseed, renderings, fixed = TRUE)))
+  expect_false(any(grepl(k[["skprf"]], tojs(unclass(s)), fixed = TRUE)))
   # the forgery of the report has nothing to work from
   expect_error(cpsatst(list(name = "forged"), s$key_state))
   f <- fipskg("ML-DSA-65")
@@ -333,7 +333,7 @@ test_that("Y2b: the XMSS index record persists by default, in the package config
   a <- cpsatst(list(n = 1), k)
   expect_true(file.exists(f))
   xmssfgt()   # removes the file too; recreate the record as another session would
-  writeLines(paste(paste0(k$root, ":", k$pub_seed), a$signature$index, sep = "\t"), f)
+  writeLines(paste(paste0(k$root, ":", k$pubseed), a$signature$index, sep = "\t"), f)
   expect_error(cpsatst(list(n = 2), saved), "already used")
   expect_s3_class(cpsatst(list(n = 2), xmssadv(saved, a$signature)), "bricklayer_attestation")
   # a record the package cannot read stops signing, it is not read around
@@ -377,7 +377,7 @@ test_that("a line typed at a terminal in a non-interactive session is read by a 
 test_that("an XMSS object that still carries key_state (0.5.9 to 7703a04) is verified with a warning", {
   k <- pqckg(height = 2)
   s <- cpssign("m", k)
-  s$key_state <- list(sk_seed = k$sk_seed, sk_prf = k[["sk_prf"]], next_index = 1L)
+  s$key_state <- list(sk_seed = k$skseed, sk_prf = k[["skprf"]], next_index = 1L)
   expect_warning(ok <- cpsvrf("m", s, signpubkey(k)), "carries the signer")
   expect_true(ok)
   a <- cpsatst(list(n = 1), xmssadv(k, s))

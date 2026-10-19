@@ -47,7 +47,10 @@ std::string as_string(SEXP x, const char *what) {
     if (LENGTH(STRING_ELT(x, 0)) > (2 << 20)) {
         RMBL_ARG_ERROR("%s is larger than 2 MiB: not a report page", what);
     }
-    return std::string(CHAR(STRING_ELT(x, 0)));
+    /* in UTF-8 whatever the input's declared encoding: the core reads UTF-8,
+     * so a latin1 page came back as invalid UTF-8 marked UTF-8 and a latin1
+     * "d\xe9cembre" was no month (review of 1.0.0, M10) */
+    return std::string(Rf_translateCharUTF8(STRING_ELT(x, 0)));
 }
 
 }  // namespace
@@ -130,7 +133,7 @@ SEXP C_rmbl_siu_schema_impl(SEXP unused) {
     SEXP ans = PROTECT(rmbl::alloc_vector(VECSXP, 3));
     SEXP nms = PROTECT(rmbl::alloc_vector(STRSXP, 3));
     SET_STRING_ELT(nms, 0, Rf_mkChar("name"));
-    SET_STRING_ELT(nms, 1, Rf_mkChar("is_count"));
+    SET_STRING_ELT(nms, 1, Rf_mkChar("count"));
     SET_STRING_ELT(nms, 2, Rf_mkChar("description"));
     SET_VECTOR_ELT(ans, 0, name);
     SET_VECTOR_ELT(ans, 1, is_count);

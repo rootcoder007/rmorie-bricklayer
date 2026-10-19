@@ -248,9 +248,14 @@ SEXP C_rmbl_hll_add_impl(SEXP x, SEXP p_bits, SEXP regs_in) {
     for (R_xlen_t i = 0; i < n; ++i) {
         SEXP e = STRING_ELT(x, i);
         if (e == NA_STRING) continue;
-        const char *s = CHAR(e);
+        /* the UTF-8 bytes of the string, so "cafe" with an accented e in UTF-8 and in latin1
+         * is one value, not two (review of 1.0.0, M10); the translation's
+         * buffer is released each time round */
+        const void *vmax = vmaxget();
+        const char *s = Rf_translateCharUTF8(e);
         const uint64_t h = hash64(reinterpret_cast<const unsigned char *>(s),
                                   std::strlen(s));
+        vmaxset(vmax);
         /* top p bits select the register, the rest supply the run length */
         const std::size_t idx = static_cast<std::size_t>(h >> (64 - p));
         const uint64_t rest = (h << p) | (static_cast<uint64_t>(1) << (p - 1));

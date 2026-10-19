@@ -51,7 +51,7 @@
 #'   Using Deterministic Random Bit Generators, section 10.2.1.
 #'   \href{https://doi.org/10.6028/NIST.SP.800-90Ar1}{doi:10.6028/NIST.SP.800-90Ar1}
 #'
-#'   NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard (AES).
+#'   NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard (AES).\cr
 #'   \href{https://doi.org/10.6028/NIST.FIPS.197-upd1}{doi:10.6028/NIST.FIPS.197-upd1}
 #' @seealso [drbggen()],
 #'   [drbgrsd()],
@@ -73,8 +73,8 @@
 #' # the entropy must be exactly 48 bytes
 #' try(drbgnew(as.raw(1:16)))
 #' @section Security:
-#' A hand-written implementation. The standardised schemes are checked byte
-#' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+#' The implementation is hand-written. Its standardised schemes are checked
+#' byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
 #' suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
 #' operation that touches a secret under valgrind memcheck with the secret
 #' marked undefined (the ctgrind method), so a branch or a memory address
@@ -84,9 +84,8 @@
 #' hardware (`inst/dudect`) and power leakage is assessed in simulation under
 #' the value and the transition models (`inst/tvla`) for the masked ML-KEM
 #' and ML-DSA kernels; this scheme is not masked. These are checks of this
-#' code on those compilers; no third-party security audit has been
-#' commissioned, and the README's security section lists what each check
-#' does and does not cover.
+#' code on those compilers; the README's security section lists what each
+#' check does and does not cover.
 #' @export
 drbgnew <- function(entropy = NULL, person = NULL) {
   # the generator is an environment and is not meant to be serialised:

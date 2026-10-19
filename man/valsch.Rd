@@ -63,8 +63,8 @@ The checks, and the name of the issue each one adds:
 \itemize{
 \item a missing \code{expected_columns} entry: \code{missing_columns},
 \code{"fatal"};
-\item fewer than \code{min_data_rows} or more than \code{max_data_rows}
-rows: \code{row_count_low} / \code{row_count_high};
+\item fewer than \code{min_data_rows} rows: \code{row_count_low};
+\item more than \code{max_data_rows} rows: \code{row_count_high};
 \item a column whose class differs from \code{expected_types}:
 \code{type_<col>}. \code{integer}, \code{numeric} and \code{double} are
 one family, and so are \code{character} and \code{factor};
@@ -74,8 +74,8 @@ non-numeric columns are skipped): \code{range_<col>};
 \code{missing_<col>};
 \item values not in \code{expected_value_sets}: \code{unexpected_<col>}.
 }
-A column named in a check but absent from the data is skipped by that
-check (only \code{expected_columns} reports it). All of these are
+A column that a check names but the data lack is skipped by that check.
+Only the \code{expected_columns} check reports such a column. All of these are
 \code{"warning"} except \code{missing_columns}.
 
 The schema itself is checked too. An empty schema (\code{list()}) gives

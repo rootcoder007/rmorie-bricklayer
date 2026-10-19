@@ -40,8 +40,9 @@
 #'   periods, or a named character vector mapping a period (as a string) to
 #'   its label.
 #' @return The object, still of class \code{rmbl_yoy}, with an added
-#'   character column \code{perlbl} and \code{attr(x, "yoy")$perlbl}
-#'   set to \code{TRUE}, so the labels are used by \code{print()},
+#'   character column \code{perlbl}. Its \code{yoy} attribute gets
+#'   \code{perlbl} set to \code{TRUE}, as \code{attr(x, "yoy")$perlbl}, so the labels
+#'   are used by \code{print()},
 #'   [yoyhtml()],
 #'   [yoypdf()] and the delimited writers.
 #' @seealso [fylbl()]
@@ -123,8 +124,8 @@ yoylbl <- function(x, labels) {
 #' @param sep Separator between the two years, a string; default
 #'   \code{"/"}.
 #' @param short Logical. \code{TRUE} (the default) abbreviates the second year
-#'   to two digits (\code{"2022/23"}); \code{FALSE} writes it in full
-#'   (\code{"2022/2023"}).
+#'   to two digits, as in \code{"2022/23"}; \code{FALSE} writes it in full, as in
+#'   \code{"2022/2023"}.
 #' @return A character vector of labels, the same length as
 #'   \code{endyear}, with \code{NA} where a value is not a year.
 #' @examples

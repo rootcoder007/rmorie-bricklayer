@@ -194,8 +194,10 @@ m$estimate
 **A single treated place, or a few.** `syndid()` weights both comparison units and
 pre-periods:
 
-```{r sdid}
-syndid(p13, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1)
+```{r sdid, fig.height = 3.5}
+sd <- syndid(p13, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1)
+sd
+plot(sd)
 ```
 
 **Null results without a measure of power.** `plnpwr()` simulates the design on the

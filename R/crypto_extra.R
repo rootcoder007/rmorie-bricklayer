@@ -13,9 +13,9 @@
 #' reproducibility is the point.
 #'
 #' @details
-#' Reads the operating system's own random source -- `/dev/urandom` on
-#' Unix and macOS, `RtlGenRandom` on Windows -- rather than R's
-#' Mersenne Twister.
+#' Reads the operating system's own random source rather than R's
+#' Mersenne Twister: `/dev/urandom` on Unix and macOS, `RtlGenRandom` on
+#' Windows.
 #'
 #' This distinction matters for anything that becomes a key.
 #' [set.seed()] makes R's generator reproducible BY

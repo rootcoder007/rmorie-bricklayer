@@ -238,7 +238,7 @@
 #'
 #' @details
 #' \strong{Where settings live.} Saved settings are kept in
-#' \code{$XDG_CONFIG_HOME/morie/llm.json} (\code{~/.config/morie/llm.json}
+#' \code{llm.json} in the folder \code{$XDG_CONFIG_HOME/morie} (\code{~/.config/morie}
 #' when \code{XDG_CONFIG_HOME} is unset), a private file (mode 0600, in a
 #' private directory) next to the shared \code{credentials.json}. The file is
 #' written only when you pass a setting; only the settings that change are
@@ -250,8 +250,8 @@
 #' over a saved value, which wins over the built-in default. Saving a
 #' setting whose variable is set warns that the variable still wins. A
 #' provider key is also read from the provider's alternative variable where
-#' it has one (\code{GOOGLE_API_KEY} for Gemini, \code{HUGGINGFACE_HUB_TOKEN}
-#' for Hugging Face, \code{CO_API_KEY} for Cohere).
+#' it has one: \code{GOOGLE_API_KEY} for Gemini, \code{CO_API_KEY} for Cohere,
+#' and for Hugging Face \code{HUGGINGFACE_HUB_TOKEN}.
 #'
 #' \strong{Checks when saving.} Names must be among the settings listed in
 #' the \code{key} column (\code{"unknown setting"} otherwise) and every value
@@ -279,13 +279,16 @@
 #' change one (a key is asked for without echo when no value is given), and
 #' \code{rmbl config setup} walks through them.
 #'
-#' @param ... Settings to save, as \code{key = value}: \code{route}
-#'   (\code{"auto"}, \code{"own"}, \code{"ollama"} or a provider id such as
-#'   \code{"anthropic"}; case is ignored), \code{<provider>.key} and
-#'   \code{<provider>.model} (e.g. \code{anthropic.key},
-#'   \code{openai.model}), \code{own.url}, \code{own.key},
-#'   \code{own.model}, \code{ollama.url}, \code{ollama.model},
-#'   \code{ollama.key}. Each value is a single string (leading and trailing
+#' @param ... Settings to save, as \code{key = value}. The keys are:
+#'   \itemize{
+#'     \item \code{route}: \code{"auto"}, \code{"own"}, \code{"ollama"} or a
+#'       provider id such as \code{"anthropic"} (case is ignored);
+#'     \item \code{<provider>.key} and \code{<provider>.model}, for example
+#'       \code{anthropic.key} or \code{openai.model};
+#'     \item \code{own.url}, \code{own.key} and \code{own.model};
+#'     \item \code{ollama.url}, \code{ollama.model} and \code{ollama.key}.
+#'   }
+#'   Each value is a single string (leading and trailing
 #'   spaces are removed). \code{NULL}, \code{NA} or \code{""} removes a
 #'   saved setting. With no arguments nothing is written.
 #' @return A data frame with one row per setting (seven general settings

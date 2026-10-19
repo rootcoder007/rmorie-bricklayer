@@ -30,8 +30,8 @@ uploading.}
 \code{licenseurl}, \code{description}, \code{subject}, ...); \code{mediatype}
 defaults to \code{"data"}.}
 
-\item{tsa}{The time-stamping authority, or \code{NULL} for no timestamp (default
-\code{"https://freetsa.org/tsr"}).}
+\item{tsa}{The time-stamping authority. \code{"https://freetsa.org/tsr"} is the
+default; \code{NULL} means no timestamp.}
 
 \item{ak, sk}{archive.org keys; default from the environment as
 \code{\link{wbsave}} reads them.}
@@ -67,11 +67,13 @@ authority's signed statement that the manifest's SHA-256 existed at its time;
 \code{\link{tsvrf}} checks it, as does \code{openssl ts -verify}. Each
 file's digest in the manifest ties the file to that time.
 
-The upload uses the Internet Archive's S3-like API: each file is sent with a PUT to
-\code{https://s3.us.archive.org/<item>/<file>}, streamed from disk. The first
-request creates the item with the metadata given. The keys are those of
-\code{\link{wbsave}} (\code{IA_S3_ACCESS_KEY} and \code{IA_S3_SECRET_KEY}, or
-their \code{_FILE} twins); they travel only in the \code{authorization} header and
+The upload uses the Internet Archive's S3-like API: each file is sent
+with a PUT, streamed from disk, to\cr
+\code{https://s3.us.archive.org/<item>/<file>}.\cr The first
+request creates the item with the metadata given. The keys are the same as
+for \code{\link{wbsave}}, so they are read from \code{IA_S3_ACCESS_KEY} and
+\code{IA_S3_SECRET_KEY}, or their \code{_FILE} twins. They travel only in the
+\code{authorization} header and
 are never written or printed. Publish only what the source's licence lets you
 redistribute.
 }

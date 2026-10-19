@@ -79,9 +79,9 @@ it was looking for has not found that the effect is absent -- it has
 found nothing either way, and the two are routinely reported as the same
 thing.
 
-For each size (0 is always added) and each of \code{reps} repetitions:
-the data are passed through \code{inject(data, size)}, the statistic is
-computed, and a permutation null is built by shuffling the
+For each size (0 is always added) and each of \code{reps} repetitions,
+the statistic is computed on the data passed through the injector, as
+\code{inject(data, size)}, and a permutation null is built by shuffling the
 \code{trt} column \code{n} times and recomputing the statistic. The
 two-sided permutation p-value is
 \deqn{p = \frac{1 + \#\{|T^*| \ge |T|\}}{1 + n_{ok}}}

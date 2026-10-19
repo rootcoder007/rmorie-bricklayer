@@ -10,7 +10,7 @@ siusch()
 A data.frame with 16 rows and three columns: \code{name}
 (character, the field name used by
 \code{\link[=siuprs]{siuprs()}}),
-\code{is_count} (logical, \code{TRUE} for the five count fields) and
+\code{count} (logical, \code{TRUE} for the five count fields) and
 \code{description} (character, what the field records).
 }
 \description{
@@ -26,7 +26,7 @@ The schema is held in the native core (src/siu_schema.h) and is the same
 list that \code{\link[=siuprs]{siuprs()}} fills. Three
 fields are dates in ISO
 \code{YYYY-MM-DD} form, five are counts and the rest are free text.
-Count-type fields (\code{is_count = TRUE}) count distinct entities, and
+Count-type fields (\code{count = TRUE}) count distinct entities, and
 zero is a real answer: a witness-official-only investigation has zero
 subject officials. The function takes no arguments, reads no files and
 uses no network.
@@ -36,7 +36,7 @@ s <- siusch()
 s$name
 
 # only the count fields
-s[s$is_count, c("name", "description")]
+s[s$count, c("name", "description")]
 
 # an empty hand-coding sheet with one column per field
 sheet <- as.data.frame(setNames(replicate(nrow(s), character(0), simplify = FALSE),

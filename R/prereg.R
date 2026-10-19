@@ -52,11 +52,12 @@
 #' element, such as a capsule manifest), whose result names are used.
 #' @return `prrgdecl()` returns a list of class `bricklayer_prereg`
 #' with `statistics` (the names), `hypotheses` (the claims), `note` and
-#' `decutc` (ISO 8601 time). `prrgchk()` returns a list of class
-#' `bricklayer_prereg_check` with `ok` (logical: no departures),
-#' `decnotrep` and `repnotdec` (character vectors),
-#' `hypotheses` (a data frame of `statistic`, `hypothesis` and logical
-#' `reported`) and `decutc`. Both print a short summary.
+#' `decutc` (ISO 8601 time).
+#'
+#' `prrgchk()` returns a list of class `bricklayer_prereg_check` with `ok`
+#' (logical: no departures), the character vectors `decnotrep` and
+#' `repnotdec`, `hypotheses` (a data frame of `statistic`, `hypothesis` and
+#' logical `reported`) and `decutc`. Both print a short summary.
 #' @seealso
 #' [cpsatst()] to seal a declaration,
 #' [cpsfals()] for the controls

@@ -37,30 +37,15 @@ typedef struct { size_t start, len; int quoted; size_t pre_start, pre_len, post_
 /* the bytes a field's text can take */
 static size_t rmbl_span_len(const rmbl_span *sp) { return sp->pre_len + sp->len + sp->post_len; }
 
-/* the bytes of the field that are not NUL, read.csv(skipNul = TRUE) dropping those */
-static size_t rmbl_span_len_nonul(const unsigned char *s, const rmbl_span *sp) {
-    size_t k = 0, i;
-    for (i = 0; i < sp->pre_len; i++) k += s[sp->pre_start + i] != 0;
-    for (i = 0; i < sp->len; i++) k += s[sp->start + i] != 0;
-    for (i = 0; i < sp->post_len; i++) k += s[sp->post_start + i] != 0;
-    return k;
-}
-
 /* Scan one record from `pos`: fills `spans` (at most `cap`), returns the field count (which may
  * exceed `cap`: the caller sizes), advances `*pos` past the record's line ending, sets `*empty`
  * when the record was an empty line. `*err` names a malformed record. */
 static size_t rmbl_csv_record(const unsigned char *s, size_t n, size_t *pos, rmbl_span *spans, size_t cap,
-                              int *empty, const char **err, int skip_nul) {
+                              int *empty, const char **err) {
     size_t p = *pos, nf = 0;
     *empty = 0;
-    /* NUL bytes are dropped before anything else, as read.csv(skipNul = TRUE) drops them: a line of
-     * nothing but NULs is a blank line, skipped (it was a row of NA; CRAN stress test of b617a3f) */
-    if (skip_nul) {
-        size_t q = p;
-        while (q < n && s[q] == 0) q++;
-        if (q > p && (q == n || s[q] == '\n' || s[q] == '\r')) p = q;
-        if (p == n && q > *pos) { *empty = 1; *pos = n; return 0; }
-    }
+    /* with skipNul the NUL bytes are gone before the first record is scanned (C_rmbl_csv_split), so
+     * a line that was nothing but NULs is an empty line here and "" with NULs inside is "" */
     if (p < n && (s[p] == '\n' || s[p] == '\r')) {
         *empty = 1;
         if (s[p] == '\r' && p + 1 < n && s[p + 1] == '\n') p++;
@@ -127,24 +112,22 @@ static size_t rmbl_csv_record(const unsigned char *s, size_t n, size_t *pos, rmb
     }
     *pos = p;
     /* a line holding only "" is a blank line to read.csv(): skipped, not a row of NA; so is "" with
-     * NUL bytes inside, which are dropped (it was a row of NA; CRAN stress test of 0.5.14) */
-    if (nf == 1 && cap >= 1 && spans[0].quoted &&
-        (skip_nul ? rmbl_span_len_nonul(s, &spans[0]) : rmbl_span_len(&spans[0])) == 0) {
+     * NUL bytes inside, which were dropped up front (it was a row of NA; CRAN stress test of 0.5.14) */
+    if (nf == 1 && cap >= 1 && spans[0].quoted && rmbl_span_len(&spans[0]) == 0) {
         *empty = 2;   /* 2: a blank line that was "", which read.csv() still takes as a header */
         return 0;
     }
     return nf;
 }
 
-/* The field's text with doubled quotes undone, a CR or CRLF inside quotes made a newline (as
- * read.csv() reads the file in text mode) and NUL bytes dropped, into `buf` (sized to
- * rmbl_span_len). */
-static size_t rmbl_csv_field(const unsigned char *s, const rmbl_span *sp, char *buf, int skip_nul) {
+/* The field's text with doubled quotes undone and a CR or CRLF inside quotes made a newline (as
+ * read.csv() reads the file in text mode), into `buf` (sized to rmbl_span_len). NUL bytes, under
+ * skipNul, were dropped before the scan. */
+static size_t rmbl_csv_field(const unsigned char *s, const rmbl_span *sp, char *buf) {
     size_t o = 0;
     for (size_t i = 0; i < sp->pre_len; i++) buf[o++] = (char) s[sp->pre_start + i];
     for (size_t i = 0; i < sp->len; i++) {
         unsigned char c = s[sp->start + i];
-        if (c == 0 && skip_nul) continue;
         if (sp->quoted && c == '"' && i + 1 < sp->len && s[sp->start + i + 1] == '"') i++;
         if (sp->quoted && c == '\r') {
             if (i + 1 < sp->len && s[sp->start + i + 1] == '\n') continue;
@@ -157,7 +140,6 @@ static size_t rmbl_csv_field(const unsigned char *s, const rmbl_span *sp, char *
     int inq = 0;
     for (size_t i = 0; i < sp->post_len; i++) {
         unsigned char c = s[sp->post_start + i];
-        if (c == 0 && skip_nul) continue;
         if (c == '"') {
             if (inq && i + 1 < sp->post_len && s[sp->post_start + i + 1] == '"') { buf[o++] = '"'; i++; continue; }
             inq = !inq;
@@ -276,7 +258,7 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
     size_t cap = 64, pos = start, nh = 0;
     rmbl_span *spans = (rmbl_span *) R_alloc(cap, sizeof(rmbl_span));
     while (!quoted_blank_header && pos < n) {
-        nh = rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err, skip_nul);
+        nh = rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err);
         if (err) error("the CSV cannot be read: %s (in its header)", err);
         /* a header line of "" alone: read.csv() takes it as the header, a table of no columns, and
          * the lines below as its rows (here it was skipped and the first row became the header; CRAN
@@ -304,7 +286,7 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
         cap = nh;
         spans = (rmbl_span *) R_alloc(cap, sizeof(rmbl_span));
         pos = start;
-        do { nh = rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err, skip_nul); } while (!err && empty && pos < n);
+        do { nh = rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err); } while (!err && empty && pos < n);
     }
     SEXP out = PROTECT(allocVector(VECSXP, 2));
     SEXP nm = PROTECT(allocVector(STRSXP, 2));
@@ -316,7 +298,7 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
         SET_VECTOR_ELT(out, 1, allocVector(VECSXP, 0));
         size_t rows = 0, work = 0;
         while (quoted_blank_header && pos < n) {
-            rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err, skip_nul);
+            rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err);
             rmbl_csv_poll(&work, 1);
             if (err) error("the CSV cannot be read: %s (record %lu)", err, (unsigned long) (rows + 2));
             if (!empty) rows++;
@@ -364,7 +346,7 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
     size_t bufcap = 0;
     size_t nrow = 0, work = 0;
     while (pos < n) {
-        size_t nf = rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err, skip_nul);
+        size_t nf = rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err);
         rmbl_csv_poll(&work, nf + 1);
         if (err) error("the CSV cannot be read: %s (record %lu)", err, (unsigned long) (nrow + 2));
         if (empty) continue;
@@ -377,7 +359,7 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
             if (fl > maxlen) maxlen = fl;
             if (type[j] == RMBL_T_STR) continue;
             if (fl + 1 > bufcap) { bufcap = fl * 2 + 16; buf = (char *) R_alloc(bufcap, 1); }
-            size_t len = rmbl_csv_field(s, &spans[j], buf, skip_nul);
+            size_t len = rmbl_csv_field(s, &spans[j], buf);
             if (rmbl_csv_is_na(buf, len)) continue;
             int iv; double dv;
             int blank = 0;
@@ -405,9 +387,9 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
     buf = (char *) R_alloc(maxlen + 1, 1);
     SEXP names = PROTECT(allocVector(STRSXP, (R_xlen_t) ncol));
     pos = start;
-    do { rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err, skip_nul); } while (empty && pos < n);
+    do { rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err); } while (empty && pos < n);
     for (size_t j = 0; j < ncol; j++) {
-        size_t len = rmbl_csv_field(s, &spans[j], buf, skip_nul);
+        size_t len = rmbl_csv_field(s, &spans[j], buf);
         size_t b = 0;
         /* an unquoted name is trimmed, as read.csv() reads the header with strip.white = TRUE
          * (" Operational_Capacity " came out X.Operational_Capacity.; statistics stress test of
@@ -435,12 +417,12 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
     pos = body;
     size_t i = 0;
     while (pos < n) {
-        size_t nf = rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err, skip_nul);
+        size_t nf = rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err);
         rmbl_csv_poll(&work, ncol + 1);
         if (empty) continue;
         for (size_t j = 0; j < ncol; j++) {
             SEXP col = VECTOR_ELT(columns, (R_xlen_t) j);
-            size_t len = j < nf ? rmbl_csv_field(s, &spans[j], buf, skip_nul) : 0;   /* a short record is filled */
+            size_t len = j < nf ? rmbl_csv_field(s, &spans[j], buf) : 0;   /* a short record is filled */
             const int na = rmbl_csv_is_na(buf, len);
             switch (type[j]) {
             case RMBL_T_INT: { int v = NA_INTEGER; if (!na) rmbl_csv_int(buf, len, &v); INTEGER(col)[i] = v; break; }

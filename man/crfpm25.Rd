@@ -66,8 +66,8 @@ all-cause form. \code{crfno2()} is the log-linear function of the WHO 2021
 review (Huangfu and Atkinson 2020: RR 1.02, 95\% CI 1.01-1.04, per 10
 micrograms per cubic metre for all-cause mortality),
 \deqn{RR(z) = \exp(\beta (z - z_{cf}) / 10).}
-A vector of exposures gives the mean RR and log-RR, with the per-unit
-relative risks under \code{extra$rrperunit}.
+A vector of exposures gives the mean RR and log-RR. The per-unit
+relative risks are then in \code{extra$rrperunit}.
 
 Every function has zero excess risk at and below the reference
 concentration (\eqn{z \le z_{cf}} gives RR 1). The published 95\%

@@ -29,7 +29,7 @@ sprd(
 \item{narm}{Drop missing values (default \code{FALSE}: they are an error).}
 }
 \value{
-A list of class \code{rmbl_spread}: \code{n}, \code{mean}, \code{variance},
+A list of class \code{rmbl_spread} with \code{n}, \code{mean}, \code{variance},
 \code{sd}, \code{semean}, \code{design} (the rule applied), \code{denominator},
 and \code{reason} (a sentence). The print method shows them.
 }

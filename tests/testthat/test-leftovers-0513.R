@@ -18,7 +18,7 @@ test_that("SLH-DSA signatures are the bytes 0.5.13 produced (the polls change no
     sz <- fipssz(sc)
     k <- fipskg(sc, seed = as.raw((seq_len(sz[["seed"]]) * 7L) %% 256L))
     sig <- lo_ns(".rmbl_fips_sign")(sc, lo_ns(".rmbl_hex_to_raw")(k$secret), charToRaw("bricklayer leftovers"),
-                                    raw(0), as.raw(seq_len(sz[["opt_rand"]])))
+                                    raw(0), as.raw(seq_len(sz[["rnd"]])))
     expect_identical(csha256(sig), pinned[[sc]], info = sc)
     expect_true(lo_ns(".rmbl_fips_verify")(sc, lo_ns(".rmbl_hex_to_raw")(k$public),
                                            charToRaw("bricklayer leftovers"), raw(0), sig), info = sc)

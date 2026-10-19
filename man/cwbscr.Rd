@@ -82,6 +82,6 @@ Peters J, Beavon D, Spence N (eds), Aboriginal Well-Being: Canada's Continuing
 Challenge. Thompson Educational.
 
 Indigenous Services Canada (2019). Report on trends in First Nations communities, 1981
-to 2016 (Community Well-Being index).
+to 2016 (Community Well-Being index).\cr
 \url{https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644}
 }

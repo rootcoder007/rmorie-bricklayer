@@ -228,7 +228,7 @@ test_that("jitter keeps an event dated on the horizon inside the window", {
   expect_lte(max(j), 100)
   expect_identical(sum(j == 100), 1L)
   expect_true(is.list(chwkfit(j, 100)))
-  expect_error(chwkfit(chwkjit(d), 100), "horizon = ")
+  expect_error(chwkfit(chwkjit(d), 100), "hor = ")
   expect_identical(chwkjit(d), chwkjit(d, hor = Inf))
   expect_error(chwkjit(d, hor = 50), "must not exceed")
 })

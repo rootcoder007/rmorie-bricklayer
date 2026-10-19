@@ -56,12 +56,19 @@ without verifying anything. Use them to prove that an analysis output
 existed by a certain date.
 }
 \details{
-Every step is recorded as a row of \code{checks}: \code{token_parses},
-\code{token_structure}, \code{message_imprint} (the hash of \code{data} equals the
-token's imprint), \code{certificate_source}, \code{signature}, \code{attribute_digest}
-(the signed attributes commit to the token's contents),
-\code{certificate_trust}, and with \code{trust} the \verb{chain:} checks of
-\code{\link[=certchnvrf]{certchnvrf()}}. \code{ok} is \code{TRUE} only
+Every step is recorded as a row of \code{checks}:
+\itemize{
+\item \code{token_parses};
+\item \code{token_structure};
+\item \code{message_imprint} (the hash of \code{data} equals the token's imprint);
+\item \code{certificate_source};
+\item \code{signature};
+\item \code{attribute_digest} (the signed attributes commit to the token's contents);
+\item \code{certificate_trust};
+\item with \code{trust}, the \verb{chain:} checks of \code{\link[=certchnvrf]{certchnvrf()}}.
+}
+
+\code{ok} is \code{TRUE} only
 when every row passes. A token
 that cannot be parsed is not an error: it gives \code{ok = FALSE} and the
 rows up to the failure.

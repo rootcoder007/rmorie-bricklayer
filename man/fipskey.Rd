@@ -16,11 +16,9 @@ fipskey(scheme, public, secret = NULL)
 verification-only key.}
 }
 \value{
-A \code{bricklayer_fips_key} (\code{public}, \code{secret}, \code{scheme})
-when
-\code{secret} is given, otherwise a \code{bricklayer_fips_public_key}
-(\code{public},
-\code{scheme}); keys are held as lowercase hex, as
+When \code{secret} is given, a \code{bricklayer_fips_key} with \code{public},
+\code{secret} and \code{scheme}. Otherwise a key of class
+\code{bricklayer_fips_public_key} with \code{public} and \code{scheme}. Keys are held as lowercase hex, as
 \code{\link[=fipskg]{fipskg()}} returns
 them.
 }

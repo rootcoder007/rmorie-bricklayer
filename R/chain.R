@@ -42,7 +42,7 @@
 #' version-2 stream depends only on the object.
 #'
 #' Entries written by 0.5.12 and earlier carry no \code{scheme}. Their
-#' digest is SHA-256 of \code{"<prev>:<payload>"} (the label not covered,
+#' digest is the SHA-256 of the string \code{"<prev>:<payload>"} (the label not covered,
 #' and the payload of a non-string entry taken over serialized bytes that
 #' include the writer's R version). \code{chnvrf()} and
 #' \code{chnseal()} still accept them under those rules, with a warning

@@ -82,8 +82,7 @@
 #' @param conflvl Confidence level for every interval, default 0.95.
 #' @param alpha Level for the multiple-comparison decision and the drift
 #'   screens, default 0.05.
-#' @param adjust Multiple-comparison method for
-#'   [scanadj()], default
+#' @param adjust Multiple-comparison method for [scanadj()]. The default is
 #'   \code{"BH"} (Benjamini-Hochberg).
 #' @return A list of class \code{bricklayer_analysis} (with a print method that
 #'   summarises it in a few lines):

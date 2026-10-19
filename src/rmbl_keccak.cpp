@@ -27,6 +27,7 @@
 #include <R.h>
 #include <Rinternals.h>
 #include "rmbl_entry.h"
+#include "rmbl_ct.h"
 
 /* The first element of a character argument, or an error in words: every
  * STRING_ELT(x, 0) below went through this once a length-0 or NA input
@@ -241,10 +242,14 @@ void rmbl_keccak_squeeze(RmblKeccak *st, unsigned char *out, size_t len) {
 }
 
 /* One-shot forms. SHAKE uses the 0x1f domain byte and SHA-3 uses 0x06;
- * the rate is 200 - 2 * (security strength in bytes). */
+ * the rate is 200 - 2 * (security strength in bytes). The state is wiped
+ * on the way out: Keccak-f is a permutation, so a state left on the stack
+ * runs backwards to whatever was absorbed (ML-KEM's d, m' and K, an
+ * ML-DSA key seed; review of 1.0.0, M8). */
 void rmbl_shake128(unsigned char *out, size_t outlen,
                    const unsigned char *in, size_t inlen) {
     RmblKeccak st;
+    rmbl_ct::Guard wipe_st(&st, sizeof st);
     rmbl_keccak_init(&st, 168, 0x1f);
     rmbl_keccak_absorb(&st, in, inlen);
     rmbl_keccak_squeeze(&st, out, outlen);
@@ -253,6 +258,7 @@ void rmbl_shake128(unsigned char *out, size_t outlen,
 void rmbl_shake256(unsigned char *out, size_t outlen,
                    const unsigned char *in, size_t inlen) {
     RmblKeccak st;
+    rmbl_ct::Guard wipe_st(&st, sizeof st);
     rmbl_keccak_init(&st, 136, 0x1f);
     rmbl_keccak_absorb(&st, in, inlen);
     rmbl_keccak_squeeze(&st, out, outlen);
@@ -261,6 +267,7 @@ void rmbl_shake256(unsigned char *out, size_t outlen,
 void rmbl_sha3_256(unsigned char out[32], const unsigned char *in,
                    size_t inlen) {
     RmblKeccak st;
+    rmbl_ct::Guard wipe_st(&st, sizeof st);
     rmbl_keccak_init(&st, 136, 0x06);
     rmbl_keccak_absorb(&st, in, inlen);
     rmbl_keccak_squeeze(&st, out, 32);
@@ -269,6 +276,7 @@ void rmbl_sha3_256(unsigned char out[32], const unsigned char *in,
 void rmbl_sha3_224(unsigned char out[28], const unsigned char *in,
                    size_t inlen) {
     RmblKeccak st;
+    rmbl_ct::Guard wipe_st(&st, sizeof st);
     rmbl_keccak_init(&st, 144, 0x06);
     rmbl_keccak_absorb(&st, in, inlen);
     rmbl_keccak_squeeze(&st, out, 28);
@@ -277,6 +285,7 @@ void rmbl_sha3_224(unsigned char out[28], const unsigned char *in,
 void rmbl_sha3_384(unsigned char out[48], const unsigned char *in,
                    size_t inlen) {
     RmblKeccak st;
+    rmbl_ct::Guard wipe_st(&st, sizeof st);
     rmbl_keccak_init(&st, 104, 0x06);
     rmbl_keccak_absorb(&st, in, inlen);
     rmbl_keccak_squeeze(&st, out, 48);
@@ -285,6 +294,7 @@ void rmbl_sha3_384(unsigned char out[48], const unsigned char *in,
 void rmbl_sha3_512(unsigned char out[64], const unsigned char *in,
                    size_t inlen) {
     RmblKeccak st;
+    rmbl_ct::Guard wipe_st(&st, sizeof st);
     rmbl_keccak_init(&st, 72, 0x06);
     rmbl_keccak_absorb(&st, in, inlen);
     rmbl_keccak_squeeze(&st, out, 64);

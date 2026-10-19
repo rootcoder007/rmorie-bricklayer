@@ -109,6 +109,17 @@ bool unhexlify(const char *s, size_t len, std::vector<unsigned char> &out) {
     return rc == 0;
 }
 
+/* Wipes a vector's bytes when the scope ends, whatever size it has grown to
+ * by then: a guard made before unhexlify() sizes the vector, and before
+ * anything that can throw, still covers it (a Guard takes data() once). */
+struct VecWipe {
+    std::vector<unsigned char> &v;
+    explicit VecWipe(std::vector<unsigned char> &v_) : v(v_) {}
+    ~VecWipe() { rmbl_ct::wipe(v.data(), v.size()); }
+    VecWipe(const VecWipe &) = delete;
+    VecWipe &operator=(const VecWipe &) = delete;
+};
+
 /* toByte(x, 32) -- big-endian, zero-padded on the left. */
 void to_byte32(uint64_t x, unsigned char out[32]) {
     std::memset(out, 0, 32);
@@ -124,6 +135,8 @@ void hash_dom(uint64_t dom, const unsigned char *key,
               const unsigned char *msg, size_t msglen,
               unsigned char out[32]) {
     std::vector<unsigned char> buf(32 + kN + msglen);
+    /* key or message is secret for PRF(SK_PRF, .) and along a private chain */
+    VecWipe wbuf(buf);
     to_byte32(dom, buf.data());
     std::memcpy(buf.data() + 32, key, kN);
     if (msglen > 0) std::memcpy(buf.data() + 32 + kN, msg, msglen);
@@ -173,6 +186,7 @@ void fn_PRFkeygen(const unsigned char *key, const unsigned char *pub_seed,
                   const unsigned char adrs_bytes[32],
                   unsigned char out[32]) {
     std::vector<unsigned char> buf(32 + kN + kN + 32);
+    VecWipe wbuf(buf);   /* SK_SEED */
     to_byte32(4, buf.data());
     std::memcpy(buf.data() + 32, key, kN);
     std::memcpy(buf.data() + 32 + kN, pub_seed, kN);
@@ -240,6 +254,7 @@ void chain(const unsigned char *x, int i, int s, const unsigned char *seed,
     for (int j = i; j < i + s && j < kW - 1 + 1; ++j) {
         adrs.set_hash(static_cast<uint32_t>(j));
         unsigned char ab[32], key[32], bm[32], tmp[32];
+        rmbl_ct::Guard gtmp(tmp, sizeof tmp);   /* a step of a private chain */
         adrs.set_key_and_mask(0);
         adrs.bytes(ab);
         fn_PRF(seed, ab, key);
@@ -309,6 +324,7 @@ void wots_pk(const unsigned char *sk_seed, const unsigned char *pub_seed,
     adrs.set_ots(ots_index);
     for (int i = 0; i < kLen; ++i) {
         unsigned char sk[32];
+        rmbl_ct::Guard gsk(sk, sizeof sk);
         wots_sk(sk_seed, pub_seed, ots_index, i, sk);
         adrs.set_chain(static_cast<uint32_t>(i));
         chain(sk, 0, kW - 1, pub_seed, adrs,
@@ -401,10 +417,11 @@ extern "C" {
 
 SEXP C_rmbl_xmss_keygen_impl(SEXP sk_seed_hex, SEXP pub_seed_hex, SEXP height) {
     std::vector<unsigned char> sks, pubs;
-    if (!unhexlify(rmbl_str0(sk_seed_hex, "sk_seed"), rmbl_str0_len(sk_seed_hex, "sk_seed"), sks) || sks.size() != kN) {
+    VecWipe wsks(sks);   /* the seed is wiped on every exit, a refused argument included */
+    if (!unhexlify(rmbl_str0(sk_seed_hex, "skseed"), rmbl_str0_len(sk_seed_hex, "skseed"), sks) || sks.size() != kN) {
         rmbl::fail("`skseed` must be 64 hex characters (32 bytes)");
     }
-    if (!unhexlify(rmbl_str0(pub_seed_hex, "pub_seed"), rmbl_str0_len(pub_seed_hex, "pub_seed"), pubs) ||
+    if (!unhexlify(rmbl_str0(pub_seed_hex, "pubseed"), rmbl_str0_len(pub_seed_hex, "pubseed"), pubs) ||
         pubs.size() != kN) {
         rmbl::fail("`pubseed` must be 64 hex characters (32 bytes)");
     }
@@ -421,14 +438,17 @@ SEXP C_rmbl_xmss_keygen_impl(SEXP sk_seed_hex, SEXP pub_seed_hex, SEXP height) {
 SEXP C_rmbl_xmss_sign_impl(SEXP sk_seed_hex, SEXP sk_prf_hex, SEXP pub_seed_hex,
                       SEXP height, SEXP index, SEXP msg) {
     std::vector<unsigned char> sks, prfs, pubs;
-    if (!unhexlify(rmbl_str0(sk_seed_hex, "sk_seed"), rmbl_str0_len(sk_seed_hex, "sk_seed"), sks) || sks.size() != kN) {
+    /* made before the first call that can throw: the guards used to come after tree_root(), whose
+     * interrupt check throws, and the seeds were freed unwiped (review of 1.0.0, M8) */
+    VecWipe wsks(sks), wprfs(prfs);
+    if (!unhexlify(rmbl_str0(sk_seed_hex, "skseed"), rmbl_str0_len(sk_seed_hex, "skseed"), sks) || sks.size() != kN) {
         rmbl::fail("`skseed` must be 64 hex characters (32 bytes)");
     }
-    if (!unhexlify(rmbl_str0(sk_prf_hex, "sk_prf"), rmbl_str0_len(sk_prf_hex, "sk_prf"), prfs) ||
+    if (!unhexlify(rmbl_str0(sk_prf_hex, "skprf"), rmbl_str0_len(sk_prf_hex, "skprf"), prfs) ||
         prfs.size() != kN) {
         rmbl::fail("`skprf` must be 64 hex characters (32 bytes)");
     }
-    if (!unhexlify(rmbl_str0(pub_seed_hex, "pub_seed"), rmbl_str0_len(pub_seed_hex, "pub_seed"), pubs) ||
+    if (!unhexlify(rmbl_str0(pub_seed_hex, "pubseed"), rmbl_str0_len(pub_seed_hex, "pubseed"), pubs) ||
         pubs.size() != kN) {
         rmbl::fail("`pubseed` must be 64 hex characters (32 bytes)");
     }
@@ -468,7 +488,6 @@ SEXP C_rmbl_xmss_sign_impl(SEXP sk_seed_hex, SEXP sk_prf_hex, SEXP pub_seed_hex,
     adrs.set_type(0);
     adrs.set_ots(idx);
     std::vector<unsigned char> sig(static_cast<size_t>(kLen) * kN);
-    rmbl_ct::Guard gsks(sks.data(), sks.size()), gprf(prfs.data(), prfs.size());
     for (int i = 0; i < kLen; ++i) {
         unsigned char sk[32];
         rmbl_ct::Guard gsk(sk, sizeof sk);
@@ -521,7 +540,7 @@ SEXP C_rmbl_xmss_verify_impl(SEXP pub_seed_hex, SEXP root_hex, SEXP height,
                         SEXP index, SEXP msg, SEXP sig_hex, SEXP auth_hex,
                         SEXP r_hex) {
     std::vector<unsigned char> pubs, root, sig, auth;
-    if (!unhexlify(rmbl_str0(pub_seed_hex, "pub_seed"), rmbl_str0_len(pub_seed_hex, "pub_seed"), pubs) ||
+    if (!unhexlify(rmbl_str0(pub_seed_hex, "pubseed"), rmbl_str0_len(pub_seed_hex, "pubseed"), pubs) ||
         pubs.size() != kN) {
         return Rf_ScalarLogical(FALSE);
     }
@@ -556,7 +575,10 @@ SEXP C_rmbl_xmss_verify_impl(SEXP pub_seed_hex, SEXP root_hex, SEXP height,
     /* The verifier has no SK_PRF, so R travels with the signature. */
     std::vector<unsigned char> rnd;
     if (!unhexlify(rmbl_str0(r_hex, "r"), rmbl_str0_len(r_hex, "r"), rnd) || rnd.size() != kN) {
-        rmbl::fail("`randomizer` must be 64 hex characters (32 bytes)");
+        /* the randomizer travels with the signature, so it is the signer's (or an attacker's)
+         * input: one that is not 32 bytes of hex is a signature that does not verify, not an
+         * error (review of 1.0.0, M6) */
+        return Rf_ScalarLogical(FALSE);
     }
     unsigned char dig[32];
     fn_Hmsg_bound(rnd.data(), root.data(), idx, mb.data(), mb.size(), dig);

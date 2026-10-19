@@ -262,6 +262,125 @@ New estimators, each checked against the reference implementation (`fixest`, `di
   exposure-response bootstrap caught `setTimeLimit()`'s error as one more failed statistic and ran on.
 * The README says 121 C++ entry points behind the barrier (one new, the JSON path) and 13 in plain C.
 
+## After the tag: the manual, the plots, a C locale
+
+* **The reference manual** ran off the page on 123 lines: long URL templates and option names
+  inside inline code, dense lists of code, references with long DOIs. R's `Rd.sty` lets inline
+  code neither break nor stretch, so the help text was reworded (URL templates split at a slash,
+  references with the link on its own line, options named in prose, long lists as bullets). No
+  line is 10pt over now; the 61 left are under 10pt, most under 2pt.
+* **Plot titles** of 17 methods were handed straight to the base-graphics call, so a title wider
+  than the panel was cut ("Community Well-Being, by place and gro"). Every method now draws its
+  title with the fitter the others use: full size, then smaller, then two lines.
+* **Row labels** are drawn with `mtext()`, sized to the row (down to 0.45), instead of `axis()`,
+  which leaves out labels that would overlap: `trchlthgap()`'s 44 rows showed 22 labels beside
+  the wrong points. `plot.rmbl_trc_gaps()` adds a key for the groups.
+* **Labels cut to the same text** keep the part that told them apart ("...of 8, 9 or 10" and
+  "...between 0 and 5") instead of a number; the wellness profile breaks long indicator names
+  onto two lines.
+* **A C locale**: `cnsprof()` matched the profile's column names against UTF-8 keys, so "MÉTIS"
+  never became "Métis", and its table of column names was built with a non-ASCII name inside
+  `c()`, which a package installed in a C locale stores as `M<U+00C9>TIS`; `.rmbl_json_parse()` converted before it checked, so invalid UTF-8 was
+  reported as an unexpected character; the CSV reader's byte-order-mark cases are compared with
+  `read.csv()` only in a UTF-8 locale, where its behaviour is defined.
+* **`rmoriebricklayer.allowhttp`** was read by the R-level URL check but the native transport still
+  read the old `rmoriebricklayer.allow_http`, so `bldl()` refused plain `http` whatever the option
+  said. Three more from the coverage pass: `evstudy(leads = 1)` failed with "subscript out of
+  bounds" (no lead left to test); `baltab()` failed on a group of one unit (its tests are `NA`
+  now, as after `mtchdid()` with a tight caliper); `chwkfit(meth = "em")` with every event at the
+  horizon divided 0 by 0 (the branching ratio goes to its floor). `mcartst()` refuses an infinite
+  value in its own words rather than as collinearity.
+* Every line of R and the reachable lines of C++ are now covered by the tests; the dead guards
+  found by the pass are gone.
+* The statement about a third-party security audit is gone from `DESCRIPTION`, the README,
+  `SECURITY.md` and the help pages.
+* `vignette("plotting-results")` gains the policy-evaluation plots, one call per result;
+  `vignette("policy-evaluation")` draws the synthetic difference in differences and
+  `vignette("causal-effects")` the AIPW estimate beside its overlap.
+
+**Fixes from the review of the native code**
+
+* ECDSA verification refuses an `r` or `s` longer than the curve and a key coordinate that is
+  not exactly one field element: `r` with 2^1152 added was read back as `r` and verified.
+* The elliptic-curve multiplication refuses a scalar longer than 144 bytes instead of reading
+  only its low bytes.
+* A host written with a trailing dot (`https://example.com./`) is fetched as `example.com`, so
+  the address pin and the URL libcurl is given name the same host; before, libcurl found no pin
+  and resolved the name again itself.
+* Every connection the transport opens is checked as it opens, so a private or loopback address
+  is refused even when it comes from somewhere other than the pin. This includes a proxy named
+  by `http_proxy` or `https_proxy`: a proxy on the loopback interface or a private network is
+  now refused.
+* The decimal reader is correctly rounded past 768 significant digits: dropped digits that were
+  not all zero now count when the kept ones are exactly halfway.
+* The decimal reader takes nothing after `Inf`, `Infinity` or `NaN` (any case), so `"Info"` and
+  `"nanny"` are `NA`, as `as.numeric()` reads them.
+* `cgamcdf()` is accurate for large shapes. At `x = a` it gave 0.4786 for `a = 1e4` and 0.0797
+  for `a = 1e6`, where the answer is 0.5013 and 0.5001.
+* A missing, zero or negative timeout is the default for every request, never no limit at all.
+* Destinations and upload paths starting with `~` are expanded. A destination that cannot be
+  written is reported as a local failure, without a Wayback lookup.
+* On Unix, a download that cannot be moved into place leaves the old file as it was. Only
+  Windows removes the destination before the move.
+* The download progress callback protects both of its arguments while it builds the call.
+* An RSA signature must be exactly as long as the modulus (RFC 8017 8.2.2): leading-zero
+  variants of a valid signature no longer verify.
+* An XMSS signature whose randomizer is not 32 bytes of hex does not verify. It used to raise an
+  error.
+* XMSS keys name their seeds `pubseed`, `skseed` and `skprf`, as the help pages always said.
+  Keys saved with the earlier `pub_seed`, `sk_seed` and `sk_prf` still sign and verify.
+* The Hawkes messages name the argument `hor`.
+* `kemsz()` and `hqcsz()` name their sizes `public`, `secret` and `shared`, as the keys and
+  capsules name them. `siusch()` names its column `count`, and `fipssz()` names the
+  per-signature randomness `rnd`.
+* The native errors name the R arguments: `person` and `addl` for the DRBG, `pass` for PBKDF2,
+  `rnd` for SLH-DSA.
+* One-shot SHA-3 and SHAKE wipe their Keccak state. The permutation can be run backwards, so the
+  state gave back secret inputs such as ML-KEM and ML-DSA seeds.
+* The SHA-256 and SHA-512 message schedules and contexts are wiped after use, so an HMAC key
+  padded with ipad no longer stays on the stack.
+* XMSS key generation and signing wipe their seeds on every exit, including a refused argument or
+  an interrupt, along with the heap buffers and chain steps derived from them.
+* The heap copies of BLAKE2b and HMAC keys, the derived PBKDF2 key and the operating system's
+  random buffer are wiped before they are freed. HMAC no longer frees an unwiped copy of the
+  padded key when its buffer grows.
+* Unmasked ML-DSA signing wipes the sampler seed, the packed mask and the values of rejected
+  attempts.
+* `siuso()` removes the glossary sentence in one linear pass. 8000 repeats took 28 s before.
+* `siutxt()` no longer rescans to the end of the page for every unclosed script or style tag.
+* The SIU parsers and the distinct-count sketch read latin1 input as the text it is: a latin1
+  "5 décembre 2023" is a date, and one value in two encodings is counted once.
+* `siudate()` refuses an impossible ISO date such as 2023-02-30 or 2023-13-45, as it already
+  refused February 30.
+* A director whose name contains the letters "the", such as Heather Smith, is no longer dropped.
+* A numeric entity naming a UTF-16 surrogate decodes to nothing instead of invalid UTF-8.
+* HTML entities are decoded once each, in one pass, so `&amp;lt;` stays the literal `&lt;`.
+* Lower-casing SIU text no longer passes negative values to `tolower()`.
+* The kernels published to `LinkingTo` packages have the guards of their `.Call` versions.
+  Theil-Sen takes at most 20,000 points and polls for a Ctrl-C, and an exception in any of them
+  is an R error instead of ending the session.
+* Moran's I checks its neighbour indices and `nperm` before it allocates, and polls for a Ctrl-C
+  between permutations.
+* The Hawkes entry points refuse an `eps` or a sum-of-exponentials window that is not one. `eps`
+  of `NaN` silently dropped the excitation term, and 0 ran out of memory.
+* The C API's Hawkes likelihood keeps its own kernel codes and Lomax shape, now documented in the
+  header and checked against `chwknll()`.
+* Midranks of a vector with `NaN` are defined: the comparator orders `NaN` last.
+* The SHA-256 chunk state no longer carries four uninitialised padding bytes.
+* The Wayback snapshot URL is returned whole and with its JSON escapes undone. A long URL was cut
+  at 2047 bytes.
+* A download whose file cannot be reopened after a redirect ends cleanly, instead of writing to a
+  closed stream.
+* POST bodies set their size with the 64-bit libcurl option, which also works on Windows.
+* The scratch file of a download is created exclusively (`"wbx"`).
+* The CSV splitter's NUL branches are gone: under `skipNul` the NUL bytes are removed before the
+  scan, so those branches could never run.
+* The README counts 123 C++ entry points, the comments in `init.c` name the right source files,
+  and `SECURITY.md` names `RtlGenRandom`.
+* `/dev/urandom` is read through a descriptor opened close-on-exec instead of buffered stdio.
+* Native error messages are no longer cut at 1024 bytes by the barrier.
+* A wait for a lock held by another process ends at a Ctrl-C or a time limit.
+
 # rmoriebricklayer 0.5.14
 
 * A new data key is issued only after the data access terms are accepted. `rmbl login` and

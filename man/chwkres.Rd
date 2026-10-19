@@ -25,9 +25,9 @@ sinusoidal baseline (an annual cycle, \code{times} in days) at most
 \item{kernel}{The triggering kernel: \code{"exponential"} (the default),
 \code{"weibull"}, \code{"gamma"} or \code{"lomax"}.}
 
-\item{par}{Numeric vector of parameters (baseline terms, \code{eta},
-kernel parameters), as \code{chwkfit()} returns them in
-\code{theta}: length 3 for the exponential kernel with a constant
+\item{par}{Numeric vector of parameters, as \code{chwkfit()} returns them in
+\code{theta}: the baseline terms, \code{eta} and the kernel parameters.
+Its length is 3 for the exponential kernel with a constant
 baseline, one more for a two-parameter kernel, three more for the
 sinusoidal baseline.}
 

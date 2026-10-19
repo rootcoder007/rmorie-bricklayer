@@ -13,9 +13,9 @@ listed in Details. Lists as parsed from JSON (for example
 
 \item{n}{Whole number: how many values to generate.}
 
-\item{ctx}{Named list of already-generated columns, letting
-later columns (such as \code{id_pattern} with a \code{year_col})
-reference earlier ones. Defaults to an empty list.}
+\item{ctx}{Named list of already-generated columns. Later columns can then
+reference earlier ones, as \code{id_pattern} does with a \code{year_col}.
+Defaults to an empty list.}
 
 \item{basep}{Optional numeric vector of per-row latent propensities in
 \eqn{[0, 1]}, length \code{n}, used by the \code{"bernoulli"} type to add

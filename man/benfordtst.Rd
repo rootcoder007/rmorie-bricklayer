@@ -10,7 +10,7 @@ benfordtst(x)
 \item{x}{Numeric vector.}
 }
 \value{
-A list of class \code{bricklayer_benford}: \code{counts}
+A list of class \code{bricklayer_benford} with \code{counts}
 (observed digit frequencies 1--9), \code{expected}, \code{proportion},
 \code{statistic}, \code{df}, \code{p_value}, \code{logpvalue} (the log of the upper
 tail, which keeps its information where \code{p_value} underflows to 0),

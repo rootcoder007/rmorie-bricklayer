@@ -47,9 +47,9 @@ cluster (district by month, say) is one column made with \code{interaction()}.}
 \item{conflvl}{Confidence level (default 0.95).}
 }
 \value{
-A data frame of class \code{rmbl_wild}: \code{estimate}, \code{t},
-\code{p_value}, \code{lower}, \code{upper}, \code{clusters}, \code{draws},
-\code{enumerated}.
+A data frame of class \code{rmbl_wild} with the columns \code{estimate},
+\code{t}, \code{p_value}, \code{lower}, \code{upper}, \code{clusters},
+\code{draws} and \code{enumerated}.
 }
 \description{
 A p-value and confidence interval for the treatment effect of

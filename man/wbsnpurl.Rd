@@ -16,7 +16,7 @@ wbsnpurl(url, ts = NULL)
 }
 \value{
 A length-1 character string, the \code{https} snapshot URL of the
-form \code{https://web.archive.org/web/<timestamp>/<url>}, or
+form \code{https://web.archive.org/web/} followed by \code{<timestamp>/<url>}, or
 \code{NULL}.
 }
 \description{
@@ -29,9 +29,11 @@ has moved or has been taken offline.
 automatically.
 }
 \details{
-The function sends one request to the availability API,
-\code{https://archive.org/wayback/available?url=<url>[&timestamp=<ts>]},
-and reads \code{archived_snapshots$closest}. When the API reports an
+The function sends one request to the availability API,\cr
+\code{https://archive.org/wayback/available?url=<url>[&timestamp=<ts>]},\cr
+where the timestamp part is sent only when \code{ts} is given.
+
+The answer's \code{archived_snapshots$closest} is read. When the API reports an
 available snapshot its URL is returned, with \code{http://} rewritten to
 \code{https://} and passed through the same public-URL check as every
 other URL the package fetches. The timestamp is passed to the API as

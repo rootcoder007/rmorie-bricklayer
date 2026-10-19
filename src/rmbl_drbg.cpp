@@ -71,7 +71,7 @@ SEXP C_rmbl_aes256_encrypt_impl(SEXP key, SEXP blocks) {
 
 SEXP C_rmbl_drbg_instantiate_impl(SEXP entropy, SEXP pers) {
     need_raw(entropy, SEEDLEN, SEEDLEN, "entropy");
-    need_raw(pers, 0, SEEDLEN, "personalization");
+    need_raw(pers, 0, SEEDLEN, "person");
     CtrDrbg d;
     d.instantiate(RAW(entropy), RAW(pers), static_cast<size_t>(XLENGTH(pers)));
     return state_list(d, R_NilValue);
@@ -79,7 +79,7 @@ SEXP C_rmbl_drbg_instantiate_impl(SEXP entropy, SEXP pers) {
 
 SEXP C_rmbl_drbg_reseed_impl(SEXP key, SEXP v, SEXP entropy, SEXP add) {
     need_raw(entropy, SEEDLEN, SEEDLEN, "entropy");
-    need_raw(add, 0, SEEDLEN, "additional");
+    need_raw(add, 0, SEEDLEN, "addl");
     CtrDrbg d;
     load(d, key, v);
     d.reseed(RAW(entropy), RAW(add), static_cast<size_t>(XLENGTH(add)));
@@ -87,7 +87,7 @@ SEXP C_rmbl_drbg_reseed_impl(SEXP key, SEXP v, SEXP entropy, SEXP add) {
 }
 
 SEXP C_rmbl_drbg_generate_impl(SEXP key, SEXP v, SEXP n, SEXP add) {
-    need_raw(add, 0, SEEDLEN, "additional");
+    need_raw(add, 0, SEEDLEN, "addl");
     const int len = Rf_asInteger(n);
     if (len == NA_INTEGER || len < 1 || len > 65536) RMBL_ARG_ERROR("`n` must be between 1 and 65536 bytes");
     CtrDrbg d;

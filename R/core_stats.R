@@ -50,8 +50,8 @@
 #' @param x,a,b Numeric (or logical) vectors; coerced with
 #'   [as.numeric()].
 #'   `a` and `b` must have the same length.
-#' @param ddof Delta degrees of freedom, a single number truncated to an
-#'   integer by [as.integer()]: the divisor is `n - ddof`.
+#' @param ddof Delta degrees of freedom, a single number; [as.integer()]
+#'   truncates it to an integer. The divisor is `n - ddof`.
 #'   The default `1` gives the sample standard
 #'   deviation, matching [stats::sd()]; `0` gives the population
 #'   figure.
@@ -367,7 +367,7 @@ ctkyfnc <- function(x, k = 1.5) {
 #'
 #' Two ways to stop a handful of extreme rows dominating a column's centre.
 #' `ctrmmean()` DISCARDS the `floor(n * trim)` largest
-#' and smallest values, matching `mean(x, trim = )`.
+#' and smallest values, as `mean(x, trim = )` does.
 #' `cwinsmean()` instead PULLS THEM IN to the most extreme
 #' surviving values, so every observation still contributes weight --
 #' usually the better choice when the extremes are real measurements rather
@@ -938,8 +938,8 @@ cgamcdf <- function(shape, x) {
 #'   May be empty.
 #' @param hor End of the observation window, a single positive finite
 #'   number in the same unit; the window starts at 0.
-#' @param kernel The triggering kernel: one of `"exponential"` (the
-#'   default), `"weibull"`, `"lomax"`, `"gamma"`. Partial names are
+#' @param kernel The triggering kernel, one of `"exponential"` (the
+#'   default), `"weibull"`, `"lomax"` and `"gamma"`. Partial names are
 #'   matched.
 #' @param par Numeric parameter vector, as described above: length 3
 #'   (`a0`, `eta`, `beta`) for `"exponential"`, length 4 (`a0`,
@@ -994,7 +994,7 @@ chwknll <- function(times, hor,
     stop("`hor` must be a single positive finite number", call. = FALSE)
   }
   if (length(times) > 0L && (min(times) < 0 || max(times) > hor)) {
-    stop("`times` must lie within [0, horizon]", call. = FALSE)
+    stop("`times` must lie within [0, hor]", call. = FALSE)
   }
   par <- .rmbl_num(par, "par")
   need <- if (code == 0L) 3L else 4L

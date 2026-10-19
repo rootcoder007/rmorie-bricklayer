@@ -23,8 +23,8 @@
 #'     the capsule (no \code{..}, no absolute path, no symlink out) and parses as JSON.}
 #'   \item{\code{data_present}}{the data file (\code{dfile}, else the provenance's
 #'     \code{resource$filename}) is inside the capsule and is a file.}
-#'   \item{\code{data_sha256}}{its SHA-256 equals \code{resource$sha256} (64 hex
-#'     characters), compared by [vrfsha256()].}
+#'   \item{\code{data_sha256}}{[vrfsha256()] finds that its SHA-256 equals
+#'     \code{resource$sha256} (64 hex characters).}
 #'   \item{\code{data_size_bytes}}{when \code{resource$size_bytes} is recorded: the size
 #'     on disk matches.}
 #'   \item{\code{data_readable}}{a \code{.csv} file is read with
@@ -41,10 +41,9 @@
 #'     holds \code{manifest.json}: every result with numeric \code{observed} and
 #'     \code{expected}, a \code{tol} and a status of \code{PASS} or \code{DIFFER} still
 #'     gets that status from \eqn{|observed - expected| \le tol}.}
-#'   \item{\code{script_sha256}}{when a script is named (\code{scrfile},
-#'     \code{script$filename} in the provenance or \code{meta$scrfile} in the
-#'     manifest)
-#'     or a script digest is pinned (\code{meta$script_sha256} or \code{script$sha256}):
+#'   \item{\code{script_sha256}}{when a script is named (by \code{scrfile}, by
+#'     \code{script$filename} in the provenance or by \code{meta$scrfile} in the
+#'     manifest) or a script digest is pinned (\code{meta$script_sha256} or \code{script$sha256}):
 #'     the script's SHA-256 matches the pin.}
 #'   \item{\code{data_not_synthetic}}{no \code{<data>.synthetic} sidecar (written by
 #'     [mksyncsv()]), and neither the manifest
@@ -54,18 +53,18 @@
 #' A check that cannot be made because the provenance lacks a field is a
 #' FAILED row, never skipped: a provenance of \code{{}} verifies nothing.
 #' \code{ok} is \code{TRUE} only when every row passed and every required
-#' check (\code{provenance_readable}, \code{data_present},
-#' \code{data_sha256}, \code{data_not_synthetic}, plus
+#' check was made. The required checks are \code{provenance_readable},
+#' \code{data_present}, \code{data_sha256} and \code{data_not_synthetic}, plus
 #' \code{manifest_consistent} and \code{script_sha256} when a manifest or a
-#' script is in play) was made.
+#' script is in play.
 #'
 #' Entirely offline: nothing is downloaded and nothing is written. Error:
 #' \code{cpsdir} that is not one existing directory. Every other problem
 #' is a failed row, not an error.
 #'
 #' @param cpsdir Directory containing the capsule, a single string.
-#' @param provfile Provenance JSON filename, relative to
-#'   \code{cpsdir} (default \code{"data_provenance.json"}).
+#' @param provfile Provenance JSON filename, relative to \code{cpsdir}.
+#'   \code{"data_provenance.json"} is the default.
 #' @param dfile Data filename relative to \code{cpsdir}. \code{NULL}
 #'   (the default) uses the provenance's \code{resource$filename}.
 #' @param mnffile Optional results-manifest JSON (as written by
@@ -426,7 +425,7 @@ capenv <- function(pkgs = loadedNamespaces()) {
 #'     \code{"Untitled dataset"};
 #'   \item year: the first four characters of \code{captured_at_utc}, else the current
 #'     year; retrieval date: its first ten characters (omitted if absent);
-#'   \item link: \code{https://doi.org/<dataset$doi>} when a DOI is recorded, else
+#'   \item link: \code{https://doi.org/<dataset$doi>} if a DOI is recorded, else
 #'     \code{resource$direct_url}, else \code{dataset$catalogue_page};
 #'   \item licence: \code{dataset$licence_short}, else \code{dataset$licence_name}.
 #' }

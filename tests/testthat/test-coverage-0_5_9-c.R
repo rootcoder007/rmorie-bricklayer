@@ -52,14 +52,15 @@ test_that("entry guards: headers that are not strings, a missing pre-hash name, 
 test_that("XMSS: an index past the tree and a malformed randomiser", {
   key <- pqckg(height = 2)
   s <- cpssign("hello", key)
-  args <- list(key$pub_seed, key$root, 2L, s$index, "hello", s$signature, s$auth, s$randomizer)
+  args <- list(key$pubseed, key$root, 2L, s$index, "hello", s$signature, s$auth, s$randomizer)
   expect_true(do.call(.Call, c(list(C_rmbl_xmss_verify), args)))
   args4 <- args
   args4[[4]] <- 4L
   expect_false(do.call(.Call, c(list(C_rmbl_xmss_verify), args4)))
   argsr <- args
   argsr[[8]] <- "zz"
-  expect_error(do.call(.Call, c(list(C_rmbl_xmss_verify), argsr)), "randomizer")
+  # a randomizer that is not hex is a signature that does not verify (review of 1.0.0, M6)
+  expect_false(do.call(.Call, c(list(C_rmbl_xmss_verify), argsr)))
 })
 
 test_that("the decimal parser agrees with R on the awkward inputs: zero, subnormals, halfway cases, long mantissas", {

@@ -27,8 +27,8 @@
 #' * `fatal` -- nothing downstream can run as it stands: a schema check or a
 #' rule of severity `"fatal"` failed (for example a required column is
 #' missing), or a column of the reference is absent from the data.
-#' * `warn` -- something moved or is badly incomplete: a schema check or a
-#' rule of severity `"warning"` failed (a value left its pinned range, a type
+#' * `warn` -- something moved or is badly incomplete: a schema check, or a
+#' rule of severity `"warning"`, failed (a value left its pinned range, a type
 #' changed), a column drifted from the reference, a column is entirely
 #' missing or more than half missing, or a signature did not verify (or came
 #' with no key).
@@ -102,7 +102,7 @@
 #' with `data_digest`, and with `chunks` also `mrkroot`,
 #' `merkle_scheme`
 #' (the [mrkroot()] hashing scheme, 2) and `n_chunks`,
-#' with a signature and key also logical `signature_valid`), and `nrows` /
+#' and, with a signature and key, the logical `signature_valid`), and `nrows` /
 #' `n_cols`. `print()` shows the verdict and the findings; `summary()`
 #' gives
 #' the verdict and the count of each severity.

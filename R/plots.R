@@ -23,10 +23,10 @@
 #' @details
 #' The palettes: \code{"okabe"} is the eight-colour set of Okabe and Ito
 #' (2008), distinguishable under the common forms of colour-vision
-#' deficiency; \code{"diverging"} has three anchors (blue \code{#2166AC},
+#' deficiency. \code{"diverging"} has three anchors (blue \code{#2166AC},
 #' grey \code{#8C8C8C}, orange-red \code{#D6604D}) and is used for changes
-#' (decrease, no change, increase); \code{"sequential"} has five blues from
-#' light to dark; \code{"grey"} five greys from dark to light. With \code{n}
+#' (decrease, no change, increase). The palette \code{"sequential"} has five
+#' blues from light to dark; \code{"grey"} five greys from dark to light. With \code{n}
 #' given, \code{"okabe"} and \code{"grey"} repeat their colours
 #' (\code{rep_len()}) and \code{"diverging"} and \code{"sequential"} are
 #' interpolated with \code{grDevices::colorRampPalette()}.
@@ -40,8 +40,8 @@
 #' number; an option name other than the six above, or an unnamed value; an
 #' unknown \code{palette} option.
 #'
-#' @param name Character scalar, the palette: \code{"okabe"} (the default),
-#'   \code{"diverging"}, \code{"sequential"} or \code{"grey"}.
+#' @param name Character scalar, the palette: \code{"okabe"} (the default), or one
+#'   of \code{"diverging"}, \code{"sequential"} and \code{"grey"}.
 #' @param n Integer scalar or \code{NULL} (the default: the palette's own
 #'   colours). The number of colours wanted; \code{"okabe"} and \code{"grey"}
 #'   recycle, \code{"sequential"} and \code{"diverging"} interpolate.
@@ -86,7 +86,6 @@ blpal <- function(name = c("okabe", "diverging", "sequential", "grey"), n = NULL
   n <- .rmbl_num(n, "n", integer = TRUE)
   if (length(n) != 1L || is.na(n) || n < 1L) stop("`n` must be a single positive whole number", call. = FALSE)
   n <- as.integer(n)[1L]
-  if (is.na(n) || n < 1L) stop("`n` must be a positive whole number", call. = FALSE)
   if (name %in% c("okabe", "grey")) return(rep_len(base, n))
   if (n == 1L) return(base[1L])
   grDevices::colorRampPalette(base)(n)
@@ -490,16 +489,36 @@ plotopt <- function(...) {
   out <- x
   long <- !is.na(x) & nchar(x) > max_chars
   out[long] <- paste0(substr(x[long], 1L, max_chars - 3L), "...")
-  # distinct levels the cut made identical are told apart by a number: a 40-column missingness
-  # pattern collapsed four patterns into one label (review of 52a8883)
+  # distinct levels the cut made identical are told apart by what the cut removed: their shared
+  # start is dropped and the end kept ("Life satisfaction rating of 8, 9 or 10" and "... between
+  # 0 and 5" read "...#1" and "...#2"); a number only when the ends collide too, as a 40-column
+  # missingness pattern's did (review of 52a8883)
   for (lab in unique(out[!is.na(out) & duplicated(out)])) {
     w <- which(out == lab)
     orig <- unique(x[w])
     if (length(orig) < 2L) next
+    pre <- .bl_common_start(orig)
+    tail <- trimws(substring(x[w], pre + 1L))
+    long <- nchar(tail) > max_chars - 3L
+    tail[long] <- paste0(substr(tail[long], 1L, max_chars - 6L), "...")
+    cand <- paste0("...", tail)
+    if (pre > 0L && !anyDuplicated(cand)) {
+      out[w] <- cand
+      next
+    }
     k <- match(x[w], orig)
     out[w] <- paste0(substr(x[w], 1L, max_chars - 4L - nchar(k)), "...#", k)
   }
   out
+}
+
+# the characters the strings share at their start, back to the last space so no word is split
+.bl_common_start <- function(x) {
+  n <- min(nchar(x))
+  p <- 0L
+  while (p < n && length(unique(substr(x, p + 1L, p + 1L))) == 1L) p <- p + 1L
+  sp <- gregexpr(" ", substr(x[[1L]], 1L, p), fixed = TRUE)[[1L]]
+  if (sp[[1L]] > 0L) max(sp) else p
 }
 
 # Labels and the left margin they need, on the device as it is: a margin wider than the device
@@ -576,13 +595,42 @@ plotopt <- function(...) {
   min(1.6 + lines + (if (is.null(labels)) 2.2 else 0.6), max(14, 0.5 * fin / graphics::par("csi")))
 }
 
-# dots with an interval per row: the chart most of the tabular results want
-.bl_dot_interval <- function(label, est, lower, upper, main, xlab, cols, ref = NULL, note = NULL, ...) {
+# Row labels on the left, one per row whatever the row count: axis() leaves out labels that
+# would overlap, so 44 rows of trchlthgap() on a 4.6-inch page showed 22 and the rest read as
+# beside the wrong points. The text is sized to the row height (down to 0.45) and drawn with
+# mtext(), which drops none; mtext()'s cex is absolute, so par("cex") is applied here.
+.bl_row_labels <- function(at, labels, cex = 0.85) {
+  if (length(at) > 1L) {
+    usr <- graphics::par("usr")
+    pin <- graphics::par("pin")
+    row_in <- min(abs(diff(sort(at)))) / (usr[4L] - usr[3L]) * pin[2L]
+    line_in <- graphics::par("csi") * cex * 1.1
+    if (line_in > row_in) cex <- max(0.45, cex * row_in / line_in)
+  }
+  graphics::mtext(labels, side = 2, at = at, las = 1, line = graphics::par("mgp")[2L],
+                  cex = cex * graphics::par("cex"), col = graphics::par("col.axis"))
+  invisible(cex)
+}
+
+# dots with an interval per row: the chart most of the tabular results want; `key` (a list with
+# `legend` and `col`) adds a key under the panel
+.bl_dot_interval <- function(label, est, lower, upper, main, xlab, cols, ref = NULL, note = NULL, key = NULL,
+                             ...) {
   n <- length(est)
   # labels too long for 45% of the panel are shortened in the middle, not clipped at the edge
   label <- .bl_label_fit(label)$labels
   op <- .bl_par(labels = label)
   on.exit(graphics::par(op), add = TRUE)
+  # a key under the panel: as many columns as the panel's width takes (an entry needs its text and
+  # about half an inch for the symbol and gaps), and a bottom margin with a line per row of it; a
+  # six-entry key in one row ran off the page, and the usual 4.2-line margin cut it off
+  key_cols <- 1L
+  if (!is.null(key)) {
+    entry <- max(.bl_strwidth(key$legend, cex = 0.75)) + 0.5
+    key_cols <- max(1L, min(length(key$legend), floor(graphics::par("pin")[1L] / entry)))
+    rows <- ceiling(length(key$legend) / key_cols)
+    graphics::par(mar = .bl_safe_mar(c(5.2 + 1.1 * rows, graphics::par("mar")[2L], 3, 1), .bl_plot_opts()$cex))
+  }
   vals <- c(est, lower, upper, ref)
   vals <- vals[is.finite(vals)]
   rng <- if (length(vals)) range(vals) else c(0, 1)
@@ -603,7 +651,7 @@ plotopt <- function(...) {
     graphics::segments(lower[ok], seq_len(n)[ok], upper[ok], seq_len(n)[ok], col = cols[ok], lwd = 1.6, lend = 1)
   }
   graphics::points(est, seq_len(n), pch = 21, bg = cols, col = "white", lwd = 1.6, cex = 1.7)
-  graphics::axis(2, at = seq_len(n), labels = label, tick = FALSE, cex.axis = 0.85)
+  .bl_row_labels(seq_len(n), label)
   # a row with no estimate says why (a suppressed percentage, the first period), so an empty
   # row never reads as a missing drawing
   if (!is.null(note)) {
@@ -623,6 +671,9 @@ plotopt <- function(...) {
       graphics::text(usr[1L] + 0.02 * (usr[2L] - usr[1L]), seq_len(n)[say], txt, col = "#6E6E6E",
                      cex = cex, font = 3, adj = c(0, 0.5))
     }
+  }
+  if (!is.null(key)) {
+    .bl_legend_below(legend = key$legend, col = key$col, pch = 19, ncol = key_cols, bty = "n", cex = 0.75)
   }
   invisible(NULL)
 }
@@ -668,8 +719,7 @@ plotopt <- function(...) {
 #'     line.}
 #'   \item{\code{bricklayer_freq}, \code{bricklayer_missingness},
 #'     \code{rmbl_region_coverage}}{(\code{\link{freqtbl}},
-#'     \code{\link{misspat}}, \code{\link{rgncov}})
-#'     horizontal bars.}
+#'     \code{\link{misspat}} and \code{\link{rgncov}}) horizontal bars.}
 #'   \item{\code{bricklayer_outliers}}{(\code{\link{mahaoutl}})
 #'     the distance of every row, outliers marked.}
 #'   \item{\code{bricklayer_correlations}, \code{bricklayer_cortable}}{
@@ -679,21 +729,19 @@ plotopt <- function(...) {
 #'     the permutation null distribution with the observed statistic.}
 #'   \item{\code{rmbl_bounds}}{(\code{\link{pubbnd}}) each value
 #'     inside its published-rounding envelope.}
-#'   \item{\code{rmbl_indigenous_gap}, \code{rmbl_dsr}, \code{rmbl_prevalence},
-#'     \code{rmbl_exposure_trend}, \code{rmbl_community_index}}{
-#'     (\code{\link{indgap}}, \code{\link{agestd}},
-#'     \code{\link{stdprev}}, \code{\link{exptrnd}},
-#'     \code{\link{commidx}}) each group's difference or ratio, rate,
-#'     percentage, odds ratio or index with its interval; \code{what = "ratio"}
-#'     draws the ratio of a gap.}
+#'   \item{\code{rmbl_indigenous_gap}, \code{rmbl_dsr}, \code{rmbl_prevalence}}{
+#'     each group's difference or ratio, rate, percentage, odds ratio or index
+#'     with its interval, for these classes and for \code{rmbl_exposure_trend}
+#'     and \code{rmbl_community_index} (\code{\link{indgap}}, \code{\link{agestd}},
+#'     \code{\link{stdprev}}, \code{\link{exptrnd}}, \code{\link{commidx}});
+#'     \code{what = "ratio"} draws the ratio of a gap.}
 #'   \item{\code{rmbl_trc_progress}}{(\code{\link{trcprog}}) the Calls to
 #'     Action completed, and the pace projected with the band its interval gives.}
 #'   \item{\code{rmbl_ordinal_compare}}{(\code{\link{ordcmp}}) each
 #'     group's ratings as one stacked bar, lowest rating on the left.}
 #'   \item{\code{rmbl_wellness_profile}, \code{rmbl_wellness_continuum}}{
-#'     (\code{\link{welprof}}, \code{\link{mhcont}})
 #'     wellness indicators above, distress below, each group's estimate and
-#'     interval.}
+#'     interval (\code{\link{welprof}}, \code{\link{mhcont}}).}
 #'   \item{\code{rmbl_dual_continuum}}{(\code{\link{dualcont}}) each group
 #'     on the two axes, wellness up and distress across.}
 #'   \item{\code{rmbl_holistic_balance}}{(\code{\link{holbal}}) the
@@ -707,14 +755,12 @@ plotopt <- function(...) {
 #'     in each indicator between the periods, wellness first.}
 #'   \item{\code{rmbl_profile_share}}{(\code{\link{profshr}}) each group's
 #'     share of a census characteristic with its interval.}
-#'   \item{\code{rmbl_crf}, \code{rmbl_burden}, \code{rmbl_equity},
-#'     \code{rmbl_pollution_report}}{(\code{\link{crfpm25}},
-#'     \code{\link{polbrdn}},
-#'     \code{\link{expconcidx}},
-#'     \code{\link{vrfpol}}) the concentration-response curve with
+#'   \item{\code{rmbl_crf}, \code{rmbl_burden}, \code{rmbl_equity}}{and
+#'     \code{rmbl_pollution_report}: in turn, the concentration-response curve with
 #'     the exposure marked; baseline against attributable cases; the
 #'     concentration curve of exposure over income rank; and, for a report,
-#'     all three on one page.}
+#'     all three on one page (\code{\link{crfpm25}}, \code{\link{polbrdn}},
+#'     \code{\link{expconcidx}}, \code{\link{vrfpol}}).}
 #'   \item{\code{rmbl_footprint}}{(\code{\link{co2fp}}) the
 #'     CPU, memory and total emission in one unit chosen to fit, with the
 #'     car-kilometre and tree-month equivalents as a caption; "Too short to
@@ -786,20 +832,23 @@ plotopt <- function(...) {
 #'
 #' @param x The result.
 #' @param ... Passed to the base-graphics call (\code{plot}, \code{barplot}
-#'   or \code{image}); for \code{bricklayer_analysis}, passed on to each
-#'   panel's method.
+#'   or \code{image}). They are passed on to each panel's method for a
+#'   \code{bricklayer_analysis} object.
 #' @param main Title; each method has a default.
 #' @param col Colours, overriding the palette.
 #' @param palette A \code{\link{blpal}} name, overriding the
 #'   session option.
-#' @param what For \code{rmbl_indigenous_gap}, \code{"difference"} or \code{"ratio"}.
-#'   For \code{rmbl_stock_flow}, the measures to draw (one panel
-#'   each): any of \code{"adp"}, \code{"alos"}, \code{"people"},
-#'   \code{"days"}, \code{"flowrate"}, \code{"stkrate"}. For
-#'   \code{rmbl_yoy}, \code{"pctchg"} or \code{"value"}. For
-#'   \code{rmbl_case_flow}, \code{"flow"} and/or \code{"clearance"}; for
-#'   \code{rmbl_clearance_decomposition}, any of \code{"rates"}, \code{"mix"} and
-#'   \code{"effects"} (the default fits the device).
+#' @param what Depends on the class:
+#'   \itemize{
+#'     \item \code{rmbl_indigenous_gap}: \code{"difference"} or \code{"ratio"};
+#'     \item \code{rmbl_stock_flow}: the measures to draw (one panel each), any
+#'       of \code{"adp"}, \code{"alos"}, \code{"people"}, \code{"days"},
+#'       \code{"flowrate"}, \code{"stkrate"};
+#'     \item \code{rmbl_yoy}: \code{"pctchg"} or \code{"value"};
+#'     \item \code{rmbl_case_flow}: \code{"flow"} and/or \code{"clearance"};
+#'     \item \code{rmbl_clearance_decomposition}: any of \code{"rates"},
+#'       \code{"mix"} and \code{"effects"} (the default fits the device).
+#'   }
 #' @param exposure For \code{rmbl_crf} and \code{rmbl_burden}, the exposure
 #'   range to draw the curve over; the default runs from 0 to 1.5 times the
 #'   exposure in the object.
@@ -1118,7 +1167,8 @@ plot.rmbl_band_sensitivity <- function(x, ..., main = NULL, col = NULL, palette 
   op <- .bl_par(d$value)
   on.exit(graphics::par(op), add = TRUE)
   graphics::plot(d$cap, d$value, type = "n", xlab = "",
-                 ylab = "", main = if (is.null(main)) "Sensitivity to the open band's cap" else main, ...)
+                 ylab = "", main = "", ...)
+  .bl_title(.bl_main(main, "Sensitivity to the open band's cap"))
   .bl_ylab("Statistic")
   .bl_xlab("Cap applied to the open band")
   .bl_grid(NULL)
@@ -1205,7 +1255,8 @@ plot.bricklayer_power <- function(x, ..., main = NULL, col = NULL, palette = NUL
   on.exit(graphics::par(op), add = TRUE)
   graphics::plot(d$size, d$rate, type = "n", ylim = c(0, 1), xlab = "",
                  ylab = "",
-                 main = if (is.null(main)) sprintf("Power curve (alpha = %s)", format(x$alpha)) else main, ...)
+                 main = "", ...)
+  .bl_title(.bl_main(main, sprintf("Power curve (alpha = %s)", format(x$alpha))))
   .bl_ylab("Detection rate")
   .bl_xlab("Injected effect size")
   .bl_grid(NULL)
@@ -1236,7 +1287,8 @@ plot.bricklayer_power <- function(x, ..., main = NULL, col = NULL, palette = NUL
                       col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430")
   on.exit(graphics::par(op), add = TRUE)
   .bl_barplot(rev(values), names.arg = rev(labels), horiz = TRUE, col = rev(cols),
-              border = NA, xlab = xlab, main = main, ...)
+              border = NA, xlab = xlab, main = "", ...)
+  .bl_title(main)
   .bl_grid(NULL, side = "x")
   invisible(NULL)
 }
@@ -1318,7 +1370,8 @@ plot.bricklayer_outliers <- function(x, ..., main = NULL, col = NULL, palette = 
                       col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430")
   on.exit(graphics::par(op), add = TRUE)
   .bl_barplot(rev(ifelse(is.na(r), 0, r)), names.arg = rev(label), horiz = TRUE, col = rev(cols),
-              border = NA, xlim = c(-1, 1), xlab = "Correlation", main = main, ...)
+              border = NA, xlim = c(-1, 1), xlab = "Correlation", main = "", ...)
+  .bl_title(main)
   .bl_grid(NULL, side = "x")
   graphics::abline(v = 0, col = "#8C8C8C")
   invisible(NULL)
@@ -1750,8 +1803,8 @@ plot.bricklayer_analysis <- function(x, ..., which = NULL, main = NULL) {
 #' than chance would allow given their size.
 #'
 #' @details
-#' \code{plotlrnz()}: from a numeric vector the curve is computed by
-#' \code{\link{lorenzc}} and the title carries \code{\link{ginicoef}}; a data
+#' \code{plotlrnz()}: from a numeric vector the curve is computed with
+#' \code{\link{lorenzc}}, and the title carries \code{\link{ginicoef}}; a data
 #' frame is used as given (sorted, with the origin added when missing) and
 #' the title has no Gini. The dashed diagonal is perfect equality.
 #'
@@ -1872,7 +1925,8 @@ plotfnl <- function(obs, expd, area = NULL, lvls = c(0.95, 0.998), target = 1, .
   on.exit(graphics::par(op), add = TRUE)
   graphics::plot(expd, ratio, type = "n", xlab = "Expected count", ylab = "",
                  ylim = range(c(ratio, lim$lower, lim$upper), finite = TRUE),
-                 main = .bl_main(main, "Funnel plot"), ...)
+                 main = "", ...)
+  .bl_title(.bl_main(main, "Funnel plot"))
   .bl_ylab("Observed / expected")
   .bl_grid(NULL)
   graphics::abline(h = target, col = "#8C8C8C")

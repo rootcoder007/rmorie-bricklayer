@@ -16,8 +16,9 @@ its label.}
 }
 \value{
 The object, still of class \code{rmbl_yoy}, with an added
-character column \code{perlbl} and \code{attr(x, "yoy")$perlbl}
-set to \code{TRUE}, so the labels are used by \code{print()},
+character column \code{perlbl}. Its \code{yoy} attribute gets
+\code{perlbl} set to \code{TRUE}, as \code{attr(x, "yoy")$perlbl}, so the labels
+are used by \code{print()},
 \code{\link[=yoyhtml]{yoyhtml()}},
 \code{\link[=yoypdf]{yoypdf()}} and the delimited writers.
 }

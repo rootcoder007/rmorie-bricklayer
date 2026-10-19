@@ -18,8 +18,8 @@ bldl(
 )
 }
 \arguments{
-\item{url}{The URL: \code{https} (plain \code{http} only with
-\code{options(rmoriebricklayer.allowhttp = TRUE)}); a loopback,
+\item{url}{The URL, \code{https}. The option \code{rmoriebricklayer.allowhttp}
+set to \code{TRUE} also allows plain \code{http}. A loopback,
 link-local or private address is refused.}
 
 \item{dest}{Character string: the path to write.}
@@ -77,8 +77,8 @@ is set, and suppressed by \code{options(morie.quiet = TRUE)}.
 Network: the transfer runs in the package's compiled HTTP client. The
 URL is checked, its host resolved and pinned, and every redirect is
 checked again (no switch from https to http; credentials are not passed
-to another host). Plain \code{http://} is allowed only with
-\code{options(rmoriebricklayer.allowhttp = TRUE)}. A transfer slower than
+to another host). Plain \code{http://} is allowed only when
+\code{rmoriebricklayer.allowhttp}, an option, is \code{TRUE}. A transfer slower than
 64 bytes a second for 30 seconds is abandoned. A \code{file://} URL is
 copied locally through the same progress display, only with
 \code{allowfile = TRUE}.

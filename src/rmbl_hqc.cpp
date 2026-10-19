@@ -96,8 +96,7 @@ template <class P>
 SEXP sizes() {
     const int v[7] = {static_cast<int>(P::EK), static_cast<int>(P::DK), static_cast<int>(P::CT), 32,
                       static_cast<int>(P::K), static_cast<int>(P::SALT), 32};
-    const char *nm[7] = {"encapsulation_key", "decapsulation_key", "ciphertext", "seed",
-                         "message", "salt", "shared_secret"};
+    const char *nm[7] = {"public", "secret", "ciphertext", "seed", "message", "salt", "shared"};
     SEXP out = PROTECT(Rf_allocVector(INTSXP, 7));
     SEXP names = PROTECT(Rf_allocVector(STRSXP, 7));
     for (int i = 0; i < 7; ++i) {
@@ -159,8 +158,7 @@ SEXP sizes4() {
     const int v[7] = {static_cast<int>(S::EK), static_cast<int>(S::DK), static_cast<int>(S::CT),
                       static_cast<int>(S::RND), static_cast<int>(P::K), static_cast<int>(S::SALT),
                       static_cast<int>(S::SS)};
-    const char *nm[7] = {"encapsulation_key", "decapsulation_key", "ciphertext", "seed",
-                         "message", "salt", "shared_secret"};
+    const char *nm[7] = {"public", "secret", "ciphertext", "seed", "message", "salt", "shared"};
     SEXP out = PROTECT(Rf_allocVector(INTSXP, 7));
     SEXP names = PROTECT(Rf_allocVector(STRSXP, 7));
     for (int i = 0; i < 7; ++i) {

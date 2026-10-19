@@ -368,29 +368,54 @@ inline double hawkes_ll_lomax_const(const double *t, std::size_t n, double T,
     return -(log_sum - integral);
 }
 
+// log(x^a e^-x / Gamma(a)), the prefactor of both expansions below. For a
+// large shape the plain a*log(x) - x - lgamma(a) cancels terms of size
+// 1e7 (at a = 1e6) and keeps nine digits; written through Stirling's
+// series for lgamma(a) the large terms cancel analytically:
+// a*(log1p(t) - t) + log(a)/2 - log(2 pi)/2 - stirlerr(a), t = (x - a)/a.
+inline double gamma_log_prefactor(double a, double x) {
+    if (a < 10.0) return -x + a * std::log(x) - std::lgamma(a);
+    const double t = (x - a) / a;
+    const double ia = 1.0 / a, ia2 = ia * ia;
+    const double stirlerr =
+        ia * (1.0 / 12.0 - ia2 * (1.0 / 360.0 - ia2 * (1.0 / 1260.0 - ia2 / 1680.0)));
+    return a * (std::log1p(t) - t) + 0.5 * std::log(a) - 0.91893853320467274178 - stirlerr;
+}
+
 // Regularized lower incomplete gamma P(a, x): series for x < a+1,
 // continued fraction (Lentz) otherwise (Numerical Recipes 6.2). Used
-// by the gamma-kernel Hawkes compensator integral.
+// by the gamma-kernel Hawkes compensator integral. Near x = a both need
+// on the order of sqrt(a) terms: a fixed 200 gave P(1e4, 1e4) = 0.4786
+// (pgamma 0.5013) and P(1e6, 1e6) = 0.0797, so the cap grows with a.
 inline double gamma_cdf_regularized(double a, double x) {
     if (x <= 0.0) return 0.0;
-    const double gln = std::lgamma(a);
+    /* a NaN or a negative shape takes the old cap (no cast of a NaN) */
+    const double acap = (a > 0.0 && a < 1e12) ? a : (a >= 1e12 ? 1e12 : 0.0);
+    const int itmax = 200 + static_cast<int>(20.0 * std::sqrt(acap));
+    const double lpre = gamma_log_prefactor(a, x);
     if (x < a + 1.0) {
         double ap = a;
         double sum = 1.0 / a;
         double delta = sum;
-        for (int i = 0; i < 200; ++i) {
+        for (int i = 0; i < itmax; ++i) {
             ap += 1.0;
             delta *= x / ap;
             sum += delta;
-            if (std::fabs(delta) < std::fabs(sum) * 1e-12) break;
+            // the terms fall at least geometrically from here, by r = x / (ap + 1), so the tail is
+            // at most delta * r / (1 - r): near x = a, r is close to 1 and that tail is ~ sqrt(a)
+            // terms, which a stop at the first term below 1e-12 of the sum left out (1.4e-10 at
+            // a = 1e6). For r below one half the rule is the plain one, as it always was.
+            const double r = x / (ap + 1.0);
+            const double tail = r < 0.5 ? 1.0 : r / (1.0 - r);
+            if (std::fabs(delta) * tail < std::fabs(sum) * 1e-12) break;
         }
-        return sum * std::exp(-x + a * std::log(x) - gln);
+        return sum * std::exp(lpre);
     }
     double b = x + 1.0 - a;
     double c = 1.0 / 1e-30;
     double d = 1.0 / b;
     double h = d;
-    for (int i = 1; i <= 200; ++i) {
+    for (int i = 1; i <= itmax; ++i) {
         const double an = -static_cast<double>(i) * (static_cast<double>(i) - a);
         b += 2.0;
         d = an * d + b;
@@ -402,7 +427,7 @@ inline double gamma_cdf_regularized(double a, double x) {
         h *= delta;
         if (std::fabs(delta - 1.0) < 1e-12) break;
     }
-    return 1.0 - std::exp(-x + a * std::log(x) - gln) * h;
+    return 1.0 - std::exp(lpre) * h;
 }
 
 // Negative log-likelihood: gamma triggering kernel, constant baseline.

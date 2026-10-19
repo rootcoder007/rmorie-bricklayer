@@ -7,8 +7,8 @@
 trcind()
 }
 \value{
-A data frame: \code{call}, \code{indicator} (the Call's words), \code{table},
-\code{measure}, \code{better} (\code{"higher"} or \code{"lower"}), \code{note}.
+A data frame with \code{call}, \code{indicator} (the Call's words), \code{table},
+\code{measure}, \code{better} (\code{"higher"} or \code{"lower"}) and \code{note}.
 }
 \description{
 Call to Action 19 asks the federal government to "establish measurable goals to

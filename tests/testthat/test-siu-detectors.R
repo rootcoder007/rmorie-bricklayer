@@ -301,7 +301,7 @@ test_that("the officer and witness counts read their own labels", {
                  "Witness Officials\nWO #1 Interviewed\n",
                  "Civilian Witnesses\nCW #1 Interviewed\n")
   sch <- siusch()
-  expect_true(sch$is_count[sch$name == "number_of_subject_officials"])
+  expect_true(sch$count[sch$name == "number_of_subject_officials"])
   expect_equal(unname(parse_text(none)["number_of_witness_officials"]), "1")
 })
 

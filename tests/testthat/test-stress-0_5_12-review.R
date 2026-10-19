@@ -16,9 +16,9 @@ test_that("X1: an attestation carries no private key, and the signature inside i
   at <- cpsatst(list(name = "real manifest"), k)
   expect_null(at$signature$key_state)
   flat <- unlist(at)
-  expect_false(any(grepl("sk_seed|sk_prf|key_state", names(flat))))
-  expect_false(any(grepl(k$sk_seed, flat, fixed = TRUE)))
-  expect_false(any(grepl(k[["sk_prf"]], flat, fixed = TRUE)))
+  expect_false(any(grepl("skseed|skprf|sk_seed|sk_prf|key_state", names(flat))))
+  expect_false(any(grepl(k$skseed, flat, fixed = TRUE)))
+  expect_false(any(grepl(k[["skprf"]], flat, fixed = TRUE)))
   chk <- cpschkatst(at, list(name = "real manifest"))
   expect_match(paste(format(chk), collapse = "\n"), "Attestation check: OK")
   # the forgery of the report: there is no state to advance, so a second attestation from the

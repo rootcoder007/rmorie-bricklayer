@@ -10,8 +10,8 @@ blpal(name = c("okabe", "diverging", "sequential", "grey"), n = NULL)
 plotopt(...)
 }
 \arguments{
-\item{name}{Character scalar, the palette: \code{"okabe"} (the default),
-\code{"diverging"}, \code{"sequential"} or \code{"grey"}.}
+\item{name}{Character scalar, the palette: \code{"okabe"} (the default), or one
+of \code{"diverging"}, \code{"sequential"} and \code{"grey"}.}
 
 \item{n}{Integer scalar or \code{NULL} (the default: the palette's own
 colours). The number of colours wanted; \code{"okabe"} and \code{"grey"}
@@ -46,10 +46,10 @@ to colour your own plots so they match the package's.
 \details{
 The palettes: \code{"okabe"} is the eight-colour set of Okabe and Ito
 (2008), distinguishable under the common forms of colour-vision
-deficiency; \code{"diverging"} has three anchors (blue \code{#2166AC},
+deficiency. \code{"diverging"} has three anchors (blue \code{#2166AC},
 grey \code{#8C8C8C}, orange-red \code{#D6604D}) and is used for changes
-(decrease, no change, increase); \code{"sequential"} has five blues from
-light to dark; \code{"grey"} five greys from dark to light. With \code{n}
+(decrease, no change, increase). The palette \code{"sequential"} has five
+blues from light to dark; \code{"grey"} five greys from dark to light. With \code{n}
 given, \code{"okabe"} and \code{"grey"} repeat their colours
 (\code{rep_len()}) and \code{"diverging"} and \code{"sequential"} are
 interpolated with \code{grDevices::colorRampPalette()}.

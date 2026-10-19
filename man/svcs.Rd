@@ -65,9 +65,9 @@ copy; the bundled copy; and finally a document with every mode
 one that is older is deleted. Network failures are not errors: they fall
 through to the next copy.
 
-Side effects: an accepted live document and its signature are written to
-\code{tools::R_user_dir("rmoriebricklayer", "cache")} as
-\code{morie-services.json} and \code{morie-services.sig}. The result is
+Side effects: an accepted live document and its signature are written as
+\code{morie-services.json} and \code{morie-services.sig} to the folder
+\code{tools::R_user_dir("rmoriebricklayer", "cache")}. The result is
 also kept for the session, so later \code{offline = TRUE} calls (which the
 rest of the package makes) return it without checking the signature again.
 

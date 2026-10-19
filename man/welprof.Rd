@@ -28,16 +28,16 @@ the percentage and its published limits.}
 that measure distress; rows for any other indicator (totals, "not specified") are
 left out.}
 
-\item{domain}{Optional named character vector giving each indicator's holistic domain
-(\code{c("Life satisfaction 8 to 10" = "mental", ...)}).}
+\item{domain}{Optional named character vector giving each indicator's holistic domain,
+for example \code{c("Life satisfaction 8 to 10" = "mental", ...)}.}
 
 \item{qual}{Optional column of quality flags.}
 }
 \value{
-A data frame of class \code{rmbl_wellness_profile}: \code{group},
-\code{indicator}, \code{side} (\code{"wellness"} or \code{"distress"}),
-\code{domain}, \code{estimate}, \code{lower}, \code{upper}, \code{usewithcau},
-wellness rows first; \code{plot()} draws it.
+A data frame of class \code{rmbl_wellness_profile}, wellness rows first,
+with the columns \code{group}, \code{indicator}, \code{side} (\code{"wellness"}
+or \code{"distress"}), \code{domain}, \code{estimate}, \code{lower},
+\code{upper} and \code{usewithcau}; \code{plot()} draws it.
 }
 \description{
 Puts a group's wellness indicators (life satisfaction, perceived mental health, a
@@ -68,8 +68,9 @@ communities.
 \section{Acknowledgement}{
 
 This estimator puts to quantitative use the framework of Professor Suzanne Stewart
-(Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
-\code{vignette("first-nations-metis-inuit-health")}.
+(Yellowknives Dene First Nation, University of Toronto).
+
+See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette.
 }
 
 \examples{

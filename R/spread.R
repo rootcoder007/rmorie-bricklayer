@@ -55,7 +55,7 @@
 #' @param w Optional non-negative weights, one per value.
 #' @param wtype \code{"frequency"} (default) or \code{"reliability"}.
 #' @param narm Drop missing values (default \code{FALSE}: they are an error).
-#' @return A list of class \code{rmbl_spread}: \code{n}, \code{mean}, \code{variance},
+#' @return A list of class \code{rmbl_spread} with \code{n}, \code{mean}, \code{variance},
 #'   \code{sd}, \code{semean}, \code{design} (the rule applied), \code{denominator},
 #'   and \code{reason} (a sentence). The print method shows them.
 #' @references Cochran WG (1977). Sampling Techniques, 3rd edition. Wiley, New York,
@@ -82,9 +82,9 @@ sprd <- function(x, des = c("auto", "sample", "census", "finite"), N = NULL, w =
     x <- x[keep]
     .w <- .w[keep]
   }
-  if (any(.w < 0) || !any(.w > 0)) stop("`w` must be 0 or more, not all 0", call. = FALSE)
   n <- length(x)
   if (n < 1L) stop("`x` has no values", call. = FALSE)
+  if (any(.w < 0) || !any(.w > 0)) stop("`w` must be 0 or more, not all 0", call. = FALSE)
   .N <- if (is.null(N)) NA_real_ else .rmbl_scalar(N, "N", 1)
   if (is.finite(.N) && .N < n) stop("`N` is smaller than the number of values", call. = FALSE)
   if (des == "auto") {

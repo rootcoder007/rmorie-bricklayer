@@ -24,12 +24,16 @@
 #'
 #' @details Each label of the statistics column is read as an estimate or as one of its
 #' measures of precision, in every form the tables use:
-#' \code{"Low 95\% confidence interval"},
-#' \code{"High 95\% confidence interval, age-standardized rate"},
-#' \code{"Confidence interval lower bound of count"},
-#' \code{"95\% confidence interval (upper limit)"},
-#' \code{"95\% confidence interval lower bound, 2020"},
-#' \code{"Coefficient of variation for percent"}, \code{"Standard error"}. A limit that
+#' \itemize{
+#'   \item \code{"Low 95\% confidence interval"};
+#'   \item \code{"High 95\% confidence interval, age-standardized rate"};
+#'   \item \code{"Confidence interval lower bound of count"};
+#'   \item \code{"95\% confidence interval (upper limit)"};
+#'   \item \code{"95\% confidence interval lower bound, 2020"};
+#'   \item \code{"Coefficient of variation for percent"};
+#'   \item \code{"Standard error"}.
+#' }
+#' A limit that
 #' names its measure is matched to it (ignoring case and spacing); one that names none, or
 #' a name that fits several measures (\code{"potential years of life lost"} in a table
 #' with a number, a crude rate and an age-standardised rate of them), is matched to the
@@ -655,17 +659,18 @@ plot.rmbl_ordinal_compare <- function(x, ..., main = NULL, col = NULL, palette =
 #' @param well,distress The indicators that measure wellness or strength, and those
 #'   that measure distress; rows for any other indicator (totals, "not specified") are
 #'   left out.
-#' @param domain Optional named character vector giving each indicator's holistic domain
-#'   (\code{c("Life satisfaction 8 to 10" = "mental", ...)}).
+#' @param domain Optional named character vector giving each indicator's holistic domain,
+#'   for example \code{c("Life satisfaction 8 to 10" = "mental", ...)}.
 #' @param qual Optional column of quality flags.
-#' @return A data frame of class \code{rmbl_wellness_profile}: \code{group},
-#'   \code{indicator}, \code{side} (\code{"wellness"} or \code{"distress"}),
-#'   \code{domain}, \code{estimate}, \code{lower}, \code{upper}, \code{usewithcau},
-#'   wellness rows first; \code{plot()} draws it.
+#' @return A data frame of class \code{rmbl_wellness_profile}, wellness rows first,
+#'   with the columns \code{group}, \code{indicator}, \code{side} (\code{"wellness"}
+#'   or \code{"distress"}), \code{domain}, \code{estimate}, \code{lower},
+#'   \code{upper} and \code{usewithcau}; \code{plot()} draws it.
 #' @section Acknowledgement:
 #' This estimator puts to quantitative use the framework of Professor Suzanne Stewart
-#' (Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
-#' \code{vignette("first-nations-metis-inuit-health")}.
+#' (Yellowknives Dene First Nation, University of Toronto).
+#'
+#' See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette.
 #' @references Stewart SL (2008). Promoting Indigenous mental health: cultural
 #' perspectives on healing from Native counsellors in Canada. International Journal of
 #' Health Promotion and Education 46(2):49-56. \doi{10.1080/14635240.2008.10708129}
@@ -758,7 +763,8 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
   step <- 1 / (ng + 1)
   yb <- rev(seq_along(inds))
   y <- yb[match(d$indicator, inds)] + (match(d$group, grp) - (ng + 1) / 2) * step
-  labs <- .bl_label_fit(inds)
+  # a band per indicator leaves room for two-line labels, so long names are broken, not cut
+  labs <- .bl_label_wrap(inds)
   o <- .bl_plot_opts()
   op <- graphics::par(las = 1, cex = o$cex, bg = o$bg, bty = "n", tcl = -0.2, mgp = c(3, 0.55, 0),
                       col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430",
@@ -785,7 +791,7 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
   ok <- is.finite(d$lower) & is.finite(d$upper)
   if (any(ok)) graphics::segments(d$lower[ok], y[ok], d$upper[ok], y[ok], col = gc[ok], lwd = 2, lend = 1)
   graphics::points(d$estimate, y, pch = ifelse(d$usewithcau, 1, 19), col = gc, cex = 1.2)
-  graphics::axis(2, at = yb, labels = labs$labels, tick = FALSE, cex.axis = 0.85)
+  .bl_row_labels(yb, labs$labels)
   .bl_legend_below(legend = grp, col = cols, pch = 19, horiz = TRUE, bty = "n", cex = 0.75)
   invisible(d)
 }
@@ -855,8 +861,9 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
 #'   \code{domains} (the matrix of domain levels, groups by domains) and \code{weights}.
 #' @section Acknowledgement:
 #' This estimator puts to quantitative use the framework of Professor Suzanne Stewart
-#' (Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
-#' \code{vignette("first-nations-metis-inuit-health")}.
+#' (Yellowknives Dene First Nation, University of Toronto).
+#'
+#' See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette.
 #' @references Atkinson AB (1970). On the measurement of inequality. Journal of Economic
 #' Theory 2(3):244-263.
 #' \href{https://doi.org/10.1016/0022-0531(70)90039-6}{doi:10.1016/0022-0531(70)90039-6}
@@ -1012,14 +1019,15 @@ holbal <- function(data, grp, domain, est, lower, upper, w = NULL, qual = NULL,
 #' @param well,distress One wellness and one distress indicator of \code{x}.
 #' @param conflvl Confidence level of the published intervals and of the ratio (default
 #'   0.95).
-#' @return A data frame of class \code{rmbl_dual_continuum}: \code{group},
+#' @return A data frame of class \code{rmbl_dual_continuum} with \code{group},
 #'   \code{wellness}, \code{wello}, \code{welup}, \code{distress},
 #'   \code{distrlo}, \code{distrup}, \code{strratio},
-#'   \code{ratiolo}, \code{ratioup}, \code{usewithcau}.
+#'   \code{ratiolo}, \code{ratioup} and \code{usewithcau}.
 #' @section Acknowledgement:
 #' This estimator puts to quantitative use the framework of Professor Suzanne Stewart
-#' (Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
-#' \code{vignette("first-nations-metis-inuit-health")}.
+#' (Yellowknives Dene First Nation, University of Toronto).
+#'
+#' See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette.
 #' @references Keyes CLM (2002). The mental health continuum: from languishing to
 #' flourishing in life. Journal of Health and Social Behavior 43(2):207-222.
 #' \doi{10.2307/3090197}
@@ -1315,28 +1323,29 @@ plot.rmbl_distinctions <- function(x, ..., main = NULL, col = NULL, palette = NU
 #'
 #' @param name Which excerpt.
 #' @return A data frame.
-#' @source Statistics Canada, tables 13-10-0924-01 (
-#' \href{https://doi.org/10.25318/1310092401-eng}{
-#' doi:10.25318/1310092401-eng}),
-#'   41-10-0067-01 (
-#' \href{https://doi.org/10.25318/4110006701-eng}{doi:10.25318/4110006701-eng}),
-#'   41-10-0082-01
-#'   (
-#' \href{https://doi.org/10.25318/4110008201-eng}{
-#' doi:10.25318/4110008201-eng}), 41-10-0021-01 (\doi{10.25318/4110002101-eng}),
-#'   17-10-0160-01 (
-#' \href{https://doi.org/10.25318/1710016001-eng}{doi:10.25318/1710016001-eng})
-#'   and 17-10-0161-01
-#'   (
-#' \href{https://doi.org/10.25318/1710016101-eng}{
-#' doi:10.25318/1710016101-eng}); Indigenous Population Profile, 2021 Census of
-#'   Population, catalogue 98-510-X2021001 and 98-510-X2021016. Reproduced and distributed
-#'   on an "as is" basis with the permission of Statistics Canada, under the Statistics
-#'   Canada Open Licence
-#'   (\url{https://www.statcan.gc.ca/en/terms-conditions/open-licence}). Built by
-#'   \code{data-raw/indigenous_mental_health.R} and \code{data-raw/indigenous_census.R} in
-#'   the source package.
+#' @source Statistics Canada tables, each with its DOI:
+#' \itemize{
+#'   \item 13-10-0924-01, \doi{10.25318/1310092401-eng};
+#'   \item 41-10-0067-01, \doi{10.25318/4110006701-eng};
+#'   \item 41-10-0082-01, \doi{10.25318/4110008201-eng};
+#'   \item 41-10-0021-01, \doi{10.25318/4110002101-eng};
+#'   \item 17-10-0160-01, \doi{10.25318/1710016001-eng};
+#'   \item 17-10-0161-01, \doi{10.25318/1710016101-eng}.
+#' }
+#' Indigenous Population Profile, 2021 Census of Population, catalogue 98-510-X2021001
+#' and 98-510-X2021016. Reproduced and distributed on an "as is" basis with the
+#' permission of Statistics Canada, under the Statistics Canada Open Licence:
+#'
+#' \url{https://www.statcan.gc.ca/en/terms-conditions/open-licence}
+#'
+#' Built by the scripts \code{indigenous_mental_health.R} and \code{indigenous_census.R}
+#' in the \code{data-raw} folder of the source package.
 #' @seealso \code{\link{indtabs}} for the full tables at the data service.
+#' @usage
+#' indiex(
+#'   name = c("health", "mentalhealth", "wellbeing", "suicide",
+#'            "censuspop", "censushh", "lifeexp", "infantmort")
+#' )
 #' @examples
 #' h <- indiex("health")
 #' mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &

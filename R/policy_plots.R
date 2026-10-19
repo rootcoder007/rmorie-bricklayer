@@ -70,7 +70,8 @@ plot.rmbl_bacon <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   k <- match(d$type, types)
   graphics::plot(d$weight, d$estimate, pch = c(17, 1, 4)[k], col = cl[k], xlab = "Weight",
                  ylab = "2 x 2 difference-in-differences estimate",
-                 main = .bl_main(main, "Goodman-Bacon decomposition"), ...)
+                 main = "", ...)
+  .bl_title(.bl_main(main, "Goodman-Bacon decomposition"))
   graphics::abline(h = attr(x, "twfe"), lwd = 1.5)
   used <- sort(unique(k))
   graphics::legend(.bl_free_corner(d$weight, d$estimate), types[used], pch = c(17, 1, 4)[used], col = cl[used],
@@ -103,13 +104,14 @@ plot.rmbl_permutation <- function(x, ..., main = NULL, col = NULL, palette = NUL
     rng <- range(c(z, d$statistic[j]))
     if (type == "density" && length(unique(z)) > 1L) {
       k <- stats::density(z)
-      graphics::plot(k, xlim = range(c(k$x, rng)), main = .bl_main(main, ttl), xlab = "Permuted statistic",
+      graphics::plot(k, xlim = range(c(k$x, rng)), main = "", xlab = "Permuted statistic",
                      ylab = "Density", col = cl, ...)
       graphics::abline(v = stats::quantile(z, c(0.05, 0.95)), lty = 2)
     } else {
       graphics::hist(z, breaks = min(30L, max(5L, length(z) %/% 3L)), xlim = rng, col = "#D5D5D5",
-                     border = "white", main = .bl_main(main, ttl), xlab = "Permuted statistic", ylab = "Count", ...)
+                     border = "white", main = "", xlab = "Permuted statistic", ylab = "Count", ...)
     }
+    .bl_title(.bl_main(main, ttl))
     graphics::abline(v = d$statistic[j], col = "#C0392B", lwd = 2)
   }
   invisible(d)
@@ -161,7 +163,8 @@ plot.rmbl_loo <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   h <- graphics::hist(e, breaks = min(30L, max(5L, length(e) %/% 2L)), plot = FALSE)
   graphics::plot(h, xlim = range(c(e, f)), ylim = c(0, max(h$counts) * 1.35), col = "#D5D5D5", border = "white",
                  xlab = "Estimate leaving one unit out", ylab = "Count",
-                 main = .bl_main(main, "Leave-one-out sensitivity"), ...)
+                 main = "", ...)
+  .bl_title(.bl_main(main, "Leave-one-out sensitivity"))
   graphics::abline(v = f, col = "#C0392B", lwd = 2)
   # the summary goes above the bars, on the side with less of them
   side <- if (sum(h$counts[h$mids < mean(range(h$breaks))]) <= sum(h$counts[h$mids >= mean(range(h$breaks))]))
@@ -233,7 +236,8 @@ plot.rmbl_cohort_trends <- function(x, ..., main = NULL, col = NULL, palette = N
   graphics::plot(range(d$evtm), range(d$value, na.rm = TRUE), type = "n", xlab = "Periods since adoption",
                  ylab = if (isTRUE(attr(x, "normalised"))) "Mean outcome (1 = period before adoption)" else
                    "Mean outcome",
-                 main = .bl_main(main, "Outcome by adoption cohort"), ...)
+                 main = "", ...)
+  .bl_title(.bl_main(main, "Outcome by adoption cohort"))
   u <- graphics::par("usr")
   graphics::rect(-1.5, u[3L], -0.5, u[4L], col = grDevices::adjustcolor("#9A9A9A", 0.25), border = NA)
   for (i in seq_along(co)) {

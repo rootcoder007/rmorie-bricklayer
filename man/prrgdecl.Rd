@@ -26,11 +26,12 @@ element, such as a capsule manifest), whose result names are used.}
 \value{
 \code{prrgdecl()} returns a list of class \code{bricklayer_prereg}
 with \code{statistics} (the names), \code{hypotheses} (the claims), \code{note} and
-\code{decutc} (ISO 8601 time). \code{prrgchk()} returns a list of class
-\code{bricklayer_prereg_check} with \code{ok} (logical: no departures),
-\code{decnotrep} and \code{repnotdec} (character vectors),
-\code{hypotheses} (a data frame of \code{statistic}, \code{hypothesis} and logical
-\code{reported}) and \code{decutc}. Both print a short summary.
+\code{decutc} (ISO 8601 time).
+
+\code{prrgchk()} returns a list of class \code{bricklayer_prereg_check} with \code{ok}
+(logical: no departures), the character vectors \code{decnotrep} and
+\code{repnotdec}, \code{hypotheses} (a data frame of \code{statistic}, \code{hypothesis} and
+logical \code{reported}) and \code{decutc}. Both print a short summary.
 }
 \description{
 \code{prrgdecl()} records, before the analysis is run, the statistics

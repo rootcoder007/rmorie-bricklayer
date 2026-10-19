@@ -7,10 +7,8 @@
 envdiff(a, b)
 }
 \arguments{
-\item{a, b}{Environment records from
-\code{\link[=capenv]{capenv()}}, or whole
-manifests containing an \code{environment} element (such as
-\code{\link[=mkmnf]{mkmnf()}} returns).}
+\item{a, b}{Environment records from \code{\link[=capenv]{capenv()}}, or whole manifests (such
+as \code{\link[=mkmnf]{mkmnf()}} returns) that hold an \code{environment} element.}
 }
 \value{
 A list of class \code{c("bricklayer_env_diff", "list")}:

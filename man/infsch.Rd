@@ -21,12 +21,16 @@ number (default 50). Above this the column is treated as free text and
 no value set is pinned.}
 }
 \value{
-A list of class \code{c("bricklayer_schema", "list")} with
-\code{expected_columns} (character), \code{expected_types} (named
-character), \code{structural_invariants} (list of \code{min_data_rows}
-and \code{max_data_rows}, integers), \code{expected_value_sets} (named
-list of character vectors), \code{numeric_ranges} (named list of
-\code{c(min =, max =)}) and \code{max_missing_fraction} (named numeric).
+A list of class \code{bricklayer_schema} with these elements:
+\itemize{
+\item \code{expected_columns} (character);
+\item \code{expected_types} (named character);
+\item \code{structural_invariants} (list of \code{min_data_rows} and
+\code{max_data_rows}, integers);
+\item \code{expected_value_sets} (named list of character vectors);
+\item \code{numeric_ranges} (named list of \code{c(min =, max =)});
+\item \code{max_missing_fraction} (named numeric).
+}
 Wrap it as \code{list(schema = <this>)} to hand to
 \code{\link[=valsch]{valsch()}}.
 }

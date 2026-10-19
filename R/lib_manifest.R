@@ -53,10 +53,9 @@
 #' flag existed. On a synthetic manifest every [recrd()] entry is
 #' \code{INFO}.
 #'
-#' Fields of \code{meta} that [wrsmrytxt()]
-#' reads: \code{project},
-#' \code{author}, \code{run_at}, \code{os}, \code{r_version} and
-#' \code{r_package_versions} (a named list or vector of versions).
+#' The fields of \code{meta} that [wrsmrytxt()] reads are \code{project},
+#' \code{author}, \code{run_at}, \code{os}, \code{r_version} and, as a named
+#' list or vector of versions, \code{r_package_versions}.
 #'
 #' Errors when \code{meta} is not a list. Nothing is written.
 #'
@@ -140,8 +139,8 @@ mkmnf <- function(meta, env = TRUE) {
 #'
 #' @param man A manifest as returned by
 #'   [mkmnf()].
-#' @param name Character scalar, the name of this cross-check; used as the
-#'   key in \code{manifest$results}, so it should be unique.
+#' @param name Character scalar, the name of this cross-check. It is the key
+#'   of the entry in \code{manifest$results}, so it should be unique.
 #' @param obs The value the analysis produced: a numeric scalar for a
 #'   tolerance check, or any single value to be stored as information.
 #' @param expd The value to compare against, of the same kind.
@@ -491,9 +490,9 @@ summarise_counts <- function(manifest) {
 #' @param outdir Character scalar, an existing folder to write
 #'   \code{SUMMARY.txt} into and to list the files of.
 #' @param paths A named list (or named character vector) of paths to report,
-#'   one line each, labelled by the capitalised name (for example
-#'   \code{capsule}, \code{input}, \code{results}, \code{analysis_script},
-#'   \code{provenance}). \code{list()} reports none.
+#'   one line each, labelled by the capitalised name. Names such as
+#'   \code{capsule}, \code{input}, \code{results}, \code{analysis_script} and
+#'   \code{provenance} are typical. \code{list()} reports none.
 #' @param whatwasdone Optional character vector, one line each, describing
 #'   what the run did. Default \code{NULL} (no section).
 #' @param contact Optional character scalar appended as a \code{Contact:}

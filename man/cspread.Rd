@@ -15,8 +15,8 @@ cdistm(a, b)
 \code{\link[=as.numeric]{as.numeric()}}.
 \code{a} and \code{b} must have the same length.}
 
-\item{ddof}{Delta degrees of freedom, a single number truncated to an
-integer by \code{\link[=as.integer]{as.integer()}}: the divisor is \code{n - ddof}.
+\item{ddof}{Delta degrees of freedom, a single number; \code{\link[=as.integer]{as.integer()}}
+truncates it to an integer. The divisor is \code{n - ddof}.
 The default \code{1} gives the sample standard
 deviation, matching \code{\link[stats:sd]{stats::sd()}}; \code{0} gives the population
 figure.}

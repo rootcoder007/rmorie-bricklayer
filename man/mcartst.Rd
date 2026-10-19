@@ -131,7 +131,7 @@ all.equal(fit$mu, c(mean(x), mean(y)), check.attributes = FALSE)
 \references{
 Little RJA (1988). A test of missing completely at random
 for multivariate data with missing values. \emph{Journal of the American
-Statistical Association} 83(404), 1198--1202.
+Statistical Association} 83(404), 1198--1202.\cr
 \doi{10.1080/01621459.1988.10478722}
 
 Dempster AP, Laird NM, Rubin DB (1977). Maximum likelihood from

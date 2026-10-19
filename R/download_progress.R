@@ -66,8 +66,8 @@
 #' Network: the transfer runs in the package's compiled HTTP client. The
 #' URL is checked, its host resolved and pinned, and every redirect is
 #' checked again (no switch from https to http; credentials are not passed
-#' to another host). Plain \code{http://} is allowed only with
-#' \code{options(rmoriebricklayer.allowhttp = TRUE)}. A transfer slower than
+#' to another host). Plain \code{http://} is allowed only when
+#' \code{rmoriebricklayer.allowhttp}, an option, is \code{TRUE}. A transfer slower than
 #' 64 bytes a second for 30 seconds is abandoned. A \code{file://} URL is
 #' copied locally through the same progress display, only with
 #' \code{allowfile = TRUE}.
@@ -78,8 +78,8 @@
 #' \code{maxbytes} below 1; a network failure; an HTTP status of 400 or
 #' more; a body larger than \code{maxbytes}. \code{dest} is overwritten.
 #'
-#' @param url The URL: \code{https} (plain \code{http} only with
-#'   \code{options(rmoriebricklayer.allowhttp = TRUE)}); a loopback,
+#' @param url The URL, \code{https}. The option \code{rmoriebricklayer.allowhttp}
+#'   set to \code{TRUE} also allows plain \code{http}. A loopback,
 #'   link-local or private address is refused.
 #' @param maxbytes Most bytes the body may have (default 2 GiB, the
 #'   transport's ceiling). A body past it, chunked or not, ends the transfer

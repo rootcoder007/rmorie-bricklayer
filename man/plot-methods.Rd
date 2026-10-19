@@ -279,8 +279,8 @@
 \item{x}{The result.}
 
 \item{...}{Passed to the base-graphics call (\code{plot}, \code{barplot}
-or \code{image}); for \code{bricklayer_analysis}, passed on to each
-panel's method.}
+or \code{image}). They are passed on to each panel's method for a
+\code{bricklayer_analysis} object.}
 
 \item{component}{For \code{rmbl_census_cwb}: \code{"cwb"} (the index, default) or one
 of its components \code{"income"}, \code{"education"}, \code{"housing"},
@@ -293,14 +293,17 @@ of its components \code{"income"}, \code{"education"}, \code{"housing"},
 \item{palette}{A \code{\link{blpal}} name, overriding the
 session option.}
 
-\item{what}{For \code{rmbl_indigenous_gap}, \code{"difference"} or \code{"ratio"}.
-For \code{rmbl_stock_flow}, the measures to draw (one panel
-each): any of \code{"adp"}, \code{"alos"}, \code{"people"},
-\code{"days"}, \code{"flowrate"}, \code{"stkrate"}. For
-\code{rmbl_yoy}, \code{"pctchg"} or \code{"value"}. For
-\code{rmbl_case_flow}, \code{"flow"} and/or \code{"clearance"}; for
-\code{rmbl_clearance_decomposition}, any of \code{"rates"}, \code{"mix"} and
-\code{"effects"} (the default fits the device).}
+\item{what}{Depends on the class:
+\itemize{
+\item \code{rmbl_indigenous_gap}: \code{"difference"} or \code{"ratio"};
+\item \code{rmbl_stock_flow}: the measures to draw (one panel each), any
+of \code{"adp"}, \code{"alos"}, \code{"people"}, \code{"days"},
+\code{"flowrate"}, \code{"stkrate"};
+\item \code{rmbl_yoy}: \code{"pctchg"} or \code{"value"};
+\item \code{rmbl_case_flow}: \code{"flow"} and/or \code{"clearance"};
+\item \code{rmbl_clearance_decomposition}: any of \code{"rates"},
+\code{"mix"} and \code{"effects"} (the default fits the device).
+}}
 
 \item{points}{For \code{rmbl_density}, whether to draw the incidents
 over the surface.}
@@ -388,8 +391,7 @@ curve: detection rate against injected effect size, with the 0.8
 line.}
 \item{\code{bricklayer_freq}, \code{bricklayer_missingness},
 \code{rmbl_region_coverage}}{(\code{\link{freqtbl}},
-\code{\link{misspat}}, \code{\link{rgncov}})
-horizontal bars.}
+\code{\link{misspat}} and \code{\link{rgncov}}) horizontal bars.}
 \item{\code{bricklayer_outliers}}{(\code{\link{mahaoutl}})
 the distance of every row, outliers marked.}
 \item{\code{bricklayer_correlations}, \code{bricklayer_cortable}}{
@@ -399,21 +401,19 @@ correlation of every pair as a diverging bar.}
 the permutation null distribution with the observed statistic.}
 \item{\code{rmbl_bounds}}{(\code{\link{pubbnd}}) each value
 inside its published-rounding envelope.}
-\item{\code{rmbl_indigenous_gap}, \code{rmbl_dsr}, \code{rmbl_prevalence},
-\code{rmbl_exposure_trend}, \code{rmbl_community_index}}{
-(\code{\link{indgap}}, \code{\link{agestd}},
-\code{\link{stdprev}}, \code{\link{exptrnd}},
-\code{\link{commidx}}) each group's difference or ratio, rate,
-percentage, odds ratio or index with its interval; \code{what = "ratio"}
-draws the ratio of a gap.}
+\item{\code{rmbl_indigenous_gap}, \code{rmbl_dsr}, \code{rmbl_prevalence}}{
+each group's difference or ratio, rate, percentage, odds ratio or index
+with its interval, for these classes and for \code{rmbl_exposure_trend}
+and \code{rmbl_community_index} (\code{\link{indgap}}, \code{\link{agestd}},
+\code{\link{stdprev}}, \code{\link{exptrnd}}, \code{\link{commidx}});
+\code{what = "ratio"} draws the ratio of a gap.}
 \item{\code{rmbl_trc_progress}}{(\code{\link{trcprog}}) the Calls to
 Action completed, and the pace projected with the band its interval gives.}
 \item{\code{rmbl_ordinal_compare}}{(\code{\link{ordcmp}}) each
 group's ratings as one stacked bar, lowest rating on the left.}
 \item{\code{rmbl_wellness_profile}, \code{rmbl_wellness_continuum}}{
-(\code{\link{welprof}}, \code{\link{mhcont}})
 wellness indicators above, distress below, each group's estimate and
-interval.}
+interval (\code{\link{welprof}}, \code{\link{mhcont}}).}
 \item{\code{rmbl_dual_continuum}}{(\code{\link{dualcont}}) each group
 on the two axes, wellness up and distress across.}
 \item{\code{rmbl_holistic_balance}}{(\code{\link{holbal}}) the
@@ -427,14 +427,12 @@ places on the two indicators, with their intervals; \code{xlab} and
 in each indicator between the periods, wellness first.}
 \item{\code{rmbl_profile_share}}{(\code{\link{profshr}}) each group's
 share of a census characteristic with its interval.}
-\item{\code{rmbl_crf}, \code{rmbl_burden}, \code{rmbl_equity},
-\code{rmbl_pollution_report}}{(\code{\link{crfpm25}},
-\code{\link{polbrdn}},
-\code{\link{expconcidx}},
-\code{\link{vrfpol}}) the concentration-response curve with
+\item{\code{rmbl_crf}, \code{rmbl_burden}, \code{rmbl_equity}}{and
+\code{rmbl_pollution_report}: in turn, the concentration-response curve with
 the exposure marked; baseline against attributable cases; the
 concentration curve of exposure over income rank; and, for a report,
-all three on one page.}
+all three on one page (\code{\link{crfpm25}}, \code{\link{polbrdn}},
+\code{\link{expconcidx}}, \code{\link{vrfpol}}).}
 \item{\code{rmbl_footprint}}{(\code{\link{co2fp}}) the
 CPU, memory and total emission in one unit chosen to fit, with the
 car-kilometre and tree-month equivalents as a caption; "Too short to

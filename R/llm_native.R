@@ -596,11 +596,11 @@
 #' (\code{MORIE_LLM_BASE_URL}, or \code{own.url} saved with
 #' \code{rmoriebricklayer config set}); then every provider of
 #' \code{\link{llmprvd}} whose key is set, in the order of
-#' that table; then a local Ollama server (\code{OLLAMA_HOST}, default
-#' \code{http://localhost:11434}) when it answers with at least one pulled model
-#' or \code{OLLAMA_MODEL} is set. A saved route (\code{MORIE_LLM_ROUTE} or
-#' \code{route} saved in the settings file) replaces the automatic order
-#' when \code{route = NULL}.
+#' that table; then a local Ollama server, at \code{OLLAMA_HOST} or by default at
+#' \code{http://localhost:11434}, when it answers with at least one pulled model
+#' or \code{OLLAMA_MODEL} is set. A saved route replaces the automatic order
+#' when \code{route = NULL}; it comes from \code{MORIE_LLM_ROUTE} or from the
+#' \code{route} saved in the settings file.
 #'
 #' Nothing is sent to a provider. The only network contact is the Ollama
 #' probe, a \code{GET /api/tags} to the Ollama address with a 2 second
@@ -1000,7 +1000,7 @@ llmprvd <- function() {
 #' machine and returns the reply. Bring your own key, or run a model
 #' locally: nothing is sent anywhere you did not set up. In order:
 #' \enumerate{
-#'   \item an OpenAI-compatible endpoint of your own: \code{MORIE_LLM_BASE_URL}
+#'   \item your own OpenAI-compatible endpoint, \code{MORIE_LLM_BASE_URL}
 #'     (with \code{MORIE_LLM_API_KEY} and \code{MORIE_LLM_MODEL} when it needs
 #'     them), e.g. LM Studio, vLLM, llama.cpp or a company gateway. An
 #'     \code{https} address, or plain \code{http} to the loopback host or to a
@@ -1014,9 +1014,9 @@ llmprvd <- function() {
 #'     Cerebras, Perplexity, Hugging Face, OpenCode Zen, Cohere and NVIDIA,
 #'     each through its own documented API with its own key variable
 #'     (\code{ANTHROPIC_API_KEY}, \code{OPENAI_API_KEY}, ...);
-#'   \item a local Ollama server: \code{OLLAMA_HOST} (default
-#'     \code{http://localhost:11434}), model \code{OLLAMA_MODEL} or the first
-#'     one pulled; \code{OLLAMA_HOST=off} skips it.
+#'   \item a local Ollama server at \code{OLLAMA_HOST}, by default
+#'     \code{http://localhost:11434}, with the model \code{OLLAMA_MODEL} or the
+#'     first one pulled; \code{OLLAMA_HOST=off} skips it.
 #' }
 #' \code{\link{llmstat}} shows what is set up and which route
 #' a question would take.
@@ -1047,14 +1047,16 @@ llmprvd <- function() {
 #' on both stdin and stdout) or in an interactive GUI session gets a saved
 #' answer back at once when the question (spacing aside; case counts),
 #' route, address, model, packages and their versions, and
-#' \code{syspro} all match. Answers are kept 30 days
-#' (\code{options(rmoriebricklayer.llmcachedays)}), at most the 200
-#' newest (\code{options(rmoriebricklayer.llmcachemax)}), as owner-only
-#' files under \code{tools::R_user_dir("rmoriebricklayer", "cache")}. The
+#' \code{syspro} all match. Answers are kept as owner-only files in the
+#' folder that \code{tools::R_user_dir()} gives for \code{"rmoriebricklayer"}
+#' and \code{"cache"}: for 30 days, which the option
+#' \code{rmoriebricklayer.llmcachedays} changes, and at most the 200 newest,
+#' which the option \code{rmoriebricklayer.llmcachemax} changes. The
 #' first save in a session says where answers go. Nothing is saved from a
 #' script, a pipeline, a test run, \code{R CMD check}, or with
-#' \code{options(morie.quiet = TRUE)}; \code{MORIE_LLM_CACHE=off} or
-#' \code{options(rmoriebricklayer.llmcache = FALSE)} turns saving off.
+#' \code{options(morie.quiet = TRUE)}. Saving is also turned off by
+#' \code{MORIE_LLM_CACHE=off}, or by the option \code{rmoriebricklayer.llmcache}
+#' set to \code{FALSE}.
 #'
 #' Errors: \code{prompt} is not a single non-empty string; \code{fresh} or
 #' \code{docs} is not \code{TRUE} or \code{FALSE}; \code{route = "hosted"}
@@ -1190,7 +1192,7 @@ llmask <- function(prompt, model = NULL, tmout = 120,
 #' when unset it is \code{~/.config/morie/credentials.json}.
 #'
 #' The sign-in service address is the signed services document's
-#' \code{data.auth_url} (see \code{\link{svcs}}), or
+#' \code{data.auth_url} (see \code{\link{svcs}}), or the environment variable
 #' \code{MORIE_HOSTED_AUTH_URL} when set (it must be a public \code{https}
 #' address). The device flow polls every \code{interval} seconds the
 #' service names (5 by default), prints a progress line about every 30
@@ -1230,10 +1232,10 @@ llmask <- function(prompt, model = NULL, tmout = 120,
 #'   38604, A2AJ case law); \code{NULL} asks at the console.
 #' @param supnm,suprole,supemail Character scalars
 #'   or \code{NULL}: the supervisor, department chair, director or
-#'   coordinator who knows of your use, their role (one of
-#'   \code{"supervisor"}, \code{"chair"}, \code{"director"},
-#'   \code{"coordinator"}, \code{"other"}) and their email. Required with
-#'   \code{restricted = TRUE}; asked for when \code{NULL}.
+#'   coordinator who knows of your use, their role and their email. Required
+#'   with \code{restricted = TRUE}; asked for when \code{NULL}. The role is
+#'   one of \code{"supervisor"}, \code{"chair"}, \code{"director"},
+#'   \code{"coordinator"} or \code{"other"}.
 #' @return The key (character scalar), invisibly. A message names the file
 #'   it was stored in.
 #' @seealso \code{\link{dlogout}} to remove the key.
@@ -1466,11 +1468,10 @@ dlogin <- function(token = NULL, email = NULL, code = NULL,
 #' to switch to another key. Nothing is contacted.
 #'
 #' @details
-#' The shared credentials file
-#' (\code{$XDG_CONFIG_HOME/morie/credentials.json}, else
-#' \code{~/.config/morie/credentials.json}) is edited as text: the members
-#' \code{hosted_key}, \code{hosted_user} and \code{hosted_base_url} are
-#' removed and every other entry (written by \code{morie}, \code{rmorie} or
+#' The shared credentials file is \code{credentials.json} in the folder
+#' \code{$XDG_CONFIG_HOME/morie}, else in \code{~/.config/morie}. It is edited as
+#' text. Three members are removed: \code{hosted_key}, \code{hosted_user} and
+#' \code{hosted_base_url}. Every other entry (written by \code{morie}, \code{rmorie} or
 #' \code{rmoriedata}) is kept byte for byte. When nothing else is left the
 #' file is deleted. A key set in the environment variable
 #' \code{MORIE_HOSTED_KEY} is not touched. A message says whether a key was

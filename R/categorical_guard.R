@@ -142,8 +142,8 @@ deccodes <- function(x, vlabs, keepna = TRUE) {
 #' \code{\link{vrfrcd}} proves the result against the declared mapping;
 #' \code{\link{rcdmnf}} records it.
 #'
-#' @param x A factor or character vector (other atomic vectors are compared
-#'   through \code{as.character()} matching of their values).
+#' @param x A factor or character vector. Other atomic vectors are compared
+#'   by matching the values that \code{as.character()} gives.
 #' @param map Named character vector, \code{c(old_label = "new_label", ...)}.
 #'   Every name must be non-empty.
 #' @param keep Character vector, default empty. Labels allowed to pass
@@ -929,12 +929,12 @@ grdbin <- function(x, col) {
 #' confirm which labels went where and that nothing was changed afterwards.
 #'
 #' @details
-#' The function first runs \code{\link{vrfrcd}(original, recoded,
-#' mapping)} and, when \code{pub} is given,
-#' \code{\link{vrfmrg}(recoded, published)} with the default
-#' \code{strict = TRUE}. Either check failing is an error, so a manifest is
-#' only produced for a recode that passed; \code{checks$matches_published} is
-#' therefore \code{TRUE} or \code{NA} (no published counts), never
+#' The function first runs \code{\link{vrfrcd}}, as
+#' \code{vrfrcd(original, recoded, mapping)}. When \code{pub} is given it then
+#' runs \code{\link{vrfmrg}}, as \code{vrfmrg(recoded, published)}, with the
+#' default \code{strict = TRUE}. Either check failing is an error, so a manifest is
+#' only produced for a recode that passed. For that reason
+#' \code{checks$matches_published} is \code{TRUE} or \code{NA} (no published counts), never
 #' \code{FALSE}.
 #'
 #' \code{body_sha256} is \code{\link{csha256}} of the canonical JSON of
@@ -955,14 +955,19 @@ grdbin <- function(x, col) {
 #'   manifest carries a signature and the public key.
 #' @param ctx Optional character string, default \code{NULL}: free text
 #'   such as the dataset, table and analyst. Only the first element is kept.
-#' @return A list of class \code{c("bricklayer_recode_manifest", "list")}
-#'   with elements \code{context}, \code{created} (ISO 8601 UTC time),
-#'   \code{mapping} (list), \code{mapping_sha256}, \code{n} (number of rows),
-#'   \code{n_missing}, \code{counts_before} and \code{counts_after} (named
-#'   lists of counts), \code{checks} (list of \code{crosstab_is_function},
-#'   \code{missingness_unchanged}, \code{matches_published}),
-#'   \code{published} (list or \code{NULL}), \code{body_sha256}, and with a
-#'   key \code{signature} and \code{public_key}.
+#' @return A list of class \code{bricklayer_recode_manifest} with these elements:
+#'   \itemize{
+#'     \item \code{context};
+#'     \item \code{created} (ISO 8601 UTC time);
+#'     \item \code{mapping} (list) and \code{mapping_sha256};
+#'     \item \code{n} (number of rows) and \code{n_missing};
+#'     \item \code{counts_before} and \code{counts_after} (named lists of counts);
+#'     \item \code{checks}, a list: \code{crosstab_is_function},
+#'       \code{missingness_unchanged} and \code{matches_published};
+#'     \item \code{published} (list or \code{NULL});
+#'     \item \code{body_sha256};
+#'     \item with a key, \code{signature} and \code{public_key}.
+#'   }
 #' @examples
 #' x <- c("W", "B", "W", "I")
 #' map <- c(W = "White", B = "Black", I = "Indigenous")
@@ -1089,7 +1094,7 @@ wrrcdmnf <- function(man, path) {
 #' @param orig,recd The vectors before and after the recode, to check
 #'   the manifest against.
 #' @return \code{vrfrcdmnf()} returns a list with \code{ok}
-#'   (logical), \code{reasons} (character, \code{character(0)} when
+#'   (logical), \code{reasons} (character; empty, \code{character(0)}, when
 #'   \code{ok}), \code{signature_ok} (logical, \code{NA} when the manifest is
 #'   unsigned) and \code{manifest} (the parsed JSON as a list).
 #' @export
@@ -1489,8 +1494,8 @@ print.bricklayer_relabel_forensics <- function(x, ...) {
 #' \code{strict = FALSE} both checks run and are reported. A code without a
 #' label is an error in either mode (from the decoding step).
 #'
-#' @param imported The vector as it arrived: a haven-style labelled vector,
-#'   plain codes (with \code{codebook}), or already-decoded labels.
+#' @param imported The vector as it arrived. It is a haven-style labelled vector,
+#'   plain codes given with \code{codebook}, or labels already decoded.
 #' @param soucnts Named numeric vector, label = count, as printed by
 #'   the source program (SPSS FREQUENCIES, Stata tabulate).
 #' @param codebook Optional named character vector, code = label, from the

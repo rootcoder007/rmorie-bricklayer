@@ -248,9 +248,8 @@
 #'   \code{FALSE}; an \code{output} whose folder does not exist or that
 #'   cannot be written.
 #'
-#' @references Internet Archive. Save Page Now 2 (SPN2) public
-#'   API.
-#'   \url{https://archive.org/details/spn-2-public-api-page-docs}.
+#' @references Internet Archive. Save Page Now 2 (SPN2) public API.\cr
+#'   \url{https://archive.org/details/spn-2-public-api-page-docs}
 #' @seealso \code{\link{wbsnpnat}} to look up an existing
 #'   capture; \code{\link{wbrtry}}; \code{\link{arccap}} for URLs whose
 #'   server refuses the Internet Archive (\code{"cannot find"} although the page is

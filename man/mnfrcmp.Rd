@@ -24,8 +24,8 @@ the original run did. \code{NULL} (the default) uses the recorded one.}
 A list of class \code{c("bricklayer_recompute", "list")}:
 \describe{
 \item{\code{ok}}{logical, every statistic matched and none was left unchecked.}
-\item{\code{results}}{data frame, one row per recomputed statistic, with
-\code{name} (character), \code{recorded} and \code{recomputed} (numeric,
+\item{\code{results}}{data frame, one row per recomputed statistic, with the
+columns \code{name} (character), \code{recorded} and \code{recomputed} (numeric,
 \code{NA} for non-numeric values), \code{delta} (numeric absolute
 difference), \code{tol} (numeric), \code{status} (\code{"MATCH"},
 \code{"DIFFER"}, \code{"NOT_RECORDED"} or \code{"ERROR"}) and \code{detail}

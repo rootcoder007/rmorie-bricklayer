@@ -20,8 +20,9 @@ the nearest major intersections).}
 \code{3 * radius}).}
 }
 \value{
-A data frame: \code{group} (\code{"treated"}, \code{"comparison"} or
-\code{"excluded"}), \code{site_distance}, \code{comparison_distance}.
+A data frame with the columns \code{group} (\code{"treated"},
+\code{"comparison"} or \code{"excluded"}), \code{site_distance} and
+\code{comparison_distance}.
 }
 \description{
 Assigns each place (a block, an address) to the treated group when it lies within a

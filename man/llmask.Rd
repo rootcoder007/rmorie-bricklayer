@@ -62,7 +62,7 @@ Sends one prompt to the first language model that is set up on this
 machine and returns the reply. Bring your own key, or run a model
 locally: nothing is sent anywhere you did not set up. In order:
 \enumerate{
-\item an OpenAI-compatible endpoint of your own: \code{MORIE_LLM_BASE_URL}
+\item your own OpenAI-compatible endpoint, \code{MORIE_LLM_BASE_URL}
 (with \code{MORIE_LLM_API_KEY} and \code{MORIE_LLM_MODEL} when it needs
 them), e.g. LM Studio, vLLM, llama.cpp or a company gateway. An
 \code{https} address, or plain \code{http} to the loopback host or to a
@@ -76,9 +76,9 @@ Gemini, OpenRouter, Groq, Together, Fireworks, DeepSeek, Mistral, xAI,
 Cerebras, Perplexity, Hugging Face, OpenCode Zen, Cohere and NVIDIA,
 each through its own documented API with its own key variable
 (\code{ANTHROPIC_API_KEY}, \code{OPENAI_API_KEY}, ...);
-\item a local Ollama server: \code{OLLAMA_HOST} (default
-\code{http://localhost:11434}), model \code{OLLAMA_MODEL} or the first
-one pulled; \code{OLLAMA_HOST=off} skips it.
+\item a local Ollama server at \code{OLLAMA_HOST}, by default
+\code{http://localhost:11434}, with the model \code{OLLAMA_MODEL} or the
+first one pulled; \code{OLLAMA_HOST=off} skips it.
 }
 \code{\link{llmstat}} shows what is set up and which route
 a question would take.
@@ -109,14 +109,16 @@ Saved answers: a person at a terminal (the command line with a terminal
 on both stdin and stdout) or in an interactive GUI session gets a saved
 answer back at once when the question (spacing aside; case counts),
 route, address, model, packages and their versions, and
-\code{syspro} all match. Answers are kept 30 days
-(\code{options(rmoriebricklayer.llmcachedays)}), at most the 200
-newest (\code{options(rmoriebricklayer.llmcachemax)}), as owner-only
-files under \code{tools::R_user_dir("rmoriebricklayer", "cache")}. The
+\code{syspro} all match. Answers are kept as owner-only files in the
+folder that \code{tools::R_user_dir()} gives for \code{"rmoriebricklayer"}
+and \code{"cache"}: for 30 days, which the option
+\code{rmoriebricklayer.llmcachedays} changes, and at most the 200 newest,
+which the option \code{rmoriebricklayer.llmcachemax} changes. The
 first save in a session says where answers go. Nothing is saved from a
 script, a pipeline, a test run, \code{R CMD check}, or with
-\code{options(morie.quiet = TRUE)}; \code{MORIE_LLM_CACHE=off} or
-\code{options(rmoriebricklayer.llmcache = FALSE)} turns saving off.
+\code{options(morie.quiet = TRUE)}. Saving is also turned off by
+\code{MORIE_LLM_CACHE=off}, or by the option \code{rmoriebricklayer.llmcache}
+set to \code{FALSE}.
 
 Errors: \code{prompt} is not a single non-empty string; \code{fresh} or
 \code{docs} is not \code{TRUE} or \code{FALSE}; \code{route = "hosted"}

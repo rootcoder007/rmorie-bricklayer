@@ -28,6 +28,11 @@
 #define RMBL_CLOSE close
 #endif
 
+/* rmbl_barrier.cpp: the non-jumping interrupt test and the raise for a frame with no barrier */
+extern int rmbl_kernel_interrupted;
+int rmbl_interrupt_pending(void);
+void rmbl_interrupt_raise_unbarriered(void);
+
 #ifndef S_ISREG
 #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
 #endif
@@ -103,6 +108,15 @@ static int rmbl_flock_try(const char *p, int tmo) {
 #endif
         if (rmbl_now_ms() - start >= (double) tmo) {
             RMBL_CLOSE(fd);
+            return -1;
+        }
+        /* a Ctrl-C (or a setTimeLimit() limit) during the wait ends it: the descriptor is closed
+         * first, then the interrupt is raised from this frame, which holds nothing else (the wait
+         * ran its whole timeout through one; review of 1.0.0) */
+        if (rmbl_interrupt_pending()) {
+            RMBL_CLOSE(fd);
+            rmbl_kernel_interrupted = 0;
+            rmbl_interrupt_raise_unbarriered();
             return -1;
         }
         rmbl_sleep_ms(20);

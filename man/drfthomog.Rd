@@ -43,7 +43,7 @@ attribute:
 \item \code{"chi-square approximation"}: every expected count is at least
 5; the p-value is the chi-square upper tail.
 \item \code{"Monte Carlo permutation (small expected counts)"}: some
-expected count is below 5; the p-value comes from
+expected count is below 5; the p-value then comes from
 \code{\link[stats:chisq.test]{stats::chisq.test()}} with \code{simulate.p.value = TRUE}
 and
 \code{B = 10000} tables with the same margins, drawn under \code{seed}.

@@ -43,10 +43,10 @@ context, which is what the standards' test vectors rely on.}
 digest of the message rather than the message itself -- HashML-DSA (FIPS
 204 section 5.4) or HashSLH-DSA (FIPS 205 section 10.2.2). One of
 \code{"none"} (the default, the pure variants) or any hash function the two
-standards approve: \code{"sha224"}, \code{"sha256"}, \code{"sha384"}, \code{"sha512"},
-\code{"sha512_224"}, \code{"sha512_256"}, \code{"sha3_224"}, \code{"sha3_256"},
-\code{"sha3_384"}, \code{"sha3_512"}, \code{"shake128"} (256-bit output) or
-\code{"shake256"} (512-bit output). The identifier
+standards approve. The SHA-2 hashes are \code{"sha224"}, \code{"sha256"}, \code{"sha384"},
+\code{"sha512"}, \code{"sha512_224"} and \code{"sha512_256"}; the SHA-3 hashes are
+\code{"sha3_224"}, \code{"sha3_256"}, \code{"sha3_384"} and \code{"sha3_512"}; the SHAKE ones are
+\code{"shake128"} (256-bit output) and \code{"shake256"} (512-bit output). The identifier
 of the pre-hash is bound into the signature, so a pre-hashed signature
 is never interchangeable with a pure one over the same digest.}
 
@@ -129,8 +129,8 @@ not a silent wrap-around.
 
 \section{Security}{
 
-A hand-written implementation. The standardised schemes are checked byte
-for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+The implementation is hand-written. Its standardised schemes are checked
+byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
 suite. Side channels are checked, not assumed: \code{inst/ctcheck} runs every
 operation that touches a secret under valgrind memcheck with the secret
 marked undefined (the ctgrind method), so a branch or a memory address
@@ -141,8 +141,8 @@ hardware (\code{inst/dudect}), power leakage is assessed in simulation under
 the value and the transition models (\code{inst/tvla}), and ML-KEM
 decapsulation and ML-DSA signing are first-order masked by default. These
 are checks of this code on those compilers and under those leakage
-models; no third-party security audit has been commissioned, and the
-README's security section lists what each check does and does not cover.
+models; the README's security section lists what each check does and
+does not cover.
 }
 
 \examples{

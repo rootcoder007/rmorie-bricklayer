@@ -25,10 +25,9 @@ cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL)
 \item{dir}{Character scalar, the directory the capsule lives in. For
 \code{cpsbndlvrf()}, the directory to check the files in.}
 
-\item{man}{A manifest, as from \code{\link[=mkmnf]{mkmnf()}}.
-Required by
-\code{cpsbndl()}; optional for \code{cpsbndlvrf()}, where it adds
-a check that the manifest still has the bundled digest.}
+\item{man}{A manifest, as from \code{\link[=mkmnf]{mkmnf()}}. It is required by \code{cpsbndl()}
+and optional for \code{cpsbndlvrf()}, where it adds a check that the manifest
+still has the bundled digest.}
 
 \item{key}{A signing key from
 \code{\link[=fipskg]{fipskg()}} or
@@ -41,9 +40,11 @@ the bundle itself.}
 \item{ctx, prehash, note}{As in
 \code{\link[=cpsatst]{cpsatst()}}.}
 
-\item{path}{Character scalar. For \code{cpsbndl()}, where to write the
-bundle; defaults to \code{capsule_bundle.json} inside \code{dir} (an existing file
-is overwritten). For \code{cpsbndlrd()}, the bundle file to read.}
+\item{path}{Character scalar. For \code{cpsbndlrd()}, the bundle file to read.
+For \code{cpsbndl()}, where to write the bundle (an existing file is
+overwritten).
+
+\code{capsule_bundle.json} inside \code{dir} is the default for \code{cpsbndl()}.}
 
 \item{bundle}{A bundle read back with
 \code{cpsbndlrd()}, or the path to one.}
@@ -60,7 +61,10 @@ internally consistent, which any key's holder could arrange.}
 (from
 \code{\link[=cpsatst]{cpsatst()}}), and the path it was written to as
 attribute
-\code{"path"}. \code{cpsbndlrd()}: the same structure read from the file.
+\code{"path"}.
+
+\code{cpsbndlrd()}: the same structure read from the file.
+
 \code{cpsbndlvrf()}: a list of class \code{bricklayer_bundle_check} with
 \code{ok} (logical) and \code{checks} (a data frame of \code{check}, logical \code{ok}
 and

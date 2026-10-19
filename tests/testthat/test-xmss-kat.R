@@ -200,7 +200,7 @@ test_that("the conformant signature still verifies, and still refuses", {
 
   # and a key without SK_PRF cannot sign
   oldkey <- key
-  oldkey$sk_prf <- NULL
+  oldkey$skprf <- NULL
   expect_error(cpssign(msg, oldkey), "predates the RFC 8391 randomiser")
 
   # the randomiser is per-index, so two signatures under one key differ

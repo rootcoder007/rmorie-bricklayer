@@ -57,21 +57,28 @@
 #' @param cert The certificate, DER or PEM: a raw vector of DER bytes,
 #'   or the path of a \code{.der}, \code{.crt}, \code{.cer} or \code{.pem}
 #'   file.
-#' @return A list of class \code{c("bricklayer_certificate", "list")} with
-#'   \code{version} (integer), \code{serial} (hex), \code{issuer} and
-#'   \code{subject} (distinguished names as text), \code{not_before} and
-#'   \code{not_after} (\code{POSIXct}, UTC), \code{signature_algorithm} (a
-#'   name such as \code{"ECDSA-SHA256"}) and \code{signature_oid},
-#'   \code{signature} and \code{tbs} (raw; the signed part), \code{key} (a list:
-#'   \code{type} \code{"RSA"} or \code{"EC"}, \code{bits}, and the key
-#'   values, with \code{curve} for EC), \code{is_ca} and \code{path_len},
-#'   \code{key_usage} and \code{extended_key_usage} (character; EKU as OIDs),
-#'   \code{subject_rdns}, \code{issuer_rdns}, \code{san},
-#'   \code{name_constraints}, the policy fields (\code{policies},
-#'   \code{policy_mappings}, \code{require_explicit_policy},
-#'   \code{inhibit_policy_mapping}, \code{inhibit_any_policy}),
-#'   \code{self_signed} (logical: issuer equals subject) and \code{der} (the
-#'   bytes). \code{print()} shows a summary.
+#' @return A list of class \code{bricklayer_certificate} with these elements:
+#'   \itemize{
+#'     \item \code{version} (integer) and \code{serial} (hex);
+#'     \item \code{issuer} and \code{subject} (distinguished names as text);
+#'     \item \code{not_before} and \code{not_after} (\code{POSIXct}, UTC);
+#'     \item \code{signature_algorithm} (a name such as \code{"ECDSA-SHA256"})
+#'       and \code{signature_oid};
+#'     \item \code{signature} and \code{tbs} (raw; the signed part);
+#'     \item \code{key} (a list: \code{type} \code{"RSA"} or \code{"EC"},
+#'       \code{bits}, and the key values, with \code{curve} for EC);
+#'     \item \code{is_ca} and \code{path_len};
+#'     \item \code{key_usage} and \code{extended_key_usage} (character; EKU as
+#'       OIDs);
+#'     \item \code{subject_rdns}, \code{issuer_rdns}, \code{san} and
+#'       \code{name_constraints};
+#'     \item the policy fields \code{policies}, \code{policy_mappings} and
+#'       \code{require_explicit_policy};
+#'     \item the policy fields \code{inhibit_policy_mapping} and \code{inhibit_any_policy};
+#'     \item \code{self_signed} (logical: issuer equals subject);
+#'     \item \code{der} (the bytes).
+#'   }
+#'   \code{print()} shows a summary.
 #' @seealso
 #' [certchnvrf()],
 #' [tsvrf()].

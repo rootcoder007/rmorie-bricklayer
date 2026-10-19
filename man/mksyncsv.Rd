@@ -21,8 +21,8 @@ Defaults to \code{schema$nrows}, then 50000.}
 \code{schema$seed}, then 91735246.}
 }
 \value{
-Invisibly, an object of class \code{bricklayer_synthetic}: a list
-with \code{path}, \code{sidecar} (the \code{<path>.synthetic} marker file;
+Invisibly, a list of class \code{bricklayer_synthetic} with
+\code{path}, \code{sidecar} (the \code{<path>.synthetic} marker file;
 \code{\link{vrfcps}} treats its presence as a failed check),
 \code{rows} (rows written), \code{seed} (the seed used) and
 \code{recipe_sha256} (the recipe's digest, \code{NA} when it could not
@@ -40,7 +40,7 @@ analysis without sharing restricted records.
 \details{
 Columns are produced in declaration order so later columns can reference
 earlier ones. A shared per-person latent propensity, uniform on
-\eqn{[0, 1]}, drives every \code{"bernoulli"} column through its
+\eqn{[0, 1]}, drives every \code{"bernoulli"} column through the column's
 \code{p_with_baserate} field, so those columns are correlated with each
 other. An optional \code{row_replication} block (\code{values} and
 \code{weights}) draws how many rows each person gets: person-level

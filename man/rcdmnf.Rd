@@ -24,14 +24,19 @@ manifest carries a signature and the public key.}
 such as the dataset, table and analyst. Only the first element is kept.}
 }
 \value{
-A list of class \code{c("bricklayer_recode_manifest", "list")}
-with elements \code{context}, \code{created} (ISO 8601 UTC time),
-\code{mapping} (list), \code{mapping_sha256}, \code{n} (number of rows),
-\code{n_missing}, \code{counts_before} and \code{counts_after} (named
-lists of counts), \code{checks} (list of \code{crosstab_is_function},
-\code{missingness_unchanged}, \code{matches_published}),
-\code{published} (list or \code{NULL}), \code{body_sha256}, and with a
-key \code{signature} and \code{public_key}.
+A list of class \code{bricklayer_recode_manifest} with these elements:
+\itemize{
+\item \code{context};
+\item \code{created} (ISO 8601 UTC time);
+\item \code{mapping} (list) and \code{mapping_sha256};
+\item \code{n} (number of rows) and \code{n_missing};
+\item \code{counts_before} and \code{counts_after} (named lists of counts);
+\item \code{checks}, a list: \code{crosstab_is_function},
+\code{missingness_unchanged} and \code{matches_published};
+\item \code{published} (list or \code{NULL});
+\item \code{body_sha256};
+\item with a key, \code{signature} and \code{public_key}.
+}
 }
 \description{
 Builds a record of a recode that a later reader can check: the mapping
@@ -43,12 +48,12 @@ and re-check it with \code{\link{vrfrcdmnf}}, so anyone can
 confirm which labels went where and that nothing was changed afterwards.
 }
 \details{
-The function first runs \code{\link{vrfrcd}(original, recoded,
-mapping)} and, when \code{pub} is given,
-\code{\link{vrfmrg}(recoded, published)} with the default
-\code{strict = TRUE}. Either check failing is an error, so a manifest is
-only produced for a recode that passed; \code{checks$matches_published} is
-therefore \code{TRUE} or \code{NA} (no published counts), never
+The function first runs \code{\link{vrfrcd}}, as
+\code{vrfrcd(original, recoded, mapping)}. When \code{pub} is given it then
+runs \code{\link{vrfmrg}}, as \code{vrfmrg(recoded, published)}, with the
+default \code{strict = TRUE}. Either check failing is an error, so a manifest is
+only produced for a recode that passed. For that reason
+\code{checks$matches_published} is \code{TRUE} or \code{NA} (no published counts), never
 \code{FALSE}.
 
 \code{body_sha256} is \code{\link{csha256}} of the canonical JSON of

@@ -513,8 +513,6 @@ perdays <- function(from, to) {
   }
   from <- as_day(from, "from")
   to <- as_day(to, "to")
-  if (length(from) != 1L || length(to) != 1L)
-    stop("`from` and `to` must each be a single date", call. = FALSE)
   if (is.na(from) || is.na(to))
     stop("`from` and `to` must be dates", call. = FALSE)
   if (to < from) stop("`to` must not precede `from`", call. = FALSE)

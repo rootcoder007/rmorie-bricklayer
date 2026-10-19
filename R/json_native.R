@@ -709,8 +709,8 @@ jsb64udec <- function(input) {
 #' @param dataframe How a data frame is written: \code{"rows"} (the default,
 #'   an array of records), \code{"columns"} (an object of column arrays) or
 #'   \code{"values"} (an array of row arrays, without names).
-#' @param matrix How a matrix is written: \code{"rowmajor"} (the default, an
-#'   array of rows) or \code{"columnmajor"} (an array of columns).
+#' @param matrix How a matrix is written. \code{"rowmajor"} (the default) gives an
+#'   array of rows, and \code{"columnmajor"} an array of columns.
 #' @param Date How a \code{Date} is written: \code{"ISO8601"} (the default,
 #'   \code{"2024-01-02"}) or \code{"epoch"} (days since 1970-01-01).
 #' @param POSIXt How a date-time is written: \code{"string"} (the default,
@@ -889,9 +889,11 @@ bricklayer_json_unbox <- function(x) {
     warning("JSON string contains (illegal) UTF8 byte-order-mark!", call. = FALSE)
     s <- .rmbl_strip_bom(s)
   }
+  # JSON is UTF-8 (RFC 8259): bytes that are not were read with base R's warnings and garbled.
+  # Checked before the conversion: in a C locale enc2utf8() rewrote an invalid byte as a valid
+  # escape, and the text then failed as "unexpected character" (C-locale check of 1.0.0)
+  if (Encoding(s) != "latin1" && !validUTF8(s)) stop("the JSON text is not valid UTF-8", call. = FALSE)
   s <- enc2utf8(s)
-  # JSON is UTF-8 (RFC 8259): bytes that are not were read with base R's warnings and garbled
-  if (!validUTF8(s)) stop("the JSON text is not valid UTF-8", call. = FALSE)
   if (startsWith(s, "\x1e")) s <- substring(s, 2L)
   # the package's native path for a well-formed document (85 s for a 15 MiB reply here; CRAN stress
   # test of 0.5.14); it gives up (NULL) on whatever needs this parser's words: an error, a big integer,
@@ -1039,8 +1041,7 @@ bricklayer_json_unbox <- function(x) {
                           t0), call. = FALSE)
         }
       }
-      if (v > 2147483647 || v < -2147483647) return(v)
-      return(as.integer(v))
+      # sixteen digits or more without a leading zero is past the integer range
     }
     v
   }
@@ -1357,8 +1358,8 @@ bricklayer_json_unbox <- function(x) {
 #' arrays of records into data frames.
 #' @param simplifyMatrix Logical scalar, default \code{simplifyVector}: turn
 #' arrays of equal-length arrays into matrices.
-#' @param flatten Logical scalar, default \code{FALSE}: expand nested data
-#' frame columns into \code{outer.inner} columns.
+#' @param flatten Logical scalar, default \code{FALSE}. \code{TRUE} expands
+#' nested data frame columns into columns named \code{outer.inner}.
 #' @param duplicate_keys What to do with an object that repeats a key:
 #' \code{"error"} (default) refuses the document, \code{"keep"} returns both
 #' values under the repeated name, as jsonlite does.

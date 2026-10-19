@@ -28,6 +28,7 @@
 #include <R.h>
 #include <Rinternals.h>
 #include "rmbl_entry.h"
+#include "rmbl_ct.h"
 #include <R_ext/Rdynload.h>
 #include <cstring>
 #include <cstdint>
@@ -90,6 +91,10 @@ void sha256_transform(sha256_ctx *ctx, const uint8_t data[64]) {
 
     ctx->state[0] += a; ctx->state[1] += b; ctx->state[2] += c; ctx->state[3] += d;
     ctx->state[4] += e; ctx->state[5] += f; ctx->state[6] += g; ctx->state[7] += h;
+    /* the message schedule is the block expanded: for HMAC it is k0 ^ ipad, a key in all but
+     * name, and it stayed on the dead stack (review of 1.0.0, M8). Word stores: 64 per block */
+    volatile uint32_t *vm = m;
+    for (i = 0; i < 64; i++) vm[i] = 0;
 }
 
 void sha256_init(sha256_ctx *ctx) {
@@ -156,6 +161,8 @@ void sha256_final(sha256_ctx *ctx, uint8_t hash[32]) {
         hash[i*4+2] = (uint8_t)(ctx->state[i] >> 8);
         hash[i*4+3] = (uint8_t)(ctx->state[i]);
     }
+    /* the chaining value and the last block: done with, and secret when the input was */
+    rmbl_ct::wipe(ctx, sizeof *ctx);
 }
 
 }  // namespace
@@ -206,6 +213,7 @@ void rmbl_sha256_midstate(const unsigned char block[64],
     sha256_init(&ctx);
     sha256_transform(&ctx, block);
     std::memcpy(state_out, ctx.state, sizeof ctx.state);
+    rmbl_ct::wipe(&ctx, sizeof ctx);
 }
 
 /* Finish a digest that began with `prefix_blocks` blocks already
@@ -260,6 +268,7 @@ void rmbl_sha224_raw(const unsigned char *data, size_t len,
     sha256_update(&ctx, data, len);
     sha256_final(&ctx, full);
     std::memcpy(out, full, 28);
+    rmbl_ct::wipe(full, sizeof full);
 }
 
 void rmbl_sha256_hex(const unsigned char *data, size_t len, char out[65]) {
@@ -312,12 +321,14 @@ void rmbl_ipw_weights(const double *treat, const double *propensity,
 void rmbl_bootstrap_mean(const double *x, R_xlen_t n, R_xlen_t B,
                          unsigned long long seed, double *out) {
     bool stopped = false;
-    try {
-        morie::core::bootstrap_mean(x, static_cast<std::size_t>(n),
-                                    static_cast<std::size_t>(B), seed, out);
-    } catch (const rmbl::Interrupt &) {
-        stopped = true;
-    }
+    rmbl::kernel_call([&] {
+        try {
+            morie::core::bootstrap_mean(x, static_cast<std::size_t>(n),
+                                        static_cast<std::size_t>(B), seed, out);
+        } catch (const rmbl::Interrupt &) {
+            stopped = true;
+        }
+    });
     if (stopped) {
         for (R_xlen_t b = 0; b < B; ++b) out[b] = R_NaN;
         rmbl_kernel_interrupted = 1;
@@ -333,9 +344,20 @@ double rmbl_gamma_cdf(double shape, double x) {
  * exponential (O(n) recursion), 1 = Weibull, 2 = Lomax, 3 = gamma.
  * `par` is (a0, eta, p1[, p2]); the exponential takes one kernel
  * parameter and the rest take two. An infeasible parameter set returns
- * morie's sentinel (1e12) rather than erroring. */
+ * morie's sentinel (1e12) rather than erroring.
+ *
+ * This is the published C API and keeps its own layout, which differs
+ * from the fitter's (C_rmbl_hawkes_nll_grad, chwkfit()) in two ways a
+ * caller must know: the codes (here 2 = Lomax and 3 = gamma; the fitter
+ * numbers them 3 and 2), and the Lomax shape, which here is alpha in the
+ * density (alpha - 1) c^(alpha - 1) / (u + c)^alpha, so alpha > 1, and
+ * there is the shape a = alpha - 1 of a c^a / (u + c)^(a + 1). The same
+ * kernel either way: rmbl_hawkes_nll(.., 2, (a0, eta, alpha, c)) equals
+ * chwknll(.., "lomax", c(a0, eta, alpha - 1, c)), and test-linkingto.R
+ * checks it. Changing the layout would change every caller's numbers. */
 double rmbl_hawkes_nll(const double *t, R_xlen_t n, double T, int kernel,
                        const double *par, R_xlen_t npar) {
+    return rmbl::kernel_call([&]() -> double {
     const std::size_t nn = static_cast<std::size_t>(n);
     if (kernel == 0) {
         if (npar < 3) return R_NaN;
@@ -356,6 +378,7 @@ double rmbl_hawkes_nll(const double *t, R_xlen_t n, double T, int kernel,
                                                   par[2], par[3]);
     }
     return R_NaN;
+    });
 }
 
 /* ---- .Call wrappers: bricklayer's own R-facing API ---- */
@@ -480,8 +503,21 @@ static void rmbl_hk_grid_ok(int bk, double T) {
     }
 }
 
+/* The tuning of the approximate methods, checked as the R wrappers check them (the entries are
+ * reachable with .Call directly): eps = NaN silently dropped the excitation term and eps = 0 asked
+ * the truncation for an infinite window, out of memory (review of 1.0.0). soeR and soeDelta are
+ * the sum-of-exponentials window, a positive length and a fraction of it in (0, 1]. */
+static void rmbl_hk_tuning_ok(double eps, double soeR, double soeDelta) {
+    if (!(eps > 0.0 && eps < 1.0)) rmbl::fail("`eps` must be a single number in (0, 1)");
+    if (!(soeR > 0.0) || !R_FINITE(soeR)) rmbl::fail("`soeR` must be a positive finite number");
+    if (!(soeDelta > 0.0 && soeDelta <= 1.0)) rmbl::fail("`soeDelta` must be a number in (0, 1]");
+}
+
 SEXP C_rmbl_hawkes_nll_grad_impl(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, SEXP kind, SEXP psi, SEXP method,
                             SEXP eps, SEXP soeR, SEXP soeDelta, SEXP wantGrad) {
+    rmbl_hk_tuning_ok(Rf_asReal(eps), Rf_asReal(soeR), Rf_asReal(soeDelta));
+    (void) rmbl_hk_int(bkind, "bkind", 0, 1);
+    (void) rmbl_hk_int(kind, "kind", 0, 3);
     t = PROTECT(Rf_coerceVector(t, REALSXP));
     a = PROTECT(Rf_coerceVector(a, REALSXP));
     psi = PROTECT(Rf_coerceVector(psi, REALSXP));
@@ -575,6 +611,9 @@ SEXP C_rmbl_hawkes_cdf_sum_impl(SEXP t, SEXP T, SEXP kind, SEXP psi) {
 
 SEXP C_rmbl_hawkes_fit_pbfgs_impl(SEXP t, SEXP T, SEXP bkind, SEXP kind, SEXP method, SEXP eps, SEXP soeR,
                              SEXP soeDelta, SEXP lo, SEXP hi, SEXP x0, SEXP maxiter, SEXP gtol) {
+    rmbl_hk_tuning_ok(Rf_asReal(eps), Rf_asReal(soeR), Rf_asReal(soeDelta));
+    (void) rmbl_hk_int(bkind, "bkind", 0, 1);
+    (void) rmbl_hk_int(kind, "kind", 0, 3);
     t = PROTECT(Rf_coerceVector(t, REALSXP));
     lo = PROTECT(Rf_coerceVector(lo, REALSXP));
     hi = PROTECT(Rf_coerceVector(hi, REALSXP));
@@ -681,6 +720,8 @@ SEXP C_rmbl_sha256_impl(SEXP x) {
  * state. The digest of the pieces is the digest of their concatenation. */
 SEXP C_rmbl_sha256_chunk_impl(SEXP state, SEXP chunk, SEXP final) {
     sha256_ctx ctx;
+    /* the four padding bytes after `datalen` go out with the state: zeros, not stack garbage */
+    std::memset(&ctx, 0, sizeof ctx);
     if (Rf_isNull(state)) {
         sha256_init(&ctx);
     } else {

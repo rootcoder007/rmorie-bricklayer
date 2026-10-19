@@ -300,13 +300,13 @@ limfrom <- function(est, se = NULL, cv = NULL, moe = NULL, moelev = 0.90, conflv
 #'   \code{"Aboriginal and Torres Strait Islander"} beside its parts, or a "Total
 #'   Indigenous" row); by default the labels described in Details.
 #' @return A data frame of class \code{rmbl_indigenous_gap}, one row per group but the
-#'   reference: \code{group}, \code{estimate}, \code{refest}, \code{ratio},
+#'   reference. The columns are \code{group}, \code{estimate}, \code{refest}, \code{ratio},
 #'   \code{ratiolo}, \code{ratioup}, \code{difference}, \code{diflo},
 #'   \code{difup}, \code{usewithcau} and \code{poogrp}; attributes
 #'   \code{reference} and \code{conflvl}. \code{plot()} draws each group's difference
 #'   or ratio.
 #' @references Statistics Canada (2025). Health indicators for First Nations adults living
-#' off reserve, Metis and Inuit adults, 2015 to 2022. The Daily, 2025-02-13.
+#' off reserve, Metis and Inuit adults, 2015 to 2022. The Daily, 2025-02-13.\cr
 #' \url{https://www150.statcan.gc.ca/n1/daily-quotidien/250213/dq250213f-eng.htm}
 #'
 #' Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for
@@ -441,7 +441,7 @@ indgap <- function(data, grp, est, lower, upper, ref = "Non-Indigenous",
 #'   \code{upper}, and the attributes \code{var} (the variances, on the per-person scale)
 #'   for \code{\link{rategap}}.
 #' @references Fay MP, Feuer EJ (1997). Confidence intervals for directly standardized
-#' rates: a method based on the gamma distribution. Statistics in Medicine 16(7):791-801.
+#' rates: a method based on the gamma distribution. Statistics in Medicine 16(7):791-801.\cr
 #' \href{https://doi.org/10.1002/(sici)1097-0258(19970415)16:7%3C791::aid-sim500%3E3.0.co;2-%23}{
 #' doi:10.1002/(sici)1097-0258(19970415)16:7<791::aid-sim500>3.0.co;2-#}
 #'
@@ -729,9 +729,9 @@ trccmpl <- function() {
 #' @param start When counting began, as a year with a fraction (2015.96: December 15,
 #'   2015).
 #' @param conflvl Confidence level (default 0.95).
-#' @return A one-row data frame: \code{completed}, \code{remaining}, \code{years},
-#'   \code{rate}, \code{ratelo}, \code{rateup}, \code{cmplby},
-#'   \code{cmplbyearly}, \code{cmplbylate}, of class \code{rmbl_trc_progress};
+#' @return A one-row data frame of class \code{rmbl_trc_progress} with the columns
+#'   \code{completed}, \code{remaining}, \code{years}, \code{rate}, \code{ratelo},
+#'   \code{rateup}, \code{cmplby}, \code{cmplbyearly} and \code{cmplbylate};
 #'   \code{plot()} draws the completions and the projection, with the band the rate's
 #'   interval gives.
 #' @seealso \code{\link{trccmpl}}.

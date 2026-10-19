@@ -123,8 +123,8 @@ test_that("a bad horizon, events outside the window and a start outside the mode
   expect_error(chwkfit(e$t, Inf), "single positive finite number")
   expect_error(chwknll(e$t, Inf, "exponential", c(0, 0.3, 1)), "single positive finite number")
   expect_error(chwkres(e$t, Inf, "exponential", c(0, 0.3, 1)), "single positive finite number")
-  expect_error(chwkfit(c(e$t, e$T + 1), e$T), "within \\[0, horizon\\]")
-  expect_error(chwkfit(c(-1, e$t), e$T), "within \\[0, horizon\\]")
+  expect_error(chwkfit(c(e$t, e$T + 1), e$T), "within \\[0, hor\\]")
+  expect_error(chwkfit(c(-1, e$t), e$T), "within \\[0, hor\\]")
   # exp(15) events a day over 10^5 days: a compensator past 10^11, where the core reports no likelihood
   far <- seq(1, 1e5, length.out = 100L)
   expect_error(chwkfit(far, 1e5 + 1, start = c(15, 0.5, 1)), "not finite at `start`")

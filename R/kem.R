@@ -92,8 +92,8 @@
 #' try(kemkg(256))
 #' try(kemkg(768, seed = as.raw(1:10)))
 #' @section Security:
-#' A hand-written implementation. The standardised schemes are checked byte
-#' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+#' The implementation is hand-written. Its standardised schemes are checked
+#' byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
 #' suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
 #' operation that touches a secret under valgrind memcheck with the secret
 #' marked undefined (the ctgrind method), so a branch or a memory address
@@ -104,8 +104,8 @@
 #' the value and the transition models (`inst/tvla`), and ML-KEM
 #' decapsulation and ML-DSA signing are first-order masked by default. These
 #' are checks of this code on those compilers and under those leakage
-#' models; no third-party security audit has been commissioned, and the
-#' README's security section lists what each check does and does not cover.
+#' models; the README's security section lists what each check does and
+#' does not cover.
 #' @export
 kemkg <- function(lvl = 768L, seed = NULL) {
   lvl <- .rmbl_kem_level(lvl)
@@ -161,8 +161,10 @@ kempubkey <- function(key) {
 #' @param lvl Security level, one whole number: 512, 768 or 1024. There is
 #'   no default.
 #' @return A named integer vector of five elements, all in bytes:
-#'   \code{encapsulation_key}, \code{decapsulation_key}, \code{ciphertext},
-#'   \code{seed} and \code{shared_secret}.
+#'   \code{public} (the encapsulation key), \code{secret} (the
+#'   decapsulation key), \code{ciphertext}, \code{seed} and \code{shared}
+#'   (the shared secret), named as [kemkg()] and [kemencap()] name their
+#'   results.
 #' @seealso [kemkg()].
 #' @examples
 #' kemsz(768)
@@ -170,7 +172,7 @@ kempubkey <- function(key) {
 #' # the shared secret is 32 bytes at every level: the level buys
 #' # security margin, not a longer secret
 #' vapply(c(512, 768, 1024),
-#'        function(l) kemsz(l)[["shared_secret"]], integer(1))
+#'        function(l) kemsz(l)[["shared"]], integer(1))
 #'
 #' # check a ciphertext's length before sending it
 #' key <- kemkg(768)
@@ -214,10 +216,10 @@ kemsz <- function(lvl) {
 #' the standard's test vectors need; the default draws from the operating
 #' system's CSPRNG. Reusing it across encapsulations to the same key reuses
 #' the shared secret, so supply it only deliberately.
-#' @return A list of class \code{c("bricklayer_kem_capsule", "list")} with
-#'   \code{ciphertext} (character, hex,
-#'   [kemsz()]\code{[["ciphertext"]]}
-#'   bytes: send this), \code{shared} (character, 64 hex characters, the
+#' @return A list of class \code{bricklayer_kem_capsule} with
+#'   \code{ciphertext} (character, hex, of the length in bytes that
+#'   [kemsz()]\code{[["ciphertext"]]} gives: send this), \code{shared}
+#'   (character, 64 hex characters, the
 #'   32-byte shared secret: keep this) and \code{level} (integer). Printing
 #'   it never shows the shared secret.
 #' @seealso
@@ -298,9 +300,8 @@ kemencap <- function(key, m = NULL) {
 #' Errors (checked before any decapsulation): \code{key} not from
 #' [kemkg()], or a public key only ("decapsulation needs a
 #' key with its
-#' secret half"); a ciphertext that is not hex or raw of exactly
-#' [kemsz()]\code{[["ciphertext"]]} bytes for the key's
-#' level (768,
+#' secret half"); a ciphertext that is not hex or raw of the exact length
+#' for the key's level, which is [kemsz()]\code{[["ciphertext"]]} bytes (768,
 #' 1088 or 1568); \code{masked} not \code{TRUE} or \code{FALSE}.
 #'
 #' @param key A key from
@@ -308,9 +309,11 @@ kemencap <- function(key, m = NULL) {
 #' @param ct The \code{ct} element from
 #'   [kemencap()],
 #'   as a hex string or a raw vector, of the length for the key's level.
-#' @param masked Logical, \code{TRUE} or \code{FALSE}. \code{TRUE} (the
-#'   default, taken from the option \code{rmoriebricklayer.masked} when set)
-#'   runs the first-order masked decapsulation, \code{FALSE} the plain one.
+#' @param masked Logical, \code{TRUE} or \code{FALSE}.
+#'
+#'   \code{rmoriebricklayer.masked}, an option, gives the default when it is set;
+#'   otherwise the default is \code{TRUE}.
+#'   \code{TRUE} runs the first-order masked decapsulation, \code{FALSE} the plain one.
 #'   Both return the same secret.
 #' @return A length-1 character vector of 64 lower-case hex characters: the
 #'   32-byte shared secret.

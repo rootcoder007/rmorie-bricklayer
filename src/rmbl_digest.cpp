@@ -101,7 +101,10 @@ struct sha512_ctx {
 };
 
 void sha512_compress(sha512_ctx *c, const uint8_t blk[128]) {
+    /* the message schedule is the block itself, spread out: under HMAC it
+     * is k0 ^ ipad, so it is wiped as the frame ends (review of 1.0.0, M8) */
     uint64_t w[80];
+    rmbl_ct::Guard gw(w, sizeof w);
     for (int i = 0; i < 16; ++i) {
         w[i] = 0;
         for (int j = 0; j < 8; ++j) {
@@ -300,6 +303,7 @@ void rmbl_sha1_raw(const unsigned char *data, size_t len,
 void rmbl_sha384_raw(const unsigned char *data, size_t len,
                      unsigned char out[48]) {
     sha512_ctx c;
+    rmbl_ct::Guard gc(&c, sizeof c);
     sha512_init(&c);
     /* the SHA-384 initial state */
     c.h[0] = 0xcbbb9d5dc1059ed8ULL;
@@ -311,6 +315,7 @@ void rmbl_sha384_raw(const unsigned char *data, size_t len,
     c.h[6] = 0xdb0c2e0d64f98fa7ULL;
     c.h[7] = 0x47b5481dbefa4fa4ULL;
     unsigned char full[64];
+    rmbl_ct::Guard gf(full, sizeof full);
     sha512_update(&c, data, len);
     sha512_final(&c, full);
     std::memcpy(out, full, 48);
@@ -332,9 +337,11 @@ void rmbl_sha512t_raw(int bits, const unsigned char *data, size_t len,
         0x2B0199FC2C85B8AAULL, 0x0EB72DDC81C52CA2ULL
     };
     sha512_ctx c;
+    rmbl_ct::Guard gc(&c, sizeof c);
     sha512_init(&c);
     std::memcpy(c.h, bits == 224 ? kIv224 : kIv256, sizeof c.h);
     unsigned char full[64];
+    rmbl_ct::Guard gf(full, sizeof full);
     sha512_update(&c, data, len);
     sha512_final(&c, full);
     std::memcpy(out, full, static_cast<size_t>(bits / 8));
@@ -343,6 +350,7 @@ void rmbl_sha512t_raw(int bits, const unsigned char *data, size_t len,
 void rmbl_sha512_midstate(const unsigned char block[128],
                           uint64_t state_out[8]) {
     sha512_ctx c;
+    rmbl_ct::Guard gc(&c, sizeof c);
     sha512_init(&c);
     sha512_compress(&c, block);
     std::memcpy(state_out, c.h, sizeof c.h);
@@ -352,6 +360,7 @@ void rmbl_sha512_finish(const uint64_t state_in[8], size_t prefix_blocks,
                         const unsigned char *tail, size_t taillen,
                         unsigned char out[64]) {
     sha512_ctx c;
+    rmbl_ct::Guard gc(&c, sizeof c);
     sha512_init(&c);
     std::memcpy(c.h, state_in, sizeof c.h);
     c.bitlen_lo = static_cast<uint64_t>(prefix_blocks) * 1024u;
@@ -363,6 +372,7 @@ void rmbl_sha512_finish(const uint64_t state_in[8], size_t prefix_blocks,
 
 void rmbl_sha512_hex(const unsigned char *data, size_t len, char out[129]) {
     sha512_ctx c;
+    rmbl_ct::Guard gc(&c, sizeof c);
     uint8_t h[64];
     sha512_init(&c);
     sha512_update(&c, data, len);
@@ -376,6 +386,7 @@ void rmbl_sha512_hex(const unsigned char *data, size_t len, char out[129]) {
 void rmbl_sha512_raw(const unsigned char *data, size_t len,
                      unsigned char out[64]) {
     sha512_ctx c;
+    rmbl_ct::Guard gc(&c, sizeof c);
     sha512_init(&c);
     sha512_update(&c, data, len);
     sha512_final(&c, out);
@@ -429,7 +440,9 @@ void rmbl_hmac_sha256_hex(const unsigned char *key, size_t keylen,
                           const unsigned char *msg, size_t msglen,
                           char out[65]) {
     unsigned char oh[32];
-    rmbl_hmac_sha256_raw(key, keylen, msg, msglen, oh);
+    /* the inner buffer is a std::vector sized by the message: a failed allocation is an R error,
+     * not std::terminate() in a LinkingTo caller (review of 1.0.0, M12) */
+    rmbl::kernel_call([&] { rmbl_hmac_sha256_raw(key, keylen, msg, msglen, oh); });
     hexlify(oh, 32, out);
 }
 
@@ -621,6 +634,8 @@ SEXP C_rmbl_hmac_sha256_impl(SEXP key, SEXP msg) {
         mb.assign(s, s + std::strlen(s));
         UNPROTECT(1);
     }
+    /* the heap copy of the key, wiped before the vector frees it (review of 1.0.0, M8) */
+    rmbl_ct::Guard gkb(kb.data(), kb.size());
     char out[65];
     rmbl_hmac_sha256_hex(kb.data(), kb.size(), mb.data(), mb.size(), out);
     return Rf_mkString(out);

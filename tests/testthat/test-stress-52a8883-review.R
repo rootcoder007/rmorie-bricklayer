@@ -274,7 +274,7 @@ test_that("A3: the fcdce03 record is merged, kept, and an unreadable one stops s
   f <- file.path(d, "xmss_used_indices.txt")
   withr::local_options(rmoriebricklayer.xmssidxfile = f)
   k <- pqckg(height = 4L)
-  writeLines(sprintf('{"%s:%s": 5}', toupper(k$root), k$pub_seed), file.path(d, "xmss_index.json"))
+  writeLines(sprintf('{"%s:%s": 5}', toupper(k$root), k$pubseed), file.path(d, "xmss_index.json"))
   fresh_session()
   stale <- k
   stale$next_index <- 1L
@@ -285,7 +285,7 @@ test_that("A3: the fcdce03 record is merged, kept, and an unreadable one stops s
   expect_true(file.exists(file.path(d, "xmss_index.json.migrated")))
   # the 0.5.12-pre line format (root:pubseed) is read as well
   k2 <- pqckg(height = 3L)
-  cat(sprintf("%s:%s\t4\n", k2$root, k2$pub_seed), file = f, append = TRUE)
+  cat(sprintf("%s:%s\t4\n", k2$root, k2$pubseed), file = f, append = TRUE)
   fresh_session()
   k2$next_index <- 2L
   expect_error(cpssign("x", k2, scheme = "xmss"), "next index 5")
@@ -294,7 +294,7 @@ test_that("A3: the fcdce03 record is merged, kept, and an unreadable one stops s
   k2$next_index <- 0L
   expect_identical(as.integer(cpssign("x", k2, scheme = "xmss")$index), 0L)
   expect_error(xmssfgt(signpubkey(k2)), "signing key")
-  for (bad in c("{not json", '{"zz": 1}', sprintf('{"%s:%s": "five"}', k$root, k$pub_seed), "[1, 2]")) {
+  for (bad in c("{not json", '{"zz": 1}', sprintf('{"%s:%s": "five"}', k$root, k$pubseed), "[1, 2]")) {
     writeLines(bad, file.path(d, "xmss_index.json"))
     expect_error(cpssign("x", pqckg(height = 2L), scheme = "xmss"), "written before 0.5.12")
     unlink(file.path(d, "xmss_index.json"))

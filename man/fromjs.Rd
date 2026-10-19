@@ -32,8 +32,8 @@ arrays of records into data frames.}
 \item{simplifyMatrix}{Logical scalar, default \code{simplifyVector}: turn
 arrays of equal-length arrays into matrices.}
 
-\item{flatten}{Logical scalar, default \code{FALSE}: expand nested data
-frame columns into \code{outer.inner} columns.}
+\item{flatten}{Logical scalar, default \code{FALSE}. \code{TRUE} expands
+nested data frame columns into columns named \code{outer.inner}.}
 
 \item{bigint_as_char}{Logical scalar, default \code{FALSE}: integers beyond
 2^53 come back as strings.}

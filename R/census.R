@@ -4,22 +4,26 @@
 # published, shares with intervals that carry the long-form sample and random rounding, an Indigenous
 # standard population for age standardisation, and a Community Well-Being score from public figures.
 
-# identity columns of the profile, as the files name them, and the labels used here
-.rmbl_ipp_groups <- c(
-  TOTAL_IND_IDENT = "Total", IND_IDENT = "Indigenous identity", SINGLE_IND_RESP = "Single Indigenous responses",
-  FIRST_NATIONS = "First Nations", "M\u00c9TIS" = "M\u00e9tis", INUK = "Inuit",
-  MULTI_IND_RESP = "Multiple Indigenous responses", IND_RESP_NIE = "Indigenous responses not included elsewhere",
-  NON_IND = "Non-Indigenous", TOTAL_IND_HHLD = "Total households", IND_HHLD = "Indigenous households",
-  NON_IND_HHLD = "Non-Indigenous households")
+# identity columns of the profile, as the files name them, and the labels used here. The names are
+# set as a character vector: a non-ASCII name inside c() becomes a symbol, which a package installed
+# in a C locale stores as "M<U+00C9>TIS", so the column never matched there (C-locale check of 1.0.0)
+.rmbl_ipp_groups <- c("Total", "Indigenous identity", "Single Indigenous responses", "First Nations",
+                      "M\u00e9tis", "Inuit", "Multiple Indigenous responses",
+                      "Indigenous responses not included elsewhere", "Non-Indigenous", "Total households",
+                      "Indigenous households", "Non-Indigenous households")
+names(.rmbl_ipp_groups) <- c("TOTAL_IND_IDENT", "IND_IDENT", "SINGLE_IND_RESP", "FIRST_NATIONS", "M\u00c9TIS",
+                             "INUK", "MULTI_IND_RESP", "IND_RESP_NIE", "NON_IND", "TOTAL_IND_HHLD", "IND_HHLD",
+                             "NON_IND_HHLD")
 
 #' Read the 2021 Census Indigenous Population Profile
 #'
 #' Reads a table of the Indigenous Population Profile, 2021 Census of Population
 #' (Statistics Canada catalogue 98-510-X2021001 to 98-510-X2021016), as the data service
-#' mirrors it under \code{census2021_ipp/}, into one row per geography, gender, age group,
+#' mirrors it, into one row per geography, gender, age group,
 #' characteristic and group: First Nations, Metis, Inuit, the other identity groups and
 #' non-Indigenous people (or, in the household tables, Indigenous and non-Indigenous
-#' households), each in its own rows.
+#' households), each in its own rows. The data service keeps these tables under
+#' \code{census2021_ipp/}.
 #'
 #' @details The profile gives each characteristic in a hierarchy shown only by indentation
 #' ("Total - Highest certificate, diploma or degree", "High (secondary) school diploma or
@@ -73,6 +77,8 @@ cnsprof <- function(x) {
   sym <- sym[keep]
   base <- base[keep]
   vcol <- vcol[keep]
+  # read in a C locale the bytes of "M\u00c9TIS" are unmarked and matched none of the keys
+  base <- .rmbl_utf8(base)
   lab <- ifelse(base %in% names(.rmbl_ipp_groups), .rmbl_ipp_groups[base], base)
   # the hierarchy, from the indentation of each characteristic's name (two spaces a level)
   cid <- as.integer(x$CHARACTERISTIC_ID)
@@ -171,7 +177,7 @@ cnsprof <- function(x) {
 #' @param roubase The base of the random rounding (default 5, Statistics Canada's);
 #'   1 for counts that are not rounded.
 #' @param conflvl Confidence level (default 0.95).
-#' @return A data frame of class \code{rmbl_profile_share}: \code{geo}, \code{dguid},
+#' @return A data frame of class \code{rmbl_profile_share} with \code{geo}, \code{dguid},
 #'   \code{residence}, \code{gender}, \code{age}, \code{group}, \code{numerator},
 #'   \code{denominator}, \code{estimate} (percent), \code{lower}, \code{upper},
 #'   \code{quality}; ready for \code{\link{indgap}} and
@@ -351,7 +357,7 @@ cnsstd <- function(x, grp = "Indigenous identity", geo = "Canada",
 #'   \code{uni25p}, \code{population}, \code{participation}, \code{employment},
 #'   \code{nomajrep}, \code{notcro} (percentages).
 #' @references Indigenous Services Canada (2019). Report on trends in First Nations
-#'   communities, 1981 to 2016 (Community Well-Being index).
+#'   communities, 1981 to 2016 (Community Well-Being index).\cr
 #'   \url{https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644}
 #' @seealso \code{\link{cwbscr}}.
 #' @examples
@@ -461,8 +467,9 @@ plot.rmbl_census_cwb <- function(x, ..., component = c("cwb", "income", "educati
   k <- nrow(m)
   graphics::plot(NA, xlim = range(m, na.rm = TRUE) + c(-2, 2), ylim = c(0.5, k + 0.5), yaxt = "n",
                  xlab = if (component == "cwb") "Community Well-Being score" else paste(component, "score"), ylab = "",
-                 main = .bl_main(main, "Community Well-Being, by place and group"), ...)
-  graphics::axis(2, at = seq_len(k), labels = rownames(m), las = 1, cex.axis = 0.8)
+                 main = "", ...)
+  .bl_title(.bl_main(main, "Community Well-Being, by place and group"))
+  .bl_row_labels(seq_len(k), rownames(m), cex = 0.8)
   graphics::abline(h = seq_len(k), col = "#EEEEEE")
   for (j in seq_along(grp)) graphics::points(m[, j], seq_len(k), pch = 19, col = cl[j])
   graphics::legend(.bl_free_corner(as.vector(m), rep(seq_len(k), ncol(m))), grp, pch = 19, col = cl, bty = "n",

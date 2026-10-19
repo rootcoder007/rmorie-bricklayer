@@ -358,6 +358,10 @@ test_that("every published kernel compiles and resolves from a consumer", {
   expect_equal(nums[45L], hk(
     function(u) (lx[3] - 1) * lx[4]^(lx[3] - 1) / (u + lx[4])^lx[3],
     function(u) 1 - (lx[4] / (u + lx[4]))^(lx[3] - 1), lx))
+  # the C API's Lomax shape is the fitter's plus one, and its kernel codes differ: the same
+  # likelihood either way (review of 1.0.0)
+  expect_equal(nums[45L], chwknll(x, 10, "lomax", c(lx[1:2], lx[3] - 1, lx[4])), tolerance = 1e-12)
+  expect_equal(nums[46L], chwknll(x, 10, "gamma", c(0.5, 0.3, 1.5, 0.8)), tolerance = 1e-12)
   gm <- c(0.5, 0.3, 1.5, 0.8)
   expect_equal(nums[46L], hk(
     function(u) stats::dgamma(u, shape = gm[3], rate = gm[4]),

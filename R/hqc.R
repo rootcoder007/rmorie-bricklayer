@@ -73,8 +73,8 @@
 #' (HQC-1, HQC-3, HQC-5; 128, 192 and 256 are accepted for the same three).
 #' Level 3 matches the category of ML-KEM-768,
 #' [kemkg()]'s default.
-#' @param seed Optional raw vector: 32 bytes (`seed_KEM`) for v5; for round 4
-#' the [hqcsz()]`["seed"]` bytes its key generation
+#' @param seed Optional raw vector. For v5 it is the 32 bytes of `seed_KEM`.
+#' For round 4 it is the [hqcsz()]`["seed"]` bytes its key generation
 #' draws (`skseed`, `sigma`, `pk_seed`: 96, 104 or 112).
 #' Supplying it makes the key reproducible, which is what the known-answer
 #' tests need; the default draws from the operating system's CSPRNG.
@@ -131,8 +131,8 @@
 #' nchar(cap$shared) / 2
 #' identical(hqcdecap(old, cap$ciphertext), cap$shared)
 #' @section Security:
-#' A hand-written implementation. The standardised schemes are checked byte
-#' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+#' The implementation is hand-written. Its standardised schemes are checked
+#' byte for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
 #' suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
 #' operation that touches a secret under valgrind memcheck with the secret
 #' marked undefined (the ctgrind method), so a branch or a memory address
@@ -142,9 +142,8 @@
 #' hardware (`inst/dudect`) and power leakage is assessed in simulation under
 #' the value and the transition models (`inst/tvla`) for the masked ML-KEM
 #' and ML-DSA kernels; this scheme is not masked. These are checks of this
-#' code on those compilers; no third-party security audit has been
-#' commissioned, and the README's security section lists what each check
-#' does and does not cover.
+#' code on those compilers; the README's security section lists what each
+#' check does and does not cover.
 #' @export
 hqckg <- function(lvl = 3L, seed = NULL, ver = c("v5", "round4")) {
   lvl <- .rmbl_hqc_level(lvl)
@@ -206,9 +205,10 @@ hqcpubkey <- function(key) {
 #'   three). There is no default.
 #' @param ver \code{"v5"} (the default) or \code{"round4"}, as in
 #'   [hqckg()].
-#' @return A named integer vector: `encapsulation_key`, `decapsulation_key`,
-#' `ciphertext`, `seed` (key generation), `message` and `salt`
-#' (encapsulation randomness) and `shared_secret`, all in bytes.
+#' @return A named integer vector: `public` (the encapsulation key), `secret`
+#' (the decapsulation key), `ciphertext`, `seed` (key generation), `message`
+#' and `salt` (encapsulation randomness) and `shared` (the shared secret), all
+#' in bytes, named as [hqckg()] and [hqcencap()] name their results.
 #' @seealso [hqckg()],
 #'   [kemsz()] for ML-KEM.
 #' @examples
@@ -216,13 +216,13 @@ hqcpubkey <- function(key) {
 #'
 #' # code-based keys and ciphertexts are larger than ML-KEM's at the same
 #' # category; the shared secret is 32 bytes at every level (64 in round 4)
-#' rbind(HQC = hqcsz(3)[c("encapsulation_key", "ciphertext")],
-#'       MLKEM = kemsz(768)[c("encapsulation_key", "ciphertext")])
+#' rbind(HQC = hqcsz(3)[c("public", "ciphertext")],
+#'       MLKEM = kemsz(768)[c("public", "ciphertext")])
 #' rbind(v5 = hqcsz(1), round4 = hqcsz(1, "round4"))
 #'
 #' # check a stored public key's length
 #' key <- hqckg(1)
-#' nchar(key$public) / 2 == hqcsz(1)[["encapsulation_key"]]
+#' nchar(key$public) / 2 == hqcsz(1)[["public"]]
 #'
 #' # an unknown level is refused rather than mapped to a default
 #' try(hqcsz(2))
@@ -247,7 +247,8 @@ hqcsz <- function(lvl, ver = c("v5", "round4")) {
 #'
 #' @details
 #' The level and version are taken from the key. The randomness is a message
-#' `m` of `hqcsz(level)[["message"]]` bytes and a 16-byte `salt`,
+#' `m` and a 16-byte `salt`. The length of `m` in bytes is
+#' `hqcsz(level)[["message"]]`. They are
 #' both
 #' drawn with [rndbytes()] from the operating system's
 #' generator unless
@@ -302,9 +303,9 @@ hqcencap <- function(key, m = NULL, salt = NULL) {
   version <- .rmbl_hqc_key_version(key)
   ek <- .rmbl_hex_or_null(key$public)
   sz <- hqcsz(level, version)
-  if (is.null(ek) || length(ek) != sz[["encapsulation_key"]]) {
+  if (is.null(ek) || length(ek) != sz[["public"]]) {
     stop(sprintf("`key` has no usable HQC-%d public key (%d bytes)", level,
-                 sz[["encapsulation_key"]]), call. = FALSE)
+                 sz[["public"]]), call. = FALSE)
   }
   if (is.null(m)) {
     m <- rndbytes(sz[["message"]])
@@ -395,9 +396,9 @@ hqcdecap <- function(key, ct) {
   sz <- hqcsz(level, version)
   dk <- .rmbl_hex_or_null(key$secret)
   if (length(dk) == sz[["seed"]]) dk <- .rmbl_hqc_expand(key, dk, level, version)
-  if (is.null(dk) || length(dk) != sz[["decapsulation_key"]]) {
+  if (is.null(dk) || length(dk) != sz[["secret"]]) {
     stop(sprintf("`key` has no usable HQC-%d secret key (%d bytes)", level,
-                 sz[["decapsulation_key"]]), call. = FALSE)
+                 sz[["secret"]]), call. = FALSE)
   }
   .ct <- if (is.raw(ct)) ct else .rmbl_hex_or_null(ct)
   if (is.null(.ct) || length(.ct) != sz[["ciphertext"]]) {
@@ -477,7 +478,7 @@ hqccmpkey <- function(key) {
   dk <- .rmbl_hex_or_null(key$secret)
   n <- length(dk)
   if (n == sz[["seed"]]) return(key)
-  if (n != sz[["decapsulation_key"]]) {
+  if (n != sz[["secret"]]) {
     stop("`key` has no usable HQC secret key", call. = FALSE)
   }
   # v5: dk = ek, seed_dk, sigma, seed_KEM, so the seed is its last 32 bytes

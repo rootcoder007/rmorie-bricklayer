@@ -13,8 +13,8 @@ misspat(data, maxpat = 20L)
 frequent first, one positive whole number (default 20).}
 }
 \value{
-A data frame of class \code{c("bricklayer_missingness",
-  "data.frame")}, one row per pattern: \code{pattern} (character, \code{.}
+A data frame of class \code{bricklayer_missingness}, one row per pattern:
+\code{pattern} (character, \code{.}
 for present and \code{X} for missing, in column order), \code{nrows}
 (integer), \code{pctrows} (numeric, percent of all rows),
 \code{n_missing} (integer, columns missing in that pattern) and

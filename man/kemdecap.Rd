@@ -14,9 +14,11 @@ kemdecap(key, ct, masked = getOption("rmoriebricklayer.masked", TRUE))
 \code{\link[=kemencap]{kemencap()}},
 as a hex string or a raw vector, of the length for the key's level.}
 
-\item{masked}{Logical, \code{TRUE} or \code{FALSE}. \code{TRUE} (the
-default, taken from the option \code{rmoriebricklayer.masked} when set)
-runs the first-order masked decapsulation, \code{FALSE} the plain one.
+\item{masked}{Logical, \code{TRUE} or \code{FALSE}.
+
+\code{rmoriebricklayer.masked}, an option, gives the default when it is set;
+otherwise the default is \code{TRUE}.
+\code{TRUE} runs the first-order masked decapsulation, \code{FALSE} the plain one.
 Both return the same secret.}
 }
 \value{
@@ -60,9 +62,8 @@ plain constant-time decapsulation, and the option
 Errors (checked before any decapsulation): \code{key} not from
 \code{\link[=kemkg]{kemkg()}}, or a public key only ("decapsulation needs a
 key with its
-secret half"); a ciphertext that is not hex or raw of exactly
-\code{\link[=kemsz]{kemsz()}}\code{[["ciphertext"]]} bytes for the key's
-level (768,
+secret half"); a ciphertext that is not hex or raw of the exact length
+for the key's level, which is \code{\link[=kemsz]{kemsz()}}\code{[["ciphertext"]]} bytes (768,
 1088 or 1568); \code{masked} not \code{TRUE} or \code{FALSE}.
 }
 \examples{

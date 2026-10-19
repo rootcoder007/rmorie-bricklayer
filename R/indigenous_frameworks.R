@@ -56,13 +56,13 @@
 #'   direction, or \code{NULL} where the tables have none.
 #' @param qual Optional column of quality flags.
 #' @param conflvl Confidence level of the published intervals (default 0.95).
-#' @return A data frame of classes \code{rmbl_wellness_continuum} and
-#'   \code{rmbl_wellness_profile}: \code{group}, \code{indicator} (the direction),
+#' @return A data frame with the classes \code{rmbl_wellness_continuum} and
+#'   \code{rmbl_wellness_profile}. Its columns are \code{group}, \code{indicator} (the direction),
 #'   \code{side} (\code{"wellness"}), \code{domain} (the proxies), \code{estimate},
 #'   \code{lower}, \code{upper}, \code{usewithcau}, \code{shared}, \code{proxy}
 #'   (always \code{TRUE}).
 #' @references Health Canada, Assembly of First Nations (2015). First Nations Mental
-#' Wellness Continuum Framework. Ottawa: Health Canada. Summary report:
+#' Wellness Continuum Framework. Ottawa: Health Canada. Summary report:\cr
 #' \url{https://www.sac-isc.gc.ca/eng/1576093687903/1576093725971}
 #' @seealso \code{\link{welprof}}, \code{\link{holbal}}.
 #' @examples
@@ -186,7 +186,7 @@ mhcont <- function(data, grp, ind, est, lower, upper, hope = NULL,
 #' Challenge. Thompson Educational.
 #'
 #' Indigenous Services Canada (2019). Report on trends in First Nations communities, 1981
-#' to 2016 (Community Well-Being index).
+#' to 2016 (Community Well-Being index).\cr
 #' \url{https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644}
 #' @examples
 #' # made-up profile figures for two communities, to show the computation
@@ -270,8 +270,9 @@ cwbscr <- function(incpercap, highsch20p, uni25p, notcro, nomajrep,
 #' @section Acknowledgement:
 #' This estimator puts to quantitative use the work of Professor Angela Mashford-Pringle
 #' (Timiskaming First Nation) and Professor Suzanne Stewart (Yellowknives Dene First
-#' Nation), both of the University of Toronto; see the acknowledgements of
-#' \code{vignette("first-nations-metis-inuit-health")}.
+#' Nation), both of the University of Toronto.
+#'
+#' See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette.
 #' @references Mashford-Pringle A, Stewart SL (2019). Akiikaa (it is the land): exploring
 #' land-based experiences with university students in Ontario. Global Health Promotion
 #' 26(3_suppl):64-72. \doi{10.1177/1757975919828722}
@@ -389,8 +390,9 @@ print.rmbl_connection <- function(x, ...) {
 #'   \code{upper}, \code{usewithcau}.
 #' @section Acknowledgement:
 #' This estimator puts to quantitative use the framework of Professor Suzanne Stewart
-#' (Yellowknives Dene First Nation, University of Toronto); see the acknowledgements of
-#' \code{vignette("first-nations-metis-inuit-health")}.
+#' (Yellowknives Dene First Nation, University of Toronto).
+#'
+#' See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette.
 #' @references Stewart SL (2008), see \code{\link{holbal}}.
 #' @seealso \code{\link{welprof}}.
 #' @examples

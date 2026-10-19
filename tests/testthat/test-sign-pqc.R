@@ -87,7 +87,7 @@ test_that("a post-quantum key generates deterministically from its seeds", {
   # the public half carries no secret
   pub <- signpubkey(key)
   expect_s3_class(pub, "bricklayer_public_key")
-  expect_null(pub$sk_seed)
+  expect_null(pub$skseed)
   expect_equal(pub$root, key$root)
   expect_equal(pub$height, key$height)
 
@@ -145,7 +145,7 @@ test_that("a post-quantum signature verifies and resists every forgery", {
   expect_false(cpsvrf(msg, sig, signpubkey(pqckg(3))))
   # nor does the right root under the wrong public seed
   wrongseed <- pub
-  wrongseed$pub_seed <- paste(rep("cc", 32), collapse = "")
+  wrongseed$pubseed <- paste(rep("cc", 32), collapse = "")
   expect_false(cpsvrf(msg, sig, wrongseed))
 
   # malformed input is "not verified", never an error a caller might

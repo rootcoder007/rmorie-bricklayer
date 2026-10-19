@@ -15,7 +15,7 @@
 #include <R_ext/Rdynload.h>
 #include <stddef.h>
 
-/* .Call wrappers (defined in rmbl_core.c) */
+/* .Call wrappers (rmbl_core.cpp) -- the first kernels and SHA-256 */
 extern SEXP C_rmbl_mean(SEXP);
 extern SEXP C_rmbl_mean_running(SEXP);
 extern SEXP C_rmbl_var(SEXP);
@@ -65,9 +65,11 @@ extern SEXP C_rmbl_sen_slopes(SEXP, SEXP);
 extern SEXP C_rmbl_hurwitz_zeta(SEXP, SEXP);
 /* rmbl_keccak.cpp: FIPS 202 */
 extern SEXP C_rmbl_shake(SEXP, SEXP, SEXP);
+/* rmbl_slhdsa.cpp: the FIPS 204/205 pre-hash and the internal SLH-DSA functions */
 extern SEXP C_rmbl_prehash_digest(SEXP, SEXP);
 extern SEXP C_rmbl_slhdsa_sign_internal(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_slhdsa_verify_internal(SEXP, SEXP, SEXP, SEXP);
+/* rmbl_mldsa_ntt.cpp: FIPS 204 */
 extern SEXP C_rmbl_mldsa_sizes(SEXP);
 extern SEXP C_rmbl_mldsa_keypair(SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_sign(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -76,11 +78,11 @@ extern SEXP C_rmbl_mldsa_sign_mu(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_verify_mu(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
-/* rmbl_slhdsa.cpp: FIPS 205 */
-/* rmbl_mgf1.cpp: HMAC and MGF1, for the SHA-2 instantiation of FIPS 205
- * and exposed so their published vectors can be asserted */
+/* rmbl_strtod.cpp: correctly rounded decimal conversion, both ways */
 extern SEXP C_rmbl_strtod(SEXP);
 extern SEXP C_rmbl_dtoa17(SEXP);
+/* rmbl_mgf1.cpp: HMAC and MGF1, for the SHA-2 instantiation of FIPS 205
+ * and exposed so their published vectors can be asserted */
 extern SEXP C_rmbl_sha1(SEXP);
 extern SEXP C_rmbl_sha384(SEXP);
 extern SEXP C_rmbl_hmac_shax(SEXP, SEXP, SEXP);
@@ -91,11 +93,12 @@ extern SEXP C_rmbl_ecdsa_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_ec_mul(SEXP, SEXP);
 extern SEXP C_rmbl_ec_order(SEXP);
 
-/* rmbl_asn1.cpp: DER parsing and the RSA operation, for RFC 3161 */
+/* rmbl_fetch.cpp: the requests with a body or headers, and the native spinner */
 extern SEXP C_rmbl_http_post(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_http_put(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_http_get(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_wait_label(SEXP, SEXP, SEXP);
+/* rmbl_asn1.cpp: DER parsing and the RSA operation, for RFC 3161 */
 extern SEXP C_rmbl_der_parse(SEXP);
 extern SEXP C_rmbl_rsa_recover(SEXP, SEXP, SEXP);
 
@@ -125,10 +128,12 @@ extern SEXP C_rmbl_drbg_reseed(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_drbg_generate(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_aes_backend(SEXP);
 
+/* rmbl_slhdsa.cpp: FIPS 205 */
 extern SEXP C_rmbl_slhdsa_sizes(SEXP);
 extern SEXP C_rmbl_slhdsa_keypair(SEXP, SEXP);
 extern SEXP C_rmbl_slhdsa_sign(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_slhdsa_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+/* rmbl_series.cpp: Moran's I */
 extern SEXP C_rmbl_morans_i(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 /* rmbl_series.cpp plain-C kernels, for LinkingTo consumers */
 extern double   rmbl_gini(const double *, R_xlen_t);
@@ -139,6 +144,7 @@ extern void     rmbl_mann_kendall(const double *, R_xlen_t, double *,
 extern void     rmbl_theil_sen(const double *, const double *, R_xlen_t,
                                double *, double *);
 extern double   rmbl_hurwitz_zeta(double, double);
+/* rmbl_digest.cpp: HMAC, the constant-time comparison and the Merkle tree */
 extern SEXP C_rmbl_hmac_sha256(SEXP, SEXP);
 extern SEXP C_rmbl_digest_equal(SEXP, SEXP);
 extern SEXP C_rmbl_merkle_root(SEXP, SEXP);
@@ -152,7 +158,7 @@ extern SEXP C_rmbl_xmss_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP,
 extern SEXP C_rmbl_pqc_backends(void);
 /* .Call wrappers (rmbl_sketch.cpp) -- one-pass sketches */
 extern SEXP C_rmbl_moments_acc(SEXP);
-extern SEXP C_rmbl_json_fast(SEXP, SEXP);
+extern SEXP C_rmbl_json_fast(SEXP, SEXP);   /* rmbl_json.cpp */
 extern SEXP C_rmbl_svy_dblcode(SEXP);       /* rmbl_survey.c */
 extern SEXP C_rmbl_sha256_real(SEXP);       /* rmbl_survey.c */
 extern SEXP C_rmbl_moments_merge(SEXP, SEXP);
@@ -168,6 +174,7 @@ extern SEXP C_rmbl_fetch_fallback(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_http_download(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_redirect_check(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_url_check(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_net_probe(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_wayback(SEXP, SEXP, SEXP);
 /* .Call wrappers (defined in rmbl_siu.cpp) -- vendored SIU parse/resolve */
 extern SEXP C_rmbl_siu_html_to_text(SEXP);
@@ -176,7 +183,9 @@ extern SEXP C_rmbl_siu_to_iso_date(SEXP);
 extern SEXP C_rmbl_siu_resolve_so(SEXP);
 extern SEXP C_rmbl_siu_schema(SEXP);
 
-/* plain-C kernels (defined in rmbl_core.c) -- the cross-package API */
+/* plain-C kernels -- the cross-package API: rmbl_core.cpp (the first block, through
+ * rmbl_hawkes_nll), rmbl_stats.cpp, rmbl_digest.cpp (SHA-512, HMAC, the comparison),
+ * rmbl_sketch.cpp (moments) and rmbl_kdf.cpp (BLAKE2b, PBKDF2, OS entropy) */
 extern double rmbl_mean(const double *, R_xlen_t);
 extern double rmbl_mean_running(const double *, R_xlen_t);
 extern double rmbl_var(const double *, R_xlen_t);
@@ -234,14 +243,16 @@ extern SEXP C_rmbl_flock_release(SEXP);
 extern SEXP C_rmbl_flock_with(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_path_kind(SEXP);
 extern SEXP C_rmbl_write_file_checked(SEXP, SEXP, SEXP);
-extern SEXP C_rmbl_gunzip_checked(SEXP, SEXP);
+extern SEXP C_rmbl_gunzip_checked(SEXP, SEXP);   /* rmbl_gunzip.c */
 extern SEXP C_rmbl_csv_split(SEXP, SEXP);   /* rmbl_csv.c */
-/* .bl_readline: a pending Ctrl-C is raised before the terminal read starts (rmbl_barrier.cpp) */
+/* rmbl_progress.c: .bl_readline's check that raises a pending Ctrl-C before the terminal read
+ * starts, and the progress bar and spinner */
 extern SEXP C_rmbl_check_interrupt(void);
 extern SEXP C_rmbl_progress_frame(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_progress_spinner(SEXP, SEXP);
 /* replicate totals for survey estimation (rmbl_survey.c) */
 extern SEXP C_rmbl_svy_reptotals(SEXP, SEXP);
+/* rmbl_progress.c: the progress bar and spinner, for LinkingTo consumers */
 extern int rmbl_progress_bar(double, double, int, int, int, int, int, int, int, char *, int);
 extern const char *rmbl_progress_spinner(double, int);
 
@@ -274,6 +285,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_redirect_check", (DL_FUNC) &C_rmbl_redirect_check, 4},
     {"C_rmbl_wayback",        (DL_FUNC) &C_rmbl_wayback,        3},
     {"C_rmbl_url_check",      (DL_FUNC) &C_rmbl_url_check,      4},
+    {"C_rmbl_net_probe",      (DL_FUNC) &C_rmbl_net_probe,      4},
     {"C_rmbl_siu_html_to_text",      (DL_FUNC) &C_rmbl_siu_html_to_text,      1},
     {"C_rmbl_siu_parse_html",        (DL_FUNC) &C_rmbl_siu_parse_html,        1},
     {"C_rmbl_siu_to_iso_date",       (DL_FUNC) &C_rmbl_siu_to_iso_date,       1},

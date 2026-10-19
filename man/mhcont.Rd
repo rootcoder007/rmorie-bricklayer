@@ -34,8 +34,8 @@ direction, or \code{NULL} where the tables have none.}
 \item{conflvl}{Confidence level of the published intervals (default 0.95).}
 }
 \value{
-A data frame of classes \code{rmbl_wellness_continuum} and
-\code{rmbl_wellness_profile}: \code{group}, \code{indicator} (the direction),
+A data frame with the classes \code{rmbl_wellness_continuum} and
+\code{rmbl_wellness_profile}. Its columns are \code{group}, \code{indicator} (the direction),
 \code{side} (\code{"wellness"}), \code{domain} (the proxies), \code{estimate},
 \code{lower}, \code{upper}, \code{usewithcau}, \code{shared}, \code{proxy}
 (always \code{TRUE}).
@@ -85,7 +85,7 @@ plot(mw)
 }
 \references{
 Health Canada, Assembly of First Nations (2015). First Nations Mental
-Wellness Continuum Framework. Ottawa: Health Canada. Summary report:
+Wellness Continuum Framework. Ottawa: Health Canada. Summary report:\cr
 \url{https://www.sac-isc.gc.ca/eng/1576093687903/1576093725971}
 }
 \seealso{

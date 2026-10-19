@@ -24,7 +24,7 @@ A length-1 numeric in the units of \code{x}.
 \description{
 Two ways to stop a handful of extreme rows dominating a column's centre.
 \code{ctrmmean()} DISCARDS the \code{floor(n * trim)} largest
-and smallest values, matching \code{mean(x, trim = )}.
+and smallest values, as \code{mean(x, trim = )} does.
 \code{cwinsmean()} instead PULLS THEM IN to the most extreme
 surviving values, so every observation still contributes weight --
 usually the better choice when the extremes are real measurements rather
