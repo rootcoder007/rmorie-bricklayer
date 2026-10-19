@@ -337,8 +337,9 @@ test_that("every SIU entry point reads its text through the same cap", {
                   c("C_rmbl_siu_html_to_text", "C_rmbl_siu_parse_html", "C_rmbl_siu_to_iso_date",
                     "C_rmbl_siu_resolve_so", "C_rmbl_siu_schema"))
   # each one-argument entry hands its argument to as_string() (the 2 MiB
-  # cap) and nothing else reads CHAR() of it
-  expect_identical(sum(grepl("CHAR(STRING_ELT", s, fixed = TRUE)), 1L)
+  # cap), which reads it once, translated to UTF-8; nothing else reads it
+  expect_identical(sum(grepl("Rf_translateCharUTF8(STRING_ELT", s, fixed = TRUE)), 1L)
+  expect_false(any(grepl("CHAR(STRING_ELT", s, fixed = TRUE)))
   expect_true(any(grepl("(2 << 20)", s, fixed = TRUE)))
   # html_to_text() and the plain-text entry both run normalize_text()
   p <- readLines(file.path(d, "siu_parse.cpp"), warn = FALSE)
