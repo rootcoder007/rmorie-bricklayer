@@ -3,6 +3,7 @@
 // (morie.siu.native) carry ports of these sources; edit here first, then port.
 #include "siu_resolve.h"
 #include "siu_parse.h"
+#include "rmbl_ascii.h"
 
 #include <algorithm>
 #include <cctype>
@@ -30,13 +31,13 @@ int count_matches(const std::string& s, const std::regex& re) {
 // ASCII case-insensitive find of `needle` in `hay` from `from`; npos when absent.
 static size_t find_icase(const std::string& hay, const std::string& needle, size_t from) {
     if (needle.empty() || hay.size() < needle.size()) return std::string::npos;
-    const unsigned char n0 = static_cast<unsigned char>(std::tolower(static_cast<unsigned char>(needle[0])));
+    const unsigned char n0 = static_cast<unsigned char>(rmbl_ascii_lower(needle[0]));
     for (size_t i = from; i + needle.size() <= hay.size(); ++i) {
         if ((i & 0xFFFF) == 0xFFFF) poll_interrupt();
-        if (static_cast<unsigned char>(std::tolower(static_cast<unsigned char>(hay[i]))) != n0) continue;
+        if (static_cast<unsigned char>(rmbl_ascii_lower(hay[i])) != n0) continue;
         size_t k = 1;
         while (k < needle.size() &&
-               std::tolower(static_cast<unsigned char>(hay[i + k])) == std::tolower(static_cast<unsigned char>(needle[k]))) ++k;
+               rmbl_ascii_lower(hay[i + k]) == rmbl_ascii_lower(needle[k])) ++k;
         if (k == needle.size()) return i;
     }
     return std::string::npos;
@@ -105,9 +106,9 @@ static std::string strip_glossary_icase(const std::string& s) {
         // "who" then an optional comma and spaces, right before the head
         size_t w = h;
         while (w > pos && (s[w - 1] == ' ' || s[w - 1] == '\n' || s[w - 1] == '\t' || s[w - 1] == ',')) --w;
-        const bool who = w >= pos + 3 && std::tolower(static_cast<unsigned char>(s[w - 3])) == 'w' &&
-                         std::tolower(static_cast<unsigned char>(s[w - 2])) == 'h' &&
-                         std::tolower(static_cast<unsigned char>(s[w - 1])) == 'o';
+        const bool who = w >= pos + 3 && rmbl_ascii_lower(s[w - 3]) == 'w' &&
+                         rmbl_ascii_lower(s[w - 2]) == 'h' &&
+                         rmbl_ascii_lower(s[w - 1]) == 'o';
         if (!who) { out.append(s, pos, h + hlen - pos); pos = h + hlen; continue; }
         size_t after = h + hlen;
         if (after < s.size() && s[after] == ',') ++after;
@@ -240,7 +241,7 @@ static SoResolution resolve_fr(const std::string& text) {
         {"six", 6}, {"sept", 7}, {"huit", 8}, {"neuf", 9}, {"dix", 10}};
     auto num = [&](std::string tok) {
         std::transform(tok.begin(), tok.end(), tok.begin(),
-                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                   [](unsigned char c) { return static_cast<char>(rmbl_ascii_lower(c)); });
         const auto w = kFrNum.find(tok);
         return w != kFrNum.end() ? w->second : small_int(tok);
     };
@@ -354,7 +355,7 @@ static SoResolution resolve_subject_officials_impl(const std::string& report_tex
         int n = 0;
         std::string low = tok;
         std::transform(low.begin(), low.end(), low.begin(),
-                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                   [](unsigned char c) { return static_cast<char>(rmbl_ascii_lower(c)); });
         auto wit = kWordNum.find(low);
         n = (wit != kWordNum.end()) ? wit->second : small_int(tok);
         return {n, "plural cue '" + m[0].str() + "'"};

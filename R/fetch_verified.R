@@ -76,7 +76,9 @@ fetchvrf <- function(url, dest, sha256 = NULL, mirrors = character(), tmout = 12
       note(u, sprintf("refused: SHA-256 %s is not the one pinned", h))
       next
     }
-    if (!file.rename(tmp, dest)) {
+    # rename() warns in its own words when it refuses (a folder, another file system);
+    # the copy below is the answer to that, so the warning is not passed on
+    if (!suppressWarnings(file.rename(tmp, dest))) {
       if (!file.copy(tmp, dest, overwrite = TRUE)) stop(sprintf("cannot write %s", dest), call. = FALSE)
     }
     note(u, "kept")

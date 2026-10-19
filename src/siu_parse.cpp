@@ -8,6 +8,7 @@
 // the stripped text produced by html_to_text().
 #include "siu_parse.h"
 #include "siu_resolve.h"
+#include "rmbl_ascii.h"
 
 #include <algorithm>
 #include <cctype>
@@ -36,7 +37,7 @@ namespace {
 // other than EOF is undefined behaviour (review of 1.0.0)
 std::string lower(std::string s) {
     std::transform(s.begin(), s.end(), s.begin(),
-                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                   [](unsigned char c) { return static_cast<char>(rmbl_ascii_lower(c)); });
     return s;
 }
 
@@ -76,8 +77,8 @@ std::string flatten_ws(const std::string& s) {
 bool ieq_at(const std::string& s, size_t pos, const std::string& lit) {
     if (pos + lit.size() > s.size()) return false;
     for (size_t k = 0; k < lit.size(); ++k) {
-        if (std::tolower(static_cast<unsigned char>(s[pos + k])) !=
-            std::tolower(static_cast<unsigned char>(lit[k]))) return false;
+        if (rmbl_ascii_lower(s[pos + k]) !=
+            rmbl_ascii_lower(lit[k])) return false;
     }
     return true;
 }
@@ -146,7 +147,7 @@ std::string strip_tags(const std::string& s) {
             continue;
         }
         std::string body = s.substr(i + 1, gt - i - 1);
-        for (char& c : body) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        for (char& c : body) c = static_cast<char>(rmbl_ascii_lower(c));
         bool nl = false;
         if (body[0] == '/') {
             const std::string nm = body.substr(1);

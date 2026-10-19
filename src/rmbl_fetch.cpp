@@ -34,6 +34,7 @@
 #include <Rinternals.h>
 #include <curl/curl.h>
 #include "rmbl_entry.h"
+#include "rmbl_ascii.h"
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -86,7 +87,7 @@ bool parse_url(const std::string &url, UrlParts &u, std::string &why) {
     const size_t p = url.find("://");
     if (p == std::string::npos || p == 0) { why = "no URL scheme"; return false; }
     u.scheme = url.substr(0, p);
-    for (char &c : u.scheme) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    for (char &c : u.scheme) c = static_cast<char>(rmbl_ascii_lower(c));
     size_t a = p + 3;
     size_t e = url.find_first_of("/?#", a);
     if (e == std::string::npos) e = url.size();
@@ -111,7 +112,7 @@ bool parse_url(const std::string &url, UrlParts &u, std::string &why) {
         if (c != std::string::npos) { u.host = auth.substr(0, c); u.port = auth.substr(c + 1); }
         else u.host = auth;
     }
-    for (char &c : u.host) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    for (char &c : u.host) c = static_cast<char>(rmbl_ascii_lower(c));
     if (!u.port.empty()) {
         for (char c : u.port) if (c < '0' || c > '9') { why = "malformed port"; return false; }
         if (u.port.size() > 5 || std::atoi(u.port.c_str()) > 65535) { why = "port out of range"; return false; }
@@ -359,7 +360,7 @@ bool loopback_host(const UrlParts &u) {
     uint32_t a = 0;
     if (ipv4_literal(u.host, a)) return (a >> 24) == 127u;
     std::string h = u.host;
-    for (char &c : h) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    for (char &c : h) c = static_cast<char>(rmbl_ascii_lower(c));
     return h == "localhost";
 }
 
@@ -398,7 +399,7 @@ std::string url_check(const std::string &url_in, bool allow_http, bool resolve,
     {
         const size_t p = url.find("://");
         sch = p == std::string::npos ? "" : url.substr(0, p);
-        for (char &c : sch) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        for (char &c : sch) c = static_cast<char>(rmbl_ascii_lower(c));
         if (sch != "https" && sch != "http") return "scheme " + sch + ":// is refused";
     }
     if (!parse_url(url, u, why)) return why;
@@ -464,7 +465,7 @@ std::string url_check(const std::string &url_in, bool allow_http, bool resolve,
  * caller, identifies the caller to the first origin and stays there. */
 bool header_travels(const std::string &hdr) {
     std::string name = hdr.substr(0, hdr.find(':'));
-    for (char &c : name) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    for (char &c : name) c = static_cast<char>(rmbl_ascii_lower(c));
     while (!name.empty() && name.back() == ' ') name.pop_back();
     static const char *const kTravels[] = {
         "accept", "accept-encoding", "accept-language", "user-agent", "content-type",
@@ -480,8 +481,8 @@ bool header_travels(const std::string &hdr) {
  * 127.0.0.1:18081 -> 127.0.0.1:18082 forwarded the bearer). */
 std::string origin_of(const UrlParts &u) {
     std::string sch = u.scheme, host = u.host;
-    for (char &c : sch) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    for (char &c : host) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    for (char &c : sch) c = static_cast<char>(rmbl_ascii_lower(c));
+    for (char &c : host) c = static_cast<char>(rmbl_ascii_lower(c));
     const std::string port = u.port.empty() ? (sch == "https" ? "443" : "80") : u.port;
     return sch + "://" + host + ":" + port;
 }
@@ -499,7 +500,7 @@ std::string redirect_policy(const std::string &from, const std::string &to,
     std::string why;
     if (!parse_url(from, f, why)) return "the request URL is malformed: " + why;
     std::string fs = f.scheme;
-    for (char &c : fs) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    for (char &c : fs) c = static_cast<char>(rmbl_ascii_lower(c));
     UrlParts t;
     /* the local relaxation follows a redirect only when it STAYS on the same
      * local host (a path or port change on your own box); a hop to any other
@@ -511,15 +512,15 @@ std::string redirect_policy(const std::string &from, const std::string &to,
         std::string w0;
         if (parse_url(to, t0, w0)) {
             std::string a = f.host, b = t0.host;
-            for (char &c : a) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-            for (char &c : b) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            for (char &c : a) c = static_cast<char>(rmbl_ascii_lower(c));
+            for (char &c : b) c = static_cast<char>(rmbl_ascii_lower(c));
             same_local = a == b;
         }
     }
     why = url_check(to, allow_http && fs != "https", resolve, &t, addrs, same_local);
     if (!why.empty()) {
         std::string ts = to.substr(0, to.find("://"));
-        for (char &c : ts) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        for (char &c : ts) c = static_cast<char>(rmbl_ascii_lower(c));
         if (fs == "https" && ts == "http") return "a redirect from https to plain http is refused";
         return why;
     }
@@ -686,7 +687,7 @@ size_t note_retry_after(char *ptr, size_t sz, size_t nm, void *ud) {
     if (line.size() > sizeof key - 1) {
         bool match = true;
         for (size_t i = 0; i + 1 < sizeof key; ++i) {
-            if (std::tolower(static_cast<unsigned char>(line[i])) != key[i]) { match = false; break; }
+            if (rmbl_ascii_lower(line[i]) != key[i]) { match = false; break; }
         }
         if (match) {
             std::string v = line.substr(sizeof key - 1);
@@ -1299,7 +1300,7 @@ std::string wayback_snapshot(const std::string &url, long timeout_s, bool *inter
         for (int q = 1; q <= 4; ++q) {
             const int hv = std::isxdigit(static_cast<unsigned char>(body[k + q]))
                 ? (std::isdigit(static_cast<unsigned char>(body[k + q])) ? body[k + q] - '0'
-                   : (std::tolower(static_cast<unsigned char>(body[k + q])) - 'a' + 10)) : -1;
+                   : (rmbl_ascii_lower(body[k + q]) - 'a' + 10)) : -1;
             if (hv < 0) return "";
             cp = cp * 16 + static_cast<unsigned>(hv);
         }
