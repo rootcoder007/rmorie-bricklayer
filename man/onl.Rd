@@ -17,7 +17,8 @@ smrymrg(a, b)
 smrystat(acc)
 }
 \arguments{
-\item{x}{Numeric vector: the first block, or \code{NULL} (the default) for
+\item{x}{Numeric vector (finite; \code{NA} is skipped and an infinite value
+refused): the first block, or \code{NULL} (the default) for
 an empty accumulator; for \code{smryupd()}, the next block.}
 
 \item{acc, a, b}{Accumulators from \code{onlsmry()}.}

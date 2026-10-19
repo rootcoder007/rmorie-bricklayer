@@ -7,7 +7,7 @@
 fylbl(endyear, sep = "/", short = TRUE)
 }
 \arguments{
-\item{endyear}{The fiscal year's end year, as a number
+\item{endyear}{The fiscal year's end year, as a whole number
 or a string; a vector of them.}
 
 \item{sep}{Separator between the two years, a string; default

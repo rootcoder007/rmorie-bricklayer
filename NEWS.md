@@ -261,7 +261,8 @@ New estimators, each checked against the reference implementation (`fixest`, `di
   in 20 s and an estimate in 5 s (52 s each in the stress test).
 * **A time limit ends a loop over your function**: `cpsfals()`, `cpspwr()` and the
   exposure-response bootstrap caught `setTimeLimit()`'s error as one more failed statistic and ran on.
-* The README says 123 C++ entry points behind the barrier (one new, the JSON path) and 13 in plain C.
+* The README says 123 C++ entry points behind the barrier (one new, the JSON path) and 15 in plain
+  C (the survey column pass and the set digest are new).
 
 ## After the tag: the manual, the plots, a C locale
 
@@ -325,10 +326,20 @@ New estimators, each checked against the reference implementation (`fixest`, `di
   more replicates than rows that asked for 74.5 GB (`n = 20`, `B = 1e5`) and took 113 s at
   `B = 5,000`. The smaller of the two Gram matrices is read, the replicates scaled first (a
   replicate of 1e308 overflowed `eigen()`).
+* **Memory, again**: `svydes()` reads each replicate column against the weight in one native pass
+  with nothing allocated as long as the column (the R pass held 340 MB a column at 5e6 rows), and
+  its row-key digests read a column as a set through an order-independent hash in place of a
+  sorted copy (a radix sort asks for working memory as long as the column outside R's heap, and
+  that request failed at the limit). 5e6 rows and 20 replicates now fit a 3 GB address space as a
+  matrix and by name, the matrix design in 6 s (17 before). A domain estimate centres its
+  linearized values within strata one column at a time and reads the rows of each domain once:
+  fifty domains at a million rows peak at 0.65 GB of heap (1.9 before).
 * **The replicate contract's edges**: a Fay replicate equal to the weight (a post-stratified domain
   whose rows sit in one PSU per stratum) is said, not refused; one factor `k/(k - 1)` on every row
-  with no row left out (`w * 1.005` under JKn, the full data plus `w * 15/14` under JK1) is said;
-  two or more JKn replicates equal to the weight are said.
+  with no row left out, carried by more or fewer replicates than its `k` (`w * 1.005` beside 200
+  JKn replicates, the full data plus `w * 15/14` under JK1), is said as a rescaled copy. Two or more
+  JKn replicates equal to the weight stay as they are: a stratum left out of a subset leaves all of
+  its replicates at the weight, and two copies of it cannot be told from that.
 * **The manifest fetch** capped the bytes on the wire, and a reply sent with
   `Content-Encoding: gzip` was stored as sent and decompressed whole by `readLines()`: 300 MiB of
   zeros in a 300 KB body (a 2.3 GB allocation, or an OOM kill). The manifest is read a megabyte at
@@ -369,7 +380,8 @@ New estimators, each checked against the reference implementation (`fixest`, `di
   capsule and template file arguments, `yoylbl()`'s `labels`, `profshr()`'s `num` and `den`,
   `plotevgrid()`'s `main`, `plnpois()`'s `offset`, `trchlthgap()`'s tables, `wcb()`'s `trtd`,
   `chgenv()`'s `per`, the `strict` and `ex` flags, the `col` of the `rule*()` builders and
-  `chwknll()`'s `par`. Each is refused in words now.
+  `chwknll()`'s `par`, and `shrs()`'s `total`. Each is refused in words now; the battery's last
+  run found none.
 * The native CSV reader drops a byte-order mark before a header name when blanks follow the mark
   (`read.csv()` keeps the mark in the name, `X.s`): 37 of 24,000 fuzz inputs, documented.
 

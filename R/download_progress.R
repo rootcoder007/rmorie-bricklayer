@@ -209,7 +209,7 @@ bldl <- function(url, dest, headers = NULL,
     # URL is checked again there, resolved and pinned, every redirect hop is
     # re-checked (no https -> http, credentials dropped across hosts) and the
     # body is capped; base R's url() did none of that (0.5.7 review)
-    res <- .Call(C_rmbl_http_download, url, dest, as.integer(tmout), hdr_lines, draw, maxbytes, FALSE)
+    res <- .bl_http_download(url, dest, as.integer(tmout), hdr_lines, draw, maxbytes, FALSE)
     if (res$status < 0) {
       stop(sprintf("%s: %s", url, res$error), call. = FALSE)
     }
@@ -228,4 +228,9 @@ bldl <- function(url, dest, headers = NULL,
     }
   }
   invisible(dest)
+}
+
+# the one call into the native transport, named so a test can stand a reply in for it
+.bl_http_download <- function(url, dest, tmout, headers, draw, maxbytes, head_only) {
+  .Call(C_rmbl_http_download, url, dest, tmout, headers, draw, maxbytes, head_only)
 }

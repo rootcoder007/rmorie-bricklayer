@@ -287,7 +287,9 @@ yoy.ts <- function(x, lag = NULL, ...) {
     if (cand %in% names(data)) nm <- cand
   }
   if (is.null(nm)) {
-    v <- val
+    # the promise of a bare name the table lacks fails in R's words ("object 'stops' not found";
+    # final audit of 1.0.0): read as no name
+    v <- tryCatch(val, error = function(e) NULL)
     if (is.character(v) && length(v) == 1L && !is.na(v)) {
       nm <- v
     } else {

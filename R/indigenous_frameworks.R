@@ -9,7 +9,16 @@
 .rmbl_ind_cols <- function(data, ...) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   a <- list(...)
-  for (nm in names(a)) if (!is.null(a[[nm]])) .rmbl_col(data, a[[nm]], nm)
+  # the limit and quality columns are optional; every other NULL reached data[[NULL]] and failed
+  # in R's words ("attempt to select less than one element"; final audit of 1.0.0)
+  optional <- c("quality", "x_lower", "x_upper", "y_lower", "y_upper")
+  for (nm in names(a)) {
+    if (is.null(a[[nm]])) {
+      if (!nm %in% optional) stop(sprintf("`%s` must name a column of `data`", nm), call. = FALSE)
+      next
+    }
+    .rmbl_col(data, a[[nm]], nm)
+  }
   invisible(TRUE)
 }
 

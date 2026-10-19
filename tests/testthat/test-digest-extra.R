@@ -267,7 +267,7 @@ test_that("chnkfile splits a file and pins it", {
   expect_length(chnkfile(e), 0L)
 
   expect_error(chnkfile(tempfile()), "no such file")
-  expect_error(chnkfile(p, chnkbytes = 0), "positive integer")
+  expect_error(chnkfile(p, chnkbytes = 0), "whole number from 1")
 })
 
 test_that("file digests stream to the same value at any block size", {
@@ -294,5 +294,5 @@ test_that("file digests stream to the same value at any block size", {
   expect_equal(crc32file(e), 0)
 
   expect_error(sha512file(tempfile()), "no such file")
-  expect_error(crc32file(p, blkbytes = 0), "positive integer")
+  expect_error(crc32file(p, blkbytes = 0), "whole number from 1")
 })

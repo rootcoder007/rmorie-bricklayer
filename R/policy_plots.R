@@ -55,7 +55,8 @@ plotevgrid <- function(x, ncol = NULL, main = NULL, ...) {
   on.exit(graphics::par(op), add = TRUE)
   out <- lapply(names(x), function(nm) {
     d <- graphics::plot(x[[nm]], main = nm, ...)
-    if (is.data.frame(d)) cbind(panel = nm, d[c("evtm", "estimate", "lower", "upper")]) else NULL
+    if (!is.data.frame(d)) return(NULL)
+    cbind(panel = nm, d[c("evtm", "estimate", "lower", "upper")])
   })
   if (!is.null(main)) graphics::mtext(main, outer = TRUE, font = 2, cex = 1.2)
   invisible(do.call(rbind, out))

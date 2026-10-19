@@ -319,3 +319,17 @@ test_that("the signer helpers and the digest helpers cover every algorithm they 
   expect_match(.rmbl_pkcs1_check(wrong_digest, "sha256", msg)$detail, "not DigestInfo")
   expect_true(.rmbl_pkcs1_check(c(pad, dinfo("608648016503040201", d256)), "sha256", msg)$ok)
 })
+
+test_that("audit coverage: an RSA timestamp signature of the wrong length is not verified", {
+  f <- x509_branch_fx("timestamp-token.txt")
+  info <- .rmbl_ts_extract(der_parse(f$rsa_token), f$rsa_token)
+  k <- info$signer$children
+  idx <- which(vapply(k, function(nd) identical(nd$class, 0L) && identical(nd$tag, 4), logical(1)))
+  k[[max(idx)]]$value <- as.raw(c(0x01, 0x02))
+  info$signer$children <- k
+  v <- .rmbl_ts_verify_sig(info, f$rsa_cert)
+  expect_false(v$ok)
+  expect_true(nzchar(v$detail))
+  expect_true(v$content_ok)
+})
+

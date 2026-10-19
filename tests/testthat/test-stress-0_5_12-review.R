@@ -394,7 +394,7 @@ test_that("patch coverage: the territory fallback, an overflowed stability numbe
   expect_identical(rmoriebricklayer:::.rmbl_territory_location("MC", known, proxies = c(MC = "ZZ")), "WORLD")
   expect_identical(rmoriebricklayer:::.rmbl_territory_location("MC", known, proxies = c(XX = "FR")), "WORLD")
   expect_error(advdif2d(matrix(1, 4, 4), u = 1e308, v = 0, kx = 0, ky = 0, dx = 1e-308, dy = 1,
-                                      dt = 1e308, nsteps = 1), "not finite")
+                                      dt = 1e308, nsteps = 1), "below 1e300")
   cf_env2()
   cfg <- rmoriebricklayer:::.bl_config_path()
   dir.create(dirname(cfg), recursive = TRUE, showWarnings = FALSE)

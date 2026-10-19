@@ -96,7 +96,7 @@ test_that("an interrupt inside a guarded call stops the replicate kernel with an
   prog <- function(now, total) {
     if (!is.null(got)) return(invisible())
     tools::pskill(Sys.getpid(), tools::SIGINT)
-    got <<- tryCatch(.Call(ns("C_rmbl_svy_reptotals"), matrix(1, 10, 1), list(rep(1, 10))),
+    got <<- tryCatch(.Call(ns("C_rmbl_svy_reptotals"), matrix(1, 10, 1), list(rep(1, 10)), NULL),
                      error = function(e) conditionMessage(e), interrupt = function(i) "interrupt")
   }
   res <- tryCatch(.Call(ns("C_rmbl_http_download"), sprintf("http://127.0.0.1:%d/f", port), withr::local_tempfile(),

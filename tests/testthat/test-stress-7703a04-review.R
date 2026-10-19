@@ -387,7 +387,7 @@ test_that("an XMSS object that still carries key_state (0.5.9 to 7703a04) is ver
 
 test_that("the refusals of the third pass are exercised: work, keys, credentials, stages", {
   # a step count that overflows the work estimate is refused before any loop runs
-  expect_error(advdif2d(matrix(1, 4, 4), 0, 0, 1, 1, 1, 1, 0.1, 1e308), "not finite")
+  expect_error(advdif2d(matrix(1, 4, 4), 0, 0, 1, 1, 1, 1, 0.1, 1e308), "below 1e300")
   # xmssadv() refuses what is not a key, not an XMSS signature, or has no index
   k <- pqckg(height = 2)
   s <- cpssign("m", k)

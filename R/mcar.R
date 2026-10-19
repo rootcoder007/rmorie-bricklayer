@@ -231,7 +231,7 @@
 #' @export
 mcartst <- function(data, maxit = 500L, tol = 1e-7) {
   maxit <- .rmbl_scalar(maxit, "maxit", 1, 1e6, integer = TRUE)
-  tol <- .rmbl_scalar(tol, "tol", 0, 1)
+  tol <- .rmbl_scalar(tol, "tol", 1e-12, 1)   # zero never converged (final audit of 1.0.0)
   if (is.matrix(data)) data <- as.data.frame(data)
   if (!is.data.frame(data)) {
     stop("`data` must be a data frame or a numeric matrix", call. = FALSE)

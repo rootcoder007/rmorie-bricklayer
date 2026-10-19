@@ -44,11 +44,12 @@ test_that("a replicate variance is the scaled sum of squared deviations", {
 
 test_that("domains keep the whole design and the native kernel reads the replicate columns", {
   R <- matrix(rep(toy$w, 4), ncol = 4) * c(1, 2, 0.5, 1.5)
-  tot <- .Call(rmoriebricklayer:::C_rmbl_svy_reptotals, cbind(toy$y, 1), unname(as.list(as.data.frame(R))))
+  tot <- .Call(rmoriebricklayer:::C_rmbl_svy_reptotals, cbind(toy$y, 1), unname(as.list(as.data.frame(R))), NULL)
   expect_equal(tot, crossprod(R, cbind(toy$y, 1)), ignore_attr = TRUE)
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_svy_reptotals, cbind(toy$y), list(1:3)), "replicate weight column 1")
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_svy_reptotals, toy$y, list(toy$w)), "double matrix")
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_svy_reptotals, cbind(toy$y), 1), "list")
+  expect_error(.Call(rmoriebricklayer:::C_rmbl_svy_reptotals, cbind(toy$y), list(1:3), NULL),
+               "replicate weight column 1")
+  expect_error(.Call(rmoriebricklayer:::C_rmbl_svy_reptotals, toy$y, list(toy$w), NULL), "double matrix")
+  expect_error(.Call(rmoriebricklayer:::C_rmbl_svy_reptotals, cbind(toy$y), 1, NULL), "list")
   des <- svydes(toy, w = "w")
   e <- svyest(des, toy, "y", by = "g")
   for (k in c("x", "y", "z")) {
@@ -263,7 +264,7 @@ test_that("a pending interrupt stops the replicate-totals kernel between replica
   # sees the signal (the replicate list holds one vector 4,000 times, so it costs 24 MB)
   got <- interrupt_probe(paste(
     "w <- as.numeric(seq_len(3e6)); y <- matrix(1, 3e6, 1);",
-    ".Call(rmoriebricklayer:::C_rmbl_svy_reptotals, y, rep(list(w), 4000L))"))
+    ".Call(rmoriebricklayer:::C_rmbl_svy_reptotals, y, rep(list(w), 4000L), NULL)"))
   skip_if(startsWith(got, "inconclusive"), got)
   expect_identical(got, "interrupt")
 })

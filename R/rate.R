@@ -380,13 +380,13 @@ shrs.data.frame <- function(x, count, by = NULL, total = NULL,
   }
   denom <- if (is.null(total)) {
     sum(agg$count, na.rm = TRUE)
-  } else if (is.character(total)) {
+  } else if (is.character(total) && length(total) == 1L && !is.na(total)) {
     if (!total %in% names(x)) {
       stop(sprintf("`total` column not found: %s", total), call. = FALSE)
     }
     sum(x[[total]], na.rm = TRUE)
   } else {
-    as.numeric(total)[1L]
+    .share_total(total, "a column name or ")
   }
   out <- .share_compute(agg, denom, conflvl)
   structure(out, class = c("rmbl_share", "data.frame"),
@@ -394,12 +394,24 @@ shrs.data.frame <- function(x, count, by = NULL, total = NULL,
                          conflvl = conflvl))
 }
 
+# one finite, non-negative number: a data frame or a vector in `total` (shrs(1e308, stops, by =
+# "division")) failed in as.numeric()'s words (hostile battery, final audit of 1.0.0)
+.share_total <- function(total, also) {
+  if (!is.numeric(total) || length(total) != 1L || !is.finite(total) || total < 0) {
+    stop(sprintf("`total` must be NULL, %sone finite non-negative number", also), call. = FALSE)
+  }
+  as.numeric(total)
+}
+
 #' @rdname shrs
 #' @export
 shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
+  if (is.null(x) || !is.atomic(x) || all(is.na(x)) || any(is.infinite(x))) {
+    stop("`x` must be finite counts (a numeric vector) or a data frame of them", call. = FALSE)
+  }
   lab <- names(x)
   x <- .rmbl_num(x, "x")
-  denom <- if (is.null(total)) sum(x, na.rm = TRUE) else as.numeric(total)[1L]
+  denom <- if (is.null(total)) sum(x, na.rm = TRUE) else .share_total(total, "")
   agg <- data.frame(count = x, stringsAsFactors = FALSE)
   # a named vector keeps its names as the first column (.rmbl_num drops them)
   if (!is.null(lab)) agg <- cbind(data.frame(label = lab, stringsAsFactors = FALSE), agg)

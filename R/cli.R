@@ -521,7 +521,8 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
   # does not make a sentence of a command's few words: "dat list?" and "conifg set openai.api_key?"
   # went to a model with it (final audit of 1.0.0, #6); a question of five words or more that opens
   # with a verb ("doctor says the data is fine, is it?") is still asked
-  if (.bl_verb_near(words[[1L]]) && (!endsWith(trimws(q), "?") || length(wordy) <= 4L)) return(FALSE)
+  # ("describe the drift test?", four words, is a question; the command lines above have three or fewer)
+  if (.bl_verb_near(words[[1L]]) && (!endsWith(trimws(q), "?") || length(wordy) <= 3L)) return(FALSE)
   # a short line naming a file is a command's argument, not a question: `urls.txt?` and `my urls.txt`
   # were sent (18 of 64 bare file names; CRAN stress test of 0.5.14). A question that names a file in
   # a sentence is still asked.

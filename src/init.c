@@ -161,6 +161,8 @@ extern SEXP C_rmbl_moments_acc(SEXP);
 extern SEXP C_rmbl_json_fast(SEXP, SEXP, SEXP);   /* rmbl_json.cpp */
 extern SEXP C_rmbl_svy_dblcode(SEXP);       /* rmbl_survey.c */
 extern SEXP C_rmbl_sha256_real(SEXP);       /* rmbl_survey.c */
+extern SEXP C_rmbl_svy_msethash(SEXP);      /* rmbl_survey.c */
+extern SEXP C_rmbl_svy_colsumm(SEXP, SEXP, SEXP, SEXP); /* rmbl_survey.c */
 extern SEXP C_rmbl_moments_merge(SEXP, SEXP);
 extern SEXP C_rmbl_reservoir(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hll_add(SEXP, SEXP, SEXP);
@@ -251,7 +253,7 @@ extern SEXP C_rmbl_check_interrupt(void);
 extern SEXP C_rmbl_progress_frame(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_progress_spinner(SEXP, SEXP);
 /* replicate totals for survey estimation (rmbl_survey.c) */
-extern SEXP C_rmbl_svy_reptotals(SEXP, SEXP);
+extern SEXP C_rmbl_svy_reptotals(SEXP, SEXP, SEXP);
 /* rmbl_progress.c: the progress bar and spinner, for LinkingTo consumers */
 extern int rmbl_progress_bar(double, double, int, int, int, int, int, int, int, char *, int);
 extern const char *rmbl_progress_spinner(double, int);
@@ -266,11 +268,13 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_json_fast",          (DL_FUNC) &C_rmbl_json_fast,          3},
     {"C_rmbl_svy_dblcode",        (DL_FUNC) &C_rmbl_svy_dblcode,        1},
     {"C_rmbl_sha256_real",        (DL_FUNC) &C_rmbl_sha256_real,        1},
+    {"C_rmbl_svy_msethash",       (DL_FUNC) &C_rmbl_svy_msethash,       1},
+    {"C_rmbl_svy_colsumm",        (DL_FUNC) &C_rmbl_svy_colsumm,        4},
     {"C_rmbl_csv_split",          (DL_FUNC) &C_rmbl_csv_split,          2},
     {"C_rmbl_check_interrupt",    (DL_FUNC) &C_rmbl_check_interrupt,    0},
     {"C_rmbl_progress_frame",     (DL_FUNC) &C_rmbl_progress_frame,     7},
     {"C_rmbl_progress_spinner",   (DL_FUNC) &C_rmbl_progress_spinner,   2},
-    {"C_rmbl_svy_reptotals",      (DL_FUNC) &C_rmbl_svy_reptotals,      2},
+    {"C_rmbl_svy_reptotals",      (DL_FUNC) &C_rmbl_svy_reptotals,      3},
     {"C_rmbl_mean",           (DL_FUNC) &C_rmbl_mean,           1},
     {"C_rmbl_mean_running",   (DL_FUNC) &C_rmbl_mean_running,   1},
     {"C_rmbl_var",            (DL_FUNC) &C_rmbl_var,            1},

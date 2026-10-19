@@ -1371,8 +1371,8 @@ synctl <- function(data, unit, time, y, treunit, adopt, plac = TRUE) {
     ws <- sol[seq_along(sup)]
     mu <- sol[length(sol)]
     if (any(ws < -1e-12)) {
+      # one column alone solves to weight 1 exactly, so the support never empties
       sup <- sup[-which.min(ws)]
-      if (!length(sup)) break
       next
     }
     w[] <- 0

@@ -145,7 +145,12 @@ weight. Warned about, because a genuine set can produce it but
 rarely does: under the bootstrap, more replicates equal to the
 full-sample weight than chance draws; under the bootstrap or
 Fay's method, a replicate within 1 percent of the weight on
-every row;
+every row, and under Fay's method one equal to it (a
+post-stratified domain whose rows sit in one PSU per stratum);
+under JK1 and JKn, one factor \eqn{k/(k - 1)} on every row with
+no row left out that more or fewer replicates than \eqn{k} carry
+(a rescaled copy beside a full set, or a lone stray; a genuine
+set carries it on exactly \eqn{k}, on a subset too);
 under JK1, JKn and BRR, a replicate that leaves no row out; a
 replicate more than ten times the weight on a typical row (a
 column on another scale, such as an outcome); and a

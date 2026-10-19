@@ -774,8 +774,10 @@ tojs <- function(x, dataframe = c("rows", "columns", "values"),
                                  null = c("list", "null"), na = c("null", "string"),
                                  auto_unbox = FALSE, digits = 4, pretty = FALSE,
                                  force = FALSE, ...) {
-  if (!is.numeric(digits) || length(digits) != 1L) {
-    stop("`digits` must be one number (NA for full precision), or I(n) for significant digits", call. = FALSE)
+  # NULL (full precision, this codec's own) and NA (15 significant digits) are documented forms
+  if (!is.null(digits) && (!(is.numeric(digits) || is.logical(digits)) || length(digits) != 1L ||
+                           (!is.na(digits) && !is.numeric(digits)))) {
+    stop("`digits` must be one number, NA for 15 significant digits, or I(n) for n", call. = FALSE)
   }
   dots <- list(...)
   o <- list(dataframe = .rmbl_arg(dataframe), matrix = .rmbl_arg(matrix),
@@ -1424,8 +1426,8 @@ fromjs <- function(txt, simplifyVector = TRUE,
       txt <- .rmbl_check_public_url(txt, "txt")
       tmp <- tempfile(fileext = ".json")
       on.exit(unlink(tmp), add = TRUE)
-      res <- .bl_net(txt, .Call(C_rmbl_http_download, txt, tmp, 60L,
-                                "Accept: application/json, text/*, */*", NULL, 16777216, FALSE))  # 16 MiB is a large JSON
+      res <- .bl_net(txt, .bl_http_download(txt, tmp, 60L, "Accept: application/json, text/*, */*", NULL,
+                                            16777216, FALSE))  # 16 MiB is a large JSON
       if (res$status < 0) stop(sprintf("%s: %s", txt, res$error), call. = FALSE)
       if (res$status >= 400) stop(sprintf("%s answered HTTP %d", txt, res$status), call. = FALSE)
       txt <- file(tmp)

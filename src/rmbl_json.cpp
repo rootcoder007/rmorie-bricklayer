@@ -190,20 +190,20 @@ SEXP string_(Parser &P) {
 SEXP number_(Parser &P) {
     const size_t st = P.i;
     if (P.p[P.i] == '-') ++P.i;
-    if (P.i >= P.n || P.p[P.i] < '0' || P.p[P.i] > '9') { P.fail = true; return R_NilValue; }
+    if (P.i >= P.n || P.p[P.i] < '0' || P.p[P.i] > '9') { return failed(P, "invalid number"); }
     if (P.p[P.i] == '0') ++P.i; else while (P.i < P.n && P.p[P.i] >= '0' && P.p[P.i] <= '9') ++P.i;
     bool isint = true;
     if (P.i < P.n && P.p[P.i] == '.') {
         isint = false;
         ++P.i;
-        if (P.i >= P.n || P.p[P.i] < '0' || P.p[P.i] > '9') { P.fail = true; return R_NilValue; }
+        if (P.i >= P.n || P.p[P.i] < '0' || P.p[P.i] > '9') { return failed(P, "invalid number"); }
         while (P.i < P.n && P.p[P.i] >= '0' && P.p[P.i] <= '9') ++P.i;
     }
     if (P.i < P.n && (P.p[P.i] == 'e' || P.p[P.i] == 'E')) {
         isint = false;
         ++P.i;
         if (P.i < P.n && (P.p[P.i] == '+' || P.p[P.i] == '-')) ++P.i;
-        if (P.i >= P.n || P.p[P.i] < '0' || P.p[P.i] > '9') { P.fail = true; return R_NilValue; }
+        if (P.i >= P.n || P.p[P.i] < '0' || P.p[P.i] > '9') { return failed(P, "invalid number"); }
         while (P.i < P.n && P.p[P.i] >= '0' && P.p[P.i] <= '9') ++P.i;
     }
     const size_t len = P.i - st;

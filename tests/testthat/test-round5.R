@@ -227,6 +227,8 @@ test_that("an email sign-in with no code typed says how to finish instead of pos
 
 test_that("the key hints name the command the user typed", {
   withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = NA, RMBL_PROG = "rmbl")
+  # a manifest an earlier test cached in this process would answer without a key
+  withr::local_options(rmoriebricklayer.dcache = withr::local_tempdir())
   expect_error(dmnf(), "`rmbl login`", fixed = TRUE)
 })
 

@@ -236,8 +236,11 @@ test_that("survey: stray replicate columns are refused or said, genuine ones pas
   # weight is (a jackknife replicate that leaves no row out is genuine on a subset or post-stratified)
   expect_warning(svydes(d, w = "w", reps = cbind(jk, rep(7, n)), type = "jk1"),
                  "one value on every row")
-  # a jackknife on a subset whose left-out PSU is elsewhere: the weight times one factor, in silence
-  expect_silent(svydes(d, w = "w", reps = cbind(jk, w * m / (m - 1)), type = "jk1"))
+  # the weight times one factor k/(k - 1) beside the k replicates that carry it: one more than k
+  # carry it, so it is a rescaled copy, said (passed in silence before the final audit of 1.0.0,
+  # #9; a genuine subset carries the factor on exactly k, see test-final-audit-1_0_0.R)
+  expect_warning(svydes(d, w = "w", reps = cbind(jk, w * m / (m - 1)), type = "jk1"),
+                 "replicates carry and leaves no row out")
   # multipliers in place of the weights (the weights here average about 40)
   mult <- boot / w
   expect_warning(svydes(d, w = "w", reps = mult, type = "bootstrap"), "multipliers")

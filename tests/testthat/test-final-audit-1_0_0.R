@@ -119,7 +119,12 @@ test_that("#9: k/(k - 1) on every row with no row out is said under JK1 and JKn"
   expect_no_warning(svydes(data.frame(w = w, y = stats::rnorm(n)), "w", reps = jk1, type = "jk1"))
   # the full data plus a column that is w * 15/14 on every row: a rescaled copy, said
   expect_warning(svydes(data.frame(w = w, y = stats::rnorm(n)), "w", reps = cbind(jk1, w * 15 / 14), type = "jk1"),
-                 "scales every row by one factor k/\\(k - 1\\) and leaves no row out")
+                 "that 16 replicates carry and leaves no row out")
+  # the same factor on a domain subset whose PSUs lie outside some replicates: k of them carry it,
+  # with or without a row out, and nothing is said
+  sub <- psu <= 5
+  jsub <- jk1[sub, ]
+  expect_no_warning(svydes(data.frame(w = w[sub], y = stats::rnorm(sum(sub))), "w", reps = jsub, type = "jk1"))
   # within 1% of the weight and k/(k - 1) for a k the set allows (B/(B - 1) with B = 16): said, not
   # refused, where w * 1.004 and w * 1.006 are refused as copies
   expect_warning(svydes(data.frame(w = w, y = stats::rnorm(n)), "w", reps = cbind(jk1, w * 16 / 15), type = "jkn",
@@ -130,7 +135,7 @@ test_that("#9: k/(k - 1) on every row with no row out is said under JK1 and JKn"
                "a copy of the full-sample weight")
 })
 
-test_that("#9: two JKn replicates equal to the weight are said, one is refused, all are refused", {
+test_that("#9: one JKn replicate equal to the weight is refused, all are refused, two are kept", {
   set.seed(6)
   n <- 24L
   w <- stats::runif(n, 1, 2)
@@ -143,10 +148,12 @@ test_that("#9: two JKn replicates equal to the weight are said, one is refused, 
   }, numeric(n))
   d <- data.frame(w = w, y = stats::rnorm(n))
   expect_no_warning(svydes(d, "w", reps = jkn, type = "jkn", rscales = rep(3 / 4, 12L)))
-  expect_error(svydes(d, "w", reps = cbind(jkn, w), type = "jkn", rscales = rep(3 / 4, 13L)), "the full-sample weight")
-  expect_warning(svydes(d, "w", reps = cbind(jkn, w, w), type = "jkn", rscales = rep(3 / 4, 14L)),
-                 "2 replicates \\(V13, V14\\) equal the full-sample weight")
-  expect_error(svydes(d, "w", reps = cbind(w, w, w), type = "jkn", rscales = rep(3 / 4, 3L)), "every replicate is the full-sample weight")
+  expect_error(svydes(d, "w", reps = cbind(jkn, V13 = w), type = "jkn", rscales = rep(3 / 4, 13L)),
+               "the full-sample weight")
+  # two equal to the weight look like a stratum left out of a subset: kept, without a word
+  expect_no_warning(svydes(d, "w", reps = cbind(jkn, V13 = w, V14 = w), type = "jkn", rscales = rep(3 / 4, 14L)))
+  expect_error(svydes(d, "w", reps = cbind(V1 = w, V2 = w, V3 = w), type = "jkn", rscales = rep(3 / 4, 3L)),
+               "every replicate is the full-sample weight")
 })
 
 # ---- #4: the manifest is read with a bound on its decoded size ---------------------------------
@@ -190,7 +197,7 @@ test_that("#5: big integers, duplicate keys and deep nesting are the fast path's
   expect_no_warning(fromjs("[9007199254740993]", bigint_warn = FALSE))
   # sixteen digits that a double holds exactly: no warning; a leading zero does not count
   expect_no_warning(expect_identical(fromjs("[9007199254740994]")[[1L]], 9007199254740994))
-  expect_no_warning(expect_identical(fromjs("[0009007199254740992]")[[1L]], 9007199254740992))
+  expect_no_warning(expect_identical(fromjs("[-9007199254740992]")[[1L]], -9007199254740992))
   expect_identical(fromjs("[-9007199254740993]", bigint_as_char = TRUE)[[1L]], "-9007199254740993")
   # a 17-digit number far beyond 2^53 that the double does not hold
   expect_warning(fromjs("[12345678901234567]"), "exceeds 2\\^53")
@@ -217,14 +224,16 @@ test_that("#5: big integers, duplicate keys and deep nesting are the fast path's
                "expected a key in double quotes")
   expect_error(fromjs(paste0("{", paste(sprintf('"k%d": 1', 1:60000), collapse = ","), ', "x" 1}')), "expected ':'")
   expect_error(fromjs(paste0("[", paste(rep("1", 1e5), collapse = ","), " 1]")), "expected ',' or '\\]'")
-  expect_error(fromjs(paste0("{", paste(sprintf('"k%d": 1', 1:60000), collapse = ","), ' "x": 1}')), "expected ',' or '\\}'")
+  big <- paste0("{", paste(sprintf('"k%d": 1', 1:60000), collapse = ","), ' "x": 1}')
+  expect_error(fromjs(big), "expected ',' or '\\}'")
   expect_error(fromjs(paste0("[", paste(rep("1", 1e5), collapse = ","), ",")), "unexpected end of the text")
   expect_error(fromjs(paste0("[", paste(rep("1", 1e5), collapse = ","), ", 9007199254740993.0]")),
                "a whole number beyond 2\\^53 written as a decimal")
   # the direct .Call refuses bytes that are not UTF-8 instead of handing back an invalid CHARSXP
   expect_error(.Call(C$C_rmbl_json_fast, rawToChar(as.raw(c(0x22, 0xff, 0x22))), FALSE, FALSE), "not valid UTF-8")
   expect_error(.Call(C$C_rmbl_json_fast, rawToChar(as.raw(c(0x22, 0xc0, 0x80, 0x22))), FALSE, FALSE), "not valid UTF-8")
-  expect_error(.Call(C$C_rmbl_json_fast, rawToChar(as.raw(c(0x22, 0xed, 0xa0, 0x80, 0x22))), FALSE, FALSE), "not valid UTF-8")
+  bad <- rawToChar(as.raw(c(0x22, 0xed, 0xa0, 0x80, 0x22)))
+  expect_error(.Call(C$C_rmbl_json_fast, bad, FALSE, FALSE), "not valid UTF-8")
   expect_error(.Call(C$C_rmbl_json_fast, rawToChar(as.raw(c(0x22, 0xf0, 0x9f))), FALSE, FALSE), "not valid UTF-8")
   expect_identical(fromjs('{"é": "ü\\u00e9\\ud83d\\ude00"}')[[1L]], "üé\U0001f600")
 })
@@ -279,10 +288,10 @@ test_that("#11: col = is checked by the field, density, Knox and leave-one-out p
   expect_error(plot(f, col = "notacolor"), "`col` must be colours")
   expect_no_error(plot(f, col = c("white", "blue")))
   p <- polex()
-  lo <- loodid(p, "district", "month", "crmrate", "refmonth")
+  lo <- loounit(p, "district", "month", "crmrate", "reformed")
   expect_error(plot(lo, col = "notacolor"), "`col` must be colours")
   expect_no_error(plot(lo, col = "steelblue"))
-  expect_no_error(plot(lo, palette = "mono"))
+  expect_no_error(plot(lo, palette = "grey"))
 })
 
 test_that("#11: smrystat() on an accumulator, stepchg() near the double's range, fylbl() of a half year", {
@@ -316,4 +325,151 @@ test_that("wall_limit() widens a bound on a loaded machine and under covr", {
   expect_identical(wall_limit(2), 100)
   withr::local_envvar(NOT_CRAN = "true", R_COVR = NA)
   expect_gte(wall_limit(2), 2)
+})
+
+test_that("#3: the row-key digests read a column as a set without sorting it", {
+  h <- function(x) .Call(C_rmbl_svy_msethash, x)
+  x <- c(3, 1, 2, 2, -0, NA, NaN, 1e300)
+  expect_identical(nchar(h(x)), 32L)
+  expect_identical(h(x), h(rev(x)))
+  expect_identical(h(x), h(sample(x)))
+  # -0 is 0 and every NaN is NA, as the row keys read them
+  expect_identical(h(c(0, 1)), h(c(-0, 1)))
+  expect_identical(h(c(NaN, 1)), h(c(NA_real_, 1)))
+  # a value edited, added or dropped changes the digest
+  expect_false(h(x) == h(replace(x, 1, 3.0000001)))
+  expect_false(h(x) == h(x[-1]))
+  expect_false(h(x) == h(c(x, 0)))
+  expect_identical(h(numeric()), h(numeric()))
+  expect_false(h(numeric()) == h(0))
+  expect_error(h(1L), "double vector")
+  # a reorder of the data is still told from an edit, and the same keys come back in another order
+  d <- data.frame(y = c(1, 2, 3, 4), w = c(1, 1, 2, 2), g = c("a", "b", "a", "b"))
+  k1 <- .svy_rowkey_digests(d)
+  k2 <- .svy_rowkey_digests(d[4:1, ])
+  expect_identical(k1$sorted, k2$sorted)
+  expect_false(identical(k1$ordered, k2$ordered))
+  expect_identical(k1$colsor, k2$colsor)
+  d$y[2] <- 2.5
+  k3 <- .svy_rowkey_digests(d)
+  expect_false(identical(k1$sorted, k3$sorted))
+  expect_false(identical(k1$colsor[["y"]], k3$colsor[["y"]]))
+  expect_identical(k1$colsor[["w"]], k3$colsor[["w"]])
+})
+
+test_that("#3: one replicate column is read against the weight in one native pass", {
+  s <- function(r, w, idv = NULL, rn = NULL) .Call(C_rmbl_svy_colsumm, as.numeric(r), as.numeric(w), idv, rn)
+  w <- c(1.5, 2, 3, 4)
+  x <- s(w, w)
+  expect_true(x$same)
+  expect_identical(x$maxrel, 0)
+  expect_false(x$anyzero)
+  expect_false(x$const)
+  expect_false(x$isid)
+  expect_false(x$isrow)
+  expect_identical(x$hk, 1:4)
+  expect_equal(x$fullfac, 1)
+  # a jackknife replicate: one row out, the others scaled by 4/3
+  r <- c(0, w[-1] * 4 / 3)
+  x <- s(r, w)
+  expect_false(x$same)
+  expect_true(x$anyzero)
+  expect_identical(x$hk, 2:4)
+  expect_equal(x$fullfac, 4 / 3)
+  expect_equal(x$maxrel, 1)
+  # the row numbers, the row names and the id's values are recognised
+  expect_true(s(1:4, w)$isrow)
+  expect_true(s(c(10, 20, 30, 40), w, rn = c(10, 20, 30, 40))$isrow)
+  expect_false(s(c(10, 20, 30, 40), w)$isrow)
+  expect_true(s(c(7, 7, 8, 9), w, idv = c(7, 7, 8, 9))$isid)
+  expect_false(s(c(7, 7, 8, 9), w, idv = c(7, 7, 8, 10))$isid)
+  expect_true(s(c(5, 5, 5, 5), w)$const)
+  # factors that differ by row: no single factor
+  expect_true(is.na(s(c(1, 2, 3, 5), w)$fullfac))
+  # no row kept: no factor and no rows
+  x <- s(c(0, 0, 0, 0), w)
+  expect_true(is.na(x$fullfac))
+  expect_identical(x$hk, integer())
+  expect_true(x$const)
+  # a weight of zero is floored, not divided by
+  x <- s(c(1, 2, 3, 4), c(0, 2, 3, 4))
+  expect_true(is.finite(x$maxrel))
+  expect_identical(x$hk, 2:4)
+  # the first 4,096 rows kept, no more
+  n <- 10000
+  x <- s(rep(2, n), rep(1, n))
+  expect_identical(x$hk, 1:4096)
+  expect_equal(x$fullfac, 2)
+  expect_identical(s(numeric(), numeric())$maxrel, 0)
+  expect_error(s(1:3, 1:2), "one length")
+  expect_error(.Call(C_rmbl_svy_colsumm, 1L, 1, NULL, NULL), "double vectors")
+  # an id of another length or type is ignored, not read out of bounds
+  expect_false(s(w, w, idv = c(1, 2))$isid)
+  expect_false(s(w, w, idv = 1:4)$isid)
+})
+
+test_that("#3: the linearized variance centres each stratum in place and matches survey", {
+  skip_if_not_installed("survey")
+  set.seed(31)
+  n <- 400
+  d <- data.frame(y = rnorm(n), x = runif(n, 1, 2), w = runif(n, 1, 3),
+                  s = rep(1:8, each = 50), p = rep(1:80, each = 5),
+                  g = sample(c("a", "b", "c"), n, TRUE), stringsAsFactors = FALSE)
+  des <- svydes(d, "w", strata = "s", psu = "p")
+  sd <- survey::svydesign(ids = ~p, strata = ~s, weights = ~w, data = d)
+  for (stat in c("mean", "total")) {
+    e <- svyest(des, d, "y", by = "g", stat = stat)
+    f <- if (stat == "mean") survey::svyby(~y, ~g, sd, survey::svymean) else survey::svyby(~y, ~g, sd, survey::svytotal)
+    expect_equal(e$estimate, unname(f$y), tolerance = 1e-10)
+    expect_equal(e$se, unname(survey::SE(f)), tolerance = 1e-8)
+  }
+  e <- svyest(des, d, "y", by = "g", stat = "ratio", den = "x")
+  f <- survey::svyby(~y, ~g, sd, survey::svyratio, denominator = ~x)
+  expect_equal(e$estimate, unname(f[[2L]]), tolerance = 1e-10)
+  expect_equal(e$se, unname(survey::SE(f)), tolerance = 1e-8)
+  e <- svyest(des, d, "g", stat = "proportion")
+  f <- survey::svymean(~g, sd)
+  expect_equal(e$estimate, unname(as.numeric(f)), tolerance = 1e-10)
+  expect_equal(e$se, unname(survey::SE(f)), tolerance = 1e-8)
+  # a lonely PSU adjusted: centred on the grand mean, as survey does
+  d2 <- d[!(d$s == 1 & d$p != 1), ]
+  old <- options(survey.lonely.psu = "adjust")
+  on.exit(options(old), add = TRUE)
+  e <- svyest(svydes(d2, "w", strata = "s", psu = "p", lonely = "adjust"), d2, "y", by = "g")
+  f <- survey::svyby(~y, ~g, survey::svydesign(ids = ~p, strata = ~s, weights = ~w, data = d2), survey::svymean)
+  expect_equal(e$se, unname(survey::SE(f)), tolerance = 1e-8)
+})
+
+test_that("#3: domains beyond one block of columns get the same variance as the closed form", {
+  # one block holds floor(2^24 / n) columns: 16,385 rows and 1,024 domains are two blocks
+  set.seed(32)
+  n <- 16385L
+  d <- data.frame(y = rnorm(n), w = runif(n, 1, 3), h = sample(sprintf("h%04d", 1:1024), n, TRUE),
+                  stringsAsFactors = FALSE)
+  des <- svydes(d, "w")
+  e <- svyest(des, d, "y", by = "h")
+  expect_identical(nrow(e), 1024L)
+  # each row its own PSU in one stratum: se^2 = n/(n - 1) * sum((z - mean z)^2) over every row, with
+  # z = w (y - est) / sum(w) on the domain's rows and 0 elsewhere
+  est <- tapply(d$w * d$y, d$h, sum) / tapply(d$w, d$h, sum)
+  D <- tapply(d$w, d$h, sum)
+  z <- d$w * (d$y - est[d$h]) / D[d$h]
+  s2 <- tapply(z^2, d$h, sum)
+  zbar <- tapply(z, d$h, sum) / n
+  se <- sqrt(n / (n - 1) * (s2 - n * zbar^2))
+  expect_equal(e$estimate, as.numeric(est[e$h]), tolerance = 1e-12)
+  expect_equal(e$se, as.numeric(se[e$h]), tolerance = 1e-10)
+})
+
+test_that("battery: shrs() refuses a total that is not one number", {
+  stops <- data.frame(division = c("N", "S"), stops = c(4, 6))
+  expect_error(shrs(1e308, stops, by = "division"), "`total` must be NULL, one finite non-negative number")
+  expect_error(shrs(stops, stops, total = stops), "`total` must be NULL, a column name or one finite")
+  expect_error(shrs(stops, stops, total = c(1, 2)), "`total` must be NULL")
+  expect_error(shrs(stops, stops, total = Inf), "`total` must be NULL")
+  expect_error(shrs(stops, stops, total = -1), "`total` must be NULL")
+  expect_error(shrs(stops, stops, total = NA_character_), "`total` must be NULL")
+  expect_error(shrs(c(5, 2), total = NaN), "`total` must be NULL")
+  expect_equal(shrs(stops, stops, by = "division", total = 20)$share, c(20, 30))
+  expect_equal(shrs(c(5, 2), total = 10L)$share, c(50, 20))
 })

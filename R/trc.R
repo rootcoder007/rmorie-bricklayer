@@ -146,9 +146,10 @@ trchlthgap <- function(health = indiex("health"),
   ref <- .rmbl_string1(ref, "ref")
   for (nm in c("health", "lifeexp", "infmort", "suiide")) {
     v <- get(nm)
+    if (is.null(v)) next
     if (!is.data.frame(v) || !all(c("group", "estimate") %in% names(v))) {
-      stop(sprintf("`%s` must be a data frame of indicators as indiex() returns it (columns group, estimate)", nm),
-           call. = FALSE)
+      stop(sprintf(paste("`%s` must be a data frame of indicators as indiex() returns them (columns group,",
+                         "estimate): the tables must be data frames or NULL"), nm), call. = FALSE)
     }
   }
   ti <- trcind()
@@ -174,7 +175,6 @@ trchlthgap <- function(health = indiex("health"),
   }
   latest <- function(p) sort(unique(p))[length(unique(p))]
   if (!is.null(health)) {
-    if (!is.data.frame(health)) stop("`health` must be a data frame or NULL", call. = FALSE)
     h <- health[health$age == "Total, 18 years and over", ]
     pr <- latest(h$period)
     for (i in which(ti$table == "13-10-0924")) {
@@ -185,14 +185,12 @@ trchlthgap <- function(health = indiex("health"),
   for (src in list(list(lifeexp, "17-10-0160"), list(infmort, "17-10-0161"))) {
     d <- src[[1L]]
     if (is.null(d)) next
-    if (!is.data.frame(d)) stop("`lifeexp` and `infmort` must be data frames or NULL", call. = FALSE)
     i <- which(ti$table == src[[2L]])
     ok <- d[is.finite(d$estimate), ]
     pr <- latest(ok$period)
     pieces[[length(pieces) + 1L]] <- one(d[d$period == pr, ], ti$measure[i], pr, ti$indicator[i], ti$better[i])
   }
   if (!is.null(suiide)) {
-    if (!is.data.frame(suiide)) stop("`suiide` must be a data frame or NULL", call. = FALSE)
     i <- which(ti$table == "41-10-0021")
     d <- suiide[suiide$measure == ti$measure[i] &
                              suiide$age == "Total, 15 years and over", ]

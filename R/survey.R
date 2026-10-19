@@ -72,10 +72,10 @@
 #' Fay's method, a replicate within 1 percent of the weight on
 #' every row, and under Fay's method one equal to it (a
 #' post-stratified domain whose rows sit in one PSU per stratum);
-#' under JKn, two or more replicates equal to the weight (a subset
-#' that leaves their stratum out); under JK1 and JKn, one factor
-#' \eqn{k/(k - 1)} on every row with no row left out (genuine only
-#' on a subset whose deleted PSU lies outside it);
+#' under JK1 and JKn, one factor \eqn{k/(k - 1)} on every row with
+#' no row left out that more or fewer replicates than \eqn{k} carry
+#' (a rescaled copy beside a full set, or a lone stray; a genuine
+#' set carries it on exactly \eqn{k}, on a subset too);
 #' under JK1, JKn and BRR, a replicate that leaves no row out; a
 #' replicate more than ten times the weight on a typical row (a
 #' column on another scale, such as an outcome); and a
@@ -238,6 +238,11 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
   # replicates passed as a matrix (re-test of the b617a3f CRAN stress fixes, 1e6 rows)
   check$rowkeys <- .svy_rowkey_digests(
     if (is.character(reps)) data[, !(names(data) %in% reps), drop = FALSE] else data)
+  # the data frame the last check passed on, held by reference (no copy) in an environment the
+  # design keeps: the next estimate on the same object skips the digests, which were recomputed on
+  # every estimate (21 s each at 5e6 rows; final audit of 1.0.0). An edited data frame is another
+  # object to R (copy on modify), so identical() is the whole test.
+  check$cache <- new.env(parent = emptyenv())
   des <- list(n = n, weights = .w, type = NULL, scale = NULL, mse = mse, reps = NULL, strata = NULL,
               psu = NULL, fpc = NULL, lonely = lonely, check = check, degf = degf)
   if (!is.null(reps)) {
@@ -265,10 +270,37 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
       # method and read wrongly
       # whether the columns came with names (as.data.frame invents V1, V2, ... for a bare matrix)
       named <- !is.null(colnames(reps)) && any(nzchar(colnames(reps)))
-      if (is.matrix(reps)) reps <- as.data.frame.matrix(unclass(reps))
-      if (!is.data.frame(reps)) {
+      # a double matrix is kept as it is and its columns read in place: a list copied from it was
+      # a second 800 MB at 5e6 rows and 20 replicates, and the design failed under 3 GB where the
+      # same replicates by name passed (final audit of 1.0.0). One with an id, or not double, goes
+      # the data frame way.
+      keep_matrix <- is.matrix(reps) && is.double(reps) && is.null(id)
+      if (is.matrix(reps) && !keep_matrix) reps <- as.data.frame.matrix(unclass(reps))
+      if (keep_matrix) {
+        reps <- unclass(reps)
+        if (nrow(reps) != n) stop(sprintf("`reps` must have one row per row of `data` (%d)", n), call. = FALSE)
+        if (is.character(w) && length(w) == 1L && w %in% colnames(reps)) {
+          for (i in which(colnames(reps) == w)) {
+            if (any(abs(reps[, i] - .w) > 1e-12 * pmax(abs(.w), .Machine$double.xmin))) {
+              stop(sprintf(paste("column %s of `reps` has the full weight's name but not its values: rename",
+                                 "it, or give only the replicate columns"), w), call. = FALSE)
+            }
+          }
+          reps <- reps[, colnames(reps) != w, drop = FALSE]
+        }
+        # not named here: setting dimnames on the caller's matrix copied it (762.9 MB at 5e6 x 20)
+        for (j in seq_len(ncol(reps))) {
+          r <- reps[, j]
+          if (anyNA(r) || any(!is.finite(r)) || any(r < 0)) {
+            stop("replicate weights must be finite, non-negative and not missing", call. = FALSE)
+          }
+        }
+        .reps <- reps
+      }
+      if (!keep_matrix && !is.data.frame(reps)) {
         stop("`reps` must be a data frame, a matrix or column names", call. = FALSE)
       }
+      if (!keep_matrix) {
       if (!is.null(id)) {
         if (!is.character(id) || length(id) != 1L || !id %in% names(data) || !id %in% names(reps)) {
           stop("`id` must name a column present in both `data` and `reps`", call. = FALSE)
@@ -309,21 +341,24 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
       }
       .reps <- as.list(reps)
       if (is.null(names(.reps)) || any(!nzchar(names(.reps)))) names(.reps) <- sprintf("V%d", seq_along(.reps))
-    }
-    bad <- which(!vapply(.reps, is.numeric, NA))
-    if (length(bad)) {
-      stop(sprintf("not a replicate weight: %s (not numbers); give only the replicate columns",
-                   names(.reps)[[bad[[1L]]]]), call. = FALSE)
-    }
-    .reps <- lapply(.reps, function(r) {
-      if (anyNA(r) || any(!is.finite(r)) || any(r < 0)) {
-        stop("replicate weights must be finite, non-negative and not missing", call. = FALSE)
       }
-      as.numeric(r)
-    })
+    }
+    if (!is.matrix(.reps)) {
+      bad <- which(!vapply(.reps, is.numeric, NA))
+      if (length(bad)) {
+        stop(sprintf("not a replicate weight: %s (not numbers); give only the replicate columns",
+                     names(.reps)[[bad[[1L]]]]), call. = FALSE)
+      }
+      .reps <- lapply(.reps, function(r) {
+        if (anyNA(r) || any(!is.finite(r)) || any(r < 0)) {
+          stop("replicate weights must be finite, non-negative and not missing", call. = FALSE)
+        }
+        as.numeric(r)
+      })
+    }
     .svy_replicate_check(.reps, .w, type, data, id_values, attr(data, "row.names"), named)
-    .reps <- unname(.reps)
-    B <- length(.reps)
+    if (!is.matrix(.reps)) .reps <- unname(.reps)
+    B <- if (is.matrix(.reps)) ncol(.reps) else length(.reps)
     if (B < 2L) stop("at least two replicate weights are needed", call. = FALSE)
     if (type == "jkn" && is.null(rscales)) {
       stop("type = \"jkn\" needs `rscales`: (n_h - 1) / n_h for the stratum each replicate deletes from",
@@ -364,10 +399,10 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
     # values within 1e-5 of the largest count), which is the B x B problem: a QR of the n x B matrix
     # took 16 s for CSUS's 36,180 x 1,000
     if (is.null(des$degf)) {
-      B <- length(.reps)
       # the replicates scaled by their largest value: a replicate of 1e308 overflowed the
       # cross-product to Inf and eigen() failed in its own words (final audit of 1.0.0, #8)
-      sc <- max(vapply(.reps, function(r) if (length(r)) max(abs(r)) else 0, 0))
+      sc <- if (is.matrix(.reps)) max(0, vapply(seq_len(B), function(j) max(abs(.reps[, j])), 0)) else
+        max(vapply(.reps, function(r) if (length(r)) max(abs(r)) else 0, 0))
       if (!is.finite(sc) || sc == 0) sc <- 1
       # the rank is at most min(n, B): the smaller Gram matrix is the one read. B replicates on n rows
       # with B > n (n = 20, B = 1e5) built a B x B product that asked for 74.5 GB and B = 5,000 took
@@ -378,13 +413,16 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
         cp <- matrix(0, B, B)
         for (st in if (n > 0L) seq(1L, n, by = 262144L)) {
           idx <- st:min(n, st + 262143L)
-          cp <- cp + crossprod(vapply(.reps, function(r) r[idx] / sc, numeric(length(idx))))
+          blk <- if (is.matrix(.reps)) .reps[idx, , drop = FALSE] / sc else
+            vapply(.reps, function(r) r[idx] / sc, numeric(length(idx)))
+          cp <- cp + crossprod(blk)
         }
       } else {
         cp <- matrix(0, n, n)
         for (st in seq(1L, B, by = 4096L)) {
           idx <- st:min(B, st + 4095L)
-          m <- vapply(.reps[idx], function(r) r / sc, numeric(n))
+          m <- if (is.matrix(.reps)) .reps[, idx, drop = FALSE] / sc else
+            vapply(.reps[idx], function(r) r / sc, numeric(n))
           cp <- cp + tcrossprod(m)
         }
       }
@@ -425,8 +463,11 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
 .svy_df <- function(des) {
   if (!is.null(des$degf)) return(des$degf)
   if (identical(des$type, "linearization")) length(unique(des$psu)) - length(unique(des$strata)) else
-    length(des$reps) - 1L
+    .svy_nrep(des) - 1L
 }
+
+# the number of replicates a design holds (a list of columns, or a matrix kept as given)
+.svy_nrep <- function(des) if (is.matrix(des$reps)) ncol(des$reps) else length(des$reps)
 
 # The data must be the rows the design was built on, in the same order
 .svy_check_data <- function(design, data) {
@@ -435,6 +476,8 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
   }
   ck <- design$check
   if (is.null(ck)) return(invisible())
+  cache <- ck$cache
+  if (is.environment(cache) && !is.null(cache$last) && identical(data, cache$last)) return(invisible())
   same_cols <- all(vapply(names(ck$cols), function(k) {
     cn <- ck$cols[[k]]
     cn %in% names(data) && identical(data[[cn]], ck$values[[k]])
@@ -489,6 +532,8 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
     stop(paste("`data` is not the data frame the design was built on (its rows are in another order, or",
                "its weight, strata or PSU columns differ): build the design on this data"), call. = FALSE)
   }
+  if (is.environment(cache)) cache$last <- data
+  invisible()
 }
 
 # One number per row that does not depend on the row order: each column's values coded by their
@@ -527,7 +572,9 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
     k <- fold(k * 1000003 + code)
     code <- as.numeric(code)
     co[[nm[[i]]]] <- .Call(C_rmbl_sha256_real, code)
-    cs[[nm[[i]]]] <- .Call(C_rmbl_sha256_real, sort(code, method = "radix"))
+    # the column as a set of values: an order-independent digest, not the sorted column's (the sort
+    # copied the column and asked for working memory as long again; final audit of 1.0.0, #3)
+    cs[[nm[[i]]]] <- .Call(C_rmbl_svy_msethash, code)
     ci[[nm[[i]]]] <- n > 0L && any(code != code[[1L]])
   }
   # each column on its own as well, in order and as a set, and whether it holds more than one
@@ -535,7 +582,7 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
   # the keys themselves as well (one double a row): what .svy_check_data() reads when a cell was
   # edited since, to tell rows that moved from rows that changed
   list(cols = cols, ordered = .Call(C_rmbl_sha256_real, k),
-       sorted = .Call(C_rmbl_sha256_real, sort(k, method = "radix")), keys = k,
+       sorted = .Call(C_rmbl_svy_msethash, k), keys = k,
        colord = unlist(co), colsor = unlist(cs), colinf = unlist(ci))
 }
 
@@ -550,19 +597,26 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
 # unnamed matrix, which has no names to compare (reviews of 46de6a9).
 .svy_replicate_check <- function(reps, w, type, data, id_values = NULL, row_names = NULL, named = TRUE) {
   n <- length(w)
-  rown <- as.numeric(seq_len(n))
+  # the replicates as a list of columns or as the matrix given: each column read in place, ONCE.
+  # Every rule below reads a summary of the column made on that one pass (the earlier five passes
+  # over 20 columns of 5e6 rows were 4 GB of transient copies and 17 s; final audit of 1.0.0)
+  B <- if (is.matrix(reps)) ncol(reps) else length(reps)
+  rnm <- if (is.matrix(reps)) colnames(reps) else names(reps)
+  if (is.null(rnm)) rnm <- sprintf("V%d", seq_len(B))
+  rnm[!nzchar(rnm)] <- sprintf("V%d", seq_len(B))[!nzchar(rnm)]
+  getcol <- function(b) if (is.matrix(reps)) reps[, b] else reps[[b]]
   rn <- if (is.numeric(row_names)) as.numeric(row_names) else NULL
   idv <- if (is.numeric(id_values)) as.numeric(id_values) else NULL
   refuse <- function(b, what) {
     stop(sprintf("replicate %s is %s, not a replicate weight; give only the replicate columns",
-                 names(reps)[[b]] %||% b, what), call. = FALSE)
+                 rnm[[b]] %||% b, what), call. = FALSE)
   }
   numcols <- Filter(is.numeric, as.list(data))
   key <- function(v) c(v[1L], v[n], sum(v))
   keys <- lapply(numcols, function(v) key(as.numeric(v)))
   warned <- character()
   equal <- integer()
-  B <- length(reps)
+  wvaries <- n > 0L && max(w) != min(w)
   # the factors r / w a replicate applies on the rows it keeps. Unadjusted, a jackknife or BRR
   # replicate has at most three (0 aside: 1, n / (n - 1), 2) and a bootstrap a handful of counts;
   # post-stratified or calibrated, each row has its own. Read on the set, by majority, so one stray
@@ -571,19 +625,50 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
   # stratification brings it back to the weight): 18 post-stratified and 4 JKn calibrated designs were
   # refused, and 16 bootstrap and BRR subsets warned about (re-test of the b617a3f CRAN stress fixes)
   # read on the first 4,096 rows each keeps: an adjustment shows there as well as anywhere, and the
-  # whole column took a second a million rows
-  head_kept <- function(r) utils::head(which(r > 0 & w > 0), 4096L)
-  nfac <- function(r) {
-    k <- head_kept(r)
-    if (!length(k)) return(0L)
-    length(unique(signif(r[k] / w[k], 9)))
+  # whole column took a second a million rows. The pass over the column is in C, with nothing
+  # allocated as long as it (the R pass held 340 MB per column at 5e6 rows; final audit of 1.0.0, #3)
+  pg <- blprog("checking replicate weights", B)
+  on.exit(pg$done(), add = TRUE)
+  summ <- vector("list", B)
+  i8 <- seq_len(min(n, 8192L))
+  w8 <- pmax(w[i8], .Machine$double.xmin)
+  for (b in seq_len(B)) {
+    pg$update(b - 1L, sprintf("replicate %d/%d", b, B))
+    r <- getcol(b)
+    s <- .Call(C_rmbl_svy_colsumm, r, w, idv, rn)
+    hk <- s$hk
+    fh <- unique(signif(r[hk] / w[hk], 9))
+    # one factor on every row kept (no hashing of the column)
+    fullfac <- if (!is.na(s$fullfac) && signif(s$fullfac, 9) != 1) signif(s$fullfac, 9) else NA_real_
+    fnz <- fh[fh != 1]
+    summ[[b]] <- list(
+      same = s$same,
+      maxrel = s$maxrel,
+      anyzero = s$anyzero,
+      const = s$const,
+      total = sum(r),
+      key = key(r),
+      isid = s$isid,
+      isrow = s$isrow,
+      nfac = length(fh),
+      fh = fh,
+      f1 = if (length(fh) == 1L) fh else NA_real_,
+      fac = if (length(fnz) == 1L) fnz else NA_real_,
+      fullfac = fullfac,
+      counts = length(hk) > 0L && all(abs(fh - round(fh)) < 1e-9),
+      # the factors on the first rows, zeros included (a BRR replicate keeps one PSU of each pair)
+      nfac_all = length(unique(signif(r[i8] / w8, 9))),
+      typical = if (length(hk)) stats::median(r[hk] / w[hk]) else NA_real_)
   }
+  flags <- c("same", "anyzero", "const", "isid", "isrow", "counts")
+  get <- function(what) vapply(summ, function(x) x[[what]], if (what %in% flags) NA else 0)
+  same <- get("same")
+  inf_idx <- which(!same)
   # jackknife and BRR: a factor off the lattice 1, 2, k / (k - 1) is an adjustment's (three post-strata
   # give few factors, but not these); a bootstrap's counts are many, so there it is their number
-  off_lattice <- function(r) {
-    k <- head_kept(r)
-    if (!length(k)) return(FALSE)
-    f <- unique(signif(r[k] / w[k], 9))
+  off_lattice <- function(b) {
+    f <- summ[[b]]$fh
+    if (!length(f)) return(FALSE)
     # whole numbers are counts (a bootstrap set called a jackknife), never an adjustment's factors
     f <- f[abs(f - round(f)) > 1e-9]
     if (!length(f)) return(FALSE)
@@ -594,8 +679,6 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
   # adjustment, and on a post-stratum subset most are (each deletes a PSU with no row there, and
   # post-stratification brings the rest back to the weight): the set read as unadjusted and was
   # refused (apiclus1 JK1 post-stratified on stype, rows of H; CRAN stress test of 0.5.14, #5)
-  same <- vapply(reps, function(r) identical(r, w) || all(abs(r - w) < 1e-12 * pmax(w, .Machine$double.xmin)), NA)
-  inf <- reps[!same]
   # JK1 unadjusted scales every row a replicate keeps by one factor, n / (n - 1), the same in all n
   # of them (n PSUs): the factor that most replicates share, held by exactly n of them. A
   # stray column beside them (the weight, a jittered copy) leaves that intact. Post-stratified, the
@@ -603,11 +686,7 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
   # k / (k - 1), but not shared by k replicates), and the set is adjusted (CRAN stress test of
   # 0.5.14, #5)
   jk1_unadjusted <- function() {
-    f1 <- vapply(inf, function(r) {
-      k <- head_kept(r)
-      f <- unique(signif(r[k] / w[k], 9))
-      if (length(f) == 1L) f else NA_real_
-    }, 0)
+    f1 <- get("f1")[inf_idx]
     u <- unique(f1[!is.na(f1)])
     if (!length(u)) return(FALSE)
     cnt <- tabulate(match(f1, u), length(u))
@@ -616,49 +695,48 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
     # the k of k / (k - 1) is the number of replicates sharing the factor, or the number of those
     # that leave a row out: the full data plus a column w * 15/14 made 16 of a factor whose k is 15,
     # and the set read as adjusted, so the copy passed silently (final audit of 1.0.0, #9)
-    out <- vapply(inf, function(r) any(r == 0 & w > 0), NA)
+    out <- get("anyzero")[inf_idx]
     nout <- sum(out & !is.na(f1) & f1 == c1)
     k <- c1 / (c1 - 1)
     nm > B / 2 && c1 > 1 && (abs(k - nm) < 1e-6 * nm || abs(k - nout) < 1e-6 * max(nout, 1))
   }
-  # whole-number factors are a bootstrap's counts (a bootstrap set called a jackknife), never an
-  # adjustment's
-  counts <- function() {
-    sum(vapply(inf, function(r) {
-      k <- head_kept(r)
-      f <- r[k] / w[k]
-      all(abs(f - round(f)) < 1e-9)
-    }, NA)) > length(inf) / 2
-  }
-  adjusted <- length(inf) > 0L && if (identical(type, "jk1")) {
-    !jk1_unadjusted() && !counts()
+  adjusted <- length(inf_idx) > 0L && if (identical(type, "jk1")) {
+    # whole-number factors are a bootstrap's counts (a bootstrap set called a jackknife), never an
+    # adjustment's
+    !jk1_unadjusted() && !(sum(get("counts")[inf_idx]) > length(inf_idx) / 2)
   } else if (type %in% c("jkn", "brr")) {
-    sum(vapply(inf, off_lattice, NA)) > length(inf) / 2
+    sum(vapply(inf_idx, off_lattice, NA)) > length(inf_idx) / 2
   } else {
-    sum(vapply(inf, nfac, 0L) > 8L) > length(inf) / 2
+    sum(get("nfac")[inf_idx] > 8L) > length(inf_idx) / 2
   }
   # a jackknife replicate whose deleted PSU is outside the rows scales every row by one factor
   # k / (k - 1), and 1 elsewhere: JK1 with k the number of replicates (n PSUs), JKn with k the PSUs of
   # its stratum, post-stratified JK1 with k those of the post-stratum.
   # With 101 PSUs or more that is within 1% of the weight, and it was refused as a copy on 15 JK1
   # domain subsets (re-test of the b617a3f CRAN stress fixes)
-  jk_scale <- function(r) {
-    # both callers reach it with a row of the weight left in, so k is never empty
-    k <- r > 0 & w > 0
-    f <- unique(signif(r[k] / w[k], 9))
-    f <- f[f != 1]
-    if (length(f) != 1L || f <= 1) return(FALSE)
+  jk_scale <- function(b) {
+    f <- summ[[b]]$fullfac
+    if (is.na(f) || f <= 1) return(FALSE)
     m <- f / (f - 1)
     # post-stratified JK1 has its post-stratum's k, not the number of replicates
     abs(m - round(m)) < 1e-6 * m && round(m) <= B
   }
-  pg <- blprog("checking replicate weights", length(reps))
-  on.exit(pg$done(), add = TRUE)
-  for (b in seq_along(reps)) {
-    pg$update(b - 1L, sprintf("replicate %d/%d", b, length(reps)))
-    r <- reps[[b]]
-    nm <- names(reps)[[b]] %||% as.character(b)
-    if (same[[b]]) {
+  # the factor each unadjusted jackknife replicate applies to the rows it keeps, and how many
+  # carry it: a genuine set carries a factor k/(k - 1) on exactly k replicates (those whose PSU lies
+  # in a subset have a row out, the others not), so a no-row-out replicate whose factor is carried
+  # by more or fewer than k is a stray: the full data plus w * 15/14 (16 of a factor whose k is 15)
+  # and w * 1.005 beside 200 JKn replicates (1 of a factor whose k is 200) passed silently (final
+  # audit of 1.0.0, #9)
+  fac_of <- if (!adjusted && type %in% c("jk1", "jkn")) get("fac") else rep(NA_real_, B)
+  fac_cnt <- function(f) sum(!is.na(fac_of) & fac_of == f)
+  stray_scale <- function(b) {
+    f <- summ[[b]]$fullfac   # above 1: only asked after jk_scale(b)
+    abs(f / (f - 1) - fac_cnt(f)) > 1e-6 * max(1, fac_cnt(f))
+  }
+  for (b in seq_len(B)) {
+    x <- summ[[b]]
+    nm <- rnm[[b]] %||% as.character(b)
+    if (x$same) {
       # a JKn replicate deletes a PSU of one stratum and leaves every other stratum's rows at the
       # weight: on a subset of other strata it is the weight, legitimately (refused on 72% of JKn
       # stratum subsets that survey estimates; CRAN stress test of b617a3f, #7). A stratum has two
@@ -677,47 +755,50 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
     # every row within 1% of the weight, not equal to it: a rounded, jittered or single-precision
     # copy. A jackknife or BRR replicate zeroes the PSUs it leaves out, so there it cannot be one;
     # under a bootstrap or Fay's method it is said
-    rel <- abs(r - w) / pmax(w, .Machine$double.xmin)
-    if (all(rel < 0.01)) {
-      if (adjusted || (type %in% c("jk1", "jkn") && jk_scale(r))) {
+    if (x$maxrel < 0.01) {
+      if (adjusted || (type %in% c("jk1", "jkn") && jk_scale(b))) {
         # genuine: see `adjusted` and jk_scale() above. One factor k / (k - 1) on every row with no row
-        # left out is genuine only on a subset whose deleted PSU lies outside it; on the full data it
-        # is a rescaled copy (w * 1.005 under JKn and w * 15/14 under JK1 passed silently; final audit
-        # of 1.0.0, #9): said
-        if (!adjusted && !any(r == 0 & w > 0)) {
-          warned <- c(warned, sprintf(paste("replicate %s scales every row by one factor k/(k - 1) and leaves",
-                                            "no row out: genuine on a subset whose deleted PSU lies outside",
-                                            "it, a rescaled copy of the full-sample weight otherwise"), nm))
+        # left out is genuine only on a subset whose deleted PSU lies outside it; carried by more or
+        # fewer replicates than its k it is a rescaled copy (w * 1.005 under JKn and w * 15/14 under
+        # JK1 passed silently; final audit of 1.0.0, #9): said
+        if (!adjusted && !x$anyzero && stray_scale(b)) {
+          warned <- c(warned, sprintf(paste("replicate %s scales every row by one factor k/(k - 1) that %d",
+                                            "replicates carry and leaves no row out: a rescaled copy of the",
+                                            "full-sample weight, not a replicate of this set"),
+                                      nm, fac_cnt(fac_of[[b]])))
         }
       } else if (type %in% c("jk1", "jkn", "brr")) {
         refuse(b, "a copy of the full-sample weight (within 1% on every row)")
       } else {
         warned <- c(warned, sprintf("replicate %s is within 1%% of the full-sample weight on every row", nm))
       }
-    } else if (!adjusted && identical(type, "brr") && !any(r == 0 & w > 0) &&
-                 length(unique(signif(r / pmax(w, .Machine$double.xmin), 9))) > 2L) {
+    } else if (!adjusted && identical(type, "brr") && !x$anyzero && x$nfac_all > 2L) {
       # a BRR replicate keeps one PSU of every stratum pair (the other's rows are 0) and doubles it.
       # A jackknife replicate on a subset may leave out a PSU outside it, and post-stratified or
       # calibrated it scales each row by its own factor: no row out and many factors is genuine
       # there, and was said falsely (CRAN stress test of b617a3f, #8)
       warned <- c(warned, sprintf("replicate %s leaves no row out and is no rescaled weight, as a %s replicate is",
                                   nm, toupper(type)))
-    } else if (length(unique(r)) == 1L && length(unique(w)) > 1L) {
+    } else if (x$const && wvaries) {
       # one value on every row while the weight varies: no multiplier of the weight makes it
       warned <- c(warned, sprintf("replicate %s is one value on every row, which the full-sample weight is not", nm))
-    } else if (!adjusted && type %in% c("jk1", "jkn") && !any(r == 0 & w > 0)) {
+    } else if (!adjusted && type %in% c("jk1", "jkn") && !x$anyzero) {
       # a jackknife replicate deletes a PSU: on rows that keep every PSU it is one factor k / (k - 1)
       # (and 1 on other strata under JKn), as documented, and that is genuine only on a subset whose
       # deleted PSU lies outside it (the full data plus w * 15/14 passed silently; final audit of
       # 1.0.0, #9); anything else that leaves no row out is said (the warning the Rd promises was
       # not given; re-test of the b617a3f CRAN stress fixes)
-      warned <- c(warned, if (jk_scale(r)) {
-        sprintf(paste("replicate %s scales every row by one factor k/(k - 1) and leaves no row out: genuine",
-                      "on a subset whose deleted PSU lies outside it, a rescaled copy of the full-sample",
-                      "weight otherwise"), nm)
+      if (jk_scale(b)) {
+        if (stray_scale(b)) {
+          warned <- c(warned, sprintf(paste("replicate %s scales every row by one factor k/(k - 1) that %d",
+                                            "replicates carry and leaves no row out: a rescaled copy of the",
+                                            "full-sample weight, not a replicate of this set"),
+                                      nm, fac_cnt(fac_of[[b]])))
+        }
       } else {
-        sprintf("replicate %s leaves no row out and is no rescaled weight, as a %s replicate is", nm, toupper(type))
-      })
+        warned <- c(warned, sprintf("replicate %s leaves no row out and is no rescaled weight, as a %s replicate is",
+                                    nm, toupper(type)))
+      }
     }
     # a replicate weight is the weight times a multiplier of a few at most on a typical row (a bootstrap
     # PSU drawn k times, 0 or n / (n - 1) for a jackknife, 0 or 2 for BRR); a column ten times the
@@ -726,24 +807,22 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
     # rows is drawn ten times (about 1e-7 a replicate)
     # A tenth of the weight is another scale too: a normalised weight pw / mean(pw) or one of
     # survey's multiplier columns passed silently and multiplied the SE of a total by 3.5 (CRAN
-    # stress test of b617a3f, #9). Read on the rows the replicate keeps (BRR zeroes half of them);
-    # Fay's 1 - rho can be small, so the lower bound is not applied there
-    kept <- r > 0 & w > 0
-    typical <- if (any(kept)) stats::median(r[kept] / w[kept]) else NA_real_
+    # stress test of b617a3f, #9). Read on the first 4,096 rows the replicate keeps (BRR zeroes half
+    # of them); Fay's 1 - rho can be small, so the lower bound is not applied there
+    typical <- x$typical
     if (is.finite(typical) && (typical > 10 || (typical < 0.1 && !identical(type, "fay")))) {
       warned <- c(warned, sprintf("replicate %s is %.3g times the full-sample weight on a typical row", nm, typical))
     }
-    if (!is.null(idv) && identical(r, idv)) refuse(b, "the id")
-    if (identical(r, rown) || (!is.null(rn) && identical(r, rn))) refuse(b, "the row number")
+    if (x$isid) refuse(b, "the id")
+    if (x$isrow) refuse(b, "the row number")
     if (!named) next
-    kr <- key(r)
     # the other replicates passed are not strays: two genuine replicates can be identical (common
     # in JK1 and BRR subsets and small bootstraps; 216 of 2,400 designs refused, CRAN stress test of
     # b617a3f, #1)
     # a column of `data` under its own name was asked for (a genuine replicate kept in `data` is one;
     # reviews of 46de6a9, b617a3f #1, e57fed5 E9); the same values under another name are a stray
-    for (cn in setdiff(names(numcols), names(reps))) {
-      if (identical(kr, keys[[cn]]) && identical(r, as.numeric(numcols[[cn]]))) {
+    for (cn in setdiff(names(numcols), rnm)) {
+      if (identical(x$key, keys[[cn]]) && identical(getcol(b), as.numeric(numcols[[cn]]))) {
         refuse(b, sprintf("column %s of `data`", cn))
       }
     }
@@ -757,35 +836,34 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
   # replicates than that makes (a Poisson tail under 1e-4) means the weight itself was passed beside
   # them: said, not refused (kept silently, SE 0.270 for 0.284; statistics stress test of 5e1dce5).
   # The PSUs are read from the replicates: the rows of one PSU share their multiplier in every one
-  if (identical(type, "jkn") && length(equal) == length(reps)) {
+  if (identical(type, "jkn") && length(equal) == B) {
     stop("every replicate is the full-sample weight: give the replicate weights", call. = FALSE)
   }
   # one JKn replicate equal to the weight: a stratum left out of a subset leaves all its (two or
   # more) replicates at the weight, so a single one is the weight passed beside them (accepted;
   # re-test of the b617a3f CRAN stress fixes)
   if (identical(type, "jkn") && !adjusted && length(equal) == 1L) refuse(equal[[1L]], "the full-sample weight")
-  if (identical(type, "jkn") && !adjusted && length(equal) >= 2L && length(equal) < length(reps)) {
-    # genuine on a subset that leaves their stratum out, copies on the full data (two exact copies
-    # passed silently; final audit of 1.0.0, #9)
-    warned <- c(warned, sprintf(paste("%d replicates (%s) equal the full-sample weight: genuine on a subset",
-                                      "that leaves their stratum out, copies of the weight otherwise"),
-                                length(equal), paste(names(reps)[equal], collapse = ", ")))
-  }
+  # two or more JKn replicates equal to the weight are kept: a stratum left out of a subset leaves
+  # all of its replicates at the weight, and two copies of it look the same (documented)
   if (length(equal) && identical(type, "bootstrap") && !adjusted) {
-    z <- cos(seq_along(reps))
+    z <- cos(seq_len(B))
     sig <- numeric(n)
-    for (b in seq_along(reps)) sig <- sig + z[[b]] * reps[[b]] / pmax(w, .Machine$double.xmin)
-    key <- signif(sig, 10)
-    m <- length(unique(key))
     top <- numeric(n)
     pos <- w > 0
-    for (b in seq_along(reps)) top[pos] <- pmax(top[pos], reps[[b]][pos] / w[pos])
+    wpos <- pmax(w, .Machine$double.xmin)
+    for (b in seq_len(B)) {
+      r <- getcol(b)
+      sig <- sig + z[[b]] * r / wpos
+      top[pos] <- pmax(top[pos], r[pos] / w[pos])
+    }
+    key <- signif(sig, 10)
+    m <- length(unique(key))
     size <- pmax(2, round(tapply(top, key, max)))
-    expect <- length(reps) * exp(sum((lfactorial(size) - size * log(size)) / size))
+    expect <- B * exp(sum((lfactorial(size) - size * log(size)) / size))
     if (stats::ppois(length(equal) - 1L, expect, lower.tail = FALSE) < 1e-4) {
       warned <- c(warned, sprintf(paste("%d replicate(s) equal the full-sample weight (%s), more than a",
                                         "bootstrap of %d PSUs draws"),
-                                  length(equal), paste(utils::head(names(reps)[equal], 3L), collapse = ", "), m))
+                                  length(equal), paste(utils::head(rnm[equal], 3L), collapse = ", "), m))
     }
   }
   # the set as a whole: replicate weights total, on average, what the weight totals (jackknife and
@@ -793,7 +871,7 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
   # replicate). An average a tenth of that or ten times it is survey's multipliers ($repweights) or
   # another scale passed in place of the weights (accepted silently: SE 20.16 for 28.28 on apiclus2;
   # statistics stress test of 5e1dce5)
-  ratio <- mean(vapply(reps, sum, 0)) / sum(w)
+  ratio <- mean(get("total")) / sum(w)
   if (is.finite(ratio) && (ratio < 0.1 || ratio > 10)) {
     # first: it explains the per-replicate lines that follow, which the five shown would cut off
     warned <- c(sprintf(paste("the replicates total %.3g times the full-sample weight: multipliers",
@@ -822,24 +900,46 @@ print.rmbl_svy_design <- function(x, ...) {
       jkn = "stratified jackknife (JKn)",
       brr = "balanced repeated replication",
       fay = sprintf("Fay's BRR (rho = %g)", x$rho))
-    cat(sprintf("Variance: %d replicate weights, %s; scale %.6g, %s\n", length(x$reps), lab, x$scale,
+    cat(sprintf("Variance: %d replicate weights, %s; scale %.6g, %s\n", .svy_nrep(x), lab, x$scale,
                 if (x$mse) "centred on the full-sample estimate" else "centred on the replicate mean"))
   }
   invisible(x)
 }
 
 # The estimates and their covariance. Every estimate is a total A (stat "total") or a ratio A / D of
-# weighted totals; `num` and `den` are n x k matrices of the per-row values entering each.
+# weighted totals; `num` and `den` are n x k matrices of the per-row values entering each, or `num`
+# is the column spec of .svy_columns(), whose k columns are read as the rows of their domain only:
+# n x k matrices for the numerators, the denominators and their products with the weights were
+# 1.9 GB of heap for a mean over 50 domains at a million rows (final audit of 1.0.0).
 .svy_core <- function(des, num, den) {
   w <- des$weights
-  A <- colSums(w * num)
-  D <- if (is.null(den)) NULL else colSums(w * den)
-  est <- if (is.null(den)) A else A / D
-  k <- ncol(num)
-  if (!is.null(des$reps)) {
-    tot <- .Call(C_rmbl_svy_reptotals, cbind(num, den), des$reps)
-    th <- if (is.null(den)) tot[, seq_len(k), drop = FALSE] else
-      tot[, seq_len(k), drop = FALSE] / tot[, k + seq_len(k), drop = FALSE]
+  n <- length(w)
+  spec <- inherits(num, "rmbl_svy_colspec")
+  k <- if (spec) num$k else ncol(num)
+  has_den <- if (spec) num$stat != "total" else !is.null(den)
+  replicate <- !is.null(des$reps)
+  # one column as the rows it has: the row indices, the numerator and the denominator there
+  column <- if (spec) function(j) .svy_colpair(num, j) else function(j) {
+    list(idx = seq_len(n), num = num[, j], den = if (has_den) den[, j])
+  }
+  A <- numeric(k)
+  D <- if (has_den) numeric(k) else NULL
+  if (replicate) {
+    B <- .svy_nrep(des)
+    tn <- matrix(0, B, k)
+    td <- if (has_den) matrix(0, B, k) else NULL
+    for (j in seq_len(k)) {
+      cj <- column(j)
+      wj <- w[cj$idx]
+      A[j] <- sum(wj * cj$num)
+      if (has_den) D[j] <- sum(wj * cj$den)
+      t <- .Call(C_rmbl_svy_reptotals, if (has_den) cbind(cj$num, cj$den) else cbind(cj$num), des$reps,
+                 if (length(cj$idx) == n) NULL else cj$idx)
+      tn[, j] <- t[, 1L]
+      if (has_den) td[, j] <- t[, 2L]
+    }
+    est <- if (has_den) A / D else A
+    th <- if (has_den) tn / td else tn
     centre <- if (des$mse) est else colMeans(th)
     dev <- sweep(th, 2L, centre)
     dev[!is.finite(dev)] <- NA_real_
@@ -852,40 +952,116 @@ print.rmbl_svy_design <- function(x, ...) {
       V[bad, ] <- NA_real_
       V[, bad] <- NA_real_
     }
-  } else {
-    # linearized values: a total's own values, a ratio's (y - theta x) / X
-    u <- if (is.null(den)) num else sweep(num - sweep(den, 2L, est, `*`), 2L, D, `/`)
-    z <- w * u
-    pt <- rowsum(z, des$psu, reorder = TRUE)
-    ps <- as.integer(tapply(des$strata, des$psu, `[`, 1L))
-    V <- matrix(0, k, k)
-    informative <- 0L     # strata that carry variance information
-    for (h in sort(unique(ps))) {
-      zh <- pt[ps == h, , drop = FALSE]
-      nh <- nrow(zh)
-      fh <- if (is.null(des$fpc)) 0 else des$fpc[h]
-      # a certainty stratum (every PSU sampled) adds no sampling variance, one PSU or many
-      if (fh >= 1 - 1e-12) next
-      if (nh == 1L) {
-        if (des$lonely == "fail") {
-          stop(sprintf("stratum %d has a single PSU: set lonely to \"remove\" or \"adjust\"", h), call. = FALSE)
-        }
-        if (des$lonely == "remove" || nrow(pt) < 2L) next
-        dz <- sweep(zh, 2L, colSums(pt) / nrow(pt))
-        V <- V + (1 - fh) * crossprod(dz)
-        informative <- informative + 1L
-        next
-      }
-      dz <- sweep(zh, 2L, colMeans(zh))
-      V <- V + (1 - fh) * nh / (nh - 1) * crossprod(dz)
-      informative <- informative + 1L
-    }
-    # no stratum with two PSUs (one PSU in all, or every lonely PSU removed): a standard error of
-    # zero would read as an exact estimate, so the variance is not computable
-    census <- !is.null(des$fpc) && all(des$fpc >= 1 - 1e-12)
-    if (informative == 0L && !census) V[] <- NA_real_
+    return(list(est = unname(est), V = unname(V), A = A, D = D))
   }
+  # Linearization. The PSU totals of the linearized values are n_psu x k; with one row per PSU and
+  # fifty domains at a million rows that alone is 400 MB, so the columns go in blocks: each block's
+  # linearized PSU totals are centred within strata and scaled by the stratum's factor, and the
+  # covariance is the cross-product of those blocks, two at a time.
+  psu <- des$psu
+  # the stratum of each PSU, in the order rowsum() returns them (sorted); tapply() over a million
+  # one-row PSUs built a list of a million elements (final audit of 1.0.0)
+  upsu <- sort(unique(psu))
+  ps <- as.integer(des$strata[match(upsu, psu)])
+  npsu <- length(ps)
+  for (j in seq_len(k)) {
+    cj <- column(j)
+    wj <- w[cj$idx]
+    A[j] <- sum(wj * cj$num)
+    if (has_den) D[j] <- sum(wj * cj$den)
+  }
+  est <- if (has_den) A / D else A
+  # the strata that carry variance information, and each one's centring and factor
+  strata <- sort(unique(ps))
+  informative <- 0L
+  use <- logical(npsu)       # PSUs that enter the cross-product
+  fac <- numeric(npsu)       # sqrt of the stratum's factor, per PSU
+  grand <- logical(npsu)     # PSUs centred on the grand mean (a lonely PSU, adjusted)
+  for (h in strata) {
+    rows <- which(ps == h)
+    nh <- length(rows)
+    fh <- if (is.null(des$fpc)) 0 else des$fpc[h]
+    # a certainty stratum (every PSU sampled) adds no sampling variance, one PSU or many
+    if (fh >= 1 - 1e-12) next
+    if (nh == 1L) {
+      if (des$lonely == "fail") {
+        stop(sprintf("stratum %d has a single PSU: set lonely to \"remove\" or \"adjust\"", h), call. = FALSE)
+      }
+      if (des$lonely == "remove" || npsu < 2L) next
+      use[rows] <- TRUE
+      grand[rows] <- TRUE
+      fac[rows] <- sqrt(1 - fh)
+      informative <- informative + 1L
+      next
+    }
+    use[rows] <- TRUE
+    fac[rows] <- sqrt((1 - fh) * nh / (nh - 1))
+    informative <- informative + 1L
+  }
+  # each PSU one row (no PSU given): the PSU totals are the rows themselves, and rowsum() over a
+  # million groups (a sort and a million row names a call, 300 calls) is skipped
+  one_row <- npsu == n && identical(as.integer(psu), seq_len(n))
+  # one block of columns' linearized values per row, (y - theta x) / X, written on the rows of each
+  # column's domain only, then summed by PSU, centred and scaled
+  block <- function(cols) {
+    z <- matrix(0, n, length(cols))
+    for (i in seq_along(cols)) {
+      cj <- column(cols[[i]])
+      wj <- w[cj$idx]
+      z[cj$idx, i] <- if (has_den) wj * (cj$num - est[cols[[i]]] * cj$den) / D[cols[[i]]] else wj * cj$num
+    }
+    if (!one_row) {
+      z <- rowsum(z, psu, reorder = TRUE)
+      dimnames(z) <- NULL
+    }
+    # centred within the stratum (a lonely PSU kept: on the grand mean) and scaled, one column at
+    # a time: sweep() over row subsets copied the whole block four times (final audit of 1.0.0)
+    hm <- rowsum(z, ps, reorder = TRUE) / as.vector(table(ps))   # stratum means, strata sorted
+    hi <- match(ps, sort(unique(ps)))
+    gm <- colSums(z) / npsu
+    for (i in seq_len(ncol(z))) {
+      ci <- hm[hi, i]
+      if (any(grand)) ci[grand] <- gm[i]
+      zi <- (z[, i] - ci) * fac
+      zi[!use] <- 0
+      z[, i] <- zi
+    }
+    z
+  }
+  V <- matrix(0, k, k)
+  bk <- max(1L, as.integer(floor(2^24 / max(n, 1L))))
+  starts <- seq(1L, k, by = bk)
+  for (a in starts) {
+    ca <- a:min(k, a + bk - 1L)
+    za <- block(ca)
+    V[ca, ca] <- crossprod(za)
+    for (b in starts[starts > a]) {
+      cb <- b:min(k, b + bk - 1L)
+      zb <- block(cb)
+      V[ca, cb] <- crossprod(za, zb)
+      V[cb, ca] <- t(V[ca, cb])
+    }
+  }
+  # no stratum with two PSUs (one PSU in all, or every lonely PSU removed): a standard error of
+  # zero would read as an exact estimate, so the variance is not computable
+  census <- !is.null(des$fpc) && all(des$fpc >= 1 - 1e-12)
+  if (informative == 0L && !census) V[] <- NA_real_
   list(est = unname(est), V = unname(V), A = A, D = D)
+}
+
+# one analysis column of a column spec, on the rows of its domain: the row indices, the numerator
+# and the denominator (NULL for a total)
+.svy_colpair <- function(s, j) {
+  idx <- s$rows[[s$di[j]]]
+  if (s$stat == "proportion") {
+    num <- as.numeric(s$vc[idx] == s$li[j])
+    num[is.na(num)] <- 0
+  } else {
+    num <- s$vn[idx]
+    num[is.na(num)] <- 0
+  }
+  den <- if (s$stat == "total") NULL else if (s$stat == "ratio") s$xn[idx] else rep(1, length(idx))
+  list(idx = idx, num = num, den = den)
 }
 
 # The analysis columns for one variable over the domains: numerators, denominators and labels.
@@ -933,29 +1109,23 @@ print.rmbl_svy_design <- function(x, ...) {
   }
   nd <- nlevels(dom)
   k <- nd * length(lv)
-  num <- matrix(0, n, k)
-  den <- if (stat == "total") NULL else matrix(0, n, k)
-  cnt <- integer(k)
-  di <- integer(k)
-  li <- character(k)
-  j <- 0L
-  for (d in seq_len(nd)) {
-    ind <- ok & as.integer(dom) == d
-    ind[is.na(ind)] <- FALSE
-    for (l in lv) {
-      j <- j + 1L
-      num[, j] <- if (stat == "proportion") as.numeric(ind & as.character(v) == l) else ifelse(ind, as.numeric(v), 0)
-      num[is.na(num[, j]), j] <- 0
-      if (!is.null(den)) den[, j] <- if (stat == "ratio") ifelse(ind, as.numeric(x), 0) else as.numeric(ind)
-      cnt[j] <- sum(ind)
-      di[j] <- d
-      li[j] <- l
-    }
-  }
+  domi <- as.integer(dom)
+  di <- rep(seq_len(nd), each = length(lv))
+  li <- rep(lv, times = nd)
+  okd <- ok & !is.na(domi)
+  # the rows of each domain, once (a which() over every row per column was a copy per column)
+  rows <- split(which(okd), factor(domi[okd], levels = seq_len(nd)))
+  cnt <- lengths(rows)[di]
   lab <- if (ncol(dlab)) dlab[di, , drop = FALSE] else data.frame(row.names = seq_len(k))
   if (stat == "proportion") lab$level <- li
   rownames(lab) <- NULL
-  list(num = num, den = den, n = cnt, labels = lab)
+  # the columns are made one at a time by .svy_colpair(): see .svy_core()
+  spec <- structure(list(k = k, stat = stat, rows = rows, di = di, li = li,
+                         vn = if (stat != "proportion") as.numeric(v),
+                         vc = if (stat == "proportion") as.character(v),
+                         xn = if (stat == "ratio") as.numeric(x)),
+                    class = "rmbl_svy_colspec")
+  list(num = spec, den = NULL, n = cnt, labels = lab)
 }
 
 .svy_ci <- function(est, se, n_used, stat, ci, conf_level, df = Inf, design_df = Inf) {

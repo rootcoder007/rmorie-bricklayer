@@ -625,7 +625,9 @@ rgnmappts <- function(x, y, unit, bounds, fields,
   if (!is.character(bounds) || length(bounds) != 1L || is.na(bounds)) {
     stop("`bounds` must be the path of one boundary file", call. = FALSE)
   }
-  unit <- .rmbl_string1(unit, "unit")
+  if (!is.character(unit) || length(unit) != length(x) || anyNA(unit) || !all(nzchar(unit))) {
+    stop("`unit` must be one non-empty name per point", call. = FALSE)
+  }
   if (!is.character(fields) || !length(fields) || anyNA(fields)) stop("`fields` must name columns of the boundary file", call. = FALSE)
   if (!(is.numeric(crs) || is.character(crs)) || length(crs) != 1L || is.na(crs)) {
     stop("`crs` must be one EPSG code or coordinate reference string", call. = FALSE)
