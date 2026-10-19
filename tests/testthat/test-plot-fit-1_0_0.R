@@ -46,3 +46,11 @@ test_that("the methods that drew their title straight now fit it to the panel", 
   plot(cnscwb(cnsprof(indiex("censuspop")), cnsprof(indiex("censushh"))), main = "My title")
   expect_true("My title" %in% seen)
 })
+
+test_that("a column subset of a yoy() result prints its rows, not \"no periods\"", {
+  y <- yoy(data.frame(year = 2018:2021, n = c(40, 44, 41, 55)), value = "n", prd = "year")
+  out <- capture.output(print(y[1:3, c("year", "pctchg")]))
+  expect_false(any(grepl("no periods", out)))
+  expect_true(any(grepl("pctchg", out)))
+  expect_identical(capture.output(print(y[0, ])), "<rmbl_yoy: no periods>")
+})

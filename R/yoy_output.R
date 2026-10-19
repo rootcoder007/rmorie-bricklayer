@@ -138,8 +138,14 @@ yoypals <- function() names(.YOY_PALETTES)
 print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
                            color = NULL, n = 30, ...) {
   m <- .yoy_meta(x)
-  if (is.null(m) || !nrow(x)) {
+  if (!nrow(x)) {
     cat("<rmbl_yoy: no periods>\n")
+    return(invisible(x))
+  }
+  # a subset of the columns keeps the class but not the period record (`[` on a data frame
+  # drops attributes): print what is there as a table rather than "no periods" (1.0.0 examples)
+  if (is.null(m) || !all(c("value", "previous", "change") %in% names(x))) {
+    print(as.data.frame(unclass(x), stringsAsFactors = FALSE), ...)
     return(invisible(x))
   }
   if (is.null(color)) {
