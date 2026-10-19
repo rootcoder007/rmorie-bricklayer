@@ -259,7 +259,11 @@
 <li>
 <code><a href="../articles/plotting-results.html">vignette("plotting-results")</a></code> gains the policy-evaluation plots, one call per result; <code><a href="../articles/policy-evaluation.html">vignette("policy-evaluation")</a></code> draws the synthetic difference in differences and <code><a href="../articles/causal-effects.html">vignette("causal-effects")</a></code> the AIPW estimate beside its overlap.</li>
 </ul><p><strong>Fixes from the review of the native code</strong></p>
-<ul><li>ECDSA verification refuses an <code>r</code> or <code>s</code> longer than the curve and a key coordinate that is not exactly one field element: <code>r</code> with 2^1152 added was read back as <code>r</code> and verified.</li>
+<ul><li>
+<strong>macOS</strong>: <code><a href="../reference/siudate.html">siudate()</a></code> returned “” for every accented French date (“3 août 2017”, “3 DÉCEMBRE 2017”) because the native text code folded case with <code>std::tolower()</code>, which on macOS in a UTF-8 locale rewrites the bytes of a multibyte character as if they were Latin-1. Case folding of text that may hold UTF-8 is ASCII-only now, in the SIU parser, the SIU resolver and the transport (r-universe macOS checks of 1.0.0).</li>
+<li>
+<code><a href="../reference/fetchvrf.html">fetchvrf()</a></code> no longer passes on R’s “cannot rename file” warning when it falls back to copying the kept file into place.</li>
+<li>ECDSA verification refuses an <code>r</code> or <code>s</code> longer than the curve and a key coordinate that is not exactly one field element: <code>r</code> with 2^1152 added was read back as <code>r</code> and verified.</li>
 <li>The elliptic-curve multiplication refuses a scalar longer than 144 bytes instead of reading only its low bytes.</li>
 <li>A host written with a trailing dot (<code>https://example.com./</code>) is fetched as <code>example.com</code>, so the address pin and the URL libcurl is given name the same host; before, libcurl found no pin and resolved the name again itself.</li>
 <li>Every connection the transport opens is checked as it opens, so a private or loopback address is refused even when it comes from somewhere other than the pin. This includes a proxy named by <code>http_proxy</code> or <code>https_proxy</code>: a proxy on the loopback interface or a private network is now refused.</li>

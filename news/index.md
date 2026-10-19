@@ -517,6 +517,17 @@ New estimators, each checked against the reference implementation
 
 **Fixes from the review of the native code**
 
+- **macOS**:
+  [`siudate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siudate.md)
+  returned “” for every accented French date (“3 août 2017”, “3 DÉCEMBRE
+  2017”) because the native text code folded case with `std::tolower()`,
+  which on macOS in a UTF-8 locale rewrites the bytes of a multibyte
+  character as if they were Latin-1. Case folding of text that may hold
+  UTF-8 is ASCII-only now, in the SIU parser, the SIU resolver and the
+  transport (r-universe macOS checks of 1.0.0).
+- [`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)
+  no longer passes on R’s “cannot rename file” warning when it falls
+  back to copying the kept file into place.
 - ECDSA verification refuses an `r` or `s` longer than the curve and a
   key coordinate that is not exactly one field element: `r` with 2^1152
   added was read back as `r` and verified.

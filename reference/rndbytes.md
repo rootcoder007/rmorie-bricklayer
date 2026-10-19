@@ -53,7 +53,7 @@ which uses this for its seeds.
 
 ``` r
 rndbytes(8)
-#> [1] 3c 90 23 a5 18 72 cb 69
+#> [1] ca 27 44 71 e0 b7 6a 62
 
 # Independent between calls, unlike a seeded generator.
 identical(rndbytes(16), rndbytes(16))
@@ -69,7 +69,7 @@ identical(stats::runif(1), a)
 
 # As hex, for a seed argument.
 paste(format(rndbytes(4)), collapse = "")
-#> [1] "c99a425b"
+#> [1] "a28efcf8"
 
 try(rndbytes(0))
 #> Error : `n` must be a single integer between 1 and 1048576
