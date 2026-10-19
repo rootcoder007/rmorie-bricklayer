@@ -95,7 +95,7 @@ cpsvrf("edited-manifest", sig, pub)              # message changed
 #> [1] FALSE
 bad <- sig; bad$signature <- paste0("ff", substring(bad$signature, 3))
 cpsvrf("pinned-manifest", bad, pub)              # signature edited
-#> [1] TRUE
+#> [1] FALSE
 cpsvrf("pinned-manifest", sig,
                signpubkey(pqckg(height = 2)))  # foreign key
 #> [1] FALSE
