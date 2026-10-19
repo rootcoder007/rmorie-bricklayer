@@ -82,7 +82,8 @@ combine two with <code>smrymrg()</code> and read the result with
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>Numeric vector: the first block, or <code>NULL</code> (the default) for
+<dd><p>Numeric vector (finite; <code>NA</code> is skipped and an infinite value
+refused): the first block, or <code>NULL</code> (the default) for
 an empty accumulator; for <code>smryupd()</code>, the next block.</p></dd>
 
 

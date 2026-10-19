@@ -22,7 +22,8 @@ smrystat(acc)
 
 - x:
 
-  Numeric vector: the first block, or `NULL` (the default) for an empty
+  Numeric vector (finite; `NA` is skipped and an infinite value
+  refused): the first block, or `NULL` (the default) for an empty
   accumulator; for `smryupd()`, the next block.
 
 - acc, a, b:

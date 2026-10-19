@@ -408,13 +408,15 @@ New estimators, each checked against the reference implementation
   `yoy_*()` writer’s `digits`,
   [`stepchg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stepchg.md),
   [`scanadj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scanadj.md)
-  and the plots’ `col =`; the battery now finds none, each refused in
-  words, naming the argument. Shared checks do most of it: a single
-  number in a range (`.rmbl_scalar()`), an environment refused where
-  data goes, a date refused as a count (`reps = Sys.Date()` ran 20,000
-  replications), colours checked before a device sees them (one check
-  for every plot), titles checked once. `morani(n_perm = 1)` no longer
-  fails on the spread of one permutation.
+  and the plots’ `col =`; each is refused in words, naming the argument
+  (the final audit’s wider battery, 15 values in every argument of every
+  export, found 90 more raw errors in 31 functions; those are fixed
+  below). Shared checks do most of it: a single number in a range
+  (`.rmbl_scalar()`), an environment refused where data goes, a date
+  refused as a count (`reps = Sys.Date()` ran 20,000 replications),
+  colours checked before a device sees them (one check for every plot),
+  titles checked once. `morani(n_perm = 1)` no longer fails on the
+  spread of one permutation.
 - **Memory**:
   [`chwkres()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwkres.md)
   and the fits built a grid of one point a time unit, 32 GB for a
@@ -435,8 +437,9 @@ New estimators, each checked against the reference implementation
   and the exposure-response bootstrap caught
   [`setTimeLimit()`](https://rdrr.io/r/base/setTimeLimit.html)’s error
   as one more failed statistic and ran on.
-- The README says 121 C++ entry points behind the barrier (one new, the
-  JSON path) and 13 in plain C.
+- The README says 123 C++ entry points behind the barrier (one new, the
+  JSON path) and 15 in plain C (the survey column pass and the set
+  digest are new).
 
 ### After the tag: the manual, the plots, a C locale
 
@@ -514,6 +517,149 @@ New estimators, each checked against the reference implementation
   draws the synthetic difference in differences and
   [`vignette("causal-effects")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/causal-effects.md)
   the AIPW estimate beside its overlap.
+
+**The final pre-CRAN audit** (three reviewers and a re-run of every
+earlier finding)
+
+- **A test failed `R CMD check` on a host without IPv6 sockets** (a
+  kernel booted with `ipv6.disable=1`): the socket guard’s probe now
+  answers `NA` where the address family cannot be opened, and the test
+  skips there instead of reading it as a refusal.
+- **Large CSVs read through the streamed path** (tables past 512 MiB)
+  took a ragged row silently, the first column as row names and the data
+  shifted one column left;
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html)’s field count
+  is checked record by record first, and the file is refused in the same
+  words as the in-memory path.
+- **The survey reorder check** read a swap of two rows beside one edited
+  cell as “in order” (SE 9.60 for 9.92 with no error): the design keeps
+  one key per row, and rows that moved beside fewer rows that changed
+  are a reorder, whatever the columns the swap left unchanged say. An
+  edit that turned an integer column into a double one changed every
+  row’s code as well; integer and logical columns now code as their
+  doubles do.
+- **A double column holding -0** (`round(-0.3)` is -0) gave its row an
+  `NA` key, which wiped the other columns’ contribution and hid reorders
+  among such rows: -0 codes as 0 and every NaN payload, `NA` among them,
+  as one value. A design saved by 0.5.14 with `NA` in a double column is
+  rebuilt on its data.
+- **The degrees of freedom** read the replicate matrix’s rank from a
+  `B x B` cross-product: with more replicates than rows that asked for
+  74.5 GB (`n = 20`, `B = 1e5`) and took 113 s at `B = 5,000`. The
+  smaller of the two Gram matrices is read, the replicates scaled first
+  (a replicate of 1e308 overflowed
+  [`eigen()`](https://rdrr.io/r/base/eigen.html)).
+- **Memory, again**:
+  [`svydes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svydes.md)
+  reads each replicate column against the weight in one native pass with
+  nothing allocated as long as the column (the R pass held 340 MB a
+  column at 5e6 rows), and its row-key digests read a column as a set
+  through an order-independent hash in place of a sorted copy (a radix
+  sort asks for working memory as long as the column outside R’s heap,
+  and that request failed at the limit). 5e6 rows and 20 replicates now
+  fit a 3 GB address space as a matrix and by name, the matrix design in
+  6 s (17 before). A domain estimate centres its linearized values
+  within strata one column at a time and reads the rows of each domain
+  once: fifty domains at a million rows peak at 0.65 GB of heap (1.9
+  before).
+- **The replicate contract’s edges**: a Fay replicate equal to the
+  weight (a post-stratified domain whose rows sit in one PSU per
+  stratum) is said, not refused; one factor `k/(k - 1)` on every row
+  with no row left out, carried by more or fewer replicates than its `k`
+  (`w * 1.005` beside 200 JKn replicates, the full data plus `w * 15/14`
+  under JK1), is said as a rescaled copy. Two or more JKn replicates
+  equal to the weight stay as they are: a stratum left out of a subset
+  leaves all of its replicates at the weight, and two copies of it
+  cannot be told from that.
+- **The manifest fetch** capped the bytes on the wire, and a reply sent
+  with `Content-Encoding: gzip` was stored as sent and decompressed
+  whole by [`readLines()`](https://rdrr.io/r/base/readLines.html): 300
+  MiB of zeros in a 300 KB body (a 2.3 GB allocation, or an OOM kill).
+  The manifest is read a megabyte at a time through
+  [`gzcon()`](https://rdrr.io/r/base/gzcon.html) and refused past 32 MiB
+  decoded.
+- **The JSON fast path** gave up on a big integer, a duplicate key and
+  nesting past 100 levels and handed the whole document to the
+  character-by-character R parser: one such value at the end of a 15 MiB
+  reply cost minutes. Whole numbers of 16 digits or more follow the R
+  parser’s rules in C++ (text when asked, else a double, the inexact
+  ones warned about once), a duplicate key and deep nesting are refused
+  there in the same words and at the same character, and any other
+  failure in a document past 128 KiB is refused with its reason instead
+  of re-read. The direct `.Call` refuses bytes that are not UTF-8 rather
+  than handing back an invalid string.
+- **The command line**: a trailing `?` no longer makes a question of a
+  near-miss command (`dat list?`, `conifg set openai.api_key?`);
+  zero-width characters are removed before the key check, so a key
+  broken by them is still a key; dotted or underscored runs with digits
+  in two segments or more, sixteen letters that change case four times
+  or more, and a key typed in groups of 8 to 16 characters are keys; a
+  UUID, dashed groups of mixed-case characters, a 15-character mixed
+  token or a key of a known prefix given as `--model` is not sent as the
+  model name.
+- **`col =`** is checked by the field, density, Knox and leave-one-out
+  plots (raw [`image()`](https://rdrr.io/r/graphics/image.html) errors
+  before; the leave-one-out plot ignored it).
+- [`onlsmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/onl.md)
+  refuses an infinite value in words
+  ([`smrystat()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/onl.md)
+  failed in R’s);
+  [`stepchg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stepchg.md)
+  reads a series near the double’s range in units of its largest value
+  (the statistic overflowed to `Inf`, the p-value to `NaN`);
+  `fylbl(2024.5)` is refused instead of labelled “2023/24”.
+- `rmbl` exits 130 for a Ctrl-C that lands while R is still starting
+  (status 1 and “Execution halted” before); an interrupt a native call
+  took and a `tryCatch(error = )` swallowed as “interrupted” is raised
+  again as the interrupt it was (`rmbl data pull` went on for 65 s once
+  in ten runs).
+- The tests’ wall-clock bounds widen with the machine’s load per core
+  and under covr; the test that connects to the loopback discard port
+  skips on CRAN.
+- **[`syndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/syndid.md)
+  and
+  [`synctl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/synctl.md)**
+  solve their simplex-constrained least squares by an active set on the
+  KKT system (one small solve a step) with the projected-gradient method
+  as the fallback: the tiny ridge of the time weights ran the latter to
+  its iteration cap, a second a placebo and 55 s of CPU in each of two
+  vignettes; 0.04 s now, at the exact optimum (the earlier weights were
+  the cap’s approximation, so estimates move in the third digit).
+- **The hostile-argument battery**, 20 values in every argument of every
+  export, found raw base R errors in 31 functions: a `NULL` seed
+  (`set.seed(NULL)` in seven functions), a learner function of the wrong
+  arity, `NULL` column names, `1e308` in the air-dispersion arguments,
+  block sizes,
+  [`pubbnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pubbnd.md)’s
+  `suplim` and `supmar`,
+  [`mksyncol()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mksyncol.md)’s
+  `basep`,
+  [`tojs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tojs.md)’s
+  `digits`, the bundle, capsule and template file arguments,
+  [`yoylbl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoylbl.md)’s
+  `labels`,
+  [`profshr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profshr.md)’s
+  `num` and `den`,
+  [`plotevgrid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotevgrid.md)’s
+  `main`,
+  [`plnpois()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpois.md)’s
+  `offset`,
+  [`trchlthgap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trchlthgap.md)’s
+  tables,
+  [`wcb()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wcb.md)’s
+  `trtd`,
+  [`chgenv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chgenv.md)’s
+  `per`, the `strict` and `ex` flags, the `col` of the `rule*()`
+  builders and
+  [`chwknll()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwknll.md)’s
+  `par`, and
+  [`shrs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/shrs.md)’s
+  `total`. Each is refused in words now; the battery’s last run found
+  none.
+- The native CSV reader drops a byte-order mark before a header name
+  when blanks follow the mark
+  ([`read.csv()`](https://rdrr.io/r/utils/read.table.html) keeps the
+  mark in the name, `X.s`): 37 of 24,000 fuzz inputs, documented.
 
 **Fixes from the review of the native code**
 

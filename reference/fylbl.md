@@ -18,7 +18,8 @@ fylbl(endyear, sep = "/", short = TRUE)
 
 - endyear:
 
-  The fiscal year's end year, as a number or a string; a vector of them.
+  The fiscal year's end year, as a whole number or a string; a vector of
+  them.
 
 - sep:
 

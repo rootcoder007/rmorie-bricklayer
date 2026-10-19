@@ -176,7 +176,12 @@ are post-stratified or calibrated (factors off 0, 1, 2 and \\k/(k -
 genuine set can produce it but rarely does: under the bootstrap, more
 replicates equal to the full-sample weight than chance draws; under the
 bootstrap or Fay's method, a replicate within 1 percent of the weight on
-every row; under JK1, JKn and BRR, a replicate that leaves no row out; a
+every row, and under Fay's method one equal to it (a post-stratified
+domain whose rows sit in one PSU per stratum); under JK1 and JKn, one
+factor \\k/(k - 1)\\ on every row with no row left out that more or
+fewer replicates than \\k\\ carry (a rescaled copy beside a full set, or
+a lone stray; a genuine set carries it on exactly \\k\\, on a subset
+too); under JK1, JKn and BRR, a replicate that leaves no row out; a
 replicate more than ten times the weight on a typical row (a column on
 another scale, such as an outcome); and a set whose replicates total, on
 average, under a tenth or over ten times the weight (multipliers such as

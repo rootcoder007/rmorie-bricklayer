@@ -84,6 +84,6 @@ which(mrklvs(ch) != mrklvs(chnkfile(q, chnkbytes = 128)))
 
 # a chunk size must be positive
 try(chnkfile(p, chnkbytes = 0))
-#> Error : `chnkbytes` must be a positive integer
+#> Error : `chnkbytes` must be one whole number from 1 to 2147483647
 unlink(c(p, q))
 ```
