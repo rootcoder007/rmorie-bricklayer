@@ -235,7 +235,8 @@ test_that("#5: big integers, duplicate keys and deep nesting are the fast path's
   bad <- rawToChar(as.raw(c(0x22, 0xed, 0xa0, 0x80, 0x22)))
   expect_error(.Call(C$C_rmbl_json_fast, bad, FALSE, FALSE), "not valid UTF-8")
   expect_error(.Call(C$C_rmbl_json_fast, rawToChar(as.raw(c(0x22, 0xf0, 0x9f))), FALSE, FALSE), "not valid UTF-8")
-  expect_identical(fromjs('{"é": "ü\\u00e9\\ud83d\\ude00"}')[[1L]], "üé\U0001f600")
+  # escapes on both sides: a C-locale check reads this file's non-ASCII bytes as U+FFFD
+  expect_identical(fromjs('{"\u00e9": "\u00fc\\u00e9\\ud83d\\ude00"}')[[1L]], "\u00fc\u00e9\U0001f600")
 })
 
 # ---- #6, #7: the command line's near-miss and key rules --------------------------------------

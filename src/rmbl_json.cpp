@@ -400,7 +400,11 @@ SEXP C_rmbl_json_fast_impl(SEXP txt, SEXP keep_dups, SEXP bigint_as_char) {
     if (TYPEOF(txt) != STRSXP || XLENGTH(txt) != 1 || STRING_ELT(txt, 0) == NA_STRING) {
         RMBL_ARG_ERROR("`txt` must be one string");
     }
-    const char *s = Rf_translateCharUTF8(STRING_ELT(txt, 0));
+    /* the bytes as given: translateCharUTF8() in a C locale rewrote every byte past 0x7f as an
+     * escape (<ff>), so a string that is not UTF-8 passed the check below and the C-locale check
+     * failed; a latin1-marked string alone is translated (final audit of 1.0.0) */
+    SEXP cs = STRING_ELT(txt, 0);
+    const char *s = Rf_getCharCE(cs) == CE_LATIN1 ? Rf_translateCharUTF8(cs) : CHAR(cs);
     Parser P;
     P.p = reinterpret_cast<const unsigned char *>(s);
     P.n = std::strlen(s);
