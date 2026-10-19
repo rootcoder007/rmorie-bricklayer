@@ -578,7 +578,8 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
 # random parts. They went to a model as words (CRAN stress test of 0.5.14).
 .bl_key_dense <- function(x) {
   r <- regmatches(x, gregexpr("[A-Za-z0-9]{16,}", x))[[1L]]
-  dense <- r[grepl("[0-9]", r) & grepl("[A-Za-z]", r) & !grepl("^([A-Za-z][a-z]+[0-9]{1,4}|[0-9]{1,4}[A-Za-z][a-z]+)$", r)]
+  dense <- r[grepl("[0-9]", r) & grepl("[A-Za-z]", r) &
+               !grepl("^([A-Za-z][a-z]+[0-9]{1,4}|[0-9]{1,4}[A-Za-z][a-z]+)$", r)]
   if (length(dense)) return(TRUE)
   # sixteen letters or more with no digit, in both cases and changing case four times or more
   # (FAKEKXsOCOxzNZfl): no word is written so, and such keys went to a model (final audit of

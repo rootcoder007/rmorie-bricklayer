@@ -332,4 +332,3 @@ test_that("audit coverage: an RSA timestamp signature of the wrong length is not
   expect_true(nzchar(v$detail))
   expect_true(v$content_ok)
 })
-

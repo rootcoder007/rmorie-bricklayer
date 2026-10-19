@@ -107,7 +107,9 @@ smryupd <- function(acc, x) {
   x <- x[!is.na(x)]
   # an infinite value has no mean or variance: the accumulator held NaN and smrystat() failed in
   # R's words ("missing value where TRUE/FALSE needed"; final audit of 1.0.0, #11)
-  if (any(is.infinite(x))) stop("`x` has infinite values, which no moment can hold; set them to NA first", call. = FALSE)
+  if (any(is.infinite(x))) {
+    stop("`x` has infinite values, which no moment can hold; set them to NA first", call. = FALSE)
+  }
   if (length(x) == 0L) return(acc)
   block <- .Call(C_rmbl_moments_acc, x)
   acc$state <- .Call(C_rmbl_moments_merge, acc$state, block)

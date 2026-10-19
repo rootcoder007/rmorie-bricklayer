@@ -84,7 +84,9 @@ pubbnd <- function(x, rnd = NULL,
                                                   "n/a")) {
   rndkind <- .rmbl_arg(rndkind)
   if (!is.null(suplim)) suplim <- .rmbl_scalar(suplim, "suplim", 0)
-  if (!is.character(supmar) || anyNA(supmar)) stop("`supmar` must be the text markers of a suppressed cell", call. = FALSE)
+  if (!is.character(supmar) || anyNA(supmar)) {
+    stop("`supmar` must be the text markers of a suppressed cell", call. = FALSE)
+  }
   if (!is.null(rnd)) {
     rnd <- .rmbl_num(rnd, "rnd")[1L]
     if (is.na(rnd) || rnd <= 0) {
