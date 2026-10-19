@@ -105,7 +105,7 @@ Suggests:
 VignetteBuilder: knitr
 URL: https://github.com/rootcoder007/rmorie-bricklayer,
     https://rootcoder007.github.io/rmorie-bricklayer/,
-    https://rmorie.com
+    https://www.rmorie.com
 BugReports: https://github.com/rootcoder007/rmorie-bricklayer/issues
 Config/testthat/edition: 3
 SystemRequirements: C++17, libcurl (deb: libcurl4-openssl-dev, rpm:
