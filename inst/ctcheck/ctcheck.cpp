@@ -11,6 +11,7 @@ extern "C" int rmbl_kernel_interrupted = 0;
 extern "C" int rmbl_interrupt_pending(void) { return 0; }
 /* the kernels raise a pending interrupt through the barrier; no R here */
 extern "C" void rmbl_interrupt_raise_unbarriered(void) {}
+extern "C" int rmbl_barrier_active(void) { return 0; }   /* no barrier: an argument error is Rf_error() */
 
 
 __attribute__((noinline)) int ct_stack_remnants(const unsigned char *needle, size_t n, const char *what) {

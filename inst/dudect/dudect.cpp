@@ -54,6 +54,7 @@ void dd_hqc_dec_run(const unsigned char *in);
 extern "C" { int rmbl_kernel_interrupted = 0; }
 extern "C" int rmbl_interrupt_pending(void) { return 0; }
 extern "C" void rmbl_interrupt_raise_unbarriered(void) {}
+extern "C" int rmbl_barrier_active(void) { return 0; }   /* no barrier: an argument error is Rf_error() */
 extern "C" int rmbl_digest_equal(const char *a, const char *b, size_t n);
 extern "C" int rmbl_pbkdf2_sha256(const unsigned char *pass, size_t passlen,
                                   const unsigned char *salt, size_t saltlen,
