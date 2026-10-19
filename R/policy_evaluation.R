@@ -732,7 +732,7 @@ plot.rmbl_staggered_att <- function(x, ..., main = NULL, col = NULL, palette = N
   # the periods before adoption in one colour and after in another, as the did package draws them
   cols <- if (is.null(col)) c("#2C6FBB", "#C0392B") else rep_len(col, 2L)
   plot.rmbl_event_study(es, ..., main = .bl_main(main, "Effect by time since adoption"), col = cols[2L],
-                        palette = palette, style = style, shade_post = shadepost, ref_line = refline)
+                        palette = palette, style = style, shadepost = shadepost, refline = refline)
   pre <- es$evtm < 0
   w <- pre & es$upper > es$lower
   graphics::arrows(es$evtm[w], es$lower[w], es$evtm[w], es$upper[w], angle = 90, code = 3,

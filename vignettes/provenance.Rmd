@@ -485,6 +485,11 @@ dates and licence) in the package's COPYRIGHTS file:
 ```{r indigenous-provenance, eval = TRUE}
 cr <- readLines(system.file("COPYRIGHTS", package = "rmoriebricklayer"))
 cat(cr[grep("indigenouslifeexpectancy", cr) + 0:4], sep = "\n")
+```
+
+With a data key (`dlogin()`), `indtabs()` lists the mirrored tables themselves:
+
+```{r indigenous-tables, eval = FALSE}
 head(indtabs()[, c("key", "rows")])
 ```
 
