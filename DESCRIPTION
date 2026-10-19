@@ -30,8 +30,8 @@ Description: Tools for building brick-proof, reproducible, self-contained data
     'SHA-256', 'SHA-512' and 'CRC-32', and, implemented from scratch with no
     system 'cryptography' library, the post-quantum standards 'ML-KEM' (FIPS
     203), 'ML-DSA' (FIPS 204) and 'SLH-DSA' (FIPS 205), 'HQC' in two
-    revisions, 'XMSS' (RFC 8391), the 'AES-256' 'CTR_DRBG' of SP 800-90A,
-    'SHA-3' and 'SHAKE' (FIPS 202), 'BLAKE2b', 'PBKDF2', an ASN.1/DER parser
+    revisions, 'XMSS' (RFC 8391), the 'AES-256' 'CTR_DRBG' of 'SP 800-90A',
+    'SHA-3' and 'SHAKE' (FIPS 202), 'BLAKE2b', 'PBKDF2', an 'ASN.1' ('DER') parser
     with 'ECDSA' (P-256, P-384, P-521) and 'RSA' ('Rivest-Shamir-Adleman')
     signature verification, and 'X.509' certificate chain,
     'OCSP' (Online Certificate Status Protocol) and RFC 3161 timestamp
@@ -39,7 +39,7 @@ Description: Tools for building brick-proof, reproducible, self-contained data
     schemes are checked byte for byte against 'OpenSSL' 3.5 and the
     known-answer vectors of 'NIST' (the US National Institute of Standards
     and Technology) in the test suite. Timing is measured on hardware,
-    power leakage is assessed in simulation, and 'ML-KEM decapsulation' and
+    power leakage is assessed in simulation, and 'ML-KEM' decapsulation and
     'ML-DSA' signing are first-order masked. For the published administrative
     tables these capsules usually hold, it computes period-over-period
     change matched on the period rather than the row, with the exact
@@ -64,8 +64,8 @@ Description: Tools for building brick-proof, reproducible, self-contained data
     measures in the formulation of 'Lakner'.
     Air pollution is followed from source to burden: 'Pasquill-Gifford'
     dispersion coefficients with the 'Briggs' plume rise, Gaussian plume and puff,
-    Eulerian and Lagrangian models; concentration-response functions for PM2.5 and
-    NO2 (the WHO 2021 guideline review and the 'Burnett' integrated exposure-response
+    'Eulerian' and 'Lagrangian' models; concentration-response functions for 'PM2.5' and
+    'NO2' (the WHO 2021 guideline review and the 'Burnett' integrated exposure-response
     curve), the 'Levin' attributable fraction, displaced mortality, a cross-fitted
     partially linear exposure-response estimator with a bootstrap, and the
     'Wagstaff' concentration index of exposure by income; and the electricity and
