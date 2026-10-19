@@ -208,7 +208,8 @@ hqcpubkey <- function(key) {
 #'   [hqckg()].
 #' @return A named integer vector of byte lengths: `public` (the encapsulation key),
 #' `secret` (the decapsulation key), `ciphertext`, `seed` (key generation),
-#' `message` and `salt` (encapsulation randomness) and `shared` (the shared secret),
+#' `message` and `salt` (encapsulation randomness) and
+#' `shared` (the shared secret),
 #' named as [hqckg()] and
 #' [hqcencap()] name their results.
 #' @seealso [hqckg()],
