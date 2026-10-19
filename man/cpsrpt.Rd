@@ -58,7 +58,7 @@ data frame of character columns \code{severity}, \code{check} (\code{"schema"},
 \code{drift} (the
 \code{\link[=cpsdrft]{cpsdrft()}} result, or \code{NULL} without a
 reference), \code{digest} (a list
-with \code{data_digest}, and with \code{chunks} also \code{mrkroot},
+with \code{data_digest}, and with \code{chunks} also \code{merkle_root},
 \code{merkle_scheme}
 (the \code{\link[=mrkroot]{mrkroot()}} hashing scheme, 2) and \code{n_chunks},
 and, with a signature and key, the logical \code{signature_valid}), and \code{nrows} /
@@ -159,7 +159,7 @@ cpsrpt(bad[, c("id", "score")], ref = ref,
 r2 <- cpsrpt(bad, rules = list(ruleinset("grade", c("a", "b", "c"))),
                      chunks = c("part one", "part two"))
 summary(r2)
-r2$digest$mrkroot
+r2$digest$merkle_root
 
 # a data frame is required
 try(cpsrpt(1:10))

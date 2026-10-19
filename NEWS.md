@@ -294,6 +294,11 @@ New estimators, each checked against the reference implementation (`fixest`, `di
   found by the pass are gone.
 * The statement about a third-party security audit is gone from `DESCRIPTION`, the README,
   `SECURITY.md` and the help pages.
+* Every example's output was read against its comment. `print.rmbl_yoy()` printed "no
+  periods" for a column subset; the `cpsrpt()` example read a `mrkroot` field that is called
+  `merkle_root`; the `recrd()` comments say when a status is `INFO` instead of `PASS`; the
+  `onlsmry()`, `benfordtst()`, `wrmnfjs()`, `cpspwr()` and `plnpois()` examples show what
+  they claim.
 * `vignette("plotting-results")` gains the policy-evaluation plots, one call per result;
   `vignette("policy-evaluation")` draws the synthetic difference in differences and
   `vignette("causal-effects")` the AIPW estimate beside its overlap.

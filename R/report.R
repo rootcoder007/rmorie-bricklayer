@@ -99,7 +99,7 @@
 #' `drift` (the
 #' [cpsdrft()] result, or `NULL` without a
 #' reference), `digest` (a list
-#' with `data_digest`, and with `chunks` also `mrkroot`,
+#' with `data_digest`, and with `chunks` also `merkle_root`,
 #' `merkle_scheme`
 #' (the [mrkroot()] hashing scheme, 2) and `n_chunks`,
 #' and, with a signature and key, the logical `signature_valid`), and `nrows` /
@@ -142,7 +142,7 @@
 #' r2 <- cpsrpt(bad, rules = list(ruleinset("grade", c("a", "b", "c"))),
 #'                      chunks = c("part one", "part two"))
 #' summary(r2)
-#' r2$digest$mrkroot
+#' r2$digest$merkle_root
 #'
 #' # a data frame is required
 #' try(cpsrpt(1:10))

@@ -78,6 +78,9 @@ consistent whatever the dispersion.
 \examples{
 p <- polex()
 plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop")
+
+# these counts are not overdispersed, so the negative binomial collapses
+# to the Poisson fit and says so
 plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop",
            family = "negbin")
 }

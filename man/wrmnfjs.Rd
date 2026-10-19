@@ -52,11 +52,11 @@ file.exists(path)
 
 # Round-trips back through the package's own codec.
 back <- fromjs(path, simplifyVector = FALSE)
-back$results$rowcount$status # "PASS"
+back$results$rowcount$status # "PASS" ("INFO" after synthetic data, see mkmnf())
 
 # the canonical form: one line whose SHA-256 is the manifest digest
 cpath <- wrmnfjs(man, tempfile(fileext = ".json"), canon = TRUE)
-identical(readLines(cpath), mnfcanon(man))
+identical(readLines(cpath), as.character(mnfcanon(man)))
 
 # the path must be one string
 try(wrmnfjs(man, c("a.json", "b.json")))

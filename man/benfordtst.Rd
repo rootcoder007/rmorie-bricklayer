@@ -57,7 +57,7 @@ benfordtst(as.numeric(paste0(sample(1:9, 2000, TRUE), "000")))
 
 # The expected proportions are the closed form.
 b <- benfordtst(10^stats::runif(500, 0, 5))
-all.equal(b$expected / b$n, log10(1 + 1 / (1:9)))
+all.equal(unname(b$expected) / b$n, log10(1 + 1 / (1:9)))
 
 # Zeros carry no leading digit and are excluded from n.
 benfordtst(c(0, 0, 1, 2, 3))$n

@@ -163,7 +163,9 @@ mkmnf <- function(meta, env = TRUE) {
 #' @examples
 #' man <- mkmnf(list(project = "demo"), env = FALSE)
 #'
-#' # Within tolerance -> PASS.
+#' # Within tolerance -> PASS. (Every status below is INFO instead in a
+#' # session that has already generated synthetic data, because mkmnf()
+#' # then marks the manifest synthetic; see mkmnf().)
 #' man <- recrd(man, "meanmatches",
 #'   obs = 1.0001, expd = 1,
 #'   tol = 0.001
@@ -286,11 +288,11 @@ recrd <- function(man, name, obs, expd,
 #'
 #' # Round-trips back through the package's own codec.
 #' back <- fromjs(path, simplifyVector = FALSE)
-#' back$results$rowcount$status # "PASS"
+#' back$results$rowcount$status # "PASS" ("INFO" after synthetic data, see mkmnf())
 #'
 #' # the canonical form: one line whose SHA-256 is the manifest digest
 #' cpath <- wrmnfjs(man, tempfile(fileext = ".json"), canon = TRUE)
-#' identical(readLines(cpath), mnfcanon(man))
+#' identical(readLines(cpath), as.character(mnfcanon(man)))
 #'
 #' # the path must be one string
 #' try(wrmnfjs(man, c("a.json", "b.json")))

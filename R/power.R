@@ -116,7 +116,8 @@
 #' # sanity check that it is not LARGE, not as an estimate of alpha.
 #' pw$curve[pw$curve$size == 0, "rate"]
 #'
-#' # an injection with fresh noise each time, and smaller effects
+#' # an injection with fresh noise each time, and effects too small to be
+#' # detected in four repetitions: the smallest detected size is NA
 #' inj2 <- function(z, size) {
 #'   z$y <- z$y + size * z$x + stats::rnorm(nrow(z), sd = 0.5)
 #'   z

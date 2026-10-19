@@ -84,9 +84,9 @@
 #' # An empty accumulator reports nothing rather than zero.
 #' smrystat(onlsmry())
 #'
-#' # NA values are skipped; text is refused
+#' # NA values are skipped; text that is not a number is refused
 #' smrystat(onlsmry(c(1, NA, 3)))[c("n", "mean")]
-#' try(onlsmry(c("1", "2")))
+#' try(onlsmry(c("a", "b")))
 #' @name onl
 #' @export
 onlsmry <- function(x = NULL) {

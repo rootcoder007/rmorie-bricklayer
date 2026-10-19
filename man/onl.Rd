@@ -93,9 +93,9 @@ all.equal(smrystat(smrymrg(a, b)), smrystat(acc))
 # An empty accumulator reports nothing rather than zero.
 smrystat(onlsmry())
 
-# NA values are skipped; text is refused
+# NA values are skipped; text that is not a number is refused
 smrystat(onlsmry(c(1, NA, 3)))[c("n", "mean")]
-try(onlsmry(c("1", "2")))
+try(onlsmry(c("a", "b")))
 }
 \references{
 Chan TF, Golub GH, LeVeque RJ (1983). Algorithms for
