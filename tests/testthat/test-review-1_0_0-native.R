@@ -240,10 +240,14 @@ test_that("M4: the progress callback's arguments survive a collection between th
   skip_if_not(serve_bg(port, "200 OK", strrep("x", 5000), times = 1L), "no local server")
   seen <- list()
   cb <- function(now, total) seen[[length(seen) + 1L]] <<- c(now, total)
-  gctorture(TRUE)
+  # a collection every fifth allocation: gctorture(TRUE) collects on every one, which made the
+  # transfer take 29 s on a plain build and time out under the sanitizers; five still puts a
+  # collection between the two arguments many times over
+  gctorture2(5L)
+  on.exit(gctorture2(0L), add = TRUE)
   url <- sprintf("http://127.0.0.1:%d/x", port)
-  r <- .Call(C_rmbl_http_download, url, tempfile(), 10L, NULL, cb, NULL, TRUE)
-  gctorture(FALSE)
+  r <- .Call(C_rmbl_http_download, url, tempfile(), 60L, NULL, cb, NULL, TRUE)
+  gctorture2(0L)
   expect_identical(r$status, 200L)
   expect_gt(length(seen), 0L)
   ok <- vapply(seen, function(v) is.double(v) && length(v) == 2L && all(v >= 0), logical(1))
