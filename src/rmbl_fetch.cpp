@@ -1741,8 +1741,16 @@ SEXP C_rmbl_net_probe_impl(SEXP url, SEXP addr, SEXP local_ok, SEXP tmo) {
         }
         if (ca.family) {
             SockGuard g = {Rf_asLogical(local_ok) == TRUE};
+            errno = 0;
             const curl_socket_t fd = guard_socket(&g, CURLSOCKTYPE_IPCXN, &ca);
             connect = fd != CURL_SOCKET_BAD;
+            /* a host without that address family (a kernel booted with ipv6.disable=1) cannot say
+             * whether the policy admits the address: NA, not "refused" (the test read it as a
+             * refusal and R CMD check failed there; final audit of 1.0.0, #1) */
+            if (fd == CURL_SOCKET_BAD && !g.local_ok && !sockaddr_private(&ca.addr) &&
+                (errno == EAFNOSUPPORT || errno == EPROTONOSUPPORT)) {
+                connect = NA_LOGICAL;
+            }
 #ifdef _WIN32
             if (fd != CURL_SOCKET_BAD) closesocket(fd);
 #else

@@ -522,9 +522,24 @@ dload <- function(key, refresh = FALSE) {
 
 # The large-table path: read.csv() itself, on a gzfile() connection (it reads plain files too).
 .bl_read_csv_streamed <- function(path) {
+  # the field count of every record first: read.csv() reads a table whose header is one field short
+  # of its rows with the first column as row names and the data shifted one column left, silently,
+  # where the in-memory path refuses "record 3 has 3 fields" (1,624 of 6,000 ragged inputs; final
+  # audit of 1.0.0, #2). count.fields() is one pass over the file and one integer a record.
+  con <- gzfile(path, "rt")
+  nf <- tryCatch(utils::count.fields(con, sep = ",", quote = "\"", comment.char = "", blank.lines.skip = TRUE),
+                 error = function(e) stop("the CSV cannot be read: ", conditionMessage(e), call. = FALSE),
+                 finally = close(con))
+  nf <- nf[!is.na(nf)]
+  if (length(nf) > 1L) {
+    bad <- which(nf != nf[[1L]])
+    if (length(bad)) {
+      stop(sprintf("record %d has %d fields, the header %d", bad[[1L]], nf[[bad[[1L]]]], nf[[1L]]), call. = FALSE)
+    }
+  }
   con <- gzfile(path, "rt")
   on.exit(close(con), add = TRUE)
-  utils::read.csv(con, stringsAsFactors = FALSE, skipNul = TRUE)
+  utils::read.csv(con, stringsAsFactors = FALSE, skipNul = TRUE, row.names = NULL)
 }
 
 .bl_csv_from_bytes <- function(bytes, skip_nul = TRUE) {

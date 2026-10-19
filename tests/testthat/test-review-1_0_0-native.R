@@ -77,7 +77,11 @@ test_that("H2: a socket to a private or loopback address is refused at connect t
     expect_false(conn(a), info = a)
   }
   expect_true(conn("8.8.8.8"))
-  expect_true(conn("2001:4860:4860::8888"))
+  # NA where the host has no IPv6 sockets (a kernel booted with ipv6.disable=1): the probe cannot
+  # say, and said "refused" before (R CMD check failed there; final audit of 1.0.0, #1)
+  v6 <- conn("2001:4860:4860::8888")
+  if (is.na(v6)) skip("this host has no IPv6 sockets")
+  expect_true(v6)
   # a hop the policy admitted to a local host (allow_loopback) may connect there
   expect_true(conn("127.0.0.1", TRUE))
   expect_identical(conn("not-an-address"), NA)

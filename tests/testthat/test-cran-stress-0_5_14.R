@@ -273,12 +273,17 @@ test_that("a time limit ends cpsfals() and cpspwr(); the statistic's own errors 
 test_that("the survey row keys from C are the keys the R arithmetic made", {
   old <- function(v) {
     fold <- function(x) x - 2147483647 * floor(x / 2147483647)
+    # the value, not its bits: -0 is 0 and every NaN is NA (final audit of 1.0.0, #3b)
+    v[v == 0] <- 0
+    v[is.nan(v)] <- NA_real_
     b <- readBin(writeBin(v, raw()), "integer", n = 2L * length(v))
     fold(fold(b[c(TRUE, FALSE)]) * 65599 + b[c(FALSE, TRUE)])
   }
   C <- asNamespace("rmoriebricklayer")
   v <- c(stats::rnorm(1000), NA, NaN, Inf, -Inf, 0, -0, 1e308, .Machine$double.xmin)
   expect_identical(.Call(C$C_rmbl_svy_dblcode, v), old(v))
+  expect_false(anyNA(.Call(C$C_rmbl_svy_dblcode, v)))
+  expect_identical(.Call(C$C_rmbl_svy_dblcode, c(-0, NaN)), .Call(C$C_rmbl_svy_dblcode, c(0, NA)))
   expect_identical(.Call(C$C_rmbl_sha256_real, v), csha256(writeBin(v, raw())))
 })
 

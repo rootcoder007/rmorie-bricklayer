@@ -359,12 +359,29 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
     # values within 1e-5 of the largest count), which is the B x B problem: a QR of the n x B matrix
     # took 16 s for CSUS's 36,180 x 1,000
     if (is.null(des$degf)) {
-      # the cross-product a block of rows at a time: do.call(cbind, reps) was a second copy of every
-      # replicate (800 MB at 5e6 rows and 20 replicates; CRAN stress test of 0.5.14, #8)
-      cp <- matrix(0, length(.reps), length(.reps))
-      for (st in if (n > 0L) seq(1L, n, by = 262144L)) {
-        idx <- st:min(n, st + 262143L)
-        cp <- cp + crossprod(vapply(.reps, function(r) r[idx], numeric(length(idx))))
+      B <- length(.reps)
+      # the replicates scaled by their largest value: a replicate of 1e308 overflowed the
+      # cross-product to Inf and eigen() failed in its own words (final audit of 1.0.0, #8)
+      sc <- max(vapply(.reps, function(r) if (length(r)) max(abs(r)) else 0, 0))
+      if (!is.finite(sc) || sc == 0) sc <- 1
+      # the rank is at most min(n, B): the smaller Gram matrix is the one read. B replicates on n rows
+      # with B > n (n = 20, B = 1e5) built a B x B product that asked for 74.5 GB and B = 5,000 took
+      # 113 s where a 200 x 200 one is instant (final audit of 1.0.0, #8)
+      if (B <= n) {
+        # the cross-product a block of rows at a time: do.call(cbind, reps) was a second copy of every
+        # replicate (800 MB at 5e6 rows and 20 replicates; CRAN stress test of 0.5.14, #8)
+        cp <- matrix(0, B, B)
+        for (st in if (n > 0L) seq(1L, n, by = 262144L)) {
+          idx <- st:min(n, st + 262143L)
+          cp <- cp + crossprod(vapply(.reps, function(r) r[idx] / sc, numeric(length(idx))))
+        }
+      } else {
+        cp <- matrix(0, n, n)
+        for (st in seq(1L, B, by = 4096L)) {
+          idx <- st:min(B, st + 4095L)
+          m <- vapply(.reps[idx], function(r) r / sc, numeric(n))
+          cp <- cp + tcrossprod(m)
+        }
       }
       ev <- eigen(cp, symmetric = TRUE, only.values = TRUE)$values
       des$degf <- sum(ev > max(ev) * 1e-10) - 1L
@@ -428,7 +445,22 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
       # the same rows in another order: a reorder, whatever the row names say. A column changed since
       # (a permuted y for a permutation test, a recode) changes the rows themselves and passes; it was
       # refused as a reorder when each column was compared on its own (statistics stress test of 5e1dce5)
-      if (identical(now$sorted, rk$sorted)) in_order <- identical(now$ordered, rk$ordered)
+      if (identical(now$sorted, rk$sorted)) {
+        in_order <- identical(now$ordered, rk$ordered)
+      } else if (!is.null(rk$keys) && length(rk$keys) == length(now$keys)) {
+        # cells edited since: each row's key is looked for among the built keys. A row whose key is
+        # at its own position is in place; one whose key is at another position has moved; one found
+        # nowhere was edited. Rows that moved beside fewer edited ones are a reorder, whatever the
+        # columns the reorder left unchanged say (a swap of two rows and one edited cell was read as
+        # in order because the columns equal on the two rows counted as "not moved": SE 9.60 for
+        # 9.92 silently; final audit of 1.0.0, #3). A permuted or recoded column changes rows and
+        # moves none, and passes as before
+        inplace <- now$keys == rk$keys
+        found <- now$keys %in% rk$keys
+        moved <- sum(found & !inplace)
+        edited <- sum(!found)
+        in_order <- !(moved >= 2L && moved > edited)
+      }
     }
     if (is.na(in_order) && length(present) && !is.null(rk$colsor)) {
       # a column dropped or one cell edited since: the rows as a whole differ, so each column that
@@ -479,9 +511,10 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
       # sort or match (in C: the R arithmetic's own result, without its column-long copies)
       .Call(C_rmbl_svy_dblcode, v)
     } else if (is.integer(v) || is.logical(v)) {
-      x <- as.numeric(v)
-      x[is.na(x)] <- -1
-      x
+      # the same codes as a double column's: an edit that turned an integer column into a double one
+      # (x$meals[5] <- x$meals[5] + 1) changed every row's code with it, and the rows as a whole read
+      # as all changed rather than two moved and one edited (final audit of 1.0.0, #3)
+      .Call(C_rmbl_svy_dblcode, as.numeric(v))
     } else {
       if (is.complex(v)) v <- paste(Re(v), Im(v))
       match(v, sort(unique(v), method = "radix", na.last = TRUE))
@@ -494,8 +527,10 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
   }
   # each column on its own as well, in order and as a set, and whether it holds more than one
   # value: what .svy_check_data() reads when a column was dropped or edited since
+  # the keys themselves as well (one double a row): what .svy_check_data() reads when a cell was
+  # edited since, to tell rows that moved from rows that changed
   list(cols = cols, ordered = .Call(C_rmbl_sha256_real, k),
-       sorted = .Call(C_rmbl_sha256_real, sort(k, method = "radix")),
+       sorted = .Call(C_rmbl_sha256_real, sort(k, method = "radix")), keys = k,
        colord = unlist(co), colsor = unlist(cs), colinf = unlist(ci))
 }
 

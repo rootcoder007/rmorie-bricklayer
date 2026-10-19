@@ -33,13 +33,15 @@ SEXP C_rmbl_svy_dblcode(SEXP v) {
     double *o = REAL(out);
     for (R_xlen_t i = 0; i < n; i++) {
         int b[2];
-        memcpy(b, x + i, sizeof b);   /* native order, as readBin(writeBin(v, raw()), "integer") read it */
-        /* readBin() read a half of 0x80000000 (the sign bit of -0, for one) as NA_integer_, and the key
-         * was NA: kept, so a design's stored keys are the ones it is checked against */
-        if (b[0] == INT_MIN || b[1] == INT_MIN) {
-            o[i] = NA_REAL;
-            continue;
-        }
+        /* the value, not its bits: -0 is 0 (round(-0.3) is -0, and its sign-bit half read as
+         * NA_integer_ gave the row an NA key that wiped the other columns' contribution, so reorders
+         * among such rows went undetected; final audit of 1.0.0, #3b), and every NaN payload, NA
+         * among them, is one value (the R path wrote NA with one payload and the C path another, so
+         * a design saved with NA in a double column lost that column in the check) */
+        double xi = x[i];
+        if (xi == 0.0) xi = 0.0;
+        if (ISNAN(xi)) xi = NA_REAL;
+        memcpy(b, &xi, sizeof b);   /* native order, as readBin(writeBin(v, raw()), "integer") read it */
         o[i] = rmbl_fold(rmbl_fold((double) b[0]) * 65599.0 + (double) b[1]);
     }
     UNPROTECT(1);
