@@ -750,7 +750,6 @@ trcprog <- function(done = trccmpl()$cumulative, yearend = trccmpl()$yearend,
   if (!length(done) || length(done) != length(yearend) || anyNA(c(done, yearend))) {
     stop("`done` and `yearend` must be one count per year, with no NA", call. = FALSE)
   }
-  if (any(abs(done - round(done)) > 1e-8)) stop("`done` must be whole numbers", call. = FALSE)
   if (is.unsorted(yearend, strictly = TRUE)) stop("`yearend` must be increasing", call. = FALSE)
   if (is.unsorted(done) || any(done < 0) || any(done > total)) {
     stop("`done` must be cumulative counts between 0 and `total`", call. = FALSE)
