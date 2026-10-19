@@ -8,7 +8,7 @@ mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" & h$indica
 cat("== GAP perceived MH\n"); print(indgap(mh, "group", "estimate", "lower", "upper", qual = "quality")[, c("group","estimate","refest","difference","diflo","difup","ratio","ratiolo","ratioup")])
 cat("== DISTINCTIONS\n"); print(dstntst(mh[mh$group != "Non-Indigenous", ], "group", "estimate", "lower", "upper"))
 r <- indiex("mentalhealth"); r <- r[r$region == "Canada", ]
-cat("== ORDINAL\n"); print(ordcmp(r, "group", "rating", "estimate", "lower", "upper", lvls = c("Fair or poor","Good","Very good","Excellent"), ref = "Métis", qual = "quality"))
+cat("== ORDINAL\n"); print(ordcmp(r, "group", "rating", "estimate", "lower", "upper", lvls = c("Fair or poor","Good","Very good","Excellent"), ref = "M\u00e9tis", qual = "quality"))
 oc2 <- r; cat("== ORDINAL ref FN\n"); print(ordcmp(r, "group", "rating", "estimate", "lower", "upper", lvls = c("Fair or poor","Good","Very good","Excellent"), ref = "First Nations", qual = "quality"))
 si <- indiex("suicide"); si <- si[si$measure == "Seriously contemplated suicide in the past 12 months" & si$age != "Total, 15 years and over", ]; si <- si[order(si$group, si$age), ]
 cat("== SI crude totals\n"); print(indiex("suicide")[indiex("suicide")$age=="Total, 15 years and over",])
@@ -25,7 +25,7 @@ cat("== CONTINUUM\n"); print(mhcont(wb, "group", "indicator", "estimate", "lower
 hh <- h[h$age == "Total, 18 years and over", ]
 cat("== HEALING\n"); print(healchg(hh[hh$indicator %in% c("Perceived mental health, very good or excellent","Sense of belonging to local community, somewhat strong or very strong","Mood disorder","Anxiety disorder"),], "group","indicator","period","estimate","lower","upper", from="2015/2018", to="2019/2022", qual="quality", well=c("Perceived mental health, very good or excellent","Sense of belonging to local community, somewhat strong or very strong")))
 mr <- indiex("mentalhealth"); mr <- mr[mr$rating == "Excellent or very good" & mr$region != "Canada", ]
-pair <- merge(mr[mr$group == "First Nations", ], mr[mr$group == "Métis", ], by = "region", suffixes = c("_fn", "_me"))
+pair <- merge(mr[mr$group == "First Nations", ], mr[mr$group == "M\u00e9tis", ], by = "region", suffixes = c("_fn", "_me"))
 cat("== CONNECTION FN-Metis\n"); print(connassoc(pair, "region", "estimate_fn", "estimate_me", "lower_fn", "upper_fn", "lower_me", "upper_me"))
 p <- cnsprof(indiex("censuspop"))
 know <- "Total - Knowledge of Indigenous languages for the population in private households - 25% sample data"
@@ -33,9 +33,9 @@ la <- profshr(p, "Indigenous languages", know); la <- la[la$age == "Total - Age 
 mh2 <- indiex("mentalhealth"); mh2 <- mh2[mh2$rating == "Excellent or very good" & mh2$group == "First Nations", ]
 both <- merge(la[c("geo","estimate","lower","upper")], mh2[c("region","estimate","lower","upper")], by.x="geo", by.y="region", suffixes=c("_lang","_mh"))
 cat("== CONTINUITY\n"); print(both); print(connassoc(both, "geo", "estimate_lang", "estimate_mh", "lower_lang", "upper_lang", "lower_mh", "upper_mh"))
-fc <- profshr(p, "Foster children", "Total - Children in census families"); fc <- fc[fc$geo=="Canada" & fc$age=="0 to 14 years" & fc$group %in% c("First Nations","Métis","Inuit","Non-Indigenous"),]
+fc <- profshr(p, "Foster children", "Total - Children in census families"); fc <- fc[fc$geo=="Canada" & fc$age=="0 to 14 years" & fc$group %in% c("First Nations","M\u00e9tis","Inuit","Non-Indigenous"),]
 cat("== FOSTER\n"); print(fc[, c("residence","group","numerator","denominator","estimate","lower","upper")])
-la2 <- profshr(p, "Indigenous languages", know); cat("== LANG Canada\n"); print(la2[la2$geo=="Canada" & la2$residence=="Total - Residence on or off reserve" & la2$group %in% c("First Nations","Métis","Inuit"), c("age","group","estimate","lower","upper")])
+la2 <- profshr(p, "Indigenous languages", know); cat("== LANG Canada\n"); print(la2[la2$geo=="Canada" & la2$residence=="Total - Residence on or off reserve" & la2$group %in% c("First Nations","M\u00e9tis","Inuit"), c("age","group","estimate","lower","upper")])
 cat("== STANDARD\n"); print(cnsstd(p))
 hd <- cnsprof(indiex("censushh")); cw <- cnscwb(p, hd)
 cat("== CWB\n"); print(cw[, c("geo","group","population","income","education","housing","labour","cwb")])

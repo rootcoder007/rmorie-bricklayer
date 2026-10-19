@@ -106,7 +106,7 @@ cnsprof <- function(x) {
   rep_k <- function(v) rep(v, times = k)
   st <- unlist(lapply(sym, function(s) as.character(x[[s]])), use.names = FALSE)
   st[is.na(st)] <- ""
-  st <- trimws(st)
+  st <- .rmbl_utf8(trimws(st))
   q <- ifelse(st == "", "ok", st)
   q[q == "rE"] <- "E"
   q[!q %in% c("ok", "E", "F", "x", "..", "...")] <- "ok"

@@ -29,7 +29,7 @@ r <- indiex("mentalhealth")
 r <- r[r$region == "Canada", ]
 fig("fig2_ratings", 6.5, 3.6, {
   plot(ordcmp(r, "group", "rating", "estimate", "lower", "upper",
-                       lvls = c("Fair or poor", "Good", "Very good", "Excellent"), ref = "Métis",
+                       lvls = c("Fair or poor", "Good", "Very good", "Excellent"), ref = "M\u00e9tis",
                        qual = "quality"),
        main = "Self-rated mental health, 2017 Aboriginal Peoples Survey")
 })

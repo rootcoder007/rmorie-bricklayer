@@ -96,7 +96,7 @@ scests <- function(x) {
     named <- cols[is_stat][grepl("^Statistics", cols[is_stat])]
     is_stat[] <- cols %in% (if (length(named) == 1L) named else cols[is_stat][1L])
   }
-  for (d in cols) if (is.character(x[[d]]) || is.factor(x[[d]])) x[[d]] <- trimws(as.character(x[[d]]))
+  for (d in cols) if (is.character(x[[d]]) || is.factor(x[[d]])) x[[d]] <- .rmbl_utf8(trimws(as.character(x[[d]])))
   if (!any(is_stat)) {
     out <- x[cols]
     out$measure <- uom
@@ -110,7 +110,7 @@ scests <- function(x) {
     return(out)
   }
   sc <- cols[is_stat]
-  lab <- gsub("\\s+", " ", trimws(as.character(x[[sc]])))
+  lab <- gsub("\\s+", " ", .rmbl_utf8(trimws(as.character(x[[sc]]))))
   low <- tolower(lab)
   role <- rep("estimate", length(lab))
   target <- rep(NA_character_, length(lab))
@@ -316,9 +316,9 @@ ordcmp <- function(data, grp, cat, est, lower, upper, lvls, ref,
   ref <- .rmbl_string1(ref, "ref")
   conflvl <- .rmbl_conf_level(conflvl)
   z <- stats::qnorm(1 - (1 - conflvl) / 2)
-  g <- trimws(as.character(data[[grp]]))
-  .cat <- trimws(as.character(data[[cat]]))
-  lvls <- trimws(lvls)
+  g <- .rmbl_utf8(trimws(as.character(data[[grp]])))
+  .cat <- .rmbl_utf8(trimws(as.character(data[[cat]])))
+  lvls <- .rmbl_utf8(trimws(lvls))
   .est <- .rmbl_num(data[[est]], "est")
   lo <- .rmbl_num(data[[lower]], "lower")
   hi <- .rmbl_num(data[[upper]], "upper")
@@ -704,14 +704,14 @@ welprof <- function(data, grp, ind, est, lower, upper, well, distress, domain = 
     if (!qual %in% names(data)) stop(sprintf("column `%s` not found in `data`", qual), call. = FALSE)
   }
   .rmbl_no_fn(wellness = well, distress = distress, domain = domain)
-  .ind <- trimws(as.character(data[[ind]]))
+  .ind <- .rmbl_utf8(trimws(as.character(data[[ind]])))
   for (nm in c("well", "distress")) {
     v <- get(nm)
     if (!is.character(v) || !length(v) || anyNA(v)) stop(sprintf("`%s` must name indicators of `data`", nm),
                                                          call. = FALSE)
   }
-  well <- trimws(well)
-  distress <- trimws(distress)
+  well <- .rmbl_utf8(trimws(well))
+  distress <- .rmbl_utf8(trimws(distress))
   if (length(intersect(well, distress))) {
     stop("an indicator cannot be both one of wellness and one of distress", call. = FALSE)
   }
@@ -729,7 +729,7 @@ welprof <- function(data, grp, ind, est, lower, upper, well, distress, domain = 
   keep <- .ind %in% c(well, distress)
   lo <- ifelse(gone, NA_real_, .rmbl_num(data[[lower]], "lower"))
   hi <- ifelse(gone, NA_real_, .rmbl_num(data[[upper]], "upper"))
-  .grp <- trimws(as.character(data[[grp]]))
+  .grp <- .rmbl_utf8(trimws(as.character(data[[grp]])))
   .est[keep] <- .rmbl_contains(.est[keep], lo[keep], hi[keep], paste0(.grp[keep], ": ", .ind[keep]))
   out <- data.frame(group = .grp, indicator = .ind,
                     side = ifelse(.ind %in% well, "wellness", "distress"), domain = dom, estimate = .est,
@@ -908,8 +908,8 @@ holbal <- function(data, grp, domain, est, lower, upper, w = NULL, qual = NULL,
   reps <- .rmbl_scalar(reps, "reps", 100, 1e6, integer = TRUE)
   conflvl <- .rmbl_conf_level(conflvl)
   z <- stats::qnorm(1 - (1 - conflvl) / 2)
-  g <- trimws(as.character(data[[grp]]))
-  dm <- trimws(as.character(data[[domain]]))
+  g <- .rmbl_utf8(trimws(as.character(data[[grp]])))
+  dm <- .rmbl_utf8(trimws(as.character(data[[domain]])))
   raw <- .rmbl_num(data[[est]], "est")
   lo_raw <- .rmbl_num(data[[lower]], "lower")
   hi_raw <- .rmbl_num(data[[upper]], "upper")
@@ -1143,7 +1143,7 @@ dstntst <- function(data, grp, est, lower, upper, qual = NULL, conflvl = 0.95,
   if (!is.null(qual)) qual <- .rmbl_col(data, qual, "qual")
   conflvl <- .rmbl_conf_level(conflvl)
   z <- stats::qnorm(1 - (1 - conflvl) / 2)
-  g <- trimws(as.character(data[[grp]]))
+  g <- .rmbl_utf8(trimws(as.character(data[[grp]])))
   y <- .rmbl_num(data[[est]], "est")
   lo <- .rmbl_num(data[[lower]], "lower")
   hi <- .rmbl_num(data[[upper]], "upper")
@@ -1352,5 +1352,7 @@ indiex <- function(name = c("health", "mentalhealth", "wellbeing", "suicide",
              lifeexp = "life_expectancy", infantmort = "infant_mortality")
   f <- system.file("extdata", sprintf("indigenous_%s.csv", files[[name]]), package = "rmoriebricklayer",
                    mustWork = TRUE)
-  utils::read.csv(f, stringsAsFactors = FALSE, encoding = "UTF-8", fileEncoding = "UTF-8", check.names = FALSE)
+  # the bytes are UTF-8 and are marked so; re-encoding to the native locale (fileEncoding) cut the
+  # file at "Metis" with an accent in a C locale (the C-locale CI cell)
+  utils::read.csv(f, stringsAsFactors = FALSE, encoding = "UTF-8", check.names = FALSE)
 }

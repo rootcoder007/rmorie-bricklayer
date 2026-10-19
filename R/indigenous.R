@@ -70,7 +70,7 @@ sctidy <- function(x) {
   x <- .rmbl_statcan_members(x)
   st <- if ("STATUS" %in% names(x)) as.character(x$STATUS) else rep("", nrow(x))
   st[is.na(st)] <- ""
-  st <- trimws(st)
+  st <- .rmbl_utf8(trimws(st))
   lv <- c("ok", "E", "F", "x", "..", "...")
   q <- ifelse(st == "", "ok", st)
   q[!q %in% lv] <- "ok"
@@ -356,7 +356,7 @@ indgap <- function(data, grp, est, lower, upper, ref = "Non-Indigenous",
             call. = FALSE)
   }
   conflvl <- .rmbl_conf_level(conflvl)
-  g <- trimws(as.character(data[[grp]]))
+  g <- .rmbl_utf8(trimws(as.character(data[[grp]])))
   .est <- .rmbl_num(data[[est]], "est")
   lo <- .rmbl_num(data[[lower]], "lower")
   hi <- .rmbl_num(data[[upper]], "upper")

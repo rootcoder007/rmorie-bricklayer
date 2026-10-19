@@ -61,13 +61,28 @@
   x
 }
 
+# Text that is valid UTF-8 but carries no encoding mark is marked UTF-8, so that a group or level
+# a user types ("Metis" with an accent) matches the same bytes read from a table with
+# `encoding = "UTF-8"` in every locale: in a C locale R left the literal unmarked and
+# `%in%` called the two different (the C-locale CI cell, 1.0.0).
+.rmbl_utf8 <- function(x) {
+  if (!is.character(x)) return(x)
+  u <- !is.na(x) & Encoding(x) == "unknown" & validUTF8(x)
+  if (any(u)) {
+    v <- x[u]
+    Encoding(v) <- "UTF-8"
+    x[u] <- v
+  }
+  x
+}
+
 .rmbl_string1 <- function(x, what) {
   if (!is.character(x) || length(x) != 1L || is.na(x) || !nzchar(trimws(x))) {
     stop(sprintf("`%s` must be a single non-empty string", what),
       call. = FALSE
     )
   }
-  x
+  .rmbl_utf8(x)
 }
 
 # A numeric argument: text that is not a number is refused in words (as.numeric() turned it into NA

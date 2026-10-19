@@ -135,7 +135,7 @@ r <- indiex("mentalhealth")
 r <- r[r$region == "Canada", ]
 oc <- ordcmp(r, "group", "rating", "estimate", "lower", "upper",
                       lvls = c("Fair or poor", "Good", "Very good", "Excellent"),
-                      ref = "Métis", qual = "quality")
+                      ref = "M\u00e9tis", qual = "quality")
 oc
 plot(oc)
 ```
@@ -275,7 +275,7 @@ people's mental health rise together, using table 41-10-0067-01:
 ```{r connection}
 r <- indiex("mentalhealth")
 r <- r[r$rating == "Excellent or very good" & r$region != "Canada", ]
-pair <- merge(r[r$group == "First Nations", ], r[r$group == "Métis", ], by = "region",
+pair <- merge(r[r$group == "First Nations", ], r[r$group == "M\u00e9tis", ], by = "region",
               suffixes = c("fn", "me"))
 ca <- connassoc(pair, "region", "estimatefn", "estimateme", "lowerfn", "upperfn",
                              "lowerme", "upperme")
