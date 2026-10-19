@@ -494,6 +494,20 @@ New estimators, each checked against the reference implementation
   tests; the dead guards found by the pass are gone.
 - The statement about a third-party security audit is gone from
   `DESCRIPTION`, the README, `SECURITY.md` and the help pages.
+- Every example’s output was read against its comment.
+  [`print.rmbl_yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  printed “no periods” for a column subset; the
+  [`cpsrpt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrpt.md)
+  example read a `mrkroot` field that is called `merkle_root`; the
+  [`recrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recrd.md)
+  comments say when a status is `INFO` instead of `PASS`; the
+  [`onlsmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/onl.md),
+  [`benfordtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/benfordtst.md),
+  [`wrmnfjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrmnfjs.md),
+  [`cpspwr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpspwr.md)
+  and
+  [`plnpois()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpois.md)
+  examples show what they claim.
 - [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md)
   gains the policy-evaluation plots, one call per result;
   [`vignette("policy-evaluation")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/policy-evaluation.md)

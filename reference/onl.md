@@ -116,16 +116,10 @@ smrystat(onlsmry())
 #>        n     mean variance       sd skewness kurtosis 
 #>        0      NaN      NaN      NaN      NaN      NaN 
 
-# NA values are skipped; text is refused
+# NA values are skipped; text that is not a number is refused
 smrystat(onlsmry(c(1, NA, 3)))[c("n", "mean")]
 #>    n mean 
 #>    2    2 
-try(onlsmry(c("1", "2")))
-#> ── Accumulated summary ─────────────────────────────────────────── 
-#>   n         2
-#>   mean          1.5
-#>   sd        0.707107
-#>   skewness    NaN
-#>   kurtosis    NaN
-#> ────────────────────────────────────────────────────────────────── 
+try(onlsmry(c("a", "b")))
+#> Error : `x` must be numeric, not text such as "a"
 ```

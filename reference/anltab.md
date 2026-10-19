@@ -217,7 +217,22 @@ a
 #>   change: 10 comparison(s), 9 significant after BH at 0.05
 #>   trend: 0 of 5 series with Mann-Kendall p < 0.05
 a$change[, c("table", "group", "year", "pctchg", "padj")]
-#> <rmbl_yoy: no periods>
+#>           table    group year     pctchg          padj
+#> 1  age_category 18 to 24 2023         NA            NA
+#> 2  age_category 18 to 24 2024 -16.053607  3.164937e-12
+#> 3  age_category 18 to 24 2025  25.271739  1.664477e-19
+#> 4  age_category 25 to 49 2023         NA            NA
+#> 5  age_category 25 to 49 2024  -3.248493  5.269786e-03
+#> 6  age_category 25 to 49 2025  27.947387 3.609584e-109
+#> 7  age_category      50+ 2023         NA            NA
+#> 8  age_category      50+ 2024  -3.924915  1.794906e-01
+#> 9  age_category      50+ 2025  27.664298  6.794641e-18
+#> 10       gender   Female 2023         NA            NA
+#> 11       gender   Female 2024  27.332892  2.786935e-12
+#> 12       gender   Female 2025  46.621622  2.223495e-38
+#> 13       gender     Male 2023         NA            NA
+#> 14       gender     Male 2024  -8.059159  1.161620e-15
+#> 15       gender     Male 2025  25.438844 8.427443e-112
 a$trend[, c("group", "tau", "trndp", "rateratio")]
 #>      group       tau     trndp rateratio
 #> 1 18 to 24 0.3333333 1.0000000  1.027143
@@ -230,7 +245,10 @@ a$trend[, c("group", "tau", "trndp", "rateratio")]
 b <- anltab(otis, value = "individuals", prd = "year",
                    by = c("table", "group"), rnd = 5)
 b$change[1:3, c("group", "year", "pctlo", "compctlo")]
-#> <rmbl_yoy: no periods>
+#>      group year     pctlo  compctlo
+#> 1 18 to 24 2023        NA        NA
+#> 2 18 to 24 2024 -20.09432 -20.09432
+#> 3 18 to 24 2025  19.31564  19.31564
 
 # rates with an exposure column
 d <- data.frame(year = rep(2019:2022, 2), site = rep(c("A", "B"), each = 4),

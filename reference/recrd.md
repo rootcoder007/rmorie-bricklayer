@@ -87,7 +87,9 @@ it.
 ``` r
 man <- mkmnf(list(project = "demo"), env = FALSE)
 
-# Within tolerance -> PASS.
+# Within tolerance -> PASS. (Every status below is INFO instead in a
+# session that has already generated synthetic data, because mkmnf()
+# then marks the manifest synthetic; see mkmnf().)
 man <- recrd(man, "meanmatches",
   obs = 1.0001, expd = 1,
   tol = 0.001

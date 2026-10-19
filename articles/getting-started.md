@@ -60,7 +60,38 @@ the company of the other nine.
 a$change[, c("table", "group", "year", "value", "previous",
              "pctchg", "pctlo", "pctup", "padj",
              "significant")]
-#> <rmbl_yoy: no periods>
+#>           table    group year value previous     pctchg      pctlo      pctup
+#> 1  age_category 18 to 24 2023  3507       NA         NA         NA         NA
+#> 2  age_category 18 to 24 2024  2944     3507 -16.053607 -20.094317 -11.813237
+#> 3  age_category 18 to 24 2025  3688     2944  25.271739  19.315638  31.533918
+#> 4  age_category 25 to 49 2023 14930       NA         NA         NA         NA
+#> 5  age_category 25 to 49 2024 14445    14930  -3.248493  -5.443046  -1.003220
+#> 6  age_category 25 to 49 2025 18482    14445  27.947387  25.185677  30.771917
+#> 7  age_category      50+ 2023  2344       NA         NA         NA         NA
+#> 8  age_category      50+ 2024  2252     2344  -3.924915  -9.363927   1.838757
+#> 9  age_category      50+ 2025  2875     2252  27.664298  20.771500  34.963148
+#> 10       gender   Female 2023  1511       NA         NA         NA         NA
+#> 11       gender   Female 2024  1924     1511  27.332892  18.974672  36.297285
+#> 12       gender   Female 2025  2821     1924  46.621622  38.316800  55.450157
+#> 13       gender     Male 2023 19270       NA         NA         NA         NA
+#> 14       gender     Male 2024 17717    19270  -8.059159  -9.920858  -6.159393
+#> 15       gender     Male 2025 22224    17717  25.438844  22.981369  27.946827
+#>             padj significant
+#> 1             NA       FALSE
+#> 2   3.164937e-12        TRUE
+#> 3   1.664477e-19        TRUE
+#> 4             NA       FALSE
+#> 5   5.269786e-03        TRUE
+#> 6  3.609584e-109        TRUE
+#> 7             NA       FALSE
+#> 8   1.794906e-01       FALSE
+#> 9   6.794641e-18        TRUE
+#> 10            NA       FALSE
+#> 11  2.786935e-12        TRUE
+#> 12  2.223495e-38        TRUE
+#> 13            NA       FALSE
+#> 14  1.161620e-15        TRUE
+#> 15 8.427443e-112        TRUE
 ```
 
 ## What the release withheld
@@ -80,7 +111,17 @@ b <- anltab(otis, value = "individuals", prd = "year",
 b$change[!is.na(b$change$previous),
          c("group", "year", "pctchg", "pctlo", "pctup",
            "compctlo", "compctup")]
-#> <rmbl_yoy: no periods>
+#>       group year     pctchg      pctlo      pctup   compctlo   compctup
+#> 1  18 to 24 2024 -16.053607 -20.094317 -11.813237 -20.094317 -11.813237
+#> 2  18 to 24 2025  25.271739  19.315638  31.533918  19.315638  31.533918
+#> 3  25 to 49 2024  -3.248493  -5.443046  -1.003220  -5.443046  -1.003220
+#> 4  25 to 49 2025  27.947387  25.185677  30.771917  25.185677  30.771917
+#> 5       50+ 2024  -3.924915  -9.363927   1.838757  -9.363927   1.838757
+#> 6       50+ 2025  27.664298  20.771500  34.963148  20.771500  34.963148
+#> 7    Female 2024  27.332892  18.974672  36.297285  18.974672  36.297285
+#> 8    Female 2025  46.621622  38.316800  55.450157  38.316800  55.450157
+#> 9      Male 2024  -8.059159  -9.920858  -6.159393  -9.920858  -6.159393
+#> 10     Male 2025  25.438844  22.981369  27.946827  22.981369  27.946827
 ```
 
 ## Trend

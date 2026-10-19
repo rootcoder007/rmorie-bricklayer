@@ -174,18 +174,12 @@ batch version.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        n     mean variance       sd skewness kurtosis </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        0      NaN      NaN      NaN      NaN      NaN </span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># NA values are skipped; text is refused</span></span></span>
+<span class="r-in"><span><span class="co"># NA values are skipped; text that is not a number is refused</span></span></span>
 <span class="r-in"><span><span class="fu">smrystat</span><span class="op">(</span><span class="fu">onlsmry</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="cn">NA</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span>, <span class="st">"mean"</span><span class="op">)</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    n mean </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    2    2 </span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">onlsmry</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"1"</span>, <span class="st">"2"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ── Accumulated summary ─────────────────────────────────────────── </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   n         2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   mean          1.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   sd        0.707107</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   skewness    NaN</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   kurtosis    NaN</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">onlsmry</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `x` must be numeric, not text such as "a"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

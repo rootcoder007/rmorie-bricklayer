@@ -151,7 +151,9 @@ entry. The message line is a side effect; wrap the call in
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">man</span> <span class="op">&lt;-</span> <span class="fu"><a href="mkmnf.html">mkmnf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>project <span class="op">=</span> <span class="st">"demo"</span><span class="op">)</span>, env <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Within tolerance -&gt; PASS.</span></span></span>
+<span class="r-in"><span><span class="co"># Within tolerance -&gt; PASS. (Every status below is INFO instead in a</span></span></span>
+<span class="r-in"><span><span class="co"># session that has already generated synthetic data, because mkmnf()</span></span></span>
+<span class="r-in"><span><span class="co"># then marks the manifest synthetic; see mkmnf().)</span></span></span>
 <span class="r-in"><span><span class="va">man</span> <span class="op">&lt;-</span> <span class="fu">recrd</span><span class="op">(</span><span class="va">man</span>, <span class="st">"meanmatches"</span>,</span></span>
 <span class="r-in"><span>  obs <span class="op">=</span> <span class="fl">1.0001</span>, expd <span class="op">=</span> <span class="fl">1</span>,</span></span>
 <span class="r-in"><span>  tol <span class="op">=</span> <span class="fl">0.001</span></span></span>

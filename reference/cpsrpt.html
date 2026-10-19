@@ -146,7 +146,7 @@ data frame of character columns <code>severity</code>, <code>check</code> (<code
 <code>drift</code> (the
 <code><a href="cpsdrft.html">cpsdrft()</a></code> result, or <code>NULL</code> without a
 reference), <code>digest</code> (a list
-with <code>data_digest</code>, and with <code>chunks</code> also <code>mrkroot</code>,
+with <code>data_digest</code>, and with <code>chunks</code> also <code>merkle_root</code>,
 <code>merkle_scheme</code>
 (the <code><a href="mrk.html">mrkroot()</a></code> hashing scheme, 2) and <code>n_chunks</code>,
 and, with a signature and key, the logical <code>signature_valid</code>), and <code>nrows</code> /
@@ -281,8 +281,8 @@ a departure is a screen rather than a verdict.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">r2</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> verdict   fatal    warn    note </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  "warn"     "0"     "1"     "0" </span>
-<span class="r-in"><span><span class="va">r2</span><span class="op">$</span><span class="va">digest</span><span class="op">$</span><span class="va">mrkroot</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
+<span class="r-in"><span><span class="va">r2</span><span class="op">$</span><span class="va">digest</span><span class="op">$</span><span class="va">merkle_root</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "271d0c66b493e55e2b9659fda7eddb00b0439d076eb82f36a4b8922d6bd4d062"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a data frame is required</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cpsrpt</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span><span class="op">)</span></span></span>

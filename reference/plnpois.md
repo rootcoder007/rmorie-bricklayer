@@ -119,6 +119,9 @@ p <- polex()
 plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop")
 #>      term  estimate         se rateratio     lower     upper      p_value
 #> 1 treated -0.092146 0.02220761  0.911972 0.8731289 0.9525431 3.334947e-05
+
+# these counts are not overdispersed, so the negative binomial collapses
+# to the Poisson fit and says so
 plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop",
            family = "negbin")
 #> Warning: no overdispersion: theta is at its bound, the Poisson model fits

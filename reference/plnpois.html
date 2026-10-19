@@ -164,6 +164,9 @@ Sociological Methodology 32:247-265.
 <span class="r-in"><span><span class="fu">plnpois</span><span class="op">(</span><span class="va">p</span>, <span class="st">"district"</span>, <span class="st">"month"</span>, <span class="st">"crimes"</span>, <span class="st">"reformed"</span>, offset <span class="op">=</span> <span class="st">"logpop"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      term  estimate         se rateratio     lower     upper      p_value</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 treated -0.092146 0.02220761  0.911972 0.8731289 0.9525431 3.334947e-05</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># these counts are not overdispersed, so the negative binomial collapses</span></span></span>
+<span class="r-in"><span><span class="co"># to the Poisson fit and says so</span></span></span>
 <span class="r-in"><span><span class="fu">plnpois</span><span class="op">(</span><span class="va">p</span>, <span class="st">"district"</span>, <span class="st">"month"</span>, <span class="st">"crimes"</span>, <span class="st">"reformed"</span>, offset <span class="op">=</span> <span class="st">"logpop"</span>,</span></span>
 <span class="r-in"><span>           family <span class="op">=</span> <span class="st">"negbin"</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>no overdispersion: theta is at its bound, the Poisson model fits</span>

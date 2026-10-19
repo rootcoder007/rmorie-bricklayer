@@ -86,7 +86,8 @@ or `"clean"` when there is no finding), `profile` (from
 `drift` (the
 [`cpsdrft()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md)
 result, or `NULL` without a reference), `digest` (a list with
-`data_digest`, and with `chunks` also `mrkroot`, `merkle_scheme` (the
+`data_digest`, and with `chunks` also `merkle_root`, `merkle_scheme`
+(the
 [`mrkroot()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mrk.md)
 hashing scheme, 2) and `n_chunks`, and, with a signature and key, the
 logical `signature_valid`), and `nrows` / `n_cols`.
@@ -231,8 +232,8 @@ r2 <- cpsrpt(bad, rules = list(ruleinset("grade", c("a", "b", "c"))),
 summary(r2)
 #> verdict   fatal    warn    note 
 #>  "warn"     "0"     "1"     "0" 
-r2$digest$mrkroot
-#> NULL
+r2$digest$merkle_root
+#> [1] "271d0c66b493e55e2b9659fda7eddb00b0439d076eb82f36a4b8922d6bd4d062"
 
 # a data frame is required
 try(cpsrpt(1:10))

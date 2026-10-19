@@ -85,7 +85,13 @@ seg <- data.frame(year = rep(2022:2023, each = 3),
                   n = c(30, 50, 80, 45, 52, 79))
 y <- yoy(seg, value = "n", prd = "year", by = "site")
 scanadj(y)[, c("site", "pctchg", "p_value", "padj")]
-#> <rmbl_yoy: no periods>
+#>   site pctchg   p_value      padj
+#> 1    A     NA        NA        NA
+#> 2    A  50.00 0.1053423 0.3160268
+#> 3    B     NA        NA        NA
+#> 4    B   4.00 0.9211910 1.0000000
+#> 5    C     NA        NA        NA
+#> 6    C  -1.25 1.0000000 1.0000000
 
 # family-wise control instead of the false discovery rate
 scanadj(y, meth = "holm")$padj
