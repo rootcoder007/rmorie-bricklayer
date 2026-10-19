@@ -11,28 +11,28 @@ band contains.
 
 ``` r
 
-parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
-#>             label lower upper open_lower open_upper
-#> 1               1     1     1      FALSE      FALSE
-#> 2          2 to 5     2     5      FALSE      FALSE
-#> 3         6 to 10     6    10      FALSE      FALSE
-#> 4 Greater than 10    11    NA      FALSE       TRUE
-parse_bands(c("18 to 24", "25 to 49", "50+"))
-#>      label lower upper open_lower open_upper
-#> 1 18 to 24    18    24      FALSE      FALSE
-#> 2 25 to 49    25    49      FALSE      FALSE
-#> 3      50+    50    NA      FALSE       TRUE
+prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
+#>             label lower upper openlo openup
+#> 1               1     1     1  FALSE  FALSE
+#> 2          2 to 5     2     5  FALSE  FALSE
+#> 3         6 to 10     6    10  FALSE  FALSE
+#> 4 Greater than 10    11    NA  FALSE   TRUE
+prsbands(c("18 to 24", "25 to 49", "50+"))
+#>      label lower upper openlo openup
+#> 1 18 to 24    18    24  FALSE  FALSE
+#> 2 25 to 49    25    49  FALSE  FALSE
+#> 3      50+    50    NA  FALSE   TRUE
 ```
 
 An unrecognised label is reported as unparsed, never guessed at:
 
 ``` r
 
-parse_bands(c("3", "unknown", "not stated"))
-#>        label lower upper open_lower open_upper
-#> 1          3     3     3      FALSE      FALSE
-#> 2    unknown    NA    NA      FALSE      FALSE
-#> 3 not stated    NA    NA      FALSE      FALSE
+prsbands(c("3", "unknown", "not stated"))
+#>        label lower upper openlo openup
+#> 1          3     3     3  FALSE  FALSE
+#> 2    unknown    NA    NA  FALSE  FALSE
+#> 3 not stated    NA    NA  FALSE  FALSE
 ```
 
 ## Representative values
@@ -44,36 +44,36 @@ its lower edge is supplied explicitly:
 
 ``` r
 
-b <- parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
-band_values(b, rule = "midpoint", open_upper_cap = 20)
-#>             label lower upper open_lower open_upper value assumed
-#> 1               1     1     1      FALSE      FALSE   1.0   FALSE
-#> 2          2 to 5     2     5      FALSE      FALSE   3.5   FALSE
-#> 3         6 to 10     6    10      FALSE      FALSE   8.0   FALSE
-#> 4 Greater than 10    11    NA      FALSE       TRUE  15.5    TRUE
-band_values(b, rule = "geometric", open_upper_cap = 20)
-#>             label lower upper open_lower open_upper     value assumed
-#> 1               1     1     1      FALSE      FALSE  1.000000   FALSE
-#> 2          2 to 5     2     5      FALSE      FALSE  3.162278   FALSE
-#> 3         6 to 10     6    10      FALSE      FALSE  7.745967   FALSE
-#> 4 Greater than 10    11    NA      FALSE       TRUE 14.832397    TRUE
+b <- prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
+bandvals(b, rule = "midpoint", openupcap = 20)
+#>             label lower upper openlo openup value assumed
+#> 1               1     1     1  FALSE  FALSE   1.0   FALSE
+#> 2          2 to 5     2     5  FALSE  FALSE   3.5   FALSE
+#> 3         6 to 10     6    10  FALSE  FALSE   8.0   FALSE
+#> 4 Greater than 10    11    NA  FALSE   TRUE  15.5    TRUE
+bandvals(b, rule = "geometric", openupcap = 20)
+#>             label lower upper openlo openup     value assumed
+#> 1               1     1     1  FALSE  FALSE  1.000000   FALSE
+#> 2          2 to 5     2     5  FALSE  FALSE  3.162278   FALSE
+#> 3         6 to 10     6    10  FALSE  FALSE  7.745967   FALSE
+#> 4 Greater than 10    11    NA  FALSE   TRUE 14.832397    TRUE
 ```
 
 ## Expanding to per-unit values
 
 With counts per band,
-[`expand_bands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expand_bands.md)
+[`expbands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expbands.md)
 returns one value per unit, ready for any statistic:
 
 ``` r
 
-x <- expand_bands(c("1", "2 to 5", "Greater than 5"), counts = c(10, 4, 2),
-                  open_upper_cap = 12)
+x <- expbands(c("1", "2 to 5", "Greater than 5"), cnts = c(10, 4, 2),
+                  openupcap = 12)
 table(x)
 #> x
 #>   1 3.5   9 
 #>  10   4   2
-gini(x)
+ginicoef(x)
 #> [1] 0.452381
 ```
 
@@ -82,29 +82,29 @@ gini(x)
 The **Gini coefficient** measures how unequally a total is spread across
 units: 0 when every unit holds the same, approaching 1 when one unit
 holds everything.
-[`top_share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
+[`topshr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
 reports what the most frequent few account for, and
-[`lorenz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
+[`lorenzc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
 gives the curve behind the Gini.
 
 ``` r
 
-gini(rep(1, 10))             # no concentration
+ginicoef(rep(1, 10))             # no concentration
 #> [1] 0
-gini(c(rep(0, 9), 1))        # one unit holds everything
+ginicoef(c(rep(0, 9), 1))        # one unit holds everything
 #> [1] 0.9
 1 - 1 / 10                   # the maximum for ten units
 #> [1] 0.9
 
 placements <- c(rep(1, 1200), rep(3, 430), rep(8, 110), rep(20, 38))
-gini(placements)
+ginicoef(placements)
 #> [1] 0.461225
-top_share(placements, c(0.01, 0.05, 0.1))
+topshr(placements, c(0.01, 0.05, 0.1))
 #>   fraction units      share
 #> 1     0.01    18 0.08716707
 #> 2     0.05    89 0.28280872
 #> 3     0.10   178 0.41888620
-head(lorenz(placements))
+head(lorenzc(placements))
 #>     population        value
 #> 1 0.0000000000 0.0000000000
 #> 2 0.0005624297 0.0002421308
@@ -122,13 +122,13 @@ placements: the substantive finding a banded table hides.
 Everything above depends on what the “Greater than 10” band is taken to
 contain. If the statistic barely moves as that assumption varies, it has
 been measured; if it swings, it has not, and the honest report says so.
-[`band_sensitivity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_sensitivity.md)
+[`bandsens()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bandsens.md)
 recomputes a statistic over a range of caps:
 
 ``` r
 
 counts <- c(1200, 430, 110, 38)
-band_sensitivity(b, counts)
+bandsens(b, counts)
 #> ── Sensitivity to the open top band's assumed cap ──────────────── 
 #>        cap     value
 #>   11.55000 0.4254708
@@ -149,7 +149,7 @@ band_sensitivity(b, counts)
 #>   caps tried, so it is a property of the assumption as much as
 #>   of the data. Report the range, not a single figure.
 #> ──────────────────────────────────────────────────────────────────
-band_sensitivity(b, counts, statistic = mean)
+bandsens(b, counts, stat = mean)
 #> ── Sensitivity to the open top band's assumed cap ──────────────── 
 #>        cap    value
 #>   11.55000 2.257283
@@ -185,8 +185,8 @@ k <- 1:10000
 p <- k^(-2.5) / sum(k^(-2.5))
 set.seed(2)
 z <- sample(k, 5000, replace = TRUE, prob = p)
-c(exact = round(hill_tail_index(z, x_min = 1)$alpha, 2),
-  approx = round(hill_tail_index(z, x_min = 1, approx = TRUE)$alpha, 2))
+c(exact = round(hilltlidx(z, xmin = 1)$alpha, 2),
+  approx = round(hilltlidx(z, xmin = 1, approx = TRUE)$alpha, 2))
 #>  exact approx 
 #>   2.46   2.00
 ```
@@ -195,24 +195,45 @@ A short tail still returns an estimate, marked as not to be leaned on:
 
 ``` r
 
-short <- hill_tail_index(c(3, 4, 5, 9), x_min = 3)
-c(alpha = round(short$alpha, 2), n = short$n_tail, reliable = short$reliable)
+short <- hilltlidx(c(3, 4, 5, 9), xmin = 3)
+c(alpha = round(short$alpha, 2), n = short$ntl, reliable = short$reliable)
 #>    alpha        n reliable 
 #>     2.59     4.00     0.00
 ```
 
 ## Workflow
 
-1.  [`parse_bands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/parse_bands.md);
+1.  [`prsbands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/prsbands.md);
     stop if anything is unparsed.
-2.  [`band_values()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_values.md)
+2.  [`bandvals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bandvals.md)
     or
-    [`expand_bands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expand_bands.md)
+    [`expbands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expbands.md)
     with an explicit cap for the open band.
 3.  The statistic:
-    [`gini()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md),
-    [`top_share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md),
-    [`lorenz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md),
-    [`hill_tail_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hill_tail_index.md).
-4.  [`band_sensitivity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_sensitivity.md)
+    [`ginicoef()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md),
+    [`topshr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md),
+    [`lorenzc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md),
+    [`hilltlidx()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hilltlidx.md).
+4.  [`bandsens()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bandsens.md)
     over the cap, and report the range, not the point.
+
+## How unevenly a population is spread
+
+Concentration measures apply to any non-negative counts. With the 2021
+Census counts of First Nations people by province and territory (bundled
+with the package), the Gini coefficient and top shares say how
+concentrated the population is in a few jurisdictions:
+
+``` r
+
+cp <- indiex("censuspop")
+tot <- cp[cp$GEO_LEVEL != "Country" & cp$AGE_GROUP == "Total - Age groups" &
+            cp$RESIDENCE == "Total - Residence on or off reserve" &
+            grepl("^Total - Average age", cp$CHARACTERISTIC_NAME), ]
+ginicoef(tot$FIRST_NATIONS)
+#> [1] 0.5291808
+topshr(tot$FIRST_NATIONS, fracs = c(0.25, 0.5))
+#>   fraction units     share
+#> 1     0.25     4 0.6787850
+#> 2     0.50     7 0.9326599
+```

@@ -20,23 +20,23 @@ yoy(x, ...)
 yoy(
   x,
   value,
-  period,
+  prd,
   by = NULL,
   lag = 1L,
   fun = NULL,
   units = c("count", "continuous", "percent"),
-  min_base = NULL,
-  conf_level = 0.95,
-  direction = c("neutral", "higher_is_better", "lower_is_better"),
+  minbase = NULL,
+  conflvl = 0.95,
+  dir = c("neutral", "higher", "lower"),
   complete = TRUE,
   ...
 )
 
 # S3 method for class 'numeric'
-yoy(x, period = seq_along(x), ...)
+yoy(x, prd = seq_along(x), ...)
 
 # S3 method for class 'integer'
-yoy(x, period = seq_along(x), ...)
+yoy(x, prd = seq_along(x), ...)
 
 # S3 method for class 'ts'
 yoy(x, lag = NULL, ...)
@@ -60,7 +60,7 @@ print(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
   For a data frame, the column holding the measure, as a string or a
   bare name.
 
-- period:
+- prd:
 
   For a data frame, the column holding the period (a year, a `Date`, a
   fiscal-year integer, an ordered factor). For a numeric vector, the
@@ -93,23 +93,23 @@ print(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
   `"percent"` reports a percentage-POINT change and withholds the
   percent change, which for a percentage is a different quantity.
 
-- min_base:
+- minbase:
 
   Optional: previous-period values below this get a "small base" note.
   Nothing is withheld either way: every non-zero base gets its percent
   change and exact interval, which is as wide as the base is small.
   Defaults to 0 (no note); only a zero base has no percent change.
 
-- conf_level:
+- conflvl:
 
   Numeric scalar in (0, 1), the confidence level for the count interval;
   default 0.95.
 
-- direction:
+- dir:
 
-  Which way is an improvement: `"higher_is_better"`, `"lower_is_better"`
-  (segregation days, deaths in custody, use of force), or `"neutral"`.
-  Affects colour and the `verdict` column only, never the arithmetic.
+  Which way is an improvement: `"higher"`, `"lower"` (segregation days,
+  deaths in custody, use of force), or `"neutral"`. Affects colour and
+  the `verdict` column only, never the arithmetic.
 
 - complete:
 
@@ -126,7 +126,7 @@ print(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
 - palette:
 
   Character, default `"diverging"`. One of
-  [`yoy_palettes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_palettes.md);
+  [`yoypals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoypals.md);
   chooses the colours used when `color = TRUE`. An unknown name is an
   error.
 
@@ -148,16 +148,15 @@ print(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
 An `rmbl_yoy` object (a data frame of class
 `c("rmbl_yoy", "data.frame")`) with one row per period (and group): the
 period column under its own name (`period` for a vector or a `ts`), the
-grouping columns, then `value`, `previous`, `change`, `pct_change` (or
-`pp_change` for percentages), `flag` (character: "no comparison period",
-"no data", "previous period is zero", or a small-base note when
-`min_base` is set; `NA` otherwise), `pct_lower` and `pct_upper` for
-counts, and `verdict`. Attribute `"yoy"` records `value`, `period`,
-`by`, `lag`, `units`, `min_base`, `conf_level`, `direction` and the
-display digits; the writers
-([`yoy_write()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_write.md))
+grouping columns, then `value`, `previous`, `change`, `pctchg` (or
+`ppchg` for percentages), `flag` (character: "no comparison period", "no
+data", "previous period is zero", or a small-base note when `minbase` is
+set; `NA` otherwise), `pctlo` and `pctup` for counts, and `verdict`.
+Attribute `"yoy"` records `value`, `period`, `by`, `lag`, `units`,
+`minbase`, `conflvl`, `direction` and the display digits; the writers
+([`yoywr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoywr.md))
 and
-[`yoy_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_summary.md)
+[`yoysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoysmry.md)
 read it.
 
 ## Details
@@ -166,15 +165,15 @@ Rows are first combined to one per period (and group) with `fun`. With
 `complete = TRUE` the periods missing from a regular grid (numbers,
 `Date` or `POSIXct` with a common step) are inserted with `NA` values
 and flagged "no data". Each period is then compared with the period
-`lag` steps earlier in that grid: `change` is the difference,
-`pct_change` \\100 (v_t / v\_{t-lag} - 1)\\ (`NA` off a zero base), and
-for percentages `pp_change` is the difference in percentage points.
+`lag` steps earlier in that grid: `change` is the difference, `pctchg`
+\\100 (v_t / v\_{t-lag} - 1)\\ (`NA` off a zero base), and for
+percentages `ppchg` is the difference in percentage points.
 
 For counts, conditional on their sum \\n = a + b\\ the current count
 \\a\\ is binomial with probability \\\rho / (1 + \rho)\\, \\\rho\\ the
 rate ratio; the Clopper-Pearson interval for that probability,
 transformed back, is an exact interval for the ratio, reported as
-`pct_lower` and `pct_upper` (percent change). It is the interval
+`pctlo` and `pctup` (percent change). It is the interval
 [`stats::poisson.test()`](https://rdrr.io/r/stats/poisson.test.html)
 gives for two counts with equal exposure. A zero base has no percent
 change but still an interval (with an infinite upper end).
@@ -187,8 +186,8 @@ significance.
 Errors: `x` neither a data frame, a numeric vector nor a `ts`; `value`,
 `period` or `by` naming a column that does not exist; a non-numeric or
 infinite `value`; for `units = "count"`, negative or fractional values;
-`lag` not a positive whole number; `conf_level` outside (0, 1); an
-unknown `units` or `direction`.
+`lag` not a positive whole number; `conflvl` outside (0, 1); an unknown
+`units` or `direction`.
 
 ## References
 
@@ -203,9 +202,9 @@ this function is built for.
 
 ## See also
 
-[`yoy_html()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md),
-[`yoy_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md),
-[`yoy_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_summary.md)
+[`yoyhtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoyren.md),
+[`yoypdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoyren.md),
+[`yoysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoysmry.md)
 
 ## Examples
 
@@ -213,41 +212,41 @@ this function is built for.
 seg <- data.frame(
   EndFiscalYear = rep(2019:2023, each = 2),
   Gender = rep(c("Female", "Male"), 5),
-  Number_Of_Placements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
+  NumberOfPlacements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
 )
 
 y <- yoy(seg,
-  value = "Number_Of_Placements", period = "EndFiscalYear",
-  by = "Gender", direction = "lower_is_better"
+  value = "NumberOfPlacements", prd = "EndFiscalYear",
+  by = "Gender", dir = "lower"
 )
 y
-#> Gender  EndFiscalYear  Number_Of_Placements  previous  change  change %  interval     
-#> ──────  ─────────────  ────────────────────  ────────  ──────  ────────  ─────────────
-#> Female  2019           31                    —         —         —       —            
+#> Gender  EndFiscalYear  NumberOfPlacements  previous  change  change %  interval     
+#> ──────  ─────────────  ──────────────────  ────────  ──────  ────────  ─────────────
+#> Female  2019           31                  —         —         —       —            
 #>     ↳ note: no comparison period
-#> Female  2020           28                    31        -3      ▼ -9.7%   [-48%, +56%] 
-#> Female  2021           12                    28        -16     ▼ -57.1%  [-80%, -13%] 
-#> Female  2022           19                    12        7       ▲ +58.3%  [-27%, +258%]
-#> Female  2023           24                    19        5       ▲ +26.3%  [-34%, +144%]
-#> Male    2019           402                   —         —         —       —            
+#> Female  2020           28                  31        -3      ▼ -9.7%   [-48%, +56%] 
+#> Female  2021           12                  28        -16     ▼ -57.1%  [-80%, -13%] 
+#> Female  2022           19                  12        7       ▲ +58.3%  [-27%, +258%]
+#> Female  2023           24                  19        5       ▲ +26.3%  [-34%, +144%]
+#> Male    2019           402                 —         —         —       —            
 #>     ↳ note: no comparison period
-#> Male    2020           377                   402       -25     ▼ -6.2%   [-19%, +8%]  
-#> Male    2021           190                   377       -187    ▼ -49.6%  [-58%, -40%] 
-#> Male    2022           268                   190       78      ▲ +41.1%  [+17%, +71%] 
-#> Male    2023           331                   268       63      ▲ +23.5%  [+5%, +46%]  
+#> Male    2020           377                 402       -25     ▼ -6.2%   [-19%, +8%]  
+#> Male    2021           190                 377       -187    ▼ -49.6%  [-58%, -40%] 
+#> Male    2022           268                 190       78      ▲ +41.1%  [+17%, +71%] 
+#> Male    2023           331                 268       63      ▲ +23.5%  [+5%, +46%]  
 #> 
 #> lag 1 period · units: count · 95% exact rate-ratio interval · lower is better
 
 # The interval is exact, so a small group does not get a confident
 # percent it has not earned.
 subset(as.data.frame(y), Gender == "Female")
-#>   Gender EndFiscalYear value previous change pct_change                 flag
+#>   Gender EndFiscalYear value previous change     pctchg                 flag
 #> 1 Female          2019    31       NA     NA         NA no comparison period
 #> 2 Female          2020    28       31     -3  -9.677419                 <NA>
 #> 3 Female          2021    12       28    -16 -57.142857                 <NA>
 #> 4 Female          2022    19       12      7  58.333333                 <NA>
 #> 5 Female          2023    24       19      5  26.315789                 <NA>
-#>   pct_lower pct_upper verdict
+#>       pctlo     pctup verdict
 #> 1        NA        NA    <NA>
 #> 2 -47.79679  55.62836  better
 #> 3 -80.14950 -12.97354  better
@@ -257,7 +256,7 @@ subset(as.data.frame(y), Gender == "Female")
 # A percentage is handled as percentage points, not as a percent of a
 # percent.
 rate <- data.frame(year = 2019:2023, share = c(4.1, 4.6, 5.2, 5.0, 5.4))
-yoy(rate, value = "share", period = "year", units = "percent")
+yoy(rate, value = "share", prd = "year", units = "percent")
 #> year  share  previous  change  points  
 #> ────  ─────  ────────  ──────  ────────
 #> 2019  4.1    —         —         —     
@@ -270,7 +269,7 @@ yoy(rate, value = "share", period = "year", units = "percent")
 #> lag 1 period · units: percent · percentage-point change, not percent of a percent
 
 # a missing year stays a gap; a bare column name works too
-yoy(data.frame(year = c(2019, 2021, 2022), n = c(10, 12, 15)), value = n, period = year)
+yoy(data.frame(year = c(2019, 2021, 2022), n = c(10, 12, 15)), value = n, prd = year)
 #> year  n   previous  change  change %  interval     
 #> ────  ──  ────────  ──────  ────────  ─────────────
 #> 2019  10  —         —         —       —            
@@ -285,12 +284,12 @@ yoy(data.frame(year = c(2019, 2021, 2022), n = c(10, 12, 15)), value = n, period
 
 # a quarterly series compares each quarter with the same quarter a year earlier
 q <- ts(c(5, 6, 7, 8, 6, 7, 9, 9), frequency = 4, start = c(2020, 1))
-as.data.frame(yoy(q))[5:8, c("period", "value", "previous", "pct_change")]
-#>    period value previous pct_change
-#> 5 2021.00     6        5   20.00000
-#> 6 2021.25     7        6   16.66667
-#> 7 2021.50     9        7   28.57143
-#> 8 2021.75     9        8   12.50000
+as.data.frame(yoy(q))[5:8, c("period", "value", "previous", "pctchg")]
+#>    period value previous   pctchg
+#> 5 2021.00     6        5 20.00000
+#> 6 2021.25     7        6 16.66667
+#> 7 2021.50     9        7 28.57143
+#> 8 2021.75     9        8 12.50000
 
 # counts must be whole numbers
 try(yoy(data.frame(year = 1:3, n = c(1.5, 2, 3)), "n", "year"))

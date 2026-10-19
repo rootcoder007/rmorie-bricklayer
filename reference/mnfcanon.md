@@ -1,0 +1,85 @@
+# The canonical serialisation of a manifest, and its digest
+
+`mnfcanon()` renders a manifest as one line of JSON with every object's
+keys in sorted order and every number at full double precision.
+`mnfdgst()` is the SHA-256 of those bytes.
+
+## Usage
+
+``` r
+mnfcanon(man)
+
+mnfdgst(man)
+```
+
+## Arguments
+
+- man:
+
+  A manifest (a list), as from
+  [`mkmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkmnf.md);
+  any list is accepted.
+
+## Value
+
+`mnfcanon()`: a character scalar, the one-line JSON. `mnfdgst()`: a
+character scalar of 64 lower-case hexadecimal characters, the SHA-256 of
+the canonical bytes.
+
+## Details
+
+Why this is needed. Two manifests that record the same thing can easily
+differ as bytes: R lists keep insertion order, so building `meta` before
+`results` or the other way round gives different JSON, and a signature
+over the JSON would then depend on the order a script happened to
+assemble the list. Sorting the keys removes that. The precision matters
+for a different reason: the default JSON writer emits four significant
+digits, which is right for a human-readable report and wrong for a
+record something will later be checked against, because `1/3` comes back
+as `0.3333` and no recomputation can match it.
+
+Sign `mnfdgst()`, not the pretty JSON. The digest is stable across the
+assembly order, across `pretty`, and across a round trip through a file.
+
+Full precision means full precision on every platform, which took more
+than writing enough digits. Seventeen significant digits recover any
+double exactly, but only through a reader that converts decimal to
+binary with correct rounding, and not every C library does – macOS arm64
+reads the correct decimal for the largest double as infinity. So this
+package converts decimals itself rather than asking the platform, in
+integer arithmetic with a remainder that decides the rounding. A
+manifest written on one machine reads back bit-identically on another,
+and a caller does nothing to get that.
+
+Errors when `man` is not a list.
+
+## See also
+
+[`mkmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkmnf.md),
+[`wrmnfjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrmnfjs.md),
+[`cpsatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md).
+
+## Examples
+
+``` r
+a <- mkmnf(list(b = 2, a = 1), env = FALSE)
+b <- mkmnf(list(a = 1, b = 2), env = FALSE)
+# the same content in a different order has the same digest
+identical(mnfdgst(a), mnfdgst(b))
+#> [1] TRUE
+
+# full precision, so a recorded number can be checked later
+m <- mkmnf(list(x = 1 / 3), env = FALSE)
+grepl("0.33333333333333331", mnfcanon(m), fixed = TRUE)
+#> [1] TRUE
+
+# any change to a recorded value changes the digest
+m2 <- recrd(m, "check", obs = 1, expd = 1)
+#>   check                                        observed = 1.0000       expected = 1.0000       [INFO]
+mnfdgst(m) == mnfdgst(m2)
+#> [1] FALSE
+
+# only lists can be serialised this way
+try(mnfdgst("not a manifest"))
+#> Error : `man` must be a list
+```

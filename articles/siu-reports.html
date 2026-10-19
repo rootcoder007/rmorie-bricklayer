@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,7 +91,7 @@ hostile input.</p>
 <h2 id="the-schema">The schema<a class="anchor" aria-label="anchor" href="#the-schema"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sch</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bricklayer_siu_schema.html">bricklayer_siu_schema</a></span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">sch</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/siusch.html">siusch</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sch</span><span class="op">$</span><span class="va">name</span>, <span class="fl">20</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "police_service"                "date_of_incident_iso"         </span></span>
 <span><span class="co">#&gt;  [3] "date_siu_notified_iso"         "date_of_director_decision_iso"</span></span>
@@ -110,7 +110,7 @@ hostile input.</p>
 <p>The package ships a synthetic report with the structure of a real one
 and no real person in it:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bricklayer_parse_siu.html">bricklayer_parse_siu</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"siu_synthetic_report.html"</span>,</span>
+<code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/siuprs.html">siuprs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"siu_synthetic_report.html"</span>,</span>
 <span>                                      package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">f</span><span class="op">[[</span><span class="st">"number_of_subject_officials"</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="co">#&gt; [1] "2"</span></span>
@@ -123,12 +123,12 @@ and no real person in it:</p>
 <p>HTML to plain text, with the layout tags turned into line structure
 and entities decoded:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/bricklayer_siu_text.html">bricklayer_siu_text</a></span><span class="op">(</span><span class="st">"&lt;p&gt;Number of SIU Investigators assigned: 3&lt;/p&gt;"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/siutxt.html">siutxt</a></span><span class="op">(</span><span class="st">"&lt;p&gt;Number of SIU Investigators assigned: 3&lt;/p&gt;"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] " Number of SIU Investigators assigned: 3\n"</span></span></code></pre></div>
 <p>The subject-official count, resolved from the enumerated list rather
 than a headline number that reports sometimes omit:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/bricklayer_siu_resolve_so.html">bricklayer_siu_resolve_so</a></span><span class="op">(</span><span class="st">"Subject Officials\nSO #1 Interviewed\nSO #2 Declined interview"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/siuso.html">siuso</a></span><span class="op">(</span><span class="st">"Subject Officials\nSO #1 Interviewed\nSO #2 Declined interview"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $count</span></span>
 <span><span class="co">#&gt; [1] 2</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -136,9 +136,9 @@ than a headline number that reports sometimes omit:</p>
 <span><span class="co">#&gt; [1] "section: max(ordinal 2, entries 2)"</span></span></code></pre></div>
 <p>Dates in the report’s prose, normalised to ISO:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/bricklayer_siu_iso_date.html">bricklayer_siu_iso_date</a></span><span class="op">(</span><span class="st">"March 4, 2024"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/siudate.html">siudate</a></span><span class="op">(</span><span class="st">"March 4, 2024"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "2024-03-04"</span></span>
-<span><span class="fu"><a href="../reference/bricklayer_siu_iso_date.html">bricklayer_siu_iso_date</a></span><span class="op">(</span><span class="st">"not a date"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/siudate.html">siudate</a></span><span class="op">(</span><span class="st">"not a date"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] ""</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -184,17 +184,32 @@ reviewers used.</li>
 <div class="section level2">
 <h2 id="fetching-live-reports">Fetching live reports<a class="anchor" aria-label="anchor" href="#fetching-live-reports"></a>
 </h2>
-<p><code><a href="../reference/bricklayer_fetch_siu.html">bricklayer_fetch_siu()</a></code> fetches a report by its
-identifier through the package’s checked transport (address validation,
-redirect policy, resource limits) with an Internet Archive fallback, and
-<code><a href="../reference/bricklayer_fetch_parse_siu.html">bricklayer_fetch_parse_siu()</a></code> fetches and parses in one
-call:</p>
+<p><code><a href="../reference/siufetch.html">siufetch()</a></code> fetches a report by its identifier through
+the package’s checked transport (address validation, redirect policy,
+resource limits) with an Internet Archive fallback, and
+<code><a href="../reference/siufprs.html">siufprs()</a></code> fetches and parses in one call:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bricklayer_fetch_parse_siu.html">bricklayer_fetch_parse_siu</a></span><span class="op">(</span><span class="st">"24-OCI-123"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/siufprs.html">siufprs</a></span><span class="op">(</span><span class="st">"24-OCI-123"</span><span class="op">)</span></span></code></pre></div>
 <p>The corpus of parsed reports, reviewed round by round, is distributed
 as a dataset by the companion package <code>rmoriedata</code>; this
 package provides the parser so the corpus can be rebuilt and
 audited.</p>
+</div>
+<div class="section level2">
+<h2 id="indigenous-police-services">Indigenous police services<a class="anchor" aria-label="anchor" href="#indigenous-police-services"></a>
+</h2>
+<p>Ontario’s First Nations police services, among them the
+Nishnawbe-Aski Police Service, the Anishinabek Police Service and the
+Treaty Three Police Service, are investigated by the SIU like any other.
+The parsed <code>police_service</code> field selects their cases (this
+fetches live reports, so it is not run here):</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fnservices</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Nishnawbe-Aski Police Service"</span>, <span class="st">"Anishinabek Police Service"</span>,</span>
+<span>                 <span class="st">"Treaty Three Police Service"</span>, <span class="st">"UCCM Anishnaabe Police Service"</span><span class="op">)</span></span>
+<span><span class="va">reports</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">reporturls</span>, <span class="va">siufprs</span><span class="op">)</span></span>
+<span><span class="va">mine</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/funprog.html" class="external-link">Filter</a></span><span class="op">(</span><span class="kw">function</span><span class="op">(</span><span class="va">r</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/any.html" class="external-link">any</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">fnservices</span>, collapse <span class="op">=</span> <span class="st">"|"</span><span class="op">)</span>, <span class="va">r</span><span class="op">$</span><span class="va">police_service</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>               <span class="va">reports</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">mine</span><span class="op">)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

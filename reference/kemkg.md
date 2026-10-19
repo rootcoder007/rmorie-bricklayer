@@ -1,0 +1,138 @@
+# Generate an ML-KEM key pair
+
+Generates a key pair for ML-KEM (FIPS 203), the standardised
+post-quantum key encapsulation mechanism, and `kempubkey()` strips a key
+pair down to the half that can be shared. Use them when a capsule, a
+data file or a credential has to reach one recipient without being
+readable on the way: the recipient makes the key pair and publishes the
+public half, and the sender uses it with
+[`kemencap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemencap.md).
+It is implemented in this package, with no system dependency.
+
+## Usage
+
+``` r
+kemkg(lvl = 768L, seed = NULL)
+
+kempubkey(key)
+```
+
+## Arguments
+
+- lvl:
+
+  Security level, one whole number: 512 (ML-KEM-512, NIST category 1),
+  768 (the default, category 3) or 1024 (category 5). 768 is the level
+  NIST and the IETF have settled on for general use.
+
+- seed:
+
+  Optional raw vector of 64 seed bytes ( `d || z`) . Supplying it makes
+  the key reproducible, which is what the standard's test vectors need;
+  the default draws from the operating system's CSPRNG.
+
+- key:
+
+  For `kempubkey()`: a key pair from `kemkg()`.
+
+## Value
+
+`kemkg()`: a list of class `c("bricklayer_kem_key", "list")` with
+`public` (character, the encapsulation key as lower-case hex, 800, 1184
+or 1568 bytes), `secret` (character, the decapsulation key as hex, 1632,
+2400 or 3168 bytes) and `level` (integer). Printing it never shows the
+secret. `kempubkey()`: a list of class
+`c("bricklayer_kem_public_key", "list")` with `public` and `level` only.
+
+## Details
+
+A KEM is not a signature scheme and not a cipher. Encapsulation produces
+two things: a ciphertext to send, and a 32-byte shared secret to keep.
+The holder of the decapsulation key recovers the same secret from the
+ciphertext. What either side then does with that secret – feed it to a
+KDF, key an AEAD – is outside the mechanism.
+
+Key generation is ML-KEM.KeyGen of FIPS 203 (Algorithm 19) from the
+64-byte seed \\d \\ z\\: \\d\\ seeds the K-PKE key and \\z\\ is the
+implicit-rejection value kept inside the decapsulation key. With a seed
+the result is deterministic (the same seed gives the same key, which is
+how the NIST test vectors are reproduced); without one the seed is drawn
+with
+[`rndbytes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rndbytes.md)
+from the operating system. The key sizes per level are given by
+[`kemsz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemsz.md);
+the level is not recorded in a ciphertext, so both sides must agree on
+it.
+
+Errors: `lvl` other than one whole number 512, 768 or 1024; `seed` that
+is not a raw vector of 64 bytes; `key` passed to `kempubkey()` that is
+not from `kemkg()`.
+
+## Security
+
+A hand-written implementation. The standardised schemes are checked byte
+for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
+operation that touches a secret under valgrind memcheck with the secret
+marked undefined (the ctgrind method), so a branch or a memory address
+that depends on it is a reported error, and afterwards scans the dead
+stack for copies of the secret. Both checks run in CI on every change,
+with GCC and with Clang. Timing is also measured on x86-64 and arm64
+hardware (`inst/dudect`), power leakage is assessed in simulation under
+the value and the transition models (`inst/tvla`), and ML-KEM
+decapsulation and ML-DSA signing are first-order masked by default.
+These are checks of this code on those compilers and under those leakage
+models; no third-party security audit has been commissioned, and the
+README's security section lists what each check does and does not cover.
+
+## References
+
+National Institute of Standards and Technology (2024).
+Module-Lattice-Based Key-Encapsulation Mechanism Standard. FIPS 203.
+[doi:10.6028/NIST.FIPS.203](https://doi.org/10.6028/NIST.FIPS.203)
+
+## See also
+
+[`kemencap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemencap.md),
+[`kemdecap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemdecap.md),
+[`kemsz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemsz.md),
+[`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)
+for the signature schemes.
+
+## Examples
+
+``` r
+key <- kemkg(768)
+pub <- kempubkey(key)
+
+# the sender holds only the public key
+sent <- kemencap(pub)
+# the recipient recovers the same secret from the ciphertext
+got <- kemdecap(key, sent$ciphertext)
+identical(sent$shared, got)
+#> [1] TRUE
+
+# a corrupted ciphertext yields a DIFFERENT secret, not an error
+bad <- sent$ciphertext
+substring(bad, 1L, 2L) <- "00"
+identical(kemdecap(key, bad), got)
+#> [1] FALSE
+
+# a fixed seed gives the same key every time (for test vectors only)
+k1 <- kemkg(512, seed = as.raw(0:63))
+k2 <- kemkg(512, seed = as.raw(0:63))
+identical(k1$public, k2$public)
+#> [1] TRUE
+k1
+#> ── Key encapsulation key (ML-KEM, FIPS 203) ──────────────────────
+#>   level       ML-KEM-512
+#>   public key  3995815e597d104355cf29aa5333c932... (800 bytes)
+#>   secret      <withheld>
+#> ──────────────────────────────────────────────────────────────────
+
+# levels other than the three FIPS 203 defines are refused
+try(kemkg(256))
+#> Error : `level` must be one of 512, 768 or 1024
+try(kemkg(768, seed = as.raw(1:10)))
+#> Error : `seed` must be a raw vector of 64 bytes
+```

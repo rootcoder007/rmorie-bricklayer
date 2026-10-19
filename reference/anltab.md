@@ -1,0 +1,256 @@
+# Analyse a published administrative table in one call
+
+The questions asked of a published table are always the same: what is in
+it, what changed between periods and how sure can one be, what the rates
+are if there is an exposure, whether a short series trends, and whether
+this release differs from the one held before. Each has a function in
+this package; this runs them together, with the pieces a reviewer needs
+and that are easy to forget on a deadline: exact intervals on every
+change, multiple-comparison adjustment over the groups scanned, the
+envelope that rounding and suppression in the release imply, and a drift
+screen against the prior capsule.
+
+## Usage
+
+``` r
+anltab(
+  data,
+  value,
+  prd,
+  by = NULL,
+  pop = NULL,
+  prior = NULL,
+  units = c("count", "continuous", "percent"),
+  rnd = NULL,
+  rndkind = c("nearest", "random"),
+  suplim = NULL,
+  dir = c("neutral", "higher", "lower"),
+  per = 1000,
+  conflvl = 0.95,
+  alpha = 0.05,
+  adjust = "BH"
+)
+```
+
+## Arguments
+
+- data:
+
+  A data frame in long form: one row per period and group.
+
+- value:
+
+  Name of the column (a string) with the published count (or measure).
+
+- prd:
+
+  Name of the column with the period (fiscal year, quarter, ...);
+  numeric periods are used as the time axis of the trend tests.
+
+- by:
+
+  Optional character vector of grouping column names (institution,
+  region, ...). `NULL` (the default) treats the table as one series.
+
+- pop:
+
+  Optional name of an exposure column for rates (`NULL`, the default,
+  skips the rate step).
+
+- prior:
+
+  Optional data frame: the previous capsule of the same table, for the
+  drift screen. `NULL` (the default) skips it.
+
+- units:
+
+  `"count"` (the default), `"continuous"` or `"percent"`, as in
+  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md).
+
+- rnd, rndkind, suplim:
+
+  How the release rounds or suppresses cells; see
+  [`pubbnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pubbnd.md).
+  `rnd` is the rounding base (for example 5), `rndkind` `"nearest"` (the
+  default) or `"random"`, `suplim` the threshold below which cells are
+  suppressed. `NULL` when the counts are exact. Used only for counts:
+  with other `units` they are ignored, with a warning.
+
+- dir:
+
+  Which way is an improvement, as in
+  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md):
+  `"neutral"` (the default), `"higher"` or `"lower"`.
+
+- per:
+
+  Rate denominator, as in
+  [`rtcalc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md);
+  default 1000 (rates per 1,000 of `pop`).
+
+- conflvl:
+
+  Confidence level for every interval, default 0.95.
+
+- alpha:
+
+  Level for the multiple-comparison decision and the drift screens,
+  default 0.05.
+
+- adjust:
+
+  Multiple-comparison method for
+  [`scanadj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scanadj.md),
+  default `"BH"` (Benjamini-Hochberg).
+
+## Value
+
+A list of class `bricklayer_analysis` (with a print method that
+summarises it in a few lines):
+
+- `profile`:
+
+  [`profcols()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profcols.md)
+  of `data`.
+
+- `missingness`:
+
+  named numeric from
+  [`misssmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/misssmry.md).
+
+- `change`:
+
+  the
+  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  table; for counts with the added columns `p_value`, `padj` and
+  `significant`, and with `env_*` and `compctlo`/`compctup` when
+  publication bounds were requested.
+
+- `rates`, `ratechg`:
+
+  the
+  [`rtcalc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md)
+  and
+  [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
+  tables when `population` is given, otherwise `NULL`.
+
+- `trend`:
+
+  data frame with one row per group: the `by` columns, `periods`,
+  `first`, `last`, `tau`, `trndp`, `slope`, `rateratio`, `rateratiolo`,
+  `rateratioup`.
+
+- `drift`:
+
+  [`cpsdrft()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md)
+  result against `prior`, or `NULL`.
+
+- `meta`:
+
+  list of the arguments used, `nrows`, the sorted `periods`, `prior`
+  (logical) and `when` (a time stamp).
+
+## Details
+
+The steps, in order:
+
+1.  profile:
+    [`profcols()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profcols.md)
+    and
+    [`misssmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/misssmry.md)
+    on `data`;
+
+2.  change:
+    [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+    between consecutive periods within each `by` group. For
+    `units = "count"` the exact p-values are then adjusted across all
+    comparisons with
+    [`scanadj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scanadj.md),
+    and, when `rnd` or `suplim` is given,
+    [`yoybnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoybnd.md)
+    adds the publication envelope (see
+    [`pubbnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pubbnd.md)).
+    For `"continuous"` and `"percent"` units neither step runs: `rnd`
+    and `suplim` are then ignored, with a warning;
+
+3.  rates (only with `pop`):
+    [`rtcalc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md)
+    per group and period, and
+    [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
+    between periods, adjusted with
+    [`scanadj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scanadj.md);
+
+4.  trend: per group, the values summed within each period, then
+    [`trndtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trndtst.md)
+    (Mann-Kendall tau, p-value and Theil-Sen slope) and, for counts,
+    [`cnttrnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnttrnd.md)
+    (Poisson rate ratio per period). A group with fewer than three
+    periods gets `NA`; a test that fails gets `NA` rather than an error;
+
+5.  drift (only with `prior`):
+    [`cpsdrft()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md)
+    of `data` against `prior`.
+
+Nothing is written and nothing is fetched; a progress bar for the trend
+step is drawn on stderr unless `options(morie.quiet = TRUE)`. Errors:
+`data` or `prior` not a data frame; a named column not in `data`; an
+invalid `units`, `dir` or `rndkind`; a `conflvl` outside (0, 1); and any
+error of the functions called (for example negative counts in
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)).
+
+## See also
+
+[`rptanl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rptanl.md)
+writes the result as a Markdown or HTML report.
+
+## Examples
+
+``` r
+path <- system.file("extdata", "otis_a01_individuals.csv",
+                    package = "rmoriebricklayer")
+otis <- read.csv(path)
+a <- anltab(otis, value = "individuals", prd = "year",
+                   by = c("table", "group"))
+a
+#> Analysis of `individuals` by year over 3 period(s) (2023 to 2025), grouped by table x group
+#>   rows 15, columns 4; no missing values
+#>   change: 10 comparison(s), 9 significant after BH at 0.05
+#>   trend: 0 of 5 series with Mann-Kendall p < 0.05
+a$change[, c("table", "group", "year", "pctchg", "padj")]
+#> <rmbl_yoy: no periods>
+a$trend[, c("group", "tau", "trndp", "rateratio")]
+#>      group       tau     trndp rateratio
+#> 1 18 to 24 0.3333333 1.0000000  1.027143
+#> 2 25 to 49 0.3333333 1.0000000  1.118024
+#> 3      50+ 0.3333333 1.0000000  1.112728
+#> 4   Female 1.0000000 0.3333333  1.376319
+#> 5     Male 0.3333333 1.0000000  1.077781
+
+# counts published rounded to base 5: the intervals widen
+b <- anltab(otis, value = "individuals", prd = "year",
+                   by = c("table", "group"), rnd = 5)
+b$change[1:3, c("group", "year", "pctlo", "compctlo")]
+#> <rmbl_yoy: no periods>
+
+# rates with an exposure column
+d <- data.frame(year = rep(2019:2022, 2), site = rep(c("A", "B"), each = 4),
+                n = c(10, 12, 15, 9, 30, 28, 35, 40),
+                pop = rep(c(1000, 2000), each = 4))
+r <- anltab(d, "n", "year", by = "site", pop = "pop", per = 1000)
+r$ratechg[, c("site", "year", "rate", "rateratio", "padj")]
+#> ──  ────────────────────────────────────────────────────────────── 
+#>  site year rate rateratio      padj
+#>     A 2019 10.0        NA        NA
+#>     A 2020 12.0 1.2000000 0.8956832
+#>     A 2021 15.0 1.2500000 0.8956832
+#>     A 2022  9.0 0.6000000 0.8956832
+#>     B 2019 15.0        NA        NA
+#>     B 2020 14.0 0.9333333 0.8956832
+#>     B 2021 17.5 1.2500000 0.8956832
+#>     B 2022 20.0 1.1428571 0.8956832
+#> ────────────────────────────────────────────────────────────────── 
+
+# a column that is not in the data is an error
+try(anltab(otis, value = "count", prd = "year"))
+#> Error : column `count` not found in `data`
+```

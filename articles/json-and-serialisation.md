@@ -8,15 +8,15 @@ cryptography.
 
 ## Encoding R objects
 
-[`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_to_json.md)
+[`tojs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tojs.md)
 follows jsonlite’s `toJSON()` conventions (data frames as rows,
 `auto_unbox`, `pretty`, `na` handling):
 
 ``` r
 
-bricklayer_json_to_json(list(a = 1:3, b = "x"), auto_unbox = TRUE)
+tojs(list(a = 1:3, b = "x"), auto_unbox = TRUE)
 #> {"a":[1,2,3],"b":"x"}
-bricklayer_json_to_json(data.frame(id = 1:2, v = c(1.5, NA)), pretty = TRUE)
+tojs(data.frame(id = 1:2, v = c(1.5, NA)), pretty = TRUE)
 #> [
 #>   {
 #>     "id": 1,
@@ -30,18 +30,18 @@ bricklayer_json_to_json(data.frame(id = 1:2, v = c(1.5, NA)), pretty = TRUE)
 
 ## Parsing JSON
 
-[`bricklayer_json_from_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_from_json.md)
+[`fromjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fromjs.md)
 follows `fromJSON()`, with the simplification options:
 
 ``` r
 
 txt <- '{"id":[1,2,3],"name":["a","b","c"],"ok":true}'
-str(bricklayer_json_from_json(txt))
+str(fromjs(txt))
 #> List of 3
 #>  $ id  : int [1:3] 1 2 3
 #>  $ name: chr [1:3] "a" "b" "c"
 #>  $ ok  : logi TRUE
-str(bricklayer_json_from_json(txt, simplifyVector = FALSE))
+str(fromjs(txt, simplifyVector = FALSE))
 #> List of 3
 #>  $ id  :List of 3
 #>   ..$ : int 1
@@ -63,9 +63,9 @@ unless you ask to keep it:
 
 ``` r
 
-try(bricklayer_json_from_json('{"a":1,"a":2}'))
+try(fromjs('{"a":1,"a":2}'))
 #> Error : duplicate key "a" at character 14
-bricklayer_json_from_json('{"a":1,"a":2}', duplicate_keys = "keep")
+fromjs('{"a":1,"a":2}', duplicate_keys = "keep")
 #> $a
 #> [1] 1
 #> 
@@ -80,7 +80,7 @@ returned as text so no digit is lost:
 
 ``` r
 
-bricklayer_json_from_json('{"id": 9007199254740993}', bigint_as_char = TRUE)
+fromjs('{"id": 9007199254740993}', bigint_as_char = TRUE)
 #> $id
 #> [1] "9007199254740993"
 ```
@@ -89,23 +89,23 @@ bricklayer_json_from_json('{"id": 9007199254740993}', bigint_as_char = TRUE)
 
 Data JSON loses R’s structure: a factor becomes strings, a matrix
 becomes nested arrays, a `Date` becomes text.
-[`bricklayer_json_serialize()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
+[`jsser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
 writes an object *with* its type and attributes, so the round trip is
 [`identical()`](https://rdrr.io/r/base/identical.html):
 
 ``` r
 
 f <- factor(c("b", "a", "b"), levels = c("a", "b", "c"))
-back <- bricklayer_json_unserialize(bricklayer_json_serialize(f))
+back <- jsunser(jsser(f))
 identical(back, f)
 #> [1] TRUE
 
 m <- matrix(1:6, nrow = 2)
-identical(bricklayer_json_unserialize(bricklayer_json_serialize(m)), m)
+identical(jsunser(jsser(m)), m)
 #> [1] TRUE
 
 x <- list(a = 1:3, b = list(c = "x", d = NULL), e = TRUE)
-identical(bricklayer_json_unserialize(bricklayer_json_serialize(x)), x)
+identical(jsunser(jsser(x)), x)
 #> [1] TRUE
 ```
 
@@ -113,7 +113,7 @@ Plain data JSON does not keep either, which is the trade-off:
 
 ``` r
 
-bricklayer_json_to_json(f)
+tojs(f)
 #> ["b","a","b"]
 ```
 
@@ -122,10 +122,10 @@ the last bit:
 
 ``` r
 
-bricklayer_json_serialize(1 / 3)
+jsser(1 / 3)
 #> {"type":"double","attributes":{},"value":[0.33333333]}
-exact <- bricklayer_json_serialize(1 / 3, digits = I(17))
-identical(bricklayer_json_unserialize(exact), 1 / 3)
+exact <- jsser(1 / 3, digits = I(17))
+identical(jsunser(exact), 1 / 3)
 #> [1] TRUE
 ```
 
@@ -133,7 +133,7 @@ The serialised form is text, so it can be pinned like any other:
 
 ``` r
 
-core_sha256(bricklayer_json_serialize(m))
+csha256(jsser(m))
 #> [1] "8ad8c97422a65fd2c22eb76f9ef58957b1456bdb941dac86dbe0cee57be7ac46"
 ```
 
@@ -141,19 +141,19 @@ core_sha256(bricklayer_json_serialize(m))
 
 For embedding a table inside another document (a manifest field, a URL,
 a signed record),
-[`json_gzip_encode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_gzip.md)
+[`jsgzenc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md)
 gzips the JSON and base64-encodes the bytes:
 
 ``` r
 
 x <- list(rows = data.frame(id = 1:50, value = round(stats::runif(50), 3)))
-enc <- json_gzip_encode(x)
+enc <- jsgzenc(x)
 substring(enc, 1, 40)
 #> [1] "H4sIAAAAAAAA/23UwUoEMQzG8XfpeZE0SZtmXkU8"
-c(json = nchar(bricklayer_json_to_json(x)), gzip_b64 = nchar(enc))
-#>     json gzip_b64 
-#>     1193      393
-identical(json_gzip_decode(enc)$rows$id, 1:50)
+c(json = nchar(tojs(x)), gzipb64 = nchar(enc))
+#>    json gzipb64 
+#>    1193     393
+identical(jsgzdec(enc)$rows$id, 1:50)
 #> [1] TRUE
 ```
 
@@ -161,9 +161,9 @@ Base64 and base64url are available on their own:
 
 ``` r
 
-bricklayer_json_base64_enc(charToRaw("manifest"))
+jsb64enc(charToRaw("manifest"))
 #> [1] "bWFuaWZlc3Q="
-rawToChar(bricklayer_json_base64_dec("bWFuaWZlc3Q="))
+rawToChar(jsb64dec("bWFuaWZlc3Q="))
 #> [1] "manifest"
 ```
 
@@ -178,3 +178,18 @@ UTF-8, and a body that is a bare URL, which is “not JSON”, never a
 second fetch. The parser and the encoder are R code (see below), so they
 run under R’s own memory management rather than a sanitizer; the test
 suite carries the corpus of malformed inputs the review produced.
+
+## Sending a table as JSON
+
+A published table travels well as JSON, with its quality flags kept:
+
+``` r
+
+d <- indiex("infantmort")
+js <- tojs(d[d$period == "2014/2016", ], auto_unbox = TRUE)
+substring(js, 1, 200)
+#> [{"period":"2014/2016","group":"Métis","measure":"Infant mortality rate","estimate":5.2,"lower":3.6,"upper":7.7,"quality":"E"},{"period":"2014/2016","group":"Inuit","measure":"Infant mortality rate","
+back <- fromjs(js)
+all.equal(back$estimate, d$estimate[d$period == "2014/2016"])
+#> [1] TRUE
+```

@@ -11,15 +11,15 @@ every court, load from the data hub:
 
 ``` r
 
-clearance <- bricklayer_data_load("ocj_statistics/clearance_rate_criminal")
-offences  <- bricklayer_data_load("ocj_statistics/offence_based_criminal")
-mci       <- bricklayer_data_load("tps_open_data/major_crime_indicators_open_data_0")
+clearance <- dload("ocj_statistics/clearance_rate_criminal")
+offences  <- dload("ocj_statistics/offence_based_criminal")
+mci       <- dload("tps_open_data/major_crime_indicators_open_data_0")
 ```
 
 ## Is the court keeping up? Case flow and clearance
 
 A court keeps up when it disposes of as many cases as it receives.
-[`case_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/case_flow.md)
+[`caseflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/caseflow.md)
 turns the monthly counts into the clearance rate (disposed per case
 received) with an exact interval, its rolling twelve-month value, and,
 from the pending count, how many months the inventory would take to
@@ -28,12 +28,12 @@ clear at the recent pace.
 ``` r
 
 f <- ext("ocj_flow_ontario.csv")
-cf <- case_flow(f$received, f$disposed, pending = f$pending, period = f$month)
-cf[c(1, 12, 24), c("period", "received", "disposed", "clearance", "rolling_clearance", "periods_to_clear")]
-#>    period received disposed clearance rolling_clearance periods_to_clear
-#> 1 2024-04    21265    22053  1.037056                NA         6.752097
-#> 2 2025-03    20688    20996  1.014888         0.9742875         7.466076
-#> 3 2026-03    20602    23136  1.122998         0.9937306         7.196190
+cf <- caseflow(f$received, f$disposed, pend = f$pending, prd = f$month)
+cf[c(1, 12, 24), c("period", "received", "disposed", "clearance", "rolclr", "pertoclear")]
+#>    period received disposed clearance    rolclr pertoclear
+#> 1 2024-04    21265    22053  1.037056        NA   6.752097
+#> 2 2025-03    20688    20996  1.014888 0.9742875   7.466076
+#> 3 2026-03    20602    23136  1.122998 0.9937306   7.196190
 plot(cf)
 ```
 
@@ -48,7 +48,7 @@ is the one to read.
 
 The Court publishes the share of cases disposed within 10 months, 10 to
 15, 15 to 18 and over 18.
-[`life_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/life_table.md)
+[`lifetbl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/lifetbl.md)
 reads those bands directly and gives the share still open at each band
 edge, with a Greenwood interval, and the median.
 
@@ -57,22 +57,22 @@ edge, with a Greenwood interval, and the median.
 d <- ext("ocj_time_to_disposition.csv")
 last <- nrow(d)
 shares <- unlist(d[last, c("under_10", "m10_15", "m15_18", "over_18")])
-lt <- life_table(c("Under 10 Months", "Between 10-15 Months", "Between 15-18 Months", "Over 18 Months"),
+lt <- lifetbl(c("Under 10 Months", "Between 10-15 Months", "Between 15-18 Months", "Over 18 Months"),
                  events = shares * f$disposed[last])
 lt
 #> ── Life table (actuarial), 95% log-log Greenwood interval ──────── 
 #>   Median time: 6.36 (linear within its band)
 #> 
-#>  lower upper  entering    events censored   at_risk      q survival     se
+#>  lower upper  entering    events censored    atrisk      q survival     se
 #>      0    10 23136.000 18184.896        0 23136.000 0.7860    0.214 0.0027
 #>     10    15  4951.104  2868.864        0  4951.104 0.5794    0.090 0.0019
 #>     15    18  2082.240   879.168        0  2082.240 0.4222    0.052 0.0015
 #>     18   Inf  1203.072  1203.072        0  1203.072 1.0000    0.000     NA
-#>  conf_lower conf_upper hazard
-#>      0.2087     0.2193 0.1295
-#>      0.0864     0.0937 0.1632
-#>      0.0492     0.0549 0.1784
-#>          NA         NA     NA
+#>  conflo confup hazard
+#>  0.2087 0.2193 0.1295
+#>  0.0864 0.0937 0.1632
+#>  0.0492 0.0549 0.1784
+#>      NA     NA     NA
 #> ──────────────────────────────────────────────────────────────────
 plot(lt)
 ```
@@ -89,9 +89,9 @@ that ended, not every case received.
 ``` r
 
 x <- ext("ocj_dispositions.csv")
-mix <- disposition_mix(x[, -(1:2)], period = x$year, scores = x$year)
-mix$trend[, c("outcome", "statistic", "p_holm", "change")]
-#>                         outcome    statistic       p_holm        change
+mix <- dispmix(x[, -(1:2)], prd = x$year, scores = x$year)
+mix$trend[, c("outcome", "statistic", "pholm", "change")]
+#>                         outcome    statistic        pholm        change
 #> 1 withdrawn_stayed_before_trial 30150.915355 0.000000e+00  0.1292036827
 #> 2      guilty_plea_before_trial 10825.914695 0.000000e+00 -0.0805960172
 #> 3            other_before_trial     7.296441 6.909133e-03 -0.0002635828
@@ -118,7 +118,7 @@ can fall while most parts improve, if the work shifts toward the parts
 that clear more slowly. Demers and Rossmo (2015) found 210 such
 reversals in fifteen years of clearance rates for Canada’s fifty largest
 police services.
-[`clearance_decomposition()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clearance_decomposition.md)
+[`clrdcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clrdcmp.md)
 splits a change exactly into the change in the parts’ rates and the
 change in the mix (Kitagawa, 1955), and tests the within-part change
 with a Mantel-Haenszel rate ratio.
@@ -127,7 +127,7 @@ with a Mantel-Haenszel rate ratio.
 
 g <- ext("ocj_offence_groups.csv")
 g <- g[g$year %in% c(2014, 2022), ]
-cd <- clearance_decomposition(g$disposed, g$received, g$offence_group, g$year)
+cd <- clrdcmp(g$disposed, g$received, g$offence_group, g$year)
 cd
 #> ── Clearance rate, 2022 against 2014: rate and case-mix effects (Kitagawa)  
 #>   2014: 0.9760   2022: 0.9749   change -0.0011 = rate effect +0.0096 + mix effect -0.0107
@@ -141,13 +141,13 @@ cd
 #>      Criminal Code Traffic    1.0105    1.0212     0.0808     0.0948 1.0106
 #>            Federal Statute    1.0232    1.1734     0.1148     0.0534 1.1468
 #>        Other Criminal Code    1.0675    1.0818     0.0455     0.0539 1.0134
-#>   lower  upper rate_effect mix_effect
-#>  1.0484 1.0725    0.016300   4.24e-04
-#>  0.9710 0.9969   -0.003370  -5.16e-05
-#>  0.9233 0.9454   -0.017500  -4.97e-03
-#>  0.9905 1.0311    0.000939   5.66e-04
-#>  1.1230 1.1710    0.012600  -7.54e-03
-#>  0.9874 1.0402    0.000713   8.34e-04
+#>   lower  upper   rateeff    mixeff
+#>  1.0484 1.0725  0.016300  4.24e-04
+#>  0.9710 0.9969 -0.003370 -5.16e-05
+#>  0.9233 0.9454 -0.017500 -4.97e-03
+#>  0.9905 1.0311  0.000939  5.66e-04
+#>  1.1230 1.1710  0.012600 -7.54e-03
+#>  0.9874 1.0402  0.000713  8.34e-04
 #> 
 #>   Rate ratio 2022/2014: crude 0.9989 (0.9929 to 1.0050); within parts (Mantel-Haenszel) 1.0085 (1.0024 to 1.0146), p 0.00644
 #> ──────────────────────────────────────────────────────────────────
@@ -159,7 +159,7 @@ plot(cd)
 ``` r
 
 # a group's share of the cases received in a year, as a percentage
-case_share <- function(group, yr) {
+caseshare <- function(group, yr) {
   sprintf("%.0f%%", 100 * sum(g$received[g$offence_group == group & g$year == yr]) / sum(g$received[g$year == yr]))
 }
 ```
@@ -185,12 +185,10 @@ c <- ext("ocj_courts.csv")
 c <- aggregate(cbind(received, disposed) ~ year + court_series, c, sum)
 c <- c[c$year %in% c(2012, 2024), ]
 c <- c[c$court_series %in% names(which(table(c$court_series) == 2)), ]
-cc <- clearance_decomposition(c$disposed, c$received, c$court_series, c$year)
+cc <- clrdcmp(c$disposed, c$received, c$court_series, c$year)
 cc$overall
-#>      rate_a    rate_b       change rate_effect  mix_effect standardised_on_base
-#> 1 0.9990086 0.9891387 -0.009869871 -0.01247238 0.002602504            0.9852411
-#>   standardised_on_average
-#> 1               0.9871899
+#>       ratea     rateb       change     rateeff      mixeff staonbase  staonave
+#> 1 0.9990086 0.9891387 -0.009869871 -0.01247238 0.002602504 0.9852411 0.9871899
 cc$simpson$type
 #> [1] "none"
 ```
@@ -202,22 +200,22 @@ way the parts moved and how much the mix did.
 
 ## Where do incidents cluster? Kernel density
 
-[`crime_density()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crime_density.md)
+[`crmdens()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crmdens.md)
 estimates the density of incidents in incidents per square kilometre and
 outlines the smallest areas holding half and nine-tenths of them.
 
 ``` r
 
 b <- ext("tps_break_enter_d14_2024.csv")
-kd <- crime_density(b$lon, b$lat, n_grid = 150)
+kd <- crmdens(b$lon, b$lat, ngrid = 150)
 kd
 #> ── Kernel density of incidents: smallest areas holding each share  
 #>   508 incidents; bandwidth 0.337 km east-west, 0.412 km north-south
 #>   Peak density 77.92 incidents per square kilometre
 #> 
-#>  incidents area_km2 share_of_mapped_area density_at_edge
-#>        50%    5.502                11.9%           31.88
-#>        90%   14.840                32.1%           11.23
+#>  incidents areakm2 shrofmaparea densatedge
+#>        50%   5.502        11.9%      31.88
+#>        90%  14.840        32.1%      11.23
 #> ──────────────────────────────────────────────────────────────────
 plot(kd)
 ```
@@ -234,8 +232,8 @@ exact, and a permutation test gives each cell’s p-value.
 ``` r
 
 b <- b[!is.na(b$lon), ]
-kn <- knox_test(b$lon, b$lat, as.Date(b$occ_date), space_bands = c(100, 200, 400),
-                time_bands = c(7, 14, 28), nsim = 199, seed = 1)
+kn <- knoxtst(b$lon, b$lat, as.Date(b$occ_date), spcbands = c(100, 200, 400),
+                tmbands = c(7, 14, 28), nsim = 199, seed = 1)
 kn
 #> ── Knox ratios, observed / expected pairs (508 incidents, 199 permutations)  
 #>   distance  0-7 d 7-14 d 14-28 d
@@ -253,7 +251,7 @@ plot(kn)
 ## Do the hot spots last?
 
 A hot spot that stays put is a place problem; one that moves is not.
-[`hotspot_persistence()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hotspot_persistence.md)
+[`hotpers()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hotpers.md)
 counts the incidents in grid cells each period, reports the share of
 places that holds half of them, which cells are hot (the busiest 5% of
 the cells with any incident), and how much each period’s hot spots
@@ -261,19 +259,19 @@ overlap the previous period’s:
 
 ``` r
 
-h <- hotspot_persistence(b$lon, b$lat, quarters(as.Date(b$occ_date)), cell = 0.3)
+h <- hotpers(b$lon, b$lat, quarters(as.Date(b$occ_date)), cell = 0.3)
 h
 #> Hot spots: 139 active cells of side 0.3 km over 4 periods; hot = busiest 7 (5%)
-#>  period incidents active_cells cells_for_half share_for_half hot_cells tied_in
-#>      Q1       128           77             22          15.8%        11       4
-#>      Q2       133           74             22          15.8%         7       0
-#>      Q3       112           70             19          13.7%         7       0
-#>      Q4       135           72             23          16.5%         4       0
-#>  tied_out hot_share jaccard_previous
-#>         0     32.8%                 
-#>         0     22.6%             0.29
-#>         0     26.8%             0.17
-#>        12     13.3%             0.10
+#>  period incidents actcells cellsforhalf shrforhalf hotcells tiedin tiedout
+#>      Q1       128       77           22      15.8%       11      4       0
+#>      Q2       133       74           22      15.8%        7      0       0
+#>      Q3       112       70           19      13.7%        7      0       0
+#>      Q4       135       72           23      16.5%        4      0      12
+#>  hotshr jacpre
+#>   32.8%       
+#>   22.6%   0.29
+#>   26.8%   0.17
+#>   13.3%   0.10
 #> Cells hot in at least half the periods: 7
 #> Note: cells tied with the busiest 7 were left out of the hot set (period Q4: 12 cells tied); the counts are too even (or the cells too small) to single out hot spots
 plot(h)
@@ -284,12 +282,33 @@ plot(h)
 The hot set is the busiest 7 cells and every cell tied with the last of
 them. When a tie would make more than twice that many cells hot, the
 counts do not single those cells out, so the tied group is left out and
-counted under `tied_out`: a quarter can then show fewer hot cells than
-7, a smaller hot share, and an overlap with its neighbours that cannot
-be computed (left blank), as in Q4 here.
+counted under `tiedout`: a quarter can then show fewer hot cells than 7,
+a smaller hot share, and an overlap with its neighbours that cannot be
+computed (left blank), as in Q4 here.
 
 Pairs of break-ins within 100 metres and a week of each other occur 1.66
 times as often as chance would give.
+
+## Indigenous life expectancy
+
+[`lifetbl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/lifetbl.md)
+works from counts of events in age intervals. Where only published
+summaries exist, as for Indigenous life expectancy, the comparison is
+made on the published estimates and their intervals instead:
+
+``` r
+
+le <- indiex("lifeexp")
+le[le$period == "2016/2021", c("group", "estimate", "lower", "upper")]
+#>                                                group estimate lower upper
+#> 15                                             Métis    80.47 79.98 80.95
+#> 16                                             Inuit    71.91 70.80 73.03
+#> 17              First Nations (Registered or Treaty)    73.98 73.63 74.33
+#> 18  First Nations (Registered or Treaty), on reserve    71.42 71.02 71.81
+#> 19 First Nations (Registered or Treaty), off reserve    76.04 75.37 76.71
+#> 20          First Nations, without registered status    79.23 78.42 80.04
+#> 21                                    Non-Indigenous    84.99 84.93 85.04
+```
 
 ## References
 

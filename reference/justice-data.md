@@ -5,7 +5,7 @@ Small excerpts of published court and police statistics, in
 vignette. Each is a faithful copy of published numbers (no value
 altered, no row invented); the full tables, every edition and location,
 are on the package's data hub
-([`bricklayer_data_load`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md),
+([`dload`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md),
 collections `ocj_statistics` and `tps_open_data`).
 
 ## Source
@@ -72,12 +72,12 @@ frame with
 
 ## See also
 
-[`case_flow`](https://rootcoder007.github.io/rmorie-bricklayer/reference/case_flow.md),
-[`life_table`](https://rootcoder007.github.io/rmorie-bricklayer/reference/life_table.md),
-[`disposition_mix`](https://rootcoder007.github.io/rmorie-bricklayer/reference/disposition_mix.md),
-[`clearance_decomposition`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clearance_decomposition.md),
-[`crime_density`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crime_density.md),
-[`knox_test`](https://rootcoder007.github.io/rmorie-bricklayer/reference/knox_test.md).
+[`caseflow`](https://rootcoder007.github.io/rmorie-bricklayer/reference/caseflow.md),
+[`lifetbl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/lifetbl.md),
+[`dispmix`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dispmix.md),
+[`clrdcmp`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clrdcmp.md),
+[`crmdens`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crmdens.md),
+[`knoxtst`](https://rootcoder007.github.io/rmorie-bricklayer/reference/knoxtst.md).
 
 ## Examples
 

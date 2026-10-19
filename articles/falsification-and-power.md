@@ -12,7 +12,7 @@ function of the data.
 
 ## Falsification controls
 
-[`capsule_falsify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_falsify.md)
+[`cpsfals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsfals.md)
 takes the data, a statistic (a function of the data frame) and the name
 of the treatment column, and runs the controls that a real association
 must pass:
@@ -30,7 +30,7 @@ set.seed(1)
 d <- data.frame(x = rnorm(200))
 d$y <- 0.8 * d$x + rnorm(200)
 
-real <- capsule_falsify(d, function(z) cor(z$x, z$y), treatment = "x", n = 199, seed = 42)
+real <- cpsfals(d, function(z) cor(z$x, z$y), trt = "x", n = 199, seed = 42)
 real$controls[, c("control", "passed")]
 #>               control passed
 #> 1         permutation   TRUE
@@ -46,7 +46,7 @@ destroyed):
 
 ``` r
 
-fake <- capsule_falsify(d, function(z) 0.5, treatment = "x", n = 199, seed = 42)
+fake <- cpsfals(d, function(z) 0.5, trt = "x", n = 199, seed = 42)
 fake$controls[fake$controls$control == "permutation", "passed"]
 #> [1] FALSE
 ```
@@ -59,7 +59,7 @@ permutation is not.
 
 A null result is only informative if the procedure could have found
 something.
-[`capsule_power()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_power.md)
+[`cpspwr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpspwr.md)
 injects an effect of known size into the data, re-runs the statistic
 with its permutation test, and reports the detection rate at each size:
 
@@ -72,8 +72,8 @@ inj <- function(z, size) {
   z
 }
 
-pw <- capsule_power(d, function(z) cor(z$x, z$y), inj,
-                    sizes = c(0, 0.3, 0.6), treatment = "x",
+pw <- cpspwr(d, function(z) cor(z$x, z$y), inj,
+                    sizes = c(0, 0.3, 0.6), trt = "x",
                     n = 99, reps = 5, seed = 42)
 pw$curve
 #>   size detected reps rate
@@ -102,7 +102,7 @@ this data?”
 
 When several statistics are examined, the smallest p-value among them is
 not the finding.
-[`falsify_family()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/falsify_family.md)
+[`falsfam()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/falsfam.md)
 applies a multiple-testing correction across a family of falsification
 results, so one real association is still reported as real and the noise
 is not:
@@ -115,15 +115,15 @@ d$y <- 0.6 * d$x + rnorm(150)
 d$a <- rnorm(150)
 d$b <- rnorm(150)
 fam <- list(
-  real    = capsule_falsify(d, function(z) cor(z$x, z$y), treatment = "x", n = 199, seed = 1),
-  noise_a = capsule_falsify(d, function(z) cor(z$a, z$y), treatment = "a", n = 199, seed = 2),
-  noise_b = capsule_falsify(d, function(z) cor(z$b, z$y), treatment = "b", n = 199, seed = 3)
+  real    = cpsfals(d, function(z) cor(z$x, z$y), trt = "x", n = 199, seed = 1),
+  noisea = cpsfals(d, function(z) cor(z$a, z$y), trt = "a", n = 199, seed = 2),
+  noiseb = cpsfals(d, function(z) cor(z$b, z$y), trt = "b", n = 199, seed = 3)
 )
-falsify_family(fam)
+falsfam(fam)
 #> ── Family of 3, corrected by holm at alpha 0.05 ──────────────────
 #>   real                   p 0.005      adjusted 0.015      survives
-#>   noise_a                p 0.955      adjusted 1          
-#>   noise_b                p 0.995      adjusted 1          
+#>   noisea                 p 0.955      adjusted 1          
+#>   noiseb                 p 0.995      adjusted 1          
 #> ──────────────────────────────────────────────────────────────────
 #>   at the permutation floor (more permutations would be needed to say more): real
 #> ──────────────────────────────────────────────────────────────────
@@ -134,7 +134,7 @@ several from being read as the finding:
 
 ``` r
 
-falsify_family(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5))$results
+falsfam(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5))$results
 #>   name    p adjusted survives
 #> 1    a 0.01     0.04     TRUE
 #> 2    b 0.04     0.12    FALSE
@@ -150,31 +150,122 @@ with both treatment and outcome to explain the result away:
 
 ``` r
 
-evalue_rr(2)                       # needs a confounder associated by 3.41 with both
-#> evalue_point 
-#>     3.414214
-evalue_rr(0.5)                     # a protective effect is inverted; same answer
-#> evalue_point 
-#>     3.414214
-evalue_rr(2, lo = 0.9, hi = 4.4)   # an interval that includes the null needs nothing
-#> evalue_point evalue_limit 
-#>     3.414214     1.000000
-evalue_rr(3, lo = 2.1, hi = 4.3)   # a strong result with a limit well above the null
-#> evalue_point evalue_limit 
-#>     5.449490     3.619868
+evlrr(2)                       # needs a confounder associated by 3.41 with both
+#> evlpoint 
+#> 3.414214
+evlrr(0.5)                     # a protective effect is inverted; same answer
+#> evlpoint 
+#> 3.414214
+evlrr(2, lo = 0.9, hi = 4.4)   # an interval that includes the null needs nothing
+#> evlpoint evllimit 
+#> 3.414214 1.000000
+evlrr(3, lo = 2.1, hi = 4.3)   # a strong result with a limit well above the null
+#> evlpoint evllimit 
+#> 5.449490 3.619868
 ```
 
 ## Where this fits in a capsule
 
-[`capsule_report()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_report.md)
+[`cpsrpt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrpt.md)
 runs the falsification controls alongside the schema, rule and drift
 checks when a statistic is supplied, so the capsule records not only
 that the number was computed from these bytes but that it survived its
 controls. A pre-registered hypothesis
-([`prereg_declare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/prereg_declare.md),
-[`prereg_check()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/prereg_declare.md))
+([`prrgdecl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/prrgdecl.md),
+[`prrgchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/prrgdecl.md))
 pins what was going to be tested before the data were seen, which is the
 other half of keeping a finding honest.
+
+## Several gaps, one family of tests
+
+A report on Indigenous health usually tests many indicators at once.
+[`falsfam()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/falsfam.md)
+adjusts the family; here the differences from non-Indigenous adults in
+2019/2022 for First Nations adults, with z statistics from the published
+95 percent intervals:
+
+``` r
+
+hi <- indiex("health")
+s <- hi[hi$period == "2019/2022" & hi$age == "Total, 18 years and over" &
+          hi$quality == "ok", ]
+fn <- s[s$group == "First Nations", ]
+ni <- s[s$group == "Non-Indigenous", ]
+both <- merge(fn, ni, by = "indicator", suffixes = c("fn", "ni"))
+se <- function(l, u) (u - l) / (2 * 1.96)
+z <- (both$estimatefn - both$estimateni) /
+  sqrt(se(both$lowerfn, both$upperfn)^2 + se(both$lowerni, both$upperni)^2)
+p <- stats::setNames(2 * stats::pnorm(-abs(z)), both$indicator)
+res <- falsfam(p, meth = "holm")
+head(res)
+#> $results
+#>                                                                     name
+#> 1                                    Current smoker, daily or occasional
+#> 2                                                  Current smoker, daily
+#> 3                        Perceived mental health, very good or excellent
+#> 4                               Perceived health, very good or excellent
+#> 5                                                       Anxiety disorder
+#> 6                  Body mass index, adjusted self-reported, adult, obese
+#> 7                                                          Mood disorder
+#> 8                                  Perceived mental health, fair or poor
+#> 9                                         Perceived health, fair or poor
+#> 10                                                        Heavy drinking
+#> 11                        Life satisfaction, satisfied or very satisfied
+#> 12                      At least one underlying chronic health condition
+#> 13            Body mass index, adjusted self-reported, adult, overweight
+#> 14                                     Has a regular healthcare provider
+#> 15                                         Perceived mental health, good
+#> 16                                                Perceived health, good
+#> 17                                                   Has ever had cancer
+#> 18                                                             Arthritis
+#> 19 Sense of belonging to local community, somewhat strong or very strong
+#> 20   Perceived life stress, most days quite a bit or extremely stressful
+#> 21                                                   Effects of a stroke
+#> 22                                                              Diabetes
+#> 23                                 Two or more chronic health conditions
+#> 24                                                   High blood pressure
+#> 25                      Never had alcoholic drinks in the past 12 months
+#> 26                                                         Heart disease
+#>               p     adjusted survives
+#> 1  4.799378e-47 1.247838e-45     TRUE
+#> 2  6.666055e-33 1.666514e-31     TRUE
+#> 3  1.977723e-27 4.746535e-26     TRUE
+#> 4  4.701772e-27 1.081408e-25     TRUE
+#> 5  8.269913e-26 1.819381e-24     TRUE
+#> 6  1.570439e-24 3.297922e-23     TRUE
+#> 7  2.217733e-22 4.435465e-21     TRUE
+#> 8  8.105074e-22 1.539964e-20     TRUE
+#> 9  5.917920e-20 1.065226e-18     TRUE
+#> 10 2.383432e-15 4.051834e-14     TRUE
+#> 11 4.967275e-13 7.947640e-12     TRUE
+#> 12 4.149245e-11 6.223867e-10     TRUE
+#> 13 6.976248e-10 9.766747e-09     TRUE
+#> 14 4.744043e-05 6.167256e-04     TRUE
+#> 15 1.916130e-04 2.299356e-03     TRUE
+#> 16 1.986114e-04 2.299356e-03     TRUE
+#> 17 7.953428e-04 7.953428e-03     TRUE
+#> 18 5.573725e-03 5.016352e-02    FALSE
+#> 19 9.255276e-03 7.404220e-02    FALSE
+#> 20 1.455855e-02 1.019099e-01    FALSE
+#> 21 1.616352e-02 1.019099e-01    FALSE
+#> 22 2.409857e-02 1.204929e-01    FALSE
+#> 23 3.100005e-02 1.240002e-01    FALSE
+#> 24 2.077056e-01 6.231168e-01    FALSE
+#> 25 6.863741e-01 1.000000e+00    FALSE
+#> 26 1.000000e+00 1.000000e+00    FALSE
+#> 
+#> $method
+#> [1] "holm"
+#> 
+#> $famsz
+#> [1] 26
+#> 
+#> $alpha
+#> [1] 0.05
+#> 
+#> $atflr
+#> character(0)
+```
 
 ## References
 

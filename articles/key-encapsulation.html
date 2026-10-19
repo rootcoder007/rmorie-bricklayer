@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,28 +92,28 @@ and recovers the same secret. The package implements
 <h2 id="ml-kem">ML-KEM<a class="anchor" aria-label="anchor" href="#ml-kem"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kem_keygen.html">kem_keygen</a></span><span class="op">(</span><span class="fl">768</span><span class="op">)</span></span>
-<span><span class="va">pub</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kem_keygen.html">kem_public_key</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kemkg.html">kemkg</a></span><span class="op">(</span><span class="fl">768</span><span class="op">)</span></span>
+<span><span class="va">pub</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kemkg.html">kempubkey</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># the sender holds only the public key</span></span>
-<span><span class="va">sent</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kem_encapsulate.html">kem_encapsulate</a></span><span class="op">(</span><span class="va">pub</span><span class="op">)</span></span>
+<span><span class="va">sent</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kemencap.html">kemencap</a></span><span class="op">(</span><span class="va">pub</span><span class="op">)</span></span>
 <span><span class="co"># the recipient recovers the same secret from the ciphertext</span></span>
-<span><span class="va">got</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kem_decapsulate.html">kem_decapsulate</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span><span class="op">)</span></span>
+<span><span class="va">got</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kemdecap.html">kemdecap</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">sent</span><span class="op">$</span><span class="va">shared</span>, <span class="va">got</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <p>Three parameter sets trade size for security margin:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/kem_sizes.html">kem_sizes</a></span><span class="op">(</span><span class="fl">512</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/kemsz.html">kemsz</a></span><span class="op">(</span><span class="fl">512</span><span class="op">)</span></span>
 <span><span class="co">#&gt; encapsulation_key decapsulation_key        ciphertext              seed </span></span>
 <span><span class="co">#&gt;               800              1632               768                64 </span></span>
 <span><span class="co">#&gt;     shared_secret </span></span>
 <span><span class="co">#&gt;                32</span></span>
-<span><span class="fu"><a href="../reference/kem_sizes.html">kem_sizes</a></span><span class="op">(</span><span class="fl">768</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/kemsz.html">kemsz</a></span><span class="op">(</span><span class="fl">768</span><span class="op">)</span></span>
 <span><span class="co">#&gt; encapsulation_key decapsulation_key        ciphertext              seed </span></span>
 <span><span class="co">#&gt;              1184              2400              1088                64 </span></span>
 <span><span class="co">#&gt;     shared_secret </span></span>
 <span><span class="co">#&gt;                32</span></span>
-<span><span class="fu"><a href="../reference/kem_sizes.html">kem_sizes</a></span><span class="op">(</span><span class="fl">1024</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/kemsz.html">kemsz</a></span><span class="op">(</span><span class="fl">1024</span><span class="op">)</span></span>
 <span><span class="co">#&gt; encapsulation_key decapsulation_key        ciphertext              seed </span></span>
 <span><span class="co">#&gt;              1568              3168              1568                64 </span></span>
 <span><span class="co">#&gt;     shared_secret </span></span>
@@ -131,7 +131,7 @@ way.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substring</a></span><span class="op">(</span><span class="va">bad</span>, <span class="fl">1L</span>, <span class="fl">2L</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"00"</span></span>
-<span><span class="va">other</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kem_decapsulate.html">kem_decapsulate</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">bad</span><span class="op">)</span></span>
+<span><span class="va">other</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kemdecap.html">kemdecap</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">bad</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar</a></span><span class="op">(</span><span class="va">other</span><span class="op">)</span> <span class="op">==</span> <span class="fl">64L</span>          <span class="co"># a 32-byte secret, as always</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">other</span>, <span class="va">got</span><span class="op">)</span>        <span class="co"># but not the one the sender has</span></span>
@@ -149,9 +149,9 @@ re-encryption comparison of the FO transform is done on shares (the
 decompressed comparison of Bhasin et al., TCHES 2021). The result is
 byte-identical to the plain computation:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/kem_decapsulate.html">kem_decapsulate</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span>, masked <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, <span class="va">got</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/kemdecap.html">kemdecap</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span>, masked <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, <span class="va">got</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/kem_decapsulate.html">kem_decapsulate</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">bad</span>, masked <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, <span class="va">other</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/kemdecap.html">kemdecap</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">bad</span>, masked <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, <span class="va">other</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <p><code>masked = FALSE</code> is three to four times faster for
 decapsulation (seven to eleven for ML-DSA signing) and is the right
@@ -176,13 +176,13 @@ a key.</p>
 assumption unrelated to lattices, which is why NIST selected it as the
 second KEM. The interface is the same:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">hkey</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hqc_keygen.html">hqc_keygen</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
-<span><span class="va">hpub</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hqc_keygen.html">hqc_public_key</a></span><span class="op">(</span><span class="va">hkey</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">hkey</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hqckg.html">hqckg</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">hpub</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hqckg.html">hqcpubkey</a></span><span class="op">(</span><span class="va">hkey</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">hsent</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hqc_encapsulate.html">hqc_encapsulate</a></span><span class="op">(</span><span class="va">hpub</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/hqc_decapsulate.html">hqc_decapsulate</a></span><span class="op">(</span><span class="va">hkey</span>, <span class="va">hsent</span><span class="op">$</span><span class="va">ciphertext</span><span class="op">)</span>, <span class="va">hsent</span><span class="op">$</span><span class="va">shared</span><span class="op">)</span></span>
+<span><span class="va">hsent</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hqcencap.html">hqcencap</a></span><span class="op">(</span><span class="va">hpub</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/hqcdecap.html">hqcdecap</a></span><span class="op">(</span><span class="va">hkey</span>, <span class="va">hsent</span><span class="op">$</span><span class="va">ciphertext</span><span class="op">)</span>, <span class="va">hsent</span><span class="op">$</span><span class="va">shared</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="fu"><a href="../reference/hqc_sizes.html">hqc_sizes</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/hqcsz.html">hqcsz</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; encapsulation_key decapsulation_key        ciphertext              seed </span></span>
 <span><span class="co">#&gt;              2241              2321              4433                32 </span></span>
 <span><span class="co">#&gt;           message              salt     shared_secret </span></span>
@@ -193,9 +193,9 @@ second KEM. The interface is the same:</p>
 derivation. A key made under one does not interoperate with the other,
 and the version is recorded in the key:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hqc_keygen.html">hqc_keygen</a></span><span class="op">(</span><span class="fl">1</span>, version <span class="op">=</span> <span class="st">"round4"</span><span class="op">)</span></span>
-<span><span class="va">cap</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hqc_encapsulate.html">hqc_encapsulate</a></span><span class="op">(</span><span class="fu"><a href="../reference/hqc_keygen.html">hqc_public_key</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/hqc_decapsulate.html">hqc_decapsulate</a></span><span class="op">(</span><span class="va">old</span>, <span class="va">cap</span><span class="op">$</span><span class="va">ciphertext</span><span class="op">)</span>, <span class="va">cap</span><span class="op">$</span><span class="va">shared</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hqckg.html">hqckg</a></span><span class="op">(</span><span class="fl">1</span>, ver <span class="op">=</span> <span class="st">"round4"</span><span class="op">)</span></span>
+<span><span class="va">cap</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hqcencap.html">hqcencap</a></span><span class="op">(</span><span class="fu"><a href="../reference/hqckg.html">hqcpubkey</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/hqcdecap.html">hqcdecap</a></span><span class="op">(</span><span class="va">old</span>, <span class="va">cap</span><span class="op">$</span><span class="va">ciphertext</span><span class="op">)</span>, <span class="va">cap</span><span class="op">$</span><span class="va">shared</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="reproducible-keys-for-tests">Reproducible keys for tests<a class="anchor" aria-label="anchor" href="#reproducible-keys-for-tests"></a>
@@ -205,8 +205,8 @@ bytes for ML-KEM (FIPS 203’s <code>d || z</code>) and 32 bytes for HQC
 v5 (its <code>seed_KEM</code>). Never use this outside tests: a key
 derived from a guessable seed is no key at all.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/hqc_keygen.html">hqc_keygen</a></span><span class="op">(</span><span class="fl">1</span>, seed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">32</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">public</span>,</span>
-<span>          <span class="fu"><a href="../reference/hqc_keygen.html">hqc_keygen</a></span><span class="op">(</span><span class="fl">1</span>, seed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">32</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">public</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/hqckg.html">hqckg</a></span><span class="op">(</span><span class="fl">1</span>, seed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">32</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">public</span>,</span>
+<span>          <span class="fu"><a href="../reference/hqckg.html">hqckg</a></span><span class="op">(</span><span class="fl">1</span>, seed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">32</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">public</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
 </div>
@@ -214,11 +214,11 @@ derived from a guessable seed is no key at all.</p>
 <h2 id="using-the-shared-secret">Using the shared secret<a class="anchor" aria-label="anchor" href="#using-the-shared-secret"></a>
 </h2>
 <p>The shared secret is 32 bytes of hex. It is a <em>key</em>, not a
-password: use it directly as the key of <code><a href="../reference/rmbl_keyed_digest.html">core_hmac_sha256()</a></code>
-or to derive further keys, never as text to be stored.</p>
+password: use it directly as the key of <code><a href="../reference/keyeddgst.html">chmac()</a></code> or to
+derive further keys, never as text to be stored.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rmbl_keyed_digest.html">core_hmac_sha256</a></span><span class="op">(</span><span class="va">sent</span><span class="op">$</span><span class="va">shared</span>, <span class="st">"the capsule manifest"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/rmbl_keyed_digest.html">core_digest_equal</a></span><span class="op">(</span><span class="va">tag</span>, <span class="fu"><a href="../reference/rmbl_keyed_digest.html">core_hmac_sha256</a></span><span class="op">(</span><span class="va">got</span>, <span class="st">"the capsule manifest"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">tag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/keyeddgst.html">chmac</a></span><span class="op">(</span><span class="va">sent</span><span class="op">$</span><span class="va">shared</span>, <span class="st">"the capsule manifest"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/keyeddgst.html">cdgsteq</a></span><span class="op">(</span><span class="va">tag</span>, <span class="fu"><a href="../reference/keyeddgst.html">chmac</a></span><span class="op">(</span><span class="va">got</span>, <span class="st">"the capsule manifest"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -232,6 +232,22 @@ CPUs with dudect, its constant-time property is proved under valgrind,
 and its masked arithmetic is assessed for first-order power leakage in a
 Cortex-M4 simulation. See <code>SECURITY.md</code> in the
 repository.</p>
+</div>
+<div class="section level2">
+<h2 id="sending-a-table-to-a-community-data-steward">Sending a table to a community data steward<a class="anchor" aria-label="anchor" href="#sending-a-table-to-a-community-data-steward"></a>
+</h2>
+<p>Key encapsulation lets a sender share a table so only the holder of a
+secret key can read it, for instance a First Nations data steward
+receiving a release:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">steward</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kemkg.html">kemkg</a></span><span class="op">(</span><span class="fl">768</span><span class="op">)</span></span>
+<span><span class="va">pub</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kemkg.html">kempubkey</a></span><span class="op">(</span><span class="va">steward</span><span class="op">)</span></span>
+<span><span class="va">sent</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kemencap.html">kemencap</a></span><span class="op">(</span><span class="va">pub</span><span class="op">)</span></span>
+<span><span class="va">msg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tojs.html">tojs</a></span><span class="op">(</span><span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"wellbeing"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co"># the shared secret keys an authentication tag the steward can recompute</span></span>
+<span><span class="va">tag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/keyeddgst.html">chmac</a></span><span class="op">(</span><span class="va">msg</span>, <span class="va">sent</span><span class="op">$</span><span class="va">shared</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/keyeddgst.html">chmac</a></span><span class="op">(</span><span class="va">msg</span>, <span class="fu"><a href="../reference/kemdecap.html">kemdecap</a></span><span class="op">(</span><span class="va">steward</span>, <span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span><span class="op">)</span><span class="op">)</span>, <span class="va">tag</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

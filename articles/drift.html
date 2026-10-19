@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -98,7 +98,7 @@ and the row count are identical. The digest changes, so you know
 <em>what</em>, and if you re-pin without looking, the change is now
 baked in.</li>
 </ul>
-<p><code><a href="../reference/capsule_drift.html">capsule_drift()</a></code> answers the second question.</p>
+<p><code><a href="../reference/cpsdrft.html">cpsdrft()</a></code> answers the second question.</p>
 <div class="section level2">
 <h2 id="a-re-release-that-is-statistically-the-same">A re-release that is statistically the same<a class="anchor" aria-label="anchor" href="#a-re-release-that-is-statistically-the-same"></a>
 </h2>
@@ -120,11 +120,11 @@ another draw from the same process.</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The two have different bytes, so their digests differ:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/digest_object.html">digest_object</a></span><span class="op">(</span><span class="va">reference</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="../reference/digest_object.html">digest_object</a></span><span class="op">(</span><span class="va">current</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="va">reference</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="va">current</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
 <p>But nothing moved distributionally, and the report says so:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/capsule_drift.html">capsule_drift</a></span><span class="op">(</span><span class="va">reference</span>, <span class="va">current</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpsdrft.html">cpsdrft</a></span><span class="op">(</span><span class="va">reference</span>, <span class="va">current</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Capsule drift report ──────────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   ✓ no drift detected</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -150,7 +150,7 @@ scale and a category appears that the capsule never saw.</p>
 <span><span class="va">moved</span><span class="op">$</span><span class="va">size</span> <span class="op">&lt;-</span> <span class="va">moved</span><span class="op">$</span><span class="va">size</span> <span class="op">*</span> <span class="fl">3</span></span>
 <span><span class="va">moved</span><span class="op">$</span><span class="va">grade</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">200</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"z"</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/capsule_drift.html">capsule_drift</a></span><span class="op">(</span><span class="va">reference</span>, <span class="va">moved</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/cpsdrft.html">cpsdrft</a></span><span class="op">(</span><span class="va">reference</span>, <span class="va">moved</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Capsule drift report ──────────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   ✗ DRIFT DETECTED</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -171,13 +171,13 @@ and <code>grade</code> are.</p>
 <div class="section level2">
 <h2 id="which-test-and-why">Which test, and why<a class="anchor" aria-label="anchor" href="#which-test-and-why"></a>
 </h2>
-<p>For a numeric column, <code><a href="../reference/capsule_drift.html">capsule_drift()</a></code> runs a two-sample
+<p>For a numeric column, <code><a href="../reference/cpsdrft.html">cpsdrft()</a></code> runs a two-sample
 Kolmogorov-Smirnov test and computes the population stability index. The
 KS p-value drives the flag because it is <em>calibrated</em> – under no
 drift it is uniform, so a threshold means what it says.</p>
 <p>The population stability index is reported alongside it as an effect
 size, but by default it is not allowed to raise the flag on its own
-until both samples reach <code>psi_min_n</code>. The reason is worth
+until both samples reach <code>psiminn</code>. The reason is worth
 stating, because the index is widely used without it: PSI’s conventional
 bands (0.1 “investigate”, 0.25 “material shift”) are large-sample
 heuristics with no calibrated null distribution. On a few hundred rows,
@@ -187,26 +187,26 @@ binning noise alone clears 0.25 routinely:</p>
 <span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>v <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Two draws from the SAME distribution.</span></span>
-<span><span class="fu"><a href="../reference/capsule_drift.html">capsule_drift</a></span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span><span class="op">$</span><span class="va">columns</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"p_value"</span>, <span class="st">"psi"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="fu"><a href="../reference/cpsdrft.html">cpsdrft</a></span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span><span class="op">$</span><span class="va">columns</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"p_value"</span>, <span class="st">"psi"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;     p_value       psi</span></span>
 <span><span class="co">#&gt; 1 0.5595597 0.1376677</span></span></code></pre></div>
 <p>The PSI is above the conventional threshold; the p-value correctly is
 not. Flagging on PSI here would manufacture drift.</p>
-<p>For a categorical column the test is
-<code><a href="../reference/drift_homogeneity.html">drift_homogeneity()</a></code>, a two-sample chi-square on the 2-by-k
-table – <em>not</em> a goodness-of-fit test against the reference
-proportions. The distinction matters: the reference is itself a finite
-sample, and treating its proportions as known ignores their sampling
-error, which inflates the false-positive rate.</p>
+<p>For a categorical column the test is <code><a href="../reference/drfthomog.html">drfthomog()</a></code>, a
+two-sample chi-square on the 2-by-k table – <em>not</em> a
+goodness-of-fit test against the reference proportions. The distinction
+matters: the reference is itself a finite sample, and treating its
+proportions as known ignores their sampling error, which inflates the
+false-positive rate.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"p"</span>, <span class="st">"q"</span>, <span class="st">"r"</span><span class="op">)</span>, <span class="fl">300</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"p"</span>, <span class="st">"q"</span>, <span class="st">"r"</span><span class="op">)</span>, <span class="fl">300</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># The homogeneity test is the more conservative, and the correct one here.</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>homogeneity <span class="op">=</span> <span class="fu"><a href="../reference/drift_homogeneity.html">drift_homogeneity</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">[[</span><span class="st">"p_value"</span><span class="op">]</span><span class="op">]</span>,</span>
-<span>  goodness_of_fit <span class="op">=</span> <span class="fu"><a href="../reference/drift_chisq.html">drift_chisq</a></span><span class="op">(</span><span class="va">y</span>, <span class="va">x</span><span class="op">)</span><span class="op">[[</span><span class="st">"p_value"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt;     homogeneity goodness_of_fit </span></span>
-<span><span class="co">#&gt;    5.992249e-03    9.970333e-06</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>homogeneity <span class="op">=</span> <span class="fu"><a href="../reference/drfthomog.html">drfthomog</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">[[</span><span class="st">"p_value"</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>  goooffit <span class="op">=</span> <span class="fu"><a href="../reference/drftchisq.html">drftchisq</a></span><span class="op">(</span><span class="va">y</span>, <span class="va">x</span><span class="op">)</span><span class="op">[[</span><span class="st">"p_value"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  homogeneity     goooffit </span></span>
+<span><span class="co">#&gt; 5.992249e-03 9.970333e-06</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="screening-for-figures-that-were-not-measured">Screening for figures that were not measured<a class="anchor" aria-label="anchor" href="#screening-for-figures-that-were-not-measured"></a>
@@ -216,7 +216,7 @@ several orders of magnitude. Figures that were rounded, capped,
 re-scaled or invented typically do not follow it.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># A quantity spanning several orders of magnitude.</span></span>
-<span><span class="fu"><a href="../reference/benford_test.html">benford_test</a></span><span class="op">(</span><span class="fl">10</span><span class="op">^</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">2000</span>, <span class="fl">0</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/benfordtst.html">benfordtst</a></span><span class="op">(</span><span class="fl">10</span><span class="op">^</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">2000</span>, <span class="fl">0</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Benford first-digit screen ────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   ✓ consistent with Benford's law</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -238,7 +238,7 @@ re-scaled or invented typically do not follow it.</p>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Leading digits drawn uniformly -- not what measurement looks like.</span></span>
-<span><span class="fu"><a href="../reference/benford_test.html">benford_test</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">9</span>, <span class="fl">2000</span>, <span class="cn">TRUE</span><span class="op">)</span>, <span class="st">"000"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/benfordtst.html">benfordtst</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">9</span>, <span class="fl">2000</span>, <span class="cn">TRUE</span><span class="op">)</span>, <span class="st">"000"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Benford first-digit screen ────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   ! departs from Benford's law (screen only, not a verdict)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -267,11 +267,11 @@ small p-value is a reason to look.</p>
 <h2 id="structure-separately">Structure, separately<a class="anchor" aria-label="anchor" href="#structure-separately"></a>
 </h2>
 <p>Drift is about distributions. Structure – names, types, bounds,
-allowed values – is <code><a href="../reference/validate_schema.html">validate_schema()</a></code>’s job, and the two
-complement each other. <code><a href="../reference/infer_schema.html">infer_schema()</a></code> writes the schema for
-you from data you trust:</p>
+allowed values – is <code><a href="../reference/valsch.html">valsch()</a></code>’s job, and the two complement
+each other. <code><a href="../reference/infsch.html">infsch()</a></code> writes the schema for you from data
+you trust:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">schema</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/infer_schema.html">infer_schema</a></span><span class="op">(</span><span class="va">reference</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">schema</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/infsch.html">infsch</a></span><span class="op">(</span><span class="va">reference</span><span class="op">)</span></span>
 <span><span class="va">schema</span></span>
 <span><span class="co">#&gt; ── Inferred schema ───────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   columns         3</span></span>
@@ -285,17 +285,31 @@ you from data you trust:</p>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># It accepts the data it learned from.</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="../reference/validate_schema.html">validate_schema</a></span><span class="op">(</span><span class="va">reference</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>schema <span class="op">=</span> <span class="va">schema</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="../reference/valsch.html">valsch</a></span><span class="op">(</span><span class="va">reference</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>schema <span class="op">=</span> <span class="va">schema</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 0</span></span>
 <span></span>
 <span><span class="co"># And catches the rescaled column, which is now outside its pinned range.</span></span>
-<span><span class="va">issues</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/validate_schema.html">validate_schema</a></span><span class="op">(</span><span class="va">moved</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>schema <span class="op">=</span> <span class="va">schema</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">issues</span><span class="op">[[</span><span class="st">"range_size"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">message</span></span>
-<span><span class="co">#&gt; [1] "Column 'size' has 355 value(s) outside [0.1196138, 10.86161]"</span></span></code></pre></div>
-<p>Read what <code><a href="../reference/infer_schema.html">infer_schema()</a></code> produces before committing it.
-It describes one extract, and cannot know that a category which happens
-not to occur is nonetheless legal, or that a range is a physical bound
+<span><span class="va">issues</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/valsch.html">valsch</a></span><span class="op">(</span><span class="va">moved</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>schema <span class="op">=</span> <span class="va">schema</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">issues</span><span class="op">[[</span><span class="st">"rangesize"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">message</span></span>
+<span><span class="co">#&gt; NULL</span></span></code></pre></div>
+<p>Read what <code><a href="../reference/infsch.html">infsch()</a></code> produces before committing it. It
+describes one extract, and cannot know that a category which happens not
+to occur is nonetheless legal, or that a range is a physical bound
 rather than an accident of this sample.</p>
+</div>
+<div class="section level2">
+<h2 id="two-cycles-of-the-same-survey">Two cycles of the same survey<a class="anchor" aria-label="anchor" href="#two-cycles-of-the-same-survey"></a>
+</h2>
+<p>Drift checks fit a question a re-release raises: did the distribution
+of a published table change between cycles? On the bundled indicators,
+the 2015/2018 and 2019/2022 estimates:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">hi</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"health"</span><span class="op">)</span></span>
+<span><span class="va">a</span> <span class="op">&lt;-</span> <span class="va">hi</span><span class="op">$</span><span class="va">estimate</span><span class="op">[</span><span class="va">hi</span><span class="op">$</span><span class="va">period</span> <span class="op">==</span> <span class="st">"2015/2018"</span><span class="op">]</span></span>
+<span><span class="va">b</span> <span class="op">&lt;-</span> <span class="va">hi</span><span class="op">$</span><span class="va">estimate</span><span class="op">[</span><span class="va">hi</span><span class="op">$</span><span class="va">period</span> <span class="op">==</span> <span class="st">"2019/2022"</span><span class="op">]</span></span>
+<span><span class="fu"><a href="../reference/drftks.html">drftks</a></span><span class="op">(</span><span class="va">a</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/is.finite.html" class="external-link">is.finite</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span><span class="op">]</span>, <span class="va">b</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/is.finite.html" class="external-link">is.finite</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   statistic     p_value        neff </span></span>
+<span><span class="co">#&gt;   0.0526087   0.4894839 251.4910537</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

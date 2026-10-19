@@ -11,7 +11,7 @@ runs tamper-evident rather than only each run.
 ## Signing: a shared secret
 
 The simplest case is one team, one secret.
-[`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
+[`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
 with `scheme = "hmac"` produces an HMAC-SHA-256 tag: only a key holder
 can compute it, so only a key holder can produce a manifest that
 verifies.
@@ -20,13 +20,13 @@ verifies.
 
 manifest <- paste0(
   "source=https://example.org/extract.csv\n",
-  "sha256=", core_sha256("id,value\n1,2\n"), "\n",
+  "sha256=", csha256("id,value\n1,2\n"), "\n",
   "fetched=2026-09-12"
 )
 
-sig <- capsule_sign(core_sha256(manifest), key = "team-secret",
+sig <- cpssign(csha256(manifest), key = "team-secret",
                     scheme = "hmac")
-capsule_verify(core_sha256(manifest), sig, "team-secret")
+cpsvrf(csha256(manifest), sig, "team-secret")
 #> [1] TRUE
 ```
 
@@ -36,21 +36,21 @@ cover:
 ``` r
 
 edited <- sub("fetched=2026-09-12", "fetched=2026-01-01", manifest)
-capsule_verify(core_sha256(edited), sig, "team-secret")
+cpsvrf(csha256(edited), sig, "team-secret")
 #> [1] FALSE
 ```
 
 Do not carry raw key bytes around by hand.
-[`derive_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/derive_key.md)
+[`drvkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drvkey.md)
 stretches a passphrase into a full-width key with PBKDF2:
 
 ``` r
 
 # Fixed here so the vignette is reproducible. For a real key the salt
-# comes from random_bytes(16), which reads the operating system's
+# comes from rndbytes(16), which reads the operating system's
 # CSPRNG rather than R's generator.
 salt <- "9f2c41a7d8e05b36"
-key <- derive_key("correct horse battery staple", salt)
+key <- drvkey("correct horse battery staple", salt)
 nchar(key)
 #> [1] 64
 ```
@@ -72,7 +72,7 @@ algorithm only halves the security exponent, so SHA-256 retains roughly
 2^128 preimage resistance, and HMAC with a 256-bit key is likewise fine.
 **Signatures** are the part that breaks.
 
-[`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md)
+[`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md)
 builds a hash-based signing key – a Merkle tree over Winternitz one-time
 keys, the RFC 8391 construction, over the SHA-256 this package already
 ships. Its security rests on the hash function alone: no lattice
@@ -81,11 +81,11 @@ assumption, no elliptic curve, and no new system dependency.
 ``` r
 
 # Small for the vignette; the default height 10 gives 1024 signatures.
-signing_key <- pqc_keygen(height = 3)
-signing_key
+signingkey <- pqckg(height = 3)
+signingkey
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       821098b2ac0663d70b77a5052dab86060142af199d3d1756ad06ed920ee07fef
+#>   root       e85072f9051ccdce52f26631d78dbc2ddcbf998da0fc4c3c40e71862ece149b7
 #>   height     3
 #>   used       0 of 8 signatures
 #>   remaining  8
@@ -98,23 +98,23 @@ Publish the public half. It carries no secret:
 
 ``` r
 
-pub <- signing_public_key(signing_key)
+pub <- signpubkey(signingkey)
 pub
 #> ── Public verification key ───────────────────────────────────────
 #>   scheme  xmss-sha256
-#>   root    821098b2ac0663d70b77a5052dab86060142af199d3d1756ad06ed920ee07fef
+#>   root    e85072f9051ccdce52f26631d78dbc2ddcbf998da0fc4c3c40e71862ece149b7
 #>   height  3
 #> ──────────────────────────────────────────────────────────────────
 ```
 
 ``` r
 
-s1 <- capsule_sign(core_sha256(manifest), signing_key)
-capsule_verify(core_sha256(manifest), s1, pub)
+s1 <- cpssign(csha256(manifest), signingkey)
+cpsvrf(csha256(manifest), s1, pub)
 #> [1] TRUE
 
 # A verifier holding only `pub` cannot forge one.
-capsule_verify(core_sha256(edited), s1, pub)
+cpsvrf(csha256(edited), s1, pub)
 #> [1] FALSE
 ```
 
@@ -122,33 +122,33 @@ capsule_verify(core_sha256(edited), s1, pub)
 
 A Winternitz key signs **once**. Signing two different messages at one
 leaf index leaks enough chain material to forge a third. So the key is
-stateful, and `xmss_advance(key, signature)` returns the advanced state
-for you to carry forward:
+stateful, and `xmssadv(key, signature)` returns the advanced state for
+you to carry forward:
 
 ``` r
 
-signing_key <- xmss_advance(signing_key, s1)
-signing_key$next_index
+signingkey <- xmssadv(signingkey, s1)
+signingkey$next_index
 #> [1] 1
 
-s2 <- capsule_sign(core_sha256("a second manifest"), signing_key)
-capsule_verify(core_sha256("a second manifest"), s2, pub)
+s2 <- cpssign(csha256("a second manifest"), signingkey)
+cpsvrf(csha256("a second manifest"), s2, pub)
 #> [1] TRUE
 
 # and forward again, for the next signature
-signing_key <- xmss_advance(signing_key, s2)
+signingkey <- xmssadv(signingkey, s2)
 ```
 
 An exhausted key is an error rather than a silent wrap-around:
 
 ``` r
 
-k <- pqc_keygen(height = 1)          # signs exactly 2 messages
-k <- xmss_advance(k, capsule_sign("one", k))
-k <- xmss_advance(k, capsule_sign("two", k))
+k <- pqckg(height = 1)          # signs exactly 2 messages
+k <- xmssadv(k, cpssign("one", k))
+k <- xmssadv(k, cpssign("two", k))
 #> Warning: this key has used all 2 of its one-time indices: generate a new one
-#> with pqc_keygen()
-capsule_sign("three", k)
+#> with pqckg()
+cpssign("three", k)
 #> Error:
 #> ! this key is exhausted: a height-1 key signs 2 messages and all of them are used. Generate a new key -- reusing an index would break the signature scheme.
 ```
@@ -157,11 +157,11 @@ On the standardised schemes: ML-DSA (FIPS 204) and SLH-DSA (FIPS 205)
 are implemented here too, at every parameter set both standards define –
 three for ML-DSA, twelve for SLH-DSA – with no system dependency, so the
 list
-[`pqc_backends()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_backends.md)
+[`pqcbknd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqcbknd.md)
 reports is the same on every machine.
-[`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md)
+[`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)
 takes any of them,
-[`fips_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_key.md)
+[`fipskey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskey.md)
 wraps key material that came from elsewhere, and both are stateless: one
 key signs any number of messages.
 
@@ -173,7 +173,7 @@ construction where a single misplaced field changes every output.
 
 ``` r
 
-pqc_backends()
+pqcbknd()
 #>  [1] "xmss-sha256"        "ML-DSA-44"          "ML-DSA-65"         
 #>  [4] "ML-DSA-87"          "SLH-DSA-SHA2-128s"  "SLH-DSA-SHA2-128f" 
 #>  [7] "SLH-DSA-SHA2-192s"  "SLH-DSA-SHA2-192f"  "SLH-DSA-SHA2-256s" 
@@ -184,22 +184,22 @@ pqc_backends()
 
 ## Signing something a verifier can check
 
-[`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
+[`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
 signs a string, which proves the string was signed and leaves three
 things implicit: which key, which scheme, which bytes. A verifier handed
 a directory still has to be told all three, and a check that depends on
 being told what to check is a formality.
 
-[`capsule_attest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_attest.md)
+[`cpsatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)
 records them inside the signed payload.
 
 ``` r
 
-m <- make_manifest(list(dataset = "otis", rows = 1200L),
-                   environment = FALSE)
-key <- fips_keygen("ML-DSA-65")
-att <- capsule_attest(m, key, note = "counts as published")
-capsule_check_attestation(att, m)
+m <- mkmnf(list(dataset = "otis", rows = 1200L),
+                   env = FALSE)
+key <- fipskg("ML-DSA-65")
+att <- cpsatst(m, key, note = "counts as published")
+cpschkatst(att, m)
 #> ── Attestation check: OK ─────────────────────────────────────────
 #>   attestation_complete   ok    
 #>   manifest_digest        ok    efa1b7387f225380245de0b5170999e87ad4044f3e8f
@@ -215,13 +215,13 @@ is part of the digest – and it fails:
 
 m2 <- m
 m2$meta$rows <- 1201L
-capsule_check_attestation(att, m2)$ok
+cpschkatst(att, m2)$ok
 #> [1] FALSE
 ```
 
 What it does not establish is that the key belongs to whoever you think:
 an attestation is only as good as the channel the public key arrived on.
-Pass `key_expected` when you know which key should have signed.
+Pass `keyexp` when you know which key should have signed.
 
 ## The number in the manifest is the number
 
@@ -230,14 +230,14 @@ records what actually happened, at the precision it happened:
 
 ``` r
 
-one_third <- make_manifest(list(x = 1 / 3), environment = FALSE)
-back <- bricklayer_json_from_json(manifest_canonical(one_third))
+onethird <- mkmnf(list(x = 1 / 3), env = FALSE)
+back <- fromjs(mnfcanon(onethird))
 identical(back$meta$x, 1 / 3)
 #> [1] TRUE
 ```
 
 Sign
-[`manifest_digest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_canonical.md)
+[`mnfdgst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfcanon.md)
 rather than the pretty JSON. R lists keep insertion order, so building
 `meta` before `results` or the other way round gives different bytes for
 the same content; the canonical form sorts the keys, so the digest
@@ -246,8 +246,8 @@ depends on what the manifest says and not on how a script assembled it.
 ``` r
 
 identical(
-  manifest_digest(make_manifest(list(a = 1, b = 2), environment = FALSE)),
-  manifest_digest(make_manifest(list(b = 2, a = 1), environment = FALSE)))
+  mnfdgst(mkmnf(list(a = 1, b = 2), env = FALSE)),
+  mnfdgst(mkmnf(list(b = 2, a = 1), env = FALSE)))
 #> [1] TRUE
 ```
 
@@ -263,7 +263,7 @@ question and it needs controls that can fail.
 set.seed(1)
 d <- data.frame(x = rnorm(200))
 d$y <- 0.8 * d$x + rnorm(200)
-capsule_falsify(d, function(z) cor(z$x, z$y), treatment = "x",
+cpsfals(d, function(z) cor(z$x, z$y), trt = "x",
                 n = 199, seed = 42)
 #> ── Falsification controls ────────────────────────────────────────
 #>   observed statistic  0.5812737
@@ -287,7 +287,7 @@ stable:
 
 ``` r
 
-capsule_falsify(d, function(z) 0.5, treatment = "x", n = 199,
+cpsfals(d, function(z) 0.5, trt = "x", n = 199,
                 seed = 42)$controls[, c("control", "passed")]
 #>               control passed
 #> 1         permutation  FALSE
@@ -303,7 +303,7 @@ permutations is not weak evidence, it is no evidence at all.
 
 ## Re-deriving the numbers, not just checking them
 
-[`verify_capsule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_capsule.md)
+[`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
 reads a manifest and confirms it is consistent with itself. That catches
 an edited manifest and cannot catch one that was wrong when it was
 written, because a manifest written from the wrong data is perfectly
@@ -312,13 +312,13 @@ consistent too.
 ``` r
 
 d <- data.frame(x = 1:10)
-man <- make_manifest(list(dataset = "demo"), environment = FALSE)
-man <- record(man, "mean_x", observed = mean(d$x), expected = 5.5)
+man <- mkmnf(list(dataset = "demo"), env = FALSE)
+man <- recrd(man, "mean_x", obs = mean(d$x), expd = 5.5)
 #>   mean_x                                       observed = 5.5000       expected = 5.5000       [PASS]
-man <- record(man, "n", observed = nrow(d), expected = 10)
+man <- recrd(man, "n", obs = nrow(d), expd = 10)
 #>   n                                            observed = 10.0000      expected = 10.0000      [PASS]
 
-manifest_recompute(man, d, list(mean_x = function(z) mean(z$x),
+mnfrcmp(man, d, list(mean_x = function(z) mean(z$x),
                                 n = function(z) nrow(z)))
 #> ── Recomputation: everything checked and matched ─────────────────
 #>   mean_x                   MATCH      |recorded - recomputed| = 0
@@ -332,7 +332,7 @@ health and a partial one:
 
 ``` r
 
-manifest_recompute(man, d, list(n = function(z) nrow(z)))
+mnfrcmp(man, d, list(n = function(z) nrow(z)))
 #> ── Recomputation: see below ──────────────────────────────────────
 #>   n                        MATCH      |recorded - recomputed| = 0
 #> ──────────────────────────────────────────────────────────────────
@@ -347,11 +347,11 @@ too – one extra draw anywhere upstream shifts every later value:
 ``` r
 
 set.seed(1)
-m2 <- manifest_record_seed(make_manifest(list(a = 1),
-                                         environment = FALSE))
+m2 <- mnfrecseed(mkmnf(list(a = 1),
+                                         env = FALSE))
 first <- runif(3)
 invisible(runif(1000))          # any amount of other work
-manifest_restore_seed(m2)
+mnfrstseed(m2)
 identical(runif(3), first)
 #> [1] TRUE
 ```
@@ -364,20 +364,20 @@ ways of departing from a plan visible, and they are different failures:
 
 ``` r
 
-plan <- prereg_declare(c(
+plan <- prrgdecl(c(
   ate = "use of force is higher in the exposed division",
   n_rows = "the extract has the row count the source publishes"))
 
 # a declared outcome that was not reported
-prereg_check(plan, "n_rows")
-#> ── Against the declaration of 2026-10-16T17:51:36Z: departures below 
+prrgchk(plan, "n_rows")
+#> ── Against the declaration of 2026-10-19T04:02:33Z: departures below 
 #>   declared but not reported (outcome switching): ate
 #> ──────────────────────────────────────────────────────────────────
 
 # statistics reported that were never declared
-prereg_check(plan, c("ate", "n_rows", "by_year", "by_precinct"))
-#> ── Against the declaration of 2026-10-16T17:51:36Z: departures below 
-#>   reported but not declared (2 addition(s)): by_year, by_precinct
+prrgchk(plan, c("ate", "n_rows", "byyear", "byprecinct"))
+#> ── Against the declaration of 2026-10-19T04:02:33Z: departures below 
+#>   reported but not declared (2 addition(s)): byyear, byprecinct
 #> ──────────────────────────────────────────────────────────────────
 ```
 
@@ -387,14 +387,14 @@ finding:
 
 ``` r
 
-falsify_family(c(ate = 0.02, by_year = 0.3, by_precinct = 0.4,
-                 by_shift = 0.6, by_month = 0.7), method = "holm")
+falsfam(c(ate = 0.02, byyear = 0.3, byprecinct = 0.4,
+                 byshift = 0.6, bymonth = 0.7), meth = "holm")
 #> ── Family of 5, corrected by holm at alpha 0.05 ──────────────────
 #>   ate                    p 0.02       adjusted 0.1        
-#>   by_year                p 0.3        adjusted 1          
-#>   by_precinct            p 0.4        adjusted 1          
-#>   by_shift               p 0.6        adjusted 1          
-#>   by_month               p 0.7        adjusted 1          
+#>   byyear                 p 0.3        adjusted 1          
+#>   byprecinct             p 0.4        adjusted 1          
+#>   byshift                p 0.6        adjusted 1          
+#>   bymonth                p 0.7        adjusted 1          
 #> ──────────────────────────────────────────────────────────────────
 ```
 
@@ -404,9 +404,9 @@ the outcome:
 
 ``` r
 
-evalue_rr(2, lo = 1.4, hi = 2.9)
-#> evalue_point evalue_limit 
-#>     3.414214     2.148331
+evlrr(2, lo = 1.4, hi = 2.9)
+#> evlpoint evllimit 
+#> 3.414214 2.148331
 ```
 
 ## One file to hand someone
@@ -422,13 +422,13 @@ dir <- tempfile()
 dir.create(dir)
 write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"),
           row.names = FALSE)
-b <- capsule_bundle(dir, man, key, note = "as published")
-capsule_bundle_verify(attr(b, "path"), dir, manifest = man)
+b <- cpsbndl(dir, man, key, note = "as published")
+cpsbndlvrf(attr(b, "path"), dir, man = man)
 #> ── Bundle check: OK ──────────────────────────────────────────────
 #>   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606
 #>   no_unlisted_files              ok    
 #>   attestation:attestation_comple ok    
-#>   attestation:manifest_digest    ok    64eeb07b3fbf185e9c663cda971eb74bc4d5
+#>   attestation:manifest_digest    ok    11e55752ec0e84672d0ad640f2eb6dca180d
 #>   attestation:signature          ok    
 #>   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a
 #> ──────────────────────────────────────────────────────────────────
@@ -449,13 +449,13 @@ The chain proves the order of a sequence of manifests. It does not prove
 that any of them existed at a particular time – the whole chain can be
 built in an afternoon and dated however one likes. An RFC 3161 timestamp
 token from a third party supplies the date, and
-[`timestamp_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/timestamp_verify.md)
+[`tsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsvrf.md)
 checks three separate things: that the token is about these bytes, what
 time it asserts, and that the authority’s signature holds.
 
 ``` r
 
-res <- timestamp_verify("response.tsr", data = "manifest.json")
+res <- tsvrf("response.tsr", data = "manifest.json")
 res$time
 res$checks
 ```
@@ -476,7 +476,7 @@ belongs without re-reading the rest.
 ``` r
 
 chunks <- c("id,value", "1,2", "3,4", "5,6")
-root <- merkle_root(chunks)
+root <- mrkroot(chunks)
 root
 #> [1] "80332968a476e13898f2d88c2632603b3fa6bcc746bf05be7ed178aced51ab16"
 ```
@@ -484,16 +484,16 @@ root
 ``` r
 
 # Editing one chunk moves exactly one leaf.
-edited_chunks <- chunks
-edited_chunks[3] <- "3,5"
-which(merkle_leaves(chunks) != merkle_leaves(edited_chunks))
+editedchunks <- chunks
+editedchunks[3] <- "3,5"
+which(mrklvs(chunks) != mrklvs(editedchunks))
 #> [1] 3
 ```
 
 ``` r
 
 # Prove chunk 3 belongs, holding only it and log2(n) sibling digests.
-proof <- merkle_proof(chunks, 3)
+proof <- mrkprf(chunks, 3)
 proof
 #> $sibling
 #> [1] "2191ddd39af84a2334704f1bc99d7c53fc4735a5f1f44cdebdf0c3c52f5d5681"
@@ -504,13 +504,13 @@ proof
 #> 
 #> $scheme
 #> [1] 2
-merkle_verify(chunks[3], proof, root)
+mrkvrf(chunks[3], proof, root)
 #> [1] TRUE
-merkle_verify("3,5", proof, root)
+mrkvrf("3,5", proof, root)
 #> [1] FALSE
 ```
 
-[`chunk_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chunk_file.md)
+[`chnkfile()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chnkfile.md)
 produces the chunks from a file.
 
 An unpaired node at an odd level is *promoted* rather than hashed
@@ -520,7 +520,7 @@ produce the same root, which is the CVE-2012-2459 weakness.
 
 ``` r
 
-merkle_root(c("a", "b", "c")) == merkle_root(c("a", "b", "c", "c"))
+mrkroot(c("a", "b", "c")) == mrkroot(c("a", "b", "c", "c"))
 #> [1] FALSE
 ```
 
@@ -535,10 +535,10 @@ before:
 
 ``` r
 
-chain <- chain_new()
-chain <- chain_append(chain, "manifest for run 1", label = "run-1")
-chain <- chain_append(chain, "manifest for run 2", label = "run-2")
-chain <- chain_append(chain, "manifest for run 3", label = "run-3")
+chain <- chnnew()
+chain <- chnapp(chain, "manifest for run 1", label = "run-1")
+chain <- chnapp(chain, "manifest for run 2", label = "run-2")
+chain <- chnapp(chain, "manifest for run 3", label = "run-3")
 chain
 #> ── Manifest chain ────────────────────────────────────────────────
 #>   ✓ chain intact
@@ -558,7 +558,7 @@ chain
 # Deleting an entry from the middle breaks the links, and names where.
 tampered <- chain
 tampered$entries[[2]] <- NULL
-chain_verify(tampered)
+chnvrf(tampered)
 #> ✗ chain broken at entry 2 of 2
 ```
 
@@ -568,10 +568,10 @@ Two failure modes, and neither single value catches both:
 
 - Deleting from the **middle** leaves the last entry’s stored digest
   untouched, so the head is unchanged – but
-  [`chain_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_chain.md)
+  [`chnvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chn.md)
   fails.
 - Truncating from the **end** leaves a valid prefix that
-  [`chain_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_chain.md)
+  [`chnvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chn.md)
   accepts – but the head changes.
 
 ``` r
@@ -579,29 +579,29 @@ Two failure modes, and neither single value catches both:
 truncated <- chain
 truncated$entries[[3]] <- NULL
 
-c(head_unchanged_by_middle_deletion =
-    chain_head(tampered) == chain_head(chain),
-  links_accept_truncation = chain_verify(truncated)$valid)
-#> head_unchanged_by_middle_deletion           links_accept_truncation 
-#>                              TRUE                              TRUE
+c(headuncbymiddel =
+    chnhead(tampered) == chnhead(chain),
+  linksacctru = chnvrf(truncated)$valid)
+#> headuncbymiddel     linksacctru 
+#>            TRUE            TRUE
 ```
 
-[`chain_seal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_chain.md)
+[`chnseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chn.md)
 folds the entry count and every link digest into one value, which covers
 both. It is the thing to sign:
 
 ``` r
 
-seal_sig <- capsule_sign(chain_seal(chain), signing_key)
-capsule_verify(chain_seal(chain), seal_sig, pub)
+sealsig <- cpssign(chnseal(chain), signingkey)
+cpsvrf(chnseal(chain), sealsig, pub)
 #> [1] TRUE
 
 # The truncated chain seals to a different value.
-capsule_verify(chain_seal(truncated), seal_sig, pub)
+cpsvrf(chnseal(truncated), sealsig, pub)
 #> [1] FALSE
 
 # A chain whose links disagree has no seal to offer at all.
-chain_seal(tampered)
+chnseal(tampered)
 #> [1] NA
 ```
 
@@ -627,3 +627,29 @@ signature verifies, and every tampering of the message, the signature,
 the authentication path, the leaf index or the key fails. The scheme is
 not *certified*, which is a statement about process rather than about
 the bytes.
+
+## Provenance for Indigenous data
+
+The bundled Indigenous tables name their sources (Statistics Canada
+table numbers, retrieval dates and licence) in the package’s COPYRIGHTS
+file:
+
+``` r
+
+cr <- readLines(system.file("COPYRIGHTS", package = "rmoriebricklayer"))
+cat(cr[grep("indigenouslifeexpectancy", cr) + 0:4], sep = "\n")
+```
+
+With a data key
+([`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)),
+[`indtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indtabs.md)
+lists the mirrored tables themselves:
+
+``` r
+
+head(indtabs()[, c("key", "rows")])
+```
+
+[`indtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indtabs.md)
+lists the Statistics Canada tables on data.rmorie.com with their source,
+licence and table number, so a result can name the exact table it used.

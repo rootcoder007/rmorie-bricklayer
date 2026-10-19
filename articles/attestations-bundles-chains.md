@@ -14,11 +14,11 @@ manifest covers, with an optional note from the person signing:
 
 ``` r
 
-m <- make_manifest(list(dataset = "otis", rows = 1200L), environment = FALSE)
-key <- fips_keygen("ML-DSA-65")
-att <- capsule_attest(m, key, note = "counts as published")
+m <- mkmnf(list(dataset = "otis", rows = 1200L), env = FALSE)
+key <- fipskg("ML-DSA-65")
+att <- cpsatst(m, key, note = "counts as published")
 
-res <- capsule_check_attestation(att, m)
+res <- cpschkatst(att, m)
 res$ok
 #> [1] TRUE
 res$checks
@@ -40,15 +40,15 @@ key:
 
 m2 <- m
 m2$meta$rows <- 1201L
-capsule_check_attestation(att, m2)$ok
+cpschkatst(att, m2)$ok
 #> [1] FALSE
 
-capsule_check_attestation(att, m, key_expected = fips_keygen("ML-DSA-65")$public)$ok
+cpschkatst(att, m, keyexp = fipskg("ML-DSA-65")$public)$ok
 #> [1] FALSE
 ```
 
-`key_expected` is how a reader pins the signer: the attestation carries
-the public key that made it, but a reader who knows which key to expect
+`keyexp` is how a reader pins the signer: the attestation carries the
+public key that made it, but a reader who knows which key to expect
 should say so, or any key would do.
 
 ## Bundling a capsule
@@ -62,11 +62,11 @@ and the bundle verifies against the directory later:
 dir <- tempfile()
 dir.create(dir)
 write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"), row.names = FALSE)
-m <- make_manifest(list(dataset = "demo"), environment = FALSE)
-key <- fips_keygen("ML-DSA-44")
+m <- mkmnf(list(dataset = "demo"), env = FALSE)
+key <- fipskg("ML-DSA-44")
 
-b <- capsule_bundle(dir, m, key, note = "as published")
-capsule_bundle_verify(attr(b, "path"), dir, manifest = m)$ok
+b <- cpsbndl(dir, m, key, note = "as published")
+cpsbndlvrf(attr(b, "path"), dir, man = m)$ok
 #> [1] TRUE
 ```
 
@@ -76,14 +76,14 @@ names the file:
 ``` r
 
 write.csv(data.frame(x = 1:4), file.path(dir, "data.csv"), row.names = FALSE)
-v <- capsule_bundle_verify(attr(b, "path"), dir, manifest = m)
+v <- cpsbndlvrf(attr(b, "path"), dir, man = m)
 v$ok
 #> [1] FALSE
 ```
 
 ``` r
 
-capsule_bundle_read(attr(b, "path"))$attestation$note
+cpsbndlrd(attr(b, "path"))$attestation$note
 #> [1] "as published"
 unlink(dir, recursive = TRUE)
 ```
@@ -98,11 +98,11 @@ insertion and reordering all break it:
 
 ``` r
 
-ch <- chain_new()
-ch <- chain_append(ch, "manifest for run 1", label = "run-1")
-ch <- chain_append(ch, "manifest for run 2", label = "run-2")
-ch <- chain_append(ch, "manifest for run 3", label = "run-3")
-chain_verify(ch)$valid
+ch <- chnnew()
+ch <- chnapp(ch, "manifest for run 1", label = "run-1")
+ch <- chnapp(ch, "manifest for run 2", label = "run-2")
+ch <- chnapp(ch, "manifest for run 3", label = "run-3")
+chnvrf(ch)$valid
 #> [1] TRUE
 ```
 
@@ -111,10 +111,10 @@ Editing an entry breaks the chain and names where:
 ``` r
 
 edited <- ch
-edited$entries[[2]]$digest <- core_sha256("something else")
-chain_verify(edited)$valid
+edited$entries[[2]]$digest <- csha256("something else")
+chnvrf(edited)$valid
 #> [1] FALSE
-chain_verify(edited)$broken_at
+chnvrf(edited)$broken_at
 #> [1] 2
 ```
 
@@ -125,7 +125,7 @@ catch:
 
 dropped <- ch
 dropped$entries[[2]] <- NULL
-chain_verify(dropped)$valid
+chnvrf(dropped)$valid
 #> [1] FALSE
 ```
 
@@ -137,14 +137,14 @@ but to a different value:
 
 ``` r
 
-key <- fips_keygen("ML-DSA-44")
-sig <- capsule_sign(chain_seal(ch), key)
-capsule_verify(chain_seal(ch), sig, fips_public_key(key))
+key <- fipskg("ML-DSA-44")
+sig <- cpssign(chnseal(ch), key)
+cpsvrf(chnseal(ch), sig, fipspubkey(key))
 #> [1] TRUE
 
 truncated <- ch
 truncated$entries[[3]] <- NULL
-capsule_verify(chain_seal(truncated), sig, fips_public_key(key))
+cpsvrf(chnseal(truncated), sig, fipspubkey(key))
 #> [1] FALSE
 ```
 
@@ -152,30 +152,49 @@ A chain whose links disagree has no seal to present at all:
 
 ``` r
 
-chain_seal(dropped)
+chnseal(dropped)
 #> [1] NA
 ```
 
 ## Which to use
 
 - One manifest, one signer:
-  [`capsule_attest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_attest.md).
+  [`cpsatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md).
 - A directory of files that must travel together:
-  [`capsule_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_bundle.md).
+  [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md).
 - A series of runs, releases or data refreshes where order and
   completeness matter:
-  [`chain_append()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_chain.md)
+  [`chnapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chn.md)
   after each, sign
-  [`chain_seal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_chain.md)
+  [`chnseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chn.md)
   at each release.
 
 All three accept any signing key the package knows: ML-DSA and SLH-DSA
-([`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md))
+([`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md))
 or XMSS
-([`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md),
+([`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md),
 with the key state carried forward). A shared secret from
-[`derive_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/derive_key.md)
+[`drvkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drvkey.md)
 is for keyed digests
-([`core_hmac_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_keyed_digest.md)),
+([`chmac()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/keyeddgst.md)),
 not for attestations: an attestation names a public key, and a shared
 secret has none.
+
+## Releases of Indigenous health tables
+
+A chain fits data a community needs to be able to trust release after
+release. Here each link pins one of the Statistics Canada tables on
+Indigenous health bundled with the package, so a later reader can tell
+whether any release was altered or dropped:
+
+``` r
+
+ch <- chnnew()
+for (nm in c("health", "mentalhealth", "wellbeing")) {
+  d <- indiex(nm)
+  ch <- chnapp(ch, list(table = nm, rows = nrow(d), sha256 = dgstobj(d)),
+                     label = nm)
+}
+chnvrf(ch)$valid
+#> [1] TRUE
+```

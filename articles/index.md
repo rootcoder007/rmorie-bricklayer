@@ -60,6 +60,11 @@
   computation](https://rootcoder007.github.io/rmorie-bricklayer/articles/air-pollution-and-health.md):
 - [Causal effects with cross-fitted double machine
   learning](https://rootcoder007.github.io/rmorie-bricklayer/articles/causal-effects.md):
+- [Evaluating a policy from administrative
+  panels](https://rootcoder007.github.io/rmorie-bricklayer/articles/policy-evaluation.md):
+- [First Nations, Metis and Inuit health: published tables, distinctions
+  and
+  governance](https://rootcoder007.github.io/rmorie-bricklayer/articles/first-nations-metis-inuit-health.md):
 - [Courts and crime: flow, time, outcomes, place and case
   mix](https://rootcoder007.github.io/rmorie-bricklayer/articles/courts-and-crime.md):
 

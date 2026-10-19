@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,9 +81,9 @@
 
     
     
-<p><code><a href="../reference/bricklayer_llm_ask.html">bricklayer_llm_ask()</a></code> sends a question to a language
-model and returns the answer. You bring the model: a key for a provider
-you already use, a model on your own machine, or a server of your own.
+<p><code><a href="../reference/llmask.html">llmask()</a></code> sends a question to a language model and
+returns the answer. You bring the model: a key for a provider you
+already use, a model on your own machine, or a server of your own.
 Nothing is sent anywhere you did not set up, and the package runs no
 model service of its own. This vignette explains the routes, how the
 model is given the packages’ help, and what the package will and will
@@ -100,13 +100,13 @@ vLLM, llama.cpp’s <code>llama-server</code>, a company gateway). Taken
 when configured, not probed.</li>
 <li>
 <strong>A provider whose key is set</strong>, in the order
-<code><a href="../reference/bricklayer_llm_providers.html">bricklayer_llm_providers()</a></code> lists them: OpenAI, Anthropic,
-Google Gemini, OpenRouter, Groq, Together AI, Fireworks AI, DeepSeek,
-Mistral, xAI, Cerebras, Perplexity, Hugging Face, OpenCode Zen, Cohere
-and NVIDIA. Each reads its usual variable (<code>OPENAI_API_KEY</code>,
+<code><a href="../reference/llmprvd.html">llmprvd()</a></code> lists them: OpenAI, Anthropic, Google Gemini,
+OpenRouter, Groq, Together AI, Fireworks AI, DeepSeek, Mistral, xAI,
+Cerebras, Perplexity, Hugging Face, OpenCode Zen, Cohere and NVIDIA.
+Each reads its usual variable (<code>OPENAI_API_KEY</code>,
 <code>ANTHROPIC_API_KEY</code>, <code>GEMINI_API_KEY</code>, …) or a key
-saved with <code>bricklayer_llm_config(anthropic.key = ...)</code>; the
-model is <code>MORIE_&lt;PROVIDER&gt;_MODEL</code> or
+saved with <code>llmcfg(anthropic.key = ...)</code>; the model is
+<code>MORIE_&lt;PROVIDER&gt;_MODEL</code> or
 <code>&lt;provider&gt;.model</code>. Anthropic’s Messages API and
 Gemini’s <code>generateContent</code> are spoken natively; the others
 are OpenAI-compatible.</li>
@@ -123,7 +123,7 @@ probe. Its first listed model is the default.</li>
 <p><code>route = "anthropic"</code> (or
 <code>rmbl config set route anthropic</code>) takes one route only.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/bricklayer_llm_providers.html">bricklayer_llm_providers</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"label"</span>, <span class="st">"key_env"</span><span class="op">)</span><span class="op">]</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/llmprvd.html">llmprvd</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"label"</span>, <span class="st">"key_env"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;             id         label            key_env</span></span>
 <span><span class="co">#&gt; 1       openai        OpenAI     OPENAI_API_KEY</span></span>
 <span><span class="co">#&gt; 2    anthropic     Anthropic  ANTHROPIC_API_KEY</span></span>
@@ -141,12 +141,12 @@ probe. Its first listed model is the default.</li>
 <span><span class="co">#&gt; 14    opencode  OpenCode Zen   OPENCODE_API_KEY</span></span>
 <span><span class="co">#&gt; 15      cohere        Cohere     COHERE_API_KEY</span></span>
 <span><span class="co">#&gt; 16      nvidia    NVIDIA NIM     NVIDIA_API_KEY</span></span></code></pre></div>
-<p><code><a href="../reference/bricklayer_llm_status.html">bricklayer_llm_status()</a></code> reports what is available from
-this machine. With the local route off the call reaches no network:</p>
+<p><code><a href="../reference/llmstat.html">llmstat()</a></code> reports what is available from this machine.
+With the local route off the call reaches no network:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"OLLAMA_HOST"</span>, unset <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>OLLAMA_HOST <span class="op">=</span> <span class="st">"off"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/bricklayer_llm_status.html">bricklayer_llm_status</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/llmstat.html">llmstat</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;             route   status</span></span>
 <span><span class="co">#&gt; 1    own endpoint  not set</span></span>
 <span><span class="co">#&gt; 2 other providers   no key</span></span>
@@ -161,10 +161,10 @@ this machine. With the local route off the call reaches no network:</p>
 <h2 id="asking-with-the-packages-help-at-hand">Asking, with the packages’ help at hand<a class="anchor" aria-label="anchor" href="#asking-with-the-packages-help-at-hand"></a>
 </h2>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/bricklayer_llm_ask.html">bricklayer_llm_ask</a></span><span class="op">(</span><span class="st">"How do I estimate a weighted proportion with bootstrap replicate weights?"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/bricklayer_llm_ask.html">bricklayer_llm_ask</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Summarise this table:"</span>, <span class="fu"><a href="https://rdrr.io/r/utils/capture.output.html" class="external-link">capture.output</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/llmask.html">llmask</a></span><span class="op">(</span><span class="st">"How do I estimate a weighted proportion with bootstrap replicate weights?"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/llmask.html">llmask</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Summarise this table:"</span>, <span class="fu"><a href="https://rdrr.io/r/utils/capture.output.html" class="external-link">capture.output</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                         collapse <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span>,</span>
-<span>                   system_prompt <span class="op">=</span> <span class="st">"Answer in two sentences."</span>, docs <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<span>                   syspro <span class="op">=</span> <span class="st">"Answer in two sentences."</span>, docs <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p>With <code>docs = TRUE</code> (the default) the model is told every
 function of the MORIE packages installed here (rmoriebricklayer, and
 rmoriedata and rmorie when present), read from their installed help, and
@@ -192,8 +192,8 @@ whatever the route.</li>
 </ul>
 <p>Every size can still reach every function: <code>search_docs</code>
 and <code>get_help</code> look up any page.</p>
-<p><code><a href="../reference/agent_bundle.html">agent_bundle()</a></code> asks over the same routes, with the
-bundle task added, and with no route it returns the setup hint
+<p><code><a href="../reference/agentbndl.html">agentbndl()</a></code> asks over the same routes, with the bundle
+task added, and with no route it returns the setup hint
 (<code>rmbl bundle</code> exits 1).</p>
 </div>
 <div class="section level2">
@@ -207,7 +207,7 @@ with ML-DSA-44 under a key pinned in the package, so the endpoints can
 change without a release while no one but the project can change them. A
 copy ships with the package as the fallback and the floor:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bricklayer_services.html">bricklayer_services</a></span><span class="op">(</span>offline <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/svcs.html">svcs</a></span><span class="op">(</span>offline <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">s</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">mode</span></span>
 <span><span class="co">#&gt; [1] "key"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">s</span>, <span class="st">"source"</span><span class="op">)</span></span>
@@ -265,9 +265,9 @@ browser only when it is a public https address.</li>
 <p>Signing in is for the curated tables at <code>data.rmorie.com</code>
 only; it is never a language model.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>token <span class="op">=</span> <span class="st">"&lt;key issued at https://www.rmorie.com/access/&gt;"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span><span class="op">)</span>          <span class="co"># or: GitHub device flow / emailed code</span></span>
-<span><span class="fu"><a href="../reference/bricklayer_llm_logout.html">bricklayer_llm_logout</a></span><span class="op">(</span><span class="op">)</span>         <span class="co"># forget the key</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/dlogin.html">dlogin</a></span><span class="op">(</span>token <span class="op">=</span> <span class="st">"&lt;key issued at https://www.rmorie.com/access/&gt;"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/dlogin.html">dlogin</a></span><span class="op">(</span><span class="op">)</span>          <span class="co"># or: GitHub device flow / emailed code</span></span>
+<span><span class="fu"><a href="../reference/dlogout.html">dlogout</a></span><span class="op">(</span><span class="op">)</span>         <span class="co"># forget the key</span></span></code></pre></div>
 <p>The key is stored with mode 0600 in the user’s configuration
 directory and never written anywhere else. <code>rmbl doctor</code> says
 whether one is stored.</p>
@@ -276,13 +276,24 @@ whether one is stored.</p>
 <h2 id="from-the-command-line">From the command line<a class="anchor" aria-label="anchor" href="#from-the-command-line"></a>
 </h2>
 <p>The same routes serve the CLI installed by
-<code><a href="../reference/install_cli.html">install_cli()</a></code>:</p>
+<code><a href="../reference/instcli.html">instcli()</a></code>:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config setup       <span class="co"># pick a provider, paste its key (saved privately), pick a model</span></span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor             <span class="co"># the routes, and the one ask takes</span></span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models <span class="at">--route</span> anthropic</span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="st">"what does capsule_bundle() cover?"</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="st">"what does cpsbndl() cover?"</span></span>
 <span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--route</span> ollama <span class="at">--model</span> gemma3:4b <span class="st">"how do I verify a capsule?"</span></span>
 <span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--token</span>      <span class="co"># the data key: paste it when asked; it never sits in the shell history</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="asking-about-the-indigenous-tables">Asking about the Indigenous tables<a class="anchor" aria-label="anchor" href="#asking-about-the-indigenous-tables"></a>
+</h2>
+<p>With a route set up, a question can name the package’s Indigenous
+data; the model answers with the functions to call (this needs a model,
+so it is not run here):</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/llmask.html">llmask</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"How do I compare perceived mental health of First Nations,"</span>,</span>
+<span>                         <span class="st">"Metis and Inuit adults with non-Indigenous adults, using"</span>,</span>
+<span>                         <span class="st">"indiex('health_indicators')?"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

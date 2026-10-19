@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -98,32 +98,32 @@ data frame. A <code>fatal</code> severity stops the pipeline; a
 <span>                 start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">5</span>, <span class="fl">3</span><span class="op">)</span>, end <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">9</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">rules</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="../reference/rule.html">rule</a></span><span class="op">(</span><span class="st">"age_non_negative"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="va">v</span> <span class="op">&gt;=</span> <span class="fl">0</span>, column <span class="op">=</span> <span class="st">"age"</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="../reference/rule.html">rule</a></span><span class="op">(</span><span class="st">"id_unique"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/duplicated.html" class="external-link">anyDuplicated</a></span><span class="op">(</span><span class="va">v</span><span class="op">)</span>, column <span class="op">=</span> <span class="st">"id"</span>, severity <span class="op">=</span> <span class="st">"fatal"</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="../reference/rule.html">rule</a></span><span class="op">(</span><span class="st">"dates_ordered"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">start</span> <span class="op">&lt;=</span> <span class="va">d</span><span class="op">$</span><span class="va">end</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="../reference/rul.html">rul</a></span><span class="op">(</span><span class="st">"agenonnegative"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="va">v</span> <span class="op">&gt;=</span> <span class="fl">0</span>, col <span class="op">=</span> <span class="st">"age"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/rul.html">rul</a></span><span class="op">(</span><span class="st">"idunique"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/duplicated.html" class="external-link">anyDuplicated</a></span><span class="op">(</span><span class="va">v</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"id"</span>, sev <span class="op">=</span> <span class="st">"fatal"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/rul.html">rul</a></span><span class="op">(</span><span class="st">"datesordered"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">start</span> <span class="op">&lt;=</span> <span class="va">d</span><span class="op">$</span><span class="va">end</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">issues</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/validate_rules.html">validate_rules</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">rules</span><span class="op">)</span></span>
+<span><span class="va">issues</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/valrules.html">valrules</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">rules</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">issues</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "age_non_negative" "id_unique"        "dates_ordered"</span></span>
-<span><span class="va">issues</span><span class="op">$</span><span class="va">age_non_negative</span><span class="op">$</span><span class="va">n_failed</span></span>
+<span><span class="co">#&gt; [1] "agenonnegative" "idunique"       "datesordered"</span></span>
+<span><span class="va">issues</span><span class="op">$</span><span class="va">agenonnegative</span><span class="op">$</span><span class="va">n_failed</span></span>
 <span><span class="co">#&gt; [1] 1</span></span>
-<span><span class="va">issues</span><span class="op">$</span><span class="va">age_non_negative</span><span class="op">$</span><span class="va">rows</span></span>
+<span><span class="va">issues</span><span class="op">$</span><span class="va">agenonnegative</span><span class="op">$</span><span class="va">rows</span></span>
 <span><span class="co">#&gt; [1] 2</span></span></code></pre></div>
 <p>Clean data produces nothing:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">31</span>, <span class="fl">40</span><span class="op">)</span>, start <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, end <span class="op">=</span> <span class="fl">4</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="../reference/validate_rules.html">validate_rules</a></span><span class="op">(</span><span class="va">clean</span>, <span class="va">rules</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="../reference/valrules.html">valrules</a></span><span class="op">(</span><span class="va">clean</span>, <span class="va">rules</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 0</span></span></code></pre></div>
 <p>Two behaviours matter for trust. A rule for an absent column is
 <strong>skipped</strong>, not failed: a missing column is the schema’s
 finding to report. And a rule that <em>errors</em> is a
 <strong>failure</strong>, never a silent pass:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="../reference/validate_rules.html">validate_rules</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span>, <span class="va">rules</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="../reference/valrules.html">valrules</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span>, <span class="va">rules</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 0</span></span>
-<span><span class="va">broken</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="../reference/rule.html">rule</a></span><span class="op">(</span><span class="st">"bad"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span><span class="st">"boom"</span><span class="op">)</span>, column <span class="op">=</span> <span class="st">"age"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/validate_rules.html">validate_rules</a></span><span class="op">(</span><span class="va">clean</span>, <span class="va">broken</span><span class="op">)</span><span class="op">$</span><span class="va">bad</span><span class="op">$</span><span class="va">message</span></span>
+<span><span class="va">broken</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="../reference/rul.html">rul</a></span><span class="op">(</span><span class="st">"bad"</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span><span class="st">"boom"</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"age"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/valrules.html">valrules</a></span><span class="op">(</span><span class="va">clean</span>, <span class="va">broken</span><span class="op">)</span><span class="op">$</span><span class="va">bad</span><span class="op">$</span><span class="va">message</span></span>
 <span><span class="co">#&gt; [1] "Rule 'bad' failed (rule could not be evaluated: boom)"</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="ready-made-rules">Ready-made rules<a class="anchor" aria-label="anchor" href="#ready-made-rules"></a>
@@ -131,32 +131,31 @@ finding to report. And a rule that <em>errors</em> is a
 <p>Common checks have constructors so the intent is in the name:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rules2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="../reference/rmbl_rule_library.html">rule_not_null</a></span><span class="op">(</span><span class="st">"id"</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="../reference/rmbl_rule_library.html">rule_unique</a></span><span class="op">(</span><span class="st">"id"</span>, severity <span class="op">=</span> <span class="st">"fatal"</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="../reference/rmbl_rule_library.html">rule_between</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="fl">0</span>, <span class="fl">120</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="../reference/rmbl_rule_library.html">rule_in_set</a></span><span class="op">(</span><span class="st">"grade"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="../reference/rmbl_rule_library.html">rule_regex</a></span><span class="op">(</span><span class="st">"code"</span>, <span class="st">"^[A-Z]{2}-[0-9]{4}$"</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="../reference/rmbl_rule_library.html">rule_within_n_mads</a></span><span class="op">(</span><span class="st">"score"</span>, n <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="../reference/rmbl_rule_library.html">rule_col_count</a></span><span class="op">(</span><span class="fl">6</span>, severity <span class="op">=</span> <span class="st">"fatal"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="../reference/rulelib.html">rulenull</a></span><span class="op">(</span><span class="st">"id"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/rulelib.html">ruleuniq</a></span><span class="op">(</span><span class="st">"id"</span>, sev <span class="op">=</span> <span class="st">"fatal"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/rulelib.html">rulebtw</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="fl">0</span>, <span class="fl">120</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/rulelib.html">ruleinset</a></span><span class="op">(</span><span class="st">"grade"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/rulelib.html">rulerx</a></span><span class="op">(</span><span class="st">"code"</span>, <span class="st">"^[A-Z]{2}-[0-9]{4}$"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/rulelib.html">rulemad</a></span><span class="op">(</span><span class="st">"score"</span>, n <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/rulelib.html">rulecolcnt</a></span><span class="op">(</span><span class="fl">6</span>, sev <span class="op">=</span> <span class="st">"fatal"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">rules2</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 7</span></span></code></pre></div>
-<p><code><a href="../reference/rmbl_rule_library.html">rule_increasing()</a></code>, <code><a href="../reference/rmbl_rule_library.html">rule_distinct_rows()</a></code> and
-<code><a href="../reference/rmbl_rule_library.html">rule_complete_rows()</a></code> complete the set.
-<code>apply_schema_validation(df, rules2)</code> runs a rule list the
-same way and stops on any fatal issue, which is the call a pipeline
-makes (it takes a provenance list or a rule list; until 0.5.12 a rule
-list was silently ignored and reported a pass).</p>
+<p><code><a href="../reference/rulelib.html">ruleincr()</a></code>, <code><a href="../reference/rulelib.html">ruledstn()</a></code> and
+<code><a href="../reference/rulelib.html">rulecmpl()</a></code> complete the set.
+<code>schval(df, rules2)</code> runs a rule list the same way and stops
+on any fatal issue, which is the call a pipeline makes (it takes a
+provenance list or a rule list; until 0.5.12 a rule list was silently
+ignored and reported a pass).</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="inferring-a-schema">Inferring a schema<a class="anchor" aria-label="anchor" href="#inferring-a-schema"></a>
 </h2>
-<p>Given a table known to be right, <code><a href="../reference/infer_schema.html">infer_schema()</a></code> pins
-what can be pinned: column names and types, numeric ranges with a little
-slack, and the level set of categorical columns (up to
-<code>max_levels</code>, so free text is not mistaken for a code
-list):</p>
+<p>Given a table known to be right, <code><a href="../reference/infsch.html">infsch()</a></code> pins what can
+be pinned: column names and types, numeric ranges with a little slack,
+and the level set of categorical columns (up to <code>maxlvl</code>, so
+free text is not mistaken for a code list):</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
@@ -166,24 +165,24 @@ list):</p>
 <span>  note <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"free text "</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">100</span><span class="op">)</span>,</span>
 <span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">sch</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/infer_schema.html">infer_schema</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
+<span><span class="va">sch</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/infsch.html">infsch</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
 <span><span class="va">sch</span><span class="op">$</span><span class="va">expected_value_sets</span></span>
 <span><span class="co">#&gt; $grade</span></span>
 <span><span class="co">#&gt; [1] "a" "b" "c"</span></span></code></pre></div>
 <p>It validates the table it was learned from, and catches a vanished
 column or a new category:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="../reference/validate_schema.html">validate_schema</a></span><span class="op">(</span><span class="va">df</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>schema <span class="op">=</span> <span class="va">sch</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="../reference/valsch.html">valsch</a></span><span class="op">(</span><span class="va">df</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>schema <span class="op">=</span> <span class="va">sch</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 0</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="../reference/validate_schema.html">validate_schema</a></span><span class="op">(</span><span class="va">df</span><span class="op">[</span>, <span class="op">-</span><span class="fl">3</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>schema <span class="op">=</span> <span class="va">sch</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="../reference/valsch.html">valsch</a></span><span class="op">(</span><span class="va">df</span><span class="op">[</span>, <span class="op">-</span><span class="fl">3</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>schema <span class="op">=</span> <span class="va">sch</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="va">df</span></span>
 <span><span class="va">bad</span><span class="op">$</span><span class="va">grade</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"z"</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="../reference/validate_schema.html">validate_schema</a></span><span class="op">(</span><span class="va">bad</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>schema <span class="op">=</span> <span class="va">sch</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="../reference/valsch.html">valsch</a></span><span class="op">(</span><span class="va">bad</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>schema <span class="op">=</span> <span class="va">sch</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <p>A schema goes into the capsule’s provenance record;
-<code><a href="../reference/validate_schema.html">validate_schema()</a></code> is what <code><a href="../reference/verify_capsule.html">verify_capsule()</a></code>
-runs on a fresh download.</p>
+<code><a href="../reference/valsch.html">valsch()</a></code> is what <code><a href="../reference/vrfcps.html">vrfcps()</a></code> runs on a fresh
+download.</p>
 </div>
 <div class="section level2">
 <h2 id="synthetic-stand-ins">Synthetic stand-ins<a class="anchor" aria-label="anchor" href="#synthetic-stand-ins"></a>
@@ -202,7 +201,7 @@ each column’s generator:</p>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".csv"</span><span class="op">)</span></span>
-<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_synthetic_csv.html">make_synthetic_csv</a></span><span class="op">(</span><span class="va">recipe</span>, <span class="va">out</span><span class="op">)</span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mksyncsv.html">mksyncsv</a></span><span class="op">(</span><span class="va">recipe</span>, <span class="va">out</span><span class="op">)</span></span>
 <span><span class="va">res</span><span class="op">$</span><span class="va">rows</span></span>
 <span><span class="co">#&gt; [1] 20</span></span>
 <span><span class="va">res</span><span class="op">$</span><span class="va">seed</span></span>
@@ -218,31 +217,48 @@ each column’s generator:</p>
 <span><span class="co">#&gt; 1 2024    No      4 p-00001</span></span>
 <span><span class="co">#&gt; 2 2024    No      7 p-00002</span></span>
 <span><span class="co">#&gt; 3 2024   Yes      4 p-00003</span></span></code></pre></div>
-<p>The seed makes the stand-in reproducible; <code>n_rows</code>
+<p>The seed makes the stand-in reproducible; <code>nrows</code>
 overrides the recipe’s own count. A <code>&lt;path&gt;.synthetic</code>
 sidecar file is written beside the CSV (the file itself stays a plain
 table), and the capsule checks read that marker, so a synthetic run can
 never be mistaken for a result:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/make_synthetic_csv.html">make_synthetic_csv</a></span><span class="op">(</span><span class="va">recipe</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".csv"</span><span class="op">)</span>, n_rows <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">$</span><span class="va">rows</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mksyncsv.html">mksyncsv</a></span><span class="op">(</span><span class="va">recipe</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".csv"</span><span class="op">)</span>, nrows <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">$</span><span class="va">rows</span></span>
 <span><span class="co">#&gt; [1] 5</span></span></code></pre></div>
-<p><code><a href="../reference/make_synthetic_column.html">make_synthetic_column()</a></code> generates one column from a
-spec, for building a table piece by piece or for testing a
-generator.</p>
+<p><code><a href="../reference/mksyncol.html">mksyncol()</a></code> generates one column from a spec, for
+building a table piece by piece or for testing a generator.</p>
 </div>
 <div class="section level2">
 <h2 id="putting-them-together">Putting them together<a class="anchor" aria-label="anchor" href="#putting-them-together"></a>
 </h2>
 <ol style="list-style-type: decimal">
-<li>On the first, trusted download: <code><a href="../reference/infer_schema.html">infer_schema()</a></code>, then
-add the rules the schema cannot express (ordering between columns,
-cross-table consistency) and pin both.</li>
-<li>On every later run: <code><a href="../reference/validate_schema.html">validate_schema()</a></code> and
-<code><a href="../reference/validate_rules.html">validate_rules()</a></code>; stop on <code>fatal</code>.</li>
-<li>When the source is unreachable: <code><a href="../reference/make_synthetic_csv.html">make_synthetic_csv()</a></code>
-from the pinned schema, run the pipeline, and let the synthetic marker
-say what the output is.</li>
+<li>On the first, trusted download: <code><a href="../reference/infsch.html">infsch()</a></code>, then add the
+rules the schema cannot express (ordering between columns, cross-table
+consistency) and pin both.</li>
+<li>On every later run: <code><a href="../reference/valsch.html">valsch()</a></code> and
+<code><a href="../reference/valrules.html">valrules()</a></code>; stop on <code>fatal</code>.</li>
+<li>When the source is unreachable: <code><a href="../reference/mksyncsv.html">mksyncsv()</a></code> from the
+pinned schema, run the pipeline, and let the synthetic marker say what
+the output is.</li>
 </ol>
+</div>
+<div class="section level2">
+<h2 id="rules-for-a-published-table">Rules for a published table<a class="anchor" aria-label="anchor" href="#rules-for-a-published-table"></a>
+</h2>
+<p>Rules catch problems in a table before it is used. For an Indigenous
+health table: the estimate inside its interval, a known quality flag,
+and a known group:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"health"</span><span class="op">)</span></span>
+<span><span class="va">rules</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/rulelib.html">ruleinset</a></span><span class="op">(</span><span class="st">"quality"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ok"</span>, <span class="st">"E"</span>, <span class="st">"F"</span>, <span class="st">"x"</span>, <span class="st">".."</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/rulelib.html">ruleinset</a></span><span class="op">(</span><span class="st">"group"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"First Nations"</span>, <span class="st">"Métis"</span>, <span class="st">"Inuit"</span>, <span class="st">"Non-Indigenous"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/rul.html">rul</a></span><span class="op">(</span><span class="st">"estimate inside its interval"</span>,</span>
+<span>       <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">x</span><span class="op">$</span><span class="va">estimate</span><span class="op">)</span> <span class="op">|</span> <span class="op">(</span><span class="va">x</span><span class="op">$</span><span class="va">lower</span> <span class="op">&lt;=</span> <span class="va">x</span><span class="op">$</span><span class="va">estimate</span> <span class="op">&amp;</span> <span class="va">x</span><span class="op">$</span><span class="va">estimate</span> <span class="op">&lt;=</span> <span class="va">x</span><span class="op">$</span><span class="va">upper</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/valrules.html">valrules</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">rules</span><span class="op">)</span></span>
+<span><span class="co">#&gt; list()</span></span></code></pre></div>
+<p>An empty list means every rule held on every row.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

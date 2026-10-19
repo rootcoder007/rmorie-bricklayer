@@ -10,7 +10,7 @@ a fixed, panel-reviewed schema with a parser written for hostile input.
 
 ``` r
 
-sch <- bricklayer_siu_schema()
+sch <- siusch()
 head(sch$name, 20)
 #>  [1] "police_service"                "date_of_incident_iso"         
 #>  [3] "date_siu_notified_iso"         "date_of_director_decision_iso"
@@ -31,7 +31,7 @@ and no real person in it:
 
 ``` r
 
-f <- bricklayer_parse_siu(system.file("extdata", "siu_synthetic_report.html",
+f <- siuprs(system.file("extdata", "siu_synthetic_report.html",
                                       package = "rmoriebricklayer"))
 f[["number_of_subject_officials"]]
 #> [1] "2"
@@ -46,7 +46,7 @@ entities decoded:
 
 ``` r
 
-bricklayer_siu_text("<p>Number of SIU Investigators assigned: 3</p>")
+siutxt("<p>Number of SIU Investigators assigned: 3</p>")
 #> [1] " Number of SIU Investigators assigned: 3\n"
 ```
 
@@ -55,7 +55,7 @@ than a headline number that reports sometimes omit:
 
 ``` r
 
-bricklayer_siu_resolve_so("Subject Officials\nSO #1 Interviewed\nSO #2 Declined interview")
+siuso("Subject Officials\nSO #1 Interviewed\nSO #2 Declined interview")
 #> $count
 #> [1] 2
 #> 
@@ -67,9 +67,9 @@ Dates in the report’s prose, normalised to ISO:
 
 ``` r
 
-bricklayer_siu_iso_date("March 4, 2024")
+siudate("March 4, 2024")
 #> [1] "2024-03-04"
-bricklayer_siu_iso_date("not a date")
+siudate("not a date")
 #> [1] ""
 ```
 
@@ -104,18 +104,36 @@ pinned by a test over the sources:
 
 ## Fetching live reports
 
-[`bricklayer_fetch_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch_siu.md)
+[`siufetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siufetch.md)
 fetches a report by its identifier through the package’s checked
 transport (address validation, redirect policy, resource limits) with an
 Internet Archive fallback, and
-[`bricklayer_fetch_parse_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch_parse_siu.md)
+[`siufprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siufprs.md)
 fetches and parses in one call:
 
 ``` r
 
-f <- bricklayer_fetch_parse_siu("24-OCI-123")
+f <- siufprs("24-OCI-123")
 ```
 
 The corpus of parsed reports, reviewed round by round, is distributed as
 a dataset by the companion package `rmoriedata`; this package provides
 the parser so the corpus can be rebuilt and audited.
+
+## Indigenous police services
+
+Ontario’s First Nations police services, among them the Nishnawbe-Aski
+Police Service, the Anishinabek Police Service and the Treaty Three
+Police Service, are investigated by the SIU like any other. The parsed
+`police_service` field selects their cases (this fetches live reports,
+so it is not run here):
+
+``` r
+
+fnservices <- c("Nishnawbe-Aski Police Service", "Anishinabek Police Service",
+                 "Treaty Three Police Service", "UCCM Anishnaabe Police Service")
+reports <- lapply(reporturls, siufprs)
+mine <- Filter(function(r) any(grepl(paste(fnservices, collapse = "|"), r$police_service)),
+               reports)
+length(mine)
+```

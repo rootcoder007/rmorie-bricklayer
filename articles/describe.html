@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,8 +88,8 @@ it is never obviously necessary until afterwards.</p>
 <div class="section level2">
 <h2 id="one-command">One command<a class="anchor" aria-label="anchor" href="#one-command"></a>
 </h2>
-<p><code><a href="../reference/capsule_report.html">capsule_report()</a></code> runs the checks this package provides
-and puts the findings in one place, worst first.</p>
+<p><code><a href="../reference/cpsrpt.html">cpsrpt()</a></code> runs the checks this package provides and puts
+the findings in one place, worst first.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">reference</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">300</span>,</span>
@@ -101,8 +101,8 @@ and puts the findings in one place, worst first.</p>
 <span><span class="va">fresh</span> <span class="op">&lt;-</span> <span class="va">reference</span></span>
 <span><span class="va">fresh</span><span class="op">$</span><span class="va">score</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/capsule_report.html">capsule_report</a></span><span class="op">(</span><span class="va">fresh</span>, reference <span class="op">=</span> <span class="va">reference</span>,</span>
-<span>               schema <span class="op">=</span> <span class="fu"><a href="../reference/infer_schema.html">infer_schema</a></span><span class="op">(</span><span class="va">reference</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/cpsrpt.html">cpsrpt</a></span><span class="op">(</span><span class="va">fresh</span>, ref <span class="op">=</span> <span class="va">reference</span>,</span>
+<span>               schema <span class="op">=</span> <span class="fu"><a href="../reference/infsch.html">infsch</a></span><span class="op">(</span><span class="va">reference</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Capsule report ────────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   ✓ these checks found nothing</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -125,8 +125,8 @@ empty, and one that arrived constant:</p>
 <span><span class="va">broken</span><span class="op">$</span><span class="va">dead</span> <span class="op">&lt;-</span> <span class="cn">NA_real_</span></span>
 <span><span class="va">broken</span><span class="op">$</span><span class="va">flat</span> <span class="op">&lt;-</span> <span class="fl">7</span></span>
 <span></span>
-<span><span class="va">report</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/capsule_report.html">capsule_report</a></span><span class="op">(</span><span class="va">broken</span>, reference <span class="op">=</span> <span class="va">reference</span>,</span>
-<span>                         schema <span class="op">=</span> <span class="fu"><a href="../reference/infer_schema.html">infer_schema</a></span><span class="op">(</span><span class="va">reference</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">report</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpsrpt.html">cpsrpt</a></span><span class="op">(</span><span class="va">broken</span>, ref <span class="op">=</span> <span class="va">reference</span>,</span>
+<span>                         schema <span class="op">=</span> <span class="fu"><a href="../reference/infsch.html">infsch</a></span><span class="op">(</span><span class="va">reference</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">report</span></span>
 <span><span class="co">#&gt; ── Capsule report ────────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   ✗ WARNINGS: something moved</span></span>
@@ -157,10 +157,10 @@ empty, and one that arrived constant:</p>
 column is missing, is trivially constant, and makes any covariance
 singular — reporting all three would bury the findings that matter under
 a single cause.</p>
-<p><code><a href="../reference/report_markdown.html">report_markdown()</a></code> writes the same assessment beside the
-capsule it describes, so it outlives the console.</p>
+<p><code><a href="../reference/rptmd.html">rptmd()</a></code> writes the same assessment beside the capsule it
+describes, so it outlives the console.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/report_markdown.html">report_markdown</a></span><span class="op">(</span><span class="va">report</span><span class="op">)</span>, <span class="fl">12</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/rptmd.html">rptmd</a></span><span class="op">(</span><span class="va">report</span><span class="op">)</span>, <span class="fl">12</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # Capsule report</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; **Warnings** -- something moved.</span></span>
@@ -176,10 +176,10 @@ capsule it describes, so it outlives the console.</p>
 <div class="section level2">
 <h2 id="per-column">Per column<a class="anchor" aria-label="anchor" href="#per-column"></a>
 </h2>
-<p><code><a href="../reference/profile_columns.html">profile_columns()</a></code> is the underlying description. It
-reports the classical and robust centre side by side, which is the
-cheapest outlier detector there is: where a mean and a median disagree,
-the mean is not describing the column.</p>
+<p><code><a href="../reference/profcols.html">profcols()</a></code> is the underlying description. It reports the
+classical and robust centre side by side, which is the cheapest outlier
+detector there is: where a mean and a median disagree, the mean is not
+describing the column.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">messy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  clean <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>,</span>
@@ -187,7 +187,7 @@ the mean is not describing the column.</p>
 <span>  skewed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="fl">199</span><span class="op">)</span>, <span class="fl">500</span><span class="op">)</span>,</span>
 <span>  zeros <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>, <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">150</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/profile_columns.html">profile_columns</a></span><span class="op">(</span><span class="va">messy</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"column"</span>, <span class="st">"mean"</span>, <span class="st">"median"</span>, <span class="st">"sd"</span>, <span class="st">"mad"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="fu"><a href="../reference/profcols.html">profcols</a></span><span class="op">(</span><span class="va">messy</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"column"</span>, <span class="st">"mean"</span>, <span class="st">"median"</span>, <span class="st">"sd"</span>, <span class="st">"mad"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    column         mean     median         sd       mad</span></span>
 <span><span class="co">#&gt; 1   clean -0.109165485 -0.1445507  1.0340169 1.0397160</span></span>
 <span><span class="co">#&gt; 2 bimodal -0.006117203 -0.2014852  3.2205494 4.4949028</span></span>
@@ -195,7 +195,7 @@ the mean is not describing the column.</p>
 <span><span class="co">#&gt; 4   zeros  0.342795696  0.2656884  0.3197161 0.3939096</span></span></code></pre></div>
 <p>The <code>hist</code> column carries what no single number can:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/profile_columns.html">profile_columns</a></span><span class="op">(</span><span class="va">messy</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"column"</span>, <span class="st">"hist"</span><span class="op">)</span><span class="op">]</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/profcols.html">profcols</a></span><span class="op">(</span><span class="va">messy</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"column"</span>, <span class="st">"hist"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    column       hist</span></span>
 <span><span class="co">#&gt; 1   clean ▁▂▃▇█▇▇▃▃▁</span></span>
 <span><span class="co">#&gt; 2 bimodal ▂▆▆▅ ▂▄█▄▁</span></span>
@@ -226,41 +226,41 @@ different handling:</p>
 <span><span class="co">#&gt; structural  scattered </span></span>
 <span><span class="co">#&gt;          6          6</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/missingness_pattern.html">missingness_pattern</a></span><span class="op">(</span><span class="va">structural</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/misspat.html">misspat</a></span><span class="op">(</span><span class="va">structural</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Missingness patterns ────────────────────────────────────────── </span></span>
 <span><span class="co">#&gt;   columns, in pattern order: id, a, b</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  pattern n_rows pct_rows n_missing columns</span></span>
-<span><span class="co">#&gt;      ...     14     70.0         0        </span></span>
-<span><span class="co">#&gt;      .XX      6     30.0         2    a, b</span></span>
+<span><span class="co">#&gt;  pattern n_rows pctrows n_missing columns</span></span>
+<span><span class="co">#&gt;      ...     14    70.0         0        </span></span>
+<span><span class="co">#&gt;      .XX      6    30.0         2    a, b</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/missingness_pattern.html">missingness_pattern</a></span><span class="op">(</span><span class="va">scattered</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/misspat.html">misspat</a></span><span class="op">(</span><span class="va">scattered</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Missingness patterns ────────────────────────────────────────── </span></span>
 <span><span class="co">#&gt;   columns, in pattern order: id, a, b</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  pattern n_rows pct_rows n_missing columns</span></span>
-<span><span class="co">#&gt;      ...      8     40.0         0        </span></span>
-<span><span class="co">#&gt;      ..X      6     30.0         1       b</span></span>
-<span><span class="co">#&gt;      .X.      6     30.0         1       a</span></span>
+<span><span class="co">#&gt;  pattern n_rows pctrows n_missing columns</span></span>
+<span><span class="co">#&gt;      ...      8    40.0         0        </span></span>
+<span><span class="co">#&gt;      ..X      6    30.0         1       b</span></span>
+<span><span class="co">#&gt;      .X.      6    30.0         1       a</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>Two patterns against three. In the first, one structural gap took out
 both columns in the same rows — those rows are a different population,
 and often belong dropped or modelled separately. In the second the
 failures are independent.</p>
-<p><code><a href="../reference/missing_runs.html">missing_runs()</a></code> answers a different question again —
-whether a gap is one outage or many failures:</p>
+<p><code><a href="../reference/missruns.html">missruns()</a></code> answers a different question again — whether
+a gap is one outage or many failures:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/missing_runs.html">missing_runs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/missruns.html">missruns</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  outage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">8</span><span class="op">)</span>, <span class="fl">11</span><span class="op">:</span><span class="fl">20</span><span class="op">)</span>,</span>
 <span>  sporadic <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="cn">NA</span>, <span class="fl">3</span>, <span class="cn">NA</span>, <span class="fl">5</span>, <span class="cn">NA</span>, <span class="fl">7</span><span class="op">:</span><span class="fl">20</span><span class="op">)</span></span>
-<span><span class="op">)</span>, min_run <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="op">)</span>, minrun <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Runs of consecutive missing values ──────────────────────────── </span></span>
 <span><span class="co">#&gt;  column start end length</span></span>
 <span><span class="co">#&gt;  outage     3  10      8</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
-<p>And <code><a href="../reference/missingness_map.html">missingness_map()</a></code> shows the whole table at once,
-with no graphics device, so it works over SSH and inside a plain-text
+<p>And <code><a href="../reference/missgrid.html">missgrid()</a></code> shows the whole table at once, with no
+graphics device, so it works over SSH and inside a plain-text
 summary:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gappy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
@@ -269,7 +269,7 @@ summary:</p>
 <span>  random <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">0.3</span>, <span class="cn">NA</span>, <span class="fl">1</span><span class="op">)</span>,</span>
 <span>  late <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">70</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/missingness_map.html">missingness_map</a></span><span class="op">(</span><span class="va">gappy</span>, height <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/missgrid.html">missgrid</a></span><span class="op">(</span><span class="va">gappy</span>, height <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Missingness map ───────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt;          cerl</span></span>
 <span><span class="co">#&gt;          oaaa</span></span>
@@ -299,10 +299,10 @@ summary:</p>
 <p>Dropping incomplete rows is unbiased <strong>only</strong> if the
 data are missing completely at random. Otherwise the complete cases are
 a biased sample and every downstream estimate inherits the bias.</p>
-<p><code><a href="../reference/mcar_test.html">mcar_test()</a></code> is Little’s test for that assumption. It
-needs maximum-likelihood estimates of the mean and covariance
-<em>under</em> missingness, which have no closed form, so it carries an
-EM estimator.</p>
+<p><code><a href="../reference/mcartst.html">mcartst()</a></code> is Little’s test for that assumption. It needs
+maximum-likelihood estimates of the mean and covariance <em>under</em>
+missingness, which have no closed form, so it carries an EM
+estimator.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">400</span></span>
 <span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
@@ -311,7 +311,7 @@ EM estimator.</p>
 <span><span class="co"># Missing on a coin flip: nothing to find.</span></span>
 <span><span class="va">mcar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span></span>
 <span><span class="va">mcar</span><span class="op">$</span><span class="va">y</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">120</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
-<span><span class="fu"><a href="../reference/mcar_test.html">mcar_test</a></span><span class="op">(</span><span class="va">mcar</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/mcartst.html">mcartst</a></span><span class="op">(</span><span class="va">mcar</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Little's MCAR test ────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   ✓ no departure from MCAR detected</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -331,7 +331,7 @@ EM estimator.</p>
 <span><span class="co"># and that is detectable because the pattern's mean of x is shifted.</span></span>
 <span><span class="va">mar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">y</span><span class="op">)</span></span>
 <span><span class="va">mar</span><span class="op">$</span><span class="va">y</span><span class="op">[</span><span class="va">x</span> <span class="op">&gt;</span> <span class="fl">0.4</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
-<span><span class="fu"><a href="../reference/mcar_test.html">mcar_test</a></span><span class="op">(</span><span class="va">mar</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/mcartst.html">mcartst</a></span><span class="op">(</span><span class="va">mar</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Little's MCAR test ────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   ✗ MCAR rejected: the missingness is related to the data</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -356,25 +356,25 @@ how the data were collected settles it.</p>
 <p>A row can be unremarkable on every column separately and impossible
 jointly.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">people</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>height_cm <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">170</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">people</span><span class="op">$</span><span class="va">weight_kg</span> <span class="op">&lt;-</span> <span class="va">people</span><span class="op">$</span><span class="va">height_cm</span> <span class="op">*</span> <span class="fl">0.5</span> <span class="op">+</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">0</span>, <span class="fl">5</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">people</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>heightcm <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">170</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">people</span><span class="op">$</span><span class="va">weightkg</span> <span class="op">&lt;-</span> <span class="va">people</span><span class="op">$</span><span class="va">heightcm</span> <span class="op">*</span> <span class="fl">0.5</span> <span class="op">+</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">0</span>, <span class="fl">5</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Inside both marginal ranges, outside the cloud.</span></span>
-<span><span class="va">people</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>height_cm <span class="op">=</span> <span class="fl">150</span>, weight_kg <span class="op">=</span> <span class="fl">140</span><span class="op">)</span></span>
+<span><span class="va">people</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>heightcm <span class="op">=</span> <span class="fl">150</span>, weightkg <span class="op">=</span> <span class="fl">140</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">people</span><span class="op">$</span><span class="va">height_cm</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">people</span><span class="op">$</span><span class="va">heightcm</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 146.2977 196.0117</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">people</span><span class="op">$</span><span class="va">weight_kg</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">people</span><span class="op">$</span><span class="va">weightkg</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1]  61.95293 140.00000</span></span></code></pre></div>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/mahalanobis_outliers.html">mahalanobis_outliers</a></span><span class="op">(</span><span class="va">people</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/mahaoutl.html">mahaoutl</a></span><span class="op">(</span><span class="va">people</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Mahalanobis outliers (robust) ───────────────────────────────── </span></span>
 <span><span class="co">#&gt;   ! 1 of 3 rows beyond alpha = 0.001</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  row distance p_value log_p_value outlier</span></span>
-<span><span class="co">#&gt;    1    10.80  &lt;2e-16  -58.355041    TRUE</span></span>
-<span><span class="co">#&gt;   59     3.14 0.00725   -4.926492   FALSE</span></span>
-<span><span class="co">#&gt;  203     2.91  0.0146   -4.227502   FALSE</span></span>
+<span><span class="co">#&gt;  row distance p_value  logpvalue outlier</span></span>
+<span><span class="co">#&gt;    1    10.80  &lt;2e-16 -58.355041    TRUE</span></span>
+<span><span class="co">#&gt;   59     3.14 0.00725  -4.926492   FALSE</span></span>
+<span><span class="co">#&gt;  203     2.91  0.0146  -4.227502   FALSE</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>The default is a robust centre and scale, and that default matters
 more than it sounds: outliers inflate the very covariance used to judge
@@ -382,10 +382,10 @@ them, so with several of them the classical distance hides exactly the
 rows it is meant to find.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">many</span> <span class="op">&lt;-</span> <span class="va">people</span></span>
-<span><span class="va">many</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">8</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>height_cm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">8</span><span class="op">)</span>, weight_kg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">140</span>, <span class="fl">8</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">many</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">8</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>heightcm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">8</span><span class="op">)</span>, weightkg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">140</span>, <span class="fl">8</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>robust <span class="op">=</span> <span class="fu"><a href="../reference/mahalanobis_outliers.html">mahalanobis_outliers</a></span><span class="op">(</span><span class="va">many</span>, robust <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">distance</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
-<span>  classical <span class="op">=</span> <span class="fu"><a href="../reference/mahalanobis_outliers.html">mahalanobis_outliers</a></span><span class="op">(</span><span class="va">many</span>, robust <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">$</span><span class="va">distance</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>robust <span class="op">=</span> <span class="fu"><a href="../reference/mahaoutl.html">mahaoutl</a></span><span class="op">(</span><span class="va">many</span>, robust <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">distance</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
+<span>  classical <span class="op">=</span> <span class="fu"><a href="../reference/mahaoutl.html">mahaoutl</a></span><span class="op">(</span><span class="va">many</span>, robust <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">$</span><span class="va">distance</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    robust classical </span></span>
 <span><span class="co">#&gt;  5.629601  5.510207</span></span></code></pre></div>
 </div>
@@ -396,7 +396,7 @@ rows it is meant to find.</p>
 Figures that were rounded, capped, rescaled or invented usually do
 not.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/benford_test.html">benford_test</a></span><span class="op">(</span><span class="fl">10</span><span class="op">^</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">2000</span>, <span class="fl">0</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/benfordtst.html">benfordtst</a></span><span class="op">(</span><span class="fl">10</span><span class="op">^</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">2000</span>, <span class="fl">0</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Benford first-digit screen ────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   ✓ consistent with Benford's law</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -417,7 +417,7 @@ not.</p>
 <span><span class="co">#&gt;       9     0.044     0.046  ###                 </span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/benford_test.html">benford_test</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">9</span>, <span class="fl">2000</span>, <span class="cn">TRUE</span><span class="op">)</span>, <span class="st">"000"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/benfordtst.html">benfordtst</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">9</span>, <span class="fl">2000</span>, <span class="cn">TRUE</span><span class="op">)</span>, <span class="st">"000"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Benford first-digit screen ────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   ! departs from Benford's law (screen only, not a verdict)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -450,7 +450,7 @@ these particular checks found nothing:</p>
 <ul>
 <li>the drift tests have little power on small samples;</li>
 <li>
-<code><a href="../reference/mcar_test.html">mcar_test()</a></code> assumes multivariate normality, so on
+<code><a href="../reference/mcartst.html">mcartst()</a></code> assumes multivariate normality, so on
 markedly non-normal columns a rejection may be telling you about the
 distribution rather than the missingness;</li>
 <li>Mahalanobis distance assumes the bulk of the data is
@@ -460,8 +460,39 @@ quantities.</li>
 </ul>
 <p>None of them can tell you the data means what you think it means.
 That still requires reading the documentation for the source, which is
-the part <code><a href="../reference/load_provenance.html">load_provenance()</a></code> and the manifest exist to keep
+the part <code><a href="../reference/loadprov.html">loadprov()</a></code> and the manifest exist to keep
 attached.</p>
+</div>
+<div class="section level2">
+<h2 id="describing-an-indigenous-health-table">Describing an Indigenous health table<a class="anchor" aria-label="anchor" href="#describing-an-indigenous-health-table"></a>
+</h2>
+<p>The description functions take any data frame. On the bundled
+Canadian Community Health Survey indicators by Aboriginal identity:</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">hi</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"health"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/profcols.html">profcols</a></span><span class="op">(</span><span class="va">hi</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ── Column profile ──────────────────────────────────────────────── </span></span>
+<span><span class="co">#&gt;    column    type     n n_missing pct_missing n_distinct nzero  nneg  ninf</span></span>
+<span><span class="co">#&gt;  estimate numeric  1080        74       6.852        544     0     0     0</span></span>
+<span><span class="co">#&gt;     lower numeric  1080        74       6.852        514     0     0     0</span></span>
+<span><span class="co">#&gt;     upper numeric  1080        74       6.852        576     0     0     0</span></span>
+<span><span class="co">#&gt;   mean    sd median   mad   min   max skewness n_outliers top   q25   q50   q75</span></span>
+<span><span class="co">#&gt;  31.23 23.37   26.2  20.9   0.2  95.5   0.9636         36   –  13.5  26.2  42.8</span></span>
+<span><span class="co">#&gt;  27.61  22.6  22.05 18.61   0.1  95.1    1.153         59   –  10.5 22.05 36.98</span></span>
+<span><span class="co">#&gt;   35.3 24.15   30.1 23.28   0.3  97.9   0.7558          1   – 17.12  30.1 48.88</span></span>
+<span><span class="co">#&gt;        hist</span></span>
+<span><span class="co">#&gt;  ███▆▄▃▂▂▂▂</span></span>
+<span><span class="co">#&gt;  ██▇▅▃▂▂▂▂▁</span></span>
+<span><span class="co">#&gt;  ▇▇█▇▅▃▄▂▂▂</span></span>
+<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">hi</span><span class="op">$</span><span class="va">quality</span>, useNA <span class="op">=</span> <span class="st">"ifany"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;  ..   E   F  ok   x </span></span>
+<span><span class="co">#&gt;  40  72   7 934  27</span></span></code></pre></div>
+<p>The <code>quality</code> column carries Statistics Canada’s flags:
+<code>E</code> (use with caution), <code>F</code> (too unreliable to
+publish), <code>x</code> (suppressed) and <code>..</code> (not
+available).</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

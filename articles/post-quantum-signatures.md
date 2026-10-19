@@ -6,9 +6,9 @@ standards natively, with no system cryptography library: **ML-DSA**
 (FIPS 204, lattice-based), **SLH-DSA** (FIPS 205, hash-based, stateless)
 and **XMSS** (RFC 8391, hash-based, stateful). All three are used
 through the same two calls,
-[`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
+[`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
 and
-[`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_verify.md).
+[`cpsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsvrf.md).
 
 ## Why post-quantum, and why three schemes
 
@@ -31,12 +31,12 @@ take the others:
 
 ``` r
 
-key <- fips_keygen("ML-DSA-65")
+key <- fipskg("ML-DSA-65")
 key$scheme
 #> [1] "ML-DSA-65"
 
-sig <- capsule_sign("a manifest digest", key)
-capsule_verify("a manifest digest", sig, fips_public_key(key))
+sig <- cpssign("a manifest digest", key)
+cpsvrf("a manifest digest", sig, fipspubkey(key))
 #> [1] TRUE
 ```
 
@@ -45,7 +45,7 @@ caught:
 
 ``` r
 
-capsule_verify("a manifest digest (edited)", sig, fips_public_key(key))
+cpsvrf("a manifest digest (edited)", sig, fipspubkey(key))
 #> [1] FALSE
 ```
 
@@ -58,10 +58,10 @@ replayed as a “release” approval:
 
 ``` r
 
-sig2 <- capsule_sign("a manifest digest", key, context = "release")
-capsule_verify("a manifest digest", sig2, key, context = "release")
+sig2 <- cpssign("a manifest digest", key, ctx = "release")
+cpsvrf("a manifest digest", sig2, key, ctx = "release")
 #> [1] TRUE
-capsule_verify("a manifest digest", sig2, key, context = "staging")
+cpsvrf("a manifest digest", sig2, key, ctx = "staging")
 #> [1] FALSE
 ```
 
@@ -75,13 +75,13 @@ only on the key and the message:
 
 ``` r
 
-s1 <- capsule_sign("same message", key, deterministic = TRUE)
-s2 <- capsule_sign("same message", key, deterministic = TRUE)
+s1 <- cpssign("same message", key, determ = TRUE)
+s2 <- cpssign("same message", key, determ = TRUE)
 identical(s1$signature, s2$signature)
 #> [1] TRUE
 
-h1 <- capsule_sign("same message", key)
-h2 <- capsule_sign("same message", key)
+h1 <- cpssign("same message", key)
+h2 <- cpssign("same message", key)
 identical(h1$signature, h2$signature)
 #> [1] FALSE
 ```
@@ -90,18 +90,18 @@ identical(h1$signature, h2$signature)
 
 ML-DSA signs `mu = H(tr || M')`, a digest of the message that depends on
 the public key but not on the secret.
-[`fips_mu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_mu.md)
+[`fipsmu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipsmu.md)
 computes it from the *public* key, so the machine holding the secret
 never needs to see the message:
 
 ``` r
 
-mu <- fips_mu(fips_public_key(key), "a manifest digest", context = "release")
-sig3 <- fips_sign_mu(key, mu)
-fips_verify_mu(key, mu, sig3)
+mu <- fipsmu(fipspubkey(key), "a manifest digest", ctx = "release")
+sig3 <- fipssignmu(key, mu)
+fipsvrfmu(key, mu, sig3)
 #> [1] TRUE
 # the same signature verifies the ordinary way
-capsule_verify("a manifest digest", sig3, key, context = "release")
+cpsvrf("a manifest digest", sig3, key, ctx = "release")
 #> [1] TRUE
 ```
 
@@ -114,10 +114,10 @@ unmasked computation; only the cost differs.
 
 ``` r
 
-fips_sizes("ML-DSA-65")
+fipssz("ML-DSA-65")
 #> public_key secret_key  signature       seed   opt_rand 
 #>       1952       4032       3309         32         32
-fips_sizes("SLH-DSA-SHAKE-128f")
+fipssz("SLH-DSA-SHAKE-128f")
 #> public_key secret_key  signature       seed   opt_rand 
 #>         32         64      17088         48         16
 ```
@@ -128,7 +128,7 @@ level.
 
 ``` r
 
-fips_sizes("SLH-DSA-SHAKE-128f")[["signature"]] > fips_sizes("ML-DSA-44")[["signature"]]
+fipssz("SLH-DSA-SHAKE-128f")[["signature"]] > fipssz("ML-DSA-44")[["signature"]]
 #> [1] TRUE
 ```
 
@@ -136,9 +136,9 @@ The calls are identical:
 
 ``` r
 
-hkey <- fips_keygen("SLH-DSA-SHAKE-128f")
-hsig <- capsule_sign("a manifest digest", hkey)
-capsule_verify("a manifest digest", hsig, fips_public_key(hkey))
+hkey <- fipskg("SLH-DSA-SHAKE-128f")
+hsig <- cpssign("a manifest digest", hkey)
+cpsvrf("a manifest digest", hsig, fipspubkey(hkey))
 #> [1] TRUE
 ```
 
@@ -151,55 +151,55 @@ two digests of the same length never verify for each other:
 
 ``` r
 
-p <- capsule_sign("a large artifact", key, prehash = "sha512")
-capsule_verify("a large artifact", p, key, prehash = "sha512")
+p <- cpssign("a large artifact", key, prehash = "sha512")
+cpsvrf("a large artifact", p, key, prehash = "sha512")
 #> [1] TRUE
-capsule_verify("a large artifact", p, key, prehash = "sha3_512")
+cpsvrf("a large artifact", p, key, prehash = "sha3_512")
 #> [1] FALSE
 ```
 
 ## XMSS: hash-based, stateful
 
 An XMSS key of height *h* signs 2^h messages. The package stores the
-next index in the key and `xmss_advance(key, signature)` gives the
-advanced key after every signature; reusing an index would break
-security, so always advance the key with
-[`xmss_advance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
+next index in the key and `xmssadv(key, signature)` gives the advanced
+key after every signature; reusing an index would break security, so
+always advance the key with
+[`xmssadv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssadv.md)
 and save that:
 
 ``` r
 
-xkey <- pqc_keygen(height = 3)
+xkey <- pqckg(height = 3)
 xkey$capacity
 #> [1] 8
 xkey$next_index
 #> [1] 0
 
-s1 <- capsule_sign("manifest-1", xkey)
-capsule_verify("manifest-1", s1, signing_public_key(xkey))
+s1 <- cpssign("manifest-1", xkey)
+cpsvrf("manifest-1", s1, signpubkey(xkey))
 #> [1] TRUE
 
-xkey <- xmss_advance(xkey, s1)
+xkey <- xmssadv(xkey, s1)
 xkey$next_index
 #> [1] 1
-s2 <- capsule_sign("manifest-2", xkey)
-capsule_verify("manifest-2", s2, signing_public_key(xkey))
+s2 <- cpssign("manifest-2", xkey)
+cpsvrf("manifest-2", s2, signpubkey(xkey))
 #> [1] TRUE
 
 # a signature does not transfer to another message
-capsule_verify("manifest-1", s2, signing_public_key(xkey))
+cpsvrf("manifest-1", s2, signpubkey(xkey))
 #> [1] FALSE
 ```
 
 The key is a value, so an old copy of it still says an old `next_index`.
 The package therefore also keeps a record of the highest index each key
 has used on this machine
-([`?xmss_advance`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
+([`?xmssadv`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssadv.md)
 says where), and refuses a used index even from a stale copy. A key
 generated here is entered at birth; a key from another machine, one
 rebuilt from its seeds, or one used in a CI job or a container with a
 fresh home directory is unknown to the record and must be vouched for
-once with `xmss_register_key(key)` before it signs from index 0.
+once with `xmssregkey(key)` before it signs from index 0.
 
 ## Every way of being wrong returns FALSE
 
@@ -211,16 +211,16 @@ because that is a programming mistake rather than a tampered artefact.)
 
 ``` r
 
-pub <- fips_public_key(key)
+pub <- fipspubkey(key)
 bad <- sig
 bad$signature <- paste0("ff", substring(bad$signature, 3))
-capsule_verify("a manifest digest", bad, pub)
+cpsvrf("a manifest digest", bad, pub)
 #> [1] FALSE
 trunc <- sig
 trunc$signature <- substring(sig$signature, 1, 64)
-capsule_verify("a manifest digest", trunc, pub)
+cpsvrf("a manifest digest", trunc, pub)
 #> [1] FALSE
-capsule_verify("a manifest digest", sig, fips_public_key(fips_keygen("ML-DSA-65")))
+cpsvrf("a manifest digest", sig, fipspubkey(fipskg("ML-DSA-65")))
 #> [1] FALSE
 ```
 
@@ -234,3 +234,18 @@ RFC 8391 vectors. Every signer runs under valgrind with the secret key
 marked undefined, a dynamic check that no executed branch or memory
 address depends on it. `SECURITY.md` in the package repository has the
 full table of what each check catches and what it does not.
+
+## Signing a release of Indigenous tables
+
+A signature lets anyone check that a release came from its publisher and
+has not changed:
+
+``` r
+
+key <- fipskg("ML-DSA-65")
+d <- indiex("mentalhealth")
+msg <- dgstobj(d)
+sig <- cpssign(msg, key)
+cpsvrf(msg, sig, fipspubkey(key))
+#> [1] TRUE
+```

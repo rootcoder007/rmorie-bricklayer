@@ -98,15 +98,15 @@ vector suite checks on every vector:
 
 ``` r
 
-key <- kem_keygen(512)
-sent <- kem_encapsulate(kem_public_key(key))
-identical(kem_decapsulate(key, sent$ciphertext, masked = TRUE),
-          kem_decapsulate(key, sent$ciphertext, masked = FALSE))
+key <- kemkg(512)
+sent <- kemencap(kempubkey(key))
+identical(kemdecap(key, sent$ciphertext, masked = TRUE),
+          kemdecap(key, sent$ciphertext, masked = FALSE))
 #> [1] TRUE
 
-skey <- fips_keygen("ML-DSA-44")
-sig <- capsule_sign("manifest", skey, deterministic = TRUE)
-capsule_verify("manifest", sig, fips_public_key(skey))
+skey <- fipskg("ML-DSA-44")
+sig <- cpssign("manifest", skey, determ = TRUE)
+cpsvrf("manifest", sig, fipspubkey(skey))
 #> [1] TRUE
 ```
 
@@ -210,8 +210,24 @@ Masking costs about 2.3 to 3.4 times the plain time on decapsulation (4
 ms for ML-KEM-768 against 1.2 ms on this package’s test machine) and 7
 to 10 times on signing (17 ms for ML-DSA-65 against 2.4 ms), depending
 on the CPU. Where the threat model has no physical attacker,
-`kem_decapsulate(masked = FALSE)`, `capsule_sign(masked = FALSE)` and
-`fips_sign_mu(masked = FALSE)` keep the plain path, and
+`kemdecap(masked = FALSE)`, `cpssign(masked = FALSE)` and
+`fipssignmu(masked = FALSE)` keep the plain path, and
 `options(rmoriebricklayer.masked = FALSE)` makes that the default for a
 session (a chain or bundle signs many times). Timing protections cannot
 be switched off; they are not optional.
+
+## Indigenous examples
+
+Side-channel assurance concerns the cryptography, not the data; the keys
+it tests are the ones that sign and encrypt releases such as the
+Indigenous tables shown in
+[`vignette("post-quantum-signatures")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/post-quantum-signatures.md)
+and
+[`vignette("key-encapsulation")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/key-encapsulation.md).
+The masked implementation is used by default:
+
+``` r
+
+getOption("rmoriebricklayer.masked", TRUE)
+#> [1] TRUE
+```

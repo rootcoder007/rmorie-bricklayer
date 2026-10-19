@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,10 +84,10 @@
 <p>A survey respondent stands for many people, and not the same number
 each: the final weight says how many. The weights fix the estimate; the
 design (how the sample was drawn) fixes its uncertainty, and ignoring it
-usually understates the interval. <code><a href="../reference/survey_design.html">survey_design()</a></code> records
-the design, <code><a href="../reference/survey_estimate.html">survey_estimate()</a></code> gives means, totals,
-proportions and ratios with design-based standard errors, and
-<code><a href="../reference/survey_compare.html">survey_compare()</a></code> tests differences between groups.</p>
+usually understates the interval. <code><a href="../reference/svydes.html">svydes()</a></code> records the
+design, <code><a href="../reference/svyest.html">svyest()</a></code> gives means, totals, proportions and
+ratios with design-based standard errors, and <code><a href="../reference/svycmp.html">svycmp()</a></code>
+tests differences between groups.</p>
 <div class="section level2">
 <h2 id="two-ways-to-the-variance">Two ways to the variance<a class="anchor" aria-label="anchor" href="#two-ways-to-the-variance"></a>
 </h2>
@@ -105,7 +105,7 @@ linearization.</p>
 <span>                age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"15-24"</span>, <span class="st">"25-49"</span>, <span class="st">"50+"</span><span class="op">)</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
 <span>                used <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">1</span>, <span class="fl">0.3</span><span class="op">)</span>, drinks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">3</span><span class="op">)</span>, w <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">40</span>, <span class="fl">160</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co"># a stratified design: variance by linearization</span></span>
-<span><span class="va">lin</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/survey_design.html">survey_design</a></span><span class="op">(</span><span class="va">d</span>, weights <span class="op">=</span> <span class="st">"w"</span>, strata <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span>
+<span><span class="va">lin</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/svydes.html">svydes</a></span><span class="op">(</span><span class="va">d</span>, w <span class="op">=</span> <span class="st">"w"</span>, strata <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span>
 <span><span class="va">lin</span></span>
 <span><span class="co">#&gt; Survey design: 600 respondents, weights summing to 60,110</span></span>
 <span><span class="co">#&gt; Variance: Taylor linearization, 3 strata, 600 PSUs</span></span>
@@ -118,8 +118,8 @@ linearization.</p>
 <span>  <span class="op">}</span></span>
 <span>  <span class="va">d</span><span class="op">$</span><span class="va">w</span> <span class="op">*</span> <span class="va">m</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
-<span><span class="va">rep_des</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/survey_design.html">survey_design</a></span><span class="op">(</span><span class="va">d</span>, weights <span class="op">=</span> <span class="st">"w"</span>, replicates <span class="op">=</span> <span class="va">reps</span>, type <span class="op">=</span> <span class="st">"bootstrap"</span><span class="op">)</span></span>
-<span><span class="va">rep_des</span></span>
+<span><span class="va">repdes</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/svydes.html">svydes</a></span><span class="op">(</span><span class="va">d</span>, w <span class="op">=</span> <span class="st">"w"</span>, reps <span class="op">=</span> <span class="va">reps</span>, type <span class="op">=</span> <span class="st">"bootstrap"</span><span class="op">)</span></span>
+<span><span class="va">repdes</span></span>
 <span><span class="co">#&gt; Survey design: 600 respondents, weights summing to 60,110</span></span>
 <span><span class="co">#&gt; Variance: 200 replicate weights, bootstrap; scale 0.005, centred on the full-sample estimate</span></span></code></pre></div>
 </div>
@@ -130,7 +130,7 @@ linearization.</p>
 design: a respondent outside it counts zero, but stays in the design.
 That is what makes the subgroup’s variance right.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">e</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/survey_estimate.html">survey_estimate</a></span><span class="op">(</span><span class="va">rep_des</span>, <span class="va">d</span>, <span class="st">"used"</span>, by <span class="op">=</span> <span class="st">"age"</span>, stat <span class="op">=</span> <span class="st">"proportion"</span>, levels <span class="op">=</span> <span class="st">"1"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">e</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/svyest.html">svyest</a></span><span class="op">(</span><span class="va">repdes</span>, <span class="va">d</span>, <span class="st">"used"</span>, by <span class="op">=</span> <span class="st">"age"</span>, stat <span class="op">=</span> <span class="st">"proportion"</span>, lvls <span class="op">=</span> <span class="st">"1"</span><span class="op">)</span></span>
 <span><span class="va">e</span></span>
 <span><span class="co">#&gt; Survey proportion of used by age (bootstrap variance, 95% wilson interval)</span></span>
 <span><span class="co">#&gt;    age level estimate      se  lower  upper     cv   n flag</span></span>
@@ -140,7 +140,7 @@ That is what makes the subgroup’s variance right.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">e</span><span class="op">)</span></span></code></pre></div>
 <p><img src="survey-estimation_files/figure-html/estimate-1.png" class="r-plt" alt="" width="504"></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/survey_estimate.html">survey_estimate</a></span><span class="op">(</span><span class="va">lin</span>, <span class="va">d</span>, <span class="st">"drinks"</span>, by <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/svyest.html">svyest</a></span><span class="op">(</span><span class="va">lin</span>, <span class="va">d</span>, <span class="st">"drinks"</span>, by <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Survey mean of drinks by region (linearization variance, 95% wald interval)</span></span>
 <span><span class="co">#&gt;  region estimate     se lower upper    cv   n flag</span></span>
 <span><span class="co">#&gt;    east    2.857 0.1245 2.614 3.101 4.356 186   NA</span></span>
@@ -161,10 +161,9 @@ travels with the row.</p>
 </h2>
 <p>Two overlapping intervals do not mean two groups are the same, and
 two separate intervals leave out the covariance between the estimates.
-<code><a href="../reference/survey_compare.html">survey_compare()</a></code> takes the difference within the
-design:</p>
+<code><a href="../reference/svycmp.html">svycmp()</a></code> takes the difference within the design:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cmp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/survey_compare.html">survey_compare</a></span><span class="op">(</span><span class="va">rep_des</span>, <span class="va">d</span>, <span class="st">"used"</span>, by <span class="op">=</span> <span class="st">"region"</span>, stat <span class="op">=</span> <span class="st">"proportion"</span>, levels <span class="op">=</span> <span class="st">"1"</span>,</span>
+<code class="sourceCode R"><span><span class="va">cmp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/svycmp.html">svycmp</a></span><span class="op">(</span><span class="va">repdes</span>, <span class="va">d</span>, <span class="st">"used"</span>, by <span class="op">=</span> <span class="st">"region"</span>, stat <span class="op">=</span> <span class="st">"proportion"</span>, lvls <span class="op">=</span> <span class="st">"1"</span>,</span>
 <span>                      ref <span class="op">=</span> <span class="st">"north"</span><span class="op">)</span></span>
 <span><span class="va">cmp</span></span>
 <span><span class="co">#&gt; Survey proportion of used against north (95% interval)</span></span>
@@ -184,32 +183,31 @@ multiplied by 12 (Health Canada’s technical notes; the same as Fay’s BRR
 with
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ρ</mi><mo>=</mo><mn>1</mn><mo>−</mo><mn>1</mn><mi>/</mi><msqrt><mn>12</mn></msqrt></mrow><annotation encoding="application/x-tex">\rho = 1 - 1/\sqrt{12}</annotation></semantics></math>).
 The public-use file and its weights are on data.rmorie.com (sign in once
-with <code>rmbl login</code>), where <code><a href="../reference/bricklayer_data_manifest.html">bricklayer_data_load()</a></code>
-checks each table against the SHA-256 its manifest lists:</p>
+with <code>rmbl login</code>), where <code><a href="../reference/dmnf.html">dload()</a></code> checks each
+table against the SHA-256 its manifest lists:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bricklayer_data_manifest.html">bricklayer_data_load</a></span><span class="op">(</span><span class="st">"csus_2023/pumf"</span><span class="op">)</span>        <span class="co"># 36,180 respondents</span></span>
-<span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bricklayer_data_manifest.html">bricklayer_data_load</a></span><span class="op">(</span><span class="st">"csus_2023/bootstrap"</span><span class="op">)</span>   <span class="co"># PUMF_ID, WGT_PUMF and BWGT1 ... BWGT1000</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dmnf.html">dload</a></span><span class="op">(</span><span class="st">"csus_2023/pumf"</span><span class="op">)</span>        <span class="co"># 36,180 respondents</span></span>
+<span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dmnf.html">dload</a></span><span class="op">(</span><span class="st">"csus_2023/bootstrap"</span><span class="op">)</span>   <span class="co"># PUMF_ID, WGT_PUMF and BWGT1 ... BWGT1000</span></span></code></pre></div>
 <p>Or, without signing in, from Health Canada’s own copies on the Open
 Government Portal (the same files, 612 MB for the weights):</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">src</span> <span class="op">&lt;-</span> <span class="st">"https://open.canada.ca/data/dataset/65e2d45e-efc6-4c29-9a9b-db59bc96aa0e/resource"</span></span>
 <span><span class="va">pumf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"csus2023_pumf_final.csv"</span><span class="op">)</span></span>
 <span><span class="va">bwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"csus2023_pumf_bwt.csv"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/bricklayer_download.html">bricklayer_download</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">src</span>, <span class="st">"/c2c1795b-4501-49ba-9dd1-5b8360cc3b2e/download/"</span>,</span>
+<span><span class="fu"><a href="../reference/bldl.html">bldl</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">src</span>, <span class="st">"/c2c1795b-4501-49ba-9dd1-5b8360cc3b2e/download/"</span>,</span>
 <span>                           <span class="st">"csus2023_pumf_final.csv"</span><span class="op">)</span>, <span class="va">pumf</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/bricklayer_download.html">bricklayer_download</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">src</span>, <span class="st">"/7d19d47a-5f42-4447-b735-aa4d677ad5ed/download/"</span>,</span>
+<span><span class="fu"><a href="../reference/bldl.html">bldl</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">src</span>, <span class="st">"/7d19d47a-5f42-4447-b735-aa4d677ad5ed/download/"</span>,</span>
 <span>                           <span class="st">"csus2023_pumf_bwt.csv"</span><span class="op">)</span>, <span class="va">bwt</span><span class="op">)</span></span>
 <span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="va">pumf</span><span class="op">)</span></span>
 <span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="va">bwt</span><span class="op">)</span></span>
-<span><span class="co"># With rmorie installed, the same two files:</span></span>
-<span><span class="co"># a &lt;- rmorie::morie_load_dataset("cu23mf")</span></span>
-<span><span class="co"># b &lt;- rmorie::morie_load_dataset("cu23bt")</span></span></code></pre></div>
+<span><span class="co"># With rmorie installed, the same two files come from</span></span>
+<span><span class="co"># rmorie::morie_load_dataset() with the keys "cu23mf" and "cu23bt".</span></span></code></pre></div>
 <p>Either way, the design and the lifetime cannabis question are:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">a</span><span class="op">$</span><span class="va">can</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">a</span><span class="op">$</span><span class="va">CAN_Q01</span> <span class="op">&lt;</span> <span class="fl">0</span>, <span class="cn">NA</span>, <span class="va">a</span><span class="op">$</span><span class="va">CAN_Q01</span><span class="op">)</span>   <span class="co"># -8: not stated</span></span>
-<span><span class="va">des</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/survey_design.html">survey_design</a></span><span class="op">(</span><span class="va">a</span>, weights <span class="op">=</span> <span class="st">"WGT_PUMF"</span>, replicates <span class="op">=</span> <span class="va">b</span>, id <span class="op">=</span> <span class="st">"PUMF_ID"</span>,</span>
-<span>                     type <span class="op">=</span> <span class="st">"mean_bootstrap"</span>, mean_size <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/survey_estimate.html">survey_estimate</a></span><span class="op">(</span><span class="va">des</span>, <span class="va">a</span>, <span class="st">"can"</span>, stat <span class="op">=</span> <span class="st">"proportion"</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"1"</span>, <span class="st">"2"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">des</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/svydes.html">svydes</a></span><span class="op">(</span><span class="va">a</span>, w <span class="op">=</span> <span class="st">"WGT_PUMF"</span>, reps <span class="op">=</span> <span class="va">b</span>, id <span class="op">=</span> <span class="st">"PUMF_ID"</span>,</span>
+<span>                     type <span class="op">=</span> <span class="st">"meanboot"</span>, msize <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/svyest.html">svyest</a></span><span class="op">(</span><span class="va">des</span>, <span class="va">a</span>, <span class="st">"can"</span>, stat <span class="op">=</span> <span class="st">"proportion"</span>, lvls <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"1"</span>, <span class="st">"2"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Run on 13 October 2026 (1.6 seconds for the 1,000 replicates),
 against Health Infobase’s published table:</p>
 <table class="table">
@@ -252,13 +250,44 @@ public-use weights are not identical to it (the percentages differ in
 the fifth significant digit).</p>
 </div>
 <div class="section level2">
+<h2 id="when-you-only-have-the-published-table">When you only have the published table<a class="anchor" aria-label="anchor" href="#when-you-only-have-the-published-table"></a>
+</h2>
+<p>Often there is no microdata, only the published table: an estimate
+and its 95% limits for each group. The limits carry the design. A
+standard error is the limits’ width over
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>z</mi></mrow><annotation encoding="application/x-tex">2z</annotation></semantics></math>,
+and it includes the design effect of the survey’s weights and clusters.
+<code><a href="../reference/scests.html">scests()</a></code> puts each Statistics Canada estimate beside its
+limits. <code><a href="../reference/indgap.html">indgap()</a></code>, <code><a href="../reference/dstntst.html">dstntst()</a></code> and
+<code><a href="../reference/ordcmp.html">ordcmp()</a></code> then compare groups from them.</p>
+<p>They treat the groups as independent samples. Disjoint domains of one
+survey nearly are, but not exactly, since they share strata and
+clusters. The exact comparison needs the bootstrap weights, which
+Statistics Canada holds in its Research Data Centres.</p>
+<p>Perceived mental health of First Nations, Metis and Inuit adults
+living off reserve, 2019/2022 (table 13-10-0924-01):</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">h</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"health"</span><span class="op">)</span></span>
+<span><span class="va">mh</span> <span class="op">&lt;-</span> <span class="va">h</span><span class="op">[</span><span class="va">h</span><span class="op">$</span><span class="va">period</span> <span class="op">==</span> <span class="st">"2019/2022"</span> <span class="op">&amp;</span> <span class="va">h</span><span class="op">$</span><span class="va">age</span> <span class="op">==</span> <span class="st">"Total, 18 years and over"</span> <span class="op">&amp;</span></span>
+<span>          <span class="va">h</span><span class="op">$</span><span class="va">indicator</span> <span class="op">==</span> <span class="st">"Perceived mental health, very good or excellent"</span>, <span class="op">]</span></span>
+<span><span class="fu"><a href="../reference/indgap.html">indgap</a></span><span class="op">(</span><span class="va">mh</span>, <span class="st">"group"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span>, qual <span class="op">=</span> <span class="st">"quality"</span><span class="op">)</span><span class="op">[</span></span>
+<span>  , <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"group"</span>, <span class="st">"difference"</span>, <span class="st">"diflo"</span>, <span class="st">"difup"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;           group difference     diflo      difup</span></span>
+<span><span class="co">#&gt; 1 First Nations      -15.7 -18.53593 -12.864070</span></span>
+<span><span class="co">#&gt; 2         Métis       -8.7 -11.58531  -5.814692</span></span>
+<span><span class="co">#&gt; 3         Inuit      -13.7 -20.16568  -7.234321</span></span>
+<span><span class="fu"><a href="../reference/dstntst.html">dstntst</a></span><span class="op">(</span><span class="va">mh</span><span class="op">[</span><span class="va">mh</span><span class="op">$</span><span class="va">group</span> <span class="op">!=</span> <span class="st">"Non-Indigenous"</span>, <span class="op">]</span>, <span class="st">"group"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Distinctions test across 3 groups: Q = 11.97 on 2 df, p = 0.00252, I^2 = 83%</span></span>
+<span><span class="co">#&gt; Pooled (inverse-variance) 49.11; the groups differ: report each one, not the pooled figure</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="linearization-or-replicates-the-same-answer">Linearization or replicates, the same answer<a class="anchor" aria-label="anchor" href="#linearization-or-replicates-the-same-answer"></a>
 </h2>
 <p>On the same data the two routes agree closely when the replicates
 come from the same design:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span>linearization <span class="op">=</span> <span class="fu"><a href="../reference/survey_estimate.html">survey_estimate</a></span><span class="op">(</span><span class="va">lin</span>, <span class="va">d</span>, <span class="st">"drinks"</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"estimate"</span>, <span class="st">"se"</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>      bootstrap <span class="op">=</span> <span class="fu"><a href="../reference/survey_estimate.html">survey_estimate</a></span><span class="op">(</span><span class="va">rep_des</span>, <span class="va">d</span>, <span class="st">"drinks"</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"estimate"</span>, <span class="st">"se"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span>linearization <span class="op">=</span> <span class="fu"><a href="../reference/svyest.html">svyest</a></span><span class="op">(</span><span class="va">lin</span>, <span class="va">d</span>, <span class="st">"drinks"</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"estimate"</span>, <span class="st">"se"</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>      bootstrap <span class="op">=</span> <span class="fu"><a href="../reference/svyest.html">svyest</a></span><span class="op">(</span><span class="va">repdes</span>, <span class="va">d</span>, <span class="st">"drinks"</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"estimate"</span>, <span class="st">"se"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  estimate      se</span></span>
 <span><span class="co">#&gt;     2.906 0.07295</span></span>
 <span><span class="co">#&gt;     2.906 0.07324</span></span></code></pre></div>

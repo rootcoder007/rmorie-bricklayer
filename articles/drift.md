@@ -16,7 +16,7 @@ hide behind it:
   *something* happened – but a digest cannot tell you *what*, and if you
   re-pin without looking, the change is now baked in.
 
-[`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md)
+[`cpsdrft()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md)
 answers the second question.
 
 ## A re-release that is statistically the same
@@ -45,7 +45,7 @@ The two have different bytes, so their digests differ:
 
 ``` r
 
-digest_object(reference) == digest_object(current)
+dgstobj(reference) == dgstobj(current)
 #> [1] FALSE
 ```
 
@@ -53,7 +53,7 @@ But nothing moved distributionally, and the report says so:
 
 ``` r
 
-capsule_drift(reference, current)
+cpsdrft(reference, current)
 #> ── Capsule drift report ──────────────────────────────────────────
 #>   ✓ no drift detected
 #> 
@@ -81,7 +81,7 @@ moved <- current
 moved$size <- moved$size * 3
 moved$grade[1:200] <- "z"
 
-capsule_drift(reference, moved)
+cpsdrft(reference, moved)
 #> ── Capsule drift report ──────────────────────────────────────────
 #>   ✗ DRIFT DETECTED
 #> 
@@ -103,7 +103,7 @@ capsule_drift(reference, moved)
 ## Which test, and why
 
 For a numeric column,
-[`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md)
+[`cpsdrft()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md)
 runs a two-sample Kolmogorov-Smirnov test and computes the population
 stability index. The KS p-value drives the flag because it is
 *calibrated* – under no drift it is uniform, so a threshold means what
@@ -111,11 +111,11 @@ it says.
 
 The population stability index is reported alongside it as an effect
 size, but by default it is not allowed to raise the flag on its own
-until both samples reach `psi_min_n`. The reason is worth stating,
-because the index is widely used without it: PSI’s conventional bands
-(0.1 “investigate”, 0.25 “material shift”) are large-sample heuristics
-with no calibrated null distribution. On a few hundred rows, binning
-noise alone clears 0.25 routinely:
+until both samples reach `psiminn`. The reason is worth stating, because
+the index is widely used without it: PSI’s conventional bands (0.1
+“investigate”, 0.25 “material shift”) are large-sample heuristics with
+no calibrated null distribution. On a few hundred rows, binning noise
+alone clears 0.25 routinely:
 
 ``` r
 
@@ -123,7 +123,7 @@ a <- data.frame(v = rnorm(80))
 b <- data.frame(v = rnorm(80))
 
 # Two draws from the SAME distribution.
-capsule_drift(a, b)$columns[, c("p_value", "psi")]
+cpsdrft(a, b)$columns[, c("p_value", "psi")]
 #>     p_value       psi
 #> 1 0.5595597 0.1376677
 ```
@@ -132,7 +132,7 @@ The PSI is above the conventional threshold; the p-value correctly is
 not. Flagging on PSI here would manufacture drift.
 
 For a categorical column the test is
-[`drift_homogeneity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_homogeneity.md),
+[`drfthomog()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drfthomog.md),
 a two-sample chi-square on the 2-by-k table – *not* a goodness-of-fit
 test against the reference proportions. The distinction matters: the
 reference is itself a finite sample, and treating its proportions as
@@ -145,10 +145,10 @@ x <- sample(c("p", "q", "r"), 300, TRUE)
 y <- sample(c("p", "q", "r"), 300, TRUE)
 
 # The homogeneity test is the more conservative, and the correct one here.
-c(homogeneity = drift_homogeneity(x, y)[["p_value"]],
-  goodness_of_fit = drift_chisq(y, x)[["p_value"]])
-#>     homogeneity goodness_of_fit 
-#>    5.992249e-03    9.970333e-06
+c(homogeneity = drfthomog(x, y)[["p_value"]],
+  goooffit = drftchisq(y, x)[["p_value"]])
+#>  homogeneity     goooffit 
+#> 5.992249e-03 9.970333e-06
 ```
 
 ## Screening for figures that were not measured
@@ -160,7 +160,7 @@ re-scaled or invented typically do not follow it.
 ``` r
 
 # A quantity spanning several orders of magnitude.
-benford_test(10^runif(2000, 0, 6))
+benfordtst(10^runif(2000, 0, 6))
 #> ── Benford first-digit screen ────────────────────────────────────
 #>   ✓ consistent with Benford's law
 #> 
@@ -185,7 +185,7 @@ benford_test(10^runif(2000, 0, 6))
 ``` r
 
 # Leading digits drawn uniformly -- not what measurement looks like.
-benford_test(as.numeric(paste0(sample(1:9, 2000, TRUE), "000")))
+benfordtst(as.numeric(paste0(sample(1:9, 2000, TRUE), "000")))
 #> ── Benford first-digit screen ────────────────────────────────────
 #>   ! departs from Benford's law (screen only, not a verdict)
 #> 
@@ -216,14 +216,14 @@ small p-value is a reason to look.
 
 Drift is about distributions. Structure – names, types, bounds, allowed
 values – is
-[`validate_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_schema.md)’s
+[`valsch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/valsch.md)’s
 job, and the two complement each other.
-[`infer_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/infer_schema.md)
+[`infsch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/infsch.md)
 writes the schema for you from data you trust:
 
 ``` r
 
-schema <- infer_schema(reference)
+schema <- infsch(reference)
 schema
 #> ── Inferred schema ───────────────────────────────────────────────
 #>   columns         3
@@ -240,17 +240,33 @@ schema
 ``` r
 
 # It accepts the data it learned from.
-length(validate_schema(reference, list(schema = schema)))
+length(valsch(reference, list(schema = schema)))
 #> [1] 0
 
 # And catches the rescaled column, which is now outside its pinned range.
-issues <- validate_schema(moved, list(schema = schema))
-issues[["range_size"]]$message
-#> [1] "Column 'size' has 355 value(s) outside [0.1196138, 10.86161]"
+issues <- valsch(moved, list(schema = schema))
+issues[["rangesize"]]$message
+#> NULL
 ```
 
 Read what
-[`infer_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/infer_schema.md)
+[`infsch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/infsch.md)
 produces before committing it. It describes one extract, and cannot know
 that a category which happens not to occur is nonetheless legal, or that
 a range is a physical bound rather than an accident of this sample.
+
+## Two cycles of the same survey
+
+Drift checks fit a question a re-release raises: did the distribution of
+a published table change between cycles? On the bundled indicators, the
+2015/2018 and 2019/2022 estimates:
+
+``` r
+
+hi <- indiex("health")
+a <- hi$estimate[hi$period == "2015/2018"]
+b <- hi$estimate[hi$period == "2019/2022"]
+drftks(a[is.finite(a)], b[is.finite(b)])
+#>   statistic     p_value        neff 
+#>   0.0526087   0.4894839 251.4910537
+```

@@ -14,8 +14,8 @@ length of stay, one panel per measure.
 
 ``` r
 
-sf <- stock_flow(days = c(13500, 14600, 15100, 14200), people = c(300, 320, 310, 290),
-                 period = 2020:2023)
+sf <- stkflow(days = c(13500, 14600, 15100, 14200), people = c(300, 320, 310, 290),
+                 prd = 2020:2023)
 plot(sf)
 ```
 
@@ -26,7 +26,7 @@ Period-over-period change with its interval, coloured by verdict:
 ``` r
 
 y <- yoy(data.frame(year = 2018:2023, n = c(40, 44, 41, 55, 52, 61)), value = "n",
-         period = "year")
+         prd = "year")
 plot(y)
 ```
 
@@ -38,7 +38,7 @@ percentage, and its row says so.
 
 ``` r
 
-plot(yoy(data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)), value = "n", period = "year"))
+plot(yoy(data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)), value = "n", prd = "year"))
 ```
 
 ![](plotting-results_files/figure-html/yoy-small-1.png)
@@ -49,14 +49,14 @@ Rates with their intervals, and the change in a rate:
 
 d <- data.frame(division = rep(c("north", "east", "west"), 2), year = rep(2022:2023, each = 3),
                 stops = c(120, 90, 60, 150, 85, 70), residents = c(1e4, 8e3, 5e3, 1e4, 8e3, 5e3))
-plot(rate(d[d$year == 2023, ], count = "stops", population = "residents", by = "division"))
+plot(rtcalc(d[d$year == 2023, ], count = "stops", pop = "residents", by = "division"))
 ```
 
 ![](plotting-results_files/figure-html/rates-1.png)
 
 ``` r
 
-plot(rate_change(d, count = "stops", population = "residents", period = "year", by = "division"))
+plot(ratechg(d, count = "stops", pop = "residents", prd = "year", by = "division"))
 ```
 
 ![](plotting-results_files/figure-html/rates-2.png)
@@ -68,7 +68,7 @@ permutation null:
 
 set.seed(1)
 amounts <- round(exp(rnorm(400, 6, 1.4)))
-plot(benford_test(amounts))
+plot(benfordtst(amounts))
 ```
 
 ![](plotting-results_files/figure-html/checks-1.png)
@@ -80,7 +80,7 @@ shift <- function(z, s) {
   z$y <- z$y + s * z$x
   z
 }
-plot(capsule_power(dd, function(z) cor(z$x, z$y), inject = shift, treatment = "x",
+plot(cpspwr(dd, function(z) cor(z$x, z$y), inject = shift, trt = "x",
                    sizes = c(0, 0.2, 0.4, 0.6), n = 49, reps = 6, seed = 1))
 ```
 
@@ -90,27 +90,27 @@ plot(capsule_power(dd, function(z) cor(z$x, z$y), inject = shift, treatment = "x
 
 The concentration-response curve with the exposure marked, the burden it
 implies, and the whole
-[`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+[`vrfpol()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfpol.md)
 report on one page (curve, burden and the concentration curve of
 exposure over income):
 
 ``` r
 
-plot(crf_no2(25))
+plot(crfno2(25))
 ```
 
 ![](plotting-results_files/figure-html/pollution-1.png)
 
 ``` r
 
-plot(pollution_burden(25, 1, 0.008, 1e6, pollutant = "NO2"))
+plot(polbrdn(25, 1, 0.008, 1e6, poll = "NO2"))
 ```
 
 ![](plotting-results_files/figure-html/pollution-2.png)
 
 ``` r
 
-plot(verify_pollution("no2", demo = TRUE))
+plot(vrfpol("no2", demo = TRUE))
 ```
 
 ![](plotting-results_files/figure-html/report-1.png)
@@ -119,7 +119,7 @@ A plume on a grid, and the particle cloud of the random walk:
 
 ``` r
 
-plot(plume_field(q = 100, u = 5, h = 50, x = seq(100, 3000, by = 100),
+plot(plmfld(q = 100, u = 5, h = 50, x = seq(100, 3000, by = 100),
                  y = seq(-500, 500, by = 50)))
 ```
 
@@ -127,7 +127,7 @@ plot(plume_field(q = 100, u = 5, h = 50, x = seq(100, 3000, by = 100),
 
 ``` r
 
-plot(lagrangian_particles(500, 0, 0, u = 2, v = 0.5, kx = 1, ky = 1, dt = 1, n_steps = 60,
+plot(lagrprt(500, 0, 0, u = 2, v = 0.5, kx = 1, ky = 1, dt = 1, nsteps = 60,
                           grid = c(0, 200, -60, 100, 40, 32)))
 ```
 
@@ -138,8 +138,8 @@ chosen to fit, with its everyday equivalents under the bars:
 
 ``` r
 
-plot(compute_footprint(for (i in 1:20) sum(sqrt(seq_len(2e5))), location = "CA",
-                       cpu_power_w = 45, memory_gb = 8))
+plot(co2fp(for (i in 1:20) sum(sqrt(seq_len(2e5))), loc = "CA",
+                       cpupwrw = 45, memgb = 8))
 ```
 
 ![](plotting-results_files/figure-html/footprint-1.png)
@@ -167,7 +167,7 @@ Cases received and disposed, and the clearance rate:
 
 ``` r
 
-plot(case_flow(f$received, f$disposed, pending = f$pending, period = f$month))
+plot(caseflow(f$received, f$disposed, pend = f$pending, prd = f$month))
 ```
 
 ![](plotting-results_files/figure-html/case-flow-1.png)
@@ -177,7 +177,7 @@ How long cases stay open, from the published time-to-disposition bands:
 ``` r
 
 last <- nrow(d)
-plot(life_table(c(0, 10, 15, 18, Inf), unlist(d[last, 2:5]) * f$disposed[last]))
+plot(lifetbl(c(0, 10, 15, 18, Inf), unlist(d[last, 2:5]) * f$disposed[last]))
 ```
 
 ![](plotting-results_files/figure-html/life-table-1.png)
@@ -186,7 +186,7 @@ The mix of outcomes over the years:
 
 ``` r
 
-plot(disposition_mix(x[, -(1:2)], period = x$year))
+plot(dispmix(x[, -(1:2)], prd = x$year))
 ```
 
 ![](plotting-results_files/figure-html/disposition-mix-1.png)
@@ -196,7 +196,7 @@ the change split into rate and mix effects:
 
 ``` r
 
-plot(clearance_decomposition(g$disposed, g$received, g$offence_group, g$year))
+plot(clrdcmp(g$disposed, g$received, g$offence_group, g$year))
 ```
 
 ![](plotting-results_files/figure-html/simpson-1.png)
@@ -206,26 +206,114 @@ soon after:
 
 ``` r
 
-plot(crime_density(b$lon, b$lat, n_grid = 120))
+plot(crmdens(b$lon, b$lat, ngrid = 120))
 ```
 
 ![](plotting-results_files/figure-html/density-1.png)
 
 ``` r
 
-plot(knox_test(b$lon, b$lat, as.Date(b$occ_date), c(100, 200, 400), c(7, 14, 28),
+plot(knoxtst(b$lon, b$lat, as.Date(b$occ_date), c(100, 200, 400), c(7, 14, 28),
                nsim = 99, seed = 1))
 ```
 
 ![](plotting-results_files/figure-html/density-2.png)
 
+## First Nations, Metis and Inuit health
+
+Published Statistics Canada estimates bundled with the package
+([`?indiex`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indiex.md);
+see
+[`vignette("first-nations-metis-inuit-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/first-nations-metis-inuit-health.md)
+for the methods and the governance behind them). Each group is drawn on
+its own: the plots never pool First Nations, Metis and Inuit.
+
+``` r
+
+h <- indiex("health")
+adults <- h[h$age == "Total, 18 years and over", ]
+mh <- adults[adults$period == "2019/2022" & adults$indicator == "Perceived mental health, very good or excellent", ]
+```
+
+Each group against non-Indigenous adults, with intervals from the
+published ones:
+
+``` r
+
+plot(indgap(mh, "group", "estimate", "lower", "upper", qual = "quality"))
+```
+
+![](plotting-results_files/figure-html/indigenous-gap-1.png)
+
+Perceived mental health on its whole scale (2022 Indigenous Peoples
+Survey):
+
+``` r
+
+r <- indiex("mentalhealth")
+r <- r[r$region == "Canada", ]
+plot(ordcmp(r, "group", "rating", "estimate", "lower", "upper",
+                     lvls = c("Fair or poor", "Good", "Very good", "Excellent"),
+                     ref = "M\u00e9tis", qual = "quality"))
+```
+
+![](plotting-results_files/figure-html/indigenous-ordinal-1.png)
+
+Wellness beside distress, and the two as separate axes (2024 well-being
+table):
+
+``` r
+
+wb <- indiex("wellbeing")
+w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
+                      well = c("Always or often has a hopeful outlook",
+                                   "Sense of meaning and purpose rating of 8, 9 or 10"),
+                      distress = c("Rarely or never has a hopeful outlook",
+                                   "Life satisfaction rating between 0 and 5"),
+                      qual = "quality")
+plot(w)
+```
+
+![](plotting-results_files/figure-html/indigenous-wellness-1.png)
+
+``` r
+
+plot(dualcont(w, "Always or often has a hopeful outlook", "Life satisfaction rating between 0 and 5"))
+```
+
+![](plotting-results_files/figure-html/indigenous-wellness-2.png)
+
+Change between the two survey periods, wellness first:
+
+``` r
+
+hc <- healchg(adults[adults$indicator %in% c("Perceived mental health, very good or excellent",
+                                                    "Mood disorder"), ],
+                     "group", "indicator", "period", "estimate", "lower", "upper",
+                     from = "2015/2018", to = "2019/2022", qual = "quality",
+                     well = "Perceived mental health, very good or excellent")
+plot(hc)
+```
+
+![](plotting-results_files/figure-html/indigenous-change-1.png)
+
+The Truth and Reconciliation Commission’s Calls to Action, completed and
+projected:
+
+``` r
+
+plot(trcprog())
+```
+
+![](plotting-results_files/figure-html/indigenous-trc-1.png)
+
 ## Customising
 
 Every method takes `main`, `col` (or a `palette` name), `grid`, and
 `...` for the base-graphics call.
-[`bricklayer_plot_options()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
+[`plotopt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blpal.md)
 sets the session defaults;
-[`bricklayer_palette()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
+[`blpal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blpal.md)
 gives the colour-blind-safe sets the package uses.
 
 ``` r
@@ -237,7 +325,7 @@ plot(sf, what = "alos", col = "firebrick", main = "Length of stay (days)", lwd =
 
 ``` r
 
-old <- bricklayer_plot_options(palette = "grey", grid = FALSE)
+old <- plotopt(palette = "grey", grid = FALSE)
 plot(y, what = "value")
 ```
 
@@ -245,8 +333,8 @@ plot(y, what = "value")
 
 ``` r
 
-bricklayer_plot_options(palette = old$palette, grid = old$grid)
-bricklayer_palette("okabe", 4)
+plotopt(palette = old$palette, grid = old$grid)
+blpal("okabe", 4)
 #> [1] "#0072B2" "#D55E00" "#009E73" "#E69F00"
 ```
 
@@ -262,10 +350,10 @@ drawn <- plot(y)
 ``` r
 
 head(drawn, 3)
-#>   label pct_change     lower    upper verdict
-#> 1  2018         NA        NA       NA    <NA>
-#> 2  2019  10.000000 -29.95683 73.20735      up
-#> 3  2020  -6.818182 -40.61975 45.94265    down
+#>   label    pctchg     lower    upper verdict
+#> 1  2018        NA        NA       NA    <NA>
+#> 2  2019 10.000000 -29.95683 73.20735      up
+#> 3  2020 -6.818182 -40.61975 45.94265    down
 ```
 
 Results that are plain data frames have a plot function of their own:
@@ -274,14 +362,14 @@ expected counts per area.
 
 ``` r
 
-plot_lorenz(c(1, 1, 2, 3, 5, 8, 13, 21))
+plotlrnz(c(1, 1, 2, 3, 5, 8, 13, 21))
 ```
 
 ![](plotting-results_files/figure-html/helpers-1.png)
 
 ``` r
 
-plot_funnel(observed = c(4, 20, 50, 9, 31), expected = c(5, 22, 40, 20, 30),
+plotfnl(obs = c(4, 20, 50, 9, 31), expd = c(5, 22, 40, 20, 30),
             area = c("a", "b", "c", "d", "e"))
 ```
 

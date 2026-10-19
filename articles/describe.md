@@ -8,7 +8,7 @@ This vignette is the short version of looking.
 
 ## One command
 
-[`capsule_report()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_report.md)
+[`cpsrpt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrpt.md)
 runs the checks this package provides and puts the findings in one
 place, worst first.
 
@@ -24,8 +24,8 @@ reference <- data.frame(
 fresh <- reference
 fresh$score <- stats::runif(300, 0, 10)
 
-capsule_report(fresh, reference = reference,
-               schema = infer_schema(reference))
+cpsrpt(fresh, ref = reference,
+               schema = infsch(reference))
 #> ── Capsule report ────────────────────────────────────────────────
 #>   ✓ these checks found nothing
 #> 
@@ -52,8 +52,8 @@ broken$grade[1:100] <- "z"
 broken$dead <- NA_real_
 broken$flat <- 7
 
-report <- capsule_report(broken, reference = reference,
-                         schema = infer_schema(reference))
+report <- cpsrpt(broken, ref = reference,
+                         schema = infsch(reference))
 report
 #> ── Capsule report ────────────────────────────────────────────────
 #>   ✗ WARNINGS: something moved
@@ -90,13 +90,13 @@ missing, is trivially constant, and makes any covariance singular —
 reporting all three would bury the findings that matter under a single
 cause.
 
-[`report_markdown()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/report_markdown.md)
+[`rptmd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rptmd.md)
 writes the same assessment beside the capsule it describes, so it
 outlives the console.
 
 ``` r
 
-cat(head(report_markdown(report), 12), sep = "\n")
+cat(head(rptmd(report), 12), sep = "\n")
 #> # Capsule report
 #> 
 #> **Warnings** -- something moved.
@@ -112,7 +112,7 @@ cat(head(report_markdown(report), 12), sep = "\n")
 
 ## Per column
 
-[`profile_columns()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profile_columns.md)
+[`profcols()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profcols.md)
 is the underlying description. It reports the classical and robust
 centre side by side, which is the cheapest outlier detector there is:
 where a mean and a median disagree, the mean is not describing the
@@ -126,7 +126,7 @@ messy <- data.frame(
   skewed = c(stats::rexp(199), 500),
   zeros = c(rep(0, 50), stats::runif(150))
 )
-profile_columns(messy)[, c("column", "mean", "median", "sd", "mad")]
+profcols(messy)[, c("column", "mean", "median", "sd", "mad")]
 #>    column         mean     median         sd       mad
 #> 1   clean -0.109165485 -0.1445507  1.0340169 1.0397160
 #> 2 bimodal -0.006117203 -0.2014852  3.2205494 4.4949028
@@ -138,7 +138,7 @@ The `hist` column carries what no single number can:
 
 ``` r
 
-profile_columns(messy)[, c("column", "hist")]
+profcols(messy)[, c("column", "hist")]
 #>    column       hist
 #> 1   clean ▁▂▃▇█▇▇▃▃▁
 #> 2 bimodal ▂▆▆▅ ▂▄█▄▁
@@ -175,26 +175,26 @@ c(structural = sum(is.na(structural$a)), scattered = sum(is.na(scattered$a)))
 
 ``` r
 
-missingness_pattern(structural)
+misspat(structural)
 #> ── Missingness patterns ────────────────────────────────────────── 
 #>   columns, in pattern order: id, a, b
 #> 
-#>  pattern n_rows pct_rows n_missing columns
-#>      ...     14     70.0         0        
-#>      .XX      6     30.0         2    a, b
+#>  pattern n_rows pctrows n_missing columns
+#>      ...     14    70.0         0        
+#>      .XX      6    30.0         2    a, b
 #> ──────────────────────────────────────────────────────────────────
 ```
 
 ``` r
 
-missingness_pattern(scattered)
+misspat(scattered)
 #> ── Missingness patterns ────────────────────────────────────────── 
 #>   columns, in pattern order: id, a, b
 #> 
-#>  pattern n_rows pct_rows n_missing columns
-#>      ...      8     40.0         0        
-#>      ..X      6     30.0         1       b
-#>      .X.      6     30.0         1       a
+#>  pattern n_rows pctrows n_missing columns
+#>      ...      8    40.0         0        
+#>      ..X      6    30.0         1       b
+#>      .X.      6    30.0         1       a
 #> ──────────────────────────────────────────────────────────────────
 ```
 
@@ -203,16 +203,16 @@ both columns in the same rows — those rows are a different population,
 and often belong dropped or modelled separately. In the second the
 failures are independent.
 
-[`missing_runs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missing_runs.md)
+[`missruns()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missruns.md)
 answers a different question again — whether a gap is one outage or many
 failures:
 
 ``` r
 
-missing_runs(data.frame(
+missruns(data.frame(
   outage = c(1, 2, rep(NA, 8), 11:20),
   sporadic = c(1, NA, 3, NA, 5, NA, 7:20)
-), min_run = 2)
+), minrun = 2)
 #> ── Runs of consecutive missing values ──────────────────────────── 
 #>  column start end length
 #>  outage     3  10      8
@@ -220,7 +220,7 @@ missing_runs(data.frame(
 ```
 
 And
-[`missingness_map()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missingness_map.md)
+[`missgrid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missgrid.md)
 shows the whole table at once, with no graphics device, so it works over
 SSH and inside a plain-text summary:
 
@@ -232,7 +232,7 @@ gappy <- data.frame(
   random = ifelse(stats::runif(100) < 0.3, NA, 1),
   late = c(1:70, rep(NA, 30))
 )
-missingness_map(gappy, height = 10)
+missgrid(gappy, height = 10)
 #> ── Missingness map ───────────────────────────────────────────────
 #>          cerl
 #>          oaaa
@@ -263,7 +263,7 @@ Dropping incomplete rows is unbiased **only** if the data are missing
 completely at random. Otherwise the complete cases are a biased sample
 and every downstream estimate inherits the bias.
 
-[`mcar_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mcar_test.md)
+[`mcartst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mcartst.md)
 is Little’s test for that assumption. It needs maximum-likelihood
 estimates of the mean and covariance *under* missingness, which have no
 closed form, so it carries an EM estimator.
@@ -277,7 +277,7 @@ y <- x + stats::rnorm(n)
 # Missing on a coin flip: nothing to find.
 mcar <- data.frame(x = x, y = y)
 mcar$y[sample(n, 120)] <- NA
-mcar_test(mcar)
+mcartst(mcar)
 #> ── Little's MCAR test ────────────────────────────────────────────
 #>   ✓ no departure from MCAR detected
 #> 
@@ -300,7 +300,7 @@ mcar_test(mcar)
 # and that is detectable because the pattern's mean of x is shifted.
 mar <- data.frame(x = x, y = y)
 mar$y[x > 0.4] <- NA
-mcar_test(mar)
+mcartst(mar)
 #> ── Little's MCAR test ────────────────────────────────────────────
 #>   ✗ MCAR rejected: the missingness is related to the data
 #> 
@@ -328,28 +328,28 @@ jointly.
 
 ``` r
 
-people <- data.frame(height_cm = stats::rnorm(300, 170, 10))
-people$weight_kg <- people$height_cm * 0.5 + stats::rnorm(300, 0, 5)
+people <- data.frame(heightcm = stats::rnorm(300, 170, 10))
+people$weightkg <- people$heightcm * 0.5 + stats::rnorm(300, 0, 5)
 
 # Inside both marginal ranges, outside the cloud.
-people[1, ] <- list(height_cm = 150, weight_kg = 140)
+people[1, ] <- list(heightcm = 150, weightkg = 140)
 
-range(people$height_cm)
+range(people$heightcm)
 #> [1] 146.2977 196.0117
-range(people$weight_kg)
+range(people$weightkg)
 #> [1]  61.95293 140.00000
 ```
 
 ``` r
 
-head(mahalanobis_outliers(people), 3)
+head(mahaoutl(people), 3)
 #> ── Mahalanobis outliers (robust) ───────────────────────────────── 
 #>   ! 1 of 3 rows beyond alpha = 0.001
 #> 
-#>  row distance p_value log_p_value outlier
-#>    1    10.80  <2e-16  -58.355041    TRUE
-#>   59     3.14 0.00725   -4.926492   FALSE
-#>  203     2.91  0.0146   -4.227502   FALSE
+#>  row distance p_value  logpvalue outlier
+#>    1    10.80  <2e-16 -58.355041    TRUE
+#>   59     3.14 0.00725  -4.926492   FALSE
+#>  203     2.91  0.0146  -4.227502   FALSE
 #> ──────────────────────────────────────────────────────────────────
 ```
 
@@ -361,10 +361,10 @@ is meant to find.
 ``` r
 
 many <- people
-many[1:8, ] <- list(height_cm = rep(150, 8), weight_kg = rep(140, 8))
+many[1:8, ] <- list(heightcm = rep(150, 8), weightkg = rep(140, 8))
 
-c(robust = mahalanobis_outliers(many, robust = TRUE)$distance[1],
-  classical = mahalanobis_outliers(many, robust = FALSE)$distance[1])
+c(robust = mahaoutl(many, robust = TRUE)$distance[1],
+  classical = mahaoutl(many, robust = FALSE)$distance[1])
 #>    robust classical 
 #>  5.629601  5.510207
 ```
@@ -376,7 +376,7 @@ Figures that were rounded, capped, rescaled or invented usually do not.
 
 ``` r
 
-benford_test(10^stats::runif(2000, 0, 6))
+benfordtst(10^stats::runif(2000, 0, 6))
 #> ── Benford first-digit screen ────────────────────────────────────
 #>   ✓ consistent with Benford's law
 #> 
@@ -400,7 +400,7 @@ benford_test(10^stats::runif(2000, 0, 6))
 
 ``` r
 
-benford_test(as.numeric(paste0(sample(1:9, 2000, TRUE), "000")))
+benfordtst(as.numeric(paste0(sample(1:9, 2000, TRUE), "000")))
 #> ── Benford first-digit screen ────────────────────────────────────
 #>   ! departs from Benford's law (screen only, not a verdict)
 #> 
@@ -432,7 +432,7 @@ Every check here has a blind spot, and a clean report means only that
 these particular checks found nothing:
 
 - the drift tests have little power on small samples;
-- [`mcar_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mcar_test.md)
+- [`mcartst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mcartst.md)
   assumes multivariate normality, so on markedly non-normal columns a
   rejection may be telling you about the distribution rather than the
   missingness;
@@ -442,5 +442,38 @@ these particular checks found nothing:
 None of them can tell you the data means what you think it means. That
 still requires reading the documentation for the source, which is the
 part
-[`load_provenance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/load_provenance.md)
+[`loadprov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md)
 and the manifest exist to keep attached.
+
+## Describing an Indigenous health table
+
+The description functions take any data frame. On the bundled Canadian
+Community Health Survey indicators by Aboriginal identity:
+
+``` r
+
+hi <- indiex("health")
+profcols(hi[, c("estimate", "lower", "upper")])
+#> ── Column profile ──────────────────────────────────────────────── 
+#>    column    type     n n_missing pct_missing n_distinct nzero  nneg  ninf
+#>  estimate numeric  1080        74       6.852        544     0     0     0
+#>     lower numeric  1080        74       6.852        514     0     0     0
+#>     upper numeric  1080        74       6.852        576     0     0     0
+#>   mean    sd median   mad   min   max skewness n_outliers top   q25   q50   q75
+#>  31.23 23.37   26.2  20.9   0.2  95.5   0.9636         36   –  13.5  26.2  42.8
+#>  27.61  22.6  22.05 18.61   0.1  95.1    1.153         59   –  10.5 22.05 36.98
+#>   35.3 24.15   30.1 23.28   0.3  97.9   0.7558          1   – 17.12  30.1 48.88
+#>        hist
+#>  ███▆▄▃▂▂▂▂
+#>  ██▇▅▃▂▂▂▂▁
+#>  ▇▇█▇▅▃▄▂▂▂
+#> ──────────────────────────────────────────────────────────────────
+table(hi$quality, useNA = "ifany")
+#> 
+#>  ..   E   F  ok   x 
+#>  40  72   7 934  27
+```
+
+The `quality` column carries Statistics Canada’s flags: `E` (use with
+caution), `F` (too unreliable to publish), `x` (suppressed) and `..`
+(not available).

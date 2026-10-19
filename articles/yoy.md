@@ -16,7 +16,7 @@ and by group. A realistic shape:
 seg <- data.frame(
   EndFiscalYear = rep(2019:2023, each = 2),
   Gender = rep(c("Female", "Male"), 5),
-  Number_Of_Placements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
+  NumberOfPlacements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
 )
 ```
 
@@ -26,26 +26,26 @@ That affects colour and the verdict column, never the arithmetic.
 ``` r
 
 y <- yoy(seg,
-  value = Number_Of_Placements,
-  period = EndFiscalYear,
+  value = NumberOfPlacements,
+  prd = EndFiscalYear,
   by = "Gender",
-  direction = "lower_is_better"
+  dir = "lower"
 )
 y
-#> Gender  EndFiscalYear  Number_Of_Placements  previous  change  change %  interval     
-#> ──────  ─────────────  ────────────────────  ────────  ──────  ────────  ─────────────
-#> Female  2019           31                    —         —         —       —            
+#> Gender  EndFiscalYear  NumberOfPlacements  previous  change  change %  interval     
+#> ──────  ─────────────  ──────────────────  ────────  ──────  ────────  ─────────────
+#> Female  2019           31                  —         —         —       —            
 #>     ↳ note: no comparison period
-#> Female  2020           28                    31        -3      ▼ -9.7%   [-48%, +56%] 
-#> Female  2021           12                    28        -16     ▼ -57.1%  [-80%, -13%] 
-#> Female  2022           19                    12        7       ▲ +58.3%  [-27%, +258%]
-#> Female  2023           24                    19        5       ▲ +26.3%  [-34%, +144%]
-#> Male    2019           402                   —         —         —       —            
+#> Female  2020           28                  31        -3      ▼ -9.7%   [-48%, +56%] 
+#> Female  2021           12                  28        -16     ▼ -57.1%  [-80%, -13%] 
+#> Female  2022           19                  12        7       ▲ +58.3%  [-27%, +258%]
+#> Female  2023           24                  19        5       ▲ +26.3%  [-34%, +144%]
+#> Male    2019           402                 —         —         —       —            
 #>     ↳ note: no comparison period
-#> Male    2020           377                   402       -25     ▼ -6.2%   [-19%, +8%]  
-#> Male    2021           190                   377       -187    ▼ -49.6%  [-58%, -40%] 
-#> Male    2022           268                   190       78      ▲ +41.1%  [+17%, +71%] 
-#> Male    2023           331                   268       63      ▲ +23.5%  [+5%, +46%]  
+#> Male    2020           377                 402       -25     ▼ -6.2%   [-19%, +8%]  
+#> Male    2021           190                 377       -187    ▼ -49.6%  [-58%, -40%] 
+#> Male    2022           268                 190       78      ▲ +41.1%  [+17%, +71%] 
+#> Male    2023           331                 268       63      ▲ +23.5%  [+5%, +46%]  
 #> 
 #> lag 1 period · units: count · 95% exact rate-ratio interval · lower is better
 ```
@@ -73,7 +73,7 @@ value cannot do that:
 ``` r
 
 gap <- data.frame(year = c(2019, 2020, 2022, 2023), n = c(100, 120, 140, 150))
-yoy(gap, value = n, period = year)
+yoy(gap, value = n, prd = year)
 #> year  n    previous  change  change %  interval    
 #> ────  ───  ────────  ──────  ────────  ────────────
 #> 2019  100  —         —         —       —           
@@ -100,21 +100,21 @@ percent is still the right number; what changes is its interval:
 ``` r
 
 tiny <- data.frame(year = 2019:2021, n = c(2, 20, 25))
-as.data.frame(yoy(tiny, value = n, period = year))[, c("year", "pct_change",
-                                                     "pct_lower", "pct_upper")]
-#>   year pct_change pct_lower pct_upper
-#> 1 2019         NA        NA        NA
-#> 2 2020        900  142.9205 8724.1205
-#> 3 2021         25  -33.3407  137.3319
+as.data.frame(yoy(tiny, value = n, prd = year))[, c("year", "pctchg",
+                                                     "pctlo", "pctup")]
+#>   year pctchg    pctlo     pctup
+#> 1 2019     NA       NA        NA
+#> 2 2020    900 142.9205 8724.1205
+#> 3 2021     25 -33.3407  137.3319
 ```
 
 Every non-zero base gets its percent and exact interval, however small
-the base or the change. Set `min_base` to add a note to small-base rows;
+the base or the change. Set `minbase` to add a note to small-base rows;
 nothing is withheld either way:
 
 ``` r
 
-as.data.frame(yoy(tiny, value = n, period = year, min_base = 20))$flag
+as.data.frame(yoy(tiny, value = n, prd = year, minbase = 20))$flag
 #> [1] "no comparison period"  "small base (below 20)" NA
 ```
 
@@ -126,7 +126,7 @@ If a rate moves from 4% to 5% that is one percentage point. Calling it
 ``` r
 
 rate <- data.frame(year = 2019:2023, share = c(4.1, 4.6, 5.2, 5.0, 5.4))
-yoy(rate, value = share, period = year, units = "percent")
+yoy(rate, value = share, prd = year, units = "percent")
 #> year  share  previous  change  points  
 #> ────  ─────  ────────  ──────  ────────
 #> 2019  4.1    —         —         —     
@@ -151,7 +151,7 @@ December:
 ``` r
 
 m <- stats::ts(c(10:21, 20:31), start = c(2021, 1), frequency = 12)
-head(as.data.frame(yoy(m, min_base = 0))[12:14, c("period", "value",
+head(as.data.frame(yoy(m, minbase = 0))[12:14, c("period", "value",
                                                   "previous", "change")], 3)
 #>      period value previous change
 #> 12 2021.917    21       NA     NA
@@ -163,14 +163,14 @@ head(as.data.frame(yoy(m, min_base = 0))[12:14, c("period", "value",
 
 ``` r
 
-yoy_summary(y)
-#>   Gender from   to first last total_pct  cagr_pct periods up down flat
+yoysmry(y)
+#>   Gender from   to first last  totalpct   cagrpct periods up down flat
 #> 1 Female 2019 2023    31   24 -22.58065 -6.197938       5  2    2    0
 #> 2   Male 2019 2023   402  331 -17.66169 -4.742214       5  2    2    0
 ```
 
-`cagr_pct` is the compound rate per period: applying it across the span
-returns `total_pct` exactly.
+`cagrpct` is the compound rate per period: applying it across the span
+returns `totalpct` exactly.
 
 ## Rates, when the denominator moves too
 
@@ -186,7 +186,7 @@ stops <- data.frame(
   stops = c(412, 77, 3),
   residents = c(120000, 41000, 9500))
 
-rate(stops, stops, residents, by = "division", per = "100k")
+rtcalc(stops, stops, residents, by = "division", per = "100k")
 #> ── Rate per 100,000, 95% exact Poisson interval ────────────────── 
 #>  division count population      rate      lower     upper flag
 #>      East     3       9500  31.57895   6.512338  92.28708 <NA>
@@ -207,7 +207,7 @@ same events, not a population, so shares over a complete grouping sum to
 
 ``` r
 
-share(stops, stops, by = "division")
+shrs(stops, stops, by = "division")
 #> ── Share of 492, 95% Wilson interval ───────────────────────────── 
 #>  division count total      share      lower     upper
 #>      East     3   492  0.6097561  0.2075843  1.777215
@@ -230,29 +230,22 @@ d <- data.frame(
   stops = c(400, 70, 430, 66, 455, 61),
   residents = c(120000, 41000, 122000, 41500, 125000, 42000))
 
-rate_change(d, stops, residents, year, by = "division", per = "100k")
+ratechg(d, stops, residents, year, by = "division", per = "100k")
 #> ── Change in rate per 100,000, lag 1, 95% exact conditional interval  
-#>  division year count population     rate previous_rate previous_count
-#>     North 2021   400     120000 333.3333            NA             NA
-#>     North 2022   430     122000 352.4590      333.3333            400
-#>     North 2023   455     125000 364.0000      352.4590            430
-#>     South 2021    70      41000 170.7317            NA             NA
-#>     South 2022    66      41500 159.0361      170.7317             70
-#>     South 2023    61      42000 145.2381      159.0361             66
-#>  previous_population rate_ratio pct_change  pct_lower pct_upper
-#>                   NA         NA         NA         NA        NA
-#>               120000  1.0573770   5.737705  -7.937165  21.46533
-#>               122000  1.0327442   3.274419  -9.679876  18.10199
-#>                   NA         NA         NA         NA        NA
-#>                41000  0.9314974  -6.850258 -34.473784  32.29053
-#>                41500  0.9132395  -8.676046 -36.596300  31.35600
-#>                  flag
-#>  no comparison period
-#>                  <NA>
-#>                  <NA>
-#>  no comparison period
-#>                  <NA>
-#>                  <NA>
+#>  division year count population     rate  prerate precnt prepop rateratio
+#>     North 2021   400     120000 333.3333       NA     NA     NA        NA
+#>     North 2022   430     122000 352.4590 333.3333    400 120000 1.0573770
+#>     North 2023   455     125000 364.0000 352.4590    430 122000 1.0327442
+#>     South 2021    70      41000 170.7317       NA     NA     NA        NA
+#>     South 2022    66      41500 159.0361 170.7317     70  41000 0.9314974
+#>     South 2023    61      42000 145.2381 159.0361     66  41500 0.9132395
+#>     pctchg      pctlo    pctup                 flag
+#>         NA         NA       NA no comparison period
+#>   5.737705  -7.937165 21.46533                 <NA>
+#>   3.274419  -9.679876 18.10199                 <NA>
+#>         NA         NA       NA no comparison period
+#>  -6.850258 -34.473784 32.29053                 <NA>
+#>  -8.676046 -36.596300 31.35600                 <NA>
 #> ──────────────────────────────────────────────────────────────────
 ```
 
@@ -273,15 +266,15 @@ The same object writes to six formats. The format follows the file name.
 dir <- tempdir()
 for (ext in c("csv", "tsv", "json", "md", "html", "pdf")) {
   f <- file.path(dir, paste0("placements.", ext))
-  yoy_write(y, f, title = "Placements by gender")
+  yoywr(y, f, title = "Placements by gender")
   cat(sprintf("%-5s %6d bytes\n", ext, file.size(f)))
 }
-#> csv      966 bytes
-#> tsv      966 bytes
-#> json    3373 bytes
-#> md      1601 bytes
-#> html    6772 bytes
-#> pdf     5095 bytes
+#> csv      952 bytes
+#> tsv      952 bytes
+#> json    3233 bytes
+#> md      1575 bytes
+#> html    6769 bytes
+#> pdf     5092 bytes
 ```
 
 The delimited writers lead with the settings as comments, and carry the
@@ -290,9 +283,9 @@ with it:
 
 ``` r
 
-cat(yoy_csv(y, NULL, digits = 1L))
-#> # value: Number_Of_Placements; period: EndFiscalYear; by: Gender; lag: 1; units: count; interval: 95% exact rate ratio; direction: lower is better
-#> Gender,EndFiscalYear,value,previous,change,pct_change,flag,pct_lower,pct_upper,verdict
+cat(yoycsv(y, NULL, digits = 1L))
+#> # value: NumberOfPlacements; period: EndFiscalYear; by: Gender; lag: 1; units: count; interval: 95% exact rate ratio; direction: lower is better
+#> Gender,EndFiscalYear,value,previous,change,pctchg,flag,pctlo,pctup,verdict
 #> Female,2019,31,,,,no comparison period,,,
 #> Female,2020,28,31,-3,-9.7,,-47.8,55.6,better
 #> Female,2021,12,28,-16,-57.1,,-80.1,-13,better
@@ -309,7 +302,7 @@ Markdown, for a report:
 
 ``` r
 
-cat(yoy_markdown(yoy(gap, value = n, period = year), NULL))
+cat(yoymd(yoy(gap, value = n, prd = year), NULL))
 #> | year |   n | previous | change | change % |     interval | note                 |
 #> | ---- | --: | -------: | -----: | -------: | -----------: | -------------------- |
 #> | 2019 | 100 |        — |      — |        — |              | no comparison period |
@@ -329,9 +322,37 @@ truncating, so neither needs a package beyond base R.
 
 ``` r
 
-yoy_palettes()
+yoypals()
 #> [1] "diverging" "safe"      "mono"
 ```
 
 `"safe"` is a blue/orange pair that survives both common forms of colour
 blindness; `"mono"` emits no colour at all, for print.
+
+## Indigenous examples
+
+Change between survey cycles in percentage points, here the share of
+adults rating their mental health very good or excellent, 2015/2018 to
+2019/2022, from the bundled health indicators:
+
+``` r
+
+hi <- indiex("health")
+m <- hi[hi$age == "Total, 18 years and over" &
+          hi$indicator == "Perceived mental health, very good or excellent", ]
+# yoy() steps through consecutive periods: number the two survey cycles 1 and 2
+m$cycle <- match(m$period, c("2015/2018", "2019/2022"))
+for (g in unique(m$group)) {
+  s <- m[m$group == g, ]
+  print(as.data.frame(yoy(s, value = estimate, prd = cycle, units = "percent"))[
+    2, c("value", "previous", "ppchg", "verdict")])
+}
+#>   value previous ppchg verdict
+#> 2  45.8     59.8   -14    down
+#>   value previous ppchg verdict
+#> 2  52.8       61  -8.2    down
+#>   value previous ppchg verdict
+#> 2  47.8     49.1  -1.3    down
+#>   value previous ppchg verdict
+#> 2  61.5     70.6  -9.1    down
+```

@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,9 +93,9 @@ statistic you can write as a function of the data.</p>
 <div class="section level2">
 <h2 id="falsification-controls">Falsification controls<a class="anchor" aria-label="anchor" href="#falsification-controls"></a>
 </h2>
-<p><code><a href="../reference/capsule_falsify.html">capsule_falsify()</a></code> takes the data, a statistic (a
-function of the data frame) and the name of the treatment column, and
-runs the controls that a real association must pass:</p>
+<p><code><a href="../reference/cpsfals.html">cpsfals()</a></code> takes the data, a statistic (a function of the
+data frame) and the name of the treatment column, and runs the controls
+that a real association must pass:</p>
 <ul>
 <li>
 <strong>permutation</strong>: shuffle the treatment; the statistic
@@ -112,7 +112,7 @@ should stay stable.</li>
 <span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">d</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fl">0.8</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">real</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/capsule_falsify.html">capsule_falsify</a></span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">x</span>, <span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>, treatment <span class="op">=</span> <span class="st">"x"</span>, n <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">real</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpsfals.html">cpsfals</a></span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">x</span>, <span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>, trt <span class="op">=</span> <span class="st">"x"</span>, n <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">real</span><span class="op">$</span><span class="va">controls</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"control"</span>, <span class="st">"passed"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;               control passed</span></span>
 <span><span class="co">#&gt; 1         permutation   TRUE</span></span>
@@ -124,7 +124,7 @@ A constant “0.5” passes the subset check (it is perfectly stable) and
 fails the permutation check (it does not collapse when the treatment is
 destroyed):</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fake</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/capsule_falsify.html">capsule_falsify</a></span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fl">0.5</span>, treatment <span class="op">=</span> <span class="st">"x"</span>, n <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">fake</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpsfals.html">cpsfals</a></span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fl">0.5</span>, trt <span class="op">=</span> <span class="st">"x"</span>, n <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">fake</span><span class="op">$</span><span class="va">controls</span><span class="op">[</span><span class="va">fake</span><span class="op">$</span><span class="va">controls</span><span class="op">$</span><span class="va">control</span> <span class="op">==</span> <span class="st">"permutation"</span>, <span class="st">"passed"</span><span class="op">]</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
 <p>This is the point of running controls rather than looking at a
@@ -135,9 +135,9 @@ permutation is not.</p>
 <h2 id="power-curves">Power curves<a class="anchor" aria-label="anchor" href="#power-curves"></a>
 </h2>
 <p>A null result is only informative if the procedure could have found
-something. <code><a href="../reference/capsule_power.html">capsule_power()</a></code> injects an effect of known size
-into the data, re-runs the statistic with its permutation test, and
-reports the detection rate at each size:</p>
+something. <code><a href="../reference/cpspwr.html">cpspwr()</a></code> injects an effect of known size into
+the data, re-runs the statistic with its permutation test, and reports
+the detection rate at each size:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span><span class="op">)</span><span class="op">)</span></span>
@@ -146,8 +146,8 @@ reports the detection rate at each size:</p>
 <span>  <span class="va">z</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">pw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/capsule_power.html">capsule_power</a></span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">x</span>, <span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>, <span class="va">inj</span>,</span>
-<span>                    sizes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.3</span>, <span class="fl">0.6</span><span class="op">)</span>, treatment <span class="op">=</span> <span class="st">"x"</span>,</span>
+<span><span class="va">pw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpspwr.html">cpspwr</a></span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">x</span>, <span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>, <span class="va">inj</span>,</span>
+<span>                    sizes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.3</span>, <span class="fl">0.6</span><span class="op">)</span>, trt <span class="op">=</span> <span class="st">"x"</span>,</span>
 <span>                    n <span class="op">=</span> <span class="fl">99</span>, reps <span class="op">=</span> <span class="fl">5</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
 <span><span class="va">pw</span><span class="op">$</span><span class="va">curve</span></span>
 <span><span class="co">#&gt;   size detected reps rate</span></span>
@@ -170,9 +170,9 @@ detected with this data?”</p>
 <h2 id="families-of-statistics-the-multiple-testing-correction">Families of statistics: the multiple-testing correction<a class="anchor" aria-label="anchor" href="#families-of-statistics-the-multiple-testing-correction"></a>
 </h2>
 <p>When several statistics are examined, the smallest p-value among them
-is not the finding. <code><a href="../reference/falsify_family.html">falsify_family()</a></code> applies a
-multiple-testing correction across a family of falsification results, so
-one real association is still reported as real and the noise is not:</p>
+is not the finding. <code><a href="../reference/falsfam.html">falsfam()</a></code> applies a multiple-testing
+correction across a family of falsification results, so one real
+association is still reported as real and the noise is not:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">150</span><span class="op">)</span><span class="op">)</span></span>
@@ -180,22 +180,22 @@ one real association is still reported as real and the noise is not:</p>
 <span><span class="va">d</span><span class="op">$</span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">150</span><span class="op">)</span></span>
 <span><span class="va">d</span><span class="op">$</span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">150</span><span class="op">)</span></span>
 <span><span class="va">fam</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  real    <span class="op">=</span> <span class="fu"><a href="../reference/capsule_falsify.html">capsule_falsify</a></span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">x</span>, <span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>, treatment <span class="op">=</span> <span class="st">"x"</span>, n <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
-<span>  noise_a <span class="op">=</span> <span class="fu"><a href="../reference/capsule_falsify.html">capsule_falsify</a></span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">a</span>, <span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>, treatment <span class="op">=</span> <span class="st">"a"</span>, n <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  noise_b <span class="op">=</span> <span class="fu"><a href="../reference/capsule_falsify.html">capsule_falsify</a></span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">b</span>, <span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>, treatment <span class="op">=</span> <span class="st">"b"</span>, n <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
+<span>  real    <span class="op">=</span> <span class="fu"><a href="../reference/cpsfals.html">cpsfals</a></span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">x</span>, <span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>, trt <span class="op">=</span> <span class="st">"x"</span>, n <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  noisea <span class="op">=</span> <span class="fu"><a href="../reference/cpsfals.html">cpsfals</a></span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">a</span>, <span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>, trt <span class="op">=</span> <span class="st">"a"</span>, n <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  noiseb <span class="op">=</span> <span class="fu"><a href="../reference/cpsfals.html">cpsfals</a></span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">b</span>, <span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>, trt <span class="op">=</span> <span class="st">"b"</span>, n <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/falsify_family.html">falsify_family</a></span><span class="op">(</span><span class="va">fam</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/falsfam.html">falsfam</a></span><span class="op">(</span><span class="va">fam</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Family of 3, corrected by holm at alpha 0.05 ──────────────────</span></span>
 <span><span class="co">#&gt;   real                   p 0.005      adjusted 0.015      survives</span></span>
-<span><span class="co">#&gt;   noise_a                p 0.955      adjusted 1          </span></span>
-<span><span class="co">#&gt;   noise_b                p 0.995      adjusted 1          </span></span>
+<span><span class="co">#&gt;   noisea                 p 0.955      adjusted 1          </span></span>
+<span><span class="co">#&gt;   noiseb                 p 0.995      adjusted 1          </span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   at the permutation floor (more permutations would be needed to say more): real</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>It also accepts bare p-values, which is what stops the smallest of
 several from being read as the finding:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/falsify_family.html">falsify_family</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fl">0.01</span>, b <span class="op">=</span> <span class="fl">0.04</span>, c <span class="op">=</span> <span class="fl">0.2</span>, d <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">results</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/falsfam.html">falsfam</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fl">0.01</span>, b <span class="op">=</span> <span class="fl">0.04</span>, c <span class="op">=</span> <span class="fl">0.2</span>, d <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">results</span></span>
 <span><span class="co">#&gt;   name    p adjusted survives</span></span>
 <span><span class="co">#&gt; 1    a 0.01     0.04     TRUE</span></span>
 <span><span class="co">#&gt; 2    b 0.04     0.12    FALSE</span></span>
@@ -209,29 +209,117 @@ several from being read as the finding:</p>
 is the minimum strength of association an unmeasured confounder would
 need with both treatment and outcome to explain the result away:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/evalue_rr.html">evalue_rr</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>                       <span class="co"># needs a confounder associated by 3.41 with both</span></span>
-<span><span class="co">#&gt; evalue_point </span></span>
-<span><span class="co">#&gt;     3.414214</span></span>
-<span><span class="fu"><a href="../reference/evalue_rr.html">evalue_rr</a></span><span class="op">(</span><span class="fl">0.5</span><span class="op">)</span>                     <span class="co"># a protective effect is inverted; same answer</span></span>
-<span><span class="co">#&gt; evalue_point </span></span>
-<span><span class="co">#&gt;     3.414214</span></span>
-<span><span class="fu"><a href="../reference/evalue_rr.html">evalue_rr</a></span><span class="op">(</span><span class="fl">2</span>, lo <span class="op">=</span> <span class="fl">0.9</span>, hi <span class="op">=</span> <span class="fl">4.4</span><span class="op">)</span>   <span class="co"># an interval that includes the null needs nothing</span></span>
-<span><span class="co">#&gt; evalue_point evalue_limit </span></span>
-<span><span class="co">#&gt;     3.414214     1.000000</span></span>
-<span><span class="fu"><a href="../reference/evalue_rr.html">evalue_rr</a></span><span class="op">(</span><span class="fl">3</span>, lo <span class="op">=</span> <span class="fl">2.1</span>, hi <span class="op">=</span> <span class="fl">4.3</span><span class="op">)</span>   <span class="co"># a strong result with a limit well above the null</span></span>
-<span><span class="co">#&gt; evalue_point evalue_limit </span></span>
-<span><span class="co">#&gt;     5.449490     3.619868</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/evlrr.html">evlrr</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span>                       <span class="co"># needs a confounder associated by 3.41 with both</span></span>
+<span><span class="co">#&gt; evlpoint </span></span>
+<span><span class="co">#&gt; 3.414214</span></span>
+<span><span class="fu"><a href="../reference/evlrr.html">evlrr</a></span><span class="op">(</span><span class="fl">0.5</span><span class="op">)</span>                     <span class="co"># a protective effect is inverted; same answer</span></span>
+<span><span class="co">#&gt; evlpoint </span></span>
+<span><span class="co">#&gt; 3.414214</span></span>
+<span><span class="fu"><a href="../reference/evlrr.html">evlrr</a></span><span class="op">(</span><span class="fl">2</span>, lo <span class="op">=</span> <span class="fl">0.9</span>, hi <span class="op">=</span> <span class="fl">4.4</span><span class="op">)</span>   <span class="co"># an interval that includes the null needs nothing</span></span>
+<span><span class="co">#&gt; evlpoint evllimit </span></span>
+<span><span class="co">#&gt; 3.414214 1.000000</span></span>
+<span><span class="fu"><a href="../reference/evlrr.html">evlrr</a></span><span class="op">(</span><span class="fl">3</span>, lo <span class="op">=</span> <span class="fl">2.1</span>, hi <span class="op">=</span> <span class="fl">4.3</span><span class="op">)</span>   <span class="co"># a strong result with a limit well above the null</span></span>
+<span><span class="co">#&gt; evlpoint evllimit </span></span>
+<span><span class="co">#&gt; 5.449490 3.619868</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="where-this-fits-in-a-capsule">Where this fits in a capsule<a class="anchor" aria-label="anchor" href="#where-this-fits-in-a-capsule"></a>
 </h2>
-<p><code><a href="../reference/capsule_report.html">capsule_report()</a></code> runs the falsification controls
-alongside the schema, rule and drift checks when a statistic is
-supplied, so the capsule records not only that the number was computed
-from these bytes but that it survived its controls. A pre-registered
-hypothesis (<code><a href="../reference/prereg_declare.html">prereg_declare()</a></code>, <code><a href="../reference/prereg_declare.html">prereg_check()</a></code>)
-pins what was going to be tested before the data were seen, which is the
-other half of keeping a finding honest.</p>
+<p><code><a href="../reference/cpsrpt.html">cpsrpt()</a></code> runs the falsification controls alongside the
+schema, rule and drift checks when a statistic is supplied, so the
+capsule records not only that the number was computed from these bytes
+but that it survived its controls. A pre-registered hypothesis
+(<code><a href="../reference/prrgdecl.html">prrgdecl()</a></code>, <code><a href="../reference/prrgdecl.html">prrgchk()</a></code>) pins what was going to
+be tested before the data were seen, which is the other half of keeping
+a finding honest.</p>
+</div>
+<div class="section level2">
+<h2 id="several-gaps-one-family-of-tests">Several gaps, one family of tests<a class="anchor" aria-label="anchor" href="#several-gaps-one-family-of-tests"></a>
+</h2>
+<p>A report on Indigenous health usually tests many indicators at once.
+<code><a href="../reference/falsfam.html">falsfam()</a></code> adjusts the family; here the differences from
+non-Indigenous adults in 2019/2022 for First Nations adults, with z
+statistics from the published 95 percent intervals:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">hi</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"health"</span><span class="op">)</span></span>
+<span><span class="va">s</span> <span class="op">&lt;-</span> <span class="va">hi</span><span class="op">[</span><span class="va">hi</span><span class="op">$</span><span class="va">period</span> <span class="op">==</span> <span class="st">"2019/2022"</span> <span class="op">&amp;</span> <span class="va">hi</span><span class="op">$</span><span class="va">age</span> <span class="op">==</span> <span class="st">"Total, 18 years and over"</span> <span class="op">&amp;</span></span>
+<span>          <span class="va">hi</span><span class="op">$</span><span class="va">quality</span> <span class="op">==</span> <span class="st">"ok"</span>, <span class="op">]</span></span>
+<span><span class="va">fn</span> <span class="op">&lt;-</span> <span class="va">s</span><span class="op">[</span><span class="va">s</span><span class="op">$</span><span class="va">group</span> <span class="op">==</span> <span class="st">"First Nations"</span>, <span class="op">]</span></span>
+<span><span class="va">ni</span> <span class="op">&lt;-</span> <span class="va">s</span><span class="op">[</span><span class="va">s</span><span class="op">$</span><span class="va">group</span> <span class="op">==</span> <span class="st">"Non-Indigenous"</span>, <span class="op">]</span></span>
+<span><span class="va">both</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">fn</span>, <span class="va">ni</span>, by <span class="op">=</span> <span class="st">"indicator"</span>, suffixes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fn"</span>, <span class="st">"ni"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">se</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">l</span>, <span class="va">u</span><span class="op">)</span> <span class="op">(</span><span class="va">u</span> <span class="op">-</span> <span class="va">l</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="fl">1.96</span><span class="op">)</span></span>
+<span><span class="va">z</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">both</span><span class="op">$</span><span class="va">estimatefn</span> <span class="op">-</span> <span class="va">both</span><span class="op">$</span><span class="va">estimateni</span><span class="op">)</span> <span class="op">/</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu">se</span><span class="op">(</span><span class="va">both</span><span class="op">$</span><span class="va">lowerfn</span>, <span class="va">both</span><span class="op">$</span><span class="va">upperfn</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span> <span class="op">+</span> <span class="fu">se</span><span class="op">(</span><span class="va">both</span><span class="op">$</span><span class="va">lowerni</span>, <span class="va">both</span><span class="op">$</span><span class="va">upperni</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
+<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">pnorm</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">z</span><span class="op">)</span><span class="op">)</span>, <span class="va">both</span><span class="op">$</span><span class="va">indicator</span><span class="op">)</span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/falsfam.html">falsfam</a></span><span class="op">(</span><span class="va">p</span>, meth <span class="op">=</span> <span class="st">"holm"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $results</span></span>
+<span><span class="co">#&gt;                                                                     name</span></span>
+<span><span class="co">#&gt; 1                                    Current smoker, daily or occasional</span></span>
+<span><span class="co">#&gt; 2                                                  Current smoker, daily</span></span>
+<span><span class="co">#&gt; 3                        Perceived mental health, very good or excellent</span></span>
+<span><span class="co">#&gt; 4                               Perceived health, very good or excellent</span></span>
+<span><span class="co">#&gt; 5                                                       Anxiety disorder</span></span>
+<span><span class="co">#&gt; 6                  Body mass index, adjusted self-reported, adult, obese</span></span>
+<span><span class="co">#&gt; 7                                                          Mood disorder</span></span>
+<span><span class="co">#&gt; 8                                  Perceived mental health, fair or poor</span></span>
+<span><span class="co">#&gt; 9                                         Perceived health, fair or poor</span></span>
+<span><span class="co">#&gt; 10                                                        Heavy drinking</span></span>
+<span><span class="co">#&gt; 11                        Life satisfaction, satisfied or very satisfied</span></span>
+<span><span class="co">#&gt; 12                      At least one underlying chronic health condition</span></span>
+<span><span class="co">#&gt; 13            Body mass index, adjusted self-reported, adult, overweight</span></span>
+<span><span class="co">#&gt; 14                                     Has a regular healthcare provider</span></span>
+<span><span class="co">#&gt; 15                                         Perceived mental health, good</span></span>
+<span><span class="co">#&gt; 16                                                Perceived health, good</span></span>
+<span><span class="co">#&gt; 17                                                   Has ever had cancer</span></span>
+<span><span class="co">#&gt; 18                                                             Arthritis</span></span>
+<span><span class="co">#&gt; 19 Sense of belonging to local community, somewhat strong or very strong</span></span>
+<span><span class="co">#&gt; 20   Perceived life stress, most days quite a bit or extremely stressful</span></span>
+<span><span class="co">#&gt; 21                                                   Effects of a stroke</span></span>
+<span><span class="co">#&gt; 22                                                              Diabetes</span></span>
+<span><span class="co">#&gt; 23                                 Two or more chronic health conditions</span></span>
+<span><span class="co">#&gt; 24                                                   High blood pressure</span></span>
+<span><span class="co">#&gt; 25                      Never had alcoholic drinks in the past 12 months</span></span>
+<span><span class="co">#&gt; 26                                                         Heart disease</span></span>
+<span><span class="co">#&gt;               p     adjusted survives</span></span>
+<span><span class="co">#&gt; 1  4.799378e-47 1.247838e-45     TRUE</span></span>
+<span><span class="co">#&gt; 2  6.666055e-33 1.666514e-31     TRUE</span></span>
+<span><span class="co">#&gt; 3  1.977723e-27 4.746535e-26     TRUE</span></span>
+<span><span class="co">#&gt; 4  4.701772e-27 1.081408e-25     TRUE</span></span>
+<span><span class="co">#&gt; 5  8.269913e-26 1.819381e-24     TRUE</span></span>
+<span><span class="co">#&gt; 6  1.570439e-24 3.297922e-23     TRUE</span></span>
+<span><span class="co">#&gt; 7  2.217733e-22 4.435465e-21     TRUE</span></span>
+<span><span class="co">#&gt; 8  8.105074e-22 1.539964e-20     TRUE</span></span>
+<span><span class="co">#&gt; 9  5.917920e-20 1.065226e-18     TRUE</span></span>
+<span><span class="co">#&gt; 10 2.383432e-15 4.051834e-14     TRUE</span></span>
+<span><span class="co">#&gt; 11 4.967275e-13 7.947640e-12     TRUE</span></span>
+<span><span class="co">#&gt; 12 4.149245e-11 6.223867e-10     TRUE</span></span>
+<span><span class="co">#&gt; 13 6.976248e-10 9.766747e-09     TRUE</span></span>
+<span><span class="co">#&gt; 14 4.744043e-05 6.167256e-04     TRUE</span></span>
+<span><span class="co">#&gt; 15 1.916130e-04 2.299356e-03     TRUE</span></span>
+<span><span class="co">#&gt; 16 1.986114e-04 2.299356e-03     TRUE</span></span>
+<span><span class="co">#&gt; 17 7.953428e-04 7.953428e-03     TRUE</span></span>
+<span><span class="co">#&gt; 18 5.573725e-03 5.016352e-02    FALSE</span></span>
+<span><span class="co">#&gt; 19 9.255276e-03 7.404220e-02    FALSE</span></span>
+<span><span class="co">#&gt; 20 1.455855e-02 1.019099e-01    FALSE</span></span>
+<span><span class="co">#&gt; 21 1.616352e-02 1.019099e-01    FALSE</span></span>
+<span><span class="co">#&gt; 22 2.409857e-02 1.204929e-01    FALSE</span></span>
+<span><span class="co">#&gt; 23 3.100005e-02 1.240002e-01    FALSE</span></span>
+<span><span class="co">#&gt; 24 2.077056e-01 6.231168e-01    FALSE</span></span>
+<span><span class="co">#&gt; 25 6.863741e-01 1.000000e+00    FALSE</span></span>
+<span><span class="co">#&gt; 26 1.000000e+00 1.000000e+00    FALSE</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $method</span></span>
+<span><span class="co">#&gt; [1] "holm"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $famsz</span></span>
+<span><span class="co">#&gt; [1] 26</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $alpha</span></span>
+<span><span class="co">#&gt; [1] 0.05</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $atflr</span></span>
+<span><span class="co">#&gt; character(0)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

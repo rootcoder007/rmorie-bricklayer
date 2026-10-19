@@ -10,14 +10,17 @@
 Source:
 [`inst/CITATION`](https://github.com/rootcoder007/rmorie-bricklayer/blob/main/inst/CITATION)
 
-Ruhela V (2026). *rmoriebricklayer: Reproducible Data Capsules with
-Provenance and Fallback*. R package version 0.5.14,
-<https://github.com/rootcoder007/rmorie-bricklayer>.
+Ruhela VS (2026). *rmoriebricklayer: Reproducible Data Capsules with
+Provenance and Fallback*.
+[doi:10.32614/CRAN.package.rmoriebricklayer](https://doi.org/10.32614/CRAN.package.rmoriebricklayer).
+R package version 1.0.0,
+<https://rootcoder007.r-universe.dev/rmoriebricklayer>.
 
     @Manual{ruhela_rmoriebricklayer_2026,
       title = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},
       author = {Vansh Singh Ruhela},
       year = {2026},
-      note = {R package version 0.5.14},
-      url = {https://github.com/rootcoder007/rmorie-bricklayer},
+      note = {R package version 1.0.0},
+      doi = {10.32614/CRAN.package.rmoriebricklayer},
+      url = {https://rootcoder007.r-universe.dev/rmoriebricklayer},
     }

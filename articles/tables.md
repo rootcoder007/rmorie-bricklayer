@@ -10,6 +10,48 @@ The running example is the shape Ontario’s inmate datasets have – one
 row per placement, keyed on the fiscal year’s end year, with banded
 counts and a region.
 
+## A Statistics Canada table, as published
+
+A Statistics Canada full-table download puts each estimate, its
+confidence limits (or its coefficient of variation), and a quality flag
+on separate rows.
+[`sctidy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sctidy.md)
+reads the flags and never keeps a suppressed value.
+[`scests()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scests.md)
+puts each estimate beside its limits, whatever form the limits take.
+Here, a table with three measures per cell, and limits that name their
+measure only in part:
+
+``` r
+
+pyll <- data.frame(GEO = rep(c("Inuit Nunangat", "Rest of Canada"), each = 5),
+                   Characteristics = rep(c("Number of potential years of life lost",
+                                           "Crude rate of potential years of life lost",
+                                           "Age-standardized rate of potential years of life lost",
+                                           "Low 95% confidence interval, potential years of life lost",
+                                           "High 95% confidence interval, potential years of life lost"), 2),
+                   VALUE = c(5000, 900, 1100, 1000, 1200, 7000, 800, 950, 870, 1030), STATUS = "")
+scests(pyll)[, c("GEO", "measure", "estimate", "lower", "upper")]
+#>              GEO                                               measure estimate
+#> 1 Inuit Nunangat                Number of potential years of life lost     5000
+#> 2 Inuit Nunangat            Crude rate of potential years of life lost      900
+#> 3 Inuit Nunangat Age-standardized rate of potential years of life lost     1100
+#> 4 Rest of Canada                Number of potential years of life lost     7000
+#> 5 Rest of Canada            Crude rate of potential years of life lost      800
+#> 6 Rest of Canada Age-standardized rate of potential years of life lost      950
+#>   lower upper
+#> 1    NA    NA
+#> 2    NA    NA
+#> 3  1000  1200
+#> 4    NA    NA
+#> 5    NA    NA
+#> 6   870  1030
+```
+
+The limits belong to the age-standardised rate: they are the only pair
+that contains its estimate in every cell. (The values are made up; the
+layout is that of table 13-10-0402.)
+
 ## Bands
 
 Published categories are intervals. Anything computed from them rests on
@@ -18,13 +60,13 @@ second assumption about where the open top band ends.
 
 ``` r
 
-bands <- parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
+bands <- prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 bands
-#>             label lower upper open_lower open_upper
-#> 1               1     1     1      FALSE      FALSE
-#> 2          2 to 5     2     5      FALSE      FALSE
-#> 3         6 to 10     6    10      FALSE      FALSE
-#> 4 Greater than 10    11    NA      FALSE       TRUE
+#>             label lower upper openlo openup
+#> 1               1     1     1  FALSE  FALSE
+#> 2          2 to 5     2     5  FALSE  FALSE
+#> 3         6 to 10     6    10  FALSE  FALSE
+#> 4 Greater than 10    11    NA  FALSE   TRUE
 ```
 
 Note what the bounds say. `"Greater than 10"` starts at 11, because the
@@ -36,12 +78,12 @@ The representative value needs a rule, and the open band needs a cap:
 
 ``` r
 
-band_values(bands)
-#>             label lower upper open_lower open_upper value assumed
-#> 1               1     1     1      FALSE      FALSE   1.0   FALSE
-#> 2          2 to 5     2     5      FALSE      FALSE   3.5   FALSE
-#> 3         6 to 10     6    10      FALSE      FALSE   8.0   FALSE
-#> 4 Greater than 10    11    NA      FALSE       TRUE  16.5    TRUE
+bandvals(bands)
+#>             label lower upper openlo openup value assumed
+#> 1               1     1     1  FALSE  FALSE   1.0   FALSE
+#> 2          2 to 5     2     5  FALSE  FALSE   3.5   FALSE
+#> 3         6 to 10     6    10  FALSE  FALSE   8.0   FALSE
+#> 4 Greater than 10    11    NA  FALSE   TRUE  16.5    TRUE
 ```
 
 The last row is marked `assumed`, because a band with no upper bound has
@@ -51,7 +93,7 @@ how much it matters:
 ``` r
 
 counts <- c(1200, 430, 110, 38)
-band_sensitivity(bands, counts)
+bandsens(bands, counts)
 #> ── Sensitivity to the open top band's assumed cap ──────────────── 
 #>        cap     value
 #>   11.55000 0.4254708
@@ -85,10 +127,10 @@ the total.
 
 ``` r
 
-placements <- expand_bands(bands, counts, open_upper_cap = 25)
-gini(placements)
+placements <- expbands(bands, counts, openupcap = 25)
+ginicoef(placements)
 #> [1] 0.4585838
-top_share(placements, c(0.01, 0.05, 0.1))
+topshr(placements, c(0.01, 0.05, 0.1))
 #>   fraction units      share
 #> 1     0.01    18 0.07589599
 #> 2     0.05    89 0.25579761
@@ -111,7 +153,7 @@ goodness-of-fit distance before the exponent:
 
 ``` r
 
-fit <- hill_tail_index(placements, x_min = 1)
+fit <- hilltlidx(placements, xmin = 1)
 c(alpha = round(fit$alpha, 2), ks = round(fit$ks, 3),
   reliable = fit$reliable)
 #>    alpha       ks reliable 
@@ -132,7 +174,7 @@ not support a model with an autocorrelation structure.
 ``` r
 
 y <- c(402, 377, 190, 268, 331)
-tt <- trend_test(y)
+tt <- trndtst(y)
 c(tau = tt$tau, p = round(tt$p_value, 4), slope = tt$slope)
 #>      tau        p    slope 
 #>  -0.4000   0.4833 -21.3750
@@ -145,11 +187,11 @@ trend is better expressed as a multiplicative change per year:
 
 ``` r
 
-ct <- count_trend(y)
-c(rate_ratio = round(ct$rate_ratio, 3),
+ct <- cnttrnd(y)
+c(rateratio = round(ct$rateratio, 3),
   lower = round(ct$lower, 3), upper = round(ct$upper, 3),
   dispersion = round(ct$dispersion, 2))
-#> rate_ratio      lower      upper dispersion 
+#>  rateratio      lower      upper dispersion 
 #>      0.923      0.696      1.223     24.390
 ```
 
@@ -161,11 +203,11 @@ being left too narrow.
 
 ``` r
 
-sc <- step_change(c(100, 104, 98, 60, 63, 58), x = 2018:2023)
-c(after = sc$break_after, before = sc$before, after_mean = sc$after,
+sc <- stepchg(c(100, 104, 98, 60, 63, 58), x = 2018:2023)
+c(after = sc$breakafter, before = sc$before, aftermean = sc$after,
   p = round(sc$p_value, 4))
-#>      after     before after_mean          p 
-#> 2020.00000  100.66667   60.33333    0.10120
+#>      after     before  aftermean          p 
+#> 2020.00000  100.66667   60.33333    0.10000
 ```
 
 The p-value comes from the permutation distribution of the **maximum**
@@ -208,7 +250,7 @@ pop <- data.frame(
 )
 ```
 
-[`region_map_integrity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_integrity.md)
+[`rgnmapintg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rgnmapintg.md)
 finds the failures that a comparison against published output cannot,
 because they would be present on both sides of it: a facility assigned
 two regions, a facility assigned none, a region code that belongs to a
@@ -216,7 +258,7 @@ different province.
 
 ``` r
 
-region_map_integrity(cw, "facility", "region", regions = pop$region)
+rgnmapintg(cw, "facility", "region", regs = pop$region)
 #>                                         check observed expected pass
 #> 1         units assigned more than one region        0        0 TRUE
 #> 2                    units assigned no region        0        0 TRUE
@@ -230,7 +272,7 @@ makes the frame safe to record directly into a manifest.
 
 bad <- cw
 bad$region[3] <- "2406"          # a code from another province
-region_map_integrity(bad, "facility", "region", regions = pop$region)
+rgnmapintg(bad, "facility", "region", regs = pop$region)
 #>                                         check observed expected  pass
 #> 1         units assigned more than one region        0        0  TRUE
 #> 2                    units assigned no region        0        0  TRUE
@@ -239,7 +281,7 @@ region_map_integrity(bad, "facility", "region", regions = pop$region)
 
 ### Recomputing is not the same as checking
 
-[`region_map_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_compare.md)
+[`rgnmapcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rgnmapcmp.md)
 matches a recomputed region map against the published one and compares
 them cell by cell. Numeric columns go through
 [`all.equal()`](https://rdrr.io/r/base/all.equal.html), so a coordinate
@@ -249,7 +291,7 @@ that survived a round trip through text is not reported as a change.
 
 recomputed <- cw
 recomputed$region[2] <- "3519"
-region_map_compare(cw, recomputed, "facility")
+rgnmapcmp(cw, recomputed, "facility")
 #>   column cells mismatched                                       first
 #> 1   rows     4          0                                            
 #> 2 region     4          1 South Jail: published 3520, recomputed 3519
@@ -277,7 +319,7 @@ district.
 
 route <- c("North Jail" = "3557", "South Jail" = "3520",
            "Hill Jail" = "3552", "Lake Jail" = "3520")
-region_map_second_route(cw, "facility", "region", route,
+rgnmapalt(cw, "facility", "region", route,
                        known = "Hill Jail")
 #>        unit primary second known
 #> 1 Hill Jail    3553   3552  TRUE
@@ -292,7 +334,7 @@ that must be zero.
 ``` r
 
 route["South Jail"] <- "3599"    # an assignment nobody documented
-d <- region_map_second_route(cw, "facility", "region", route,
+d <- rgnmapalt(cw, "facility", "region", route,
                             known = "Hill Jail")
 d
 #>         unit primary second known
@@ -313,38 +355,37 @@ length(route)
 #> [1] 4
 ```
 
-[`region_map_from_points()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_from_points.md)
+[`rgnmappts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rgnmappts.md)
 does the geometric recompute, projecting the points onto the boundary
 file’s own coordinate system rather than the reverse, since reprojecting
 polygons moves their edges. It needs `sf` and a boundary file and
 returns `NULL` without either, so a verification script records the
 check as unavailable instead of failing over an optional dependency. It
-also returns `n_regions` rather than silently resolving it: any value
-but 1 means the point fell outside the geography, or the boundaries
-overlap.
+also returns `nreg` rather than silently resolving it: any value but 1
+means the point fell outside the geography, or the boundaries overlap.
 
 ### The coverage share is not a denominator
 
 With the region map checked, the obvious next step is a rate per region.
-[`region_coverage()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_coverage.md)
+[`rgncov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rgncov.md)
 reports the ingredients and, every time it prints, declines to supply
 that rate.
 
 ``` r
 
 units <- vapply(pop$region, function(r) sum(cw$region == r), numeric(1))
-cov <- region_coverage(pop$region, pop$population, units)
+cov <- rgncov(pop$region, pop$population, units)
 cov
 #> ── 4 units in 3 of 5 regions ───────────────────────────────────── 
 #>   those regions hold 3,311,309 of 4,507,389 residents (73.5%)
 #>   2 regions hold none; 1,196,080 residents (26.5%) live there
 #> 
-#>  region population units has_unit  pop_share
-#>    3520    3025647     2     TRUE 67.1263785
-#>    3553     171568     1     TRUE  3.8063722
-#>    3557     114094     1     TRUE  2.5312659
-#>    3519    1173334     0    FALSE 26.0313454
-#>    3552      22746     0    FALSE  0.5046381
+#>  region population units hasunit     popshr
+#>    3520    3025647     2    TRUE 67.1263785
+#>    3553     171568     1    TRUE  3.8063722
+#>    3557     114094     1    TRUE  2.5312659
+#>    3519    1173334     0   FALSE 26.0313454
+#>    3552      22746     0   FALSE  0.5046381
 #> 
 #>   The covered share is context, not a denominator: units serve
 #>   catchments, so a rate over these regions alone would take its
@@ -369,8 +410,8 @@ distort it in opposite directions.
 ``` r
 
 a <- attr(cov, "coverage")
-c(covered = a$covered_population, uncovered = a$uncovered_population,
-  share = round(a$covered_share, 1))
+c(covered = a$covpop, uncovered = a$uncpop,
+  share = round(a$covshr, 1))
 #>   covered uncovered     share 
 #> 3311309.0 1196080.0      73.5
 ```
@@ -407,7 +448,7 @@ given its own age composition.
 
 ``` r
 
-e <- expected_counts(d$n, d$pop, d$region, strata = d$age)
+e <- expcnts(d$n, d$pop, d$region, strata = d$age)
 e
 #>       area observed population  expected
 #> 1  Central       17       4000 48.366013
@@ -433,7 +474,7 @@ interval:
 
 ``` r
 
-sir(e$observed, e$expected, e$area)
+stdinc(e$observed, e$expected, e$area)
 #>       area observed  expected       sir     lower     upper excess deficit
 #> 1  Central       17 48.366013 0.3514865 0.2047538 0.5627639  FALSE    TRUE
 #> 2  Eastern       36 36.274510 0.9924324 0.6950875 1.3739448  FALSE   FALSE
@@ -453,7 +494,7 @@ to both ends by construction, so borrow strength across regions:
 
 ``` r
 
-eb_rates(e$observed, e$expected, e$area)
+ebrates(e$observed, e$expected, e$area)
 #>       area observed  expected       sir        eb  shrinkage       nu    alpha
 #> 1  Central       17 48.366013 0.3514865 0.4301763 0.12133873 6.679104 6.679104
 #> 2  Eastern       36 36.274510 0.9924324 0.9936092 0.15549575 6.679104 6.679104
@@ -472,7 +513,7 @@ anywhere else.
 
 ``` r
 
-funnel_limits(c(5, 20, 50, 200))
+fnllim(c(5, 20, 50, 200))
 #>   expected level lower upper
 #> 1        5 0.950 0.200 2.000
 #> 2       20 0.950 0.600 1.450
@@ -490,7 +531,7 @@ funnel_limits(c(5, 20, 50, 200))
 
 nb <- list(c(2L, 4L), c(1L, 3L), c(2L, 5L), c(1L, 5L), c(3L, 4L))
 set.seed(1)
-mi <- morans_i(e$observed / e$expected, nb, n_perm = 999L)
+mi <- morani(e$observed / e$expected, nb, nperm = 999L)
 c(I = round(mi$I, 3), expectation = round(mi$expectation, 3),
   p = mi$p_value)
 #>           I expectation           p 
@@ -508,3 +549,31 @@ independence looks like.
 -1 / (5 - 1)
 #> [1] -0.25
 ```
+
+## Indigenous examples
+
+Statistics Canada tables on Indigenous health come in several layouts;
+[`scests()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scests.md)
+reads them all into estimate, lower and upper. The bundled excerpts are
+already in that form, and
+[`stdprev()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stdprev.md)
+and
+[`indgap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indgap.md)
+take them directly; see
+[`vignette("first-nations-metis-inuit-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/first-nations-metis-inuit-health.md).
+A trend across the three life expectancy periods:
+
+``` r
+
+le <- indiex("lifeexp")
+inuit <- le[le$group == "Inuit", ]
+inuit[, c("period", "estimate", "lower", "upper")]
+#>       period estimate lower upper
+#> 2  2006/2011    71.83 70.44 73.23
+#> 9  2011/2016    74.18 72.17 76.19
+#> 16 2016/2021    71.91 70.80 73.03
+trndtst(inuit$estimate, x = 1:3)$p_value
+#> [1] 1
+```
+
+Three periods cannot show a trend: the exact Mann-Kendall p-value is 1.

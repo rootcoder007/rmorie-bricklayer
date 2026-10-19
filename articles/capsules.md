@@ -30,7 +30,7 @@ stand-in.
 
 ``` r
 
-prov_json <- '{
+provjson <- '{
   "dataset": {
     "title": "Demo library statistics",
     "ckan_api_endpoint": "https://data.ontario.ca/api/3/action/package_show?id=ontario-public-library-statistics"
@@ -53,10 +53,10 @@ prov_json <- '{
   }
 }'
 
-prov_path <- file.path(tempdir(), "data_provenance.json")
-writeLines(prov_json, prov_path)
+provpath <- file.path(tempdir(), "data_provenance.json")
+writeLines(provjson, provpath)
 
-prov <- load_provenance(prov_path)
+prov <- loadprov(provpath)
 prov$dataset$title
 #> [1] "Demo library statistics"
 ```
@@ -71,12 +71,12 @@ portals.
 
 ``` r
 
-url <- resolve_via_ckan(prov)            # package_show + name match
+url <- rslvckan(prov)            # package_show + name match
 if (is.null(url))                        # slug-change fallback
-  url <- resolve_via_ckan_search(prov)
+  url <- rslvckns(prov)
 
 path <- file.path(tempdir(), "data.csv")
-friendly_download(url, path)             # plain-language failure diagnosis
+fdl(url, path)             # plain-language failure diagnosis
                                          # + automatic Wayback fallback
 ```
 
@@ -85,7 +85,7 @@ This vignette stays offline, so we go straight to the fallback path.
 ## 3. Synthetic fallback: the pipeline always runs
 
 When the real source is down,
-[`make_synthetic_csv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_synthetic_csv.md)
+[`mksyncsv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mksyncsv.md)
 generates a reproducible stand-in from the recipe pinned in the
 provenance itself. Results from synthetic data are marked as such all
 the way through (see the manifest below) — the point is to keep the
@@ -93,12 +93,12 @@ the way through (see the manifest below) — the point is to keep the
 
 ``` r
 
-data_path <- file.path(tempdir(), "data.csv")
-gen <- make_synthetic_csv(prov$schema$synthetic_recipe, data_path)
+datapath <- file.path(tempdir(), "data.csv")
+gen <- mksyncsv(prov$schema$synthetic_recipe, datapath)
 gen$rows
 #> [1] 25
 
-df <- read.csv(data_path)
+df <- read.csv(datapath)
 head(df, 3)
 #>   year visits alert      id
 #> 1 2025      2    No p-00001
@@ -110,63 +110,63 @@ head(df, 3)
 
 Every file gets a SHA256; every data frame is checked against the pinned
 schema.
-[`validate_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_schema.md)
+[`valsch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/valsch.md)
 reports issues without raising, so callers choose the severity response;
-[`apply_schema_validation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/apply_schema_validation.md)
+[`schval()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/schval.md)
 is the strict wrapper (fatal issues stop, drift warns).
 
 ``` r
 
-digest <- sha256_file(data_path)
+digest <- sha256file(datapath)
 substr(digest, 1, 16)
 #> [1] "e2f4b6752a2e3b56"
 
-chk <- verify_sha256(data_path, digest)
+chk <- vrfsha256(datapath, digest)
 chk$match
 #> [1] TRUE
 
-issues <- validate_schema(df, prov)
+issues <- valsch(df, prov)
 length(issues)   # 0 = clean against the pinned schema
 #> [1] 0
 ```
 
 ## 5. The manifest: account for everything
 
-[`make_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_manifest.md) +
-[`record()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/record.md)
+[`mkmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkmnf.md) +
+[`recrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recrd.md)
 accumulate named cross-checks (each PASS / DIFFER / INFO), and the
 writers produce the two capsule artifacts: a machine-readable
 `manifest.json` and a human-readable `SUMMARY.txt`.
 
 ``` r
 
-man <- make_manifest(
+man <- mkmnf(
   list(project = "demo-study", author = "A. Author", synthetic = TRUE),
-  environment = FALSE  # TRUE also snapshots R/OS/package versions
+  env = FALSE  # TRUE also snapshots R/OS/package versions
 )
 
-man <- record(man, "rows_generated", observed = gen$rows, expected = 25)
-#>   rows_generated                               observed = 25.0000      expected = 25.0000      [INFO]
-man <- record(man, "mean_visits",
-              observed = mean(df$visits), expected = 3,
-              tol = 1, synthetic = TRUE)
-#>   mean_visits                                  observed = 2.8000       expected = 3.0000       [INFO]
+man <- recrd(man, "rowsgenerated", obs = gen$rows, expd = 25)
+#>   rowsgenerated                                observed = 25.0000      expected = 25.0000      [INFO]
+man <- recrd(man, "meanvisits",
+              obs = mean(df$visits), expd = 3,
+              tol = 1, syn = TRUE)
+#>   meanvisits                                   observed = 2.8000       expected = 3.0000       [INFO]
 
-out_dir <- file.path(tempdir(), "capsule-demo")
-dir.create(out_dir, showWarnings = FALSE)
+outdir <- file.path(tempdir(), "capsule-demo")
+dir.create(outdir, showWarnings = FALSE)
 
-write_manifest_json(man, file.path(out_dir, "manifest.json"))
-summary_path <- write_summary_txt(
-  man, out_dir,
-  paths = list(input = data_path, results = out_dir),
-  what_was_done = c("* generated synthetic stand-in (real source offline)",
+wrmnfjs(man, file.path(outdir, "manifest.json"))
+summarypath <- wrsmrytxt(
+  man, outdir,
+  paths = list(input = datapath, results = outdir),
+  whatwasdone = c("* generated synthetic stand-in (real source offline)",
                     "* validated schema and recorded cross-checks")
 )
 
-cat(readLines(summary_path)[7:12], sep = "\n")
+cat(readLines(summarypath)[7:12], sep = "\n")
 #> Project:   demo-study
 #> Author:    A. Author
-#> When:      2026-10-16 17:50:56 UTC
+#> When:      2026-10-19 04:00:43 UTC
 #> OS:        Linux
 #> R:         R version 4.6.1 (2026-06-24)
 #> Mode:      SYNTHETIC (not real data -- pipeline check only)
@@ -184,7 +184,33 @@ the portal has moved on.
 [rmoriedata](https://github.com/rootcoder007/rmoriedata); both link
 against its compiled core (`LinkingTo: rmoriebricklayer`) for shared
 SHA-256 and summary-statistic kernels
-([`core_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_sha256.md),
-[`core_mean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_stats.md),
-[`core_var()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_stats.md),
-[`core_cor()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_stats.md)).
+([`csha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/csha256.md),
+[`cmn()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cstat.md),
+[`cvari()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cstat.md),
+[`ccorr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cstat.md)).
+
+## A capsule for an Indigenous health table
+
+The same steps pin a Statistics Canada table: write it, record its
+digest, and describe it in a manifest that names its source and licence.
+
+``` r
+
+d <- indiex("wellbeing")
+f <- file.path(tempdir(), "indigenous_wellbeing.csv")
+utils::write.csv(d, f, row.names = FALSE)
+h <- sha256file(f)
+m <- mkmnf(list(dataset = "indigenouswellbeing", rows = nrow(d), sha256 = h,
+                        source = "Statistics Canada, Indigenous Peoples Survey 2022",
+                        licence = "Statistics Canada Open Licence"),
+                   env = FALSE)
+vrfsha256(f, h)
+#> $actual
+#> [1] "c4b3e61f660856d89b302f1050393f99d84363ad7540b838ebecfbac5e4e5c2a"
+#> 
+#> $expected
+#> [1] "c4b3e61f660856d89b302f1050393f99d84363ad7540b838ebecfbac5e4e5c2a"
+#> 
+#> $match
+#> [1] TRUE
+```

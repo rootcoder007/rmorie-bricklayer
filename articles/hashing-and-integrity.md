@@ -9,13 +9,13 @@ a large file be pinned and partially verified.
 
 ``` r
 
-core_sha256("hello capsule")
+csha256("hello capsule")
 #> [1] "97cdf3978fc8755453e42fb3d0384a6612f1dde79c46cf422abc0563cf8426e2"
-core_sha512("hello capsule")
+csha512("hello capsule")
 #> [1] "aa92b1aa2bf977ec1c4b3a47795d24e98ab595464236b9c59696c1999794714639df0fa5e66fb7be86bf2d05e4a45b6207a40fc4ae1f3458ca40ceed87a9d76e"
-core_blake2b("hello capsule")
+cblake2b("hello capsule")
 #> [1] "061431a711a23d1745664ba6d36ad517ab6f48db421d492f13cd110f2067b9ce"
-core_crc32("hello capsule")
+ccrc32("hello capsule")
 #> [1] 1607001718
 ```
 
@@ -26,42 +26,42 @@ fit in memory:
 
 f <- tempfile()
 writeLines("hello capsule", f)
-sha256_file(f)
+sha256file(f)
 #> [1] "55d6110230c260319d580bb6274db530b7e751c4f687fc00d0736ec531260a02"
-sha512_file(f)
+sha512file(f)
 #> [1] "358665f1505b7dced4ab0e1d7cf5b634bc60f8cbdf7c59f8ec6957f8e1a0df990fbaf92e6dc662662cca542e475b0862453a932d9fa58c2bc7a4b3de8cecdfc4"
-crc32_file(f)
+crc32file(f)
 #> [1] 2347637372
 
-before <- sha256_file(f)
+before <- sha256file(f)
 writeLines("hello capsule (edited)", f)
-sha256_file(f) == before
+sha256file(f) == before
 #> [1] FALSE
 ```
 
 CRC-32 is a checksum, not a cryptographic hash: it detects accidental
 corruption and nothing more. SHA-256 and SHA-512 (FIPS 180-4) and
 BLAKE2b are collision-resistant;
-[`verify_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_sha256.md)
+[`vrfsha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfsha256.md)
 checks a file against a pinned digest.
 
 ## Digests of R objects
 
-[`digest_object()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/digest_object.md)
+[`dgstobj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dgstobj.md)
 serialises an object canonically and hashes the bytes, so attributes,
 names and types are part of the identity:
 
 ``` r
 
-digest_object(list(a = 1L, b = "x"))
+dgstobj(list(a = 1L, b = "x"))
 #> [1] "bf5d21a8b26f6cec8503a46f69e854bf98fea03b62dfaf90cb780feac7165b27"
-identical(digest_object(1:10), digest_object(1:10))
+identical(dgstobj(1:10), dgstobj(1:10))
 #> [1] TRUE
-digest_object(1:10) == digest_object(1:11)
+dgstobj(1:10) == dgstobj(1:11)
 #> [1] FALSE
-digest_object(matrix(1:6, nrow = 2)) == digest_object(1:6)   # dimensions count
+dgstobj(matrix(1:6, nrow = 2)) == dgstobj(1:6)   # dimensions count
 #> [1] FALSE
-digest_object(data.frame(x = 1:3))
+dgstobj(data.frame(x = 1:3))
 #> [1] "24b0995a368ea8d1178b7f6e44c6d8956db4aadfc91d3e6f6911868b38c06d21"
 ```
 
@@ -72,29 +72,29 @@ produce, so a manifest cannot be re-signed without the key:
 
 ``` r
 
-core_hmac_sha256("Jefe", "what do ya want for nothing?")   # RFC 4231 test case 2
+chmac("Jefe", "what do ya want for nothing?")   # RFC 4231 test case 2
 #> [1] "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843"
-core_hmac_sha256("key-a", "manifest")
+chmac("key-a", "manifest")
 #> [1] "463b8b2c47caadd6334c53e4d9492fdac6fcaca185f56229043e1a025138ceae"
-core_hmac_sha256("key-b", "manifest")
+chmac("key-b", "manifest")
 #> [1] "f3ebaf1b8fad504c57fd4cf82b163e30eac6eabd31b7c41a2a6e268ec445b134"
 ```
 
 **Never compare a tag with `==`.** A string comparison stops at the
 first differing character, so its running time tells an attacker how
 many leading characters were right.
-[`core_digest_equal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_keyed_digest.md)
+[`cdgsteq()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/keyeddgst.md)
 compares every byte regardless and returns `FALSE` for a length mismatch
 without erroring:
 
 ``` r
 
-tag <- core_hmac_sha256("k", "m")
-core_digest_equal(tag, core_hmac_sha256("k", "m"))
+tag <- chmac("k", "m")
+cdgsteq(tag, chmac("k", "m"))
 #> [1] TRUE
-core_digest_equal(tag, core_hmac_sha256("k", "tampered"))
+cdgsteq(tag, chmac("k", "tampered"))
 #> [1] FALSE
-core_digest_equal(tag, "too-short")
+cdgsteq(tag, "too-short")
 #> [1] FALSE
 ```
 
@@ -106,11 +106,11 @@ count that makes each guess expensive:
 
 ``` r
 
-derive_key("password", "salt", iterations = 1)     # the published test vector
+drvkey("password", "salt", iter = 1)     # the published test vector
 #> [1] "120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b"
-identical(derive_key("pw", "s", 1000), derive_key("pw", "s", 1000))
+identical(drvkey("pw", "s", 1000), drvkey("pw", "s", 1000))
 #> [1] TRUE
-derive_key("pw", "salt-a", 1000) == derive_key("pw", "salt-b", 1000)
+drvkey("pw", "salt-a", 1000) == drvkey("pw", "salt-b", 1000)
 #> [1] FALSE
 ```
 
@@ -120,16 +120,16 @@ derived key signs a manifest symmetrically:
 
 ``` r
 
-salt <- paste(format(random_bytes(16)), collapse = "")
-key <- derive_key("correct horse battery staple", salt)
-sig <- capsule_sign("manifest-digest", key, scheme = "hmac")
-capsule_verify("manifest-digest", sig, key)
+salt <- paste(format(rndbytes(16)), collapse = "")
+key <- drvkey("correct horse battery staple", salt)
+sig <- cpssign("manifest-digest", key, scheme = "hmac")
+cpsvrf("manifest-digest", sig, key)
 #> [1] TRUE
 ```
 
 ## Randomness
 
-[`random_bytes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/random_bytes.md)
+[`rndbytes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rndbytes.md)
 draws from the operating system (`getrandom` or `/dev/urandom` on Unix,
 `RtlGenRandom` on Windows) and does **not** consume R’s seeded stream,
 so a reproducible analysis is unaffected by key generation happening
@@ -140,7 +140,7 @@ beside it:
 set.seed(1)
 a <- stats::runif(1)
 set.seed(1)
-invisible(random_bytes(32))
+invisible(rndbytes(32))
 identical(stats::runif(1), a)
 #> [1] TRUE
 ```
@@ -152,12 +152,12 @@ streams:
 
 ``` r
 
-d <- drbg_new(as.raw(0:47))
-drbg_generate(d, 16)
+d <- drbgnew(as.raw(0:47))
+drbggen(d, 16)
 #>  [1] 06 15 50 23 4d 15 8c 5e c9 55 95 fe 04 ef 7a 25
-a <- drbg_new(as.raw(1:48), personalization = charToRaw("session 1"))
-b <- drbg_new(as.raw(1:48), personalization = charToRaw("session 2"))
-identical(drbg_generate(a, 16), drbg_generate(b, 16))
+a <- drbgnew(as.raw(1:48), person = charToRaw("session 1"))
+b <- drbgnew(as.raw(1:48), person = charToRaw("session 2"))
+identical(drbggen(a, 16), drbggen(b, 16))
 #> [1] FALSE
 ```
 
@@ -171,23 +171,23 @@ diff of the leaves names exactly which chunk changed.
 ``` r
 
 chunks <- c("row1,row2", "row3,row4", "row5,row6", "row7,row8")
-root <- merkle_root(chunks)
+root <- mrkroot(chunks)
 root
 #> [1] "3b1537c90e21c2e66f341b946388abbb78bf249fb433f961fba223b67141be31"
 
-before <- merkle_leaves(chunks)
-after <- merkle_leaves(c(chunks[1:2], "row5,row6-EDITED", chunks[4]))
+before <- mrklvs(chunks)
+after <- mrklvs(c(chunks[1:2], "row5,row6-EDITED", chunks[4]))
 which(before != after)
 #> [1] 3
 
-pr <- merkle_proof(chunks, 3)
-merkle_verify(chunks[3], pr, root)
+pr <- mrkprf(chunks, 3)
+mrkvrf(chunks[3], pr, root)
 #> [1] TRUE
-merkle_verify("row5,row6-EDITED", pr, root)
+mrkvrf("row5,row6-EDITED", pr, root)
 #> [1] FALSE
 ```
 
-[`chunk_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chunk_file.md)
+[`chnkfile()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chnkfile.md)
 splits a real file into fixed-size chunks that concatenate back to its
 bytes:
 
@@ -195,18 +195,18 @@ bytes:
 
 p <- tempfile()
 writeLines(rep("some capsule content", 50), p)
-ch <- chunk_file(p, chunk_bytes = 128)
+ch <- chnkfile(p, chnkbytes = 128)
 length(ch)
 #> [1] 9
-merkle_root(ch)
+mrkroot(ch)
 #> [1] "3f565b39becbebbc336618294525d7a1ff45394d68ecaec899d292bb0fd357c1"
 identical(unlist(ch), readBin(p, "raw", file.size(p)))
 #> [1] TRUE
 ```
 
-[`capsule_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_bundle.md)
+[`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
 pins each data file by one whole-file digest
-([`sha256_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sha256_file.md));
+([`sha256file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sha256file.md));
 the Merkle tree is for pinning the parts of a large file, so a mismatch
 identifies which part of it changed rather than only that something did.
 
@@ -218,3 +218,22 @@ differentially against OpenSSL 3.5. The keyed-digest comparison and
 PBKDF2 run under valgrind with the key marked undefined to prove their
 timing does not depend on it, and dudect measures the comparison and
 PBKDF2 on real CPUs.
+
+## Pinning a community’s copy of a table
+
+Ownership and control of data, in the sense of the First Nations
+principles of OCAP, include knowing that a copy has not been altered. A
+digest of the table and a Merkle root over its rows let a community
+check its copy, and check single rows without the rest:
+
+``` r
+
+d <- indiex("suicide")
+dgstobj(d)
+#> [1] "b8faefff893183d72b4030a00407eb55c8952cedc4a35beb3416fece9d85c90f"
+rows <- apply(d, 1, paste, collapse = ",")
+root <- mrkroot(rows)
+proof <- mrkprf(rows, 3)
+mrkvrf(rows[3], proof, root)
+#> [1] TRUE
+```

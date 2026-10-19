@@ -7,7 +7,7 @@ together with
 to tell whether a change in the population held came from more people or
 from longer stays. For the full distribution of stays (median, spread,
 interval) use
-[`stay_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stay_summary.md).
+[`staysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/staysmry.md).
 
 ## Usage
 
@@ -53,7 +53,7 @@ Corrections Planners*. University of Illinois at Urbana-Champaign.
 ## See also
 
 [`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md),
-[`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+[`stkflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stkflow.md)
 
 ## Examples
 

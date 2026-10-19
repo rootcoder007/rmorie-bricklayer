@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,51 +89,50 @@ a large file be pinned and partially verified.</p>
 <h2 id="digests-of-text-and-files">Digests of text and files<a class="anchor" aria-label="anchor" href="#digests-of-text-and-files"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/core_sha256.html">core_sha256</a></span><span class="op">(</span><span class="st">"hello capsule"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/csha256.html">csha256</a></span><span class="op">(</span><span class="st">"hello capsule"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "97cdf3978fc8755453e42fb3d0384a6612f1dde79c46cf422abc0563cf8426e2"</span></span>
-<span><span class="fu"><a href="../reference/core_sha512.html">core_sha512</a></span><span class="op">(</span><span class="st">"hello capsule"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/csha512.html">csha512</a></span><span class="op">(</span><span class="st">"hello capsule"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "aa92b1aa2bf977ec1c4b3a47795d24e98ab595464236b9c59696c1999794714639df0fa5e66fb7be86bf2d05e4a45b6207a40fc4ae1f3458ca40ceed87a9d76e"</span></span>
-<span><span class="fu"><a href="../reference/core_blake2b.html">core_blake2b</a></span><span class="op">(</span><span class="st">"hello capsule"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/cblake2b.html">cblake2b</a></span><span class="op">(</span><span class="st">"hello capsule"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "061431a711a23d1745664ba6d36ad517ab6f48db421d492f13cd110f2067b9ce"</span></span>
-<span><span class="fu"><a href="../reference/core_crc32.html">core_crc32</a></span><span class="op">(</span><span class="st">"hello capsule"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/ccrc32.html">ccrc32</a></span><span class="op">(</span><span class="st">"hello capsule"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 1607001718</span></span></code></pre></div>
 <p>Files are hashed in blocks, so a multi-gigabyte file does not need to
 fit in memory:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="st">"hello capsule"</span>, <span class="va">f</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/sha256_file.html">sha256_file</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/sha256file.html">sha256file</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "55d6110230c260319d580bb6274db530b7e751c4f687fc00d0736ec531260a02"</span></span>
-<span><span class="fu"><a href="../reference/rmbl_file_digest.html">sha512_file</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/filedgst.html">sha512file</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "358665f1505b7dced4ab0e1d7cf5b634bc60f8cbdf7c59f8ec6957f8e1a0df990fbaf92e6dc662662cca542e475b0862453a932d9fa58c2bc7a4b3de8cecdfc4"</span></span>
-<span><span class="fu"><a href="../reference/rmbl_file_digest.html">crc32_file</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/filedgst.html">crc32file</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 2347637372</span></span>
 <span></span>
-<span><span class="va">before</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sha256_file.html">sha256_file</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span>
+<span><span class="va">before</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sha256file.html">sha256file</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="st">"hello capsule (edited)"</span>, <span class="va">f</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/sha256_file.html">sha256_file</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span> <span class="op">==</span> <span class="va">before</span></span>
+<span><span class="fu"><a href="../reference/sha256file.html">sha256file</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span> <span class="op">==</span> <span class="va">before</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
 <p>CRC-32 is a checksum, not a cryptographic hash: it detects accidental
 corruption and nothing more. SHA-256 and SHA-512 (FIPS 180-4) and
-BLAKE2b are collision-resistant; <code><a href="../reference/verify_sha256.html">verify_sha256()</a></code> checks a
-file against a pinned digest.</p>
+BLAKE2b are collision-resistant; <code><a href="../reference/vrfsha256.html">vrfsha256()</a></code> checks a file
+against a pinned digest.</p>
 </div>
 <div class="section level2">
 <h2 id="digests-of-r-objects">Digests of R objects<a class="anchor" aria-label="anchor" href="#digests-of-r-objects"></a>
 </h2>
-<p><code><a href="../reference/digest_object.html">digest_object()</a></code> serialises an object canonically and
-hashes the bytes, so attributes, names and types are part of the
-identity:</p>
+<p><code><a href="../reference/dgstobj.html">dgstobj()</a></code> serialises an object canonically and hashes
+the bytes, so attributes, names and types are part of the identity:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/digest_object.html">digest_object</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fl">1L</span>, b <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fl">1L</span>, b <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "bf5d21a8b26f6cec8503a46f69e854bf98fea03b62dfaf90cb780feac7165b27"</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/digest_object.html">digest_object</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span>, <span class="fu"><a href="../reference/digest_object.html">digest_object</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span>, <span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="fu"><a href="../reference/digest_object.html">digest_object</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="../reference/digest_object.html">digest_object</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">11</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">11</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span>
-<span><span class="fu"><a href="../reference/digest_object.html">digest_object</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, nrow <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="../reference/digest_object.html">digest_object</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span>   <span class="co"># dimensions count</span></span>
+<span><span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, nrow <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span>   <span class="co"># dimensions count</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span>
-<span><span class="fu"><a href="../reference/digest_object.html">digest_object</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "24b0995a368ea8d1178b7f6e44c6d8956db4aadfc91d3e6f6911868b38c06d21"</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -142,24 +141,24 @@ identity:</p>
 <p>An HMAC (RFC 2104) is a digest that only the holder of the key can
 produce, so a manifest cannot be re-signed without the key:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/rmbl_keyed_digest.html">core_hmac_sha256</a></span><span class="op">(</span><span class="st">"Jefe"</span>, <span class="st">"what do ya want for nothing?"</span><span class="op">)</span>   <span class="co"># RFC 4231 test case 2</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/keyeddgst.html">chmac</a></span><span class="op">(</span><span class="st">"Jefe"</span>, <span class="st">"what do ya want for nothing?"</span><span class="op">)</span>   <span class="co"># RFC 4231 test case 2</span></span>
 <span><span class="co">#&gt; [1] "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843"</span></span>
-<span><span class="fu"><a href="../reference/rmbl_keyed_digest.html">core_hmac_sha256</a></span><span class="op">(</span><span class="st">"key-a"</span>, <span class="st">"manifest"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/keyeddgst.html">chmac</a></span><span class="op">(</span><span class="st">"key-a"</span>, <span class="st">"manifest"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "463b8b2c47caadd6334c53e4d9492fdac6fcaca185f56229043e1a025138ceae"</span></span>
-<span><span class="fu"><a href="../reference/rmbl_keyed_digest.html">core_hmac_sha256</a></span><span class="op">(</span><span class="st">"key-b"</span>, <span class="st">"manifest"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/keyeddgst.html">chmac</a></span><span class="op">(</span><span class="st">"key-b"</span>, <span class="st">"manifest"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "f3ebaf1b8fad504c57fd4cf82b163e30eac6eabd31b7c41a2a6e268ec445b134"</span></span></code></pre></div>
 <p><strong>Never compare a tag with <code>==</code>.</strong> A string
 comparison stops at the first differing character, so its running time
 tells an attacker how many leading characters were right.
-<code><a href="../reference/rmbl_keyed_digest.html">core_digest_equal()</a></code> compares every byte regardless and
-returns <code>FALSE</code> for a length mismatch without erroring:</p>
+<code><a href="../reference/keyeddgst.html">cdgsteq()</a></code> compares every byte regardless and returns
+<code>FALSE</code> for a length mismatch without erroring:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rmbl_keyed_digest.html">core_hmac_sha256</a></span><span class="op">(</span><span class="st">"k"</span>, <span class="st">"m"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/rmbl_keyed_digest.html">core_digest_equal</a></span><span class="op">(</span><span class="va">tag</span>, <span class="fu"><a href="../reference/rmbl_keyed_digest.html">core_hmac_sha256</a></span><span class="op">(</span><span class="st">"k"</span>, <span class="st">"m"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">tag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/keyeddgst.html">chmac</a></span><span class="op">(</span><span class="st">"k"</span>, <span class="st">"m"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/keyeddgst.html">cdgsteq</a></span><span class="op">(</span><span class="va">tag</span>, <span class="fu"><a href="../reference/keyeddgst.html">chmac</a></span><span class="op">(</span><span class="st">"k"</span>, <span class="st">"m"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="fu"><a href="../reference/rmbl_keyed_digest.html">core_digest_equal</a></span><span class="op">(</span><span class="va">tag</span>, <span class="fu"><a href="../reference/rmbl_keyed_digest.html">core_hmac_sha256</a></span><span class="op">(</span><span class="st">"k"</span>, <span class="st">"tampered"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/keyeddgst.html">cdgsteq</a></span><span class="op">(</span><span class="va">tag</span>, <span class="fu"><a href="../reference/keyeddgst.html">chmac</a></span><span class="op">(</span><span class="st">"k"</span>, <span class="st">"tampered"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span>
-<span><span class="fu"><a href="../reference/rmbl_keyed_digest.html">core_digest_equal</a></span><span class="op">(</span><span class="va">tag</span>, <span class="st">"too-short"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/keyeddgst.html">cdgsteq</a></span><span class="op">(</span><span class="va">tag</span>, <span class="st">"too-short"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -169,26 +168,26 @@ returns <code>FALSE</code> for a length mismatch without erroring:</p>
 person. PBKDF2 (RFC 8018) stretches it with a salt and an iteration
 count that makes each guess expensive:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/derive_key.html">derive_key</a></span><span class="op">(</span><span class="st">"password"</span>, <span class="st">"salt"</span>, iterations <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>     <span class="co"># the published test vector</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/drvkey.html">drvkey</a></span><span class="op">(</span><span class="st">"password"</span>, <span class="st">"salt"</span>, iter <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>     <span class="co"># the published test vector</span></span>
 <span><span class="co">#&gt; [1] "120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b"</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/derive_key.html">derive_key</a></span><span class="op">(</span><span class="st">"pw"</span>, <span class="st">"s"</span>, <span class="fl">1000</span><span class="op">)</span>, <span class="fu"><a href="../reference/derive_key.html">derive_key</a></span><span class="op">(</span><span class="st">"pw"</span>, <span class="st">"s"</span>, <span class="fl">1000</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/drvkey.html">drvkey</a></span><span class="op">(</span><span class="st">"pw"</span>, <span class="st">"s"</span>, <span class="fl">1000</span><span class="op">)</span>, <span class="fu"><a href="../reference/drvkey.html">drvkey</a></span><span class="op">(</span><span class="st">"pw"</span>, <span class="st">"s"</span>, <span class="fl">1000</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="fu"><a href="../reference/derive_key.html">derive_key</a></span><span class="op">(</span><span class="st">"pw"</span>, <span class="st">"salt-a"</span>, <span class="fl">1000</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="../reference/derive_key.html">derive_key</a></span><span class="op">(</span><span class="st">"pw"</span>, <span class="st">"salt-b"</span>, <span class="fl">1000</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/drvkey.html">drvkey</a></span><span class="op">(</span><span class="st">"pw"</span>, <span class="st">"salt-a"</span>, <span class="fl">1000</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="../reference/drvkey.html">drvkey</a></span><span class="op">(</span><span class="st">"pw"</span>, <span class="st">"salt-b"</span>, <span class="fl">1000</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
 <p>The salt must be random and stored beside the ciphertext or
 signature; the default of 100,000 iterations is the floor for
 interactive use. A derived key signs a manifest symmetrically:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">salt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="../reference/random_bytes.html">random_bytes</a></span><span class="op">(</span><span class="fl">16</span><span class="op">)</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
-<span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_key.html">derive_key</a></span><span class="op">(</span><span class="st">"correct horse battery staple"</span>, <span class="va">salt</span><span class="op">)</span></span>
-<span><span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/capsule_sign.html">capsule_sign</a></span><span class="op">(</span><span class="st">"manifest-digest"</span>, <span class="va">key</span>, scheme <span class="op">=</span> <span class="st">"hmac"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/capsule_verify.html">capsule_verify</a></span><span class="op">(</span><span class="st">"manifest-digest"</span>, <span class="va">sig</span>, <span class="va">key</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">salt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="../reference/rndbytes.html">rndbytes</a></span><span class="op">(</span><span class="fl">16</span><span class="op">)</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
+<span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/drvkey.html">drvkey</a></span><span class="op">(</span><span class="st">"correct horse battery staple"</span>, <span class="va">salt</span><span class="op">)</span></span>
+<span><span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpssign.html">cpssign</a></span><span class="op">(</span><span class="st">"manifest-digest"</span>, <span class="va">key</span>, scheme <span class="op">=</span> <span class="st">"hmac"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/cpsvrf.html">cpsvrf</a></span><span class="op">(</span><span class="st">"manifest-digest"</span>, <span class="va">sig</span>, <span class="va">key</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="randomness">Randomness<a class="anchor" aria-label="anchor" href="#randomness"></a>
 </h2>
-<p><code><a href="../reference/random_bytes.html">random_bytes()</a></code> draws from the operating system
+<p><code><a href="../reference/rndbytes.html">rndbytes()</a></code> draws from the operating system
 (<code>getrandom</code> or <code>/dev/urandom</code> on Unix,
 <code>RtlGenRandom</code> on Windows) and does <strong>not</strong>
 consume R’s seeded stream, so a reproducible analysis is unaffected by
@@ -197,7 +196,7 @@ key generation happening beside it:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/invisible.html" class="external-link">invisible</a></span><span class="op">(</span><span class="fu"><a href="../reference/random_bytes.html">random_bytes</a></span><span class="op">(</span><span class="fl">32</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/invisible.html" class="external-link">invisible</a></span><span class="op">(</span><span class="fu"><a href="../reference/rndbytes.html">rndbytes</a></span><span class="op">(</span><span class="fl">32</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>, <span class="va">a</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <p>For tests that need reproducible “random” bytes, the package’s
@@ -205,12 +204,12 @@ AES-256 CTR_DRBG (SP 800-90A) gives the same bytes from the same seed,
 exactly as NIST’s known-answer files use it; a personalization string
 separates streams:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/drbg_new.html">drbg_new</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">47</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/drbg_generate.html">drbg_generate</a></span><span class="op">(</span><span class="va">d</span>, <span class="fl">16</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/drbgnew.html">drbgnew</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">47</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/drbggen.html">drbggen</a></span><span class="op">(</span><span class="va">d</span>, <span class="fl">16</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] 06 15 50 23 4d 15 8c 5e c9 55 95 fe 04 ef 7a 25</span></span>
-<span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/drbg_new.html">drbg_new</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">48</span><span class="op">)</span>, personalization <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="st">"session 1"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/drbg_new.html">drbg_new</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">48</span><span class="op">)</span>, personalization <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="st">"session 2"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/drbg_generate.html">drbg_generate</a></span><span class="op">(</span><span class="va">a</span>, <span class="fl">16</span><span class="op">)</span>, <span class="fu"><a href="../reference/drbg_generate.html">drbg_generate</a></span><span class="op">(</span><span class="va">b</span>, <span class="fl">16</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/drbgnew.html">drbgnew</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">48</span><span class="op">)</span>, person <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="st">"session 1"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/drbgnew.html">drbgnew</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">48</span><span class="op">)</span>, person <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="st">"session 2"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/drbggen.html">drbggen</a></span><span class="op">(</span><span class="va">a</span>, <span class="fl">16</span><span class="op">)</span>, <span class="fu"><a href="../reference/drbggen.html">drbggen</a></span><span class="op">(</span><span class="va">b</span>, <span class="fl">16</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -223,36 +222,36 @@ holding the others, and a diff of the leaves names exactly which chunk
 changed.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">chunks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row1,row2"</span>, <span class="st">"row3,row4"</span>, <span class="st">"row5,row6"</span>, <span class="st">"row7,row8"</span><span class="op">)</span></span>
-<span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rmbl_merkle.html">merkle_root</a></span><span class="op">(</span><span class="va">chunks</span><span class="op">)</span></span>
+<span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mrk.html">mrkroot</a></span><span class="op">(</span><span class="va">chunks</span><span class="op">)</span></span>
 <span><span class="va">root</span></span>
 <span><span class="co">#&gt; [1] "3b1537c90e21c2e66f341b946388abbb78bf249fb433f961fba223b67141be31"</span></span>
 <span></span>
-<span><span class="va">before</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rmbl_merkle.html">merkle_leaves</a></span><span class="op">(</span><span class="va">chunks</span><span class="op">)</span></span>
-<span><span class="va">after</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rmbl_merkle.html">merkle_leaves</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">chunks</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>, <span class="st">"row5,row6-EDITED"</span>, <span class="va">chunks</span><span class="op">[</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">before</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mrk.html">mrklvs</a></span><span class="op">(</span><span class="va">chunks</span><span class="op">)</span></span>
+<span><span class="va">after</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mrk.html">mrklvs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">chunks</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>, <span class="st">"row5,row6-EDITED"</span>, <span class="va">chunks</span><span class="op">[</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">before</span> <span class="op">!=</span> <span class="va">after</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 3</span></span>
 <span></span>
-<span><span class="va">pr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rmbl_merkle.html">merkle_proof</a></span><span class="op">(</span><span class="va">chunks</span>, <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/rmbl_merkle.html">merkle_verify</a></span><span class="op">(</span><span class="va">chunks</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span>, <span class="va">pr</span>, <span class="va">root</span><span class="op">)</span></span>
+<span><span class="va">pr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mrk.html">mrkprf</a></span><span class="op">(</span><span class="va">chunks</span>, <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/mrk.html">mrkvrf</a></span><span class="op">(</span><span class="va">chunks</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span>, <span class="va">pr</span>, <span class="va">root</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="fu"><a href="../reference/rmbl_merkle.html">merkle_verify</a></span><span class="op">(</span><span class="st">"row5,row6-EDITED"</span>, <span class="va">pr</span>, <span class="va">root</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/mrk.html">mrkvrf</a></span><span class="op">(</span><span class="st">"row5,row6-EDITED"</span>, <span class="va">pr</span>, <span class="va">root</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
-<p><code><a href="../reference/chunk_file.html">chunk_file()</a></code> splits a real file into fixed-size chunks
+<p><code><a href="../reference/chnkfile.html">chnkfile()</a></code> splits a real file into fixed-size chunks
 that concatenate back to its bytes:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"some capsule content"</span>, <span class="fl">50</span><span class="op">)</span>, <span class="va">p</span><span class="op">)</span></span>
-<span><span class="va">ch</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/chunk_file.html">chunk_file</a></span><span class="op">(</span><span class="va">p</span>, chunk_bytes <span class="op">=</span> <span class="fl">128</span><span class="op">)</span></span>
+<span><span class="va">ch</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/chnkfile.html">chnkfile</a></span><span class="op">(</span><span class="va">p</span>, chnkbytes <span class="op">=</span> <span class="fl">128</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">ch</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 9</span></span>
-<span><span class="fu"><a href="../reference/rmbl_merkle.html">merkle_root</a></span><span class="op">(</span><span class="va">ch</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/mrk.html">mrkroot</a></span><span class="op">(</span><span class="va">ch</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "3f565b39becbebbc336618294525d7a1ff45394d68ecaec899d292bb0fd357c1"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">ch</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/readBin.html" class="external-link">readBin</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"raw"</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.info.html" class="external-link">file.size</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
-<p><code><a href="../reference/capsule_bundle.html">capsule_bundle()</a></code> pins each data file by one whole-file
-digest (<code><a href="../reference/sha256_file.html">sha256_file()</a></code>); the Merkle tree is for pinning the
-parts of a large file, so a mismatch identifies which part of it changed
-rather than only that something did.</p>
+<p><code><a href="../reference/cpsbndl.html">cpsbndl()</a></code> pins each data file by one whole-file digest
+(<code><a href="../reference/sha256file.html">sha256file()</a></code>); the Merkle tree is for pinning the parts of
+a large file, so a mismatch identifies which part of it changed rather
+than only that something did.</p>
 </div>
 <div class="section level2">
 <h2 id="how-these-implementations-are-checked">How these implementations are checked<a class="anchor" aria-label="anchor" href="#how-these-implementations-are-checked"></a>
@@ -263,6 +262,23 @@ differentially against OpenSSL 3.5. The keyed-digest comparison and
 PBKDF2 run under valgrind with the key marked undefined to prove their
 timing does not depend on it, and dudect measures the comparison and
 PBKDF2 on real CPUs.</p>
+</div>
+<div class="section level2">
+<h2 id="pinning-a-communitys-copy-of-a-table">Pinning a community’s copy of a table<a class="anchor" aria-label="anchor" href="#pinning-a-communitys-copy-of-a-table"></a>
+</h2>
+<p>Ownership and control of data, in the sense of the First Nations
+principles of OCAP, include knowing that a copy has not been altered. A
+digest of the table and a Merkle root over its rows let a community
+check its copy, and check single rows without the rest:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"suicide"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "b8faefff893183d72b4030a00407eb55c8952cedc4a35beb3416fece9d85c90f"</span></span>
+<span><span class="va">rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">d</span>, <span class="fl">1</span>, <span class="va">paste</span>, collapse <span class="op">=</span> <span class="st">","</span><span class="op">)</span></span>
+<span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mrk.html">mrkroot</a></span><span class="op">(</span><span class="va">rows</span><span class="op">)</span></span>
+<span><span class="va">proof</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mrk.html">mrkprf</a></span><span class="op">(</span><span class="va">rows</span>, <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/mrk.html">mrkvrf</a></span><span class="op">(</span><span class="va">rows</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span>, <span class="va">proof</span>, <span class="va">root</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

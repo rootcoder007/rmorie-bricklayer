@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -118,7 +118,7 @@ tidy copy of the published figures ships with the package.</p>
 <h2 id="one-call">One call<a class="anchor" aria-label="anchor" href="#one-call"></a>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/analyse_table.html">analyse_table</a></span><span class="op">(</span><span class="va">otis</span>, value <span class="op">=</span> <span class="st">"individuals"</span>, period <span class="op">=</span> <span class="st">"year"</span>,</span>
+<code class="sourceCode R"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/anltab.html">anltab</a></span><span class="op">(</span><span class="va">otis</span>, value <span class="op">=</span> <span class="st">"individuals"</span>, prd <span class="op">=</span> <span class="st">"year"</span>,</span>
 <span>                   by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"table"</span>, <span class="st">"group"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">a</span></span>
 <span><span class="co">#&gt; Analysis of `individuals` by year over 3 period(s) (2023 to 2025), grouped by table x group</span></span>
@@ -132,7 +132,7 @@ row is called significant. A row that looks striking on its own is
 judged in the company of the other nine.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">a</span><span class="op">$</span><span class="va">change</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"table"</span>, <span class="st">"group"</span>, <span class="st">"year"</span>, <span class="st">"value"</span>, <span class="st">"previous"</span>,</span>
-<span>             <span class="st">"pct_change"</span>, <span class="st">"pct_lower"</span>, <span class="st">"pct_upper"</span>, <span class="st">"p_adjusted"</span>,</span>
+<span>             <span class="st">"pctchg"</span>, <span class="st">"pctlo"</span>, <span class="st">"pctup"</span>, <span class="st">"padj"</span>,</span>
 <span>             <span class="st">"significant"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt; &lt;rmbl_yoy: no periods&gt;</span></span></code></pre></div>
 </div>
@@ -146,13 +146,13 @@ and a half of it, and the percent change inherits that.
 is the union of the sampling interval and the envelope: the honest range
 for a number read off a rounded table. Suppressed cells
 (<code>"x"</code>, <code>"&lt;5"</code>) are handled the same way
-through <code>suppression_limit</code>.</p>
+through <code>suplim</code>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/analyse_table.html">analyse_table</a></span><span class="op">(</span><span class="va">otis</span>, value <span class="op">=</span> <span class="st">"individuals"</span>, period <span class="op">=</span> <span class="st">"year"</span>,</span>
-<span>                   by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"table"</span>, <span class="st">"group"</span><span class="op">)</span>, rounding <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/anltab.html">anltab</a></span><span class="op">(</span><span class="va">otis</span>, value <span class="op">=</span> <span class="st">"individuals"</span>, prd <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>                   by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"table"</span>, <span class="st">"group"</span><span class="op">)</span>, rnd <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="va">b</span><span class="op">$</span><span class="va">change</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">change</span><span class="op">$</span><span class="va">previous</span><span class="op">)</span>,</span>
-<span>         <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"group"</span>, <span class="st">"year"</span>, <span class="st">"pct_change"</span>, <span class="st">"pct_lower"</span>, <span class="st">"pct_upper"</span>,</span>
-<span>           <span class="st">"combined_pct_lower"</span>, <span class="st">"combined_pct_upper"</span><span class="op">)</span><span class="op">]</span></span>
+<span>         <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"group"</span>, <span class="st">"year"</span>, <span class="st">"pctchg"</span>, <span class="st">"pctlo"</span>, <span class="st">"pctup"</span>,</span>
+<span>           <span class="st">"compctlo"</span>, <span class="st">"compctup"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt; &lt;rmbl_yoy: no periods&gt;</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -165,29 +165,29 @@ instead of hiding it. The Poisson rate ratio per year is still
 informative as a description.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">a</span><span class="op">$</span><span class="va">trend</span></span>
-<span><span class="co">#&gt;          table    group periods first  last       tau   trend_p  slope</span></span>
+<span><span class="co">#&gt;          table    group periods first  last       tau     trndp  slope</span></span>
 <span><span class="co">#&gt; 1 age_category 18 to 24       3  3507  3688 0.3333333 1.0000000   90.5</span></span>
 <span><span class="co">#&gt; 2 age_category 25 to 49       3 14930 18482 0.3333333 1.0000000 1776.0</span></span>
 <span><span class="co">#&gt; 3 age_category      50+       3  2344  2875 0.3333333 1.0000000  265.5</span></span>
 <span><span class="co">#&gt; 4       gender   Female       3  1511  2821 1.0000000 0.3333333  655.0</span></span>
 <span><span class="co">#&gt; 5       gender     Male       3 19270 22224 0.3333333 1.0000000 1477.0</span></span>
-<span><span class="co">#&gt;   rate_ratio rate_ratio_lower rate_ratio_upper</span></span>
-<span><span class="co">#&gt; 1   1.027143        0.2491778         4.234015</span></span>
-<span><span class="co">#&gt; 2   1.118024        0.4111145         3.040459</span></span>
-<span><span class="co">#&gt; 3   1.112728        0.4023851         3.077062</span></span>
-<span><span class="co">#&gt; 4   1.376319        0.8250989         2.295790</span></span>
-<span><span class="co">#&gt; 5   1.077781        0.3556341         3.266310</span></span></code></pre></div>
+<span><span class="co">#&gt;   rateratio rateratiolo rateratioup</span></span>
+<span><span class="co">#&gt; 1  1.027143   0.2491778    4.234015</span></span>
+<span><span class="co">#&gt; 2  1.118024   0.4111145    3.040459</span></span>
+<span><span class="co">#&gt; 3  1.112728   0.4023851    3.077062</span></span>
+<span><span class="co">#&gt; 4  1.376319   0.8250989    2.295790</span></span>
+<span><span class="co">#&gt; 5  1.077781   0.3556341    3.266310</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="has-the-data-changed-since-last-time">Has the data changed since last time?<a class="anchor" aria-label="anchor" href="#has-the-data-changed-since-last-time"></a>
 </h2>
 <p>Keep the previous release and pass it as <code>prior</code>; every
 column is screened. Before trusting a drift verdict, ask how often the
-screens fire on data that has not changed:
-<code><a href="../reference/drift_calibrate.html">drift_calibrate()</a></code> splits one release into random halves and
-reports the false-alarm rate per column.</p>
+screens fire on data that has not changed: <code><a href="../reference/drftcal.html">drftcal()</a></code> splits
+one release into random halves and reports the false-alarm rate per
+column.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/drift_calibrate.html">drift_calibrate</a></span><span class="op">(</span><span class="va">otis</span>, n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/drftcal.html">drftcal</a></span><span class="op">(</span><span class="va">otis</span>, n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Drift screens on 10 identical re-fetches (alpha = 0.01)</span></span>
 <span><span class="co">#&gt;   at least one column flagged: 0% of re-fetches</span></span>
 <span><span class="co">#&gt;   no column fired on identical data</span></span>
@@ -202,11 +202,10 @@ exactly: average daily population is person-days over the days in the
 period, average length of stay is person-days over the people served,
 and the identity <code>adp = admissions * alos / t</code> means a change
 in days must multiply out of a change in people and a change in stay.
-<code><a href="../reference/stock_flow.html">stock_flow()</a></code> reports both sides and checks the
-identity.</p>
+<code><a href="../reference/stkflow.html">stkflow()</a></code> reports both sides and checks the identity.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stock_flow.html">stock_flow</a></span><span class="op">(</span>days <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">21900</span>, <span class="fl">23725</span>, <span class="fl">20440</span><span class="op">)</span>, people <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">325</span>, <span class="fl">280</span><span class="op">)</span>,</span>
-<span>                 period <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2022</span>, <span class="fl">2023</span>, <span class="fl">2024</span><span class="op">)</span>, t <span class="op">=</span> <span class="fl">365</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stkflow.html">stkflow</a></span><span class="op">(</span>days <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">21900</span>, <span class="fl">23725</span>, <span class="fl">20440</span><span class="op">)</span>, people <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">325</span>, <span class="fl">280</span><span class="op">)</span>,</span>
+<span>                 prd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2022</span>, <span class="fl">2023</span>, <span class="fl">2024</span><span class="op">)</span>, t <span class="op">=</span> <span class="fl">365</span><span class="op">)</span></span>
 <span><span class="va">sf</span></span>
 <span><span class="co">#&gt; ── Stock and flow over 3 periods ───────────────────────────────── </span></span>
 <span><span class="co">#&gt;  period people  days alos adp</span></span>
@@ -218,8 +217,8 @@ identity.</p>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>A population that rose while stays shortened, or fell while stays
 lengthened, reads differently from one where both moved together;
-<code><a href="../reference/adp.html">adp()</a></code>, <code><a href="../reference/alos.html">alos()</a></code> and <code><a href="../reference/admissions.html">admissions()</a></code>
-give the single measures.</p>
+<code><a href="../reference/adp.html">adp()</a></code>, <code><a href="../reference/alos.html">alos()</a></code> and <code><a href="../reference/admits.html">admits()</a></code> give
+the single measures.</p>
 </div>
 <div class="section level2">
 <h2 id="stock-and-flow-1">Stock and flow<a class="anchor" aria-label="anchor" href="#stock-and-flow-1"></a>
@@ -230,11 +229,10 @@ exactly: average daily population is person-days over the days in the
 period, average length of stay is person-days over the people served,
 and the identity <code>adp = admissions * alos / t</code> means a change
 in days must multiply out of a change in people and a change in stay.
-<code><a href="../reference/stock_flow.html">stock_flow()</a></code> reports both sides and checks the
-identity.</p>
+<code><a href="../reference/stkflow.html">stkflow()</a></code> reports both sides and checks the identity.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stock_flow.html">stock_flow</a></span><span class="op">(</span>days <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">21900</span>, <span class="fl">23725</span>, <span class="fl">20440</span><span class="op">)</span>, people <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">325</span>, <span class="fl">280</span><span class="op">)</span>,</span>
-<span>                 period <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2022</span>, <span class="fl">2023</span>, <span class="fl">2024</span><span class="op">)</span>, t <span class="op">=</span> <span class="fl">365</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stkflow.html">stkflow</a></span><span class="op">(</span>days <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">21900</span>, <span class="fl">23725</span>, <span class="fl">20440</span><span class="op">)</span>, people <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">325</span>, <span class="fl">280</span><span class="op">)</span>,</span>
+<span>                 prd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2022</span>, <span class="fl">2023</span>, <span class="fl">2024</span><span class="op">)</span>, t <span class="op">=</span> <span class="fl">365</span><span class="op">)</span></span>
 <span><span class="va">sf</span></span>
 <span><span class="co">#&gt; ── Stock and flow over 3 periods ───────────────────────────────── </span></span>
 <span><span class="co">#&gt;  period people  days alos adp</span></span>
@@ -246,19 +244,30 @@ identity.</p>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>A population that rose while stays shortened, or fell while stays
 lengthened, reads differently from one where both moved together;
-<code><a href="../reference/adp.html">adp()</a></code>, <code><a href="../reference/alos.html">alos()</a></code> and <code><a href="../reference/admissions.html">admissions()</a></code>
-give the single measures.</p>
+<code><a href="../reference/adp.html">adp()</a></code>, <code><a href="../reference/alos.html">alos()</a></code> and <code><a href="../reference/admits.html">admits()</a></code> give
+the single measures.</p>
+</div>
+<div class="section level2">
+<h2 id="other-published-tables">Other published tables<a class="anchor" aria-label="anchor" href="#other-published-tables"></a>
+</h2>
+<p>The same approach works on any table with an estimate and its
+interval. The package also bundles Statistics Canada estimates of First
+Nations, Metis and Inuit health and mental health
+(<code><a href="../reference/indiex.html">?indiex</a></code>).
+<code><a href="../articles/first-nations-metis-inuit-health.html">vignette("first-nations-metis-inuit-health")</a></code> analyses them:
+by distinction, with suppressed cells never imputed, and with wellness
+reported beside distress.</p>
 </div>
 <div class="section level2">
 <h2 id="record-it">Record it<a class="anchor" aria-label="anchor" href="#record-it"></a>
 </h2>
-<p><code><a href="../reference/report_analysis.html">report_analysis()</a></code> writes the whole analysis as Markdown
-or a single HTML file, and <code><a href="../reference/use_capsule_template.html">use_capsule_template()</a></code> writes a
-folder with the provenance file, an <code>analysis.R</code> that pins
-the source bytes and runs the steps above, and a README. The template
-runs as written against this table.</p>
+<p><code><a href="../reference/rptanl.html">rptanl()</a></code> writes the whole analysis as Markdown or a
+single HTML file, and <code><a href="../reference/usecpstmpl.html">usecpstmpl()</a></code> writes a folder with the
+provenance file, an <code>analysis.R</code> that pins the source bytes
+and runs the steps above, and a README. The template runs as written
+against this table.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/use_capsule_template.html">use_capsule_template</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"capsule-"</span><span class="op">)</span>, example <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/usecpstmpl.html">usecpstmpl</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"capsule-"</span><span class="op">)</span>, ex <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "analysis.R"           "data_provenance.json" "README.md"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"analysis.R"</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">12</span><span class="op">]</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
@@ -267,19 +276,18 @@ runs as written against this table.</p>
 <span><span class="co">#&gt; library(rmoriebricklayer)</span></span>
 <span><span class="co">#&gt; arg &lt;- grep("^--file=", commandArgs(), value = TRUE)</span></span>
 <span><span class="co">#&gt; here &lt;- if (length(arg)) dirname(normalizePath(sub("^--file=", "", arg[1]))) else getwd()</span></span>
-<span><span class="co">#&gt; prov &lt;- load_provenance(file.path(here, "data_provenance.json"))</span></span>
+<span><span class="co">#&gt; prov &lt;- loadprov(file.path(here, "data_provenance.json"))</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; # 1. Fetch (a local path is read directly; a URL is downloaded with a</span></span>
 <span><span class="co">#&gt; #    Wayback Machine fallback) and pin the bytes.</span></span>
 <span><span class="co">#&gt; src &lt;- prov$source$url</span></span>
 <span><span class="co">#&gt; local &lt;- if (file.exists(src)) src else</span></span>
-<span><span class="co">#&gt;   friendly_download(src, file.path(here, basename(src)))</span></span></code></pre></div>
+<span><span class="co">#&gt;   fdl(src, file.path(here, basename(src)))</span></span></code></pre></div>
 <p>From here, replace the source URL and the column names in
 <code>data_provenance.json</code>, run <code>Rscript analysis.R</code>,
 and copy the SHA-256 it prints back into the provenance file. Later runs
-refuse to proceed if the bytes change, and
-<code><a href="../reference/manifest_recompute.html">manifest_recompute()</a></code> compares two runs number by
-number.</p>
+refuse to proceed if the bytes change, and <code><a href="../reference/mnfrcmp.html">mnfrcmp()</a></code>
+compares two runs number by number.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

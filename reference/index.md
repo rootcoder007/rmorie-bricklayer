@@ -7,24 +7,24 @@ intervals on every change, multiple-comparison adjustment over the scan,
 the envelope that rounding and suppression imply, trend, and a drift
 screen against the prior capsule; then a report and a capsule template.
 
-- [`analyse_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/analyse_table.md)
+- [`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md)
   : Analyse a published administrative table in one call
-- [`report_analysis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/report_analysis.md)
+- [`rptanl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rptanl.md)
   : Write an analysis as a Markdown or HTML report
-- [`published_bounds()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/published_bounds.md)
+- [`pubbnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pubbnd.md)
   : Bounds implied by rounding and suppression in a published table
-- [`change_envelope()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/change_envelope.md)
+- [`chgenv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chgenv.md)
   : Envelope of a difference, a percent change or a rate under
   publication bounds
-- [`yoy_bounds()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_bounds.md)
+- [`yoybnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoybnd.md)
   : Add publication bounds to a year-over-year table
-- [`yoy_pvalues()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_pvalues.md)
+- [`yoypv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoypv.md)
   : Exact p-values for the rows of a year-over-year table
-- [`scan_adjust()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scan_adjust.md)
+- [`scanadj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scanadj.md)
   : Adjust a scan of many comparisons for multiple testing
-- [`drift_calibrate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_calibrate.md)
+- [`drftcal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftcal.md)
   : Calibrate the drift screens on data known not to have drifted
-- [`use_capsule_template()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/use_capsule_template.md)
+- [`usecpstmpl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/usecpstmpl.md)
   : Start a capsule from a template
 
 ## Fetch open data
@@ -32,13 +32,18 @@ screen against the prior capsule; then a report and a capsule template.
 Resilient downloaders with libcurl + Wayback fallback for pulling public
 datasets over flaky endpoints.
 
-- [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch.md)
+- [`blfetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blfetch.md)
   : Fetch a URL to disk with an Internet Archive fallback (C++/libcurl)
-- [`bricklayer_fetch_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch_siu.md)
+- [`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)
+  : Fetch a file from its source or a mirror, verified by its SHA-256
+- [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
+  : Capture files the Internet Archive cannot reach, and publish them as
+  an archive.org item
+- [`siufetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siufetch.md)
   : Fetch an Ontario SIU director's report by drid
-- [`download_data()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/download_data.md)
+- [`dldata()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dldata.md)
   : Download a File
-- [`friendly_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/friendly_download.md)
+- [`fdl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fdl.md)
   : Download a File With Diagnostic Error Messages
 
 ## SIU report mining
@@ -47,17 +52,17 @@ Deterministic, offline parse/resolve core for Ontario Special
 Investigations Unit director’s reports — schema, parser,
 subject-official resolver.
 
-- [`bricklayer_siu_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_schema.md)
+- [`siusch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siusch.md)
   : The panel-reviewed SIU report field schema
-- [`bricklayer_parse_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_parse_siu.md)
+- [`siuprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siuprs.md)
   : Parse an SIU director's report into the schema fields
-- [`bricklayer_fetch_parse_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch_parse_siu.md)
+- [`siufprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siufprs.md)
   : Fetch and parse one SIU director's report
-- [`bricklayer_siu_text()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_text.md)
+- [`siutxt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siutxt.md)
   : Convert SIU report HTML to plain text
-- [`bricklayer_siu_iso_date()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_iso_date.md)
+- [`siudate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siudate.md)
   : Convert a human-readable SIU report date to ISO format
-- [`bricklayer_siu_resolve_so()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_resolve_so.md)
+- [`siuso()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siuso.md)
   : Resolve the subject-official count from SIU report text
 
 ## Portal resolvers
@@ -65,21 +70,21 @@ subject-official resolver.
 Turn a dataset identifier on a government open-data portal into a direct
 resource URL — CKAN, Socrata, ArcGIS, and Wayback snapshots.
 
-- [`resolve_via_ckan()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_ckan.md)
+- [`rslvckan()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rslvckan.md)
   : Resolve a Download URL via CKAN package_show
-- [`resolve_via_ckan_search()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_ckan_search.md)
+- [`rslvckns()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rslvckns.md)
   : Resolve a Download URL via CKAN package_search
-- [`resolve_via_socrata()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_socrata.md)
+- [`rslvsoc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rslvsoc.md)
   : Resolve a Download URL via the Socrata Metadata API
-- [`resolve_via_arcgis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_arcgis.md)
+- [`rslvarc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rslvarc.md)
   : Resolve a Query URL via ArcGIS FeatureServer Metadata
-- [`wayback_snapshot_url()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_snapshot_url.md)
+- [`wbsnpurl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsnpurl.md)
   : Resolve a Wayback Machine snapshot URL
-- [`wayback_snapshot_url_native()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_snapshot_url_native.md)
+- [`wbsnpnat()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsnpnat.md)
   : Resolve a Wayback Machine snapshot URL (C++/libcurl)
-- [`wayback_save()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_save.md)
+- [`wbsave()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsave.md)
   : Archive many pages in the Wayback Machine
-- [`wayback_retry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_retry.md)
+- [`wbrtry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbrtry.md)
   : Retry the failures of a bulk Wayback run
 
 ## Provenance & reproducibility capsules
@@ -87,31 +92,31 @@ resource URL — CKAN, Socrata, ArcGIS, and Wayback snapshots.
 Capture the environment, record a citable data-provenance capsule, and
 verify it later so an analysis reproduces from the same inputs.
 
-- [`capture_environment()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capture_environment.md)
+- [`capenv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capenv.md)
   : Capture the Analysis Environment for a Manifest
-- [`cite_capsule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cite_capsule.md)
+- [`citecps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/citecps.md)
   : Generate a Data Citation From Provenance
-- [`verify_capsule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_capsule.md)
+- [`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
   : Re-Verify an Entire Reproducible Data Capsule
-- [`load_provenance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/load_provenance.md)
+- [`loadprov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md)
   : Load a Pinned Data-Provenance Record
-- [`record()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/record.md)
+- [`recrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recrd.md)
   : Record a Cross-Check Result in a Manifest
-- [`make_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_manifest.md)
+- [`mkmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mkmnf.md)
   : Construct a Reproducibility Manifest
-- [`manifest_canonical()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_canonical.md)
-  [`manifest_digest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_canonical.md)
+- [`mnfcanon()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfcanon.md)
+  [`mnfdgst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfcanon.md)
   : The canonical serialisation of a manifest, and its digest
-- [`manifest_recompute()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_recompute.md)
+- [`mnfrcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfrcmp.md)
   : Recompute a manifest's recorded statistics against the data
-- [`manifest_record_seed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_record_seed.md)
-  [`manifest_restore_seed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_record_seed.md)
+- [`mnfrecseed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfrecseed.md)
+  [`mnfrstseed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfrecseed.md)
   : Record and restore the random number generator state
-- [`capture_dependencies()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capture_dependencies.md)
+- [`capdeps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capdeps.md)
   : Where each loaded package came from
-- [`write_manifest_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_manifest_json.md)
+- [`wrmnfjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrmnfjs.md)
   : Write a Manifest to JSON
-- [`write_summary_txt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_summary_txt.md)
+- [`wrsmrytxt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrsmrytxt.md)
   : Write a Plain-Language Run Summary
 
 ## Language model and command line
@@ -120,73 +125,73 @@ Language models you bring (a provider’s key, an OpenAI-compatible server
 of your own, or a local Ollama), answering from the MORIE packages’
 help; the rmoriebricklayer shell command.
 
-- [`agent_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
+- [`agentbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agentbndl.md)
   : Agent-assisted reproducibility-bundle help
-- [`bricklayer_llm_ask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)
+- [`llmask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmask.md)
   : Ask a language model
-- [`bricklayer_explain_error()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_explain_error.md)
+- [`explerr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/explerr.md)
   : Explain an error from rmoriebricklayer (or a package built on it)
-- [`bricklayer_llm_config()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_config.md)
+- [`llmcfg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmcfg.md)
   : Show or save the language-model settings
-- [`bricklayer_llm_login()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_login.md)
+- [`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
   : Sign in for the curated tables at data.rmorie.com
-- [`bricklayer_llm_logout()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_logout.md)
+- [`dlogout()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogout.md)
   : Forget the MORIE data key
-- [`bricklayer_llm_status()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_status.md)
+- [`llmstat()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmstat.md)
   : Report the language-model routes available from this machine
-- [`bricklayer_services()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_services.md)
+- [`svcs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svcs.md)
   : The hosted MORIE services, as the project site currently describes
   them
-- [`bricklayer_llm_models()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_models.md)
+- [`llmmdls()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmmdls.md)
   : Models a language-model route offers
-- [`bricklayer_llm_providers()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_providers.md)
+- [`llmprvd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmprvd.md)
   : The language-model providers a key can be brought for
-- [`bricklayer_llm_route_info()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_route_info.md)
+- [`llmrte()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmrte.md)
   : The language-model route that would answer
-- [`bricklayer_llm_chat()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_chat.md)
+- [`llmchat()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmchat.md)
   : A conversation with a language model
-- [`bricklayer_data_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
-  [`bricklayer_data_tables()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
-  [`bricklayer_data_load()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
+- [`dmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  [`dtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
+  [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
   : Curated datasets at data.rmorie.com
-- [`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md)
+- [`bldl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bldl.md)
   : Download a file with live progress
-- [`bricklayer_progress()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_progress.md)
+- [`blprog()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blprog.md)
   : Live progress for long-running work
-- [`bricklayer_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_cli.md)
+- [`blcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blcli.md)
   : Run the rmoriebricklayer command line
-- [`install_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)
+- [`instcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/instcli.md)
   : Install the rmoriebricklayer command-line launcher
 
 ## JSON (native codec)
 
 jsonlite’s mapping in base R, byte-for-byte; no jsonlite at run time.
 
-- [`bricklayer_json_from_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_from_json.md)
+- [`fromjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fromjs.md)
   : Parse JSON into R objects (jsonlite's fromJSON, natively)
-- [`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_to_json.md)
+- [`tojs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tojs.md)
   : Encode an R object as JSON (jsonlite's toJSON, natively)
-- [`bricklayer_json_serialize()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
-  [`bricklayer_json_unserialize()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
+- [`jsser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
+  [`jsunser()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsserdoc.md)
   : JSON serialisation of an R object, type and attributes included
-- [`json_gzip_encode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_gzip.md)
-  [`json_gzip_decode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_gzip.md)
+- [`jsgzenc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md)
+  [`jsgzdec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/jsgz.md)
   : Compressed, base64-encoded JSON
-- [`bricklayer_json_base64_enc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_base64.md)
-  [`bricklayer_json_base64_dec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_base64.md)
-  [`bricklayer_json_base64url_enc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_base64.md)
-  [`bricklayer_json_base64url_dec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_base64.md)
+- [`jsb64enc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/b64.md)
+  [`jsb64dec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/b64.md)
+  [`jsb64uenc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/b64.md)
+  [`jsb64udec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/b64.md)
   : Base64 encoding
 
 ## Integrity & checksums
 
 SHA-256 hashing and verification for downloaded files.
 
-- [`sha256_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sha256_file.md)
+- [`sha256file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sha256file.md)
   : Compute a File's SHA256 Digest
-- [`verify_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_sha256.md)
+- [`vrfsha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfsha256.md)
   : Verify a File's SHA256 Against an Expected Digest
-- [`core_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_sha256.md)
+- [`csha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/csha256.md)
   : SHA-256 hex digest (C backend)
 
 ## Categorical integrity
@@ -197,39 +202,39 @@ cross-tabulation proof, counts checked against what was published,
 reported odds ratios checked under every relabelling, and a signed
 manifest of the whole chain.
 
-- [`guard_recode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/guard_recode.md)
+- [`grdrcd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/grdrcd.md)
   : Recode a categorical column by explicit name-to-name mapping
-- [`decode_codes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/decode_codes.md)
+- [`deccodes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/deccodes.md)
   : Decode numeric category codes with an explicit code-to-label
   dictionary
-- [`guard_levels()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/guard_levels.md)
+- [`grdlvls()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/grdlvls.md)
   : Build a factor with explicit, verified levels
-- [`audit_categories()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/audit_categories.md)
+- [`audcats()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/audcats.md)
   : Audit the categorical columns of a data frame for coding hazards
-- [`verify_recode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_recode.md)
+- [`vrfrcd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfrcd.md)
   : Prove a recode with a before/after cross-tabulation
-- [`verify_marginals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_marginals.md)
+- [`vrfmrg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfmrg.md)
   : Verify recoded category counts against the counts a release
   published
-- [`odds_ratio_check()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/odds_ratio_check.md)
+- [`orchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/orchk.md)
   : Check reported odds ratios against a labelled table, under every
   relabelling
-- [`relabel()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/relabel.md)
+- [`relbl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/relbl.md)
   : Relabel a categorical variable by name, never by position
-- [`decode_labelled()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/decode_labelled.md)
+- [`declbld()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/declbld.md)
   : Decode a labelled import by its value labels, by code
-- [`transfer_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/transfer_verify.md)
+- [`xfrvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xfrvrf.md)
   : Verify a categorical variable that crossed from one program to
   another
-- [`relabel_forensics()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/relabel_forensics.md)
+- [`rlblfrns()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rlblfrns.md)
   : Name the mechanical step that reproduces a label permutation
-- [`guard_binary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/guard_binary.md)
+- [`grdbin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/grdbin.md)
   : Refuse a categorical column where a numeric 0/1 treatment is
   required
-- [`recode_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recode_manifest.md)
+- [`rcdmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rcdmnf.md)
   : Record a recode as a manifest that can be signed and verified later
-- [`write_recode_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_recode_manifest.md)
-  [`verify_recode_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_recode_manifest.md)
+- [`wrrcdmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrrcdmnf.md)
+  [`vrfrcdmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrrcdmnf.md)
   : Write and verify a recode manifest
 
 ## Categorical integrity
@@ -240,30 +245,30 @@ cross-tabulation proof, counts checked against what was published,
 reported odds ratios checked under every relabelling, and a signed
 manifest of the whole chain.
 
-- [`guard_recode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/guard_recode.md)
+- [`grdrcd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/grdrcd.md)
   : Recode a categorical column by explicit name-to-name mapping
-- [`decode_codes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/decode_codes.md)
+- [`deccodes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/deccodes.md)
   : Decode numeric category codes with an explicit code-to-label
   dictionary
-- [`guard_levels()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/guard_levels.md)
+- [`grdlvls()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/grdlvls.md)
   : Build a factor with explicit, verified levels
-- [`audit_categories()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/audit_categories.md)
+- [`audcats()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/audcats.md)
   : Audit the categorical columns of a data frame for coding hazards
-- [`verify_recode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_recode.md)
+- [`vrfrcd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfrcd.md)
   : Prove a recode with a before/after cross-tabulation
-- [`verify_marginals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_marginals.md)
+- [`vrfmrg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfmrg.md)
   : Verify recoded category counts against the counts a release
   published
-- [`odds_ratio_check()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/odds_ratio_check.md)
+- [`orchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/orchk.md)
   : Check reported odds ratios against a labelled table, under every
   relabelling
-- [`guard_binary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/guard_binary.md)
+- [`grdbin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/grdbin.md)
   : Refuse a categorical column where a numeric 0/1 treatment is
   required
-- [`recode_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recode_manifest.md)
+- [`rcdmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rcdmnf.md)
   : Record a recode as a manifest that can be signed and verified later
-- [`write_recode_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_recode_manifest.md)
-  [`verify_recode_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_recode_manifest.md)
+- [`wrrcdmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrrcdmnf.md)
+  [`vrfrcdmnf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrrcdmnf.md)
   : Write and verify a recode manifest
 
 ## Schema validation & synthetic data
@@ -271,24 +276,24 @@ manifest of the whole chain.
 Validate a data frame against a declared schema, and build typed
 synthetic columns/CSVs for tests and documentation.
 
-- [`apply_schema_validation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/apply_schema_validation.md)
+- [`schval()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/schval.md)
   : Apply Schema Validation, Stopping on Fatal Issues
-- [`validate_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_schema.md)
+- [`valsch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/valsch.md)
   : Validate a Data Frame Against a Provenance Schema
-- [`make_synthetic_column()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_synthetic_column.md)
+- [`mksyncol()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mksyncol.md)
   : Generate One Synthetic Column From a Spec
-- [`make_synthetic_csv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_synthetic_csv.md)
+- [`mksyncsv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mksyncsv.md)
   : Generate a Synthetic CSV From a Schema Recipe
 
 ## Text & encoding utilities
 
 ASCII transliteration and safe text fallbacks for non-UTF-8 sinks.
 
-- [`to_ascii()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/to_ascii.md)
+- [`toascii()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/toascii.md)
   : Transliterate Text to Plain ASCII
-- [`ascii_fallback()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ascii_fallback.md)
+- [`asciifb()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/asciifb.md)
   : Use Text As-Is, Falling Back to ASCII When It Cannot Be Represented
-- [`write_text_fallback()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_text_fallback.md)
+- [`wrtxtfb()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrtxtfb.md)
   : Write Text as UTF-8, Falling Back to ASCII on an Encoding Error
 
 ## Core numeric primitives
@@ -297,51 +302,51 @@ Thin R wrappers over the shared compiled core that the whole ecosystem
 links against via `LinkingTo: rmoriebricklayer`, so every sibling
 package computes with one copy of the arithmetic.
 
-- [`core_mean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_stats.md)
-  [`core_var()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_stats.md)
-  [`core_cor()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_stats.md)
+- [`cmn()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cstat.md)
+  [`cvari()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cstat.md)
+  [`ccorr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cstat.md)
   : Fast summary statistics (C backend)
-- [`core_normal_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_normal_pdf.md)
+- [`cnormpdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnormpdf.md)
   : Normal density (C backend)
-- [`core_normal_logpdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_normal_logpdf.md)
+- [`cnormlpdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnormlpdf.md)
   : Normal log-density (C backend)
-- [`core_sd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_spread.md)
-  [`core_dist()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_spread.md)
+- [`csdev()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cspread.md)
+  [`cdistm()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cspread.md)
   : Standard deviation and Euclidean distance (C backend)
-- [`core_moments()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_moments.md)
+- [`cmom()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cmom.md)
   : Mean, variance, skewness and kurtosis (C backend)
-- [`core_quantile()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_robust.md)
-  [`core_median()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_robust.md)
-  [`core_mad()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_robust.md)
-  [`core_iqr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_robust.md)
-  [`core_tukey_fences()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_robust.md)
+- [`cqnt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md)
+  [`cmed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md)
+  [`cmad()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md)
+  [`ciqr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md)
+  [`ctkyfnc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crob.md)
   : Quantiles, median and robust spread (C backend)
-- [`core_trimmed_mean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_trimmed.md)
-  [`core_winsorized_mean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_trimmed.md)
+- [`ctrmmean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ctrm.md)
+  [`cwinsmean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ctrm.md)
   : Trimmed and winsorized means (C backend)
-- [`core_weighted()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_weighted.md)
+- [`cwtd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cwtd.md)
   : Weighted mean and variance (C backend)
-- [`core_cor_spearman()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_rank.md)
-  [`core_midranks()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_rank.md)
+- [`cspr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crank.md)
+  [`cmidrk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crank.md)
   : Rank correlation and midranks (C backend)
-- [`core_cov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_cov.md)
+- [`ccovm()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ccovm.md)
   : Covariance matrix of a numeric matrix (C backend)
-- [`core_bootstrap_mean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_bootstrap_mean.md)
+- [`cbootmean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cbootmean.md)
   : Bootstrap replicate means (C backend)
-- [`core_ipw_weights()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_ipw_weights.md)
+- [`cipw()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cipw.md)
   : Trimmed inverse-probability weights (C backend)
-- [`core_gamma_cdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_gamma_cdf.md)
+- [`cgamcdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cgamcdf.md)
   : Regularized incomplete gamma function (C backend)
-- [`core_hawkes_nll()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_nll.md)
+- [`chwknll()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwknll.md)
   : Hawkes-process negative log-likelihood (C backend)
-- [`core_hawkes_fit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_fit.md)
+- [`chwkfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwkfit.md)
   : Fit a Hawkes process by maximum likelihood (analytic gradient, fast
   routes)
-- [`core_hawkes_residuals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_residuals.md)
+- [`chwkres()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwkres.md)
   : Time-rescaling residuals of a Hawkes process
-- [`core_uniforms()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_uniforms.md)
+- [`cunif()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cunif.md)
   : Reproducible uniforms shared with morie's Python arm (splitmix64)
-- [`core_hawkes_jitter()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_jitter.md)
+- [`chwkjit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwkjit.md)
   : Spread event times recorded to a resolution across their interval
 
 ## Distributional drift
@@ -351,18 +356,18 @@ pinned against. A byte digest cannot answer this: a re-release can be
 statistically identical yet differ byte-for-byte, and a column can keep
 its name and type while having been silently rescaled.
 
-- [`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md)
+- [`cpsdrft()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md)
   : Compare a fetched data frame with the one a capsule was pinned
   against
-- [`drift_ks()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_ks.md)
+- [`drftks()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftks.md)
   : Two-sample Kolmogorov-Smirnov test (C backend)
-- [`drift_psi()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_psi.md)
+- [`drftpsi()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftpsi.md)
   : Population stability index and Jensen-Shannon divergence (C backend)
-- [`drift_chisq()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_chisq.md)
+- [`drftchisq()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftchisq.md)
   : Chi-square test for a categorical column
-- [`drift_homogeneity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_homogeneity.md)
+- [`drfthomog()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drfthomog.md)
   : Chi-square test of homogeneity for two categorical samples
-- [`benford_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/benford_test.md)
+- [`benfordtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/benfordtst.md)
   : Benford first-digit test
 
 ## Signed provenance
@@ -372,93 +377,93 @@ secret, post-quantum hash-based signatures for a public verifier, Merkle
 trees to pin a capsule chunk by chunk, and hash chains to make the run
 history itself tamper-evident.
 
-- [`capsule_attest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_attest.md)
-  [`capsule_check_attestation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_attest.md)
+- [`cpsatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)
+  [`cpschkatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)
   : Attest a capsule, binding a signature to what it covers
-- [`capsule_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_bundle.md)
-  [`capsule_bundle_read()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_bundle.md)
-  [`capsule_bundle_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_bundle.md)
+- [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  [`cpsbndlrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
   : Bundle a capsule into one signed artifact
-- [`capsule_falsify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_falsify.md)
+- [`cpsfals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsfals.md)
   : Run falsification controls against a statistic
-- [`capsule_power()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_power.md)
+- [`cpspwr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpspwr.md)
   : Detect an injected effect of known size
-- [`prereg_declare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/prereg_declare.md)
-  [`prereg_check()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/prereg_declare.md)
+- [`prrgdecl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/prrgdecl.md)
+  [`prrgchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/prrgdecl.md)
   : Declare an analysis before running it
-- [`falsify_family()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/falsify_family.md)
+- [`falsfam()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/falsfam.md)
   : Correct a family of falsification results for multiple testing
-- [`evalue_rr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/evalue_rr.md)
+- [`evlrr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/evlrr.md)
   : How strong would an unmeasured confounder have to be
-- [`timestamp_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/timestamp_verify.md)
-  [`timestamp_info()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/timestamp_verify.md)
+- [`tsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsvrf.md)
+  [`tsinfo()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsvrf.md)
   : Verify an RFC 3161 timestamp token
-- [`cert_parse()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cert_parse.md)
+- [`certprs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/certprs.md)
   : Parse an X.509 certificate
-- [`cert_chain_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cert_chain_verify.md)
+- [`certchnvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/certchnvrf.md)
   : Verify a certificate chain
-- [`revocation_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/revocation_fetch.md)
+- [`rvkfetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rvkfetch.md)
   : Fetch revocation data for a certificate path
-- [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
+- [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
   : Sign a capsule manifest
-- [`xmss_advance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
-  [`xmss_register_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
-  [`xmss_forget_used_indices()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
+- [`xmssadv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssadv.md)
+  [`xmssregkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssadv.md)
+  [`xmssfgt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssadv.md)
   : Advance an XMSS key past a signature it made
-- [`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_verify.md)
+- [`cpsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsvrf.md)
   : Verify a capsule manifest signature
-- [`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md)
+- [`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md)
   : Generate a post-quantum signing key for capsule provenance
-- [`signing_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/signing_public_key.md)
+- [`signpubkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/signpubkey.md)
   : Public half of a signing key
-- [`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md)
-  [`fips_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md)
+- [`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)
+  [`fipspubkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)
   : Generate a standardised post-quantum signing key
-- [`fips_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_key.md)
+- [`fipskey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskey.md)
   : Assemble a standardised key from raw key material
-- [`fips_mu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_mu.md)
-  [`fips_sign_mu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_mu.md)
-  [`fips_verify_mu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_mu.md)
+- [`fipsmu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipsmu.md)
+  [`fipssignmu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipsmu.md)
+  [`fipsvrfmu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipsmu.md)
   : Sign an ML-DSA message digest computed elsewhere
-- [`fips_sizes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_sizes.md)
+- [`fipssz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipssz.md)
   : Byte lengths of a standardised signature scheme
-- [`kem_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_keygen.md)
-  [`kem_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_keygen.md)
+- [`kemkg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemkg.md)
+  [`kempubkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemkg.md)
   : Generate an ML-KEM key pair
-- [`kem_sizes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_sizes.md)
+- [`kemsz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemsz.md)
   : Byte lengths of an ML-KEM parameter set
-- [`kem_encapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_encapsulate.md)
+- [`kemencap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemencap.md)
   : Encapsulate a shared secret under an ML-KEM key
-- [`kem_decapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_decapsulate.md)
+- [`kemdecap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemdecap.md)
   : Recover a shared secret from an ML-KEM ciphertext
-- [`hqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_keygen.md)
-  [`hqc_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_keygen.md)
+- [`hqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqckg.md)
+  [`hqcpubkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqckg.md)
   : Generate an HQC key pair
-- [`hqc_sizes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_sizes.md)
+- [`hqcsz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqcsz.md)
   : Byte lengths of an HQC parameter set
-- [`hqc_encapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_encapsulate.md)
+- [`hqcencap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqcencap.md)
   : Encapsulate a shared secret under an HQC key
-- [`hqc_decapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_decapsulate.md)
+- [`hqcdecap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqcdecap.md)
   : Recover a shared secret from an HQC ciphertext
-- [`hqc_compress_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_compress_key.md)
+- [`hqccmpkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqccmpkey.md)
   : The compressed HQC decapsulation key
-- [`oqs_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
-  [`oqs_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
+- [`oqskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqskg.md)
+  [`oqspubkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqskg.md)
   : Generate a standardised post-quantum signing key (deprecated name)
-- [`pqc_backends()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_backends.md)
+- [`pqcbknd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqcbknd.md)
   : Available post-quantum signature schemes
-- [`chain_new()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_chain.md)
-  [`chain_append()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_chain.md)
-  [`chain_head()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_chain.md)
-  [`chain_seal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_chain.md)
-  [`chain_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_chain.md)
+- [`chnnew()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chn.md)
+  [`chnapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chn.md)
+  [`chnhead()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chn.md)
+  [`chnseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chn.md)
+  [`chnvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chn.md)
   : Tamper-evident chain of capsule manifests
-- [`merkle_root()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_merkle.md)
-  [`merkle_leaves()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_merkle.md)
-  [`merkle_proof()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_merkle.md)
-  [`merkle_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_merkle.md)
+- [`mrkroot()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mrk.md)
+  [`mrklvs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mrk.md)
+  [`mrkprf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mrk.md)
+  [`mrkvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mrk.md)
   : Merkle tree over capsule chunks (C backend)
-- [`chunk_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chunk_file.md)
+- [`chnkfile()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chnkfile.md)
   : Split a file into fixed-size chunks
 
 ## Digests and keys
@@ -466,30 +471,30 @@ history itself tamper-evident.
 The hashes and key-derivation the provenance layer is built on, each
 verified against its published test vectors.
 
-- [`core_sha512()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_sha512.md)
+- [`csha512()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/csha512.md)
   : SHA-512 hex digest (C backend)
-- [`core_crc32()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_crc32.md)
+- [`ccrc32()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ccrc32.md)
   : CRC-32 checksum (C backend)
-- [`core_blake2b()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_blake2b.md)
+- [`cblake2b()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cblake2b.md)
   : BLAKE2b digest, optionally keyed
-- [`core_hmac_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_keyed_digest.md)
-  [`core_digest_equal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_keyed_digest.md)
+- [`chmac()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/keyeddgst.md)
+  [`cdgsteq()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/keyeddgst.md)
   : Keyed digest and constant-time comparison (C backend)
-- [`sha512_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_file_digest.md)
-  [`crc32_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_file_digest.md)
+- [`sha512file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/filedgst.md)
+  [`crc32file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/filedgst.md)
   : SHA-512 and CRC-32 of a file
-- [`digest_object()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/digest_object.md)
+- [`dgstobj()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dgstobj.md)
   : Digest an arbitrary R object
-- [`random_bytes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/random_bytes.md)
+- [`rndbytes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rndbytes.md)
   : Cryptographically strong random bytes
-- [`drbg_new()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_new.md)
+- [`drbgnew()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbgnew.md)
   : A deterministic random bit generator: AES-256 CTR_DRBG (NIST SP
   800-90A)
-- [`drbg_generate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_generate.md)
+- [`drbggen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbggen.md)
   : Draw bytes from a DRBG
-- [`drbg_reseed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_reseed.md)
+- [`drbgrsd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbgrsd.md)
   : Reseed a DRBG
-- [`derive_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/derive_key.md)
+- [`drvkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drvkey.md)
   : Derive a key from a passphrase
 
 ## Schema and rules
@@ -497,22 +502,22 @@ verified against its published test vectors.
 Derive a pinnable schema from data you already trust, then declare the
 project-specific checks a generic schema cannot express.
 
-- [`infer_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/infer_schema.md)
+- [`infsch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/infsch.md)
   : Infer a pinnable schema from a data frame
-- [`rule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rule.md)
+- [`rul()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rul.md)
   : Declare a validation rule
-- [`validate_rules()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_rules.md)
+- [`valrules()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/valrules.md)
   : Apply declared rules to a data frame
-- [`rule_in_set()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md)
-  [`rule_between()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md)
-  [`rule_not_null()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md)
-  [`rule_unique()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md)
-  [`rule_regex()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md)
-  [`rule_increasing()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md)
-  [`rule_within_n_mads()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md)
-  [`rule_complete_rows()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md)
-  [`rule_distinct_rows()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md)
-  [`rule_col_count()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md)
+- [`ruleinset()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md)
+  [`rulebtw()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md)
+  [`rulenull()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md)
+  [`ruleuniq()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md)
+  [`rulerx()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md)
+  [`ruleincr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md)
+  [`rulemad()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md)
+  [`rulecmpl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md)
+  [`ruledstn()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md)
+  [`rulecolcnt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md)
   : Ready-made validation rules
 
 ## Period-over-period change
@@ -527,23 +532,23 @@ HTML, PDF, CSV, TSV, JSON or Markdown.
 - [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
   [`print(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
   : Year-over-year (and period-over-period) change
-- [`yoy_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_summary.md)
+- [`yoysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoysmry.md)
   : Summarise a change table
-- [`yoy_label()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_label.md)
+- [`yoylbl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoylbl.md)
   : Label a period without changing it
-- [`fiscal_year_label()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fiscal_year_label.md)
+- [`fylbl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fylbl.md)
   : Name a fiscal year by the years it spans
-- [`yoy_html()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md)
-  [`yoy_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md)
+- [`yoyhtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoyren.md)
+  [`yoypdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoyren.md)
   : Render a change table to HTML or PDF
-- [`yoy_write()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_write.md)
+- [`yoywr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoywr.md)
   : Write a change table to a file, in whatever format the name implies
-- [`yoy_csv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_delim.md)
-  [`yoy_tsv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_delim.md)
-  [`yoy_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_delim.md)
-  [`yoy_markdown()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_delim.md)
+- [`yoycsv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoydelim.md)
+  [`yoytsv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoydelim.md)
+  [`yoyjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoydelim.md)
+  [`yoymd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoydelim.md)
   : Write a change table as delimited text, JSON or Markdown
-- [`yoy_palettes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_palettes.md)
+- [`yoypals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoypals.md)
   : Colour palettes for change tables
 
 ## Stock and flow over time
@@ -559,15 +564,15 @@ Statistical Sampling Methods for Corrections Planners.
   : Average daily population
 - [`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md)
   : Average length of stay
-- [`admissions()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admissions.md)
+- [`admits()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admits.md)
   : Admissions implied by a population and a length of stay
-- [`adp_from_counts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp_from_counts.md)
+- [`adpcnts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adpcnts.md)
   : Person-days estimated from periodic headcounts
-- [`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+- [`stkflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stkflow.md)
   : Stock and flow side by side, with the decomposition
-- [`stay_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stay_summary.md)
+- [`staysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/staysmry.md)
   : Length of stay with its distribution and interval
-- [`period_days()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/period_days.md)
+- [`perdays()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/perdays.md)
   : Period length in days, from dates
 
 ## Rates, shares and rate change
@@ -580,11 +585,11 @@ Rates carry the exact Poisson interval, shares carry Wilson-s, and the
 change in a rate conditions on the two counts and corrects for the
 exposure ratio rather than treating two rates as measured numbers.
 
-- [`rate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate.md)
+- [`rtcalc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md)
   : Event rates per unit of population
-- [`share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/share.md)
+- [`shrs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/shrs.md)
   : Share of a total, in percent
-- [`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate_change.md)
+- [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
   : Change in a rate between periods
 
 ## Banded categories
@@ -595,14 +600,14 @@ where the open top band ends. These parse to bounds, make the
 representative-value rule explicit, and measure how far a result moves
 as the open band’s assumed cap varies.
 
-- [`parse_bands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/parse_bands.md)
+- [`prsbands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/prsbands.md)
   : Parse banded category labels into numeric bounds
-- [`band_values()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_values.md)
+- [`bandvals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bandvals.md)
   : Representative values for banded categories
-- [`expand_bands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expand_bands.md)
+- [`expbands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expbands.md)
   : Expand a banded frequency table into per-unit values
-- [`band_sensitivity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_sensitivity.md)
-  [`print(`*`<rmbl_band_sensitivity>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_sensitivity.md)
+- [`bandsens()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bandsens.md)
+  [`print(`*`<rmbl_band_sensitivity>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bandsens.md)
   : How much a result depends on the open band's assumed cap
 
 ## Concentration and association
@@ -614,15 +619,15 @@ index maximises the exact discrete likelihood, the closed-form
 continuity correction being badly biased at the small thresholds
 administrative counts start from.
 
-- [`gini()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
-  [`lorenz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
-  [`top_share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
+- [`ginicoef()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
+  [`lorenzc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
+  [`topshr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
   : Concentration of a total across units
-- [`hill_tail_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hill_tail_index.md)
+- [`hilltlidx()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hilltlidx.md)
   : Tail index of a heavy-tailed count
-- [`hurwitz_zeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwitz_zeta.md)
+- [`hurwzeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwzeta.md)
   : Hurwitz zeta function
-- [`cramers_v()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cramers_v.md)
+- [`cramerv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cramerv.md)
   : Association in a contingency table
 
 ## Trend in a short series
@@ -632,11 +637,11 @@ a resistant slope but not a model with an autocorrelation structure. The
 step test takes its p-value from the permutation distribution of the
 maximum over splits, not from the best split’s own test.
 
-- [`trend_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trend_test.md)
+- [`trndtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trndtst.md)
   : Trend in a short series
-- [`step_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/step_change.md)
+- [`stepchg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stepchg.md)
   : A single step change, with the scan's own null distribution
-- [`count_trend()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.md)
+- [`cnttrnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnttrnd.md)
   : Trend in a count series, as a rate ratio per period
 
 ## Air pollution, dispersion and health burden
@@ -648,35 +653,35 @@ the concentration index of exposure by income, a cross-fitted
 exposure-response estimator, and the one-call pipeline with its
 assumption log.
 
-- [`pg_sigmas()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
-  [`briggs_plume_rise()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
-  [`gaussian_plume()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
-  [`gaussian_puff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
-  [`advection_diffusion_2d()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
-  [`lagrangian_particles()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+- [`pgsig()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pgsig.md)
+  [`briggs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pgsig.md)
+  [`gplume()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pgsig.md)
+  [`gspuff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pgsig.md)
+  [`advdif2d()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pgsig.md)
+  [`lagrprt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pgsig.md)
   : Atmospheric dispersion: sigmas, plume rise, plume, puff, grid and
   particles
-- [`crf_pm25()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)
-  [`crf_no2()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)
+- [`crfpm25()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crfpm25.md)
+  [`crfno2()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crfpm25.md)
   : Concentration-response functions for PM2.5 and NO2
-- [`attributable_fraction()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/attributable_fraction.md)
+- [`attrfrac()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/attrfrac.md)
   : Population attributable fraction
-- [`mortality_displaced()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mortality_displaced.md)
+- [`mortdisp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mortdisp.md)
   : Deaths avoided under a counterfactual exposure reduction
-- [`pollution_burden()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.md)
+- [`polbrdn()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/polbrdn.md)
   : End-to-end pollution burden
-- [`pollution_burden_by_area()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden_by_area.md)
+- [`polbrdarea()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/polbrdarea.md)
   : Per-area pollution burden
-- [`plr_crossfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plr_crossfit.md)
+- [`plrcf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plrcf.md)
   : Cross-fitted partially linear regression (double machine learning)
-- [`exposure_response_plr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_response_plr.md)
+- [`exprspplr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exprspplr.md)
   : Exposure-response estimate with a bootstrap sensitivity interval
-- [`exposure_concentration_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_concentration_index.md)
+- [`expconcidx()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expconcidx.md)
   : Concentration index of exposure by income
-- [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
-  [`pollution_report_text()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+- [`vrfpol()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfpol.md)
+  [`polrpttxt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfpol.md)
   : Run the pollution-to-health pipeline and report it
-- [`plume_field()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plume_field.md)
+- [`plmfld()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plmfld.md)
   : A Gaussian-plume concentration field on a grid
 
 ## Courts and police-reported crime
@@ -687,24 +692,197 @@ rate and case-mix effects (Simpson’s paradox), where incidents cluster,
 and near-repeat space-time clustering; with real Ontario Court of
 Justice and Toronto Police Service data.
 
-- [`case_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/case_flow.md)
+- [`caseflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/caseflow.md)
   : Case flow through a court: clearance, backlog and time to clear
-- [`life_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/life_table.md)
+- [`lifetbl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/lifetbl.md)
   : Life table for grouped times: how long cases take
-- [`disposition_mix()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/disposition_mix.md)
+- [`dispmix()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dispmix.md)
   : The mix of outcomes over time, with simultaneous intervals and trend
   tests
-- [`clearance_decomposition()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clearance_decomposition.md)
+- [`clrdcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clrdcmp.md)
   : Decompose a change in a clearance rate into rate and case-mix
   effects
-- [`crime_density()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crime_density.md)
+- [`crmdens()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crmdens.md)
   : Where incidents cluster: a kernel density surface
-- [`hotspot_persistence()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hotspot_persistence.md)
+- [`hotpers()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hotpers.md)
   : Hot spots and how long they last
-- [`knox_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/knox_test.md)
+- [`knoxtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/knoxtst.md)
   : Near-repeat analysis: the Knox test for space-time clustering
 - [`justice-data`](https://rootcoder007.github.io/rmorie-bricklayer/reference/justice-data.md)
   : Court and police data shipped with the package
+
+## Evaluating a policy
+
+Difference in differences with two-way fixed effects, event studies,
+staggered adoption (Callaway and Sant’Anna; Wooldridge), the
+Goodman-Bacon decomposition, switching treatments, permutation inference
+and Westfall-Young stepdown p-values, fixed-effects Poisson, synthetic
+control; severity-weighted crime indices, justice-pipeline rates,
+cumulative risk of a first event, and place-based buffers.
+
+- [`plndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndid.md)
+  : Difference in differences with two-way fixed effects
+- [`evstudy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/evstudy.md)
+  : An event study: the effect period by period around adoption
+- [`stgatt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stgatt.md)
+  : Effects of a policy adopted at different times
+- [`bacondcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bacondcmp.md)
+  : The Goodman-Bacon decomposition of a two-way fixed-effects estimate
+- [`swtdid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/swtdid.md)
+  : Difference in differences for treatments that switch on and off
+- [`perminf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/perminf.md)
+  : Permutation inference for a policy's adoption
+- [`stpdnpv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stpdnpv.md)
+  : Westfall-Young stepdown p-values
+- [`plnpois()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpois.md)
+  : A fixed-effects Poisson or negative binomial regression for counts
+- [`synctl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/synctl.md)
+  : Synthetic control for one treated unit
+- [`sevidx()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sevidx.md)
+  : A severity-weighted crime index
+- [`piperate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/piperate.md)
+  : Justice-pipeline rates with a lag between stages
+- [`cmlrisk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cmlrisk.md)
+  : Cumulative risk of a first event by age
+- [`bufasgn()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bufasgn.md)
+  : Treated, comparison and excluded places around sites
+- [`polex()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/polex.md)
+  : A simulated policy panel for the examples
+- [`plotevgrid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotevgrid.md)
+  : Event studies for several outcomes in one grid
+- [`loounit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loounit.md)
+  : Leave-one-out estimates of a difference in differences
+- [`cohtrnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cohtrnd.md)
+  : Raw outcome trends by adoption cohort
+
+## Causal estimation on panels
+
+Double machine learning with fixed effects (lasso, ridge or any learner,
+cross-fitted by unit), matching on pre-treatment trajectories, synthetic
+difference in differences, the wild cluster bootstrap for few clusters,
+sensitivity to departures from parallel trends, and design-based power.
+
+- [`plndml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndml.md)
+  : Double machine learning for panels with fixed effects
+- [`aipwcf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/aipwcf.md)
+  : Cross-fitted augmented inverse probability weighting for a binary
+  treatment
+- [`mtchdid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mtchdid.md)
+  : Difference in differences after matching on pre-treatment
+  trajectories
+- [`baltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/baltab.md)
+  : A covariate balance table
+- [`syndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/syndid.md)
+  : Synthetic difference in differences
+- [`wcb()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wcb.md)
+  : The wild cluster bootstrap for a difference in differences with few
+  clusters
+- [`tse()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tse.md)
+  : How far parallel trends can fail before an effect disappears
+- [`plnpwr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpwr.md)
+  : Power and minimum detectable effect of a difference-in-differences
+  design
+
+## First Nations, Metis and Inuit health
+
+Statistics Canada tables read as published (suppressed cells never
+imputed), distinctions-based comparisons, age-standardised rates,
+intergenerational exposure, and the Truth and Reconciliation Commission
+Calls to Action.
+
+- [`sctidy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sctidy.md)
+  : Read a Statistics Canada table as published
+- [`qltyrcd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/qltyrcd.md)
+  : Recode another agency's quality flags to the package's
+- [`limfrom()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/limfrom.md)
+  : Confidence limits from a standard error, a coefficient of variation
+  or a margin of error
+- [`indgap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indgap.md)
+  : Compare published group estimates with a reference group
+- [`agestd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agestd.md)
+  : Directly age-standardised rates, with Fay-Feuer gamma intervals
+- [`rategap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rategap.md)
+  : The gap between two standardised rates
+- [`genexpo()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/genexpo.md)
+  : Generations of residential school attendance in a family
+- [`exptrnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exptrnd.md)
+  : A dose-response across generations of exposure
+- [`trccmpl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trccmpl.md)
+  : Calls to Action completed, year by year
+- [`trcprog()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trcprog.md)
+  : How fast the Calls to Action are being completed
+- [`trcind()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trcind.md)
+  : The indicators of Calls to Action 19 and 55, and the tables that
+  measure them
+- [`trchlthgap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trchlthgap.md)
+  : The Call to Action 19 health gaps, in one place
+- [`indtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indtabs.md)
+  : The Indigenous health and wellbeing tables the data service holds
+- [`indiex()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indiex.md)
+  : First Nations, Metis and Inuit health and mental health: bundled
+  Statistics Canada excerpts
+
+## First Nations, Metis and Inuit mental health and wellness
+
+Survey estimates taken out of a table with their limits, rated scales
+compared as whole distributions, age-standardised percentages, and
+wellness reported beside distress; Indigenous frameworks of mental
+wellness put to work as estimators (holistic balance, the four
+directions of the First Nations Mental Wellness Continuum, healing as
+change, connection across places, community-set weights), the Community
+Well-Being index, a test before pooling, and an audit of deficit
+framing.
+
+- [`scests()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scests.md)
+  : The estimates of a Statistics Canada table, with their confidence
+  limits
+- [`ordcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ordcmp.md)
+  : Compare rated scales (perceived mental health, life satisfaction)
+  between groups
+- [`stdprev()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stdprev.md)
+  : Age-standardise survey percentages
+- [`welprof()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/welprof.md)
+  : Wellness beside distress: a strengths-first profile of published
+  indicators
+- [`dualcont()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dualcont.md)
+  : Wellness and distress as two continua
+- [`holbal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/holbal.md)
+  : Holistic balance: how evenly wellness is held across the domains of
+  a whole person
+- [`mhcont()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mhcont.md)
+  : The four directions of the First Nations Mental Wellness Continuum,
+  from published indicators
+- [`healchg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/healchg.md)
+  : Healing as a process: change in published indicators between two
+  periods
+- [`connassoc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/connassoc.md)
+  : Connection across places: does one indicator rise where another
+  does?
+- [`commidx()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/commidx.md)
+  : A community-weighted index of protective and risk factors
+- [`dstntst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstntst.md)
+  : Do distinct groups differ? A heterogeneity test before pooling
+- [`cwbscr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cwbscr.md)
+  : The Community Well-Being index of a community
+- [`frmaud()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/frmaud.md)
+  : How deficit-framed is a set of results?
+
+## The 2021 Census Indigenous Population Profile
+
+The census profile read with its hierarchy, symbols and sample; shares
+with intervals that carry the long-form sample and random rounding; an
+Indigenous standard population; and a Community Well-Being score from
+public figures.
+
+- [`cnsprof()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnsprof.md)
+  : Read the 2021 Census Indigenous Population Profile
+- [`profshr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profshr.md)
+  : The share of a population with a characteristic, from the census
+  profile
+- [`cnsstd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnsstd.md)
+  : An Indigenous standard population from the census
+- [`cnscwb()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnscwb.md)
+  : A Community Well-Being score from the census profile
 
 ## Complex survey estimation
 
@@ -713,12 +891,14 @@ domain, with variances from replicate weights (Statistics Canada
 bootstrap, mean bootstrap, jackknife, BRR, Fay) or Taylor linearization
 over strata and PSUs, and design-based comparisons between domains.
 
-- [`survey_design()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_design.md)
+- [`svydes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svydes.md)
   : Describe a complex survey design
-- [`survey_estimate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md)
+- [`svyest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svyest.md)
   : Estimate a mean, total, proportion or ratio from a survey design
-- [`survey_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_compare.md)
+- [`svycmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svycmp.md)
   : Compare survey estimates between domains
+- [`sprd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sprd.md)
+  : Variance and standard deviation with the right correction, and why
 
 ## The footprint of the computation
 
@@ -727,16 +907,16 @@ energy counters where the operating system exposes them, otherwise
 modelled with the Green Algorithms method, against a sourced
 carbon-intensity table.
 
-- [`compute_footprint()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/compute_footprint.md)
+- [`co2fp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2fp.md)
   : Energy and carbon footprint of a computation
-- [`carbon_intensity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/carbon_intensity.md)
-  [`carbon_intensity_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/carbon_intensity.md)
+- [`co2int()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2int.md)
+  [`co2inttab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2int.md)
   : Carbon intensity of electricity by location, offline, anywhere
-- [`detect_location()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/detect_location.md)
+- [`dtctloc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dtctloc.md)
   : Where is this computation running?
-- [`rapl_available()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rapl_available.md)
+- [`raplok()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/raplok.md)
   : Is CPU energy measurable here?
-- [`footprint_equivalents()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/footprint_equivalents.md)
+- [`fpeqv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fpeqv.md)
   : Everyday equivalents of a quantity of CO2-equivalent
 
 ## Region-coded counts
@@ -747,15 +927,15 @@ area holds; empirical Bayes stops a small area’s noise from ranking it
 to the top or bottom; a funnel plot shows the reader the same thing
 directly.
 
-- [`expected_counts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expected_counts.md)
+- [`expcnts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expcnts.md)
   : Expected counts under indirect standardisation
-- [`sir()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sir.md)
+- [`stdinc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stdinc.md)
   : Standardised incidence ratio, with an exact interval
-- [`eb_rates()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/eb_rates.md)
+- [`ebrates()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ebrates.md)
   : Empirical Bayes rates, shrunk toward the overall experience
-- [`funnel_limits()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/funnel_limits.md)
+- [`fnllim()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fnllim.md)
   : Funnel-plot control limits
-- [`morans_i()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/morans_i.md)
+- [`morani()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/morani.md)
   : Global Moran's I over a neighbour list
 
 ## Points, and the regions that contain them
@@ -771,16 +951,16 @@ unit, and says each time that the share is context rather than a rate
 denominator: units serve catchments, which a point location does not
 state.
 
-- [`region_coverage()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_coverage.md)
+- [`rgncov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rgncov.md)
   : Population of the regions that contain a unit, and of those that do
   not
-- [`region_map_integrity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_integrity.md)
+- [`rgnmapintg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rgnmapintg.md)
   : Internal soundness of a region map
-- [`region_map_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_compare.md)
+- [`rgnmapcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rgnmapcmp.md)
   : Compare a recomputed region map against a published one
-- [`region_map_second_route()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_second_route.md)
+- [`rgnmapalt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rgnmapalt.md)
   : Check a region map against an independently derived assignment
-- [`region_map_from_points()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_from_points.md)
+- [`rgnmappts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rgnmappts.md)
   : Recompute a region map by point in polygon
 
 ## Describe a capsule
@@ -788,33 +968,33 @@ state.
 The summaries worth reading before trusting a capsule: what every column
 looks like, where the gaps are, which values dominate, and which rows do
 not belong.
-[`capsule_report()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_report.md)
+[`cpsrpt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrpt.md)
 runs the lot and orders the findings by severity.
 
-- [`capsule_report()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_report.md)
+- [`cpsrpt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrpt.md)
   : Assess a capsule in one call
-- [`report_markdown()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/report_markdown.md)
+- [`rptmd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rptmd.md)
   : Write a capsule report as Markdown
-- [`profile_columns()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profile_columns.md)
+- [`profcols()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profcols.md)
   : Column report for a data frame
-- [`inline_hist()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/inline_hist.md)
+- [`inlhist()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/inlhist.md)
   : Inline histogram for a numeric vector
-- [`frequency_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/frequency_table.md)
+- [`freqtbl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/freqtbl.md)
   : Frequency table for one column
-- [`correlation_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/correlation_table.md)
+- [`cortbl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cortbl.md)
   : Full pairwise correlation table
-- [`top_correlations()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/top_correlations.md)
+- [`topcors()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/topcors.md)
   : Strongest pairwise correlations in a data frame
-- [`mahalanobis_outliers()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mahalanobis_outliers.md)
+- [`mahaoutl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mahaoutl.md)
   : Multivariate outliers by Mahalanobis distance
-- [`duplicate_rows()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/duplicate_rows.md)
+- [`duprows()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/duprows.md)
   : Duplicated rows, with their groups
-- [`drop_empty()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_drop.md)
-  [`drop_constant()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_drop.md)
+- [`drpempty()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drp.md)
+  [`drpconst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drp.md)
   : Drop empty or constant columns and rows
-- [`clean_column_names()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clean_column_names.md)
+- [`clncolnms()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clncolnms.md)
   : Tidy the column names of an ingested table
-- [`environment_diff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/environment_diff.md)
+- [`envdiff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/envdiff.md)
   : Compare two captured environments
 
 ## Missingness
@@ -824,15 +1004,15 @@ together, whether the gaps are contiguous, and whether the missingness
 is related to the data (in which case dropping incomplete rows is
 biased).
 
-- [`missingness_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missingness_summary.md)
+- [`misssmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/misssmry.md)
   : Missingness in one line per question
-- [`missingness_pattern()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missingness_pattern.md)
+- [`misspat()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/misspat.md)
   : Which columns are missing together
-- [`missing_runs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missing_runs.md)
+- [`missruns()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missruns.md)
   : Runs of consecutive missing values
-- [`missingness_map()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missingness_map.md)
+- [`missgrid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missgrid.md)
   : Text map of where the missing values are
-- [`mcar_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mcar_test.md)
+- [`mcartst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mcartst.md)
   : Little's test for data missing completely at random
 
 ## Large capsules
@@ -840,58 +1020,58 @@ biased).
 One-pass algorithms for members bigger than memory: exact block-wise
 moments, uniform sampling of a stream, and fixed-memory distinct counts.
 
-- [`online_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_online.md)
-  [`summary_update()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_online.md)
-  [`summary_merge()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_online.md)
-  [`summary_stats()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_online.md)
-  : Exact summary statistics accumulated in blocks
-- [`reservoir_indices()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_reservoir.md)
-  [`reservoir_sample()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_reservoir.md)
+- [`onlsmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/onl.md)
+  [`smryupd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/onl.md)
+  [`smrymrg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/onl.md)
+  [`smrystat()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/onl.md)
+  : Summary statistics accumulated in blocks
+- [`rsvidx()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rsv.md)
+  [`rsvsmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rsv.md)
   : Uniform sample of a stream in one pass
-- [`distinct_sketch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_distinct.md)
-  [`distinct_count()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_distinct.md)
-  [`sketch_merge()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_distinct.md)
+- [`dstnskch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstn.md)
+  [`dstncnt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstn.md)
+  [`skchmrg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstn.md)
   : Distinct-value count in fixed memory
 
 ## Output
 
 Printed reports for the objects the package returns.
 
-- [`print(`*`<bricklayer_attestation>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_attestation_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_bundle>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_bundle_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_chain>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_drbg>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_falsification>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_hqc_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_hqc_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_hqc_capsule>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_kem_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_kem_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_kem_capsule>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_mcar>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_power>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_prereg>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_prereg_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_falsify_family>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_drift>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`summary(`*`<bricklayer_drift>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_benford>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_signing_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_signature>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`summary(`*`<bricklayer_benford>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_env_diff>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_report>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`summary(`*`<bricklayer_report>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_recompute>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_schema>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_oqs_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_oqs_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_timestamp>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_certificate>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
-  [`print(`*`<bricklayer_certpath_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
+- [`print(`*`<bricklayer_attestation>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_attestation_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_bundle>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_bundle_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_chain>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_drbg>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_falsification>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_hqc_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_hqc_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_hqc_capsule>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_kem_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_kem_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_kem_capsule>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_mcar>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_power>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_prereg>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_prereg_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_falsify_family>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_drift>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`summary(`*`<bricklayer_drift>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_benford>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_signing_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_signature>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`summary(`*`<bricklayer_benford>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_env_diff>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_report>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`summary(`*`<bricklayer_report>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_recompute>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_schema>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_oqs_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_oqs_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_timestamp>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_certificate>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
+  [`print(`*`<bricklayer_certpath_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/printmeth.md)
   : Printed reports for bricklayer objects
 
 ## Plots
@@ -900,13 +1080,32 @@ Every result draws itself with plot(), on base graphics, with one shared
 look and the same customisation everywhere; palettes and session
 options; Lorenz and funnel plots for results that are plain data frames.
 
-- [`plot(`*`<rmbl_hotspot>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+- [`plot(`*`<rmbl_census_cwb>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_profile_share>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_hotspot>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_connection>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_healing_change>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_community_index>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_indigenous_gap>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_prevalence>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_dsr>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_exposure_trend>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_trc_progress>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_ordinal_compare>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_wellness_profile>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_holistic_balance>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_dual_continuum>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_distinctions>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_case_flow>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_life_table>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_disposition_mix>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_density>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_knox>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_clearance_decomposition>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_synthdid>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_power>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_balance>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_aipw>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_stock_flow>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_rate>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
@@ -934,12 +1133,20 @@ options; Lorenz and funnel plots for results that are plain data frames.
   [`plot(`*`<rmbl_particles>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_count_trend>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<bricklayer_analysis>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_event_study>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_staggered_att>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_synth>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_bacon>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_permutation>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_loo>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_cohort_trends>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_svy_estimate>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_svy_compare>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_trc_gaps>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   : Plot methods for the package's results
-- [`bricklayer_palette()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
-  [`bricklayer_plot_options()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
+- [`blpal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blpal.md)
+  [`plotopt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blpal.md)
   : Plot styling for the package's plot methods
-- [`plot_lorenz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot_lorenz.md)
-  [`plot_funnel()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot_lorenz.md)
+- [`plotlrnz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotlrnz.md)
+  [`plotfnl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotlrnz.md)
   : Lorenz and funnel plots

@@ -18,17 +18,17 @@ df <- data.frame(id = c(1, 2, 2), age = c(30, -5, 40),
                  start = c(1, 5, 3), end = c(2, 4, 9))
 
 rules <- list(
-  rule("age_non_negative", function(v) v >= 0, column = "age"),
-  rule("id_unique", function(v) !anyDuplicated(v), column = "id", severity = "fatal"),
-  rule("dates_ordered", function(d) all(d$start <= d$end))
+  rul("agenonnegative", function(v) v >= 0, col = "age"),
+  rul("idunique", function(v) !anyDuplicated(v), col = "id", sev = "fatal"),
+  rul("datesordered", function(d) all(d$start <= d$end))
 )
 
-issues <- validate_rules(df, rules)
+issues <- valrules(df, rules)
 names(issues)
-#> [1] "age_non_negative" "id_unique"        "dates_ordered"
-issues$age_non_negative$n_failed
+#> [1] "agenonnegative" "idunique"       "datesordered"
+issues$agenonnegative$n_failed
 #> [1] 1
-issues$age_non_negative$rows
+issues$agenonnegative$rows
 #> [1] 2
 ```
 
@@ -37,7 +37,7 @@ Clean data produces nothing:
 ``` r
 
 clean <- data.frame(id = 1:3, age = c(30, 31, 40), start = 1:3, end = 4:6)
-length(validate_rules(clean, rules))
+length(valrules(clean, rules))
 #> [1] 0
 ```
 
@@ -47,10 +47,10 @@ report. And a rule that *errors* is a **failure**, never a silent pass:
 
 ``` r
 
-length(validate_rules(data.frame(id = 1:3), rules[1:2]))
+length(valrules(data.frame(id = 1:3), rules[1:2]))
 #> [1] 0
-broken <- list(rule("bad", function(v) stop("boom"), column = "age"))
-validate_rules(clean, broken)$bad$message
+broken <- list(rul("bad", function(v) stop("boom"), col = "age"))
+valrules(clean, broken)$bad$message
 #> [1] "Rule 'bad' failed (rule could not be evaluated: boom)"
 ```
 
@@ -61,34 +61,34 @@ Common checks have constructors so the intent is in the name:
 ``` r
 
 rules2 <- list(
-  rule_not_null("id"),
-  rule_unique("id", severity = "fatal"),
-  rule_between("age", 0, 120),
-  rule_in_set("grade", c("a", "b", "c")),
-  rule_regex("code", "^[A-Z]{2}-[0-9]{4}$"),
-  rule_within_n_mads("score", n = 3),
-  rule_col_count(6, severity = "fatal")
+  rulenull("id"),
+  ruleuniq("id", sev = "fatal"),
+  rulebtw("age", 0, 120),
+  ruleinset("grade", c("a", "b", "c")),
+  rulerx("code", "^[A-Z]{2}-[0-9]{4}$"),
+  rulemad("score", n = 3),
+  rulecolcnt(6, sev = "fatal")
 )
 length(rules2)
 #> [1] 7
 ```
 
-[`rule_increasing()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md),
-[`rule_distinct_rows()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md)
+[`ruleincr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md),
+[`ruledstn()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md)
 and
-[`rule_complete_rows()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md)
-complete the set. `apply_schema_validation(df, rules2)` runs a rule list
-the same way and stops on any fatal issue, which is the call a pipeline
-makes (it takes a provenance list or a rule list; until 0.5.12 a rule
-list was silently ignored and reported a pass).
+[`rulecmpl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rulelib.md)
+complete the set. `schval(df, rules2)` runs a rule list the same way and
+stops on any fatal issue, which is the call a pipeline makes (it takes a
+provenance list or a rule list; until 0.5.12 a rule list was silently
+ignored and reported a pass).
 
 ## Inferring a schema
 
 Given a table known to be right,
-[`infer_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/infer_schema.md)
+[`infsch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/infsch.md)
 pins what can be pinned: column names and types, numeric ranges with a
-little slack, and the level set of categorical columns (up to
-`max_levels`, so free text is not mistaken for a code list):
+little slack, and the level set of categorical columns (up to `maxlvl`,
+so free text is not mistaken for a code list):
 
 ``` r
 
@@ -100,7 +100,7 @@ df <- data.frame(
   note = paste0("free text ", 1:100),
   stringsAsFactors = FALSE
 )
-sch <- infer_schema(df)
+sch <- infsch(df)
 sch$expected_value_sets
 #> $grade
 #> [1] "a" "b" "c"
@@ -111,20 +111,20 @@ column or a new category:
 
 ``` r
 
-length(validate_schema(df, list(schema = sch)))
+length(valsch(df, list(schema = sch)))
 #> [1] 0
-length(validate_schema(df[, -3], list(schema = sch))) > 0
+length(valsch(df[, -3], list(schema = sch))) > 0
 #> [1] TRUE
 bad <- df
 bad$grade[1] <- "z"
-length(validate_schema(bad, list(schema = sch))) > 0
+length(valsch(bad, list(schema = sch))) > 0
 #> [1] TRUE
 ```
 
 A schema goes into the capsule’s provenance record;
-[`validate_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_schema.md)
+[`valsch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/valsch.md)
 is what
-[`verify_capsule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_capsule.md)
+[`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
 runs on a fresh download.
 
 ## Synthetic stand-ins
@@ -145,7 +145,7 @@ recipe <- list(
   )
 )
 out <- tempfile(fileext = ".csv")
-res <- make_synthetic_csv(recipe, out)
+res <- mksyncsv(recipe, out)
 res$rows
 #> [1] 20
 res$seed
@@ -163,33 +163,54 @@ head(df, 3)
 #> 3 2024   Yes      4 p-00003
 ```
 
-The seed makes the stand-in reproducible; `n_rows` overrides the
-recipe’s own count. A `<path>.synthetic` sidecar file is written beside
-the CSV (the file itself stays a plain table), and the capsule checks
-read that marker, so a synthetic run can never be mistaken for a result:
+The seed makes the stand-in reproducible; `nrows` overrides the recipe’s
+own count. A `<path>.synthetic` sidecar file is written beside the CSV
+(the file itself stays a plain table), and the capsule checks read that
+marker, so a synthetic run can never be mistaken for a result:
 
 ``` r
 
-make_synthetic_csv(recipe, tempfile(fileext = ".csv"), n_rows = 5)$rows
+mksyncsv(recipe, tempfile(fileext = ".csv"), nrows = 5)$rows
 #> [1] 5
 ```
 
-[`make_synthetic_column()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_synthetic_column.md)
+[`mksyncol()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mksyncol.md)
 generates one column from a spec, for building a table piece by piece or
 for testing a generator.
 
 ## Putting them together
 
 1.  On the first, trusted download:
-    [`infer_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/infer_schema.md),
+    [`infsch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/infsch.md),
     then add the rules the schema cannot express (ordering between
     columns, cross-table consistency) and pin both.
 2.  On every later run:
-    [`validate_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_schema.md)
+    [`valsch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/valsch.md)
     and
-    [`validate_rules()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_rules.md);
+    [`valrules()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/valrules.md);
     stop on `fatal`.
 3.  When the source is unreachable:
-    [`make_synthetic_csv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_synthetic_csv.md)
+    [`mksyncsv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mksyncsv.md)
     from the pinned schema, run the pipeline, and let the synthetic
     marker say what the output is.
+
+## Rules for a published table
+
+Rules catch problems in a table before it is used. For an Indigenous
+health table: the estimate inside its interval, a known quality flag,
+and a known group:
+
+``` r
+
+d <- indiex("health")
+rules <- list(
+  ruleinset("quality", c("ok", "E", "F", "x", "..")),
+  ruleinset("group", c("First Nations", "Métis", "Inuit", "Non-Indigenous")),
+  rul("estimate inside its interval",
+       function(x) is.na(x$estimate) | (x$lower <= x$estimate & x$estimate <= x$upper))
+)
+valrules(d, rules)
+#> list()
+```
+
+An empty list means every rule held on every row.

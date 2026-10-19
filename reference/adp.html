@@ -17,7 +17,7 @@ beds in use rather than people who passed through."><meta property="og:image" co
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,7 +84,7 @@ element per person and a single pre-computed total give the same result.</p></dd
 <dt id="arg-t">t<a class="anchor" aria-label="anchor" href="#arg-t"></a></dt>
 <dd><p>Numeric scalar, the length of the period in days; must be
 positive. Default <code>365</code>. A vector of several values is refused.
-<code><a href="period_days.html">period_days</a></code> turns two dates into this.</p></dd>
+<code><a href="perdays.html">perdays</a></code> turns two dates into this.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -99,7 +99,7 @@ of people held on any one day of the period.</p>
 denominator is TIME, which is what makes it a stock. Compare
 <code><a href="alos.html">alos()</a></code>, whose denominator is people: the two are linked by
 \(\mathrm{ADP} = N \times \mathrm{ALOS} / t\) (Little's law), so
-<code><a href="admissions.html">admissions()</a></code> and <code><a href="stock_flow.html">stock_flow()</a></code>
+<code><a href="admits.html">admits()</a></code> and <code><a href="stkflow.html">stkflow()</a></code>
 can move between them.</p>
 <p>Only days served inside the period should be counted: a stay that began
 before the period or ends after it contributes its days within the window.</p>
@@ -115,8 +115,8 @@ Corrections Planners</em>. University of Illinois at Urbana-Champaign.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="alos.html">alos()</a></code>,
-<code><a href="stock_flow.html">stock_flow()</a></code>,
-<code><a href="adp_from_counts.html">adp_from_counts()</a></code></p></div>
+<code><a href="stkflow.html">stkflow()</a></code>,
+<code><a href="adpcnts.html">adpcnts()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -131,7 +131,7 @@ Corrections Planners</em>. University of Illinois at Urbana-Champaign.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a leap year, with the period length taken from the dates</span></span></span>
-<span class="r-in"><span><span class="fu">adp</span><span class="op">(</span><span class="fl">13500</span>, t <span class="op">=</span> <span class="fu"><a href="period_days.html">period_days</a></span><span class="op">(</span><span class="st">"2024-01-01"</span>, <span class="st">"2024-12-31"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">adp</span><span class="op">(</span><span class="fl">13500</span>, t <span class="op">=</span> <span class="fu"><a href="perdays.html">perdays</a></span><span class="op">(</span><span class="st">"2024-01-01"</span>, <span class="st">"2024-12-31"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 36.88525</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># negative days are refused</span></span></span>

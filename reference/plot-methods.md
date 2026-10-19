@@ -5,21 +5,82 @@ Every result the package returns draws itself with
 beyond the object are needed, and every method takes the same
 customisation (`main`, `col` or `palette`, `...` for the base-graphics
 call, the grid from the session option; see
-[`bricklayer_plot_options`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)).
+[`plotopt`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blpal.md)).
 Titles fit their panel: a title too wide for it is drawn a step smaller,
 and in a panel set one that still does not fit becomes a letter with the
-key printed under the panels (the returned data carry it as the
-`panel_key` attribute); the left margin is sized from the widest tick
-label, so an axis title never overlaps the numbers. (Session defaults:
-see
-[`bricklayer_plot_options`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
+key printed under the panels (the returned data carry it as the `plnkey`
+attribute); the left margin is sized from the widest tick label, so an
+axis title never overlaps the numbers. (Session defaults: see
+[`plotopt`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blpal.md)
 for the session defaults). Each method returns the data it drew,
 invisibly, as a data frame.
 
 ## Usage
 
 ``` r
+# S3 method for class 'rmbl_census_cwb'
+plot(
+  x,
+  ...,
+  component = c("cwb", "income", "education", "housing", "labour"),
+  main = NULL,
+  col = NULL,
+  palette = NULL
+)
+
+# S3 method for class 'rmbl_profile_share'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
 # S3 method for class 'rmbl_hotspot'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_connection'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_healing_change'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_community_index'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_indigenous_gap'
+plot(
+  x,
+  ...,
+  what = c("difference", "ratio"),
+  main = NULL,
+  col = NULL,
+  palette = NULL
+)
+
+# S3 method for class 'rmbl_prevalence'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_dsr'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_prevalence'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_exposure_trend'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_trc_progress'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_ordinal_compare'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_wellness_profile'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_holistic_balance'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_dual_continuum'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_distinctions'
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
 # S3 method for class 'rmbl_case_flow'
@@ -47,7 +108,34 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
 # S3 method for class 'rmbl_clearance_decomposition'
 plot(x, ..., what = NULL,
-  max_parts = 20L, main = NULL, col = NULL, palette = NULL)
+  maxparts = 20L, main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_synthdid'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_power'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_balance'
+plot(
+  x,
+  ...,
+  threshold = 0.1,
+  after = NULL,
+  main = NULL,
+  col = NULL,
+  palette = NULL
+)
+
+# S3 method for class 'rmbl_aipw'
+plot(
+  x,
+  ...,
+  type = c("overlap", "estimate"),
+  main = NULL,
+  col = NULL,
+  palette = NULL
+)
 
 # S3 method for class 'rmbl_stock_flow'
 plot(
@@ -63,7 +151,7 @@ plot(
 plot(
   x,
   ...,
-  what = c("pct_change", "value"),
+  what = c("pctchg", "value"),
   main = NULL,
   col = NULL,
   palette = NULL
@@ -144,10 +232,59 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 # S3 method for class 'bricklayer_analysis'
 plot(x, ..., which = NULL, main = NULL)
 
+# S3 method for class 'rmbl_event_study'
+plot(
+  x,
+  ...,
+  main = NULL,
+  col = NULL,
+  palette = NULL,
+  style = c("dot", "stata"),
+  shadepost = FALSE,
+  refline = -0.5
+)
+
+# S3 method for class 'rmbl_staggered_att'
+plot(
+  x,
+  ...,
+  main = NULL,
+  col = NULL,
+  palette = NULL,
+  style = c("dot", "stata"),
+  shadepost = FALSE,
+  refline = -0.5
+)
+
+# S3 method for class 'rmbl_synth'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_bacon'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_permutation'
+plot(
+  x,
+  ...,
+  main = NULL,
+  col = NULL,
+  palette = NULL,
+  type = c("density", "histogram")
+)
+
+# S3 method for class 'rmbl_loo'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_cohort_trends'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
 # S3 method for class 'rmbl_svy_estimate'
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
 # S3 method for class 'rmbl_svy_compare'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_trc_gaps'
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
 ```
 
@@ -162,6 +299,11 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
   Passed to the base-graphics call (`plot`, `barplot` or `image`); for
   `bricklayer_analysis`, passed on to each panel's method.
 
+- component:
+
+  For `rmbl_census_cwb`: `"cwb"` (the index, default) or one of its
+  components `"income"`, `"education"`, `"housing"`, `"labour"`.
+
 - main:
 
   Title; each method has a default.
@@ -173,26 +315,47 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 - palette:
 
   A
-  [`bricklayer_palette`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
+  [`blpal`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blpal.md)
   name, overriding the session option.
 
 - what:
 
-  For `rmbl_stock_flow`, the measures to draw (one panel each): any of
-  `"adp"`, `"alos"`, `"people"`, `"days"`, `"flow_rate"`,
-  `"stock_rate"`. For `rmbl_yoy`, `"pct_change"` or `"value"`. For
-  `rmbl_case_flow`, `"flow"` and/or `"clearance"`; for
-  `rmbl_clearance_decomposition`, any of `"rates"`, `"mix"` and
-  `"effects"` (the default fits the device).
+  For `rmbl_indigenous_gap`, `"difference"` or `"ratio"`. For
+  `rmbl_stock_flow`, the measures to draw (one panel each): any of
+  `"adp"`, `"alos"`, `"people"`, `"days"`, `"flowrate"`, `"stkrate"`.
+  For `rmbl_yoy`, `"pctchg"` or `"value"`. For `rmbl_case_flow`,
+  `"flow"` and/or `"clearance"`; for `rmbl_clearance_decomposition`, any
+  of `"rates"`, `"mix"` and `"effects"` (the default fits the device).
 
 - points:
 
   For `rmbl_density`, whether to draw the incidents over the surface.
 
-- max_parts:
+- maxparts:
 
   For `rmbl_clearance_decomposition`, the most parts drawn: past it, the
   parts that moved the aggregate most, and the rest summed into one row.
+
+- threshold:
+
+  For `rmbl_balance`: the absolute standardised difference drawn as the
+  line of acceptable balance (default 0.1).
+
+- after:
+
+  For `rmbl_balance`: optionally a second
+  [`baltab`](https://rootcoder007.github.io/rmorie-bricklayer/reference/baltab.md)
+  on the same covariates (after weighting or matching), drawn beside the
+  first.
+
+- type:
+
+  For a permutation test: `"density"` (a kernel density of the permuted
+  statistics, their 5th and 95th percentiles dashed, the observed one in
+  red; the default) or `"histogram"`. For a cross-fitted AIPW result:
+  `"overlap"` (the weighted distribution of the out-of-fold propensity
+  in each arm with the clipping bounds; the default) or `"estimate"`
+  (the effect with its confidence interval).
 
 - period:
 
@@ -212,7 +375,22 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 - which:
 
   For `bricklayer_analysis`, the panels: any of `"change"`, `"rates"`,
-  `"rate_change"`; `NULL` draws every panel the analysis has.
+  `"ratechg"`; `NULL` draws every panel the analysis has.
+
+- style:
+
+  For an event study: `"dot"` (filled points with solid capped bars, the
+  default) or `"stata"` (hollow points joined by a line, dashed capped
+  bars, dashed reference lines).
+
+- shadepost:
+
+  Shade the periods after adoption (default `FALSE`).
+
+- refline:
+
+  Where the vertical reference line goes (default `-0.5`, between the
+  reference period and adoption; `0` puts it at adoption).
 
 ## Value
 
@@ -222,7 +400,7 @@ The data drawn, invisibly.
 
 - `rmbl_stock_flow`:
 
-  ([`stock_flow`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md))
+  ([`stkflow`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stkflow.md))
   the average daily population, length of stay, people and person-days
   over the periods, one panel per measure in `what`; with an exposure,
   the flow and stock rates too.
@@ -236,142 +414,274 @@ The data drawn, invisibly.
 
 - `rmbl_rate`, `rmbl_share`, `rmbl_rate_change`:
 
-  ([`rate`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate.md))
+  ([`rtcalc`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md))
   the rate, share or percent change per group with its interval.
 
 - `rmbl_band_sensitivity`:
 
-  ([`band_sensitivity`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_sensitivity.md))
+  ([`bandsens`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bandsens.md))
   the statistic against the cap applied to the open band.
 
 - `rmbl_drift_calibration`, `bricklayer_drift`:
 
-  ([`drift_calibrate`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_calibrate.md),
-  [`capsule_drift`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md))
+  ([`drftcal`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftcal.md),
+  [`cpsdrft`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md))
   the false-alarm rate per column against alpha; the population
   stability index per column with the drifted columns marked.
 
 - `bricklayer_benford`:
 
-  ([`benford_test`](https://rootcoder007.github.io/rmorie-bricklayer/reference/benford_test.md))
+  ([`benfordtst`](https://rootcoder007.github.io/rmorie-bricklayer/reference/benfordtst.md))
   observed first-digit proportions against Benford's law.
 
 - `bricklayer_power`:
 
-  ([`capsule_power`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_power.md))
+  ([`cpspwr`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpspwr.md))
   the power curve: detection rate against injected effect size, with the
   0.8 line.
 
 - `bricklayer_freq`, `bricklayer_missingness`, `rmbl_region_coverage`:
 
-  ([`frequency_table`](https://rootcoder007.github.io/rmorie-bricklayer/reference/frequency_table.md),
-  [`missingness_pattern`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missingness_pattern.md),
-  [`region_coverage`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_coverage.md))
+  ([`freqtbl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/freqtbl.md),
+  [`misspat`](https://rootcoder007.github.io/rmorie-bricklayer/reference/misspat.md),
+  [`rgncov`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rgncov.md))
   horizontal bars.
 
 - `bricklayer_outliers`:
 
-  ([`mahalanobis_outliers`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mahalanobis_outliers.md))
+  ([`mahaoutl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mahaoutl.md))
   the distance of every row, outliers marked.
 
 - `bricklayer_correlations`, `bricklayer_cortable`:
 
-  ([`top_correlations`](https://rootcoder007.github.io/rmorie-bricklayer/reference/top_correlations.md),
-  [`correlation_table`](https://rootcoder007.github.io/rmorie-bricklayer/reference/correlation_table.md))
+  ([`topcors`](https://rootcoder007.github.io/rmorie-bricklayer/reference/topcors.md),
+  [`cortbl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cortbl.md))
   the correlation of every pair as a diverging bar.
 
 - `bricklayer_falsification`:
 
-  ([`capsule_falsify`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_falsify.md))
+  ([`cpsfals`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsfals.md))
   the permutation null distribution with the observed statistic.
 
 - `rmbl_bounds`:
 
-  ([`published_bounds`](https://rootcoder007.github.io/rmorie-bricklayer/reference/published_bounds.md))
+  ([`pubbnd`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pubbnd.md))
   each value inside its published-rounding envelope.
+
+- `rmbl_indigenous_gap`, `rmbl_dsr`, `rmbl_prevalence`,
+  `rmbl_exposure_trend`, `rmbl_community_index`:
+
+  ([`indgap`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indgap.md),
+  [`agestd`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agestd.md),
+  [`stdprev`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stdprev.md),
+  [`exptrnd`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exptrnd.md),
+  [`commidx`](https://rootcoder007.github.io/rmorie-bricklayer/reference/commidx.md))
+  each group's difference or ratio, rate, percentage, odds ratio or
+  index with its interval; `what = "ratio"` draws the ratio of a gap.
+
+- `rmbl_trc_progress`:
+
+  ([`trcprog`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trcprog.md))
+  the Calls to Action completed, and the pace projected with the band
+  its interval gives.
+
+- `rmbl_ordinal_compare`:
+
+  ([`ordcmp`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ordcmp.md))
+  each group's ratings as one stacked bar, lowest rating on the left.
+
+- `rmbl_wellness_profile`, `rmbl_wellness_continuum`:
+
+  ([`welprof`](https://rootcoder007.github.io/rmorie-bricklayer/reference/welprof.md),
+  [`mhcont`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mhcont.md))
+  wellness indicators above, distress below, each group's estimate and
+  interval.
+
+- `rmbl_dual_continuum`:
+
+  ([`dualcont`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dualcont.md))
+  each group on the two axes, wellness up and distress across.
+
+- `rmbl_holistic_balance`:
+
+  ([`holbal`](https://rootcoder007.github.io/rmorie-bricklayer/reference/holbal.md))
+  the domains as spokes and each group's levels on them, with its
+  balance.
+
+- `rmbl_distinctions`:
+
+  ([`dstntst`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstntst.md))
+  each group's estimate and the pooled figure, with I-squared.
+
+- `rmbl_connection`:
+
+  ([`connassoc`](https://rootcoder007.github.io/rmorie-bricklayer/reference/connassoc.md))
+  the places on the two indicators, with their intervals; `xlab` and
+  `ylab` name the axes (default: the indicators' column names).
+
+- `rmbl_healing_change`:
+
+  ([`healchg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/healchg.md))
+  the change in each indicator between the periods, wellness first.
+
+- `rmbl_profile_share`:
+
+  ([`profshr`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profshr.md))
+  each group's share of a census characteristic with its interval.
 
 - `rmbl_crf`, `rmbl_burden`, `rmbl_equity`, `rmbl_pollution_report`:
 
-  ([`crf_pm25`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md),
-  [`pollution_burden`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.md),
-  [`exposure_concentration_index`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_concentration_index.md),
-  [`verify_pollution`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md))
+  ([`crfpm25`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crfpm25.md),
+  [`polbrdn`](https://rootcoder007.github.io/rmorie-bricklayer/reference/polbrdn.md),
+  [`expconcidx`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expconcidx.md),
+  [`vrfpol`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfpol.md))
   the concentration-response curve with the exposure marked; baseline
   against attributable cases; the concentration curve of exposure over
   income rank; and, for a report, all three on one page.
 
 - `rmbl_footprint`:
 
-  ([`compute_footprint`](https://rootcoder007.github.io/rmorie-bricklayer/reference/compute_footprint.md))
+  ([`co2fp`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2fp.md))
   the CPU, memory and total emission in one unit chosen to fit, with the
   car-kilometre and tree-month equivalents as a caption; "Too short to
   measure" when the work took no measurable time.
 
 - `rmbl_field`, `rmbl_particles`:
 
-  ([`plume_field`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plume_field.md),
-  [`advection_diffusion_2d`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md),
-  [`lagrangian_particles`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md))
+  ([`plmfld`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plmfld.md),
+  [`advdif2d`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pgsig.md),
+  [`lagrprt`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pgsig.md))
   a concentration field as an image with contours; particle positions,
   with the counting grid behind them when one was given.
 
 - `rmbl_count_trend`:
 
-  ([`count_trend`](https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.md))
+  ([`cnttrnd`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnttrnd.md))
   the counts with the fitted trend.
 
 - `bricklayer_analysis`:
 
-  ([`analyse_table`](https://rootcoder007.github.io/rmorie-bricklayer/reference/analyse_table.md))
+  ([`anltab`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md))
   the change, rates and rate change of a published table, one panel
   each.
 
+- `rmbl_event_study`, `rmbl_staggered_att`:
+
+  ([`evstudy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/evstudy.md),
+  [`stgatt`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stgatt.md))
+  the effect at each period since adoption with its interval, the
+  reference period at zero.
+
+- `rmbl_synth`, `rmbl_synthdid`:
+
+  ([`synctl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/synctl.md),
+  [`syndid`](https://rootcoder007.github.io/rmorie-bricklayer/reference/syndid.md))
+  the treated unit (or mean) and its synthetic or weighted comparison
+  over time, adoption marked.
+
+- `rmbl_power`:
+
+  ([`plnpwr`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpwr.md))
+  power against effect size, with the 0.8 line and the minimum
+  detectable effect.
+
+- `rmbl_prevalence`:
+
+  ([`stdprev`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stdprev.md))
+  each group's age-standardised prevalence with its interval.
+
+- `rmbl_census_cwb`:
+
+  ([`cnscwb`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnscwb.md))
+  the Community Well-Being index, or one `component`, by place, one
+  colour per group.
+
+- `rmbl_balance`:
+
+  ([`baltab`](https://rootcoder007.github.io/rmorie-bricklayer/reference/baltab.md))
+  a love plot: each covariate's absolute standardised difference against
+  the `threshold` line, with a second table (`after`, after weighting or
+  matching) beside it.
+
+- `rmbl_aipw`:
+
+  ([`aipwcf`](https://rootcoder007.github.io/rmorie-bricklayer/reference/aipwcf.md))
+  the overlap of the two groups' out-of-fold propensities
+  (`type = "overlap"`) or the estimate with its interval
+  (`type = "estimate"`).
+
+- `rmbl_event_study`, `rmbl_staggered_att`:
+
+  also take `style = "stata"` (hollow points joined by a line, dashed
+  bars) and `shadepost`;
+  [`plotevgrid`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotevgrid.md)
+  puts several in one grid.
+
+- `rmbl_bacon`:
+
+  ([`bacondcmp`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bacondcmp.md))
+  each two-group comparison's estimate against its weight, by type, with
+  the two-way estimate.
+
+- `rmbl_permutation`:
+
+  ([`perminf`](https://rootcoder007.github.io/rmorie-bricklayer/reference/perminf.md))
+  the permuted statistics as a density (5th and 95th percentiles dashed)
+  or histogram, the observed one in red, one panel per outcome.
+
+- `rmbl_loo`, `rmbl_cohort_trends`:
+
+  ([`loounit`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loounit.md),
+  [`cohtrnd`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cohtrnd.md))
+  the leave-one-out estimates with the full-sample one; each cohort's
+  outcome by time since adoption.
+
 - `rmbl_case_flow`:
 
-  ([`case_flow`](https://rootcoder007.github.io/rmorie-bricklayer/reference/case_flow.md))
+  ([`caseflow`](https://rootcoder007.github.io/rmorie-bricklayer/reference/caseflow.md))
   cases received and disposed, shaded where the inventory grew or fell,
   and the clearance rate with its interval and rolling value.
 
 - `rmbl_life_table`:
 
-  ([`life_table`](https://rootcoder007.github.io/rmorie-bricklayer/reference/life_table.md))
+  ([`lifetbl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/lifetbl.md))
   the share of cases still open at each band edge with its interval, and
   the median.
 
 - `rmbl_disposition_mix`:
 
-  ([`disposition_mix`](https://rootcoder007.github.io/rmorie-bricklayer/reference/disposition_mix.md))
+  ([`dispmix`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dispmix.md))
   the shares of each outcome over the periods, stacked.
 
 - `rmbl_density`:
 
-  ([`crime_density`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crime_density.md))
+  ([`crmdens`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crmdens.md))
   the density of incidents as a heat map, with the highest-density
   regions outlined.
 
 - `rmbl_knox`:
 
-  ([`knox_test`](https://rootcoder007.github.io/rmorie-bricklayer/reference/knox_test.md))
+  ([`knoxtst`](https://rootcoder007.github.io/rmorie-bricklayer/reference/knoxtst.md))
   the Knox ratio of each distance-by-time cell, coloured on a log scale
   around 1.
 
 - `rmbl_hotspot`:
 
-  ([`hotspot_persistence`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hotspot_persistence.md))
+  ([`hotpers`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hotpers.md))
   the share of places holding half the incidents and the overlap of hot
   spots with the period before, over time, and a map of the cells
   coloured by how often they were hot.
 
 - `rmbl_svy_estimate`, `rmbl_svy_compare`:
 
-  ([`survey_estimate`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md),
-  [`survey_compare`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_compare.md))
+  ([`svyest`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svyest.md),
+  [`svycmp`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svycmp.md))
   each domain's estimate with its interval, flagged domains marked; each
   difference from the reference domain with its interval.
 
 - `rmbl_clearance_decomposition`:
 
-  ([`clearance_decomposition`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clearance_decomposition.md))
+  ([`clrdcmp`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clrdcmp.md))
   the parts' rates in both comparisons with the aggregate on top, where
   the workload moved (coloured by whether a part clears above or below
   the average), and the change as a waterfall of rate and mix effects:
@@ -381,116 +691,116 @@ The data drawn, invisibly.
 ## Examples
 
 ``` r
-sf <- stock_flow(days = c(13500, 14600, 15100), people = c(300, 320, 310),
-                 period = 2021:2023)
+sf <- stkflow(days = c(13500, 14600, 15100), people = c(300, 320, 310),
+                 prd = 2021:2023)
 plot(sf)
 
 plot(sf, what = "alos", col = "firebrick", main = "Length of stay")
 
 y <- yoy(data.frame(year = 2019:2023, n = c(400, 420, 390, 460, 450)), value = "n",
-         period = "year")
+         prd = "year")
 plot(y)
 
 # small counts: each percentage carries its exact interval
 plot(yoy(data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)), value = "n",
-         period = "year"))
+         prd = "year"))
 
-plot(benford_test(c(1, 12, 123, 1234, 2, 23, 3, 31, 4, 45, 5, 6, 7, 8, 9)))
+plot(benfordtst(c(1, 12, 123, 1234, 2, 23, 3, 31, 4, 45, 5, 6, 7, 8, 9)))
 
-plot(crf_no2(25))
+plot(crfno2(25))
 
-plot(compute_footprint(for (i in 1:20) sum(sqrt(seq_len(2e5))), location = "CA",
-                       cpu_power_w = 45, memory_gb = 8))
+plot(co2fp(for (i in 1:20) sum(sqrt(seq_len(2e5))), loc = "CA",
+                       cpupwrw = 45, memgb = 8))
 
 # the courts and crime data shipped with the package
 ext <- function(f) {
   read.csv(system.file("extdata", f, package = "rmoriebricklayer"))
 }
 fl <- ext("ocj_flow_ontario.csv")
-plot(case_flow(fl$received, fl$disposed, pending = fl$pending, period = fl$month))
+plot(caseflow(fl$received, fl$disposed, pend = fl$pending, prd = fl$month))
 
 td <- ext("ocj_time_to_disposition.csv")
 open <- unlist(td[nrow(td), 2:5]) * fl$disposed[nrow(fl)]
-plot(life_table(c(0, 10, 15, 18, Inf), open))
+plot(lifetbl(c(0, 10, 15, 18, Inf), open))
 
 dm <- ext("ocj_dispositions.csv")
-plot(disposition_mix(dm[, -(1:2)], period = dm$year))
+plot(dispmix(dm[, -(1:2)], prd = dm$year))
 
 og <- ext("ocj_offence_groups.csv")
 og <- og[og$year %in% c(2014, 2022), ]
-plot(clearance_decomposition(og$disposed, og$received, og$offence_group, og$year))
+plot(clrdcmp(og$disposed, og$received, og$offence_group, og$year))
 
 be <- ext("tps_break_enter_d14_2024.csv")
 be <- be[!is.na(be$lon), ]
-plot(crime_density(be$lon, be$lat, n_grid = 60))
+plot(crmdens(be$lon, be$lat, ngrid = 60))
 
 # \donttest{
-plot(knox_test(be$lon, be$lat, as.Date(be$occ_date), c(100, 200, 400), c(7, 14, 28),
+plot(knoxtst(be$lon, be$lat, as.Date(be$occ_date), c(100, 200, 400), c(7, 14, 28),
                nsim = 99, seed = 1))
 
 # }
-plot(hotspot_persistence(be$lon, be$lat, quarters(as.Date(be$occ_date)), cell = 0.3))
+plot(hotpers(be$lon, be$lat, quarters(as.Date(be$occ_date)), cell = 0.3))
 
 # rates, shares and the change in a rate
 rt <- data.frame(division = rep(c("n", "e", "w"), 2), year = rep(2022:2023, each = 3),
                  stops = c(120, 90, 60, 150, 85, 70),
                  residents = rep(c(1e4, 8e3, 5e3), 2))
 r23 <- rt[rt$year == 2023, ]
-plot(rate(r23, count = "stops", population = "residents", by = "division"))
+plot(rtcalc(r23, count = "stops", pop = "residents", by = "division"))
 
-plot(share(r23, count = "stops", by = "division"))
+plot(shrs(r23, count = "stops", by = "division"))
 
-plot(rate_change(rt, count = "stops", population = "residents", period = "year",
+plot(ratechg(rt, count = "stops", pop = "residents", prd = "year",
                  by = "division"))
 
 # a rate over time, one panel per group
-plot(rate(rt, count = "stops", population = "residents", by = c("division", "year")),
+plot(rtcalc(rt, count = "stops", pop = "residents", by = c("division", "year")),
      period = "year")
 
 # complex survey estimates by domain, and the differences between domains
 set.seed(3)
 sv <- data.frame(region = rep(c("north", "south", "east"), length.out = 300),
                  smoker = rbinom(300, 1, 0.25), w = runif(300, 50, 150))
-sd <- survey_design(sv, weights = "w", strata = "region")
-plot(survey_estimate(sd, sv, "smoker", by = "region", stat = "proportion", levels = "1"))
+sd <- svydes(sv, w = "w", strata = "region")
+plot(svyest(sd, sv, "smoker", by = "region", stat = "proportion", lvls = "1"))
 
-plot(survey_compare(sd, sv, "smoker", by = "region", stat = "proportion", levels = "1"))
+plot(svycmp(sd, sv, "smoker", by = "region", stat = "proportion", lvls = "1"))
 
 # a published table in one call: change, rates and rate change
 tab <- data.frame(year = rep(2020:2023, each = 2), g = rep(c("a", "b"), 4),
                   n = c(10, 20, 12, 22, 11, 25, 15, 24), pop = rep(c(1000, 2000), 4))
-plot(analyse_table(tab, value = "n", period = "year", by = "g", population = "pop"))
+plot(anltab(tab, value = "n", prd = "year", by = "g", pop = "pop"))
 
-plot(count_trend(c(21000, 23000, 22000, 25000, 24000)))
+plot(cnttrnd(c(21000, 23000, 22000, 25000, 24000)))
 
 # banded tables
-plot(band_sensitivity(parse_bands(c("0-17", "18-24", "25-44", "45+")), c(10, 20, 30, 40),
+plot(bandsens(prsbands(c("0-17", "18-24", "25-44", "45+")), c(10, 20, 30, 40),
                       caps = c(60, 70, 80, 90)))
 
-plot(published_bounds(c(10, 20), rounding = 5))
+plot(pubbnd(c(10, 20), rnd = 5))
 
-plot(region_coverage(c("a", "b", "c"), c(100, 200, 300), c(1L, 0L, 2L)))
+plot(rgncov(c("a", "b", "c"), c(100, 200, 300), c(1L, 0L, 2L)))
 
 # drift between two extracts, and how often the test cries wolf
 set.seed(1)
 dd <- data.frame(a = rnorm(400), b = sample(letters[1:3], 400, TRUE))
-plot(capsule_drift(dd, transform(dd, a = a + 3)))
+plot(cpsdrft(dd, transform(dd, a = a + 3)))
 
-plot(drift_calibrate(dd, n = 20L))
+plot(drftcal(dd, n = 20L))
 
 # describing a table
-plot(frequency_table(data.frame(g = c("a", "b", "b", "c", "c", "c")), "g"))
+plot(freqtbl(data.frame(g = c("a", "b", "b", "c", "c", "c")), "g"))
 
-plot(missingness_pattern(data.frame(a = c(1, NA, 3, NA), b = c(NA, NA, 1, 2))))
+plot(misspat(data.frame(a = c(1, NA, 3, NA), b = c(NA, NA, 1, 2))))
 
 hw <- data.frame(h = rnorm(100), w = rnorm(100))
 hw$h[1] <- 15
-plot(mahalanobis_outliers(hw))
+plot(mahaoutl(hw))
 
 sq <- data.frame(a = 1:20, b = (1:20)^2, c = rev(1:20))
-plot(top_correlations(sq))
+plot(topcors(sq))
 
-plot(correlation_table(sq))
+plot(cortbl(sq))
 
 # power and falsification of a statistic
 xy <- data.frame(x = rnorm(60), y = rnorm(60))
@@ -498,23 +808,23 @@ shift <- function(z, s) {
   z$y <- z$y + s * z$x
   z
 }
-plot(capsule_power(xy, function(z) cor(z$x, z$y), inject = shift, treatment = "x",
+plot(cpspwr(xy, function(z) cor(z$x, z$y), inject = shift, trt = "x",
                    sizes = c(0, 0.25, 0.5), n = 19, reps = 3, seed = 1))
 
-plot(capsule_falsify(xy, function(z) cor(z$x, z$y), treatment = "x", n = 29, seed = 1))
+plot(cpsfals(xy, function(z) cor(z$x, z$y), trt = "x", n = 29, seed = 1))
 
 # air pollution: burden, equity, and the full report
-plot(pollution_burden(25, 1, 0.008, 1e6, pollutant = "NO2"))
+plot(polbrdn(25, 1, 0.008, 1e6, poll = "NO2"))
 
-plot(exposure_concentration_index(data.frame(exposure = c(4, 1, 8, 2),
+plot(expconcidx(data.frame(exposure = c(4, 1, 8, 2),
                                              income = c(2, 1, 4, 3)),
                                   "exposure", "income"))
 
-plot(verify_pollution("no2", demo = TRUE))
+plot(vrfpol("no2", demo = TRUE))
 
-plot(lagrangian_particles(200, 0, 0, 1, 0.5, 1, 1, 1, 20,
+plot(lagrprt(200, 0, 0, 1, 0.5, 1, 1, 1, 20,
                           grid = c(-10, 40, -15, 25, 10, 8)))
 
-plot(plume_field(q = 100, u = 5, h = 50, x = seq(100, 2000, by = 100),
+plot(plmfld(q = 100, u = 5, h = 50, x = seq(100, 2000, by = 100),
                  y = seq(-300, 300, by = 50)))
 ```

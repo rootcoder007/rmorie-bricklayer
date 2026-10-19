@@ -25,7 +25,7 @@ adp(days, t = 365)
 
   Numeric scalar, the length of the period in days; must be positive.
   Default `365`. A vector of several values is refused.
-  [`period_days`](https://rootcoder007.github.io/rmorie-bricklayer/reference/period_days.md)
+  [`perdays`](https://rootcoder007.github.io/rmorie-bricklayer/reference/perdays.md)
   turns two dates into this.
 
 ## Value
@@ -41,9 +41,9 @@ denominator is TIME, which is what makes it a stock. Compare
 [`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md),
 whose denominator is people: the two are linked by \\\mathrm{ADP} = N
 \times \mathrm{ALOS} / t\\ (Little's law), so
-[`admissions()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admissions.md)
+[`admits()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admits.md)
 and
-[`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+[`stkflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stkflow.md)
 can move between them.
 
 Only days served inside the period should be counted: a stay that began
@@ -62,8 +62,8 @@ Corrections Planners*. University of Illinois at Urbana-Champaign.
 ## See also
 
 [`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md),
-[`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md),
-[`adp_from_counts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp_from_counts.md)
+[`stkflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stkflow.md),
+[`adpcnts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adpcnts.md)
 
 ## Examples
 
@@ -78,7 +78,7 @@ adp(c(10, 20, 30), t = 30)
 #> [1] 2
 
 # a leap year, with the period length taken from the dates
-adp(13500, t = period_days("2024-01-01", "2024-12-31"))
+adp(13500, t = perdays("2024-01-01", "2024-12-31"))
 #> [1] 36.88525
 
 # negative days are refused

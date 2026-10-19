@@ -1,6 +1,6 @@
 # Language models (your own key) and the signed services document
 
-[`bricklayer_llm_ask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)
+[`llmask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmask.md)
 sends a question to a language model and returns the answer. You bring
 the model: a key for a provider you already use, a model on your own
 machine, or a server of your own. Nothing is sent anywhere you did not
@@ -15,16 +15,16 @@ the package will and will not do on the network.
     server (LM Studio, vLLM, llama.cpp’s `llama-server`, a company
     gateway). Taken when configured, not probed.
 2.  **A provider whose key is set**, in the order
-    [`bricklayer_llm_providers()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_providers.md)
+    [`llmprvd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmprvd.md)
     lists them: OpenAI, Anthropic, Google Gemini, OpenRouter, Groq,
     Together AI, Fireworks AI, DeepSeek, Mistral, xAI, Cerebras,
     Perplexity, Hugging Face, OpenCode Zen, Cohere and NVIDIA. Each
     reads its usual variable (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
     `GEMINI_API_KEY`, …) or a key saved with
-    `bricklayer_llm_config(anthropic.key = ...)`; the model is
-    `MORIE_<PROVIDER>_MODEL` or `<provider>.model`. Anthropic’s Messages
-    API and Gemini’s `generateContent` are spoken natively; the others
-    are OpenAI-compatible.
+    `llmcfg(anthropic.key = ...)`; the model is `MORIE_<PROVIDER>_MODEL`
+    or `<provider>.model`. Anthropic’s Messages API and Gemini’s
+    `generateContent` are spoken natively; the others are
+    OpenAI-compatible.
 3.  **Ollama** at `OLLAMA_HOST` (default `localhost:11434`), on this
     machine or another, once its server is running (`ollama serve`, the
     Ollama app, or the system service its Linux installer sets up) and
@@ -38,7 +38,7 @@ route only.
 
 ``` r
 
-bricklayer_llm_providers()[, c("id", "label", "key_env")]
+llmprvd()[, c("id", "label", "key_env")]
 #>             id         label            key_env
 #> 1       openai        OpenAI     OPENAI_API_KEY
 #> 2    anthropic     Anthropic  ANTHROPIC_API_KEY
@@ -58,7 +58,7 @@ bricklayer_llm_providers()[, c("id", "label", "key_env")]
 #> 16      nvidia    NVIDIA NIM     NVIDIA_API_KEY
 ```
 
-[`bricklayer_llm_status()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_status.md)
+[`llmstat()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmstat.md)
 reports what is available from this machine. With the local route off
 the call reaches no network:
 
@@ -66,7 +66,7 @@ the call reaches no network:
 
 old <- Sys.getenv("OLLAMA_HOST", unset = NA)
 Sys.setenv(OLLAMA_HOST = "off")
-bricklayer_llm_status()
+llmstat()
 #>             route   status
 #> 1    own endpoint  not set
 #> 2 other providers   no key
@@ -82,10 +82,10 @@ if (is.na(old)) Sys.unsetenv("OLLAMA_HOST") else Sys.setenv(OLLAMA_HOST = old)
 
 ``` r
 
-bricklayer_llm_ask("How do I estimate a weighted proportion with bootstrap replicate weights?")
-bricklayer_llm_ask(paste(c("Summarise this table:", capture.output(print(head(mtcars)))),
+llmask("How do I estimate a weighted proportion with bootstrap replicate weights?")
+llmask(paste(c("Summarise this table:", capture.output(print(head(mtcars)))),
                          collapse = "\n"),
-                   system_prompt = "Answer in two sentences.", docs = FALSE)
+                   syspro = "Answer in two sentences.", docs = FALSE)
 ```
 
 With `docs = TRUE` (the default) the model is told every function of the
@@ -115,7 +115,7 @@ take in:
 Every size can still reach every function: `search_docs` and `get_help`
 look up any page.
 
-[`agent_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
+[`agentbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agentbndl.md)
 asks over the same routes, with the bundle task added, and with no route
 it returns the setup hint (`rmbl bundle` exits 1).
 
@@ -130,7 +130,7 @@ ships with the package as the fallback and the floor:
 
 ``` r
 
-s <- bricklayer_services(offline = TRUE)
+s <- svcs(offline = TRUE)
 s$data$mode
 #> [1] "key"
 attr(s, "source")
@@ -183,9 +183,9 @@ never a language model.
 
 ``` r
 
-bricklayer_llm_login(token = "<key issued at https://www.rmorie.com/access/>")
-bricklayer_llm_login()          # or: GitHub device flow / emailed code
-bricklayer_llm_logout()         # forget the key
+dlogin(token = "<key issued at https://www.rmorie.com/access/>")
+dlogin()          # or: GitHub device flow / emailed code
+dlogout()         # forget the key
 ```
 
 The key is stored with mode 0600 in the user’s configuration directory
@@ -195,13 +195,26 @@ stored.
 ## From the command line
 
 The same routes serve the CLI installed by
-[`install_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md):
+[`instcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/instcli.md):
 
 ``` sh
 rmoriebricklayer config setup       # pick a provider, paste its key (saved privately), pick a model
 rmoriebricklayer doctor             # the routes, and the one ask takes
 rmoriebricklayer models --route anthropic
-rmoriebricklayer ask "what does capsule_bundle() cover?"
+rmoriebricklayer ask "what does cpsbndl() cover?"
 rmoriebricklayer ask --route ollama --model gemma3:4b "how do I verify a capsule?"
 rmoriebricklayer login --token      # the data key: paste it when asked; it never sits in the shell history
+```
+
+## Asking about the Indigenous tables
+
+With a route set up, a question can name the package’s Indigenous data;
+the model answers with the functions to call (this needs a model, so it
+is not run here):
+
+``` r
+
+llmask(paste("How do I compare perceived mental health of First Nations,",
+                         "Metis and Inuit adults with non-Indigenous adults, using",
+                         "indiex('health_indicators')?"))
 ```

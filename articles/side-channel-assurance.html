@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -177,15 +177,15 @@ masking order with the measurement noise as the base.</p>
 output is byte-identical to the unmasked computation, which the full
 vector suite checks on every vector:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kem_keygen.html">kem_keygen</a></span><span class="op">(</span><span class="fl">512</span><span class="op">)</span></span>
-<span><span class="va">sent</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kem_encapsulate.html">kem_encapsulate</a></span><span class="op">(</span><span class="fu"><a href="../reference/kem_keygen.html">kem_public_key</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/kem_decapsulate.html">kem_decapsulate</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span>, masked <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
-<span>          <span class="fu"><a href="../reference/kem_decapsulate.html">kem_decapsulate</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span>, masked <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kemkg.html">kemkg</a></span><span class="op">(</span><span class="fl">512</span><span class="op">)</span></span>
+<span><span class="va">sent</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/kemencap.html">kemencap</a></span><span class="op">(</span><span class="fu"><a href="../reference/kemkg.html">kempubkey</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/kemdecap.html">kemdecap</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span>, masked <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>          <span class="fu"><a href="../reference/kemdecap.html">kemdecap</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span>, masked <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span></span>
-<span><span class="va">skey</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fips_keygen.html">fips_keygen</a></span><span class="op">(</span><span class="st">"ML-DSA-44"</span><span class="op">)</span></span>
-<span><span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/capsule_sign.html">capsule_sign</a></span><span class="op">(</span><span class="st">"manifest"</span>, <span class="va">skey</span>, deterministic <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/capsule_verify.html">capsule_verify</a></span><span class="op">(</span><span class="st">"manifest"</span>, <span class="va">sig</span>, <span class="fu"><a href="../reference/fips_keygen.html">fips_public_key</a></span><span class="op">(</span><span class="va">skey</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">skey</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fipskg.html">fipskg</a></span><span class="op">(</span><span class="st">"ML-DSA-44"</span><span class="op">)</span></span>
+<span><span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpssign.html">cpssign</a></span><span class="op">(</span><span class="st">"manifest"</span>, <span class="va">skey</span>, determ <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/cpsvrf.html">cpsvrf</a></span><span class="op">(</span><span class="st">"manifest"</span>, <span class="va">sig</span>, <span class="fu"><a href="../reference/fipskg.html">fipspubkey</a></span><span class="op">(</span><span class="va">skey</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <p>The gadgets (<code>src/rmbl_masked.h</code>) are the published ones:
 Trichina’s two-share AND; a bitsliced ripple-carry adder over Boolean
@@ -290,12 +290,25 @@ every power figure above comes from the emulator.</p>
 (4 ms for ML-KEM-768 against 1.2 ms on this package’s test machine) and
 7 to 10 times on signing (17 ms for ML-DSA-65 against 2.4 ms), depending
 on the CPU. Where the threat model has no physical attacker,
-<code>kem_decapsulate(masked = FALSE)</code>,
-<code>capsule_sign(masked = FALSE)</code> and
-<code>fips_sign_mu(masked = FALSE)</code> keep the plain path, and
+<code>kemdecap(masked = FALSE)</code>,
+<code>cpssign(masked = FALSE)</code> and
+<code>fipssignmu(masked = FALSE)</code> keep the plain path, and
 <code>options(rmoriebricklayer.masked = FALSE)</code> makes that the
 default for a session (a chain or bundle signs many times). Timing
 protections cannot be switched off; they are not optional.</p>
+</div>
+<div class="section level2">
+<h2 id="indigenous-examples">Indigenous examples<a class="anchor" aria-label="anchor" href="#indigenous-examples"></a>
+</h2>
+<p>Side-channel assurance concerns the cryptography, not the data; the
+keys it tests are the ones that sign and encrypt releases such as the
+Indigenous tables shown in
+<code><a href="../articles/post-quantum-signatures.html">vignette("post-quantum-signatures")</a></code> and
+<code><a href="../articles/key-encapsulation.html">vignette("key-encapsulation")</a></code>. The masked implementation is
+used by default:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"rmoriebricklayer.masked"</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

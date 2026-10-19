@@ -19,7 +19,7 @@ off a small count comes with an interval as wide as the count is small."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,23 +80,23 @@ off a small count comes with an interval as wide as the count is small.</p>
 <span><span class="fu">yoy</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  <span class="va">value</span>,</span>
-<span>  <span class="va">period</span>,</span>
+<span>  <span class="va">prd</span>,</span>
 <span>  by <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  lag <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  fun <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  units <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"count"</span>, <span class="st">"continuous"</span>, <span class="st">"percent"</span><span class="op">)</span>,</span>
-<span>  min_base <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  conf_level <span class="op">=</span> <span class="fl">0.95</span>,</span>
-<span>  direction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"neutral"</span>, <span class="st">"higher_is_better"</span>, <span class="st">"lower_is_better"</span><span class="op">)</span>,</span>
+<span>  minbase <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  conflvl <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"neutral"</span>, <span class="st">"higher"</span>, <span class="st">"lower"</span><span class="op">)</span>,</span>
 <span>  complete <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'numeric'</span></span>
-<span><span class="fu">yoy</span><span class="op">(</span><span class="va">x</span>, period <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span></span>
+<span><span class="fu">yoy</span><span class="op">(</span><span class="va">x</span>, prd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'integer'</span></span>
-<span><span class="fu">yoy</span><span class="op">(</span><span class="va">x</span>, period <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span></span>
+<span><span class="fu">yoy</span><span class="op">(</span><span class="va">x</span>, prd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'ts'</span></span>
 <span><span class="fu">yoy</span><span class="op">(</span><span class="va">x</span>, lag <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span>
@@ -122,7 +122,7 @@ off a small count comes with an interval as wide as the count is small.</p>
 measure, as a string or a bare name.</p></dd>
 
 
-<dt id="arg-period">period<a class="anchor" aria-label="anchor" href="#arg-period"></a></dt>
+<dt id="arg-prd">prd<a class="anchor" aria-label="anchor" href="#arg-prd"></a></dt>
 <dd><p>For a data frame, the column holding the
 period (a year, a <code>Date</code>, a fiscal-year integer, an ordered
 factor). For a numeric vector, the periods themselves.</p></dd>
@@ -158,21 +158,21 @@ and withholds the percent change, which for a percentage is a different
 quantity.</p></dd>
 
 
-<dt id="arg-min-base">min_base<a class="anchor" aria-label="anchor" href="#arg-min-base"></a></dt>
+<dt id="arg-minbase">minbase<a class="anchor" aria-label="anchor" href="#arg-minbase"></a></dt>
 <dd><p>Optional: previous-period values below this get a
 "small base" note. Nothing is withheld either way: every non-zero base gets
 its percent change and exact interval, which is as wide as the base is
 small. Defaults to 0 (no note); only a zero base has no percent change.</p></dd>
 
 
-<dt id="arg-conf-level">conf_level<a class="anchor" aria-label="anchor" href="#arg-conf-level"></a></dt>
+<dt id="arg-conflvl">conflvl<a class="anchor" aria-label="anchor" href="#arg-conflvl"></a></dt>
 <dd><p>Numeric scalar in (0, 1), the confidence level for the
 count interval; default 0.95.</p></dd>
 
 
-<dt id="arg-direction">direction<a class="anchor" aria-label="anchor" href="#arg-direction"></a></dt>
+<dt id="arg-dir">dir<a class="anchor" aria-label="anchor" href="#arg-dir"></a></dt>
 <dd><p>Which way is an improvement:
-<code>"higher_is_better"</code>, <code>"lower_is_better"</code> (segregation days,
+<code>"higher"</code>, <code>"lower"</code> (segregation days,
 deaths in custody, use of force), or <code>"neutral"</code>. Affects colour
 and the <code>verdict</code> column only, never the arithmetic.</p></dd>
 
@@ -191,7 +191,7 @@ always shown to whole percent.</p></dd>
 
 <dt id="arg-palette">palette<a class="anchor" aria-label="anchor" href="#arg-palette"></a></dt>
 <dd><p>Character, default <code>"diverging"</code>. One of
-<code><a href="yoy_palettes.html">yoy_palettes()</a></code>; chooses the colours used when
+<code><a href="yoypals.html">yoypals()</a></code>; chooses the colours used when
 <code>color = TRUE</code>. An unknown name is an error.</p></dd>
 
 
@@ -213,18 +213,18 @@ number of rows left out is reported on a final line.</p></dd>
     <p>An <code>rmbl_yoy</code> object (a data frame of class
 <code>c("rmbl_yoy", "data.frame")</code>) with one row per period (and group): the
 period column under its own name (<code>period</code> for a vector or a <code>ts</code>), the
-grouping columns, then <code>value</code>, <code>previous</code>, <code>change</code>, <code>pct_change</code>
+grouping columns, then <code>value</code>, <code>previous</code>, <code>change</code>, <code>pctchg</code>
 (or
-<code>pp_change</code> for percentages), <code>flag</code> (character: "no comparison period",
+<code>ppchg</code> for percentages), <code>flag</code> (character: "no comparison period",
 "no data", "previous period is zero", or a small-base note when
-<code>min_base</code> is set; <code>NA</code> otherwise), <code>pct_lower</code> and <code>pct_upper</code>
+<code>minbase</code> is set; <code>NA</code> otherwise), <code>pctlo</code> and <code>pctup</code>
 for counts,
 and <code>verdict</code>. Attribute <code>"yoy"</code> records <code>value</code>, <code>period</code>,
 <code>by</code>, <code>lag</code>,
-<code>units</code>, <code>min_base</code>, <code>conf_level</code>, <code>direction</code> and the display
+<code>units</code>, <code>minbase</code>, <code>conflvl</code>, <code>direction</code> and the display
 digits;
-the writers (<code><a href="yoy_write.html">yoy_write()</a></code>) and
-<code><a href="yoy_summary.html">yoy_summary()</a></code> read it.</p>
+the writers (<code><a href="yoywr.html">yoywr()</a></code>) and
+<code><a href="yoysmry.html">yoysmry()</a></code> read it.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -232,14 +232,14 @@ the writers (<code><a href="yoy_write.html">yoy_write()</a></code>) and
 <code>complete = TRUE</code> the periods missing from a regular grid (numbers, <code>Date</code>
 or <code>POSIXct</code> with a common step) are inserted with <code>NA</code> values and flagged
 "no data". Each period is then compared with the period <code>lag</code> steps
-earlier in that grid: <code>change</code> is the difference, <code>pct_change</code>
+earlier in that grid: <code>change</code> is the difference, <code>pctchg</code>
 \(100 (v_t / v_{t-lag} - 1)\) (<code>NA</code> off a zero base), and for percentages
-<code>pp_change</code> is the difference in percentage points.</p>
+<code>ppchg</code> is the difference in percentage points.</p>
 <p>For counts, conditional on their sum \(n = a + b\) the current count
 \(a\) is binomial with probability \(\rho / (1 + \rho)\), \(\rho\)
 the rate ratio; the Clopper-Pearson interval for that probability,
 transformed back, is an exact interval for the ratio, reported as
-<code>pct_lower</code> and <code>pct_upper</code> (percent change). It is the interval
+<code>pctlo</code> and <code>pctup</code> (percent change). It is the interval
 <code><a href="https://rdrr.io/r/stats/poisson.test.html" class="external-link">stats::poisson.test()</a></code> gives for two counts with equal exposure. A zero
 base has no percent change but still an interval (with an infinite upper
 end).</p>
@@ -250,7 +250,7 @@ the sign of the change only and makes no claim of significance.</p>
 <p>Errors: <code>x</code> neither a data frame, a numeric vector nor a <code>ts</code>; <code>value</code>,
 <code>period</code> or <code>by</code> naming a column that does not exist; a non-numeric or
 infinite <code>value</code>; for <code>units = "count"</code>, negative or fractional values;
-<code>lag</code> not a positive whole number; <code>conf_level</code> outside (0, 1); an unknown
+<code>lag</code> not a positive whole number; <code>conflvl</code> outside (0, 1); an unknown
 <code>units</code> or <code>direction</code>.</p>
     </div>
     <div class="section level2">
@@ -265,8 +265,8 @@ administrative extract, and is the shape this function is built for.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="yoy_render.html">yoy_html()</a></code>, <code><a href="yoy_render.html">yoy_pdf()</a></code>,
-<code><a href="yoy_summary.html">yoy_summary()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="yoyren.html">yoyhtml()</a></code>, <code><a href="yoyren.html">yoypdf()</a></code>,
+<code><a href="yoysmry.html">yoysmry()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -274,41 +274,41 @@ administrative extract, and is the shape this function is built for.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">seg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  EndFiscalYear <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2019</span><span class="op">:</span><span class="fl">2023</span>, each <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  Gender <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Female"</span>, <span class="st">"Male"</span><span class="op">)</span>, <span class="fl">5</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  Number_Of_Placements <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">31</span>, <span class="fl">402</span>, <span class="fl">28</span>, <span class="fl">377</span>, <span class="fl">12</span>, <span class="fl">190</span>, <span class="fl">19</span>, <span class="fl">268</span>, <span class="fl">24</span>, <span class="fl">331</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  NumberOfPlacements <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">31</span>, <span class="fl">402</span>, <span class="fl">28</span>, <span class="fl">377</span>, <span class="fl">12</span>, <span class="fl">190</span>, <span class="fl">19</span>, <span class="fl">268</span>, <span class="fl">24</span>, <span class="fl">331</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">yoy</span><span class="op">(</span><span class="va">seg</span>,</span></span>
-<span class="r-in"><span>  value <span class="op">=</span> <span class="st">"Number_Of_Placements"</span>, period <span class="op">=</span> <span class="st">"EndFiscalYear"</span>,</span></span>
-<span class="r-in"><span>  by <span class="op">=</span> <span class="st">"Gender"</span>, direction <span class="op">=</span> <span class="st">"lower_is_better"</span></span></span>
+<span class="r-in"><span>  value <span class="op">=</span> <span class="st">"NumberOfPlacements"</span>, prd <span class="op">=</span> <span class="st">"EndFiscalYear"</span>,</span></span>
+<span class="r-in"><span>  by <span class="op">=</span> <span class="st">"Gender"</span>, dir <span class="op">=</span> <span class="st">"lower"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">y</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Gender  EndFiscalYear  Number_Of_Placements  previous  change  change %  interval     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────  ─────────────  ────────────────────  ────────  ──────  ────────  ─────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2019           31                    —         —         —       —            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Gender  EndFiscalYear  NumberOfPlacements  previous  change  change %  interval     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ──────  ─────────────  ──────────────────  ────────  ──────  ────────  ─────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2019           31                  —         —         —       —            </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ note: no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2020           28                    31        -3      ▼ -9.7%   [-48%, +56%] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2021           12                    28        -16     ▼ -57.1%  [-80%, -13%] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2022           19                    12        7       ▲ +58.3%  [-27%, +258%]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2023           24                    19        5       ▲ +26.3%  [-34%, +144%]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2019           402                   —         —         —       —            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2020           28                  31        -3      ▼ -9.7%   [-48%, +56%] </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2021           12                  28        -16     ▼ -57.1%  [-80%, -13%] </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2022           19                  12        7       ▲ +58.3%  [-27%, +258%]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2023           24                  19        5       ▲ +26.3%  [-34%, +144%]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2019           402                 —         —         —       —            </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ note: no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2020           377                   402       -25     ▼ -6.2%   [-19%, +8%]  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2021           190                   377       -187    ▼ -49.6%  [-58%, -40%] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2022           268                   190       78      ▲ +41.1%  [+17%, +71%] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2023           331                   268       63      ▲ +23.5%  [+5%, +46%]  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2020           377                 402       -25     ▼ -6.2%   [-19%, +8%]  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2021           190                 377       -187    ▼ -49.6%  [-58%, -40%] </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2022           268                 190       78      ▲ +41.1%  [+17%, +71%] </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2023           331                 268       63      ▲ +23.5%  [+5%, +46%]  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> lag 1 period · units: count · 95% exact rate-ratio interval · lower is better</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The interval is exact, so a small group does not get a confident</span></span></span>
 <span class="r-in"><span><span class="co"># percent it has not earned.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span>, <span class="va">Gender</span> <span class="op">==</span> <span class="st">"Female"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Gender EndFiscalYear value previous change pct_change                 flag</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Gender EndFiscalYear value previous change     pctchg                 flag</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 Female          2019    31       NA     NA         NA no comparison period</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 Female          2020    28       31     -3  -9.677419                 &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 Female          2021    12       28    -16 -57.142857                 &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4 Female          2022    19       12      7  58.333333                 &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5 Female          2023    24       19      5  26.315789                 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   pct_lower pct_upper verdict</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       pctlo     pctup verdict</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1        NA        NA    &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 -47.79679  55.62836  better</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 -80.14950 -12.97354  better</span>
@@ -318,7 +318,7 @@ administrative extract, and is the shape this function is built for.</p>
 <span class="r-in"><span><span class="co"># A percentage is handled as percentage points, not as a percent of a</span></span></span>
 <span class="r-in"><span><span class="co"># percent.</span></span></span>
 <span class="r-in"><span><span class="va">rate</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fl">2019</span><span class="op">:</span><span class="fl">2023</span>, share <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4.1</span>, <span class="fl">4.6</span>, <span class="fl">5.2</span>, <span class="fl">5.0</span>, <span class="fl">5.4</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">yoy</span><span class="op">(</span><span class="va">rate</span>, value <span class="op">=</span> <span class="st">"share"</span>, period <span class="op">=</span> <span class="st">"year"</span>, units <span class="op">=</span> <span class="st">"percent"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">yoy</span><span class="op">(</span><span class="va">rate</span>, value <span class="op">=</span> <span class="st">"share"</span>, prd <span class="op">=</span> <span class="st">"year"</span>, units <span class="op">=</span> <span class="st">"percent"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> year  share  previous  change  points  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ────  ─────  ────────  ──────  ────────</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2019  4.1    —         —         —     </span>
@@ -331,7 +331,7 @@ administrative extract, and is the shape this function is built for.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> lag 1 period · units: percent · percentage-point change, not percent of a percent</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a missing year stays a gap; a bare column name works too</span></span></span>
-<span class="r-in"><span><span class="fu">yoy</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2019</span>, <span class="fl">2021</span>, <span class="fl">2022</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">12</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span>, value <span class="op">=</span> <span class="va">n</span>, period <span class="op">=</span> <span class="va">year</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">yoy</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2019</span>, <span class="fl">2021</span>, <span class="fl">2022</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">12</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span>, value <span class="op">=</span> <span class="va">n</span>, prd <span class="op">=</span> <span class="va">year</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> year  n   previous  change  change %  interval     </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ────  ──  ────────  ──────  ────────  ─────────────</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2019  10  —         —         —       —            </span>
@@ -346,12 +346,12 @@ administrative extract, and is the shape this function is built for.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a quarterly series compares each quarter with the same quarter a year earlier</span></span></span>
 <span class="r-in"><span><span class="va">q</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/ts.html" class="external-link">ts</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">6</span>, <span class="fl">7</span>, <span class="fl">8</span>, <span class="fl">6</span>, <span class="fl">7</span>, <span class="fl">9</span>, <span class="fl">9</span><span class="op">)</span>, frequency <span class="op">=</span> <span class="fl">4</span>, start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2020</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu">yoy</span><span class="op">(</span><span class="va">q</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">5</span><span class="op">:</span><span class="fl">8</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"period"</span>, <span class="st">"value"</span>, <span class="st">"previous"</span>, <span class="st">"pct_change"</span><span class="op">)</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    period value previous pct_change</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 2021.00     6        5   20.00000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 2021.25     7        6   16.66667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7 2021.50     9        7   28.57143</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8 2021.75     9        8   12.50000</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu">yoy</span><span class="op">(</span><span class="va">q</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">5</span><span class="op">:</span><span class="fl">8</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"period"</span>, <span class="st">"value"</span>, <span class="st">"previous"</span>, <span class="st">"pctchg"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    period value previous   pctchg</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 2021.00     6        5 20.00000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 2021.25     7        6 16.66667</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7 2021.50     9        7 28.57143</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8 2021.75     9        8 12.50000</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># counts must be whole numbers</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">yoy</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>, <span class="st">"n"</span>, <span class="st">"year"</span><span class="op">)</span><span class="op">)</span></span></span>

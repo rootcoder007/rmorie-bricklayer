@@ -17,7 +17,7 @@ the median of all pairwise slopes, a robust rate of change.
 ``` r
 
 y <- c(402, 377, 190, 268, 331)        # five years of placements
-trend_test(y)
+trndtst(y)
 #> $S
 #> [1] -4
 #> 
@@ -33,13 +33,13 @@ trend_test(y)
 #> $intercept
 #> [1] 419.75
 #> 
-#> $slope_lower
+#> $slopelo
 #> [1] -187
 #> 
-#> $slope_upper
+#> $slopeup
 #> [1] 78
 #> 
-#> $slope_ci_clamped
+#> $slopecicla
 #> [1] TRUE
 #> 
 #> $n
@@ -51,7 +51,7 @@ trend_test(y)
 #> $alternative
 #> [1] "two.sided"
 #> 
-#> $conf_level
+#> $conflvl
 #> [1] 0.95
 #> 
 #> $method
@@ -62,7 +62,7 @@ A monotone series is detected even at *n* = 5:
 
 ``` r
 
-trend_test(c(1, 2, 3, 4, 5))
+trndtst(c(1, 2, 3, 4, 5))
 #> $S
 #> [1] 10
 #> 
@@ -78,13 +78,13 @@ trend_test(c(1, 2, 3, 4, 5))
 #> $intercept
 #> [1] 0
 #> 
-#> $slope_lower
+#> $slopelo
 #> [1] 1
 #> 
-#> $slope_upper
+#> $slopeup
 #> [1] 1
 #> 
-#> $slope_ci_clamped
+#> $slopecicla
 #> [1] TRUE
 #> 
 #> $n
@@ -96,7 +96,7 @@ trend_test(c(1, 2, 3, 4, 5))
 #> $alternative
 #> [1] "two.sided"
 #> 
-#> $conf_level
+#> $conflvl
 #> [1] 0.95
 #> 
 #> $method
@@ -107,7 +107,7 @@ One aberrant period does not create a trend:
 
 ``` r
 
-trend_test(c(100, 100, 100, 100, 900))$p_value
+trndtst(c(100, 100, 100, 100, 900))$p_value
 #> [1] 0.4
 ```
 
@@ -116,9 +116,9 @@ From a data frame, with a direction when one is hypothesised in advance:
 ``` r
 
 d <- data.frame(year = 2019:2023, n = y)
-trend_test(d, value = "n", period = "year")$slope
+trndtst(d, value = "n", prd = "year")$slope
 #> [1] -21.375
-trend_test(d, value = "n", period = "year", alternative = "decreasing")$p_value
+trndtst(d, value = "n", prd = "year", alt = "decreasing")$p_value
 #> [1] 0.2416667
 ```
 
@@ -127,15 +127,15 @@ trend_test(d, value = "n", period = "year", alternative = "decreasing")$p_value
 For counts, the natural model is a Poisson log-linear trend:
 `log E[y] = a + b * t`, so `exp(b)` is the **rate ratio per period**,
 the multiplicative change from one period to the next.
-[`count_trend()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.md)
+[`cnttrnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnttrnd.md)
 fits it with an interval:
 
 ``` r
 
 set.seed(3)
 y <- stats::rpois(8, lambda = 200 * 0.85^(0:7))   # falling ~15% a year
-fit <- count_trend(y)
-round(fit$rate_ratio, 3)
+fit <- cnttrnd(y)
+round(fit$rateratio, 3)
 #> [1] 0.869
 ```
 
@@ -143,7 +143,7 @@ With a varying denominator the trend is in the *rate*, via an offset:
 
 ``` r
 
-count_trend(c(20, 25, 30), offset = c(1000, 1500, 2500))$rate_ratio
+cnttrnd(c(20, 25, 30), offset = c(1000, 1500, 2500))$rateratio
 #> [1] 0.7708656
 ```
 
@@ -159,8 +159,8 @@ split:
 
 ``` r
 
-step_change(c(100, 104, 98, 60, 63, 58))
-#> $break_after
+stepchg(c(100, 104, 98, 60, 63, 58))
+#> $breakafter
 #> [1] 3
 #> 
 #> $index
@@ -179,9 +179,9 @@ step_change(c(100, 104, 98, 60, 63, 58))
 #> [1] 2440.167
 #> 
 #> $p_value
-#> [1] 0.1012483
+#> [1] 0.1
 #> 
-#> $n_perm
+#> $nperm
 #> [1] 720
 #> 
 #> $method
@@ -193,17 +193,65 @@ Pure noise still yields a best split, and it is not significant:
 ``` r
 
 set.seed(2)
-step_change(stats::rnorm(12))$p_value
+stepchg(stats::rnorm(12))$p_value
 #> [1] 0.6223
+```
+
+## Two survey periods
+
+Survey tables often give only two periods, each with its confidence
+interval. The change between them has an interval of its own.
+[`healchg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/healchg.md)
+gives it for every group and indicator at once. It lists wellness
+indicators first, reading change as Indigenous scholars of mental health
+read it, as a process of healing (Stewart 2008). Perceived mental health
+of adults, 2015/2018 and 2019/2022, by Statistics Canada (table
+13-10-0924-01):
+
+``` r
+
+h <- indiex("health")
+h <- h[h$age == "Total, 18 years and over" &
+         h$indicator == "Perceived mental health, very good or excellent", ]
+healchg(h, "group", "indicator", "period", "estimate", "lower", "upper",
+               from = "2015/2018", to = "2019/2022", qual = "quality")
+#>            group                                       indicator side from   to
+#> 1  First Nations Perceived mental health, very good or excellent <NA> 59.8 45.8
+#> 2          Métis Perceived mental health, very good or excellent <NA> 61.0 52.8
+#> 3          Inuit Perceived mental health, very good or excellent <NA> 49.1 47.8
+#> 4 Non-Indigenous Perceived mental health, very good or excellent <NA> 70.6 61.5
+#>   change      lower      upper usewithcau
+#> 1  -14.0 -17.687818 -10.312182      FALSE
+#> 2   -8.2 -11.925923  -4.474077      FALSE
+#> 3   -1.3  -9.974243   7.374243      FALSE
+#> 4   -9.1  -9.702080  -8.497920      FALSE
+```
+
+## A pace, projected
+
+Some counts accumulate toward a fixed number: the 94 Calls to Action of
+the Truth and Reconciliation Commission, for instance.
+[`trcprog()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trcprog.md)
+takes the pace so far as a Poisson rate with its exact interval, and
+gives the year all would be complete at that pace. That is a description
+of the pace, not a forecast.
+
+``` r
+
+trcprog()
+#>   completed remaining years     rate    ratelo   rateup   cmplby cmplbyearly
+#> 1        13        81  7.04 1.846591 0.9832319 3.157727 2066.865    2048.651
+#>   cmplbylate
+#> 1   2105.381
 ```
 
 ## Choosing between them
 
 | Question | Tool | Reports |
 |----|----|----|
-| Is the series moving in one direction? | [`trend_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trend_test.md) | Mann–Kendall p-value, Sen’s slope with interval |
-| By what factor per period? | [`count_trend()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.md) | rate ratio with interval, optional offset |
-| Did it change once, and when? | [`step_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/step_change.md) | split point, segment means, permutation p-value |
+| Is the series moving in one direction? | [`trndtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trndtst.md) | Mann–Kendall p-value, Sen’s slope with interval |
+| By what factor per period? | [`cnttrnd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnttrnd.md) | rate ratio with interval, optional offset |
+| Did it change once, and when? | [`stepchg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stepchg.md) | split point, segment means, permutation p-value |
 | Year over year, with publication rounding | [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md) (its own vignette) | exact intervals on each change |
 
 All of them work on the five to ten values a published table gives, and

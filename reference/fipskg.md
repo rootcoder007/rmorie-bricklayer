@@ -1,0 +1,157 @@
+# Generate a standardised post-quantum signing key
+
+Generates a key for one of the NIST-standardised signature schemes:
+ML-DSA (FIPS 204) or SLH-DSA (FIPS 205). Both are implemented in this
+package, natively, with no system dependency;
+[`pqcbknd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqcbknd.md)
+lists the parameter sets. The key signs capsule manifests, attestations
+and bundles with
+[`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md),
+and its public half, from `fipspubkey()`, is what you give to anyone who
+should be able to check those signatures with
+[`cpsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsvrf.md).
+
+## Usage
+
+``` r
+fipskg(scheme = "ML-DSA-65", seed = NULL)
+
+fipspubkey(key)
+```
+
+## Arguments
+
+- scheme:
+
+  Scheme name, one of
+  [`pqcbknd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqcbknd.md)
+  other than `"xmss-sha256"`. The default `"ML-DSA-65"` is the FIPS 204
+  middle security level.
+
+- seed:
+
+  Optional raw vector of key-generation seed bytes, of the length
+  [`fipssz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipssz.md)
+  reports for the scheme. Supplying it makes the key reproducible, which
+  is what the standards' test vectors need; the default draws from the
+  operating system's CSPRNG.
+
+- key:
+
+  A key from `fipskg()`.
+
+## Value
+
+`fipskg()`: a list of class `bricklayer_fips_key` (also
+`bricklayer_oqs_key`) with `public` and `secret` (the encoded keys as
+lowercase hex strings, in the standards' byte layouts) and `scheme`.
+Printing it never shows the secret. `fipspubkey()`: a list of class
+`bricklayer_fips_public_key` (also `bricklayer_oqs_public_key`) with
+`public` and `scheme`.
+
+## Details
+
+Unlike
+[`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md)
+'s hash-based key, these are STATELESS: one key signs any number of
+messages, with no index to track and nothing to persist between
+signatures.
+
+Which to pick. ML-DSA is small and fast and rests on a lattice
+assumption. SLH-DSA rests on nothing but the hash function, at the cost
+of a signature one to two orders of magnitude larger; its `s` parameter
+sets have small signatures and slow signing, its `f` sets the reverse,
+and its SHAKE and SHA-2 families are equally strong: pick SHA-2 where a
+validated SHA-2 implementation is what an auditor will ask about.
+`"ML-DSA-65"` is the sensible default.
+
+Key generation expands a random seed (the length
+[`fipssz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipssz.md)
+reports as `seed`: 32 bytes for ML-DSA, three times the security level
+in bytes for SLH-DSA) into the key pair exactly as FIPS 204
+`ML-DSA.KeyGen` and FIPS 205 `slh_keygen` do, so the same seed gives the
+same key as any other conforming implementation. ML-DSA keys take
+milliseconds; SLH-DSA keys take from milliseconds (the `f` sets) to
+about a second (the `s` sets, which build a larger top tree), with a
+spinner on stderr after 0.75 s when a person is watching (see
+[`blprog()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blprog.md))
+and Ctrl-C honoured. Nothing is written to disk: saving the key, and
+keeping its `secret` private, is up to you. `fipspubkey()` drops the
+secret half, leaving what a verifier needs.
+
+Refusals: an unknown scheme (the message lists the known ones, and
+points to
+[`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md)
+for XMSS), a `seed` that is not a raw vector of the right length, and
+for `fipspubkey()` a key that did not come from `fipskg()` or
+[`fipskey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskey.md).
+
+## Security
+
+A hand-written implementation. The standardised schemes are checked byte
+for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
+operation that touches a secret under valgrind memcheck with the secret
+marked undefined (the ctgrind method), so a branch or a memory address
+that depends on it is a reported error, and afterwards scans the dead
+stack for copies of the secret. Both checks run in CI on every change,
+with GCC and with Clang. Timing is also measured on x86-64 and arm64
+hardware (`inst/dudect`), power leakage is assessed in simulation under
+the value and the transition models (`inst/tvla`), and ML-KEM
+decapsulation and ML-DSA signing are first-order masked by default.
+These are checks of this code on those compilers and under those leakage
+models; no third-party security audit has been commissioned, and the
+README's security section lists what each check does and does not cover.
+
+## References
+
+National Institute of Standards and Technology (2024).
+Module-Lattice-Based Digital Signature Standard. FIPS 204.
+[doi:10.6028/NIST.FIPS.204](https://doi.org/10.6028/NIST.FIPS.204)
+
+National Institute of Standards and Technology (2024). Stateless
+Hash-Based Digital Signature Standard. FIPS 205.
+[doi:10.6028/NIST.FIPS.205](https://doi.org/10.6028/NIST.FIPS.205)
+
+## See also
+
+[`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md)
+for the stateful hash-based key,
+[`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
+which accepts either,
+[`fipssz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipssz.md)
+for the byte lengths.
+
+## Examples
+
+``` r
+key <- fipskg("ML-DSA-65")
+key$scheme
+#> [1] "ML-DSA-65"
+
+sig <- cpssign("a manifest digest", key)
+cpsvrf("a manifest digest", sig, fipspubkey(key))
+#> [1] TRUE
+
+# A context string binds the signature to its purpose: the same
+# message signed for one context does not verify under another.
+sig2 <- cpssign("a manifest digest", key, ctx = "release")
+cpsvrf("a manifest digest", sig2, key, ctx = "release")
+#> [1] TRUE
+cpsvrf("a manifest digest", sig2, key, ctx = "staging")
+#> [1] FALSE
+
+# A fixed seed reproduces the key (for test vectors only: a guessable
+# seed is a guessable key).
+seed <- as.raw(1:32)
+identical(fipskg("ML-DSA-44", seed)$public, fipskg("ML-DSA-44", seed)$public)
+#> [1] TRUE
+
+# The public half carries no secret.
+names(fipspubkey(key))
+#> [1] "public" "scheme"
+
+# An unknown parameter set is refused.
+try(fipskg("ML-DSA-99"))
+#> Error : unknown scheme 'ML-DSA-99'. The standardised schemes are: ML-DSA-44, ML-DSA-65, ML-DSA-87, SLH-DSA-SHA2-128s, SLH-DSA-SHA2-128f, SLH-DSA-SHA2-192s, SLH-DSA-SHA2-192f, SLH-DSA-SHA2-256s, SLH-DSA-SHA2-256f, SLH-DSA-SHAKE-128s, SLH-DSA-SHAKE-128f, SLH-DSA-SHAKE-192s, SLH-DSA-SHAKE-192f, SLH-DSA-SHAKE-256s, SLH-DSA-SHAKE-256f. For the stateful hash-based scheme use pqckg().
+```

@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,25 +90,25 @@ Justice’s criminal statistics and the Toronto Police Service’s open data
 section uses the excerpt shipped with the package; the full tables,
 every edition and every court, load from the data hub:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">clearance</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bricklayer_data_manifest.html">bricklayer_data_load</a></span><span class="op">(</span><span class="st">"ocj_statistics/clearance_rate_criminal"</span><span class="op">)</span></span>
-<span><span class="va">offences</span>  <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bricklayer_data_manifest.html">bricklayer_data_load</a></span><span class="op">(</span><span class="st">"ocj_statistics/offence_based_criminal"</span><span class="op">)</span></span>
-<span><span class="va">mci</span>       <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bricklayer_data_manifest.html">bricklayer_data_load</a></span><span class="op">(</span><span class="st">"tps_open_data/major_crime_indicators_open_data_0"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">clearance</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dmnf.html">dload</a></span><span class="op">(</span><span class="st">"ocj_statistics/clearance_rate_criminal"</span><span class="op">)</span></span>
+<span><span class="va">offences</span>  <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dmnf.html">dload</a></span><span class="op">(</span><span class="st">"ocj_statistics/offence_based_criminal"</span><span class="op">)</span></span>
+<span><span class="va">mci</span>       <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dmnf.html">dload</a></span><span class="op">(</span><span class="st">"tps_open_data/major_crime_indicators_open_data_0"</span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="is-the-court-keeping-up-case-flow-and-clearance">Is the court keeping up? Case flow and clearance<a class="anchor" aria-label="anchor" href="#is-the-court-keeping-up-case-flow-and-clearance"></a>
 </h2>
 <p>A court keeps up when it disposes of as many cases as it receives.
-<code><a href="../reference/case_flow.html">case_flow()</a></code> turns the monthly counts into the clearance
-rate (disposed per case received) with an exact interval, its rolling
+<code><a href="../reference/caseflow.html">caseflow()</a></code> turns the monthly counts into the clearance rate
+(disposed per case received) with an exact interval, its rolling
 twelve-month value, and, from the pending count, how many months the
 inventory would take to clear at the recent pace.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu">ext</span><span class="op">(</span><span class="st">"ocj_flow_ontario.csv"</span><span class="op">)</span></span>
-<span><span class="va">cf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/case_flow.html">case_flow</a></span><span class="op">(</span><span class="va">f</span><span class="op">$</span><span class="va">received</span>, <span class="va">f</span><span class="op">$</span><span class="va">disposed</span>, pending <span class="op">=</span> <span class="va">f</span><span class="op">$</span><span class="va">pending</span>, period <span class="op">=</span> <span class="va">f</span><span class="op">$</span><span class="va">month</span><span class="op">)</span></span>
-<span><span class="va">cf</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">12</span>, <span class="fl">24</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"period"</span>, <span class="st">"received"</span>, <span class="st">"disposed"</span>, <span class="st">"clearance"</span>, <span class="st">"rolling_clearance"</span>, <span class="st">"periods_to_clear"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt;    period received disposed clearance rolling_clearance periods_to_clear</span></span>
-<span><span class="co">#&gt; 1 2024-04    21265    22053  1.037056                NA         6.752097</span></span>
-<span><span class="co">#&gt; 2 2025-03    20688    20996  1.014888         0.9742875         7.466076</span></span>
-<span><span class="co">#&gt; 3 2026-03    20602    23136  1.122998         0.9937306         7.196190</span></span>
+<span><span class="va">cf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/caseflow.html">caseflow</a></span><span class="op">(</span><span class="va">f</span><span class="op">$</span><span class="va">received</span>, <span class="va">f</span><span class="op">$</span><span class="va">disposed</span>, pend <span class="op">=</span> <span class="va">f</span><span class="op">$</span><span class="va">pending</span>, prd <span class="op">=</span> <span class="va">f</span><span class="op">$</span><span class="va">month</span><span class="op">)</span></span>
+<span><span class="va">cf</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">12</span>, <span class="fl">24</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"period"</span>, <span class="st">"received"</span>, <span class="st">"disposed"</span>, <span class="st">"clearance"</span>, <span class="st">"rolclr"</span>, <span class="st">"pertoclear"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;    period received disposed clearance    rolclr pertoclear</span></span>
+<span><span class="co">#&gt; 1 2024-04    21265    22053  1.037056        NA   6.752097</span></span>
+<span><span class="co">#&gt; 2 2025-03    20688    20996  1.014888 0.9742875   7.466076</span></span>
+<span><span class="co">#&gt; 3 2026-03    20602    23136  1.122998 0.9937306   7.196190</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cf</span><span class="op">)</span></span></code></pre></div>
 <p><img src="courts-and-crime_files/figure-html/flow-1.png" class="r-plt" alt="" width="768"></p>
 <p>Over these 24 months the court disposed of 489,448 cases against
@@ -120,29 +120,29 @@ rolling rate is the one to read.</p>
 <h2 id="how-long-do-cases-take-a-life-table-from-banded-times">How long do cases take? A life table from banded times<a class="anchor" aria-label="anchor" href="#how-long-do-cases-take-a-life-table-from-banded-times"></a>
 </h2>
 <p>The Court publishes the share of cases disposed within 10 months, 10
-to 15, 15 to 18 and over 18. <code><a href="../reference/life_table.html">life_table()</a></code> reads those bands
+to 15, 15 to 18 and over 18. <code><a href="../reference/lifetbl.html">lifetbl()</a></code> reads those bands
 directly and gives the share still open at each band edge, with a
 Greenwood interval, and the median.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">ext</span><span class="op">(</span><span class="st">"ocj_time_to_disposition.csv"</span><span class="op">)</span></span>
 <span><span class="va">last</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
 <span><span class="va">shares</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">d</span><span class="op">[</span><span class="va">last</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"under_10"</span>, <span class="st">"m10_15"</span>, <span class="st">"m15_18"</span>, <span class="st">"over_18"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="va">lt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/life_table.html">life_table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Under 10 Months"</span>, <span class="st">"Between 10-15 Months"</span>, <span class="st">"Between 15-18 Months"</span>, <span class="st">"Over 18 Months"</span><span class="op">)</span>,</span>
+<span><span class="va">lt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lifetbl.html">lifetbl</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Under 10 Months"</span>, <span class="st">"Between 10-15 Months"</span>, <span class="st">"Between 15-18 Months"</span>, <span class="st">"Over 18 Months"</span><span class="op">)</span>,</span>
 <span>                 events <span class="op">=</span> <span class="va">shares</span> <span class="op">*</span> <span class="va">f</span><span class="op">$</span><span class="va">disposed</span><span class="op">[</span><span class="va">last</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">lt</span></span>
 <span><span class="co">#&gt; ── Life table (actuarial), 95% log-log Greenwood interval ──────── </span></span>
 <span><span class="co">#&gt;   Median time: 6.36 (linear within its band)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  lower upper  entering    events censored   at_risk      q survival     se</span></span>
+<span><span class="co">#&gt;  lower upper  entering    events censored    atrisk      q survival     se</span></span>
 <span><span class="co">#&gt;      0    10 23136.000 18184.896        0 23136.000 0.7860    0.214 0.0027</span></span>
 <span><span class="co">#&gt;     10    15  4951.104  2868.864        0  4951.104 0.5794    0.090 0.0019</span></span>
 <span><span class="co">#&gt;     15    18  2082.240   879.168        0  2082.240 0.4222    0.052 0.0015</span></span>
 <span><span class="co">#&gt;     18   Inf  1203.072  1203.072        0  1203.072 1.0000    0.000     NA</span></span>
-<span><span class="co">#&gt;  conf_lower conf_upper hazard</span></span>
-<span><span class="co">#&gt;      0.2087     0.2193 0.1295</span></span>
-<span><span class="co">#&gt;      0.0864     0.0937 0.1632</span></span>
-<span><span class="co">#&gt;      0.0492     0.0549 0.1784</span></span>
-<span><span class="co">#&gt;          NA         NA     NA</span></span>
+<span><span class="co">#&gt;  conflo confup hazard</span></span>
+<span><span class="co">#&gt;  0.2087 0.2193 0.1295</span></span>
+<span><span class="co">#&gt;  0.0864 0.0937 0.1632</span></span>
+<span><span class="co">#&gt;  0.0492 0.0549 0.1784</span></span>
+<span><span class="co">#&gt;      NA     NA     NA</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lt</span><span class="op">)</span></span></code></pre></div>
 <p><img src="courts-and-crime_files/figure-html/life-1.png" class="r-plt" alt="" width="768"></p>
@@ -156,9 +156,9 @@ that ended, not every case received.</p>
 </h2>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">ext</span><span class="op">(</span><span class="st">"ocj_dispositions.csv"</span><span class="op">)</span></span>
-<span><span class="va">mix</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/disposition_mix.html">disposition_mix</a></span><span class="op">(</span><span class="va">x</span><span class="op">[</span>, <span class="op">-</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">)</span><span class="op">]</span>, period <span class="op">=</span> <span class="va">x</span><span class="op">$</span><span class="va">year</span>, scores <span class="op">=</span> <span class="va">x</span><span class="op">$</span><span class="va">year</span><span class="op">)</span></span>
-<span><span class="va">mix</span><span class="op">$</span><span class="va">trend</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"outcome"</span>, <span class="st">"statistic"</span>, <span class="st">"p_holm"</span>, <span class="st">"change"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt;                         outcome    statistic       p_holm        change</span></span>
+<span><span class="va">mix</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dispmix.html">dispmix</a></span><span class="op">(</span><span class="va">x</span><span class="op">[</span>, <span class="op">-</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">)</span><span class="op">]</span>, prd <span class="op">=</span> <span class="va">x</span><span class="op">$</span><span class="va">year</span>, scores <span class="op">=</span> <span class="va">x</span><span class="op">$</span><span class="va">year</span><span class="op">)</span></span>
+<span><span class="va">mix</span><span class="op">$</span><span class="va">trend</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"outcome"</span>, <span class="st">"statistic"</span>, <span class="st">"pholm"</span>, <span class="st">"change"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;                         outcome    statistic        pholm        change</span></span>
 <span><span class="co">#&gt; 1 withdrawn_stayed_before_trial 30150.915355 0.000000e+00  0.1292036827</span></span>
 <span><span class="co">#&gt; 2      guilty_plea_before_trial 10825.914695 0.000000e+00 -0.0805960172</span></span>
 <span><span class="co">#&gt; 3            other_before_trial     7.296441 6.909133e-03 -0.0002635828</span></span>
@@ -183,14 +183,13 @@ parts – offence groups, courts – weighted by their share of the work. It
 can fall while most parts improve, if the work shifts toward the parts
 that clear more slowly. Demers and Rossmo (2015) found 210 such
 reversals in fifteen years of clearance rates for Canada’s fifty largest
-police services. <code><a href="../reference/clearance_decomposition.html">clearance_decomposition()</a></code> splits a change
-exactly into the change in the parts’ rates and the change in the mix
-(Kitagawa, 1955), and tests the within-part change with a
-Mantel-Haenszel rate ratio.</p>
+police services. <code><a href="../reference/clrdcmp.html">clrdcmp()</a></code> splits a change exactly into the
+change in the parts’ rates and the change in the mix (Kitagawa, 1955),
+and tests the within-part change with a Mantel-Haenszel rate ratio.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu">ext</span><span class="op">(</span><span class="st">"ocj_offence_groups.csv"</span><span class="op">)</span></span>
 <span><span class="va">g</span> <span class="op">&lt;-</span> <span class="va">g</span><span class="op">[</span><span class="va">g</span><span class="op">$</span><span class="va">year</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2014</span>, <span class="fl">2022</span><span class="op">)</span>, <span class="op">]</span></span>
-<span><span class="va">cd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/clearance_decomposition.html">clearance_decomposition</a></span><span class="op">(</span><span class="va">g</span><span class="op">$</span><span class="va">disposed</span>, <span class="va">g</span><span class="op">$</span><span class="va">received</span>, <span class="va">g</span><span class="op">$</span><span class="va">offence_group</span>, <span class="va">g</span><span class="op">$</span><span class="va">year</span><span class="op">)</span></span>
+<span><span class="va">cd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/clrdcmp.html">clrdcmp</a></span><span class="op">(</span><span class="va">g</span><span class="op">$</span><span class="va">disposed</span>, <span class="va">g</span><span class="op">$</span><span class="va">received</span>, <span class="va">g</span><span class="op">$</span><span class="va">offence_group</span>, <span class="va">g</span><span class="op">$</span><span class="va">year</span><span class="op">)</span></span>
 <span><span class="va">cd</span></span>
 <span><span class="co">#&gt; ── Clearance rate, 2022 against 2014: rate and case-mix effects (Kitagawa)  </span></span>
 <span><span class="co">#&gt;   2014: 0.9760   2022: 0.9749   change -0.0011 = rate effect +0.0096 + mix effect -0.0107</span></span>
@@ -204,13 +203,13 @@ Mantel-Haenszel rate ratio.</p>
 <span><span class="co">#&gt;      Criminal Code Traffic    1.0105    1.0212     0.0808     0.0948 1.0106</span></span>
 <span><span class="co">#&gt;            Federal Statute    1.0232    1.1734     0.1148     0.0534 1.1468</span></span>
 <span><span class="co">#&gt;        Other Criminal Code    1.0675    1.0818     0.0455     0.0539 1.0134</span></span>
-<span><span class="co">#&gt;   lower  upper rate_effect mix_effect</span></span>
-<span><span class="co">#&gt;  1.0484 1.0725    0.016300   4.24e-04</span></span>
-<span><span class="co">#&gt;  0.9710 0.9969   -0.003370  -5.16e-05</span></span>
-<span><span class="co">#&gt;  0.9233 0.9454   -0.017500  -4.97e-03</span></span>
-<span><span class="co">#&gt;  0.9905 1.0311    0.000939   5.66e-04</span></span>
-<span><span class="co">#&gt;  1.1230 1.1710    0.012600  -7.54e-03</span></span>
-<span><span class="co">#&gt;  0.9874 1.0402    0.000713   8.34e-04</span></span>
+<span><span class="co">#&gt;   lower  upper   rateeff    mixeff</span></span>
+<span><span class="co">#&gt;  1.0484 1.0725  0.016300  4.24e-04</span></span>
+<span><span class="co">#&gt;  0.9710 0.9969 -0.003370 -5.16e-05</span></span>
+<span><span class="co">#&gt;  0.9233 0.9454 -0.017500 -4.97e-03</span></span>
+<span><span class="co">#&gt;  0.9905 1.0311  0.000939  5.66e-04</span></span>
+<span><span class="co">#&gt;  1.1230 1.1710  0.012600 -7.54e-03</span></span>
+<span><span class="co">#&gt;  0.9874 1.0402  0.000713  8.34e-04</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   Rate ratio 2022/2014: crude 0.9989 (0.9929 to 1.0050); within parts (Mantel-Haenszel) 1.0085 (1.0024 to 1.0146), p 0.00644</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
@@ -218,7 +217,7 @@ Mantel-Haenszel rate ratio.</p>
 <p><img src="courts-and-crime_files/figure-html/simpson-1.png" class="r-plt" alt="" width="768"></p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># a group's share of the cases received in a year, as a percentage</span></span>
-<span><span class="va">case_share</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">group</span>, <span class="va">yr</span><span class="op">)</span> <span class="op">{</span></span>
+<span><span class="va">caseshare</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">group</span>, <span class="va">yr</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%.0f%%"</span>, <span class="fl">100</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">g</span><span class="op">$</span><span class="va">received</span><span class="op">[</span><span class="va">g</span><span class="op">$</span><span class="va">offence_group</span> <span class="op">==</span> <span class="va">group</span> <span class="op">&amp;</span> <span class="va">g</span><span class="op">$</span><span class="va">year</span> <span class="op">==</span> <span class="va">yr</span><span class="op">]</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">g</span><span class="op">$</span><span class="va">received</span><span class="op">[</span><span class="va">g</span><span class="op">$</span><span class="va">year</span> <span class="op">==</span> <span class="va">yr</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p>Between 2014 and 2022 the province-wide clearance rate moved by
@@ -240,12 +239,10 @@ comparing 2012 with 2024:</p>
 <span><span class="va">c</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">received</span>, <span class="va">disposed</span><span class="op">)</span> <span class="op">~</span> <span class="va">year</span> <span class="op">+</span> <span class="va">court_series</span>, <span class="va">c</span>, <span class="va">sum</span><span class="op">)</span></span>
 <span><span class="va">c</span> <span class="op">&lt;-</span> <span class="va">c</span><span class="op">[</span><span class="va">c</span><span class="op">$</span><span class="va">year</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2012</span>, <span class="fl">2024</span><span class="op">)</span>, <span class="op">]</span></span>
 <span><span class="va">c</span> <span class="op">&lt;-</span> <span class="va">c</span><span class="op">[</span><span class="va">c</span><span class="op">$</span><span class="va">court_series</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">c</span><span class="op">$</span><span class="va">court_series</span><span class="op">)</span> <span class="op">==</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span>, <span class="op">]</span></span>
-<span><span class="va">cc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/clearance_decomposition.html">clearance_decomposition</a></span><span class="op">(</span><span class="va">c</span><span class="op">$</span><span class="va">disposed</span>, <span class="va">c</span><span class="op">$</span><span class="va">received</span>, <span class="va">c</span><span class="op">$</span><span class="va">court_series</span>, <span class="va">c</span><span class="op">$</span><span class="va">year</span><span class="op">)</span></span>
+<span><span class="va">cc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/clrdcmp.html">clrdcmp</a></span><span class="op">(</span><span class="va">c</span><span class="op">$</span><span class="va">disposed</span>, <span class="va">c</span><span class="op">$</span><span class="va">received</span>, <span class="va">c</span><span class="op">$</span><span class="va">court_series</span>, <span class="va">c</span><span class="op">$</span><span class="va">year</span><span class="op">)</span></span>
 <span><span class="va">cc</span><span class="op">$</span><span class="va">overall</span></span>
-<span><span class="co">#&gt;      rate_a    rate_b       change rate_effect  mix_effect standardised_on_base</span></span>
-<span><span class="co">#&gt; 1 0.9990086 0.9891387 -0.009869871 -0.01247238 0.002602504            0.9852411</span></span>
-<span><span class="co">#&gt;   standardised_on_average</span></span>
-<span><span class="co">#&gt; 1               0.9871899</span></span>
+<span><span class="co">#&gt;       ratea     rateb       change     rateeff      mixeff staonbase  staonave</span></span>
+<span><span class="co">#&gt; 1 0.9990086 0.9891387 -0.009869871 -0.01247238 0.002602504 0.9852411 0.9871899</span></span>
 <span><span class="va">cc</span><span class="op">$</span><span class="va">simpson</span><span class="op">$</span><span class="va">type</span></span>
 <span><span class="co">#&gt; [1] "none"</span></span></code></pre></div>
 <p>Here the aggregate (-0.0099) and the rate at a fixed mix (-0.0125)
@@ -256,20 +253,20 @@ which way the parts moved and how much the mix did.</p>
 <div class="section level2">
 <h2 id="where-do-incidents-cluster-kernel-density">Where do incidents cluster? Kernel density<a class="anchor" aria-label="anchor" href="#where-do-incidents-cluster-kernel-density"></a>
 </h2>
-<p><code><a href="../reference/crime_density.html">crime_density()</a></code> estimates the density of incidents in
+<p><code><a href="../reference/crmdens.html">crmdens()</a></code> estimates the density of incidents in
 incidents per square kilometre and outlines the smallest areas holding
 half and nine-tenths of them.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">ext</span><span class="op">(</span><span class="st">"tps_break_enter_d14_2024.csv"</span><span class="op">)</span></span>
-<span><span class="va">kd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/crime_density.html">crime_density</a></span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">lon</span>, <span class="va">b</span><span class="op">$</span><span class="va">lat</span>, n_grid <span class="op">=</span> <span class="fl">150</span><span class="op">)</span></span>
+<span><span class="va">kd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/crmdens.html">crmdens</a></span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">lon</span>, <span class="va">b</span><span class="op">$</span><span class="va">lat</span>, ngrid <span class="op">=</span> <span class="fl">150</span><span class="op">)</span></span>
 <span><span class="va">kd</span></span>
 <span><span class="co">#&gt; ── Kernel density of incidents: smallest areas holding each share  </span></span>
 <span><span class="co">#&gt;   508 incidents; bandwidth 0.337 km east-west, 0.412 km north-south</span></span>
 <span><span class="co">#&gt;   Peak density 77.92 incidents per square kilometre</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  incidents area_km2 share_of_mapped_area density_at_edge</span></span>
-<span><span class="co">#&gt;        50%    5.502                11.9%           31.88</span></span>
-<span><span class="co">#&gt;        90%   14.840                32.1%           11.23</span></span>
+<span><span class="co">#&gt;  incidents areakm2 shrofmaparea densatedge</span></span>
+<span><span class="co">#&gt;        50%   5.502        11.9%      31.88</span></span>
+<span><span class="co">#&gt;        90%  14.840        32.1%      11.23</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">kd</span><span class="op">)</span></span></code></pre></div>
 <p><img src="courts-and-crime_files/figure-html/density-1.png" class="r-plt" alt="" width="768"></p>
@@ -284,8 +281,8 @@ expectation is exact, and a permutation test gives each cell’s
 p-value.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">b</span> <span class="op">&lt;-</span> <span class="va">b</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">lon</span><span class="op">)</span>, <span class="op">]</span></span>
-<span><span class="va">kn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/knox_test.html">knox_test</a></span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">lon</span>, <span class="va">b</span><span class="op">$</span><span class="va">lat</span>, <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">occ_date</span><span class="op">)</span>, space_bands <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">200</span>, <span class="fl">400</span><span class="op">)</span>,</span>
-<span>                time_bands <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">7</span>, <span class="fl">14</span>, <span class="fl">28</span><span class="op">)</span>, nsim <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">kn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/knoxtst.html">knoxtst</a></span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">lon</span>, <span class="va">b</span><span class="op">$</span><span class="va">lat</span>, <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">occ_date</span><span class="op">)</span>, spcbands <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">200</span>, <span class="fl">400</span><span class="op">)</span>,</span>
+<span>                tmbands <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">7</span>, <span class="fl">14</span>, <span class="fl">28</span><span class="op">)</span>, nsim <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">kn</span></span>
 <span><span class="co">#&gt; ── Knox ratios, observed / expected pairs (508 incidents, 199 permutations)  </span></span>
 <span><span class="co">#&gt;   distance  0-7 d 7-14 d 14-28 d</span></span>
@@ -302,24 +299,24 @@ p-value.</p>
 <h2 id="do-the-hot-spots-last">Do the hot spots last?<a class="anchor" aria-label="anchor" href="#do-the-hot-spots-last"></a>
 </h2>
 <p>A hot spot that stays put is a place problem; one that moves is not.
-<code><a href="../reference/hotspot_persistence.html">hotspot_persistence()</a></code> counts the incidents in grid cells
-each period, reports the share of places that holds half of them, which
-cells are hot (the busiest 5% of the cells with any incident), and how
-much each period’s hot spots overlap the previous period’s:</p>
+<code><a href="../reference/hotpers.html">hotpers()</a></code> counts the incidents in grid cells each period,
+reports the share of places that holds half of them, which cells are hot
+(the busiest 5% of the cells with any incident), and how much each
+period’s hot spots overlap the previous period’s:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">h</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hotspot_persistence.html">hotspot_persistence</a></span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">lon</span>, <span class="va">b</span><span class="op">$</span><span class="va">lat</span>, <span class="fu"><a href="https://rdrr.io/r/base/weekday.POSIXt.html" class="external-link">quarters</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">occ_date</span><span class="op">)</span><span class="op">)</span>, cell <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">h</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hotpers.html">hotpers</a></span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">lon</span>, <span class="va">b</span><span class="op">$</span><span class="va">lat</span>, <span class="fu"><a href="https://rdrr.io/r/base/weekday.POSIXt.html" class="external-link">quarters</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">occ_date</span><span class="op">)</span><span class="op">)</span>, cell <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span></span>
 <span><span class="va">h</span></span>
 <span><span class="co">#&gt; Hot spots: 139 active cells of side 0.3 km over 4 periods; hot = busiest 7 (5%)</span></span>
-<span><span class="co">#&gt;  period incidents active_cells cells_for_half share_for_half hot_cells tied_in</span></span>
-<span><span class="co">#&gt;      Q1       128           77             22          15.8%        11       4</span></span>
-<span><span class="co">#&gt;      Q2       133           74             22          15.8%         7       0</span></span>
-<span><span class="co">#&gt;      Q3       112           70             19          13.7%         7       0</span></span>
-<span><span class="co">#&gt;      Q4       135           72             23          16.5%         4       0</span></span>
-<span><span class="co">#&gt;  tied_out hot_share jaccard_previous</span></span>
-<span><span class="co">#&gt;         0     32.8%                 </span></span>
-<span><span class="co">#&gt;         0     22.6%             0.29</span></span>
-<span><span class="co">#&gt;         0     26.8%             0.17</span></span>
-<span><span class="co">#&gt;        12     13.3%             0.10</span></span>
+<span><span class="co">#&gt;  period incidents actcells cellsforhalf shrforhalf hotcells tiedin tiedout</span></span>
+<span><span class="co">#&gt;      Q1       128       77           22      15.8%       11      4       0</span></span>
+<span><span class="co">#&gt;      Q2       133       74           22      15.8%        7      0       0</span></span>
+<span><span class="co">#&gt;      Q3       112       70           19      13.7%        7      0       0</span></span>
+<span><span class="co">#&gt;      Q4       135       72           23      16.5%        4      0      12</span></span>
+<span><span class="co">#&gt;  hotshr jacpre</span></span>
+<span><span class="co">#&gt;   32.8%       </span></span>
+<span><span class="co">#&gt;   22.6%   0.29</span></span>
+<span><span class="co">#&gt;   26.8%   0.17</span></span>
+<span><span class="co">#&gt;   13.3%   0.10</span></span>
 <span><span class="co">#&gt; Cells hot in at least half the periods: 7</span></span>
 <span><span class="co">#&gt; Note: cells tied with the busiest 7 were left out of the hot set (period Q4: 12 cells tied); the counts are too even (or the cells too small) to single out hot spots</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">h</span><span class="op">)</span></span></code></pre></div>
@@ -327,11 +324,30 @@ much each period’s hot spots overlap the previous period’s:</p>
 <p>The hot set is the busiest 7 cells and every cell tied with the last
 of them. When a tie would make more than twice that many cells hot, the
 counts do not single those cells out, so the tied group is left out and
-counted under <code>tied_out</code>: a quarter can then show fewer hot
+counted under <code>tiedout</code>: a quarter can then show fewer hot
 cells than 7, a smaller hot share, and an overlap with its neighbours
 that cannot be computed (left blank), as in Q4 here.</p>
 <p>Pairs of break-ins within 100 metres and a week of each other occur
 1.66 times as often as chance would give.</p>
+</div>
+<div class="section level2">
+<h2 id="indigenous-life-expectancy">Indigenous life expectancy<a class="anchor" aria-label="anchor" href="#indigenous-life-expectancy"></a>
+</h2>
+<p><code><a href="../reference/lifetbl.html">lifetbl()</a></code> works from counts of events in age intervals.
+Where only published summaries exist, as for Indigenous life expectancy,
+the comparison is made on the published estimates and their intervals
+instead:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">le</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"lifeexp"</span><span class="op">)</span></span>
+<span><span class="va">le</span><span class="op">[</span><span class="va">le</span><span class="op">$</span><span class="va">period</span> <span class="op">==</span> <span class="st">"2016/2021"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"group"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;                                                group estimate lower upper</span></span>
+<span><span class="co">#&gt; 15                                             Métis    80.47 79.98 80.95</span></span>
+<span><span class="co">#&gt; 16                                             Inuit    71.91 70.80 73.03</span></span>
+<span><span class="co">#&gt; 17              First Nations (Registered or Treaty)    73.98 73.63 74.33</span></span>
+<span><span class="co">#&gt; 18  First Nations (Registered or Treaty), on reserve    71.42 71.02 71.81</span></span>
+<span><span class="co">#&gt; 19 First Nations (Registered or Treaty), off reserve    76.04 75.37 76.71</span></span>
+<span><span class="co">#&gt; 20          First Nations, without registered status    79.23 78.42 80.04</span></span>
+<span><span class="co">#&gt; 21                                    Non-Indigenous    84.99 84.93 85.04</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

@@ -11,13 +11,13 @@ secret. The package implements **ML-KEM** (FIPS 203, lattice-based) and
 
 ``` r
 
-key <- kem_keygen(768)
-pub <- kem_public_key(key)
+key <- kemkg(768)
+pub <- kempubkey(key)
 
 # the sender holds only the public key
-sent <- kem_encapsulate(pub)
+sent <- kemencap(pub)
 # the recipient recovers the same secret from the ciphertext
-got <- kem_decapsulate(key, sent$ciphertext)
+got <- kemdecap(key, sent$ciphertext)
 identical(sent$shared, got)
 #> [1] TRUE
 ```
@@ -26,17 +26,17 @@ Three parameter sets trade size for security margin:
 
 ``` r
 
-kem_sizes(512)
+kemsz(512)
 #> encapsulation_key decapsulation_key        ciphertext              seed 
 #>               800              1632               768                64 
 #>     shared_secret 
 #>                32
-kem_sizes(768)
+kemsz(768)
 #> encapsulation_key decapsulation_key        ciphertext              seed 
 #>              1184              2400              1088                64 
 #>     shared_secret 
 #>                32
-kem_sizes(1024)
+kemsz(1024)
 #> encapsulation_key decapsulation_key        ciphertext              seed 
 #>              1568              3168              1568                64 
 #>     shared_secret 
@@ -56,7 +56,7 @@ recipient behaves identically either way.
 
 bad <- sent$ciphertext
 substring(bad, 1L, 2L) <- "00"
-other <- kem_decapsulate(key, bad)
+other <- kemdecap(key, bad)
 nchar(other) == 64L          # a 32-byte secret, as always
 #> [1] TRUE
 identical(other, got)        # but not the one the sender has
@@ -76,9 +76,9 @@ to the plain computation:
 
 ``` r
 
-identical(kem_decapsulate(key, sent$ciphertext, masked = FALSE), got)
+identical(kemdecap(key, sent$ciphertext, masked = FALSE), got)
 #> [1] TRUE
-identical(kem_decapsulate(key, bad, masked = FALSE), other)
+identical(kemdecap(key, bad, masked = FALSE), other)
 #> [1] TRUE
 ```
 
@@ -104,13 +104,13 @@ second KEM. The interface is the same:
 
 ``` r
 
-hkey <- hqc_keygen(1)
-hpub <- hqc_public_key(hkey)
+hkey <- hqckg(1)
+hpub <- hqcpubkey(hkey)
 
-hsent <- hqc_encapsulate(hpub)
-identical(hqc_decapsulate(hkey, hsent$ciphertext), hsent$shared)
+hsent <- hqcencap(hpub)
+identical(hqcdecap(hkey, hsent$ciphertext), hsent$shared)
 #> [1] TRUE
-hqc_sizes(1)
+hqcsz(1)
 #> encapsulation_key decapsulation_key        ciphertext              seed 
 #>              2241              2321              4433                32 
 #>           message              salt     shared_secret 
@@ -124,9 +124,9 @@ interoperate with the other, and the version is recorded in the key:
 
 ``` r
 
-old <- hqc_keygen(1, version = "round4")
-cap <- hqc_encapsulate(hqc_public_key(old))
-identical(hqc_decapsulate(old, cap$ciphertext), cap$shared)
+old <- hqckg(1, ver = "round4")
+cap <- hqcencap(hqcpubkey(old))
+identical(hqcdecap(old, cap$ciphertext), cap$shared)
 #> [1] TRUE
 ```
 
@@ -139,8 +139,8 @@ guessable seed is no key at all.
 
 ``` r
 
-identical(hqc_keygen(1, seed = as.raw(1:32))$public,
-          hqc_keygen(1, seed = as.raw(1:32))$public)
+identical(hqckg(1, seed = as.raw(1:32))$public,
+          hqckg(1, seed = as.raw(1:32))$public)
 #> [1] TRUE
 ```
 
@@ -148,13 +148,13 @@ identical(hqc_keygen(1, seed = as.raw(1:32))$public,
 
 The shared secret is 32 bytes of hex. It is a *key*, not a password: use
 it directly as the key of
-[`core_hmac_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_keyed_digest.md)
+[`chmac()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/keyeddgst.md)
 or to derive further keys, never as text to be stored.
 
 ``` r
 
-tag <- core_hmac_sha256(sent$shared, "the capsule manifest")
-core_digest_equal(tag, core_hmac_sha256(got, "the capsule manifest"))
+tag <- chmac(sent$shared, "the capsule manifest")
+cdgsteq(tag, chmac(got, "the capsule manifest"))
 #> [1] TRUE
 ```
 
@@ -167,3 +167,21 @@ against it. Decapsulation’s timing is measured on real x86-64 and arm64
 CPUs with dudect, its constant-time property is proved under valgrind,
 and its masked arithmetic is assessed for first-order power leakage in a
 Cortex-M4 simulation. See `SECURITY.md` in the repository.
+
+## Sending a table to a community data steward
+
+Key encapsulation lets a sender share a table so only the holder of a
+secret key can read it, for instance a First Nations data steward
+receiving a release:
+
+``` r
+
+steward <- kemkg(768)
+pub <- kempubkey(steward)
+sent <- kemencap(pub)
+msg <- tojs(indiex("wellbeing"))
+# the shared secret keys an authentication tag the steward can recompute
+tag <- chmac(msg, sent$shared)
+identical(chmac(msg, kemdecap(steward, sent$ciphertext)), tag)
+#> [1] TRUE
+```

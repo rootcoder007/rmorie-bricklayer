@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -96,7 +96,7 @@ where a regression’s standard error would be nearly meaningless. Sen’s
 slope is the median of all pairwise slopes, a robust rate of change.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">402</span>, <span class="fl">377</span>, <span class="fl">190</span>, <span class="fl">268</span>, <span class="fl">331</span><span class="op">)</span>        <span class="co"># five years of placements</span></span>
-<span><span class="fu"><a href="../reference/trend_test.html">trend_test</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/trndtst.html">trndtst</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $S</span></span>
 <span><span class="co">#&gt; [1] -4</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -112,13 +112,13 @@ slope is the median of all pairwise slopes, a robust rate of change.</p>
 <span><span class="co">#&gt; $intercept</span></span>
 <span><span class="co">#&gt; [1] 419.75</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $slope_lower</span></span>
+<span><span class="co">#&gt; $slopelo</span></span>
 <span><span class="co">#&gt; [1] -187</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $slope_upper</span></span>
+<span><span class="co">#&gt; $slopeup</span></span>
 <span><span class="co">#&gt; [1] 78</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $slope_ci_clamped</span></span>
+<span><span class="co">#&gt; $slopecicla</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $n</span></span>
@@ -130,14 +130,14 @@ slope is the median of all pairwise slopes, a robust rate of change.</p>
 <span><span class="co">#&gt; $alternative</span></span>
 <span><span class="co">#&gt; [1] "two.sided"</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $conf_level</span></span>
+<span><span class="co">#&gt; $conflvl</span></span>
 <span><span class="co">#&gt; [1] 0.95</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $method</span></span>
 <span><span class="co">#&gt; [1] "Mann-Kendall, exact over all 120 orderings"</span></span></code></pre></div>
 <p>A monotone series is detected even at <em>n</em> = 5:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/trend_test.html">trend_test</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/trndtst.html">trndtst</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $S</span></span>
 <span><span class="co">#&gt; [1] 10</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -153,13 +153,13 @@ slope is the median of all pairwise slopes, a robust rate of change.</p>
 <span><span class="co">#&gt; $intercept</span></span>
 <span><span class="co">#&gt; [1] 0</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $slope_lower</span></span>
+<span><span class="co">#&gt; $slopelo</span></span>
 <span><span class="co">#&gt; [1] 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $slope_upper</span></span>
+<span><span class="co">#&gt; $slopeup</span></span>
 <span><span class="co">#&gt; [1] 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $slope_ci_clamped</span></span>
+<span><span class="co">#&gt; $slopecicla</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $n</span></span>
@@ -171,22 +171,22 @@ slope is the median of all pairwise slopes, a robust rate of change.</p>
 <span><span class="co">#&gt; $alternative</span></span>
 <span><span class="co">#&gt; [1] "two.sided"</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $conf_level</span></span>
+<span><span class="co">#&gt; $conflvl</span></span>
 <span><span class="co">#&gt; [1] 0.95</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $method</span></span>
 <span><span class="co">#&gt; [1] "Mann-Kendall, exact over all 120 orderings"</span></span></code></pre></div>
 <p>One aberrant period does not create a trend:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/trend_test.html">trend_test</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">900</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">p_value</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/trndtst.html">trndtst</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">900</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">p_value</span></span>
 <span><span class="co">#&gt; [1] 0.4</span></span></code></pre></div>
 <p>From a data frame, with a direction when one is hypothesised in
 advance:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fl">2019</span><span class="op">:</span><span class="fl">2023</span>, n <span class="op">=</span> <span class="va">y</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/trend_test.html">trend_test</a></span><span class="op">(</span><span class="va">d</span>, value <span class="op">=</span> <span class="st">"n"</span>, period <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span><span class="op">$</span><span class="va">slope</span></span>
+<span><span class="fu"><a href="../reference/trndtst.html">trndtst</a></span><span class="op">(</span><span class="va">d</span>, value <span class="op">=</span> <span class="st">"n"</span>, prd <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span><span class="op">$</span><span class="va">slope</span></span>
 <span><span class="co">#&gt; [1] -21.375</span></span>
-<span><span class="fu"><a href="../reference/trend_test.html">trend_test</a></span><span class="op">(</span><span class="va">d</span>, value <span class="op">=</span> <span class="st">"n"</span>, period <span class="op">=</span> <span class="st">"year"</span>, alternative <span class="op">=</span> <span class="st">"decreasing"</span><span class="op">)</span><span class="op">$</span><span class="va">p_value</span></span>
+<span><span class="fu"><a href="../reference/trndtst.html">trndtst</a></span><span class="op">(</span><span class="va">d</span>, value <span class="op">=</span> <span class="st">"n"</span>, prd <span class="op">=</span> <span class="st">"year"</span>, alt <span class="op">=</span> <span class="st">"decreasing"</span><span class="op">)</span><span class="op">$</span><span class="va">p_value</span></span>
 <span><span class="co">#&gt; [1] 0.2416667</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -195,18 +195,18 @@ advance:</p>
 <p>For counts, the natural model is a Poisson log-linear trend:
 <code>log E[y] = a + b * t</code>, so <code>exp(b)</code> is the
 <strong>rate ratio per period</strong>, the multiplicative change from
-one period to the next. <code><a href="../reference/count_trend.html">count_trend()</a></code> fits it with an
+one period to the next. <code><a href="../reference/cnttrnd.html">cnttrnd()</a></code> fits it with an
 interval:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span>
 <span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">8</span>, lambda <span class="op">=</span> <span class="fl">200</span> <span class="op">*</span> <span class="fl">0.85</span><span class="op">^</span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">7</span><span class="op">)</span><span class="op">)</span>   <span class="co"># falling ~15% a year</span></span>
-<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/count_trend.html">count_trend</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">rate_ratio</span>, <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cnttrnd.html">cnttrnd</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">rateratio</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 0.869</span></span></code></pre></div>
 <p>With a varying denominator the trend is in the <em>rate</em>, via an
 offset:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/count_trend.html">count_trend</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">25</span>, <span class="fl">30</span><span class="op">)</span>, offset <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1000</span>, <span class="fl">1500</span>, <span class="fl">2500</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">rate_ratio</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cnttrnd.html">cnttrnd</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">25</span>, <span class="fl">30</span><span class="op">)</span>, offset <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1000</span>, <span class="fl">1500</span>, <span class="fl">2500</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">rateratio</span></span>
 <span><span class="co">#&gt; [1] 0.7708656</span></span></code></pre></div>
 <p>Counts here rise while the rate per 1,000 falls, which is the
 finding.</p>
@@ -220,8 +220,8 @@ between-segment difference, and its significance is judged by
 permutation, which accounts for having searched over every possible
 split:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/step_change.html">step_change</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">104</span>, <span class="fl">98</span>, <span class="fl">60</span>, <span class="fl">63</span>, <span class="fl">58</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; $break_after</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/stepchg.html">stepchg</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">104</span>, <span class="fl">98</span>, <span class="fl">60</span>, <span class="fl">63</span>, <span class="fl">58</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $breakafter</span></span>
 <span><span class="co">#&gt; [1] 3</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $index</span></span>
@@ -240,9 +240,9 @@ split:</p>
 <span><span class="co">#&gt; [1] 2440.167</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $p_value</span></span>
-<span><span class="co">#&gt; [1] 0.1012483</span></span>
+<span><span class="co">#&gt; [1] 0.1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $n_perm</span></span>
+<span><span class="co">#&gt; $nperm</span></span>
 <span><span class="co">#&gt; [1] 720</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $method</span></span>
@@ -250,8 +250,50 @@ split:</p>
 <p>Pure noise still yields a best split, and it is not significant:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/step_change.html">step_change</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">12</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">p_value</span></span>
+<span><span class="fu"><a href="../reference/stepchg.html">stepchg</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">12</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">p_value</span></span>
 <span><span class="co">#&gt; [1] 0.6223</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="two-survey-periods">Two survey periods<a class="anchor" aria-label="anchor" href="#two-survey-periods"></a>
+</h2>
+<p>Survey tables often give only two periods, each with its confidence
+interval. The change between them has an interval of its own.
+<code><a href="../reference/healchg.html">healchg()</a></code> gives it for every group and indicator at once.
+It lists wellness indicators first, reading change as Indigenous
+scholars of mental health read it, as a process of healing (Stewart
+2008). Perceived mental health of adults, 2015/2018 and 2019/2022, by
+Statistics Canada (table 13-10-0924-01):</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">h</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"health"</span><span class="op">)</span></span>
+<span><span class="va">h</span> <span class="op">&lt;-</span> <span class="va">h</span><span class="op">[</span><span class="va">h</span><span class="op">$</span><span class="va">age</span> <span class="op">==</span> <span class="st">"Total, 18 years and over"</span> <span class="op">&amp;</span></span>
+<span>         <span class="va">h</span><span class="op">$</span><span class="va">indicator</span> <span class="op">==</span> <span class="st">"Perceived mental health, very good or excellent"</span>, <span class="op">]</span></span>
+<span><span class="fu"><a href="../reference/healchg.html">healchg</a></span><span class="op">(</span><span class="va">h</span>, <span class="st">"group"</span>, <span class="st">"indicator"</span>, <span class="st">"period"</span>, <span class="st">"estimate"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span>,</span>
+<span>               from <span class="op">=</span> <span class="st">"2015/2018"</span>, to <span class="op">=</span> <span class="st">"2019/2022"</span>, qual <span class="op">=</span> <span class="st">"quality"</span><span class="op">)</span></span>
+<span><span class="co">#&gt;            group                                       indicator side from   to</span></span>
+<span><span class="co">#&gt; 1  First Nations Perceived mental health, very good or excellent &lt;NA&gt; 59.8 45.8</span></span>
+<span><span class="co">#&gt; 2          Métis Perceived mental health, very good or excellent &lt;NA&gt; 61.0 52.8</span></span>
+<span><span class="co">#&gt; 3          Inuit Perceived mental health, very good or excellent &lt;NA&gt; 49.1 47.8</span></span>
+<span><span class="co">#&gt; 4 Non-Indigenous Perceived mental health, very good or excellent &lt;NA&gt; 70.6 61.5</span></span>
+<span><span class="co">#&gt;   change      lower      upper usewithcau</span></span>
+<span><span class="co">#&gt; 1  -14.0 -17.687818 -10.312182      FALSE</span></span>
+<span><span class="co">#&gt; 2   -8.2 -11.925923  -4.474077      FALSE</span></span>
+<span><span class="co">#&gt; 3   -1.3  -9.974243   7.374243      FALSE</span></span>
+<span><span class="co">#&gt; 4   -9.1  -9.702080  -8.497920      FALSE</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="a-pace-projected">A pace, projected<a class="anchor" aria-label="anchor" href="#a-pace-projected"></a>
+</h2>
+<p>Some counts accumulate toward a fixed number: the 94 Calls to Action
+of the Truth and Reconciliation Commission, for instance.
+<code><a href="../reference/trcprog.html">trcprog()</a></code> takes the pace so far as a Poisson rate with its
+exact interval, and gives the year all would be complete at that pace.
+That is a description of the pace, not a forecast.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/trcprog.html">trcprog</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   completed remaining years     rate    ratelo   rateup   cmplby cmplbyearly</span></span>
+<span><span class="co">#&gt; 1        13        81  7.04 1.846591 0.9832319 3.157727 2066.865    2048.651</span></span>
+<span><span class="co">#&gt;   cmplbylate</span></span>
+<span><span class="co">#&gt; 1   2105.381</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="choosing-between-them">Choosing between them<a class="anchor" aria-label="anchor" href="#choosing-between-them"></a>
@@ -270,17 +312,17 @@ split:</p>
 <tbody>
 <tr class="odd">
 <td>Is the series moving in one direction?</td>
-<td><code><a href="../reference/trend_test.html">trend_test()</a></code></td>
+<td><code><a href="../reference/trndtst.html">trndtst()</a></code></td>
 <td>Mann–Kendall p-value, Sen’s slope with interval</td>
 </tr>
 <tr class="even">
 <td>By what factor per period?</td>
-<td><code><a href="../reference/count_trend.html">count_trend()</a></code></td>
+<td><code><a href="../reference/cnttrnd.html">cnttrnd()</a></code></td>
 <td>rate ratio with interval, optional offset</td>
 </tr>
 <tr class="odd">
 <td>Did it change once, and when?</td>
-<td><code><a href="../reference/step_change.html">step_change()</a></code></td>
+<td><code><a href="../reference/stepchg.html">stepchg()</a></code></td>
 <td>split point, segment means, permutation p-value</td>
 </tr>
 <tr class="even">

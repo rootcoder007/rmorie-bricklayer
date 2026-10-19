@@ -4,12 +4,12 @@ A survey respondent stands for many people, and not the same number
 each: the final weight says how many. The weights fix the estimate; the
 design (how the sample was drawn) fixes its uncertainty, and ignoring it
 usually understates the interval.
-[`survey_design()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_design.md)
+[`svydes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svydes.md)
 records the design,
-[`survey_estimate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md)
+[`svyest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svyest.md)
 gives means, totals, proportions and ratios with design-based standard
 errors, and
-[`survey_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_compare.md)
+[`svycmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svycmp.md)
 tests differences between groups.
 
 ## Two ways to the variance
@@ -29,7 +29,7 @@ d <- data.frame(region = sample(c("north", "south", "east"), n, replace = TRUE),
                 age = sample(c("15-24", "25-49", "50+"), n, replace = TRUE),
                 used = rbinom(n, 1, 0.3), drinks = rpois(n, 3), w = runif(n, 40, 160))
 # a stratified design: variance by linearization
-lin <- survey_design(d, weights = "w", strata = "region")
+lin <- svydes(d, w = "w", strata = "region")
 lin
 #> Survey design: 600 respondents, weights summing to 60,110
 #> Variance: Taylor linearization, 3 strata, 600 PSUs
@@ -42,8 +42,8 @@ reps <- sapply(1:200, function(r) {
   }
   d$w * m
 })
-rep_des <- survey_design(d, weights = "w", replicates = reps, type = "bootstrap")
-rep_des
+repdes <- svydes(d, w = "w", reps = reps, type = "bootstrap")
+repdes
 #> Survey design: 600 respondents, weights summing to 60,110
 #> Variance: 200 replicate weights, bootstrap; scale 0.005, centred on the full-sample estimate
 ```
@@ -56,7 +56,7 @@ what makes the subgroup’s variance right.
 
 ``` r
 
-e <- survey_estimate(rep_des, d, "used", by = "age", stat = "proportion", levels = "1")
+e <- svyest(repdes, d, "used", by = "age", stat = "proportion", lvls = "1")
 e
 #> Survey proportion of used by age (bootstrap variance, 95% wilson interval)
 #>    age level estimate      se  lower  upper     cv   n flag
@@ -70,7 +70,7 @@ plot(e)
 
 ``` r
 
-survey_estimate(lin, d, "drinks", by = "region")
+svyest(lin, d, "drinks", by = "region")
 #> Survey mean of drinks by region (linearization variance, 95% wald interval)
 #>  region estimate     se lower upper    cv   n flag
 #>    east    2.857 0.1245 2.614 3.101 4.356 186   NA
@@ -89,12 +89,12 @@ tool; here nothing is withheld, and the flag travels with the row.
 
 Two overlapping intervals do not mean two groups are the same, and two
 separate intervals leave out the covariance between the estimates.
-[`survey_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_compare.md)
+[`svycmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svycmp.md)
 takes the difference within the design:
 
 ``` r
 
-cmp <- survey_compare(rep_des, d, "used", by = "region", stat = "proportion", levels = "1",
+cmp <- svycmp(repdes, d, "used", by = "region", stat = "proportion", lvls = "1",
                       ref = "north")
 cmp
 #> Survey proportion of used against north (95% interval)
@@ -113,13 +113,13 @@ bootstrap weights, so the bootstrap variance is multiplied by 12 (Health
 Canada’s technical notes; the same as Fay’s BRR with
 $`\rho = 1 - 1/\sqrt{12}`$). The public-use file and its weights are on
 data.rmorie.com (sign in once with `rmbl login`), where
-[`bricklayer_data_load()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
+[`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
 checks each table against the SHA-256 its manifest lists:
 
 ``` r
 
-a <- bricklayer_data_load("csus_2023/pumf")        # 36,180 respondents
-b <- bricklayer_data_load("csus_2023/bootstrap")   # PUMF_ID, WGT_PUMF and BWGT1 ... BWGT1000
+a <- dload("csus_2023/pumf")        # 36,180 respondents
+b <- dload("csus_2023/bootstrap")   # PUMF_ID, WGT_PUMF and BWGT1 ... BWGT1000
 ```
 
 Or, without signing in, from Health Canada’s own copies on the Open
@@ -130,15 +130,14 @@ Government Portal (the same files, 612 MB for the weights):
 src <- "https://open.canada.ca/data/dataset/65e2d45e-efc6-4c29-9a9b-db59bc96aa0e/resource"
 pumf <- file.path(tempdir(), "csus2023_pumf_final.csv")
 bwt <- file.path(tempdir(), "csus2023_pumf_bwt.csv")
-bricklayer_download(paste0(src, "/c2c1795b-4501-49ba-9dd1-5b8360cc3b2e/download/",
+bldl(paste0(src, "/c2c1795b-4501-49ba-9dd1-5b8360cc3b2e/download/",
                            "csus2023_pumf_final.csv"), pumf)
-bricklayer_download(paste0(src, "/7d19d47a-5f42-4447-b735-aa4d677ad5ed/download/",
+bldl(paste0(src, "/7d19d47a-5f42-4447-b735-aa4d677ad5ed/download/",
                            "csus2023_pumf_bwt.csv"), bwt)
 a <- utils::read.csv(pumf)
 b <- utils::read.csv(bwt)
-# With rmorie installed, the same two files:
-# a <- rmorie::morie_load_dataset("cu23mf")
-# b <- rmorie::morie_load_dataset("cu23bt")
+# With rmorie installed, the same two files come from
+# rmorie::morie_load_dataset() with the keys "cu23mf" and "cu23bt".
 ```
 
 Either way, the design and the lifetime cannabis question are:
@@ -146,9 +145,9 @@ Either way, the design and the lifetime cannabis question are:
 ``` r
 
 a$can <- ifelse(a$CAN_Q01 < 0, NA, a$CAN_Q01)   # -8: not stated
-des <- survey_design(a, weights = "WGT_PUMF", replicates = b, id = "PUMF_ID",
-                     type = "mean_bootstrap", mean_size = 12)
-survey_estimate(des, a, "can", stat = "proportion", levels = c("1", "2"))
+des <- svydes(a, w = "WGT_PUMF", reps = b, id = "PUMF_ID",
+                     type = "meanboot", msize = 12)
+svyest(des, a, "can", stat = "proportion", lvls = c("1", "2"))
 ```
 
 Run on 13 October 2026 (1.6 seconds for the 1,000 replicates), against
@@ -166,6 +165,44 @@ wider here: Health Canada computed from its master file, and the
 public-use weights are not identical to it (the percentages differ in
 the fifth significant digit).
 
+## When you only have the published table
+
+Often there is no microdata, only the published table: an estimate and
+its 95% limits for each group. The limits carry the design. A standard
+error is the limits’ width over $`2z`$, and it includes the design
+effect of the survey’s weights and clusters.
+[`scests()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scests.md)
+puts each Statistics Canada estimate beside its limits.
+[`indgap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indgap.md),
+[`dstntst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstntst.md)
+and
+[`ordcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ordcmp.md)
+then compare groups from them.
+
+They treat the groups as independent samples. Disjoint domains of one
+survey nearly are, but not exactly, since they share strata and
+clusters. The exact comparison needs the bootstrap weights, which
+Statistics Canada holds in its Research Data Centres.
+
+Perceived mental health of First Nations, Metis and Inuit adults living
+off reserve, 2019/2022 (table 13-10-0924-01):
+
+``` r
+
+h <- indiex("health")
+mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
+          h$indicator == "Perceived mental health, very good or excellent", ]
+indgap(mh, "group", "estimate", "lower", "upper", qual = "quality")[
+  , c("group", "difference", "diflo", "difup")]
+#>           group difference     diflo      difup
+#> 1 First Nations      -15.7 -18.53593 -12.864070
+#> 2         Métis       -8.7 -11.58531  -5.814692
+#> 3         Inuit      -13.7 -20.16568  -7.234321
+dstntst(mh[mh$group != "Non-Indigenous", ], "group", "estimate", "lower", "upper")
+#> Distinctions test across 3 groups: Q = 11.97 on 2 df, p = 0.00252, I^2 = 83%
+#> Pooled (inverse-variance) 49.11; the groups differ: report each one, not the pooled figure
+```
+
 ## Linearization or replicates, the same answer
 
 On the same data the two routes agree closely when the replicates come
@@ -173,8 +210,8 @@ from the same design:
 
 ``` r
 
-rbind(linearization = survey_estimate(lin, d, "drinks")[, c("estimate", "se")],
-      bootstrap = survey_estimate(rep_des, d, "drinks")[, c("estimate", "se")])
+rbind(linearization = svyest(lin, d, "drinks")[, c("estimate", "se")],
+      bootstrap = svyest(repdes, d, "drinks")[, c("estimate", "se")])
 #>  estimate      se
 #>     2.906 0.07295
 #>     2.906 0.07324

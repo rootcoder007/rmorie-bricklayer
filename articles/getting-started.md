@@ -40,7 +40,7 @@ otis
 
 ``` r
 
-a <- analyse_table(otis, value = "individuals", period = "year",
+a <- anltab(otis, value = "individuals", prd = "year",
                    by = c("table", "group"))
 a
 #> Analysis of `individuals` by year over 3 period(s) (2023 to 2025), grouped by table x group
@@ -58,7 +58,7 @@ the company of the other nine.
 ``` r
 
 a$change[, c("table", "group", "year", "value", "previous",
-             "pct_change", "pct_lower", "pct_upper", "p_adjusted",
+             "pctchg", "pctlo", "pctup", "padj",
              "significant")]
 #> <rmbl_yoy: no periods>
 ```
@@ -71,15 +71,15 @@ and a half of it, and the percent change inherits that. `rounding = 5`
 adds the envelope and a combined interval that is the union of the
 sampling interval and the envelope: the honest range for a number read
 off a rounded table. Suppressed cells (`"x"`, `"<5"`) are handled the
-same way through `suppression_limit`.
+same way through `suplim`.
 
 ``` r
 
-b <- analyse_table(otis, value = "individuals", period = "year",
-                   by = c("table", "group"), rounding = 5)
+b <- anltab(otis, value = "individuals", prd = "year",
+                   by = c("table", "group"), rnd = 5)
 b$change[!is.na(b$change$previous),
-         c("group", "year", "pct_change", "pct_lower", "pct_upper",
-           "combined_pct_lower", "combined_pct_upper")]
+         c("group", "year", "pctchg", "pctlo", "pctup",
+           "compctlo", "compctup")]
 #> <rmbl_yoy: no periods>
 ```
 
@@ -94,18 +94,18 @@ description.
 ``` r
 
 a$trend
-#>          table    group periods first  last       tau   trend_p  slope
+#>          table    group periods first  last       tau     trndp  slope
 #> 1 age_category 18 to 24       3  3507  3688 0.3333333 1.0000000   90.5
 #> 2 age_category 25 to 49       3 14930 18482 0.3333333 1.0000000 1776.0
 #> 3 age_category      50+       3  2344  2875 0.3333333 1.0000000  265.5
 #> 4       gender   Female       3  1511  2821 1.0000000 0.3333333  655.0
 #> 5       gender     Male       3 19270 22224 0.3333333 1.0000000 1477.0
-#>   rate_ratio rate_ratio_lower rate_ratio_upper
-#> 1   1.027143        0.2491778         4.234015
-#> 2   1.118024        0.4111145         3.040459
-#> 3   1.112728        0.4023851         3.077062
-#> 4   1.376319        0.8250989         2.295790
-#> 5   1.077781        0.3556341         3.266310
+#>   rateratio rateratiolo rateratioup
+#> 1  1.027143   0.2491778    4.234015
+#> 2  1.118024   0.4111145    3.040459
+#> 3  1.112728   0.4023851    3.077062
+#> 4  1.376319   0.8250989    2.295790
+#> 5  1.077781   0.3556341    3.266310
 ```
 
 ## Has the data changed since last time?
@@ -113,13 +113,13 @@ a$trend
 Keep the previous release and pass it as `prior`; every column is
 screened. Before trusting a drift verdict, ask how often the screens
 fire on data that has not changed:
-[`drift_calibrate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_calibrate.md)
+[`drftcal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftcal.md)
 splits one release into random halves and reports the false-alarm rate
 per column.
 
 ``` r
 
-drift_calibrate(otis, n = 10)
+drftcal(otis, n = 10)
 #> Drift screens on 10 identical re-fetches (alpha = 0.01)
 #>   at least one column flagged: 0% of re-fetches
 #>   no column fired on identical data
@@ -134,13 +134,13 @@ exactly: average daily population is person-days over the days in the
 period, average length of stay is person-days over the people served,
 and the identity `adp = admissions * alos / t` means a change in days
 must multiply out of a change in people and a change in stay.
-[`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+[`stkflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stkflow.md)
 reports both sides and checks the identity.
 
 ``` r
 
-sf <- stock_flow(days = c(21900, 23725, 20440), people = c(300, 325, 280),
-                 period = c(2022, 2023, 2024), t = 365)
+sf <- stkflow(days = c(21900, 23725, 20440), people = c(300, 325, 280),
+                 prd = c(2022, 2023, 2024), t = 365)
 sf
 #> ── Stock and flow over 3 periods ───────────────────────────────── 
 #>  period people  days alos adp
@@ -157,7 +157,7 @@ lengthened, reads differently from one where both moved together;
 [`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md),
 [`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md)
 and
-[`admissions()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admissions.md)
+[`admits()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admits.md)
 give the single measures.
 
 ## Stock and flow
@@ -168,13 +168,13 @@ exactly: average daily population is person-days over the days in the
 period, average length of stay is person-days over the people served,
 and the identity `adp = admissions * alos / t` means a change in days
 must multiply out of a change in people and a change in stay.
-[`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+[`stkflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stkflow.md)
 reports both sides and checks the identity.
 
 ``` r
 
-sf <- stock_flow(days = c(21900, 23725, 20440), people = c(300, 325, 280),
-                 period = c(2022, 2023, 2024), t = 365)
+sf <- stkflow(days = c(21900, 23725, 20440), people = c(300, 325, 280),
+                 prd = c(2022, 2023, 2024), t = 365)
 sf
 #> ── Stock and flow over 3 periods ───────────────────────────────── 
 #>  period people  days alos adp
@@ -191,21 +191,31 @@ lengthened, reads differently from one where both moved together;
 [`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md),
 [`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md)
 and
-[`admissions()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admissions.md)
+[`admits()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admits.md)
 give the single measures.
+
+## Other published tables
+
+The same approach works on any table with an estimate and its interval.
+The package also bundles Statistics Canada estimates of First Nations,
+Metis and Inuit health and mental health
+([`?indiex`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indiex.md)).
+[`vignette("first-nations-metis-inuit-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/first-nations-metis-inuit-health.md)
+analyses them: by distinction, with suppressed cells never imputed, and
+with wellness reported beside distress.
 
 ## Record it
 
-[`report_analysis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/report_analysis.md)
+[`rptanl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rptanl.md)
 writes the whole analysis as Markdown or a single HTML file, and
-[`use_capsule_template()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/use_capsule_template.md)
+[`usecpstmpl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/usecpstmpl.md)
 writes a folder with the provenance file, an `analysis.R` that pins the
 source bytes and runs the steps above, and a README. The template runs
 as written against this table.
 
 ``` r
 
-d <- use_capsule_template(tempfile("capsule-"), example = TRUE)
+d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 list.files(d)
 #> [1] "analysis.R"           "data_provenance.json" "README.md"
 cat(readLines(file.path(d, "analysis.R"))[1:12], sep = "\n")
@@ -214,18 +224,18 @@ cat(readLines(file.path(d, "analysis.R"))[1:12], sep = "\n")
 #> library(rmoriebricklayer)
 #> arg <- grep("^--file=", commandArgs(), value = TRUE)
 #> here <- if (length(arg)) dirname(normalizePath(sub("^--file=", "", arg[1]))) else getwd()
-#> prov <- load_provenance(file.path(here, "data_provenance.json"))
+#> prov <- loadprov(file.path(here, "data_provenance.json"))
 #> 
 #> # 1. Fetch (a local path is read directly; a URL is downloaded with a
 #> #    Wayback Machine fallback) and pin the bytes.
 #> src <- prov$source$url
 #> local <- if (file.exists(src)) src else
-#>   friendly_download(src, file.path(here, basename(src)))
+#>   fdl(src, file.path(here, basename(src)))
 ```
 
 From here, replace the source URL and the column names in
 `data_provenance.json`, run `Rscript analysis.R`, and copy the SHA-256
 it prints back into the provenance file. Later runs refuse to proceed if
 the bytes change, and
-[`manifest_recompute()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_recompute.md)
+[`mnfrcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfrcmp.md)
 compares two runs number by number.

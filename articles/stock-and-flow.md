@@ -23,7 +23,7 @@ adp(c(10, 20, 30), t = 30)
 #> [1] 2
 ```
 
-[`adp_from_counts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp_from_counts.md)
+[`adpcnts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adpcnts.md)
 estimates person-days from periodic headcounts (a monthly census) when
 daily data are not published.
 
@@ -47,16 +47,16 @@ a year imply a stay of 5.2 days, and back again:
 
 ``` r
 
-alos_implied <- 25 * 365 / 1750
-round(alos_implied, 1)
+alosimplied <- 25 * 365 / 1750
+round(alosimplied, 1)
 #> [1] 5.2
-admissions(25, alos_implied)
+admits(25, alosimplied)
 #> [1] 1750
 ```
 
 ## Stock and flow together
 
-[`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+[`stkflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stkflow.md)
 takes detention days and people per period, with an exposure (the
 population at risk) to turn counts into rates, and reports how the
 stock, the flow and the stay moved between periods. The pattern it is
@@ -65,15 +65,15 @@ the stock rises.
 
 ``` r
 
-stock_flow(
+stkflow(
   days = c(115674, 126121), people = c(12647, 9608),
-  period = c("2023", "2025"),
-  exposure = c(15495050, 16256538)
+  prd = c("2023", "2025"),
+  expo = c(15495050, 16256538)
 )
 #> ── Stock and flow over 2 periods ───────────────────────────────── 
-#>  period people   days      alos      adp flow_rate stock_rate
-#>    2023  12647 115674  9.146359 316.9151  81.61961   2.045267
-#>    2025   9608 126121 13.126665 345.5370  59.10237   2.125526
+#>  period people   days      alos      adp flowrate  stkrate
+#>    2023  12647 115674  9.146359 316.9151 81.61961 2.045267
+#>    2025   9608 126121 13.126665 345.5370 59.10237 2.125526
 #> 
 #>   2023 to 2025: people -24.0%, stay +43.5%, days +9.0%
 #>   flow rate -27.6%, stock rate +3.9%  <- opposite signs: quote both
@@ -92,15 +92,15 @@ summary that matters is the whole distribution:
 ``` r
 
 stays <- c(rep(1, 40), rep(3, 30), rep(10, 20), 60, 90, 120)
-stay_summary(stays)
-#>    n total_days     mean       sd median iqr max       se    lower    upper
-#> 1 93        600 6.451613 16.33183      3   2 120 1.693532 3.088113 9.815113
-stay_summary(stays)[, c("mean", "median", "max")]
+staysmry(stays)
+#>    n totaldays     mean       sd median iqr max       se    lower    upper
+#> 1 93       600 6.451613 16.33183      3   2 120 1.693532 3.088113 9.815113
+staysmry(stays)[, c("mean", "median", "max")]
 #>       mean median max
 #> 1 6.451613      3 120
 ```
 
-[`stay_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stay_summary.md)
+[`staysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/staysmry.md)
 gives the mean with its interval, the quantiles and the maximum, so a
 report can say “half of stays were three days or less, and the longest
 was 120” instead of “the average stay was 9.6 days”, which describes
@@ -112,9 +112,9 @@ Published series use fiscal years and uneven periods:
 
 ``` r
 
-period_days("2024-04-01", "2025-03-31")
+perdays("2024-04-01", "2025-03-31")
 #> [1] 365
-fiscal_year_label(2024)
+fylbl(2024)
 #> [1] "2023/24"
 ```
 
@@ -122,16 +122,38 @@ fiscal_year_label(2024)
 
 1.  [`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md)
     for the stock from detention days, or
-    [`adp_from_counts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp_from_counts.md)
+    [`adpcnts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adpcnts.md)
     from headcounts.
 2.  [`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md)
     for the stay;
-    [`admissions()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admissions.md)
+    [`admits()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admits.md)
     to check the implied flow against the published one.
-3.  [`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+3.  [`stkflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stkflow.md)
     across periods, with the population as exposure.
-4.  [`stay_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stay_summary.md)
+4.  [`staysmry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/staysmry.md)
     whenever per-person stays are available, and report the median.
+
+## Indigenous examples
+
+Stock and flow measures need counts of people and the days they spend in
+custody or care. The census excerpt bundled with the package counts
+foster children, a stock on census day:
+
+``` r
+
+cp <- indiex("censuspop")
+fc <- cp[cp$GEO_NAME == "Canada" & cp$AGE_GROUP == "0 to 14 years" &
+           cp$RESIDENCE == "Total - Residence on or off reserve", ]
+kids <- fc[grepl("Total - Children in census families", fc$CHARACTERISTIC_NAME),
+           c("FIRST_NATIONS", "NON_IND")]
+fost <- fc[grepl("Foster children", fc$CHARACTERISTIC_NAME), c("FIRST_NATIONS", "NON_IND")]
+round(100 * unlist(fost) / unlist(kids), 2)
+#> FIRST_NATIONS       NON_IND 
+#>          4.42          0.23
+```
+
+Turning that stock into admissions and lengths of stay needs the flow
+data held by child welfare agencies.
 
 ## Reference
 

@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -100,17 +100,17 @@ Pasquill’s stability classes A (very unstable) to F (very stable) with
 Briggs’s (1973) curve fits are the standard parameterisation; rural and
 urban coefficients differ because cities are rougher and warmer.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/pg_sigmas.html">pg_sigmas</a></span><span class="op">(</span><span class="fl">1000</span>, <span class="st">"D"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; $sigma_y</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/pgsig.html">pgsig</a></span><span class="op">(</span><span class="fl">1000</span>, <span class="st">"D"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $sigmay</span></span>
 <span><span class="co">#&gt; [1] 76.27701</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $sigma_z</span></span>
+<span><span class="co">#&gt; $sigmaz</span></span>
 <span><span class="co">#&gt; [1] 37.94733</span></span>
-<span><span class="fu"><a href="../reference/pg_sigmas.html">pg_sigmas</a></span><span class="op">(</span><span class="fl">1000</span>, <span class="st">"D"</span>, setting <span class="op">=</span> <span class="st">"urban"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; $sigma_y</span></span>
+<span><span class="fu"><a href="../reference/pgsig.html">pgsig</a></span><span class="op">(</span><span class="fl">1000</span>, <span class="st">"D"</span>, set <span class="op">=</span> <span class="st">"urban"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $sigmay</span></span>
 <span><span class="co">#&gt; [1] 135.2247</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $sigma_z</span></span>
+<span><span class="co">#&gt; $sigmaz</span></span>
 <span><span class="co">#&gt; [1] 122.7881</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -120,11 +120,11 @@ urban coefficients differ because cities are rougher and warmer.</p>
 equations give the buoyancy flux, the final rise and the distance at
 which it is reached; before that distance the plume is still rising:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pg_sigmas.html">briggs_plume_rise</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">500</span>, <span class="fl">2000</span><span class="op">)</span>, u <span class="op">=</span> <span class="fl">4</span>, diameter <span class="op">=</span> <span class="fl">1</span>, exit_velocity <span class="op">=</span> <span class="fl">12</span>,</span>
-<span>                       stack_temp <span class="op">=</span> <span class="fl">420</span>, ambient_temp <span class="op">=</span> <span class="fl">285</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pgsig.html">briggs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">500</span>, <span class="fl">2000</span><span class="op">)</span>, u <span class="op">=</span> <span class="fl">4</span>, diam <span class="op">=</span> <span class="fl">1</span>, exitvel <span class="op">=</span> <span class="fl">12</span>,</span>
+<span>                       stktmp <span class="op">=</span> <span class="fl">420</span>, ambtmp <span class="op">=</span> <span class="fl">285</span><span class="op">)</span></span>
 <span><span class="va">r</span><span class="op">$</span><span class="va">flux</span></span>
 <span><span class="co">#&gt; [1] 9.45594</span></span>
-<span><span class="va">r</span><span class="op">$</span><span class="va">final_rise</span></span>
+<span><span class="va">r</span><span class="op">$</span><span class="va">finalrise</span></span>
 <span><span class="co">#&gt; [1] 28.88281</span></span>
 <span><span class="va">r</span><span class="op">$</span><span class="va">rise</span></span>
 <span><span class="co">#&gt; [1] 18.22335 28.88281 28.88281</span></span></code></pre></div>
@@ -139,26 +139,25 @@ with distance as the plume reaches the ground, then falls as it
 dilutes:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">5000</span>, by <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
-<span><span class="va">h</span> <span class="op">&lt;-</span> <span class="fl">30</span> <span class="op">+</span> <span class="va">r</span><span class="op">$</span><span class="va">final_rise</span></span>
-<span><span class="va">c_d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pg_sigmas.html">gaussian_plume</a></span><span class="op">(</span>q <span class="op">=</span> <span class="fl">100</span>, u <span class="op">=</span> <span class="fl">4</span>, h <span class="op">=</span> <span class="va">h</span>, receptors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, stability <span class="op">=</span> <span class="st">"D"</span><span class="op">)</span></span>
-<span><span class="va">c_b</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pg_sigmas.html">gaussian_plume</a></span><span class="op">(</span>q <span class="op">=</span> <span class="fl">100</span>, u <span class="op">=</span> <span class="fl">4</span>, h <span class="op">=</span> <span class="va">h</span>, receptors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, stability <span class="op">=</span> <span class="st">"B"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">c_d</span>, type <span class="op">=</span> <span class="st">"l"</span>, xlab <span class="op">=</span> <span class="st">"downwind distance (m)"</span>, ylab <span class="op">=</span> <span class="st">"concentration (g/m^3)"</span>,</span>
+<span><span class="va">h</span> <span class="op">&lt;-</span> <span class="fl">30</span> <span class="op">+</span> <span class="va">r</span><span class="op">$</span><span class="va">finalrise</span></span>
+<span><span class="va">cd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pgsig.html">gplume</a></span><span class="op">(</span>q <span class="op">=</span> <span class="fl">100</span>, u <span class="op">=</span> <span class="fl">4</span>, h <span class="op">=</span> <span class="va">h</span>, rcpt <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, stab <span class="op">=</span> <span class="st">"D"</span><span class="op">)</span></span>
+<span><span class="va">cb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pgsig.html">gplume</a></span><span class="op">(</span>q <span class="op">=</span> <span class="fl">100</span>, u <span class="op">=</span> <span class="fl">4</span>, h <span class="op">=</span> <span class="va">h</span>, rcpt <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, stab <span class="op">=</span> <span class="st">"B"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">cd</span>, type <span class="op">=</span> <span class="st">"l"</span>, xlab <span class="op">=</span> <span class="st">"downwind distance (m)"</span>, ylab <span class="op">=</span> <span class="st">"concentration (g/m^3)"</span>,</span>
 <span>     main <span class="op">=</span> <span class="st">"Ground-level centreline concentration"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/lines.html" class="external-link">lines</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">c_b</span>, col <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/lines.html" class="external-link">lines</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">cb</span>, col <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/legend.html" class="external-link">legend</a></span><span class="op">(</span><span class="st">"topright"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"class D (neutral)"</span>, <span class="st">"class B (unstable)"</span><span class="op">)</span>, col <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, lty <span class="op">=</span> <span class="fl">1</span>, bty <span class="op">=</span> <span class="st">"n"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="air-pollution-and-health_files/figure-html/plume-1.png" class="r-plt" alt="" width="576"></p>
-<p><code><a href="../reference/pg_sigmas.html">gaussian_puff()</a></code> is the instantaneous-release
-counterpart; <code><a href="../reference/pg_sigmas.html">advection_diffusion_2d()</a></code> and
-<code><a href="../reference/pg_sigmas.html">lagrangian_particles()</a></code> are grid and particle models for
-cases the Gaussian assumptions (steady wind, flat terrain) do not fit.
-The particle model is deterministic from its seed and takes any normal
-generator through <code>normals=</code>, so another package’s random
-stream can be reproduced exactly.</p>
+<p><code><a href="../reference/pgsig.html">gspuff()</a></code> is the instantaneous-release counterpart;
+<code><a href="../reference/pgsig.html">advdif2d()</a></code> and <code><a href="../reference/pgsig.html">lagrprt()</a></code> are grid and particle
+models for cases the Gaussian assumptions (steady wind, flat terrain) do
+not fit. The particle model is deterministic from its seed and takes any
+normal generator through <code>normals=</code>, so another package’s
+random stream can be reproduced exactly.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pg_sigmas.html">lagrangian_particles</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">500</span>, x0 <span class="op">=</span> <span class="fl">0</span>, y0 <span class="op">=</span> <span class="fl">0</span>, u <span class="op">=</span> <span class="fl">1</span>, v <span class="op">=</span> <span class="fl">0</span>, kx <span class="op">=</span> <span class="fl">0.5</span>, ky <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>                          dt <span class="op">=</span> <span class="fl">1</span>, n_steps <span class="op">=</span> <span class="fl">50</span>, seed <span class="op">=</span> <span class="fl">1</span>, grid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">100</span>, <span class="op">-</span><span class="fl">30</span>, <span class="fl">30</span>, <span class="fl">20</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>mean_x <span class="op">=</span> <span class="va">p</span><span class="op">$</span><span class="va">mean_x</span>, mean_y <span class="op">=</span> <span class="va">p</span><span class="op">$</span><span class="va">mean_y</span><span class="op">)</span></span>
-<span><span class="co">#&gt;       mean_x       mean_y </span></span>
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pgsig.html">lagrprt</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">500</span>, x0 <span class="op">=</span> <span class="fl">0</span>, y0 <span class="op">=</span> <span class="fl">0</span>, u <span class="op">=</span> <span class="fl">1</span>, v <span class="op">=</span> <span class="fl">0</span>, kx <span class="op">=</span> <span class="fl">0.5</span>, ky <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>                          dt <span class="op">=</span> <span class="fl">1</span>, nsteps <span class="op">=</span> <span class="fl">50</span>, seed <span class="op">=</span> <span class="fl">1</span>, grid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">100</span>, <span class="op">-</span><span class="fl">30</span>, <span class="fl">30</span>, <span class="fl">20</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>mean_x <span class="op">=</span> <span class="va">p</span><span class="op">$</span><span class="va">mean_x</span>, meany <span class="op">=</span> <span class="va">p</span><span class="op">$</span><span class="va">meany</span><span class="op">)</span></span>
+<span><span class="co">#&gt;       mean_x        meany </span></span>
 <span><span class="co">#&gt; 49.981881150  0.009562424</span></span></code></pre></div>
 </div>
 </div>
@@ -177,21 +176,21 @@ cause-specific PM2.5 functions are the Integrated Exposure-Response
 curves of Burnett et al. (2014), which saturate at high
 concentrations:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/crf_pm25.html">crf_pm25</a></span><span class="op">(</span><span class="fl">12</span><span class="op">)</span><span class="op">$</span><span class="va">rr</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/crfpm25.html">crfpm25</a></span><span class="op">(</span><span class="fl">12</span><span class="op">)</span><span class="op">$</span><span class="va">rr</span></span>
 <span><span class="co">#&gt; [1] 1.048873</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">1.08</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="fl">12</span> <span class="op">-</span> <span class="fl">5.8</span><span class="op">)</span> <span class="op">/</span> <span class="fl">10</span><span class="op">)</span>          <span class="co"># the same, by hand</span></span>
 <span><span class="co">#&gt; [1] 1.048873</span></span>
-<span><span class="fu"><a href="../reference/crf_pm25.html">crf_pm25</a></span><span class="op">(</span><span class="fl">12</span>, outcome <span class="op">=</span> <span class="st">"ihd"</span><span class="op">)</span><span class="op">$</span><span class="va">rr</span></span>
+<span><span class="fu"><a href="../reference/crfpm25.html">crfpm25</a></span><span class="op">(</span><span class="fl">12</span>, y <span class="op">=</span> <span class="st">"ihd"</span><span class="op">)</span><span class="op">$</span><span class="va">rr</span></span>
 <span><span class="co">#&gt; [1] 1.553634</span></span>
-<span><span class="fu"><a href="../reference/crf_pm25.html">crf_no2</a></span><span class="op">(</span><span class="fl">25</span><span class="op">)</span><span class="op">$</span><span class="va">rr</span></span>
+<span><span class="fu"><a href="../reference/crfpm25.html">crfno2</a></span><span class="op">(</span><span class="fl">25</span><span class="op">)</span><span class="op">$</span><span class="va">rr</span></span>
 <span><span class="co">#&gt; [1] 1.03015</span></span></code></pre></div>
 <p>A vector of exposures gives the mean RR and keeps the per-unit
 values:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">v</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/crf_pm25.html">crf_pm25</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">6</span>, <span class="fl">10</span>, <span class="fl">15</span>, <span class="fl">22</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">v</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/crfpm25.html">crfpm25</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">6</span>, <span class="fl">10</span>, <span class="fl">15</span>, <span class="fl">22</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">v</span><span class="op">$</span><span class="va">rr</span></span>
 <span><span class="co">#&gt; [1] 1.060136</span></span>
-<span><span class="va">v</span><span class="op">$</span><span class="va">extra</span><span class="op">$</span><span class="va">rr_per_unit</span></span>
+<span><span class="va">v</span><span class="op">$</span><span class="va">extra</span><span class="op">$</span><span class="va">rrperunit</span></span>
 <span><span class="co">#&gt; [1] 1.001540 1.032852 1.073371 1.132782</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -202,22 +201,22 @@ exposure prevalence into the share of deaths the exposure accounts for;
 the BenMAP health-impact function gives the deaths avoided by a
 counterfactual reduction:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/attributable_fraction.html">attributable_fraction</a></span><span class="op">(</span><span class="fu"><a href="../reference/crf_pm25.html">crf_no2</a></span><span class="op">(</span><span class="fl">25</span><span class="op">)</span><span class="op">$</span><span class="va">rr</span>, exposure_prevalence <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/attrfrac.html">attrfrac</a></span><span class="op">(</span><span class="fu"><a href="../reference/crfpm25.html">crfno2</a></span><span class="op">(</span><span class="fl">25</span><span class="op">)</span><span class="op">$</span><span class="va">rr</span>, expoprev <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 0.02926711</span></span>
-<span><span class="fu"><a href="../reference/mortality_displaced.html">mortality_displaced</a></span><span class="op">(</span>exposure_delta <span class="op">=</span> <span class="fl">10</span>, population <span class="op">=</span> <span class="fl">1e6</span>, baseline_rate <span class="op">=</span> <span class="fl">0.008</span>,</span>
-<span>                    beta_per_unit <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">1.02</span><span class="op">)</span> <span class="op">/</span> <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/mortdisp.html">mortdisp</a></span><span class="op">(</span>expdel <span class="op">=</span> <span class="fl">10</span>, pop <span class="op">=</span> <span class="fl">1e6</span>, brate <span class="op">=</span> <span class="fl">0.008</span>,</span>
+<span>                    betaperunit <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">1.02</span><span class="op">)</span> <span class="op">/</span> <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 156.8627</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="the-burden-chain">The burden chain<a class="anchor" aria-label="anchor" href="#the-burden-chain"></a>
 </h3>
-<p><code><a href="../reference/pollution_burden.html">pollution_burden()</a></code> chains concentration-response,
-attributable fraction and the baseline case count, as the Global Burden
-of Disease risk-factor estimates do:</p>
+<p><code><a href="../reference/polbrdn.html">polbrdn()</a></code> chains concentration-response, attributable
+fraction and the baseline case count, as the Global Burden of Disease
+risk-factor estimates do:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pollution_burden.html">pollution_burden</a></span><span class="op">(</span>exposure_mean <span class="op">=</span> <span class="fl">25</span>, exposure_prevalence <span class="op">=</span> <span class="fl">1</span>, baseline_rate <span class="op">=</span> <span class="fl">0.008</span>,</span>
-<span>                      population <span class="op">=</span> <span class="fl">1e6</span>, pollutant <span class="op">=</span> <span class="st">"NO2"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>rr <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">extra</span><span class="op">$</span><span class="va">rr</span>, paf <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">paf</span>, attributable <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">attributable_cases</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/polbrdn.html">polbrdn</a></span><span class="op">(</span>expomean <span class="op">=</span> <span class="fl">25</span>, expoprev <span class="op">=</span> <span class="fl">1</span>, brate <span class="op">=</span> <span class="fl">0.008</span>,</span>
+<span>                      pop <span class="op">=</span> <span class="fl">1e6</span>, poll <span class="op">=</span> <span class="st">"NO2"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>rr <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">extra</span><span class="op">$</span><span class="va">rr</span>, paf <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">paf</span>, attributable <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">attrcases</span><span class="op">)</span></span>
 <span><span class="co">#&gt;           rr          paf attributable </span></span>
 <span><span class="co">#&gt;   1.03014950   0.02926711 234.13691783</span></span>
 <span><span class="va">b</span><span class="op">$</span><span class="va">citation</span></span>
@@ -225,18 +224,13 @@ of Disease risk-factor estimates do:</p>
 <p>Per area, sorted worst first:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">areas</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>fsa <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"M6H"</span>, <span class="st">"M5V"</span>, <span class="st">"M4W"</span>, <span class="st">"M1B"</span><span class="op">)</span>, exposure <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">28</span>, <span class="fl">18</span>, <span class="fl">15</span>, <span class="fl">24</span><span class="op">)</span>,</span>
-<span>                    population <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">40000</span>, <span class="fl">60000</span>, <span class="fl">25000</span>, <span class="fl">70000</span><span class="op">)</span>, baseline_rate <span class="op">=</span> <span class="fl">0.008</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/pollution_burden_by_area.html">pollution_burden_by_area</a></span><span class="op">(</span><span class="va">areas</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   fsa exposure population baseline_rate       rr         paf attributable_cases</span></span>
-<span><span class="co">#&gt; 1 M1B       24      70000         0.008 1.028112 0.027342904          15.312026</span></span>
-<span><span class="co">#&gt; 2 M6H       28      40000         0.008 1.036288 0.035016937          11.205420</span></span>
-<span><span class="co">#&gt; 3 M5V       18      60000         0.008 1.015968 0.015717276           7.544292</span></span>
-<span><span class="co">#&gt; 4 M4W       15      25000         0.008 1.009950 0.009852457           1.970491</span></span>
-<span><span class="co">#&gt;   baseline_cases</span></span>
-<span><span class="co">#&gt; 1            560</span></span>
-<span><span class="co">#&gt; 2            320</span></span>
-<span><span class="co">#&gt; 3            480</span></span>
-<span><span class="co">#&gt; 4            200</span></span></code></pre></div>
+<span>                    population <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">40000</span>, <span class="fl">60000</span>, <span class="fl">25000</span>, <span class="fl">70000</span><span class="op">)</span>, brate <span class="op">=</span> <span class="fl">0.008</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/polbrdarea.html">polbrdarea</a></span><span class="op">(</span><span class="va">areas</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   fsa exposure population brate       rr         paf attrcases basecases</span></span>
+<span><span class="co">#&gt; 1 M1B       24      70000 0.008 1.028112 0.027342904 15.312026       560</span></span>
+<span><span class="co">#&gt; 2 M6H       28      40000 0.008 1.036288 0.035016937 11.205420       320</span></span>
+<span><span class="co">#&gt; 3 M5V       18      60000 0.008 1.015968 0.015717276  7.544292       480</span></span>
+<span><span class="co">#&gt; 4 M4W       15      25000 0.008 1.009950 0.009852457  1.970491       200</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -249,8 +243,8 @@ income rank, divided by mean exposure. Negative means the poor bear
 more.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>exposure <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">27</span>, <span class="fl">22</span>, <span class="fl">18</span>, <span class="fl">14</span><span class="op">)</span>, income <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span></span>
-<span><span class="va">e</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/exposure_concentration_index.html">exposure_concentration_index</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"exposure"</span>, <span class="st">"income"</span><span class="op">)</span></span>
-<span><span class="va">e</span><span class="op">$</span><span class="va">concentration_index</span></span>
+<span><span class="va">e</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/expconcidx.html">expconcidx</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"exposure"</span>, <span class="st">"income"</span><span class="op">)</span></span>
+<span><span class="va">e</span><span class="op">$</span><span class="va">concidx</span></span>
 <span><span class="co">#&gt; [1] -0.1477477</span></span>
 <span><span class="va">e</span><span class="op">$</span><span class="va">interpretation</span></span>
 <span><span class="co">#&gt; [1] "CI = -0.1477. Pro-poor exposure burden: lower-income individuals bear disproportionately higher pollution."</span></span></code></pre></div>
@@ -262,18 +256,18 @@ more.</p>
 partially linear model of Chernozhukov et al. (2018) estimates the
 exposure effect with cross-fitted nuisance functions, so the confounder
 adjustment cannot overfit the same rows it is evaluated on.
-<code><a href="../reference/exposure_response_plr.html">exposure_response_plr()</a></code> adds a percentile bootstrap for a
-sensitivity interval. The default estimator uses ordinary-least-squares
-nuisances; any estimator with the same interface can be passed.</p>
+<code><a href="../reference/exprspplr.html">exprspplr()</a></code> adds a percentile bootstrap for a sensitivity
+interval. The default estimator uses ordinary-least-squares nuisances;
+any estimator with the same interface can be passed.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">300</span></span>
 <span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>income <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>, density <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">sim</span><span class="op">$</span><span class="va">no2</span> <span class="op">&lt;-</span> <span class="fl">20</span> <span class="op">-</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">sim</span><span class="op">$</span><span class="va">income</span> <span class="op">+</span> <span class="fl">3</span> <span class="op">*</span> <span class="va">sim</span><span class="op">$</span><span class="va">density</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
-<span><span class="va">sim</span><span class="op">$</span><span class="va">asthma_rate</span> <span class="op">&lt;-</span> <span class="fl">5</span> <span class="op">+</span> <span class="fl">0.3</span> <span class="op">*</span> <span class="va">sim</span><span class="op">$</span><span class="va">no2</span> <span class="op">-</span> <span class="fl">0.5</span> <span class="op">*</span> <span class="va">sim</span><span class="op">$</span><span class="va">income</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
-<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/exposure_response_plr.html">exposure_response_plr</a></span><span class="op">(</span><span class="va">sim</span>, outcome <span class="op">=</span> <span class="st">"asthma_rate"</span>, exposure <span class="op">=</span> <span class="st">"no2"</span>,</span>
-<span>                             confounders <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"income"</span>, <span class="st">"density"</span><span class="op">)</span>, n_bootstrap <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>ate <span class="op">=</span> <span class="va">fit</span><span class="op">$</span><span class="va">ate</span>, lower <span class="op">=</span> <span class="va">fit</span><span class="op">$</span><span class="va">ci_lower_bs</span>, upper <span class="op">=</span> <span class="va">fit</span><span class="op">$</span><span class="va">ci_upper_bs</span><span class="op">)</span></span>
+<span><span class="va">sim</span><span class="op">$</span><span class="va">asthmarate</span> <span class="op">&lt;-</span> <span class="fl">5</span> <span class="op">+</span> <span class="fl">0.3</span> <span class="op">*</span> <span class="va">sim</span><span class="op">$</span><span class="va">no2</span> <span class="op">-</span> <span class="fl">0.5</span> <span class="op">*</span> <span class="va">sim</span><span class="op">$</span><span class="va">income</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/exprspplr.html">exprspplr</a></span><span class="op">(</span><span class="va">sim</span>, y <span class="op">=</span> <span class="st">"asthmarate"</span>, expo <span class="op">=</span> <span class="st">"no2"</span>,</span>
+<span>                             confs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"income"</span>, <span class="st">"density"</span><span class="op">)</span>, nboot <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>ate <span class="op">=</span> <span class="va">fit</span><span class="op">$</span><span class="va">ate</span>, lower <span class="op">=</span> <span class="va">fit</span><span class="op">$</span><span class="va">cilobs</span>, upper <span class="op">=</span> <span class="va">fit</span><span class="op">$</span><span class="va">ciupbs</span><span class="op">)</span></span>
 <span><span class="co">#&gt;       ate     lower     upper </span></span>
 <span><span class="co">#&gt; 0.2464713 0.1437978 0.3132657</span></span></code></pre></div>
 <p>The true coefficient is 0.3 and the interval covers it.</p>
@@ -281,17 +275,16 @@ nuisances; any estimator with the same interface can be passed.</p>
 <div class="section level2">
 <h2 id="the-whole-pipeline-with-an-assumption-log">5. The whole pipeline, with an assumption log<a class="anchor" aria-label="anchor" href="#the-whole-pipeline-with-an-assumption-log"></a>
 </h2>
-<p><code><a href="../reference/verify_pollution.html">verify_pollution()</a></code> runs the chain end to end and records
-every assumption it checked, so a report says not only the number but
-the conditions under which it holds. Synthetic demo data stand in
-here:</p>
+<p><code><a href="../reference/vrfpol.html">vrfpol()</a></code> runs the chain end to end and records every
+assumption it checked, so a report says not only the number but the
+conditions under which it holds. Synthetic demo data stand in here:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/verify_pollution.html">verify_pollution</a></span><span class="op">(</span><span class="st">"no2"</span>, demo <span class="op">=</span> <span class="cn">TRUE</span>, region <span class="op">=</span> <span class="st">"demo"</span>, years <span class="op">=</span> <span class="st">"2024"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vrfpol.html">vrfpol</a></span><span class="op">(</span><span class="st">"no2"</span>, demo <span class="op">=</span> <span class="cn">TRUE</span>, reg <span class="op">=</span> <span class="st">"demo"</span>, years <span class="op">=</span> <span class="st">"2024"</span><span class="op">)</span></span>
 <span><span class="va">r</span><span class="op">$</span><span class="va">status</span></span>
 <span><span class="co">#&gt; [1] "ok"</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/verify_pollution.html">pollution_report_text</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/vrfpol.html">polrpttxt</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ==================================================================</span></span>
-<span><span class="co">#&gt;   verify-pollution -- NO2 -&gt; all_cause_mortality</span></span>
+<span><span class="co">#&gt;   verify-pollution -- NO2 -&gt; allcause</span></span>
 <span><span class="co">#&gt;   region: demo</span></span>
 <span><span class="co">#&gt;   years:  2024</span></span>
 <span><span class="co">#&gt;   data:   demo (synthetic)</span></span>
@@ -308,7 +301,7 @@ here:</p>
 <span><span class="co">#&gt;   [PASS] exposure finite and non-negative -- mean 24.26113743 vs ref 10</span></span>
 <span><span class="co">#&gt;   [PASS] exposure within the concentration-response range (at most 10,000 ug/m3) -- exposure_mean=24.26114</span></span>
 <span><span class="co">#&gt;   [PASS] prevalence in [0,1] -- exposure_prevalence=0.981</span></span>
-<span><span class="co">#&gt;   [PASS] baseline_rate finite: zero, or between 1 and 10,000 per 100k -- baseline_rate=500 per 100k per year</span></span>
+<span><span class="co">#&gt;   [PASS] brate finite: zero, or between 1 and 10,000 per 100k -- brate=500 per 100k per year</span></span>
 <span><span class="co">#&gt;   [PASS] population finite, positive and at most 10 billion -- population=1,000,000</span></span>
 <span><span class="co">#&gt;   [PASS] reference finite and non-negative -- reference=10</span></span>
 <span><span class="co">#&gt;   [PASS] pollutant supported by the CRFs -- Current CRFs: NO2 (log-linear), PM2.5 (log-linear all-cause; Burnett IER for IHD and stroke). Other pollutants reject.</span></span>
@@ -335,15 +328,15 @@ exposure at or below the reference is a valid run with zero attributable
 cases, and a call with no exposure data at all is an error, not a clean
 zero:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/verify_pollution.html">verify_pollution</a></span><span class="op">(</span><span class="st">"pm25"</span>, exposure_mean <span class="op">=</span> <span class="op">-</span><span class="fl">3</span>, exposure_prevalence <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vrfpol.html">vrfpol</a></span><span class="op">(</span><span class="st">"pm25"</span>, expomean <span class="op">=</span> <span class="op">-</span><span class="fl">3</span>, expoprev <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span><span class="va">bad</span><span class="op">$</span><span class="va">status</span></span>
 <span><span class="co">#&gt; [1] "assumption_failure"</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">bad</span>, <span class="st">"exit_status"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">bad</span>, <span class="st">"exitstat"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 1</span></span>
-<span><span class="va">none</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/verify_pollution.html">verify_pollution</a></span><span class="op">(</span><span class="st">"pm25"</span><span class="op">)</span></span>
+<span><span class="va">none</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vrfpol.html">vrfpol</a></span><span class="op">(</span><span class="st">"pm25"</span><span class="op">)</span></span>
 <span><span class="va">none</span><span class="op">$</span><span class="va">status</span></span>
 <span><span class="co">#&gt; [1] "error"</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">none</span>, <span class="st">"exit_status"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">none</span>, <span class="st">"exitstat"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 2</span></span></code></pre></div>
 <p>A CSV with an <code>exposure</code> column (and optionally
 <code>income</code>) replaces the demo data; a NAPS pull with
@@ -353,22 +346,21 @@ zero:</p>
 <h2 id="what-did-this-computation-cost">6. What did this computation cost?<a class="anchor" aria-label="anchor" href="#what-did-this-computation-cost"></a>
 </h2>
 <p>Computation uses electricity, and electricity has a carbon intensity.
-<code><a href="../reference/compute_footprint.html">compute_footprint()</a></code> reports both for any expression, two
-ways. On Linux with readable RAPL counters it <em>measures</em> the CPU
-package energy, as codecarbon does. Everywhere else it <em>models</em>
-energy with the Green Algorithms formula (Lannelongue, Grealey and
-Inouye 2021),
+<code><a href="../reference/co2fp.html">co2fp()</a></code> reports both for any expression, two ways. On Linux
+with readable RAPL counters it <em>measures</em> the CPU package energy,
+as codecarbon does. Everywhere else it <em>models</em> energy with the
+Green Algorithms formula (Lannelongue, Grealey and Inouye 2021),
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi><mo>=</mo><mi>t</mi><mspace width="0.167em"></mspace><mo stretchy="false" form="prefix">(</mo><msub><mi>P</mi><mrow><mi>c</mi><mi>p</mi><mi>u</mi></mrow></msub><mi>u</mi><mo>+</mo><mi>M</mi><mo>⋅</mo><mn>0.3725</mn><mspace width="0.167em"></mspace><mrow><mi mathvariant="normal">W</mi><mi mathvariant="normal">/</mi><mi mathvariant="normal">G</mi><mi mathvariant="normal">B</mi></mrow><mo stretchy="false" form="postfix">)</mo><mspace width="0.167em"></mspace><mi>P</mi><mi>U</mi><mi>E</mi></mrow><annotation encoding="application/x-tex">E = t\,(P_{cpu} u + M \cdot 0.3725\,\mathrm{W/GB})\,PUE</annotation></semantics></math>.
 Every default that stood in for a measurement is listed:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/rapl_available.html">rapl_available</a></span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/raplok.html">raplok</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span>
-<span><span class="va">fp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/compute_footprint.html">compute_footprint</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">3e5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, location <span class="op">=</span> <span class="st">"CA-ON"</span>, cpu_power_w <span class="op">=</span> <span class="fl">45</span>,</span>
-<span>                        memory_gb <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span>
+<span><span class="va">fp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/co2fp.html">co2fp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">3e5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, loc <span class="op">=</span> <span class="st">"CA-ON"</span>, cpupwrw <span class="op">=</span> <span class="fl">45</span>,</span>
+<span>                        memgb <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fp</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Computation footprint (modelled): 0.003 s wall, 0.003 s CPU, utilisation 0.25 (process) on 4 cores</span></span>
-<span><span class="co">#&gt;   energy: 1.43e-08 kWh (cpu 9.38e-09, memory 4.97e-09)</span></span>
-<span><span class="co">#&gt;   CO2e:   1.3e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)</span></span>
+<span><span class="co">#&gt; Computation footprint (modelled): 0.006 s wall, 0.004 s CPU, utilisation 0.17 (process) on 4 cores</span></span>
+<span><span class="co">#&gt;   energy: 2.24e-08 kWh (cpu 1.25e-08, memory 9.93e-09)</span></span>
+<span><span class="co">#&gt;   CO2e:   2.04e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)</span></span>
 <span><span class="va">fp</span><span class="op">$</span><span class="va">assumptions</span></span>
 <span><span class="co">#&gt; character(0)</span></span></code></pre></div>
 <div class="section level3">
@@ -377,7 +369,7 @@ Every default that stood in for a measurement is listed:</p>
 <p>The Green Algorithms calculator asks the user for the utilisation
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>u</mi><annotation encoding="application/x-tex">u</annotation></semantics></math>
 and defaults to 1; codecarbon measures it in one of two tracking modes.
-<code><a href="../reference/compute_footprint.html">compute_footprint()</a></code> measures it too, in the same two ways.
+<code><a href="../reference/co2fp.html">co2fp()</a></code> measures it too, in the same two ways.
 <code>usage = "process"</code> (the default) is this R process’s own CPU
 time, children included, over wall time and cores, so an idle wait is
 not charged as computation. <code>usage = "machine"</code> is the whole
@@ -385,23 +377,22 @@ machine’s busy share over the run, read from <code>/proc/stat</code> on
 Linux, for the case where the computation is all the machine is doing or
 the question is what the machine drew; where there is no
 <code>/proc/stat</code> the process figure is used and the assumptions
-say so. A number fixes it, as the calculator does.
-<code>load_curve</code> chooses how power follows utilisation: linearly
-(Green Algorithms) or along codecarbon’s curves, a 10% floor for a
-process and
+say so. A number fixes it, as the calculator does. <code>loadcur</code>
+chooses how power follows utilisation: linearly (Green Algorithms) or
+along codecarbon’s curves, a 10% floor for a process and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.1</mn><mo>+</mo><mn>0.9</mn><msup><mi>u</mi><mn>3</mn></msup></mrow><annotation encoding="application/x-tex">0.1 + 0.9u^3</annotation></semantics></math>
 for a machine, so a figure can be made comparable with either tool:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">busy</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">2e5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/compute_footprint.html">compute_footprint</a></span><span class="op">(</span><span class="fu">busy</span><span class="op">(</span><span class="op">)</span>, location <span class="op">=</span> <span class="st">"CA-ON"</span>, cpu_power_w <span class="op">=</span> <span class="fl">45</span>, memory_gb <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span>
-<span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/compute_footprint.html">compute_footprint</a></span><span class="op">(</span><span class="fu">busy</span><span class="op">(</span><span class="op">)</span>, location <span class="op">=</span> <span class="st">"CA-ON"</span>, cpu_power_w <span class="op">=</span> <span class="fl">45</span>, memory_gb <span class="op">=</span> <span class="fl">16</span>,</span>
-<span>                       usage <span class="op">=</span> <span class="st">"machine"</span>, load_curve <span class="op">=</span> <span class="st">"codecarbon"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span>process_linear <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>usage <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">usage</span>, cpu_kwh <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">energy_kwh</span><span class="op">$</span><span class="va">cpu</span><span class="op">)</span>,</span>
-<span>      machine_codecarbon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>usage <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">usage</span>, cpu_kwh <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">energy_kwh</span><span class="op">$</span><span class="va">cpu</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                    usage      cpu_kwh</span></span>
-<span><span class="co">#&gt; process_linear      0.25 6.250000e-09</span></span>
-<span><span class="co">#&gt; machine_codecarbon  0.25 1.568359e-08</span></span>
-<span><span class="va">b</span><span class="op">$</span><span class="va">usage_mode</span></span>
+<span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/co2fp.html">co2fp</a></span><span class="op">(</span><span class="fu">busy</span><span class="op">(</span><span class="op">)</span>, loc <span class="op">=</span> <span class="st">"CA-ON"</span>, cpupwrw <span class="op">=</span> <span class="fl">45</span>, memgb <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span>
+<span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/co2fp.html">co2fp</a></span><span class="op">(</span><span class="fu">busy</span><span class="op">(</span><span class="op">)</span>, loc <span class="op">=</span> <span class="st">"CA-ON"</span>, cpupwrw <span class="op">=</span> <span class="fl">45</span>, memgb <span class="op">=</span> <span class="fl">16</span>,</span>
+<span>                       usage <span class="op">=</span> <span class="st">"machine"</span>, loadcur <span class="op">=</span> <span class="st">"codecarbon"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span>prolin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>usage <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">usage</span>, cpukwh <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">enekwh</span><span class="op">$</span><span class="va">cpu</span><span class="op">)</span>,</span>
+<span>      maccod <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>usage <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">usage</span>, cpukwh <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">enekwh</span><span class="op">$</span><span class="va">cpu</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;            usage       cpukwh</span></span>
+<span><span class="co">#&gt; prolin 0.1875000 9.375000e-09</span></span>
+<span><span class="co">#&gt; maccod 0.1666667 1.953125e-08</span></span>
+<span><span class="va">b</span><span class="op">$</span><span class="va">usagemode</span></span>
 <span><span class="co">#&gt; [1] "machine"</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -420,7 +411,7 @@ cite them. A location is matched by code, alpha-3 code or name; an
 unknown zone falls back to its country and says so; a number of your own
 is accepted when you have a better figure:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/carbon_intensity.html">carbon_intensity</a></span><span class="op">(</span><span class="st">"CA-ON"</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"g_per_kwh"</span>, <span class="st">"year"</span>, <span class="st">"source"</span><span class="op">)</span><span class="op">]</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/co2int.html">co2int</a></span><span class="op">(</span><span class="st">"CA-ON"</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"g_per_kwh"</span>, <span class="st">"year"</span>, <span class="st">"source"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt; $g_per_kwh</span></span>
 <span><span class="co">#&gt; [1] 90.97</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -429,7 +420,7 @@ is accepted when you have a better figure:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $source</span></span>
 <span><span class="co">#&gt; [1] "Electricity Maps (2025). Canada 2024 Yearly Carbon Intensity Data (Version January 27, 2025). Electricity Maps (via Green Algorithms data v3.1)"</span></span>
-<span><span class="fu"><a href="../reference/carbon_intensity.html">carbon_intensity</a></span><span class="op">(</span><span class="st">"Kenya"</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"location"</span>, <span class="st">"g_per_kwh"</span>, <span class="st">"year"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="fu"><a href="../reference/co2int.html">co2int</a></span><span class="op">(</span><span class="st">"Kenya"</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"location"</span>, <span class="st">"g_per_kwh"</span>, <span class="st">"year"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt; $location</span></span>
 <span><span class="co">#&gt; [1] "KE"</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -438,9 +429,9 @@ is accepted when you have a better figure:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $year</span></span>
 <span><span class="co">#&gt; [1] 2025</span></span>
-<span><span class="fu"><a href="../reference/carbon_intensity.html">carbon_intensity</a></span><span class="op">(</span><span class="st">"CA-XX"</span><span class="op">)</span><span class="op">$</span><span class="va">note</span></span>
+<span><span class="fu"><a href="../reference/co2int.html">co2int</a></span><span class="op">(</span><span class="st">"CA-XX"</span><span class="op">)</span><span class="op">$</span><span class="va">note</span></span>
 <span><span class="co">#&gt; [1] "no row for zone CA-XX; its country CA used"</span></span>
-<span><span class="va">tab</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/carbon_intensity.html">carbon_intensity_table</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">tab</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/co2int.html">co2inttab</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">tab</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 378</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar</a></span><span class="op">(</span><span class="va">tab</span><span class="op">$</span><span class="va">location</span><span class="op">)</span> <span class="op">==</span> <span class="fl">2</span>, <span class="va">tab</span><span class="op">$</span><span class="va">year</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"2024"</span>, <span class="st">"2025"</span><span class="op">)</span><span class="op">]</span></span>
@@ -458,29 +449,29 @@ assumptions; when nothing is found the world average is used and the
 result says so, so one country’s grid is never silently applied to
 another’s computation:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/detect_location.html">detect_location</a></span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/dtctloc.html">dtctloc</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $location</span></span>
 <span><span class="co">#&gt; [1] "WORLD"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $method</span></span>
 <span><span class="co">#&gt; [1] "fallback, no location found in environment, time zone or locale"</span></span>
-<span><span class="fu"><a href="../reference/detect_location.html">detect_location</a></span><span class="op">(</span>env_location <span class="op">=</span> <span class="st">""</span>, codecarbon_location <span class="op">=</span> <span class="st">""</span>, tz <span class="op">=</span> <span class="st">"Asia/Kolkata"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/dtctloc.html">dtctloc</a></span><span class="op">(</span>envloc <span class="op">=</span> <span class="st">""</span>, codloc <span class="op">=</span> <span class="st">""</span>, tz <span class="op">=</span> <span class="st">"Asia/Kolkata"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $location</span></span>
 <span><span class="co">#&gt; [1] "IN"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $method</span></span>
 <span><span class="co">#&gt; [1] "system time zone Asia/Kolkata"</span></span>
-<span><span class="fu"><a href="../reference/compute_footprint.html">compute_footprint</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fl">1</span>, cpu_power_w <span class="op">=</span> <span class="fl">45</span>, memory_gb <span class="op">=</span> <span class="fl">16</span><span class="op">)</span><span class="op">$</span><span class="va">assumptions</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
+<span><span class="fu"><a href="../reference/co2fp.html">co2fp</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fl">1</span>, cpupwrw <span class="op">=</span> <span class="fl">45</span>, memgb <span class="op">=</span> <span class="fl">16</span><span class="op">)</span><span class="op">$</span><span class="va">assumptions</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="co">#&gt; [1] "location WORLD via fallback, no location found in environment, time zone or locale"</span></span></code></pre></div>
 <p>For a long analysis the figures become meaningful; the equivalents
 are the two the Green Algorithms calculator prints:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/footprint_equivalents.html">footprint_equivalents</a></span><span class="op">(</span><span class="va">fp</span><span class="op">$</span><span class="va">co2e_g</span> <span class="op">*</span> <span class="fl">1e4</span><span class="op">)</span>   <span class="co"># if this ran ten thousand times</span></span>
-<span><span class="co">#&gt; $car_km</span></span>
-<span><span class="co">#&gt; [1] 7.455208e-05</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/fpeqv.html">fpeqv</a></span><span class="op">(</span><span class="va">fp</span><span class="op">$</span><span class="va">co2eg</span> <span class="op">*</span> <span class="fl">1e4</span><span class="op">)</span>   <span class="co"># if this ran ten thousand times</span></span>
+<span><span class="co">#&gt; $carkm</span></span>
+<span><span class="co">#&gt; [1] 0.0001166149</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $tree_months</span></span>
-<span><span class="co">#&gt; [1] 1.42275e-05</span></span>
+<span><span class="co">#&gt; $treemon</span></span>
+<span><span class="co">#&gt; [1] 2.225475e-05</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $sources</span></span>
 <span><span class="co">#&gt;                                                                  car </span></span>
@@ -489,9 +480,9 @@ are the two the Green Algorithms calculator prints:</p>
 <span><span class="co">#&gt;             "917 gCO2 per tree-month (Green Algorithms context.csv)"</span></span></code></pre></div>
 <p><strong>Cross-checked against codecarbon.</strong> On the same
 8-second CPU-bound workload with the same forced inputs (65 W CPU, 16 GB
-at 0.3725 W/GB), codecarbon 3.3.1 and <code><a href="../reference/compute_footprint.html">compute_footprint()</a></code>
-charged the memory identically (5.96 W) and the CPU within 8%;
-<code>load_curve = "codecarbon"</code> reproduces codecarbon’s
+at 0.3725 W/GB), codecarbon 3.3.1 and <code><a href="../reference/co2fp.html">co2fp()</a></code> charged the
+memory identically (5.96 W) and the CPU within 8%;
+<code>loadcur = "codecarbon"</code> reproduces codecarbon’s
 power-from-load curves, so what remains of the difference is the load
 measurement itself (codecarbon samples it during the run, this function
 integrates the CPU time). The carbon intensity they applied to Canada
@@ -509,11 +500,41 @@ assumptions: memory draws 0.3725 W/GB regardless of how it is populated
 (codecarbon v3 moved to a per-DIMM heuristic for the same reason), and
 the grid intensity is an annual average, not the hour’s. Embodied
 emissions of the hardware are excluded, as in both reference tools. The
-place to improve a figure is the inputs: a measured
-<code>cpu_power_w</code> for your CPU, the actual <code>memory_gb</code>
-your job used, the data centre’s <code>pue</code>, and, if you have it,
-the hour’s carbon intensity passed as a number.</p>
+place to improve a figure is the inputs: a measured <code>cpupwrw</code>
+for your CPU, the actual <code>memgb</code> your job used, the data
+centre’s <code>pue</code>, and, if you have it, the hour’s carbon
+intensity passed as a number.</p>
 </div>
+</div>
+<div class="section level2">
+<h2 id="first-nations-métis-and-inuit-populations">First Nations, Métis and Inuit populations<a class="anchor" aria-label="anchor" href="#first-nations-m%C3%A9tis-and-inuit-populations"></a>
+</h2>
+<p>The 2021 Census gives the populations a burden estimate needs. The
+bundled Indigenous Population Profile excerpt has them by province and
+territory; the concentrations below are scenarios (the WHO 2021
+guideline of 5 µg/m³ against 8 and 12 µg/m³), not measurements of any
+community.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"censuspop"</span><span class="op">)</span></span>
+<span><span class="va">tot</span> <span class="op">&lt;-</span> <span class="va">cp</span><span class="op">[</span><span class="va">cp</span><span class="op">$</span><span class="va">GEO_LEVEL</span> <span class="op">!=</span> <span class="st">"Country"</span> <span class="op">&amp;</span> <span class="va">cp</span><span class="op">$</span><span class="va">AGE_GROUP</span> <span class="op">==</span> <span class="st">"Total - Age groups"</span> <span class="op">&amp;</span></span>
+<span>            <span class="va">cp</span><span class="op">$</span><span class="va">RESIDENCE</span> <span class="op">==</span> <span class="st">"Total - Residence on or off reserve"</span> <span class="op">&amp;</span></span>
+<span>            <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^Total - Average age"</span>, <span class="va">cp</span><span class="op">$</span><span class="va">CHARACTERISTIC_NAME</span><span class="op">)</span>, <span class="op">]</span></span>
+<span><span class="va">pop</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">tot</span><span class="op">$</span><span class="va">FIRST_NATIONS</span>, <span class="va">tot</span><span class="op">$</span><span class="va">GEO_NAME</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pop</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">pop</span><span class="op">)</span><span class="op">]</span>, <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt;          Ontario British Columbia          Alberta         Manitoba </span></span>
+<span><span class="co">#&gt;           251030           180085           145640           134890 </span></span>
+<span><span class="co">#&gt;     Saskatchewan </span></span>
+<span><span class="co">#&gt;           121175</span></span>
+<span><span class="co"># relative risk of all-cause mortality from PM2.5, and the share of deaths attributable to</span></span>
+<span><span class="co"># the excess above the guideline if the whole population breathes the scenario level</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">8</span>, <span class="fl">12</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">conc</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">rr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/crfpm25.html">crfpm25</a></span><span class="op">(</span><span class="va">conc</span>, refconc <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">$</span><span class="va">rr</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>pm25 <span class="op">=</span> <span class="va">conc</span>, rr <span class="op">=</span> <span class="va">rr</span>, attributable <span class="op">=</span> <span class="fu"><a href="../reference/attrfrac.html">attrfrac</a></span><span class="op">(</span><span class="va">rr</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                    [,1]       [,2]</span></span>
+<span><span class="co">#&gt; pm25         8.00000000 12.0000000</span></span>
+<span><span class="co">#&gt; rr           1.02335691  1.0553503</span></span>
+<span><span class="co">#&gt; attributable 0.02282382  0.0524473</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

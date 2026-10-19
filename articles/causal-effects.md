@@ -1,6 +1,6 @@
 # Causal effects with cross-fitted double machine learning
 
-[`plr_crossfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plr_crossfit.md)
+[`plrcf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plrcf.md)
 estimates the average effect of a treatment on an outcome when the
 treated and the untreated differ in measured ways (confounders). It fits
 the partially linear model
@@ -16,7 +16,7 @@ regression of the outcome residuals on the treatment residuals (DML2),
 with a sandwich standard error. When the effect is the same for
 everyone, $`\theta`$ is the average treatment effect (ATE); otherwise it
 is a variance-weighted average of the individual effects.
-[`exposure_response_plr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_response_plr.md)
+[`exprspplr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exprspplr.md)
 bootstraps the same estimator for a continuous exposure (see the
 air-pollution vignette). The nuisances $`g`$ and $`m`$ are ordinary
 least squares fits, so $`\theta`$ is consistent when they are linear in
@@ -38,7 +38,7 @@ sim$d <- rbinom(n, 1, plogis(1.5 * sim$x1))
 sim$y <- 2 * sim$d + 3 * sim$x1 + sim$x2 + rnorm(n)
 mean(sim$y[sim$d == 1]) - mean(sim$y[sim$d == 0])   # biased by x1
 #> [1] 5.373073
-fit <- plr_crossfit(sim, "y", "d", c("x1", "x2"))
+fit <- plrcf(sim, "y", "d", c("x1", "x2"))
 fit$ate
 #> [1] 2.039439
 fit$ate + c(-1.96, 1.96) * fit$se
@@ -58,9 +58,9 @@ once), checked against the SHA-256 the manifest lists:
 
 ``` r
 
-tr <- bricklayer_data_load("nsw_dw/treated")
-ct <- bricklayer_data_load("nsw_dw/control")
-ps <- bricklayer_data_load("nsw_dw/psid_controls")
+tr <- dload("nsw_dw/treated")
+ct <- dload("nsw_dw/control")
+ps <- dload("nsw_dw/psid_controls")
 ```
 
 Or, without signing in, from Rajeev Dehejia’s own pages
@@ -71,7 +71,7 @@ Or, without signing in, from Rajeev Dehejia’s own pages
 cols <- c("treat", "age", "educ", "black", "hisp", "married", "nodegree", "re74", "re75", "re78")
 nber <- function(f) {
   dest <- file.path(tempdir(), f)
-  bricklayer_download(paste0("https://users.nber.org/~rdehejia/data/", f), dest)
+  bldl(paste0("https://users.nber.org/~rdehejia/data/", f), dest)
   stats::setNames(utils::read.table(dest), cols)
 }
 tr <- nber("nswre74_treated.txt")
@@ -99,9 +99,9 @@ exp <- rbind(tr, ct)
 obs <- rbind(tr, ps)
 mean(tr$re78) - mean(ct$re78)                 # the experiment
 mean(tr$re78) - mean(ps$re78)                 # treated against the PSID, unadjusted
-plr_crossfit(exp, "re78", "treat", x)
-plr_crossfit(obs, "re78", "treat", x)
-plr_crossfit(obs, "re78", "treat", x, k_folds = 10, seed = 2)
+plrcf(exp, "re78", "treat", x)
+plrcf(obs, "re78", "treat", x)
+plrcf(obs, "re78", "treat", x, kfol = 10, seed = 2)
 ```
 
 Run on 15 October 2026 (1982 US dollars of 1978 earnings):
@@ -109,10 +109,10 @@ Run on 15 October 2026 (1982 US dollars of 1978 earnings):
 | Sample and estimator | Effect | Standard error | 95% interval |
 |----|----|----|----|
 | Experiment, difference in means | 1,794.3 |  |  |
-| Experiment, [`plr_crossfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plr_crossfit.md) | 1,695.9 | 680.8 | 361.5 to 3,030.2 |
+| Experiment, [`plrcf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plrcf.md) | 1,695.9 | 680.8 | 361.5 to 3,030.2 |
 | Treated vs PSID, difference in means | -15,204.8 |  |  |
-| Treated vs PSID, [`plr_crossfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plr_crossfit.md) | 618.3 | 791.1 | -932.3 to 2,168.9 |
-| Treated vs PSID, [`plr_crossfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plr_crossfit.md), 10 folds, seed 2 | 748.4 | 777.5 | -775.5 to 2,272.3 |
+| Treated vs PSID, [`plrcf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plrcf.md) | 618.3 | 791.1 | -932.3 to 2,168.9 |
+| Treated vs PSID, [`plrcf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plrcf.md), 10 folds, seed 2 | 748.4 | 777.5 | -775.5 to 2,272.3 |
 
 Adjusting for the eight pre-programme covariates turns a
 fifteen-thousand-dollar penalty into a small positive effect whose
@@ -124,10 +124,76 @@ almost any treated man, so the comparison rests on the few who look like
 them. Dehejia and Wahba show that trimming the comparison group to the
 region of common support (on an estimated propensity score) brings the
 observational estimate close to the experiment; with
-[`plr_crossfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plr_crossfit.md),
+[`plrcf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plrcf.md),
 restrict `obs` to that region before fitting. The cross-fit split moves
 the estimate by about a sixth of a standard error, which is why the seed
 and the number of folds are arguments.
+
+## Overlap and balance
+
+Two checks belong with every weighting estimate: whether the two groups
+overlap (each person has a real chance of either treatment) and whether
+weighting balances the covariates. On simulated data, where the true
+effect is 3:
+
+``` r
+
+set.seed(7)
+n <- 1500
+d <- data.frame(age = runif(n, 18, 70), income = rnorm(n))
+d$t <- rbinom(n, 1, plogis(-2 + 0.04 * d$age + 0.5 * d$income))
+d$y <- 10 + 3 * d$t + 0.2 * d$age + d$income + rnorm(n)
+fit <- aipwcf(d, "y", "t", c("age", "income"), lrn = "ols")
+fit
+#> Cross-fitted AIPW, ATE: 1500 rows, 684 treated
+#>  estimate      se lower upper p_value
+#>     3.071 0.05606 2.961 3.181       0
+#> Propensities from 0.086 to 0.903; 0 clipped
+plot(fit)
+```
+
+![](causal-effects_files/figure-html/overlap-balance-1.png)
+
+``` r
+
+pr <- attr(fit, "propensity")
+e <- pmin(pmax(pr$propensity, 0.01), 0.99)
+d$ipw <- ifelse(d$t == 1, 1 / e, 1 / (1 - e))
+plot(baltab(d, "t", c("age", "income")),
+     after = baltab(d, "t", c("age", "income"), w = "ipw"))
+```
+
+![](causal-effects_files/figure-html/overlap-balance-2.png)
+
+The groups overlap where both curves have mass; after weighting, both
+covariates fall below the 0.1 line.
+
+## Indigenous examples
+
+The person-level questions this vignette is about (does a strong sense
+of belonging go with better mental health once circumstances are held
+equal?) need the survey microdata, which Statistics Canada distributes
+as a public use file;
+[`aipwcf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/aipwcf.md)
+with `design = svydes(...)` takes its bootstrap weights directly. The
+published tables bundled with the package support the group-level
+questions; for those see
+[`vignette("first-nations-metis-inuit-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/first-nations-metis-inuit-health.md).
+A comparison of the published estimates themselves:
+
+``` r
+
+hi <- indiex("health")
+x <- hi[hi$period == "2019/2022" & hi$age == "Total, 18 years and over" &
+          hi$indicator == "Perceived mental health, very good or excellent", ]
+indgap(x, "group", "estimate", "lower", "upper", qual = "quality")[
+  , c("group", "estimate", "refest", "difference", "diflo",
+      "difup")]
+#>           group estimate refest difference     diflo      difup
+#> 1 First Nations     45.8   61.5      -15.7 -18.53593 -12.864070
+#> 2         Métis     52.8   61.5       -8.7 -11.58531  -5.814692
+#> 3         Inuit     47.8   61.5      -13.7 -20.16568  -7.234321
+```
 
 ## References
 

@@ -19,7 +19,7 @@ d <- data.frame(
   n = c(30, 45, 12, 60, 8, 20),
   pop = c(1000, 6000, 900, 9000, 400, 3500)
 )
-expected_counts(d$n, d$pop, d$region)
+expcnts(d$n, d$pop, d$region)
 #>    area observed population expected
 #> 1  East       28       3900 32.81250
 #> 2 North       75       7000 58.89423
@@ -33,24 +33,58 @@ the unit rather than about who lives there:
 
 ``` r
 
-expected_counts(d$n, d$pop, d$region, strata = d$age)
+expcnts(d$n, d$pop, d$region, strata = d$age)
 #>    area observed population expected
 #> 1  East       28       3900 32.34430
 #> 2 North       75       7000 62.27967
 #> 3 South       72       9900 80.37603
 ```
 
+## Direct standardisation, for populations of different ages
+
+Indirect standardisation asks what each unit would expect at the overall
+rates. Direct standardisation asks what rate each population would have
+with one standard age structure. It is the comparison to use when the
+populations’ ages differ a great deal. First Nations, Metis and Inuit
+populations, for example, are younger than the non-Indigenous
+population.
+[`agestd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agestd.md)
+gives the rates with the Fay-Feuer gamma interval, which holds for small
+counts.
+[`rategap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rategap.md)
+compares two of them. The counts below are made up, to show the
+computation:
+
+``` r
+
+r <- agestd(events = c(4, 9, 11, 6, 3, 40, 70, 90, 80, 60),
+                     pop = c(9000, 8000, 6000, 4000, 2000, 300000, 320000, 350000, 340000, 300000),
+                     std = c(30, 25, 20, 15, 10),
+                     grp = rep(c("Inuit", "Non-Indigenous"), each = 5))
+r
+#>            group events      rate    lower    upper
+#> 1          Inuit     33 115.62500 79.23967 165.0186
+#> 2 Non-Indigenous    340  20.14102 17.93306  22.5839
+rategap(r, "Inuit", "Non-Indigenous")
+#>   group      reference    ratio  ratiolo ratioup difference    diflo    difup
+#> 1 Inuit Non-Indigenous 5.740772 3.993798 8.25191   95.48398 55.54321 135.4247
+```
+
+For survey percentages rather than counts,
+[`stdprev()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stdprev.md)
+does the same.
+
 ## Standardised ratios with exact intervals
 
 The ratio of observed to expected is the standardised incidence ratio
 (SIR).
-[`sir()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sir.md)
+[`stdinc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stdinc.md)
 gives the exact Poisson interval, which is what makes a small count
 honest:
 
 ``` r
 
-sir(observed = c(30, 12, 3), expected = c(20, 14, 5),
+stdinc(obs = c(30, 12, 3), expd = c(20, 14, 5),
     area = c("North", "South", "East"))
 #>    area observed expected       sir     lower    upper excess deficit
 #> 1 North       30       20 1.5000000 1.0120437 2.141343   TRUE   FALSE
@@ -67,7 +101,7 @@ interval says so rather than hiding it:
 
 ``` r
 
-sir(3, 5)
+stdinc(3, 5)
 #>   observed expected sir     lower    upper excess deficit significant
 #> 1        3        5 0.6 0.1237344 1.753455  FALSE   FALSE       FALSE
 ```
@@ -83,7 +117,7 @@ count (Clayton and Kaldor 1987).
 
 ``` r
 
-eb_rates(observed = c(30, 45, 2), expected = c(25, 50, 0.5),
+ebrates(obs = c(30, 45, 2), expd = c(25, 50, 0.5),
          area = c("North", "South", "Tiny"))
 #>    area observed expected sir        eb shrinkage       nu    alpha
 #> 1 North       30     25.0 1.2 1.1073869 0.5141392 26.98066 26.45506
@@ -103,7 +137,7 @@ ones worth a second look; the rest are consistent with the common rate.
 
 ``` r
 
-funnel_limits(c(2, 20, 200))
+fnllim(c(2, 20, 200))
 #>   expected level lower upper
 #> 1        2 0.950 0.000 2.500
 #> 2       20 0.950 0.600 1.450
@@ -116,7 +150,7 @@ funnel_limits(c(2, 20, 200))
 ``` r
 
 e <- seq(2, 200, length.out = 60)
-lim <- funnel_limits(e)
+lim <- fnllim(e)
 plot(e, lim$upper_95, type = "l", ylim = c(0, 3), xlab = "expected count",
      ylab = "observed / expected", main = "Funnel limits")
 lines(e, lim$lower_95)
@@ -142,7 +176,7 @@ whether similar values cluster in space, against a permutation null;
 nb <- list(2L, c(1L, 3L), c(2L, 4L), c(3L, 5L), c(4L, 6L), 5L)   # six areas in a line
 
 set.seed(1)
-morans_i(c(1, 2, 3, 4, 5, 6), nb, n_perm = 999L)[c("I", "p_value")]   # a gradient
+morani(c(1, 2, 3, 4, 5, 6), nb, nperm = 999L)[c("I", "p_value")]   # a gradient
 #> $I
 #> [1] 0.7142857
 #> 
@@ -150,7 +184,7 @@ morans_i(c(1, 2, 3, 4, 5, 6), nb, n_perm = 999L)[c("I", "p_value")]   # a gradie
 #> [1] 0.011
 
 set.seed(1)
-morans_i(c(1, 6, 1, 6, 1, 6), nb, n_perm = 999L)[c("I", "p_value")]   # alternating
+morani(c(1, 6, 1, 6, 1, 6), nb, nperm = 999L)[c("I", "p_value")]   # alternating
 #> $I
 #> [1] -1
 #> 
@@ -172,15 +206,15 @@ treats them as independent is optimistic.
 
 ## From a published table to a judgement
 
-1.  [`expected_counts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expected_counts.md)
+1.  [`expcnts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expcnts.md)
     with the strata the table publishes.
-2.  [`sir()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sir.md)
+2.  [`stdinc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stdinc.md)
     for the ratios and their exact intervals.
-3.  [`eb_rates()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/eb_rates.md)
+3.  [`ebrates()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ebrates.md)
     where small units dominate.
-4.  [`funnel_limits()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/funnel_limits.md)
+4.  [`fnllim()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fnllim.md)
     to see which units are outside the common experience.
-5.  [`morans_i()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/morans_i.md)
+5.  [`morani()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/morani.md)
     on the residuals before trusting independence.
 
 ## References
