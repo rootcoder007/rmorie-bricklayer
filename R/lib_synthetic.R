@@ -145,6 +145,10 @@ mksyncol <- function(spec, n, ctx = list(), basep = NULL) {
   }
   n <- .rmbl_num(n, "n", integer = TRUE)
   if (length(n) != 1L || is.na(n) || n < 0L) stop("`n` must be a single non-negative whole number", call. = FALSE)
+  if (!is.null(basep)) {
+    basep <- .rmbl_num(basep, "basep")
+    if (anyNA(basep) || any(basep < 0 | basep > 1)) stop("`basep` must be probabilities between 0 and 1", call. = FALSE)
+  }
   if (identical(type, "sample") && !length(unlist(spec$values))) {
     stop("a \"sample\" column spec needs `values` to draw from", call. = FALSE)
   }

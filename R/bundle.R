@@ -139,6 +139,10 @@ cpsbndl <- function(dir, man, key, files = NULL,
   if (!dir.exists(dir)) {
     stop("`dir` does not exist: ", dir, call. = FALSE)
   }
+  if (!is.null(path)) path <- .rmbl_string1(path, "path")
+  if (!is.null(files) && (!is.character(files) || anyNA(files))) {
+    stop("`files` must be file names (relative to `dir`), or NULL for every file", call. = FALSE)
+  }
   path <- path %||% file.path(dir, "capsule_bundle.json")
   if (is.null(files)) {
     # dotfiles too: a .Rprofile dropped into a capsule directory runs when
@@ -219,6 +223,7 @@ cpsbndlvrf <- function(bundle, dir, man = NULL,
     stop("`bundle` must come from cpsbndl() or ",
          "cpsbndlrd()", call. = FALSE)
   }
+  dir <- .rmbl_string1(dir, "dir")
   checks <- list()
   note_row <- function(check, ok, detail = "") {
     checks[[length(checks) + 1L]] <<- data.frame(

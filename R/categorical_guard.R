@@ -639,6 +639,7 @@ vrfrcd <- function(orig, recd, decl) {
 #' @export
 vrfmrg <- function(x, pub, tol = 0, strict = TRUE) {
   .rmbl_no_fn(x = x)
+  strict <- .rmbl_flag1(strict, "strict")
   # labels are compared as text: a date column was compared through charToDate() and failed on a label
   if (is.factor(x) || inherits(x, c("Date", "POSIXt"))) x <- as.character(x)
   tol <- .rmbl_scalar(tol, "tol", 0)
@@ -1287,6 +1288,8 @@ relbl <- function(x, map, keep = character()) {
 #' try(declbld(c(1, 2, 2)))
 #' @export
 declbld <- function(x, vlabs = NULL) {
+  .rmbl_no_fn(x = x)
+  if (!is.atomic(x) && !is.factor(x)) stop("`x` must be a vector of codes", call. = FALSE)
   lab <- attr(x, "labels", exact = TRUE)
   if (!is.null(lab)) {
     if (is.null(names(lab))) {
@@ -1533,6 +1536,7 @@ print.bricklayer_relabel_forensics <- function(x, ...) {
 xfrvrf <- function(imported, soucnts, codebook = NULL,
                             tol = 0, strict = TRUE) {
   .rmbl_no_fn(imported = imported, code_book = codebook)
+  strict <- .rmbl_flag1(strict, "strict")
   if (!is.null(codebook) &&
         (!is.atomic(codebook) || is.null(names(codebook)) || inherits(codebook, c("Date", "POSIXt")))) {
     stop("`codebook` must be a named vector (code = label), or NULL", call. = FALSE)

@@ -165,6 +165,7 @@ test_that("arccap(): a silent time-stamping authority is a warning, a refused up
 })
 
 test_that("the capture seams reach the transport: a closed loopback port answers with an error, not a crash", {
+  skip_on_cran()   # two connects to the loopback discard port (final audit of 1.0.0, #10)
   u <- "http://127.0.0.1:9/tsa"
   r <- .bl_tsa_post(u, as.raw(1:4), 2L)
   expect_false(identical(r$status, 200L))

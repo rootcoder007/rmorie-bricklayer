@@ -531,10 +531,7 @@ mrkvrf <- function(leaf, proof, root, scheme = NULL) {
 #' @export
 chnkfile <- function(path, chnkbytes = 1048576L) {
   path <- .rmbl_file1(path, "path")
-  chnkbytes <- .rmbl_num(chnkbytes, "chnkbytes", integer = TRUE)
-  if (is.na(chnkbytes) || chnkbytes < 1L) {
-    stop("`chnkbytes` must be a positive integer", call. = FALSE)
-  }
+  chnkbytes <- .rmbl_scalar(chnkbytes, "chnkbytes", 1, .Machine$integer.max, integer = TRUE)
   size <- file.info(path)$size
   if (is.na(size) || size == 0) return(list())
   con <- file(path, "rb")
@@ -606,10 +603,7 @@ crc32file <- function(path, blkbytes = 1048576L) {
 
 .rmbl_read_all_raw <- function(path, block_bytes = 1048576L) {
   path <- .rmbl_file1(path, "path")
-  block_bytes <- .rmbl_num(block_bytes, "block_bytes", integer = TRUE)
-  if (is.na(block_bytes) || block_bytes < 1L) {
-    stop("`blkbytes` must be a positive integer", call. = FALSE)
-  }
+  block_bytes <- .rmbl_scalar(block_bytes, "blkbytes", 1, .Machine$integer.max, integer = TRUE)
   con <- file(path, "rb")
   on.exit(close(con), add = TRUE)
   parts <- list()

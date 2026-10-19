@@ -124,6 +124,10 @@ vrfcps <- function(cpsdir,
     stop("`cpsdir` is not an existing directory: ", cpsdir,
          call. = FALSE)
   }
+  provfile <- .rmbl_string1(provfile, "provfile")
+  if (!is.null(dfile)) dfile <- .rmbl_string1(dfile, "dfile")
+  if (!is.null(mnffile)) mnffile <- .rmbl_string1(mnffile, "mnffile")
+  if (!is.null(scrfile)) scrfile <- .rmbl_string1(scrfile, "scrfile")
   checks <- list()
   note <- function(check, ok, detail = "") {
     checks[[length(checks) + 1L]] <<- data.frame(

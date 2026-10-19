@@ -774,6 +774,9 @@ tojs <- function(x, dataframe = c("rows", "columns", "values"),
                                  null = c("list", "null"), na = c("null", "string"),
                                  auto_unbox = FALSE, digits = 4, pretty = FALSE,
                                  force = FALSE, ...) {
+  if (!is.numeric(digits) || length(digits) != 1L) {
+    stop("`digits` must be one number (NA for full precision), or I(n) for significant digits", call. = FALSE)
+  }
   dots <- list(...)
   o <- list(dataframe = .rmbl_arg(dataframe), matrix = .rmbl_arg(matrix),
             Date = .rmbl_arg(Date), POSIXt = .rmbl_arg(POSIXt), factor = .rmbl_arg(factor),
@@ -904,8 +907,15 @@ bricklayer_json_unbox <- function(x) {
     .rmbl_native$json <- fast
   }
   if (fast) {
-    r <- .Call(C_rmbl_json_fast, s, duplicate_keys == "keep")
-    if (!is.null(r)) return(r[[1L]])
+    r <- .Call(C_rmbl_json_fast, s, duplicate_keys == "keep", isTRUE(bigint_as_char))
+    if (!is.null(r)) {
+      if (!is.null(r[[2L]]) && bigint_warn) {
+        warning(sprintf(paste0("integer %s exceeds 2^53 and cannot be held exactly ",
+                               "in a double; pass bigint_as_char = TRUE to keep it as text"), r[[2L]]),
+                call. = FALSE)
+      }
+      return(r[[1L]])
+    }
   }
   ch <- strsplit(s, "", fixed = TRUE)[[1]]
   n <- length(ch)

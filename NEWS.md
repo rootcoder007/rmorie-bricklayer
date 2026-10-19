@@ -245,8 +245,9 @@ New estimators, each checked against the reference implementation (`fixest`, `di
 * **Arguments, again**: a battery of every export with 41 hostile values in every argument (not only
   those the examples set; 38,836 calls over 306 functions) found 1,007 base R errors in 77 functions
   past the fixes above (the stress test counted 1,070 in 180), among them every `yoy_*()` writer's
-  `digits`, `stepchg()`, `scanadj()` and the plots' `col =`; the battery now finds none, each
-  refused in words, naming the argument. Shared checks do most of it: a single
+  `digits`, `stepchg()`, `scanadj()` and the plots' `col =`; each is refused in words, naming the
+  argument (the final audit's wider battery, 15 values in every argument of every export, found
+  90 more raw errors in 31 functions; those are fixed below). Shared checks do most of it: a single
   number in a range (`.rmbl_scalar()`), an environment refused where data goes, a date refused as a
   count (`reps = Sys.Date()` ran 20,000 replications), colours checked before a device sees them (one
   check for every plot), titles checked once. `morani(n_perm = 1)` no longer fails on the spread of
@@ -260,7 +261,7 @@ New estimators, each checked against the reference implementation (`fixest`, `di
   in 20 s and an estimate in 5 s (52 s each in the stress test).
 * **A time limit ends a loop over your function**: `cpsfals()`, `cpspwr()` and the
   exposure-response bootstrap caught `setTimeLimit()`'s error as one more failed statistic and ran on.
-* The README says 121 C++ entry points behind the barrier (one new, the JSON path) and 13 in plain C.
+* The README says 123 C++ entry points behind the barrier (one new, the JSON path) and 13 in plain C.
 
 ## After the tag: the manual, the plots, a C locale
 
@@ -302,6 +303,75 @@ New estimators, each checked against the reference implementation (`fixest`, `di
 * `vignette("plotting-results")` gains the policy-evaluation plots, one call per result;
   `vignette("policy-evaluation")` draws the synthetic difference in differences and
   `vignette("causal-effects")` the AIPW estimate beside its overlap.
+
+**The final pre-CRAN audit** (three reviewers and a re-run of every earlier finding)
+
+* **A test failed `R CMD check` on a host without IPv6 sockets** (a kernel booted with
+  `ipv6.disable=1`): the socket guard's probe now answers `NA` where the address family cannot be
+  opened, and the test skips there instead of reading it as a refusal.
+* **Large CSVs read through the streamed path** (tables past 512 MiB) took a ragged row silently,
+  the first column as row names and the data shifted one column left; `read.csv()`'s field count is
+  checked record by record first, and the file is refused in the same words as the in-memory path.
+* **The survey reorder check** read a swap of two rows beside one edited cell as "in order" (SE
+  9.60 for 9.92 with no error): the design keeps one key per row, and rows that moved beside fewer
+  rows that changed are a reorder, whatever the columns the swap left unchanged say. An edit that
+  turned an integer column into a double one changed every row's code as well; integer and logical
+  columns now code as their doubles do.
+* **A double column holding -0** (`round(-0.3)` is -0) gave its row an `NA` key, which wiped the
+  other columns' contribution and hid reorders among such rows: -0 codes as 0 and every NaN
+  payload, `NA` among them, as one value. A design saved by 0.5.14 with `NA` in a double column
+  is rebuilt on its data.
+* **The degrees of freedom** read the replicate matrix's rank from a `B x B` cross-product: with
+  more replicates than rows that asked for 74.5 GB (`n = 20`, `B = 1e5`) and took 113 s at
+  `B = 5,000`. The smaller of the two Gram matrices is read, the replicates scaled first (a
+  replicate of 1e308 overflowed `eigen()`).
+* **The replicate contract's edges**: a Fay replicate equal to the weight (a post-stratified domain
+  whose rows sit in one PSU per stratum) is said, not refused; one factor `k/(k - 1)` on every row
+  with no row left out (`w * 1.005` under JKn, the full data plus `w * 15/14` under JK1) is said;
+  two or more JKn replicates equal to the weight are said.
+* **The manifest fetch** capped the bytes on the wire, and a reply sent with
+  `Content-Encoding: gzip` was stored as sent and decompressed whole by `readLines()`: 300 MiB of
+  zeros in a 300 KB body (a 2.3 GB allocation, or an OOM kill). The manifest is read a megabyte at
+  a time through `gzcon()` and refused past 32 MiB decoded.
+* **The JSON fast path** gave up on a big integer, a duplicate key and nesting past 100 levels and
+  handed the whole document to the character-by-character R parser: one such value at the end of
+  a 15 MiB reply cost minutes. Whole numbers of 16 digits or more follow the R parser's rules in
+  C++ (text when asked, else a double, the inexact ones warned about once), a duplicate key and
+  deep nesting are refused there in the same words and at the same character, and any other
+  failure in a document past 128 KiB is refused with its reason instead of re-read. The direct
+  `.Call` refuses bytes that are not UTF-8 rather than handing back an invalid string.
+* **The command line**: a trailing `?` no longer makes a question of a near-miss command
+  (`dat list?`, `conifg set openai.api_key?`); zero-width characters are removed before the key
+  check, so a key broken by them is still a key; dotted or underscored runs with digits in two
+  segments or more, sixteen letters that change case four times or more, and a key typed in groups
+  of 8 to 16 characters are keys; a UUID, dashed groups of mixed-case characters, a 15-character
+  mixed token or a key of a known prefix given as `--model` is not sent as the model name.
+* **`col =`** is checked by the field, density, Knox and leave-one-out plots (raw `image()` errors
+  before; the leave-one-out plot ignored it).
+* `onlsmry()` refuses an infinite value in words (`smrystat()` failed in R's); `stepchg()` reads a
+  series near the double's range in units of its largest value (the statistic overflowed to `Inf`,
+  the p-value to `NaN`); `fylbl(2024.5)` is refused instead of labelled "2023/24".
+* `rmbl` exits 130 for a Ctrl-C that lands while R is still starting (status 1 and "Execution
+  halted" before); an interrupt a native call took and a `tryCatch(error = )` swallowed as
+  "interrupted" is raised again as the interrupt it was (`rmbl data pull` went on for 65 s once in
+  ten runs).
+* The tests' wall-clock bounds widen with the machine's load per core and under covr; the test
+  that connects to the loopback discard port skips on CRAN.
+* **`syndid()` and `synctl()`** solve their simplex-constrained least squares by an active set on
+  the KKT system (one small solve a step) with the projected-gradient method as the fallback: the
+  tiny ridge of the time weights ran the latter to its iteration cap, a second a placebo and 55 s
+  of CPU in each of two vignettes; 0.04 s now, at the exact optimum (the earlier weights were the
+  cap's approximation, so estimates move in the third digit).
+* **The hostile-argument battery**, 20 values in every argument of every export, found raw base R
+  errors in 31 functions: a `NULL` seed (`set.seed(NULL)` in seven functions), a learner function
+  of the wrong arity, `NULL` column names, `1e308` in the air-dispersion arguments, block sizes,
+  `pubbnd()`'s `suplim` and `supmar`, `mksyncol()`'s `basep`, `tojs()`'s `digits`, the bundle,
+  capsule and template file arguments, `yoylbl()`'s `labels`, `profshr()`'s `num` and `den`,
+  `plotevgrid()`'s `main`, `plnpois()`'s `offset`, `trchlthgap()`'s tables, `wcb()`'s `trtd`,
+  `chgenv()`'s `per`, the `strict` and `ex` flags, the `col` of the `rule*()` builders and
+  `chwknll()`'s `par`. Each is refused in words now.
+* The native CSV reader drops a byte-order mark before a header name when blanks follow the mark
+  (`read.csv()` keeps the mark in the name, `X.s`): 37 of 24,000 fuzz inputs, documented.
 
 **Fixes from the review of the native code**
 

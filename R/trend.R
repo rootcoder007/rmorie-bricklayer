@@ -401,6 +401,10 @@ stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
   y <- y[ok]
   x <- x[ok]
   n <- length(y)
+  # the statistic is a squared difference of means, so values near 1e300 overflowed it to Inf and
+  # the p-value was NaN (final audit of 1.0.0, #11); it is scale-free, as is the permutation null,
+  # so the series is read in units of its largest value when that is beyond 1e150
+  if (n && max(abs(y)) > 1e150) y <- y / max(abs(y))
   minseg <- .rmbl_scalar(minseg, "minseg", 1, integer = TRUE)
   nperm <- .rmbl_scalar(nperm, "nperm", 1, integer = TRUE)
   if (n < 2L * minseg) {

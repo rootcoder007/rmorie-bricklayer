@@ -1103,7 +1103,8 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
   f <- x$field
   # the faintest tail is left blank so the map reads as hot spots on a plain ground
   f[f < 0.02 * max(f)] <- NA
-  cols <- if (!is.null(col)) col else if (!is.null(palette)) blpal(palette, 64) else
+  # col = "notacolor" failed in image.default() in its own words (final audit of 1.0.0, #11)
+  cols <- if (!is.null(col)) .bl_cols(length(col), col) else if (!is.null(palette)) blpal(palette, 64) else
     grDevices::hcl.colors(64, "YlOrRd", rev = TRUE)
   op <- .bl_par(ys)
   on.exit(graphics::par(op), add = TRUE)
@@ -1437,7 +1438,7 @@ plot.rmbl_knox <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   lim <- max(1, abs(lr[is.finite(lr)]))
   # white at a ratio of 1, blue below, red above (the diverging palette's grey midpoint muddied
   # every cell near 1)
-  cols <- if (!is.null(col)) col else if (!is.null(palette)) blpal(palette, 63) else
+  cols <- if (!is.null(col)) .bl_cols(length(col), col) else if (!is.null(palette)) blpal(palette, 63) else
     grDevices::colorRampPalette(c("#2166AC", "#F7F7F7", "#B2182B"))(63)
   ylabs <- sprintf("%g-%g", c(0, utils::head(x$spcbands, -1L)), x$spcbands)
   op <- .bl_par(labels = ylabs)

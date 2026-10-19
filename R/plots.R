@@ -1701,7 +1701,7 @@ plot.rmbl_field <- function(x, ..., contours = 8L, main = NULL, col = NULL, pale
   f <- x$field
   xs <- if (!is.null(x$x)) x$x else seq_len(nrow(f)) * (x$dx %||% 1)
   ys <- if (!is.null(x$y)) x$y else seq_len(ncol(f)) * (x$dy %||% 1)
-  cols <- if (!is.null(col)) col else blpal(if (is.null(palette)) "sequential" else palette, 64)
+  cols <- if (!is.null(col)) .bl_cols(length(col), col) else blpal(if (is.null(palette)) "sequential" else palette, 64)
   op <- .bl_par(ys)
   on.exit(graphics::par(op), add = TRUE)
   ff <- f

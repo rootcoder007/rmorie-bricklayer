@@ -260,6 +260,12 @@ print.bricklayer_falsification <- function(x, ...) {
     stop(sprintf("the statistic failed on %s: %s", what,
                  conditionMessage(e)), call. = FALSE)
   })
+  # a data frame or a list returned by the statistic failed in R's words in as.numeric() (final
+  # audit of 1.0.0): refused here, as any other non-number is
+  if (!is.atomic(v)) {
+    stop(sprintf("the statistic must return one finite number; on %s it ", what), "returned something else",
+         call. = FALSE)
+  }
   v <- suppressWarnings(as.numeric(v))
   if (length(v) != 1L || !is.finite(v)) {
     stop(sprintf("the statistic must return one finite number; on %s it ",

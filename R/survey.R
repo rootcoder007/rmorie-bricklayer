@@ -70,7 +70,12 @@
 #' rarely does: under the bootstrap, more replicates equal to the
 #' full-sample weight than chance draws; under the bootstrap or
 #' Fay's method, a replicate within 1 percent of the weight on
-#' every row;
+#' every row, and under Fay's method one equal to it (a
+#' post-stratified domain whose rows sit in one PSU per stratum);
+#' under JKn, two or more replicates equal to the weight (a subset
+#' that leaves their stratum out); under JK1 and JKn, one factor
+#' \eqn{k/(k - 1)} on every row with no row left out (genuine only
+#' on a subset whose deleted PSU lies outside it);
 #' under JK1, JKn and BRR, a replicate that leaves no row out; a
 #' replicate more than ten times the weight on a typical row (a
 #' column on another scale, such as an outcome); and a
@@ -608,7 +613,13 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
     cnt <- tabulate(match(f1, u), length(u))
     c1 <- u[[which.max(cnt)]]
     nm <- max(cnt)
-    nm > B / 2 && c1 > 1 && abs(c1 / (c1 - 1) - nm) < 1e-6 * nm
+    # the k of k / (k - 1) is the number of replicates sharing the factor, or the number of those
+    # that leave a row out: the full data plus a column w * 15/14 made 16 of a factor whose k is 15,
+    # and the set read as adjusted, so the copy passed silently (final audit of 1.0.0, #9)
+    out <- vapply(inf, function(r) any(r == 0 & w > 0), NA)
+    nout <- sum(out & !is.na(f1) & f1 == c1)
+    k <- c1 / (c1 - 1)
+    nm > B / 2 && c1 > 1 && (abs(k - nm) < 1e-6 * nm || abs(k - nout) < 1e-6 * max(nout, 1))
   }
   # whole-number factors are a bootstrap's counts (a bootstrap set called a jackknife), never an
   # adjustment's
@@ -652,7 +663,14 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
       # weight: on a subset of other strata it is the weight, legitimately (refused on 72% of JKn
       # stratum subsets that survey estimates; CRAN stress test of b617a3f, #7). A stratum has two
       # PSUs at the least, so those replicates come two or more at a time; one alone is a copy (below)
-      if (!adjusted && !type %in% c("bootstrap", "meanboot", "jkn")) refuse(b, "the full-sample weight")
+      # a Fay replicate too: post-stratified on a domain whose rows sit in one PSU per stratum, every
+      # row of the domain keeps the weight (refused as a copy, 1 of 2,576 designs; final audit of
+      # 1.0.0, #9): said, not refused
+      if (!adjusted && !type %in% c("bootstrap", "meanboot", "jkn", "fay")) refuse(b, "the full-sample weight")
+      if (!adjusted && identical(type, "fay")) {
+        warned <- c(warned, sprintf(paste("replicate %s is the full-sample weight: genuine on a domain whose",
+                                          "rows sit in one PSU per stratum, a copy otherwise"), nm))
+      }
       equal <- c(equal, b)
       next
     }
@@ -662,7 +680,15 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
     rel <- abs(r - w) / pmax(w, .Machine$double.xmin)
     if (all(rel < 0.01)) {
       if (adjusted || (type %in% c("jk1", "jkn") && jk_scale(r))) {
-        # genuine: see `adjusted` and jk_scale() above
+        # genuine: see `adjusted` and jk_scale() above. One factor k / (k - 1) on every row with no row
+        # left out is genuine only on a subset whose deleted PSU lies outside it; on the full data it
+        # is a rescaled copy (w * 1.005 under JKn and w * 15/14 under JK1 passed silently; final audit
+        # of 1.0.0, #9): said
+        if (!adjusted && !any(r == 0 & w > 0)) {
+          warned <- c(warned, sprintf(paste("replicate %s scales every row by one factor k/(k - 1) and leaves",
+                                            "no row out: genuine on a subset whose deleted PSU lies outside",
+                                            "it, a rescaled copy of the full-sample weight otherwise"), nm))
+        }
       } else if (type %in% c("jk1", "jkn", "brr")) {
         refuse(b, "a copy of the full-sample weight (within 1% on every row)")
       } else {
@@ -679,12 +705,19 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
     } else if (length(unique(r)) == 1L && length(unique(w)) > 1L) {
       # one value on every row while the weight varies: no multiplier of the weight makes it
       warned <- c(warned, sprintf("replicate %s is one value on every row, which the full-sample weight is not", nm))
-    } else if (!adjusted && type %in% c("jk1", "jkn") && !any(r == 0 & w > 0) && !jk_scale(r)) {
+    } else if (!adjusted && type %in% c("jk1", "jkn") && !any(r == 0 & w > 0)) {
       # a jackknife replicate deletes a PSU: on rows that keep every PSU it is one factor k / (k - 1)
-      # (and 1 on other strata under JKn), as documented; anything else that leaves no row out is
-      # said (the warning the Rd promises was not given; re-test of the b617a3f CRAN stress fixes)
-      warned <- c(warned, sprintf("replicate %s leaves no row out and is no rescaled weight, as a %s replicate is",
-                                  nm, toupper(type)))
+      # (and 1 on other strata under JKn), as documented, and that is genuine only on a subset whose
+      # deleted PSU lies outside it (the full data plus w * 15/14 passed silently; final audit of
+      # 1.0.0, #9); anything else that leaves no row out is said (the warning the Rd promises was
+      # not given; re-test of the b617a3f CRAN stress fixes)
+      warned <- c(warned, if (jk_scale(r)) {
+        sprintf(paste("replicate %s scales every row by one factor k/(k - 1) and leaves no row out: genuine",
+                      "on a subset whose deleted PSU lies outside it, a rescaled copy of the full-sample",
+                      "weight otherwise"), nm)
+      } else {
+        sprintf("replicate %s leaves no row out and is no rescaled weight, as a %s replicate is", nm, toupper(type))
+      })
     }
     # a replicate weight is the weight times a multiplier of a few at most on a typical row (a bootstrap
     # PSU drawn k times, 0 or n / (n - 1) for a jackknife, 0 or 2 for BRR); a column ten times the
@@ -707,6 +740,8 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
     # the other replicates passed are not strays: two genuine replicates can be identical (common
     # in JK1 and BRR subsets and small bootstraps; 216 of 2,400 designs refused, CRAN stress test of
     # b617a3f, #1)
+    # a column of `data` under its own name was asked for (a genuine replicate kept in `data` is one;
+    # reviews of 46de6a9, b617a3f #1, e57fed5 E9); the same values under another name are a stray
     for (cn in setdiff(names(numcols), names(reps))) {
       if (identical(kr, keys[[cn]]) && identical(r, as.numeric(numcols[[cn]]))) {
         refuse(b, sprintf("column %s of `data`", cn))
@@ -729,6 +764,13 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
   # more) replicates at the weight, so a single one is the weight passed beside them (accepted;
   # re-test of the b617a3f CRAN stress fixes)
   if (identical(type, "jkn") && !adjusted && length(equal) == 1L) refuse(equal[[1L]], "the full-sample weight")
+  if (identical(type, "jkn") && !adjusted && length(equal) >= 2L && length(equal) < length(reps)) {
+    # genuine on a subset that leaves their stratum out, copies on the full data (two exact copies
+    # passed silently; final audit of 1.0.0, #9)
+    warned <- c(warned, sprintf(paste("%d replicates (%s) equal the full-sample weight: genuine on a subset",
+                                      "that leaves their stratum out, copies of the weight otherwise"),
+                                length(equal), paste(names(reps)[equal], collapse = ", ")))
+  }
   if (length(equal) && identical(type, "bootstrap") && !adjusted) {
     z <- cos(seq_along(reps))
     sig <- numeric(n)

@@ -982,6 +982,7 @@ chwknll <- function(times, hor,
                             kernel = c("exponential", "weibull", "lomax",
                                        "gamma"),
                             par) {
+  if (missing(par)) stop("`par` must be the kernel parameters", call. = FALSE)
   kernel <- .rmbl_arg(kernel)
   code <- switch(kernel, exponential = 0L, weibull = 1L, lomax = 2L,
                  gamma = 3L)

@@ -101,6 +101,13 @@
 
 .rmbl_learner <- function(learner) {
   if (is.function(learner)) {
+    # called as learner(xtr, ytr, xte): a function of fewer arguments failed in R's words
+    # ("unused arguments"; final audit of 1.0.0)
+    fm <- names(formals(learner))
+    if (!"..." %in% fm && length(fm) < 3L) {
+      stop("`lrn` must be a learner name or a function(xtr, ytr, xte) returning one prediction per test row",
+           call. = FALSE)
+    }
     return(function(xtr, ytr, xte) {
       p <- learner(xtr, ytr, xte)
       if (!is.numeric(p) || length(p) != nrow(xte) || anyNA(p)) {
@@ -205,6 +212,8 @@ plndml <- function(data, unit, time, y, trt, covs, fe = c("unit", "time"),
   basis <- .rmbl_arg(basis)
   folds <- .rmbl_scalar(folds, "folds", 2, 100, integer = TRUE)
   nrep <- .rmbl_scalar(nrep, "nrep", 1, 1000, integer = TRUE)
+  # the fold draws are seeded from `seed` plus the repetition: text or NULL reached that sum
+  seed <- if (is.null(seed)) sample.int(2^30, 1L) else .rmbl_r_seed(seed)
   fit_fun <- .rmbl_learner(lrn)
   p <- .rmbl_panel(data, unit, time, y)
   v <- .rmbl_colnames(trt, "trt")
@@ -318,6 +327,7 @@ baltab <- function(data, grp, covs, w = NULL) {
   g <- .rmbl_num(data[[.rmbl_colnames(grp, "grp")]], "grp")
   if (anyNA(g) || !all(g %in% c(0, 1)) || length(unique(g)) < 2L) stop("`grp` must be 0 and 1", call. = FALSE)
   x <- .rmbl_covariates(data, covs)
+  if (is.null(x)) stop("`covs` must name one column at least", call. = FALSE)
   .w <- .rmbl_weights(data, w)
   rows <- lapply(colnames(x), function(v) {
     a <- x[g == 1, v]
@@ -696,6 +706,7 @@ wcb <- function(data, unit, time, y, trtd, covs = NULL, cl = NULL,
   reps <- .rmbl_scalar(reps, "reps", 9, 1e6, integer = TRUE)
   p <- .rmbl_panel(data, unit, time, y)
   v <- .rmbl_colnames(trtd, "trtd")
+  if (!v %in% names(data)) stop(sprintf("`trtd` (%s) is not a column of `data`", v), call. = FALSE)
   d <- as.numeric(data[[v]])
   if (anyNA(d) || !all(d %in% c(0, 1))) stop("`trtd` must be 0 or 1", call. = FALSE)
   .cl <- .rmbl_cluster(data, cl, p)

@@ -355,7 +355,7 @@ test_that("compiled refusals and branches: JSON escapes, invalid UTF-8, CSV CR i
   C <- asNamespace("rmoriebricklayer")
   P <- C$.rmbl_json_parse
   expect_identical(P('"a\\rb\\bc\\fd\\u20ac"'), "a\rb\bc\fd€")
-  expect_error(.Call(C$C_rmbl_json_fast, c("a", "b"), FALSE), "`txt` must be one string")
+  expect_error(.Call(C$C_rmbl_json_fast, c("a", "b"), FALSE, FALSE), "`txt` must be one string")
   bad <- rawToChar(as.raw(c(0x22, 0xff, 0x22)))
   expect_type(tryCatch(P(bad), error = function(e) "refused"), "character")
   expect_match(.Call(C$C_rmbl_url_check, "https://[100::1]/", FALSE, FALSE, FALSE), "local or private")

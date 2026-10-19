@@ -144,6 +144,13 @@ trchlthgap <- function(health = indiex("health"),
                             suiide = indiex("suicide"),
                             ref = "Non-Indigenous") {
   ref <- .rmbl_string1(ref, "ref")
+  for (nm in c("health", "lifeexp", "infmort", "suiide")) {
+    v <- get(nm)
+    if (!is.data.frame(v) || !all(c("group", "estimate") %in% names(v))) {
+      stop(sprintf("`%s` must be a data frame of indicators as indiex() returns it (columns group, estimate)", nm),
+           call. = FALSE)
+    }
+  }
   ti <- trcind()
   ti <- ti[ti$call == "19" & nzchar(ti$better), ]
   pieces <- list()

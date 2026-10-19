@@ -498,9 +498,12 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
   if (!nzchar(q) || startsWith(q, "-") || grepl("[\t\r\n\v\f]", q) || grepl("[/\\]", q)) return(FALSE)
   # a key-shaped run anywhere in the line, not only as a whole word: "KEY?", "KEY," or "my key is
   # KEY, thanks" went to a model, and to the wrong provider (CRAN stress test of b617a3f, #2)
+  # zero-width characters are no characters: a key broken by one every eleven characters read as
+  # words and went to a model (final audit of 1.0.0, #7)
+  q <- gsub("[\u200b\u200c\u200d\u2060\ufeff]", "", q)
   if (.bl_key_shaped(q)) return(FALSE)
-  # ideographic, no-break and zero-width spaces split words like a space
-  q <- gsub("[\u3000\u00a0\u2007\u202f\u200b\u200c\u200d\u2060\ufeff]", " ", q)
+  # ideographic and no-break spaces split words like a space
+  q <- gsub("[\u3000\u00a0\u2007\u202f]", " ", q)
   q <- gsub("\uff1f", "?", q, fixed = TRUE)
   words <- strsplit(trimws(q), "[[:space:]]+")[[1L]]
   # letters in any script (PCRE's \p classes): [[:alpha:]] takes no CJK letter in the C locale, so a
@@ -514,8 +517,11 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
     if (min(utils::adist(w, gsub("-", "", .bl_verb_names(), fixed = TRUE))) <= 2L) return(FALSE)
   }
   # a line that opens with a verb or a near miss of one and is not asked as a question is a command
-  # typed as one argument: "cnfig set openai.key" was sent to the first provider
-  if (!endsWith(trimws(q), "?") && .bl_verb_near(words[[1L]])) return(FALSE)
+  # typed as one argument: "cnfig set openai.key" was sent to the first provider. A question mark
+  # does not make a sentence of a command's few words: "dat list?" and "conifg set openai.api_key?"
+  # went to a model with it (final audit of 1.0.0, #6); a question of five words or more that opens
+  # with a verb ("doctor says the data is fine, is it?") is still asked
+  if (.bl_verb_near(words[[1L]]) && (!endsWith(trimws(q), "?") || length(wordy) <= 4L)) return(FALSE)
   # a short line naming a file is a command's argument, not a question: `urls.txt?` and `my urls.txt`
   # were sent (18 of 64 bare file names; CRAN stress test of 0.5.14). A question that names a file in
   # a sentence is still asked.
@@ -550,11 +556,20 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
   runs <- regmatches(x, gregexpr("[A-Za-z0-9_+=.:-]{24,}", x))[[1L]]
   runs <- sub("[.:=-]+$", "", runs)
   # words joined by _ or . (survey_design_replicates) are a name, not a key; a segment that mixes
-  # letters and digits past a trailing number (k3j9sq2w_...) is a key's, however short each segment
-  named <- vapply(strsplit(runs, "[_.]"), function(seg) all(grepl("^[a-z]+[0-9]*$", seg)), NA)
+  # letters and digits past a trailing number (k3j9sq2w_...) is a key's, however short each segment.
+  # Two segments or more that carry digits are a key's as well (abc123.def456.ghi789 read as a
+  # name; final audit of 1.0.0, #7)
+  segs <- strsplit(runs, "[_.]")
+  named <- vapply(segs, function(seg) all(grepl("^[a-z]+[0-9]*$", seg)) && sum(grepl("[0-9]", seg)) < 2L, NA)
   runs <- runs[nchar(runs) >= 24L & !(grepl("^[a-z][a-z0-9]{0,14}([_.][a-z0-9]{1,15})+$", runs) & named) &
                  !runs %in% getNamespaceExports(asNamespace("rmoriebricklayer"))]
-  length(runs) > 0L
+  if (length(runs)) return(TRUE)
+  # a key typed in groups (abcd1234efgh ijkl5678mnop qrst9012uvwx): three words or more in a row of
+  # 8 to 16 letters and digits each, every one holding both (final audit of 1.0.0, #7)
+  w <- strsplit(trimws(x), "[[:space:]]+")[[1L]]
+  grp <- grepl("^[A-Za-z0-9]{8,16}$", w) & grepl("[0-9]", w) & grepl("[A-Za-z]", w)
+  r <- rle(grp)
+  any(r$values & r$lengths >= 3L)
 }
 
 # TRUE when the text holds a run of 16 or more letters and digits, mixed, that is not a word and a
@@ -562,8 +577,16 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
 # random parts. They went to a model as words (CRAN stress test of 0.5.14).
 .bl_key_dense <- function(x) {
   r <- regmatches(x, gregexpr("[A-Za-z0-9]{16,}", x))[[1L]]
-  r <- r[grepl("[0-9]", r) & grepl("[A-Za-z]", r) & !grepl("^([A-Za-z][a-z]+[0-9]{1,4}|[0-9]{1,4}[A-Za-z][a-z]+)$", r)]
-  length(r) > 0L
+  dense <- r[grepl("[0-9]", r) & grepl("[A-Za-z]", r) & !grepl("^([A-Za-z][a-z]+[0-9]{1,4}|[0-9]{1,4}[A-Za-z][a-z]+)$", r)]
+  if (length(dense)) return(TRUE)
+  # sixteen letters or more with no digit, in both cases and changing case four times or more
+  # (FAKEKXsOCOxzNZfl): no word is written so, and such keys went to a model (final audit of
+  # 1.0.0, #7). A capitalised word (Rmoriebricklayer) changes case once.
+  letters_only <- r[!grepl("[0-9]", r)]
+  any(vapply(letters_only, function(t) {
+    cls <- grepl("[A-Z]", strsplit(t, "")[[1L]])
+    sum(cls[-1L] != cls[-length(cls)]) >= 4L
+  }, NA))
 }
 
 # Every verb and spelling the command takes, for the bare-question rule and "did you mean".

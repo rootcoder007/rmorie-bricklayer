@@ -83,6 +83,8 @@ pubbnd <- function(x, rnd = NULL,
                                                   "F", "suppressed",
                                                   "n/a")) {
   rndkind <- .rmbl_arg(rndkind)
+  if (!is.null(suplim)) suplim <- .rmbl_scalar(suplim, "suplim", 0)
+  if (!is.character(supmar) || anyNA(supmar)) stop("`supmar` must be the text markers of a suppressed cell", call. = FALSE)
   if (!is.null(rnd)) {
     rnd <- .rmbl_num(rnd, "rnd")[1L]
     if (is.na(rnd) || rnd <= 0) {
@@ -211,6 +213,7 @@ chgenv <- function(now, prev, pop = NULL,
     stop("`now` and `prev` must have the same number of rows",
          call. = FALSE)
   }
+  per <- .rmbl_scalar(per, "per", 1e-12)
   out <- data.frame(chglo = now$lower - prev$upper,
                     chgup = now$upper - prev$lower)
   pl <- ifelse(prev$upper > 0,

@@ -56,6 +56,19 @@
   d
 }
 
+# A Ctrl-C that a native call took is raised as R's interrupt condition and ends the command with 130.
+# When that condition finds no handler the barrier says it as an error, "<entry>: interrupted", and a
+# tryCatch(error = ) that swallows errors swallowed the Ctrl-C: `rmbl data pull` went on for 65 s
+# once in ten runs (final audit of 1.0.0, #11). Such an error is raised again as the interrupt it was;
+# any other error gives `value`.
+.bl_unless_interrupted <- function(e, value = NULL) {
+  if (grepl("(^|: )interrupted$", conditionMessage(e))) {
+    signalCondition(structure(list(message = "interrupt", call = NULL), class = c("interrupt", "condition")))
+    invokeRestart("abort")
+  }
+  value
+}
+
 .bl_data_get <- function(path, dest, timeout = 600, max_bytes = 2^31) {
   key <- .bl_data_key()
   if (is.null(key)) {
@@ -77,7 +90,7 @@
   size <- NULL
   if (grepl("\\.csv\\.gz$", path)) {
     label <- sub("\\.csv\\.gz$", "", label)
-    m <- tryCatch(dmnf(), error = function(e) NULL)
+    m <- tryCatch(dmnf(), error = function(e) .bl_unless_interrupted(e))
     for (d in m$datasets %||% list()) {
       if (identical(d$key, label)) {
         size <- d$bytes_gz
@@ -88,7 +101,7 @@
   rc <- tryCatch(
     bldl(paste0(.bl_data_url(), path), dest, headers = hdr,
                         label = label, size = size, tmout = timeout, maxbytes = max_bytes),
-    error = function(e) e, warning = function(w) w
+    error = function(e) .bl_unless_interrupted(e, e), warning = function(w) w
   )
   if (inherits(rc, "condition")) {
     msg <- conditionMessage(rc)
@@ -245,7 +258,7 @@ dmnf <- function(refresh = FALSE) {
     # the manifest is a list of tables (well under 1 MiB): 32 MiB is far past any real one, and a
     # 300 MiB reply (a gzip bomb) was read whole, then failed to allocate (CRAN stress test of 0.5.14)
     .bl_data_get("/manifest.json", tmp, timeout = 60, max_bytes = 32 * 2^20)
-    m <- .rmbl_json_text(paste(readLines(tmp, warn = FALSE), collapse = "\n"), simplifyVector = FALSE)
+    m <- .rmbl_json_text(.bl_read_text_capped(tmp, 32 * 2^20), simplifyVector = FALSE)
     if (!is.list(m) || (length(m) && is.null(names(m)))) {
       stop("the manifest fetched from data.rmorie.com is not a JSON object", call. = FALSE)
     }
@@ -260,7 +273,7 @@ dmnf <- function(refresh = FALSE) {
     # an empty list does not replace a manifest that lists tables: `{"datasets": []}` took the place
     # of the good copy and, with no digest left, a tampered cached table loaded (review of e57fed5, E10)
     if (!length(ds) && file.exists(p)) {
-      old <- tryCatch(.rmbl_json_text(paste(readLines(p, warn = FALSE), collapse = "\n"), simplifyVector = FALSE),
+      old <- tryCatch(.rmbl_json_text(.bl_read_text_capped(p, 32 * 2^20), simplifyVector = FALSE),
                       error = function(e) NULL)
       if (is.list(old) && is.list(old$datasets) && length(old$datasets)) {
         stop("the manifest from data.rmorie.com lists no tables: the cached copy, which does, is kept",
@@ -270,8 +283,37 @@ dmnf <- function(refresh = FALSE) {
     if (!isTRUE(file.rename(tmp, p))) stop(sprintf("could not store the manifest in %s", p), call. = FALSE)
     return(m)
   }
-  .rmbl_json_text(paste(readLines(p, warn = FALSE), collapse = "\n"),
-                            simplifyVector = FALSE)
+  .rmbl_json_text(.bl_read_text_capped(p, 32 * 2^20), simplifyVector = FALSE)
+}
+
+# A text file read whole with a bound on its DECODED size. The transport caps the bytes it writes,
+# but a reply sent with Content-Encoding: gzip is stored as sent, and readLines() decompresses a
+# gzip file on its own: 300 MiB of zeros in a 300 KB body were decoded whole and pasted (a 2.3 GB
+# allocation, or an OOM kill; final audit of 1.0.0, #4). A compressed file is read through gzcon()
+# a megabyte at a time and refused past `max_bytes`.
+.bl_read_text_capped <- function(path, max_bytes) {
+  raw_con <- file(path, "rb")
+  magic <- readBin(raw_con, "raw", 2L)
+  close(raw_con)
+  gz <- length(magic) == 2L && identical(magic, as.raw(c(0x1f, 0x8b)))
+  con <- if (gz) gzcon(file(path, "rb")) else file(path, "rb")
+  on.exit(close(con), add = TRUE)
+  parts <- list()
+  total <- 0
+  repeat {
+    b <- readBin(con, "raw", 2^20)
+    if (!length(b)) break
+    total <- total + length(b)
+    if (total > max_bytes) {
+      stop(sprintf("%s holds more than %d bytes once decoded: not a manifest", basename(path), max_bytes),
+           call. = FALSE)
+    }
+    parts[[length(parts) + 1L]] <- b
+  }
+  txt <- rawToChar(unlist(parts, use.names = FALSE))
+  Encoding(txt) <- "UTF-8"
+  # readLines() dropped a final line break and joined lines with "\n": the same text
+  sub("\r?\n$", "", gsub("\r\n", "\n", txt, fixed = TRUE))
 }
 
 # the description, else the source, else the key: the first that is set and not blank (the otis
@@ -457,7 +499,7 @@ dload <- function(key, refresh = FALSE) {
     stop("key must be db/table (see dtabs())", call. = FALSE)
   }
   .bl_check_flag(refresh, "refresh")
-  known <- tryCatch(vapply(dmnf()$datasets, function(d) d$key, ""), error = function(e) NULL)
+  known <- tryCatch(vapply(dmnf()$datasets, function(d) d$key, ""), error = function(e) .bl_unless_interrupted(e))
   # an empty list is an answer too: no table is listed, so none is loaded
   if (!is.null(known) && !key %in% known) {
     stop(sprintf("no table %s at data.rmorie.com (`%s data list` shows them)", key, .bl_prog()), call. = FALSE)

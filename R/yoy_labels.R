@@ -72,6 +72,9 @@ yoylbl <- function(x, labels) {
   }
   m <- .yoy_meta(x)
   p <- x[[m$period]]
+  if (!is.function(labels) && !is.atomic(labels)) {
+    stop("`labels` must be a function of the periods or a vector of labels", call. = FALSE)
+  }
   lab <- if (is.function(labels)) {
     as.character(labels(p))
   } else if (!is.null(names(labels))) {
@@ -119,7 +122,7 @@ yoylbl <- function(x, labels) {
 #' Errors: \code{endyear} that is neither numeric nor character (for
 #' example logical); a numeric year below 1.
 #'
-#' @param endyear The fiscal year's end year, as a number
+#' @param endyear The fiscal year's end year, as a whole number
 #'   or a string; a vector of them.
 #' @param sep Separator between the two years, a string; default
 #'   \code{"/"}.
@@ -148,6 +151,10 @@ fylbl <- function(endyear, sep = "/", short = TRUE) {
   }
   if (is.numeric(endyear) && any(endyear < 1, na.rm = TRUE)) {
     stop("`endyear` must be positive years", call. = FALSE)
+  }
+  # 2024.5 labelled "2023/24" silently (final audit of 1.0.0): a year is a whole number
+  if (is.numeric(endyear) && any(endyear != round(endyear), na.rm = TRUE)) {
+    stop("`endyear` must be whole years", call. = FALSE)
   }
   y <- suppressWarnings(as.integer(as.character(endyear)))
   out <- rep(NA_character_, length(y))

@@ -211,7 +211,9 @@ profshr <- function(x, num, den = NULL, smpfrac = 0.25, deff = 1, conflvl = 0.95
   roubase <- .rmbl_scalar(roubase, "roubase", 1, 1000, integer = TRUE)
   conflvl <- .rmbl_conf_level(conflvl)
   pick <- function(v, what) {
-    if (length(v) != 1L || is.na(v)) stop(sprintf("`%s` must be one characteristic id or name", what), call. = FALSE)
+    if (!(is.numeric(v) || is.character(v)) || length(v) != 1L || is.na(v)) {
+      stop(sprintf("`%s` must be one characteristic id or name", what), call. = FALSE)
+    }
     id <- if (is.numeric(v)) as.integer(v) else unique(x$chaid[x$characteristic == v])
     if (length(id) != 1L || !id %in% x$chaid) {
       stop(sprintf("`%s` (%s) names %s characteristic of `x`", what, v,

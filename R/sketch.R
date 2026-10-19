@@ -45,7 +45,8 @@
 #' Errors: a block that is not numeric; an accumulator that does not come
 #' from \code{onlsmry()}.
 #'
-#' @param x Numeric vector: the first block, or \code{NULL} (the default) for
+#' @param x Numeric vector (finite; \code{NA} is skipped and an infinite value
+#'   refused): the first block, or \code{NULL} (the default) for
 #'   an empty accumulator; for \code{smryupd()}, the next block.
 #' @param acc,a,b Accumulators from \code{onlsmry()}.
 #' @return \code{onlsmry()}, \code{smryupd()} and
@@ -104,6 +105,9 @@ smryupd <- function(acc, x) {
   }
   x <- .rmbl_num(x, "x")
   x <- x[!is.na(x)]
+  # an infinite value has no mean or variance: the accumulator held NaN and smrystat() failed in
+  # R's words ("missing value where TRUE/FALSE needed"; final audit of 1.0.0, #11)
+  if (any(is.infinite(x))) stop("`x` has infinite values, which no moment can hold; set them to NA first", call. = FALSE)
   if (length(x) == 0L) return(acc)
   block <- .Call(C_rmbl_moments_acc, x)
   acc$state <- .Call(C_rmbl_moments_merge, acc$state, block)
@@ -131,8 +135,8 @@ smrystat <- function(acc) {
   n <- s[1L]
   variance <- if (n > 1) s[3L] / (n - 1) else NaN
   m2 <- if (n > 0) s[3L] / n else NaN
-  skew <- if (n > 2 && s[3L] > 0) (s[4L] / n) / m2^1.5 else NaN
-  kurt <- if (n > 3 && s[3L] > 0) (s[5L] / n) / (m2 * m2) - 3 else NaN
+  skew <- if (n > 2 && isTRUE(s[3L] > 0)) (s[4L] / n) / m2^1.5 else NaN
+  kurt <- if (n > 3 && isTRUE(s[3L] > 0)) (s[5L] / n) / (m2 * m2) - 3 else NaN
   c(n = n, mean = if (n > 0) s[2L] else NaN, variance = variance,
     sd = sqrt(variance), skewness = skew, kurtosis = kurt)
 }

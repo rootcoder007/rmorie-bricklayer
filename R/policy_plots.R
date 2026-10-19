@@ -48,6 +48,7 @@ plotevgrid <- function(x, ncol = NULL, main = NULL, ...) {
   n <- length(x)
   if (is.null(ncol)) ncol <- min(3L, n)
   ncol <- .rmbl_scalar(ncol, "ncol", 1, 20, integer = TRUE)
+  if (!is.null(main)) main <- .rmbl_text1(main, "main")
   nrow <- ceiling(n / ncol)
   op <- graphics::par(mfrow = c(nrow, ncol), oma = c(0, 0, if (is.null(main)) 0 else 2, 0),
                       mar = c(4, 4, 2.5, 1))
@@ -137,6 +138,7 @@ loounit <- function(data, unit, time, y, trtd, covs = NULL, cl = NULL, units = N
   full <- plndid(data, unit, time, y, trtd, covs = covs, cl = cl)
   ever <- tapply(data[[trtd]], data[[unit]], max) > 0
   if (is.null(units)) units <- names(ever)[ever]
+  if (!is.atomic(units)) stop("`units` must be unit labels of `data`", call. = FALSE)
   units <- as.character(units)
   if (!length(units) || !all(units %in% as.character(data[[unit]]))) {
     stop("`units` must be units of `data`", call. = FALSE)
@@ -161,7 +163,9 @@ plot.rmbl_loo <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   e <- d$estimate[is.finite(d$estimate)]
   f <- attr(x, "full")
   h <- graphics::hist(e, breaks = min(30L, max(5L, length(e) %/% 2L)), plot = FALSE)
-  graphics::plot(h, xlim = range(c(e, f)), ylim = c(0, max(h$counts) * 1.35), col = "#D5D5D5", border = "white",
+  # col = fills the bars (it was accepted and ignored; final audit of 1.0.0, #11)
+  fill <- if (!is.null(col)) .bl_cols(1L, col) else if (!is.null(palette)) blpal(palette, 1L) else "#D5D5D5"
+  graphics::plot(h, xlim = range(c(e, f)), ylim = c(0, max(h$counts) * 1.35), col = fill, border = "white",
                  xlab = "Estimate leaving one unit out", ylab = "Count",
                  main = "", ...)
   .bl_title(.bl_main(main, "Leave-one-out sensitivity"))

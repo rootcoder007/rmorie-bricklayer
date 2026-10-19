@@ -2,13 +2,16 @@
  *
  * A native path for the JSON parser in R/json_native.R. It parses a well-formed document into exactly
  * what .rmbl_json_parse() returns (nested lists, named for objects; strings in UTF-8; TRUE/FALSE; NULL;
- * an integer for a whole number in the integer range, a double otherwise) and gives up -- returns NULL,
- * so the R parser runs -- on everything else: a syntax error, nesting past 100 levels, a duplicate key
- * (unless they are kept), a whole number of 16 digits or more or a double that holds one beyond 2^53, a
- * \u0000 or lone-surrogate escape, a control character in a string. The R parser then says what it
- * has always said, warnings included, and a staged bundle (which sources the R file without this
- * library) parses the same way. The R parser went one character at a time through R calls: a 15 MiB
- * reply took 85 s (CRAN stress test of 0.5.14).
+ * an integer for a whole number in the integer range, a double otherwise). A whole number of 16 digits
+ * or more follows the R parser's rules here (text when asked, else a double, with the inexact ones
+ * reported back so R gives its warning); a duplicate key (unless they are kept) and nesting past 100
+ * levels are refused with the R parser's words and the character position. What is left -- a syntax
+ * error, a \u0000 or lone-surrogate escape, a control character in a string, a double written as a
+ * whole number beyond 2^53 -- gives up (returns NULL) on a document of 128 KiB or less, so the R parser
+ * says what it has always said, warnings included; past that size it is refused here with the reason,
+ * since the R parser went one character at a time through R calls (85 s for a 15 MiB reply; CRAN
+ * stress test of 0.5.14) and one bad byte at the end of a large reply cost minutes (final audit of
+ * 1.0.0, #5). A staged bundle (which sources the R file without this library) parses in R.
  *
  * Every allocation is R's (R_alloc for scratch, freed when the .Call returns), so an allocation error
  * or an interrupt leaves nothing behind.
@@ -19,6 +22,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+#include <cstdio>
 #include "rmbl_entry.h"
 
 extern "C" double rmbl_strtod_bytes(const char *s, size_t len, int *ok);
@@ -31,9 +35,53 @@ struct Parser {
     size_t i;
     int depth;
     bool keep_dups;
+    bool as_char;      /* a whole number beyond 2^53 is kept as text */
     bool fail;
+    const char *why;   /* the first failure's reason, for a document too large for the R parser */
+    size_t at;         /* ... and its byte offset */
+    char dupkey[256];  /* the duplicate key, in the R parser's words */
+    char bigtok[64];   /* the first inexact big integer written, for R's warning */
     unsigned long count;
 };
+
+/* the first failure's reason and place; the value the callers return */
+inline SEXP failed(Parser &P, const char *why) {
+    P.fail = true;
+    if (!P.why) { P.why = why; P.at = P.i; }
+    return R_NilValue;
+}
+
+/* the 1-based character (not byte) position of byte offset `at`, as the R parser counts */
+R_xlen_t char_pos(const Parser &P, size_t at) {
+    R_xlen_t c = 0;
+    for (size_t k = 0; k < at && k < P.n; ++k) if ((P.p[k] & 0xC0) != 0x80) ++c;
+    return c + 1;
+}
+
+/* valid UTF-8, as validUTF8() judges it: the direct .Call handed an invalid CHARSXP back
+ * (final audit of 1.0.0, #11) */
+bool valid_utf8(const unsigned char *s, size_t n) {
+    size_t i = 0;
+    while (i < n) {
+        const unsigned char c = s[i];
+        if (c < 0x80) { ++i; continue; }
+        size_t len;
+        unsigned cp;
+        if ((c & 0xE0) == 0xC0) { len = 2; cp = c & 0x1F; }
+        else if ((c & 0xF0) == 0xE0) { len = 3; cp = c & 0x0F; }
+        else if ((c & 0xF8) == 0xF0) { len = 4; cp = c & 0x07; }
+        else return false;
+        if (i + len > n) return false;
+        for (size_t k = 1; k < len; ++k) {
+            if ((s[i + k] & 0xC0) != 0x80) return false;
+            cp = (cp << 6) | (s[i + k] & 0x3F);
+        }
+        if ((len == 2 && cp < 0x80) || (len == 3 && cp < 0x800) || (len == 4 && cp < 0x10000) ||
+            cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF)) return false;
+        i += len;
+    }
+    return true;
+}
 
 inline void ws(Parser &P) {
     while (P.i < P.n) {
@@ -86,7 +134,7 @@ SEXP string_(Parser &P) {
     size_t st = ++P.i;
     size_t j = st;
     while (j < P.n && P.p[j] != '"' && P.p[j] != '\\' && P.p[j] >= 0x20) ++j;
-    if (j >= P.n || P.p[j] < 0x20) { P.fail = true; return R_NilValue; }
+    if (j >= P.n || P.p[j] < 0x20) { return failed(P, "unterminated or invalid string"); }
     if (P.p[j] == '"') {
         P.i = j + 1;
         return Rf_mkCharLenCE(reinterpret_cast<const char *>(P.p + st), static_cast<int>(j - st), CE_UTF8);
@@ -94,17 +142,17 @@ SEXP string_(Parser &P) {
     /* an escape: decode into scratch no longer than the rest of the input */
     size_t end = j;
     while (end < P.n && P.p[end] != '"') end += (P.p[end] == '\\') ? 2 : 1;
-    if (end >= P.n) { P.fail = true; return R_NilValue; }
+    if (end >= P.n) { return failed(P, "unterminated or invalid string"); }
     char *buf = R_alloc(end - st + 1, 1);
     size_t o = 0;
     size_t k = st;
     for (;;) {
-        if (k >= P.n) { P.fail = true; return R_NilValue; }
+        if (k >= P.n) { return failed(P, "unterminated or invalid string"); }
         const unsigned char c = P.p[k];
         if (c == '"') break;
-        if (c < 0x20) { P.fail = true; return R_NilValue; }
+        if (c < 0x20) { return failed(P, "unterminated or invalid string"); }
         if (c != '\\') { buf[o++] = static_cast<char>(c); ++k; continue; }
-        if (k + 1 >= P.n) { P.fail = true; return R_NilValue; }
+        if (k + 1 >= P.n) { return failed(P, "unterminated or invalid string"); }
         const unsigned char e = P.p[k + 1];
         k += 2;
         switch (e) {
@@ -118,7 +166,7 @@ SEXP string_(Parser &P) {
             case '/': buf[o++] = '/'; break;
             case 'u': {
                 long cp = hex4(P, k);
-                if (cp < 0) { P.fail = true; return R_NilValue; }
+                if (cp < 0) { return failed(P, "unterminated or invalid string"); }
                 k += 4;
                 if (cp >= 0xD800 && cp <= 0xDBFF && k + 6 <= P.n && P.p[k] == '\\' && P.p[k + 1] == 'u') {
                     const long lo = hex4(P, k + 2);
@@ -127,12 +175,12 @@ SEXP string_(Parser &P) {
                         k += 6;
                     }
                 }
-                if (cp == 0 || (cp >= 0xD800 && cp <= 0xDFFF)) { P.fail = true; return R_NilValue; }
+                if (cp == 0 || (cp >= 0xD800 && cp <= 0xDFFF)) { return failed(P, "unterminated or invalid string"); }
                 /* the escape is at least six bytes and a character at most four: the scratch suffices */
                 o += put_utf8(buf + o, static_cast<unsigned long>(cp));
                 break;
             }
-            default: P.fail = true; return R_NilValue;
+            default: return failed(P, "unterminated or invalid string");
         }
     }
     P.i = k + 1;
@@ -159,21 +207,47 @@ SEXP number_(Parser &P) {
         while (P.i < P.n && P.p[P.i] >= '0' && P.p[P.i] <= '9') ++P.i;
     }
     const size_t len = P.i - st;
-    /* 16 characters or more of a whole number may pass 2^53: the R parser's rules (a warning, text) */
-    if (isint && len >= 16) { P.fail = true; return R_NilValue; }
     int ok = 0;
     const double v = rmbl_strtod_bytes(reinterpret_cast<const char *>(P.p + st), len, &ok);
-    if (!ok) { P.fail = true; return R_NilValue; }
+    if (!ok) return failed(P, "invalid number");
+    if (isint && len >= 16) {
+        /* the R parser's rules for a whole number of 16 digits or more: its digits without the sign
+         * and leading zeros; past 2^53 it is text when asked, else a double, and when the double does
+         * not hold the digits written R warns once (the token is handed back for that). A 15 MiB reply
+         * ending in one such number ran through the R parser for minutes (final audit of 1.0.0, #5) */
+        size_t d0 = st;
+        if (P.p[d0] == '-') ++d0;
+        while (d0 + 1 < P.i && P.p[d0] == '0') ++d0;
+        const size_t nd = P.i - d0;
+        bool big = nd > 16;
+        if (nd == 16) big = std::memcmp(P.p + d0, "9007199254740992", 16) > 0;
+        if (big) {
+            if (P.as_char) {
+                return Rf_ScalarString(Rf_mkCharLenCE(reinterpret_cast<const char *>(P.p + st),
+                                                      static_cast<int>(len), CE_UTF8));
+            }
+            if (R_FINITE(v) && !P.bigtok[0]) {
+                char held[64];
+                std::snprintf(held, sizeof held, "%.0f", v < 0 ? -v : v);
+                if (std::strlen(held) != nd || std::memcmp(held, P.p + d0, nd) != 0) {
+                    const size_t keep = len < sizeof P.bigtok - 1 ? len : sizeof P.bigtok - 1;
+                    std::memcpy(P.bigtok, P.p + st, keep);
+                    P.bigtok[keep] = '\0';
+                }
+            }
+            return Rf_ScalarReal(v);
+        }
+    }
     if (isint) {
         if (v > 2147483647.0 || v < -2147483647.0) return Rf_ScalarReal(v);
         return Rf_ScalarInteger(static_cast<int>(v));
     }
-    /* a double that holds a whole number in [2^53, 2^64) may be an identifier the R parser warns of */
+    /* a double that holds a whole number in [2^53, 2^64) may be an identifier the R parser warns of:
+     * the R parser's comparison of the digits written is left to it */
     const double a = v < 0 ? -v : v;
     /* (every double of 2^53 or more is a whole number) */
     if (R_FINITE(v) && a >= 9007199254740992.0 && a < 18446744073709551616.0) {
-        P.fail = true;
-        return R_NilValue;
+        return failed(P, "a whole number beyond 2^53 written as a decimal");
     }
     return Rf_ScalarReal(v);
 }
@@ -189,13 +263,25 @@ int cmp_chars(const void *a, const void *b) {
     return (lx > ly) - (lx < ly);
 }
 
-bool has_dup(SEXP names, R_xlen_t k) {
-    if (k < 2) return false;
+/* the first key, in document order, that repeats an earlier one (keys[duplicated(keys)][1] in the R
+ * parser), or NULL */
+SEXP first_dup(SEXP names, R_xlen_t k) {
+    if (k < 2) return R_NilValue;
     SEXP *v = reinterpret_cast<SEXP *>(R_alloc(static_cast<size_t>(k), sizeof(SEXP)));
     for (R_xlen_t t = 0; t < k; ++t) v[t] = STRING_ELT(names, t);
     std::qsort(v, static_cast<size_t>(k), sizeof(SEXP), cmp_chars);
-    for (R_xlen_t t = 1; t < k; ++t) if (cmp_chars(&v[t - 1], &v[t]) == 0) return true;
-    return false;
+    bool any = false;
+    for (R_xlen_t t = 1; t < k; ++t) if (cmp_chars(&v[t - 1], &v[t]) == 0) { any = true; break; }
+    if (!any) return R_NilValue;
+    /* which repeated key comes first: the earliest second occurrence */
+    for (R_xlen_t t = 1; t < k; ++t) {
+        for (R_xlen_t u = 0; u < t; ++u) {
+            if (STRING_ELT(names, t) == STRING_ELT(names, u)) return STRING_ELT(names, t);   /* CHARSXPs are cached */
+        }
+        if (t > 4096) break;   /* a huge object: the sorted scan said there is one; name the first repeat found */
+    }
+    for (R_xlen_t t = 1; t < k; ++t) if (cmp_chars(&v[t - 1], &v[t]) == 0) return v[t];
+    return R_NilValue;
 }
 
 SEXP container(Parser &P, bool obj) {
@@ -214,12 +300,12 @@ SEXP container(Parser &P, bool obj) {
             SEXP key = R_NilValue;
             if (obj) {
                 ws(P);
-                if (P.i >= P.n || P.p[P.i] != '"') { P.fail = true; break; }
+                if (P.i >= P.n || P.p[P.i] != '"') { failed(P, "expected a key in double quotes"); break; }
                 key = string_(P);
                 if (P.fail) break;
                 PROTECT(key);
                 ws(P);
-                if (P.i >= P.n || P.p[P.i] != ':') { UNPROTECT(1); P.fail = true; break; }
+                if (P.i >= P.n || P.p[P.i] != ':') { UNPROTECT(1); failed(P, "expected ':'"); break; }
                 ++P.i;
             }
             SEXP v = value(P);
@@ -244,12 +330,20 @@ SEXP container(Parser &P, bool obj) {
             ws(P);
             if (P.i < P.n && P.p[P.i] == ',') { ++P.i; continue; }
             if (P.i < P.n && P.p[P.i] == close) { ++P.i; break; }
-            P.fail = true;
+            failed(P, obj ? "expected ',' or '}'" : "expected ',' or ']'");
             break;
         }
     }
     if (P.fail) { UNPROTECT(2); return R_NilValue; }
-    if (obj && !P.keep_dups && has_dup(nms, k)) { P.fail = true; UNPROTECT(2); return R_NilValue; }
+    if (obj && !P.keep_dups) {
+        SEXP d = first_dup(nms, k);
+        if (d != R_NilValue) {
+            /* the R parser's refusal, at the position just past the object */
+            std::snprintf(P.dupkey, sizeof P.dupkey, "%s", CHAR(d));
+            UNPROTECT(2);
+            return failed(P, "duplicate key");
+        }
+    }
     SEXP out = PROTECT(Rf_allocVector(VECSXP, k));
     for (R_xlen_t t = 0; t < k; ++t) SET_VECTOR_ELT(out, t, VECTOR_ELT(vals, t));
     if (obj) {
@@ -264,12 +358,12 @@ SEXP container(Parser &P, bool obj) {
 
 SEXP value(Parser &P) {
     /* the R parser counts every value, a scalar too, and refuses past 100 */
-    if (++P.depth > 100) { P.fail = true; return R_NilValue; }
+    if (++P.depth > 100) { ws(P); return failed(P, "nesting deeper than 100 levels"); }
     if ((++P.count & 4095UL) == 0) rmbl::check_interrupt();
     ws(P);
     SEXP r = R_NilValue;
     if (P.i >= P.n) {
-        P.fail = true;
+        failed(P, "unexpected end of the text");
     } else {
         const unsigned char c = P.p[P.i];
         if (c == '{' || c == '[') {
@@ -288,7 +382,7 @@ SEXP value(Parser &P) {
         } else if (c == '-' || (c >= '0' && c <= '9')) {
             r = number_(P);
         } else {
-            P.fail = true;
+            failed(P, "unexpected character");
         }
     }
     --P.depth;
@@ -299,8 +393,10 @@ SEXP value(Parser &P) {
 
 extern "C" {
 
-/* list(value) for a document the fast path parses, NULL for the R parser to take */
-SEXP C_rmbl_json_fast_impl(SEXP txt, SEXP keep_dups) {
+/* list(value, bigtoken) for a document the fast path parses (bigtoken: the first inexact whole
+ * number beyond 2^53, or NULL, for the R side's warning); NULL for the R parser to take; an error, in
+ * the R parser's words, for a duplicate key, nesting past 100 levels, and, past 128 KiB, any failure */
+SEXP C_rmbl_json_fast_impl(SEXP txt, SEXP keep_dups, SEXP bigint_as_char) {
     if (TYPEOF(txt) != STRSXP || XLENGTH(txt) != 1 || STRING_ELT(txt, 0) == NA_STRING) {
         RMBL_ARG_ERROR("`txt` must be one string");
     }
@@ -311,19 +407,38 @@ SEXP C_rmbl_json_fast_impl(SEXP txt, SEXP keep_dups) {
     P.i = 0;
     P.depth = 0;
     P.keep_dups = Rf_asLogical(keep_dups) == 1;
+    P.as_char = Rf_asLogical(bigint_as_char) == 1;
     P.fail = false;
+    P.why = nullptr;
+    P.at = 0;
+    P.dupkey[0] = '\0';
+    P.bigtok[0] = '\0';
     P.count = 0;
+    if (!valid_utf8(P.p, P.n)) RMBL_ARG_ERROR("the JSON text is not valid UTF-8");
     SEXP v = PROTECT(value(P));
     if (!P.fail) {
         ws(P);
-        if (P.i < P.n) P.fail = true;
+        if (P.i < P.n) failed(P, "trailing characters");
     }
     if (P.fail) {
         UNPROTECT(1);
+        const bool strict = P.n > 131072;
+        if (P.dupkey[0]) {
+            Rf_errorcall(R_NilValue, "duplicate key \"%s\" at character %lld", P.dupkey,
+                         static_cast<long long>(char_pos(P, P.at)));
+        }
+        if (P.why && std::strcmp(P.why, "nesting deeper than 100 levels") == 0) {
+            Rf_errorcall(R_NilValue, "%s at character %lld", P.why, static_cast<long long>(char_pos(P, P.at)));
+        }
+        if (strict) {
+            Rf_errorcall(R_NilValue, "%s at character %lld", P.why ? P.why : "the JSON text could not be parsed",
+                         static_cast<long long>(char_pos(P, P.at)));
+        }
         return R_NilValue;
     }
-    SEXP out = PROTECT(Rf_allocVector(VECSXP, 1));
+    SEXP out = PROTECT(Rf_allocVector(VECSXP, 2));
     SET_VECTOR_ELT(out, 0, v);
+    SET_VECTOR_ELT(out, 1, P.bigtok[0] ? Rf_mkString(P.bigtok) : R_NilValue);
     UNPROTECT(2);
     return out;
 }

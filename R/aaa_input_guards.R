@@ -117,6 +117,10 @@
 # hand with NULL or "" names is refused in words, not with a subscript error later (review of
 # 29a55d8, hostile battery).
 .rmbl_df_names <- function(data, what = "data") {
+  if (!is.data.frame(data)) {
+    stop(sprintf("`%s` must be a data frame, not %s", what, if (is.null(data)) "NULL" else class(data)[[1L]]),
+         call. = FALSE)
+  }
   nm <- names(data)
   if (length(data) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)))) {
     stop(sprintf("every column of `%s` must have a name (names(%s) has an empty one)", what, what), call. = FALSE)
@@ -265,7 +269,10 @@
 # untouched: a drift report must not move the user's downstream draws.
 #' @noRd
 .rmbl_with_seed <- function(seed, expr) {
-  if (!is.null(seed)) seed <- .rmbl_r_seed(seed)   # before the promise `expr` is forced
+  # a NULL seed is no seed: the expression runs on the session's stream (set.seed(NULL) said
+  # "supplied seed is not a valid integer" in seven functions; final audit of 1.0.0)
+  if (is.null(seed)) return(expr)
+  seed <- .rmbl_r_seed(seed)   # before the promise `expr` is forced
   had <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
   old <- if (had) get(".Random.seed", envir = globalenv(), inherits = FALSE)
   on.exit({

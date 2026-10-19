@@ -157,6 +157,7 @@
 #' @export
 ruleinset <- function(col, set, napass = TRUE,
                         sev = c("warning", "fatal")) {
+  if (missing(col)) stop("`col` must name a column", call. = FALSE)
   .rmbl_no_fn(set = set)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
@@ -178,6 +179,7 @@ ruleinset <- function(col, set, napass = TRUE,
 #' @export
 rulebtw <- function(col, lo, hi, napass = TRUE,
                          sev = c("warning", "fatal")) {
+  if (missing(col)) stop("`col` must name a column", call. = FALSE)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
   lo <- .rmbl_num(lo, "lo")[1L]
@@ -201,6 +203,7 @@ rulebtw <- function(col, lo, hi, napass = TRUE,
 #' @rdname rulelib
 #' @export
 rulenull <- function(col, sev = c("warning", "fatal")) {
+  if (missing(col)) stop("`col` must name a column", call. = FALSE)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
   rul(paste0(col, "_not_null"), function(v) !is.na(v),
@@ -212,6 +215,7 @@ rulenull <- function(col, sev = c("warning", "fatal")) {
 #' @rdname rulelib
 #' @export
 ruleuniq <- function(col, sev = c("warning", "fatal")) {
+  if (missing(col)) stop("`col` must name a column", call. = FALSE)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
   rul(paste0(col, "_unique"),
@@ -227,6 +231,7 @@ ruleuniq <- function(col, sev = c("warning", "fatal")) {
 #' @export
 rulerx <- function(col, pat, napass = TRUE,
                        sev = c("warning", "fatal")) {
+  if (missing(col)) stop("`col` must name a column", call. = FALSE)
   .rmbl_no_fn(pattern = pat)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
@@ -248,6 +253,7 @@ rulerx <- function(col, pat, napass = TRUE,
 #' @export
 ruleincr <- function(col, strict = FALSE,
                             sev = c("warning", "fatal")) {
+  if (missing(col)) stop("`col` must name a column", call. = FALSE)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
   rul(paste0(col, "_increasing"),
@@ -276,6 +282,7 @@ ruleincr <- function(col, strict = FALSE,
 #' @export
 rulemad <- function(col, n = 3, napass = TRUE,
                                sev = c("warning", "fatal")) {
+  if (missing(col)) stop("`col` must name a column", call. = FALSE)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
   n <- .rmbl_num(n, "n")[1L]

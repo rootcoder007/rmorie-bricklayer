@@ -986,8 +986,21 @@ llmprvd <- function() {
   if (!is.character(model) || length(model) != 1L || is.na(model)) {
     stop("`model` must be one model name", call. = FALSE)
   }
-  if (.bl_key_dense(model) || grepl(paste0("^(sk-|sk_|AIza|gsk_|xai-|hf_|r8_|pplx-|fw_|csk-|ghp_|gho_|ghs_|",
-                                           "github_pat_|glpat-|nvapi-)[A-Za-z0-9_-]{12,}"), model)) {
+  # a model is a name (gpt-4o-mini, claude-sonnet-4-5, llama3.1:8b, mistral-large-latest): words
+  # and version numbers joined by - . : /. A UUID, groups of mixed-case letters and digits joined
+  # by dashes (bf3RrVH-ZUyZo5t-u075Nfn-0JumknD), a segment of 15 characters or more that mixes
+  # cases and digits with no word in it, or a key of any known prefix is a key, and was sent as the
+  # model (80 of 144 key shapes; final audit of 1.0.0, #7)
+  segs <- strsplit(model, "[-.:/_]")[[1L]]
+  mixed <- grepl("[A-Z]", segs) & grepl("[a-z]", segs) & nchar(segs) >= 5L
+  keyish <- .bl_key_dense(model) ||
+    grepl(paste0("^(sk-|sk_|AIza|gsk_|xai-|hf_|r8_|pplx-|fw_|csk-|ghp_|gho_|ghs_|",
+                 "github_pat_|glpat-|nvapi-)[A-Za-z0-9_-]{12,}"), model) ||
+    grepl("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", model) ||
+    sum(mixed) >= 2L ||
+    any(nchar(segs) >= 15L & grepl("[0-9]", segs) & grepl("[A-Za-z]", segs) & !grepl("^[a-z]+[0-9.]*[a-z]*$", segs)) ||
+    (!grepl("[-.:/_ ]", model) && nchar(model) >= 15L && grepl("[A-Z]", model) && grepl("[a-z]", model))
+  if (keyish) {
     stop(paste("`model` looks like a key, so it is not sent: a model is a name such as gpt-4o-mini;",
                "a key is saved with llmcfg()"), call. = FALSE)
   }

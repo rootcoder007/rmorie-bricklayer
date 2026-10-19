@@ -163,7 +163,7 @@ static SEXP rmbl_guard(const char *name, F f) {
 }
 
 extern "C" {
-SEXP C_rmbl_json_fast_impl(SEXP, SEXP);
+SEXP C_rmbl_json_fast_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_mean_impl(SEXP);
 SEXP C_rmbl_mean_running_impl(SEXP);
 SEXP C_rmbl_var_impl(SEXP);
@@ -289,8 +289,8 @@ SEXP C_rmbl_os_random_impl(SEXP);
 }
 
 extern "C" {
-SEXP C_rmbl_json_fast(SEXP a0, SEXP a1) {
-    return rmbl_guard("C_rmbl_json_fast", [&] { return C_rmbl_json_fast_impl(a0, a1); });
+SEXP C_rmbl_json_fast(SEXP a0, SEXP a1, SEXP a2) {
+    return rmbl_guard("C_rmbl_json_fast", [&] { return C_rmbl_json_fast_impl(a0, a1, a2); });
 }
 SEXP C_rmbl_mean(SEXP a0) {
     return rmbl_guard("C_rmbl_mean", [&] { return C_rmbl_mean_impl(a0); });

@@ -158,7 +158,7 @@ extern SEXP C_rmbl_xmss_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP,
 extern SEXP C_rmbl_pqc_backends(void);
 /* .Call wrappers (rmbl_sketch.cpp) -- one-pass sketches */
 extern SEXP C_rmbl_moments_acc(SEXP);
-extern SEXP C_rmbl_json_fast(SEXP, SEXP);   /* rmbl_json.cpp */
+extern SEXP C_rmbl_json_fast(SEXP, SEXP, SEXP);   /* rmbl_json.cpp */
 extern SEXP C_rmbl_svy_dblcode(SEXP);       /* rmbl_survey.c */
 extern SEXP C_rmbl_sha256_real(SEXP);       /* rmbl_survey.c */
 extern SEXP C_rmbl_moments_merge(SEXP, SEXP);
@@ -263,7 +263,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_path_kind",      (DL_FUNC) &C_rmbl_path_kind,      1},
     {"C_rmbl_write_file_checked", (DL_FUNC) &C_rmbl_write_file_checked, 3},
     {"C_rmbl_gunzip_checked",     (DL_FUNC) &C_rmbl_gunzip_checked,     2},
-    {"C_rmbl_json_fast",          (DL_FUNC) &C_rmbl_json_fast,          2},
+    {"C_rmbl_json_fast",          (DL_FUNC) &C_rmbl_json_fast,          3},
     {"C_rmbl_svy_dblcode",        (DL_FUNC) &C_rmbl_svy_dblcode,        1},
     {"C_rmbl_sha256_real",        (DL_FUNC) &C_rmbl_sha256_real,        1},
     {"C_rmbl_csv_split",          (DL_FUNC) &C_rmbl_csv_split,          2},

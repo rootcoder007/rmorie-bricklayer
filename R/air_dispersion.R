@@ -16,6 +16,8 @@
   }
   if (positive && any(v <= 0)) stop(sprintf("`%s` must be positive", what), call. = FALSE)
   if (any(v < min)) stop(sprintf("`%s` must be at least %s", what, format(min)), call. = FALSE)
+  # 1e308 overflowed the arithmetic to Inf and NaN and failed in R's words (final audit of 1.0.0)
+  if (any(abs(v) > 1e300)) stop(sprintf("`%s` must be below 1e300 in size", what), call. = FALSE)
   if (whole && any(v != round(v))) {
     stop(sprintf("`%s` must be a whole number", what), call. = FALSE)
   }

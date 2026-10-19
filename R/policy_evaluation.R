@@ -1180,6 +1180,13 @@ plnpois <- function(data, unit, time, y, trtd, covs = NULL, offset = NULL, cl = 
   d <- data[[v]]
   if (is.logical(d)) d <- as.numeric(d)
   if (!is.numeric(d) || anyNA(d)) stop("`trtd` must be numeric with no NA", call. = FALSE)
+  if (!is.null(offset)) {
+    ov <- .rmbl_colnames(offset, "offset")
+    if (!ov %in% names(data)) stop(sprintf("`offset` (%s) is not a column of `data`", ov), call. = FALSE)
+    if (!is.numeric(data[[ov]]) || any(!is.finite(data[[ov]]))) {
+      stop("`offset` must be a finite numeric column (a log exposure)", call. = FALSE)
+    }
+  }
   off <- if (is.null(offset)) rep(0, length(p$y)) else .rmbl_num(data[[.rmbl_colnames(offset, "offset")]], "offset")
   .cl <- .rmbl_cluster(data, cl, p)
   x <- cbind(treated = d, .rmbl_covariates(data, covs))
@@ -1302,6 +1309,8 @@ synctl <- function(data, unit, time, y, treunit, adopt, plac = TRUE) {
   if (!is.logical(plac) || length(plac) != 1L || is.na(plac)) {
     stop("`plac` must be TRUE or FALSE", call. = FALSE)
   }
+  .rmbl_no_fn(treunit = treunit)
+  if (!is.atomic(treunit)) stop("`treunit` is not a unit of `data`", call. = FALSE)
   tu <- as.character(treunit)
   if (length(tu) != 1L || !tu %in% p$ul) stop("`treunit` is not a unit of `data`", call. = FALSE)
   nu <- length(p$ul)
@@ -1341,17 +1350,45 @@ synctl <- function(data, unit, time, y, treunit, adopt, plac = TRUE) {
   out
 }
 
-# min ||A w - b||^2 over the simplex: FISTA with the exact Euclidean projection (Duchi et al. 2008)
+# min ||A w - b||^2 over the simplex. An active set on the KKT system first: the exact least squares
+# on a support with the sum constraint (one small solve), a weight that comes out negative leaves
+# the support, a zero weight whose reduced gradient says it would lower the objective joins it.
+# FISTA with the exact Euclidean projection (Duchi et al. 2008) is the fallback: with a tiny ridge
+# (the time weights of syndid(), zeta = 1e-6 sigma) its projected gradient steps ran to the limit,
+# a second a placebo and 55 s of CPU a vignette (final audit of 1.0.0)
 .rmbl_simplex_ls <- function(A, b, maxit = 20000L, tol = 1e-12) {
+  k <- ncol(A)
+  ata <- crossprod(A)
+  atb <- crossprod(A, b)
+  if (k == 1L) return(1)
+  sup <- seq_len(k)
+  w <- rep(1 / k, k)
+  scale <- max(1, abs(atb))
+  for (it in seq_len(10L * k + 10L)) {
+    m <- rbind(cbind(2 * ata[sup, sup, drop = FALSE], 1), c(rep(1, length(sup)), 0))
+    sol <- tryCatch(solve(m, c(2 * atb[sup], 1)), error = function(e) NULL)
+    if (is.null(sol) || !all(is.finite(sol))) break
+    ws <- sol[seq_along(sup)]
+    mu <- sol[length(sol)]
+    if (any(ws < -1e-12)) {
+      sup <- sup[-which.min(ws)]
+      if (!length(sup)) break
+      next
+    }
+    w[] <- 0
+    w[sup] <- ws
+    # the reduced gradient of the Lagrangian on the zero weights: none below zero is the optimum
+    g <- 2 * (as.vector(ata %*% w) - as.vector(atb)) + mu
+    off <- setdiff(seq_len(k), sup)
+    if (!length(off) || all(g[off] >= -1e-10 * scale)) return(w)
+    sup <- sort(c(sup, off[which.min(g[off])]))
+  }
   proj <- function(v) {
     u <- sort(v, decreasing = TRUE)
     cs <- cumsum(u)
     rho <- max(which(u - (cs - 1) / seq_along(u) > 0))
     pmax(v - (cs[rho] - 1) / rho, 0)
   }
-  k <- ncol(A)
-  ata <- crossprod(A)
-  atb <- crossprod(A, b)
   lip <- max(eigen(ata, symmetric = TRUE, only.values = TRUE)$values, 1e-12)
   w <- rep(1 / k, k)
   z <- w
