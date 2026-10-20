@@ -516,9 +516,8 @@ NOT_CRAN=true RMBL_LIVE_TESTS=1 Rscript -e 'devtools::test()'
 ## Installation
 
 Current release from r-universe (prebuilt binaries for macOS and Windows, a
-source build on Linux); the
-[CRAN](https://CRAN.R-project.org/package=rmoriebricklayer) release lags this
-one by several versions.
+source build on Linux) or from
+[CRAN](https://CRAN.R-project.org/package=rmoriebricklayer).
 
 With [pak](https://pak.r-lib.org) (progress bars, parallel downloads, compiler
 output hidden unless a build fails, and the named packages always upgraded to
