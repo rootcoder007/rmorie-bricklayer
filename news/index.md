@@ -300,8 +300,33 @@ package, so the action can call them.
   (the default), or for a standardised scheme the JSON of a
   [`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)
   key or its secret hex with `--public-key`. An existing bundle is
-  refused without `--overwrite`, and a stateful `xmss-sha256` key is
-  refused outright.
+  refused without `--overwrite`.
+- `rmbl sign --scheme xmss-sha256 --key-file key.json` signs with an
+  XMSS key and treats the key file as its state, as RFC 10033 asks:
+  before anything is signed the file is rewritten atomically (a
+  temporary file beside it, flushed and renamed, under a lock) with
+  `next_index` advanced and a `used` field holding the highest index
+  used, a generation counter and a digest of the host that wrote it. A
+  key file that cannot be rewritten is refused; `--state-file` keeps the
+  state elsewhere, and a key in `RMBL_KEY` needs it.
+  `--sectors K --sector-index I` (or `--sector NAME`) signs only in one
+  of K disjoint index ranges, `--reserve N` reserves N indices in one
+  write, `--warn-left N` warns when the range is nearly used up, and a
+  key file older than a signature it is seen to have made (in a bundle
+  under the path, or in the `--seen-log` each run appends to) is refused
+  as a stale copy. The command line never writes to the configuration
+  directory; `RMBL_XMSS_INDEX_FILE` is used only when it is set.
+- `rmbl verify` and
+  [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  name each XMSS signature’s index and key fingerprint, and an index one
+  key signed twice under the path or in `--seen-log`
+  (`cpsbndlvrf(seen = )`, `cpschk(seenlog = )`) is a failed `xmss_index`
+  row.
+  [`xmssidxseen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssidxseen.md)
+  lists the XMSS signatures in a folder of bundles and seen-logs and
+  marks a reused index.
+  [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
+  signs several capsules with one XMSS key, at consecutive indices.
 - The capsule checks compare manifests with a base folder by paths
   relative to the folder searched on every system, and the smoke test
   restores what its drift case changed, so a Windows path no longer

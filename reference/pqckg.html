@@ -139,6 +139,30 @@ signatures at one index an adversary can forge a third message.
 and do not copy a key to two machines that sign independently.</p>
     </div>
     <div class="section level2">
+    <h2 id="the-key-and-its-state">The key and its state<a class="anchor" aria-label="anchor" href="#the-key-and-its-state"></a></h2>
+    <p>RFC 10033 (Hash-Based Signatures: State and Backup Management) splits
+an XMSS key into the private key, which never changes, and the state,
+which records the indices used and must be updated, durably, before
+each signature is released (its sections 2 and 4). In an R session the
+state is <code>next_index</code> plus the used-index record described under
+<code><a href="xmssadv.html">xmssadv()</a></code>. From the command line,
+<code>rmbl sign --scheme xmss-sha256 --key-file key.json</code>
+makes the key file itself the state: it rewrites
+the file atomically, with <code>next_index</code> advanced and a <code>used</code> field,
+before anything is signed, and signs from the indices it reserved.
+<code>--state-file</code> keeps the state in a file of its own, <code>--sectors</code> and
+<code>--sector-index</code> give each signer its own disjoint range of indices
+(section 5.3), <code>--reserve</code> reserves a block in one write (section
+5.9), and a key file older than a signature it is seen to have made is
+refused as a stale copy. See the section XMSS keys of <code><a href="blcli.html">blcli()</a></code>.</p>
+<p>A key saved as a CI secret is a fixed copy that every job starts
+from, so every job signs the same indices: in CI use ML-DSA
+(<code><a href="fipskg.html">fipskg()</a></code>) unless the XMSS state is kept in a file that persists
+between jobs. NIST SP 800-208 approves XMSS only inside a hardware
+cryptographic module that never exports the key; this software key
+is not such a deployment.</p>
+    </div>
+    <div class="section level2">
     <h2 id="key-format">Key format<a class="anchor" aria-label="anchor" href="#key-format"></a></h2>
     <p>A key made before the RFC 8391 conformance work
 carries no <code>skprf</code> and cannot sign;

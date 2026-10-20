@@ -1718,6 +1718,8 @@ history itself tamper-evident.
   [`xmssregkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssadv.md)
   [`xmssfgt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssadv.md)
   : Advance an XMSS key past a signature it made
+- [`xmssidxseen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssidxseen.md)
+  : Find XMSS signature indices used twice
 - [`cpsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsvrf.md)
   : Verify a capsule manifest signature
 - [`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md)

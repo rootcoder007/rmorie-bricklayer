@@ -20,7 +20,7 @@ cpsbndl(
 
 cpsbndlrd(path)
 
-cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL, key = NULL)
+cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL, key = NULL, seen = NULL)
 ```
 
 ## Arguments
@@ -80,6 +80,15 @@ cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL, key = NULL)
   signed: without it the check confirms the bundle is internally
   consistent, which any key's holder could arrange.
 
+- seen:
+
+  For `cpsbndlvrf()`, the XMSS signatures seen elsewhere, as
+  [`xmssidxseen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssidxseen.md)
+  returns them, or `NULL`. For an XMSS bundle it adds an `xmss_index`
+  row, failed ("xmss index reused") when the same key signed the
+  bundle's index with another signature: the key's state was copied or
+  rolled back (RFC 10033, section 4).
+
 ## Value
 
 `cpsbndl()`: the bundle, invisibly, a list of class `bricklayer_bundle`
@@ -93,7 +102,9 @@ and the path it was written to as attribute `"path"`.
 `cpsbndlvrf()`: a list of class `bricklayer_bundle_check` with `ok`
 (logical) and `checks` (a data frame of `check`, logical `ok` and
 `detail`: one `file:PATH` row per listed file, `no_unlisted_files`, the
-`attestation:` rows and, with a manifest, `manifest_digest`).
+`attestation:` rows, with a manifest `manifest_digest`, and with `seen`
+`xmss_index`). For an XMSS bundle the `attestation:signature` row's
+detail names the signature's index and the key fingerprint.
 
 ## Details
 
@@ -178,7 +189,7 @@ b2
 #> ── Capsule bundle ────────────────────────────────────────────────
 #>   files            1
 #>   manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e4167960781a579
-#>   bundled          2026-10-20T13:03:07Z
+#>   bundled          2026-10-20T13:37:37Z
 #>   scheme           ML-DSA-44
 #> ──────────────────────────────────────────────────────────────────
 cpsbndlvrf(b2, dir, keyexp = "00ff")$ok
@@ -211,6 +222,6 @@ unlink(dir2, recursive = TRUE)
 
 # a directory that does not exist
 try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))
-#> Error : `dir` does not exist: /tmp/Rtmp147Jzo/no-such-capsule
+#> Error : `dir` does not exist: /tmp/RtmpxAJGDE/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```

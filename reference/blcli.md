@@ -92,7 +92,9 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
   source's latest Wayback snapshot and `--no-footprint` leaves the
   footprint
   ([`co2fp`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2fp.md))
-  out of the report
+  out of the report. `--seen-log FILE` adds the signatures an XMSS
+  seen-log lists to those under PATH: an XMSS index one key signed twice
+  fails its `xmss_index` row
 
 - `drift PATH [--json] [--fail-on LEVEL] [--html FILE] [--app]`:
 
@@ -128,8 +130,10 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
   printed: the shared secret for `hmac` (the default), else the JSON of
   a
   [`fipskg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)
-  key, or its secret hex with `--public-key`. An existing bundle is
-  refused without `--overwrite`; an `xmss-sha256` key is refused
+  key, or its secret hex with `--public-key`, or the JSON of a
+  [`pqckg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md)
+  key for `xmss-sha256` (see the section XMSS keys). An existing bundle
+  is refused without `--overwrite`
 
 - `functions [PATTERN]`:
 
@@ -214,6 +218,70 @@ capsule's provenance and bundle; `verify` and `report` only read the
 capsule files; `functions`, `describe`, `examples`, `explain-error`,
 `version` and `help` only read the installed help.
 
+## XMSS keys
+
+An XMSS key
+([`pqckg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md))
+signs each of its `2^height` indices once; two signatures at one index
+let anyone forge a third. Its private key never changes, but its state,
+the indices already used, changes with every signature, and a copy of an
+old state signs used indices again (RFC 10033, "Hash-Based Signatures:
+State and Backup Management", sections 2 and 4).
+`rmbl sign --scheme xmss-sha256 --key-file KEY` therefore treats the key
+file as the state:
+
+- Before anything is signed it rewrites KEY, under a lock, through a
+  temporary file in the same directory that is flushed to the disk and
+  renamed over it, with `next_index` advanced and the state in a `used`
+  field: `highest` (the highest index used), `generation` (one more at
+  every write), `writer` (a digest of the host name and boot id), the
+  last `reserved` block and, once split, `sectors`. A crash after that
+  write loses the reserved indices and never reuses one. A KEY that
+  cannot be rewritten (not writable, a read-only file system) is
+  refused.
+
+- `--state-file FILE` keeps the state in FILE (an absolute path to a
+  writable regular file, or a new file in a writable directory) and only
+  reads KEY; a key in `RMBL_KEY` needs it. The command line never uses
+  the configuration directory that
+  [`cpssign`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
+  uses in an R session; it reads and updates the record in
+  `RMBL_XMSS_INDEX_FILE` only when that is set.
+
+- `--sectors K --sector NAME` (K a power of two, at most half the
+  indices) splits the indices into K disjoint ranges and signs only in
+  one of them, which keeps its own highest index; the range of NAME is
+  SHA-256 of NAME and the key fingerprint, modulo K. Two names land in
+  one sector by chance, so for real use give each runner its own
+  `--sector-index I`. A sector that is used up is refused. Once split,
+  sign only through `rmbl sign`.
+
+- `--reserve N` marks the next N indices used in one write (at least one
+  per capsule signed); the capsules of the run are signed from that
+  block, and the indices it does not use are lost, as RFC 10033, section
+  5.9 allows.
+
+- A stale copy is refused: when a bundle under PATH, or the
+  `--seen-log FILE` that every `rmbl sign` appends its signatures to,
+  shows this key signed an index above what the state says, nothing is
+  signed. A note says when another host wrote the state last.
+
+- When N or fewer indices are left in the range (`--warn-left N`, by
+  default a tenth of the range) a warning is printed in the report and
+  on standard error (RFC 10033, section 3.4).
+
+A CI secret is a fixed copy of the key that every job starts from, so
+each job would sign the same indices again: in CI sign with ML-DSA
+([`fipskg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)),
+or keep the XMSS state in a file that persists between jobs and give
+each concurrent runner its own sector. `rmbl verify` shows each XMSS
+signature's index and key fingerprint, and
+[`xmssidxseen`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssidxseen.md)
+lists indices signed twice. NIST SP 800-208 approves XMSS only when the
+key is made and used inside a hardware cryptographic module that never
+exports it; a key file is software, so this follows the software
+guidance of RFC 10033 and is not a validated SP 800-208 deployment.
+
 ## See also
 
 [`instcli`](https://rootcoder007.github.io/rmorie-bricklayer/reference/instcli.md)
@@ -295,26 +363,26 @@ invisible(cpsrfrsh(d))
 blcli(c("verify", d))
 #> ## rmbl capsule verify with [rmoriebricklayer 1.0.0](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/Rtmp147Jzo/capsule-1f46734aff02`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/RtmpxAJGDE/capsule-1e173224022a`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/Rtmp147Jzo/capsule-1f46734aff02` | /tmp/Rtmp147Jzo/temp_libpath1f461d33de48/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/RtmpxAJGDE/capsule-1e173224022a` | /tmp/RtmpxAJGDE/temp_libpath1e17383cacc8/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/Rtmp147Jzo/capsule-1f46734aff02</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/RtmpxAJGDE/capsule-1e173224022a</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/Rtmp147Jzo/temp_libpath1f461d33de48/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/RtmpxAJGDE/temp_libpath1e17383cacc8/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/Rtmp147Jzo/capsule-1f46734aff02/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/Rtmp147Jzo/capsule-1f46734aff02/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/RtmpxAJGDE/capsule-1e173224022a/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/RtmpxAJGDE/capsule-1e173224022a/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/Rtmp147Jzo/capsule-1f46734aff02/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/RtmpxAJGDE/capsule-1e173224022a/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>

@@ -257,6 +257,60 @@ machine, one rebuilt from its seeds, or one used in a CI job or a
 container with a fresh home directory is unknown to the record and must
 be vouched for once with <code>xmssregkey(key)</code> before it signs
 from index 0.</p>
+<div class="section level3">
+<h3 id="the-key-file-is-the-state">The key file is the state<a class="anchor" aria-label="anchor" href="#the-key-file-is-the-state"></a>
+</h3>
+<p>RFC 10033 (<em>Hash-Based Signatures: State and Backup
+Management</em>) separates the private key, which never changes, from
+the state, the indices already used, which must be updated and saved
+before a signature is released, and warns that a copied or restored
+state signs used indices again. <code>rmbl sign</code> follows it: with
+<code>--scheme xmss-sha256 --key-file key.json</code> the key file is
+the state. It is rewritten atomically, with <code>next_index</code>
+advanced and a <code>used</code> field, before any bundle is written,
+and the run signs from the indices it reserved.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"capsules-"</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">nm</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"one"</span>, <span class="st">"two"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">root</span>, <span class="va">nm</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">d</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>  <span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"data.csv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="st">'{"resource": {"filename": "data.csv"}}'</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"data_provenance.json"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="va">kf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".json"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="fu"><a href="../reference/tojs.html">tojs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">unclass</a></span><span class="op">(</span><span class="fu"><a href="../reference/pqckg.html">pqckg</a></span><span class="op">(</span>height <span class="op">=</span> <span class="fl">4</span><span class="op">)</span><span class="op">)</span>, auto_unbox <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, <span class="va">kf</span><span class="op">)</span></span>
+<span><span class="va">copy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".json"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/invisible.html" class="external-link">invisible</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="va">kf</span>, <span class="va">copy</span><span class="op">)</span><span class="op">)</span>   <span class="co"># an old copy of the key, kept by mistake</span></span>
+<span></span>
+<span><span class="va">status</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blcli.html">blcli</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sign"</span>, <span class="va">root</span>, <span class="st">"--scheme"</span>, <span class="st">"xmss-sha256"</span>, <span class="st">"--key-file"</span>, <span class="va">kf</span>, <span class="st">"--json"</span><span class="op">)</span>,</span>
+<span>                out <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">s</span><span class="op">)</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="va">status</span></span>
+<span><span class="co">#&gt; [1] 0</span></span>
+<span><span class="va">state</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fromjs.html">fromjs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">kf</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">state</span><span class="op">$</span><span class="va">next_index</span>                <span class="co"># two capsules signed, two indices used</span></span>
+<span><span class="co">#&gt; [1] 2</span></span>
+<span><span class="va">state</span><span class="op">$</span><span class="va">used</span><span class="op">$</span><span class="va">generation</span></span>
+<span><span class="co">#&gt; [1] 1</span></span>
+<span></span>
+<span><span class="co"># the old copy is refused: the bundles show indices it does not know are used</span></span>
+<span><span class="fu"><a href="../reference/blcli.html">blcli</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sign"</span>, <span class="va">root</span>, <span class="st">"--scheme"</span>, <span class="st">"xmss-sha256"</span>, <span class="st">"--key-file"</span>, <span class="va">copy</span>, <span class="st">"--overwrite"</span><span class="op">)</span>,</span>
+<span>      out <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">s</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">s</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"stale"</span>, <span class="va">s</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; rmoriebricklayer: stale copy of the key: index 1 of it was already signed (seen in /tmp/RtmpWDr6xl/capsules-38d93ed9399a/two/capsule_bundle.json), but this state says the highest used in its range is -1. Signing would reuse an index: use the copy that made that signature, or generate a new key</span></span>
+<span><span class="fu"><a href="../reference/xmssidxseen.html">xmssidxseen</a></span><span class="op">(</span><span class="va">root</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"index"</span>, <span class="st">"reused"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;   index reused</span></span>
+<span><span class="co">#&gt; 1     0  FALSE</span></span>
+<span><span class="co">#&gt; 2     1  FALSE</span></span></code></pre></div>
+<p><code>--state-file</code> keeps the state in a file of its own.
+<code>--sectors K --sector-index I</code> splits the indices into K
+disjoint ranges so that K signers can share one key, each in its own
+range (RFC 10033, section 5.3), and <code>--reserve N</code> marks N
+indices used in one write and signs from them (section 5.9; the ones a
+run does not use are lost). A key kept as a CI secret is a fixed copy
+that every job starts from, so every job would sign the same indices: in
+CI, sign with ML-DSA unless the XMSS state lives in a file that persists
+between jobs. NIST SP 800-208 approves XMSS only inside a hardware
+module that never exports the key, which a key file is not.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="every-way-of-being-wrong-returns-false">Every way of being wrong returns FALSE<a class="anchor" aria-label="anchor" href="#every-way-of-being-wrong-returns-false"></a>
@@ -267,7 +321,7 @@ foreign key and an edited message all fail the same way. (An object that
 is not a signature at all, a key of the wrong class or a missing message
 is an error, because that is a programming mistake rather than a
 tampered artefact.)</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pub</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fipskg.html">fipspubkey</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span></span>
 <span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="va">sig</span></span>
 <span><span class="va">bad</span><span class="op">$</span><span class="va">signature</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"ff"</span>, <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substring</a></span><span class="op">(</span><span class="va">bad</span><span class="op">$</span><span class="va">signature</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
@@ -298,7 +352,7 @@ does not.</p>
 </h2>
 <p>A signature lets anyone check that a release came from its publisher
 and has not changed:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fipskg.html">fipskg</a></span><span class="op">(</span><span class="st">"ML-DSA-65"</span><span class="op">)</span></span>
 <span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"mentalhealth"</span><span class="op">)</span></span>
 <span><span class="va">msg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dgstobj.html">dgstobj</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
