@@ -101,7 +101,7 @@ identical(kemdecap(key, bad, masked = FALSE), other)
 
 # a public key alone cannot decapsulate, and a short ciphertext is refused
 try(kemdecap(kempubkey(key), sent$ciphertext))
-#> Error : decapsulation needs a key with its secret half
+#> Error : kemdecap: decapsulation needs a key with its secret half
 try(kemdecap(key, "abcd"))
 #> Error : `ct` must be 768 bytes for ML-KEM-512
 ```

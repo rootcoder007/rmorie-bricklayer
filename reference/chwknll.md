@@ -122,5 +122,5 @@ chwknll(times, 10, "gamma", c(-0.5, 0.3, 2, 1.5))
 
 # Unsorted times are an error, not the sentinel.
 try(chwknll(rev(times), 10, "exponential", c(-0.5, 0.3, 1.2)))
-#> Error : `times` must be sorted in increasing order
+#> Error : chwknll: `times` must be sorted in increasing order
 ```

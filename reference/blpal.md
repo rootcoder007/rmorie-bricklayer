@@ -66,6 +66,12 @@ defaults are `palette = "okabe"`, `grid = TRUE`, `cex = 1`, `las = 1`,
 `bg = "white"` and `panel = "#EEF1F6"`. Setting some options keeps the
 others.
 
+Text is drawn at the session `cex`. Titles, axis titles, row labels and
+keys are made smaller to fit a small device, but never below 0.6 of that
+size, so that they stay readable; for larger text set, for example,
+`plotopt(cex = 1.2)`, and for a table with many rows use a taller
+device.
+
 Errors: an unknown palette `name`; `n` not a positive whole number; an
 option name other than the six above, or an unnamed value; an unknown
 `palette` option.
@@ -115,7 +121,7 @@ plot(1:8, pch = 19, cex = 3, col = blpal("okabe"))
 
 # names are checked
 try(blpal("viridis"))
-#> Error : `name` must be one of "okabe", "diverging", "sequential", "grey", not "viridis"
+#> Error : blpal: `name` must be one of "okabe", "diverging", "sequential", "grey", not "viridis"
 try(plotopt(colour = "red"))
 #> Error : plot options are palette, grid, cex, las, bg, panel
 ```

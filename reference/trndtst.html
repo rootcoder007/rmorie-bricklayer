@@ -150,13 +150,12 @@ Mann-Kendall's variance places at the chosen level, so it is consistent
 with the test rather than derived from a different model. At small
 \(n\) the slopes may not reach the requested confidence; the bound is
 then the most extreme slope and <code>slopecicla</code> is <code>TRUE</code>.</p>
-<p>Missing periods are dropped and the series is sorted by <code>x</code>.
-Errors: fewer than three periods; infinite values; <code>x</code> and <code>y</code>
-of different lengths; a data frame without <code>value</code> or with a column
-not found; more than 20,000 periods (the pairwise slopes would not fit in
-memory); a <code>conflvl</code> outside (0, 1). <code>exact = TRUE</code> with \(n &gt; 8\)
-warns and uses the normal
-approximation.</p>
+<p>Missing periods are dropped and the series is sorted by <code>x</code>. Errors: fewer
+than three periods; infinite values; <code>x</code> and <code>y</code> of different lengths; a
+period given twice in <code>x</code>; a data frame without <code>value</code> or with a column
+not found; more than 20,000 periods (the pairwise slopes would not fit in memory);
+a <code>conflvl</code> outside (0, 1). <code>exact = TRUE</code> with \(n &gt; 8\) warns and
+uses the normal approximation.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -272,7 +271,7 @@ preferring it on a series this short.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.2416667</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">trndtst</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : a trend needs at least three periods</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : trndtst: a trend needs at least three periods</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

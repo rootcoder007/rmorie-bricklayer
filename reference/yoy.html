@@ -125,7 +125,9 @@ measure, as a string or a bare name.</p></dd>
 <dt id="arg-prd">prd<a class="anchor" aria-label="anchor" href="#arg-prd"></a></dt>
 <dd><p>For a data frame, the column holding the
 period (a year, a <code>Date</code>, a fiscal-year integer, an ordered
-factor). For a numeric vector, the periods themselves.</p></dd>
+factor). An ordered factor is compared by level order, one level being one
+period; an unordered factor or a character column has no order, so every row
+is flagged "no comparison period". For a numeric vector, the periods themselves.</p></dd>
 
 
 <dt id="arg-by">by<a class="anchor" aria-label="anchor" href="#arg-by"></a></dt>

@@ -39,14 +39,14 @@ where a value is not a year.
 ## Details
 
 Each value is converted with `as.integer(as.character(endyear))`, so a
-string such as `"2023"` works and a fractional number is truncated
-(2023.7 gives `"2022/23"`). The label is `(y - 1)`, `sep`, then `y`
-itself or its last two digits. Values that cannot be read as a year give
-`NA`. The two-digit form is unambiguous within a century (2000 gives
-`"1999/00"`).
+string such as `"2023"` works; a fractional number is refused rather
+than truncated (2023.7 is an error). The label is `(y - 1)`, `sep`, then
+`y` itself or its last two digits. Values that cannot be read as a year
+give `NA`. The two-digit form is unambiguous within a century (2000
+gives `"1999/00"`).
 
 Errors: `endyear` that is neither numeric nor character (for example
-logical); a numeric year below 1.
+logical); a numeric year below 1; a numeric year that is not whole.
 
 ## Examples
 

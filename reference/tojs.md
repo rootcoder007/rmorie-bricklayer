@@ -178,5 +178,5 @@ tojs(pi, digits = I(17))
 
 # a choice that does not exist is refused
 try(tojs(df, dataframe = "table"))
-#> Error : `dataframe` must be one of "rows", "columns", "values", not "table"
+#> Error : tojs: `dataframe` must be one of "rows", "columns", "values", not "table"
 ```

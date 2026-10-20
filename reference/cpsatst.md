@@ -12,7 +12,7 @@ manifest has not changed since you signed it.
 ``` r
 cpsatst(man, key, ctx = NULL, prehash = "none", note = NULL)
 
-cpschkatst(attest, man, keyexp = NULL)
+cpschkatst(attest, man, keyexp = NULL, key = NULL)
 ```
 
 ## Arguments
@@ -24,11 +24,14 @@ cpschkatst(attest, man, keyexp = NULL)
 
 - key:
 
-  A signing key from
+  For `cpsatst()`, a signing key from
   [`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)
   (ML-DSA, SLH-DSA and the other standardised schemes) or
   [`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md)
-  (XMSS).
+  (XMSS), or a shared secret (a string or raw vector) for `"hmac"`. For
+  `cpschkatst()`, the shared secret that checks an `"hmac"` attestation;
+  it is not used for the other schemes, whose public key the attestation
+  carries.
 
 - ctx:
 
@@ -102,10 +105,22 @@ the scheme is `"xmss-sha256"` and the context and pre-hash are not used
 by the signature; signing uses up one of the key's one-time indices, as
 every XMSS signature does.
 
+With a shared secret (a string or raw vector) as `key` the scheme is
+`"hmac"`: HMAC-SHA-256 under that secret, as `cpssign(scheme = "hmac")`.
+`public` is then a key id, the hex of HMAC-SHA-256 of the string
+`"public"` under the secret: it names the key, so `keyexp` can pin it,
+without revealing it. The secret itself is never recorded, so checking
+needs it again (`key` in `cpschkatst()`). `context` is `""` and
+`prehash` `"none"`, the bytes morie's capsule signer writes. HMAC is
+symmetric: anyone who can check the signature can also make one. It is
+not one of the post-quantum signature schemes and carries none of their
+guarantees.
+
 The check, one row each: `attestation_complete` (every field is
-present), `mnfdgst` (the manifest's digest equals the attested one),
-`key_as_expected` (only when `keyexp` is given) and `signature` (the
-signature verifies under the attested public key). `ok` is `TRUE` when
+present), `manifest_digest` (the manifest's digest equals the attested
+one), `key_as_expected` (only when `keyexp` is given) and `signature`
+(the signature verifies under the attested public key; for `"hmac"`,
+under `key`, whose key id must equal `public`). `ok` is `TRUE` when
 every row passes.
 
 What it does NOT establish. That the public key belongs to whoever you
@@ -121,11 +136,12 @@ directly.
 Errors: `man` not a list; `key` not from
 [`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)
 or
-[`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md);
-an invalid `prehash` or `ctx` (from
-[`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md));
-`attestation` not from `cpsatst()`. A signature that fails to verify is
-a failed row, not an error.
+[`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md)
+and not a non-empty string or raw vector; an invalid `prehash` or `ctx`
+(from
+[`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)),
+or either given with an hmac key; `attestation` not from `cpsatst()`. A
+signature that fails to verify is a failed row, not an error.
 
 ## See also
 
@@ -149,8 +165,8 @@ att
 #>   context     <none>
 #>   prehash     none
 #>   note        counts as published
-#>   signed      2026-10-20T05:47:12Z
-#>   public key  54e25baf1402e4ab92be997511fbd076... (1952 bytes)
+#>   signed      2026-10-20T07:46:32Z
+#>   public key  79e118ac657bd6992bd586d583fc9253... (1952 bytes)
 #> ──────────────────────────────────────────────────────────────────
 
 # a verifier needs the attestation and the manifest, nothing else
@@ -193,7 +209,23 @@ att2 <- cpsatst(m, key, ctx = "release 2026-10", prehash = "sha512")
 cpschkatst(att2, m, keyexp = key)$ok
 #> [1] TRUE
 
+# a shared secret signs with hmac; `public` is its key id, not the secret
+att3 <- cpsatst(m, "shared-secret")
+att3$public
+#> [1] "4e289ef69cbe6f4c0d7de16c0801ad1155aba1598f2f4b25cddb46880caacd60"
+cpschkatst(att3, m, key = "shared-secret", keyexp = att3$public)$ok
+#> [1] TRUE
+cpschkatst(att3, m, key = "another-secret")$checks[, c("check", "ok", "detail")]
+#>                  check    ok
+#> 1 attestation_complete  TRUE
+#> 2      manifest_digest  TRUE
+#> 3            signature FALSE
+#>                                                             detail
+#> 1                                                                 
+#> 2 efa1b7387f225380245de0b5170999e87ad4044f3e8fd2ef6a6bfbc2bd0a9c90
+#> 3               the key given is not the key the attestation names
+
 # a key that is not a signing key is refused
-try(cpsatst(m, "not-a-key"))
-#> Error : `key` must come from fipskg() or pqckg()
+try(cpsatst(m, 42))
+#> Error : `key` must come from fipskg() or pqckg(), or be a shared secret (a string or raw vector) for hmac
 ```

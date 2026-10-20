@@ -159,7 +159,7 @@ for the key's level, which is
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a public key alone cannot decapsulate, and a short ciphertext is refused</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">kemdecap</span><span class="op">(</span><span class="fu"><a href="kemkg.html">kempubkey</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span>, <span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : decapsulation needs a key with its secret half</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : kemdecap: decapsulation needs a key with its secret half</span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">kemdecap</span><span class="op">(</span><span class="va">key</span>, <span class="st">"abcd"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : `ct` must be 768 bytes for ML-KEM-512</span>
 </code></pre></div>

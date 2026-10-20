@@ -246,7 +246,7 @@ help; <code><a href="llmstat.html">llmstat</a></code> and
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># arguments are checked before any route is resolved</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">llmask</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"two"</span>, <span class="st">"questions"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `prompt` must be a single non-empty string</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : llmask: `prompt` must be a single non-empty string</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a provider named explicitly without its key</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">llmask</span><span class="op">(</span><span class="st">"What is a capsule?"</span>, route <span class="op">=</span> <span class="st">"anthropic"</span><span class="op">)</span><span class="op">)</span></span></span>

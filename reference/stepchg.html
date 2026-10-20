@@ -81,7 +81,7 @@ test, which is the standard way to find a change point in noise.</p>
 
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>Vector of periods, default <code>NULL</code> (the position). Used only
-to label the break.</p></dd>
+to label the break; numeric or date periods must be strictly increasing.</p></dd>
 
 
 <dt id="arg-minseg">minseg<a class="anchor" aria-label="anchor" href="#arg-minseg"></a></dt>
@@ -123,12 +123,15 @@ enumerated, the observed one among them, and the p-value is exact:
 \(\mathrm{count}(T^*_{\max} \ge T_{\max}) / n!\);
 otherwise <code>nperm</code> random permutations are drawn under <code>seed</code>,
 and the caller's random number stream is restored afterwards.</p>
-<p>The test assumes the periods are exchangeable under no change, so it
-ignores autocorrelation and smooth trends; a steady trend can produce a
-"step". With very few periods even a clean step cannot reach small
-p-values (six periods allow only 720 orderings). Missing values are
-dropped. Errors: infinite values; fewer than <code>2 * minseg</code>
-periods. A progress bar is shown in an interactive session.</p>
+<p>The test assumes the periods are exchangeable under no change, so it ignores
+autocorrelation and smooth trends; a steady trend can produce a "step". With very
+few periods even a clean step cannot reach small p-values (six periods allow only
+720 orderings). Missing values are dropped. A series with values beyond 1e150 is
+scanned in units of its largest absolute value, so the statistic does not overflow;
+<code>before</code>, <code>after</code> and <code>difference</code> are given back in the units of
+<code>y</code>, and <code>statistic</code> stays in the rescaled units. Errors: infinite
+values; fewer than <code>2 * minseg</code> periods; numeric or date <code>x</code> that is not
+strictly increasing. A progress bar is shown in an interactive session.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

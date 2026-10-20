@@ -237,5 +237,5 @@ r2$digest$merkle_root
 
 # a data frame is required
 try(cpsrpt(1:10))
-#> Error : `data` must be a data frame
+#> Error : cpsrpt: `data` must be a data frame
 ```

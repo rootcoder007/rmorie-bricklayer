@@ -103,5 +103,5 @@ stdinc(c(0, 40), c(2, 25), conflvl = 0.90)
 #> 2       40       25 1.6 1.20783 2.082775   TRUE   FALSE        TRUE
 
 try(stdinc(c(3, 4), c(5, 0)))
-#> Error : `expd` must be positive
+#> Error : stdinc: `expd` must be positive
 ```

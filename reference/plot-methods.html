@@ -212,7 +212,8 @@ method returns the data it drew, invisibly, as a data frame.</p>
 <span>  what <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"adp"</span>, <span class="st">"alos"</span>, <span class="st">"people"</span>, <span class="st">"days"</span><span class="op">)</span>,</span>
 <span>  main <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  col <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  palette <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  xlab <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'rmbl_yoy'</span></span>
@@ -222,7 +223,9 @@ method returns the data it drew, invisibly, as a data frame.</p>
 <span>  what <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pctchg"</span>, <span class="st">"value"</span><span class="op">)</span>,</span>
 <span>  main <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  col <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  palette <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  xlab <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  gaps <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"break"</span>, <span class="st">"join"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'rmbl_rate'</span></span>
@@ -232,7 +235,7 @@ method returns the data it drew, invisibly, as a data frame.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'rmbl_rate_change'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span>, xlab <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'rmbl_band_sensitivity'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
@@ -295,7 +298,7 @@ method returns the data it drew, invisibly, as a data frame.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'rmbl_count_trend'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span>, xlab <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'bricklayer_analysis'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, which <span class="op">=</span> <span class="cn">NULL</span>, main <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
@@ -309,7 +312,9 @@ method returns the data it drew, invisibly, as a data frame.</p>
 <span>  palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  style <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"dot"</span>, <span class="st">"stata"</span><span class="op">)</span>,</span>
 <span>  shadepost <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  refline <span class="op">=</span> <span class="op">-</span><span class="fl">0.5</span></span>
+<span>  refline <span class="op">=</span> <span class="op">-</span><span class="fl">0.5</span>,</span>
+<span>  xlab <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  gaps <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"break"</span>, <span class="st">"join"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'rmbl_staggered_att'</span></span>
@@ -431,6 +436,26 @@ arm with the clipping bounds; the default) or <code>"estimate"</code> (the effec
 its confidence interval).</p></dd>
 
 
+<dt id="arg-xlab">xlab<a class="anchor" aria-label="anchor" href="#arg-xlab"></a></dt>
+<dd><p>For the plots over time (<code>rmbl_stock_flow</code>,
+<code>rmbl_yoy</code>, <code>rmbl_rate_change</code>, <code>rmbl_count_trend</code>,
+<code>rmbl_event_study</code>), the title of the period axis. The default
+<code>NULL</code> names the unit the period implies: <code>"Date"</code> for dates,
+<code>"Time"</code> for date-times, <code>"Fiscal year"</code> for fiscal-year labels
+such as <code>"2022/23"</code>, <code>"Periods since adoption"</code> for an event
+study, otherwise <code>"Period"</code>. A number or a date is drawn on its own
+continuous scale, so a missing period leaves its gap; any other period
+(text, a factor) is drawn at evenly spaced positions labelled with its text.</p></dd>
+
+
+<dt id="arg-gaps">gaps<a class="anchor" aria-label="anchor" href="#arg-gaps"></a></dt>
+<dd><p>For <code>rmbl_yoy</code> (<code>what = "value"</code>) and
+<code>rmbl_event_study</code> (<code>style = "stata"</code>): how a missing value
+shows in a line. <code>"break"</code> (the default) breaks the
+line there, so a "no data" period that <code>yoy(complete = TRUE)</code>
+inserted is a visible gap; <code>"join"</code> draws the line straight over it.</p></dd>
+
+
 <dt id="arg-period">period<a class="anchor" aria-label="anchor" href="#arg-period"></a></dt>
 <dd><p>For <code>rmbl_rate</code>, a <code>by</code> column holding the period: the rate
 is
@@ -471,7 +496,10 @@ between the reference period and adoption; <code>0</code> puts it at adoption).<
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The data drawn, invisibly.</p>
+    <p>The data drawn, invisibly. For the plots over time the frame
+carries the x position of each point drawn: an <code>at</code> column
+(<code>rmbl_yoy</code>, <code>rmbl_rate_change</code>), or an <code>"at"</code> attribute
+(<code>rmbl_stock_flow</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -484,12 +512,17 @@ the flow and stock rates too.</p></dd>
 
 <dt><code>rmbl_yoy</code></dt>
 <dd><p>(<code><a href="yoy.html">yoy</a></code>) the period-over-period
-percent change with its interval, one row per period (and group),
-coloured by verdict; <code>what = "value"</code> draws the values instead.</p></dd>
+percent change with its interval over the periods, the period across and
+the change up, groups side by side, coloured by verdict;
+<code>what = "value"</code> draws the values instead.</p></dd>
 
-<dt><code>rmbl_rate</code>, <code>rmbl_share</code>, <code>rmbl_rate_change</code></dt>
-<dd><p>(<code><a href="rtcalc.html">rtcalc</a></code>) the rate, share or percent change per group with
+<dt><code>rmbl_rate</code>, <code>rmbl_share</code></dt>
+<dd><p>(<code><a href="rtcalc.html">rtcalc</a></code>, <code><a href="shrs.html">shrs</a></code>) the rate or share per group with
 its interval.</p></dd>
+
+<dt><code>rmbl_rate_change</code></dt>
+<dd><p>(<code><a href="ratechg.html">ratechg</a></code>) the percent change
+in the rate with its interval over the periods, groups side by side.</p></dd>
 
 <dt><code>rmbl_band_sensitivity</code></dt>
 <dd><p>(<code><a href="bandsens.html">bandsens</a></code>)

@@ -102,5 +102,5 @@ as.data.frame(yb)[, c("year", "envpctlo", "envpctup",
 
 # only yoy() results are accepted
 try(yoybnd(seg, rnd = 5))
-#> Error : `y` must come from yoy()
+#> Error : yoybnd: `y` must come from yoy()
 ```

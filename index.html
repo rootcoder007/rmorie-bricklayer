@@ -80,7 +80,7 @@
 <blockquote>
 <p>Brick-proof, reproducible data capsules for R.</p>
 </blockquote>
-<p><code>rmoriebricklayer</code> resolves open-data sources, records and verifies provenance, validates downloaded data against a pinned schema, and falls back to schema-driven synthetic data when the real source is unreachable — so any analysis result can be traced back to its exact inputs.</p>
+<p><code>rmoriebricklayer</code> resolves open-data sources, records and verifies provenance, validates downloaded data against a pinned schema, and falls back to schema-driven synthetic data when the real source is unreachable — so any analysis result can be traced back to its exact inputs. It is written for analysts and researchers who work from published administrative and survey tables (justice, corrections, health and Indigenous statistics, for example) and who need to show later exactly which data a result came from.</p>
 <p>A checksum answers one question: are these the same bytes? The package exists because that is rarely the question that matters. A re-released extract can be statistically identical and differ byte-for-byte; a column can keep its name, type and row count while having been silently rescaled; and a digest anyone can recompute says nothing about who produced the data.</p>
 <div class="section level2">
 <h2 id="what-it-does">What it does<a class="anchor" aria-label="anchor" href="#what-it-does"></a>
@@ -274,31 +274,47 @@
 <p>It is also verified against its security properties: a valid signature verifies, and every tampering of the message, signature, authentication path, index or key fails.</p>
 </div>
 <div class="section level2">
+<h2 id="algorithms">Algorithms<a class="anchor" aria-label="anchor" href="#algorithms"></a>
+</h2>
+<p>Several methods re-implement established ones and are tested against them: the design-based survey estimators (<code><a href="reference/svydes.html">svydes()</a></code>, <code><a href="reference/svyest.html">svyest()</a></code>, <code><a href="reference/svycmp.html">svycmp()</a></code>) against the <code>survey</code> package’s <code>svymean()</code>, <code>svytotal()</code>, <code>svyratio()</code>, <code>svyby()</code> and <code>svyciprop()</code>; the Mann-Kendall trend test and Theil-Sen slope (<code><a href="reference/trndtst.html">trndtst()</a></code>) against <code><a href="https://rdrr.io/r/stats/cor.test.html" class="external-link">stats::cor.test()</a></code>’s Kendall tau and its exact p-values; the Hawkes-process fits (<code><a href="reference/chwkfit.html">chwkfit()</a></code>) against the reference fits of MORIE’s Python package, which uses the same C++ core; and the hashes and signatures against <code>digest</code>, <code>openssl</code> and published test vectors (see Verification above). Others are, as far as we know, new in R: the bounds that a release’s rounding and suppression imply for its cells (<code><a href="reference/pubbnd.html">pubbnd()</a></code>) and the reproducible data capsules with signed manifests.</p>
+</div>
+<div class="section level2">
+<h2 id="life-cycle">Life cycle<a class="anchor" aria-label="anchor" href="#life-cycle"></a>
+</h2>
+<p>Version 1.0.0 is <em>maturing</em>: the exported function names and arguments are stable. A function or argument that is to change or go is first deprecated with a warning for one minor release, and the change is listed in <code>NEWS.md</code>.</p>
+</div>
+<div class="section level2">
+<h2 id="running-the-extended-tests">Running the extended tests<a class="anchor" aria-label="anchor" href="#running-the-extended-tests"></a>
+</h2>
+<p><code>R CMD check</code> and <code>devtools::test()</code> never reach a real host. Setting <code>RMBL_LIVE_TESTS=1</code> (exactly <code>1</code>, together with <code>NOT_CRAN=true</code>) switches on the live tests in the same <code>testthat</code> suite: downloads from <code>cloud.r-project.org</code> and <code>www.r-project.org</code>, a redirect chain at <code>httpbin.org</code>, and Wayback Machine lookups at <code>archive.org</code> (never a capture request). They write only to temporary files and take about a minute on a broadband connection:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="va">NOT_CRAN</span><span class="op">=</span>true <span class="va">RMBL_LIVE_TESTS</span><span class="op">=</span>1 <span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'devtools::test()'</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <p>Current release from r-universe (prebuilt binaries for macOS and Windows, a source build on Linux); the <a href="https://CRAN.R-project.org/package=rmoriebricklayer" class="external-link">CRAN</a> release lags this one by several versions.</p>
 <p>With <a href="https://pak.r-lib.org" class="external-link">pak</a> (progress bars, parallel downloads, compiler output hidden unless a build fails, and the named packages always upgraded to the current release). Keep the <code>repos</code> arguments as written: under <code>Rscript</code> there is no mirror chooser, so a bare <code><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages()</a></code> stops with “trying to use CRAN without setting a mirror”, and if CRAN carries older versions than r-universe.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"pak"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span>, repos <span class="op">=</span> <span class="st">"https://cloud.r-project.org"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/repo_add.html" class="external-link">repo_add</a></span><span class="op">(</span>rootcoder007 <span class="op">=</span> <span class="st">"https://rootcoder007.r-universe.dev"</span><span class="op">)</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pkg_install.html" class="external-link">pkg_install</a></span><span class="op">(</span><span class="st">"rmoriebricklayer"</span><span class="op">)</span></span></code></pre></div>
 <p>From a terminal (single quotes outside, double quotes inside, so the shell passes the R code through untouched):</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak", repos = "https://cloud.r-project.org"); pak::repo_add(rootcoder007 = "https://rootcoder007.r-universe.dev"); pak::pkg_install("rmoriebricklayer")'</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak", repos = "https://cloud.r-project.org"); pak::repo_add(rootcoder007 = "https://rootcoder007.r-universe.dev"); pak::pkg_install("rmoriebricklayer")'</span></span></code></pre></div>
 <p>Without pak, plain <code><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages()</a></code> does the same with R’s own output:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'install.packages("rmoriebricklayer", repos = c("https://rootcoder007.r-universe.dev", "https://cloud.r-project.org"))'</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'install.packages("rmoriebricklayer", repos = c("https://rootcoder007.r-universe.dev", "https://cloud.r-project.org"))'</span></span></code></pre></div>
 <p>Development version from GitHub (a source build; needs a C/C++ toolchain):</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak", repos = "https://cloud.r-project.org"); pak::repo_add(rootcoder007 = "https://rootcoder007.r-universe.dev"); pak::pkg_install("rootcoder007/rmorie-bricklayer")'</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co"># without pak</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'repos &lt;- c("https://rootcoder007.r-universe.dev", "https://cloud.r-project.org"); install.packages("remotes", repos = repos); remotes::install_github("rootcoder007/rmorie-bricklayer", repos = repos, upgrade = "always")'</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak", repos = "https://cloud.r-project.org"); pak::repo_add(rootcoder007 = "https://rootcoder007.r-universe.dev"); pak::pkg_install("rootcoder007/rmorie-bricklayer")'</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co"># without pak</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'repos &lt;- c("https://rootcoder007.r-universe.dev", "https://cloud.r-project.org"); install.packages("remotes", repos = repos); remotes::install_github("rootcoder007/rmorie-bricklayer", repos = repos, upgrade = "always")'</span></span></code></pre></div>
 <p>On macOS, CRAN’s R (from <a href="https://CRAN.R-project.org/bin/macosx/" class="external-link uri">https://CRAN.R-project.org/bin/macosx/</a>) installs r-universe’s prebuilt binaries in seconds. Homebrew’s R cannot use them, so there every package is compiled from source.</p>
 </div>
 <div class="section level2">
 <h2 id="quick-example">Quick example<a class="anchor" aria-label="anchor" href="#quick-example"></a>
 </h2>
 <p>The shortest path, on the OTIS table that ships with the package:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rootcoder007/rmorie-bricklayer" class="external-link">rmoriebricklayer</a></span><span class="op">)</span></span>
 <span><span class="va">otis</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"otis_a01_individuals.csv"</span>,</span>
 <span>                             package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span><span class="op">)</span></span>
@@ -307,7 +323,7 @@
 <span><span class="va">a</span>                                   <span class="co"># what changed, how sure, what was withheld</span></span>
 <span><span class="fu"><a href="reference/rptanl.html">rptanl</a></span><span class="op">(</span><span class="va">a</span>, <span class="st">"otis.html"</span><span class="op">)</span>     <span class="co"># one self-contained file</span></span></code></pre></div>
 <p>The full capsule, step by step. It runs as written, offline: the provenance file pins the source, the schema and a recipe for a synthetic stand-in, and the stand-in is what gets validated and recorded when the portal is not reachable.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rootcoder007/rmorie-bricklayer" class="external-link">rmoriebricklayer</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># 1. The pin: portal endpoint, resource pattern, expected schema, recipe.</span></span>
@@ -357,7 +373,7 @@
 <span>                  paths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>input <span class="op">=</span> <span class="va">path</span>, results <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                  what_was_done <span class="op">=</span> <span class="st">"* validated the schema and recorded the row count"</span><span class="op">)</span></span></code></pre></div>
 <p>Then ask whether the data itself moved, and sign the answer:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Did the distribution change, not just the bytes?</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">ref</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">300</span><span class="op">)</span>, size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">1</span>, <span class="fl">10</span><span class="op">)</span>,</span>
@@ -393,7 +409,7 @@
 </ol>
 <p>While it works, <code>rmbl ask</code> (or <code>rmbl aye</code>, <code>rmbl tellme</code>) shows a spinner with the seconds so far. The same question again is answered from this machine at once (<code>--fresh</code> asks the model again; <code>MORIE_LLM_CACHE=off</code> turns that off), and an error of these packages can be explained without any model: <code>rmbl explain-error "the error text"</code> (R: <code><a href="reference/explerr.html">explerr()</a></code>) names the function that raised it, the exported functions it comes from and what the message asks for.</p>
 <p>The model gets the packages’ help: the name, arguments and title of every function of rmoriebricklayer (and of rmoriedata and rmorie when installed), and tools to search the help, read a page, its examples, a vignette and the dataset list before it writes code. A large model (a provider’s, or an Ollama cloud model) gets all of it; a small model running locally gets the functions nearest the question and can still look up any other. <code>MORIE_LLM_CONTEXT</code> sets the size by hand.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rootcoder007/rmorie-bricklayer" class="external-link">rmoriebricklayer</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="reference/llmprvd.html">llmprvd</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># the providers, their addresses and key variables</span></span>
@@ -406,7 +422,7 @@
 <h3 id="choosing-the-route-and-model">Choosing the route and model<a class="anchor" aria-label="anchor" href="#choosing-the-route-and-model"></a>
 </h3>
 <p>Every setting can be saved once, from R or the shell, without touching the environment or the source. Saved settings live in <code>~/.config/morie/llm.json</code> (private to you); an environment variable that is set still wins for that session.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/llmcfg.html">llmcfg</a></span><span class="op">(</span><span class="op">)</span>                                        <span class="co"># every setting, its value and source</span></span>
 <span><span class="fu"><a href="reference/llmcfg.html">llmcfg</a></span><span class="op">(</span>route <span class="op">=</span> <span class="st">"anthropic"</span><span class="op">)</span>                     <span class="co"># always this provider</span></span>
 <span><span class="fu"><a href="reference/llmcfg.html">llmcfg</a></span><span class="op">(</span>anthropic.model <span class="op">=</span> <span class="st">"claude-opus-5-5"</span><span class="op">)</span>     <span class="co"># its model</span></span>
@@ -462,45 +478,45 @@
 <p>With <code>route = "auto"</code>, a local Ollama server that has no model pulled is passed over.</p>
 <p>Signing in (<code><a href="reference/dlogin.html">dlogin()</a></code>, <code>rmbl login</code>) is for the curated tables at data.rmorie.com only; it is never a language model.</p>
 <p>The same verbs exist on the command line once the launcher is on your <code>PATH</code>:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'rmoriebricklayer::instcli()'</span>   <span class="co"># links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> help                           <span class="co"># every verb; `help start`, `help llm`, `help config`, `help r`</span></span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor                         <span class="co"># which routes answer here, and the one ask will use</span></span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="st">"your question"</span>            <span class="co"># own endpoint, a provider with a key, then Ollama</span></span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--model</span> NAME <span class="st">"your question"</span></span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--route</span> anthropic <span class="st">"your question"</span>   <span class="co"># one route, this time</span></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> aye <span class="st">"your question"</span>            <span class="co"># aye and tellme are ask under other names</span></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> tellme <span class="st">"your question"</span></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config                         <span class="co"># every language-model setting and where it comes from</span></span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config setup                   <span class="co"># pick a provider, paste its key, pick a model</span></span>
-<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set route anthropic     <span class="co"># always this provider</span></span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set anthropic.key       <span class="co"># asks for the key; saved privately</span></span>
-<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set ollama.url http://192.168.1.20:11434</span>
-<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set own.url http://localhost:1234/v1</span>
-<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config unset route             <span class="co"># back to the automatic order</span></span>
-<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models <span class="at">--route</span> ollama          <span class="co"># the models a route offers, the one in use marked</span></span>
-<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--token</span>                  <span class="co"># the data key: paste the key you were issued</span></span>
-<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com  <span class="co"># or: a code is emailed, type it at the prompt</span></span>
-<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com <span class="at">--code</span> 123456   <span class="co"># the same, code passed (scripts)</span></span>
-<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login                          <span class="co"># or: GitHub device flow</span></span>
-<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--no-browser</span>             <span class="co"># server / SSH: prints a link + code for any device</span></span>
-<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> logout                         <span class="co"># forget the data key</span></span>
-<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data list                      <span class="co"># the curated tables at data.rmorie.com</span></span>
-<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data pull db/table <span class="at">--out</span> t.csv <span class="co"># download one (your MORIE key)</span></span>
-<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> bundle <span class="st">"your request"</span>          <span class="co"># agentbndl() from the shell</span></span>
-<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> functions <span class="pp">[</span><span class="ss">PATTERN</span><span class="pp">]</span>            <span class="co"># exported functions and their titles</span></span>
-<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> describe NAME                  <span class="co"># one function's help page</span></span>
-<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> examples NAME                  <span class="co"># its examples</span></span>
-<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> version</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'rmoriebricklayer::instcli()'</span>   <span class="co"># links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> help                           <span class="co"># every verb; `help start`, `help llm`, `help config`, `help r`</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor                         <span class="co"># which routes answer here, and the one ask will use</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="st">"your question"</span>            <span class="co"># own endpoint, a provider with a key, then Ollama</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--model</span> NAME <span class="st">"your question"</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--route</span> anthropic <span class="st">"your question"</span>   <span class="co"># one route, this time</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> aye <span class="st">"your question"</span>            <span class="co"># aye and tellme are ask under other names</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> tellme <span class="st">"your question"</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config                         <span class="co"># every language-model setting and where it comes from</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config setup                   <span class="co"># pick a provider, paste its key, pick a model</span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set route anthropic     <span class="co"># always this provider</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set anthropic.key       <span class="co"># asks for the key; saved privately</span></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set ollama.url http://192.168.1.20:11434</span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set own.url http://localhost:1234/v1</span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config unset route             <span class="co"># back to the automatic order</span></span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models <span class="at">--route</span> ollama          <span class="co"># the models a route offers, the one in use marked</span></span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--token</span>                  <span class="co"># the data key: paste the key you were issued</span></span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com  <span class="co"># or: a code is emailed, type it at the prompt</span></span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com <span class="at">--code</span> 123456   <span class="co"># the same, code passed (scripts)</span></span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login                          <span class="co"># or: GitHub device flow</span></span>
+<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--no-browser</span>             <span class="co"># server / SSH: prints a link + code for any device</span></span>
+<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> logout                         <span class="co"># forget the data key</span></span>
+<span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data list                      <span class="co"># the curated tables at data.rmorie.com</span></span>
+<span id="cb11-24"><a href="#cb11-24" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data pull db/table <span class="at">--out</span> t.csv <span class="co"># download one (your MORIE key)</span></span>
+<span id="cb11-25"><a href="#cb11-25" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> bundle <span class="st">"your request"</span>          <span class="co"># agentbndl() from the shell</span></span>
+<span id="cb11-26"><a href="#cb11-26" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> functions <span class="pp">[</span><span class="ss">PATTERN</span><span class="pp">]</span>            <span class="co"># exported functions and their titles</span></span>
+<span id="cb11-27"><a href="#cb11-27" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> describe NAME                  <span class="co"># one function's help page</span></span>
+<span id="cb11-28"><a href="#cb11-28" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> examples NAME                  <span class="co"># its examples</span></span>
+<span id="cb11-29"><a href="#cb11-29" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> version</span></code></pre></div>
 <p><code>rmbl</code> is the same command under a short name; every verb works under either:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="ex">rmbl</span> help</span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="ex">rmbl</span> doctor</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="ex">rmbl</span> config setup</span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="ex">rmbl</span> ask <span class="st">"your question"</span></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="ex">rmbl</span> aye <span class="st">"your question"</span></span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="ex">rmbl</span> tellme <span class="st">"your question"</span></span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="ex">rmbl</span> <span class="st">"how do I weight a survey?"</span>               <span class="co"># a quoted question with no verb is asked too</span></span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="ex">rmbl</span> login <span class="at">--token</span></span>
-<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="ex">rmbl</span> models</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="ex">rmbl</span> help</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="ex">rmbl</span> doctor</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="ex">rmbl</span> config setup</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="ex">rmbl</span> ask <span class="st">"your question"</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="ex">rmbl</span> aye <span class="st">"your question"</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="ex">rmbl</span> tellme <span class="st">"your question"</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="ex">rmbl</span> <span class="st">"how do I weight a survey?"</span>               <span class="co"># a quoted question with no verb is asked too</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="ex">rmbl</span> login <span class="at">--token</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="ex">rmbl</span> models</span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -521,13 +537,13 @@
 <p>Ruhela, V. S. (2026). <em>rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback.</em> R package version 1.0.0. <a href="doi:10.32614/CRAN.package.rmoriebricklayer" class="uri">doi:10.32614/CRAN.package.rmoriebricklayer</a>. <a href="https://rootcoder007.r-universe.dev/rmoriebricklayer" class="external-link uri">https://rootcoder007.r-universe.dev/rmoriebricklayer</a></p>
 </blockquote>
 <p>BibTeX (or run <code>citation("rmoriebricklayer")</code> after installation for the entry stamped with the exact installed version, sourced from <code>inst/CITATION</code>):</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="va">@Manual</span>{<span class="ot">ruhela_rmoriebricklayer_2026</span>,</span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="dt">title</span>  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},</span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="dt">author</span> = {Ruhela, Vansh Singh},</span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="dt">year</span>   = {2026},</span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>  <span class="dt">doi</span>    = {10.32614/CRAN.package.rmoriebricklayer},</span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>  <span class="dt">url</span>    = {https://rootcoder007.r-universe.dev/rmoriebricklayer}</span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="va">@Manual</span>{<span class="ot">ruhela_rmoriebricklayer_2026</span>,</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="dt">title</span>  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="dt">author</span> = {Ruhela, Vansh Singh},</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="dt">year</span>   = {2026},</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  <span class="dt">doi</span>    = {10.32614/CRAN.package.rmoriebricklayer},</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="dt">url</span>    = {https://rootcoder007.r-universe.dev/rmoriebricklayer}</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>}</span></code></pre></div>
 <p>See <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/CITATION.cff" class="external-link"><code>CITATION.cff</code></a> for the machine-readable metadata GitHub’s “Cite this repository” button uses.</p>
 </div>
 <div class="section level2">

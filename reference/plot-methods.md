@@ -144,7 +144,8 @@ plot(
   what = c("adp", "alos", "people", "days"),
   main = NULL,
   col = NULL,
-  palette = NULL
+  palette = NULL,
+  xlab = NULL
 )
 
 # S3 method for class 'rmbl_yoy'
@@ -154,7 +155,9 @@ plot(
   what = c("pctchg", "value"),
   main = NULL,
   col = NULL,
-  palette = NULL
+  palette = NULL,
+  xlab = NULL,
+  gaps = c("break", "join")
 )
 
 # S3 method for class 'rmbl_rate'
@@ -164,7 +167,7 @@ plot(x, ..., period = NULL, main = NULL, col = NULL, palette = NULL)
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
 # S3 method for class 'rmbl_rate_change'
-plot(x, ..., main = NULL, col = NULL, palette = NULL)
+plot(x, ..., main = NULL, col = NULL, palette = NULL, xlab = NULL)
 
 # S3 method for class 'rmbl_band_sensitivity'
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
@@ -227,7 +230,7 @@ plot(x, ..., contours = 8L, main = NULL, col = NULL, palette = NULL)
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
 # S3 method for class 'rmbl_count_trend'
-plot(x, ..., main = NULL, col = NULL, palette = NULL)
+plot(x, ..., main = NULL, col = NULL, palette = NULL, xlab = NULL)
 
 # S3 method for class 'bricklayer_analysis'
 plot(x, ..., which = NULL, main = NULL)
@@ -241,7 +244,9 @@ plot(
   palette = NULL,
   style = c("dot", "stata"),
   shadepost = FALSE,
-  refline = -0.5
+  refline = -0.5,
+  xlab = NULL,
+  gaps = c("break", "join")
 )
 
 # S3 method for class 'rmbl_staggered_att'
@@ -365,6 +370,26 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
   in each arm with the clipping bounds; the default) or `"estimate"`
   (the effect with its confidence interval).
 
+- xlab:
+
+  For the plots over time (`rmbl_stock_flow`, `rmbl_yoy`,
+  `rmbl_rate_change`, `rmbl_count_trend`, `rmbl_event_study`), the title
+  of the period axis. The default `NULL` names the unit the period
+  implies: `"Date"` for dates, `"Time"` for date-times, `"Fiscal year"`
+  for fiscal-year labels such as `"2022/23"`, `"Periods since adoption"`
+  for an event study, otherwise `"Period"`. A number or a date is drawn
+  on its own continuous scale, so a missing period leaves its gap; any
+  other period (text, a factor) is drawn at evenly spaced positions
+  labelled with its text.
+
+- gaps:
+
+  For `rmbl_yoy` (`what = "value"`) and `rmbl_event_study`
+  (`style = "stata"`): how a missing value shows in a line. `"break"`
+  (the default) breaks the line there, so a "no data" period that
+  `yoy(complete = TRUE)` inserted is a visible gap; `"join"` draws the
+  line straight over it.
+
 - period:
 
   For `rmbl_rate`, a `by` column holding the period: the rate is drawn
@@ -402,7 +427,9 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
 ## Value
 
-The data drawn, invisibly.
+The data drawn, invisibly. For the plots over time the frame carries the
+x position of each point drawn: an `at` column (`rmbl_yoy`,
+`rmbl_rate_change`), or an `"at"` attribute (`rmbl_stock_flow`).
 
 ## Details
 
@@ -416,14 +443,21 @@ The data drawn, invisibly.
 - `rmbl_yoy`:
 
   ([`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md))
-  the period-over-period percent change with its interval, one row per
-  period (and group), coloured by verdict; `what = "value"` draws the
-  values instead.
+  the period-over-period percent change with its interval over the
+  periods, the period across and the change up, groups side by side,
+  coloured by verdict; `what = "value"` draws the values instead.
 
-- `rmbl_rate`, `rmbl_share`, `rmbl_rate_change`:
+- `rmbl_rate`, `rmbl_share`:
 
-  ([`rtcalc`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md))
-  the rate, share or percent change per group with its interval.
+  ([`rtcalc`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md),
+  [`shrs`](https://rootcoder007.github.io/rmorie-bricklayer/reference/shrs.md))
+  the rate or share per group with its interval.
+
+- `rmbl_rate_change`:
+
+  ([`ratechg`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md))
+  the percent change in the rate with its interval over the periods,
+  groups side by side.
 
 - `rmbl_band_sensitivity`:
 

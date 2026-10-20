@@ -63,7 +63,7 @@ rslvckns(list(resource = list(name_match_pattern = "2014")))
 
 # a provenance must be a list
 try(rslvckns("data.ontario.ca"))
-#> Error : `prov` must be a provenance list (loadprov())
+#> Error : rslvckns: `prov` must be a provenance list (loadprov())
 
 if (FALSE) { # interactive()
 # needs the network: searches data.ontario.ca

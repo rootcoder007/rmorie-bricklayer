@@ -125,9 +125,9 @@ factor or list input for <code>x</code> is an error.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a non-positive sd and text are refused</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cnormpdf</span><span class="op">(</span><span class="fl">0</span>, sd <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `sd` must be a single positive number</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cnormpdf: `sd` must be a single positive number</span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cnormpdf</span><span class="op">(</span><span class="st">"0"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `x` must be numeric, got character</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cnormpdf: `x` must be numeric, got character</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

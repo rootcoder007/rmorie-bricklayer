@@ -87,7 +87,7 @@ for (v in keys) {
 
 # argument errors come first
 try(agentbndl(""))
-#> Error : `req` must be a single non-empty string
+#> Error : agentbndl: `req` must be a single non-empty string
 try(agentbndl("plan a bundle", route = "hosted"))
 #> Error : the hosted MORIE language-model tier is retired: bring your own key (a provider's variable such as ANTHROPIC_API_KEY or OPENAI_API_KEY, or `rmoriebricklayer config set <provider>.key`) or run a model locally (Ollama); `rmoriebricklayer config setup` walks through it
 ```

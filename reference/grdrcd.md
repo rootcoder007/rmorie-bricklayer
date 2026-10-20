@@ -21,6 +21,8 @@ grdrcd(x, map, keep = character())
   A factor or character vector. Other atomic vectors are compared by
   matching the values that
   [`as.character()`](https://rdrr.io/r/base/character.html) gives.
+  Ordered and unordered factors are treated the same: both are read
+  through their labels, and the result is character either way.
 
 - map:
 

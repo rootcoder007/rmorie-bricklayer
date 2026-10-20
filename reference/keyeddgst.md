@@ -99,5 +99,5 @@ cdgsteq(tag, "too-short")
 
 # one message at a time
 try(chmac("k", c("m1", "m2")))
-#> Error : `msg` must be a length-1 character vector or a raw vector
+#> Error : chmac: `msg` must be a length-1 character vector or a raw vector
 ```

@@ -103,5 +103,5 @@ cortbl(thin)$correlation
 
 # one numeric column cannot be correlated
 try(cortbl(data.frame(a = 1:5, b = letters[1:5])))
-#> Error : need at least two numeric columns to correlate
+#> Error : cortbl: need at least two numeric columns to correlate
 ```

@@ -122,5 +122,5 @@ smrystat(onlsmry(c(1, NA, 3)))[c("n", "mean")]
 #>    n mean 
 #>    2    2 
 try(onlsmry(c("a", "b")))
-#> Error : `x` must be numeric, not text such as "a"
+#> Error : smryupd: `x` must be numeric, not text such as "a"
 ```

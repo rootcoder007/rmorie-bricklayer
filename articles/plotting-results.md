@@ -461,10 +461,10 @@ drawn <- plot(y)
 ``` r
 
 head(drawn, 3)
-#>   label    pctchg     lower    upper verdict
-#> 1  2018        NA        NA       NA    <NA>
-#> 2  2019 10.000000 -29.95683 73.20735      up
-#> 3  2020 -6.818182 -40.61975 45.94265    down
+#>   label    pctchg     lower    upper verdict   at
+#> 1  2018        NA        NA       NA    <NA> 2018
+#> 2  2019 10.000000 -29.95683 73.20735      up 2019
+#> 3  2020 -6.818182 -40.61975 45.94265    down 2020
 ```
 
 Results that are plain data frames have a plot function of their own:

@@ -270,5 +270,5 @@ r$ratechg[, c("site", "year", "rate", "rateratio", "padj")]
 
 # a column that is not in the data is an error
 try(anltab(otis, value = "count", prd = "year"))
-#> Error : column `count` not found in `data`
+#> Error : anltab: column `count` not found in `data`
 ```

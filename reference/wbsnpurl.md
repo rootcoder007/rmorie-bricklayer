@@ -55,9 +55,9 @@ written.
 ``` r
 # argument errors come before any request
 try(wbsnpurl(NA))
-#> Error : `url` must be a single non-empty string
+#> Error : wbsnpurl: `url` must be a single non-empty string
 try(wbsnpurl(c("https://a.org", "https://b.org")))
-#> Error : `url` must be a single non-empty string
+#> Error : wbsnpurl: `url` must be a single non-empty string
 
 if (FALSE) { # interactive()
 # needs the network

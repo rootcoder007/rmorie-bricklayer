@@ -96,5 +96,5 @@ clncolnms(c("2021 count", "Rate per 1000"), sep = ".")
 
 # an unknown case is an error
 try(clncolnms("a b", case = "kebab"))
-#> Error : `case` must be one of "snake", "lower_camel", "upper_camel", "screaming_snake", "none", not "kebab"
+#> Error : clncolnms: `case` must be one of "snake", "lower_camel", "upper_camel", "screaming_snake", "none", not "kebab"
 ```

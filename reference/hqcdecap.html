@@ -135,7 +135,7 @@ the wrong length; a ciphertext of the wrong length or not valid hex.</p>
 <span class="r-in"><span><span class="co"># the public key alone cannot decapsulate, and a truncated ciphertext</span></span></span>
 <span class="r-in"><span><span class="co"># is refused</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">hqcdecap</span><span class="op">(</span><span class="fu"><a href="hqckg.html">hqcpubkey</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span>, <span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : decapsulation needs a key with its secret half</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : hqcdecap: decapsulation needs a key with its secret half</span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">hqcdecap</span><span class="op">(</span><span class="va">key</span>, <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substring</a></span><span class="op">(</span><span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span>, <span class="fl">1L</span>, <span class="fl">100L</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : `ct` must be 4433 bytes for HQC-1</span>
 </code></pre></div>

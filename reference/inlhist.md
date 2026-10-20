@@ -75,5 +75,5 @@ inlhist(stats::rexp(1000), bins = 30)
 
 # text is not a distribution
 try(inlhist(c("a", "b")))
-#> Error : `x` must be numeric, got character
+#> Error : inlhist: `x` must be numeric, got character
 ```

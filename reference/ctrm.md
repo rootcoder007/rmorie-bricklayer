@@ -83,5 +83,5 @@ all.equal(ctrmmean(x, 0.5), cmed(x))
 try(cwinsmean(x, 0.7))
 #> Error : `trim` must be a single number in [0, 0.5]
 try(ctrmmean(letters))
-#> Error : `x` must be numeric, got character
+#> Error : ctrmmean: `x` must be numeric, got character
 ```

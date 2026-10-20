@@ -67,7 +67,7 @@ all.equal(cnormpdf(-2:2, 0, 1), stats::dnorm(-2:2, 0, 1))
 
 # a non-positive sd and text are refused
 try(cnormpdf(0, sd = 0))
-#> Error : `sd` must be a single positive number
+#> Error : cnormpdf: `sd` must be a single positive number
 try(cnormpdf("0"))
-#> Error : `x` must be numeric, got character
+#> Error : cnormpdf: `x` must be numeric, got character
 ```

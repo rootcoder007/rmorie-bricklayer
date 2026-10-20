@@ -19,7 +19,9 @@ declbld(x, vlabs = NULL)
 - x:
 
   A vector with a `labels` attribute (as produced by haven), or a plain
-  vector of codes when `vlabs` is supplied.
+  vector of codes when `vlabs` is supplied. A factor, ordered or not, is
+  read through its integer codes; the result is an unordered factor
+  whose levels follow the codes.
 
 - vlabs:
 

@@ -69,5 +69,5 @@ readBin(q, "raw", 20)
 
 # The path must be one string.
 try(wrtxtfb("x", c("a.txt", "b.txt")))
-#> Error : `path` must be a single non-empty string
+#> Error : wrtxtfb: `path` must be a single non-empty string
 ```

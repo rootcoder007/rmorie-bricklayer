@@ -75,5 +75,5 @@ expconcidx(data.frame(exposure = 20, income = c(1, 1, 2, 3)),
 # A text income cannot be ranked.
 try(expconcidx(data.frame(exposure = 1:3, income = c("a", "b", "c")),
                                  "exposure", "income"))
-#> Error : `income` must be numeric, got character
+#> Error : expconcidx: `income` must be numeric, got character
 ```

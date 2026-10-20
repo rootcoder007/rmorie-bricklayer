@@ -68,5 +68,5 @@ identical(a, b)
 try(cunif(-1, 1))
 #> Error : `n` must be a non-negative whole number
 try(cunif(2, 2^53))
-#> Error : `seed` must be a whole number in [0, 2^53)
+#> Error : cunif: `seed` must be a whole number in [0, 2^53)
 ```

@@ -90,10 +90,10 @@ most extreme slope and `slopecicla` is `TRUE`.
 
 Missing periods are dropped and the series is sorted by `x`. Errors:
 fewer than three periods; infinite values; `x` and `y` of different
-lengths; a data frame without `value` or with a column not found; more
-than 20,000 periods (the pairwise slopes would not fit in memory); a
-`conflvl` outside (0, 1). `exact = TRUE` with \\n \> 8\\ warns and uses
-the normal approximation.
+lengths; a period given twice in `x`; a data frame without `value` or
+with a column not found; more than 20,000 periods (the pairwise slopes
+would not fit in memory); a `conflvl` outside (0, 1). `exact = TRUE`
+with \\n \> 8\\ warns and uses the normal approximation.
 
 ## References
 
@@ -211,5 +211,5 @@ trndtst(d, value = "n", prd = "year", alt = "decreasing")$p_value
 #> [1] 0.2416667
 
 try(trndtst(c(5, 6)))
-#> Error : a trend needs at least three periods
+#> Error : trndtst: a trend needs at least three periods
 ```

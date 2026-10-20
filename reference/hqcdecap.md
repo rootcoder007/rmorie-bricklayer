@@ -80,7 +80,7 @@ identical(other, sent$shared)
 # the public key alone cannot decapsulate, and a truncated ciphertext
 # is refused
 try(hqcdecap(hqcpubkey(key), sent$ciphertext))
-#> Error : decapsulation needs a key with its secret half
+#> Error : hqcdecap: decapsulation needs a key with its secret half
 try(hqcdecap(key, substring(sent$ciphertext, 1L, 100L)))
 #> Error : `ct` must be 4433 bytes for HQC-1
 ```

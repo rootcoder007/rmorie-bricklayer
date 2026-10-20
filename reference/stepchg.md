@@ -22,7 +22,7 @@ stepchg(y, x = NULL, minseg = 2L, nperm = 9999L, seed = 1L)
 - x:
 
   Vector of periods, default `NULL` (the position). Used only to label
-  the break.
+  the break; numeric or date periods must be strictly increasing.
 
 - minseg:
 
@@ -66,8 +66,12 @@ The test assumes the periods are exchangeable under no change, so it
 ignores autocorrelation and smooth trends; a steady trend can produce a
 "step". With very few periods even a clean step cannot reach small
 p-values (six periods allow only 720 orderings). Missing values are
-dropped. Errors: infinite values; fewer than `2 * minseg` periods. A
-progress bar is shown in an interactive session.
+dropped. A series with values beyond 1e150 is scanned in units of its
+largest absolute value, so the statistic does not overflow; `before`,
+`after` and `difference` are given back in the units of `y`, and
+`statistic` stays in the rescaled units. Errors: infinite values; fewer
+than `2 * minseg` periods; numeric or date `x` that is not strictly
+increasing. A progress bar is shown in an interactive session.
 
 ## References
 

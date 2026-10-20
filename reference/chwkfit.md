@@ -120,9 +120,11 @@ A list:
   character, the names of parameters that lie on the box (`character(0)`
   for an interior maximum).
 
-An estimate on the box is not an interior maximum of the likelihood:
-day-dated (tied) times drive a shape or decay to its wall, and a Lomax
-fitted to exponential data runs to its exponential limit.
+A warning is given when \\\eta\\ reaches its upper bound 0.99 (a
+near-critical, probably non-stationary fit). An estimate on the box is
+not an interior maximum of the likelihood: day-dated (tied) times drive
+a shape or decay to its wall, and a Lomax fitted to exponential data
+runs to its exponential limit.
 
 ## Details
 

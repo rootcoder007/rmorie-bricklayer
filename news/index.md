@@ -2,7 +2,58 @@
 
 ## rmoriebricklayer 1.0.0
 
+### Standards and the fixes they surfaced
+
+- The package documents the rOpenSci statistical software standards
+  (General, EDA, Time Series) with `srr` tags: 139 met, 29 not
+  applicable, none left to do.
+- The plots over time put the period on its own scale (a number or a
+  `Date`; text at labelled positions) with the unit as the axis title,
+  and take `xlab`, which passed through `...` was an error.
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) of a
+  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  or
+  [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
+  result draws the period across and the change up, with vertical
+  interval bars; groups sit side by side. `gaps = "break"` (the default)
+  breaks a line at a missing value, such as a “no data” year
+  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  inserted, and `gaps = "join"` draws over it.
+- A refusal that several functions share now starts with the name of the
+  function that refused (“anltab: `data` must be a data frame”), and so
+  do the shared argument checks.
+- [`stepchg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stepchg.md)
+  puts `before`, `after` and `difference` back into the units of `y`
+  when the series is above 1e150 (they stayed rescaled), and refuses a
+  numeric or date `x` that is not strictly increasing.
+  [`trndtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trndtst.md)
+  refuses duplicated periods.
+- [`chwkfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwkfit.md)
+  warns when the branching ratio sits on its 0.99 bound.
+- [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  compares ordered-factor periods by level order and completes missing
+  levels; its refusal names every accepted input.
+  [`fylbl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fylbl.md)’s
+  help says a fractional year is an error.
+- Every internal function has a roxygen2 block with `@noRd` (srr G1.4a).
+- Plot labels shrink to no less than 0.6 of the session `cex`
+  ([`?blpal`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blpal.md)).
+- [`cpsatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md),
+  [`cpsbndl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  and their checks take a shared secret (hmac, the attestation recording
+  only its key id), so bundles signed by morie verify with
+  `cpsbndlvrf(key = )`.
+- README: who the package is for, which algorithms re-implement existing
+  packages and are checked against them, the life cycle, and how to run
+  the extended tests.
+
 ### Capsule template and the attestation check
+
+- [`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
+  reports a provenance record that does not parse as a failed
+  `provenance_readable` row with the parser’s message, instead of
+  stopping; the other rows are then run as for a missing record.
+  `morie.capsule.verify()` answers the same way.
 
 - [`usecpstmpl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/usecpstmpl.md)’s
   `analysis.R` pins the source digest into `data_provenance.json` on its
@@ -10,10 +61,13 @@
   [`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
   verifies the capsule from then on. Before, the provenance said the
   digest would be filled in and nothing ever did.
+
 - [`cpschkatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)’s
   `key_as_expected` row says whether the key matched; its detail read
   the same either way.
+
 - The Docker image installs the package and puts `rmbl` on the PATH.
+
 - `capenv()$packages` is a named list, so a manifest written with
   [`wrmnfjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrmnfjs.md)
   keeps the package names; as a named character vector they were written

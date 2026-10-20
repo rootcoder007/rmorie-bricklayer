@@ -68,5 +68,5 @@ ms[c("pct_missing", "n_cols_all_missing")]
 
 # a vector is not a table
 try(misssmry(c(1, NA, 3)))
-#> Error : `data` must be a data frame
+#> Error : misssmry: `data` must be a data frame
 ```

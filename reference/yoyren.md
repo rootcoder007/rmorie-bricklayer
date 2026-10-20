@@ -158,6 +158,6 @@ yoypdf(yoylbl(y, fylbl), p, width = 8.5, height = 11)
 
 # only yoy() tables can be rendered
 try(yoyhtml(d, h))
-#> Error : `x` must be an rmbl_yoy object from yoy()
+#> Error : yoyhtml: `x` must be an rmbl_yoy object from yoy()
 unlink(c(h, p))
 ```

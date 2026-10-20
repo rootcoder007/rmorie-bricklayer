@@ -80,7 +80,9 @@ renaming categories (race, offence type, region) before analysis.</p>
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>A factor or character vector. Other atomic vectors are compared
-by matching the values that <code><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character()</a></code> gives.</p></dd>
+by matching the values that <code><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character()</a></code> gives. Ordered and
+unordered factors are treated the same: both are read through their labels,
+and the result is character either way.</p></dd>
 
 
 <dt id="arg-map">map<a class="anchor" aria-label="anchor" href="#arg-map"></a></dt>

@@ -112,5 +112,5 @@ misspat(scattered, maxpat = 1)
 
 # a frame without columns has no patterns
 try(misspat(data.frame()))
-#> Error : `data` has no columns
+#> Error : misspat: `data` has no columns
 ```

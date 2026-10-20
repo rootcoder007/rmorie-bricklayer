@@ -150,5 +150,5 @@ fit$controls[, c("control", "passed")]
 
 # the statistic must return one finite number
 try(cpsfals(d, function(z) c(1, 2), n = 49))
-#> Error : the statistic must return one finite number; on the data as given it returned something else
+#> Error : cpsfals: the statistic must return one finite number; on the data as given it returned something else
 ```

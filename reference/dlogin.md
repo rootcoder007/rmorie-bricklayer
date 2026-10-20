@@ -158,7 +158,7 @@ Sys.setenv(XDG_CONFIG_HOME = tempfile())   # never touch your real credentials
 try(dlogin(token = "   "))
 #> Error : an empty token cannot be stored
 try(dlogin(email = "not-an-email"))
-#> Error : 'not-an-email' is not an email address
+#> Error : dlogin: 'not-an-email' is not an email address
 
 if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
 

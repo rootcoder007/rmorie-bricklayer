@@ -140,7 +140,7 @@ directory); <code>chnkbytes</code> that is not a positive whole number.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a chunk size must be positive</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">chnkfile</span><span class="op">(</span><span class="va">p</span>, chnkbytes <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `chnkbytes` must be one whole number from 1 to 2147483647</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : chnkfile: `chnkbytes` must be one whole number from 1 to 2147483647</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">p</span>, <span class="va">q</span><span class="op">)</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

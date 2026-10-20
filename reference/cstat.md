@@ -82,7 +82,7 @@ ccorr(1:10, 10:1)            # perfect negative: -1
 
 ## refusals
 try(cmn(c("1", "2")))     # character input is not coerced
-#> Error : `x` must be numeric, got character
+#> Error : cmn: `x` must be numeric, got character
 try(ccorr(1:3, 1:4))         # lengths differ
-#> Error : `x` and `y` must have the same length
+#> Error : ccorr: `x` and `y` must have the same length
 ```

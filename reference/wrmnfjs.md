@@ -82,5 +82,5 @@ identical(readLines(cpath), as.character(mnfcanon(man)))
 
 # the path must be one string
 try(wrmnfjs(man, c("a.json", "b.json")))
-#> Error : `path` must be a single non-empty string
+#> Error : wrmnfjs: `path` must be a single non-empty string
 ```

@@ -82,5 +82,5 @@ print(yoy(d, value = "n", prd = "year"), palette = "safe", color = FALSE)
 
 # a name that is not a palette is refused
 try(print(yoy(d, value = "n", prd = "year"), palette = "rainbow"))
-#> Error : `palette` must be one of "diverging", "safe", "mono", not "rainbow"
+#> Error : print: `palette` must be one of "diverging", "safe", "mono", not "rainbow"
 ```

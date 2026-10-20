@@ -150,5 +150,5 @@ identical(fipsmu(key, "a manifest digest", ctx = "staging"), mu)
 
 # SLH-DSA has no external-mu interface.
 try(fipsmu(fipskg("SLH-DSA-SHA2-128f"), "m"))
-#> Error : external mu is an ML-DSA interface; SLH-DSA-SHA2-128f has no equivalent
+#> Error : fipsmu: external mu is an ML-DSA interface; SLH-DSA-SHA2-128f has no equivalent
 ```

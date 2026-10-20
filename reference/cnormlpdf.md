@@ -81,9 +81,9 @@ sum(cnormlpdf(y, mean = mean(y), sd = stats::sd(y)))
 # A standard deviation of zero has no density, and the parameters are
 # single numbers.
 try(cnormlpdf(1, sd = 0))
-#> Error : `sd` must be a single positive number
+#> Error : cnormlpdf: `sd` must be a single positive number
 try(cnormlpdf(1, mean = c(0, 1)))
-#> Error : `mean` must be a single finite number
+#> Error : cnormlpdf: `mean` must be a single finite number
 try(cnormlpdf("1"))
-#> Error : `x` must be numeric, got character
+#> Error : cnormlpdf: `x` must be numeric, got character
 ```

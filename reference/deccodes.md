@@ -21,7 +21,8 @@ deccodes(x, vlabs, keepna = TRUE)
 - x:
 
   Vector of codes: numeric, integer, character or factor. A factor is
-  read through its labels, not its integer codes.
+  read through its labels, not its integer codes; an ordered factor is
+  treated the same as an unordered one (its level order is not used).
 
 - vlabs:
 

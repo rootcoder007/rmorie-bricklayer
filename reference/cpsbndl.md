@@ -20,7 +20,7 @@ cpsbndl(
 
 cpsbndlrd(path)
 
-cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL)
+cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL, key = NULL)
 ```
 
 ## Arguments
@@ -39,10 +39,16 @@ cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL)
 
 - key:
 
-  A signing key from
+  For `cpsbndl()`, a signing key from
   [`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)
   or
-  [`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md).
+  [`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md),
+  or a shared secret (a string or raw vector) for an `"hmac"` bundle
+  such as morie writes: the attestation then records the key's id, never
+  the secret (see
+  [`cpsatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)).
+  For `cpsbndlvrf()`, the shared secret that checks an `"hmac"` bundle's
+  signature; not used for the other schemes.
 
 - files:
 
@@ -69,16 +75,16 @@ cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL)
 
 - keyexp:
 
-  Optional public key hex the bundle's attestation must carry. Supply it
-  when you know which key should have signed: without it the check
-  confirms the bundle is internally consistent, which any key's holder
-  could arrange.
+  Optional public key hex (for `"hmac"`, the key id) the bundle's
+  attestation must carry. Supply it when you know which key should have
+  signed: without it the check confirms the bundle is internally
+  consistent, which any key's holder could arrange.
 
 ## Value
 
 `cpsbndl()`: the bundle, invisibly, a list of class `bricklayer_bundle`
-with `files` (a list of `path`, `sha256`, `size_bytes`), `mnfdgst`,
-`bundled_utc` and `attestation` (from
+with `files` (a list of `path`, `sha256`, `size_bytes`),
+`manifest_digest`, `bundled_utc` and `attestation` (from
 [`cpsatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)),
 and the path it was written to as attribute `"path"`.
 
@@ -87,7 +93,7 @@ and the path it was written to as attribute `"path"`.
 `cpsbndlvrf()`: a list of class `bricklayer_bundle_check` with `ok`
 (logical) and `checks` (a data frame of `check`, logical `ok` and
 `detail`: one `file:PATH` row per listed file, `no_unlisted_files`, the
-`attestation:` rows and, with a manifest, `mnfdgst`).
+`attestation:` rows and, with a manifest, `manifest_digest`).
 
 ## Details
 
@@ -121,10 +127,10 @@ that is absolute or climbs out of `dir` fails its row), reports every
 file on disk the bundle does not list (the bundle's own file excepted),
 checks the attestation with
 [`cpschkatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)
-(signature, digest, and `keyexp` when given), and, when `man` is given,
-compares its digest with the bundled one. Every check is a row of
-`checks`; `ok` is `TRUE` only when all pass. A failed check is a row,
-not an error.
+(signature, digest, and `keyexp` when given; an `"hmac"` signature needs
+the shared secret as `key`), and, when `man` is given, compares its
+digest with the bundled one. Every check is a row of `checks`; `ok` is
+`TRUE` only when all pass. A failed check is a row, not an error.
 
 Errors: `dir` missing or not a directory; no files to bundle, or a named
 file not in `dir`; a key
@@ -172,7 +178,7 @@ b2
 #> ── Capsule bundle ────────────────────────────────────────────────
 #>   files            1
 #>   manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e4167960781a579
-#>   bundled          2026-10-20T05:47:12Z
+#>   bundled          2026-10-20T07:46:33Z
 #>   scheme           ML-DSA-44
 #> ──────────────────────────────────────────────────────────────────
 cpsbndlvrf(b2, dir, keyexp = "00ff")$ok
@@ -188,8 +194,23 @@ cpsbndlvrf(b2, dir)$checks[, c("check", "ok")]
 #> 4      attestation:manifest_digest  TRUE
 #> 5            attestation:signature  TRUE
 
+# a bundle signed with a shared secret (hmac), as morie signs
+dir2 <- tempfile()
+dir.create(dir2)
+writeLines("x,y", file.path(dir2, "d.csv"))
+h <- cpsbndl(dir2, m, "shared-secret")
+h$attestation$public  # the key id, not the secret
+#> [1] "4e289ef69cbe6f4c0d7de16c0801ad1155aba1598f2f4b25cddb46880caacd60"
+cpsbndlvrf(attr(h, "path"), dir2, key = "shared-secret",
+           keyexp = h$attestation$public)$ok
+#> [1] TRUE
+# without the secret the signature row cannot pass
+cpsbndlvrf(attr(h, "path"), dir2)$ok
+#> [1] FALSE
+unlink(dir2, recursive = TRUE)
+
 # a directory that does not exist
 try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))
-#> Error : `dir` does not exist: /tmp/RtmpI9BrEE/no-such-capsule
+#> Error : `dir` does not exist: /tmp/RtmpBBH8ci/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```

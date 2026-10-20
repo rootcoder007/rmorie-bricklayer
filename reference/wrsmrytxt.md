@@ -105,5 +105,5 @@ tail(readLines(s), 6)
 
 # the manifest has to be a list
 try(wrsmrytxt("demo", out, paths = list()))
-#> Error : `man` must be a manifest from mkmnf()
+#> Error : wrsmrytxt: `man` must be a manifest from mkmnf()
 ```

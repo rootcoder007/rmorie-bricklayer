@@ -102,13 +102,13 @@ to two digits, as in <code>"2022/23"</code>; <code>FALSE</code> writes it in ful
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Each value is converted with <code>as.integer(as.character(endyear))</code>,
-so a string such as <code>"2023"</code> works and a fractional number is
-truncated (2023.7 gives <code>"2022/23"</code>). The label is
+so a string such as <code>"2023"</code> works; a fractional number is refused
+rather than truncated (2023.7 is an error). The label is
 <code>(y - 1)</code>, <code>sep</code>, then <code>y</code> itself or its last two digits.
 Values that cannot be read as a year give <code>NA</code>. The two-digit form
 is unambiguous within a century (2000 gives <code>"1999/00"</code>).</p>
 <p>Errors: <code>endyear</code> that is neither numeric nor character (for
-example logical); a numeric year below 1.</p>
+example logical); a numeric year below 1; a numeric year that is not whole.</p>
     </div>
 
     <div class="section level2">

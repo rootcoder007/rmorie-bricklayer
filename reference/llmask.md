@@ -160,7 +160,7 @@ Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
 
 # arguments are checked before any route is resolved
 try(llmask(c("two", "questions")))
-#> Error : `prompt` must be a single non-empty string
+#> Error : llmask: `prompt` must be a single non-empty string
 
 # a provider named explicitly without its key
 try(llmask("What is a capsule?", route = "anthropic"))

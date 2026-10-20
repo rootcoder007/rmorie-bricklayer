@@ -182,6 +182,6 @@ chnhead(ch2)
 
 # only chains are accepted
 try(chnvrf(list(entries = list())))
-#> Error : `chain` must come from chnnew()
+#> Error : chnvrf: `chain` must come from chnnew()
 options(op)
 ```

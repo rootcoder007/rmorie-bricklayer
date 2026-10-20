@@ -89,5 +89,5 @@ citecps(NULL)
 
 # anything else that is not a list is an error
 try(citecps("data-on-inmates-in-ontario"))
-#> Error : `prov` must be a provenance list (loadprov())
+#> Error : citecps: `prov` must be a provenance list (loadprov())
 ```

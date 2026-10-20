@@ -70,7 +70,7 @@ together with proof that its manifest has not changed since you signed it.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cpsatst</span><span class="op">(</span><span class="va">man</span>, <span class="va">key</span>, ctx <span class="op">=</span> <span class="cn">NULL</span>, prehash <span class="op">=</span> <span class="st">"none"</span>, note <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">cpschkatst</span><span class="op">(</span><span class="va">attest</span>, <span class="va">man</span>, keyexp <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">cpschkatst</span><span class="op">(</span><span class="va">attest</span>, <span class="va">man</span>, keyexp <span class="op">=</span> <span class="cn">NULL</span>, key <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -82,9 +82,12 @@ together with proof that its manifest has not changed since you signed it.</p>
 
 
 <dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
-<dd><p>A signing key from <code><a href="fipskg.html">fipskg()</a></code> (ML-DSA,
+<dd><p>For <code>cpsatst()</code>, a signing key from <code><a href="fipskg.html">fipskg()</a></code> (ML-DSA,
 SLH-DSA and the
-other standardised schemes) or <code><a href="pqckg.html">pqckg()</a></code> (XMSS).</p></dd>
+other standardised schemes) or <code><a href="pqckg.html">pqckg()</a></code> (XMSS), or a shared secret
+(a string or raw vector) for <code>"hmac"</code>. For <code>cpschkatst()</code>,
+the shared secret that checks an <code>"hmac"</code> attestation; it is not
+used for the other schemes, whose public key the attestation carries.</p></dd>
 
 
 <dt id="arg-ctx">ctx<a class="anchor" aria-label="anchor" href="#arg-ctx"></a></dt>
@@ -154,10 +157,23 @@ key from <code><a href="pqckg.html">pqckg()</a></code> the scheme is <code>"xmss
 and the context
 and pre-hash are not used by the signature; signing uses up one of the
 key's one-time indices, as every XMSS signature does.</p>
+<p>With a shared secret (a string or raw vector) as <code>key</code> the scheme
+is <code>"hmac"</code>: HMAC-SHA-256 under that secret, as
+<code>cpssign(scheme = "hmac")</code>. <code>public</code> is then a key id, the hex
+of HMAC-SHA-256 of the string <code>"public"</code> under the secret: it names
+the key, so <code>keyexp</code> can pin it, without revealing it. The secret
+itself is never recorded, so checking needs it again (<code>key</code> in
+<code>cpschkatst()</code>). <code>context</code> is <code>""</code> and <code>prehash</code>
+<code>"none"</code>, the bytes morie's capsule signer writes. HMAC is
+symmetric: anyone who can check the signature can also make one. It is
+not one of the post-quantum signature schemes and carries none of their
+guarantees.</p>
 <p>The check, one row each: <code>attestation_complete</code> (every field is
-present), <code>mnfdgst</code> (the manifest's digest equals the attested
+present), <code>manifest_digest</code> (the manifest's digest equals the attested
 one), <code>key_as_expected</code> (only when <code>keyexp</code> is given) and
-<code>signature</code> (the signature verifies under the attested public key).
+<code>signature</code> (the signature verifies under the attested public key;
+for <code>"hmac"</code>, under <code>key</code>, whose key id must equal
+<code>public</code>).
 <code>ok</code> is <code>TRUE</code> when every row passes.</p>
 <p>What it does NOT establish. That the public key belongs to whoever you
 think it does: an attestation is only as good as the channel the key
@@ -168,9 +184,10 @@ seal is recorded;
 to attest a run history, sign <code><a href="chn.html">chnseal()</a></code> directly.</p>
 <p>Errors: <code>man</code> not a list; <code>key</code> not from
 <code><a href="fipskg.html">fipskg()</a></code>
-or <code><a href="pqckg.html">pqckg()</a></code>; an invalid <code>prehash</code> or
+or <code><a href="pqckg.html">pqckg()</a></code> and not a non-empty string or raw vector; an invalid
+<code>prehash</code> or
 <code>ctx</code> (from
-<code><a href="cpssign.html">cpssign()</a></code>); <code>attestation</code> not from
+<code><a href="cpssign.html">cpssign()</a></code>), or either given with an hmac key; <code>attestation</code> not from
 <code>cpsatst()</code>. A
 signature that fails to verify is a failed row, not an error.</p>
     </div>
@@ -196,8 +213,8 @@ signature that fails to verify is a failed row, not an error.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   context     &lt;none&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   prehash     none</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   note        counts as published</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   signed      2026-10-20T05:47:12Z</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   public key  54e25baf1402e4ab92be997511fbd076... (1952 bytes)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   signed      2026-10-20T07:46:32Z</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   public key  79e118ac657bd6992bd586d583fc9253... (1952 bytes)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a verifier needs the attestation and the manifest, nothing else</span></span></span>
@@ -240,9 +257,25 @@ signature that fails to verify is a failed row, not an error.</p>
 <span class="r-in"><span><span class="fu">cpschkatst</span><span class="op">(</span><span class="va">att2</span>, <span class="va">m</span>, keyexp <span class="op">=</span> <span class="va">key</span><span class="op">)</span><span class="op">$</span><span class="va">ok</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a shared secret signs with hmac; `public` is its key id, not the secret</span></span></span>
+<span class="r-in"><span><span class="va">att3</span> <span class="op">&lt;-</span> <span class="fu">cpsatst</span><span class="op">(</span><span class="va">m</span>, <span class="st">"shared-secret"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">att3</span><span class="op">$</span><span class="va">public</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "4e289ef69cbe6f4c0d7de16c0801ad1155aba1598f2f4b25cddb46880caacd60"</span>
+<span class="r-in"><span><span class="fu">cpschkatst</span><span class="op">(</span><span class="va">att3</span>, <span class="va">m</span>, key <span class="op">=</span> <span class="st">"shared-secret"</span>, keyexp <span class="op">=</span> <span class="va">att3</span><span class="op">$</span><span class="va">public</span><span class="op">)</span><span class="op">$</span><span class="va">ok</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span><span class="fu">cpschkatst</span><span class="op">(</span><span class="va">att3</span>, <span class="va">m</span>, key <span class="op">=</span> <span class="st">"another-secret"</span><span class="op">)</span><span class="op">$</span><span class="va">checks</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"check"</span>, <span class="st">"ok"</span>, <span class="st">"detail"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  check    ok</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 attestation_complete  TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2      manifest_digest  TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3            signature FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                             detail</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1                                                                 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 efa1b7387f225380245de0b5170999e87ad4044f3e8fd2ef6a6bfbc2bd0a9c90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3               the key given is not the key the attestation names</span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a key that is not a signing key is refused</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cpsatst</span><span class="op">(</span><span class="va">m</span>, <span class="st">"not-a-key"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `key` must come from fipskg() or pqckg()</span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cpsatst</span><span class="op">(</span><span class="va">m</span>, <span class="fl">42</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `key` must come from fipskg() or pqckg(), or be a shared secret (a string or raw vector) for hmac</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -140,11 +140,11 @@ character, factor or list <code>x</code> is refused (<code>"must be numeric"</co
 <span class="r-in"><span><span class="co"># A standard deviation of zero has no density, and the parameters are</span></span></span>
 <span class="r-in"><span><span class="co"># single numbers.</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cnormlpdf</span><span class="op">(</span><span class="fl">1</span>, sd <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `sd` must be a single positive number</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cnormlpdf: `sd` must be a single positive number</span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cnormlpdf</span><span class="op">(</span><span class="fl">1</span>, mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `mean` must be a single finite number</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cnormlpdf: `mean` must be a single finite number</span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cnormlpdf</span><span class="op">(</span><span class="st">"1"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `x` must be numeric, got character</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cnormlpdf: `x` must be numeric, got character</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

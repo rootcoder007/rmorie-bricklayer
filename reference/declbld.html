@@ -80,7 +80,9 @@ source program's reference category.</p>
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>A vector with a <code>labels</code> attribute (as produced by haven),
-or a plain vector of codes when <code>vlabs</code> is supplied.</p></dd>
+or a plain vector of codes when <code>vlabs</code> is supplied. A factor,
+ordered or not, is read through its integer codes; the result is an
+unordered factor whose levels follow the codes.</p></dd>
 
 
 <dt id="arg-vlabs">vlabs<a class="anchor" aria-label="anchor" href="#arg-vlabs"></a></dt>

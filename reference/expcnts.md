@@ -126,5 +126,5 @@ stdinc(e$observed, e$expected, area = e$area)
 
 # a population of zero has no rate
 try(expcnts(c(1, 2), c(10, 0), c("a", "b")))
-#> Error : `pop` must be positive
+#> Error : expcnts: `pop` must be positive
 ```

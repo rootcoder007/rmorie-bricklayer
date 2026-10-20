@@ -101,5 +101,5 @@ ncol(drpconst(x, naasval = TRUE))
 
 # only data frames
 try(drpempty(c(1, NA)))
-#> Error : `data` must be a data frame
+#> Error : drpempty: `data` must be a data frame
 ```

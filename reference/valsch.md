@@ -164,5 +164,5 @@ names(valsch(data.frame(id = 1:2), list(schema = sch)))
 
 # the data must be a data frame
 try(valsch(list(id = 1), prov))
-#> Error : `dfraw` must be a data frame
+#> Error : valsch: `dfraw` must be a data frame
 ```

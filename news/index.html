@@ -49,14 +49,29 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.0" id="rmoriebricklayer-100">rmoriebricklayer 1.0.0<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-100"></a></h2>
 <div class="section level3">
+<h3 id="standards-and-the-fixes-they-surfaced-1-0-0">Standards and the fixes they surfaced<a class="anchor" aria-label="anchor" href="#standards-and-the-fixes-they-surfaced-1-0-0"></a></h3>
+<ul><li>The package documents the rOpenSci statistical software standards (General, EDA, Time Series) with <code>srr</code> tags: 139 met, 29 not applicable, none left to do.</li>
+<li>The plots over time put the period on its own scale (a number or a <code>Date</code>; text at labelled positions) with the unit as the axis title, and take <code>xlab</code>, which passed through <code>...</code> was an error. <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> of a <code><a href="../reference/yoy.html">yoy()</a></code> or <code><a href="../reference/ratechg.html">ratechg()</a></code> result draws the period across and the change up, with vertical interval bars; groups sit side by side. <code>gaps = "break"</code> (the default) breaks a line at a missing value, such as a “no data” year <code><a href="../reference/yoy.html">yoy()</a></code> inserted, and <code>gaps = "join"</code> draws over it.</li>
+<li>A refusal that several functions share now starts with the name of the function that refused (“anltab: <code>data</code> must be a data frame”), and so do the shared argument checks.</li>
+<li>
+<code><a href="../reference/stepchg.html">stepchg()</a></code> puts <code>before</code>, <code>after</code> and <code>difference</code> back into the units of <code>y</code> when the series is above 1e150 (they stayed rescaled), and refuses a numeric or date <code>x</code> that is not strictly increasing. <code><a href="../reference/trndtst.html">trndtst()</a></code> refuses duplicated periods.</li>
+<li>
+<code><a href="../reference/chwkfit.html">chwkfit()</a></code> warns when the branching ratio sits on its 0.99 bound.</li>
+<li>
+<code><a href="../reference/yoy.html">yoy()</a></code> compares ordered-factor periods by level order and completes missing levels; its refusal names every accepted input. <code><a href="../reference/fylbl.html">fylbl()</a></code>’s help says a fractional year is an error.</li>
+<li>Every internal function has a roxygen2 block with <code>@noRd</code> (srr G1.4a).</li>
+<li>Plot labels shrink to no less than 0.6 of the session <code>cex</code> (<code><a href="../reference/blpal.html">?blpal</a></code>).</li>
+<li>
+<code><a href="../reference/cpsatst.html">cpsatst()</a></code>, <code><a href="../reference/cpsbndl.html">cpsbndl()</a></code> and their checks take a shared secret (hmac, the attestation recording only its key id), so bundles signed by morie verify with <code>cpsbndlvrf(key = )</code>.</li>
+<li>README: who the package is for, which algorithms re-implement existing packages and are checked against them, the life cycle, and how to run the extended tests.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="capsule-template-and-the-attestation-check-1-0-0">Capsule template and the attestation check<a class="anchor" aria-label="anchor" href="#capsule-template-and-the-attestation-check-1-0-0"></a></h3>
-<ul><li>
-<code><a href="../reference/usecpstmpl.html">usecpstmpl()</a></code>’s <code>analysis.R</code> pins the source digest into <code>data_provenance.json</code> on its first run (<code>source$sha256</code> and a <code>resource</code> block), so <code><a href="../reference/vrfcps.html">vrfcps()</a></code> verifies the capsule from then on. Before, the provenance said the digest would be filled in and nothing ever did.</li>
-<li>
-<code><a href="../reference/cpsatst.html">cpschkatst()</a></code>’s <code>key_as_expected</code> row says whether the key matched; its detail read the same either way.</li>
-<li>The Docker image installs the package and puts <code>rmbl</code> on the PATH.</li>
-<li>
-<code>capenv()$packages</code> is a named list, so a manifest written with <code><a href="../reference/wrmnfjs.html">wrmnfjs()</a></code> keeps the package names; as a named character vector they were written as a bare array of versions.</li>
+<ul><li><p><code><a href="../reference/vrfcps.html">vrfcps()</a></code> reports a provenance record that does not parse as a failed <code>provenance_readable</code> row with the parser’s message, instead of stopping; the other rows are then run as for a missing record. <code>morie.capsule.verify()</code> answers the same way.</p></li>
+<li><p><code><a href="../reference/usecpstmpl.html">usecpstmpl()</a></code>’s <code>analysis.R</code> pins the source digest into <code>data_provenance.json</code> on its first run (<code>source$sha256</code> and a <code>resource</code> block), so <code><a href="../reference/vrfcps.html">vrfcps()</a></code> verifies the capsule from then on. Before, the provenance said the digest would be filled in and nothing ever did.</p></li>
+<li><p><code><a href="../reference/cpsatst.html">cpschkatst()</a></code>’s <code>key_as_expected</code> row says whether the key matched; its detail read the same either way.</p></li>
+<li><p>The Docker image installs the package and puts <code>rmbl</code> on the PATH.</p></li>
+<li><p><code>capenv()$packages</code> is a named list, so a manifest written with <code><a href="../reference/wrmnfjs.html">wrmnfjs()</a></code> keeps the package names; as a named character vector they were written as a bare array of versions.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="short-names-1-0-0">Short names<a class="anchor" aria-label="anchor" href="#short-names-1-0-0"></a></h3>

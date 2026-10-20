@@ -93,7 +93,7 @@ str(llmrte())
 try(llmrte("hosted"))
 #> Error : the hosted MORIE language-model tier is retired: bring your own key (a provider's variable such as ANTHROPIC_API_KEY or OPENAI_API_KEY, or `rmoriebricklayer config set <provider>.key`) or run a model locally (Ollama); `rmoriebricklayer config setup` walks through it
 try(llmrte("nope"))
-#> Error : `route` must be one of "auto", "own", "openai", "anthropic", "gemini", "openrouter", "groq", "together", "fireworks", "deepseek", "mistral", "xai", "cerebras", "perplexity", "huggingface", "opencode", "cohere", "nvidia", "ollama", not "nope"
+#> Error : llmrte: `route` must be one of "auto", "own", "openai", "anthropic", "gemini", "openrouter", "groq", "together", "fireworks", "deepseek", "mistral", "xai", "cerebras", "perplexity", "huggingface", "opencode", "cohere", "nvidia", "ollama", not "nope"
 
 for (v in names(old)) {
   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))

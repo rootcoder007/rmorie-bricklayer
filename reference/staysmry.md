@@ -77,5 +77,5 @@ staysmry(stays, conflvl = 0.90)[, c("mean", "lower", "upper")]
 
 # a confidence level of 1 is refused
 try(staysmry(stays, conflvl = 1))
-#> Error : `conflvl` must be a single number strictly between 0 and 1
+#> Error : staysmry: `conflvl` must be a single number strictly between 0 and 1
 ```

@@ -90,5 +90,5 @@ all.equal(cspr(x, y), cspr(exp(x), log(y)))
 cmidrk(c(3, NA, 1, 3))
 #> [1] 2.5  NA 1.0 2.5
 try(cspr(1:3, 1:4))
-#> Error : `x` and `y` must have the same length
+#> Error : cspr: `x` and `y` must have the same length
 ```

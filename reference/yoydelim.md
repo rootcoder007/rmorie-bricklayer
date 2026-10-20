@@ -150,5 +150,5 @@ read.csv(f, comment.char = "#")[, c("year", "pctchg", "flag")]
 
 # only yoy() results are accepted
 try(yoycsv(d, NULL))
-#> Error : `x` must be an rmbl_yoy object from yoy()
+#> Error : yoycsv: `x` must be an rmbl_yoy object from yoy()
 ```

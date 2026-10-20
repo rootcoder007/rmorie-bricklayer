@@ -74,5 +74,5 @@ stats::binom.test(45, 75)$p.value
 
 # anything that is not a yoy() table is refused
 try(yoypv(seg))
-#> Error : `y` must come from yoy()
+#> Error : yoypv: `y` must come from yoy()
 ```

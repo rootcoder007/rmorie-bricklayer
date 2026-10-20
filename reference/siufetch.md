@@ -78,7 +78,7 @@ reached.
 try(siufetch(1.5, tempfile(fileext = ".html")))
 #> Error : `drid` must be one positive report number (the drid in the SIU report URL)
 try(siufetch(648, tempfile(fileext = ".html"), lang = "de"))
-#> Error : `lang` must be one of "en", "fr", not "de"
+#> Error : siufetch: `lang` must be one of "en", "fr", not "de"
 
 # a real fetch needs the network (the SIU site or the Wayback Machine)
 

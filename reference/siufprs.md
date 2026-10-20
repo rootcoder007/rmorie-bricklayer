@@ -50,7 +50,7 @@ Errors: `drid` that is not one positive whole number; `lang` other than
 try(siufprs("abc"))
 #> Error : `drid` must be one positive report number (the drid in the SIU report URL)
 try(siufprs(648, lang = "de"))
-#> Error : `lang` must be one of "en", "fr", not "de"
+#> Error : siufprs: `lang` must be one of "en", "fr", not "de"
 
 if (FALSE) { # interactive()
 # needs the network: downloads report 648 from the SIU site

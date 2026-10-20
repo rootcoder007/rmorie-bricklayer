@@ -75,7 +75,7 @@ the files on disk and checks everything against it.</p>
 <span></span>
 <span><span class="fu">cpsbndlrd</span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">cpsbndlvrf</span><span class="op">(</span><span class="va">bundle</span>, <span class="va">dir</span>, man <span class="op">=</span> <span class="cn">NULL</span>, keyexp <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">cpsbndlvrf</span><span class="op">(</span><span class="va">bundle</span>, <span class="va">dir</span>, man <span class="op">=</span> <span class="cn">NULL</span>, keyexp <span class="op">=</span> <span class="cn">NULL</span>, key <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -95,9 +95,13 @@ still has the bundled digest.</p></dd>
 
 
 <dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
-<dd><p>A signing key from
+<dd><p>For <code>cpsbndl()</code>, a signing key from
 <code><a href="fipskg.html">fipskg()</a></code> or
-<code><a href="pqckg.html">pqckg()</a></code>.</p></dd>
+<code><a href="pqckg.html">pqckg()</a></code>, or a shared secret (a string or raw vector) for an <code>"hmac"</code>
+bundle such as morie writes: the attestation then records the key's id,
+never the secret (see <code><a href="cpsatst.html">cpsatst()</a></code>). For <code>cpsbndlvrf()</code>, the shared
+secret that checks an <code>"hmac"</code> bundle's signature; not used for the
+other schemes.</p></dd>
 
 
 <dt id="arg-files">files<a class="anchor" aria-label="anchor" href="#arg-files"></a></dt>
@@ -124,7 +128,7 @@ overwritten).</p>
 
 
 <dt id="arg-keyexp">keyexp<a class="anchor" aria-label="anchor" href="#arg-keyexp"></a></dt>
-<dd><p>Optional public key hex the
+<dd><p>Optional public key hex (for <code>"hmac"</code>, the key id) the
 bundle's attestation must carry. Supply it when you know which key
 should have signed: without it the check confirms the bundle is
 internally consistent, which any key's holder could arrange.</p></dd>
@@ -134,7 +138,7 @@ internally consistent, which any key's holder could arrange.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>cpsbndl()</code>: the bundle, invisibly, a list of class
 <code>bricklayer_bundle</code> with <code>files</code> (a list of <code>path</code>, <code>sha256</code>,
-<code>size_bytes</code>), <code>mnfdgst</code>, <code>bundled_utc</code> and <code>attestation</code>
+<code>size_bytes</code>), <code>manifest_digest</code>, <code>bundled_utc</code> and <code>attestation</code>
 (from
 <code><a href="cpsatst.html">cpsatst()</a></code>), and the path it was written to as
 attribute
@@ -144,7 +148,7 @@ attribute
 <code>ok</code> (logical) and <code>checks</code> (a data frame of <code>check</code>, logical <code>ok</code>
 and
 <code>detail</code>: one <code>file:PATH</code> row per listed file, <code>no_unlisted_files</code>, the
-<code>attestation:</code> rows and, with a manifest, <code>mnfdgst</code>).</p>
+<code>attestation:</code> rows and, with a manifest, <code>manifest_digest</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -173,7 +177,8 @@ itself. A progress bar is shown when <code>options(morie.progress)</code> allows
 every file on disk the bundle does not list (the bundle's own file
 excepted), checks the attestation with
 <code><a href="cpsatst.html">cpschkatst()</a></code>
-(signature, digest, and <code>keyexp</code> when given), and, when <code>man</code>
+(signature, digest, and <code>keyexp</code> when given; an <code>"hmac"</code>
+signature needs the shared secret as <code>key</code>), and, when <code>man</code>
 is given, compares its digest with the bundled one. Every check is a row of
 <code>checks</code>; <code>ok</code> is <code>TRUE</code> only when all pass. A failed check is a row,
 not
@@ -224,7 +229,7 @@ Reading a bundle whose signature records a stateful key's state warns (see
 <span class="r-out co"><span class="r-pr">#&gt;</span> ── Capsule bundle ────────────────────────────────────────────────</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   files            1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e4167960781a579</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   bundled          2026-10-20T05:47:12Z</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   bundled          2026-10-20T07:46:33Z</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   scheme           ML-DSA-44</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
 <span class="r-in"><span><span class="fu">cpsbndlvrf</span><span class="op">(</span><span class="va">b2</span>, <span class="va">dir</span>, keyexp <span class="op">=</span> <span class="st">"00ff"</span><span class="op">)</span><span class="op">$</span><span class="va">ok</span></span></span>
@@ -240,9 +245,24 @@ Reading a bundle whose signature records a stateful key's state warns (see
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4      attestation:manifest_digest  TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5            attestation:signature  TRUE</span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a bundle signed with a shared secret (hmac), as morie signs</span></span></span>
+<span class="r-in"><span><span class="va">dir2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">dir2</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="st">"x,y"</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">dir2</span>, <span class="st">"d.csv"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">h</span> <span class="op">&lt;-</span> <span class="fu">cpsbndl</span><span class="op">(</span><span class="va">dir2</span>, <span class="va">m</span>, <span class="st">"shared-secret"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">h</span><span class="op">$</span><span class="va">attestation</span><span class="op">$</span><span class="va">public</span>  <span class="co"># the key id, not the secret</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "4e289ef69cbe6f4c0d7de16c0801ad1155aba1598f2f4b25cddb46880caacd60"</span>
+<span class="r-in"><span><span class="fu">cpsbndlvrf</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">h</span>, <span class="st">"path"</span><span class="op">)</span>, <span class="va">dir2</span>, key <span class="op">=</span> <span class="st">"shared-secret"</span>,</span></span>
+<span class="r-in"><span>           keyexp <span class="op">=</span> <span class="va">h</span><span class="op">$</span><span class="va">attestation</span><span class="op">$</span><span class="va">public</span><span class="op">)</span><span class="op">$</span><span class="va">ok</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span><span class="co"># without the secret the signature row cannot pass</span></span></span>
+<span class="r-in"><span><span class="fu">cpsbndlvrf</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">h</span>, <span class="st">"path"</span><span class="op">)</span>, <span class="va">dir2</span><span class="op">)</span><span class="op">$</span><span class="va">ok</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">dir2</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a directory that does not exist</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cpsbndl</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"no-such-capsule"</span><span class="op">)</span>, <span class="va">m</span>, <span class="va">key</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `dir` does not exist: /tmp/RtmpI9BrEE/no-such-capsule</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `dir` does not exist: /tmp/RtmpBBH8ci/no-such-capsule</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
