@@ -80,6 +80,6 @@ Synthetic difference-in-differences. American Economic Review
 p <- polex()
 p1 <- p[is.na(p$refmonth) | p$refmonth == 13, ]
 syndid(p1, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1)
-#> Synthetic difference in differences: -3.126 (jackknife s.e. 0.2474; -3.611 to -2.641)
+#> Synthetic difference in differences: -3.126 (jackknife s.e. 0.2473; -3.611 to -2.641)
 #> Unit weights: D12 0.203, D16 0.200, D08 0.200, D20 0.199, D04 0.198 
 ```
