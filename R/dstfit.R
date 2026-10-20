@@ -214,7 +214,7 @@
 #' @param seed Whole number, default 1: the seed of the bootstrap.
 #' @param k Whole number or `NULL`: the upper order statistics of the Hill
 #'   estimate.
-#' @param object,... For `print()` and `plot()`: see
+#' @param ... For `print()` and `plot()`: see
 #'   [plot.rmbl_dstfit()].
 #' @return A list of class `c("rmbl_dstfit", "list")`:
 #'   \describe{

@@ -719,6 +719,9 @@ print.rmbl_opteffort <- function(x, ...) {
 }
 
 #' @rdname plot-methods
+#' @param equiv Whether to draw the equivalent definite-range rectangle and the A and B areas
+#'   (figure 4-7 of the book).
+#' @param spacing NULL, or the distance to a second track, drawn beside the first.
 #' @usage \method{plot}{rmbl_ltrlrng}(x, ..., equiv = FALSE, spacing = NULL,
 #'   main = NULL, col = NULL, palette = NULL)
 #' @export
@@ -783,6 +786,10 @@ plot.rmbl_ltrlrng <- function(x, ..., equiv = FALSE, spacing = NULL, main = NULL
 }
 
 #' @rdname plot-methods
+#' @param models Model codes ("random", "definite", "invcube", "mbeta"), one curve each; NULL
+#'   draws the fitted model.
+#' @param m M-Beta heights, one curve each when "mbeta" is among the models.
+#' @param cmax The largest coverage drawn.
 #' @usage \method{plot}{rmbl_srchpod}(x, ..., models = NULL, m = NULL, cmax = NULL,
 #'   main = NULL, col = NULL, palette = NULL)
 #' @export
@@ -948,6 +955,9 @@ plot.rmbl_srchpod <- function(x, ..., models = NULL, m = NULL, cmax = NULL, main
 }
 
 #' @rdname plot-methods
+#' @param view "map" (the top view), "persp" (the surface), "both" (side by side,
+#'   in the book's colour bands) or "cells" (the probability map as a grid of percentages).
+#' @param digits Decimal places of the percentages in the "cells" view.
 #' @usage \method{plot}{rmbl_datummap}(x, ..., view = c("map", "persp", "both", "cells"),
 #'   contours = 8L, digits = 2, main = NULL, col = NULL, palette = NULL)
 #' @export

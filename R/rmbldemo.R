@@ -229,7 +229,7 @@ rmbldemo <- function(name = NULL) {
 .bl_demo_fnmi <- function() {
   ind <- c("Perceived mental health, very good or excellent", "Perceived health, very good or excellent",
            "Has a regular health care provider", "Daily smoker")
-  grp <- c("First Nations", "Métis", "Inuit", "Non-Indigenous")
+  grp <- c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous")
   age <- c("Total, 18 years and over", "18 to 34 years", "35 to 54 years", "55 years and over")
   d <- expand.grid(age = age, indicator = ind, group = grp, period = c("2015/2018", "2019/2022"),
                    stringsAsFactors = FALSE)[, c("period", "group", "age", "indicator")]

@@ -250,8 +250,10 @@ srchfig <- function(fig = NULL, num = NULL, seed = 1, main = NULL) {
   graphics::lines(R * cos(a), R * sin(a), col = "#1F2430", lwd = 1.5)
   graphics::points(0, 0, pch = 13, cex = 1.6)
   graphics::arrows(0, 0, R * cos(pi / 4), -R * sin(pi / 4), length = 0.08)
-  graphics::text(R * 0.45, -R * 0.2, lab, cex = 0.9)
-  graphics::text(c(-R, R), -R, c(paste0("-", lab), paste0("+", lab)), pos = 1, cex = 0.8, xpd = NA)
+  # `lab` is plotmath ("sigma", "E", "1.1*E"): Greek letters as text do not survive a C-locale device
+  graphics::text(R * 0.45, -R * 0.2, str2expression(lab), cex = 0.9)
+  graphics::text(c(-R, R), -R, str2expression(c(paste0("-", lab), paste0("+", lab))), pos = 1, cex = 0.8,
+                 xpd = NA)
   graphics::text(1.25 * R, c(0.6, 0.25) * R, sprintf("%s POC = %.0f%%", c("Square:", "Circle:"),
                                                      100 * poc[c("square", "circle")]), pos = 4, cex = 0.9)
   .bl_title(ttl)
@@ -270,9 +272,9 @@ srchfig <- function(fig = NULL, num = NULL, seed = 1, main = NULL) {
   both <- function(m) plot(m, view = "both", main = ttl)
   switch(fig,
     "3-1" = both(datumpmap(g, g)),
-    "3-2" = .sr_fig_circsq(1, "\u03c3", ttl),
+    "3-2" = .sr_fig_circsq(1, "sigma", ttl),
     "3-3" = .sr_fig_circsq(E, "E", ttl),
-    "3-5" = .sr_fig_circsq(1.1 * E, "1.1E", ttl),
+    "3-5" = .sr_fig_circsq(1.1 * E, "1.1*E", ttl),
     "3-4" = {
       m <- datumpmap(c(-3, -1, 1, 3) * E, c(-3, -1, 1, 3) * E)
       op <- .bl_par()
@@ -391,7 +393,7 @@ srchfig <- function(fig = NULL, num = NULL, seed = 1, main = NULL) {
         if (k == 2L) {
           graphics::text(c(-1, 1), -0.05, c("-rmax", "+rmax"), pos = 1, cex = 0.7, offset = 0.2)
           graphics::arrows(-1, -0.45, 1, -0.45, length = 0.05, code = 3)
-          graphics::text(0, -0.45, "\u03b2", pos = 1, cex = 0.8, offset = 0.3)
+          graphics::text(0, -0.45, expression(beta), pos = 1, cex = 0.8, offset = 0.3)
           graphics::text(0, 0.5, "M 0.5", pos = 3, cex = 0.7)
         }
         graphics::mtext(LETTERS[k], side = 1, line = 2, font = 2, cex = 1.1)
@@ -426,7 +428,7 @@ srchfig <- function(fig = NULL, num = NULL, seed = 1, main = NULL) {
       cx <- r + 0.35
       graphics::segments(r, 0, cx, h * (1 - cx / (r + a)) + 0.02, lty = 2)
       graphics::text(c(-0.3, -0.5, 4, 0, r - 0.9, cx - 0.2, 4.5), c(h + 0.3, h / 2, 2.4, -0.5, 0.9, 0.55, -0.5),
-                     c("O", "h", "s", "A", "\u03b1", "c", "r"), font = 2)
+                     expression(bold(O), bold(h), bold(s), bold(A), bold(alpha), bold(c), bold(r)))
       graphics::arrows(r + 0.6, -0.5, c(r, r + a), -0.5, length = 0.06)
       graphics::text(r + a / 2 + 0.3, -0.75, "a", font = 2)
       # the same in perspective: the observer, the wake a by b and the solid angle it subtends
@@ -446,8 +448,8 @@ srchfig <- function(fig = NULL, num = NULL, seed = 1, main = NULL) {
       graphics::text((o$x + wk$x[1]) / 2, (o$y + wk$y[1]) / 2, "s", pos = 2, font = 2)
       graphics::text(mean(wk$x[1:2]), mean(wk$y[1:2]), "a", pos = 1, font = 2)
       graphics::text(mean(wk$x[2:3]), mean(wk$y[2:3]), "b", pos = 4, font = 2)
-      graphics::text(mean(c(o$x, wk$x[1:2])), mean(c(o$y, wk$y[1:2])), "\u03b1", font = 2)
-      graphics::text(mean(c(o$x, wk$x[2:3])), mean(c(o$y, wk$y[2:3])), "\u03b2", font = 2)
+      graphics::text(mean(c(o$x, wk$x[1:2])), mean(c(o$y, wk$y[1:2])), expression(bold(alpha)))
+      graphics::text(mean(c(o$x, wk$x[2:3])), mean(c(o$y, wk$y[2:3])), expression(bold(beta)))
       graphics::mtext(ttl, side = 3, outer = TRUE, font = 2, line = 0.5)
       data.frame(h = h, r = r, a = a, solid = a * h / (h^2 + r^2)^1.5)
     }

@@ -25,7 +25,7 @@ level.}
 \item{k}{Whole number or \code{NULL}: the upper order statistics of the Hill
 estimate.}
 
-\item{object, ...}{For \code{print()} and \code{plot()}: see
+\item{...}{For \code{print()} and \code{plot()}: see
 \code{\link[=plot.rmbl_dstfit]{plot.rmbl_dstfit()}}.}
 }
 \value{

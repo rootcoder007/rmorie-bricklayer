@@ -412,6 +412,23 @@ capped bars, dashed reference lines).}
 
 \item{refline}{Where the vertical reference line goes (default \code{-0.5},
 between the reference period and adoption; \code{0} puts it at adoption).}
+
+\item{equiv}{Whether to draw the equivalent definite-range rectangle and the A and B areas
+(figure 4-7 of the book).}
+
+\item{spacing}{NULL, or the distance to a second track, drawn beside the first.}
+
+\item{models}{Model codes ("random", "definite", "invcube", "mbeta"), one curve each; NULL
+draws the fitted model.}
+
+\item{m}{M-Beta heights, one curve each when "mbeta" is among the models.}
+
+\item{cmax}{The largest coverage drawn.}
+
+\item{view}{"map" (the top view), "persp" (the surface), "both" (side by side,
+in the book's colour bands) or "cells" (the probability map as a grid of percentages).}
+
+\item{digits}{Decimal places of the percentages in the "cells" view.}
 }
 \value{
 The data drawn, invisibly. For the plots over time the frame

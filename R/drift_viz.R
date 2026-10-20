@@ -597,7 +597,7 @@ drftapp <- function(x = NULL, ref = NULL, cur = NULL, hist = NULL, warn = NULL, 
   ui <- shiny::sidebarLayout(side, shiny::mainPanel(do.call(shiny::tabsetPanel, tabs)))
   server <- function(input, output, session) {
     cx <- shiny::reactiveVal(x)
-    data <- shiny::reactiveVal(if (!is.null(ref)) list(ref = ref, cur = cur))
+    dat <- shiny::reactiveVal(if (!is.null(ref)) list(ref = ref, cur = cur))
     now <- shiny::reactive({
       y <- cx()
       shiny::req(y)
@@ -620,12 +620,12 @@ drftapp <- function(x = NULL, ref = NULL, cur = NULL, hist = NULL, warn = NULL, 
     shiny::observeEvent(list(input$refcsv, input$curcsv), {
       shiny::req(input$refcsv, input$curcsv)
       d <- list(ref = .bl_read_csv_gz(input$refcsv$datapath), cur = .bl_read_csv_gz(input$curcsv$datapath))
-      data(d)
+      dat(d)
       shiny::updateSelectInput(session, "sub", choices = intersect(names(d$ref), names(d$cur)))
       run(d$ref, d$cur, intersect(names(d$ref), names(d$cur)))
     })
     shiny::observeEvent(input$rerun, {
-      d <- data()
+      d <- dat()
       shiny::req(d)
       run(d$ref, d$cur, if (length(input$sub)) input$sub else intersect(names(d$ref), names(d$cur)))
     })
