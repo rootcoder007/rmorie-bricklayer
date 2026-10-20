@@ -858,7 +858,6 @@ plot.rmbl_srchpod <- function(x, ..., models = NULL, m = NULL, cmax = NULL, main
 #' @return Band numbers from 1 to n.
 #' @noRd
 .sr_band_of <- function(v, top, n) {
-  if (!(top > 0)) return(rep(1L, length(v)))
   pmin(n, findInterval(v / top, c(-Inf, 0.06 + (0:(n - 2)) * 0.94 / (n - 1))))
 }
 

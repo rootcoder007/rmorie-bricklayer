@@ -165,6 +165,7 @@ test_that("the general plot arguments and the new datums refuse what cannot be d
   expect_error(plot(m, view = "cells", digits = 7), "`digits` must be between 0 and 6")
   expect_error(plot(datumpmap(0:1, 0:1), view = "persp"), "at least two cells in x and in y")
   expect_silent(plot(datumpmap(0:4, 0:3, "general", wts = matrix(1, 3, 4)), view = "both"))
+  expect_silent(plot(datumpmap(0:4, 0:3, "general", wts = matrix(1:12, 3, 4))))
   # inside a layout the caller set, "both" uses the next two panels and leaves the layout as it was
   op <- graphics::par(mfrow = c(2L, 2L))
   plot(m, view = "both")
