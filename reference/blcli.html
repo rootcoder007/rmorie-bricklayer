@@ -91,6 +91,17 @@ report PATH [--format md|json]
 the verify report, exit 0;
 the options of verify apply
 
+sign PATH [--scheme S] [--key-file F] [--overwrite]
+pin
+each provenance on its first run and sign each capsule into
+capsule_bundle.json (cpsseal), then verify as
+verify does. The key is RMBL_KEY, removed from the
+environment at once, or the contents of --key-file, and is
+never printed: the shared secret for hmac (the default), else
+the JSON of a fipskg key, or its secret hex with
+--public-key. An existing bundle is refused without
+--overwrite; an xmss-sha256 key is refused
+
 functions [PATTERN]
 list the exported functions with
 their one-line titles, optionally filtered by a regular expression
@@ -205,6 +216,17 @@ pin each source's new bytes
 report PATH [--format md|json]
 the verify report, exit 0;
 the options of verify apply
+
+sign PATH [--scheme S] [--key-file F] [--overwrite]
+pin
+each provenance on its first run and sign each capsule into
+capsule_bundle.json (cpsseal), then verify as
+verify does. The key is RMBL_KEY, removed from the
+environment at once, or the contents of --key-file, and is
+never printed: the shared secret for hmac (the default), else
+the JSON of a fipskg key, or its secret hex with
+--public-key. An existing bundle is refused without
+--overwrite; an xmss-sha256 key is refused
 
 functions [PATTERN]
 list the exported functions with
@@ -369,6 +391,17 @@ reads it when a fetch fails; the options of verify apply</p></dd>
 <dd><p>the verify report, exit 0;
 the options of verify apply</p></dd>
 
+<dt><code>sign PATH [--scheme S] [--key-file F] [--overwrite]</code></dt>
+<dd><p>pin
+each provenance on its first run and sign each capsule into
+<code>capsule_bundle.json</code> (<code><a href="cpsseal.html">cpsseal</a></code>), then verify as
+<code>verify</code> does. The key is <code>RMBL_KEY</code>, removed from the
+environment at once, or the contents of <code>--key-file</code>, and is
+never printed: the shared secret for <code>hmac</code> (the default), else
+the JSON of a <code><a href="fipskg.html">fipskg</a></code> key, or its secret hex with
+<code>--public-key</code>. An existing bundle is refused without
+<code>--overwrite</code>; an <code>xmss-sha256</code> key is refused</p></dd>
+
 <dt><code>functions [PATTERN]</code></dt>
 <dd><p>list the exported functions with
 their one-line titles, optionally filtered by a regular expression</p></dd>
@@ -445,7 +478,8 @@ temporary folder. The verbs <code>login</code>, <code>logout</code> and
 <code>config</code> write the shared credentials and settings files;
 <code>ask</code>, <code>models</code>, <code>data</code>, <code>bundle</code> and
 <code>wayback</code> use the network, and <code>drift</code> and <code>refresh</code>
-fetch each capsule's source (<code>refresh</code> writes the capsule);
+fetch each capsule's source (<code>refresh</code> writes the capsule),
+<code>sign</code> writes each capsule's provenance and bundle;
 <code>verify</code> and <code>report</code> only read the capsule files;
 <code>functions</code>, <code>describe</code>,
 <code>examples</code>, <code>explain-error</code>, <code>version</code> and <code>help</code>
@@ -494,6 +528,7 @@ only read the installed help.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   drift PATH [--json] [--fail-on LEVEL]     verify, then fetch each source and compare it with the pin</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         [--psi-warn X] [--psi-fail X]       the PSI bands of the column table (0.1 and 0.25)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   refresh PATH                              pin each source's new bytes in its provenance</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sign PATH [--scheme S] [--key-file F]     pin and sign each capsule (key: RMBL_KEY or the file), verify</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   report PATH [--format md|json]            the verify report; never fails</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> More help</span>
@@ -705,33 +740,33 @@ only read the installed help.</p>
 <span class="r-in"><span><span class="fu">blcli</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"verify"</span>, <span class="va">d</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## rmbl capsule verify with [rmoriebricklayer 1.0.0](https://github.com/rootcoder007/rmorie-bricklayer)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> **✔ ok**: 1 capsule under `/tmp/RtmpcKHsEi/capsule-1eb715bb425`: 1 ok, 0 warn, 0 drift, 0 error</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> **✔ ok**: 1 capsule under `/tmp/RtmpJ6D2Nz/capsule-1e551554d60c`: 1 ok, 0 warn, 0 drift, 0 error</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |---|---|---|---|---|---|---|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | `/tmp/RtmpcKHsEi/capsule-1eb715bb425` | /tmp/RtmpcKHsEi/temp_libpath1eb7107b8e56/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | `/tmp/RtmpJ6D2Nz/capsule-1e551554d60c` | /tmp/RtmpJ6D2Nz/temp_libpath1e5536b5b38/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;details&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;summary&gt;✔ &lt;code&gt;/tmp/RtmpcKHsEi/capsule-1eb715bb425&lt;/code&gt;: ok, 7 of 7 checks passed (click to open)&lt;/summary&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;summary&gt;✔ &lt;code&gt;/tmp/RtmpJ6D2Nz/capsule-1e551554d60c&lt;/code&gt;: ok, 7 of 7 checks passed (click to open)&lt;/summary&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> - Source: /tmp/RtmpcKHsEi/temp_libpath1eb7107b8e56/rmoriebricklayer/extdata/otis_a01_individuals.csv</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - Source: /tmp/RtmpJ6D2Nz/temp_libpath1e5536b5b38/rmoriebricklayer/extdata/otis_a01_individuals.csv</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | Status | Check | Detail |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |---|---|---|</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | provenance_readable | /tmp/RtmpcKHsEi/capsule-1eb715bb425/data_provenance.json |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_present | /tmp/RtmpcKHsEi/capsule-1eb715bb425/otis_a01_individuals.csv |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | provenance_readable | /tmp/RtmpJ6D2Nz/capsule-1e551554d60c/data_provenance.json |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_present | /tmp/RtmpJ6D2Nz/capsule-1e551554d60c/otis_a01_individuals.csv |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_size_bytes | 462 bytes on disk |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_readable | /tmp/RtmpcKHsEi/capsule-1eb715bb425/otis_a01_individuals.csv |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_readable | /tmp/RtmpJ6D2Nz/capsule-1e551554d60c/otis_a01_individuals.csv |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/details&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000242 Wh, 0.000111 gCO2e at 458.3 gCO2e/kWh (World, 2025).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000201 Wh, 9.23e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>

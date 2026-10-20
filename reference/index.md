@@ -102,6 +102,8 @@ verify it later so an analysis reproduces from the same inputs.
   [`format(`*`<rmbl_cpschk>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
   [`print(`*`<rmbl_cpschk>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
   : Check every capsule under a folder
+- [`cpsseal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsseal.md)
+  : Pin and sign every capsule under a folder
 - [`ghann()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ghann.md)
   [`ghcmt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ghann.md)
   [`ghout()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ghann.md)
