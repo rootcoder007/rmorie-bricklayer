@@ -21,7 +21,7 @@ test_that(".bl_row_labels() sizes the text to the row instead of leaving labels 
   graphics::plot(1, 1, type = "n", ylim = c(0.5, 44.5), yaxt = "n")
   cex <- rmoriebricklayer:::.bl_row_labels(1:44, sprintf("row %d", 1:44))
   expect_lt(cex, 0.85)
-  expect_gte(cex, 0.45)
+  expect_gte(cex, 0.6)
   graphics::plot(1, 1, type = "n", ylim = c(0.5, 4.5), yaxt = "n")
   expect_identical(rmoriebricklayer:::.bl_row_labels(1:4, letters[1:4]), 0.85)
 })

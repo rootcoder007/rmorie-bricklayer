@@ -65,7 +65,9 @@
 #' measure, as a string or a bare name.
 #' @param prd For a data frame, the column holding the
 #' period (a year, a `Date`, a fiscal-year integer, an ordered
-#' factor). For a numeric vector, the periods themselves.
+#' factor). An ordered factor is compared by level order, one level being one
+#' period; an unordered factor or a character column has no order, so every row
+#' is flagged "no comparison period". For a numeric vector, the periods themselves.
 #' @param by Optional grouping columns, as a character vector.
 #' The change is computed within each group.
 #' @param lag How many periods back to compare with. `1` is
@@ -159,30 +161,47 @@
 #' # counts must be whole numbers
 #' try(yoy(data.frame(year = 1:3, n = c(1.5, 2, 3)), "n", "year"))
 #' @export
-#' @srrstats {G2.6} S3 methods for numeric, integer and ts pre-process 1-D input (as.numeric, ts frequency used as lag) before yoy.data.frame.
-#' @srrstats {G2.10} Columns are extracted with x[[value]], which returns a vector for data.frame, tibble and data.table alike.
+#' @srrstats {G2.6} S3 methods for numeric, integer and ts pre-process 1-D input (as.numeric, ts frequency used as
+#'   lag) before yoy.data.frame.
+#' @srrstats {G2.10} Columns are extracted with `x[[value]]`, which returns a vector for data.frame, tibble and
+#'   data.table alike.
 #' @srrstats {G3.0} Whole-count check uses tolerance abs(v - round(v)) > 1e-8 rather than exact equality.
-#' @srrstats {EA2.3} The one internal join (.yoy_complete merge) is keyed only on the columns the user names in `prd` and `by`; no column names are assumed.
-#' @srrstats {EA4.0} .yoy_restore puts aggregated key columns back to their input class (Date, POSIXct, factor, integer, numeric, logical); test-yoy.R:203-207,652.
-#' @srrstats {EA4.2} The rmbl_yoy result has print (yoy_output.R) and plot (plots.R) methods; summary exists for drift, Benford and report objects; test-plots.R, test-print-methods.R.
-#' @srrstats {TS1.1} @param x/prd list data frame, numeric, integer or ts input, with Date, POSIXct, integer or ordered-factor periods; methods dispatch on each class.
-#' @srrstats {TS1.2} yoy.default rejects other classes, and .rmbl_num rejects factors, text, lists and logicals; tested in test-round5.R:317 and test-input-contracts.R.
-#' @srrstats {TS1.3} yoy.numeric, yoy.integer and yoy.ts all convert to one period/value data frame and pass it to yoy.data.frame, the single validation and compute path.
-#' @srrstats {TS1.4} .yoy_restore keeps the Date or POSIXct class and the tzone of the period column; tested in test-branches.R:32-42.
-#' @srrstats {TS1.5} Rows are sorted by period and matched on the period's value, not row order; test-yoy.R "the percent change is the arithmetic, not the row order".
-#' @srrstats {TS2.0} complete = TRUE inserts periods missing from the regular grid as explicit NA rows flagged "no data"; tested in test-yoy.R:34 and test-round5.R:96.
-#' @srrstats {TS2.1} The `complete` option lets the user show gaps as explicit missing rows (TRUE) or analyse the irregular rows as they are (FALSE).
-#' @srrstats {TS2.1b} complete = FALSE gives the same matched comparisons as the completed regular grid; test-yoy.R:34-55 checks previous[2022] under both settings.
-#' @srrstats {TS4.0} Results are class-defined formats (rmbl_yoy, rmbl_count_trend, rmbl_stock_flow, rmbl_event_study), each with print and plot methods.
-#' @srrstats {TS4.0b} Returns class c("rmbl_yoy","data.frame") with a "yoy" metadata attribute that the print, summary, plot and writer methods read.
-#' @srrstats {TS4.1} The period's Date/POSIXct class and tzone carry into the output (test-branches.R:38-42); a ts frequency is kept as the lag in attr "yoy".
+#' @srrstats {EA2.3} The one internal join (.yoy_complete merge) is keyed only on the columns the user names in
+#'   `prd` and `by`; no column names are assumed.
+#' @srrstats {EA4.0} .yoy_restore puts aggregated key columns back to their input class (Date, POSIXct, factor,
+#'   integer, numeric, logical); test-yoy.R:203-207,652.
+#' @srrstats {EA4.2} The rmbl_yoy result has print (yoy_output.R) and plot (plots.R) methods; summary exists for
+#'   drift, Benford and report objects; test-plots.R, test-print-methods.R.
+#' @srrstats {TS1.1} @param x/prd list data frame, numeric, integer or ts input, with Date, POSIXct, integer or
+#'   ordered-factor periods; methods dispatch on each class.
+#' @srrstats {TS1.2} yoy.default rejects other classes, and .rmbl_num rejects factors, text, lists and logicals;
+#'   tested in test-round5.R:317 and test-input-contracts.R.
+#' @srrstats {TS1.3} yoy.numeric, yoy.integer and yoy.ts all convert to one period/value data frame and pass it to
+#'   yoy.data.frame, the single validation and compute path.
+#' @srrstats {TS1.4} .yoy_restore keeps the Date or POSIXct class and the tzone of the period column; tested in
+#'   test-branches.R:32-42.
+#' @srrstats {TS1.5} Rows are sorted by period and matched on the period's value, not row order; test-yoy.R "the
+#'   percent change is the arithmetic, not the row order".
+#' @srrstats {TS2.0} complete = TRUE inserts periods missing from the regular grid as explicit NA rows flagged "no
+#'   data"; tested in test-yoy.R:34 and test-round5.R:96.
+#' @srrstats {TS2.1} The `complete` option lets the user show gaps as explicit missing rows (TRUE) or analyse the
+#'   irregular rows as they are (FALSE).
+#' @srrstats {TS2.1b} complete = FALSE gives the same matched comparisons as the completed regular grid;
+#'   test-yoy.R:34-55 checks `previous[2022]` under both settings.
+#' @srrstats {TS4.0} Results are class-defined formats (rmbl_yoy, rmbl_count_trend, rmbl_stock_flow,
+#'   rmbl_event_study), each with print and plot methods.
+#' @srrstats {TS4.0b} Returns class c("rmbl_yoy","data.frame") with a "yoy" metadata attribute that the print,
+#'   summary, plot and writer methods read.
+#' @srrstats {TS4.1} The period's Date/POSIXct class and tzone carry into the output (test-branches.R:38-42); a ts
+#'   frequency is kept as the lag in attr "yoy".
 #' @srrstats {TS4.2} @return gives the class, every column with its type, and the contents of the "yoy" attribute.
 yoy <- function(x, ...) UseMethod("yoy")
 
 #' @rdname yoy
 #' @export
 yoy.default <- function(x, ...) {
-  stop(sprintf("`x` must be a data frame, not %s", class(x)[1L]), call. = FALSE)
+  stop(sprintf("`x` must be a data frame, a numeric or integer vector, or a ts, not %s", class(x)[1L]),
+       call. = FALSE)
 }
 
 #' @rdname yoy
@@ -379,6 +398,10 @@ yoy.ts <- function(x, lag = NULL, ...) {
 
 # The regular grid a period column implies, or NULL when it has none.
 .yoy_period_grid <- function(p) {
+  if (is.ordered(p)) {
+    r <- range(as.integer(p), na.rm = TRUE)
+    return(factor(levels(p)[r[1L]:r[2L]], levels = levels(p), ordered = TRUE))
+  }
   if (!is.numeric(p) && !inherits(p, c("Date", "POSIXct"))) return(NULL)
   u <- sort(unique(p))
   if (length(u) < 2L) return(NULL)
@@ -487,6 +510,14 @@ yoy.ts <- function(x, lag = NULL, ...) {
   # mean anything. A character or factor column -- "Q1", "Q2" -- has no
   # step, and taking diff() of it raised rather than reporting that
   # there is no comparison to make.
+  if (is.ordered(p)) {
+    # an ordered factor's levels are the grid: one level is one step
+    key <- as.integer(p)
+    idx <- match(key - lag, key)
+    out <- rep(NA_real_, length(v))
+    out[!is.na(idx)] <- v[idx[!is.na(idx)]]
+    return(out)
+  }
   if (!is.numeric(p) && !inherits(p, c("Date", "POSIXct"))) {
     return(rep(NA_real_, length(v)))
   }

@@ -48,7 +48,7 @@
 #'
 #' Missing periods are dropped and the series is sorted by \code{x}.
 #' Errors: fewer than three periods; infinite values; \code{x} and \code{y}
-#' of different lengths; a data frame without \code{value} or with a column
+#' of different lengths; a period given twice in \code{x}; a data frame without \code{value} or with a column
 #' not found; more than 20,000 periods (the pairwise slopes would not fit in
 #' memory); a \code{conflvl} outside (0, 1). \code{exact = TRUE} with \eqn{n > 8}
 #' warns and uses the normal
@@ -108,7 +108,8 @@
 #'
 #' try(trndtst(c(5, 6)))
 #' @export
-#' @srrstats {G5.7} test-trend-scale.R:34 runs 3,000 periods within a wall-clock limit with finite Sen bounds, and refuses 20,001 periods.
+#' @srrstats {G5.7} test-trend-scale.R:34 runs 3,000 periods within a wall-clock limit with finite Sen bounds, and
+#'   refuses 20,001 periods.
 trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
                        exact = NULL,
                        alt = c(
@@ -151,6 +152,10 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
   ok <- is.finite(x) & is.finite(y)
   x <- x[ok]
   y <- y[ok]
+  if (anyDuplicated(x)) {
+    # two values for one period are not a series; Sen's slope would divide by a zero gap
+    stop("`x` has duplicated periods: combine the values of each period first", call. = FALSE)
+  }
   ord <- order(x)
   x <- x[ord]
   y <- y[ord]
@@ -346,12 +351,15 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
 #' ignores autocorrelation and smooth trends; a steady trend can produce a
 #' "step". With very few periods even a clean step cannot reach small
 #' p-values (six periods allow only 720 orderings). Missing values are
-#' dropped. Errors: infinite values; fewer than \code{2 * minseg}
-#' periods. A progress bar is shown in an interactive session.
+#' dropped. A series with values beyond 1e150 is scanned in units of its largest absolute value, so
+#' the statistic does not overflow; \code{before}, \code{after} and \code{difference} are given back
+#' in the units of \code{y}, and \code{statistic} stays in the rescaled units. Errors: infinite
+#' values; fewer than \code{2 * minseg} periods; numeric or date \code{x} that is not strictly
+#' increasing. A progress bar is shown in an interactive session.
 #'
 #' @param y Numeric vector, the series in period order.
 #' @param x Vector of periods, default \code{NULL} (the position). Used only
-#'   to label the break.
+#'   to label the break; numeric or date periods must be strictly increasing.
 #' @param minseg Whole number, default 2: the fewest periods allowed on
 #'   either side of the break.
 #' @param nperm Whole number, default 9999: the number of random
@@ -387,6 +395,8 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
 #'
 #' try(stepchg(c(1, 2, 3)))
 #' @export
+#' @srrstats {TS1.6} stepchg() refuses numeric or date periods that are not strictly increasing, and trndtst()
+#'   refuses duplicated periods; test-srr.R.
 stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
                         seed = 1L) {
   y <- .rmbl_num(y, "y")
@@ -402,10 +412,16 @@ stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
   y <- y[ok]
   x <- x[ok]
   n <- length(y)
+  # the scan splits the series in the order given, so the periods must be in time order
+  if ((is.numeric(x) || inherits(x, c("Date", "POSIXt"))) && is.unsorted(x, na.rm = TRUE, strictly = TRUE)) {
+    stop("`x` must be strictly increasing: sort the series by period first", call. = FALSE)
+  }
   # the statistic is a squared difference of means, so values near 1e300 overflowed it to Inf and
   # the p-value was NaN (final audit of 1.0.0, #11); it is scale-free, as is the permutation null,
   # so the series is read in units of its largest value when that is beyond 1e150
-  if (n && max(abs(y)) > 1e150) y <- y / max(abs(y))
+  # before, after and difference are put back in the units of y at the end
+  sc <- if (n && max(abs(y)) > 1e150) max(abs(y)) else 1
+  y <- y / sc
   minseg <- .rmbl_scalar(minseg, "minseg", 1, integer = TRUE)
   nperm <- .rmbl_scalar(nperm, "nperm", 1, integer = TRUE)
   if (n < 2L * minseg) {
@@ -488,8 +504,8 @@ stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
   # test of 0.5.14).
   p <- if (nfact <= nperm) mean(hit) else (1 + sum(hit)) / (1 + length(null))
   list(
-    breakafter = x[best], index = best, before = mean(a),
-    after = mean(b), difference = mean(b) - mean(a),
+    breakafter = x[best], index = best, before = mean(a) * sc,
+    after = mean(b) * sc, difference = (mean(b) - mean(a)) * sc,
     statistic = tmax, p_value = min(1, p), nperm = np,
     method = method
   )
@@ -570,7 +586,8 @@ stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
 #'
 #' try(cnttrnd(c(1.5, 2, 3)))
 #' @export
-#' @srrstats {TS5.0} Each result class has a default plot method (plot.rmbl_count_trend, rmbl_yoy, rmbl_stock_flow, rmbl_event_study); tested in test-plots.R:236.
+#' @srrstats {TS5.0} Each result class has a default plot method (plot.rmbl_count_trend, rmbl_yoy, rmbl_stock_flow,
+#'   rmbl_event_study); tested in test-plots.R:236.
 cnttrnd <- function(y, x = NULL, offset = NULL, conflvl = 0.95) {
   conflvl <- .rmbl_conf_level(conflvl)
   y <- .rmbl_num(y, "y")

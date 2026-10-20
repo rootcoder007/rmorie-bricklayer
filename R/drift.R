@@ -69,7 +69,8 @@
 #' # Identical samples have nothing to report.
 #' drftks(ref, ref)[["statistic"]]
 #' @export
-#' @srrstats {G5.8c} All-NA input errors "at least one non-missing" (test-drift.R:46); identical values give Gini 0 (test-tables.R:148).
+#' @srrstats {G5.8c} All-NA input errors "at least one non-missing" (test-drift.R:46); identical values give Gini 0
+#'   (test-tables.R:148).
 drftks <- function(x, y) {
   x <- .rmbl_finite_input(x, "x", min_n = 1L)
   y <- .rmbl_finite_input(y, "y", min_n = 1L)
@@ -734,8 +735,10 @@ benfordtst <- function(x) {
 #'   left
 #'   untouched.
 #' @export
-#' @srrstats {G5.3} test-drift.R:195 checks all(is.finite(d$columns$psi)); similar no-NA checks in test-areal.R:322 and test-census.R:143.
-#' @srrstats {EA3.1} A fixed battery (KS, chi-square, PSI, Jensen-Shannon) compares a fetched frame with the pinned one, column by column, in one report; test-print-methods.R.
+#' @srrstats {G5.3} test-drift.R:195 checks all(is.finite(d$columns$psi)); similar no-NA checks in test-areal.R:322
+#'   and test-census.R:143.
+#' @srrstats {EA3.1} A fixed battery (KS, chi-square, PSI, Jensen-Shannon) compares a fetched frame with the pinned
+#'   one, column by column, in one report; test-print-methods.R.
 cpsdrft <- function(ref, cur, alpha = 0.01,
                           psithr = 0.25, psiminn = 1000L,
                           bins = 10L, idelvls = 100L, seed = 1L) {

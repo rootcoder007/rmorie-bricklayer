@@ -62,7 +62,8 @@
 #' factor with the levels in code order.
 #'
 #' @param x Vector of codes: numeric, integer, character or factor. A factor
-#'   is read through its labels, not its integer codes.
+#'   is read through its labels, not its integer codes; an ordered factor is
+#'   treated the same as an unordered one (its level order is not used).
 #' @param vlabs Named character vector, code = label, for example
 #'   \code{c("1" = "White", "2" = "Black")}. The names are the codes as they
 #'   print with \code{as.character()}; the values are the labels. Codes in the
@@ -95,6 +96,8 @@
 #' @srrstats {G2.4c} Codes are converted with as.character(x) before lookup, not paste().
 #' @srrstats {G2.14} keepna sets the NA policy: keep NA (default) or error; G2.14a-c give the detail.
 #' @srrstats {G2.14a} keepna = FALSE turns any NA code into an error (documented, and shown in the examples).
+#' @srrstats {G2.5} The x docs of deccodes, grdrcd and declbld say how ordered factors are read: like unordered
+#'   ones, by label (deccodes, grdrcd) or by integer code (declbld).
 deccodes <- function(x, vlabs, keepna = TRUE) {
   .rmbl_no_fn(x = x)
   if (is.factor(x)) x <- as.character(x)
@@ -146,7 +149,9 @@ deccodes <- function(x, vlabs, keepna = TRUE) {
 #' \code{\link{rcdmnf}} records it.
 #'
 #' @param x A factor or character vector. Other atomic vectors are compared
-#'   by matching the values that \code{as.character()} gives.
+#'   by matching the values that \code{as.character()} gives. Ordered and
+#'   unordered factors are treated the same: both are read through their labels,
+#'   and the result is character either way.
 #' @param map Named character vector, \code{c(old_label = "new_label", ...)}.
 #'   Every name must be non-empty.
 #' @param keep Character vector, default empty. Labels allowed to pass
@@ -171,7 +176,8 @@ deccodes <- function(x, vlabs, keepna = TRUE) {
 #'   \code{\link{grdlvls}} to fix the levels,
 #'   \code{\link{rcdmnf}} to record the chain.
 #' @export
-#' @srrstats {G2.4e} A factor is converted with as.character() and read by its labels, not its codes; test-categorical-guard.R grdrcd(factor(...)).
+#' @srrstats {G2.4e} A factor is converted with as.character() and read by its labels, not its codes;
+#'   test-categorical-guard.R grdrcd(factor(...)).
 grdrcd <- function(x, map, keep = character()) {
   .rmbl_no_fn(x = x)
   if (is.factor(x)) x <- as.character(x)
@@ -337,7 +343,8 @@ grdlvls <- function(x, lvls, ref = NULL) {
 #'
 #' try(audcats(1:3))
 #' @export
-#' @srrstats {G2.11} Columns with non-standard classes are processed: test-categorical-guard.R:238 audits a haven_labelled I() column; a yoy Date period keeps its class (test-yoy.R:203).
+#' @srrstats {G2.11} Columns with non-standard classes are processed: test-categorical-guard.R:238 audits a
+#'   haven_labelled I() column; a yoy Date period keeps its class (test-yoy.R:203).
 audcats <- function(data, cols = NULL) {
   if (!is.data.frame(data)) {
     stop("audcats: `data` must be a data frame", call. = FALSE)
@@ -1272,7 +1279,9 @@ relbl <- function(x, map, keep = character()) {
 #' \code{vlabs}; a code with no label.
 #'
 #' @param x A vector with a \code{labels} attribute (as produced by haven),
-#'   or a plain vector of codes when \code{vlabs} is supplied.
+#'   or a plain vector of codes when \code{vlabs} is supplied. A factor,
+#'   ordered or not, is read through its integer codes; the result is an
+#'   unordered factor whose levels follow the codes.
 #' @param vlabs Optional named character vector, code = label, used
 #'   only when \code{x} carries no \code{labels} attribute. Default
 #'   \code{NULL}.

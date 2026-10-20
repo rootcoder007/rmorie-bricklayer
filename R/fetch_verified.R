@@ -36,8 +36,6 @@
 #'   \code{outcome}).
 #' @seealso \code{\link{blfetch}}, \code{\link{sha256file}},
 #'   \code{\link{wbsave}}.
-#' @examples
-#'
 #' @examplesIf interactive()
 #' # a Statistics Canada table the Wayback Machine cannot capture, with the archive.org copy
 #' # made from elsewhere as a mirror

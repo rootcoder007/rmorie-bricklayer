@@ -59,6 +59,11 @@ the defaults are \code{palette = "okabe"}, \code{grid = TRUE},
 \code{cex = 1}, \code{las = 1}, \code{bg = "white"} and
 \code{panel = "#EEF1F6"}. Setting some options keeps the others.
 
+Text is drawn at the session \code{cex}. Titles, axis titles, row labels
+and keys are made smaller to fit a small device, but never below 0.6 of
+that size, so that they stay readable; for larger text set, for example,
+\code{plotopt(cex = 1.2)}, and for a table with many rows use a taller device.
+
 Errors: an unknown palette \code{name}; \code{n} not a positive whole
 number; an option name other than the six above, or an unnamed value; an
 unknown \code{palette} option.

@@ -229,6 +229,8 @@
 #'     \item{\code{atbound}}{character, the names of parameters that lie on the box
 #'       (\code{character(0)} for an interior maximum).}
 #'   }
+#'   A warning is given when \eqn{\eta} reaches its upper bound 0.99 (a near-critical,
+#'   probably non-stationary fit).
 #'   An estimate on the box is not an interior maximum of the likelihood:
 #'   day-dated (tied) times drive a shape or decay to its wall, and a Lomax
 #'   fitted to exponential data runs to its exponential limit.
@@ -279,10 +281,16 @@
 #' try(chwkfit(times[1:20], 100))
 #' try(chwkfit(times, 50))
 #' @export
-#' @srrstats {TS2.1a} NA event times are an error ("must not contain NA"), tested in test-round8.R:237; stkflow and perdays also refuse NA.
-#' @srrstats {TS2.2} The constant baseline with eta bounded at 0.99 is the stationary Hawkes; base = "sinusoidal" lets the mean intensity trend and cycle.
-#' @srrstats {TS2.4} Stationarity is enforced by the eta bound; meth = "inar" refuses the non-stationary baseline (test-hawkes-fit.R:102); the sinusoidal baseline models the trend.
-#' @srrstats {TS2.4b} base = "sinusoidal" models the trend and yearly cycle, so the triggering part stays stationary; the docs point day-dated ties to chwkjit().
+#' @srrstats {TS2.1a} NA event times are an error ("must not contain NA"), tested in test-round8.R:237; stkflow and
+#'   perdays also refuse NA.
+#' @srrstats {TS2.2} The constant baseline with eta bounded at 0.99 is the stationary Hawkes; base = "sinusoidal"
+#'   lets the mean intensity trend and cycle.
+#' @srrstats {TS2.4} Stationarity is enforced by the eta bound; meth = "inar" refuses the non-stationary baseline
+#'   (test-hawkes-fit.R:102); the sinusoidal baseline models the trend.
+#' @srrstats {TS2.4b} base = "sinusoidal" models the trend and yearly cycle, so the triggering part stays
+#'   stationary; the docs point day-dated ties to chwkjit().
+#' @srrstats {TS2.4a} A fit with eta on its 0.99 upper bound (near-critical) warns, naming base = "sinusoidal";
+#'   test-srr.R.
 chwkfit <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "lomax"),
                             base = c("constant", "sinusoidal"), meth = "auto", eps = 1e-9,
                             start = NULL) {
@@ -378,6 +386,11 @@ chwkfit <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
   # reported, not warned: a Lomax fitted to exponential-like data reaching its exponential limit is
   # an ordinary result; a shape at its wall on day-dated times is the case to look at
   at_bound <- pnames[on_box]
+  if (abs(theta[[nb + 1L]] - b$upper[[nb + 1L]]) <= 1e-6) {
+    warning(sprintf(paste0("the branching ratio eta sits on its upper bound %g: the process is near critical ",
+                           "and the fit is not an interior maximum (often an unmodelled trend; try ",
+                           "base = \"sinusoidal\")"), b$upper[[nb + 1L]]), call. = FALSE)
+  }
   U <- chwkres(times, hor, kernel, theta, base = base)
   # the exact distribution up to n = 10,000, as morie's Python (and scipy's "auto"); with
   # tied residuals (tied event times) the exact computation is extremely slow and memory-hungry

@@ -231,7 +231,8 @@
 #' # clustered by region instead of district
 #' plndid(p, "district", "month", "crmrate", "reformed", cl = "region")
 #' @export
-#' @srrstats {G5.6} polex() is built with a known reform effect of -3; test-policy-evaluation.R checks that plndid() recovers it.
+#' @srrstats {G5.6} polex() is built with a known reform effect of -3; test-policy-evaluation.R checks that plndid()
+#'   recovers it.
 #' @srrstats {G5.6a} Recovery is to a tolerance: expect_lt(abs(estimate + 3), 0.5).
 plndid <- function(data, unit, time, y, trtd, covs = NULL, cl = NULL,
                       fe = c("unit", "time"), w = NULL, comb = NULL, conflvl = 0.95) {
@@ -1745,7 +1746,8 @@ bufasgn <- function(x, y, sitex, sitey, comx, comy, radius, buffer = 3 * radius)
 #' @examples
 #' head(polex())
 #' @export
-#' @srrstats {G5.1} Exported generator of the test/example panel with a known effect (-3); used across test-policy-evaluation.R and test-panel-causal.R.
+#' @srrstats {G5.1} Exported generator of the test/example panel with a known effect (-3); used across
+#'   test-policy-evaluation.R and test-panel-causal.R.
 polex <- function(seed = 20240101) {
   .rmbl_with_seed(seed, {
     nd <- 20L

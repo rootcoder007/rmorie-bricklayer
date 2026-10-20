@@ -86,7 +86,8 @@
 #' try(cdistm(1:3, 1:2))
 #' @name cspread
 #' @export
-#' @srrstats {G2.4a} ddof goes through .rmbl_scalar(integer = TRUE): fractional, too-large and Inf values are refused, then as.integer() is applied.
+#' @srrstats {G2.4a} ddof goes through .rmbl_scalar(integer = TRUE): fractional, too-large and Inf values are
+#'   refused, then as.integer() is applied.
 csdev <- function(x, ddof = 1L) {
   .Call(C_rmbl_sd, .rmbl_num_input(x, "x"), as.integer(.rmbl_scalar(ddof, "ddof", 0, integer = TRUE)))
 }
@@ -727,7 +728,8 @@ ccovm <- function(x) {
 #' # At least one replicate is needed.
 #' try(cbootmean(x, B = 0))
 #' @export
-#' @srrstats {G5.5} test-core-stats.R runs with set.seed(7) and seed = 11; the same seed reproduces the replicates exactly.
+#' @srrstats {G5.5} test-core-stats.R runs with set.seed(7) and seed = 11; the same seed reproduces the replicates
+#'   exactly.
 cbootmean <- function(x, B = 1000L, seed = 42L) {
   x <- .rmbl_num_input(x, "x")
   B <- .rmbl_num(B, "B")
@@ -980,7 +982,8 @@ cgamcdf <- function(shape, x) {
 #' # Unsorted times are an error, not the sentinel.
 #' try(chwknll(rev(times), 10, "exponential", c(-0.5, 0.3, 1.2)))
 #' @export
-#' @srrstats {TS2.3} The docs say the process is stationary only for eta < 1, and the example shows eta >= 1 returns the infeasible sentinel; stepchg documents its exchangeability assumption.
+#' @srrstats {TS2.3} The docs say the process is stationary only for eta < 1, and the example shows eta >= 1 returns
+#'   the infeasible sentinel; stepchg documents its exchangeability assumption.
 chwknll <- function(times, hor,
                             kernel = c("exponential", "weibull", "lomax",
                                        "gamma"),
