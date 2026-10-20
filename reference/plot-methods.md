@@ -471,6 +471,38 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
   Where the vertical reference line goes (default `-0.5`, between the
   reference period and adoption; `0` puts it at adoption).
 
+- equiv:
+
+  Whether to draw the equivalent definite-range rectangle and the A and
+  B areas (figure 4-7 of the book).
+
+- spacing:
+
+  NULL, or the distance to a second track, drawn beside the first.
+
+- models:
+
+  Model codes ("random", "definite", "invcube", "mbeta"), one curve
+  each; NULL draws the fitted model.
+
+- m:
+
+  M-Beta heights, one curve each when "mbeta" is among the models.
+
+- cmax:
+
+  The largest coverage drawn.
+
+- view:
+
+  "map" (the top view), "persp" (the surface), "both" (side by side, in
+  the book's colour bands) or "cells" (the probability map as a grid of
+  percentages).
+
+- digits:
+
+  Decimal places of the percentages in the "cells" view.
+
 ## Value
 
 The data drawn, invisibly. For the plots over time the frame carries the

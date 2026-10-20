@@ -126,5 +126,5 @@ plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop",
            family = "negbin")
 #> Warning: no overdispersion: theta is at its bound, the Poisson model fits
 #>      term    estimate         se rateratio     lower    upper      p_value
-#> 1 treated -0.09214602 0.02220756  0.911972 0.8731289 0.952543 3.334802e-05
+#> 1 treated -0.09214602 0.02220756  0.911972 0.8731289 0.952543 3.334804e-05
 ```

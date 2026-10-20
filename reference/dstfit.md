@@ -43,7 +43,7 @@ print(x, ...)
   Whole number or `NULL`: the upper order statistics of the Hill
   estimate.
 
-- object, ...:
+- ...:
 
   For [`print()`](https://rdrr.io/r/base/print.html) and
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html): see
