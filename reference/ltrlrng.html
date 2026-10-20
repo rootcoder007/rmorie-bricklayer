@@ -283,8 +283,10 @@ centre). <code>opteffort()</code>: a list of class <code>rmbl_opteffort</code> w
 (<code>equiv = TRUE</code> adds the equivalent definite-range rectangle,
 <code>spacing</code> a second track), the POD by coverage for any of the
 models (<code>models</code>, <code>m</code>, <code>cmax</code>), the map as an image with
-contours, a surface, both side by side, or its cells with their
-percentages (<code>view</code>), and the allocation (see
+contours, a surface banded by height, the surface and its top view side
+by side (the device's two panels, or the
+next two of a layout the caller set with <code>par(mfrow = )</code>), or its
+cells with their percentages (<code>view</code>), and the allocation (see
 <code><a href="plot-methods.html">plot-methods</a></code>). <code><a href="srchfig.html">srchfig</a></code> draws every figure of
 Frost (1996) with them.</p>
     </div>
@@ -299,7 +301,7 @@ sweep width. <code>swpwdth()</code> integrates by the trapezoid rule.</p>
 <p>With <code>navsd &gt; 0</code>, <code>ltrlrng()</code> gives the expected curve seen
 through a normal cross-track navigation error: the convolution of the curve
 with that normal (Frost 1996, equation 5-14), exact for the rectangular
-curves and by 40-point Gauss-Hermite quadrature for the inverse cube. Its
+curves and by the trapezoid rule for the inverse cube. Its
 area is still <code>W</code>; the curve is lower and wider.</p>
 <p><code>srchpod()</code>: random search <code>1 - exp(-C)</code>; definite range
 <code>min(C, 1)</code>; inverse cube parallel sweep

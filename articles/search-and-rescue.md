@@ -21,7 +21,7 @@ recovered exactly.
 table(srchfig()$how)
 #> 
 #> approximation         model     schematic 
-#>             4            28             4
+#>             3            29             4
 ```
 
 The functions behind the figures work on any inputs:
@@ -241,15 +241,11 @@ srchfig("4-6")
 ``` r
 
 srchfig("4-7")
-```
-
-![](search-and-rescue_files/figure-html/f46-2.png)
-
-``` r
-
 swpwdth(ltrlrng(seq(-500, 500, by = 0.01), W = 1))
 #> [1] 0.9996817
 ```
+
+![](search-and-rescue_files/figure-html/f46-2.png)
 
 ## Chapter 5: effort, coverage and probability of detection
 

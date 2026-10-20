@@ -98,7 +98,7 @@ book’s plate cannot be recovered exactly.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">how</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; approximation         model     schematic </span></span>
-<span><span class="co">#&gt;             4            28             4</span></span></code></pre></div>
+<span><span class="co">#&gt;             3            29             4</span></span></code></pre></div>
 <p>The functions behind the figures work on any inputs:
 <code><a href="../reference/ltrlrng.html">ltrlrng()</a></code> (lateral range curves), <code><a href="../reference/ltrlrng.html">swpwdth()</a></code>
 (sweep width), <code><a href="../reference/ltrlrng.html">srchpod()</a></code> and <code><a href="../reference/ltrlrng.html">pswppod()</a></code>
@@ -223,11 +223,10 @@ those seen outside it (B).</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"4-6"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f46-1.png" class="r-plt" alt="" width="672"></p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"4-7"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="search-and-rescue_files/figure-html/f46-2.png" class="r-plt" alt="" width="672"></p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/ltrlrng.html">swpwdth</a></span><span class="op">(</span><span class="fu"><a href="../reference/ltrlrng.html">ltrlrng</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">500</span>, <span class="fl">500</span>, by <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span>, W <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"4-7"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/ltrlrng.html">swpwdth</a></span><span class="op">(</span><span class="fu"><a href="../reference/ltrlrng.html">ltrlrng</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">500</span>, <span class="fl">500</span>, by <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span>, W <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 0.9996817</span></span></code></pre></div>
+<p><img src="search-and-rescue_files/figure-html/f46-2.png" class="r-plt" alt="" width="672"></p>
 </div>
 <div class="section level2">
 <h2 id="chapter-5-effort-coverage-and-probability-of-detection">Chapter 5: effort, coverage and probability of detection<a class="anchor" aria-label="anchor" href="#chapter-5-effort-coverage-and-probability-of-detection"></a>
@@ -236,23 +235,23 @@ those seen outside it (B).</p>
 length, <code>Z = W L</code>, and coverage is effort over area,
 <code>C = Z / A</code>. A search whose path is random gives
 <code>POD = 1 - exp(-C)</code>.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"5-1"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f51-1.png" class="r-plt" alt="" width="672"></p>
 <p><strong>Figures 5-2 to 5-5.</strong> A parallel sweep at track
 spacing <code>S</code> has coverage <code>C = W / S</code>. With a
 definite range sensor the POD is <code>min(C, 1)</code>: half the gap is
 seen at <code>S = 2W</code>, all of it at <code>S = W</code>.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"5-2"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f52-1.png" class="r-plt" alt="" width="672"></p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"5-3"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f52-2.png" class="r-plt" alt="" width="672"></p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"5-4"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f52-3.png" class="r-plt" alt="" width="672"></p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"5-5"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f52-4.png" class="r-plt" alt="" width="672"></p>
 <p><strong>Figures 5-6 and 5-7.</strong> M-Beta curves overlap once the
@@ -261,13 +260,13 @@ tracks are closer than their width: <code>POD = C</code> below
 and 0.6836 at coverage 1 for <code>M = 0.5</code> and
 <code>M = 0.25</code>, nearer the random search curve as <code>M</code>
 falls.</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"5-6"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f56-1.png" class="r-plt" alt="" width="672"></p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"5-7"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f56-2.png" class="r-plt" alt="" width="672"></p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ltrlrng.html">srchpod</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">"mbeta"</span>, m <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Probability of detection ────────────────────────────────────── </span></span>
 <span><span class="co">#&gt;   M-Beta model, M = 0.25</span></span>
@@ -281,10 +280,10 @@ falls.</p>
 <code>POD = erf(sqrt(pi) C / 2)</code>, 0.7899 at coverage 1, between
 the definite range and random search curves. <code><a href="../reference/ltrlrng.html">pswppod()</a></code>
 computes the same sweep directly, for any curve.</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"5-8"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f58-1.png" class="r-plt" alt="" width="672"></p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ltrlrng.html">pswppod</a></span><span class="op">(</span>W <span class="op">=</span> <span class="fl">1</span>, S <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 0.7899086</span></span></code></pre></div>
 <p><strong>Figure 5-9.</strong> Poorer conditions shrink the sweep
@@ -294,7 +293,7 @@ convolution <code>phi(x) = integral of p(x - t) Z(t, sigma) dt</code>,
 whose area is still <code>W</code>
 (<code>ltrlrng(..., navsd = )</code>). The plate is blank in the
 published file; it is drawn from the text.</p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"5-9"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f59-1.png" class="r-plt" alt="" width="672"></p>
 </div>
@@ -306,10 +305,10 @@ published file; it is drawn from the text.</p>
 trial squares of the whole area, half of it and a third of it hold 100%,
 60.94% and 46.30%; at coverage 1 the middle trial succeeds most
 often.</p>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"6-1"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f61-1.png" class="r-plt" alt="" width="672"></p>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"6-2"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f61-2.png" class="r-plt" alt="" width="672"></p>
 <p><strong>Figures 6-3 and 6-4.</strong> For a point datum,
@@ -317,7 +316,7 @@ often.</p>
 should cover: the search factor is its half side in units of
 <code>E</code>. An effort of <code>4 E^2</code> gives a factor of 1.02,
 coverage 0.96 and POS 0.4578, as the book’s program found.</p>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/optsqr.html">optsqr</a></span><span class="op">(</span><span class="fl">4</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   search effort releff cumeff   factor     side       poc  coverage       pod</span></span>
 <span><span class="co">#&gt; 1      1      4      4      4 1.021043 2.042086 0.5939919 0.9592059 0.7707087</span></span>
@@ -325,21 +324,21 @@ coverage 0.96 and POS 0.4578, as the book’s program found.</p>
 <span><span class="co">#&gt; 1 0.4577947 0.4577947</span></span>
 <span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"6-3"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f63-1.png" class="r-plt" alt="" width="672"></p>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"6-4"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f63-2.png" class="r-plt" alt="" width="672"></p>
 <p><strong>Figure 6-5.</strong> By the additive principle, a series of
 searches each optimal for what the earlier ones left does as well as one
 optimal search with all the effort: the cumulative probability of
 success depends on the cumulative effort.</p>
-<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"6-5"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f65-1.png" class="r-plt" alt="" width="672"></p>
 <p><strong>Figure 6-6.</strong> Searching in a series with random
 efforts between 0.1 and 50 <code>E^2</code>, the optimal factors cluster
 around the curve, except where a much smaller effort follows a large one
 and the best use of it is the remaining central peak.</p>
-<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/srchfig.html">srchfig</a></span><span class="op">(</span><span class="st">"6-6"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/f66-1.png" class="r-plt" alt="" width="672"></p>
 </div>
@@ -350,7 +349,7 @@ and the best use of it is the remaining central peak.</p>
 spreads a total track length over the cells to make the probability of
 success as large as possible (Stone 1975), and <code><a href="../reference/ltrlrng.html">srchscs()</a></code>
 updates the containment after a search that finds nothing.</p>
-<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ltrlrng.html">datumpmap</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">6</span>, <span class="fl">6</span>, by <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">6</span>, <span class="fl">6</span>, by <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>, sigma <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ltrlrng.html">opteffort</a></span><span class="op">(</span><span class="va">m</span>, W <span class="op">=</span> <span class="fl">1</span>, effort <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span>
 <span><span class="va">a</span><span class="op">$</span><span class="va">pos</span></span>
@@ -359,7 +358,7 @@ updates the containment after a search that finds nothing.</p>
 <span><span class="co">#&gt; [1] 0.4571532</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span></span></code></pre></div>
 <p><img src="search-and-rescue_files/figure-html/grid-1.png" class="r-plt" alt="" width="672"></p>
-<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ltrlrng.html">srchscs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0.3</span>, <span class="fl">0.2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.8</span>, <span class="fl">0.5</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Probability of success ──────────────────────────────────────── </span></span>
 <span><span class="co">#&gt;   POS 0.55 after 1 search</span></span>

@@ -193,8 +193,10 @@ and the inputs. `optcrcsrch()`: a list of class `rmbl_optcrc` with
 lateral range curve (`equiv = TRUE` adds the equivalent definite-range
 rectangle, `spacing` a second track), the POD by coverage for any of the
 models (`models`, `m`, `cmax`), the map as an image with contours, a
-surface, both side by side, or its cells with their percentages
-(`view`), and the allocation (see
+surface banded by height, the surface and its top view side by side (the
+device's two panels, or the next two of a layout the caller set with
+`par(mfrow = )`), or its cells with their percentages (`view`), and the
+allocation (see
 [`plot-methods`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)).
 [`srchfig`](https://rootcoder007.github.io/rmorie-bricklayer/reference/srchfig.md)
 draws every figure of Frost (1996) with them.
@@ -211,8 +213,8 @@ trapezoid rule.
 With `navsd > 0`, `ltrlrng()` gives the expected curve seen through a
 normal cross-track navigation error: the convolution of the curve with
 that normal (Frost 1996, equation 5-14), exact for the rectangular
-curves and by 40-point Gauss-Hermite quadrature for the inverse cube.
-Its area is still `W`; the curve is lower and wider.
+curves and by the trapezoid rule for the inverse cube. Its area is still
+`W`; the curve is lower and wider.
 
 `srchpod()`: random search `1 - exp(-C)`; definite range `min(C, 1)`;
 inverse cube parallel sweep `erf(sqrt(pi) C / 2)` (Koopman 1956); M-Beta
