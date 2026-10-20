@@ -205,8 +205,7 @@ and a digest anyone can recompute says nothing about who produced the data.
   data. Each matches the reference implementation;
   `vignette("policy-evaluation")`.
 - **First Nations, Metis and Inuit health, mental health and wellness** —
-  distinctions-based methods for Statistics Canada's published tables, with
-  suppressed cells never imputed:
+  distinctions-based methods for Statistics Canada's published tables:
   - `sctidy()` and `scests()` read every layout of limit,
     coefficient of variation and standard error;
   - `indgap()`, `dstntst()`, `ordcmp()`,
