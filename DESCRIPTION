@@ -90,14 +90,17 @@ Imports:
     utils
 Suggests:
     withr,
+    bslib (>= 0.9.0),
     digest,
     jsonlite,
     knitr,
+    later,
     MASS,
     openssl,
     pkgdown,
     rmarkdown,
     sf,
+    promises,
     shiny,
     stringi,
     survival,

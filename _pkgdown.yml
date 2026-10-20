@@ -181,6 +181,7 @@ reference:
       series, a fitted Hawkes process drawn and simulated, and proof ledgers.
     contents:
       - rmblapp
+      - rmbldemo
       - dstfit
       - plot.rmbl_dstfit
       - plotmore
