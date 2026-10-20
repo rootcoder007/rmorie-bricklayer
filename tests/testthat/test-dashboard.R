@@ -554,8 +554,10 @@ test_that("the report assembles one HTML page, Markdown and the GitHub comment",
   entries <- c(g$rpt, h$rpt)
   page <- ns$.bl_rpt_html(entries, "Counts")
   expect_match(page, "<title>Counts</title>", fixed = TRUE)
-  expect_match(page, "<svg", fixed = TRUE)
-  expect_match(page, "id=\"p2-", fixed = TRUE)
+  # inline SVG with per-plot ids where cairo works; a PNG data URI otherwise (macOS runners)
+  fig <- if (ns$.bl_have_cairo()) "<svg" else "data:image/png;base64,"
+  expect_match(page, fig, fixed = TRUE)
+  if (ns$.bl_have_cairo()) expect_match(page, "id=\"p2-", fixed = TRUE)
   expect_match(page, "<div class=\"scroll\"><table>", fixed = TRUE)
   expect_match(page, "rtcalc(data", fixed = TRUE)
   md <- ns$.bl_rpt_md(entries, "Counts")
@@ -567,7 +569,7 @@ test_that("the report assembles one HTML page, Markdown and the GitHub comment",
   shiny::testServer(ns$.bl_rpt_server, args = list(id = "report", rpt = shiny::reactiveVal(entries)), {
     session$setInputs(title = "Counts", pick = c("1", "2"))
     expect_match(output$gh, "## Change from period to period", fixed = TRUE)
-    expect_match(paste(readLines(output$html), collapse = ""), "<svg", fixed = TRUE)
+    expect_match(paste(readLines(output$html), collapse = ""), fig, fixed = TRUE)
     expect_match(readLines(output$md)[1L], "# Counts", fixed = TRUE)
     session$setInputs(pick = character())
     expect_identical(output$gh, "")
