@@ -192,7 +192,8 @@ blcli("help")
 #>   rmoriebricklayer help r          the same from R and Rscript
 #>   rmoriebricklayer VERB --help     one verb's usage
 blcli(c("functions", "json"))
-#> no exported function matches
+#>   bricklayer_json_from_json  Old names kept for rmoriedata 0.3.x
+#>   bricklayer_json_to_json    Old names kept for rmoriedata 0.3.x
 blcli(c("describe", "anltab"))
 #> Analyse a published administrative table in one call
 #> 

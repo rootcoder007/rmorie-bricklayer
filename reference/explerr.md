@@ -96,10 +96,10 @@ explerr(msg, pkgs = "rmoriebricklayer")
 #> 1 rmoriebricklayer     .rmbl_string1
 #> 2 rmoriebricklayer .rmbl_fips_scheme
 #> 3 rmoriebricklayer        usecpstmpl
-#>                                                     exported  kind
-#> 1             llmask, agentbndl, anltab, arccap, blcli, bldl error
-#> 2 cpsatst, cpsbndl, cpsbndlvrf, cpschkatst, cpssign, fipskey error
-#> 3                                                 usecpstmpl error
+#>                                                          exported  kind
+#> 1                  llmask, agentbndl, anltab, arccap, blcli, bldl error
+#> 2 capsule_sign, cpsatst, cpsbndl, cpsbndlvrf, cpschkatst, cpssign error
+#> 3                                                      usecpstmpl error
 #>                                      message            match
 #> 1    `...` must be a single non-empty string            exact
 #> 2 `scheme` must be a single non-empty string 80% of its words

@@ -82,10 +82,24 @@ now has a short name without underscores (`survey_design()` is
 [`tse()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tse.md)).
 Each help page gives the full form of every short name. The old names
 are gone, not kept as aliases, so the reference stays one page per
-method. `rmbl functions` and the help-aware language-model tools list
-the new names. Wire formats (capsule, manifest and service JSON fields,
-CSV columns from published tables) keep their names, so files written by
-earlier versions still read.
+method. The one exception is the eleven 0.5.x names rmoriedata 0.3.x on
+CRAN calls
+([`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md),
+[`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md),
+[`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md),
+[`signing_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md),
+[`core_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md),
+[`core_mean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md),
+[`sha256_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md),
+[`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md),
+[`bricklayer_json_from_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md),
+[`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md),
+[`wayback_snapshot_url()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)),
+kept as thin wrappers (`?rmbl-compat`) so that release keeps installing
+and checking against 1.0.0. `rmbl functions` and the help-aware
+language-model tools list the new names. Wire formats (capsule, manifest
+and service JSON fields, CSV columns from published tables) keep their
+names, so files written by earlier versions still read.
 
 ### First Nations, Metis and Inuit health, mental health and wellness
 
@@ -990,10 +1004,11 @@ earlier finding)
 - **Interrupts and time limits**: every POST polls for Ctrl-C and
   [`setTimeLimit()`](https://rdrr.io/r/base/setTimeLimit.html), not only
   when the wait label shows (Wayback `/save`, OCSP, the data-key check,
-  `ask` with stderr redirected); a Ctrl-C in `bricklayer_fetch()` or
-  `wayback_snapshot_url_native()` is raised at once instead of running
-  the Wayback lookups on to their timeouts; the Wayback back-off without
-  a terminal sleeps a second at a time, so a time limit ends it.
+  `ask` with stderr redirected); a Ctrl-C in
+  [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  or `wayback_snapshot_url_native()` is raised at once instead of
+  running the Wayback lookups on to their timeouts; the Wayback back-off
+  without a terminal sleeps a second at a time, so a time limit ends it.
 - **`bricklayer_data_load()`** applies the option
   `rmoriebricklayer.maxcsvbytes` (1 GiB by default) on both of its read
   paths.
@@ -1067,15 +1082,17 @@ earlier finding)
   and long vectors in `benford_test()` and `distinct_sketch()` (read in
   blocks of a million; the counts and registers are those of one pass).
 - **A spinner for long native calls**: XMSS key generation and signing
-  (`pqc_keygen()`, a few seconds at the default height, about a minute
-  at 14), `derive_key()`, the native routes of `core_hawkes_fit()` (with
-  the stage: first start, second start) and every network request
-  (`bricklayer_fetch()`, the portal resolvers,
-  `wayback_snapshot_url_native()`, revocation and service lookups, model
-  lists) show a turning spinner with the label and the seconds so far,
-  drawn by the compiled layer each time the call polls for a Ctrl-C,
-  from 0.75 s on, on a terminal only. The XMSS tree now polls every 32
-  leaves (it was every 1,024, once in a whole default key).
+  ([`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md),
+  a few seconds at the default height, about a minute at 14),
+  `derive_key()`, the native routes of `core_hawkes_fit()` (with the
+  stage: first start, second start) and every network request
+  ([`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md),
+  the portal resolvers, `wayback_snapshot_url_native()`, revocation and
+  service lookups, model lists) show a turning spinner with the label
+  and the seconds so far, drawn by the compiled layer each time the call
+  polls for a Ctrl-C, from 0.75 s on, on a terminal only. The XMSS tree
+  now polls every 32 leaves (it was every 1,024, once in a whole default
+  key).
 - **Live progress in the IDE consoles, and one look for it.** Whether a
   console can redraw a line is now decided as the cli package decides
   it, no longer by `isatty(stderr())` alone, which is `FALSE` in the
@@ -2168,18 +2185,18 @@ fixes overstated corrected.
   temporary name whose rename is checked; a malformed line stops signing
   until the file is repaired or removed; the off switch warns on every
   signature; a value that is not a path (`TRUE`, `"0"`) is refused.
-  `pqc_keygen()` registers every key in the record at birth, so a key
-  the record does not know that claims never to have signed is refused
-  (a deleted record, or a key from another machine) until
-  `xmss_register_key()` vouches for it or `xmss_advance()` carries it
-  forward. `xmss_advance()` checks the index against the key’s height,
-  verifies the signature when the message is given, never advances below
-  what the record knows, accepts an attestation, bundle or recode
-  manifest, and warns when the key is exhausted;
-  `xmss_forget_used_indices()` can forget one key and is documented as
-  removing the protection. Examples and vignettes point the record at a
-  temporary file so checks and builds leave the configuration directory
-  alone.
+  [`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  registers every key in the record at birth, so a key the record does
+  not know that claims never to have signed is refused (a deleted
+  record, or a key from another machine) until `xmss_register_key()`
+  vouches for it or `xmss_advance()` carries it forward.
+  `xmss_advance()` checks the index against the key’s height, verifies
+  the signature when the message is given, never advances below what the
+  record knows, accepts an attestation, bundle or recode manifest, and
+  warns when the key is exhausted; `xmss_forget_used_indices()` can
+  forget one key and is documented as removing the protection. Examples
+  and vignettes point the record at a temporary file so checks and
+  builds leave the configuration directory alone.
 - `verify_pollution()` reads the exposure CSV whole: UTF-16 is decoded,
   a UTF-8 BOM dropped, a file that is not UTF-8 read as Latin-1 and
   said, NUL bytes refused (the fifth pass found a quote that swallowed
@@ -2228,13 +2245,15 @@ fixes overstated corrected.
 
 - **The XMSS signature object carried the private key too.** The
   attestation fix of the first pass stripped `key_state` from
-  attestations only; `capsule_sign()` itself still returned the advanced
-  key, with `sk_seed` and `sk_prf`, inside every XMSS signature, so
-  every shared signature, bundle JSON file, chain and report made with
-  XMSS from 0.5.9 to 7703a04 handed out the private key, and anyone
-  holding one could attest or sign anything under the victim’s root. The
-  signature object now carries no key material of any scheme, and the
-  next key state is `xmss_advance(key, signature)` (new, exported, with
+  attestations only;
+  [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  itself still returned the advanced key, with `sk_seed` and `sk_prf`,
+  inside every XMSS signature, so every shared signature, bundle JSON
+  file, chain and report made with XMSS from 0.5.9 to 7703a04 handed out
+  the private key, and anyone holding one could attest or sign anything
+  under the victim’s root. The signature object now carries no key
+  material of any scheme, and the next key state is
+  `xmss_advance(key, signature)` (new, exported, with
   `xmss_forget_used_indices()`). **Treat every XMSS key whose signature,
   attestation, bundle or report left your machine under 0.5.9 to 7703a04
   as compromised: generate a new key and sign again.** A test checks
@@ -2270,7 +2289,9 @@ fixes overstated corrected.
 - [`plot()`](https://rdrr.io/r/graphics/plot.default.html) of a
   frequency table with a missing level draws it as “(missing)” instead
   of failing on the margin (broken since 0.5.11).
-- HMAC `capsule_verify()` answers FALSE to any edited `signature` field;
+- HMAC
+  [`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  answers FALSE to any edited `signature` field;
   `capsule_check_attestation()` accepts a public-key object as
   `key_expected` (for XMSS the root and seed both) and reports a missing
   digest instead of throwing.
@@ -2309,13 +2330,14 @@ fixes overstated corrected.
 - Third pass over the branch (4b4af29): `top_share(x, 0)` is zero units
   again and `apply_schema_validation(data, NULL)` means nothing to
   validate (two guards of the second pass overshot and turned CI red);
-  `capsule_verify()` checks the shape of a signature before the type of
-  the key, so an HMAC signature whose scheme was edited to XMSS is FALSE
-  while a real XMSS signature with a string for a key is still an error;
-  a FIPS signature whose recorded `context` or `prehash` is not a string
-  is FALSE; `verify_pollution()` with a missing `reference` is a report,
-  not a crash; `briggs_plume_rise()` at ambient temperature has zero
-  flux and zero rise (a cooler stack is refused); Ctrl-C at the
+  [`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  checks the shape of a signature before the type of the key, so an HMAC
+  signature whose scheme was edited to XMSS is FALSE while a real XMSS
+  signature with a string for a key is still an error; a FIPS signature
+  whose recorded `context` or `prehash` is not a string is FALSE;
+  `verify_pollution()` with a missing `reference` is a report, not a
+  crash; `briggs_plume_rise()` at ambient temperature has zero flux and
+  zero rise (a cooler stack is refused); Ctrl-C at the
   `rmbl login --token` prompt interrupts at once (the terminal line is
   read by a shell child, so the interrupt is not held until Enter); the
   `yoy_pdf()` notes test asserts the page rule instead of comparing a
@@ -2449,12 +2471,13 @@ fixes overstated corrected.
   ML-KEM case recomputes `r-hat` and `m'` from the message it
   encapsulated and scans for both after the masked decapsulation; this
   is the check that would have caught the gap above.
-- `capsule_verify()` answers `FALSE`, not an error, for a signature
-  whose `signature` field is not one string, whose `prehash` names no
-  digest, or whose XMSS `auth`, `randomizer` or `index` is missing; and
-  an XMSS signature whose own `root`, `height` or `wire` disagrees with
-  the key or with its parts no longer verifies (verification used the
-  key’s values and ignored the edited fields).
+- [`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  answers `FALSE`, not an error, for a signature whose `signature` field
+  is not one string, whose `prehash` names no digest, or whose XMSS
+  `auth`, `randomizer` or `index` is missing; and an XMSS signature
+  whose own `root`, `height` or `wire` disagrees with the key or with
+  its parts no longer verifies (verification used the key’s values and
+  ignored the edited fields).
 
 ### Location, emissions
 
@@ -2970,7 +2993,8 @@ tells them apart, and for the fixes below; this is both.
 ### Side channels: timing, power, masking
 
 - **First-order masking, on by default.** `kem_decapsulate()`
-  (ML-KEM-512/768/1024) and every ML-DSA signature (`capsule_sign()`
+  (ML-KEM-512/768/1024) and every ML-DSA signature
+  ([`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
   with an ML-DSA key, `fips_sign_mu()`) run with each value that depends
   on the secret key held as two shares, refreshed with fresh randomness
   from the operating system for every call. The output is byte-identical
@@ -3086,8 +3110,9 @@ did make. All closed here, each at every site of its kind, pinned by
 - The exact Mann-Kendall memo evicts its oldest table instead of
   flushing all 32.
 - `mcar_test()`’s `log_p_value` is documented; `download_data(mode =)`
-  says what it accepts; `bricklayer_json_to_json()` names
-  `keep_vec_names` and `quiet_vec_names`; `MORIE_SERVICES_URL` is
+  says what it accepts;
+  [`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  names `keep_vec_names` and `quiet_vec_names`; `MORIE_SERVICES_URL` is
   documented and a mirror without a `.json` suffix finds its `.sig`;
   `bricklayer_download(timeout = 1e18)` is an error, not an undefined
   cast; a single-label host name is reported as a local address;
@@ -3140,8 +3165,9 @@ pinned by `test-review4.R`.
 - **Bytes a server sent are parsed as text, never as a second address.**
   One helper, `.rmbl_json_text()`, parses every network body, cached
   manifest and signature file; the URL and file branches of
-  `bricklayer_json_from_json()` are for a user’s argument only. A body
-  or a `.sig` that is a bare URL is “not JSON”, not a fetch.
+  [`bricklayer_json_from_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  are for a user’s argument only. A body or a `.sig` that is a bare URL
+  is “not JSON”, not a fetch.
 - **Keys are redacted by value.** A gateway’s error text has the key
   that was sent, any `Bearer` token and any `sk-` key removed before it
   reaches an R condition.
@@ -3243,7 +3269,8 @@ unnoticed.
   `bricklayer_download()` gated with the validator and then transported
   with base R’s [`url()`](https://rdrr.io/r/base/connections.html): no
   DNS check, no pin, no redirect re-validation, no size cap on the
-  package’s own documented pipeline; `bricklayer_json_from_json()`
+  package’s own documented pipeline;
+  [`bricklayer_json_from_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
   fetched a bare URL with no gate at all; `download_data()` wrapped
   [`download.file()`](https://rdrr.io/r/utils/download.file.html). All
   three use `src/rmbl_fetch.cpp`, with the live progress bar driven by a
@@ -3350,7 +3377,8 @@ Every item below has a test in `tests/testthat/test-review2.R`.
   the connection to those addresses (`CURLOPT_RESOLVE`, so DNS rebinding
   cannot answer differently), follows redirects itself one checked hop
   at a time (an `https` fetch cannot be bounced to `http` or to a
-  private host), and caps a chunked download. `bricklayer_fetch()`,
+  private host), and caps a chunked download.
+  [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md),
   `.rmbl_read_json()`, the CRL/OCSP fetch, the Wayback resolver and the
   hosted-model client all go through it. `.rmbl_check_public_url()`
   calls the same C check.
@@ -3587,15 +3615,17 @@ was fixed, and each has a test that fails on 0.5.5).
 
 ## rmoriebricklayer 0.5.5
 
-- **XMSS: an index never signs twice.** `capsule_sign()` signed two
-  messages at index 0 when called twice with the same key object (the
-  key is an R value, so it cannot advance the caller’s copy), and the
-  help said it refused. It now remembers, for the session, the highest
-  index each key has signed with and refuses that index or an earlier
-  one (one key object signed twice, or a stale copy), retiring the index
-  before the signature exists (RFC 8391; NIST SP 800-208). A damaged
-  `next_index` (NA, negative, fractional) is refused in words. Across
-  sessions, save the latest `key_state` after every signature.
+- **XMSS: an index never signs twice.**
+  [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  signed two messages at index 0 when called twice with the same key
+  object (the key is an R value, so it cannot advance the caller’s
+  copy), and the help said it refused. It now remembers, for the
+  session, the highest index each key has signed with and refuses that
+  index or an earlier one (one key object signed twice, or a stale
+  copy), retiring the index before the signature exists (RFC 8391; NIST
+  SP 800-208). A damaged `next_index` (NA, negative, fractional) is
+  refused in words. Across sessions, save the latest `key_state` after
+  every signature.
 
 - Hawkes processes: events at the same instant no longer excite each
   other. The intensity sums over strictly earlier events, as the
@@ -3735,8 +3765,9 @@ was fixed, and each has a test that fails on 0.5.5).
   integer range in words, with no coercion warning; `hqc_sizes(Inf)` no
   longer warns before refusing.
 
-- `bricklayer_fetch()` gives the HTTP status of a server that answered
-  (“answered HTTP 404”; it said “could not reach”);
+- [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  gives the HTTP status of a server that answered (“answered HTTP 404”;
+  it said “could not reach”);
   `friendly_download(attempt_wayback = FALSE)` (or `""`) says the
   fallback is switched off instead of claiming the Wayback Machine has
   no snapshot.
@@ -3748,15 +3779,15 @@ was fixed, and each has a test that fails on 0.5.5).
   empty prompt or request, a malformed `--email` and an unknown option
   to `help` exit 2.
 
-- `bricklayer_json_to_json()` is byte-identical to jsonlite’s `toJSON()`
-  where jsonlite does not pass an option on: `raw = "js"` is written
-  with jsonlite’s defaults (`new Uint8Array([35])`, an array, even under
-  `auto_unbox`, where it wrote the number 35), `raw = "hex"` is unpadded
-  (“f”), a `Date` epoch never gets a decimal point, the mongo `$date`
-  and `$binary` objects and `keep_vec_names` objects stay on one line
-  under `pretty`, and `keep_vec_names` does not reach the columns of a
-  data frame. 18,000 random objects now encode identically (30 in 3,000
-  differed).
+- [`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  is byte-identical to jsonlite’s `toJSON()` where jsonlite does not
+  pass an option on: `raw = "js"` is written with jsonlite’s defaults
+  (`new Uint8Array([35])`, an array, even under `auto_unbox`, where it
+  wrote the number 35), `raw = "hex"` is unpadded (“f”), a `Date` epoch
+  never gets a decimal point, the mongo `$date` and `$binary` objects
+  and `keep_vec_names` objects stay on one line under `pretty`, and
+  `keep_vec_names` does not reach the columns of a data frame. 18,000
+  random objects now encode identically (30 in 3,000 differed).
 
 - `bricklayer_json_serialize()` is no longer called lossless: like
   jsonlite’s `serializeJSON()` it rounds doubles to `digits` (8);
@@ -3871,10 +3902,11 @@ was fixed, and each has a test that fails on 0.5.5).
   suggested jsonlite. `agent_bundle()` and `doctor` use the package’s
   own hosted route only (`backend` is “auto” or “hosted”).
 
-- `bricklayer_fetch()` says why a download failed (the HTTP status, a
-  server never reached, no Wayback snapshot) and refuses a non-http(s)
-  URL, an unwritable destination or a non-positive timeout before
-  downloading; `friendly_download()` keeps R’s
+- [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  says why a download failed (the HTTP status, a server never reached,
+  no Wayback snapshot) and refuses a non-http(s) URL, an unwritable
+  destination or a non-positive timeout before downloading;
+  `friendly_download()` keeps R’s
   [`url()`](https://rdrr.io/r/base/connections.html) warning out of the
   console, reports its status as the cause and says when the Wayback
   Machine has no copy; the Wayback lookup retries once. SIU: an
@@ -3887,13 +3919,16 @@ was fixed, and each has a test that fails on 0.5.5).
   compares a biennial series step to step (it found no comparisons) and
   labels an inserted year “no data”; `report_analysis()` prints years
   without a thousands separator and describes a percent analysis in
-  percentage points; `sha256_file()` names a missing file.
+  percentage points;
+  [`sha256_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  names a missing file.
 
 - The SIU parser reads ordinal dates (“August 3rd, 2017”) as well as
   French months, and legislation such as the Police Services Act no
   longer outvotes the police service (17-OVI-201 reads Guelph Police
   Service, 2017-08-03). `data --help` exits 0 like every other help, and
-  `bricklayer_fetch()` refuses an empty URL or path in words.
+  [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  refuses an empty URL or path in words.
 
 - The command line answers to `rmbl` as well as `rmoriebricklayer`:
   `install_cli()` writes both launchers, pinned to the library they were
@@ -3907,8 +3942,9 @@ was fixed, and each has a test that fails on 0.5.5).
 - Fixes from the 1.4.0 stress test of the family: `friendly_download()`
   no longer fails inside its own Wayback fallback when the snapshot
   lookup returns nothing usable, and names a cause for an error it does
-  not recognise; `wayback_snapshot_url()` returns `NULL` for a malformed
-  answer;
+  not recognise;
+  [`wayback_snapshot_url()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  returns `NULL` for a malformed answer;
   [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
   averages several rows of one period for continuous values and
   percentages (counts still add up; pass `fun` to choose);
@@ -4045,15 +4081,15 @@ The bundle built by `make_bundle.sh` runs on a machine with none of the
 family packages installed, so every internal name a staged file calls
 has to be staged too. Three were not: the input guards the libraries now
 call, the seed helper behind the synthetic-data route, and the compiled
-`core_sha256()` behind `manifest_digest()`. The first two files are now
-staged; `manifest_digest()`, `.rmbl_read_json()` and the describe table
-fall back to the pure-R implementations when the compiled ones are
-absent, with the same numbers. `dev/bundle_symbol_scan.R` now runs
-inside the build and fails it on any called-but-unstaged name, so the
-class cannot recur. `setup_and_run.R --synthetic` (or
-`OTIS_MRP_SYNTHETIC=1`) takes the synthetic route without a prompt, and
-the exhausted-downloads message names that route by its real menu
-number.
+[`core_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+behind `manifest_digest()`. The first two files are now staged;
+`manifest_digest()`, `.rmbl_read_json()` and the describe table fall
+back to the pure-R implementations when the compiled ones are absent,
+with the same numbers. `dev/bundle_symbol_scan.R` now runs inside the
+build and fails it on any called-but-unstaged name, so the class cannot
+recur. `setup_and_run.R --synthetic` (or `OTIS_MRP_SYNTHETIC=1`) takes
+the synthetic route without a prompt, and the exhausted-downloads
+message names that route by its real menu number.
 
 ### Every export, degenerate inputs and known answers
 
@@ -5017,11 +5053,15 @@ gone along with the `./configure` step that probed for it.
   MGF1, and its multi-block tweakable hash switches to SHA-512 at
   192-bit security and above but its single-block one does not – none of
   which a test that only signs and verifies would notice.
-- `capsule_sign()` and `capsule_verify()` gained `context`, the context
-  string both standards bind into the message encoding, so one key can
-  be used for two purposes without a signature crossing between them.
-  `capsule_sign()` also gained `deterministic`, selecting the variant
-  whose output depends only on key, message and context.
+- [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  and
+  [`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  gained `context`, the context string both standards bind into the
+  message encoding, so one key can be used for two purposes without a
+  signature crossing between them.
+  [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  also gained `deterministic`, selecting the variant whose output
+  depends only on key, message and context.
 - `oqs_keygen()` and `oqs_public_key()` are deprecated in favour of the
   `fips_*` names and now warn. They still work, and still return the
   same classes.
@@ -5079,14 +5119,17 @@ A digest in a manifest proves the data was not corrupted. It proves
 nothing about who produced it, because anyone who edits the data can
 recompute the digest.
 
-- `capsule_sign()` / `capsule_verify()` authenticate a manifest, either
-  with a shared secret (`HMAC-SHA-256`, RFC 2104) or with a
-  post-quantum, asymmetric, hash-based signature.
-- `pqc_keygen()` builds that signature’s key: a Merkle tree over
-  Winternitz one-time keys, following the RFC 8391 construction over the
-  SHA-256 this package already ships. Its security rests on the hash
-  alone – no lattice assumption, no elliptic curve, nothing Shor’s
-  algorithm breaks, and no new system dependency.
+- [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  /
+  [`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  authenticate a manifest, either with a shared secret (`HMAC-SHA-256`,
+  RFC 2104) or with a post-quantum, asymmetric, hash-based signature.
+- [`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  builds that signature’s key: a Merkle tree over Winternitz one-time
+  keys, following the RFC 8391 construction over the SHA-256 this
+  package already ships. Its security rests on the hash alone – no
+  lattice assumption, no elliptic curve, nothing Shor’s algorithm
+  breaks, and no new system dependency.
 - `merkle_root()` and friends pin a capsule chunk by chunk, so a
   mismatch names *which* chunk moved rather than only that the file did.
 - `chain_new()` / `chain_append()` link each manifest to the digest of
@@ -5113,9 +5156,10 @@ signs any number of messages, with no leaf index to track. A signature
 is never verified against a key of a different scheme.
 
 A height-`h` signing key signs exactly `2^h` messages. Signing twice at
-one index breaks the scheme outright, so `capsule_sign()` tracks the
-index, returns the advanced key state, and refuses an exhausted key
-rather than wrapping around.
+one index breaks the scheme outright, so
+[`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+tracks the index, returns the advanced key state, and refuses an
+exhausted key rather than wrapping around.
 
 ### What is actually in it?
 
@@ -5220,8 +5264,9 @@ their own.
 
 ### Keys
 
-`pqc_keygen()`’s seeds previously came from a function that mixed the
-clock, the process id and R’s Mersenne Twister.
+[`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)’s
+seeds previously came from a function that mixed the clock, the process
+id and R’s Mersenne Twister.
 [`set.seed()`](https://rdrr.io/r/base/Random.html) makes R’s generator
 reproducible by design and its state is recoverable from its output, so
 a key drawn from it is guessable.
@@ -5248,9 +5293,9 @@ like a result.
   the complete-case covariance where it can, because two identical
   columns with different missingness leave the pairwise covariance only
   nearly singular.
-- `capsule_verify()` rejects a signature presented with a key of a
-  different scheme explicitly. It already failed, but incidentally, on a
-  length mismatch.
+- [`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  rejects a signature presented with a key of a different scheme
+  explicitly. It already failed, but incidentally, on a length mismatch.
 
 ### SIU parser fixes
 
@@ -5482,11 +5527,13 @@ WOTS+ signature and authentication path – now matches the reference byte
 for byte, and the vectors are embedded in the test suite so the check
 needs neither a network nor a C toolchain.
 
-**This changes the key and signature formats.** `pqc_keygen()` now
-generates a third secret (`sk_prf`) and `capsule_sign()` returns
-`randomizer` and `wire` alongside the existing fields. A key made by an
-earlier build cannot sign, and a signature made by one cannot be
-verified; both raise an explicit error rather than failing quietly.
+**This changes the key and signature formats.**
+[`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+now generates a third secret (`sk_prf`) and
+[`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+returns `randomizer` and `wire` alongside the existing fields. A key
+made by an earlier build cannot sign, and a signature made by one cannot
+be verified; both raise an explicit error rather than failing quietly.
 Nothing is lost in practice, because signing is new in this release and
 was never in a version on CRAN.
 
@@ -5553,14 +5600,17 @@ behind a native JSON codec and a compiled SHA-256 core:
 
 - `load_provenance()` said it parsed via
   [`jsonlite::fromJSON()`](https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html),
-  and linked to it; it reads with `bricklayer_json_from_json()`.
+  and linked to it; it reads with
+  [`bricklayer_json_from_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md).
 - `verify_capsule()`’s example called
   [`jsonlite::write_json()`](https://jeroen.r-universe.dev/jsonlite/reference/read_json.html)
   – a Suggests package used unconditionally in an example. It now writes
-  with `bricklayer_json_to_json()`.
-- `sha256_file()` and `verify_sha256()` said they hashed “via the digest
-  package”; they use the compiled core, or the bundled pure-R FIPS 180-4
-  implementation when a capsule is sourced standalone.
+  with
+  [`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md).
+- [`sha256_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  and `verify_sha256()` said they hashed “via the digest package”; they
+  use the compiled core, or the bundled pure-R FIPS 180-4 implementation
+  when a capsule is sourced standalone.
 - `wayback_snapshot_url_native()` described the R-level resolver it
   supersedes as “jsonlite-based”; that resolver parses natively too.
 - `write_manifest_json()`‘s example said it round-tripped through
@@ -5583,26 +5633,33 @@ CRAN release: 2026-09-08
   when jsonlite is installed (1,742 cases, 0 differences).
 - Standalone capsule bundles: `make_bundle.sh` now ships `json_native.R`
   and a pure-R SHA-256 (`sha256_native.R`), `setup_and_run.R` no longer
-  requires jsonlite, and `sha256_file()` falls back to the pure-R digest
-  when the compiled core is not loaded. This fixes the 0.3.8 CI failure
-  of the otis-mrp bundle (`bricklayer_json_from_json` not found).
+  requires jsonlite, and
+  [`sha256_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  falls back to the pure-R digest when the compiled core is not loaded.
+  This fixes the 0.3.8 CI failure of the otis-mrp bundle
+  (`bricklayer_json_from_json` not found).
 - pkgdown index and examples for the two exported codec functions.
 
 ## rmoriebricklayer 0.3.8
 
 - No more runtime dependence on ‘digest’ or ‘jsonlite’: Imports is now
-  base R only (`stats`, `utils`). `sha256_file()` hashes through the
-  compiled SHA-256 core that already backed `core_sha256()`; every JSON
-  read (CKAN, Socrata, ArcGIS, Wayback metadata, local manifests) and
-  the manifest writer go through a new pure-R, jsonlite-compatible codec
-  exported as `bricklayer_json_from_json()` /
-  `bricklayer_json_to_json()` (same simplification rules and encoder
-  options as jsonlite). Both old packages move to Suggests and are only
-  used by the cross-check tests, which pin the native codec and hash to
-  their output when installed.
-- Remote JSON endpoints are fetched with `bricklayer_fetch()` (the
-  compiled fetch core with its Wayback fallback) instead of jsonlite’s
-  URL reader.
+  base R only (`stats`, `utils`).
+  [`sha256_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  hashes through the compiled SHA-256 core that already backed
+  [`core_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md);
+  every JSON read (CKAN, Socrata, ArcGIS, Wayback metadata, local
+  manifests) and the manifest writer go through a new pure-R,
+  jsonlite-compatible codec exported as
+  [`bricklayer_json_from_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  /
+  [`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  (same simplification rules and encoder options as jsonlite). Both old
+  packages move to Suggests and are only used by the cross-check tests,
+  which pin the native codec and hash to their output when installed.
+- Remote JSON endpoints are fetched with
+  [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  (the compiled fetch core with its Wayback fallback) instead of
+  jsonlite’s URL reader.
 
 ## rmoriebricklayer 0.3.7
 
@@ -5657,9 +5714,11 @@ CRAN release: 2026-08-05
 - Every exported function now carries exhaustive, multiple-example
   documentation covering each argument, edge cases, and a realistic
   workflow (previously most had a single one-liner).
-- Version bump ensures the `bricklayer_fetch()` help topic (added in an
-  earlier 0.3.1 build without a version bump) propagates to the
-  r-universe binary and downstream reverse-dependency checks.
+- Version bump ensures the
+  [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md)
+  help topic (added in an earlier 0.3.1 build without a version bump)
+  propagates to the r-universe binary and downstream reverse-dependency
+  checks.
 
 ## rmoriebricklayer 0.3.1
 
