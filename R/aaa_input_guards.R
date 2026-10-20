@@ -455,3 +455,52 @@
   }
   invisible(x)
 }
+
+# The 0.5.x compatibility helpers that files sourced on their own (the otis-mrp bundle stages
+# yoy.R and rate.R beside this file) call; the rest of the layer is R/compat_s3.R.
+
+# Old allowed values renamed in 1.0.0: each element of `x` found in names(map) becomes its new
+# value; a full old choice vector becomes the full new one, so the default still means "first".
+.rmbl_alias_val <- function(x, map) {
+  if (!is.character(x)) return(x)
+  i <- match(x, names(map))
+  x[!is.na(i)] <- unname(map[i[!is.na(i)]])
+  x
+}
+
+# 0.5.x argument names reaching a function through `...` (yoy() kept its name, so it has no
+# alias): when the call that is running used one, returns that call with the new names and the
+# frame to evaluate it in, else NULL. A call naming both forms is refused.
+.rmbl_old_names <- function(map) {
+  env <- parent.frame(2L)
+  fn <- sys.function(-1L)
+  mc <- match.call(fn, sys.call(-1L), expand.dots = TRUE, envir = env)
+  n <- names(mc)
+  k <- n %in% names(map)
+  if (!any(k)) return(NULL)
+  both <- n[k][unname(map[n[k]]) %in% n]
+  if (length(both)) {
+    stop(.rmbl_fn(), sprintf("give `%s` or its 0.5.x name `%s`, not both", map[[both[1L]]], both[1L]),
+         call. = FALSE)
+  }
+  names(mc)[k] <- unname(map[n[k]])
+  # the function itself: an S3 method's call names the method, which the caller cannot see
+  mc[[1L]] <- fn
+  list(call = mc, env = env)
+}
+
+# 1.0.0 shortened the option names: a session that still sets a 0.5.x name (in .Rprofile, say)
+# is read too, so an XMSS index record or a data cache it points to is not silently dropped
+.rmbl_old_options <- c(allowhttp = "allow_http", dcache = "data_cache", llmcache = "llm_cache",
+                       llmcachedays = "llm_cache_days", llmcachedir = "llm_cache_dir",
+                       llmcachemax = "llm_cache_max", maxcsvbytes = "max_csv_bytes",
+                       numcol = "num_colors", xmssidxfile = "xmss_index_file")
+
+# getOption("rmoriebricklayer.<name>", default), falling back on the option's 0.5.x name.
+.rmbl_getopt <- function(name, default = NULL) {
+  v <- getOption(paste0("rmoriebricklayer.", name))
+  if (is.null(v) && name %in% names(.rmbl_old_options)) {
+    v <- getOption(paste0("rmoriebricklayer.", .rmbl_old_options[[name]]))
+  }
+  if (is.null(v)) default else v
+}
