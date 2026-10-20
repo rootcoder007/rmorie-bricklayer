@@ -4,11 +4,18 @@
 # options(morie.progress = TRUE)); milestone lines when stderr is not a
 # terminal; nothing when quiet. options(morie.quiet = TRUE) silences it.
 
+#' Tells whether a download should draw no progress line.
+#' @return `TRUE` when the session is quiet or not interactive and progress is not forced on.
+#' @noRd
 .bl_dl_quiet <- function() {
   isTRUE(getOption("morie.quiet")) ||
     !(interactive() || isTRUE(getOption("morie.progress")))
 }
 
+#' Formats a byte count in B, KB, MB or GB.
+#' @param n The number of bytes.
+#' @return A string; "?" for a count that is not finite.
+#' @noRd
 .bl_fmt_bytes <- function(n) {
   if (!is.finite(n)) return("?")
   units <- c("B", "KB", "MB", "GB")
@@ -21,6 +28,15 @@
   sprintf("%.1f %s", n, units[i])
 }
 
+#' Formats one line of a download progress display.
+#' @param label The text shown before the bar.
+#' @param got The amount received so far.
+#' @param size The total size, or a non-finite value when it is unknown (a spinner is drawn).
+#' @param t0 The elapsed time at the start, from `proc.time()`.
+#' @param spin The spinner step.
+#' @param unit The unit of `got` and `size`; "B" formats them as bytes.
+#' @return A string.
+#' @noRd
 .bl_dl_line <- function(label, got, size, t0, spin, unit = "B") {
   elapsed <- max(proc.time()[["elapsed"]] - t0, 1e-6)
   fmt <- .bl_fmt_bytes
@@ -235,7 +251,16 @@ bldl <- function(url, dest, headers = NULL,
   invisible(dest)
 }
 
-# the one call into the native transport, named so a test can stand a reply in for it
+#' The one call into the native transport, named so a test can stand a reply in for it
+#' @param url The URL to fetch.
+#' @param dest The file to write.
+#' @param tmout The timeout in seconds.
+#' @param headers The request headers.
+#' @param draw Whether to draw a progress line.
+#' @param maxbytes The largest body accepted.
+#' @param head_only Whether to send a HEAD request only.
+#' @return What the native transport returns.
+#' @noRd
 .bl_http_download <- function(url, dest, tmout, headers, draw, maxbytes, head_only) {
   .Call(C_rmbl_http_download, url, dest, tmout, headers, draw, maxbytes, head_only)
 }

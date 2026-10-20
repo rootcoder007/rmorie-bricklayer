@@ -11,42 +11,82 @@
 # marked the URL failed and the next POST went straight out, 300 URLs in 32 seconds, the
 # behaviour that gets an account suspended (review of e57fed5, E7).
 
+#' Returns the address of the Wayback Machine.
+#' @return One URL.
+#' @noRd
 .bl_wb_base <- function() "https://web.archive.org"
 
 # The transport seams (the package's checked libcurl calls), one place for tests to stand in a
 # server. An API call takes its answer only from the host it asked (a redirect to another host
 # is refused in the transport), and the reply carries Retry-After.
+#' Posts a capture request to Save Page Now.
+#' @param body The form-encoded request body.
+#' @param headers The request headers, the account's key among them.
+#' @return The transport's reply: a list with the status, headers and body.
+#' @noRd
 .bl_wb_post <- function(body, headers) {
   .Call(C_rmbl_http_post, paste0(.bl_wb_base(), "/save"), charToRaw(body),
         "application/x-www-form-urlencoded", 60L, headers, FALSE)
 }
+#' Sends a GET request to a path of the Wayback Machine.
+#' @param path The path, starting with "/".
+#' @param headers The request headers, the account's key among them.
+#' @return The transport's reply: a list with the status, headers and body.
+#' @noRd
 .bl_wb_get <- function(path, headers) {
   .Call(C_rmbl_http_get, paste0(.bl_wb_base(), path), 60L, headers, FALSE)
 }
+#' Looks up the latest capture of a URL, or NULL when the lookup fails.
+#' @param url The URL.
+#' @return The value of `wbsnpnat()`, or NULL.
+#' @noRd
 .bl_wb_lookup <- function(url) tryCatch(wbsnpnat(url, tmout = 30L), error = function(e) NULL)
+#' Returns the elapsed time of the session, in seconds.
+#' @return One number.
+#' @noRd
 .bl_wb_now <- function() proc.time()[["elapsed"]]
+#' Waits for a number of seconds.
+#' @param seconds The time to wait.
+#' @noRd
 .bl_wb_sleep <- function(seconds) Sys.sleep(seconds)
 
 # SPN2 replies are a few hundred bytes: a larger body is not one (a 4 MB reply took 443 s to parse)
 .bl_wb_body_max <- 65536L
 
-# a reply's JSON, or NULL (an HTML error page, an empty or oversized body)
+#' A reply's JSON, or NULL (an HTML error page, an empty or oversized body)
+#' @param res A transport reply.
+#' @return A list, or NULL.
+#' @noRd
 .bl_wb_json <- function(res) {
   if (!length(res$body) || length(res$body) > .bl_wb_body_max) return(NULL)
   j <- tryCatch(.rmbl_json_parse(rawToChar(res$body)), error = function(e) NULL)
   if (is.list(j)) j else NULL
 }
 
-# A field of a reply or of a results line as one string, or NA: a list, a number or TRUE where text
-# belongs (a broken or hostile reply, a hand-edited file) is not taken as text. A list timestamp
-# written to the results file had broken every later resume.
+#' Returns a field as one string, or NA.
+#'
+#' A field of a reply or of a results line as one string, or NA: a list, a number or TRUE where text
+#' belongs (a broken or hostile reply, a hand-edited file) is not taken as text. A list timestamp
+#' written to the results file had broken every later resume.
+#' @param x The field.
+#' @return One string, or `NA_character_`.
+#' @noRd
 .bl_wb_str <- function(x) if (is.character(x) && length(x) == 1L && !is.na(x)) x else NA_character_
+#' Returns a field as a 14-digit Wayback timestamp, or NA.
+#' @param x The field.
+#' @return One string, or `NA_character_`.
+#' @noRd
 .bl_wb_ts <- function(x) {
   x <- .bl_wb_str(x)
   if (!is.na(x) && grepl("^[0-9]{14}$", x)) x else NA_character_
 }
-# SPN2 job ids are "spn2-" and hex; anything that is not a short token is not a job to poll (TRUE
-# looped forever, 123 stopped the run)
+#' Returns a field as an SPN2 job id, or NA.
+#'
+#' SPN2 job ids are "spn2-" and hex; anything that is not a short token is not a job to poll (TRUE
+#' looped forever, 123 stopped the run)
+#' @param x The field.
+#' @return One string, or `NA_character_`.
+#' @noRd
 .bl_wb_job_id <- function(x) {
   x <- .bl_wb_str(x)
   # a job id that reads like a status code ("error:not-found") is not one: polling it would turn
@@ -54,7 +94,10 @@
   if (!is.na(x) && grepl("^[A-Za-z0-9._:-]{1,200}$", x) && !grepl("^error", x, ignore.case = TRUE)) x else NA_character_
 }
 
-# Retry-After in seconds (a number, or an HTTP date), capped at an hour; NA when not sent
+#' Retry-After in seconds (a number, or an HTTP date), capped at an hour; NA when not sent
+#' @param res A transport reply.
+#' @return The wait in seconds, or `NA_real_`.
+#' @noRd
 .bl_wb_retry_after <- function(res) {
   v <- .bl_wb_str(res$retry_after)
   if (is.na(v) || !nzchar(v)) return(NA_real_)
@@ -64,8 +107,13 @@
   min(3600, max(0, as.numeric(difftime(t, Sys.time(), units = "secs"))))
 }
 
-# An archive.org key: the variable, or the file its _FILE twin names (the convention for keys
-# kept on disk, as Docker secrets are). Never printed. A key file other users can read is said.
+#' Reads an archive.org key from the environment or from a key file.
+#'
+#' An archive.org key: the variable, or the file its _FILE twin names (the convention for keys
+#' kept on disk, as Docker secrets are). Never printed. A key file other users can read is said.
+#' @param var The environment variable's name.
+#' @return The key, or "" when neither is set.
+#' @noRd
 .bl_ia_key <- function(var) {
   v <- Sys.getenv(var)
   if (nzchar(v)) return(trimws(v))
@@ -79,13 +127,21 @@
   trimws(readLines(f, n = 1L, warn = FALSE))
 }
 
+#' Builds the Wayback address of a capture.
+#' @param ts The capture's timestamp, or NA for the latest capture.
+#' @param url The captured URL.
+#' @return One URL.
+#' @noRd
 .bl_wb_snapshot <- function(ts, url) {
   # without a timestamp, the address of the latest capture
   if (is.na(ts)) return(sprintf("https://web.archive.org/web/%s", url))
   sprintf("https://web.archive.org/web/%s/%s", ts, url)
 }
 
-# archive.org's own words for "this URL was captured already today" (a limit on the URL)
+#' archive.org's own words for "this URL was captured already today" (a limit on the URL)
+#' @param j A parsed SPN2 reply.
+#' @return TRUE or FALSE.
+#' @noRd
 .bl_wb_daily_limit <- function(j) {
   grepl("already captured", .bl_wb_str(j$message) %|NA|% "", fixed = TRUE) ||
     identical(.bl_wb_str(j$status_ext), "error:too-many-daily-captures")
@@ -98,23 +154,40 @@
 # fail that URL (review of 29a55d8, G5)
 .bl_wb_throttle_codes <- c("error:user-session-limit", "error:too-many-requests",
                            "error:no-browsers-available", "error:celery")
+#' Tells whether an SPN2 reply asks the run to slow down.
+#' @param j A parsed SPN2 reply.
+#' @return TRUE or FALSE.
+#' @noRd
 .bl_wb_throttled <- function(j) {
   isTRUE(.bl_wb_str(j$status_ext) %in% .bl_wb_throttle_codes) ||
     grepl("already reached the limit of active sessions|cannot start capture|too many requests|try again later",
           .bl_wb_str(j$message) %|NA|% "", ignore.case = TRUE)
 }
 
-# the account's own daily cap: nothing more can be captured today, so the run stops submitting
+#' The account's own daily cap: nothing more can be captured today, so the run stops submitting
+#' @param j A parsed SPN2 reply.
+#' @return TRUE or FALSE.
+#' @noRd
 .bl_wb_account_cap <- function(j) {
   isTRUE(.bl_wb_str(j$status_ext) %in% c("error:max-daily-bandwidth", "error:max-daily-bandwidth-from-ip")) ||
     grepl("cannot make more than [0-9,]+ captures per day|daily (not-logged-in )?captures limit",
           .bl_wb_str(j$message) %|NA|% "", ignore.case = TRUE)
 }
 
+#' Returns `b` when `a` is NA, else `a`.
+#' @param a A value that may be NA.
+#' @param b The value used in its place.
+#' @return `a` or `b`.
+#' @noRd
 `%|NA|%` <- function(a, b) if (is.na(a)) b else a
 
-# The results file as one normalised record per URL (the last line written for a URL wins: a
-# retry appends). Every field is a single string or NA, whatever the file holds.
+#' Reads the results file into one record per URL.
+#'
+#' The results file as one normalised record per URL (the last line written for a URL wins: a
+#' retry appends). Every field is a single string or NA, whatever the file holds.
+#' @param output The results file, or NULL.
+#' @return A list of records named by URL, empty when there is no file.
+#' @noRd
 .bl_wb_records <- function(output) {
   rows <- list()
   if (is.null(output) || !file.exists(output)) return(rows)
@@ -129,6 +202,10 @@
   rows
 }
 
+#' Turns the run's records into the results data frame.
+#' @param rows A list of records, as from `.bl_wb_records()`.
+#' @return A data frame of class `rmbl_wayback_save`.
+#' @noRd
 .bl_wb_frame <- function(rows) {
   col <- function(k) vapply(rows, function(r) as.character(r[[k]] %||% NA_character_), "", USE.NAMES = FALSE)
   out <- data.frame(url = col("url"), status = col("status"), timestamp = col("timestamp"),
@@ -138,8 +215,13 @@
   out
 }
 
-# a URL that cannot be sent as it is: a control or invisible formatting character (U+202E printed
-# the rest of a line reversed)
+#' Finds a control or invisible formatting character in a URL.
+#'
+#' A URL that cannot be sent as it is: a control or invisible formatting character (U+202E printed
+#' the rest of a line reversed)
+#' @param u The URL.
+#' @return A description of the first such character, or "".
+#' @noRd
 .bl_wb_hidden_char <- function(u) {
   # the bytes as given: under the C locale enc2utf8() rewrote U+202E to "<U+202E>", which passed
   u <- iconv(u, "UTF-8", "UTF-8", sub = NA)
@@ -579,11 +661,19 @@ print.rmbl_wayback_save <- function(x, ...) {
   invisible(x)
 }
 
-# The results of a run as they stand on disk: the last line written for each URL wins (a retry
-# appends, so a later "saved" replaces an earlier "failed").
+#' Reads the results of a run as they stand on disk.
+#'
+#' The results of a run as they stand on disk: the last line written for each URL wins (a retry
+#' appends, so a later "saved" replaces an earlier "failed").
+#' @param output The results file.
+#' @return A data frame of class `rmbl_wayback_save`.
+#' @noRd
 .bl_wb_read <- function(output) .bl_wb_frame(.bl_wb_records(output))
 
-# a failure that a new capture cannot fix: the page is gone from its source
+#' A failure that a new capture cannot fix: the page is gone from its source
+#' @param msg The failure message.
+#' @return TRUE or FALSE.
+#' @noRd
 .bl_wb_gone <- function(msg) {
   # only what the target server said: "HTTP 404" in a failure message is the status of
   # archive.org's own API (a capture refused or a job lost), and those pages are live
@@ -591,7 +681,10 @@ print.rmbl_wayback_save <- function(x, ...) {
         msg, ignore.case = TRUE)
 }
 
-# a failure that a capture today cannot fix: the URL's or the account's daily limit
+#' A failure that a capture today cannot fix: the URL's or the account's daily limit
+#' @param msg The failure message.
+#' @return TRUE or FALSE.
+#' @noRd
 .bl_wb_daily_failure <- function(msg) {
   grepl(paste0("already captured|captured already today|captured [0-9]+ times today|too-many-daily-captures|",
                "daily capture limit|captures per day"), msg, ignore.case = TRUE)

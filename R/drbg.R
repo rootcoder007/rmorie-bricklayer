@@ -242,6 +242,9 @@ print.bricklayer_drbg <- function(x, ...) {
   invisible(x)
 }
 
+#' Checks that an object is a DRBG state made by drbgnew().
+#' @param drbg The object passed by the user.
+#' @noRd
 .rmbl_drbg_check <- function(drbg) {
   if (!inherits(drbg, "bricklayer_drbg") || !is.environment(drbg) ||
       !is.raw(drbg$key) || length(drbg$key) != 32L || !is.raw(drbg$v) || length(drbg$v) != 16L) {
@@ -249,7 +252,15 @@ print.bricklayer_drbg <- function(x, ...) {
   }
 }
 
-# raw or hex; NULL is the empty string; at most `max` bytes (exactly, when `exact`)
+#' Reads a DRBG input given as raw bytes or hex.
+#'
+#' Raw or hex; NULL is the empty string; at most `max` bytes (exactly, when `exact`)
+#' @param x The input, raw, one hex string, or NULL.
+#' @param what The argument name, used in the error message.
+#' @param max The largest number of bytes accepted.
+#' @param exact Whether the input must be exactly `max` bytes.
+#' @return A raw vector.
+#' @noRd
 .rmbl_drbg_input <- function(x, what, max, exact = FALSE) {
   if (is.null(x)) return(raw(0))
   r <- if (is.raw(x)) x else if (is.character(x) && length(x) == 1L) .rmbl_hex_or_null(x) else NULL
@@ -260,8 +271,13 @@ print.bricklayer_drbg <- function(x, ...) {
   r
 }
 
-# "aesni" or "portable"; `portable = TRUE` forces the portable cipher, FALSE restores the
-# hardware path (the tests run the vectors through both)
+#' Reports or sets the AES backend.
+#'
+#' "aesni" or "portable"; `portable = TRUE` forces the portable cipher, FALSE restores the
+#' hardware path (the tests run the vectors through both)
+#' @param portable TRUE to force the portable cipher, FALSE to restore the hardware path, NA to leave it.
+#' @return The backend in use, "aesni" or "portable".
+#' @noRd
 .rmbl_aes_backend <- function(portable = NA) {
   .Call(C_rmbl_aes_backend, as.logical(portable))
 }

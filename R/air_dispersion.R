@@ -4,7 +4,15 @@
 # The formulas are those of rmorie's AirDispersion module and morie's
 # airdisp; only the random-number seam differs (see lagrprt()).
 
-# One finite number (or a vector of them) for the dispersion inputs.
+#' One finite number (or a vector of them) for the dispersion inputs.
+#' @param x The value passed by the user.
+#' @param what The argument's name, used in the error message.
+#' @param min The smallest value accepted.
+#' @param positive Whether the value must be above zero.
+#' @param scalar Whether a single number is required.
+#' @param whole Whether the value must be a whole number.
+#' @return A double vector.
+#' @noRd
 .ad_num <- function(x, what, min = -Inf, positive = FALSE, scalar = TRUE, whole = FALSE) {
   if (is.logical(x) && !all(is.na(x))) stop(sprintf("`%s` must be numeric, not logical", what), call. = FALSE)
   v <- .rmbl_num_input(x, what, allow_null = FALSE)
@@ -24,8 +32,14 @@
   v
 }
 
-# A receptor below the ground or above the mixing lid is outside the model: the reflection
-# images still return a number there, so it is said.
+#' Warns about receptors below the ground or above the mixing lid.
+#'
+#' A receptor below the ground or above the mixing lid is outside the model: the reflection
+#' images still return a number there, so it is said.
+#' @param R The receptors as an n x 3 matrix.
+#' @param mixing_height The mixing height, or a non-finite value for none.
+#' @return NULL, invisibly.
+#' @noRd
 .ad_receptor_heights <- function(R, mixing_height) {
   z <- R[, 3L]
   if (any(z < 0)) {
@@ -40,6 +54,11 @@
   invisible(NULL)
 }
 
+#' Checks the mixing height and warns when the release is above it.
+#' @param mixing_height The mixing height, or NULL for no lid.
+#' @param h The release height.
+#' @return The mixing height, or NULL.
+#' @noRd
 .ad_lid <- function(mixing_height, h) {
   if (is.null(mixing_height)) return(NULL)
   lid <- .ad_num(mixing_height, "mixing_height", positive = TRUE)
@@ -305,6 +324,10 @@ briggs <- function(x, u, diam, exitvel, stktmp, ambtmp,
   list(flux = F_, finalrise = final, xfinal = xf, rise = rise)
 }
 
+#' Checks a Pasquill stability class.
+#' @param stability The class passed by the user.
+#' @return The class in upper case.
+#' @noRd
 .ad_class <- function(stability) {
   cls <- toupper(as.character(stability))
   if (length(cls) != 1L || is.na(cls) || !cls %in% c("A", "B", "C", "D", "E", "F")) {
@@ -313,6 +336,10 @@ briggs <- function(x, u, diam, exitvel, stktmp, ambtmp,
   cls
 }
 
+#' Checks that the setting is "rural" or "urban".
+#' @param setting The setting passed by the user.
+#' @return `setting`.
+#' @noRd
 .ad_setting <- function(setting) {
   if (!is.character(setting) || length(setting) != 1L || !setting %in% c("rural", "urban")) {
     stop("`setting` must be \"rural\" or \"urban\"", call. = FALSE)
@@ -320,7 +347,14 @@ briggs <- function(x, u, diam, exitvel, stktmp, ambtmp,
   setting
 }
 
-# Vertical term: ground reflection, plus image pairs under a mixing lid.
+#' Vertical term: ground reflection, plus image pairs under a mixing lid.
+#' @param z The receptor heights.
+#' @param h The release height.
+#' @param sz The vertical dispersion coefficients.
+#' @param lid The mixing height, or NULL for no lid.
+#' @param n_images The number of image pairs under the lid.
+#' @return The vertical term at each receptor.
+#' @noRd
 .ad_vertical <- function(z, h, sz, lid, n_images) {
   tt <- exp(-(z - h)^2 / (2 * sz * sz)) + exp(-(z + h)^2 / (2 * sz * sz))
   if (!is.null(lid)) {
@@ -334,7 +368,10 @@ briggs <- function(x, u, diam, exitvel, stktmp, ambtmp,
   tt
 }
 
-# Receptors as an n x 3 matrix, from a matrix or a list of coordinate triples.
+#' Receptors as an n x 3 matrix, from a matrix or a list of coordinate triples.
+#' @param r The receptors: a matrix, a data frame, a list of triples or a vector of x, y, z in turn.
+#' @return An n x 3 matrix.
+#' @noRd
 .ad_rec <- function(r) {
   bad <- function() stop("`receptors` must give x, y, z for at least one receptor", call. = FALSE)
   m <- if (is.list(r) && !is.data.frame(r)) {
@@ -517,9 +554,16 @@ advdif2d <- function(c0, u, v, kx, ky, dx, dy, dt, nsteps, source = NULL, maxwor
             class = "rmbl_field")
 }
 
-# Standard normals from the package's shared uniform stream: one stream per
-# (seed, stream) pair, through the normal quantile. The uniforms are kept
-# strictly inside (0, 1) so the quantile is finite.
+#' Draws standard normals from the package's shared uniform stream.
+#'
+#' Standard normals from the package's shared uniform stream: one stream per
+#' (seed, stream) pair, through the normal quantile. The uniforms are kept
+#' strictly inside (0, 1) so the quantile is finite.
+#' @param n The number of draws.
+#' @param seed The seed.
+#' @param stream The stream within the seed.
+#' @return A vector of `n` normals.
+#' @noRd
 .rmbl_normals <- function(n, seed = 0, stream = 0) {
   if (n == 0L) return(numeric(0))
   s <- (as.numeric(seed) * 65536 + as.numeric(stream)) %% 2147483647
@@ -624,8 +668,13 @@ lagrprt <- function(n, x0, y0, u, v, kx, ky, dt, nsteps, seed = 0, grid = NULL,
   structure(out, class = c("rmbl_particles", "list"))
 }
 
-# the lid's image terms shrink geometrically: past a few pairs they add nothing but time, and
-# 1e9 of them took about 480 s per receptor (review of 52a8883)
+#' Checks the number of image pairs under the mixing lid.
+#'
+#' The lid's image terms shrink geometrically: past a few pairs they add nothing but time, and
+#' 1e9 of them took about 480 s per receptor (review of 52a8883)
+#' @param n_images The value passed by the user.
+#' @return The number of image pairs.
+#' @noRd
 .ad_check_images <- function(n_images) {
   n_images <- .ad_num(n_images, "n_images", min = 0, whole = TRUE)
   if (n_images > 1000) {

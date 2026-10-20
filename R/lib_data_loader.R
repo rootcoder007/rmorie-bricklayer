@@ -448,9 +448,16 @@ wbsnpurl <- function(url, ts = NULL) {
                          "the Wayback snapshot URL")
 }
 
-# The one transport fdl() uses, live and Wayback alike (tests
-# mock it). Inside the package it is bldl() with its live
-# progress bar; a staged bundle (which copies this file alone) uses base R.
+#' Downloads a URL to a file.
+#'
+#' The one transport fdl() uses, live and Wayback alike (tests
+#' mock it). Inside the package it is bldl() with its live
+#' progress bar; a staged bundle (which copies this file alone) uses base R.
+#' @param url The URL to fetch.
+#' @param dest The file to write.
+#' @param allow_file Whether a `file://` URL is accepted.
+#' @return What `bldl()` or `utils::download.file()` returns.
+#' @noRd
 .bl_fetch_file <- function(url, dest, allow_file = FALSE) {
   url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
   if (exists("bldl", mode = "function")) {

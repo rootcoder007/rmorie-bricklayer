@@ -27,6 +27,9 @@
 # A provider not listed here that speaks the OpenAI format (a company gateway, Azure's v1 endpoint,
 # LM Studio, vLLM, llama.cpp) is the "own" route: own.url, own.key, own.model.
 
+#' Lists the provider presets: address, wire format, key variables and default model.
+#' @return A data frame with one row per provider.
+#' @noRd
 .bl_llm_presets <- function() {
   p <- function(id, label, base, api, key_env, alt_env = "", default_model = NA_character_, models = TRUE) {
     data.frame(id = id, label = label, base = base, api = api, key_env = key_env, alt_env = alt_env,
@@ -57,16 +60,28 @@
   )
 }
 
+#' Looks up one provider preset.
+#' @param id The provider id, such as "openai".
+#' @return A one-row data frame (all NA when `id` is unknown).
+#' @noRd
 .bl_preset <- function(id) {
   ps <- .bl_llm_presets()
   ps[match(id, ps$id), , drop = FALSE]
 }
 
-# The settings variable that holds a provider's model, e.g. MORIE_ANTHROPIC_MODEL.
+#' The settings variable that holds a provider's model, e.g. MORIE_ANTHROPIC_MODEL.
+#' @param id The provider id.
+#' @return The variable name.
+#' @noRd
 .bl_preset_model_env <- function(id) paste0("MORIE_", toupper(id), "_MODEL")
 
-# A provider's key: its variable, the alternative spelling, else the value saved with
-# `rmbl config set <id>.key`. NULL when none is set.
+#' Finds a provider's key.
+#'
+#' A provider's key: its variable, the alternative spelling, else the value saved with
+#' `rmbl config set <id>.key`. NULL when none is set.
+#' @param id The provider id.
+#' @return The key, or NULL.
+#' @noRd
 .bl_preset_key <- function(id) {
   pr <- .bl_preset(id)
   for (e in c(pr$key_env, if (nzchar(pr$alt_env)) pr$alt_env)) {
@@ -76,8 +91,14 @@
   .bl_key_text(.bl_config_value(pr$key_env), paste0(id, ".key"))
 }
 
-# A key is one line of printable text: a line break or control character inside one would go to
-# the wire as a second request header (review of 29a55d8, L3). NULL passes through.
+#' Checks that a key is one line of printable text.
+#'
+#' A key is one line of printable text: a line break or control character inside one would go to
+#' the wire as a second request header (review of 29a55d8, L3). NULL passes through.
+#' @param key The key, or NULL.
+#' @param what Where the key came from, used in the error message.
+#' @return `key`.
+#' @noRd
 .bl_key_text <- function(key, what) {
   if (!is.null(key) && grepl("[[:cntrl:]]", key)) {
     stop(sprintf("%s has a line break or control character in it: set it to the key alone", what), call. = FALSE)
@@ -85,7 +106,10 @@
   key
 }
 
-# The route for a provider: list(name, id, api, base, key, model, local = FALSE), or NULL when no key.
+#' The route for a provider: list(name, id, api, base, key, model, local = FALSE), or NULL when no key.
+#' @param id The provider id.
+#' @return The route list, or NULL.
+#' @noRd
 .bl_provider_route <- function(id) {
   pr <- .bl_preset(id)
   key <- .bl_preset_key(id)
@@ -95,7 +119,10 @@
        models_endpoint = isTRUE(pr$models))
 }
 
-# The request headers a route needs: its key in the provider's own header.
+#' The request headers a route needs: its key in the provider's own header.
+#' @param rt The route.
+#' @return A character vector of header lines.
+#' @noRd
 .bl_llm_headers <- function(rt) {
   key <- rt$key
   switch(rt$api %||% "openai",
@@ -104,8 +131,13 @@
     .bl_bearer(key))
 }
 
-# The base the OpenAI-format paths hang off: a preset's documented base (with its /v1 when it has
-# one), or the own/Ollama address with /v1 added (those are stored without it).
+#' Gives the base URL that the OpenAI-format paths hang off.
+#'
+#' The base the OpenAI-format paths hang off: a preset's documented base (with its /v1 when it has
+#' one), or the own/Ollama address with /v1 added (those are stored without it).
+#' @param rt The route.
+#' @return The base URL.
+#' @noRd
 .bl_openai_base <- function(rt) {
   if (!is.null(rt$id)) rt$base else paste0(rt$base, "/v1")
 }
@@ -118,8 +150,19 @@
 # A tool is list(name, description, parameters), parameters a JSON schema (as an R list).
 # .bl_llm_chat() returns list(text, tool_calls, finish).
 
+#' Keeps an empty list an empty JSON object rather than an array.
+#' @param x A list.
+#' @return `x`, or an empty named list when it is empty.
+#' @noRd
 .bl_json_object <- function(x) if (length(x)) x else structure(list(), names = character())
 
+#' Builds an OpenAI chat-completions request body from a conversation.
+#' @param model The model name.
+#' @param messages The conversation.
+#' @param tools The tools the model may call.
+#' @param max_tokens The most tokens the reply may have.
+#' @return The body, as a list for the JSON encoder.
+#' @noRd
 .bl_openai_body <- function(model, messages, tools, max_tokens) {
   msgs <- lapply(messages, function(m) {
     if (identical(m$role, "tool")) {
@@ -146,6 +189,10 @@
   body
 }
 
+#' Reads an OpenAI chat-completions reply.
+#' @param json The parsed reply.
+#' @return A list with `text`, `tool_calls` and `finish`.
+#' @noRd
 .bl_openai_parse <- function(json) {
   if (!length(json$choices)) return(list(text = "", tool_calls = list(), finish = ""))
   ch <- json$choices[[1L]]
@@ -167,6 +214,13 @@
        finish = as.character(ch$finish_reason %||% ""))
 }
 
+#' Builds an Anthropic Messages request body from a conversation.
+#' @param model The model name.
+#' @param messages The conversation.
+#' @param tools The tools the model may call.
+#' @param max_tokens The most tokens the reply may have.
+#' @return The body, as a list for the JSON encoder.
+#' @noRd
 .bl_anthropic_body <- function(model, messages, tools, max_tokens) {
   sys <- vapply(Filter(function(m) identical(m$role, "system"), messages), function(m) m$content, "")
   out <- list()
@@ -210,6 +264,10 @@
   body
 }
 
+#' Reads an Anthropic Messages reply.
+#' @param json The parsed reply.
+#' @return A list with `text`, `tool_calls` and `finish`.
+#' @noRd
 .bl_anthropic_parse <- function(json) {
   txt <- character()
   calls <- list()
@@ -223,7 +281,10 @@
   list(text = paste(txt, collapse = "\n"), tool_calls = calls, finish = as.character(json$stop_reason %||% ""))
 }
 
-# Gemini's schema types are upper-case (OpenAPI's STRING, OBJECT ...).
+#' Gemini's schema types are upper-case (OpenAPI's STRING, OBJECT ...).
+#' @param s A JSON schema, as an R list.
+#' @return The schema with every type upper-cased.
+#' @noRd
 .bl_gemini_schema <- function(s) {
   if (!is.list(s)) return(s)
   if (is.character(s$type)) s$type <- toupper(s$type)
@@ -232,6 +293,12 @@
   s
 }
 
+#' Builds a Gemini generateContent request body from a conversation.
+#' @param messages The conversation.
+#' @param tools The tools the model may call.
+#' @param max_tokens The most tokens the reply may have.
+#' @return The body, as a list for the JSON encoder.
+#' @noRd
 .bl_gemini_body <- function(messages, tools, max_tokens) {
   sys <- vapply(Filter(function(m) identical(m$role, "system"), messages), function(m) m$content, "")
   contents <- list()
@@ -265,6 +332,10 @@
   body
 }
 
+#' Reads a Gemini generateContent reply.
+#' @param json The parsed reply.
+#' @return A list with `text`, `tool_calls` and `finish`.
+#' @noRd
 .bl_gemini_parse <- function(json) {
   if (!length(json$candidates)) return(list(text = "", tool_calls = list(), finish = ""))
   cand <- json$candidates[[1L]]
@@ -283,9 +354,19 @@
   list(text = paste(txt, collapse = "\n"), tool_calls = calls, finish = as.character(cand$finishReason %||% ""))
 }
 
-# Where a route's chat request goes, and the body for it.
-# `no_calls`: the tools stay declared (a history holding tool calls needs them) but the model may not
-# call one: OpenAI's tool_choice "none", Anthropic's {type: "none"}, Gemini's function-calling mode NONE.
+#' Builds the URL and body of a route's chat request.
+#'
+#' Where a route's chat request goes, and the body for it.
+#' `no_calls`: the tools stay declared (a history holding tool calls needs them) but the model may not
+#' call one: OpenAI's tool_choice "none", Anthropic's {type: "none"}, Gemini's function-calling mode NONE.
+#' @param rt The route.
+#' @param model The model name.
+#' @param messages The conversation.
+#' @param tools The tools the model may call.
+#' @param max_tokens The most tokens the reply may have.
+#' @param no_calls Whether the model is told not to call a tool.
+#' @return A list with `url` and `body`.
+#' @noRd
 .bl_llm_request <- function(rt, model, messages, tools, max_tokens, no_calls = FALSE) {
   api <- rt$api %||% "openai"
   req <- switch(api,
@@ -308,6 +389,11 @@
   req
 }
 
+#' Reads a chat reply in the route's wire format.
+#' @param rt The route.
+#' @param json The parsed reply.
+#' @return A list with `text`, `tool_calls` and `finish`.
+#' @noRd
 .bl_llm_parse <- function(rt, json) {
   switch(rt$api %||% "openai",
     anthropic = .bl_anthropic_parse(json),
@@ -320,13 +406,27 @@
 # reply comes). Nothing when nobody is watching or the session is quiet (the download bar's rule).
 .bl_wait <- new.env(parent = emptyenv())
 
+#' Gives the line shown while the model works, or "" when nobody is watching.
+#' @param model The model name.
+#' @return The label.
+#' @noRd
 .bl_llm_wait_label <- function(model) {
   if (.bl_dl_quiet() || !.bl_stderr_tty()) return("")
   # the model's name can come from a server's own list (Ollama's /api/tags): printable or nothing
   paste(.rmbl_printable(model %||% "the model"), "is", .bl_wait$what %||% "thinking")
 }
 
-# One chat turn on a route: list(text, tool_calls, finish). No retry: the prompt goes once.
+#' One chat turn on a route: list(text, tool_calls, finish). No retry: the prompt goes once.
+#' @param rt The route.
+#' @param model The model name.
+#' @param messages The conversation.
+#' @param tools The tools the model may call, or NULL.
+#' @param timeout The request timeout in seconds.
+#' @param max_tokens The most tokens the reply may have.
+#' @param allow_empty Whether a reply with no text and no tool call is accepted.
+#' @param no_calls Whether the model is told not to call a tool.
+#' @return A list with `text`, `tool_calls` and `finish`.
+#' @noRd
 .bl_llm_chat <- function(rt, model, messages, tools = NULL, timeout = 120, max_tokens = 4096L, allow_empty = FALSE,
                          no_calls = FALSE) {
   req <- .bl_llm_request(rt, model, messages, tools, max_tokens, no_calls)
@@ -368,7 +468,11 @@
   out
 }
 
-# The models a route offers, from the provider's own list (NULL when it has none to give).
+#' The models a route offers, from the provider's own list (NULL when it has none to give).
+#' @param rt The route.
+#' @param timeout The request timeout in seconds.
+#' @return A character vector of model names, or NULL.
+#' @noRd
 .bl_llm_list_models <- function(rt, timeout = 15) {
   if (identical(rt$name, "local Ollama")) return(rt$models %||% .bl_ollama_tags(rt$base))
   if (!is.null(rt$id) && !isTRUE(rt$models_endpoint)) return(NULL)
@@ -388,8 +492,14 @@
   .rmbl_printable(ids[nzchar(ids)])
 }
 
-# A route in a sentence: "the own endpoint", "the local Ollama", but "OpenAI".
+#' A route in a sentence: "the own endpoint", "the local Ollama", but "OpenAI".
+#' @param rt The route.
+#' @return The phrase.
+#' @noRd
 .bl_route_what <- function(rt) if (is.null(rt$id)) paste("the", rt$name) else rt$name
 
-# The name `--route` takes for a route.
+#' The name `--route` takes for a route.
+#' @param rt The route.
+#' @return The route id.
+#' @noRd
 .bl_route_id <- function(rt) rt$id %||% (if (identical(rt$name, "local Ollama")) "ollama" else "own")

@@ -168,7 +168,11 @@ fylbl <- function(endyear, sep = "/", short = TRUE) {
   out
 }
 
-# The column a renderer should print for the period.
+#' The column a renderer should print for the period.
+#' @param x The result table.
+#' @param m The result's metadata, with `period` and, when set, `perlbl`.
+#' @return A character vector, one label per row.
+#' @noRd
 .yoy_period_text <- function(x, m) {
   if (!is.null(m$perlbl) && "perlbl" %in% names(x)) {
     return(as.character(x$perlbl))

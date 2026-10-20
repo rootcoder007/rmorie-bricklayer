@@ -238,6 +238,10 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
 # distribution of S over the permutations.
 .rmbl_mk_cache <- new.env(parent = emptyenv())
 
+#' Returns the exact null distribution of the Mann-Kendall S for n distinct ranks, memoised.
+#' @param n The series length.
+#' @return A numeric vector of S, one per permutation.
+#' @noRd
 .rmbl_mk_exact <- function(n) {
   key <- as.character(n)
   if (!is.null(.rmbl_mk_cache[[key]])) {
@@ -255,7 +259,10 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
   s
 }
 
-# S over every ordering of the observed values themselves (ties and all).
+#' S over every ordering of the observed values themselves (ties and all).
+#' @param y The observed values.
+#' @return A numeric vector of S, one per permutation.
+#' @noRd
 .rmbl_mk_exact_values <- function(y) {
   n <- length(y)
   # memoised on the observed multiset: a loop over short tied series paid
@@ -277,6 +284,10 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
   s
 }
 
+#' Lists every permutation of 1 to n.
+#' @param n The number of elements.
+#' @return An integer matrix with one permutation per row.
+#' @noRd
 .rmbl_permutations <- function(n) {
   if (n == 1L) {
     return(matrix(1L, 1L, 1L))
@@ -296,10 +307,18 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
   out
 }
 
-# Distribution-free interval for the Theil-Sen slope: the pairwise
-# slopes, sorted, cut at the order statistics Mann-Kendall's variance
-# places at the level. Consistent with the test, rather than borrowed
-# from a normal-errors model the data was never claimed to follow.
+#' Computes the distribution-free confidence interval of the Theil-Sen slope.
+#'
+#' Distribution-free interval for the Theil-Sen slope: the pairwise
+#' slopes, sorted, cut at the order statistics Mann-Kendall's variance
+#' places at the level. Consistent with the test, rather than borrowed
+#' from a normal-errors model the data was never claimed to follow.
+#' @param x The periods.
+#' @param y The values.
+#' @param var_s The variance of the Mann-Kendall S.
+#' @param conf_level The confidence level.
+#' @return The lower and upper bounds, with a `clamped` attribute for each side.
+#' @noRd
 .rmbl_sen_ci <- function(x, y, var_s, conf_level) {
   conf_level <- .rmbl_conf_level(conf_level)
   slopes <- .Call(C_rmbl_sen_slopes, as.numeric(x), as.numeric(y))
@@ -714,6 +733,11 @@ cnttrnd <- function(y, x = NULL, offset = NULL, conflvl = 0.95) {
 # loop over 33 series got no reuse at all; its diff review). Insertion order is
 # kept beside the tables.
 .rmbl_mk_order <- new.env(parent = emptyenv())
+#' Stores an exact Mann-Kendall distribution in the bounded memo.
+#' @param key The memo key.
+#' @param value The distribution.
+#' @return `value`, invisibly.
+#' @noRd
 .rmbl_mk_remember <- function(key, value) {
   keys <- get0("keys", envir = .rmbl_mk_order, inherits = FALSE, ifnotfound = character())
   keys <- keys[keys %in% ls(.rmbl_mk_cache, all.names = TRUE)]

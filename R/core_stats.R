@@ -429,7 +429,10 @@ cwinsmean <- function(x, trim = 0.1) {
   .Call(C_rmbl_winsorized_mean, .rmbl_num_input(x, "x"), .rmbl_trim(trim))
 }
 
-# one proportion in [0, 0.5]: outside it the core returned NaN, which reads as a result
+#' One proportion in \[0, 0.5\]: outside it the core returned NaN, which reads as a result
+#' @param trim The trimming proportion passed by the user.
+#' @return The proportion as a double.
+#' @noRd
 .rmbl_trim <- function(trim) {
   trim <- .rmbl_num(trim, "trim")
   if (length(trim) != 1L || is.na(trim) || trim < 0 || trim > 0.5) {

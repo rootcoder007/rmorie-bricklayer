@@ -120,6 +120,9 @@ plotopt <- function(...) {
   invisible(current)
 }
 
+#' Returns the session plot options, the defaults overlaid with the rmoriebricklayer.plot option.
+#' @return A list with `palette`, `grid`, `cex`, `las`, `bg` and `panel`.
+#' @noRd
 .bl_plot_opts <- function() {
   d <- list(palette = "okabe", grid = TRUE, cex = 1, las = 1, bg = "white", panel = "#EEF1F6")
   o <- getOption("rmoriebricklayer.plot")
@@ -127,7 +130,12 @@ plotopt <- function(...) {
   d
 }
 
-# colours for n series: `col` wins, then the palette argument, then the option
+#' Colours for n series: `col` wins, then the palette argument, then the option
+#' @param n The number of series.
+#' @param col The colours the caller gave, or NULL.
+#' @param palette The palette the caller gave, or NULL for the session option.
+#' @return A vector of n colours.
+#' @noRd
 .bl_cols <- function(n, col = NULL, palette = NULL) {
   if (!is.null(col)) {
     # colours a device can draw, said here: col = "x" failed in col2rgb() or plot.xy() (CRAN stress
@@ -144,10 +152,16 @@ plotopt <- function(...) {
   blpal(if (is.null(palette)) .bl_plot_opts()$palette else palette, n)
 }
 
-# The panel behind the data: the plot region filled with the session's panel colour and crossed
-# by white grid lines, major ones along `side` (the axis values are read against) and fainter
-# ones across, with minor lines halfway between. A method that has already drawn its bars
-# (.bl_barplot) drew the panel first, and the call that follows is skipped.
+#' Draws the panel and its grid lines behind the data.
+#'
+#' The panel behind the data: the plot region filled with the session's panel colour and crossed
+#' by white grid lines, major ones along `side` (the axis values are read against) and fainter
+#' ones across, with minor lines halfway between. A method that has already drawn its bars
+#' (.bl_barplot) drew the panel first, and the call that follows is skipped.
+#' @param grid Whether to draw grid lines; NULL takes the session option.
+#' @param side "y" or "x", the axis whose values are read against the major lines.
+#' @return Whether grid lines were drawn, invisibly (TRUE when the call is skipped).
+#' @noRd
 .bl_grid <- function(grid = NULL, side = "y") {
   if (isTRUE(.bl_state$plndone)) {
     .bl_state$plndone <- FALSE
@@ -176,9 +190,18 @@ plotopt <- function(...) {
   invisible(on)
 }
 
-# Bars on the panel, not under it: the frame is set up with invisible bars, the panel drawn,
-# then the bars, each with a soft highlight along its leading edge and its value at its end
-# (when there are few enough bars to label). Takes barplot()'s arguments; returns the midpoints.
+#' Draws bars on the panel.
+#'
+#' Bars on the panel, not under it: the frame is set up with invisible bars, the panel drawn,
+#' then the bars, each with a soft highlight along its leading edge and its value at its end
+#' (when there are few enough bars to label). Takes barplot()'s arguments; returns the midpoints.
+#' @param height The bar heights.
+#' @param ... Further arguments to barplot().
+#' @param col The bar colours.
+#' @param horiz Whether the bars are horizontal.
+#' @param labels Whether each bar's value is written at its end.
+#' @return The bar midpoints, invisibly.
+#' @noRd
 .bl_barplot <- function(height, ..., col = NULL, horiz = FALSE, labels = TRUE) {
   args <- list(...)
   args$border <- NULL
@@ -223,10 +246,20 @@ plotopt <- function(...) {
   invisible(mids)
 }
 
-# A series drawn as a line over a soft fill down to the axis, with haloed points and its last
-# value emphasised and labelled. gaps = "break" keeps a missing value as a break in the line and
-# its fill (a "no data" year that yoy(complete = TRUE) inserted); "join" draws over it. Returns
-# the points the line passes through, NA where it breaks.
+#' Draws a series as a line over a soft fill.
+#'
+#' A series drawn as a line over a soft fill down to the axis, with haloed points and its last
+#' value emphasised and labelled. gaps = "break" keeps a missing value as a break in the line and
+#' its fill (a "no data" year that yoy(complete = TRUE) inserted); "join" draws over it.
+#' @param x The x values.
+#' @param y The y values.
+#' @param col The line colour.
+#' @param fill Whether to fill down to the axis.
+#' @param label Whether to label the last value.
+#' @param points Whether to draw the points.
+#' @param gaps "break" or "join": how a missing value is drawn.
+#' @return The points the line passes through, NA where it breaks, invisibly.
+#' @noRd
 .bl_line <- function(x, y, col, fill = TRUE, label = TRUE, points = TRUE, gaps = "join") {
   x <- as.numeric(x)
   keep <- is.finite(x) & (gaps == "break" | is.finite(y))
@@ -264,6 +297,11 @@ plotopt <- function(...) {
   invisible(drawn)
 }
 
+#' Sets the graphics parameters of a single plot and returns the old ones.
+#' @param y The values on the y axis, used to size the left margin.
+#' @param labels The row labels, used instead of `y` to size the left margin.
+#' @return The previous parameters, for `par(op)`.
+#' @noRd
 .bl_par <- function(y = NULL, labels = NULL) {
   o <- .bl_plot_opts()
   left <- if (is.null(y) && is.null(labels)) 4.5 else .bl_left_margin(y, labels)
@@ -272,9 +310,14 @@ plotopt <- function(...) {
   op
 }
 
-# A legend centred under the plot, `line` text lines below the plot region: placed in inches, so it
-# sits under the axis title on a short panel and a tall one alike (an inset fraction of the plot's
-# height ran into a two-line axis title on one, off the device on another)
+#' Draws a legend centred under the plot.
+#'
+#' A legend centred under the plot, `line` text lines below the plot region: placed in inches, so it
+#' sits under the axis title on a short panel and a tall one alike (an inset fraction of the plot's
+#' height ran into a two-line axis title on one, off the device on another)
+#' @param ... Arguments to legend().
+#' @param line How many text lines below the plot region the legend sits.
+#' @noRd
 .bl_legend_below <- function(..., line = 4.8) {
   usr <- graphics::par("usr")
   pin <- graphics::par("pin")
@@ -286,9 +329,18 @@ plotopt <- function(...) {
   graphics::legend(x, y, xjust = 0.5, yjust = 1, xpd = NA, ...)
 }
 
+#' Formats numbers for a label, with thousands separators.
+#' @param x The numbers.
+#' @param digits The number of significant digits.
+#' @return A character vector.
+#' @noRd
 .bl_label <- function(x, digits = 3) format(x, digits = digits, big.mark = ",")
 
-# the title: the caller's, or the method's default
+#' The title: the caller's, or the method's default
+#' @param main The caller's title, or NULL.
+#' @param default The method's title.
+#' @return The title.
+#' @noRd
 .bl_main <- function(main, default) {
   if (is.null(main)) return(default)
   # one title: a string or a plotmath expression
@@ -303,6 +355,10 @@ plotopt <- function(...) {
 .bl_state <- new.env(parent = emptyenv())
 .bl_state$active <- FALSE
 
+#' Starts a set of panels on one device, with the grid from `.bl_panel_grid()`.
+#' @param n The number of panels.
+#' @return The previous graphics parameters, for `par(op)`.
+#' @noRd
 .bl_panels_begin <- function(n) {
   .bl_state$active <- TRUE
   .bl_state$n <- n
@@ -312,10 +368,15 @@ plotopt <- function(...) {
                 bty = "n", tcl = -0.2, mgp = c(3, 0.55, 0), col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430")
 }
 
-# Rows and columns for n panels on the device as it is: always one row squeezed four panels into
-# a 3.5-inch device, each too narrow for its tick labels. The grid chosen gives each panel's plot
-# region -- the cell less its margins (about 5.5 lines across, 7.2 down, and the key's 2.4) --
-# the largest 4:3 box, fewer rows on a tie: a wide device keeps one row, a tall one stacks.
+#' Chooses the rows and columns for n panels.
+#'
+#' Rows and columns for n panels on the device as it is: always one row squeezed four panels into
+#' a 3.5-inch device, each too narrow for its tick labels. The grid chosen gives each panel's plot
+#' region -- the cell less its margins (about 5.5 lines across, 7.2 down, and the key's 2.4) --
+#' the largest 4:3 box, fewer rows on a tie: a wide device keeps one row, a tall one stacks.
+#' @param n The number of panels.
+#' @return An integer vector: rows, columns.
+#' @noRd
 .bl_panel_grid <- function(n) {
   din <- tryCatch(graphics::par("din"), error = function(e) c(7, 7))
   line <- 0.2 * .bl_plot_opts()$cex
@@ -336,6 +397,9 @@ plotopt <- function(...) {
   as.integer(best)
 }
 
+#' Ends a set of panels and draws the key of lettered titles under them.
+#' @return The key entries, invisibly.
+#' @noRd
 .bl_panels_end <- function() {
   keys <- .bl_state$keys
   .bl_state$active <- FALSE
@@ -343,24 +407,40 @@ plotopt <- function(...) {
   invisible(keys)
 }
 
-# an error inside a panel set must not leave the next single plot titled "A"
+#' Ends a set of panels after an error.
+#'
+#' An error inside a panel set must not leave the next single plot titled "A"
+#' @return NULL, invisibly.
+#' @noRd
 .bl_panels_abort <- function() {
   .bl_state$active <- FALSE
   .bl_state$keys <- character()
   invisible(NULL)
 }
 
-# the width of a string in inches on the open device, with a fallback before any
-# plot exists (0.55 of a character height per character)
+#' Measures the width of a string in inches.
+#'
+#' The width of a string in inches on the open device, with a fallback before any
+#' plot exists (0.55 of a character height per character)
+#' @param x The strings.
+#' @param cex The text size.
+#' @param font The font.
+#' @return The widths in inches.
+#' @noRd
 .bl_strwidth <- function(x, cex = 1, font = 1) {
   w <- tryCatch(graphics::strwidth(x, units = "inches", cex = cex, font = font), error = function(e) NULL)
   if (is.null(w) || any(!is.finite(w))) w <- nchar(x) * 0.55 * graphics::par("csi") * cex
   w
 }
 
-# Draw a title that fits the current panel: full size, then two smaller steps; a title
-# that still does not fit becomes a letter inside a panel set (the key goes under the
-# panels) or is wrapped onto two lines in a single plot.
+#' Draws a title that fits the current panel.
+#'
+#' Draw a title that fits the current panel: full size, then two smaller steps; a title
+#' that still does not fit becomes a letter inside a panel set (the key goes under the
+#' panels) or is wrapped onto two lines in a single plot.
+#' @param title The title.
+#' @return The title as drawn (a letter in a panel set), invisibly.
+#' @noRd
 .bl_title <- function(title) {
   if (is.null(title) || !nzchar(title)) return(invisible(title))
   width <- graphics::par("pin")[1L] * 0.98
@@ -394,7 +474,10 @@ plotopt <- function(...) {
   invisible(paste(lines, collapse = " "))
 }
 
-# An axis title that fits the plot width: full size, then smaller, then two lines.
+#' An axis title that fits the plot width: full size, then smaller, then two lines.
+#' @param xlab The axis title.
+#' @return The axis title, invisibly.
+#' @noRd
 .bl_xlab <- function(xlab) {
   if (is.null(xlab) || !nzchar(xlab)) return(invisible(xlab))
   width <- graphics::par("pin")[1L] * 0.98
@@ -427,9 +510,14 @@ plotopt <- function(...) {
   invisible(xlab)
 }
 
-# The y-axis title, placed outside the tick labels actually drawn. plot()'s fixed line 3 sits
-# inside a five-digit tick label ("25000"), so the two overprinted; the line is now the measured
-# label width plus a gap, kept inside the margin, and the title is fitted to the plot height.
+#' Draws the y-axis title outside the tick labels.
+#'
+#' The y-axis title, placed outside the tick labels actually drawn. plot()'s fixed line 3 sits
+#' inside a five-digit tick label ("25000"), so the two overprinted; the line is now the measured
+#' label width plus a gap, kept inside the margin, and the title is fitted to the plot height.
+#' @param ylab The axis title.
+#' @return The axis title, invisibly; NULL when there is no room for it.
+#' @noRd
 .bl_ylab <- function(ylab) {
   if (is.null(ylab) || !nzchar(ylab)) return(invisible(ylab))
   op <- graphics::par(c("cex.axis", "csi", "mar", "mgp", "pin", "las"))
@@ -469,7 +557,10 @@ plotopt <- function(...) {
   invisible(ylab)
 }
 
-# the key under lettered panels, wrapped to the device width
+#' The key under lettered panels, wrapped to the device width
+#' @param keys The key entries, "A: title" each.
+#' @return The key lines drawn, invisibly.
+#' @noRd
 .bl_panel_key <- function(keys) {
   width <- graphics::par("din")[1L] * 0.96
   # mtext()'s cex is absolute and strwidth()'s is scaled by par("cex"), which a panel grid
@@ -503,10 +594,14 @@ plotopt <- function(...) {
   invisible(lines)
 }
 
-# a left margin (in lines) wide enough for the tick labels of `y`, or for `labels`,
-# plus the axis title
-# A bar label longer than 28 characters is cut with an ellipsis: the margin it would ask for
-# does not fit a figure ("figure margins too large"), and a label that long is not read anyway.
+#' Cuts long bar labels with an ellipsis.
+#'
+#' A bar label longer than 28 characters is cut with an ellipsis: the margin it would ask for
+#' does not fit a figure ("figure margins too large"), and a label that long is not read anyway.
+#' @param x The labels.
+#' @param max_chars The longest label kept whole (at least 8).
+#' @return The labels, cut ones told apart when the cut made them equal.
+#' @noRd
 .bl_short_label <- function(x, max_chars = 28L) {
   x <- as.character(x)
   max_chars <- max(8L, as.integer(max_chars))
@@ -536,7 +631,10 @@ plotopt <- function(...) {
   out
 }
 
-# the characters the strings share at their start, back to the last space so no word is split
+#' The characters the strings share at their start, back to the last space so no word is split
+#' @param x The strings.
+#' @return The number of characters.
+#' @noRd
 .bl_common_start <- function(x) {
   n <- min(nchar(x))
   p <- 0L
@@ -545,12 +643,18 @@ plotopt <- function(...) {
   if (sp[[1L]] > 0L) max(sp) else p
 }
 
-# Labels and the left margin they need, on the device as it is: a margin wider than the device
-# failed with "figure margins too large" on a 2-3 inch plot, so long labels are cut to fit.
-# The longest cut (28 characters down to 8) whose measured width fits 45% of the figure at the
-# text size in use: the margin was sized at cex 1 and floored at 4.5 lines, so cex = 2 on a
-# 2-3 inch device failed and a 4-inch plot cut labels to 14 characters it had room for (review
-# of 02a38be). The margins are then fitted to the figure by .bl_safe_mar().
+#' Cuts labels to fit 45% of the figure and gives the left margin they need.
+#'
+#' Labels and the left margin they need, on the device as it is: a margin wider than the device
+#' failed with "figure margins too large" on a 2-3 inch plot, so long labels are cut to fit.
+#' The longest cut (28 characters down to 8) whose measured width fits 45% of the figure at the
+#' text size in use: the margin was sized at cex 1 and floored at 4.5 lines, so cex = 2 on a
+#' 2-3 inch device failed and a 4-inch plot cut labels to 14 characters it had room for (review
+#' of 02a38be). The margins are then fitted to the figure by .bl_safe_mar().
+#' @param labels The labels.
+#' @param cex The text size.
+#' @return A list with `labels` and `mar`, the margin in lines.
+#' @noRd
 .bl_label_fit <- function(labels, cex = .bl_plot_opts()$cex) {
   fin <- tryCatch(graphics::par("fin")[1L], error = function(e) 7)
   csi <- tryCatch(graphics::par("cin")[2L], error = function(e) 0.2) * cex
@@ -565,9 +669,15 @@ plotopt <- function(...) {
   list(labels = fit$labels, mar = max(1, fit$w / csi + 1))
 }
 
-# Row labels that do not fit are broken onto two lines at the space nearest their middle before
-# .bl_label_fit() cuts them: "Crimes Against the Person" read "Crimes Against the Pe..." on a
-# 9-inch device. Returns the labels and the margin, as .bl_label_fit() does.
+#' Breaks long row labels onto two lines, then cuts those that still do not fit.
+#'
+#' Row labels that do not fit are broken onto two lines at the space nearest their middle before
+#' .bl_label_fit() cuts them: "Crimes Against the Person" read "Crimes Against the Pe..." on a
+#' 9-inch device. Returns the labels and the margin, as .bl_label_fit() does.
+#' @param labels The labels.
+#' @param cex The text size.
+#' @return A list with `labels` and `mar`, the margin in lines.
+#' @noRd
 .bl_label_wrap <- function(labels, cex = .bl_plot_opts()$cex) {
   fin <- tryCatch(graphics::par("fin")[1L], error = function(e) 7)
   csi <- tryCatch(graphics::par("cin")[2L], error = function(e) 0.2) * cex
@@ -589,9 +699,15 @@ plotopt <- function(...) {
   list(labels = out, mar = max(1, w / csi + 1))
 }
 
-# Margins (in lines, as par("mar")) scaled down so that the left and right together, and the top
-# and bottom together, take at most three quarters of the figure at the text size in use:
-# "figure margins too large" on a small device or a panel otherwise.
+#' Scales margins down to fit the figure.
+#'
+#' Margins (in lines, as par("mar")) scaled down so that the left and right together, and the top
+#' and bottom together, take at most three quarters of the figure at the text size in use:
+#' "figure margins too large" on a small device or a panel otherwise.
+#' @param mar The margins in lines, as par("mar").
+#' @param cex The text size.
+#' @return The margins.
+#' @noRd
 .bl_safe_mar <- function(mar, cex = .bl_plot_opts()$cex) {
   fin <- tryCatch(graphics::par("fin"), error = function(e) c(7, 7))
   csi <- tryCatch(graphics::par("cin")[2L] * graphics::par("mex"), error = function(e) 0.2) * cex
@@ -602,6 +718,12 @@ plotopt <- function(...) {
   mar
 }
 
+#' A left margin (in lines) wide enough for the tick labels of `y`, or for `labels`,
+#' plus the axis title
+#' @param y The values on the y axis.
+#' @param labels The row labels, used instead of `y`.
+#' @return The margin in lines.
+#' @noRd
 .bl_left_margin <- function(y = NULL, labels = NULL) {
   if (!is.null(labels)) {
     txt <- as.character(labels)
@@ -619,10 +741,17 @@ plotopt <- function(...) {
   min(1.6 + lines + (if (is.null(labels)) 2.2 else 0.6), max(14, 0.5 * fin / graphics::par("csi")))
 }
 
-# Row labels on the left, one per row whatever the row count: axis() leaves out labels that
-# would overlap, so 44 rows of trchlthgap() on a 4.6-inch page showed 22 and the rest read as
-# beside the wrong points. The text is sized to the row height (down to 0.6) and drawn with
-# mtext(), which drops none; mtext()'s cex is absolute, so par("cex") is applied here.
+#' Writes one label per row on the left.
+#'
+#' Row labels on the left, one per row whatever the row count: axis() leaves out labels that
+#' would overlap, so 44 rows of trchlthgap() on a 4.6-inch page showed 22 and the rest read as
+#' beside the wrong points. The text is sized to the row height (down to 0.6) and drawn with
+#' mtext(), which drops none; mtext()'s cex is absolute, so par("cex") is applied here.
+#' @param at The row positions.
+#' @param labels The labels.
+#' @param cex The text size before it is fitted to the row height.
+#' @return The text size used, invisibly.
+#' @noRd
 .bl_row_labels <- function(at, labels, cex = 0.85) {
   if (length(at) > 1L) {
     usr <- graphics::par("usr")
@@ -637,8 +766,23 @@ plotopt <- function(...) {
   invisible(cex)
 }
 
-# dots with an interval per row: the chart most of the tabular results want; `key` (a list with
-# `legend` and `col`) adds a key under the panel
+#' Draws a dot and an interval per row.
+#'
+#' Dots with an interval per row: the chart most of the tabular results want; `key` (a list with
+#' `legend` and `col`) adds a key under the panel
+#' @param label The row labels.
+#' @param est The estimates.
+#' @param lower The lower limits.
+#' @param upper The upper limits.
+#' @param main The title.
+#' @param xlab The x-axis title.
+#' @param cols The colours.
+#' @param ref A reference value drawn as a dashed line, or NULL.
+#' @param note A note written under the plot, or NULL.
+#' @param key A list with `legend` and `col` for a key under the panel, or NULL.
+#' @param ... Further arguments to plot().
+#' @return NULL, invisibly.
+#' @noRd
 .bl_dot_interval <- function(label, est, lower, upper, main, xlab, cols, ref = NULL, note = NULL, key = NULL,
                              ...) {
   n <- length(est)
@@ -1203,6 +1347,11 @@ plot.rmbl_yoy <- function(x, ..., what = c("pctchg", "value"), main = NULL, col 
 
 # ---- rates, shares, rate change --------------------------------------------------
 
+#' Labels each row by its grouping columns.
+#' @param d The data frame.
+#' @param by The grouping columns.
+#' @return A character vector, "all" when there are no groups.
+#' @noRd
 .bl_group_label <- function(d, by) {
   if (!length(by)) return("all")
   do.call(paste, c(d[by], sep = " / "))
@@ -1226,8 +1375,19 @@ plot.rmbl_rate <- function(x, ..., period = NULL, main = NULL, col = NULL, palet
                        stringsAsFactors = FALSE))
 }
 
-# A rate over time: one panel per group (the `by` columns other than `period`), the rate as a
-# line over its interval band, every panel on the same scale so groups compare at a glance.
+#' Draws a rate over time, one panel per group.
+#'
+#' A rate over time: one panel per group (the `by` columns other than `period`), the rate as a
+#' line over its interval band, every panel on the same scale so groups compare at a glance.
+#' @param d The rate table.
+#' @param meta The rate's settings, with its `by` columns.
+#' @param period The `by` column that holds the period.
+#' @param main The title.
+#' @param col The colours the caller gave, or NULL.
+#' @param palette The palette the caller gave, or NULL.
+#' @param ... Further arguments to plot().
+#' @return The plotted rates as a data frame, invisibly.
+#' @noRd
 .bl_rate_over_time <- function(d, meta, period, main, col, palette, ...) {
   if (!is.character(period) || length(period) != 1L || !period %in% meta$by) {
     stop("`period` must be one of the rate's `by` columns", call. = FALSE)
@@ -1413,6 +1573,15 @@ plot.bricklayer_power <- function(x, ..., main = NULL, col = NULL, palette = NUL
 
 # ---- bars: frequencies, missingness, coverage ----------------------------------------
 
+#' Draws horizontal bars with a label per bar.
+#' @param values The bar lengths.
+#' @param labels The bar labels; NA is a level of its own.
+#' @param xlab The x-axis title.
+#' @param main The title.
+#' @param cols The colours.
+#' @param ... Further arguments to barplot().
+#' @return NULL, invisibly.
+#' @noRd
 .bl_hbars <- function(values, labels, xlab, main, cols, ...) {
   labels <- as.character(labels)
   # a frequency table counts NA as a level of its own; a real level called "(missing)" keeps
@@ -1505,6 +1674,15 @@ plot.bricklayer_outliers <- function(x, ..., main = NULL, col = NULL, palette = 
   invisible(d[c("row", "distance", "outlier")])
 }
 
+#' Draws correlations as horizontal bars from -1 to 1.
+#' @param label The bar labels.
+#' @param r The correlations.
+#' @param main The title.
+#' @param col The colours the caller gave, or NULL.
+#' @param palette The palette the caller gave, or NULL for the diverging palette.
+#' @param ... Further arguments to barplot().
+#' @return NULL, invisibly.
+#' @noRd
 .bl_corr_bars <- function(label, r, main, col, palette, ...) {
   pal <- .bl_cols(3, col, if (is.null(palette) && is.null(col)) "diverging" else palette)
   cols <- ifelse(is.na(r), pal[2L], ifelse(r > 0, pal[3L], pal[1L]))
@@ -1590,7 +1768,11 @@ plot.rmbl_bounds <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 
 # ---- air pollution ---------------------------------------------------------------------
 
-# the relative-risk curve of a CRF object over a range of exposures
+#' The relative-risk curve of a CRF object over a range of exposures
+#' @param crf A concentration-response function object.
+#' @param exposure The exposures, or NULL for a range up to 1.5 times the CRF's exposure.
+#' @return A data frame with `exposure` and `rr`.
+#' @noRd
 .bl_crf_curve <- function(crf, exposure = NULL) {
   ref <- crf$refconc
   z <- if (is.null(exposure)) {

@@ -100,19 +100,22 @@ jsgzenc <- function(x, raw = FALSE, ...) {
   jsb64enc(bytes)
 }
 
-# Wrap a deflate stream in a real gzip member (RFC 1952).
-#
-# memCompress(type = "gzip") does NOT produce gzip: it produces a zlib
-# stream (RFC 1950), whose header is 0x78 0x9c rather than gzip's 0x1f
-# 0x8b. R's own memDecompress reads both, so a round trip through this
-# package looked correct while no external tool -- gzip, zcat, a browser
-# decoding Content-Encoding: gzip -- could read the bytes at all.
-#
-# The two formats share the same deflate payload and differ only in the
-# wrapper, so the zlib header (2 bytes) and its Adler-32 trailer (4
-# bytes) come off and the gzip header and trailer go on. MTIME is left
-# at zero so the same input always gives the same bytes: a capsule's
-# digest must not depend on the clock.
+#' Wrap a deflate stream in a real gzip member (RFC 1952).
+#'
+#' memCompress(type = "gzip") does NOT produce gzip: it produces a zlib
+#' stream (RFC 1950), whose header is 0x78 0x9c rather than gzip's 0x1f
+#' 0x8b. R's own memDecompress reads both, so a round trip through this
+#' package looked correct while no external tool -- gzip, zcat, a browser
+#' decoding Content-Encoding: gzip -- could read the bytes at all.
+#'
+#' The two formats share the same deflate payload and differ only in the
+#' wrapper, so the zlib header (2 bytes) and its Adler-32 trailer (4
+#' bytes) come off and the gzip header and trailer go on. MTIME is left
+#' at zero so the same input always gives the same bytes: a capsule's
+#' digest must not depend on the clock.
+#' @param bytes The raw bytes to compress.
+#' @return A raw vector holding one gzip member with MTIME zero.
+#' @noRd
 .rmbl_gzip_member <- function(bytes) {
   # memCompress(type = "gzip") returns a zlib stream (CMF/FLG header, deflate
   # body, Adler-32 trailer), never fewer than six bytes

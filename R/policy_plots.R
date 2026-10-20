@@ -4,8 +4,14 @@
 # grid, the Goodman-Bacon scatter, randomization-inference distributions, leave-one-out estimates, and
 # raw outcome trends by adoption cohort.
 
-# The corner of the plotting region with the fewest of the plotted points, for a legend that hides
-# nothing
+#' Returns the corner of the plot with the fewest points, for a legend.
+#'
+#' The corner of the plotting region with the fewest of the plotted points, for a legend that hides
+#' nothing
+#' @param x The points' x coordinates.
+#' @param y Their y coordinates.
+#' @return "topleft", "topright", "bottomleft" or "bottomright".
+#' @noRd
 .bl_free_corner <- function(x, y) {
   u <- graphics::par("usr")
   mx <- (u[1L] + u[2L]) / 2

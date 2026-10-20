@@ -6,6 +6,11 @@
 # over time, a community-weighted index of protective and risk factors, and an audit of how
 # deficit-framed a set of results is. Each says what it computes and what it cannot.
 
+#' Checks that `data` is a data frame and that each column argument names one of its columns.
+#' @param data The data frame passed by the user.
+#' @param ... The column arguments, each named; the optional ones may be NULL.
+#' @return `TRUE`, invisibly.
+#' @noRd
 .rmbl_ind_cols <- function(data, ...) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   a <- list(...)
@@ -22,6 +27,11 @@
   invisible(TRUE)
 }
 
+#' Reads the quality flags of the rows, "ok" for every row when there is no quality column.
+#' @param data The data frame.
+#' @param quality The name of the quality column, or NULL.
+#' @return A character vector of flags, one per row.
+#' @noRd
 .rmbl_quality <- function(data, quality) {
   q <- if (is.null(quality)) rep("ok", nrow(data)) else as.character(data[[quality]])
   .rmbl_qflags(q)
@@ -355,7 +365,10 @@ connassoc <- function(data, place, x, y, xlo = NULL, xup = NULL, ylo = NULL,
   out
 }
 
-# every ordering of 1..n, one per row (n <= 8: 40,320 rows at most)
+#' Every ordering of 1..n, one per row (n <= 8: 40,320 rows at most)
+#' @param n The number of items, a whole number from 1 to 8.
+#' @return An integer matrix with one permutation per row.
+#' @noRd
 .rmbl_permutations <- function(n) {
   if (n == 1L) return(matrix(1L, 1L, 1L))
   sub <- .rmbl_permutations(n - 1L)

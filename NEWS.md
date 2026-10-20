@@ -3,8 +3,7 @@
 ## Standards and the fixes they surfaced
 
 * The package documents the rOpenSci statistical software standards (General, EDA, Time Series)
-  with `srr` tags: 131 met, 29 not applicable, 2 still to do (internal-function roxygen and
-  duplicated refusal texts).
+  with `srr` tags: 132 met, 29 not applicable, 1 still to do (duplicated refusal texts).
 * The plots over time put the period on its own scale (a number or a `Date`; text at labelled
   positions) with the unit as the axis title, and take `xlab`, which passed through `...` was an
   error. `plot()` of a `yoy()` or `ratechg()` result draws the period across and the change up, with
@@ -16,6 +15,7 @@
 * `chwkfit()` warns when the branching ratio sits on its 0.99 bound.
 * `yoy()` compares ordered-factor periods by level order and completes missing levels; its
   refusal names every accepted input. `fylbl()`'s help says a fractional year is an error.
+* Every internal function has a roxygen2 block with `@noRd` (srr G1.4a).
 * Plot labels shrink to no less than 0.6 of the session `cex` (`?blpal`).
 * README: who the package is for, which algorithms re-implement existing packages and are checked
   against them, the life cycle, and how to run the extended tests.

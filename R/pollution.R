@@ -7,6 +7,19 @@
 # mirror rmorie's envhealth module (and morie's Python envhealth) formula for
 # formula; see exprspplr() for the one seam that differs.
 
+#' Builds an `rmbl_crf` object from a concentration-response curve evaluated at the exposures.
+#' @param rr The relative risk at each exposure.
+#' @param log_rr Its logarithm.
+#' @param z The exposures.
+#' @param scalar Whether one exposure was given (the object then holds its values, not means).
+#' @param reference_conc The counterfactual concentration.
+#' @param pollutant The pollutant's name.
+#' @param citation The source of the curve.
+#' @param extra Further fields kept in the object's `extra` list.
+#' @param rr_lower The lower 95 percent limit of the relative risk, or NA.
+#' @param rr_upper The upper 95 percent limit, or NA.
+#' @return An object of class `rmbl_crf`.
+#' @noRd
 .crf_object <- function(rr, log_rr, z, scalar, reference_conc, pollutant, citation, extra,
                         rr_lower = NA_real_, rr_upper = NA_real_) {
   structure(list(
@@ -202,6 +215,10 @@ crfno2 <- function(expo, y = "allcause", refconc = 10,
               rr_upper = exp(ci[[2L]] * pmax(z - refconc, 0) / 10))
 }
 
+#' Checks the exposure concentrations: finite, non-negative, none missing.
+#' @param exposure The concentrations passed by the user.
+#' @return A double vector.
+#' @noRd
 .pollution_exposure <- function(exposure) {
   if (is.logical(exposure)) stop("`exposure` must be numeric, not logical", call. = FALSE)
   z <- .rmbl_num_input(exposure, "exposure", allow_null = FALSE)
@@ -213,18 +230,28 @@ crfno2 <- function(expo, y = "allcause", refconc = 10,
   z
 }
 
-# One finite number, optionally non-negative: the scalar inputs of the burden functions.
+#' Says that a baseline rate above 1 looks like a rate per 100,000.
+#' @param rate The rate passed.
+#' @return One string.
+#' @noRd
 .pollution_rate_msg <- function(rate) {
   sprintf(paste("`brate` is a rate per person-year, between 0 and 1 (0.008 is 800 per 100,000);",
                 "%s looks like a rate per 100,000, which only vrfpol() takes"), format(rate))
 }
 
-# A baseline rate per person-year, checked as vrfpol() checks its rate per 100,000 (the
-# same band, the same switches; review of e57fed5, E4: 0.5 and 8e-8 were taken as they came). The
-# band is 1 to 10,000 per 100,000 a year (1e-5 to 0.1 per person-year): below it, the number is
-# also what a rate per 100,000 passed here looks like (rare = TRUE when the outcome really
-# is that rare, never below 1e-6 per 100,000); above it, no population's all-cause mortality comes
-# close (hirate = TRUE for an outcome that common, never above 1); zero is a measured zero.
+#' Checks a baseline rate per person-year.
+#'
+#' A baseline rate per person-year, checked as vrfpol() checks its rate per 100,000 (the
+#' same band, the same switches; review of e57fed5, E4: 0.5 and 8e-8 were taken as they came). The
+#' band is 1 to 10,000 per 100,000 a year (1e-5 to 0.1 per person-year): below it, the number is
+#' also what a rate per 100,000 passed here looks like (rare = TRUE when the outcome really
+#' is that rare, never below 1e-6 per 100,000); above it, no population's all-cause mortality comes
+#' close (hirate = TRUE for an outcome that common, never above 1); zero is a measured zero.
+#' @param rate The rate.
+#' @param rare_outcome Whether a rate below one per 100,000 a year is taken.
+#' @param high_rate Whether a rate above 0.1 per person-year is taken.
+#' @return `rate`.
+#' @noRd
 .pollution_rate_pp <- function(rate, rare_outcome = FALSE, high_rate = FALSE) {
   for (a in list(list("rare_outcome", rare_outcome), list("high_rate", high_rate))) {
     if (!is.logical(a[[2L]]) || length(a[[2L]]) != 1L || is.na(a[[2L]])) {
@@ -252,6 +279,13 @@ crfno2 <- function(expo, y = "allcause", refconc = 10,
   rate
 }
 
+#' One finite number, optionally non-negative: the scalar inputs of the burden functions.
+#' @param x The value passed by the user.
+#' @param what The argument's name, used in the error message.
+#' @param nonneg Whether a negative value is refused.
+#' @param positive Whether zero is refused too.
+#' @return The number.
+#' @noRd
 .pollution_scalar <- function(x, what, nonneg = TRUE, positive = FALSE) {
   # a flag is not a number: as.numeric(TRUE) is 1, and a relative risk of TRUE is a typo
   if (is.logical(x) && !all(is.na(x))) stop(sprintf("`%s` must be numeric, not logical", what), call. = FALSE)
@@ -267,7 +301,10 @@ crfno2 <- function(expo, y = "allcause", refconc = 10,
   v
 }
 
-# "PM2.5", "PM25", "pm2.5", "pm25" -> "PM2.5"; "NO2", "no2" -> "NO2"; anything else NA.
+#' "PM2.5", "PM25", "pm2.5", "pm25" -> "PM2.5"; "NO2", "no2" -> "NO2"; anything else NA.
+#' @param pollutant The pollutant's name as given.
+#' @return "PM2.5", "NO2" or NA.
+#' @noRd
 .pollution_pollutant <- function(pollutant) {
   if (!is.character(pollutant) || length(pollutant) != 1L || is.na(pollutant)) return(NA_character_)
   key <- gsub("[^a-z0-9]", "", tolower(pollutant))
@@ -276,8 +313,11 @@ crfno2 <- function(expo, y = "allcause", refconc = 10,
   NA_character_
 }
 
-# The unit of an outcome's attributable count: the mortality outcomes are deaths, the
-# childhood-asthma CRF is an incidence relative risk.
+#' The unit of an outcome's attributable count: the mortality outcomes are deaths, the
+#' childhood-asthma CRF is an incidence relative risk.
+#' @param outcome The outcome's code.
+#' @return One string.
+#' @noRd
 .pollution_outcome_unit <- function(outcome) {
   if (identical(outcome, "chiast")) "incident cases" else "deaths"
 }
@@ -680,16 +720,25 @@ plrcf <- function(data, y, trt, covs, kfol = 5L, seed = 1L) {
        method = "partially linear regression, DML2 cross-fitting, OLS nuisances")
 }
 
-# One fold's two nuisance fits (outcome and treatment on the covariates, least squares on the
-# training rows) predicted on the test rows. The least-squares solution comes from the normal
-# equations of the standardized design Z, solved by Cholesky: two cross-products and a p x p
-# solve. That is the same projection lm.fit() computes by its LINPACK QR, and it is used only when
-# the cross-product is well conditioned (reciprocal condition number at least 1e-5, so the
-# rounding difference from the QR is far below 1e-10); a near-singular fold (collinear
-# covariates, a constant column) takes lm.fit() on the raw design as before, with its pivoting
-# and its NA coefficients set to 0. lm.fit()'s QR is a long chain of level-1 BLAS calls, which a
-# threaded BLAS on a busy machine runs a hundred times slower than this (an n = 20000 fit took
-# 1.5 s); the cross-products are level-3 calls.
+#' Fits one fold's two nuisance regressions and predicts them on the test rows.
+#'
+#' One fold's two nuisance fits (outcome and treatment on the covariates, least squares on the
+#' training rows) predicted on the test rows. The least-squares solution comes from the normal
+#' equations of the standardized design Z, solved by Cholesky: two cross-products and a p x p
+#' solve. That is the same projection lm.fit() computes by its LINPACK QR, and it is used only when
+#' the cross-product is well conditioned (reciprocal condition number at least 1e-5, so the
+#' rounding difference from the QR is far below 1e-10); a near-singular fold (collinear
+#' covariates, a constant column) takes lm.fit() on the raw design as before, with its pivoting
+#' and its NA coefficients set to 0. lm.fit()'s QR is a long chain of level-1 BLAS calls, which a
+#' threaded BLAS on a busy machine runs a hundred times slower than this (an n = 20000 fit took
+#' 1.5 s); the cross-products are level-3 calls.
+#' @param X The raw design matrix.
+#' @param Z The standardized design matrix.
+#' @param YD The outcome and treatment, as a two-column matrix.
+#' @param train The training rows.
+#' @param test The test rows.
+#' @return A matrix of predictions, one column for each of `YD`.
+#' @noRd
 .plr_fold_fit <- function(X, Z, YD, train, test) {
   Zt <- Z[train, , drop = FALSE]
   A <- crossprod(Zt)
@@ -1019,8 +1068,13 @@ polbrdarea <- function(areatab, areacol = "fsa", expcol = "exposure",
 
 # ---- vrfpol -------------------------------------------------------
 
-# Synthetic exposure and income with the orders of magnitude of Toronto
-# forward-sortation-area NO2 and CIHI asthma rates. R's own RNG, seeded locally.
+#' Makes synthetic exposure and income data for the examples.
+#'
+#' Synthetic exposure and income with the orders of magnitude of Toronto
+#' forward-sortation-area NO2 and CIHI asthma rates. R's own RNG, seeded locally.
+#' @param pollutant "no2", "pm25" or another name.
+#' @return A data frame with `exposure` and `income`.
+#' @noRd
 .pollution_demo_data <- function(pollutant) {
   .rmbl_with_seed(20260417L, {
     n <- 1000L
@@ -1033,6 +1087,17 @@ polbrdarea <- function(areatab, areacol = "fsa", expcol = "exposure",
   })
 }
 
+#' Lists the assumptions of a burden calculation, each checked against the inputs.
+#' @param pollutant The pollutant.
+#' @param exposure_mean The mean exposure.
+#' @param exposure_prevalence The share of the population exposed.
+#' @param baseline_rate The baseline rate.
+#' @param population The population size.
+#' @param reference The counterfactual concentration.
+#' @param rare_outcome Whether a rare outcome was declared.
+#' @param high_rate Whether a high rate was declared.
+#' @return A list of rows, each with `assumption`, `ok` and `note`.
+#' @noRd
 .pollution_assumptions <- function(pollutant, exposure_mean, exposure_prevalence,
                                    baseline_rate, population, reference, rare_outcome = FALSE,
                                    high_rate = FALSE) {
@@ -1482,6 +1547,10 @@ vrfpol <- function(poll, y = "allcause", reg = NULL,
   structure(report, exitstat = 0L, class = c("rmbl_pollution_report", "list"))
 }
 
+#' Formats the interval of an attributable fraction for printing.
+#' @param ci The interval, with `lower` and `upper`, or NULL.
+#' @return One string, "" when there is no interval.
+#' @noRd
 .pollution_paf_ci_text <- function(ci) {
   if (is.null(ci)) return("")
   sprintf("  (95%% CI %.4f to %.4f, from the risk's limits)", ci[["lower"]], ci[["upper"]])
@@ -1542,12 +1611,17 @@ polrpttxt <- function(report) {
   paste0(paste(lines, collapse = "\n"), "\n\nSTATUS: ok\n")
 }
 
-# The exposure CSV, read whole: a gzip, bzip2 or xz file is decompressed (as read.csv did
-# before 0.5.12, review of 52a8883, A4) and checked to be complete (.rmbl_decompress_checked), a
-# UTF-16 file is decoded with or without its byte-order mark, a UTF-8 BOM is dropped, a file that
-# is not UTF-8 is read as Latin-1 (and said), other NUL bytes are refused. A parse that reports a
-# problem (an unbalanced quote that swallowed the rest of the file, A5) stops with the parser's
-# own message instead of returning the rows before it.
+#' Reads the exposure CSV whole.
+#'
+#' The exposure CSV, read whole: a gzip, bzip2 or xz file is decompressed (as read.csv did
+#' before 0.5.12, review of 52a8883, A4) and checked to be complete (.rmbl_decompress_checked), a
+#' UTF-16 file is decoded with or without its byte-order mark, a UTF-8 BOM is dropped, a file that
+#' is not UTF-8 is read as Latin-1 (and said), other NUL bytes are refused. A parse that reports a
+#' problem (an unbalanced quote that swallowed the rest of the file, A5) stops with the parser's
+#' own message instead of returning the rows before it.
+#' @param path The file.
+#' @return A data frame.
+#' @noRd
 .pollution_read_csv <- function(path) {
   head <- readBin(path, "raw", 6L)
   compressed <- length(head) >= 2L && (identical(head[1:2], as.raw(c(0x1f, 0x8b))) ||
@@ -1651,13 +1725,19 @@ polrpttxt <- function(report) {
   df
 }
 
-# A compressed CSV, decompressed whole and checked to be complete. R's gzfile() returns whatever
-# a truncated gzip or bzip2 file decodes to, with no error and no warning, so half a file was read
-# as a whole one (review of 02a38be, C3). gzip goes through zlib in C (every member's CRC-32 and
-# length checked); a bzip2 file must end with its end-of-stream marker; an xz decoder warning
-# ("lzma decoding result 10" for a cut file) is an error. The output is capped while it is read
-# (option rmoriebricklayer.maxcsvbytes, 1 GiB by default): a few megabytes of gzip no longer
-# expand to gigabytes before anything is refused.
+#' Decompresses a compressed CSV whole and checks that it is complete.
+#'
+#' A compressed CSV, decompressed whole and checked to be complete. R's gzfile() returns whatever
+#' a truncated gzip or bzip2 file decodes to, with no error and no warning, so half a file was read
+#' as a whole one (review of 02a38be, C3). gzip goes through zlib in C (every member's CRC-32 and
+#' length checked); a bzip2 file must end with its end-of-stream marker; an xz decoder warning
+#' ("lzma decoding result 10" for a cut file) is an error. The output is capped while it is read
+#' (option rmoriebricklayer.maxcsvbytes, 1 GiB by default): a few megabytes of gzip no longer
+#' expand to gigabytes before anything is refused.
+#' @param path The file.
+#' @param head The file's first bytes.
+#' @return A raw vector.
+#' @noRd
 .rmbl_decompress_checked <- function(path, head = readBin(path, "raw", 6L)) {
   lim <- min(.rmbl_max_csv_bytes(), 2^31 - 2)   # rawToChar() takes at most 2^31 - 1 bytes
   if (length(head) >= 2L && identical(head[1:2], as.raw(c(0x1f, 0x8b)))) {
@@ -1684,8 +1764,12 @@ polrpttxt <- function(report) {
   do.call(c, chunks)
 }
 
-# The option rmoriebricklayer.maxcsvbytes (1 GiB by default): the most a CSV may decompress to,
-# for the pollution readers and dload() alike.
+#' Returns the most a CSV may decompress to.
+#'
+#' The option rmoriebricklayer.maxcsvbytes (1 GiB by default): the most a CSV may decompress to,
+#' for the pollution readers and dload() alike.
+#' @return A number of bytes.
+#' @noRd
 .rmbl_max_csv_bytes <- function() {
   lim <- getOption("rmoriebricklayer.maxcsvbytes", 2^30)
   if (!is.numeric(lim) || length(lim) != 1L || is.na(lim) || lim < 0)
@@ -1693,9 +1777,14 @@ polrpttxt <- function(report) {
   as.numeric(lim)
 }
 
-# A bzip2 stream ends with the 48-bit end-of-stream magic 0x177245385090, a 32-bit CRC and zero
-# padding to the next byte; none of it is byte-aligned. A file cut anywhere before its end lacks
-# it in its last 11 bytes.
+#' Says whether a bzip2 file ends with its end-of-stream marker.
+#'
+#' A bzip2 stream ends with the 48-bit end-of-stream magic 0x177245385090, a 32-bit CRC and zero
+#' padding to the next byte; none of it is byte-aligned. A file cut anywhere before its end lacks
+#' it in its last 11 bytes.
+#' @param path The file.
+#' @return TRUE or FALSE.
+#' @noRd
 .rmbl_bzip2_complete <- function(path) {
   n <- file.size(path)
   if (is.na(n) || n < 14) return(FALSE)

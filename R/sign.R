@@ -269,8 +269,14 @@ fipskey <- function(scheme, public, secret = NULL) {
   out
 }
 
-# Key material as hex, whatever it arrived as, with its length checked
-# against the parameter set.
+#' Key material as hex, whatever it arrived as, with its length checked
+#' against the parameter set.
+#' @param x The key material: a raw vector or a hex string.
+#' @param n The number of bytes the parameter set needs.
+#' @param what The argument's name, used in the error message.
+#' @param scheme The parameter set's name, used in the error message.
+#' @return The material as lower-case hex.
+#' @noRd
 .rmbl_fips_material <- function(x, n, what, scheme) {
   hex <- if (is.raw(x)) {
     .rmbl_hexlify(x)
@@ -447,8 +453,11 @@ fipsvrfmu <- function(key, mu, sig) {
   isTRUE(.Call(C_rmbl_mldsa_verify_mu, mode, pk, mu, sg))
 }
 
-# The scheme a key object names, refusing anything that is not one of
-# ours rather than reaching into an arbitrary list.
+#' The scheme a key object names, refusing anything that is not one of
+#' ours rather than reaching into an arbitrary list.
+#' @param key A key from `fipskg()` or `fipskey()`.
+#' @return The key's parameter-set name.
+#' @noRd
 .rmbl_fips_key_scheme <- function(key) {
   if (!inherits(key, c("bricklayer_oqs_key", "bricklayer_oqs_public_key"))) {
     stop("`key` must come from fipskg() or fipskey()", call. = FALSE)
@@ -514,9 +523,14 @@ fipssz <- function(scheme) {
   c(sz, rnd = sz[["seed"]] %/% 3L)
 }
 
-# The parameter-set name, validated against what the package implements.
-# A typo must fail here rather than silently selecting a default, since
-# the scheme is baked into every signature the key goes on to produce.
+#' Checks a FIPS 204 or 205 parameter-set name.
+#'
+#' The parameter-set name, validated against what the package implements.
+#' A typo must fail here rather than silently selecting a default, since
+#' the scheme is baked into every signature the key goes on to produce.
+#' @param scheme The name passed by the user.
+#' @return `scheme`.
+#' @noRd
 .rmbl_fips_scheme <- function(scheme) {
   # one name: a vector of two was read as its first (review of 52a8883)
   if (!is.character(scheme) || length(scheme) != 1L) stop("`scheme` must be a single non-empty string", call. = FALSE)
@@ -533,12 +547,20 @@ fipssz <- function(scheme) {
   scheme
 }
 
-# NA for an SLH-DSA set, the FIPS 204 mode number for an ML-DSA one.
+#' NA for an SLH-DSA set, the FIPS 204 mode number for an ML-DSA one.
+#' @param scheme The parameter-set name.
+#' @return An integer mode, or NA.
+#' @noRd
 .rmbl_fips_mldsa_mode <- function(scheme) {
   if (!grepl("^ML-DSA-", scheme)) return(NA_integer_)
   as.integer(sub("^ML-DSA-", "", scheme))
 }
 
+#' Generates an ML-DSA or SLH-DSA key pair from a seed in the native kernel.
+#' @param scheme The parameter-set name.
+#' @param seed The seed bytes.
+#' @return What the kernel returns: the public and secret keys.
+#' @noRd
 .rmbl_fips_keypair <- function(scheme, seed) {
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (!is.na(mode)) return(.Call(C_rmbl_mldsa_keypair, mode, seed))
@@ -547,6 +569,16 @@ fipssz <- function(scheme) {
   .bl_busy(sprintf("%s key: building the top tree", scheme), .Call(C_rmbl_slhdsa_keypair, scheme, seed))
 }
 
+#' Signs a message with an ML-DSA or SLH-DSA secret key in the native kernel.
+#' @param scheme The parameter-set name.
+#' @param sk The secret key bytes.
+#' @param msg The message bytes.
+#' @param ctx The context bytes.
+#' @param rnd The randomness bytes, or the fixed bytes of the deterministic variant.
+#' @param prehash The pre-hash name, "none" for a pure signature.
+#' @param masked Whether ML-DSA signs with the masked implementation.
+#' @return The signature bytes.
+#' @noRd
 .rmbl_fips_sign <- function(scheme, sk, msg, ctx, rnd, prehash = "none", masked = TRUE) {
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (!is.na(mode)) {
@@ -555,8 +587,13 @@ fipssz <- function(scheme) {
   .bl_busy(sprintf("%s signature", scheme), .Call(C_rmbl_slhdsa_sign, scheme, sk, msg, ctx, rnd, prehash))
 }
 
-# TRUE or FALSE for the `masked` argument of the three masked operations; the
-# option rmoriebricklayer.masked sets the default for a whole session.
+#' Checks the `masked` argument of the three masked operations.
+#'
+#' TRUE or FALSE for the `masked` argument of the three masked operations; the
+#' option rmoriebricklayer.masked sets the default for a whole session.
+#' @param masked The value passed by the user.
+#' @return `masked`.
+#' @noRd
 .rmbl_masked_flag <- function(masked) {
   if (!isTRUE(masked) && !isFALSE(masked)) {
     stop("`masked` must be TRUE or FALSE (option rmoriebricklayer.masked sets the default)",
@@ -565,6 +602,15 @@ fipssz <- function(scheme) {
   masked
 }
 
+#' Verifies an ML-DSA or SLH-DSA signature in the native kernel.
+#' @param scheme The parameter-set name.
+#' @param pk The public key bytes.
+#' @param msg The message bytes.
+#' @param ctx The context bytes.
+#' @param sig The signature bytes.
+#' @param prehash The pre-hash name, "none" for a pure signature.
+#' @return `TRUE` when the signature verifies.
+#' @noRd
 .rmbl_fips_verify <- function(scheme, pk, msg, ctx, sig,
                               prehash = "none") {
   mode <- .rmbl_fips_mldsa_mode(scheme)
@@ -574,8 +620,13 @@ fipssz <- function(scheme) {
   .Call(C_rmbl_slhdsa_verify, scheme, pk, msg, ctx, sig, prehash)
 }
 
-# The pre-hash name, validated here so a typo cannot be read as "none"
-# and quietly produce a pure signature instead of the requested one.
+#' Checks the pre-hash name.
+#'
+#' The pre-hash name, validated here so a typo cannot be read as "none"
+#' and quietly produce a pure signature instead of the requested one.
+#' @param prehash The name passed by the user; NULL or NA is "none".
+#' @return The pre-hash name.
+#' @noRd
 .rmbl_fips_prehash <- function(prehash) {
   if (is.null(prehash)) return("none")
   prehash <- as.character(prehash)[1L]
@@ -585,8 +636,13 @@ fipssz <- function(scheme) {
                      "shake128", "shake256"))
 }
 
-# A context string is at most 255 bytes because the FIPS 204 and 205
-# message encodings write its length in one byte.
+#' Checks a FIPS 204 or 205 context string and returns it as bytes.
+#'
+#' A context string is at most 255 bytes because the FIPS 204 and 205
+#' message encodings write its length in one byte.
+#' @param context A string, a raw vector or NULL (empty).
+#' @return A raw vector of at most 255 bytes.
+#' @noRd
 .rmbl_fips_context <- function(context) {
   if (is.null(context)) return(raw(0L))
   if (is.raw(context)) {
@@ -1483,14 +1539,11 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
         sig$auth, sig[["randomizer"]])
 }
 
-# 32 seed bytes as hex, from the operating system's CSPRNG.
-#
-# Deliberately NOT R's generator: set.seed() makes that reproducible by
-# design and its state is recoverable from its output, so a key drawn
-# from it is guessable. rndbytes() fails rather than degrading, which
-# is the behaviour a key needs.
-# Hex bytes, or NULL if the string is not an even-length run of hex
-# digits. as.raw(strtoi(...)) would quietly map a non-hex pair to 00.
+#' Hex bytes, or NULL if the string is not an even-length run of hex
+#' digits. as.raw(strtoi(...)) would quietly map a non-hex pair to 00.
+#' @param hex A hex string.
+#' @return A raw vector, or NULL.
+#' @noRd
 .rmbl_hex_or_null <- function(hex) {
   # one string, not the first of several: a length-2 `signature` field is a tampered object
   if (is.null(hex) || length(hex) != 1L) return(NULL)
@@ -1500,9 +1553,14 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   .rmbl_hex_to_raw(hex)
 }
 
-# A message is either a single string or raw bytes. Anything else is an
-# error rather than a coercion: silently signing the deparsed form of an
-# object would produce a signature nobody can reproduce.
+#' Returns the message to sign as bytes.
+#'
+#' A message is either a single string or raw bytes. Anything else is an
+#' error rather than a coercion: silently signing the deparsed form of an
+#' object would produce a signature nobody can reproduce.
+#' @param message A single string or a raw vector.
+#' @return A raw vector.
+#' @noRd
 .rmbl_sign_message <- function(message) {
   if (is.raw(message)) return(message)
   message <- as.character(message)
@@ -1513,10 +1571,17 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   charToRaw(message)
 }
 
-# The deterministic variant's substitute for fresh randomness. FIPS 205
-# specifies PK.seed; FIPS 204 specifies 32 zero bytes. Both are fixed
-# per key, which is the whole point: the same message signs identically
-# every time.
+#' Returns the fixed randomness of the deterministic signing variant.
+#'
+#' The deterministic variant's substitute for fresh randomness. FIPS 205
+#' specifies PK.seed; FIPS 204 specifies 32 zero bytes. Both are fixed
+#' per key, which is the whole point: the same message signs identically
+#' every time.
+#' @param scheme The parameter-set name.
+#' @param public_hex The public key as hex.
+#' @param n The number of bytes.
+#' @return A raw vector of `n` bytes.
+#' @noRd
 .rmbl_fips_fixed_rand <- function(scheme, public_hex, n) {
   if (is.na(.rmbl_fips_mldsa_mode(scheme))) {
     return(.rmbl_hex_to_raw(substring(public_hex, 1L, 2L * n)))
@@ -1524,10 +1589,23 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   raw(n)
 }
 
+#' 32 seed bytes as hex, from the operating system's CSPRNG.
+#'
+#' Deliberately NOT R's generator: set.seed() makes that reproducible by
+#' design and its state is recoverable from its output, so a key drawn
+#' from it is guessable. rndbytes() fails rather than degrading, which
+#' is the behaviour a key needs.
+#' @return 64 hex characters.
+#' @noRd
 .rmbl_random_seed_hex <- function() {
   paste(format(rndbytes(32L)), collapse = "")
 }
 
+#' Checks a 32-byte seed given as hex.
+#' @param seed The seed passed by the user.
+#' @param what The argument's name, used in the error message.
+#' @return The seed as lower-case hex.
+#' @noRd
 .rmbl_check_seed <- function(seed, what) {
   seed <- as.character(seed)
   if (length(seed) != 1L || is.na(seed) || nchar(seed) != 64L ||
@@ -1538,7 +1616,9 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   tolower(seed)
 }
 
-# The one sentence every path that meets an old XMSS object with `key_state` says.
+#' The one sentence every path that meets an old XMSS object with `key_state` says.
+#' @return A string.
+#' @noRd
 .rmbl_key_state_warning <- function() {
   paste0("this XMSS signature carries the signer's private key (`key_state`, written by ",
          "rmoriebricklayer 0.5.9 to 7703a04): treat that key as compromised, generate a new ",
@@ -1548,16 +1628,27 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 # the highest XMSS index each key has signed with in this session, by record id
 .rmbl_xmss_used <- new.env(parent = emptyenv())
 
-# An XMSS key field by its name (pubseed, skseed, skprf). Builds of 1.0.0 before the review
-# wrote pub_seed, sk_seed and sk_prf; a key saved by one still reads.
+#' Reads an XMSS key field by its name, under its old name too.
+#'
+#' An XMSS key field by its name (pubseed, skseed, skprf). Builds of 1.0.0 before the review
+#' wrote pub_seed, sk_seed and sk_prf; a key saved by one still reads.
+#' @param key The XMSS key.
+#' @param nm "pubseed", "skseed" or "skprf".
+#' @return The field's value, or NULL.
+#' @noRd
 .rmbl_xkey <- function(key, nm) {
   old <- c(pubseed = "pub_seed", skseed = "sk_seed", skprf = "sk_prf")[[nm]]
   key[[nm]] %||% key[[old]]
 }
 
-# A key's ids in the record: `id` a fingerprint of the secret seed the signer actually uses
-# (so a stale copy whose `root` field was edited is still the same key), `legacy` the
-# root:pubseed id the records of 0.5.12-pre and fcdce03 used, consulted and never written.
+#' Computes a key's ids in the used-index record.
+#'
+#' A key's ids in the record: `id` a fingerprint of the secret seed the signer actually uses
+#' (so a stale copy whose `root` field was edited is still the same key), `legacy` the
+#' root:pubseed id the records of 0.5.12-pre and fcdce03 used, consulted and never written.
+#' @param key The XMSS key.
+#' @return A list with `id`, `legacy` and `root`.
+#' @noRd
 .rmbl_xmss_ids <- function(key) {
   sk <- .rmbl_check_seed(.rmbl_xkey(key, "skseed"), "skseed")
   ps <- .rmbl_check_seed(.rmbl_xkey(key, "pubseed"), "pubseed")
@@ -1570,12 +1661,16 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
        legacy = paste0(root, ":", ps), root = root)
 }
 
-# The used-index record: the option, then the environment variable, else the package's own
-# configuration directory (tools::R_user_dir, the place CRAN policy sets aside for it).
-# FALSE or "" turns the file off (the session record stays); a value that is plainly not a
-# path ("TRUE", "0", ...), a relative path (it would follow the working directory) and a path
-# that is not a regular file (a device such as /dev/null, which the rename replaced when run
-# as root, or a directory) are refused (review of 52a8883, B7).
+#' Finds the XMSS used-index record's path.
+#'
+#' The used-index record: the option, then the environment variable, else the package's own
+#' configuration directory (tools::R_user_dir, the place CRAN policy sets aside for it).
+#' FALSE or "" turns the file off (the session record stays); a value that is plainly not a
+#' path ("TRUE", "0", ...), a relative path (it would follow the working directory) and a path
+#' that is not a regular file (a device such as /dev/null, which the rename replaced when run
+#' as root, or a directory) are refused (review of 52a8883, B7).
+#' @return The path, or NULL when the record is turned off.
+#' @noRd
 .rmbl_xmss_index_file <- function() {
   p <- getOption("rmoriebricklayer.xmssidxfile", NULL)
   from <- "the option rmoriebricklayer.xmssidxfile"
@@ -1613,9 +1708,14 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   p
 }
 
-# One line per key, `k:<fingerprint><TAB>highest index used` (or a legacy `root:pubseed` line
-# from 0.5.12-pre). A line that is not that is an error, not a line to skip: a record that
-# cannot be read cannot be trusted. The fcdce03 record next to it is merged in.
+#' Reads the XMSS used-index record.
+#'
+#' One line per key, `k:<fingerprint><TAB>highest index used` (or a legacy `root:pubseed` line
+#' from 0.5.12-pre). A line that is not that is an error, not a line to skip: a record that
+#' cannot be read cannot be trusted. The fcdce03 record next to it is merged in.
+#' @param p The record's path.
+#' @return A named integer vector: the highest index used, by key id.
+#' @noRd
 .rmbl_xmss_record_read <- function(p) {
   ids <- character()
   idx <- integer()
@@ -1649,9 +1749,14 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   stats::setNames(idx[keep], ids[keep])
 }
 
-# The record of the releases before 0.5.12, `xmss_index.json` (key root:pubseed -> highest
-# index used), in the same directory: read and merged, so an upgrade does not forget which
-# indices were used (review of 52a8883, A3). Unreadable is an error, like the new record.
+#' Reads the XMSS index record of the releases before 0.5.12.
+#'
+#' The record of the releases before 0.5.12, `xmss_index.json` (key root:pubseed -> highest
+#' index used), in the same directory: read and merged, so an upgrade does not forget which
+#' indices were used (review of 52a8883, A3). Unreadable is an error, like the new record.
+#' @param p The current record's path; the old record is looked for beside it.
+#' @return A named integer vector: the highest index used, by legacy id.
+#' @noRd
 .rmbl_xmss_legacy_json <- function(p) {
   j <- file.path(dirname(p), "xmss_index.json")
   kind <- .Call(C_rmbl_path_kind, j)
@@ -1685,10 +1790,16 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   out
 }
 
-# The whole record, written to a temporary file whose size is checked and which is flushed to the
-# disk before it replaces the old
-# one: a write that did not complete (a full disk) stops the signature instead of renaming an
-# empty file over the record (review of 52a8883, B3).
+#' Writes the XMSS used-index record.
+#'
+#' The whole record, written to a temporary file whose size is checked and which is flushed to the
+#' disk before it replaces the old
+#' one: a write that did not complete (a full disk) stops the signature instead of renaming an
+#' empty file over the record (review of 52a8883, B3).
+#' @param p The record's path.
+#' @param rec A named integer vector: the highest index used, by key id.
+#' @return `p`, invisibly.
+#' @noRd
 .rmbl_xmss_record_write <- function(p, rec) {
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   # the record is written only under its lock, so a temporary file OF THIS RECORD found now was left
@@ -1723,13 +1834,12 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   invisible(p)
 }
 
-# An exclusive operating-system lock around read -> check -> write (flock on Unix, LockFileEx on
-# Windows; rmbl_flock.c). The kernel releases it when the process exits, so no lock is ever
-# taken over: the lock directory of 0.5.12-pre was, by check-then-delete, which let two signers
-# hold it at once and sign one index (review of 52a8883, B2), and spun for ever on a lock it
-# could not delete (B4). The wait is bounded at 10 s and draws no random numbers.
-# What to check when the lock file cannot be opened: a read-only directory, or a lock file another
-# user owns. "" when the system's reason says neither.
+#' What to check when the lock file cannot be opened: a read-only directory, or a lock file another
+#' user owns. "" when the system's reason says neither.
+#' @param m The lock error's message.
+#' @param lock The lock file's path.
+#' @return A hint to add to the message, or "".
+#' @noRd
 .rmbl_lock_hint <- function(m, lock) {
   if (grepl("Read-only", m)) return(" (is the directory read-only?)")
   if (!grepl("Permission denied", m)) return("")
@@ -1737,6 +1847,17 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
     " (is the directory read-only?)"
 }
 
+#' Runs a function under an exclusive lock on the used-index record.
+#'
+#' An exclusive operating-system lock around read -> check -> write (flock on Unix, LockFileEx on
+#' Windows; rmbl_flock.c). The kernel releases it when the process exits, so no lock is ever
+#' taken over: the lock directory of 0.5.12-pre was, by check-then-delete, which let two signers
+#' hold it at once and sign one index (review of 52a8883, B2), and spun for ever on a lock it
+#' could not delete (B4). The wait is bounded at 10 s and draws no random numbers.
+#' @param p The record's path.
+#' @param f The function to run, with no arguments.
+#' @return The value of `f()`.
+#' @noRd
 .rmbl_xmss_with_lock <- function(p, f) {
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   lock <- paste0(p, ".flock")
@@ -1765,8 +1886,12 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   }
 }
 
-# The highest index this key is known to have used: the record on disk (its id, and the legacy
-# id of the older records) and this session.
+#' The highest index this key is known to have used: the record on disk (its id, and the legacy
+#' id of the older records) and this session.
+#' @param ids The key's ids from `.rmbl_xmss_ids()`.
+#' @param rec The record from `.rmbl_xmss_record_read()`.
+#' @return The highest index used, or -1.
+#' @noRd
 .rmbl_xmss_highest <- function(ids, rec) {
   cand <- -1L
   for (k in c(ids$id, ids$legacy)) {
@@ -1777,11 +1902,20 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   cand
 }
 
+#' Tells whether the record or this session knows a key.
+#' @param ids The key's ids from `.rmbl_xmss_ids()`.
+#' @param rec The record from `.rmbl_xmss_record_read()`.
+#' @return `TRUE` or `FALSE`.
+#' @noRd
 .rmbl_xmss_known <- function(ids, rec) {
   any(c(ids$id, ids$legacy) %in% names(rec)) || !is.null(.rmbl_xmss_used[[ids$id]])
 }
 
-# Retire `idx` for this key before the signature is made (RFC 8391's order), under the lock.
+#' Retire `idx` for this key before the signature is made (RFC 8391's order), under the lock.
+#' @param ids The key's ids from `.rmbl_xmss_ids()`.
+#' @param idx The index to retire.
+#' @return `TRUE` invisibly, or `FALSE` invisibly when the record is off and only this session remembers.
+#' @noRd
 .rmbl_xmss_reserve <- function(ids, idx) {
   p <- .rmbl_xmss_index_file()
   refuse <- function(hi) {
@@ -1817,7 +1951,11 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   invisible(TRUE)
 }
 
-# Add a key to the record as "registered, nothing used" (-1), never lowering an entry.
+#' Add a key to the record as "registered, nothing used" (-1), never lowering an entry.
+#' @param key The XMSS key.
+#' @param fresh Whether the key was just generated, so a registered entry is not an error.
+#' @return `TRUE` invisibly, or `FALSE` invisibly when the record is off.
+#' @noRd
 .rmbl_xmss_register <- function(key, fresh = FALSE) {
   ids <- .rmbl_xmss_ids(key)
   p <- .rmbl_xmss_index_file()

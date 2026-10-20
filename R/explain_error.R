@@ -11,7 +11,10 @@
 
 .bl_ee_calls <- c("stop", "warning", "usage_error", "gettextf")
 
-# A message argument as text: literal parts kept, everything computed replaced by a marker.
+#' A message argument as text: literal parts kept, everything computed replaced by a marker.
+#' @param e An expression from a function body: a string or a call that builds one.
+#' @return The template, with "\001" where a part is computed.
+#' @noRd
 .bl_ee_text <- function(e) {
   if (is.character(e) && length(e) == 1L && !is.na(e)) return(e)
   if (!is.call(e)) return("\001")
@@ -38,7 +41,11 @@
   "\001"
 }
 
-# Every (function, kind, template) in a function body.
+#' Every (function, kind, template) in a function body.
+#' @param e An expression or a function.
+#' @param out An environment whose `rows` list collects the messages found.
+#' @return `out`, invisibly.
+#' @noRd
 .bl_ee_walk <- function(e, out) {
   if (is.call(e)) {
     fn <- e[[1L]]
@@ -62,14 +69,23 @@
   invisible(out)
 }
 
-# Whether reading the messages takes long enough to say so first: by the size of the namespaces
-# (a package of some 18,000 objects takes a while; this one, about 1,200, takes a second).
+#' Whether reading the messages takes long enough to say so first: by the size of the namespaces
+#' (a package of some 18,000 objects takes a while; this one, about 1,200, takes a second).
+#' @param pkgs The package names.
+#' @param limit The number of objects above which the namespaces count as large.
+#' @return TRUE or FALSE.
+#' @noRd
 .bl_ee_big <- function(pkgs, limit = 5000L) {
   sum(vapply(pkgs, function(p) length(ls(asNamespace(p), all.names = TRUE)), 0L)) > limit
 }
 
-# The table for the packages: one row per message, with the function raising it and the exported
-# functions it is reached from.
+#' Builds the table of every message the packages raise.
+#'
+#' The table for the packages: one row per message, with the function raising it and the exported
+#' functions it is reached from.
+#' @param pkgs The package names.
+#' @return A data frame with `package`, `raised_by`, `kind`, `template`, `exported` and `words`.
+#' @noRd
 .bl_ee_table <- function(pkgs) {
   key <- paste(pkgs, vapply(pkgs, function(p) as.character(utils::packageVersion(p)), ""), collapse = " ")
   if (!is.null(.bl_ee_memo[[key]])) return(.bl_ee_memo[[key]])
@@ -143,7 +159,12 @@
   tab
 }
 
-# "Error in f(x) : msg" / "Error: msg" / "Warning message:" as R prints them, fancy quotes made plain
+#' Strips the prefix R prints before an error or a warning and makes fancy quotes plain.
+#'
+#' "Error in f(x) : msg" / "Error: msg" / "Warning message:" as R prints them, fancy quotes made plain
+#' @param msg The message as the user pasted it.
+#' @return One string.
+#' @noRd
 .bl_ee_clean <- function(msg) {
   m <- paste(msg, collapse = " ")
   m <- gsub("[\u2018\u2019]", "'", gsub("[\u201c\u201d]", "\"", m))
@@ -156,6 +177,10 @@
 .bl_ee_stop <- c("the", "and", "for", "not", "must", "with", "this", "that", "are", "was", "has", "have", "from",
                  "one", "only", "can", "cannot", "its", "use", "found", "given", "should", "when", "than", "into",
                  "any", "all", "but", "out", "had", "you", "your", "there", "here", "which", "what", "been", "will")
+#' Splits a text into the words that tell one message from another.
+#' @param x The text.
+#' @return The distinct words of three letters or more, the common ones and numbers left out.
+#' @noRd
 .bl_ee_words <- function(x) {
   w <- tolower(unlist(strsplit(x, "[^[:alnum:]_]+")))
   unique(w[nchar(w) >= 3L & !w %in% .bl_ee_stop & !grepl("^[0-9]+$", w)])
@@ -307,7 +332,12 @@ explerr <- function(msg = geterrmessage(), pkgs = NULL, n = 3L) {
   out
 }
 
-# The shell verb: the matches in words.
+#' The shell verb: the matches in words.
+#' @param rest The message, as the words after the verb.
+#' @param out The function that prints.
+#' @param prog The program's name, used in the usage line.
+#' @return The exit status: 0 on a match, 1 on none, 2 on a usage error.
+#' @noRd
 .bl_cli_explain <- function(rest, out, prog) {
   if (!length(rest)) {
     out(sprintf("usage: %s explain-error MESSAGE...   (quote it: %s explain-error \"the error text\")\n", prog, prog))

@@ -18,10 +18,17 @@
 # world average. Every row carries its year, its basis (lifecycle) and source.
 .rmbl_ci_cache <- new.env(parent = emptyenv())
 
+#' Returns the path of a file the package installs under extdata.
+#' @param name The file name.
+#' @return The full path; an error when the file is missing.
+#' @noRd
 .rmbl_extdata <- function(name) {
   system.file("extdata", name, package = "rmoriebricklayer", mustWork = TRUE)
 }
 
+#' Reads the bundled carbon-intensity table once and keeps it in the cache.
+#' @return The table as a data frame.
+#' @noRd
 .rmbl_ci_table <- function() {
   if (is.null(.rmbl_ci_cache$tab)) {
     .rmbl_ci_cache$tab <- utils::read.csv(
@@ -32,6 +39,9 @@
   .rmbl_ci_cache$tab
 }
 
+#' Reads the bundled time-zone to country table once and keeps it in the cache.
+#' @return The table as a data frame.
+#' @noRd
 .rmbl_tz_table <- function() {
   if (is.null(.rmbl_ci_cache$tz)) {
     .rmbl_ci_cache$tz <- utils::read.csv(.rmbl_extdata("timezone_countries.csv"), stringsAsFactors = FALSE,
@@ -40,8 +50,14 @@
   .rmbl_ci_cache$tz
 }
 
-# Row index of a location key in the table: by code (CA, CA-ON, US-CAL-CISO),
-# by ISO 3166-1 alpha-3 (CAN), or by name (Canada); NA when none matches.
+#' Finds the row of a location key in the carbon-intensity table.
+#'
+#' Row index of a location key in the table: by code (CA, CA-ON, US-CAL-CISO),
+#' by ISO 3166-1 alpha-3 (CAN), or by name (Canada); NA when none matches.
+#' @param key The location key: a code, an ISO 3166-1 alpha-3 code or a name.
+#' @param tab The carbon-intensity table.
+#' @return The row index, or NA.
+#' @noRd
 .rmbl_ci_match <- function(key, tab) {
   key <- toupper(trimws(key))
   i <- match(key, tab$location)
@@ -263,8 +279,15 @@ dtctloc <- function(envloc = Sys.getenv("RMBL_LOCATION"),
   TV = NA_character_
 )
 
-# The grid a territory draws on: its proxy country when the carbon table has that row, the world
-# average when the territory has no proxy or the proxy itself is missing from the table.
+#' Picks the carbon-intensity location for a territory.
+#'
+#' The grid a territory draws on: its proxy country when the carbon table has that row, the world
+#' average when the territory has no proxy or the proxy itself is missing from the table.
+#' @param terr The territory's two-letter code.
+#' @param known A function that maps a country code to its location in the table, or NA.
+#' @param proxies The named vector of proxy countries.
+#' @return A location code, "WORLD" when no proxy is known.
+#' @noRd
 .rmbl_territory_location <- function(terr, known, proxies = .rmbl_territory_proxy) {
   proxy <- proxies[terr]
   loc <- if (is.na(proxy)) NA_character_ else known(unname(proxy))
@@ -273,9 +296,14 @@ dtctloc <- function(envloc = Sys.getenv("RMBL_LOCATION"),
 
 # ---- RAPL -------------------------------------------------------------------
 
-# The package-level RAPL domains under a powercap directory: directories named
-# intel-rapl:N (not the :N:M subdomains, which are parts of the package and
-# would count the same energy twice), whose `name` starts with "package".
+#' Lists the package-level RAPL domains under a powercap directory.
+#'
+#' The package-level RAPL domains under a powercap directory: directories named
+#' intel-rapl:N (not the :N:M subdomains, which are parts of the package and
+#' would count the same energy twice), whose `name` starts with "package".
+#' @param rapl_dir The powercap directory.
+#' @return The domain directories, possibly none.
+#' @noRd
 .rapl_domains <- function(rapl_dir) {
   if (!dir.exists(rapl_dir)) return(character(0))
   d <- list.files(rapl_dir, pattern = "^intel-rapl:[0-9]+$", full.names = TRUE)
@@ -286,8 +314,13 @@ dtctloc <- function(envloc = Sys.getenv("RMBL_LOCATION"),
   d[keep]
 }
 
-# Energy counters (microjoules) of the package domains, or NULL when any is
-# unreadable (on Linux 5.10 and later the files are root-only by default).
+#' Reads the energy counters of the RAPL package domains.
+#'
+#' Energy counters (microjoules) of the package domains, or NULL when any is
+#' unreadable (on Linux 5.10 and later the files are root-only by default).
+#' @param domains The domain directories from `.rapl_domains()`.
+#' @return A list with `uj` (the counters) and `max` (their wrap-around ranges), or NULL.
+#' @noRd
 .rapl_read <- function(domains) {
   if (!length(domains)) return(NULL)
   vals <- vapply(domains, function(p) {
@@ -357,6 +390,12 @@ raplok <- function(rapldir = "/sys/class/powercap") {
 
 # ---- memory and cores ---------------------------------------------------------
 
+#' Reads the machine's total memory in gigabytes.
+#' @param meminfo The Linux meminfo file.
+#' @param sysname The operating system's name, as `Sys.info()` gives it.
+#' @param sysctl The path of the sysctl program, used on macOS.
+#' @return The memory in GB, or NA when it cannot be read.
+#' @noRd
 .rmbl_total_memory_gb <- function(meminfo = "/proc/meminfo", sysname = Sys.info()[["sysname"]],
                                   sysctl = Sys.which("sysctl")) {
   if (file.exists(meminfo)) {
@@ -373,22 +412,36 @@ raplok <- function(rapldir = "/sys/class/powercap") {
   NA_real_
 }
 
-# CPU seconds between two proc.time() readings, children included. Windows
-# reports the child times as NA, which would have turned every figure NA.
+#' Counts the CPU seconds between two proc.time() readings.
+#'
+#' CPU seconds between two proc.time() readings, children included. Windows
+#' reports the child times as NA, which would have turned every figure NA.
+#' @param t0 The `proc.time()` reading at the start.
+#' @param t1 The `proc.time()` reading at the end.
+#' @return The CPU seconds used, never negative.
+#' @noRd
 .rmbl_cpu_seconds <- function(t0, t1) {
   parts <- c("user.self", "sys.self", "user.child", "sys.child")
   d <- unname(t1[parts]) - unname(t0[parts])
   max(sum(d[is.finite(d)]), 0)
 }
 
+#' Counts the machine's logical cores.
+#' @return The number of cores, or NA.
+#' @noRd
 .rmbl_cores <- function() {
   tryCatch(parallel::detectCores(logical = TRUE), error = function(e) NA_integer_)
 }
 
 # ---- utilisation ----------------------------------------------------------------
 
-# Whole-machine CPU accounting from the first line of /proc/stat (Linux):
-# idle + iowait jiffies and the total, or NULL where the file is absent.
+#' Reads the whole machine's idle and total CPU time on Linux.
+#'
+#' Whole-machine CPU accounting from the first line of /proc/stat (Linux):
+#' idle + iowait jiffies and the total, or NULL where the file is absent.
+#' @param proc_stat The path of the stat file, normally /proc/stat.
+#' @return A named vector with `idle` and `total` jiffies, or NULL.
+#' @noRd
 .proc_stat_cpu <- function(proc_stat) {
   l <- tryCatch(suppressWarnings(readLines(proc_stat, n = 1L, warn = FALSE)), error = function(e) character(0))
   if (length(l) != 1L || !startsWith(l, "cpu ")) return(NULL)
@@ -397,9 +450,17 @@ raplok <- function(rapldir = "/sys/class/powercap") {
   c(idle = v[4] + if (length(v) >= 5L) v[5] else 0, total = sum(v))
 }
 
-# CPU power at a utilisation u, as a fraction of the CPU's power P: Green
-# Algorithms' linear scaling, or codecarbon's curve for the matching mode (a
-# floor at 10% of P when tracking a process; 0.1 + 0.9 u^3 for the machine).
+#' Scales the CPU's power to a utilisation.
+#'
+#' CPU power at a utilisation u, as a fraction of the CPU's power P: Green
+#' Algorithms' linear scaling, or codecarbon's curve for the matching mode (a
+#' floor at 10% of P when tracking a process; 0.1 + 0.9 u^3 for the machine).
+#' @param p The CPU's power.
+#' @param u The utilisation, a fraction from 0 to 1.
+#' @param load_curve "linear" for Green Algorithms' scaling, anything else for codecarbon's curve.
+#' @param usage_mode "machine" or "process".
+#' @return The power drawn, in the units of `p`.
+#' @noRd
 .cpu_load_power <- function(p, u, load_curve, usage_mode) {
   if (load_curve == "linear") return(p * u)
   if (usage_mode == "machine") p * (0.1 + 0.9 * u^3) else max(p * u, 0.1 * p)

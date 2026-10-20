@@ -460,18 +460,28 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
   structure(des, class = "rmbl_svy_design")
 }
 
-# the design's degrees of freedom (svydes(): PSUs less strata, the replicate matrix's rank less
-# one, or as given)
+#' The design's degrees of freedom (svydes(): PSUs less strata, the replicate matrix's rank less
+#' one, or as given)
+#' @param des A design from `svydes()`.
+#' @return The degrees of freedom.
+#' @noRd
 .svy_df <- function(des) {
   if (!is.null(des$degf)) return(des$degf)
   if (identical(des$type, "linearization")) length(unique(des$psu)) - length(unique(des$strata)) else
     .svy_nrep(des) - 1L
 }
 
-# the number of replicates a design holds (a list of columns, or a matrix kept as given)
+#' The number of replicates a design holds (a list of columns, or a matrix kept as given)
+#' @param des A design from `svydes()`.
+#' @return The number of replicates; 0 for a linearisation design.
+#' @noRd
 .svy_nrep <- function(des) if (is.matrix(des$reps)) ncol(des$reps) else length(des$reps)
 
-# The data must be the rows the design was built on, in the same order
+#' The data must be the rows the design was built on, in the same order
+#' @param design A design from `svydes()`.
+#' @param data The data frame passed to the estimator.
+#' @return NULL, invisibly; an error when `data` is not the design's data.
+#' @noRd
 .svy_check_data <- function(design, data) {
   if (!is.data.frame(data) || nrow(data) != design$n) {
     stop("`data` must be the data frame the design was built on", call. = FALSE)
@@ -538,12 +548,17 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
   invisible()
 }
 
-# One number per row that does not depend on the row order: each column's values coded by their
-# rank among its distinct values (a radix sort, so no locale), folded into the row's key modulo
-# 2^31 - 1 (exact in a double). Digested in row order and sorted: the same rows in another order
-# have the same sorted digest and a different ordered one. A million rows of ten columns take about
-# a second; the per-column text digests this replaces took 88 s per estimate (statistics stress test
-# of 5e1dce5).
+#' Digests the rows of a data frame in an order-free and an ordered form.
+#'
+#' One number per row that does not depend on the row order: each column's values coded by their
+#' rank among its distinct values (a radix sort, so no locale), folded into the row's key modulo
+#' 2^31 - 1 (exact in a double). Digested in row order and sorted: the same rows in another order
+#' have the same sorted digest and a different ordered one. A million rows of ten columns take about
+#' a second; the per-column text digests this replaces took 88 s per estimate (statistics stress test
+#' of 5e1dce5).
+#' @param data The data frame.
+#' @return A list with the columns used, the ordered and sorted digests, each row's key and per-column digests.
+#' @noRd
 .svy_rowkey_digests <- function(data) {
   nm <- names(data) %||% character(length(data))
   # the columns that can be found again by name: atomic, named, the name used once
@@ -588,15 +603,26 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
        colord = unlist(co), colsor = unlist(cs), colinf = unlist(ci))
 }
 
-# The replicates are exactly the columns given, by name or as the object passed: nothing is
-# guessed from values (the totals, constancy and multiplier-shape rules of 46de6a9 and after refused
-# genuine sets, a dominant PSU or a jackknife on a subset, and still passed strays; reviews of
-# 46de6a9). What is refused is exact: the full-sample weight itself (a jackknife, BRR or Fay
-# replicate always changes some rows; a bootstrap replicate that draws every PSU once is the
-# weight, legitimately, and survey's rescaled multipliers put it a rounding error off), the id's
-# values, the row numbers, and a column of `data` passed under another name. A column of `data`
-# passed under its own name is a replicate because it was asked for; so is every column of an
-# unnamed matrix, which has no names to compare (reviews of 46de6a9).
+#' Checks that the replicate weights given are replicate weights.
+#'
+#' The replicates are exactly the columns given, by name or as the object passed: nothing is
+#' guessed from values (the totals, constancy and multiplier-shape rules of 46de6a9 and after refused
+#' genuine sets, a dominant PSU or a jackknife on a subset, and still passed strays; reviews of
+#' 46de6a9). What is refused is exact: the full-sample weight itself (a jackknife, BRR or Fay
+#' replicate always changes some rows; a bootstrap replicate that draws every PSU once is the
+#' weight, legitimately, and survey's rescaled multipliers put it a rounding error off), the id's
+#' values, the row numbers, and a column of `data` passed under another name. A column of `data`
+#' passed under its own name is a replicate because it was asked for; so is every column of an
+#' unnamed matrix, which has no names to compare (reviews of 46de6a9).
+#' @param reps The replicates: a list of numeric columns or a matrix.
+#' @param w The full-sample weights.
+#' @param type The replicate type ("bootstrap", "meanboot", "jk1", "jkn", "brr" or "fay").
+#' @param data The data frame the design is built on.
+#' @param id_values The PSU id values, when numeric.
+#' @param row_names The row names of `data`.
+#' @param named Whether the replicates were given by name, so their names can be compared with the columns of `data`.
+#' @return `TRUE`, invisibly; warnings for replicates kept as given.
+#' @noRd
 .svy_replicate_check <- function(reps, w, type, data, id_values = NULL, row_names = NULL, named = TRUE) {
   n <- length(w)
   # the replicates as a list of columns or as the matrix given: each column read in place, ONCE.
@@ -908,11 +934,18 @@ print.rmbl_svy_design <- function(x, ...) {
   invisible(x)
 }
 
-# The estimates and their covariance. Every estimate is a total A (stat "total") or a ratio A / D of
-# weighted totals; `num` and `den` are n x k matrices of the per-row values entering each, or `num`
-# is the column spec of .svy_columns(), whose k columns are read as the rows of their domain only:
-# n x k matrices for the numerators, the denominators and their products with the weights were
-# 1.9 GB of heap for a mean over 50 domains at a million rows (final audit of 1.0.0).
+#' Computes the design-based estimates and their covariance matrix.
+#'
+#' The estimates and their covariance. Every estimate is a total A (stat "total") or a ratio A / D of
+#' weighted totals; `num` and `den` are n x k matrices of the per-row values entering each, or `num`
+#' is the column spec of .svy_columns(), whose k columns are read as the rows of their domain only:
+#' n x k matrices for the numerators, the denominators and their products with the weights were
+#' 1.9 GB of heap for a mean over 50 domains at a million rows (final audit of 1.0.0).
+#' @param des A design from `svydes()`.
+#' @param num The n x k matrix of numerators, or a column spec from `.svy_columns()`.
+#' @param den The n x k matrix of denominators, or NULL for totals.
+#' @return A list with the estimates `est`, their covariance `V` and the weighted totals `A` and `D`.
+#' @noRd
 .svy_core <- function(des, num, den) {
   w <- des$weights
   n <- length(w)
@@ -1051,8 +1084,12 @@ print.rmbl_svy_design <- function(x, ...) {
   list(est = unname(est), V = unname(V), A = A, D = D)
 }
 
-# one analysis column of a column spec, on the rows of its domain: the row indices, the numerator
-# and the denominator (NULL for a total)
+#' One analysis column of a column spec, on the rows of its domain: the row indices, the numerator
+#' and the denominator (NULL for a total)
+#' @param s A column spec from `.svy_columns()`.
+#' @param j The column's index.
+#' @return A list with `idx`, `num` and `den`.
+#' @noRd
 .svy_colpair <- function(s, j) {
   idx <- s$rows[[s$di[j]]]
   if (s$stat == "proportion") {
@@ -1066,7 +1103,16 @@ print.rmbl_svy_design <- function(x, ...) {
   list(idx = idx, num = num, den = den)
 }
 
-# The analysis columns for one variable over the domains: numerators, denominators and labels.
+#' The analysis columns for one variable over the domains: numerators, denominators and labels.
+#' @param data The data frame.
+#' @param des A design from `svydes()`.
+#' @param y The analysis variable's column name.
+#' @param by The domain columns, or NULL.
+#' @param stat The statistic: "mean", "total", "proportion" or "ratio".
+#' @param denominator The ratio's denominator column, or NULL.
+#' @param levels The levels of a proportion to report, or NULL for all observed.
+#' @return A list with the column spec `num`, `den` (NULL), the respondent counts `n` and the row `labels`.
+#' @noRd
 .svy_columns <- function(data, des, y, by, stat, denominator, levels) {
   n <- des$n
   if (!is.character(y) || length(y) != 1L || !y %in% names(data)) {
@@ -1130,6 +1176,17 @@ print.rmbl_svy_design <- function(x, ...) {
   list(num = spec, den = NULL, n = cnt, labels = lab)
 }
 
+#' Computes confidence limits for survey estimates.
+#' @param est The estimates.
+#' @param se Their standard errors.
+#' @param n_used The number of respondents behind each estimate.
+#' @param stat The statistic; proportions get bounded intervals.
+#' @param ci The interval for proportions: "wald", "wilson" or "logit".
+#' @param conf_level The confidence level.
+#' @param df The degrees of freedom for the quantile; Inf uses the normal.
+#' @param design_df The design's degrees of freedom, for the effective sample size of the Wilson interval.
+#' @return A list with `lower` and `upper`.
+#' @noRd
 .svy_ci <- function(est, se, n_used, stat, ci, conf_level, df = Inf, design_df = Inf) {
   conf_level <- .rmbl_conf_level(conf_level)
   z <- if (is.finite(df)) stats::qt(1 - (1 - conf_level) / 2, df) else stats::qnorm(1 - (1 - conf_level) / 2)

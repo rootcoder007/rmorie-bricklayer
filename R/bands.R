@@ -539,10 +539,13 @@ expbands <- function(bands, cnts, ..., drpunp = FALSE) {
 }
 
 
-# U+2010..U+2015 and U+2212 as a byte-wise alternation, built from raw bytes
-# and marked "bytes": a string literal with those bytes is translated to the
-# native encoding when it is pasted, and in a C locale that translation is
-# a warning per call.
+#' Returns a regular expression that matches the Unicode dashes and the minus sign.
+#'
+#' U+2010..U+2015 and U+2212 as a byte-wise alternation, built from raw bytes
+#' and marked "bytes": a string literal with those bytes is translated to the
+#' native encoding when it is pasted, and in a C locale that translation is
+#' a warning per call.
+#' @return One string marked "bytes".
 #' @noRd
 .rmbl_dash_pattern <- function() {
   one <- function(...) rawToChar(as.raw(c(...)))

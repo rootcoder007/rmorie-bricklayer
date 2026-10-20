@@ -35,7 +35,11 @@
 # where cli's own options -- which testthat and knitr set for their output -- do not apply; NO_COLOR,
 # R_CLI_NUM_COLORS and this package's options do); `tty = FALSE` says it is not.
 
-# a logical override from options, then an environment variable; NULL when none is set
+#' A logical override from options, then an environment variable; NULL when none is set
+#' @param opts The option names, tried in order.
+#' @param env An environment variable tried after the options, or NULL.
+#' @return TRUE or FALSE, or NULL when nothing is set.
+#' @noRd
 .bl_opt_flag <- function(opts, env = NULL) {
   for (o in opts) {
     v <- getOption(o)
@@ -45,13 +49,24 @@
   NULL
 }
 
-# where R runs inside RStudio: "console", "terminal", "build", "render", "job", "subprocess", or ""
-# outside it (cli's rstudio_detect(), without its rstudioapi probe)
-# the GUI and whether stdin is a terminal, as bindings the tests can replace (a test cannot change
-# .Platform$GUI, and its stdin is never a terminal)
+#' Returns the GUI R runs in.
+#'
+#' The GUI and whether stdin is a terminal, as bindings the tests can replace (a test cannot change
+#' .Platform$GUI, and its stdin is never a terminal)
+#' @return `.Platform$GUI`.
+#' @noRd
 .bl_gui <- function() .Platform$GUI
+#' Says whether stdin is a terminal.
+#' @return TRUE or FALSE.
+#' @noRd
 .bl_stdin_tty <- function() isatty(stdin())
 
+#' Says where R runs inside RStudio.
+#'
+#' Where R runs inside RStudio: "console", "terminal", "build", "render", "job", "subprocess", or ""
+#' outside it (cli's rstudio_detect(), without its rstudioapi probe)
+#' @return One string.
+#' @noRd
 .bl_rstudio <- function() {
   if (!identical(Sys.getenv("RSTUDIO"), "1")) return("")
   if (identical(.bl_gui(), "RStudio") ||
@@ -63,9 +78,17 @@
   if (pane %in% c("build", "render", "job")) pane else "subprocess"
 }
 
-# interactive(), as a binding the tests can replace
+#' Says whether the session is interactive.
+#'
+#' interactive(), as a binding the tests can replace
+#' @return TRUE or FALSE.
+#' @noRd
 .bl_interactive <- function() interactive()
 
+#' Describes what the console can show: whether it redraws, its colours, characters, stream and width.
+#' @param tty TRUE to treat the console as a terminal, FALSE to treat it as not one, NULL to detect.
+#' @return A list with `dynamic`, `colors`, `unicode`, `out`, `width`, `rstudio`, `positron` and `knitr`.
+#' @noRd
 .bl_console <- function(tty = NULL) {
   rs <- .bl_rstudio()
   positron <- identical(.bl_gui(), "Positron") || identical(Sys.getenv("POSITRON"), "1")
@@ -96,6 +119,15 @@
        out = out, width = .bl_console_width(rs), rstudio = rs, positron = positron, knitr = knit)
 }
 
+#' Returns the number of colours the console shows, 1 for none.
+#' @param con The connection the frames go to.
+#' @param rs Where R runs inside RStudio, from `.bl_rstudio()`.
+#' @param positron Whether this is the Positron console.
+#' @param knit Whether knitr or an R Markdown notebook chunk is running.
+#' @param free Whether the stream is not sunk.
+#' @param tty Whether the caller said this is a terminal.
+#' @return An integer.
+#' @noRd
 .bl_num_colors <- function(con, rs, positron, knit, free, tty) {
   n <- function(x) {
     x <- suppressWarnings(as.integer(x)[1L])
@@ -122,6 +154,10 @@
   8L
 }
 
+#' Returns the console's width in characters, from 20 to 500.
+#' @param rs Where R runs inside RStudio, from `.bl_rstudio()`.
+#' @return An integer.
+#' @noRd
 .bl_console_width <- function(rs = .bl_rstudio()) {
   w <- getOption("rmoriebricklayer.width", getOption("cli.width"))
   if (is.null(w) && !rs %in% c("console", "build", "render")) w <- Sys.getenv("COLUMNS")
@@ -135,8 +171,14 @@
 .bl_anim_colors <- list(blue = c(80, 200, 255), green = c(120, 220, 140), red = c(255, 120, 120),
                         violet = c(130, 160, 255), amber = c(220, 190, 110))
 
-# the escape for a foreground colour at `n` colours ("" below 8): 24-bit, the 6x6x6 cube of 256,
-# or the basic colour made of the channels within a quarter of the brightest (as src/rmbl_progress.c)
+#' Returns the escape for a foreground colour.
+#'
+#' The escape for a foreground colour at `n` colours ("" below 8): 24-bit, the 6x6x6 cube of 256,
+#' or the basic colour made of the channels within a quarter of the brightest (as src/rmbl_progress.c)
+#' @param rgb The colour's red, green and blue channels, 0 to 255.
+#' @param n The number of colours the console shows.
+#' @return One string.
+#' @noRd
 .bl_sgr <- function(rgb, n) {
   rgb <- as.integer(round(rgb))
   if (n < 8L) return("")
@@ -149,16 +191,35 @@
   sprintf("\033[%dm", 30L + sum(c(1L, 2L, 4L)[on]))
 }
 
+#' Returns the escapes for a bar's accent, check, cross and dimmed text.
+#' @param rgb The accent colour's channels.
+#' @param n The number of colours the console shows.
+#' @return A list of escape strings.
+#' @noRd
 .bl_styles <- function(rgb, n) {
   list(accent = .bl_sgr(rgb, n), ok = .bl_sgr(.bl_anim_colors$green, n), err = .bl_sgr(.bl_anim_colors$red, n),
        dim = if (n >= 256L) .bl_sgr(c(135, 135, 145), n) else if (n >= 8L) "\033[2m" else "")
 }
 
+#' Wraps text in a colour escape and a reset.
+#' @param x The text.
+#' @param code The escape, or "" for none.
+#' @return The painted text.
+#' @noRd
 .bl_paint <- function(x, code) if (nzchar(code) && nzchar(x)) paste0(code, x, "\033[0m") else x
 
+#' Returns the width of text in console cells.
+#' @param x The text.
+#' @return An integer vector.
+#' @noRd
 .bl_w <- function(x) nchar(x, type = "width")
 
-# `x` cut to `n` cells, the cut marked with an ellipsis
+#' `x` cut to `n` cells, the cut marked with an ellipsis
+#' @param x The text.
+#' @param n The number of cells.
+#' @param unicode Whether the ellipsis may be the Unicode one.
+#' @return The text, cut when longer than `n`.
+#' @noRd
 .bl_trunc <- function(x, n, unicode = TRUE) {
   n <- max(0L, as.integer(n))
   if (.bl_w(x) <= n) return(x)
@@ -171,11 +232,18 @@
 
 # ---- formats -----------------------------------------------------------------------------------
 
+#' Formats a time taken: 4.2s, 2m05s.
+#' @param s Seconds.
+#' @return One string.
+#' @noRd
 .bl_fmt_elapsed <- function(s) {
   if (s < 60) sprintf("%.1fs", s) else sprintf("%dm%02ds", as.integer(s %/% 60), as.integer(s %% 60))
 }
 
-# a time left, whole seconds rounded up: 4s, 2m05s, 1h03m; NULL past 99 hours
+#' A time left, whole seconds rounded up: 4s, 2m05s, 1h03m; NULL past 99 hours
+#' @param s Seconds left.
+#' @return One string, or NULL.
+#' @noRd
 .bl_fmt_eta <- function(s) {
   if (!is.finite(s) || s < 0 || s > 99 * 3600) return(NULL)
   s <- ceiling(s)
@@ -184,7 +252,11 @@
   sprintf("%dh%02dm", as.integer(s %/% 3600), as.integer((s %% 3600) %/% 60))
 }
 
-# a rate: 12.3 MB/s for bytes; 0.25/s, 4.2/s, 85/s, 12k/s, 3.4M/s for steps
+#' A rate: 12.3 MB/s for bytes; 0.25/s, 4.2/s, 85/s, 12k/s, 3.4M/s for steps
+#' @param x Steps or bytes a second.
+#' @param bytes Whether `x` counts bytes.
+#' @return One string, or NULL when `x` is not a finite non-negative number.
+#' @noRd
 .bl_fmt_rate <- function(x, bytes = FALSE) {
   if (!is.finite(x) || x < 0) return(NULL)
   if (bytes) return(paste0(.bl_fmt_bytes(x), "/s"))
@@ -194,7 +266,17 @@
 
 # ---- the animation -----------------------------------------------------------------------------
 
-# `unit`: "" counts steps, "B" counts bytes (rates in MB/s)
+#' Makes the state of an animated bar.
+#'
+#' `unit`: "" counts steps, "B" counts bytes (rates in MB/s)
+#' @param label The text before the bar.
+#' @param total The number of steps, 0 when the work has no count.
+#' @param color The name of a colour in `.bl_anim_colors`.
+#' @param quiet TRUE, FALSE or NULL to follow the session.
+#' @param tty Passed to `.bl_console()`.
+#' @param unit "" for steps, "B" for bytes.
+#' @return An environment.
+#' @noRd
 .bl_anim_new <- function(label, total, color = "blue", quiet = NULL, tty = NULL, unit = "") {
   a <- new.env(parent = emptyenv())
   a$label <- label
@@ -225,6 +307,11 @@
   a
 }
 
+#' Updates the bar's moving-average rate once at least half a second has passed.
+#' @param a The bar's state, from `.bl_anim_new()`.
+#' @param now Seconds since the start.
+#' @return `a`, invisibly.
+#' @noRd
 .bl_rate_sample <- function(a, now) {
   dt <- now - a$rt
   if (dt < 0.5) return(invisible(a))
@@ -236,12 +323,23 @@
   invisible(a)
 }
 
+#' Returns the bar's rate: the moving average, or the mean rate before the first window ends.
+#' @param a The bar's state, from `.bl_anim_new()`.
+#' @param now Seconds since the start.
+#' @return A number, or NA.
+#' @noRd
 .bl_rate_now <- function(a, now) {
   if (!is.na(a$rate)) a$rate else if (now > 0.2) a$done / now else NA_real_
 }
 
-# the text after the bar, most important last-dropped: count, rate, time so far, time left (shown
-# once three rate windows have passed, two seconds in and 2% done, so it does not jump about)
+#' Builds the text after the bar.
+#'
+#' The text after the bar, most important last-dropped: count, rate, time so far, time left (shown
+#' once three rate windows have passed, two seconds in and 2% done, so it does not jump about)
+#' @param a The bar's state, from `.bl_anim_new()`.
+#' @param now Seconds since the start.
+#' @return A named character vector.
+#' @noRd
 .bl_anim_stats <- function(a, now) {
   bytes <- identical(a$unit, "B")
   rate <- .bl_rate_now(a, now)
@@ -260,7 +358,11 @@
     eta = if (!is.null(eta)) paste(if (a$unicode) "ETA" else "eta", eta))
 }
 
-# the frame for the current state, fitted to the console's width; `now` is seconds since the start
+#' The frame for the current state, fitted to the console's width; `now` is seconds since the start
+#' @param a The bar's state, from `.bl_anim_new()`.
+#' @param now Seconds since the start.
+#' @return One string.
+#' @noRd
 .bl_anim_line <- function(a, now) {
   cols <- .bl_console_width(a$rs) - 1L
   sep <- if (a$unicode) " \u00b7 " else ", "
@@ -316,8 +418,16 @@
          if (nzchar(info)) paste0("  ", info))
 }
 
-# the line that replaces the bar: a check (or a cross when `ok` is FALSE), the summary or else the
-# label and its result, and the time taken
+#' Builds the line that replaces the bar when the work ends.
+#'
+#' The line that replaces the bar: a check (or a cross when `ok` is FALSE), the summary or else the
+#' label and its result, and the time taken
+#' @param a The bar's state, from `.bl_anim_new()`.
+#' @param now Seconds since the start.
+#' @param summary A line to show instead of the label and the count, or NULL.
+#' @param ok Whether the work ended well.
+#' @return One string.
+#' @noRd
 .bl_anim_final <- function(a, now, summary = NULL, ok = TRUE) {
   cols <- .bl_console_width(a$rs) - 1L
   mark <- if (ok) .bl_paint(if (a$unicode) "\u2714" else "v", a$sty$ok) else
@@ -343,10 +453,21 @@
   paste0(mark, " ", text, if (nzchar(tail)) paste0(" ", .bl_paint(tail, a$sty$dim)))
 }
 
+#' Returns the connection the bar's frames go to.
+#' @param a The bar's state, from `.bl_anim_new()`.
+#' @return `stdout()` or `stderr()`.
+#' @noRd
 .bl_out <- function(a) if (identical(a$out, "stdout")) stdout() else stderr()
 
-# one frame in place: back to the start of the line, the frame, spaces over what the last frame
-# left (no erase-line escape: the RStudio console redraws on \r but has no cursor control)
+#' Draws one frame in place.
+#'
+#' One frame in place: back to the start of the line, the frame, spaces over what the last frame
+#' left (no erase-line escape: the RStudio console redraws on \r but has no cursor control)
+#' @param a The bar's state, from `.bl_anim_new()`.
+#' @param line The frame.
+#' @param end What follows the frame: "" to keep the line, "\n" to end it.
+#' @return `a`, invisibly.
+#' @noRd
 .bl_draw <- function(a, line, end = "") {
   vis <- .bl_w(gsub("\033\\[[0-9;]*m", "", line))
   pad <- max(0L, min(a$width, .bl_console_width(a$rs) - 1L) - vis)
@@ -355,8 +476,16 @@
   invisible(a)
 }
 
-# a new value (`done` of `total`) and the text after the bar; `force` draws even inside the
-# frame interval (the last frame of a run)
+#' Sets a new value on the bar and draws it.
+#'
+#' A new value (`done` of `total`) and the text after the bar; `force` draws even inside the
+#' frame interval (the last frame of a run)
+#' @param a The bar's state, from `.bl_anim_new()`.
+#' @param done The steps done.
+#' @param info The text after the bar.
+#' @param force Whether to draw inside the frame interval.
+#' @return `a`, invisibly.
+#' @noRd
 .bl_anim_update <- function(a, done = a$done, info = a$info, force = FALSE) {
   a$done <- done
   a$info <- info
@@ -385,7 +514,11 @@
   invisible(a)
 }
 
-# keep the animation moving while waiting `seconds` (a poll interval, a back-off)
+#' Keep the animation moving while waiting `seconds` (a poll interval, a back-off)
+#' @param a The bar's state, from `.bl_anim_new()`.
+#' @param seconds How long to wait.
+#' @return `a`, invisibly.
+#' @noRd
 .bl_anim_wait <- function(a, seconds) {
   end <- proc.time()[["elapsed"]] + seconds
   repeat {
@@ -399,8 +532,15 @@
   invisible(a)
 }
 
-# the end: on a console that redraws, the bar replaced by its last line (a check, or a cross when
-# `ok` is FALSE); elsewhere the summary, when there is one, on a line of its own
+#' Ends the bar.
+#'
+#' The end: on a console that redraws, the bar replaced by its last line (a check, or a cross when
+#' `ok` is FALSE); elsewhere the summary, when there is one, on a line of its own
+#' @param a The bar's state, from `.bl_anim_new()`.
+#' @param summary A line to show, or NULL.
+#' @param ok Whether the work ended well.
+#' @return `a`, invisibly.
+#' @noRd
 .bl_anim_done <- function(a, summary = NULL, ok = TRUE) {
   if (a$quiet) return(invisible(a))
   if (a$tty) {
@@ -423,6 +563,9 @@
 # what returnValue() gives in an on.exit() when the frame is leaving by an error or an interrupt
 .bl_progress_state$unwound <- new.env(parent = emptyenv())
 
+#' Returns the frames of the bars still running whose frame is still on the call stack.
+#' @return A list of environments.
+#' @noRd
 .bl_prog_live <- function() {
   frames <- sys.frames()
   Filter(function(e) any(vapply(frames, identical, NA, e)), .bl_progress_state$active)
@@ -598,15 +741,22 @@ print.rmbl_progress <- function(x, ...) {
   invisible(x)
 }
 
-# a bar's total from a count the caller passed, before the caller's own checks have run: a
-# count that is not a finite non-negative number gives a bar with no count, so the check that
-# follows reports it in its own words
+#' Turns a count the caller passed into a bar's total.
+#'
+#' A bar's total from a count the caller passed, before the caller's own checks have run: a
+#' count that is not a finite non-negative number gives a bar with no count, so the check that
+#' follows reports it in its own words
+#' @param x The count.
+#' @return A number, 0 when `x` is no finite non-negative number.
+#' @noRd
 .bl_count <- function(x) {
   x <- suppressWarnings(as.numeric(x))
   if (length(x) != 1L || !is.finite(x) || x < 0) 0 else x
 }
 
-# whether the console redraws a line in place (the name is older than the IDE consoles)
+#' Whether the console redraws a line in place (the name is older than the IDE consoles)
+#' @return TRUE or FALSE.
+#' @noRd
 .bl_stderr_tty <- function() .bl_console()$dynamic
 
 # A long native call with no count R can see (a key generation, a network request): from 0.75 s on
@@ -618,6 +768,11 @@ print.rmbl_progress <- function(x, ...) {
 # The mode travels to C as c(colours, redraws, to stdout[, ended well]).
 .bl_progress_state$busy <- FALSE
 
+#' Shows a spinner from the compiled layer while a long native call runs.
+#' @param label The text after the spinner.
+#' @param expr The call.
+#' @return The value of `expr`.
+#' @noRd
 .bl_busy <- function(label, expr) {
   if (!.bl_progress_state$busy && !.bl_dl_quiet() && !length(.bl_prog_live())) {
     con <- .bl_console()
@@ -635,11 +790,18 @@ print.rmbl_progress <- function(x, ...) {
   expr
 }
 
-# a network request: "waiting for <host>"
+#' A network request: "waiting for <host>"
+#' @param url The request's URL.
+#' @param expr The request.
+#' @return The value of `expr`.
+#' @noRd
 .bl_net <- function(url, expr) {
   host <- sub("^[A-Za-z][A-Za-z0-9+.-]*://([^/?#]*).*$", "\\1", as.character(url)[1L])
   .bl_busy(paste("waiting for", sub("^.*@", "", host)), expr)
 }
 
-# a count for a bar's text: 1,000,000, never 1e+06
+#' A count for a bar's text: 1,000,000, never 1e+06
+#' @param x A number.
+#' @return One string.
+#' @noRd
 .bl_n <- function(x) format(x, big.mark = ",", scientific = FALSE, trim = TRUE)

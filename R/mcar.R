@@ -9,20 +9,28 @@
 # missingness -- and those require EM, since the likelihood has no
 # closed form once the pattern of observation varies by row.
 
-# ML estimates of a multivariate normal mean and covariance from data
-# with missing entries, by expectation-maximisation (Dempster, Laird &
-# Rubin 1977; the MVN case is Little & Rubin 2002 ch. 11).
-#
-# E-step: for each row, the missing entries are replaced by their
-#   conditional expectation given the observed ones, and the conditional
-#   COVARIANCE of those entries is accumulated separately. Imputing the
-#   conditional mean alone and then taking a sample covariance is the
-#   classic error -- it understates the variance, because it treats an
-#   estimate as if it were an observation.
-# M-step: the completed first and second moments give the next estimates.
-#
-# Returns the estimates plus the iteration count, or NULL when the
-# problem is degenerate.
+#' Estimates a multivariate normal mean and covariance from incomplete data by EM.
+#'
+#' ML estimates of a multivariate normal mean and covariance from data
+#' with missing entries, by expectation-maximisation (Dempster, Laird &
+#' Rubin 1977; the MVN case is Little & Rubin 2002 ch. 11).
+#'
+#' E-step: for each row, the missing entries are replaced by their
+#'   conditional expectation given the observed ones, and the conditional
+#'   COVARIANCE of those entries is accumulated separately. Imputing the
+#'   conditional mean alone and then taking a sample covariance is the
+#'   classic error -- it understates the variance, because it treats an
+#'   estimate as if it were an observation.
+#' M-step: the completed first and second moments give the next estimates.
+#'
+#' Returns the estimates plus the iteration count, or NULL when the
+#' problem is degenerate.
+#' @param X A numeric matrix with missing entries as NA.
+#' @param max_iter The largest number of EM iterations.
+#' @param tol The change in the estimates that ends the iterations.
+#' @param ridge The eigenvalue floor passed to .rmbl_make_pd().
+#' @return A list with `mu`, `sigma` and `iterations`, or NULL.
+#' @noRd
 .rmbl_em_mvn <- function(X, max_iter = 500L, tol = 1e-7, ridge = 1e-8) {
   n <- nrow(X)
   p <- ncol(X)
@@ -89,9 +97,15 @@
   list(mu = mu, sigma = S, iterations = iter)
 }
 
-# Nudge a symmetric matrix to positive definiteness by flooring its
-# eigenvalues. EM can land on a numerically indefinite estimate on the
-# way to convergence, and inverting that would end the run.
+#' Makes a symmetric matrix positive definite by flooring its eigenvalues.
+#'
+#' Nudge a symmetric matrix to positive definiteness by flooring its
+#' eigenvalues. EM can land on a numerically indefinite estimate on the
+#' way to convergence, and inverting that would end the run.
+#' @param S A square matrix.
+#' @param ridge The relative eigenvalue floor.
+#' @return The symmetrised matrix, with its eigenvalues floored when needed.
+#' @noRd
 .rmbl_make_pd <- function(S, ridge = 1e-8) {
   S <- (S + t(S)) / 2
   ev <- tryCatch(eigen(S, symmetric = TRUE), error = function(e) NULL)

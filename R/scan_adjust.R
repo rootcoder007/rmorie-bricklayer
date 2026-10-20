@@ -58,8 +58,16 @@ yoypv <- function(y) {
   y
 }
 
-# Two-sided exact conditional test of v1 / w1 == v2 / w2 for Poisson
-# counts: given the total, v1 ~ Binomial(v1 + v2, w1 / (w1 + w2)).
+#' Computes exact conditional p-values for the equality of two Poisson rates.
+#'
+#' Two-sided exact conditional test of v1 / w1 == v2 / w2 for Poisson
+#' counts: given the total, v1 ~ Binomial(v1 + v2, w1 / (w1 + w2)).
+#' @param v1 The first counts.
+#' @param v2 The second counts.
+#' @param w1 The first exposures, recycled.
+#' @param w2 The second exposures, recycled.
+#' @return A vector of p-values, NA where a comparison cannot be made.
+#' @noRd
 .exact_ratio_p <- function(v1, v2, w1 = 1, w2 = 1) {
   n <- length(v1)
   w1 <- rep_len(w1, n)

@@ -132,6 +132,10 @@ topshr <- function(x, fracs = c(0.01, 0.05, 0.1, 0.25),
   data.frame(fraction = f, units = r$units, share = r$share)
 }
 
+#' Checks the values a concentration measure is computed from.
+#' @param x The values passed by the user.
+#' @return `x` as finite, non-negative doubles.
+#' @noRd
 .rmbl_conc_input <- function(x) {
   # .rmbl_finite_input() has already refused non-numeric and negative
   # values: a negative value has no place in a share of a total
@@ -443,21 +447,27 @@ hurwzeta <- function(s, q = 1) {
   }, numeric(1))
 }
 
-# zeta(s, q) for q > 0 and every s but the pole s = 1. Three regimes:
-#  * s > 1: the C series.
-#  * s <= -5: Hurwitz's formula for 0 < f <= 1, with t = 1 - s >= 6,
-#      zeta(s, f) = 2 Gamma(t) / (2 pi)^t * sum_k cos(pi (2 k f - t / 2)) / k^t,
-#    which converges absolutely and fast; cospi() keeps the exact zeros (zeta(-2n) = 0).
-#  * -5 < s < 1: Hermite's integral at 1 <= q < 2,
-#      zeta(s, q) is q^-s / 2 plus q^(1 - s) / (s - 1) plus twice the integral over t from 0 to
-#      infinity of sin(s atan(t / q)) (q^2 + t^2)^(-s / 2) / (e^(2 pi t) - 1),
-#    whose integrand is smooth and small there.
-#  Any other q is moved into range first: up by zeta(s, q) = q^-s + zeta(s, q + 1), down by
-#  zeta(s, q) = zeta(s, f) - sum_{j < N} (f + j)^-s (the sum dominates, nothing cancels), and past
-#  q = max(40, 2 |s|) the asymptotic series at q itself is used (terms fall like (|s| / (2 pi q))^2k).
-#  The Euler-Maclaurin shift used before summed M = |s| + 20 terms of size M^-s and cancelled them
-#  against a small result: 1e-6 relative error at s = -4.9 and every digit lost below s = -5
-#  (zeta(-15) came back as -2.3e7, review of 02a38be, C1).
+#' Computes the Hurwitz zeta function for any order but the pole.
+#'
+#' zeta(s, q) for q > 0 and every s but the pole s = 1. Three regimes:
+#'  * s > 1: the C series.
+#'  * s <= -5: Hurwitz's formula for 0 < f <= 1, with t = 1 - s >= 6,
+#'      zeta(s, f) = 2 Gamma(t) / (2 pi)^t * sum_k cos(pi (2 k f - t / 2)) / k^t,
+#'    which converges absolutely and fast; cospi() keeps the exact zeros (zeta(-2n) = 0).
+#'  * -5 < s < 1: Hermite's integral at 1 <= q < 2,
+#'      zeta(s, q) is q^-s / 2 plus q^(1 - s) / (s - 1) plus twice the integral over t from 0 to
+#'      infinity of sin(s atan(t / q)) (q^2 + t^2)^(-s / 2) / (e^(2 pi t) - 1),
+#'    whose integrand is smooth and small there.
+#'  Any other q is moved into range first: up by zeta(s, q) = q^-s + zeta(s, q + 1), down by
+#'  zeta(s, q) = zeta(s, f) - sum_{j < N} (f + j)^-s (the sum dominates, nothing cancels), and past
+#'  q = max(40, 2 |s|) the asymptotic series at q itself is used (terms fall like (|s| / (2 pi q))^2k).
+#'  The Euler-Maclaurin shift used before summed M = |s| + 20 terms of size M^-s and cancelled them
+#'  against a small result: 1e-6 relative error at s = -4.9 and every digit lost below s = -5
+#'  (zeta(-15) came back as -2.3e7, review of 02a38be, C1).
+#' @param s The orders, a numeric vector.
+#' @param q The shift, a positive number.
+#' @return A double vector the length of `s`; NA where `s` is not finite or is 1.
+#' @noRd
 .rmbl_hurwitz_any <- function(s, q) {
   out <- rep(NA_real_, length(s))
   hi <- is.finite(s) & s > 1
@@ -466,6 +476,11 @@ hurwzeta <- function(s, q = 1) {
   out
 }
 
+#' Computes the Hurwitz zeta function for one order below one.
+#' @param si The order, a number below 1.
+#' @param q The shift, a positive number.
+#' @return A number.
+#' @noRd
 .rmbl_hurwitz_below_one <- function(si, q) {
   # zeta(s, 1/2) = (2^s - 1) zeta(s) exactly, and zeta(s) is accurate beside its trivial zeros, where the
   # Fourier series lost relative digits (34% near s = -32 at b617a3f, 3.6e-5 at -32 + 1e-10 since;
@@ -518,6 +533,11 @@ hurwzeta <- function(s, q = 1) {
   .rmbl_hurwitz_hermite(si, f) - if (N > 0) sum((f + (seq_len(N) - 1))^(-si)) else 0
 }
 
+#' Computes the Hurwitz zeta function by Hurwitz's Fourier series, for an order of -5 or less.
+#' @param si The order.
+#' @param f The shift, in (0, 1].
+#' @return A number.
+#' @noRd
 .rmbl_hurwitz_fourier <- function(si, f) {
   t <- 1 - si
   K <- min(1e5, max(50, ceiling((1e-18 * (t - 1))^(1 / (1 - t)))))  # tail sum_{k > K} k^-t below 1e-18
@@ -528,6 +548,11 @@ hurwzeta <- function(s, q = 1) {
   if (series == 0) 0 else sign(series) * 2 * exp(lgamma(t) - t * log(2 * pi) + log(abs(series)))
 }
 
+#' Computes the Hurwitz zeta function by Hermite's integral, for an order between -5 and 1.
+#' @param si The order.
+#' @param q The shift, in [1, 2).
+#' @return A number.
+#' @noRd
 .rmbl_hurwitz_hermite <- function(si, q) {
   g <- function(t) sin(si * atan(t / q)) * (q * q + t * t)^(-si / 2) / expm1(2 * pi * t)
   I <- stats::integrate(g, 0, Inf, rel.tol = 2e-14, abs.tol = 0, subdivisions = 500L)$value
@@ -537,15 +562,27 @@ hurwzeta <- function(s, q = 1) {
 .rmbl_b2k <- c(1 / 6, -1 / 30, 1 / 42, -1 / 30, 5 / 66, -691 / 2730, 7 / 6, -3617 / 510, 43867 / 798,
                -174611 / 330, 854513 / 138, -236364091 / 2730)
 
-# Euler-Maclaurin after M direct terms (M = 0: the asymptotic series at q itself)
-# sin(pi x) with the reduction done exactly: x - round(x) is exact (Sterbenz) and the sign
-# alternates with the integer.
+#' Computes sin(pi x) with an exact argument reduction.
+#'
+#' sin(pi x) with the reduction done exactly: x - round(x) is exact (Sterbenz) and the sign
+#' alternates with the integer.
+#' @param x A number.
+#' @return sin(pi x).
+#' @noRd
 .rmbl_sinpi <- function(x) {
   k <- round(x)
   s <- sinpi(x - k)
   if (k %% 2 == 0) s else -s
 }
 
+#' Computes the Hurwitz zeta function by the Euler-Maclaurin formula.
+#'
+#' Euler-Maclaurin after M direct terms (M = 0: the asymptotic series at q itself)
+#' @param si The order.
+#' @param q The shift.
+#' @param M The number of terms summed directly before the series.
+#' @return A number.
+#' @noRd
 .rmbl_hurwitz_em <- function(si, q, M) {
   x <- q + M
   val <- if (M > 0) sum((q + (seq_len(M) - 1))^(-si)) else 0  # q + (n - 1): (q + n) - 1 lost a tiny q (C2)
@@ -562,19 +599,31 @@ hurwzeta <- function(s, q = 1) {
   val
 }
 
+#' Computes the Hurwitz zeta function by the C series, for orders above one.
+#' @param s The orders.
+#' @param q The shift.
+#' @return A double vector.
+#' @noRd
 .rmbl_hurwitz <- function(s, q) {
   .Call(C_rmbl_hurwitz_zeta, as.numeric(s), as.numeric(q))
 }
 
-# Kolmogorov-Smirnov distance between a sample and a fitted
-# distribution function, evaluated once per DISTINCT value.
-#
-# seq_along(sort(x)) / n is not the empirical distribution function when
-# there are ties: it steps through a tied block instead of jumping once
-# at its end, so at the first member of the block it reads near zero.
-# Counts are almost all ties -- at an exponent of 2.5 three quarters of
-# the draws are the value one -- so this reported every good fit as a
-# terrible one.
+#' Computes the Kolmogorov-Smirnov distance between a sample and a fitted distribution.
+#'
+#' Kolmogorov-Smirnov distance between a sample and a fitted
+#' distribution function, evaluated once per DISTINCT value.
+#'
+#' seq_along(sort(x)) / n is not the empirical distribution function when
+#' there are ties: it steps through a tied block instead of jumping once
+#' at its end, so at the first member of the block it reads near zero.
+#' Counts are almost all ties -- at an exponent of 2.5 three quarters of
+#' the draws are the value one -- so this reported every good fit as a
+#' terrible one.
+#' @param x The sample.
+#' @param cdf The fitted distribution function.
+#' @param continuous Whether the fit is continuous, so the left limits of the empirical function count too.
+#' @return The distance, or NA when there is nothing to compare.
+#' @noRd
 .rmbl_ks_discrete <- function(x, cdf, continuous = FALSE) {
   n <- length(x)
   if (!n) return(NA_real_)

@@ -371,6 +371,11 @@ dgstobj <- function(x, algo = c(
   )
 }
 
-# NULL when no operating-system source could be read; rndbytes() refuses
-# to fall back. One line so the refusal can be exercised without breaking the OS.
+#' Reads random bytes from the operating system's source.
+#'
+#' NULL when no operating-system source could be read; rndbytes() refuses
+#' to fall back. One line so the refusal can be exercised without breaking the OS.
+#' @param n The number of bytes.
+#' @return A raw vector, or NULL when no source could be read.
+#' @noRd
 .rmbl_os_random <- function(n) .Call(C_rmbl_os_random, n)

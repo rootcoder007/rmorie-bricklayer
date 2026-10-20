@@ -13,6 +13,9 @@
 # options(rmoriebricklayer.llmcache = FALSE) turns it off, fresh = TRUE (`ask --fresh`) asks again
 # and keeps the new answer.
 
+#' Says whether saved answers are read and written in this session.
+#' @return TRUE or FALSE.
+#' @noRd
 .bl_answer_cache_on <- function() {
   # never under a test run or R CMD check, of this package or of one that drives its command line
   if (identical(Sys.getenv("TESTTHAT"), "true") || nzchar(Sys.getenv("_R_CHECK_PACKAGE_NAME_"))) return(FALSE)
@@ -24,21 +27,41 @@
     .bl_person_watching()
 }
 
-# Someone is there to see the answer: a terminal at both ends, or an interactive session in a GUI
-# (RStudio, R.app, Rgui). `R --interactive < file` is interactive() with neither, and saved answers
-# from a script (network stress test of 5e1dce5).
+#' Says whether someone is there to see the answer.
+#'
+#' Someone is there to see the answer: a terminal at both ends, or an interactive session in a GUI
+#' (RStudio, R.app, Rgui). `R --interactive < file` is interactive() with neither, and saved answers
+#' from a script (network stress test of 5e1dce5).
+#' @return TRUE or FALSE.
+#' @noRd
 .bl_person_watching <- function() {
   (.bl_stdin_tty() && .bl_stdout_tty()) || (interactive() && !.Platform$GUI %in% c("X11", "unknown", "Tk"))
 }
 
+#' Returns the folder the answers are kept in.
+#' @return A path.
+#' @noRd
 .bl_answer_dir <- function() {
   getOption("rmoriebricklayer.llmcachedir") %||% file.path(tools::R_user_dir("rmoriebricklayer", "cache"), "answers")
 }
 
-# The question is matched spacing aside, and in its own case (R is case-sensitive: df$X is not
-# df$x; F3); everything else exactly.
+#' Normalises a question for matching.
+#'
+#' The question is matched spacing aside, and in its own case (R is case-sensitive: df$X is not
+#' df$x; F3); everything else exactly.
+#' @param prompt The question.
+#' @return The question with its spacing collapsed and trimmed.
+#' @noRd
 .bl_answer_question <- function(prompt) gsub("[[:space:]]+", " ", trimws(prompt))
 
+#' Computes the key a saved answer is filed under.
+#' @param rt The route: a list with `name`, `base` and `key`.
+#' @param model The model's name.
+#' @param prompt The question.
+#' @param pkgs The packages the answer draws on, whose versions are part of the key.
+#' @param system_prompt The instructions sent with the question.
+#' @return A SHA-256 digest in hex.
+#' @noRd
 .bl_answer_key <- function(rt, model, prompt, pkgs = NULL, system_prompt = NULL) {
   vers <- vapply(pkgs, function(p) as.character(utils::packageVersion(p)), "")
   q <- .bl_answer_question(prompt)
@@ -48,6 +71,11 @@
                       paste(pkgs, vers), system_prompt %||% "", q), collapse = "\x1f"))
 }
 
+#' Reads a saved answer.
+#' @param key The answer's key, from `.bl_answer_key()`.
+#' @param prompt The question, checked against the one stored, or NULL.
+#' @return The answer, with attribute `cached` (when it was saved), or NULL.
+#' @noRd
 .bl_answer_get <- function(key, prompt = NULL) {
   if (!.bl_answer_cache_on()) return(NULL)
   f <- file.path(.bl_answer_dir(), paste0(key, ".json"))
@@ -72,6 +100,13 @@
   structure(.rmbl_printable(ans, lines = TRUE), cached = .rmbl_printable(rec$time %||% ""))
 }
 
+#' Saves an answer, then prunes the folder.
+#' @param key The answer's key, from `.bl_answer_key()`.
+#' @param prompt The question.
+#' @param model The model's name.
+#' @param answer The answer text.
+#' @return TRUE when the answer was saved, invisibly.
+#' @noRd
 .bl_answer_put <- function(key, prompt, model, answer) {
   if (!.bl_answer_cache_on() || !is.character(answer) || length(answer) != 1L || !nzchar(answer)) {
     return(invisible(FALSE))
@@ -96,7 +131,10 @@
   invisible(isTRUE(ok))
 }
 
-# Expired answers go, and past the cap the oldest; leftover .tmp files of an interrupted save too.
+#' Expired answers go, and past the cap the oldest; leftover .tmp files of an interrupted save too.
+#' @param d The answers folder.
+#' @return The number of files removed, invisibly.
+#' @noRd
 .bl_answer_prune <- function(d = .bl_answer_dir()) {
   fs <- list.files(d, pattern = "^[0-9a-f]{64}[.]json$|[.]tmp$", full.names = TRUE)
   if (!length(fs)) return(invisible(0L))

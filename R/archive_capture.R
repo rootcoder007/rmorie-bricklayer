@@ -6,24 +6,51 @@
 # holds them all publicly. fetchvrf() then serves the same bytes from that item.
 
 # The transport seams, one place for tests to stand in a server.
+#' Posts a timestamp query to a time-stamping authority.
+#' @param url The authority's URL.
+#' @param body The query, as raw DER.
+#' @param timeout Seconds before the request gives up.
+#' @return The reply from the native transport.
+#' @noRd
 .bl_tsa_post <- function(url, body, timeout) {
   .bl_net(url, .Call(C_rmbl_http_post, url, body, "application/timestamp-query", as.integer(timeout),
                      character(), .bl_loopback_url(url)))
 }
+#' Uploads a file to the Internet Archive with a PUT request.
+#' @param url The item's URL.
+#' @param path The file to upload.
+#' @param content_type The file's media type.
+#' @param headers Further request headers.
+#' @param timeout Seconds before the request gives up.
+#' @return The reply from the native transport.
+#' @noRd
 .bl_ia_put <- function(url, path, content_type, headers, timeout) {
   .bl_net(url, .Call(C_rmbl_http_put, url, path, content_type, as.integer(timeout), headers,
                      .bl_loopback_url(url)))
 }
+#' Returns the Internet Archive's S3 endpoint.
+#' @return One URL.
+#' @noRd
 .bl_ia_s3 <- function() "https://s3.us.archive.org"
 
-# DER: a tag, its length, its content
+#' Encodes one DER element.
+#'
+#' DER: a tag, its length, its content
+#' @param tag The tag byte.
+#' @param content The content, as raw.
+#' @return A raw vector.
+#' @noRd
 .bl_der <- function(tag, content) {
   n <- length(content)
   len <- if (n < 128L) as.raw(n) else if (n < 256L) as.raw(c(0x81, n)) else as.raw(c(0x82, n %/% 256L, n %% 256L))
   c(as.raw(tag), len, content)
 }
 
-# An RFC 3161 TimeStampReq for a SHA-256 digest (raw, 32 bytes), with a nonce and certReq TRUE
+#' An RFC 3161 TimeStampReq for a SHA-256 digest (raw, 32 bytes), with a nonce and certReq TRUE
+#' @param digest The SHA-256 digest, 32 raw bytes.
+#' @param nonce The nonce, as raw.
+#' @return The request, as raw DER.
+#' @noRd
 .bl_tsq <- function(digest, nonce) {
   sha256_oid <- as.raw(c(0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01))
   alg <- .bl_der(0x30, c(sha256_oid, as.raw(c(0x05, 0x00))))
@@ -31,10 +58,19 @@
   .bl_der(0x30, c(.bl_der(0x02, as.raw(1L)), imprint, .bl_der(0x02, nonce), as.raw(c(0x01, 0x01, 0xff))))
 }
 
+#' Turns hex text into raw bytes.
+#' @param h One string of hex digits.
+#' @return A raw vector.
+#' @noRd
 .bl_hex_raw <- function(h) as.raw(strtoi(substring(h, seq(1L, nchar(h), 2L), seq(2L, nchar(h), 2L)), 16L))
 
-# a file name from a URL: its last path segment (or "index"), safe characters only, and the start of
-# the URL's own digest when the URL has a query (tv.action?pid=... pages share one name otherwise)
+#' Makes a file name from a URL.
+#'
+#' A file name from a URL: its last path segment (or "index"), safe characters only, and the start of
+#' the URL's own digest when the URL has a query (tv.action?pid=... pages share one name otherwise)
+#' @param u The URL.
+#' @return One string.
+#' @noRd
 .bl_capture_name <- function(u) {
   path <- sub("[?#].*$", "", sub("^https?://[^/]+", "", u))
   base <- utils::tail(strsplit(path, "/", fixed = TRUE)[[1L]], 1L)

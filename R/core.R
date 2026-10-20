@@ -69,9 +69,14 @@
 #'   attributes before the C kernels; factor, character and list input is refused.
 cmn <- function(x) .Call(C_rmbl_mean, .rmbl_num_input(x, "x"))
 
-# The overflow fallback of cmn(): a running mean that cannot
-# overflow on finite input. cmn() reaches it only where long double
-# is 64-bit, so it is exposed here (internal) to be tested everywhere.
+#' Computes the running mean that cmn() falls back to on overflow.
+#'
+#' The overflow fallback of cmn(): a running mean that cannot
+#' overflow on finite input. cmn() reaches it only where long double
+#' is 64-bit, so it is exposed here (internal) to be tested everywhere.
+#' @param x A numeric vector.
+#' @return One number.
+#' @noRd
 .core_mean_running <- function(x) .Call(C_rmbl_mean_running, as.numeric(x))
 
 #' @rdname cstat

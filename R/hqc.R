@@ -496,8 +496,16 @@ hqccmpkey <- function(key) {
   key
 }
 
-# a compressed decapsulation key: re-derive the pair from its seed, and
-# refuse a seed that does not give the key's own public half
+#' Expands a compressed HQC decapsulation key from its seed.
+#'
+#' A compressed decapsulation key: re-derive the pair from its seed, and
+#' refuse a seed that does not give the key's own public half
+#' @param key The key.
+#' @param seed The seed it was made from.
+#' @param level The parameter set, 1, 3 or 5.
+#' @param version "v5" or "round4".
+#' @return The full secret key as hex, or NULL.
+#' @noRd
 .rmbl_hqc_expand <- function(key, seed, level, version) {
   full <- hqckg(level, seed = seed, ver = version)
   if (!is.null(key[["public"]]) && !identical(tolower(key$public), full$public)) {
@@ -559,9 +567,14 @@ print.bricklayer_hqc_capsule <- function(x, ...) {
   invisible(x)
 }
 
-# The three parameter sets, by NIST category (or its security in bits).
-# A typo must fail rather than select a default: the level is not recorded
-# in the ciphertext, so both sides have to agree on it by other means.
+#' Maps a level to its HQC parameter set.
+#'
+#' The three parameter sets, by NIST category (or its security in bits).
+#' A typo must fail rather than select a default: the level is not recorded
+#' in the ciphertext, so both sides have to agree on it by other means.
+#' @param level 1, 3 or 5, or 128, 192 or 256.
+#' @return 1, 3 or 5.
+#' @noRd
 .rmbl_hqc_level <- function(level) {
   # one whole number: as.integer() would read c(1, 3) as 1 and 3.5 as 3
   lv <- if (is.numeric(level) && length(level) == 1L && is.finite(level) && level == round(level)) {
@@ -575,7 +588,10 @@ print.bricklayer_hqc_capsule <- function(x, ...) {
   unname(lv)
 }
 
-# a key made before the version existed is a v5 key
+#' A key made before the version existed is a v5 key
+#' @param key The key.
+#' @return "v5" or "round4".
+#' @noRd
 .rmbl_hqc_key_version <- function(key) {
   v <- key[["version"]]
   if (is.null(v)) return("v5")
@@ -585,6 +601,10 @@ print.bricklayer_hqc_capsule <- function(x, ...) {
   v
 }
 
+#' Names a key's parameter set for printing.
+#' @param x The key.
+#' @return One string.
+#' @noRd
 .rmbl_hqc_label <- function(x) {
   if (identical(.rmbl_hqc_key_version(x), "round4")) {
     sprintf("HQC-%d (round 4, 2023-04-30)", c(`1` = 128L, `3` = 192L, `5` = 256L)[[as.character(x$level)]])
@@ -593,6 +613,10 @@ print.bricklayer_hqc_capsule <- function(x, ...) {
   }
 }
 
+#' Returns the parameter set of a key from hqckg() or hqcpubkey().
+#' @param key The key.
+#' @return 1, 3 or 5.
+#' @noRd
 .rmbl_hqc_key_level <- function(key) {
   if (!inherits(key, c("bricklayer_hqc_key", "bricklayer_hqc_public_key"))) {
     stop("`key` must come from hqckg() or hqcpubkey()",
@@ -601,9 +625,12 @@ print.bricklayer_hqc_capsule <- function(x, ...) {
   .rmbl_hqc_level(key$level)
 }
 
-# Which carry-less multiplier the HQC products use: "pclmul", "pmull" or
-# "portable". `portable = TRUE` forces the portable one, FALSE restores the
-# hardware path (the tests run the vectors through both).
+#' Which carry-less multiplier the HQC products use: "pclmul", "pmull" or
+#' "portable". `portable = TRUE` forces the portable one, FALSE restores the
+#' hardware path (the tests run the vectors through both).
+#' @param portable TRUE for the portable multiplier, FALSE for the hardware one, NA to leave it.
+#' @return "pclmul", "pmull" or "portable".
+#' @noRd
 .rmbl_hqc_backend <- function(portable = NA) {
   .Call(C_rmbl_hqc_backend, as.logical(portable))
 }

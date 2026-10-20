@@ -10,13 +10,18 @@
 # box-drawing characters, reusing the package's own toascii()/
 # asciifb() policy rather than assuming UTF-8.
 
-# TRUE when the connection can be trusted with non-ASCII box characters.
+#' TRUE when the connection can be trusted with non-ASCII box characters.
+#' @return TRUE or FALSE.
+#' @noRd
 .rmbl_unicode_ok <- function() {
   if (!identical(Sys.getenv("RMBL_ASCII_ONLY"), "")) return(FALSE)
   l10n <- l10n_info()
   isTRUE(l10n[["UTF-8"]])
 }
 
+#' Returns the box-drawing and status glyphs for the console, Unicode or ASCII.
+#' @return A named list of strings.
+#' @noRd
 .rmbl_glyphs <- function() {
   if (.rmbl_unicode_ok()) {
     list(h = "\u2500", tl = "\u250c", tr = "\u2510", bl = "\u2514",
@@ -28,7 +33,11 @@
   }
 }
 
-# A titled rule, e.g. "-- Drift report ----------------".
+#' A titled rule, e.g. "-- Drift report ----------------".
+#' @param title The title, or NULL for a plain rule.
+#' @param width The rule's width in characters.
+#' @return One string.
+#' @noRd
 .rmbl_rule <- function(title = NULL, width = 66L) {
   g <- .rmbl_glyphs()
   if (is.null(title)) return(strrep(g$h, width))
@@ -37,7 +46,11 @@
   paste0(left, strrep(g$h, pad))
 }
 
-# Fixed-width label/value lines, labels right-padded to a common width.
+#' Fixed-width label/value lines, labels right-padded to a common width.
+#' @param pairs A named list or vector of values.
+#' @param indent The number of spaces before each line.
+#' @return A character vector of lines.
+#' @noRd
 .rmbl_kv <- function(pairs, indent = 2L) {
   keys <- names(pairs)
   w <- if (length(keys)) max(nchar(keys)) else 0L
@@ -46,12 +59,21 @@
                 character(1)))
 }
 
-# One frame for every statistic that returns a classed data frame: a
-# titled rule, optional lines that qualify the table, the table without
-# row names, optional lines that follow it, a closing rule. The stock and
-# flow, rate, share, coverage and band printers all go through here, so
-# their caveats -- which are the argument each of them makes -- are laid
-# out the same way instead of rewritten per method.
+#' Prints a classed data frame inside the package's titled frame.
+#'
+#' One frame for every statistic that returns a classed data frame: a
+#' titled rule, optional lines that qualify the table, the table without
+#' row names, optional lines that follow it, a closing rule. The stock and
+#' flow, rate, share, coverage and band printers all go through here, so
+#' their caveats -- which are the argument each of them makes -- are laid
+#' out the same way instead of rewritten per method.
+#' @param title The title on the opening rule.
+#' @param df The table to print.
+#' @param notes Lines printed above the table, or NULL.
+#' @param footer Lines printed below the table, or NULL.
+#' @param ... Passed to `print.data.frame()`.
+#' @return NULL, invisibly.
+#' @noRd
 .rmbl_print_table <- function(title, df, notes = NULL, footer = NULL, ...) {
   cat(.rmbl_rule(title), "\n")
   if (length(notes)) {
@@ -69,15 +91,25 @@
   invisible(NULL)
 }
 
+#' Formats p-values for printing, "<2e-16" for the smallest.
+#' @param p A numeric vector of p-values.
+#' @return A character vector.
+#' @noRd
 .rmbl_fmt_p <- function(p) {
   ifelse(is.na(p), "NA",
          ifelse(p < 2e-16, "<2e-16", formatC(p, format = "g", digits = 3)))
 }
 
-# A classed data frame keeps its class when columns are subset away, so
-# `result[, c("a", "b")]` still dispatches to the custom print method
-# with the columns that method needs now missing. Fall back to a plain
-# data-frame print rather than erroring on the user's subset.
+#' Prints a subset table as a plain data frame when the print method's columns are missing.
+#'
+#' A classed data frame keeps its class when columns are subset away, so
+#' `result[, c("a", "b")]` still dispatches to the custom print method
+#' with the columns that method needs now missing. Fall back to a plain
+#' data-frame print rather than erroring on the user's subset.
+#' @param x The classed data frame.
+#' @param cols The columns the print method needs.
+#' @return TRUE when the plain print was done, else FALSE.
+#' @noRd
 .rmbl_needs_cols <- function(x, cols) {
   if (all(cols %in% names(x))) return(FALSE)
   df <- x
@@ -522,11 +554,16 @@ print.bricklayer_profile <- function(x, ...) {
   invisible(x)
 }
 
-# Column statistics for the describe table. Inside the package these are
-# the compiled kernels; sourced standalone in a capsule bundle (no family
-# package installed) the same definitions come from base R: population
-# skewness m3 / m2^1.5, type-7 quartiles, Tukey fences at 1.5 IQR, MAD
-# with the 1.4826 constant.
+#' Computes the column statistics of the describe table.
+#'
+#' Column statistics for the describe table. Inside the package these are
+#' the compiled kernels; sourced standalone in a capsule bundle (no family
+#' package installed) the same definitions come from base R: population
+#' skewness m3 / m2^1.5, type-7 quartiles, Tukey fences at 1.5 IQR, MAD
+#' with the 1.4826 constant.
+#' @param ok The column's non-missing values.
+#' @param native Whether the compiled kernels are there to use.
+#' @return A named list of statistics.
 #' @noRd
 .rmbl_column_stats <- function(ok,
                                native = exists("cmom",

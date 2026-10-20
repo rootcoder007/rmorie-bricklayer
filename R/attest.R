@@ -321,13 +321,22 @@ print.bricklayer_attestation_check <- function(x, ...) {
   invisible(x)
 }
 
-# The payload is signed through its own canonical digest, so the
-# signature does not depend on the order the fields were assembled in --
-# the same reason mnfdgst() exists.
+#' Hashes an attestation payload through its canonical digest.
+#'
+#' The payload is signed through its own canonical digest, so the
+#' signature does not depend on the order the fields were assembled in --
+#' the same reason mnfdgst() exists.
+#' @param payload The attestation fields, as a list.
+#' @return The SHA-256 digest of the canonical payload.
+#' @noRd
 .rmbl_attest_payload_digest <- function(payload) {
   csha256(charToRaw(mnfcanon(payload)))
 }
 
+#' Names the signature scheme of a signing or public key.
+#' @param key A key from fipskg() or pqckg(), private or public.
+#' @return The scheme name, such as "xmss-sha256".
+#' @noRd
 .rmbl_attest_scheme <- function(key) {
   if (inherits(key, c("bricklayer_oqs_key", "bricklayer_oqs_public_key"))) {
     return(key$scheme)
@@ -338,6 +347,10 @@ print.bricklayer_attestation_check <- function(x, ...) {
   stop("`key` must come from fipskg() or pqckg()", call. = FALSE)
 }
 
+#' Returns the public key text an attestation records for a key.
+#' @param key A key from fipskg() or pqckg(), private or public.
+#' @return The public key as hex text; for XMSS the root followed by the public seed.
+#' @noRd
 .rmbl_attest_public <- function(key) {
   if (inherits(key, c("bricklayer_oqs_key", "bricklayer_oqs_public_key"))) {
     return(key$public)
@@ -347,6 +360,10 @@ print.bricklayer_attestation_check <- function(x, ...) {
   paste0(key$root, .rmbl_xkey(key, "pubseed"))
 }
 
+#' Rebuilds the public key recorded in an attestation.
+#' @param attestation An attestation, with its scheme, public key and signature.
+#' @return A public key object that the scheme can verify with.
+#' @noRd
 .rmbl_attest_key_from <- function(attestation) {
   if (identical(attestation$scheme, "xmss-sha256")) {
     n <- nchar(attestation$public)

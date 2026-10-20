@@ -188,6 +188,16 @@ yoytsv <- function(x, file, digits = NULL, na = "", meta = TRUE,
              metadata = meta, comment = comment)
 }
 
+#' Writes a year-over-year table as delimited text, with its metadata.
+#' @param x An `rmbl_yoy` object.
+#' @param file A path or connection, or NULL to return the text.
+#' @param sep The field separator.
+#' @param digits The decimals the percent columns are rounded to, or NULL.
+#' @param na The text written for a missing value.
+#' @param metadata Whether the metadata lines are written.
+#' @param comment The prefix of the metadata lines.
+#' @return The text when `file` is NULL, else `file`, invisibly.
+#' @noRd
 .yoy_delim <- function(x, file, sep, digits, na, metadata, comment) {
   if (!inherits(x, "rmbl_yoy")) {
     stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
@@ -331,8 +341,11 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   invisible(file)
 }
 
-# One line describing what the percentages mean, shared by every writer
-# so the caveat cannot drift between formats.
+#' One line describing what the percentages mean, shared by every writer
+#' so the caveat cannot drift between formats.
+#' @param m The metadata list, as from `.yoy_meta()`.
+#' @return One string.
+#' @noRd
 .yoy_meta_lines <- function(m) {
   bits <- c(sprintf("value: %s", m$value),
             sprintf("period: %s", m$period),
@@ -355,10 +368,16 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   paste(bits, collapse = "; ")
 }
 
-# The data frame the machine-readable writers export: every column the
-# object carries, with the percent columns optionally rounded. The `flag`
-# column travels with them, so a row's note (zero base, missing period)
-# stays with it wherever it lands.
+#' Builds the data frame the machine-readable writers export.
+#'
+#' The data frame the machine-readable writers export: every column the
+#' object carries, with the percent columns optionally rounded. The `flag`
+#' column travels with them, so a row's note (zero base, missing period)
+#' stays with it wherever it lands.
+#' @param x An `rmbl_yoy` object.
+#' @param digits The decimals the percent columns are rounded to, or NULL.
+#' @return A data frame.
+#' @noRd
 .yoy_export_frame <- function(x, digits) {
   d <- as.data.frame(x)
   if (!is.null(digits)) {

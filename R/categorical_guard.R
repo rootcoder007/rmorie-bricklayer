@@ -14,8 +14,16 @@
 # reported odds ratios against a labelled table under every relabelling,
 # and record the whole chain in a manifest that can be signed.
 
+#' Wraps text in typographic single quotes.
+#' @param v A character vector.
+#' @return `v` with each element in curly single quotes.
+#' @noRd
 .rmbl_squote <- function(v) paste0("\u2018", v, "\u2019")
 
+#' Lists every ordering of a set of labels.
+#' @param v The labels.
+#' @return A list of character vectors, one per permutation of `v`.
+#' @noRd
 .rmbl_label_perms <- function(v) {
   n <- length(v)
   if (n <= 1L) {

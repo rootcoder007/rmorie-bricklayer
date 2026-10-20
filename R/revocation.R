@@ -99,6 +99,11 @@ rvkfetch <- function(path, tmout = 10) {
   .rmbl_revocation_fetch(path, tmout)
 }
 
+#' Fetches the CRLs and asks the OCSP responders named in a certificate path.
+#' @param path The certificate path, leaf first, as parsed by certprs().
+#' @param timeout The network timeout in seconds.
+#' @return A list with the fetched `crls`, an `ok` flag per check and the `notes`.
+#' @noRd
 .rmbl_revocation_fetch <- function(path, timeout = 10) {
   crls <- list()
   acc <- new.env(parent = emptyenv())
@@ -135,17 +140,29 @@ rvkfetch <- function(path, tmout = 10) {
   list(crls = crls, ok = acc$ok, notes = acc$notes)
 }
 
-# cRLDistributionPoints (2.5.29.31): the http URLs in it.
+#' cRLDistributionPoints (2.5.29.31): the http URLs in it.
+#' @param cert A parsed certificate.
+#' @return The http(s) CRL URLs.
+#' @noRd
 .rmbl_crl_urls <- function(cert) {
   .rmbl_ext_urls(cert, "2.5.29.31", NULL)
 }
 
-# authorityInfoAccess (1.3.6.1.5.5.7.1.1), the entries whose method is
-# id-ad-ocsp (1.3.6.1.5.5.7.48.1).
+#' authorityInfoAccess (1.3.6.1.5.5.7.1.1), the entries whose method is
+#' id-ad-ocsp (1.3.6.1.5.5.7.48.1).
+#' @param cert A parsed certificate.
+#' @return The http(s) OCSP URLs.
+#' @noRd
 .rmbl_ocsp_urls <- function(cert) {
   .rmbl_ext_urls(cert, "1.3.6.1.5.5.7.1.1", "1.3.6.1.5.5.7.48.1")
 }
 
+#' Reads the http(s) URLs out of a certificate extension.
+#' @param cert A parsed certificate.
+#' @param oid The extension's OID.
+#' @param method The access method OID the URLs must sit under, or NULL for any.
+#' @return A character vector of URLs.
+#' @noRd
 .rmbl_ext_urls <- function(cert, oid, method) {
   der <- cert$der
   top <- tryCatch(.Call(C_rmbl_der_parse, der), error = function(e) NULL)
@@ -172,8 +189,14 @@ rvkfetch <- function(path, tmout = 10) {
   urls[grepl("^https?://", urls)]
 }
 
-# Walk a structure collecting [6] IA5String URIs. When `method` is
-# given, only from SEQUENCEs whose first element is that OID.
+#' Collects the IA5String URIs in a parsed DER structure.
+#'
+#' Walk a structure collecting \[6\] IA5String URIs. When `method` is
+#' given, only from SEQUENCEs whose first element is that OID.
+#' @param nd A parsed DER node.
+#' @param method The OID a URI's SEQUENCE must start with, or NULL.
+#' @return A character vector of URIs.
+#' @noRd
 .rmbl_collect_uris <- function(nd, method = NULL) {
   out <- character(0)
   if (!is.null(method) && isTRUE(nd$constructed) &&
@@ -195,8 +218,14 @@ rvkfetch <- function(path, tmout = 10) {
   out
 }
 
-# A GET that returns the body as raw bytes, through the package's own
-# fetch so there is one place where the network is touched.
+#' Fetches a URL as raw DER bytes.
+#'
+#' A GET that returns the body as raw bytes, through the package's own
+#' fetch so there is one place where the network is touched.
+#' @param url The URL, taken from the certificate.
+#' @param timeout The network timeout in seconds.
+#' @return The body as raw DER (a PEM body is decoded), or NULL.
+#' @noRd
 .rmbl_http_der <- function(url, timeout = 10) {
   tmp <- tempfile()
   on.exit(unlink(tmp), add = TRUE)
@@ -238,12 +267,26 @@ rvkfetch <- function(path, tmout = 10) {
 
 # The two network calls, each one line, so the protocol logic above and
 # below can be exercised against recorded answers.
+#' Downloads a URL to a file.
+#' @param url The URL.
+#' @param fallback A fallback URL, or NA for none.
+#' @param tmp The file to write.
+#' @param timeout The network timeout in seconds.
+#' @return The fetch result, or NULL on error.
+#' @noRd
 .rmbl_net_get_file <- function(url, fallback, tmp, timeout) {
   tryCatch(.bl_net(url, .Call(C_rmbl_fetch_fallback, url, fallback, tmp,
                               as.integer(timeout), "")),
            error = function(e) NULL)
 }
 
+#' Posts a body to a URL.
+#' @param url The URL.
+#' @param body The raw request body.
+#' @param content_type The request's Content-Type.
+#' @param timeout The network timeout in seconds.
+#' @return The response, with its `status` and `body`, or NULL on error.
+#' @noRd
 .rmbl_net_post <- function(url, body, content_type, timeout) {
   tryCatch(.bl_net(url, .Call(C_rmbl_http_post, url, body, content_type,
                               as.integer(timeout), NULL, FALSE)),
@@ -256,14 +299,27 @@ rvkfetch <- function(path, tmout = 10) {
 
 # Minimal DER encoding. Only what an OCSP request needs, because a
 # general encoder is a great deal of surface for one message shape.
+#' Encodes one DER tag-length-value.
+#' @param tag The tag byte.
+#' @param body The raw contents.
+#' @return The encoding as raw bytes.
+#' @noRd
 .rmbl_der_tlv <- function(tag, body) {
   c(as.raw(tag), .rmbl_der_length(length(body)), body)
 }
 
+#' Encodes a DER SEQUENCE of already encoded elements.
+#' @param ... The encoded elements, as raw vectors.
+#' @return The encoding as raw bytes.
+#' @noRd
 .rmbl_der_seq <- function(...) {
   .rmbl_der_tlv(0x30, c(...))
 }
 
+#' Encodes a dotted object identifier as a DER OBJECT IDENTIFIER.
+#' @param dotted The OID, such as "1.3.14.3.2.26".
+#' @return The encoding as raw bytes.
+#' @noRd
 .rmbl_der_oid_bytes <- function(dotted) {
   parts <- as.integer(strsplit(dotted, ".", fixed = TRUE)[[1]])
   first <- as.raw(40L * parts[1] + parts[2])
@@ -288,10 +344,16 @@ rvkfetch <- function(path, tmout = 10) {
   .rmbl_der_tlv(0x06, c(first, rest))
 }
 
-# The issuer name and key as the CertID wants them: the SHA-1 of the
-# issuer's encoded Name, and of the BIT STRING contents of its public
-# key. SHA-1 is what RFC 6960 specifies for CertID and what responders
-# key on; it is not verifying anything here.
+#' Builds the DER CertID of a certificate.
+#'
+#' The issuer name and key as the CertID wants them: the SHA-1 of the
+#' issuer's encoded Name, and of the BIT STRING contents of its public
+#' key. SHA-1 is what RFC 6960 specifies for CertID and what responders
+#' key on; it is not verifying anything here.
+#' @param cert The parsed certificate asked about.
+#' @param issuer Its parsed issuer certificate.
+#' @return The CertID as raw DER.
+#' @noRd
 .rmbl_ocsp_certid <- function(cert, issuer) {
   top <- .Call(C_rmbl_der_parse, cert$der)
   k <- top$children[[1]]$children
@@ -322,12 +384,25 @@ rvkfetch <- function(path, tmout = 10) {
     .rmbl_der_tlv(0x02, serial_raw))
 }
 
+#' Builds a DER OCSP request for one certificate.
+#' @param cert The parsed certificate asked about.
+#' @param issuer Its parsed issuer certificate.
+#' @return The OCSPRequest as raw DER.
+#' @noRd
 .rmbl_ocsp_request <- function(cert, issuer) {
   req <- .rmbl_der_seq(.rmbl_der_seq(.rmbl_der_seq(
     .rmbl_ocsp_certid(cert, issuer))))
   .rmbl_der_seq(req)
 }
 
+#' Asks an OCSP responder about a certificate, by POST then GET.
+#' @param cert The parsed certificate asked about.
+#' @param issuer Its parsed issuer certificate.
+#' @param url The responder's URL.
+#' @param path The certificate path, whose certificates may sign the answer.
+#' @param timeout The network timeout in seconds.
+#' @return A list with `ok` and a `detail` sentence.
+#' @noRd
 .rmbl_ocsp_query <- function(cert, issuer, url, path, timeout = 10) {
   req <- tryCatch(.rmbl_ocsp_request(cert, issuer),
                   error = function(e) NULL)
@@ -356,6 +431,10 @@ rvkfetch <- function(path, tmout = 10) {
   .rmbl_ocsp_parse(body, cert, path)
 }
 
+#' Percent-encodes every character outside the unreserved set of RFC 3986.
+#' @param x One string.
+#' @return The encoded string.
+#' @noRd
 .rmbl_url_encode <- function(x) {
   chars <- strsplit(x, "", fixed = TRUE)[[1]]
   out <- vapply(chars, function(ch) {
@@ -365,11 +444,18 @@ rvkfetch <- function(path, tmout = 10) {
   paste(out, collapse = "")
 }
 
-# OCSPResponse ::= SEQUENCE { responseStatus ENUMERATED,
-#                             responseBytes [0] EXPLICIT OPTIONAL }
-# The status is what says whether there is an answer at all; the answer
-# is a BasicOCSPResponse whose tbsResponseData carries one
-# SingleResponse per certificate asked about.
+#' Reads an OCSP answer and checks its signature.
+#'
+#' OCSPResponse ::= SEQUENCE { responseStatus ENUMERATED,
+#'                             responseBytes \[0\] EXPLICIT OPTIONAL }
+#' The status is what says whether there is an answer at all; the answer
+#' is a BasicOCSPResponse whose tbsResponseData carries one
+#' SingleResponse per certificate asked about.
+#' @param body The answer as raw DER.
+#' @param cert The parsed certificate asked about.
+#' @param path The certificate path, whose certificates may sign the answer.
+#' @return A list with `ok` (TRUE only for a signed "good") and a `detail` sentence.
+#' @noRd
 .rmbl_ocsp_parse <- function(body, cert, path) {
   d <- tryCatch(.Call(C_rmbl_der_parse, body), error = function(e) NULL)
   if (is.null(d) || !length(d$children)) {
@@ -441,6 +527,12 @@ rvkfetch <- function(path, tmout = 10) {
        detail = sprintf("the responder says %s, signed", state))
 }
 
+#' Verifies a BasicOCSPResponse's signature under a certificate in the path.
+#' @param basic The parsed BasicOCSPResponse.
+#' @param path The certificate path.
+#' @param src The raw bytes `basic` was parsed from.
+#' @return A list with `ok` and a `detail` sentence.
+#' @noRd
 .rmbl_ocsp_verify_sig <- function(basic, path, src) {
   tbs_nd <- basic$children[[1]]
   alg <- basic$children[[2]]
@@ -511,11 +603,17 @@ rvkfetch <- function(path, tmout = 10) {
        detail = "its signature does not verify under any certificate in the path")
 }
 
-# One node's complete DER, sliced out of the input it was parsed from.
-# The parser reports offsets rather than copying, so the source has to
-# travel with the node -- and it matters that this is the exact
-# encoding, because an OCSP signature is over the bytes of
-# tbsResponseData as they appeared, not over a re-encoding of them.
+#' Slices a parsed node's exact DER out of its source.
+#'
+#' One node's complete DER, sliced out of the input it was parsed from.
+#' The parser reports offsets rather than copying, so the source has to
+#' travel with the node -- and it matters that this is the exact
+#' encoding, because an OCSP signature is over the bytes of
+#' tbsResponseData as they appeared, not over a re-encoding of them.
+#' @param nd A parsed DER node.
+#' @param src The raw bytes it was parsed from.
+#' @return The node's bytes, or NULL when they are out of range.
+#' @noRd
 .rmbl_node_bytes <- function(nd, src) {
   if (is.null(nd) || is.null(src)) return(NULL)
   from <- nd$start + 1L

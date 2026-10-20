@@ -247,6 +247,16 @@ anltab <- function(data, value, prd, by = NULL, pop = NULL,
             class = "bricklayer_analysis")
 }
 
+#' Tests the trend of each group's per-period totals with trndtst() and, for counts, cnttrnd().
+#' @param data The table.
+#' @param value The name of the value column.
+#' @param period The name of the period column.
+#' @param by The names of the grouping columns, or NULL for one group.
+#' @param units The kind of value; `"count"` adds the rate ratio from cnttrnd().
+#' @param conf_level The confidence level for the intervals.
+#' @return A data frame with one row per group: periods, first and last totals, Kendall tau, its p-value, the slope, and
+#'   the rate ratio with its interval.
+#' @noRd
 .analysis_trends <- function(data, value, period, by, units, conf_level) {
   conf_level <- .rmbl_conf_level(conf_level)
   groups <- if (is.null(by)) list(data) else
@@ -515,8 +525,13 @@ rptanl <- function(x, path = NULL, format = c("markdown", "html"),
   invisible(text)
 }
 
-# Minimal Markdown table (pipe syntax) from a data frame; numeric
-# columns rounded to `digits`, logicals as yes/no, NA as blank.
+#' Minimal Markdown table (pipe syntax) from a data frame; numeric
+#' columns rounded to `digits`, logicals as yes/no, NA as blank.
+#' @param d A data frame.
+#' @param digits The number of decimals for numbers that are not whole.
+#' @param plain The names of columns written without a thousands separator.
+#' @return One string holding the table.
+#' @noRd
 .md_table <- function(d, digits = 1L, plain = character()) {
   d <- as.data.frame(d, stringsAsFactors = FALSE)
   if (!nrow(d)) return("(no rows)")
@@ -546,8 +561,14 @@ rptanl <- function(x, path = NULL, format = c("markdown", "html"),
           paste("|", rows, "|")), collapse = "\n")
 }
 
-# Enough Markdown for the report: headings, paragraphs, pipe tables,
-# inline code. No dependency, no external resources.
+#' Converts the report Markdown to a self-contained HTML page.
+#'
+#' Enough Markdown for the report: headings, paragraphs, pipe tables,
+#' inline code. No dependency, no external resources.
+#' @param md The Markdown text.
+#' @param title The page title.
+#' @return One string holding the HTML document.
+#' @noRd
 .md_to_html <- function(md, title) {
   esc <- function(s) {
     s <- gsub("&", "&amp;", s, fixed = TRUE)

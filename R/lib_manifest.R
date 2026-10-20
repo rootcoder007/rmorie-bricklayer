@@ -401,8 +401,13 @@ mnfdgst <- function(man) {
   .rmbl_sha256_bytes(charToRaw(mnfcanon(man)))
 }
 
-# Inside the package: the compiled core; sourced standalone in a capsule
-# bundle: the pure-R implementation from sha256_native.R.
+#' Hashes bytes with SHA-256, natively when the compiled core is there.
+#'
+#' Inside the package: the compiled core; sourced standalone in a capsule
+#' bundle: the pure-R implementation from sha256_native.R.
+#' @param bytes A raw vector.
+#' @param native Whether the compiled csha256() is used.
+#' @return The hex digest.
 #' @noRd
 .rmbl_sha256_bytes <- function(bytes,
                                native = exists("csha256",
@@ -414,8 +419,11 @@ mnfdgst <- function(man) {
   .rmbl_sha256_hex(bytes)
 }
 
-# Recursively order the names of every list, leaving unnamed lists (JSON
-# arrays, where order is content) alone.
+#' Recursively order the names of every list, leaving unnamed lists (JSON
+#' arrays, where order is content) alone.
+#' @param x A parsed JSON value.
+#' @return `x` with the names of every named list in sorted order.
+#' @noRd
 .rmbl_sort_keys <- function(x) {
   if (!is.list(x)) {
     return(x)

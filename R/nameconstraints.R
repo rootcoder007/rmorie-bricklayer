@@ -16,10 +16,15 @@
 # constraint matches on whole relative distinguished names, so a
 # constraint of "O=Acme" is not satisfied by "O=AcmeCorp".
 
-# One GeneralName, as a type and a value. The types this handles are the
-# ones name constraints are written against in practice; an unhandled
-# type is carried through with its tag so that a constraint on it can be
-# reported rather than silently ignored.
+#' Reads the GeneralNames under a parsed DER node.
+#'
+#' One GeneralName, as a type and a value. The types this handles are the
+#' ones name constraints are written against in practice; an unhandled
+#' type is carried through with its tag so that a constraint on it can be
+#' reported rather than silently ignored.
+#' @param nd A node from `C_rmbl_der_parse`.
+#' @return A list of names, each a list with `type` and `value`.
+#' @noRd
 .rmbl_general_names <- function(nd) {
   out <- list()
   for (g in nd$children) {
@@ -51,15 +56,24 @@
   out
 }
 
+#' Converts raw bytes to text, "" when they are empty or cannot be converted.
+#' @param v A raw vector.
+#' @return One string.
+#' @noRd
 .rmbl_raw_text <- function(v) {
   if (!length(v)) return("")
   tryCatch(rawToChar(v), error = function(e) "")
 }
 
-# A distinguished name as a list of RDNs, each a set of attribute
-# type/value pairs. The flattened string is for people; constraint
-# matching needs the structure, because a prefix match is defined on
-# whole RDNs.
+#' Reads a distinguished name as a list of RDNs.
+#'
+#' A distinguished name as a list of RDNs, each a set of attribute
+#' type/value pairs. The flattened string is for people; constraint
+#' matching needs the structure, because a prefix match is defined on
+#' whole RDNs.
+#' @param nd The parsed DER node of the Name.
+#' @return A list of RDNs, each a list of attributes with `oid` and `value`.
+#' @noRd
 .rmbl_x509_rdns <- function(nd) {
   lapply(nd$children, function(rdn) {
     lapply(rdn$children, function(atv) {
@@ -70,8 +84,13 @@
   })
 }
 
-# NameConstraints ::= SEQUENCE { permittedSubtrees [0] OPTIONAL,
-#                                excludedSubtrees  [1] OPTIONAL }
+#' Parses a NameConstraints extension value.
+#'
+#' NameConstraints ::= SEQUENCE { permittedSubtrees \[0\] OPTIONAL,
+#'                                excludedSubtrees  \[1\] OPTIONAL }
+#' @param val The extension's DER bytes.
+#' @return A list with `permitted` and `excluded` subtrees, or NULL when there are none.
+#' @noRd
 .rmbl_name_constraints <- function(val) {
   inner <- tryCatch(.Call(C_rmbl_der_parse, val), error = function(e) NULL)
   if (is.null(inner)) return(NULL)
@@ -91,9 +110,15 @@
   out
 }
 
-# A DNS constraint of "example.org" is satisfied by "example.org" and by
-# anything under it. A leading dot, which is a convention rather than
-# the RFC's text, is read as subdomains only.
+#' Tells whether a DNS name is inside a DNS constraint.
+#'
+#' A DNS constraint of "example.org" is satisfied by "example.org" and by
+#' anything under it. A leading dot, which is a convention rather than
+#' the RFC's text, is read as subdomains only.
+#' @param name The DNS name.
+#' @param base The constraint.
+#' @return TRUE or FALSE.
+#' @noRd
 .rmbl_nc_match_dns <- function(name, base) {
   name <- tolower(name)
   base <- tolower(base)
@@ -104,10 +129,16 @@
   identical(name, base) || endsWith(name, paste0(".", base))
 }
 
-# An email constraint may be a full mailbox, a host, or a dot-prefixed
-# domain. A host constraint is NOT satisfied by a subdomain of it, which
-# is where this differs from DNS and where a verifier that reuses the
-# DNS rule becomes too permissive.
+#' Tells whether a mailbox is inside an email constraint.
+#'
+#' An email constraint may be a full mailbox, a host, or a dot-prefixed
+#' domain. A host constraint is NOT satisfied by a subdomain of it, which
+#' is where this differs from DNS and where a verifier that reuses the
+#' DNS rule becomes too permissive.
+#' @param name The mailbox.
+#' @param base The constraint.
+#' @return TRUE or FALSE.
+#' @noRd
 .rmbl_nc_match_email <- function(name, base) {
   name <- tolower(name)
   base <- tolower(base)
@@ -117,6 +148,11 @@
   identical(host, base)
 }
 
+#' Tells whether a URI's host is inside a DNS-style constraint.
+#' @param name The URI.
+#' @param base The constraint.
+#' @return TRUE or FALSE.
+#' @noRd
 .rmbl_nc_match_uri <- function(name, base) {
   host <- sub("^[a-zA-Z][a-zA-Z0-9+.-]*://", "", name)
   host <- sub("[/?#].*$", "", host)
@@ -125,8 +161,14 @@
   .rmbl_nc_match_dns(host, base)
 }
 
-# The constraint is the address followed by the mask, so 8 bytes for
-# IPv4 and 32 for IPv6.
+#' Tells whether an IP address is inside an address-and-mask constraint.
+#'
+#' The constraint is the address followed by the mask, so 8 bytes for
+#' IPv4 and 32 for IPv6.
+#' @param name The address bytes.
+#' @param base The constraint: the address bytes followed by the mask bytes.
+#' @return TRUE or FALSE.
+#' @noRd
 .rmbl_nc_match_ip <- function(name, base) {
   n <- length(name)
   if (length(base) != 2L * n) return(FALSE)
@@ -136,9 +178,15 @@
   all(bitwAnd(ip, mask) == bitwAnd(addr, mask))
 }
 
-# A directory name constraint matches when its RDNs are an initial
-# sequence of the name's, compared whole: "O=Acme" does not match
-# "O=AcmeCorp", and a partial attribute value never matches.
+#' Tells whether a directory name is inside a directory name constraint.
+#'
+#' A directory name constraint matches when its RDNs are an initial
+#' sequence of the name's, compared whole: "O=Acme" does not match
+#' "O=AcmeCorp", and a partial attribute value never matches.
+#' @param rdns The name's RDNs, as from `.rmbl_x509_rdns()`.
+#' @param base The constraint's RDNs.
+#' @return TRUE or FALSE.
+#' @noRd
 .rmbl_nc_match_dirname <- function(rdns, base) {
   if (!length(base)) return(TRUE)
   if (length(rdns) < length(base)) return(FALSE)
@@ -154,6 +202,11 @@
   TRUE
 }
 
+#' Matches a name against a constraint of the same type.
+#' @param nm A name, a list with `type` and `value`.
+#' @param base A constraint, a list with `type` and `value`.
+#' @return TRUE or FALSE, or NA when the types differ or the type is not handled.
+#' @noRd
 .rmbl_nc_match <- function(nm, base) {
   if (!identical(nm$type, base$type)) return(NA)
   switch(nm$type,
@@ -165,13 +218,17 @@
          NA)
 }
 
-# Check one certificate's names against one CA's constraints.
-#
-# The asymmetry is in the RFC and is easy to get backwards: an excluded
-# subtree rejects on any match, while permitted subtrees only bite for
-# name types they actually mention. A certificate carrying no name of a
-# constrained type is not rejected on that type -- otherwise every
-# constraint on email would reject every certificate without one.
+#' Check one certificate's names against one CA's constraints.
+#'
+#' The asymmetry is in the RFC and is easy to get backwards: an excluded
+#' subtree rejects on any match, while permitted subtrees only bite for
+#' name types they actually mention. A certificate carrying no name of a
+#' constrained type is not rejected on that type -- otherwise every
+#' constraint on email would reject every certificate without one.
+#' @param cert A parsed certificate, with `san` and `subject_rdns`.
+#' @param nc The CA's constraints, as from `.rmbl_name_constraints()`.
+#' @return A character vector of problems, empty when the names pass.
+#' @noRd
 .rmbl_nc_check_one <- function(cert, nc) {
   names_to_check <- cert$san
   if (length(cert$subject_rdns)) {
@@ -209,6 +266,10 @@
   problems
 }
 
+#' Formats a name for a message.
+#' @param nm A name, a list with `type` and `value`.
+#' @return One string.
+#' @noRd
 .rmbl_nc_show <- function(nm) {
   if (identical(nm$type, "dirname")) {
     parts <- unlist(lapply(nm$value, function(rdn) {

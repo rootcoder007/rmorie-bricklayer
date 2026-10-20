@@ -25,6 +25,11 @@
 # And one thing is deliberately not offered: a per-capita rate by region.
 # See rgncov().
 
+#' Trims a character argument and refuses it when it is empty or has a missing or empty value.
+#' @param x The value passed by the user.
+#' @param arg The argument name, used in the error message.
+#' @return The trimmed character vector.
+#' @noRd
 .rmbl_rm_chr <- function(x, arg) {
   x <- trimws(as.character(x))
   if (!length(x)) stop(sprintf("`%s` must not be empty", arg), call. = FALSE)
@@ -36,6 +41,12 @@
   x
 }
 
+#' Returns one named column of a data frame, refusing a missing frame or column.
+#' @param d The data frame.
+#' @param nm The column name.
+#' @param arg The argument name, used in the error message.
+#' @return The column.
+#' @noRd
 .rmbl_rm_col <- function(d, nm, arg) {
   if (!is.data.frame(d)) {
     stop(sprintf("`%s` must be a data frame", arg),

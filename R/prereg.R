@@ -305,11 +305,17 @@ falsfam <- function(x, meth = c("holm", "bh", "bonferroni",
   out
 }
 
-# Holm, Benjamini-Hochberg and Bonferroni, written out rather than
-# delegated so the step-up and step-down directions are visible: Holm
-# accumulates a running maximum from the smallest p upward, BH a running
-# minimum from the largest downward, and swapping them silently inverts
-# which hypotheses survive.
+#' Adjusts p-values for multiple comparisons.
+#'
+#' Holm, Benjamini-Hochberg and Bonferroni, written out rather than
+#' delegated so the step-up and step-down directions are visible: Holm
+#' accumulates a running maximum from the smallest p upward, BH a running
+#' minimum from the largest downward, and swapping them silently inverts
+#' which hypotheses survive.
+#' @param p The p-values.
+#' @param method One of "holm", "BH", "bonferroni" or "none".
+#' @return The adjusted p-values, in the order of `p`.
+#' @noRd
 .rmbl_p_adjust <- function(p, method) {
   n <- length(p)
   if (identical(method, "none") || n == 0L) return(pmin(1, p))

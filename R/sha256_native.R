@@ -5,6 +5,9 @@
 # doubles in [0, 2^32) with XOR/AND on 16-bit halves. Slow but exact; the
 # package itself always routes through csha256().
 
+#' Computes the SHA-256 digest of a byte vector in pure R.
+#' @param bytes The bytes to digest.
+#' @return The 32-byte digest as a raw vector.
 #' @noRd
 .rmbl_sha256_raw <- function(bytes) {
   # Words live as DOUBLES in [0, 2^32): R integers are signed 32-bit,
@@ -81,10 +84,16 @@
     (w %/% 2^c(24, 16, 8, 0)) %% 256, numeric(4))))
 }
 
+#' Writes bytes as lower-case hex text.
+#' @param bs The bytes.
+#' @return One string, two hex digits per byte.
 #' @noRd
 .rmbl_hexlify <- function(bs) {
   paste(format(as.hexmode(as.integer(bs)), width = 2L), collapse = "")
 }
 
+#' Computes the SHA-256 digest of a byte vector in pure R as hex text.
+#' @param bytes The bytes to digest.
+#' @return The digest as 64 hex digits.
 #' @noRd
 .rmbl_sha256_hex <- function(bytes) .rmbl_hexlify(.rmbl_sha256_raw(bytes))

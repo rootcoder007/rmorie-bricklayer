@@ -388,7 +388,11 @@ skchmrg <- function(a, b) {
   pmax(a, b)
 }
 
-# HyperLogLog registers: non-negative integers.
+#' HyperLogLog registers: non-negative integers.
+#' @param r The registers passed by the user.
+#' @param what The argument's name, used in the error message.
+#' @return The registers as an integer vector.
+#' @noRd
 .rmbl_registers <- function(r, what) {
   r <- .rmbl_num_input(r, what)
   if (any(!is.finite(r)) || any(r < 0) || any(r > 64) || any(r != floor(r))) {

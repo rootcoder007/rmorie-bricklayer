@@ -414,8 +414,11 @@ mrkvrf <- function(leaf, proof, root, scheme = NULL) {
   cdgsteq(node, as.character(root))
 }
 
-# The Merkle hashing scheme: 2 (leaf and node prefixes, 0.5.13 on) or 1
-# (no prefixes, 0.5.12 and earlier).
+#' The Merkle hashing scheme: 2 (leaf and node prefixes, 0.5.13 on) or 1
+#' (no prefixes, 0.5.12 and earlier).
+#' @param scheme The scheme number passed by the user.
+#' @return The scheme as an integer, 1 or 2.
+#' @noRd
 .rmbl_merkle_scheme <- function(scheme) {
   scheme <- .rmbl_num(scheme, "scheme", integer = TRUE)
   if (length(scheme) != 1L || is.na(scheme) || !scheme %in% c(1, 2)) {
@@ -424,18 +427,21 @@ mrkvrf <- function(leaf, proof, root, scheme = NULL) {
   as.integer(scheme)
 }
 
-# Normalise a chunk argument to a list of raw vectors.
-#
-# A chunk is a byte sequence, and the Merkle functions used to take it as
-# a character vector measured with strlen. That forbade a zero byte in a
-# chunk and, worse, silently accepted a raw vector by coercing it -- a
-# list of raw vectors deparses, so `mrkroot(list(charToRaw("a")))`
-# hashed the TEXT "as.raw(0x61)" rather than the byte 0x61, and reported
-# a confident digest of the wrong thing.
-#
-# Byte sequences for character input are unchanged, so a root recorded by
-# an earlier version still verifies: charToRaw() yields exactly the bytes
-# CHAR() gave the C layer.
+#' Normalise a chunk argument to a list of raw vectors.
+#'
+#' A chunk is a byte sequence, and the Merkle functions used to take it as
+#' a character vector measured with strlen. That forbade a zero byte in a
+#' chunk and, worse, silently accepted a raw vector by coercing it -- a
+#' list of raw vectors deparses, so `mrkroot(list(charToRaw("a")))`
+#' hashed the TEXT "as.raw(0x61)" rather than the byte 0x61, and reported
+#' a confident digest of the wrong thing.
+#'
+#' Byte sequences for character input are unchanged, so a root recorded by
+#' an earlier version still verifies: charToRaw() yields exactly the bytes
+#' CHAR() gave the C layer.
+#' @param chunks A character vector, a raw vector, or a list of raw vectors and single strings.
+#' @return A list of raw vectors, one per chunk.
+#' @noRd
 .rmbl_chunk_bytes <- function(chunks) {
   if (is.raw(chunks)) return(list(chunks))
   if (is.character(chunks)) {
@@ -459,9 +465,14 @@ mrkvrf <- function(leaf, proof, root, scheme = NULL) {
        call. = FALSE)
 }
 
-# Hex string to raw. Merkle nodes hash the concatenated BYTES of the two
-# child digests, not their hex spelling, so the pair has to be decoded
-# before hashing.
+#' Decodes a hex string to raw bytes.
+#'
+#' Hex string to raw. Merkle nodes hash the concatenated BYTES of the two
+#' child digests, not their hex spelling, so the pair has to be decoded
+#' before hashing.
+#' @param hex A hex string; only its first element is read.
+#' @return A raw vector.
+#' @noRd
 .rmbl_hex_to_raw <- function(hex) {
   hex <- as.character(hex)[1L]
   n <- nchar(hex)
@@ -601,6 +612,11 @@ crc32file <- function(path, blkbytes = 1048576L) {
   ccrc32(.rmbl_read_all_raw(path, blkbytes))
 }
 
+#' Reads a whole file as raw bytes, block by block.
+#' @param path The file to read.
+#' @param block_bytes The number of bytes read per block.
+#' @return A raw vector of the file contents.
+#' @noRd
 .rmbl_read_all_raw <- function(path, block_bytes = 1048576L) {
   path <- .rmbl_file1(path, "path")
   block_bytes <- .rmbl_scalar(block_bytes, "blkbytes", 1, .Machine$integer.max, integer = TRUE)

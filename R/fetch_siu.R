@@ -67,7 +67,10 @@ siufetch <- function(drid, dest, lang = c("en", "fr"),
   blfetch(url, dest, wb = wb, tmout = tmout)
 }
 
-# One positive whole report number: as.integer() would read 1.5 as 1 and fetch another report.
+#' One positive whole report number: as.integer() would read 1.5 as 1 and fetch another report.
+#' @param drid The report number passed by the user.
+#' @return The report number as an integer.
+#' @noRd
 .rmbl_drid <- function(drid) {
   v <- if (is.atomic(drid) && length(drid) == 1L && !is.logical(drid) && !is.complex(drid)) {
     suppressWarnings(as.numeric(drid))

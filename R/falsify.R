@@ -254,8 +254,15 @@ print.bricklayer_falsification <- function(x, ...) {
   invisible(x)
 }
 
-# A statistic has to return one finite number. Anything else is an error
-# here rather than an NA that quietly passes every control below.
+#' Calls the user statistic on one data set and checks it returns one finite number.
+#'
+#' A statistic has to return one finite number. Anything else is an error
+#' here rather than an NA that quietly passes every control below.
+#' @param statistic The user function.
+#' @param data The data set it is called on.
+#' @param what Which data set this is, used in the error message.
+#' @return The statistic as one double.
+#' @noRd
 .rmbl_falsify_eval <- function(statistic, data, what) {
   v <- tryCatch(statistic(data), error = function(e) {
     stop(sprintf("the statistic failed on %s: %s", what,

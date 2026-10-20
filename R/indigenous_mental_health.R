@@ -795,7 +795,12 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
   invisible(d)
 }
 
-# a column of `data` named by a string argument, checked
+#' A column of `data` named by a string argument, checked
+#' @param data The data frame.
+#' @param x The column name passed by the user.
+#' @param what The argument's name, used in the error message.
+#' @return The column name.
+#' @noRd
 .rmbl_col <- function(data, x, what) {
   x <- .rmbl_string1(x, what)
   if (!x %in% names(data)) stop(sprintf("column `%s` not found in `data`", x), call. = FALSE)

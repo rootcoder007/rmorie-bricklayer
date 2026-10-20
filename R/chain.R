@@ -207,8 +207,14 @@ chnvrf <- function(chain) {
   .rmbl_chain_check(chain, warn = TRUE)
 }
 
-# The walk behind chnvrf(), chnseal() and format(): `warn` says
-# whether entries sealed under scheme 1 (0.5.12 and earlier) are reported.
+#' Walks a chain and finds the first entry whose link does not verify.
+#'
+#' The walk behind chnvrf(), chnseal() and format(): `warn` says
+#' whether entries sealed under scheme 1 (0.5.12 and earlier) are reported.
+#' @param chain A chain made by chnnew().
+#' @param warn Whether entries sealed under scheme 1 are reported in a warning.
+#' @return A `bricklayer_chain_check` list: `valid`, `n`, `broken_at` (NA when none) and `head`.
+#' @noRd
 .rmbl_chain_check <- function(chain, warn) {
   if (!inherits(chain, "bricklayer_chain")) {
     stop("`chain` must come from chnnew()", call. = FALSE)
@@ -244,22 +250,35 @@ chnvrf <- function(chain) {
   out
 }
 
-# One link's digest. Scheme 2 covers the label: "0" for a missing label and
-# "1" + the label otherwise, after the fixed-width prev and payload, so no
-# two (prev, payload, label) triples share a preimage. Scheme 1 (0.5.12 and
-# earlier) is "<prev>:<payload>" and is only ever recomputed, never written.
+#' Computes the digest of one chain link.
+#'
+#' One link's digest. Scheme 2 covers the label: "0" for a missing label and
+#' "1" + the label otherwise, after the fixed-width prev and payload, so no
+#' two (prev, payload, label) triples share a preimage. Scheme 1 (0.5.12 and
+#' earlier) is "<prev>:<payload>" and is only ever recomputed, never written.
+#' @param prev The previous link digest (the genesis digest for the first entry).
+#' @param payload The entry digest.
+#' @param label The entry label, or NULL or NA when it has none.
+#' @param scheme The sealing scheme, 1 or 2.
+#' @return The link digest as hex text.
+#' @noRd
 .rmbl_link_digest <- function(prev, payload, label, scheme) {
   if (scheme == 1L) return(csha256(paste0(prev, ":", payload)))
   lab <- if (length(label) != 1L || is.na(label)) "0" else paste0("1", enc2utf8(as.character(label)))
   csha256(paste0("v2|", prev, "|", payload, "|", lab))
 }
 
-# Deterministic digest of an arbitrary object. serialize() with a fixed
-# version and no native encoding gives the same bytes on every platform,
-# which a printed representation would not -- except bytes 7 to 10 of the
-# header, the version of R that wrote the stream. Those are zeroed, so the
-# digest is the same on every R version; the rest of a version-2 stream is
-# fixed by the object (format version 2, reader version 2.3.0).
+#' Computes a deterministic SHA-256 digest of an R object.
+#'
+#' Deterministic digest of an arbitrary object. serialize() with a fixed
+#' version and no native encoding gives the same bytes on every platform,
+#' which a printed representation would not -- except bytes 7 to 10 of the
+#' header, the version of R that wrote the stream. Those are zeroed, so the
+#' digest is the same on every R version; the rest of a version-2 stream is
+#' fixed by the object (format version 2, reader version 2.3.0).
+#' @param entry The object; a single string is digested as its text.
+#' @return The digest as hex text.
+#' @noRd
 .rmbl_entry_digest <- function(entry) {
   if (is.character(entry) && length(entry) == 1L && !is.na(entry)) {
     return(csha256(entry))

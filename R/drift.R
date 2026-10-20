@@ -333,16 +333,28 @@ drftchisq <- function(obs, expd) {
     logpvalue = .rmbl_chisq_logp(stat, df))
 }
 
-# The upper tail of a chi-square, computed AS the upper tail. The former
-# 1 - cgamcdf(df / 2, stat / 2) underflowed to exactly 0 once the
-# lower tail rounded to 1 (stat >= 74.9 at df = 2), and "p = 0" is a
-# number a reader quotes.
+#' Returns the upper tail of a chi-square distribution.
+#'
+#' The upper tail of a chi-square, computed AS the upper tail. The former
+#' 1 - cgamcdf(df / 2, stat / 2) underflowed to exactly 0 once the
+#' lower tail rounded to 1 (stat >= 74.9 at df = 2), and "p = 0" is a
+#' number a reader quotes.
+#' @param stat The chi-square statistic.
+#' @param df Its degrees of freedom.
+#' @return The upper-tail probability.
+#' @noRd
 .rmbl_chisq_p <- function(stat, df) {
   stats::pchisq(stat, df, lower.tail = FALSE)
 }
 
-# The same tail on the log scale: a double cannot hold exp(-2536), so
-# `p_value` is 0 there while `logpvalue` still says how far below.
+#' Returns the upper tail of a chi-square distribution on the log scale.
+#'
+#' The same tail on the log scale: a double cannot hold exp(-2536), so
+#' `p_value` is 0 there while `logpvalue` still says how far below.
+#' @param stat The chi-square statistic.
+#' @param df Its degrees of freedom.
+#' @return The log of the upper-tail probability.
+#' @noRd
 .rmbl_chisq_logp <- function(stat, df) {
   stats::pchisq(stat, df, lower.tail = FALSE, log.p = TRUE)
 }
@@ -867,9 +879,13 @@ cpsdrft <- function(ref, cur, alpha = 0.01,
 }
 
 
-# A character vector that is entirely ISO dates or date-times, as Date /
-# POSIXct; NULL when any value is not (a numeric comparison then makes no
-# sense). NAs are allowed and kept.
+#' Reads a column of ISO dates or date-times as dates.
+#'
+#' A character vector that is entirely ISO dates or date-times, as Date /
+#' POSIXct; NULL when any value is not (a numeric comparison then makes no
+#' sense). NAs are allowed and kept.
+#' @param v The column.
+#' @return A Date or POSIXct vector, or NULL.
 #' @noRd
 .rmbl_as_dates <- function(v) {
   if (inherits(v, "Date") || inherits(v, "POSIXct")) return(v)

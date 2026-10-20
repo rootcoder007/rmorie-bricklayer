@@ -7,7 +7,13 @@
 
 # ---- shared ---------------------------------------------------------------------------------
 
-# counts as numbers: finite, non-negative, one per period
+#' Counts as numbers: finite, non-negative, one per period
+#' @param x The counts passed by the user.
+#' @param what The argument's name, used in the error message.
+#' @param n The number of periods, or NULL for any length.
+#' @param allow_na Whether missing values are accepted.
+#' @return A double vector.
+#' @noRd
 .jx_counts <- function(x, what, n = NULL, allow_na = FALSE) {
   x <- .rmbl_num_input(x, what, allow_null = FALSE)
   if (!is.null(n) && length(x) != n) {
@@ -22,9 +28,16 @@
   x
 }
 
-# The exact conditional interval for the ratio a / b of two Poisson counts over the same
-# exposure: given a + b, a is binomial with p = r / (1 + r), and the Clopper-Pearson limits
-# for p map to r = p / (1 - p).
+#' Computes the exact conditional confidence interval for the ratio of two Poisson counts.
+#'
+#' The exact conditional interval for the ratio a / b of two Poisson counts over the same
+#' exposure: given a + b, a is binomial with p = r / (1 + r), and the Clopper-Pearson limits
+#' for p map to r = p / (1 - p).
+#' @param a The numerator counts.
+#' @param b The denominator counts.
+#' @param conf_level The confidence level.
+#' @return A list with `lower` and `upper`; NA where both counts are 0 or missing.
+#' @noRd
 .jx_ratio_ci <- function(a, b, conf_level) {
   conf_level <- .rmbl_conf_level(conf_level)
   alpha <- 1 - conf_level
@@ -36,6 +49,11 @@
   list(lower = lo / (1 - lo), upper = ifelse(hi >= 1, Inf, hi / (1 - hi)))
 }
 
+#' Checks the period labels, or numbers the periods 1 to `n` when there are none.
+#' @param period The labels passed by the user, or NULL.
+#' @param n The number of periods.
+#' @return The period labels.
+#' @noRd
 .jx_period <- function(period, n) {
   if (is.null(period)) return(seq_len(n))
   if (length(period) != n) stop(sprintf("`period` must have %d values, got %d", n, length(period)), call. = FALSE)
@@ -44,8 +62,11 @@
   period
 }
 
-# x positions for periods: numbers as they are, dates as dates, "YYYY-MM" as month starts,
-# anything else in the order given
+#' X positions for periods: numbers as they are, dates as dates, "YYYY-MM" as month starts,
+#' anything else in the order given
+#' @param p The period labels.
+#' @return The x positions: numbers or dates.
+#' @noRd
 .jx_period_x <- function(p) {
   if (is.numeric(p) || inherits(p, "Date")) return(p)
   p <- as.character(p)
@@ -278,7 +299,14 @@ print.rmbl_case_flow <- function(x, ...) {
   invisible(x)
 }
 
-# fill between two series in two colours by sign, splitting segments where they cross
+#' Fill between two series in two colours by sign, splitting segments where they cross
+#' @param x The x positions.
+#' @param a The first series.
+#' @param b The second series.
+#' @param col_pos The colour where `a` is above `b`.
+#' @param col_neg The colour where `a` is below `b`.
+#' @return NULL, invisibly.
+#' @noRd
 .jx_fill_between <- function(x, a, b, col_pos, col_neg) {
   x <- as.numeric(x)
   for (i in seq_len(length(x) - 1L)) {
@@ -299,6 +327,10 @@ print.rmbl_case_flow <- function(x, ...) {
   invisible(NULL)
 }
 
+#' Draws the x axis, as dates when the periods are dates.
+#' @param px The x positions.
+#' @return What the axis function returns.
+#' @noRd
 .jx_xaxis <- function(px) {
   if (inherits(px, "Date")) graphics::axis.Date(1, px) else graphics::axis(1)
 }
@@ -817,18 +849,31 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
 
 .jx_earth_km <- 6371.0088
 
-# lon/lat to kilometres on a plane through their centre (equirectangular): within a city
-# the distortion is far below the bandwidth
+#' lon/lat to kilometres on a plane through their centre (equirectangular): within a city
+#' the distortion is far below the bandwidth
+#' @param lon The longitudes.
+#' @param lat The latitudes.
+#' @param lon0 The centre's longitude.
+#' @param lat0 The centre's latitude.
+#' @return A list with the coordinates `x` and `y` in kilometres.
+#' @noRd
 .jx_project <- function(lon, lat, lon0, lat0) {
   list(x = .jx_earth_km * (lon - lon0) * pi / 180 * cos(lat0 * pi / 180),
        y = .jx_earth_km * (lat - lat0) * pi / 180)
 }
 
-# The one way crmdens(), knoxtst() and hotpers() put longitudes and latitudes on
-# the plane: points across the antimeridian are taken on one side of it (179 and -179 degrees were
-# 358 degrees apart, a 19,240 km bandwidth; review of e57fed5), the centre is the median, and an
-# extent past 2,000 km, where the flat approximation stops being one, is said. Returns the
-# projection (kilometres), the centre and the longitudes as used.
+#' Puts longitudes and latitudes on a plane in kilometres.
+#'
+#' The one way crmdens(), knoxtst() and hotpers() put longitudes and latitudes on
+#' the plane: points across the antimeridian are taken on one side of it (179 and -179 degrees were
+#' 358 degrees apart, a 19,240 km bandwidth; review of e57fed5), the centre is the median, and an
+#' extent past 2,000 km, where the flat approximation stops being one, is said. Returns the
+#' projection (kilometres), the centre and the longitudes as used.
+#' @param lon The longitudes.
+#' @param lat The latitudes.
+#' @param caller The calling function's name, used in the warning.
+#' @return A list with `x`, `y`, the centre `lon0` and `lat0`, and the longitudes `lon` as used.
+#' @noRd
 .jx_lonlat_plane <- function(lon, lat, caller) {
   if (length(lon) && diff(range(lon)) > 180) {
     alt <- ifelse(lon < 0, lon + 360, lon)
@@ -846,10 +891,23 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
   list(x = p$x, y = p$y, lon0 = ((lon0 + 180) %% 360) - 180, lat0 = lat0, lon = lon)
 }
 
-# (0, 0) is how raw police exports write "no location": no incident is placed in the Gulf of Guinea
+#' Marks the points at (0, 0).
+#'
+#' (0, 0) is how raw police exports write "no location": no incident is placed in the Gulf of Guinea
+#' @param lon The longitudes.
+#' @param lat The latitudes.
+#' @return A logical vector.
+#' @noRd
 .jx_null_island <- function(lon, lat) is.finite(lon) & is.finite(lat) & lon == 0 & lat == 0
 
-# linear binning (each point shares its weight among the four nearest grid nodes)
+#' Linear binning (each point shares its weight among the four nearest grid nodes)
+#' @param x The x coordinates.
+#' @param y The y coordinates.
+#' @param w The weights.
+#' @param gx The grid's x nodes, equally spaced.
+#' @param gy The grid's y nodes, equally spaced.
+#' @return A matrix of binned weights, one row per x node.
+#' @noRd
 .jx_linbin <- function(x, y, w, gx, gy) {
   nx <- length(gx)
   ny <- length(gy)
@@ -1124,7 +1182,10 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
   invisible(data.frame(x = rep(xs, times = length(ys)), y = rep(ys, each = length(xs)), density = as.vector(x$field)))
 }
 
-# the y title of the Knox table sits outside its band labels, which are text, not axTicks()
+#' The y title of the Knox table sits outside its band labels, which are text, not axTicks()
+#' @param labels The band labels drawn on the y axis.
+#' @return What `graphics::title()` returns.
+#' @noRd
 .bl_knox_ylab <- function(labels) {
   o <- graphics::par(c("cex.axis", "csi", "mar", "mgp"))
   w <- max(.bl_strwidth(labels, cex = o$cex.axis), 0)
@@ -1133,18 +1194,30 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
 
 # ---- near repeats: the Knox test ---------------------------------------------------------------
 
-# pairs closer than `r`: points hashed to cells of side r, each cell compared with itself and
-# four of its neighbours, so every close pair is found once
-# The grid's origin: the smallest coordinate of the points within 2^52 cells of the median. The smallest
-# of all let one point at -1e300 shift every other one to 1e300, where they all fell into one cell
-# (the counts were wiped out; the mirror of the +1e300 point, CRAN stress test of b617a3f). With no
-# such outlier it is min(v), as before; an outlier is then a far point, compared directly.
+#' Chooses a grid origin that a far outlier cannot shift.
+#'
+#' The grid's origin: the smallest coordinate of the points within 2^52 cells of the median. The smallest
+#' of all let one point at -1e300 shift every other one to 1e300, where they all fell into one cell
+#' (the counts were wiped out; the mirror of the +1e300 point, CRAN stress test of b617a3f). With no
+#' such outlier it is min(v), as before; an outlier is then a far point, compared directly.
+#' @param v The coordinates.
+#' @param unit The cell side.
+#' @return The origin.
+#' @noRd
 .jx_origin <- function(v, unit) {
   med <- stats::median(v)
   inl <- abs(v - med) / unit <= 2^52
   if (any(inl)) min(v[inl]) else med
 }
 
+#' Pairs closer than `r`: points hashed to cells of side r, each cell compared with itself and
+#' four of its neighbours, so every close pair is found once
+#' @param x The x coordinates.
+#' @param y The y coordinates.
+#' @param r The distance.
+#' @param max_pairs The largest number of direct comparisons allowed for points too far out to index.
+#' @return A list with the indices `i` and `j` of each pair and their distance `d`.
+#' @noRd
 .jx_close_pairs <- function(x, y, r, max_pairs) {
   # distances do not move when the coordinates are shifted, and the cell indices shrink
   x <- x - .jx_origin(x, r)
@@ -1205,7 +1278,11 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
   list(i = i, j = j, d = sqrt((x[i] - x[j])^2 + (y[i] - y[j])^2))
 }
 
-# pairs (over all n(n-1)/2) whose absolute difference is within each cut, from sorted values
+#' Pairs (over all n(n-1)/2) whose absolute difference is within each cut, from sorted values
+#' @param t The values.
+#' @param cuts The cuts.
+#' @return A count for each cut.
+#' @noRd
 .jx_pairs_within <- function(t, cuts) {
   t <- sort(t)
   vapply(cuts, function(b) sum(findInterval(t + b, t) - seq_along(t)), numeric(1))
@@ -1404,7 +1481,13 @@ knoxtst <- function(x, y, time, spcbands, tmbands, nsim = 999L, seed = NULL,
             class = "rmbl_knox")
 }
 
-# the seed is optional here, unlike .rmbl_with_seed()
+#' Evaluates an expression under a seed when one is given.
+#'
+#' The seed is optional here, unlike .rmbl_with_seed()
+#' @param seed The seed, or NULL for the session's stream.
+#' @param expr The expression to evaluate.
+#' @return The value of `expr`.
+#' @noRd
 .rmbl_with_seed_maybe <- function(seed, expr) {
   if (is.null(seed)) return(expr)
   # every seed the package takes, up to 2^53 - 1 (2^40 was refused here, and -2^31 called too large;
@@ -1757,9 +1840,15 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, maxparts = 20
   invisible(x$groups)
 }
 
-# The parts as drawn: ordered by their average rate (lowest at the bottom), so the colours of
-# the mix panel separate; past `maxparts`, the parts that moved the aggregate most, and the rest
-# summed into one row (its rate from the summed counts, not an average of rates).
+#' Prepares the parts of a clearance decomposition for drawing.
+#'
+#' The parts as drawn: ordered by their average rate (lowest at the bottom), so the colours of
+#' the mix panel separate; past `maxparts`, the parts that moved the aggregate most, and the rest
+#' summed into one row (its rate from the summed counts, not an average of rates).
+#' @param x A `rmbl_clearance_decomposition` object.
+#' @param max_parts The most parts drawn; the rest are summed into one row.
+#' @return A list with the parts to draw, `groups`, and the number summed into the last row, `other`.
+#' @noRd
 .jx_cd_view <- function(x, max_parts) {
   g <- x$groups
   other <- 0L
@@ -1783,9 +1872,15 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, maxparts = 20
   list(groups = g, other = other)
 }
 
-# Row labels for a panel of `units` rows, chosen before the plot so the margin fits them: two
-# lines when the rows are tall enough, else one (cut with an ellipsis only past the room), and
-# a text size the row height allows.
+#' Fits the row labels of a panel to its margin and row height.
+#'
+#' Row labels for a panel of `units` rows, chosen before the plot so the margin fits them: two
+#' lines when the rows are tall enough, else one (cut with an ellipsis only past the room), and
+#' a text size the row height allows.
+#' @param labs The labels.
+#' @param units The number of rows the panel holds.
+#' @return A list with `labels`, the margin `mar` in lines and the text size `cex`.
+#' @noRd
 .jx_row_labels <- function(labs, units) {
   fin <- tryCatch(graphics::par("fin"), error = function(e) c(7, 7))
   csi <- tryCatch(graphics::par("cin")[2L], error = function(e) 0.2) * .bl_plot_opts()$cex
@@ -1813,8 +1908,15 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, maxparts = 20
   fit
 }
 
-# arrows only where they are long enough to have a direction (a part that barely moved gets its
-# two points and no arrow: R warns about a zero-length arrow and draws nothing)
+#' Arrows only where they are long enough to have a direction (a part that barely moved gets its
+#' two points and no arrow: R warns about a zero-length arrow and draws nothing)
+#' @param x0 The start positions.
+#' @param y The rows.
+#' @param x1 The end positions.
+#' @param col The colours.
+#' @param lwd The line widths.
+#' @return NULL, invisibly when no arrow is drawn.
+#' @noRd
 .jx_arrows <- function(x0, y, x1, col, lwd) {
   usr <- graphics::par("usr")
   len <- abs(x1 - x0) / diff(usr[1:2]) * graphics::par("pin")[1L]
@@ -1822,8 +1924,16 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, maxparts = 20
   if (any(ok)) graphics::arrows(x0[ok], y[ok], x1[ok], y[ok], length = 0.06, col = col[ok], lwd = lwd[ok])
 }
 
-# each part's rate in both comparisons, the aggregate on top; an arrow per part, coloured by
-# direction, so a reversal reads as every arrow pointing one way and the top one the other
+#' Draws the rates panel of a clearance decomposition.
+#'
+#' Each part's rate in both comparisons, the aggregate on top; an arrow per part, coloured by
+#' direction, so a reversal reads as every arrow pointing one way and the top one the other
+#' @param x A `rmbl_clearance_decomposition` object, as prepared by `.jx_cd_view()`.
+#' @param cols The two colours: rate up, rate down.
+#' @param main The title, or NULL for the default.
+#' @param ... Passed to `graphics::plot()`.
+#' @return NULL, invisibly.
+#' @noRd
 .jx_cd_rates <- function(x, cols, main, ...) {
   g <- x$groups
   o <- x$overall
@@ -1862,8 +1972,16 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, maxparts = 20
   invisible(NULL)
 }
 
-# each part's share of the workload in both comparisons, coloured by whether it clears above or
-# below the average: the mix that can turn the aggregate against its parts
+#' Draws the case-mix panel of a clearance decomposition.
+#'
+#' Each part's share of the workload in both comparisons, coloured by whether it clears above or
+#' below the average: the mix that can turn the aggregate against its parts
+#' @param x A `rmbl_clearance_decomposition` object, as prepared by `.jx_cd_view()`.
+#' @param cols The two colours: above and below the average rate.
+#' @param main The title, or NULL for the default.
+#' @param ... Passed to `graphics::plot()`.
+#' @return NULL, invisibly.
+#' @noRd
 .jx_cd_mix <- function(x, cols, main, ...) {
   g <- x$groups
   o <- x$overall
@@ -1899,7 +2017,13 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, maxparts = 20
   invisible(NULL)
 }
 
-# the change in the aggregate as a waterfall: rate effect, then mix effect, then the total
+#' The change in the aggregate as a waterfall: rate effect, then mix effect, then the total
+#' @param x A `rmbl_clearance_decomposition` object.
+#' @param cols The two colours: a gain and a loss.
+#' @param main The title, or NULL for the default.
+#' @param ... Passed to `graphics::plot()`.
+#' @return NULL, invisibly.
+#' @noRd
 .jx_cd_effects <- function(x, cols, main, ...) {
   o <- x$overall
   vals <- c(o$rateeff, o$mixeff)

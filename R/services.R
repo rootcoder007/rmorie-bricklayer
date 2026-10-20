@@ -15,8 +15,12 @@
 
 .rmbl_services_url <- "https://rmorie.com/.well-known/morie-services.json"
 .rmbl_services_context <- "morie-services"
-# ML-DSA-44 public key of the document signer (generated 2026-10-06). Rotating
-# it is a package release by design; rotating anything the document names is not.
+#' Returns the public key that signs the services document.
+#'
+#' ML-DSA-44 public key of the document signer (generated 2026-10-06). Rotating
+#' it is a package release by design; rotating anything the document names is not.
+#' @return The ML-DSA-44 public key as hex text.
+#' @noRd
 .rmbl_services_pubkey <- function() {
   paste0(
     "ed5aa38192b6ad40e692856549fa2d8977f551d6cfe36c80c5235c19d0762d3a",
@@ -66,17 +70,25 @@
 # One verified document per session: the hosted helpers ask for it on every
 # call and a signature check per call is waste. Cleared by a live refresh.
 .rmbl_services_memo <- new.env(parent = emptyenv())
+#' Clears the in-session memo of the services document.
+#' @return NULL, invisibly.
+#' @noRd
 .rmbl_services_forget <- function() {
   rm(list = ls(.rmbl_services_memo, all.names = TRUE), envir = .rmbl_services_memo)
   invisible(NULL)
 }
 
+#' Gives the path of the cached services document.
+#' @return The path of morie-services.json in the user cache directory.
+#' @noRd
 .rmbl_services_cache_path <- function() {
   dir <- tools::R_user_dir("rmoriebricklayer", "cache")
   file.path(dir, "morie-services.json")
 }
 
-# The document every field falls back to: nothing hosted is reachable.
+#' The document every field falls back to: nothing hosted is reachable.
+#' @return A services document with every service off.
+#' @noRd
 .rmbl_services_off <- function() {
   list(version = 1L, issued = "1970-01-01T00:00:00Z",
        notice = paste0("The hosted MORIE services could not be verified from this machine. ",
@@ -87,9 +99,16 @@
                    request_access = "https://www.rmorie.com/access/"))
 }
 
-# Verify the detached signature over the document's exact bytes. `pubkey`
-# is an argument so the tests can sign with a key of their own; every
-# exported path pins .rmbl_services_pubkey.
+#' Checks the detached signature over a services document.
+#'
+#' Verify the detached signature over the document's exact bytes. `pubkey`
+#' is an argument so the tests can sign with a key of their own; every
+#' exported path pins .rmbl_services_pubkey.
+#' @param doc_bytes The document as raw bytes.
+#' @param sig_json The signature document as JSON text.
+#' @param pubkey The signer's public key as hex text.
+#' @return TRUE when the signature verifies, else FALSE.
+#' @noRd
 .rmbl_services_verify <- function(doc_bytes, sig_json, pubkey = .rmbl_services_pubkey()) {
   sig <- tryCatch(.rmbl_json_text(sig_json, simplifyVector = FALSE), error = function(e) NULL)
   if (is.null(sig) || !identical(sig$scheme, "ML-DSA-44") ||
@@ -105,7 +124,10 @@
                   error = function(e) FALSE))
 }
 
-# Parse and shape-check a verified document. NULL when it is not a v1 document.
+#' Parse and shape-check a verified document. NULL when it is not a v1 document.
+#' @param doc_bytes The verified document as raw bytes.
+#' @return The document as a list, or NULL.
+#' @noRd
 .rmbl_services_parse <- function(doc_bytes) {
   d <- tryCatch(.rmbl_json_text(doc_bytes, simplifyVector = FALSE), error = function(e) NULL)
   if (!is.list(d) || !identical(as.integer(d$version), 1L)) return(NULL)
@@ -128,12 +150,22 @@
   d
 }
 
+#' Reads an issue time in the document's ISO 8601 UTC form.
+#' @param s The time as "YYYY-MM-DDTHH:MM:SSZ".
+#' @return A POSIXct time, NA when `s` is not in that form.
+#' @noRd
 .rmbl_services_time <- function(s) {
   as.POSIXct(strptime(s, "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"))
 }
 
-# Read a document+signature pair from `path` (the cache or the bundled copy):
-# verified and parsed, or NULL.
+#' Reads a document and its signature from disk.
+#'
+#' Read a document+signature pair from `path` (the cache or the bundled copy):
+#' verified and parsed, or NULL.
+#' @param path The path of the .json document; its .sig sits beside it.
+#' @param pubkey The signer's public key as hex text.
+#' @return The verified, parsed document, or NULL.
+#' @noRd
 .rmbl_services_read <- function(path, pubkey = .rmbl_services_pubkey()) {
   sig_path <- sub("[.]json$", ".sig", path)
   if (!file.exists(path) || !file.exists(sig_path)) return(NULL)
@@ -143,6 +175,12 @@
   .rmbl_services_parse(bytes)
 }
 
+#' Writes a document and its signature to disk.
+#' @param path The path of the .json document; its .sig is written beside it.
+#' @param doc_bytes The document as raw bytes.
+#' @param sig_json The signature document as JSON text.
+#' @return `path`, invisibly.
+#' @noRd
 .rmbl_services_write <- function(path, doc_bytes, sig_json) {
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   writeBin(doc_bytes, path)
@@ -251,6 +289,13 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20,
   out
 }
 
+#' Chooses the services document from the live site, the cache and the bundled copy.
+#' @param refresh Whether to fetch even when the cache is fresh.
+#' @param max_age The seconds a cached copy is used without fetching.
+#' @param timeout The seconds allowed for each download.
+#' @param offline Whether to skip the network.
+#' @return The document, with a `source` attribute: "live", "cache", "bundled" or "off".
+#' @noRd
 .rmbl_services_resolve <- function(refresh, max_age, timeout, offline) {
   cache <- .rmbl_services_cache_path()
   bundled <- .rmbl_services_read(.rmbl_services_bundled_path())
@@ -288,9 +333,14 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20,
   structure(.rmbl_services_off(), source = "off")
 }
 
-# Fetch document and signature through the checked transport; a verified,
-# parsed pair or NULL. The URL may be overridden for a mirror of the site
-# (MORIE_SERVICES_URL), which changes nothing about the signature check.
+#' Fetches the services document and its signature.
+#'
+#' Fetch document and signature through the checked transport; a verified,
+#' parsed pair or NULL. The URL may be overridden for a mirror of the site
+#' (MORIE_SERVICES_URL), which changes nothing about the signature check.
+#' @param timeout The seconds allowed for each download.
+#' @return A list with `doc`, `bytes` and `sig`, or NULL.
+#' @noRd
 .rmbl_services_fetch <- function(timeout = 20) {
   url <- Sys.getenv("MORIE_SERVICES_URL", .rmbl_services_url)
   ok <- !inherits(tryCatch(.rmbl_check_public_url(url, "MORIE_SERVICES_URL"),
@@ -313,7 +363,12 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20,
   list(doc = doc, bytes = bytes, sig = sig)
 }
 
-# The download seam (one line, so the tests can serve a document of their own).
+#' The download seam (one line, so the tests can serve a document of their own).
+#' @param url The URL.
+#' @param tmp The file the body is written to.
+#' @param timeout The seconds allowed.
+#' @return The HTTP status.
+#' @noRd
 .rmbl_net_download <- function(url, tmp, timeout) {
   # 1 MiB is a large document
   res <- .bl_net(url, .Call(C_rmbl_http_download, url, tmp, as.integer(timeout), NULL, NULL, 1048576, FALSE))
@@ -323,18 +378,31 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20,
 # The one-line answers the rest of the package asks for. Offline inside the
 # package: a sign-in or a table fetch must not block on the site; the daily
 # refresh happens when svcs() is called for its own sake.
+#' Returns the language-model block of the services document, without going online.
+#' @return The `llm` list of svcs().
+#' @noRd
 .rmbl_services_llm <- function() svcs(offline = TRUE)$llm
+#' Returns the data block of the services document, without going online.
+#' @return The `data` list of svcs().
+#' @noRd
 .rmbl_services_data <- function() svcs(offline = TRUE)$data
 
 
-# The signature sits beside the document: "x.json" -> "x.sig"; a mirror
-# without the suffix gets ".sig" appended (0.5.8 fetched the document as its
-# own signature and failed closed, silently).
+#' Gives the URL of a document's signature.
+#'
+#' The signature sits beside the document: "x.json" -> "x.sig"; a mirror
+#' without the suffix gets ".sig" appended (0.5.8 fetched the document as its
+#' own signature and failed closed, silently).
+#' @param url The document URL.
+#' @return The signature URL.
+#' @noRd
 .rmbl_services_sig_url <- function(url) {
   if (grepl("[.]json$", url)) sub("[.]json$", ".sig", url) else paste0(url, ".sig")
 }
 
-# The copy shipped with the package (one seam, so a test can stand in a bundled document).
+#' The copy shipped with the package (one seam, so a test can stand in a bundled document).
+#' @return The path of the bundled morie-services.json.
+#' @noRd
 .rmbl_services_bundled_path <- function() {
   system.file("services", "morie-services.json", package = "rmoriebricklayer")
 }

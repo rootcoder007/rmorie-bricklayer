@@ -418,9 +418,14 @@ print.bricklayer_kem_capsule <- function(x, ...) {
   invisible(x)
 }
 
-# The three levels FIPS 203 defines, and nothing else. A typo must fail
-# rather than select a default: the level is not recorded in the
-# ciphertext, so the two sides have to agree by other means.
+#' Checks an ML-KEM security level.
+#'
+#' The three levels FIPS 203 defines, and nothing else. A typo must fail
+#' rather than select a default: the level is not recorded in the
+#' ciphertext, so the two sides have to agree by other means.
+#' @param level The level passed by the user.
+#' @return The level as an integer.
+#' @noRd
 .rmbl_kem_level <- function(level) {
   # one whole number: as.integer() read c(512, 768) as 512 and 512.5 as 512
   ok <- is.numeric(level) && length(level) == 1L && !is.na(level) && level == round(level) &&
@@ -429,6 +434,10 @@ print.bricklayer_kem_capsule <- function(x, ...) {
   as.integer(level)
 }
 
+#' Checks that a key came from kemkg() or kempubkey() and returns its level.
+#' @param key The key passed by the user.
+#' @return The key's level as an integer.
+#' @noRd
 .rmbl_kem_key_level <- function(key) {
   if (!inherits(key, c("bricklayer_kem_key",
                        "bricklayer_kem_public_key"))) {

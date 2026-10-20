@@ -26,9 +26,14 @@
                      "1m" = 1e6, "1000" = 1e3, "10000" = 1e4,
                      "100000" = 1e5, "1000000" = 1e6)
 
-# `per` accepts a number or one of the shorthands, because "per 100k" is
-# how the denominator is spoken and mistyping 1e5 as 1e6 is a silent
-# factor of ten in a published number.
+#' Reads the `per` argument as a positive number.
+#'
+#' `per` accepts a number or one of the shorthands, because "per 100k" is
+#' how the denominator is spoken and mistyping 1e5 as 1e6 is a silent
+#' factor of ten in a published number.
+#' @param per A number or a shorthand such as `"100k"`.
+#' @return The multiplier as a double.
+#' @noRd
 .rate_per <- function(per) {
   if (is.character(per)) {
     key <- tolower(gsub("[ ,_]", "", per[1L]))
@@ -47,8 +52,13 @@
   per
 }
 
-# "per 100,000", not "per 1e+05" -- the label goes into published
-# tables, and 1e+05 in a table is a defect.
+#' Writes the label for a rate's denominator.
+#'
+#' "per 100,000", not "per 1e+05" -- the label goes into published
+#' tables, and 1e+05 in a table is a defect.
+#' @param per The multiplier.
+#' @return One string such as `"per 100,000"`.
+#' @noRd
 .rate_per_label <- function(per) {
   paste0("per ", formatC(per, format = "d", big.mark = ","))
 }
@@ -228,6 +238,13 @@ rtcalc.default <- function(x, pop, per = 1000, conflvl = 0.95,
                         conflvl = conflvl, mincnt = mincnt))
 }
 
+#' Computes rates per `per` with exact Poisson intervals from aggregated counts and populations.
+#' @param agg A data frame with `count`, `population` and the grouping columns.
+#' @param per The multiplier.
+#' @param conf_level The confidence level.
+#' @param min_count Counts at or below this are flagged.
+#' @return A data frame with the grouping columns, `count`, `population`, `rate`, `lower`, `upper` and `flag`.
+#' @noRd
 .rate_compute <- function(agg, per, conf_level, min_count) {
   conf_level <- .rmbl_conf_level(conf_level)
   cnt <- as.numeric(agg$count)
@@ -397,8 +414,14 @@ shrs.data.frame <- function(x, count, by = NULL, total = NULL,
                          conflvl = conflvl))
 }
 
-# one finite, non-negative number: a data frame or a vector in `total` (shrs(1e308, stops, by =
-# "division")) failed in as.numeric()'s words (hostile battery, final audit of 1.0.0)
+#' Checks the `total` argument of shrs().
+#'
+#' One finite, non-negative number: a data frame or a vector in `total` (shrs(1e308, stops, by =
+#' "division")) failed in as.numeric()'s words (hostile battery, final audit of 1.0.0)
+#' @param total The value passed by the user.
+#' @param also Extra text for the error message naming other accepted forms.
+#' @return The total as a double.
+#' @noRd
 .share_total <- function(total, also) {
   if (!is.numeric(total) || length(total) != 1L || !is.finite(total) || total < 0) {
     stop(sprintf("`total` must be NULL, %sone finite non-negative number", also), call. = FALSE)
@@ -424,6 +447,12 @@ shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
                          conflvl = conflvl))
 }
 
+#' Computes each count's share of a total, in percent, with Wilson intervals.
+#' @param agg A data frame with `count` and the grouping columns.
+#' @param denom The total the counts are shares of.
+#' @param conf_level The confidence level.
+#' @return A data frame with the grouping columns, `count`, `total`, `share`, `lower` and `upper`.
+#' @noRd
 .share_compute <- function(agg, denom, conf_level) {
   conf_level <- .rmbl_conf_level(conf_level)
   cnt <- as.numeric(agg$count)
@@ -449,9 +478,16 @@ shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
   out
 }
 
-# Wilson's score interval, in percent. Stays inside [0, 100] at the
-# small counts and extreme shares where the normal approximation
-# reports impossible values.
+#' Computes Wilson's score interval for a share, in percent.
+#'
+#' Wilson's score interval, in percent. Stays inside \[0, 100\] at the
+#' small counts and extreme shares where the normal approximation
+#' reports impossible values.
+#' @param cnt The counts.
+#' @param n The total.
+#' @param conf_level The confidence level.
+#' @return A list with `lower` and `upper`.
+#' @noRd
 .share_wilson <- function(cnt, n, conf_level) {
   conf_level <- .rmbl_conf_level(conf_level)
   z <- stats::qnorm(1 - (1 - conf_level) / 2)
@@ -654,10 +690,16 @@ ratechg.data.frame <- function(x, count, pop, prd, by = NULL,
                                mincnt = mincnt))
 }
 
-# Match on the PERIOD, not on position: the comparison row is the one
-# whose period is `lag` steps earlier on the observed grid, and is NA
-# when that period is absent. Position would compare 2023 against 2020
-# whenever 2021 were missing and say nothing about it.
+#' Finds, for each row, the row whose period is `lag` steps earlier.
+#'
+#' Match on the PERIOD, not on position: the comparison row is the one
+#' whose period is `lag` steps earlier on the observed grid, and is NA
+#' when that period is absent. Position would compare 2023 against 2020
+#' whenever 2021 were missing and say nothing about it.
+#' @param p The periods.
+#' @param lag The number of steps back.
+#' @return An integer index vector, NA where that period is absent.
+#' @noRd
 .rate_previous_index <- function(p, lag) {
   key <- if (is.numeric(p)) p else as.character(p)
   want <- if (is.numeric(p)) p - lag else NA
@@ -678,11 +720,20 @@ ratechg.data.frame <- function(x, count, pop, prd, by = NULL,
   match(want, key)
 }
 
-# The exact conditional interval for a rate ratio. Given the two counts,
-# a is binomial on a + b with success probability
-# p = RR * ta / (RR * ta + tb); inverting a qbeta interval for p gives
-# the interval for RR. With ta == tb this is the same construction
-# yoy() uses for counts.
+#' Computes the exact conditional interval for a rate ratio.
+#'
+#' The exact conditional interval for a rate ratio. Given the two counts,
+#' a is binomial on a + b with success probability
+#' p = RR * ta / (RR * ta + tb); inverting a qbeta interval for p gives
+#' the interval for RR. With ta == tb this is the same construction
+#' yoy() uses for counts.
+#' @param a The current counts.
+#' @param b The comparison counts.
+#' @param ta The current exposures.
+#' @param tb The comparison exposures.
+#' @param conf_level The confidence level.
+#' @return A list with `lower` and `upper`, as percent changes.
+#' @noRd
 .rate_ratio_ci <- function(a, b, ta, tb, conf_level) {
   conf_level <- .rmbl_conf_level(conf_level)
   n <- length(a)

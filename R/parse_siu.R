@@ -338,10 +338,15 @@ siuso <- function(text) {
 }
 
 
-# The core splits any line longer than 2000 characters before the extractors
-# run (their regexes recurse once per character); it prefers a sentence end
-# and counts what it split. A field spanning a split can come back incomplete,
-# so the count is said, never swallowed (the SIU review's silent truncation).
+#' Warns when the core split long lines before extraction.
+#'
+#' The core splits any line longer than 2000 characters before the extractors
+#' run (their regexes recurse once per character); it prefers a sentence end
+#' and counts what it split. A field spanning a split can come back incomplete,
+#' so the count is said, never swallowed (the SIU review's silent truncation).
+#' @param x The core result, possibly carrying a `split_lines` attribute.
+#' @return `x` with the attribute removed.
+#' @noRd
 .bl_siu_split_warn <- function(x) {
   n <- attr(x, "split_lines", exact = TRUE)
   if (!is.null(n)) {

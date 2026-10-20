@@ -14,16 +14,24 @@
 # A package with more help pages than this is searched, not listed in full.
 .bl_kn_list_max <- 800L
 
-# The packages whose help and messages ask and explain-error read when none are named: this one.
-# This package names no package built on it. Such a package passes its own (`packages =`), and its
-# command line sets RMBL_PACKAGES (comma-separated) for the verbs it hands over, the way RMBL_PROG
-# names the command. A package with thousands of pages is searched by the tools, not listed.
+#' Names the packages whose help is read when none are named.
+#'
+#' The packages whose help and messages ask and explain-error read when none are named: this one.
+#' This package names no package built on it. Such a package passes its own (`packages =`), and its
+#' command line sets RMBL_PACKAGES (comma-separated) for the verbs it hands over, the way RMBL_PROG
+#' names the command. A package with thousands of pages is searched by the tools, not listed.
+#' @return A character vector of package names.
+#' @noRd
 .bl_kn_default_packages <- function() {
   v <- trimws(strsplit(Sys.getenv("RMBL_PACKAGES", unset = ""), ",", fixed = TRUE)[[1L]])
   v <- v[nzchar(v)]
   if (length(v)) unique(v) else "rmoriebricklayer"
 }
 
+#' Flattens a parsed Rd fragment to its text, comments dropped.
+#' @param x An Rd fragment, or a character vector.
+#' @return One string.
+#' @noRd
 .bl_rd_plain <- function(x) {
   if (is.character(x)) return(paste(x, collapse = ""))
   tag <- attr(x, "Rd_tag") %||% ""
@@ -31,12 +39,21 @@
   paste(vapply(x, .bl_rd_plain, ""), collapse = "")
 }
 
+#' Gives the text of one section of a parsed Rd page, its white space collapsed.
+#' @param rd A parsed Rd page.
+#' @param tag The section tag, such as "\\title".
+#' @return One string, "" when the page has no such section.
+#' @noRd
 .bl_rd_section <- function(rd, tag) {
   hit <- rd[.bl_rd_tags(rd) == tag]
   if (!length(hit)) return("")
   trimws(gsub("[[:space:]]+", " ", .bl_rd_plain(hit[[1L]])))
 }
 
+#' Splits text into lower-case search terms, stop words dropped and lightly stemmed.
+#' @param x One string.
+#' @return A character vector of terms.
+#' @noRd
 .bl_kn_tokens <- function(x) {
   w <- strsplit(tolower(x), "[^a-z0-9_]+")[[1L]]
   w <- w[nchar(w) >= 2L]
@@ -55,8 +72,13 @@
   w
 }
 
-# The help pages of one installed package: one record per page (name, aliases, title,
-# description, usage, exported, tokens), cached for the session and the installed version.
+#' Reads the help pages of one installed package into search records.
+#'
+#' The help pages of one installed package: one record per page (name, aliases, title,
+#' description, usage, exported, tokens), cached for the session and the installed version.
+#' @param pkg The package name.
+#' @return A list of page records.
+#' @noRd
 .bl_kn_pages <- function(pkg) {
   ver <- tryCatch(as.character(utils::packageVersion(pkg)), error = function(e) "")
   key <- paste(pkg, ver)
@@ -84,10 +106,20 @@
   pages
 }
 
+#' Collects the help page records of several packages.
+#' @param pkgs The package names.
+#' @return A list of page records.
+#' @noRd
 .bl_kn_all_pages <- function(pkgs) unlist(lapply(pkgs, .bl_kn_pages), recursive = FALSE)
 
-# The call of `fn` in a usage section, its parentheses balanced (an argument default such as
-# c("a", "b") holds its own), spaces inside the brackets dropped: "svydes(data, weights, ...)".
+#' Extracts a function's call from a usage section.
+#'
+#' The call of `fn` in a usage section, its parentheses balanced (an argument default such as
+#' c("a", "b") holds its own), spaces inside the brackets dropped: "svydes(data, weights, ...)".
+#' @param usage The usage section's text.
+#' @param fn The function name.
+#' @return The call as one string, or `fn` when the usage does not show it.
+#' @noRd
 .bl_kn_call <- function(usage, fn) {
   at <- regexpr(paste0(fn, "("), usage, fixed = TRUE)
   if (at < 0L) return(fn)
@@ -104,7 +136,12 @@
   gsub(" +\\)", ")", gsub("\\( +", "(", sig))
 }
 
-# One line per exported function: name(arguments)  -- title. A long signature is cut.
+#' Writes the index of exported functions the model is given.
+#'
+#' One line per exported function: name(arguments)  -- title. A long signature is cut.
+#' @param pages The page records.
+#' @return A character vector of index lines.
+#' @noRd
 .bl_kn_index_lines <- function(pages) {
   out <- character()
   for (p in pages) {
@@ -117,7 +154,12 @@
   unique(out)
 }
 
-# BM25 over the pages' text: the best `k` pages for a query (k1 = 1.2, b = 0.75).
+#' BM25 over the pages' text: the best `k` pages for a query (k1 = 1.2, b = 0.75).
+#' @param query The question.
+#' @param pages The page records.
+#' @param k The most pages returned.
+#' @return A list of the best page records, best first.
+#' @noRd
 .bl_kn_search <- function(query, pages, k = 8L) {
   q <- unique(.bl_kn_tokens(query))
   if (!length(q) || !length(pages)) return(list())
@@ -138,17 +180,34 @@
   pages[utils::head(o, k)]
 }
 
+#' Finds the page that documents a function.
+#' @param name The function name or alias.
+#' @param pages The page records.
+#' @return The page record, or NULL.
+#' @noRd
 .bl_kn_find <- function(name, pages) {
   hit <- Filter(function(p) name %in% p$aliases, pages)
   if (length(hit)) hit[[1L]] else NULL
 }
 
+#' Renders a page record as plain text.
+#' @param p A page record.
+#' @return One string.
+#' @noRd
 .bl_kn_render <- function(p) paste(.bl_rd_text(p$rd), collapse = "\n")
 
+#' Cuts text to a number of characters and marks the cut.
+#' @param x One string.
+#' @param n The most characters kept.
+#' @return The text, cut when longer than `n`.
+#' @noRd
 .bl_kn_clip <- function(x, n = 9000L) if (nchar(x) > n) paste0(substr(x, 1L, n), "\n[... cut]") else x
 
 # ---- the tools the model may call ------------------------------------------------------------
 
+#' Declares the five read-only tools the model may call.
+#' @return A list of tools, each with a name, a description and a JSON schema.
+#' @noRd
 .bl_kn_tools <- function() {
   str <- function(d) list(type = "string", description = d)
   obj <- function(props, req) list(type = "object", properties = props, required = I(req))
@@ -168,6 +227,11 @@
   )
 }
 
+#' Lists the datasets the packages ship and the curated tables in the cached manifest.
+#' @param filter A word to filter by, or "" for all.
+#' @param pkgs The package names.
+#' @return The list as text.
+#' @noRd
 .bl_kn_datasets <- function(filter, pkgs) {
   out <- character()
   for (p in pkgs) {
@@ -191,9 +255,17 @@
   .bl_kn_clip(paste(utils::head(out, 200L), collapse = "\n"))
 }
 
-# The installed doc/ folder of each package ("" when it has none).
+#' The installed doc/ folder of each package ("" when it has none).
+#' @param p The package name.
+#' @return The folder's path, or "".
+#' @noRd
 .bl_kn_doc_dir <- function(p) system.file("doc", package = p)
 
+#' Reads an installed vignette, or lists them when no name is given.
+#' @param name The vignette name, or "" to list them.
+#' @param pkgs The package names.
+#' @return The vignette's source, or the list, as text.
+#' @noRd
 .bl_kn_vignette <- function(name, pkgs) {
   docs <- as.character(unlist(lapply(pkgs, function(p) {
     d <- .bl_kn_doc_dir(p)
@@ -210,8 +282,15 @@
   .bl_kn_clip(paste(readLines(hit[[1L]], warn = FALSE), collapse = "\n"), 14000L)
 }
 
-# Run one tool call: always text, never an error (a bad call is answered in words). `clip` is the
-# most text a page may return (smaller for a local model, whose context is small).
+#' Runs one tool call the model made.
+#'
+#' Run one tool call: always text, never an error (a bad call is answered in words). `clip` is the
+#' most text a page may return (smaller for a local model, whose context is small).
+#' @param call The tool call, with its name and arguments.
+#' @param pkgs The package names.
+#' @param clip The most characters a page may return.
+#' @return The tool's answer as text.
+#' @noRd
 .bl_kn_run_tool <- function(call, pkgs, clip = 9000L) {
   a <- call$arguments
   arg <- function(n) {
@@ -257,9 +336,16 @@
 
 # ---- the conversation ------------------------------------------------------------------------
 
-# The instructions stay the same from one question to the next (the functions picked for a question
-# travel with the question), so a server's prompt cache can reuse them: Ollama, OpenAI, DeepSeek and
-# Gemini do it on their own for an unchanged start, Anthropic when asked (.bl_anthropic_body).
+#' Writes the model's instructions.
+#'
+#' The instructions stay the same from one question to the next (the functions picked for a question
+#' travel with the question), so a server's prompt cache can reuse them: Ollama, OpenAI, DeepSeek and
+#' Gemini do it on their own for an unchanged start, Anthropic when asked (.bl_anthropic_body).
+#' @param pkgs The package names.
+#' @param index_lines The index of exported functions, or none.
+#' @param extra More lines for the instructions, or NULL.
+#' @return The instructions as one string.
+#' @noRd
 .bl_kn_system <- function(pkgs, index_lines, extra = NULL) {
   where <- if (length(index_lines)) "the index below lists every one" else
     "the ones nearest the question are listed with it, and search_docs finds the rest"
@@ -278,19 +364,30 @@
     if (length(index_lines)) c("", "Exported functions (name(arguments)  -- title):", index_lines)), collapse = "\n")
 }
 
-# A model that says it cannot take tools (HTTP 400 naming them, as Ollama and many servers answer)
+#' Tells whether an error says the model cannot take tools.
+#'
+#' A model that says it cannot take tools (HTTP 400 naming them, as Ollama and many servers answer)
+#' @param e The condition.
+#' @return TRUE or FALSE.
+#' @noRd
 .bl_kn_no_tools <- function(e) {
   grepl("(?i)\\b(tools?|tool_choice|function[ _]?call(ing)?|functions)\\b", conditionMessage(e), perl = TRUE) &&
     grepl("(?i)answered 4[0-9][0-9]", conditionMessage(e), perl = TRUE)
 }
 
-# How much the model can take in, in tokens: what decides how much of the help goes into its
-# instructions. A provider's model (any key you bring) and a model Ollama serves from its cloud
-# (minimax-m3:cloud reports 512,000) have room for all of it. A model Ollama runs on this machine
-# or the LAN works in Ollama's own context window, 4,096 tokens unless the server was started with
-# OLLAMA_CONTEXT_LENGTH, whatever the model could take, and on a CPU it reads the whole prompt
-# again every round. Your own endpoint is taken as large when it is remote and as 8,192 when it is
-# on this machine (LM Studio and llama.cpp start small too). MORIE_LLM_CONTEXT (tokens) overrides.
+#' Gives the context size of a model, in tokens.
+#'
+#' How much the model can take in, in tokens: what decides how much of the help goes into its
+#' instructions. A provider's model (any key you bring) and a model Ollama serves from its cloud
+#' (minimax-m3:cloud reports 512,000) have room for all of it. A model Ollama runs on this machine
+#' or the LAN works in Ollama's own context window, 4,096 tokens unless the server was started with
+#' OLLAMA_CONTEXT_LENGTH, whatever the model could take, and on a CPU it reads the whole prompt
+#' again every round. Your own endpoint is taken as large when it is remote and as 8,192 when it is
+#' on this machine (LM Studio and llama.cpp start small too). MORIE_LLM_CONTEXT (tokens) overrides.
+#' @param rt The route.
+#' @param model The model name.
+#' @return The number of tokens.
+#' @noRd
 .bl_llm_capacity <- function(rt, model) {
   set <- suppressWarnings(as.numeric(.bl_env1("MORIE_LLM_CONTEXT") %||% NA))
   if (is.finite(set) && set > 0) return(set)
@@ -308,18 +405,34 @@
   if (isTRUE(rt$local)) 8192 else 128000
 }
 
-# What a context of that size gets: the whole index of every function with full help pages and six
-# rounds of lookups; or, for a small one, the functions nearest the question, shorter pages and
-# fewer rounds. Every tier can still reach every function: search_docs and get_help look up any
-# page of the packages.
+#' Gives how much help goes to a model with a context of a given size.
+#'
+#' What a context of that size gets: the whole index of every function with full help pages and six
+#' rounds of lookups; or, for a small one, the functions nearest the question, shorter pages and
+#' fewer rounds. Every tier can still reach every function: search_docs and get_help look up any
+#' page of the packages.
+#' @param tokens The context size in tokens.
+#' @return A list with the tier `name`, the `index` size, the page `clip`, the `rounds` and the `pages`.
+#' @noRd
 .bl_llm_tier <- function(tokens) {
   if (tokens >= 32000) return(list(name = "full", index = Inf, clip = 9000L, rounds = 6L, pages = 6L))
   if (tokens >= 8000) return(list(name = "compact", index = 120L, clip = 4000L, rounds = 4L, pages = 4L))
   list(name = "small", index = 40L, clip = 2500L, rounds = 3L, pages = 2L)
 }
 
-# Ask with the packages' help at hand: tools when the model takes them, else the matching pages in
-# the prompt. Returns the reply text.
+#' Asks a model a question with the packages' help at hand.
+#'
+#' Ask with the packages' help at hand: tools when the model takes them, else the matching pages in
+#' the prompt. Returns the reply text.
+#' @param rt The route.
+#' @param model The model name.
+#' @param prompt The question.
+#' @param pkgs The package names.
+#' @param system_extra More lines for the instructions, or NULL.
+#' @param timeout The request timeout in seconds.
+#' @param max_rounds The most rounds of tool calls, or NULL for the tier's.
+#' @return The reply text.
+#' @noRd
 .bl_llm_assist <- function(rt, model, prompt, pkgs, system_extra = NULL, timeout = 120, max_rounds = NULL) {
   pages <- .bl_kn_all_pages(pkgs)
   tier <- .bl_llm_tier(.bl_llm_capacity(rt, model))
@@ -431,7 +544,16 @@
   ans
 }
 
-# No tools: the pages that match the question go into the prompt.
+#' No tools: the pages that match the question go into the prompt.
+#' @param rt The route.
+#' @param model The model name.
+#' @param prompt The question.
+#' @param pkgs The package names.
+#' @param sys The instructions.
+#' @param timeout The request timeout in seconds.
+#' @param tier The tier, from .bl_llm_tier().
+#' @return The reply text.
+#' @noRd
 .bl_llm_assist_plain <- function(rt, model, prompt, pkgs, sys, timeout, tier = .bl_llm_tier(128000)) {
   hit <- .bl_kn_search(prompt, .bl_kn_all_pages(pkgs), tier$pages)
   ctx <- vapply(hit, function(p) .bl_kn_clip(.bl_kn_render(p), tier$clip), "")

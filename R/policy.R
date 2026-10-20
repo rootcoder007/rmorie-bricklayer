@@ -18,30 +18,42 @@
 
 kAnyPolicy <- "2.5.29.32.0"
 
-# An absent field is NA, not NULL.
-#
-# `is.na(NULL)` is logical(0), and `if (logical(0))` is an error, not
-# FALSE -- so reading a counter straight out of a list that happens not
-# to carry it fails rather than defaulting. certprs() always sets
-# these, but a certificate built by hand, or one round-tripped through
-# JSON where NA became null, does not.
+#' An absent field is NA, not NULL.
+#'
+#' `is.na(NULL)` is logical(0), and `if (logical(0))` is an error, not
+#' FALSE -- so reading a counter straight out of a list that happens not
+#' to carry it fails rather than defaulting. certprs() always sets
+#' these, but a certificate built by hand, or one round-tripped through
+#' JSON where NA became null, does not.
+#' @param x A field read from a certificate list, possibly NULL.
+#' @return One integer, NA when the field is absent.
+#' @noRd
 .rmbl_na_int <- function(x) {
   if (is.null(x) || !length(x)) return(NA_integer_)
   suppressWarnings(as.integer(x)[1L])
 }
 
+#' Reads a field as character, giving `character(0)` for NULL.
+#' @param x A field read from a certificate list, possibly NULL.
+#' @return A character vector.
+#' @noRd
 .rmbl_chr0 <- function(x) {
   if (is.null(x)) character(0) else as.character(x)
 }
 
-# The policy set valid for a path, working from the anchor down.
-#
-# `path` is leaf-first, as certchnvrf() builds it; the algorithm
-# runs root-first, which is why it is reversed. The counters start at
-# the number of certificates and are decremented as the standard says:
-# a value of zero at a certificate means the constraint is in force for
-# that certificate onward, which is why they are tested before being
-# decremented.
+#' The policy set valid for a path, working from the anchor down.
+#'
+#' `path` is leaf-first, as certchnvrf() builds it; the algorithm
+#' runs root-first, which is why it is reversed. The counters start at
+#' the number of certificates and are decremented as the standard says:
+#' a value of zero at a certificate means the constraint is in force for
+#' that certificate onward, which is why they are tested before being
+#' decremented.
+#' @param path The certificate path, leaf first.
+#' @param initial The initial policy set the caller accepts.
+#' @return A list with the valid policy set, the authorities it is constrained to, the explicit-policy and inhibit
+#'   flags, the mappings seen, notes, and `ok`.
+#' @noRd
 .rmbl_policy_tree <- function(path, initial = kAnyPolicy) {
   certs <- rev(path)                       # anchor first
   n <- length(certs)

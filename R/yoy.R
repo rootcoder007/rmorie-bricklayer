@@ -311,12 +311,18 @@ yoy.ts <- function(x, lag = NULL, ...) {
   yoy.data.frame(d, value = "value", prd = "period", lag = lag, ...)
 }
 
-# Resolve a column given either a bare name or a string.
-#
-# The unevaluated argument is consulted FIRST. Testing is.character(val)
-# before that forces the promise, so a bare column name -- the whole
-# point of accepting one -- raised "object 'n' not found" instead of
-# naming the column.
+#' Resolve a column given either a bare name or a string.
+#'
+#' The unevaluated argument is consulted FIRST. Testing is.character(val)
+#' before that forces the promise, so a bare column name -- the whole
+#' point of accepting one -- raised "object 'n' not found" instead of
+#' naming the column.
+#' @param sub The unevaluated argument, from `substitute()`.
+#' @param val The argument itself.
+#' @param data The data frame.
+#' @param what The argument's name, used in the error message.
+#' @return The column's name.
+#' @noRd
 .yoy_col <- function(sub, val, data, what) {
   nm <- NULL
   if (is.name(sub)) {
@@ -339,7 +345,14 @@ yoy.ts <- function(x, lag = NULL, ...) {
   nm
 }
 
-# Collapse to one row per period (and group).
+#' Collapse to one row per period (and group).
+#' @param x The data frame.
+#' @param value The value column's name.
+#' @param period The period column's name.
+#' @param by The group columns' names, or NULL.
+#' @param fun The function that collapses a period's values to one.
+#' @return A data frame ordered by group and period.
+#' @noRd
 .yoy_aggregate <- function(x, value, period, by, fun) {
   keys <- c(period, by)
   if (!anyDuplicated(x[keys])) {
@@ -356,11 +369,20 @@ yoy.ts <- function(x, lag = NULL, ...) {
   out[order(.yoy_order(out, keys)), , drop = FALSE]
 }
 
+#' Orders rows by the keys taken last first, so rows sort by group and then by period.
+#' @param d The data frame.
+#' @param keys The columns to order by.
+#' @return An integer permutation.
+#' @noRd
 .yoy_order <- function(d, keys) {
   do.call(order, lapply(rev(keys), function(k) d[[k]]))
 }
 
-# Put a stringified key back into the class it came from.
+#' Put a stringified key back into the class it came from.
+#' @param chr The stringified key.
+#' @param orig The original column.
+#' @return `chr` in the class of `orig`.
+#' @noRd
 .yoy_restore <- function(chr, orig) {
   if (is.factor(orig)) return(factor(chr, levels = levels(orig)))
   if (inherits(orig, "Date")) return(as.Date(chr))
@@ -371,8 +393,14 @@ yoy.ts <- function(x, lag = NULL, ...) {
   chr
 }
 
-# Insert the periods that are absent from the observed range, so a gap
-# shows as a gap instead of the next period closing up over it.
+#' Insert the periods that are absent from the observed range, so a gap
+#' shows as a gap instead of the next period closing up over it.
+#' @param agg The aggregated data, from `.yoy_aggregate()`.
+#' @param period The period column's name.
+#' @param by The group columns' names, or NULL.
+#' @param lag The comparison lag, in periods.
+#' @return `agg` with the missing periods added as rows with no value.
+#' @noRd
 .yoy_complete <- function(agg, period, by, lag) {
   p <- agg[[period]]
   full <- .yoy_period_grid(p)
@@ -396,7 +424,10 @@ yoy.ts <- function(x, lag = NULL, ...) {
   out[order(.yoy_order(out, c(period, by))), , drop = FALSE]
 }
 
-# The regular grid a period column implies, or NULL when it has none.
+#' The regular grid a period column implies, or NULL when it has none.
+#' @param p The period column.
+#' @return A vector of periods, or NULL.
+#' @noRd
 .yoy_period_grid <- function(p) {
   if (is.ordered(p)) {
     r <- range(as.integer(p), na.rm = TRUE)
@@ -423,6 +454,10 @@ yoy.ts <- function(x, lag = NULL, ...) {
   NULL
 }
 
+#' Returns the greatest common step of period differences, or the smallest when they are fractional.
+#' @param d The differences.
+#' @return A number, or NA when there is no positive difference.
+#' @noRd
 .yoy_gcd <- function(d) {
   d <- d[is.finite(d) & d > 0]
   if (!length(d)) return(NA_real_)
@@ -439,7 +474,18 @@ yoy.ts <- function(x, lag = NULL, ...) {
   as.numeric(g)
 }
 
-# The comparison itself.
+#' The comparison itself.
+#' @param agg The completed data, from `.yoy_complete()`.
+#' @param value The value column's name.
+#' @param period The period column's name.
+#' @param by The group columns' names, or NULL.
+#' @param lag The comparison lag, in periods.
+#' @param units "count", "percent" or another unit.
+#' @param min_base The previous value below which a change is flagged as a small base.
+#' @param conf_level The confidence level of the count-ratio interval.
+#' @param direction "higher", "lower" or "neutral": which way is better.
+#' @return A data frame, one row per period and group.
+#' @noRd
 .yoy_compute <- function(agg, value, period, by, lag, units, min_base,
                          conf_level, direction) {
   conf_level <- .rmbl_conf_level(conf_level)
@@ -504,7 +550,12 @@ yoy.ts <- function(x, lag = NULL, ...) {
   out
 }
 
-# Previous value at the period `lag` grid-steps earlier.
+#' Previous value at the period `lag` grid-steps earlier.
+#' @param p The periods.
+#' @param v The values.
+#' @param lag The lag, in grid steps.
+#' @return A double vector, NA where the earlier period is absent.
+#' @noRd
 .yoy_previous <- function(p, v, lag) {
   # A period has to be on a numeric scale for "lag periods earlier" to
   # mean anything. A character or factor column -- "Q1", "Q2" -- has no
@@ -540,15 +591,20 @@ yoy.ts <- function(x, lag = NULL, ...) {
   out
 }
 
-# Exact interval for the ratio of two counts.
-#
-# Conditional on the total a + b, the current count a is
-# Binomial(a + b, p) with p = R / (1 + R), where R is the ratio of the
-# two periods' rates. A Clopper-Pearson interval for p therefore maps
-# straight onto an exact interval for R, and from there to the percent
-# change. No simulation and no normal approximation, which is what makes
-# it usable at the small counts where the percent change is least
-# trustworthy.
+#' Exact interval for the ratio of two counts.
+#'
+#' Conditional on the total a + b, the current count a is
+#' Binomial(a + b, p) with p = R / (1 + R), where R is the ratio of the
+#' two periods' rates. A Clopper-Pearson interval for p therefore maps
+#' straight onto an exact interval for R, and from there to the percent
+#' change. No simulation and no normal approximation, which is what makes
+#' it usable at the small counts where the percent change is least
+#' trustworthy.
+#' @param a The current counts.
+#' @param b The previous counts.
+#' @param conf_level The confidence level.
+#' @return A list with the percent-change limits `lower` and `upper`.
+#' @noRd
 .yoy_ratio_ci <- function(a, b, conf_level) {
   conf_level <- .rmbl_conf_level(conf_level)
   n <- length(a)
@@ -567,9 +623,13 @@ yoy.ts <- function(x, lag = NULL, ...) {
   list(lower = lower, upper = upper)
 }
 
-# How many decimals the value column needs. A count has none; a measured
-# quantity keeps what it actually carries, so a rate of 4.1 does not
-# print as 4 and its change of 0.5 does not print as 0.
+#' How many decimals the value column needs. A count has none; a measured
+#' quantity keeps what it actually carries, so a rate of 4.1 does not
+#' print as 4 and its change of 0.5 does not print as 0.
+#' @param v The values.
+#' @param units "count" or another unit.
+#' @return An integer from 0 to 6.
+#' @noRd
 .yoy_value_digits <- function(v, units) {
   if (identical(units, "count")) return(0L)
   fin <- v[is.finite(v)]
@@ -581,6 +641,11 @@ yoy.ts <- function(x, lag = NULL, ...) {
   min(6L, max(dec))
 }
 
+#' Names each change: up, down or unchanged, or better or worse when a direction is set.
+#' @param chg The changes.
+#' @param direction "higher", "lower" or "neutral".
+#' @return A character vector.
+#' @noRd
 .yoy_verdict <- function(chg, direction) {
   out <- rep(NA_character_, length(chg))
   ok <- !is.na(chg)

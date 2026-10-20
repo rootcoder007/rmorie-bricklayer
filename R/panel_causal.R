@@ -7,7 +7,10 @@
 
 # ---- learners --------------------------------------------------------------------------------------
 
-# Columns scaled by their training moments (1/n), the convention of glmnet
+#' Columns scaled by their training moments (1/n), the convention of glmnet
+#' @param x The design matrix.
+#' @return A list with `mu` and `sd`; a constant column has `sd` 1.
+#' @noRd
 .rmbl_scale_fit <- function(x) {
   mu <- colMeans(x)
   sdv <- sqrt(colMeans(sweep(x, 2L, mu)^2))
@@ -15,9 +18,16 @@
   list(mu = mu, sd = sdv)
 }
 
-# The lasso by cyclic coordinate descent: (1/2n) ||y - a - X b||^2 + lambda ||b||_1 on standardised X,
-# along a decreasing path of lambda (warm starts). Returns the coefficients at each lambda, on the
-# original scale, with the intercept first.
+#' Fits the lasso along a path of penalties.
+#'
+#' The lasso by cyclic coordinate descent: (1/2n) ||y - a - X b||^2 + lambda ||b||_1 on standardised X,
+#' along a decreasing path of lambda (warm starts). Returns the coefficients at each lambda, on the
+#' original scale, with the intercept first.
+#' @param x The design matrix.
+#' @param y The response.
+#' @param lambda The penalties, decreasing.
+#' @return A matrix with one column of coefficients per penalty.
+#' @noRd
 .rmbl_lasso_path <- function(x, y, lambda) {
   sc <- .rmbl_scale_fit(x)
   z <- sweep(sweep(x, 2L, sc$mu), 2L, sc$sd, "/")
@@ -49,6 +59,12 @@
   out
 }
 
+#' Makes the decreasing path of lasso penalties, from the smallest that sets every coefficient to zero.
+#' @param x The design matrix.
+#' @param y The response.
+#' @param n_lambda The number of penalties.
+#' @return The penalties, on a log scale.
+#' @noRd
 .rmbl_lasso_lambdas <- function(x, y, n_lambda = 60L) {
   sc <- .rmbl_scale_fit(x)
   z <- sweep(sweep(x, 2L, sc$mu), 2L, sc$sd, "/")
@@ -57,7 +73,13 @@
   exp(seq(log(lmax), log(lmax * if (nrow(x) > ncol(x)) 1e-4 else 1e-2), length.out = n_lambda))
 }
 
-# lasso with lambda chosen by K-fold cross-validation (the minimum of the mean squared error)
+#' Lasso with lambda chosen by K-fold cross-validation (the minimum of the mean squared error)
+#' @param xtr The training design matrix.
+#' @param ytr The training response.
+#' @param xte The test design matrix.
+#' @param k The number of cross-validation folds.
+#' @return One prediction per test row.
+#' @noRd
 .rmbl_lasso_cv <- function(xtr, ytr, xte, k = 5L) {
   lam <- .rmbl_lasso_lambdas(xtr, ytr)
   f <- rep_len(seq_len(k), nrow(xtr))[order(stats::runif(nrow(xtr)))]
@@ -72,7 +94,12 @@
   as.vector(cbind(1, xte) %*% b[, ncol(b)])
 }
 
-# ridge with the penalty chosen by generalised cross-validation, through the SVD of standardised X
+#' Ridge with the penalty chosen by generalised cross-validation, through the SVD of standardised X
+#' @param xtr The training design matrix.
+#' @param ytr The training response.
+#' @param xte The test design matrix.
+#' @return One prediction per test row.
+#' @noRd
 .rmbl_ridge_gcv <- function(xtr, ytr, xte) {
   sc <- .rmbl_scale_fit(xtr)
   z <- sweep(sweep(xtr, 2L, sc$mu), 2L, sc$sd, "/")
@@ -92,6 +119,12 @@
   as.vector(my + zt %*% beta)
 }
 
+#' Fits least squares on training rows and predicts the test rows.
+#' @param xtr The training design matrix.
+#' @param ytr The training response.
+#' @param xte The test design matrix.
+#' @return One prediction per test row; an aliased coefficient counts as zero.
+#' @noRd
 .rmbl_ols_learner <- function(xtr, ytr, xte) {
   q <- qr(cbind(1, xtr))
   b <- qr.coef(q, ytr)
@@ -99,6 +132,10 @@
   as.vector(cbind(1, xte) %*% b)
 }
 
+#' Turns a learner name or a user function into a function(xtr, ytr, xte).
+#' @param learner "lasso", "ridge", "ols" or a function of the training and test data.
+#' @return The learner function.
+#' @noRd
 .rmbl_learner <- function(learner) {
   if (is.function(learner)) {
     # called as learner(xtr, ytr, xte): a function of fewer arguments failed in R's words
@@ -120,7 +157,10 @@
   switch(learner, lasso = .rmbl_lasso_cv, ridge = .rmbl_ridge_gcv, ols = .rmbl_ols_learner)
 }
 
-# squares and pairwise products of the columns, so the penalised learners can find a nonlinear fit
+#' Squares and pairwise products of the columns, so the penalised learners can find a nonlinear fit
+#' @param x The design matrix.
+#' @return `x` with the square and product columns appended.
+#' @noRd
 .rmbl_poly2 <- function(x) {
   p <- ncol(x)
   nm <- colnames(x)
@@ -498,8 +538,15 @@ print.rmbl_matched_did <- function(x, ...) {
 
 # ---- synthetic difference in differences -----------------------------------------------------------
 
-# min over the simplex (with a free intercept) of (1/n) ||A w - b||^2 + zeta^2 ||w||^2; A rows are the
-# fitting points, columns the candidates. The intercept is removed by centring the columns.
+#' Computes synthetic difference-in-differences weights.
+#'
+#' Min over the simplex (with a free intercept) of (1/n) ||A w - b||^2 + zeta^2 ||w||^2; A rows are the
+#' fitting points, columns the candidates. The intercept is removed by centring the columns.
+#' @param a The matrix of fitting points (rows) by candidates (columns).
+#' @param b The target at each fitting point.
+#' @param zeta The ridge penalty.
+#' @return The weights, on the simplex.
+#' @noRd
 .rmbl_sdid_weights <- function(a, b, zeta) {
   ac <- sweep(a, 2L, colMeans(a))
   bc <- b - mean(b)

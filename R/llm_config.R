@@ -13,16 +13,25 @@
 # settings asked for them dozens of times) and kept in .bl_cfg_state.
 .bl_cfg_state <- new.env(parent = emptyenv())
 
+#' Returns the provider presets, built once per session.
+#' @return The presets data frame of `.bl_llm_presets()`.
+#' @noRd
 .bl_cfg_presets <- function() {
   if (is.null(.bl_cfg_state$presets)) .bl_cfg_state$presets <- .bl_llm_presets()
   .bl_cfg_state$presets
 }
 
+#' Returns the table of settings, built once per session.
+#' @return The data frame of `.bl_config_spec_build()`.
+#' @noRd
 .bl_config_spec <- function() {
   if (is.null(.bl_cfg_state$spec)) .bl_cfg_state$spec <- .bl_config_spec_build()
   .bl_cfg_state$spec
 }
 
+#' Builds the table of settings: each key, its environment variable, whether it is secret, and its help.
+#' @return A data frame with columns `key`, `env`, `secret` and `help`, one row per setting.
+#' @noRd
 .bl_config_spec_build <- function() {
   base <- data.frame(
     key = c("route", "own.url", "own.key", "own.model", "ollama.url", "ollama.model", "ollama.key"),
@@ -57,16 +66,27 @@
   rbind(base, prov)
 }
 
+#' Gives the path of the saved settings file, llm.json beside the credentials file.
+#' @return The path.
+#' @noRd
 .bl_config_path <- function() file.path(dirname(.bl_credentials_path()), "llm.json")
 
-# TRUE when the settings file parses; a file that does not is reported once per change and
-# treated as empty for reading, and is never written over (its saved keys would be lost)
+#' TRUE when the settings file parses; a file that does not is reported once per change and
+#' treated as empty for reading, and is never written over (its saved keys would be lost)
+#' @param p The path of the settings file.
+#' @return TRUE or FALSE.
+#' @noRd
 .bl_config_parses <- function(p) {
   !is.null(.bl_config_object(p))
 }
 
-# The settings file as a named list, or NULL when it is not a JSON object ([], "x", 5 and a
-# syntax error alike).
+#' Reads the settings file as a JSON object.
+#'
+#' The settings file as a named list, or NULL when it is not a JSON object ([], "x", 5 and a
+#' syntax error alike).
+#' @param p The path of the settings file.
+#' @return A named list, or NULL.
+#' @noRd
 .bl_config_object <- function(p) {
   lines <- readLines(p, warn = FALSE)
   # `[]`, `"x"` and `5` parse, and an empty array reads as an empty list: only an object will do
@@ -76,6 +96,9 @@
   out
 }
 
+#' Reads the saved settings, refusing a file that is not a JSON object or has a setting of the wrong type.
+#' @return A named list of the saved settings; an empty list when there is no file.
+#' @noRd
 .bl_read_config <- function() {
   p <- .bl_config_path()
   if (!file.exists(p)) return(list())
@@ -101,6 +124,9 @@
   out
 }
 
+#' Saves settings, writing only the ones that changed into the file as it stands.
+#' @param data A named list of the settings to hold; an empty list removes the file.
+#' @noRd
 .bl_write_config <- function(data) {
   p <- .bl_config_path()
   if (file.exists(p) && !.bl_config_parses(p)) {
@@ -125,7 +151,10 @@
   .bl_write_private_text(p, txt)
 }
 
-# The saved value behind an environment variable's name, or NULL.
+#' The saved value behind an environment variable's name, or NULL.
+#' @param env The environment variable's name.
+#' @return The saved value as a trimmed string, or NULL.
+#' @noRd
 .bl_config_value <- function(env) {
   spec <- .bl_config_spec()
   key <- spec$key[match(env, spec$env)]
@@ -135,18 +164,28 @@
   if (is.character(v) && length(v) == 1L && nzchar(trimws(v))) trimws(v) else NULL
 }
 
-# Where a setting comes from right now: "environment", "saved", or "default".
+#' Where a setting comes from right now: "environment", "saved", or "default".
+#' @param key The setting's key.
+#' @param env The setting's environment variable.
+#' @return "environment", "saved" or "default".
+#' @noRd
 .bl_config_source <- function(key, env) {
   if (nzchar(trimws(Sys.getenv(env, unset = "")))) return("environment")
   if (!is.null(.bl_config_value(env))) "saved" else "default"
 }
 
-# How a key is displayed: only whether one is set. No character of it is ever printed.
+#' How a key is displayed: only whether one is set. No character of it is ever printed.
+#' @param v The key, or NULL.
+#' @return "set" or "(not set)".
+#' @noRd
 .bl_mask <- function(v) {
   if (is.null(v) || !nzchar(v)) "(not set)" else "set"
 }
 
-# The value a setting has right now (the default spelled out), for display.
+#' The value a setting has right now (the default spelled out), for display.
+#' @param key The setting's key.
+#' @return The value as printable text; a key shows only whether it is set.
+#' @noRd
 .bl_config_effective <- function(key) {
   fixed <- switch(key,
     route = {
@@ -169,8 +208,14 @@
                     (if (!is.na(pr$default_model)) pr$default_model else "(not chosen)"))
 }
 
-# .bl_preset_key() (R/llm_providers.R) over the cached preset row: the provider's variable, its
-# alternative spelling, else the saved value. The same three steps, without rebuilding the presets.
+#' Finds a provider's key from its environment variables or the saved settings.
+#'
+#' .bl_preset_key() (R/llm_providers.R) over the cached preset row: the provider's variable, its
+#' alternative spelling, else the saved value. The same three steps, without rebuilding the presets.
+#' @param pr The provider's preset row.
+#' @param id The provider's id.
+#' @return The key, or NULL.
+#' @noRd
 .bl_cfg_preset_key <- function(pr, id) {
   for (e in c(pr$key_env, if (nzchar(pr$alt_env)) pr$alt_env)) {
     v <- trimws(Sys.getenv(e, unset = ""))
@@ -179,7 +224,11 @@
   .bl_key_text(.bl_config_value(pr$key_env), paste0(id, ".key"))
 }
 
-# An address that is saved must be one address: no whitespace, no `#fragment`, no `user@`.
+#' An address that is saved must be one address: no whitespace, no `#fragment`, no `user@`.
+#' @param value The address.
+#' @param key The setting's key, used in the error message.
+#' @return TRUE, invisibly.
+#' @noRd
 .bl_url_sane <- function(value, key) {
   if (grepl("[[:space:][:cntrl:]#@]", value)) {
     stop(sprintf("%s must be a plain address with no spaces, fragment or user information", key), call. = FALSE)
@@ -187,6 +236,11 @@
   invisible(TRUE)
 }
 
+#' Checks a value before it is saved for a setting.
+#' @param key The setting's key.
+#' @param value The value to save.
+#' @return TRUE, invisibly.
+#' @noRd
 .bl_config_check <- function(key, value) {
   if (key %in% c("own.url", "ollama.url") && !tolower(value) %in% c("off", "none", "disabled")) {
     .bl_url_sane(value, key)
@@ -397,7 +451,14 @@ llmcfg <- function(...) {
   if (length(args)) invisible(tab) else tab
 }
 
-# `rmbl config ...`
+#' Runs `rmbl config` and its sub-commands.
+#'
+#' `rmbl config ...`
+#' @param rest The command-line words after `config`.
+#' @param out The function that writes the output.
+#' @param usage_error The function called with a usage message.
+#' @return 0, invisibly.
+#' @noRd
 .bl_cli_config <- function(rest, out, usage_error) {
   prog <- .bl_prog()
   spec <- .bl_config_spec()
@@ -492,8 +553,13 @@ llmcfg <- function(...) {
   invisible(0L)
 }
 
-# `rmbl config setup`: where `ask` should go (a provider with your key, Ollama, or your own server),
-# then that route's settings. Enter keeps what is there.
+#' Asks for the route and its settings at the console.
+#'
+#' `rmbl config setup`: where `ask` should go (a provider with your key, Ollama, or your own server),
+#' then that route's settings. Enter keeps what is there.
+#' @param out The function that writes the output.
+#' @return 0, invisibly.
+#' @noRd
 .bl_config_setup <- function(out) {
   prog <- .bl_prog()
   ask <- function(q, current = "", secret = FALSE) {
@@ -549,7 +615,11 @@ llmcfg <- function(...) {
   invisible(0L)
 }
 
-# `rmbl doctor`: the routes, then the one `ask` would take now.
+#' Prints the language-model routes, the one `ask` would take now, and the data key state.
+#'
+#' `rmbl doctor`: the routes, then the one `ask` would take now.
+#' @param out The function that writes the output.
+#' @noRd
 .bl_cli_doctor <- function(out) {
   st <- llmstat()
   for (i in seq_len(nrow(st))) {
@@ -577,8 +647,13 @@ llmcfg <- function(...) {
     sprintf("\n  data key: none (`%s login` opens the curated tables)\n", prog)))
 }
 
-# The recovery path for a settings file the package refuses to read: it is moved aside, never
-# deleted, and the path of the copy is returned (NULL when there is no file).
+#' Moves an unreadable settings file aside.
+#'
+#' The recovery path for a settings file the package refuses to read: it is moved aside, never
+#' deleted, and the path of the copy is returned (NULL when there is no file).
+#' @param force Whether a file that reads fine is moved too.
+#' @return The path of the moved copy, or NULL.
+#' @noRd
 .bl_config_reset <- function(force = FALSE) {
   p <- .bl_config_path()
   if (!file.exists(p)) return(NULL)

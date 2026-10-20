@@ -9,6 +9,11 @@
 .rmbl_hk_bkind <- c(constant = 0L, sinusoidal = 1L)
 .rmbl_hk_methods <- c("auto", "exact", "soe", "truncate", "em", "inar")
 
+#' Resolves the fitting route for a kernel, turning "auto" into a concrete one.
+#' @param method The route asked for: one of "auto", "exact", "soe", "truncate", "em", "inar".
+#' @param kernel The kernel name.
+#' @return The route name.
+#' @noRd
 .rmbl_hk_method <- function(method, kernel) {
   method <- .rmbl_arg(method, .rmbl_hk_methods)
   # Weibull's exact window is where the kernel underflows: for shape < 1 the whole record, so
@@ -24,8 +29,15 @@
   method
 }
 
-# the sum-of-exponentials window: r = (u + c)/R in [delta, 1] (Lomax, c <= 100 in the
-# fit), r = u/R from the smallest gap (gamma)
+#' Gives the sum-of-exponentials window for a kernel.
+#'
+#' The sum-of-exponentials window: r = (u + c)/R in \[delta, 1\] (Lomax, c <= 100 in the
+#' fit), r = u/R from the smallest gap (gamma)
+#' @param times The sorted event times.
+#' @param horizon The end of the observation window.
+#' @param kernel The kernel name.
+#' @return A length-two vector: the scale and the lower end delta of the window.
+#' @noRd
 .rmbl_hk_soe <- function(times, horizon, kernel) {
   if (kernel == "lomax") return(c(horizon + 100, 1e-3 / (horizon + 100)))
   g <- diff(times)
@@ -33,6 +45,17 @@
   c(horizon, max(if (length(g)) min(g) else 1e-9, 1e-12) / horizon)
 }
 
+#' Evaluates the negative log-likelihood (and its gradient) in the shared C++ core.
+#' @param times The sorted event times.
+#' @param horizon The end of the observation window.
+#' @param kernel The kernel name.
+#' @param baseline "constant" or "sinusoidal".
+#' @param theta The parameters: the baseline terms, the branching ratio and the kernel parameters.
+#' @param method The route: "exact", "soe" or "truncate".
+#' @param eps The tolerance of the "soe" and "truncate" routes.
+#' @param gradient Whether the gradient is computed too.
+#' @return The negative log-likelihood, followed by the gradient when asked for.
+#' @noRd
 .rmbl_hk_call <- function(times, horizon, kernel, baseline, theta, method, eps, gradient) {
   nb <- if (baseline == "constant") 1L else 4L
   soe <- .rmbl_hk_soe(times, horizon, kernel)
@@ -41,6 +64,12 @@
         .rmbl_hk_kind[[kernel]], theta[-seq_len(nb + 1L)], code, eps, soe[[1]], soe[[2]], gradient)
 }
 
+#' Checks event times and the horizon of a Hawkes fit.
+#' @param times The event times passed by the user.
+#' @param horizon The horizon passed by the user (the `hor` argument).
+#' @param baseline "constant" or "sinusoidal"; the sinusoidal one caps the horizon.
+#' @return A list with the checked `times` and `horizon`.
+#' @noRd
 .rmbl_hk_check_times <- function(times, horizon, baseline = "constant") {
   times <- .rmbl_num(times, "times")
   if (anyNA(times)) stop("`times` must not contain NA", call. = FALSE)
@@ -60,6 +89,14 @@
   list(times = times, horizon = horizon)
 }
 
+#' Gives the starting parameters for the optimiser.
+#' @param kernel The kernel name.
+#' @param baseline "constant" or "sinusoidal".
+#' @param n The number of events.
+#' @param horizon The end of the observation window.
+#' @param mean_dt The mean gap between events.
+#' @return The starting parameter vector.
+#' @noRd
 .rmbl_hk_x0 <- function(kernel, baseline, n, horizon, mean_dt) {
   rate <- max(n / horizon, 1e-3)
   a <- if (baseline == "constant") log(rate * 0.6) else c(log(rate * 0.6), 0, 0, 0)
@@ -72,6 +109,11 @@
   c(a, 0.4, psi)
 }
 
+#' Gives the parameter box the optimiser stays inside.
+#' @param kernel The kernel name.
+#' @param baseline "constant" or "sinusoidal".
+#' @return A list with the `lower` and `upper` bounds.
+#' @noRd
 .rmbl_hk_bounds <- function(kernel, baseline) {
   nb <- if (baseline == "constant") 1L else 4L
   lo <- c(-15, rep(-5, nb - 1L), 1e-3)
@@ -404,8 +446,20 @@ chwkfit <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
        atbound = at_bound)
 }
 
-# the whole fit in the shared C++ core (projected BFGS, morie_core.h hawkes_fit_pbfgs): the routine
-# morie's Python fit calls, so both reach the same optimum from the same start
+#' Runs the whole projected BFGS fit in the shared C++ core.
+#'
+#' The whole fit in the shared C++ core (projected BFGS, morie_core.h hawkes_fit_pbfgs): the routine
+#' morie's Python fit calls, so both reach the same optimum from the same start
+#' @param times The sorted event times.
+#' @param horizon The end of the observation window.
+#' @param kernel The kernel name.
+#' @param baseline "constant" or "sinusoidal".
+#' @param method The route: "exact", "soe" or "truncate".
+#' @param eps The tolerance of the "soe" and "truncate" routes.
+#' @param b The parameter box, from .rmbl_hk_bounds().
+#' @param start The starting parameters.
+#' @return A list with the parameters `par`, the minimum `value` and the number of `iterations`.
+#' @noRd
 .rmbl_hk_pbfgs <- function(times, horizon, kernel, baseline, method, eps, b, start) {
   soe <- .rmbl_hk_soe(times, horizon, kernel)
   code <- c(exact = 0L, soe = 1L, truncate = 2L)[[method]]
@@ -415,6 +469,14 @@ chwkfit <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
   list(par = r[seq_len(d)], value = r[[d + 1L]], iterations = r[[d + 2L]])
 }
 
+#' Starts a kernel's fit from the fitted exponential model.
+#' @param times The sorted event times.
+#' @param horizon The end of the observation window.
+#' @param kernel The kernel name.
+#' @param baseline "constant" or "sinusoidal".
+#' @param b The parameter box, from .rmbl_hk_bounds().
+#' @return Starting parameters for `kernel`, inside the box.
+#' @noRd
 .rmbl_hk_warm <- function(times, horizon, kernel, baseline, b) {
   nb <- if (baseline == "constant") 1L else 4L
   eb <- list(lower = c(b$lower[seq_len(nb + 1L)], 0.1), upper = c(b$upper[seq_len(nb + 1L)], 25))
@@ -493,12 +555,29 @@ chwkres <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
         par[[nb + 1L]], .rmbl_hk_kind[[kernel]], par[-seq_len(nb + 1L)])
 }
 
+#' Builds the baseline design matrix at a set of times.
+#' @param x The times.
+#' @param horizon The end of the observation window.
+#' @param baseline "constant" or "sinusoidal".
+#' @return A matrix with one column for the constant baseline, four for the sinusoidal one.
+#' @noRd
 .rmbl_hk_feats <- function(x, horizon, baseline) {
   if (baseline == "constant") return(matrix(1, length(x), 1L))
   cbind(1, x / max(horizon, 1), sin(2 * pi * x / 365.25), cos(2 * pi * x / 365.25))
 }
 
-# EM (Veen & Schoenberg 2008), as morie's Python hawkes_em
+#' EM (Veen & Schoenberg 2008), as morie's Python hawkes_em
+#' @param times The sorted event times.
+#' @param horizon The end of the observation window.
+#' @param kernel The kernel name.
+#' @param baseline "constant" or "sinusoidal".
+#' @param x0 The starting parameters.
+#' @param b The parameter box, from .rmbl_hk_bounds().
+#' @param max_iter The largest number of EM iterations.
+#' @param tol The relative change in the negative log-likelihood that ends the iterations.
+#' @param pg A progress bar to update, or NULL.
+#' @return A list with the parameters `theta` and whether the iterations `converged`.
+#' @noRd
 .rmbl_hk_em <- function(times, horizon, kernel, baseline, x0, b, max_iter = 500L, tol = 1e-9, pg = NULL) {
   kind <- .rmbl_hk_kind[[kernel]]
   bk <- .rmbl_hk_bkind[[baseline]]
@@ -564,6 +643,12 @@ chwkres <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
   list(theta = theta, converged = done)
 }
 
+#' Evaluates a kernel's cumulative distribution function.
+#' @param u The lags.
+#' @param kernel The kernel name.
+#' @param psi The kernel parameters.
+#' @return The CDF at `u`.
+#' @noRd
 .rmbl_hk_cdf <- function(u, kernel, psi) {
   switch(kernel,
     exponential = stats::pexp(u, psi[[1]]),
@@ -573,7 +658,14 @@ chwkres <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
   )
 }
 
-# Kirchner's INAR(p) estimator, as morie's Python hawkes_inar
+#' Kirchner's INAR(p) estimator, as morie's Python hawkes_inar
+#' @param times The sorted event times.
+#' @param horizon The end of the observation window.
+#' @param kernel The kernel name.
+#' @param baseline Must be "constant".
+#' @param b The parameter box, from .rmbl_hk_bounds().
+#' @return The parameter vector: the log baseline, the branching ratio and the kernel parameters.
+#' @noRd
 .rmbl_hk_inar <- function(times, horizon, kernel, baseline, b) {
   if (baseline != "constant") {
     stop("method = \"inar\" assumes a stationary process: use baseline = \"constant\"", call. = FALSE)

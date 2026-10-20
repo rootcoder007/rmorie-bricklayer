@@ -10,17 +10,24 @@
 # document (svcs()). Every request goes through the package's own
 # libcurl binding.
 
-# $XDG_CONFIG_HOME/morie/credentials.json, the file the morie (Python)
-# and rmorie (R) packages read and write too, so one sign-in serves all.
-# Reading it is always allowed; it is only ever written by an
-# explicit sign-in (dlogin()), never by examples or tests,
-# which point XDG_CONFIG_HOME at a temporary directory.
+#' Returns the path of the shared credentials file.
+#'
+#' $XDG_CONFIG_HOME/morie/credentials.json, the file the morie (Python)
+#' and rmorie (R) packages read and write too, so one sign-in serves all.
+#' Reading it is always allowed; it is only ever written by an
+#' explicit sign-in (dlogin()), never by examples or tests,
+#' which point XDG_CONFIG_HOME at a temporary directory.
+#' @return One path.
+#' @noRd
 .bl_credentials_path <- function() {
   base <- trimws(Sys.getenv("XDG_CONFIG_HOME", unset = ""))
   if (!nzchar(base)) base <- file.path(path.expand("~"), ".config")
   file.path(base, "morie", "credentials.json")
 }
 
+#' Reads the shared credentials file, refusing one that is not a JSON object.
+#' @return A named list, empty when the file does not exist.
+#' @noRd
 .bl_read_credentials <- function() {
   p <- .bl_credentials_path()
   if (!file.exists(p)) {
@@ -36,7 +43,11 @@
   out
 }
 
-# The credentials file as a named list, or NULL when it is not a JSON object.
+#' The credentials file as a named list, or NULL when it is not a JSON object.
+#' @param p The path of the credentials file.
+#' @param simplify Whether the JSON parser simplifies vectors.
+#' @return A named list, or NULL.
+#' @noRd
 .bl_credentials_object <- function(p, simplify = TRUE) {
   txt <- .bl_read_text(p)
   if (!startsWith(trimws(txt), "{")) return(NULL)  # an array or a scalar is not the credentials object
@@ -46,8 +57,12 @@
   out
 }
 
-# The file as written: no vector simplification, so another package's arrays, nulls and large
-# integers come back out as they went in (the file is shared with morie and rmorie).
+#' Reads the credentials file without simplifying its values.
+#'
+#' The file as written: no vector simplification, so another package's arrays, nulls and large
+#' integers come back out as they went in (the file is shared with morie and rmorie).
+#' @return A named list, empty when the file does not exist.
+#' @noRd
 .bl_credentials_raw <- function() {
   p <- .bl_credentials_path()
   if (!file.exists(p)) return(list())
@@ -59,14 +74,23 @@
   out
 }
 
+#' Writes the credentials file as private JSON.
+#' @param data The named list to write.
+#' @return The path, invisibly.
+#' @noRd
 .bl_write_credentials <- function(data) .bl_write_private_json(.bl_credentials_path(), data)
 
-# The file as text, bytes kept (the file is shared with morie and rmorie, whose numbers,
-# arrays and non-ASCII text must come back out exactly as they went in).
-# The credentials file as UTF-8 text, refused with a plain reason when it is not: readChar()
-# stopped at a NUL byte and dropped what followed it, a Latin-1 file failed in the JSON parser
-# with a message about bytes, and a 10 MB file took minutes in the member scanner (review of
-# 02a38be, B5). A credentials file is a few hundred bytes; past 1 MB it is not one.
+#' Reads the credentials file as UTF-8 text.
+#'
+#' The file as text, bytes kept (the file is shared with morie and rmorie, whose numbers,
+#' arrays and non-ASCII text must come back out exactly as they went in).
+#' The credentials file as UTF-8 text, refused with a plain reason when it is not: readChar()
+#' stopped at a NUL byte and dropped what followed it, a Latin-1 file failed in the JSON parser
+#' with a message about bytes, and a 10 MB file took minutes in the member scanner (review of
+#' 02a38be, B5). A credentials file is a few hundred bytes; past 1 MB it is not one.
+#' @param p The path of the credentials file.
+#' @return One string.
+#' @noRd
 .bl_read_text <- function(p) {
   n <- file.size(p)
   if (is.na(n)) stop(sprintf("cannot read %s", p), call. = FALSE)
@@ -82,6 +106,11 @@
   txt
 }
 
+#' Writes text to a file through an owner-only temporary file and a rename.
+#' @param p The path to write.
+#' @param txt The text.
+#' @return The path, invisibly.
+#' @noRd
 .bl_write_private_text <- function(p, txt) {
   # the directory as private as its files: under umask 000 it came out 0777 (review of 46de6a9)
   .bl_private_dir(dirname(p))
@@ -96,10 +125,15 @@
   invisible(p)
 }
 
-# The top-level members of a JSON object as character spans: the key's opening quote, where
-# the value starts and where it ends. With them the file is edited as text, so every byte
-# that is not one of this package's own members stays exactly as it was. NULL when the text
-# is not a JSON object.
+#' Finds the top-level members of a JSON object as character spans.
+#'
+#' The top-level members of a JSON object as character spans: the key's opening quote, where
+#' the value starts and where it ends. With them the file is edited as text, so every byte
+#' that is not one of this package's own members stays exactly as it was. NULL when the text
+#' is not a JSON object.
+#' @param txt The JSON text.
+#' @return A list with, per member, its `key`, `start`, `vstart` and `end`; NULL when the text is not a JSON object.
+#' @noRd
 .bl_json_top_members <- function(txt) {
   ch <- strsplit(txt, "", fixed = TRUE)[[1L]]
   n <- length(ch)
@@ -162,10 +196,15 @@
   out
 }
 
-# The whole file as the real parser reads it, before a byte is edited: the member scanner alone
-# accepted bare words, missing commas, trailing garbage and duplicate keys, wrote the key into
-# such a file and every later read failed (review of 52a8883, B5). A key listed twice is refused:
-# morie reads the last and this package edited the first.
+#' Checks that the credentials text parses and names no key twice.
+#'
+#' The whole file as the real parser reads it, before a byte is edited: the member scanner alone
+#' accepted bare words, missing commas, trailing garbage and duplicate keys, wrote the key into
+#' such a file and every later read failed (review of 52a8883, B5). A key listed twice is refused:
+#' morie reads the last and this package edited the first.
+#' @param txt The JSON text.
+#' @return `TRUE` or `FALSE`.
+#' @noRd
 .bl_credentials_text_ok <- function(txt) {
   mem <- .bl_json_top_members(txt)
   if (is.null(mem)) return(FALSE)
@@ -176,7 +215,12 @@
   !anyDuplicated(keys) && length(obj) == length(mem)
 }
 
-# Set (value a string) or remove (value NULL) one top-level member by editing the text.
+#' Set (value a string) or remove (value NULL) one top-level member by editing the text.
+#' @param txt The JSON text.
+#' @param key The member name.
+#' @param value A string, or NULL to remove the member.
+#' @return The edited text.
+#' @noRd
 .bl_credentials_text_set <- function(txt, key, value) {
   mem <- .bl_json_top_members(txt)
   if (is.null(mem)) stop("the credentials file is not a JSON object", call. = FALSE)
@@ -203,15 +247,25 @@
 }
 
 
-# A folder for keys, settings or saved answers: created owner-only, and made owner-only when it is
-# already there (mode = "0700" applies only to a folder dir.create() makes, so one an earlier version
-# left at 0777 under umask 000 stayed open; network stress test of 5e1dce5). Windows has no modes.
+#' Creates a folder owner-only, or makes an existing one owner-only.
+#'
+#' A folder for keys, settings or saved answers: created owner-only, and made owner-only when it is
+#' already there (mode = "0700" applies only to a folder dir.create() makes, so one an earlier version
+#' left at 0777 under umask 000 stayed open; network stress test of 5e1dce5). Windows has no modes.
+#' @param d The folder.
+#' @return `d`, invisibly.
+#' @noRd
 .bl_private_dir <- function(d) {
   if (!dir.exists(d)) dir.create(d, recursive = TRUE, showWarnings = FALSE, mode = "0700")
   if (.Platform$OS.type == "unix" && dir.exists(d)) Sys.chmod(d, "0700", use_umask = FALSE)
   invisible(d)
 }
 
+#' Writes a list as pretty JSON to an owner-only file.
+#' @param p The path to write.
+#' @param data The list to write.
+#' @return The path, invisibly.
+#' @noRd
 .bl_write_private_json <- function(p, data) {
   # through the one private writer: a fresh temporary name each time (a planted llm.json.tmp
   # symlink had its target overwritten with the keys; review of 29a55d8, L5), created empty and
@@ -221,6 +275,11 @@
   invisible(p)
 }
 
+#' Stores the data key, its user and its address in the credentials file, keeping every other byte.
+#' @param key The data key.
+#' @param user The user name the sign-in service gave, or NULL.
+#' @return The path, invisibly.
+#' @noRd
 .bl_store_key <- function(key, user = NULL) {
   p <- .bl_credentials_path()
   txt <- if (file.exists(p)) .bl_read_text(p) else "{}"
@@ -244,6 +303,9 @@
   .bl_write_private_text(p, new)
 }
 
+#' Returns the stored data key when it may be sent to the address in use.
+#' @return The key, or NULL (with a message, once, when it was saved for another address).
+#' @noRd
 .bl_hosted_key <- function() {
   st <- .bl_hosted_key_state()
   if (identical(st$state, "other_address")) {
@@ -260,8 +322,10 @@
 }
 .bl_said_once <- new.env(parent = emptyenv())
 
-# The stored hosted key and whether it may be sent: state "none", "ok" or "other_address" (a key
-# saved for another address than the one in use), with no message.
+#' The stored hosted key and whether it may be sent: state "none", "ok" or "other_address" (a key
+#' saved for another address than the one in use), with no message.
+#' @return A list with `state` and `key`, and for `"other_address"` the `saved_for` and `now` addresses.
+#' @noRd
 .bl_hosted_key_state <- function() {
   env <- trimws(Sys.getenv("MORIE_HOSTED_KEY", unset = ""))
   if (nzchar(env)) {
@@ -300,18 +364,24 @@
 # Where pre-0.5.12 logins recorded the key: the retired language-model tier's gateway.
 .bl_legacy_key_addresses <- "https://llm.rmorie.com"
 
-# The address a stored key belongs to: the model tier's while the services document has one, else
-# the data service's (the signed document's, never MORIE_DATA_URL). "" when neither is known.
+#' The address a stored key belongs to: the model tier's while the services document has one, else
+#' the data service's (the signed document's, never MORIE_DATA_URL). "" when neither is known.
+#' @return One address without a trailing slash, or `""`.
+#' @noRd
 .bl_key_address <- function() {
   a <- tryCatch(.bl_hosted_base(), error = function(e) NULL)
   if (is.null(a)) a <- .rmbl_services_data()$base_url %||% ""
   sub("/+$", "", a)
 }
 
-# The address a stored key was issued for under the retired language-model tier, or NULL (the
-# signed services document now switches that tier off, and a key is bound to the data address).
-# MORIE_HOSTED_BASE_URL overrides ("" on POSIX or "off" on any platform disables; Windows drops a
-# variable set to "").
+#' Returns the address of the retired language-model tier, if any.
+#'
+#' The address a stored key was issued for under the retired language-model tier, or NULL (the
+#' signed services document now switches that tier off, and a key is bound to the data address).
+#' MORIE_HOSTED_BASE_URL overrides ("" on POSIX or "off" on any platform disables; Windows drops a
+#' variable set to "").
+#' @return One address, or NULL.
+#' @noRd
 .bl_hosted_base <- function() {
   saved <- .bl_config_value("MORIE_HOSTED_BASE_URL")
   if (!"MORIE_HOSTED_BASE_URL" %in% names(Sys.getenv()) && is.null(saved)) {
@@ -325,8 +395,12 @@
   .rmbl_check_public_url(v, "MORIE_HOSTED_BASE_URL")
 }
 
-# The sign-in service that issues the data key: the services document's data.auth_url, else the
-# auth_url of its llm block (documents signed before the data service issued its own keys).
+#' Returns the address of the sign-in service.
+#'
+#' The sign-in service that issues the data key: the services document's data.auth_url, else the
+#' auth_url of its llm block (documents signed before the data service issued its own keys).
+#' @return One address.
+#' @noRd
 .bl_hosted_auth <- function() {
   v <- sub("/+$", "", trimws(Sys.getenv("MORIE_HOSTED_AUTH_URL", unset = "")))
   if (nzchar(v)) return(.rmbl_check_public_url(v, "MORIE_HOSTED_AUTH_URL"))  # a code and a key go there
@@ -336,14 +410,21 @@
 
 
 
-# How to get a key, in one line.
+#' How to get a key, in one line.
+#' @return One string.
+#' @noRd
 .bl_access_hint <- function() {
   sprintf(paste("`%s login` signs in with GitHub or an emailed code; a key you were given:",
                 "`%s login --token` and paste it when asked (R: dlogin(token = )); or ask at %s"),
           .bl_prog(), .bl_prog(), .rmbl_services_data()$request_access %||% "https://www.rmorie.com/access")
 }
 
-# The GET seam for public https addresses (a provider model list, the data key check).
+#' The GET seam for public https addresses (a provider model list, the data key check).
+#' @param url The address.
+#' @param timeout The timeout in seconds.
+#' @param headers Request headers, or NULL.
+#' @return The response list from the native GET.
+#' @noRd
 .bl_http_get <- function(url, timeout, headers) {
   .rmbl_check_public_url(url, "url")
   .bl_net(url, .Call(C_rmbl_http_get, url, as.integer(timeout), headers, FALSE))
@@ -351,15 +432,20 @@
 
 # ---- your own endpoint and a local Ollama server ------------------------------
 #
-# An endpoint of your own and a local Ollama server are addresses from your own
-# environment, not from a document, so the anti-SSRF policy that guards every
-# other URL is relaxed for them in one precise way: plain http to the loopback
-# host or to a LITERAL private LAN address (10/8, 172.16/12, 192.168/16,
-# fc00::/7: an LM Studio or vLLM box on your own network, diff review D4) is
-# admitted, as an argument of that one call (never an option: a global switch
-# relaxed every fetch in the process, fourth review), only when the address IS
-# such a literal, and a redirect off it meets the usual rules. Link-local
-# (169.254/16, the metadata range) and every name stay under the full policy.
+#' Tells whether an address is a loopback or literal private-LAN address.
+#'
+#' An endpoint of your own and a local Ollama server are addresses from your own
+#' environment, not from a document, so the anti-SSRF policy that guards every
+#' other URL is relaxed for them in one precise way: plain http to the loopback
+#' host or to a LITERAL private LAN address (10/8, 172.16/12, 192.168/16,
+#' fc00::/7: an LM Studio or vLLM box on your own network, diff review D4) is
+#' admitted, as an argument of that one call (never an option: a global switch
+#' relaxed every fetch in the process, fourth review), only when the address IS
+#' such a literal, and a redirect off it meets the usual rules. Link-local
+#' (169.254/16, the metadata range) and every name stay under the full policy.
+#' @param url The address.
+#' @return `TRUE` or `FALSE`.
+#' @noRd
 .bl_loopback_url <- function(url) {
   host <- paste0("(localhost|127\\.[0-9.]+|10\\.[0-9.]+|192\\.168\\.[0-9.]+|",
                  "172\\.(1[6-9]|2[0-9]|3[01])\\.[0-9.]+|\\[::1\\]|\\[::ffff:127\\.[0-9.]+\\]|",
@@ -367,6 +453,9 @@
   grepl(paste0("^https?://", host, "(:[0-9]+)?(/|$)"), url, ignore.case = TRUE)
 }
 
+#' Returns the base address of your own OpenAI-compatible endpoint, if set.
+#' @return One address without `/v1`, or NULL.
+#' @noRd
 .bl_own_base <- function() {
   v <- sub("/+$", "", .bl_env1("MORIE_LLM_BASE_URL") %||% "")
   if (!nzchar(v) || tolower(v) %in% c("off", "none", "disabled")) return(NULL)
@@ -378,12 +467,18 @@
   if (!.bl_loopback_url(v)) .rmbl_check_public_url(v, "MORIE_LLM_BASE_URL")
   v
 }
-# An environment variable, else the value saved under it by llmcfg().
+#' An environment variable, else the value saved under it by llmcfg().
+#' @param name The variable name.
+#' @return The value, or NULL when neither is set.
+#' @noRd
 .bl_env1 <- function(name) {
   v <- trimws(Sys.getenv(name, unset = ""))
   if (nzchar(v)) v else .bl_config_value(name)
 }
 
+#' Returns the address of the Ollama server, from the environment, the saved setting or the default.
+#' @return One address, or NULL when Ollama is switched off.
+#' @noRd
 .bl_ollama_base <- function() {
   # the environment wins over the saved setting, whichever of the two names it uses
   env <- function(n) {
@@ -397,34 +492,64 @@
   sub("/+$", "", v)
 }
 
-# Ollama was pointed at on purpose (environment or saved setting), not the default address.
-# Own-endpoint settings without an address: a model or key alone cannot be a route, and saying
-# so is what keeps "a prompt never leaves the machine silently" true for this case too.
+#' Tells whether own-endpoint settings are present.
+#'
+#' Own-endpoint settings without an address: a model or key alone cannot be a route, and saying
+#' so is what keeps "a prompt never leaves the machine silently" true for this case too.
+#' @return `TRUE` or `FALSE`.
+#' @noRd
 .bl_own_configured <- function() {
   !is.null(.bl_env1("MORIE_LLM_MODEL")) || !is.null(.bl_env1("MORIE_LLM_API_KEY"))
 }
 
+#' Ollama was pointed at on purpose (environment or saved setting), not the default address.
+#' @return `TRUE` or `FALSE`.
+#' @noRd
 .bl_ollama_configured <- function() {
   !is.null(.bl_env1("OLLAMA_HOST")) || !is.null(.bl_env1("OLLAMA_BASE_URL")) ||
     !is.null(.bl_env1("OLLAMA_MODEL")) || !is.null(.bl_env1("OLLAMA_API_KEY"))
 }
 
+#' Builds an Authorization header for a key.
+#' @param key The key, or NULL.
+#' @return One header string, or NULL.
+#' @noRd
 .bl_bearer <- function(key) if (is.null(key)) NULL else paste("Authorization: Bearer", key)
 
-# GET for the local routes: the loopback relaxation passed for a loopback
-# address, the usual checks for anything else. One seam, so tests can stand
-# in a server.
+#' Sends a GET for a local route.
+#'
+#' GET for the local routes: the loopback relaxation passed for a loopback
+#' address, the usual checks for anything else. One seam, so tests can stand
+#' in a server.
+#' @param url The address.
+#' @param timeout The timeout in seconds.
+#' @param headers Request headers, or NULL.
+#' @return The response list from the native GET.
+#' @noRd
 .bl_http_get_local <- function(url, timeout, headers) {
   .bl_net(url, .Call(C_rmbl_http_get, url, as.integer(timeout), headers, .bl_loopback_url(url)))
 }
-# POST for the local routes, the same way.
+#' POST for the local routes, the same way.
+#' @param url The address.
+#' @param body The request body as raw bytes.
+#' @param content_type The body's media type.
+#' @param timeout The timeout in seconds.
+#' @param headers Request headers, or NULL.
+#' @return The response list from the native POST.
+#' @noRd
 .bl_http_post_local <- function(url, body, content_type, timeout, headers) {
   .Call(C_rmbl_http_post, url, body, content_type, as.integer(timeout), headers, .bl_loopback_url(url))
 }
 
-# The models a local Ollama server has (GET /api/tags): a character vector, or NULL when nothing
-# answers there. Attributes: `remote`, the models Ollama serves from its cloud (a remote_host:
-# minimax-m3:cloud, gpt-oss:120b-cloud), and `context`, the context length each one reports.
+#' Lists the models a local Ollama server has.
+#'
+#' The models a local Ollama server has (GET /api/tags): a character vector, or NULL when nothing
+#' answers there. Attributes: `remote`, the models Ollama serves from its cloud (a remote_host:
+#' minimax-m3:cloud, gpt-oss:120b-cloud), and `context`, the context length each one reports.
+#' @param base The Ollama address.
+#' @param timeout The timeout in seconds.
+#' @return A character vector with attributes `remote` and `context`, or NULL.
+#' @noRd
 .bl_ollama_tags <- function(base, timeout = 2) {
   key <- .bl_key_for("OLLAMA_API_KEY", "OLLAMA_HOST")
   res <- tryCatch(.bl_http_get_local(paste0(base, "/api/tags"), timeout, .bl_bearer(key)),
@@ -444,20 +569,33 @@
   structure(nm[keep], remote = nm[keep & remote], context = stats::setNames(ctx[keep], nm[keep]))
 }
 
-# The routes a question can take, in the automatic order: an endpoint of your own when one is
-# configured, then every provider whose key is set (in the order of .bl_llm_presets()), then a
-# local Ollama server when it answers with a model. Bring your own key: the hosted MORIE tier
-# is retired, and no prompt goes anywhere you did not set up.
+#' Lists the routes a question can take, in the automatic order.
+#'
+#' The routes a question can take, in the automatic order: an endpoint of your own when one is
+#' configured, then every provider whose key is set (in the order of .bl_llm_presets()), then a
+#' local Ollama server when it answers with a model. Bring your own key: the hosted MORIE tier
+#' is retired, and no prompt goes anywhere you did not set up.
+#' @return A character vector of route names.
+#' @noRd
 .bl_llm_route_names <- function() c("own", .bl_llm_presets()$id, "ollama")
 
+#' Says that the hosted language-model tier is retired and what to do instead.
+#' @return One string.
+#' @noRd
 .bl_hosted_retired <- function() {
   sprintf(paste("the hosted MORIE language-model tier is retired: bring your own key (a provider's",
                 "variable such as ANTHROPIC_API_KEY or OPENAI_API_KEY, or `%s config set <provider>.key`)",
                 "or run a model locally (Ollama); `%s config setup` walks through it"), .bl_prog(), .bl_prog())
 }
 
-# The route a question takes: list(name, api, base, key, model, local, ...), or NULL when nothing
-# is set up. `route` forces one: "own", "ollama" or a provider id ("anthropic", "openai", ...).
+#' Finds the route a question takes.
+#'
+#' The route a question takes: list(name, api, base, key, model, local, ...), or NULL when nothing
+#' is set up. `route` forces one: "own", "ollama" or a provider id ("anthropic", "openai", ...).
+#' @param route NULL or `"auto"` for the automatic order, else one route name.
+#' @param probe_timeout The timeout in seconds for asking a local server for its models.
+#' @return A route list, or NULL.
+#' @noRd
 .bl_llm_route <- function(route = NULL, probe_timeout = 2) {
   if (identical(route, "auto")) {
     route <- NULL
@@ -527,9 +665,15 @@
   NULL
 }
 
-# A saved key belongs to the address it was saved with: a one-off address in the environment
-# (MORIE_LLM_BASE_URL=..., OLLAMA_HOST=...) gets the environment's key or none, never the key
-# saved for another server.
+#' Returns the key for an address setting.
+#'
+#' A saved key belongs to the address it was saved with: a one-off address in the environment
+#' (MORIE_LLM_BASE_URL=..., OLLAMA_HOST=...) gets the environment's key or none, never the key
+#' saved for another server.
+#' @param key_env The name of the key variable.
+#' @param url_env The name of the address variable.
+#' @return The key, or NULL.
+#' @noRd
 .bl_key_for <- function(key_env, url_env) {
   env_key <- trimws(Sys.getenv(key_env, unset = ""))
   if (nzchar(env_key)) return(.bl_key_text(env_key, key_env))
@@ -542,7 +686,10 @@
   .bl_key_text(.bl_config_value(key_env), key_env)
 }
 
-# What to set up, when no route (or the one asked for) answers.
+#' What to set up, when no route (or the one asked for) answers.
+#' @param route The route asked for, or NULL for any.
+#' @return One string, several lines.
+#' @noRd
 .bl_no_route_message <- function(route = NULL) {
   prog <- .bl_prog()
   ollama <- .bl_ollama_base()
@@ -566,7 +713,10 @@
           paste0("  ", lines), sprintf("`%s config setup` walks through it.", prog)), collapse = "\n")
 }
 
-# What to do when a route has no model to use.
+#' What to do when a route has no model to use.
+#' @param rt The route list.
+#' @return One string.
+#' @noRd
 .bl_no_model_message <- function(rt) {
   prog <- .bl_prog()
   have <- tryCatch(.bl_llm_list_models(rt), error = function(e) NULL)
@@ -858,8 +1008,15 @@ llmprvd <- function() {
   ps
 }
 
-# Ask the data service whether it knows a key: GET /v1/whoami, or /manifest.json from a service
-# that predates /v1/whoami (it answers 404 there). The reply, or NULL when nothing answered.
+#' Asks the data service whether it knows a key.
+#'
+#' Ask the data service whether it knows a key: GET /v1/whoami, or /manifest.json from a service
+#' that predates /v1/whoami (it answers 404 there). The reply, or NULL when nothing answered.
+#' @param base The data service address.
+#' @param key The key.
+#' @param timeout The timeout in seconds.
+#' @return The response list, or NULL.
+#' @noRd
 .bl_key_reply <- function(base, key, timeout = 10) {
   get <- function(p) {
     tryCatch(.bl_http_get(paste0(base, p), timeout, paste("Authorization: Bearer", key)), error = function(e) NULL)
@@ -869,8 +1026,13 @@ llmprvd <- function() {
   res
 }
 
-# `login --token KEY`: ask the data service before the key replaces a working one in the shared
-# file (stored as is, a mistyped key left all three packages reporting "key rejected").
+#' Checks a pasted key with the data service before it is stored.
+#'
+#' `login --token KEY`: ask the data service before the key replaces a working one in the shared
+#' file (stored as is, a mistyped key left all three packages reporting "key rejected").
+#' @param token The key.
+#' @return `TRUE`, invisibly.
+#' @noRd
 .bl_check_token <- function(token) {
   # the signed document's address only: MORIE_DATA_URL is never sent a key under test (G3)
   base <- sub("/+$", "", .rmbl_services_data()$base_url %||% "")
@@ -887,7 +1049,14 @@ llmprvd <- function() {
 }
 
 
-# One seam for the HTTP layer so tests can stand in canned replies.
+#' One seam for the HTTP layer so tests can stand in canned replies.
+#' @param url The address.
+#' @param body The request body as raw bytes.
+#' @param content_type The body's media type.
+#' @param timeout The timeout in seconds.
+#' @param headers Request headers, or NULL.
+#' @return The response list from the native POST.
+#' @noRd
 .bl_http_post <- function(url, body, content_type, timeout, headers) {
   .Call(
     C_rmbl_http_post, url, body, content_type, as.integer(timeout),
@@ -895,9 +1064,18 @@ llmprvd <- function() {
   )
 }
 
-# POST a JSON document, get back list(status, json) where json is the
-# parsed reply (NULL when the body is not JSON). `local` is the own-endpoint /
-# Ollama relaxation described above.
+#' Posts a JSON document and parses the reply.
+#'
+#' POST a JSON document, get back list(status, json) where json is the
+#' parsed reply (NULL when the body is not JSON). `local` is the own-endpoint /
+#' Ollama relaxation described above.
+#' @param url The address.
+#' @param payload The list to send as JSON.
+#' @param timeout The timeout in seconds.
+#' @param headers Request headers, or NULL.
+#' @param local Whether the loopback relaxation applies.
+#' @return A list with `status`, `json` and `error`.
+#' @noRd
 .bl_post_json <- function(url, payload, timeout = 30, headers = NULL, local = FALSE) {
   raw <- charToRaw(enc2utf8(tojs(payload,
     auto_unbox = TRUE
@@ -926,7 +1104,10 @@ llmprvd <- function() {
   list(status = as.integer(res$status), json = json, error = res$error %||% "")
 }
 
-# The first `data:` line of an event stream whose JSON holds an error, as that JSON; NULL otherwise.
+#' The first `data:` line of an event stream whose JSON holds an error, as that JSON; NULL otherwise.
+#' @param body The response body, raw or text.
+#' @return A list, or NULL.
+#' @noRd
 .bl_sse_error <- function(body) {
   txt <- tryCatch(if (is.raw(body)) rawToChar(body) else as.character(body), error = function(e) "")
   if (length(txt) != 1L || !grepl("^(event|data):", txt)) return(NULL)
@@ -937,6 +1118,11 @@ llmprvd <- function() {
   NULL
 }
 
+#' Stops with a plain message for a failed reply.
+#' @param res The reply list from `.bl_post_json()`.
+#' @param what The service, as named in the message.
+#' @param secret Keys to redact from the message, or NULL.
+#' @noRd
 .bl_reply_error <- function(res, what, secret = NULL) {
   if (!isTRUE(res$status > 0L)) {
     # libcurl gives -1 when no HTTP answer came at all; its own reason says which way it failed
@@ -956,16 +1142,27 @@ llmprvd <- function() {
   stop(sprintf("%s answered %d%s", what, res$status, detail), call. = FALSE)
 }
 
-# The sign-in service names the page to open; only a public https address is
-# handed to the OS browser (the service could otherwise name any scheme).
+#' Tells whether a sign-in page may be handed to the browser.
+#'
+#' The sign-in service names the page to open; only a public https address is
+#' handed to the OS browser (the service could otherwise name any scheme).
+#' @param uri The address the sign-in service named.
+#' @return `TRUE` or `FALSE`.
+#' @noRd
 .bl_browsable <- function(uri) {
   is.character(uri) && length(uri) == 1L && grepl("^https://", uri) &&
     !inherits(tryCatch(.rmbl_check_public_url(uri, "verification_uri"), error = function(e) e), "error")
 }
 
-# A server's error text can quote the key it was sent, in any phrasing. The key
-# itself is redacted by value, the usual spellings of a bearer or an sk- key by
-# shape, and the two LiteLLM phrasings seen in the wild are cut as before.
+#' Removes keys from a server's error text.
+#'
+#' A server's error text can quote the key it was sent, in any phrasing. The key
+#' itself is redacted by value, the usual spellings of a bearer or an sk- key by
+#' shape, and the two LiteLLM phrasings seen in the wild are cut as before.
+#' @param msg The error text.
+#' @param secret The keys sent, or NULL.
+#' @return The redacted text.
+#' @noRd
 .bl_redact <- function(msg, secret = NULL) {
   msg <- sub("(?i)[.,;]?\\s*(received api key|key hash).*$", "", msg, perl = TRUE)
   for (sec in secret) if (is.character(sec) && nzchar(sec)) msg <- gsub(sec, "<key>", msg, fixed = TRUE)
@@ -973,14 +1170,21 @@ llmprvd <- function() {
   gsub("\\bsk-[A-Za-z0-9._-]{6,}", "<key>", msg, perl = TRUE)
 }
 
-# The command name the user typed (the launchers set RMBL_PROG; rmbl and rmoriebricklayer are one command).
+#' The command name the user typed (the launchers set RMBL_PROG; rmbl and rmoriebricklayer are one command).
+#' @return One string.
+#' @noRd
 .bl_prog <- function() {
   p <- Sys.getenv("RMBL_PROG", "")
   if (nzchar(p)) p else "rmoriebricklayer"
 }
 
-# A model name to send, or NULL. The name travels in the request body: a key given as one
-# (`--model sk-...`) went with it (CRAN stress test of 0.5.14).
+#' Checks a model name and refuses one that looks like a key.
+#'
+#' A model name to send, or NULL. The name travels in the request body: a key given as one
+#' (`--model sk-...`) went with it (CRAN stress test of 0.5.14).
+#' @param model One model name, or NULL.
+#' @return `model`.
+#' @noRd
 .bl_model_name <- function(model) {
   if (is.null(model)) return(NULL)
   if (!is.character(model) || length(model) != 1L || is.na(model)) {
@@ -1303,7 +1507,10 @@ dlogin <- function(token = NULL, email = NULL, code = NULL,
   .bl_login_device(openbro, pollmaxsec, profile)
 }
 
-# The email check, before anything is asked or sent.
+#' The email check, before anything is asked or sent.
+#' @param email The address given.
+#' @return The address in lower case, invisibly.
+#' @noRd
 .bl_check_email <- function(email) {
   email <- tolower(trimws(as.character(email)))
   if (length(email) != 1L || is.na(email) || !nzchar(email)) {
@@ -1315,7 +1522,10 @@ dlogin <- function(token = NULL, email = NULL, code = NULL,
   invisible(email)
 }
 
-# The current version of the data access terms and where to read them, from the sign-in service.
+#' The current version of the data access terms and where to read them, from the sign-in service.
+#' @param auth The sign-in service address.
+#' @return A list with the terms `version` and `url`.
+#' @noRd
 .bl_terms_info <- function(auth = .bl_hosted_auth()) {
   base <- sub("/auth$", "", auth)
   res <- tryCatch(.bl_http_get(paste0(base, "/terms.json"), 20L, NULL), error = function(e) NULL)
@@ -1332,10 +1542,22 @@ dlogin <- function(token = NULL, email = NULL, code = NULL,
 
 .bl_SUPERVISOR_ROLES <- c("supervisor", "chair", "director", "coordinator", "other")
 
-# Everything a new key needs said first: the terms accepted (y/N at the console, or accter =
-# TRUE), the person's name and reason, and for Schedule B a supervisor, chair, director or
-# coordinator. Arguments win; what is missing is asked for; a missing required answer stops here,
-# before any request that could issue a key. The data service checks the same things.
+#' Collects the profile a new key needs.
+#'
+#' Everything a new key needs said first: the terms accepted (y/N at the console, or accter =
+#' TRUE), the person's name and reason, and for Schedule B a supervisor, chair, director or
+#' coordinator. Arguments win; what is missing is asked for; a missing required answer stops here,
+#' before any request that could issue a key. The data service checks the same things.
+#' @param accept_terms Whether the data access terms are accepted.
+#' @param name The person's name, or NULL to ask.
+#' @param affiliation The person's affiliation, or NULL to ask.
+#' @param purpose The reason for access, or NULL to ask.
+#' @param restricted Whether Schedule B tables are wanted, or NULL to ask.
+#' @param supervisor_name The supervisor's name, or NULL to ask.
+#' @param supervisor_role The supervisor's role, or NULL to ask.
+#' @param supervisor_email The supervisor's email, or NULL to ask.
+#' @return A named list sent with the sign-in request.
+#' @noRd
 .bl_signin_profile <- function(accept_terms = FALSE, name = NULL, affiliation = NULL, purpose = NULL,
                                restricted = NULL, supervisor_name = NULL, supervisor_role = NULL,
                                supervisor_email = NULL) {
@@ -1397,6 +1619,12 @@ dlogin <- function(token = NULL, email = NULL, code = NULL,
   out
 }
 
+#' Signs in with a one-time code sent by email and stores the key.
+#' @param email The email address.
+#' @param code The code, or NULL to request one and ask for it.
+#' @param profile The profile from `.bl_signin_profile()`.
+#' @return The key, invisibly.
+#' @noRd
 .bl_login_email <- function(email, code = NULL, profile = list()) {
   auth <- .bl_hosted_auth()
   email <- tolower(trimws(as.character(email)))
@@ -1433,6 +1661,12 @@ dlogin <- function(token = NULL, email = NULL, code = NULL,
   invisible(key)
 }
 
+#' Signs in with the GitHub device flow and stores the key.
+#' @param open_browser Whether the sign-in page is opened in the browser.
+#' @param poll_max_seconds How long to wait for the approval.
+#' @param profile The profile from `.bl_signin_profile()`.
+#' @return The key, invisibly.
+#' @noRd
 .bl_login_device <- function(open_browser = interactive(),
                              poll_max_seconds = 600, profile = list()) {
   auth <- .bl_hosted_auth()

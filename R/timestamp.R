@@ -281,6 +281,11 @@ tsinfo <- function(token) {
   out
 }
 
+#' Assembles the result of a timestamp verification.
+#' @param checks A list of one-row data frames, one per check.
+#' @param info The token's pieces from `.rmbl_ts_extract()`, or NULL when it could not be read.
+#' @return A `bricklayer_timestamp` list.
+#' @noRd
 .rmbl_ts_result <- function(checks, info) {
   df <- do.call(rbind, checks)
   rownames(df) <- NULL
@@ -354,6 +359,11 @@ print.bricklayer_timestamp <- function(x, ...) {
 # RFC 5652 (CMS) and RFC 5280 (X.509) define, by tag and by OID.
 # ---------------------------------------------------------------- #
 
+#' Reads a token or certificate as DER bytes, from a raw vector or a DER or PEM file.
+#' @param x A raw vector or the path to a file.
+#' @param what The argument's name, used in the error message.
+#' @return A raw vector.
+#' @noRd
 .rmbl_as_bytes <- function(x, what) {
   if (is.raw(x)) {
     return(x)
@@ -379,7 +389,10 @@ print.bricklayer_timestamp <- function(x, ...) {
   )
 }
 
-# An OID's dotted form, from its DER contents.
+#' An OID's dotted form, from its DER contents.
+#' @param v The OID's DER contents, as a raw vector.
+#' @return The dotted OID, or NA for empty contents.
+#' @noRd
 .rmbl_oid_string <- function(v) {
   if (!length(v)) {
     return(NA_character_)
@@ -398,9 +411,17 @@ print.bricklayer_timestamp <- function(x, ...) {
   paste(out, collapse = ".")
 }
 
+#' Returns the children of a parsed DER node.
+#' @param nd A node from the DER parser.
+#' @return A list of nodes.
+#' @noRd
 .rmbl_der_kids <- function(nd) nd$children
 
-# Depth-first search for the first node satisfying `pred`.
+#' Depth-first search for the first node satisfying `pred`.
+#' @param nd A node from the DER parser.
+#' @param pred A function of a node that returns `TRUE` for a match.
+#' @return The first matching node, or NULL.
+#' @noRd
 .rmbl_der_find <- function(nd, pred) {
   if (isTRUE(pred(nd))) {
     return(nd)
@@ -414,11 +435,20 @@ print.bricklayer_timestamp <- function(x, ...) {
   NULL
 }
 
+#' Tells whether a DER node is an OBJECT IDENTIFIER with the given dotted value.
+#' @param nd A node from the DER parser.
+#' @param oid The dotted OID.
+#' @return `TRUE` or `FALSE`.
+#' @noRd
 .rmbl_der_oid_eq <- function(nd, oid) {
   identical(nd$class, 0L) && identical(nd$tag, 6) &&
     identical(.rmbl_oid_string(nd$value), oid)
 }
 
+#' Names the digest algorithm of a dotted OID.
+#' @param oid The dotted OID.
+#' @return "sha256", "sha384", "sha512" or "sha1", or NA for another OID.
+#' @noRd
 .rmbl_ts_digest_name <- function(oid) {
   switch(as.character(oid),
     "2.16.840.1.101.3.4.2.1" = "sha256",
@@ -429,6 +459,11 @@ print.bricklayer_timestamp <- function(x, ...) {
   )
 }
 
+#' Computes a digest of bytes with a named algorithm.
+#' @param alg "sha256", "sha384" or "sha512".
+#' @param bytes A raw vector.
+#' @return The digest as a raw vector.
+#' @noRd
 .rmbl_ts_digest <- function(alg, bytes) {
   switch(alg,
     sha256 = .rmbl_hex_to_raw(csha256(bytes)),
@@ -440,7 +475,12 @@ print.bricklayer_timestamp <- function(x, ...) {
   )
 }
 
-# Pull out the pieces of a TimeStampResp or bare TimeStampToken.
+#' Pull out the pieces of a TimeStampResp or bare TimeStampToken.
+#' @param der The parsed DER of the response or token.
+#' @param token The token's bytes.
+#' @return A list with the TSTInfo DER, policy, message imprint and its OID, serial, time, signer, certificate (or
+#'   NULL), signature OID and the token.
+#' @noRd
 .rmbl_ts_extract <- function(der, token) {
   # The token is a CMS ContentInfo whose contentType is id-signedData.
   ci <- .rmbl_der_find(der, function(nd) {
@@ -511,7 +551,10 @@ print.bricklayer_timestamp <- function(x, ...) {
   )
 }
 
-# GeneralizedTime: YYYYMMDDHHMMSS[.fff]Z
+#' GeneralizedTime: YYYYMMDDHHMMSS\[.fff\]Z
+#' @param s A GeneralizedTime string.
+#' @return A POSIXct time in UTC.
+#' @noRd
 .rmbl_ts_gentime <- function(s) {
   s <- sub("Z$", "", s)
   frac <- 0
@@ -523,6 +566,10 @@ print.bricklayer_timestamp <- function(x, ...) {
   t + frac
 }
 
+#' Reads the signature algorithm's OID from a SignerInfo.
+#' @param signer The SignerInfo node.
+#' @return The dotted OID, or NA when it is not there.
+#' @noRd
 .rmbl_ts_signer_sig_oid <- function(signer) {
   # SignerInfo: version, sid, digestAlgorithm, [0] signedAttrs,
   # signatureAlgorithm, signature
@@ -540,6 +587,11 @@ print.bricklayer_timestamp <- function(x, ...) {
   .rmbl_oid_string(algs[[length(algs)]]$children[[1]]$value)
 }
 
+#' Verifies a token's RSA or ECDSA signature over its signed attributes, and its messageDigest attribute.
+#' @param info The token's pieces from `.rmbl_ts_extract()`.
+#' @param cert The signer's certificate in DER.
+#' @return A list with `ok`, `detail`, `content_ok` and `content_detail`.
+#' @noRd
 .rmbl_ts_verify_sig <- function(info, cert) {
   signer <- info$signer
   # signedAttrs is [0] IMPLICIT; the bytes that are SIGNED are the same
@@ -639,6 +691,10 @@ print.bricklayer_timestamp <- function(x, ...) {
   )
 }
 
+#' Names the digest algorithm a SignerInfo declares.
+#' @param signer The SignerInfo node.
+#' @return The digest's name, or NA.
+#' @noRd
 .rmbl_ts_signer_digest <- function(signer) {
   algs <- Filter(
     function(nd) {
@@ -654,6 +710,10 @@ print.bricklayer_timestamp <- function(x, ...) {
   .rmbl_ts_digest_name(.rmbl_oid_string(algs[[1]]$children[[1]]$value))
 }
 
+#' Returns the signature bytes of a SignerInfo.
+#' @param signer The SignerInfo node.
+#' @return A raw vector.
+#' @noRd
 .rmbl_ts_signature <- function(signer) {
   octs <- Filter(function(nd) {
     identical(nd$class, 0L) &&
@@ -663,7 +723,10 @@ print.bricklayer_timestamp <- function(x, ...) {
   octs[[length(octs)]]$value
 }
 
-# The DER length octets for a given length.
+#' The DER length octets for a given length.
+#' @param n The length.
+#' @return A raw vector.
+#' @noRd
 .rmbl_der_length <- function(n) {
   if (n < 128L) {
     return(as.raw(n))
@@ -677,7 +740,10 @@ print.bricklayer_timestamp <- function(x, ...) {
   c(as.raw(0x80 + length(bytes)), bytes)
 }
 
-# The RSA modulus and exponent from a certificate's SubjectPublicKeyInfo.
+#' The RSA modulus and exponent from a certificate's SubjectPublicKeyInfo.
+#' @param cert The certificate in DER.
+#' @return A list with `modulus` and `exponent` as raw vectors, or NULL when the key is not RSA.
+#' @noRd
 .rmbl_ts_cert_rsa <- function(cert) {
   der <- tryCatch(.Call(C_rmbl_der_parse, cert), error = function(e) NULL)
   if (is.null(der)) {
@@ -717,7 +783,14 @@ print.bricklayer_timestamp <- function(x, ...) {
   )
 }
 
-# EMSA-PKCS1-v1_5: 0x00 0x01 0xff...0xff 0x00 DigestInfo.
+#' Checks an EMSA-PKCS1-v1_5 encoded block against the digest of a message.
+#'
+#' EMSA-PKCS1-v1_5: 0x00 0x01 0xff...0xff 0x00 DigestInfo.
+#' @param em The encoded block recovered from the signature.
+#' @param alg The digest's name, or NA when it is not supported.
+#' @param message The signed bytes.
+#' @return A list with `ok` and `detail`.
+#' @noRd
 .rmbl_pkcs1_check <- function(em, alg, message) {
   if (is.na(alg)) {
     return(list(ok = FALSE, detail = "unsupported signature digest"))
@@ -755,7 +828,10 @@ print.bricklayer_timestamp <- function(x, ...) {
   )
 }
 
-# The DER DigestInfo prefixes of RFC 8017 section 9.2, note 1.
+#' The DER DigestInfo prefixes of RFC 8017 section 9.2, note 1.
+#' @param alg The digest's name.
+#' @return The prefix as a raw vector, or NULL for another digest.
+#' @noRd
 .rmbl_pkcs1_prefix <- function(alg) {
   hex <- switch(alg,
     sha1 = "3021300906052b0e03021a05000414",

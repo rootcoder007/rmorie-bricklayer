@@ -198,7 +198,10 @@ certprs <- function(cert) {
   out
 }
 
-# A small non-negative INTEGER's value.
+#' A small non-negative INTEGER's value.
+#' @param v The INTEGER's content bytes.
+#' @return The value as an integer, NA for no bytes.
+#' @noRd
 .rmbl_int_of <- function(v) {
   if (!length(v)) {
     return(NA_integer_)
@@ -208,6 +211,10 @@ certprs <- function(cert) {
   r
 }
 
+#' Returns the OID bytes of an AlgorithmIdentifier.
+#' @param alg The parsed AlgorithmIdentifier node.
+#' @return A raw vector, empty when the node has no children.
+#' @noRd
 tbs_alg_oid <- function(alg) {
   if (!length(alg$children)) {
     return(raw(0))
@@ -632,9 +639,14 @@ print.bricklayer_certpath_check <- function(x, ...) {
 # The pieces
 # ---------------------------------------------------------------- #
 
-# A distinguished name, rendered the way a person reads it. Only the
-# attributes anyone looks at are named; the rest keep their OIDs, which
-# is honest about what was in the certificate.
+#' Renders a distinguished name as text.
+#'
+#' A distinguished name, rendered the way a person reads it. Only the
+#' attributes anyone looks at are named; the rest keep their OIDs, which
+#' is honest about what was in the certificate.
+#' @param nd The parsed Name node.
+#' @return One string such as `"CN=..., O=..."`.
+#' @noRd
 .rmbl_x509_name <- function(nd) {
   short <- c(
     "2.5.4.3" = "CN", "2.5.4.6" = "C", "2.5.4.7" = "L",
@@ -656,9 +668,14 @@ print.bricklayer_certpath_check <- function(x, ...) {
   paste(parts, collapse = ", ")
 }
 
-# UTCTime is two-digit years, with the 1950 pivot RFC 5280 mandates;
-# GeneralizedTime is four. Getting the pivot wrong puts a 2049
-# certificate in 1949.
+#' Reads a UTCTime or GeneralizedTime.
+#'
+#' UTCTime is two-digit years, with the 1950 pivot RFC 5280 mandates;
+#' GeneralizedTime is four. Getting the pivot wrong puts a 2049
+#' certificate in 1949.
+#' @param nd The parsed time node.
+#' @return A POSIXct time in UTC.
+#' @noRd
 .rmbl_x509_time <- function(nd) {
   s <- tryCatch(rawToChar(nd$value), error = function(e) "")
   s <- sub("Z$", "", s)
@@ -672,6 +689,11 @@ print.bricklayer_certpath_check <- function(x, ...) {
   )
 }
 
+#' Reads the certificate extensions that path validation uses.
+#' @param k The children of the TBSCertificate node.
+#' @return A list with the CA flag, path length, key usage, extended key usage, subject alternative names, name
+#'   constraints, policies, policy mappings and the policy constraint counters.
+#' @noRd
 .rmbl_x509_extensions <- function(k) {
   out <- list(
     is_ca = FALSE, path_len = NA_integer_,
@@ -752,6 +774,10 @@ print.bricklayer_certpath_check <- function(x, ...) {
   out
 }
 
+#' Names the bits set in a keyUsage BIT STRING.
+#' @param v The BIT STRING's content bytes, unused-bits byte first.
+#' @return A character vector of key usage names.
+#' @noRd
 .rmbl_key_usage_bits <- function(v) {
   if (length(v) < 2L) {
     return(character(0))
@@ -774,6 +800,10 @@ print.bricklayer_certpath_check <- function(x, ...) {
   bits
 }
 
+#' Maps extended key usage names to their OIDs.
+#' @param x Names such as `"codeSigning"` or OIDs.
+#' @return A character vector of OIDs; anything unknown is kept as given.
+#' @noRd
 .rmbl_eku_oid <- function(x) {
   map <- c(
     timeStamping = "1.3.6.1.5.5.7.3.8",
@@ -789,6 +819,10 @@ print.bricklayer_certpath_check <- function(x, ...) {
   }, character(1), USE.NAMES = FALSE)
 }
 
+#' Names a signature algorithm OID.
+#' @param oid The OID as a dotted string.
+#' @return A name such as `"RSA-SHA256"`, or the OID when it is not known.
+#' @noRd
 .rmbl_x509_sigalg_name <- function(oid) {
   switch(oid,
     "1.2.840.113549.1.1.11" = "RSA-SHA256",
@@ -802,7 +836,11 @@ print.bricklayer_certpath_check <- function(x, ...) {
   )
 }
 
-# The public key, whichever kind it is.
+#' The public key, whichever kind it is.
+#' @param spki The parsed SubjectPublicKeyInfo node.
+#' @return A list with `type` and `bits`, plus the modulus and exponent of an RSA key or the curve and point of an EC
+#'   key.
+#' @noRd
 .rmbl_x509_key <- function(spki) {
   alg <- spki$children[[1]]
   oid <- .rmbl_oid_string(alg$children[[1]]$value)
@@ -848,7 +886,11 @@ print.bricklayer_certpath_check <- function(x, ...) {
   }
 }
 
-# One certificate's signature, under its issuer's key.
+#' One certificate's signature, under its issuer's key.
+#' @param cert The parsed certificate.
+#' @param issuer The parsed issuer certificate.
+#' @return A list with `ok` and `detail`.
+#' @noRd
 .rmbl_cert_verify_sig <- function(cert, issuer) {
   name <- cert$signature_algorithm
   key <- issuer$key
@@ -914,7 +956,10 @@ print.bricklayer_certpath_check <- function(x, ...) {
   list(ok = FALSE, detail = sprintf("%s is not verified here", name))
 }
 
-# An ECDSA signature is SEQUENCE { INTEGER r, INTEGER s }.
+#' An ECDSA signature is SEQUENCE { INTEGER r, INTEGER s }.
+#' @param sig The DER signature bytes.
+#' @return A list with raw `r` and `s`, or NULL when the encoding is not canonical.
+#' @noRd
 .rmbl_ecdsa_rs <- function(sig) {
   d <- tryCatch(.Call(C_rmbl_der_parse, sig), error = function(e) NULL)
   # ECDSA-Sig-Value ::= SEQUENCE { r INTEGER, s INTEGER } and nothing else:
@@ -945,7 +990,12 @@ print.bricklayer_certpath_check <- function(x, ...) {
   list(r = r, s = s)
 }
 
-# Revocation, against a CRL that was handed in. Nothing is fetched.
+#' Revocation, against a CRL that was handed in. Nothing is fetched.
+#' @param path The parsed certificates of the path.
+#' @param crls The CRLs, as DER bytes or PEM text.
+#' @param at_time The time of the check.
+#' @return A data frame with `check`, `ok` and `detail`, one row per certificate.
+#' @noRd
 .rmbl_crl_check <- function(path, crls, at_time) {
   acc <- new.env(parent = emptyenv())
   acc$rows <- list()

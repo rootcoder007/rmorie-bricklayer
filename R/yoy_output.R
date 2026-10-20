@@ -67,20 +67,37 @@
 #' @export
 yoypals <- function() names(.YOY_PALETTES)
 
+#' Looks up a printing palette by name.
+#' @param palette The palette name, one of yoypals().
+#' @return The palette's named colours.
+#' @noRd
 .yoy_pal <- function(palette) {
   palette <- .rmbl_arg(palette, names(.YOY_PALETTES))
   .YOY_PALETTES[[palette]]
 }
 
+#' Returns the settings that yoy() stored on its result.
+#' @param x A yoy() result.
+#' @return The list held in the "yoy" attribute, or NULL.
+#' @noRd
 .yoy_meta <- function(x) attr(x, "yoy", exact = TRUE)
 
+#' Names the change column of a yoy() result.
+#' @param x A yoy() result.
+#' @return "ppchg" for a percentage-point change, else "pctchg".
+#' @noRd
 .yoy_change_col <- function(x) {
   if ("ppchg" %in% names(x)) "ppchg" else "pctchg"
 }
 
-# The colour class of each verdict: good or bad news only when a direction says which is which.
-# "up" and "down" (direction = "neutral") are neither, so they are flat; they had been painted
-# bad and good, which called every neutral rise bad news.
+#' Classes each verdict as good, bad or flat news.
+#'
+#' The colour class of each verdict: good or bad news only when a direction says which is which.
+#' "up" and "down" (direction = "neutral") are neither, so they are flat; they had been painted
+#' bad and good, which called every neutral rise bad news.
+#' @param v The verdicts.
+#' @return A character vector of "good", "bad" or "flat".
+#' @noRd
 .yoy_verdict_class <- function(v) {
   out <- rep("flat", length(v))
   out[!is.na(v) & v == "worse"] <- "bad"
@@ -88,9 +105,14 @@ yoypals <- function() names(.YOY_PALETTES)
   out
 }
 
-# The arrow carries the sign; the colour carries whether the sign is
-# good news. Keeping them separate means a monochrome or piped-to-file
-# rendering still says which way the number moved.
+#' Draws the arrow that shows the sign of each change.
+#'
+#' The arrow carries the sign; the colour carries whether the sign is
+#' good news. Keeping them separate means a monochrome or piped-to-file
+#' rendering still says which way the number moved.
+#' @param chg The changes.
+#' @return A character vector of arrows, a dash for no change and a blank for NA.
+#' @noRd
 .yoy_arrow <- function(chg) {
   out <- rep(" ", length(chg))
   ok <- !is.na(chg)
@@ -100,6 +122,12 @@ yoypals <- function() names(.YOY_PALETTES)
   out
 }
 
+#' Formats changes as signed percentages or percentage points.
+#' @param v The changes.
+#' @param digits The number of decimal places.
+#' @param pp Whether the unit is percentage points.
+#' @return A character vector, a dash for a missing value.
+#' @noRd
 .yoy_fmt_pct <- function(v, digits = 1L, pp = FALSE) {
   # every writer's digits come through here: NA, a vector or text became the format "%+.NAf"
   digits <- .rmbl_scalar(digits, "digits", 0, 15, integer = TRUE)
@@ -111,6 +139,11 @@ yoypals <- function() names(.YOY_PALETTES)
   out
 }
 
+#' Formats numbers with thousands separators.
+#' @param v The numbers.
+#' @param digits The number of decimal places.
+#' @return A character vector, a dash for a missing value.
+#' @noRd
 .yoy_fmt_num <- function(v, digits = 0L) {
   out <- rep(.yg("\u2014"), length(v))
   ok <- !is.na(v)
@@ -213,7 +246,10 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
   invisible(x)
 }
 
-# 24-bit ANSI, which every terminal that reports colour support handles.
+#' 24-bit ANSI, which every terminal that reports colour support handles.
+#' @param hex The colour as "#RRGGBB".
+#' @return The escape sequence that sets that foreground colour.
+#' @noRd
 .yoy_ansi <- function(hex) {
   r <- strtoi(substr(hex, 2L, 3L), 16L)
   g <- strtoi(substr(hex, 4L, 5L), 16L)
@@ -221,6 +257,10 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
   sprintf("\033[38;2;%d;%d;%dm", r, g, b)
 }
 
+#' Writes the footer line that states a yoy() table's settings.
+#' @param m The settings of the yoy() result (see `.yoy_meta()`).
+#' @return One string.
+#' @noRd
 .yoy_footer <- function(m) {
   bits <- c(sprintf("lag %d period%s", m$lag, if (m$lag == 1L) "" else "s"),
             sprintf("units: %s", m$units))
@@ -354,5 +394,8 @@ yoysmry.rmbl_yoy <- function(object, ...) {
   out
 }
 
-# a glyph, or its ASCII meaning where the console cannot render UTF-8 (LC_ALL=C, some CI logs)
+#' A glyph, or its ASCII meaning where the console cannot render UTF-8 (LC_ALL=C, some CI logs)
+#' @param x The glyph.
+#' @return `x`, or its ASCII replacement.
+#' @noRd
 .yg <- function(x) if (.rmbl_unicode_ok()) x else .yoy_ascii(x)

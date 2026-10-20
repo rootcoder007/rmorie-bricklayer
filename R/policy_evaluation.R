@@ -9,6 +9,13 @@
 
 # ---- panel helpers ---------------------------------------------------------------------------------
 
+#' Checks the unit, time and outcome columns of a panel and returns them coded.
+#' @param data The panel data frame.
+#' @param unit The name of the unit column.
+#' @param time The name of the numeric time column.
+#' @param outcome The name of the outcome column.
+#' @return A list with integer unit codes `u`, unit levels `ul`, times `t`, sorted unique times `tl` and outcomes `y`.
+#' @noRd
 .rmbl_panel <- function(data, unit, time, outcome) {
   .rmbl_df_names(data)
   for (nm in c("unit", "time", "outcome")) {
@@ -26,6 +33,12 @@
   list(u = as.integer(factor(u)), ul = levels(factor(u)), t = t, tl = sort(unique(t)), y = y)
 }
 
+#' Reads the first-treated period of each row, with never treated as Inf.
+#' @param data The panel data frame.
+#' @param first_treated The name of the first-treated column.
+#' @param p The coded panel from `.rmbl_panel()`.
+#' @return A numeric vector, Inf for units never treated.
+#' @noRd
 .rmbl_first_treated <- function(data, first_treated, p) {
   v <- .rmbl_colnames(first_treated, "ftreat")
   if (!v %in% names(data)) stop(sprintf("`ftreat` (%s) is not a column of `data`", v), call. = FALSE)
@@ -38,8 +51,17 @@
   g
 }
 
-# Two-way (or k-way) within transformation by alternating projections: exact for a balanced panel in
-# one sweep, and convergent for an unbalanced one.
+#' Removes fixed effects from the columns of a matrix.
+#'
+#' Two-way (or k-way) within transformation by alternating projections: exact for a balanced panel in
+#' one sweep, and convergent for an unbalanced one.
+#' @param x A vector or matrix.
+#' @param fes A list of fixed-effect vectors.
+#' @param tol The convergence tolerance.
+#' @param maxit The most sweeps.
+#' @param w Observation weights, or NULL for equal weights.
+#' @return The demeaned matrix.
+#' @noRd
 .rmbl_demean <- function(x, fes, tol = 1e-12, maxit = 10000L, w = NULL) {
   x <- as.matrix(x)
   if (!length(fes)) return(x)
@@ -58,8 +80,17 @@
   x
 }
 
-# OLS on demeaned data with one-way cluster-robust (CR1) variance. `k_fe` is the number of fixed-effect
-# parameters counted in the small-sample factor (N - 1) / (N - K), as fixest counts them.
+#' Fits weighted least squares on demeaned data with cluster-robust variance.
+#'
+#' OLS on demeaned data with one-way cluster-robust (CR1) variance. `k_fe` is the number of fixed-effect
+#' parameters counted in the small-sample factor (N - 1) / (N - K), as fixest counts them.
+#' @param y The demeaned outcome.
+#' @param x The demeaned regressor matrix, with column names.
+#' @param cl A cluster vector, or a list of two for two-way clustering.
+#' @param k_fe The number of fixed-effect parameters.
+#' @param w Observation weights, or NULL for equal weights.
+#' @return A list with `coef`, `vcov`, `resid`, `n` and the smallest number of `clusters`.
+#' @noRd
 .rmbl_ols_cr1 <- function(y, x, cl, k_fe, w = NULL) {
   if (is.null(w)) w <- rep(1, length(y))
   sw <- sqrt(w)
@@ -94,6 +125,11 @@
   list(coef = stats::setNames(as.vector(b), colnames(x)), vcov = v, resid = e, n = n, clusters = g)
 }
 
+#' Counts the fixed-effect parameters for the small-sample factor.
+#' @param fes A list of fixed-effect vectors.
+#' @param cl A cluster vector, or a list of them.
+#' @return An integer.
+#' @noRd
 .rmbl_k_fe <- function(fes, cl) {
   # fixest's "nested" count: the fixed effects nested in the clusters drop out, the others count
   # their levels less one, and the absorbed constant counts one
@@ -106,6 +142,12 @@
   k
 }
 
+#' Reads the cluster column or columns, defaulting to the unit.
+#' @param data The panel data frame.
+#' @param cluster One or two column names, or NULL.
+#' @param p The coded panel from `.rmbl_panel()`.
+#' @return An integer cluster vector, or a list of two.
+#' @noRd
 .rmbl_cluster <- function(data, cluster, p) {
   if (is.null(cluster)) return(p$u)
   v <- .rmbl_colnames(cluster, "cluster", several = TRUE)
@@ -118,6 +160,11 @@
   if (length(out) == 1L) out[[1L]] else out
 }
 
+#' Reads the covariate columns as a numeric matrix.
+#' @param data The panel data frame.
+#' @param covariates Column names, or NULL.
+#' @return A matrix with one column per covariate, or NULL.
+#' @noRd
 .rmbl_covariates <- function(data, covariates) {
   if (is.null(covariates)) return(NULL)
   covariates <- .rmbl_colnames(covariates, "covariates", several = TRUE)
@@ -127,6 +174,11 @@
   matrix(m, nrow(data), dimnames = list(NULL, covariates))
 }
 
+#' Reads the weights column, defaulting to equal weights.
+#' @param data The panel data frame.
+#' @param weights A column name, or NULL.
+#' @return A numeric vector of weights.
+#' @noRd
 .rmbl_weights <- function(data, weights) {
   if (is.null(weights)) return(rep(1, nrow(data)))
   v <- .rmbl_colnames(weights, "weights")
@@ -136,6 +188,12 @@
   w
 }
 
+#' Tabulates coefficients with t intervals on clusters less one degrees of freedom.
+#' @param fit A fit from `.rmbl_ols_cr1()`.
+#' @param terms The coefficient names to report.
+#' @param conf_level The confidence level.
+#' @return A data frame with `term`, `estimate`, `se`, `lower`, `upper`, `t` and `p_value`.
+#' @noRd
 .rmbl_coef_table <- function(fit, terms, conf_level) {
   se <- sqrt(diag(fit$vcov))[terms]
   est <- fit$coef[terms]
@@ -641,6 +699,15 @@ stgatt <- function(data, unit, time, y, ftreat, ctrl = c("notyet", "never"),
   out
 }
 
+#' Computes the Callaway-Sant'Anna group-time average treatment effects.
+#' @param y A unit-by-period outcome matrix.
+#' @param gg The first-treated period of each unit.
+#' @param tl The sorted periods.
+#' @param control The comparison group, `"never"` or `"notyet"`.
+#' @param x A list of unit-by-period covariate matrices, or NULL.
+#' @param est_method The covariate method passed to `.rmbl_drdid()`.
+#' @return A data frame with `cohort`, `period`, `evtm`, `estimate` and `ncoh`.
+#' @noRd
 .rmbl_cs <- function(y, gg, tl, control, x = NULL, est_method = "dr") {
   cohorts <- sort(unique(gg[is.finite(gg)]))
   rows <- list()
@@ -669,9 +736,15 @@ stgatt <- function(data, unit, time, y, ftreat, ctrl = c("notyet", "never"),
              estimate = m[, 3L], ncoh = m[, 4L])
 }
 
-# The two-period panel DiD with covariates of Sant'Anna and Zhao (2020): outcome regression on the
-# comparison units ("reg"), normalised inverse probability weighting ("ipw"), or both, doubly robust
-# ("dr"); comparison units with a propensity above 0.995 are trimmed, as DRDID does.
+#' The two-period panel DiD with covariates of Sant'Anna and Zhao (2020): outcome regression on the
+#' comparison units ("reg"), normalised inverse probability weighting ("ipw"), or both, doubly robust
+#' ("dr"); comparison units with a propensity above 0.995 are trimmed, as DRDID does.
+#' @param dy The outcome change of each unit.
+#' @param d The treatment indicator, 1 or 0.
+#' @param x The covariate matrix, with an intercept column.
+#' @param est_method `"reg"`, `"ipw"` or `"dr"`.
+#' @return The average treatment effect on the treated.
+#' @noRd
 .rmbl_drdid <- function(dy, d, x, est_method) {
   m <- 0
   if (est_method != "ipw") m <- as.vector(x %*% qr.coef(qr(x[d == 0, , drop = FALSE]), dy[d == 0]))
@@ -683,6 +756,13 @@ stgatt <- function(data, unit, time, y, ftreat, ctrl = c("notyet", "never"),
   sum(d * (dy - m)) / sum(d) - sum(wc * (dy - m)) / sum(wc)
 }
 
+#' Computes cohort-period effects by the extended two-way fixed-effects regression.
+#' @param y A unit-by-period outcome matrix.
+#' @param gg The first-treated period of each unit.
+#' @param tl The sorted periods.
+#' @param control The comparison group, `"never"` or `"notyet"`.
+#' @return A data frame with `cohort`, `period`, `evtm`, `estimate` and `ncoh`.
+#' @noRd
 .rmbl_etwfe <- function(y, gg, tl, control) {
   nu <- nrow(y)
   nt <- ncol(y)
@@ -1063,6 +1143,10 @@ perminf <- function(data, unit, time, y, ftreat, cl = NULL,
   out
 }
 
+#' Lists the distinct permutations of a vector with repeated values.
+#' @param v The vector.
+#' @return A matrix with one permutation per row.
+#' @noRd
 .rmbl_multiset_perms <- function(v) {
   if (length(v) <= 1L) return(matrix(v, 1L))
   u <- unique(v)
@@ -1250,7 +1334,10 @@ plnpois <- function(data, unit, time, y, trtd, covs = NULL, offset = NULL, cl = 
   out
 }
 
-# The negative binomial (NB2) family at a fixed theta, for glm.fit: base R, no MASS
+#' The negative binomial (NB2) family at a fixed theta, for glm.fit: base R, no MASS
+#' @param theta The dispersion parameter.
+#' @return A family object.
+#' @noRd
 .rmbl_negbin_family <- function(theta) {
   f <- stats::poisson()
   f$family <- sprintf("Negative Binomial(%.4g)", theta)
@@ -1356,12 +1443,20 @@ synctl <- function(data, unit, time, y, treunit, adopt, plac = TRUE) {
   out
 }
 
-# min ||A w - b||^2 over the simplex. An active set on the KKT system first: the exact least squares
-# on a support with the sum constraint (one small solve), a weight that comes out negative leaves
-# the support, a zero weight whose reduced gradient says it would lower the objective joins it.
-# FISTA with the exact Euclidean projection (Duchi et al. 2008) is the fallback: with a tiny ridge
-# (the time weights of syndid(), zeta = 1e-6 sigma) its projected gradient steps ran to the limit,
-# a second a placebo and 55 s of CPU a vignette (final audit of 1.0.0)
+#' Solves least squares with the weights on the simplex.
+#'
+#' Min ||A w - b||^2 over the simplex. An active set on the KKT system first: the exact least squares
+#' on a support with the sum constraint (one small solve), a weight that comes out negative leaves
+#' the support, a zero weight whose reduced gradient says it would lower the objective joins it.
+#' FISTA with the exact Euclidean projection (Duchi et al. 2008) is the fallback: with a tiny ridge
+#' (the time weights of syndid(), zeta = 1e-6 sigma) its projected gradient steps ran to the limit,
+#' a second a placebo and 55 s of CPU a vignette (final audit of 1.0.0)
+#' @param A The design matrix.
+#' @param b The target vector.
+#' @param maxit The most FISTA iterations.
+#' @param tol The FISTA convergence tolerance.
+#' @return The weight vector, non-negative and summing to one.
+#' @noRd
 .rmbl_simplex_ls <- function(A, b, maxit = 20000L, tol = 1e-12) {
   k <- ncol(A)
   ata <- crossprod(A)

@@ -177,10 +177,24 @@ yoyhtml <- function(x, file, title = "Year-over-year change",
   invisible(file)
 }
 
+#' Wraps text in an HTML table cell of a class.
+#' @param txt The cell text, already escaped.
+#' @param cls The cell's CSS class.
+#' @return The `<td>` element as a string.
+#' @noRd
 .yoy_td <- function(txt, cls) {
   paste0("<td class=\"", cls, "\">", txt, "</td>")
 }
 
+#' Builds the HTML cell for a percentage change, with its arrow and optional bar.
+#' @param v The change.
+#' @param cls The verdict class of the row.
+#' @param digits The number of decimal places.
+#' @param pp Whether the change is in percentage points.
+#' @param bars Whether a bar proportional to the change is drawn.
+#' @param scale The largest absolute change in the table, the full width of a bar.
+#' @return The `<td>` element as a string.
+#' @noRd
 .yoy_pct_cell <- function(v, cls, digits, pp, bars, scale) {
   txt <- .yoy_fmt_pct(v, digits, pp)
   arrow <- if (is.na(v)) "" else if (v > 0) "\u25b2" else if (v < 0)
@@ -195,6 +209,11 @@ yoyhtml <- function(x, file, title = "Year-over-year change",
          "</span><span class=\"val\">", txt, "</span>", bar, "</td>")
 }
 
+#' Builds the HTML cards that summarise each series across the span.
+#' @param sm The summary table from yoysmry().
+#' @param m The yoy table's metadata.
+#' @return The HTML section as a string.
+#' @noRd
 .yoy_summary_html <- function(sm, m) {
   keys <- intersect(m$by, names(sm))
   cells <- vapply(seq_len(nrow(sm)), function(r) {
@@ -221,6 +240,10 @@ yoyhtml <- function(x, file, title = "Year-over-year change",
          paste(cells, collapse = ""), "</div>")
 }
 
+#' Escapes text for HTML, with NA as the empty string.
+#' @param s The text.
+#' @return A character vector with `&`, `<`, `>` and both quotes escaped.
+#' @noRd
 .yoy_esc <- function(s) {
   s <- as.character(s)
   s[is.na(s)] <- ""
@@ -231,8 +254,11 @@ yoyhtml <- function(x, file, title = "Year-over-year change",
   gsub("'", "&#39;", s, fixed = TRUE)
 }
 
-# One stylesheet, inlined, defining the palette as custom properties so
-# that the dark theme redefines only the tokens.
+#' One stylesheet, inlined, defining the palette as custom properties so
+#' that the dark theme redefines only the tokens.
+#' @param pal The palette, from .yoy_pal().
+#' @return The stylesheet as a string.
+#' @noRd
 .yoy_css <- function(pal) {
   paste0(
     ":root{--bad:", pal$bad, ";--good:", pal$good, ";--flat:", pal$flat,
@@ -385,8 +411,11 @@ yoypdf <- function(x, file, title = "Year-over-year change",
   invisible(file)
 }
 
-# Glyphs the PDF device's base fonts cannot draw, rendered as the ASCII
-# that means the same thing.
+#' Glyphs the PDF device's base fonts cannot draw, rendered as the ASCII
+#' that means the same thing.
+#' @param x A character vector or matrix.
+#' @return `x` with those glyphs replaced, keeping a matrix's shape.
+#' @noRd
 .yoy_ascii <- function(x) {
   out <- as.character(x)
   for (pair in list(c("\u2014", "-"), c("\u2013", "-"),
@@ -401,18 +430,42 @@ yoypdf <- function(x, file, title = "Year-over-year change",
   out
 }
 
-# Rows that fit one page of `height` inches: the title block takes the top 12 percent of the
-# page and the page label the bottom 6, every row 0.22 inch, and the notes (last page)
-# 0.018 of the height per line. .yoy_pdf_page() draws with the same figures.
+#' Counts the table rows that fit on one PDF page.
+#'
+#' Rows that fit one page of `height` inches: the title block takes the top 12 percent of the
+#' page and the page label the bottom 6, every row 0.22 inch, and the notes (last page)
+#' 0.018 of the height per line. .yoy_pdf_page() draws with the same figures.
+#' @param height The page height in inches.
+#' @param n_notes The number of note lines on the page.
+#' @return The number of rows, at least 5.
+#' @noRd
 .yoy_rows_per_page <- function(height, n_notes = 0L) {
   notes_in <- if (n_notes > 0L) .yoy_note_line(height) * (n_notes + 1L) else 0
   max(5L, as.integer(floor((0.82 * height - 0.22 * 1.1 - notes_in) / 0.22)))
 }
 
-# The height of one note line: 0.018 of the page, but never under a tenth of an inch (about
-# seven points), so a short page does not print its notes at a size nobody can read.
+#' Gives the height of one note line on a PDF page.
+#'
+#' The height of one note line: 0.018 of the page, but never under a tenth of an inch (about
+#' seven points), so a short page does not print its notes at a size nobody can read.
+#' @param height The page height in inches.
+#' @return The line height in inches.
+#' @noRd
 .yoy_note_line <- function(height) max(0.018 * height, 0.1)
 
+#' Draws one page of a yoy table on the open PDF device.
+#' @param hdr The column headers.
+#' @param body The character matrix of rows for this page.
+#' @param cols The colour of each row's change.
+#' @param title The page title.
+#' @param subtitle The line under the title.
+#' @param pal The palette, from .yoy_pal().
+#' @param pagelab The page label, or "" for none.
+#' @param notes The note lines for this page.
+#' @param height The page height in inches.
+#' @param notes_only Whether the page holds notes alone.
+#' @return NULL, invisibly.
+#' @noRd
 .yoy_pdf_page <- function(hdr, body, cols, title, subtitle, pal,
                           pagelab, notes, height = 8.5, notes_only = FALSE) {
   ncol <- length(hdr)

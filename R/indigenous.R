@@ -82,10 +82,15 @@ sctidy <- function(x) {
   x
 }
 
-# A census data table (98-10-xxxx) in its wide layout: one column per member of a dimension
-# ("Indigenous identity (9):Metis[5]"), each followed by its "Symbol" column, and no VALUE. Made long:
-# the dimension becomes a column of member labels, the values VALUE and the symbols STATUS. NULL when
-# the table has no such columns.
+#' Reshapes a wide census data table into the long layout.
+#'
+#' A census data table (98-10-xxxx) in its wide layout: one column per member of a dimension
+#' ("Indigenous identity (9):Metis\[5\]"), each followed by its "Symbol" column, and no VALUE. Made long:
+#' the dimension becomes a column of member labels, the values VALUE and the symbols STATUS. NULL when
+#' the table has no such columns.
+#' @param x The table as read.
+#' @return A long data frame with the dimension, VALUE and STATUS columns, or NULL.
+#' @noRd
 .rmbl_statcan_long <- function(x) {
   nm <- names(x)
   vc <- grep(":.*\\[[0-9]+\\]\\s*$", nm)
@@ -107,11 +112,16 @@ sctidy <- function(x) {
   out
 }
 
-# One label can name two members of a dimension ("Without children" under couple families and under
-# another parent, table 98-10-0254): the CSV drops the hierarchy, and only the member number in the
-# coordinate tells them apart. Such labels get their member number ("Without children [3]"); labels that
-# name one member are left as they are. The coordinate holds one number per dimension, the geography
-# first, in the order of the columns; the geography is told apart by DGUID and is left alone.
+#' Tells apart member labels that name two members of one dimension.
+#'
+#' One label can name two members of a dimension ("Without children" under couple families and under
+#' another parent, table 98-10-0254): the CSV drops the hierarchy, and only the member number in the
+#' coordinate tells them apart. Such labels get their member number ("Without children \[3\]"); labels that
+#' name one member are left as they are. The coordinate holds one number per dimension, the geography
+#' first, in the order of the columns; the geography is told apart by DGUID and is left alone.
+#' @param x The table as read.
+#' @return `x`, with ambiguous member labels given their member number.
+#' @noRd
 .rmbl_statcan_members <- function(x) {
   cc <- intersect(c("COORDINATE", "Coordinate"), names(x))[1L]
   if (is.na(cc) || !"GEO" %in% names(x)) return(x)
@@ -132,9 +142,15 @@ sctidy <- function(x) {
   x
 }
 
-# Rows that pool groups (a pan-Indigenous total, as against First Nations, Metis or Inuit): those
-# named in `pooled`, or by default labels that begin "Total", "Indigenous identity",
-# "Aboriginal identity" or "Indigenous population".
+#' Finds the rows that pool groups.
+#'
+#' Rows that pool groups (a pan-Indigenous total, as against First Nations, Metis or Inuit): those
+#' named in `pooled`, or by default labels that begin "Total", "Indigenous identity",
+#' "Aboriginal identity" or "Indigenous population".
+#' @param g The group labels.
+#' @param pooled_groups The labels of the pooled rows, or NULL for the default patterns.
+#' @return A logical vector, TRUE for a pooled row.
+#' @noRd
 .rmbl_pan_indigenous <- function(g, pooled_groups = NULL) {
   if (!is.null(pooled_groups)) {
     .rmbl_no_fn(pooled_groups = pooled_groups)
@@ -147,9 +163,14 @@ sctidy <- function(x) {
         trimws(tolower(g)))
 }
 
-# The package's quality vocabulary: "ok", "E" (use with caution), "F", "x", "..", "..." (no value).
-# A flag outside it is said once and treated as "ok": recode another agency's flags with
-# qltyrcd() first.
+#' Reads quality flags into the package vocabulary.
+#'
+#' The package's quality vocabulary: "ok", "E" (use with caution), "F", "x", "..", "..." (no value).
+#' A flag outside it is said once and treated as "ok": recode another agency's flags with
+#' qltyrcd() first.
+#' @param q The quality flags as given.
+#' @return A character vector of flags, blanks and unknown flags as "ok".
+#' @noRd
 .rmbl_qflags <- function(q) {
   q <- trimws(as.character(q))
   q[is.na(q) | q == ""] <- "ok"
@@ -162,8 +183,16 @@ sctidy <- function(x) {
   q
 }
 
-# Published limits that miss their own estimate (it happens: a 100% with limits 85.5 to 98.6): the
-# estimate is set to NA, so the row is not compared, and the rows are named in one warning.
+#' Drops estimates that their own published limits do not contain.
+#'
+#' Published limits that miss their own estimate (it happens: a 100% with limits 85.5 to 98.6): the
+#' estimate is set to NA, so the row is not compared, and the rows are named in one warning.
+#' @param est The estimates.
+#' @param lo The lower limits.
+#' @param hi The upper limits.
+#' @param labels The row labels named in the warning.
+#' @return `est`, with the uncontained estimates set to NA.
+#' @noRd
 .rmbl_contains <- function(est, lo, hi, labels) {
   bad <- is.finite(lo) & is.finite(hi) & is.finite(est) & (lo > est | hi < est)
   if (any(bad)) {

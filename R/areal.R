@@ -344,6 +344,17 @@ ebrates <- function(obs, expd, area = NULL) {
   .eb_frame(area, obs, expd, theta, eb, 1 - w, nu, alpha)
 }
 
+#' Builds the data frame of empirical Bayes estimates, with an `area` column when areas are named.
+#' @param area The area labels, or NULL.
+#' @param observed The observed counts.
+#' @param expected The expected counts.
+#' @param theta The standardised incidence ratios.
+#' @param eb The empirical Bayes estimates.
+#' @param shrink The shrinkage factors.
+#' @param nu The prior's shape.
+#' @param alpha The prior's rate.
+#' @return A data frame with one row per area.
+#' @noRd
 .eb_frame <- function(area, observed, expected, theta, eb, shrink,
                       nu, alpha) {
   out <- data.frame(observed = observed, expected = expected,
@@ -603,7 +614,12 @@ morani <- function(x, nbrs, style = c("W", "B"),
        p_value = p, W = r$W, n = n, nperm = length(null), style = style)
 }
 
-# A neighbour list, from a list or from a weight matrix.
+#' A neighbour list, from a list or from a weight matrix.
+#' @param neighbours A list of neighbour indices or an n by n weight matrix.
+#' @param n The number of areas.
+#' @return A list of neighbour indices, one element per area; from a matrix it carries the weights in its `weights`
+#'   attribute.
+#' @noRd
 .rmbl_neighbours <- function(neighbours, n) {
   if (is.matrix(neighbours)) {
     if (nrow(neighbours) != n || ncol(neighbours) != n) {

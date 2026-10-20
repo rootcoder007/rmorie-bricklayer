@@ -11,6 +11,7 @@
 #' @srrstats {G1.3} Exported functions define their terms and estimators in @details with formulas (e.g. svyest
 #'   mean/total/ratio, ginicoef Gini, cmn n-1 variance).
 #' @srrstats {G1.4} All exports are documented with roxygen2 (DESCRIPTION Roxygen: markdown = TRUE; man/ is generated).
+#' @srrstats {G1.4a} Every internal function carries a roxygen2 block with a title, @param, @return and @noRd.
 #' @srrstats {G1.6} Results are checked against other implementations: survey package (test-survey.R),
 #'   digest/openssl (test-byte-parity.R), OpenSSL 3.5 vectors (test-fips-*.R).
 #' @srrstats {G2.4} Explicit conversions are centralised in R/aaa_input_guards.R (.rmbl_num, .rmbl_scalar) and the
@@ -48,8 +49,6 @@
 #' @srrstats {EA1.0} README's opening paragraph names the users: analysts and researchers working from published
 #'   administrative and survey tables.
 #'
-#' @srrstatsTODO {G1.4a} Only 77 @noRd blocks for about 697 internal functions; most internal helpers have plain #
-#'   comments, and 235 have none at all.
 #' @srrstatsTODO {G5.2a} 63 stop() messages are duplicated (e.g. "`data` must be a data frame" appears 21 times;
 #'   "`col` must name a column" 7 times).
 #' @noRd

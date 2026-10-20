@@ -22,6 +22,13 @@
 # relationship governs hospital beds, shelter occupancy and open
 # caseloads. It is Little's law with the names corrections planning uses.
 
+#' Checks a positive (or, with `allow_zero`, non-negative) numeric argument.
+#' @param x The value passed by the user.
+#' @param arg The argument name, used in the error message.
+#' @param allow_zero Whether zero is accepted.
+#' @param scalar Whether one value is required.
+#' @return A double vector.
+#' @noRd
 .rmbl_pos_num <- function(x, arg, allow_zero = FALSE, scalar = FALSE) {
   x <- .rmbl_num_input(x, arg)
   # a scalar argument with several values was read by its first one and the

@@ -192,6 +192,10 @@ print.bricklayer_recompute <- function(x, ...) {
   invisible(x)
 }
 
+#' Reads the first element of a value as a number, NA when it is none.
+#' @param x The value.
+#' @return One number, or `NA_real_`.
+#' @noRd
 .rmbl_num_or_na <- function(x) {
   v <- suppressWarnings(as.numeric(x)[1L])
   if (length(v) != 1L) NA_real_ else v

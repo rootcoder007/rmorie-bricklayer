@@ -6,9 +6,15 @@
 # shape of every column, where the gaps are, which values dominate, and
 # which rows do not belong.
 
-# A one-line histogram from block-drawing characters, or ASCII where the
-# console cannot render them. Eight levels is what the Unicode blocks
-# give; the ASCII fallback has five and says less, but says it legibly.
+#' Draws a one-line histogram.
+#'
+#' A one-line histogram from block-drawing characters, or ASCII where the
+#' console cannot render them. Eight levels is what the Unicode blocks
+#' give; the ASCII fallback has five and says less, but says it legibly.
+#' @param x The values.
+#' @param bins The number of bins, one character each.
+#' @return One string.
+#' @noRd
 .rmbl_sparkline <- function(x, bins = 10L) {
   x <- .rmbl_num(x, "x")
   x <- x[is.finite(x)]
@@ -579,6 +585,10 @@ clncolnms <- function(data, case = c("snake", "lower_camel",
   out
 }
 
+#' Capitalises each word: the first letter upper case, the rest lower case.
+#' @param w The words.
+#' @return A character vector.
+#' @noRd
 .rmbl_capitalise <- function(w) {
   if (length(w) == 0L) return(character(0))
   paste0(toupper(substring(w, 1L, 1L)), tolower(substring(w, 2L)))
