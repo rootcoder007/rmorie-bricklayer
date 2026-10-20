@@ -257,6 +257,10 @@
   graphics::plot.window(c(0.5, length(runs) + 0.5), c(length(cl) + 0.5, 0.5), xaxs = "i", yaxs = "i")
   .bl_title(sprintf("PSI by run (warn %s, fail %s)", b$warn, b$fail))
   .bl_xlab("Run")
+  if (!nrow(h)) {
+    .bl_xlab("Run")
+    return(invisible(h))
+  }
   x <- match(h$run, runs)
   y <- match(h$column, cl)
   graphics::rect(x - 0.48, y - 0.46, x + 0.48, y + 0.46, col = grDevices::adjustcolor(fill[h$band], 0.85), border = NA)
@@ -604,7 +608,10 @@ drftapp <- function(x = NULL, ref = NULL, cur = NULL, hist = NULL, warn = NULL, 
       y$alpha <- input$alpha
       y
     })
-    bands <- shiny::reactive(.bl_drift_bands(now(), input$warn, max(input$warn, input$fail)))
+    bands <- shiny::reactive({
+      shiny::req(input$warn, input$fail)
+      .bl_drift_bands(now(), input$warn, max(input$warn, input$fail))
+    })
     run <- function(r, c1, cols) {
       y <- cpsdrft(r[cols], c1[cols], alpha = input$alpha, bins = input$bins)
       y$manifest <- x$manifest

@@ -215,7 +215,8 @@ test_that("audit coverage: the simplex solver lets a column back in and polishes
 
 test_that("audit coverage: a record set whose columns simplify to different lengths is refused", {
   local_mocked_bindings(.rmbl_json_simplify = function(x, ...) if (identical(unlist(x), c(1, 2))) c(1, 2) else 1:3)
-  recs <- list(list(a = 1, b = 3), list(a = 2, b = 4))
+  # list cells: a column of scalars is built without the simplifier (the fast path)
+  recs <- list(list(a = list(1), b = list(3)), list(a = list(2), b = list(4)))
   expect_error(.rmbl_json_simplify_df(recs, c("a", "b"), flatten = FALSE, simplifyMatrix = FALSE),
                "Elements not of equal length: 2 3")
 })

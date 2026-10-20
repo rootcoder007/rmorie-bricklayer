@@ -176,19 +176,31 @@ yoy_summary.rmbl_yoy <- function(object, ...) {
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
-print.rmbl_old <- function(x, ...) .rmbl_old_call("print", x, ...)
+print.rmbl_old <- function(x, ...) .rmbl_old_call("print", .rmbl_old_arg(x), ...)
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
-format.rmbl_old <- function(x, ...) .rmbl_old_call("format", x, ...)
+format.rmbl_old <- function(x, ...) .rmbl_old_call("format", .rmbl_old_arg(x), ...)
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
-plot.rmbl_old <- function(x, ...) .rmbl_old_call("plot", x, ...)
+plot.rmbl_old <- function(x, ...) .rmbl_old_call("plot", .rmbl_old_arg(x), ...)
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
-summary.rmbl_old <- function(object, ...) .rmbl_old_call("summary", object, ...)
+summary.rmbl_old <- function(object, ...) .rmbl_old_call("summary", .rmbl_old_arg(object), ...)
+
+#' The argument of an rmbl_old method must be a translated result: called by name on anything
+#' else (the hostile-argument battery), the method would hand it to the base generic.
+#' @param x The argument as given.
+#' @return `x`.
+#' @noRd
+.rmbl_old_arg <- function(x) {
+  if (!inherits(x, "rmbl_old")) {
+    stop("`x` must be a result returned under its 0.5.x names (class rmbl_old)", call. = FALSE)
+  }
+  x
+}

@@ -243,7 +243,8 @@ rmbldemo <- function(name = NULL) {
   d$lower <- round(d$estimate - 1.96 * se, 1)
   d$upper <- round(d$estimate + 1.96 * se, 1)
   cv <- 100 * se / d$estimate
-  d$quality <- as.character(cut(cv, c(-Inf, 5, 10, 15, 16.6, 33.3, Inf), labels = c("A", "B", "C", "D", "E", "F")))
+  # the package vocabulary: acceptable ("ok"), use with caution ("E"), suppressed ("F")
+  d$quality <- as.character(cut(cv, c(-Inf, 16.6, 33.3, Inf), labels = c("ok", "E", "F")))
   sup <- d$quality == "F"
   d$estimate[sup] <- NA
   d$lower[sup] <- NA

@@ -444,14 +444,16 @@ test_that("the task path through a mocked long task: running, then the result; a
     expect_match(output$code, "chwkfit(", fixed = TRUE)
   })
   local_mocked_bindings(.bl_bg = function(fn, long = FALSE) promises::promise_reject(simpleError("the fork died")))
-  shiny::testServer(ns$.bl_tab_server, args = list(id = "hawkes", s = s, dat = shiny::reactiveVal(nodata),
-                                                    rpt = shiny::reactiveVal(list()), set = setting(),
-                                                    active = shiny::reactive("")), {
+  # shiny reports a rejected ExtendedTask with a warning of its own; the refusal is what is tested
+  expect_warning(shiny::testServer(ns$.bl_tab_server, args = list(id = "hawkes", s = s,
+                                                                  dat = shiny::reactiveVal(nodata),
+                                                                  rpt = shiny::reactiveVal(list()), set = setting(),
+                                                                  active = shiny::reactive("")), {
     session$setInputs(source = unname(s$sources[[1L]]), fn = "chwkfit", run = 1)
     settle(session, task, res)
     expect_identical(task$status(), "error")
     expect_match(html(output$err), "the fork died")
-  })
+  }), "the fork died")
 })
 
 test_that("bookmarking: the URL of a view restores its tab, data, analysis and form, and reruns it", {
@@ -772,6 +774,7 @@ test_that("tabs made in a loop each keep their own spec", {
 })
 
 test_that("the source tables are a comma-separated list of links", {
+  skip_if_not_installed("shiny")
   about <- as.character(Filter(function(s) s$id == "fnmi", ns$.bl_app_specs())[[1L]]$about)
   expect_match(about, "13-10-0924-01</a>, <a", fixed = TRUE)
 })
