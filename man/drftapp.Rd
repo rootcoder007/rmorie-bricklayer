@@ -41,10 +41,10 @@ uploaded. It needs the shiny package, which is suggested, not required.
 }
 \details{
 The app has the column table (verdicts under the bands), the PSI per
-column, and for the chosen column its summary, the distributions, the PSI
-by bin, the first digits and a sentence on the verdict, as
-\code{\link[=drfthtml]{drfthtml()}}
-has; the warn and fail bands and alpha are sliders, with a reset to the
+column, the fingerprint, and for the chosen column its summary, the
+distributions, the ECDFs, the quantile shift, the first digits and a
+sentence on the verdict, as \code{\link[=drfthtml]{drfthtml()}} has, and a history heatmap
+with \code{hist}; the warn and fail bands and alpha are sliders, with a reset to the
 object's bands. Beyond the page it has: "what would clear this", the
 PSI of the column with its \code{k} largest bins left out and the rest
 renormalised; with \code{ref} and \code{cur} (or uploaded CSV files), a rerun of

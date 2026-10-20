@@ -213,16 +213,16 @@
            tse = .uf("Sensitivity to pre-trends (tse)", list(panel("evstudy", "es", trt = "ftreat"),
              .us("tse", "sens", x = .ua("ref", name = "es", pos = TRUE), seed = seed)), plot = FALSE)
          )),
-    list(id = "fnmi", title = "First Nations, Métis and Inuit",
+    list(id = "fnmi", title = "First Nations, M\u00e9tis and Inuit",
          filters = c("group", "period", "age", "indicator", "region", "rating", "measure"),
          about = shiny::tagList(
            shiny::tags$p(paste(
-             "Statistics Canada's published tables, read as published: each distinction (First Nations, Métis,",
+             "Statistics Canada's published tables, read as published: each distinction (First Nations, M\u00e9tis,",
              "Inuit) is reported on its own and never pooled, suppressed cells (quality F, x, ..) stay suppressed",
              "and are never imputed, and the quality flags are shown beside each estimate.",
              "The First Nations figures are for people living off reserve.")),
            shiny::tags$p(shiny::tags$strong("Whose data these are. "), paste(
-             "OCAP® (First Nations Information Governance Centre): Ownership, Control, Access and Possession;",
+             "OCAP\u00ae (First Nations Information Governance Centre): Ownership, Control, Access and Possession;",
              "First Nations own their information and decide how it is collected, used and shared. The CARE",
              "Principles (Carroll et al. 2020): Collective benefit, Authority to control, Responsibility and Ethics.",
              "The package mirrors only openly licensed aggregate tables, never First Nations-held survey data.")),
@@ -246,7 +246,7 @@
            ordcmp = .uf("Ordered ratings (ordcmp)", list(do.call(.us, c(list("ordcmp", "oc", data = D), ind,
              list(cat = col("Rating", "rating"), lvls = .ua("texts", label = "Levels, lowest first",
                                                           default = "Fair or poor, Good, Very good, Excellent"),
-                  ref = .ua("text", label = "Reference group", default = "Métis")), q)))),
+                  ref = .ua("text", label = "Reference group", default = "M\u00e9tis")), q)))),
            welprof = .uf("Wellness beside distress (welprof, dualcont)", list(
              do.call(.us, c(list("welprof", "w", data = D, ind = col("Indicator", "indicator")), ind, list(
                well = .ua("texts", label = "Wellness indicators",

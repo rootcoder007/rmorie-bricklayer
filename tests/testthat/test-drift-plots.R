@@ -58,6 +58,11 @@ test_that("cpsdrft() keeps binned summaries whose PSI terms add up to the index"
   expect_equal(nrow(d$summ$grade$top), 4L)
   # dates: labels as dates, no Benford; identifiers: sizes only
   expect_match(d$summ$day$bins$bin[2], "^\\(2020-")
+  ds <- rmoriebricklayer:::.bl_drift_show_stats(d$summ$day)
+  expect_match(ds$ref[ds$stat == "median"], "^2020-[0-9]{2}-[0-9]{2}$")
+  expect_match(ds$ref[ds$stat == "sd"], " days$")
+  expect_equal(nrow(with_dev(plot(d, what = "columns", cols = "day"))), nrow(d$summ$day$bins))
+  expect_equal(rmoriebricklayer:::.bl_drift_show_stats(d$summ$grade), d$summ$grade$top)
   expect_null(d$summ$day$benford)
   expect_null(d$summ$id$bins)
   expect_equal(d$summ$id$nref, 400L)
@@ -73,7 +78,15 @@ test_that("the summaries cover the small and degenerate columns", {
                data.frame(k = 5, t = format(t1 + 30), e = 1, z = 0, s = NA_character_, stringsAsFactors = FALSE))
   expect_true(is.na(d$summ$k$stats$cur[2]))           # one value: no sd
   expect_equal(diff(range(c(d$summ$k$hist$lo, d$summ$k$hist$hi))), 1)  # a constant: a unit range
-  expect_match(d$summ$t$bins$bin[1], "2024-01-01")    # date-times label as date-times
+  expect_match(d$summ$t$bins$bin[1], "2024-01-01T")   # date-times label as date-times, ISO 8601
+  expect_equal(d$summ$t$kind, "datetime")
+  st <- rmoriebricklayer:::.bl_drift_show_stats(d$summ$t)
+  expect_equal(st$ref[st$stat == "min"], "2024-01-01T00:00:00Z")
+  expect_equal(st$ref[st$stat == "sd"], "60 s")
+  expect_equal(st$cur[st$stat == "sd"], "")
+  expect_equal(rmoriebricklayer:::.bl_drift_show_stats(d$summ$k)$ref[1], "5")
+  expect_null(rmoriebricklayer:::.bl_drift_show_stats(d$summ$e))
+  expect_equal(nrow(with_dev(plot(d, what = "columns", cols = "t"))), nrow(d$summ$t$bins))
   expect_null(d$summ$e$bins)                          # nothing on one side
   expect_equal(d$summ$e$missref, 1)
   expect_null(d$summ$z$benford)                       # zeros carry no first digit
@@ -135,6 +148,14 @@ test_that("plot() draws the PSI, the columns and the first digits", {
   expect_equal(sum(cl$contrib[cl$column == "grade"]), d$columns$psi[d$columns$column == "grade"],
                tolerance = 1e-9)
   bf <- with_dev(plot(d, what = "benford", cols = "value", main = "digits"))
+  # a title too long for any size falls back to the fitted one; whole numbers get one bin per value
+  expect_equal(nrow(with_dev(plot(d, what = "benford", cols = "value", main = strrep("long title ", 30)))), 9L)
+  set.seed(9)
+  w <- cpsdrft(data.frame(wait = stats::rpois(500, 21)), data.frame(wait = stats::rpois(500, 26)))
+  hw <- w$summ$wait$hist
+  expect_true(all(hw$hi - hw$lo == 1))
+  expect_equal(hw$lo[1], min(w$summ$wait$stats$ref[3], w$summ$wait$stats$cur[3]) - 0.5)
+  expect_equal(sum(hw$cur), 1)
   expect_equal(bf$expected, log10(1 + 1 / (1:9)))
   expect_equal(sum(bf$cur), 1)
   # colours, a palette, the bands, the default title's counts
@@ -178,8 +199,10 @@ test_that("drfthtml() writes one self-contained page whose data round-trip", {
   expect_false(grepl("https://[a-z]", gsub("https://example.org", "", txt, fixed = TRUE)))
   expect_false(grepl("@import|url\\(", txt))
   for (id in c("verdict", "counts", "prov", "coltable", "search", "filters", "warn", "fail", "alpha", "reset",
-               "detail", "sumtable", "chart-cmp", "chart-psi", "chart-benford", "tab-manifest", "manifest",
-               "tab-history", "hist-file", "history-plots", "dl-md", "dl-json", "copy-gh", "theme", "drift-data")) {
+               "detail", "sumtable", "chart-cmp", "chart-flow", "chart-ecdf", "chart-qq", "chart-psi", "chart-benford",
+               "tab-manifest", "manifest", "manifest-tree", "tab-history", "hist-file", "history-plots", "heatmap",
+               "tab-overview", "fingerprint", "multiples", "tab-chain", "chain", "hero", "hero-col",
+               "dl-md", "dl-json", "copy-gh", "theme", "drift-data")) {
     expect_true(grepl(sprintf("id=\"%s\"", id), txt, fixed = TRUE) || grepl(sprintf("'%s'", id), txt, fixed = TRUE),
                 label = id)
   }
@@ -195,9 +218,14 @@ test_that("drfthtml() writes one self-contained page whose data round-trip", {
   sz <- p$columns[[which(d$columns$column == "size")]]
   expect_equal(unlist(sz$bins$contrib), d$summ$size$bins$contrib, tolerance = 1e-5)
   expect_equal(unlist(sz$stats$stat), d$summ$size$stats$stat)
+  expect_equal(p$columns[[which(d$columns$column == "day")]]$kind, "date")
   expect_equal(p$provenance$date, "2026-10-01")
   expect_equal(unlist(p$manifest$change), "changed")
   expect_equal(p$bands, list(warn = 0.1, fail = 0.25))
+  expect_length(unlist(sz$dens$ref), 64L)
+  expect_length(unlist(sz$benford$band$upper), 9L)
+  expect_equal(unlist(p$chain$status), c("ok", "warn", "ok", "none"))
+  expect_true(grepl("prefers-reduced-motion", txt, fixed = TRUE))
   expect_lt(file.size(f), 150000)                     # summaries, not rows
   # the bands the page opens with, and open = TRUE
   opened <- NULL
@@ -278,6 +306,10 @@ test_that("drftapp() refuses without shiny, and builds its UI and server", {
     expect_type(output$cmp, "list")
     expect_type(output$benford, "list")
     expect_type(output$history, "list")
+    expect_type(output$heat, "list")
+    expect_type(output$ecdf, "list")
+    expect_type(output$qq, "list")
+    expect_type(output$fingerprint, "list")
     expect_match(output$manifest, "changed")
     expect_true(file.exists(output$html))
     expect_match(paste(readLines(output$md), collapse = "\n"), "## Drift")
@@ -343,6 +375,8 @@ test_that("rmbl drift --html, --json and --app on a capsule whose source moved",
   expect_match(r$text, "HTML report: ", fixed = TRUE)
   p <- page_json(h)
   expect_equal(p$provenance$name, "one")
+  expect_equal(unlist(p$chain$link), c("provenance", "bytes", "manifest", "attestation"))
+  expect_equal(unlist(p$chain$status)[2], "warn")
   expect_equal(unlist(p$manifest$change), "changed")
   j <- fromjs(run("drift", root, "--json", "--html", h)$text, simplifyVector = FALSE)
   expect_equal(j$capsules[[1]]$drift$columns[[2]]$column, "v")
@@ -373,4 +407,64 @@ test_that("the launchers hand on to the browser and to shiny, and the help names
   buf <- character()
   blcli("help", out = function(s) buf <<- c(buf, s))
   expect_match(paste(buf, collapse = ""), "[--html FILE] [--app]", fixed = TRUE)
+})
+
+test_that("the curves, the Benford band, the chain and the history heatmap", {
+  fx <- drift_fixture()
+  d <- fx$d
+  v <- d$summ$value
+  expect_equal(nrow(v$dens), 64L)
+  expect_true(all(diff(v$ecdf$ref) >= 0) && all(diff(v$ecdf$cur) >= 0))
+  expect_equal(v$qq$ref, unname(stats::quantile(fx$ref$value, seq(0.02, 0.98, by = 0.04))))
+  expect_gt(v$qq$cur[13], v$qq$ref[13])          # the median moved up by about 0.5
+  # one value on each side: the bandwidth is still positive
+  one <- cpsdrft(data.frame(v = 3), data.frame(v = 3))
+  expect_equal(nrow(one$summ$v$dens), 64L)
+  bb <- rmoriebricklayer:::.bl_benford_band(100)
+  expect_equal(bb$expected, log10(1 + 1 / (1:9)))
+  expect_true(all(bb$lower >= 0 & bb$lower < bb$expected & bb$upper > bb$expected))
+  expect_equal(rmoriebricklayer:::.bl_benford_band(0)$upper[9] <= 1, TRUE)
+  chain <- function(x) rmoriebricklayer:::.bl_drift_chain(x)$status
+  expect_equal(chain(d), rep("none", 4))
+  d$provenance <- list(name = "x")
+  d$manifest <- data.frame(change = "unchanged")
+  expect_equal(chain(d), c("ok", "ok", "ok", "none"))
+  d$checks <- data.frame(part = c("provenance", "data", "data", "spec", "bundle", "data"),
+                         file = c("p.json", "d.csv", "d.csv", "manifest.json", "b.json", "d.csv"),
+                         check = c("provenance_readable", "data_sha256", "source_digest", "manifest_consistent",
+                                   "attestation:signature", "source_columns"),
+                         ok = c(TRUE, TRUE, FALSE, FALSE, TRUE, FALSE),
+                         detail = c("", "", "moved", "differs", "", "drift"),
+                         severity = c("error", "error", "note", "error", "error", "drift"), stringsAsFactors = FALSE)
+  ch <- rmoriebricklayer:::.bl_drift_chain(d)
+  expect_equal(ch$status, c("ok", "warn", "fail", "ok"))
+  expect_match(ch$detail[2], "source_columns: drift")
+  expect_equal(ch$detail[1], "1 check passed")
+  d$checks <- d$checks[1, ]
+  expect_equal(rmoriebricklayer:::.bl_drift_chain(d)$status, c("ok", "none", "none", "none"))
+  h <- data.frame(run = rep(1:3, each = 2), column = rep(c("a", "b"), 3), psi = c(0.05, 0.2, 0.3, NA, 0.4, 0.1),
+                  stringsAsFactors = FALSE)
+  hb <- rmoriebricklayer:::.bl_drift_heat(h, list(warn = 0.1, fail = 0.25))
+  expect_equal(hb$band, c("ok", "warn", "fail", "none", "fail", "ok"))
+  expect_equal(with_dev(rmoriebricklayer:::.bl_drift_heat_plot(h, list(warn = 0.1, fail = 0.25)))$band, hb$band)
+})
+
+test_that("plot() draws the ECDFs, the quantiles and the fingerprint", {
+  d <- drift_fixture()$d
+  e <- with_dev(plot(d, what = "ecdf"))
+  expect_setequal(unique(e$column), c("size", "grade", "value", "day"))
+  expect_equal(max(e$ref[e$column == "grade"]), 1, tolerance = 1e-12)
+  q <- with_dev(plot(d, what = "quantiles"))
+  expect_setequal(unique(q$column), c("size", "value", "day"))
+  expect_equal(q$ref[q$column == "value"], d$summ$value$qq$ref)
+  f <- with_dev(plot(d, what = "fingerprint", warn = 0.05))
+  expect_equal(nrow(f), 5L)
+  expect_equal(f$radius[f$column == "size"], 1)      # the largest PSI sits on the outer ring
+  expect_equal(f$verdict[f$column == "id"], "untested")
+  # one or two columns: no polygon, the points alone
+  expect_equal(nrow(with_dev(plot(cpsdrft(data.frame(a = 1:50), data.frame(a = 3:52)), what = "fingerprint"))), 1L)
+  only_cat <- cpsdrft(data.frame(g = c("a", "b")), data.frame(g = c("a", "a")))
+  expect_equal(nrow(with_dev(plot(only_cat, what = "quantiles"))), 0L)
+  ids <- cpsdrft(data.frame(i = sprintf("x%03d", 1:200)), data.frame(i = sprintf("y%03d", 1:200)))
+  expect_equal(nrow(with_dev(plot(ids, what = "ecdf"))), 0L)
 })

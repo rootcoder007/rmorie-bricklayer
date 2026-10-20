@@ -181,6 +181,10 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
     if (!is.null(cp$drift)) cp$drift$object <- NULL
     cp
   })
+  # each capsule's check rows, for the report's chain of provenance, bytes, manifest and attestation
+  for (d in names(drifts)) {
+    drifts[[d]]$checks <- rows[rows$capsule == d, c("part", "file", "check", "ok", "detail", "severity"), drop = FALSE]
+  }
   foot <- foot[names(foot) != "value"]
   structure(list(status = .bl_worst(vapply(caps, `[[`, "", "result")), mode = o$mode, path = path, glob = glob,
                  rows = rows, capsules = caps,

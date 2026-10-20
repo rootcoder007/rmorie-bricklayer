@@ -198,7 +198,7 @@
 \method{plot}{bricklayer_drift}(
   x,
   ...,
-  what = c("psi", "columns", "benford"),
+  what = c("psi", "columns", "benford", "ecdf", "quantiles", "fingerprint"),
   cols = NULL,
   warn = NULL,
   fail = NULL,
@@ -318,8 +318,9 @@ session option.}
 of \code{"adp"}, \code{"alos"}, \code{"people"}, \code{"days"},
 \code{"flowrate"}, \code{"stkrate"};
 \item \code{rmbl_yoy}: \code{"pctchg"} or \code{"value"};
-\item \code{bricklayer_drift}: \code{"psi"}, \code{"columns"} or
-\code{"benford"};
+\item \code{bricklayer_drift}: \code{"psi"}, \code{"columns"},
+\code{"benford"}, \code{"ecdf"}, \code{"quantiles"} or
+\code{"fingerprint"};
 \item \code{rmbl_case_flow}: \code{"flow"} and/or \code{"clearance"};
 \item \code{rmbl_clearance_decomposition}: any of \code{"rates"},
 \code{"mix"} and \code{"effects"} (the default fits the device).
@@ -442,7 +443,11 @@ per column, worst first, coloured by verdict, with the warn and fail
 bands as dashed lines; \code{"columns"} the reference and current
 distributions of up to six columns (\code{cols}, or the worst), each
 PSI bin's term written on it; \code{"benford"} the first digits of
-numeric columns against Benford's law, with the test's verdict.}
+numeric columns against Benford's law with its 95\\% band, and the
+test's verdict; \code{"ecdf"} both ECDFs with the area between them
+shaded; \code{"quantiles"} the current quantiles against the
+reference's on the identity line; \code{"fingerprint"} one spoke
+per column, its PSI as the distance out, with the bands as rings.}
 \item{\code{bricklayer_benford}}{(\code{\link{benfordtst}}) observed
 first-digit proportions against Benford's law.}
 \item{\code{bricklayer_power}}{(\code{\link{cpspwr}}) the power
@@ -634,6 +639,9 @@ dr <- cpsdrft(dd, transform(dd, a = a + 3))
 plot(dr)
 plot(dr, what = "columns")
 plot(dr, what = "benford", warn = 0.05, fail = 0.2)
+plot(dr, what = "ecdf")
+plot(dr, what = "quantiles")
+plot(dr, what = "fingerprint")
 plot(drftcal(dd, n = 20L))
 # describing a table
 plot(freqtbl(data.frame(g = c("a", "b", "b", "c", "c", "c")), "g"))

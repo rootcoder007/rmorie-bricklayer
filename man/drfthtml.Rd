@@ -46,29 +46,45 @@ The page shows:
 verdict, the row counts, when the page was written, the package
 version, and the capsule's provenance (name, source, pinned
 SHA-256, data date) when \code{x$provenance} holds one;
-\item the column table: verdict, column, type, test (KS for numbers
-and dates, chi-square homogeneity for categories), statistic,
+\item a hero canvas: the chosen column's reference and current
+distributions as ribbons, the band between them shaded, drawn in
+on load and on each new column (still when the reader asks for
+reduced motion);
+\item Columns: the table (verdict, column, type, test: KS for numbers
+and dates, chi-square homogeneity for categories; statistic,
 p-value, PSI, the change in the missing share and both sample
-sizes. It has a search box, filters by verdict and type, and sorts
-on any header;
-\item for the column chosen (click a row, or the up and down keys; \code{/}
-goes to the search box): both samples' summary statistics, or the
-ten largest categories; their distributions overlaid; each bin's
-term of the PSI, drawn up where the current sample has more mass
-and down where it has less; for a numeric column the first digits
-against Benford's law; and a sentence on what the verdict means;
+sizes) with a search box, filters by verdict and type and sorting on
+any header; and the column detail for the column chosen (click a
+row, or the up and down keys; \code{/} goes to the search box): both
+samples' summary statistics (dates in ISO 8601) or the ten largest
+categories, a sentence on the verdict, and charts each with a line
+on how to read it: the density overlay with the area between shaded
+(numeric) or the category flow from reference to current shares
+(categorical), the ECDF overlay with the largest gap marked, the
+quantile shift against the identity line (numeric), the PSI by bin,
+drawn up where the current sample has more mass, and the first
+digits against Benford's law with its 95\\% band (numeric);
+\item Overview: the drift fingerprint, one spoke per column at its PSI
+with the warn and fail bands as rings, and a tile per column with its
+two distributions in small;
+\item Manifest, when \code{x$manifest} holds an
+\code{\link[=mnfdiff]{mnfdiff()}}: the resources before and after as a tree, and the
+table of digests and sizes;
+\item History: pick earlier \verb{rmbl drift --json} outputs or this page's
+JSON exports, and the PSI of each column over the runs is drawn as a
+heatmap in the bands, the first crossing of the fail band outlined,
+and as a line per column;
+\item Capsule chain: provenance, pinned bytes, manifest and
+attestation, each verified, moved, failed or not checked (from the
+capsule's checks when \verb{rmbl drift} made the report);
 \item sliders for the warn and fail PSI bands and for alpha, which
-score the verdicts again as they move, and a button back to the
-object's bands;
-\item a manifest tab with the resources added, removed or changed,
-their digests and sizes, when \code{x$manifest} holds an
-\code{\link[=mnfdiff]{mnfdiff()}};
-\item a history tab: pick earlier \verb{rmbl drift --json} outputs or this
-page's JSON exports, and the PSI of each column is drawn over the
-runs, points above the fail band marked;
+score every verdict and chart again as they move, and a button back
+to the object's bands;
 \item exports: Markdown, JSON, each chart as SVG, and the column table
 copied as a GitHub comment.
 }
+Every chart is drawn at its card's width, two to a row on a wide screen
+and one on a narrow one, in the colours of the theme in use.
 The verdicts: \code{fail} when the test rejects at alpha, or the PSI is above
 the fail band with both samples at least \code{psiminn}; \code{warn} when the PSI
 is above the warn band; \code{untested} when no test applies; \code{ok} otherwise.

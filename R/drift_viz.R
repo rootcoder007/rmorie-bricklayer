@@ -122,14 +122,15 @@
     s <- x$summ[[d$column[i]]] %||% list()
     c(as.list(d[i, c("column", "type", "statistic", "p_value", "psi", "jsdiv", "unseen_share", "drifted", "note")]),
       list(test = .bl_drift_test(d$type[i]), verdict = v[i], nref = s$nref, ncur = s$ncur,
-           missref = s$missref, misscur = s$misscur, stats = s$stats, top = s$top, bins = s$bins,
-           hist = s$hist, benford = s$benford))
+           missref = s$missref, misscur = s$misscur, kind = s$kind, stats = s$stats, top = s$top, bins = s$bins,
+           hist = s$hist, dens = s$dens, ecdf = s$ecdf, qq = s$qq,
+           benford = if (!is.null(s$benford)) c(s$benford, list(band = .bl_benford_band(s$benford$n)))))
   })
   list(title = title, version = as.character(utils::packageVersion("rmoriebricklayer")),
        written = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"), nref = x$nref, ncur = x$ncur, alpha = x$alpha,
        psiminn = x$psiminn %||% 0, bands = b, anydrft = isTRUE(x$anydrft), added = as.list(x$added),
        removed = as.list(x$removed), meaning = .bl_check_meaning("source_columns"), columns = cols,
-       provenance = .bl_drift_prov(x$provenance),
+       provenance = .bl_drift_prov(x$provenance), chain = .bl_drift_chain(x),
        manifest = if (is.data.frame(x$manifest)) as.data.frame(unclass(x$manifest), stringsAsFactors = FALSE))
 }
 
@@ -229,6 +230,97 @@
   invisible(h)
 }
 
+#' The PSI of each column in each run, in its band, for the history heatmap.
+#' @param h From .bl_drift_history().
+#' @param b The PSI bands.
+#' @return `h` with `band`: fail above the fail band, warn above the warn band, ok, or none (no PSI).
+#' @noRd
+.bl_drift_heat <- function(h, b) {
+  h$band <- ifelse(is.na(h$psi), "none", ifelse(h$psi > b$fail, "fail", ifelse(h$psi > b$warn, "warn", "ok")))
+  h
+}
+
+#' Draws the history heatmap: a row per column, a cell per run in its band's colour, the PSI written in
+#' it, and a run where a column first crosses the fail band outlined.
+#' @param h From .bl_drift_history().
+#' @param b The PSI bands.
+#' @return The heatmap's data (.bl_drift_heat()), invisibly.
+#' @noRd
+.bl_drift_heat_plot <- function(h, b) {
+  h <- .bl_drift_heat(h, b)
+  cl <- unique(h$column)
+  runs <- sort(unique(h$run))
+  fill <- c(.BL_VERDICT_COLS[c("ok", "warn", "fail")], none = "#EEF1F6")
+  op <- graphics::par(mar = .bl_safe_mar(c(4.2, .bl_label_fit(cl)$mar, 3, 1)), las = 1)
+  on.exit(graphics::par(op), add = TRUE)
+  graphics::plot.new()
+  graphics::plot.window(c(0.5, length(runs) + 0.5), c(length(cl) + 0.5, 0.5), xaxs = "i", yaxs = "i")
+  .bl_title(sprintf("PSI by run (warn %s, fail %s)", b$warn, b$fail))
+  .bl_xlab("Run")
+  x <- match(h$run, runs)
+  y <- match(h$column, cl)
+  graphics::rect(x - 0.48, y - 0.46, x + 0.48, y + 0.46, col = grDevices::adjustcolor(fill[h$band], 0.85), border = NA)
+  graphics::text(x, y, ifelse(is.na(h$psi), "", formatC(h$psi, digits = 2, format = "g")), cex = 0.6, col = "white")
+  first <- !is.na(h$psi) & h$band == "fail" & !duplicated(paste(h$column, h$band == "fail"))
+  graphics::rect(x[first] - 0.5, y[first] - 0.48, x[first] + 0.5, y[first] + 0.48, border = "#1F2430", lwd = 2)
+  graphics::axis(1, at = seq_along(runs), labels = runs, tick = FALSE)
+  .bl_row_labels(seq_along(cl), .bl_label_fit(cl)$labels)
+  invisible(h)
+}
+
+#' The 95% band of each first digit's share under Benford's law, for n values.
+#' @param n The number of values.
+#' @return A data frame: digit, expected, lower and upper (normal approximation, clipped to 0 and 1).
+#' @noRd
+.bl_benford_band <- function(n) {
+  e <- log10(1 + 1 / (1:9))
+  half <- 1.96 * sqrt(e * (1 - e) / max(1, n))
+  data.frame(digit = 1:9, expected = e, lower = pmax(0, e - half), upper = pmin(1, e + half))
+}
+
+#' The capsule chain of a drift result: provenance, pinned bytes, manifest and attestation, each with
+#' whether it verified.
+#'
+#' From the capsule's check rows when cpschk() attached them (`x$checks`): a link is fail when a row of
+#' it failed as an error, warn when one failed as a warning or drift, ok when its rows passed, none when
+#' it has no rows. Without them (a cpsdrft() result alone), from what the object carries.
+#' @param x A cpsdrft() result.
+#' @return A data frame: link, label, status and detail.
+#' @noRd
+.bl_drift_chain <- function(x) {
+  links <- c(provenance = "Provenance", bytes = "Pinned bytes", manifest = "Manifest",
+             attestation = "Attestation")
+  ck <- x$checks
+  if (is.data.frame(ck) && nrow(ck)) {
+    grp <- ifelse(grepl("^attestation|^file:|no_unlisted", ck$check) | ck$part == "bundle", "attestation",
+                  ifelse(grepl("^data_|^source_", ck$check), "bytes",
+                         ifelse(grepl("manifest|script", ck$check) | grepl("manifest", ck$file), "manifest",
+                                "provenance")))
+    one <- function(g) {
+      r <- ck[grp == g & ck$severity != "note", , drop = FALSE]
+      if (!nrow(r)) return(c("none", "not checked"))
+      bad <- r[!r$ok, , drop = FALSE]
+      st <- if (any(bad$severity == "error")) "fail" else if (nrow(bad)) "warn" else "ok"
+      c(st, if (nrow(bad)) paste(utils::head(paste0(bad$check, ": ", bad$detail), 2L), collapse = "; ") else
+        sprintf("%d check%s passed", nrow(r), if (nrow(r) == 1L) "" else "s"))
+    }
+    v <- vapply(names(links), one, c("", ""))
+    return(data.frame(link = names(links), label = unname(links), status = v[1L, ], detail = v[2L, ],
+                      stringsAsFactors = FALSE))
+  }
+  ch <- if (is.data.frame(x$manifest)) x$manifest$change else character()
+  data.frame(link = names(links), label = unname(links),
+             status = c(if (is.list(x$provenance)) "ok" else "none",
+                        if (!length(ch)) "none" else if (all(ch == "unchanged")) "ok" else "warn",
+                        if (length(ch)) "ok" else "none", "none"),
+             detail = c(if (is.list(x$provenance)) "a provenance record is attached" else "no provenance attached",
+                        if (!length(ch)) "no manifest diff attached" else
+                          sprintf("%d of %d resources changed", sum(ch != "unchanged"), length(ch)),
+                        if (length(ch)) "a manifest diff is attached" else "no manifest diff attached",
+                        "not checked (rmbl drift checks the bundle's signature)"),
+             stringsAsFactors = FALSE)
+}
+
 #' Puts a value in for a placeholder of a template, literally (no regular expression).
 #' @param t The template.
 #' @param key The placeholder.
@@ -236,6 +328,23 @@
 #' @return The template filled.
 #' @noRd
 .bl_fill <- function(t, key, v) paste(strsplit(paste0(t, "\n"), key, fixed = TRUE)[[1L]], collapse = v)
+
+#' A column's summary table as a reader sees it: dates and date-times in ISO 8601, a spread in days or seconds.
+#' @param s The column's summary from cpsdrft().
+#' @return The statistics as text (numeric and date columns), the top categories, or NULL.
+#' @noRd
+.bl_drift_show_stats <- function(s) {
+  st <- s$stats
+  if (is.null(st)) return(s$top)
+  kind <- s$kind %||% "number"
+  show <- function(v) {
+    ifelse(is.na(v), "", ifelse(st$stat == "sd" & kind != "number",
+                                paste(trimws(formatC(v, digits = 3, format = "g")),
+                                      if (kind == "date") "days" else "s"),
+                                .bl_drift_iso(v, if (kind == "number") "number" else kind)))
+  }
+  data.frame(stat = st$stat, ref = show(st$ref), cur = show(st$cur), stringsAsFactors = FALSE)
+}
 
 #' Opens a file in the browser.
 #' @param f The path.
@@ -262,29 +371,45 @@
 #'     verdict, the row counts, when the page was written, the package
 #'     version, and the capsule's provenance (name, source, pinned
 #'     SHA-256, data date) when `x$provenance` holds one;
-#'   \item the column table: verdict, column, type, test (KS for numbers
-#'     and dates, chi-square homogeneity for categories), statistic,
+#'   \item a hero canvas: the chosen column's reference and current
+#'     distributions as ribbons, the band between them shaded, drawn in
+#'     on load and on each new column (still when the reader asks for
+#'     reduced motion);
+#'   \item Columns: the table (verdict, column, type, test: KS for numbers
+#'     and dates, chi-square homogeneity for categories; statistic,
 #'     p-value, PSI, the change in the missing share and both sample
-#'     sizes. It has a search box, filters by verdict and type, and sorts
-#'     on any header;
-#'   \item for the column chosen (click a row, or the up and down keys; `/`
-#'     goes to the search box): both samples' summary statistics, or the
-#'     ten largest categories; their distributions overlaid; each bin's
-#'     term of the PSI, drawn up where the current sample has more mass
-#'     and down where it has less; for a numeric column the first digits
-#'     against Benford's law; and a sentence on what the verdict means;
+#'     sizes) with a search box, filters by verdict and type and sorting on
+#'     any header; and the column detail for the column chosen (click a
+#'     row, or the up and down keys; `/` goes to the search box): both
+#'     samples' summary statistics (dates in ISO 8601) or the ten largest
+#'     categories, a sentence on the verdict, and charts each with a line
+#'     on how to read it: the density overlay with the area between shaded
+#'     (numeric) or the category flow from reference to current shares
+#'     (categorical), the ECDF overlay with the largest gap marked, the
+#'     quantile shift against the identity line (numeric), the PSI by bin,
+#'     drawn up where the current sample has more mass, and the first
+#'     digits against Benford's law with its 95\% band (numeric);
+#'   \item Overview: the drift fingerprint, one spoke per column at its PSI
+#'     with the warn and fail bands as rings, and a tile per column with its
+#'     two distributions in small;
+#'   \item Manifest, when `x$manifest` holds an
+#'     [mnfdiff()]: the resources before and after as a tree, and the
+#'     table of digests and sizes;
+#'   \item History: pick earlier `rmbl drift --json` outputs or this page's
+#'     JSON exports, and the PSI of each column over the runs is drawn as a
+#'     heatmap in the bands, the first crossing of the fail band outlined,
+#'     and as a line per column;
+#'   \item Capsule chain: provenance, pinned bytes, manifest and
+#'     attestation, each verified, moved, failed or not checked (from the
+#'     capsule's checks when `rmbl drift` made the report);
 #'   \item sliders for the warn and fail PSI bands and for alpha, which
-#'     score the verdicts again as they move, and a button back to the
-#'     object's bands;
-#'   \item a manifest tab with the resources added, removed or changed,
-#'     their digests and sizes, when `x$manifest` holds an
-#'     [mnfdiff()];
-#'   \item a history tab: pick earlier `rmbl drift --json` outputs or this
-#'     page's JSON exports, and the PSI of each column is drawn over the
-#'     runs, points above the fail band marked;
+#'     score every verdict and chart again as they move, and a button back
+#'     to the object's bands;
 #'   \item exports: Markdown, JSON, each chart as SVG, and the column table
 #'     copied as a GitHub comment.
 #' }
+#' Every chart is drawn at its card's width, two to a row on a wide screen
+#' and one on a narrow one, in the colours of the theme in use.
 #' The verdicts: `fail` when the test rejects at alpha, or the PSI is above
 #' the fail band with both samples at least `psiminn`; `warn` when the PSI
 #' is above the warn band; `untested` when no test applies; `ok` otherwise.
@@ -371,10 +496,10 @@ drfthtml <- function(x, file, title = "Drift report", warn = NULL, fail = NULL, 
 #'
 #' @details
 #' The app has the column table (verdicts under the bands), the PSI per
-#' column, and for the chosen column its summary, the distributions, the PSI
-#' by bin, the first digits and a sentence on the verdict, as
-#' [drfthtml()]
-#' has; the warn and fail bands and alpha are sliders, with a reset to the
+#' column, the fingerprint, and for the chosen column its summary, the
+#' distributions, the ECDFs, the quantile shift, the first digits and a
+#' sentence on the verdict, as [drfthtml()] has, and a history heatmap
+#' with `hist`; the warn and fail bands and alpha are sliders, with a reset to the
 #' object's bands. Beyond the page it has: "what would clear this", the
 #' PSI of the column with its `k` largest bins left out and the rest
 #' renormalised; with `ref` and `cur` (or uploaded CSV files), a rerun of
@@ -462,9 +587,13 @@ drftapp <- function(x = NULL, ref = NULL, cur = NULL, hist = NULL, warn = NULL, 
     shiny::downloadButton("json", "JSON"))
   tabs <- list(shiny::tabPanel("Columns", shiny::tableOutput("tab"), shiny::plotOutput("psi")),
                shiny::tabPanel("Column", shiny::textOutput("note"), shiny::tableOutput("summ"),
-                               shiny::plotOutput("cmp"), shiny::plotOutput("benford"), shiny::textOutput("clear")))
+                               shiny::plotOutput("cmp"), shiny::plotOutput("ecdf"), shiny::plotOutput("qq"),
+                               shiny::plotOutput("benford"), shiny::textOutput("clear")),
+               shiny::tabPanel("Fingerprint", shiny::plotOutput("fingerprint", height = "520px")))
   if (is.data.frame(x$manifest)) tabs <- c(tabs, list(shiny::tabPanel("Manifest", shiny::tableOutput("manifest"))))
-  if (!is.null(h)) tabs <- c(tabs, list(shiny::tabPanel("History", shiny::plotOutput("history"))))
+  if (!is.null(h)) {
+    tabs <- c(tabs, list(shiny::tabPanel("History", shiny::plotOutput("heat"), shiny::plotOutput("history"))))
+  }
   ui <- shiny::sidebarLayout(side, shiny::mainPanel(do.call(shiny::tabsetPanel, tabs)))
   server <- function(input, output, session) {
     cx <- shiny::reactiveVal(x)
@@ -507,6 +636,13 @@ drftapp <- function(x = NULL, ref = NULL, cur = NULL, hist = NULL, warn = NULL, 
     output$tab <- shiny::renderTable(.bl_drift_table(now(), bands()$warn, bands()$fail), digits = 4)
     output$psi <- shiny::renderPlot(plot(now(), warn = bands()$warn, fail = bands()$fail))
     output$cmp <- shiny::renderPlot(plot(now(), what = "columns", cols = shiny::req(input$col)))
+    output$ecdf <- shiny::renderPlot(plot(now(), what = "ecdf", cols = shiny::req(input$col)))
+    output$qq <- shiny::renderPlot({
+      if (!is.null(now()$summ[[shiny::req(input$col)]]$qq)) plot(now(), what = "quantiles", cols = input$col)
+    })
+    output$fingerprint <- shiny::renderPlot(plot(now(), what = "fingerprint", warn = bands()$warn,
+                                                 fail = bands()$fail))
+    output$heat <- shiny::renderPlot(.bl_drift_heat_plot(h, bands()))
     output$benford <- shiny::renderPlot({
       if (!is.null(now()$summ[[shiny::req(input$col)]]$benford)) plot(now(), what = "benford", cols = input$col)
     })
@@ -516,7 +652,7 @@ drftapp <- function(x = NULL, ref = NULL, cur = NULL, hist = NULL, warn = NULL, 
     })
     output$summ <- shiny::renderTable({
       s <- now()$summ[[shiny::req(input$col)]]
-      s$stats %||% s$top
+      .bl_drift_show_stats(s)
     }, digits = 4)
     output$clear <- shiny::renderText({
       bn <- now()$summ[[shiny::req(input$col)]]$bins

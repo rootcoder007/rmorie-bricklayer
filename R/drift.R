@@ -910,7 +910,8 @@ cpsdrft <- function(ref, cur, alpha = 0.01,
 #' What a reader needs to see where a column moved, and nothing that would reproduce its rows: the
 #' missing shares, the non-missing sizes, summary statistics (numeric) or the ten largest categories,
 #' the PSI bins with each bin's term of the index, a 30-bin histogram on the pooled 0.5-99.5% range
-#' (numeric), and the first-digit counts of both samples (numeric, not dates).
+#' (one bin per value for whole numbers over a range under 60), densities and ECDFs on a 64-point grid
+#' and matched quantiles (numeric), and the first-digit counts of both samples (numeric, not dates).
 #' @param a,b The column in the reference and in the current frame.
 #' @param type The column's type as cpsdrft() decided it.
 #' @param bins The number of quantile bins (as for drftpsi()).
@@ -923,9 +924,8 @@ cpsdrft <- function(ref, cur, alpha = 0.01,
       a <- .rmbl_as_dates(a)
       b <- .rmbl_as_dates(b)
     }
-    fmt <- if (inherits(a, "Date")) function(v) format(as.Date(v, origin = "1970-01-01")) else
-      if (inherits(a, "POSIXct")) function(v) format(as.POSIXct(v, origin = "1970-01-01", tz = "UTC")) else
-        function(v) formatC(v, digits = 3, format = "g")
+    out$kind <- if (inherits(a, "Date")) "date" else if (inherits(a, "POSIXct")) "datetime" else "number"
+    fmt <- function(v) .bl_drift_iso(v, out$kind)
     av <- as.numeric(a[!is.na(a)])
     bv <- as.numeric(b[!is.na(b)])
     out$nref <- length(av)
@@ -941,13 +941,19 @@ cpsdrft <- function(ref, cur, alpha = 0.01,
     out$bins <- data.frame(bin = .rmbl_bin_labels(s$edges, fmt), ref = s$px, cur = s$py,
                            contrib = .rmbl_psi_terms(s$px, s$py), stringsAsFactors = FALSE)
     r <- stats::quantile(c(av, bv), c(0.005, 0.995), names = FALSE)
+    whole <- all(c(av, bv) == round(c(av, bv))) && diff(range(c(av, bv))) < 60
     if (r[2L] <= r[1L]) r <- r + c(-0.5, 0.5)
-    br <- seq(r[1L], r[2L], length.out = 31L)
+    # whole numbers over a short range: one bin per value, so no bin falls between two integers and
+    # draws a false gap (a day count over 30 bins narrower than 1)
+    if (whole) r <- range(c(av, bv)) + c(-0.5, 0.5)
+    br <- if (whole) seq(r[1L], r[2L], by = 1) else seq(r[1L], r[2L], length.out = 31L)
+    nb <- length(br) - 1L
     h <- function(v) {
       tabulate(findInterval(pmin(pmax(v, r[1L]), r[2L]), br, rightmost.closed = TRUE, all.inside = TRUE),
-               30L) / length(v)
+               nb) / length(v)
     }
-    out$hist <- data.frame(lo = br[-31L], hi = br[-1L], ref = h(av), cur = h(bv))
+    out$hist <- data.frame(lo = br[-length(br)], hi = br[-1L], ref = h(av), cur = h(bv))
+    out <- c(out, .rmbl_drift_curves(av, bv, r))
     if (type == "numeric") out$benford <- .rmbl_benford_pair(av, bv)
     return(out)
   }
@@ -971,6 +977,38 @@ cpsdrft <- function(ref, cur, alpha = 0.01,
                         stringsAsFactors = FALSE)
   rownames(out$bins) <- NULL
   out
+}
+
+#' The smooth curves of a numeric column: densities and ECDFs on one grid, and matched quantiles.
+#'
+#' Both densities use one bandwidth (Silverman's, of the pooled values), so a difference between the
+#' curves is a difference between the samples, not between two smoothings. 64 grid points over `r`.
+#' @param av,bv The reference and current values, finite and non-empty.
+#' @param r The range the grid covers.
+#' @return A list: `dens` (x, ref, cur: densities), `ecdf` (x, ref, cur: shares at or below x) and `qq`
+#'   (p, ref, cur: the quantiles at probabilities 0.02 to 0.98).
+#' @noRd
+.rmbl_drift_curves <- function(av, bv, r) {
+  x <- seq(r[1L], r[2L], length.out = 64L)
+  bw <- stats::bw.nrd0(c(av, bv))   # positive even for constant values (it falls back to |x| or 1)
+  d <- function(v) stats::density(v, bw = bw, from = r[1L], to = r[2L], n = 64L)$y
+  p <- seq(0.02, 0.98, by = 0.04)
+  list(dens = data.frame(x = x, ref = d(av), cur = d(bv)),
+       ecdf = data.frame(x = x, ref = stats::ecdf(av)(x), cur = stats::ecdf(bv)(x)),
+       qq = data.frame(p = p, ref = stats::quantile(av, p, names = FALSE),
+                       cur = stats::quantile(bv, p, names = FALSE)))
+}
+
+#' Writes values of a numeric, date or date-time column for a reader: ISO 8601 for the last two.
+#' @param v The values as numbers (days or seconds since 1970-01-01 for dates and date-times).
+#' @param kind "number", "date" or "datetime".
+#' @return A character vector.
+#' @noRd
+.bl_drift_iso <- function(v, kind) {
+  switch(kind,
+    date = format(as.Date(v, origin = "1970-01-01")),
+    datetime = format(as.POSIXct(v, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%dT%H:%M:%SZ"),
+    trimws(formatC(v, digits = 3, format = "g")))
 }
 
 #' Each bin's term of the population stability index, with drftpsi()'s default floor.

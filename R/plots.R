@@ -996,7 +996,11 @@ plotopt <- function(...) {
 #'     bands as dashed lines; \code{"columns"} the reference and current
 #'     distributions of up to six columns (\code{cols}, or the worst), each
 #'     PSI bin's term written on it; \code{"benford"} the first digits of
-#'     numeric columns against Benford's law, with the test's verdict.}
+#'     numeric columns against Benford's law with its 95\% band, and the
+#'     test's verdict; \code{"ecdf"} both ECDFs with the area between them
+#'     shaded; \code{"quantiles"} the current quantiles against the
+#'     reference's on the identity line; \code{"fingerprint"} one spoke
+#'     per column, its PSI as the distance out, with the bands as rings.}
 #'   \item{\code{bricklayer_benford}}{(\code{\link{benfordtst}}) observed
 #'     first-digit proportions against Benford's law.}
 #'   \item{\code{bricklayer_power}}{(\code{\link{cpspwr}}) the power
@@ -1130,8 +1134,9 @@ plotopt <- function(...) {
 #'       of \code{"adp"}, \code{"alos"}, \code{"people"}, \code{"days"},
 #'       \code{"flowrate"}, \code{"stkrate"};
 #'     \item \code{rmbl_yoy}: \code{"pctchg"} or \code{"value"};
-#'     \item \code{bricklayer_drift}: \code{"psi"}, \code{"columns"} or
-#'       \code{"benford"};
+#'     \item \code{bricklayer_drift}: \code{"psi"}, \code{"columns"},
+#'       \code{"benford"}, \code{"ecdf"}, \code{"quantiles"} or
+#'       \code{"fingerprint"};
 #'     \item \code{rmbl_case_flow}: \code{"flow"} and/or \code{"clearance"};
 #'     \item \code{rmbl_clearance_decomposition}: any of \code{"rates"},
 #'       \code{"mix"} and \code{"effects"} (the default fits the device).
@@ -1247,6 +1252,9 @@ plotopt <- function(...) {
 #' plot(dr)
 #' plot(dr, what = "columns")
 #' plot(dr, what = "benford", warn = 0.05, fail = 0.2)
+#' plot(dr, what = "ecdf")
+#' plot(dr, what = "quantiles")
+#' plot(dr, what = "fingerprint")
 #' plot(drftcal(dd, n = 20L))
 #' # describing a table
 #' plot(freqtbl(data.frame(g = c("a", "b", "b", "c", "c", "c")), "g"))
@@ -1579,7 +1587,8 @@ plot.rmbl_drift_calibration <- function(x, ..., main = NULL, col = NULL, palette
 #' @srrstats {EA5.0} The drift plots colour each column by its verdict under the PSI bands drawn as
 #'   reference lines; the same palette and verdicts as drfthtml()'s page (test-drift-plots.R).
 #' @export
-plot.bricklayer_drift <- function(x, ..., what = c("psi", "columns", "benford"), cols = NULL, warn = NULL,
+plot.bricklayer_drift <- function(x, ..., what = c("psi", "columns", "benford", "ecdf", "quantiles", "fingerprint"),
+                                  cols = NULL, warn = NULL,
                                   fail = NULL, main = NULL, col = NULL, palette = NULL) {
   .rmbl_plot_check(x, "bricklayer_drift")
   what <- .rmbl_arg(what)
@@ -1598,7 +1607,9 @@ plot.bricklayer_drift <- function(x, ..., what = c("psi", "columns", "benford"),
     rownames(out) <- NULL
     return(invisible(out))
   }
-  have <- vapply(t$column, function(cl) !is.null(x$summ[[cl]][[if (what == "columns") "bins" else "benford"]]), NA)
+  if (what == "fingerprint") return(invisible(.bl_drift_fingerprint(t, b, vc, main, ...)))
+  need <- c(columns = "bins", benford = "benford", ecdf = "bins", quantiles = "qq")[[what]]
+  have <- vapply(t$column, function(cl) !is.null(x$summ[[cl]][[need]]), NA)
   if (!is.null(cols)) {
     if (!is.character(cols) || anyNA(cols) || !all(cols %in% x$columns$column)) {
       stop(.rmbl_fn(), sprintf("`cols` must name columns of the drift result (%s)",
@@ -1610,18 +1621,33 @@ plot.bricklayer_drift <- function(x, ..., what = c("psi", "columns", "benford"),
   }
   if (!length(pick)) {
     graphics::plot.new()
-    graphics::title(main = .bl_main(main, if (what == "columns") "Nothing to draw: no column has binned data" else
-      "Nothing to draw: no numeric column"))
+    graphics::title(main = .bl_main(main, if (what %in% c("columns", "ecdf")) {
+      "Nothing to draw: no column has binned data"
+    } else {
+      "Nothing to draw: no numeric column"
+    }))
     return(invisible(data.frame()))
   }
   op <- .bl_panels_begin(length(pick))
   on.exit(graphics::par(op), add = TRUE)
   on.exit(.bl_panels_abort(), add = TRUE)
   rc <- .bl_cols(2, col, palette)
+  # the Benford titles, all at one size: the size the longest needs
+  ttl <- if (what == "benford") {
+    vapply(pick, function(cl) {
+      bf <- x$summ[[cl]]$benford
+      .bl_main(main, sprintf("%s: %s Benford (p %s)", cl, if (bf$p_value < x$alpha) "departs from" else
+        "consistent with", sub("^([0-9])", "= \\1", format.pval(bf$p_value, digits = 2, eps = 1e-16))))
+    }, "", USE.NAMES = TRUE)
+  }
   drawn <- lapply(pick, function(cl) {
     s <- x$summ[[cl]]
     v <- t$verdict[t$column == cl]
-    if (what == "benford") return(.bl_drift_benford_panel(cl, s$benford, v, x$alpha, rc, main, ...))
+    if (what == "benford") {
+      return(.bl_drift_benford_panel(cl, s$benford, x$alpha, rc, ttl[[cl]], ttl, cl == pick[1L], ...))
+    }
+    if (what == "ecdf") return(.bl_drift_ecdf_panel(cl, s, x$columns$statistic[x$columns$column == cl], rc, main, ...))
+    if (what == "quantiles") return(.bl_drift_qq_panel(cl, s, v, rc, main, ...))
     .bl_drift_column_panel(cl, s, v, rc, main, ...)
   })
   key <- .bl_panels_end()
@@ -1647,8 +1673,13 @@ plot.bricklayer_drift <- function(x, ..., what = c("psi", "columns", "benford"),
     h <- s$hist
     dens <- function(p) p / (h$hi - h$lo)
     graphics::par(mar = .bl_safe_mar(c(4.2, .bl_left_margin(c(0, dens(c(h$ref, h$cur)))), 3, 1)))
+    kind <- s$kind %||% "number"
     graphics::plot(range(c(h$lo, h$hi)), c(0, max(dens(c(h$ref, h$cur))) * 1.15), type = "n", xlab = "",
-                   ylab = "", ...)
+                   ylab = "", xaxt = if (kind == "number") "s" else "n", ...)
+    if (kind != "number") {
+      at <- pretty(range(c(h$lo, h$hi)), n = 4L)
+      graphics::axis(1, at = at, labels = .bl_drift_iso(at, kind))
+    }
     .bl_title(ttl)
     .bl_ylab("Density")
     .bl_grid(NULL)
@@ -1656,8 +1687,13 @@ plot.bricklayer_drift <- function(x, ..., what = c("psi", "columns", "benford"),
     graphics::lines(c(rbind(h$lo, h$hi)), rep(dens(h$cur), each = 2L), col = rc[2L], lwd = 2.4)
     graphics::legend("topright", c("reference", "current"), fill = c(grDevices::adjustcolor(rc[1L], 0.35), NA),
                      border = NA, col = c(NA, rc[2L]), lwd = c(NA, 2.4), bty = "n", cex = 0.75)
-    graphics::mtext(sprintf("PSI by quantile bin: %s", paste(formatC(b$contrib, digits = 2, format = "g"),
-                                                            collapse = " ")), side = 1, line = 2.6, cex = 0.6)
+    # the three largest terms, sized to this panel (the full list is on drfthtml()'s page): the whole
+    # list at a fixed size ran into the next panel's
+    top <- utils::head(order(-b$contrib), 3L)
+    cap <- paste0("largest PSI terms: ", paste(trimws(formatC(b$contrib[top], digits = 2, format = "g")),
+                                               collapse = ", "), if (nrow(b) > 3L) " ..." else "")
+    cx <- min(0.6, 0.6 * graphics::par("pin")[1L] / .bl_strwidth(cap, cex = 0.6))
+    graphics::mtext(cap, side = 1, line = 2.6, cex = max(0.35, cx) * graphics::par("cex"))
   } else {
     keep <- utils::head(order(-(b$ref + b$cur)), 15L)
     bb <- b[sort(keep), , drop = FALSE]
@@ -1675,30 +1711,148 @@ plot.bricklayer_drift <- function(x, ..., what = c("psi", "columns", "benford"),
   data.frame(column = cl, bin = b$bin, ref = b$ref, cur = b$cur, contrib = b$contrib, stringsAsFactors = FALSE)
 }
 
-#' Draws one column's first digits against Benford's law, the reference as points.
+#' Draws one column's ECDFs, reference and current, with the area between them shaded.
+#'
+#' A numeric column draws its ECDFs on the 64-point grid; a categorical one its cumulative shares over
+#' the categories in the reference's order. The largest vertical gap is the KS statistic for a numeric
+#' column, marked.
 #' @param cl The column.
-#' @param bf Its first-digit counts from cpsdrft().
-#' @param v Its verdict.
-#' @param alpha The level of the test.
+#' @param s Its summary from cpsdrft().
+#' @param stat Its test statistic.
 #' @param rc The reference and current colours.
 #' @param main The caller's title, or NULL.
 #' @param ... Further arguments to the base call.
+#' @return A data frame: column, x, ref, cur.
+#' @noRd
+.bl_drift_ecdf_panel <- function(cl, s, stat, rc, main, ...) {
+  e <- if (!is.null(s$ecdf)) s$ecdf else
+    data.frame(x = seq_len(nrow(s$bins)), ref = cumsum(s$bins$ref), cur = cumsum(s$bins$cur))
+  graphics::par(mar = .bl_safe_mar(c(4.2, .bl_left_margin(c(0, 1)), 3, 1)))
+  graphics::plot(range(e$x), c(0, 1), type = "n", xlab = "", ylab = "",
+                 xaxt = if (is.null(s$ecdf) || (s$kind %||% "number") != "number") "n" else "s", ...)
+  if (is.null(s$ecdf)) {
+    graphics::axis(1, at = e$x, labels = .bl_short_label(s$bins$bin, 10L))
+  } else if ((s$kind %||% "number") != "number") {
+    at <- pretty(range(e$x), n = 4L)
+    graphics::axis(1, at = at, labels = .bl_drift_iso(at, s$kind))
+  }
+  .bl_title(.bl_main(main, sprintf("%s: largest gap %s", cl, trimws(formatC(max(abs(e$ref - e$cur)), digits = 3,
+                                                                           format = "g")))))
+  .bl_ylab("Share at or below")
+  .bl_grid(NULL)
+  graphics::polygon(c(e$x, rev(e$x)), c(e$ref, rev(e$cur)), col = grDevices::adjustcolor(rc[2L], 0.18), border = NA)
+  graphics::lines(e$x, e$ref, type = "s", col = rc[1L], lwd = 2.4)
+  graphics::lines(e$x, e$cur, type = "s", col = rc[2L], lwd = 2.4)
+  k <- which.max(abs(e$ref - e$cur))
+  graphics::segments(e$x[k], e$ref[k], e$x[k], e$cur[k], lwd = 2, lty = 3)
+  graphics::legend("bottomright", c("reference", "current"), col = rc, lwd = 2.4, bty = "n", cex = 0.75)
+  data.frame(column = cl, x = e$x, ref = e$ref, cur = e$cur)
+}
+
+#' Draws a numeric column's matched quantiles, reference across and current up, on the identity line.
+#' @param cl The column.
+#' @param s Its summary from cpsdrft().
+#' @param v Its verdict.
+#' @param rc The reference and current colours.
+#' @param main The caller's title, or NULL.
+#' @param ... Further arguments to the base call.
+#' @return A data frame: column, p, ref, cur.
+#' @noRd
+.bl_drift_qq_panel <- function(cl, s, v, rc, main, ...) {
+  q <- s$qq
+  lim <- range(c(q$ref, q$cur))
+  kind <- s$kind %||% "number"
+  graphics::par(mar = .bl_safe_mar(c(4.2, .bl_left_margin(lim), 3, 1)))
+  graphics::plot(lim, lim, type = "n", xlab = "", ylab = "", xaxt = if (kind == "number") "s" else "n",
+                 yaxt = if (kind == "number") "s" else "n", ...)
+  if (kind != "number") {
+    at <- pretty(lim, n = 3L)
+    graphics::axis(1, at = at, labels = .bl_drift_iso(at, kind))
+    graphics::axis(2, at = at, labels = .bl_drift_iso(at, kind))
+  }
+  .bl_title(.bl_main(main, sprintf("%s: quantiles (%s)", cl, v)))
+  .bl_ylab("Current quantile")
+  .bl_xlab("Reference quantile")
+  .bl_grid(NULL)
+  graphics::abline(0, 1, lty = 2, col = "#4D4D4D")
+  graphics::lines(q$ref, q$cur, col = rc[2L], lwd = 2.4)
+  graphics::points(q$ref, q$cur, pch = 21, bg = rc[2L], col = "white", cex = 1.1)
+  data.frame(column = cl, p = q$p, ref = q$ref, cur = q$cur)
+}
+
+#' Draws the drift fingerprint: one spoke per column, its PSI as the distance out, the warn and fail
+#' bands as rings, each column's point in its verdict's colour.
+#' @param t From .bl_drift_table().
+#' @param b The PSI bands.
+#' @param vc The verdict colours.
+#' @param main The caller's title, or NULL.
+#' @param ... Further arguments to plot.window().
+#' @return A data frame: column, psi, verdict, angle and radius (1 is the outer ring).
+#' @noRd
+.bl_drift_fingerprint <- function(t, b, vc, main, ...) {
+  psi <- ifelse(is.finite(t$psi), t$psi, 0)
+  cap <- max(2 * b$fail, psi, 1e-9)
+  r <- sqrt(pmin(psi, cap) / cap)   # square-root scale: small PSIs stay apart from the centre
+  a <- pi / 2 - 2 * pi * (seq_along(psi) - 1) / max(1L, length(psi))
+  op <- graphics::par(mar = c(1, 1, 3, 1), bg = .bl_plot_opts()$bg)
+  on.exit(graphics::par(op), add = TRUE)
+  graphics::plot.new()
+  graphics::plot.window(c(-1.45, 1.45), c(-1.25, 1.25), asp = 1, ...)
+  .bl_title(.bl_main(main, sprintf("Drift fingerprint (%d fail, %d warn)", sum(t$verdict == "fail"),
+                                   sum(t$verdict == "warn"))))
+  th <- seq(0, 2 * pi, length.out = 181L)
+  graphics::polygon(cos(th), sin(th), col = .bl_plot_opts()$panel %||% NA, border = NA)
+  for (ring in c(b$warn, b$fail)) {
+    graphics::lines(sqrt(ring / cap) * cos(th), sqrt(ring / cap) * sin(th), lty = 2,
+                    col = vc[[if (ring == b$fail) "fail" else "warn"]])
+  }
+  graphics::segments(0, 0, cos(a), sin(a), col = "white", lwd = 1.2)
+  if (length(r) > 2L) {
+    graphics::polygon(r * cos(a), r * sin(a), col = grDevices::adjustcolor(vc[["ok"]], 0.18), border = vc[["ok"]])
+  }
+  graphics::points(r * cos(a), r * sin(a), pch = 21, bg = unname(vc[t$verdict]), col = "white", cex = 1.6)
+  graphics::text(1.12 * cos(a), 1.12 * sin(a), .bl_short_label(t$column, 14L), cex = 0.7, col = "#3D4350",
+                 adj = c(ifelse(cos(a) < -0.2, 1, ifelse(cos(a) > 0.2, 0, 0.5)), 0.5), xpd = NA)
+  graphics::mtext(sprintf("rings: warn %s, fail %s; outer ring PSI %s (square-root scale)", b$warn, b$fail,
+                                  signif(cap, 3)), side = 1,
+                  line = -0.2, cex = 0.65 * graphics::par("cex"), col = "#3D4350")
+  data.frame(column = t$column, psi = t$psi, verdict = t$verdict, angle = a, radius = r, stringsAsFactors = FALSE)
+}
+
+#' Draws one column's first digits against Benford's law, the reference as points.
+#' @param cl The column.
+#' @param bf Its first-digit counts from cpsdrft().
+#' @param alpha The level of the test.
+#' @param rc The reference and current colours.
+#' @param title This panel's title.
+#' @param titles Every panel's title, so all are drawn at the size the longest needs.
+#' @param key Whether this panel carries the legend.
+#' @param ... Further arguments to the base call.
 #' @return A data frame: column, digit, cur, ref, expected.
 #' @noRd
-.bl_drift_benford_panel <- function(cl, bf, v, alpha, rc, main, ...) {
+.bl_drift_benford_panel <- function(cl, bf, alpha, rc, title, titles, key, ...) {
   cur <- bf$cur / bf$n
   ref <- if (sum(bf$ref)) bf$ref / sum(bf$ref) else rep(NA_real_, 9L)
   e <- log10(1 + 1 / (1:9))
   graphics::par(mar = .bl_safe_mar(c(4.2, .bl_left_margin(c(0, cur, e)), 3, 1)))
   mids <- .bl_barplot(cur, names.arg = 1:9, col = rc[2L], labels = FALSE,
-                      ylim = c(0, max(c(cur, ref, e), na.rm = TRUE) * 1.15), xlab = "First digit", ...)
-  .bl_title(.bl_main(main, sprintf("%s: %s Benford (p = %s)", cl,
-                                   if (bf$p_value < alpha) "departs from" else "consistent with",
-                                   formatC(bf$p_value, digits = 3, format = "g"))))
+                      ylim = c(0, max(c(cur, ref, e), na.rm = TRUE) * 1.25), xlab = "First digit", ...)
+  width <- graphics::par("pin")[1L] * 0.98
+  fit <- Filter(function(cx) all(.bl_strwidth(titles, cex = cx, font = 2) <= width), c(1.2, 1, 0.85))
+  if (length(fit)) graphics::title(main = title, cex.main = fit[[1L]]) else .bl_title(title)
   .bl_ylab("Proportion")
   .bl_grid(NULL)
+  band <- .bl_benford_band(bf$n)
+  graphics::polygon(c(mids, rev(mids)), c(band$lower, rev(band$upper)), col = grDevices::adjustcolor("#4D4D4D", 0.15),
+                    border = NA)
   .bl_line(mids, e, "#4D4D4D", fill = FALSE, label = FALSE)
   graphics::points(mids, ref, pch = 21, bg = rc[1L], col = "white", cex = 1.3)
+  if (key) {
+    graphics::legend("topright", c("current", "reference", "Benford expected, 95% band"),
+                     fill = c(rc[2L], NA, grDevices::adjustcolor("#4D4D4D", 0.15)), border = NA, pch = c(NA, 21, NA),
+                     pt.bg = c(NA, rc[1L], NA), col = c(NA, "white", "#4D4D4D"), lwd = c(NA, NA, 2), bty = "n",
+                     cex = 0.65)
+  }
   data.frame(column = cl, digit = 1:9, cur = cur, ref = ref, expected = e)
 }
 

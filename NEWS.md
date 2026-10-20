@@ -32,7 +32,7 @@
 ## Standards and the fixes they surfaced
 
 * The package documents the rOpenSci statistical software standards (General, EDA, Time Series)
-  with `srr` tags: 146 met, 29 not applicable, none left to do.
+  with `srr` tags: 149 standards tagged as met, 29 not applicable, none left to do.
 * A period with no percentage change in `plot(yoy(...))` carries its whole reason again ("first period:
   nothing to compare with", "no percentage: previous period is zero"), sized to the panel; the period-axis
   rewrite had cut every reason at the colon.
@@ -91,14 +91,20 @@
 * `plot()` of a `cpsdrft()` result takes `what`: `"psi"` (the default) draws the PSI per column,
   worst first, coloured by verdict with the warn and fail bands as dashed lines; `"columns"` draws
   the reference and current distributions of up to six columns (`cols`) with each PSI bin's term;
-  `"benford"` the first digits of numeric columns against Benford's law.
+  `"benford"` the first digits of numeric columns against Benford's law with its 95% band; `"ecdf"`
+  the two ECDFs, `"quantiles"` the quantile shift and `"fingerprint"` the PSI of every column on
+  spokes, the bands as rings.
 * `cpsdrft()` keeps a binned summary of each column (`summ`: missing shares, summary statistics or
   the largest categories, the PSI bins, a histogram, first-digit counts; never the rows) and its
   PSI `bands`, which the plots and reports colour by.
 * `drfthtml()` writes the drift report as one HTML file that fetches nothing: the verdict and
-  provenance, a column table to search, filter and sort, each column's summary and charts, sliders
-  for the bands and alpha that score the verdicts again, the manifest diff, PSI over earlier runs,
-  and Markdown, JSON, SVG and GitHub-comment exports. `rmbl drift PATH --html FILE` writes it.
+  provenance; the chosen column's two distributions drawn in on a canvas; a column table to search,
+  filter and sort; per column its statistics and the density overlay or category flow, ECDF
+  overlay, quantile shift, PSI by bin and Benford charts, each with a line on how to read it; the
+  drift fingerprint and a tile per column; the manifest diff as a tree; PSI over earlier runs as a
+  heatmap; the capsule chain (provenance, bytes, manifest, attestation); sliders for the bands and
+  alpha that score every chart again; and Markdown, JSON, SVG and GitHub-comment exports. Dates show
+  in ISO 8601. `rmbl drift PATH --html FILE` writes it.
 * `drftapp()` is the same report as a Shiny app (shiny is suggested), with what would clear a
   column, a rerun on chosen columns and a download of the page; `drftapp()` alone opens on two
   uploaded CSV files, and `rmbl drift PATH --app` opens it on a capsule whose source moved.

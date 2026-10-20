@@ -1,35 +1,62 @@
 <!-- the body of the drift report; drfthtml() fills {{TITLE}} and {{VERSION}} (escaped) -->
-<header><h1>{{TITLE}}</h1>
+<header class="top"><p class="tag"><i></i>Capsule drift report</p>
+<h1>{{TITLE}}</h1>
 <button type="button" id="theme" aria-label="Switch light or dark theme">theme</button></header>
+<section id="hero-wrap" class="hero" aria-label="Reference and current distributions of the chosen column">
+<canvas id="hero" role="img" aria-label="Reference and current distributions"></canvas>
+<div class="hero-label"><p id="hero-col"></p><p id="hero-stat"></p></div>
+<p class="hero-key"><span class="k ref"></span>reference <span class="k cur"></span>current <span class="k div"></span>where they part</p>
+</section>
 <section id="summary" aria-live="polite">
-<p id="verdict"></p>
-<p id="counts"></p><dl id="prov"></dl></section>
+<div class="lead"><p id="verdict"></p>
+<p id="counts"></p></div>
+<dl id="prov"></dl></section>
 <nav class="tabs" role="tablist">
 <button type="button" role="tab" id="tab-columns" aria-selected="true">Columns</button>
+<button type="button" role="tab" id="tab-overview">Overview</button>
 <button type="button" role="tab" id="tab-manifest" hidden>Manifest</button>
-<button type="button" role="tab" id="tab-history">History</button></nav>
-<section id="pane-columns">
+<button type="button" role="tab" id="tab-history">History</button>
+<button type="button" role="tab" id="tab-chain">Capsule chain</button></nav>
 <div id="thresholds" class="card"><h2>Bands</h2>
 <label>warn PSI <input type="range" id="warn" min="0" max="1" step="0.01"> <output id="warn-v"></output></label>
 <label>fail PSI <input type="range" id="fail" min="0" max="1" step="0.01"> <output id="fail-v"></output></label>
 <label>alpha <input type="range" id="alpha" min="0.001" max="0.2" step="0.001"> <output id="alpha-v"></output></label>
 <button type="button" id="reset">Reset to the object's bands</button></div>
-<div class="tools"><input type="search" id="search" placeholder="search columns ( / )" aria-label="Search columns"><span id="filters" role="group" aria-label="Filters"></span></div>
-<div class="scroll"><table id="coltable"><caption>Columns, worst first</caption><thead><tr></tr></thead><tbody></tbody></table></div>
+<section id="pane-columns">
+<div class="tools"><input type="search" id="search" placeholder="search columns ( / )" aria-label="Search columns">
+<span id="filters" role="group" aria-label="Filters"></span></div>
+<div class="scroll"><table id="coltable"><caption>Columns, worst first; up and down keys move through them</caption><thead><tr></tr></thead><tbody></tbody></table></div>
 <section id="detail" aria-live="polite"><h2 id="detail-title"></h2>
 <p id="note"></p>
 <div class="scroll"><table id="sumtable"><thead></thead><tbody></tbody></table></div>
 <div class="charts">
-<figure><figcaption>Distribution, reference and current</figcaption>
-<div id="chart-cmp"></div></figure>
-<figure><figcaption>PSI by bin (up: more in current)</figcaption>
-<div id="chart-psi"></div></figure>
-<figure id="fig-benford"><figcaption>First digits against Benford</figcaption>
-<div id="chart-benford"></div></figure></div></section></section>
+<figure id="fig-cmp"><figcaption id="t-cmp"></figcaption>
+<div id="chart-cmp" class="chart"></div><p class="reading" id="r-cmp"></p></figure>
+<figure id="fig-flow"><figcaption id="t-flow"></figcaption>
+<div id="chart-flow" class="chart"></div><p class="reading" id="r-flow"></p></figure>
+<figure id="fig-ecdf"><figcaption id="t-ecdf"></figcaption>
+<div id="chart-ecdf" class="chart"></div><p class="reading" id="r-ecdf"></p></figure>
+<figure id="fig-qq"><figcaption id="t-qq"></figcaption>
+<div id="chart-qq" class="chart"></div><p class="reading" id="r-qq"></p></figure>
+<figure id="fig-psi"><figcaption id="t-psi"></figcaption>
+<div id="chart-psi" class="chart"></div><p class="reading" id="r-psi"></p></figure>
+<figure id="fig-benford"><figcaption id="t-benford"></figcaption>
+<div id="chart-benford" class="chart"></div><p class="reading" id="r-benford"></p></figure>
+</div></section></section>
+<section id="pane-overview" hidden><h2>Overview: drift fingerprint</h2>
+<div class="fp"><div id="fingerprint"></div>
+<p class="soft">Each spoke is a column; its point sits at the column's PSI, the dashed rings are the warn and fail bands. Click a point, or a tile below, to open the column.</p></div>
+<div id="multiples" class="multiples"></div></section>
 <section id="pane-manifest" hidden><h2>Manifest</h2>
+<div id="manifest-tree"></div>
 <div class="scroll"><table id="manifest"><thead></thead><tbody></tbody></table></div></section>
+<section id="pane-chain" hidden><h2>Capsule chain</h2>
+<p class="soft">Provenance, the pinned bytes, the manifest and the attestation: each link verified, moved, failed or not checked.</p>
+<div id="chain"></div></section>
 <section id="pane-history" hidden><h2>History</h2>
-<p>Pick earlier <code>rmbl drift --json</code> outputs or JSON exports of this page.</p><input type="file" id="hist-file" accept=".json,application/json" multiple aria-label="Earlier drift JSON files">
+<p>Pick earlier <code>rmbl drift --json</code> outputs or JSON exports of this page.</p>
+<input type="file" id="hist-file" accept=".json,application/json" multiple aria-label="Earlier drift JSON files">
+<div id="heatmap"></div>
 <div id="history-plots" class="charts"></div></section>
 <div class="exports"><a id="dl-md" download="drift.md" href="#">Markdown</a> <a id="dl-json" download="drift.json" href="#">JSON</a> <button type="button" id="copy-gh">Copy as GitHub comment</button> <span id="copied" role="status"></span></div>
 <p class="gen">rmoriebricklayer {{VERSION}}</p>
