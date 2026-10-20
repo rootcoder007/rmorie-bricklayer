@@ -9,7 +9,11 @@ explerr(msg = geterrmessage(), pkgs = NULL, n = 3L)
 \arguments{
 \item{msg}{The message: the text of an error, as R printed it ("Error
 in f(x) : ..." is fine), a condition object, or a \code{try()} result.
-Default: the last error of this session (\code{geterrmessage()}).}
+Default: the last error of this session (\code{geterrmessage()}).
+Or a data frame of check rows with the columns \code{check},
+\code{ok} and \code{detail}, as \code{rmbl verify --json} writes
+them and \code{\link{vrfcps}} returns them in \code{checks}: each
+failed row is explained.}
 
 \item{pkgs}{Character vector of installed packages to search. The default,
 \code{NULL}, means this package, or the comma-separated list in
@@ -29,6 +33,10 @@ functions that reach it, separated by commas), \code{kind} (\code{"error"} or
 of its words found, such as \code{"80\% of its words"}). No rows when the
 message is not one of these packages' own: it came from another package
 or from R, and \code{\link{llmask}} can help with it.
+For a data frame of check rows: one row per failed check, with the
+columns \code{check}, \code{detail}, \code{explanation} (what the
+failure means and what to do) and \code{raised_by} (\code{pkg::fn}
+when the detail is a message of these packages, else \code{NA}).
 }
 \description{
 Finds where an error or warning message comes from, without a language
@@ -68,7 +76,8 @@ words (three letters or more, common words left out, at least two
 needed), \eqn{|m|} the words of the message and \eqn{|t|} those of the
 template; scores of 0.55 and above are kept.
 
-Errors: \code{msg} that is not character text or a condition;
+Errors: \code{msg} that is not character text, a condition or a data
+frame with the columns \code{check}, \code{ok} and \code{detail};
 \code{n} not a whole number of 1 or more; \code{pkgs} that are not
 installed.
 }
@@ -90,6 +99,11 @@ explerr("index between number chunks", n = 1)
 
 # R's own messages are not in the table: no rows
 nrow(explerr("object 'x' not found"))
+
+# the failed rows of a capsule check
+rows <- data.frame(check = c("data_present", "data_sha256"), ok = c(TRUE, FALSE),
+                   detail = c("d.csv", "expected 01..., got 9c..."))
+explerr(rows)$explanation
 
 # n must be at least 1
 try(explerr(msg, n = 0))

@@ -1129,7 +1129,8 @@ plotopt <- function(...) {
 #' @param contours Number of contour lines over a field image (0 for none).
 #' @param xlab For the plots over time (\code{rmbl_stock_flow},
 #'   \code{rmbl_yoy}, \code{rmbl_rate_change}, \code{rmbl_count_trend},
-#'   \code{rmbl_event_study}), the title of the period axis. The default
+#'   \code{rmbl_event_study}, and \code{rmbl_rate} with \code{period}),
+#'   the title of the period axis. The default
 #'   \code{NULL} names the unit the period implies: \code{"Date"} for dates,
 #'   \code{"Time"} for date-times, \code{"Fiscal year"} for fiscal-year labels
 #'   such as \code{"2022/23"}, \code{"Periods since adoption"} for an event
@@ -1370,14 +1371,16 @@ plot.rmbl_yoy <- function(x, ..., what = c("pctchg", "value"), main = NULL, col 
 }
 
 #' @rdname plot-methods
+#' @usage \method{plot}{rmbl_rate}(x, ..., period = NULL, main = NULL,
+#'   col = NULL, palette = NULL, xlab = NULL)
 #' @export
 #' @srrstats {EA5.5} Rate axes carry the unit from the result's metadata, for example "Rate per 100,000, with
 #'   interval"; yoy percent axes say "Percent change".
-plot.rmbl_rate <- function(x, ..., period = NULL, main = NULL, col = NULL, palette = NULL) {
+plot.rmbl_rate <- function(x, ..., period = NULL, main = NULL, col = NULL, palette = NULL, xlab = NULL) {
   .rmbl_plot_check(x, "rmbl_rate")
   d <- as.data.frame(x)
   meta <- attr(x, "rate")
-  if (!is.null(period)) return(.bl_rate_over_time(d, meta, period, main, col, palette, ...))
+  if (!is.null(period)) return(.bl_rate_over_time(d, meta, period, main, col, palette, xlab, ...))
   label <- .bl_group_label(d, meta$by)
   cols <- .bl_cols(nrow(d), col, palette)
   .bl_dot_interval(label, d$rate, d$lower, d$upper,
@@ -1397,10 +1400,11 @@ plot.rmbl_rate <- function(x, ..., period = NULL, main = NULL, col = NULL, palet
 #' @param main The title.
 #' @param col The colours the caller gave, or NULL.
 #' @param palette The palette the caller gave, or NULL.
+#' @param xlab The period axis title, or NULL for the one the period implies.
 #' @param ... Further arguments to plot().
 #' @return The plotted rates as a data frame, invisibly.
 #' @noRd
-.bl_rate_over_time <- function(d, meta, period, main, col, palette, ...) {
+.bl_rate_over_time <- function(d, meta, period, main, col, palette, xlab = NULL, ...) {
   if (!is.character(period) || length(period) != 1L || !period %in% meta$by) {
     stop("`period` must be one of the rate's `by` columns", call. = FALSE)
   }
@@ -1409,6 +1413,9 @@ plot.rmbl_rate <- function(x, ..., period = NULL, main = NULL, col = NULL, palet
   groups <- unique(g)
   if (length(groups) > 16L) stop("more than 16 groups to draw over time: filter or regroup first", call. = FALSE)
   pv <- sort(unique(d[[period]]))
+  # the period on its own scale, as the other plots over time draw it (index positions before)
+  ax <- .bl_period_axis(pv)
+  xlab <- xlab %||% ax$xlab
   cols <- .bl_cols(length(groups), col, palette)
   ylim <- range(c(d$lower, d$upper, d$rate), finite = TRUE)
   ylim <- ylim + c(-0.04, 0.12) * diff(ylim)
@@ -1418,9 +1425,9 @@ plot.rmbl_rate <- function(x, ..., period = NULL, main = NULL, col = NULL, palet
   for (k in seq_along(groups)) {
     s <- d[g == groups[k], , drop = FALSE]
     s <- s[order(match(s[[period]], pv)), , drop = FALSE]
-    xs <- match(s[[period]], pv)
+    xs <- ax$at[match(s[[period]], pv)]
     graphics::par(mar = .bl_safe_mar(c(4.2, .bl_left_margin(ylim), 3, 1)))
-    graphics::plot(range(seq_along(pv)), ylim, type = "n", xaxt = "n", xlab = "", ylab = "", main = "", ...)
+    graphics::plot(ax$xlim, ylim, type = "n", xaxt = "n", xlab = "", ylab = "", main = "", ...)
     .bl_grid(NULL)
     ok <- is.finite(s$lower) & is.finite(s$upper)
     if (sum(ok) > 1L) {
@@ -1428,7 +1435,8 @@ plot.rmbl_rate <- function(x, ..., period = NULL, main = NULL, col = NULL, palet
                         col = grDevices::adjustcolor(cols[k], 0.22), border = NA)
     }
     .bl_line(xs, s$rate, cols[k], fill = FALSE)
-    graphics::axis(1, at = seq_along(pv), labels = pv)
+    .bl_period_ticks(ax)
+    .bl_xlab(xlab)
     .bl_title(groups[k])
     .bl_ylab(sprintf("Rate %s", meta$perlbl %||% ""))
   }

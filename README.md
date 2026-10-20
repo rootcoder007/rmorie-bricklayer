@@ -773,6 +773,11 @@ rmoriebricklayer logout                         # forget the data key
 rmoriebricklayer data list                      # the curated tables at data.rmorie.com
 rmoriebricklayer data pull db/table --out t.csv # download one (your MORIE key)
 rmoriebricklayer bundle "your request"          # agentbndl() from the shell
+rmoriebricklayer verify capsules --fail-on warn # every capsule under a folder, as the rmbl GitHub Action checks it
+rmoriebricklayer verify capsules --json         # the check rows as JSON (hmac secret: RMBL_KEY)
+rmoriebricklayer drift capsules                 # fetch each source again and compare it with the pin
+rmoriebricklayer refresh capsules               # pin each source's new bytes (cpsrfrsh())
+rmoriebricklayer report capsules --format md    # the Markdown report; never fails
 rmoriebricklayer functions [PATTERN]            # exported functions and their titles
 rmoriebricklayer describe NAME                  # one function's help page
 rmoriebricklayer examples NAME                  # its examples

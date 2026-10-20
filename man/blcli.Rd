@@ -57,6 +57,22 @@ with \code{\link{wbsave}}, results in \code{--out} (default
 \code{FILE.wayback.jsonl}), so a stopped run carries on;
 \code{wayback --retry FILE.jsonl [--include-gone]} retries the failures
 of an earlier run (\code{\link{wbrtry}})}
+\item{\code{verify PATH [--json] [--fail-on LEVEL] [--public-key HEX]}}{check
+every capsule under PATH as the rmbl GitHub Action does: each
+file against its JSON Schema (\code{\link{schemapath}}),
+\code{\link{vrfcps}} and \code{\link{cpsbndlvrf}}. The secret of
+an hmac bundle is read from \code{RMBL_KEY}, which is then removed
+from the environment. Prints the Markdown report, or JSON with
+\code{--json}; exits 1 when a failed row is at or above
+\code{--fail-on} (\code{error}, the default, \code{drift} or
+\code{warn})}
+\item{\code{drift PATH [--json] [--fail-on LEVEL]}}{verify, then fetch
+each source again: new bytes are a warning, drifting columns
+(\code{\link{cpsdrft}}) are drift}
+\item{\code{refresh PATH}}{pin each source's new bytes
+(\code{\link{cpsrfrsh}}) and print what changed
+(\code{\link{mnfdiff}})}
+\item{\code{report PATH [--format md|json]}}{the verify report, exit 0}
 \item{\code{functions [PATTERN]}}{list the exported functions with
 their one-line titles, optionally filtered by a regular expression}
 \item{\code{describe NAME}}{title, usage, arguments and description of
@@ -96,7 +112,10 @@ the data.rmorie.com manifest and tables are kept in
 temporary folder. The verbs \code{login}, \code{logout} and
 \code{config} write the shared credentials and settings files;
 \code{ask}, \code{models}, \code{data}, \code{bundle} and
-\code{wayback} use the network; \code{functions}, \code{describe},
+\code{wayback} use the network, and \code{drift} and \code{refresh}
+fetch each capsule's source (\code{refresh} writes the capsule);
+\code{verify} and \code{report} only read the capsule files;
+\code{functions}, \code{describe},
 \code{examples}, \code{explain-error}, \code{version} and \code{help}
 only read the installed help.
 }
@@ -119,6 +138,11 @@ lines
 
 # an unknown verb is a usage error: status 2, nothing run
 blcli("nonsense")
+
+# check a capsule as the rmbl GitHub Action does
+d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
+invisible(cpsrfrsh(d))
+blcli(c("verify", d))
 }
 \seealso{
 \code{\link{instcli}} to put the command on your PATH.

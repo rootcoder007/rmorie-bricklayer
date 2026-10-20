@@ -45,6 +45,12 @@
 #' @noRd
 .bl_data_restricted <- function(key) grepl("^(icpsr_|ncvs_38604|a2aj_)", sub("^(db|files)/", "", key))
 
+#' The MORIE key a call to dload() was given, held only while that call runs.
+#'
+#' An environment, not a variable of the process environment: a child process never inherits it.
+#' @noRd
+.bl_data_token <- new.env(parent = emptyenv())
+
 #' Returns the hosted key to send to the data service, or NULL.
 #'
 #' The hosted key for the data service: to the address the signed services document names, never
@@ -52,7 +58,8 @@
 #' @return One string, or NULL.
 #' @noRd
 .bl_data_key <- function() {
-  key <- .bl_hosted_key()
+  # a key passed to dload(token = ) beats the stored one
+  key <- .bl_data_token$key %||% .bl_hosted_key()
   if (is.null(key)) return(NULL)
   env <- sub("/+$", "", trimws(Sys.getenv("MORIE_DATA_URL", unset = "")))
   if (!nzchar(env)) return(key)
@@ -208,14 +215,17 @@
 #' Errors: \code{refresh} not \code{TRUE} or \code{FALSE}; no key stored (the
 #' message says how to sign in); the service unavailable, or the key rejected;
 #' a \code{key} that is not of the form \code{db/table}, or not listed in the
-#' manifest; a digest mismatch; a restricted table whose terms were not
-#' accepted.
+#' manifest; a \code{token} that is not one non-empty string; a digest
+#' mismatch; a restricted table whose terms were not accepted.
 #'
 #' @param refresh Logical scalar, default \code{FALSE}: fetch again even when a
 #'   day-old copy (of the manifest, or for \code{dload()} of the
 #'   table) is cached.
 #' @param key Character scalar, a \code{db/table} key from the manifest (the
 #'   \code{key} column of \code{dtabs()}).
+#' @param token For \code{dload()}: the MORIE key to use for this call,
+#'   in place of the one \code{\link{dlogin}} stored; \code{NULL} (the
+#'   default) uses the stored key. It is never printed or written to disk.
 #' @return \code{dmnf()}: the manifest as a list (element
 #'   \code{datasets}, one list per table with at least \code{key}, and as the
 #'   service provides them \code{rows}, \code{columns}, sizes, the SHA-256 of
@@ -572,7 +582,7 @@ print.bricklayer_data_tables <- function(x, ...) {
 
 #' @rdname dmnf
 #' @export
-dload <- function(key, refresh = FALSE) {
+dload <- function(key, refresh = FALSE, token = NULL) {
   ok <- is.character(key) && length(key) == 1L &&
     grepl("/", key, fixed = TRUE) &&
     !startsWith(key, "/") && !endsWith(key, "/")
@@ -580,6 +590,10 @@ dload <- function(key, refresh = FALSE) {
     stop("key must be db/table (see dtabs())", call. = FALSE)
   }
   .bl_check_flag(refresh, "refresh")
+  if (!is.null(token)) {
+    .bl_data_token$key <- trimws(.rmbl_string1(token, "token"))
+    on.exit(.bl_data_token$key <- NULL, add = TRUE)
+  }
   known <- tryCatch(vapply(dmnf()$datasets, function(d) d$key, ""), error = function(e) .bl_unless_interrupted(e))
   # an empty list is an answer too: no table is listed, so none is loaded
   if (!is.null(known) && !key %in% known) {

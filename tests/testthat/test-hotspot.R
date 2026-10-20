@@ -76,3 +76,19 @@ test_that("a rate over time draws one panel per group on a shared scale", {
   big <- data.frame(g = rep(letters[1:17], each = 2), year = rep(1:2, 17), n = 5, pop = 100)
   expect_error(plot(rtcalc(big, count = n, pop = pop, by = c("g", "year")), period = "year"), "16 groups")
 })
+
+test_that("a rate over time puts the period on its own scale with an axis title", {
+  d <- data.frame(year = c(2020, 2022, 2023), n = c(30, 35, 28), pop = 1000)
+  r <- rtcalc(d, count = n, pop = pop, by = "year", per = 100)
+  seen <- character()
+  testthat::local_mocked_bindings(.bl_xlab = function(xlab) seen <<- c(seen, xlab))
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  p <- plot(r, period = "year")
+  expect_identical(seen, "Period")
+  expect_equal(p$period, c(2020, 2022, 2023))
+  # the gap year keeps its place: the axis runs on the years themselves
+  expect_equal(graphics::par("usr")[1:2] > 2019 & graphics::par("usr")[1:2] < 2024, c(TRUE, TRUE))
+  plot(r, period = "year", xlab = "Year of release")
+  expect_identical(seen[2L], "Year of release")
+})

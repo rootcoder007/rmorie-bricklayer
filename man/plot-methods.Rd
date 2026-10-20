@@ -183,7 +183,8 @@
   gaps = c("break", "join")
 )
 
-\method{plot}{rmbl_rate}(x, ..., period = NULL, main = NULL, col = NULL, palette = NULL)
+\method{plot}{rmbl_rate}(x, ..., period = NULL, main = NULL,
+  col = NULL, palette = NULL, xlab = NULL)
 
 \method{plot}{rmbl_share}(x, ..., main = NULL, col = NULL, palette = NULL)
 
@@ -334,7 +335,8 @@ its confidence interval).}
 
 \item{xlab}{For the plots over time (\code{rmbl_stock_flow},
 \code{rmbl_yoy}, \code{rmbl_rate_change}, \code{rmbl_count_trend},
-\code{rmbl_event_study}), the title of the period axis. The default
+\code{rmbl_event_study}, and \code{rmbl_rate} with \code{period}),
+the title of the period axis. The default
 \code{NULL} names the unit the period implies: \code{"Date"} for dates,
 \code{"Time"} for date-times, \code{"Fiscal year"} for fiscal-year labels
 such as \code{"2022/23"}, \code{"Periods since adoption"} for an event

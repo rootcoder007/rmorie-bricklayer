@@ -10,7 +10,7 @@ dmnf(refresh = FALSE)
 
 dtabs(refresh = FALSE)
 
-dload(key, refresh = FALSE)
+dload(key, refresh = FALSE, token = NULL)
 }
 \arguments{
 \item{refresh}{Logical scalar, default \code{FALSE}: fetch again even when a
@@ -19,6 +19,10 @@ table) is cached.}
 
 \item{key}{Character scalar, a \code{db/table} key from the manifest (the
 \code{key} column of \code{dtabs()}).}
+
+\item{token}{For \code{dload()}: the MORIE key to use for this call,
+in place of the one \code{\link{dlogin}} stored; \code{NULL} (the
+default) uses the stored key. It is never printed or written to disk.}
 }
 \value{
 \code{dmnf()}: the manifest as a list (element
@@ -87,8 +91,8 @@ bar when \code{options(morie.progress)} allows it.
 Errors: \code{refresh} not \code{TRUE} or \code{FALSE}; no key stored (the
 message says how to sign in); the service unavailable, or the key rejected;
 a \code{key} that is not of the form \code{db/table}, or not listed in the
-manifest; a digest mismatch; a restricted table whose terms were not
-accepted.
+manifest; a \code{token} that is not one non-empty string; a digest
+mismatch; a restricted table whose terms were not accepted.
 }
 \examples{
 # Offline, against a cache folder holding a manifest and one table made

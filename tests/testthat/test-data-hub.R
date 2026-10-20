@@ -85,3 +85,30 @@ test_that("a table with a blank description and source is named by its key", {
   expect_identical(.bl_data_name(list(key = "", source = NULL, meta = list(description = " "))), "")
   expect_identical(.bl_data_name(list()), "")
 })
+
+test_that("dload(token = ) sends that key for the call only, over the stored one", {
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = NA, MORIE_DATA_URL = NA)
+  withr::local_options(rmoriebricklayer.dcache = withr::local_tempdir())
+  used <- character()
+  testthat::local_mocked_bindings(.bl_data_get = function(path, dest, ...) {
+    used <<- c(used, .bl_data_key() %||% "none")
+    if (path == "/manifest.json") {
+      writeLines('{"datasets":[{"key":"demo/t","rows":1}]}', dest)
+    } else {
+      con <- gzfile(dest, "w")
+      writeLines(c("a", "1"), con)
+      close(con)
+    }
+    invisible(dest)
+  })
+  expect_identical(dload("demo/t", token = " sk-call-key ")$a, 1L)
+  expect_true(all(used == "sk-call-key"))
+  expect_null(.bl_data_key())
+  withr::local_envvar(MORIE_HOSTED_KEY = "sk-stored")
+  used <- character()
+  dload("demo/t", refresh = TRUE, token = "sk-other")
+  expect_true(all(used == "sk-other"))
+  expect_identical(.bl_data_key(), "sk-stored")
+  expect_error(dload("demo/t", token = ""), "dload: `token` must be a single non-empty string")
+  expect_error(dload("demo/t", token = c("a", "b")), "dload: `token` must be a single non-empty string")
+})

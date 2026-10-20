@@ -41,6 +41,32 @@
 * `capenv()$packages` is a named list, so a manifest written with `wrmnfjs()` keeps the package
   names; as a named character vector they were written as a bare array of versions.
 
+## Capsule checks from the command line
+
+The checks the rmbl GitHub Action ran in its own script are now in the package, so the action
+can call them.
+
+* `rmbl verify PATH` checks every capsule under PATH: each capsule file against its JSON Schema,
+  then `vrfcps()` and `cpsbndlvrf()`, one row per check, with the action's Markdown report.
+  `--json` prints the rows as JSON instead, and `--fail-on error|drift|warn` sets which failed
+  row makes the exit status 1. The secret of an hmac bundle is read from `RMBL_KEY`, which is
+  removed from the environment at once; `--public-key` pins the signing key.
+* `rmbl drift PATH` verifies, then fetches each source again: new bytes are a warning, and
+  columns that drift (`cpsdrft()`) are drift. `rmbl refresh PATH` pins the new bytes, and
+  `rmbl report PATH [--format md|json]` prints the verify report and never fails.
+* The schemas ship in `inst/schemas/` (the same files as the action's `spec/`); `schemapath()`
+  gives their path.
+* `mnfdiff()` lists the resources two manifests (provenance records, bundles or data frames)
+  added, removed or changed, with their digests and sizes.
+* `cpsrfrsh()` fetches a capsule's source again and, when the bytes changed, writes them and pins
+  them in the provenance as `usecpstmpl()`'s `analysis.R` does; it returns the `mnfdiff()`.
+* `dload()` takes `token`, a MORIE key for that call that is used in place of the stored one and
+  never printed. (`key` is already the table's name.)
+* `explerr()` takes a data frame of check rows, as `rmbl verify --json` writes them, and explains
+  each failed row.
+* `plot()` of a `rtcalc()` result with `period` draws the period on its own scale, as the other
+  plots over time do, and takes `xlab`; it drew index positions with no axis title.
+
 ## Short names
 
 Every exported function, argument, output column, help topic and option now has a short name without

@@ -135,6 +135,9 @@ reference:
       - capenv
       - citecps
       - vrfcps
+      - cpsrfrsh
+      - mnfdiff
+      - schemapath
       - loadprov
       - recrd
       - mkmnf
