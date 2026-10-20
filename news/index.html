@@ -441,6 +441,33 @@
 <li>Native error messages are no longer cut at 1024 bytes by the barrier.</li>
 <li>A wait for a lock held by another process ends at a Ctrl-C or a time limit.</li>
 </ul></div>
+<div class="section level3">
+<h3 id="security-1-0-0">Security<a class="anchor" aria-label="anchor" href="#security-1-0-0"></a></h3>
+<ul><li>
+<code>rmbl drift</code> and <code>rmbl refresh</code> (<code><a href="../reference/cpschk.html">cpschk()</a></code>, <code><a href="../reference/cpsrfrsh.html">cpsrfrsh()</a></code>) fetch a capsule’s source over <code>https://</code> only. A local path or a <code>file://</code> URL is read only when it resolves, links followed, to a file inside the capsule, inside the <code>allowfile</code> folder (<code>TRUE</code>: the folder checked), or in the package’s <code>extdata</code>; never under <code>/proc</code>, <code>/sys</code> or <code>/dev</code>. A source such as <code>/proc/self/environ</code> or a <code>creds.csv</code> outside the capsule used to be printed in the report.</li>
+<li>Drift reads the pinned data file only inside the capsule (<code>resource$filename</code> of <code>../../outside.csv</code> was read and its header printed).</li>
+<li>Refresh does not write through a <code>data_provenance.json</code> that links out of the capsule.</li>
+<li>A gzip source or data file inflates to at most the option <code>rmoriebricklayer.maxcsvbytes</code> when drift or refresh reads it; a small gzip of zeros ran for minutes.</li>
+<li>
+<code>--public-key ""</code> (or any capsule option given an empty value) is a usage error, and <code><a href="../reference/cpsbndl.html">cpsbndlvrf()</a></code> and <code><a href="../reference/cpsatst.html">cpschkatst()</a></code> refuse <code>keyexp = ""</code>; both checked against no key.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fixes-from-the-audit-ofbed8e-1-0-0">Fixes from the audit of 30bed8e<a class="anchor" aria-label="anchor" href="#fixes-from-the-audit-ofbed8e-1-0-0"></a></h3>
+<ul><li>
+<code><a href="../reference/fromjs.html">fromjs()</a></code> reads a <code>\u</code> escape only with four hex digits: <code>\u 041</code> was read as “A” and <code>\u-041</code> as the key “NA”.</li>
+<li>A key typed in groups joined by any punctuation with no space (<code>abcd1234efgh;ijkl5678mnop;...</code>) is a key and is not sent to a model; so is an AWS access key id written in letters only.</li>
+<li>
+<code>RMBL_KEY</code> is removed from the process before anything else, and its startup copy is wiped.</li>
+<li>A provider reply with a long number or bytes that are not UTF-8 gives the package’s message, not R’s warnings.</li>
+<li>
+<code><a href="../reference/wbsave.html">wbsave()</a></code> refuses a public name that resolves to a private address.</li>
+<li>
+<code><a href="../reference/fromjs.html">fromjs()</a></code> decodes a latin1 string in a C locale, and simplifies sparse records about twice as fast.</li>
+<li>
+<code><a href="../reference/fdl.html">fdl()</a></code> passes a time limit on instead of trying the fallback; drift tries the Wayback copy the provenance pins and no other, and deletes its download.</li>
+<li>The drift report escapes directory names in its HTML, and a symlink loop lists each capsule once.</li>
+<li>Six test files of the native code (JSON parity, dtoa, HashML-DSA, sketches, the 1.0.0 native branches, X.509 branches) now also run on CRAN.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.14" id="rmoriebricklayer-0514">rmoriebricklayer 0.5.14<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-0514"></a></h2>

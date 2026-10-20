@@ -1211,6 +1211,59 @@ earlier finding)
 - A wait for a lock held by another process ends at a Ctrl-C or a time
   limit.
 
+### Security
+
+- `rmbl drift` and `rmbl refresh`
+  ([`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md),
+  [`cpsrfrsh()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrfrsh.md))
+  fetch a capsule’s source over `https://` only. A local path or a
+  `file://` URL is read only when it resolves, links followed, to a file
+  inside the capsule, inside the `allowfile` folder (`TRUE`: the folder
+  checked), or in the package’s `extdata`; never under `/proc`, `/sys`
+  or `/dev`. A source such as `/proc/self/environ` or a `creds.csv`
+  outside the capsule used to be printed in the report.
+- Drift reads the pinned data file only inside the capsule
+  (`resource$filename` of `../../outside.csv` was read and its header
+  printed).
+- Refresh does not write through a `data_provenance.json` that links out
+  of the capsule.
+- A gzip source or data file inflates to at most the option
+  `rmoriebricklayer.maxcsvbytes` when drift or refresh reads it; a small
+  gzip of zeros ran for minutes.
+- `--public-key ""` (or any capsule option given an empty value) is a
+  usage error, and
+  [`cpsbndlvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)
+  and
+  [`cpschkatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)
+  refuse `keyexp = ""`; both checked against no key.
+
+### Fixes from the audit of 30bed8e
+
+- [`fromjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fromjs.md)
+  reads a `\u` escape only with four hex digits: `\u 041` was read as
+  “A” and `\u-041` as the key “NA”.
+- A key typed in groups joined by any punctuation with no space
+  (`abcd1234efgh;ijkl5678mnop;...`) is a key and is not sent to a model;
+  so is an AWS access key id written in letters only.
+- `RMBL_KEY` is removed from the process before anything else, and its
+  startup copy is wiped.
+- A provider reply with a long number or bytes that are not UTF-8 gives
+  the package’s message, not R’s warnings.
+- [`wbsave()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsave.md)
+  refuses a public name that resolves to a private address.
+- [`fromjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fromjs.md)
+  decodes a latin1 string in a C locale, and simplifies sparse records
+  about twice as fast.
+- [`fdl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fdl.md)
+  passes a time limit on instead of trying the fallback; drift tries the
+  Wayback copy the provenance pins and no other, and deletes its
+  download.
+- The drift report escapes directory names in its HTML, and a symlink
+  loop lists each capsule once.
+- Six test files of the native code (JSON parity, dtoa, HashML-DSA,
+  sketches, the 1.0.0 native branches, X.509 branches) now also run on
+  CRAN.
+
 ## rmoriebricklayer 0.5.14
 
 - A new data key is issued only after the data access terms are

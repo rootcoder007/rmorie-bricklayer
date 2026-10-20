@@ -1,10 +1,10 @@
 # Fetch a capsule's source again and pin the new bytes
 
 Downloads the source named in a capsule's `data_provenance.json`
-(`resource$direct_url`, else `source$url`; a local path is read
-directly), and when its bytes differ from the pin writes them as the
-capsule's data file and pins them in the provenance, in the form the
-`analysis.R` of
+(`resource$direct_url`, else `source$url`; an `https://` URL, or a local
+file inside the capsule), and when its bytes differ from the pin writes
+them as the capsule's data file and pins them in the provenance, in the
+form the `analysis.R` of
 [`usecpstmpl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/usecpstmpl.md)
 writes on its first run: `source$sha256`, and `resource$filename`,
 `sha256`, `size_bytes` and `retrieved_utc` (`row_count_data_rows` too
@@ -27,7 +27,9 @@ cpsrfrsh(dir, allowfile = FALSE)
 
 - allowfile:
 
-  Logical: accept a `file://` source URL (a local path is always read).
+  `FALSE` (the default), `TRUE` to accept a `file://` source inside
+  `dir`, or an existing folder whose files may also be read as a source
+  (a local path or a `file://` URL).
 
 ## Value
 
@@ -40,15 +42,23 @@ still matches its pin.
 
 Nothing is written when the bytes are unchanged. A download goes through
 [`fdl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fdl.md),
-with the provenance's `wayback$csv_snapshot` as its fallback. A capsule
-bundle is not signed again: that needs your key
+with the provenance's `wayback$csv_snapshot` as its fallback (no other
+Wayback copy is looked up). A source is fetched over `https://` only. A
+local path (relative to the capsule) or a `file://` URL is read only
+when it resolves, symbolic links followed, to a file inside the capsule,
+inside the `allowfile` folder, or in the package's `extdata`; never
+under `/proc`, `/sys` or `/dev`. A gzip source may inflate to at most
+the option `rmoriebricklayer.maxcsvbytes` (1 GiB by default) when it is
+read. A capsule bundle is not signed again: that needs your key
 ([`cpsbndl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)).
 Side effects: writes the data file and `data_provenance.json` in `dir`.
 Errors: `dir` is not a directory or holds no provenance; the provenance
 names no source, or a `TODO` one, or a `file://` one without
-`allowfile`; the source cannot be fetched; `resource$filename` is not a
-plain relative path inside `dir`; the new data fail the schema the
-provenance pins
+`allowfile`; a URL that is not `https://`; a local source outside those
+folders; the source cannot be fetched, or inflates past the limit;
+`resource$filename` is not a plain relative path inside `dir`;
+`data_provenance.json` is a link out of `dir`; the new data fail the
+schema the provenance pins
 ([`valsch`](https://rootcoder007.github.io/rmorie-bricklayer/reference/valsch.md)).
 
 ## See also
@@ -70,5 +80,5 @@ cpsrfrsh(d)$change     # the source has not changed since
 #> [1] "unchanged"
 
 try(cpsrfrsh(tempfile()))
-#> Error : cpsrfrsh: `dir` is not an existing directory: /tmp/RtmpAleQnN/file1eeb21320c54
+#> Error : cpsrfrsh: `dir` is not an existing directory: /tmp/Rtmp8SVLqe/file1efb4970d264
 ```
