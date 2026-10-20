@@ -41,3 +41,4 @@
 ^conftest\.c$
 ^conftest\.gcno$
 ^.*Rplots\.pdf$
+^tests/testthat/testthat-problems\.rds$
