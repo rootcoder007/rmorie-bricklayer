@@ -19,7 +19,7 @@ cpsbndl(
 
 cpsbndlrd(path)
 
-cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL, key = NULL)
+cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL, key = NULL, seen = NULL)
 }
 \arguments{
 \item{dir}{Character scalar, the directory the capsule lives in. For
@@ -57,6 +57,13 @@ overwritten).
 bundle's attestation must carry. Supply it when you know which key
 should have signed: without it the check confirms the bundle is
 internally consistent, which any key's holder could arrange.}
+
+\item{seen}{For \code{cpsbndlvrf()}, the XMSS signatures seen elsewhere, as
+\code{\link[=xmssidxseen]{xmssidxseen()}} returns them,
+or \code{NULL}. For an XMSS bundle it adds an \code{xmss_index} row, failed
+("xmss index reused") when the same key signed
+the bundle's index with another signature: the key's state was copied
+or rolled back (RFC 10033, section 4).}
 }
 \value{
 \code{cpsbndl()}: the bundle, invisibly, a list of class
@@ -73,7 +80,9 @@ attribute
 \code{ok} (logical) and \code{checks} (a data frame of \code{check}, logical \code{ok}
 and
 \code{detail}: one \code{file:PATH} row per listed file, \code{no_unlisted_files}, the
-\verb{attestation:} rows and, with a manifest, \code{manifest_digest}).
+\verb{attestation:} rows, with a manifest \code{manifest_digest}, and with \code{seen}
+\code{xmss_index}). For an XMSS bundle the \code{attestation:signature} row's
+detail names the signature's index and the key fingerprint.
 }
 \description{
 Records a digest of every file named, the manifest's canonical digest,

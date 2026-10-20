@@ -19,7 +19,8 @@ cpschk(
   snapshot = FALSE,
   wayback = FALSE,
   glob = "",
-  fp = TRUE
+  fp = TRUE,
+  seenlog = ""
 )
 
 \method{format}{rmbl_cpschk}(x, fmt = c("md", "json"), failon = NULL, ...)
@@ -70,6 +71,12 @@ matches this glob (\code{*} also matches \code{/}), or \code{""}.}
 
 \item{fp}{Logical: measure the footprint of the checks
 (\code{\link{co2fp}}) for the last lines of the report.}
+
+\item{seenlog}{Character scalar: an XMSS seen-log (\code{\link{xmssidxseen}};
+\code{rmbl verify --seen-log}) read with the bundles under \code{path},
+or \code{""}. Every XMSS bundle gets an \code{xmss_index} row, failed
+when the same key signed its index with another signature in what was
+seen.}
 
 \item{x}{An \code{rmbl_cpschk} result.}
 

@@ -94,6 +94,11 @@
 #'   matches this glob (\code{*} also matches \code{/}), or \code{""}.
 #' @param fp Logical: measure the footprint of the checks
 #'   (\code{\link{co2fp}}) for the last lines of the report.
+#' @param seenlog Character scalar: an XMSS seen-log (\code{\link{xmssidxseen}};
+#'   \code{rmbl verify --seen-log}) read with the bundles under \code{path},
+#'   or \code{""}. Every XMSS bundle gets an \code{xmss_index} row, failed
+#'   when the same key signed its index with another signature in what was
+#'   seen.
 #' @param x An \code{rmbl_cpschk} result.
 #' @param fmt \code{"md"} (the Markdown report) or \code{"json"}.
 #' @param failon Character scalar or \code{NULL}: the fail-on level, named
@@ -147,7 +152,7 @@
 #' @export
 cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"), key = "", pubkey = "",
                    psiwarn = 0.1, psifail = 0.25, base = NULL, cache = NULL, allowfile = FALSE,
-                   snapshot = FALSE, wayback = FALSE, glob = "", fp = TRUE) {
+                   snapshot = FALSE, wayback = FALSE, glob = "", fp = TRUE, seenlog = "") {
   path <- .rmbl_string1(path, "path")
   if (!dir.exists(path)) stop(.rmbl_fn(), "`path` is not an existing directory: ", .rmbl_printable(path), call. = FALSE)
   o <- list(path = path, mode = .rmbl_arg(mode), key = .bl_str0(key, "key"), pubkey = .bl_str0(pubkey, "pubkey"),
@@ -160,6 +165,9 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
   glob <- .bl_str0(glob, "glob")
   fp <- .rmbl_flag1(fp, "fp")
   o$cache <- .bl_cache_arg(cache)
+  seenlog <- .bl_str0(seenlog, "seenlog")
+  # every XMSS signature under the path and in the log, for the index-reuse row of each bundle
+  o$seen <- xmssidxseen(path, if (nzchar(seenlog)) seenlog)
   dirs <- .bl_capsule_dirs(path, glob)
   run <- function() {
     lapply(dirs, function(d) {
@@ -254,7 +262,7 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
   prov <- if (file.exists(pf)) tryCatch(loadprov(pf), error = function(e) NULL)
   src <- .bl_s1(prov[["resource"]][["direct_url"]]) %||% .bl_s1(prov[["source"]][["url"]]) %||% ""
   cap <- list(capsule = d, source = src, pinned_sha256 = .bl_s1(prov[["resource"]][["sha256"]]) %||% "",
-              fetched_sha256 = "", changed = FALSE, rows = .bl_verify_capsule(d, o$key, o$pubkey))
+              fetched_sha256 = "", changed = FALSE, rows = .bl_verify_capsule(d, o$key, o$pubkey, seen = o$seen))
   if (o$snapshot && !is.null(prov)) {
     s <- .bl_snapshot(src)
     cap$snapshot <- s$url
@@ -813,7 +821,9 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #' @param path Character scalar, the folder searched recursively.
 #' @param key The signing key, as \code{cpsbndl()} takes it: a shared
 #'   secret (a string or raw vector) for an \code{"hmac"} bundle, or a key
-#'   from \code{\link{fipskg}} or \code{\link{fipskey}}.
+#'   from \code{\link{fipskg}} or \code{\link{fipskey}}, or an XMSS key
+#'   from \code{\link{pqckg}}, which signs one capsule after another at
+#'   consecutive indices (each reserved as \code{\link{cpssign}} reserves it).
 #' @param overwrite Logical: sign a capsule that already has a bundle again.
 #' @param glob Character scalar: only the provenance files whose path
 #'   matches this glob (\code{*} also matches \code{/}), or \code{""}.
@@ -842,18 +852,9 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #'   checked by cpsbndl() (test-capsule-check.R).
 #' @export
 cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
-  path <- .rmbl_string1(path, "path")
-  if (!dir.exists(path)) stop(.rmbl_fn(), "`path` is not an existing directory: ", .rmbl_printable(path), call. = FALSE)
-  overwrite <- .rmbl_flag1(overwrite, "overwrite")
-  dirs <- .bl_capsule_dirs(path, .bl_str0(glob, "glob"))
-  dirs <- dirs[file.exists(file.path(dirs, "data_provenance.json"))]
-  if (!length(dirs)) stop(.rmbl_fn(), "no data_provenance.json under ", .rmbl_printable(path), call. = FALSE)
-  have <- dirs[file.exists(file.path(dirs, "capsule_bundle.json"))]
-  if (length(have) && !overwrite) {
-    stop(.rmbl_fn(), "capsule_bundle.json already exists in ", paste(have, collapse = ", "),
-         "; pass overwrite = TRUE (rmbl sign --overwrite) to sign again", call. = FALSE)
-  }
-  rows <- lapply(dirs, function(d) {
+  dirs <- .bl_seal_dirs(path, overwrite, glob)
+  rows <- list()
+  for (d in dirs) {
     pf <- file.path(d, "data_provenance.json")
     prov <- loadprov(pf)
     pinned <- is.null(prov[["resource"]][["sha256"]])
@@ -867,8 +868,29 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
     }
     mf <- file.path(d, "manifest.json")
     b <- cpsbndl(d, if (file.exists(mf)) loadprov(mf) else mkmnf(list(), env = FALSE), key)
-    data.frame(capsule = d, pinned = pinned, files = length(b$files), public = b$attestation$public,
-               stringsAsFactors = FALSE)
-  })
+    # an XMSS key moves past the index it just signed with, for the next capsule
+    if (inherits(key, "bricklayer_signing_key")) key$next_index <- b$attestation$signature$index + 1L
+    rows[[length(rows) + 1L]] <- data.frame(capsule = d, pinned = pinned, files = length(b$files),
+                                            public = b$attestation$public, stringsAsFactors = FALSE)
+  }
   do.call(rbind, rows)
+}
+
+#' The capsules cpsseal() signs, checked before anything is written.
+#' @param path,overwrite,glob As for cpsseal().
+#' @return The capsule directories.
+#' @noRd
+.bl_seal_dirs <- function(path, overwrite, glob) {
+  path <- .rmbl_string1(path, "path")
+  if (!dir.exists(path)) stop(.rmbl_fn(), "`path` is not an existing directory: ", .rmbl_printable(path), call. = FALSE)
+  overwrite <- .rmbl_flag1(overwrite, "overwrite")
+  dirs <- .bl_capsule_dirs(path, .bl_str0(glob, "glob"))
+  dirs <- dirs[file.exists(file.path(dirs, "data_provenance.json"))]
+  if (!length(dirs)) stop(.rmbl_fn(), "no data_provenance.json under ", .rmbl_printable(path), call. = FALSE)
+  have <- dirs[file.exists(file.path(dirs, "capsule_bundle.json"))]
+  if (length(have) && !overwrite) {
+    stop(.rmbl_fn(), "capsule_bundle.json already exists in ", paste(have, collapse = ", "),
+         "; pass overwrite = TRUE (rmbl sign --overwrite) to sign again", call. = FALSE)
+  }
+  dirs
 }

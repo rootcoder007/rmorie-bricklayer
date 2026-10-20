@@ -404,9 +404,10 @@ test_that("rmbl sign pins and signs each capsule with RMBL_KEY or a key file, th
   r <- run_cli(c("sign", root, "--key-file", kf, "--scheme", "ML-DSA-65", "--public-key", key$public, "--overwrite"))
   expect_identical(r$status, 2L)
   expect_match(r$out, "the key: ", fixed = TRUE)
-  r <- run_cli(c("sign", root, "--key-file", kf, "--scheme", "xmss-sha256"))
-  expect_identical(r$status, 2L)
-  expect_match(r$out, "sign takes no xmss-sha256 key", fixed = TRUE)
+  # an xmss-sha256 key must be the JSON of a pqckg() key (test-xmss-cli.R signs with one)
+  r <- run_cli(c("sign", root, "--key-file", kf, "--scheme", "xmss-sha256", "--overwrite"))
+  expect_identical(r$status, 1L)
+  expect_match(r$out, "the key is not an xmss-sha256 key", fixed = TRUE)
   expect_identical(run_cli(c("sign", root, "--key-file", file.path(root, "nope")))$status, 2L)
   # signed with one key, verified against another: fails by --fail-on
   writeLines("the shared secret", kf)

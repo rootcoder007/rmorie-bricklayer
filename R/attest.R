@@ -309,6 +309,10 @@ cpschkatst <- function(attest, man,
       )
     }
   }
+  if (isTRUE(ok) && identical(attest$scheme, "xmss-sha256")) {
+    # the index and key a verifier needs to see an index signed twice (RFC 10033, section 4)
+    detail <- sprintf("xmss index %d, key %s", as.integer(attest$signature$index), .rmbl_xmss_fpr(attest$public))
+  }
   note_row("signature", ok, detail)
 
   df <- do.call(rbind, acc$checks)

@@ -72,6 +72,31 @@ signatures at one index an adversary can forge a third message.
 and do not copy a key to two machines that sign independently.
 }
 
+\section{The key and its state}{
+RFC 10033 (Hash-Based Signatures: State and Backup Management) splits
+an XMSS key into the private key, which never changes, and the state,
+which records the indices used and must be updated, durably, before
+each signature is released (its sections 2 and 4). In an R session the
+state is \code{next_index} plus the used-index record described under
+\code{\link[=xmssadv]{xmssadv()}}. From the command line,
+\verb{rmbl sign --scheme xmss-sha256 --key-file key.json}
+makes the key file itself the state: it rewrites
+the file atomically, with \code{next_index} advanced and a \code{used} field,
+before anything is signed, and signs from the indices it reserved.
+\code{--state-file} keeps the state in a file of its own, \code{--sectors} and
+\code{--sector-index} give each signer its own disjoint range of indices
+(section 5.3), \code{--reserve} reserves a block in one write (section
+5.9), and a key file older than a signature it is seen to have made is
+refused as a stale copy. See the section XMSS keys of \code{\link[=blcli]{blcli()}}.
+
+A key saved as a CI secret is a fixed copy that every job starts
+from, so every job signs the same indices: in CI use ML-DSA
+(\code{\link[=fipskg]{fipskg()}}) unless the XMSS state is kept in a file that persists
+between jobs. NIST SP 800-208 approves XMSS only inside a hardware
+cryptographic module that never exports the key; this software key
+is not such a deployment.
+}
+
 \section{Key format}{
  A key made before the RFC 8391 conformance work
 carries no \code{skprf} and cannot sign;

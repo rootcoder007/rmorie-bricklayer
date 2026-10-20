@@ -316,6 +316,7 @@ reference:
       - rvkfetch
       - cpssign
       - xmssadv
+      - xmssidxseen
       - cpsvrf
       - pqckg
       - signpubkey

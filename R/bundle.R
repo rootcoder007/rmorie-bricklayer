@@ -86,6 +86,12 @@
 #' bundle's attestation must carry. Supply it when you know which key
 #' should have signed: without it the check confirms the bundle is
 #' internally consistent, which any key's holder could arrange.
+#' @param seen For `cpsbndlvrf()`, the XMSS signatures seen elsewhere, as
+#' [xmssidxseen()] returns them,
+#' or `NULL`. For an XMSS bundle it adds an `xmss_index` row, failed
+#' ("xmss index reused") when the same key signed
+#' the bundle's index with another signature: the key's state was copied
+#' or rolled back (RFC 10033, section 4).
 #' @return `cpsbndl()`: the bundle, invisibly, a list of class
 #' `bricklayer_bundle` with `files` (a list of `path`, `sha256`,
 #' `size_bytes`), `manifest_digest`, `bundled_utc` and `attestation`
@@ -100,7 +106,9 @@
 #' `ok` (logical) and `checks` (a data frame of `check`, logical `ok`
 #' and
 #' `detail`: one `file:PATH` row per listed file, `no_unlisted_files`, the
-#' `attestation:` rows and, with a manifest, `manifest_digest`).
+#' `attestation:` rows, with a manifest `manifest_digest`, and with `seen`
+#' `xmss_index`). For an XMSS bundle the `attestation:signature` row's
+#' detail names the signature's index and the key fingerprint.
 #' @seealso
 #' [cpsatst()],
 #' [vrfcps()],
@@ -236,7 +244,7 @@ cpsbndlrd <- function(path) {
 #' @rdname cpsbndl
 #' @export
 cpsbndlvrf <- function(bundle, dir, man = NULL,
-                                  keyexp = NULL, key = NULL) {
+                                  keyexp = NULL, key = NULL, seen = NULL) {
   if (is.character(bundle)) bundle <- cpsbndlrd(bundle)
   if (!inherits(bundle, "bricklayer_bundle")) {
     stop("`bundle` must come from cpsbndl() or ",
@@ -300,6 +308,22 @@ cpsbndlvrf <- function(bundle, dir, man = NULL,
   for (i in seq_len(nrow(res$checks))) {
     note_row(paste0("attestation:", res$checks$check[i]),
              res$checks$ok[i], res$checks$detail[i])
+  }
+  if (!is.null(seen)) {
+    if (!is.data.frame(seen) || !all(c("key", "index", "sig", "where") %in% names(seen))) {
+      stop(.rmbl_fn(), "`seen` must be what xmssidxseen() returns, or NULL", call. = FALSE)
+    }
+    a <- bundle$attestation
+    s <- a$signature
+    if (identical(a$scheme, "xmss-sha256") && is.character(a$public) && is.numeric(s$index) && is.character(s$wire)) {
+      k <- .rmbl_xmss_fpr(a$public)
+      i <- as.integer(s$index)
+      o <- seen$where[seen$key == k & seen$index == i & seen$sig != .rmbl_xmss_sigd(s$wire)]
+      note_row("xmss_index", !length(o),
+               if (length(o)) sprintf("xmss index reused: index %d of key %s also made another signature (%s)", i, k,
+                                      paste(utils::head(unique(o), 3L), collapse = ", ")) else
+                 sprintf("index %d of key %s made one signature in what was seen", i, k))
+    }
   }
   if (!is.null(man)) {
     got <- mnfdgst(man)

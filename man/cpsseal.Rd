@@ -11,7 +11,9 @@ cpsseal(path = ".", key, overwrite = FALSE, glob = "")
 
 \item{key}{The signing key, as \code{cpsbndl()} takes it: a shared
 secret (a string or raw vector) for an \code{"hmac"} bundle, or a key
-from \code{\link{fipskg}} or \code{\link{fipskey}}.}
+from \code{\link{fipskg}} or \code{\link{fipskey}}, or an XMSS key
+from \code{\link{pqckg}}, which signs one capsule after another at
+consecutive indices (each reserved as \code{\link{cpssign}} reserves it).}
 
 \item{overwrite}{Logical: sign a capsule that already has a bundle again.}
 

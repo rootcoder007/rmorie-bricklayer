@@ -128,6 +128,17 @@ cases <- list(
     r <- run("sign", dirname(d)); check(r$status == 1L && grepl("already exists", r$text, fixed = TRUE), paste("sign again:", substr(r$text, 1, 300)))
     kf <- file.path(home, "pq.key"); writeLines(tojs(unclass(fipskg("ML-DSA-44")), auto_unbox = TRUE), kf)
     r <- run("sign", dirname(d), "--scheme", "ML-DSA-44", "--key-file", kf, "--overwrite", "--json"); check(r$status == 0 && grepl("\"status\": \"ok\"", r$text, fixed = TRUE), paste("sign ML-DSA-44:", substr(r$text, 1, 300)))
+
+    # XMSS: the key file is the state, rewritten before anything is signed; a stale copy is refused
+    xf <- file.path(home, "xmss.json"); writeLines(tojs(unclass(pqckg(3)), auto_unbox = TRUE), xf)
+    old <- file.path(home, "xmss-old.json"); file.copy(xf, old)
+    r <- run("sign", dirname(d), "--scheme", "xmss-sha256", "--key-file", xf, "--overwrite", "--sectors", "2", "--sector-index", "1", "--reserve", "2", "--seen-log", file.path(home, "seen.log"))
+    k <- fromjs(paste(readLines(xf), collapse = "\n"))
+    check(r$status == 0 && k$next_index == 6 && k$used$generation == 1 && grepl("indices 4 to 5 reserved in sector 1 of 2", r$text, fixed = TRUE), paste("sign xmss:", substr(r$text, 1, 300)))
+    sf <- file.path(home, "xmss-state.json")
+    r <- run("sign", dirname(d), "--scheme", "xmss-sha256", "--key-file", old, "--overwrite", "--state-file", sf, "--sectors", "2", "--sector-index", "1", "--warn-left", "3")
+    check(r$status == 1L && grepl("stale copy of the key", r$text, fixed = TRUE) && !file.exists(sf), paste("sign xmss stale:", substr(r$text, 1, 300)))
+    r <- run("verify", dirname(d), "--seen-log", file.path(home, "seen.log")); check(r$status == 0 && grepl("xmss index 4, key", r$text, fixed = TRUE), paste("verify xmss:", substr(r$text, 1, 300)))
   },
   refresh = function() { r <- run("refresh", smoke_capsule); check(r$status == 0, paste("refresh:", substr(r$text, 1, 300))) },
   report = function() {

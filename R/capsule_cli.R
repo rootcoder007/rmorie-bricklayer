@@ -453,9 +453,10 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' @param key The shared secret of an hmac bundle, or "".
 #' @param pubkey The public key (or hmac key id) the bundle must be signed with, or "".
 #' @param pkgs The packages whose functions a ledger's checks may run, or NULL for all (ldgrchk()).
+#' @param seen The XMSS signatures seen (xmssidxseen()), or NULL.
 #' @return Check rows.
 #' @noRd
-.bl_verify_capsule <- function(d, key = "", pubkey = "", pkgs = NULL) {
+.bl_verify_capsule <- function(d, key = "", pubkey = "", pkgs = NULL, seen = NULL) {
   prov_file <- file.path(d, "data_provenance.json")
   bundle_file <- file.path(d, "capsule_bundle.json")
   rows <- list()
@@ -473,7 +474,8 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     bnd <- cpsbndlrd(bundle_file)
     # the secret goes to an hmac bundle only; the key id or public key is checked for any scheme
     hmac <- identical(as.character(unlist(bnd$attestation$scheme))[1L], "hmac")
-    chk <- cpsbndlvrf(bnd, d, keyexp = if (nzchar(pubkey)) pubkey, key = if (hmac && nzchar(key)) key)
+    chk <- cpsbndlvrf(bnd, d, keyexp = if (nzchar(pubkey)) pubkey, key = if (hmac && nzchar(key)) key,
+                      seen = seen)
     rows[[length(rows) + 1L]] <- .bl_result_rows(chk, d, "bundle", bundle_file)
   }
   do.call(rbind, rows)
@@ -556,7 +558,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
                          psiwarn = num("--psi-warn", 0.1), psifail = num("--psi-fail", 0.25), base = flag("--base"),
                          cache = flag("--cache") %||% FALSE, allowfile = "--allow-file" %in% rest,
                          snapshot = "--snapshot" %in% rest, glob = flag("--manifests") %||% "",
-                         fp = !"--no-footprint" %in% rest),
+                         fp = !"--no-footprint" %in% rest, seenlog = flag("--seen-log") %||% ""),
                   error = function(e) usage_error(sub("^cpschk: ", "", conditionMessage(e))))
   out(format(res, fmt = fmt, failon = if (verb != "report") fail_on))
   html <- flag("--html")
@@ -570,19 +572,20 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' The options of the capsule verbs that take a value.
 #' @noRd
 .bl_capsule_valued <- c("--fail-on", "--format", "--public-key", "--psi-warn", "--psi-fail", "--base", "--cache",
-                        "--manifests", "--scheme", "--key-file")
+                        "--manifests", "--scheme", "--key-file", "--seen-log", "--state-file", "--sectors",
+                        "--sector", "--sector-index", "--reserve", "--warn-left")
 
 #' The options verify, drift and report share (the first take a value).
 #' @noRd
 .bl_capsule_opts <- c("--public-key", "--psi-warn", "--psi-fail", "--base", "--cache", "--manifests", "--allow-file",
-                      "--snapshot", "--no-footprint")
+                      "--snapshot", "--no-footprint", "--seen-log")
 
 #' The sign verb: cpsseal() on every capsule under a path, then the verify report.
 #'
 #' The key is RMBL_KEY (already read and removed from the environment) or the contents of --key-file,
 #' never printed: for hmac the shared secret; for a standardised scheme the JSON fipskg() writes
-#' (scheme, public, secret) or the secret key's hex with --public-key. A stateful XMSS key is refused:
-#' a copy in a file could sign an index twice.
+#' (scheme, public, secret) or the secret key's hex with --public-key; for xmss-sha256 the JSON of a
+#' pqckg() key, whose state is reserved in the key file (or --state-file) before anything is signed.
 #' @param root The directory searched.
 #' @param key The value of RMBL_KEY, or "".
 #' @param flag,usage_error,out As for .bl_cli_capsule().
@@ -599,34 +602,144 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     key <- sub("[\r\n]+$", "", paste(readLines(kf, warn = FALSE), collapse = "\n"))
   }
   if (!nzchar(key)) usage_error("sign needs a key: RMBL_KEY in the environment, or --key-file FILE")
-  if (identical(scheme, "xmss-sha256")) {
-    usage_error(paste("sign takes no xmss-sha256 key: a stateful key copied into a file can sign one index twice;",
-                      "sign with cpsbndl() on the machine that holds it"))
+  glob <- flag("--manifests") %||% ""
+  overwrite <- "--overwrite" %in% rest
+  fail <- function(e) {
+    out(sprintf("%s: %s\n", .bl_prog(), sub("^(blcli|xmssidxseen): ", "", conditionMessage(e))))
+    1L
   }
   pub <- flag("--public-key") %||% ""
-  sk <- if (scheme == "hmac") key else tryCatch({
-    if (startsWith(trimws(key), "{")) {
-      j <- fromjs(key)
-      fipskey(j$scheme %||% scheme, j$public, j$secret)
-    } else {
-      if (!nzchar(pub)) usage_error(sprintf("--scheme %s with a bare secret key needs --public-key HEX", scheme))
-      fipskey(scheme, pub, key)
-    }
-  }, bl_usage = function(e) stop(e), error = function(e) usage_error(paste("the key:", conditionMessage(e))))
-  if (scheme != "hmac" && !nzchar(pub)) pub <- sk$public
-  res <- tryCatch(cpsseal(root, sk, overwrite = "--overwrite" %in% rest, glob = flag("--manifests") %||% ""),
-                  error = function(e) e)
-  if (inherits(res, "error")) {
-    out(sprintf("%s: %s\n", .bl_prog(), conditionMessage(res)))
-    return(1L)
+  xs <- NULL
+  if (identical(scheme, "xmss-sha256")) {
+    xs <- .bl_cli_xmss_reserve(root, key, kf, flag, overwrite, glob, usage_error)
+    if (inherits(xs, "error")) return(fail(xs))
+    sk <- xs$key
+    sk$next_index <- xs$from
+    pub <- paste0(sk$root, .rmbl_xkey(sk, "pubseed"))
+    # the block is this run's to sign from; the configuration directory is not used
+    assign(xs$id, c(xs$from, xs$to), envir = .rmbl_xmss_block)
+    on.exit(rm(list = xs$id, envir = .rmbl_xmss_block), add = TRUE)
+  } else {
+    xo <- intersect(c("--state-file", "--sectors", "--sector", "--sector-index", "--reserve", "--warn-left"), rest)
+    if (length(xo)) usage_error(sprintf("%s is for --scheme xmss-sha256 only", xo[[1L]]))
+    sk <- if (scheme == "hmac") key else tryCatch({
+      if (startsWith(trimws(key), "{")) {
+        j <- fromjs(key)
+        fipskey(j$scheme %||% scheme, j$public, j$secret)
+      } else {
+        if (!nzchar(pub)) usage_error(sprintf("--scheme %s with a bare secret key needs --public-key HEX", scheme))
+        fipskey(scheme, pub, key)
+      }
+    }, bl_usage = function(e) stop(e), error = function(e) usage_error(paste("the key:", conditionMessage(e))))
+    if (scheme != "hmac" && !nzchar(pub)) pub <- sk$public
   }
+  res <- tryCatch(cpsseal(root, sk, overwrite = overwrite, glob = glob), error = function(e) e)
+  if (inherits(res, "error")) return(fail(res))
   out(sprintf("signed %s: %d files, %s %s%s\n", res$capsule, res$files, if (scheme == "hmac") "hmac key id" else
     "public key", substr(res$public, 1L, 16L), ifelse(res$pinned, " (provenance pinned)", "")))
-  x <- cpschk(root, key = if (scheme == "hmac") key else "", pubkey = pub, glob = flag("--manifests") %||% "",
-              fp = FALSE)
+  if (!is.null(xs)) .bl_cli_xmss_report(xs, root, flag("--seen-log"), out)
+  x <- cpschk(root, key = if (scheme == "hmac") key else "", pubkey = pub, glob = glob, fp = FALSE,
+              seenlog = flag("--seen-log") %||% "")
   out(format(x, fmt = fmt, failon = fail_on))
   rank <- c(ok = 0L, warn = 1L, drift = 2L, error = 3L)
   if (rank[[x$status]] >= rank[[fail_on]]) 1L else 0L
+}
+
+#' rmbl sign with an XMSS key: check the options, then reserve this run's indices in the key's state.
+#'
+#' The state is the key file (rewritten atomically, under a lock) or --state-file; RMBL_XMSS_INDEX_FILE
+#' is read and updated only when it is set. Nothing is signed here: the reservation is durable before
+#' the first signature exists (RFC 10033 section 4), and a refusal leaves the capsules as they were.
+#' @param root The directory searched.
+#' @param key The key's JSON text.
+#' @param kf The key file, or NULL (the key came from RMBL_KEY).
+#' @param flag,usage_error As for .bl_cli_capsule().
+#' @param overwrite,glob As for cpsseal().
+#' @return The reservation (.rmbl_xmss_state_commit() with `id` and `warn`), or the error that refused it.
+#' @noRd
+.bl_cli_xmss_reserve <- function(root, key, kf, flag, overwrite, glob, usage_error) {
+  sf <- flag("--state-file")
+  writable <- function(f) (!file.exists(f) || file.access(f, 2L) == 0L) && file.access(dirname(f), 2L) == 0L
+  if (!is.null(sf)) {
+    kind <- .Call(C_rmbl_path_kind, sf)
+    why <- if (!grepl("^(/|[A-Za-z]:[/\\\\])", sf)) "a relative path" else if (kind == "directory") "a directory" else
+      if (!kind %in% c("missing", "regular")) "a device or other special file" else if (!writable(sf)) "not writable"
+    if (!is.null(why)) {
+      usage_error(sprintf(paste("--state-file must be an absolute path to a writable regular file, or to a new file",
+                                "in a writable directory: %s is %s"), .rmbl_printable(sf), why))
+    }
+  } else if (is.null(kf)) {
+    usage_error(paste("an xmss-sha256 key in RMBL_KEY needs --state-file FILE: the environment cannot keep the key's",
+                      "state, and a key signing from a fixed copy reuses its indices. Use ML-DSA in CI unless the",
+                      "state is kept in a file that persists"))
+  } else if (!writable(kf)) {
+    usage_error(sprintf(paste("--key-file %s cannot be rewritten (it, or its directory, is not writable, or the file",
+                              "system is read-only): an XMSS key file is the key's state and is rewritten before every",
+                              "signature (RFC 10033, section 4). Keep the state elsewhere with --state-file FILE"),
+                        .rmbl_printable(kf)))
+  }
+  int <- function(f, lo) {
+    v <- flag(f)
+    if (is.null(v)) return(NULL)
+    x <- suppressWarnings(as.numeric(v))
+    if (is.na(x) || x != floor(x) || x < lo || x >= 2^31) {
+      usage_error(sprintf("%s takes a whole number from %d, not '%s'", f, lo, .rmbl_printable(v)))
+    }
+    as.integer(x)
+  }
+  sec <- list(count = int("--sectors", 2L), index = int("--sector-index", 0L), name = flag("--sector"))
+  if (!is.null(sec$index) && !is.null(sec$name)) usage_error("give --sector NAME or --sector-index I, not both")
+  if (!is.null(sec$count) && is.null(sec$index) && is.null(sec$name)) {
+    usage_error("--sectors K needs --sector NAME or --sector-index I: the sector this run signs in")
+  }
+  reserve <- int("--reserve", 1L) %||% 1L
+  warn <- int("--warn-left", 0L)
+  seenlog <- flag("--seen-log")
+  tryCatch({
+    dirs <- .bl_seal_dirs(root, overwrite, glob)
+    # every signature of this key seen under the path and in the log: a state below them is a stale copy
+    seen <- xmssidxseen(root, seenlog)
+    ids <- .rmbl_xmss_ids(.rmbl_xmss_key_json(key, "the key")$key)
+    p <- .rmbl_xmss_index_file(cli = TRUE)
+    rec_hi <- if (is.null(p)) -1L else .rmbl_xmss_highest(ids, .rmbl_xmss_record_read(p))
+    st <- .rmbl_xmss_state_commit(kf, sf, key, sec, max(reserve, length(dirs)), seen, rec_hi)
+    if (!is.null(p)) {
+      .rmbl_xmss_with_lock(p, function() {
+        rec <- .rmbl_xmss_record_read(p)
+        rec[ids$id] <- max(c(rec[ids$id], st$to), na.rm = TRUE)
+        .rmbl_xmss_record_write(p, rec)
+      })
+    }
+    c(st, list(id = ids$id, warn = warn %||% (st$size %/% 10L)))
+  }, error = function(e) e)
+}
+
+#' The lines rmbl sign prints about an XMSS key's state, and the seen-log it appends to.
+#' @param xs The reservation from .bl_cli_xmss_reserve().
+#' @param root The directory signed.
+#' @param seenlog The seen-log, or NULL.
+#' @param out As for .bl_cli_capsule().
+#' @return NULL, invisibly.
+#' @noRd
+.bl_cli_xmss_report <- function(xs, root, seenlog, out) {
+  out(sprintf("xmss state in %s: indices %d to %d reserved in sector %d of %d, generation %d; %d left in the sector\n",
+              xs$where, xs$from, xs$to, xs$sector, xs$count, xs$generation, xs$left))
+  if (nzchar(xs$prev) && xs$prev != xs$writer) {
+    out(sprintf(paste("note: the state was last written on another host (%s; this host is %s): copies of one",
+                      "key share one index space, so let one copy sign, or give each its own sector\n"),
+                xs$prev, xs$writer))
+  }
+  if (xs$left <= xs$warn) {
+    m <- sprintf(paste("warning: signatures nearing exhaustion: %d left in sector %d of %d (--warn-left %d).",
+                       "Generate a new key before they run out\n"), xs$left, xs$sector, xs$count, xs$warn)
+    out(m)
+    message(sub("\n$", "", m))
+  }
+  if (!is.null(seenlog)) {
+    s <- xmssidxseen(root)
+    .rmbl_xmss_seen_append(seenlog, s[s$key == xs$fpr & s$index >= xs$from & s$index <= xs$to, , drop = FALSE])
+  }
+  invisible(NULL)
 }
 
 #' Writes the drift HTML report of every capsule whose columns were compared (rmbl drift --html).
@@ -719,6 +832,8 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     `attestation:key_as_expected` = "the bundle was signed with another key than the one given (--public-key)",
     `attestation:manifest_digest` = "the bundle's file list is not the one the attestation signed",
     `attestation:attestation_complete` = "the attestation lacks a field it needs",
+    xmss_index = paste("the key signed this XMSS index twice, with different signatures (xmssidxseen()): its state",
+                       "was copied or rolled back, so anyone can forge with it. Generate a new key"),
     check_stopped = "the checks of this capsule stopped with the error in the detail",
     source_fetched = "the source named in the provenance could not be fetched",
     source_digest = "the source serves other bytes than the pin: rmbl refresh pins them (cpsrfrsh())",

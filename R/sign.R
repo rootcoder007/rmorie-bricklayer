@@ -805,6 +805,31 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #' `next_index` and refuses to reuse one. Do not hand-edit that field,
 #' and do not copy a key to two machines that sign independently.
 #'
+#' # The key and its state
+#'
+#' RFC 10033 (Hash-Based Signatures: State and Backup Management) splits
+#' an XMSS key into the private key, which never changes, and the state,
+#' which records the indices used and must be updated, durably, before
+#' each signature is released (its sections 2 and 4). In an R session the
+#' state is `next_index` plus the used-index record described under
+#' [xmssadv()]. From the command line,
+#' `rmbl sign --scheme xmss-sha256 --key-file key.json`
+#' makes the key file itself the state: it rewrites
+#' the file atomically, with `next_index` advanced and a `used` field,
+#' before anything is signed, and signs from the indices it reserved.
+#' `--state-file` keeps the state in a file of its own, `--sectors` and
+#' `--sector-index` give each signer its own disjoint range of indices
+#' (section 5.3), `--reserve` reserves a block in one write (section
+#' 5.9), and a key file older than a signature it is seen to have made is
+#' refused as a stale copy. See the section XMSS keys of [blcli()].
+#'
+#' A key saved as a CI secret is a fixed copy that every job starts
+#' from, so every job signs the same indices: in CI use ML-DSA
+#' ([fipskg()]) unless the XMSS state is kept in a file that persists
+#' between jobs. NIST SP 800-208 approves XMSS only inside a hardware
+#' cryptographic module that never exports the key; this software key
+#' is not such a deployment.
+#'
 #' @param height Tree height, 1 to 16 (default 10, i.e. 1024
 #' signatures).
 #' @param skseed,pubseed,skprf 64-character hex seeds
@@ -1669,10 +1694,12 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 #' path ("TRUE", "0", ...), a relative path (it would follow the working directory) and a path
 #' that is not a regular file (a device such as /dev/null, which the rename replaced when run
 #' as root, or a directory) are refused (review of 52a8883, B7).
+#' @param cli For the command line: only RMBL_XMSS_INDEX_FILE, and NULL when it is not set (the
+#'   command line writes only where it is pointed, never to the configuration directory).
 #' @return The path, or NULL when the record is turned off.
 #' @noRd
-.rmbl_xmss_index_file <- function() {
-  p <- .rmbl_getopt("xmssidxfile", NULL)
+.rmbl_xmss_index_file <- function(cli = FALSE) {
+  p <- if (!cli) .rmbl_getopt("xmssidxfile", NULL)
   from <- "the option rmoriebricklayer.xmssidxfile"
   if (is.null(p)) {
     p <- Sys.getenv("RMBL_XMSS_INDEX_FILE", unset = NA_character_)
@@ -1683,6 +1710,7 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
     stop(sprintf("%s must be a file path, \"\" or FALSE", from), call. = FALSE)
   }
   if (is.na(p)) {
+    if (cli) return(NULL)
     p <- file.path(tools::R_user_dir("rmoriebricklayer", "config"), "xmss_used_indices.txt")
   } else {
     p <- trimws(p)
@@ -1856,9 +1884,10 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 #' could not delete (B4). The wait is bounded at 10 s and draws no random numbers.
 #' @param p The record's path.
 #' @param f The function to run, with no arguments.
+#' @param what What the file is, for the refusals.
 #' @return The value of `f()`.
 #' @noRd
-.rmbl_xmss_with_lock <- function(p, f) {
+.rmbl_xmss_with_lock <- function(p, f, what = "the XMSS used-index record") {
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   lock <- paste0(p, ".flock")
   # one non-blocking attempt at a time, the wait between them in R: Sys.sleep() takes Ctrl-C, and
@@ -1875,11 +1904,11 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
     r <- tryCatch(.Call(C_rmbl_flock_with, lock, f, busy), error = function(e) {
       m <- conditionMessage(e)
       if (!grepl("lock file", m, fixed = TRUE)) stop(e)
-      stop(sprintf("cannot use the XMSS used-index record %s: %s%s", p, m, .rmbl_lock_hint(m, lock)), call. = FALSE)
+      stop(sprintf("cannot use %s %s: %s%s", what, p, m, .rmbl_lock_hint(m, lock)), call. = FALSE)
     })
     if (!identical(r, busy)) return(r)
     if (proc.time()[["elapsed"]] - start >= 10) {
-      stop(sprintf("could not lock the XMSS used-index record %s within 10 s: another process holds %s", p, lock),
+      stop(sprintf("could not lock %s %s within 10 s: another process holds %s", what, p, lock),
            call. = FALSE)
     }
     Sys.sleep(0.02)
@@ -1917,12 +1946,25 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 #' @return `TRUE` invisibly, or `FALSE` invisibly when the record is off and only this session remembers.
 #' @noRd
 .rmbl_xmss_reserve <- function(ids, idx) {
-  p <- .rmbl_xmss_index_file()
   refuse <- function(hi) {
     stop(sprintf(paste0("index %d of this key was already used: signing it again would break the ",
                         "scheme. Carry the key forward with xmssadv(key, signature) after every ",
                         "signature (next index %d)."), idx, hi + 1L), call. = FALSE)
   }
+  # rmbl sign reserved a block in the key's own state before signing (RFC 10033 section 5.9): an
+  # index is taken from that block, in order, and the configuration directory is not used
+  # (the block is the durable state's; the session memory is not consulted, so two sectors of one key
+  # may sign in one session)
+  blk <- .rmbl_xmss_block[[ids$id]]
+  if (!is.null(blk)) {
+    if (idx < blk[[1L]] || idx > blk[[2L]]) {
+      stop(sprintf("index %d is outside the block this run reserved (%d to %d): no signature is made", idx, blk[[1L]],
+                   blk[[2L]]), call. = FALSE)
+    }
+    assign(ids$id, c(idx + 1L, blk[[2L]]), envir = .rmbl_xmss_block)
+    return(invisible(TRUE))
+  }
+  p <- .rmbl_xmss_index_file()
   if (is.null(p)) {
     hi <- .rmbl_xmss_highest(ids, integer(0))
     if (idx <= hi) refuse(hi)
