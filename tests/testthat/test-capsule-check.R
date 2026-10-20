@@ -20,6 +20,9 @@ pinned_capsule <- function(df = data.frame(id = 1:300, v = rep(c("a", "b", "c"),
   list(root = root, dir = d, src = src)
 }
 
+# the package reports paths with forward slashes; Windows temp paths come with backslashes
+fwd <- function(p) gsub("\\\\", "/", p)
+
 serve_from <- function(src, env = parent.frame()) {
   testthat::local_mocked_bindings(fdl = function(url, tpath, attwb = NULL, allowfile = FALSE) {
     file.copy(src, tpath, overwrite = TRUE)
@@ -70,7 +73,8 @@ test_that("no capsule, a glob, and the plural of the summary", {
   expect_length(x$capsules, 2L)
   expect_match(format(x), "2 capsules under", fixed = TRUE)
   x <- cpschk(cp$root, glob = "*two/*", fp = FALSE)
-  expect_identical(vapply(x$capsules, `[[`, "", "capsule"), file.path(cp$root, "two"))
+  # capsule paths come back with forward slashes on every OS
+  expect_identical(vapply(x$capsules, `[[`, "", "capsule"), fwd(file.path(cp$root, "two")))
 })
 
 test_that("drift: the PSI bands decide warn and drift, and the column table carries Benford", {
@@ -222,7 +226,7 @@ test_that("refresh pins new bytes, captures in the Wayback Machine, and refuses 
   expect_identical(p$wayback$csv_snapshot, "https://web.archive.org/web/1/x")
   expect_identical(p$wayback$captured_at_utc, p$resource$retrieved_utc)
   expect_match(p$resource$retrieved_utc, "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z$")
-  expect_identical(ghout(x)$changed, cp$dir)
+  expect_identical(ghout(x)$changed, fwd(cp$dir))
   unlink(file.path(cp$dir, "capsule_bundle.json"))
   expect_true(all(x$rows$ok[x$rows$part == "after refresh"]))
   # a capture that fails, or errors, is a note; the bytes are still pinned
@@ -355,8 +359,10 @@ test_that("ghann(), ghcmt() and ghout() give the action's annotation lines, comm
   cat("1,a\n", file = file.path(cp$dir, "data.csv"), append = TRUE)
   x <- cpschk(cp$root, fp = FALSE)
   a <- ghann(x)
+  # a property value escapes ":" and "," the way GitHub's workflow commands require (C: on Windows)
+  prop <- gsub(":", "%3A", fwd(file.path(cp$dir, "data_provenance.json")), fixed = TRUE)
   expect_match(a[1L], sprintf("^::error file=%s,title=rmbl provenance data_sha256::expected ",
-                              gsub(".", "\\.", file.path(cp$dir, "data_provenance.json"), fixed = TRUE)))
+                              gsub(".", "\\.", prop, fixed = TRUE)))
   r <- x
   r$rows$detail[!r$rows$ok][1L] <- "50%\r\nof it, a: b"
   r$rows$file[!r$rows$ok][1L] <- "a,b:c"
