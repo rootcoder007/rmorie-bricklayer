@@ -43,7 +43,8 @@ test_that("every alias forwards each old argument under the new name", {
 })
 
 test_that("an alias really reaches the new function", {
-  f <- tempfile(); writeLines("abc", f)
+  f <- tempfile()
+  writeLines("abc", f)
   expect_identical(crc32_file(f), crc32file(f))
   expect_identical(gini(c(1, 2, 3, 10)), ginicoef(c(1, 2, 3, 10)))
   expect_identical(rule_not_null("x"), rulenull("x"))
