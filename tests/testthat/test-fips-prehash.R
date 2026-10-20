@@ -1,4 +1,3 @@
-testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # HashML-DSA (FIPS 204 section 5.4), HashSLH-DSA (FIPS 205 section
 # 10.2.2) and the ML-DSA external-mu interface.
 #

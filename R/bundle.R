@@ -245,6 +245,7 @@ cpsbndlrd <- function(path) {
 #' @export
 cpsbndlvrf <- function(bundle, dir, man = NULL,
                                   keyexp = NULL, key = NULL, seen = NULL) {
+  .bl_keyexp_arg(keyexp)
   if (is.character(bundle)) bundle <- cpsbndlrd(bundle)
   if (!inherits(bundle, "bricklayer_bundle")) {
     stop("`bundle` must come from cpsbndl() or ",

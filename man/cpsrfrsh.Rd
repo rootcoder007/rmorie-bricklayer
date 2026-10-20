@@ -9,8 +9,10 @@ cpsrfrsh(dir, allowfile = FALSE)
 \arguments{
 \item{dir}{Character scalar, the capsule directory.}
 
-\item{allowfile}{Logical: accept a \code{file://} source URL (a local
-path is always read).}
+\item{allowfile}{\code{FALSE} (the default), \code{TRUE} to accept a
+\code{file://} source inside \code{dir}, or an existing folder whose
+files may also be read as a source (a local path or a \code{file://}
+URL).}
 }
 \value{
 The \code{\link{mnfdiff}} of the provenance before and after:
@@ -18,8 +20,9 @@ all \code{"unchanged"} when the source still matches its pin.
 }
 \description{
 Downloads the source named in a capsule's \code{data_provenance.json}
-(\code{resource$direct_url}, else \code{source$url}; a local path is
-read directly), and when its bytes differ from the pin writes them as the
+(\code{resource$direct_url}, else \code{source$url}; an \code{https://}
+URL, or a local file inside the capsule), and when its bytes differ from
+the pin writes them as the
 capsule's data file and pins them in the provenance, in the form the
 \code{analysis.R} of \code{\link{usecpstmpl}} writes on its first run:
 \code{source$sha256}, and \code{resource$filename}, \code{sha256},
@@ -31,14 +34,23 @@ From the shell: \code{rmbl refresh PATH}.
 \details{
 Nothing is written when the bytes are unchanged. A download goes through
 \code{\link{fdl}}, with the provenance's \code{wayback$csv_snapshot}
-as its fallback. A capsule bundle is not signed again: that needs your
+as its fallback (no other Wayback copy is looked up). A source is fetched
+over \code{https://} only. A local path (relative to the capsule) or a
+\code{file://} URL is read only when it resolves, symbolic links followed,
+to a file inside the capsule, inside the \code{allowfile} folder, or in the
+package's \code{extdata}; never under \code{/proc}, \code{/sys} or
+\code{/dev}. A gzip source may inflate to at most the option
+\code{rmoriebricklayer.maxcsvbytes} (1 GiB by default) when it is read.
+A capsule bundle is not signed again: that needs your
 key (\code{\link{cpsbndl}}). Side effects: writes the data file and
 \code{data_provenance.json} in \code{dir}. Errors: \code{dir} is not a
 directory or holds no provenance; the provenance names no source, or a
-\code{TODO} one, or a \code{file://} one without \code{allowfile}; the
-source cannot be fetched; \code{resource$filename} is not a plain
-relative path inside \code{dir}; the new data fail the schema the
-provenance pins (\code{\link{valsch}}).
+\code{TODO} one, or a \code{file://} one without \code{allowfile}; a
+URL that is not \code{https://}; a local source outside those folders;
+the source cannot be fetched, or inflates past the limit;
+\code{resource$filename} is not a plain relative path inside \code{dir};
+\code{data_provenance.json} is a link out of \code{dir}; the new data
+fail the schema the provenance pins (\code{\link{valsch}}).
 }
 \examples{
 d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)

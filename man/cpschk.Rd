@@ -56,8 +56,11 @@ it in the report.}
 \code{tools::R_user_dir("rmoriebricklayer", "cache")}, in an
 interactive session, none otherwise), \code{FALSE} (none) or a folder.}
 
-\item{allowfile}{Logical: accept \code{file://} sources (local mirrors,
-tests).}
+\item{allowfile}{\code{FALSE} (the default), \code{TRUE} to accept
+\code{file://} sources and local files anywhere under \code{path}, or an
+existing folder whose files may be sources as well. Without it a local
+source must be a file inside its own capsule; a fetched one is
+\code{https://} only (see \code{\link{cpsrfrsh}}).}
 
 \item{snapshot}{Logical: look up the latest Wayback snapshot of each
 http(s) source, a \code{snapshot} row (a note).}

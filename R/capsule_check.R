@@ -83,8 +83,11 @@
 #' @param cache \code{NULL} (the default: the user cache folder,
 #'   \code{tools::R_user_dir("rmoriebricklayer", "cache")}, in an
 #'   interactive session, none otherwise), \code{FALSE} (none) or a folder.
-#' @param allowfile Logical: accept \code{file://} sources (local mirrors,
-#'   tests).
+#' @param allowfile \code{FALSE} (the default), \code{TRUE} to accept
+#'   \code{file://} sources and local files anywhere under \code{path}, or an
+#'   existing folder whose files may be sources as well. Without it a local
+#'   source must be a file inside its own capsule; a fetched one is
+#'   \code{https://} only (see \code{\link{cpsrfrsh}}).
 #' @param snapshot Logical: look up the latest Wayback snapshot of each
 #'   http(s) source, a \code{snapshot} row (a note).
 #' @param wayback Logical: with \code{"refresh"}, capture each changed
@@ -157,7 +160,7 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
   if (!dir.exists(path)) stop(.rmbl_fn(), "`path` is not an existing directory: ", .rmbl_printable(path), call. = FALSE)
   o <- list(path = path, mode = .rmbl_arg(mode), key = .bl_str0(key, "key"), pubkey = .bl_str0(pubkey, "pubkey"),
             psiwarn = .rmbl_scalar(psiwarn, "psiwarn", 0), psifail = .rmbl_scalar(psifail, "psifail", 0),
-            base = .bl_base_arg(base), allowfile = .rmbl_flag1(allowfile, "allowfile"),
+            base = .bl_base_arg(base), allowfile = .bl_allowfile_arg(allowfile),
             snapshot = .rmbl_flag1(snapshot, "snapshot"), wayback = .rmbl_flag1(wayback, "wayback"))
   if (o$psiwarn > o$psifail) {
     stop(.rmbl_fn(), sprintf("`psiwarn` (%g) must not exceed `psifail` (%g)", o$psiwarn, o$psifail), call. = FALSE)
@@ -303,17 +306,23 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
 #' @noRd
 .bl_drift_capsule <- function(d, o) {
   pf <- file.path(d, "data_provenance.json")
-  f <- tryCatch(.bl_fetch_pin(d, o$allowfile, o$cache), error = function(e) e)
+  f <- tryCatch(.bl_fetch_pin(d, o$allowfile, o$cache, root = o$path), error = function(e) e)
   if (inherits(f, "error")) return(list(rows = .bl_check_row(d, "drift", pf, "source_fetched", FALSE,
                                                               conditionMessage(f))))
+  on.exit(.bl_fetch_cleanup(f), add = TRUE)
   out <- list(notes = if (f$cached) "source unreachable: used the copy cached by an earlier run",
               fetched_sha256 = f$new$resource$sha256)
   diff <- mnfdiff(f$old, f$new)
   ch <- diff[diff$change != "unchanged", , drop = FALSE]
   out$changed <- nrow(ch) > 0L
-  local <- file.path(d, .bl_s1(f$old[["resource"]][["filename"]]) %||% "")
+  # the pinned data file stays inside the capsule: "../../outside/outside.csv" was read and its
+  # header printed (audit of 30bed8e, #7)
+  local <- .rmbl_safe_rel(.bl_s1(f$old[["resource"]][["filename"]]), d) %||% ""
   cmp <- if (nrow(ch) && grepl("\\.csv$", local, ignore.case = TRUE) && file.exists(local)) {
-    .bl_column_drift(local, f$path, o)
+    tryCatch(.bl_column_drift(local, f$path, o), error = function(e) e)
+  }
+  if (inherits(cmp, "error")) {
+    return(c(out, list(rows = .bl_check_row(d, "drift", pf, "source_columns", FALSE, conditionMessage(cmp)))))
   }
   if (!is.null(cmp)) {
     cmp$object$provenance <- f$old
@@ -343,15 +352,13 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
 #'   `columns`, cpsdrft()'s table with band, verdict and the Benford p-values of both files.
 #' @noRd
 .bl_column_drift <- function(local, got, o) {
-  rd <- function(p) {
-    tryCatch(utils::read.csv(p, check.names = FALSE, stringsAsFactors = FALSE), error = function(e) NULL)
-  }
-  ref <- rd(local)
-  cur <- rd(got)
+  ref <- .bl_read_csv_capped(local)
+  cur <- .bl_read_csv_capped(got)
   if (is.null(ref) || is.null(cur)) return(NULL)
   dr <- cpsdrft(ref, cur, psithr = o$psifail)
   dr$bands <- c(warn = o$psiwarn, fail = o$psifail)
-  attr(dr, "files") <- c(ref = local, cur = got)
+  # the tables themselves, for drftapp(): the fetched file is deleted when the check ends
+  attr(dr, "data") <- list(ref = ref, cur = cur)
   cols <- dr$columns
   cols$band <- ifelse(is.na(cols$psi), "-", ifelse(cols$psi > o$psifail, "fail",
                                                    ifelse(cols$psi > o$psiwarn, "warn", "ok")))
@@ -648,8 +655,11 @@ print.rmbl_cpschk <- function(x, ...) {
 .bl_md_capsule <- function(cp, ck, mark) {
   esc <- .bl_md_esc
   num <- .bl_md_num
+  # inside <summary> the directory name is HTML: a name like "<img src=x onerror=...>" went in raw
+  # (audit of 30bed8e, #17)
   md <- c("", "<details>", sprintf("<summary>%s <code>%s</code>: %s, %d of %d checks passed (click to open)</summary>",
-                                   mark[[cp$result]], cp$capsule, cp$result, cp$checks_passed, cp$checks_total), "")
+                                   mark[[cp$result]], .yoy_esc(cp$capsule), cp$result, cp$checks_passed,
+                                   cp$checks_total), "")
   if (nzchar(cp$source)) md <- c(md, sprintf("- Source: %s", esc(cp$source)))
   if (nzchar(cp$pinned_sha256)) md <- c(md, sprintf("- Pinned SHA-256: `%s`", cp$pinned_sha256))
   if (nzchar(cp$fetched_sha256)) {

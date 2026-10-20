@@ -9,7 +9,7 @@ pinned_capsule <- function(df = data.frame(id = 1:300, v = rep(c("a", "b", "c"),
   root <- withr::local_tempdir(.local_envir = env)
   d <- file.path(root, "one")
   dir.create(d)
-  src <- withr::local_tempfile(fileext = ".csv", .local_envir = env)
+  src <- file.path(d, "source.csv")  # a local source is read only inside its capsule
   utils::write.csv(df, src, row.names = FALSE)
   file.copy(src, file.path(d, "data.csv"))
   name <- switch(url, path = src, file = paste0("file://", src), http = "https://example.org/data.csv")
@@ -145,7 +145,7 @@ test_that("drift that cannot compare columns is a warning; a fetch that fails is
   expect_identical(x$status, "error")
   nt <- unlist(x$capsules[[1]]$notes)
   expect_match(nt[1L], "source_fetched: cpschk: the source is a file:// URL and `allowfile` is FALSE", fixed = TRUE)
-  expect_true(any(grepl("^explained: raised by \\.bl_fetch_pin\\(\\) \\(reached from ", nt)))
+  expect_true(any(grepl("^explained: raised by \\.bl_local_source\\(\\) \\(reached from ", nt)))
   expect_identical(cpschk(cp$root, "drift", allowfile = TRUE, fp = FALSE)$status, "ok")
   expect_error(cpsrfrsh(cp$dir), "cpsrfrsh: the source is a file:// URL and `allowfile` is FALSE")
   expect_identical(cpsrfrsh(cp$dir, allowfile = TRUE)$change, "unchanged")
@@ -153,7 +153,7 @@ test_that("drift that cannot compare columns is a warning; a fetch that fails is
   # a refused URL is rethrown with its own message, explained
   cp <- pinned_capsule()
   p <- loadprov(file.path(cp$dir, "data_provenance.json"))
-  p$resource$direct_url <- "http://127.0.0.1/data.csv"
+  p$resource$direct_url <- "https://127.0.0.1/data.csv"
   writeLines(tojs(p, auto_unbox = TRUE), file.path(cp$dir, "data_provenance.json"))
   x <- cpschk(cp$root, "drift", fp = FALSE)
   nt <- unlist(x$capsules[[1]]$notes)

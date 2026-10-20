@@ -1,4 +1,3 @@
-testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # The writer's half of "the reader is ours". sprintf("%.17g") asks the
 # platform, and Windows aarch64 answers wrongly: it renders the largest
 # double one ulp low, so the text reads back as a DIFFERENT double and

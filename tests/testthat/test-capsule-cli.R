@@ -19,9 +19,9 @@ no_stdin <- function(env = parent.frame()) {
 # a capsule whose source is a local CSV the test controls
 src_capsule <- function(df = data.frame(id = 1:40, v = rep(c("a", "b"), 20)), env = parent.frame()) {
   d <- withr::local_tempdir(.local_envir = env)
-  src <- withr::local_tempfile(fileext = ".csv", .local_envir = env)
+  src <- file.path(d, "source.csv")  # a local source is read only inside its capsule
   utils::write.csv(df, src, row.names = FALSE)
-  prov <- list(name = "t", source = list(url = src, sha256 = "TODO: pinned later"),
+  prov <- list(name = "t", source = list(url = "source.csv", sha256 = "TODO: pinned later"),
                resource = list(filename = "data.csv", row_count_data_rows = 0),
                table = list(rounding = 5, suppression_limit = 10))
   writeLines(tojs(prov, auto_unbox = TRUE), file.path(d, "data_provenance.json"))
@@ -344,7 +344,7 @@ test_that("the capsule verbs take the options of the rmbl action", {
   r <- run_cli(c("drift", cp$dir, "--json", "--allow-file", "--cache", cache, "--snapshot"))
   j <- fromjs(r$out)
   expect_identical(j$status, "drift")
-  expect_length(list.files(cache), 1L)
+  expect_length(list.files(cache), 0L)  # a local source is read in place, never cached
   expect_true("snapshot: not looked up (not an http(s) source)" %in% unlist(j$capsules$notes))
   r <- run_cli(c("verify", dirname(cp$dir), "--manifests", "nothing/*"))
   expect_match(r$out, "No manifests found under", fixed = TRUE)

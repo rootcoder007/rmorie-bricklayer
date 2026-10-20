@@ -267,3 +267,22 @@ SEXP C_rmbl_write_file_checked(SEXP tmp_, SEXP path_, SEXP bytes) {
     }
     return R_NilValue;
 }
+
+/*
+ * Wipes an environment variable's value in place, before the R side unsets it. unsetenv() takes
+ * the name out of environ, but for a variable the process was started with the bytes stay where
+ * the kernel put them, and /proc/self/environ still showed RMBL_KEY's value (audit of 30bed8e,
+ * #17). getenv() points at those bytes. Windows keeps no such copy (its CRT holds its own), so
+ * there nothing is written.
+ */
+SEXP C_rmbl_env_wipe(SEXP name) {
+    if (!isString(name) || XLENGTH(name) != 1 || STRING_ELT(name, 0) == NA_STRING)
+        error("`name` must be one string");
+#ifndef _WIN32
+    char *v = getenv(CHAR(STRING_ELT(name, 0)));
+    if (v != NULL) memset(v, 0, strlen(v));
+    return ScalarLogical(v != NULL);
+#else
+    return ScalarLogical(getenv(CHAR(STRING_ELT(name, 0))) != NULL);
+#endif
+}

@@ -1,4 +1,3 @@
-testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # One-pass sketches.
 #
 # The moment accumulator claims to be EXACT, so it is anchored against

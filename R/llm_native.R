@@ -1090,9 +1090,16 @@ llmprvd <- function() {
   }
   json <- NULL
   if (length(res$body)) {
+    # a reply that is not UTF-8 text is said in the package's words: R's own "unable to translate"
+    # warnings reached the user (audit of 30bed8e, #17)
+    if (!.bl_utf8_body(res$body)) {
+      return(list(status = as.integer(res$status), json = list(error = list(message = "the reply is not UTF-8 text")),
+                  error = res$error %||% ""))
+    }
+    # a long numeric id in a reply is not the user's business: no "exceeds 2^53" warning
     json <- tryCatch(
       .rmbl_json_text(res$body,
-        simplifyVector = FALSE
+        simplifyVector = FALSE, bigint_warn = FALSE
       ),
       error = function(e) NULL
     )
@@ -1104,13 +1111,22 @@ llmprvd <- function() {
   list(status = as.integer(res$status), json = json, error = res$error %||% "")
 }
 
+#' Tells whether a reply body is UTF-8 text: no NUL byte, no invalid sequence.
+#' @param body The response body, raw or text.
+#' @return TRUE or FALSE.
+#' @noRd
+.bl_utf8_body <- function(body) {
+  if (is.raw(body)) return(!any(body == as.raw(0L)) && validUTF8(rawToChar(body)))
+  all(validUTF8(as.character(body)))
+}
+
 #' The first `data:` line of an event stream whose JSON holds an error, as that JSON; NULL otherwise.
 #' @param body The response body, raw or text.
 #' @return A list, or NULL.
 #' @noRd
 .bl_sse_error <- function(body) {
   txt <- tryCatch(if (is.raw(body)) rawToChar(body) else as.character(body), error = function(e) "")
-  if (length(txt) != 1L || !grepl("^(event|data):", txt)) return(NULL)
+  if (length(txt) != 1L || !validUTF8(txt) || !grepl("^(event|data):", txt)) return(NULL)
   for (d in sub("^data:[[:space:]]*", "", grep("^data:", strsplit(txt, "\r?\n")[[1L]], value = TRUE))) {
     j <- tryCatch(.rmbl_json_text(d, simplifyVector = FALSE), error = function(e) NULL)
     if (is.list(j) && !is.null(j$error)) return(j)

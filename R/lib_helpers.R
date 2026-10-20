@@ -619,9 +619,12 @@ wrtxtfb <- function(text, path) {
 .rmbl_json_text <- function(txt, ...) {
   if (is.raw(txt)) txt <- rawToChar(txt)
   txt <- paste(as.character(txt), collapse = "\n")
+  # bytes that are not UTF-8 are refused before any regular expression sees them: grepl() on them
+  # warned "unable to translate ... to a wide string" (audit of 30bed8e, #17)
+  if (Encoding(txt) != "latin1" && !validUTF8(txt)) stop("not UTF-8 text", call. = FALSE)
   # the shape of a JSON value, never of an address or a path: that is the whole point
   # of this entry (fourth review: a body that was a bare URL made the package fetch it)
-  shaped <- grepl("^\\s*([\\[{\"]|-?[0-9]|true|false|null)", txt)
+  shaped <- grepl("^\\s*([\\[{\"]|-?[0-9]|true|false|null)", txt, useBytes = TRUE)
   if (!shaped) stop("not JSON", call. = FALSE)
   # the parser itself refuses what is not JSON, with its own reasons (a repeated key, a
   # bad escape, 100 levels), under whatever options the caller passes

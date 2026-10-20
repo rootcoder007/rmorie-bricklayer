@@ -1,4 +1,3 @@
-testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # The native JSON codec must produce jsonlite's bytes, option for option,
 # and simplify parsed JSON to the same R objects. jsonlite is Suggests-only;

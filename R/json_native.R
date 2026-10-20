@@ -1044,6 +1044,10 @@ bricklayer_json_unbox <- function(x) {
 .rmbl_json_parse <- function(txt, bigint_as_char = FALSE, bigint_warn = TRUE,
                              duplicate_keys = c("error", "keep")) {
   duplicate_keys <- .rmbl_arg(duplicate_keys)
+  # latin1 text is converted before paste(): in a C locale paste() wrote its accented letters as
+  # "<e9>", and the parser read that text as the data (audit of 30bed8e, #17)
+  lat <- if (is.character(txt)) Encoding(txt) == "latin1" else FALSE
+  if (any(lat)) txt[lat] <- iconv(txt[lat], "latin1", "UTF-8")
   s <- paste(txt, collapse = "\n")
   # the byte-order mark is tested and removed on the BYTES, before any
   # encoding conversion: substring(s, 2L) on a string a C locale has not
@@ -1130,11 +1134,11 @@ bricklayer_json_unbox <- function(x) {
         push(switch(e, n = "\n", t = "\t", r = "\r", b = "\b", f = "\f",
                                  "\"" = "\"", "\\" = "\\", "/" = "/",
                                  u = {
-                                   cp <- strtoi(paste(ch[(p$i + 1L):(p$i + 4L)], collapse = ""), 16L)
+                                   cp <- .rmbl_json_hex4(ch[(p$i + 1L):(p$i + 4L)])
                                    if (is.na(cp)) bad("invalid \\u escape")
                                    p$i <- p$i + 4L
                                    if (cp >= 0xD800 && cp <= 0xDBFF && p$i + 6L <= n && ch[p$i + 1L] == "\\" && ch[p$i + 2L] == "u") {
-                                     lo <- strtoi(paste(ch[(p$i + 3L):(p$i + 6L)], collapse = ""), 16L)
+                                     lo <- .rmbl_json_hex4(ch[(p$i + 3L):(p$i + 6L)])
                                      if (!is.na(lo) && lo >= 0xDC00 && lo <= 0xDFFF) {
                                        p$i <- p$i + 6L
                                        cp <- 0x10000 + (cp - 0xD800) * 1024 + (lo - 0xDC00)
@@ -1312,6 +1316,18 @@ bricklayer_json_unbox <- function(x) {
   v
 }
 
+#' The code point of a u escape's four characters, or NA unless they are four hex digits.
+#'
+#' strtoi() alone took a space, a sign or "0x": the escape "u 041" read as "A", and "u-041" as NA,
+#' which became the key "NA" (audit of 30bed8e, #12).
+#' @param h The four characters, one per element.
+#' @return An integer, or NA.
+#' @noRd
+.rmbl_json_hex4 <- function(h) {
+  h <- paste(h, collapse = "")
+  if (grepl("^[0-9A-Fa-f]{4}$", h)) strtoi(h, 16L) else NA_integer_
+}
+
 # ================================================================ simplify
 
 #' Says whether a value is a named list.
@@ -1325,12 +1341,10 @@ bricklayer_json_unbox <- function(x) {
 #' @noRd
 .rmbl_json_is_recordlist <- function(x) {
   if (!(is.list(x) && is.null(names(x)) && length(x))) return(FALSE)
-  one <- FALSE
-  for (el in x) {
-    if (!(.rmbl_json_is_namedlist(el) || is.null(el))) return(FALSE)
-    if (!one && .rmbl_json_is_namedlist(el)) one <- TRUE
-  }
-  one
+  # vectorised, with primitives only: a closure per element made fromjs() on 20,000 sparse records
+  # eight times slower than jsonlite (audit of 30bed8e, #17)
+  named <- vapply(x, is.list, NA) & !vapply(lapply(x, names), is.null, NA)
+  all(named | vapply(x, is.null, NA)) && any(named)
 }
 #' Says whether every element of a list is NULL or an atomic value of length at most one.
 #' @param x The value.
@@ -1338,8 +1352,7 @@ bricklayer_json_unbox <- function(x) {
 #' @noRd
 .rmbl_json_is_scalarlist <- function(x) {
   if (!is.list(x)) return(FALSE)
-  for (el in x) if (!(is.null(el) || (is.atomic(el) && length(el) < 2L))) return(FALSE)
-  TRUE
+  all(vapply(x, is.null, NA) | (vapply(x, is.atomic, NA) & lengths(x) < 2L))
 }
 #' Turns NULL elements into NA, and the strings "NA", "NaN", "Inf" and "-Inf" into their values when no other string is
 #' present.
@@ -1347,19 +1360,14 @@ bricklayer_json_unbox <- function(x) {
 #' @return The list.
 #' @noRd
 .rmbl_json_null_to_na <- function(x) {
-  n <- length(x)
-  if (!n) return(x)
-  looks_chr <- FALSE
-  for (i in seq_len(n)) {
-    el <- x[[i]]
-    if (is.null(el)) x[i] <- list(NA)
-    else if (!looks_chr && is.character(el) && !(el[1L] %in% c("NA", "NaN", "Inf", "-Inf"))) looks_chr <- TRUE
-  }
-  if (looks_chr) return(x)
-  for (i in seq_len(n)) {
-    el <- x[[i]]
-    if (is.character(el)) x[[i]] <- switch(el[1L], "NA" = NA, "NaN" = NaN, "Inf" = Inf, "-Inf" = -Inf, el)
-  }
+  if (!length(x)) return(x)
+  x[vapply(x, is.null, NA)] <- list(NA)
+  chr <- which(vapply(x, is.character, NA))
+  if (!length(chr)) return(x)
+  first <- vapply(x[chr], function(el) el[1L], "")
+  special <- c("NA", "NaN", "Inf", "-Inf")
+  if (!all(first %in% special)) return(x)
+  x[chr] <- list(NA, NaN, Inf, -Inf)[match(first, special)]
   x
 }
 #' Says whether a list holds date-times, NULLs and "NA" strings only, with at least one date-time.
@@ -1499,14 +1507,34 @@ bricklayer_json_unbox <- function(x) {
     return(data.frame(matrix(nrow = length(recordlist), ncol = 0)))
   if (missing(columns))
     columns <- unique(unlist(lapply(recordlist, names), recursive = FALSE, use.names = FALSE))
+  # each column from the records' values laid end to end, the first value of a repeated key: a
+  # match() per record and column was the hot loop on sparse records (audit of 30bed8e, #17)
+  keys <- lapply(recordlist, names)
+  rid <- rep.int(seq_along(recordlist), lengths(keys))
+  keys <- unlist(keys, use.names = FALSE)
+  vals <- unlist(recordlist, recursive = FALSE, use.names = FALSE)
   columnlist <- lapply(columns, function(nm) {
-    lapply(recordlist, function(rec) {
-      k <- match(nm, names(rec))
-      if (is.na(k)) NULL else rec[[k]]
-    })
+    at <- which(keys == nm)
+    at <- at[!duplicated(rid[at])]
+    pv <- vals[at]
+    # a column of scalars and nulls (the usual case) is a vector at once, its missing cells NA: what
+    # .rmbl_json_simplify() makes of it, without a call per cell. "NA", "Inf" and the like go the
+    # long way, which decides whether they are numbers.
+    len <- lengths(pv)
+    one <- len == 1L
+    u <- if (all(len <= 1L) && all(vapply(pv[!one], is.null, NA))) {
+      unlist(pv[one], recursive = FALSE, use.names = FALSE)
+    }
+    if (is.atomic(u) && !(is.character(u) && any(u %in% c("NA", "NaN", "Inf", "-Inf")))) {
+      col <- rep(NA, length(recordlist))
+      col[rid[at][one]] <- u
+      return(col)
+    }
+    col <- vector("list", length(recordlist))
+    col[rid[at]] <- pv
+    .rmbl_json_simplify(col, simplifyVector = TRUE, simplifyDataFrame = TRUE, simplifyMatrix = FALSE,
+                        simplifySubMatrix = simplifyMatrix, flatten = flatten)
   })
-  columnlist <- lapply(columnlist, .rmbl_json_simplify, simplifyVector = TRUE, simplifyDataFrame = TRUE,
-                       simplifyMatrix = FALSE, simplifySubMatrix = simplifyMatrix, flatten = flatten)
   lens <- vapply(columnlist, function(z) if (length(dim(z)) > 1L) nrow(z) else length(z), integer(1))
   n <- unique(lens)
   if (length(n) > 1L) stop("Elements not of equal length: ", paste(lens, collapse = " "), call. = FALSE)
@@ -1806,11 +1834,11 @@ bricklayer_json_validate <- function(txt) {
         j <- j + 1L
         e <- ch[j]
         if (e == "u") {
-          cp <- strtoi(paste(ch[(j + 1L):(j + 4L)], collapse = ""), 16L)
+          cp <- .rmbl_json_hex4(ch[(j + 1L):(j + 4L)])
           if (is.na(cp)) bad("invalid \\u escape")
           j <- j + 4L
           if (cp >= 0xD800 && cp <= 0xDBFF && j + 6L <= n && ch[j + 1L] == "\\" && ch[j + 2L] == "u") {
-            lo <- strtoi(paste(ch[(j + 3L):(j + 6L)], collapse = ""), 16L)
+            lo <- .rmbl_json_hex4(ch[(j + 3L):(j + 6L)])
             if (!is.na(lo) && lo >= 0xDC00 && lo <= 0xDFFF) {
               j <- j + 6L
               cp <- 0x10000 + (cp - 0xD800) * 1024 + (lo - 0xDC00)

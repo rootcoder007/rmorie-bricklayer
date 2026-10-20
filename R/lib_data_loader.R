@@ -467,6 +467,16 @@ wbsnpurl <- function(url, ts = NULL) {
   }
 }
 
+#' Tells whether an error is R's time limit (setTimeLimit()), in English or translated.
+#' @param msg The error's message.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_time_limit <- function(msg) {
+  k <- c("reached elapsed time limit", "reached CPU time limit", "reached session elapsed time limit",
+         "reached session CPU time limit")
+  any(vapply(unique(c(k, gettext(k, domain = "R"))), grepl, NA, msg, fixed = TRUE))
+}
+
 ## ----- fdl: wraps bldl with diagnostic
 ## error messages for common academic/corporate network failures.
 ## Returns TRUE on success, FALSE on failure.
@@ -560,6 +570,9 @@ fdl <- function(url, tpath, attwb = NULL,
     },
     error = function(e) {
       msg <- conditionMessage(e)
+      # a time limit (setTimeLimit()) is the caller's, not a failed download: it was swallowed and
+      # the fallback ran on, 34 s under a 3 s limit (audit of 30bed8e, #17)
+      if (.rmbl_time_limit(msg)) stop(e)
       if (length(acc$said) && grepl("cannot open the connection", msg, fixed = TRUE)) {
         msg <- acc$said[[length(acc$said)]]
       }

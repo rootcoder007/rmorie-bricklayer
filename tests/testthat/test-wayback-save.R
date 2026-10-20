@@ -129,6 +129,7 @@ fake_spn2 <- function(plan = list(), lookup = NULL) {
 with_fake <- function(s, code) {
   local_mocked_bindings(
     .bl_wb_post = function(body, headers) s$post(body, headers),
+    .bl_wb_resolved_why = function(u) "",
     .bl_wb_get = function(path, headers) s$get(path, headers),
     .bl_wb_lookup = function(url) s$lookup(url),
     .bl_wb_now = function() s$clock,

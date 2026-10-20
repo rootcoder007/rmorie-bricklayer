@@ -232,6 +232,14 @@
   if (length(bad)) sprintf("U+%04X", bad[[1L]]) else ""
 }
 
+#' The URL check with the host's addresses resolved: why a URL is refused, or "".
+#'
+#' A seam of its own, so the tests can stand in for the resolver.
+#' @param u The URL.
+#' @return The reason, or "".
+#' @noRd
+.bl_wb_resolved_why <- function(u) .Call(C_rmbl_url_check, u, TRUE, TRUE, FALSE)
+
 #' Archive many pages in the Wayback Machine
 #'
 #' @description
@@ -371,7 +379,6 @@ wbsave <- function(urls, ak = NULL, sk = NULL, within = "30d", jobs = 4L,
   if (length(bad)) stop(sprintf("not an http(s) URL: %s", .rmbl_printable(bad[[1L]])), call. = FALSE)
   # an address on your own network (10.0.0.7, a .local or one-label name, 127.0.0.1) is not archive.org's to
   # reach, and the request would tell a public archive where your intranet is (CRAN stress test of 0.5.14).
-  # Literal addresses and local names only: the archive resolves public names itself.
   why <- vapply(urls, function(u) .Call(C_rmbl_url_check, u, TRUE, FALSE, FALSE), "", USE.NAMES = FALSE)
   if (any(nzchar(why))) {
     i <- which(nzchar(why))[[1L]]
@@ -429,6 +436,16 @@ wbsave <- function(urls, ak = NULL, sk = NULL, within = "30d", jobs = 4L,
       TRUE
     }, error = function(e) FALSE, warning = function(w) FALSE)
     if (!ok || dir.exists(output)) stop(sprintf("cannot write the results file %s", output), call. = FALSE)
+  }
+  # a public name that resolves to an address on your own network is refused too, once every
+  # argument is checked (audit of 30bed8e, #17); a name this machine cannot resolve is sent, since
+  # the archive resolves names itself
+  for (u in urls) {
+    r <- .bl_wb_resolved_why(u)
+    if (grepl("resolves to", r, fixed = TRUE)) {
+      stop(.rmbl_fn(), sprintf("not a public address, so it is not sent to archive.org: %s (%s)",
+                               .rmbl_printable(u), r), call. = FALSE)
+    }
   }
   # results already in `output`: a finished URL is not sent again, a submitted one is polled
   prior <- .bl_wb_records(output)

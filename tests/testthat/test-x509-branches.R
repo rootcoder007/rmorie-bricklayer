@@ -1,4 +1,3 @@
-testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # The branches of the certificate and timestamp verifiers that the two
 # fixture chains never reach: a version 1 certificate, a three-link path
 # with a pathLenConstraint, the policy mapping and constraint extensions,

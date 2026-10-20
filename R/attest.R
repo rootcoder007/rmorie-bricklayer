@@ -167,7 +167,8 @@
 #' @srrstats {G5.2b} Each refusal added for hmac (`ctx`, `prehash`, empty or multi-valued secret) is
 #'   triggered in test-attest.R:457-461 and its message text matched.
 #' @srrstats {G5.8a} A zero-length secret, "" or raw(0), is refused rather than used as an empty HMAC
-#'   key (test-attest.R:459-460).
+#'   key (test-attest.R:459-460); so is an empty `keyexp` in cpschkatst() and cpsbndlvrf(), which
+#'   checked against no key (test-audit-sec-1_0_0.R).
 cpsatst <- function(man, key, ctx = NULL,
                            prehash = "none", note = NULL) {
   .rmbl_no_fn(note = note, context = ctx)
@@ -217,6 +218,7 @@ cpsatst <- function(man, key, ctx = NULL,
 cpschkatst <- function(attest, man,
                                       keyexp = NULL, key = NULL) {
   .rmbl_no_fn(key_expected = keyexp, key = key)
+  .bl_keyexp_arg(keyexp)
   acc <- new.env(parent = emptyenv())
   acc$checks <- list()
   note_row <- function(check, ok, detail = "") {
@@ -372,6 +374,20 @@ format.bricklayer_attestation_check <- function(x, ...) {
 print.bricklayer_attestation_check <- function(x, ...) {
   cat(format(x), sep = "\n")
   invisible(x)
+}
+
+#' Refuses an empty expected key.
+#'
+#' `keyexp = ""` (an unset variable passed along) pinned no key at all (audit of 30bed8e, #10).
+#' NULL is no pin; a key object is checked where it is used.
+#' @param keyexp The value.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_keyexp_arg <- function(keyexp) {
+  if (is.character(keyexp) && (length(keyexp) != 1L || is.na(keyexp) || !nzchar(trimws(keyexp)))) {
+    stop(.rmbl_fn(), "`keyexp` is empty: give the expected public key (hex), or NULL to pin none", call. = FALSE)
+  }
+  invisible(NULL)
 }
 
 #' Hashes an attestation payload through its canonical digest.

@@ -731,6 +731,9 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
     return(TRUE)
   }
   if (.bl_key_dense(x)) return(TRUE)
+  # an AWS access key id: AKIA or ASIA and sixteen capitals or digits, which may all be letters
+  # (audit of 30bed8e, #17)
+  if (grepl("(AKIA|ASIA)[A-Z0-9]{16}", x)) return(TRUE)
   runs <- regmatches(x, gregexpr("[A-Za-z0-9_+=.:-]{24,}", x))[[1L]]
   runs <- sub("[.:=-]+$", "", runs)
   # words joined by _ or . (survey_design_replicates) are a name, not a key; a segment that mixes
@@ -749,10 +752,10 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
   # to a model (re-check of 1.0.0)
   x <- gsub("[\u200b\u200c\u200d\u2060\ufeff]", "", x)
   x <- gsub("[\u3000\u00a0\u2007\u202f]", " ", x)
-  w <- strsplit(trimws(x), "[[:space:]]+")[[1L]]
-  # punctuation stuck to a group is not part of it: "qrst9012uvwx?" and "qrst9012uvwx," closed a
-  # grouped key and it went to a model (re-check of 1.0.0)
-  w <- gsub("^[[:punct:]]+|[[:punct:]]+$", "", w)
+  # groups are split at anything but a letter or a digit, a space or not: "abcd1234efgh;ijkl5678mnop;
+  # qrst9012uvwx" with no space went to a model with each of ! # $ % & * , ; @ ^ | ~ (audit of
+  # 30bed8e)
+  w <- strsplit(trimws(x), "[^A-Za-z0-9]+")[[1L]]
   grp <- grepl("^[A-Za-z0-9]{8,16}$", w) & grepl("[0-9]", w) & grepl("[A-Za-z]", w)
   r <- rle(grp)
   any(r$values & r$lengths >= 3L)

@@ -156,8 +156,9 @@ print.rmbl_mnfdiff <- function(x, ...) {
 #'
 #' @description
 #' Downloads the source named in a capsule's \code{data_provenance.json}
-#' (\code{resource$direct_url}, else \code{source$url}; a local path is
-#' read directly), and when its bytes differ from the pin writes them as the
+#' (\code{resource$direct_url}, else \code{source$url}; an \code{https://}
+#' URL, or a local file inside the capsule), and when its bytes differ from
+#' the pin writes them as the
 #' capsule's data file and pins them in the provenance, in the form the
 #' \code{analysis.R} of \code{\link{usecpstmpl}} writes on its first run:
 #' \code{source$sha256}, and \code{resource$filename}, \code{sha256},
@@ -169,18 +170,29 @@ print.rmbl_mnfdiff <- function(x, ...) {
 #' @details
 #' Nothing is written when the bytes are unchanged. A download goes through
 #' \code{\link{fdl}}, with the provenance's \code{wayback$csv_snapshot}
-#' as its fallback. A capsule bundle is not signed again: that needs your
+#' as its fallback (no other Wayback copy is looked up). A source is fetched
+#' over \code{https://} only. A local path (relative to the capsule) or a
+#' \code{file://} URL is read only when it resolves, symbolic links followed,
+#' to a file inside the capsule, inside the \code{allowfile} folder, or in the
+#' package's \code{extdata}; never under \code{/proc}, \code{/sys} or
+#' \code{/dev}. A gzip source may inflate to at most the option
+#' \code{rmoriebricklayer.maxcsvbytes} (1 GiB by default) when it is read.
+#' A capsule bundle is not signed again: that needs your
 #' key (\code{\link{cpsbndl}}). Side effects: writes the data file and
 #' \code{data_provenance.json} in \code{dir}. Errors: \code{dir} is not a
 #' directory or holds no provenance; the provenance names no source, or a
-#' \code{TODO} one, or a \code{file://} one without \code{allowfile}; the
-#' source cannot be fetched; \code{resource$filename} is not a plain
-#' relative path inside \code{dir}; the new data fail the schema the
-#' provenance pins (\code{\link{valsch}}).
+#' \code{TODO} one, or a \code{file://} one without \code{allowfile}; a
+#' URL that is not \code{https://}; a local source outside those folders;
+#' the source cannot be fetched, or inflates past the limit;
+#' \code{resource$filename} is not a plain relative path inside \code{dir};
+#' \code{data_provenance.json} is a link out of \code{dir}; the new data
+#' fail the schema the provenance pins (\code{\link{valsch}}).
 #'
 #' @param dir Character scalar, the capsule directory.
-#' @param allowfile Logical: accept a \code{file://} source URL (a local
-#'   path is always read).
+#' @param allowfile \code{FALSE} (the default), \code{TRUE} to accept a
+#'   \code{file://} source inside \code{dir}, or an existing folder whose
+#'   files may also be read as a source (a local path or a \code{file://}
+#'   URL).
 #' @return The \code{\link{mnfdiff}} of the provenance before and after:
 #'   all \code{"unchanged"} when the source still matches its pin.
 #' @seealso \code{\link{mnfdiff}}, \code{\link{vrfcps}},
@@ -197,9 +209,10 @@ print.rmbl_mnfdiff <- function(x, ...) {
 #' @export
 cpsrfrsh <- function(dir, allowfile = FALSE) {
   dir <- .rmbl_string1(dir, "dir")
-  allowfile <- .rmbl_flag1(allowfile, "allowfile")
+  allowfile <- .bl_allowfile_arg(allowfile)
   if (!dir.exists(dir)) stop(.rmbl_fn(), "`dir` is not an existing directory: ", dir, call. = FALSE)
   f <- .bl_fetch_pin(dir, allowfile)
+  on.exit(.bl_fetch_cleanup(f), add = TRUE)
   diff <- mnfdiff(f$old, f$new)
   if (all(diff$change == "unchanged")) return(diff)
   .bl_write_pin(dir, f)
@@ -220,9 +233,11 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     stop(.rmbl_fn(), "resource$filename is not a plain relative path inside the capsule: ",
          .rmbl_printable(f$new[["resource"]][["filename"]]), call. = FALSE)
   }
-  cur <- if (grepl("\\.csv$", dest, ignore.case = TRUE)) {
-    tryCatch(utils::read.csv(f$path, check.names = FALSE, stringsAsFactors = FALSE), error = function(e) NULL)
-  }
+  # the provenance is written in place: a link to a file outside the capsule was written through
+  # (audit of 30bed8e, #8)
+  pf <- .rmbl_safe_rel("data_provenance.json", dir)
+  if (is.null(pf)) stop(.rmbl_fn(), "data_provenance.json is a link out of the capsule: not written", call. = FALSE)
+  cur <- if (grepl("\\.csv$", dest, ignore.case = TRUE)) .bl_read_csv_capped(f$path)
   issues <- if (is.data.frame(cur)) valsch(cur, f$old)
   fatal <- vapply(issues, function(i) identical(i$severity, "fatal"), NA)
   if (any(fatal)) {
@@ -232,20 +247,23 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   # serialised first: nothing is written unless both can be
   js <- tojs(f$new, auto_unbox = TRUE, pretty = TRUE, null = "null", digits = NA)
   if (!identical(.rmbl_realpath(f$path), .rmbl_realpath(dest))) file.copy(f$path, dest, overwrite = TRUE)
-  writeLines(js, file.path(dir, "data_provenance.json"))
+  writeLines(js, pf)
   invisible(dest)
 }
 
 #' Fetches a capsule's source and builds the provenance that pins it, without writing anything.
 #'
-#' A failed fetch falls back on the copy kept in `cache` by an earlier fetch, when there is one.
+#' An https:// source is downloaded; a local path or a file:// URL is read where it is, when
+#' .bl_local_source() admits it. A failed download falls back on the provenance's own Wayback
+#' snapshot, else on the copy kept in `cache` by an earlier fetch.
 #' @param dir The capsule directory.
-#' @param allowfile Whether a file:// source URL is fetched.
+#' @param allowfile FALSE, TRUE or a folder, from .bl_allowfile_arg().
 #' @param cache The cache folder, or NULL.
-#' @return A list: `old` and `new` provenance, `path` (the fetched file), `src` (the source) and
-#'   `cached` (whether the cached copy stood in).
+#' @param root The folder `allowfile = TRUE` admits (the folder checked; the capsule by default).
+#' @return A list: `old` and `new` provenance, `path` (the fetched file), `src` (the source),
+#'   `cached` (whether the cached copy stood in) and `tmp` (whether `path` is a download to delete).
 #' @noRd
-.bl_fetch_pin <- function(dir, allowfile = FALSE, cache = NULL) {
+.bl_fetch_pin <- function(dir, allowfile = FALSE, cache = NULL, root = dir) {
   prov <- loadprov(file.path(dir, "data_provenance.json"))
   if (is.null(prov)) stop(.rmbl_fn(), "no data_provenance.json in ", dir, call. = FALSE)
   s1 <- function(v) {
@@ -256,29 +274,163 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   if (!nzchar(src) || startsWith(src, "TODO")) {
     stop(.rmbl_fn(), "the provenance names no source to fetch (resource$direct_url or source$url)", call. = FALSE)
   }
-  got <- src
   cached <- FALSE
-  if (!file.exists(src)) {
-    is_file <- startsWith(src, "file://")
-    if (is_file && !allowfile) {
-      stop(.rmbl_fn(), "the source is a file:// URL and `allowfile` is FALSE: ", .rmbl_printable(src), call. = FALSE)
+  tmp <- FALSE
+  if (grepl("^file://", src, ignore.case = TRUE) || !grepl("^[A-Za-z][A-Za-z0-9+.-]*://", src)) {
+    got <- .bl_local_source(src, dir, allowfile, root)
+  } else {
+    # a source in a capsule (a pull request's, in the action) is fetched over https only
+    # (audit of 30bed8e, #6)
+    if (!grepl("^https://", src, ignore.case = TRUE)) {
+      stop(.rmbl_fn(), "a source to fetch must be an https:// URL: ", .rmbl_printable(src), call. = FALSE)
     }
     got <- tempfile(fileext = paste0(".", tools::file_ext(src)))
-    ok <- tryCatch(fdl(src, got, attwb = if (is_file) "" else s1(prov[["wayback"]][["csv_snapshot"]]),
-                       allowfile = is_file), error = function(e) e)
+    tmp <- TRUE
+    # the Wayback copy the provenance pins, and no other: an unpinned source that answered 404 was
+    # looked up in the archive without being asked (audit of 30bed8e, #17)
+    ok <- tryCatch(fdl(src, got, attwb = s1(prov[["wayback"]][["csv_snapshot"]]) %||% ""), error = function(e) e)
     keep <- if (!is.null(cache)) file.path(cache, paste0("source-", substr(csha256(charToRaw(src)), 1L, 16L)))
     if (isTRUE(ok) && !is.null(keep)) file.copy(got, keep, overwrite = TRUE)
     if (!isTRUE(ok)) {
+      unlink(got)
       if (is.null(keep) || !file.exists(keep)) {
         if (inherits(ok, "error")) stop(ok)
         stop(.rmbl_fn(), "the source could not be fetched: ", .rmbl_printable(src), call. = FALSE)
       }
       got <- keep
       cached <- TRUE
+      tmp <- FALSE
     }
   }
-  new <- .bl_pin(prov, got, s1(prov[["resource"]][["filename"]]) %||% basename(src))
-  list(old = prov, new = new, path = got, src = src, cached = cached)
+  f <- list(old = prov, path = got, src = src, cached = cached, tmp = tmp)
+  f$new <- tryCatch(.bl_pin(prov, got, s1(prov[["resource"]][["filename"]]) %||% basename(src)),
+                    error = function(e) {
+                      .bl_fetch_cleanup(f)
+                      stop(e)
+                    })
+  f
+}
+
+#' Deletes the download behind a .bl_fetch_pin() result, when it was one.
+#' @param f From .bl_fetch_pin().
+#' @return NULL, invisibly.
+#' @noRd
+.bl_fetch_cleanup <- function(f) {
+  if (isTRUE(f$tmp)) unlink(f$path)
+  invisible(NULL)
+}
+
+#' The `allowfile` argument: FALSE, TRUE, or an existing folder (its real path).
+#' @param allowfile The value.
+#' @return FALSE, TRUE or the folder.
+#' @noRd
+.bl_allowfile_arg <- function(allowfile) {
+  if (is.logical(allowfile) && length(allowfile) == 1L && !is.na(allowfile)) return(allowfile)
+  if (!is.character(allowfile) || length(allowfile) != 1L || is.na(allowfile) || !dir.exists(allowfile)) {
+    stop(.rmbl_fn(), "`allowfile` must be TRUE or FALSE, or an existing folder", call. = FALSE)
+  }
+  real <- normalizePath(allowfile, winslash = "/", mustWork = TRUE)
+  if (grepl("^([A-Za-z]:)?/*$", real)) {
+    stop(.rmbl_fn(), "`allowfile` must not be the root of the file system", call. = FALSE)
+  }
+  real
+}
+
+#' The file a local capsule source names, when it may be read: its real path.
+#'
+#' A source is attacker-authored input (a capsule in a pull request): a bare path read any file the
+#' job could, /proc/self/environ and its secrets included, into the report (audit of 30bed8e, #6).
+#' The path, relative to the capsule unless absolute, is resolved with its symbolic links, and must
+#' be a file inside the capsule, inside the `allowfile` folder (the folder checked, for TRUE) or in
+#' the package's extdata (the template's example source); never under /proc, /sys or /dev.
+#' ponytail: resolved once and read after; a link swapped in between is not looked at again.
+#' @param src The source as the provenance names it.
+#' @param dir The capsule directory.
+#' @param allowfile FALSE, TRUE or a folder.
+#' @param root The folder `allowfile = TRUE` admits.
+#' @return The file's real path.
+#' @noRd
+.bl_local_source <- function(src, dir, allowfile, root) {
+  is_file <- grepl("^file://", src, ignore.case = TRUE)
+  if (is_file && isFALSE(allowfile)) {
+    stop(.rmbl_fn(), "the source is a file:// URL and `allowfile` is FALSE: ", .rmbl_printable(src), call. = FALSE)
+  }
+  p <- src
+  if (is_file) {
+    p <- utils::URLdecode(sub("^file://(localhost)?", "", src, ignore.case = TRUE))
+    p <- sub("^/([A-Za-z]:)", "\\1", p)
+  }
+  if (!grepl("^([/\\\\]|~|[A-Za-z]:)", p)) p <- file.path(dir, p)
+  p <- path.expand(p)
+  real <- if (file.exists(p) && !dir.exists(p)) {
+    tryCatch(normalizePath(p, winslash = "/", mustWork = TRUE), error = function(e) NULL)
+  }
+  roots <- c(dir, if (isTRUE(allowfile)) root else if (is.character(allowfile)) allowfile,
+             system.file("extdata", package = "rmoriebricklayer"))
+  roots <- sub("/+$", "", normalizePath(roots[nzchar(roots)], winslash = "/", mustWork = FALSE))
+  if (is.null(real) || !any(startsWith(real, paste0(roots, "/"))) || grepl("^/(proc|sys|dev)(/|$)", real)) {
+    stop(.rmbl_fn(), "a local source must be a file inside the capsule",
+         if (!isFALSE(allowfile)) " or the `allowfile` folder", ": ", .rmbl_printable(src), call. = FALSE)
+  }
+  real
+}
+
+#' Reads a capsule's CSV, inflating a gzip file no further than the option
+#' rmoriebricklayer.maxcsvbytes.
+#'
+#' read.csv() inflates gzip itself, with no limit: a 388 KB gzip of 400 MB of zeros ran for more
+#' than 400 s at 1.3 GB (audit of 30bed8e, #9). Only reading errors give NULL; the limit is an error.
+#' @param p The file.
+#' @return A data frame, or NULL when the file does not read as a CSV.
+#' @noRd
+.bl_read_csv_capped <- function(p) {
+  plain <- .bl_gunzip_capped(p)
+  if (!identical(plain, p)) on.exit(unlink(plain), add = TRUE)
+  tryCatch(utils::read.csv(plain, check.names = FALSE, stringsAsFactors = FALSE), error = function(e) NULL)
+}
+
+#' A gzip file inflated into a temporary file of at most the option rmoriebricklayer.maxcsvbytes,
+#' or the file itself when it is not gzip.
+#'
+#' The trailer's ISIZE is checked first (free, but it can lie), then the bytes are counted as they
+#' are inflated, 4 MiB at a time.
+#' @param p The file.
+#' @return The path of the plain bytes.
+#' @noRd
+.bl_gunzip_capped <- function(p) {
+  head <- readBin(p, "raw", 2L)
+  if (length(head) < 2L || head[[1L]] != as.raw(0x1f) || head[[2L]] != as.raw(0x8b)) return(p)
+  lim <- .rmbl_max_csv_bytes()
+  over <- function() {
+    stop(.rmbl_fn(), sprintf("%s inflates to more than %s bytes (option rmoriebricklayer.maxcsvbytes)",
+                             basename(p), format(lim, big.mark = ",", scientific = FALSE)), call. = FALSE)
+  }
+  n <- file.size(p)
+  if (n >= 18) {
+    con <- file(p, "rb")
+    seek(con, n - 4)
+    isize <- sum(as.numeric(as.integer(readBin(con, "raw", 4L))) * 256^(0:3))
+    close(con)
+    if (isize > lim) over()
+  }
+  out <- tempfile(fileext = ".csv")
+  ok <- FALSE
+  on.exit(if (!ok) unlink(out), add = TRUE)
+  inp <- gzfile(p, "rb")
+  dst <- file(out, "wb")
+  total <- 0
+  tryCatch(repeat {
+    b <- readBin(inp, "raw", 4194304L)
+    if (!length(b)) break
+    total <- total + length(b)
+    if (total > lim) over()
+    writeBin(b, dst)
+  }, finally = {
+    close(inp)
+    close(dst)
+  })
+  ok <- TRUE
+  out
 }
 
 #' A provenance record pinned to a data file's bytes, in the fields usecpstmpl()'s analysis.R writes.
@@ -298,7 +450,11 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   prov$resource$sha256 <- digest
   prov$resource$size_bytes <- file.size(got)
   prov$resource$retrieved_utc <- format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
-  if (had_rows) prov$resource$row_count_data_rows <- nrow(utils::read.csv(got, check.names = FALSE))
+  if (had_rows) {
+    d <- .bl_read_csv_capped(got)
+    if (is.null(d)) stop(.rmbl_fn(), "the source does not read as a CSV, so its rows cannot be counted", call. = FALSE)
+    prov$resource$row_count_data_rows <- nrow(d)
+  }
   prov
 }
 
@@ -445,7 +601,10 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   f <- sub("^\\./", "", f)
   f <- f[!grepl("(^|/)(\\.git|\\.rmbl-cache)/", f)]
   if (nzchar(glob)) f <- f[grepl(utils::glob2rx(glob), f)]
-  sort(unique(dirname(f)))
+  d <- sort(unique(dirname(f)))
+  # one capsule once: list.files() follows a link back up the tree, and a loop listed the same
+  # capsule under every depth the system allowed, a 209 KB report (audit of 30bed8e, #17)
+  d[!duplicated(normalizePath(d, winslash = "/", mustWork = FALSE))]
 }
 
 #' The verify rows of one capsule: every file against its schema, vrfcps(), cpsbndlvrf().
@@ -505,7 +664,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   src <- s1(res[["direct_url"]]) %||% s1(p[["source"]][["url"]]) %||% ""
   host <- if (!nzchar(src)) "-" else if (startsWith(src, "file://")) "local file" else
     sub("^[a-z]+://([^/:]+).*$", "\\1", src)
-  f <- file.path(d, s1(res[["filename"]]) %||% "")
+  f <- .rmbl_safe_rel(s1(res[["filename"]]), d) %||% ""
   b <- if (file.exists(f) && !dir.exists(f)) file.size(f) else NA
   n <- suppressWarnings(as.numeric(s1(res[["row_count_data_rows"]]) %||% NA))
   rnd <- s1(p[["table"]][["rounding"]])
@@ -530,6 +689,11 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' @return The exit status.
 #' @noRd
 .bl_cli_capsule <- function(verb, rest, flag, out, usage_error) {
+  # the secret is taken out of the process first, before any usage error can return with it still
+  # set: its bytes are wiped, then the name unset (audit of 30bed8e, #17)
+  key <- Sys.getenv("RMBL_KEY")
+  .Call(C_rmbl_env_wipe, "RMBL_KEY")
+  Sys.unsetenv("RMBL_KEY")
   pos <- rest
   for (f in c(.bl_capsule_valued, "--html")) {
     i <- match(f, pos)
@@ -539,14 +703,17 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   if (length(pos) != 1L) usage_error(sub("\n$", "", .bl_verb_usage(verb, .bl_prog())))
   root <- pos[[1L]]
   if (!dir.exists(root)) usage_error(sprintf("%s is not a directory", .rmbl_printable(root)))
+  # an option given an empty value is a mistake, not the option left out: `--public-key ""` (an
+  # unset CI variable) verified a self-signed bundle as if no key were pinned (audit of 30bed8e, #10)
+  for (f in c(.bl_capsule_valued, "--html")) {
+    if (identical(flag(f), "")) usage_error(sprintf("%s was given an empty value", f))
+  }
   fail_on <- flag("--fail-on") %||% "error"
   if (!fail_on %in% c("error", "drift", "warn")) {
     usage_error(sprintf("--fail-on takes error, drift or warn, not '%s'", .rmbl_printable(fail_on)))
   }
   fmt <- flag("--format") %||% (if ("--json" %in% rest) "json" else "md")
   if (!fmt %in% c("md", "json")) usage_error(sprintf("--format takes md or json, not '%s'", .rmbl_printable(fmt)))
-  key <- Sys.getenv("RMBL_KEY")
-  Sys.unsetenv("RMBL_KEY")
   if (verb == "refresh") return(.bl_cli_refresh(root, out))
   if (verb == "sign") return(.bl_cli_sign(root, key, flag, rest, fmt, fail_on, out, usage_error))
   num <- function(f, default) {
@@ -776,9 +943,8 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     return(invisible(NULL))
   }
   dr <- drifts[[1L]]
-  f <- attr(dr, "files")
-  rd <- function(p) utils::read.csv(p, check.names = FALSE, stringsAsFactors = FALSE)
-  app <- drftapp(dr, ref = rd(f[["ref"]]), cur = rd(f[["cur"]]))
+  tabs <- attr(dr, "data")
+  app <- drftapp(dr, ref = tabs$ref, cur = tabs$cur)
   out(sprintf("\nOpening the drift app on %s\n", names(drifts)[1L]))
   .bl_run_app(app)
   invisible(NULL)
