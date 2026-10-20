@@ -70,6 +70,26 @@ cases <- list(
     # a stored key is shown only as set / (not set), never any of its characters
     if (nzchar(key)) check(!grepl(substr(key, nchar(key) - 5L, nchar(key)), run("config")$text, fixed = TRUE), "config printed part of the key")
   },
+  # the capsule verbs, on a capsule whose source is a local CSV: refresh pins it, then the rest read it
+  verify = function() {
+    d <- tempfile("smoke-capsule"); dir.create(d)
+    src <- file.path(d, "source.csv")
+    utils::write.csv(data.frame(id = 1:40, v = rep(c("a", "b"), 20)), src, row.names = FALSE)
+    prov <- list(name = "smoke", source = list(url = src, sha256 = "TODO: pinned later"),
+                 resource = list(filename = "data.csv", row_count_data_rows = 0),
+                 table = list(rounding = 5, suppression_limit = 10))
+    writeLines(tojs(prov, auto_unbox = TRUE), file.path(d, "data_provenance.json"))
+    r <- run("refresh", d); check(r$status == 0, paste("refresh:", substr(r$text, 1, 300)))
+    r <- run("verify", d); check(r$status == 0 && grepl("ok", r$text, fixed = TRUE), paste("verify:", substr(r$text, 1, 300)))
+    r <- run("verify", d, "--json"); check(r$status == 0 && grepl("\"status\"", r$text, fixed = TRUE), paste("verify --json:", substr(r$text, 1, 300)))
+    smoke_capsule <<- d
+  },
+  drift = function() { r <- run("drift", smoke_capsule); check(r$status == 0, paste("drift:", substr(r$text, 1, 300))) },
+  refresh = function() { r <- run("refresh", smoke_capsule); check(r$status == 0, paste("refresh:", substr(r$text, 1, 300))) },
+  report = function() {
+    r <- run("report", smoke_capsule); check(r$status == 0 && grepl("rmbl", r$text, fixed = TRUE), substr(r$text, 1, 300))
+    r <- run("report", smoke_capsule, "--format", "json"); check(r$status == 0 && grepl("\"status\"", r$text, fixed = TRUE), substr(r$text, 1, 300))
+  },
   help = function() {
     for (p in c("start", "llm", "config", "r")) { r <- run("help", p); check(r$status == 0 && nzchar(r$text), paste("help", p)) }
   },
