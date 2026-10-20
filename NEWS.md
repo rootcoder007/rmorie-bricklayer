@@ -3,7 +3,7 @@
 ## Standards and the fixes they surfaced
 
 * The package documents the rOpenSci statistical software standards (General, EDA, Time Series)
-  with `srr` tags: 144 met, 29 not applicable, none left to do.
+  with `srr` tags: 146 met, 29 not applicable, none left to do.
 * A period with no percentage change in `plot(yoy(...))` carries its whole reason again ("first period:
   nothing to compare with", "no percentage: previous period is zero"), sized to the panel; the period-axis
   rewrite had cut every reason at the colon.
@@ -56,6 +56,24 @@
 * The Docker image installs the package and puts `rmbl` on the PATH.
 * `capenv()$packages` is a named list, so a manifest written with `wrmnfjs()` keeps the package
   names; as a named character vector they were written as a bare array of versions.
+
+## Drift you can look at
+
+* `plot()` of a `cpsdrft()` result takes `what`: `"psi"` (the default) draws the PSI per column,
+  worst first, coloured by verdict with the warn and fail bands as dashed lines; `"columns"` draws
+  the reference and current distributions of up to six columns (`cols`) with each PSI bin's term;
+  `"benford"` the first digits of numeric columns against Benford's law.
+* `cpsdrft()` keeps a binned summary of each column (`summ`: missing shares, summary statistics or
+  the largest categories, the PSI bins, a histogram, first-digit counts; never the rows) and its
+  PSI `bands`, which the plots and reports colour by.
+* `drfthtml()` writes the drift report as one HTML file that fetches nothing: the verdict and
+  provenance, a column table to search, filter and sort, each column's summary and charts, sliders
+  for the bands and alpha that score the verdicts again, the manifest diff, PSI over earlier runs,
+  and Markdown, JSON, SVG and GitHub-comment exports. `rmbl drift PATH --html FILE` writes it.
+* `drftapp()` is the same report as a Shiny app (shiny is suggested), with what would clear a
+  column, a rerun on chosen columns and a download of the page; `drftapp()` alone opens on two
+  uploaded CSV files, and `rmbl drift PATH --app` opens it on a capsule whose source moved.
+  `cpschk()` keeps each capsule's `cpsdrft()` result in its `drifts` attribute.
 
 ## Capsule checks from the command line
 

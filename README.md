@@ -76,7 +76,10 @@ and a digest anyone can recompute says nothing about who produced the data.
 - **Drift detection** — `cpsdrft()` asks whether the *data* moved,
   not just the bytes, with Kolmogorov-Smirnov, two-sample homogeneity,
   population stability index, Jensen-Shannon divergence and a Benford
-  first-digit screen.
+  first-digit screen. `plot()` draws the PSI per column against its bands
+  and each column's distributions; `drfthtml()` writes the report as one
+  interactive HTML file (`rmbl drift PATH --html FILE`), and `drftapp()`
+  opens it as a Shiny app.
 - **Signed provenance** — `cpssign()` authenticates a manifest with a
   keyed digest or a post-quantum hash-based signature; `mrkroot()` pins
   a capsule chunk by chunk so a mismatch names which chunk moved; and

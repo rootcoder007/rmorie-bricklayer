@@ -195,13 +195,17 @@
 #'     capsule files matching GLOB, \code{--snapshot} looks up each
 #'     source's latest Wayback snapshot and \code{--no-footprint} leaves
 #'     the footprint (\code{\link{co2fp}}) out of the report}
-#'   \item{\code{drift PATH [--json] [--fail-on LEVEL]}}{verify, then fetch
+#'   \item{\code{drift PATH [--json] [--fail-on LEVEL] [--html FILE] [--app]}}{
+#'     verify, then fetch
 #'     each source again and compare it column by column
 #'     (\code{\link{cpsdrft}}, Benford): a column past
 #'     \code{--psi-warn X} (0.1) is a warning, a flagged one past
 #'     \code{--psi-fail X} (0.25) drift. \code{--allow-file} accepts
 #'     \code{file://} sources, \code{--cache DIR} keeps each source and
-#'     reads it when a fetch fails; the options of verify apply}
+#'     reads it when a fetch fails; the options of verify apply.
+#'     \code{--html FILE} writes the interactive report
+#'     (\code{\link{drfthtml}}) and \code{--app} opens it as a Shiny
+#'     app (\code{\link{drftapp}})}
 #'   \item{\code{refresh PATH}}{pin each source's new bytes
 #'     (\code{\link{cpsrfrsh}}) and print what changed
 #'     (\code{\link{mnfdiff}})}
@@ -365,14 +369,15 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
                 ask = c("--model", "--route", "--fresh"),
                 models = "--route",
                 data = "--out", wayback = c("--out", "--jobs", "--within", "--max", "--retry", "--include-gone"),
-                verify = c("--json", "--fail-on", .bl_capsule_opts), drift = c("--json", "--fail-on", .bl_capsule_opts),
+                verify = c("--json", "--fail-on", .bl_capsule_opts),
+                drift = c("--json", "--fail-on", .bl_capsule_opts, "--html", "--app"),
                 report = c("--format", .bl_capsule_opts),
                 sign = c("--json", "--fail-on", "--scheme", "--key-file", "--public-key", "--overwrite", "--manifests"),
                 config = if (length(rest) && identical(rest[[1L]], "reset")) "--force")
   opts <- rest[startsWith(rest, "--")]
   values <- unlist(lapply(c("--email", "--code", "--token", "--model", "--route", "--out", "--jobs", "--within",
                             "--name", "--affiliation", "--reason", "--supervisor-name", "--supervisor-role",
-                            "--supervisor-email", .bl_capsule_valued),
+                            "--supervisor-email", .bl_capsule_valued, "--html"),
                           function(f) {
     i <- match(f, rest)
     if (!is.na(i) && i < length(rest)) rest[[i + 1L]] else NULL
@@ -787,7 +792,8 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
     drift = paste("drift PATH [--json] [--fail-on error|warn|drift] [--psi-warn 0.1] [--psi-fail 0.25]",
                   "[--allow-file] [--cache DIR] [the options of verify]   verify, then fetch each source again",
                   "and compare it with the pin, column by column in the PSI bands (--allow-file: file:// sources;",
-                  "--cache: keep each source, read when a fetch fails)"),
+                  "--cache: keep each source, read when a fetch fails); [--html FILE] writes the interactive report",
+                  "(drfthtml()), [--app] opens it as a Shiny app (drftapp())"),
     refresh = "refresh PATH   fetch each capsule's source and pin its new bytes in the provenance (cpsrfrsh())",
     sign = paste("sign PATH [--scheme hmac|ML-DSA-44|...] [--key-file FILE] [--public-key HEX] [--overwrite]",
                  "[--manifests GLOB] [--json] [--fail-on LEVEL]   pin each provenance on its first run and sign",
@@ -1207,6 +1213,7 @@ instcli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     "        [--base MANIFEST|DIR] [--snapshot]  manifests against their base copies; Wayback snapshots\n",
     "  drift PATH [--json] [--fail-on LEVEL]     verify, then fetch each source and compare it with the pin\n",
     "        [--psi-warn X] [--psi-fail X]       the PSI bands of the column table (0.1 and 0.25)\n",
+    "        [--html FILE] [--app]               and write the drift report, or open it as an app\n",
     "  refresh PATH                              pin each source's new bytes in its provenance\n",
     "  sign PATH [--scheme S] [--key-file F]     pin and sign each capsule (key: RMBL_KEY or the file), verify\n",
     "  report PATH [--format md|json]            the verify report; never fails\n",

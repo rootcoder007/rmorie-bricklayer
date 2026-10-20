@@ -111,8 +111,12 @@
 #'   \code{drift_summary}, \code{snapshot}, \code{snapshot_utc} and
 #'   \code{manifests}), \code{base} (its label), \code{psiwarn},
 #'   \code{psifail} and \code{footprint} (the \code{co2fp()} result
-#'   without its value, or \code{NULL}). \code{format()} returns one
-#'   string and \code{print()} writes the Markdown report.
+#'   without its value, or \code{NULL}). The \code{cpsdrft()} result
+#'   of each capsule whose columns were compared, with its provenance and
+#'   manifest diff, is in the attribute \code{drifts} (named by capsule),
+#'   for \code{\link{drfthtml}} and \code{\link{drftapp}}.
+#'   \code{format()} returns one string and \code{print()} writes the
+#'   Markdown report.
 #' @seealso \code{\link{blcli}} (the verbs), \code{\link{ghann}},
 #'   \code{\link{cpsrfrsh}}, \code{\link{explerr}}.
 #' @examples
@@ -170,12 +174,19 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
   rows <- do.call(rbind, c(list(.bl_check_row(character(), character(), character(), character(), logical(),
                                               character(), character())), lapply(caps, `[[`, "rows")))
   caps <- lapply(caps, function(cp) cp[names(cp) != "rows"])
+  # the cpsdrft() results go to an attribute, for drfthtml() and drftapp() (rmbl drift --html, --app)
+  drifts <- Filter(Negate(is.null), stats::setNames(lapply(caps, function(cp) cp$drift$object),
+                                                    vapply(caps, `[[`, "", "capsule")))
+  caps <- lapply(caps, function(cp) {
+    if (!is.null(cp$drift)) cp$drift$object <- NULL
+    cp
+  })
   foot <- foot[names(foot) != "value"]
   structure(list(status = .bl_worst(vapply(caps, `[[`, "", "result")), mode = o$mode, path = path, glob = glob,
                  rows = rows, capsules = caps,
                  base = if (is.function(base)) attr(base, "label") %||% "the base" else base,
                  psiwarn = o$psiwarn, psifail = o$psifail, footprint = foot),
-            class = "rmbl_cpschk")
+            class = "rmbl_cpschk", drifts = drifts)
 }
 
 #' A single string argument that may be empty.
@@ -292,6 +303,10 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
   cmp <- if (nrow(ch) && grepl("\\.csv$", local, ignore.case = TRUE) && file.exists(local)) {
     .bl_column_drift(local, f$path, o)
   }
+  if (!is.null(cmp)) {
+    cmp$object$provenance <- f$old
+    cmp$object$manifest <- diff
+  }
   out$rows <- .bl_check_row(d, "drift", pf, "source_digest", !nrow(ch),
                             if (nrow(ch)) paste(trimws(format(diff)[-1L]), collapse = "; ") else
                               "the source matches the pin",
@@ -323,6 +338,8 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
   cur <- rd(got)
   if (is.null(ref) || is.null(cur)) return(NULL)
   dr <- cpsdrft(ref, cur, psithr = o$psifail)
+  dr$bands <- c(warn = o$psiwarn, fail = o$psifail)
+  attr(dr, "files") <- c(ref = local, cur = got)
   cols <- dr$columns
   cols$band <- ifelse(is.na(cols$psi), "-", ifelse(cols$psi > o$psifail, "fail",
                                                    ifelse(cols$psi > o$psiwarn, "warn", "ok")))
@@ -348,7 +365,7 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
     if (any(cols$verdict == "warn")) "warn" else "ok"
   list(verdict = verdict, summary = summ, any = isTRUE(dr$anydrft), nref = dr$nref, ncur = dr$ncur,
        alpha = dr$alpha, added = as.list(dr$added), removed = as.list(dr$removed), psiwarn = o$psiwarn,
-       psifail = o$psifail, columns = cols)
+       psifail = o$psifail, columns = cols, object = dr)
 }
 
 #' Pins the new bytes of a capsule whose source changed (refresh mode), then verifies it again.

@@ -79,6 +79,48 @@ cpsdrft(reference, moved)
 
 `value` is untouched and is not flagged. `size` and `grade` are.
 
+## Looking at the drift
+
+`plot()` draws the population stability index of each column, worst
+first, coloured by its verdict, with the warn and fail bands as dashed
+lines. A column is `fail` when its test rejects at `alpha` or its PSI is
+above the fail band on large samples, `warn` when its PSI is above the
+warn band, and `ok` otherwise.
+
+```{r drift-plot, fig.width = 6, fig.height = 3.5}
+d <- cpsdrft(reference, moved)
+plot(d)
+```
+
+`what = "columns"` shows where each column moved: the two
+distributions, with each PSI bin's share of the index written on it.
+
+```{r drift-columns, fig.width = 7, fig.height = 3.5}
+plot(d, what = "columns", cols = c("size", "grade"))
+```
+
+For someone who will not run R, `drfthtml()` writes the same report as
+one HTML file. It fetches nothing, so it opens from disk and stays as it
+was written. It holds only the binned summaries, never the rows. The page
+leads with the verdict and the capsule's provenance. Its column table can
+be searched, filtered and sorted, and the up and down keys move through
+it. For each column it shows both samples' statistics and three charts:
+the distributions, the PSI by bin (up where the current sample has more
+mass), and the first digits against Benford's law. Sliders move the
+bands and alpha and score the verdicts again. Further tabs show the
+manifest diff and the PSI over earlier runs. Buttons export Markdown,
+JSON, SVG or a GitHub comment.
+
+```{r drift-html}
+f <- file.path(tempdir(), "drift.html")
+drfthtml(d, f, title = "Pinned against fetched")
+file.exists(f)
+```
+
+On the command line `rmbl drift PATH --html FILE` writes it for each
+capsule whose source moved. `drftapp(d)` opens the report as a Shiny app
+that also reruns the comparison and shows what would clear a column.
+
 ## Which test, and why
 
 For a numeric column, `cpsdrft()` runs a two-sample

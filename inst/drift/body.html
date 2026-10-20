@@ -1,0 +1,35 @@
+<!-- the body of the drift report; drfthtml() fills {{TITLE}} and {{VERSION}} (escaped) -->
+<header><h1>{{TITLE}}</h1>
+<button type="button" id="theme" aria-label="Switch light or dark theme">theme</button></header>
+<section id="summary" aria-live="polite">
+<p id="verdict"></p>
+<p id="counts"></p><dl id="prov"></dl></section>
+<nav class="tabs" role="tablist">
+<button type="button" role="tab" id="tab-columns" aria-selected="true">Columns</button>
+<button type="button" role="tab" id="tab-manifest" hidden>Manifest</button>
+<button type="button" role="tab" id="tab-history">History</button></nav>
+<section id="pane-columns">
+<div id="thresholds" class="card"><h2>Bands</h2>
+<label>warn PSI <input type="range" id="warn" min="0" max="1" step="0.01"> <output id="warn-v"></output></label>
+<label>fail PSI <input type="range" id="fail" min="0" max="1" step="0.01"> <output id="fail-v"></output></label>
+<label>alpha <input type="range" id="alpha" min="0.001" max="0.2" step="0.001"> <output id="alpha-v"></output></label>
+<button type="button" id="reset">Reset to the object's bands</button></div>
+<div class="tools"><input type="search" id="search" placeholder="search columns ( / )" aria-label="Search columns"><span id="filters" role="group" aria-label="Filters"></span></div>
+<div class="scroll"><table id="coltable"><caption>Columns, worst first</caption><thead><tr></tr></thead><tbody></tbody></table></div>
+<section id="detail" aria-live="polite"><h2 id="detail-title"></h2>
+<p id="note"></p>
+<div class="scroll"><table id="sumtable"><thead></thead><tbody></tbody></table></div>
+<div class="charts">
+<figure><figcaption>Distribution, reference and current</figcaption>
+<div id="chart-cmp"></div></figure>
+<figure><figcaption>PSI by bin (up: more in current)</figcaption>
+<div id="chart-psi"></div></figure>
+<figure id="fig-benford"><figcaption>First digits against Benford</figcaption>
+<div id="chart-benford"></div></figure></div></section></section>
+<section id="pane-manifest" hidden><h2>Manifest</h2>
+<div class="scroll"><table id="manifest"><thead></thead><tbody></tbody></table></div></section>
+<section id="pane-history" hidden><h2>History</h2>
+<p>Pick earlier <code>rmbl drift --json</code> outputs or JSON exports of this page.</p><input type="file" id="hist-file" accept=".json,application/json" multiple aria-label="Earlier drift JSON files">
+<div id="history-plots" class="charts"></div></section>
+<div class="exports"><a id="dl-md" download="drift.md" href="#">Markdown</a> <a id="dl-json" download="drift.json" href="#">JSON</a> <button type="button" id="copy-gh">Copy as GitHub comment</button> <span id="copied" role="status"></span></div>
+<p class="gen">rmoriebricklayer {{VERSION}}</p>

@@ -195,7 +195,17 @@
 
 \method{plot}{rmbl_drift_calibration}(x, ..., main = NULL, col = NULL, palette = NULL)
 
-\method{plot}{bricklayer_drift}(x, ..., main = NULL, col = NULL, palette = NULL)
+\method{plot}{bricklayer_drift}(
+  x,
+  ...,
+  what = c("psi", "columns", "benford"),
+  cols = NULL,
+  warn = NULL,
+  fail = NULL,
+  main = NULL,
+  col = NULL,
+  palette = NULL
+)
 
 \method{plot}{bricklayer_benford}(x, ..., main = NULL, col = NULL, palette = NULL)
 
@@ -308,6 +318,8 @@ session option.}
 of \code{"adp"}, \code{"alos"}, \code{"people"}, \code{"days"},
 \code{"flowrate"}, \code{"stkrate"};
 \item \code{rmbl_yoy}: \code{"pctchg"} or \code{"value"};
+\item \code{bricklayer_drift}: \code{"psi"}, \code{"columns"} or
+\code{"benford"};
 \item \code{rmbl_case_flow}: \code{"flow"} and/or \code{"clearance"};
 \item \code{rmbl_clearance_decomposition}: any of \code{"rates"},
 \code{"mix"} and \code{"effects"} (the default fits the device).
@@ -357,6 +369,14 @@ inserted is a visible gap; \code{"join"} draws the line straight over it.}
 is
 drawn over time with its interval band, one panel per group of the other \code{by}
 columns.}
+
+\item{cols}{For \code{bricklayer_drift}, the columns to draw with
+\code{what = "columns"} or \code{"benford"}; \code{NULL} (the default)
+takes up to six, worst first.}
+
+\item{warn, fail}{For \code{bricklayer_drift}, the PSI bands: a column is
+\code{warn} above the first and \code{fail} above the second (or when
+its test rejects at alpha). \code{NULL} takes the object's \code{bands}.}
 
 \item{exposure}{For \code{rmbl_crf} and \code{rmbl_burden}, the exposure
 range to draw the curve over; the default runs from 0 to 1.5 times the
@@ -416,8 +436,13 @@ in the rate with its interval over the periods, groups side by side.}
 the statistic against the cap applied to the open band.}
 \item{\code{rmbl_drift_calibration}, \code{bricklayer_drift}}{
 (\code{\link{drftcal}}, \code{\link{cpsdrft}}) the
-false-alarm rate per column against alpha; the population stability
-index per column with the drifted columns marked.}
+false-alarm rate per column against alpha; for a drift result,
+\code{what = "psi"} (the default) the population stability index
+per column, worst first, coloured by verdict, with the warn and fail
+bands as dashed lines; \code{"columns"} the reference and current
+distributions of up to six columns (\code{cols}, or the worst), each
+PSI bin's term written on it; \code{"benford"} the first digits of
+numeric columns against Benford's law, with the test's verdict.}
 \item{\code{bricklayer_benford}}{(\code{\link{benfordtst}}) observed
 first-digit proportions against Benford's law.}
 \item{\code{bricklayer_power}}{(\code{\link{cpspwr}}) the power
@@ -605,7 +630,10 @@ plot(rgncov(c("a", "b", "c"), c(100, 200, 300), c(1L, 0L, 2L)))
 # drift between two extracts, and how often the test cries wolf
 set.seed(1)
 dd <- data.frame(a = rnorm(400), b = sample(letters[1:3], 400, TRUE))
-plot(cpsdrft(dd, transform(dd, a = a + 3)))
+dr <- cpsdrft(dd, transform(dd, a = a + 3))
+plot(dr)
+plot(dr, what = "columns")
+plot(dr, what = "benford", warn = 0.05, fail = 0.2)
 plot(drftcal(dd, n = 20L))
 # describing a table
 plot(freqtbl(data.frame(g = c("a", "b", "b", "c", "c", "c")), "g"))

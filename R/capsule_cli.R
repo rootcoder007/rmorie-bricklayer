@@ -523,11 +523,11 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' @noRd
 .bl_cli_capsule <- function(verb, rest, flag, out, usage_error) {
   pos <- rest
-  for (f in .bl_capsule_valued) {
+  for (f in c(.bl_capsule_valued, "--html")) {
     i <- match(f, pos)
     if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
   }
-  pos <- pos[!pos %in% c("--json", "--allow-file", "--snapshot", "--no-footprint", "--overwrite")]
+  pos <- pos[!pos %in% c("--json", "--allow-file", "--snapshot", "--no-footprint", "--overwrite", "--app")]
   if (length(pos) != 1L) usage_error(sub("\n$", "", .bl_verb_usage(verb, .bl_prog())))
   root <- pos[[1L]]
   if (!dir.exists(root)) usage_error(sprintf("%s is not a directory", .rmbl_printable(root)))
@@ -553,6 +553,10 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
                          fp = !"--no-footprint" %in% rest),
                   error = function(e) usage_error(sub("^cpschk: ", "", conditionMessage(e))))
   out(format(res, fmt = fmt, failon = if (verb != "report") fail_on))
+  html <- flag("--html")
+  drifts <- attr(res, "drifts")
+  if (verb == "drift" && !is.null(html)) .bl_cli_drift_html(drifts, html, if (fmt == "md") out else function(s) NULL)
+  if (verb == "drift" && "--app" %in% rest) .bl_cli_drift_app(drifts, out)
   rank <- c(ok = 0L, warn = 1L, drift = 2L, error = 3L)
   if (verb != "report" && rank[[res$status]] >= rank[[fail_on]]) 1L else 0L
 }
@@ -617,6 +621,48 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   out(format(x, fmt = fmt, failon = fail_on))
   rank <- c(ok = 0L, warn = 1L, drift = 2L, error = 3L)
   if (rank[[x$status]] >= rank[[fail_on]]) 1L else 0L
+}
+
+#' Writes the drift HTML report of every capsule whose columns were compared (rmbl drift --html).
+#'
+#' One capsule writes `file`; several write `file` with each capsule's directory name before the
+#' extension.
+#' @param drifts The cpsdrft() results, named by capsule directory.
+#' @param file The path given to --html.
+#' @param out The function that prints a line (a no-op under --json, which must stay JSON).
+#' @return The paths written, invisibly.
+#' @noRd
+.bl_cli_drift_html <- function(drifts, file, out) {
+  if (!length(drifts)) {
+    out("\nNo columns were compared (every source matches its pin, or is not a CSV): no HTML report written.\n")
+    return(invisible(character()))
+  }
+  paths <- if (length(drifts) == 1L) file else
+    paste0(sub("\\.html?$", "", file, ignore.case = TRUE), "-", basename(names(drifts)), ".html")
+  for (i in seq_along(drifts)) {
+    drfthtml(drifts[[i]], paths[i], title = sprintf("Drift report: %s", basename(names(drifts)[i])))
+    out(sprintf("\nHTML report: %s\n", paths[i]))
+  }
+  invisible(paths)
+}
+
+#' Opens drftapp() on the first capsule whose columns were compared (rmbl drift --app).
+#' @param drifts The cpsdrft() results, named by capsule directory.
+#' @param out The function that prints a line.
+#' @return NULL, invisibly.
+#' @noRd
+.bl_cli_drift_app <- function(drifts, out) {
+  if (!length(drifts)) {
+    out("\nNo columns were compared (every source matches its pin, or is not a CSV): no app to open.\n")
+    return(invisible(NULL))
+  }
+  dr <- drifts[[1L]]
+  f <- attr(dr, "files")
+  rd <- function(p) utils::read.csv(p, check.names = FALSE, stringsAsFactors = FALSE)
+  app <- drftapp(dr, ref = rd(f[["ref"]]), cur = rd(f[["cur"]]))
+  out(sprintf("\nOpening the drift app on %s\n", names(drifts)[1L]))
+  .bl_run_app(app)
+  invisible(NULL)
 }
 
 #' The refresh verb: cpsrfrsh() on every capsule under a path that has a provenance.

@@ -73,8 +73,8 @@ NULL
 #' @srrstatsNA {EA2.5} No index columns, for the reason given under EA2.0.
 #' @srrstatsNA {EA5.1} No plot sets a typeface family (grep shows no `family=` in plots.R or policy_plots.R); device
 #'   defaults are used.
-#' @srrstatsNA {EA5.6} No dynamic-visualisation library is bundled: base graphics only, Imports are base packages,
-#'   and inst/ holds no .js files.
+#' @srrstatsNA {EA5.6} No dynamic-visualisation library is bundled: plots are base graphics, drfthtml()'s page
+#'   draws with its own short script (inst/drift/drift.js, no library), and drftapp() uses shiny from Suggests.
 #' @srrstatsNA {TS1.0} Series are short published tables keyed by period columns (fiscal years, dates), not regular
 #'   ts objects; plain vectors and data frames are deliberate, and yoy() also accepts ts.
 #' @srrstatsNA {TS1.7} Inputs are dimensionless counts or periods and days the user sets; there is no physical-unit

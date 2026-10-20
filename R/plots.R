@@ -990,8 +990,13 @@ plotopt <- function(...) {
 #'     the statistic against the cap applied to the open band.}
 #'   \item{\code{rmbl_drift_calibration}, \code{bricklayer_drift}}{
 #'     (\code{\link{drftcal}}, \code{\link{cpsdrft}}) the
-#'     false-alarm rate per column against alpha; the population stability
-#'     index per column with the drifted columns marked.}
+#'     false-alarm rate per column against alpha; for a drift result,
+#'     \code{what = "psi"} (the default) the population stability index
+#'     per column, worst first, coloured by verdict, with the warn and fail
+#'     bands as dashed lines; \code{"columns"} the reference and current
+#'     distributions of up to six columns (\code{cols}, or the worst), each
+#'     PSI bin's term written on it; \code{"benford"} the first digits of
+#'     numeric columns against Benford's law, with the test's verdict.}
 #'   \item{\code{bricklayer_benford}}{(\code{\link{benfordtst}}) observed
 #'     first-digit proportions against Benford's law.}
 #'   \item{\code{bricklayer_power}}{(\code{\link{cpspwr}}) the power
@@ -1125,12 +1130,20 @@ plotopt <- function(...) {
 #'       of \code{"adp"}, \code{"alos"}, \code{"people"}, \code{"days"},
 #'       \code{"flowrate"}, \code{"stkrate"};
 #'     \item \code{rmbl_yoy}: \code{"pctchg"} or \code{"value"};
+#'     \item \code{bricklayer_drift}: \code{"psi"}, \code{"columns"} or
+#'       \code{"benford"};
 #'     \item \code{rmbl_case_flow}: \code{"flow"} and/or \code{"clearance"};
 #'     \item \code{rmbl_clearance_decomposition}: any of \code{"rates"},
 #'       \code{"mix"} and \code{"effects"} (the default fits the device).
 #'   }
 #'   The 0.5.x values \code{"pct_change"}, \code{"flow_rate"} and \code{"stock_rate"} are
 #'   still accepted, as is \code{"rate_change"} for \code{which}.
+#' @param cols For \code{bricklayer_drift}, the columns to draw with
+#'   \code{what = "columns"} or \code{"benford"}; \code{NULL} (the default)
+#'   takes up to six, worst first.
+#' @param warn,fail For \code{bricklayer_drift}, the PSI bands: a column is
+#'   \code{warn} above the first and \code{fail} above the second (or when
+#'   its test rejects at alpha). \code{NULL} takes the object's \code{bands}.
 #' @param exposure For \code{rmbl_crf} and \code{rmbl_burden}, the exposure
 #'   range to draw the curve over; the default runs from 0 to 1.5 times the
 #'   exposure in the object.
@@ -1230,7 +1243,10 @@ plotopt <- function(...) {
 #' # drift between two extracts, and how often the test cries wolf
 #' set.seed(1)
 #' dd <- data.frame(a = rnorm(400), b = sample(letters[1:3], 400, TRUE))
-#' plot(cpsdrft(dd, transform(dd, a = a + 3)))
+#' dr <- cpsdrft(dd, transform(dd, a = a + 3))
+#' plot(dr)
+#' plot(dr, what = "columns")
+#' plot(dr, what = "benford", warn = 0.05, fail = 0.2)
 #' plot(drftcal(dd, n = 20L))
 #' # describing a table
 #' plot(freqtbl(data.frame(g = c("a", "b", "b", "c", "c", "c")), "g"))
@@ -1560,24 +1576,130 @@ plot.rmbl_drift_calibration <- function(x, ..., main = NULL, col = NULL, palette
 }
 
 #' @rdname plot-methods
+#' @srrstats {EA5.0} The drift plots colour each column by its verdict under the PSI bands drawn as
+#'   reference lines; the same palette and verdicts as drfthtml()'s page (test-drift-plots.R).
 #' @export
-plot.bricklayer_drift <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+plot.bricklayer_drift <- function(x, ..., what = c("psi", "columns", "benford"), cols = NULL, warn = NULL,
+                                  fail = NULL, main = NULL, col = NULL, palette = NULL) {
   .rmbl_plot_check(x, "bricklayer_drift")
-  d <- x$columns
-  pal <- .bl_cols(3, col, if (is.null(palette) && is.null(col)) "diverging" else palette)
-  cols <- ifelse(!is.na(d$drifted) & d$drifted, pal[3L], pal[1L])
-  if (!is.null(col)) cols <- rep_len(col, nrow(d))
-  op <- .bl_par(d$psi)
+  what <- .rmbl_arg(what)
+  b <- .bl_drift_bands(x, warn, fail)
+  t <- .bl_drift_table(x, b$warn, b$fail)
+  vc <- if (is.null(col) && is.null(palette)) .BL_VERDICT_COLS else
+    stats::setNames(.bl_cols(4, col, palette), names(.BL_VERDICT_COLS))
+  if (what == "psi") {
+    t <- t[order(-xtfrm(ifelse(is.finite(t$psi), t$psi, -1))), , drop = FALSE]
+    bc <- if (is.null(col)) unname(vc[t$verdict]) else rep_len(col, nrow(t))
+    .bl_hbars(ifelse(is.finite(t$psi), t$psi, 0), t$column, "Population stability index",
+              .bl_main(main, sprintf("Drift by column (%d fail, %d warn)", sum(t$verdict == "fail"),
+                                     sum(t$verdict == "warn"))), bc, ref = c(b$warn, b$fail), ...)
+    out <- t[c("column", "psi", "p_value", "verdict")]
+    out$drifted <- x$columns$drifted[match(out$column, x$columns$column)]
+    rownames(out) <- NULL
+    return(invisible(out))
+  }
+  have <- vapply(t$column, function(cl) !is.null(x$summ[[cl]][[if (what == "columns") "bins" else "benford"]]), NA)
+  if (!is.null(cols)) {
+    if (!is.character(cols) || anyNA(cols) || !all(cols %in% x$columns$column)) {
+      stop(.rmbl_fn(), sprintf("`cols` must name columns of the drift result (%s)",
+                               paste(utils::head(x$columns$column, 6L), collapse = ", ")), call. = FALSE)
+    }
+    pick <- cols[cols %in% t$column[have]]
+  } else {
+    pick <- utils::head(t$column[have], 6L)
+  }
+  if (!length(pick)) {
+    graphics::plot.new()
+    graphics::title(main = .bl_main(main, if (what == "columns") "Nothing to draw: no column has binned data" else
+      "Nothing to draw: no numeric column"))
+    return(invisible(data.frame()))
+  }
+  op <- .bl_panels_begin(length(pick))
   on.exit(graphics::par(op), add = TRUE)
-  psi <- ifelse(is.finite(d$psi), d$psi, 0)
-  .bl_barplot(psi, names.arg = d$column, col = cols, border = NA,
-                    ylab = "",
-                    main = "",
-                    ...)
-  .bl_ylab("Population stability index")
-  .bl_title(.bl_main(main, sprintf("Drift by column (%d drifted)", sum(d$drifted, na.rm = TRUE))))
+  on.exit(.bl_panels_abort(), add = TRUE)
+  rc <- .bl_cols(2, col, palette)
+  drawn <- lapply(pick, function(cl) {
+    s <- x$summ[[cl]]
+    v <- t$verdict[t$column == cl]
+    if (what == "benford") return(.bl_drift_benford_panel(cl, s$benford, v, x$alpha, rc, main, ...))
+    .bl_drift_column_panel(cl, s, v, rc, main, ...)
+  })
+  key <- .bl_panels_end()
+  out <- do.call(rbind, drawn)
+  attr(out, "plnkey") <- key
+  invisible(out)
+}
+
+#' Draws one column's comparison panel: overlaid histograms (numeric) or side-by-side shares
+#' (categorical), each PSI bin's term written above it.
+#' @param cl The column.
+#' @param s Its summary from cpsdrft().
+#' @param v Its verdict.
+#' @param rc The reference and current colours.
+#' @param main The caller's title, or NULL.
+#' @param ... Further arguments to the base call.
+#' @return A data frame of the bins drawn: column, bin, ref, cur, contrib.
+#' @noRd
+.bl_drift_column_panel <- function(cl, s, v, rc, main, ...) {
+  b <- s$bins
+  ttl <- .bl_main(main, sprintf("%s: %s, PSI %s", cl, v, formatC(sum(b$contrib), digits = 3, format = "g")))
+  if (!is.null(s$hist)) {
+    h <- s$hist
+    dens <- function(p) p / (h$hi - h$lo)
+    graphics::par(mar = .bl_safe_mar(c(4.2, .bl_left_margin(c(0, dens(c(h$ref, h$cur)))), 3, 1)))
+    graphics::plot(range(c(h$lo, h$hi)), c(0, max(dens(c(h$ref, h$cur))) * 1.15), type = "n", xlab = "",
+                   ylab = "", ...)
+    .bl_title(ttl)
+    .bl_ylab("Density")
+    .bl_grid(NULL)
+    graphics::rect(h$lo, 0, h$hi, dens(h$ref), col = grDevices::adjustcolor(rc[1L], 0.35), border = NA)
+    graphics::lines(c(rbind(h$lo, h$hi)), rep(dens(h$cur), each = 2L), col = rc[2L], lwd = 2.4)
+    graphics::legend("topright", c("reference", "current"), fill = c(grDevices::adjustcolor(rc[1L], 0.35), NA),
+                     border = NA, col = c(NA, rc[2L]), lwd = c(NA, 2.4), bty = "n", cex = 0.75)
+    graphics::mtext(sprintf("PSI by quantile bin: %s", paste(formatC(b$contrib, digits = 2, format = "g"),
+                                                            collapse = " ")), side = 1, line = 2.6, cex = 0.6)
+  } else {
+    keep <- utils::head(order(-(b$ref + b$cur)), 15L)
+    bb <- b[sort(keep), , drop = FALSE]
+    m <- rbind(bb$ref, bb$cur)
+    graphics::par(mar = .bl_safe_mar(c(4.2, .bl_left_margin(c(0, m)), 3, 1)))
+    mids <- .bl_barplot(m, beside = TRUE, names.arg = .bl_short_label(bb$bin, 12L), col = rc, labels = FALSE,
+                        ylim = c(0, max(m) * 1.25), ...)
+    .bl_title(ttl)
+    .bl_ylab("Share")
+    .bl_grid(NULL)
+    graphics::text(colMeans(mids), apply(m, 2L, max), formatC(bb$contrib, digits = 2, format = "g"), pos = 3,
+                   cex = 0.6, col = "#3D4350", xpd = NA)
+    graphics::legend("topright", c("reference", "current"), fill = rc, border = NA, bty = "n", cex = 0.75)
+  }
+  data.frame(column = cl, bin = b$bin, ref = b$ref, cur = b$cur, contrib = b$contrib, stringsAsFactors = FALSE)
+}
+
+#' Draws one column's first digits against Benford's law, the reference as points.
+#' @param cl The column.
+#' @param bf Its first-digit counts from cpsdrft().
+#' @param v Its verdict.
+#' @param alpha The level of the test.
+#' @param rc The reference and current colours.
+#' @param main The caller's title, or NULL.
+#' @param ... Further arguments to the base call.
+#' @return A data frame: column, digit, cur, ref, expected.
+#' @noRd
+.bl_drift_benford_panel <- function(cl, bf, v, alpha, rc, main, ...) {
+  cur <- bf$cur / bf$n
+  ref <- if (sum(bf$ref)) bf$ref / sum(bf$ref) else rep(NA_real_, 9L)
+  e <- log10(1 + 1 / (1:9))
+  graphics::par(mar = .bl_safe_mar(c(4.2, .bl_left_margin(c(0, cur, e)), 3, 1)))
+  mids <- .bl_barplot(cur, names.arg = 1:9, col = rc[2L], labels = FALSE,
+                      ylim = c(0, max(c(cur, ref, e), na.rm = TRUE) * 1.15), xlab = "First digit", ...)
+  .bl_title(.bl_main(main, sprintf("%s: %s Benford (p = %s)", cl,
+                                   if (bf$p_value < alpha) "departs from" else "consistent with",
+                                   formatC(bf$p_value, digits = 3, format = "g"))))
+  .bl_ylab("Proportion")
   .bl_grid(NULL)
-  invisible(d[c("column", "psi", "p_value", "drifted")])
+  .bl_line(mids, e, "#4D4D4D", fill = FALSE, label = FALSE)
+  graphics::points(mids, ref, pch = 21, bg = rc[1L], col = "white", cex = 1.3)
+  data.frame(column = cl, digit = 1:9, cur = cur, ref = ref, expected = e)
 }
 
 #' @rdname plot-methods
@@ -1632,9 +1754,10 @@ plot.bricklayer_power <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' @param main The title.
 #' @param cols The colours.
 #' @param ... Further arguments to barplot().
+#' @param ref Values drawn as dashed reference lines, or NULL.
 #' @return NULL, invisibly.
 #' @noRd
-.bl_hbars <- function(values, labels, xlab, main, cols, ...) {
+.bl_hbars <- function(values, labels, xlab, main, cols, ..., ref = NULL) {
   labels <- as.character(labels)
   # a frequency table counts NA as a level of its own; a real level called "(missing)" keeps
   # its name and the NA level is told apart
@@ -1657,6 +1780,7 @@ plot.bricklayer_power <- function(x, ..., main = NULL, col = NULL, palette = NUL
               border = NA, xlab = xlab, main = "", ...)
   .bl_title(main)
   .bl_grid(NULL, side = "x")
+  if (length(ref)) graphics::abline(v = ref, lty = 2, col = "#4D4D4D")
   invisible(NULL)
 }
 

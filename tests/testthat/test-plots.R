@@ -109,7 +109,7 @@ test_that("band sensitivity, drift calibration and drift", {
   expect_true(all(pc$lower <= pc$falsealarmrate & pc$falsealarmrate <= pc$upper))
   dr <- cpsdrft(dd, transform(dd, a = a + 3))
   pd <- with_dev(plot(dr))
-  expect_equal(pd$column, dr$columns$column)
+  expect_setequal(pd$column, dr$columns$column)
   expect_equal(nrow(with_dev(plot(dr, col = "red"))), nrow(dr$columns))
 })
 

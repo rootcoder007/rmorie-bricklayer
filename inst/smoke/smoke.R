@@ -98,6 +98,15 @@ cases <- list(
     r <- run("drift", smoke_capsule, "--psi-warn", "0.1", "--psi-fail", "0.25", "--cache", file.path(home, "cache"), "--snapshot")
     check(r$status == 0 && grepl("| Verdict | Column |", r$text, fixed = TRUE) && grepl("Footprint of these checks", r$text, fixed = TRUE), paste("drift bands:", substr(r$text, 1, 300)))
     r <- run("drift", smoke_capsule, "--fail-on", "drift", "--no-footprint"); check(r$status == 1L && !grepl("Footprint", r$text, fixed = TRUE), paste("drift fail-on:", substr(r$text, 1, 300)))
+    # the moved source: --html writes the interactive report, --json carries the columns, --app builds the app
+    h <- file.path(home, "drift.html")
+    r <- run("drift", smoke_capsule, "--html", h); check(r$status == 0 && file.exists(h) && grepl("HTML report", r$text, fixed = TRUE), paste("drift --html:", substr(r$text, 1, 300)))
+    check(any(grepl("id=\"drift-data\"", readLines(h, warn = FALSE), fixed = TRUE)), "drift --html: no data in the page")
+    # --app with the launcher replaced, so no server starts: the app is built, or shiny's absence is said
+    ns <- asNamespace("rmoriebricklayer"); real <- get(".bl_run_app", ns); got <- NULL
+    utils::assignInNamespace(".bl_run_app", function(app) got <<- app, ns = ns); on.exit(utils::assignInNamespace(".bl_run_app", real, ns = ns), add = TRUE)
+    r <- run("drift", smoke_capsule, "--app")
+    check((r$status == 0 && inherits(got, "shiny.appobj")) || (r$status == 1 && grepl("drftapp: the app needs the shiny package", r$text, fixed = TRUE)), paste("drift --app:", substr(r$text, 1, 300)))
     pf <- file.path(smoke_capsule, "data_provenance.json"); p0 <- readLines(pf)
     on.exit(writeLines(p0, pf), add = TRUE)  # refresh (cpsrfrsh() without allowfile) reads the plain path again
     p <- loadprov(pf); p$source$url <- paste0("file://", normalizePath(file.path(smoke_capsule, "source.csv"), winslash = "/"))

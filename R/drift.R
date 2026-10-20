@@ -186,6 +186,21 @@ drftpsi <- function(x, y, bins = 10L, eps = 1e-6) {
   if (length(eps) != 1L || is.na(eps) || eps <= 0 || eps >= 1) {
     stop("`eps` must be a positive floor below one (0 < eps < 1)", call. = FALSE)
   }
+  s <- .rmbl_psi_shares(x, y, bins)
+  out <- .Call(C_rmbl_psi, s$px, s$py, as.numeric(eps))
+  names(out) <- c("psi", "jsdiv")
+  out
+}
+
+#' Bins two samples on the reference's quantiles, as drftpsi() does.
+#'
+#' The bin edges and the two sets of bin shares behind the PSI; cpsdrft() keeps them so a plot
+#' or a report can show where the index comes from.
+#' @param x,y The reference and the new sample, finite and non-empty.
+#' @param bins The number of quantile bins of the reference.
+#' @return A list: `edges` (from -Inf to Inf), `px` and `py` (the shares per bin).
+#' @noRd
+.rmbl_psi_shares <- function(x, y, bins) {
   # Values within a part in 1e12 of each other are the same value: cut()
   # is right-closed, and a float-formatting difference between two
   # releases of a file moved whole bins of tied integers across an edge.
@@ -206,11 +221,9 @@ drftpsi <- function(x, y, bins = 10L, eps = 1e-6) {
   } else {
     c(-Inf, q, Inf)
   }
-  px <- as.numeric(table(cut(x, edges))) / length(x)
-  py <- as.numeric(table(cut(y, edges))) / length(y)
-  out <- .Call(C_rmbl_psi, px, py, as.numeric(eps))
-  names(out) <- c("psi", "jsdiv")
-  out
+  list(edges = edges,
+       px = as.numeric(table(cut(x, edges))) / length(x),
+       py = as.numeric(table(cut(y, edges))) / length(y))
 }
 
 #' Chi-square test for a categorical column
@@ -696,7 +709,15 @@ benfordtst <- function(x) {
 #'     (why a column was not tested, or `""`);}
 #'   \item{`added`, `removed`}{character vectors of column names;}
 #'   \item{`nref`, `ncur`}{row counts;}
-#'   \item{`alpha`}{the level used;}
+#'   \item{`alpha`, `psithr`, `psiminn`}{the settings used;}
+#'   \item{`bands`}{the PSI bands the plots and reports colour by:
+#'     `warn` (0.1, or `psithr` when lower) and `fail` (`psithr`);}
+#'   \item{`summ`}{one binned summary per shared column, for
+#'     [plot()][plot-methods], [drfthtml()] and
+#'     [drftapp()]: missing shares,
+#'     sizes, summary statistics or the ten largest categories, the PSI bins
+#'     with each bin's term of the index, a histogram and first-digit counts.
+#'     Never the rows;}
 #'   \item{`anydrft`}{logical.}
 #' }
 #' The print method lists the per-column verdicts, drifted columns first.
@@ -869,15 +890,127 @@ cpsdrft <- function(ref, cur, alpha = 0.01,
                unseen_share = numeric(0), drifted = logical(0),
                note = character(0), stringsAsFactors = FALSE)
 
+  # the binned summaries a plot or a report draws from (never the rows themselves)
+  summ <- stats::setNames(lapply(seq_along(shared), function(i) {
+    .rmbl_drift_summ(ref[[shared[i]]], cur[[shared[i]]], cols$type[i], bins)
+  }), shared)
   out <- list(columns = cols, added = added, removed = removed,
               nref = nrow(ref), ncur = nrow(cur),
-              alpha = alpha,
+              alpha = alpha, psithr = psithr, psiminn = psiminn,
+              bands = c(warn = min(0.1, psithr), fail = psithr), summ = summ,
               anydrft = any(cols$drifted, na.rm = TRUE) ||
                 length(added) > 0L || length(removed) > 0L)
   class(out) <- c("bricklayer_drift", "list")
   out
 }
 
+
+#' The binned summary of one shared column, for the drift plots and reports.
+#'
+#' What a reader needs to see where a column moved, and nothing that would reproduce its rows: the
+#' missing shares, the non-missing sizes, summary statistics (numeric) or the ten largest categories,
+#' the PSI bins with each bin's term of the index, a 30-bin histogram on the pooled 0.5-99.5% range
+#' (numeric), and the first-digit counts of both samples (numeric, not dates).
+#' @param a,b The column in the reference and in the current frame.
+#' @param type The column's type as cpsdrft() decided it.
+#' @param bins The number of quantile bins (as for drftpsi()).
+#' @return A list.
+#' @noRd
+.rmbl_drift_summ <- function(a, b, type, bins) {
+  out <- list(missref = if (length(a)) mean(is.na(a)) else 0, misscur = if (length(b)) mean(is.na(b)) else 0)
+  if (type %in% c("numeric", "date")) {
+    if (type == "date") {
+      a <- .rmbl_as_dates(a)
+      b <- .rmbl_as_dates(b)
+    }
+    fmt <- if (inherits(a, "Date")) function(v) format(as.Date(v, origin = "1970-01-01")) else
+      if (inherits(a, "POSIXct")) function(v) format(as.POSIXct(v, origin = "1970-01-01", tz = "UTC")) else
+        function(v) formatC(v, digits = 3, format = "g")
+    av <- as.numeric(a[!is.na(a)])
+    bv <- as.numeric(b[!is.na(b)])
+    out$nref <- length(av)
+    out$ncur <- length(bv)
+    if (!length(av) || !length(bv)) return(out)
+    q <- function(v) {
+      c(mean(v), if (length(v) > 1L) stats::sd(v) else NA_real_,
+        stats::quantile(v, c(0, 0.25, 0.5, 0.75, 1), names = FALSE))
+    }
+    out$stats <- data.frame(stat = c("mean", "sd", "min", "q1", "median", "q3", "max"), ref = q(av), cur = q(bv),
+                            stringsAsFactors = FALSE)
+    s <- .rmbl_psi_shares(av, bv, bins)
+    out$bins <- data.frame(bin = .rmbl_bin_labels(s$edges, fmt), ref = s$px, cur = s$py,
+                           contrib = .rmbl_psi_terms(s$px, s$py), stringsAsFactors = FALSE)
+    r <- stats::quantile(c(av, bv), c(0.005, 0.995), names = FALSE)
+    if (r[2L] <= r[1L]) r <- r + c(-0.5, 0.5)
+    br <- seq(r[1L], r[2L], length.out = 31L)
+    h <- function(v) {
+      tabulate(findInterval(pmin(pmax(v, r[1L]), r[2L]), br, rightmost.closed = TRUE, all.inside = TRUE),
+               30L) / length(v)
+    }
+    out$hist <- data.frame(lo = br[-31L], hi = br[-1L], ref = h(av), cur = h(bv))
+    if (type == "numeric") out$benford <- .rmbl_benford_pair(av, bv)
+    return(out)
+  }
+  av <- as.character(a)
+  bv <- as.character(b)
+  av <- av[!is.na(av)]
+  bv <- bv[!is.na(bv)]
+  out$nref <- length(av)
+  out$ncur <- length(bv)
+  if (type != "categorical" || !length(av) || !length(bv)) return(out)
+  lv <- unique(av)
+  unseen <- mean(!(bv %in% av))
+  px <- c(as.numeric(table(factor(av, levels = lv))) / length(av), 0)
+  py <- c(as.numeric(table(factor(bv, levels = lv))) / length(bv), unseen)
+  b <- data.frame(bin = c(lv, "(not in the reference)"), ref = px, cur = py, contrib = .rmbl_psi_terms(px, py),
+                  stringsAsFactors = FALSE)
+  out$bins <- b[c(rep(TRUE, length(lv)), unseen > 0), , drop = FALSE]
+  pooled <- (out$bins$ref * length(av) + out$bins$cur * length(bv)) / (length(av) + length(bv))
+  top <- utils::head(order(-pooled), 10L)
+  out$top <- data.frame(category = out$bins$bin[top], ref = out$bins$ref[top], cur = out$bins$cur[top],
+                        stringsAsFactors = FALSE)
+  rownames(out$bins) <- NULL
+  out
+}
+
+#' Each bin's term of the population stability index, with drftpsi()'s default floor.
+#' @param p,q The reference and current shares.
+#' @return The terms, which add up to the index.
+#' @noRd
+.rmbl_psi_terms <- function(p, q) {
+  a <- pmax(p, 1e-6)
+  b <- pmax(q, 1e-6)
+  (a - b) * log(a / b)
+}
+
+#' Labels for quantile bins: "<= a", "(a, b]", "> b".
+#' @param edges The bin edges, from -Inf to Inf.
+#' @param fmt The function that formats an edge.
+#' @return One label per bin.
+#' @noRd
+.rmbl_bin_labels <- function(edges, fmt) {
+  lo <- edges[-length(edges)]
+  hi <- edges[-1L]
+  ifelse(is.infinite(lo), paste0("<= ", fmt(hi)),
+         ifelse(is.infinite(hi), paste0("> ", fmt(lo)), paste0("(", fmt(lo), ", ", fmt(hi), "]")))
+}
+
+#' First-digit counts of two samples and the current sample's Benford test.
+#' @param av,bv The reference and current values, finite.
+#' @return A list (`ref`, `cur`: counts of digits 1-9; `n`; `p_value`), or NULL when the current
+#'   sample has no non-zero value.
+#' @noRd
+.rmbl_benford_pair <- function(av, bv) {
+  digits <- function(v) {
+    v <- v[v != 0]
+    if (length(v)) as.numeric(.Call(C_rmbl_first_digit_counts, v)) else rep(0, 9L)
+  }
+  k <- digits(bv)
+  n <- sum(k)
+  if (!n) return(NULL)
+  e <- n * log10(1 + 1 / (1:9))
+  list(ref = digits(av), cur = k, n = n, p_value = .rmbl_chisq_p(sum((k - e)^2 / e), 8L))
+}
 
 #' Reads a column of ISO dates or date-times as dates.
 #'

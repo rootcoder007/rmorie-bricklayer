@@ -170,7 +170,8 @@ format.bricklayer_drift <- function(x, ...) {
              paste0("  ", utils::capture.output(
                print(tbl[ord, , drop = FALSE], row.names = FALSE))))
   }
-  c(out, .rmbl_rule())
+  c(out, "", "  plot(x, what = \"columns\") draws the columns; drfthtml(x, file) writes an interactive report",
+    .rmbl_rule())
 }
 
 #' Printed reports for bricklayer objects

@@ -71,13 +71,17 @@ with its base copy, \code{--manifests GLOB} checks only the
 capsule files matching GLOB, \code{--snapshot} looks up each
 source's latest Wayback snapshot and \code{--no-footprint} leaves
 the footprint (\code{\link{co2fp}}) out of the report}
-\item{\code{drift PATH [--json] [--fail-on LEVEL]}}{verify, then fetch
+\item{\code{drift PATH [--json] [--fail-on LEVEL] [--html FILE] [--app]}}{
+verify, then fetch
 each source again and compare it column by column
 (\code{\link{cpsdrft}}, Benford): a column past
 \code{--psi-warn X} (0.1) is a warning, a flagged one past
 \code{--psi-fail X} (0.25) drift. \code{--allow-file} accepts
 \code{file://} sources, \code{--cache DIR} keeps each source and
-reads it when a fetch fails; the options of verify apply}
+reads it when a fetch fails; the options of verify apply.
+\code{--html FILE} writes the interactive report
+(\code{\link{drfthtml}}) and \code{--app} opens it as a Shiny
+app (\code{\link{drftapp}})}
 \item{\code{refresh PATH}}{pin each source's new bytes
 (\code{\link{cpsrfrsh}}) and print what changed
 (\code{\link{mnfdiff}})}

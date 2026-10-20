@@ -279,6 +279,8 @@ reference:
       - drftchisq
       - drfthomog
       - benfordtst
+      - drfthtml
+      - drftapp
   - title: Signed provenance
     desc: >
       Authenticated rather than merely checksummed. Keyed digests for a shared

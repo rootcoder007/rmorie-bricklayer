@@ -93,8 +93,12 @@ made \code{drift} with its \code{columns} table,
 \code{drift_summary}, \code{snapshot}, \code{snapshot_utc} and
 \code{manifests}), \code{base} (its label), \code{psiwarn},
 \code{psifail} and \code{footprint} (the \code{co2fp()} result
-without its value, or \code{NULL}). \code{format()} returns one
-string and \code{print()} writes the Markdown report.
+without its value, or \code{NULL}). The \code{cpsdrft()} result
+of each capsule whose columns were compared, with its provenance and
+manifest diff, is in the attribute \code{drifts} (named by capsule),
+for \code{\link{drfthtml}} and \code{\link{drftapp}}.
+\code{format()} returns one string and \code{print()} writes the
+Markdown report.
 }
 \description{
 Runs the checks of the rmbl GitHub Action on every capsule (a folder
