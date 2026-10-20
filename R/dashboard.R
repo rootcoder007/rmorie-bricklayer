@@ -806,12 +806,16 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 #' @return NULL, invisibly.
 #' @noRd
 .bl_tab_server <- function(id, s, dat, rpt, set, active = shiny::reactive(id), mode = shiny::reactive("light")) {
+  # forced here: the tabs are made in a loop, and a promise first read by an observer or a task would see
+  # the loop's last spec (every tab ran the Hawkes analysis)
+  force(s)
   shiny::moduleServer(id, function(input, output, session) {
     shiny::setBookmarkExclude(c("run", "add", "pickcol", "hover", "dbrush", "side"))
     res <- shiny::reactiveVal(NULL)
     restored <- shiny::reactiveVal(list())
     shiny::onRestore(function(state) restored(state$input))
-    tabdata <- shiny::reactive(.bl_app_try(.bl_tab_data(input$source, dat())))
+    # before the page has sent its inputs, the tab's first example is its data
+    tabdata <- shiny::reactive(.bl_app_try(.bl_tab_data(input$source %||% unname(s$sources[[1L]]), dat())))
     task <- shiny::ExtendedTask$new(function(f, d, inp, st) {
       .bl_bg(function() .bl_app_try(.bl_tab_run(f, s, d, inp, st)), f$long)
     })

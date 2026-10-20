@@ -336,8 +336,8 @@
                              rel = "noopener", sprintf("%s-%s-%s-01", substr(id, 1, 2), substr(id, 3, 4),
                                                        substr(id, 5, 8)))
              })
-             sep <- c(rep(list(", "), length(links) - 1L), list(""))
-             shiny::tags$p("Source tables: ", c(rbind(links, sep)), " (Statistics Canada Open Licence).")
+             shiny::tags$p("Source tables: ", shiny::HTML(paste(vapply(links, as.character, ""), collapse = ", ")),
+                           " (Statistics Canada Open Licence).")
            })),
          sources = c("Demo: a published table with suppressed cells (rmbldemo)" = .ux("fnmi"),
                      "Health indicators (indiex)" = "indiex(\"health\")",

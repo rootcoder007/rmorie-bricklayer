@@ -754,3 +754,24 @@ test_that("the launcher hands the app to shiny::runApp()", {
   local_mocked_bindings(runApp = function(...) "ran", .package = "shiny")
   expect_null(ns$.bl_app_launch(NULL, NULL, FALSE))
 })
+
+test_that("tabs made in a loop each keep their own spec", {
+  skip_if_not_installed("shiny")
+  shiny::testServer(ns$.bl_app_server(nodata), {
+    for (tab in c("yoy", "hawkes")) {
+      session$setInputs(tabs = tab)
+      for (i in seq_len(300L)) {
+        later::run_now(0.02)
+        session$flushReact()
+        if (nzchar(output[[paste0(tab, "-code")]])) break
+      }
+    }
+    expect_match(output[["yoy-code"]], "yoy(data", fixed = TRUE)
+    expect_match(output[["hawkes-code"]], "chwkfit(", fixed = TRUE)
+  })
+})
+
+test_that("the source tables are a comma-separated list of links", {
+  about <- as.character(Filter(function(s) s$id == "fnmi", ns$.bl_app_specs())[[1L]]$about)
+  expect_match(about, "13-10-0924-01</a>, <a", fixed = TRUE)
+})
