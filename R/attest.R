@@ -221,10 +221,11 @@ cpschkatst <- function(attest, man,
     } else {
       as.character(keyexp)[1L]
     }
+    key_ok <- identical(tolower(as.character(expected_hex)), tolower(as.character(attest$public %||% "")))
     note_row(
-      "key_as_expected",
-      identical(tolower(as.character(expected_hex)), tolower(as.character(attest$public %||% ""))),
-      "the attestation carries the key it was checked against"
+      "key_as_expected", key_ok,
+      if (key_ok) "the attestation carries the expected key" else
+        "the attestation carries a different key from the one expected"
     )
   }
 

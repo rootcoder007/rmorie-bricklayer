@@ -174,6 +174,16 @@ test_that("the capsule template runs as written on the shipped example", {
   expect_true(file.exists(file.path(d, "results", "manifest.json")),
               info = paste(res, collapse = "\n"))
   expect_true(file.exists(file.path(d, "results", "report.html")))
+  # the first run pinned the bytes into the provenance, in the form vrfcps() reads
+  prov2 <- loadprov(file.path(d, "data_provenance.json"))
+  expect_identical(prov2$source$sha256, sha256file(prov$source$url))
+  expect_identical(prov2$resource$sha256, prov2$source$sha256)
+  expect_true(file.exists(file.path(d, prov2$resource$filename)))
+  expect_true(vrfcps(d)$ok)
+  # a second run sees the pin and goes through again
+  res2 <- system2(file.path(R.home("bin"), "Rscript"), c(shQuote(file.path(d, "analysis.R"))),
+                  stdout = TRUE, stderr = TRUE)
+  expect_true(any(grepl("results in", res2)), info = paste(res2, collapse = "\n"))
 })
 
 test_that("rptanl() renders a percent analysis", {

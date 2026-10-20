@@ -17,6 +17,12 @@ RUN R -e "options(repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux
 WORKDIR /bricklayer
 COPY . /bricklayer
 
+# The package itself, so `library(rmoriebricklayer)` and `rmbl` work in the image and in the
+# rmbl GitHub Action built on it.
+RUN R CMD INSTALL --no-multiarch /bricklayer \
+    && ln -s "$(Rscript -e 'cat(system.file("bin", "rmbl", package = "rmoriebricklayer"))')" /usr/local/bin/rmbl \
+    && rmbl version
+
 # Default to an interactive shell with the kit + R toolchain ready.
 # Build a bundle with:  ./make_bundle.sh otis-mrp --version <v>
 CMD ["bash"]
