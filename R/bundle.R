@@ -149,6 +149,9 @@
 #' try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))
 #' unlink(dir, recursive = TRUE)
 #' @export
+#' @srrstats {G5.4b} An hmac bundle written by morie (the Python implementation, fixed fixture
+#'   tests/testthat/fixtures/morie-hmac) verifies here, and one written here verifies with morie's own
+#'   `capsule verify` (test-bundle.R:7, 22).
 cpsbndl <- function(dir, man, key, files = NULL,
                            ctx = NULL, prehash = "none", note = NULL,
                            path = NULL) {

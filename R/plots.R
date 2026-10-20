@@ -1282,6 +1282,8 @@ plot.rmbl_stock_flow <- function(x, ..., what = c("adp", "alos", "people", "days
 #'   interval bars (.bl_time_interval), as the event-study plot does.
 #' @srrstats {TS5.5} `gaps = "break"` (default) breaks lines at a missing value, such as a "no data" period yoy
 #'   inserted; `gaps = "join"` draws over it (.bl_line).
+#' @srrstats {G2.3a} `gaps` (like `what`) is matched by .rmbl_arg(), the package's match.arg(); an unknown value is
+#'   refused listing the choices (test-srr.R:245).
 #' @export
 plot.rmbl_yoy <- function(x, ..., what = c("pctchg", "value"), main = NULL, col = NULL,
                           palette = NULL, xlab = NULL, gaps = c("break", "join")) {

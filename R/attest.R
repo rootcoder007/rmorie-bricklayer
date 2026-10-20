@@ -160,6 +160,15 @@
 #' # a key that is not a signing key is refused
 #' try(cpsatst(m, 42))
 #' @export
+#' @srrstats {G2.0} An hmac `key` must be one string or a non-empty raw vector; a character vector of
+#'   length 2 is refused (.rmbl_attest_scheme, test-attest.R:461).
+#' @srrstats {G2.1} `key` must be a key object, a string or raw: anything else (a list, NULL) is
+#'   refused naming the accepted types (a list: test-attest.R:226; NULL: test-stress-7703a04-review.R:31); a
+#'   function given to cpschkatst() is refused by .rmbl_no_fn (test-attest.R:462).
+#' @srrstats {G5.2b} Each refusal added for hmac (`ctx`, `prehash`, empty or multi-valued secret) is
+#'   triggered in test-attest.R:457-461 and its message text matched.
+#' @srrstats {G5.8a} A zero-length secret, "" or raw(0), is refused rather than used as an empty HMAC
+#'   key (test-attest.R:459-460).
 cpsatst <- function(man, key, ctx = NULL,
                            prehash = "none", note = NULL) {
   .rmbl_no_fn(note = note, context = ctx)
