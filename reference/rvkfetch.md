@@ -91,9 +91,10 @@ try(rvkfetch(list(list(der = as.raw(1:3))), tmout = 0))
 #> Error : `tmout` must be positive
 
 # Reaches the network, so it is not run here.
-if (FALSE) { # \dontrun{
+
+if (FALSE) { # interactive()
 res <- certchnvrf("leaf.crt", trust = "ca.crt",
                          rvk = "fetch")
 res$checks
-} # }
+}
 ```

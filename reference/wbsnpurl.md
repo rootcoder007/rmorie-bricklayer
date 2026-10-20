@@ -58,10 +58,11 @@ try(wbsnpurl(NA))
 #> Error : `url` must be a single non-empty string
 try(wbsnpurl(c("https://a.org", "https://b.org")))
 #> Error : `url` must be a single non-empty string
-if (FALSE) { # \dontrun{
+
+if (FALSE) { # interactive()
 # needs the network
 wbsnpurl("https://www.r-project.org/")
 # the snapshot nearest to January 2020
 wbsnpurl("https://www.r-project.org/", ts = "202001")
-} # }
+}
 ```

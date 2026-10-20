@@ -121,14 +121,14 @@ returned, to be pinned for the next run.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># interactive()</span></span></span>
 <span class="r-in"><span><span class="co"># a Statistics Canada table the Wayback Machine cannot capture, with the archive.org copy</span></span></span>
 <span class="r-in"><span><span class="co"># made from elsewhere as a mirror</span></span></span>
 <span class="r-in"><span><span class="va">item</span> <span class="op">&lt;-</span> <span class="st">"https://archive.org/download/rmorie-statcan-indigenous-tables-2026-10"</span></span></span>
 <span class="r-in"><span><span class="fu">fetchvrf</span><span class="op">(</span><span class="st">"https://www150.statcan.gc.ca/n1/tbl/csv/41100063-eng.zip"</span>,</span></span>
 <span class="r-in"><span>               <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"41100063-eng.zip"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>               mirrors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">item</span>, <span class="st">"/41100063-eng.zip"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

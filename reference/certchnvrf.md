@@ -179,9 +179,10 @@ r$checks[!r$checks$ok, ]
 # a chain must end at something you trust
 try(certchnvrf(leaf, trust = list()))
 #> Error : `trust` must name at least one anchor; a chain that reaches nothing you have decided to believe proves nothing
-if (FALSE) { # \dontrun{
+
+if (FALSE) { # interactive()
 # with revocation looked up on the network
 certchnvrf("tsa.crt", trust = "ca.crt", purp = "timeStamping",
                   rvk = "fetch")
-} # }
+}
 ```

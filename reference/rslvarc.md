@@ -56,12 +56,13 @@ try(rslvarc(list(dataset = list(
 #> Error : arcgis_layer_url must be an https:// URL, not ftp:// ('ftp://example.org/FeatureServer/0'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror
 try(rslvarc("not a list"))
 #> Error : `prov` must be a provenance list (loadprov())
-if (FALSE) { # \dontrun{
+
+if (FALSE) { # interactive()
 # needs the network
 prov <- list(dataset = list(arcgis_layer_url = paste0(
   "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/",
   "Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0"
 )))
 rslvarc(prov)
-} # }
+}
 ```

@@ -83,8 +83,8 @@ fdl(paste0("file://", src), tempfile(fileext = ".csv"),
 fdl(paste0("file://", src, "-missing"), tempfile(),
   attwb = "", allowfile = TRUE)
 #>   ! Download failed.
-#>     URL:   file:///tmp/Rtmp7Dir15/file1da316b27559.csv-missing
-#>     Error: cannot open file '/tmp/Rtmp7Dir15/file1da316b27559.csv-missing': No such file or directory
+#>     URL:   file:///tmp/RtmpJ6aEBs/file1d8811eb0dcd.csv-missing
+#>     Error: cannot open file '/tmp/RtmpJ6aEBs/file1d8811eb0dcd.csv-missing': No such file or directory
 #> 
 #>   Common causes (in rough order of likelihood):
 #>     * The server did not serve the file (see the error above): the URL may have moved or the
@@ -95,10 +95,11 @@ fdl(paste0("file://", src, "-missing"), tempfile(),
 # a refused URL is an error, not FALSE
 try(fdl("http://example.org/data.csv", tempfile()))
 #> Error : url must be an https:// URL, not http:// ('http://example.org/data.csv'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror
-if (FALSE) { # \dontrun{
+
+if (FALSE) { # interactive()
 # needs the network; the Wayback fallback is looked up on failure
 ok <- fdl("https://cloud.r-project.org/",
   tempfile(fileext = ".html"))
 ok
-} # }
+}
 ```

@@ -66,12 +66,12 @@ returned, to be pinned for the next run.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+if (FALSE) { # interactive()
 # a Statistics Canada table the Wayback Machine cannot capture, with the archive.org copy
 # made from elsewhere as a mirror
 item <- "https://archive.org/download/rmorie-statcan-indigenous-tables-2026-10"
 fetchvrf("https://www150.statcan.gc.ca/n1/tbl/csv/41100063-eng.zip",
                file.path(tempdir(), "41100063-eng.zip"),
                mirrors = paste0(item, "/41100063-eng.zip"))
-} # }
+}
 ```

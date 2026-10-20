@@ -161,15 +161,16 @@ try(wbsave("https://example.org/", ak = "abc", sk = "def",
 #> Error : `jobs` must be a whole number from 1 to 12
 try(wbsave("https://example.org/", ak = "abc", sk = "def",
                  output = file.path(tempdir(), "no-such-folder", "runs.jsonl")))
-#> Error : the folder for `output` does not exist: /tmp/Rtmp7Dir15/no-such-folder
+#> Error : the folder for `output` does not exist: /tmp/RtmpJ6aEBs/no-such-folder
 
 # A real run needs archive.org keys and the network.
-if (FALSE) { # \dontrun{
+
+if (FALSE) { # interactive()
 Sys.setenv(IA_S3_ACCESS_KEY_FILE = "~/.config/ia/s3_access_key.txt",
            IA_S3_SECRET_KEY_FILE = "~/.config/ia/s3_secret_key.txt")
 res <- wbsave(c("https://www.ontariocourts.ca/ocj/statistics/",
                       "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"),
                     output = "snapshots.jsonl")
 res
-} # }
+}
 ```

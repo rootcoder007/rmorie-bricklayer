@@ -86,15 +86,16 @@ read.csv(dest)
 
 # file:// is refused unless asked for, and so is an append mode
 try(dldata(paste0("file://", src), tempfile()))
-#> Error : url must be an https:// URL, not file:// ('file:///tmp/Rtmp7Dir15/file1da325b86afc.csv'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror
+#> Error : url must be an https:// URL, not file:// ('file:///tmp/RtmpJ6aEBs/file1d882584961b.csv'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror
 try(dldata("https://example.org/x.csv", tempfile(), mode = "a"))
 #> Error : `mode` must be "wb" (every transfer is binary)
-if (FALSE) { # \dontrun{
+
+if (FALSE) { # interactive()
 # needs the network
 dest <- dldata("https://cloud.r-project.org/",
   tempfile(fileext = ".html"),
   quiet = TRUE
 )
 file.exists(dest)
-} # }
+}
 ```

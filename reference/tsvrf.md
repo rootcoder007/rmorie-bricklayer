@@ -145,9 +145,10 @@ try(tsinfo(as.raw(1:10)))
 
 # Real tokens come from a timestamping authority; this is the shape of
 # the call.
-if (FALSE) { # \dontrun{
+
+if (FALSE) { # interactive()
 res <- tsvrf("response.tsr", data = "manifest.json")
 res$ok
 res$time
-} # }
+}
 ```

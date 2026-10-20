@@ -146,10 +146,11 @@ try(llmcfg(route = "hosted"))
 #> Error : the hosted MORIE language-model tier is retired: bring your own key (a provider's variable such as ANTHROPIC_API_KEY or OPENAI_API_KEY, or `rmoriebricklayer config set <provider>.key`) or run a model locally (Ollama); `rmoriebricklayer config setup` walks through it
 
 if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
-if (FALSE) { # \dontrun{
+
+if (FALSE) { # interactive()
 # your Anthropic key and model, and always use them
 llmcfg(anthropic.key = "sk-ant-...", route = "anthropic")
 # an Ollama server on another machine
 llmcfg(ollama.url = "http://192.168.1.20:11434", ollama.model = "qwen3:8b")
-} # }
+}
 ```

@@ -175,12 +175,13 @@ try(llmask("What is a capsule?", route = "ollama", docs = FALSE))
 for (v in names(old)) {
   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 }
-if (FALSE) { # \dontrun{
+
+if (FALSE) { # interactive()
 # needs your own key or a local model, and the network
 Sys.setenv(ANTHROPIC_API_KEY = "...")
 llmask("What does a SHA-256 provenance record protect against?")
 llmask("Explain an E-value of 2.1", route = "ollama")
 llmask("Summarise Benford's law in two lines", docs = FALSE,
                    syspro = "You are terse.")
-} # }
+}
 ```

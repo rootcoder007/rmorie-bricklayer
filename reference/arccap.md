@@ -121,7 +121,7 @@ Internet Archive. ias3: the Internet Archive's S3-like API.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+if (FALSE) { # interactive()
 w <- wbsave(urls)
 lic <- "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
 meta <- list(title = "Statistics Canada tables (captures)",
@@ -130,5 +130,5 @@ cap <- arccap(w, file.path(tempdir(), "capture"),
                        item = "my-statcan-tables-2026", meta = meta)
 fetchvrf(cap$url[1], tempfile(), sha256 = cap$sha256[1],
                mirrors = cap$mirror[1])
-} # }
+}
 ```

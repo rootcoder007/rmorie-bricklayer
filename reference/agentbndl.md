@@ -59,12 +59,12 @@ errors raised by
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+if (FALSE) { # interactive()
 # Needs a language model: a provider key (e.g. ANTHROPIC_API_KEY), your own
 # endpoint or a local Ollama.
 agentbndl("scaffold a bundle for analysis.R from the Toronto CKAN data")
 agentbndl("sign and verify my capsule", route = "ollama")
-} # }
+}
 
 # With every route switched off (no key in the environment and no saved
 # settings: the settings folder is pointed at an empty one) the call returns

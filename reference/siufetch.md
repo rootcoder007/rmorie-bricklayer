@@ -81,9 +81,10 @@ try(siufetch(648, tempfile(fileext = ".html"), lang = "de"))
 #> Error : `lang` must be one of "en", "fr", not "de"
 
 # a real fetch needs the network (the SIU site or the Wayback Machine)
-if (FALSE) { # \dontrun{
+
+if (FALSE) { # interactive()
 dest <- tempfile(fileext = ".html")
 siufetch(648, dest)
 siufetch(648, tempfile(fileext = ".html"), lang = "fr")
-} # }
+}
 ```

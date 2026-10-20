@@ -363,13 +363,13 @@ blcli(c("examples", "perdays"))
 #>      
 
 # capture the output instead of printing it
-lines <- character()
-status <- blcli(c("functions", "^drbg_"),
-                         out = function(x) lines <<- c(lines, x))
+con <- textConnection("lines", "w")
+status <- blcli(c("functions", "^drbg_"), out = function(x) cat(x, file = con))
+close(con)
 status
 #> [1] 0
 lines
-#> [1] "no exported function matches\n"
+#> [1] "no exported function matches"
 
 # an unknown verb is a usage error: status 2, nothing run
 blcli("nonsense")

@@ -52,10 +52,10 @@ try(siufprs("abc"))
 try(siufprs(648, lang = "de"))
 #> Error : `lang` must be one of "en", "fr", not "de"
 
-if (FALSE) { # \dontrun{
+if (FALSE) { # interactive()
 # needs the network: downloads report 648 from the SIU site
 f <- siufprs(648)
 if (!is.null(f)) f[["police_service"]]
 fr <- siufprs(648, lang = "fr")
-} # }
+}
 ```

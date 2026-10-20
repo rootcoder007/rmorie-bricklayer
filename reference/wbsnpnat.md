@@ -52,7 +52,7 @@ try(wbsnpnat(""))     # empty url -> error
 try(wbsnpnat("http://localhost/report.csv"))
 #> Error : url points at a local or private address ('http://localhost/report.csv'): refused (a single-label name is not a public host (localhost))
 
-if (FALSE) { # \dontrun{
+if (FALSE) { # interactive()
 # needs the network; any network failure returns NULL rather than erroring.
 # Closest archived snapshot of a live page (or NULL if none archived).
 wbsnpnat("https://www.r-project.org/")
@@ -62,5 +62,5 @@ wbsnpnat("https://cloud.r-project.org/", tmout = 10)
 
 # A never-archived URL returns NULL rather than erroring.
 wbsnpnat("https://example.invalid/never-archived")
-} # }
+}
 ```

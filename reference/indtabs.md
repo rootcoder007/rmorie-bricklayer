@@ -41,7 +41,7 @@ archived copy
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+if (FALSE) { # interactive()
 indtabs("mental health")
-} # }
+}
 ```
