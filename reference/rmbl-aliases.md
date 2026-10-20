@@ -13,9 +13,19 @@ lives on the new name; this page only lists the aliases.
 
 ## Details
 
-Results are not translated: their columns and fields carry the new
-names. The last table lists every renamed one, so old code that reads a
-result can be updated.
+Results come back in their 0.5.x form: an alias returns its result with
+the 0.5.x column and field names (nested tables and attributes too; the
+last table lists them), and a delimited writer writes the 0.5.x header.
+Such a result carries the class `rmbl_old` in front, so
+[`print()`](https://rdrr.io/r/base/print.html),
+[`format()`](https://rdrr.io/r/base/format.html),
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html),
+[`summary()`](https://rdrr.io/r/base/summary.html) and the aliases that
+take a result read it in the 1.0.0 names. A 1.0.0 call is never
+translated.
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+kept its name: it returns the 0.5.x names when called with a 0.5.x
+argument name, and the 1.0.0 names otherwise.
 
 ## The map
 

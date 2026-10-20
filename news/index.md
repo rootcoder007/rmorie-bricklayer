@@ -366,14 +366,24 @@ and
 stay S3 generics, so methods written for them still dispatch.
 [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
 kept its name and takes its 0.5.x argument names (`period`, `min_base`,
-`conf_level`, `direction`) beside the new ones. Functions and arguments
-keep working through the aliases; result columns and fields use the new
-names (`co2e_g` is `co2eg`, `pct_valid` is `pctvalid`), and
-`?rmbl-aliases` lists every renamed one, so code that reads a 0.5.x
-result needs those names changed. `rmbl functions` and the help-aware
-language-model tools list the new names. Wire formats (capsule, manifest
-and service JSON fields, CSV columns from published tables) keep their
-names, so files written by earlier versions still read.
+`conf_level`, `direction`) beside the new ones. Code written against
+0.5.x keeps running through the aliases: results come back under their
+0.5.x column and field names (`co2e_g`, `pct_valid`, nested tables and
+attributes too, and the header row of a delimited writer),
+[`print()`](https://rdrr.io/r/base/print.html),
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html),
+[`format()`](https://rdrr.io/r/base/format.html) and
+[`summary()`](https://rdrr.io/r/base/summary.html) work on them, and an
+alias that is given one reads it. A 1.0.0 call returns the 1.0.0 names.
+The one call that cannot tell is
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+which kept its name: with a 0.5.x argument name it returns the 0.5.x
+names, without one the 1.0.0 names (`pctchg` for `pct_change`);
+`?rmbl-aliases` lists every renamed column and field. `rmbl functions`
+and the help-aware language-model tools list the new names. Wire formats
+(capsule, manifest and service JSON fields, CSV columns from published
+tables) keep their names, so files written by earlier versions still
+read.
 
 ### First Nations, Metis and Inuit health, mental health and wellness
 
@@ -696,7 +706,10 @@ New estimators, each checked against the reference implementation
   [`optsqr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/optsqr.md)
   (the square a point-datum search should cover, for one search or a
   series). The numbers agree with rmorie’s to 1e-12. Each result prints
-  and plots.
+  and plots, and the dashboard
+  ([`rmblapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmblapp.md))
+  has a “Search and rescue” tab with them and a picker for the book’s
+  figures.
   [`srchfig()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/srchfig.md)
   draws each of the 36 figures of Frost’s *The Theory of Search* (1996)
   from these functions with the book’s parameters, and a new vignette,

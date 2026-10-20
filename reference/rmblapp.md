@@ -195,6 +195,20 @@ explanation of where it comes from beside it. The tabs:
   (intensity, time-rescaling QQ, branching tree) and
   [`chwksim()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwksim.md).
 
+- Search and rescue:
+
+  the search theory functions behind one form:
+  [`ltrlrng()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md),
+  [`srchpod()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md),
+  [`pswppod()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md),
+  [`datumpmap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md),
+  [`opteffort()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  and
+  [`optcrcsrch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md),
+  with the POD and POS numbers and four plots, and any figure of Frost's
+  The Theory of Search through
+  [`srchfig()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/srchfig.md).
+
 - Proof ledger:
 
   a ledger
