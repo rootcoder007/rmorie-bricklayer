@@ -68,6 +68,7 @@ articles:
       - policy-evaluation
       - first-nations-metis-inuit-health
       - courts-and-crime
+      - search-and-rescue
   - title: Data handling
     contents:
       - validation-rules-and-synthetic-data
@@ -478,6 +479,16 @@ reference:
       - hotpers
       - knoxtst
       - justice-data
+  - title: Search and rescue
+    desc: >
+      Koopman's search theory: lateral range curves and sweep width, probability of
+      detection from coverage and for parallel sweeps, probability of success with
+      Bayesian updating, datum probability maps and the optimal allocation of effort;
+      every figure of Frost's The Theory of Search.
+    contents:
+      - ltrlrng
+      - optsqr
+      - srchfig
   - title: Evaluating a policy
     desc: >
       Difference in differences with two-way fixed effects, event studies,

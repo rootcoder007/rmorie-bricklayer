@@ -2,7 +2,7 @@
 % Please edit documentation in R/census.R, R/hotspot.R,
 %   R/indigenous_frameworks.R, R/indigenous_mental_health.R, R/justice.R,
 %   R/panel_causal.R, R/plots.R, R/policy_evaluation.R, R/policy_plots.R,
-%   R/survey.R, R/trc.R
+%   R/search.R, R/survey.R, R/trc.R
 \name{plot.rmbl_census_cwb}
 \alias{plot.rmbl_census_cwb}
 \alias{plot.rmbl_profile_share}
@@ -65,6 +65,10 @@
 \alias{plot.rmbl_permutation}
 \alias{plot.rmbl_loo}
 \alias{plot.rmbl_cohort_trends}
+\alias{plot.rmbl_ltrlrng}
+\alias{plot.rmbl_srchpod}
+\alias{plot.rmbl_datummap}
+\alias{plot.rmbl_opteffort}
 \alias{plot.rmbl_svy_estimate}
 \alias{plot.rmbl_svy_compare}
 \alias{plot.rmbl_trc_gaps}
@@ -286,6 +290,17 @@
 \method{plot}{rmbl_loo}(x, ..., main = NULL, col = NULL, palette = NULL)
 
 \method{plot}{rmbl_cohort_trends}(x, ..., main = NULL, col = NULL, palette = NULL)
+
+\method{plot}{rmbl_ltrlrng}(x, ..., equiv = FALSE, spacing = NULL,
+  main = NULL, col = NULL, palette = NULL)
+
+\method{plot}{rmbl_srchpod}(x, ..., models = NULL, m = NULL, cmax = NULL,
+  main = NULL, col = NULL, palette = NULL)
+
+\method{plot}{rmbl_datummap}(x, ..., view = c("map", "persp", "both", "cells"),
+  contours = 8L, digits = 2, main = NULL, col = NULL, palette = NULL)
+
+\method{plot}{rmbl_opteffort}(x, ..., main = NULL, col = NULL, palette = NULL)
 
 \method{plot}{rmbl_svy_estimate}(x, ..., main = NULL, col = NULL, palette = NULL)
 

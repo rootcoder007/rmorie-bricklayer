@@ -212,6 +212,16 @@ and a digest anyone can recompute says nothing about who produced the data.
   permutation p-values). Each has a plot. Real Ontario Court of Justice and
   Toronto Police Service excerpts ship in `inst/extdata` (`?justice-data`);
   `vignette("courts-and-crime")`.
+- **Search and rescue** — `ltrlrng()` (lateral range curves: inverse
+  cube, definite range, M-Beta), `swpwdth()` (sweep width),
+  `srchpod()` and `pswppod()` (probability of detection from coverage,
+  and for a parallel sweep with navigation error), `srchscs()` (probability
+  of success and the Bayesian update after a search), `datumpmap()` (point,
+  line and area datums on a grid), `optcrcsrch()` and `opteffort()`
+  (Koopman's and Stone's optimal effort), `optsqr()` (the optimal search
+  square for a point datum, one search or a series). Each result prints and
+  plots, and `srchfig()` draws every figure of Frost's *The Theory of
+  Search* (1996) from them; `vignette("search-and-rescue")`.
 - **Evaluating a policy** — `plndid()` (two-way fixed effects with
   cluster-robust errors), `evstudy()` (leads, lags and the pre-trend
   test), `stgatt()` (Callaway-Sant'Anna and Wooldridge),

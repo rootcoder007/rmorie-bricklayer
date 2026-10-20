@@ -365,6 +365,18 @@ New estimators, each checked against the reference implementation (`fixest`, `di
   the finite-population correction for a sample drawn without replacement, frequency or
   reliability weights), chosen automatically from the population size and explained.
 
+## Search and rescue
+
+* Search theory for planning a search, in base R: `ltrlrng()` (lateral range curves), `swpwdth()`
+  (sweep width), `srchpod()` (probability of detection from coverage), `pswppod()` (a parallel sweep,
+  with navigation error), `srchscs()` (probability of success and the update after a search that
+  finds nothing), `datumpmap()` (point, line and area datums on a grid), `optcrcsrch()` and
+  `opteffort()` (the optimal effort for a circular datum and over cells), and `optsqr()` (the
+  square a point-datum search should cover, for one search or a series). The numbers agree with
+  rmorie's to 1e-12. Each result prints and plots. `srchfig()` draws each of the 36 figures of
+  Frost's *The Theory of Search* (1996) from these functions with the book's parameters, and a new
+  vignette, "Search and rescue", walks the book's chapters through them.
+
 ## Fixes from the CRAN stress test of 0.5.14
 
 * **No leak on an argument error in compiled code**: an error raised inside a C++ entry point
