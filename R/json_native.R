@@ -266,7 +266,7 @@
 jsb64enc <- function(input) {
   if (is.null(input)) return(NA_character_)
   if (is.character(input)) input <- charToRaw(paste(input, collapse = "\n"))
-  if (!is.raw(input)) stop("`input` must be a raw vector or text", call. = FALSE)
+  if (!is.raw(input)) stop("jsb64enc: `input` must be a raw vector or text", call. = FALSE)
   b <- as.integer(input)
   n <- length(b)
   if (!n) return("")
@@ -301,7 +301,7 @@ jsb64enc <- function(input) {
 #' @export
 jsb64dec <- function(input) {
   if (is.character(input)) input <- charToRaw(paste(input, collapse = "\n"))
-  if (!is.raw(input)) stop("`input` must be a raw vector or text", call. = FALSE)
+  if (!is.raw(input)) stop("jsb64dec: `input` must be a raw vector or text", call. = FALSE)
   s <- rawToChar(input)
   # whitespace and padding may be dropped; anything else is not base64, and
   # deleting it would decode a corrupt body into a shorter valid-looking one
@@ -1097,7 +1097,7 @@ bricklayer_json_unbox <- function(x) {
   }
   p$depth <- 0L          # nesting, capped: 20,000 "[" exhausted the C stack
   p$big_warned <- FALSE  # one warning per document for integers above 2^53
-  bad <- function(msg) stop(sprintf("%s at character %d", msg, p$i), call. = FALSE)
+  bad <- function(msg) stop(.rmbl_fn(), sprintf("%s at character %d", msg, p$i), call. = FALSE)
   ws <- function() if (p$i <= n && is_ws[p$i]) p$i <- after(p$i, not_ws)
   str_ <- function() {
     p$i <- p$i + 1L
@@ -1636,8 +1636,8 @@ fromjs <- function(txt, simplifyVector = TRUE,
       on.exit(unlink(tmp), add = TRUE)
       res <- .bl_net(txt, .bl_http_download(txt, tmp, 60L, "Accept: application/json, text/*, */*", NULL,
                                             16777216, FALSE))  # 16 MiB is a large JSON
-      if (res$status < 0) stop(sprintf("%s: %s", txt, res$error), call. = FALSE)
-      if (res$status >= 400) stop(sprintf("%s answered HTTP %d", txt, res$status), call. = FALSE)
+      if (res$status < 0) stop(sprintf("fromjs: %s: %s", txt, res$error), call. = FALSE)
+      if (res$status >= 400) stop(sprintf("fromjs: %s answered HTTP %d", txt, res$status), call. = FALSE)
       txt <- file(tmp)
     } else if (file.exists(txt)) {
       txt <- file(txt)
@@ -1766,7 +1766,7 @@ bricklayer_json_validate <- function(txt) {
   p$depth <- 0L
   p$state <- "start"        # start | array_start | in_array | map_start | map_key | map_val | complete
   p$stack <- character(0)
-  bad <- function(msg) stop(sprintf("%s at character %d", msg, p$i), call. = FALSE)
+  bad <- function(msg) stop(.rmbl_fn(), sprintf("%s at character %d", msg, p$i), call. = FALSE)
   emit <- function(t) p$out <- c(p$out, t)
   p$need_sep <- FALSE
   sep <- function() {
@@ -2002,7 +2002,7 @@ bricklayer_json_flatten <- function(x, recursive = TRUE) {
 #' handler); `stream_out`: invisible.
 #' @noRd
 bricklayer_json_stream_in <- function(con, handler = NULL, pagesize = 500, verbose = TRUE, ...) {
-  if (!inherits(con, "connection")) stop("Argument 'con' must be a connection.", call. = FALSE)
+  if (!inherits(con, "connection")) stop("bricklayer_json_stream_in: Argument 'con' must be a connection.", call. = FALSE)
   acc <- new.env(parent = emptyenv())
   acc$count <- 0
   acc$pages <- list()
@@ -2070,7 +2070,7 @@ bricklayer_json_stream_in <- function(con, handler = NULL, pagesize = 500, verbo
 #' @return Nothing, invisibly.
 #' @noRd
 bricklayer_json_stream_out <- function(x, con = stdout(), pagesize = 500, verbose = TRUE, prefix = "", ...) {
-  if (!inherits(con, "connection")) stop("Argument 'con' must be a connection.", call. = FALSE)
+  if (!inherits(con, "connection")) stop("bricklayer_json_stream_out: Argument 'con' must be a connection.", call. = FALSE)
   stopifnot(is.data.frame(x))
   if (!isOpen(con, "w")) {
     if (verbose) message("opening ", class(con)[1L], " output connection.")

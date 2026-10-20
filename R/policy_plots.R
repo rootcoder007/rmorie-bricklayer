@@ -214,7 +214,7 @@ cohtrnd <- function(data, unit, time, y, ftreat, win = c(-12, 12), ma = 3L, norm
   }
   ma <- .rmbl_scalar(ma, "ma", 1, 100, integer = TRUE)
   cohorts <- sort(unique(g[is.finite(g)]))
-  if (!length(cohorts)) stop("no unit is ever treated", call. = FALSE)
+  if (!length(cohorts)) stop("cohtrnd: no unit is ever treated", call. = FALSE)
   rows <- lapply(cohorts, function(cg) {
     k <- g == cg
     m <- tapply(p$y[k], p$t[k], mean)

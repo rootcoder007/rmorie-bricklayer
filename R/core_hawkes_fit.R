@@ -72,11 +72,12 @@
 #' @noRd
 .rmbl_hk_check_times <- function(times, horizon, baseline = "constant") {
   times <- .rmbl_num(times, "times")
-  if (anyNA(times)) stop("`times` must not contain NA", call. = FALSE)
-  if (length(times) > 1L && any(diff(times) < 0)) stop("`times` must be sorted in increasing order", call. = FALSE)
+  if (anyNA(times)) stop(.rmbl_fn(), "`times` must not contain NA", call. = FALSE)
+  if (length(times) > 1L && any(diff(times) < 0)) stop(.rmbl_fn(), "`times` must be sorted in increasing order",
+                                                       call. = FALSE)
   horizon <- .rmbl_num(horizon, "hor")
   if (length(horizon) != 1L || !is.finite(horizon) || horizon <= 0) {
-    stop("`hor` must be a single positive finite number", call. = FALSE)
+    stop(.rmbl_fn(), "`hor` must be a single positive finite number", call. = FALSE)
   }
   if (baseline != "constant" && horizon > 4194304) {
     stop("a sinusoidal baseline is integrated day by day: `hor` must be at most 4194304 days", call. = FALSE)

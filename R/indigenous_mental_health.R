@@ -303,14 +303,14 @@ scests <- function(x) {
 #' @export
 ordcmp <- function(data, grp, cat, est, lower, upper, lvls, ref,
                             qual = NULL, conflvl = 0.95, pooled = NULL) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("ordcmp: `data` must be a data frame", call. = FALSE)
   for (nm in c("grp", "cat", "est", "lower", "upper")) {
     v <- .rmbl_string1(get(nm), nm)
-    if (!v %in% names(data)) stop(sprintf("column `%s` not found in `data`", v), call. = FALSE)
+    if (!v %in% names(data)) stop(sprintf("ordcmp: column `%s` not found in `data`", v), call. = FALSE)
   }
   if (!is.null(qual)) {
     qual <- .rmbl_string1(qual, "qual")
-    if (!qual %in% names(data)) stop(sprintf("column `%s` not found in `data`", qual), call. = FALSE)
+    if (!qual %in% names(data)) stop(sprintf("ordcmp: column `%s` not found in `data`", qual), call. = FALSE)
   }
   .rmbl_no_fn(levels = lvls)
   if (!is.character(lvls) || length(lvls) < 2L || anyNA(lvls) || anyDuplicated(lvls)) {
@@ -453,7 +453,7 @@ stdprev <- function(est, lower, upper, std, grp = NULL, qual = NULL,
   if (!identical(scale, Inf)) scale <- .rmbl_scalar(scale, "scale", 0)
   k <- length(std)
   if (!k || anyNA(std) || any(std < 0) || sum(std) <= 0) {
-    stop("`std` must be non-negative counts, one per age group, not all zero", call. = FALSE)
+    stop("stdprev: `std` must be non-negative counts, one per age group, not all zero", call. = FALSE)
   }
   if (length(lo) != length(.est) || length(hi) != length(.est)) {
     stop("`est`, `lower` and `upper` must be the same length", call. = FALSE)
@@ -461,7 +461,7 @@ stdprev <- function(est, lower, upper, std, grp = NULL, qual = NULL,
   if (is.null(grp)) grp <- rep("all", length(.est))
   .rmbl_no_fn(group = grp, quality = qual)
   grp <- as.character(grp)
-  if (length(grp) != length(.est)) stop("`grp` must have one label per row", call. = FALSE)
+  if (length(grp) != length(.est)) stop("stdprev: `grp` must have one label per row", call. = FALSE)
   q <- if (is.null(qual)) rep("ok", length(.est)) else as.character(qual)
   if (length(q) != length(.est)) stop("`qual` must have one flag per row", call. = FALSE)
   q <- .rmbl_qflags(q)
@@ -476,7 +476,7 @@ stdprev <- function(est, lower, upper, std, grp = NULL, qual = NULL,
   rows <- lapply(unique(grp), function(gi) {
     i <- which(grp == gi)
     if (length(i) != k) {
-      stop(sprintf("group \"%s\" has %d age groups; `std` has %d", gi, length(i), k), call. = FALSE)
+      stop(sprintf("stdprev: group \"%s\" has %d age groups; `std` has %d", gi, length(i), k), call. = FALSE)
     }
     gone <- q[i] %in% c("F", "x", "..", "...") | !is.finite(.est[i]) | !is.finite(lo[i]) | !is.finite(hi[i])
     if (any(gone)) {
@@ -698,14 +698,14 @@ plot.rmbl_ordinal_compare <- function(x, ..., main = NULL, col = NULL, palette =
 #' @export
 welprof <- function(data, grp, ind, est, lower, upper, well, distress, domain = NULL,
                              qual = NULL) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("welprof: `data` must be a data frame", call. = FALSE)
   for (nm in c("grp", "ind", "est", "lower", "upper")) {
     v <- .rmbl_string1(get(nm), nm)
-    if (!v %in% names(data)) stop(sprintf("column `%s` not found in `data`", v), call. = FALSE)
+    if (!v %in% names(data)) stop(sprintf("welprof: column `%s` not found in `data`", v), call. = FALSE)
   }
   if (!is.null(qual)) {
     qual <- .rmbl_string1(qual, "qual")
-    if (!qual %in% names(data)) stop(sprintf("column `%s` not found in `data`", qual), call. = FALSE)
+    if (!qual %in% names(data)) stop(sprintf("welprof: column `%s` not found in `data`", qual), call. = FALSE)
   }
   .rmbl_no_fn(wellness = well, distress = distress, domain = domain)
   .ind <- .rmbl_utf8(trimws(as.character(data[[ind]])))
@@ -720,7 +720,8 @@ welprof <- function(data, grp, ind, est, lower, upper, well, distress, domain = 
     stop("an indicator cannot be both one of wellness and one of distress", call. = FALSE)
   }
   miss <- setdiff(c(well, distress), .ind)
-  if (length(miss)) stop(sprintf("not an indicator of `data`: %s", paste(miss, collapse = ", ")), call. = FALSE)
+  if (length(miss)) stop(sprintf("welprof: not an indicator of `data`: %s", paste(miss, collapse = ", ")),
+                         call. = FALSE)
   if (!is.null(domain) && (!is.character(domain) || is.null(names(domain)))) {
     stop("`domain` must be a named character vector: indicator = domain", call. = FALSE)
   }
@@ -803,7 +804,7 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
 #' @noRd
 .rmbl_col <- function(data, x, what) {
   x <- .rmbl_string1(x, what)
-  if (!x %in% names(data)) stop(sprintf("column `%s` not found in `data`", x), call. = FALSE)
+  if (!x %in% names(data)) stop(.rmbl_fn(), sprintf("column `%s` not found in `data`", x), call. = FALSE)
   x
 }
 
@@ -908,7 +909,7 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
 #' @export
 holbal <- function(data, grp, domain, est, lower, upper, w = NULL, qual = NULL,
                              reps = 10000, seed = 1, conflvl = 0.95) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("holbal: `data` must be a data frame", call. = FALSE)
   grp <- .rmbl_col(data, grp, "grp")
   domain <- .rmbl_col(data, domain, "domain")
   est <- .rmbl_col(data, est, "est")
@@ -1054,7 +1055,7 @@ holbal <- function(data, grp, domain, est, lower, upper, w = NULL, qual = NULL,
 #' plot(dc)
 #' @export
 dualcont <- function(x, well, distress, conflvl = 0.95) {
-  if (!inherits(x, "rmbl_wellness_profile")) stop("`x` must come from welprof()", call. = FALSE)
+  if (!inherits(x, "rmbl_wellness_profile")) stop("dualcont: `x` must come from welprof()", call. = FALSE)
   well <- .rmbl_string1(well, "well")
   distress <- .rmbl_string1(distress, "distress")
   if (!well %in% x$indicator[x$side == "wellness"]) {
@@ -1146,7 +1147,7 @@ dualcont <- function(x, well, distress, conflvl = 0.95) {
 #' @export
 dstntst <- function(data, grp, est, lower, upper, qual = NULL, conflvl = 0.95,
                               pooled = NULL) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("dstntst: `data` must be a data frame", call. = FALSE)
   grp <- .rmbl_col(data, grp, "grp")
   est <- .rmbl_col(data, est, "est")
   lower <- .rmbl_col(data, lower, "lower")

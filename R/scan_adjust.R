@@ -47,7 +47,7 @@
 #' @export
 yoypv <- function(y) {
   if (!inherits(y, "rmbl_yoy")) {
-    stop("`y` must come from yoy()", call. = FALSE)
+    stop("yoypv: `y` must come from yoy()", call. = FALSE)
   }
   m <- attr(y, "yoy")
   if (!identical(m$units, "count")) {

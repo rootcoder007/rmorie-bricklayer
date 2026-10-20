@@ -180,7 +180,7 @@ freqtbl <- function(data, col = NULL, maxlvl = 25L,
   }
   maxlvl <- .rmbl_num(maxlvl, "maxlvl", integer = TRUE)
   if (length(maxlvl) != 1L || is.na(maxlvl) || maxlvl < 1L) {
-    stop("`maxlvl` must be a single positive integer", call. = FALSE)
+    stop("freqtbl: `maxlvl` must be a single positive integer", call. = FALSE)
   }
   n_all <- length(v)
   if (n_all == 0L) {
@@ -309,11 +309,11 @@ print.bricklayer_freq <- function(x, ...) {
 cortbl <- function(data, meth = c("spearman", "pearson"),
                               minprs = 3L) {
   meth <- .rmbl_arg(meth)
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("cortbl: `data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
   num <- names(data)[vapply(data, is.numeric, logical(1))]
   if (length(num) < 2L) {
-    stop("need at least two numeric columns to correlate", call. = FALSE)
+    stop("cortbl: need at least two numeric columns to correlate", call. = FALSE)
   }
   minprs <- .rmbl_num(minprs, "minprs", integer = TRUE)
   if (length(minprs) != 1L || is.na(minprs) || minprs < 2L) {
@@ -426,7 +426,7 @@ print.bricklayer_cortable <- function(x, ...) {
 #' @name drp
 #' @export
 drpempty <- function(data, which = c("rows", "cols")) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("drpempty: `data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
   which <- .rmbl_arg(which, c("rows", "cols"), several = TRUE)
   dropped <- character(0)
@@ -447,7 +447,7 @@ drpempty <- function(data, which = c("rows", "cols")) {
 #' @rdname drp
 #' @export
 drpconst <- function(data, naasval = FALSE) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("drpconst: `data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
   if (ncol(data) == 0L) {
     attr(data, "dropped") <- character(0)

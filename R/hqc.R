@@ -168,7 +168,7 @@ hqckg <- function(lvl = 3L, seed = NULL, ver = c("v5", "round4")) {
 #' @export
 hqcpubkey <- function(key) {
   if (!inherits(key, "bricklayer_hqc_key")) {
-    stop("`key` must come from hqckg()", call. = FALSE)
+    stop("hqcpubkey: `key` must come from hqckg()", call. = FALSE)
   }
   out <- list(public = key$public, level = key$level, version = .rmbl_hqc_key_version(key))
   class(out) <- c("bricklayer_hqc_public_key", "list")
@@ -394,7 +394,7 @@ hqcdecap <- function(key, ct) {
   level <- .rmbl_hqc_key_level(key)
   version <- .rmbl_hqc_key_version(key)
   if (is.null(key[["secret"]])) {
-    stop("decapsulation needs a key with its secret half", call. = FALSE)
+    stop("hqcdecap: decapsulation needs a key with its secret half", call. = FALSE)
   }
   sz <- hqcsz(level, version)
   dk <- .rmbl_hex_or_null(key$secret)
@@ -474,7 +474,7 @@ hqcdecap <- function(key, ct) {
 #' @export
 hqccmpkey <- function(key) {
   if (!inherits(key, "bricklayer_hqc_key")) {
-    stop("`key` must come from hqckg()", call. = FALSE)
+    stop("hqccmpkey: `key` must come from hqckg()", call. = FALSE)
   }
   version <- .rmbl_hqc_key_version(key)
   sz <- hqcsz(key$level, version)

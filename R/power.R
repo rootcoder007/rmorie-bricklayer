@@ -133,7 +133,7 @@ cpspwr <- function(data, stat, inject, sizes = c(0, 0.2, 0.5),
                           alpha = 0.05, seed = NULL) {
   .rmbl_no_fn(treatment = trt)
   if (!is.data.frame(data) || nrow(data) < 4L) {
-    stop("`data` must be a data frame with at least 4 rows", call. = FALSE)
+    stop("cpspwr: `data` must be a data frame with at least 4 rows", call. = FALSE)
   }
   if (!is.function(stat) || !is.function(inject)) {
     stop("`stat` and `inject` must both be functions", call. = FALSE)
@@ -145,7 +145,7 @@ cpspwr <- function(data, stat, inject, sizes = c(0, 0.2, 0.5),
   }
   trt <- as.character(trt)[1L]
   if (!trt %in% names(data)) {
-    stop("`trt` is not a column of `data`", call. = FALSE)
+    stop("cpspwr: `trt` is not a column of `data`", call. = FALSE)
   }
   sizes <- sort(unique(c(0, .rmbl_num(sizes, "sizes"))))
   n <- .rmbl_num(n, "n", integer = TRUE)[1L]

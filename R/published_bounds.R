@@ -300,7 +300,7 @@ yoybnd <- function(y, rnd = NULL,
                        rndkind = c("nearest", "random"),
                        suplim = NULL) {
   if (!inherits(y, "rmbl_yoy")) {
-    stop("`y` must come from yoy()", call. = FALSE)
+    stop("yoybnd: `y` must come from yoy()", call. = FALSE)
   }
   rndkind <- .rmbl_arg(rndkind)
   m <- attr(y, "yoy")

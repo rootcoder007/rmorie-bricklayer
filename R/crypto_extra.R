@@ -267,7 +267,7 @@ cblake2b <- function(x, key = NULL, length = 32L) {
   if (!is.null(key) && !is.raw(key)) {
     key <- as.character(key)
     if (base::length(key) != 1L || is.na(key)) {
-      stop("`key` must be a length-1 character vector or a raw vector",
+      stop("cblake2b: `key` must be a length-1 character vector or a raw vector",
         call. = FALSE
       )
     }

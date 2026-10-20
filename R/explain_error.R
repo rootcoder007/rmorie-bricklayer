@@ -54,6 +54,8 @@
       args <- as.list(e)[-1L]
       named <- names(args) %||% rep("", length(args))
       parts <- args[!named %in% c("call.", "immediate.", "noBreaks.", "domain")]
+      # the name of the function that refused (.rmbl_fn()) is matched as an optional prefix below
+      parts <- parts[!vapply(parts, identical, NA, quote(.rmbl_fn()))]
       if (length(parts)) {
         txt <- paste(vapply(parts, .bl_ee_text, ""), collapse = "")
         lit <- gsub("\001", "", txt, fixed = TRUE)
@@ -281,17 +283,18 @@ explerr <- function(msg = geterrmessage(), pkgs = NULL, n = 3L) {
   n <- as.integer(min(n, .Machine$integer.max))   # Inf: every match (as.integer(Inf) was NA)
   pk <- pkgs %||% .bl_kn_default_packages()
   if (!is.character(pk) || !length(pk) || anyNA(pk) || !all(nzchar(pk))) {
-    stop("`pkgs` must name installed packages", call. = FALSE)
+    stop("explerr: `pkgs` must name installed packages", call. = FALSE)
   }
   missing <- pk[!vapply(pk, function(x) nzchar(system.file(package = x)), logical(1))]
-  if (length(missing)) stop(sprintf("not installed: %s", paste(missing, collapse = ", ")), call. = FALSE)
+  if (length(missing)) stop(sprintf("explerr: not installed: %s", paste(missing, collapse = ", ")), call. = FALSE)
   .msg <- .bl_ee_clean(msg)
   tab <- .bl_ee_table(pk)
   empty <- cbind(tab[0L, c("package", "raised_by", "exported", "kind")], message = character(), match = character())
   if (!nzchar(.msg) || !nrow(tab)) return(empty)
-  # exact: the template as a regular expression, its variable parts as wildcards
+  # exact: the template as a regular expression, its variable parts as wildcards, after the name of
+  # the function that refused ("anltab: ") that a shared check puts first
   rx <- vapply(strsplit(tab$template, "\001", fixed = TRUE), function(p) {
-    paste0("^", paste(gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", p), collapse = "(.*?)"))
+    paste0("^(?:[A-Za-z][A-Za-z0-9._]*: )?", paste(gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", p), collapse = "(.*?)"))
   }, "")
   rx <- ifelse(endsWith(tab$template, "\001"), paste0(rx, "(.*)"), rx)
   exact <- vapply(rx, function(r) isTRUE(tryCatch(grepl(r, .msg, perl = TRUE), error = function(e) FALSE)), NA)

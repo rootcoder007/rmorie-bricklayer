@@ -412,7 +412,7 @@ bandsens <- function(bands, cnts, stat = ginicoef, caps = NULL,
   if (!is.data.frame(bands)) bands <- prsbands(bands)
   cnts <- .rmbl_num(cnts, "cnts")
   if (length(cnts) != nrow(bands)) {
-    stop(sprintf("`cnts` has %d entries for %d bands",
+    stop(sprintf("bandsens: `cnts` has %d entries for %d bands",
                  length(cnts), nrow(bands)), call. = FALSE)
   }
   if (!any(bands$openup)) {
@@ -516,7 +516,7 @@ expbands <- function(bands, cnts, ..., drpunp = FALSE) {
   if (!is.data.frame(bands)) bands <- prsbands(bands)
   cnts <- .rmbl_num(cnts, "cnts")
   if (length(cnts) != nrow(bands)) {
-    stop(sprintf("`cnts` has %d entries for %d bands",
+    stop(sprintf("expbands: `cnts` has %d entries for %d bands",
                  length(cnts), nrow(bands)), call. = FALSE)
   }
   if (any(cnts < 0, na.rm = TRUE)) {

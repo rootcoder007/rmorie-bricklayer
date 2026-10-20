@@ -153,12 +153,12 @@ anltab <- function(data, value, prd, by = NULL, pop = NULL,
                                         "lower"),
                           per = 1000, conflvl = 0.95, alpha = 0.05,
                           adjust = "BH") {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("anltab: `data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
   value <- .rmbl_string1(value, "value")
   prd <- .rmbl_string1(prd, "prd")
   if (!is.null(by) && (!is.character(by) || !length(by) || anyNA(by))) {
-    stop("`by` must be one or more column names, or NULL", call. = FALSE)
+    stop("anltab: `by` must be one or more column names, or NULL", call. = FALSE)
   }
   conflvl <- .rmbl_conf_level(conflvl)
   # each a single value, checked here: the inner calls met them as base R did ("the condition has
@@ -180,7 +180,7 @@ anltab <- function(data, value, prd, by = NULL, pop = NULL,
   rndkind <- .rmbl_arg(rndkind)
   for (col in c(value, prd, by, pop)) {
     if (!col %in% names(data)) {
-      stop(sprintf("column `%s` not found in `data`", col), call. = FALSE)
+      stop(sprintf("anltab: column `%s` not found in `data`", col), call. = FALSE)
     }
   }
   bounded <- !is.null(rnd) || !is.null(suplim)

@@ -138,13 +138,14 @@
 #' try(mksyncol(list(type = "nope"), 3))
 #' @export
 mksyncol <- function(spec, n, ctx = list(), basep = NULL) {
-  if (!is.list(spec)) stop("`spec` must be a column spec list (type = ..., ...)", call. = FALSE)
+  if (!is.list(spec)) stop("mksyncol: `spec` must be a column spec list (type = ..., ...)", call. = FALSE)
   type <- spec$type %||% "sample"
   if (is.data.frame(spec) || (length(spec) && is.null(names(spec)))) {
-    stop("`spec` must be a column spec list (type = ..., ...)", call. = FALSE)
+    stop("mksyncol: `spec` must be a column spec list (type = ..., ...)", call. = FALSE)
   }
   n <- .rmbl_num(n, "n", integer = TRUE)
-  if (length(n) != 1L || is.na(n) || n < 0L) stop("`n` must be a single non-negative whole number", call. = FALSE)
+  if (length(n) != 1L || is.na(n) || n < 0L) stop("mksyncol: `n` must be a single non-negative whole number",
+                                                  call. = FALSE)
   if (!is.null(basep)) {
     basep <- .rmbl_num(basep, "basep")
     if (anyNA(basep) || any(basep < 0 | basep > 1)) stop("`basep` must be probabilities between 0 and 1", call. = FALSE)

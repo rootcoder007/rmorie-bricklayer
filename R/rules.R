@@ -174,7 +174,7 @@ rul <- function(name, expr, col = NULL, sev = c("warning", "fatal"),
 #' try(valrules(df, list(function(v) v >= 0)))
 #' @export
 valrules <- function(data, rules) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("valrules: `data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
   if (inherits(rules, "bricklayer_rule")) rules <- list(rules)
   if (!is.list(rules)) {

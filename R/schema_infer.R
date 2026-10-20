@@ -106,7 +106,7 @@
 #' @export
 infsch <- function(data, slack = 0.1, maxlvl = 50L) {
   if (!is.data.frame(data)) {
-    stop("`data` must be a data frame", call. = FALSE)
+    stop("infsch: `data` must be a data frame", call. = FALSE)
   }
   if (ncol(data) == 0L) {
     stop("`data` has no columns to learn a schema from", call. = FALSE)
@@ -117,7 +117,7 @@ infsch <- function(data, slack = 0.1, maxlvl = 50L) {
   }
   maxlvl <- .rmbl_num(maxlvl, "maxlvl", integer = TRUE)
   if (length(maxlvl) != 1L || is.na(maxlvl) || maxlvl < 1L) {
-    stop("`maxlvl` must be a single positive integer", call. = FALSE)
+    stop("infsch: `maxlvl` must be a single positive integer", call. = FALSE)
   }
 
   n <- nrow(data)

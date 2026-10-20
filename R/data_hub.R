@@ -12,7 +12,7 @@
 #' @noRd
 .bl_check_flag <- function(x, name) {
   if (!is.logical(x) || length(x) != 1L || is.na(x)) {
-    stop(sprintf("`%s` must be TRUE or FALSE", name), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` must be TRUE or FALSE", name), call. = FALSE)
   }
   invisible(x)
 }
@@ -660,7 +660,7 @@ dload <- function(key, refresh = FALSE) {
   # audit of 1.0.0, #2). count.fields() is one pass over the file and one integer a record.
   con <- gzfile(path, "rt")
   nf <- tryCatch(utils::count.fields(con, sep = ",", quote = "\"", comment.char = "", blank.lines.skip = TRUE),
-                 error = function(e) stop("the CSV cannot be read: ", conditionMessage(e), call. = FALSE),
+                 error = function(e) stop(.rmbl_fn(), "the CSV cannot be read: ", conditionMessage(e), call. = FALSE),
                  finally = close(con))
   nf <- nf[!is.na(nf)]
   if (length(nf) > 1L) {
@@ -694,7 +694,9 @@ dload <- function(key, refresh = FALSE) {
     # what read.csv() refuses (a header of "" and nothing under it: "first five rows are empty") is
     # refused in words, as the reader refuses
     return(tryCatch(utils::read.csv(f, stringsAsFactors = FALSE, skipNul = skip_nul),
-                    error = function(e) stop("the CSV cannot be read: ", conditionMessage(e), call. = FALSE)))
+                    error = function(e) {
+                      stop(.rmbl_fn(), "the CSV cannot be read: ", conditionMessage(e), call. = FALSE)
+                    }))
   }
   # the bytes decided the plain integer, decimal and logical columns; the rest is text for R to judge
   cols <- lapply(parts$columns, function(v) {

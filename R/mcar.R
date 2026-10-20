@@ -248,7 +248,7 @@ mcartst <- function(data, maxit = 500L, tol = 1e-7) {
   tol <- .rmbl_scalar(tol, "tol", 1e-12, 1)   # zero never converged (final audit of 1.0.0)
   if (is.matrix(data)) data <- as.data.frame(data)
   if (!is.data.frame(data)) {
-    stop("`data` must be a data frame or a numeric matrix", call. = FALSE)
+    stop("mcartst: `data` must be a data frame or a numeric matrix", call. = FALSE)
   }
   num <- vapply(data, is.numeric, logical(1))
   if (!all(num)) {

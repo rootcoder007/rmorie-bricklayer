@@ -162,8 +162,9 @@ cnormlpdf <- function(x, mean = 0, sd = 1) {
   # the core reads only the first element of each parameter, so a vector was used in part
   mean <- .rmbl_num(mean, "mean")
   sd <- .rmbl_num(sd, "sd")
-  if (length(mean) != 1L || !is.finite(mean)) stop("`mean` must be a single finite number", call. = FALSE)
-  if (length(sd) != 1L || !is.finite(sd) || sd <= 0) stop("`sd` must be a single positive number", call. = FALSE)
+  if (length(mean) != 1L || !is.finite(mean)) stop("cnormlpdf: `mean` must be a single finite number", call. = FALSE)
+  if (length(sd) != 1L || !is.finite(sd) || sd <= 0) stop("cnormlpdf: `sd` must be a single positive number",
+                                                          call. = FALSE)
   .Call(C_rmbl_normal_logpdf, .rmbl_num_input(x, "x"), mean, sd)
 }
 
@@ -575,7 +576,7 @@ cspr <- function(x, y) {
   x <- .rmbl_num_input(x, "x")
   y <- .rmbl_num_input(y, "y")
   if (length(x) != length(y)) {
-    stop("`x` and `y` must have the same length", call. = FALSE)
+    stop("cspr: `x` and `y` must have the same length", call. = FALSE)
   }
   .Call(C_rmbl_cor_spearman, x, y)
 }
@@ -996,13 +997,13 @@ chwknll <- function(times, hor,
   code <- switch(kernel, exponential = 0L, weibull = 1L, lomax = 2L,
                  gamma = 3L)
   times <- .rmbl_num(times, "times")
-  if (anyNA(times)) stop("`times` must not contain NA", call. = FALSE)
+  if (anyNA(times)) stop("chwknll: `times` must not contain NA", call. = FALSE)
   if (length(times) > 1L && any(diff(times) < 0)) {
-    stop("`times` must be sorted in increasing order", call. = FALSE)
+    stop("chwknll: `times` must be sorted in increasing order", call. = FALSE)
   }
   hor <- .rmbl_num(hor, "hor")
   if (length(hor) != 1L || !is.finite(hor) || hor <= 0) {
-    stop("`hor` must be a single positive finite number", call. = FALSE)
+    stop("chwknll: `hor` must be a single positive finite number", call. = FALSE)
   }
   if (length(times) > 0L && (min(times) < 0 || max(times) > hor)) {
     stop("`times` must lie within [0, hor]", call. = FALSE)

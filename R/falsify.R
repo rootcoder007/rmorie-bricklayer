@@ -118,7 +118,7 @@ cpsfals <- function(data, stat, trt = NULL, n = 199L,
                             subfrac = 0.8, seed = NULL) {
   .rmbl_no_fn(treatment = trt)
   if (!is.data.frame(data) || nrow(data) < 4L) {
-    stop("`data` must be a data frame with at least 4 rows", call. = FALSE)
+    stop("cpsfals: `data` must be a data frame with at least 4 rows", call. = FALSE)
   }
   if (!is.function(stat)) {
     stop("`stat` must be a function of one data frame", call. = FALSE)
@@ -135,7 +135,7 @@ cpsfals <- function(data, stat, trt = NULL, n = 199L,
   if (!is.null(trt)) {
     trt <- as.character(trt)[1L]
     if (!trt %in% names(data)) {
-      stop("`trt` is not a column of `data`", call. = FALSE)
+      stop("cpsfals: `trt` is not a column of `data`", call. = FALSE)
     }
   }
   if (!is.null(seed)) seed <- .rmbl_r_seed(seed)
@@ -271,12 +271,12 @@ print.bricklayer_falsification <- function(x, ...) {
   # a data frame or a list returned by the statistic failed in R's words in as.numeric() (final
   # audit of 1.0.0): refused here, as any other non-number is
   if (!is.atomic(v)) {
-    stop(sprintf("the statistic must return one finite number; on %s it ", what), "returned something else",
+    stop(.rmbl_fn(), sprintf("the statistic must return one finite number; on %s it ", what), "returned something else",
          call. = FALSE)
   }
   v <- suppressWarnings(as.numeric(v))
   if (length(v) != 1L || !is.finite(v)) {
-    stop(sprintf("the statistic must return one finite number; on %s it ",
+    stop(.rmbl_fn(), sprintf("the statistic must return one finite number; on %s it ",
                  what), "returned something else", call. = FALSE)
   }
   v

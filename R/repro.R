@@ -265,7 +265,7 @@ print.bricklayer_recompute <- function(x, ...) {
 #' @export
 mnfrecseed <- function(man) {
   if (!is.list(man) || is.data.frame(man)) {
-    stop("`man` must be a manifest from mkmnf()",
+    stop("mnfrecseed: `man` must be a manifest from mkmnf()",
          call. = FALSE)
   }
   has <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
@@ -287,7 +287,7 @@ mnfrecseed <- function(man) {
 #' @export
 mnfrstseed <- function(man) {
   if (!is.list(man) || is.data.frame(man)) {
-    stop("`man` must be a manifest from mkmnf()", call. = FALSE)
+    stop("mnfrstseed: `man` must be a manifest from mkmnf()", call. = FALSE)
   }
   rng <- man[["rng"]]
   if (is.null(rng) || is.null(rng$state) || is.null(rng$kind)) {

@@ -260,7 +260,7 @@ plndml <- function(data, unit, time, y, trt, covs, fe = c("unit", "time"),
   if (!v %in% names(data)) stop(sprintf("`trt` (%s) is not a column of `data`", v), call. = FALSE)
   d <- .rmbl_num(data[[v]], "trt")
   x <- .rmbl_covariates(data, covs)
-  if (is.null(x)) stop("`covs` must name one column at least", call. = FALSE)
+  if (is.null(x)) stop("plndml: `covs` must name one column at least", call. = FALSE)
   if (anyNA(d) || anyNA(x) || anyNA(p$y)) stop("the outcome, treatment and covariates must have no NA", call. = FALSE)
   if (length(unique(p$u)) < folds) stop("fewer units than folds", call. = FALSE)
   fes <- list()
@@ -367,7 +367,7 @@ baltab <- function(data, grp, covs, w = NULL) {
   g <- .rmbl_num(data[[.rmbl_colnames(grp, "grp")]], "grp")
   if (anyNA(g) || !all(g %in% c(0, 1)) || length(unique(g)) < 2L) stop("`grp` must be 0 and 1", call. = FALSE)
   x <- .rmbl_covariates(data, covs)
-  if (is.null(x)) stop("`covs` must name one column at least", call. = FALSE)
+  if (is.null(x)) stop("baltab: `covs` must name one column at least", call. = FALSE)
   .w <- .rmbl_weights(data, w)
   rows <- lapply(colnames(x), function(v) {
     a <- x[g == 1, v]
@@ -449,7 +449,7 @@ mtchdid <- function(data, unit, time, y, ftreat, covs = NULL, ratio = 1L, exact 
   g <- .rmbl_first_treated(data, ftreat, p)
   nu <- length(p$ul)
   nt <- length(p$tl)
-  if (length(p$y) != nu * nt) stop("`data` must be a balanced panel", call. = FALSE)
+  if (length(p$y) != nu * nt) stop("mtchdid: `data` must be a balanced panel", call. = FALSE)
   o <- order(p$u, p$t)
   gu <- g[o][seq(1L, by = nt, length.out = nu)]
   tr <- is.finite(gu)
@@ -603,7 +603,7 @@ syndid <- function(data, unit, time, y, ftreat, reps = 200L, seed = NULL, conflv
   g <- .rmbl_first_treated(data, ftreat, p)
   nu <- length(p$ul)
   nt <- length(p$tl)
-  if (length(p$y) != nu * nt) stop("`data` must be a balanced panel", call. = FALSE)
+  if (length(p$y) != nu * nt) stop("syndid: `data` must be a balanced panel", call. = FALSE)
   o <- order(p$u, p$t)
   ym <- matrix(p$y[o], nu, nt, byrow = TRUE, dimnames = list(p$ul, p$tl))
   gu <- g[o][seq(1L, by = nt, length.out = nu)]
@@ -753,11 +753,11 @@ wcb <- function(data, unit, time, y, trtd, covs = NULL, cl = NULL,
   reps <- .rmbl_scalar(reps, "reps", 9, 1e6, integer = TRUE)
   p <- .rmbl_panel(data, unit, time, y)
   v <- .rmbl_colnames(trtd, "trtd")
-  if (!v %in% names(data)) stop(sprintf("`trtd` (%s) is not a column of `data`", v), call. = FALSE)
+  if (!v %in% names(data)) stop(sprintf("wcb: `trtd` (%s) is not a column of `data`", v), call. = FALSE)
   d <- as.numeric(data[[v]])
   if (anyNA(d) || !all(d %in% c(0, 1))) stop("`trtd` must be 0 or 1", call. = FALSE)
   .cl <- .rmbl_cluster(data, cl, p)
-  if (is.list(.cl)) stop("`cl` names one column here", call. = FALSE)
+  if (is.list(.cl)) stop("wcb: `cl` names one column here", call. = FALSE)
   fes <- list(unit = p$u, time = as.integer(factor(p$t)))
   x <- cbind(treated = d, .rmbl_covariates(data, covs))
   xd <- .rmbl_demean(x, fes)
@@ -997,7 +997,7 @@ plnpwr <- function(data, unit, time, y, ntrt, adopt, eff = NULL, cl = NULL,
     stop("`adopt` must leave a period before it and fall within the panel", call. = FALSE)
   }
   .cl <- .rmbl_cluster(data, cl, p)
-  if (is.list(.cl)) stop("`cl` names one column here", call. = FALSE)
+  if (is.list(.cl)) stop("plnpwr: `cl` names one column here", call. = FALSE)
   ucl <- unique(.cl)
   ntrt <- .rmbl_scalar(ntrt, "ntrt", 1, length(ucl) - 1, integer = TRUE)
   if (is.null(eff)) eff <- seq(0, 2 * stats::sd(p$y), length.out = 6L)
@@ -1240,9 +1240,9 @@ aipwcf <- function(data, y, trt, covs, estd = c("ATE", "ATT"), lrn = "lasso",
   .y <- .rmbl_num(data[[.rmbl_colnames(y, "y")]], "y")
   d <- .rmbl_num(data[[.rmbl_colnames(trt, "trt")]], "trt")
   x <- .rmbl_covariates(data, covs)
-  if (is.null(x)) stop("`covs` must name one column at least", call. = FALSE)
+  if (is.null(x)) stop("aipwcf: `covs` must name one column at least", call. = FALSE)
   if (!is.null(des)) {
-    if (!inherits(des, "rmbl_svy_design")) stop("`des` must come from svydes()", call. = FALSE)
+    if (!inherits(des, "rmbl_svy_design")) stop("aipwcf: `des` must come from svydes()", call. = FALSE)
     if (!is.null(w)) stop("give `w` or `des`, not both", call. = FALSE)
     .svy_check_data(des, data)
     .w <- des$weights

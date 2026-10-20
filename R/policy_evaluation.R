@@ -20,7 +20,7 @@
   .rmbl_df_names(data)
   for (nm in c("unit", "time", "outcome")) {
     v <- .rmbl_colnames(get(nm), nm)
-    if (!v %in% names(data)) stop(sprintf("`%s` (%s) is not a column of `data`", nm, v), call. = FALSE)
+    if (!v %in% names(data)) stop(.rmbl_fn(), sprintf("`%s` (%s) is not a column of `data`", nm, v), call. = FALSE)
   }
   u <- data[[unit]]
   t <- data[[time]]
@@ -299,7 +299,7 @@ plndid <- function(data, unit, time, y, trtd, covs = NULL, cl = NULL,
   if (!"time" %in% fe) stop("`fe` must include \"time\"", call. = FALSE)
   p <- .rmbl_panel(data, unit, time, y)
   v <- .rmbl_colnames(trtd, "trtd")
-  if (!v %in% names(data)) stop(sprintf("`trtd` (%s) is not a column of `data`", v), call. = FALSE)
+  if (!v %in% names(data)) stop(sprintf("plndid: `trtd` (%s) is not a column of `data`", v), call. = FALSE)
   d <- data[[v]]
   if (is.logical(d)) d <- as.numeric(d)
   if (!is.numeric(d) || anyNA(d) || !all(d %in% c(0, 1))) {
@@ -419,7 +419,7 @@ evstudy <- function(data, unit, time, y, ftreat, leads = 4L, lags = 4L, ref = -1
   if (!is.logical(bin) || length(bin) != 1L || is.na(bin)) stop("`bin` must be TRUE or FALSE", call. = FALSE)
   p <- .rmbl_panel(data, unit, time, y)
   g <- .rmbl_first_treated(data, ftreat, p)
-  if (all(is.infinite(g))) stop("no unit is ever treated", call. = FALSE)
+  if (all(is.infinite(g))) stop("evstudy: no unit is ever treated", call. = FALSE)
   k <- p$t - g
   keep <- rep(TRUE, length(k))
   if (bin) {
@@ -867,12 +867,12 @@ plot.rmbl_staggered_att <- function(x, ..., main = NULL, col = NULL, palette = N
 bacondcmp <- function(data, unit, time, y, trtd) {
   p <- .rmbl_panel(data, unit, time, y)
   v <- .rmbl_colnames(trtd, "trtd")
-  if (!v %in% names(data)) stop(sprintf("`trtd` (%s) is not a column of `data`", v), call. = FALSE)
+  if (!v %in% names(data)) stop(sprintf("bacondcmp: `trtd` (%s) is not a column of `data`", v), call. = FALSE)
   d <- as.numeric(data[[v]])
-  if (anyNA(d) || !all(d %in% c(0, 1))) stop("`trtd` must be 0 or 1, with no NA", call. = FALSE)
+  if (anyNA(d) || !all(d %in% c(0, 1))) stop("bacondcmp: `trtd` must be 0 or 1, with no NA", call. = FALSE)
   nu <- length(p$ul)
   nt <- length(p$tl)
-  if (length(p$y) != nu * nt) stop("`data` must be a balanced panel", call. = FALSE)
+  if (length(p$y) != nu * nt) stop("bacondcmp: `data` must be a balanced panel", call. = FALSE)
   o <- order(p$u, p$t)
   ym <- matrix(p$y[o], nu, nt, byrow = TRUE)
   dm <- matrix(d[o], nu, nt, byrow = TRUE)
@@ -880,7 +880,7 @@ bacondcmp <- function(data, unit, time, y, trtd) {
   first <- apply(dm, 1L, function(r) if (any(r == 1)) which(r == 1)[1L] else Inf)
   groups <- sort(unique(first))
   timing <- groups[is.finite(groups)]
-  if (!length(timing)) stop("no unit is ever treated", call. = FALSE)
+  if (!length(timing)) stop("bacondcmp: no unit is ever treated", call. = FALSE)
   dbar <- function(k) if (is.finite(k)) mean(seq_len(nt) >= k) else 0
   nsh <- function(k) mean(first == k)
   dd <- function(tr, co, win) {
@@ -979,12 +979,12 @@ swtdid <- function(data, unit, time, y, trtd, cl = NULL, reps = 499L, seed = NUL
   reps <- .rmbl_scalar(reps, "reps", 0, 1e5, integer = TRUE)
   p <- .rmbl_panel(data, unit, time, y)
   v <- .rmbl_colnames(trtd, "trtd")
-  if (!v %in% names(data)) stop(sprintf("`trtd` (%s) is not a column of `data`", v), call. = FALSE)
+  if (!v %in% names(data)) stop(sprintf("swtdid: `trtd` (%s) is not a column of `data`", v), call. = FALSE)
   d <- as.numeric(data[[v]])
-  if (anyNA(d) || !all(d %in% c(0, 1))) stop("`trtd` must be 0 or 1, with no NA", call. = FALSE)
+  if (anyNA(d) || !all(d %in% c(0, 1))) stop("swtdid: `trtd` must be 0 or 1, with no NA", call. = FALSE)
   nu <- length(p$ul)
   nt <- length(p$tl)
-  if (length(p$y) != nu * nt) stop("`data` must be a balanced panel", call. = FALSE)
+  if (length(p$y) != nu * nt) stop("swtdid: `data` must be a balanced panel", call. = FALSE)
   o <- order(p$u, p$t)
   ym <- matrix(p$y[o], nu, nt, byrow = TRUE)
   dm <- matrix(d[o], nu, nt, byrow = TRUE)
@@ -1266,7 +1266,7 @@ plnpois <- function(data, unit, time, y, trtd, covs = NULL, offset = NULL, cl = 
   p <- .rmbl_panel(data, unit, time, y)
   if (any(p$y < 0)) stop("`y` must be counts (0 or more)", call. = FALSE)
   v <- .rmbl_colnames(trtd, "trtd")
-  if (!v %in% names(data)) stop(sprintf("`trtd` (%s) is not a column of `data`", v), call. = FALSE)
+  if (!v %in% names(data)) stop(sprintf("plnpois: `trtd` (%s) is not a column of `data`", v), call. = FALSE)
   d <- data[[v]]
   if (is.logical(d)) d <- as.numeric(d)
   if (!is.numeric(d) || anyNA(d)) stop("`trtd` must be numeric with no NA", call. = FALSE)
@@ -1403,12 +1403,12 @@ synctl <- function(data, unit, time, y, treunit, adopt, plac = TRUE) {
     stop("`plac` must be TRUE or FALSE", call. = FALSE)
   }
   .rmbl_no_fn(treunit = treunit)
-  if (!is.atomic(treunit)) stop("`treunit` is not a unit of `data`", call. = FALSE)
+  if (!is.atomic(treunit)) stop("synctl: `treunit` is not a unit of `data`", call. = FALSE)
   tu <- as.character(treunit)
-  if (length(tu) != 1L || !tu %in% p$ul) stop("`treunit` is not a unit of `data`", call. = FALSE)
+  if (length(tu) != 1L || !tu %in% p$ul) stop("synctl: `treunit` is not a unit of `data`", call. = FALSE)
   nu <- length(p$ul)
   nt <- length(p$tl)
-  if (length(p$y) != nu * nt) stop("`data` must be a balanced panel", call. = FALSE)
+  if (length(p$y) != nu * nt) stop("synctl: `data` must be a balanced panel", call. = FALSE)
   if (nu < 3L) stop("synthetic control needs two donor units at least", call. = FALSE)
   o <- order(p$u, p$t)
   ym <- matrix(p$y[o], nu, nt, byrow = TRUE, dimnames = list(p$ul, p$tl))
@@ -1588,7 +1588,7 @@ sevidx <- function(data, unit, time, offence, count, w, pop = NULL, per = 1e5) {
   .rmbl_df_names(data)
   for (nm in c("unit", "time", "offence", "count")) {
     v <- .rmbl_colnames(get(nm), nm)
-    if (!v %in% names(data)) stop(sprintf("`%s` (%s) is not a column of `data`", nm, v), call. = FALSE)
+    if (!v %in% names(data)) stop(sprintf("sevidx: `%s` (%s) is not a column of `data`", nm, v), call. = FALSE)
   }
   if (!is.numeric(w) || is.null(names(w)) || anyNA(w) || any(!nzchar(names(w)))) {
     stop("`w` must be numbers named by offence", call. = FALSE)

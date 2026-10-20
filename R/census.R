@@ -205,7 +205,7 @@ cnsprof <- function(x) {
 #' @export
 profshr <- function(x, num, den = NULL, smpfrac = 0.25, deff = 1, conflvl = 0.95,
                           roubase = 5) {
-  if (!inherits(x, "rmbl_census_profile")) stop("`x` must come from cnsprof()", call. = FALSE)
+  if (!inherits(x, "rmbl_census_profile")) stop("profshr: `x` must come from cnsprof()", call. = FALSE)
   smpfrac <- .rmbl_scalar(smpfrac, "smpfrac", 0.001, 1)
   deff <- .rmbl_scalar(deff, "deff", 0.1, 100)
   roubase <- .rmbl_scalar(roubase, "roubase", 1, 1000, integer = TRUE)
@@ -291,7 +291,7 @@ cnsstd <- function(x, grp = "Indigenous identity", geo = "Canada",
                                      "20 to 24 years", "25 to 34 years", "35 to 44 years", "45 to 54 years",
                                      "55 to 64 years", "65 to 74 years", "75 years and over"),
                             resid = "Total - Residence on or off reserve") {
-  if (!inherits(x, "rmbl_census_profile")) stop("`x` must come from cnsprof()", call. = FALSE)
+  if (!inherits(x, "rmbl_census_profile")) stop("cnsstd: `x` must come from cnsprof()", call. = FALSE)
   grp <- .rmbl_string1(grp, "grp")
   geo <- .rmbl_string1(geo, "geo")
   .rmbl_no_fn(ages = ages)
@@ -374,7 +374,7 @@ cnsstd <- function(x, grp = "Indigenous identity", geo = "Canada",
 cnscwb <- function(x, dwell = NULL, groups = c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"),
                        bounds = c(2650, 75000), resid = "Total - Residence on or off reserve",
                        minpop = 250) {
-  if (!inherits(x, "rmbl_census_profile")) stop("`x` must come from cnsprof()", call. = FALSE)
+  if (!inherits(x, "rmbl_census_profile")) stop("cnscwb: `x` must come from cnsprof()", call. = FALSE)
   if (!is.null(dwell) && !inherits(dwell, "rmbl_census_profile")) {
     stop("`dwell` must come from cnsprof()", call. = FALSE)
   }

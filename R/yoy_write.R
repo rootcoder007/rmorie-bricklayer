@@ -68,7 +68,7 @@
 yoywr <- function(x, file, format = "auto", ...) {
   .rmbl_no_fn(file = file, format = format)
   if (!inherits(x, "rmbl_yoy")) {
-    stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+    stop("yoywr: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
   file <- as.character(file)[1L]
   format <- tolower(as.character(format)[1L])
@@ -200,7 +200,7 @@ yoytsv <- function(x, file, digits = NULL, na = "", meta = TRUE,
 #' @noRd
 .yoy_delim <- function(x, file, sep, digits, na, metadata, comment) {
   if (!inherits(x, "rmbl_yoy")) {
-    stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+    stop(.rmbl_fn(), "`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
   file <- .rmbl_out_file(file)
   na <- .rmbl_text1(na, "na")
@@ -240,7 +240,7 @@ yoytsv <- function(x, file, digits = NULL, na = "", meta = TRUE,
 #' @export
 yoyjs <- function(x, file, digits = NULL, pretty = TRUE, ...) {
   if (!inherits(x, "rmbl_yoy")) {
-    stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+    stop("yoyjs: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
   file <- .rmbl_out_file(file)
   m <- .yoy_meta(x)
@@ -271,7 +271,7 @@ yoyjs <- function(x, file, digits = NULL, pretty = TRUE, ...) {
 #' @export
 yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   if (!inherits(x, "rmbl_yoy")) {
-    stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+    stop("yoymd: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
   file <- .rmbl_out_file(file)
   m <- .yoy_meta(x)

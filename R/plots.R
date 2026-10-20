@@ -2231,14 +2231,14 @@ plotfnl <- function(obs, expd, area = NULL, lvls = c(0.95, 0.998), target = 1, .
                         main = NULL, col = NULL, pal = NULL) {
   obs <- .rmbl_finite_input(obs, "obs", nonneg = TRUE, min_n = 1L)
   expd <- .rmbl_finite_input(expd, "expd", min_n = 1L)
-  if (any(expd <= 0)) stop("`expd` must be positive", call. = FALSE)
+  if (any(expd <= 0)) stop("plotfnl: `expd` must be positive", call. = FALSE)
   if (!is.numeric(lvls) || !length(lvls) || any(!is.finite(lvls)) || any(lvls <= 0 | lvls >= 1)) {
     stop("`lvls` must be probabilities strictly between 0 and 1", call. = FALSE)
   }
   if (!is.numeric(target) || length(target) != 1L || !is.finite(target) || target <= 0 || target > 1e300) {
     stop("`target` must be a single positive number below 1e300", call. = FALSE)
   }
-  if (length(obs) != length(expd)) stop("`obs` and `expd` must be the same length", call. = FALSE)
+  if (length(obs) != length(expd)) stop("plotfnl: `obs` and `expd` must be the same length", call. = FALSE)
   if (!is.null(area) && length(area) != length(obs)) {
     stop("`area` must have one label per point (recycling would mislabel the areas)", call. = FALSE)
   }

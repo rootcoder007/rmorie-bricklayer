@@ -395,11 +395,11 @@ fipsmu <- function(key, msg, ctx = NULL, prehash = "none") {
   scheme <- .rmbl_fips_key_scheme(key)
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (is.na(mode)) {
-    stop("external mu is an ML-DSA interface; ", scheme,
+    stop("fipsmu: external mu is an ML-DSA interface; ", scheme,
          " has no equivalent", call. = FALSE)
   }
   pk <- .rmbl_hex_or_null(key$public)
-  if (is.null(pk)) stop("`key` has no usable public key", call. = FALSE)
+  if (is.null(pk)) stop("fipsmu: `key` has no usable public key", call. = FALSE)
   .Call(C_rmbl_mldsa_mu, mode, pk, .rmbl_sign_message(msg),
         .rmbl_fips_context(ctx), .rmbl_fips_prehash(prehash))
 }
@@ -412,7 +412,7 @@ fipssignmu <- function(key, mu, determ = FALSE,
   scheme <- .rmbl_fips_key_scheme(key)
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (is.na(mode)) {
-    stop("external mu is an ML-DSA interface; ", scheme,
+    stop("fipssignmu: external mu is an ML-DSA interface; ", scheme,
          " has no equivalent", call. = FALSE)
   }
   if (is.null(key[["secret"]])) {
@@ -434,7 +434,7 @@ fipssignmu <- function(key, mu, determ = FALSE,
 #' @rdname fipsmu
 #' @export
 fipsvrfmu <- function(key, mu, sig) {
-  if (!is.list(key)) stop("`key` must come from fipskg() or fipskey()", call. = FALSE)
+  if (!is.list(key)) stop("fipsvrfmu: `key` must come from fipskg() or fipskey()", call. = FALSE)
   if (!inherits(sig, "bricklayer_signature")) {
     stop("`sig` must come from fipssignmu() or cpssign()",
          call. = FALSE)
@@ -460,7 +460,7 @@ fipsvrfmu <- function(key, mu, sig) {
 #' @noRd
 .rmbl_fips_key_scheme <- function(key) {
   if (!inherits(key, c("bricklayer_oqs_key", "bricklayer_oqs_public_key"))) {
-    stop("`key` must come from fipskg() or fipskey()", call. = FALSE)
+    stop(.rmbl_fn(), "`key` must come from fipskg() or fipskey()", call. = FALSE)
   }
   .rmbl_fips_scheme(key$scheme)
 }
@@ -1149,7 +1149,7 @@ cpssign <- function(msg, key, scheme = NULL, ctx = NULL,
   idx <- key$next_index
   if (!is.numeric(idx) || length(idx) != 1L || is.na(idx) || idx < 0 || idx != floor(idx) ||
         idx > .Machine$integer.max) {
-    stop("this key's `next_index` is not a whole number >= 0 (below 2^31): the key state is damaged; ",
+    stop("cpssign: this key's `next_index` is not a whole number >= 0 (below 2^31): the key state is damaged; ",
          "do not hand-edit it", call. = FALSE)
   }
   idx <- as.integer(idx)
@@ -1162,7 +1162,7 @@ cpssign <- function(msg, key, scheme = NULL, ctx = NULL,
   if (!is.raw(msg)) {
     msg <- as.character(msg)
     if (length(msg) != 1L || is.na(msg)) {
-      stop("`msg` must be a length-1 character vector or a raw vector",
+      stop("cpssign: `msg` must be a length-1 character vector or a raw vector",
            call. = FALSE)
     }
   }
@@ -1324,7 +1324,7 @@ xmssadv <- function(key, sig, msg = NULL) {
   }
   nx <- key$next_index
   if (!is.numeric(nx) || length(nx) != 1L || is.na(nx) || nx < 0 || nx != floor(nx) || nx > .Machine$integer.max) {
-    stop(paste("this key's `next_index` is not a whole number >= 0 (below 2^31):",
+    stop(paste("xmssadv: this key's `next_index` is not a whole number >= 0 (below 2^31):",
                "the key state is damaged; do not hand-edit it"),
          call. = FALSE)
   }
@@ -1524,7 +1524,7 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   if (!is.raw(msg)) {
     msg <- as.character(msg)
     if (length(msg) != 1L || is.na(msg)) {
-      stop("`msg` must be a length-1 character vector or a raw vector",
+      stop("cpsvrf: `msg` must be a length-1 character vector or a raw vector",
            call. = FALSE)
     }
   }

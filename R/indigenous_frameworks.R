@@ -12,7 +12,7 @@
 #' @return `TRUE`, invisibly.
 #' @noRd
 .rmbl_ind_cols <- function(data, ...) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop(.rmbl_fn(), "`data` must be a data frame", call. = FALSE)
   a <- list(...)
   # the limit and quality columns are optional; every other NULL reached data[[NULL]] and failed
   # in R's words ("attempt to select less than one element"; final audit of 1.0.0)
@@ -116,7 +116,7 @@ mhcont <- function(data, grp, ind, est, lower, upper, hope = NULL,
   if (all(vapply(dirs, is.null, NA))) stop("name a proxy for one direction at least", call. = FALSE)
   .ind <- .rmbl_utf8(trimws(as.character(data[[ind]])))
   miss <- setdiff(trimws(unlist(dirs)), .ind)
-  if (length(miss)) stop(sprintf("not an indicator of `data`: %s", paste(miss, collapse = ", ")), call. = FALSE)
+  if (length(miss)) stop(sprintf("mhcont: not an indicator of `data`: %s", paste(miss, collapse = ", ")), call. = FALSE)
   g <- .rmbl_utf8(trimws(as.character(data[[grp]])))
   .est <- .rmbl_num(data[[est]], "est")
   lo <- .rmbl_num(data[[lower]], "lower")
@@ -547,7 +547,8 @@ commidx <- function(data, grp, ind, est, lower, upper, w, qual = NULL,
   z <- stats::qnorm(1 - (1 - conflvl) / 2)
   .ind <- .rmbl_utf8(trimws(as.character(data[[ind]])))
   miss <- setdiff(names(w), .ind)
-  if (length(miss)) stop(sprintf("not an indicator of `data`: %s", paste(miss, collapse = ", ")), call. = FALSE)
+  if (length(miss)) stop(sprintf("commidx: not an indicator of `data`: %s", paste(miss, collapse = ", ")),
+                         call. = FALSE)
   g <- .rmbl_utf8(trimws(as.character(data[[grp]])))
   .est <- .rmbl_num(data[[est]], "est")
   lo <- .rmbl_num(data[[lower]], "lower")
@@ -611,7 +612,7 @@ commidx <- function(data, grp, ind, est, lower, upper, w, qual = NULL,
 #' frmaud(w)
 #' @export
 frmaud <- function(x) {
-  if (!inherits(x, "rmbl_wellness_profile")) stop("`x` must come from welprof()", call. = FALSE)
+  if (!inherits(x, "rmbl_wellness_profile")) stop("frmaud: `x` must come from welprof()", call. = FALSE)
   groups <- unique(x$group)
   bg <- data.frame(group = groups,
                    wellness = vapply(groups, function(gi) sum(x$group == gi & x$side == "wellness"), 0L),

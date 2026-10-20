@@ -488,7 +488,7 @@ capenv <- function(pkgs = loadedNamespaces()) {
 #' @export
 citecps <- function(prov) {
   if (is.null(prov)) return(NULL)
-  if (!is.list(prov)) stop("`prov` must be a provenance list (loadprov())", call. = FALSE)
+  if (!is.list(prov)) stop("citecps: `prov` must be a provenance list (loadprov())", call. = FALSE)
   ds  <- prov$dataset
   res <- prov$resource
   year <- substr(prov$captured_at_utc %||% "", 1, 4)

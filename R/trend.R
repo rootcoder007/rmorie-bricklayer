@@ -142,7 +142,7 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
   if (is.null(x)) x <- seq_along(y)
   x <- .rmbl_num(x, "x")
   if (length(x) != length(y)) {
-    stop("`x` and `y` must be the same length", call. = FALSE)
+    stop("trndtst: `x` and `y` must be the same length", call. = FALSE)
   }
   if (any(is.infinite(y)) || any(is.infinite(x))) {
     # a missing period is dropped; an infinite value is a data error
@@ -160,7 +160,7 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
   y <- y[ord]
   n <- length(y)
   if (n < 3L) {
-    stop("a trend needs at least three periods", call. = FALSE)
+    stop("trndtst: a trend needs at least three periods", call. = FALSE)
   }
   if (n > 20000L) {
     stop(sprintf(
@@ -612,7 +612,7 @@ cnttrnd <- function(y, x = NULL, offset = NULL, conflvl = 0.95) {
   if (is.null(x)) x <- seq_along(y)
   x <- .rmbl_num(x, "x")
   if (length(x) != length(y)) {
-    stop("`x` and `y` must be the same length", call. = FALSE)
+    stop("cnttrnd: `x` and `y` must be the same length", call. = FALSE)
   }
   if (any(y < 0, na.rm = TRUE) ||
     any(abs(y - round(y)) > 1e-8, na.rm = TRUE)) {
@@ -641,7 +641,7 @@ cnttrnd <- function(y, x = NULL, offset = NULL, conflvl = 0.95) {
   y <- y[ok]
   logoff <- logoff[ok]
   n <- length(y)
-  if (n < 3L) stop("a trend needs at least three periods", call. = FALSE)
+  if (n < 3L) stop("cnttrnd: a trend needs at least three periods", call. = FALSE)
   # centre the periods so the intercept is interpretable and the normal
   # equations are better conditioned
   xc <- x - mean(x)

@@ -37,7 +37,7 @@
   if (is.null(out)) {
     # the file is shared with morie and rmorie: a file that does not parse is said, not read as
     # "no key" and then written over by the next login (which deleted the other entries)
-    stop(sprintf("%s is not a JSON object; fix or remove it (it is shared with morie and rmorie)", p),
+    stop(.rmbl_fn(), sprintf("%s is not a JSON object; fix or remove it (it is shared with morie and rmorie)", p),
          call. = FALSE)
   }
   out
@@ -68,7 +68,7 @@
   if (!file.exists(p)) return(list())
   out <- .bl_credentials_object(p, simplify = FALSE)
   if (is.null(out)) {
-    stop(sprintf("%s is not a JSON object; fix or remove it (it is shared with morie and rmorie)", p),
+    stop(.rmbl_fn(), sprintf("%s is not a JSON object; fix or remove it (it is shared with morie and rmorie)", p),
          call. = FALSE)
   }
   out
@@ -1357,9 +1357,10 @@ llmask <- function(prompt, model = NULL, tmout = 120,
   .bl_check_flag(docs, "docs")
   if (docs) {
     pk <- pkgs %||% .bl_kn_default_packages()
-    if (!is.character(pk) || !length(pk) || anyNA(pk)) stop("`pkgs` must name installed packages", call. = FALSE)
+    if (!is.character(pk) || !length(pk) || anyNA(pk)) stop("llmask: `pkgs` must name installed packages",
+                                                            call. = FALSE)
     missing <- pk[!vapply(pk, function(x) nzchar(system.file(package = x)), logical(1))]
-    if (length(missing)) stop(sprintf("not installed: %s", paste(missing, collapse = ", ")), call. = FALSE)
+    if (length(missing)) stop(sprintf("llmask: not installed: %s", paste(missing, collapse = ", ")), call. = FALSE)
   }
   key <- .bl_answer_key(rt, model, prompt, if (docs) pk, syspro)
   if (!fresh && !is.null(hit <- .bl_answer_get(key, prompt))) return(hit)
@@ -1514,10 +1515,10 @@ dlogin <- function(token = NULL, email = NULL, code = NULL,
 .bl_check_email <- function(email) {
   email <- tolower(trimws(as.character(email)))
   if (length(email) != 1L || is.na(email) || !nzchar(email)) {
-    stop("an email address is required", call. = FALSE)
+    stop(.rmbl_fn(), "an email address is required", call. = FALSE)
   }
   if (!grepl("^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$", email)) {
-    stop(sprintf("'%s' is not an email address", email), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("'%s' is not an email address", email), call. = FALSE)
   }
   invisible(email)
 }
@@ -1629,10 +1630,10 @@ dlogin <- function(token = NULL, email = NULL, code = NULL,
   auth <- .bl_hosted_auth()
   email <- tolower(trimws(as.character(email)))
   if (length(email) != 1L || is.na(email) || !nzchar(email)) {
-    stop("an email address is required", call. = FALSE)
+    stop(.rmbl_fn(), "an email address is required", call. = FALSE)
   }
   if (!grepl("^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$", email)) {
-    stop(sprintf("'%s' is not an email address", email), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("'%s' is not an email address", email), call. = FALSE)
   }
   if (is.null(code)) {
     res <- .bl_post_json(paste0(auth, "/email/code"), c(list(email = email), profile))

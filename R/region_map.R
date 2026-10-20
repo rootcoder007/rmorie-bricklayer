@@ -32,7 +32,7 @@
 #' @noRd
 .rmbl_rm_chr <- function(x, arg) {
   x <- trimws(as.character(x))
-  if (!length(x)) stop(sprintf("`%s` must not be empty", arg), call. = FALSE)
+  if (!length(x)) stop(.rmbl_fn(), sprintf("`%s` must not be empty", arg), call. = FALSE)
   if (anyNA(x) || !all(nzchar(x))) {
     stop(sprintf("`%s` must not contain missing or empty values", arg),
       call. = FALSE

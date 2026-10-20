@@ -104,7 +104,7 @@ expcnts <- function(cnts, pop, area, strata = NULL) {
          call. = FALSE)
   }
   if (any(pop <= 0, na.rm = TRUE)) {
-    stop("`pop` must be positive", call. = FALSE)
+    stop("expcnts: `pop` must be positive", call. = FALSE)
   }
   if (is.null(strata)) {
     strata <- rep("all", n)
@@ -203,13 +203,13 @@ stdinc <- function(obs, expd, area = NULL, conflvl = 0.95) {
                                  min_n = 1L)
   if (length(expd) == 1L) expd <- rep(expd, length(obs))
   if (length(obs) != length(expd)) {
-    stop("`obs` and `expd` must be the same length", call. = FALSE)
+    stop("stdinc: `obs` and `expd` must be the same length", call. = FALSE)
   }
   if (any(expd <= 0, na.rm = TRUE)) {
-    stop("`expd` must be positive", call. = FALSE)
+    stop("stdinc: `expd` must be positive", call. = FALSE)
   }
   if (!is.null(area) && (!is.atomic(area) || is.matrix(area) || length(area) != length(obs))) {
-    stop("`area` must be NULL or one label per area (as many as `obs`)", call. = FALSE)
+    stop("stdinc: `area` must be NULL or one label per area (as many as `obs`)", call. = FALSE)
   }
   conflvl <- .rmbl_conf_level(conflvl)
   a <- 1 - conflvl
@@ -301,10 +301,10 @@ ebrates <- function(obs, expd, area = NULL) {
   obs <- .rmbl_num(obs, "obs")
   expd <- .rmbl_num(expd, "expd")
   if (length(obs) != length(expd)) {
-    stop("`obs` and `expd` must be the same length", call. = FALSE)
+    stop("ebrates: `obs` and `expd` must be the same length", call. = FALSE)
   }
   if (!is.null(area) && (!is.atomic(area) || is.matrix(area) || length(area) != length(obs))) {
-    stop("`area` must be NULL or one label per area (as many as `obs`)", call. = FALSE)
+    stop("ebrates: `area` must be NULL or one label per area (as many as `obs`)", call. = FALSE)
   }
   # counts: finite and non-negative, as sir() requires of the same inputs
   if (anyNA(obs) || any(!is.finite(obs)) || any(obs < 0)) {
@@ -314,7 +314,7 @@ ebrates <- function(obs, expd, area = NULL) {
     stop("`expd` must be finite", call. = FALSE)
   }
   if (any(expd <= 0)) {
-    stop("`expd` must be positive", call. = FALSE)
+    stop("ebrates: `expd` must be positive", call. = FALSE)
   }
   n <- length(obs)
   if (n < 2L) {
@@ -440,7 +440,7 @@ fnllim <- function(expd, target = 1,
                           lvls = c(0.95, 0.998)) {
   expd <- .rmbl_finite_input(expd, "expd", min_n = 1L)
   if (any(expd <= 0, na.rm = TRUE)) {
-    stop("`expd` must be positive", call. = FALSE)
+    stop("fnllim: `expd` must be positive", call. = FALSE)
   }
   target <- .rmbl_num(target, "target")[1L]
   if (is.na(target) || target <= 0) {

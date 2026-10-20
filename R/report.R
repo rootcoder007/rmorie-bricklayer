@@ -152,7 +152,7 @@ cpsrpt <- function(data, ref = NULL, schema = NULL,
                            key = NULL, alpha = 0.01,
                            maxrowsoutl = 20000L) {
   if (!is.data.frame(data)) {
-    stop("`data` must be a data frame", call. = FALSE)
+    stop("cpsrpt: `data` must be a data frame", call. = FALSE)
   }
   if (ncol(data) == 0L) {
     stop("`data` has no columns to assess", call. = FALSE)

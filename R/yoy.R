@@ -216,7 +216,7 @@ yoy.data.frame <- function(x, value, prd, by = NULL, lag = 1L,
                            ),
                            complete = TRUE, ...) {
   if (!is.null(by) && (!is.character(by) || !length(by) || anyNA(by))) {
-    stop("`by` must be one or more column names, or NULL", call. = FALSE)
+    stop("yoy: `by` must be one or more column names, or NULL", call. = FALSE)
   }
   units <- .rmbl_arg(units)
   dir <- .rmbl_arg(dir)
@@ -230,19 +230,19 @@ yoy.data.frame <- function(x, value, prd, by = NULL, lag = 1L,
     miss <- setdiff(by, names(x))
     if (length(miss)) {
       stop(sprintf(
-        "`by` column not found: %s",
+        "yoy: `by` column not found: %s",
         paste(miss, collapse = ", ")
       ), call. = FALSE)
     }
   }
   lag <- .rmbl_num(lag, "lag", integer = TRUE)
   if (length(lag) != 1L || is.na(lag) || lag < 1L) {
-    stop("`lag` must be a positive integer", call. = FALSE)
+    stop("yoy: `lag` must be a positive integer", call. = FALSE)
   }
   conflvl <- .rmbl_conf_level(conflvl)
   v <- x[[value]]
   if (!is.numeric(v)) {
-    stop(sprintf("`%s` must be numeric, not %s", value, class(v)[1L]),
+    stop(sprintf("yoy: `%s` must be numeric, not %s", value, class(v)[1L]),
       call. = FALSE
     )
   }

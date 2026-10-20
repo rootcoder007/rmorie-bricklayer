@@ -5,6 +5,32 @@
 # exports doing one of those; these guards make every such call an error
 # that names the argument.
 
+#' The function a refusal comes from, as "fn: ".
+#'
+#' A check several functions share still says which of them refused (srr G5.2a: every
+#' message unique; "`data` must be a data frame" came from 21). It is the nearest frame on the
+#' stack running an exported function or an S3 method of the package, the method named by its
+#' generic; "" when there is none (an internal helper called on its own).
+#' @return A string, "fn: " or "".
+#' @noRd
+.rmbl_fn <- function() {
+  ns <- environment(.rmbl_fn)
+  s3 <- getNamespaceInfo(ns, "S3methods")
+  ex <- getNamespaceExports(ns)
+  for (i in rev(seq_len(sys.nframe() - 1L))) {
+    f <- sys.function(i)
+    if (!identical(environment(f), ns)) next
+    h <- sys.call(i)[[1L]]
+    if (is.call(h) && as.character(h[[1L]]) %in% c("::", ":::")) h <- h[[3L]]
+    # do.call(fromjs, ...) calls the function itself, not its name
+    nm <- if (is.name(h)) as.character(h) else ex[vapply(ex, function(n) identical(get0(n, ns), f), NA)][1L]
+    g <- if (!is.na(nm)) s3[which(s3[, 3L] == nm), 1L]
+    if (length(g)) return(paste0(g[[1L]], ": "))
+    if (!is.na(nm) && nm %in% ex) return(paste0(nm, ": "))
+  }
+  ""
+}
+
 #' Checks that an argument is numeric (or logical) and returns it as a double vector.
 #' @param x The value passed by the user.
 #' @param what The argument's name, used in the error message.
@@ -14,11 +40,11 @@
 .rmbl_num_input <- function(x, what, allow_null = TRUE) {
   if (is.null(x)) {
     if (allow_null) return(numeric(0))
-    stop(sprintf("`%s` must be numeric, got NULL", what), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` must be numeric, got NULL", what), call. = FALSE)
   }
   if (is.factor(x) || is.character(x) || is.list(x) || is.data.frame(x) ||
         !(is.numeric(x) || is.logical(x))) {
-    stop(sprintf("`%s` must be numeric, got %s", what, class(x)[1]),
+    stop(.rmbl_fn(), sprintf("`%s` must be numeric, got %s", what, class(x)[1]),
       call. = FALSE
     )
   }
@@ -36,13 +62,13 @@
   x <- .rmbl_num_input(x, what)
   x <- x[!is.na(x)]
   if (any(!is.finite(x))) {
-    stop(sprintf("`%s` must be finite (no Inf)", what), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` must be finite (no Inf)", what), call. = FALSE)
   }
   if (nonneg && any(x < 0)) {
-    stop(sprintf("`%s` must be non-negative", what), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` must be non-negative", what), call. = FALSE)
   }
   if (length(x) < min_n) {
-    stop(sprintf("`%s` needs at least %s non-missing value%s, got %d", what,
+    stop(.rmbl_fn(), sprintf("`%s` needs at least %s non-missing value%s, got %d", what,
                  if (min_n == 1L) "one" else as.character(min_n),
                  if (min_n == 1L) "" else "s", length(x)), call. = FALSE)
   }
@@ -60,7 +86,7 @@
   # a logical NA is left to the caller's own length/NA check
   if (is.logical(x) && all(is.na(x))) return(x)
   if (!is.character(x)) {
-    stop(sprintf("`%s` must be character%s, got %s", what,
+    stop(.rmbl_fn(), sprintf("`%s` must be character%s, got %s", what,
                  if (allow_raw) " or raw" else "", class(x)[1]),
       call. = FALSE
     )
@@ -81,7 +107,7 @@
 .rmbl_colnames <- function(x, what, several = FALSE) {
   ok <- is.character(x) && length(x) >= 1L && !anyNA(x) && all(nzchar(x)) && (several || length(x) == 1L)
   if (!ok) {
-    stop(sprintf("`%s` must name %s of `data`", what, if (several) "one or more columns" else "one column"),
+    stop(.rmbl_fn(), sprintf("`%s` must name %s of `data`", what, if (several) "one or more columns" else "one column"),
          call. = FALSE)
   }
   x
@@ -114,7 +140,7 @@
 #' @noRd
 .rmbl_string1 <- function(x, what) {
   if (!is.character(x) || length(x) != 1L || is.na(x) || !nzchar(trimws(x))) {
-    stop(sprintf("`%s` must be a single non-empty string", what),
+    stop(.rmbl_fn(), sprintf("`%s` must be a single non-empty string", what),
       call. = FALSE
     )
   }
@@ -142,12 +168,14 @@
   shown <- paste(dQuote(choices, FALSE), collapse = ", ")
   given <- .rmbl_printable(paste(utils::head(deparse(arg), 1L), collapse = ""))
   if (!is.character(arg) || !length(arg) || anyNA(arg) || (!several && length(arg) != 1L)) {
-    stop(sprintf("`%s` must be %s %s, not %s", what, if (several) "one or more of" else "one of", shown, given),
+    stop(.rmbl_fn(),
+         sprintf("`%s` must be %s %s, not %s", what, if (several) "one or more of" else "one of", shown, given),
          call. = FALSE)
   }
   i <- pmatch(arg, choices, nomatch = 0L, duplicates.ok = several)
   if (any(i == 0L)) {
-    stop(sprintf("`%s` must be %s %s, not %s", what, if (several) "one or more of" else "one of", shown, given),
+    stop(.rmbl_fn(),
+         sprintf("`%s` must be %s %s, not %s", what, if (several) "one or more of" else "one of", shown, given),
          call. = FALSE)
   }
   unique(choices[i])
@@ -164,15 +192,18 @@
 #' @noRd
 .rmbl_df_names <- function(data, what = "data") {
   if (!is.data.frame(data)) {
-    stop(sprintf("`%s` must be a data frame, not %s", what, if (is.null(data)) "NULL" else class(data)[[1L]]),
+    stop(.rmbl_fn(),
+         sprintf("`%s` must be a data frame, not %s", what, if (is.null(data)) "NULL" else class(data)[[1L]]),
          call. = FALSE)
   }
   nm <- names(data)
   if (length(data) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)))) {
-    stop(sprintf("every column of `%s` must have a name (names(%s) has an empty one)", what, what), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("every column of `%s` must have a name (names(%s) has an empty one)", what, what),
+         call. = FALSE)
   }
   if (anyDuplicated(nm)) {
-    stop(sprintf("`%s` has two columns named %s: rename one", what, nm[duplicated(nm)][[1L]]), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` has two columns named %s: rename one", what, nm[duplicated(nm)][[1L]]),
+         call. = FALSE)
   }
   invisible(TRUE)
 }
@@ -188,7 +219,7 @@
 .rmbl_seed <- function(seed, what = "seed") {
   seed <- .rmbl_num(seed, what)
   if (length(seed) != 1L || is.na(seed) || seed < 0 || seed != floor(seed) || seed >= 2^53) {
-    stop(sprintf("`%s` must be a whole number in [0, 2^53)", what), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` must be a whole number in [0, 2^53)", what), call. = FALSE)
   }
   seed
 }
@@ -201,7 +232,7 @@
 .rmbl_conf_level <- function(x, what = "conflvl") {
   x <- .rmbl_num(x, what)
   if (length(x) != 1L || is.na(x) || x <= 0 || x >= 1) {
-    stop(sprintf("`%s` must be a single number strictly between 0 and 1", what), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` must be a single number strictly between 0 and 1", what), call. = FALSE)
   }
   x
 }
@@ -221,26 +252,27 @@
   # them in its own words ("'list' object cannot be coerced to type 'double'") or read a factor's codes
   # (re-test of the b617a3f CRAN stress fixes, hostile battery)
   if (!is.null(x) && (!is.atomic(x) || is.factor(x) || is.complex(x) || is.raw(x))) {
-    stop(sprintf("`%s` must be a%s number, not %s", what, if (integer) " whole" else "",
+    stop(.rmbl_fn(), sprintf("`%s` must be a%s number, not %s", what, if (integer) " whole" else "",
                  if (is.data.frame(x)) "a data frame" else if (is.factor(x)) "a factor" else
                    if (is.function(x)) "a function" else class(x)[[1L]]), call. = FALSE)
   }
   # a date is a number of days, never a count: reps = Sys.Date() ran 20,000 replications (CRAN stress
   # test of 0.5.14). A period (the x of a trend) may be a date, so only counts refuse it.
   if (integer && inherits(x, c("Date", "POSIXt", "difftime"))) {
-    stop(sprintf("`%s` must be a whole number, not a %s", what, class(x)[[1L]]), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` must be a whole number, not a %s", what, class(x)[[1L]]), call. = FALSE)
   }
   if (is.character(x)) {
     v <- suppressWarnings(as.numeric(x))
     bad <- !is.na(x) & is.na(v) & nzchar(trimws(x)) & x != "NA"
     if (any(bad)) {
-      stop(sprintf("`%s` must be numeric, not text such as \"%s\"", what, x[bad][1L]), call. = FALSE)
+      stop(.rmbl_fn(), sprintf("`%s` must be numeric, not text such as \"%s\"", what, x[bad][1L]), call. = FALSE)
     }
     x <- v
   }
   # a number, not a flag: as.numeric(TRUE) is 1 (maxprs = TRUE was read as one pair)
   if (is.logical(x) && any(!is.na(x))) {
-    stop(sprintf("`%s` must be a%s number, not %s", what, if (integer) " whole" else "", format(x[!is.na(x)][1L])),
+    stop(.rmbl_fn(),
+         sprintf("`%s` must be a%s number, not %s", what, if (integer) " whole" else "", format(x[!is.na(x)][1L])),
          call. = FALSE)
   }
   if (!integer) return(as.numeric(x))
@@ -248,10 +280,12 @@
   # turn Inf or 1e10 into NA with a coercion warning
   x <- as.numeric(x)
   frac <- (is.finite(x) & x != floor(x)) | is.infinite(x)
-  if (any(frac)) stop(sprintf("`%s` must be a whole number, not %s", what, format(x[frac][1L])), call. = FALSE)
+  if (any(frac)) stop(.rmbl_fn(), sprintf("`%s` must be a whole number, not %s", what, format(x[frac][1L])),
+                      call. = FALSE)
   big <- !is.na(x) & abs(x) > .Machine$integer.max
   if (any(big)) {
-    stop(sprintf("`%s` is too large: %s (the limit is 2147483647)", what, format(x[big][1L])), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` is too large: %s (the limit is 2147483647)", what, format(x[big][1L])),
+         call. = FALSE)
   }
   as.integer(x)
 }
@@ -278,7 +312,7 @@
 #' @noRd
 .rmbl_flag1 <- function(x, what) {
   if (!is.logical(x) || length(x) != 1L || is.na(x)) {
-    stop(sprintf("`%s` must be TRUE or FALSE", what), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` must be TRUE or FALSE", what), call. = FALSE)
   }
   x
 }
@@ -290,7 +324,7 @@
 #' @noRd
 .rmbl_text1 <- function(x, what) {
   if (!is.character(x) || length(x) != 1L || is.na(x)) {
-    stop(sprintf("`%s` must be a single string", what), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` must be a single string", what), call. = FALSE)
   }
   x
 }
@@ -314,7 +348,8 @@
     rng <- if (is.finite(min) && is.finite(max)) sprintf(" from %s to %s", format(min), format(max)) else
       if (is.finite(min)) sprintf(" of at least %s", format(min)) else
         if (is.finite(max)) sprintf(" of at most %s", format(max)) else ""
-    stop(sprintf("`%s` must be one %s%s", what, if (integer) "whole number" else "number", rng), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` must be one %s%s", what, if (integer) "whole number" else "number", rng),
+         call. = FALSE)
   }
   v
 }
@@ -349,9 +384,9 @@
 .rmbl_no_fn <- function(...) {
   a <- list(...)
   for (nm in names(a)) {
-    if (is.function(a[[nm]])) stop(sprintf("`%s` must be data, not a function", nm), call. = FALSE)
+    if (is.function(a[[nm]])) stop(.rmbl_fn(), sprintf("`%s` must be data, not a function", nm), call. = FALSE)
     # an environment too: as.character() refuses it in its own words (CRAN stress test of 0.5.14)
-    if (is.environment(a[[nm]])) stop(sprintf("`%s` must be data, not an environment", nm), call. = FALSE)
+    if (is.environment(a[[nm]])) stop(.rmbl_fn(), sprintf("`%s` must be data, not an environment", nm), call. = FALSE)
   }
   invisible(TRUE)
 }
@@ -363,8 +398,8 @@
 #' @noRd
 .rmbl_file1 <- function(path, what = "path") {
   path <- .rmbl_string1(path, what)
-  if (!file.exists(path)) stop(sprintf("`%s`: no such file: %s", what, path), call. = FALSE)
-  if (dir.exists(path)) stop(sprintf("`%s` is a directory, not a file: %s", what, path), call. = FALSE)
+  if (!file.exists(path)) stop(.rmbl_fn(), sprintf("`%s`: no such file: %s", what, path), call. = FALSE)
+  if (dir.exists(path)) stop(.rmbl_fn(), sprintf("`%s` is a directory, not a file: %s", what, path), call. = FALSE)
   path
 }
 
@@ -400,7 +435,7 @@
 #' @noRd
 .rmbl_check_counts <- function(v, what) {
   if (any(!is.finite(v)) || any(v < 0)) {
-    stop(sprintf("`%s` must be finite, non-negative counts", what), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` must be finite, non-negative counts", what), call. = FALSE)
   }
   invisible(v)
 }
@@ -416,7 +451,7 @@
 #' @noRd
 .rmbl_plot_check <- function(x, cls) {
   if (!inherits(x, cls) || !is.list(x)) {
-    stop(sprintf("`x` must be a %s object, as returned by the function that makes one", cls), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`x` must be a %s object, as returned by the function that makes one", cls), call. = FALSE)
   }
   invisible(x)
 }

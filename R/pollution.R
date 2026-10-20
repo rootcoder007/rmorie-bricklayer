@@ -255,7 +255,7 @@ crfno2 <- function(expo, y = "allcause", refconc = 10,
 .pollution_rate_pp <- function(rate, rare_outcome = FALSE, high_rate = FALSE) {
   for (a in list(list("rare_outcome", rare_outcome), list("high_rate", high_rate))) {
     if (!is.logical(a[[2L]]) || length(a[[2L]]) != 1L || is.na(a[[2L]])) {
-      stop(sprintf("`%s` must be TRUE or FALSE", a[[1L]]), call. = FALSE)
+      stop(.rmbl_fn(), sprintf("`%s` must be TRUE or FALSE", a[[1L]]), call. = FALSE)
     }
   }
   if (rate > 1) stop(.pollution_rate_msg(rate), call. = FALSE)
@@ -288,7 +288,8 @@ crfno2 <- function(expo, y = "allcause", refconc = 10,
 #' @noRd
 .pollution_scalar <- function(x, what, nonneg = TRUE, positive = FALSE) {
   # a flag is not a number: as.numeric(TRUE) is 1, and a relative risk of TRUE is a typo
-  if (is.logical(x) && !all(is.na(x))) stop(sprintf("`%s` must be numeric, not logical", what), call. = FALSE)
+  if (is.logical(x) && !all(is.na(x))) stop(.rmbl_fn(), sprintf("`%s` must be numeric, not logical", what),
+                                            call. = FALSE)
   if (is.factor(x)) {
     stop(sprintf("`%s` must be numeric, not a factor (its level codes are not values)", what), call. = FALSE)
   }
@@ -296,8 +297,8 @@ crfno2 <- function(expo, y = "allcause", refconc = 10,
   if (length(v) != 1L || is.na(v) || !is.finite(v)) {
     stop(sprintf("`%s` must be a single finite number", what), call. = FALSE)
   }
-  if (positive && v <= 0) stop(sprintf("`%s` must be positive", what), call. = FALSE)
-  if (nonneg && v < 0) stop(sprintf("`%s` must be non-negative", what), call. = FALSE)
+  if (positive && v <= 0) stop(.rmbl_fn(), sprintf("`%s` must be positive", what), call. = FALSE)
+  if (nonneg && v < 0) stop(.rmbl_fn(), sprintf("`%s` must be non-negative", what), call. = FALSE)
   v
 }
 
@@ -670,7 +671,8 @@ plrcf <- function(data, y, trt, covs, kfol = 5L, seed = 1L) {
   .rmbl_colnames(covs, "covs", several = TRUE)
   cols <- c(y, trt, covs)
   missing <- setdiff(cols, names(data))
-  if (length(missing)) stop(sprintf("data is missing columns: %s", paste(missing, collapse = ", ")), call. = FALSE)
+  if (length(missing)) stop(sprintf("plrcf: data is missing columns: %s", paste(missing, collapse = ", ")),
+                            call. = FALSE)
   df <- data[stats::complete.cases(data[, cols, drop = FALSE]), cols, drop = FALSE]
   n <- nrow(df)
   kfol <- as.integer(.rmbl_num(kfol, "kfol", integer = TRUE))
@@ -932,7 +934,8 @@ expconcidx <- function(data, expo, income) {
   .rmbl_colnames(expo, "expo")
   .rmbl_colnames(income, "income")
   missing <- setdiff(c(expo, income), names(data))
-  if (length(missing)) stop(sprintf("data is missing columns: %s", paste(missing, collapse = ", ")), call. = FALSE)
+  if (length(missing)) stop(sprintf("expconcidx: data is missing columns: %s", paste(missing, collapse = ", ")),
+                            call. = FALSE)
   df <- data[, c(expo, income), drop = FALSE]
   df <- df[stats::complete.cases(df), , drop = FALSE]
   n <- nrow(df)

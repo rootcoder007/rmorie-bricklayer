@@ -191,14 +191,14 @@ chmac <- function(key, msg) {
   if (!is.raw(key)) {
     key <- as.character(key)
     if (length(key) != 1L || is.na(key)) {
-      stop("`key` must be a length-1 character vector or a raw vector",
+      stop("chmac: `key` must be a length-1 character vector or a raw vector",
            call. = FALSE)
     }
   }
   if (!is.raw(msg)) {
     msg <- as.character(msg)
     if (length(msg) != 1L || is.na(msg)) {
-      stop("`msg` must be a length-1 character vector or a raw vector",
+      stop("chmac: `msg` must be a length-1 character vector or a raw vector",
            call. = FALSE)
     }
   }

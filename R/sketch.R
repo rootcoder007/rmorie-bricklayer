@@ -101,7 +101,7 @@ onlsmry <- function(x = NULL) {
 #' @export
 smryupd <- function(acc, x) {
   if (!inherits(acc, "bricklayer_online")) {
-    stop("`acc` must come from onlsmry()", call. = FALSE)
+    stop("smryupd: `acc` must come from onlsmry()", call. = FALSE)
   }
   x <- .rmbl_num(x, "x")
   x <- x[!is.na(x)]
@@ -131,7 +131,7 @@ smrymrg <- function(a, b) {
 #' @export
 smrystat <- function(acc) {
   if (!inherits(acc, "bricklayer_online")) {
-    stop("`acc` must come from onlsmry()", call. = FALSE)
+    stop("smrystat: `acc` must come from onlsmry()", call. = FALSE)
   }
   s <- acc$state
   n <- s[1L]
@@ -236,7 +236,7 @@ rsvidx <- function(n, k, seed = 42L) {
   n <- .rmbl_num(n, "n")
   k <- .rmbl_num(k, "k")
   if (length(n) != 1L || is.na(n) || !is.finite(n) || n < 0 || n != floor(n)) {
-    stop("`n` must be a single non-negative whole number", call. = FALSE)
+    stop("rsvidx: `n` must be a single non-negative whole number", call. = FALSE)
   }
   if (length(k) != 1L || is.na(k) || !is.finite(k) || k < 0 || k != floor(k)) {
     stop("`k` must be a single non-negative whole number", call. = FALSE)

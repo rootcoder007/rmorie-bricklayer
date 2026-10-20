@@ -37,10 +37,10 @@
     stop(sprintf("`%s` must be a single number, got %d values", arg, length(x)), call. = FALSE)
   }
   if (any(!is.finite(x[!is.na(x)]))) {
-    stop(sprintf("`%s` must be finite (no Inf)", arg), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` must be finite (no Inf)", arg), call. = FALSE)
   }
   x <- .rmbl_num(x, "x")
-  if (!length(x)) stop(sprintf("`%s` must not be empty", arg), call. = FALSE)
+  if (!length(x)) stop(.rmbl_fn(), sprintf("`%s` must not be empty", arg), call. = FALSE)
   if (anyNA(x)) stop(sprintf("`%s` must not contain NA", arg), call. = FALSE)
   bad <- if (allow_zero) any(x < 0) else any(x <= 0)
   if (bad) {

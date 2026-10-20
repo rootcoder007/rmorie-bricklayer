@@ -232,10 +232,10 @@ bldl <- function(url, dest, headers = NULL,
     # body is capped; base R's url() did none of that (0.5.7 review)
     res <- .bl_http_download(url, dest, as.integer(tmout), hdr_lines, draw, maxbytes, FALSE)
     if (res$status < 0) {
-      stop(sprintf("%s: %s", url, res$error), call. = FALSE)
+      stop(sprintf("bldl: %s: %s", url, res$error), call. = FALSE)
     }
     if (res$status >= 400) {
-      stop(sprintf("%s answered HTTP %d", url, res$status), call. = FALSE)
+      stop(sprintf("bldl: %s answered HTTP %d", url, res$status), call. = FALSE)
     }
     got <- res$bytes
   }

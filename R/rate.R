@@ -178,17 +178,17 @@ rtcalc.data.frame <- function(x, count, pop, by = NULL, per = 1000,
     by <- as.character(by)
     miss <- setdiff(by, names(x))
     if (length(miss)) {
-      stop(sprintf("`by` column not found: %s",
+      stop(sprintf("rtcalc: `by` column not found: %s",
                    paste(miss, collapse = ", ")), call. = FALSE)
     }
   }
   per <- .rate_per(per)
   if (!is.numeric(x[[count]])) {
-    stop(sprintf("`%s` must be numeric, not %s", count,
+    stop(sprintf("rtcalc: `%s` must be numeric, not %s", count,
                  class(x[[count]])[1L]), call. = FALSE)
   }
   if (!is.numeric(x[[pop]])) {
-    stop(sprintf("`%s` must be numeric, not %s", pop,
+    stop(sprintf("rtcalc: `%s` must be numeric, not %s", pop,
                  class(x[[pop]])[1L]), call. = FALSE)
   }
   if (is.null(by)) {
@@ -250,7 +250,7 @@ rtcalc.default <- function(x, pop, per = 1000, conflvl = 0.95,
   cnt <- as.numeric(agg$count)
   pop <- as.numeric(agg$population)
   if (any(cnt < 0, na.rm = TRUE)) {
-    stop("`count` must be non-negative", call. = FALSE)
+    stop(.rmbl_fn(), "`count` must be non-negative", call. = FALSE)
   }
   nonint <- stats::na.omit(cnt)
   if (length(nonint) && any(abs(nonint - round(nonint)) > 1e-8)) {
@@ -382,12 +382,12 @@ shrs.data.frame <- function(x, count, by = NULL, total = NULL,
     by <- as.character(by)
     miss <- setdiff(by, names(x))
     if (length(miss)) {
-      stop(sprintf("`by` column not found: %s",
+      stop(sprintf("shrs: `by` column not found: %s",
                    paste(miss, collapse = ", ")), call. = FALSE)
     }
   }
   if (!is.numeric(x[[count]])) {
-    stop(sprintf("`%s` must be numeric, not %s", count,
+    stop(sprintf("shrs: `%s` must be numeric, not %s", count,
                  class(x[[count]])[1L]), call. = FALSE)
   }
   if (is.null(by)) {
@@ -457,7 +457,7 @@ shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
   conf_level <- .rmbl_conf_level(conf_level)
   cnt <- as.numeric(agg$count)
   if (any(cnt < 0, na.rm = TRUE)) {
-    stop("`count` must be non-negative", call. = FALSE)
+    stop(.rmbl_fn(), "`count` must be non-negative", call. = FALSE)
   }
   if (is.na(denom) || denom <= 0) {
     stop("the total must be positive", call. = FALSE)
@@ -617,14 +617,14 @@ ratechg.data.frame <- function(x, count, pop, prd, by = NULL,
     by <- as.character(by)
     miss <- setdiff(by, names(x))
     if (length(miss)) {
-      stop(sprintf("`by` column not found: %s",
+      stop(sprintf("ratechg: `by` column not found: %s",
                    paste(miss, collapse = ", ")), call. = FALSE)
     }
   }
   per <- .rate_per(per)
   lag <- .rmbl_num(lag, "lag", integer = TRUE)
   if (length(lag) != 1L || is.na(lag) || lag < 1L) {
-    stop("`lag` must be a positive integer", call. = FALSE)
+    stop("ratechg: `lag` must be a positive integer", call. = FALSE)
   }
   conflvl <- .rmbl_conf_level(conflvl)
   keys <- c(by, prd)

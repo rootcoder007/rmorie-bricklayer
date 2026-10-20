@@ -23,7 +23,7 @@
   if (!allow_na && anyNA(x)) stop(sprintf("`%s` has missing values", what), call. = FALSE)
   ok <- x[!is.na(x)]
   if (any(!is.finite(ok)) || any(ok < 0)) {
-    stop(sprintf("`%s` must be finite, non-negative counts", what), call. = FALSE)
+    stop(.rmbl_fn(), sprintf("`%s` must be finite, non-negative counts", what), call. = FALSE)
   }
   x
 }

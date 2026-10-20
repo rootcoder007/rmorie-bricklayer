@@ -197,7 +197,7 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
                           id = NULL, type = c("bootstrap", "meanboot", "jk1", "jkn", "brr", "fay"),
                           msize = 1, rho = NULL, mse = TRUE,
                           lonely = c("fail", "remove", "adjust"), rscales = NULL, degf = NULL) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("svydes: `data` must be a data frame", call. = FALSE)
   # only the columns the design names must be unique: a duplicated column it does not use is no
   # reason to refuse the data (statistics stress test of 5e1dce5)
   used <- unlist(Filter(function(v) is.character(v), list(w, strata, psu, fpc, id, reps)))
@@ -280,7 +280,7 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
       if (is.matrix(reps) && !keep_matrix) reps <- as.data.frame.matrix(unclass(reps))
       if (keep_matrix) {
         reps <- unclass(reps)
-        if (nrow(reps) != n) stop(sprintf("`reps` must have one row per row of `data` (%d)", n), call. = FALSE)
+        if (nrow(reps) != n) stop(sprintf("svydes: `reps` must have one row per row of `data` (%d)", n), call. = FALSE)
         if (is.character(w) && length(w) == 1L && w %in% colnames(reps)) {
           for (i in which(colnames(reps) == w)) {
             if (any(abs(reps[, i] - .w) > 1e-12 * pmax(abs(.w), .Machine$double.xmin))) {
@@ -294,7 +294,7 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
         for (j in seq_len(ncol(reps))) {
           r <- reps[, j]
           if (anyNA(r) || any(!is.finite(r)) || any(r < 0)) {
-            stop("replicate weights must be finite, non-negative and not missing", call. = FALSE)
+            stop("svydes: replicate weights must be finite, non-negative and not missing", call. = FALSE)
           }
         }
         .reps <- reps
@@ -323,7 +323,7 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
         reps <- reps[m, names(reps) != id, drop = FALSE]
       }
       if (nrow(reps) != n) {
-        stop(sprintf("`reps` must have one row per row of `data` (%d)", n), call. = FALSE)
+        stop(sprintf("svydes: `reps` must have one row per row of `data` (%d)", n), call. = FALSE)
       }
       # the full weight named in `w`, shipped beside the replicates (CSUS's bootstrap file carries
       # WGT_PUMF), is the weight and not a replicate: set aside when it is the weight. A column that
@@ -353,7 +353,7 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
       }
       .reps <- lapply(.reps, function(r) {
         if (anyNA(r) || any(!is.finite(r)) || any(r < 0)) {
-          stop("replicate weights must be finite, non-negative and not missing", call. = FALSE)
+          stop("svydes: replicate weights must be finite, non-negative and not missing", call. = FALSE)
         }
         as.numeric(r)
       })
@@ -1363,7 +1363,7 @@ svyest <- function(des, data, y, by = NULL, stat = c("mean", "total", "proportio
   .rmbl_no_fn(levels = lvls)
   stat <- .rmbl_arg(stat)
   ci <- .rmbl_arg(ci)
-  if (!inherits(des, "rmbl_svy_design")) stop("`des` must come from svydes()", call. = FALSE)
+  if (!inherits(des, "rmbl_svy_design")) stop("svyest: `des` must come from svydes()", call. = FALSE)
   .svy_check_data(des, data)
   if (!length(by)) by <- NULL
   if (!is.character(by) && !is.null(by)) stop("`by` must name columns of `data`", call. = FALSE)

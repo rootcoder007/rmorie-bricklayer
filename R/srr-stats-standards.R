@@ -17,6 +17,8 @@
 #' @srrstats {G2.4} Explicit conversions are centralised in R/aaa_input_guards.R (.rmbl_num, .rmbl_scalar) and the
 #'   categorical decoders; see G2.4a-e.
 #' @srrstats {G5.2} There are about 2,200 expect_error/expect_warning/expect_message calls across 159 test files.
+#' @srrstats {G5.2a} A refusal several functions share names the one that refused: a literal copy starts with
+#'   "fn: ", and the shared input guards prefix the calling exported function found by .rmbl_fn().
 #' @srrstats {G5.2b} Tests trigger the refusals and match the message text (e.g. test-input-contracts.R,
 #'   test-docs-bugs-0513.R, test-cran-stress-*.R).
 #' @srrstats {G5.4} Correctness tests against the survey package, Lakner's published examples and closed forms; see
@@ -49,8 +51,6 @@
 #' @srrstats {EA1.0} README's opening paragraph names the users: analysts and researchers working from published
 #'   administrative and survey tables.
 #'
-#' @srrstatsTODO {G5.2a} 63 stop() messages are duplicated (e.g. "`data` must be a data frame" appears 21 times;
-#'   "`col` must name a column" 7 times).
 #' @noRd
 NULL
 

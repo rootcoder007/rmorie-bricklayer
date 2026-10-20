@@ -88,7 +88,7 @@ cvari <- function(x) .Call(C_rmbl_var, .rmbl_num_input(x, "x"))
 ccorr <- function(x, y) {
   x <- .rmbl_num_input(x, "x")
   y <- .rmbl_num_input(y, "y")
-  if (length(x) != length(y)) stop("`x` and `y` must have the same length", call. = FALSE)
+  if (length(x) != length(y)) stop("ccorr: `x` and `y` must have the same length", call. = FALSE)
   .Call(C_rmbl_cor, x, y)
 }
 
@@ -137,8 +137,9 @@ ccorr <- function(x, y) {
 cnormpdf <- function(x, mean = 0, sd = 1) {
   mean <- .rmbl_num(mean, "mean")
   sd <- .rmbl_num(sd, "sd")
-  if (length(mean) != 1L || !is.finite(mean)) stop("`mean` must be a single finite number", call. = FALSE)
-  if (length(sd) != 1L || !is.finite(sd) || sd <= 0) stop("`sd` must be a single positive number", call. = FALSE)
+  if (length(mean) != 1L || !is.finite(mean)) stop("cnormpdf: `mean` must be a single finite number", call. = FALSE)
+  if (length(sd) != 1L || !is.finite(sd) || sd <= 0) stop("cnormpdf: `sd` must be a single positive number",
+                                                          call. = FALSE)
   .Call(C_rmbl_normal_pdf, .rmbl_num_input(x, "x"), mean, sd)
 }
 

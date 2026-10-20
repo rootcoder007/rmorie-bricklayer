@@ -258,7 +258,8 @@ hilltlidx <- function(x, xmin = NULL, discrete = TRUE,
                             approx = FALSE, mintl = 3L) {
   for (flag in c("discrete", "approx")) {
     v <- get(flag, inherits = FALSE)
-    if (!is.logical(v) || length(v) != 1L || is.na(v)) stop(sprintf("`%s` must be TRUE or FALSE", flag), call. = FALSE)
+    if (!is.logical(v) || length(v) != 1L || is.na(v)) stop(sprintf("hilltlidx: `%s` must be TRUE or FALSE", flag),
+                                                            call. = FALSE)
   }
   mintl <- .rmbl_scalar(mintl, "mintl", 1, integer = TRUE)
   # a factor's level code is not a threshold (xmin = factor("3") fitted from 1, review of 52a8883)

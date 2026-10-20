@@ -249,7 +249,7 @@ kemsz <- function(lvl) {
 kemencap <- function(key, m = NULL) {
   level <- .rmbl_kem_key_level(key)
   ek <- .rmbl_hex_or_null(key$public)
-  if (is.null(ek)) stop("`key` has no usable public key", call. = FALSE)
+  if (is.null(ek)) stop("kemencap: `key` has no usable public key", call. = FALSE)
   if (is.null(m)) {
     m <- rndbytes(32L)
   } else if (!is.raw(m) || length(m) != 32L) {
@@ -344,7 +344,7 @@ kemdecap <- function(key, ct, masked = getOption("rmoriebricklayer.masked", TRUE
   masked <- .rmbl_masked_flag(masked)
   level <- .rmbl_kem_key_level(key)
   if (is.null(key[["secret"]])) {
-    stop("decapsulation needs a key with its secret half", call. = FALSE)
+    stop("kemdecap: decapsulation needs a key with its secret half", call. = FALSE)
   }
   dk <- .rmbl_hex_or_null(key$secret)
   if (is.null(dk)) stop("`key` has no usable secret key", call. = FALSE)

@@ -157,7 +157,7 @@
 #' @export
 ruleinset <- function(col, set, napass = TRUE,
                         sev = c("warning", "fatal")) {
-  if (missing(col)) stop("`col` must name a column", call. = FALSE)
+  if (missing(col)) stop("ruleinset: `col` must name a column", call. = FALSE)
   .rmbl_no_fn(set = set)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
@@ -179,7 +179,7 @@ ruleinset <- function(col, set, napass = TRUE,
 #' @export
 rulebtw <- function(col, lo, hi, napass = TRUE,
                          sev = c("warning", "fatal")) {
-  if (missing(col)) stop("`col` must name a column", call. = FALSE)
+  if (missing(col)) stop("rulebtw: `col` must name a column", call. = FALSE)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
   lo <- .rmbl_num(lo, "lo")[1L]
@@ -203,7 +203,7 @@ rulebtw <- function(col, lo, hi, napass = TRUE,
 #' @rdname rulelib
 #' @export
 rulenull <- function(col, sev = c("warning", "fatal")) {
-  if (missing(col)) stop("`col` must name a column", call. = FALSE)
+  if (missing(col)) stop("rulenull: `col` must name a column", call. = FALSE)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
   rul(paste0(col, "_not_null"), function(v) !is.na(v),
@@ -215,7 +215,7 @@ rulenull <- function(col, sev = c("warning", "fatal")) {
 #' @rdname rulelib
 #' @export
 ruleuniq <- function(col, sev = c("warning", "fatal")) {
-  if (missing(col)) stop("`col` must name a column", call. = FALSE)
+  if (missing(col)) stop("ruleuniq: `col` must name a column", call. = FALSE)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
   rul(paste0(col, "_unique"),
@@ -231,7 +231,7 @@ ruleuniq <- function(col, sev = c("warning", "fatal")) {
 #' @export
 rulerx <- function(col, pat, napass = TRUE,
                        sev = c("warning", "fatal")) {
-  if (missing(col)) stop("`col` must name a column", call. = FALSE)
+  if (missing(col)) stop("rulerx: `col` must name a column", call. = FALSE)
   .rmbl_no_fn(pattern = pat)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
@@ -253,7 +253,7 @@ rulerx <- function(col, pat, napass = TRUE,
 #' @export
 ruleincr <- function(col, strict = FALSE,
                             sev = c("warning", "fatal")) {
-  if (missing(col)) stop("`col` must name a column", call. = FALSE)
+  if (missing(col)) stop("ruleincr: `col` must name a column", call. = FALSE)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
   rul(paste0(col, "_increasing"),
@@ -282,7 +282,7 @@ ruleincr <- function(col, strict = FALSE,
 #' @export
 rulemad <- function(col, n = 3, napass = TRUE,
                                sev = c("warning", "fatal")) {
-  if (missing(col)) stop("`col` must name a column", call. = FALSE)
+  if (missing(col)) stop("rulemad: `col` must name a column", call. = FALSE)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
   n <- .rmbl_num(n, "n")[1L]
@@ -416,7 +416,7 @@ rulecolcnt <- function(n, sev = c("warning", "fatal")) {
 #' try(duprows(df, "code"))
 #' @export
 duprows <- function(data, cols = NULL) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("duprows: `data` must be a data frame", call. = FALSE)
   # duplicate column names are messy data, which this exists to inspect: every column by position,
   # a column given by name only when the name is one column's (statistics stress test of 5e1dce5)
   if (nrow(data) == 0L) {
@@ -500,9 +500,9 @@ duprows <- function(data, cols = NULL) {
 #' try(misssmry(c(1, NA, 3)))
 #' @export
 misssmry <- function(data) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("misssmry: `data` must be a data frame", call. = FALSE)
   # every column by position: duplicate or empty names are the messy data this summarises
-  if (ncol(data) == 0L) stop("`data` has no columns", call. = FALSE)
+  if (ncol(data) == 0L) stop("misssmry: `data` has no columns", call. = FALSE)
   n <- nrow(data)
   per_col <- vapply(data, function(v) sum(is.na(v)), numeric(1))
   total <- sum(per_col)

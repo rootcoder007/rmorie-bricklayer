@@ -112,7 +112,7 @@
 mahaoutl <- function(data, alpha = 0.001, robust = TRUE) {
   if (is.matrix(data)) data <- as.data.frame(data)
   if (!is.data.frame(data)) {
-    stop("`data` must be a data frame or a numeric matrix", call. = FALSE)
+    stop("mahaoutl: `data` must be a data frame or a numeric matrix", call. = FALSE)
   }
   num <- vapply(data, is.numeric, logical(1))
   if (!any(num)) stop("`data` has no numeric columns", call. = FALSE)
@@ -121,7 +121,7 @@ mahaoutl <- function(data, alpha = 0.001, robust = TRUE) {
   p <- ncol(X)
   alpha <- .rmbl_num(alpha, "alpha")
   if (length(alpha) != 1L || is.na(alpha) || alpha <= 0 || alpha >= 1) {
-    stop("`alpha` must be a single value strictly inside (0, 1)",
+    stop("mahaoutl: `alpha` must be a single value strictly inside (0, 1)",
          call. = FALSE)
   }
   ok <- stats::complete.cases(X)
@@ -275,9 +275,9 @@ print.bricklayer_outliers <- function(x, ...) {
 #' try(missruns(df, minrun = 0))
 #' @export
 missruns <- function(data, minrun = 2L) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("missruns: `data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
-  if (ncol(data) == 0L) stop("`data` has no columns", call. = FALSE)
+  if (ncol(data) == 0L) stop("missruns: `data` has no columns", call. = FALSE)
   minrun <- .rmbl_num(minrun, "minrun", integer = TRUE)
   if (length(minrun) != 1L || is.na(minrun) || minrun < 1L) {
     stop("`minrun` must be a single positive integer", call. = FALSE)
@@ -372,9 +372,9 @@ print.bricklayer_runs <- function(x, ...) {
 #' try(missgrid(df, height = 0))
 #' @export
 missgrid <- function(data, height = 20L, width = 12L) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("missgrid: `data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
-  if (ncol(data) == 0L) stop("`data` has no columns", call. = FALSE)
+  if (ncol(data) == 0L) stop("missgrid: `data` has no columns", call. = FALSE)
   height <- .rmbl_num(height, "height", integer = TRUE)
   if (length(height) != 1L || is.na(height) || height < 1L) {
     stop("`height` must be a single positive integer", call. = FALSE)

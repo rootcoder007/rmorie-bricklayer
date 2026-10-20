@@ -14,7 +14,8 @@
 #' @return A double vector.
 #' @noRd
 .ad_num <- function(x, what, min = -Inf, positive = FALSE, scalar = TRUE, whole = FALSE) {
-  if (is.logical(x) && !all(is.na(x))) stop(sprintf("`%s` must be numeric, not logical", what), call. = FALSE)
+  if (is.logical(x) && !all(is.na(x))) stop(.rmbl_fn(), sprintf("`%s` must be numeric, not logical", what),
+                                            call. = FALSE)
   v <- .rmbl_num_input(x, what, allow_null = FALSE)
   if (scalar && length(v) != 1L) {
     stop(sprintf("`%s` must be a single number", what), call. = FALSE)
@@ -22,7 +23,7 @@
   if (!length(v) || anyNA(v) || any(!is.finite(v))) {
     stop(sprintf("`%s` must be finite, with no missing values", what), call. = FALSE)
   }
-  if (positive && any(v <= 0)) stop(sprintf("`%s` must be positive", what), call. = FALSE)
+  if (positive && any(v <= 0)) stop(.rmbl_fn(), sprintf("`%s` must be positive", what), call. = FALSE)
   if (any(v < min)) stop(sprintf("`%s` must be at least %s", what, format(min)), call. = FALSE)
   # 1e308 overflowed the arithmetic to Inf and NaN and failed in R's words (final audit of 1.0.0)
   if (any(abs(v) > 1e300)) stop(sprintf("`%s` must be below 1e300 in size", what), call. = FALSE)
@@ -495,7 +496,7 @@ advdif2d <- function(c0, u, v, kx, ky, dx, dy, dt, nsteps, source = NULL, maxwor
   work <- as.numeric(nx) * ny * nsteps * substeps
   if (!is.finite(work)) stop("the amount of work is not finite: check nsteps and the grid", call. = FALSE)
   if (!is.numeric(maxwork) || length(maxwork) != 1L || is.na(maxwork) || maxwork <= 0) {
-    stop("`maxwork` must be a single positive number (Inf lifts the cap)", call. = FALSE)
+    stop("advdif2d: `maxwork` must be a single positive number (Inf lifts the cap)", call. = FALSE)
   }
   if (work > maxwork) {
     minutes <- work / 8e5 / 60   # about 0.8 million cell updates a second in the explicit loop
@@ -510,7 +511,7 @@ advdif2d <- function(c0, u, v, kx, ky, dx, dy, dt, nsteps, source = NULL, maxwor
                  format(round(minutes, 1), big.mark = ",")), call. = FALSE)
   }
   # a count R can loop over, whatever maxwork allows: 1e300 died in seq_len() (review of 02a38be)
-  if (nsteps > .Machine$integer.max) stop("`nsteps` must be at most 2^31 - 1", call. = FALSE)
+  if (nsteps > .Machine$integer.max) stop("advdif2d: `nsteps` must be at most 2^31 - 1", call. = FALSE)
   substeps <- as.integer(substeps)
   if (stab > 1) {
     # the same physical time, taken in enough sub-steps to satisfy the bound:
@@ -589,7 +590,7 @@ lagrprt <- function(n, x0, y0, u, v, kx, ky, dt, nsteps, seed = 0, grid = NULL,
   dt <- .ad_num(dt, "dt", positive = TRUE)
   nsteps <- .ad_num(nsteps, "nsteps", min = 0, whole = TRUE)
   if (!is.numeric(maxwork) || length(maxwork) != 1L || is.na(maxwork) || maxwork <= 0) {
-    stop("`maxwork` must be a single positive number (Inf lifts the cap)", call. = FALSE)
+    stop("lagrprt: `maxwork` must be a single positive number (Inf lifts the cap)", call. = FALSE)
   }
   # the same cap as advdif2d(): particles x steps (nsteps = 1e9 built a 7.5 GB
   # index vector and would have run for about 32 hours, review of 52a8883)
@@ -600,7 +601,7 @@ lagrprt <- function(n, x0, y0, u, v, kx, ky, dt, nsteps, seed = 0, grid = NULL,
                  format(maxwork, big.mark = ",", scientific = FALSE)), call. = FALSE)
   }
   # a count R can loop over, whatever maxwork allows: 1e300 died in seq_len() (review of 02a38be)
-  if (nsteps > .Machine$integer.max) stop("`nsteps` must be at most 2^31 - 1", call. = FALSE)
+  if (nsteps > .Machine$integer.max) stop("lagrprt: `nsteps` must be at most 2^31 - 1", call. = FALSE)
   # a function, or NULL; what it returns is checked every step: a name went to match.fun() and a
   # wrong length was recycled into the positions silently (CRAN stress test of b617a3f)
   draw <- if (is.null(normals)) {

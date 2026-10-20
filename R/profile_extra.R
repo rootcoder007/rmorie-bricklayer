@@ -70,10 +70,10 @@
 #' try(misspat(data.frame()))
 #' @export
 misspat <- function(data, maxpat = 20L) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("misspat: `data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
   if (ncol(data) == 0L) {
-    stop("`data` has no columns", call. = FALSE)
+    stop("misspat: `data` has no columns", call. = FALSE)
   }
   maxpat <- .rmbl_num(maxpat, "maxpat", integer = TRUE)
   if (length(maxpat) != 1L || is.na(maxpat) ||
@@ -221,11 +221,11 @@ topcors <- function(data, n = 10L, meth = c(
                              ),
                              minabs = 0) {
   meth <- .rmbl_arg(meth)
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("topcors: `data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
   num <- names(data)[vapply(data, is.numeric, logical(1))]
   if (length(num) < 2L) {
-    stop("need at least two numeric columns to correlate", call. = FALSE)
+    stop("topcors: need at least two numeric columns to correlate", call. = FALSE)
   }
   n <- .rmbl_num(n, "n", integer = TRUE)
   if (length(n) != 1L || is.na(n) || n < 1L) {

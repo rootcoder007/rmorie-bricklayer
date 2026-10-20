@@ -196,7 +196,7 @@ sctidy <- function(x) {
 .rmbl_contains <- function(est, lo, hi, labels) {
   bad <- is.finite(lo) & is.finite(hi) & is.finite(est) & (lo > est | hi < est)
   if (any(bad)) {
-    warning(sprintf("the interval does not contain the estimate for: %s; not compared",
+    warning(.rmbl_fn(), sprintf("the interval does not contain the estimate for: %s; not compared",
                     paste(unique(labels[bad]), collapse = ", ")), call. = FALSE)
     est[bad] <- NA_real_
   }
@@ -368,14 +368,14 @@ limfrom <- function(est, se = NULL, cv = NULL, moe = NULL, moelev = 0.90, conflv
 #' @export
 indgap <- function(data, grp, est, lower, upper, ref = "Non-Indigenous",
                            qual = NULL, conflvl = 0.95, pooled = NULL) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) stop("indgap: `data` must be a data frame", call. = FALSE)
   for (nm in c("grp", "est", "lower", "upper")) {
     v <- .rmbl_string1(get(nm), nm)
-    if (!v %in% names(data)) stop(sprintf("column `%s` not found in `data`", v), call. = FALSE)
+    if (!v %in% names(data)) stop(sprintf("indgap: column `%s` not found in `data`", v), call. = FALSE)
   }
   if (!is.null(qual)) {
     qual <- .rmbl_string1(qual, "qual")
-    if (!qual %in% names(data)) stop(sprintf("column `%s` not found in `data`", qual), call. = FALSE)
+    if (!qual %in% names(data)) stop(sprintf("indgap: column `%s` not found in `data`", qual), call. = FALSE)
   }
   ref <- .rmbl_string1(ref, "ref")
   if (grepl("^total", trimws(ref), ignore.case = TRUE) || .rmbl_pan_indigenous(ref, pooled)) {
@@ -406,7 +406,7 @@ indgap <- function(data, grp, est, lower, upper, ref = "Non-Indigenous",
   }
   if (any(bad)) {
     # a published table can hold such a cell (a 100% with limits 85.5 to 98.6): said, and not compared
-    warning(sprintf("the interval does not contain the estimate for: %s; not compared",
+    warning(sprintf("indgap: the interval does not contain the estimate for: %s; not compared",
                     paste(g[bad], collapse = ", ")), call. = FALSE)
     .est[bad] <- NA_real_
   }
@@ -491,23 +491,23 @@ agestd <- function(events, pop, std, grp = NULL, per = 1e5, conflvl = 0.95) {
   conflvl <- .rmbl_conf_level(conflvl)
   k <- length(std)
   if (!k || anyNA(std) || any(std < 0) || sum(std) <= 0) {
-    stop("`std` must be non-negative counts, one per age group, not all zero", call. = FALSE)
+    stop("agestd: `std` must be non-negative counts, one per age group, not all zero", call. = FALSE)
   }
   if (length(events) != length(pop)) stop("`events` and `pop` must be the same length", call. = FALSE)
   if (anyNA(events) || any(events < 0) || any(abs(events - round(events)) > 1e-8)) {
     stop("`events` must be non-negative whole numbers", call. = FALSE)
   }
-  if (anyNA(pop) || any(pop <= 0)) stop("`pop` must be positive", call. = FALSE)
+  if (anyNA(pop) || any(pop <= 0)) stop("agestd: `pop` must be positive", call. = FALSE)
   if (is.null(grp)) grp <- rep("all", length(events))
   .rmbl_no_fn(group = grp)
   grp <- as.character(grp)
-  if (length(grp) != length(events)) stop("`grp` must have one label per row", call. = FALSE)
+  if (length(grp) != length(events)) stop("agestd: `grp` must have one label per row", call. = FALSE)
   w <- std / sum(std)
   a <- 1 - conflvl
   rows <- lapply(unique(grp), function(gi) {
     i <- which(grp == gi)
     if (length(i) != k) {
-      stop(sprintf("group \"%s\" has %d age groups; `std` has %d", gi, length(i), k), call. = FALSE)
+      stop(sprintf("agestd: group \"%s\" has %d age groups; `std` has %d", gi, length(i), k), call. = FALSE)
     }
     d <- events[i]
     n <- pop[i]

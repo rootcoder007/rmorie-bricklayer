@@ -173,7 +173,7 @@ cpsatst <- function(man, key, ctx = NULL,
                            prehash = "none", note = NULL) {
   .rmbl_no_fn(note = note, context = ctx)
   if (!is.list(man)) {
-    stop("`man` must be a manifest from mkmnf()",
+    stop("cpsatst: `man` must be a manifest from mkmnf()",
       call. = FALSE
     )
   }

@@ -779,7 +779,8 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
   if (!file.exists(output)) stop(sprintf("no results file at %s", output), call. = FALSE)
   for (a in c("incgone", "lookup")) {
     v <- get(a)
-    if (!is.logical(v) || length(v) != 1L || is.na(v)) stop(sprintf("`%s` must be TRUE or FALSE", a), call. = FALSE)
+    if (!is.logical(v) || length(v) != 1L || is.na(v)) stop(sprintf("wbrtry: `%s` must be TRUE or FALSE", a),
+                                                            call. = FALSE)
   }
   recs <- .bl_wb_records(output)
   now <- .bl_wb_frame(recs)

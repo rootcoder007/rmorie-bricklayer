@@ -68,7 +68,7 @@
 #' @export
 yoylbl <- function(x, labels) {
   if (!inherits(x, "rmbl_yoy")) {
-    stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+    stop("yoylbl: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
   m <- .yoy_meta(x)
   p <- x[[m$period]]

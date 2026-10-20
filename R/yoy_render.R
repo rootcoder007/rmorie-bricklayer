@@ -98,7 +98,7 @@ yoyhtml <- function(x, file, title = "Year-over-year change",
                      sub = NULL, pal = "diverging", digits = 1L,
                      bars = TRUE, intv = TRUE, notes = NULL, ...) {
   if (!inherits(x, "rmbl_yoy")) {
-    stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+    stop("yoyhtml: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
   # an HTML page is written to a file or a connection (writeLines(html, NULL) failed in base R's words)
   if (is.null(file)) stop("`file` must be a file path or a connection", call. = FALSE)
@@ -106,7 +106,7 @@ yoyhtml <- function(x, file, title = "Year-over-year change",
   title <- .rmbl_text1(title, "title")
   if (!is.null(sub)) sub <- .rmbl_text1(sub, "sub")
   if (!is.null(notes) && (!is.character(notes) || anyNA(notes))) {
-    stop("`notes` must be text (a character vector), or NULL", call. = FALSE)
+    stop("yoyhtml: `notes` must be text (a character vector), or NULL", call. = FALSE)
   }
   m <- .yoy_meta(x)
   .pal <- .yoy_pal(pal)
@@ -323,7 +323,7 @@ yoypdf <- function(x, file, title = "Year-over-year change",
                     intv = TRUE, notes = NULL,
                     width = 11, height = 8.5, ...) {
   if (!inherits(x, "rmbl_yoy")) {
-    stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
+    stop("yoypdf: `x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
   file <- .rmbl_out_file(file, connection = FALSE)
   width <- .rmbl_scalar(width, "width", 2, 200)
@@ -331,7 +331,7 @@ yoypdf <- function(x, file, title = "Year-over-year change",
   title <- .rmbl_text1(title, "title")
   if (!is.null(sub)) sub <- .rmbl_text1(sub, "sub")
   if (!is.null(notes) && (!is.character(notes) || anyNA(notes))) {
-    stop("`notes` must be text (a character vector), or NULL", call. = FALSE)
+    stop("yoypdf: `notes` must be text (a character vector), or NULL", call. = FALSE)
   }
   m <- .yoy_meta(x)
   .pal <- .yoy_pal(pal)

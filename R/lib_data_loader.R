@@ -147,7 +147,7 @@ rslvckan <- function(prov) {
   if (is.null(prov)) {
     return(NULL)
   }
-  if (!is.list(prov)) stop("`prov` must be a provenance list (loadprov())", call. = FALSE)
+  if (!is.list(prov)) stop("rslvckan: `prov` must be a provenance list (loadprov())", call. = FALSE)
   ds <- prov$dataset
   res <- prov$resource
   if (is.null(ds$ckan_api_endpoint) || is.null(res$name_match_pattern)) {
@@ -243,7 +243,7 @@ rslvckns <- function(prov) {
   if (is.null(prov)) {
     return(NULL)
   }
-  if (!is.list(prov)) stop("`prov` must be a provenance list (loadprov())", call. = FALSE)
+  if (!is.list(prov)) stop("rslvckns: `prov` must be a provenance list (loadprov())", call. = FALSE)
   res <- prov$resource
   q <- res$search_query
   if (is.null(q) || !nzchar(q)) {
@@ -841,7 +841,7 @@ vrfsha256 <- function(path, expsha) {
 #' @export
 valsch <- function(dfraw, prov) {
   if (!is.data.frame(dfraw)) {
-    stop("`dfraw` must be a data frame", call. = FALSE)
+    stop("valsch: `dfraw` must be a data frame", call. = FALSE)
   }
   if (!is.null(prov) && !is.list(prov)) {
     stop("`prov` must be a provenance list (from read_provenance()), or NULL", call. = FALSE)
@@ -1088,7 +1088,7 @@ valsch <- function(dfraw, prov) {
 #' try(schval(data.frame(id = 1), list(scheme = list())))
 #' @export
 schval <- function(dfraw, prov) {
-  if (!is.data.frame(dfraw)) stop("`dfraw` must be a data frame", call. = FALSE)
+  if (!is.data.frame(dfraw)) stop("schval: `dfraw` must be a data frame", call. = FALSE)
   if (is.data.frame(prov)) {
     stop("`prov` must be a provenance list or a list of rules, not a data frame", call. = FALSE)
   }
@@ -1183,7 +1183,7 @@ rslvsoc <- function(prov) {
   if (is.null(prov)) {
     return(NULL)
   }
-  if (!is.list(prov)) stop("`prov` must be a provenance list (loadprov())", call. = FALSE)
+  if (!is.list(prov)) stop("rslvsoc: `prov` must be a provenance list (loadprov())", call. = FALSE)
   domain <- prov$dataset$socrata_domain
   id <- prov$dataset$socrata_id
   if (is.null(domain) || is.null(id)) {
@@ -1251,7 +1251,7 @@ rslvarc <- function(prov) {
   if (is.null(prov)) {
     return(NULL)
   }
-  if (!is.list(prov)) stop("`prov` must be a provenance list (loadprov())", call. = FALSE)
+  if (!is.list(prov)) stop("rslvarc: `prov` must be a provenance list (loadprov())", call. = FALSE)
   layer <- prov$dataset$arcgis_layer_url
   if (is.null(layer)) {
     return(NULL)

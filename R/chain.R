@@ -160,7 +160,7 @@ chnnew <- function() {
 chnapp <- function(chain, entry, label = NA_character_) {
   .rmbl_no_fn(label = label)
   if (!inherits(chain, "bricklayer_chain")) {
-    stop("`chain` must come from chnnew()", call. = FALSE)
+    stop("chnapp: `chain` must come from chnnew()", call. = FALSE)
   }
   prev <- chnhead(chain)
   payload <- .rmbl_entry_digest(entry)
@@ -182,7 +182,7 @@ chnapp <- function(chain, entry, label = NA_character_) {
 #' @export
 chnhead <- function(chain) {
   if (!inherits(chain, "bricklayer_chain")) {
-    stop("`chain` must come from chnnew()", call. = FALSE)
+    stop("chnhead: `chain` must come from chnnew()", call. = FALSE)
   }
   n <- length(chain$entries)
   if (n == 0L) return(chain$genesis)
@@ -217,7 +217,7 @@ chnvrf <- function(chain) {
 #' @noRd
 .rmbl_chain_check <- function(chain, warn) {
   if (!inherits(chain, "bricklayer_chain")) {
-    stop("`chain` must come from chnnew()", call. = FALSE)
+    stop(.rmbl_fn(), "`chain` must come from chnnew()", call. = FALSE)
   }
   n <- length(chain$entries)
   prev <- chain$genesis

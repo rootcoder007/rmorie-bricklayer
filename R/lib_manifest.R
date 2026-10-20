@@ -195,7 +195,7 @@ recrd <- function(man, name, obs, expd,
                    tol = 0.0001, grp = "general",
                    syn = FALSE) {
   .rmbl_no_fn(observed = obs, expected = expd)
-  if (!is.list(man) || is.data.frame(man)) stop("`man` must be a manifest from mkmnf()", call. = FALSE)
+  if (!is.list(man) || is.data.frame(man)) stop("recrd: `man` must be a manifest from mkmnf()", call. = FALSE)
   name <- .rmbl_string1(name, "name")
   tol <- .rmbl_scalar(tol, "tol", 0)
   # one value each: a vector made the PASS test `diff <= tol` a vector and
@@ -299,7 +299,7 @@ recrd <- function(man, name, obs, expd,
 #' @export
 wrmnfjs <- function(man, path, canon = FALSE) {
   path <- .rmbl_string1(path, "path")
-  if (!is.list(man)) stop("`man` must be a manifest from mkmnf()", call. = FALSE)
+  if (!is.list(man)) stop("wrmnfjs: `man` must be a manifest from mkmnf()", call. = FALSE)
   # never written without the flag (see mkmnf())
   if (isTRUE(man$meta$synthetic) || .rmbl_synthetic_flag()) {
     man$meta$synthetic <- TRUE
@@ -538,7 +538,7 @@ wrsmrytxt <- function(man, outdir, paths,
                               whatwasdone = NULL,
                               contact = NULL,
                               lic = NULL) {
-  if (!is.list(man)) stop("`man` must be a manifest from mkmnf()", call. = FALSE)
+  if (!is.list(man)) stop("wrsmrytxt: `man` must be a manifest from mkmnf()", call. = FALSE)
   counts <- summarise_counts(man)
   outdir <- .rmbl_string1(outdir, "outdir")
   if (!dir.exists(outdir)) stop("`outdir` is not a directory: ", outdir, call. = FALSE)

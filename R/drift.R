@@ -759,7 +759,7 @@ cpsdrft <- function(ref, cur, alpha = 0.01,
   }
   alpha <- .rmbl_num(alpha, "alpha")
   if (length(alpha) != 1L || is.na(alpha) || alpha <= 0 || alpha >= 1) {
-    stop("`alpha` must be a single value strictly inside (0, 1)",
+    stop("cpsdrft: `alpha` must be a single value strictly inside (0, 1)",
          call. = FALSE)
   }
   psiminn <- .rmbl_num(psiminn, "psiminn", integer = TRUE)
