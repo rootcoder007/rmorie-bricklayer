@@ -172,7 +172,7 @@ b2
 #> ── Capsule bundle ────────────────────────────────────────────────
 #>   files            1
 #>   manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e4167960781a579
-#>   bundled          2026-10-20T00:30:49Z
+#>   bundled          2026-10-20T02:42:50Z
 #>   scheme           ML-DSA-44
 #> ──────────────────────────────────────────────────────────────────
 cpsbndlvrf(b2, dir, keyexp = "00ff")$ok
@@ -190,6 +190,6 @@ cpsbndlvrf(b2, dir)$checks[, c("check", "ok")]
 
 # a directory that does not exist
 try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))
-#> Error : `dir` does not exist: /tmp/RtmpW0vzft/no-such-capsule
+#> Error : `dir` does not exist: /tmp/Rtmp7Dir15/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```

@@ -77,7 +77,7 @@ env <- capenv(c("stats", "utils"))
 env$r_version
 #> [1] "4.6.1"
 env$os
-#> [1] "Linux 6.17.0-1022-azure"
+#> [1] "Linux 7.0.0-1017-azure"
 env$packages          # named character vector of versions
 #>   stats   utils 
 #> "4.6.1" "4.6.1" 
