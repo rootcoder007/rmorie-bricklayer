@@ -504,3 +504,123 @@
   }
   if (is.null(v)) default else v
 }
+
+# ---- 0.5.x result names --------------------------------------------------------------------
+# Results keep their 1.0.0 names when a 1.0.0 function is called. Called through a 0.5.x alias
+# (or yoy() with its 0.5.x argument names), the result comes back under its 0.5.x column and
+# field names, from inst/compat/compat_results_map.tsv: the names of that page, then the
+# unambiguous ones of every page (a 1.0.0 name no 0.5.13 result used). The object gets the class
+# "rmbl_old" in front, so print(), plot(), format(), summary() and the aliases that take a
+# result turn it back into the 1.0.0 form before the 1.0.0 method reads it.
+
+.rmbl_compat_env <- new.env(parent = emptyenv())
+
+#' The result-name maps, read once from the installed package.
+#' @return A list: `topic`, named new -> old vectors by 0.5.x page; `global`, the unambiguous
+#'   pairs. Empty when the map is not installed (a bundle that sources the R files).
+#' @noRd
+.rmbl_result_maps <- function() {
+  m <- .rmbl_compat_env$maps
+  if (!is.null(m)) return(m)
+  p <- system.file("compat", "compat_results_map.tsv", package = "rmoriebricklayer")
+  m <- list(topic = list(), global = character())
+  if (nzchar(p)) {
+    t <- utils::read.delim(p, stringsAsFactors = FALSE, na.strings = character())
+    m$topic <- lapply(split(t, t$topic), function(d) stats::setNames(d$old, d$new))
+    g <- t[t$safe == 1L, ]
+    g <- g[!duplicated(g$new), ]
+    m$global <- stats::setNames(g$old, g$new)
+  }
+  assign("maps", m, envir = .rmbl_compat_env)
+  m
+}
+
+#' The new -> old map for a result of a 0.5.x page.
+#' @param topic The 0.5.x page (the alias's name).
+#' @param x The result: an rmbl_<page> class adds that page's names.
+#' @return A named character vector, new name -> old name.
+#' @noRd
+.rmbl_out_map <- function(topic, x) {
+  m <- .rmbl_result_maps()
+  cls <- intersect(sub("^rmbl_", "", oldClass(x)), names(m$topic))
+  r <- c(m$topic[[topic]], unlist(unname(m$topic[cls])), m$global)
+  r[!duplicated(names(r))]
+}
+
+#' Renames, through a result, every name found in `map` (from -> to): names, column names,
+#' dimnames and attribute names, in nested lists and attributes too.
+#' @param x Any object.
+#' @param map A named character vector, from -> to.
+#' @param used An environment collecting the names renamed (`used$from`), or NULL.
+#' @return `x` renamed.
+#' @noRd
+.rmbl_names_swap <- function(x, map, used = NULL) {
+  if (!length(map) || is.function(x) || is.environment(x)) return(x)
+  hit <- function(v) {
+    k <- v %in% names(map)
+    if (!is.null(used) && any(k)) used$from <- union(used$from, v[k])
+    k
+  }
+  # a list is renamed bare, so a data frame's compact row names stay as they are
+  cl <- if (is.list(x)) oldClass(x)
+  if (is.list(x)) x <- unclass(x)
+  n <- names(x)
+  if (!is.null(n) && any(k <- hit(n))) names(x)[k] <- unname(map[n[k]])
+  dn <- if (is.null(dim(x))) NULL else dimnames(x)
+  if (is.list(dn)) {
+    dimnames(x) <- lapply(dn, function(v) {
+      if (!is.null(v) && any(k <- hit(v))) v[k] <- unname(map[v[k]])
+      v
+    })
+  }
+  if (is.list(x)) {
+    for (i in seq_along(x)) {
+      if (!is.null(x[[i]]) && (is.list(x[[i]]) || !is.null(attributes(x[[i]])))) {
+        x[[i]] <- .rmbl_names_swap(x[[i]], map, used)
+      }
+    }
+  }
+  a <- attributes(x)
+  for (nm in setdiff(names(a), c("names", "row.names", "class", "dim", "dimnames", "tsp", "levels",
+                                 "comment", "srcref", "rmbl_names"))) {
+    v <- .rmbl_names_swap(a[[nm]], map, used)
+    to <- if (hit(nm)) map[[nm]] else nm
+    attr(x, nm) <- NULL
+    attr(x, to) <- v
+  }
+  if (!is.null(cl)) oldClass(x) <- cl
+  x
+}
+
+#' A result under its 0.5.x names, as an alias returns it.
+#' @param topic The 0.5.x page (the alias's name).
+#' @param v The call's result, from withVisible().
+#' @return The result renamed, visible as it was.
+#' @noRd
+.rmbl_alias_out <- function(topic, v) {
+  x <- v$value
+  map <- .rmbl_out_map(topic, x)
+  if (length(map)) {
+    used <- new.env(parent = emptyenv())
+    x <- .rmbl_names_swap(x, map, used)
+    # marked only when a name changed and the result has a class to dispatch on; the mark
+    # keeps the renames made, so they are undone exactly
+    if (length(used$from) && is.list(x) && !is.null(oldClass(x))) {
+      class(x) <- unique(c("rmbl_old", oldClass(x)))
+      attr(x, "rmbl_names") <- map[used$from]
+    }
+  }
+  if (v$visible) x else invisible(x)
+}
+
+#' A result an alias returned, back in its 1.0.0 names; anything else as it is.
+#' @param x Any object.
+#' @return `x`, renamed back and unmarked when it carries the "rmbl_old" class.
+#' @noRd
+.rmbl_new_names <- function(x) {
+  if (!inherits(x, "rmbl_old")) return(x)
+  done <- attr(x, "rmbl_names")
+  class(x) <- setdiff(oldClass(x), "rmbl_old")
+  attr(x, "rmbl_names") <- NULL
+  .rmbl_names_swap(x, stats::setNames(names(done), unname(done)))
+}

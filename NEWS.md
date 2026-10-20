@@ -193,9 +193,12 @@ methods. The nine options read their 0.5.x names too (`rmoriebricklayer.xmss_ind
 `rmoriebricklayer.xmssidxfile`), so a record or cache an old `.Rprofile` points to is still used. `rate()`, `rate_change()`, `share()` and
 `yoy_summary()` stay S3 generics, so methods written for them still dispatch. `yoy()` kept its name and
 takes its 0.5.x argument names (`period`, `min_base`, `conf_level`, `direction`) beside the new ones.
-Functions and arguments keep working through the aliases; result columns and fields use the new names
-(`co2e_g` is `co2eg`, `pct_valid` is `pctvalid`), and `?rmbl-aliases` lists every renamed one, so code
-that reads a 0.5.x result needs those names changed. `rmbl functions` and the help-aware language-model
+Code written against 0.5.x keeps running through the aliases: results come back under their 0.5.x
+column and field names (`co2e_g`, `pct_valid`, nested tables and attributes too, and the header row of a
+delimited writer), `print()`, `plot()`, `format()` and `summary()` work on them, and an alias that is
+given one reads it. A 1.0.0 call returns the 1.0.0 names. The one call that cannot tell is `yoy()`,
+which kept its name: with a 0.5.x argument name it returns the 0.5.x names, without one the 1.0.0
+names (`pctchg` for `pct_change`); `?rmbl-aliases` lists every renamed column and field. `rmbl functions` and the help-aware language-model
 tools list the new names. Wire formats (capsule, manifest and service JSON fields, CSV columns from
 published tables) keep their names, so files written by earlier versions still read.
 

@@ -1,34 +1,37 @@
 # The pre-CRAN audit of 30bed8e (stats, plotting and data reading), each finding reproduced first.
 
+# a result an alias returned, in its 1.0.0 names again
+nn <- function(x) rmoriebricklayer:::.rmbl_new_names(x)
+
 test_that("rate, rate_change, share and yoy_summary are S3 generics again, with the old arguments", {
   for (g in c("rate", "rate_change", "share", "yoy_summary")) {
     expect_true(utils::isS3stdGeneric(get(g, asNamespace("rmoriebricklayer"))), info = g)
   }
   d <- data.frame(n = c(5, 8, 3), pop = c(1000, 1200, 900), g = c("a", "b", "c"))
-  expect_identical(rate(d, count = "n", population = "pop", by = "g"),
+  expect_identical(nn(rate(d, count = "n", population = "pop", by = "g")),
                    rtcalc(d, count = "n", pop = "pop", by = "g"))
-  expect_identical(rate(10, population = 1000), rtcalc(10, pop = 1000))
+  expect_identical(nn(rate(10, population = 1000)), rtcalc(10, pop = 1000))
   # conf_level reaches the method instead of vanishing in `...`
   expect_identical(rate(d, count = "n", pop = "pop", conf_level = 0.5)$lower,
                    rtcalc(d, count = "n", pop = "pop", conflvl = 0.5)$lower)
   expect_equal(share(c(1, 2, 3), conf_level = 0.5)$lower, c(8.85, 21.9, 36.7), tolerance = 0.01)
-  expect_identical(share(d, count = "n", conf_level = 0.5), shrs(d, count = "n", conflvl = 0.5))
+  expect_identical(nn(share(d, count = "n", conf_level = 0.5)), shrs(d, count = "n", conflvl = 0.5))
   # bare column names still read as columns through the old generic
-  expect_identical(rate(d, n, pop, by = "g"), rtcalc(d, count = "n", pop = "pop", by = "g"))
+  expect_identical(nn(rate(d, n, pop, by = "g")), rtcalc(d, count = "n", pop = "pop", by = "g"))
   ch <- data.frame(year = rep(2019:2021, 2), g = rep(c("a", "b"), each = 3), n = c(4, 6, 9, 3, 2, 5),
                    pop = 1000)
-  expect_identical(rate_change(ch, count = "n", population = "pop", period = "year", by = "g",
-                               conf_level = 0.9, min_count = 3),
+  expect_identical(nn(rate_change(ch, count = "n", population = "pop", period = "year", by = "g",
+                               conf_level = 0.9, min_count = 3)),
                    ratechg(ch, count = "n", pop = "pop", prd = "year", by = "g", conflvl = 0.9, mincnt = 3))
   expect_error(rate_change(1:3), "data frame")
   y <- yoy(data.frame(year = 2019:2022, n = c(10, 12, 9, 15)), value = "n", prd = "year")
-  expect_identical(yoy_summary(y), yoysmry(y))
+  expect_identical(nn(yoy_summary(y)), yoysmry(y))
   expect_error(yoy_summary(1), "yoy")
   # a method written for the old generic dispatches
   local({
     rate.mycls <- function(x, ...) "mine"
     registerS3method("rate", "mycls", rate.mycls, envir = asNamespace("rmoriebricklayer"))
-    expect_identical(rate(structure(1, class = "mycls")), "mine")
+    expect_identical(nn(rate(structure(1, class = "mycls"))), "mine")
   })
 })
 
@@ -44,17 +47,17 @@ test_that("old argument names after `...` still work: plot of a clearance decomp
 test_that("yoy() takes its 0.5.x argument names and values; giving both is refused", {
   seg <- data.frame(year = 2019:2022, n = c(10, 12, 9, 15))
   new <- yoy(seg, value = "n", prd = "year", minbase = 11, conflvl = 0.5, dir = "higher")
-  expect_identical(yoy(seg, value = "n", period = "year", min_base = 11, conf_level = 0.5,
-                       direction = "higher_is_better"), new)
-  expect_identical(yoy(seg, value = n, period = year, dir = "higher", minbase = 11, conflvl = 0.5), new)
+  expect_identical(nn(yoy(seg, value = "n", period = "year", min_base = 11, conf_level = 0.5,
+                       direction = "higher_is_better")), new)
+  expect_identical(nn(yoy(seg, value = n, period = year, dir = "higher", minbase = 11, conflvl = 0.5)), new)
   expect_identical(yoy(seg, value = "n", prd = "year", dir = "lower_is_better"),
                    yoy(seg, value = "n", prd = "year", dir = "lower"))
   expect_error(yoy(seg, value = "n", period = "year", prd = "year"),
                "yoy: give `prd` or its 0.5.x name `period`, not both")
-  expect_identical(yoy(c(10, 12, 9), period = 2001:2003), yoy(c(10, 12, 9), prd = 2001:2003))
-  expect_identical(yoy(c(10L, 12L, 9L), period = 2001:2003), yoy(c(10L, 12L, 9L), prd = 2001:2003))
+  expect_identical(nn(yoy(c(10, 12, 9), period = 2001:2003)), yoy(c(10, 12, 9), prd = 2001:2003))
+  expect_identical(nn(yoy(c(10L, 12L, 9L), period = 2001:2003)), yoy(c(10L, 12L, 9L), prd = 2001:2003))
   tsx <- stats::ts(c(10, 12, 9, 15, 11, 13, 12, 14), frequency = 4, start = 2020)
-  expect_identical(yoy(tsx, conf_level = 0.5), yoy(tsx, conflvl = 0.5))
+  expect_identical(nn(yoy(tsx, conf_level = 0.5)), yoy(tsx, conflvl = 0.5))
 })
 
 test_that("yearly, quarterly and monthly Date periods compare on calendar steps", {

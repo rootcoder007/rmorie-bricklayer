@@ -221,7 +221,10 @@ yoy.data.frame <- function(x, value, prd, by = NULL, lag = 1L,
                              "lower"
                            ),
                            complete = TRUE, ...) {
-  if (!is.null(old <- .rmbl_old_names(.yoy_old_args))) return(eval(old$call, old$env))
+  if (!is.null(old <- .rmbl_old_names(.yoy_old_args))) {
+    # called the 0.5.x way: the result comes back under its 0.5.x names
+    return(.rmbl_alias_out("yoy", withVisible(eval(old$call, old$env))))
+  }
   if (!is.null(by) && (!is.character(by) || !length(by) || anyNA(by))) {
     stop("yoy: `by` must be one or more column names, or NULL", call. = FALSE)
   }
@@ -292,7 +295,10 @@ yoy.data.frame <- function(x, value, prd, by = NULL, lag = 1L,
 #' @rdname yoy
 #' @export
 yoy.numeric <- function(x, prd = seq_along(x), ...) {
-  if (!is.null(old <- .rmbl_old_names(.yoy_old_args))) return(eval(old$call, old$env))
+  if (!is.null(old <- .rmbl_old_names(.yoy_old_args))) {
+    # called the 0.5.x way: the result comes back under its 0.5.x names
+    return(.rmbl_alias_out("yoy", withVisible(eval(old$call, old$env))))
+  }
   if (any(c("value", "data") %in% names(list(...)))) {
     stop("for a numeric `x`, `x` is the values: give `prd` (and options), not `value`", call. = FALSE)
   }
@@ -304,14 +310,20 @@ yoy.numeric <- function(x, prd = seq_along(x), ...) {
 #' @rdname yoy
 #' @export
 yoy.integer <- function(x, prd = seq_along(x), ...) {
-  if (!is.null(old <- .rmbl_old_names(.yoy_old_args))) return(eval(old$call, old$env))
+  if (!is.null(old <- .rmbl_old_names(.yoy_old_args))) {
+    # called the 0.5.x way: the result comes back under its 0.5.x names
+    return(.rmbl_alias_out("yoy", withVisible(eval(old$call, old$env))))
+  }
   yoy.numeric(as.numeric(x), prd = prd, ...)
 }
 
 #' @rdname yoy
 #' @export
 yoy.ts <- function(x, lag = NULL, ...) {
-  if (!is.null(old <- .rmbl_old_names(.yoy_old_args))) return(eval(old$call, old$env))
+  if (!is.null(old <- .rmbl_old_names(.yoy_old_args))) {
+    # called the 0.5.x way: the result comes back under its 0.5.x names
+    return(.rmbl_alias_out("yoy", withVisible(eval(old$call, old$env))))
+  }
   f <- stats::frequency(x)
   # a year-over-year comparison on a seasonal series means the same
   # season one year earlier, which is the frequency itself -- comparing

@@ -314,6 +314,10 @@
 \alias{yoy_summary}
 \alias{yoy_summary.default}
 \alias{yoy_summary.rmbl_yoy}
+\alias{print.rmbl_old}
+\alias{format.rmbl_old}
+\alias{plot.rmbl_old}
+\alias{summary.rmbl_old}
 \title{The 0.5.x names, kept as aliases}
 \description{
 Every function rmoriebricklayer 0.5.13 exported that 1.0.0 renamed is still callable
@@ -327,8 +331,13 @@ An option set under its 0.5.x name (\code{rmoriebricklayer.xmss_index_file},
 The reference documentation lives on the new name; this page only lists the aliases.
 }
 \details{
-Results are not translated: their columns and fields carry the new names. The last
-table lists every renamed one, so old code that reads a result can be updated.
+Results come back in their 0.5.x form: an alias returns its result with the 0.5.x
+column and field names (nested tables and attributes too; the last table lists them),
+and a delimited writer writes the 0.5.x header. Such a result carries the class
+\code{rmbl_old} in front, so \code{print()}, \code{format()}, \code{plot()},
+\code{summary()} and the aliases that take a result read it in the 1.0.0 names. A
+1.0.0 call is never translated. \code{yoy()} kept its name: it returns the 0.5.x
+names when called with a 0.5.x argument name, and the 1.0.0 names otherwise.
 }
 \section{The map}{
 

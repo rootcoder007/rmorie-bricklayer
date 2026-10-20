@@ -102,32 +102,35 @@ test_that("an alias really reaches the new function", {
   expect_identical(rule_not_null("x"), rulenull("x"))
 })
 
+# a result an alias returned, in its 1.0.0 names again
+nn <- function(x) rmoriebricklayer:::.rmbl_new_names(x)
+
 test_that("old defaults and old allowed values work end to end", {
   d <- data.frame(w = 1:4, y = 1:4)
   expect_s3_class(survey_design(d, weights = "w"), "rmbl_svy_design")
   expect_identical(survey_design(d, weights = "w", type = "mean_bootstrap")$type,
                    svydes(d, w = "w", type = "meanboot")$type)
-  expect_identical(crf_no2(20), crfno2(20))
-  expect_identical(crf_pm25(20), crfpm25(20))
-  expect_identical(crf_no2(20, outcome = "all_cause_mortality"), crfno2(20, y = "allcause"))
+  expect_identical(nn(crf_no2(20)), crfno2(20))
+  expect_identical(nn(crf_pm25(20)), crfpm25(20))
+  expect_identical(nn(crf_no2(20, outcome = "all_cause_mortality")), crfno2(20, y = "allcause"))
   tab <- data.frame(year = 2018:2022, n = c(10, 12, 9, 15, 14))
-  expect_identical(analyse_table(tab, value = "n", period = "year"),
+  expect_identical(nn(analyse_table(tab, value = "n", period = "year")),
                    anltab(tab, value = "n", prd = "year"))
-  expect_identical(analyse_table(tab, value = "n", period = "year", direction = "higher_is_better"),
+  expect_identical(nn(analyse_table(tab, value = "n", period = "year", direction = "higher_is_better")),
                    anltab(tab, value = "n", prd = "year", dir = "higher"))
-  expect_identical(pollution_burden(5, 1, 0.008, 1e5), polbrdn(5, 1, 0.008, 1e5))
+  expect_identical(nn(pollution_burden(5, 1, 0.008, 1e5)), polbrdn(5, 1, 0.008, 1e5))
   at <- data.frame(fsa = c("A", "B"), exposure = c(5, 8), population = c(1e4, 2e4),
                    baseline_rate = c(0.005, 0.006))
-  expect_identical(pollution_burden_by_area(at),
+  expect_identical(nn(pollution_burden_by_area(at)),
                    polbrdarea(at, basratecol = "baseline_rate"))
-  expect_identical(verify_pollution("NO2", demo = TRUE), vrfpol("NO2", demo = TRUE))
+  expect_identical(nn(verify_pollution("NO2", demo = TRUE)), vrfpol("NO2", demo = TRUE))
   # an allowed value renamed that no default shows
-  expect_identical(crf_no2(20, outcome = "childhood_asthma"), crfno2(20, y = "chiast"))
-  expect_identical(pollution_burden(5, 1, 0.008, 1e5, outcome = "childhood_asthma"),
+  expect_identical(nn(crf_no2(20, outcome = "childhood_asthma")), crfno2(20, y = "chiast"))
+  expect_identical(nn(pollution_burden(5, 1, 0.008, 1e5, outcome = "childhood_asthma")),
                    polbrdn(5, 1, 0.008, 1e5, y = "chiast"))
-  expect_identical(pollution_burden_by_area(at, outcome = "childhood_asthma"),
+  expect_identical(nn(pollution_burden_by_area(at, outcome = "childhood_asthma")),
                    polbrdarea(at, basratecol = "baseline_rate", y = "chiast"))
-  expect_identical(verify_pollution("NO2", outcome = "childhood_asthma", demo = TRUE),
+  expect_identical(nn(verify_pollution("NO2", outcome = "childhood_asthma", demo = TRUE)),
                    vrfpol("NO2", y = "chiast", demo = TRUE))
 })
 
@@ -187,4 +190,77 @@ test_that("every alias whose `...` carries 0.5.x names renames each of them", {
               list(.package = "rmoriebricklayer")))
     expect_identical(seen$names, c(new[old != "..."], vapply(p, `[`, "", 3L), ""), info = m$old[i])
   }
+})
+
+test_that("results come back under their 0.5.x names through an alias", {
+  ns <- asNamespace("rmoriebricklayer")
+  out <- function(topic, x, visible = TRUE) ns$.rmbl_alias_out(topic, list(value = x, visible = visible))
+  # a data frame: columns renamed back, class and attributes kept, marked for the methods
+  d <- structure(data.frame(year = 1:2, pctchg = c(1, 2), pctlo = 0), class = c("rmbl_yoy", "data.frame"),
+                 yoy = list(conflvl = 0.95, minbase = 0))
+  o <- out("yoy", d)
+  expect_identical(names(o), c("year", "pct_change", "pct_lower"))
+  expect_identical(class(o), c("rmbl_old", "rmbl_yoy", "data.frame"))
+  expect_identical(names(attr(o, "yoy")), c("conf_level", "min_base"))
+  expect_identical(nn(o), d)
+  # a classed list, nested data frames and a renamed attribute
+  cf <- structure(list(tab = data.frame(rolclr = 1, cumnet = 2), inner = list(penchg = 3)),
+                  class = "rmbl_case_flow", caseflow = list(conflvl = 0.9))
+  o <- out("case_flow", cf)
+  expect_identical(names(o$tab), c("rolling_clearance", "cumulative_net"))
+  expect_identical(names(o$inner), "pending_change")
+  expect_identical(names(attr(o, "case_flow")), "conf_level")
+  expect_identical(nn(o), cf)
+  # a named vector and a matrix: renamed, no class to mark
+  expect_identical(names(out("kem_sizes", c(public = 1L, ciphertext = 2L, shared = 3L))),
+                   c("encapsulation_key", "ciphertext", "shared_secret"))
+  m <- matrix(1:2, 1, dimnames = list(NULL, c("pctchg", "x")))
+  expect_identical(colnames(out("yoy", m)), c("pct_change", "x"))
+  # nothing renamed: the result as it was, unmarked; visibility kept
+  expect_identical(out("yoy", data.frame(a = 1)), data.frame(a = 1))
+  expect_false(withVisible(out("yoy", 1, visible = FALSE))$visible)
+  expect_identical(nn(1), 1)
+  # an unknown page still renames the 1.0.0 names no 0.5.13 result used
+  expect_identical(names(out("no_such_page", list(pctchg = 1))), "pct_change")
+})
+
+test_that("a translated result prints, plots and is read back by the aliases", {
+  seg <- data.frame(year = 2019:2022, n = c(10, 12, 9, 15))
+  y <- yoy(seg, value = "n", period = "year")
+  y1 <- yoy(seg, value = "n", prd = "year")
+  expect_true("pct_change" %in% names(y))
+  expect_false("pct_change" %in% names(y1))
+  expect_identical(capture.output(print(y)), capture.output(print(y1)))
+  expect_identical(unname(format(y)), unname(format(y1)))
+  expect_true("pct_change" %in% names(format(y)))
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  expect_identical(unname(plot(y)), unname(plot(y1)))
+  expect_true("pct_change" %in% names(plot(y)))
+  expect_identical(nn(yoy_summary(y)), yoysmry(y1))
+  # no package method: R's own runs on the 0.5.x names
+  fr <- frequency_table(data.frame(g = c("a", "a", "b")), "g")
+  expect_true("pct_valid" %in% names(fr))
+  expect_output(print(fr), "Frequency table")
+  pl <- rmoriebricklayer:::.rmbl_alias_out("frequency_table", list(value = data.frame(pctvalid = 1),
+                                                                    visible = TRUE))
+  expect_output(print(pl), "pct_valid")
+  expect_s3_class(summary(pl), "table")
+  expect_identical(format(pl), format(data.frame(pct_valid = 1)))
+  # an alias given a translated result reads it in the 1.0.0 names, and writes the 0.5.x header
+  txt <- yoy_csv(y, NULL)
+  expect_match(txt, "year,value,previous,change,pct_change", fixed = TRUE)
+  f <- tempfile(fileext = ".csv")
+  expect_invisible(yoy_csv(y, f))
+  expect_identical(names(utils::read.csv(f, comment.char = "#"))[5], "pct_change")
+  expect_match(yoy_tsv(y, NULL), "pct_change", fixed = TRUE)
+  h <- tempfile(fileext = ".html")
+  yoy_write(y, h)
+  expect_true(file.exists(h))
+  expect_identical(yoy_markdown(y, NULL), yoymd(y1, NULL))
+  # a text with no header row is left as it is
+  hdr <- rmoriebricklayer:::.rmbl_alias_header
+  expect_identical(hdr(list(value = "# only a comment", visible = TRUE), NULL, c(a = "b")), "# only a comment")
+  # a 1.0.0 call is never translated
+  expect_identical(class(yoysmry(y1)), "data.frame")
 })

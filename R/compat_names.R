@@ -12,8 +12,13 @@
 #' \code{rmoriebricklayer.data_cache} ...) is read when the new name is not set.
 #' The reference documentation lives on the new name; this page only lists the aliases.
 #'
-#' Results are not translated: their columns and fields carry the new names. The last
-#' table lists every renamed one, so old code that reads a result can be updated.
+#' Results come back in their 0.5.x form: an alias returns its result with the 0.5.x
+#' column and field names (nested tables and attributes too; the last table lists them),
+#' and a delimited writer writes the 0.5.x header. Such a result carries the class
+#' \code{rmbl_old} in front, so \code{print()}, \code{format()}, \code{plot()},
+#' \code{summary()} and the aliases that take a result read it in the 1.0.0 names. A
+#' 1.0.0 call is never translated. \code{yoy()} kept its name: it returns the 0.5.x
+#' names when called with a 0.5.x argument name, and the 1.0.0 names otherwise.
 #'
 #' @section The map:
 #' Old name, then the new one.
@@ -470,14 +475,16 @@ NULL
 #' @usage NULL
 #' @export
 admissions <- function(adp, alos, t = 365) {
-  admits(adp = adp, alos = alos, t = t)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("admissions", withVisible(admits(adp = adp, alos = alos, t = t)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 adp_from_counts <- function(counts, t = 365) {
-  adpcnts(cnts = counts, t = t)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("adp_from_counts", withVisible(adpcnts(cnts = counts, t = t)))
 }
 
 #' @rdname rmbl-aliases
@@ -485,15 +492,19 @@ adp_from_counts <- function(counts, t = 365) {
 #' @export
 advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source = NULL,
                                     max_work = 1e+08) {
-  advdif2d(c0 = c0, u = u, v = v, kx = kx, ky = ky, dx = dx, dy = dy, dt = dt,
-           nsteps = n_steps, source = source, maxwork = max_work)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("advection_diffusion_2d", withVisible(advdif2d(c0 = c0, u = u, v = v,
+    kx = kx, ky = ky, dx = dx, dy = dy, dt = dt, nsteps = n_steps, source = source,
+    maxwork = max_work)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 agent_bundle <- function(request, model = NULL, route = NULL) {
-  agentbndl(req = request, model = model, route = route)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("agent_bundle", withVisible(agentbndl(req = request, model = model,
+    route = route)))
 }
 
 #' @rdname rmbl-aliases
@@ -507,24 +518,28 @@ analyse_table <- function(data, value, period, by = NULL, population = NULL, pri
                            per = 1000, conf_level = 0.95, alpha = 0.05, adjust = "BH") {
   direction <- .rmbl_alias_val(direction, c(higher_is_better = "higher",
     lower_is_better = "lower"))
-  anltab(data = data, value = value, prd = period, by = by, pop = population,
-         prior = prior, units = units, rnd = rounding, rndkind = rounding_kind,
-         suplim = suppression_limit, dir = direction, per = per, conflvl = conf_level,
-         alpha = alpha, adjust = adjust)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("analyse_table", withVisible(anltab(data = data, value = value,
+    prd = period, by = by, pop = population, prior = prior, units = units, rnd = rounding,
+    rndkind = rounding_kind, suplim = suppression_limit, dir = direction, per = per,
+    conflvl = conf_level, alpha = alpha, adjust = adjust)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 apply_schema_validation <- function(df_raw, provenance) {
-  schval(dfraw = df_raw, prov = provenance)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("apply_schema_validation", withVisible(schval(dfraw = df_raw,
+    prov = provenance)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 ascii_fallback <- function(x, force = FALSE) {
-  asciifb(x = x, force = force)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("ascii_fallback", withVisible(asciifb(x = x, force = force)))
 }
 
 #' @rdname rmbl-aliases
@@ -532,14 +547,17 @@ ascii_fallback <- function(x, force = FALSE) {
 #' @export
 attributable_fraction <- function(rr, exposure_prevalence, rr_lower = NULL,
                                    rr_upper = NULL) {
-  attrfrac(rr = rr, expoprev = exposure_prevalence, rrlo = rr_lower, rrup = rr_upper)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("attributable_fraction", withVisible(attrfrac(rr = rr,
+    expoprev = exposure_prevalence, rrlo = rr_lower, rrup = rr_upper)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 audit_categories <- function(data, cols = NULL) {
-  audcats(data = data, cols = cols)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("audit_categories", withVisible(audcats(data = data, cols = cols)))
 }
 
 #' @rdname rmbl-aliases
@@ -547,7 +565,9 @@ audit_categories <- function(data, cols = NULL) {
 #' @export
 band_sensitivity <- function(bands, counts, statistic = gini, caps = NULL,
                               rule = "midpoint") {
-  bandsens(bands = bands, cnts = counts, stat = statistic, caps = caps, rule = rule)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("band_sensitivity", withVisible(bandsens(bands = bands, cnts = counts,
+    stat = statistic, caps = caps, rule = rule)))
 }
 
 #' @rdname rmbl-aliases
@@ -556,43 +576,51 @@ band_sensitivity <- function(bands, counts, statistic = gini, caps = NULL,
 band_values <- function(bands, rule = c("midpoint", "lower", "upper", "geometric"),
                          open_upper_cap = NULL, open_upper_factor = 2,
                          open_lower_floor = NULL) {
-  bandvals(bands = bands, rule = rule, openupcap = open_upper_cap,
-           openupfac = open_upper_factor, openloflr = open_lower_floor)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("band_values", withVisible(bandvals(bands = bands, rule = rule,
+    openupcap = open_upper_cap, openupfac = open_upper_factor,
+    openloflr = open_lower_floor)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 benford_test <- function(x) {
-  benfordtst(x = x)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("benford_test", withVisible(benfordtst(x = x)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE), out = cat) {
-  blcli(args = args, out = out)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_cli", withVisible(blcli(args = args, out = out)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_data_load <- function(key, refresh = FALSE) {
-  dload(key = key, refresh = refresh)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_data_load", withVisible(dload(key = key,
+    refresh = refresh)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_data_manifest <- function(refresh = FALSE) {
-  dmnf(refresh = refresh)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_data_manifest", withVisible(dmnf(refresh = refresh)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_data_tables <- function(refresh = FALSE) {
-  dtabs(refresh = refresh)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_data_tables", withVisible(dtabs(refresh = refresh)))
 }
 
 #' @rdname rmbl-aliases
@@ -601,23 +629,28 @@ bricklayer_data_tables <- function(refresh = FALSE) {
 bricklayer_download <- function(url, dest, headers = NULL, label = basename(dest),
                                  size = NULL, timeout = 3600, quiet = NULL, tty = NULL,
                                  allow_file = FALSE, max_bytes = 2^31) {
-  bldl(url = url, dest = dest, headers = headers, label = label, size = size,
-       tmout = timeout, quiet = quiet, tty = tty, allowfile = allow_file,
-       maxbytes = max_bytes)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_download", withVisible(bldl(url = url, dest = dest,
+    headers = headers, label = label, size = size, tmout = timeout, quiet = quiet,
+    tty = tty, allowfile = allow_file, maxbytes = max_bytes)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_explain_error <- function(message = geterrmessage(), packages = NULL, n = 3L) {
-  explerr(msg = message, pkgs = packages, n = n)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_explain_error", withVisible(explerr(msg = message,
+    pkgs = packages, n = n)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_fetch_parse_siu <- function(drid, lang = c("en", "fr")) {
-  siufprs(drid = drid, lang = lang)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_fetch_parse_siu", withVisible(siufprs(drid = drid,
+    lang = lang)))
 }
 
 #' @rdname rmbl-aliases
@@ -625,49 +658,59 @@ bricklayer_fetch_parse_siu <- function(drid, lang = c("en", "fr")) {
 #' @export
 bricklayer_fetch_siu <- function(drid, dest, lang = c("en", "fr"), wayback = "",
                                   timeout = 120L) {
-  siufetch(drid = drid, dest = dest, lang = lang, wb = wayback, tmout = timeout)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_fetch_siu", withVisible(siufetch(drid = drid, dest = dest,
+    lang = lang, wb = wayback, tmout = timeout)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_json_base64_dec <- function(input) {
-  jsb64dec(input = input)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_json_base64_dec", withVisible(jsb64dec(input = input)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_json_base64_enc <- function(input) {
-  jsb64enc(input = input)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_json_base64_enc", withVisible(jsb64enc(input = input)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_json_base64url_dec <- function(input) {
-  jsb64udec(input = input)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_json_base64url_dec", withVisible(jsb64udec(input = input)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_json_base64url_enc <- function(input) {
-  jsb64uenc(input = input)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_json_base64url_enc", withVisible(jsb64uenc(input = input)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_json_serialize <- function(x, digits = 8, pretty = FALSE) {
-  jsser(x = x, digits = digits, pretty = pretty)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_json_serialize", withVisible(jsser(x = x, digits = digits,
+    pretty = pretty)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_json_unserialize <- function(txt, trusted = FALSE) {
-  jsunser(txt = txt, trusted = trusted)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_json_unserialize", withVisible(jsunser(txt = txt,
+    trusted = trusted)))
 }
 
 #' @rdname rmbl-aliases
@@ -676,22 +719,26 @@ bricklayer_json_unserialize <- function(txt, trusted = FALSE) {
 bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120, system_prompt = NULL,
                                 route = NULL, docs = TRUE, packages = NULL,
                                 fresh = FALSE) {
-  llmask(prompt = prompt, model = model, tmout = timeout, syspro = system_prompt,
-         route = route, docs = docs, pkgs = packages, fresh = fresh)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_llm_ask", withVisible(llmask(prompt = prompt, model = model,
+    tmout = timeout, syspro = system_prompt, route = route, docs = docs, pkgs = packages,
+    fresh = fresh)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_llm_chat <- function(messages, model = NULL, route = NULL, timeout = 120) {
-  llmchat(msgs = messages, model = model, route = route, tmout = timeout)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_llm_chat", withVisible(llmchat(msgs = messages,
+    model = model, route = route, tmout = timeout)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_llm_config <- function(...) {
-  llmcfg(...)
+  .rmbl_alias_out("bricklayer_llm_config", withVisible(llmcfg(...)))
 }
 
 #' @rdname rmbl-aliases
@@ -699,43 +746,47 @@ bricklayer_llm_config <- function(...) {
 #' @export
 bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
                                   open_browser = interactive(), poll_max_seconds = 600) {
-  dlogin(token = token, email = email, code = code, openbro = open_browser,
-         pollmaxsec = poll_max_seconds)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_llm_login", withVisible(dlogin(token = token, email = email,
+    code = code, openbro = open_browser, pollmaxsec = poll_max_seconds)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_llm_logout <- function() {
-  dlogout()
+  .rmbl_alias_out("bricklayer_llm_logout", withVisible(dlogout()))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_llm_models <- function(route = NULL, timeout = 15) {
-  llmmdls(route = route, tmout = timeout)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_llm_models", withVisible(llmmdls(route = route,
+    tmout = timeout)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_llm_providers <- function() {
-  llmprvd()
+  .rmbl_alias_out("bricklayer_llm_providers", withVisible(llmprvd()))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_llm_route_info <- function(route = NULL) {
-  llmrte(route = route)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_llm_route_info", withVisible(llmrte(route = route)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_llm_status <- function() {
-  llmstat()
+  .rmbl_alias_out("bricklayer_llm_status", withVisible(llmstat()))
 }
 
 #' @rdname rmbl-aliases
@@ -743,21 +794,23 @@ bricklayer_llm_status <- function() {
 #' @export
 bricklayer_palette <- function(name = c("okabe", "diverging", "sequential", "grey"),
                                 n = NULL) {
-  blpal(name = name, n = n)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_palette", withVisible(blpal(name = name, n = n)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_parse_siu <- function(html) {
-  siuprs(html = html)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_parse_siu", withVisible(siuprs(html = html)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_plot_options <- function(...) {
-  plotopt(...)
+  .rmbl_alias_out("bricklayer_plot_options", withVisible(plotopt(...)))
 }
 
 #' @rdname rmbl-aliases
@@ -765,7 +818,9 @@ bricklayer_plot_options <- function(...) {
 #' @export
 bricklayer_progress <- function(label, total, quiet = NULL, color = "blue",
                                  delay = NULL) {
-  blprog(label = label, total = total, quiet = quiet, color = color, delay = delay)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_progress", withVisible(blprog(label = label, total = total,
+    quiet = quiet, color = color, delay = delay)))
 }
 
 #' @rdname rmbl-aliases
@@ -773,35 +828,40 @@ bricklayer_progress <- function(label, total, quiet = NULL, color = "blue",
 #' @export
 bricklayer_services <- function(refresh = FALSE, max_age = 86400, timeout = 20,
                                  offline = FALSE) {
-  svcs(refresh = refresh, maxage = max_age, tmout = timeout, offline = offline)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_services", withVisible(svcs(refresh = refresh,
+    maxage = max_age, tmout = timeout, offline = offline)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_siu_iso_date <- function(x) {
-  siudate(x = x)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_siu_iso_date", withVisible(siudate(x = x)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_siu_resolve_so <- function(text) {
-  siuso(text = text)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_siu_resolve_so", withVisible(siuso(text = text)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_siu_schema <- function() {
-  siusch()
+  .rmbl_alias_out("bricklayer_siu_schema", withVisible(siusch()))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 bricklayer_siu_text <- function(html) {
-  siutxt(html = html)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("bricklayer_siu_text", withVisible(siutxt(html = html)))
 }
 
 #' @rdname rmbl-aliases
@@ -809,15 +869,19 @@ bricklayer_siu_text <- function(html) {
 #' @export
 briggs_plume_rise <- function(x, u, diameter, exit_velocity, stack_temp, ambient_temp,
                                stability = "D", dtheta_dz = NULL, g = 9.80616) {
-  briggs(x = x, u = u, diam = diameter, exitvel = exit_velocity, stktmp = stack_temp,
-         ambtmp = ambient_temp, stab = stability, dthdz = dtheta_dz, g = g)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("briggs_plume_rise", withVisible(briggs(x = x, u = u, diam = diameter,
+    exitvel = exit_velocity, stktmp = stack_temp, ambtmp = ambient_temp, stab = stability,
+    dthdz = dtheta_dz, g = g)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 capsule_attest <- function(manifest, key, context = NULL, prehash = "none", note = NULL) {
-  cpsatst(man = manifest, key = key, ctx = context, prehash = prehash, note = note)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("capsule_attest", withVisible(cpsatst(man = manifest, key = key,
+    ctx = context, prehash = prehash, note = note)))
 }
 
 #' @rdname rmbl-aliases
@@ -825,29 +889,36 @@ capsule_attest <- function(manifest, key, context = NULL, prehash = "none", note
 #' @export
 capsule_bundle <- function(dir, manifest, key, files = NULL, context = NULL,
                             prehash = "none", note = NULL, path = NULL) {
-  cpsbndl(dir = dir, man = manifest, key = key, files = files, ctx = context,
-          prehash = prehash, note = note, path = path)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("capsule_bundle", withVisible(cpsbndl(dir = dir, man = manifest,
+    key = key, files = files, ctx = context, prehash = prehash, note = note,
+    path = path)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 capsule_bundle_read <- function(path) {
-  cpsbndlrd(path = path)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("capsule_bundle_read", withVisible(cpsbndlrd(path = path)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 capsule_bundle_verify <- function(bundle, dir, manifest = NULL, key_expected = NULL) {
-  cpsbndlvrf(bundle = bundle, dir = dir, man = manifest, keyexp = key_expected)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("capsule_bundle_verify", withVisible(cpsbndlvrf(bundle = bundle,
+    dir = dir, man = manifest, keyexp = key_expected)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 capsule_check_attestation <- function(attestation, manifest, key_expected = NULL) {
-  cpschkatst(attest = attestation, man = manifest, keyexp = key_expected)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("capsule_check_attestation", withVisible(cpschkatst(attest = attestation,
+    man = manifest, keyexp = key_expected)))
 }
 
 #' @rdname rmbl-aliases
@@ -856,8 +927,10 @@ capsule_check_attestation <- function(attestation, manifest, key_expected = NULL
 capsule_drift <- function(reference, current, alpha = 0.01, psi_threshold = 0.25,
                            psi_min_n = 1000L, bins = 10L, identifier_levels = 100L,
                            seed = 1L) {
-  cpsdrft(ref = reference, cur = current, alpha = alpha, psithr = psi_threshold,
-          psiminn = psi_min_n, bins = bins, idelvls = identifier_levels, seed = seed)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("capsule_drift", withVisible(cpsdrft(ref = reference, cur = current,
+    alpha = alpha, psithr = psi_threshold, psiminn = psi_min_n, bins = bins,
+    idelvls = identifier_levels, seed = seed)))
 }
 
 #' @rdname rmbl-aliases
@@ -865,8 +938,9 @@ capsule_drift <- function(reference, current, alpha = 0.01, psi_threshold = 0.25
 #' @export
 capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
                              subset_frac = 0.8, seed = NULL) {
-  cpsfals(data = data, stat = statistic, trt = treatment, n = n, subfrac = subset_frac,
-          seed = seed)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("capsule_falsify", withVisible(cpsfals(data = data, stat = statistic,
+    trt = treatment, n = n, subfrac = subset_frac, seed = seed)))
 }
 
 #' @rdname rmbl-aliases
@@ -875,8 +949,10 @@ capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
 capsule_power <- function(data, statistic, inject, sizes = c(0, 0.2, 0.5),
                            treatment = NULL, n = 99L, reps = 10L, alpha = 0.05,
                            seed = NULL) {
-  cpspwr(data = data, stat = statistic, inject = inject, sizes = sizes, trt = treatment,
-         n = n, reps = reps, alpha = alpha, seed = seed)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("capsule_power", withVisible(cpspwr(data = data, stat = statistic,
+    inject = inject, sizes = sizes, trt = treatment, n = n, reps = reps, alpha = alpha,
+    seed = seed)))
 }
 
 #' @rdname rmbl-aliases
@@ -885,36 +961,41 @@ capsule_power <- function(data, statistic, inject, sizes = c(0, 0.2, 0.5),
 capsule_report <- function(data, reference = NULL, schema = NULL, rules = NULL,
                             chunks = NULL, signature = NULL, key = NULL, alpha = 0.01,
                             max_rows_outliers = 20000L) {
-  cpsrpt(data = data, ref = reference, schema = schema, rules = rules, chunks = chunks,
-         sig = signature, key = key, alpha = alpha, maxrowsoutl = max_rows_outliers)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("capsule_report", withVisible(cpsrpt(data = data, ref = reference,
+    schema = schema, rules = rules, chunks = chunks, sig = signature, key = key,
+    alpha = alpha, maxrowsoutl = max_rows_outliers)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 capture_dependencies <- function(packages = loadedNamespaces()) {
-  capdeps(pkgs = packages)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("capture_dependencies", withVisible(capdeps(pkgs = packages)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 capture_environment <- function(packages = loadedNamespaces()) {
-  capenv(pkgs = packages)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("capture_environment", withVisible(capenv(pkgs = packages)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 carbon_intensity <- function(location = "WORLD") {
-  co2int(loc = location)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("carbon_intensity", withVisible(co2int(loc = location)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 carbon_intensity_table <- function() {
-  co2inttab()
+  .rmbl_alias_out("carbon_intensity_table", withVisible(co2inttab()))
 }
 
 #' @rdname rmbl-aliases
@@ -922,8 +1003,9 @@ carbon_intensity_table <- function() {
 #' @export
 case_flow <- function(received, disposed, pending = NULL, period = NULL, window = 12L,
                        conf_level = 0.95) {
-  caseflow(recv = received, disp = disposed, pend = pending, prd = period, win = window,
-           conflvl = conf_level)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("case_flow", withVisible(caseflow(recv = received, disp = disposed,
+    pend = pending, prd = period, win = window, conflvl = conf_level)))
 }
 
 #' @rdname rmbl-aliases
@@ -932,50 +1014,58 @@ case_flow <- function(received, disposed, pending = NULL, period = NULL, window 
 cert_chain_verify <- function(leaf, trust, intermediates = list(), at_time = Sys.time(),
                                purpose = NULL, crls = list(), policies = NULL,
                                revocation = c("supplied", "fetch", "none")) {
-  certchnvrf(leaf = leaf, trust = trust, inter = intermediates, attm = at_time,
-             purp = purpose, crls = crls, pols = policies, rvk = revocation)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("cert_chain_verify", withVisible(certchnvrf(leaf = leaf, trust = trust,
+    inter = intermediates, attm = at_time, purp = purpose, crls = crls, pols = policies,
+    rvk = revocation)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 cert_parse <- function(certificate) {
-  certprs(cert = certificate)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("cert_parse", withVisible(certprs(cert = certificate)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 chain_append <- function(chain, entry, label = NA_character_) {
-  chnapp(chain = chain, entry = entry, label = label)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("chain_append", withVisible(chnapp(chain = chain, entry = entry,
+    label = label)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 chain_head <- function(chain) {
-  chnhead(chain = chain)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("chain_head", withVisible(chnhead(chain = chain)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 chain_new <- function() {
-  chnnew()
+  .rmbl_alias_out("chain_new", withVisible(chnnew()))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 chain_seal <- function(chain) {
-  chnseal(chain = chain)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("chain_seal", withVisible(chnseal(chain = chain)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 chain_verify <- function(chain) {
-  chnvrf(chain = chain)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("chain_verify", withVisible(chnvrf(chain = chain)))
 }
 
 #' @rdname rmbl-aliases
@@ -983,22 +1073,26 @@ chain_verify <- function(chain) {
 #' @export
 change_envelope <- function(now, previous, population = NULL, previous_population = NULL,
                              per = 1000) {
-  chgenv(now = now, prev = previous, pop = population, prepop = previous_population,
-         per = per)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("change_envelope", withVisible(chgenv(now = now, prev = previous,
+    pop = population, prepop = previous_population, per = per)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 chunk_file <- function(path, chunk_bytes = 1048576L) {
-  chnkfile(path = path, chnkbytes = chunk_bytes)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("chunk_file", withVisible(chnkfile(path = path,
+    chnkbytes = chunk_bytes)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 cite_capsule <- function(provenance) {
-  citecps(prov = provenance)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("cite_capsule", withVisible(citecps(prov = provenance)))
 }
 
 #' @rdname rmbl-aliases
@@ -1007,7 +1101,9 @@ cite_capsule <- function(provenance) {
 clean_column_names <- function(data,
                                 case = c("snake", "lower_camel", "upper_camel", "screaming_snake", "none"),
                                 sep = "_") {
-  clncolnms(data = data, case = case, sep = sep)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("clean_column_names", withVisible(clncolnms(data = data, case = case,
+    sep = sep)))
 }
 
 #' @rdname rmbl-aliases
@@ -1015,8 +1111,9 @@ clean_column_names <- function(data,
 #' @export
 clearance_decomposition <- function(numerator, denominator, group, compare, base = NULL,
                                      conf_level = 0.95) {
-  clrdcmp(num = numerator, den = denominator, grp = group, cmp = compare, base = base,
-          conflvl = conf_level)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("clearance_decomposition", withVisible(clrdcmp(num = numerator,
+    den = denominator, grp = group, cmp = compare, base = base, conflvl = conf_level)))
 }
 
 #' @rdname rmbl-aliases
@@ -1028,73 +1125,85 @@ compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", 
                                memory_gb = NULL, memory_power_w_per_gb = 0.3725, pue = 1,
                                rapl_dir = "/sys/class/powercap",
                                proc_stat = "/proc/stat") {
-  co2fp(expr = expr, loc = location, meth = method, cpupwrw = cpu_power_w, usage = usage,
-        loadcur = load_curve, cores = cores, memgb = memory_gb,
-        mempwrwpergb = memory_power_w_per_gb, pue = pue, rapldir = rapl_dir,
-        procstat = proc_stat)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("compute_footprint", withVisible(co2fp(expr = expr, loc = location,
+    meth = method, cpupwrw = cpu_power_w, usage = usage, loadcur = load_curve,
+    cores = cores, memgb = memory_gb, mempwrwpergb = memory_power_w_per_gb, pue = pue,
+    rapldir = rapl_dir, procstat = proc_stat)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_blake2b <- function(x, key = NULL, length = 32L) {
-  cblake2b(x = x, key = key, length = length)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_blake2b", withVisible(cblake2b(x = x, key = key,
+    length = length)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_bootstrap_mean <- function(x, B = 1000L, seed = 42L) {
-  cbootmean(x = x, B = B, seed = seed)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_bootstrap_mean", withVisible(cbootmean(x = x, B = B,
+    seed = seed)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_cor <- function(x, y) {
-  ccorr(x = x, y = y)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_cor", withVisible(ccorr(x = x, y = y)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_cor_spearman <- function(x, y) {
-  cspr(x = x, y = y)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_cor_spearman", withVisible(cspr(x = x, y = y)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_cov <- function(x) {
-  ccovm(x = x)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_cov", withVisible(ccovm(x = x)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_crc32 <- function(x) {
-  ccrc32(x = x)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_crc32", withVisible(ccrc32(x = x)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_digest_equal <- function(a, b) {
-  cdgsteq(a = a, b = b)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_digest_equal", withVisible(cdgsteq(a = a, b = b)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_dist <- function(a, b) {
-  cdistm(a = a, b = b)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_dist", withVisible(cdistm(a = a, b = b)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_gamma_cdf <- function(shape, x) {
-  cgamcdf(shape = shape, x = x)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_gamma_cdf", withVisible(cgamcdf(shape = shape, x = x)))
 }
 
 #' @rdname rmbl-aliases
@@ -1104,15 +1213,18 @@ core_hawkes_fit <- function(times, horizon,
                              kernel = c("exponential", "weibull", "gamma", "lomax"),
                              baseline = c("constant", "sinusoidal"), method = "auto",
                              eps = 1e-09, start = NULL) {
-  chwkfit(times = times, hor = horizon, kernel = kernel, base = baseline, meth = method,
-          eps = eps, start = start)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_hawkes_fit", withVisible(chwkfit(times = times, hor = horizon,
+    kernel = kernel, base = baseline, meth = method, eps = eps, start = start)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_hawkes_jitter <- function(times, resolution = 1, seed = 42, horizon = Inf) {
-  chwkjit(times = times, res = resolution, seed = seed, hor = horizon)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_hawkes_jitter", withVisible(chwkjit(times = times,
+    res = resolution, seed = seed, hor = horizon)))
 }
 
 #' @rdname rmbl-aliases
@@ -1121,7 +1233,9 @@ core_hawkes_jitter <- function(times, resolution = 1, seed = 42, horizon = Inf) 
 core_hawkes_nll <- function(times, horizon,
                              kernel = c("exponential", "weibull", "lomax", "gamma"),
                              par) {
-  chwknll(times = times, hor = horizon, kernel = kernel, par = par)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_hawkes_nll", withVisible(chwknll(times = times, hor = horizon,
+    kernel = kernel, par = par)))
 }
 
 #' @rdname rmbl-aliases
@@ -1130,161 +1244,191 @@ core_hawkes_nll <- function(times, horizon,
 core_hawkes_residuals <- function(times, horizon,
                                    kernel = c("exponential", "weibull", "gamma", "lomax"),
                                    par, baseline = c("constant", "sinusoidal")) {
-  chwkres(times = times, hor = horizon, kernel = kernel, par = par, base = baseline)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_hawkes_residuals", withVisible(chwkres(times = times,
+    hor = horizon, kernel = kernel, par = par, base = baseline)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_hmac_sha256 <- function(key, message) {
-  chmac(key = key, msg = message)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_hmac_sha256", withVisible(chmac(key = key, msg = message)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_ipw_weights <- function(treat, propensity, trim_lo = 0.01, trim_hi = 0.99) {
-  cipw(treat = treat, ps = propensity, trimlo = trim_lo, trimhi = trim_hi)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_ipw_weights", withVisible(cipw(treat = treat, ps = propensity,
+    trimlo = trim_lo, trimhi = trim_hi)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_iqr <- function(x) {
-  ciqr(x = x)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_iqr", withVisible(ciqr(x = x)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_mad <- function(x, constant = 1.4826) {
-  cmad(x = x, const = constant)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_mad", withVisible(cmad(x = x, const = constant)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_median <- function(x) {
-  cmed(x = x)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_median", withVisible(cmed(x = x)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_midranks <- function(x) {
-  cmidrk(x = x)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_midranks", withVisible(cmidrk(x = x)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_moments <- function(x) {
-  cmom(x = x)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_moments", withVisible(cmom(x = x)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_normal_logpdf <- function(x, mean = 0, sd = 1) {
-  cnormlpdf(x = x, mean = mean, sd = sd)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_normal_logpdf", withVisible(cnormlpdf(x = x, mean = mean,
+    sd = sd)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_normal_pdf <- function(x, mean = 0, sd = 1) {
-  cnormpdf(x = x, mean = mean, sd = sd)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_normal_pdf", withVisible(cnormpdf(x = x, mean = mean, sd = sd)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_quantile <- function(x, probs = c(0, 0.25, 0.5, 0.75, 1)) {
-  cqnt(x = x, probs = probs)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_quantile", withVisible(cqnt(x = x, probs = probs)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_sd <- function(x, ddof = 1L) {
-  csdev(x = x, ddof = ddof)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_sd", withVisible(csdev(x = x, ddof = ddof)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_sha512 <- function(x) {
-  csha512(x = x)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_sha512", withVisible(csha512(x = x)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_trimmed_mean <- function(x, trim = 0.1) {
-  ctrmmean(x = x, trim = trim)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_trimmed_mean", withVisible(ctrmmean(x = x, trim = trim)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_tukey_fences <- function(x, k = 1.5) {
-  ctkyfnc(x = x, k = k)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_tukey_fences", withVisible(ctkyfnc(x = x, k = k)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_uniforms <- function(n, seed) {
-  cunif(n = n, seed = seed)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_uniforms", withVisible(cunif(n = n, seed = seed)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_var <- function(x) {
-  cvari(x = x)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_var", withVisible(cvari(x = x)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_weighted <- function(x, w) {
-  cwtd(x = x, w = w)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_weighted", withVisible(cwtd(x = x, w = w)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 core_winsorized_mean <- function(x, trim = 0.1) {
-  cwinsmean(x = x, trim = trim)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("core_winsorized_mean", withVisible(cwinsmean(x = x, trim = trim)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 correlation_table <- function(data, method = c("spearman", "pearson"), min_pairs = 3L) {
-  cortbl(data = data, meth = method, minprs = min_pairs)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("correlation_table", withVisible(cortbl(data = data, meth = method,
+    minprs = min_pairs)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
-  cnttrnd(y = y, x = x, offset = offset, conflvl = conf_level)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("count_trend", withVisible(cnttrnd(y = y, x = x, offset = offset,
+    conflvl = conf_level)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 cramers_v <- function(tbl, bias_correct = TRUE, min_expected = 5, seed = 1L) {
-  cramerv(tbl = tbl, biascor = bias_correct, minexp = min_expected, seed = seed)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("cramers_v", withVisible(cramerv(tbl = tbl, biascor = bias_correct,
+    minexp = min_expected, seed = seed)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 crc32_file <- function(path, block_bytes = 1048576L) {
-  crc32file(path = path, blkbytes = block_bytes)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("crc32_file", withVisible(crc32file(path = path,
+    blkbytes = block_bytes)))
 }
 
 #' @rdname rmbl-aliases
@@ -1294,7 +1438,9 @@ crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 
                      beta_per_10 = NULL) {
   outcome <- .rmbl_alias_val(outcome, c(all_cause_mortality = "allcause",
     childhood_asthma = "chiast"))
-  crfno2(expo = exposure, y = outcome, refconc = reference_conc, betaper10 = beta_per_10)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("crf_no2", withVisible(crfno2(expo = exposure, y = outcome,
+    refconc = reference_conc, betaper10 = beta_per_10)))
 }
 
 #' @rdname rmbl-aliases
@@ -1302,7 +1448,9 @@ crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 
 #' @export
 crf_pm25 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 5.8) {
   outcome <- .rmbl_alias_val(outcome, c(all_cause_mortality = "allcause"))
-  crfpm25(expo = exposure, y = outcome, refconc = reference_conc)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("crf_pm25", withVisible(crfpm25(expo = exposure, y = outcome,
+    refconc = reference_conc)))
 }
 
 #' @rdname rmbl-aliases
@@ -1310,29 +1458,35 @@ crf_pm25 <- function(exposure, outcome = "all_cause_mortality", reference_conc =
 #' @export
 crime_density <- function(lon, lat, weights = NULL, bandwidth = NULL, n_grid = 200L,
                            coverage = c(0.5, 0.9), coords = c("lonlat", "planar")) {
-  crmdens(lon = lon, lat = lat, w = weights, bw = bandwidth, ngrid = n_grid,
-          cover = coverage, xy = coords)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("crime_density", withVisible(crmdens(lon = lon, lat = lat, w = weights,
+    bw = bandwidth, ngrid = n_grid, cover = coverage, xy = coords)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 decode_codes <- function(x, value_labels, keep_na = TRUE) {
-  deccodes(x = x, vlabs = value_labels, keepna = keep_na)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("decode_codes", withVisible(deccodes(x = x, vlabs = value_labels,
+    keepna = keep_na)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 decode_labelled <- function(x, value_labels = NULL) {
-  declbld(x = x, vlabs = value_labels)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("decode_labelled", withVisible(declbld(x = x, vlabs = value_labels)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 derive_key <- function(passphrase, salt, iterations = 100000L, length = 32L) {
-  drvkey(pass = passphrase, salt = salt, iter = iterations, length = length)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("derive_key", withVisible(drvkey(pass = passphrase, salt = salt,
+    iter = iterations, length = length)))
 }
 
 #' @rdname rmbl-aliases
@@ -1341,7 +1495,9 @@ derive_key <- function(passphrase, salt, iterations = 100000L, length = 32L) {
 detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
                              codecarbon_location = Sys.getenv("CODECARBON_COUNTRY_ISO_CODE"),
                              tz = Sys.timezone(), locale = Sys.getlocale("LC_TIME")) {
-  dtctloc(envloc = env_location, codloc = codecarbon_location, tz = tz, locale = locale)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("detect_location", withVisible(dtctloc(envloc = env_location,
+    codloc = codecarbon_location, tz = tz, locale = locale)))
 }
 
 #' @rdname rmbl-aliases
@@ -1349,28 +1505,34 @@ detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
 #' @export
 digest_object <- function(x, algo = c("sha256", "sha512", "blake2b", "crc32"),
                            key = NULL) {
-  dgstobj(x = x, algo = algo, key = key)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("digest_object", withVisible(dgstobj(x = x, algo = algo, key = key)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 disposition_mix <- function(counts, period = NULL, scores = NULL, conf_level = 0.95) {
-  dispmix(cnts = counts, prd = period, scores = scores, conflvl = conf_level)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("disposition_mix", withVisible(dispmix(cnts = counts, prd = period,
+    scores = scores, conflvl = conf_level)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 distinct_count <- function(registers) {
-  dstncnt(regstr = registers)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("distinct_count", withVisible(dstncnt(regstr = registers)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 distinct_sketch <- function(x, p = 14L, registers = NULL) {
-  dstnskch(x = x, p = p, regstr = registers)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("distinct_sketch", withVisible(dstnskch(x = x, p = p,
+    regstr = registers)))
 }
 
 #' @rdname rmbl-aliases
@@ -1378,136 +1540,162 @@ distinct_sketch <- function(x, p = 14L, registers = NULL) {
 #' @export
 download_data <- function(url, target_path, mode = "wb", quiet = FALSE,
                            allow_file = FALSE) {
-  dldata(url = url, tpath = target_path, mode = mode, quiet = quiet,
-         allowfile = allow_file)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("download_data", withVisible(dldata(url = url, tpath = target_path,
+    mode = mode, quiet = quiet, allowfile = allow_file)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 drbg_generate <- function(drbg, n, additional = NULL) {
-  drbggen(drbg = drbg, n = n, addl = additional)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("drbg_generate", withVisible(drbggen(drbg = drbg, n = n,
+    addl = additional)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 drbg_new <- function(entropy = NULL, personalization = NULL) {
-  drbgnew(entropy = entropy, person = personalization)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("drbg_new", withVisible(drbgnew(entropy = entropy,
+    person = personalization)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 drbg_reseed <- function(drbg, entropy = NULL, additional = NULL) {
-  drbgrsd(drbg = drbg, entropy = entropy, addl = additional)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("drbg_reseed", withVisible(drbgrsd(drbg = drbg, entropy = entropy,
+    addl = additional)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 drift_calibrate <- function(data, n = 50L, alpha = 0.01, seed = 1L, ...) {
+  .rmbl_alias_in(environment())
   .nm <- .rmbl_alias_dots(c(reference = "ref", current = "cur", psi_threshold = "psithr",
     psi_min_n = "psiminn", identifier_levels = "idelvls"), ...)
-  if (is.null(.nm)) return(drftcal(data = data, n = n, alpha = alpha, seed = seed, ...))
-  .rmbl_alias_redot(quote(drftcal(data = data, n = n, alpha = alpha,
-    seed = seed)), .nm, environment())
+  if (is.null(.nm)) return(.rmbl_alias_out("drift_calibrate", withVisible(drftcal(data = data,
+    n = n, alpha = alpha, seed = seed, ...))))
+  .rmbl_alias_out("drift_calibrate", withVisible(.rmbl_alias_redot(quote(drftcal(data = data,
+    n = n, alpha = alpha, seed = seed)), .nm, environment())))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 drift_chisq <- function(observed, expected) {
-  drftchisq(obs = observed, expd = expected)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("drift_chisq", withVisible(drftchisq(obs = observed, expd = expected)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 drift_homogeneity <- function(x, y, seed = 1L) {
-  drfthomog(x = x, y = y, seed = seed)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("drift_homogeneity", withVisible(drfthomog(x = x, y = y, seed = seed)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 drift_ks <- function(x, y) {
-  drftks(x = x, y = y)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("drift_ks", withVisible(drftks(x = x, y = y)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 drift_psi <- function(x, y, bins = 10L, eps = 1e-06) {
-  drftpsi(x = x, y = y, bins = bins, eps = eps)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("drift_psi", withVisible(drftpsi(x = x, y = y, bins = bins, eps = eps)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 drop_constant <- function(data, na_as_value = FALSE) {
-  drpconst(data = data, naasval = na_as_value)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("drop_constant", withVisible(drpconst(data = data,
+    naasval = na_as_value)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 drop_empty <- function(data, which = c("rows", "cols")) {
-  drpempty(data = data, which = which)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("drop_empty", withVisible(drpempty(data = data, which = which)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 duplicate_rows <- function(data, columns = NULL) {
-  duprows(data = data, cols = columns)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("duplicate_rows", withVisible(duprows(data = data, cols = columns)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 eb_rates <- function(observed, expected, area = NULL) {
-  ebrates(obs = observed, expd = expected, area = area)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("eb_rates", withVisible(ebrates(obs = observed, expd = expected,
+    area = area)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 environment_diff <- function(a, b) {
-  envdiff(a = a, b = b)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("environment_diff", withVisible(envdiff(a = a, b = b)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 evalue_rr <- function(rr, lo = NULL, hi = NULL, true = 1) {
-  evlrr(rr = rr, lo = lo, hi = hi, true = true)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("evalue_rr", withVisible(evlrr(rr = rr, lo = lo, hi = hi, true = true)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 expand_bands <- function(bands, counts, ..., drop_unparsed = FALSE) {
+  .rmbl_alias_in(environment())
   .nm <- .rmbl_alias_dots(c(open_upper_cap = "openupcap", open_upper_factor = "openupfac",
     open_lower_floor = "openloflr"), ...)
-  if (is.null(.nm)) return(expbands(bands = bands, cnts = counts, ...,
-    drpunp = drop_unparsed))
-  .rmbl_alias_redot(quote(expbands(bands = bands, cnts = counts,
-    drpunp = drop_unparsed)), .nm, environment())
+  if (is.null(.nm)) return(.rmbl_alias_out("expand_bands", withVisible(expbands(bands = bands,
+    cnts = counts, ..., drpunp = drop_unparsed))))
+  .rmbl_alias_out("expand_bands", withVisible(.rmbl_alias_redot(quote(expbands(bands = bands,
+    cnts = counts, drpunp = drop_unparsed)), .nm, environment())))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 expected_counts <- function(counts, population, area, strata = NULL) {
-  expcnts(cnts = counts, pop = population, area = area, strata = strata)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("expected_counts", withVisible(expcnts(cnts = counts, pop = population,
+    area = area, strata = strata)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 exposure_concentration_index <- function(data, exposure, income) {
-  expconcidx(data = data, expo = exposure, income = income)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("exposure_concentration_index", withVisible(expconcidx(data = data,
+    expo = exposure, income = income)))
 }
 
 #' @rdname rmbl-aliases
@@ -1516,8 +1704,10 @@ exposure_concentration_index <- function(data, exposure, income) {
 exposure_response_plr <- function(data, outcome, exposure, confounders,
                                    n_bootstrap = 100L, random_state = 42L,
                                    estimator = plr_crossfit) {
-  exprspplr(data = data, y = outcome, expo = exposure, confs = confounders,
-            nboot = n_bootstrap, rstate = random_state, estr = estimator)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("exposure_response_plr", withVisible(exprspplr(data = data, y = outcome,
+    expo = exposure, confs = confounders, nboot = n_bootstrap, rstate = random_state,
+    estr = estimator)))
 }
 
 #' @rdname rmbl-aliases
@@ -1525,35 +1715,43 @@ exposure_response_plr <- function(data, outcome, exposure, confounders,
 #' @export
 falsify_family <- function(x, method = c("holm", "bh", "bonferroni", "none"),
                             alpha = 0.05) {
-  falsfam(x = x, meth = method, alpha = alpha)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("falsify_family", withVisible(falsfam(x = x, meth = method,
+    alpha = alpha)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 fips_key <- function(scheme, public, secret = NULL) {
-  fipskey(scheme = scheme, public = public, secret = secret)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("fips_key", withVisible(fipskey(scheme = scheme, public = public,
+    secret = secret)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 fips_keygen <- function(scheme = "ML-DSA-65", seed = NULL) {
-  fipskg(scheme = scheme, seed = seed)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("fips_keygen", withVisible(fipskg(scheme = scheme, seed = seed)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 fips_mu <- function(key, message, context = NULL, prehash = "none") {
-  fipsmu(key = key, msg = message, ctx = context, prehash = prehash)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("fips_mu", withVisible(fipsmu(key = key, msg = message, ctx = context,
+    prehash = prehash)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 fips_public_key <- function(key) {
-  fipspubkey(key = key)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("fips_public_key", withVisible(fipspubkey(key = key)))
 }
 
 #' @rdname rmbl-aliases
@@ -1561,42 +1759,52 @@ fips_public_key <- function(key) {
 #' @export
 fips_sign_mu <- function(key, mu, deterministic = FALSE,
                           masked = getOption("rmoriebricklayer.masked", TRUE)) {
-  fipssignmu(key = key, mu = mu, determ = deterministic, masked = masked)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("fips_sign_mu", withVisible(fipssignmu(key = key, mu = mu,
+    determ = deterministic, masked = masked)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 fips_sizes <- function(scheme) {
-  fipssz(scheme = scheme)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("fips_sizes", withVisible(fipssz(scheme = scheme)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 fips_verify_mu <- function(key, mu, signature) {
-  fipsvrfmu(key = key, mu = mu, sig = signature)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("fips_verify_mu", withVisible(fipsvrfmu(key = key, mu = mu,
+    sig = signature)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 fiscal_year_label <- function(end_year, sep = "/", short = TRUE) {
-  fylbl(endyear = end_year, sep = sep, short = short)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("fiscal_year_label", withVisible(fylbl(endyear = end_year, sep = sep,
+    short = short)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 footprint_equivalents <- function(co2e_g) {
-  fpeqv(co2eg = co2e_g)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("footprint_equivalents", withVisible(fpeqv(co2eg = co2e_g)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 frequency_table <- function(data, column = NULL, max_levels = 25L, sort = TRUE) {
-  freqtbl(data = data, col = column, maxlvl = max_levels, sort = sort)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("frequency_table", withVisible(freqtbl(data = data, col = column,
+    maxlvl = max_levels, sort = sort)))
 }
 
 #' @rdname rmbl-aliases
@@ -1604,14 +1812,18 @@ frequency_table <- function(data, column = NULL, max_levels = 25L, sort = TRUE) 
 #' @export
 friendly_download <- function(url, target_path, attempt_wayback = NULL,
                                allow_file = FALSE) {
-  fdl(url = url, tpath = target_path, attwb = attempt_wayback, allowfile = allow_file)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("friendly_download", withVisible(fdl(url = url, tpath = target_path,
+    attwb = attempt_wayback, allowfile = allow_file)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 funnel_limits <- function(expected, target = 1, levels = c(0.95, 0.998)) {
-  fnllim(expd = expected, target = target, lvls = levels)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("funnel_limits", withVisible(fnllim(expd = expected, target = target,
+    lvls = levels)))
 }
 
 #' @rdname rmbl-aliases
@@ -1619,8 +1831,10 @@ funnel_limits <- function(expected, target = 1, levels = c(0.95, 0.998)) {
 #' @export
 gaussian_plume <- function(q, u, h, receptors, stability = "D", setting = "rural",
                             mixing_height = NULL, n_images = 3) {
-  gplume(q = q, u = u, h = h, rcpt = receptors, stab = stability, set = setting,
-         mixh = mixing_height, nimg = n_images)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("gaussian_plume", withVisible(gplume(q = q, u = u, h = h,
+    rcpt = receptors, stab = stability, set = setting, mixh = mixing_height,
+    nimg = n_images)))
 }
 
 #' @rdname rmbl-aliases
@@ -1628,36 +1842,43 @@ gaussian_plume <- function(q, u, h, receptors, stability = "D", setting = "rural
 #' @export
 gaussian_puff <- function(mass, u, h, receptors, t, stability = "D", setting = "rural",
                            mixing_height = NULL, n_images = 3) {
-  gspuff(mass = mass, u = u, h = h, rcpt = receptors, t = t, stab = stability,
-         set = setting, mixh = mixing_height, nimg = n_images)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("gaussian_puff", withVisible(gspuff(mass = mass, u = u, h = h,
+    rcpt = receptors, t = t, stab = stability, set = setting, mixh = mixing_height,
+    nimg = n_images)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 gini <- function(x, na.rm = TRUE) {
-  ginicoef(x = x, na.rm = na.rm)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("gini", withVisible(ginicoef(x = x, na.rm = na.rm)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 guard_binary <- function(x, col) {
-  grdbin(x = x, col = col)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("guard_binary", withVisible(grdbin(x = x, col = col)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 guard_levels <- function(x, levels, reference = NULL) {
-  grdlvls(x = x, lvls = levels, ref = reference)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("guard_levels", withVisible(grdlvls(x = x, lvls = levels,
+    ref = reference)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 guard_recode <- function(x, mapping, keep = character()) {
-  grdrcd(x = x, map = mapping, keep = keep)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("guard_recode", withVisible(grdrcd(x = x, map = mapping, keep = keep)))
 }
 
 #' @rdname rmbl-aliases
@@ -1665,7 +1886,9 @@ guard_recode <- function(x, mapping, keep = character()) {
 #' @export
 hill_tail_index <- function(x, x_min = NULL, discrete = TRUE, approx = FALSE,
                              min_tail = 3L) {
-  hilltlidx(x = x, xmin = x_min, discrete = discrete, approx = approx, mintl = min_tail)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("hill_tail_index", withVisible(hilltlidx(x = x, xmin = x_min,
+    discrete = discrete, approx = approx, mintl = min_tail)))
 }
 
 #' @rdname rmbl-aliases
@@ -1673,70 +1896,83 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE, approx = FALSE,
 #' @export
 hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05,
                                  coords = c("lonlat", "planar")) {
-  hotpers(lon = lon, lat = lat, prd = period, cell = cell, top = top, xy = coords)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("hotspot_persistence", withVisible(hotpers(lon = lon, lat = lat,
+    prd = period, cell = cell, top = top, xy = coords)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 hqc_compress_key <- function(key) {
-  hqccmpkey(key = key)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("hqc_compress_key", withVisible(hqccmpkey(key = key)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 hqc_decapsulate <- function(key, ciphertext) {
-  hqcdecap(key = key, ct = ciphertext)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("hqc_decapsulate", withVisible(hqcdecap(key = key, ct = ciphertext)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 hqc_encapsulate <- function(key, m = NULL, salt = NULL) {
-  hqcencap(key = key, m = m, salt = salt)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("hqc_encapsulate", withVisible(hqcencap(key = key, m = m, salt = salt)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 hqc_keygen <- function(level = 3L, seed = NULL, version = c("v5", "round4")) {
-  hqckg(lvl = level, seed = seed, ver = version)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("hqc_keygen", withVisible(hqckg(lvl = level, seed = seed,
+    ver = version)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 hqc_public_key <- function(key) {
-  hqcpubkey(key = key)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("hqc_public_key", withVisible(hqcpubkey(key = key)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 hqc_sizes <- function(level, version = c("v5", "round4")) {
-  hqcsz(lvl = level, ver = version)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("hqc_sizes", withVisible(hqcsz(lvl = level, ver = version)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 hurwitz_zeta <- function(s, q = 1) {
-  hurwzeta(s = s, q = q)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("hurwitz_zeta", withVisible(hurwzeta(s = s, q = q)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 infer_schema <- function(data, slack = 0.1, max_levels = 50L) {
-  infsch(data = data, slack = slack, maxlvl = max_levels)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("infer_schema", withVisible(infsch(data = data, slack = slack,
+    maxlvl = max_levels)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 inline_hist <- function(x, bins = 10L) {
-  inlhist(x = x, bins = bins)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("inline_hist", withVisible(inlhist(x = x, bins = bins)))
 }
 
 #' @rdname rmbl-aliases
@@ -1744,21 +1980,24 @@ inline_hist <- function(x, bins = 10L) {
 #' @export
 install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
                          name = c("rmoriebricklayer", "rmbl")) {
-  instcli(dir = dir, name = name)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("install_cli", withVisible(instcli(dir = dir, name = name)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 json_gzip_decode <- function(txt, raw = FALSE, ...) {
-  jsgzdec(txt = txt, raw = raw, ...)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("json_gzip_decode", withVisible(jsgzdec(txt = txt, raw = raw, ...)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 json_gzip_encode <- function(x, raw = FALSE, ...) {
-  jsgzenc(x = x, raw = raw, ...)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("json_gzip_encode", withVisible(jsgzenc(x = x, raw = raw, ...)))
 }
 
 #' @rdname rmbl-aliases
@@ -1766,35 +2005,41 @@ json_gzip_encode <- function(x, raw = FALSE, ...) {
 #' @export
 kem_decapsulate <- function(key, ciphertext,
                              masked = getOption("rmoriebricklayer.masked", TRUE)) {
-  kemdecap(key = key, ct = ciphertext, masked = masked)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("kem_decapsulate", withVisible(kemdecap(key = key, ct = ciphertext,
+    masked = masked)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 kem_encapsulate <- function(key, m = NULL) {
-  kemencap(key = key, m = m)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("kem_encapsulate", withVisible(kemencap(key = key, m = m)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 kem_keygen <- function(level = 768L, seed = NULL) {
-  kemkg(lvl = level, seed = seed)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("kem_keygen", withVisible(kemkg(lvl = level, seed = seed)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 kem_public_key <- function(key) {
-  kempubkey(key = key)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("kem_public_key", withVisible(kempubkey(key = key)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 kem_sizes <- function(level) {
-  kemsz(lvl = level)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("kem_sizes", withVisible(kemsz(lvl = level)))
 }
 
 #' @rdname rmbl-aliases
@@ -1802,8 +2047,10 @@ kem_sizes <- function(level) {
 #' @export
 knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = NULL,
                        coords = c("lonlat", "planar"), max_pairs = 5e+07) {
-  knoxtst(x = x, y = y, time = time, spcbands = space_bands, tmbands = time_bands,
-          nsim = nsim, seed = seed, xy = coords, maxprs = max_pairs)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("knox_test", withVisible(knoxtst(x = x, y = y, time = time,
+    spcbands = space_bands, tmbands = time_bands, nsim = nsim, seed = seed, xy = coords,
+    maxprs = max_pairs)))
 }
 
 #' @rdname rmbl-aliases
@@ -1811,9 +2058,10 @@ knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = N
 #' @export
 lagrangian_particles <- function(n, x0, y0, u, v, kx, ky, dt, n_steps, seed = 0,
                                   grid = NULL, normals = NULL, max_work = 1e+08) {
-  lagrprt(n = n, x0 = x0, y0 = y0, u = u, v = v, kx = kx, ky = ky, dt = dt,
-          nsteps = n_steps, seed = seed, grid = grid, normals = normals,
-          maxwork = max_work)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("lagrangian_particles", withVisible(lagrprt(n = n, x0 = x0, y0 = y0,
+    u = u, v = v, kx = kx, ky = ky, dt = dt, nsteps = n_steps, seed = seed, grid = grid,
+    normals = normals, maxwork = max_work)))
 }
 
 #' @rdname rmbl-aliases
@@ -1821,155 +2069,187 @@ lagrangian_particles <- function(n, x0, y0, u, v, kx, ky, dt, n_steps, seed = 0,
 #' @export
 life_table <- function(breaks, events, censored = 0, conf_level = 0.95,
                         conf_type = c("log-log", "log", "plain")) {
-  lifetbl(breaks = breaks, events = events, cens = censored, conflvl = conf_level,
-          conftype = conf_type)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("life_table", withVisible(lifetbl(breaks = breaks, events = events,
+    cens = censored, conflvl = conf_level, conftype = conf_type)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 load_provenance <- function(path) {
-  loadprov(path = path)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("load_provenance", withVisible(loadprov(path = path)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 lorenz <- function(x, na.rm = TRUE) {
-  lorenzc(x = x, na.rm = na.rm)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("lorenz", withVisible(lorenzc(x = x, na.rm = na.rm)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
-  mahaoutl(data = data, alpha = alpha, robust = robust)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("mahalanobis_outliers", withVisible(mahaoutl(data = data, alpha = alpha,
+    robust = robust)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 make_manifest <- function(meta, environment = TRUE) {
-  mkmnf(meta = meta, env = environment)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("make_manifest", withVisible(mkmnf(meta = meta, env = environment)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
-  mksyncol(spec = spec, n = n, ctx = ctx, basep = base_p)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("make_synthetic_column", withVisible(mksyncol(spec = spec, n = n,
+    ctx = ctx, basep = base_p)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 make_synthetic_csv <- function(schema, out_path, n_rows = NULL, seed = NULL) {
-  mksyncsv(schema = schema, outpath = out_path, nrows = n_rows, seed = seed)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("make_synthetic_csv", withVisible(mksyncsv(schema = schema,
+    outpath = out_path, nrows = n_rows, seed = seed)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 manifest_canonical <- function(manifest) {
-  mnfcanon(man = manifest)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("manifest_canonical", withVisible(mnfcanon(man = manifest)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 manifest_digest <- function(manifest) {
-  mnfdgst(man = manifest)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("manifest_digest", withVisible(mnfdgst(man = manifest)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 manifest_recompute <- function(manifest, data, statistics, tol = NULL) {
-  mnfrcmp(man = manifest, data = data, stats = statistics, tol = tol)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("manifest_recompute", withVisible(mnfrcmp(man = manifest, data = data,
+    stats = statistics, tol = tol)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 manifest_record_seed <- function(manifest) {
-  mnfrecseed(man = manifest)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("manifest_record_seed", withVisible(mnfrecseed(man = manifest)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 manifest_restore_seed <- function(manifest) {
-  mnfrstseed(man = manifest)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("manifest_restore_seed", withVisible(mnfrstseed(man = manifest)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 mcar_test <- function(data, max_iter = 500L, tol = 1e-07) {
-  mcartst(data = data, maxit = max_iter, tol = tol)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("mcar_test", withVisible(mcartst(data = data, maxit = max_iter,
+    tol = tol)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 merkle_leaves <- function(chunks, scheme = 2L) {
-  mrklvs(chunks = chunks, scheme = scheme)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("merkle_leaves", withVisible(mrklvs(chunks = chunks, scheme = scheme)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 merkle_proof <- function(chunks, index, scheme = 2L) {
-  mrkprf(chunks = chunks, index = index, scheme = scheme)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("merkle_proof", withVisible(mrkprf(chunks = chunks, index = index,
+    scheme = scheme)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 merkle_root <- function(chunks, scheme = 2L) {
-  mrkroot(chunks = chunks, scheme = scheme)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("merkle_root", withVisible(mrkroot(chunks = chunks, scheme = scheme)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 merkle_verify <- function(leaf, proof, root, scheme = NULL) {
-  mrkvrf(leaf = leaf, proof = proof, root = root, scheme = scheme)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("merkle_verify", withVisible(mrkvrf(leaf = leaf, proof = proof,
+    root = root, scheme = scheme)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 missing_runs <- function(data, min_run = 2L) {
-  missruns(data = data, minrun = min_run)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("missing_runs", withVisible(missruns(data = data, minrun = min_run)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 missingness_map <- function(data, height = 20L, width = 12L) {
-  missgrid(data = data, height = height, width = width)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("missingness_map", withVisible(missgrid(data = data, height = height,
+    width = width)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 missingness_pattern <- function(data, max_patterns = 20L) {
-  misspat(data = data, maxpat = max_patterns)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("missingness_pattern", withVisible(misspat(data = data,
+    maxpat = max_patterns)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 missingness_summary <- function(data) {
-  misssmry(data = data)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("missingness_summary", withVisible(misssmry(data = data)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 morans_i <- function(x, neighbours, style = c("W", "B"), n_perm = 9999L) {
-  morani(x = x, nbrs = neighbours, style = style, nperm = n_perm)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("morans_i", withVisible(morani(x = x, nbrs = neighbours, style = style,
+    nperm = n_perm)))
 }
 
 #' @rdname rmbl-aliases
@@ -1977,57 +2257,68 @@ morans_i <- function(x, neighbours, style = c("W", "B"), n_perm = 9999L) {
 #' @export
 mortality_displaced <- function(exposure_delta, population, baseline_rate, beta_per_unit,
                                  rare_outcome = FALSE, high_rate = FALSE) {
-  mortdisp(expdel = exposure_delta, pop = population, brate = baseline_rate,
-           betaperunit = beta_per_unit, rare = rare_outcome, hirate = high_rate)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("mortality_displaced", withVisible(mortdisp(expdel = exposure_delta,
+    pop = population, brate = baseline_rate, betaperunit = beta_per_unit,
+    rare = rare_outcome, hirate = high_rate)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 odds_ratio_check <- function(counts, reference, reported, tolerance = 0.05) {
-  orchk(cnts = counts, ref = reference, rptd = reported, tol = tolerance)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("odds_ratio_check", withVisible(orchk(cnts = counts, ref = reference,
+    rptd = reported, tol = tolerance)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 online_summary <- function(x = NULL) {
-  onlsmry(x = x)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("online_summary", withVisible(onlsmry(x = x)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 oqs_keygen <- function(scheme = "ML-DSA-65") {
-  oqskg(scheme = scheme)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("oqs_keygen", withVisible(oqskg(scheme = scheme)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 oqs_public_key <- function(key) {
-  oqspubkey(key = key)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("oqs_public_key", withVisible(oqspubkey(key = key)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 parse_bands <- function(x, closed_upper = TRUE, integer_scale = TRUE) {
-  prsbands(x = x, clsup = closed_upper, intsca = integer_scale)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("parse_bands", withVisible(prsbands(x = x, clsup = closed_upper,
+    intsca = integer_scale)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 period_days <- function(from, to) {
-  perdays(from = from, to = to)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("period_days", withVisible(perdays(from = from, to = to)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 pg_sigmas <- function(x, stability = "D", setting = "rural") {
-  pgsig(x = x, stab = stability, set = setting)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("pg_sigmas", withVisible(pgsig(x = x, stab = stability, set = setting)))
 }
 
 #' @rdname rmbl-aliases
@@ -2035,23 +2326,28 @@ pg_sigmas <- function(x, stability = "D", setting = "rural") {
 #' @export
 plot_funnel <- function(observed, expected, area = NULL, levels = c(0.95, 0.998),
                          target = 1, ..., main = NULL, col = NULL, palette = NULL) {
-  plotfnl(obs = observed, expd = expected, area = area, lvls = levels, target = target,
-          ..., main = main, col = col, pal = palette)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("plot_funnel", withVisible(plotfnl(obs = observed, expd = expected,
+    area = area, lvls = levels, target = target, ..., main = main, col = col,
+    pal = palette)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 plot_lorenz <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
-  plotlrnz(x = x, ..., main = main, col = col, pal = palette)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("plot_lorenz", withVisible(plotlrnz(x = x, ..., main = main, col = col,
+    pal = palette)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 plr_crossfit <- function(data, outcome, treatment, covariates, k_folds = 5L, seed = 1L) {
-  plrcf(data = data, y = outcome, trt = treatment, covs = covariates, kfol = k_folds,
-        seed = seed)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("plr_crossfit", withVisible(plrcf(data = data, y = outcome,
+    trt = treatment, covs = covariates, kfol = k_folds, seed = seed)))
 }
 
 #' @rdname rmbl-aliases
@@ -2059,8 +2355,9 @@ plr_crossfit <- function(data, outcome, treatment, covariates, k_folds = 5L, see
 #' @export
 plume_field <- function(q, u, h, x, y, z = 0, stability = "D", setting = "rural",
                          mixing_height = NULL, n_images = 3) {
-  plmfld(q = q, u = u, h = h, x = x, y = y, z = z, stab = stability, set = setting,
-         mixh = mixing_height, nimg = n_images)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("plume_field", withVisible(plmfld(q = q, u = u, h = h, x = x, y = y,
+    z = z, stab = stability, set = setting, mixh = mixing_height, nimg = n_images)))
 }
 
 #' @rdname rmbl-aliases
@@ -2072,9 +2369,11 @@ pollution_burden <- function(exposure_mean, exposure_prevalence, baseline_rate,
                               rare_outcome = FALSE, high_rate = FALSE) {
   outcome <- .rmbl_alias_val(outcome, c(all_cause_mortality = "allcause",
     childhood_asthma = "chiast"))
-  polbrdn(expomean = exposure_mean, expoprev = exposure_prevalence, brate = baseline_rate,
-          pop = population, poll = pollutant, y = outcome, refconc = reference_conc,
-          rare = rare_outcome, hirate = high_rate)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("pollution_burden", withVisible(polbrdn(expomean = exposure_mean,
+    expoprev = exposure_prevalence, brate = baseline_rate, pop = population,
+    poll = pollutant, y = outcome, refconc = reference_conc, rare = rare_outcome,
+    hirate = high_rate)))
 }
 
 #' @rdname rmbl-aliases
@@ -2088,44 +2387,50 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa",
                                       rare_outcome = FALSE, high_rate = FALSE) {
   outcome <- .rmbl_alias_val(outcome, c(all_cause_mortality = "allcause",
     childhood_asthma = "chiast"))
-  polbrdarea(areatab = area_table, areacol = area_col, expcol = exposure_col,
-             popcol = population_col, basratecol = baseline_rate_col, poll = pollutant,
-             y = outcome, rare = rare_outcome, hirate = high_rate)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("pollution_burden_by_area", withVisible(polbrdarea(areatab = area_table,
+    areacol = area_col, expcol = exposure_col, popcol = population_col,
+    basratecol = baseline_rate_col, poll = pollutant, y = outcome, rare = rare_outcome,
+    hirate = high_rate)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 pollution_report_text <- function(report) {
-  polrpttxt(report = report)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("pollution_report_text", withVisible(polrpttxt(report = report)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 pqc_backends <- function() {
-  pqcbknd()
+  .rmbl_alias_out("pqc_backends", withVisible(pqcbknd()))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 prereg_check <- function(prereg, reported) {
-  prrgchk(prereg = prereg, rptd = reported)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("prereg_check", withVisible(prrgchk(prereg = prereg, rptd = reported)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 prereg_declare <- function(hypotheses, note = NULL) {
-  prrgdecl(hyps = hypotheses, note = note)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("prereg_declare", withVisible(prrgdecl(hyps = hypotheses, note = note)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 profile_columns <- function(data, quantiles = c(0.25, 0.5, 0.75)) {
-  profcols(data = data, qnts = quantiles)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("profile_columns", withVisible(profcols(data = data, qnts = quantiles)))
 }
 
 #' @rdname rmbl-aliases
@@ -2134,22 +2439,25 @@ profile_columns <- function(data, quantiles = c(0.25, 0.5, 0.75)) {
 published_bounds <- function(x, rounding = NULL, rounding_kind = c("nearest", "random"),
                               suppression_limit = NULL,
                               suppressed_marks = c("x", "X", "s", "..", "F", "suppressed", "n/a")) {
-  pubbnd(x = x, rnd = rounding, rndkind = rounding_kind, suplim = suppression_limit,
-         supmar = suppressed_marks)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("published_bounds", withVisible(pubbnd(x = x, rnd = rounding,
+    rndkind = rounding_kind, suplim = suppression_limit, supmar = suppressed_marks)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 random_bytes <- function(n) {
-  rndbytes(n = n)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("random_bytes", withVisible(rndbytes(n = n)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 rapl_available <- function(rapl_dir = "/sys/class/powercap") {
-  raplok(rapldir = rapl_dir)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("rapl_available", withVisible(raplok(rapldir = rapl_dir)))
 }
 
 #' @rdname rmbl-aliases
@@ -2157,8 +2465,9 @@ rapl_available <- function(rapl_dir = "/sys/class/powercap") {
 #' @export
 recode_manifest <- function(original, recoded, mapping, published = NULL, key = NULL,
                              context = NULL) {
-  rcdmnf(orig = original, recd = recoded, map = mapping, pub = published, key = key,
-         ctx = context)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("recode_manifest", withVisible(rcdmnf(orig = original, recd = recoded,
+    map = mapping, pub = published, key = key, ctx = context)))
 }
 
 #' @rdname rmbl-aliases
@@ -2166,57 +2475,71 @@ recode_manifest <- function(original, recoded, mapping, published = NULL, key = 
 #' @export
 record <- function(manifest, name, observed, expected, tol = 1e-04, group = "general",
                     synthetic = FALSE) {
-  recrd(man = manifest, name = name, obs = observed, expd = expected, tol = tol,
-        grp = group, syn = synthetic)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("record", withVisible(recrd(man = manifest, name = name, obs = observed,
+    expd = expected, tol = tol, grp = group, syn = synthetic)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 region_coverage <- function(region, population, units) {
-  rgncov(reg = region, pop = population, units = units)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("region_coverage", withVisible(rgncov(reg = region, pop = population,
+    units = units)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 region_map_compare <- function(published, observed, unit, cols = NULL) {
-  rgnmapcmp(pub = published, obs = observed, unit = unit, cols = cols)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("region_map_compare", withVisible(rgnmapcmp(pub = published,
+    obs = observed, unit = unit, cols = cols)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 region_map_from_points <- function(x, y, unit, boundaries, fields, crs = 4326) {
-  rgnmappts(x = x, y = y, unit = unit, bounds = boundaries, fields = fields, crs = crs)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("region_map_from_points", withVisible(rgnmappts(x = x, y = y,
+    unit = unit, bounds = boundaries, fields = fields, crs = crs)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 region_map_integrity <- function(map, unit, region, regions = NULL) {
-  rgnmapintg(map = map, unit = unit, reg = region, regs = regions)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("region_map_integrity", withVisible(rgnmapintg(map = map, unit = unit,
+    reg = region, regs = regions)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 region_map_second_route <- function(map, unit, region, route, known = character()) {
-  rgnmapalt(map = map, unit = unit, reg = region, route = route, known = known)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("region_map_second_route", withVisible(rgnmapalt(map = map, unit = unit,
+    reg = region, route = route, known = known)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 relabel <- function(x, mapping, keep = character()) {
-  relbl(x = x, map = mapping, keep = keep)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("relabel", withVisible(relbl(x = x, map = mapping, keep = keep)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 relabel_forensics <- function(value_labels, observed, counts = NULL) {
-  rlblfrns(vlabs = value_labels, obs = observed, cnts = counts)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("relabel_forensics", withVisible(rlblfrns(vlabs = value_labels,
+    obs = observed, cnts = counts)))
 }
 
 #' @rdname rmbl-aliases
@@ -2224,63 +2547,74 @@ relabel_forensics <- function(value_labels, observed, counts = NULL) {
 #' @export
 report_analysis <- function(x, path = NULL, format = c("markdown", "html"),
                              title = "Analysis of a published table", digits = 1L) {
-  rptanl(x = x, path = path, format = format, title = title, digits = digits)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("report_analysis", withVisible(rptanl(x = x, path = path,
+    format = format, title = title, digits = digits)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 report_markdown <- function(report, path = NULL, title = "Capsule report") {
-  rptmd(report = report, path = path, title = title)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("report_markdown", withVisible(rptmd(report = report, path = path,
+    title = title)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 reservoir_indices <- function(n, k, seed = 42L) {
-  rsvidx(n = n, k = k, seed = seed)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("reservoir_indices", withVisible(rsvidx(n = n, k = k, seed = seed)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 reservoir_sample <- function(x, k, seed = 42L) {
-  rsvsmp(x = x, k = k, seed = seed)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("reservoir_sample", withVisible(rsvsmp(x = x, k = k, seed = seed)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 resolve_via_arcgis <- function(provenance) {
-  rslvarc(prov = provenance)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("resolve_via_arcgis", withVisible(rslvarc(prov = provenance)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 resolve_via_ckan <- function(provenance) {
-  rslvckan(prov = provenance)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("resolve_via_ckan", withVisible(rslvckan(prov = provenance)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 resolve_via_ckan_search <- function(provenance) {
-  rslvckns(prov = provenance)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("resolve_via_ckan_search", withVisible(rslvckns(prov = provenance)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 resolve_via_socrata <- function(provenance) {
-  rslvsoc(prov = provenance)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("resolve_via_socrata", withVisible(rslvsoc(prov = provenance)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 revocation_fetch <- function(path, timeout = 10) {
-  rvkfetch(path = path, tmout = timeout)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("revocation_fetch", withVisible(rvkfetch(path = path, tmout = timeout)))
 }
 
 #' @rdname rmbl-aliases
@@ -2288,7 +2622,9 @@ revocation_fetch <- function(path, timeout = 10) {
 #' @export
 rule <- function(name, expr, column = NULL, severity = c("warning", "fatal"),
                   message = NULL) {
-  rul(name = name, expr = expr, col = column, sev = severity, msg = message)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("rule", withVisible(rul(name = name, expr = expr, col = column,
+    sev = severity, msg = message)))
 }
 
 #' @rdname rmbl-aliases
@@ -2296,49 +2632,60 @@ rule <- function(name, expr, column = NULL, severity = c("warning", "fatal"),
 #' @export
 rule_between <- function(column, lo, hi, na_pass = TRUE,
                           severity = c("warning", "fatal")) {
-  rulebtw(col = column, lo = lo, hi = hi, napass = na_pass, sev = severity)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("rule_between", withVisible(rulebtw(col = column, lo = lo, hi = hi,
+    napass = na_pass, sev = severity)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 rule_col_count <- function(n, severity = c("warning", "fatal")) {
-  rulecolcnt(n = n, sev = severity)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("rule_col_count", withVisible(rulecolcnt(n = n, sev = severity)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 rule_complete_rows <- function(severity = c("warning", "fatal")) {
-  rulecmpl(sev = severity)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("rule_complete_rows", withVisible(rulecmpl(sev = severity)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 rule_distinct_rows <- function(columns = NULL, severity = c("warning", "fatal")) {
-  ruledstn(cols = columns, sev = severity)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("rule_distinct_rows", withVisible(ruledstn(cols = columns,
+    sev = severity)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 rule_in_set <- function(column, set, na_pass = TRUE, severity = c("warning", "fatal")) {
-  ruleinset(col = column, set = set, napass = na_pass, sev = severity)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("rule_in_set", withVisible(ruleinset(col = column, set = set,
+    napass = na_pass, sev = severity)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 rule_increasing <- function(column, strictly = FALSE, severity = c("warning", "fatal")) {
-  ruleincr(col = column, strict = strictly, sev = severity)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("rule_increasing", withVisible(ruleincr(col = column, strict = strictly,
+    sev = severity)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 rule_not_null <- function(column, severity = c("warning", "fatal")) {
-  rulenull(col = column, sev = severity)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("rule_not_null", withVisible(rulenull(col = column, sev = severity)))
 }
 
 #' @rdname rmbl-aliases
@@ -2346,14 +2693,17 @@ rule_not_null <- function(column, severity = c("warning", "fatal")) {
 #' @export
 rule_regex <- function(column, pattern, na_pass = TRUE,
                         severity = c("warning", "fatal")) {
-  rulerx(col = column, pat = pattern, napass = na_pass, sev = severity)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("rule_regex", withVisible(rulerx(col = column, pat = pattern,
+    napass = na_pass, sev = severity)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 rule_unique <- function(column, severity = c("warning", "fatal")) {
-  ruleuniq(col = column, sev = severity)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("rule_unique", withVisible(ruleuniq(col = column, sev = severity)))
 }
 
 #' @rdname rmbl-aliases
@@ -2361,49 +2711,62 @@ rule_unique <- function(column, severity = c("warning", "fatal")) {
 #' @export
 rule_within_n_mads <- function(column, n = 3, na_pass = TRUE,
                                 severity = c("warning", "fatal")) {
-  rulemad(col = column, n = n, napass = na_pass, sev = severity)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("rule_within_n_mads", withVisible(rulemad(col = column, n = n,
+    napass = na_pass, sev = severity)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 scan_adjust <- function(x, method = "BH", alpha = 0.05) {
-  scanadj(x = x, meth = method, alpha = alpha)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("scan_adjust", withVisible(scanadj(x = x, meth = method,
+    alpha = alpha)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 sha512_file <- function(path, block_bytes = 1048576L) {
-  sha512file(path = path, blkbytes = block_bytes)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("sha512_file", withVisible(sha512file(path = path,
+    blkbytes = block_bytes)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
-  stdinc(obs = observed, expd = expected, area = area, conflvl = conf_level)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("sir", withVisible(stdinc(obs = observed, expd = expected, area = area,
+    conflvl = conf_level)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 sketch_merge <- function(a, b) {
-  skchmrg(a = a, b = b)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("sketch_merge", withVisible(skchmrg(a = a, b = b)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 stay_summary <- function(days_per_person, conf_level = 0.95) {
-  staysmry(daysperper = days_per_person, conflvl = conf_level)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("stay_summary", withVisible(staysmry(daysperper = days_per_person,
+    conflvl = conf_level)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L, seed = 1L) {
-  stepchg(y = y, x = x, minseg = min_segment, nperm = n_perm, seed = seed)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("step_change", withVisible(stepchg(y = y, x = x, minseg = min_segment,
+    nperm = n_perm, seed = seed)))
 }
 
 #' @rdname rmbl-aliases
@@ -2411,29 +2774,33 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L, seed = 1L
 #' @export
 stock_flow <- function(days, people, period = NULL, t = 365, exposure = NULL, per = 1e+05,
                         baseline = c("first", "previous")) {
-  stkflow(days = days, people = people, prd = period, t = t, expo = exposure, per = per,
-          base = baseline)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("stock_flow", withVisible(stkflow(days = days, people = people,
+    prd = period, t = t, expo = exposure, per = per, base = baseline)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 summary_merge <- function(a, b) {
-  smrymrg(a = a, b = b)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("summary_merge", withVisible(smrymrg(a = a, b = b)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 summary_stats <- function(acc) {
-  smrystat(acc = acc)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("summary_stats", withVisible(smrystat(acc = acc)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 summary_update <- function(acc, x) {
-  smryupd(acc = acc, x = x)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("summary_update", withVisible(smryupd(acc = acc, x = x)))
 }
 
 #' @rdname rmbl-aliases
@@ -2443,8 +2810,10 @@ survey_compare <- function(design, data, y, by,
                             stat = c("mean", "total", "proportion", "ratio"),
                             denominator = NULL, levels = NULL, ref = NULL,
                             conf_level = 0.95) {
-  svycmp(des = design, data = data, y = y, by = by, stat = stat, den = denominator,
-         lvls = levels, ref = ref, conflvl = conf_level)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("survey_compare", withVisible(svycmp(des = design, data = data, y = y,
+    by = by, stat = stat, den = denominator, lvls = levels, ref = ref,
+    conflvl = conf_level)))
 }
 
 #' @rdname rmbl-aliases
@@ -2457,9 +2826,11 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL,
                            lonely_psu = c("fail", "remove", "adjust"), rscales = NULL,
                            degf = NULL) {
   type <- .rmbl_alias_val(type, c(mean_bootstrap = "meanboot"))
-  svydes(data = data, w = weights, strata = strata, psu = psu, fpc = fpc,
-         reps = replicates, id = id, type = type, msize = mean_size, rho = rho, mse = mse,
-         lonely = lonely_psu, rscales = rscales, degf = degf)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("survey_design", withVisible(svydes(data = data, w = weights,
+    strata = strata, psu = psu, fpc = fpc, reps = replicates, id = id, type = type,
+    msize = mean_size, rho = rho, mse = mse, lonely = lonely_psu, rscales = rscales,
+    degf = degf)))
 }
 
 #' @rdname rmbl-aliases
@@ -2470,15 +2841,18 @@ survey_estimate <- function(design, data, y, by = NULL,
                              denominator = NULL, levels = NULL, conf_level = 0.95,
                              ci = c("auto", "wilson", "logit", "wald"), min_n = 30,
                              df = Inf) {
-  svyest(des = design, data = data, y = y, by = by, stat = stat, den = denominator,
-         lvls = levels, conflvl = conf_level, ci = ci, minn = min_n, df = df)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("survey_estimate", withVisible(svyest(des = design, data = data, y = y,
+    by = by, stat = stat, den = denominator, lvls = levels, conflvl = conf_level, ci = ci,
+    minn = min_n, df = df)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 timestamp_info <- function(token) {
-  tsinfo(token = token)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("timestamp_info", withVisible(tsinfo(token = token)))
 }
 
 #' @rdname rmbl-aliases
@@ -2486,15 +2860,17 @@ timestamp_info <- function(token) {
 #' @export
 timestamp_verify <- function(token, data, certificate = NULL, trust = NULL, crls = list(),
                               at_time = NULL) {
-  tsvrf(token = token, data = data, cert = certificate, trust = trust, crls = crls,
-        attm = at_time)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("timestamp_verify", withVisible(tsvrf(token = token, data = data,
+    cert = certificate, trust = trust, crls = crls, attm = at_time)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 to_ascii <- function(x) {
-  toascii(x = x)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("to_ascii", withVisible(toascii(x = x)))
 }
 
 #' @rdname rmbl-aliases
@@ -2502,14 +2878,18 @@ to_ascii <- function(x) {
 #' @export
 top_correlations <- function(data, n = 10L, method = c("spearman", "pearson"),
                               min_abs = 0) {
-  topcors(data = data, n = n, meth = method, minabs = min_abs)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("top_correlations", withVisible(topcors(data = data, n = n,
+    meth = method, minabs = min_abs)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25), na.rm = TRUE) {
-  topshr(x = x, fracs = fractions, na.rm = na.rm)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("top_share", withVisible(topshr(x = x, fracs = fractions,
+    na.rm = na.rm)))
 }
 
 #' @rdname rmbl-aliases
@@ -2517,8 +2897,9 @@ top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25), na.rm = TRUE) {
 #' @export
 transfer_verify <- function(imported, source_counts, code_book = NULL, tolerance = 0,
                              strict = TRUE) {
-  xfrvrf(imported = imported, soucnts = source_counts, codebook = code_book,
-         tol = tolerance, strict = strict)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("transfer_verify", withVisible(xfrvrf(imported = imported,
+    soucnts = source_counts, codebook = code_book, tol = tolerance, strict = strict)))
 }
 
 #' @rdname rmbl-aliases
@@ -2527,29 +2908,35 @@ transfer_verify <- function(imported, source_counts, code_book = NULL, tolerance
 trend_test <- function(y, x = NULL, value = NULL, period = NULL, exact = NULL,
                         alternative = c("two.sided", "increasing", "decreasing"),
                         conf_level = 0.95) {
-  trndtst(y = y, x = x, value = value, prd = period, exact = exact, alt = alternative,
-          conflvl = conf_level)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("trend_test", withVisible(trndtst(y = y, x = x, value = value,
+    prd = period, exact = exact, alt = alternative, conflvl = conf_level)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 use_capsule_template <- function(path, name = basename(path), example = FALSE) {
-  usecpstmpl(path = path, name = name, ex = example)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("use_capsule_template", withVisible(usecpstmpl(path = path, name = name,
+    ex = example)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 validate_rules <- function(data, rules) {
-  valrules(data = data, rules = rules)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("validate_rules", withVisible(valrules(data = data, rules = rules)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 validate_schema <- function(df_raw, provenance) {
-  valsch(dfraw = df_raw, prov = provenance)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("validate_schema", withVisible(valsch(dfraw = df_raw,
+    prov = provenance)))
 }
 
 #' @rdname rmbl-aliases
@@ -2557,15 +2944,19 @@ validate_schema <- function(df_raw, provenance) {
 #' @export
 verify_capsule <- function(capsule_dir, provenance_file = "data_provenance.json",
                             data_file = NULL, manifest_file = NULL, script_file = NULL) {
-  vrfcps(cpsdir = capsule_dir, provfile = provenance_file, dfile = data_file,
-         mnffile = manifest_file, scrfile = script_file)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("verify_capsule", withVisible(vrfcps(cpsdir = capsule_dir,
+    provfile = provenance_file, dfile = data_file, mnffile = manifest_file,
+    scrfile = script_file)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 verify_marginals <- function(x, published, tolerance = 0, strict = TRUE) {
-  vrfmrg(x = x, pub = published, tol = tolerance, strict = strict)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("verify_marginals", withVisible(vrfmrg(x = x, pub = published,
+    tol = tolerance, strict = strict)))
 }
 
 #' @rdname rmbl-aliases
@@ -2579,43 +2970,52 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
                               rare_outcome = FALSE, high_rate = FALSE) {
   outcome <- .rmbl_alias_val(outcome, c(all_cause_mortality = "allcause",
     childhood_asthma = "chiast"))
-  vrfpol(poll = pollutant, y = outcome, reg = region, years = years, demo = demo,
-         expcsv = exposure_csv, expomean = exposure_mean, expoprev = exposure_prevalence,
-         ref = reference, brate = baseline_rate, basrateper = baseline_rate_per,
-         pop = population, rare = rare_outcome, hirate = high_rate)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("verify_pollution", withVisible(vrfpol(poll = pollutant, y = outcome,
+    reg = region, years = years, demo = demo, expcsv = exposure_csv,
+    expomean = exposure_mean, expoprev = exposure_prevalence, ref = reference,
+    brate = baseline_rate, basrateper = baseline_rate_per, pop = population,
+    rare = rare_outcome, hirate = high_rate)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 verify_recode <- function(original, recoded, declared) {
-  vrfrcd(orig = original, recd = recoded, decl = declared)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("verify_recode", withVisible(vrfrcd(orig = original, recd = recoded,
+    decl = declared)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 verify_recode_manifest <- function(path, original, recoded) {
-  vrfrcdmnf(path = path, orig = original, recd = recoded)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("verify_recode_manifest", withVisible(vrfrcdmnf(path = path,
+    orig = original, recd = recoded)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 verify_sha256 <- function(path, expected_sha) {
-  vrfsha256(path = path, expsha = expected_sha)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("verify_sha256", withVisible(vrfsha256(path = path,
+    expsha = expected_sha)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 wayback_retry <- function(output, include_gone = FALSE, lookup = TRUE, ...) {
+  .rmbl_alias_in(environment())
   .nm <- .rmbl_alias_dots(c(access_key = "ak", secret_key = "sk", max_wait = "maxwait",
     capture_all = "capall", per_minute = "permin", max_captures = "maxcap"), ...)
-  if (is.null(.nm)) return(wbrtry(output = output, incgone = include_gone,
-    lookup = lookup, ...))
-  .rmbl_alias_redot(quote(wbrtry(output = output, incgone = include_gone,
-    lookup = lookup)), .nm, environment())
+  if (is.null(.nm)) return(.rmbl_alias_out("wayback_retry", withVisible(wbrtry(output = output,
+    incgone = include_gone, lookup = lookup, ...))))
+  .rmbl_alias_out("wayback_retry", withVisible(.rmbl_alias_redot(quote(wbrtry(output = output,
+    incgone = include_gone, lookup = lookup)), .nm, environment())))
 }
 
 #' @rdname rmbl-aliases
@@ -2625,30 +3025,38 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
                           jobs = 4L, output = NULL, poll = 10, max_wait = 600,
                           capture_all = FALSE, quiet = NULL, per_minute = 6,
                           max_captures = 1000) {
-  wbsave(urls = urls, ak = access_key, sk = secret_key, within = within, jobs = jobs,
-         output = output, poll = poll, maxwait = max_wait, capall = capture_all,
-         quiet = quiet, permin = per_minute, maxcap = max_captures)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("wayback_save", withVisible(wbsave(urls = urls, ak = access_key,
+    sk = secret_key, within = within, jobs = jobs, output = output, poll = poll,
+    maxwait = max_wait, capall = capture_all, quiet = quiet, permin = per_minute,
+    maxcap = max_captures)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 wayback_snapshot_url_native <- function(url, timeout = 30L) {
-  wbsnpnat(url = url, tmout = timeout)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("wayback_snapshot_url_native", withVisible(wbsnpnat(url = url,
+    tmout = timeout)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 write_manifest_json <- function(manifest, path, canonical = FALSE) {
-  wrmnfjs(man = manifest, path = path, canon = canonical)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("write_manifest_json", withVisible(wrmnfjs(man = manifest, path = path,
+    canon = canonical)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 write_recode_manifest <- function(manifest, path) {
-  wrrcdmnf(man = manifest, path = path)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("write_recode_manifest", withVisible(wrrcdmnf(man = manifest,
+    path = path)))
 }
 
 #' @rdname rmbl-aliases
@@ -2656,36 +3064,43 @@ write_recode_manifest <- function(manifest, path) {
 #' @export
 write_summary_txt <- function(manifest, output_dir, paths, what_was_done = NULL,
                                contact = NULL, licence = NULL) {
-  wrsmrytxt(man = manifest, outdir = output_dir, paths = paths,
-            whatwasdone = what_was_done, contact = contact, lic = licence)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("write_summary_txt", withVisible(wrsmrytxt(man = manifest,
+    outdir = output_dir, paths = paths, whatwasdone = what_was_done, contact = contact,
+    lic = licence)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 write_text_fallback <- function(text, path) {
-  wrtxtfb(text = text, path = path)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("write_text_fallback", withVisible(wrtxtfb(text = text, path = path)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 xmss_advance <- function(key, signature, message = NULL) {
-  xmssadv(key = key, sig = signature, msg = message)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("xmss_advance", withVisible(xmssadv(key = key, sig = signature,
+    msg = message)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 xmss_forget_used_indices <- function(key_to_forget = NULL) {
-  xmssfgt(keytofgt = key_to_forget)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("xmss_forget_used_indices", withVisible(xmssfgt(keytofgt = key_to_forget)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 xmss_register_key <- function(key_to_register) {
-  xmssregkey(keytoreg = key_to_register)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("xmss_register_key", withVisible(xmssregkey(keytoreg = key_to_register)))
 }
 
 #' @rdname rmbl-aliases
@@ -2693,7 +3108,9 @@ xmss_register_key <- function(key_to_register) {
 #' @export
 yoy_bounds <- function(y, rounding = NULL, rounding_kind = c("nearest", "random"),
                         suppression_limit = NULL) {
-  yoybnd(y = y, rnd = rounding, rndkind = rounding_kind, suplim = suppression_limit)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("yoy_bounds", withVisible(yoybnd(y = y, rnd = rounding,
+    rndkind = rounding_kind, suplim = suppression_limit)))
 }
 
 #' @rdname rmbl-aliases
@@ -2701,8 +3118,9 @@ yoy_bounds <- function(y, rounding = NULL, rounding_kind = c("nearest", "random"
 #' @export
 yoy_csv <- function(x, file, digits = NULL, na = "", metadata = TRUE, comment = "#",
                      ...) {
-  yoycsv(x = x, file = file, digits = digits, na = na, meta = metadata, comment = comment,
-         ...)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_header(withVisible(yoycsv(x = x, file = file, digits = digits, na = na,
+    meta = metadata, comment = comment, ...)), file, .rmbl_out_map("yoy", x))
 }
 
 #' @rdname rmbl-aliases
@@ -2711,36 +3129,43 @@ yoy_csv <- function(x, file, digits = NULL, na = "", metadata = TRUE, comment = 
 yoy_html <- function(x, file, title = "Year-over-year change", subtitle = NULL,
                       palette = "diverging", digits = 1L, bars = TRUE, interval = TRUE,
                       notes = NULL, ...) {
-  yoyhtml(x = x, file = file, title = title, sub = subtitle, pal = palette,
-          digits = digits, bars = bars, intv = interval, notes = notes, ...)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("yoy_html", withVisible(yoyhtml(x = x, file = file, title = title,
+    sub = subtitle, pal = palette, digits = digits, bars = bars, intv = interval,
+    notes = notes, ...)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 yoy_json <- function(x, file, digits = NULL, pretty = TRUE, ...) {
-  yoyjs(x = x, file = file, digits = digits, pretty = pretty, ...)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("yoy_json", withVisible(yoyjs(x = x, file = file, digits = digits,
+    pretty = pretty, ...)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 yoy_label <- function(x, labels) {
-  yoylbl(x = x, labels = labels)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("yoy_label", withVisible(yoylbl(x = x, labels = labels)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 yoy_markdown <- function(x, file, digits = 1L, align = TRUE, ...) {
-  yoymd(x = x, file = file, digits = digits, align = align, ...)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("yoy_markdown", withVisible(yoymd(x = x, file = file, digits = digits,
+    align = align, ...)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 yoy_palettes <- function() {
-  yoypals()
+  .rmbl_alias_out("yoy_palettes", withVisible(yoypals()))
 }
 
 #' @rdname rmbl-aliases
@@ -2749,16 +3174,18 @@ yoy_palettes <- function() {
 yoy_pdf <- function(x, file, title = "Year-over-year change", subtitle = NULL,
                      palette = "diverging", digits = 1L, interval = TRUE, notes = NULL,
                      width = 11, height = 8.5, ...) {
-  yoypdf(x = x, file = file, title = title, sub = subtitle, pal = palette,
-         digits = digits, intv = interval, notes = notes, width = width, height = height,
-         ...)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("yoy_pdf", withVisible(yoypdf(x = x, file = file, title = title,
+    sub = subtitle, pal = palette, digits = digits, intv = interval, notes = notes,
+    width = width, height = height, ...)))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 yoy_pvalues <- function(y) {
-  yoypv(y = y)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_out("yoy_pvalues", withVisible(yoypv(y = y)))
 }
 
 #' @rdname rmbl-aliases
@@ -2766,16 +3193,20 @@ yoy_pvalues <- function(y) {
 #' @export
 yoy_tsv <- function(x, file, digits = NULL, na = "", metadata = TRUE, comment = "#",
                      ...) {
-  yoytsv(x = x, file = file, digits = digits, na = na, meta = metadata, comment = comment,
-         ...)
+  .rmbl_alias_in(environment())
+  .rmbl_alias_header(withVisible(yoytsv(x = x, file = file, digits = digits, na = na,
+    meta = metadata, comment = comment, ...)), file, .rmbl_out_map("yoy", x))
 }
 
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
 yoy_write <- function(x, file, format = "auto", ...) {
+  .rmbl_alias_in(environment())
   .nm <- .rmbl_alias_dots(c(subtitle = "sub", palette = "pal", interval = "intv",
     metadata = "meta"), ...)
-  if (is.null(.nm)) return(yoywr(x = x, file = file, format = format, ...))
-  .rmbl_alias_redot(quote(yoywr(x = x, file = file, format = format)), .nm, environment())
+  if (is.null(.nm)) return(.rmbl_alias_header(withVisible(yoywr(x = x, file = file,
+    format = format, ...)), file, .rmbl_out_map("yoy", x)))
+  .rmbl_alias_header(withVisible(.rmbl_alias_redot(quote(yoywr(x = x, file = file,
+    format = format)), .nm, environment())), file, .rmbl_out_map("yoy", x))
 }

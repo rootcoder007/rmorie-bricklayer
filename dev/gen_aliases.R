@@ -241,7 +241,13 @@ for (o in names(topics)) {
   if (length(a) == length(b)) nw <- b else {
     for (j in seq_along(a)) if (gsub("_", "", a[j]) %in% b) nw[j] <- gsub("_", "", a[j])
     la <- which(is.na(nw)); lb <- setdiff(b, nw)
-    nw[la] <- if (length(la) == length(lb)) lb else "?"
+    if (length(la) == length(lb)) nw[la] <- lb else for (j in la) {
+      # an abbreviation: the 1.0.0 name's letters in order within the 0.5.x name (jsdiv in
+      # js_divergence), the first letter shared, and only one such name on the page
+      cand <- lb[vapply(lb, function(z) startsWith(gsub("_", "", a[j]), substr(z, 1L, 1L)) &&
+        grepl(paste0("^", paste(strsplit(z, "")[[1]], collapse = ".*")), gsub("_", "", a[j])), NA)]
+      nw[j] <- if (length(cand) == 1L) cand else "?"
+    }
   }
   nw[a == "period_label"] <- "perlbl"
   k <- grepl("_", a)
@@ -269,8 +275,13 @@ out <- c(
   "#' \\code{rmoriebricklayer.data_cache} ...) is read when the new name is not set.",
   "#' The reference documentation lives on the new name; this page only lists the aliases.",
   "#'",
-  "#' Results are not translated: their columns and fields carry the new names. The last",
-  "#' table lists every renamed one, so old code that reads a result can be updated.",
+  "#' Results come back in their 0.5.x form: an alias returns its result with the 0.5.x",
+  "#' column and field names (nested tables and attributes too; the last table lists them),",
+  "#' and a delimited writer writes the 0.5.x header. Such a result carries the class",
+  "#' \\code{rmbl_old} in front, so \\code{print()}, \\code{format()}, \\code{plot()},",
+  "#' \\code{summary()} and the aliases that take a result read it in the 1.0.0 names. A",
+  "#' 1.0.0 call is never translated. \\code{yoy()} kept its name: it returns the 0.5.x",
+  "#' names when called with a 0.5.x argument name, and the 1.0.0 names otherwise.",
   "#'",
   "#' @section The map:",
   "#' Old name, then the new one.",
@@ -309,15 +320,26 @@ for (r in rows) {
     pre <- c(pre, wrap_lines(sprintf("%s = \"%s\"", names(v), v),
                              paste0("  ", a, " <- .rmbl_alias_val(", a, ", c("), "    ", "))"))
   }
+  # the result comes back under its 0.5.x names (a delimited writer's header row too); a result
+  # given as an argument goes back to its 1.0.0 names first
+  writer <- r$old %in% c("yoy_csv", "yoy_tsv", "yoy_write")
+  open_ <- if (writer) ".rmbl_alias_header(withVisible(" else sprintf(".rmbl_alias_out(\"%s\", withVisible(", r$old)
+  close_ <- if (writer) '), file, .rmbl_out_map("yoy", x))' else "))"
+  nse <- r$old_names[r$old_names != "..." & vapply(r$new_names, function(nn)
+    grepl(sprintf("substitute(%s)", nn), paste(deparse(new_defs[[r$new]]$body), collapse = " "), fixed = TRUE), NA)]
+  pre <- c(pre, if (length(setdiff(r$old_names, "...")))
+    if (length(nse)) sprintf("  .rmbl_alias_in(environment(), c(%s))", paste(sprintf("\"%s\"", nse), collapse = ", "))
+    else "  .rmbl_alias_in(environment())")
   if (length(r$dots)) {
     # `...` may carry 0.5.x argument names: renamed on the way through
     body <- c(wrap_lines(sprintf("%s = \"%s\"", names(r$dots), r$dots),
                          "  .nm <- .rmbl_alias_dots(c(", "    ", "), ...)"),
-              wrap_lines(args, paste0("  if (is.null(.nm)) return(", r$new, "("), "    ", "))"),
-              wrap_lines(args[args != "..."], paste0("  .rmbl_alias_redot(quote(", r$new, "("), "    ",
-                         ")), .nm, environment())"))
+              wrap_lines(args, paste0("  if (is.null(.nm)) return(", open_, r$new, "("), "    ",
+                         paste0(")", close_, ")")),
+              wrap_lines(args[args != "..."], paste0("  ", open_, ".rmbl_alias_redot(quote(", r$new, "("), "    ",
+                         paste0(")), .nm, environment())", close_)))
   } else {
-    body <- wrap_lines(args, paste0("  ", r$new, "("), strrep(" ", nchar(r$new) + 3L), ")")
+    body <- wrap_lines(args, paste0("  ", open_, r$new, "("), "    ", paste0(")", close_))
   }
   out <- c(out, "#' @rdname rmbl-aliases", "#' @usage NULL", "#' @export", sig, pre, body, "}", "")
 }
@@ -330,4 +352,14 @@ map <- do.call(rbind, lapply(rows, function(r) data.frame(old = r$old, new = r$n
   values = vals(r))))
 dir.create("inst/compat", showWarnings = FALSE, recursive = TRUE)
 write.table(map, "inst/compat/compat_names_map.tsv", sep = "\t", quote = FALSE, row.names = FALSE)
+# the result names: page, 0.5.x name, 1.0.0 name, and whether the 1.0.0 name is unambiguous (no
+# 0.5.13 result or argument used it), so that it is renamed back on any page's result
+old_vocab <- unique(c(unlist(lapply(unique(oi), function(f) value_codes(git("show", paste0(old_ref, ":", f))))),
+                      unlist(lapply(old_defs, function(d) names(d$formals)))))
+res <- do.call(rbind, lapply(names(cols), function(o) data.frame(topic = o, old = names(cols[[o]]),
+                                                                 new = unname(cols[[o]]))))
+amb <- tapply(res$old, res$new, function(v) length(unique(v)) > 1L)
+res$safe <- as.integer(!(res$new %in% old_vocab) & !amb[res$new])
+write.table(res, "inst/compat/compat_results_map.tsv", sep = "\t", quote = FALSE, row.names = FALSE)
+cat("result map:", nrow(res), "rows,", sum(res$safe), "unambiguous\n")
 cat("wrote R/compat_names.R with", length(rows), "aliases\n")
