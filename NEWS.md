@@ -3,7 +3,7 @@
 ## Standards and the fixes they surfaced
 
 * The package documents the rOpenSci statistical software standards (General, EDA, Time Series)
-  with `srr` tags: 139 met, 29 not applicable, none left to do.
+  with `srr` tags: 141 met, 29 not applicable, none left to do.
 * A period with no percentage change in `plot(yoy(...))` carries its whole reason again ("first period:
   nothing to compare with", "no percentage: previous period is zero"), sized to the panel; the period-axis
   rewrite had cut every reason at the colon.
@@ -71,12 +71,10 @@ can call them.
 
 Every exported function, argument, output column, help topic and option now has a short name without
 underscores (`survey_design()` is `svydes()`, `conf_level` is `conflvl`, `trend_sensitivity()` is
-`tse()`). Each help page gives the full form of every short name. The old names are gone, not kept as
-aliases, so the reference stays one page per method. The one exception is the eleven 0.5.x names
-rmoriedata 0.3.x on CRAN calls (`capsule_sign()`, `capsule_verify()`, `pqc_keygen()`,
-`signing_public_key()`, `core_sha256()`, `core_mean()`, `sha256_file()`, `bricklayer_json_to_json()`,
-`bricklayer_json_from_json()`, `bricklayer_fetch()`, `wayback_snapshot_url()`), kept as thin wrappers
-(`?rmbl-compat`) so that release keeps installing and checking against 1.0.0. `rmbl functions` and the help-aware language-model
+`tse()`). Each help page gives the full form of every short name. Every 0.5.13 export is still callable
+by its old name with its old argument names: `?rmbl-aliases` lists the 304 aliases, each a wrapper that
+forwards to the new function (the eleven rmoriedata 0.3.x calls among them in `?rmbl-compat`), so code
+written against 0.5.x keeps running and the reference stays one page per method. `rmbl functions` and the help-aware language-model
 tools list the new names. Wire formats (capsule, manifest and service JSON fields, CSV columns from
 published tables) keep their names, so files written by earlier versions still read.
 
