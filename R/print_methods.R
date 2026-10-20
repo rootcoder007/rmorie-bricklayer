@@ -421,6 +421,8 @@ summary.bricklayer_benford <- function(object, ...) {
 #' # a table with no columns has nothing to profile
 #' try(profcols(df[, 0]))
 #' @export
+#' @srrstats {EA5.2} print.bricklayer_profile formats numbers with formatC(digits = 4); other print methods use formatC or sprintf too; test-print-methods.R.
+#' @srrstats {EA5.3} The column profile has a `type` column (the first class of each column); test-print-methods.R:137.
 profcols <- function(data, qnts = c(0.25, 0.5, 0.75)) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)

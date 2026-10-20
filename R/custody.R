@@ -159,6 +159,7 @@ adp <- function(days, t = 365) {
 #' # zero people cannot have an average stay
 #' try(alos(12150, 0))
 #' @export
+#' @srrstats {G5.4c} test-custody.R uses stored values from Lakner (1976) worked examples (p.15, p.17, p.20).
 alos <- function(days, n) {
   days <- .rmbl_pos_num(days, "days", allow_zero = TRUE)
   n <- .rmbl_pos_num(n, "n", scalar = TRUE)
@@ -358,6 +359,7 @@ adpcnts <- function(cnts, t = 365) {
 #' # days and people must line up period by period
 #' try(stkflow(days = c(100, 120), people = c(10, 12, 14)))
 #' @export
+#' @srrstats {TS4.3} Returns alos in days per person, adp per day, and attr "stkflow"$t with each period's length in days.
 stkflow <- function(days, people, prd = NULL, t = 365,
                        expo = NULL, per = 100000,
                        base = c("first", "previous")) {
@@ -495,6 +497,7 @@ print.rmbl_stock_flow <- function(x, ...) {
 #' try(perdays(1, 31))
 #' try(perdays("2024-12-31", "2024-01-01"))
 #' @export
+#' @srrstats {TS1.8} Day counts use Gregorian Date arithmetic, so leap years give 366 (test-custody.R:140); the Hawkes sinusoid documents a 365.25-day year.
 perdays <- function(from, to) {
   if (is.numeric(from) || is.numeric(to)) {
     stop("`from` and `to` must be dates or date strings, not numbers",

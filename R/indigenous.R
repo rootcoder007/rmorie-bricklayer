@@ -737,6 +737,16 @@ trccmpl <- function() {
 #' p
 #' plot(p)
 #' @export
+#' @srrstats {TS3.2} @details give the error sources: the exact Garwood interval of the rate and the constant-pace assumption ("a description of the pace so far, not a forecast").
+#' @srrstats {TS4.5} Met through TS4.5c: the limits of the projected completion year are documented.
+#' @srrstats {TS4.5c} @details state that the projection assumes a constant rate, that the pace has not been constant, and that it is a description, not a forecast.
+#' @srrstats {TS4.6} Met through TS4.6c: the projection comes with interval bounds.
+#' @srrstats {TS4.6c} Returns ratelo/rateup (Garwood) and cmplbyearly/cmplbylate, the projected completion year at each end of the interval; tested in test-indigenous.R:133.
+#' @srrstats {TS4.7} Projected and observed values are kept apart (see TS4.7b).
+#' @srrstats {TS4.7b} The projection is the returned row, and the observed counts are a separate "history" attribute.
+#' @srrstats {TS5.6} plot.rmbl_trc_progress shades, by default, the band between projections at the rate interval's two ends; tested in test-indigenous-mental-health.R:290.
+#' @srrstats {TS5.7} The plot draws the observed cumulative completions (step line and points) by default next to the projection.
+#' @srrstats {TS5.8} Observed values are solid steps with points; the projection is a dashed line inside a translucent band.
 trcprog <- function(done = trccmpl()$cumulative, yearend = trccmpl()$yearend,
                          total = 94, start = 2015.96, conflvl = 0.95) {
   done <- .rmbl_num(done, "done", integer = TRUE)

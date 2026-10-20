@@ -61,6 +61,8 @@
 #' unlink(f)
 #' try(yoywr(y, file.path(tempdir(), "change.xlsx")))
 #' @export
+#' @srrstats {G2.3b} format is lower-cased with tolower() before dispatch, and so is the file extension when format = "auto".
+#' @srrstats {G4.0} Output format is parsed from the file suffix (csv/tsv/json/md/html/pdf); a path with no known suffix is refused unless format is given.
 yoywr <- function(x, file, format = "auto", ...) {
   .rmbl_no_fn(file = file, format = format)
   if (!inherits(x, "rmbl_yoy")) {
@@ -168,6 +170,7 @@ yoywr <- function(x, file, format = "auto", ...) {
 #' try(yoycsv(d, NULL))
 #' @name yoydelim
 #' @export
+#' @srrstats {EA4.1} The `digits` argument rounds exported numbers (also yoytsv, yoyjs, yoymd, print.rmbl_yoy); test-yoy.R:369 checks round(pctchg, 1).
 yoycsv <- function(x, file, digits = NULL, na = "", meta = TRUE,
                     comment = "#", ...) {
   .yoy_delim(x, file, sep = ",", digits = digits, na = na,

@@ -150,6 +150,7 @@
 #' # a fractional count has no Poisson interval
 #' try(rtcalc(2.5, 1000))
 #' @export
+#' @srrstats {G2.8} rtcalc.default and rtcalc.data.frame both build one data frame that is passed to the shared .rate_compute().
 rtcalc <- function(x, ...) UseMethod("rtcalc")
 
 #' @rdname rtcalc

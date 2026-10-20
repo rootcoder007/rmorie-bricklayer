@@ -92,6 +92,9 @@
 #' # missing codes can be refused too
 #' try(deccodes(race, book, keepna = FALSE))
 #' @export
+#' @srrstats {G2.4c} Codes are converted with as.character(x) before lookup, not paste().
+#' @srrstats {G2.14} keepna sets the NA policy: keep NA (default) or error; G2.14a-c give the detail.
+#' @srrstats {G2.14a} keepna = FALSE turns any NA code into an error (documented, and shown in the examples).
 deccodes <- function(x, vlabs, keepna = TRUE) {
   .rmbl_no_fn(x = x)
   if (is.factor(x)) x <- as.character(x)
@@ -168,6 +171,7 @@ deccodes <- function(x, vlabs, keepna = TRUE) {
 #'   \code{\link{grdlvls}} to fix the levels,
 #'   \code{\link{rcdmnf}} to record the chain.
 #' @export
+#' @srrstats {G2.4e} A factor is converted with as.character() and read by its labels, not its codes; test-categorical-guard.R grdrcd(factor(...)).
 grdrcd <- function(x, map, keep = character()) {
   .rmbl_no_fn(x = x)
   if (is.factor(x)) x <- as.character(x)
@@ -333,6 +337,7 @@ grdlvls <- function(x, lvls, ref = NULL) {
 #'
 #' try(audcats(1:3))
 #' @export
+#' @srrstats {G2.11} Columns with non-standard classes are processed: test-categorical-guard.R:238 audits a haven_labelled I() column; a yoy Date period keeps its class (test-yoy.R:203).
 audcats <- function(data, cols = NULL) {
   if (!is.data.frame(data)) {
     stop("audcats: `data` must be a data frame", call. = FALSE)
@@ -1287,6 +1292,7 @@ relbl <- function(x, map, keep = character()) {
 #' # codes alone are not categories
 #' try(declbld(c(1, 2, 2)))
 #' @export
+#' @srrstats {G2.4d} Builds a factor explicitly, factor(..., levels = labels in code order), from labelled codes.
 declbld <- function(x, vlabs = NULL) {
   .rmbl_no_fn(x = x)
   if (!is.atomic(x) && !is.factor(x)) stop("`x` must be a vector of codes", call. = FALSE)

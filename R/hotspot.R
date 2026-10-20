@@ -102,6 +102,7 @@
 #' # a share of zero hot cells is refused
 #' try(hotpers(b$lon, b$lat, q, top = 0))
 #' @export
+#' @srrstats {G2.14b} Incidents without a usable location or period are dropped with a message giving the count.
 hotpers <- function(lon, lat, prd, cell = 0.25, top = 0.05, xy = c("lonlat", "planar")) {
   xy <- .rmbl_arg(xy)
   lon <- .rmbl_num_input(lon, "lon", allow_null = FALSE)

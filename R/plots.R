@@ -75,6 +75,9 @@
 #' try(blpal("viridis"))
 #' try(plotopt(colour = "red"))
 #' @export
+#' @srrstats {EA5.0} All plot methods share one base-graphics style with colour-blind-safe palettes and the session options set through plotopt().
+#' @srrstats {EA5.0b} Default palette is Okabe-Ito (colour-vision-deficiency safe), with a ColorBrewer-style diverging, sequential and grey set; test-plots.R checks palettes.
+#' @srrstats {EA5.4} Axes are drawn with base axis()/axTicks(), which use pretty(); margins are sized from format(pretty(y)) in .bl_left_margin.
 blpal <- function(name = c("okabe", "diverging", "sequential", "grey"), n = NULL) {
   name <- .rmbl_arg(name)
   base <- switch(name,
@@ -1069,6 +1072,7 @@ plot.rmbl_yoy <- function(x, ..., what = c("pctchg", "value"), main = NULL, col 
 
 #' @rdname plot-methods
 #' @export
+#' @srrstats {EA5.5} Rate axes carry the unit from the result's metadata, for example "Rate per 100,000, with interval"; yoy percent axes say "Percent change".
 plot.rmbl_rate <- function(x, ..., period = NULL, main = NULL, col = NULL, palette = NULL) {
   .rmbl_plot_check(x, "rmbl_rate")
   d <- as.data.frame(x)

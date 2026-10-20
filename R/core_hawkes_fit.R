@@ -279,6 +279,10 @@
 #' try(chwkfit(times[1:20], 100))
 #' try(chwkfit(times, 50))
 #' @export
+#' @srrstats {TS2.1a} NA event times are an error ("must not contain NA"), tested in test-round8.R:237; stkflow and perdays also refuse NA.
+#' @srrstats {TS2.2} The constant baseline with eta bounded at 0.99 is the stationary Hawkes; base = "sinusoidal" lets the mean intensity trend and cycle.
+#' @srrstats {TS2.4} Stationarity is enforced by the eta bound; meth = "inar" refuses the non-stationary baseline (test-hawkes-fit.R:102); the sinusoidal baseline models the trend.
+#' @srrstats {TS2.4b} base = "sinusoidal" models the trend and yearly cycle, so the triggering part stays stationary; the docs point day-dated ties to chwkjit().
 chwkfit <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "lomax"),
                             base = c("constant", "sinusoidal"), meth = "auto", eps = 1e-9,
                             start = NULL) {

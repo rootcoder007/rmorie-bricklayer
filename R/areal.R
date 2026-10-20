@@ -194,6 +194,7 @@ expcnts <- function(cnts, pop, area, strata = NULL) {
 #'
 #' try(stdinc(c(3, 4), c(5, 0)))
 #' @export
+#' @srrstats {G2.0} .rmbl_conf_level()/.rmbl_scalar() refuse inputs of the wrong length; test-docs-bugs-0513.R:34 refuses conflvl = c(0.9, 0.95).
 stdinc <- function(obs, expd, area = NULL, conflvl = 0.95) {
   obs <- .rmbl_finite_input(obs, "obs", nonneg = TRUE,
                                  min_n = 1L)

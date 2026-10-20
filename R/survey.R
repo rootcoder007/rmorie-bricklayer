@@ -1290,6 +1290,12 @@ print.rmbl_svy_design <- function(x, ...) {
 #' # the design remembers its rows: a subset is refused
 #' try(svyest(des, d[-1, ], "drinks"))
 #' @export
+#' @srrstats {G2.0a} @param docs state lengths explicitly ("y Character scalar", "conflvl Numeric scalar in (0, 1)", "by Optional character vector").
+#' @srrstats {G2.3} Univariate character options are handled by .rmbl_arg (G2.3a); case handling is covered under G2.3b.
+#' @srrstats {G2.3a} stat and ci are checked by .rmbl_arg() (match.arg equivalent, pmatch, names the value given); there are 106 .rmbl_arg calls package-wide.
+#' @srrstats {G2.13} A missing y counts zero in its domain but stays in the design; test-survey.R checks estimate and n = 11 with y[1] = NA.
+#' @srrstats {G5.0} Tested on the survey package's standard api datasets (apistrat, apiclus1) in test-survey.R.
+#' @srrstats {G5.4b} test-survey.R matches survey::svymean/svytotal/svyratio/svyby/svyciprop and JK1 replicates to the estimate and SE.
 svyest <- function(des, data, y, by = NULL, stat = c("mean", "total", "proportion", "ratio"),
                             den = NULL, lvls = NULL, conflvl = 0.95,
                             ci = c("auto", "wilson", "logit", "wald"), minn = 30, df = Inf) {

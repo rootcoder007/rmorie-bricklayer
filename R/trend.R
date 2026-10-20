@@ -108,6 +108,7 @@
 #'
 #' try(trndtst(c(5, 6)))
 #' @export
+#' @srrstats {G5.7} test-trend-scale.R:34 runs 3,000 periods within a wall-clock limit with finite Sen bounds, and refuses 20,001 periods.
 trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
                        exact = NULL,
                        alt = c(
@@ -569,6 +570,7 @@ stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
 #'
 #' try(cnttrnd(c(1.5, 2, 3)))
 #' @export
+#' @srrstats {TS5.0} Each result class has a default plot method (plot.rmbl_count_trend, rmbl_yoy, rmbl_stock_flow, rmbl_event_study); tested in test-plots.R:236.
 cnttrnd <- function(y, x = NULL, offset = NULL, conflvl = 0.95) {
   conflvl <- .rmbl_conf_level(conflvl)
   y <- .rmbl_num(y, "y")
