@@ -357,8 +357,7 @@ produced the data.
   [`vignette("policy-evaluation")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/policy-evaluation.md).
 
 - **First Nations, Metis and Inuit health, mental health and wellness**
-  — distinctions-based methods for Statistics Canada’s published tables,
-  with suppressed cells never imputed:
+  — distinctions-based methods for Statistics Canada’s published tables:
 
   - [`sctidy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sctidy.md)
     and
