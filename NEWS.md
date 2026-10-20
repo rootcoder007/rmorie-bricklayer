@@ -17,6 +17,7 @@
   refusal names every accepted input. `fylbl()`'s help says a fractional year is an error.
 * Every internal function has a roxygen2 block with `@noRd` (srr G1.4a).
 * Plot labels shrink to no less than 0.6 of the session `cex` (`?blpal`).
+* `cpsatst()`, `cpsbndl()` and their checks take a shared secret (hmac, the attestation recording only its key id), so bundles signed by morie verify with `cpsbndlvrf(key = )`.
 * README: who the package is for, which algorithms re-implement existing packages and are checked
   against them, the life cycle, and how to run the extended tests.
 

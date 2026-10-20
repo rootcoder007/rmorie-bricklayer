@@ -1,0 +1,29 @@
+{
+  "files": [
+    {
+      "path": "d.csv",
+      "sha256": "9c7491d5b87c43a98ce440ebf475ffc2b44e399e5a67d9bdb2ad02118c0eff0b",
+      "size_bytes": 16
+    },
+    {
+      "path": "data_provenance.json",
+      "sha256": "902bee9e08fddc7a8c58bfbf9464e64f08f8f8dab0eeb8f5fd351bee7df106e5",
+      "size_bytes": 286
+    }
+  ],
+  "manifest_digest": "43ee897435ca40346993b4d048187d560a840a8065350ed9e4eff69d6864efe7",
+  "bundled_utc": "2026-10-20T06:20:59Z",
+  "attestation": {
+    "digest": "adb257e9cd1f238c315de4acec939cf2972ba80f444284e7f09a2269d1e9341e",
+    "scheme": "hmac",
+    "public": "1c28aab2838d16e632796fc899e5c4724117a19b60a66eb70f0a5b9bf55afe5b",
+    "context": "",
+    "prehash": "none",
+    "note": "morie test fixture",
+    "signed_utc": "2026-10-20T06:20:59Z",
+    "signature": {
+      "scheme": "hmac",
+      "signature": "94db3dbbf49a99288ae209fd09c9533473081e9a8140d512536a1dfe6e4c5709"
+    }
+  }
+}

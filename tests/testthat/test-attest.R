@@ -418,3 +418,46 @@ test_that("a hash-based attestation carries its context, and a damaged key is re
   expect_match(res$checks$detail[res$checks$check == "signature"], "not usable")
   expect_error(.rmbl_attest_key_from(bad), "64 bytes")
 })
+
+test_that("an hmac attestation names its key by id, checks with the secret, and refuses what hmac cannot bind", {
+  m <- mkmnf(list(a = 1), env = FALSE)
+  att <- cpsatst(m, "rmbl-test-secret-hmac", note = "shared")
+  # morie's field order and convention: public = HMAC-SHA-256(key, "public"), no context, no pre-hash
+  expect_identical(names(att), c(
+    "digest", "scheme", "public", "context", "prehash", "note", "signed_utc", "signature"
+  ))
+  expect_identical(att$scheme, "hmac")
+  expect_identical(att$public, "1c28aab2838d16e632796fc899e5c4724117a19b60a66eb70f0a5b9bf55afe5b")
+  expect_identical(att$context, "")
+  expect_identical(att$prehash, "none")
+  expect_false(any(grepl("rmbl-test-secret-hmac", unlist(att), fixed = TRUE)))
+  res <- cpschkatst(att, m, key = "rmbl-test-secret-hmac", keyexp = att$public)
+  expect_true(res$ok)
+  expect_identical(res$checks$check, c("attestation_complete", "manifest_digest", "key_as_expected", "signature"))
+  # a raw secret is the same key as its bytes
+  expect_true(cpschkatst(att, m, key = charToRaw("rmbl-test-secret-hmac"))$ok)
+  # the wrong key, no key, an edited field, a mismatched expected id
+  wrong <- cpschkatst(att, m, key = "another-secret")
+  expect_false(wrong$ok)
+  expect_identical(wrong$checks$detail[wrong$checks$check == "signature"],
+                   "the key given is not the key the attestation names")
+  none <- cpschkatst(att, m)
+  expect_false(none$ok)
+  expect_identical(none$checks$detail[none$checks$check == "signature"],
+                   "an hmac signature needs the shared key")
+  forged <- att
+  forged$note <- "edited"
+  expect_false(cpschkatst(forged, m, key = "rmbl-test-secret-hmac")$ok)
+  kx <- cpschkatst(att, m, key = "rmbl-test-secret-hmac", keyexp = strrep("0", 64L))
+  expect_false(kx$ok)
+  expect_identical(kx$checks$detail[kx$checks$check == "key_as_expected"],
+                   "the attestation carries a different key from the one expected")
+  expect_true(kx$checks$ok[kx$checks$check == "signature"])
+  expect_output(print(att), "hmac")
+  expect_error(cpsatst(m, "s", ctx = "release"), "no `ctx`")
+  expect_error(cpsatst(m, "s", prehash = "sha256"), "no `prehash`")
+  expect_error(cpsatst(m, ""), "shared secret")
+  expect_error(cpsatst(m, raw(0)), "shared secret")
+  expect_error(cpsatst(m, c("a", "b")), "shared secret")
+  expect_error(cpschkatst(att, m, key = function() 1), "not a function")
+})

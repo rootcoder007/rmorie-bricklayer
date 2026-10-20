@@ -19,7 +19,7 @@ cpsbndl(
 
 cpsbndlrd(path)
 
-cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL)
+cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL, key = NULL)
 }
 \arguments{
 \item{dir}{Character scalar, the directory the capsule lives in. For
@@ -30,9 +30,13 @@ cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL)
 that the manifest
 still has the bundled digest.}
 
-\item{key}{A signing key from
+\item{key}{For \code{cpsbndl()}, a signing key from
 \code{\link[=fipskg]{fipskg()}} or
-\code{\link[=pqckg]{pqckg()}}.}
+\code{\link[=pqckg]{pqckg()}}, or a shared secret (a string or raw vector) for an \code{"hmac"}
+bundle such as morie writes: the attestation then records the key's id,
+never the secret (see \code{\link[=cpsatst]{cpsatst()}}). For \code{cpsbndlvrf()}, the shared
+secret that checks an \code{"hmac"} bundle's signature; not used for the
+other schemes.}
 
 \item{files}{Character vector of paths relative to \code{dir}. Defaults to
 every regular file in \code{dir} (recursively, dot-files included), excluding
@@ -50,7 +54,7 @@ overwritten).
 \item{bundle}{A bundle read back with
 \code{cpsbndlrd()}, or the path to one.}
 
-\item{keyexp}{Optional public key hex the
+\item{keyexp}{Optional public key hex (for \code{"hmac"}, the key id) the
 bundle's attestation must carry. Supply it when you know which key
 should have signed: without it the check confirms the bundle is
 internally consistent, which any key's holder could arrange.}
@@ -58,7 +62,7 @@ internally consistent, which any key's holder could arrange.}
 \value{
 \code{cpsbndl()}: the bundle, invisibly, a list of class
 \code{bricklayer_bundle} with \code{files} (a list of \code{path}, \code{sha256},
-\code{size_bytes}), \code{mnfdgst}, \code{bundled_utc} and \code{attestation}
+\code{size_bytes}), \code{manifest_digest}, \code{bundled_utc} and \code{attestation}
 (from
 \code{\link[=cpsatst]{cpsatst()}}), and the path it was written to as
 attribute
@@ -70,7 +74,7 @@ attribute
 \code{ok} (logical) and \code{checks} (a data frame of \code{check}, logical \code{ok}
 and
 \code{detail}: one \code{file:PATH} row per listed file, \code{no_unlisted_files}, the
-\verb{attestation:} rows and, with a manifest, \code{mnfdgst}).
+\verb{attestation:} rows and, with a manifest, \code{manifest_digest}).
 }
 \description{
 Records a digest of every file named, the manifest's canonical digest,
@@ -107,7 +111,8 @@ How it is checked. \code{cpsbndlvrf()} re-hashes every listed file
 every file on disk the bundle does not list (the bundle's own file
 excepted), checks the attestation with
 \code{\link[=cpschkatst]{cpschkatst()}}
-(signature, digest, and \code{keyexp} when given), and, when \code{man}
+(signature, digest, and \code{keyexp} when given; an \code{"hmac"}
+signature needs the shared secret as \code{key}), and, when \code{man}
 is given, compares its digest with the bundled one. Every check is a row of
 \code{checks}; \code{ok} is \code{TRUE} only when all pass. A failed check is a row,
 not
@@ -147,6 +152,18 @@ cpsbndlvrf(b2, dir, keyexp = "00ff")$ok
 # a file added beside the bundle is reported too
 writeLines("x", file.path(dir, "extra.txt"))
 cpsbndlvrf(b2, dir)$checks[, c("check", "ok")]
+
+# a bundle signed with a shared secret (hmac), as morie signs
+dir2 <- tempfile()
+dir.create(dir2)
+writeLines("x,y", file.path(dir2, "d.csv"))
+h <- cpsbndl(dir2, m, "shared-secret")
+h$attestation$public  # the key id, not the secret
+cpsbndlvrf(attr(h, "path"), dir2, key = "shared-secret",
+           keyexp = h$attestation$public)$ok
+# without the secret the signature row cannot pass
+cpsbndlvrf(attr(h, "path"), dir2)$ok
+unlink(dir2, recursive = TRUE)
 
 # a directory that does not exist
 try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))

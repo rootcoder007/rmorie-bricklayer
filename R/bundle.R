@@ -43,7 +43,8 @@
 #' every file on disk the bundle does not list (the bundle's own file
 #' excepted), checks the attestation with
 #' [cpschkatst()]
-#' (signature, digest, and `keyexp` when given), and, when `man`
+#' (signature, digest, and `keyexp` when given; an `"hmac"`
+#' signature needs the shared secret as `key`), and, when `man`
 #' is given, compares its digest with the bundled one. Every check is a row of
 #' `checks`; `ok` is `TRUE` only when all pass. A failed check is a row,
 #' not
@@ -63,9 +64,13 @@
 #' `cpsbndl()` and optional for `cpsbndlvrf()`, where it adds a check
 #' that the manifest
 #' still has the bundled digest.
-#' @param key A signing key from
+#' @param key For `cpsbndl()`, a signing key from
 #' [fipskg()] or
-#' [pqckg()].
+#' [pqckg()], or a shared secret (a string or raw vector) for an `"hmac"`
+#' bundle such as morie writes: the attestation then records the key's id,
+#' never the secret (see [cpsatst()]). For `cpsbndlvrf()`, the shared
+#' secret that checks an `"hmac"` bundle's signature; not used for the
+#' other schemes.
 #' @param files Character vector of paths relative to `dir`. Defaults to
 #' every regular file in `dir` (recursively, dot-files included), excluding
 #' the bundle itself.
@@ -78,13 +83,13 @@
 #' `capsule_bundle.json` inside `dir` is the default for `cpsbndl()`.
 #' @param bundle A bundle read back with
 #' `cpsbndlrd()`, or the path to one.
-#' @param keyexp Optional public key hex the
+#' @param keyexp Optional public key hex (for `"hmac"`, the key id) the
 #' bundle's attestation must carry. Supply it when you know which key
 #' should have signed: without it the check confirms the bundle is
 #' internally consistent, which any key's holder could arrange.
 #' @return `cpsbndl()`: the bundle, invisibly, a list of class
 #' `bricklayer_bundle` with `files` (a list of `path`, `sha256`,
-#' `size_bytes`), `mnfdgst`, `bundled_utc` and `attestation`
+#' `size_bytes`), `manifest_digest`, `bundled_utc` and `attestation`
 #' (from
 #' [cpsatst()]), and the path it was written to as
 #' attribute
@@ -96,7 +101,7 @@
 #' `ok` (logical) and `checks` (a data frame of `check`, logical `ok`
 #' and
 #' `detail`: one `file:PATH` row per listed file, `no_unlisted_files`, the
-#' `attestation:` rows and, with a manifest, `mnfdgst`).
+#' `attestation:` rows and, with a manifest, `manifest_digest`).
 #' @seealso
 #' [cpsatst()],
 #' [vrfcps()],
@@ -127,6 +132,18 @@
 #' # a file added beside the bundle is reported too
 #' writeLines("x", file.path(dir, "extra.txt"))
 #' cpsbndlvrf(b2, dir)$checks[, c("check", "ok")]
+#'
+#' # a bundle signed with a shared secret (hmac), as morie signs
+#' dir2 <- tempfile()
+#' dir.create(dir2)
+#' writeLines("x,y", file.path(dir2, "d.csv"))
+#' h <- cpsbndl(dir2, m, "shared-secret")
+#' h$attestation$public  # the key id, not the secret
+#' cpsbndlvrf(attr(h, "path"), dir2, key = "shared-secret",
+#'            keyexp = h$attestation$public)$ok
+#' # without the secret the signature row cannot pass
+#' cpsbndlvrf(attr(h, "path"), dir2)$ok
+#' unlink(dir2, recursive = TRUE)
 #'
 #' # a directory that does not exist
 #' try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))
@@ -217,7 +234,7 @@ cpsbndlrd <- function(path) {
 #' @rdname cpsbndl
 #' @export
 cpsbndlvrf <- function(bundle, dir, man = NULL,
-                                  keyexp = NULL) {
+                                  keyexp = NULL, key = NULL) {
   if (is.character(bundle)) bundle <- cpsbndlrd(bundle)
   if (!inherits(bundle, "bricklayer_bundle")) {
     stop("`bundle` must come from cpsbndl() or ",
@@ -277,7 +294,7 @@ cpsbndlvrf <- function(bundle, dir, man = NULL,
                             bundled_utc = bundle$bundled_utc),
                 results = list())
   res <- cpschkatst(bundle$attestation, inner,
-                                   keyexp = keyexp)
+                                   keyexp = keyexp, key = key)
   for (i in seq_len(nrow(res$checks))) {
     note_row(paste0("attestation:", res$checks$check[i]),
              res$checks$ok[i], res$checks$detail[i])

@@ -42,10 +42,24 @@
 #' and pre-hash are not used by the signature; signing uses up one of the
 #' key's one-time indices, as every XMSS signature does.
 #'
+#' With a shared secret (a string or raw vector) as \code{key} the scheme
+#' is \code{"hmac"}: HMAC-SHA-256 under that secret, as
+#' \code{cpssign(scheme = "hmac")}. \code{public} is then a key id, the hex
+#' of HMAC-SHA-256 of the string \code{"public"} under the secret: it names
+#' the key, so \code{keyexp} can pin it, without revealing it. The secret
+#' itself is never recorded, so checking needs it again (\code{key} in
+#' \code{cpschkatst()}). \code{context} is \code{""} and \code{prehash}
+#' \code{"none"}, the bytes morie's capsule signer writes. HMAC is
+#' symmetric: anyone who can check the signature can also make one. It is
+#' not one of the post-quantum signature schemes and carries none of their
+#' guarantees.
+#'
 #' The check, one row each: \code{attestation_complete} (every field is
-#' present), \code{mnfdgst} (the manifest's digest equals the attested
+#' present), \code{manifest_digest} (the manifest's digest equals the attested
 #' one), \code{key_as_expected} (only when \code{keyexp} is given) and
-#' \code{signature} (the signature verifies under the attested public key).
+#' \code{signature} (the signature verifies under the attested public key;
+#' for \code{"hmac"}, under \code{key}, whose key id must equal
+#' \code{public}).
 #' \code{ok} is \code{TRUE} when every row passes.
 #'
 #' What it does NOT establish. That the public key belongs to whoever you
@@ -58,16 +72,20 @@
 #'
 #' Errors: \code{man} not a list; \code{key} not from
 #' [fipskg()]
-#' or [pqckg()]; an invalid \code{prehash} or
+#' or [pqckg()] and not a non-empty string or raw vector; an invalid
+#' \code{prehash} or
 #' \code{ctx} (from
-#' [cpssign()]); \code{attestation} not from
+#' [cpssign()]), or either given with an hmac key; \code{attestation} not from
 #' \code{cpsatst()}. A
 #' signature that fails to verify is a failed row, not an error.
 #'
 #' @param man A manifest, as from [mkmnf()].
-#' @param key A signing key from [fipskg()] (ML-DSA,
+#' @param key For \code{cpsatst()}, a signing key from [fipskg()] (ML-DSA,
 #'   SLH-DSA and the
-#'   other standardised schemes) or [pqckg()] (XMSS).
+#'   other standardised schemes) or [pqckg()] (XMSS), or a shared secret
+#'   (a string or raw vector) for \code{"hmac"}. For \code{cpschkatst()},
+#'   the shared secret that checks an \code{"hmac"} attestation; it is not
+#'   used for the other schemes, whose public key the attestation carries.
 #' @param ctx Optional context string (or raw vector), bound into the
 #'   signature for the standardised schemes; see
 #'   [cpssign()].
@@ -133,8 +151,14 @@
 #' att2 <- cpsatst(m, key, ctx = "release 2026-10", prehash = "sha512")
 #' cpschkatst(att2, m, keyexp = key)$ok
 #'
+#' # a shared secret signs with hmac; `public` is its key id, not the secret
+#' att3 <- cpsatst(m, "shared-secret")
+#' att3$public
+#' cpschkatst(att3, m, key = "shared-secret", keyexp = att3$public)$ok
+#' cpschkatst(att3, m, key = "another-secret")$checks[, c("check", "ok", "detail")]
+#'
 #' # a key that is not a signing key is refused
-#' try(cpsatst(m, "not-a-key"))
+#' try(cpsatst(m, 42))
 #' @export
 cpsatst <- function(man, key, ctx = NULL,
                            prehash = "none", note = NULL) {
@@ -145,6 +169,10 @@ cpsatst <- function(man, key, ctx = NULL,
     )
   }
   scheme <- .rmbl_attest_scheme(key)
+  if (identical(scheme, "hmac") && (!is.null(ctx) || !identical(prehash, "none"))) {
+    # HMAC takes neither, so an attestation that recorded one would claim a binding it does not have
+    stop("an hmac attestation takes no `ctx` and no `prehash`", call. = FALSE)
+  }
   pub <- .rmbl_attest_public(key)
   .ctx <- if (is.null(ctx)) {
     NULL
@@ -166,6 +194,8 @@ cpsatst <- function(man, key, ctx = NULL,
   signed <- .rmbl_attest_payload_digest(payload)
   sig <- if (identical(scheme, "xmss-sha256")) {
     cpssign(signed, key, scheme = "xmss")
+  } else if (identical(scheme, "hmac")) {
+    cpssign(signed, key, scheme = "hmac")
   } else {
     cpssign(signed, key, ctx = if (is.null(.ctx)) NULL else payload$context, prehash = prehash)
   }
@@ -177,8 +207,8 @@ cpsatst <- function(man, key, ctx = NULL,
 #' @rdname cpsatst
 #' @export
 cpschkatst <- function(attest, man,
-                                      keyexp = NULL) {
-  .rmbl_no_fn(key_expected = keyexp)
+                                      keyexp = NULL, key = NULL) {
+  .rmbl_no_fn(key_expected = keyexp, key = key)
   acc <- new.env(parent = emptyenv())
   acc$checks <- list()
   note_row <- function(check, ok, detail = "") {
@@ -236,7 +266,18 @@ cpschkatst <- function(attest, man,
   signed <- .rmbl_attest_payload_digest(payload)
   ok <- FALSE
   detail <- ""
-  if (length(missing) == 0L) {
+  if (length(missing) == 0L && identical(attest$scheme, "hmac")) {
+    # a shared secret cannot travel with the attestation: the verifier brings it, and the
+    # key id in `public` says whether it is the one that signed (morie's rows and wording)
+    kid <- if (is.null(key)) NULL else tryCatch(.rmbl_hmac_key_id(key), error = function(e) NULL)
+    if (is.null(key)) {
+      detail <- "an hmac signature needs the shared key"
+    } else if (!identical(kid, tolower(as.character(attest$public)[1L]))) {
+      detail <- "the key given is not the key the attestation names"
+    } else {
+      ok <- tryCatch(cpsvrf(signed, attest$signature, key), error = function(e) FALSE)
+    }
+  } else if (length(missing) == 0L) {
     key <- tryCatch(.rmbl_attest_key_from(attest),
       error = function(e) NULL
     )
@@ -344,7 +385,20 @@ print.bricklayer_attestation_check <- function(x, ...) {
   if (inherits(key, c("bricklayer_signing_key", "bricklayer_public_key"))) {
     return("xmss-sha256")
   }
-  stop("`key` must come from fipskg() or pqckg()", call. = FALSE)
+  if ((is.raw(key) && length(key) > 0L) ||
+        (is.character(key) && length(key) == 1L && !is.na(key) && nzchar(key))) {
+    return("hmac")
+  }
+  stop("`key` must come from fipskg() or pqckg(), or be a shared secret (a string or raw vector) for hmac",
+       call. = FALSE)
+}
+
+#' Names an hmac key without revealing it: HMAC-SHA-256 of "public" under the key, as morie's key_id().
+#' @param key The shared secret, a string or raw vector.
+#' @return 64 hex characters.
+#' @noRd
+.rmbl_hmac_key_id <- function(key) {
+  chmac(key, "public")
 }
 
 #' Returns the public key text an attestation records for a key.
@@ -354,6 +408,9 @@ print.bricklayer_attestation_check <- function(x, ...) {
 .rmbl_attest_public <- function(key) {
   if (inherits(key, c("bricklayer_oqs_key", "bricklayer_oqs_public_key"))) {
     return(key$public)
+  }
+  if (is.raw(key) || is.character(key)) {
+    return(.rmbl_hmac_key_id(key))
   }
   # An XMSS public key is the root plus the public seed: both are needed
   # to verify, so both have to be recorded.

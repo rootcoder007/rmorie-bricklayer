@@ -1,0 +1,13 @@
+{
+  "name": "d",
+  "source": {
+    "url": "https://example.org/d.csv",
+    "retrieved": "2026-10-20"
+  },
+  "resource": {
+    "filename": "d.csv",
+    "sha256": "9c7491d5b87c43a98ce440ebf475ffc2b44e399e5a67d9bdb2ad02118c0eff0b",
+    "size_bytes": 16,
+    "row_count_data_rows": 3
+  }
+}

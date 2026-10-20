@@ -2,3 +2,5 @@
 # so no line-ending conversion on any platform (Windows checkouts default to autocrlf).
 inst/services/* -text
 *.sig -text
+# Test fixtures whose bytes are pinned by sha256 in a signed bundle
+tests/testthat/fixtures/** -text

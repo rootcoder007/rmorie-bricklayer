@@ -7,14 +7,17 @@
 \usage{
 cpsatst(man, key, ctx = NULL, prehash = "none", note = NULL)
 
-cpschkatst(attest, man, keyexp = NULL)
+cpschkatst(attest, man, keyexp = NULL, key = NULL)
 }
 \arguments{
 \item{man}{A manifest, as from \code{\link[=mkmnf]{mkmnf()}}.}
 
-\item{key}{A signing key from \code{\link[=fipskg]{fipskg()}} (ML-DSA,
+\item{key}{For \code{cpsatst()}, a signing key from \code{\link[=fipskg]{fipskg()}} (ML-DSA,
 SLH-DSA and the
-other standardised schemes) or \code{\link[=pqckg]{pqckg()}} (XMSS).}
+other standardised schemes) or \code{\link[=pqckg]{pqckg()}} (XMSS), or a shared secret
+(a string or raw vector) for \code{"hmac"}. For \code{cpschkatst()},
+the shared secret that checks an \code{"hmac"} attestation; it is not
+used for the other schemes, whose public key the attestation carries.}
 
 \item{ctx}{Optional context string (or raw vector), bound into the
 signature for the standardised schemes; see
@@ -82,10 +85,24 @@ and the context
 and pre-hash are not used by the signature; signing uses up one of the
 key's one-time indices, as every XMSS signature does.
 
+With a shared secret (a string or raw vector) as \code{key} the scheme
+is \code{"hmac"}: HMAC-SHA-256 under that secret, as
+\code{cpssign(scheme = "hmac")}. \code{public} is then a key id, the hex
+of HMAC-SHA-256 of the string \code{"public"} under the secret: it names
+the key, so \code{keyexp} can pin it, without revealing it. The secret
+itself is never recorded, so checking needs it again (\code{key} in
+\code{cpschkatst()}). \code{context} is \code{""} and \code{prehash}
+\code{"none"}, the bytes morie's capsule signer writes. HMAC is
+symmetric: anyone who can check the signature can also make one. It is
+not one of the post-quantum signature schemes and carries none of their
+guarantees.
+
 The check, one row each: \code{attestation_complete} (every field is
-present), \code{mnfdgst} (the manifest's digest equals the attested
+present), \code{manifest_digest} (the manifest's digest equals the attested
 one), \code{key_as_expected} (only when \code{keyexp} is given) and
-\code{signature} (the signature verifies under the attested public key).
+\code{signature} (the signature verifies under the attested public key;
+for \code{"hmac"}, under \code{key}, whose key id must equal
+\code{public}).
 \code{ok} is \code{TRUE} when every row passes.
 
 What it does NOT establish. That the public key belongs to whoever you
@@ -98,9 +115,10 @@ to attest a run history, sign \code{\link[=chnseal]{chnseal()}} directly.
 
 Errors: \code{man} not a list; \code{key} not from
 \code{\link[=fipskg]{fipskg()}}
-or \code{\link[=pqckg]{pqckg()}}; an invalid \code{prehash} or
+or \code{\link[=pqckg]{pqckg()}} and not a non-empty string or raw vector; an invalid
+\code{prehash} or
 \code{ctx} (from
-\code{\link[=cpssign]{cpssign()}}); \code{attestation} not from
+\code{\link[=cpssign]{cpssign()}}), or either given with an hmac key; \code{attestation} not from
 \code{cpsatst()}. A
 signature that fails to verify is a failed row, not an error.
 }
@@ -136,8 +154,14 @@ cpschkatst(forged, m)$checks[, c("check", "ok")]
 att2 <- cpsatst(m, key, ctx = "release 2026-10", prehash = "sha512")
 cpschkatst(att2, m, keyexp = key)$ok
 
+# a shared secret signs with hmac; `public` is its key id, not the secret
+att3 <- cpsatst(m, "shared-secret")
+att3$public
+cpschkatst(att3, m, key = "shared-secret", keyexp = att3$public)$ok
+cpschkatst(att3, m, key = "another-secret")$checks[, c("check", "ok", "detail")]
+
 # a key that is not a signing key is refused
-try(cpsatst(m, "not-a-key"))
+try(cpsatst(m, 42))
 }
 \seealso{
 \code{\link[=cpssign]{cpssign()}},
