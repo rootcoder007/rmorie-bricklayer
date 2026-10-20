@@ -47,7 +47,9 @@ measure, as a string or a bare name.}
 
 \item{prd}{For a data frame, the column holding the
 period (a year, a \code{Date}, a fiscal-year integer, an ordered
-factor). For a numeric vector, the periods themselves.}
+factor). An ordered factor is compared by level order, one level being one
+period; an unordered factor or a character column has no order, so every row
+is flagged "no comparison period". For a numeric vector, the periods themselves.}
 
 \item{by}{Optional grouping columns, as a character vector.
 The change is computed within each group.}

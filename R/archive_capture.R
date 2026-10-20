@@ -106,8 +106,6 @@
 #' \url{https://archive.org/developers/ias3.html}
 #' @seealso \code{\link{fetchvrf}}, \code{\link{wbsave}},
 #'   \code{\link{tsvrf}}.
-#' @examples
-#'
 #' @examplesIf interactive()
 #' w <- wbsave(urls)
 #' lic <- "https://www.statcan.gc.ca/en/terms-conditions/open-licence"

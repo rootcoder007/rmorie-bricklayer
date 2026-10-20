@@ -34,8 +34,6 @@
 #'   \code{"anthropic"} or \code{"openai"}.
 #' @return Character scalar: the answer, or a message saying what to set
 #'   up when no route answers.
-#' @examples
-#'
 #' @examplesIf interactive()
 #' # Needs a language model: a provider key (e.g. ANTHROPIC_API_KEY), your own
 #' # endpoint or a local Ollama.

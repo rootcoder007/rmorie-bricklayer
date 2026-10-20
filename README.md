@@ -16,6 +16,10 @@
 provenance, validates downloaded data against a pinned schema, and falls
 back to schema-driven synthetic data when the real source is unreachable —
 so any analysis result can be traced back to its exact inputs.
+It is written for analysts and researchers who work from published
+administrative and survey tables (justice, corrections, health and
+Indigenous statistics, for example) and who need to show later exactly
+which data a result came from.
 
 A checksum answers one question: are these the same bytes? The package
 exists because that is rarely the question that matters. A re-released
@@ -474,6 +478,40 @@ from a cached midstate.
 It is also verified against its security properties: a valid signature
 verifies, and every tampering of the message, signature, authentication
 path, index or key fails.
+
+## Algorithms
+
+Several methods re-implement established ones and are tested against them:
+the design-based survey estimators (`svydes()`, `svyest()`, `svycmp()`)
+against the `survey` package's `svymean()`, `svytotal()`, `svyratio()`,
+`svyby()` and `svyciprop()`; the Mann-Kendall trend test and Theil-Sen slope
+(`trndtst()`) against `stats::cor.test()`'s Kendall tau and its exact
+p-values; the Hawkes-process fits (`chwkfit()`) against the reference fits of
+MORIE's Python package, which uses the same C++ core; and the hashes and
+signatures against `digest`, `openssl` and published test vectors (see
+Verification above). Others are, as far as we know, new in R: the bounds
+that a release's rounding and suppression imply for its cells (`pubbnd()`)
+and the reproducible data capsules with signed manifests.
+
+## Life cycle
+
+Version 1.0.0 is *maturing*: the exported function names and arguments are
+stable. A function or argument that is to change or go is first deprecated
+with a warning for one minor release, and the change is listed in `NEWS.md`.
+
+## Running the extended tests
+
+`R CMD check` and `devtools::test()` never reach a real host. Setting
+`RMBL_LIVE_TESTS=1` (exactly `1`, together with `NOT_CRAN=true`) switches on
+the live tests in the same `testthat` suite: downloads from
+`cloud.r-project.org` and `www.r-project.org`, a redirect chain at
+`httpbin.org`, and Wayback Machine lookups at `archive.org` (never a capture
+request). They write only to temporary files and take about a minute on a
+broadband connection:
+
+```sh
+NOT_CRAN=true RMBL_LIVE_TESTS=1 Rscript -e 'devtools::test()'
+```
 
 ## Installation
 

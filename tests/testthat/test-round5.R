@@ -315,7 +315,8 @@ test_that("French reports give the police service, the dates and the person", {
 test_that("bad inputs get a worded error and no coercion warning", {
   d <- withr::local_tempdir()
   dir.create(file.path(d, "adir"))
-  expect_error(yoy("abc"), "`x` must be a data frame, not character", fixed = TRUE)
+  expect_error(yoy("abc"), "`x` must be a data frame, a numeric or integer vector, or a ts, not character",
+               fixed = TRUE)
   expect_error(yoysmry(NULL), "`object` must be a yoy() result, not NULL", fixed = TRUE)
   expect_error(ratechg(NA), "`x` must be a data frame", fixed = TRUE)
   expect_error(agentbndl(NA), "`req` must be a single non-empty string", fixed = TRUE)

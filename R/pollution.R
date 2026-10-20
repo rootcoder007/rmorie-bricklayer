@@ -1230,6 +1230,8 @@ polbrdarea <- function(areatab, areacol = "fsa", expcol = "exposure",
 #' # ... and an argument it cannot use is an error report, not an R error.
 #' vrfpol("no2")$error
 #' @export
+#' @srrstats {G2.9} Messages report ppb-to-ug/m3 conversion and dropped rows; test-stress-52a8883-review.R:395
+#'   expect_message "have no exposure value".
 vrfpol <- function(poll, y = "allcause", reg = NULL,
                              years = NULL, demo = FALSE, expcsv = NULL,
                              expomean = NULL, expoprev = NULL, ref = NULL,

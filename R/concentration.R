@@ -86,6 +86,18 @@
 #' try(ginicoef(c(0, 0, 0)))
 #' @name concentration
 #' @export
+#' @srrstats {G2.1} .rmbl_conc_input/.rmbl_num_input refuse character, factor, list and data frame input;
+#'   test-tables.R:165 ginicoef(c("a","b")) errors.
+#' @srrstats {G2.1a} @param x says "Numeric vector of non-negative values"; it also says Inf, negative and
+#'   non-numeric input are errors.
+#' @srrstats {G2.16} Inf is refused and NaN/NA dropped by .rmbl_conc_input; test-input-contracts.R ginicoef(Inf)
+#'   errors "finite", topshr(NaN) errors.
+#' @srrstats {G5.4a} test-tables.R checks closed forms: Gini = 1 - 1/n for n = 2..100, 0 for equal values, scale
+#'   invariance, and 1 - 2*area of the Lorenz curve.
+#' @srrstats {G5.8} Edge cases tested in test-tables.R and test-input-contracts.R; see G5.8a-d.
+#' @srrstats {G5.8a} ginicoef(numeric(0)) errors "no values" (test-tables.R:162, test-input-contracts.R:30).
+#' @srrstats {G5.8b} Character input refused (test-tables.R:165); test-input-contracts.R loops 17 kernels over
+#'   "abc", list and data frame.
 ginicoef <- function(x, na.rm = TRUE) {
   x <- .rmbl_conc_input(x)
   if (all(x == 0, na.rm = TRUE)) {

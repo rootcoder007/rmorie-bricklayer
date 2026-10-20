@@ -75,6 +75,8 @@ on the box counts: \code{atbound} names the parameters that lie on it.}
 \item{\code{atbound}}{character, the names of parameters that lie on the box
 (\code{character(0)} for an interior maximum).}
 }
+A warning is given when \eqn{\eta} reaches its upper bound 0.99 (a near-critical,
+probably non-stationary fit).
 An estimate on the box is not an interior maximum of the likelihood:
 day-dated (tied) times drive a shape or decay to its wall, and a Lomax
 fitted to exponential data runs to its exponential limit.

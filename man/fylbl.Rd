@@ -32,14 +32,14 @@ label a change table.
 }
 \details{
 Each value is converted with \code{as.integer(as.character(endyear))},
-so a string such as \code{"2023"} works and a fractional number is
-truncated (2023.7 gives \code{"2022/23"}). The label is
+so a string such as \code{"2023"} works; a fractional number is refused
+rather than truncated (2023.7 is an error). The label is
 \code{(y - 1)}, \code{sep}, then \code{y} itself or its last two digits.
 Values that cannot be read as a year give \code{NA}. The two-digit form
 is unambiguous within a century (2000 gives \code{"1999/00"}).
 
 Errors: \code{endyear} that is neither numeric nor character (for
-example logical); a numeric year below 1.
+example logical); a numeric year below 1; a numeric year that is not whole.
 }
 \examples{
 fylbl(2019:2023)

@@ -8,7 +8,8 @@ deccodes(x, vlabs, keepna = TRUE)
 }
 \arguments{
 \item{x}{Vector of codes: numeric, integer, character or factor. A factor
-is read through its labels, not its integer codes.}
+is read through its labels, not its integer codes; an ordered factor is
+treated the same as an unordered one (its level order is not used).}
 
 \item{vlabs}{Named character vector, code = label, for example
 \code{c("1" = "White", "2" = "Black")}. The names are the codes as they

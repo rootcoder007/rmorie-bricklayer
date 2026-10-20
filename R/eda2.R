@@ -101,6 +101,14 @@
 #' dup$height2 <- dup$height
 #' try(mahaoutl(dup))
 #' @export
+#' @srrstats {G2.7} Accepts a data frame or a numeric matrix (a matrix goes through as.data.frame); subclasses of
+#'   data.frame are accepted by inheritance.
+#' @srrstats {G3.1} robust = TRUE (median/MAD) or FALSE (means and sample covariance); mtchdid also has covm =
+#'   "pooled"/"full".
+#' @srrstats {G3.1a} Both options are shown in @examples and in the missingness-and-outliers.Rmd and describe.Rmd
+#'   vignettes.
+#' @srrstats {G5.8d} No more complete rows than columns and collinear columns are refused (test-eda.R:270,
+#'   test-edge-cases.R:121).
 mahaoutl <- function(data, alpha = 0.001, robust = TRUE) {
   if (is.matrix(data)) data <- as.data.frame(data)
   if (!is.data.frame(data)) {

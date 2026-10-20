@@ -10,7 +10,7 @@ stepchg(y, x = NULL, minseg = 2L, nperm = 9999L, seed = 1L)
 \item{y}{Numeric vector, the series in period order.}
 
 \item{x}{Vector of periods, default \code{NULL} (the position). Used only
-to label the break.}
+to label the break; numeric or date periods must be strictly increasing.}
 
 \item{minseg}{Whole number, default 2: the fewest periods allowed on
 either side of the break.}
@@ -56,8 +56,11 @@ The test assumes the periods are exchangeable under no change, so it
 ignores autocorrelation and smooth trends; a steady trend can produce a
 "step". With very few periods even a clean step cannot reach small
 p-values (six periods allow only 720 orderings). Missing values are
-dropped. Errors: infinite values; fewer than \code{2 * minseg}
-periods. A progress bar is shown in an interactive session.
+dropped. A series with values beyond 1e150 is scanned in units of its largest absolute value, so
+the statistic does not overflow; \code{before}, \code{after} and \code{difference} are given back
+in the units of \code{y}, and \code{statistic} stays in the rescaled units. Errors: infinite
+values; fewer than \code{2 * minseg} periods; numeric or date \code{x} that is not strictly
+increasing. A progress bar is shown in an interactive session.
 }
 \examples{
 # A step down after the third period. With six periods there are only

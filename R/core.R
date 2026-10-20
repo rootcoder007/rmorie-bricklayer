@@ -59,6 +59,14 @@
 #' @useDynLib rmoriebricklayer, .registration = TRUE
 #' @name cstat
 #' @export
+#' @srrstats {G2.2} .rmbl_num_input refuses data frames and lists for a vector argument; test-input-contracts.R:
+#'   cmn(data.frame(a = 1)) errors "must be numeric".
+#' @srrstats {G2.4b} .rmbl_num_input() converts with as.numeric() after refusing text, factor and list; logical is
+#'   read as 0/1 (test-input-contracts.R).
+#' @srrstats {G2.15} Never silently drops NA: NA/NaN propagate as documented ("There is no na.rm");
+#'   test-input-contracts.R is.na(cmn(c(1, NA))).
+#' @srrstats {EA2.6} .rmbl_num_input (R/aaa_input_guards.R) uses as.numeric(), which drops names, dims and extra
+#'   attributes before the C kernels; factor, character and list input is refused.
 cmn <- function(x) .Call(C_rmbl_mean, .rmbl_num_input(x, "x"))
 
 # The overflow fallback of cmn(): a running mean that cannot

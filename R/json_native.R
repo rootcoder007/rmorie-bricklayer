@@ -764,6 +764,8 @@ jsb64udec <- function(input) {
 #' # a choice that does not exist is refused
 #' try(tojs(df, dataframe = "table"))
 #' @export
+#' @srrstats {G2.12} List columns are encoded element-wise; test-review-coverage.R:95 tojs(data.frame(a =
+#'   I(list(1:2, 3)))).
 tojs <- function(x, dataframe = c("rows", "columns", "values"),
                                  matrix = c("rowmajor", "columnmajor"),
                                  Date = c("ISO8601", "epoch"),

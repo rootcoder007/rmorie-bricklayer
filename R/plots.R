@@ -36,6 +36,11 @@
 #' \code{cex = 1}, \code{las = 1}, \code{bg = "white"} and
 #' \code{panel = "#EEF1F6"}. Setting some options keeps the others.
 #'
+#' Text is drawn at the session \code{cex}. Titles, axis titles, row labels
+#' and keys are made smaller to fit a small device, but never below 0.6 of
+#' that size, so that they stay readable; for larger text set, for example,
+#' \code{plotopt(cex = 1.2)}, and for a table with many rows use a taller device.
+#'
 #' Errors: an unknown palette \code{name}; \code{n} not a positive whole
 #' number; an option name other than the six above, or an unnamed value; an
 #' unknown \code{palette} option.
@@ -75,6 +80,14 @@
 #' try(blpal("viridis"))
 #' try(plotopt(colour = "red"))
 #' @export
+#' @srrstats {EA5.0} All plot methods share one base-graphics style with colour-blind-safe palettes and the session
+#'   options set through plotopt().
+#' @srrstats {EA5.0b} Default palette is Okabe-Ito (colour-vision-deficiency safe), with a ColorBrewer-style
+#'   diverging, sequential and grey set; test-plots.R checks palettes.
+#' @srrstats {EA5.0a} Text follows plotopt(cex = ), and labels shrunk to fit stop at 0.6 of it (documented in
+#'   the details); test-plot-fit-1_0_0.R checks the floor.
+#' @srrstats {EA5.4} Axes are drawn with base axis()/axTicks(), which use pretty(); margins are sized from
+#'   format(pretty(y)) in .bl_left_margin.
 blpal <- function(name = c("okabe", "diverging", "sequential", "grey"), n = NULL) {
   name <- .rmbl_arg(name)
   base <- switch(name,
@@ -384,7 +397,7 @@ plotopt <- function(...) {
   # lines cut "Percent change, with interval" to "Percent change, with", and a word wider than
   # the panel ("NO2 (micrograms per cubic metre)") ran past the panel's edge
   words <- strsplit(xlab, " ", fixed = TRUE)[[1L]]
-  for (cex in c(0.85, 0.75, 0.65, 0.55)) {
+  for (cex in c(0.85, 0.75, 0.65, 0.6)) {
     lines <- character()
     cur <- ""
     for (w in words) {
@@ -454,7 +467,7 @@ plotopt <- function(...) {
   # a key that wraps to more lines than the outer margin holds is drawn smaller: a third line
   # fell below the device
   room <- graphics::par("oma")[1L]
-  for (cex in c(0.8, 0.7, 0.6, 0.5)) {
+  for (cex in c(0.8, 0.7, 0.6)) {
     rel <- cex / graphics::par("cex")
     lines <- character()
     cur <- ""
@@ -597,7 +610,7 @@ plotopt <- function(...) {
 
 # Row labels on the left, one per row whatever the row count: axis() leaves out labels that
 # would overlap, so 44 rows of trchlthgap() on a 4.6-inch page showed 22 and the rest read as
-# beside the wrong points. The text is sized to the row height (down to 0.45) and drawn with
+# beside the wrong points. The text is sized to the row height (down to 0.6) and drawn with
 # mtext(), which drops none; mtext()'s cex is absolute, so par("cex") is applied here.
 .bl_row_labels <- function(at, labels, cex = 0.85) {
   if (length(at) > 1L) {
@@ -605,7 +618,8 @@ plotopt <- function(...) {
     pin <- graphics::par("pin")
     row_in <- min(abs(diff(sort(at)))) / (usr[4L] - usr[3L]) * pin[2L]
     line_in <- graphics::par("csi") * cex * 1.1
-    if (line_in > row_in) cex <- max(0.45, cex * row_in / line_in)
+    # floored at 0.6 so the labels stay readable (rOpenSci EA5.0a); a taller device fits more rows
+    if (line_in > row_in) cex <- max(0.6, cex * row_in / line_in)
   }
   graphics::mtext(labels, side = 2, at = at, las = 1, line = graphics::par("mgp")[2L],
                   cex = cex * graphics::par("cex"), col = graphics::par("col.axis"))
@@ -1069,6 +1083,8 @@ plot.rmbl_yoy <- function(x, ..., what = c("pctchg", "value"), main = NULL, col 
 
 #' @rdname plot-methods
 #' @export
+#' @srrstats {EA5.5} Rate axes carry the unit from the result's metadata, for example "Rate per 100,000, with
+#'   interval"; yoy percent axes say "Percent change".
 plot.rmbl_rate <- function(x, ..., period = NULL, main = NULL, col = NULL, palette = NULL) {
   .rmbl_plot_check(x, "rmbl_rate")
   d <- as.data.frame(x)

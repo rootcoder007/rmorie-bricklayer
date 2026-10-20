@@ -8,7 +8,9 @@ declbld(x, vlabs = NULL)
 }
 \arguments{
 \item{x}{A vector with a \code{labels} attribute (as produced by haven),
-or a plain vector of codes when \code{vlabs} is supplied.}
+or a plain vector of codes when \code{vlabs} is supplied. A factor,
+ordered or not, is read through its integer codes; the result is an
+unordered factor whose levels follow the codes.}
 
 \item{vlabs}{Optional named character vector, code = label, used
 only when \code{x} carries no \code{labels} attribute. Default

@@ -137,6 +137,12 @@
 #'   Markdown or HTML
 #'   report.
 #' @export
+#' @srrstats {EA1.1} @param data and the title say "a published administrative table" of counts in long form, one
+#'   row per period and group; getting-started vignette says the same.
+#' @srrstats {EA1.2} The description lists the questions: what changed and how sure, rates, trend, whether this
+#'   release differs from the one held before.
+#' @srrstats {EA3.0} One call runs profile, change, Benjamini-Hochberg adjustment over the whole scan, publication
+#'   envelope, trend, rates and drift, which otherwise take separate manual steps; test-analyse-table.R.
 anltab <- function(data, value, prd, by = NULL, pop = NULL,
                           prior = NULL,
                           units = c("count", "continuous", "percent"),
