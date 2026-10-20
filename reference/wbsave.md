@@ -161,7 +161,7 @@ try(wbsave("https://example.org/", ak = "abc", sk = "def",
 #> Error : `jobs` must be a whole number from 1 to 12
 try(wbsave("https://example.org/", ak = "abc", sk = "def",
                  output = file.path(tempdir(), "no-such-folder", "runs.jsonl")))
-#> Error : the folder for `output` does not exist: /tmp/RtmpQm4Z81/no-such-folder
+#> Error : the folder for `output` does not exist: /tmp/Rtmp2IenZh/no-such-folder
 
 # A real run needs archive.org keys and the network.
 

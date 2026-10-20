@@ -7,6 +7,10 @@
 - The package documents the rOpenSci statistical software standards
   (General, EDA, Time Series) with `srr` tags: 139 met, 29 not
   applicable, none left to do.
+- A period with no percentage change in `plot(yoy(...))` carries its
+  whole reason again (“first period: nothing to compare with”, “no
+  percentage: previous period is zero”), sized to the panel; the
+  period-axis rewrite had cut every reason at the colon.
 - The plots over time put the period on its own scale (a number or a
   `Date`; text at labelled positions) with the unit as the axis title,
   and take `xlab`, which passed through `...` was an error.

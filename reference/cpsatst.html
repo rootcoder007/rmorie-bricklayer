@@ -82,9 +82,9 @@ together with proof that its manifest has not changed since you signed it.</p>
 
 
 <dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
-<dd><p>For <code>cpsatst()</code>, a signing key from <code><a href="fipskg.html">fipskg()</a></code> (ML-DSA,
-SLH-DSA and the
-other standardised schemes) or <code><a href="pqckg.html">pqckg()</a></code> (XMSS), or a shared secret
+<dd><p>For <code>cpsatst()</code>, a signing key from
+<code><a href="fipskg.html">fipskg()</a></code> (ML-DSA, SLH-DSA and the other standardised schemes) or
+<code><a href="pqckg.html">pqckg()</a></code> (XMSS), or a shared secret
 (a string or raw vector) for <code>"hmac"</code>. For <code>cpschkatst()</code>,
 the shared secret that checks an <code>"hmac"</code> attestation; it is not
 used for the other schemes, whose public key the attestation carries.</p></dd>
@@ -186,10 +186,9 @@ to attest a run history, sign <code><a href="chn.html">chnseal()</a></code> dire
 <code><a href="fipskg.html">fipskg()</a></code>
 or <code><a href="pqckg.html">pqckg()</a></code> and not a non-empty string or raw vector; an invalid
 <code>prehash</code> or
-<code>ctx</code> (from
-<code><a href="cpssign.html">cpssign()</a></code>), or either given with an hmac key; <code>attestation</code> not from
-<code>cpsatst()</code>. A
-signature that fails to verify is a failed row, not an error.</p>
+<code>ctx</code> (from <code><a href="cpssign.html">cpssign()</a></code>), or either given with an hmac key;
+<code>attestation</code> not from <code>cpsatst()</code>. A signature that fails to
+verify is a failed row, not an error.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -213,8 +212,8 @@ signature that fails to verify is a failed row, not an error.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   context     &lt;none&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   prehash     none</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   note        counts as published</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   signed      2026-10-20T07:59:27Z</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   public key  836cb012a0f5ee77a4166800c5c01fef... (1952 bytes)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   signed      2026-10-20T08:30:45Z</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   public key  ce6ae9d6fb211ba92ef28b8770dd2171... (1952 bytes)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a verifier needs the attestation and the manifest, nothing else</span></span></span>

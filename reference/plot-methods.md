@@ -167,7 +167,8 @@ plot(x, ..., period = NULL, main = NULL, col = NULL, palette = NULL)
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
 # S3 method for class 'rmbl_rate_change'
-plot(x, ..., main = NULL, col = NULL, palette = NULL, xlab = NULL)
+plot(x, ..., main = NULL, col = NULL,
+  palette = NULL, xlab = NULL)
 
 # S3 method for class 'rmbl_band_sensitivity'
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
@@ -230,7 +231,8 @@ plot(x, ..., contours = 8L, main = NULL, col = NULL, palette = NULL)
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
 # S3 method for class 'rmbl_count_trend'
-plot(x, ..., main = NULL, col = NULL, palette = NULL, xlab = NULL)
+plot(x, ..., main = NULL, col = NULL,
+  palette = NULL, xlab = NULL)
 
 # S3 method for class 'bricklayer_analysis'
 plot(x, ..., which = NULL, main = NULL)
