@@ -7,7 +7,8 @@ test_that("audit coverage: refusals in words across the input guards", {
   expect_identical(.rmbl_with_seed(NULL, 1 + 1), 2)
   expect_error(advdif2d(matrix(1, 4, 4), u = 1e200, v = 0, kx = 0, ky = 0, dx = 1e-200, dy = 1, dt = 1, nsteps = 1),
                "stability number is not finite")
-  expect_error(advdif2d(matrix(1, 4, 4), u = 1e150, v = 0, kx = 0, ky = 0, dx = 1e-150, dy = 1, dt = 1, nsteps = 1e300),
+  # 1e299, not 1e300: valgrind has no 80-bit long double, and R's parser reads 1e300 one ulp above it
+  expect_error(advdif2d(matrix(1, 4, 4), u = 1e150, v = 0, kx = 0, ky = 0, dx = 1e-150, dy = 1, dt = 1, nsteps = 1e299),
                "amount of work is not finite")
   expect_error(cpsbndl(tempdir(), man = NULL, key = NULL, files = 1), "`files` must be file names")
   expect_error(declbld(list(1)), "`x` must be a vector of codes")
@@ -226,4 +227,40 @@ test_that("audit coverage: native guards reached by a direct call", {
   z <- strrep("00", 32)
   expect_false(.Call(C_rmbl_xmss_verify, z, z, 0L, 0L, charToRaw("m"), z, z, z))
   expect_false(.Call(C_rmbl_xmss_verify, z, z, 2L, 0L, charToRaw("m"), z, z, z))
+})
+
+test_that("re-check of 1.0.0: the battery's last raw errors are refused in words", {
+  expect_error(blcli("version", out = 1), "`out` must be a function")
+  expect_error(dlogin(token = function(x) x), "`token` must be one string")
+  cp <- structure(data.frame(), class = c("rmbl_census_profile", "data.frame"))
+  expect_error(cnscwb(cp, groups = NULL), "`groups` must name one group or more")
+  expect_error(cnscwb(cp, groups = character(0)), "`groups` must name one group or more")
+  expect_error(cnscwb(cp, groups = c("a", "")), "`groups` must name one group or more")
+  expect_error(rtcalc(Inf, 100), "`x` and `pop` must be finite counts")
+  expect_error(rtcalc(3, Inf), "`x` and `pop` must be finite counts")
+  expect_error(recrd(data.frame(), "n", 1, 1), "`man` must be a manifest from mkmnf\\(\\)")
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  expect_error(plotfnl(c(1, 2, 3), c(1, 2, 3), target = 1e308), "below 1e300")
+  expect_error(stkflow(c(10, 20), c(2, 3), per = 1e308, expo = c(100, 100)), "`per` must be at most 1e12")
+  # a grouped key with punctuation on its last group is still a key
+  expect_true(.bl_key_shaped("key is abcd1234efgh ijkl5678mnop qrst9012uvwx?"))
+  expect_true(.bl_key_shaped("abcd1234efgh ijkl5678mnop qrst9012uvwx, why?"))
+  expect_false(.bl_bare_question("key is abcd1234efgh ijkl5678mnop qrst9012uvwx?"))
+  expect_false(.bl_key_shaped("describe the drift test?"))
+  # the neighbouring shapes: every group punctuated, quoted, joined by dashes, dots or underscores,
+  # no-break spaces or tabs between the groups, zero-width characters inside one
+  for (s in c("abcd1234efgh, ijkl5678mnop, qrst9012uvwx.", "\"abcd1234efgh\" \"ijkl5678mnop\" \"qrst9012uvwx\"",
+              "abcd1234efgh-ijkl5678mnop-qrst9012uvwx", "abcd1234efgh.ijkl5678mnop.qrst9012uvwx",
+              "abcd1234efgh\tijkl5678mnop\tqrst9012uvwx?", "abcd1234efgh\u00a0ijkl5678mnop\u00a0qrst9012uvwx?",
+              "abcd12\u200b34efgh ijkl5678mnop qrst9012uvwx?", "ABCD1234EFGH IJKL5678MNOP QRST9012UVWX!")) {
+    expect_true(.bl_key_shaped(s), info = s)
+    expect_false(.bl_bare_question(s), info = s)
+  }
+  for (s in c("compare 2019 2020 2021 totals for the ocj table?",
+              "is table 35100177 the same as 35100026 and 35100003?",
+              "describe the drift test for cafe1234 and beef5678?")) {
+    expect_false(.bl_key_shaped(s), info = s)
+    expect_true(.bl_bare_question(s), info = s)
+  }
 })

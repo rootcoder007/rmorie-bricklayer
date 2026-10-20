@@ -379,6 +379,9 @@ cnscwb <- function(x, dwell = NULL, groups = c("First Nations", "M\u00e9tis", "I
     stop("`dwell` must come from cnsprof()", call. = FALSE)
   }
   .rmbl_no_fn(groups = groups)
+  if (!is.character(groups) || !length(groups) || anyNA(groups) || !all(nzchar(groups))) {
+    stop("`groups` must name one group or more", call. = FALSE)
+  }
   resid <- .rmbl_string1(resid, "resid")
   minpop <- .rmbl_scalar(minpop, "minpop", 0)
   tot_g <- x$gender %in% c("Total - Gender", "Total") & x$residence %in% c(resid, "Total")

@@ -195,7 +195,7 @@ recrd <- function(man, name, obs, expd,
                    tol = 0.0001, grp = "general",
                    syn = FALSE) {
   .rmbl_no_fn(observed = obs, expected = expd)
-  if (!is.list(man)) stop("`man` must be a manifest from mkmnf()", call. = FALSE)
+  if (!is.list(man) || is.data.frame(man)) stop("`man` must be a manifest from mkmnf()", call. = FALSE)
   name <- .rmbl_string1(name, "name")
   tol <- .rmbl_scalar(tol, "tol", 0)
   # one value each: a vector made the PASS test `diff <= tol` a vector and

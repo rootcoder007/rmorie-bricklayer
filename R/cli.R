@@ -225,6 +225,7 @@
 #' @export
 blcli <- function(args = commandArgs(trailingOnly = TRUE),
                            out = cat) {
+  if (!is.function(out)) stop("`out` must be a function that writes text, as cat() does", call. = FALSE)
   old_progress <- options(morie.progress = TRUE)  # downloads draw their bar
   on.exit(options(old_progress), add = TRUE)
   if (nzchar(Sys.getenv("RMBL_PROG")) && is.null(getOption("rmoriebricklayer.dcache"))) {
@@ -567,7 +568,15 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
   if (length(runs)) return(TRUE)
   # a key typed in groups (abcd1234efgh ijkl5678mnop qrst9012uvwx): three words or more in a row of
   # 8 to 16 letters and digits each, every one holding both (final audit of 1.0.0, #7)
+  # zero-width characters are no characters and a no-break or ideographic space splits words like a
+  # space, here as in the question rule: a grouped key with no-break spaces between its groups went
+  # to a model (re-check of 1.0.0)
+  x <- gsub("[\u200b\u200c\u200d\u2060\ufeff]", "", x)
+  x <- gsub("[\u3000\u00a0\u2007\u202f]", " ", x)
   w <- strsplit(trimws(x), "[[:space:]]+")[[1L]]
+  # punctuation stuck to a group is not part of it: "qrst9012uvwx?" and "qrst9012uvwx," closed a
+  # grouped key and it went to a model (re-check of 1.0.0)
+  w <- gsub("^[[:punct:]]+|[[:punct:]]+$", "", w)
   grp <- grepl("^[A-Za-z0-9]{8,16}$", w) & grepl("[0-9]", w) & grepl("[A-Za-z]", w)
   r <- rle(grp)
   any(r$values & r$lengths >= 3L)

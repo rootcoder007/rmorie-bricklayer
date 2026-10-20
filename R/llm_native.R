@@ -1280,6 +1280,7 @@ dlogin <- function(token = NULL, email = NULL, code = NULL,
                                  supnm = NULL, suprole = NULL,
                                  supemail = NULL) {
   if (!is.null(token)) {
+    if (!is.character(token) && !is.numeric(token)) stop("`token` must be one string", call. = FALSE)
     token <- trimws(as.character(token))
     if (length(token) != 1L || !nzchar(token)) {
       stop("an empty token cannot be stored", call. = FALSE)

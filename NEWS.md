@@ -381,8 +381,11 @@ New estimators, each checked against the reference implementation (`fixest`, `di
   capsule and template file arguments, `yoylbl()`'s `labels`, `profshr()`'s `num` and `den`,
   `plotevgrid()`'s `main`, `plnpois()`'s `offset`, `trchlthgap()`'s tables, `wcb()`'s `trtd`,
   `chgenv()`'s `per`, the `strict` and `ex` flags, the `col` of the `rule*()` builders and
-  `chwknll()`'s `par`, and `shrs()`'s `total`. Each is refused in words now; the battery's last
-  run found none.
+  `chwknll()`'s `par`, and `shrs()`'s `total`. Each is refused in words now. The re-check of the
+  fixes replayed the battery and found 29 more in nine functions, refused in words too: `blcli()`'s
+  `out`, `cnscwb()`'s `groups`, `dlogin()`'s `token`, `rtcalc()`'s infinite counts, `recrd()`'s
+  manifest, `plotfnl()`'s `target` and `stkflow()`'s `per`. A key typed in groups with punctuation on
+  its last group ("... qrst9012uvwx?") is a key.
 * The native CSV reader drops a byte-order mark before a header name when blanks follow the mark
   (`read.csv()` keeps the mark in the name, `X.s`): 37 of 24,000 fuzz inputs, documented.
 

@@ -391,6 +391,7 @@ stkflow <- function(days, people, prd = NULL, t = 365,
       )
     }
     per <- .rmbl_pos_num(per, "per", scalar = TRUE)
+    if (per > 1e12) stop("`per` must be at most 1e12 (a population unit, such as 100000)", call. = FALSE)
     out$exposure <- expo
     out$flowrate <- per * people / expo
     out$stkrate <- per * out$adp / expo

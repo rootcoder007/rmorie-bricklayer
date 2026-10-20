@@ -208,6 +208,7 @@ rtcalc.default <- function(x, pop, per = 1000, conflvl = 0.95,
   lab <- names(x)
   x <- .rmbl_num(x, "x")
   pop <- .rmbl_num(pop, "pop")
+  if (any(is.infinite(x)) || any(is.infinite(pop))) stop("`x` and `pop` must be finite counts", call. = FALSE)
   if (length(pop) == 1L) pop <- rep(pop, length(x))
   if (length(x) != length(pop)) {
     stop("`x` and `pop` must be the same length", call. = FALSE)

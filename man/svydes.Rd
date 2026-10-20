@@ -136,7 +136,9 @@ subset). Refused, because no genuine replicate can be it: the
 another name, a second column named like the weight or the \code{id}
 that holds other values, and under JK1, JKn and BRR a copy of the
 full-sample weight (equal to it, or within 1 percent of it on every
-row; under JKn, a single replicate equal to it). Not a copy: a
+row; under JKn, a single replicate equal to it, while two or more
+equal to it are kept, as a stratum left out of a subset leaves all
+of its replicates at the weight). Not a copy: a
 jackknife replicate that scales the rows by one factor
 \eqn{k/(k - 1)} (its deleted PSU outside a subset), and, in a set
 whose replicates are post-stratified or calibrated (factors off
