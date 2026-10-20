@@ -656,8 +656,24 @@ earlier finding)
   [`chwknll()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwknll.md)’s
   `par`, and
   [`shrs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/shrs.md)’s
-  `total`. Each is refused in words now; the battery’s last run found
-  none.
+  `total`. Each is refused in words now. The re-check of the fixes
+  replayed the battery and found 29 more in nine functions, refused in
+  words too:
+  [`blcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blcli.md)’s
+  `out`,
+  [`cnscwb()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cnscwb.md)’s
+  `groups`,
+  [`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)’s
+  `token`,
+  [`rtcalc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md)’s
+  infinite counts,
+  [`recrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recrd.md)’s
+  manifest,
+  [`plotfnl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotlrnz.md)’s
+  `target` and
+  [`stkflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stkflow.md)’s
+  `per`. A key typed in groups with punctuation on its last group (“…
+  qrst9012uvwx?”) is a key.
 - The native CSV reader drops a byte-order mark before a header name
   when blanks follow the mark
   ([`read.csv()`](https://rdrr.io/r/utils/read.table.html) keeps the

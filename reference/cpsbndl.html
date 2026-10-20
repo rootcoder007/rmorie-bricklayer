@@ -224,7 +224,7 @@ Reading a bundle whose signature records a stateful key's state warns (see
 <span class="r-out co"><span class="r-pr">#&gt;</span> ── Capsule bundle ────────────────────────────────────────────────</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   files            1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e4167960781a579</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   bundled          2026-10-19T23:56:04Z</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   bundled          2026-10-20T00:30:49Z</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   scheme           ML-DSA-44</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
 <span class="r-in"><span><span class="fu">cpsbndlvrf</span><span class="op">(</span><span class="va">b2</span>, <span class="va">dir</span>, keyexp <span class="op">=</span> <span class="st">"00ff"</span><span class="op">)</span><span class="op">$</span><span class="va">ok</span></span></span>
@@ -242,7 +242,7 @@ Reading a bundle whose signature records a stateful key's state warns (see
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a directory that does not exist</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cpsbndl</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"no-such-capsule"</span><span class="op">)</span>, <span class="va">m</span>, <span class="va">key</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `dir` does not exist: /tmp/RtmpGTAe1C/no-such-capsule</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `dir` does not exist: /tmp/RtmpW0vzft/no-such-capsule</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

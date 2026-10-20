@@ -168,29 +168,31 @@ genuine replicate can be it: the `id`'s values, the row numbers, a
 column of `data` passed under another name, a second column named like
 the weight or the `id` that holds other values, and under JK1, JKn and
 BRR a copy of the full-sample weight (equal to it, or within 1 percent
-of it on every row; under JKn, a single replicate equal to it). Not a
-copy: a jackknife replicate that scales the rows by one factor \\k/(k -
-1)\\ (its deleted PSU outside a subset), and, in a set whose replicates
-are post-stratified or calibrated (factors off 0, 1, 2 and \\k/(k -
-1)\\), a replicate equal or close to the weight. Warned about, because a
-genuine set can produce it but rarely does: under the bootstrap, more
-replicates equal to the full-sample weight than chance draws; under the
-bootstrap or Fay's method, a replicate within 1 percent of the weight on
-every row, and under Fay's method one equal to it (a post-stratified
-domain whose rows sit in one PSU per stratum); under JK1 and JKn, one
-factor \\k/(k - 1)\\ on every row with no row left out that more or
-fewer replicates than \\k\\ carry (a rescaled copy beside a full set, or
-a lone stray; a genuine set carries it on exactly \\k\\, on a subset
-too); under JK1, JKn and BRR, a replicate that leaves no row out; a
-replicate more than ten times the weight on a typical row (a column on
-another scale, such as an outcome); and a set whose replicates total, on
-average, under a tenth or over ten times the weight (multipliers such as
-survey's `$repweights` passed in place of replicate weights). A column
-of `data` named in `reps`, and every column of an unnamed matrix, is a
-replicate because it was given as one; a stray that is itself shaped
-like a replicate (another design's multipliers, a constant under the
-bootstrap) cannot be told from one. BRR and Fay replicates must come in
-a Hadamard order (2, or a multiple of 4).
+of it on every row; under JKn, a single replicate equal to it, while two
+or more equal to it are kept, as a stratum left out of a subset leaves
+all of its replicates at the weight). Not a copy: a jackknife replicate
+that scales the rows by one factor \\k/(k - 1)\\ (its deleted PSU
+outside a subset), and, in a set whose replicates are post-stratified or
+calibrated (factors off 0, 1, 2 and \\k/(k - 1)\\), a replicate equal or
+close to the weight. Warned about, because a genuine set can produce it
+but rarely does: under the bootstrap, more replicates equal to the
+full-sample weight than chance draws; under the bootstrap or Fay's
+method, a replicate within 1 percent of the weight on every row, and
+under Fay's method one equal to it (a post-stratified domain whose rows
+sit in one PSU per stratum); under JK1 and JKn, one factor \\k/(k - 1)\\
+on every row with no row left out that more or fewer replicates than
+\\k\\ carry (a rescaled copy beside a full set, or a lone stray; a
+genuine set carries it on exactly \\k\\, on a subset too); under JK1,
+JKn and BRR, a replicate that leaves no row out; a replicate more than
+ten times the weight on a typical row (a column on another scale, such
+as an outcome); and a set whose replicates total, on average, under a
+tenth or over ten times the weight (multipliers such as survey's
+`$repweights` passed in place of replicate weights). A column of `data`
+named in `reps`, and every column of an unnamed matrix, is a replicate
+because it was given as one; a stray that is itself shaped like a
+replicate (another design's multipliers, a constant under the bootstrap)
+cannot be told from one. BRR and Fay replicates must come in a Hadamard
+order (2, or a multiple of 4).
 
 The data passed to
 [`svyest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svyest.md)
