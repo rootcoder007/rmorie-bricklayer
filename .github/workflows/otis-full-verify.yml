@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   full-verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       CACHE: ${{ github.workspace }}/.otis-cache
     steps:

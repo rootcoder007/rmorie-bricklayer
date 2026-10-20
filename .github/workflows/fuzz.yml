@@ -33,7 +33,7 @@ concurrency:
 jobs:
   libfuzzer:
     name: libFuzzer + ASan + UBSan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Debian 13 ships OpenSSL 3.5, which fuzz_ossl differs against (ML-KEM, ML-DSA, SLH-DSA)
     container: debian:trixie
     timeout-minutes: 60

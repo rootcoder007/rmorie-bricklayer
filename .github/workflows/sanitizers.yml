@@ -26,7 +26,7 @@ concurrency:
 jobs:
   asan-ubsan:
     name: ASAN + UBSAN (rocker/r-devel-san)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: rocker/r-devel-san
     timeout-minutes: 120
     env:

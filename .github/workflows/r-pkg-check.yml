@@ -39,12 +39,12 @@ jobs:
           # r-universe also checks on Intel macOS; 0.5.5's Hawkes EM failed only there
           - {os: macos-15-intel, r: 'release'}
           - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
-          - {os: ubuntu-latest,  r: 'release'}
-          - {os: ubuntu-latest,  r: 'oldrel-1'}
+          - {os: ubuntu-24.04,  r: 'devel', http-user-agent: 'release'}
+          - {os: ubuntu-24.04,  r: 'release'}
+          - {os: ubuntu-24.04,  r: 'oldrel-1'}
           # A C locale changes what enc2utf8()/validUTF8() report; 0.5.0
           # passed every UTF-8 cell and failed here. Keep one cell on it.
-          - {os: ubuntu-latest,  r: 'release', locale: 'C'}
+          - {os: ubuntu-24.04,  r: 'release', locale: 'C'}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       # pak queries 5 Bioconductor repos by default; this package needs
