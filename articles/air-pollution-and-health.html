@@ -359,9 +359,9 @@ Every default that stood in for a measurement is listed:</p>
 <span><span class="va">fp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/co2fp.html">co2fp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">3e5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, loc <span class="op">=</span> <span class="st">"CA-ON"</span>, cpupwrw <span class="op">=</span> <span class="fl">45</span>,</span>
 <span>                        memgb <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fp</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Computation footprint (modelled): 0.005 s wall, 0.005 s CPU, utilisation 0.25 (process) on 4 cores</span></span>
-<span><span class="co">#&gt;   energy: 2.39e-08 kWh (cpu 1.56e-08, memory 8.28e-09)</span></span>
-<span><span class="co">#&gt;   CO2e:   2.17e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)</span></span>
+<span><span class="co">#&gt; Computation footprint (modelled): 0.004 s wall, 0.003 s CPU, utilisation 0.19 (process) on 4 cores</span></span>
+<span><span class="co">#&gt;   energy: 1.6e-08 kWh (cpu 9.38e-09, memory 6.62e-09)</span></span>
+<span><span class="co">#&gt;   CO2e:   1.46e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)</span></span>
 <span><span class="va">fp</span><span class="op">$</span><span class="va">assumptions</span></span>
 <span><span class="co">#&gt; character(0)</span></span></code></pre></div>
 <div class="section level3">
@@ -391,8 +391,8 @@ for a machine, so a figure can be made comparable with either tool:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span>prolin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>usage <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">usage</span>, cpukwh <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">enekwh</span><span class="op">$</span><span class="va">cpu</span><span class="op">)</span>,</span>
 <span>      maccod <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>usage <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">usage</span>, cpukwh <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">enekwh</span><span class="op">$</span><span class="va">cpu</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;        usage       cpukwh</span></span>
-<span><span class="co">#&gt; prolin 0.250 1.250000e-08</span></span>
-<span><span class="co">#&gt; maccod 0.375 3.133545e-08</span></span>
+<span><span class="co">#&gt; prolin 0.375 9.375000e-09</span></span>
+<span><span class="co">#&gt; maccod 0.250 1.568359e-08</span></span>
 <span><span class="va">b</span><span class="op">$</span><span class="va">usagemode</span></span>
 <span><span class="co">#&gt; [1] "machine"</span></span></code></pre></div>
 </div>
@@ -469,10 +469,10 @@ are the two the Green Algorithms calculator prints:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/fpeqv.html">fpeqv</a></span><span class="op">(</span><span class="va">fp</span><span class="op">$</span><span class="va">co2eg</span> <span class="op">*</span> <span class="fl">1e4</span><span class="op">)</span>   <span class="co"># if this ran ten thousand times</span></span>
 <span><span class="co">#&gt; $carkm</span></span>
-<span><span class="co">#&gt; [1] 0.0001242535</span></span>
+<span><span class="co">#&gt; [1] 8.315813e-05</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $treemon</span></span>
-<span><span class="co">#&gt; [1] 2.371249e-05</span></span>
+<span><span class="co">#&gt; [1] 1.586987e-05</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $sources</span></span>
 <span><span class="co">#&gt;                                                                  car </span></span>
