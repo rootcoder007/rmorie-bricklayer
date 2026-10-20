@@ -91,6 +91,12 @@ the OCAP and CARE principles and the source tables.}
 \item{Hawkes}{\code{\link[=chwkfit]{chwkfit()}} with
 \code{\link[=plothwk]{plothwk()}} (intensity, time-rescaling QQ, branching tree)
 and \code{\link[=chwksim]{chwksim()}}.}
+\item{Search and rescue}{the search theory functions behind one form:
+\code{\link[=ltrlrng]{ltrlrng()}}, \code{\link[=srchpod]{srchpod()}},
+\code{\link[=pswppod]{pswppod()}}, \code{\link[=datumpmap]{datumpmap()}},
+\code{\link[=opteffort]{opteffort()}} and \code{\link[=optcrcsrch]{optcrcsrch()}},
+with the POD and POS numbers and four plots, and any figure of
+Frost's The Theory of Search through \code{\link[=srchfig]{srchfig()}}.}
 \item{Proof ledger}{a ledger (\code{\link[=ldgrread]{ldgrread()}}) from a file, a
 capsule or an installed package, its theorems with their status and covered
 functions, and \code{\link[=ldgrchk]{ldgrchk()}}.}

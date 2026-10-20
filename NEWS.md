@@ -389,7 +389,8 @@ New estimators, each checked against the reference implementation (`fixest`, `di
   finds nothing), `datumpmap()` (point, line and area datums on a grid), `optcrcsrch()` and
   `opteffort()` (the optimal effort for a circular datum and over cells), and `optsqr()` (the
   square a point-datum search should cover, for one search or a series). The numbers agree with
-  rmorie's to 1e-12. Each result prints and plots. `srchfig()` draws each of the 36 figures of
+  rmorie's to 1e-12. Each result prints and plots, and the dashboard (`rmblapp()`) has a "Search and
+  rescue" tab with them and a picker for the book's figures. `srchfig()` draws each of the 36 figures of
   Frost's *The Theory of Search* (1996) from these functions with the book's parameters, and a new
   vignette, "Search and rescue", walks the book's chapters through them.
 

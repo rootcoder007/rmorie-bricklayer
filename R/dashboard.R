@@ -74,6 +74,12 @@
 #'   \item{Hawkes}{[chwkfit()] with
 #'     [plothwk()] (intensity, time-rescaling QQ, branching tree)
 #'     and [chwksim()].}
+#'   \item{Search and rescue}{the search theory functions behind one form:
+#'     [ltrlrng()], [srchpod()],
+#'     [pswppod()], [datumpmap()],
+#'     [opteffort()] and [optcrcsrch()],
+#'     with the POD and POS numbers and four plots, and any figure of
+#'     Frost's The Theory of Search through [srchfig()].}
 #'   \item{Proof ledger}{a ledger ([ldgrread()]) from a file, a
 #'     capsule or an installed package, its theorems with their status and covered
 #'     functions, and [ldgrchk()].}
@@ -260,7 +266,8 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
   tabs <- c(tabs[1:6], list(shiny::tabPanel("Drift", value = "drift", .bl_drift_ui("drift")),
                             shiny::tabPanel("Capsule", value = "capsule", .bl_cps_ui("capsule"))),
             tabs[-(1:6)],
-            list(shiny::tabPanel("Proof ledger", value = "ledger", .bl_ldgr_ui("ledger")),
+            list(shiny::tabPanel("Search and rescue", value = "search", .bl_srch_ui("search")),
+                 shiny::tabPanel("Proof ledger", value = "ledger", .bl_ldgr_ui("ledger")),
                  shiny::tabPanel("Report", value = "report", .bl_rpt_ui("report")),
                  shiny::tabPanel("Settings", value = "settings", .bl_set_ui("settings"))))
   shiny::fluidPage(
@@ -287,6 +294,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
     for (s in .bl_app_specs()) .bl_tab_server(s$id, s, dat, rpt, set)
     .bl_drift_server(input, output, session)
     .bl_cps_server("capsule", dat, rpt)
+    .bl_srch_server("search", rpt)
     .bl_ldgr_server("ledger", dat, rpt)
     .bl_rpt_server("report", rpt)
   }
