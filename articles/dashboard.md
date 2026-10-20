@@ -6,7 +6,7 @@ on your machine, in your R session. It needs the shiny package.
 
 ``` r
 
-rmblapp()                          # start empty, load data at the left
+rmblapp()                          # every tab opens on its own demo dataset
 rmblapp(indiex("health"))          # start with a data frame
 rmblapp(capsule = "path/to/capsule")
 ```
@@ -14,22 +14,112 @@ rmblapp(capsule = "path/to/capsule")
 From a terminal, `rmbl app [PATH] [--port N] [--no-browser]` does the
 same. PATH is a CSV file or a capsule directory.
 
-Every analysis shows the R call it ran, and it runs exactly that call.
-Copy the call into a script and you get the same result. When a function
-refuses, the tab shows the refusal in the package’s words, with
+## The page
+
+The navbar groups the tabs in menus: **Data** (Describe, Distributions),
+**Over time** (Year over year, Rates, Trends), **Causal and survey**
+(Survey, Policy), **Capsules** (Drift, Capsule, Proof ledger) and
+**Domains** (First Nations, Métis and Inuit; Courts and corrections; Air
+pollution; Hawkes), then Report and Settings. At the right, **Share this
+view** gives a link that reopens the page with the same tab, data and
+form, and the switch sets light or dark mode.
+
+Each analysis tab has its form in a sidebar (the data, the analysis and
+its arguments) and opens with its first analysis already run on a demo
+dataset. Its results are in cards:
+
+- **Value boxes**: the headline estimate, its interval, n (with the
+  p-value) and a verdict.
+- **Plot**: the package’s plot for the result, or the estimates with
+  their intervals when the function has no plot. It opens full screen,
+  and downloads as PNG, SVG or the table as CSV.
+- **Method**: the method in its help page’s words, its assumptions, what
+  the numbers mean, and how to read the effect sizes and fit statistics
+  the result carries (standardised differences, Cramér’s V, I-squared,
+  correlations, ratios, the branching ratio, the time-rescaling test,
+  overdispersion, the PSI).
+- **Diagnostics**: the diagnostic plots the method has (QQ, PP and tail
+  plots of a fit, the time-rescaling QQ plot of a Hawkes fit, observed
+  and fitted values with residuals of a count trend, the clearance
+  interval of a case flow, the fingerprint of a drift), the checks and
+  secondary tables the function returns, and the rows by flag.
+- **Table**, with the printed result below it, and the **Reproducible R
+  call**.
+
+Some views are linked. Choose a column name in Describe’s profile to see
+its distribution. Point at the year-over-year plot to see the rows of
+that period. On the Drift tab, drag across the two densities of a column
+to see the share of each snapshot’s rows in that range.
+
+The resampling analyses (bootstraps, permutations, simulations, the
+Hawkes fits) run in a forked background process on Linux and macOS, so
+the page stays live while they work; the Run button shows that it is
+busy. A refusal appears in the page in the package’s words, with
 [`explerr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/explerr.md)’s
-note on where it comes from.
+note on where it comes from, and as a notice in the corner.
 
-## Loading data
+Every analysis shows the R call it ran, and it runs exactly that call.
+Copy the call into a script and you get the same result.
 
-The panel at the left takes a CSV file (plain or gzip), a capsule
-directory, or a table from data.rmorie.com. For a capsule it loads the
-pinned data file. For data.rmorie.com, sign in first with `rmbl login`.
-The app never holds your data key:
+## Data
+
+Every tab opens on a dataset from
+[`rmbldemo()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbldemo.md):
+made-up, seeded data shaped like what the tab reads. They are the same
+on every call.
+
+``` r
+
+rmbldemo()
+#>               name rows
+#> 1            court  576
+#> 2         offences 1440
+#> 3  offences_annual  120
+#> 4           survey 1200
+#> 5             fnmi  128
+#> 6             otis  144
+#> 7              air 2016
+#> 8           hawkes   NA
+#> 9            drift 3000
+#> 10           waits 1000
+#> 11          ledger  120
+#>                                                                  description
+#> 1           Court caseload panel, 16 courts by 36 months, a staggered reform
+#> 2   Monthly offence counts by area, seasonal, with a step down in April 2020
+#> 3                       The offence counts by area and year, with population
+#> 4    Stratified two-stage survey with design and bootstrap replicate weights
+#> 5  Published health table by distinction, suppressed cells and quality flags
+#> 6       Custody admissions and days by institution and year (stock and flow)
+#> 7                   Hourly NO2 at six monitors around a stack, with the wind
+#> 8                                   Self-exciting event stream over one year
+#> 9              Two snapshots of one table, reference and current, with drift
+#> 10                  Days to disposition and appearances of 1,000 court cases
+#> 11                 Proof ledger of 120 theorems and the functions they cover
+```
+
+The court panel, for example, has a reform adopted by eight of sixteen
+courts at four different months. It lowers the median delay by 12 days,
+and the courts share a trend, so the parallel-trends assumption holds:
+
+``` r
+
+court <- rmbldemo("court")
+plndid(court, unit = "court", time = "month", y = "delay", trtd = "reformed")
+#> Difference in differences: 576 observations, 16 clusters
+#>     term estimate     se  lower  upper     t   p_value
+#>  treated   -12.61 0.4724 -13.62 -11.61 -26.7 4.643e-14
+#> Effect relative to the comparison units' pre-period mean (100): -12.6%
+```
+
+The **Data** sidebar (the arrow at the left) takes a demo dataset, a CSV
+file (plain or gzip), a capsule directory, or a table from
+data.rmorie.com, and **Load all demos** loads every demo dataset so you
+can switch between them. Data chosen there is used by every tab (“The
+dataset chosen at the left” in a tab’s Data menu). For a capsule it
+loads the pinned data file. For data.rmorie.com, sign in first with
+`rmbl login`. The app never holds your data key:
 [`dload()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dmnf.md)
-reads it from where `rmbl login` stored it. The column types are listed
-under the source. Each tab also offers example data, so you can try
-every form before loading your own.
+reads it from where `rmbl login` stored it.
 
 ## The tabs
 
@@ -42,6 +132,11 @@ every form before loading your own.
   [`missgrid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missgrid.md),
   plus ridgelines, distribution functions, violins, hexagonal bins and
   concentration curves.
+- **Distributions**:
+  [`dstfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstfit.md)
+  fits candidate distributions and ranks them, with density, QQ, PP and
+  tail plots. You can draw a synthetic sample from the best fit with
+  [`mksyncol()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mksyncol.md).
 - **Year over year**:
   [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
   with the period, value, groups, the smallest base for a percentage and
@@ -66,19 +161,6 @@ every form before loading your own.
   [`svyest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svyest.md)
   or
   [`svycmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svycmp.md).
-- **Distributions**:
-  [`dstfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstfit.md)
-  fits candidate distributions and ranks them, with density, QQ, PP and
-  tail plots. You can draw a synthetic sample from the best fit with
-  [`mksyncol()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mksyncol.md).
-- **Drift**: the drift app, when this version has it.
-- **Capsule**: a capsule’s provenance, manifest, attestation and bundle
-  files. Its buttons run
-  [`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
-  and
-  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md),
-  or
-  [`cpsrfrsh()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrfrsh.md).
 - **Policy**: the panel designs on unit-by-period data, from
   [`plndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndid.md)
   and
@@ -89,18 +171,35 @@ every form before loading your own.
   [`plnpwr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpwr.md)
   and
   [`tse()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tse.md).
-  The panel names the assumption they share: without the policy, the
+  The tab names the assumption they share: without the policy, the
   outcomes would have moved in parallel. Read the pre-period
   coefficients and the cohort trends before the estimate.
+- **Drift**:
+  [`cpsdrft()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md)
+  on two snapshots, and the app of
+  [`drftapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftapp.md)
+  for two CSV files.
+- **Capsule**: a capsule’s provenance, manifest, attestation and bundle
+  files (a demo capsule is built in a temporary directory). Its buttons
+  run
+  [`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
+  and
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md),
+  or
+  [`cpsrfrsh()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrfrsh.md).
+- **Proof ledger**: a ledger from the demo, a file, a capsule or an
+  installed package, its theorems and
+  [`ldgrchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)’s
+  rows.
 - **First Nations, Métis and Inuit**: Statistics Canada’s tables as
   [`indiex()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indiex.md)
-  ships them, or your own in the same layout. Each distinction is
-  reported on its own. Suppressed cells stay suppressed, and the quality
-  flags are shown. The panel states the OCAP® and CARE principles and
-  links the source tables.
+  ships them, a demo table in the same layout, or your own. Each
+  distinction is reported on its own. Suppressed cells stay suppressed,
+  and the quality flags are shown. The tab states the OCAP® and CARE
+  principles and links the source tables.
 - **Courts and corrections**:
-  [`stkflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stkflow.md),
   [`caseflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/caseflow.md),
+  [`stkflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stkflow.md),
   [`clrdcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clrdcmp.md),
   [`dispmix()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dispmix.md),
   [`lifetbl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/lifetbl.md),
@@ -114,7 +213,8 @@ every form before loading your own.
   on pasted text.
 - **Air pollution**: a plume map
   ([`plmfld()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plmfld.md)),
-  a downwind profile and receptor concentrations
+  the demo monitors’ readings, a downwind profile and receptor
+  concentrations
   ([`gplume()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pgsig.md)),
   the concentration-response functions,
   [`polbrdn()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/polbrdn.md)
@@ -124,12 +224,10 @@ every form before loading your own.
   [`chwkfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwkfit.md)
   with
   [`plothwk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plothwk.md)
-  (intensity, time-rescaling check, branching tree) and
-  [`chwksim()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwksim.md).
-- **Proof ledger**: a ledger from a file, a capsule or an installed
-  package, its theorems and
-  [`ldgrchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)’s
-  rows.
+  (intensity, time-rescaling check, branching tree),
+  [`chwksim()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwksim.md)
+  and
+  [`chwkjit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwkjit.md).
 - **Report**: what you added from the tabs. Save it as one HTML page
   with the plots as inline SVG, as Markdown, or copy it as a GitHub
   comment.
@@ -138,26 +236,25 @@ every form before loading your own.
 
 ## The same work in a script
 
-What the Distributions tab runs:
+What the Distributions tab runs on its demo data:
 
 ``` r
 
-set.seed(1)
-wait <- stats::rgamma(300, 2, 0.5)
+wait <- rmbldemo("waits")$days
 fit <- dstfit(wait, nboot = 50)
 fit$table[, c("rank", "family", "aic", "ks")]
 #>   rank      family      aic         ks
-#> 1    1     weibull 1351.093 0.02543328
-#> 2    2       gamma 1352.651 0.03906373
-#> 3    3   lognormal 1387.446 0.07363527
-#> 4    4 exponential 1420.742 0.14763458
-#> 5    5           t 1428.453 0.08260813
-#> 6    6      normal 1438.345 0.09559638
-#> 7    7      pareto 1895.463 0.36065534
+#> 1    1       gamma 12144.46 0.04754282
+#> 2    2     weibull 12163.66 0.05231905
+#> 3    3   lognormal 12166.91 0.04705977
+#> 4    4 exponential 12196.68 0.07886116
+#> 5    5           t 12571.14 0.13837486
+#> 6    6      normal 12934.52 0.16103623
+#> 7    7      pareto 14258.49 0.41016644
 plot(fit, which = "qq", fams = c("gamma", "weibull"))
 ```
 
-![](dashboard_files/figure-html/unnamed-chunk-1-1.png)
+![](dashboard_files/figure-html/unnamed-chunk-3-1.png)
 
 And what the Proof ledger tab runs on the sample ledger:
 

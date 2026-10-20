@@ -194,18 +194,18 @@ Quantifying the carbon emissions of machine learning. arXiv:1910.09700.
 ``` r
 fp <- co2fp(sum(sqrt(seq_len(2e5))), loc = "CA-ON")
 fp$enekwh$total
-#> [1] 4.02638e-08
+#> [1] 2.684254e-08
 fp$co2eg
-#> [1] 3.662798e-06
+#> [1] 2.441866e-06
 fp$co2int$year
 #> [1] 2024
 fp$assumptions
 #> [1] "CPU power unknown: 85 W x 50% (codecarbon fallback)"
 #> [2] "memory charged: the machine's total 15.6 GB"        
 print(fp)
-#> Computation footprint (modelled): 0.003 s wall, 0.002 s CPU, utilisation 0.17 (process) on 4 cores
-#>   energy: 4.03e-08 kWh (cpu 3.54e-08, memory 4.85e-09)
-#>   CO2e:   3.66e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
+#> Computation footprint (modelled): 0.002 s wall, 0.002 s CPU, utilisation 0.25 (process) on 4 cores
+#>   energy: 2.68e-08 kWh (cpu 2.36e-08, memory 3.23e-09)
+#>   CO2e:   2.44e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
 #>   assumed: CPU power unknown: 85 W x 50% (codecarbon fallback); memory charged: the machine's total 15.6 GB 
 # wherever you are, offline: the location is detected and recorded
 co2fp(1 + 1, cpupwrw = 45, memgb = 8)$assumptions

@@ -19,6 +19,26 @@
   note. The Report tab gathers results into one HTML page (plots as
   inline SVG), Markdown or a GitHub comment.
   [`vignette("dashboard")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/dashboard.md).
+- The dashboard is built with bslib (suggested, and installed with
+  shiny): menus in the navbar, a form in each tab’s sidebar, value boxes
+  with the estimate, its interval, n and a verdict, a plot card that
+  opens full screen and downloads as PNG, SVG or CSV, a method card (the
+  method in its help page’s words, its assumptions, what the numbers
+  mean, how to read the effect sizes), a diagnostics card, the table and
+  the R call. Every tab opens with its first analysis run on a demo
+  dataset. Resampling analyses run in the background so the page stays
+  live, refusals also show as a notice, a column of the profile opens
+  its distribution, the year-over-year plot shows a period’s rows on
+  hover, the Drift tab gives each snapshot’s share of a brushed range,
+  and “Share this view” bookmarks the page in its URL. Dark mode follows
+  the switch in the navbar.
+- [`rmbldemo()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbldemo.md)
+  returns seeded, made-up datasets for the dashboard and examples: a
+  court caseload panel with a staggered reform, monthly offence counts
+  with a step change, a stratified survey with replicate weights, a
+  published health table with suppressed cells, custody stock and flow,
+  a monitor series around a plume source, a Hawkes event stream, two
+  drift snapshots, case processing times and a proof ledger.
 - [`dstfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstfit.md)
   fits normal, log-normal, exponential, gamma, Weibull, Student t,
   Pareto, beta, Poisson, negative binomial and zero-inflated Poisson and

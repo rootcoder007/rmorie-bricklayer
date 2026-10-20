@@ -1441,6 +1441,8 @@ ledgers.
 
 - [`rmblapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmblapp.md)
   : Open the analysis dashboard
+- [`rmbldemo()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbldemo.md)
+  : Demonstration datasets
 - [`dstfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstfit.md)
   [`print(`*`<rmbl_dstfit>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstfit.md)
   : Fit and rank candidate distributions

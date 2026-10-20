@@ -107,7 +107,7 @@ explerr(msg, pkgs = "rmoriebricklayer")
 #>                                                                           exported
 #> 1       bricklayer_llm_ask, llmask, agent_bundle, agentbndl, analyse_table, anltab
 #> 2 blcli, capsule_attest, capsule_check_attestation, capsule_sign, cpsatst, cpsbndl
-#> 3                                                 use_capsule_template, usecpstmpl
+#> 3                                        rmblapp, use_capsule_template, usecpstmpl
 #>    kind                                    message            match
 #> 1 error    `...` must be a single non-empty string            exact
 #> 2 error `scheme` must be a single non-empty string 80% of its words

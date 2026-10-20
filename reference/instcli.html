@@ -122,18 +122,18 @@ refused).</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># into a scratch folder, so nothing on your PATH changes</span></span></span>
 <span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"bin"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">instcli</span><span class="op">(</span>dir <span class="op">=</span> <span class="va">d</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Installed /tmp/RtmpN0LMhC/bin/rmoriebricklayer and /tmp/RtmpN0LMhC/bin/rmbl; add /tmp/RtmpN0LMhC/bin to your PATH</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Installed /tmp/RtmpUoHxei/bin/rmoriebricklayer and /tmp/RtmpUoHxei/bin/rmbl; add /tmp/RtmpUoHxei/bin to your PATH</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "rmbl"             "rmoriebricklayer"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "#!/bin/sh"                                                                                        </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [2] "# rmoriebricklayer: the rmoriebricklayer command line (written by rmoriebricklayer::instcli())"   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "# runs the package in /tmp/RtmpN0LMhC/temp_libpath1f4a52eb8e33 (pinned with .libPaths() inside R)"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "# runs the package in /tmp/RtmpUoHxei/temp_libpath1f22157811d3 (pinned with .libPaths() inside R)"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [4] "export RMBL_PROG=rmoriebricklayer"                                                                </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># one name only</span></span></span>
 <span class="r-in"><span><span class="fu">instcli</span><span class="op">(</span>dir <span class="op">=</span> <span class="va">d</span>, name <span class="op">=</span> <span class="st">"rmbl"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Installed /tmp/RtmpN0LMhC/bin/rmbl; add /tmp/RtmpN0LMhC/bin to your PATH</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Installed /tmp/RtmpUoHxei/bin/rmbl; add /tmp/RtmpUoHxei/bin to your PATH</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># interactive()</span></span></span>
 <span class="r-in"><span><span class="fu">instcli</span><span class="op">(</span><span class="op">)</span>   <span class="co"># ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl</span></span></span>
