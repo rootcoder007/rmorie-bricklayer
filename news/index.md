@@ -28,10 +28,43 @@
   do the shared argument checks.
 - [`stepchg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stepchg.md)
   puts `before`, `after` and `difference` back into the units of `y`
-  when the series is above 1e150 (they stayed rescaled), and refuses a
-  numeric or date `x` that is not strictly increasing.
+  when the series is above 1e150 (they stayed rescaled), rescales a
+  series below 1e-150 as well (the squares underflowed and every split
+  tied), and refuses an `x` that is not numbers or dates, has a missing
+  period or is not strictly increasing.
   [`trndtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trndtst.md)
   refuses duplicated periods.
+- [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  compares yearly, quarterly and monthly `Date` periods (all on one day
+  of the month, or all month ends) on a grid of calendar months; on a
+  grid of days none of them had a comparison.
+- `svydes(type = "jkn")` on a domain keeps a replicate that deletes a
+  PSU of a stratum of 101 or more PSUs: its factor, within 1% of the
+  weight, is the 1 / rscale its `rscales` says, and it was refused as a
+  copy.
+- The plots over time put text periods in time order (fiscal years,
+  years, year-months, quarters), not in the order they first appear.
+  `plot(yoy(...))` says “no data in the previous period” for a period
+  after a gap, which it called the first period, and refuses a result
+  with no values.
+- [`rtcalc()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md)
+  and
+  [`ratechg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ratechg.md)
+  name `pop` in their refusal, and
+  [`exprspplr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exprspplr.md)
+  names the call `estr(data, y, expo, confs)`.
+  [`blcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blcli.md)
+  refuses `NA` or a function as `args`,
+  [`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
+  a function as `email`, and
+  [`instcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/instcli.md)
+  a `dir` it cannot create or write, each with its name in front.
+- The examples that sign keep the one-time index record in a temporary
+  file, and the slower examples of
+  [`blcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blcli.md)
+  and
+  [`explerr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/explerr.md)
+  run only in an interactive session.
 - [`chwkfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwkfit.md)
   warns when the branching ratio sits on its 0.99 bound.
 - [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
@@ -186,11 +219,30 @@ is
 `conf_level` is `conflvl`, `trend_sensitivity()` is
 [`tse()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tse.md)).
 Each help page gives the full form of every short name. Every 0.5.13
-export is still callable by its old name with its old argument names:
-`?rmbl-aliases` lists the 304 aliases, each a wrapper that forwards to
-the new function (the eleven rmoriedata 0.3.x calls among them in
-`?rmbl-compat`), so code written against 0.5.x keeps running and the
-reference stays one page per method. `rmbl functions` and the help-aware
+export is still callable by its old name with its old argument names and
+defaults: `?rmbl-aliases` lists the 304 aliases, each a wrapper that
+forwards to the new function (the eleven rmoriedata 0.3.x calls among
+them in `?rmbl-compat`). Allowed values that were renamed
+(`"mean_bootstrap"` is `"meanboot"`, `"higher_is_better"` is `"higher"`,
+`"all_cause_mortality"` is `"allcause"`) are translated on the way, as
+are old argument names passed through `...` and the old `what` and
+`which` values of the plot methods. The nine options read their 0.5.x
+names too (`rmoriebricklayer.xmss_index_file` for
+`rmoriebricklayer.xmssidxfile`), so a record or cache an old `.Rprofile`
+points to is still used.
+[`rate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md),
+[`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md),
+[`share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md)
+and
+[`yoy_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md)
+stay S3 generics, so methods written for them still dispatch.
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+kept its name and takes its 0.5.x argument names (`period`, `min_base`,
+`conf_level`, `direction`) beside the new ones. Functions and arguments
+keep working through the aliases; result columns and fields use the new
+names (`co2e_g` is `co2eg`, `pct_valid` is `pctvalid`), and
+`?rmbl-aliases` lists every renamed one, so code that reads a 0.5.x
+result needs those names changed. `rmbl functions` and the help-aware
 language-model tools list the new names. Wire formats (capsule, manifest
 and service JSON fields, CSV columns from published tables) keep their
 names, so files written by earlier versions still read.

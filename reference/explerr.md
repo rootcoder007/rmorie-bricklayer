@@ -112,28 +112,8 @@ explerr(msg, pkgs = "rmoriebricklayer")
 #> 1 error    `...` must be a single non-empty string            exact
 #> 2 error `scheme` must be a single non-empty string 80% of its words
 #> 3 error   `name` must be a single non-empty string 80% of its words
-r <- try(llmcfg(no.such = 1), silent = TRUE)
-explerr(r, pkgs = "rmoriebricklayer")
-#>            package      raised_by
-#> 1 rmoriebricklayer .bl_cli_config
-#> 2 rmoriebricklayer         llmcfg
-#>                                               exported  kind
-#> 1                                blcli, bricklayer_cli error
-#> 2 blcli, bricklayer_cli, bricklayer_llm_config, llmcfg error
-#>                               message match
-#> 1 unknown setting '...' (one of: ...) exact
-#> 2 unknown setting '...' (one of: ...) exact
 
-# the message as R prints it, with the call in front
-explerr(
-  "Error in mrkprf(x, 9) : `index` must be between 1 and the number of chunks",
-  n = 1)
-#>            package raised_by             exported  kind
-#> 1 rmoriebricklayer    mrkprf merkle_proof, mrkprf error
-#>                                              message match
-#> 1 `index` must be between 1 and the number of chunks exact
-
-# a condition object, and a message retyped from memory
+# a condition object
 e <- tryCatch(kemsz(3), error = identity)
 explerr(e, n = 1)
 #>            package       raised_by
@@ -142,15 +122,6 @@ explerr(e, n = 1)
 #> 1 kem_keygen, kem_sizes, kem_decapsulate, kem_encapsulate, kemdecap, kemencap
 #>    kind                                 message match
 #> 1 error `level` must be one of 512, 768 or 1024 exact
-explerr("index between number chunks", n = 1)
-#>            package raised_by             exported  kind
-#> 1 rmoriebricklayer    mrkprf merkle_proof, mrkprf error
-#>                                              message             match
-#> 1 `index` must be between 1 and the number of chunks 100% of its words
-
-# R's own messages are not in the table: no rows
-nrow(explerr("object 'x' not found"))
-#> [1] 0
 
 # the failed rows of a capsule check
 rows <- data.frame(check = c("data_present", "data_sha256"), ok = c(TRUE, FALSE),
@@ -161,4 +132,19 @@ explerr(rows)$explanation
 # n must be at least 1
 try(explerr(msg, n = 0))
 #> Error : `n` must be a whole number of 1 or more
+
+if (FALSE) { # interactive()
+# an error caught with try(), and the message as R prints it, with the call in front
+r <- try(llmcfg(no.such = 1), silent = TRUE)
+explerr(r, pkgs = "rmoriebricklayer")
+explerr(
+  "Error in mrkprf(x, 9) : `index` must be between 1 and the number of chunks",
+  n = 1)
+
+# a message retyped from memory
+explerr("index between number chunks", n = 1)
+
+# R's own messages are not in the table: no rows
+nrow(explerr("object 'x' not found"))
+}
 ```

@@ -406,7 +406,8 @@ of <code>"adp"</code>, <code>"alos"</code>, <code>"people"</code>, <code>"days"<
 <li><p><code>rmbl_case_flow</code>: <code>"flow"</code> and/or <code>"clearance"</code>;</p></li>
 <li><p><code>rmbl_clearance_decomposition</code>: any of <code>"rates"</code>,
 <code>"mix"</code> and <code>"effects"</code> (the default fits the device).</p></li>
-</ul></dd>
+</ul><p>The 0.5.x values <code>"pct_change"</code>, <code>"flow_rate"</code> and <code>"stock_rate"</code> are
+still accepted, as is <code>"rate_change"</code> for <code>which</code>.</p></dd>
 
 
 <dt id="arg-points">points<a class="anchor" aria-label="anchor" href="#arg-points"></a></dt>
@@ -417,7 +418,8 @@ over the surface.</p></dd>
 <dt id="arg-maxparts">maxparts<a class="anchor" aria-label="anchor" href="#arg-maxparts"></a></dt>
 <dd><p>For <code>rmbl_clearance_decomposition</code>, the most parts drawn: past
 it,
-the parts that moved the aggregate most, and the rest summed into one row.</p></dd>
+the parts that moved the aggregate most, and the rest summed into one row. The 0.5.x
+name <code>max_parts</code> is still accepted.</p></dd>
 
 
 <dt id="arg-threshold">threshold<a class="anchor" aria-label="anchor" href="#arg-threshold"></a></dt>

@@ -256,187 +256,10 @@ blcli("help")
 #>   rmoriebricklayer help config     every setting, its environment variable, and examples
 #>   rmoriebricklayer help r          the same from R and Rscript
 #>   rmoriebricklayer VERB --help     one verb's usage
-blcli(c("functions", "json"))
-#>   bricklayer_json_base64_dec     The 0.5.x names, kept as aliases
-#>   bricklayer_json_base64_enc     The 0.5.x names, kept as aliases
-#>   bricklayer_json_base64url_dec  The 0.5.x names, kept as aliases
-#>   bricklayer_json_base64url_enc  The 0.5.x names, kept as aliases
-#>   bricklayer_json_from_json      Old names kept for rmoriedata 0.3.x
-#>   bricklayer_json_serialize      The 0.5.x names, kept as aliases
-#>   bricklayer_json_to_json        Old names kept for rmoriedata 0.3.x
-#>   bricklayer_json_unserialize    The 0.5.x names, kept as aliases
-#>   json_gzip_decode               The 0.5.x names, kept as aliases
-#>   json_gzip_encode               The 0.5.x names, kept as aliases
-#>   write_manifest_json            The 0.5.x names, kept as aliases
-#>   yoy_json                       The 0.5.x names, kept as aliases
-blcli(c("describe", "anltab"))
-#> Analyse a published administrative table in one call
-#> 
-#> Description:
-#> 
-#>      The questions asked of a published table are always the same:
-#>      what is in it, what changed between periods and how sure can one
-#>      be, what the rates are if there is an exposure, whether a short
-#>      series trends, and whether this release differs from the one
-#>      held before. Each has a function in this package; this runs them
-#>      together, with the pieces a reviewer needs and that are easy to
-#>      forget on a deadline: exact intervals on every change,
-#>      multiple-comparison adjustment over the groups scanned, the
-#>      envelope that rounding and suppression in the release imply, and
-#>      a drift screen against the prior capsule.
-#> 
-#> Usage:
-#> 
-#>      anltab(
-#>        data,
-#>        value,
-#>        prd,
-#>        by = NULL,
-#>        pop = NULL,
-#>        prior = NULL,
-#>        units = c("count", "continuous", "percent"),
-#>        rnd = NULL,
-#>        rndkind = c("nearest", "random"),
-#>        suplim = NULL,
-#>        dir = c("neutral", "higher", "lower"),
-#>        per = 1000,
-#>        conflvl = 0.95,
-#>        alpha = 0.05,
-#>        adjust = "BH"
-#>      )
-#>      
-#> Arguments:
-#> 
-#>     data: A data frame in long form: one row per period and group.
-#> 
-#>    value: Name of the column (a string) with the published count (or
-#>           measure).
-#> 
-#>      prd: Name of the column with the period (fiscal year, quarter,
-#>           ...); numeric periods are used as the time axis of the
-#>           trend tests.
-#> 
-#>       by: Optional character vector of grouping column names
-#>           (institution, region, ...). ‘NULL’ (the default) treats the
-#>           table as one series.
-#> 
-#>      pop: Optional name of an exposure column for rates (‘NULL’, the
-#>           default, skips the rate step).
-#> 
-#>    prior: Optional data frame: the previous capsule of the same
-#>           table, for the drift screen. ‘NULL’ (the default) skips it.
-#> 
-#>    units: ‘"count"’ (the default), ‘"continuous"’ or ‘"percent"’, as
-#>           in ‘yoy()’.
-#> 
-#> rnd, rndkind, suplim: How the release rounds or suppresses cells; see
-#>           ‘pubbnd()’. ‘rnd’ is the rounding base (for example 5),
-#>           ‘rndkind’ ‘"nearest"’ (the default) or ‘"random"’, ‘suplim’
-#>           the threshold below which cells are suppressed. ‘NULL’ when
-#>           the counts are exact. Used only for counts: with other
-#>           ‘units’ they are ignored, with a warning.
-#> 
-#>      dir: Which way is an improvement, as in ‘yoy()’: ‘"neutral"’
-#>           (the default), ‘"higher"’ or ‘"lower"’.
-#> 
-#>      per: Rate denominator, as in ‘rtcalc()’; default 1000 (rates per
-#>           1,000 of ‘pop’).
-#> 
-#>  conflvl: Confidence level for every interval, default 0.95.
-#> 
-#>    alpha: Level for the multiple-comparison decision and the drift
-#>           screens, default 0.05.
-#> 
-#>   adjust: Multiple-comparison method for ‘scanadj()’. The default is
-#>           ‘"BH"’ (Benjamini-Hochberg).
-#> 
-#> Details:
-#> 
-#>      The steps, in order:
-#> 
-#>        1. profile: ‘profcols()’ and ‘misssmry()’ on ‘data’;
-#> 
-#>        2. change: ‘yoy()’ between consecutive periods within each
-#>           ‘by’ group. For ‘units = "count"’ the exact p-values are
-#>           then adjusted across all comparisons with ‘scanadj()’, and,
-#>           when ‘rnd’ or ‘suplim’ is given, ‘yoybnd()’ adds the
-#>           publication envelope (see ‘pubbnd()’). For ‘"continuous"’
-#>           and ‘"percent"’ units neither step runs: ‘rnd’ and ‘suplim’
-#>           are then ignored, with a warning;
-#> 
-#>        3. rates (only with ‘pop’): ‘rtcalc()’ per group and period,
-#>           and ‘ratechg()’ between periods, adjusted with ‘scanadj()’;
-#> 
-#>        4. trend: per group, the values summed within each period,
-#>           then ‘trndtst()’ (Mann-Kendall tau, p-value and Theil-Sen
-#>           slope) and, for counts, ‘cnttrnd()’ (Poisson rate ratio per
-#>           period). A group with fewer than three periods gets ‘NA’; a
-#>           test that fails gets ‘NA’ rather than an error;
-#> 
-#>        5. drift (only with ‘prior’): ‘cpsdrft()’ of ‘data’ against
-#>           ‘prior’.
-#> 
-#>      Nothing is written and nothing is fetched; a progress bar for
-#>      the trend step is drawn on stderr unless ‘options(morie.quiet =
-#>      TRUE)’. Errors: ‘data’ or ‘prior’ not a data frame; a named
-#>      column not in ‘data’; an invalid ‘units’, ‘dir’ or ‘rndkind’; a
-#>      ‘conflvl’ outside (0, 1); and any error of the functions called
-#>      (for example negative counts in ‘yoy()’).
-#> 
-#> Value:
-#> 
-#>      A list of class ‘bricklayer_analysis’ (with a print method that
-#>      summarises it in a few lines):
-#> 
-#>      ‘profile’
-#>           ‘profcols()’ of ‘data’.
-#> 
-#>      ‘missingness’
-#>           named numeric from ‘misssmry()’.
-#> 
-#>      ‘change’
-#>           the ‘yoy()’ table; for counts with the added columns
-#>           ‘p_value’, ‘padj’ and ‘significant’, and with ‘env_*’ and
-#>           ‘compctlo’/‘compctup’ when publication bounds were
-#>           requested.
-#> 
-#>      ‘rates’, ‘ratechg’
-#>           the ‘rtcalc()’ and ‘ratechg()’ tables when ‘population’ is
-#>           given, otherwise ‘NULL’.
-#> 
-#>      ‘trend’
-#>           data frame with one row per group: the ‘by’ columns,
-#>           ‘periods’, ‘first’, ‘last’, ‘tau’, ‘trndp’, ‘slope’,
-#>           ‘rateratio’, ‘rateratiolo’, ‘rateratioup’.
-#> 
-#>      ‘drift’
-#>           ‘cpsdrft()’ result against ‘prior’, or ‘NULL’.
-#> 
-#>      ‘meta’
-#>           list of the arguments used, ‘nrows’, the sorted ‘periods’,
-#>           ‘prior’ (logical) and ‘when’ (a time stamp).
-#> 
-#> See Also:
-#> 
-#>      ‘rptanl()’ writes the result as a Markdown or HTML report.
-#> 
 
-# one verb's usage, and the examples of a help page
+# one verb's usage
 blcli(c("help", "data"))
 #> usage: rmoriebricklayer data list | data pull db/table [--out FILE.csv]   curated tables at data.rmorie.com (your MORIE key)
-blcli(c("examples", "perdays"))
-#> 
-#>      perdays("2024-01-01", "2024-12-31") # a leap year
-#>      perdays("2023-01-01", "2023-12-31")
-#>      perdays("2025-04-01", "2026-03-31") # a fiscal year
-#>      
-#>      # a quarter as the period of an average daily population
-#>      adp(4200, t = perdays(as.Date("2025-01-01"), as.Date("2025-03-31")))
-#>      
-#>      # numbers are not dates, and the end cannot come first
-#>      try(perdays(1, 31))
-#>      try(perdays("2024-12-31", "2024-01-01"))
-#>      
 
 # capture the output instead of printing it
 con <- textConnection("lines", "w")
@@ -459,35 +282,42 @@ invisible(cpsrfrsh(d))
 blcli(c("verify", d))
 #> ## rmbl capsule verify with [rmoriebricklayer 1.0.0](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmpJ6D2Nz/capsule-1e551554d60c`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/RtmpMK7Ka6/capsule-1f1d1e20da27`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmpJ6D2Nz/capsule-1e551554d60c` | /tmp/RtmpJ6D2Nz/temp_libpath1e5536b5b38/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/RtmpMK7Ka6/capsule-1f1d1e20da27` | /tmp/RtmpMK7Ka6/temp_libpath1f1d2043cfaf/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmpJ6D2Nz/capsule-1e551554d60c</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/RtmpMK7Ka6/capsule-1f1d1e20da27</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/RtmpJ6D2Nz/temp_libpath1e5536b5b38/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/RtmpMK7Ka6/temp_libpath1f1d2043cfaf/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/RtmpJ6D2Nz/capsule-1e551554d60c/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/RtmpJ6D2Nz/capsule-1e551554d60c/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/RtmpMK7Ka6/capsule-1f1d1e20da27/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/RtmpMK7Ka6/capsule-1f1d1e20da27/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/RtmpJ6D2Nz/capsule-1e551554d60c/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/RtmpMK7Ka6/capsule-1f1d1e20da27/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>
 #> 
 #> ---
 #> 
-#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000201 Wh, 9.23e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).
+#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000107 Wh, 4.92e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).
 #> 
 #> ---
 #> 
 #> mode `verify` · fail-on `error` · rmoriebricklayer 1.0.0 · R version 4.6.1 (2026-06-24)
+
+if (FALSE) { # interactive()
+# these read every help page, which takes a few seconds
+blcli(c("functions", "json"))
+blcli(c("describe", "anltab"))
+blcli(c("examples", "perdays"))
+}
 ```

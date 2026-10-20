@@ -191,6 +191,14 @@ infinite `value`; for `units = "count"`, negative or fractional values;
 `lag` not a positive whole number; `conflvl` outside (0, 1); an unknown
 `units` or `direction`.
 
+## 0.5.x argument names
+
+The 0.5.x names `period`, `min_base`, `conf_level` and `direction` are
+still accepted for `prd`, `minbase`, `conflvl` and `dir`, the names to
+use, as are the 0.5.x values `"higher_is_better"` and
+`"lower_is_better"` of `dir`. A call that gives both names of one
+argument is refused.
+
 ## References
 
 The exact interval for a ratio of two counts is the conditional-binomial

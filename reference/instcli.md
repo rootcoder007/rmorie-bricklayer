@@ -48,10 +48,10 @@ message names the files written and, when `dir` is not on the `PATH`,
 says to add it. Re-run it after moving the package to another library.
 
 Errors when the package installation has no launcher in `inst/bin` (a
-damaged installation), and from base R when `dir` cannot be created or
-written; when `dir` is not one string; and when `name` is not a
-character vector of one or more command names (empty, `NA`, an empty
-string or a name with a directory part is refused).
+damaged installation); when `dir` cannot be created or written, or is
+not one string; and when `name` is not a character vector of one or more
+command names (empty, `NA`, an empty string or a name with a directory
+part is refused).
 
 ## See also
 
@@ -64,18 +64,18 @@ for the verbs.
 # into a scratch folder, so nothing on your PATH changes
 d <- file.path(tempdir(), "bin")
 p <- instcli(dir = d)
-#> Installed /tmp/RtmpJ6D2Nz/bin/rmoriebricklayer and /tmp/RtmpJ6D2Nz/bin/rmbl; add /tmp/RtmpJ6D2Nz/bin to your PATH
+#> Installed /tmp/RtmpMK7Ka6/bin/rmoriebricklayer and /tmp/RtmpMK7Ka6/bin/rmbl; add /tmp/RtmpMK7Ka6/bin to your PATH
 list.files(d)
 #> [1] "rmbl"             "rmoriebricklayer"
 readLines(p)[1:4]
-#> [1] "#!/bin/sh"                                                                                       
-#> [2] "# rmoriebricklayer: the rmoriebricklayer command line (written by rmoriebricklayer::instcli())"  
-#> [3] "# runs the package in /tmp/RtmpJ6D2Nz/temp_libpath1e5536b5b38 (pinned with .libPaths() inside R)"
-#> [4] "export RMBL_PROG=rmoriebricklayer"                                                               
+#> [1] "#!/bin/sh"                                                                                        
+#> [2] "# rmoriebricklayer: the rmoriebricklayer command line (written by rmoriebricklayer::instcli())"   
+#> [3] "# runs the package in /tmp/RtmpMK7Ka6/temp_libpath1f1d2043cfaf (pinned with .libPaths() inside R)"
+#> [4] "export RMBL_PROG=rmoriebricklayer"                                                                
 
 # one name only
 instcli(dir = d, name = "rmbl")
-#> Installed /tmp/RtmpJ6D2Nz/bin/rmbl; add /tmp/RtmpJ6D2Nz/bin to your PATH
+#> Installed /tmp/RtmpMK7Ka6/bin/rmbl; add /tmp/RtmpMK7Ka6/bin to your PATH
 
 if (FALSE) { # interactive()
 instcli()   # ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl

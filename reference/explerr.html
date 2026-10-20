@@ -167,28 +167,8 @@ installed.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 error    `...` must be a single non-empty string            exact</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 error `scheme` must be a single non-empty string 80% of its words</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 error   `name` must be a single non-empty string 80% of its words</span>
-<span class="r-in"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu"><a href="llmcfg.html">llmcfg</a></span><span class="op">(</span>no.such <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">explerr</span><span class="op">(</span><span class="va">r</span>, pkgs <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            package      raised_by</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 rmoriebricklayer .bl_cli_config</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 rmoriebricklayer         llmcfg</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                               exported  kind</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1                                blcli, bricklayer_cli error</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 blcli, bricklayer_cli, bricklayer_llm_config, llmcfg error</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                               message match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 unknown setting '...' (one of: ...) exact</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 unknown setting '...' (one of: ...) exact</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># the message as R prints it, with the call in front</span></span></span>
-<span class="r-in"><span><span class="fu">explerr</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="st">"Error in mrkprf(x, 9) : `index` must be between 1 and the number of chunks"</span>,</span></span>
-<span class="r-in"><span>  n <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            package raised_by             exported  kind</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 rmoriebricklayer    mrkprf merkle_proof, mrkprf error</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                              message match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 `index` must be between 1 and the number of chunks exact</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># a condition object, and a message retyped from memory</span></span></span>
+<span class="r-in"><span><span class="co"># a condition object</span></span></span>
 <span class="r-in"><span><span class="va">e</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span><span class="fu"><a href="kemsz.html">kemsz</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span>, error <span class="op">=</span> <span class="va">identity</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">explerr</span><span class="op">(</span><span class="va">e</span>, n <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>            package       raised_by</span>
@@ -197,15 +177,6 @@ installed.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 kem_keygen, kem_sizes, kem_decapsulate, kem_encapsulate, kemdecap, kemencap</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    kind                                 message match</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 error `level` must be one of 512, 768 or 1024 exact</span>
-<span class="r-in"><span><span class="fu">explerr</span><span class="op">(</span><span class="st">"index between number chunks"</span>, n <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            package raised_by             exported  kind</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 rmoriebricklayer    mrkprf merkle_proof, mrkprf error</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                              message             match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 `index` must be between 1 and the number of chunks 100% of its words</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># R's own messages are not in the table: no rows</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu">explerr</span><span class="op">(</span><span class="st">"object 'x' not found"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the failed rows of a capsule check</span></span></span>
 <span class="r-in"><span><span class="va">rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>check <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"data_present"</span>, <span class="st">"data_sha256"</span><span class="op">)</span>, ok <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="cn">FALSE</span><span class="op">)</span>,</span></span>
@@ -216,6 +187,21 @@ installed.</p>
 <span class="r-in"><span><span class="co"># n must be at least 1</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">explerr</span><span class="op">(</span><span class="va">msg</span>, n <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : `n` must be a whole number of 1 or more</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># interactive()</span></span></span>
+<span class="r-in"><span><span class="co"># an error caught with try(), and the message as R prints it, with the call in front</span></span></span>
+<span class="r-in"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu"><a href="llmcfg.html">llmcfg</a></span><span class="op">(</span>no.such <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">explerr</span><span class="op">(</span><span class="va">r</span>, pkgs <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">explerr</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="st">"Error in mrkprf(x, 9) : `index` must be between 1 and the number of chunks"</span>,</span></span>
+<span class="r-in"><span>  n <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a message retyped from memory</span></span></span>
+<span class="r-in"><span><span class="fu">explerr</span><span class="op">(</span><span class="st">"index between number chunks"</span>, n <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># R's own messages are not in the table: no rows</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu">explerr</span><span class="op">(</span><span class="st">"object 'x' not found"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

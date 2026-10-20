@@ -21,8 +21,9 @@ stepchg(y, x = NULL, minseg = 2L, nperm = 9999L, seed = 1L)
 
 - x:
 
-  Vector of periods, default `NULL` (the position). Used only to label
-  the break; numeric or date periods must be strictly increasing.
+  Numeric or date periods, default `NULL` (the position), strictly
+  increasing and not missing where `y` has a value. Used only to label
+  the break.
 
 - minseg:
 

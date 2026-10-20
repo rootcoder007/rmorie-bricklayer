@@ -343,6 +343,9 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
   - `rmbl_clearance_decomposition`: any of `"rates"`, `"mix"` and
     `"effects"` (the default fits the device).
 
+  The 0.5.x values `"pct_change"`, `"flow_rate"` and `"stock_rate"` are
+  still accepted, as is `"rate_change"` for `which`.
+
 - points:
 
   For `rmbl_density`, whether to draw the incidents over the surface.
@@ -351,6 +354,7 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
   For `rmbl_clearance_decomposition`, the most parts drawn: past it, the
   parts that moved the aggregate most, and the rest summed into one row.
+  The 0.5.x name `max_parts` is still accepted.
 
 - threshold:
 
