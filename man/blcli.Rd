@@ -36,6 +36,9 @@ order \code{ask} tries them}
 server) offers, the one in use marked}
 \item{\code{data list}}{the curated tables at data.rmorie.com}
 \item{\code{data pull db/table}}{download one table as CSV}
+\item{\code{app [PATH] [--port N] [--no-browser]}}{open the analysis dashboard
+(\code{\link{rmblapp}}) on this machine, with PATH, a CSV file or a capsule
+directory, loaded; needs the shiny package}
 \item{\code{config [setup | set KEY VALUE | unset KEY | get KEY | help]}}{show
 or change the settings of the language model (\code{\link{llmcfg}}):
 the route \code{ask} uses and the address, key and model of each route;

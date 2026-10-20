@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rootcoder007/rmbl-action/spec/ledger.schema.json",
+  "title": "ledger.json",
+  "description": "A proof ledger: the theorems of a formal-proof build (Lean and Mathlib), their status, the functions of which packages each covers, and an optional numeric check of each in R. ldgrread() reads it, ldgrchk() checks it. Fields other than those listed are allowed and ignored by the checks.",
+  "type": "object",
+  "required": ["name", "toolchain", "source", "theorems"],
+  "properties": {
+    "name": {"type": "string", "minLength": 1, "description": "Name of the ledger."},
+    "toolchain": {
+      "type": "object",
+      "description": "The versions the proofs were built with.",
+      "required": ["lean"],
+      "properties": {
+        "lean": {"type": "string", "minLength": 1, "description": "Lean version, e.g. v4.12.0."},
+        "mathlib": {"type": "string", "description": "Mathlib commit or tag."},
+        "lake": {"type": "string", "description": "Lake version."}
+      }
+    },
+    "source": {
+      "type": "object",
+      "description": "Where the proofs live and which build this ledger records.",
+      "required": ["repo", "commit"],
+      "properties": {
+        "repo": {"type": "string", "minLength": 1, "description": "Repository: a URL, or owner/name on GitHub."},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{7,64}$", "description": "Commit the build was made from (ldgrchk(): ledger_commit_pinned)."},
+        "built_utc": {"type": "string", "description": "UTC time of the build, YYYY-MM-DDThh:mm:ssZ."},
+        "build_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA-256 of the build output (ldgrchk(): ledger_build_pinned)."}
+      }
+    },
+    "theorems": {
+      "type": "array",
+      "description": "One entry per theorem (ldgrchk(): one proved row each).",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "statement", "file", "line", "status", "sorry_count"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1, "description": "Identifier, unique in the ledger."},
+          "name": {"type": "string", "minLength": 1, "description": "Fully qualified Lean name."},
+          "statement": {"type": "string", "description": "The statement as written in Lean."},
+          "file": {"type": "string", "minLength": 1, "description": "Lean file, relative to the repository root."},
+          "line": {"type": "integer", "minimum": 1, "description": "Line of the declaration in that file."},
+          "status": {"type": "string", "enum": ["proved", "sorry", "axiom"], "description": "proved, sorry (an unfinished proof) or axiom (assumed)."},
+          "sorry_count": {"type": "integer", "minimum": 0, "description": "Number of sorry placeholders the proof depends on."},
+          "covers": {
+            "type": "array",
+            "description": "The functions whose behaviour the theorem states (ldgrchk(): covered rows).",
+            "items": {
+              "type": "object",
+              "required": ["package", "function", "language"],
+              "properties": {
+                "package": {"type": "string", "minLength": 1, "description": "Package name."},
+                "function": {"type": "string", "minLength": 1, "description": "Exported function."},
+                "language": {"type": "string", "enum": ["R", "Python", "C++", "Lean"], "description": "Language of the package."}
+              }
+            }
+          },
+          "check": {
+            "type": "object",
+            "description": "A numeric check in R: expr is one call to a function of the first R package in covers (ldgrchk(): check rows).",
+            "required": ["expr", "expect"],
+            "properties": {
+              "expr": {"type": "string", "minLength": 1, "description": "R expression, evaluated in a sandbox."},
+              "expect": {"type": "number", "description": "Expected value."},
+              "tol": {"type": "number", "minimum": 0, "description": "Absolute tolerance, default 1e-8."}
+            }
+          }
+        }
+      }
+    }
+  }
+}

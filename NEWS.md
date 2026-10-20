@@ -1,5 +1,34 @@
 # rmoriebricklayer 1.0.0
 
+## A dashboard, distributions and proof ledgers
+
+* `rmblapp()` opens a dashboard over the package's analyses on your own machine (`rmbl app [PATH]
+  [--port N] [--no-browser]` from a terminal; it needs shiny, which is suggested, not imported).
+  Load a CSV file, a capsule's pinned data or a data.rmorie.com table, then describe, compare
+  years, compute rates, test trends, estimate from a survey, fit distributions, check a capsule,
+  evaluate a policy on a panel, read the First Nations, Metis and Inuit tables, work through
+  courts and corrections counts, model a plume and its burden, fit a Hawkes process, or check a
+  proof ledger. Each analysis shows the R call it ran and runs exactly that call; a refusal is
+  shown in the package's words with `explerr()`'s note. The Report tab gathers results into one
+  HTML page (plots as inline SVG), Markdown or a GitHub comment. `vignette("dashboard")`.
+* `dstfit()` fits normal, log-normal, exponential, gamma, Weibull, Student t, Pareto, beta,
+  Poisson, negative binomial and zero-inflated Poisson and negative binomial distributions by
+  maximum likelihood in base R, ranks them by AIC with BIC, Kolmogorov-Smirnov and
+  Anderson-Darling statistics, gives percentile bootstrap intervals and a Hill tail index, and
+  plots the density, QQ, PP and log-log tail. `mksyncol()` takes `type = "fitted"` to draw from a
+  fit.
+* New plots in the house style, each returning what it drew: `plotrdg()` (ridgelines),
+  `plotecdf()`, `plotvln()` (violins), `plothex()` (hexagonal bins), `plotgain()` (concentration
+  curves), `plotcal()` (calendar heatmap), `plothrz()` (horizon chart), `plotsm()` (small
+  multiples) and `plotbump()` (ranks over time). `plothwk()` draws a fitted Hawkes process's
+  intensity, time-rescaling check and most probable branching; `chwksim()` simulates from it.
+* `ldgrread()` and `ldgrchk()` read and check a proof ledger (`schemapath("ledger")`): each theorem
+  proved with no `sorry`, each covered function exported by the installed package, each numeric
+  check within its tolerance. A check is evaluated in a sandbox that allows only the named
+  package's functions and base arithmetic, so `system()` or a file read is refused before it runs.
+  A capsule whose provenance says `kind: "ledger"` gets these rows, and its commit and build pins,
+  from `rmbl verify`.
+
 ## Standards and the fixes they surfaced
 
 * The package documents the rOpenSci statistical software standards (General, EDA, Time Series)

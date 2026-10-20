@@ -43,6 +43,20 @@ and a digest anyone can recompute says nothing about who produced the data.
   `vignette("stock-and-flow")`, `vignette("air-pollution-and-health")`,
   `vignette("plotting-results")` and the rest,
   grouped by topic on the package website.
+- **A dashboard on your own machine** — `rmblapp()` (or `rmbl app [PATH]`) opens forms over the
+  analysis families: load a CSV file, a capsule or a data.rmorie.com table, run an analysis, see
+  the package's plot and the exact R call it ran, and gather the results into one HTML page,
+  Markdown or a GitHub comment. Needs shiny; `vignette("dashboard")`.
+- **Distributions and plots** — `dstfit()` fits and ranks candidate distributions by maximum
+  likelihood (continuous, proportions and counts with zero inflation), with bootstrap intervals,
+  a Hill tail index and density, QQ, PP and tail plots; `mksyncol(list(type = "fitted"))` draws
+  from a fit. `plotrdg()`, `plotecdf()`, `plotvln()`, `plothex()`, `plotgain()`, `plotcal()`,
+  `plothrz()`, `plotsm()` and `plotbump()` draw distributions and many series in the house style;
+  `plothwk()` and `chwksim()` show and simulate a fitted Hawkes process.
+- **Proof ledgers** — `ldgrread()` reads a ledger of formal proofs (Lean theorems, their status
+  and the package functions they cover) against `schemapath("ledger")`; `ldgrchk()` checks each
+  theorem is proved, each covered function exists and each numeric check holds, in a sandbox.
+  `rmbl verify` adds those rows to a capsule that holds a ledger.
 - **CKAN resolution** — `rslvckan()` / `rslvckns()`
   locate resources through a portal's `package_show` / `package_search`
   endpoints.

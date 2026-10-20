@@ -1,0 +1,43 @@
+{
+  "name": "rmoriebricklayer sample ledger",
+  "toolchain": {"lean": "v4.12.0", "mathlib": "v4.12.0", "lake": "5.0.0"},
+  "source": {
+    "repo": "https://github.com/rootcoder007/rmorie-proofs",
+    "commit": "0123456789abcdef0123456789abcdef01234567",
+    "built_utc": "2026-10-20T12:00:00Z",
+    "build_digest": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  },
+  "theorems": [
+    {
+      "id": "gini-equal",
+      "name": "Rmorie.Gini.gini_const_eq_zero",
+      "statement": "theorem gini_const_eq_zero (n : Nat) (c : Real) (h : 0 < c) : gini (List.replicate n c) = 0",
+      "file": "Rmorie/Gini.lean",
+      "line": 42,
+      "status": "proved",
+      "sorry_count": 0,
+      "covers": [{"package": "rmoriebricklayer", "function": "ginicoef", "language": "R"}],
+      "check": {"expr": "ginicoef(c(5, 5, 5, 5))", "expect": 0, "tol": 1e-12}
+    },
+    {
+      "id": "lorenz-monotone",
+      "name": "Rmorie.Gini.lorenz_monotone",
+      "statement": "theorem lorenz_monotone (xs : List Real) (h : forall x in xs, 0 <= x) : Monotone (lorenz xs)",
+      "file": "Rmorie/Gini.lean",
+      "line": 77,
+      "status": "sorry",
+      "sorry_count": 1,
+      "covers": [{"package": "rmoriebricklayer", "function": "lorenzc", "language": "R"}]
+    },
+    {
+      "id": "float-round",
+      "name": "Rmorie.Float.round_nearest",
+      "statement": "axiom round_nearest (x : Real) : |fl x - x| <= eps * |x|",
+      "file": "Rmorie/Float.lean",
+      "line": 12,
+      "status": "axiom",
+      "sorry_count": 0,
+      "covers": []
+    }
+  ]
+}

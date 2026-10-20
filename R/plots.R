@@ -2450,3 +2450,426 @@ plotfnl <- function(obs, expd, area = NULL, lvls = c(0.95, 0.998), target = 1, .
   invisible(data.frame(area = if (is.null(area)) NA_character_ else as.character(area), observed = obs,
                        expected = expd, ratio = ratio, outside = out, stringsAsFactors = FALSE))
 }
+
+# ---- distributions, densities and many series -------------------------------------------------
+
+#' Checks a numeric variable and an optional grouping of the same length for a plot.
+#' @param x The values.
+#' @param grp The groups, or NULL.
+#' @param what The name of `x` in the messages.
+#' @return A data frame of `x` and `grp` (a factor), rows with a missing
+#'   value dropped.
+#' @noRd
+.bl_xgrp <- function(x, grp = NULL, what = "x") {
+  if (!is.numeric(x) || is.object(x)) stop(.rmbl_fn(), sprintf("`%s` must be a numeric vector", what), call. = FALSE)
+  if (is.null(grp)) grp <- rep("all", length(x))
+  if (length(grp) != length(x)) stop(.rmbl_fn(), sprintf("`grp` must have one entry per value of `%s`", what),
+                                     call. = FALSE)
+  d <- data.frame(x = as.numeric(x), grp = as.character(grp), stringsAsFactors = FALSE)
+  d <- d[is.finite(d$x) & !is.na(d$grp), , drop = FALSE]
+  if (nrow(d) < 2L) stop(.rmbl_fn(), sprintf("`%s` needs at least two finite values", what), call. = FALSE)
+  d$grp <- factor(d$grp, levels = unique(d$grp))
+  d
+}
+
+#' Many-plot helpers: ridgelines, ECDFs, violins, hexagonal bins and concentration
+#' curves
+#'
+#' Base-graphics plots in the house style for a numeric variable split by a group, or
+#' two numeric variables:
+#' \describe{
+#'   \item{`plotrdg()`}{a ridgeline: one kernel density per group, stacked with
+#'     a small overlap.}
+#'   \item{`plotecdf()`}{the empirical distribution function of each group,
+#'     overlaid.}
+#'   \item{`plotvln()`}{a violin per group: the mirrored density, the median as
+#'     a point and the interquartile range as a bar.}
+#'   \item{`plothex()`}{the two-dimensional density of `x` and `y`
+#'     in hexagonal bins, shaded by count.}
+#'   \item{`plotgain()`}{cumulative-gain (concentration) curves: the Lorenz
+#'     curve of each group ([lorenzc()]) with its Gini coefficient
+#'     in the key.}
+#' }
+#' Missing and non-finite values are dropped. A group of fewer than two values draws no
+#' density.
+#' @param x Numeric vector.
+#' @param grp Optional vector of groups, one per value of `x`.
+#' @param y Numeric vector, one per value of `x` (`plothex()`).
+#' @param bins Whole number, default 30: hexagons across the range of `x`.
+#' @param bw Bandwidth passed to [stats::density()],
+#'   default `"nrd0"`.
+#' @param ... Further arguments to the first `plot()` call.
+#' @param main,col,pal The title, colours overriding the palette, and a
+#'   [blpal()] name.
+#' @return The data drawn, invisibly: for `plotrdg()` and `plotvln()` the
+#'   densities (`grp`, `x`, `y`), for `plotvln()` with the
+#'   per-group `median`, `q1` and `q3` as an attribute
+#'   `summary`, for `plotecdf()` the steps (`grp`, `x`,
+#'   `y`), for `plothex()` the hexagon centres (`x`, `y`)
+#'   and `count`, for `plotgain()` the curves (`grp`,
+#'   `population`, `value`) with the Gini coefficients as an attribute
+#'   `gini`.
+#' @examples
+#' set.seed(3)
+#' x <- c(stats::rnorm(200), stats::rnorm(200, 2, 0.6))
+#' g <- rep(c("before", "after"), each = 200)
+#' plotrdg(x, g)
+#' plotecdf(x, g)
+#' plotvln(x, g)
+#' plothex(x, x + stats::rnorm(400), bins = 20)
+#' plotgain(stats::rexp(400), g)
+#' try(plotrdg("a"))
+#' @name plotmore
+NULL
+
+#' @rdname plotmore
+#' @export
+plotrdg <- function(x, grp = NULL, bw = "nrd0", ..., main = NULL, col = NULL, pal = NULL) {
+  d <- .bl_xgrp(x, grp)
+  lv <- levels(d$grp)
+  dens <- lapply(lv, function(g) {
+    v <- d$x[d$grp == g]
+    if (length(v) < 2L) return(NULL)
+    k <- stats::density(v, bw = bw)
+    data.frame(grp = g, x = k$x, y = k$y, stringsAsFactors = FALSE)
+  })
+  out <- do.call(rbind, dens)
+  top <- max(out$y)
+  cols <- .bl_cols(length(lv), col, pal)
+  op <- .bl_par(labels = lv)
+  on.exit(graphics::par(op), add = TRUE)
+  step <- 0.7 * top
+  graphics::plot(range(out$x), c(0, step * (length(lv) - 1L) + top), type = "n", yaxt = "n", xlab = "", ylab = "",
+                 main = "", ...)
+  .bl_grid(NULL, side = "x")
+  for (i in rev(seq_along(lv))) {
+    s <- out[out$grp == lv[i], ]
+    if (!nrow(s)) next
+    b <- step * (i - 1L)
+    graphics::polygon(c(s$x, rev(s$x)), c(b + s$y, rep(b, nrow(s))), col = grDevices::adjustcolor(cols[i], 0.55),
+                      border = "white")
+    graphics::lines(s$x, b + s$y, col = cols[i], lwd = 1.8)
+  }
+  graphics::axis(2, at = step * (seq_along(lv) - 1L), labels = lv, tick = FALSE)
+  .bl_xlab("Value")
+  .bl_title(.bl_main(main, "Distribution by group"))
+  invisible(out)
+}
+
+#' @rdname plotmore
+#' @export
+plotecdf <- function(x, grp = NULL, ..., main = NULL, col = NULL, pal = NULL) {
+  d <- .bl_xgrp(x, grp)
+  lv <- levels(d$grp)
+  cols <- .bl_cols(length(lv), col, pal)
+  op <- .bl_par(c(0, 1))
+  on.exit(graphics::par(op), add = TRUE)
+  graphics::plot(range(d$x), c(0, 1), type = "n", xlab = "", ylab = "", main = "", ...)
+  .bl_grid(NULL)
+  out <- do.call(rbind, lapply(seq_along(lv), function(i) {
+    v <- sort(d$x[d$grp == lv[i]])
+    p <- seq_along(v) / length(v)
+    graphics::lines(c(v[1L], v), c(0, p), type = "s", col = cols[i], lwd = 2)
+    data.frame(grp = lv[i], x = v, y = p, stringsAsFactors = FALSE)
+  }))
+  if (length(lv) > 1L) graphics::legend("bottomright", lv, col = cols, lwd = 2, bty = "n", cex = 0.85)
+  .bl_ylab("Share at or below")
+  .bl_xlab("Value")
+  .bl_title(.bl_main(main, "Empirical distribution functions"))
+  invisible(out)
+}
+
+#' @rdname plotmore
+#' @export
+plotvln <- function(x, grp = NULL, bw = "nrd0", ..., main = NULL, col = NULL, pal = NULL) {
+  d <- .bl_xgrp(x, grp)
+  lv <- levels(d$grp)
+  cols <- .bl_cols(length(lv), col, pal)
+  op <- .bl_par(d$x)
+  on.exit(graphics::par(op), add = TRUE)
+  graphics::plot(c(0.5, length(lv) + 0.5), range(d$x), type = "n", xaxt = "n", xlab = "", ylab = "", main = "", ...)
+  .bl_grid(NULL)
+  out <- NULL
+  sm <- NULL
+  for (i in seq_along(lv)) {
+    v <- d$x[d$grp == lv[i]]
+    q <- stats::quantile(v, c(0.25, 0.5, 0.75), names = FALSE)
+    sm <- rbind(sm, data.frame(grp = lv[i], median = q[2L], q1 = q[1L], q3 = q[3L], stringsAsFactors = FALSE))
+    if (length(v) >= 2L) {
+      k <- stats::density(v, bw = bw)
+      w <- 0.42 * k$y / max(k$y)
+      graphics::polygon(c(i - w, rev(i + w)), c(k$x, rev(k$x)), col = grDevices::adjustcolor(cols[i], 0.5),
+                        border = cols[i])
+      out <- rbind(out, data.frame(grp = lv[i], x = k$x, y = k$y, stringsAsFactors = FALSE))
+    }
+    graphics::segments(i, q[1L], i, q[3L], lwd = 5, col = "#1F2430")
+    graphics::points(i, q[2L], pch = 21, bg = "white", col = "#1F2430", cex = 1.3)
+  }
+  graphics::axis(1, at = seq_along(lv), labels = lv, tick = FALSE)
+  .bl_ylab("Value")
+  .bl_title(.bl_main(main, "Violins: density, median and quartiles"))
+  attr(out, "summary") <- sm
+  invisible(out)
+}
+
+#' @rdname plotmore
+#' @export
+plothex <- function(x, y, bins = 30L, ..., main = NULL, col = NULL, pal = NULL) {
+  if (!is.numeric(y) || length(y) != length(x)) stop("plothex: `y` must be numeric, one per value of `x`",
+                                                     call. = FALSE)
+  .bl_xgrp(x, NULL)
+  ok <- is.finite(x) & is.finite(y)
+  x <- as.numeric(x[ok])
+  y <- as.numeric(y[ok])
+  if (length(x) < 2L) stop("plothex: needs at least two points with both values", call. = FALSE)
+  bins <- .rmbl_scalar(bins, "bins", 2, 500, integer = TRUE)
+  rx <- range(x)
+  ry <- range(y)
+  if (diff(rx) == 0) rx <- rx + c(-0.5, 0.5)
+  if (diff(ry) == 0) ry <- ry + c(-0.5, 0.5)
+  # hexagons in scaled units: width w across x, rows sqrt(3)/2 * w apart, odd rows shifted half a width
+  sx <- (x - rx[1L]) / diff(rx) * bins
+  sy <- (y - ry[1L]) / diff(ry) * bins
+  h <- sqrt(3) / 2
+  r1 <- round(sy / h)
+  c1 <- round(sx - (r1 %% 2) / 2)
+  r2 <- floor(sy / h)
+  r2 <- ifelse(r2 == r1, r2 + 1, r2)
+  c2 <- round(sx - (r2 %% 2) / 2)
+  d1 <- (sx - c1 - (r1 %% 2) / 2)^2 + (sy - r1 * h)^2
+  d2 <- (sx - c2 - (r2 %% 2) / 2)^2 + (sy - r2 * h)^2
+  rr <- ifelse(d1 <= d2, r1, r2)
+  cc <- ifelse(d1 <= d2, c1, c2)
+  key <- paste(rr, cc)
+  tab <- table(key)
+  first <- match(names(tab), key)
+  cx <- cc[first] + (rr[first] %% 2) / 2
+  cy <- rr[first] * h
+  out <- data.frame(x = rx[1L] + cx / bins * diff(rx), y = ry[1L] + cy / bins * diff(ry),
+                    count = as.integer(tab), stringsAsFactors = FALSE)
+  shades <- if (is.null(col)) blpal(if (is.null(pal)) "sequential" else pal, 9L) else rep_len(col, 9L)
+  lvl <- pmin(9L, 1L + floor(8 * (out$count - 1) / max(1, max(out$count) - 1)))
+  op <- .bl_par(y)
+  on.exit(graphics::par(op), add = TRUE)
+  graphics::plot(rx, ry, type = "n", xlab = "", ylab = "", main = "", ...)
+  .bl_grid(NULL)
+  a <- seq(pi / 6, 2 * pi, by = pi / 3)
+  hx <- cos(a) / sqrt(3) / bins * diff(rx)
+  hy <- sin(a) / sqrt(3) / bins * diff(ry)
+  for (i in seq_len(nrow(out))) {
+    graphics::polygon(out$x[i] + hx, out$y[i] + hy, col = shades[lvl[i]], border = NA)
+  }
+  .bl_xlab("x")
+  .bl_ylab("y")
+  .bl_title(.bl_main(main, sprintf("Density in hexagons (most: %d)", max(out$count))))
+  invisible(out)
+}
+
+#' @rdname plotmore
+#' @export
+plotgain <- function(x, grp = NULL, ..., main = NULL, col = NULL, pal = NULL) {
+  d <- .bl_xgrp(x, grp)
+  if (any(d$x < 0)) stop("plotgain: `x` must not be negative (a share of a total)", call. = FALSE)
+  lv <- levels(d$grp)
+  cols <- .bl_cols(length(lv), col, pal)
+  curves <- lapply(lv, function(g) {
+    l <- lorenzc(d$x[d$grp == g])
+    data.frame(grp = g, population = c(0, l$population), value = c(0, l$value), stringsAsFactors = FALSE)
+  })
+  gini <- vapply(lv, function(g) ginicoef(d$x[d$grp == g]), 1)
+  op <- .bl_par(c(0, 1))
+  on.exit(graphics::par(op), add = TRUE)
+  graphics::plot(c(0, 1), c(0, 1), type = "n", xlab = "", ylab = "", main = "", ...)
+  .bl_grid(NULL)
+  graphics::abline(0, 1, col = "#8C8C8C", lty = 2)
+  for (i in seq_along(lv)) graphics::lines(curves[[i]]$population, curves[[i]]$value, col = cols[i], lwd = 2.2)
+  graphics::legend("topleft", sprintf("%s (Gini %.3f)", lv, gini), col = cols, lwd = 2, bty = "n", cex = 0.85)
+  .bl_ylab("Cumulative share of the total")
+  .bl_xlab("Cumulative share of units, smallest first")
+  .bl_title(.bl_main(main, "Concentration curves"))
+  out <- do.call(rbind, curves)
+  attr(out, "gini") <- gini
+  invisible(out)
+}
+
+#' Plots for many series over time
+#'
+#' Base-graphics plots in the house style for a value observed by period, for one
+#' series or many:
+#' \describe{
+#'   \item{`plotcal()`}{a calendar heatmap of a daily series: one tile per day,
+#'     weeks across and weekdays down, one block per year.}
+#'   \item{`plothrz()`}{a horizon chart: each series in its own thin row, its
+#'     deviation from its own median folded into `bands` shaded bands, above in
+#'     blue and below in red, so many series fit in little height.}
+#'   \item{`plotsm()`}{small multiples: one panel per series on a shared scale.}
+#'   \item{`plotbump()`}{a bump chart: the rank of each series in each period (1
+#'     = largest), so changes of order stand out.}
+#' }
+#' @param x Dates (a `Date` or text `as.Date()` reads) for
+#'   `plotcal()`.
+#' @param y Numeric vector of values.
+#' @param prd Vector of periods, one per value (numbers, dates or text in order of
+#'   appearance).
+#' @param grp Vector of series names, one per value, or `NULL` for one series.
+#' @param bands Whole number, default 3: the bands of a horizon chart.
+#' @param desc Logical, default `TRUE`: rank 1 is the largest value
+#'   (`FALSE`: the smallest).
+#' @param ... Further arguments to the first `plot()` call.
+#' @param main,col,pal The title, colours overriding the palette, and a
+#'   [blpal()] name.
+#' @return The data drawn, invisibly: for `plotcal()` the days (`date`,
+#'   `year`, `week`, `wday`, `y`), for the others the
+#'   series (`grp`, `prd`, `y`, and `rank` for
+#'   `plotbump()`, `band` for `plothrz()`).
+#' @examples
+#' set.seed(5)
+#' days <- seq(as.Date("2024-01-01"), as.Date("2024-12-31"), by = "day")
+#' plotcal(days, stats::rpois(length(days), 5 + 3 * (format(days, "%u") > "5")))
+#' d <- expand.grid(year = 2015:2024, area = c("north", "south", "east", "west"))
+#' d$n <- stats::rpois(nrow(d), 50 + 10 * as.integer(d$area) + 2 * (d$year - 2015))
+#' plotsm(d$n, d$year, d$area)
+#' plothrz(d$n, d$year, d$area)
+#' plotbump(d$n, d$year, d$area)
+#' try(plotcal("not a date", 1))
+#' @name plotseries
+NULL
+
+#' Checks values, periods and series for the many-series plots.
+#' @param y The values.
+#' @param prd The periods.
+#' @param grp The series, or NULL.
+#' @return A data frame: grp (factor), prd, y, ordered by series and period.
+#' @noRd
+.bl_series <- function(y, prd, grp) {
+  if (!is.numeric(y) || is.object(y)) stop(.rmbl_fn(), "`y` must be a numeric vector", call. = FALSE)
+  if (is.null(grp)) grp <- rep("series", length(y))
+  if (length(prd) != length(y) || length(grp) != length(y)) {
+    stop(.rmbl_fn(), "`prd` and `grp` must have one entry per value of `y`", call. = FALSE)
+  }
+  d <- data.frame(grp = as.character(grp), prd = prd, y = as.numeric(y), stringsAsFactors = FALSE)
+  d <- d[!is.na(d$grp) & !is.na(d$prd), , drop = FALSE]
+  if (!nrow(d)) stop(.rmbl_fn(), "no value has both a period and a series", call. = FALSE)
+  d$grp <- factor(d$grp, levels = unique(d$grp))
+  d$pos <- if (is.numeric(d$prd) || inherits(d$prd, "Date")) as.numeric(d$prd) else
+    match(d$prd, unique(d$prd))
+  d[order(d$grp, d$pos), , drop = FALSE]
+}
+
+#' @rdname plotseries
+#' @export
+plotcal <- function(x, y, ..., main = NULL, col = NULL, pal = NULL) {
+  dt <- tryCatch(as.Date(x), error = function(e) NULL)
+  if (is.null(dt) || anyNA(dt[!is.na(x)]) || length(dt) != length(y) || !is.numeric(y)) {
+    stop("plotcal: `x` must be dates, one per value of the numeric `y`", call. = FALSE)
+  }
+  ok <- !is.na(dt)
+  d <- data.frame(date = dt[ok], y = as.numeric(y[ok]))
+  d$year <- as.integer(format(d$date, "%Y"))
+  d$wday <- as.integer(format(d$date, "%u"))
+  jan1 <- as.Date(paste0(d$year, "-01-01"))
+  d$week <- as.integer((as.numeric(d$date - jan1) + as.integer(format(jan1, "%u")) - 1) %/% 7)
+  yrs <- sort(unique(d$year))
+  shades <- if (is.null(col)) blpal(if (is.null(pal)) "sequential" else pal, 9L) else rep_len(col, 9L)
+  r <- range(d$y, finite = TRUE)
+  lvl <- ifelse(is.finite(d$y), 1L + floor(8 * (d$y - r[1L]) / max(diff(r), .Machine$double.eps)), NA)
+  op <- .bl_par(labels = as.character(yrs))
+  on.exit(graphics::par(op), add = TRUE)
+  graphics::plot(c(0, 54), c(0, 8 * length(yrs)), type = "n", axes = FALSE, xlab = "", ylab = "", main = "", ...)
+  for (i in seq_along(yrs)) {
+    s <- d$year == yrs[i]
+    top <- 8 * (length(yrs) - i + 1L)
+    graphics::rect(d$week[s], top - d$wday[s], d$week[s] + 0.92, top - d$wday[s] + 0.92,
+                   col = ifelse(is.na(lvl[s]), "#E0E0E0", shades[lvl[s]]), border = NA)
+    graphics::text(-0.5, top - 4, yrs[i], adj = 1, xpd = NA, cex = 0.85)
+  }
+  graphics::axis(1, at = seq(0, 52, by = 13), labels = c("Jan", "Apr", "Jul", "Oct", "Dec"), tick = FALSE)
+  .bl_title(.bl_main(main, sprintf("Daily values, %s to %s", format(r[1L], big.mark = ","),
+                                   format(r[2L], big.mark = ","))))
+  invisible(d[, c("date", "year", "week", "wday", "y")])
+}
+
+#' @rdname plotseries
+#' @export
+plothrz <- function(y, prd, grp = NULL, bands = 3L, ..., main = NULL, col = NULL, pal = NULL) {
+  d <- .bl_series(y, prd, grp)
+  bands <- .rmbl_scalar(bands, "bands", 1, 6, integer = TRUE)
+  lv <- levels(d$grp)
+  d$dev <- d$y - stats::ave(d$y, d$grp, FUN = function(v) stats::median(v, na.rm = TRUE))
+  top <- max(abs(d$dev), na.rm = TRUE)
+  if (!is.finite(top) || top == 0) top <- 1
+  bw <- top / bands
+  up <- blpal("sequential", bands + 1L)[-1L]
+  dn <- grDevices::colorRampPalette(c("#FBD5CC", "#B2182B"))(bands)
+  op <- .bl_par(labels = lv)
+  on.exit(graphics::par(op), add = TRUE)
+  graphics::plot(range(d$pos), c(0, length(lv)), type = "n", yaxt = "n", xlab = "", ylab = "", main = "", ...)
+  d$band <- pmin(bands, ceiling(abs(d$dev) / bw))
+  for (i in seq_along(lv)) {
+    s <- d[d$grp == lv[i] & is.finite(d$dev), ]
+    base <- length(lv) - i
+    for (b in seq_len(bands)) {
+      v <- pmin(pmax(abs(s$dev) - (b - 1) * bw, 0), bw) / bw * 0.9
+      for (sgn in c(1, -1)) {
+        vv <- ifelse(sign(s$dev) == sgn, v, 0)
+        graphics::polygon(c(s$pos, rev(s$pos)), base + c(vv, rep(0, nrow(s))), border = NA,
+                          col = if (sgn > 0) up[b] else dn[b])
+      }
+    }
+  }
+  graphics::axis(2, at = length(lv) - seq_along(lv) + 0.45, labels = lv, tick = FALSE)
+  .bl_xlab("Period")
+  .bl_title(.bl_main(main, sprintf("Horizon chart: distance from each series' median, %d bands", bands)))
+  invisible(d[, c("grp", "prd", "y", "band")])
+}
+
+#' @rdname plotseries
+#' @export
+plotsm <- function(y, prd, grp = NULL, ..., main = NULL, col = NULL, pal = NULL) {
+  d <- .bl_series(y, prd, grp)
+  lv <- levels(d$grp)
+  cols <- .bl_cols(length(lv), col, pal)
+  op <- .bl_panels_begin(length(lv))
+  on.exit(graphics::par(op), add = TRUE)
+  on.exit(.bl_panels_abort(), add = TRUE)
+  yl <- range(d$y, finite = TRUE)
+  for (i in seq_along(lv)) {
+    s <- d[d$grp == lv[i], ]
+    graphics::par(mar = c(3, 3.6, 2.6, 0.8))
+    graphics::plot(range(d$pos), yl, type = "n", xlab = "", ylab = "", main = "", ...)
+    .bl_grid(NULL)
+    .bl_line(s$pos, s$y, cols[i], fill = TRUE, label = FALSE)
+    .bl_title(lv[i])
+  }
+  if (!is.null(main)) graphics::mtext(main, outer = TRUE, side = 1, line = 1)
+  out <- d[, c("grp", "prd", "y")]
+  attr(out, "plnkey") <- .bl_panels_end()
+  invisible(out)
+}
+
+#' @rdname plotseries
+#' @export
+plotbump <- function(y, prd, grp, desc = TRUE, ..., main = NULL, col = NULL, pal = NULL) {
+  d <- .bl_series(y, prd, grp)
+  desc <- .rmbl_flag1(desc, "desc")
+  d$rank <- stats::ave(if (desc) -d$y else d$y, d$pos, FUN = function(v) rank(v, ties.method = "min"))
+  lv <- levels(d$grp)
+  cols <- .bl_cols(length(lv), col, pal)
+  op <- .bl_par(labels = lv)
+  on.exit(graphics::par(op), add = TRUE)
+  nr <- max(d$rank, na.rm = TRUE)
+  graphics::plot(range(d$pos), c(nr + 0.5, 0.5), type = "n", yaxt = "n", xlab = "", ylab = "", main = "", ...)
+  .bl_grid(NULL)
+  graphics::axis(2, at = seq_len(nr), tick = FALSE)
+  for (i in seq_along(lv)) {
+    s <- d[d$grp == lv[i], ]
+    graphics::lines(s$pos, s$rank, col = cols[i], lwd = 3)
+    graphics::points(s$pos, s$rank, pch = 21, bg = cols[i], col = "white", cex = 1.4)
+    last <- s[nrow(s), ]
+    graphics::text(last$pos, last$rank, lv[i], pos = 4, xpd = NA, cex = 0.8, col = cols[i])
+  }
+  .bl_ylab("Rank")
+  .bl_xlab("Period")
+  .bl_title(.bl_main(main, "Ranks over time"))
+  invisible(d[, c("grp", "prd", "y", "rank")])
+}

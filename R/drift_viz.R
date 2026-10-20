@@ -422,6 +422,15 @@ drfthtml <- function(x, file, title = "Drift report", warn = NULL, fail = NULL, 
 #' }
 #' @export
 drftapp <- function(x = NULL, ref = NULL, cur = NULL, hist = NULL, warn = NULL, fail = NULL) {
+  p <- .bl_drift_parts(x, ref, cur, hist, warn, fail)
+  shiny::shinyApp(shiny::fluidPage(shiny::titlePanel("Drift report"), p$ui), p$server)
+}
+
+#' The page body and the server of the drift app, for drftapp() and the dashboard's Drift tab.
+#' @param x,ref,cur,hist,warn,fail As in drftapp().
+#' @return A list: ui (a sidebar layout) and server (a server function).
+#' @noRd
+.bl_drift_parts <- function(x = NULL, ref = NULL, cur = NULL, hist = NULL, warn = NULL, fail = NULL) {
   if (!is.null(x) && !inherits(x, "bricklayer_drift")) {
     stop(.rmbl_fn(), "`x` must be a bricklayer_drift object from cpsdrft(), or NULL", call. = FALSE)
   }
@@ -456,8 +465,7 @@ drftapp <- function(x = NULL, ref = NULL, cur = NULL, hist = NULL, warn = NULL, 
                                shiny::plotOutput("cmp"), shiny::plotOutput("benford"), shiny::textOutput("clear")))
   if (is.data.frame(x$manifest)) tabs <- c(tabs, list(shiny::tabPanel("Manifest", shiny::tableOutput("manifest"))))
   if (!is.null(h)) tabs <- c(tabs, list(shiny::tabPanel("History", shiny::plotOutput("history"))))
-  ui <- shiny::fluidPage(shiny::titlePanel("Drift report"),
-                         shiny::sidebarLayout(side, shiny::mainPanel(do.call(shiny::tabsetPanel, tabs))))
+  ui <- shiny::sidebarLayout(side, shiny::mainPanel(do.call(shiny::tabsetPanel, tabs)))
   server <- function(input, output, session) {
     cx <- shiny::reactiveVal(x)
     data <- shiny::reactiveVal(if (!is.null(ref)) list(ref = ref, cur = cur))
@@ -529,7 +537,7 @@ drftapp <- function(x = NULL, ref = NULL, cur = NULL, hist = NULL, warn = NULL, 
       writeLines(.bl_drift_json(.bl_drift_payload(now(), bands()$warn, bands()$fail)), f)
     })
   }
-  shiny::shinyApp(ui, server)
+  list(ui = ui, server = server)
 }
 
 #' Runs a Shiny app (rmbl drift --app); a test replaces it so no server starts.

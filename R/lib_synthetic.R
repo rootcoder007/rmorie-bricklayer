@@ -80,6 +80,8 @@
 #'     the sequence within each year. With \code{year_col}, that column must
 #'     have \code{n} values. No other tokens are recognised.}
 #'   \item{\code{"sequence"}}{\code{from} (default 1): \code{from, from + 1, ...}.}
+#'   \item{\code{"fitted"}}{\code{fit}, a \code{\link{dstfit}} result, and \code{family}
+#'     (default the first-ranked converged fit): draws from that fitted distribution.}
 #' }
 #' Random draws use R's random number generator, so call \code{set.seed()}
 #' first for a reproducible column. Errors: \code{spec} not a list; an
@@ -130,6 +132,10 @@
 #' unname(mksyncol(list(type = "id_pattern",
 #'   pattern = "{year}-{seq:05d}", year_col = "year"), 3,
 #'   ctx = list(year = yrs)))
+#'
+#' # "fitted": draws from a distribution fitted by dstfit()
+#' f <- dstfit(stats::rexp(100, 2), fams = "exponential", nboot = 0)
+#' mksyncol(list(type = "fitted", fit = f), 4)
 #'
 #' # "sequence": a running integer sequence from from.
 #' mksyncol(list(type = "sequence", from = 100), 4)
@@ -193,6 +199,15 @@ mksyncol <- function(spec, n, ctx = list(), basep = NULL) {
       vapply(seq_len(n), function(s) {
         gsub("\\{seq:05d\\}", sprintf("%05d", s), pattern)
       }, character(1))
+    },
+    fitted = {
+      fit <- spec$fit
+      if (!inherits(fit, "rmbl_dstfit") || !length(fit$fits)) {
+        stop("mksyncol: a \"fitted\" column spec needs `fit`, a dstfit() result with a converged fit", call. = FALSE)
+      }
+      fam <- spec$family %||% names(fit$fits)[[1L]]
+      if (!fam %in% names(fit$fits)) stop(sprintf("mksyncol: the fit has no converged %s family", fam), call. = FALSE)
+      .dst_fams()[[fam]]$r(n, fit$fits[[fam]])
     },
     sequence = {
       from <- spec$from %||% 1L

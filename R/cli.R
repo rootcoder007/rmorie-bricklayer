@@ -160,6 +160,9 @@
 #'     server) offers, the one in use marked}
 #'   \item{\code{data list}}{the curated tables at data.rmorie.com}
 #'   \item{\code{data pull db/table}}{download one table as CSV}
+#'   \item{\code{app [PATH] [--port N] [--no-browser]}}{open the analysis dashboard
+#'     (\code{\link{rmblapp}}) on this machine, with PATH, a CSV file or a capsule
+#'     directory, loaded; needs the shiny package}
 #'   \item{\code{config [setup | set KEY VALUE | unset KEY | get KEY | help]}}{show
 #'     or change the settings of the language model (\code{\link{llmcfg}}):
 #'     the route \code{ask} uses and the address, key and model of each route;
@@ -368,7 +371,8 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
                           "--reason", "--restricted", "--supervisor-name", "--supervisor-role", "--supervisor-email"),
                 ask = c("--model", "--route", "--fresh"),
                 models = "--route",
-                data = "--out", wayback = c("--out", "--jobs", "--within", "--max", "--retry", "--include-gone"),
+                data = "--out", app = c("--port", "--no-browser"),
+                wayback = c("--out", "--jobs", "--within", "--max", "--retry", "--include-gone"),
                 verify = c("--json", "--fail-on", .bl_capsule_opts),
                 drift = c("--json", "--fail-on", .bl_capsule_opts, "--html", "--app"),
                 report = c("--format", .bl_capsule_opts),
@@ -377,7 +381,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
   opts <- rest[startsWith(rest, "--")]
   values <- unlist(lapply(c("--email", "--code", "--token", "--model", "--route", "--out", "--jobs", "--within",
                             "--name", "--affiliation", "--reason", "--supervisor-name", "--supervisor-role",
-                            "--supervisor-email", .bl_capsule_valued, "--html"),
+                            "--supervisor-email", "--port", .bl_capsule_valued, "--html"),
                           function(f) {
     i <- match(f, rest)
     if (!is.na(i) && i < length(rest)) rest[[i + 1L]] else NULL
@@ -542,6 +546,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
           }
         },
         data = status <- .bl_cli_data(rest, flag, out),
+        app = status <- .bl_cli_app(rest, flag, has, out, usage_error),
         `explain-error` = status <- .bl_cli_explain(c(rest, tail_args), out, prog),
         wayback = status <- .bl_cli_wayback(rest, flag, out),
         sign = ,
@@ -782,6 +787,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
     describe = "describe NAME   help page of one function",
     examples = "examples NAME   the examples of one function",
     data = "data list | data pull db/table [--out FILE.csv]   curated tables at data.rmorie.com (your MORIE key)",
+    app = "app [PATH] [--port N] [--no-browser]   the analysis dashboard (rmblapp()); PATH a CSV file or a capsule",
     wayback = paste("wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d] [--max N]   archive every URL in FILE;",
                     "wayback --retry FILE.jsonl [--include-gone]   retry the failures of an earlier run;",
                     "(keys: IA_S3_ACCESS_KEY and IA_S3_SECRET_KEY, or their _FILE twins)"),
@@ -1202,6 +1208,7 @@ instcli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     "  logout                                    forget the data key\n",
     "  data list                                 curated tables at data.rmorie.com\n",
     "  data pull db/table [--out FILE.csv]       download one of them (your MORIE data key)\n",
+    "  app [PATH] [--port N] [--no-browser]      the analysis dashboard on this machine (needs shiny)\n",
     "  wayback FILE [--out F.jsonl] [--jobs N]   archive every URL in FILE (archive.org keys)\n",
     "  wayback --retry F.jsonl                   retry the failed URLs of an earlier wayback run\n",
     "  functions [PATTERN]                       exported functions and their titles\n",

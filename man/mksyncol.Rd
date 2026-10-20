@@ -58,6 +58,8 @@ column in \code{ctx} whose values supply \code{\{year\}} and restart
 the sequence within each year. With \code{year_col}, that column must
 have \code{n} values. No other tokens are recognised.}
 \item{\code{"sequence"}}{\code{from} (default 1): \code{from, from + 1, ...}.}
+\item{\code{"fitted"}}{\code{fit}, a \code{\link{dstfit}} result, and \code{family}
+(default the first-ranked converged fit): draws from that fitted distribution.}
 }
 Random draws use R's random number generator, so call \code{set.seed()}
 first for a reproducible column. Errors: \code{spec} not a list; an
@@ -92,6 +94,10 @@ yrs <- c(2024, 2024, 2025)
 unname(mksyncol(list(type = "id_pattern",
   pattern = "{year}-{seq:05d}", year_col = "year"), 3,
   ctx = list(year = yrs)))
+
+# "fitted": draws from a distribution fitted by dstfit()
+f <- dstfit(stats::rexp(100, 2), fams = "exponential", nboot = 0)
+mksyncol(list(type = "fitted", fit = f), 4)
 
 # "sequence": a running integer sequence from from.
 mksyncol(list(type = "sequence", from = 100), 4)

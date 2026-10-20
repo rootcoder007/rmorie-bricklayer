@@ -39,7 +39,7 @@ test_that("schemapath() finds the three schemas, the same files as the action's 
     expect_true(file.exists(schemapath(n)))
     expect_identical(schemapath(paste0(n, ".schema.json")), schemapath(n))
   }
-  expect_error(schemapath("nope"), "schemapath: `name` must be capsule, bundle or manifest, not 'nope'")
+  expect_error(schemapath("nope"), "schemapath: `name` must be capsule, bundle, manifest or ledger, not 'nope'")
   expect_error(schemapath(1), "schemapath: `name` must be a single non-empty string")
   spec <- Sys.getenv("RMBL_ACTION_DIR", file.path(path.expand("~"), "work", "rmbl-action"))
   skip_if_not(dir.exists(file.path(spec, "spec")), "the rmbl-action clone is not here")

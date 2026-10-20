@@ -137,6 +137,11 @@ cases <- list(
     file.copy(m, file.path(smoke_capsule, "manifest.json"), overwrite = TRUE)
     r <- run("report", smoke_capsule, "--base", m, "--manifests", "*"); check(r$status == 0 && grepl("### Manifests against", r$text, fixed = TRUE), paste("report --base:", substr(r$text, 1, 300)))
   },
+  # the dashboard is never started here: a missing path and a bad port are refused first
+  app = function() {
+    r <- run("app", "no-such-capsule-dir"); check(r$status == 1L && grepl("no such file", r$text, fixed = TRUE), r$text)
+    r <- run("app", "--port", "x"); check(r$status == 2L && grepl("--port", r$text, fixed = TRUE), r$text)
+  },
   help = function() {
     for (p in c("start", "llm", "config", "r")) { r <- run("help", p); check(r$status == 0 && nzchar(r$text), paste("help", p)) }
   },

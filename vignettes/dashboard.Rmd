@@ -1,0 +1,101 @@
+---
+title: "The analysis dashboard"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{The analysis dashboard}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 4, dpi = 72)
+library(rmoriebricklayer)
+```
+
+`rmblapp()` opens a dashboard over the package's analyses in your browser. It runs on your machine,
+in your R session. It needs the shiny package.
+
+```r
+rmblapp()                          # start empty, load data at the left
+rmblapp(indiex("health"))          # start with a data frame
+rmblapp(capsule = "path/to/capsule")
+```
+
+From a terminal, `rmbl app [PATH] [--port N] [--no-browser]` does the same. PATH is a CSV file or a
+capsule directory.
+
+Every analysis shows the R call it ran, and it runs exactly that call. Copy the call into a script
+and you get the same result. When a function refuses, the tab shows the refusal in the package's
+words, with `explerr()`'s note on where it comes from.
+
+## Loading data
+
+The panel at the left takes a CSV file (plain or gzip), a capsule directory, or a table from
+data.rmorie.com. For a capsule it loads the pinned data file. For data.rmorie.com, sign in first
+with `rmbl login`. The app never holds your data key: `dload()` reads it from where `rmbl login`
+stored it. The column types are listed under the source. Each tab also offers example data, so you
+can try every form before loading your own.
+
+## The tabs
+
+- **Describe**: `profcols()`, `freqtbl()`, `cortbl()`, `mahaoutl()` and `missgrid()`, plus
+  ridgelines, distribution functions, violins, hexagonal bins and concentration curves.
+- **Year over year**: `yoy()` with the period, value, groups, the smallest base for a percentage
+  and which direction is better. Download the result as the `yoyhtml()` page.
+- **Rates**: `rtcalc()`, `ratechg()` and `shrs()`. A rate per population and a share of a total
+  stay apart.
+- **Trends**: `trndtst()` (Mann-Kendall with the Theil-Sen slope), `stepchg()`, `cnttrnd()`, a
+  calendar heatmap, a horizon chart, small multiples and a bump chart.
+- **Survey**: `svydes()` with weights, strata, clusters or replicate weights, then `svyest()` or
+  `svycmp()`.
+- **Distributions**: `dstfit()` fits candidate distributions and ranks them, with density, QQ, PP
+  and tail plots. You can draw a synthetic sample from the best fit with `mksyncol()`.
+- **Drift**: the drift app, when this version has it.
+- **Capsule**: a capsule's provenance, manifest, attestation and bundle files. Its buttons run
+  `vrfcps()` and `cpschk()`, or `cpsrfrsh()`.
+- **Policy**: the panel designs on unit-by-period data, from `plndid()` and `evstudy()` to
+  `syndid()`, `wcb()`, `plnpwr()` and `tse()`. The panel names the assumption they share: without
+  the policy, the outcomes would have moved in parallel. Read the pre-period coefficients and the
+  cohort trends before the estimate.
+- **First Nations, Métis and Inuit**: Statistics Canada's tables as `indiex()` ships them, or your
+  own in the same layout. Each distinction is reported on its own. Suppressed cells stay
+  suppressed, and the quality flags are shown. The panel states the OCAP® and CARE principles and
+  links the source tables.
+- **Courts and corrections**: `stkflow()`, `caseflow()`, `clrdcmp()`, `dispmix()`, `lifetbl()`,
+  `crmdens()`, `knoxtst()`, `rgnmapintg()`, and the SIU readers `siuprs()` and `siuso()` on pasted
+  text.
+- **Air pollution**: a plume map (`plmfld()`), a downwind profile and receptor concentrations
+  (`gplume()`), the concentration-response functions, `polbrdn()` and `vrfpol()`.
+- **Hawkes**: `chwkfit()` with `plothwk()` (intensity, time-rescaling check, branching tree) and
+  `chwksim()`.
+- **Proof ledger**: a ledger from a file, a capsule or an installed package, its theorems and
+  `ldgrchk()`'s rows.
+- **Report**: what you added from the tabs. Save it as one HTML page with the plots as inline SVG,
+  as Markdown, or copy it as a GitHub comment.
+- **Settings**: the theme (light, dark or as the system is set), printed digits, and the seed the
+  seeded analyses use.
+
+## The same work in a script
+
+What the Distributions tab runs:
+
+```{r}
+set.seed(1)
+wait <- stats::rgamma(300, 2, 0.5)
+fit <- dstfit(wait, nboot = 50)
+fit$table[, c("rank", "family", "aic", "ks")]
+plot(fit, which = "qq", fams = c("gamma", "weibull"))
+```
+
+And what the Proof ledger tab runs on the sample ledger:
+
+```{r}
+led <- ldgrread(system.file("extdata", "ledger_sample.json", package = "rmoriebricklayer"))
+led
+ldgrchk(led)[, c("check", "ok", "severity")]
+```
+
+A ledger records the theorems of a formal-proof build and the functions each one covers. Any
+package can ship one in `inst/ledger/`, and the tab finds it there. A theorem counts as proved
+only when no `sorry` remains. An axiom is assumed, not proved, so it shows as a warning. A ledger
+pinned in a capsule (provenance `kind: "ledger"`) is checked by `rmbl verify` too.

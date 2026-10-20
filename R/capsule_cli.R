@@ -24,14 +24,14 @@
 #' s <- fromjs(paste(readLines(schemapath("bundle")), collapse = "\n"))
 #' s$required
 #'
-#' # only the three schemas exist
+#' # only the four schemas exist
 #' try(schemapath("nope"))
 #' @export
 schemapath <- function(name) {
   name <- .rmbl_string1(name, "name")
   base <- sub("\\.schema\\.json$", "", name)
-  if (!base %in% c("capsule", "bundle", "manifest")) {
-    stop(.rmbl_fn(), sprintf("`name` must be capsule, bundle or manifest, not '%s'", .rmbl_printable(name)),
+  if (!base %in% c("capsule", "bundle", "manifest", "ledger")) {
+    stop(.rmbl_fn(), sprintf("`name` must be capsule, bundle, manifest or ledger, not '%s'", .rmbl_printable(name)),
          call. = FALSE)
   }
   system.file("schemas", paste0(base, ".schema.json"), package = "rmoriebricklayer", mustWork = TRUE)
@@ -452,9 +452,10 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' @param d The capsule directory.
 #' @param key The shared secret of an hmac bundle, or "".
 #' @param pubkey The public key (or hmac key id) the bundle must be signed with, or "".
+#' @param pkgs The packages whose functions a ledger's checks may run, or NULL for all (ldgrchk()).
 #' @return Check rows.
 #' @noRd
-.bl_verify_capsule <- function(d, key = "", pubkey = "") {
+.bl_verify_capsule <- function(d, key = "", pubkey = "", pkgs = NULL) {
   prov_file <- file.path(d, "data_provenance.json")
   bundle_file <- file.path(d, "capsule_bundle.json")
   rows <- list()
@@ -462,7 +463,12 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
                   c(file.path(d, "results", "manifest.json"), "manifest"))) {
     if (file.exists(sp[[1L]])) rows[[length(rows) + 1L]] <- .bl_schema_row(d, sp[[1L]], sp[[2L]])
   }
-  if (file.exists(prov_file)) rows[[length(rows) + 1L]] <- .bl_result_rows(vrfcps(d), d, "provenance", prov_file)
+  if (file.exists(prov_file)) {
+    rows[[length(rows) + 1L]] <- .bl_result_rows(vrfcps(d), d, "provenance", prov_file)
+    # a proof ledger pinned in a capsule: its theorem rows and the pins of its commit and build
+    prov <- tryCatch(.bl_read_json_list(prov_file), error = function(e) NULL)
+    if (identical(prov$kind, "ledger")) rows[[length(rows) + 1L]] <- .bl_ldgr_capsule_rows(d, prov, pkgs)
+  }
   if (file.exists(bundle_file)) {
     bnd <- cpsbndlrd(bundle_file)
     # the secret goes to an hmac bundle only; the key id or public key is checked for any scheme

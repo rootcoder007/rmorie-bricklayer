@@ -27,7 +27,7 @@ schemapath("capsule")
 s <- fromjs(paste(readLines(schemapath("bundle")), collapse = "\n"))
 s$required
 
-# only the three schemas exist
+# only the four schemas exist
 try(schemapath("nope"))
 }
 \seealso{
