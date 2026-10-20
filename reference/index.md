@@ -182,6 +182,40 @@ help; the rmoriebricklayer shell command.
 - [`instcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/instcli.md)
   : Install the rmoriebricklayer command-line launcher
 
+## Dashboard, distributions, plots and proof ledgers
+
+The analysis dashboard, distribution fitting, plots for distributions
+and many series, a fitted Hawkes process drawn and simulated, and proof
+ledgers.
+
+- [`rmblapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmblapp.md)
+  : Open the analysis dashboard
+- [`dstfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstfit.md)
+  [`print(`*`<rmbl_dstfit>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstfit.md)
+  : Fit and rank candidate distributions
+- [`plot(`*`<rmbl_dstfit>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot.rmbl_dstfit.md)
+  : Plot fitted distributions
+- [`plotrdg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
+  [`plotecdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
+  [`plotvln()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
+  [`plothex()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
+  [`plotgain()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md)
+  : Many-plot helpers: ridgelines, ECDFs, violins, hexagonal bins and
+  concentration curves
+- [`plotcal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
+  [`plothrz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
+  [`plotsm()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
+  [`plotbump()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
+  : Plots for many series over time
+- [`plothwk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plothwk.md)
+  : Plot a fitted Hawkes process
+- [`chwksim()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwksim.md)
+  : Simulate event times from a fitted Hawkes process
+- [`ldgrread()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)
+  [`print(`*`<rmbl_ledger>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)
+  [`ldgrchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)
+  : Read and check a proof ledger
+
 ## JSON (native codec)
 
 jsonlite’s mapping in base R, byte-for-byte; no jsonlite at run time.

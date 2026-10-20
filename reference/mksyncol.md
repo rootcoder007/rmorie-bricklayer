@@ -79,6 +79,13 @@ parentheses):
 
   `from` (default 1): `from, from + 1, ...`.
 
+- `"fitted"`:
+
+  `fit`, a
+  [`dstfit`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstfit.md)
+  result, and `family` (default the first-ranked converged fit): draws
+  from that fitted distribution.
+
 Random draws use R's random number generator, so call
 [`set.seed()`](https://rdrr.io/r/base/Random.html) first for a
 reproducible column. Errors: `spec` not a list; an unknown `type`;
@@ -125,6 +132,11 @@ unname(mksyncol(list(type = "id_pattern",
   pattern = "{year}-{seq:05d}", year_col = "year"), 3,
   ctx = list(year = yrs)))
 #> [1] "2024-00001" "2024-00002" "2025-00001"
+
+# "fitted": draws from a distribution fitted by dstfit()
+f <- dstfit(stats::rexp(100, 2), fams = "exponential", nboot = 0)
+mksyncol(list(type = "fitted", fit = f), 4)
+#> [1] 0.2982046 0.4023028 0.8290420 0.9676400
 
 # "sequence": a running integer sequence from from.
 mksyncol(list(type = "sequence", from = 100), 4)

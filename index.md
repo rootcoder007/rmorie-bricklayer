@@ -45,6 +45,45 @@ produced the data.
   [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md)
   and the rest, grouped by topic on the package website.
 
+- **A dashboard on your own machine** —
+  [`rmblapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmblapp.md)
+  (or `rmbl app [PATH]`) opens forms over the analysis families: load a
+  CSV file, a capsule or a data.rmorie.com table, run an analysis, see
+  the package’s plot and the exact R call it ran, and gather the results
+  into one HTML page, Markdown or a GitHub comment. Needs shiny;
+  [`vignette("dashboard")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/dashboard.md).
+
+- **Distributions and plots** —
+  [`dstfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstfit.md)
+  fits and ranks candidate distributions by maximum likelihood
+  (continuous, proportions and counts with zero inflation), with
+  bootstrap intervals, a Hill tail index and density, QQ, PP and tail
+  plots; `mksyncol(list(type = "fitted"))` draws from a fit.
+  [`plotrdg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
+  [`plotecdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
+  [`plotvln()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
+  [`plothex()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
+  [`plotgain()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md),
+  [`plotcal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md),
+  [`plothrz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md),
+  [`plotsm()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
+  and
+  [`plotbump()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.md)
+  draw distributions and many series in the house style;
+  [`plothwk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plothwk.md)
+  and
+  [`chwksim()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chwksim.md)
+  show and simulate a fitted Hawkes process.
+
+- **Proof ledgers** —
+  [`ldgrread()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)
+  reads a ledger of formal proofs (Lean theorems, their status and the
+  package functions they cover) against `schemapath("ledger")`;
+  [`ldgrchk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.md)
+  checks each theorem is proved, each covered function exists and each
+  numeric check holds, in a sandbox. `rmbl verify` adds those rows to a
+  capsule that holds a ledger.
+
 - **CKAN resolution** —
   [`rslvckan()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rslvckan.md)
   /

@@ -29,6 +29,7 @@ before, or instead of, touching restricted data.'><meta property="og:image" cont
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
+    <li><a class="dropdown-item" href="../articles/dashboard.html">The analysis dashboard</a></li>
     <li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
     <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
     <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
@@ -136,6 +137,10 @@ have <code>n</code> values. No other tokens are recognised.</p></dd>
 <dt><code>"sequence"</code></dt>
 <dd><p><code>from</code> (default 1): <code>from, from + 1, ...</code>.</p></dd>
 
+<dt><code>"fitted"</code></dt>
+<dd><p><code>fit</code>, a <code><a href="dstfit.html">dstfit</a></code> result, and <code>family</code>
+(default the first-ranked converged fit): draws from that fitted distribution.</p></dd>
+
 
 </dl><p>Random draws use R's random number generator, so call <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code>
 first for a reproducible column. Errors: <code>spec</code> not a list; an
@@ -181,6 +186,11 @@ invalid weights or rates.</p>
 <span class="r-in"><span>  pattern <span class="op">=</span> <span class="st">"{year}-{seq:05d}"</span>, year_col <span class="op">=</span> <span class="st">"year"</span><span class="op">)</span>, <span class="fl">3</span>,</span></span>
 <span class="r-in"><span>  ctx <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>year <span class="op">=</span> <span class="va">yrs</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "2024-00001" "2024-00002" "2025-00001"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># "fitted": draws from a distribution fitted by dstfit()</span></span></span>
+<span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="dstfit.html">dstfit</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">2</span><span class="op">)</span>, fams <span class="op">=</span> <span class="st">"exponential"</span>, nboot <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">mksyncol</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"fitted"</span>, fit <span class="op">=</span> <span class="va">f</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.2982046 0.4023028 0.8290420 0.9676400</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># "sequence": a running integer sequence from from.</span></span></span>
 <span class="r-in"><span><span class="fu">mksyncol</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"sequence"</span>, from <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span></span></span>

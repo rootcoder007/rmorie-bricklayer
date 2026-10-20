@@ -4,6 +4,8 @@
 
 - [Your first capsule: a published table, analysed and
   recorded](https://rootcoder007.github.io/rmorie-bricklayer/articles/getting-started.md):
+- [The analysis
+  dashboard](https://rootcoder007.github.io/rmorie-bricklayer/articles/dashboard.md):
 - [Building reproducible data
   capsules](https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules.md):
 - [Provenance you can

@@ -35,12 +35,12 @@ other name.
 
 ``` r
 schemapath("capsule")
-#> [1] "/tmp/RtmpKWGbI3/temp_libpath1e1361ff2343/rmoriebricklayer/schemas/capsule.schema.json"
+#> [1] "/tmp/RtmppbTrMy/temp_libpath1e1132c85042/rmoriebricklayer/schemas/capsule.schema.json"
 s <- fromjs(paste(readLines(schemapath("bundle")), collapse = "\n"))
 s$required
 #> [1] "files"           "manifest_digest" "bundled_utc"     "attestation"    
 
-# only the three schemas exist
+# only the four schemas exist
 try(schemapath("nope"))
-#> Error : schemapath: `name` must be capsule, bundle or manifest, not 'nope'
+#> Error : schemapath: `name` must be capsule, bundle, manifest or ledger, not 'nope'
 ```

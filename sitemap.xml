@@ -11,6 +11,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/categorical-integrity.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/causal-effects.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/courts-and-crime.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/dashboard.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/describe.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/drift.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/falsification-and-power.html</loc></url>
@@ -80,6 +81,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/chwkjit.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/chwknll.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/chwkres.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/chwksim.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/cipw.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/citecps.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/clncolnms.html</loc></url>
@@ -143,6 +145,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/drftpsi.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/drp.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/drvkey.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/dstfit.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/dstn.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/dstntst.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/dtctloc.html</loc></url>
@@ -203,6 +206,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/kemsz.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/keyeddgst.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/knoxtst.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/ldgrread.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/lifetbl.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/limfrom.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/llmask.html</loc></url>
@@ -246,8 +250,12 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpois.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpwr.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/plot.rmbl_dstfit.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/plotevgrid.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/plothwk.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/plotlrnz.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/plotseries.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/plrcf.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/polbrdarea.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/polbrdn.html</loc></url>
@@ -275,6 +283,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rlblfrns.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rmblapp.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rndbytes.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rptanl.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rptmd.html</loc></url>
