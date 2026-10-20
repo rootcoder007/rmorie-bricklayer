@@ -42,7 +42,7 @@ jobs:
           use-public-rspm: true
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::covr, any::xml2, any::roxygen2
+          extra-packages: any::covr, any::xml2, any::roxygen2, any::srr
           cache: 'always'
           cache-version: 1
       - name: Roxygenise (generate NAMESPACE + man)
