@@ -108,7 +108,7 @@ From the shell: <code>rmoriebricklayer data list</code> and
 <span></span>
 <span><span class="fu">dtabs</span><span class="op">(</span>refresh <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">dload</span><span class="op">(</span><span class="va">key</span>, refresh <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">dload</span><span class="op">(</span><span class="va">key</span>, refresh <span class="op">=</span> <span class="cn">FALSE</span>, token <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -124,6 +124,12 @@ table) is cached.</p></dd>
 <dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
 <dd><p>Character scalar, a <code>db/table</code> key from the manifest (the
 <code>key</code> column of <code>dtabs()</code>).</p></dd>
+
+
+<dt id="arg-token">token<a class="anchor" aria-label="anchor" href="#arg-token"></a></dt>
+<dd><p>For <code>dload()</code>: the MORIE key to use for this call,
+in place of the one <code><a href="dlogin.html">dlogin</a></code> stored; <code>NULL</code> (the
+default) uses the stored key. It is never printed or written to disk.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -172,8 +178,8 @@ bar when <code>options(morie.progress)</code> allows it.</p>
 <p>Errors: <code>refresh</code> not <code>TRUE</code> or <code>FALSE</code>; no key stored (the
 message says how to sign in); the service unavailable, or the key rejected;
 a <code>key</code> that is not of the form <code>db/table</code>, or not listed in the
-manifest; a digest mismatch; a restricted table whose terms were not
-accepted.</p>
+manifest; a <code>token</code> that is not one non-empty string; a digest
+mismatch; a restricted table whose terms were not accepted.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

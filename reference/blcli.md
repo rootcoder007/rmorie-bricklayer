@@ -67,6 +67,37 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
   failures of an earlier run
   ([`wbrtry`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbrtry.md))
 
+- `verify PATH [--json] [--fail-on LEVEL] [--public-key HEX]`:
+
+  check every capsule under PATH as the rmbl GitHub Action does: each
+  file against its JSON Schema
+  ([`schemapath`](https://rootcoder007.github.io/rmorie-bricklayer/reference/schemapath.md)),
+  [`vrfcps`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
+  and
+  [`cpsbndlvrf`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md).
+  The secret of an hmac bundle is read from `RMBL_KEY`, which is then
+  removed from the environment. Prints the Markdown report, or JSON with
+  `--json`; exits 1 when a failed row is at or above `--fail-on`
+  (`error`, the default, `drift` or `warn`)
+
+- `drift PATH [--json] [--fail-on LEVEL]`:
+
+  verify, then fetch each source again: new bytes are a warning,
+  drifting columns
+  ([`cpsdrft`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md))
+  are drift
+
+- `refresh PATH`:
+
+  pin each source's new bytes
+  ([`cpsrfrsh`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrfrsh.md))
+  and print what changed
+  ([`mnfdiff`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfdiff.md))
+
+- `report PATH [--format md|json]`:
+
+  the verify report, exit 0
+
 - `functions [PATTERN]`:
 
   list the exported functions with their one-line titles, optionally
@@ -144,7 +175,9 @@ data.rmorie.com manifest and tables are kept in
 `tools::R_user_dir("rmoriebricklayer", "cache")` rather than a fresh
 temporary folder. The verbs `login`, `logout` and `config` write the
 shared credentials and settings files; `ask`, `models`, `data`, `bundle`
-and `wayback` use the network; `functions`, `describe`, `examples`,
+and `wayback` use the network, and `drift` and `refresh` fetch each
+capsule's source (`refresh` writes the capsule); `verify` and `report`
+only read the capsule files; `functions`, `describe`, `examples`,
 `explain-error`, `version` and `help` only read the installed help.
 
 ## See also
@@ -185,6 +218,12 @@ blcli("help")
 #>   examples NAME                             its examples
 #>   version                                   package version
 #> 
+#> Capsules (the checks of the rmbl GitHub Action)
+#>   verify PATH [--json] [--fail-on LEVEL]    schemas, digests, bundle signature (hmac secret: RMBL_KEY)
+#>   drift PATH [--json] [--fail-on LEVEL]     verify, then fetch each source and compare it with the pin
+#>   refresh PATH                              pin each source's new bytes in its provenance
+#>   report PATH [--format md|json]            the verify report; never fails
+#> 
 #> More help
 #>   rmoriebricklayer help start      getting started, step by step
 #>   rmoriebricklayer help llm        every way to point ask at a model (your key, Ollama, your own server)
@@ -192,8 +231,18 @@ blcli("help")
 #>   rmoriebricklayer help r          the same from R and Rscript
 #>   rmoriebricklayer VERB --help     one verb's usage
 blcli(c("functions", "json"))
-#>   bricklayer_json_from_json  Old names kept for rmoriedata 0.3.x
-#>   bricklayer_json_to_json    Old names kept for rmoriedata 0.3.x
+#>   bricklayer_json_base64_dec     The 0.5.x names, kept as aliases
+#>   bricklayer_json_base64_enc     The 0.5.x names, kept as aliases
+#>   bricklayer_json_base64url_dec  The 0.5.x names, kept as aliases
+#>   bricklayer_json_base64url_enc  The 0.5.x names, kept as aliases
+#>   bricklayer_json_from_json      Old names kept for rmoriedata 0.3.x
+#>   bricklayer_json_serialize      The 0.5.x names, kept as aliases
+#>   bricklayer_json_to_json        Old names kept for rmoriedata 0.3.x
+#>   bricklayer_json_unserialize    The 0.5.x names, kept as aliases
+#>   json_gzip_decode               The 0.5.x names, kept as aliases
+#>   json_gzip_encode               The 0.5.x names, kept as aliases
+#>   write_manifest_json            The 0.5.x names, kept as aliases
+#>   yoy_json                       The 0.5.x names, kept as aliases
 blcli(c("describe", "anltab"))
 #> Analyse a published administrative table in one call
 #> 
@@ -370,9 +419,42 @@ close(con)
 status
 #> [1] 0
 lines
-#> [1] "no exported function matches"
+#> [1] "  drbg_generate  The 0.5.x names, kept as aliases"
+#> [2] "  drbg_new       The 0.5.x names, kept as aliases"
+#> [3] "  drbg_reseed    The 0.5.x names, kept as aliases"
 
 # an unknown verb is a usage error: status 2, nothing run
 blcli("nonsense")
 #> rmoriebricklayer: unknown verb 'nonsense'; try `rmoriebricklayer help`, or `rmoriebricklayer ask "QUESTION"` for a model
+
+# check a capsule as the rmbl GitHub Action does
+d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
+invisible(cpsrfrsh(d))
+blcli(c("verify", d))
+#> ## rmbl capsule verify with [rmoriebricklayer 1.0.0](https://github.com/rootcoder007/rmorie-bricklayer)
+#> 
+#> **✔ ok**: 1 capsule under `/tmp/RtmpEELkXf/capsule-1ed83025fdd3`: 1 ok, 0 warn, 0 drift, 0 error
+#> 
+#> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
+#> |---|---|---|---|---|---|---|
+#> | `/tmp/RtmpEELkXf/capsule-1ed83025fdd3` | /tmp/RtmpEELkXf/temp_libpath1ed8c37f4de/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> 
+#> <details>
+#> <summary>✔ <code>/tmp/RtmpEELkXf/capsule-1ed83025fdd3</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> 
+#> | | Check | Detail |
+#> |---|---|---|
+#> | ✔ | schema: data_provenance.json | valid against capsule.schema.json |
+#> | ✔ | provenance_readable | /tmp/RtmpEELkXf/capsule-1ed83025fdd3/data_provenance.json |
+#> | ✔ | data_present | /tmp/RtmpEELkXf/capsule-1ed83025fdd3/otis_a01_individuals.csv |
+#> | ✔ | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
+#> | ✔ | data_size_bytes | 462 bytes on disk |
+#> | ✔ | data_readable | /tmp/RtmpEELkXf/capsule-1ed83025fdd3/otis_a01_individuals.csv |
+#> | ✔ | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
+#> 
+#> </details>
+#> 
+#> ---
+#> 
+#> mode `verify` · rmoriebricklayer 1.0.0 · R version 4.6.1 (2026-06-24)
 ```

@@ -161,7 +161,8 @@ plot(
 )
 
 # S3 method for class 'rmbl_rate'
-plot(x, ..., period = NULL, main = NULL, col = NULL, palette = NULL)
+plot(x, ..., period = NULL, main = NULL,
+  col = NULL, palette = NULL, xlab = NULL)
 
 # S3 method for class 'rmbl_share'
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
@@ -375,14 +376,14 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 - xlab:
 
   For the plots over time (`rmbl_stock_flow`, `rmbl_yoy`,
-  `rmbl_rate_change`, `rmbl_count_trend`, `rmbl_event_study`), the title
-  of the period axis. The default `NULL` names the unit the period
-  implies: `"Date"` for dates, `"Time"` for date-times, `"Fiscal year"`
-  for fiscal-year labels such as `"2022/23"`, `"Periods since adoption"`
-  for an event study, otherwise `"Period"`. A number or a date is drawn
-  on its own continuous scale, so a missing period leaves its gap; any
-  other period (text, a factor) is drawn at evenly spaced positions
-  labelled with its text.
+  `rmbl_rate_change`, `rmbl_count_trend`, `rmbl_event_study`, and
+  `rmbl_rate` with `period`), the title of the period axis. The default
+  `NULL` names the unit the period implies: `"Date"` for dates, `"Time"`
+  for date-times, `"Fiscal year"` for fiscal-year labels such as
+  `"2022/23"`, `"Periods since adoption"` for an event study, otherwise
+  `"Period"`. A number or a date is drawn on its own continuous scale,
+  so a missing period leaves its gap; any other period (text, a factor)
+  is drawn at evenly spaced positions labelled with its text.
 
 - gaps:
 

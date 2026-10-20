@@ -229,7 +229,8 @@ method returns the data it drew, invisibly, as a data frame.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'rmbl_rate'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, period <span class="op">=</span> <span class="cn">NULL</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, period <span class="op">=</span> <span class="cn">NULL</span>, main <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span>, xlab <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'rmbl_share'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
@@ -441,7 +442,8 @@ its confidence interval).</p></dd>
 <dt id="arg-xlab">xlab<a class="anchor" aria-label="anchor" href="#arg-xlab"></a></dt>
 <dd><p>For the plots over time (<code>rmbl_stock_flow</code>,
 <code>rmbl_yoy</code>, <code>rmbl_rate_change</code>, <code>rmbl_count_trend</code>,
-<code>rmbl_event_study</code>), the title of the period axis. The default
+<code>rmbl_event_study</code>, and <code>rmbl_rate</code> with <code>period</code>),
+the title of the period axis. The default
 <code>NULL</code> names the unit the period implies: <code>"Date"</code> for dates,
 <code>"Time"</code> for date-times, <code>"Fiscal year"</code> for fiscal-year labels
 such as <code>"2022/23"</code>, <code>"Periods since adoption"</code> for an event

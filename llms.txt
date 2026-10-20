@@ -1082,6 +1082,11 @@ rmoriebricklayer logout                         # forget the data key
 rmoriebricklayer data list                      # the curated tables at data.rmorie.com
 rmoriebricklayer data pull db/table --out t.csv # download one (your MORIE key)
 rmoriebricklayer bundle "your request"          # agentbndl() from the shell
+rmoriebricklayer verify capsules --fail-on warn # every capsule under a folder, as the rmbl GitHub Action checks it
+rmoriebricklayer verify capsules --json         # the check rows as JSON (hmac secret: RMBL_KEY)
+rmoriebricklayer drift capsules                 # fetch each source again and compare it with the pin
+rmoriebricklayer refresh capsules               # pin each source's new bytes (cpsrfrsh())
+rmoriebricklayer report capsules --format md    # the Markdown report; never fails
 rmoriebricklayer functions [PATTERN]            # exported functions and their titles
 rmoriebricklayer describe NAME                  # one function's help page
 rmoriebricklayer examples NAME                  # its examples
@@ -1258,6 +1263,14 @@ verify it later so an analysis reproduces from the same inputs.
   : Generate a Data Citation From Provenance
 - [`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
   : Re-Verify an Entire Reproducible Data Capsule
+- [`cpsrfrsh()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrfrsh.md)
+  : Fetch a capsule's source again and pin the new bytes
+- [`mnfdiff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfdiff.md)
+  [`format(`*`<rmbl_mnfdiff>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfdiff.md)
+  [`print(`*`<rmbl_mnfdiff>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfdiff.md)
+  : Compare the resources of two manifests
+- [`schemapath()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/schemapath.md)
+  : Path of a JSON Schema shipped with the package
 - [`loadprov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md)
   : Load a Pinned Data-Provenance Record
 - [`recrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recrd.md)

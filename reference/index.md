@@ -98,6 +98,14 @@ verify it later so an analysis reproduces from the same inputs.
   : Generate a Data Citation From Provenance
 - [`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
   : Re-Verify an Entire Reproducible Data Capsule
+- [`cpsrfrsh()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrfrsh.md)
+  : Fetch a capsule's source again and pin the new bytes
+- [`mnfdiff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfdiff.md)
+  [`format(`*`<rmbl_mnfdiff>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfdiff.md)
+  [`print(`*`<rmbl_mnfdiff>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfdiff.md)
+  : Compare the resources of two manifests
+- [`schemapath()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/schemapath.md)
+  : Path of a JSON Schema shipped with the package
 - [`loadprov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loadprov.md)
   : Load a Pinned Data-Provenance Record
 - [`recrd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recrd.md)

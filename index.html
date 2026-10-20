@@ -503,10 +503,15 @@
 <span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data list                      <span class="co"># the curated tables at data.rmorie.com</span></span>
 <span id="cb11-24"><a href="#cb11-24" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data pull db/table <span class="at">--out</span> t.csv <span class="co"># download one (your MORIE key)</span></span>
 <span id="cb11-25"><a href="#cb11-25" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> bundle <span class="st">"your request"</span>          <span class="co"># agentbndl() from the shell</span></span>
-<span id="cb11-26"><a href="#cb11-26" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> functions <span class="pp">[</span><span class="ss">PATTERN</span><span class="pp">]</span>            <span class="co"># exported functions and their titles</span></span>
-<span id="cb11-27"><a href="#cb11-27" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> describe NAME                  <span class="co"># one function's help page</span></span>
-<span id="cb11-28"><a href="#cb11-28" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> examples NAME                  <span class="co"># its examples</span></span>
-<span id="cb11-29"><a href="#cb11-29" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> version</span></code></pre></div>
+<span id="cb11-26"><a href="#cb11-26" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> verify capsules <span class="at">--fail-on</span> warn <span class="co"># every capsule under a folder, as the rmbl GitHub Action checks it</span></span>
+<span id="cb11-27"><a href="#cb11-27" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> verify capsules <span class="at">--json</span>         <span class="co"># the check rows as JSON (hmac secret: RMBL_KEY)</span></span>
+<span id="cb11-28"><a href="#cb11-28" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> drift capsules                 <span class="co"># fetch each source again and compare it with the pin</span></span>
+<span id="cb11-29"><a href="#cb11-29" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> refresh capsules               <span class="co"># pin each source's new bytes (cpsrfrsh())</span></span>
+<span id="cb11-30"><a href="#cb11-30" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> report capsules <span class="at">--format</span> md    <span class="co"># the Markdown report; never fails</span></span>
+<span id="cb11-31"><a href="#cb11-31" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> functions <span class="pp">[</span><span class="ss">PATTERN</span><span class="pp">]</span>            <span class="co"># exported functions and their titles</span></span>
+<span id="cb11-32"><a href="#cb11-32" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> describe NAME                  <span class="co"># one function's help page</span></span>
+<span id="cb11-33"><a href="#cb11-33" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> examples NAME                  <span class="co"># its examples</span></span>
+<span id="cb11-34"><a href="#cb11-34" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> version</span></code></pre></div>
 <p><code>rmbl</code> is the same command under a short name; every verb works under either:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="ex">rmbl</span> help</span>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="ex">rmbl</span> doctor</span>

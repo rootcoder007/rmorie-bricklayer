@@ -23,7 +23,11 @@ explerr(msg = geterrmessage(), pkgs = NULL, n = 3L)
   ..." is fine), a condition object, or a
   [`try()`](https://rdrr.io/r/base/try.html) result. Default: the last
   error of this session
-  ([`geterrmessage()`](https://rdrr.io/r/base/stop.html)).
+  ([`geterrmessage()`](https://rdrr.io/r/base/stop.html)). Or a data
+  frame of check rows with the columns `check`, `ok` and `detail`, as
+  `rmbl verify --json` writes them and
+  [`vrfcps`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
+  returns them in `checks`: each failed row is explained.
 
 - pkgs:
 
@@ -47,7 +51,10 @@ its words found, such as `"80% of its words"`). No rows when the message
 is not one of these packages' own: it came from another package or from
 R, and
 [`llmask`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmask.md)
-can help with it.
+can help with it. For a data frame of check rows: one row per failed
+check, with the columns `check`, `detail`, `explanation` (what the
+failure means and what to do) and `raised_by` (`pkg::fn` when the detail
+is a message of these packages, else `NA`).
 
 ## Details
 
@@ -84,8 +91,9 @@ more, common words left out, at least two needed), \\\|m\|\\ the words
 of the message and \\\|t\|\\ those of the template; scores of 0.55 and
 above are kept.
 
-Errors: `msg` that is not character text or a condition; `n` not a whole
-number of 1 or more; `pkgs` that are not installed.
+Errors: `msg` that is not character text, a condition or a data frame
+with the columns `check`, `ok` and `detail`; `n` not a whole number of 1
+or more; `pkgs` that are not installed.
 
 ## Examples
 
@@ -96,19 +104,22 @@ explerr(msg, pkgs = "rmoriebricklayer")
 #> 1 rmoriebricklayer     .rmbl_string1
 #> 2 rmoriebricklayer .rmbl_fips_scheme
 #> 3 rmoriebricklayer        usecpstmpl
-#>                                                          exported  kind
-#> 1                  llmask, agentbndl, anltab, arccap, blcli, bldl error
-#> 2 capsule_sign, cpsatst, cpsbndl, cpsbndlvrf, cpschkatst, cpssign error
-#> 3                                                      usecpstmpl error
-#>                                      message            match
-#> 1    `...` must be a single non-empty string            exact
-#> 2 `scheme` must be a single non-empty string 80% of its words
-#> 3   `name` must be a single non-empty string 80% of its words
+#>                                                                                exported
+#> 1            bricklayer_llm_ask, llmask, agent_bundle, agentbndl, analyse_table, anltab
+#> 2 capsule_attest, capsule_check_attestation, capsule_sign, cpsatst, cpsbndl, cpsbndlvrf
+#> 3                                                      use_capsule_template, usecpstmpl
+#>    kind                                    message            match
+#> 1 error    `...` must be a single non-empty string            exact
+#> 2 error `scheme` must be a single non-empty string 80% of its words
+#> 3 error   `name` must be a single non-empty string 80% of its words
 r <- try(llmcfg(no.such = 1), silent = TRUE)
 explerr(r, pkgs = "rmoriebricklayer")
-#>            package      raised_by      exported  kind
-#> 1 rmoriebricklayer .bl_cli_config         blcli error
-#> 2 rmoriebricklayer         llmcfg blcli, llmcfg error
+#>            package      raised_by
+#> 1 rmoriebricklayer .bl_cli_config
+#> 2 rmoriebricklayer         llmcfg
+#>                                               exported  kind
+#> 1                                blcli, bricklayer_cli error
+#> 2 blcli, bricklayer_cli, bricklayer_llm_config, llmcfg error
 #>                               message match
 #> 1 unknown setting '...' (one of: ...) exact
 #> 2 unknown setting '...' (one of: ...) exact
@@ -117,27 +128,35 @@ explerr(r, pkgs = "rmoriebricklayer")
 explerr(
   "Error in mrkprf(x, 9) : `index` must be between 1 and the number of chunks",
   n = 1)
-#>            package raised_by exported  kind
-#> 1 rmoriebricklayer    mrkprf   mrkprf error
+#>            package raised_by             exported  kind
+#> 1 rmoriebricklayer    mrkprf merkle_proof, mrkprf error
 #>                                              message match
 #> 1 `index` must be between 1 and the number of chunks exact
 
 # a condition object, and a message retyped from memory
 e <- tryCatch(kemsz(3), error = identity)
 explerr(e, n = 1)
-#>            package       raised_by                         exported  kind
-#> 1 rmoriebricklayer .rmbl_kem_level kemdecap, kemencap, kemkg, kemsz error
-#>                                   message match
-#> 1 `level` must be one of 512, 768 or 1024 exact
+#>            package       raised_by
+#> 1 rmoriebricklayer .rmbl_kem_level
+#>                                                                      exported
+#> 1 kem_keygen, kem_sizes, kem_decapsulate, kem_encapsulate, kemdecap, kemencap
+#>    kind                                 message match
+#> 1 error `level` must be one of 512, 768 or 1024 exact
 explerr("index between number chunks", n = 1)
-#>            package raised_by exported  kind
-#> 1 rmoriebricklayer    mrkprf   mrkprf error
+#>            package raised_by             exported  kind
+#> 1 rmoriebricklayer    mrkprf merkle_proof, mrkprf error
 #>                                              message             match
 #> 1 `index` must be between 1 and the number of chunks 100% of its words
 
 # R's own messages are not in the table: no rows
 nrow(explerr("object 'x' not found"))
 #> [1] 0
+
+# the failed rows of a capsule check
+rows <- data.frame(check = c("data_present", "data_sha256"), ok = c(TRUE, FALSE),
+                   detail = c("d.csv", "expected 01..., got 9c..."))
+explerr(rows)$explanation
+#> [1] "the data file's bytes differ from the pinned SHA-256: restore the file, or pin the new bytes with cpsrfrsh() (rmbl refresh)"
 
 # n must be at least 1
 try(explerr(msg, n = 0))

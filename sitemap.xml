@@ -104,6 +104,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsfals.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/cpspwr.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrfrsh.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrpt.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsvrf.html</loc></url>
@@ -219,6 +220,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/mksyncol.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/mksyncsv.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfcanon.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfdiff.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfrcmp.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfrecseed.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/morani.html</loc></url>
@@ -266,6 +268,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rgnmapintg.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rgnmappts.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rlblfrns.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rndbytes.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rptanl.html</loc></url>
@@ -281,6 +284,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rvkfetch.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/scanadj.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/scests.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/schemapath.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/schval.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/sctidy.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/sevidx.html</loc></url>

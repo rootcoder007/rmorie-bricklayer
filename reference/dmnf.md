@@ -25,7 +25,7 @@ dmnf(refresh = FALSE)
 
 dtabs(refresh = FALSE)
 
-dload(key, refresh = FALSE)
+dload(key, refresh = FALSE, token = NULL)
 ```
 
 ## Arguments
@@ -39,6 +39,13 @@ dload(key, refresh = FALSE)
 
   Character scalar, a `db/table` key from the manifest (the `key` column
   of `dtabs()`).
+
+- token:
+
+  For `dload()`: the MORIE key to use for this call, in place of the one
+  [`dlogin`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
+  stored; `NULL` (the default) uses the stored key. It is never printed
+  or written to disk.
 
 ## Value
 
@@ -88,7 +95,8 @@ draw a progress bar when `options(morie.progress)` allows it.
 Errors: `refresh` not `TRUE` or `FALSE`; no key stored (the message says
 how to sign in); the service unavailable, or the key rejected; a `key`
 that is not of the form `db/table`, or not listed in the manifest; a
-digest mismatch; a restricted table whose terms were not accepted.
+`token` that is not one non-empty string; a digest mismatch; a
+restricted table whose terms were not accepted.
 
 ## See also
 
