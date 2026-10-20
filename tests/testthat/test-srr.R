@@ -248,3 +248,16 @@ test_that("missing values break lines by default and can be joined", {
   expect_true(is.na(with_pdf(plot(es, style = "stata"))$estimate[1L]))
   expect_true(is.na(with_pdf(plot(es, style = "stata", gaps = "join"))$estimate[1L]))
 })
+
+test_that("vrfcps() reports an unparseable provenance record as a failed row", {
+  dir <- tempfile("cps-")
+  dir.create(dir)
+  utils::write.csv(data.frame(a = 1:3), file.path(dir, "d.csv"), row.names = FALSE)
+  writeLines("{bad", file.path(dir, "data_provenance.json"))
+  r <- vrfcps(dir)
+  expect_false(r$ok)
+  row <- r$checks[r$checks$check == "provenance_readable", ]
+  expect_false(row$ok)
+  expect_match(row$detail, "data_provenance.json: ")
+  expect_true("data_present" %in% r$checks$check)
+})

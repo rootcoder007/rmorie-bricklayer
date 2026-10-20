@@ -141,11 +141,18 @@ vrfcps <- function(cpsdir,
   # so it is contained like every other path: a symlink out of the capsule,
   # or a caller-supplied "../evil.json", pinned tampered bytes as intact.
   ppath <- .rmbl_safe_rel(provfile, cpsdir)
-  prov <- if (is.null(ppath)) NULL else loadprov(ppath)
+  # a record that does not parse is a failed row, not an error: the verdict of the capsule is
+  # what the caller asked for, and morie's verify() answers the same way
+  loaded <- if (is.null(ppath)) list(prov = NULL, err = NULL) else
+    tryCatch(list(prov = loadprov(ppath), err = NULL),
+             error = function(e) list(prov = NULL, err = conditionMessage(e)))
+  prov <- loaded$prov
+  parse_err <- loaded$err
   note("provenance_readable", !is.null(prov),
        if (is.null(ppath))
          sprintf("'%s' is not a plain relative path inside the capsule",
                  as.character(unlist(provfile))[1L])
+       else if (!is.null(parse_err)) sprintf("%s: %s", ppath, parse_err)
        else ppath)
   # a field that should be one string: a nested object or an array in its
   # place is a different document, not a value to take element 1 of

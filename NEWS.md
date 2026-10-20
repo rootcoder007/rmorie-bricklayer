@@ -23,6 +23,10 @@
 
 ## Capsule template and the attestation check
 
+* `vrfcps()` reports a provenance record that does not parse as a failed `provenance_readable`
+  row with the parser's message, instead of stopping; the other rows are then run as for a
+  missing record. `morie.capsule.verify()` answers the same way.
+
 * `usecpstmpl()`'s `analysis.R` pins the source digest into `data_provenance.json` on its first
   run (`source$sha256` and a `resource` block), so `vrfcps()` verifies the capsule from then on.
   Before, the provenance said the digest would be filled in and nothing ever did.
