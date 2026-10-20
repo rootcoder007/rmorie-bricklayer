@@ -100,9 +100,15 @@
 #' in the observed range so that a gap is visible as a gap instead of closing
 #' up.
 #' @param ... Passed between methods: the numeric and `ts` methods pass every
-#' argument of the data-frame method (`units`, `minbase`, `direction`,
+#' argument of the data-frame method (`units`, `minbase`, `dir`,
 #' ...)
 #' through.
+#' @section 0.5.x argument names:
+#' The 0.5.x names `period`, `min_base`, `conf_level` and
+#' `direction` are still accepted for `prd`, `minbase`, `conflvl`
+#' and `dir`, the names to use, as are the 0.5.x values
+#' `"higher_is_better"` and `"lower_is_better"` of `dir`. A call
+#' that gives both names of one argument is refused.
 #' @return An `rmbl_yoy` object (a data frame of class
 #' `c("rmbl_yoy", "data.frame")`) with one row per period (and group): the
 #' period column under its own name (`period` for a vector or a `ts`), the
@@ -215,10 +221,12 @@ yoy.data.frame <- function(x, value, prd, by = NULL, lag = 1L,
                              "lower"
                            ),
                            complete = TRUE, ...) {
+  if (!is.null(old <- .rmbl_old_names(.yoy_old_args))) return(eval(old$call, old$env))
   if (!is.null(by) && (!is.character(by) || !length(by) || anyNA(by))) {
     stop("yoy: `by` must be one or more column names, or NULL", call. = FALSE)
   }
   units <- .rmbl_arg(units)
+  dir <- .rmbl_alias_val(dir, c(higher_is_better = "higher", lower_is_better = "lower"))
   dir <- .rmbl_arg(dir)
   # several rows for one period: counts add up, a rate or a share is averaged
   # (two shares of 53% and 57.9% are not 110.9%)
@@ -284,6 +292,7 @@ yoy.data.frame <- function(x, value, prd, by = NULL, lag = 1L,
 #' @rdname yoy
 #' @export
 yoy.numeric <- function(x, prd = seq_along(x), ...) {
+  if (!is.null(old <- .rmbl_old_names(.yoy_old_args))) return(eval(old$call, old$env))
   if (any(c("value", "data") %in% names(list(...)))) {
     stop("for a numeric `x`, `x` is the values: give `prd` (and options), not `value`", call. = FALSE)
   }
@@ -295,12 +304,14 @@ yoy.numeric <- function(x, prd = seq_along(x), ...) {
 #' @rdname yoy
 #' @export
 yoy.integer <- function(x, prd = seq_along(x), ...) {
+  if (!is.null(old <- .rmbl_old_names(.yoy_old_args))) return(eval(old$call, old$env))
   yoy.numeric(as.numeric(x), prd = prd, ...)
 }
 
 #' @rdname yoy
 #' @export
 yoy.ts <- function(x, lag = NULL, ...) {
+  if (!is.null(old <- .rmbl_old_names(.yoy_old_args))) return(eval(old$call, old$env))
   f <- stats::frequency(x)
   # a year-over-year comparison on a seasonal series means the same
   # season one year earlier, which is the frequency itself -- comparing
@@ -310,6 +321,9 @@ yoy.ts <- function(x, lag = NULL, ...) {
   d <- data.frame(period = as.numeric(tt), value = as.numeric(x))
   yoy.data.frame(d, value = "value", prd = "period", lag = lag, ...)
 }
+
+# the 0.5.x argument names of yoy(), still accepted (yoy() kept its name, so it has no alias)
+.yoy_old_args <- c(period = "prd", min_base = "minbase", conf_level = "conflvl", direction = "dir")
 
 #' Resolve a column given either a bare name or a string.
 #'
@@ -437,6 +451,16 @@ yoy.ts <- function(x, lag = NULL, ...) {
   u <- sort(unique(p))
   if (length(u) < 2L) return(NULL)
   if (inherits(p, "Date")) {
+    cal <- .yoy_calendar(u)
+    if (!is.null(cal)) {
+      # yearly, quarterly or monthly dates: whole calendar months apart, not a count of days
+      # (2019-01-01 to 2020-01-01 is 365 days, then 366: a one-day grid compared nothing)
+      mu <- .yoy_months(u)
+      step <- .yoy_gcd(diff(mu))
+      n <- (max(mu) - min(mu)) / step + 1
+      if (cal == "end") return(seq(min(u) + 1, by = paste(step, "months"), length.out = n) - 1)
+      return(seq(min(u), by = paste(step, "months"), length.out = n))
+    }
     d <- as.numeric(diff(u))
     step <- .yoy_gcd(d)
     if (!is.finite(step) || step <= 0) return(NULL)
@@ -452,6 +476,27 @@ yoy.ts <- function(x, lag = NULL, ...) {
     return(if (is.integer(p)) as.integer(round(g)) else g)
   }
   NULL
+}
+
+#' Whether sorted unique dates fall on calendar steps.
+#' @param u Sorted unique dates.
+#' @return `"day"` when all share one day of the month (1 to 28), `"end"` when all are month
+#'   ends, else NULL (daily or weekly data, stepped in days).
+#' @noRd
+.yoy_calendar <- function(u) {
+  lt <- as.POSIXlt(u)
+  if (length(unique(lt$mday)) == 1L && lt$mday[1L] <= 28L) return("day")
+  if (all(as.POSIXlt(u + 1)$mday == 1L)) return("end")
+  NULL
+}
+
+#' Month number (12 * year + month) of dates.
+#' @param x Dates.
+#' @return A double vector.
+#' @noRd
+.yoy_months <- function(x) {
+  lt <- as.POSIXlt(x)
+  (lt$year + 1900) * 12 + lt$mon
 }
 
 #' Returns the greatest common step of period differences, or the smallest when they are fractional.
@@ -574,6 +619,11 @@ yoy.ts <- function(x, lag = NULL, ...) {
   }
   u <- sort(unique(p))
   if (length(u) < 2L) return(rep(NA_real_, length(v)))
+  if (inherits(p, "Date") && !is.null(.yoy_calendar(u))) {
+    # calendar steps: count in months, so a year back is 12 months back, leap day or not
+    p <- .yoy_months(p)
+    u <- .yoy_months(u)
+  }
   step <- .yoy_gcd(as.numeric(diff(u)))
   if (!is.finite(step) || step <= 0) return(rep(NA_real_, length(v)))
   # Match on the grid INDEX rather than on a reconstructed period value.

@@ -162,6 +162,15 @@ infinite \code{value}; for \code{units = "count"}, negative or fractional values
 \code{lag} not a positive whole number; \code{conflvl} outside (0, 1); an unknown
 \code{units} or \code{direction}.
 }
+\section{0.5.x argument names}{
+
+The 0.5.x names \code{period}, \code{min_base}, \code{conf_level} and
+\code{direction} are still accepted for \code{prd}, \code{minbase}, \code{conflvl}
+and \code{dir}, the names to use, as are the 0.5.x values
+\code{"higher_is_better"} and \code{"lower_is_better"} of \code{dir}. A call
+that gives both names of one argument is refused.
+}
+
 \examples{
 seg <- data.frame(
   EndFiscalYear = rep(2019:2023, each = 2),

@@ -376,8 +376,8 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
 #' strictly increasing. A progress bar is shown in an interactive session.
 #'
 #' @param y Numeric vector, the series in period order.
-#' @param x Vector of periods, default \code{NULL} (the position). Used only
-#'   to label the break; numeric or date periods must be strictly increasing.
+#' @param x Numeric or date periods, default \code{NULL} (the position), strictly
+#'   increasing and not missing where \code{y} has a value. Used only to label the break.
 #' @param minseg Whole number, default 2: the fewest periods allowed on
 #'   either side of the break.
 #' @param nperm Whole number, default 9999: the number of random
@@ -430,15 +430,24 @@ stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
   y <- y[ok]
   x <- x[ok]
   n <- length(y)
-  # the scan splits the series in the order given, so the periods must be in time order
-  if ((is.numeric(x) || inherits(x, c("Date", "POSIXt"))) && is.unsorted(x, na.rm = TRUE, strictly = TRUE)) {
-    stop("`x` must be strictly increasing: sort the series by period first", call. = FALSE)
+  # the scan splits the series in the order given, so the periods must be numbers or dates in time
+  # order: a character or factor x has no order to check, and "40" < "5" (pre-CRAN audit of 30bed8e)
+  if (!(is.numeric(x) || inherits(x, c("Date", "POSIXt"))) || is.factor(x)) {
+    stop(.rmbl_fn(), sprintf("`x` must be numbers or dates (the periods), not %s", class(x)[1L]),
+         call. = FALSE)
+  }
+  if (anyNA(x)) stop(.rmbl_fn(), "`x` has a missing period where `y` has a value", call. = FALSE)
+  if (is.unsorted(x, strictly = TRUE)) {
+    stop(.rmbl_fn(), "`x` must be strictly increasing: sort the series by period first", call. = FALSE)
   }
   # the statistic is a squared difference of means, so values near 1e300 overflowed it to Inf and
   # the p-value was NaN (final audit of 1.0.0, #11); it is scale-free, as is the permutation null,
-  # so the series is read in units of its largest value when that is beyond 1e150
+  # so the series is read in units of its largest value when that is beyond 1e150, or below
+  # 1e-150, where the squares underflowed to 0 and every split tied (y * 1e-200 broke after period
+  # 2 with p = 1; pre-CRAN audit of 30bed8e)
   # before, after and difference are put back in the units of y at the end
-  sc <- if (n && max(abs(y)) > 1e150) max(abs(y)) else 1
+  m <- if (n) max(abs(y)) else 0
+  sc <- if (m > 1e150 || (m > 0 && m < 1e-150)) m else 1
   y <- y / sc
   minseg <- .rmbl_scalar(minseg, "minseg", 1, integer = TRUE)
   nperm <- .rmbl_scalar(nperm, "nperm", 1, integer = TRUE)

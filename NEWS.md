@@ -15,8 +15,24 @@
 * A refusal that several functions share now starts with the name of the function that refused
   ("anltab: `data` must be a data frame"), and so do the shared argument checks.
 * `stepchg()` puts `before`, `after` and `difference` back into the units of `y` when the
-  series is above 1e150 (they stayed rescaled), and refuses a numeric or date `x` that is not
-  strictly increasing. `trndtst()` refuses duplicated periods.
+  series is above 1e150 (they stayed rescaled), rescales a series below 1e-150 as well (the
+  squares underflowed and every split tied), and refuses an `x` that is not numbers or dates, has a
+  missing period or is not strictly increasing. `trndtst()` refuses duplicated periods.
+* `yoy()` compares yearly, quarterly and monthly `Date` periods (all on one day of the month, or
+  all month ends) on a grid of calendar months; on a grid of days none of them had a comparison.
+* `svydes(type = "jkn")` on a domain keeps a replicate that deletes a PSU of a stratum of 101 or
+  more PSUs: its factor, within 1% of the weight, is the 1 / rscale its `rscales` says, and it
+  was refused as a copy.
+* The plots over time put text periods in time order (fiscal years, years, year-months,
+  quarters), not in the order they first appear. `plot(yoy(...))` says "no data in the previous
+  period" for a period after a gap, which it called the first period, and refuses a result with
+  no values.
+* `rtcalc()` and `ratechg()` name `pop` in their refusal, and `exprspplr()` names the call
+  `estr(data, y, expo, confs)`. `blcli()` refuses `NA` or a function as `args`, `dlogin()` a
+  function as `email`, and `instcli()` a `dir` it cannot create or write, each with its name in
+  front.
+* The examples that sign keep the one-time index record in a temporary file, and the slower
+  examples of `blcli()` and `explerr()` run only in an interactive session.
 * `chwkfit()` warns when the branching ratio sits on its 0.99 bound.
 * `yoy()` compares ordered-factor periods by level order and completes missing levels; its
   refusal names every accepted input. `fylbl()`'s help says a fractional year is an error.
@@ -99,9 +115,18 @@ can call them.
 Every exported function, argument, output column, help topic and option now has a short name without
 underscores (`survey_design()` is `svydes()`, `conf_level` is `conflvl`, `trend_sensitivity()` is
 `tse()`). Each help page gives the full form of every short name. Every 0.5.13 export is still callable
-by its old name with its old argument names: `?rmbl-aliases` lists the 304 aliases, each a wrapper that
-forwards to the new function (the eleven rmoriedata 0.3.x calls among them in `?rmbl-compat`), so code
-written against 0.5.x keeps running and the reference stays one page per method. `rmbl functions` and the help-aware language-model
+by its old name with its old argument names and defaults: `?rmbl-aliases` lists the 304 aliases, each a
+wrapper that forwards to the new function (the eleven rmoriedata 0.3.x calls among them in
+`?rmbl-compat`). Allowed values that were renamed (`"mean_bootstrap"` is `"meanboot"`,
+`"higher_is_better"` is `"higher"`, `"all_cause_mortality"` is `"allcause"`) are translated on the way,
+as are old argument names passed through `...` and the old `what` and `which` values of the plot
+methods. The nine options read their 0.5.x names too (`rmoriebricklayer.xmss_index_file` for
+`rmoriebricklayer.xmssidxfile`), so a record or cache an old `.Rprofile` points to is still used. `rate()`, `rate_change()`, `share()` and
+`yoy_summary()` stay S3 generics, so methods written for them still dispatch. `yoy()` kept its name and
+takes its 0.5.x argument names (`period`, `min_base`, `conf_level`, `direction`) beside the new ones.
+Functions and arguments keep working through the aliases; result columns and fields use the new names
+(`co2e_g` is `co2eg`, `pct_valid` is `pctvalid`), and `?rmbl-aliases` lists every renamed one, so code
+that reads a 0.5.x result needs those names changed. `rmbl functions` and the help-aware language-model
 tools list the new names. Wire formats (capsule, manifest and service JSON fields, CSV columns from
 published tables) keep their names, so files written by earlier versions still read.
 

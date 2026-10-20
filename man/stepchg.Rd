@@ -9,8 +9,8 @@ stepchg(y, x = NULL, minseg = 2L, nperm = 9999L, seed = 1L)
 \arguments{
 \item{y}{Numeric vector, the series in period order.}
 
-\item{x}{Vector of periods, default \code{NULL} (the position). Used only
-to label the break; numeric or date periods must be strictly increasing.}
+\item{x}{Numeric or date periods, default \code{NULL} (the position), strictly
+increasing and not missing where \code{y} has a value. Used only to label the break.}
 
 \item{minseg}{Whole number, default 2: the fewest periods allowed on
 either side of the break.}

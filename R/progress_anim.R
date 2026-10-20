@@ -133,7 +133,7 @@
     x <- suppressWarnings(as.integer(x)[1L])
     if (length(x) != 1L || is.na(x) || x < 1L) 1L else x
   }
-  for (o in c("rmoriebricklayer.numcol", if (!tty) "cli.num_colors")) {
+  for (o in c("rmoriebricklayer.numcol", "rmoriebricklayer.num_colors", if (!tty) "cli.num_colors")) {
     if (!is.null(v <- getOption(o))) return(n(v))
   }
   if (nzchar(e <- Sys.getenv("R_CLI_NUM_COLORS"))) return(n(e))

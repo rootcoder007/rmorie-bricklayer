@@ -844,8 +844,8 @@ exprspplr <- function(data, y, expo, confs, nboot = 100L,
   pg$update(0, "fitting the full sample")
   # the full sample: an estimator that cannot take (data, outcome, exposure, confounders) is said so
   base <- tryCatch(estr(data, y, expo, confs), error = function(e) {
-    stop(sprintf(paste("`estr` failed on the full sample, called as",
-                       "estimator(data, outcome, exposure, confounders): %s"), conditionMessage(e)), call. = FALSE)
+    stop(.rmbl_fn(), sprintf(paste("`estr` failed on the full sample, called as",
+                                   "estr(data, y, expo, confs): %s"), conditionMessage(e)), call. = FALSE)
   })
   ate <- as.numeric(base$ate)
   se_analytic <- as.numeric(base$se)
@@ -1774,7 +1774,7 @@ polrpttxt <- function(report) {
 #' @return A number of bytes.
 #' @noRd
 .rmbl_max_csv_bytes <- function() {
-  lim <- getOption("rmoriebricklayer.maxcsvbytes", 2^30)
+  lim <- .rmbl_getopt("maxcsvbytes", 2^30)
   if (!is.numeric(lim) || length(lim) != 1L || is.na(lim) || lim < 0)
     stop("option rmoriebricklayer.maxcsvbytes must be a single non-negative number", call. = FALSE)
   as.numeric(lim)

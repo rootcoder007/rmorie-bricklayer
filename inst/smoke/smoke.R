@@ -13,6 +13,13 @@ check <- function(cond, what) if (!isTRUE(cond)) stop(what, call. = FALSE)
 no_route <- function(r) r$status == 1L && grepl("bring your own key", r$text, fixed = TRUE)
 cases <- list(
   version = function() { r <- run("version"); check(r$status == 0 && grepl("rmoriebricklayer", r$text), r$text) },
+  # NA or a function as the command line is refused by name, not failed in R's words
+  args = function() {
+    for (a in list(NA_character_, function() 1)) {
+      e <- tryCatch(blcli(a), error = conditionMessage)
+      check(is.character(e) && startsWith(e, "blcli: "), paste("args:", e))
+    }
+  },
   doctor = function() { r <- run("doctor"); check(r$status == 0 && nzchar(r$text), r$text) },
   models = function() {
     r <- run("models"); check(r$status == 0 || no_route(r), r$text)

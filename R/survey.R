@@ -358,7 +358,7 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
         as.numeric(r)
       })
     }
-    .svy_replicate_check(.reps, .w, type, data, id_values, attr(data, "row.names"), named)
+    .svy_replicate_check(.reps, .w, type, data, id_values, attr(data, "row.names"), named, rscales)
     if (!is.matrix(.reps)) .reps <- unname(.reps)
     B <- if (is.matrix(.reps)) ncol(.reps) else length(.reps)
     if (B < 2L) stop("at least two replicate weights are needed", call. = FALSE)
@@ -621,9 +621,11 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
 #' @param id_values The PSU id values, when numeric.
 #' @param row_names The row names of `data`.
 #' @param named Whether the replicates were given by name, so their names can be compared with the columns of `data`.
+#' @param rscales The per-replicate scales given, or NULL.
 #' @return `TRUE`, invisibly; warnings for replicates kept as given.
 #' @noRd
-.svy_replicate_check <- function(reps, w, type, data, id_values = NULL, row_names = NULL, named = TRUE) {
+.svy_replicate_check <- function(reps, w, type, data, id_values = NULL, row_names = NULL, named = TRUE,
+                                 rscales = NULL) {
   n <- length(w)
   # the replicates as a list of columns or as the matrix given: each column read in place, ONCE.
   # Every rule below reads a summary of the column made on that one pass (the earlier five passes
@@ -755,6 +757,17 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
   # by more or fewer than k is a stray: the full data plus w * 15/14 (16 of a factor whose k is 15)
   # and w * 1.005 beside 200 JKn replicates (1 of a factor whose k is 200) passed silently (final
   # audit of 1.0.0, #9)
+  # JKn with its rscales: the replicate deleting a PSU of a stratum of m PSUs scales the stratum's
+  # other rows by m / (m - 1), which is 1 / rscale, and leaves the other strata at 1. From 101 PSUs
+  # on that is within 1% of the weight, and on a domain without the deleted PSU's rows it was
+  # refused as a copy (stratum of 150 PSUs; pre-CRAN audit of 30bed8e)
+  rsc <- if (identical(type, "jkn") && is.numeric(rscales) && length(rscales) == B &&
+             all(is.finite(rscales))) rscales
+  jkn_known <- function(b) {
+    f <- summ[[b]]$fh
+    !is.null(rsc) && rsc[b] > 0 && rsc[b] < 1 && length(f) > 0L &&
+      all(abs(f - 1) < 1e-8 | abs(f * rsc[b] - 1) < 1e-8)
+  }
   fac_of <- if (!adjusted && type %in% c("jk1", "jkn")) get("fac") else rep(NA_real_, B)
   fac_cnt <- function(f) sum(!is.na(fac_of) & fac_of == f)
   stray_scale <- function(b) {
@@ -784,12 +797,12 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
     # copy. A jackknife or BRR replicate zeroes the PSUs it leaves out, so there it cannot be one;
     # under a bootstrap or Fay's method it is said
     if (x$maxrel < 0.01) {
-      if (adjusted || (type %in% c("jk1", "jkn") && jk_scale(b))) {
+      if (adjusted || (type %in% c("jk1", "jkn") && jk_scale(b)) || jkn_known(b)) {
         # genuine: see `adjusted` and jk_scale() above. One factor k / (k - 1) on every row with no row
         # left out is genuine only on a subset whose deleted PSU lies outside it; carried by more or
         # fewer replicates than its k it is a rescaled copy (w * 1.005 under JKn and w * 15/14 under
         # JK1 passed silently; final audit of 1.0.0, #9): said
-        if (!adjusted && !x$anyzero && stray_scale(b)) {
+        if (!adjusted && !x$anyzero && !jkn_known(b) && stray_scale(b)) {
           warned <- c(warned, sprintf(paste("replicate %s scales every row by one factor k/(k - 1) that %d",
                                             "replicates carry and leaves no row out: a rescaled copy of the",
                                             "full-sample weight, not a replicate of this set"),
@@ -823,7 +836,8 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
                                             "full-sample weight, not a replicate of this set"),
                                       nm, fac_cnt(fac_of[[b]])))
         }
-      } else {
+      } else if (!jkn_known(b)) {
+        # JKn's factor 1 / rscale on its stratum and 1 elsewhere is a rescaled weight
         warned <- c(warned, sprintf("replicate %s leaves no row out and is no rescaled weight, as a %s replicate is",
                                     nm, toupper(type)))
       }

@@ -84,21 +84,10 @@ installed.
 \examples{
 msg <- "`prompt` must be a single non-empty string"
 explerr(msg, pkgs = "rmoriebricklayer")
-r <- try(llmcfg(no.such = 1), silent = TRUE)
-explerr(r, pkgs = "rmoriebricklayer")
 
-# the message as R prints it, with the call in front
-explerr(
-  "Error in mrkprf(x, 9) : `index` must be between 1 and the number of chunks",
-  n = 1)
-
-# a condition object, and a message retyped from memory
+# a condition object
 e <- tryCatch(kemsz(3), error = identity)
 explerr(e, n = 1)
-explerr("index between number chunks", n = 1)
-
-# R's own messages are not in the table: no rows
-nrow(explerr("object 'x' not found"))
 
 # the failed rows of a capsule check
 rows <- data.frame(check = c("data_present", "data_sha256"), ok = c(TRUE, FALSE),
@@ -107,4 +96,19 @@ explerr(rows)$explanation
 
 # n must be at least 1
 try(explerr(msg, n = 0))
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
+# an error caught with try(), and the message as R prints it, with the call in front
+r <- try(llmcfg(no.such = 1), silent = TRUE)
+explerr(r, pkgs = "rmoriebricklayer")
+explerr(
+  "Error in mrkprf(x, 9) : `index` must be between 1 and the number of chunks",
+  n = 1)
+
+# a message retyped from memory
+explerr("index between number chunks", n = 1)
+
+# R's own messages are not in the table: no rows
+nrow(explerr("object 'x' not found"))
+\dontshow{\}) # examplesIf}
 }

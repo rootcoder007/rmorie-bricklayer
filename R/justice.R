@@ -1787,12 +1787,14 @@ print.rmbl_clearance_decomposition <- function(x, ...) {
 #' @rdname plot-methods
 #' @param maxparts For \code{rmbl_clearance_decomposition}, the most parts drawn: past
 #'   it,
-#'   the parts that moved the aggregate most, and the rest summed into one row.
+#'   the parts that moved the aggregate most, and the rest summed into one row. The 0.5.x
+#'   name \code{max_parts} is still accepted.
 #' @usage \method{plot}{rmbl_clearance_decomposition}(x, ..., what = NULL,
 #'   maxparts = 20L, main = NULL, col = NULL, palette = NULL)
 #' @export
 plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, maxparts = 20L, main = NULL, col = NULL,
                                               palette = NULL) {
+  if (!is.null(old <- .rmbl_old_names(c(max_parts = "maxparts")))) return(eval(old$call, old$env))
   .rmbl_plot_check(x, "rmbl_clearance_decomposition")
   cols <- .bl_cols(2, col, palette)
   maxparts <- .rmbl_num(maxparts, "maxparts", integer = TRUE)

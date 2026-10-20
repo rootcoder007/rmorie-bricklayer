@@ -20,7 +20,7 @@
   # never under a test run or R CMD check, of this package or of one that drives its command line
   if (identical(Sys.getenv("TESTTHAT"), "true") || nzchar(Sys.getenv("_R_CHECK_PACKAGE_NAME_"))) return(FALSE)
   off <- c("off", "0", "false", "no", "none", "disabled")
-  opt <- getOption("rmoriebricklayer.llmcache")
+  opt <- .rmbl_getopt("llmcache")
   !tolower(trimws(Sys.getenv("MORIE_LLM_CACHE", ""))) %in% off &&
     !isFALSE(opt) && !(is.character(opt) && tolower(trimws(opt[[1L]])) %in% off) &&
     !isTRUE(getOption("morie.quiet")) &&
@@ -42,7 +42,7 @@
 #' @return A path.
 #' @noRd
 .bl_answer_dir <- function() {
-  getOption("rmoriebricklayer.llmcachedir") %||% file.path(tools::R_user_dir("rmoriebricklayer", "cache"), "answers")
+  .rmbl_getopt("llmcachedir") %||% file.path(tools::R_user_dir("rmoriebricklayer", "cache"), "answers")
 }
 
 #' Normalises a question for matching.
@@ -80,7 +80,7 @@
   if (!.bl_answer_cache_on()) return(NULL)
   f <- file.path(.bl_answer_dir(), paste0(key, ".json"))
   if (!file.exists(f)) return(NULL)
-  days <- getOption("rmoriebricklayer.llmcachedays", 30)
+  days <- .rmbl_getopt("llmcachedays", 30)
   if (difftime(Sys.time(), file.mtime(f), units = "days") > days) {
     unlink(f)
     return(NULL)
@@ -139,9 +139,9 @@
   fs <- list.files(d, pattern = "^[0-9a-f]{64}[.]json$|[.]tmp$", full.names = TRUE)
   if (!length(fs)) return(invisible(0L))
   age <- as.numeric(difftime(Sys.time(), file.mtime(fs), units = "days"))
-  drop <- age > getOption("rmoriebricklayer.llmcachedays", 30) | (endsWith(fs, ".tmp") & age > 1 / 24)
+  drop <- age > .rmbl_getopt("llmcachedays", 30) | (endsWith(fs, ".tmp") & age > 1 / 24)
   keep <- fs[!drop & endsWith(fs, ".json")]
-  cap <- getOption("rmoriebricklayer.llmcachemax", 200L)
+  cap <- .rmbl_getopt("llmcachemax", 200L)
   if (length(keep) > cap) drop[fs %in% keep[order(file.mtime(keep), decreasing = TRUE)][-seq_len(cap)]] <- TRUE
   unlink(fs[drop])
   invisible(sum(drop))

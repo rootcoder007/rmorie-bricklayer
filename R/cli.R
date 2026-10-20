@@ -275,12 +275,9 @@
 #' @examples
 #' blcli("version")
 #' blcli("help")
-#' blcli(c("functions", "json"))
-#' blcli(c("describe", "anltab"))
 #'
-#' # one verb's usage, and the examples of a help page
+#' # one verb's usage
 #' blcli(c("help", "data"))
-#' blcli(c("examples", "perdays"))
 #'
 #' # capture the output instead of printing it
 #' con <- textConnection("lines", "w")
@@ -296,17 +293,27 @@
 #' d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 #' invisible(cpsrfrsh(d))
 #' blcli(c("verify", d))
+#'
+#' @examplesIf interactive()
+#' # these read every help page, which takes a few seconds
+#' blcli(c("functions", "json"))
+#' blcli(c("describe", "anltab"))
+#' blcli(c("examples", "perdays"))
 #' @export
 blcli <- function(args = commandArgs(trailingOnly = TRUE),
                            out = cat) {
   if (!is.function(out)) stop("`out` must be a function that writes text, as cat() does", call. = FALSE)
   old_progress <- options(morie.progress = TRUE)  # downloads draw their bar
   on.exit(options(old_progress), add = TRUE)
-  if (nzchar(Sys.getenv("RMBL_PROG")) && is.null(getOption("rmoriebricklayer.dcache"))) {
+  if (nzchar(Sys.getenv("RMBL_PROG")) && is.null(.rmbl_getopt("dcache"))) {
     # from the shell every call is a new R session: keep the data.rmorie.com manifest and tables in
     # the user cache (tools::R_user_dir) instead of a fresh tempdir() each time
     old_cache <- options(rmoriebricklayer.dcache = tools::R_user_dir("rmoriebricklayer", "cache"))
     on.exit(options(old_cache), add = TRUE)
+  }
+  # NA or a closure failed in R's words further on (pre-CRAN audit of 30bed8e)
+  if (!is.null(args) && (!is.atomic(args) || anyNA(args))) {
+    stop(.rmbl_fn(), "`args` must be a character vector of command-line words, with no NA", call. = FALSE)
   }
   args <- as.character(args)
   if (length(args) && identical(args[[1L]], "--args")) args <- args[-1L]  # R >= 4.6 keeps the separator
@@ -943,8 +950,8 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
 #' says to add it. Re-run it after moving the package to another library.
 #'
 #' Errors when the package installation has no launcher in
-#' \code{inst/bin} (a damaged installation), and from base R when \code{dir}
-#' cannot be created or written; when \code{dir} is not one string; and
+#' \code{inst/bin} (a damaged installation); when \code{dir}
+#' cannot be created or written, or is not one string; and
 #' when \code{name} is not a character vector of one or more command names
 #' (empty, \code{NA}, an empty string or a name with a directory part is
 #' refused).
@@ -981,6 +988,10 @@ instcli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
   src <- .bl_launcher()
   if (!nzchar(src)) stop("the launcher is missing from this installation", call. = FALSE)
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  # a folder that cannot be made or written failed later in file()'s words (pre-CRAN audit of 30bed8e)
+  if (!dir.exists(dir) || file.access(dir, 2L) != 0L) {
+    stop(.rmbl_fn(), sprintf("`dir` %s cannot be created or written", dir), call. = FALSE)
+  }
   # the launcher pins the library this copy of the package lives in, inside R with .libPaths(),
   # so the shell's R_LIBS or an R_LIBS in ~/.Renviron cannot swap in another copy
   lib <- normalizePath(dirname(system.file(package = "rmoriebricklayer")), winslash = "/")

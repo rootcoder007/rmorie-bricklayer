@@ -1513,7 +1513,9 @@ dlogin <- function(token = NULL, email = NULL, code = NULL,
 #' @return The address in lower case, invisibly.
 #' @noRd
 .bl_check_email <- function(email) {
-  email <- tolower(trimws(as.character(email)))
+  # a closure or a list reached as.character() and failed in R's words (pre-CRAN audit of 30bed8e)
+  if (!is.character(email)) stop(.rmbl_fn(), "`email` must be one string, an email address", call. = FALSE)
+  email <- tolower(trimws(email))
   if (length(email) != 1L || is.na(email) || !nzchar(email)) {
     stop(.rmbl_fn(), "an email address is required", call. = FALSE)
   }

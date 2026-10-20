@@ -1672,7 +1672,7 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 #' @return The path, or NULL when the record is turned off.
 #' @noRd
 .rmbl_xmss_index_file <- function() {
-  p <- getOption("rmoriebricklayer.xmssidxfile", NULL)
+  p <- .rmbl_getopt("xmssidxfile", NULL)
   from <- "the option rmoriebricklayer.xmssidxfile"
   if (is.null(p)) {
     p <- Sys.getenv("RMBL_XMSS_INDEX_FILE", unset = NA_character_)

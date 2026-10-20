@@ -42,8 +42,8 @@ names the files written and, when \code{dir} is not on the \code{PATH},
 says to add it. Re-run it after moving the package to another library.
 
 Errors when the package installation has no launcher in
-\code{inst/bin} (a damaged installation), and from base R when \code{dir}
-cannot be created or written; when \code{dir} is not one string; and
+\code{inst/bin} (a damaged installation); when \code{dir}
+cannot be created or written, or is not one string; and
 when \code{name} is not a character vector of one or more command names
 (empty, \code{NA}, an empty string or a name with a directory part is
 refused).

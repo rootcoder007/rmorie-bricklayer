@@ -492,7 +492,7 @@ wrtxtfb <- function(text, path) {
 #' @return `url`.
 #' @noRd
 .rmbl_check_public_url <- function(url, what = "url", allow_file = FALSE,
-                                   allow_http = getOption("rmoriebricklayer.allowhttp", FALSE),
+                                   allow_http = .rmbl_getopt("allowhttp", FALSE),
                                    resolve = FALSE, allow_loopback = FALSE) {
   url <- as.character(unlist(url))[1L]
   if (is.na(url) || !nzchar(url)) stop(sprintf("%s is empty", what), call. = FALSE)

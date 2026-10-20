@@ -864,7 +864,11 @@ plotopt <- function(...) {
   }
   time <- inherits(p, c("Date", "POSIXt"))
   cont <- is.numeric(p) || time
-  at <- if (cont) as.numeric(p) else match(txt, unique(txt))
+  # text periods in time order, not in order of first appearance (2019/20, 2021/22, 2020/21 was
+  # drawn so; pre-CRAN audit of 30bed8e): a factor by its levels, text by .bl_period_order()
+  key <- as.character(p)
+  lev <- if (is.factor(p)) levels(p) else .bl_period_order(unique(key[!is.na(key)]))
+  at <- if (cont) as.numeric(p) else match(key, lev[lev %in% key])
   first <- !duplicated(at)
   t <- stats::na.omit(txt)
   fiscal <- length(t) > 0L && all(grepl("^[0-9]{4}[/-][0-9]{2}([0-9]{2})?$", t))
@@ -873,6 +877,15 @@ plotopt <- function(...) {
   step <- if (length(u) > 1L) min(diff(u)) else 1
   list(p = p, at = at, ticks = at[first], tlab = txt[first], cont = cont, time = time, xlab = xlab,
        xlim = (if (length(u)) range(u) else c(0, 1)) + c(-0.5, 0.5) * step, step = step)
+}
+
+# Text periods in time order: fiscal years ("2019/20"), years, year-months ("2019-03") and
+# quarters ("2019Q1") by year, then the number after it; anything else sorted.
+.bl_period_order <- function(u) {
+  if (!length(u) || !all(grepl("^[0-9]{4}([/ -]?[Qq]?[0-9]{1,4})?$", u))) return(sort(u))
+  r <- suppressWarnings(as.numeric(sub("^[0-9]{4}[/ -]?[Qq]?", "", u)))
+  r[is.na(r)] <- 0
+  u[order(as.numeric(substr(u, 1L, 4L)), r)]
 }
 
 # The period axis itself: a tick at every period when there are few (a year never reads
@@ -1116,6 +1129,8 @@ plotopt <- function(...) {
 #'     \item \code{rmbl_clearance_decomposition}: any of \code{"rates"},
 #'       \code{"mix"} and \code{"effects"} (the default fits the device).
 #'   }
+#'   The 0.5.x values \code{"pct_change"}, \code{"flow_rate"} and \code{"stock_rate"} are
+#'   still accepted, as is \code{"rate_change"} for \code{which}.
 #' @param exposure For \code{rmbl_crf} and \code{rmbl_burden}, the exposure
 #'   range to draw the curve over; the default runs from 0 to 1.5 times the
 #'   exposure in the object.
@@ -1256,6 +1271,7 @@ plot.rmbl_stock_flow <- function(x, ..., what = c("adp", "alos", "people", "days
                                  main = NULL, col = NULL, palette = NULL, xlab = NULL) {
   .rmbl_plot_check(x, "rmbl_stock_flow")
   avail <- intersect(c("adp", "alos", "people", "days", "flowrate", "stkrate"), names(x))
+  what <- .rmbl_alias_val(what, c(flow_rate = "flowrate", stock_rate = "stkrate"))  # 0.5.x values
   what <- .rmbl_arg(what, avail, several = TRUE)
   labs <- c(adp = "Average daily population", alos = "Average length of stay (days)",
             people = "People", days = "Person-days", flowrate = "Flow rate",
@@ -1299,9 +1315,13 @@ plot.rmbl_stock_flow <- function(x, ..., what = c("adp", "alos", "people", "days
 plot.rmbl_yoy <- function(x, ..., what = c("pctchg", "value"), main = NULL, col = NULL,
                           palette = NULL, xlab = NULL, gaps = c("break", "join")) {
   .rmbl_plot_check(x, "rmbl_yoy")
+  what <- .rmbl_alias_val(what, c(pct_change = "pctchg"))  # the 0.5.x value
   what <- .rmbl_arg(what)
   gaps <- .rmbl_arg(gaps)
   d <- as.data.frame(x)
+  if (!any(is.finite(d$value))) {
+    stop(.rmbl_fn(), "no period has a value, so there is nothing to draw", call. = FALSE)
+  }
   meta <- attr(x, "yoy")
   period <- if (!is.null(meta$period)) meta$period else names(d)[1L]
   by <- meta$by
@@ -1328,9 +1348,19 @@ plot.rmbl_yoy <- function(x, ..., what = c("pctchg", "value"), main = NULL, col 
     }
   }
   if (what == "pctchg") {
-    why <- ifelse(is.na(d$previous), "first period: nothing to compare with",
-                  ifelse(!is.na(d$flag) & nzchar(as.character(d$flag)),
-                         paste("no percentage:", as.character(d$flag)), "no percentage"))
+    # no previous value: the first `lag` periods of a group have none to compare with; a later one
+    # follows a period without data (inserted by the grid, or absent), and was called "first
+    # period" too (pre-CRAN audit of 30bed8e)
+    rk <- stats::ave(as.numeric(ax$at), if (length(by)) grp else rep("", nrow(d)),
+                     FUN = function(a) match(a, sort(unique(a))))
+    first <- is.na(rk) | rk <= (meta$lag %||% 1L)
+    flag <- as.character(d$flag)
+    why <- ifelse(is.na(d$value), "no data",
+                  ifelse(is.na(d$previous),
+                         ifelse(first, "first period: nothing to compare with",
+                                "no data in the previous period"),
+                         ifelse(!is.na(flag) & nzchar(flag), paste("no percentage:", flag),
+                                "no percentage")))
     at <- .bl_time_interval(ax, d$pctchg, d$pctlo, d$pctup,
                             if (is.null(main)) "Period-over-period change (%)" else main,
                             "Percent change, with interval", xlab, cols, ref = 0, note = why, group = grp, ...)
@@ -2125,6 +2155,7 @@ plot.rmbl_count_trend <- function(x, ..., main = NULL, col = NULL, palette = NUL
 plot.bricklayer_analysis <- function(x, ..., which = NULL, main = NULL) {
   .rmbl_plot_check(x, "bricklayer_analysis")
   panels <- c("change", "rates", "ratechg")
+  which <- .rmbl_alias_val(which, c(rate_change = "ratechg"))  # the 0.5.x value
   which <- if (is.null(which)) panels else .rmbl_arg(which, panels, several = TRUE)
   parts <- Filter(Negate(is.null), list(change = x$change, rates = x$rates, ratechg = x$ratechg)[which])
   if (!length(parts)) {

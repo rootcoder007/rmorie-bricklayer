@@ -3,9 +3,17 @@
 #' The 0.5.x names, kept as aliases
 #'
 #' Every function rmoriebricklayer 0.5.13 exported that 1.0.0 renamed is still callable
-#' by its old name, with its old argument names: each alias forwards to the new
-#' function. The reference documentation lives on the new name; this page only lists
-#' the aliases.
+#' by its old name, with its old argument names and its old defaults: each alias forwards
+#' to the new function. Allowed values that were renamed (\code{"mean_bootstrap"} is now
+#' \code{"meanboot"}) are translated on the way, as are old argument names passed through
+#' \code{...}. \code{rate()}, \code{rate_change()}, \code{share()} and
+#' \code{yoy_summary()} stay S3 generics, so methods written for them still dispatch.
+#' An option set under its 0.5.x name (\code{rmoriebricklayer.xmss_index_file},
+#' \code{rmoriebricklayer.data_cache} ...) is read when the new name is not set.
+#' The reference documentation lives on the new name; this page only lists the aliases.
+#'
+#' Results are not translated: their columns and fields carry the new names. The last
+#' table lists every renamed one, so old code that reads a result can be updated.
 #'
 #' @section The map:
 #' Old name, then the new one.
@@ -315,6 +323,145 @@
 #' yoy_tsv                                    yoytsv
 #' yoy_write                                  yoywr
 #' }
+#'
+#' @section Renamed allowed values:
+#' Alias, argument, then each old value and the value it is translated to.
+#' \preformatted{
+#' analyse_table              direction  higher_is_better -> higher,
+#'                                       lower_is_better -> lower
+#' crf_no2                    outcome    all_cause_mortality -> allcause,
+#'                                       childhood_asthma -> chiast
+#' crf_pm25                   outcome    all_cause_mortality -> allcause
+#' pollution_burden           outcome    all_cause_mortality -> allcause,
+#'                                       childhood_asthma -> chiast
+#' pollution_burden_by_area   outcome    all_cause_mortality -> allcause,
+#'                                       childhood_asthma -> chiast
+#' survey_design              type       mean_bootstrap -> meanboot
+#' verify_pollution           outcome    all_cause_mortality -> allcause,
+#'                                       childhood_asthma -> chiast
+#' }
+#'
+#' @section Renamed result columns and fields:
+#' The 0.5.13 page, then each old name and the name the result has now.
+#' \preformatted{
+#' advection_diffusion_2d: sigma_y -> sigmay, sigma_z -> sigmaz, final_rise -> finalrise,
+#'   x_final -> xfinal, diffusion_number -> difn, stability_number -> stabn,
+#'   mean_y -> meany
+#' analyse_table: p_adjusted -> padj, combined_pct_lower -> compctlo,
+#'   combined_pct_upper -> compctup, rate_change -> ratechg, trend_p -> trndp,
+#'   rate_ratio -> rateratio, rate_ratio_lower -> rateratiolo,
+#'   rate_ratio_upper -> rateratioup, n_rows -> nrows
+#' band_sensitivity: relative_span -> relspan
+#' benford_test: log_p_value -> logpvalue
+#' bricklayer_siu_schema: is_count -> count
+#' capsule_drift: js_divergence -> jsdiv, n_reference -> nref, n_current -> ncur,
+#'   any_drift -> anydrft
+#' capsule_power: smallest_detected -> smadet
+#' capsule_report: n_rows -> nrows
+#' case_flow: rolling_clearance -> rolclr, rolling_lower -> rollo, rolling_upper -> rolup,
+#'   pending_change -> penchg, periods_to_clear -> pertoclear, cumulative_net -> cumnet,
+#'   case_flow -> caseflow
+#' cert_chain_verify: at_time -> attm
+#' change_envelope: change_lower -> chglo, change_upper -> chgup, pct_lower -> pctlo,
+#'   pct_upper -> pctup, rate_lower -> ratelo, rate_upper -> rateup,
+#'   previous_population -> prepop, previous_rate_lower -> preratelo,
+#'   previous_rate_upper -> prerateup
+#' clean_column_names: original_names -> orignms
+#' clearance_decomposition: rate_effect -> rateeff, mix_effect -> mixeff,
+#'   standardised_on_base -> staonbase, standardised_on_average -> staonave,
+#'   rate_ratio -> rateratio
+#' compute_footprint: duration_s -> durs, cpu_time_s -> cputms, usage_mode -> usagemode,
+#'   memory_gb -> memgb, energy_kwh -> enekwh, co2e_g -> co2eg, carbon_intensity -> co2int
+#' core_hawkes_fit: baseline_params -> basepar, branching_ratio -> braratio,
+#'   kernel_params -> kerpar, k_params -> kpar, ks_stat -> ksstat, ks_pvalue -> kspva,
+#'   at_bound -> atbound
+#' correlation_table: n_pairs -> nprs
+#' count_trend: rate_ratio -> rateratio, log_slope -> logslope
+#' cramers_v: min_expected -> minexp, cells_below -> cellsbelow
+#' crf_no2: log_rr -> logrr, rr_lower -> rrlo, rr_upper -> rrup,
+#'   reference_conc -> refconc, exposure_conc -> expconc, beta_per_10 -> betaper10,
+#'   beta_per_10_ci -> betaper10ci, rr_per_unit -> rrperunit
+#' crime_density: area_km2 -> areakm2
+#' download_data: target_path -> tpath
+#' drift_calibrate: false_alarm_rate -> falsealarmrate, any_flag -> anyflag,
+#'   alpha_familywise -> alphafam
+#' drift_chisq: log_p_value -> logpvalue
+#' drift_homogeneity: log_p_value -> logpvalue
+#' drift_ks: n_eff -> neff
+#' drift_psi: js_divergence -> jsdiv
+#' evalue_rr: evalue_point -> evlpoint, evalue_limit -> evllimit
+#' exposure_concentration_index: concentration_index -> concidx, exposure_mean -> expomean
+#' exposure_response_plr: se_analytic -> seana, se_bootstrap -> seboot,
+#'   ci_lower_bs -> cilobs, ci_upper_bs -> ciupbs, n_bootstrap -> nboot
+#' falsify_family: family_size -> famsz, at_floor -> atflr
+#' fips_sizes: opt_rand -> rnd
+#' fiscal_year_label: end_year -> endyear
+#' footprint_equivalents: car_km -> carkm, tree_months -> treemon
+#' frequency_table: pct_valid -> pctvalid
+#' friendly_download: target_path -> tpath
+#' hill_tail_index: x_min -> xmin, n_tail -> ntl
+#' hotspot_persistence: active_cells -> actcells, cells_for_half -> cellsforhalf,
+#'   share_for_half -> shrforhalf, hot_cells -> hotcells, tied_in -> tiedin,
+#'   tied_out -> tiedout, hot_share -> hotshr, jaccard_previous -> jacpre,
+#'   periods_hot -> perhot, n_cells -> ncells, hot_k -> hotk
+#' hqc_sizes: encapsulation_key -> public, decapsulation_key -> secret,
+#'   shared_secret -> shared
+#' kem_sizes: encapsulation_key -> public, decapsulation_key -> secret,
+#'   shared_secret -> shared
+#' knox_test: space_lower -> spclo, space_upper -> spcup, time_lower -> tmlo,
+#'   time_upper -> tmup
+#' life_table: at_risk -> atrisk, conf_lower -> conflo, conf_upper -> confup,
+#'   life_table -> lifetbl
+#' mahalanobis_outliers: log_p_value -> logpvalue
+#' mcar_test: log_p_value -> logpvalue, n_patterns -> npat, n_used -> nused,
+#'   n_vars -> nvars
+#' missingness_pattern: n_rows -> nrows, pct_rows -> pctrows
+#' missingness_summary: n_rows -> nrows
+#' morans_i: null_mean -> nullmean, null_sd -> nullsd, n_perm -> nperm
+#' parse_bands: open_lower -> openlo, open_upper -> openup
+#' plr_crossfit: k_folds -> kfol
+#' pollution_burden: attributable_cases -> attrcases, baseline_cases -> basecases,
+#'   baseline_rate -> brate, exposure_mean -> expomean, reference_conc -> refconc,
+#'   log_rr -> logrr
+#' pollution_burden_by_area: attributable_cases -> attrcases, baseline_cases -> basecases
+#' pollution_report_text: exit_status -> exitstat, exposure_csv -> expcsv,
+#'   exposure_mean -> expomean, exposure_prevalence -> expoprev, paf_ci -> pafci
+#' prereg_check: declared_utc -> decutc, declared_not_reported -> decnotrep,
+#'   reported_not_declared -> repnotdec
+#' profile_columns: n_zero -> nzero, n_negative -> nneg, n_infinite -> ninf
+#' published_bounds: rounding_kind -> rndkind, suppression_limit -> suplim
+#' rapl_available: rapl_dir -> rapldir
+#' region_coverage: has_unit -> hasunit, pop_share -> popshr, with_unit -> withunit,
+#'   without_unit -> witunit, total_population -> totalpop, covered_population -> covpop,
+#'   uncovered_population -> uncpop, covered_share -> covshr
+#' region_map_from_points: n_regions -> nreg
+#' scan_adjust: p_adjusted -> padj, scan_adjust -> scanadj
+#' stay_summary: total_days -> totaldays
+#' step_change: break_after -> breakafter, n_perm -> nperm
+#' stock_flow: flow_rate -> flowrate, stock_rate -> stkrate, people_change -> peochg,
+#'   alos_change -> aloschg, days_change -> dayschg, adp_change -> adpchg,
+#'   flow_rate_change -> flowratechg, stock_rate_change -> stkratechg,
+#'   stock_flow -> stkflow
+#' survey_compare: conf_level -> conflvl
+#' survey_design: lonely_psu -> lonely
+#' survey_estimate: conf_level -> conflvl
+#' top_correlations: abs_correlation -> abscor
+#' trend_test: slope_lower -> slopelo, slope_upper -> slopeup,
+#'   slope_ci_clamped -> slopecicla, conf_level -> conflvl
+#' wayback_save: max_captures -> maxcap
+#' yoy_bounds: env_change_lower -> envchglo, env_change_upper -> envchgup,
+#'   env_pct_lower -> envpctlo, env_pct_upper -> envpctup, combined_pct_lower -> compctlo,
+#'   combined_pct_upper -> compctup
+#' yoy_label: period_label -> perlbl
+#' rate: per_label -> perlbl, conf_level -> conflvl, min_count -> mincnt
+#' rate_change: previous_rate -> prerate, previous_count -> precnt,
+#'   previous_population -> prepop, rate_ratio -> rateratio, pct_change -> pctchg,
+#'   pct_lower -> pctlo, pct_upper -> pctup, rate_change -> ratechg
+#' share: conf_level -> conflvl
+#' yoy_summary: total_pct -> totalpct, cagr_pct -> cagrpct
+#' yoy: pct_change -> pctchg, pp_change -> ppchg, min_base -> minbase, pct_lower -> pctlo,
+#'   pct_upper -> pctup, conf_level -> conflvl
+#' }
 #' @keywords internal
 #' @name rmbl-aliases
 NULL
@@ -358,6 +505,8 @@ analyse_table <- function(data, value, period, by = NULL, population = NULL, pri
                            suppression_limit = NULL,
                            direction = c("neutral", "higher_is_better", "lower_is_better"),
                            per = 1000, conf_level = 0.95, alpha = 0.05, adjust = "BH") {
+  direction <- .rmbl_alias_val(direction, c(higher_is_better = "higher",
+    lower_is_better = "lower"))
   anltab(data = data, value = value, prd = period, by = by, pop = population,
          prior = prior, units = units, rnd = rounding, rndkind = rounding_kind,
          suplim = suppression_limit, dir = direction, per = per, conflvl = conf_level,
@@ -1143,6 +1292,8 @@ crc32_file <- function(path, block_bytes = 1048576L) {
 #' @export
 crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 10,
                      beta_per_10 = NULL) {
+  outcome <- .rmbl_alias_val(outcome, c(all_cause_mortality = "allcause",
+    childhood_asthma = "chiast"))
   crfno2(expo = exposure, y = outcome, refconc = reference_conc, betaper10 = beta_per_10)
 }
 
@@ -1150,6 +1301,7 @@ crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 
 #' @usage NULL
 #' @export
 crf_pm25 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 5.8) {
+  outcome <- .rmbl_alias_val(outcome, c(all_cause_mortality = "allcause"))
   crfpm25(expo = exposure, y = outcome, refconc = reference_conc)
 }
 
@@ -1255,7 +1407,11 @@ drbg_reseed <- function(drbg, entropy = NULL, additional = NULL) {
 #' @usage NULL
 #' @export
 drift_calibrate <- function(data, n = 50L, alpha = 0.01, seed = 1L, ...) {
-  drftcal(data = data, n = n, alpha = alpha, seed = seed, ...)
+  .nm <- .rmbl_alias_dots(c(reference = "ref", current = "cur", psi_threshold = "psithr",
+    psi_min_n = "psiminn", identifier_levels = "idelvls"), ...)
+  if (is.null(.nm)) return(drftcal(data = data, n = n, alpha = alpha, seed = seed, ...))
+  .rmbl_alias_redot(quote(drftcal(data = data, n = n, alpha = alpha,
+    seed = seed)), .nm, environment())
 }
 
 #' @rdname rmbl-aliases
@@ -1332,7 +1488,12 @@ evalue_rr <- function(rr, lo = NULL, hi = NULL, true = 1) {
 #' @usage NULL
 #' @export
 expand_bands <- function(bands, counts, ..., drop_unparsed = FALSE) {
-  expbands(bands = bands, cnts = counts, ..., drpunp = drop_unparsed)
+  .nm <- .rmbl_alias_dots(c(open_upper_cap = "openupcap", open_upper_factor = "openupfac",
+    open_lower_floor = "openloflr"), ...)
+  if (is.null(.nm)) return(expbands(bands = bands, cnts = counts, ...,
+    drpunp = drop_unparsed))
+  .rmbl_alias_redot(quote(expbands(bands = bands, cnts = counts,
+    drpunp = drop_unparsed)), .nm, environment())
 }
 
 #' @rdname rmbl-aliases
@@ -1909,6 +2070,8 @@ pollution_burden <- function(exposure_mean, exposure_prevalence, baseline_rate,
                               population, pollutant = "NO2",
                               outcome = "all_cause_mortality", reference_conc = NULL,
                               rare_outcome = FALSE, high_rate = FALSE) {
+  outcome <- .rmbl_alias_val(outcome, c(all_cause_mortality = "allcause",
+    childhood_asthma = "chiast"))
   polbrdn(expomean = exposure_mean, expoprev = exposure_prevalence, brate = baseline_rate,
           pop = population, poll = pollutant, y = outcome, refconc = reference_conc,
           rare = rare_outcome, hirate = high_rate)
@@ -1923,6 +2086,8 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa",
                                       baseline_rate_col = "baseline_rate",
                                       pollutant = "NO2", outcome = "all_cause_mortality",
                                       rare_outcome = FALSE, high_rate = FALSE) {
+  outcome <- .rmbl_alias_val(outcome, c(all_cause_mortality = "allcause",
+    childhood_asthma = "chiast"))
   polbrdarea(areatab = area_table, areacol = area_col, expcol = exposure_col,
              popcol = population_col, basratecol = baseline_rate_col, poll = pollutant,
              y = outcome, rare = rare_outcome, hirate = high_rate)
@@ -1985,20 +2150,6 @@ random_bytes <- function(n) {
 #' @export
 rapl_available <- function(rapl_dir = "/sys/class/powercap") {
   raplok(rapldir = rapl_dir)
-}
-
-#' @rdname rmbl-aliases
-#' @usage NULL
-#' @export
-rate <- function(x, ...) {
-  rtcalc(x = x, ...)
-}
-
-#' @rdname rmbl-aliases
-#' @usage NULL
-#' @export
-rate_change <- function(x, ...) {
-  ratechg(x = x, ...)
 }
 
 #' @rdname rmbl-aliases
@@ -2230,13 +2381,6 @@ sha512_file <- function(path, block_bytes = 1048576L) {
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
-share <- function(x, ...) {
-  shrs(x = x, ...)
-}
-
-#' @rdname rmbl-aliases
-#' @usage NULL
-#' @export
 sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
   stdinc(obs = observed, expd = expected, area = area, conflvl = conf_level)
 }
@@ -2312,6 +2456,7 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL,
                            mean_size = 1, rho = NULL, mse = TRUE,
                            lonely_psu = c("fail", "remove", "adjust"), rscales = NULL,
                            degf = NULL) {
+  type <- .rmbl_alias_val(type, c(mean_bootstrap = "meanboot"))
   svydes(data = data, w = weights, strata = strata, psu = psu, fpc = fpc,
          reps = replicates, id = id, type = type, msize = mean_size, rho = rho, mse = mse,
          lonely = lonely_psu, rscales = rscales, degf = degf)
@@ -2432,6 +2577,8 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
                               reference = NULL, baseline_rate = 500,
                               baseline_rate_per = 1e+05, population = 1e+06,
                               rare_outcome = FALSE, high_rate = FALSE) {
+  outcome <- .rmbl_alias_val(outcome, c(all_cause_mortality = "allcause",
+    childhood_asthma = "chiast"))
   vrfpol(poll = pollutant, y = outcome, reg = region, years = years, demo = demo,
          expcsv = exposure_csv, expomean = exposure_mean, expoprev = exposure_prevalence,
          ref = reference, brate = baseline_rate, basrateper = baseline_rate_per,
@@ -2463,7 +2610,12 @@ verify_sha256 <- function(path, expected_sha) {
 #' @usage NULL
 #' @export
 wayback_retry <- function(output, include_gone = FALSE, lookup = TRUE, ...) {
-  wbrtry(output = output, incgone = include_gone, lookup = lookup, ...)
+  .nm <- .rmbl_alias_dots(c(access_key = "ak", secret_key = "sk", max_wait = "maxwait",
+    capture_all = "capall", per_minute = "permin", max_captures = "maxcap"), ...)
+  if (is.null(.nm)) return(wbrtry(output = output, incgone = include_gone,
+    lookup = lookup, ...))
+  .rmbl_alias_redot(quote(wbrtry(output = output, incgone = include_gone,
+    lookup = lookup)), .nm, environment())
 }
 
 #' @rdname rmbl-aliases
@@ -2612,13 +2764,6 @@ yoy_pvalues <- function(y) {
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
-yoy_summary <- function(object, ...) {
-  yoysmry(object = object, ...)
-}
-
-#' @rdname rmbl-aliases
-#' @usage NULL
-#' @export
 yoy_tsv <- function(x, file, digits = NULL, na = "", metadata = TRUE, comment = "#",
                      ...) {
   yoytsv(x = x, file = file, digits = digits, na = na, meta = metadata, comment = comment,
@@ -2629,5 +2774,8 @@ yoy_tsv <- function(x, file, digits = NULL, na = "", metadata = TRUE, comment = 
 #' @usage NULL
 #' @export
 yoy_write <- function(x, file, format = "auto", ...) {
-  yoywr(x = x, file = file, format = format, ...)
+  .nm <- .rmbl_alias_dots(c(subtitle = "sub", palette = "pal", interval = "intv",
+    metadata = "meta"), ...)
+  if (is.null(.nm)) return(yoywr(x = x, file = file, format = format, ...))
+  .rmbl_alias_redot(quote(yoywr(x = x, file = file, format = format)), .nm, environment())
 }

@@ -142,12 +142,9 @@ only read the installed help.
 \examples{
 blcli("version")
 blcli("help")
-blcli(c("functions", "json"))
-blcli(c("describe", "anltab"))
 
-# one verb's usage, and the examples of a help page
+# one verb's usage
 blcli(c("help", "data"))
-blcli(c("examples", "perdays"))
 
 # capture the output instead of printing it
 con <- textConnection("lines", "w")
@@ -163,6 +160,13 @@ blcli("nonsense")
 d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 invisible(cpsrfrsh(d))
 blcli(c("verify", d))
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
+# these read every help page, which takes a few seconds
+blcli(c("functions", "json"))
+blcli(c("describe", "anltab"))
+blcli(c("examples", "perdays"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{instcli}} to put the command on your PATH.

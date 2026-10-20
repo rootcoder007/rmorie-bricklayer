@@ -259,8 +259,7 @@ rtcalc.default <- function(x, pop, per = 1000, conflvl = 0.95,
          call. = FALSE)
   }
   if (any(pop <= 0, na.rm = TRUE)) {
-    stop("`population` must be positive: a rate needs exposure",
-         call. = FALSE)
+    stop(.rmbl_fn(), "`pop` must be positive: a rate needs exposure", call. = FALSE)
   }
   a <- 1 - conf_level
   # the exact Poisson interval through the gamma relation, matching
@@ -643,8 +642,7 @@ ratechg.data.frame <- function(x, count, pop, prd, by = NULL,
     cnt <- as.numeric(g$count)
     .pop <- as.numeric(g$population)
     if (any(.pop <= 0, na.rm = TRUE)) {
-      stop("`pop` must be positive: a rate needs exposure",
-           call. = FALSE)
+      stop(.rmbl_fn(), "`pop` must be positive: a rate needs exposure", call. = FALSE)
     }
     p <- g[[prd]]
     prev_i <- .rate_previous_index(p, lag)

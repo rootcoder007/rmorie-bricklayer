@@ -311,14 +311,17 @@ of \code{"adp"}, \code{"alos"}, \code{"people"}, \code{"days"},
 \item \code{rmbl_case_flow}: \code{"flow"} and/or \code{"clearance"};
 \item \code{rmbl_clearance_decomposition}: any of \code{"rates"},
 \code{"mix"} and \code{"effects"} (the default fits the device).
-}}
+}
+The 0.5.x values \code{"pct_change"}, \code{"flow_rate"} and \code{"stock_rate"} are
+still accepted, as is \code{"rate_change"} for \code{which}.}
 
 \item{points}{For \code{rmbl_density}, whether to draw the incidents
 over the surface.}
 
 \item{maxparts}{For \code{rmbl_clearance_decomposition}, the most parts drawn: past
 it,
-the parts that moved the aggregate most, and the rest summed into one row.}
+the parts that moved the aggregate most, and the rest summed into one row. The 0.5.x
+name \code{max_parts} is still accepted.}
 
 \item{threshold}{For \code{rmbl_balance}: the absolute standardised difference
 drawn as the line of acceptable balance (default 0.1).}

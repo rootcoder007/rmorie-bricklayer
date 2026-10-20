@@ -74,7 +74,7 @@
 #' @return A path.
 #' @noRd
 .bl_data_cache_dir <- function() {
-  d <- getOption("rmoriebricklayer.dcache", NULL)
+  d <- .rmbl_getopt("dcache", NULL)
   if (is.null(d) || !nzchar(d)) {
     d <- file.path(tempdir(), "rmoriebricklayer-data")
   }
