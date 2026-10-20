@@ -2,6 +2,23 @@
 
 ## rmoriebricklayer 1.0.0
 
+### Capsule template and the attestation check
+
+- [`usecpstmpl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/usecpstmpl.md)’s
+  `analysis.R` pins the source digest into `data_provenance.json` on its
+  first run (`source$sha256` and a `resource` block), so
+  [`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
+  verifies the capsule from then on. Before, the provenance said the
+  digest would be filled in and nothing ever did.
+- [`cpschkatst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsatst.md)’s
+  `key_as_expected` row says whether the key matched; its detail read
+  the same either way.
+- The Docker image installs the package and puts `rmbl` on the PATH.
+- `capenv()$packages` is a named list, so a manifest written with
+  [`wrmnfjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrmnfjs.md)
+  keeps the package names; as a named character vector they were written
+  as a bare array of versions.
+
 ### Short names
 
 Every exported function, argument, output column, help topic and option

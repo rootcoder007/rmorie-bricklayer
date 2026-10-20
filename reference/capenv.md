@@ -54,8 +54,9 @@ A list of seven elements:
 
 - `packages`:
 
-  named character vector of versions, sorted by name (`NA` for a package
-  that is not installed).
+  named list of version strings, sorted by name (`NA` for a package that
+  is not installed). A list, not a vector, so the names survive the
+  manifest's JSON: a named vector is written as a bare array.
 
 ## Details
 
@@ -77,10 +78,14 @@ env <- capenv(c("stats", "utils"))
 env$r_version
 #> [1] "4.6.1"
 env$os
-#> [1] "Linux 6.17.0-1022-azure"
-env$packages          # named character vector of versions
-#>   stats   utils 
-#> "4.6.1" "4.6.1" 
+#> [1] "Linux 7.0.0-1017-azure"
+env$packages          # named list of versions
+#> $stats
+#> [1] "4.6.1"
+#> 
+#> $utils
+#> [1] "4.6.1"
+#> 
 
 # Default captures every currently loaded namespace.
 names(capenv())
@@ -99,6 +104,10 @@ capenv("stats")[c("rng_kind", "rng_seeded")]
 
 # a package that is not installed is recorded as NA, not an error
 capenv(c("stats", "notapackage123"))$packages
-#> notapackage123          stats 
-#>             NA        "4.6.1" 
+#> $notapackage123
+#> [1] NA
+#> 
+#> $stats
+#> [1] "4.6.1"
+#> 
 ```

@@ -91,13 +91,13 @@ list.files(d)
 # the provenance file to fill in
 cat(readLines(file.path(d, "data_provenance.json")), sep = "\n")
 #> {
-#>   "name": "capsule-1e3b5ffa2570",
+#>   "name": "capsule-1d973f028e39",
 #>   "source": {
-#>     "url": "/tmp/RtmpX1MB9h/temp_libpath1e3b129ea21/rmoriebricklayer/extdata/otis_a01_individuals.csv",
+#>     "url": "/tmp/RtmpI9BrEE/temp_libpath1d972ca772ec/rmoriebricklayer/extdata/otis_a01_individuals.csv",
 #>     "publisher": "TODO: who publishes the table",
 #>     "licence": "TODO: e.g. Open Government Licence - Ontario",
 #>     "retrieved": "TODO: YYYY-MM-DD",
-#>     "sha256": "TODO: filled by analysis.R on first run"
+#>     "sha256": "TODO: pinned by analysis.R on its first run"
 #>   },
 #>   "table": {
 #>     "value": "individuals",
@@ -115,7 +115,7 @@ grep("TODO", readLines(file.path(d2, "data_provenance.json")), value = TRUE)
 #> [2] "    \"publisher\": \"TODO: who publishes the table\","             
 #> [3] "    \"licence\": \"TODO: e.g. Open Government Licence - Ontario\","
 #> [4] "    \"retrieved\": \"TODO: YYYY-MM-DD\","                          
-#> [5] "    \"sha256\": \"TODO: filled by analysis.R on first run\""       
+#> [5] "    \"sha256\": \"TODO: pinned by analysis.R on its first run\""   
 
 # an existing, non-empty folder is never overwritten
 try(usecpstmpl(d))

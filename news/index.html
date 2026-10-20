@@ -49,6 +49,16 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.0" id="rmoriebricklayer-100">rmoriebricklayer 1.0.0<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-100"></a></h2>
 <div class="section level3">
+<h3 id="capsule-template-and-the-attestation-check-1-0-0">Capsule template and the attestation check<a class="anchor" aria-label="anchor" href="#capsule-template-and-the-attestation-check-1-0-0"></a></h3>
+<ul><li>
+<code><a href="../reference/usecpstmpl.html">usecpstmpl()</a></code>’s <code>analysis.R</code> pins the source digest into <code>data_provenance.json</code> on its first run (<code>source$sha256</code> and a <code>resource</code> block), so <code><a href="../reference/vrfcps.html">vrfcps()</a></code> verifies the capsule from then on. Before, the provenance said the digest would be filled in and nothing ever did.</li>
+<li>
+<code><a href="../reference/cpsatst.html">cpschkatst()</a></code>’s <code>key_as_expected</code> row says whether the key matched; its detail read the same either way.</li>
+<li>The Docker image installs the package and puts <code>rmbl</code> on the PATH.</li>
+<li>
+<code>capenv()$packages</code> is a named list, so a manifest written with <code><a href="../reference/wrmnfjs.html">wrmnfjs()</a></code> keeps the package names; as a named character vector they were written as a bare array of versions.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="short-names-1-0-0">Short names<a class="anchor" aria-label="anchor" href="#short-names-1-0-0"></a></h3>
 <p>Every exported function, argument, output column, help topic and option now has a short name without underscores (<code>survey_design()</code> is <code><a href="../reference/svydes.html">svydes()</a></code>, <code>conf_level</code> is <code>conflvl</code>, <code>trend_sensitivity()</code> is <code><a href="../reference/tse.html">tse()</a></code>). Each help page gives the full form of every short name. The old names are gone, not kept as aliases, so the reference stays one page per method. <code>rmbl functions</code> and the help-aware language-model tools list the new names. Wire formats (capsule, manifest and service JSON fields, CSV columns from published tables) keep their names, so files written by earlier versions still read.</p>
 </div>
