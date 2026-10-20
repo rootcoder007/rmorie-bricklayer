@@ -127,3 +127,124 @@ test_that("fylbl() refuses a fractional year, as documented", {
   expect_error(fylbl(2023.7), "whole years")
   expect_identical(fylbl(2023), "2022/23")
 })
+
+# ---- time-series plots (TS5.1, TS5.2, TS5.3, TS5.5) ----------------------------------------------
+
+with_pdf <- function(expr) {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  force(expr)
+}
+
+#' @srrstats {TS5.1} Periods sit on their own number or Date scale; text periods at labelled positions.
+#' @srrstats {TS5.3} The period axis is titled with the unit the period implies.
+test_that("the period axis keeps the period's own scale and names its unit", {
+  pa <- rmoriebricklayer:::.bl_period_axis
+  a <- pa(c(2019, 2020, 2022))
+  expect_identical(a$at, c(2019, 2020, 2022))
+  expect_identical(a$xlab, "Period")
+  expect_equal(a$xlim, c(2018.5, 2022.5))
+  # stkflow() stores its periods as text: whole numbers and ISO dates are read back
+  expect_identical(pa(c("2021", "2023"))$at, c(2021, 2023))
+  d <- pa(c("2020-01-01", "2020-03-01"))
+  expect_identical(d$xlab, "Date")
+  expect_identical(d$at, as.numeric(as.Date(c("2020-01-01", "2020-03-01"))))
+  expect_identical(pa(as.Date("2020-01-01") + 0:1)$xlab, "Date")
+  expect_identical(pa(as.POSIXct(c("2020-01-01 10:00", "2020-01-01 11:00"), tz = "UTC"))$xlab, "Time")
+  f <- pa(c("2021/22", "2022/23", "2022/23"))
+  expect_identical(f$xlab, "Fiscal year")
+  expect_identical(f$at, c(1L, 2L, 2L))
+  expect_identical(f$tlab, c("2021/22", "2022/23"))
+  q <- pa(factor(c("Q1", "Q2")))
+  expect_identical(q$xlab, "Period")
+  expect_identical(q$step, 1L)
+  # labels relabel the ticks of a numeric period (yoylbl()'s fiscal years)
+  l <- pa(c(2022, 2023), c("2021/22", "2022/23"))
+  expect_identical(l$at, c(2022, 2023))
+  expect_identical(l$xlab, "Fiscal year")
+  expect_identical(pa(NA_character_)$xlim, c(-0.5, 1.5))
+  # a tick per period when there are few; pretty ticks along a long numeric or date series
+  with_pdf({
+    graphics::plot(c(1, 20), c(0, 1))
+    expect_equal(rmoriebricklayer:::.bl_period_ticks(pa(1:3)), 1:3)
+    expect_length(rmoriebricklayer:::.bl_period_ticks(pa(1:20)), 20L)
+    expect_length(rmoriebricklayer:::.bl_period_ticks(pa(as.character(1:20 + 100))), 20L)
+    graphics::plot(as.numeric(as.Date("2020-01-01") + c(0, 600)), c(0, 1))
+    expect_length(rmoriebricklayer:::.bl_period_ticks(pa(seq(as.Date("2020-01-01"), by = "month",
+                                                               length.out = 20))), 20L)
+  })
+})
+
+#' @srrstats {TS5.2} yoy and rate-change plots put the period across: points sit at the period's own x.
+test_that("change plots draw the period across, groups side by side", {
+  y <- yoy(data.frame(year = 2019:2023, n = c(400, 420, 390, 460, 450)), value = "n", prd = "year")
+  d <- with_pdf(plot(y))
+  expect_equal(d$at, 2019:2023)
+  expect_equal(d$pctchg, y$pctchg)
+  seg <- data.frame(year = rep(2021:2023, 2), g = rep(c("a", "b"), each = 3),
+                    n = c(500, 600, 700, 900, 800, 1000))
+  dg <- with_pdf(plot(yoy(seg, value = "n", prd = "year", by = "g")))
+  # two groups in one period: a to the left of the period, b to the right
+  expect_equal(dg$at, c(2021, 2022, 2023, 2021, 2022, 2023) + rep(c(-0.175, 0.175), each = 3))
+  rt <- data.frame(division = rep(c("n", "e", "w"), 2), year = rep(2022:2023, each = 3),
+                   stops = c(120, 90, 60, 150, 85, 70), residents = rep(c(1e4, 8e3, 5e3), 2))
+  rc <- ratechg(rt, count = "stops", pop = "residents", prd = "year", by = "division")
+  drc <- with_pdf(plot(rc, xlab = "Year"))
+  expect_equal(drc$pctchg, rc$pctchg)
+  expect_length(unique(drc$at), nrow(rc))
+  rc0 <- ratechg(rt, count = "stops", pop = "residents", prd = "year")
+  expect_equal(with_pdf(plot(rc0))$at, as.numeric(rc0$year))
+  # one value everywhere, or none at all, still gives the panel a height
+  ti <- rmoriebricklayer:::.bl_time_interval
+  ax <- rmoriebricklayer:::.bl_period_axis(1:2)
+  expect_equal(with_pdf(ti(ax, c(2, 2), c(2, 2), c(2, 2), "m", "y", "x", "black")), 1:2)
+  expect_equal(with_pdf(ti(ax, c(NA, NA), c(NA, NA), c(NA, NA), "m", "y", "x", "black", note = c("a: b", ""))), 1:2)
+  # six groups recycle the five symbols
+  many <- data.frame(year = rep(2021:2022, 6), g = rep(letters[1:6], each = 2), n = rep(c(100, 120), 6))
+  expect_equal(nrow(with_pdf(plot(yoy(many, value = "n", prd = "year", by = "g")))), 12L)
+})
+
+#' @srrstats {TS5.3} A formal `xlab` reaches every plot over time; through `...` it was matched twice.
+test_that("xlab is an argument of the plots over time", {
+  sf <- stkflow(days = c(13500, 14600, 15100), people = c(300, 320, 310), prd = 2021:2023)
+  out <- with_pdf(plot(sf, xlab = "Year"))
+  expect_identical(attr(out, "at"), c(2021, 2022, 2023))
+  y <- yoy(data.frame(year = 2019:2021, n = c(40, 44, 41)), value = "n", prd = "year")
+  expect_equal(with_pdf(plot(y, xlab = "Year"))$at, 2019:2021)
+  expect_equal(with_pdf(plot(y, what = "value", xlab = "Year"))$at, 2019:2021)
+  fy <- yoylbl(y, fylbl)
+  expect_equal(with_pdf(plot(fy, what = "value"))$at, 2019:2021)
+  ct <- cnttrnd(c(5, 7, 6, 9, 12, 11), x = 2018:2023)
+  expect_equal(with_pdf(plot(ct, xlab = "Year"))$x, 2018:2023)
+  es <- evstudy(polex(), "district", "month", "crmrate", "refmonth", leads = 2, lags = 2)
+  expect_equal(with_pdf(plot(es, xlab = "Months since the reform"))$evtm, es$evtm)
+  dt <- yoy(data.frame(d = as.Date(c("2020-01-01", "2021-01-01", "2022-01-01")), n = c(40, 44, 41)),
+            value = "n", prd = "d", complete = FALSE)
+  expect_equal(with_pdf(plot(dt, what = "value"))$at, as.numeric(dt$d))
+})
+
+#' @srrstats {TS5.5} gaps = "break" breaks the line at a missing value; "join" draws over it.
+test_that("missing values break lines by default and can be joined", {
+  bl <- rmoriebricklayer:::.bl_line
+  with_pdf({
+    graphics::plot(1:4, c(0, 5, 0, 5))
+    br <- bl(1:4, c(1, NA, 3, 4), "black", gaps = "break")
+    expect_identical(br$y, c(1, NA, 3, 4))
+    jn <- bl(1:4, c(1, NA, 3, 4), "black", gaps = "join")
+    expect_identical(jn$x, c(1, 3, 4))
+    expect_identical(bl(c(1, NA, 3), c(1, 2, Inf), "black", gaps = "break")$y, c(1, NA))
+    expect_null(bl(1:2, c(NA, NA), "black", gaps = "break"))
+  })
+  # a year with no data, inserted by yoy(complete = TRUE)
+  y <- yoy(data.frame(year = c(2019, 2020, 2022, 2023), n = c(40, 44, 41, 50)), value = "n", prd = "year")
+  expect_identical(y$flag[y$year == 2021], "no data")
+  v <- with_pdf(plot(y, what = "value"))
+  expect_equal(v$at, 2019:2023)
+  expect_true(is.na(v$value[3L]))
+  expect_equal(with_pdf(plot(y, what = "value", gaps = "join"))$value, v$value)
+  expect_error(with_pdf(plot(y, what = "value", gaps = "skip")), "must be one of")
+  es <- evstudy(polex(), "district", "month", "crmrate", "refmonth", leads = 2, lags = 2)
+  es$estimate[1L] <- NA
+  expect_true(is.na(with_pdf(plot(es, style = "stata"))$estimate[1L]))
+  expect_true(is.na(with_pdf(plot(es, style = "stata", gaps = "join"))$estimate[1L]))
+})

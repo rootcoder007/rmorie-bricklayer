@@ -224,20 +224,31 @@ plotopt <- function(...) {
 }
 
 # A series drawn as a line over a soft fill down to the axis, with haloed points and its last
-# value emphasised and labelled.
-.bl_line <- function(x, y, col, fill = TRUE, label = TRUE, points = TRUE) {
-  ok <- is.finite(x) & is.finite(y)
-  x <- x[ok]
-  y <- y[ok]
-  if (!length(x)) return(invisible(NULL))
+# value emphasised and labelled. gaps = "break" keeps a missing value as a break in the line and
+# its fill (a "no data" year that yoy(complete = TRUE) inserted); "join" draws over it. Returns
+# the points the line passes through, NA where it breaks.
+.bl_line <- function(x, y, col, fill = TRUE, label = TRUE, points = TRUE, gaps = "join") {
+  x <- as.numeric(x)
+  keep <- is.finite(x) & (gaps == "break" | is.finite(y))
+  x <- x[keep]
+  y <- y[keep]
+  y[!is.finite(y)] <- NA
+  ok <- !is.na(y)
+  if (!any(ok)) return(invisible(NULL))
   usr <- graphics::par("usr")
   base <- max(usr[3L], min(0, usr[4L]))
-  if (fill && length(x) > 1L) {
-    graphics::polygon(c(x[1L], x, x[length(x)]), c(base, y, base), col = grDevices::adjustcolor(col, 0.16),
-                      border = NA)
+  # one fill per unbroken run; lines() itself breaks at the NA
+  for (r in if (fill) split(which(ok), cumsum(!ok)[ok]) else list()) {
+    if (length(r) > 1L) {
+      graphics::polygon(c(x[r[1L]], x[r], x[r[length(r)]]), c(base, y[r], base),
+                        col = grDevices::adjustcolor(col, 0.16), border = NA)
+    }
   }
   graphics::lines(x, y, col = grDevices::adjustcolor(col, 0.25), lwd = 6)
   graphics::lines(x, y, col = col, lwd = 2.4)
+  drawn <- data.frame(x = x, y = y)
+  x <- x[ok]
+  y <- y[ok]
   n <- length(x)
   # a dense curve (a concentration curve over every person) is drawn as a line: haloed points
   # that close together merge into a white band
@@ -250,7 +261,7 @@ plotopt <- function(...) {
     graphics::text(x[n], y[n], trimws(formatC(y[n], digits = 3, format = "fg", big.mark = ",")), pos = 3, offset = 0.7,
                    cex = 0.8, font = 2, col = col, xpd = NA)
   }
-  invisible(NULL)
+  invisible(drawn)
 }
 
 .bl_par <- function(y = NULL, labels = NULL) {
@@ -692,6 +703,91 @@ plotopt <- function(...) {
   invisible(NULL)
 }
 
+# The period on a time axis: a number or a Date on its own continuous scale (whole-number and
+# ISO-date text, as stkflow() stores its periods, read back as such), anything else (fiscal-year
+# labels, quarters, a factor) at positions 1..n labelled with its text; `labels` (yoylbl()'s
+# perlbl) relabels the ticks. Gives the positions, the ticks with their labels, and the axis
+# title the period implies.
+.bl_period_axis <- function(p, labels = NULL) {
+  txt <- as.character(if (is.null(labels)) p else labels)
+  if (is.character(p)) {
+    q <- p[!is.na(p)]
+    if (all(grepl("^-?[0-9]+$", q))) {
+      p <- as.numeric(p)
+    } else if (all(grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", q))) {
+      p <- as.Date(p)
+    }
+  }
+  time <- inherits(p, c("Date", "POSIXt"))
+  cont <- is.numeric(p) || time
+  at <- if (cont) as.numeric(p) else match(txt, unique(txt))
+  first <- !duplicated(at)
+  t <- stats::na.omit(txt)
+  fiscal <- length(t) > 0L && all(grepl("^[0-9]{4}[/-][0-9]{2}([0-9]{2})?$", t))
+  xlab <- if (inherits(p, "Date")) "Date" else if (time) "Time" else if (fiscal) "Fiscal year" else "Period"
+  u <- sort(unique(at[is.finite(at)]))
+  step <- if (length(u) > 1L) min(diff(u)) else 1
+  list(p = p, at = at, ticks = at[first], tlab = txt[first], cont = cont, time = time, xlab = xlab,
+       xlim = (if (length(u)) range(u) else c(0, 1)) + c(-0.5, 0.5) * step, step = step)
+}
+
+# The period axis itself: a tick at every period when there are few (a year never reads
+# "2022.5"), the usual pretty ticks along a long numeric or date series.
+.bl_period_ticks <- function(ax) {
+  if (!ax$cont || length(ax$ticks) <= 12L) {
+    graphics::axis(1, at = ax$ticks, labels = ax$tlab, cex.axis = 0.8)
+  } else if (ax$time) {
+    graphics::Axis(ax$p, side = 1)
+  } else {
+    graphics::axis(1)
+  }
+  invisible(ax$ticks)
+}
+
+# Change over time: each period's estimate as a point with its vertical interval bar, the period
+# across; several groups sit side by side within a period, each with its own symbol and a key.
+# A period with no estimate carries its note (the part before any colon) up its slot. Returns
+# the x position of each point.
+.bl_time_interval <- function(ax, est, lower, upper, main, ylab, xlab, cols, ref = NULL, note = NULL,
+                              group = NULL, ...) {
+  op <- .bl_par(c(est, lower, upper, ref))
+  on.exit(graphics::par(op), add = TRUE)
+  g <- if (is.null(group)) rep(1L, length(est)) else match(group, unique(group))
+  ng <- max(c(g, 1L))
+  # five filled symbols, recycled past five groups
+  pch <- c(21, 22, 24, 23, 25)[(g - 1L) %% 5L + 1L]
+  x <- ax$at + (g - (ng + 1) / 2) * ax$step * 0.7 / ng
+  vals <- c(est, lower, upper, ref)
+  vals <- vals[is.finite(vals)]
+  rng <- if (length(vals)) range(vals) else c(0, 1)
+  if (diff(rng) == 0) rng <- rng + c(-1, 1)
+  graphics::plot(ax$xlim, rng, type = "n", xaxt = "n", xlab = "", ylab = "", main = "", ...)
+  .bl_title(main)
+  .bl_xlab(xlab)
+  .bl_ylab(ylab)
+  .bl_grid(NULL)
+  if (!is.null(ref)) graphics::abline(h = ref, col = "#8C8C8C", lty = 2)
+  ok <- is.finite(lower) & is.finite(upper)
+  cols <- rep_len(cols, length(est))
+  if (any(ok)) {
+    graphics::segments(x[ok], lower[ok], x[ok], upper[ok], col = grDevices::adjustcolor(cols[ok], 0.28),
+                       lwd = 9, lend = 1)
+    graphics::segments(x[ok], lower[ok], x[ok], upper[ok], col = cols[ok], lwd = 1.6, lend = 1)
+  }
+  graphics::points(x, est, pch = pch, bg = cols, col = "white", lwd = 1.6, cex = 1.7)
+  .bl_period_ticks(ax)
+  say <- if (is.null(note)) logical() else !is.finite(est) & !is.na(note) & nzchar(note)
+  if (any(say)) {
+    graphics::text(x[say], mean(graphics::par("usr")[3:4]), sub(":.*$", "", note[say]), srt = 90,
+                   col = "#6E6E6E", cex = 0.7, font = 3)
+  }
+  if (ng > 1L) {
+    graphics::legend("topleft", legend = unique(group), pch = c(21, 22, 24, 23, 25)[(seq_len(ng) - 1L) %% 5L + 1L],
+                     pt.bg = "#8A909A", col = "white", bty = "n", cex = 0.75)
+  }
+  invisible(x)
+}
+
 # ---- stock and flow -----------------------------------------------------------
 
 #' Plot methods for the package's results
@@ -715,11 +811,14 @@ plotopt <- function(...) {
 #'     periods, one panel per measure in \code{what}; with an exposure,
 #'     the flow and stock rates too.}
 #'   \item{\code{rmbl_yoy}}{(\code{\link{yoy}}) the period-over-period
-#'     percent change with its interval, one row per period (and group),
-#'     coloured by verdict; \code{what = "value"} draws the values instead.}
-#'   \item{\code{rmbl_rate}, \code{rmbl_share}, \code{rmbl_rate_change}}{
-#'     (\code{\link{rtcalc}}) the rate, share or percent change per group with
+#'     percent change with its interval over the periods, the period across and
+#'     the change up, groups side by side, coloured by verdict;
+#'     \code{what = "value"} draws the values instead.}
+#'   \item{\code{rmbl_rate}, \code{rmbl_share}}{
+#'     (\code{\link{rtcalc}}, \code{\link{shrs}}) the rate or share per group with
 #'     its interval.}
+#'   \item{\code{rmbl_rate_change}}{(\code{\link{ratechg}}) the percent change
+#'     in the rate with its interval over the periods, groups side by side.}
 #'   \item{\code{rmbl_band_sensitivity}}{(\code{\link{bandsens}})
 #'     the statistic against the cap applied to the open band.}
 #'   \item{\code{rmbl_drift_calibration}, \code{bricklayer_drift}}{
@@ -874,7 +973,24 @@ plotopt <- function(...) {
 #'   \code{"change"}, \code{"rates"}, \code{"ratechg"}; \code{NULL} draws
 #'   every panel the analysis has.
 #' @param contours Number of contour lines over a field image (0 for none).
-#' @return The data drawn, invisibly.
+#' @param xlab For the plots over time (\code{rmbl_stock_flow},
+#'   \code{rmbl_yoy}, \code{rmbl_rate_change}, \code{rmbl_count_trend},
+#'   \code{rmbl_event_study}), the title of the period axis. The default
+#'   \code{NULL} names the unit the period implies: \code{"Date"} for dates,
+#'   \code{"Time"} for date-times, \code{"Fiscal year"} for fiscal-year labels
+#'   such as \code{"2022/23"}, \code{"Periods since adoption"} for an event
+#'   study, otherwise \code{"Period"}. A number or a date is drawn on its own
+#'   continuous scale, so a missing period leaves its gap; any other period
+#'   (text, a factor) is drawn at evenly spaced positions labelled with its text.
+#' @param gaps For \code{rmbl_yoy} (\code{what = "value"}) and
+#'   \code{rmbl_event_study} (\code{style = "stata"}): how a missing value
+#'   shows in a line. \code{"break"} (the default) breaks the
+#'   line there, so a "no data" period that \code{yoy(complete = TRUE)}
+#'   inserted is a visible gap; \code{"join"} draws the line straight over it.
+#' @return The data drawn, invisibly. For the plots over time the frame
+#'   carries the x position of each point drawn: an \code{at} column
+#'   (\code{rmbl_yoy}, \code{rmbl_rate_change}), or an \code{"at"} attribute
+#'   (\code{rmbl_stock_flow}).
 #' @examples
 #' sf <- stkflow(days = c(13500, 14600, 15100), people = c(300, 320, 310),
 #'                  prd = 2021:2023)
@@ -976,9 +1092,13 @@ plotopt <- function(...) {
 #'                  y = seq(-300, 300, by = 50)))
 #' @name plot-methods
 #' @aliases plot.rmbl_stock_flow
+#' @srrstats {TS5.1} Stock-flow, yoy, rate-change, trend and event-study plots put the period on a continuous axis
+#'   (its own number or Date scale; text periods at labelled positions) titled with its unit (.bl_period_axis).
+#' @srrstats {TS5.3} The period axis is titled with the unit the period implies ("Date", "Fiscal year", "Period",
+#'   "Periods since adoption"), and a formal `xlab` argument overrides it.
 #' @export
 plot.rmbl_stock_flow <- function(x, ..., what = c("adp", "alos", "people", "days"),
-                                 main = NULL, col = NULL, palette = NULL) {
+                                 main = NULL, col = NULL, palette = NULL, xlab = NULL) {
   .rmbl_plot_check(x, "rmbl_stock_flow")
   avail <- intersect(c("adp", "alos", "people", "days", "flowrate", "stkrate"), names(x))
   what <- .rmbl_arg(what, avail, several = TRUE)
@@ -992,38 +1112,47 @@ plot.rmbl_stock_flow <- function(x, ..., what = c("adp", "alos", "people", "days
   on.exit(graphics::par(op2), add = TRUE)
   on.exit(.bl_panels_abort(), add = TRUE)
   on.exit(graphics::par(op), add = TRUE)
-  xs <- seq_len(nrow(x))
+  ax <- .bl_period_axis(x$period)
   for (i in seq_along(what)) {
     v <- x[[what[i]]]
     graphics::par(mar = .bl_safe_mar(c(4.2, .bl_left_margin(v), 3, 1)))
-    graphics::plot(xs, v, type = "n", xaxt = "n", xlab = "Period", ylab = "",
+    graphics::plot(ax$at, v, type = "n", xaxt = "n", xlab = xlab %||% ax$xlab, ylab = "",
                    main = "", ...)
     .bl_ylab(labs[[what[i]]])
     .bl_title(.bl_main(main, labs[[what[i]]]))
     .bl_grid(NULL)
-    .bl_line(xs, v, cols[i])
-    graphics::axis(1, at = xs, labels = x$period)
+    .bl_line(ax$at, v, cols[i])
+    .bl_period_ticks(ax)
   }
   key <- .bl_panels_end()
   out <- as.data.frame(x)[c("period", what)]
   attr(out, "plnkey") <- key
+  attr(out, "at") <- ax$at
   invisible(out)
 }
 
 # ---- period-over-period ---------------------------------------------------------
 
 #' @rdname plot-methods
+#' @srrstats {TS5.2} The yoy and rate-change plots draw the period across and the change up, points with vertical
+#'   interval bars (.bl_time_interval), as the event-study plot does.
+#' @srrstats {TS5.5} `gaps = "break"` (default) breaks lines at a missing value, such as a "no data" period yoy
+#'   inserted; `gaps = "join"` draws over it (.bl_line).
 #' @export
 plot.rmbl_yoy <- function(x, ..., what = c("pctchg", "value"), main = NULL, col = NULL,
-                          palette = NULL) {
+                          palette = NULL, xlab = NULL, gaps = c("break", "join")) {
   .rmbl_plot_check(x, "rmbl_yoy")
   what <- .rmbl_arg(what)
+  gaps <- .rmbl_arg(gaps)
   d <- as.data.frame(x)
   meta <- attr(x, "yoy")
   period <- if (!is.null(meta$period)) meta$period else names(d)[1L]
   by <- meta$by
   label <- as.character(d[[period]])
-  if (length(by)) label <- paste(do.call(paste, c(d[by], sep = " / ")), label, sep = ": ")
+  grp <- if (length(by)) do.call(paste, c(d[by], sep = " / "))
+  if (length(by)) label <- paste(grp, label, sep = ": ")
+  ax <- .bl_period_axis(d[[period]], if (isTRUE(meta$perlbl) && "perlbl" %in% names(d)) d$perlbl)
+  xlab <- xlab %||% ax$xlab
   verdict <- as.character(d$verdict)
   pal <- .bl_cols(3, col, if (is.null(palette) && is.null(col)) "diverging" else palette)
   # good and bad news only when a direction says which is which; "up" and "down" (neutral) take
@@ -1045,32 +1174,30 @@ plot.rmbl_yoy <- function(x, ..., what = c("pctchg", "value"), main = NULL, col 
     why <- ifelse(is.na(d$previous), "first period: nothing to compare with",
                   ifelse(!is.na(d$flag) & nzchar(as.character(d$flag)),
                          paste("no percentage:", as.character(d$flag)), "no percentage"))
-    .bl_dot_interval(label, d$pctchg, d$pctlo, d$pctup,
-                     if (is.null(main)) "Period-over-period change (%)" else main,
-                     "Percent change, with interval", cols, ref = 0, note = why, ...)
+    at <- .bl_time_interval(ax, d$pctchg, d$pctlo, d$pctup,
+                            if (is.null(main)) "Period-over-period change (%)" else main,
+                            "Percent change, with interval", xlab, cols, ref = 0, note = why, group = grp, ...)
     invisible(data.frame(label = label, pctchg = d$pctchg, lower = d$pctlo,
-                         upper = d$pctup, verdict = verdict, stringsAsFactors = FALSE))
+                         upper = d$pctup, verdict = verdict, at = at, stringsAsFactors = FALSE))
   } else {
     op <- .bl_par(d$value)
     on.exit(graphics::par(op), add = TRUE)
-    xs <- seq_len(nrow(d))
-    graphics::plot(xs, d$value, type = "n", xaxt = "n", xlab = "", ylab = "", main = "", ...)
+    graphics::plot(ax$at, d$value, type = "n", xaxt = "n", xlab = xlab, ylab = "", main = "", ...)
     .bl_title(.bl_main(main, "Value by period"))
     .bl_ylab("Value")
     .bl_grid(NULL)
     if (length(by)) {
-      g <- do.call(paste, c(d[by], sep = " / "))
-      gc <- .bl_cols(length(unique(g)), col, palette)
-      for (k in seq_along(unique(g))) {
-        idx <- g == unique(g)[k]
-        .bl_line(xs[idx], d$value[idx], gc[k], fill = FALSE)
+      gc <- .bl_cols(length(unique(grp)), col, palette)
+      for (k in seq_along(unique(grp))) {
+        idx <- grp == unique(grp)[k]
+        .bl_line(ax$at[idx], d$value[idx], gc[k], fill = FALSE, gaps = gaps)
       }
-      graphics::legend("topleft", legend = unique(g), col = gc, lwd = 2, bty = "n", cex = 0.8)
+      graphics::legend("topleft", legend = unique(grp), col = gc, lwd = 2, bty = "n", cex = 0.8)
     } else {
-      .bl_line(xs, d$value, pal[1L])
+      .bl_line(ax$at, d$value, pal[1L], gaps = gaps)
     }
-    graphics::axis(1, at = xs, labels = label, cex.axis = 0.8)
-    invisible(data.frame(label = label, value = d$value, stringsAsFactors = FALSE))
+    .bl_period_ticks(ax)
+    invisible(data.frame(label = label, value = d$value, at = ax$at, stringsAsFactors = FALSE))
   }
 }
 
@@ -1156,20 +1283,23 @@ plot.rmbl_share <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 
 #' @rdname plot-methods
 #' @export
-plot.rmbl_rate_change <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+plot.rmbl_rate_change <- function(x, ..., main = NULL, col = NULL, palette = NULL, xlab = NULL) {
   .rmbl_plot_check(x, "rmbl_rate_change")
   d <- as.data.frame(x)
   meta <- attr(x, "ratechg")
-  label <- paste(.bl_group_label(d, meta$by), as.character(d[[meta$period]]), sep = ": ")
-  if (!length(meta$by)) label <- as.character(d[[meta$period]])
+  grp <- if (length(meta$by)) .bl_group_label(d, meta$by)
+  label <- as.character(d[[meta$period]])
+  if (length(meta$by)) label <- paste(grp, label, sep = ": ")
+  ax <- .bl_period_axis(d[[meta$period]])
   pal <- .bl_cols(3, col, if (is.null(palette) && is.null(col)) "diverging" else palette)
   cols <- ifelse(is.na(d$pctchg), pal[2L], ifelse(d$pctchg > 0, pal[3L], pal[1L]))
   if (!is.null(col)) cols <- rep_len(col, nrow(d))
-  .bl_dot_interval(label, d$pctchg, d$pctlo, d$pctup,
-                   if (is.null(main)) "Change in the rate (%)" else main,
-                   "Percent change in the rate, with interval", cols, ref = 0, ...)
+  at <- .bl_time_interval(ax, d$pctchg, d$pctlo, d$pctup,
+                          if (is.null(main)) "Change in the rate (%)" else main,
+                          "Percent change in the rate, with interval", xlab %||% ax$xlab, cols, ref = 0,
+                          group = grp, ...)
   invisible(data.frame(label = label, pctchg = d$pctchg, lower = d$pctlo,
-                       upper = d$pctup, stringsAsFactors = FALSE))
+                       upper = d$pctup, at = at, stringsAsFactors = FALSE))
 }
 
 # ---- banded tables, drift, Benford, power ------------------------------------------
@@ -1763,14 +1893,14 @@ plot.rmbl_particles <- function(x, ..., main = NULL, col = NULL, palette = NULL)
 
 #' @rdname plot-methods
 #' @export
-plot.rmbl_count_trend <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+plot.rmbl_count_trend <- function(x, ..., main = NULL, col = NULL, palette = NULL, xlab = NULL) {
   .rmbl_plot_check(x, "rmbl_count_trend")
   d <- x$data
   if (is.null(d)) stop("this trend result carries no data (older object)", call. = FALSE)
   cols <- .bl_cols(2, col, palette)
   op <- .bl_par(c(0, d$y, x$fitted))
   on.exit(graphics::par(op), add = TRUE)
-  graphics::plot(d$x, d$y, type = "n", xlab = "Period", ylab = "",
+  graphics::plot(d$x, d$y, type = "n", xlab = xlab %||% "Period", ylab = "",
                  ylim = range(c(0, d$y, x$fitted), finite = TRUE),
                  main = "",
                  ...)

@@ -168,7 +168,8 @@
   what = c("adp", "alos", "people", "days"),
   main = NULL,
   col = NULL,
-  palette = NULL
+  palette = NULL,
+  xlab = NULL
 )
 
 \method{plot}{rmbl_yoy}(
@@ -177,14 +178,16 @@
   what = c("pctchg", "value"),
   main = NULL,
   col = NULL,
-  palette = NULL
+  palette = NULL,
+  xlab = NULL,
+  gaps = c("break", "join")
 )
 
 \method{plot}{rmbl_rate}(x, ..., period = NULL, main = NULL, col = NULL, palette = NULL)
 
 \method{plot}{rmbl_share}(x, ..., main = NULL, col = NULL, palette = NULL)
 
-\method{plot}{rmbl_rate_change}(x, ..., main = NULL, col = NULL, palette = NULL)
+\method{plot}{rmbl_rate_change}(x, ..., main = NULL, col = NULL, palette = NULL, xlab = NULL)
 
 \method{plot}{rmbl_band_sensitivity}(x, ..., main = NULL, col = NULL, palette = NULL)
 
@@ -226,7 +229,7 @@
 
 \method{plot}{rmbl_particles}(x, ..., main = NULL, col = NULL, palette = NULL)
 
-\method{plot}{rmbl_count_trend}(x, ..., main = NULL, col = NULL, palette = NULL)
+\method{plot}{rmbl_count_trend}(x, ..., main = NULL, col = NULL, palette = NULL, xlab = NULL)
 
 \method{plot}{bricklayer_analysis}(x, ..., which = NULL, main = NULL)
 
@@ -238,7 +241,9 @@
   palette = NULL,
   style = c("dot", "stata"),
   shadepost = FALSE,
-  refline = -0.5
+  refline = -0.5,
+  xlab = NULL,
+  gaps = c("break", "join")
 )
 
 \method{plot}{rmbl_staggered_att}(
@@ -325,6 +330,22 @@ red; the default) or \code{"histogram"}. For a cross-fitted AIPW result:
 arm with the clipping bounds; the default) or \code{"estimate"} (the effect with
 its confidence interval).}
 
+\item{xlab}{For the plots over time (\code{rmbl_stock_flow},
+\code{rmbl_yoy}, \code{rmbl_rate_change}, \code{rmbl_count_trend},
+\code{rmbl_event_study}), the title of the period axis. The default
+\code{NULL} names the unit the period implies: \code{"Date"} for dates,
+\code{"Time"} for date-times, \code{"Fiscal year"} for fiscal-year labels
+such as \code{"2022/23"}, \code{"Periods since adoption"} for an event
+study, otherwise \code{"Period"}. A number or a date is drawn on its own
+continuous scale, so a missing period leaves its gap; any other period
+(text, a factor) is drawn at evenly spaced positions labelled with its text.}
+
+\item{gaps}{For \code{rmbl_yoy} (\code{what = "value"}) and
+\code{rmbl_event_study} (\code{style = "stata"}): how a missing value
+shows in a line. \code{"break"} (the default) breaks the
+line there, so a "no data" period that \code{yoy(complete = TRUE)}
+inserted is a visible gap; \code{"join"} draws the line straight over it.}
+
 \item{period}{For \code{rmbl_rate}, a \code{by} column holding the period: the rate
 is
 drawn over time with its interval band, one panel per group of the other \code{by}
@@ -350,7 +371,10 @@ capped bars, dashed reference lines).}
 between the reference period and adoption; \code{0} puts it at adoption).}
 }
 \value{
-The data drawn, invisibly.
+The data drawn, invisibly. For the plots over time the frame
+carries the x position of each point drawn: an \code{at} column
+(\code{rmbl_yoy}, \code{rmbl_rate_change}), or an \code{"at"} attribute
+(\code{rmbl_stock_flow}).
 }
 \description{
 Every result the package returns draws itself with \code{plot()}: no
@@ -373,11 +397,14 @@ daily population, length of stay, people and person-days over the
 periods, one panel per measure in \code{what}; with an exposure,
 the flow and stock rates too.}
 \item{\code{rmbl_yoy}}{(\code{\link{yoy}}) the period-over-period
-percent change with its interval, one row per period (and group),
-coloured by verdict; \code{what = "value"} draws the values instead.}
-\item{\code{rmbl_rate}, \code{rmbl_share}, \code{rmbl_rate_change}}{
-(\code{\link{rtcalc}}) the rate, share or percent change per group with
+percent change with its interval over the periods, the period across and
+the change up, groups side by side, coloured by verdict;
+\code{what = "value"} draws the values instead.}
+\item{\code{rmbl_rate}, \code{rmbl_share}}{
+(\code{\link{rtcalc}}, \code{\link{shrs}}) the rate or share per group with
 its interval.}
+\item{\code{rmbl_rate_change}}{(\code{\link{ratechg}}) the percent change
+in the rate with its interval over the periods, groups side by side.}
 \item{\code{rmbl_band_sensitivity}}{(\code{\link{bandsens}})
 the statistic against the cap applied to the open band.}
 \item{\code{rmbl_drift_calibration}, \code{bricklayer_drift}}{

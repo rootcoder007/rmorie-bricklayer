@@ -3,8 +3,13 @@
 ## Standards and the fixes they surfaced
 
 * The package documents the rOpenSci statistical software standards (General, EDA, Time Series)
-  with `srr` tags: 122 met, 29 not applicable, 6 still to do (internal-function roxygen,
-  duplicated refusal texts, and period axes on four plots).
+  with `srr` tags: 131 met, 29 not applicable, 2 still to do (internal-function roxygen and
+  duplicated refusal texts).
+* The plots over time put the period on its own scale (a number or a `Date`; text at labelled
+  positions) with the unit as the axis title, and take `xlab`, which passed through `...` was an
+  error. `plot()` of a `yoy()` or `ratechg()` result draws the period across and the change up, with
+  vertical interval bars; groups sit side by side. `gaps = "break"` (the default) breaks a line at a
+  missing value, such as a "no data" year `yoy()` inserted, and `gaps = "join"` draws over it.
 * `stepchg()` puts `before`, `after` and `difference` back into the units of `y` when the
   series is above 1e150 (they stayed rescaled), and refuses a numeric or date `x` that is not
   strictly increasing. `trndtst()` refuses duplicated periods.

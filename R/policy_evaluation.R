@@ -434,13 +434,14 @@ print.rmbl_event_study <- function(x, ...) {
 #'   between the reference period and adoption; \code{0} puts it at adoption).
 #' @export
 plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NULL, style = c("dot", "stata"),
-                                  shadepost = FALSE, refline = -0.5) {
+                                  shadepost = FALSE, refline = -0.5, xlab = NULL, gaps = c("break", "join")) {
   .rmbl_plot_check(x, "rmbl_event_study")
   style <- .rmbl_arg(style)
+  gaps <- .rmbl_arg(gaps)
   d <- as.data.frame(x)
   cl <- .bl_cols(1L, col, palette)
   yl <- range(c(d$lower, d$upper, 0), na.rm = TRUE)
-  graphics::plot(d$evtm, d$estimate, ylim = yl, type = "n", xlab = "Periods since adoption",
+  graphics::plot(d$evtm, d$estimate, ylim = yl, type = "n", xlab = xlab %||% "Periods since adoption",
                  ylab = "Effect, with its interval", main = "", ...)
   .bl_title(.bl_main(main, "Event study"))
   if (isTRUE(shadepost)) {
@@ -453,7 +454,8 @@ plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NUL
     graphics::abline(v = refline, lty = 2, col = "#9A9A9A")
     graphics::arrows(d$evtm[w], d$lower[w], d$evtm[w], d$upper[w], angle = 90, code = 3,
                      length = 0.03, col = "#7A7A7A", lty = 2)
-    graphics::lines(d$evtm, d$estimate, col = cl)
+    on <- gaps == "break" | is.finite(d$estimate)
+    graphics::lines(d$evtm[on], d$estimate[on], col = cl)
     graphics::points(d$evtm, d$estimate, pch = 1, col = cl)
   } else {
     graphics::abline(h = 0, col = "#9A9A9A")

@@ -52,14 +52,6 @@
 #'   comments, and 235 have none at all.
 #' @srrstatsTODO {G5.2a} 63 stop() messages are duplicated (e.g. "`data` must be a data frame" appears 21 times;
 #'   "`col` must name a column" 7 times).
-#' @srrstatsTODO {TS5.1} plot.rmbl_yoy(what = "value") draws an empty x label, and yoy and stkflow plots place
-#'   periods at positions 1..n, not on a continuous time scale.
-#' @srrstatsTODO {TS5.2} plot.rmbl_yoy (default pctchg) and plot.rmbl_rate_change use .bl_dot_interval, which puts
-#'   the periods on the vertical axis.
-#' @srrstatsTODO {TS5.3} Plots hard-code xlab = "Period" or "Periods since adoption" without the unit, and passing
-#'   xlab through ... errors (matched twice).
-#' @srrstatsTODO {TS5.5} .bl_line drops non-finite points, so a "no data" year inserted by yoy is joined over; there
-#'   is no option for broken lines.
 #' @noRd
 NULL
 
