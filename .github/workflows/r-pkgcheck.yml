@@ -48,11 +48,14 @@ jobs:
           # and not anything triggered by workflow_dispatch. Wait for
           # precisely those, whatever commit they belong to.
           need="R-CMD-check r-coverage"
-          for i in $(seq 1 75); do
+          # 180 x 20 s = 60 min: R CMD check runs 24 to 26 min and coverage longer, so the old
+          # 25 min ran out and pkgcheck read in-progress runs ("Package fails continuous
+          # integration checks" on a green repository)
+          for i in $(seq 1 180); do
             # an API hiccup (GitHub answered 503 on 2026-10-03) is a reason to ask again, not to fail
             if ! runs=$(gh api \
               "repos/${GITHUB_REPOSITORY}/actions/runs?event=push&per_page=100"); then
-              echo "[${i}/75] the Actions API did not answer; asking again"
+              echo "[${i}/180] the Actions API did not answer; asking again"
               sleep 20
               continue
             fi
@@ -95,7 +98,7 @@ jobs:
               done
               exit 0
             fi
-            echo "[${i}/75] waiting for:$pending"
+            echo "[${i}/180] waiting for:$pending"
             sleep 20
           done
           # Not fatal: pkgcheck still reports every other check, and
