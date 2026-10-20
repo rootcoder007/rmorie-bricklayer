@@ -391,25 +391,37 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
 #' @noRd
 .bl_manifests_vs_base <- function(d, o) {
   out <- list()
-  for (m in file.path(d, c("manifest.json", file.path("results", "manifest.json")))) {
-    b <- .bl_base_copy(m, o)
+  for (r in c("manifest.json", file.path("results", "manifest.json"))) {
+    m <- file.path(d, r)
+    b <- .bl_base_copy(m, file.path(.bl_rel_dir(d, o$path), r), o)
     if (file.exists(m) || !is.null(b)) out[[length(out) + 1L]] <- .bl_manifest_vs(m, b)
   }
   out
 }
 
+#' A capsule directory relative to the folder searched, "/" separated on every system.
+#' @param d The capsule directory (under `root`).
+#' @param root The folder searched.
+#' @return The relative path, "." for the folder itself.
+#' @noRd
+.bl_rel_dir <- function(d, root) {
+  a <- normalizePath(d, winslash = "/")
+  r <- sub("/+$", "", normalizePath(root, winslash = "/"))
+  if (a == r) "." else substring(a, nchar(r) + 2L)
+}
+
 #' The base copy of one manifest, as `base` locates it.
 #' @param m The manifest's path (it may not exist).
+#' @param rel Its path relative to the folder searched.
 #' @param o The options of cpschk().
 #' @return The path of an existing base copy, or NULL.
 #' @noRd
-.bl_base_copy <- function(m, o) {
+.bl_base_copy <- function(m, rel, o) {
   b <- o$base
   p <- if (is.function(b)) {
     b(m)
   } else if (dir.exists(b)) {
-    root <- sub("/+$", "", sub("^\\./", "", o$path))
-    file.path(b, if (root == ".") m else substring(m, nchar(root) + 2L))
+    file.path(b, rel)
   } else if (file.exists(m)) {
     b  # one manifest file pairs with every manifest present
   }
@@ -751,4 +763,91 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 .bl_is_cpschk <- function(x) {
   if (!inherits(x, "rmbl_cpschk")) stop(.rmbl_fn(), "`x` must be a cpschk() result", call. = FALSE)
   invisible(NULL)
+}
+
+#' Pin and sign every capsule under a folder
+#'
+#' @description
+#' Seals each capsule (a folder holding \code{data_provenance.json}) under
+#' \code{path}, so that a program in any language only has to write the
+#' data file and a plain provenance naming it
+#' (\code{{"resource": {"filename": "data.csv"}}}): on its first run the
+#' provenance is pinned to the data file's bytes as \code{\link{cpsrfrsh}}
+#' pins it (\code{resource$sha256}, \code{size_bytes},
+#' \code{retrieved_utc}, the row count when one is recorded), then
+#' \code{\link{cpsbndl}} signs every file of the capsule into
+#' \code{capsule_bundle.json}, over its \code{manifest.json} when it has
+#' one. \code{rmbl sign} calls it and then verifies (\code{\link{cpschk}}).
+#'
+#' @details
+#' A provenance already pinned (one with \code{resource$sha256}) is left as
+#' it is. Side effects: writes \code{data_provenance.json} (first run) and
+#' \code{capsule_bundle.json} in each capsule. Errors, before anything is
+#' written: no provenance under \code{path}; a capsule that already has a
+#' bundle, unless \code{overwrite}; then, per capsule, a
+#' \code{resource$filename} that is not a plain relative path to a file in
+#' the capsule, and the refusals of \code{cpsbndl()} (a key it cannot sign
+#' with).
+#'
+#' @param path Character scalar, the folder searched recursively.
+#' @param key The signing key, as \code{cpsbndl()} takes it: a shared
+#'   secret (a string or raw vector) for an \code{"hmac"} bundle, or a key
+#'   from \code{\link{fipskg}} or \code{\link{fipskey}}.
+#' @param overwrite Logical: sign a capsule that already has a bundle again.
+#' @param glob Character scalar: only the provenance files whose path
+#'   matches this glob (\code{*} also matches \code{/}), or \code{""}.
+#' @return A data frame, one row per capsule: \code{capsule},
+#'   \code{pinned} (whether the provenance was pinned now), \code{files}
+#'   (the number signed) and \code{public} (the hmac key id or the public
+#'   key; never the secret).
+#' @seealso \code{\link{cpsbndl}}, \code{\link{cpschk}},
+#'   \code{\link{blcli}} (\code{rmbl sign}).
+#' @examples
+#' root <- tempfile("capsules-")
+#' d <- file.path(root, "one")
+#' dir.create(d, recursive = TRUE)
+#' utils::write.csv(data.frame(x = 1:3), file.path(d, "data.csv"),
+#'                  row.names = FALSE)
+#' writeLines('{"resource": {"filename": "data.csv"}}',
+#'            file.path(d, "data_provenance.json"))
+#' s <- cpsseal(root, "a shared secret")
+#' s
+#' cpschk(root, key = "a shared secret", fp = FALSE)$status
+#'
+#' # a second run needs overwrite, and a post-quantum key signs too
+#' try(cpsseal(root, "a shared secret"))
+#' cpsseal(root, fipskg("ML-DSA-44"), overwrite = TRUE)$pinned
+#' @srrstats {G2.0} `path` must be one existing directory, `overwrite` one logical and `glob` one string; the key is
+#'   checked by cpsbndl() (test-capsule-check.R).
+#' @export
+cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
+  path <- .rmbl_string1(path, "path")
+  if (!dir.exists(path)) stop(.rmbl_fn(), "`path` is not an existing directory: ", .rmbl_printable(path), call. = FALSE)
+  overwrite <- .rmbl_flag1(overwrite, "overwrite")
+  dirs <- .bl_capsule_dirs(path, .bl_str0(glob, "glob"))
+  dirs <- dirs[file.exists(file.path(dirs, "data_provenance.json"))]
+  if (!length(dirs)) stop(.rmbl_fn(), "no data_provenance.json under ", .rmbl_printable(path), call. = FALSE)
+  have <- dirs[file.exists(file.path(dirs, "capsule_bundle.json"))]
+  if (length(have) && !overwrite) {
+    stop(.rmbl_fn(), "capsule_bundle.json already exists in ", paste(have, collapse = ", "),
+         "; pass overwrite = TRUE (rmbl sign --overwrite) to sign again", call. = FALSE)
+  }
+  rows <- lapply(dirs, function(d) {
+    pf <- file.path(d, "data_provenance.json")
+    prov <- loadprov(pf)
+    pinned <- is.null(prov[["resource"]][["sha256"]])
+    if (pinned) {
+      fn <- .bl_s1(prov[["resource"]][["filename"]])
+      df <- .rmbl_safe_rel(fn, d)
+      if (is.null(df) || !file.exists(df) || dir.exists(df)) {
+        stop(.rmbl_fn(), pf, ": resource$filename must name the data file, relative to the capsule", call. = FALSE)
+      }
+      writeLines(tojs(.bl_pin(prov, df, fn), auto_unbox = TRUE, pretty = TRUE, null = "null", digits = NA), pf)
+    }
+    mf <- file.path(d, "manifest.json")
+    b <- cpsbndl(d, if (file.exists(mf)) loadprov(mf) else mkmnf(list(), env = FALSE), key)
+    data.frame(capsule = d, pinned = pinned, files = length(b$files), public = b$attestation$public,
+               stringsAsFactors = FALSE)
+  })
+  do.call(rbind, rows)
 }

@@ -3,7 +3,7 @@
 ## Standards and the fixes they surfaced
 
 * The package documents the rOpenSci statistical software standards (General, EDA, Time Series)
-  with `srr` tags: 143 met, 29 not applicable, none left to do.
+  with `srr` tags: 144 met, 29 not applicable, none left to do.
 * A period with no percentage change in `plot(yoy(...))` carries its whole reason again ("first period:
   nothing to compare with", "no percentage: previous period is zero"), sized to the panel; the period-axis
   rewrite had cut every reason at the colon.
@@ -82,6 +82,15 @@ can call them.
   warning; new bytes that cannot be compared column by column are still a warning.
 * `cpsrfrsh()` records `resource$retrieved_utc`, takes `allowfile` for a `file://` source, and
   refuses new data that fail the schema the provenance pins.
+* `rmbl sign PATH` pins each plain provenance on its first run and signs each capsule into
+  `capsule_bundle.json` (`cpsseal()`), then verifies, so a program in any language only writes
+  the data and a provenance naming it. The key is `RMBL_KEY` or the contents of `--key-file`,
+  never printed: the shared secret for `--scheme hmac` (the default), or for a standardised
+  scheme the JSON of a `fipskg()` key or its secret hex with `--public-key`. An existing bundle
+  is refused without `--overwrite`, and a stateful `xmss-sha256` key is refused outright.
+* The capsule checks compare manifests with a base folder by paths relative to the folder
+  searched on every system, and the smoke test restores what its drift case changed, so a
+  Windows path no longer reaches `rmbl refresh` as a `file://` URL.
 * `plot()` of a `rtcalc()` result with `period` draws the period on its own scale, as the other
   plots over time do, and takes `xlab`; it drew index positions with no axis title.
 

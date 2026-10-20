@@ -83,6 +83,15 @@ reads it when a fetch fails; the options of verify apply}
 (\code{\link{mnfdiff}})}
 \item{\code{report PATH [--format md|json]}}{the verify report, exit 0;
 the options of verify apply}
+\item{\code{sign PATH [--scheme S] [--key-file F] [--overwrite]}}{pin
+each provenance on its first run and sign each capsule into
+\code{capsule_bundle.json} (\code{\link{cpsseal}}), then verify as
+\code{verify} does. The key is \code{RMBL_KEY}, removed from the
+environment at once, or the contents of \code{--key-file}, and is
+never printed: the shared secret for \code{hmac} (the default), else
+the JSON of a \code{\link{fipskg}} key, or its secret hex with
+\code{--public-key}. An existing bundle is refused without
+\code{--overwrite}; an \code{xmss-sha256} key is refused}
 \item{\code{functions [PATTERN]}}{list the exported functions with
 their one-line titles, optionally filtered by a regular expression}
 \item{\code{describe NAME}}{title, usage, arguments and description of
@@ -123,7 +132,8 @@ temporary folder. The verbs \code{login}, \code{logout} and
 \code{config} write the shared credentials and settings files;
 \code{ask}, \code{models}, \code{data}, \code{bundle} and
 \code{wayback} use the network, and \code{drift} and \code{refresh}
-fetch each capsule's source (\code{refresh} writes the capsule);
+fetch each capsule's source (\code{refresh} writes the capsule),
+\code{sign} writes each capsule's provenance and bundle;
 \code{verify} and \code{report} only read the capsule files;
 \code{functions}, \code{describe},
 \code{examples}, \code{explain-error}, \code{version} and \code{help}

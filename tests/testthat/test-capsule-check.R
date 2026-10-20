@@ -388,3 +388,59 @@ test_that("the footprint footer names the method, the intensity and its year", {
   expect_match(format(x), paste("(co2fp(), measured with RAPL): 1.0 s wall, 0.5 s CPU, 0.001 Wh, 0.0001 gCO2e",
                                 "at 30 gCO2e/kWh (Ontario)."), fixed = TRUE)
 })
+
+plain_capsule <- function(env = parent.frame()) {
+  root <- withr::local_tempdir(.local_envir = env)
+  d <- file.path(root, "one")
+  dir.create(d)
+  utils::write.csv(data.frame(x = 1:5), file.path(d, "data.csv"), row.names = FALSE)
+  writeLines('{"resource": {"filename": "data.csv", "row_count_data_rows": 0}, "source": {"url": "x"}}',
+             file.path(d, "data_provenance.json"))
+  list(root = root, dir = d)
+}
+
+test_that("cpsseal() pins a plain provenance once and signs each capsule, hmac or post-quantum", {
+  cp <- plain_capsule()
+  s <- cpsseal(cp$root, "secret")
+  expect_identical(names(s), c("capsule", "pinned", "files", "public"))
+  expect_true(s$pinned)
+  expect_identical(s$files, 2L)
+  p <- loadprov(file.path(cp$dir, "data_provenance.json"))
+  expect_identical(p$resource$sha256, sha256file(file.path(cp$dir, "data.csv")))
+  expect_identical(p$source$sha256, p$resource$sha256)
+  expect_equal(p$resource$row_count_data_rows, 5)
+  x <- cpschk(cp$root, key = "secret", pubkey = s$public, fp = FALSE)
+  expect_identical(x$status, "ok")
+  expect_error(cpsseal(cp$root, "secret"), "cpsseal: capsule_bundle.json already exists in")
+  invisible(utils::capture.output(wrmnfjs(mkmnf(list(dataset = "t"), env = FALSE), file.path(cp$dir, "manifest.json"))))
+  key <- fipskg("ML-DSA-44")
+  s <- cpsseal(cp$root, key, overwrite = TRUE)
+  expect_false(s$pinned)
+  expect_identical(s$public, key$public)
+  expect_identical(cpschk(cp$root, pubkey = key$public, fp = FALSE)$status, "ok")
+  expect_identical(nrow(cpsseal(cp$root, "secret", overwrite = TRUE, glob = "*one/*")), 1L)
+  expect_error(cpsseal(cp$root, "secret", glob = "nothing/*"), "cpsseal: no data_provenance.json under")
+  expect_error(cpsseal(tempfile(), "secret"), "cpsseal: `path` is not an existing directory")
+  expect_error(cpsseal(cp$root, "secret", overwrite = NA), "cpsseal: `overwrite` must be TRUE or FALSE")
+  writeLines('{"resource": {"filename": "../x.csv"}}', file.path(cp$dir, "data_provenance.json"))
+  expect_error(cpsseal(cp$root, "secret", overwrite = TRUE), "resource\\$filename must name the data file")
+})
+
+test_that("capsule folders are relative to the folder searched however its path is written", {
+  root <- withr::local_tempdir()
+  d <- file.path(root, "a", "b")
+  dir.create(d, recursive = TRUE)
+  expect_identical(.bl_rel_dir(d, root), "a/b")
+  expect_identical(.bl_rel_dir(root, paste0(root, "/")), ".")
+  expect_identical(.bl_rel_dir(d, file.path(root, ".")), "a/b")
+})
+
+test_that("a local source written with backslashes is read as a local file (Windows)", {
+  skip_on_os(c("mac", "linux", "solaris"))
+  cp <- pinned_capsule()
+  p <- loadprov(file.path(cp$dir, "data_provenance.json"))
+  p$resource$direct_url <- gsub("/", "\\\\", normalizePath(cp$src))
+  writeLines(tojs(p, auto_unbox = TRUE), file.path(cp$dir, "data_provenance.json"))
+  expect_identical(cpschk(gsub("/", "\\\\", cp$root), "drift", fp = FALSE)$status, "ok")
+  expect_identical(cpsrfrsh(cp$dir)$change, "unchanged")
+})

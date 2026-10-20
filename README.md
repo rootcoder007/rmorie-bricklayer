@@ -778,6 +778,8 @@ rmoriebricklayer drift capsules --psi-warn 0.1 --psi-fail 0.25   # the PSI bands
 rmoriebricklayer drift capsules --allow-file --cache .rmbl-cache --snapshot   # file:// sources, a cache, snapshots
 rmoriebricklayer verify capsules --base base-copy/   # each manifest against its base copy (a file or a folder)
 rmoriebricklayer refresh capsules               # pin each source's new bytes (cpsrfrsh())
+RMBL_KEY=... rmoriebricklayer sign capsules     # pin each plain provenance and sign each capsule (cpsseal())
+rmoriebricklayer sign capsules --scheme ML-DSA-44 --key-file key.json --overwrite
 rmoriebricklayer report capsules --format md    # the Markdown report; never fails
 rmoriebricklayer functions [PATTERN]            # exported functions and their titles
 rmoriebricklayer describe NAME                  # one function's help page
@@ -799,7 +801,7 @@ rmbl login --token
 rmbl models
 ```
 
-The capsule verbs are `cpschk()` from R, and `ghann()`, `ghcmt()` and `ghout()` give the
+The capsule verbs are `cpschk()` and `cpsseal()` from R, and `ghann()`, `ghcmt()` and `ghout()` give the
 annotations, the sticky pull-request comment and the step outputs the rmbl GitHub Action prints.
 
 ## Part of the MORIE family

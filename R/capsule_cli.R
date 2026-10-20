@@ -277,17 +277,29 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       cached <- TRUE
     }
   }
-  new <- prov
-  digest <- sha256file(got)
-  if (is.list(new[["source"]])) new[["source"]][["sha256"]] <- digest
-  new$resource$filename <- s1(prov[["resource"]][["filename"]]) %||% basename(src)
-  new$resource$sha256 <- digest
-  new$resource$size_bytes <- file.size(got)
-  new$resource$retrieved_utc <- format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
-  if (!is.null(prov[["resource"]][["row_count_data_rows"]])) {
-    new$resource$row_count_data_rows <- nrow(utils::read.csv(got, check.names = FALSE))
-  }
+  new <- .bl_pin(prov, got, s1(prov[["resource"]][["filename"]]) %||% basename(src))
   list(old = prov, new = new, path = got, src = src, cached = cached)
+}
+
+#' A provenance record pinned to a data file's bytes, in the fields usecpstmpl()'s analysis.R writes.
+#'
+#' source$sha256 (when there is a source block), resource$filename, sha256, size_bytes and
+#' retrieved_utc, and row_count_data_rows when it was recorded.
+#' @param prov The provenance record.
+#' @param got The data file.
+#' @param filename The name the capsule keeps it under.
+#' @return The pinned record.
+#' @noRd
+.bl_pin <- function(prov, got, filename) {
+  digest <- sha256file(got)
+  if (is.list(prov[["source"]])) prov[["source"]][["sha256"]] <- digest
+  had_rows <- !is.null(prov[["resource"]][["row_count_data_rows"]])
+  prov$resource$filename <- filename
+  prov$resource$sha256 <- digest
+  prov$resource$size_bytes <- file.size(got)
+  prov$resource$retrieved_utc <- format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
+  if (had_rows) prov$resource$row_count_data_rows <- nrow(utils::read.csv(got, check.names = FALSE))
+  prov
 }
 
 # ---- the rows of rmbl verify / drift / report ---------------------------------------------
@@ -515,7 +527,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     i <- match(f, pos)
     if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
   }
-  pos <- pos[!pos %in% c("--json", "--allow-file", "--snapshot", "--no-footprint")]
+  pos <- pos[!pos %in% c("--json", "--allow-file", "--snapshot", "--no-footprint", "--overwrite")]
   if (length(pos) != 1L) usage_error(sub("\n$", "", .bl_verb_usage(verb, .bl_prog())))
   root <- pos[[1L]]
   if (!dir.exists(root)) usage_error(sprintf("%s is not a directory", .rmbl_printable(root)))
@@ -528,6 +540,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
   key <- Sys.getenv("RMBL_KEY")
   Sys.unsetenv("RMBL_KEY")
   if (verb == "refresh") return(.bl_cli_refresh(root, out))
+  if (verb == "sign") return(.bl_cli_sign(root, key, flag, rest, fmt, fail_on, out, usage_error))
   num <- function(f, default) {
     v <- flag(f)
     if (is.null(v)) default else suppressWarnings(as.numeric(v))
@@ -547,12 +560,64 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' The options of the capsule verbs that take a value.
 #' @noRd
 .bl_capsule_valued <- c("--fail-on", "--format", "--public-key", "--psi-warn", "--psi-fail", "--base", "--cache",
-                        "--manifests")
+                        "--manifests", "--scheme", "--key-file")
 
 #' The options verify, drift and report share (the first take a value).
 #' @noRd
 .bl_capsule_opts <- c("--public-key", "--psi-warn", "--psi-fail", "--base", "--cache", "--manifests", "--allow-file",
                       "--snapshot", "--no-footprint")
+
+#' The sign verb: cpsseal() on every capsule under a path, then the verify report.
+#'
+#' The key is RMBL_KEY (already read and removed from the environment) or the contents of --key-file,
+#' never printed: for hmac the shared secret; for a standardised scheme the JSON fipskg() writes
+#' (scheme, public, secret) or the secret key's hex with --public-key. A stateful XMSS key is refused:
+#' a copy in a file could sign an index twice.
+#' @param root The directory searched.
+#' @param key The value of RMBL_KEY, or "".
+#' @param flag,usage_error,out As for .bl_cli_capsule().
+#' @param rest The arguments after the verb.
+#' @param fmt md or json, for the verify report.
+#' @param fail_on The fail-on level of the verify that follows.
+#' @return The exit status.
+#' @noRd
+.bl_cli_sign <- function(root, key, flag, rest, fmt, fail_on, out, usage_error) {
+  scheme <- flag("--scheme") %||% "hmac"
+  kf <- flag("--key-file")
+  if (!is.null(kf)) {
+    if (!file.exists(kf) || dir.exists(kf)) usage_error(sprintf("--key-file: no such file: %s", .rmbl_printable(kf)))
+    key <- sub("[\r\n]+$", "", paste(readLines(kf, warn = FALSE), collapse = "\n"))
+  }
+  if (!nzchar(key)) usage_error("sign needs a key: RMBL_KEY in the environment, or --key-file FILE")
+  if (identical(scheme, "xmss-sha256")) {
+    usage_error(paste("sign takes no xmss-sha256 key: a stateful key copied into a file can sign one index twice;",
+                      "sign with cpsbndl() on the machine that holds it"))
+  }
+  pub <- flag("--public-key") %||% ""
+  sk <- if (scheme == "hmac") key else tryCatch({
+    if (startsWith(trimws(key), "{")) {
+      j <- fromjs(key)
+      fipskey(j$scheme %||% scheme, j$public, j$secret)
+    } else {
+      if (!nzchar(pub)) usage_error(sprintf("--scheme %s with a bare secret key needs --public-key HEX", scheme))
+      fipskey(scheme, pub, key)
+    }
+  }, bl_usage = function(e) stop(e), error = function(e) usage_error(paste("the key:", conditionMessage(e))))
+  if (scheme != "hmac" && !nzchar(pub)) pub <- sk$public
+  res <- tryCatch(cpsseal(root, sk, overwrite = "--overwrite" %in% rest, glob = flag("--manifests") %||% ""),
+                  error = function(e) e)
+  if (inherits(res, "error")) {
+    out(sprintf("%s: %s\n", .bl_prog(), conditionMessage(res)))
+    return(1L)
+  }
+  out(sprintf("signed %s: %d files, %s %s%s\n", res$capsule, res$files, if (scheme == "hmac") "hmac key id" else
+    "public key", substr(res$public, 1L, 16L), ifelse(res$pinned, " (provenance pinned)", "")))
+  x <- cpschk(root, key = if (scheme == "hmac") key else "", pubkey = pub, glob = flag("--manifests") %||% "",
+              fp = FALSE)
+  out(format(x, fmt = fmt, failon = fail_on))
+  rank <- c(ok = 0L, warn = 1L, drift = 2L, error = 3L)
+  if (rank[[x$status]] >= rank[[fail_on]]) 1L else 0L
+}
 
 #' The refresh verb: cpsrfrsh() on every capsule under a path that has a provenance.
 #' @param root The directory searched.

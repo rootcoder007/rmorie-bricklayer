@@ -207,6 +207,15 @@
 #'     (\code{\link{mnfdiff}})}
 #'   \item{\code{report PATH [--format md|json]}}{the verify report, exit 0;
 #'     the options of verify apply}
+#'   \item{\code{sign PATH [--scheme S] [--key-file F] [--overwrite]}}{pin
+#'     each provenance on its first run and sign each capsule into
+#'     \code{capsule_bundle.json} (\code{\link{cpsseal}}), then verify as
+#'     \code{verify} does. The key is \code{RMBL_KEY}, removed from the
+#'     environment at once, or the contents of \code{--key-file}, and is
+#'     never printed: the shared secret for \code{hmac} (the default), else
+#'     the JSON of a \code{\link{fipskg}} key, or its secret hex with
+#'     \code{--public-key}. An existing bundle is refused without
+#'     \code{--overwrite}; an \code{xmss-sha256} key is refused}
 #'   \item{\code{functions [PATTERN]}}{list the exported functions with
 #'     their one-line titles, optionally filtered by a regular expression}
 #'   \item{\code{describe NAME}}{title, usage, arguments and description of
@@ -247,7 +256,8 @@
 #' \code{config} write the shared credentials and settings files;
 #' \code{ask}, \code{models}, \code{data}, \code{bundle} and
 #' \code{wayback} use the network, and \code{drift} and \code{refresh}
-#' fetch each capsule's source (\code{refresh} writes the capsule);
+#' fetch each capsule's source (\code{refresh} writes the capsule),
+#' \code{sign} writes each capsule's provenance and bundle;
 #' \code{verify} and \code{report} only read the capsule files;
 #' \code{functions}, \code{describe},
 #' \code{examples}, \code{explain-error}, \code{version} and \code{help}
@@ -350,6 +360,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
                 data = "--out", wayback = c("--out", "--jobs", "--within", "--max", "--retry", "--include-gone"),
                 verify = c("--json", "--fail-on", .bl_capsule_opts), drift = c("--json", "--fail-on", .bl_capsule_opts),
                 report = c("--format", .bl_capsule_opts),
+                sign = c("--json", "--fail-on", "--scheme", "--key-file", "--public-key", "--overwrite", "--manifests"),
                 config = if (length(rest) && identical(rest[[1L]], "reset")) "--force")
   opts <- rest[startsWith(rest, "--")]
   values <- unlist(lapply(c("--email", "--code", "--token", "--model", "--route", "--out", "--jobs", "--within",
@@ -521,6 +532,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
         data = status <- .bl_cli_data(rest, flag, out),
         `explain-error` = status <- .bl_cli_explain(c(rest, tail_args), out, prog),
         wayback = status <- .bl_cli_wayback(rest, flag, out),
+        sign = ,
         verify = ,
         drift = ,
         refresh = ,
@@ -770,6 +782,11 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
                   "and compare it with the pin, column by column in the PSI bands (--allow-file: file:// sources;",
                   "--cache: keep each source, read when a fetch fails)"),
     refresh = "refresh PATH   fetch each capsule's source and pin its new bytes in the provenance (cpsrfrsh())",
+    sign = paste("sign PATH [--scheme hmac|ML-DSA-44|...] [--key-file FILE] [--public-key HEX] [--overwrite]",
+                 "[--manifests GLOB] [--json] [--fail-on LEVEL]   pin each provenance on its first run and sign",
+                 "each capsule into capsule_bundle.json (cpsseal()), then verify; the key is RMBL_KEY or the",
+                 "contents of --key-file (for a standardised scheme the JSON of fipskg(), or the secret's hex with",
+                 "--public-key), never printed"),
     report = "report PATH [--format md|json] [the options of verify]   the verify report; never fails",
     version = "version   package version"
   )
@@ -1180,6 +1197,7 @@ instcli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     "  drift PATH [--json] [--fail-on LEVEL]     verify, then fetch each source and compare it with the pin\n",
     "        [--psi-warn X] [--psi-fail X]       the PSI bands of the column table (0.1 and 0.25)\n",
     "  refresh PATH                              pin each source's new bytes in its provenance\n",
+    "  sign PATH [--scheme S] [--key-file F]     pin and sign each capsule (key: RMBL_KEY or the file), verify\n",
     "  report PATH [--format md|json]            the verify report; never fails\n",
     "\nMore help\n",
     sprintf("  %s help start      getting started, step by step\n", prog),

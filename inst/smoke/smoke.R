@@ -92,12 +92,26 @@ cases <- list(
     check(r$status == 0 && grepl("| Verdict | Column |", r$text, fixed = TRUE) && grepl("Footprint of these checks", r$text, fixed = TRUE), paste("drift bands:", substr(r$text, 1, 300)))
     r <- run("drift", smoke_capsule, "--fail-on", "drift", "--no-footprint"); check(r$status == 1L && !grepl("Footprint", r$text, fixed = TRUE), paste("drift fail-on:", substr(r$text, 1, 300)))
     pf <- file.path(smoke_capsule, "data_provenance.json"); p0 <- readLines(pf)
-    p <- loadprov(pf); p$source$url <- paste0("file://", file.path(smoke_capsule, "source.csv"))
+    on.exit(writeLines(p0, pf), add = TRUE)  # refresh (cpsrfrsh() without allowfile) reads the plain path again
+    p <- loadprov(pf); p$source$url <- paste0("file://", normalizePath(file.path(smoke_capsule, "source.csv"), winslash = "/"))
     writeLines(tojs(p, auto_unbox = TRUE), file.path(smoke_capsule, "data_provenance.json"))
     r <- run("drift", smoke_capsule, "--json", "--allow-file"); check(r$status == 0 && grepl("\"benford_ref\"", r$text, fixed = TRUE), paste("drift --allow-file:", substr(r$text, 1, 300)))
-    x <- cpschk(smoke_capsule, "drift", allowfile = TRUE, fp = FALSE); check(x$status == "drift" && length(ghann(x)) == 1L && ghout(x)$changed == smoke_capsule, "cpschk/ghann/ghout")
+    x <- cpschk(smoke_capsule, "drift", allowfile = TRUE, fp = FALSE)
+    same <- function(a, b) identical(normalizePath(a, winslash = "/"), normalizePath(b, winslash = "/"))
+    check(x$status == "drift" && length(ghann(x)) == 1L && same(ghout(x)$changed, smoke_capsule),
+          paste("cpschk/ghann/ghout:", x$status, paste(ghann(x), collapse = " | "), ghout(x)$changed))
     check(startsWith(ghcmt(x), "<!-- rmbl-action -->"), "ghcmt")
-    writeLines(p0, pf)  # refresh (cpsrfrsh() without allowfile) reads the plain path again
+  },
+  sign = function() {
+    d <- file.path(home, "sign", "one"); dir.create(d, recursive = TRUE)
+    utils::write.csv(data.frame(x = 1:3), file.path(d, "data.csv"), row.names = FALSE)
+    writeLines('{"resource": {"filename": "data.csv"}}', file.path(d, "data_provenance.json"))
+    Sys.setenv(RMBL_KEY = "smoke secret")
+    r <- run("sign", dirname(d)); check(r$status == 0 && grepl("hmac key id", r$text, fixed = TRUE) && !grepl("smoke secret", r$text, fixed = TRUE), paste("sign:", substr(r$text, 1, 300)))
+    Sys.setenv(RMBL_KEY = "smoke secret")  # each run removes it from the environment
+    r <- run("sign", dirname(d)); check(r$status == 1L && grepl("already exists", r$text, fixed = TRUE), paste("sign again:", substr(r$text, 1, 300)))
+    kf <- file.path(home, "pq.key"); writeLines(tojs(unclass(fipskg("ML-DSA-44")), auto_unbox = TRUE), kf)
+    r <- run("sign", dirname(d), "--scheme", "ML-DSA-44", "--key-file", kf, "--overwrite", "--json"); check(r$status == 0 && grepl("\"status\": \"ok\"", r$text, fixed = TRUE), paste("sign ML-DSA-44:", substr(r$text, 1, 300)))
   },
   refresh = function() { r <- run("refresh", smoke_capsule); check(r$status == 0, paste("refresh:", substr(r$text, 1, 300))) },
   report = function() {
