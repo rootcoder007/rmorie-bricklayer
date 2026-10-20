@@ -160,8 +160,9 @@ print.rmbl_mnfdiff <- function(x, ...) {
 #' read directly), and when its bytes differ from the pin writes them as the
 #' capsule's data file and pins them in the provenance, in the form the
 #' \code{analysis.R} of \code{\link{usecpstmpl}} writes on its first run:
-#' \code{source$sha256}, and \code{resource$filename}, \code{sha256} and
-#' \code{size_bytes} (\code{row_count_data_rows} too when it was recorded).
+#' \code{source$sha256}, and \code{resource$filename}, \code{sha256},
+#' \code{size_bytes} and \code{retrieved_utc} (\code{row_count_data_rows}
+#' too when it was recorded).
 #' \code{\link{vrfcps}} then verifies the capsule against the new data.
 #' From the shell: \code{rmbl refresh PATH}.
 #'
@@ -172,10 +173,14 @@ print.rmbl_mnfdiff <- function(x, ...) {
 #' key (\code{\link{cpsbndl}}). Side effects: writes the data file and
 #' \code{data_provenance.json} in \code{dir}. Errors: \code{dir} is not a
 #' directory or holds no provenance; the provenance names no source, or a
-#' \code{TODO} one; the source cannot be fetched; \code{resource$filename}
-#' is not a plain relative path inside \code{dir}.
+#' \code{TODO} one, or a \code{file://} one without \code{allowfile}; the
+#' source cannot be fetched; \code{resource$filename} is not a plain
+#' relative path inside \code{dir}; the new data fail the schema the
+#' provenance pins (\code{\link{valsch}}).
 #'
 #' @param dir Character scalar, the capsule directory.
+#' @param allowfile Logical: accept a \code{file://} source URL (a local
+#'   path is always read).
 #' @return The \code{\link{mnfdiff}} of the provenance before and after:
 #'   all \code{"unchanged"} when the source still matches its pin.
 #' @seealso \code{\link{mnfdiff}}, \code{\link{vrfcps}},
@@ -190,29 +195,57 @@ print.rmbl_mnfdiff <- function(x, ...) {
 #' @srrstats {G2.0} `dir` must be one existing directory, and the provenance's filename one plain relative path
 #'   inside it (test-capsule-cli.R).
 #' @export
-cpsrfrsh <- function(dir) {
+cpsrfrsh <- function(dir, allowfile = FALSE) {
   dir <- .rmbl_string1(dir, "dir")
+  allowfile <- .rmbl_flag1(allowfile, "allowfile")
   if (!dir.exists(dir)) stop(.rmbl_fn(), "`dir` is not an existing directory: ", dir, call. = FALSE)
-  f <- .bl_fetch_pin(dir)
+  f <- .bl_fetch_pin(dir, allowfile)
   diff <- mnfdiff(f$old, f$new)
   if (all(diff$change == "unchanged")) return(diff)
+  .bl_write_pin(dir, f)
+  diff
+}
+
+#' Writes the fetched bytes as the capsule's data file and the provenance that pins them.
+#'
+#' Refused when the data file is not a plain relative path inside the capsule, or when the new data
+#' (a CSV) fail the schema the old provenance pins (valsch(), a fatal issue).
+#' @param dir The capsule directory.
+#' @param f From .bl_fetch_pin().
+#' @return The data file's path, invisibly.
+#' @noRd
+.bl_write_pin <- function(dir, f) {
   dest <- .rmbl_safe_rel(f$new[["resource"]][["filename"]], dir)
   if (is.null(dest)) {
     stop(.rmbl_fn(), "resource$filename is not a plain relative path inside the capsule: ",
          .rmbl_printable(f$new[["resource"]][["filename"]]), call. = FALSE)
   }
+  cur <- if (grepl("\\.csv$", dest, ignore.case = TRUE)) {
+    tryCatch(utils::read.csv(f$path, check.names = FALSE, stringsAsFactors = FALSE), error = function(e) NULL)
+  }
+  issues <- if (is.data.frame(cur)) valsch(cur, f$old)
+  fatal <- vapply(issues, function(i) identical(i$severity, "fatal"), NA)
+  if (any(fatal)) {
+    stop(.rmbl_fn(), "the new data fail the pinned schema: ",
+         paste(vapply(issues[fatal], `[[`, "", "message"), collapse = "; "), call. = FALSE)
+  }
   # serialised first: nothing is written unless both can be
   js <- tojs(f$new, auto_unbox = TRUE, pretty = TRUE, null = "null", digits = NA)
   if (!identical(.rmbl_realpath(f$path), .rmbl_realpath(dest))) file.copy(f$path, dest, overwrite = TRUE)
   writeLines(js, file.path(dir, "data_provenance.json"))
-  diff
+  invisible(dest)
 }
 
 #' Fetches a capsule's source and builds the provenance that pins it, without writing anything.
+#'
+#' A failed fetch falls back on the copy kept in `cache` by an earlier fetch, when there is one.
 #' @param dir The capsule directory.
-#' @return A list: `old` and `new` provenance, and `path`, the fetched file.
+#' @param allowfile Whether a file:// source URL is fetched.
+#' @param cache The cache folder, or NULL.
+#' @return A list: `old` and `new` provenance, `path` (the fetched file), `src` (the source) and
+#'   `cached` (whether the cached copy stood in).
 #' @noRd
-.bl_fetch_pin <- function(dir) {
+.bl_fetch_pin <- function(dir, allowfile = FALSE, cache = NULL) {
   prov <- loadprov(file.path(dir, "data_provenance.json"))
   if (is.null(prov)) stop(.rmbl_fn(), "no data_provenance.json in ", dir, call. = FALSE)
   s1 <- function(v) {
@@ -224,10 +257,24 @@ cpsrfrsh <- function(dir) {
     stop(.rmbl_fn(), "the provenance names no source to fetch (resource$direct_url or source$url)", call. = FALSE)
   }
   got <- src
+  cached <- FALSE
   if (!file.exists(src)) {
+    is_file <- startsWith(src, "file://")
+    if (is_file && !allowfile) {
+      stop(.rmbl_fn(), "the source is a file:// URL and `allowfile` is FALSE: ", .rmbl_printable(src), call. = FALSE)
+    }
     got <- tempfile(fileext = paste0(".", tools::file_ext(src)))
-    if (!isTRUE(fdl(src, got, attwb = s1(prov[["wayback"]][["csv_snapshot"]])))) {
-      stop(.rmbl_fn(), "the source could not be fetched: ", .rmbl_printable(src), call. = FALSE)
+    ok <- tryCatch(fdl(src, got, attwb = if (is_file) "" else s1(prov[["wayback"]][["csv_snapshot"]]),
+                       allowfile = is_file), error = function(e) e)
+    keep <- if (!is.null(cache)) file.path(cache, paste0("source-", substr(csha256(charToRaw(src)), 1L, 16L)))
+    if (isTRUE(ok) && !is.null(keep)) file.copy(got, keep, overwrite = TRUE)
+    if (!isTRUE(ok)) {
+      if (is.null(keep) || !file.exists(keep)) {
+        if (inherits(ok, "error")) stop(ok)
+        stop(.rmbl_fn(), "the source could not be fetched: ", .rmbl_printable(src), call. = FALSE)
+      }
+      got <- keep
+      cached <- TRUE
     }
   }
   new <- prov
@@ -236,10 +283,11 @@ cpsrfrsh <- function(dir) {
   new$resource$filename <- s1(prov[["resource"]][["filename"]]) %||% basename(src)
   new$resource$sha256 <- digest
   new$resource$size_bytes <- file.size(got)
+  new$resource$retrieved_utc <- format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
   if (!is.null(prov[["resource"]][["row_count_data_rows"]])) {
     new$resource$row_count_data_rows <- nrow(utils::read.csv(got, check.names = FALSE))
   }
-  list(old = prov, new = new, path = got)
+  list(old = prov, new = new, path = got, src = src, cached = cached)
 }
 
 # ---- the rows of rmbl verify / drift / report ---------------------------------------------
@@ -320,12 +368,13 @@ cpsrfrsh <- function(dir) {
 #' @param check The check's name.
 #' @param ok Whether it passed.
 #' @param detail What was found.
-#' @param severity What a failure of the row is: error, drift or warn.
+#' @param severity What a failure of the row is: error, drift, warn or note (a note changes no result).
+#' @param line The line of `file` the row points at, or NA.
 #' @return A data frame of one row (or as many as `check` has).
 #' @noRd
-.bl_check_row <- function(capsule, part, file, check, ok, detail, severity = "error") {
+.bl_check_row <- function(capsule, part, file, check, ok, detail, severity = "error", line = NA_integer_) {
   data.frame(capsule = capsule, part = part, file = file, check = check, ok = ok, detail = detail,
-             severity = severity, stringsAsFactors = FALSE)
+             severity = severity, line = rep_len(as.integer(line), length(check)), stringsAsFactors = FALSE)
 }
 
 #' The schema row of one capsule file.
@@ -340,7 +389,24 @@ cpsrfrsh <- function(dir) {
     .bl_schema_errors(x, .bl_read_json_list(schemapath(schema)))
   .bl_check_row(capsule, "spec", path, paste0("schema: ", basename(path)), !length(err),
                 if (length(err)) paste(utils::head(err, 5L), collapse = "; ") else
-                  paste0("valid against ", schema, ".schema.json"))
+                  paste0("valid against ", schema, ".schema.json"),
+                line = if (length(err)) .bl_json_line(path, err[[1L]]) else NA_integer_)
+}
+
+#' The line of a JSON file a schema problem points at: the first line holding its last key.
+#'
+#' ponytail: the first line with that key, not a JSON-pointer walk; a key repeated earlier in the file
+#' points there. NA when the problem names no key (a top-level one) or no line holds it.
+#' @param path The file.
+#' @param err One problem, such as `$.a.b[2].c: does not match`.
+#' @return An integer.
+#' @noRd
+.bl_json_line <- function(path, err) {
+  at <- gsub("\\[[0-9]+\\]", "", sub(":.*$", "", err))
+  if (!grepl("\\.", at)) return(NA_integer_)
+  key <- sub("^.*\\.", "", at)
+  hit <- grep(paste0("\"", key, "\"[[:space:]]*:"), readLines(path, warn = FALSE))
+  if (length(hit)) hit[[1L]] else NA_integer_
 }
 
 #' The rows of a vrfcps() or cpsbndlvrf() result, a required check never made among them.
@@ -359,12 +425,15 @@ cpsrfrsh <- function(dir) {
 
 #' The directories under a path that hold a capsule (a provenance or a bundle).
 #' @param root The directory searched.
+#' @param glob Only capsule files whose path matches this glob (its `*` also matches "/"), or "".
 #' @return Sorted directory paths.
 #' @noRd
-.bl_capsule_dirs <- function(root) {
+.bl_capsule_dirs <- function(root, glob = "") {
   f <- list.files(root, pattern = "^(data_provenance|capsule_bundle)\\.json$", recursive = TRUE, full.names = TRUE)
   f <- sub("^\\./", "", f)
-  sort(unique(dirname(f[!grepl("(^|/)(\\.git|\\.rmbl-cache)/", f)])))
+  f <- f[!grepl("(^|/)(\\.git|\\.rmbl-cache)/", f)]
+  if (nzchar(glob)) f <- f[grepl(utils::glob2rx(glob), f)]
+  sort(unique(dirname(f)))
 }
 
 #' The verify rows of one capsule: every file against its schema, vrfcps(), cpsbndlvrf().
@@ -392,106 +461,14 @@ cpsrfrsh <- function(dir) {
   do.call(rbind, rows)
 }
 
-#' The drift rows of one capsule: the source fetched again and compared with the pin.
-#'
-#' A changed digest is a warning; a column that drifts (cpsdrft(), both files CSV) is drift.
-#' @param d The capsule directory.
-#' @return Check rows, or NULL when the capsule has no provenance.
-#' @noRd
-.bl_drift_capsule <- function(d) {
-  pf <- file.path(d, "data_provenance.json")
-  if (!file.exists(pf)) return(NULL)
-  f <- tryCatch(.bl_fetch_pin(d), error = function(e) e)
-  if (inherits(f, "error")) return(.bl_check_row(d, "drift", pf, "source_fetched", FALSE, conditionMessage(f)))
-  diff <- mnfdiff(f$old, f$new)
-  ch <- diff[diff$change != "unchanged", , drop = FALSE]
-  rows <- .bl_check_row(d, "drift", pf, "source_digest", !nrow(ch),
-                        if (nrow(ch)) paste(format(diff)[-1L], collapse = "; ") else "the source matches the pin",
-                        severity = "warn")
-  local <- file.path(d, f$old[["resource"]][["filename"]] %||% "")
-  if (nrow(ch) && grepl("\\.csv$", local, ignore.case = TRUE) && file.exists(local)) {
-    ref <- utils::read.csv(local, check.names = FALSE, stringsAsFactors = FALSE)
-    cur <- utils::read.csv(f$path, check.names = FALSE, stringsAsFactors = FALSE)
-    dr <- cpsdrft(ref, cur)
-    drifted <- dr$columns$column[dr$columns$drifted %in% TRUE]
-    found <- isTRUE(dr$anydrft) || length(dr$added) || length(dr$removed)
-    rows <- rbind(rows, .bl_check_row(d, "drift", pf, "source_columns", !found, sprintf(
-      "%d of %d columns drift%s%s%s; rows %d -> %d", length(drifted), nrow(dr$columns),
-      if (length(drifted)) paste0(" (", paste(drifted, collapse = ", "), ")") else "",
-      if (length(dr$added)) paste0("; added ", paste(dr$added, collapse = ", ")) else "",
-      if (length(dr$removed)) paste0("; removed ", paste(dr$removed, collapse = ", ")) else "",
-      dr$nref, dr$ncur), severity = "drift"))
-  }
-  rows
-}
-
 #' The worst severity among failed rows.
-#' @param sev The severities of the failed rows.
+#' @param sev The severities of the failed rows (or the results of capsules); a note counts as ok.
 #' @return ok, warn, drift or error.
 #' @noRd
 .bl_worst <- function(sev) {
   r <- c("ok", "warn", "drift", "error")
+  sev <- sev[sev != "note"]
   if (!length(sev)) "ok" else r[max(match(sev, r))]
-}
-
-#' Runs the checks of every capsule under a path.
-#' @param root The directory searched.
-#' @param drift Whether each source is fetched again and compared.
-#' @param key The shared secret of hmac bundles, or "".
-#' @param pubkey The key bundles must be signed with, or "".
-#' @return A list: `rows` (every check row), `dirs`, `results` (per capsule) and `status`.
-#' @noRd
-.bl_capsule_check <- function(root, drift = FALSE, key = "", pubkey = "") {
-  dirs <- .bl_capsule_dirs(root)
-  rows <- lapply(dirs, function(d) {
-    tryCatch(rbind(.bl_verify_capsule(d, key, pubkey), if (drift) .bl_drift_capsule(d)),
-             error = function(e) .bl_check_row(d, "capsule", d, "check_stopped", FALSE, conditionMessage(e)))
-  })
-  rows <- do.call(rbind, c(list(.bl_check_row(character(), character(), character(), character(), logical(),
-                                              character(), character())), rows))
-  results <- vapply(dirs, function(d) .bl_worst(rows$severity[rows$capsule == d & !rows$ok]), "")
-  list(rows = rows, dirs = dirs, results = results, status = .bl_worst(rows$severity[!rows$ok]))
-}
-
-#' The Markdown report of the capsule verbs, in the rmbl action's layout.
-#' @param res From .bl_capsule_check().
-#' @param verb The verb run.
-#' @param root The directory searched.
-#' @return One string.
-#' @noRd
-.bl_capsule_md <- function(res, verb, root) {
-  mark <- c(ok = "\u2714", warn = "\u26a0", drift = "\u26a0", error = "\u2716")
-  esc <- function(x) gsub("|", "\\|", gsub("\n", " ", x, fixed = TRUE), fixed = TRUE)
-  ver <- as.character(utils::packageVersion("rmoriebricklayer"))
-  st <- res$results
-  md <- c(sprintf("## rmbl capsule %s with [rmoriebricklayer %s](https://github.com/rootcoder007/rmorie-bricklayer)",
-                  verb, ver), "")
-  if (!length(res$dirs)) {
-    md <- c(md, sprintf("%s No manifests found under `%s`.", mark[["ok"]], root))
-  } else {
-    md <- c(md, sprintf("**%s %s**: %d capsule%s under `%s`: %d ok, %d warn, %d drift, %d error",
-                        mark[[res$status]], res$status, length(res$dirs), if (length(res$dirs) == 1L) "" else "s",
-                        root, sum(st == "ok"), sum(st == "warn"), sum(st == "drift"), sum(st == "error")), "",
-            "| Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |", "|---|---|---|---|---|---|---|")
-    for (d in res$dirs) {
-      i <- .bl_capsule_info(d)
-      md <- c(md, sprintf("| `%s` | %s | `%s` | %s | %s | %s | %s %s |", esc(d), esc(i$host), i$sha, i$size, i$rows,
-                          esc(i$bounds), mark[[st[[d]]]], st[[d]]))
-    }
-    for (d in res$dirs) {
-      ck <- res$rows[res$rows$capsule == d, , drop = FALSE]
-      md <- c(md, "", "<details>",
-              sprintf("<summary>%s <code>%s</code>: %s, %d of %d checks passed (click to open)</summary>",
-                      mark[[st[[d]]]], d, st[[d]], sum(ck$ok), nrow(ck)), "",
-              "| | Check | Detail |", "|---|---|---|",
-              sprintf("| %s | %s%s | %s |", ifelse(ck$ok, mark[["ok"]], mark[ck$severity]),
-                      ifelse(ck$part %in% c("provenance", "spec"), "", paste0(ck$part, ": ")), esc(ck$check),
-                      esc(ifelse(nzchar(ck$detail), ck$detail, "-"))),
-              "", "</details>")
-    }
-  }
-  md <- c(md, "", "---", "", sprintf("mode `%s` \u00b7 rmoriebricklayer %s \u00b7 %s", verb, ver, R.version.string))
-  paste0(paste(md, collapse = "\n"), "\n")
 }
 
 #' The summary-table cells of one capsule: source host, pinned digest, size, rows, bounds.
@@ -520,21 +497,6 @@ cpsrfrsh <- function(dir) {
          paste(c(if (!is.null(rnd)) paste("round", rnd), if (!is.null(sup)) paste("supp", sup)), collapse = " \u00b7 "))
 }
 
-#' The JSON of the capsule verbs: status, the capsules, every check row.
-#' @param res From .bl_capsule_check().
-#' @param verb The verb run.
-#' @param root The directory searched.
-#' @return One string.
-#' @noRd
-.bl_capsule_json <- function(res, verb, root) {
-  caps <- lapply(res$dirs, function(d) {
-    ck <- res$rows[res$rows$capsule == d, , drop = FALSE]
-    list(capsule = d, result = res$results[[d]], checks_passed = sum(ck$ok), checks_total = nrow(ck))
-  })
-  paste0(tojs(list(status = res$status, mode = verb, path = root, capsules = caps, checks = res$rows),
-              auto_unbox = TRUE, pretty = TRUE, null = "null", digits = NA), "\n")
-}
-
 #' Runs the capsule verbs: verify, drift, report and refresh.
 #'
 #' The hmac secret of a bundle is read from RMBL_KEY and removed from the environment at once, so
@@ -549,11 +511,11 @@ cpsrfrsh <- function(dir) {
 #' @noRd
 .bl_cli_capsule <- function(verb, rest, flag, out, usage_error) {
   pos <- rest
-  for (f in c("--fail-on", "--format", "--public-key")) {
+  for (f in .bl_capsule_valued) {
     i <- match(f, pos)
     if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
   }
-  pos <- pos[pos != "--json"]
+  pos <- pos[!pos %in% c("--json", "--allow-file", "--snapshot", "--no-footprint")]
   if (length(pos) != 1L) usage_error(sub("\n$", "", .bl_verb_usage(verb, .bl_prog())))
   root <- pos[[1L]]
   if (!dir.exists(root)) usage_error(sprintf("%s is not a directory", .rmbl_printable(root)))
@@ -566,11 +528,31 @@ cpsrfrsh <- function(dir) {
   key <- Sys.getenv("RMBL_KEY")
   Sys.unsetenv("RMBL_KEY")
   if (verb == "refresh") return(.bl_cli_refresh(root, out))
-  res <- .bl_capsule_check(root, drift = verb == "drift", key = key, pubkey = flag("--public-key") %||% "")
-  out(if (fmt == "json") .bl_capsule_json(res, verb, root) else .bl_capsule_md(res, verb, root))
+  num <- function(f, default) {
+    v <- flag(f)
+    if (is.null(v)) default else suppressWarnings(as.numeric(v))
+  }
+  # a refused argument (a PSI band that is not a number, a --base that does not exist) is a usage error
+  res <- tryCatch(cpschk(root, verb, key = key, pubkey = flag("--public-key") %||% "",
+                         psiwarn = num("--psi-warn", 0.1), psifail = num("--psi-fail", 0.25), base = flag("--base"),
+                         cache = flag("--cache") %||% FALSE, allowfile = "--allow-file" %in% rest,
+                         snapshot = "--snapshot" %in% rest, glob = flag("--manifests") %||% "",
+                         fp = !"--no-footprint" %in% rest),
+                  error = function(e) usage_error(sub("^cpschk: ", "", conditionMessage(e))))
+  out(format(res, fmt = fmt, failon = if (verb != "report") fail_on))
   rank <- c(ok = 0L, warn = 1L, drift = 2L, error = 3L)
   if (verb != "report" && rank[[res$status]] >= rank[[fail_on]]) 1L else 0L
 }
+
+#' The options of the capsule verbs that take a value.
+#' @noRd
+.bl_capsule_valued <- c("--fail-on", "--format", "--public-key", "--psi-warn", "--psi-fail", "--base", "--cache",
+                        "--manifests")
+
+#' The options verify, drift and report share (the first take a value).
+#' @noRd
+.bl_capsule_opts <- c("--public-key", "--psi-warn", "--psi-fail", "--base", "--cache", "--manifests", "--allow-file",
+                      "--snapshot", "--no-footprint")
 
 #' The refresh verb: cpsrfrsh() on every capsule under a path that has a provenance.
 #' @param root The directory searched.
@@ -623,7 +605,10 @@ cpsrfrsh <- function(dir) {
     check_stopped = "the checks of this capsule stopped with the error in the detail",
     source_fetched = "the source named in the provenance could not be fetched",
     source_digest = "the source serves other bytes than the pin: rmbl refresh pins them (cpsrfrsh())",
-    source_columns = "the new source's columns drift from the pinned data (cpsdrft()): look before pinning it"
+    source_columns = paste("the new source's columns drift from the pinned data (cpsdrft(), past the PSI bands):",
+                           "look before pinning it"),
+    refreshed = paste("the new bytes were not pinned: the detail says why (a schema they fail, a data file",
+                      "outside the capsule)")
   )
   if (check %in% names(m)) return(m[[check]])
   if (startsWith(check, "file:")) return("a bundled file is missing or its digest differs: restore it or sign again")

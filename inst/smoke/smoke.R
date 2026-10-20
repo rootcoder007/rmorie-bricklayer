@@ -84,11 +84,28 @@ cases <- list(
     r <- run("verify", d, "--json"); check(r$status == 0 && grepl("\"status\"", r$text, fixed = TRUE), paste("verify --json:", substr(r$text, 1, 300)))
     smoke_capsule <<- d
   },
-  drift = function() { r <- run("drift", smoke_capsule); check(r$status == 0, paste("drift:", substr(r$text, 1, 300))) },
+  drift = function() {
+    r <- run("drift", smoke_capsule); check(r$status == 0, paste("drift:", substr(r$text, 1, 300)))
+    # the options of the rmbl action: PSI bands, the column table, cache, file:// sources, snapshot, footprint
+    utils::write.csv(data.frame(id = 1:40 * 9, v = rep(c("a", "b"), 20)), file.path(smoke_capsule, "source.csv"), row.names = FALSE)
+    r <- run("drift", smoke_capsule, "--psi-warn", "0.1", "--psi-fail", "0.25", "--cache", file.path(home, "cache"), "--snapshot")
+    check(r$status == 0 && grepl("| Verdict | Column |", r$text, fixed = TRUE) && grepl("Footprint of these checks", r$text, fixed = TRUE), paste("drift bands:", substr(r$text, 1, 300)))
+    r <- run("drift", smoke_capsule, "--fail-on", "drift", "--no-footprint"); check(r$status == 1L && !grepl("Footprint", r$text, fixed = TRUE), paste("drift fail-on:", substr(r$text, 1, 300)))
+    pf <- file.path(smoke_capsule, "data_provenance.json"); p0 <- readLines(pf)
+    p <- loadprov(pf); p$source$url <- paste0("file://", file.path(smoke_capsule, "source.csv"))
+    writeLines(tojs(p, auto_unbox = TRUE), file.path(smoke_capsule, "data_provenance.json"))
+    r <- run("drift", smoke_capsule, "--json", "--allow-file"); check(r$status == 0 && grepl("\"benford_ref\"", r$text, fixed = TRUE), paste("drift --allow-file:", substr(r$text, 1, 300)))
+    x <- cpschk(smoke_capsule, "drift", allowfile = TRUE, fp = FALSE); check(x$status == "drift" && length(ghann(x)) == 1L && ghout(x)$changed == smoke_capsule, "cpschk/ghann/ghout")
+    check(startsWith(ghcmt(x), "<!-- rmbl-action -->"), "ghcmt")
+    writeLines(p0, pf)  # refresh (cpsrfrsh() without allowfile) reads the plain path again
+  },
   refresh = function() { r <- run("refresh", smoke_capsule); check(r$status == 0, paste("refresh:", substr(r$text, 1, 300))) },
   report = function() {
     r <- run("report", smoke_capsule); check(r$status == 0 && grepl("rmbl", r$text, fixed = TRUE), substr(r$text, 1, 300))
     r <- run("report", smoke_capsule, "--format", "json"); check(r$status == 0 && grepl("\"status\"", r$text, fixed = TRUE), substr(r$text, 1, 300))
+    m <- file.path(home, "base-manifest.json"); writeLines('{"resource": {"filename": "data.csv", "sha256": "01"}}', m)
+    file.copy(m, file.path(smoke_capsule, "manifest.json"), overwrite = TRUE)
+    r <- run("report", smoke_capsule, "--base", m, "--manifests", "*"); check(r$status == 0 && grepl("### Manifests against", r$text, fixed = TRUE), paste("report --base:", substr(r$text, 1, 300)))
   },
   help = function() {
     for (p in c("start", "llm", "config", "r")) { r <- run("help", p); check(r$status == 0 && nzchar(r$text), paste("help", p)) }

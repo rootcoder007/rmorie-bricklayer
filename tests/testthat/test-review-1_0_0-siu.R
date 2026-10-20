@@ -8,19 +8,24 @@ siu_page <- function(body) {
 
 test_that("M9: the glossary strip is linear in the number of heads", {
   # each head is found, the tail never is; every search used to rescan to
-  # the end of the text, 27.8 s at 8000 repeats
-  txt <- strrep("who in the opinion of the SIU Director ", 8000L)
+  # the end of the text, 27.8 s at 8000 repeats. Linear: four times the heads
+  # take about four times as long (quadratic: about sixteen)
+  head <- "who in the opinion of the SIU Director "
   # one long line is split for the extractors, which warns
-  t <- system.time(r <- suppressWarnings(siuso(txt)))[["elapsed"]]
+  t2000 <- system.time(suppressWarnings(siuso(strrep(head, 2000L))))[["elapsed"]]
+  t8000 <- system.time(r <- suppressWarnings(siuso(strrep(head, 8000L))))[["elapsed"]]
   expect_type(r, "list")
-  expect_lt(t, wall_limit(2))
+  expect_lt(t8000 / max(t2000, 0.05), 8)
+  expect_lt(t8000, wall_limit(6))
 })
 
 test_that("M9: unclosed script openers are one pass, not one scan each", {
-  # 2.94 s at 2e5 openers before the guard
-  t <- system.time(out <- suppressWarnings(siutxt(strrep("<script", 2e5))))[["elapsed"]]
+  # 2.94 s at 2e5 openers before the guard; linear: four times the openers, about four times the time
+  t5e4 <- system.time(suppressWarnings(siutxt(strrep("<script", 5e4))))[["elapsed"]]
+  t2e5 <- system.time(out <- suppressWarnings(siutxt(strrep("<script", 2e5))))[["elapsed"]]
   expect_type(out, "character")
-  expect_lt(t, wall_limit(2))
+  expect_lt(t2e5 / max(t5e4, 0.05), 8)
+  expect_lt(t2e5, wall_limit(6))
   # a closed element still goes
   expect_identical(trimws(siutxt("a<script>x</script>b")), "a b")
 })

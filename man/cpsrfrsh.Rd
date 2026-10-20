@@ -4,10 +4,13 @@
 \alias{cpsrfrsh}
 \title{Fetch a capsule's source again and pin the new bytes}
 \usage{
-cpsrfrsh(dir)
+cpsrfrsh(dir, allowfile = FALSE)
 }
 \arguments{
 \item{dir}{Character scalar, the capsule directory.}
+
+\item{allowfile}{Logical: accept a \code{file://} source URL (a local
+path is always read).}
 }
 \value{
 The \code{\link{mnfdiff}} of the provenance before and after:
@@ -19,8 +22,9 @@ Downloads the source named in a capsule's \code{data_provenance.json}
 read directly), and when its bytes differ from the pin writes them as the
 capsule's data file and pins them in the provenance, in the form the
 \code{analysis.R} of \code{\link{usecpstmpl}} writes on its first run:
-\code{source$sha256}, and \code{resource$filename}, \code{sha256} and
-\code{size_bytes} (\code{row_count_data_rows} too when it was recorded).
+\code{source$sha256}, and \code{resource$filename}, \code{sha256},
+\code{size_bytes} and \code{retrieved_utc} (\code{row_count_data_rows}
+too when it was recorded).
 \code{\link{vrfcps}} then verifies the capsule against the new data.
 From the shell: \code{rmbl refresh PATH}.
 }
@@ -31,8 +35,10 @@ as its fallback. A capsule bundle is not signed again: that needs your
 key (\code{\link{cpsbndl}}). Side effects: writes the data file and
 \code{data_provenance.json} in \code{dir}. Errors: \code{dir} is not a
 directory or holds no provenance; the provenance names no source, or a
-\code{TODO} one; the source cannot be fetched; \code{resource$filename}
-is not a plain relative path inside \code{dir}.
+\code{TODO} one, or a \code{file://} one without \code{allowfile}; the
+source cannot be fetched; \code{resource$filename} is not a plain
+relative path inside \code{dir}; the new data fail the schema the
+provenance pins (\code{\link{valsch}}).
 }
 \examples{
 d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)

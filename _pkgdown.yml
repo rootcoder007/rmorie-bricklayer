@@ -135,6 +135,8 @@ reference:
       - capenv
       - citecps
       - vrfcps
+      - cpschk
+      - ghann
       - cpsrfrsh
       - mnfdiff
       - schemapath

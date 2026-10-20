@@ -3,7 +3,7 @@
 ## Standards and the fixes they surfaced
 
 * The package documents the rOpenSci statistical software standards (General, EDA, Time Series)
-  with `srr` tags: 141 met, 29 not applicable, none left to do.
+  with `srr` tags: 143 met, 29 not applicable, none left to do.
 * A period with no percentage change in `plot(yoy(...))` carries its whole reason again ("first period:
   nothing to compare with", "no percentage: previous period is zero"), sized to the panel; the period-axis
   rewrite had cut every reason at the colon.
@@ -64,6 +64,24 @@ can call them.
   never printed. (`key` is already the table's name.)
 * `explerr()` takes a data frame of check rows, as `rmbl verify --json` writes them, and explains
   each failed row.
+* `cpschk()` runs these checks from R, and with them everything the action's script computed on
+  its own: PSI bands (`psiwarn`, `psifail`; `--psi-warn`, `--psi-fail`) with the action's verdicts,
+  the per-column drift table with the Benford first-digit p-values of the pinned and the new data,
+  each manifest compared with its base copy (`base`, `--base`: a manifest file, a folder, or a
+  function that resolves a git ref; results through `mnfrcmp()`, resources through `mnfdiff()`),
+  a cache of fetched sources read when a fetch fails (`cache`, `--cache`; none outside an
+  interactive session unless a folder is given), `file://` sources (`allowfile`, `--allow-file`),
+  Wayback snapshot rows (`snapshot`, `--snapshot`) and captures on refresh (`wayback`), a glob over
+  the capsule files (`glob`, `--manifests`), `explerr()` notes on every failed row, and the
+  footprint of the checks (`co2fp()`) at the foot of the report (`fp`, `--no-footprint`).
+  `format()` renders the Markdown report or the JSON.
+* `ghann()`, `ghcmt()` and `ghout()` turn a `cpschk()` result into GitHub workflow annotations (the
+  file, and the line of a schema problem), the body of a sticky pull-request comment and the
+  action's step outputs. They return text; nothing in the package calls GitHub.
+* In `rmbl drift`, new bytes whose columns all stay within the PSI bands are a note rather than a
+  warning; new bytes that cannot be compared column by column are still a warning.
+* `cpsrfrsh()` records `resource$retrieved_utc`, takes `allowfile` for a `file://` source, and
+  refuses new data that fail the schema the provenance pins.
 * `plot()` of a `rtcalc()` result with `period` draws the period on its own scale, as the other
   plots over time do, and takes `xlab`; it drew index positions with no axis title.
 

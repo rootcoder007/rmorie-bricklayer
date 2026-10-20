@@ -58,21 +58,31 @@ with \code{\link{wbsave}}, results in \code{--out} (default
 \code{wayback --retry FILE.jsonl [--include-gone]} retries the failures
 of an earlier run (\code{\link{wbrtry}})}
 \item{\code{verify PATH [--json] [--fail-on LEVEL] [--public-key HEX]}}{check
-every capsule under PATH as the rmbl GitHub Action does: each
+every capsule under PATH as the rmbl GitHub Action does
+(\code{\link{cpschk}}): each
 file against its JSON Schema (\code{\link{schemapath}}),
 \code{\link{vrfcps}} and \code{\link{cpsbndlvrf}}. The secret of
 an hmac bundle is read from \code{RMBL_KEY}, which is then removed
 from the environment. Prints the Markdown report, or JSON with
 \code{--json}; exits 1 when a failed row is at or above
 \code{--fail-on} (\code{error}, the default, \code{drift} or
-\code{warn})}
+\code{warn}). \code{--base MANIFEST|DIR} compares each manifest
+with its base copy, \code{--manifests GLOB} checks only the
+capsule files matching GLOB, \code{--snapshot} looks up each
+source's latest Wayback snapshot and \code{--no-footprint} leaves
+the footprint (\code{\link{co2fp}}) out of the report}
 \item{\code{drift PATH [--json] [--fail-on LEVEL]}}{verify, then fetch
-each source again: new bytes are a warning, drifting columns
-(\code{\link{cpsdrft}}) are drift}
+each source again and compare it column by column
+(\code{\link{cpsdrft}}, Benford): a column past
+\code{--psi-warn X} (0.1) is a warning, a flagged one past
+\code{--psi-fail X} (0.25) drift. \code{--allow-file} accepts
+\code{file://} sources, \code{--cache DIR} keeps each source and
+reads it when a fetch fails; the options of verify apply}
 \item{\code{refresh PATH}}{pin each source's new bytes
 (\code{\link{cpsrfrsh}}) and print what changed
 (\code{\link{mnfdiff}})}
-\item{\code{report PATH [--format md|json]}}{the verify report, exit 0}
+\item{\code{report PATH [--format md|json]}}{the verify report, exit 0;
+the options of verify apply}
 \item{\code{functions [PATTERN]}}{list the exported functions with
 their one-line titles, optionally filtered by a regular expression}
 \item{\code{describe NAME}}{title, usage, arguments and description of
