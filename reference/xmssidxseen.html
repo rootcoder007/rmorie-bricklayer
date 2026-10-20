@@ -118,9 +118,9 @@ not a reuse.</p>
 <span class="r-in"><span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="cpsbndl.html">cpsbndl</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="mkmnf.html">mkmnf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, env <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, <span class="va">key</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">xmssidxseen</span><span class="op">(</span><span class="va">root</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                key index              sig</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 33e1490449633d79     0 f6fbd1c4c2565966</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 7f0c813a836b2369     0 fa8ba2cbe1e5eb79</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                           where reused</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /tmp/RtmpWuib77/capsules-1ef04765bf22/one/capsule_bundle.json  FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /tmp/RtmpN0LMhC/capsules-1f4a59de11af/one/capsule_bundle.json  FALSE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the same index signed again from a stale copy of the key: reused</span></span></span>
 <span class="r-in"><span><span class="va">e</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"two"</span><span class="op">)</span></span></span>
@@ -134,7 +134,7 @@ not a reuse.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2     0   TRUE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">xmssidxseen</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : xmssidxseen: `path` is not an existing directory or bundle file: /tmp/RtmpWuib77/file1ef02a31571a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : xmssidxseen: `path` is not an existing directory or bundle file: /tmp/RtmpN0LMhC/file1f4a189f1574</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
