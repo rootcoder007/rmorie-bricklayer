@@ -42,10 +42,35 @@
 
 # ---- report -------------------------------------------------------------------------------------
 
-#' Whether the SVG device is available (cairo).
+#' Opens and closes an SVG device once: the probe behind .bl_have_cairo().
+#' @return TRUE.
+#' @noRd
+.bl_cairo_probe <- function() {
+  f <- tempfile(fileext = ".svg")
+  on.exit(unlink(f), add = TRUE)
+  grDevices::svg(f)
+  grDevices::dev.off()
+  TRUE
+}
+
+.bl_cairo_cache <- new.env(parent = emptyenv())
+
+#' Whether the SVG device works (cairo), probed once per session.
+#'
+#' capabilities("cairo") is TRUE on a build that has cairo even where its shared library
+#' cannot be loaded (the GitHub macOS runners, which lack the X11 libraries it links): there
+#' grDevices::svg() warns and fails, so the device is opened once to find out.
 #' @return TRUE or FALSE.
 #' @noRd
-.bl_have_cairo <- function() isTRUE(capabilities("cairo"))
+.bl_have_cairo <- function() {
+  ok <- .bl_cairo_cache$ok
+  if (is.null(ok)) {
+    ok <- isTRUE(capabilities("cairo")) &&
+      isTRUE(tryCatch(suppressWarnings(.bl_cairo_probe()), error = function(e) FALSE))
+    assign("ok", ok, envir = .bl_cairo_cache)
+  }
+  ok
+}
 
 #' Draws a plot call as inline SVG (a PNG data URI where there is no SVG device).
 #' @param expr The plot call.

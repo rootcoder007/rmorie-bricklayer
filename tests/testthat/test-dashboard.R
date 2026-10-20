@@ -49,7 +49,7 @@ run_tab <- function(id, fn, source = NULL, inputs = list(), dat = nodata, mode =
       got$dl <<- file.exists(output$dl)
       got$png <<- file.exists(output$png)
       got$csv <<- file.exists(output$csv)
-      if (isTRUE(capabilities("cairo"))) got$svg <<- file.exists(output$svg)
+      if (ns$.bl_have_cairo()) got$svg <<- file.exists(output$svg)
       got$hover <<- html(out("hoverinfo"))
     }
     if (is.function(extra)) extra(session, output, input)
@@ -539,7 +539,7 @@ test_that("results download as the package writes them", {
   expect_identical(ns$.bl_dl_name(list(a = "b"), "x"), "rmbl-x.txt")
   ns$.bl_dl_write(list(a = "b"), f)
   expect_match(readLines(f)[1L], "$a", fixed = TRUE)
-  skip_if_not(isTRUE(capabilities("cairo")))
+  skip_if_not(ns$.bl_have_cairo())
   r <- list(plot = quote(plot(1:3)), env = globalenv(), value = 1)
   ns$.bl_save_plot(r, f, "svg")
   expect_match(paste(readLines(f, 3L), collapse = ""), "<svg", fixed = TRUE)
@@ -777,4 +777,22 @@ test_that("the source tables are a comma-separated list of links", {
   skip_if_not_installed("shiny")
   about <- as.character(Filter(function(s) s$id == "fnmi", ns$.bl_app_specs())[[1L]]$about)
   expect_match(about, "13-10-0924-01</a>, <a", fixed = TRUE)
+})
+
+test_that("the SVG device is probed once, and a build whose cairo cannot load falls back to PNG", {
+  cache <- ns$.bl_cairo_cache
+  old <- cache$ok
+  on.exit(if (is.null(old)) rm(list = ls(cache), envir = cache) else assign("ok", old, envir = cache), add = TRUE)
+  # a probe that fails the way the macOS runners do: capabilities() says cairo, the device does not open
+  rm(list = ls(cache), envir = cache)
+  local_mocked_bindings(.bl_cairo_probe = function() stop("failed to load cairo DLL"))
+  expect_false(ns$.bl_have_cairo())
+  expect_false(ns$.bl_have_cairo())  # cached: the probe is not run again
+  expect_match(ns$.bl_svg(quote(plot(1:3)), globalenv()), "data:image/png;base64,", fixed = TRUE)
+  expect_error(ns$.bl_save_plot(list(plot = quote(plot(1:3)), env = globalenv(), value = 1), tempfile(), "svg"),
+               "no SVG device")
+  # a probe that succeeds
+  rm(list = ls(cache), envir = cache)
+  local_mocked_bindings(.bl_cairo_probe = function() TRUE)
+  expect_identical(ns$.bl_have_cairo(), isTRUE(capabilities("cairo")))
 })
