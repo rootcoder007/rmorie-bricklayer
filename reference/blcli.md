@@ -87,14 +87,18 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
   ([`co2fp`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2fp.md))
   out of the report
 
-- `drift PATH [--json] [--fail-on LEVEL]`:
+- `drift PATH [--json] [--fail-on LEVEL] [--html FILE] [--app]`:
 
   verify, then fetch each source again and compare it column by column
   ([`cpsdrft`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md),
   Benford): a column past `--psi-warn X` (0.1) is a warning, a flagged
   one past `--psi-fail X` (0.25) drift. `--allow-file` accepts `file://`
   sources, `--cache DIR` keeps each source and reads it when a fetch
-  fails; the options of verify apply
+  fails; the options of verify apply. `--html FILE` writes the
+  interactive report
+  ([`drfthtml`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drfthtml.md))
+  and `--app` opens it as a Shiny app
+  ([`drftapp`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftapp.md))
 
 - `refresh PATH`:
 
@@ -246,6 +250,7 @@ blcli("help")
 #>         [--base MANIFEST|DIR] [--snapshot]  manifests against their base copies; Wayback snapshots
 #>   drift PATH [--json] [--fail-on LEVEL]     verify, then fetch each source and compare it with the pin
 #>         [--psi-warn X] [--psi-fail X]       the PSI bands of the column table (0.1 and 0.25)
+#>         [--html FILE] [--app]               and write the drift report, or open it as an app
 #>   refresh PATH                              pin each source's new bytes in its provenance
 #>   sign PATH [--scheme S] [--key-file F]     pin and sign each capsule (key: RMBL_KEY or the file), verify
 #>   report PATH [--format md|json]            the verify report; never fails
@@ -282,26 +287,26 @@ invisible(cpsrfrsh(d))
 blcli(c("verify", d))
 #> ## rmbl capsule verify with [rmoriebricklayer 1.0.0](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmpMK7Ka6/capsule-1f1d1e20da27`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/RtmpEh1bXE/capsule-1f274139384b`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmpMK7Ka6/capsule-1f1d1e20da27` | /tmp/RtmpMK7Ka6/temp_libpath1f1d2043cfaf/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/RtmpEh1bXE/capsule-1f274139384b` | /tmp/RtmpEh1bXE/temp_libpath1f2729cca287/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmpMK7Ka6/capsule-1f1d1e20da27</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/RtmpEh1bXE/capsule-1f274139384b</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/RtmpMK7Ka6/temp_libpath1f1d2043cfaf/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/RtmpEh1bXE/temp_libpath1f2729cca287/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/RtmpMK7Ka6/capsule-1f1d1e20da27/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/RtmpMK7Ka6/capsule-1f1d1e20da27/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/RtmpEh1bXE/capsule-1f274139384b/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/RtmpEh1bXE/capsule-1f274139384b/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/RtmpMK7Ka6/capsule-1f1d1e20da27/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/RtmpEh1bXE/capsule-1f274139384b/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>

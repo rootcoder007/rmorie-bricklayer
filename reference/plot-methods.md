@@ -178,7 +178,17 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
 # S3 method for class 'bricklayer_drift'
-plot(x, ..., main = NULL, col = NULL, palette = NULL)
+plot(
+  x,
+  ...,
+  what = c("psi", "columns", "benford"),
+  cols = NULL,
+  warn = NULL,
+  fail = NULL,
+  main = NULL,
+  col = NULL,
+  palette = NULL
+)
 
 # S3 method for class 'bricklayer_benford'
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
@@ -338,6 +348,8 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
   - `rmbl_yoy`: `"pctchg"` or `"value"`;
 
+  - `bricklayer_drift`: `"psi"`, `"columns"` or `"benford"`;
+
   - `rmbl_case_flow`: `"flow"` and/or `"clearance"`;
 
   - `rmbl_clearance_decomposition`: any of `"rates"`, `"mix"` and
@@ -402,6 +414,17 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
   For `rmbl_rate`, a `by` column holding the period: the rate is drawn
   over time with its interval band, one panel per group of the other
   `by` columns.
+
+- cols:
+
+  For `bricklayer_drift`, the columns to draw with `what = "columns"` or
+  `"benford"`; `NULL` (the default) takes up to six, worst first.
+
+- warn, fail:
+
+  For `bricklayer_drift`, the PSI bands: a column is `warn` above the
+  first and `fail` above the second (or when its test rejects at alpha).
+  `NULL` takes the object's `bands`.
 
 - exposure:
 
@@ -475,8 +498,13 @@ x position of each point drawn: an `at` column (`rmbl_yoy`,
 
   ([`drftcal`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftcal.md),
   [`cpsdrft`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md))
-  the false-alarm rate per column against alpha; the population
-  stability index per column with the drifted columns marked.
+  the false-alarm rate per column against alpha; for a drift result,
+  `what = "psi"` (the default) the population stability index per
+  column, worst first, coloured by verdict, with the warn and fail bands
+  as dashed lines; `"columns"` the reference and current distributions
+  of up to six columns (`cols`, or the worst), each PSI bin's term
+  written on it; `"benford"` the first digits of numeric columns against
+  Benford's law, with the test's verdict.
 
 - `bricklayer_benford`:
 
@@ -836,7 +864,12 @@ plot(rgncov(c("a", "b", "c"), c(100, 200, 300), c(1L, 0L, 2L)))
 # drift between two extracts, and how often the test cries wolf
 set.seed(1)
 dd <- data.frame(a = rnorm(400), b = sample(letters[1:3], 400, TRUE))
-plot(cpsdrft(dd, transform(dd, a = a + 3)))
+dr <- cpsdrft(dd, transform(dd, a = a + 3))
+plot(dr)
+
+plot(dr, what = "columns")
+
+plot(dr, what = "benford", warn = 0.05, fail = 0.2)
 
 plot(drftcal(dd, n = 20L))
 

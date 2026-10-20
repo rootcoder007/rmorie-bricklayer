@@ -5,7 +5,7 @@
 ### Standards and the fixes they surfaced
 
 - The package documents the rOpenSci statistical software standards
-  (General, EDA, Time Series) with `srr` tags: 144 met, 29 not
+  (General, EDA, Time Series) with `srr` tags: 146 met, 29 not
   applicable, none left to do.
 - A period with no percentage change in `plot(yoy(...))` carries its
   whole reason again (“first period: nothing to compare with”, “no
@@ -109,6 +109,39 @@
   [`wrmnfjs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wrmnfjs.md)
   keeps the package names; as a named character vector they were written
   as a bare array of versions.
+
+### Drift you can look at
+
+- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) of a
+  [`cpsdrft()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md)
+  result takes `what`: `"psi"` (the default) draws the PSI per column,
+  worst first, coloured by verdict with the warn and fail bands as
+  dashed lines; `"columns"` draws the reference and current
+  distributions of up to six columns (`cols`) with each PSI bin’s term;
+  `"benford"` the first digits of numeric columns against Benford’s law.
+- [`cpsdrft()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md)
+  keeps a binned summary of each column (`summ`: missing shares, summary
+  statistics or the largest categories, the PSI bins, a histogram,
+  first-digit counts; never the rows) and its PSI `bands`, which the
+  plots and reports colour by.
+- [`drfthtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drfthtml.md)
+  writes the drift report as one HTML file that fetches nothing: the
+  verdict and provenance, a column table to search, filter and sort,
+  each column’s summary and charts, sliders for the bands and alpha that
+  score the verdicts again, the manifest diff, PSI over earlier runs,
+  and Markdown, JSON, SVG and GitHub-comment exports.
+  `rmbl drift PATH --html FILE` writes it.
+- [`drftapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftapp.md)
+  is the same report as a Shiny app (shiny is suggested), with what
+  would clear a column, a rerun on chosen columns and a download of the
+  page;
+  [`drftapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftapp.md)
+  alone opens on two uploaded CSV files, and `rmbl drift PATH --app`
+  opens it on a capsule whose source moved.
+  [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  keeps each capsule’s
+  [`cpsdrft()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md)
+  result in its `drifts` attribute.
 
 ### Capsule checks from the command line
 

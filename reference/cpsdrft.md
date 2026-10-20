@@ -95,9 +95,25 @@ A list of class `bricklayer_drift` with elements:
 
   row counts;
 
-- `alpha`:
+- `alpha`, `psithr`, `psiminn`:
 
-  the level used;
+  the settings used;
+
+- `bands`:
+
+  the PSI bands the plots and reports colour by: `warn` (0.1, or
+  `psithr` when lower) and `fail` (`psithr`);
+
+- `summ`:
+
+  one binned summary per shared column, for
+  [plot()](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md),
+  [`drfthtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drfthtml.md)
+  and
+  [`drftapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftapp.md):
+  missing shares, sizes, summary statistics or the ten largest
+  categories, the PSI bins with each bin's term of the index, a
+  histogram and first-digit counts. Never the rows;
 
 - `anydrft`:
 
@@ -196,6 +212,8 @@ cpsdrft(ref, moved)
 #>    ✗   size     numeric 0.743 <2e-16 4.299
 #>    ✗  grade categorical   121 <2e-16 4.381
 #>    ✓  value     numeric  0.05  0.847 0.092
+#> 
+#>   plot(x, what = "columns") draws the columns; drfthtml(x, file) writes an interactive report
 #> ──────────────────────────────────────────────────────────────────
 
 # The PSI is always reported as an effect size, but on a sample this

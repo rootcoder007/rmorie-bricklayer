@@ -50,7 +50,7 @@
 <h2 class="pkg-version" data-toc-text="1.0.0" id="rmoriebricklayer-100">rmoriebricklayer 1.0.0<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-100"></a></h2>
 <div class="section level3">
 <h3 id="standards-and-the-fixes-they-surfaced-1-0-0">Standards and the fixes they surfaced<a class="anchor" aria-label="anchor" href="#standards-and-the-fixes-they-surfaced-1-0-0"></a></h3>
-<ul><li>The package documents the rOpenSci statistical software standards (General, EDA, Time Series) with <code>srr</code> tags: 144 met, 29 not applicable, none left to do.</li>
+<ul><li>The package documents the rOpenSci statistical software standards (General, EDA, Time Series) with <code>srr</code> tags: 146 met, 29 not applicable, none left to do.</li>
 <li>A period with no percentage change in <code>plot(yoy(...))</code> carries its whole reason again (“first period: nothing to compare with”, “no percentage: previous period is zero”), sized to the panel; the period-axis rewrite had cut every reason at the colon.</li>
 <li>The plots over time put the period on its own scale (a number or a <code>Date</code>; text at labelled positions) with the unit as the axis title, and take <code>xlab</code>, which passed through <code>...</code> was an error. <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> of a <code><a href="../reference/yoy.html">yoy()</a></code> or <code><a href="../reference/ratechg.html">ratechg()</a></code> result draws the period across and the change up, with vertical interval bars; groups sit side by side. <code>gaps = "break"</code> (the default) breaks a line at a missing value, such as a “no data” year <code><a href="../reference/yoy.html">yoy()</a></code> inserted, and <code>gaps = "join"</code> draws over it.</li>
 <li>A refusal that several functions share now starts with the name of the function that refused (“anltab: <code>data</code> must be a data frame”), and so do the shared argument checks.</li>
@@ -81,6 +81,17 @@
 <li><p><code><a href="../reference/cpsatst.html">cpschkatst()</a></code>’s <code>key_as_expected</code> row says whether the key matched; its detail read the same either way.</p></li>
 <li><p>The Docker image installs the package and puts <code>rmbl</code> on the PATH.</p></li>
 <li><p><code>capenv()$packages</code> is a named list, so a manifest written with <code><a href="../reference/wrmnfjs.html">wrmnfjs()</a></code> keeps the package names; as a named character vector they were written as a bare array of versions.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="drift-you-can-look-at-1-0-0">Drift you can look at<a class="anchor" aria-label="anchor" href="#drift-you-can-look-at-1-0-0"></a></h3>
+<ul><li>
+<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> of a <code><a href="../reference/cpsdrft.html">cpsdrft()</a></code> result takes <code>what</code>: <code>"psi"</code> (the default) draws the PSI per column, worst first, coloured by verdict with the warn and fail bands as dashed lines; <code>"columns"</code> draws the reference and current distributions of up to six columns (<code>cols</code>) with each PSI bin’s term; <code>"benford"</code> the first digits of numeric columns against Benford’s law.</li>
+<li>
+<code><a href="../reference/cpsdrft.html">cpsdrft()</a></code> keeps a binned summary of each column (<code>summ</code>: missing shares, summary statistics or the largest categories, the PSI bins, a histogram, first-digit counts; never the rows) and its PSI <code>bands</code>, which the plots and reports colour by.</li>
+<li>
+<code><a href="../reference/drfthtml.html">drfthtml()</a></code> writes the drift report as one HTML file that fetches nothing: the verdict and provenance, a column table to search, filter and sort, each column’s summary and charts, sliders for the bands and alpha that score the verdicts again, the manifest diff, PSI over earlier runs, and Markdown, JSON, SVG and GitHub-comment exports. <code>rmbl drift PATH --html FILE</code> writes it.</li>
+<li>
+<code><a href="../reference/drftapp.html">drftapp()</a></code> is the same report as a Shiny app (shiny is suggested), with what would clear a column, a rerun on chosen columns and a download of the page; <code><a href="../reference/drftapp.html">drftapp()</a></code> alone opens on two uploaded CSV files, and <code>rmbl drift PATH --app</code> opens it on a capsule whose source moved. <code><a href="../reference/cpschk.html">cpschk()</a></code> keeps each capsule’s <code><a href="../reference/cpsdrft.html">cpsdrft()</a></code> result in its <code>drifts</code> attribute.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="capsule-checks-from-the-command-line-1-0-0">Capsule checks from the command line<a class="anchor" aria-label="anchor" href="#capsule-checks-from-the-command-line-1-0-0"></a></h3>

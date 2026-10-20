@@ -224,6 +224,8 @@ which is what to do when capturing output into a fixed-width log.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      column        type stat        p   psi</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    ✗      v     numeric 0.36 1.11e-11 0.814</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    ✓      g categorical 1.44     0.23 0.014</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   plot(x, what = "columns") draws the columns; drfthtml(x, file) writes an interactive report</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># format() gives the same lines for a log file.</span></span></span>
@@ -259,7 +261,7 @@ which is what to do when capturing output into a fixed-width log.</p>
 <span class="r-in"><span><span class="va">key</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ── Signing key (post-quantum) ────────────────────────────────────</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   scheme     xmss-sha256</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   root       d9a3371cf5ae5a7dfdf8ef2f003fa3a66e5b3b5af00a2eac69ac1b0a07d06f8a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   root       5f1cf72cba43cfe417bd0f6d25001f38d0f0c3c2c7d318c2a0b0d402ccf585cd</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   height     2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   used       0 of 4 signatures</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   remaining  4</span>
@@ -270,8 +272,8 @@ which is what to do when capturing output into a fixed-width log.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ── Capsule signature ─────────────────────────────────────────────</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   scheme     xmss-sha256</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   index      0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   root       d9a3371cf5ae5a7dfdf8ef2f003fa3a66e5b3b5af00a2eac69ac1b0a07d06f8a</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   signature  dc19a98636c2c2de87069f927bca6c77... (2144 bytes)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   root       5f1cf72cba43cfe417bd0f6d25001f38d0f0c3c2c7d318c2a0b0d402ccf585cd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   signature  4157dc131de4ecfd0d7372039cc07caa... (2144 bytes)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   auth path  2 nodes</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span></span></span>

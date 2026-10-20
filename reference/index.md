@@ -388,6 +388,10 @@ its name and type while having been silently rescaled.
   : Chi-square test of homogeneity for two categorical samples
 - [`benfordtst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/benfordtst.md)
   : Benford first-digit test
+- [`drfthtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drfthtml.md)
+  : Interactive drift report as one HTML file
+- [`drftapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftapp.md)
+  : Drift report as a Shiny app
 
 ## Signed provenance
 

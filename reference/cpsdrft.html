@@ -152,8 +152,20 @@ reference never had; categorical and identifier columns only),
 <dt><code>nref</code>, <code>ncur</code></dt>
 <dd><p>row counts;</p></dd>
 
-<dt><code>alpha</code></dt>
-<dd><p>the level used;</p></dd>
+<dt><code>alpha</code>, <code>psithr</code>, <code>psiminn</code></dt>
+<dd><p>the settings used;</p></dd>
+
+<dt><code>bands</code></dt>
+<dd><p>the PSI bands the plots and reports colour by:
+<code>warn</code> (0.1, or <code>psithr</code> when lower) and <code>fail</code> (<code>psithr</code>);</p></dd>
+
+<dt><code>summ</code></dt>
+<dd><p>one binned summary per shared column, for
+<a href="plot-methods.html">plot()</a>, <code><a href="drfthtml.html">drfthtml()</a></code> and
+<code><a href="drftapp.html">drftapp()</a></code>: missing shares,
+sizes, summary statistics or the ten largest categories, the PSI bins
+with each bin's term of the index, a histogram and first-digit counts.
+Never the rows;</p></dd>
 
 <dt><code>anydrft</code></dt>
 <dd><p>logical.</p></dd>
@@ -242,6 +254,8 @@ check, which this complements rather than replaces.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    ✗   size     numeric 0.743 &lt;2e-16 4.299</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    ✗  grade categorical   121 &lt;2e-16 4.381</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    ✓  value     numeric  0.05  0.847 0.092</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   plot(x, what = "columns") draws the columns; drfthtml(x, file) writes an interactive report</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The PSI is always reported as an effect size, but on a sample this</span></span></span>

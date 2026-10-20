@@ -73,14 +73,17 @@ capsule files matching GLOB, --snapshot looks up each
 source's latest Wayback snapshot and --no-footprint leaves
 the footprint (co2fp) out of the report
 
-drift PATH [--json] [--fail-on LEVEL]
+drift PATH [--json] [--fail-on LEVEL] [--html FILE] [--app]
 verify, then fetch
 each source again and compare it column by column
 (cpsdrft, Benford): a column past
 --psi-warn X (0.1) is a warning, a flagged one past
 --psi-fail X (0.25) drift. --allow-file accepts
 file:// sources, --cache DIR keeps each source and
-reads it when a fetch fails; the options of verify apply
+reads it when a fetch fails; the options of verify apply.
+--html FILE writes the interactive report
+(drfthtml) and --app opens it as a Shiny
+app (drftapp)
 
 refresh PATH
 pin each source's new bytes
@@ -199,14 +202,17 @@ capsule files matching GLOB, --snapshot looks up each
 source's latest Wayback snapshot and --no-footprint leaves
 the footprint (co2fp) out of the report
 
-drift PATH [--json] [--fail-on LEVEL]
+drift PATH [--json] [--fail-on LEVEL] [--html FILE] [--app]
 verify, then fetch
 each source again and compare it column by column
 (cpsdrft, Benford): a column past
 --psi-warn X (0.1) is a warning, a flagged one past
 --psi-fail X (0.25) drift. --allow-file accepts
 file:// sources, --cache DIR keeps each source and
-reads it when a fetch fails; the options of verify apply
+reads it when a fetch fails; the options of verify apply.
+--html FILE writes the interactive report
+(drfthtml) and --app opens it as a Shiny
+app (drftapp)
 
 refresh PATH
 pin each source's new bytes
@@ -373,14 +379,17 @@ capsule files matching GLOB, <code>--snapshot</code> looks up each
 source's latest Wayback snapshot and <code>--no-footprint</code> leaves
 the footprint (<code><a href="co2fp.html">co2fp</a></code>) out of the report</p></dd>
 
-<dt><code>drift PATH [--json] [--fail-on LEVEL]</code></dt>
+<dt><code>drift PATH [--json] [--fail-on LEVEL] [--html FILE] [--app]</code></dt>
 <dd><p>verify, then fetch
 each source again and compare it column by column
 (<code><a href="cpsdrft.html">cpsdrft</a></code>, Benford): a column past
 <code>--psi-warn X</code> (0.1) is a warning, a flagged one past
 <code>--psi-fail X</code> (0.25) drift. <code>--allow-file</code> accepts
 <code>file://</code> sources, <code>--cache DIR</code> keeps each source and
-reads it when a fetch fails; the options of verify apply</p></dd>
+reads it when a fetch fails; the options of verify apply.
+<code>--html FILE</code> writes the interactive report
+(<code><a href="drfthtml.html">drfthtml</a></code>) and <code>--app</code> opens it as a Shiny
+app (<code><a href="drftapp.html">drftapp</a></code>)</p></dd>
 
 <dt><code>refresh PATH</code></dt>
 <dd><p>pin each source's new bytes
@@ -527,6 +536,7 @@ only read the installed help.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         [--base MANIFEST|DIR] [--snapshot]  manifests against their base copies; Wayback snapshots</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   drift PATH [--json] [--fail-on LEVEL]     verify, then fetch each source and compare it with the pin</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         [--psi-warn X] [--psi-fail X]       the PSI bands of the column table (0.1 and 0.25)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         [--html FILE] [--app]               and write the drift report, or open it as an app</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   refresh PATH                              pin each source's new bytes in its provenance</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   sign PATH [--scheme S] [--key-file F]     pin and sign each capsule (key: RMBL_KEY or the file), verify</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   report PATH [--format md|json]            the verify report; never fails</span>
@@ -563,26 +573,26 @@ only read the installed help.</p>
 <span class="r-in"><span><span class="fu">blcli</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"verify"</span>, <span class="va">d</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## rmbl capsule verify with [rmoriebricklayer 1.0.0](https://github.com/rootcoder007/rmorie-bricklayer)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> **✔ ok**: 1 capsule under `/tmp/RtmpMK7Ka6/capsule-1f1d1e20da27`: 1 ok, 0 warn, 0 drift, 0 error</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> **✔ ok**: 1 capsule under `/tmp/RtmpEh1bXE/capsule-1f274139384b`: 1 ok, 0 warn, 0 drift, 0 error</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |---|---|---|---|---|---|---|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | `/tmp/RtmpMK7Ka6/capsule-1f1d1e20da27` | /tmp/RtmpMK7Ka6/temp_libpath1f1d2043cfaf/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | `/tmp/RtmpEh1bXE/capsule-1f274139384b` | /tmp/RtmpEh1bXE/temp_libpath1f2729cca287/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;details&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;summary&gt;✔ &lt;code&gt;/tmp/RtmpMK7Ka6/capsule-1f1d1e20da27&lt;/code&gt;: ok, 7 of 7 checks passed (click to open)&lt;/summary&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;summary&gt;✔ &lt;code&gt;/tmp/RtmpEh1bXE/capsule-1f274139384b&lt;/code&gt;: ok, 7 of 7 checks passed (click to open)&lt;/summary&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> - Source: /tmp/RtmpMK7Ka6/temp_libpath1f1d2043cfaf/rmoriebricklayer/extdata/otis_a01_individuals.csv</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - Source: /tmp/RtmpEh1bXE/temp_libpath1f2729cca287/rmoriebricklayer/extdata/otis_a01_individuals.csv</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | Status | Check | Detail |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |---|---|---|</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | provenance_readable | /tmp/RtmpMK7Ka6/capsule-1f1d1e20da27/data_provenance.json |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_present | /tmp/RtmpMK7Ka6/capsule-1f1d1e20da27/otis_a01_individuals.csv |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | provenance_readable | /tmp/RtmpEh1bXE/capsule-1f274139384b/data_provenance.json |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_present | /tmp/RtmpEh1bXE/capsule-1f274139384b/otis_a01_individuals.csv |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_size_bytes | 462 bytes on disk |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_readable | /tmp/RtmpMK7Ka6/capsule-1f1d1e20da27/otis_a01_individuals.csv |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_readable | /tmp/RtmpEh1bXE/capsule-1f274139384b/otis_a01_individuals.csv |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/details&gt;</span>

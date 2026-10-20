@@ -67,6 +67,8 @@ cpsdrft(reference, current)
 #>    ✓   size     numeric 0.078 0.0955 0.059
 #>    ✓  grade categorical  3.08  0.215 0.012
 #>    ✓  value     numeric 0.034  0.935 0.033
+#> 
+#>   plot(x, what = "columns") draws the columns; drfthtml(x, file) writes an interactive report
 #> ──────────────────────────────────────────────────────────────────
 ```
 
@@ -95,10 +97,64 @@ cpsdrft(reference, moved)
 #>    ✗   size     numeric 0.738 <2e-16 4.205
 #>    ✗  grade categorical   253 <2e-16 5.376
 #>    ✓  value     numeric 0.034  0.935 0.033
+#> 
+#>   plot(x, what = "columns") draws the columns; drfthtml(x, file) writes an interactive report
 #> ──────────────────────────────────────────────────────────────────
 ```
 
 `value` is untouched and is not flagged. `size` and `grade` are.
+
+## Looking at the drift
+
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws the
+population stability index of each column, worst first, coloured by its
+verdict, with the warn and fail bands as dashed lines. A column is
+`fail` when its test rejects at `alpha` or its PSI is above the fail
+band on large samples, `warn` when its PSI is above the warn band, and
+`ok` otherwise.
+
+``` r
+
+d <- cpsdrft(reference, moved)
+plot(d)
+```
+
+![](drift_files/figure-html/drift-plot-1.png)
+
+`what = "columns"` shows where each column moved: the two distributions,
+with each PSI bin’s share of the index written on it.
+
+``` r
+
+plot(d, what = "columns", cols = c("size", "grade"))
+```
+
+![](drift_files/figure-html/drift-columns-1.png)
+
+For someone who will not run R,
+[`drfthtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drfthtml.md)
+writes the same report as one HTML file. It fetches nothing, so it opens
+from disk and stays as it was written. It holds only the binned
+summaries, never the rows. The page leads with the verdict and the
+capsule’s provenance. Its column table can be searched, filtered and
+sorted, and the up and down keys move through it. For each column it
+shows both samples’ statistics and three charts: the distributions, the
+PSI by bin (up where the current sample has more mass), and the first
+digits against Benford’s law. Sliders move the bands and alpha and score
+the verdicts again. Further tabs show the manifest diff and the PSI over
+earlier runs. Buttons export Markdown, JSON, SVG or a GitHub comment.
+
+``` r
+
+f <- file.path(tempdir(), "drift.html")
+drfthtml(d, f, title = "Pinned against fetched")
+file.exists(f)
+#> [1] TRUE
+```
+
+On the command line `rmbl drift PATH --html FILE` writes it for each
+capsule whose source moved. `drftapp(d)` opens the report as a Shiny app
+that also reruns the comparison and shows what would clear a column.
 
 ## Which test, and why
 

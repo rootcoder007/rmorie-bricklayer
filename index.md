@@ -118,6 +118,13 @@ produced the data.
   asks whether the *data* moved, not just the bytes, with
   Kolmogorov-Smirnov, two-sample homogeneity, population stability
   index, Jensen-Shannon divergence and a Benford first-digit screen.
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws the PSI
+  per column against its bands and each column’s distributions;
+  [`drfthtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drfthtml.md)
+  writes the report as one interactive HTML file
+  (`rmbl drift PATH --html FILE`), and
+  [`drftapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drftapp.md)
+  opens it as a Shiny app.
 
 - **Signed provenance** —
   [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)

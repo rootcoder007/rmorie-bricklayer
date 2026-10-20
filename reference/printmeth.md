@@ -168,6 +168,8 @@ cpsdrft(ref, cur)
 #>      column        type stat        p   psi
 #>    ✗      v     numeric 0.36 1.11e-11 0.814
 #>    ✓      g categorical 1.44     0.23 0.014
+#> 
+#>   plot(x, what = "columns") draws the columns; drfthtml(x, file) writes an interactive report
 #> ──────────────────────────────────────────────────────────────────
 
 # format() gives the same lines for a log file.
@@ -203,7 +205,7 @@ key <- pqckg(height = 2)
 key
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       d9a3371cf5ae5a7dfdf8ef2f003fa3a66e5b3b5af00a2eac69ac1b0a07d06f8a
+#>   root       5f1cf72cba43cfe417bd0f6d25001f38d0f0c3c2c7d318c2a0b0d402ccf585cd
 #>   height     2
 #>   used       0 of 4 signatures
 #>   remaining  4
@@ -214,8 +216,8 @@ cpssign("a-manifest", key)
 #> ── Capsule signature ─────────────────────────────────────────────
 #>   scheme     xmss-sha256
 #>   index      0
-#>   root       d9a3371cf5ae5a7dfdf8ef2f003fa3a66e5b3b5af00a2eac69ac1b0a07d06f8a
-#>   signature  dc19a98636c2c2de87069f927bca6c77... (2144 bytes)
+#>   root       5f1cf72cba43cfe417bd0f6d25001f38d0f0c3c2c7d318c2a0b0d402ccf585cd
+#>   signature  4157dc131de4ecfd0d7372039cc07caa... (2144 bytes)
 #>   auth path  2 nodes
 #> ──────────────────────────────────────────────────────────────────
 options(op)
