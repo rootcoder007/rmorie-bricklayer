@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # wbsave() against a fake Save Page Now 2 server: the transport seams (.bl_wb_post,
 # .bl_wb_get, .bl_wb_lookup) are replaced and the clock is simulated, so nothing sleeps and
 # nothing reaches archive.org.

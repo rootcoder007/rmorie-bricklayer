@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Fresh-user round 8: exit codes. A failure exits 1, a usage error (a bad or empty
 # argument value, an unknown option) exits 2, as every other verb does.
 

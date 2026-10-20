@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # The 0.5.8 diff review and the SIU review (2026-10-06): the stack-overflow class
 # from the sites 0.5.8 did not reach, the cost of its line cap, the quadratic scans,
 # and the smaller divergences. Every hostile shape also runs through the subprocess

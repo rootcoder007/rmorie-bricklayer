@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Branches the 0.5.7 review left untested: the revocation client end to
 # end against recorded OCSP answers, the error paths of the C entry points,
 # and the small R guards. Every expectation is an exact value or message.

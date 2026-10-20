@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # The native-code review of 1.0.0: one test per finding, each failing on the code the review read.
 
 hexraw <- function(h) {

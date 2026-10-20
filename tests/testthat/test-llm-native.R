@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
 # The native language-model route (a provider's key), the data key's login and

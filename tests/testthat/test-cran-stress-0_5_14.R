@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Findings of the CRAN stress test of 0.5.14 (r-universe tarball, git 1c19b00), each with its fix.
 
 ns <- function(f) get(f, envir = asNamespace("rmoriebricklayer"))

@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Recomputation, seed replay, dependency capture, pre-registration,
 # multiple testing, sensitivity, bundles and timestamps.
 #

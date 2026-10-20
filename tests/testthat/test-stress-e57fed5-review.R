@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Review of e57fed5 (2026-10-13): every finding, with the reviewer's reproducer as the first check
 # of each block, then its siblings. Values are checked against independent computations (the survey
 # package, SRS Wilson, a brute-force count, zeta'(-2)) rather than this package's own output.

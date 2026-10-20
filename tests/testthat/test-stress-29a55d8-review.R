@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Reproducers for the review of 29a55d8 (G1-G6, F1-F5 and the LOW list): each failed before its fix.
 

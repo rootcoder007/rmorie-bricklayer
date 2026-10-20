@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # ML-DSA (FIPS 204) and SLH-DSA (FIPS 205), implemented in this package.
 #
 # The anchor that matters is fips-openssl-vectors.txt: public keys and

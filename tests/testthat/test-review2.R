@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Second review round (2026-10-06): the neighbours of every 0.5.6 fix, each
 # pinned here through the public API or the registered entry point.
 

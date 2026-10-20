@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # The 2026-10-08 stress test of dcb3cb9: one test per finding, each recomputing
 # the value it asserts, so the reproducer script stays "fixed".
 

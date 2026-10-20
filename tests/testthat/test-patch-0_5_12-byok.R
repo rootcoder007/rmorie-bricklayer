@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # The lines of this release's changes that no other test reached (codecov patch report on PR #56)
 
 ns <- function(x) get(x, envir = asNamespace("rmoriebricklayer"))

@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Panel causal estimation: learners, DML with fixed effects, matching, synthetic DiD, the wild cluster
 # bootstrap, trend sensitivity and power, each against an exact reference
 

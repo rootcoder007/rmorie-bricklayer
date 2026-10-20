@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # rmoriebricklayer 0.5.10: the C2SP Wycheproof post-quantum vectors and the NIST ACVP sets.
 # The full pinned sets (about 10,000 tests) run in .github/workflows/vectors.yml through
 # tools/vectors; this file runs the offline subset in tests/testthat/vectors (one Wycheproof

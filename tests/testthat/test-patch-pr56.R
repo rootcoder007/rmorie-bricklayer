@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Lines PR #56 added that no other test reached (Codecov patch on 84840ac): each is a behaviour,
 # checked here directly.
 

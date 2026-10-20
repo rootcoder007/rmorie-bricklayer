@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Review of 02a38be (PR #56, 0.5.12): one test per finding, the reviewer's reproducers as the gate.
 
 # ---- C1, C2: hurwzeta below s = 1 -----------------------------------------------------------

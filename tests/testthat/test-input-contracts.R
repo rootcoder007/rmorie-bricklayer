@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Input contracts found by the degenerate-input sweep of 2026-09-18: every
 # call here used to return a value that looked like an answer.
 

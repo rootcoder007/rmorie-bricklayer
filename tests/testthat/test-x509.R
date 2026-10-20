@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Certificate path validation, ECDSA, and the positive controls.
 #
 # The timestamp fixtures carry two tokens over the same payload under

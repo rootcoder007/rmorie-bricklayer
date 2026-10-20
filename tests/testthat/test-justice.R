@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Courts and police-reported crime (R/justice.R). Every number is checked against an independent
 # computation: binom.test() limits, survival::survfit(), the score equation behind Goodman's
 # intervals, chisq.test(), a hand-written Cochran-Armitage statistic, MASS::kde2d(), brute-force

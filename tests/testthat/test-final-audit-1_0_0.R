@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # The final pre-CRAN audit of 1.0.0: one test per finding, each failing on the code the audit read.
 
 # ---- #2: the streamed CSV path refuses a ragged row ---------------------------------------------

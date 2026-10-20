@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Branches the review fixes added, and the pre-existing gaps in the same
 # files, each exercised through the public API (or a .Call for an entry-point
 # guard that the R wrappers never reach).

@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # The review of PR #56 (head 6e80794, report of 2026-10-12): every finding pinned, siblings
 # enumerated.

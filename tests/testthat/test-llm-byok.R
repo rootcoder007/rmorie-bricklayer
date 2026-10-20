@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Bring your own key: the provider presets, the three wire formats (OpenAI chat completions,
 # Anthropic Messages, Gemini generateContent) with tool calls, the route order, and the help the
 # model gets. The replies are shaped as each provider documents them; a stand-in server answers,

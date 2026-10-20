@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # HQC-KEM (specification 2025-08-22, reference implementation v5.0.0).
 #
 # Anchored on the authors' official known-answer vectors: for each, the KAT

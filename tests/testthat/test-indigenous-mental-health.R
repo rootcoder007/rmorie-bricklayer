@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Mental health and wellbeing methods: each against an exact reference
 
 test_that("scests() puts each estimate beside its limits, cell by cell and measure by measure", {

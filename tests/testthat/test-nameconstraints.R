@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Name constraints, certificate policies, path length, and revocation.
 #
 # Every verdict asserted here was cross-checked against `openssl

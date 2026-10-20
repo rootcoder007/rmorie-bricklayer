@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # The 2021 Census Indigenous Population Profile: against the published file itself
 
 .raw_pop <- function() {

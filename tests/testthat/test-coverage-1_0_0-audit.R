@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Lines the final-audit fixes left unexercised: every refusal in words, the survey design's
 # replicate edges, the simplex solver's fallback, the transport seams through the mocked spinner.
 

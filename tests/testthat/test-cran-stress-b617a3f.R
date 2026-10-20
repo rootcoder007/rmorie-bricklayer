@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # The CRAN stress test of b617a3f (PR #56 head, 0.5.12): every finding, HIGH to LOW, as a test.
 ns <- function(x) get(x, envir = asNamespace("rmoriebricklayer"))

@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Native-code review of 1.0.0: the SIU text passes and the distinct-count
 # sketch (M9, M10, M11 and the tolower item).
 

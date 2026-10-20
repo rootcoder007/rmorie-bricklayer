@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # explerr(): where a message comes from, read from the code itself
 
 ns <- function(x) get(x, envir = asNamespace("rmoriebricklayer"))

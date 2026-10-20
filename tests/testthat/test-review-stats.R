@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # The statistical defects of the 0.5.5 review, each pinned against an
 # independent base-R computation (the review's own reproducers).
 

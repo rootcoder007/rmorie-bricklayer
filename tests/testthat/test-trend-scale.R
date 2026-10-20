@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 old_sen_ci <- function(x, y, var_s, conflvl) {
   n <- length(y)
   slopes <- numeric(0)

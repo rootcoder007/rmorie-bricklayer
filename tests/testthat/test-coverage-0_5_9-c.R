@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # C++ branches codecov listed as unreached at 0.5.9, each driven from R
 # through the registered entry points.
 

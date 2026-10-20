@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Saved language-model settings (llmcfg(), `rmbl config`) and
 # the route `ask` takes with them. Everything is written under a temporary
 # XDG_CONFIG_HOME; nothing leaves the machine.

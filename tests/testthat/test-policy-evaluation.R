@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Policy evaluation on panels: every estimator against an exact reference
 
 .pe <- function() polex()

@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Hawkes fitting on the shared C++ core: the same splitmix64 events and the same reference fits
 # as morie's Python tests (tests/test_hawkes_fast_1_4_0.py), so each check is also a
 # cross-language parity check.

@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # The findings of the fcdce03 review (the fourth pass over the 0.5.12 branch), each reproduced
 # the way the review did and then shown closed.
 

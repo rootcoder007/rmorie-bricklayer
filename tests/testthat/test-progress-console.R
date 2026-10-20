@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # What the console can show (.bl_console(): redraws, colours, characters, width, stream), the
 # formats of the progress line, its fitting to the width, and the line that ends a bar or a
 # native spinner. The IDE consoles are simulated through the variables and options they set.

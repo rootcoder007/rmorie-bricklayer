@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Fixes for the round-5 fresh-user findings (2026-10-03): one test per finding.
 
 .cap <- function(...) {

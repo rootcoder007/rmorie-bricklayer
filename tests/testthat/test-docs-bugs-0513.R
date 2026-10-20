@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Code bugs the 0.5.13 documentation pass found while reading the code against its docs.
 
 test_that("usecpstmpl escapes the name and source into valid JSON", {

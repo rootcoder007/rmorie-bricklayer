@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Little's MCAR test and the EM estimator behind it.
 #
 # The EM estimator is anchored EXACTLY: with no missing values it must

@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # HQC round 4 (the submission of 2023-04-30; liboqs <= 0.12, PQClean), version = "round4".
 #
 # Anchored on that revision's official known-answer vectors: for each, the KAT randomness

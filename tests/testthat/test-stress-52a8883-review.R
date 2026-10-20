@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # The review of 52a8883 (2026-10-12): every HIGH and MEDIUM finding has a test here that fails on
 # 52a8883, and none of them mocks the component under test. The lock is held by real forked
 # processes, the full disk is /dev/full, the cache is a real directory with a real manifest file.

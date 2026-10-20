@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # The lines codecov listed as unreached at 0.5.9 (2026-10-07), each reached
 # with a real input through a real branch. Where a branch could not be
 # reached from any input the guard was removed from the source instead.

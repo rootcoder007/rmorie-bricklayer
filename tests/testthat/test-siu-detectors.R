@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # The SIU parser's individual field detectors, on the inputs the shipped
 # synthetic fixture does not contain: the abbreviation fallback for the
 # police service, the non-City location forms, each injury verb and body

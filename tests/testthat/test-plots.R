@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Every plot method draws without error on a null device and returns the data
 # it drew; palettes and options behave; the dispersion field helpers agree
 # with the point functions they wrap.

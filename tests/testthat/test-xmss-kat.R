@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # XMSS byte-compatibility with the RFC 8391 reference implementation.
 #
 # This is the check the package previously could not make. The

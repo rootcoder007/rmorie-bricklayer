@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Project Wycheproof (C2SP/wycheproof, testvectors_v1): signature-verification
 # vectors built to catch what a home-grown verifier gets wrong -- malformed
 # DER, non-canonical integers, r or s outside [1, n-1], points off the curve,

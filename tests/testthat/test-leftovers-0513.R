@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # The 0.5.13 performance and progress leftovers: SLH-DSA signing and cbootmean() poll for
 # a Ctrl-C (and so turn the busy spinner), sha256file() streams its file, llmcfg()
 # builds its tables once, and plrcf() fits its nuisances by normal equations. Each output is

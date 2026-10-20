@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Third review of the hardening work (rmoriebricklayer_0.5.7_stress_2026-10-06.md).
 # Each finding below is fixed at every site of its kind, and where the
 # siblings can be enumerated the test enumerates them itself, so a new one

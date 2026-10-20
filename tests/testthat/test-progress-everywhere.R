@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # blprog() and the long-running functions wired to it. stderr is not a terminal under
 # testthat, so a forced-on bar writes its milestone lines; the in-place frames are tested through
 # the internal tty switch, as in test-progress-anim.R.

@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Lines of 1.0.0 in src/ the suite had not reached (codecov of 186bc3ef), each through the registered
 # entry point it sits behind: argument refusals, an unreadable upload, the closed forms of the Hurwitz
 # zeta at the non-positive integers, an overflowing mean, a P-521 digest longer than the order, an XMSS

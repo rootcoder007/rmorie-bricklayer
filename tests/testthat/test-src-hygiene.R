@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Source-level invariants that only break on a platform this machine is
 # not.
 #

@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # Lines of 1.0.0 the suite had not reached in the policy estimators (codecov of 186bc3ef): the refusals
 # of the panel helpers, the rarer branches of the staggered, switching and count estimators, the
 # matching and synthetic designs, and the plots built on them. Each test names the lines it reaches.

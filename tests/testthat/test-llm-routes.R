@@ -1,3 +1,4 @@
+testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
 # The language-model routes (an endpoint of your own, a provider's key, a local
 # Ollama server), the order they are tried in, and the one precise relaxation of
 # the URL policy they need: plain http on the loopback host.
