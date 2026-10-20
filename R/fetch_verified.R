@@ -37,14 +37,14 @@
 #' @seealso \code{\link{blfetch}}, \code{\link{sha256file}},
 #'   \code{\link{wbsave}}.
 #' @examples
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # a Statistics Canada table the Wayback Machine cannot capture, with the archive.org copy
 #' # made from elsewhere as a mirror
 #' item <- "https://archive.org/download/rmorie-statcan-indigenous-tables-2026-10"
 #' fetchvrf("https://www150.statcan.gc.ca/n1/tbl/csv/41100063-eng.zip",
 #'                file.path(tempdir(), "41100063-eng.zip"),
 #'                mirrors = paste0(item, "/41100063-eng.zip"))
-#' }
 #' @export
 fetchvrf <- function(url, dest, sha256 = NULL, mirrors = character(), tmout = 120L) {
   url <- .rmbl_string1(url, "url")
@@ -58,8 +58,9 @@ fetchvrf <- function(url, dest, sha256 = NULL, mirrors = character(), tmout = 12
   }
   tmp <- paste0(dest, ".part")
   on.exit(unlink(tmp), add = TRUE)
-  tried <- data.frame(url = character(), outcome = character(), stringsAsFactors = FALSE)
-  note <- function(u, o) tried[nrow(tried) + 1L, ] <<- list(u, o)
+  acc <- new.env(parent = emptyenv())
+  acc$tried <- data.frame(url = character(), outcome = character(), stringsAsFactors = FALSE)
+  note <- function(u, o) acc$tried[nrow(acc$tried) + 1L, ] <- list(u, o)
   cands <- c(url, mirrors)
   for (i in seq_along(cands)) {
     u <- cands[[i]]
@@ -83,9 +84,9 @@ fetchvrf <- function(url, dest, sha256 = NULL, mirrors = character(), tmout = 12
     }
     note(u, "kept")
     src <- if (i > 1L) "mirror" else as.character(got)
-    return(invisible(list(source = src, url = u, sha256 = h, bytes = file.size(dest), tried = tried)))
+    return(invisible(list(source = src, url = u, sha256 = h, bytes = file.size(dest), tried = acc$tried)))
   }
   stop(sprintf("no source served the file%s:\n%s",
                if (is.null(sha256)) "" else " with the pinned SHA-256",
-               paste(sprintf("  %s: %s", tried$url, tried$outcome), collapse = "\n")), call. = FALSE)
+               paste(sprintf("  %s: %s", acc$tried$url, acc$tried$outcome), collapse = "\n")), call. = FALSE)
 }

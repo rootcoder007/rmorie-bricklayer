@@ -414,8 +414,9 @@ rptanl <- function(x, path = NULL, format = c("markdown", "html"),
   title <- .rmbl_text1(title, "title")
   digits <- .rmbl_scalar(digits, "digits", -1, 15, integer = TRUE)
   m <- x$meta
-  lines <- character()
-  add <- function(...) lines <<- c(lines, ...)
+  acc <- new.env(parent = emptyenv())
+  acc$lines <- character()
+  add <- function(...) acc$lines <- c(acc$lines, ...)
   add(paste0("# ", title), "",
       sprintf(paste0("`%s` by `%s`%s; %d rows; %d period(s) from %s to %s; ",
                      "generated %s."),
@@ -500,7 +501,7 @@ rptanl <- function(x, path = NULL, format = c("markdown", "html"),
     add("### Missing values", "",
         .md_table(as.data.frame(as.list(x$missingness)), 2L), "")
   }
-  text <- paste(lines, collapse = "\n")
+  text <- paste(acc$lines, collapse = "\n")
   if (format == "html") text <- .md_to_html(text, title)
   if (!is.null(path)) {
     writeLines(enc2utf8(text), path, useBytes = TRUE)

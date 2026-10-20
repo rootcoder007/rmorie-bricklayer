@@ -56,7 +56,8 @@ rslvckns(list(resource = list(name_match_pattern = "2014")))
 
 # a provenance must be a list
 try(rslvckns("data.ontario.ca"))
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network: searches data.ontario.ca
 prov <- list(
   dataset = list(ckan_api_endpoint = paste0(
@@ -69,5 +70,5 @@ prov <- list(
   )
 )
 rslvckns(prov)
-}
+\dontshow{\}) # examplesIf}
 }

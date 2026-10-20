@@ -41,7 +41,7 @@ address.
 try(wbsnpnat(""))     # empty url -> error
 try(wbsnpnat("http://localhost/report.csv"))
 
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network; any network failure returns NULL rather than erroring.
 # Closest archived snapshot of a live page (or NULL if none archived).
 wbsnpnat("https://www.r-project.org/")
@@ -51,5 +51,5 @@ wbsnpnat("https://cloud.r-project.org/", tmout = 10)
 
 # A never-archived URL returns NULL rather than erroring.
 wbsnpnat("https://example.invalid/never-archived")
-}
+\dontshow{\}) # examplesIf}
 }

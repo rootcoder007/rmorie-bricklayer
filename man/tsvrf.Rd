@@ -115,11 +115,12 @@ try(tsinfo(as.raw(1:10)))
 
 # Real tokens come from a timestamping authority; this is the shape of
 # the call.
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 res <- tsvrf("response.tsr", data = "manifest.json")
 res$ok
 res$time
-}
+\dontshow{\}) # examplesIf}
 }
 \references{
 Adams, C., Cain, P., Pinkas, D., and Zuccherato, R. (2001).

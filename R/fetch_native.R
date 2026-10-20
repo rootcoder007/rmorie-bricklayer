@@ -50,7 +50,7 @@
 #' try(blfetch("https://example.org/data.csv",
 #'                      file.path(tempdir(), "no-such-dir", "data.csv")))
 #'
-#' \dontrun{
+#' @examplesIf interactive()
 #' # needs the network
 #' dst <- tempfile(fileext = ".xlsx")
 #'
@@ -69,7 +69,6 @@
 #' # The return value tells you which source served the file.
 #' status <- blfetch("https://cloud.r-project.org/", tempfile())
 #' status   # "live" or "wayback"
-#' }
 #' @export
 blfetch <- function(url, dest, wb = "", tmout = 120L) {
   if (!is.character(url) || length(url) != 1L || is.na(url) || !nzchar(url)) {
@@ -144,7 +143,7 @@ blfetch <- function(url, dest, wb = "", tmout = 120L) {
 #' try(wbsnpnat(""))     # empty url -> error
 #' try(wbsnpnat("http://localhost/report.csv"))
 #'
-#' \dontrun{
+#' @examplesIf interactive()
 #' # needs the network; any network failure returns NULL rather than erroring.
 #' # Closest archived snapshot of a live page (or NULL if none archived).
 #' wbsnpnat("https://www.r-project.org/")
@@ -154,7 +153,6 @@ blfetch <- function(url, dest, wb = "", tmout = 120L) {
 #'
 #' # A never-archived URL returns NULL rather than erroring.
 #' wbsnpnat("https://example.invalid/never-archived")
-#' }
 #' @export
 wbsnpnat <- function(url, tmout = 30L) {
   if (!is.character(url) || length(url) != 1L || is.na(url) || !nzchar(url)) {

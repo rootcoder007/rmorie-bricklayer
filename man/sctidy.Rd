@@ -52,10 +52,11 @@ d <- data.frame(REF_DATE = "2019/2022", GEO = "Canada",
                 VALUE = c("45.8", "", "61.5"), STATUS = c("", "x", ""),
                 check.names = FALSE)
 sctidy(d)
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs a data service key: sign in once with dlogin()
 t924 <- sctidy("13100924")
-}
+\dontshow{\}) # examplesIf}
 }
 \references{
 Statistics Canada. Symbol legend.

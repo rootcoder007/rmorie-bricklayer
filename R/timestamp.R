@@ -125,20 +125,21 @@
 #'
 #' # Real tokens come from a timestamping authority; this is the shape of
 #' # the call.
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' res <- tsvrf("response.tsr", data = "manifest.json")
 #' res$ok
 #' res$time
-#' }
 #' @export
 tsvrf <- function(token, data, cert = NULL,
                              trust = NULL, crls = list(),
                              attm = NULL) {
   token <- .rmbl_as_bytes(token, "token")
   data <- .rmbl_as_bytes(data, "data")
-  checks <- list()
+  acc <- new.env(parent = emptyenv())
+  acc$checks <- list()
   note_row <- function(check, ok, detail = "") {
-    checks[[length(checks) + 1L]] <<- data.frame(
+    acc$checks[[length(acc$checks) + 1L]] <- data.frame(
       check = check, ok = isTRUE(ok), detail = as.character(detail),
       stringsAsFactors = FALSE
     )
@@ -146,14 +147,14 @@ tsvrf <- function(token, data, cert = NULL,
   der <- tryCatch(.Call(C_rmbl_der_parse, token), error = function(e) e)
   if (inherits(der, "error")) {
     note_row("token_parses", FALSE, conditionMessage(der))
-    return(.rmbl_ts_result(checks, NULL))
+    return(.rmbl_ts_result(acc$checks, NULL))
   }
   note_row("token_parses", TRUE, sprintf("%d bytes of DER", length(token)))
 
   info <- tryCatch(.rmbl_ts_extract(der, token), error = function(e) e)
   if (inherits(info, "error")) {
     note_row("token_structure", FALSE, conditionMessage(info))
-    return(.rmbl_ts_result(checks, NULL))
+    return(.rmbl_ts_result(acc$checks, NULL))
   }
   note_row(
     "token_structure", TRUE,
@@ -260,7 +261,7 @@ tsvrf <- function(token, data, cert = NULL,
       }
     }
   }
-  .rmbl_ts_result(checks, info)
+  .rmbl_ts_result(acc$checks, info)
 }
 
 #' @rdname tsvrf

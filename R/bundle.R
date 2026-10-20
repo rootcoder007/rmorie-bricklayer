@@ -224,9 +224,10 @@ cpsbndlvrf <- function(bundle, dir, man = NULL,
          "cpsbndlrd()", call. = FALSE)
   }
   dir <- .rmbl_string1(dir, "dir")
-  checks <- list()
+  acc <- new.env(parent = emptyenv())
+  acc$checks <- list()
   note_row <- function(check, ok, detail = "") {
-    checks[[length(checks) + 1L]] <<- data.frame(
+    acc$checks[[length(acc$checks) + 1L]] <- data.frame(
       check = check, ok = isTRUE(ok), detail = as.character(detail),
       stringsAsFactors = FALSE)
   }
@@ -290,7 +291,7 @@ cpsbndlvrf <- function(bundle, dir, man = NULL,
                  sprintf("bundle says %s, manifest is %s",
                          as.character(bundle$manifest_digest)[1L], got))
   }
-  df <- do.call(rbind, checks)
+  df <- do.call(rbind, acc$checks)
   rownames(df) <- NULL
   out <- list(ok = all(df$ok), checks = df)
   class(out) <- c("bricklayer_bundle_check", "list")

@@ -1633,17 +1633,18 @@ polrpttxt <- function(report) {
                        "no rows are used from a file whose rows do not line up"),
                  wrong[[1L]], nf[[wrong[[1L]]]], length(hdr)), call. = FALSE)
   }
-  problems <- character()
+  acc <- new.env(parent = emptyenv())
+  acc$problems <- character()
   df <- withCallingHandlers(
     utils::read.csv(src, stringsAsFactors = FALSE, encoding = "UTF-8"),
     warning = function(w) {
       m <- conditionMessage(w)
-      if (!grepl("incomplete final line", m, fixed = TRUE)) problems <<- c(problems, m)
+      if (!grepl("incomplete final line", m, fixed = TRUE)) acc$problems <- c(acc$problems, m)
       invokeRestart("muffleWarning")
     })
-  if (length(problems)) {
+  if (length(acc$problems)) {
     stop(sprintf("could not be read cleanly (%s): no rows are used from a file the parser stopped part-way through",
-                 problems[[1L]]), call. = FALSE)
+                 acc$problems[[1L]]), call. = FALSE)
   }
   df
 }

@@ -57,9 +57,10 @@ readLines(p)[1:4]
 
 # one name only
 instcli(dir = d, name = "rmbl")
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 instcli()   # ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
-}
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{blcli}} for the verbs.

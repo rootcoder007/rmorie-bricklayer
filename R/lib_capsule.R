@@ -128,9 +128,10 @@ vrfcps <- function(cpsdir,
   if (!is.null(dfile)) dfile <- .rmbl_string1(dfile, "dfile")
   if (!is.null(mnffile)) mnffile <- .rmbl_string1(mnffile, "mnffile")
   if (!is.null(scrfile)) scrfile <- .rmbl_string1(scrfile, "scrfile")
-  checks <- list()
+  acc <- new.env(parent = emptyenv())
+  acc$checks <- list()
   note <- function(check, ok, detail = "") {
-    checks[[length(checks) + 1L]] <<- data.frame(
+    acc$checks[[length(acc$checks) + 1L]] <- data.frame(
       check = check, ok = isTRUE(ok), detail = as.character(detail),
       stringsAsFactors = FALSE
     )
@@ -316,7 +317,7 @@ vrfcps <- function(cpsdir,
        else if (is.null(dpath)) "no data file to check"
        else "no synthetic marker: sidecar, manifest and provenance all say real data")
 
-  checks <- do.call(rbind, checks)
+  checks <- do.call(rbind, acc$checks)
   rownames(checks) <- NULL
   missing <- setdiff(required, checks$check)
   out <- list(ok = all(checks$ok) && length(missing) == 0L,

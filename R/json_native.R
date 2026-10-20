@@ -921,7 +921,8 @@ bricklayer_json_unbox <- function(x) {
   }
   ch <- strsplit(s, "", fixed = TRUE)[[1]]
   n <- length(ch)
-  i <- 1L
+  p <- new.env(parent = emptyenv())   # the cursor, the nesting depth and the big-integer flag
+  p$i <- 1L
   # The code points once, and the positions the scanner jumps to (the next character that is not
   # white space, not a digit, or that ends a run of plain string text): one R call per character
   # took 85 s for a 15 MiB reply (CRAN stress test of 0.5.14).
@@ -936,47 +937,48 @@ bricklayer_json_unbox <- function(x) {
     j <- v[findInterval(pos - 1L, v, checkSorted = FALSE, checkNA = FALSE) + 1L]
     if (is.na(j)) n + 1L else as.integer(j)
   }
-  depth <- 0L          # nesting, capped: 20,000 "[" exhausted the C stack
-  big_warned <- FALSE  # one warning per document for integers above 2^53
-  bad <- function(msg) stop(sprintf("%s at character %d", msg, i), call. = FALSE)
-  ws <- function() if (i <= n && is_ws[i]) i <<- after(i, not_ws)
+  p$depth <- 0L          # nesting, capped: 20,000 "[" exhausted the C stack
+  p$big_warned <- FALSE  # one warning per document for integers above 2^53
+  bad <- function(msg) stop(sprintf("%s at character %d", msg, p$i), call. = FALSE)
+  ws <- function() if (p$i <= n && is_ws[p$i]) p$i <- after(p$i, not_ws)
   str_ <- function() {
-    i <<- i + 1L
-    st <- i
+    p$i <- p$i + 1L
+    st <- p$i
     # a string with no escape (nearly every one): its text in one step
-    j <- after(i, spec)
+    j <- after(p$i, spec)
     if (j <= n && cp[j] == 34L) {
-      i <<- j + 1L
+      p$i <- j + 1L
       return(if (j > st) paste(ch[st:(j - 1L)], collapse = "") else "")
     }
     # pieces are appended into a doubling buffer: c(parts, ...) per escape
     # was quadratic, and 532 bytes of gzip held 250,000 escapes
-    parts <- character(32L)
-    np <- 0L
+    q <- new.env(parent = emptyenv())
+    q$parts <- character(32L)
+    q$np <- 0L
     push <- function(v) {
-      np <<- np + 1L
-      if (np > length(parts)) length(parts) <<- 2L * length(parts)
-      parts[np] <<- v
+      q$np <- q$np + 1L
+      if (q$np > length(q$parts)) length(q$parts) <- 2L * length(q$parts)
+      q$parts[q$np] <- v
     }
     repeat {
-      i <<- after(i, spec)
-      if (i > n) bad("unterminated string")
-      c0 <- ch[i]
+      p$i <- after(p$i, spec)
+      if (p$i > n) bad("unterminated string")
+      c0 <- ch[p$i]
       if (c0 == "\"") break
       if (c0 == "\\") {
-        if (i > st) push(paste(ch[st:(i - 1L)], collapse = ""))
-        i <<- i + 1L
-        e <- ch[i]
+        if (p$i > st) push(paste(ch[st:(p$i - 1L)], collapse = ""))
+        p$i <- p$i + 1L
+        e <- ch[p$i]
         push(switch(e, n = "\n", t = "\t", r = "\r", b = "\b", f = "\f",
                                  "\"" = "\"", "\\" = "\\", "/" = "/",
                                  u = {
-                                   cp <- strtoi(paste(ch[(i + 1L):(i + 4L)], collapse = ""), 16L)
+                                   cp <- strtoi(paste(ch[(p$i + 1L):(p$i + 4L)], collapse = ""), 16L)
                                    if (is.na(cp)) bad("invalid \\u escape")
-                                   i <<- i + 4L
-                                   if (cp >= 0xD800 && cp <= 0xDBFF && i + 6L <= n && ch[i + 1L] == "\\" && ch[i + 2L] == "u") {
-                                     lo <- strtoi(paste(ch[(i + 3L):(i + 6L)], collapse = ""), 16L)
+                                   p$i <- p$i + 4L
+                                   if (cp >= 0xD800 && cp <= 0xDBFF && p$i + 6L <= n && ch[p$i + 1L] == "\\" && ch[p$i + 2L] == "u") {
+                                     lo <- strtoi(paste(ch[(p$i + 3L):(p$i + 6L)], collapse = ""), 16L)
                                      if (!is.na(lo) && lo >= 0xDC00 && lo <= 0xDFFF) {
-                                       i <<- i + 6L
+                                       p$i <- p$i + 6L
                                        cp <- 0x10000 + (cp - 0xD800) * 1024 + (lo - 0xDC00)
                                      }
                                    }
@@ -987,38 +989,38 @@ bricklayer_json_unbox <- function(x) {
                                    intToUtf8(cp)
                                  },
                                  bad("invalid escape")))
-        i <<- i + 1L
-        st <- i
+        p$i <- p$i + 1L
+        st <- p$i
         next
       }
       bad("control character in string")
     }
-    if (i > st) push(paste(ch[st:(i - 1L)], collapse = ""))
-    i <<- i + 1L
-    paste(parts[seq_len(np)], collapse = "")
+    if (p$i > st) push(paste(ch[st:(p$i - 1L)], collapse = ""))
+    p$i <- p$i + 1L
+    paste(q$parts[seq_len(q$np)], collapse = "")
   }
   num_ <- function() {
-    st <- i
-    if (ch[i] == "-") i <<- i + 1L
-    if (i > n || !is_dig[i]) bad("invalid number")
-    if (ch[i] == "0") i <<- i + 1L else i <<- after(i, not_dig)
+    st <- p$i
+    if (ch[p$i] == "-") p$i <- p$i + 1L
+    if (p$i > n || !is_dig[p$i]) bad("invalid number")
+    if (ch[p$i] == "0") p$i <- p$i + 1L else p$i <- after(p$i, not_dig)
     isint <- TRUE
-    if (i <= n && ch[i] == ".") {
+    if (p$i <= n && ch[p$i] == ".") {
       isint <- FALSE
-      i <<- i + 1L
-      if (i > n || !is_dig[i]) bad("invalid number")
-      i <<- after(i, not_dig)
+      p$i <- p$i + 1L
+      if (p$i > n || !is_dig[p$i]) bad("invalid number")
+      p$i <- after(p$i, not_dig)
     }
-    if (i <= n && (ch[i] == "e" || ch[i] == "E")) {
+    if (p$i <= n && (ch[p$i] == "e" || ch[p$i] == "E")) {
       isint <- FALSE
-      i <<- i + 1L
-      if (i <= n && (ch[i] == "+" || ch[i] == "-")) i <<- i + 1L
-      if (i > n || !is_dig[i]) bad("invalid number")
-      i <<- after(i, not_dig)
+      p$i <- p$i + 1L
+      if (p$i <= n && (ch[p$i] == "+" || ch[p$i] == "-")) p$i <- p$i + 1L
+      if (p$i > n || !is_dig[p$i]) bad("invalid number")
+      p$i <- after(p$i, not_dig)
     }
-    t0 <- paste(ch[st:(i - 1L)], collapse = "")
+    t0 <- paste(ch[st:(p$i - 1L)], collapse = "")
     v <- .rmbl_strtod(t0)
-    if (!isint && bigint_warn && !big_warned && is.finite(v) && v == trunc(v) &&
+    if (!isint && bigint_warn && !p$big_warned && is.finite(v) && v == trunc(v) &&
         abs(v) >= 9007199254740992 && abs(v) < 18446744073709551616) {
       # "9007199254740993.0" and "9.007199254740993e15" write an integer in
       # the identifier range that the double does not hold: the digits
@@ -1027,7 +1029,7 @@ bricklayer_json_unbox <- function(x) {
       # identifier, and is left alone.
       written <- .rmbl_json_written_integer(t0)
       if (!is.null(written) && !identical(written, sprintf("%.0f", abs(v)))) {
-        big_warned <<- TRUE
+        p$big_warned <- TRUE
         warning(sprintf(paste0("number %s is a whole number beyond 2^53 and cannot be held ",
                                "exactly in a double"), t0), call. = FALSE)
       }
@@ -1046,8 +1048,8 @@ bricklayer_json_unbox <- function(x) {
       inexact <- big && is.finite(v) && !identical(sprintf("%.0f", abs(v)), digs)
       if (big) {
         if (bigint_as_char) return(t0)
-        if (!big_warned && bigint_warn && inexact) {
-          big_warned <<- TRUE
+        if (!p$big_warned && bigint_warn && inexact) {
+          p$big_warned <- TRUE
           warning(sprintf(paste0("integer %s exceeds 2^53 and cannot be held exactly ",
                                  "in a double; pass bigint_as_char = TRUE to keep it as text"),
                           t0), call. = FALSE)
@@ -1059,41 +1061,41 @@ bricklayer_json_unbox <- function(x) {
   }
   # the depth is put back on return; an error ends the parse, so no on.exit() (a cost per value)
   value <- function() {
-    depth <<- depth + 1L
-    if (depth > 100L) bad("nesting deeper than 100 levels")
+    p$depth <- p$depth + 1L
+    if (p$depth > 100L) bad("nesting deeper than 100 levels")
     v <- value_()
-    depth <<- depth - 1L
+    p$depth <- p$depth - 1L
     v
   }
   value_ <- function() {
     ws()
-    if (i > n) bad("unexpected end of input")
-    c0 <- ch[i]
+    if (p$i > n) bad("unexpected end of input")
+    c0 <- ch[p$i]
     if (c0 == "{") {
-      i <<- i + 1L
+      p$i <- p$i + 1L
       ws()
       keys <- character(0)
       vals <- list()
-      if (i <= n && ch[i] == "}") {
-        i <<- i + 1L
+      if (p$i <= n && ch[p$i] == "}") {
+        p$i <- p$i + 1L
         return(structure(list(), names = character(0)))
       }
       repeat {
         ws()
-        if (i > n || ch[i] != "\"") bad("expected a string key")
+        if (p$i > n || ch[p$i] != "\"") bad("expected a string key")
         k <- str_()
         ws()
-        if (i > n || ch[i] != ":") bad("expected ':'")
-        i <<- i + 1L
+        if (p$i > n || ch[p$i] != ":") bad("expected ':'")
+        p$i <- p$i + 1L
         vals[[length(vals) + 1L]] <- list(value())
         keys[[length(keys) + 1L]] <- k
         ws()
-        if (i <= n && ch[i] == ",") {
-          i <<- i + 1L
+        if (p$i <= n && ch[p$i] == ",") {
+          p$i <- p$i + 1L
           next
         }
-        if (i <= n && ch[i] == "}") {
-          i <<- i + 1L
+        if (p$i <= n && ch[p$i] == "}") {
+          p$i <- p$i + 1L
           break
         }
         bad("expected ',' or '}'")
@@ -1108,22 +1110,22 @@ bricklayer_json_unbox <- function(x) {
       return(out)
     }
     if (c0 == "[") {
-      i <<- i + 1L
+      p$i <- p$i + 1L
       ws()
       vals <- list()
-      if (i <= n && ch[i] == "]") {
-        i <<- i + 1L
+      if (p$i <= n && ch[p$i] == "]") {
+        p$i <- p$i + 1L
         return(list())
       }
       repeat {
         vals[[length(vals) + 1L]] <- list(value())
         ws()
-        if (i <= n && ch[i] == ",") {
-          i <<- i + 1L
+        if (p$i <= n && ch[p$i] == ",") {
+          p$i <- p$i + 1L
           next
         }
-        if (i <= n && ch[i] == "]") {
-          i <<- i + 1L
+        if (p$i <= n && ch[p$i] == "]") {
+          p$i <- p$i + 1L
           break
         }
         bad("expected ',' or ']'")
@@ -1131,24 +1133,24 @@ bricklayer_json_unbox <- function(x) {
       return(lapply(vals, function(w) w[[1L]]))
     }
     if (c0 == "\"") return(str_())
-    if (c0 == "t" && i + 3L <= n && identical(paste(ch[i:(i + 3L)], collapse = ""), "true")) {
-      i <<- i + 4L
+    if (c0 == "t" && p$i + 3L <= n && identical(paste(ch[p$i:(p$i + 3L)], collapse = ""), "true")) {
+      p$i <- p$i + 4L
       return(TRUE)
     }
-    if (c0 == "f" && i + 4L <= n && identical(paste(ch[i:(i + 4L)], collapse = ""), "false")) {
-      i <<- i + 5L
+    if (c0 == "f" && p$i + 4L <= n && identical(paste(ch[p$i:(p$i + 4L)], collapse = ""), "false")) {
+      p$i <- p$i + 5L
       return(FALSE)
     }
-    if (c0 == "n" && i + 3L <= n && identical(paste(ch[i:(i + 3L)], collapse = ""), "null")) {
-      i <<- i + 4L
+    if (c0 == "n" && p$i + 3L <= n && identical(paste(ch[p$i:(p$i + 3L)], collapse = ""), "null")) {
+      p$i <- p$i + 4L
       return(NULL)
     }
-    if (c0 == "-" || is_dig[i]) return(num_())
+    if (c0 == "-" || is_dig[p$i]) return(num_())
     bad("unexpected character")
   }
   v <- value()
   ws()
-  if (i <= n) bad("trailing content")
+  if (p$i <= n) bad("trailing content")
   v
 }
 
@@ -1528,39 +1530,41 @@ bricklayer_json_validate <- function(txt) {
   s <- .rmbl_strip_bom(s)
   ch <- strsplit(s, "", fixed = TRUE)[[1]]
   n <- length(ch)
-  i <- 1L
-  out <- character(0)
-  depth <- 0L
-  state <- "start"        # start | array_start | in_array | map_start | map_key | map_val | complete
-  stack <- character(0)
-  bad <- function(msg) stop(sprintf("%s at character %d", msg, i), call. = FALSE)
-  emit <- function(t) out <<- c(out, t)
-  need_sep <- FALSE
+  p <- new.env(parent = emptyenv())   # the cursor, the output and the state machine
+  p$i <- 1L
+  p$out <- character(0)
+  p$depth <- 0L
+  p$state <- "start"        # start | array_start | in_array | map_start | map_key | map_val | complete
+  p$stack <- character(0)
+  bad <- function(msg) stop(sprintf("%s at character %d", msg, p$i), call. = FALSE)
+  emit <- function(t) p$out <- c(p$out, t)
+  p$need_sep <- FALSE
   sep <- function() {
-    if (state == "map_key" || state == "in_array") {
-      if (need_sep) bad("expected ',' between values")
+    if (p$state == "map_key" || p$state == "in_array") {
+      if (p$need_sep) bad("expected ',' between values")
       emit(",")
       if (pretty) emit("\n")
-    } else if (state == "map_val") {
+    } else if (p$state == "map_val") {
       emit(":")
       if (pretty) emit(" ")
     }
   }
-  wsp <- function() if (pretty && state != "map_val" && depth > 0L) emit(strrep(indent_string, depth))
+  wsp <- function() if (pretty && p$state != "map_val" && p$depth > 0L) emit(strrep(indent_string, p$depth))
   atom_done <- function() {
-    state <<- switch(state, start = "complete", map_start = "map_val", map_key = "map_val",
-                     array_start = "in_array", map_val = "map_key", state)
-    need_sep <<- state %in% c("in_array", "map_key")
+    p$state <- switch(p$state, start = "complete", map_start = "map_val", map_key = "map_val",
+                     array_start = "in_array", map_val = "map_key", p$state)
+    p$need_sep <- p$state %in% c("in_array", "map_key")
   }
-  skip_ws <- function() while (i <= n && (ch[i] == " " || ch[i] == "\t" || ch[i] == "\n" || ch[i] == "\r")) i <<- i + 1L
+  skip_ws <- function() while (p$i <= n && (ch[p$i] == " " || ch[p$i] == "\t" || ch[p$i] == "\n" || ch[p$i] == "\r")) p$i <- p$i + 1L
   read_string <- function() {
-    j <- i + 1L
-    parts <- character(32L)
-    np <- 0L
+    j <- p$i + 1L
+    q <- new.env(parent = emptyenv())
+    q$parts <- character(32L)
+    q$np <- 0L
     push <- function(v) {
-      np <<- np + 1L
-      if (np > length(parts)) length(parts) <<- 2L * length(parts)
-      parts[np] <<- v
+      q$np <- q$np + 1L
+      if (q$np > length(q$parts)) length(q$parts) <- 2L * length(q$parts)
+      q$parts[q$np] <- v
     }
     st <- j
     repeat {
@@ -1595,8 +1599,8 @@ bricklayer_json_validate <- function(txt) {
       j <- j + 1L
     }
     if (j > st) push(paste(ch[st:(j - 1L)], collapse = ""))
-    i <<- j + 1L
-    paste(parts[seq_len(np)], collapse = "")
+    p$i <- j + 1L
+    paste(q$parts[seq_len(q$np)], collapse = "")
   }
   encode_string <- function(v) {
     v <- gsub("\\", "\\\\", v, fixed = TRUE)
@@ -1614,87 +1618,87 @@ bricklayer_json_validate <- function(txt) {
     paste0("\"", v, "\"")
   }
   read_number <- function() {
-    st <- i
-    if (ch[i] == "-") i <<- i + 1L
-    if (i > n || !grepl("[0-9]", ch[i])) bad("invalid number")
-    while (i <= n && grepl("[0-9.eE+-]", ch[i])) i <<- i + 1L
-    paste(ch[st:(i - 1L)], collapse = "")
+    st <- p$i
+    if (ch[p$i] == "-") p$i <- p$i + 1L
+    if (p$i > n || !grepl("[0-9]", ch[p$i])) bad("invalid number")
+    while (p$i <= n && grepl("[0-9.eE+-]", ch[p$i])) p$i <- p$i + 1L
+    paste(ch[st:(p$i - 1L)], collapse = "")
   }
   while (TRUE) {
     skip_ws()
-    if (i > n) break
-    if (state == "complete") bad("trailing content")
-    c0 <- ch[i]
+    if (p$i > n) break
+    if (p$state == "complete") bad("trailing content")
+    c0 <- ch[p$i]
     if (c0 == "{" || c0 == "[") {
-      if (state %in% c("map_key", "map_start")) bad("keys must be strings")
+      if (p$state %in% c("map_key", "map_start")) bad("keys must be strings")
       sep()
       wsp()
-      depth <- depth + 1L
-      stack <- c(stack, state)
-      state <- if (c0 == "{") "map_start" else "array_start"
+      p$depth <- p$depth + 1L
+      p$stack <- c(p$stack, p$state)
+      p$state <- if (c0 == "{") "map_start" else "array_start"
       emit(c0)
       if (pretty) emit("\n")
-      i <- i + 1L
+      p$i <- p$i + 1L
       next
     }
     if (c0 == "}" || c0 == "]") {
-      if ((c0 == "}" && !(state %in% c("map_start", "map_key"))) || (c0 == "]" && !(state %in% c("array_start", "in_array")))) bad("unexpected closing bracket")
-      depth <- depth - 1L
+      if ((c0 == "}" && !(p$state %in% c("map_start", "map_key"))) || (c0 == "]" && !(p$state %in% c("array_start", "in_array")))) bad("unexpected closing bracket")
+      p$depth <- p$depth - 1L
       if (pretty) emit("\n")
-      state <- stack[length(stack)]
-      stack <- stack[-length(stack)]
+      p$state <- p$stack[length(p$stack)]
+      p$stack <- p$stack[-length(p$stack)]
       atom_done()
       wsp()
       emit(c0)
-      if (pretty && state == "complete") emit("\n")
-      i <- i + 1L
+      if (pretty && p$state == "complete") emit("\n")
+      p$i <- p$i + 1L
       next
     }
     if (c0 == ",") {
-      if (!(state %in% c("in_array", "map_key"))) bad("unexpected ','")
-      need_sep <- FALSE
-      i <- i + 1L
+      if (!(p$state %in% c("in_array", "map_key"))) bad("unexpected ','")
+      p$need_sep <- FALSE
+      p$i <- p$i + 1L
       skip_ws()
-      if (i > n || ch[i] %in% c("]", "}")) bad("trailing comma")
+      if (p$i > n || ch[p$i] %in% c("]", "}")) bad("trailing comma")
       next
     }
     if (c0 == ":") {
-      if (state != "map_val") bad("unexpected ':'")
-      i <- i + 1L
+      if (p$state != "map_val") bad("unexpected ':'")
+      p$i <- p$i + 1L
       next
     }
     if (c0 == "\"") {
       v <- read_string()
-      if (state %in% c("map_start", "map_key")) {
+      if (p$state %in% c("map_start", "map_key")) {
         # key
-        if (state == "map_key") {
-          if (need_sep) bad("expected ',' between members")
+        if (p$state == "map_key") {
+          if (p$need_sep) bad("expected ',' between members")
           emit(",")
           if (pretty) emit("\n")
         }
         wsp()
         emit(encode_string(v))
-        state <- "map_val"
+        p$state <- "map_val"
         skip_ws()
-        if (i > n || ch[i] != ":") bad("expected ':'")
+        if (p$i > n || ch[p$i] != ":") bad("expected ':'")
         next
       }
       sep()
       wsp()
       emit(encode_string(v))
       atom_done()
-      if (pretty && state == "complete") emit("\n")
+      if (pretty && p$state == "complete") emit("\n")
       next
     }
-    if (state %in% c("map_key", "map_start")) bad("keys must be strings")
-    if (c0 == "t" && identical(substr(s, i, i + 3L), "true")) {
-      i <- i + 4L
+    if (p$state %in% c("map_key", "map_start")) bad("keys must be strings")
+    if (c0 == "t" && identical(substr(s, p$i, p$i + 3L), "true")) {
+      p$i <- p$i + 4L
       tok <- "true"
-    } else if (c0 == "f" && identical(substr(s, i, i + 4L), "false")) {
-      i <- i + 5L
+    } else if (c0 == "f" && identical(substr(s, p$i, p$i + 4L), "false")) {
+      p$i <- p$i + 5L
       tok <- "false"
-    } else if (c0 == "n" && identical(substr(s, i, i + 3L), "null")) {
-      i <- i + 4L
+    } else if (c0 == "n" && identical(substr(s, p$i, p$i + 3L), "null")) {
+      p$i <- p$i + 4L
       tok <- "null"
     } else if (c0 == "-" || grepl("[0-9]", c0)) {
       tok <- read_number()
@@ -1705,13 +1709,13 @@ bricklayer_json_validate <- function(txt) {
     wsp()
     emit(tok)
     atom_done()
-    if (pretty && state == "complete") emit("\n")
+    if (pretty && p$state == "complete") emit("\n")
   }
-  if (state != "complete") bad("unexpected end of input")
+  if (p$state != "complete") bad("unexpected end of input")
   # paste() drops the encoding mark; JSON is UTF-8 by definition (RFC 8259
   # section 8.1), so declare it. Declare, do not convert: enc2utf8() under a
   # C locale would re-encode the bytes as Latin-1.
-  res <- paste(out, collapse = "")
+  res <- paste(p$out, collapse = "")
   Encoding(res) <- "UTF-8"
   structure(res, class = "json")
 }
@@ -1769,20 +1773,21 @@ bricklayer_json_flatten <- function(x, recursive = TRUE) {
 #' @noRd
 bricklayer_json_stream_in <- function(con, handler = NULL, pagesize = 500, verbose = TRUE, ...) {
   if (!inherits(con, "connection")) stop("Argument 'con' must be a connection.", call. = FALSE)
-  count <- 0
-  pages <- list()
+  acc <- new.env(parent = emptyenv())
+  acc$count <- 0
+  acc$pages <- list()
   cb <- if (is.null(handler)) {
     function(x) {
       if (length(x)) {
-        count <<- count + length(x)
-        pages[[length(pages) + 1L]] <<- x
+        acc$count <- acc$count + length(x)
+        acc$pages[[length(acc$pages) + 1L]] <- x
       }
     }
   } else {
     if (verbose) message("using a custom handler function.")
     function(x) {
       handler(.rmbl_json_post_process(x, ...))
-      count <<- count + length(x)
+      acc$count <- acc$count + length(x)
     }
   }
   if (!isOpen(con, "r")) {
@@ -1798,13 +1803,13 @@ bricklayer_json_stream_in <- function(con, handler = NULL, pagesize = 500, verbo
     if (length(page)) {
       cleanpage <- Filter(nchar, page)
       cb(lapply(cleanpage, .rmbl_json_parse))
-      if (verbose) cat("\r Found", count, "records...")
+      if (verbose) cat("\r Found", acc$count, "records...")
     }
     if (length(page) < pagesize) break
   }
   if (is.null(handler)) {
-    if (verbose) cat("\r Imported", count, "records. Simplifying...\n")
-    .rmbl_json_post_process(unlist(pages, FALSE, FALSE), ...)
+    if (verbose) cat("\r Imported", acc$count, "records. Simplifying...\n")
+    .rmbl_json_post_process(unlist(acc$pages, FALSE, FALSE), ...)
   } else {
     invisible()
   }

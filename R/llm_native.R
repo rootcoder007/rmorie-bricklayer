@@ -716,7 +716,8 @@ llmrte <- function(route = NULL) {
 #' for (v in names(old)) {
 #'   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 #' }
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # needs a key or a local model, and the network
 #' Sys.setenv(ANTHROPIC_API_KEY = "...")
 #' llmchat(turns)
@@ -724,7 +725,6 @@ llmrte <- function(route = NULL) {
 #'   list(role = "assistant", content = "A design weight."),
 #'   list(role = "user", content = "And a second one?")
 #' )))
-#' }
 #' @export
 llmchat <- function(msgs, model = NULL, route = NULL, tmout = 120) {
   ok <- is.list(msgs) && length(msgs) && all(vapply(msgs, function(m) {
@@ -795,12 +795,12 @@ llmchat <- function(msgs, model = NULL, route = NULL, tmout = 120) {
 #' for (v in names(old)) {
 #'   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 #' }
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # with a key set, the provider is asked (network)
 #' m <- llmmdls(route = "openai", tmout = 10)
 #' head(m)
 #' attr(m, "default")
-#' }
 #' @export
 llmmdls <- function(route = NULL, tmout = 15) {
   if (!is.null(route) && (!is.character(route) || length(route) != 1L || is.na(route))) {
@@ -1129,14 +1129,14 @@ llmprvd <- function() {
 #' for (v in names(old)) {
 #'   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 #' }
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # needs your own key or a local model, and the network
 #' Sys.setenv(ANTHROPIC_API_KEY = "...")
 #' llmask("What does a SHA-256 provenance record protect against?")
 #' llmask("Explain an E-value of 2.1", route = "ollama")
 #' llmask("Summarise Benford's law in two lines", docs = FALSE,
 #'                    syspro = "You are terse.")
-#' }
 #' @export
 llmask <- function(prompt, model = NULL, tmout = 120,
                                syspro = NULL, route = NULL, docs = TRUE, pkgs = NULL,
@@ -1261,7 +1261,8 @@ llmask <- function(prompt, model = NULL, tmout = 120,
 #' try(dlogin(email = "not-an-email"))
 #'
 #' if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # these contact the sign-in service
 #' dlogin(token = "<key issued at https://www.rmorie.com/access/>")
 #' dlogin(email = "you@example.com")
@@ -1270,7 +1271,6 @@ llmask <- function(prompt, model = NULL, tmout = 120,
 #' # everything given up front, for a script
 #' dlogin(accter = TRUE, name = "Ada Lovelace",
 #'                      purp = "Course project on court delays in Ontario.")
-#' }
 #' @export
 dlogin <- function(token = NULL, email = NULL, code = NULL,
                                  openbro = interactive(),

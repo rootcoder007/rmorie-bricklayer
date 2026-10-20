@@ -82,11 +82,11 @@
 #' try(rvkfetch(list(list(der = as.raw(1:3))), tmout = 0))
 #'
 #' # Reaches the network, so it is not run here.
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' res <- certchnvrf("leaf.crt", trust = "ca.crt",
 #'                          rvk = "fetch")
 #' res$checks
-#' }
 #' @export
 rvkfetch <- function(path, tmout = 10) {
   if (!is.list(path) || !length(path) ||
@@ -101,13 +101,14 @@ rvkfetch <- function(path, tmout = 10) {
 
 .rmbl_revocation_fetch <- function(path, timeout = 10) {
   crls <- list()
-  notes <- list()
-  ok <- logical(0)
+  acc <- new.env(parent = emptyenv())
+  acc$notes <- list()
+  acc$ok <- logical(0)
   add <- function(name, good, detail) {
     # one certificate can carry several CRL or OCSP URLs: number repeats so none is overwritten
-    if (!is.null(notes[[name]])) name <- sprintf("%s #%d", name, sum(startsWith(names(notes), name)) + 1L)
-    notes[[name]] <<- detail
-    ok <<- c(ok, isTRUE(good))
+    if (!is.null(acc$notes[[name]])) name <- sprintf("%s #%d", name, sum(startsWith(names(acc$notes), name)) + 1L)
+    acc$notes[[name]] <- detail
+    acc$ok <- c(acc$ok, isTRUE(good))
   }
   for (i in seq_along(path)) {
     cert <- path[[i]]
@@ -131,7 +132,7 @@ rvkfetch <- function(path, tmout = 10) {
       add(sprintf("ocsp [%d]", i), res$ok, res$detail)
     }
   }
-  list(crls = crls, ok = ok, notes = notes)
+  list(crls = crls, ok = acc$ok, notes = acc$notes)
 }
 
 # cRLDistributionPoints (2.5.29.31): the http URLs in it.

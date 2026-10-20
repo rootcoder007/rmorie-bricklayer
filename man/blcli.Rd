@@ -111,9 +111,9 @@ blcli(c("help", "data"))
 blcli(c("examples", "perdays"))
 
 # capture the output instead of printing it
-lines <- character()
-status <- blcli(c("functions", "^drbg_"),
-                         out = function(x) lines <<- c(lines, x))
+con <- textConnection("lines", "w")
+status <- blcli(c("functions", "^drbg_"), out = function(x) cat(x, file = con))
+close(con)
 status
 lines
 

@@ -31,7 +31,7 @@ Centre (fnigc.ca; the site answers scripts with 403, archived copy
 \url{https://web.archive.org/web/20261001141317/https://fnigc.ca/}).
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 indtabs("mental health")
-}
+\dontshow{\}) # examplesIf}
 }

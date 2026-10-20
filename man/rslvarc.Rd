@@ -49,12 +49,13 @@ rslvarc(list())
 try(rslvarc(list(dataset = list(
   arcgis_layer_url = "ftp://example.org/FeatureServer/0"))))
 try(rslvarc("not a list"))
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network
 prov <- list(dataset = list(arcgis_layer_url = paste0(
   "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/",
   "Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0"
 )))
 rslvarc(prov)
-}
+\dontshow{\}) # examplesIf}
 }

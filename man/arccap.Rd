@@ -78,7 +78,7 @@ are never written or printed. Publish only what the source's licence lets you
 redistribute.
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 w <- wbsave(urls)
 lic <- "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
 meta <- list(title = "Statistics Canada tables (captures)",
@@ -87,7 +87,7 @@ cap <- arccap(w, file.path(tempdir(), "capture"),
                        item = "my-statcan-tables-2026", meta = meta)
 fetchvrf(cap$url[1], tempfile(), sha256 = cap$sha256[1],
                mirrors = cap$mirror[1])
-}
+\dontshow{\}) # examplesIf}
 }
 \references{
 Adams C, Cain P, Pinkas D, Zuccherato R (2001). Internet X.509 Public

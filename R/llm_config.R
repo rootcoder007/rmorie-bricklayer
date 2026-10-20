@@ -334,12 +334,12 @@
 #' try(llmcfg(route = "hosted"))
 #'
 #' if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # your Anthropic key and model, and always use them
 #' llmcfg(anthropic.key = "sk-ant-...", route = "anthropic")
 #' # an Ollama server on another machine
 #' llmcfg(ollama.url = "http://192.168.1.20:11434", ollama.model = "qwen3:8b")
-#' }
 #' @export
 llmcfg <- function(...) {
   args <- list(...)

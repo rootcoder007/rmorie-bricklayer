@@ -88,10 +88,11 @@ s$issued
 
 # arguments are checked
 try(svcs(maxage = -1))
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # ask the site now (network), and keep the answer for a day
 svcs(refresh = TRUE)
-}
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{dlogin}}, \code{\link{dmnf}}.

@@ -60,7 +60,8 @@ prov <- list(
   resource = list(name_match_pattern = "2014")
 )
 try(rslvckan(prov))
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network: asks data.ontario.ca for the current file URL
 prov <- list(
   dataset = list(ckan_api_endpoint = paste0(
@@ -70,5 +71,5 @@ prov <- list(
   resource = list(name_match_pattern = "2014")
 )
 rslvckan(prov)
-}
+\dontshow{\}) # examplesIf}
 }

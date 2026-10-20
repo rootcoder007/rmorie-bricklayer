@@ -525,9 +525,10 @@ blprog <- function(label, total, quiet = NULL, color = "blue", delay = NULL) {
   a$indeterminate <- total <= 0
   a$stage <- NULL
   a$said <- -Inf
-  started <- delay <= 0
-  closed <- FALSE
-  failed <- FALSE
+  st <- new.env(parent = emptyenv())   # drawn yet, closed, and whether the creator failed
+  st$started <- delay <= 0
+  st$closed <- FALSE
+  st$failed <- FALSE
   # only a bar that draws holds back the bars inside it; the console's own frame is not on
   # the call stack, so a bar made at top level never counts
   if (!a$quiet && !identical(creator, globalenv())) {
@@ -536,15 +537,15 @@ blprog <- function(label, total, quiet = NULL, color = "blue", delay = NULL) {
     # caller's on.exit(p$done()), notes an error or an interrupt (returnValue() gives its default
     # then), and done() ends the bar with a cross instead of a check
     unwound <- .bl_progress_state$unwound
-    note <- function(value) if (identical(value, unwound)) failed <<- TRUE
+    note <- function(value) if (identical(value, unwound)) st$failed <- TRUE
     do.call(on.exit, list(as.call(list(note, as.call(list(quote(base::returnValue), unwound)))), add = TRUE),
             envir = creator)
   }
   self <- NULL
   draw <- function(force = FALSE) {
-    if (!started) {
+    if (!st$started) {
       if (proc.time()[["elapsed"]] - a$t0 < delay) return(invisible(self))
-      started <<- TRUE
+      st$started <- TRUE
       force <- TRUE
     }
     .bl_anim_update(a, force = force)
@@ -554,17 +555,17 @@ blprog <- function(label, total, quiet = NULL, color = "blue", delay = NULL) {
     update = function(done = a$done, info = NULL) {
       a$done <- done
       if (!is.null(info)) a$info <- as.character(info)[1L]
-      if (a$quiet || closed) return(invisible(self))
+      if (a$quiet || st$closed) return(invisible(self))
       draw()
     },
     tick = function(by = 1, info = NULL) {
       a$done <- a$done + by
       if (!is.null(info)) a$info <- as.character(info)[1L]
-      if (a$quiet || closed) return(invisible(self))
+      if (a$quiet || st$closed) return(invisible(self))
       draw()
     },
     wait = function(seconds) {
-      if (a$quiet || closed) {
+      if (a$quiet || st$closed) {
         Sys.sleep(seconds)
         return(invisible(self))
       }
@@ -578,10 +579,10 @@ blprog <- function(label, total, quiet = NULL, color = "blue", delay = NULL) {
       invisible(self)
     },
     done = function(summary = NULL) {
-      if (closed) return(invisible(self))
-      closed <<- TRUE
+      if (st$closed) return(invisible(self))
+      st$closed <- TRUE
       .bl_progress_state$active <- Filter(function(e) !identical(e, creator), .bl_progress_state$active)
-      if (!a$quiet && started) .bl_anim_done(a, summary, ok = !failed)
+      if (!a$quiet && st$started) .bl_anim_done(a, summary, ok = !st$failed)
       invisible(self)
     }
   ), class = "rmbl_progress")

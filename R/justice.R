@@ -861,17 +861,18 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
   iy <- pmin(pmax(floor(fy), 0), ny - 2)
   ax <- fx - ix
   ay <- fy - iy
-  m <- numeric(nx * ny)
+  acc <- new.env(parent = emptyenv())
+  acc$m <- numeric(nx * ny)
   add <- function(i, j, v) {
     s <- tapply(v, i + 1 + j * nx, sum)
     k <- as.integer(names(s))
-    m[k] <<- m[k] + s
+    acc$m[k] <- acc$m[k] + s
   }
   add(ix, iy, w * (1 - ax) * (1 - ay))
   add(ix + 1, iy, w * ax * (1 - ay))
   add(ix, iy + 1, w * (1 - ax) * ay)
   add(ix + 1, iy + 1, w * ax * ay)
-  matrix(m, nx, ny)
+  matrix(acc$m, nx, ny)
 }
 
 #' Where incidents cluster: a kernel density surface

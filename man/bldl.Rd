@@ -104,10 +104,11 @@ try(bldl("https://127.0.0.1/table.csv", tempfile()))
 try(bldl(paste0("file://", src), tempfile()))
 
 # a real download needs the network
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 bldl("https://www.ontario.ca/some/open-data/table.csv",
                     "table.csv", maxbytes = 50e6)
-}
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{blfetch}} for a download with a Wayback

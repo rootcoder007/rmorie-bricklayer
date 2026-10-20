@@ -805,9 +805,10 @@ bacondcmp <- function(data, unit, time, y, trtd) {
     yc <- ym[first == co, , drop = FALSE]
     (mean(yt[, post]) - mean(yt[, pre])) - (mean(yc[, post]) - mean(yc[, pre]))
   }
-  rows <- list()
+  acc <- new.env(parent = emptyenv())
+  acc$rows <- list()
   add <- function(type, tr, co, est, w) {
-    rows[[length(rows) + 1L]] <<- data.frame(type = type, treated = tr, control = co, estimate = est, weight = w)
+    acc$rows[[length(acc$rows) + 1L]] <- data.frame(type = type, treated = tr, control = co, estimate = est, weight = w)
   }
   if (Inf %in% groups) {
     for (k in timing) {
@@ -833,7 +834,7 @@ bacondcmp <- function(data, unit, time, y, trtd) {
     w2 <- ((nk + nl) * dk)^2 * nkl * (1 - nkl) * (dl / dk) * ((dk - dl) / dk)
     add("later vs earlier", p$tl[l], p$tl[k], dd(l, k, list(k:(l - 1L), l:nt)), w2)
   }
-  out <- do.call(rbind, rows)
+  out <- do.call(rbind, acc$rows)
   out$weight <- out$weight / sum(out$weight)
   attr(out, "twfe") <- sum(out$weight * out$estimate)
   class(out) <- c("rmbl_bacon", "data.frame")

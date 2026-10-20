@@ -72,11 +72,12 @@ try(rvkfetch(list()))
 try(rvkfetch(list(list(der = as.raw(1:3))), tmout = 0))
 
 # Reaches the network, so it is not run here.
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 res <- certchnvrf("leaf.crt", trust = "ca.crt",
                          rvk = "fetch")
 res$checks
-}
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=certchnvrf]{certchnvrf()}},

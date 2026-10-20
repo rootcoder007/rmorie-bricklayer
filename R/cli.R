@@ -214,9 +214,9 @@
 #' blcli(c("examples", "perdays"))
 #'
 #' # capture the output instead of printing it
-#' lines <- character()
-#' status <- blcli(c("functions", "^drbg_"),
-#'                          out = function(x) lines <<- c(lines, x))
+#' con <- textConnection("lines", "w")
+#' status <- blcli(c("functions", "^drbg_"), out = function(x) cat(x, file = con))
+#' close(con)
 #' status
 #' lines
 #'
@@ -299,8 +299,9 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
     out(sprintf("%s %s: unknown option %s (%s %s --help)\n", prog, verb, bad[[1L]], prog, verb))
     return(invisible(2L))
   }
+  # the handlers return the exit status: usage error 2, any other error 1, Ctrl-C 130
   status <- 0L
-  tryCatch(
+  status <- tryCatch(
     {
       # arguments after a bare `--` are a prompt or a request: only ask and bundle take one, and
       # every other verb ignored them (`functions -- a b` listed everything)
@@ -468,15 +469,16 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
         },
         usage_error(.bl_unknown_verb(verb, prog))
       )
+      status
     },
     error = function(e) {
       out(paste0(prog, ": ", conditionMessage(e), "\n"))
-      status <<- if (inherits(e, "bl_usage")) 2L else 1L
+      if (inherits(e, "bl_usage")) 2L else 1L
     },
     interrupt = function(e) {
       # Ctrl-C at a prompt: the shell convention, 128 + SIGINT, not a usage error
       out(paste0(prog, ": interrupted\n"))
-      status <<- 130L
+      130L
     }
   )
   invisible(status)
@@ -793,9 +795,9 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
 #'
 #' # one name only
 #' instcli(dir = d, name = "rmbl")
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' instcli()   # ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
-#' }
 #' @export
 instcli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
                         name = c("rmoriebricklayer", "rmbl")) {

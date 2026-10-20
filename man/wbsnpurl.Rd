@@ -49,10 +49,11 @@ Nothing is written.
 # argument errors come before any request
 try(wbsnpurl(NA))
 try(wbsnpurl(c("https://a.org", "https://b.org")))
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network
 wbsnpurl("https://www.r-project.org/")
 # the snapshot nearest to January 2020
 wbsnpurl("https://www.r-project.org/", ts = "202001")
-}
+\dontshow{\}) # examplesIf}
 }

@@ -142,11 +142,12 @@ r$checks[!r$checks$ok, ]
 
 # a chain must end at something you trust
 try(certchnvrf(leaf, trust = list()))
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # with revocation looked up on the network
 certchnvrf("tsa.crt", trust = "ca.crt", purp = "timeStamping",
                   rvk = "fetch")
-}
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=certprs]{certprs()}},

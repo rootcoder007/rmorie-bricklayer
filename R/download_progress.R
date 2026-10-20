@@ -119,10 +119,10 @@
 #' try(bldl(paste0("file://", src), tempfile()))
 #'
 #' # a real download needs the network
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' bldl("https://www.ontario.ca/some/open-data/table.csv",
 #'                     "table.csv", maxbytes = 50e6)
-#' }
 #' @export
 bldl <- function(url, dest, headers = NULL,
                                 label = basename(dest), size = NULL,
@@ -157,10 +157,14 @@ bldl <- function(url, dest, headers = NULL,
   maxbytes <- .rmbl_num(maxbytes, "maxbytes")[1L]
   if (is.na(maxbytes) || maxbytes < 1) stop("`maxbytes` must be a number of bytes, at least one", call. = FALSE)
   t0 <- proc.time()[["elapsed"]]
-  mile <- 0L
-  anim <- NULL
+  # what the progress callback updates between calls: the size once the server announces it,
+  # the bar, and the last milestone printed without a terminal
+  st <- new.env(parent = emptyenv())
+  st$size <- size
+  st$mile <- 0L
+  st$anim <- NULL
   # a transfer that fails or is interrupted ends its bar with a cross
-  on.exit(if (!is.null(anim)) .bl_anim_done(anim, ok = FALSE), add = TRUE)
+  on.exit(if (!is.null(st$anim)) .bl_anim_done(st$anim, ok = FALSE), add = TRUE)
   if (!quiet && !tty) {
     cat(sprintf("%s: downloading%s\n", label,
                 if (is.finite(size)) paste0(" ", .bl_fmt_bytes(size)) else ""),
@@ -170,21 +174,22 @@ bldl <- function(url, dest, headers = NULL,
   # and the total the server announced (0 when it did not).
   draw <- function(got, total) {
     if (quiet) return(invisible(NULL))
-    if (is.na(size) && is.finite(total) && total > 0) size <<- total
+    if (is.na(st$size) && is.finite(total) && total > 0) st$size <- total
+    size <- st$size
     if (tty) {
       # the animated bar from the native renderer once the size is known; until then a spinner
       # with the bytes so far
-      if (is.null(anim)) {
-        anim <<- .bl_anim_new(label, if (is.finite(size)) size else 0, quiet = FALSE,
-                              tty = if (auto_tty) NULL else TRUE, unit = "B")
+      if (is.null(st$anim)) {
+        st$anim <- .bl_anim_new(label, if (is.finite(size)) size else 0, quiet = FALSE,
+                                tty = if (auto_tty) NULL else TRUE, unit = "B")
       }
-      anim$total <- if (is.finite(size)) size else 0
-      .bl_anim_update(anim, got, "")
+      st$anim$total <- if (is.finite(size)) size else 0
+      .bl_anim_update(st$anim, got, "")
     } else {
       step <- if (is.finite(size)) as.integer((10 * got) %/% size) else
         as.integer(got %/% 52428800)
-      if (step > mile) {
-        mile <<- step
+      if (step > st$mile) {
+        st$mile <- step
         cat("  ", .bl_dl_line(label, got, size, t0, 0L), "\n", sep = "", file = stderr())
       }
     }
@@ -220,9 +225,9 @@ bldl <- function(url, dest, headers = NULL,
   }
   if (!quiet) {
     took <- proc.time()[["elapsed"]] - t0
-    if (!is.null(anim)) {
-      .bl_anim_done(anim, sprintf("%s: %s in %s", label, .bl_fmt_bytes(got), .bl_fmt_elapsed(took)))
-      anim <- NULL
+    if (!is.null(st$anim)) {
+      .bl_anim_done(st$anim, sprintf("%s: %s in %s", label, .bl_fmt_bytes(got), .bl_fmt_elapsed(took)))
+      st$anim <- NULL
     } else {
       cat(sprintf("%s: %s in %.0f s\n", label, .bl_fmt_bytes(got), took), file = stderr())
     }

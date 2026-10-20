@@ -52,10 +52,10 @@
 #'                 VALUE = c("45.8", "", "61.5"), STATUS = c("", "x", ""),
 #'                 check.names = FALSE)
 #' sctidy(d)
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # needs a data service key: sign in once with dlogin()
 #' t924 <- sctidy("13100924")
-#' }
 #' @export
 sctidy <- function(x) {
   if (is.character(x) && length(x) == 1L && !is.na(x)) {
@@ -789,9 +789,9 @@ trcprog <- function(done = trccmpl()$cumulative, yearend = trccmpl()$yearend,
 #' Centre (fnigc.ca; the site answers scripts with 403, archived copy
 #' \url{https://web.archive.org/web/20261001141317/https://fnigc.ca/}).
 #' @examples
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' indtabs("mental health")
-#' }
 #' @export
 indtabs <- function(pat = NULL, refresh = FALSE) {
   if (!is.null(pat)) pat <- .rmbl_string1(pat, "pat")

@@ -179,9 +179,10 @@ cpsatst <- function(man, key, ctx = NULL,
 cpschkatst <- function(attest, man,
                                       keyexp = NULL) {
   .rmbl_no_fn(key_expected = keyexp)
-  checks <- list()
+  acc <- new.env(parent = emptyenv())
+  acc$checks <- list()
   note_row <- function(check, ok, detail = "") {
-    checks[[length(checks) + 1L]] <<- data.frame(
+    acc$checks[[length(acc$checks) + 1L]] <- data.frame(
       check = check, ok = isTRUE(ok), detail = as.character(detail),
       stringsAsFactors = FALSE
     )
@@ -260,7 +261,7 @@ cpschkatst <- function(attest, man,
   }
   note_row("signature", ok, detail)
 
-  df <- do.call(rbind, checks)
+  df <- do.call(rbind, acc$checks)
   rownames(df) <- NULL
   out <- list(ok = all(df$ok), checks = df)
   class(out) <- c("bricklayer_attestation_check", "list")

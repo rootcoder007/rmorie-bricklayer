@@ -137,14 +137,15 @@ try(wbsave("https://example.org/", ak = "abc", sk = "def",
                  output = file.path(tempdir(), "no-such-folder", "runs.jsonl")))
 
 # A real run needs archive.org keys and the network.
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 Sys.setenv(IA_S3_ACCESS_KEY_FILE = "~/.config/ia/s3_access_key.txt",
            IA_S3_SECRET_KEY_FILE = "~/.config/ia/s3_secret_key.txt")
 res <- wbsave(c("https://www.ontariocourts.ca/ocj/statistics/",
                       "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"),
                     output = "snapshots.jsonl")
 res
-}
+\dontshow{\}) # examplesIf}
 }
 \references{
 Internet Archive. Save Page Now 2 (SPN2) public API.\cr

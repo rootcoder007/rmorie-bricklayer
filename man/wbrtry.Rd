@@ -86,12 +86,13 @@ attr(res, "retry")
 try(wbrtry(tempfile(fileext = ".jsonl")))
 
 # With failures to resend, keys and the network are needed.
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 res <- wbsave(urls, output = "snapshots.jsonl")
 # later, or the next day once the daily capture limits have reset:
 res <- wbrtry("snapshots.jsonl")
 attr(res, "retry")
-}
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{wbsave}}; \code{rmbl wayback

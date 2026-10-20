@@ -47,12 +47,13 @@ rslvsoc(list(dataset = list(socrata_domain = "data.cityofchicago.org")))
 # a local host is refused before any request
 try(rslvsoc(list(dataset = list(
   socrata_domain = "localhost", socrata_id = "abcd-1234"))))
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network
 prov <- list(dataset = list(
   socrata_domain = "data.cityofchicago.org",
   socrata_id = "ijzp-q8t2"
 ))
 rslvsoc(prov)
-}
+\dontshow{\}) # examplesIf}
 }

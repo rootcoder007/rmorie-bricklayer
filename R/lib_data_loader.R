@@ -131,7 +131,8 @@ loadprov <- function(path) {
 #'   resource = list(name_match_pattern = "2014")
 #' )
 #' try(rslvckan(prov))
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # needs the network: asks data.ontario.ca for the current file URL
 #' prov <- list(
 #'   dataset = list(ckan_api_endpoint = paste0(
@@ -141,7 +142,6 @@ loadprov <- function(path) {
 #'   resource = list(name_match_pattern = "2014")
 #' )
 #' rslvckan(prov)
-#' }
 #' @export
 rslvckan <- function(prov) {
   if (is.null(prov)) {
@@ -224,7 +224,8 @@ rslvckan <- function(prov) {
 #'
 #' # a provenance must be a list
 #' try(rslvckns("data.ontario.ca"))
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # needs the network: searches data.ontario.ca
 #' prov <- list(
 #'   dataset = list(ckan_api_endpoint = paste0(
@@ -237,7 +238,6 @@ rslvckan <- function(prov) {
 #'   )
 #' )
 #' rslvckns(prov)
-#' }
 #' @export
 rslvckns <- function(prov) {
   if (is.null(prov)) {
@@ -356,14 +356,14 @@ rslvckns <- function(prov) {
 #' # file:// is refused unless asked for, and so is an append mode
 #' try(dldata(paste0("file://", src), tempfile()))
 #' try(dldata("https://example.org/x.csv", tempfile(), mode = "a"))
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # needs the network
 #' dest <- dldata("https://cloud.r-project.org/",
 #'   tempfile(fileext = ".html"),
 #'   quiet = TRUE
 #' )
 #' file.exists(dest)
-#' }
 #' @export
 dldata <- function(url, tpath, mode = "wb", quiet = FALSE,
                           allowfile = FALSE) {
@@ -417,12 +417,12 @@ dldata <- function(url, tpath, mode = "wb", quiet = FALSE,
 #' # argument errors come before any request
 #' try(wbsnpurl(NA))
 #' try(wbsnpurl(c("https://a.org", "https://b.org")))
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # needs the network
 #' wbsnpurl("https://www.r-project.org/")
 #' # the snapshot nearest to January 2020
 #' wbsnpurl("https://www.r-project.org/", ts = "202001")
-#' }
 #' @export
 wbsnpurl <- function(url, ts = NULL) {
   url <- .rmbl_string1(url, "url")
@@ -527,12 +527,12 @@ wbsnpurl <- function(url, ts = NULL) {
 #'
 #' # a refused URL is an error, not FALSE
 #' try(fdl("http://example.org/data.csv", tempfile()))
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # needs the network; the Wayback fallback is looked up on failure
 #' ok <- fdl("https://cloud.r-project.org/",
 #'   tempfile(fileext = ".html"))
 #' ok
-#' }
 #' @export
 fdl <- function(url, tpath, attwb = NULL,
                               allowfile = FALSE) {
@@ -541,18 +541,21 @@ fdl <- function(url, tpath, attwb = NULL,
   tpath <- .rmbl_string1(tpath, "tpath")
   # base R's url() reports the HTTP status in a warning and then errors with a bare
   # "cannot open the connection": keep the warning's words as the cause, and do not let it leak
-  said <- character()
+  acc <- new.env(parent = emptyenv())
+  acc$said <- character()
   result <- tryCatch(
     {
       withCallingHandlers(.bl_fetch_file(url, tpath, allow_file = allowfile), warning = function(w) {
-        said <<- c(said, conditionMessage(w))
+        acc$said <- c(acc$said, conditionMessage(w))
         invokeRestart("muffleWarning")
       })
       TRUE
     },
     error = function(e) {
       msg <- conditionMessage(e)
-      if (length(said) && grepl("cannot open the connection", msg, fixed = TRUE)) msg <- said[[length(said)]]
+      if (length(acc$said) && grepl("cannot open the connection", msg, fixed = TRUE)) {
+        msg <- acc$said[[length(acc$said)]]
+      }
       message("  ! Download failed.")
       message("    URL:   ", url)
       message("    Error: ", msg, "\n\n")
@@ -1160,14 +1163,14 @@ schval <- function(dfraw, prov) {
 #' # a local host is refused before any request
 #' try(rslvsoc(list(dataset = list(
 #'   socrata_domain = "localhost", socrata_id = "abcd-1234"))))
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # needs the network
 #' prov <- list(dataset = list(
 #'   socrata_domain = "data.cityofchicago.org",
 #'   socrata_id = "ijzp-q8t2"
 #' ))
 #' rslvsoc(prov)
-#' }
 #' @export
 rslvsoc <- function(prov) {
   if (is.null(prov)) {
@@ -1228,14 +1231,14 @@ rslvsoc <- function(prov) {
 #' try(rslvarc(list(dataset = list(
 #'   arcgis_layer_url = "ftp://example.org/FeatureServer/0"))))
 #' try(rslvarc("not a list"))
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # needs the network
 #' prov <- list(dataset = list(arcgis_layer_url = paste0(
 #'   "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/",
 #'   "Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0"
 #' )))
 #' rslvarc(prov)
-#' }
 #' @export
 rslvarc <- function(prov) {
   if (is.null(prov)) {

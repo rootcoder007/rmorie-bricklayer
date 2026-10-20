@@ -46,12 +46,12 @@ of the names listed; \code{route = "hosted"} (the hosted tier is retired);
 and errors raised by \code{\link[=llmask]{llmask()}}.
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # Needs a language model: a provider key (e.g. ANTHROPIC_API_KEY), your own
 # endpoint or a local Ollama.
 agentbndl("scaffold a bundle for analysis.R from the Toronto CKAN data")
 agentbndl("sign and verify my capsule", route = "ollama")
-}
+\dontshow{\}) # examplesIf}
 
 # With every route switched off (no key in the environment and no saved
 # settings: the settings folder is pointed at an empty one) the call returns

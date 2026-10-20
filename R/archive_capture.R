@@ -107,7 +107,8 @@
 #' @seealso \code{\link{fetchvrf}}, \code{\link{wbsave}},
 #'   \code{\link{tsvrf}}.
 #' @examples
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' w <- wbsave(urls)
 #' lic <- "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
 #' meta <- list(title = "Statistics Canada tables (captures)",
@@ -116,7 +117,6 @@
 #'                        item = "my-statcan-tables-2026", meta = meta)
 #' fetchvrf(cap$url[1], tempfile(), sha256 = cap$sha256[1],
 #'                mirrors = cap$mirror[1])
-#' }
 #' @export
 arccap <- function(urls, dir, item = NULL, meta = list(), tsa = "https://freetsa.org/tsr",
                             ak = NULL, sk = NULL, tmout = 600L) {

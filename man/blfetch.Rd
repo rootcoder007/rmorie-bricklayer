@@ -62,7 +62,7 @@ try(blfetch("https://127.0.0.1/data.csv", tempfile()))
 try(blfetch("https://example.org/data.csv",
                      file.path(tempdir(), "no-such-dir", "data.csv")))
 
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network
 dst <- tempfile(fileext = ".xlsx")
 
@@ -81,5 +81,5 @@ blfetch(
 # The return value tells you which source served the file.
 status <- blfetch("https://cloud.r-project.org/", tempfile())
 status   # "live" or "wayback"
-}
+\dontshow{\}) # examplesIf}
 }

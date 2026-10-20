@@ -363,11 +363,11 @@ print.bricklayer_certificate <- function(x, ...) {
 #'
 #' # a chain must end at something you trust
 #' try(certchnvrf(leaf, trust = list()))
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # with revocation looked up on the network
 #' certchnvrf("tsa.crt", trust = "ca.crt", purp = "timeStamping",
 #'                   rvk = "fetch")
-#' }
 #' @export
 certchnvrf <- function(leaf, trust, inter = list(),
                               attm = Sys.time(), purp = NULL,
@@ -408,9 +408,10 @@ certchnvrf <- function(leaf, trust, inter = list(),
   attm <- as.POSIXct(attm, tz = "UTC")
   rvk <- .rmbl_arg(rvk)
 
-  checks <- list()
+  acc <- new.env(parent = emptyenv())
+  acc$checks <- list()
   note_row <- function(check, ok, detail = "") {
-    checks[[length(checks) + 1L]] <<- data.frame(
+    acc$checks[[length(acc$checks) + 1L]] <- data.frame(
       check = check, ok = isTRUE(ok), detail = as.character(detail),
       stringsAsFactors = FALSE
     )
@@ -587,7 +588,7 @@ certchnvrf <- function(leaf, trust, inter = list(),
     }
   }
 
-  df <- do.call(rbind, checks)
+  df <- do.call(rbind, acc$checks)
   rownames(df) <- NULL
   out <- list(
     ok = all(df$ok), path = path, checks = df,
@@ -946,9 +947,10 @@ print.bricklayer_certpath_check <- function(x, ...) {
 
 # Revocation, against a CRL that was handed in. Nothing is fetched.
 .rmbl_crl_check <- function(path, crls, at_time) {
-  rows <- list()
+  acc <- new.env(parent = emptyenv())
+  acc$rows <- list()
   add <- function(check, ok, detail) {
-    rows[[length(rows) + 1L]] <<- data.frame(
+    acc$rows[[length(acc$rows) + 1L]] <- data.frame(
       check = check, ok = ok, detail = detail, stringsAsFactors = FALSE
     )
   }
@@ -979,7 +981,7 @@ print.bricklayer_certpath_check <- function(x, ...) {
   }
   if (!length(revoked)) {
     add("revocation", TRUE, "the CRLs supplied list nothing revoked")
-    return(do.call(rbind, rows))
+    return(do.call(rbind, acc$rows))
   }
   for (i in seq_along(path)) {
     cert <- path[[i]]
@@ -993,5 +995,5 @@ print.bricklayer_certpath_check <- function(x, ...) {
       }
     )
   }
-  do.call(rbind, rows)
+  do.call(rbind, acc$rows)
 }

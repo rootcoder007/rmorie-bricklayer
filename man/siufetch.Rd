@@ -60,11 +60,12 @@ try(siufetch(1.5, tempfile(fileext = ".html")))
 try(siufetch(648, tempfile(fileext = ".html"), lang = "de"))
 
 # a real fetch needs the network (the SIU site or the Wayback Machine)
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 dest <- tempfile(fileext = ".html")
 siufetch(648, dest)
 siufetch(648, tempfile(fileext = ".html"), lang = "fr")
-}
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{blfetch}},

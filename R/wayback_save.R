@@ -264,14 +264,14 @@
 #'                  output = file.path(tempdir(), "no-such-folder", "runs.jsonl")))
 #'
 #' # A real run needs archive.org keys and the network.
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' Sys.setenv(IA_S3_ACCESS_KEY_FILE = "~/.config/ia/s3_access_key.txt",
 #'            IA_S3_SECRET_KEY_FILE = "~/.config/ia/s3_secret_key.txt")
 #' res <- wbsave(c("https://www.ontariocourts.ca/ocj/statistics/",
 #'                       "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"),
 #'                     output = "snapshots.jsonl")
 #' res
-#' }
 #' @export
 wbsave <- function(urls, ak = NULL, sk = NULL, within = "30d", jobs = 4L,
                          output = NULL, poll = 10, maxwait = 600, capall = FALSE, quiet = NULL,
@@ -356,21 +356,22 @@ wbsave <- function(urls, ak = NULL, sk = NULL, within = "30d", jobs = 4L,
                          logical(1))]
   todo <- setdiff(urls, c(kept, resumed))
   not_sent <- if (length(todo) > maxcap) todo[-seq_len(maxcap)] else character()
-  queue <- utils::head(todo, maxcap)
+  w <- new.env(parent = emptyenv())   # the run's state, shared with the helpers below
+  w$queue <- utils::head(todo, maxcap)
   hdr <- c(sprintf("Authorization: LOW %s:%s", .ak, .sk), "Accept: application/json")
-  results <- prior[kept]
-  counts <- c(saved = 0L, existing = 0L, failed = 0L, submitted = 0L)
-  anim <- .bl_anim_new("Wayback", length(queue) + length(resumed), color = "blue", quiet = quiet)
+  w$results <- prior[kept]
+  w$counts <- c(saved = 0L, existing = 0L, failed = 0L, submitted = 0L)
+  anim <- .bl_anim_new("Wayback", length(w$queue) + length(resumed), color = "blue", quiet = quiet)
   info <- function() {
-    sprintf("%d saved, %d existing, %d failed, %d in flight", counts[["saved"]], counts[["existing"]],
-            counts[["failed"]], length(inflight))
+    sprintf("%d saved, %d existing, %d failed, %d in flight", w$counts[["saved"]], w$counts[["existing"]],
+            w$counts[["failed"]], length(inflight))
   }
   stamp <- function() format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
   finish <- function(u, status, ts = NA_character_, snap = NA_character_, msg = "", job_id = NA_character_) {
     rec <- list(url = u, status = status, timestamp = ts, snapshot = snap, message = msg, at = stamp())
     if (!is.na(job_id)) rec$job_id <- job_id
-    results[[u]] <<- rec
-    counts[[status]] <<- counts[[status]] + 1L
+    w$results[[u]] <- rec
+    w$counts[[status]] <- w$counts[[status]] + 1L
     if (!is.null(output)) {
       cat(tojs(rec, auto_unbox = TRUE), "\n", sep = "", file = output, append = TRUE)
     }
@@ -403,12 +404,12 @@ wbsave <- function(urls, ak = NULL, sk = NULL, within = "30d", jobs = 4L,
   on.exit(if (length(inflight)) for (u in names(inflight)) {
     finish(u, "submitted", msg = "started; the run stopped before it finished", job_id = inflight[[u]]$id)
   }, add = TRUE)
-  attempts <- stats::setNames(integer(length(queue)), queue)
+  w$attempts <- stats::setNames(integer(length(w$queue)), w$queue)
   spacing <- 60 / permin
   next_post <- -Inf
-  hold_until <- -Inf      # nothing is submitted before this (archive.org asked to slow down)
-  throttles <- 0L         # slow-down replies since the last capture that got through
-  stopped <- NULL         # why submitting stopped for the rest of the run
+  w$hold_until <- -Inf      # nothing is submitted before this (archive.org asked to slow down)
+  w$throttles <- 0L         # slow-down replies since the last capture that got through
+  w$stopped <- NULL         # why submitting stopped for the rest of the run
   # every resubmission since the last capture that got through counts for the run, and an error
   # for the URL: a throttle in the status reply used to requeue the URL and the job id it got next
   # reset the strikes, so one URL made 174 POSTs and never stopped (review of 29a55d8, G5). A URL
@@ -416,45 +417,45 @@ wbsave <- function(urls, ak = NULL, sk = NULL, within = "30d", jobs = 4L,
   # counts toward the eight strikes); a run resubmits at most as many times as it has URLs (and
   # 20) between two captures that get through, then stops (a cap over the whole run stopped a
   # slow archive at 27 of 40; review of 46de6a9, H7)
-  requeues <- 0L
-  requeue_cap <- max(20L, length(queue))
+  w$requeues <- 0L
+  requeue_cap <- max(20L, length(w$queue))
   requeue <- function(u, why, err = TRUE) {
-    requeues <<- requeues + 1L
+    w$requeues <- w$requeues + 1L
     if (err) {
-      a <- attempts[u]
-      attempts[[u]] <<- (if (is.na(a)) 0L else a) + 1L
-      if (attempts[[u]] >= 6L) {
+      a <- w$attempts[u]
+      w$attempts[[u]] <- (if (is.na(a)) 0L else a) + 1L
+      if (w$attempts[[u]] >= 6L) {
         finish(u, "failed", msg = paste("gave up after six tries:", why))
         return(FALSE)
       }
     }
-    if (requeues > requeue_cap) {
-      queue <<- c(u, queue)
-      stopped <<- sprintf("archive.org answered %d resubmissions with errors or slow-downs (%s)", requeues, why)
+    if (w$requeues > requeue_cap) {
+      w$queue <- c(u, w$queue)
+      w$stopped <- sprintf("archive.org answered %d resubmissions with errors or slow-downs (%s)", w$requeues, why)
       return(FALSE)
     }
-    queue <<- c(u, queue)
+    w$queue <- c(u, w$queue)
     TRUE
   }
   slow_down <- function(u, res, now, why) {
-    throttles <<- throttles + 1L
-    if (throttles >= 8L) {
-      queue <<- c(u, queue)
-      stopped <<- sprintf("archive.org asked to slow down eight times in a row (%s)", why)
+    w$throttles <- w$throttles + 1L
+    if (w$throttles >= 8L) {
+      w$queue <- c(u, w$queue)
+      w$stopped <- sprintf("archive.org asked to slow down eight times in a row (%s)", why)
       return(invisible())
     }
     if (!requeue(u, why, err = FALSE)) return(invisible())
     ra <- .bl_wb_retry_after(res)
-    hold_until <<- now + if (!is.na(ra)) max(ra, spacing) else min(600, 15 * 2^(throttles - 1L))
+    w$hold_until <- now + if (!is.na(ra)) max(ra, spacing) else min(600, 15 * 2^(w$throttles - 1L))
   }
   # a message that archive.org left empty is written out, so wbrtry() knows what happened
   said <- function(m, default) if (is.na(m) || !nzchar(m)) default else m
-  while ((length(queue) && is.null(stopped)) || length(inflight)) {
+  while ((length(w$queue) && is.null(w$stopped)) || length(inflight)) {
     now <- .bl_wb_now()
     # start captures while there is room, no faster than permin and not while held
-    while (is.null(stopped) && length(inflight) < jobs && length(queue) && now >= max(next_post, hold_until)) {
-      u <- queue[[1L]]
-      queue <- queue[-1L]
+    while (is.null(w$stopped) && length(inflight) < jobs && length(w$queue) && now >= max(next_post, w$hold_until)) {
+      u <- w$queue[[1L]]
+      w$queue <- w$queue[-1L]
       next_post <- now + spacing
       res <- .bl_wb_post(form(u), hdr)
       refused(res)
@@ -463,8 +464,8 @@ wbsave <- function(urls, ak = NULL, sk = NULL, within = "30d", jobs = 4L,
       if (!is.na(id)) {
         inflight[[u]] <- list(id = id, start = now, due = now + poll, fails = 0L)
       } else if (!is.null(j) && .bl_wb_account_cap(j)) {
-        queue <- c(u, queue)
-        stopped <- sprintf("the account's daily capture limit is reached (%s)", .bl_wb_str(j$message) %|NA|% "")
+        w$queue <- c(u, w$queue)
+        w$stopped <- sprintf("the account's daily capture limit is reached (%s)", .bl_wb_str(j$message) %|NA|% "")
       } else if (identical(res$status, 429L) || (!is.null(j) && .bl_wb_throttled(j))) {
         slow_down(u, res, now, if (identical(res$status, 429L)) "HTTP 429" else
           (.bl_wb_str(j$status_ext) %|NA|% .bl_wb_str(j$message) %|NA|% "slow down"))
@@ -474,20 +475,20 @@ wbsave <- function(urls, ak = NULL, sk = NULL, within = "30d", jobs = 4L,
         why <- if (res$status < 0) res$error else sprintf("HTTP %d", res$status)
         if (requeue(u, why)) {
           ra <- .bl_wb_retry_after(res)
-          hold_until <- now + if (!is.na(ra)) ra else min(300, 15 * 2^(attempts[[u]] - 1L))
+          w$hold_until <- now + if (!is.na(ra)) ra else min(300, 15 * 2^(w$attempts[[u]] - 1L))
         }
       } else if (.bl_wb_daily_limit(j)) {
-        throttles <- 0L
+        w$throttles <- 0L
         existing_or_failed(u, said(.bl_wb_str(j$message), "captured already today"))
       } else if (!is.na(.bl_wb_ts(j$timestamp))) {
-        throttles <- 0L
-        requeues <- 0L
+        w$throttles <- 0L
+        w$requeues <- 0L
         finish(u, "existing", .bl_wb_ts(j$timestamp), .bl_wb_snapshot(.bl_wb_ts(j$timestamp), u))
       } else {
         finish(u, "failed", msg = .bl_wb_str(j$message) %|NA|% if (!is.null(j$job_id))
           "archive.org's reply has no usable job id" else sprintf("HTTP %d", res$status))
       }
-      .bl_anim_update(anim, sum(counts), info())
+      .bl_anim_update(anim, sum(w$counts), info())
       now <- .bl_wb_now()
     }
     # check the captures that are due; a failed check backs off instead of asking again at once
@@ -511,8 +512,8 @@ wbsave <- function(urls, ak = NULL, sk = NULL, within = "30d", jobs = 4L,
           inflight[[u]]$due <- now + if (!is.na(ra)) ra else min(300, poll * 2^job$fails)
         }
       } else if (identical(st, "success")) {
-        throttles <- 0L
-        requeues <- 0L
+        w$throttles <- 0L
+        w$requeues <- 0L
         ts <- .bl_wb_ts(j$timestamp)
         orig <- .bl_wb_str(j$original_url)
         if (is.na(orig) || !grepl("^https?://[^[:space:]]+$", orig, ignore.case = TRUE)) orig <- u
@@ -523,7 +524,7 @@ wbsave <- function(urls, ak = NULL, sk = NULL, within = "30d", jobs = 4L,
         if (.bl_wb_throttled(j)) {
           slow_down(u, res, now, .bl_wb_str(j$status_ext) %|NA|% "slow down")
         } else if (.bl_wb_daily_limit(j)) {
-          throttles <- 0L
+          w$throttles <- 0L
           existing_or_failed(u, said(.bl_wb_str(j$message), "captured already today"))
         } else {
           finish(u, "failed", msg = .bl_wb_str(j$message) %|NA|% (.bl_wb_str(j$status_ext) %|NA|% "error"))
@@ -535,29 +536,29 @@ wbsave <- function(urls, ak = NULL, sk = NULL, within = "30d", jobs = 4L,
         inflight[[u]]$fails <- 0L
         inflight[[u]]$due <- now + poll
       }
-      .bl_anim_update(anim, sum(counts), info())
+      .bl_anim_update(anim, sum(w$counts), info())
     }
     # wait for whichever comes first: a capture to check, or the next submission
     nxt <- c(if (length(inflight)) min(vapply(inflight, function(x) x$due, numeric(1))),
-             if (is.null(stopped) && length(queue) && length(inflight) < jobs) max(next_post, hold_until))
+             if (is.null(w$stopped) && length(w$queue) && length(inflight) < jobs) max(next_post, w$hold_until))
     if (length(nxt)) {
       gap <- min(nxt) - .bl_wb_now()
       if (gap > 0) .bl_anim_wait(anim, max(0.2, gap))
     }
   }
-  if (!is.null(stopped)) not_sent <- c(queue, not_sent)
-  .bl_anim_update(anim, sum(counts), info(), force = TRUE)
+  if (!is.null(w$stopped)) not_sent <- c(w$queue, not_sent)
+  .bl_anim_update(anim, sum(w$counts), info(), force = TRUE)
   earlier <- length(kept)
   started <- length(todo) + length(resumed) - length(not_sent)
-  .bl_anim_done(anim, sprintf("Wayback: %d saved, %d existing, %d failed (of %d)%s%s", counts[["saved"]],
-                              counts[["existing"]], counts[["failed"]], started,
+  .bl_anim_done(anim, sprintf("Wayback: %d saved, %d existing, %d failed (of %d)%s%s", w$counts[["saved"]],
+                              w$counts[["existing"]], w$counts[["failed"]], started,
                               if (earlier) sprintf("; %d done in an earlier run", earlier) else "",
                               if (length(not_sent)) sprintf("; %d not sent%s, run again to continue", length(not_sent),
-                                                             if (is.null(stopped)) " (max_captures)" else
-                                                               paste0(": ", stopped)) else ""))
-  out <- .bl_wb_frame(results[intersect(urls, names(results))])
+                                                             if (is.null(w$stopped)) " (max_captures)" else
+                                                               paste0(": ", w$stopped)) else ""))
+  out <- .bl_wb_frame(w$results[intersect(urls, names(w$results))])
   attr(out, "not_sent") <- not_sent
-  if (!is.null(stopped)) attr(out, "stopped") <- stopped
+  if (!is.null(w$stopped)) attr(out, "stopped") <- w$stopped
   out
 }
 
@@ -673,12 +674,12 @@ print.rmbl_wayback_save <- function(x, ...) {
 #' try(wbrtry(tempfile(fileext = ".jsonl")))
 #'
 #' # With failures to resend, keys and the network are needed.
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' res <- wbsave(urls, output = "snapshots.jsonl")
 #' # later, or the next day once the daily capture limits have reset:
 #' res <- wbrtry("snapshots.jsonl")
 #' attr(res, "retry")
-#' }
 #' @export
 wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
   output <- .rmbl_string1(output, "output")

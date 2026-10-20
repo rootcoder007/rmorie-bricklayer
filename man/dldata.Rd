@@ -68,12 +68,13 @@ read.csv(dest)
 # file:// is refused unless asked for, and so is an append mode
 try(dldata(paste0("file://", src), tempfile()))
 try(dldata("https://example.org/x.csv", tempfile(), mode = "a"))
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network
 dest <- dldata("https://cloud.r-project.org/",
   tempfile(fileext = ".html"),
   quiet = TRUE
 )
 file.exists(dest)
-}
+\dontshow{\}) # examplesIf}
 }

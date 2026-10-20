@@ -227,10 +227,10 @@
 #'
 #' # arguments are checked
 #' try(svcs(maxage = -1))
-#' \dontrun{
+#'
+#' @examplesIf interactive()
 #' # ask the site now (network), and keep the answer for a day
 #' svcs(refresh = TRUE)
-#' }
 #' @export
 svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20,
                                 offline = FALSE) {

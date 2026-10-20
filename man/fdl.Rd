@@ -75,10 +75,11 @@ fdl(paste0("file://", src, "-missing"), tempfile(),
 
 # a refused URL is an error, not FALSE
 try(fdl("http://example.org/data.csv", tempfile()))
-\dontrun{
+
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network; the Wayback fallback is looked up on failure
 ok <- fdl("https://cloud.r-project.org/",
   tempfile(fileext = ".html"))
 ok
-}
+\dontshow{\}) # examplesIf}
 }

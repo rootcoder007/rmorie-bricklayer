@@ -145,9 +145,10 @@ cpsfals <- function(data, stat, trt = NULL, n = 199L,
   on.exit(pg$done(), add = TRUE)
   pg$update(0, "the data as given")
   observed <- .rmbl_falsify_eval(stat, data, "the data as given")
-  rows <- list()
+  acc <- new.env(parent = emptyenv())
+  acc$rows <- list()
   add <- function(control, passed, value, detail) {
-    rows[[length(rows) + 1L]] <<- data.frame(
+    acc$rows[[length(acc$rows) + 1L]] <- data.frame(
       control = control, passed = passed, value = value,
       detail = as.character(detail), stringsAsFactors = FALSE)
   }
@@ -220,7 +221,7 @@ cpsfals <- function(data, stat, trt = NULL, n = 199L,
                 sum(sok), q[1], q[2], spread, scale))
   }
 
-  df <- do.call(rbind, rows)
+  df <- do.call(rbind, acc$rows)
   rownames(df) <- NULL
   out <- list(observed = observed, controls = df,
               permutation = perm,
