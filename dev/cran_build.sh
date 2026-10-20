@@ -13,7 +13,8 @@ rsync -a --exclude .git --exclude '.Rd2pdf*' --exclude 'src/*.o' --exclude 'src/
 cd "$out/$pkg"
 for p in rmoriebricklayer rmoriedata rmorie; do
   for f in README.md inst/CITATION CITATION.cff; do
-    [ -f "$f" ] && sed -i "s|https://rootcoder007.r-universe.dev/$p\b|https://CRAN.R-project.org/package=$p|g" "$f"
+    # the citation and the install pointer go to the CRAN page; the r-universe badge keeps its own link
+    [ -f "$f" ] && sed -i "/badges\//! s|https://rootcoder007.r-universe.dev/$p\b|https://CRAN.R-project.org/package=$p|g" "$f"
   done
 done
 # CRAN does not know the Remotes field (its sibling pins are for r-universe and GitHub installs)
