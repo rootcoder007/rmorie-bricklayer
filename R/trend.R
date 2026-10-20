@@ -46,13 +46,12 @@
 #' \eqn{n} the slopes may not reach the requested confidence; the bound is
 #' then the most extreme slope and \code{slopecicla} is \code{TRUE}.
 #'
-#' Missing periods are dropped and the series is sorted by \code{x}.
-#' Errors: fewer than three periods; infinite values; \code{x} and \code{y}
-#' of different lengths; a period given twice in \code{x}; a data frame without \code{value} or with a column
-#' not found; more than 20,000 periods (the pairwise slopes would not fit in
-#' memory); a \code{conflvl} outside (0, 1). \code{exact = TRUE} with \eqn{n > 8}
-#' warns and uses the normal
-#' approximation.
+#' Missing periods are dropped and the series is sorted by \code{x}. Errors: fewer
+#' than three periods; infinite values; \code{x} and \code{y} of different lengths; a
+#' period given twice in \code{x}; a data frame without \code{value} or with a column
+#' not found; more than 20,000 periods (the pairwise slopes would not fit in memory);
+#' a \code{conflvl} outside (0, 1). \code{exact = TRUE} with \eqn{n > 8} warns and
+#' uses the normal approximation.
 #'
 #' @param y Numeric vector, the series in period order, or a data frame.
 #' @param x Numeric vector of periods, default \code{NULL}: the position
@@ -366,15 +365,15 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
 #' otherwise \code{nperm} random permutations are drawn under \code{seed},
 #' and the caller's random number stream is restored afterwards.
 #'
-#' The test assumes the periods are exchangeable under no change, so it
-#' ignores autocorrelation and smooth trends; a steady trend can produce a
-#' "step". With very few periods even a clean step cannot reach small
-#' p-values (six periods allow only 720 orderings). Missing values are
-#' dropped. A series with values beyond 1e150 is scanned in units of its largest absolute value, so
-#' the statistic does not overflow; \code{before}, \code{after} and \code{difference} are given back
-#' in the units of \code{y}, and \code{statistic} stays in the rescaled units. Errors: infinite
-#' values; fewer than \code{2 * minseg} periods; numeric or date \code{x} that is not strictly
-#' increasing. A progress bar is shown in an interactive session.
+#' The test assumes the periods are exchangeable under no change, so it ignores
+#' autocorrelation and smooth trends; a steady trend can produce a "step". With very
+#' few periods even a clean step cannot reach small p-values (six periods allow only
+#' 720 orderings). Missing values are dropped. A series with values beyond 1e150 is
+#' scanned in units of its largest absolute value, so the statistic does not overflow;
+#' \code{before}, \code{after} and \code{difference} are given back in the units of
+#' \code{y}, and \code{statistic} stays in the rescaled units. Errors: infinite
+#' values; fewer than \code{2 * minseg} periods; numeric or date \code{x} that is not
+#' strictly increasing. A progress bar is shown in an interactive session.
 #'
 #' @param y Numeric vector, the series in period order.
 #' @param x Vector of periods, default \code{NULL} (the position). Used only
