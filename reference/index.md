@@ -768,6 +768,28 @@ Justice and Toronto Police Service data.
 - [`justice-data`](https://rootcoder007.github.io/rmorie-bricklayer/reference/justice-data.md)
   : Court and police data shipped with the package
 
+## Search and rescue
+
+Koopman’s search theory: lateral range curves and sweep width,
+probability of detection from coverage and for parallel sweeps,
+probability of success with Bayesian updating, datum probability maps
+and the optimal allocation of effort; every figure of Frost’s The Theory
+of Search.
+
+- [`ltrlrng()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  [`swpwdth()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  [`srchpod()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  [`pswppod()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  [`srchscs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  [`datumpmap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  [`optcrcsrch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  [`opteffort()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  : Search theory for search and rescue planning
+- [`optsqr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/optsqr.md)
+  : The optimal search square for a circular normal datum
+- [`srchfig()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/srchfig.md)
+  : The figures of The Theory of Search
+
 ## Evaluating a policy
 
 Difference in differences with two-way fixed effects, event studies,
@@ -1197,6 +1219,10 @@ options; Lorenz and funnel plots for results that are plain data frames.
   [`plot(`*`<rmbl_permutation>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_loo>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_cohort_trends>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_ltrlrng>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_srchpod>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_datummap>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_opteffort>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_svy_estimate>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_svy_compare>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_trc_gaps>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)

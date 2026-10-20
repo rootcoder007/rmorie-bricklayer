@@ -69,6 +69,8 @@
   governance](https://rootcoder007.github.io/rmorie-bricklayer/articles/first-nations-metis-inuit-health.md):
 - [Courts and crime: flow, time, outcomes, place and case
   mix](https://rootcoder007.github.io/rmorie-bricklayer/articles/courts-and-crime.md):
+- [Search and rescue: detection, coverage and the best use of
+  effort](https://rootcoder007.github.io/rmorie-bricklayer/articles/search-and-rescue.md):
 
 ### Data handling
 

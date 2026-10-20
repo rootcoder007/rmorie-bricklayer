@@ -66,7 +66,7 @@ method returns the data it drew, invisibly, as a data frame."><meta property="og
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Plot methods for the package's results</h1>
-      <small class="dont-index">Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/R/census.R" class="external-link"><code>R/census.R</code></a>, <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/R/hotspot.R" class="external-link"><code>R/hotspot.R</code></a>, <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/R/indigenous_frameworks.R" class="external-link"><code>R/indigenous_frameworks.R</code></a>, and 8 more</small>
+      <small class="dont-index">Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/R/census.R" class="external-link"><code>R/census.R</code></a>, <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/R/hotspot.R" class="external-link"><code>R/hotspot.R</code></a>, <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/R/indigenous_frameworks.R" class="external-link"><code>R/indigenous_frameworks.R</code></a>, and 9 more</small>
       <div class="d-none name"><code>plot-methods.Rd</code></div>
     </div>
 
@@ -363,6 +363,21 @@ method returns the data it drew, invisibly, as a data frame.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'rmbl_cohort_trends'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'rmbl_ltrlrng'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, equiv <span class="op">=</span> <span class="cn">FALSE</span>, spacing <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'rmbl_srchpod'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, models <span class="op">=</span> <span class="cn">NULL</span>, m <span class="op">=</span> <span class="cn">NULL</span>, cmax <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'rmbl_datummap'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, view <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"map"</span>, <span class="st">"persp"</span>, <span class="st">"both"</span>, <span class="st">"cells"</span><span class="op">)</span>,</span>
+<span>  contours <span class="op">=</span> <span class="fl">8L</span>, digits <span class="op">=</span> <span class="fl">2</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'rmbl_opteffort'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span>, main <span class="op">=</span> <span class="cn">NULL</span>, col <span class="op">=</span> <span class="cn">NULL</span>, palette <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'rmbl_svy_estimate'</span></span>

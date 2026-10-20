@@ -296,6 +296,21 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 # S3 method for class 'rmbl_cohort_trends'
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
+# S3 method for class 'rmbl_ltrlrng'
+plot(x, ..., equiv = FALSE, spacing = NULL,
+  main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_srchpod'
+plot(x, ..., models = NULL, m = NULL, cmax = NULL,
+  main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_datummap'
+plot(x, ..., view = c("map", "persp", "both", "cells"),
+  contours = 8L, digits = 2, main = NULL, col = NULL, palette = NULL)
+
+# S3 method for class 'rmbl_opteffort'
+plot(x, ..., main = NULL, col = NULL, palette = NULL)
+
 # S3 method for class 'rmbl_svy_estimate'
 plot(x, ..., main = NULL, col = NULL, palette = NULL)
 

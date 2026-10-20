@@ -378,6 +378,31 @@ produced the data.
   Police Service excerpts ship in `inst/extdata` (`?justice-data`);
   [`vignette("courts-and-crime")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/courts-and-crime.md).
 
+- **Search and rescue** —
+  [`ltrlrng()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  (lateral range curves: inverse cube, definite range, M-Beta),
+  [`swpwdth()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  (sweep width),
+  [`srchpod()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  and
+  [`pswppod()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  (probability of detection from coverage, and for a parallel sweep with
+  navigation error),
+  [`srchscs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  (probability of success and the Bayesian update after a search),
+  [`datumpmap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  (point, line and area datums on a grid),
+  [`optcrcsrch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  and
+  [`opteffort()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  (Koopman’s and Stone’s optimal effort),
+  [`optsqr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/optsqr.md)
+  (the optimal search square for a point datum, one search or a series).
+  Each result prints and plots, and
+  [`srchfig()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/srchfig.md)
+  draws every figure of Frost’s *The Theory of Search* (1996) from them;
+  [`vignette("search-and-rescue")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/search-and-rescue.md).
+
 - **Evaluating a policy** —
   [`plndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndid.md)
   (two-way fixed effects with cluster-robust errors),

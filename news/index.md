@@ -648,6 +648,35 @@ New estimators, each checked against the reference implementation
   for a sample drawn without replacement, frequency or reliability
   weights), chosen automatically from the population size and explained.
 
+### Search and rescue
+
+- Search theory for planning a search, in base R:
+  [`ltrlrng()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  (lateral range curves),
+  [`swpwdth()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  (sweep width),
+  [`srchpod()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  (probability of detection from coverage),
+  [`pswppod()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  (a parallel sweep, with navigation error),
+  [`srchscs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  (probability of success and the update after a search that finds
+  nothing),
+  [`datumpmap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  (point, line and area datums on a grid),
+  [`optcrcsrch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  and
+  [`opteffort()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
+  (the optimal effort for a circular datum and over cells), and
+  [`optsqr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/optsqr.md)
+  (the square a point-datum search should cover, for one search or a
+  series). The numbers agree with rmorie’s to 1e-12. Each result prints
+  and plots.
+  [`srchfig()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/srchfig.md)
+  draws each of the 36 figures of Frost’s *The Theory of Search* (1996)
+  from these functions with the book’s parameters, and a new vignette,
+  “Search and rescue”, walks the book’s chapters through them.
+
 ### Fixes from the CRAN stress test of 0.5.14
 
 - **No leak on an argument error in compiled code**: an error raised
