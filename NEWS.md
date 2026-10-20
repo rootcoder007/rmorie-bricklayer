@@ -1,5 +1,20 @@
 # rmoriebricklayer 1.0.0
 
+## Standards and the fixes they surfaced
+
+* The package documents the rOpenSci statistical software standards (General, EDA, Time Series)
+  with `srr` tags: 122 met, 29 not applicable, 6 still to do (internal-function roxygen,
+  duplicated refusal texts, and period axes on four plots).
+* `stepchg()` puts `before`, `after` and `difference` back into the units of `y` when the
+  series is above 1e150 (they stayed rescaled), and refuses a numeric or date `x` that is not
+  strictly increasing. `trndtst()` refuses duplicated periods.
+* `chwkfit()` warns when the branching ratio sits on its 0.99 bound.
+* `yoy()` compares ordered-factor periods by level order and completes missing levels; its
+  refusal names every accepted input. `fylbl()`'s help says a fractional year is an error.
+* Plot labels shrink to no less than 0.6 of the session `cex` (`?blpal`).
+* README: who the package is for, which algorithms re-implement existing packages and are checked
+  against them, the life cycle, and how to run the extended tests.
+
 ## Capsule template and the attestation check
 
 * `usecpstmpl()`'s `analysis.R` pins the source digest into `data_provenance.json` on its first
