@@ -191,18 +191,30 @@ distributions, with each PSI bin’s share of the index written on it.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">d</span>, what <span class="op">=</span> <span class="st">"columns"</span>, cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"size"</span>, <span class="st">"grade"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="drift_files/figure-html/drift-columns-1.png" class="r-plt" alt="" width="672"></p>
+<p><code>what = "ecdf"</code> and <code>what = "quantiles"</code> show
+the same moves as cumulative shares and as quantiles against the
+identity line, and <code>what = "fingerprint"</code> puts every column
+on one chart: a spoke per column at its PSI, the bands as rings.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">d</span>, what <span class="op">=</span> <span class="st">"fingerprint"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="drift_files/figure-html/drift-fingerprint-1.png" class="r-plt" alt="" width="480"></p>
 <p>For someone who will not run R, <code><a href="../reference/drfthtml.html">drfthtml()</a></code> writes the
 same report as one HTML file. It fetches nothing, so it opens from disk
-and stays as it was written. It holds only the binned summaries, never
-the rows. The page leads with the verdict and the capsule’s provenance.
-Its column table can be searched, filtered and sorted, and the up and
-down keys move through it. For each column it shows both samples’
-statistics and three charts: the distributions, the PSI by bin (up where
-the current sample has more mass), and the first digits against
-Benford’s law. Sliders move the bands and alpha and score the verdicts
-again. Further tabs show the manifest diff and the PSI over earlier
-runs. Buttons export Markdown, JSON, SVG or a GitHub comment.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+and stays as it was written, and it holds only the binned summaries,
+never the rows. It opens on the chosen column’s two distributions drawn
+in on a canvas, with the verdict and the capsule’s provenance beside
+them. The Columns tab has the table, which can be searched, filtered and
+sorted (the up and down keys move through it), and the column detail:
+both samples’ statistics, a sentence on the verdict, and charts that
+each carry a line on how to read them, namely the density overlay (a
+category flow for a categorical column), the ECDF overlay, the quantile
+shift, the PSI by bin and the first digits against Benford’s law. The
+Overview tab has the fingerprint and a tile per column. Further tabs
+show the manifest diff as a tree, the PSI over earlier runs as a
+heatmap, and the capsule chain from provenance to attestation. Sliders
+move the bands and alpha and score every chart again. Buttons export
+Markdown, JSON, SVG or a GitHub comment.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"drift.html"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/drfthtml.html">drfthtml</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">f</span>, title <span class="op">=</span> <span class="st">"Pinned against fetched"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span>
@@ -226,7 +238,7 @@ stating, because the index is widely used without it: PSI’s conventional
 bands (0.1 “investigate”, 0.25 “material shift”) are large-sample
 heuristics with no calibrated null distribution. On a few hundred rows,
 binning noise alone clears 0.25 routinely:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>v <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>v <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
@@ -242,7 +254,7 @@ goodness-of-fit test against the reference proportions. The distinction
 matters: the reference is itself a finite sample, and treating its
 proportions as known ignores their sampling error, which inflates the
 false-positive rate.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"p"</span>, <span class="st">"q"</span>, <span class="st">"r"</span><span class="op">)</span>, <span class="fl">300</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"p"</span>, <span class="st">"q"</span>, <span class="st">"r"</span><span class="op">)</span>, <span class="fl">300</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
@@ -258,7 +270,7 @@ false-positive rate.</p>
 <p>Benford’s law describes the leading digits of quantities that span
 several orders of magnitude. Figures that were rounded, capped,
 re-scaled or invented typically do not follow it.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># A quantity spanning several orders of magnitude.</span></span>
 <span><span class="fu"><a href="../reference/benfordtst.html">benfordtst</a></span><span class="op">(</span><span class="fl">10</span><span class="op">^</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">2000</span>, <span class="fl">0</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Benford first-digit screen ────────────────────────────────────</span></span>
@@ -280,7 +292,7 @@ re-scaled or invented typically do not follow it.</p>
 <span><span class="co">#&gt;       8     0.052     0.051  ###                 </span></span>
 <span><span class="co">#&gt;       9     0.044     0.046  ###                 </span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Leading digits drawn uniformly -- not what measurement looks like.</span></span>
 <span><span class="fu"><a href="../reference/benfordtst.html">benfordtst</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">9</span>, <span class="fl">2000</span>, <span class="cn">TRUE</span><span class="op">)</span>, <span class="st">"000"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Benford first-digit screen ────────────────────────────────────</span></span>
@@ -314,7 +326,7 @@ small p-value is a reason to look.</p>
 allowed values – is <code><a href="../reference/valsch.html">valsch()</a></code>’s job, and the two complement
 each other. <code><a href="../reference/infsch.html">infsch()</a></code> writes the schema for you from data
 you trust:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">schema</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/infsch.html">infsch</a></span><span class="op">(</span><span class="va">reference</span><span class="op">)</span></span>
 <span><span class="va">schema</span></span>
 <span><span class="co">#&gt; ── Inferred schema ───────────────────────────────────────────────</span></span>
@@ -327,7 +339,7 @@ you trust:</p>
 <span><span class="co">#&gt;   size                 numeric    max NA  10.0%  [0.1196, 10.86]</span></span>
 <span><span class="co">#&gt;   grade                character  max NA  10.0%  a, b, c</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># It accepts the data it learned from.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="../reference/valsch.html">valsch</a></span><span class="op">(</span><span class="va">reference</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>schema <span class="op">=</span> <span class="va">schema</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 0</span></span>
@@ -347,7 +359,7 @@ rather than an accident of this sample.</p>
 <p>Drift checks fit a question a re-release raises: did the distribution
 of a published table change between cycles? On the bundled indicators,
 the 2015/2018 and 2019/2022 estimates:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hi</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indiex.html">indiex</a></span><span class="op">(</span><span class="st">"health"</span><span class="op">)</span></span>
 <span><span class="va">a</span> <span class="op">&lt;-</span> <span class="va">hi</span><span class="op">$</span><span class="va">estimate</span><span class="op">[</span><span class="va">hi</span><span class="op">$</span><span class="va">period</span> <span class="op">==</span> <span class="st">"2015/2018"</span><span class="op">]</span></span>
 <span><span class="va">b</span> <span class="op">&lt;-</span> <span class="va">hi</span><span class="op">$</span><span class="va">estimate</span><span class="op">[</span><span class="va">hi</span><span class="op">$</span><span class="va">period</span> <span class="op">==</span> <span class="st">"2019/2022"</span><span class="op">]</span></span>

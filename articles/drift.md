@@ -131,18 +131,35 @@ plot(d, what = "columns", cols = c("size", "grade"))
 
 ![](drift_files/figure-html/drift-columns-1.png)
 
+`what = "ecdf"` and `what = "quantiles"` show the same moves as
+cumulative shares and as quantiles against the identity line, and
+`what = "fingerprint"` puts every column on one chart: a spoke per
+column at its PSI, the bands as rings.
+
+``` r
+
+plot(d, what = "fingerprint")
+```
+
+![](drift_files/figure-html/drift-fingerprint-1.png)
+
 For someone who will not run R,
 [`drfthtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drfthtml.md)
 writes the same report as one HTML file. It fetches nothing, so it opens
-from disk and stays as it was written. It holds only the binned
-summaries, never the rows. The page leads with the verdict and the
-capsule’s provenance. Its column table can be searched, filtered and
-sorted, and the up and down keys move through it. For each column it
-shows both samples’ statistics and three charts: the distributions, the
-PSI by bin (up where the current sample has more mass), and the first
-digits against Benford’s law. Sliders move the bands and alpha and score
-the verdicts again. Further tabs show the manifest diff and the PSI over
-earlier runs. Buttons export Markdown, JSON, SVG or a GitHub comment.
+from disk and stays as it was written, and it holds only the binned
+summaries, never the rows. It opens on the chosen column’s two
+distributions drawn in on a canvas, with the verdict and the capsule’s
+provenance beside them. The Columns tab has the table, which can be
+searched, filtered and sorted (the up and down keys move through it),
+and the column detail: both samples’ statistics, a sentence on the
+verdict, and charts that each carry a line on how to read them, namely
+the density overlay (a category flow for a categorical column), the ECDF
+overlay, the quantile shift, the PSI by bin and the first digits against
+Benford’s law. The Overview tab has the fingerprint and a tile per
+column. Further tabs show the manifest diff as a tree, the PSI over
+earlier runs as a heatmap, and the capsule chain from provenance to
+attestation. Sliders move the bands and alpha and score every chart
+again. Buttons export Markdown, JSON, SVG or a GitHub comment.
 
 ``` r
 

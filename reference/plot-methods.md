@@ -181,7 +181,7 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 plot(
   x,
   ...,
-  what = c("psi", "columns", "benford"),
+  what = c("psi", "columns", "benford", "ecdf", "quantiles", "fingerprint"),
   cols = NULL,
   warn = NULL,
   fail = NULL,
@@ -348,7 +348,8 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
   - `rmbl_yoy`: `"pctchg"` or `"value"`;
 
-  - `bricklayer_drift`: `"psi"`, `"columns"` or `"benford"`;
+  - `bricklayer_drift`: `"psi"`, `"columns"`, `"benford"`, `"ecdf"`,
+    `"quantiles"` or `"fingerprint"`;
 
   - `rmbl_case_flow`: `"flow"` and/or `"clearance"`;
 
@@ -504,7 +505,11 @@ x position of each point drawn: an `at` column (`rmbl_yoy`,
   as dashed lines; `"columns"` the reference and current distributions
   of up to six columns (`cols`, or the worst), each PSI bin's term
   written on it; `"benford"` the first digits of numeric columns against
-  Benford's law, with the test's verdict.
+  Benford's law with its 95\\ test's verdict; `"ecdf"` both ECDFs with
+  the area between them shaded; `"quantiles"` the current quantiles
+  against the reference's on the identity line; `"fingerprint"` one
+  spoke per column, its PSI as the distance out, with the bands as
+  rings.
 
 - `bricklayer_benford`:
 
@@ -870,6 +875,12 @@ plot(dr)
 plot(dr, what = "columns")
 
 plot(dr, what = "benford", warn = 0.05, fail = 0.2)
+
+plot(dr, what = "ecdf")
+
+plot(dr, what = "quantiles")
+
+plot(dr, what = "fingerprint")
 
 plot(drftcal(dd, n = 20L))
 
