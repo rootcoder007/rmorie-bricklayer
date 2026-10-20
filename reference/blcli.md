@@ -69,8 +69,9 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
 
 - `verify PATH [--json] [--fail-on LEVEL] [--public-key HEX]`:
 
-  check every capsule under PATH as the rmbl GitHub Action does: each
-  file against its JSON Schema
+  check every capsule under PATH as the rmbl GitHub Action does
+  ([`cpschk`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)):
+  each file against its JSON Schema
   ([`schemapath`](https://rootcoder007.github.io/rmorie-bricklayer/reference/schemapath.md)),
   [`vrfcps`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
   and
@@ -78,14 +79,22 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
   The secret of an hmac bundle is read from `RMBL_KEY`, which is then
   removed from the environment. Prints the Markdown report, or JSON with
   `--json`; exits 1 when a failed row is at or above `--fail-on`
-  (`error`, the default, `drift` or `warn`)
+  (`error`, the default, `drift` or `warn`). `--base MANIFEST|DIR`
+  compares each manifest with its base copy, `--manifests GLOB` checks
+  only the capsule files matching GLOB, `--snapshot` looks up each
+  source's latest Wayback snapshot and `--no-footprint` leaves the
+  footprint
+  ([`co2fp`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2fp.md))
+  out of the report
 
 - `drift PATH [--json] [--fail-on LEVEL]`:
 
-  verify, then fetch each source again: new bytes are a warning,
-  drifting columns
-  ([`cpsdrft`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md))
-  are drift
+  verify, then fetch each source again and compare it column by column
+  ([`cpsdrft`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsdrft.md),
+  Benford): a column past `--psi-warn X` (0.1) is a warning, a flagged
+  one past `--psi-fail X` (0.25) drift. `--allow-file` accepts `file://`
+  sources, `--cache DIR` keeps each source and reads it when a fetch
+  fails; the options of verify apply
 
 - `refresh PATH`:
 
@@ -96,7 +105,7 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
 
 - `report PATH [--format md|json]`:
 
-  the verify report, exit 0
+  the verify report, exit 0; the options of verify apply
 
 - `functions [PATTERN]`:
 
@@ -220,7 +229,9 @@ blcli("help")
 #> 
 #> Capsules (the checks of the rmbl GitHub Action)
 #>   verify PATH [--json] [--fail-on LEVEL]    schemas, digests, bundle signature (hmac secret: RMBL_KEY)
+#>         [--base MANIFEST|DIR] [--snapshot]  manifests against their base copies; Wayback snapshots
 #>   drift PATH [--json] [--fail-on LEVEL]     verify, then fetch each source and compare it with the pin
+#>         [--psi-warn X] [--psi-fail X]       the PSI bands of the column table (0.1 and 0.25)
 #>   refresh PATH                              pin each source's new bytes in its provenance
 #>   report PATH [--format md|json]            the verify report; never fails
 #> 
@@ -433,28 +444,35 @@ invisible(cpsrfrsh(d))
 blcli(c("verify", d))
 #> ## rmbl capsule verify with [rmoriebricklayer 1.0.0](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmpaSYQ04/capsule-1f1f38201773`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/RtmpcKHsEi/capsule-1eb715bb425`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmpaSYQ04/capsule-1f1f38201773` | /tmp/RtmpaSYQ04/temp_libpath1f1f7fd64739/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/RtmpcKHsEi/capsule-1eb715bb425` | /tmp/RtmpcKHsEi/temp_libpath1eb7107b8e56/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmpaSYQ04/capsule-1f1f38201773</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/RtmpcKHsEi/capsule-1eb715bb425</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> | | Check | Detail |
+#> - Source: /tmp/RtmpcKHsEi/temp_libpath1eb7107b8e56/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
+#> 
+#> | Status | Check | Detail |
 #> |---|---|---|
-#> | ✔ | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ | provenance_readable | /tmp/RtmpaSYQ04/capsule-1f1f38201773/data_provenance.json |
-#> | ✔ | data_present | /tmp/RtmpaSYQ04/capsule-1f1f38201773/otis_a01_individuals.csv |
-#> | ✔ | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
-#> | ✔ | data_size_bytes | 462 bytes on disk |
-#> | ✔ | data_readable | /tmp/RtmpaSYQ04/capsule-1f1f38201773/otis_a01_individuals.csv |
-#> | ✔ | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
+#> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
+#> | ✔ pass | provenance_readable | /tmp/RtmpcKHsEi/capsule-1eb715bb425/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/RtmpcKHsEi/capsule-1eb715bb425/otis_a01_individuals.csv |
+#> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
+#> | ✔ pass | data_size_bytes | 462 bytes on disk |
+#> | ✔ pass | data_readable | /tmp/RtmpcKHsEi/capsule-1eb715bb425/otis_a01_individuals.csv |
+#> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>
 #> 
 #> ---
 #> 
-#> mode `verify` · rmoriebricklayer 1.0.0 · R version 4.6.1 (2026-06-24)
+#> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000242 Wh, 0.000111 gCO2e at 458.3 gCO2e/kWh (World, 2025).
+#> 
+#> ---
+#> 
+#> mode `verify` · fail-on `error` · rmoriebricklayer 1.0.0 · R version 4.6.1 (2026-06-24)
 ```

@@ -1083,6 +1083,9 @@ rmoriebricklayer bundle "your request"          # agentbndl() from the shell
 rmoriebricklayer verify capsules --fail-on warn # every capsule under a folder, as the rmbl GitHub Action checks it
 rmoriebricklayer verify capsules --json         # the check rows as JSON (hmac secret: RMBL_KEY)
 rmoriebricklayer drift capsules                 # fetch each source again and compare it with the pin
+rmoriebricklayer drift capsules --psi-warn 0.1 --psi-fail 0.25   # the PSI bands of the column table
+rmoriebricklayer drift capsules --allow-file --cache .rmbl-cache --snapshot   # file:// sources, a cache, snapshots
+rmoriebricklayer verify capsules --base base-copy/   # each manifest against its base copy (a file or a folder)
 rmoriebricklayer refresh capsules               # pin each source's new bytes (cpsrfrsh())
 rmoriebricklayer report capsules --format md    # the Markdown report; never fails
 rmoriebricklayer functions [PATTERN]            # exported functions and their titles
@@ -1105,6 +1108,16 @@ rmbl "how do I weight a survey?"               # a quoted question with no verb 
 rmbl login --token
 rmbl models
 ```
+
+The capsule verbs are
+[`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+from R, and
+[`ghann()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ghann.md),
+[`ghcmt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ghann.md)
+and
+[`ghout()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ghann.md)
+give the annotations, the sticky pull-request comment and the step
+outputs the rmbl GitHub Action prints.
 
 ## Part of the MORIE family
 

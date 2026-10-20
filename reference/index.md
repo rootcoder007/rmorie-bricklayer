@@ -98,6 +98,15 @@ verify it later so an analysis reproduces from the same inputs.
   : Generate a Data Citation From Provenance
 - [`vrfcps()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
   : Re-Verify an Entire Reproducible Data Capsule
+- [`cpschk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  [`format(`*`<rmbl_cpschk>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  [`print(`*`<rmbl_cpschk>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpschk.md)
+  : Check every capsule under a folder
+- [`ghann()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ghann.md)
+  [`ghcmt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ghann.md)
+  [`ghout()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ghann.md)
+  : GitHub workflow annotations, sticky comment and outputs of a capsule
+  check
 - [`cpsrfrsh()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrfrsh.md)
   : Fetch a capsule's source again and pin the new bytes
 - [`mnfdiff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfdiff.md)

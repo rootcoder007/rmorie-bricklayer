@@ -7,8 +7,8 @@ capsule's data file and pins them in the provenance, in the form the
 `analysis.R` of
 [`usecpstmpl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/usecpstmpl.md)
 writes on its first run: `source$sha256`, and `resource$filename`,
-`sha256` and `size_bytes` (`row_count_data_rows` too when it was
-recorded).
+`sha256`, `size_bytes` and `retrieved_utc` (`row_count_data_rows` too
+when it was recorded).
 [`vrfcps`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
 then verifies the capsule against the new data. From the shell:
 `rmbl refresh PATH`.
@@ -16,7 +16,7 @@ then verifies the capsule against the new data. From the shell:
 ## Usage
 
 ``` r
-cpsrfrsh(dir)
+cpsrfrsh(dir, allowfile = FALSE)
 ```
 
 ## Arguments
@@ -24,6 +24,10 @@ cpsrfrsh(dir)
 - dir:
 
   Character scalar, the capsule directory.
+
+- allowfile:
+
+  Logical: accept a `file://` source URL (a local path is always read).
 
 ## Value
 
@@ -41,8 +45,11 @@ bundle is not signed again: that needs your key
 ([`cpsbndl`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md)).
 Side effects: writes the data file and `data_provenance.json` in `dir`.
 Errors: `dir` is not a directory or holds no provenance; the provenance
-names no source, or a `TODO` one; the source cannot be fetched;
-`resource$filename` is not a plain relative path inside `dir`.
+names no source, or a `TODO` one, or a `file://` one without
+`allowfile`; the source cannot be fetched; `resource$filename` is not a
+plain relative path inside `dir`; the new data fail the schema the
+provenance pins
+([`valsch`](https://rootcoder007.github.io/rmorie-bricklayer/reference/valsch.md)).
 
 ## See also
 
@@ -63,5 +70,5 @@ cpsrfrsh(d)$change     # the source has not changed since
 #> [1] "unchanged"
 
 try(cpsrfrsh(tempfile()))
-#> Error : cpsrfrsh: `dir` is not an existing directory: /tmp/RtmpaSYQ04/file1f1f1003a300
+#> Error : cpsrfrsh: `dir` is not an existing directory: /tmp/RtmpcKHsEi/file1eb767eca951
 ```
