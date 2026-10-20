@@ -1701,6 +1701,23 @@ SEXP C_rmbl_wayback_impl(SEXP url, SEXP timeout, SEXP api) {
     return Rf_mkString(snap.c_str());
 }
 
+/* The C API's rmbl_wayback_snapshot() as another package calls it, into a buffer of `cap`
+ * bytes, with the availability API at `api` (a test server): its truncation and its raise of a
+ * Ctrl-C had no caller in the package, so no test reached them. */
+SEXP C_rmbl_wayback_into_impl(SEXP url, SEXP timeout, SEXP api, SEXP cap) {
+    const char *u = rmbl_str0(url, "url");
+    const char *b = rmbl_str0(api, "api");
+    const int t = static_cast<int>(tmo_arg(timeout, 30L));
+    const int c = Rf_asInteger(cap);
+    if (c == NA_INTEGER || c < 1 || c > 65536) rmbl::fail("`cap` must be from 1 to 65536 bytes");
+    std::vector<char> out(static_cast<size_t>(c));
+    const int n = wayback_raise(u, out.data(), c, t, b);
+    SEXP res = PROTECT(Rf_mkString(out.data()));
+    Rf_setAttrib(res, Rf_install("n"), Rf_ScalarInteger(n));
+    UNPROTECT(1);
+    return res;
+}
+
 /* The pieces of the transport policy that need no network, for the tests (review of 1.0.0, H2
  * and M1): list(url, host, connect, timeout). `url` is the URL libcurl would be handed and `host`
  * the name its CURLOPT_RESOLVE pin would carry (they must agree); `connect` is guard_socket()'s

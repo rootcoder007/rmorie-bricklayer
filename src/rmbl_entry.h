@@ -128,10 +128,10 @@ namespace rmbl {
 inline void kernel_raise(const char *msg, bool intr) {
     if (intr) {
         rmbl_kernel_interrupted = 1;
-        rmbl_interrupt_raise_unbarriered();
-        return;
+        rmbl_interrupt_raise_unbarriered();   /* returns under a barrier, which raises it */
+    } else if (msg[0]) {
+        rmbl_arg_error("%s", msg);
     }
-    if (msg[0]) rmbl_arg_error("%s", msg);
 }
 #define RMBL_KERNEL_CATCH(msg, intr)                                                         \
     catch (const rmbl::Interrupt &) { intr = true; }                                         \

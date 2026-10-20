@@ -445,6 +445,30 @@ SEXP C_rmbl_bootstrap_mean_impl(SEXP x, SEXP B, SEXP seed) {
     return out;
 }
 
+/* n draws of morie::core::bounded_draw(), the resampling index of the bootstrap and the
+ * reservoir, from mt19937_64 seeded with `seed`, as 8 little-endian bytes each: for the tests,
+ * which need a bound s near 2^64 to reach its rejection step (an index bound below 2^40 meets it
+ * once in 2^24 draws or less). `s` is a double, an integer in [1, 2^64). */
+SEXP C_rmbl_bounded_draw_impl(SEXP seed, SEXP s, SEXP n) {
+    const double sd = Rf_asReal(seed), bd = Rf_asReal(s), nd = Rf_asReal(n);
+    if (!R_FINITE(sd) || sd < 0 || sd != std::floor(sd) || sd >= 9007199254740992.0)
+        rmbl::fail("`seed` must be a whole number in [0, 2^53)");
+    if (!R_FINITE(bd) || bd < 1 || bd != std::floor(bd) || bd >= 18446744073709551616.0)
+        rmbl::fail("`s` must be a whole number in [1, 2^64)");
+    if (!R_FINITE(nd) || nd < 0 || nd != std::floor(nd) || nd > 1e6)
+        rmbl::fail("`n` must be a whole number in [0, 1e6]");
+    std::mt19937_64 rng(static_cast<std::uint64_t>(sd));
+    const std::uint64_t bound = static_cast<std::uint64_t>(bd);
+    const R_xlen_t k = static_cast<R_xlen_t>(nd);
+    SEXP out = PROTECT(rmbl::alloc_vector(RAWSXP, 8 * k));
+    for (R_xlen_t i = 0; i < k; ++i) {
+        const std::uint64_t v = morie::core::bounded_draw(rng, bound);
+        for (int b = 0; b < 8; ++b) RAW(out)[8 * i + b] = static_cast<Rbyte>(v >> (8 * b));
+    }
+    UNPROTECT(1);
+    return out;
+}
+
 SEXP C_rmbl_gamma_cdf_impl(SEXP shape, SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double a = Rf_asReal(shape);

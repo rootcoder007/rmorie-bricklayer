@@ -431,7 +431,7 @@ struct CurveHex {
     int bytes;
 };
 
-const CurveHex kP256 = {
+constexpr CurveHex kP256 = {
     "ffffffff00000001000000000000000000000000ffffffffffffffffffffffff",
     "ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551",
     "5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b",
@@ -440,7 +440,7 @@ const CurveHex kP256 = {
     32
 };
 
-const CurveHex kP384 = {
+constexpr CurveHex kP384 = {
     "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"
     "ffffffff0000000000000000ffffffff",
     "ffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf"
@@ -454,7 +454,7 @@ const CurveHex kP384 = {
     48
 };
 
-const CurveHex kP521 = {
+constexpr CurveHex kP521 = {
     "01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     "ffff",
@@ -473,11 +473,27 @@ const CurveHex kP521 = {
     66
 };
 
+/* Every curve parameter is exactly one field element wide, in lowercase hex, checked when the
+ * package is compiled (a constant written short once left everything mod n wrong; see
+ * load_curve()). The run-time form of this check was an error no input could reach. */
+constexpr bool hex_of_width(const char *h, size_t want) {
+    size_t i = 0;
+    for (; h[i]; ++i) {
+        if (!((h[i] >= '0' && h[i] <= '9') || (h[i] >= 'a' && h[i] <= 'f'))) return false;
+    }
+    return i == want;
+}
+constexpr bool curve_hex_ok(const CurveHex &h) {
+    return hex_of_width(h.p, static_cast<size_t>(h.bytes) * 2u) && hex_of_width(h.n, static_cast<size_t>(h.bytes) * 2u) &&
+           hex_of_width(h.b, static_cast<size_t>(h.bytes) * 2u) && hex_of_width(h.gx, static_cast<size_t>(h.bytes) * 2u) &&
+           hex_of_width(h.gy, static_cast<size_t>(h.bytes) * 2u);
+}
+static_assert(curve_hex_ok(kP256) && curve_hex_ok(kP384) && curve_hex_ok(kP521),
+              "a curve parameter is not one field element of lowercase hex");
+
+/* a digit of the constants, lowercase hex by the static_assert above */
 int hexval(char c) {
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-    return -1;
+    return c <= '9' ? c - '0' : c - 'a' + 10;
 }
 
 void num_from_hex(Num *a, const char *h) {
@@ -506,13 +522,8 @@ bool load_curve(Curve *c, const char *name) {
      * correct -- it uses only p and b, and the published base-point
      * multiples still matched -- while everything mod n was wrong and
      * no signature verified. A length check catches in one line what
-     * cost an afternoon to find. */
-    const size_t want = static_cast<size_t>(h->bytes) * 2u;
-    if (std::strlen(h->p) != want || std::strlen(h->n) != want ||
-        std::strlen(h->b) != want || std::strlen(h->gx) != want ||
-        std::strlen(h->gy) != want) {
-        RMBL_ARG_ERROR("curve %s has a parameter of the wrong width", name);
-    }
+     * cost an afternoon to find: the static_assert on curve_hex_ok()
+     * above, when the package is compiled. */
     num_from_hex(&c->p, h->p);
     num_from_hex(&c->n, h->n);
     num_from_hex(&c->b, h->b);

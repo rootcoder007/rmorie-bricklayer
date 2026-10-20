@@ -270,9 +270,9 @@ SEXP first_dup(SEXP names, R_xlen_t k) {
     SEXP *v = reinterpret_cast<SEXP *>(R_alloc(static_cast<size_t>(k), sizeof(SEXP)));
     for (R_xlen_t t = 0; t < k; ++t) v[t] = STRING_ELT(names, t);
     std::qsort(v, static_cast<size_t>(k), sizeof(SEXP), cmp_chars);
-    bool any = false;
-    for (R_xlen_t t = 1; t < k; ++t) if (cmp_chars(&v[t - 1], &v[t]) == 0) { any = true; break; }
-    if (!any) return R_NilValue;
+    SEXP dup = R_NilValue;
+    for (R_xlen_t t = 1; t < k; ++t) if (cmp_chars(&v[t - 1], &v[t]) == 0) { dup = v[t]; break; }
+    if (dup == R_NilValue) return R_NilValue;
     /* which repeated key comes first: the earliest second occurrence */
     for (R_xlen_t t = 1; t < k; ++t) {
         for (R_xlen_t u = 0; u < t; ++u) {
@@ -280,8 +280,7 @@ SEXP first_dup(SEXP names, R_xlen_t k) {
         }
         if (t > 4096) break;   /* a huge object: the sorted scan said there is one; name the first repeat found */
     }
-    for (R_xlen_t t = 1; t < k; ++t) if (cmp_chars(&v[t - 1], &v[t]) == 0) return v[t];
-    return R_NilValue;
+    return dup;
 }
 
 SEXP container(Parser &P, bool obj) {

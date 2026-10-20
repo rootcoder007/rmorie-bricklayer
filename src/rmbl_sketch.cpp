@@ -32,6 +32,7 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
+#include "morie_core.h"
 
 #include <algorithm>
 #include <cmath>
@@ -156,37 +157,8 @@ SEXP C_rmbl_moments_merge_impl(SEXP a, SEXP b) {
     return out;
 }
 
-namespace {
-
-/* The full 128-bit product of two 64-bit words, in portable C++ (no
- * __int128, which -pedantic refuses). */
-inline void mul_64x64(std::uint64_t a, std::uint64_t b, std::uint64_t &hi, std::uint64_t &lo) {
-    const std::uint64_t a0 = a & 0xFFFFFFFFULL, a1 = a >> 32;
-    const std::uint64_t b0 = b & 0xFFFFFFFFULL, b1 = b >> 32;
-    const std::uint64_t p00 = a0 * b0, p01 = a0 * b1, p10 = a1 * b0, p11 = a1 * b1;
-    const std::uint64_t mid = (p00 >> 32) + (p01 & 0xFFFFFFFFULL) + (p10 & 0xFFFFFFFFULL);
-    hi = p11 + (p01 >> 32) + (p10 >> 32) + (mid >> 32);
-    lo = (mid << 32) | (p00 & 0xFFFFFFFFULL);
-}
-
-/* An unbiased draw from [0, s), s >= 1: Lemire's multiply-and-reject
- * ("Fast random integer generation in an interval", ACM TOMACS 2019) on the
- * engine's raw 64-bit outputs. std::uniform_int_distribution would do the
- * same job, but its algorithm is the standard library's choice, so a seed
- * gave one sample under libstdc++ (Linux, Windows) and another under libc++
- * (macOS); mt19937_64's output sequence is fixed by the standard, and so is
- * this. */
-inline std::uint64_t bounded_draw(std::mt19937_64 &rng, std::uint64_t s) {
-    std::uint64_t hi, lo;
-    mul_64x64(static_cast<std::uint64_t>(rng()), s, hi, lo);
-    if (lo < s) {
-        const std::uint64_t t = (0 - s) % s;   /* 2^64 mod s */
-        while (lo < t) mul_64x64(static_cast<std::uint64_t>(rng()), s, hi, lo);
-    }
-    return hi;
-}
-
-}  // namespace
+/* Lemire's unbiased draw from [0, s) is morie::core::bounded_draw() (morie_core.h): this file
+ * carried a second copy of it */
 
 /* Vitter's Algorithm R. Fills the reservoir with the first k items,
  * then replaces item j (0-based, j >= k) with probability k/(j+1).
@@ -210,7 +182,7 @@ SEXP C_rmbl_reservoir_impl(SEXP n_total, SEXP k, SEXP seed) {
     for (R_xlen_t j = kk; j < n; ++j) {
         /* n runs to 2^53: Ctrl-C ended nothing (37.9 s for 3e9; CRAN stress test of 0.5.14) */
         if ((j & 0xFFFFF) == 0) rmbl::check_interrupt();
-        const R_xlen_t t = static_cast<R_xlen_t>(bounded_draw(rng, static_cast<std::uint64_t>(j) + 1));
+        const R_xlen_t t = static_cast<R_xlen_t>(morie::core::bounded_draw(rng, static_cast<std::uint64_t>(j) + 1));
         if (t < kk) res[static_cast<std::size_t>(t)] = j;
     }
     std::sort(res.begin(), res.end());

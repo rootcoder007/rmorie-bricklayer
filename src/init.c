@@ -29,6 +29,7 @@ extern SEXP C_rmbl_euclid(SEXP, SEXP);
 extern SEXP C_rmbl_normal_logpdf(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_ipw(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_bootstrap_mean(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_bounded_draw(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_gamma_cdf(SEXP, SEXP);
 extern SEXP C_rmbl_hawkes_nll_grad(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hawkes_rescaled(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -178,6 +179,7 @@ extern SEXP C_rmbl_redirect_check(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_url_check(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_net_probe(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_wayback(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_wayback_into(SEXP, SEXP, SEXP, SEXP);
 /* .Call wrappers (defined in rmbl_siu.cpp) -- vendored SIU parse/resolve */
 extern SEXP C_rmbl_siu_html_to_text(SEXP);
 extern SEXP C_rmbl_siu_parse_html(SEXP);
@@ -290,6 +292,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_http_download",  (DL_FUNC) &C_rmbl_http_download,  7},
     {"C_rmbl_redirect_check", (DL_FUNC) &C_rmbl_redirect_check, 4},
     {"C_rmbl_wayback",        (DL_FUNC) &C_rmbl_wayback,        3},
+    {"C_rmbl_wayback_into",   (DL_FUNC) &C_rmbl_wayback_into,   4},
     {"C_rmbl_url_check",      (DL_FUNC) &C_rmbl_url_check,      4},
     {"C_rmbl_net_probe",      (DL_FUNC) &C_rmbl_net_probe,      4},
     {"C_rmbl_siu_html_to_text",      (DL_FUNC) &C_rmbl_siu_html_to_text,      1},
@@ -302,6 +305,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_normal_logpdf",     (DL_FUNC) &C_rmbl_normal_logpdf,     3},
     {"C_rmbl_ipw",               (DL_FUNC) &C_rmbl_ipw,               4},
     {"C_rmbl_bootstrap_mean",    (DL_FUNC) &C_rmbl_bootstrap_mean,    3},
+    {"C_rmbl_bounded_draw",      (DL_FUNC) &C_rmbl_bounded_draw,      3},
     {"C_rmbl_gamma_cdf",         (DL_FUNC) &C_rmbl_gamma_cdf,         2},
     {"C_rmbl_hawkes_nll_grad",   (DL_FUNC) &C_rmbl_hawkes_nll_grad,   12},
     {"C_rmbl_hawkes_rescaled",   (DL_FUNC) &C_rmbl_hawkes_rescaled,   7},

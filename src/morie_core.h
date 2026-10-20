@@ -113,10 +113,11 @@ inline double mean(const double *a, std::size_t n) {
         s += t / static_cast<long double>(n);
         return static_cast<double>(s);
     }
-    for (std::size_t i = 0; i < n; ++i) {
-        if (!std::isfinite(a[i])) return static_cast<double>(s);
-    }
-    return mean_running(a, n);
+    // the sum overflowed: a non-finite input is the answer as it stands (Inf, -Inf or NaN), and
+    // finite ones are averaged without the sum (only where long double is double: its range
+    // holds any sum of doubles on x86)
+    const bool finite = std::all_of(a, a + n, [](double v) { return std::isfinite(v); });
+    return finite ? mean_running(a, n) : static_cast<double>(s);
 }
 
 inline double variance(const double *a, std::size_t n, int ddof) {

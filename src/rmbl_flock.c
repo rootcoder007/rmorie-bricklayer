@@ -106,17 +106,17 @@ static int rmbl_flock_try(const char *p, int tmo) {
         e = errno;
         if (e != EWOULDBLOCK && e != EAGAIN && e != EINTR) { why = "cannot be locked"; continue; }
 #endif
-        if (rmbl_now_ms() - start >= (double) tmo) {
+        /* a Ctrl-C (or a setTimeLimit() limit) during the wait ends it like the time limit: the
+         * descriptor is closed first, then the interrupt is raised from this frame, which holds
+         * nothing else (the wait ran its whole timeout through one; review of 1.0.0). The raise
+         * returns only under a barrier, which raises it in turn. */
+        const int intr = rmbl_interrupt_pending();
+        if (intr || rmbl_now_ms() - start >= (double) tmo) {
             RMBL_CLOSE(fd);
-            return -1;
-        }
-        /* a Ctrl-C (or a setTimeLimit() limit) during the wait ends it: the descriptor is closed
-         * first, then the interrupt is raised from this frame, which holds nothing else (the wait
-         * ran its whole timeout through one; review of 1.0.0) */
-        if (rmbl_interrupt_pending()) {
-            RMBL_CLOSE(fd);
-            rmbl_kernel_interrupted = 0;
-            rmbl_interrupt_raise_unbarriered();
+            if (intr) {
+                rmbl_kernel_interrupted = 0;
+                rmbl_interrupt_raise_unbarriered();
+            }
             return -1;
         }
         rmbl_sleep_ms(20);

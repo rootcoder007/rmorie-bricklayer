@@ -66,13 +66,15 @@ test_that("every published kernel compiles and resolves from a consumer", {
       "useDynLib(rmblconsume, .registration = TRUE)",
       "import(rmoriebricklayer)",
       "export(consume_series)",
-      "export(consume_mk)"
+      "export(consume_mk)",
+      "export(consume_theil)"
     ),
     file.path(dir, "NAMESPACE")
   )
   writeLines(
     c("consume_series <- function() .Call(C_consume_series)",
-      "consume_mk <- function(y) .Call(C_consume_mk, as.double(y))"),
+      "consume_mk <- function(y) .Call(C_consume_mk, as.double(y))",
+      "consume_theil <- function(n) .Call(C_consume_theil, as.integer(n))"),
     file.path(dir, "R", "consume.R")
   )
 
@@ -204,6 +206,8 @@ test_that("every published kernel compiles and resolves from a consumer", {
     "                 + 10.0 * (rmbl_pbkdf2_sha256((const unsigned char *) \"password\", 8,",
     "                                              (const unsigned char *) \"salt\", 4, 0, 20, raw64) == -1);",
     "        out[k++] = ISNAN(rmbl_hawkes_nll(x, 6, 10.0, 9, hpar, 3));   /* no such kernel: NaN */",
+    "        const double hpar4[4] = {0.5, 0.3, 1.0, 1.0};",
+    "        out[k++] = ISNAN(rmbl_hawkes_nll(x, 6, 10.0, 9, hpar4, 4));  /* nor with four parameters */",
     "    }",
     "    SEXP res = PROTECT(Rf_allocVector(REALSXP, k));",
     "    for (int i = 0; i < k; ++i) REAL(res)[i] = out[i];",
@@ -216,6 +220,19 @@ test_that("every published kernel compiles and resolves from a consumer", {
     "",
     "/* the Mann-Kendall kernel on a caller-sized series, with no bricklayer barrier on",
     " * the stack: the path the interrupt probe below exercises */",
+    "/* Theil-Sen on n points, all at x = 0 but the last (the n - 1 pairs with the last kept), with no",
+    " * bricklayer barrier on the stack: past the point limit the kernel raises R's error itself,",
+    " * and a Ctrl-C in the pair loop is raised once the kernel's vectors are gone */",
+    "SEXP C_consume_theil(SEXP n) {",
+    "    const R_xlen_t m = (R_xlen_t) INTEGER(n)[0];",
+    "    double *x = (double *) R_alloc((size_t) m, sizeof(double));",
+    "    double *y = (double *) R_alloc((size_t) m, sizeof(double));",
+    "    for (R_xlen_t i = 0; i < m; ++i) { x[i] = i == m - 1 ? 1.0 : 0.0; y[i] = (double) i; }",
+    "    double slope = 0, icpt = 0;",
+    "    rmbl_theil_sen(x, y, m, &slope, &icpt);",
+    "    return Rf_ScalarReal(slope);",
+    "}",
+    "",
     "SEXP C_consume_mk(SEXP y) {",
     "    double S = 0, var = 0;",
     "    R_xlen_t used = 0;",
@@ -226,6 +243,7 @@ test_that("every published kernel compiles and resolves from a consumer", {
     "static const R_CallMethodDef CallEntries[] = {",
     "    {\"C_consume_series\", (DL_FUNC) &C_consume_series, 0},",
     "    {\"C_consume_mk\", (DL_FUNC) &C_consume_mk, 1},",
+    "    {\"C_consume_theil\", (DL_FUNC) &C_consume_theil, 1},",
     "    {NULL, NULL, 0}",
     "};",
     "",
@@ -299,14 +317,14 @@ test_that("every published kernel compiles and resolves from a consumer", {
     as.numeric(strsplit(trimws(res[length(res) - 1L]), ",")[[1L]])
   )
   sha <- trimws(res[length(res)])
-  if (length(nums) != 54L) {
+  if (length(nums) != 55L) {
     fail(paste(
       "the consumer did not print 54 numbers; it printed:",
       paste(utils::tail(res, 10L), collapse = " | ")
     ))
     return(invisible(NULL))
   }
-  expect_length(nums, 54L)
+  expect_length(nums, 55L)
 
   # the kernels must agree with the R-level functions on the same input,
   # because they are supposed to be the same code
@@ -371,12 +389,36 @@ test_that("every published kernel compiles and resolves from a consumer", {
   expect_identical(nums[49:52], c(1, 1, 1, 1))
   expect_identical(nums[53L], 10)         # pbkdf2: 0 on success, -1 on iterations = 0
   expect_identical(nums[54L], 1)          # an unknown kernel code is NaN, not a number
+  expect_identical(nums[55L], 1)          # with the four parameters a kernel has, too
   # and the digest kernel still matches its published vector, so a
   # regression in the older shims surfaces here too
   expect_identical(sha, csha256("abc"))
   expect_identical(
     sha, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
   )
+})
+
+test_that("the Theil-Sen kernel called with no barrier raises its point limit and a Ctrl-C as R does", {
+  skip_on_cran()
+  skip_on_os("windows")
+  skip_if(!dir.exists(file.path(consumer_lib, "rmblconsume")), "the consumer was not built")
+  # rmbl_theil_sen()'s refusal past kMaxPairwiseN is rmbl_arg_error() with no barrier active, an R
+  # error raised at once (src/rmbl_series.cpp, src/rmbl_entry.h)
+  f <- tempfile(fileext = ".R")
+  writeLines(c(sprintf(".libPaths(c(%s, .libPaths()))", shQuote(consumer_lib)), "library(rmblconsume)",
+               "cat(tryCatch(consume_theil(20001L), error = function(e) conditionMessage(e)), '\\n')",
+               "cat('SLOPE', consume_theil(5L), '\\n')"), f)
+  res <- suppressWarnings(system2(file.path(R.home("bin"), "Rscript"), shQuote(f), stdout = TRUE, stderr = TRUE))
+  expect_true(any(grepl("n = 20001 exceeds the 20000-point limit", res)), info = paste(res, collapse = " | "))
+  expect_true("SLOPE 2.5" %in% trimws(res), info = paste(res, collapse = " | "))
+  # a Ctrl-C in the pair loop: kernel_call() catches check_interrupt()'s throw, and kernel_raise()
+  # raises R's interrupt with no barrier to do it (src/rmbl_entry.h)
+  skip_if(!nzchar(Sys.which("python3")) || !nzchar(Sys.which("timeout")), "no python3/timeout")
+  got <- interrupt_probe(paste0(
+    ".libPaths(c(", shQuote(consumer_lib), ", .libPaths())); library(rmblconsume);",
+    " for (i in 1:2000) consume_theil(20000L)"))
+  skip_if(startsWith(got, "inconclusive"), got)
+  expect_identical(got, "interrupt")
 })
 
 test_that("a pending interrupt stops the Mann-Kendall kernel called with no barrier (D2)", {

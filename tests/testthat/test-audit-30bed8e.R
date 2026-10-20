@@ -4,8 +4,14 @@
 nn <- function(x) rmoriebricklayer:::.rmbl_new_names(x)
 
 test_that("rate, rate_change, share and yoy_summary are S3 generics again, with the old arguments", {
+  # a dispatching body with a default method, read so that it holds under covr too, whose tracing
+  # wraps the body and makes isS3stdGeneric() FALSE
+  ns <- asNamespace("rmoriebricklayer")
   for (g in c("rate", "rate_change", "share", "yoy_summary")) {
-    expect_true(utils::isS3stdGeneric(get(g, asNamespace("rmoriebricklayer"))), info = g)
+    f <- get(g, envir = ns)
+    expect_true("UseMethod" %in% all.names(body(f)), info = g)
+    expect_false(is.null(utils::getS3method(g, "default", optional = TRUE, envir = ns)), info = g)
+    expect_identical(environment(f), ns, info = g)
   }
   d <- data.frame(n = c(5, 8, 3), pop = c(1000, 1200, 900), g = c("a", "b", "c"))
   expect_identical(nn(rate(d, count = "n", population = "pop", by = "g")),

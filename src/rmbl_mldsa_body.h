@@ -125,9 +125,11 @@ void poly_uniform(int32_t a[256], const unsigned char rho[32],
     rmbl_keccak_init(&st, 168, 0x1f);
     rmbl_keccak_absorb(&st, ext, 34);
     rmbl_keccak_finalize(&st);
-    unsigned char buf[168 * 5];
-    rmbl_keccak_squeeze(&st, buf, sizeof buf);
-    unsigned int ctr = rej_uniform(a, 256, buf, sizeof buf);
+    /* one SHAKE128 block at a time: the stream, and so the polynomial, is the one five blocks at
+     * once gave, and the loop that tops it up is the loop itself (a sixth block was a branch no
+     * seed is known to reach: 256 of 280 candidates accept with probability 1 - 1e-40) */
+    unsigned char buf[168];
+    unsigned int ctr = 0;
     while (ctr < 256) {
         rmbl_keccak_squeeze(&st, buf, 168);
         ctr += rej_uniform(a + ctr, 256 - ctr, buf, 168);
@@ -146,10 +148,10 @@ void poly_uniform_eta(int32_t a[256], const unsigned char seed[64],
     rmbl_keccak_init(&st, 136, 0x1f);
     rmbl_keccak_absorb(&st, ext, 66);
     rmbl_keccak_finalize(&st);
-    unsigned char buf[136 * 2];
+    /* one SHAKE256 block at a time, the same stream as two blocks at once (see poly_uniform) */
+    unsigned char buf[136];
     rmbl_ct::Guard gb(buf, sizeof buf);
-    rmbl_keccak_squeeze(&st, buf, sizeof buf);
-    unsigned int ctr = rej_eta(a, 256, buf, sizeof buf);
+    unsigned int ctr = 0;
     while (ctr < 256) {
         rmbl_keccak_squeeze(&st, buf, 136);
         ctr += rej_eta(a + ctr, 256 - ctr, buf, 136);
@@ -228,13 +230,15 @@ void poly_challenge(int32_t c[256], const unsigned char *seed) {
     rmbl_keccak_init(&st, 136, 0x1f);
     rmbl_keccak_absorb(&st, seed, static_cast<size_t>(kCtildeBytes));
     rmbl_keccak_finalize(&st);
+    /* the signs are the stream's first eight bytes and the positions the bytes after them, read a
+     * block at a time (the first block from byte 8; a second was a branch few seeds reach) */
     unsigned char buf[136];
-    rmbl_keccak_squeeze(&st, buf, 136);
+    rmbl_keccak_squeeze(&st, buf, 8);
     uint64_t signs = 0;
     for (int i = 0; i < 8; ++i) {
         signs |= static_cast<uint64_t>(buf[i]) << (8 * i);
     }
-    unsigned int pos = 8;
+    unsigned int pos = 136;
     for (int i = 0; i < 256; ++i) c[i] = 0;
     for (int i = 256 - kTau; i < 256; ++i) {
         unsigned int b;
@@ -951,6 +955,9 @@ int sign_mu(unsigned char *sig, const unsigned char mu[64],
     veck_ntt(&t0);
 
     uint16_t nonce = 0;
+    /* -1 if no attempt is accepted: a sound key accepts within a handful, so the cap is never met
+     * (the masked signer below ends the same way) */
+    int rc = -1;
     for (int attempt = 0; attempt < rmbl_mldsa_core::kMaxSignAttempts; ++attempt) {
         vecl_uniform_gamma1(&y, rhoprime, nonce++);
         z = y;
@@ -997,9 +1004,10 @@ int sign_mu(unsigned char *sig, const unsigned char mu[64],
         if (n > static_cast<unsigned int>(kOmega)) continue;
 
         pack_sig(sig, sig, &z, &h);
-        return 0;
+        rc = 0;
+        break;
     }
-    return -1;  /* a sound key accepts within a handful of attempts */
+    return rc;
 }
 
 

@@ -153,10 +153,9 @@ static SEXP rmbl_guard(const char *name, F f) {
     rmbl_kernel_interrupted = 0;
     --rmbl_barrier_depth;
     if (kind == 0) return r;
-    if (kind == 1) {
-        rmbl_raise_interrupt();
-        Rf_errorcall(R_NilValue, "%s: interrupted", name);
-    }
+    /* an interrupt: rmbl_raise_interrupt() ends in invokeRestart("abort") and does not return
+     * (an error after it was dead code) */
+    if (kind == 1) rmbl_raise_interrupt();
     if (kind == 3) Rf_errorcall(R_NilValue, "%s", c.msg);
     Rf_errorcall(R_NilValue, "%s: %s", name, c.msg);
     return R_NilValue;
@@ -177,6 +176,7 @@ SEXP C_rmbl_fetch_fallback_impl(SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_http_download_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_redirect_check_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_wayback_impl(SEXP, SEXP, SEXP);
+SEXP C_rmbl_wayback_into_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_url_check_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_net_probe_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_siu_html_to_text_impl(SEXP);
@@ -189,6 +189,7 @@ SEXP C_rmbl_euclid_impl(SEXP, SEXP);
 SEXP C_rmbl_normal_logpdf_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_ipw_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_bootstrap_mean_impl(SEXP, SEXP, SEXP);
+SEXP C_rmbl_bounded_draw_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_gamma_cdf_impl(SEXP, SEXP);
 SEXP C_rmbl_hawkes_nll_grad_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_hawkes_rescaled_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -331,6 +332,9 @@ SEXP C_rmbl_redirect_check(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
 SEXP C_rmbl_wayback(SEXP a0, SEXP a1, SEXP a2) {
     return rmbl_guard("C_rmbl_wayback", [&] { return C_rmbl_wayback_impl(a0, a1, a2); });
 }
+SEXP C_rmbl_wayback_into(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
+    return rmbl_guard("C_rmbl_wayback_into", [&] { return C_rmbl_wayback_into_impl(a0, a1, a2, a3); });
+}
 SEXP C_rmbl_url_check(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
     return rmbl_guard("C_rmbl_url_check", [&] { return C_rmbl_url_check_impl(a0, a1, a2, a3); });
 }
@@ -366,6 +370,9 @@ SEXP C_rmbl_ipw(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
 }
 SEXP C_rmbl_bootstrap_mean(SEXP a0, SEXP a1, SEXP a2) {
     return rmbl_guard("C_rmbl_bootstrap_mean", [&] { return C_rmbl_bootstrap_mean_impl(a0, a1, a2); });
+}
+SEXP C_rmbl_bounded_draw(SEXP a0, SEXP a1, SEXP a2) {
+    return rmbl_guard("C_rmbl_bounded_draw", [&] { return C_rmbl_bounded_draw_impl(a0, a1, a2); });
 }
 SEXP C_rmbl_gamma_cdf(SEXP a0, SEXP a1) {
     return rmbl_guard("C_rmbl_gamma_cdf", [&] { return C_rmbl_gamma_cdf_impl(a0, a1); });
