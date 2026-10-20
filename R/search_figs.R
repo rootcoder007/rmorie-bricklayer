@@ -149,7 +149,7 @@ optsqr <- function(effort, model = c("invcube", "random", "definite", "mbeta"), 
     f("5-6", "M-Beta (M = 0.5) curves of two tracks 2 W apart", "model"),
     f("5-7", "M-Beta (M = 0.25 and M = 0.5)", "model"),
     f("5-8", "Inverse cube", "model"),
-    f("5-9", "Inverse cube curve under a smaller sweep width and navigation error", "approximation"),
+    f("5-9", "Lateral range curves under ideal and poor search conditions", "model"),
     f("6-1", "A simple non-uniform distribution", "model"),
     f("6-2", "The trial search square of half the area", "model"),
     f("6-3", "Optimal search factors for point datums (effort to 18)", "model"),
@@ -285,14 +285,17 @@ srchfig <- function(fig = NULL, num = NULL, seed = 1, main = NULL) {
       op <- .bl_par()
       on.exit(graphics::par(op), add = TRUE)
       r <- 1.1 * E
-      graphics::plot(c(-r, 6 + r), c(-r, r), type = "n", asp = 1, axes = FALSE, xlab = "", ylab = "", main = "")
+      L <- 6
+      graphics::plot(c(-r, L + r), c(-r, r), type = "n", asp = 1, axes = FALSE, xlab = "", ylab = "", main = "")
       a <- seq(0, 2 * pi, length.out = 241)
-      for (cx in c(0, 6)) graphics::lines(cx + r * cos(a), r * sin(a))
-      graphics::segments(c(0, 0), c(-r, r), c(6, 6), c(-r, r), lwd = 1.5)
-      graphics::segments(0, 0, 6, 0, lty = 2)
-      graphics::text(c(0, 6), 0.45 * r, c("E1", "E2"), cex = 0.9)
+      for (cx in c(0, L)) graphics::lines(cx + r * cos(a), r * sin(a), lwd = 2)
+      graphics::rect(-r, -r, L + r, r, lwd = 2)
+      graphics::segments(0, 0, L, 0, lwd = 2)
+      graphics::arrows(c(0, L), 0, c(0, L) + r * cos(c(3, 1) * pi / 4), r * sin(c(3, 1) * pi / 4), length = 0.1,
+                       lwd = 2)
+      graphics::text(c(0.15, L - 0.15) * c(1, 1), 0.72 * r, c("E1", "E2"), font = 3)
       .bl_title(ttl)
-      data.frame(x = c(0, 6), y = 0, radius = r)
+      data.frame(x = c(0, L), y = 0, radius = r)
     },
     "3-7" = both(datumpmap(g, seq(-5, 5, length.out = 57), "line", c(0, -2), end = c(0, 2))),
     "3-8" = both(datumpmap(g, seq(-5, 5, length.out = 57), "corridor", c(0, -2), end = c(0, 2))),
@@ -321,8 +324,21 @@ srchfig <- function(fig = NULL, num = NULL, seed = 1, main = NULL) {
       m
     },
     "3-13" = {
-      fine <- w314[rep(1:4, each = 10), rep(1:5, each = 10)]
-      both(datumpmap(seq(0, 5, length.out = 51), seq(0, 4, length.out = 41), "general", wts = fine))
+      # an illustrative generalized density: a plateau over the possibility area, raised where the
+      # cells of figure 3-14 are high, with scattered peaks (fixed draws)
+      gx <- seq(-0.5, 5.5, length.out = 61)
+      gy <- seq(-0.5, 4.5, length.out = 51)
+      xc <- .sr_mid(gx)
+      yc <- .sr_mid(gy)
+      soft <- function(v, a, b) stats::plogis((v - a) / 0.08) * stats::plogis((b - v) / 0.08)
+      plateau <- outer(soft(yc, 0, 4), soft(xc, 0, 5))
+      cellv <- w314[pmin(4L, pmax(1L, ceiling(yc))), pmin(5L, pmax(1L, ceiling(xc)))]
+      pk <- cbind(c(2.5, 1.6, 3.4, 2.1, 3.9, 1.2, 2.9, 4.4), c(2.4, 1.6, 2.8, 3.3, 1.4, 2.6, 1.1, 3.1),
+                  c(6, 3, 2.5, 2, 1.5, 1.5, 1.2, 1))
+      bumps <- Reduce(`+`, lapply(seq_len(nrow(pk)), function(i) {
+        pk[i, 3] * outer(stats::dnorm(yc, pk[i, 2], 0.12), stats::dnorm(xc, pk[i, 1], 0.12))
+      }))
+      both(datumpmap(gx, gy, "general", wts = plateau * (1 + cellv / 5) + 0.15 * bumps))
     },
     "3-14" = {
       m <- datumpmap(0:5, 0:4, "general", wts = w314)
@@ -345,62 +361,94 @@ srchfig <- function(fig = NULL, num = NULL, seed = 1, main = NULL) {
     "4-5" = lr("mbeta", 0.25, TRUE),
     "4-7" = lr("invcube", equiv = TRUE),
     "4-1" = {
-      op <- .bl_panels_begin(4L)
+      op <- .bl_par()
       on.exit(graphics::par(op), add = TRUE)
-      on.exit(.bl_panels_abort(), add = TRUE)
+      graphics::par(mfrow = c(2L, 2L), mar = c(3.4, 0.5, 1.2, 0.5), oma = c(0, 0, 2, 0))
       xs <- seq(-2, 2, length.out = 401)
-      cols <- .bl_cols(3)
       # D: a sensor that sees poorly straight below (illustrative), scaled to sweep width 1
       dd <- function(x) {
         pmin(1, pmax(0, 0.85 * (exp(-((x - 0.45) / 0.35)^2) + exp(-((x + 0.45) / 0.35)^2)) - 0.25 * exp(-(x / 0.2)^2)))
       }
       sc <- 1 / sum(diff(xs) * (dd(xs[-1]) + dd(xs[-401])) / 2)
+      curves <- list(.sr_lr(xs, 1, "definite", 1), .sr_lr(xs, 1, "mbeta", 0.5), .sr_lr(xs, 1, "invcube", 1),
+                     pmin(1, dd(xs) * sc))
+      xs4 <- sort(unique(c(xs, -0.5 - 1e-9, 0.5 + 1e-9, -1 - 1e-9, 1 + 1e-9)))
       out <- list()
       for (k in 1:4) {
-        graphics::par(mar = .bl_safe_mar(c(3.2, 3.6, 2.4, 0.8)))
-        graphics::plot(c(-2, 2), c(0, 1.05), type = "n", xlab = "", ylab = "", main = "")
-        .bl_grid(NULL)
-        if (k < 4L) {
-          md <- c("definite", "mbeta", "invcube")[k]
-          out[[k]] <- .sr_draw_lr(xs, 1, md, 0.5, 0, cols, equiv = FALSE)
-          graphics::rect(-0.5, 0, 0.5, 1, border = "#3D4350", lty = 2)
-          .bl_title(c("A: definite range", "B: M-Beta", "C: inverse cube")[k])
-        } else {
-          p <- pmin(1, dd(xs) * sc)
-          .bl_line(xs, p, cols[1L], label = FALSE, points = FALSE)
-          graphics::rect(-0.5, 0, 0.5, 1, border = "#3D4350", lty = 2)
-          .bl_title("D: another sensor")
-          out[[k]] <- data.frame(x = xs, p = p)
+        xx <- if (k < 3L) xs4 else xs
+        p <- if (k < 3L) .sr_lr(xx, 1, c("definite", "mbeta")[k], 0.5) else curves[[k]]
+        graphics::plot(c(-2.1, 2.1), c(-0.55, 1.15), type = "n", axes = FALSE, xlab = "", ylab = "", main = "")
+        graphics::segments(-2, 0, 2, 0, lwd = 1.5)
+        graphics::segments(0, 0, 0, 1.1, lwd = 1.5)
+        graphics::text(0, 1.12, "p(x)", pos = 4, cex = 0.8)
+        graphics::text(0, 1, "1", pos = 2, cex = 0.8)
+        graphics::text(2, 0, "x", pos = 3, cex = 0.8)
+        graphics::lines(xx, p, lwd = 2.2)
+        if (k > 1L) graphics::rect(-0.5, 0, 0.5, 1, lty = 2, border = "#555555")
+        graphics::arrows(-0.5, -0.22, 0.5, -0.22, length = 0.05, code = 3)
+        graphics::text(0, -0.22, "W", pos = 1, cex = 0.8, offset = 0.3)
+        if (k == 1L) graphics::text(c(-0.5, 0.5), -0.05, c("-rdef", "+rdef"), pos = 1, cex = 0.7, offset = 0.2)
+        if (k == 2L) {
+          graphics::text(c(-1, 1), -0.05, c("-rmax", "+rmax"), pos = 1, cex = 0.7, offset = 0.2)
+          graphics::arrows(-1, -0.45, 1, -0.45, length = 0.05, code = 3)
+          graphics::text(0, -0.45, "\u03b2", pos = 1, cex = 0.8, offset = 0.3)
+          graphics::text(0, 0.5, "M 0.5", pos = 3, cex = 0.7)
         }
+        graphics::mtext(LETTERS[k], side = 1, line = 2, font = 2, cex = 1.1)
+        out[[k]] <- data.frame(x = xx, p = p)
       }
-      .bl_panels_end()
+      graphics::mtext(ttl, side = 3, outer = TRUE, font = 2, line = 0.5)
       out
     },
     "4-3" = {
       op <- .bl_par()
       on.exit(graphics::par(op), add = TRUE)
       graphics::plot(c(0, 10), c(-2, 2), type = "n", axes = FALSE, xlab = "", ylab = "", main = "")
-      graphics::rect(0.5, -0.5, 9.5, 0.5, col = grDevices::adjustcolor("#56B4E9", 0.3), border = "#1F2430")
-      graphics::arrows(0.5, 0, 9.8, 0, length = 0.1, lwd = 2, col = "#D55E00")
+      graphics::rect(0.5, -0.5, 9.5, 0.5, lwd = 2)
+      graphics::segments(0.5, 0, 9.5, 0, lwd = 2)
       graphics::arrows(0.2, -0.5, 0.2, 0.5, length = 0.06, code = 3)
-      graphics::text(0.2, 0, "W", pos = 2)
+      graphics::text(0.2, 0, "W", pos = 2, font = 2)
       .bl_title(ttl)
       data.frame(width = 1)
     },
     "4-6" = {
       op <- .bl_par()
       on.exit(graphics::par(op), add = TRUE)
-      graphics::plot(c(-0.5, 11), c(-0.5, 4.5), type = "n", axes = FALSE, xlab = "", ylab = "", main = "")
+      graphics::par(mfrow = c(2L, 1L), mar = c(0.5, 0.5, 1, 0.5), oma = c(0, 0, 2, 0))
       h <- 4
       r <- 8
       a <- 2
-      graphics::segments(0, 0, r + a, 0)
+      graphics::plot(c(-0.8, 11), c(-1, 4.6), type = "n", axes = FALSE, xlab = "", ylab = "", main = "")
+      graphics::segments(0, 0, r + a, 0, lwd = 2)
       graphics::segments(0, 0, 0, h)
-      graphics::segments(0, h, c(r, r + a), 0)
-      graphics::text(c(0, -0.3, r / 2, r / 2, r + a / 2), c(h + 0.3, h / 2, -0.35, h / 2 + 0.4, -0.35),
-                     c("O", "h", "r", "s", "a"), font = 2)
-      graphics::text(r - 0.6, 0.45, "\u03b1")
-      .bl_title(ttl)
+      graphics::segments(0, h, r + a, 0, lwd = 2)
+      graphics::segments(0, h, r, 0)
+      cx <- r + 0.35
+      graphics::segments(r, 0, cx, h * (1 - cx / (r + a)) + 0.02, lty = 2)
+      graphics::text(c(-0.3, -0.5, 4, 0, r - 0.9, cx - 0.2, 4.5), c(h + 0.3, h / 2, 2.4, -0.5, 0.9, 0.55, -0.5),
+                     c("O", "h", "s", "A", "\u03b1", "c", "r"), font = 2)
+      graphics::arrows(r + 0.6, -0.5, c(r, r + a), -0.5, length = 0.06)
+      graphics::text(r + a / 2 + 0.3, -0.75, "a", font = 2)
+      # the same in perspective: the observer, the wake a by b and the solid angle it subtends
+      pm <- graphics::persp(c(0, 1), c(0, 1), matrix(0, 2, 2), zlim = c(0, 1), theta = 35, phi = 22, box = FALSE,
+                            border = NA, col = NA)
+      tp <- function(x, y, z) grDevices::trans3d(x, y, z, pm)
+      pl <- tp(c(0, 1, 1, 0, 0), c(0, 0, 1, 1, 0), 0)
+      graphics::lines(pl$x, pl$y)
+      wk <- tp(c(0.6, 0.85, 0.85, 0.6, 0.6), c(0.35, 0.35, 0.6, 0.6, 0.35), 0)
+      graphics::lines(wk$x, wk$y, lwd = 2)
+      o <- tp(0.15, 0.2, 0.9)
+      f <- tp(0.15, 0.2, 0)
+      graphics::segments(o$x, o$y, f$x, f$y)
+      graphics::segments(o$x, o$y, wk$x[1:4], wk$y[1:4], lwd = 1.2)
+      graphics::text(o$x, o$y, "O", pos = 3, font = 2)
+      graphics::text((o$x + f$x) / 2, (o$y + f$y) / 2, "h", pos = 2, font = 2)
+      graphics::text((o$x + wk$x[1]) / 2, (o$y + wk$y[1]) / 2, "s", pos = 2, font = 2)
+      graphics::text(mean(wk$x[1:2]), mean(wk$y[1:2]), "a", pos = 1, font = 2)
+      graphics::text(mean(wk$x[2:3]), mean(wk$y[2:3]), "b", pos = 4, font = 2)
+      graphics::text(mean(c(o$x, wk$x[1:2])), mean(c(o$y, wk$y[1:2])), "\u03b1", font = 2)
+      graphics::text(mean(c(o$x, wk$x[2:3])), mean(c(o$y, wk$y[2:3])), "\u03b2", font = 2)
+      graphics::mtext(ttl, side = 3, outer = TRUE, font = 2, line = 0.5)
       data.frame(h = h, r = r, a = a, solid = a * h / (h^2 + r^2)^1.5)
     }
   )
@@ -427,38 +475,76 @@ srchfig <- function(fig = NULL, num = NULL, seed = 1, main = NULL) {
     "5-2" = {
       op <- .bl_par()
       on.exit(graphics::par(op), add = TRUE)
-      graphics::plot(c(0, 10), c(0, 6), type = "n", axes = FALSE, xlab = "", ylab = "", main = "", asp = 1)
-      graphics::rect(0, 0, 10, 6, lty = 2)
-      ys <- seq(0.5, 5.5, by = 1)
+      graphics::par(mar = c(3, 3.5, 2.5, 6))
+      S <- 1
+      ys <- 4.5 - (0:4) * S
+      graphics::plot(c(0, 10), c(-0.2, 5.2), type = "n", axes = FALSE, xlab = "", ylab = "", main = "", asp = 1)
+      graphics::rect(0, 0, 10, 5, lty = 2, lwd = 1.5)
       xx <- c(rbind(ifelse(seq_along(ys) %% 2 == 1, 0.5, 9.5), ifelse(seq_along(ys) %% 2 == 1, 9.5, 0.5)))
-      graphics::lines(xx, rep(ys, each = 2), lwd = 2, col = "#0072B2")
-      graphics::arrows(xx[length(xx) - 1L], ys[length(ys)], xx[length(xx)], ys[length(ys)], length = 0.1, lwd = 2,
-                       col = "#0072B2")
-      graphics::arrows(10.3, ys[1], 10.3, ys[2], length = 0.05, code = 3)
-      graphics::text(10.3, mean(ys[1:2]), "S", pos = 4, xpd = NA)
+      graphics::lines(xx, rep(ys, each = 2), lwd = 2)
+      for (k in seq_along(ys)) {
+        d <- if (k %% 2 == 1) 1 else -1
+        graphics::arrows(5 - 0.3 * d, ys[k], 5 + 0.3 * d, ys[k], length = 0.09, lwd = 2)
+      }
+      graphics::points(0.5, ys[1], pch = 19)
+      graphics::points(5, 2.5, pch = 19)
+      graphics::arrows(5, 2.5, 6, 2.5, length = 0.07)
+      lab <- function(x, y, t, ...) graphics::text(x, y, t, cex = 0.7, xpd = NA, ...)
+      lab(3, 5.45, "Commence Search Point (CSP)")
+      lab(6.2, 5.45, "Search Leg")
+      lab(8.7, 5.45, "Turn Point (Way Point)")
+      lab(10.2, 5.2, "Corner Point", pos = 4)
+      lab(10.2, 4, "Cross Leg", pos = 4)
+      lab(10.2, 3, "Track Space (S)", pos = 4)
+      lab(4.9, 2.75, "Centre Point", pos = 2)
+      lab(5.9, 2.75, "Orientation", pos = 2)
+      lab(1.6, 0.9, "Direction\nof Creep")
+      graphics::arrows(1.6, 0.55, 1.6, 0.15, length = 0.05)
+      graphics::arrows(8, ys[2], 8, ys[3], length = 0.05, code = 3)
+      lab(8, mean(ys[2:3]), "S", pos = 2)
+      graphics::arrows(-0.6, 0, -0.6, 5, length = 0.06, code = 3, xpd = NA)
+      lab(-0.6, 2.5, "Width", pos = 2)
+      graphics::arrows(0, -0.4, 10, -0.4, length = 0.06, code = 3, xpd = NA)
+      lab(5, -0.4, "Length", pos = 1)
+      lab(0.25, 5.15, "1/2 S")
       .bl_title(ttl)
       data.frame(x = xx, y = rep(ys, each = 2))
     },
     "5-9" = {
-      cols <- .bl_cols(4)
-      xs <- seq(-2.5, 2.5, length.out = 501)
-      cur <- list(c(1, 0), c(0.6, 0), c(0.6, 0.3), c(0.6, 0.6))
-      d <- do.call(rbind, lapply(cur, function(v) {
-        data.frame(W = v[1], navsd = v[2], x = xs, p = .sr_lr_nav(xs, v[1], "invcube", 1, v[2]))
+      # Frost's figure 5-9: ideal conditions (sweep width 5.0 nm, probable position error 0.25 nm) and poor
+      # conditions (2.0 nm and 2.0 nm), the inverse cube curve averaged over the position error
+      xs <- seq(-10, 10, length.out = 801)
+      cur <- data.frame(cond = c("ideal", "poor"), W = c(5, 2), navsd = c(0.25, 2))
+      d <- do.call(rbind, lapply(seq_len(nrow(cur)), function(k) {
+        data.frame(cond = cur$cond[k], W = cur$W[k], navsd = cur$navsd[k], x = xs,
+                   p = .sr_lr_nav(xs, cur$W[k], "invcube", 1, cur$navsd[k]))
       }))
       op <- .bl_par(c(0, 1))
       on.exit(graphics::par(op), add = TRUE)
-      graphics::plot(range(xs), c(0, 1.05), type = "n", xlab = "", ylab = "", main = "")
-      .bl_grid(NULL)
-      for (k in seq_along(cur)) {
-        s <- d[d$W == cur[[k]][1] & d$navsd == cur[[k]][2], ]
-        graphics::lines(s$x, s$p, col = cols[k], lwd = 2.2, lty = k)
+      graphics::plot(c(-10, 10), c(0, 1.02), type = "n", xlab = "", ylab = "", main = "", axes = FALSE)
+      graphics::axis(1, at = -10:10, labels = abs(-10:10))
+      graphics::axis(2, at = seq(0, 1, 0.1), labels = paste0(seq(0, 100, 10), "%"))
+      cols <- c("#000080", "#E0301E")
+      for (k in 1:2) graphics::lines(xs, d$p[d$cond == cur$cond[k]], col = cols[k], lwd = 2.4)
+      box <- function(x, y, head, body, to) {
+        txt <- c(head, body)
+        w <- max(graphics::strwidth(txt, cex = 0.7))
+        hgt <- length(txt) * 1.25 * graphics::strheight("M", cex = 0.7)
+        graphics::rect(x, y - hgt, x + w * 1.08, y, border = "#1F2430", lwd = 1.5, col = "white")
+        graphics::text(x + w * 0.04, y - (seq_along(txt) - 0.5) * hgt / length(txt), txt, pos = 4, offset = 0,
+                       cex = 0.7, font = c(2, rep(1, length(body))))
+        graphics::arrows(x + w * 0.9, y - 0.6 * hgt, to[1], to[2], length = 0.07, lwd = 1.5)
       }
-      graphics::legend("topright", legend = c("ideal, W = 1", "poorer conditions, W = 0.6",
-                                              "W = 0.6, navigation error 0.3", "W = 0.6, navigation error 0.6"),
-                       col = cols, lty = 1:4, lwd = 2.2, bty = "n", cex = 0.75)
-      .bl_ylab("Probability of detection")
-      .bl_xlab("Lateral range (in ideal sweep widths)")
+      pi1 <- .sr_lr_nav(-1.6, 5, "invcube", 1, 0.25)
+      pp <- .sr_lr_nav(0.8, 2, "invcube", 1, 2)
+      box(-9.5, 0.92, "Ideal search conditions:",
+          c("Visibility > 20 nm, winds calm", "Fixed wing aircraft at 300 m", "Corrected sweep width 5.0 nm",
+            "Probable position error 0.25 nm"), c(-1.6, pi1))
+      box(2.4, 0.62, "Poor search conditions:",
+          c("Visibility 3 nm, winds 15 kts", "Fixed wing aircraft at 300 m", "Corrected sweep width 2.0 nm",
+            "Probable position error 2.0 nm"), c(0.8, pp))
+      .bl_ylab("POD")
+      .bl_xlab("Lateral range in nautical miles")
       .bl_title(ttl)
       d
     }
@@ -495,22 +581,35 @@ srchfig <- function(fig = NULL, num = NULL, seed = 1, main = NULL) {
     return(trials)
   }
   if (fig %in% c("6-3", "6-4", "6-5")) {
-    top <- c("6-3" = 18, "6-4" = 100, "6-5" = 25)[[fig]]
-    zs <- seq(0.05, top, length.out = 80)
+    # the book's axes: optimal factor 0-1.5 against effort 0-18, 0-3 against 0-100, and POS against effort 0-25
+    lim <- list("6-3" = c(1.5, 18, 0.2, 2), "6-4" = c(3, 100, 0.5, 10), "6-5" = c(25, 100, 1, 10))[[fig]]
+    zs <- seq(0.05, if (fig == "6-5") 25 else lim[2], length.out = 90)
     d <- rbind(curve(zs, "invcube"), curve(zs, "random"))
     yv <- if (fig == "6-5") 100 * d$cumpos else d$cumeff
     xv <- if (fig == "6-5") d$cumeff else d$factor
-    graphics::plot(range(xv), c(0, max(yv)), type = "n", xlab = "", ylab = "", main = "")
-    .bl_grid(NULL)
+    cols <- c("#000080", "#E0301E")
+    graphics::plot(c(0, lim[1]), c(0, lim[2]), type = "n", xlab = "", ylab = "", main = "", axes = FALSE,
+                   xaxs = "i", yaxs = "i")
+    graphics::abline(v = seq(0, lim[1], lim[3]), h = seq(0, lim[2], lim[4]), col = "#1F2430", lwd = 0.6)
+    graphics::axis(1, at = seq(0, lim[1], lim[3]))
+    graphics::axis(2, at = seq(0, lim[2], lim[4]), labels = if (fig == "6-5") paste0(seq(0, 100, 10), "%") else TRUE)
+    graphics::box()
+    lab <- c("Ideal Search Conditions", "Poor Search Conditions")
+    # each curve named beside a point of it: ideal below-right and poor above-left on the factor charts,
+    # ideal above and poor below on the POS chart
+    off <- if (fig == "6-5") rbind(c(0.35, 0.45), c(0.1, -0.15)) else rbind(c(0.02, -0.22), c(-0.3, 0.12))
     for (k in 1:2) {
       s <- d$model == c("invcube", "random")[k]
-      .bl_line(xv[s], yv[s], cols[k], fill = FALSE, label = FALSE, points = FALSE)
+      graphics::lines(xv[s], yv[s], col = cols[k], lwd = 2.2)
+      at <- which(s)[which.min(abs(yv[s] - 0.45 * lim[2]))]
+      tx <- xv[at] + off[k, 1] * lim[1]
+      ty <- yv[at] + off[k, 2] * lim[2]
+      graphics::text(tx, ty, lab[k], cex = 0.75, font = 2, col = cols[k])
+      graphics::arrows(tx, ty + 0.03 * lim[2] * sign(-off[k, 2]), xv[at], yv[at], length = 0.07, lwd = 1.4,
+                       col = cols[k])
     }
-    graphics::legend(if (fig == "6-5") "bottomright" else "topleft",
-                     legend = c("Ideal search conditions (inverse cube)", "Poor search conditions (random search)"),
-                     col = cols, lwd = 2.4, bty = "n", cex = 0.8)
     .bl_xlab(if (fig == "6-5") "Cumulative relative effort" else "Optimal search factor")
-    .bl_ylab(if (fig == "6-5") "Cumulative POS (%)" else "Cumulative relative effort")
+    .bl_ylab(if (fig == "6-5") "Cumulative POS" else "Cumulative relative effort")
     .bl_title(ttl)
     return(d)
   }

@@ -107,7 +107,10 @@ test_that("chapter 5: the PODs the text computes", {
   expect_equal(d$pod[d$model == "mbeta" & d$m == 0.5 & d$coverage == 1], 0.75)
   expect_identical(unique(srchfig("5-1")$model), "random")
   d9 <- srchfig("5-9")
-  expect_identical(nrow(unique(d9[c("W", "navsd")])), 4L)
+  expect_identical(nrow(unique(d9[c("W", "navsd")])), 2L)
+  # the book's peaks: about 100% under ideal conditions and about 31% under poor ones
+  expect_gt(max(d9$p[d9$cond == "ideal"]), 0.99)
+  expect_equal(max(d9$p[d9$cond == "poor"]), 0.31, tolerance = 0.1)
   expect_named(srchfig("5-2"), c("x", "y"))
 })
 
@@ -162,6 +165,12 @@ test_that("the general plot arguments and the new datums refuse what cannot be d
   expect_error(plot(m, view = "cells", digits = 7), "`digits` must be between 0 and 6")
   expect_error(plot(datumpmap(0:1, 0:1), view = "persp"), "at least two cells in x and in y")
   expect_silent(plot(datumpmap(0:4, 0:3, "general", wts = matrix(1, 3, 4)), view = "both"))
+  # inside a layout the caller set, "both" uses the next two panels and leaves the layout as it was
+  op <- graphics::par(mfrow = c(2L, 2L))
+  plot(m, view = "both")
+  expect_identical(graphics::par("mfrow"), c(2L, 2L))
+  expect_identical(graphics::par("mfg")[1:2], c(1L, 2L))
+  graphics::par(op)
   mv <- datumpmap(-3:3, 0:10, "corridor", c(0, 0), end = c(0, 10))
   expect_equal(mv$poc[, 4], rep(mv$poc[1, 4], 10))
   expect_equal(sum(mv$poc[1, ]) * 10, 2 * stats::pnorm(3) - 1, tolerance = 1e-12)

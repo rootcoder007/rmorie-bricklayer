@@ -80,7 +80,8 @@
 #' The lateral range curve seen through a normal cross-track navigation error.
 #'
 #' The convolution of the curve with a normal of standard deviation `navsd` (Frost 1996, equation 5-14):
-#' exact for the rectangular curves, 40-point Gauss-Hermite quadrature for the inverse cube.
+#' exact for the rectangular curves, the trapezoid rule on 641 points over 8 standard deviations either
+#' side for the inverse cube.
 #' @param x Lateral ranges.
 #' @param W Sweep width.
 #' @param model "invcube", "definite" or "mbeta".
@@ -95,8 +96,10 @@
     r <- W / (2 * h)
     return(h * (stats::pnorm((x + r) / navsd) - stats::pnorm((x - r) / navsd)))
   }
-  gh <- .sr_gauss(40L, "hermite")
-  drop(matrix(.sr_lr(outer(x, sqrt(2) * navsd * gh$t, "+"), W, model, m), length(x)) %*% gh$w) / sqrt(pi)
+  # trapezoid over +-8 sd: Gauss-Hermite rippled once the error is as wide as the curve
+  t <- seq(-8, 8, length.out = 641) * navsd
+  w <- stats::dnorm(t, sd = navsd) * (t[2L] - t[1L])
+  drop(matrix(.sr_lr(outer(x, t, "-"), W, model, m), length(x)) %*% w)
 }
 
 #' Gauss-Hermite or Gauss-Legendre nodes and weights by the Golub-Welsch eigenvalue method.
@@ -178,7 +181,7 @@
 #' With \code{navsd > 0}, \code{ltrlrng()} gives the expected curve seen
 #' through a normal cross-track navigation error: the convolution of the curve
 #' with that normal (Frost 1996, equation 5-14), exact for the rectangular
-#' curves and by 40-point Gauss-Hermite quadrature for the inverse cube. Its
+#' curves and by the trapezoid rule for the inverse cube. Its
 #' area is still \code{W}; the curve is lower and wider.
 #'
 #' \code{srchpod()}: random search \code{1 - exp(-C)}; definite range
@@ -292,8 +295,10 @@
 #'   (\code{equiv = TRUE} adds the equivalent definite-range rectangle,
 #'   \code{spacing} a second track), the POD by coverage for any of the
 #'   models (\code{models}, \code{m}, \code{cmax}), the map as an image with
-#'   contours, a surface, both side by side, or its cells with their
-#'   percentages (\code{view}), and the allocation (see
+#'   contours, a surface banded by height, the surface and its top view side
+#'   by side (the device's two panels, or the
+#'   next two of a layout the caller set with \code{par(mfrow = )}), or its
+#'   cells with their percentages (\code{view}), and the allocation (see
 #'   \code{\link{plot-methods}}). \code{\link{srchfig}} draws every figure of
 #'   Frost (1996) with them.
 #' @references Koopman, B. O. (1946). Search and Screening. OEG Report 56,
@@ -684,16 +689,20 @@ print.rmbl_opteffort <- function(x, ...) {
   }
   p <- .sr_lr_nav(xs, W, model, m, navsd)
   if (equiv) {
+    # Frost's figure 4-7: A, missed inside the sweep width (light), B, seen outside it (dark)
     inn <- abs(xs) <= W / 2
-    graphics::polygon(c(xs[inn], rev(xs[inn])), c(p[inn], rep(1, sum(inn))),
-                      col = grDevices::adjustcolor(cols[2L], 0.3), border = NA)
+    graphics::polygon(c(xs[inn], rev(xs[inn])), c(p[inn], rep(1, sum(inn))), col = "#E3E3E3", border = NA)
     for (o in list(xs < -W / 2, xs > W / 2)) {
-      graphics::polygon(c(xs[o], rev(xs[o])), c(p[o], rep(0, sum(o))), col = grDevices::adjustcolor(cols[3L], 0.35),
-                        border = NA)
+      graphics::polygon(c(xs[o], rev(xs[o])), c(p[o], rep(0, sum(o))), col = "#9A9A9A", border = NA)
     }
     graphics::rect(-W / 2, 0, W / 2, 1, border = "#3D4350", lty = 2)
-    graphics::text(c(-W / 4, W / 4), 0.93, "A", font = 2, col = "#3D4350")
-    graphics::text(c(-0.75, 0.75) * W, 0.04, "B", font = 2, col = "#3D4350")
+    ax <- c(-0.38, 0.38) * W
+    graphics::text(ax, 0.86, "A", font = 2, col = "#1F2430")
+    graphics::text(c(-0.62, 0.62) * W, 0.07, "B", font = 2, col = "#1F2430")
+    graphics::arrows(c(-0.3, 0.3) * W, 0.2, c(-0.5, 0.5) * W, 0.2, length = 0.07)
+    graphics::text(0, 0.2, "SWEEP WIDTH", cex = 0.7)
+    graphics::text(0, 1.11, "Missed within the sweep width (A)", cex = 0.75, xpd = NA)
+    graphics::arrows(c(-0.3, 0.3) * W, 1.08, ax, 0.9, length = 0.06, xpd = NA)
   }
   if (is.null(spacing)) {
     .bl_line(xs, p, cols[1L], label = FALSE, points = FALSE)
@@ -725,9 +734,11 @@ plot.rmbl_ltrlrng <- function(x, ..., equiv = FALSE, spacing = NULL, main = NULL
   cols <- .bl_cols(3, col, palette)
   op <- .bl_par(c(0, 1))
   on.exit(graphics::par(op), add = TRUE)
-  graphics::plot(range(xs), c(0, 1.05), type = "n", xlab = "", ylab = "", main = "", ...)
+  graphics::plot(range(xs), c(0, if (isTRUE(equiv)) 1.13 else 1.05), type = "n", xlab = "", ylab = "", main = "",
+                 ...)
   .bl_ylab("Probability of detection")
-  .bl_xlab("Lateral range (distance from the track)")
+  .bl_xlab(if (isTRUE(equiv)) "Lateral range (B: detected outside the sweep width)" else
+    "Lateral range (distance from the track)")
   .bl_title(.bl_main(main, sprintf("Lateral range curve, %s, W = %s%s", .sr_model_name(model), format(W),
                                    if (navsd > 0) sprintf(", navigation error %s", format(navsd)) else "")))
   .bl_grid(NULL)
@@ -835,30 +846,73 @@ plot.rmbl_srchpod <- function(x, ..., models = NULL, m = NULL, cmax = NULL, main
   invisible(NULL)
 }
 
-#' Draws a datum map's probability density as a surface.
+#' The book's height bands: blue base, maroon, yellow, cyan, purple, salmon, steel blue, lavender top.
+#' @return Eight colours, low to high.
+#' @noRd
+.sr_bands <- function() c("#7B7BEE", "#6B1F4F", "#FFFFB3", "#A6DCE0", "#4B0E7E", "#F0897A", "#3E7DB6", "#C9C9F2")
+
+#' The band of each value: the lowest band below 6% of the peak, seven equal bands above it.
+#' @param v Densities.
+#' @param top The peak density.
+#' @param n The number of colours.
+#' @return Band numbers from 1 to n.
+#' @noRd
+.sr_band_of <- function(v, top, n) {
+  if (!(top > 0)) return(rep(1L, length(v)))
+  pmin(n, findInterval(v / top, c(-Inf, 0.06 + (0:(n - 2)) * 0.94 / (n - 1))))
+}
+
+#' A datum map's density on its cell centres (rows x cells, columns y cells).
 #' @param x An rmbl_datummap.
-#' @param cols The facet colours, low to high.
-#' @return The density matrix (rows x cells, columns y cells), invisibly.
+#' @return A matrix.
+#' @noRd
+.sr_density <- function(x) t(x$poc / outer(diff(x$yedg), diff(x$xedg)))
+
+#' Draws a datum map's probability density as a surface banded by height, mesh drawn.
+#' @param x An rmbl_datummap.
+#' @param cols The band colours, low to high.
+#' @return The density matrix, invisibly.
 #' @noRd
 .sr_draw_persp <- function(x, cols) {
-  dens <- t(x$poc / outer(diff(x$yedg), diff(x$xedg)))
+  dens <- .sr_density(x)
   nx <- nrow(dens)
   ny <- ncol(dens)
   if (nx < 2L || ny < 2L) .sr_stop("a surface needs at least two cells in x and in y")
   mid <- (dens[-1L, -1L] + dens[-nx, -1L] + dens[-1L, -ny] + dens[-nx, -ny]) / 4
-  k <- if (diff(range(mid)) > 0) cut(mid, length(cols), labels = FALSE) else rep(1L, length(mid))
+  k <- .sr_band_of(mid, max(dens), length(cols))
   graphics::persp(.sr_mid(x$xedg), .sr_mid(x$yedg), dens, theta = -35, phi = 28, expand = 0.6,
-                  col = cols[k], border = NA, shade = 0.35, box = FALSE,
+                  col = cols[k], border = if (nx * ny <= 6400L) "#1F2430" else NA, lwd = 0.3, box = FALSE,
                   zlim = c(0, 1.05 * max(dens)))
   invisible(dens)
 }
 
+#' Draws the top view of a datum map: its cells coloured by the same height bands, mesh drawn.
+#' @param x An rmbl_datummap.
+#' @param cols The band colours, low to high.
+#' @return NULL, invisibly.
+#' @noRd
+.sr_draw_top <- function(x, cols) {
+  dens <- .sr_density(x)
+  k <- matrix(.sr_band_of(dens, max(dens), length(cols)), nrow(dens))
+  graphics::image(x$xedg, x$yedg, k, col = cols, breaks = seq_len(length(cols) + 1L) - 0.5, axes = FALSE,
+                  xlab = "", ylab = "", main = "", asp = 1)
+  if (length(dens) <= 6400L) {
+    graphics::segments(x$xedg, min(x$yedg), x$xedg, max(x$yedg), col = "#1F2430", lwd = 0.3)
+    graphics::segments(min(x$xedg), x$yedg, max(x$xedg), x$yedg, col = "#1F2430", lwd = 0.3)
+  }
+  graphics::rect(min(x$xedg), min(x$yedg), max(x$xedg), max(x$yedg), border = "#1F2430")
+  invisible(NULL)
+}
+
 #' Draws a datum map as its cells with their probabilities written in them, on a new frame.
+#'
+#' The text is sized to the cells (never wider than 80% of one); a corridor datum's line is drawn with
+#' its label, and the values of the cells it crosses are set below it.
 #' @param x An rmbl_datummap.
 #' @param digits Decimal places of the percentages.
 #' @param shade NULL, or the row and column of a cell to shade.
-#' @param circle NULL, or c(x, y, radius) of a dashed circle.
-#' @return NULL, invisibly.
+#' @param circle NULL, or c(x, y, radius) of a dashed circle, its radius marked "E".
+#' @return The text size used, invisibly.
 #' @noRd
 .sr_draw_cells <- function(x, digits, shade = NULL, circle = NULL) {
   graphics::plot(range(x$xedg), range(x$yedg), type = "n", asp = 1, axes = FALSE, xlab = "", ylab = "", main = "")
@@ -868,15 +922,30 @@ plot.rmbl_srchpod <- function(x, ..., models = NULL, m = NULL, cmax = NULL, main
     graphics::rect(x$xedg[shade[2]], x$yedg[shade[1]], x$xedg[shade[2] + 1L], x$yedg[shade[1] + 1L], col = "#D9D9D9",
                    border = NA)
   }
+  lab <- sprintf(paste0("%.", digits, "f%%"), 100 * as.vector(x$poc))
+  cw <- min(diff(x$xedg))
+  ch <- min(diff(x$yedg))
+  cex <- min(1.2, 0.8 * cw / max(graphics::strwidth(lab, cex = 1)), 0.45 * ch / graphics::strheight("0", cex = 1))
+  yt <- rep(.sr_mid(x$yedg), nx)
+  line <- if (x$datum == "corridor") x$center[2] else NA_real_
+  if (!is.na(line) && x$center[2] == x$end[2]) {
+    on <- rep(x$yedg[-(ny + 1L)] < line & x$yedg[-1L] > line, nx)
+    yt[on] <- (line + rep(x$yedg[-(ny + 1L)], nx)[on]) / 2
+    graphics::segments(min(x$xedg), line, max(x$xedg), line, lwd = 2)
+    graphics::arrows(min(x$xedg) - 0.6 * cw, line, min(x$xedg), line, length = 0.06, xpd = NA)
+    graphics::text(min(x$xedg) - 0.6 * cw, line, "Datum\nline", pos = 2, cex = 0.8 * cex, xpd = NA)
+  }
   graphics::rect(rep(x$xedg[-(nx + 1L)], each = ny), rep(x$yedg[-(ny + 1L)], nx), rep(x$xedg[-1L], each = ny),
-                 rep(x$yedg[-1L], nx), border = "#3D4350")
-  graphics::text(rep(.sr_mid(x$xedg), each = ny), rep(.sr_mid(x$yedg), nx),
-                 sprintf(paste0("%.", digits, "f%%"), 100 * as.vector(x$poc)), cex = 0.8, col = "#1F2430")
+                 rep(x$yedg[-1L], nx), border = "#1F2430", lwd = 2)
+  graphics::text(rep(.sr_mid(x$xedg), each = ny), yt, lab, cex = cex, col = "#1F2430")
   if (!is.null(circle)) {
     a <- seq(0, 2 * pi, length.out = 181)
-    graphics::lines(circle[1] + circle[3] * cos(a), circle[2] + circle[3] * sin(a), lty = 2, col = "#3D4350")
+    graphics::lines(circle[1] + circle[3] * cos(a), circle[2] + circle[3] * sin(a), lty = 2, col = "#1F2430")
+    graphics::arrows(circle[1], circle[2], circle[1] + circle[3] * cos(-pi / 4), circle[2] + circle[3] * sin(-pi / 4),
+                     length = 0.05)
+    graphics::text(circle[1] + 0.35 * circle[3], circle[2] - 0.55 * circle[3], "E", font = 3, cex = cex)
   }
-  invisible(NULL)
+  invisible(cex)
 }
 
 #' @rdname plot-methods
@@ -889,26 +958,34 @@ plot.rmbl_datummap <- function(x, ..., view = c("map", "persp", "both", "cells")
   view <- .rmbl_arg(view)
   digits <- .sr_num(digits, "digits", min = 0, max = 6, whole = TRUE)
   cols <- if (!is.null(col)) .bl_cols(length(col), col) else blpal(palette %||% "sequential", 64)
+  # the surface and its top view take the book's height bands unless colours are given
+  bands <- if (is.null(col) && is.null(palette)) .sr_bands() else cols
   op <- .bl_par(x$yedg)
   on.exit(graphics::par(op), add = TRUE)
   ttl <- .bl_main(main, sprintf("Probability of containment, %s datum", .sr_model_name(x$datum)))
-  if (view == "both") {
+  # "both" takes the device as two panels, unless the caller set a layout: then the next two of its panels
+  own <- view == "both" && prod(graphics::par("mfrow")) == 1L
+  if (own) {
     op2 <- graphics::par(mfrow = c(1L, 2L), oma = c(0, 0, 1.8, 0))
     on.exit(graphics::par(op2), add = TRUE)
   }
   if (view %in% c("persp", "both")) {
-    .sr_draw_persp(x, cols)
+    .sr_draw_persp(x, bands)
     .bl_title(if (view == "both") "Probability density" else ttl)
   }
-  if (view %in% c("map", "both")) {
+  if (view == "both") {
+    .sr_draw_top(x, bands)
+    .bl_title("Top view")
+  }
+  if (view == "map") {
     .sr_draw_map(x, contours, cols, ...)
-    .bl_title(if (view == "both") "Top view" else ttl)
+    .bl_title(ttl)
   }
   if (view == "cells") {
     .sr_draw_cells(x, digits)
     .bl_title(ttl)
   }
-  if (view == "both") graphics::mtext(ttl, side = 3, outer = TRUE, font = 2, line = 0.3, col = "#1F2430")
+  if (own) graphics::mtext(ttl, side = 3, outer = TRUE, font = 2, line = 0.3, col = "#1F2430")
   xc <- .sr_mid(x$xedg)
   yc <- .sr_mid(x$yedg)
   invisible(data.frame(x = rep(xc, times = length(yc)), y = rep(yc, each = length(xc)), poc = as.vector(t(x$poc))))

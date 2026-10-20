@@ -127,8 +127,10 @@ centre). \code{opteffort()}: a list of class \code{rmbl_opteffort} with
 (\code{equiv = TRUE} adds the equivalent definite-range rectangle,
 \code{spacing} a second track), the POD by coverage for any of the
 models (\code{models}, \code{m}, \code{cmax}), the map as an image with
-contours, a surface, both side by side, or its cells with their
-percentages (\code{view}), and the allocation (see
+contours, a surface banded by height, the surface and its top view side
+by side (the device's two panels, or the
+next two of a layout the caller set with \code{par(mfrow = )}), or its
+cells with their percentages (\code{view}), and the allocation (see
 \code{\link{plot-methods}}). \code{\link{srchfig}} draws every figure of
 Frost (1996) with them.
 }
@@ -169,7 +171,7 @@ sweep width. \code{swpwdth()} integrates by the trapezoid rule.
 With \code{navsd > 0}, \code{ltrlrng()} gives the expected curve seen
 through a normal cross-track navigation error: the convolution of the curve
 with that normal (Frost 1996, equation 5-14), exact for the rectangular
-curves and by 40-point Gauss-Hermite quadrature for the inverse cube. Its
+curves and by the trapezoid rule for the inverse cube. Its
 area is still \code{W}; the curve is lower and wider.
 
 \code{srchpod()}: random search \code{1 - exp(-C)}; definite range
