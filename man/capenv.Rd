@@ -20,8 +20,10 @@ A list of seven elements:
 \item{\code{rng_kind}}{character, the three \code{RNGkind()} values joined by
 commas.}
 \item{\code{rng_seeded}}{logical, whether \code{.Random.seed} exists.}
-\item{\code{packages}}{named character vector of versions, sorted by name
-(\code{NA} for a package that is not installed).}
+\item{\code{packages}}{named list of version strings, sorted by name
+(\code{NA} for a package that is not installed). A list, not a vector,
+so the names survive the manifest's JSON: a named vector is written as
+a bare array.}
 }
 }
 \description{
@@ -48,7 +50,7 @@ environment. Nothing is written and the random state is not touched.
 env <- capenv(c("stats", "utils"))
 env$r_version
 env$os
-env$packages          # named character vector of versions
+env$packages          # named list of versions
 
 # Default captures every currently loaded namespace.
 names(capenv())

@@ -374,15 +374,17 @@ print.bricklayer_capsule_check <- function(x, ...) {
 #'     \item{\code{rng_kind}}{character, the three \code{RNGkind()} values joined by
 #'       commas.}
 #'     \item{\code{rng_seeded}}{logical, whether \code{.Random.seed} exists.}
-#'     \item{\code{packages}}{named character vector of versions, sorted by name
-#'       (\code{NA} for a package that is not installed).}
+#'     \item{\code{packages}}{named list of version strings, sorted by name
+#'       (\code{NA} for a package that is not installed). A list, not a vector,
+#'       so the names survive the manifest's JSON: a named vector is written as
+#'       a bare array.}
 #'   }
 #' @examples
 #' # Record specific packages' versions alongside the session facts.
 #' env <- capenv(c("stats", "utils"))
 #' env$r_version
 #' env$os
-#' env$packages          # named character vector of versions
+#' env$packages          # named list of versions
 #'
 #' # Default captures every currently loaded namespace.
 #' names(capenv())
@@ -409,10 +411,10 @@ capenv <- function(pkgs = loadedNamespaces()) {
     rng_kind     = paste(RNGkind(), collapse = ","),
     rng_seeded   = exists(".Random.seed", envir = globalenv(),
                           inherits = FALSE),
-    packages     = vapply(pkgs, function(p) {
+    packages     = as.list(vapply(pkgs, function(p) {
       tryCatch(as.character(utils::packageVersion(p)),
                error = function(e) NA_character_)
-    }, character(1))
+    }, character(1)))
   )
 }
 

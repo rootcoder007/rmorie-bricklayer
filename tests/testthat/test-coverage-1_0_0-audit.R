@@ -265,3 +265,16 @@ test_that("re-check of 1.0.0: the battery's last raw errors are refused in words
     expect_true(.bl_bare_question(s), info = s)
   }
 })
+
+test_that("the manifest keeps the package names of the environment it records", {
+  e <- capenv(c("stats", "utils"))
+  expect_type(e$packages, "list")
+  expect_named(e$packages, c("stats", "utils"))
+  f <- tempfile(fileext = ".json")
+  wrmnfjs(mkmnf(list(project = "x", environment = e)), f)
+  back <- fromjs(paste(readLines(f), collapse = "\n"), simplifyVector = FALSE)
+  expect_identical(back$meta$environment$packages$stats, as.character(utils::packageVersion("stats")))
+  d <- envdiff(e, capenv("stats"))
+  expect_identical(d$packages$package, "utils")
+  expect_identical(d$packages$change, "removed")
+})

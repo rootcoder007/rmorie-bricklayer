@@ -8,6 +8,8 @@
 * `cpschkatst()`'s `key_as_expected` row says whether the key matched; its detail read the same
   either way.
 * The Docker image installs the package and puts `rmbl` on the PATH.
+* `capenv()$packages` is a named list, so a manifest written with `wrmnfjs()` keeps the package
+  names; as a named character vector they were written as a bare array of versions.
 
 ## Short names
 
