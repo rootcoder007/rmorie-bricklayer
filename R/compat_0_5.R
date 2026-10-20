@@ -2,17 +2,30 @@
 #'
 #' rmoriedata 0.3.x on CRAN calls eleven functions by their 0.5.x names. These wrappers keep
 #' that release installing and checking against rmoriebricklayer 1.0.0. Each one forwards to
-#' the function named in its body, translating the old argument names; new code should call
-#' the new names directly, and these wrappers go when every released rmoriedata uses them.
+#' the function named in its body, translating the old argument names:
+#' [cpssign()], [cpsvrf()],
+#' [pqckg()], [signpubkey()],
+#' [csha256()], [cmn()],
+#' [sha256file()], [tojs()],
+#' [fromjs()], [blfetch()] and
+#' [wbsnpurl()]. New code should call the new names directly; these
+#' wrappers go when every released rmoriedata uses them.
 #'
-#' @param message,signature,key,scheme,context,deterministic,prehash,masked As `msg`, `sig`,
-#'   `key`, `scheme`, `ctx`, `determ`, `prehash` and `masked` of [cpssign()] and [cpsvrf()].
-#' @param height,sk_seed,pub_seed,sk_prf As `height`, `skseed`, `pubseed` and `skprf` of
-#'   [pqckg()].
-#' @param url,dest,wayback,timeout As `url`, `dest`, `wb` and `tmout` of [blfetch()].
-#' @param timestamp As `ts` of [wbsnpurl()].
-#' @param x,path,txt,... Passed through to [csha256()], [cmn()], [sha256file()], [tojs()] and
-#'   [fromjs()].
+#' @param message,signature `msg` and `sig` of the new name.
+#' @param key,scheme,prehash,masked As in the new name.
+#' @param context `ctx` of the new name.
+#' @param deterministic `determ` of `cpssign()`.
+#' @param height `height` of `pqckg()`.
+#' @param sk_seed `skseed` of `pqckg()`.
+#' @param pub_seed `pubseed` of `pqckg()`.
+#' @param sk_prf `skprf` of `pqckg()`.
+#' @param url,dest As in `blfetch()` and `wbsnpurl()`.
+#' @param wayback,timeout `wb` and `tmout` of `blfetch()`.
+#' @param timestamp `ts` of `wbsnpurl()`.
+#' @param x `x` of `csha256()`, `cmn()` or `tojs()`.
+#' @param path `path` of `sha256file()`.
+#' @param txt `txt` of `fromjs()`.
+#' @param ... Passed through to `tojs()` or `fromjs()`.
 #' @return What the forwarded function returns.
 #' @keywords internal
 #' @name rmbl-compat

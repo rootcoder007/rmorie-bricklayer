@@ -187,7 +187,8 @@
 
 \method{plot}{rmbl_share}(x, ..., main = NULL, col = NULL, palette = NULL)
 
-\method{plot}{rmbl_rate_change}(x, ..., main = NULL, col = NULL, palette = NULL, xlab = NULL)
+\method{plot}{rmbl_rate_change}(x, ..., main = NULL, col = NULL,
+  palette = NULL, xlab = NULL)
 
 \method{plot}{rmbl_band_sensitivity}(x, ..., main = NULL, col = NULL, palette = NULL)
 
@@ -229,7 +230,8 @@
 
 \method{plot}{rmbl_particles}(x, ..., main = NULL, col = NULL, palette = NULL)
 
-\method{plot}{rmbl_count_trend}(x, ..., main = NULL, col = NULL, palette = NULL, xlab = NULL)
+\method{plot}{rmbl_count_trend}(x, ..., main = NULL, col = NULL,
+  palette = NULL, xlab = NULL)
 
 \method{plot}{bricklayer_analysis}(x, ..., which = NULL, main = NULL)
 

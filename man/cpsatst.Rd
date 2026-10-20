@@ -12,9 +12,9 @@ cpschkatst(attest, man, keyexp = NULL, key = NULL)
 \arguments{
 \item{man}{A manifest, as from \code{\link[=mkmnf]{mkmnf()}}.}
 
-\item{key}{For \code{cpsatst()}, a signing key from \code{\link[=fipskg]{fipskg()}} (ML-DSA,
-SLH-DSA and the
-other standardised schemes) or \code{\link[=pqckg]{pqckg()}} (XMSS), or a shared secret
+\item{key}{For \code{cpsatst()}, a signing key from
+\code{\link[=fipskg]{fipskg()}} (ML-DSA, SLH-DSA and the other standardised schemes) or
+\code{\link[=pqckg]{pqckg()}} (XMSS), or a shared secret
 (a string or raw vector) for \code{"hmac"}. For \code{cpschkatst()},
 the shared secret that checks an \code{"hmac"} attestation; it is not
 used for the other schemes, whose public key the attestation carries.}
@@ -117,10 +117,9 @@ Errors: \code{man} not a list; \code{key} not from
 \code{\link[=fipskg]{fipskg()}}
 or \code{\link[=pqckg]{pqckg()}} and not a non-empty string or raw vector; an invalid
 \code{prehash} or
-\code{ctx} (from
-\code{\link[=cpssign]{cpssign()}}), or either given with an hmac key; \code{attestation} not from
-\code{cpsatst()}. A
-signature that fails to verify is a failed row, not an error.
+\code{ctx} (from \code{\link[=cpssign]{cpssign()}}), or either given with an hmac key;
+\code{attestation} not from \code{cpsatst()}. A signature that fails to
+verify is a failed row, not an error.
 }
 \examples{
 m <- mkmnf(list(dataset = "otis", rows = 1200L),

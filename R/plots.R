@@ -920,10 +920,20 @@ plotopt <- function(...) {
   }
   graphics::points(x, est, pch = pch, bg = cols, col = "white", lwd = 1.6, cex = 1.7)
   .bl_period_ticks(ax)
+  # a period with no estimate says why (the first period, a zero base), so an empty column never
+  # reads as a missing drawing: the whole reason, sized to the panel's height, and only when
+  # that would be too small to read the part before the colon ("first period")
   say <- if (is.null(note)) logical() else !is.finite(est) & !is.na(note) & nzchar(note)
   if (any(say)) {
-    graphics::text(x[say], mean(graphics::par("usr")[3:4]), sub(":.*$", "", note[say]), srt = 90,
-                   col = "#6E6E6E", cex = 0.7, font = 3)
+    usr <- graphics::par("usr")
+    room <- graphics::par("pin")[2L] * 0.9
+    txt <- note[say]
+    cex <- min(0.7, 0.7 * room / max(.bl_strwidth(txt, cex = 0.7, font = 3)))
+    if (cex < 0.6) {
+      txt <- sub(":.*$", "", txt)
+      cex <- min(0.7, 0.7 * room / max(.bl_strwidth(txt, cex = 0.7, font = 3)))
+    }
+    graphics::text(x[say], mean(usr[3:4]), txt, srt = 90, col = "#6E6E6E", cex = cex, font = 3)
   }
   if (ng > 1L) {
     graphics::legend("topleft", legend = unique(group), pch = c(21, 22, 24, 23, 25)[(seq_len(ng) - 1L) %% 5L + 1L],
@@ -1444,6 +1454,8 @@ plot.rmbl_share <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 }
 
 #' @rdname plot-methods
+#' @usage \method{plot}{rmbl_rate_change}(x, ..., main = NULL, col = NULL,
+#'   palette = NULL, xlab = NULL)
 #' @export
 plot.rmbl_rate_change <- function(x, ..., main = NULL, col = NULL, palette = NULL, xlab = NULL) {
   .rmbl_plot_check(x, "rmbl_rate_change")
@@ -2076,6 +2088,8 @@ plot.rmbl_particles <- function(x, ..., main = NULL, col = NULL, palette = NULL)
 # ---- trend and the whole-table analysis ----------------------------------------------------
 
 #' @rdname plot-methods
+#' @usage \method{plot}{rmbl_count_trend}(x, ..., main = NULL, col = NULL,
+#'   palette = NULL, xlab = NULL)
 #' @export
 plot.rmbl_count_trend <- function(x, ..., main = NULL, col = NULL, palette = NULL, xlab = NULL) {
   .rmbl_plot_check(x, "rmbl_count_trend")

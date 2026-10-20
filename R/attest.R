@@ -74,15 +74,14 @@
 #' [fipskg()]
 #' or [pqckg()] and not a non-empty string or raw vector; an invalid
 #' \code{prehash} or
-#' \code{ctx} (from
-#' [cpssign()]), or either given with an hmac key; \code{attestation} not from
-#' \code{cpsatst()}. A
-#' signature that fails to verify is a failed row, not an error.
+#' \code{ctx} (from [cpssign()]), or either given with an hmac key;
+#' \code{attestation} not from \code{cpsatst()}. A signature that fails to
+#' verify is a failed row, not an error.
 #'
 #' @param man A manifest, as from [mkmnf()].
-#' @param key For \code{cpsatst()}, a signing key from [fipskg()] (ML-DSA,
-#'   SLH-DSA and the
-#'   other standardised schemes) or [pqckg()] (XMSS), or a shared secret
+#' @param key For \code{cpsatst()}, a signing key from
+#'   [fipskg()] (ML-DSA, SLH-DSA and the other standardised schemes) or
+#'   [pqckg()] (XMSS), or a shared secret
 #'   (a string or raw vector) for \code{"hmac"}. For \code{cpschkatst()},
 #'   the shared secret that checks an \code{"hmac"} attestation; it is not
 #'   used for the other schemes, whose public key the attestation carries.

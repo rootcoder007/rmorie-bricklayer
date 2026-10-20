@@ -12,7 +12,7 @@ testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the corre
   g <- nrow(s)
   n <- nrow(x)
   v <- b %*% crossprod(s) %*% b * g / (g - 1) * (n - 1) / (n - k)
-  sqrt(diag(v))[terms]
+  sqrt(diag(v)[terms])
 }
 
 test_that("plndid(): the two-way estimate and its CR1 error, as lm() with dummies gives them", {

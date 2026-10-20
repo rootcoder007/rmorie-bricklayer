@@ -46,18 +46,35 @@ bricklayer_fetch(url, dest, wayback = "", timeout = 120L)
 wayback_snapshot_url(url, timestamp = NULL)
 }
 \arguments{
-\item{message, signature, key, scheme, context, deterministic, prehash, masked}{As \code{msg}, \code{sig},
-\code{key}, \code{scheme}, \code{ctx}, \code{determ}, \code{prehash} and \code{masked} of \code{\link[=cpssign]{cpssign()}} and \code{\link[=cpsvrf]{cpsvrf()}}.}
+\item{message, signature}{\code{msg} and \code{sig} of the new name.}
 
-\item{height, sk_seed, pub_seed, sk_prf}{As \code{height}, \code{skseed}, \code{pubseed} and \code{skprf} of
-\code{\link[=pqckg]{pqckg()}}.}
+\item{key, scheme, prehash, masked}{As in the new name.}
 
-\item{x, path, txt, ...}{Passed through to \code{\link[=csha256]{csha256()}}, \code{\link[=cmn]{cmn()}}, \code{\link[=sha256file]{sha256file()}}, \code{\link[=tojs]{tojs()}} and
-\code{\link[=fromjs]{fromjs()}}.}
+\item{context}{\code{ctx} of the new name.}
 
-\item{url, dest, wayback, timeout}{As \code{url}, \code{dest}, \code{wb} and \code{tmout} of \code{\link[=blfetch]{blfetch()}}.}
+\item{deterministic}{\code{determ} of \code{cpssign()}.}
 
-\item{timestamp}{As \code{ts} of \code{\link[=wbsnpurl]{wbsnpurl()}}.}
+\item{height}{\code{height} of \code{pqckg()}.}
+
+\item{sk_seed}{\code{skseed} of \code{pqckg()}.}
+
+\item{pub_seed}{\code{pubseed} of \code{pqckg()}.}
+
+\item{sk_prf}{\code{skprf} of \code{pqckg()}.}
+
+\item{x}{\code{x} of \code{csha256()}, \code{cmn()} or \code{tojs()}.}
+
+\item{path}{\code{path} of \code{sha256file()}.}
+
+\item{...}{Passed through to \code{tojs()} or \code{fromjs()}.}
+
+\item{txt}{\code{txt} of \code{fromjs()}.}
+
+\item{url, dest}{As in \code{blfetch()} and \code{wbsnpurl()}.}
+
+\item{wayback, timeout}{\code{wb} and \code{tmout} of \code{blfetch()}.}
+
+\item{timestamp}{\code{ts} of \code{wbsnpurl()}.}
 }
 \value{
 What the forwarded function returns.
@@ -65,8 +82,14 @@ What the forwarded function returns.
 \description{
 rmoriedata 0.3.x on CRAN calls eleven functions by their 0.5.x names. These wrappers keep
 that release installing and checking against rmoriebricklayer 1.0.0. Each one forwards to
-the function named in its body, translating the old argument names; new code should call
-the new names directly, and these wrappers go when every released rmoriedata uses them.
+the function named in its body, translating the old argument names:
+\code{\link[=cpssign]{cpssign()}}, \code{\link[=cpsvrf]{cpsvrf()}},
+\code{\link[=pqckg]{pqckg()}}, \code{\link[=signpubkey]{signpubkey()}},
+\code{\link[=csha256]{csha256()}}, \code{\link[=cmn]{cmn()}},
+\code{\link[=sha256file]{sha256file()}}, \code{\link[=tojs]{tojs()}},
+\code{\link[=fromjs]{fromjs()}}, \code{\link[=blfetch]{blfetch()}} and
+\code{\link[=wbsnpurl]{wbsnpurl()}}. New code should call the new names directly; these
+wrappers go when every released rmoriedata uses them.
 }
 \examples{
 k <- pqc_keygen(height = 2)

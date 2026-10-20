@@ -721,3 +721,15 @@ test_that("a period-over-period plot says why a row has no percentage", {
   expect_true(any(grepl("first period", calls)))
   expect_true(any(grepl("no percentage: previous period is zero", calls)))
 })
+
+test_that("a period-over-period plot shortens the reason only when the panel is too short for it", {
+  y <- yoy(data.frame(year = 2019:2023, n = c(10, 12, 420, 0, 450)), value = "n", prd = "year")
+  grDevices::pdf(NULL, width = 4, height = 1.6)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  calls <- character()
+  local_mocked_bindings(text = function(x, y, labels, ...) calls <<- c(calls, labels), .package = "graphics")
+  plot(y)
+  expect_true(any(calls == "first period"))
+  expect_true(any(calls == "no percentage"))
+  expect_false(any(grepl("nothing to compare with|previous period is zero", calls)))
+})

@@ -64,13 +64,12 @@
 #' `cpsbndl()` and optional for `cpsbndlvrf()`, where it adds a check
 #' that the manifest
 #' still has the bundled digest.
-#' @param key For `cpsbndl()`, a signing key from
-#' [fipskg()] or
-#' [pqckg()], or a shared secret (a string or raw vector) for an `"hmac"`
-#' bundle such as morie writes: the attestation then records the key's id,
-#' never the secret (see [cpsatst()]). For `cpsbndlvrf()`, the shared
-#' secret that checks an `"hmac"` bundle's signature; not used for the
-#' other schemes.
+#' @param key For `cpsbndl()`, a signing key from [fipskg()] or
+#' [pqckg()], or a shared secret (a string or raw vector) for an
+#' `"hmac"` bundle such as morie writes: the attestation then records
+#' the key's id, never the secret (see [cpsatst()]). For
+#' `cpsbndlvrf()`, the shared secret that checks an `"hmac"` bundle's
+#' signature; not used for the other schemes.
 #' @param files Character vector of paths relative to `dir`. Defaults to
 #' every regular file in `dir` (recursively, dot-files included), excluding
 #' the bundle itself.

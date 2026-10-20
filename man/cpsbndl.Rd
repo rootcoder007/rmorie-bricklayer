@@ -30,13 +30,12 @@ cpsbndlvrf(bundle, dir, man = NULL, keyexp = NULL, key = NULL)
 that the manifest
 still has the bundled digest.}
 
-\item{key}{For \code{cpsbndl()}, a signing key from
-\code{\link[=fipskg]{fipskg()}} or
-\code{\link[=pqckg]{pqckg()}}, or a shared secret (a string or raw vector) for an \code{"hmac"}
-bundle such as morie writes: the attestation then records the key's id,
-never the secret (see \code{\link[=cpsatst]{cpsatst()}}). For \code{cpsbndlvrf()}, the shared
-secret that checks an \code{"hmac"} bundle's signature; not used for the
-other schemes.}
+\item{key}{For \code{cpsbndl()}, a signing key from \code{\link[=fipskg]{fipskg()}} or
+\code{\link[=pqckg]{pqckg()}}, or a shared secret (a string or raw vector) for an
+\code{"hmac"} bundle such as morie writes: the attestation then records
+the key's id, never the secret (see \code{\link[=cpsatst]{cpsatst()}}). For
+\code{cpsbndlvrf()}, the shared secret that checks an \code{"hmac"} bundle's
+signature; not used for the other schemes.}
 
 \item{files}{Character vector of paths relative to \code{dir}. Defaults to
 every regular file in \code{dir} (recursively, dot-files included), excluding
