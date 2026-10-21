@@ -8,7 +8,7 @@ vignette: >
 ---
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 4.2,
+knitr::opts_chunk$set(eval = identical(Sys.getenv("NOT_CRAN"), "true"), collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 4.2,
                       dpi = 72)
 library(rmoriebricklayer)
 ```

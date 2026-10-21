@@ -28,6 +28,6 @@ if [ "$pkg" = rmoriebricklayer ]; then
   printf '^tests/testthat/vectors$\n^tests/testthat/wycheproof-.*\\.txt$\n' >> .Rbuildignore
 fi
 cd "$out"
-R CMD build "$pkg" > "$out/build_$pkg.log" 2>&1
+NOT_CRAN=true R CMD build "$pkg" > "$out/build_$pkg.log" 2>&1
 ls -la "$out"/${pkg}_*.tar.gz | awk '{printf "%s %.2f MiB\n", $9, $5/1048576}'
 grep -c "r-universe.dev/$pkg" "$out/$pkg/README.md" || true
