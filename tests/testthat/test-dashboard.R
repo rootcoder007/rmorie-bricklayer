@@ -658,6 +658,8 @@ test_that("the ledger panel loads a ledger from each source and runs its checks"
   dir.create(ld)
   file.copy(smp, file.path(ld, "proofs.json"))
   expect_identical(names(ns$.bl_ldgr_installed("x", find = function(p) ld)), "x: proofs.json")
+  # with no packages named it looks in every installed package (here none ships a ledger)
+  expect_length(ns$.bl_ldgr_installed(find = function(p) ""), 0L)
   local_mocked_bindings(.bl_ldgr_installed = function(...) c("pkg: ledger.json" = smp))
   dat <- shiny::reactiveVal(list(data = NULL, code = character(), label = "c", capsule = cap))
   shiny::testServer(ns$.bl_ldgr_server, args = list(id = "ledger", dat = dat, rpt = shiny::reactiveVal(list())), {

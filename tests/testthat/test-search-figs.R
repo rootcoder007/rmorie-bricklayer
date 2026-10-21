@@ -203,3 +203,14 @@ test_that("every figure leaves the device layout as it found it", {
     expect_identical(graphics::par(c("mfrow", "oma", "mar")), before, info = f)
   }
 })
+
+test_that("every figure's own-numbers recipe runs", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  tab <- srchfig()
+  expect_identical(nrow(tab), 36L)
+  expect_false(anyNA(tab$yours))
+  for (i in seq_len(nrow(tab))) {
+    expect_no_error(eval(parse(text = tab$yours[i]), envir = new.env()), message = tab$fig[i])
+  }
+})

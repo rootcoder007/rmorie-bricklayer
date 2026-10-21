@@ -18,8 +18,10 @@ the session's random number stream is left as it was.}
 \item{main}{The title, or \code{NULL} for the book's caption.}
 }
 \value{
-Without \code{fig}, a data frame of \code{fig}, \code{caption} and
-\code{how}. With one, the figure's data, invisibly: a data frame (or a
+Without \code{fig}, a data frame of \code{fig}, \code{caption}, \code{how}
+and \code{yours}: one line of R that draws the figure from your own numbers (the
+function behind it, with example inputs to replace; for a schematic, the computation it
+pictures). With one, the figure's data, invisibly: a data frame (or a
 list of them) of what was drawn.
 }
 \description{

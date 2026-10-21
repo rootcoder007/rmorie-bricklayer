@@ -47,6 +47,7 @@ ao
 AOÛT
 août
 Apery's
+api
 API's
 apiclus
 Appl
@@ -58,6 +59,7 @@ Arkhangelsky
 Armitage
 ARMv
 artefact
+arxiv
 ASAN
 ASan
 ascendingly
@@ -148,6 +150,7 @@ CEPEJ
 Cerebras
 CertID
 cfl
+cfm
 Chainey
 Chaisemartin
 Champaign
@@ -297,6 +300,8 @@ Doorslaer
 dotfiles
 DoubleML
 DoubleML's
+dp
+dq
 DRBG
 drid
 drids
@@ -331,6 +336,7 @@ emphasised
 encapDecap
 Encaps
 encaps
+eng
 ENOSYS
 enquêteurs
 eq
@@ -359,6 +365,7 @@ Filimonov
 finiteness
 Flajolet
 FNIGC
+fnigc
 FO
 FORS
 FP
@@ -375,6 +382,7 @@ Gandouet
 Garba
 Garwood
 GBD
+gc
 gcc
 gCO
 Gelbach
@@ -397,6 +405,7 @@ GlobalProtect
 Golub
 Goubin
 gpt
+grapher
 Graubard
 Grealey
 grey
@@ -438,6 +447,8 @@ hostnames
 hotspot
 Hoyt
 HQC
+hqc
+htm
 http
 HTTPS
 https
@@ -479,23 +490,28 @@ Internationalis
 interoperable
 interoperate
 interruptible
+inuit
 Inuk
 invariant's
 invariants
 invertible
 invités
 ipad
+ipp
 IPv
 IPW
 ISC
+isc
 ISC's
 ischaemic
 Ishai
 ISIZE
+itk
 ITU
 Jaccard
 janv
 JB
+jfly
 JK
 JKn
 JM
@@ -541,6 +557,7 @@ Kitagawa's
 KKT
 knitr
 knowledges
+koeln
 Kohler
 Koopman
 Koopman's
@@ -715,6 +732,7 @@ NUL
 O'Sullivan
 OA
 OCAP
+ocj
 OCSP
 OEG
 Offence
@@ -734,6 +752,7 @@ Ollama
 ollama
 Ollama's
 ontario
+ontariocourts
 OOM
 OOPSLA
 OpenAI
@@ -750,6 +769,7 @@ organisation's
 oss
 Ostrom
 otis
+ourworldindata
 overfit
 overrepresentation
 overridable
@@ -776,6 +796,7 @@ personalization
 PHC
 Philox
 Phipson
+php
 Pinkas
 pinnable
 PKCS
@@ -790,8 +811,10 @@ POSIXt
 POSTed
 POSTs
 powercap
+ppa
 ppb
 pq
+pqc
 PQClean
 Pre
 pre
@@ -818,6 +841,7 @@ pyreadstat
 qquad
 Quant
 quintile
+quotidien
 qwen
 racialized
 Rademacher
@@ -836,6 +860,7 @@ Rbuildignore'd
 README
 README's
 realisation
+recensement
 recognisable
 recognise
 recognised
@@ -889,6 +914,7 @@ rmoriedata
 romanised
 romanises
 Roodman
+rootcoder
 rOpenSci
 rOpenSci's
 Rosenbaum
@@ -957,6 +983,7 @@ splittable
 splitter
 splitter's
 SPN
+spn
 Springer
 sprintf
 srr
@@ -974,6 +1001,7 @@ standardises
 standardising
 Stata
 Stata's
+statcan
 stateful
 Statist
 stderr
@@ -1023,7 +1051,9 @@ totalling
 Townsley
 TP
 TPS
+tps
 Transcultural
+trc
 Tremblay
 Tschuprow's
 TSV

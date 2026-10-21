@@ -230,7 +230,14 @@ srchfig("6-6")
 ## Your own search
 
 The figures use the book's numbers; every function takes yours, and each result has a `plot()`
-method. Say a sensor's sweep width is 0.8 nautical miles and its detection falls off as the
+method. `srchfig()` lists, for each of the 36 figures, the one line that draws it from your own
+numbers (replace the example inputs; a schematic gives the computation it pictures):
+
+```{r search-and-rescue-own-recipes}
+knitr::kable(srchfig()[, c("fig", "caption", "yours")])
+```
+
+The most used of them, step by step. Say a sensor's sweep width is 0.8 nautical miles and its detection falls off as the
 inverse cube of the lateral range. Its lateral range curve, and the picture of what the sweep
 width means (the objects missed inside it equal those seen outside it, Figure 4-7):
 

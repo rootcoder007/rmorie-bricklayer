@@ -128,7 +128,7 @@
 #' @noRd
 .bl_rd_method <- function(fn) {
   if (is.null(.bl_rd_env$db)) {
-    .bl_rd_env$db <- tryCatch(tools::Rd_db("rmoriebricklayer"), error = function(e) list())
+    .bl_rd_env$db <- .bl_rd_db()  # installed help pages, else the source man/ folder
   }
   for (rd in .bl_rd_env$db) {
     tags <- vapply(rd, function(x) attr(x, "Rd_tag") %||% "", "")

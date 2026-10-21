@@ -159,6 +159,59 @@ optsqr <- function(effort, model = c("invcube", "random", "definite", "mbeta"), 
   )
 }
 
+#' One line of R per figure that draws a version of it from your own numbers: the function behind
+#' the figure, with example inputs to replace (the schematics give the computation they picture).
+#' @return A named character vector, one call per figure.
+#' @noRd
+.sr_fig_yours <- function() {
+  c(
+    "3-1" = paste0("plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), ",
+                   "center = c(0, 0), sigma = 1.5), view = \"both\")"),
+    "3-2" = "sum(datumpmap(c(-1.5, 1.5), c(-1.5, 1.5), sigma = 1.5)$poc)",
+    "3-3" = "sum(datumpmap(c(-1, 1) * 1.177 * 1.5, c(-1, 1) * 1.177 * 1.5, sigma = 1.5)$poc)",
+    "3-4" = "plot(datumpmap(c(-3, -1, 1, 3) * 1.77, c(-3, -1, 1, 3) * 1.77, sigma = 1.5), view = \"cells\")",
+    "3-5" = "sum(datumpmap(c(-1, 1) * 1.295 * 1.5, c(-1, 1) * 1.295 * 1.5, sigma = 1.5)$poc)",
+    "3-6" = paste0("plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), ",
+                   "\"line\", center = c(0, -2), end = c(0, 2), sigma = 1), view = \"both\")"),
+    "3-7" = paste0("plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), ",
+                   "\"line\", center = c(0, -2), end = c(0, 2), sigma = 1), view = \"both\")"),
+    "3-8" = paste0("plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), ",
+                   "\"corridor\", center = c(0, -2), end = c(0, 2), sigma = 1), view = \"both\")"),
+    "3-9" = paste0("plot(datumpmap(c(-5, 5), c(-1.18, 1.18), \"corridor\", center = c(-4, ",
+                   "0), end = c(4, 0), sigma = 1), view = \"cells\")"),
+    "3-10" = paste0("plot(datumpmap(0:10, c(-3, -1.8, -0.6, 0.6, 1.8, 3), \"corridor\", ",
+                    "center = c(0, 0), end = c(10, 0), sigma = 1), view = \"cells\")"),
+    "3-11" = paste0("plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), ",
+                    "\"area\", center = c(-2, -1.5), end = c(2, 1.5)), view = \"both\")"),
+    "3-12" = "plot(datumpmap(0:5, 0:4, \"area\", center = c(0, 0), end = c(5, 4)), view = \"cells\")",
+    "3-13" = "plot(datumpmap(0:5, 0:4, \"general\", wts = matrix(c(1:10, 10:1), 4, 5)), view = \"both\")",
+    "3-14" = "plot(datumpmap(0:5, 0:4, \"general\", wts = matrix(c(1:10, 10:1), 4, 5)), view = \"cells\")",
+    "4-1" = "plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = \"mbeta\", m = 0.5))",
+    "4-2" = "plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = \"definite\"))",
+    "4-3" = "plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = \"definite\"), equiv = TRUE)",
+    "4-4" = "plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = \"mbeta\", m = 0.5), equiv = TRUE)",
+    "4-5" = "plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = \"mbeta\", m = 0.25), equiv = TRUE)",
+    "4-6" = "plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = \"invcube\"))",
+    "4-7" = "plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = \"invcube\"), equiv = TRUE)",
+    "5-1" = "plot(srchpod(seq(0, 3, by = 0.1), model = \"random\"))",
+    "5-2" = "pswppod(W = 0.8, S = 1, model = \"invcube\")",
+    "5-3" = "plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = \"definite\"), spacing = 1.6)",
+    "5-4" = "plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = \"definite\"), spacing = 0.8)",
+    "5-5" = "plot(srchpod(seq(0, 3, by = 0.1), \"definite\"), models = c(\"definite\", \"random\"))",
+    "5-6" = "plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = \"mbeta\", m = 0.5), spacing = 1.6)",
+    "5-7" = paste0("plot(srchpod(seq(0, 3, by = 0.1), \"mbeta\", m = 0.5), ",
+                   "models = c(\"mbeta\", \"definite\", \"random\"), m = c(0.5, 0.25))"),
+    "5-8" = "plot(srchpod(seq(0, 3, by = 0.1), \"invcube\"), models = c(\"invcube\", \"definite\", \"random\"))",
+    "5-9" = "plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = \"invcube\", navsd = 0.3), spacing = 1)",
+    "6-1" = "optsqr(effort = 2)",
+    "6-2" = "optsqr(effort = 2)$side",
+    "6-3" = "with(do.call(rbind, lapply(seq(0.5, 18, by = 0.5), optsqr)), plot(factor, cumeff, type = \"l\"))",
+    "6-4" = "with(do.call(rbind, lapply(seq(2, 100, by = 2), optsqr)), plot(factor, cumeff, type = \"l\"))",
+    "6-5" = "with(do.call(rbind, lapply(seq(0.5, 25, by = 0.5), optsqr)), plot(cumeff, 100 * cumpos, type = \"l\"))",
+    "6-6" = "optsqr(c(1, 0.5, 2, 1.5))"
+  )
+}
+
 #' The figures of The Theory of Search
 #'
 #' Draws any figure of Frost (1996), \dQuote{The Theory of Search: A Simplified
@@ -194,8 +247,10 @@ optsqr <- function(effort, model = c("invcube", "random", "definite", "mbeta"), 
 #' @param seed Number: the seed of figure 6-6's random efforts. Default 1;
 #'   the session's random number stream is left as it was.
 #' @param main The title, or \code{NULL} for the book's caption.
-#' @return Without \code{fig}, a data frame of \code{fig}, \code{caption} and
-#'   \code{how}. With one, the figure's data, invisibly: a data frame (or a
+#' @return Without \code{fig}, a data frame of \code{fig}, \code{caption}, \code{how}
+#'   and \code{yours}: one line of R that draws the figure from your own numbers (the
+#'   function behind it, with example inputs to replace; for a schematic, the computation it
+#'   pictures). With one, the figure's data, invisibly: a data frame (or a
 #'   list of them) of what was drawn.
 #' @references Frost, J. R. (1996). The Theory of Search: A Simplified
 #'   Explanation. Soza and Company and U.S. Coast Guard Office of Search and
@@ -214,7 +269,10 @@ optsqr <- function(effort, model = c("invcube", "random", "definite", "mbeta"), 
 #' @export
 srchfig <- function(fig = NULL, num = NULL, seed = 1, main = NULL) {
   tab <- .sr_fig_table()
-  if (is.null(fig)) return(tab)
+  if (is.null(fig)) {
+    tab$yours <- unname(.sr_fig_yours()[tab$fig])
+    return(tab)
+  }
   if (!is.null(num)) fig <- paste0(.sr_num(fig, "fig", whole = TRUE), "-", .sr_num(num, "num", whole = TRUE))
   fig <- .rmbl_string1(fig, "fig")
   if (!fig %in% tab$fig) {
