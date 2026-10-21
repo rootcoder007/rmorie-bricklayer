@@ -470,7 +470,7 @@ summarypath <- wrsmrytxt(
 cat(readLines(summarypath)[7:12], sep = "\n")
 #> Project:   demo-study
 #> Author:    A. Author
-#> When:      2026-10-21 15:34:54 UTC
+#> When:      2026-10-21 16:05:23 UTC
 #> OS:        Linux
 #> R:         R version 4.6.1 (2026-06-24)
 #> Mode:      SYNTHETIC (not real data -- pipeline check only)
@@ -639,7 +639,7 @@ signingkey <- pqckg(height = 3)
 signingkey
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       1a001064eb70bcd82a33be02af0e49a36c2f3a8c538e590442889262d3f9275d
+#>   root       f084ec4b5d0050f922b97ad551fbc4462d3078e06b6b7d57ed8d13fc9a350b7a
 #>   height     3
 #>   used       0 of 8 signatures
 #>   remaining  8
@@ -656,7 +656,7 @@ pub <- signpubkey(signingkey)
 pub
 #> ── Public verification key ───────────────────────────────────────
 #>   scheme  xmss-sha256
-#>   root    1a001064eb70bcd82a33be02af0e49a36c2f3a8c538e590442889262d3f9275d
+#>   root    f084ec4b5d0050f922b97ad551fbc4462d3078e06b6b7d57ed8d13fc9a350b7a
 #>   height  3
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -924,13 +924,13 @@ plan <- prrgdecl(c(
 
 # a declared outcome that was not reported
 prrgchk(plan, "n_rows")
-#> ── Against the declaration of 2026-10-21T15:34:56Z: departures below 
+#> ── Against the declaration of 2026-10-21T16:05:24Z: departures below 
 #>   declared but not reported (outcome switching): ate
 #> ──────────────────────────────────────────────────────────────────
 
 # statistics reported that were never declared
 prrgchk(plan, c("ate", "n_rows", "byyear", "byprecinct"))
-#> ── Against the declaration of 2026-10-21T15:34:56Z: departures below 
+#> ── Against the declaration of 2026-10-21T16:05:24Z: departures below 
 #>   reported but not declared (2 addition(s)): byyear, byprecinct
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -982,7 +982,7 @@ cpsbndlvrf(attr(b, "path"), dir, man = man)
 #>   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606
 #>   no_unlisted_files              ok    
 #>   attestation:attestation_comple ok    
-#>   attestation:manifest_digest    ok    f182531edb998ead81ac0451278ae9103586
+#>   attestation:manifest_digest    ok    28dc48f4d41c12c7018c2ad3e33d50abe7ec
 #>   attestation:signature          ok    
 #>   manifest_digest                ok    8082eb02d48b11e6e07667e3c024d9596aa7
 #> ──────────────────────────────────────────────────────────────────
