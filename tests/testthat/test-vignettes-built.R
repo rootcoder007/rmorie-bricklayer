@@ -14,6 +14,7 @@ test_that("every vignette's HTML and R code are built from its current source", 
     expect_true(file.exists(html), info = basename(rmd))
     if (!file.exists(html)) next
     stamp <- sub("^<!-- rmoriebricklayer vignette source sha256: ([0-9a-f]{64}) -->$", "\\1", readLines(html, n = 1L))
-    expect_identical(stamp, sha256file(rmd), info = paste(basename(rmd), "changed since its HTML was built: run dev/build_vignettes.R"))
+    expect_identical(stamp, sha256file(rmd),
+                     info = paste(basename(rmd), "changed since its HTML was built: run dev/build_vignettes.R"))
   }
 })

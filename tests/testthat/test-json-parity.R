@@ -132,4 +132,3 @@ test_that("base64 and serialize agree with jsonlite", {
     if (!is.complex(x)) expect_equal(jsunser(jsser(x)), x)
   }
 })
-
