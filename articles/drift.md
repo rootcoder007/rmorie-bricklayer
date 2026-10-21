@@ -119,7 +119,7 @@ d <- cpsdrft(reference, moved)
 plot(d)
 ```
 
-![](drift_files/figure-html/drift-plot-1.png)
+![](drift_files/figure-html/drift-drift-plot-1.png)
 
 `what = "columns"` shows where each column moved: the two distributions,
 with each PSI bin’s share of the index written on it.
@@ -129,7 +129,7 @@ with each PSI bin’s share of the index written on it.
 plot(d, what = "columns", cols = c("size", "grade"))
 ```
 
-![](drift_files/figure-html/drift-columns-1.png)
+![](drift_files/figure-html/drift-drift-columns-1.png)
 
 `what = "ecdf"` and `what = "quantiles"` show the same moves as
 cumulative shares and as quantiles against the identity line, and
@@ -141,7 +141,7 @@ column at its PSI, the bands as rings.
 plot(d, what = "fingerprint")
 ```
 
-![](drift_files/figure-html/drift-fingerprint-1.png)
+![](drift_files/figure-html/drift-drift-fingerprint-1.png)
 
 For someone who will not run R,
 [`drfthtml()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drfthtml.md)

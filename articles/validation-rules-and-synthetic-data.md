@@ -233,7 +233,7 @@ barplot(100 * al, col = blpal()[2], ylim = c(0, 100), xlab = "year", ylab = "row
 abline(h = 20, lty = 2)
 ```
 
-![](validation-rules-and-synthetic-data_files/figure-html/synthetic-plot-1.png)
+![](validation-rules-and-synthetic-data_files/figure-html/validation-rules-and-synthetic-data-synthetic-plot-1.png)
 
 ``` r
 

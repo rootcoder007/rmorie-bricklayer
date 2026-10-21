@@ -36,11 +36,18 @@ one. rmbl sign calls it and then verifies (cpschk)."><meta property="og:image" c
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/capsules-and-provenance.html">Capsules and provenance</a></li>
-    <li><a class="dropdown-item" href="../articles/integrity-and-cryptography.html">Integrity, signatures and cryptography</a></li>
-    <li><a class="dropdown-item" href="../articles/describing-data-and-tables.html">Describing data and published tables</a></li>
-    <li><a class="dropdown-item" href="../articles/statistical-methods.html">Survey, causal and statistical methods</a></li>
-    <li><a class="dropdown-item" href="../articles/applied-analyses.html">Applied analyses: justice, health, environment and rescue</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
+    <li><a class="dropdown-item" href="../articles/dashboard.html">The analysis dashboard</a></li>
+    <li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
+    <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
+    <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
+    <li><a class="dropdown-item" href="../articles/categorical-integrity.html">Categorical integrity: labels that cannot be swapped quietly</a></li>
+    <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
+    <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -138,7 +145,7 @@ with).</p>
 <span class="r-in"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu">cpsseal</span><span class="op">(</span><span class="va">root</span>, <span class="st">"a shared secret"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">s</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                     capsule pinned files</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /tmp/Rtmpq1dR9a/capsules-1fc84dfe351b/one   TRUE     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /tmp/RtmpB4VW0D/capsules-1ff25028e684/one   TRUE     2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                             public</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 2b23046c08926e30017362694e61c9f76f64815699749bede71734e74c84f65e</span>
 <span class="r-in"><span><span class="fu"><a href="cpschk.html">cpschk</a></span><span class="op">(</span><span class="va">root</span>, key <span class="op">=</span> <span class="st">"a shared secret"</span>, fp <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">$</span><span class="va">status</span></span></span>
@@ -146,7 +153,7 @@ with).</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a second run needs overwrite, and a post-quantum key signs too</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cpsseal</span><span class="op">(</span><span class="va">root</span>, <span class="st">"a shared secret"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cpsseal: capsule_bundle.json already exists in /tmp/Rtmpq1dR9a/capsules-1fc84dfe351b/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cpsseal: capsule_bundle.json already exists in /tmp/RtmpB4VW0D/capsules-1ff25028e684/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again</span>
 <span class="r-in"><span><span class="fu">cpsseal</span><span class="op">(</span><span class="va">root</span>, <span class="fu"><a href="fipskg.html">fipskg</a></span><span class="op">(</span><span class="st">"ML-DSA-44"</span><span class="op">)</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">pinned</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 </code></pre></div>

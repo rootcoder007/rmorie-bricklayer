@@ -133,6 +133,6 @@ r[, c("check", "ok", "severity", "detail")]
 bad <- tempfile(fileext = ".json")
 writeLines('{"name": "x"}', bad)
 try(ldgrread(bad))
-#> Error : ldgrread: file1fc85a3f258f.json is not a ledger: $: missing required toolchain, source, theorems
+#> Error : ldgrread: file1ff23662cf65.json is not a ledger: $: missing required toolchain, source, theorems
 unlink(bad)
 ```

@@ -111,7 +111,7 @@ inventory would take to clear at the recent pace.</p>
 <span><span class="co">#&gt; 2 2025-03    20688    20996  1.014888 0.9742875   7.466076</span></span>
 <span><span class="co">#&gt; 3 2026-03    20602    23136  1.122998 0.9937306   7.196190</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cf</span><span class="op">)</span></span></code></pre></div>
-<p><img src="courts-and-crime_files/figure-html/flow-1.png" class="r-plt" alt="" width="768"></p>
+<p><img src="courts-and-crime_files/figure-html/courts-and-crime-flow-1.png" class="r-plt" alt="" width="768"></p>
 <p>Over these 24 months the court disposed of 489,448 cases against
 497,393 received, a clearance rate of 0.984. The monthly rate swings
 well beyond its interval – summer months clear less – which is why the
@@ -146,7 +146,7 @@ Greenwood interval, and the median.</p>
 <span><span class="co">#&gt;      NA     NA     NA</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lt</span><span class="op">)</span></span></code></pre></div>
-<p><img src="courts-and-crime_files/figure-html/life-1.png" class="r-plt" alt="" width="768"></p>
+<p><img src="courts-and-crime_files/figure-html/courts-and-crime-life-1.png" class="r-plt" alt="" width="768"></p>
 <p>The median of 6.4 months assumes cases are spread evenly within the
 first band; the published average for the month is 185 days. Only
 disposed cases are in these statistics, so the table describes the cases
@@ -168,7 +168,7 @@ that ended, not every case received.</p>
 <span><span class="co">#&gt; 6                other_at_trial   175.420561 9.691647e-40 -0.0006064793</span></span>
 <span><span class="co">#&gt; 7               following_trial  2044.569303 0.000000e+00 -0.0130645687</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mix</span><span class="op">)</span></span></code></pre></div>
-<p><img src="courts-and-crime_files/figure-html/mix-1.png" class="r-plt" alt="" width="768"></p>
+<p><img src="courts-and-crime_files/figure-html/courts-and-crime-mix-1.png" class="r-plt" alt="" width="768"></p>
 <p>Every share comes with Goodman’s simultaneous interval (in
 <code>mix$shares</code>). With a few hundred thousand cases a year every
 trend is “significant”; the <code>change</code> column says how large
@@ -215,7 +215,7 @@ and tests the within-part change with a Mantel-Haenszel rate ratio.</p>
 <span><span class="co">#&gt;   Rate ratio 2022/2014: crude 0.9989 (0.9929 to 1.0050); within parts (Mantel-Haenszel) 1.0085 (1.0024 to 1.0146), p 0.00644</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cd</span><span class="op">)</span></span></code></pre></div>
-<p><img src="courts-and-crime_files/figure-html/simpson-1.png" class="r-plt" alt="" width="768"></p>
+<p><img src="courts-and-crime_files/figure-html/courts-and-crime-simpson-1.png" class="r-plt" alt="" width="768"></p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># a group's share of the cases received in a year, as a percentage</span></span>
 <span><span class="va">caseshare</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">group</span>, <span class="va">yr</span><span class="op">)</span> <span class="op">{</span></span>
@@ -270,7 +270,7 @@ half and nine-tenths of them.</p>
 <span><span class="co">#&gt;        90%  14.840        32.1%      11.23</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">kd</span><span class="op">)</span></span></code></pre></div>
-<p><img src="courts-and-crime_files/figure-html/density-1.png" class="r-plt" alt="" width="768"></p>
+<p><img src="courts-and-crime_files/figure-html/courts-and-crime-density-1.png" class="r-plt" alt="" width="768"></p>
 </div>
 <div class="section level2">
 <h2 id="do-incidents-repeat-nearby-soon-after-the-knox-test">Do incidents repeat nearby, soon after? The Knox test<a class="anchor" aria-label="anchor" href="#do-incidents-repeat-nearby-soon-after-the-knox-test"></a>
@@ -294,7 +294,7 @@ p-value.</p>
 <span><span class="co">#&gt;   * p &lt; 0.05, ** p &lt; 0.01, one-sided per cell (not adjusted for the number of cells)</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">kn</span><span class="op">)</span></span></code></pre></div>
-<p><img src="courts-and-crime_files/figure-html/knox-1.png" class="r-plt" alt="" width="768"></p>
+<p><img src="courts-and-crime_files/figure-html/courts-and-crime-knox-1.png" class="r-plt" alt="" width="768"></p>
 </div>
 <div class="section level2">
 <h2 id="do-the-hot-spots-last">Do the hot spots last?<a class="anchor" aria-label="anchor" href="#do-the-hot-spots-last"></a>
@@ -321,7 +321,7 @@ period’s hot spots overlap the previous period’s:</p>
 <span><span class="co">#&gt; Cells hot in at least half the periods: 7</span></span>
 <span><span class="co">#&gt; Note: cells tied with the busiest 7 were left out of the hot set (period Q4: 12 cells tied); the counts are too even (or the cells too small) to single out hot spots</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">h</span><span class="op">)</span></span></code></pre></div>
-<p><img src="courts-and-crime_files/figure-html/hotspots-1.png" class="r-plt" alt="" width="864"></p>
+<p><img src="courts-and-crime_files/figure-html/courts-and-crime-hotspots-1.png" class="r-plt" alt="" width="864"></p>
 <p>The hot set is the busiest 7 cells and every cell tied with the last
 of them. When a tie would make more than twice that many cells hot, the
 counts do not single those cells out, so the tied group is left out and

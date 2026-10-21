@@ -34,11 +34,18 @@ see advice about the failure and a Wayback Machine fallback."><meta property="og
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/capsules-and-provenance.html">Capsules and provenance</a></li>
-    <li><a class="dropdown-item" href="../articles/integrity-and-cryptography.html">Integrity, signatures and cryptography</a></li>
-    <li><a class="dropdown-item" href="../articles/describing-data-and-tables.html">Describing data and published tables</a></li>
-    <li><a class="dropdown-item" href="../articles/statistical-methods.html">Survey, causal and statistical methods</a></li>
-    <li><a class="dropdown-item" href="../articles/applied-analyses.html">Applied analyses: justice, health, environment and rescue</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
+    <li><a class="dropdown-item" href="../articles/dashboard.html">The analysis dashboard</a></li>
+    <li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
+    <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
+    <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
+    <li><a class="dropdown-item" href="../articles/categorical-integrity.html">Categorical integrity: labels that cannot be swapped quietly</a></li>
+    <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
+    <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -142,7 +149,7 @@ a refused URL; <code>mode</code> other than <code>"wb"</code> or <code>"w"</code
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># file:// is refused unless asked for, and so is an append mode</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">dldata</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"file://"</span>, <span class="va">src</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : url must be an https:// URL, not file:// ('file:///tmp/Rtmpq1dR9a/file1fc88cfbc80.csv'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : url must be an https:// URL, not file:// ('file:///tmp/RtmpB4VW0D/file1ff24655233e.csv'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror</span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">dldata</span><span class="op">(</span><span class="st">"https://example.org/x.csv"</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span>, mode <span class="op">=</span> <span class="st">"a"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : `mode` must be "wb" (every transfer is binary)</span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># interactive()</span></span></span>

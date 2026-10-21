@@ -4,6 +4,33 @@
 
 ### Fixes after the CRAN resubmission
 
+- [`srchfig()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/srchfig.md)
+  with no argument gains a column `yours`: for each of the 36 figures,
+  one line of R that draws it from your own numbers (the function behind
+  the figure, with example inputs to replace; a schematic gives the
+  computation it pictures). The search-and-rescue guide prints the
+  table, and a test runs every line.
+- The dashboard’s method card was empty when the package ran from its
+  source
+  ([`pkgload::load_all()`](https://pkgload.r-lib.org/reference/load_all.html)),
+  because it read only the installed help pages; it now falls back to
+  the source `man/` folder, as the command line already did.
+- The search-and-rescue guide adds “Your own search” (each search
+  function run on numbers of your own, with its plot) and “Planning a
+  search, start to finish” (a probability map from the last known
+  position, the day’s effort spread over it, and the next day planned on
+  the map updated after a search that found nothing), and its section
+  headings no longer carry the book’s chapter numbers (the figure
+  numbers do).
+- The dashboard finds the ledgers installed packages ship by listing the
+  library folders (`.packages(all.available = TRUE)`) instead of reading
+  every package’s metadata with
+  [`installed.packages()`](https://rdrr.io/r/utils/installed.packages.html).
+- `srchfig("4-4")` and `srchfig("4-6")` left the device split into
+  panels, so the next plot was drawn into a fraction of the page (figure
+  4-7 in the search-and-rescue guide came out squashed). Every figure
+  now restores the layout it changed, and a test draws all 36 in a row
+  and checks it.
 - An error raised while
   [`co2fp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2fp.md)
   measures a computation’s footprint is now named after the function
@@ -43,8 +70,8 @@
   function instead of 33 copies of the same body;
   [`yoy_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-aliases.md)
   has one method where two were identical.
-- Checks that {goodpractice} runs: `%||%` is defined once (it is base R
-  from 4.4.0, and defined only for older R) instead of in four files;
+- Checks that {`goodpractice`} runs: `%||%` is defined once (it is base
+  R from 4.4.0, and defined only for older R) instead of in four files;
   [`print()`](https://rdrr.io/r/base/print.html) of a 0.5.x-form result
   returns it invisibly; two
   [`on.exit()`](https://rdrr.io/r/base/on.exit.html) calls add to the
@@ -52,7 +79,7 @@
   and HQC backend switches, the running mean, the services memo) live
   with the tests instead of in the package; the DESCRIPTION no longer
   uses two dependency names as ordinary words; and a test helper named
-  `dbl()`, which {lintr} mistook for
+  `dbl()`, which {`lintr`} mistook for
   [`rlang::dbl()`](https://rlang.r-lib.org/reference/vector-construction.html)
   and crashed on (so that none of its checks ran), is now `hexdbl()`.
 - The README and the DESCRIPTION now say first, in plain words, what the
@@ -80,15 +107,14 @@
   re-builds a vignette, only the setup chunk runs. R CMD build,
   r-universe and pkgdown still build every vignette in full, so the
   package carries each one’s HTML, figures and R code.
-- The 33 guides are now five vignettes, one per theme:
-  [`vignette("capsules-and-provenance")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules-and-provenance.md),
-  [`vignette("integrity-and-cryptography")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/integrity-and-cryptography.md),
-  [`vignette("describing-data-and-tables")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/describing-data-and-tables.md),
-  [`vignette("statistical-methods")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/statistical-methods.md)
-  and
-  [`vignette("applied-analyses")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/applied-analyses.md).
-  Each former guide is a section of one of them, with its text, code and
-  figures unchanged.
+- On CRAN the 33 guides are combined into five vignettes, one per theme:
+  `vignette("capsules-and-provenance")`,
+  `vignette("integrity-and-cryptography")`,
+  `vignette("describing-data-and-tables")`,
+  `vignette("statistical-methods")` and `vignette("applied-analyses")`,
+  each former guide a section of one of them, with its text, code and
+  figures unchanged. The package from GitHub or r-universe, and the
+  package website, keep all 33.
 - Every example runs in GitHub CI, on r-universe, on the package website
   and in an interactive session (for example with
   [`example()`](https://rdrr.io/r/utils/example.html)), and the full
@@ -119,7 +145,8 @@
   call; a refusal is shown in the package’s words with
   [`explerr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/explerr.md)’s
   note. The Report tab gathers results into one HTML page (plots as
-  inline SVG), Markdown or a GitHub comment. `vignette("dashboard")`.
+  inline SVG), Markdown or a GitHub comment.
+  [`vignette("dashboard")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/dashboard.md).
 - The dashboard is built with bslib (suggested, and installed with
   shiny): menus in the navbar, a form in each tab’s sidebar, value boxes
   with the estimate, its interval, n and a verdict, a plot card that
@@ -1032,10 +1059,12 @@ New estimators, each checked against the reference implementation
   and
   [`plnpois()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpois.md)
   examples show what they claim.
-- `vignette("plotting-results")` gains the policy-evaluation plots, one
-  call per result; `vignette("policy-evaluation")` draws the synthetic
-  difference in differences and `vignette("causal-effects")` the AIPW
-  estimate beside its overlap.
+- [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md)
+  gains the policy-evaluation plots, one call per result;
+  [`vignette("policy-evaluation")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/policy-evaluation.md)
+  draws the synthetic difference in differences and
+  [`vignette("causal-effects")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/causal-effects.md)
+  the AIPW estimate beside its overlap.
 
 **The final pre-CRAN audit** (three reviewers and a re-run of every
 earlier finding)
@@ -2358,7 +2387,8 @@ fixes overstated corrected.
   labels that fit are not cut.
 - **Every plot is in the examples.** `?plot-methods` draws every class,
   the courts and crime plots on the shipped data included, and
-  `vignette("plotting-results")` gains a courts and crime section.
+  [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md)
+  gains a courts and crime section.
 
 ### Small bases compute
 
@@ -3165,12 +3195,13 @@ tells them apart, and for the fixes below; this is both.
   `bricklayer_palette()` with four colour-blind-safe palettes, and every
   method returns the data it drew. `plume_field()` evaluates a plume on
   a grid; `plot_lorenz()` and `plot_funnel()` serve the results that are
-  plain data frames. `vignette("plotting-results")`. Titles fit their
-  panel: a title too wide is drawn a step smaller, in a panel set one
-  that still does not fit becomes a letter with the key printed under
-  the panels (returned as the `panel_key` attribute), long axis titles
-  shrink or wrap, and the left margin is sized from the widest tick
-  label so an axis title never overlaps the numbers.
+  plain data frames.
+  [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md).
+  Titles fit their panel: a title too wide is drawn a step smaller, in a
+  panel set one that still does not fit becomes a letter with the key
+  printed under the panels (returned as the `panel_key` attribute), long
+  axis titles shrink or wrap, and the left margin is sized from the
+  widest tick label so an axis title never overlaps the numbers.
 - To carry what the plots need, `exposure_concentration_index()` records
   its concentration curve, `count_trend()` its data,
   `verify_pollution()` returns class `rmbl_pollution_report`,

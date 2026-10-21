@@ -212,7 +212,7 @@ segments(t1$lower, yy, t1$upper, yy, col = blpal()[1])
 axis(2, yy, t1$group, las = 1, cex.axis = 0.7)
 ```
 
-![](json-and-serialisation_files/figure-html/json-roundtrip-plot-1.png)
+![](json-and-serialisation_files/figure-html/json-and-serialisation-json-roundtrip-plot-1.png)
 
 ``` r
 

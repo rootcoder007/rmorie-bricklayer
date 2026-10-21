@@ -66,7 +66,7 @@ e
 plot(e)
 ```
 
-![](survey-estimation_files/figure-html/estimate-1.png)
+![](survey-estimation_files/figure-html/survey-estimation-estimate-1.png)
 
 ``` r
 
@@ -104,7 +104,7 @@ cmp
 plot(cmp)
 ```
 
-![](survey-estimation_files/figure-html/compare-1.png)
+![](survey-estimation_files/figure-html/survey-estimation-compare-1.png)
 
 ## The Canadian Substance Use Survey, against the published figures
 

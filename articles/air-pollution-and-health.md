@@ -71,7 +71,7 @@ lines(x, cb, col = 2)
 legend("topright", c("class D (neutral)", "class B (unstable)"), col = 1:2, lty = 1, bty = "n")
 ```
 
-![](air-pollution-and-health_files/figure-html/plume-1.png)
+![](air-pollution-and-health_files/figure-html/air-pollution-and-health-plume-1.png)
 
 [`gspuff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pgsig.md)
 is the instantaneous-release counterpart;
@@ -315,9 +315,9 @@ raplok()
 fp <- co2fp(sum(sqrt(seq_len(3e5))), loc = "CA-ON", cpupwrw = 45,
                         memgb = 16)
 print(fp)
-#> Computation footprint (modelled): 0.005 s wall, 0.006 s CPU, utilisation 0.30 (process) on 4 cores
-#>   energy: 2.7e-08 kWh (cpu 1.87e-08, memory 8.28e-09)
-#>   CO2e:   2.46e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
+#> Computation footprint (modelled): 0.005 s wall, 0.005 s CPU, utilisation 0.25 (process) on 4 cores
+#>   energy: 2.39e-08 kWh (cpu 1.56e-08, memory 8.28e-09)
+#>   CO2e:   2.17e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
 fp$assumptions
 #> character(0)
 ```
@@ -347,9 +347,9 @@ b <- co2fp(busy(), loc = "CA-ON", cpupwrw = 45, memgb = 16,
                        usage = "machine", loadcur = "codecarbon")
 rbind(prolin = c(usage = a$usage, cpukwh = a$enekwh$cpu),
       maccod = c(usage = b$usage, cpukwh = b$enekwh$cpu))
-#>        usage       cpukwh
-#> prolin 0.250 1.250000e-08
-#> maccod 0.375 3.133545e-08
+#>            usage       cpukwh
+#> prolin 0.2500000 9.375000e-09
+#> maccod 0.1666667 2.083333e-08
 b$usagemode
 #> [1] "machine"
 ```
@@ -434,10 +434,10 @@ the two the Green Algorithms calculator prints:
 
 fpeqv(fp$co2eg * 1e4)   # if this ran ten thousand times
 #> $carkm
-#> [1] 0.0001404981
+#> [1] 0.0001242535
 #> 
 #> $treemon
-#> [1] 2.681262e-05
+#> [1] 2.371249e-05
 #> 
 #> $sources
 #>                                                                  car 
@@ -519,9 +519,9 @@ all-cause and respiratory mortality. *Environment International* 144.
 Lannelongue, Grealey, Inouye (2021). Green Algorithms: quantifying the
 carbon footprint of computation. *Advanced Science* 8(12), 2100707.
 Ember (2026). Yearly Electricity Data, via Our World in Data,
-<https://ourworldindata.org/grapher/carbon-intensity-electricity>.
-Electricity Maps (2025). 2024 Yearly Carbon Intensity Data, via Green
-Algorithms data v3.1. Levin (1953). The occurrence of lung cancer in
-man. *Acta Unio Internationalis Contra Cancrum* 9. Wagstaff, Paci, van
-Doorslaer (1991). On the measurement of inequalities in health. *Social
-Science and Medicine* 33(5). WHO (2021). Global Air Quality Guidelines.
+ourworldindata.org/grapher/carbon-intensity-electricity. Electricity
+Maps (2025). 2024 Yearly Carbon Intensity Data, via Green Algorithms
+data v3.1. Levin (1953). The occurrence of lung cancer in man. *Acta
+Unio Internationalis Contra Cancrum* 9. Wagstaff, Paci, van Doorslaer
+(1991). On the measurement of inequalities in health. *Social Science
+and Medicine* 33(5). WHO (2021). Global Air Quality Guidelines.

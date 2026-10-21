@@ -32,9 +32,11 @@ srchfig(fig = NULL, num = NULL, seed = 1, main = NULL)
 
 ## Value
 
-Without `fig`, a data frame of `fig`, `caption` and `how`. With one, the
-figure's data, invisibly: a data frame (or a list of them) of what was
-drawn.
+Without `fig`, a data frame of `fig`, `caption`, `how` and `yours`: one
+line of R that draws the figure from your own numbers (the function
+behind it, with example inputs to replace; for a schematic, the
+computation it pictures). With one, the figure's data, invisibly: a data
+frame (or a list of them) of what was drawn.
 
 ## Details
 
@@ -85,6 +87,13 @@ head(srchfig())
 #> 4     model
 #> 5     model
 #> 6 schematic
+#>                                                                                                                               yours
+#> 1                       plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), center = c(0, 0), sigma = 1.5), view = "both")
+#> 2                                                                       sum(datumpmap(c(-1.5, 1.5), c(-1.5, 1.5), sigma = 1.5)$poc)
+#> 3                                                   sum(datumpmap(c(-1, 1) * 1.177 * 1.5, c(-1, 1) * 1.177 * 1.5, sigma = 1.5)$poc)
+#> 4                                      plot(datumpmap(c(-3, -1, 1, 3) * 1.77, c(-3, -1, 1, 3) * 1.77, sigma = 1.5), view = "cells")
+#> 5                                                   sum(datumpmap(c(-1, 1) * 1.295 * 1.5, c(-1, 1) * 1.295 * 1.5, sigma = 1.5)$poc)
+#> 6 plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), "line", center = c(0, -2), end = c(0, 2), sigma = 1), view = "both")
 srchfig("3-4")
 
 srchfig(5, 8)

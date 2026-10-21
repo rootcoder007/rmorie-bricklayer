@@ -152,14 +152,14 @@ fit
 plot(fit)
 ```
 
-![](causal-effects_files/figure-html/overlap-balance-1.png)
+![](causal-effects_files/figure-html/causal-effects-overlap-balance-1.png)
 
 ``` r
 
 plot(fit, type = "estimate")
 ```
 
-![](causal-effects_files/figure-html/overlap-balance-2.png)
+![](causal-effects_files/figure-html/causal-effects-overlap-balance-2.png)
 
 ``` r
 
@@ -170,7 +170,7 @@ plot(baltab(d, "t", c("age", "income")),
      after = baltab(d, "t", c("age", "income"), w = "ipw"))
 ```
 
-![](causal-effects_files/figure-html/overlap-balance-3.png)
+![](causal-effects_files/figure-html/causal-effects-overlap-balance-3.png)
 
 The groups overlap where both curves have mass; after weighting, both
 covariates fall below the 0.1 line.

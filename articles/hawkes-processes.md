@@ -110,7 +110,7 @@ plot(stats::qunif(stats::ppoints(length(U))), sort(U), pch = 20, cex = .6,
 abline(0, 1, col = 2)
 ```
 
-![](hawkes-processes_files/figure-html/qq-1.png)
+![](hawkes-processes_files/figure-html/hawkes-processes-qq-1.png)
 
 A misspecified kernel shows as a departure from the diagonal; a p-value
 well below 0.05 says the model does not explain the clustering it was

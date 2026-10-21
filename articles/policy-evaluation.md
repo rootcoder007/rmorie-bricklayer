@@ -63,7 +63,7 @@ just before it:
 plot(cohtrnd(p, "district", "month", "crmrate", "refmonth", win = c(-10, 10)))
 ```
 
-![](policy-evaluation_files/figure-html/trends-1.png)
+![](policy-evaluation_files/figure-html/policy-evaluation-trends-1.png)
 
 ## Leads and lags
 
@@ -93,7 +93,7 @@ es
 plot(es)
 ```
 
-![](policy-evaluation_files/figure-html/event-1.png)
+![](policy-evaluation_files/figure-html/policy-evaluation-event-1.png)
 
 ## Staggered adoption
 
@@ -111,7 +111,7 @@ tapply(b$weight, b$type, sum)
 plot(b)
 ```
 
-![](policy-evaluation_files/figure-html/bacon-1.png)
+![](policy-evaluation_files/figure-html/policy-evaluation-bacon-1.png)
 
 [`stgatt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stgatt.md)
 avoids them: each cohort is compared only with districts not yet treated
@@ -127,7 +127,7 @@ s$overall
 plot(s)
 ```
 
-![](policy-evaluation_files/figure-html/cs-1.png)
+![](policy-evaluation_files/figure-html/policy-evaluation-cs-1.png)
 
 For a treatment that can switch off as well as on,
 [`swtdid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/swtdid.md)
@@ -163,7 +163,7 @@ r
 plot(r, type = "histogram")
 ```
 
-![](policy-evaluation_files/figure-html/perm-1.png)
+![](policy-evaluation_files/figure-html/policy-evaluation-perm-1.png)
 
 [`loounit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/loounit.md)
 checks that no single district drives the estimate:
@@ -173,7 +173,7 @@ checks that no single district drives the estimate:
 plot(loounit(p, "district", "month", "crmrate", "reformed"))
 ```
 
-![](policy-evaluation_files/figure-html/loo-1.png)
+![](policy-evaluation_files/figure-html/policy-evaluation-loo-1.png)
 
 Several outcomes at once, in the style of a Stata event-study figure:
 
@@ -185,7 +185,7 @@ plotevgrid(list(
                               lags = 6)), style = "stata")
 ```
 
-![](policy-evaluation_files/figure-html/grid-1.png)
+![](policy-evaluation_files/figure-html/policy-evaluation-grid-1.png)
 
 ## Counts
 
@@ -219,7 +219,7 @@ sc
 plot(sc)
 ```
 
-![](policy-evaluation_files/figure-html/synth-1.png)
+![](policy-evaluation_files/figure-html/policy-evaluation-synth-1.png)
 
 ## Measures for justice data
 
@@ -329,12 +329,12 @@ weights both comparison units and pre-periods:
 
 sd <- syndid(p13, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1)
 sd
-#> Synthetic difference in differences: -2.886 (placebo s.e. 0.5931; -4.048 to -1.723)
+#> Synthetic difference in differences: -2.886 (placebo s.e. 0.5927; -4.047 to -1.724)
 #> Unit weights: D12 0.207, D20 0.203, D04 0.201, D16 0.195, D08 0.195
 plot(sd)
 ```
 
-![](policy-evaluation_files/figure-html/sdid-1.png)
+![](policy-evaluation_files/figure-html/policy-evaluation-sdid-1.png)
 
 **Null results without a measure of power.**
 [`plnpwr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpwr.md)
@@ -356,7 +356,7 @@ pw
 plot(pw)
 ```
 
-![](policy-evaluation_files/figure-html/power-1.png)
+![](policy-evaluation_files/figure-html/policy-evaluation-power-1.png)
 
 ## Indigenous examples
 

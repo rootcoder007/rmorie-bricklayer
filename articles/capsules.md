@@ -166,7 +166,7 @@ summarypath <- wrsmrytxt(
 cat(readLines(summarypath)[7:12], sep = "\n")
 #> Project:   demo-study
 #> Author:    A. Author
-#> When:      2026-10-21 14:22:14 UTC
+#> When:      2026-10-21 18:23:38 UTC
 #> OS:        Linux
 #> R:         R version 4.6.1 (2026-06-24)
 #> Mode:      SYNTHETIC (not real data -- pipeline check only)
@@ -179,11 +179,11 @@ the portal has moved on.
 
 ## Where this sits in the MORIE family
 
-`rmoriebricklayer` is the provenance/reproducibility layer under
-[rmorie](https://github.com/rootcoder007/rmorie) and
-[rmoriedata](https://github.com/rootcoder007/rmoriedata); both link
-against its compiled core (`LinkingTo: rmoriebricklayer`) for shared
-SHA-256 and summary-statistic kernels
+`rmoriebricklayer` is the provenance/reproducibility layer under rmorie
+(github.com/rootcoder007/rmorie) and rmoriedata
+(github.com/rootcoder007/rmoriedata); both link against its compiled
+core (`LinkingTo: rmoriebricklayer`) for shared SHA-256 and
+summary-statistic kernels
 ([`csha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/csha256.md),
 [`cmn()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cstat.md),
 [`cvari()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cstat.md),
@@ -238,7 +238,7 @@ t1 <- d[d$indicator == d$indicator[1], ]
 ci_plot(t1, t1$group, t1$indicator[1])
 ```
 
-![](capsules_files/figure-html/capsule-plots-1.png)
+![](capsules_files/figure-html/capsules-capsule-plots-1.png)
 
 ``` r
 
@@ -246,4 +246,4 @@ v <- tapply(df$visits, df$year, sum)
 barplot(v, col = blpal()[2], main = "Visits by year", xlab = "year", ylab = "visits")
 ```
 
-![](capsules_files/figure-html/capsule-plots-2.png)
+![](capsules_files/figure-html/capsules-capsule-plots-2.png)

@@ -232,4 +232,4 @@ pv <- llmprvd()
 barplot(table(pv$api), col = blpal()[1], ylab = "providers", main = "Providers by request shape")
 ```
 
-![](language-model-routes_files/figure-html/providers-plot-1.png)
+![](language-model-routes_files/figure-html/language-model-routes-providers-plot-1.png)

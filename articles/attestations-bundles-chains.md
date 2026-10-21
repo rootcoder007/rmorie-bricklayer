@@ -222,4 +222,4 @@ t1 <- d[d$indicator == d$indicator[1], ]
 ci_plot(t1, t1$group, t1$indicator[1])
 ```
 
-![](attestations-bundles-chains_files/figure-html/chain-table-plot-1.png)
+![](attestations-bundles-chains_files/figure-html/attestations-bundles-chains-chain-table-plot-1.png)

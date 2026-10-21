@@ -367,4 +367,4 @@ year-over-year result: each year’s change with its interval.
 plot(y)
 ```
 
-![](yoy_files/figure-html/yoy-plot-1.png)
+![](yoy_files/figure-html/yoy-yoy-plot-1.png)

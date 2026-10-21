@@ -262,4 +262,4 @@ plotecdf(c(honest, tampered), rep(c("honest ciphertext", "one digit changed"), e
          main = "ML-KEM-512 decapsulation time (microseconds)")
 ```
 
-![](side-channel-assurance_files/figure-html/decap-timing-plot-1.png)
+![](side-channel-assurance_files/figure-html/side-channel-assurance-decap-timing-plot-1.png)

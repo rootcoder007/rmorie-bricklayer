@@ -267,7 +267,7 @@ counts with the fitted trend.
 plot(fit)
 ```
 
-![](trends-and-change_files/figure-html/trend-plot-1.png)
+![](trends-and-change_files/figure-html/trends-and-change-trend-plot-1.png)
 
 ## References
 

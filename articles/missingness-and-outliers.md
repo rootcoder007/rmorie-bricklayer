@@ -248,7 +248,7 @@ distance places them further out.
 plot(out)
 ```
 
-![](missingness-and-outliers_files/figure-html/outliers-plots-1.png)
+![](missingness-and-outliers_files/figure-html/missingness-and-outliers-outliers-plots-1.png)
 
 ``` r
 
@@ -261,4 +261,4 @@ abline(0, 1, lty = 2)
 legend("topleft", c("planted rows", "other rows"), pch = 19, col = blpal()[c(2, 1)], bty = "n")
 ```
 
-![](missingness-and-outliers_files/figure-html/outliers-plots-2.png)
+![](missingness-and-outliers_files/figure-html/missingness-and-outliers-outliers-plots-2.png)

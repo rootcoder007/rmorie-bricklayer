@@ -261,4 +261,4 @@ t1 <- d[d$measure == d$measure[1], ]
 ci_plot(t1, paste(t1$group, t1$age), t1$measure[1])
 ```
 
-![](hashing-and-integrity_files/figure-html/hashed-table-plot-1.png)
+![](hashing-and-integrity_files/figure-html/hashing-and-integrity-hashed-table-plot-1.png)

@@ -24,11 +24,18 @@ reproducibility is the point."><meta property="og:image" content="https://rootco
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/capsules-and-provenance.html">Capsules and provenance</a></li>
-    <li><a class="dropdown-item" href="../articles/integrity-and-cryptography.html">Integrity, signatures and cryptography</a></li>
-    <li><a class="dropdown-item" href="../articles/describing-data-and-tables.html">Describing data and published tables</a></li>
-    <li><a class="dropdown-item" href="../articles/statistical-methods.html">Survey, causal and statistical methods</a></li>
-    <li><a class="dropdown-item" href="../articles/applied-analyses.html">Applied analyses: justice, health, environment and rescue</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
+    <li><a class="dropdown-item" href="../articles/dashboard.html">The analysis dashboard</a></li>
+    <li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
+    <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
+    <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
+    <li><a class="dropdown-item" href="../articles/categorical-integrity.html">Categorical integrity: labels that cannot be swapped quietly</a></li>
+    <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
+    <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -97,7 +104,7 @@ no readable operating-system source.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">rndbytes</span><span class="op">(</span><span class="fl">8</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] ab c8 f4 d3 09 a4 ae 2e</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 21 d5 76 17 ec 1b 10 88</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Independent between calls, unlike a seeded generator.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu">rndbytes</span><span class="op">(</span><span class="fl">16</span><span class="op">)</span>, <span class="fu">rndbytes</span><span class="op">(</span><span class="fl">16</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -113,7 +120,7 @@ no readable operating-system source.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># As hex, for a seed argument.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu">rndbytes</span><span class="op">(</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "f9d08629"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "3425012d"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">rndbytes</span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : `n` must be a single integer between 1 and 1048576</span>

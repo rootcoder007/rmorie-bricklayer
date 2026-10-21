@@ -133,7 +133,7 @@ the effect relative to the comparison units’ mean before the reform:</p>
 its adoption, scaled to 1 just before it:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/cohtrnd.html">cohtrnd</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"district"</span>, <span class="st">"month"</span>, <span class="st">"crmrate"</span>, <span class="st">"refmonth"</span>, win <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="policy-evaluation_files/figure-html/trends-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="policy-evaluation_files/figure-html/policy-evaluation-trends-1.png" class="r-plt" alt="" width="432"></p>
 </div>
 <div class="section level2">
 <h2 id="leads-and-lags">Leads and lags<a class="anchor" aria-label="anchor" href="#leads-and-lags"></a>
@@ -159,7 +159,7 @@ joint test of that is printed below the table:</p>
 <span><span class="co">#&gt;     6 -3.13434 0.4182 -4.0097 -2.259 -7.4940 4.362e-07</span></span>
 <span><span class="co">#&gt; Leads jointly zero: F(3, 19) = 1.263, p = 0.3152</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">es</span><span class="op">)</span></span></code></pre></div>
-<p><img src="policy-evaluation_files/figure-html/event-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="policy-evaluation_files/figure-html/policy-evaluation-event-1.png" class="r-plt" alt="" width="432"></p>
 </div>
 <div class="section level2">
 <h2 id="staggered-adoption">Staggered adoption<a class="anchor" aria-label="anchor" href="#staggered-adoption"></a>
@@ -174,7 +174,7 @@ get:</p>
 <span><span class="co">#&gt; earlier vs later later vs earlier treated vs never </span></span>
 <span><span class="co">#&gt;        0.2093023        0.2093023        0.5813953</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></span></code></pre></div>
-<p><img src="policy-evaluation_files/figure-html/bacon-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="policy-evaluation_files/figure-html/policy-evaluation-bacon-1.png" class="r-plt" alt="" width="432"></p>
 <p><code><a href="../reference/stgatt.html">stgatt()</a></code> avoids them: each cohort is compared only with
 districts not yet treated (Callaway and Sant’Anna), or the regression
 has a coefficient for every cohort and period (Wooldridge). The
@@ -185,7 +185,7 @@ bootstrap resamples whole districts:</p>
 <span><span class="co">#&gt;    estimate        se     lower     upper</span></span>
 <span><span class="co">#&gt; 1 -2.825844 0.3400471 -3.492324 -2.159364</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">s</span><span class="op">)</span></span></code></pre></div>
-<p><img src="policy-evaluation_files/figure-html/cs-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="policy-evaluation_files/figure-html/policy-evaluation-cs-1.png" class="r-plt" alt="" width="432"></p>
 <p>For a treatment that can switch off as well as on,
 <code><a href="../reference/swtdid.html">swtdid()</a></code> compares the units that switch with those that do
 not, in the period they switch, with a placebo one period earlier:</p>
@@ -211,12 +211,12 @@ hold the chance of any false positive at the nominal level:</p>
 <span><span class="co">#&gt; 1 crmrate -3.2316395 -19.516735 0.04166667 0.04166667          24  TRUE</span></span>
 <span><span class="co">#&gt; 2 arrrate -0.2136969  -3.638159 0.12500000 0.12500000          24  TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">r</span>, type <span class="op">=</span> <span class="st">"histogram"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="policy-evaluation_files/figure-html/perm-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="policy-evaluation_files/figure-html/policy-evaluation-perm-1.png" class="r-plt" alt="" width="432"></p>
 <p><code><a href="../reference/loounit.html">loounit()</a></code> checks that no single district drives the
 estimate:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/loounit.html">loounit</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"district"</span>, <span class="st">"month"</span>, <span class="st">"crmrate"</span>, <span class="st">"reformed"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="policy-evaluation_files/figure-html/loo-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="policy-evaluation_files/figure-html/policy-evaluation-loo-1.png" class="r-plt" alt="" width="432"></p>
 <p>Several outcomes at once, in the style of a Stata event-study
 figure:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
@@ -224,7 +224,7 @@ figure:</p>
 <span>  <span class="st">"Crime rate"</span> <span class="op">=</span> <span class="va">es</span>,</span>
 <span>  <span class="st">"Arrest rate"</span> <span class="op">=</span> <span class="fu"><a href="../reference/evstudy.html">evstudy</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"district"</span>, <span class="st">"month"</span>, <span class="st">"arrrate"</span>, <span class="st">"refmonth"</span>, leads <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>                              lags <span class="op">=</span> <span class="fl">6</span><span class="op">)</span><span class="op">)</span>, style <span class="op">=</span> <span class="st">"stata"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="policy-evaluation_files/figure-html/grid-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="policy-evaluation_files/figure-html/policy-evaluation-grid-1.png" class="r-plt" alt="" width="432"></p>
 </div>
 <div class="section level2">
 <h2 id="counts">Counts<a class="anchor" aria-label="anchor" href="#counts"></a>
@@ -251,7 +251,7 @@ on each untreated place as a placebo:</p>
 <span><span class="co">#&gt; Pre-period RMSPE 0.7638; mean gap after adoption -3.107; post/pre RMSPE ratio 4.33</span></span>
 <span><span class="co">#&gt; Placebo-in-space p = 0.167 (5 placebos)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sc</span><span class="op">)</span></span></code></pre></div>
-<p><img src="policy-evaluation_files/figure-html/synth-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="policy-evaluation_files/figure-html/policy-evaluation-synth-1.png" class="r-plt" alt="" width="432"></p>
 </div>
 <div class="section level2">
 <h2 id="measures-for-justice-data">Measures for justice data<a class="anchor" aria-label="anchor" href="#measures-for-justice-data"></a>
@@ -340,10 +340,10 @@ matches units on their pre-reform paths before differencing:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/syndid.html">syndid</a></span><span class="op">(</span><span class="va">p13</span>, <span class="st">"district"</span>, <span class="st">"month"</span>, <span class="st">"crmrate"</span>, <span class="st">"refmonth"</span>, reps <span class="op">=</span> <span class="fl">50</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">sd</span></span>
-<span><span class="co">#&gt; Synthetic difference in differences: -2.886 (placebo s.e. 0.5931; -4.048 to -1.723)</span></span>
+<span><span class="co">#&gt; Synthetic difference in differences: -2.886 (placebo s.e. 0.5927; -4.047 to -1.724)</span></span>
 <span><span class="co">#&gt; Unit weights: D12 0.207, D20 0.203, D04 0.201, D16 0.195, D08 0.195</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sd</span><span class="op">)</span></span></code></pre></div>
-<p><img src="policy-evaluation_files/figure-html/sdid-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="policy-evaluation_files/figure-html/policy-evaluation-sdid-1.png" class="r-plt" alt="" width="432"></p>
 <p><strong>Null results without a measure of power.</strong>
 <code><a href="../reference/plnpwr.html">plnpwr()</a></code> simulates the design on the untreated data and
 gives the minimum detectable effect:</p>
@@ -359,7 +359,7 @@ gives the minimum detectable effect:</p>
 <span><span class="co">#&gt; Size (rejections with no effect): 0.050 at alpha 0.050</span></span>
 <span><span class="co">#&gt; Minimum detectable effect at this power: 0.8095</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pw</span><span class="op">)</span></span></code></pre></div>
-<p><img src="policy-evaluation_files/figure-html/power-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="policy-evaluation_files/figure-html/policy-evaluation-power-1.png" class="r-plt" alt="" width="432"></p>
 </div>
 <div class="section level2">
 <h2 id="indigenous-examples">Indigenous examples<a class="anchor" aria-label="anchor" href="#indigenous-examples"></a>

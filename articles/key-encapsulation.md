@@ -202,7 +202,7 @@ barplot(t(sz), beside = TRUE, col = blpal()[1:2], ylab = "bytes", las = 2, cex.n
         main = "Key and ciphertext sizes")
 ```
 
-![](key-encapsulation_files/figure-html/kem-sizes-plot-1.png)
+![](key-encapsulation_files/figure-html/key-encapsulation-kem-sizes-plot-1.png)
 
 ``` r
 

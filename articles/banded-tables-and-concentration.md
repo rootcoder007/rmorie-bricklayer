@@ -253,7 +253,7 @@ barplot(counts, names.arg = b$label, col = blpal()[2], main = "Counts by band", 
 plotlrnz(placements, main = "Concentration of placements")
 ```
 
-![](banded-tables-and-concentration_files/figure-html/bands-lorenz-plot-1.png)
+![](banded-tables-and-concentration_files/figure-html/banded-tables-and-concentration-bands-lorenz-plot-1.png)
 
 ``` r
 

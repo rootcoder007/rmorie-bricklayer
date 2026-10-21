@@ -501,7 +501,7 @@ for (nm in names(messy)) {
 }
 ```
 
-![](describe_files/figure-html/describe-plots-1.png)
+![](describe_files/figure-html/describe-describe-plots-1.png)
 
 ``` r
 
@@ -511,4 +511,4 @@ plotecdf(c(reference$score, fresh$score),
          main = "Fresh scores against the reference")
 ```
 
-![](describe_files/figure-html/describe-plots-2.png)
+![](describe_files/figure-html/describe-describe-plots-2.png)

@@ -160,7 +160,7 @@ abline(h = 1, col = "grey")
 points(c(20, 14, 5), c(30, 12, 3) / c(20, 14, 5), pch = 19, col = 2)
 ```
 
-![](small-area-rates_files/figure-html/funnel-plot-1.png)
+![](small-area-rates_files/figure-html/small-area-rates-funnel-plot-1.png)
 
 The `levels` argument sets which limits are drawn; 95% and 99.8% (about
 two and three standard deviations) are the conventional pair.

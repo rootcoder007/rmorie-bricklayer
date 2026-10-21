@@ -282,21 +282,21 @@ injected effect sizes.
 plot(real)
 ```
 
-![](falsification-and-power_files/figure-html/falsification-plots-1.png)
+![](falsification-and-power_files/figure-html/falsification-and-power-falsification-plots-1.png)
 
 ``` r
 
 plot(fake)
 ```
 
-![](falsification-and-power_files/figure-html/falsification-plots-2.png)
+![](falsification-and-power_files/figure-html/falsification-and-power-falsification-plots-2.png)
 
 ``` r
 
 plot(pw)
 ```
 
-![](falsification-and-power_files/figure-html/falsification-plots-3.png)
+![](falsification-and-power_files/figure-html/falsification-and-power-falsification-plots-3.png)
 
 ## References
 

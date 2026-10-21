@@ -588,11 +588,11 @@ trend and the regional coverage computed above.
 plot(ct)
 ```
 
-![](tables_files/figure-html/tables-plots-1.png)
+![](tables_files/figure-html/tables-tables-plots-1.png)
 
 ``` r
 
 plot(cov)
 ```
 
-![](tables_files/figure-html/tables-plots-2.png)
+![](tables_files/figure-html/tables-tables-plots-2.png)

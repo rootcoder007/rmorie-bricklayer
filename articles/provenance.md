@@ -85,7 +85,7 @@ signingkey <- pqckg(height = 3)
 signingkey
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       c573e5b044ee023b615752a438363aecb58e91667a28a963d3f1ed456dc0f3d4
+#>   root       e2af2cbf010103232e53db67d1ed7db142c442fafedd9b000981878422b47a87
 #>   height     3
 #>   used       0 of 8 signatures
 #>   remaining  8
@@ -102,7 +102,7 @@ pub <- signpubkey(signingkey)
 pub
 #> ── Public verification key ───────────────────────────────────────
 #>   scheme  xmss-sha256
-#>   root    c573e5b044ee023b615752a438363aecb58e91667a28a963d3f1ed456dc0f3d4
+#>   root    e2af2cbf010103232e53db67d1ed7db142c442fafedd9b000981878422b47a87
 #>   height  3
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -370,13 +370,13 @@ plan <- prrgdecl(c(
 
 # a declared outcome that was not reported
 prrgchk(plan, "n_rows")
-#> ── Against the declaration of 2026-10-21T14:23:39Z: departures below 
+#> ── Against the declaration of 2026-10-21T18:24:49Z: departures below 
 #>   declared but not reported (outcome switching): ate
 #> ──────────────────────────────────────────────────────────────────
 
 # statistics reported that were never declared
 prrgchk(plan, c("ate", "n_rows", "byyear", "byprecinct"))
-#> ── Against the declaration of 2026-10-21T14:23:39Z: departures below 
+#> ── Against the declaration of 2026-10-21T18:24:49Z: departures below 
 #>   reported but not declared (2 addition(s)): byyear, byprecinct
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -428,7 +428,7 @@ cpsbndlvrf(attr(b, "path"), dir, man = man)
 #>   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606
 #>   no_unlisted_files              ok    
 #>   attestation:attestation_comple ok    
-#>   attestation:manifest_digest    ok    2ae05fb38404a28b18a88569521e3a0c0113
+#>   attestation:manifest_digest    ok    3254b404572022d4844183c8764e73d84c44
 #>   attestation:signature          ok    
 #>   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a
 #> ──────────────────────────────────────────────────────────────────
@@ -665,4 +665,4 @@ barplot(d$x, names.arg = seq_len(nrow(d)), col = blpal()[1], xlab = "row", ylab 
         main = "The values the manifest pins")
 ```
 
-![](provenance_files/figure-html/provenance-plot-1.png)
+![](provenance_files/figure-html/provenance-provenance-plot-1.png)

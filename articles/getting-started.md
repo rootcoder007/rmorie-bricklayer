@@ -291,11 +291,11 @@ analysis of the published table and the stock-and-flow result.
 plot(a)
 ```
 
-![](getting-started_files/figure-html/getting-started-plots-1.png)
+![](getting-started_files/figure-html/getting-started-getting-started-plots-1.png)
 
 ``` r
 
 plot(sf)
 ```
 
-![](getting-started_files/figure-html/getting-started-plots-2.png)
+![](getting-started_files/figure-html/getting-started-getting-started-plots-2.png)

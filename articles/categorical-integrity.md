@@ -334,4 +334,4 @@ barplot(r, beside = TRUE, log = "y", col = blpal()[c(2, 1)], ylab = "odds ratio 
 abline(h = 1, lty = 2)
 ```
 
-![](categorical-integrity_files/figure-html/rotation-plot-1.png)
+![](categorical-integrity_files/figure-html/categorical-integrity-rotation-plot-1.png)

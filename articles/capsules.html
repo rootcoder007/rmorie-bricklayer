@@ -233,7 +233,7 @@ a human-readable <code>SUMMARY.txt</code>.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">summarypath</span><span class="op">)</span><span class="op">[</span><span class="fl">7</span><span class="op">:</span><span class="fl">12</span><span class="op">]</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Project:   demo-study</span></span>
 <span><span class="co">#&gt; Author:    A. Author</span></span>
-<span><span class="co">#&gt; When:      2026-10-21 14:22:14 UTC</span></span>
+<span><span class="co">#&gt; When:      2026-10-21 18:23:38 UTC</span></span>
 <span><span class="co">#&gt; OS:        Linux</span></span>
 <span><span class="co">#&gt; R:         R version 4.6.1 (2026-06-24)</span></span>
 <span><span class="co">#&gt; Mode:      SYNTHETIC (not real data -- pipeline check only)</span></span></code></pre></div>
@@ -246,9 +246,9 @@ if the portal has moved on.</p>
 <h2 id="where-this-sits-in-the-morie-family">Where this sits in the MORIE family<a class="anchor" aria-label="anchor" href="#where-this-sits-in-the-morie-family"></a>
 </h2>
 <p><code>rmoriebricklayer</code> is the provenance/reproducibility layer
-under <a href="https://github.com/rootcoder007/rmorie" class="external-link">rmorie</a> and <a href="https://github.com/rootcoder007/rmoriedata" class="external-link">rmoriedata</a>; both
-link against its compiled core
-(<code>LinkingTo: rmoriebricklayer</code>) for shared SHA-256 and
+under rmorie (github.com/rootcoder007/rmorie) and rmoriedata
+(github.com/rootcoder007/rmoriedata); both link against its compiled
+core (<code>LinkingTo: rmoriebricklayer</code>) for shared SHA-256 and
 summary-statistic kernels (<code><a href="../reference/csha256.html">csha256()</a></code>, <code><a href="../reference/cstat.html">cmn()</a></code>,
 <code><a href="../reference/cstat.html">cvari()</a></code>, <code><a href="../reference/cstat.html">ccorr()</a></code>).</p>
 </div>
@@ -297,11 +297,11 @@ each year.</p>
 <span><span class="op">}</span></span>
 <span><span class="va">t1</span> <span class="op">&lt;-</span> <span class="va">d</span><span class="op">[</span><span class="va">d</span><span class="op">$</span><span class="va">indicator</span> <span class="op">==</span> <span class="va">d</span><span class="op">$</span><span class="va">indicator</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="op">]</span></span>
 <span><span class="fu">ci_plot</span><span class="op">(</span><span class="va">t1</span>, <span class="va">t1</span><span class="op">$</span><span class="va">group</span>, <span class="va">t1</span><span class="op">$</span><span class="va">indicator</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
-<p><img src="capsules_files/figure-html/capsule-plots-1.png" class="r-plt" alt="" width="672"></p>
+<p><img src="capsules_files/figure-html/capsules-capsule-plots-1.png" class="r-plt" alt="" width="672"></p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">v</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tapply.html" class="external-link">tapply</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">visits</span>, <span class="va">df</span><span class="op">$</span><span class="va">year</span>, <span class="va">sum</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span><span class="va">v</span>, col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, main <span class="op">=</span> <span class="st">"Visits by year"</span>, xlab <span class="op">=</span> <span class="st">"year"</span>, ylab <span class="op">=</span> <span class="st">"visits"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="capsules_files/figure-html/capsule-plots-2.png" class="r-plt" alt="" width="672"></p>
+<p><img src="capsules_files/figure-html/capsules-capsule-plots-2.png" class="r-plt" alt="" width="672"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

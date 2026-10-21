@@ -37,7 +37,7 @@ cf[c(1, 12, 24), c("period", "received", "disposed", "clearance", "rolclr", "per
 plot(cf)
 ```
 
-![](courts-and-crime_files/figure-html/flow-1.png)
+![](courts-and-crime_files/figure-html/courts-and-crime-flow-1.png)
 
 Over these 24 months the court disposed of 489,448 cases against 497,393
 received, a clearance rate of 0.984. The monthly rate swings well beyond
@@ -77,7 +77,7 @@ lt
 plot(lt)
 ```
 
-![](courts-and-crime_files/figure-html/life-1.png)
+![](courts-and-crime_files/figure-html/courts-and-crime-life-1.png)
 
 The median of 6.4 months assumes cases are spread evenly within the
 first band; the published average for the month is 185 days. Only
@@ -102,7 +102,7 @@ mix$trend[, c("outcome", "statistic", "pholm", "change")]
 plot(mix)
 ```
 
-![](courts-and-crime_files/figure-html/mix-1.png)
+![](courts-and-crime_files/figure-html/courts-and-crime-mix-1.png)
 
 Every share comes with Goodman’s simultaneous interval (in
 `mix$shares`). With a few hundred thousand cases a year every trend is
@@ -154,7 +154,7 @@ cd
 plot(cd)
 ```
 
-![](courts-and-crime_files/figure-html/simpson-1.png)
+![](courts-and-crime_files/figure-html/courts-and-crime-simpson-1.png)
 
 ``` r
 
@@ -220,7 +220,7 @@ kd
 plot(kd)
 ```
 
-![](courts-and-crime_files/figure-html/density-1.png)
+![](courts-and-crime_files/figure-html/courts-and-crime-density-1.png)
 
 ## Do incidents repeat nearby, soon after? The Knox test
 
@@ -246,7 +246,7 @@ kn
 plot(kn)
 ```
 
-![](courts-and-crime_files/figure-html/knox-1.png)
+![](courts-and-crime_files/figure-html/courts-and-crime-knox-1.png)
 
 ## Do the hot spots last?
 
@@ -277,7 +277,7 @@ h
 plot(h)
 ```
 
-![](courts-and-crime_files/figure-html/hotspots-1.png)
+![](courts-and-crime_files/figure-html/courts-and-crime-hotspots-1.png)
 
 The hot set is the busiest 7 cells and every cell tied with the last of
 them. When a tie would make more than twice that many cells hot, the

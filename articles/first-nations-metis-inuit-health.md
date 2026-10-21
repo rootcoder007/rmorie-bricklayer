@@ -143,7 +143,7 @@ g
 plot(g)
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/gap-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-gap-1.png)
 
 Before pooling the three groups into one “Indigenous” figure, test
 whether they differ:
@@ -157,7 +157,7 @@ dt
 plot(dt)
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/distinctions-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-distinctions-1.png)
 
 ## The whole scale, not one cut of it
 
@@ -186,7 +186,7 @@ oc
 plot(oc)
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/ordinal-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-ordinal-1.png)
 
 ## Age standardisation
 
@@ -213,7 +213,7 @@ sp
 plot(sp)
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/prevalence-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-prevalence-1.png)
 
 For counts of events (deaths, hospitalisations),
 [`agestd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agestd.md)
@@ -249,7 +249,7 @@ w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
 plot(w)
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/wellness-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-wellness-1.png)
 
 ``` r
 
@@ -276,7 +276,7 @@ dc
 plot(dc)
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/dual-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-dual-1.png)
 
 ## Holistic balance
 
@@ -314,7 +314,7 @@ hb
 plot(hb)
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/balance-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-balance-1.png)
 
 A community that weighs the domains differently sets `weights`. The
 result says which weights it used.
@@ -364,7 +364,7 @@ mw[, c("group", "indicator", "domain", "estimate", "shared")]
 plot(mw)
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/continuum-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-continuum-1.png)
 
 ## Healing as a process
 
@@ -386,7 +386,7 @@ hc <- hc[hc$indicator %in% c("Perceived mental health, very good or excellent",
 plot(hc)
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/healing-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-healing-1.png)
 
 Between the two periods, which span the COVID-19 pandemic, the share
 rating their mental health very good or excellent fell for First
@@ -425,7 +425,7 @@ plot(ca, xlab = "First Nations: excellent or very good (%)",
      ylab = "M\u00e9tis: excellent or very good (%)")
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/connection-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-connection-1.png)
 
 This is an association across places. It cannot say that one thing makes
 a person well.
@@ -450,7 +450,7 @@ ci <- commidx(h2, "group", "indicator", "estimate", "lower", "upper", qual = "qu
 plot(ci)
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/community-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-community-1.png)
 
 [`cwbscr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cwbscr.md)
 computes Indigenous Services Canada’s Community Well-Being index from
@@ -509,7 +509,7 @@ fc[, c("residence", "group", "numerator", "denominator", "estimate", "lower", "u
 plot(fc[fc$residence == "Total - Residence on or off reserve", ])
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/census-foster-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-census-foster-1.png)
 
 The overrepresentation of First Nations, Metis and Inuit children in
 care is the subject of the first five Calls to Action of the Truth and
@@ -574,7 +574,7 @@ cw[cw$geo %in% c("Canada", "Nunavut"), c("geo", "group", "income", "education", 
 plot(cw)
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/census-cwb-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-census-cwb-1.png)
 
 ## Intergenerational exposure
 
@@ -599,7 +599,7 @@ et <- exptrnd(cases = c(60, 95, 70), n = c(500, 520, 300))
 plot(et)
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/generations-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-generations-1.png)
 
 Individual-level data of this kind belong to the communities who
 collected them. These functions are for analyses done under their
@@ -663,7 +663,7 @@ g[g$measure %in% c("Life expectancy at birth", "Infant mortality rate"),
 plot(g)
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/trc-gaps-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-trc-gaps-1.png)
 
 Life expectancy at birth in 2016/2021 was 71.4 years for First Nations
 people living on reserve and 71.9 for Inuit, against 85.0 for
@@ -690,7 +690,7 @@ p
 plot(p)
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/trc-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-trc-1.png)
 
 The projection only extends the pace so far. It is not a forecast.
 
@@ -723,7 +723,7 @@ plot(cc, xlab = "First Nations who know an Indigenous language (%)",
      ylab = "First Nations: mental health excellent or very good (%)")
 ```
 
-![](first-nations-metis-inuit-health_files/figure-html/continuity-1.png)
+![](first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-continuity-1.png)
 
 Across these eight provinces and territories, the rank correlation is
 positive but far from settled: its exact p-value is large and its

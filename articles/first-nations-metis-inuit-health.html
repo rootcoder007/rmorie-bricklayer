@@ -265,7 +265,7 @@ excellent, 2019/2022, from table 13-10-0924-01:</p>
 <span><span class="co">#&gt; 2 -11.58531  -5.814692      FALSE  FALSE</span></span>
 <span><span class="co">#&gt; 3 -20.16568  -7.234321      FALSE  FALSE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/gap-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-gap-1.png" class="r-plt" alt="" width="432"></p>
 <p>Before pooling the three groups into one “Indigenous” figure, test
 whether they differ:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
@@ -274,7 +274,7 @@ whether they differ:</p>
 <span><span class="co">#&gt; Distinctions test across 3 groups: Q = 11.97 on 2 df, p = 0.00252, I^2 = 83%</span></span>
 <span><span class="co">#&gt; Pooled (inverse-variance) 49.11; the groups differ: report each one, not the pooled figure</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">dt</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/distinctions-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-distinctions-1.png" class="r-plt" alt="" width="432"></p>
 </div>
 <div class="section level2">
 <h2 id="the-whole-scale-not-one-cut-of-it">The whole scale, not one cut of it<a class="anchor" aria-label="anchor" href="#the-whole-scale-not-one-cut-of-it"></a>
@@ -300,7 +300,7 @@ than a person in the reference group, with ties counted half (Agresti
 <span><span class="co">#&gt; 1 3884.405      FALSE  FALSE</span></span>
 <span><span class="co">#&gt; 2 3884.405      FALSE  FALSE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">oc</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/ordinal-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-ordinal-1.png" class="r-plt" alt="" width="432"></p>
 </div>
 <div class="section level2">
 <h2 id="age-standardisation">Age standardisation<a class="anchor" aria-label="anchor" href="#age-standardisation"></a>
@@ -323,7 +323,7 @@ year, from the 2017 Aboriginal Peoples Survey (table 41-10-0021-01):</p>
 <span><span class="co">#&gt; 2         Inuit    5.940 5.036123 6.843877 0.4611700       TRUE</span></span>
 <span><span class="co">#&gt; 3         Métis    4.742 4.125043 5.358957 0.3147799       TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sp</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/prevalence-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-prevalence-1.png" class="r-plt" alt="" width="432"></p>
 <p>For counts of events (deaths, hospitalisations),
 <code><a href="../reference/agestd.html">agestd()</a></code> gives directly standardised rates with the
 Fay-Feuer gamma interval, and <code><a href="../reference/rategap.html">rategap()</a></code> compares two of
@@ -353,7 +353,7 @@ after them. This example uses the 2024 well-being table,
 <span>                                   <span class="st">"Rarely or never has a hopeful outlook"</span><span class="op">)</span>,</span>
 <span>                      qual <span class="op">=</span> <span class="st">"quality"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">w</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/wellness-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-wellness-1.png" class="r-plt" alt="" width="432"></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/frmaud.html">frmaud</a></span><span class="op">(</span><span class="va">w</span><span class="op">)</span></span>
 <span><span class="co">#&gt; 40% of the indicators reported are deficit-framed.</span></span></code></pre></div>
@@ -371,7 +371,7 @@ distress. They are related but distinct (Keyes 2002, 2005):</p>
 <span><span class="co">#&gt; 2 2.214178      FALSE</span></span>
 <span><span class="co">#&gt; 3 2.895953      FALSE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">dc</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/dual-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-dual-1.png" class="r-plt" alt="" width="432"></p>
 </div>
 <div class="section level2">
 <h2 id="holistic-balance">Holistic balance<a class="anchor" aria-label="anchor" href="#holistic-balance"></a>
@@ -404,7 +404,7 @@ whose data these are to make. The choice below is one reading of it:</p>
 <span><span class="co">#&gt; 3   mental      FALSE</span></span>
 <span><span class="co">#&gt; 4 physical      FALSE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">hb</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/balance-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-balance-1.png" class="r-plt" alt="" width="432"></p>
 <p>A community that weighs the domains differently sets
 <code>weights</code>. The result says which weights it used.</p>
 </div>
@@ -449,7 +449,7 @@ directions the tables do not measure, and does not fill them in:</p>
 <span><span class="co">#&gt; 11     50.5   TRUE</span></span>
 <span><span class="co">#&gt; 12     50.5   TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">mw</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/continuum-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-continuum-1.png" class="r-plt" alt="" width="432"></p>
 </div>
 <div class="section level2">
 <h2 id="healing-as-a-process">Healing as a process<a class="anchor" aria-label="anchor" href="#healing-as-a-process"></a>
@@ -467,7 +467,7 @@ between survey periods, wellness first. It uses the two periods of table
 <span>                             <span class="st">"Sense of belonging to local community, somewhat strong or very strong"</span>,</span>
 <span>                             <span class="st">"Mood disorder"</span>, <span class="st">"Anxiety disorder"</span><span class="op">)</span>, <span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">hc</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/healing-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-healing-1.png" class="r-plt" alt="" width="432"></p>
 <p>Between the two periods, which span the COVID-19 pandemic, the share
 rating their mental health very good or excellent fell for First
 Nations, Metis and non-Indigenous adults. The Inuit interval includes no
@@ -500,7 +500,7 @@ people’s mental health rise together, using table 41-10-0067-01:</p>
 <span><span class="co">#&gt; An association across places: it does not show that one causes the other for any person.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">ca</span>, xlab <span class="op">=</span> <span class="st">"First Nations: excellent or very good (%)"</span>,</span>
 <span>     ylab <span class="op">=</span> <span class="st">"M\u00e9tis: excellent or very good (%)"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/connection-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-connection-1.png" class="r-plt" alt="" width="432"></p>
 <p>This is an association across places. It cannot say that one thing
 makes a person well.</p>
 </div>
@@ -520,7 +520,7 @@ leaves the index <code>NA</code>; it is not filled in.</p>
 <span>                    <span class="st">"Perceived life stress, most days quite a bit or extremely stressful"</span> <span class="op">=</span> <span class="op">-</span><span class="fl">2</span>,</span>
 <span>                    <span class="st">"Heavy drinking"</span> <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">ci</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/community-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-community-1.png" class="r-plt" alt="" width="432"></p>
 <p><code><a href="../reference/cwbscr.html">cwbscr()</a></code> computes Indigenous Services Canada’s Community
 Well-Being index from census profile figures: income, education, housing
 and labour force activity. The index measures socio-economic conditions
@@ -572,7 +572,7 @@ the counts.</p>
 <span><span class="co">#&gt; 677  0.4914005  0.4040293  0.5975523</span></span>
 <span><span class="co">#&gt; 678  0.2308013  0.2239573  0.2378541</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fc</span><span class="op">[</span><span class="va">fc</span><span class="op">$</span><span class="va">residence</span> <span class="op">==</span> <span class="st">"Total - Residence on or off reserve"</span>, <span class="op">]</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/census-foster-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-census-foster-1.png" class="r-plt" alt="" width="432"></p>
 <p>The overrepresentation of First Nations, Metis and Inuit children in
 care is the subject of the first five Calls to Action of the Truth and
 Reconciliation Commission.</p>
@@ -623,7 +623,7 @@ Department’s own index:</p>
 <span><span class="co">#&gt; 55 Nunavut          Inuit  70.22000  28.49462 70.82270  69.85 59.84683</span></span>
 <span><span class="co">#&gt; 56 Nunavut Non-Indigenous 100.00000  79.89287 93.30144  94.85 92.01108</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cw</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/census-cwb-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-census-cwb-1.png" class="r-plt" alt="" width="432"></p>
 </div>
 <div class="section level2">
 <h2 id="intergenerational-exposure">Intergenerational exposure<a class="anchor" aria-label="anchor" href="#intergenerational-exposure"></a>
@@ -645,7 +645,7 @@ Cochran-Armitage test for a trend.</li>
 <span><span class="co">#&gt; [1]  2  0  1 NA</span></span>
 <span><span class="va">et</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/exptrnd.html">exptrnd</a></span><span class="op">(</span>cases <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">60</span>, <span class="fl">95</span>, <span class="fl">70</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">520</span>, <span class="fl">300</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">et</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/generations-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-generations-1.png" class="r-plt" alt="" width="432"></p>
 <p>Individual-level data of this kind belong to the communities who
 collected them. These functions are for analyses done under their
 authority, or on tables they have published.</p>
@@ -703,7 +703,7 @@ interval. It is a ratio of published estimates, not a relative risk.</p>
 <span><span class="co">#&gt; 43 1.4796282 3.831323</span></span>
 <span><span class="co">#&gt; 44 1.3632810 2.728262</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/trc-gaps-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-trc-gaps-1.png" class="r-plt" alt="" width="432"></p>
 <p>Life expectancy at birth in 2016/2021 was 71.4 years for First
 Nations people living on reserve and 71.9 for Inuit, against 85.0 for
 non-Indigenous people. Infant mortality among Inuit was 13.5 per 1,000
@@ -721,7 +721,7 @@ the Yellowhead Institute counts them (Jewell and Mosby 2021, 2022).
 <span><span class="co">#&gt;   cmplbylate</span></span>
 <span><span class="co">#&gt; 1   2105.381</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/trc-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-trc-1.png" class="r-plt" alt="" width="432"></p>
 <p>The projection only extends the pace so far. It is not a
 forecast.</p>
 </div>
@@ -751,7 +751,7 @@ do more rate their mental health highly?</p>
 <span><span class="co">#&gt; An association across places: it does not show that one causes the other for any person.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cc</span>, xlab <span class="op">=</span> <span class="st">"First Nations who know an Indigenous language (%)"</span>,</span>
 <span>     ylab <span class="op">=</span> <span class="st">"First Nations: mental health excellent or very good (%)"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="first-nations-metis-inuit-health_files/figure-html/continuity-1.png" class="r-plt" alt="" width="432"></p>
+<p><img src="first-nations-metis-inuit-health_files/figure-html/first-nations-metis-inuit-health-continuity-1.png" class="r-plt" alt="" width="432"></p>
 <p>Across these eight provinces and territories, the rank correlation is
 positive but far from settled: its exact p-value is large and its
 sensitivity band includes zero. That is not evidence for or against the

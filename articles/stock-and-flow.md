@@ -172,7 +172,7 @@ barplot(per1000, names.arg = c("First Nations", "non-Indigenous"), col = blpal()
 hist(stays, breaks = 30, col = blpal()[2], xlab = "length of stay", main = "Lengths of stay")
 ```
 
-![](stock-and-flow_files/figure-html/stock-flow-plots-1.png)
+![](stock-and-flow_files/figure-html/stock-and-flow-stock-flow-plots-1.png)
 
 ``` r
 

@@ -163,7 +163,7 @@ text(when[o], seq_along(o), paste0(lab, "  ", format(when[o])), cex = 0.75,
      pos = ifelse(seq_along(o) < length(o), 4, 2))
 ```
 
-![](siu-reports_files/figure-html/siu-timeline-plot-1.png)
+![](siu-reports_files/figure-html/siu-reports-siu-timeline-plot-1.png)
 
 ``` r
 
