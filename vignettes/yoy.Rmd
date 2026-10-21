@@ -237,3 +237,11 @@ for (g in unique(m$group)) {
     2, c("value", "previous", "ppchg", "verdict")])
 }
 ```
+
+## The change in a picture
+
+`plot()` draws the year-over-year result: each year's change with its interval.
+
+```{r yoy-plot, fig.width = 7, fig.height = 4.5}
+plot(y)
+```

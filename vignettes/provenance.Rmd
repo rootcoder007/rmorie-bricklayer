@@ -499,3 +499,13 @@ head(indtabs()[, c("key", "rows")])
 
 `indtabs()` lists the Statistics Canada tables on data.rmorie.com with their
 source, licence and table number, so a result can name the exact table it used.
+
+## The pinned data in a picture
+
+The manifest above pins these ten values. A verifier that recomputes the digest is checking
+exactly what this chart shows.
+
+```{r provenance-plot, fig.width = 6, fig.height = 4}
+barplot(d$x, names.arg = seq_len(nrow(d)), col = blpal()[1], xlab = "row", ylab = "x",
+        main = "The values the manifest pins")
+```

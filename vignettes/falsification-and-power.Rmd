@@ -155,6 +155,21 @@ res <- falsfam(p, meth = "holm")
 head(res)
 ```
 
+## The tests in a picture
+
+`plot()` draws each result. For the real statistic, the observed correlation stands far outside
+the correlations the permuted tables give. The fake statistic returns 0.5 whatever the data, so
+every permuted table also gives 0.5: the null collapses onto the observed value, and the
+permutation control fails, as it should. The last panel is the power of the test across injected
+effect sizes.
+
+```{r falsification-plots, fig.width = 7, fig.height = 4.5}
+plot(real)
+plot(fake)
+plot(pw)
+```
+
+
 ## References
 
 VanderWeele, Ding (2017). Sensitivity analysis in observational research: introducing the

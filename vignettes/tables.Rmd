@@ -412,3 +412,12 @@ trndtst(inuit$estimate, x = 1:3)$p_value
 ```
 
 Three periods cannot show a trend: the exact Mann-Kendall p-value is 1.
+
+## The results in a picture
+
+`plot()` draws the count trend and the regional coverage computed above.
+
+```{r tables-plots, fig.width = 7, fig.height = 4.5}
+plot(ct)
+plot(cov)
+```

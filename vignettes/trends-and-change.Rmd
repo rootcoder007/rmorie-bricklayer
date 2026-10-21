@@ -131,6 +131,15 @@ trcprog()
 All of them work on the five to ten values a published table gives, and none of them
 assumes the counts are large.
 
+## The trend in a picture
+
+`plot()` draws the counts with the fitted trend.
+
+```{r trend-plot, fig.width = 7, fig.height = 4.5}
+plot(fit)
+```
+
+
 ## References
 
 Mann (1945). Nonparametric tests against trend. *Econometrica* 13(3).

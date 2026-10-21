@@ -161,3 +161,12 @@ From here, replace the source URL and the column names in
 it prints back into the provenance file. Later runs refuse to proceed if
 the bytes change, and `mnfrcmp()` compares two runs number by
 number.
+
+## The analysis in a picture
+
+`plot()` draws the analysis of the published table and the stock-and-flow result.
+
+```{r getting-started-plots, fig.width = 7, fig.height = 4.5}
+plot(a)
+plot(sf)
+```

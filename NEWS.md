@@ -5,6 +5,7 @@
 * An error raised while `co2fp()` measures a computation's footprint is now named after the function that asked for the footprint (for example `cpschk: the provenance names no source to fetch`), not after `co2fp()`.
 * The vignettes run their code again wherever they are built (r-universe, pkgdown, `R CMD build`), so the articles show their plots; only `R CMD check` re-building a vignette skips the computing.
 * The package installs faster, which keeps its CRAN check under ten minutes: R code is no longer byte-compiled at install (R compiles each function the first time it runs), and the two SIU parser files build as one compilation unit, so `<regex>` is compiled once.
+* Every vignette now draws its results: the 21 that had no figure gain one or more, drawn with the package's own `plot()` methods and plot helpers from the objects each vignette builds.
 
 ## A dashboard, distributions and proof ledgers
 

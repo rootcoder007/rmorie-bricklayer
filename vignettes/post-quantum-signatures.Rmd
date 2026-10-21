@@ -249,3 +249,19 @@ msg <- dgstobj(d)
 sig <- cpssign(msg, key)
 cpsvrf(msg, sig, fipspubkey(key))
 ```
+
+## The sizes in a picture
+
+What a signature costs on the wire, from `fipssz()`: the public key a verifier keeps and the
+signature attached to each release, in bytes, for ML-DSA and two SLH-DSA sets. The scale is
+logarithmic, because an SLH-DSA signature is several times larger.
+
+```{r signature-sizes-plot, fig.width = 7, fig.height = 4.5}
+sch <- c("ML-DSA-44", "ML-DSA-65", "ML-DSA-87", "SLH-DSA-SHA2-128f", "SLH-DSA-SHAKE-128s")
+sz <- t(vapply(sch, function(s) fipssz(s)[c("public_key", "signature")], numeric(2)))
+op <- par(mar = c(9, 5, 3, 1))
+barplot(t(sz), beside = TRUE, log = "y", ylim = c(10, 2 * max(sz)), col = blpal()[1:2],
+        ylab = "bytes (log scale)", las = 2, cex.names = 0.8, legend.text = c("public key", "signature"),
+        args.legend = list(x = "topleft", bty = "n"), main = "Key and signature sizes")
+par(op)
+```

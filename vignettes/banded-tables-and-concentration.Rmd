@@ -135,3 +135,16 @@ tot <- cp[cp$GEO_LEVEL != "Country" & cp$AGE_GROUP == "Total - Age groups" &
 ginicoef(tot$FIRST_NATIONS)
 topshr(tot$FIRST_NATIONS, fracs = c(0.25, 0.5))
 ```
+
+## The bands and the curve in a picture
+
+The left panel shows the banded counts as published. The right panel draws the Lorenz curve of
+the placements with `plotlrnz()`: the further it bows below the diagonal, the more unevenly the
+population is spread.
+
+```{r bands-lorenz-plot, fig.width = 8, fig.height = 4}
+op <- par(mfrow = c(1, 2))
+barplot(counts, names.arg = b$label, col = blpal()[2], main = "Counts by band", ylab = "count")
+plotlrnz(placements, main = "Concentration of placements")
+par(op)
+```
