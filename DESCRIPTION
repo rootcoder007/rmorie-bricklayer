@@ -75,6 +75,7 @@ Description: Tools for building brick-proof, reproducible, self-contained data
 License: AGPL-3
 Copyright: The bundled excerpts of published statistics in inst/extdata belong
     to their publishers; see inst/COPYRIGHTS.
+ByteCompile: no
 Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE, roclets = c("namespace", "rd", "srr::srr_stats_roclet"))

@@ -17,7 +17,39 @@ PKG_LIBS = @CURL_LIBS@ -lz
 # `all` must stay the first target (Writing R Extensions 1.2.1): a rule
 # listed before it would become the default goal and the shared object
 # would never be linked.
+# Every object file, with siu_unity.o standing in for siu_parse.o and siu_resolve.o
+# (siu_unity.cpp). A new source file must be added here (test-src-hygiene.R checks).
+OBJECTS = init.o \
+  rmbl_asn1.o \
+  rmbl_barrier.o \
+  rmbl_core.o \
+  rmbl_csv.o \
+  rmbl_digest.o \
+  rmbl_drbg.o \
+  rmbl_ecdsa.o \
+  rmbl_fetch.o \
+  rmbl_flock.o \
+  rmbl_gunzip.o \
+  rmbl_hqc.o \
+  rmbl_json.o \
+  rmbl_kdf.o \
+  rmbl_keccak.o \
+  rmbl_mgf1.o \
+  rmbl_mldsa_ntt.o \
+  rmbl_mlkem.o \
+  rmbl_pqc.o \
+  rmbl_progress.o \
+  rmbl_series.o \
+  rmbl_siu.o \
+  rmbl_sketch.o \
+  rmbl_slhdsa.o \
+  rmbl_stats.o \
+  rmbl_strtod.o \
+  rmbl_survey.o \
+  siu_unity.o
+
 all: $(SHLIB)
+siu_unity.o: siu_parse.cpp siu_resolve.cpp siu_parse.h siu_resolve.h siu_schema.h
 rmbl_core.o: morie_core.h
 rmbl_mldsa_ntt.o: rmbl_mldsa_core.h rmbl_prehash.h rmbl_mldsa_body.h rmbl_masked.h rmbl_mask_rng.h
 rmbl_mlkem.o: rmbl_mlkem_core.h rmbl_mlkem_arith.h rmbl_mlkem_body.h rmbl_masked.h rmbl_mask_rng.h
