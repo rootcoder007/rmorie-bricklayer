@@ -132,7 +132,7 @@ section lists what each check does and does not cover.
 Gaborit, P., Aguilar-Melchor, C., Aragon, N., Bettaieb, S., Bidoux, L.,
 Blazy, O., Deneuville, J.-C., Persichetti, E., Zemor, G., et al. (2025).
 Hamming Quasi-Cyclic (HQC), specification of 2025-08-22; reference
-implementation v5.0.0. <https://pqc-hqc.org/>
+implementation v5.0.0. https://pqc-hqc.org/
 
 Alagic, G. et al. (2025). Status Report on the Fourth Round of the NIST
 Post-Quantum Cryptography Standardization Process. NIST IR 8545.

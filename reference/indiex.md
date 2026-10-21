@@ -47,7 +47,7 @@ Indigenous Population Profile, 2021 Census of Population, catalogue
 “as is” basis with the permission of Statistics Canada, under the
 Statistics Canada Open Licence:
 
-<https://www.statcan.gc.ca/en/terms-conditions/open-licence>
+https://www.statcan.gc.ca/en/terms-conditions/open-licence
 
 Built by the scripts `indigenous_mental_health.R` and
 `indigenous_census.R` in the `data-raw` folder of the source package.

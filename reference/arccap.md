@@ -110,7 +110,7 @@ Key Infrastructure Time-Stamp Protocol (TSP). RFC 3161.
 [doi:10.17487/RFC3161](https://doi.org/10.17487/RFC3161)
 
 Internet Archive. ias3: the Internet Archive's S3-like API.
-<https://archive.org/developers/ias3.html>
+https://archive.org/developers/ias3.html
 
 ## See also
 

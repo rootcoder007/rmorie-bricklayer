@@ -11,12 +11,12 @@ collections `ocj_statistics` and `tps_open_data`).
 ## Source
 
 Ontario Court of Justice, court statistics,
-<https://www.ontariocourts.ca/ocj/statistics/> (retrieved 2026-10-13),
+https://www.ontariocourts.ca/ocj/statistics/ (retrieved 2026-10-13),
 editions 2012 to 2026, published by the Court for public use. Toronto
 Police Service, Public Safety Data Portal, dataset “Break and Enter Open
-Data”, <https://data.tps.ca/> (retrieved 2026-10-13); contains
-information licensed under the Open Government Licence - Toronto Police
-Service. See `inst/COPYRIGHTS`.
+Data”, https://data.tps.ca/ (retrieved 2026-10-13); contains information
+licensed under the Open Government Licence - Toronto Police Service. See
+`inst/COPYRIGHTS`.
 
 ## Value
 

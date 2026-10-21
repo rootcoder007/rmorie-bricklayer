@@ -801,9 +801,9 @@ Every default that stood in for a measurement is listed:</p>
 <span><span class="va">fp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/co2fp.html">co2fp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">3e5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, loc <span class="op">=</span> <span class="st">"CA-ON"</span>, cpupwrw <span class="op">=</span> <span class="fl">45</span>,</span>
 <span>                        memgb <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fp</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Computation footprint (modelled): 0.003 s wall, 0.003 s CPU, utilisation 0.25 (process) on 4 cores</span></span>
-<span><span class="co">#&gt;   energy: 1.43e-08 kWh (cpu 9.38e-09, memory 4.97e-09)</span></span>
-<span><span class="co">#&gt;   CO2e:   1.3e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)</span></span>
+<span><span class="co">#&gt; Computation footprint (modelled): 0.002 s wall, 0.002 s CPU, utilisation 0.25 (process) on 4 cores</span></span>
+<span><span class="co">#&gt;   energy: 9.56e-09 kWh (cpu 6.25e-09, memory 3.31e-09)</span></span>
+<span><span class="co">#&gt;   CO2e:   8.7e-07 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)</span></span>
 <span><span class="va">fp</span><span class="op">$</span><span class="va">assumptions</span></span>
 <span><span class="co">#&gt; character(0)</span></span></code></pre></div>
 <div class="section level4">
@@ -832,9 +832,9 @@ for a machine, so a figure can be made comparable with either tool:</p>
 <span>                       usage <span class="op">=</span> <span class="st">"machine"</span>, loadcur <span class="op">=</span> <span class="st">"codecarbon"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span>prolin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>usage <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">usage</span>, cpukwh <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">enekwh</span><span class="op">$</span><span class="va">cpu</span><span class="op">)</span>,</span>
 <span>      maccod <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>usage <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">usage</span>, cpukwh <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">enekwh</span><span class="op">$</span><span class="va">cpu</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;        usage     cpukwh</span></span>
-<span><span class="co">#&gt; prolin  0.25 9.3750e-09</span></span>
-<span><span class="co">#&gt; maccod  0.50 1.0625e-08</span></span>
+<span><span class="co">#&gt;        usage   cpukwh</span></span>
+<span><span class="co">#&gt; prolin  0.25 6.25e-09</span></span>
+<span><span class="co">#&gt; maccod  0.00 3.75e-09</span></span>
 <span><span class="va">b</span><span class="op">$</span><span class="va">usagemode</span></span>
 <span><span class="co">#&gt; [1] "machine"</span></span></code></pre></div>
 </div>
@@ -911,10 +911,10 @@ are the two the Green Algorithms calculator prints:</p>
 <div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/fpeqv.html">fpeqv</a></span><span class="op">(</span><span class="va">fp</span><span class="op">$</span><span class="va">co2eg</span> <span class="op">*</span> <span class="fl">1e4</span><span class="op">)</span>   <span class="co"># if this ran ten thousand times</span></span>
 <span><span class="co">#&gt; $carkm</span></span>
-<span><span class="co">#&gt; [1] 7.455208e-05</span></span>
+<span><span class="co">#&gt; [1] 4.970139e-05</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $treemon</span></span>
-<span><span class="co">#&gt; [1] 1.42275e-05</span></span>
+<span><span class="co">#&gt; [1] 9.484998e-06</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $sources</span></span>
 <span><span class="co">#&gt;                                                                  car </span></span>
@@ -994,13 +994,14 @@ exposure to NO2 and O3 and all-cause and respiratory mortality.
 <em>Environment International</em> 144. Lannelongue, Grealey, Inouye
 (2021). Green Algorithms: quantifying the carbon footprint of
 computation. <em>Advanced Science</em> 8(12), 2100707. Ember (2026).
-Yearly Electricity Data, via Our World in Data, <a href="https://ourworldindata.org/grapher/carbon-intensity-electricity" class="external-link uri">https://ourworldindata.org/grapher/carbon-intensity-electricity</a>.
-Electricity Maps (2025). 2024 Yearly Carbon Intensity Data, via Green
-Algorithms data v3.1. Levin (1953). The occurrence of lung cancer in
-man. <em>Acta Unio Internationalis Contra Cancrum</em> 9. Wagstaff,
-Paci, van Doorslaer (1991). On the measurement of inequalities in
-health. <em>Social Science and Medicine</em> 33(5). WHO (2021). Global
-Air Quality Guidelines.</p>
+Yearly Electricity Data, via Our World in Data,
+ourworldindata.org/grapher/carbon-intensity-electricity. Electricity
+Maps (2025). 2024 Yearly Carbon Intensity Data, via Green Algorithms
+data v3.1. Levin (1953). The occurrence of lung cancer in man. <em>Acta
+Unio Internationalis Contra Cancrum</em> 9. Wagstaff, Paci, van
+Doorslaer (1991). On the measurement of inequalities in health.
+<em>Social Science and Medicine</em> 33(5). WHO (2021). Global Air
+Quality Guidelines.</p>
 </div>
 </div>
 <div class="section level2">

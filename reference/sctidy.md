@@ -56,7 +56,7 @@ gets its member number from the coordinate: `"Without children [3]"` and
 ## References
 
 Statistics Canada. Symbol legend.
-<https://www.statcan.gc.ca/en/concepts/definitions/guide-symbol>
+https://www.statcan.gc.ca/en/concepts/definitions/guide-symbol
 
 ## See also
 

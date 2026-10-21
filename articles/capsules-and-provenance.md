@@ -470,7 +470,7 @@ summarypath <- wrsmrytxt(
 cat(readLines(summarypath)[7:12], sep = "\n")
 #> Project:   demo-study
 #> Author:    A. Author
-#> When:      2026-10-21 16:05:23 UTC
+#> When:      2026-10-21 16:20:02 UTC
 #> OS:        Linux
 #> R:         R version 4.6.1 (2026-06-24)
 #> Mode:      SYNTHETIC (not real data -- pipeline check only)
@@ -483,11 +483,11 @@ the portal has moved on.
 
 ### Where this sits in the MORIE family
 
-`rmoriebricklayer` is the provenance/reproducibility layer under
-[rmorie](https://github.com/rootcoder007/rmorie) and
-[rmoriedata](https://github.com/rootcoder007/rmoriedata); both link
-against its compiled core (`LinkingTo: rmoriebricklayer`) for shared
-SHA-256 and summary-statistic kernels
+`rmoriebricklayer` is the provenance/reproducibility layer under rmorie
+(github.com/rootcoder007/rmorie) and rmoriedata
+(github.com/rootcoder007/rmoriedata); both link against its compiled
+core (`LinkingTo: rmoriebricklayer`) for shared SHA-256 and
+summary-statistic kernels
 ([`csha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/csha256.md),
 [`cmn()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cstat.md),
 [`cvari()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cstat.md),
@@ -639,7 +639,7 @@ signingkey <- pqckg(height = 3)
 signingkey
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       f084ec4b5d0050f922b97ad551fbc4462d3078e06b6b7d57ed8d13fc9a350b7a
+#>   root       0928819b01c4966fc9311762c29c10cf6b7dd45113725b2de02cd9bcb4fef5fb
 #>   height     3
 #>   used       0 of 8 signatures
 #>   remaining  8
@@ -656,7 +656,7 @@ pub <- signpubkey(signingkey)
 pub
 #> ── Public verification key ───────────────────────────────────────
 #>   scheme  xmss-sha256
-#>   root    f084ec4b5d0050f922b97ad551fbc4462d3078e06b6b7d57ed8d13fc9a350b7a
+#>   root    0928819b01c4966fc9311762c29c10cf6b7dd45113725b2de02cd9bcb4fef5fb
 #>   height  3
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -924,13 +924,13 @@ plan <- prrgdecl(c(
 
 # a declared outcome that was not reported
 prrgchk(plan, "n_rows")
-#> ── Against the declaration of 2026-10-21T16:05:24Z: departures below 
+#> ── Against the declaration of 2026-10-21T16:20:03Z: departures below 
 #>   declared but not reported (outcome switching): ate
 #> ──────────────────────────────────────────────────────────────────
 
 # statistics reported that were never declared
 prrgchk(plan, c("ate", "n_rows", "byyear", "byprecinct"))
-#> ── Against the declaration of 2026-10-21T16:05:24Z: departures below 
+#> ── Against the declaration of 2026-10-21T16:20:03Z: departures below 
 #>   reported but not declared (2 addition(s)): byyear, byprecinct
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -982,7 +982,7 @@ cpsbndlvrf(attr(b, "path"), dir, man = man)
 #>   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606
 #>   no_unlisted_files              ok    
 #>   attestation:attestation_comple ok    
-#>   attestation:manifest_digest    ok    28dc48f4d41c12c7018c2ad3e33d50abe7ec
+#>   attestation:manifest_digest    ok    0d0e46702cd4aa9e2b8ee05ec032b1565ff7
 #>   attestation:signature          ok    
 #>   manifest_digest                ok    8082eb02d48b11e6e07667e3c024d9596aa7
 #> ──────────────────────────────────────────────────────────────────

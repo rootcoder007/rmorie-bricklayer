@@ -58,7 +58,7 @@ compressed key must be protected exactly like the full one.
 ## References
 
 Gaborit, P. et al. (2025). Hamming Quasi-Cyclic (HQC), specification of
-2025-08-22, section 3 (HQC-KEM key pair formats). <https://pqc-hqc.org/>
+2025-08-22, section 3 (HQC-KEM key pair formats). https://pqc-hqc.org/
 
 ## See also
 

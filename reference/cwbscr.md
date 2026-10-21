@@ -104,7 +104,7 @@ Educational.
 
 Indigenous Services Canada (2019). Report on trends in First Nations
 communities, 1981 to 2016 (Community Well-Being index).  
-<https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644>
+https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644
 
 ## Examples
 
