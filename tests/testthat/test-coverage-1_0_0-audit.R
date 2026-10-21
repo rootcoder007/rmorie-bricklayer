@@ -312,3 +312,9 @@ test_that("bldl asks a busy server again and gives up on any other answer", {
   expect_error(bldl("https://example.org/x.csv", tempfile(), quiet = TRUE), "answered HTTP 404")
   expect_identical(calls, 1L)
 })
+
+test_that("the wait between tries is a plain sleep", {
+  t0 <- proc.time()[["elapsed"]]
+  expect_null(.bl_sleep(0))
+  expect_lt(proc.time()[["elapsed"]] - t0, 5)
+})
