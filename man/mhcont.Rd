@@ -89,7 +89,7 @@ plot(mw)
 \references{
 Health Canada, Assembly of First Nations (2015). First Nations Mental
 Wellness Continuum Framework. Ottawa: Health Canada. Summary report:\cr
-https://www.sac-isc.gc.ca/eng/1576093687903/1576093725971
+sac-isc.gc.ca/eng/1576093687903/1576093725971
 }
 \seealso{
 \code{\link{welprof}}, \code{\link{holbal}}.

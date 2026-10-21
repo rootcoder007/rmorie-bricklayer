@@ -62,7 +62,7 @@ t924 <- sctidy("13100924")
 }
 \references{
 Statistics Canada. Symbol legend.
-https://www.statcan.gc.ca/en/concepts/definitions/guide-symbol
+statcan.gc.ca/en/concepts/definitions/guide-symbol
 }
 \seealso{
 \code{\link{indgap}}, \code{\link{indtabs}}.

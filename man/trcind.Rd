@@ -43,7 +43,7 @@ ti[ti$call == "19", c("indicator", "table", "measure", "better")]
 Truth and Reconciliation Commission of Canada (2015). Truth and
 Reconciliation Commission of Canada: Calls to Action. Winnipeg. Government of Canada
 catalogue IR4-8/2015E.
-https://publications.gc.ca/collections/collection_2015/trc/IR4-8-2015-eng.pdf
+publications.gc.ca/collections/collection_2015/trc/IR4-8-2015-eng.pdf
 }
 \seealso{
 \code{\link{trchlthgap}}, \code{\link{trcprog}}.

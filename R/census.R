@@ -50,7 +50,7 @@ names(.rmbl_ipp_groups) <- c("TOTAL_IND_IDENT", "IND_IDENT", "SINGLE_IND_RESP", 
 #' @references Statistics Canada (2023). Indigenous Population Profile, 2021 Census of
 #' Population. Statistics Canada Catalogue no. 98-510-X2021001. Released June 21, 2023.
 #' Published at
-#' https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/ipp-ppa/index.cfm?Lang=E
+#' www12.statcan.gc.ca/census-recensement/2021/dp-pd/ipp-ppa/index.cfm?Lang=E
 #' (the site answers scripts with 403); the Wayback Machine holds a copy of that address
 #' captured on 8 March 2026 (web.archive.org, snapshot 20260308015010).
 #'
@@ -365,7 +365,7 @@ cnsstd <- function(x, grp = "Indigenous identity", geo = "Canada",
 #'   \code{nomajrep}, \code{notcro} (percentages).
 #' @references Indigenous Services Canada (2019). Report on trends in First Nations
 #'   communities, 1981 to 2016 (Community Well-Being index).\cr
-#'   https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644
+#'   sac-isc.gc.ca/eng/1345816651029/1557323327644
 #' @seealso \code{\link{cwbscr}}.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' p <- cnsprof(indiex("censuspop"))

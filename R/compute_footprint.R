@@ -108,7 +108,7 @@
 #'   was involved). \code{co2inttab()}: the full table as a data
 #'   frame with the same columns plus \code{iso3}.
 #' @references Ember (2026). Yearly Electricity Data, via Our World in Data,
-#'   https://ourworldindata.org/grapher/carbon-intensity-electricity.
+#'   ourworldindata.org/grapher/carbon-intensity-electricity.
 #'   Electricity Maps (2025). 2024 Yearly Carbon Intensity Data, via Green
 #'   Algorithms data v3.1. Lannelongue, L., Grealey, J. and Inouye, M. (2021).
 #'   Green Algorithms: quantifying the carbon footprint of computation.

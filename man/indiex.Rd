@@ -18,7 +18,7 @@ Indigenous Population Profile, 2021 Census of Population, catalogue 98-510-X2021
 and 98-510-X2021016. Reproduced and distributed on an \dQuote{as is} basis with the
 permission of Statistics Canada, under the Statistics Canada Open Licence:
 
-https://www.statcan.gc.ca/en/terms-conditions/open-licence
+statcan.gc.ca/en/terms-conditions/open-licence
 
 Built by the scripts \code{indigenous_mental_health.R} and \code{indigenous_census.R}
 in the \code{data-raw} folder of the source package.

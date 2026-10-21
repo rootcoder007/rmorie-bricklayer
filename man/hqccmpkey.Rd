@@ -68,7 +68,7 @@ try(hqcdecap(spliced, sent$ciphertext))
 \references{
 Gaborit, P. et al. (2025). Hamming Quasi-Cyclic (HQC),
 specification of 2025-08-22, section 3 (HQC-KEM key pair formats).
-https://pqc-hqc.org/
+pqc-hqc.org
 }
 \seealso{
 \code{\link[=hqckg]{hqckg()}},
