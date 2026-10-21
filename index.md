@@ -5,10 +5,10 @@
 
 ## What it is
 
-`rmoriebricklayer` is for people who work from a variety of published
-and unpublished tables: a ministry’s open-data portal, Statistics
-Canada, a police oversight agency, or your own data. It does three
-things with such a table.
+`rmoriebricklayer` is for individuals who work from a variety of
+published and unpublished tables: a ministry’s open-data portal,
+Statistics Canada, a police oversight agency, or your own data. It does
+three things with such a table.
 
 1.  **It analyzes the table.**
     [`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md)

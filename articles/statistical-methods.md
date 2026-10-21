@@ -774,7 +774,7 @@ weights both comparison units and pre-periods:
 
 sd <- syndid(p13, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1)
 sd
-#> Synthetic difference in differences: -2.886 (placebo s.e. 0.5931; -4.048 to -1.723)
+#> Synthetic difference in differences: -2.886 (placebo s.e. 0.5927; -4.047 to -1.724)
 #> Unit weights: D12 0.207, D20 0.203, D04 0.201, D16 0.195, D08 0.195
 plot(sd)
 ```
