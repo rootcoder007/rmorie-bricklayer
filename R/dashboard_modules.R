@@ -399,7 +399,7 @@
 #' @param find The ledger directory of a package, \code{""} when it has none.
 #' @return A named character vector of paths (\dQuote{pkg: file}).
 #' @noRd
-.bl_ldgr_installed <- function(pkgs = rownames(utils::installed.packages(fields = character())),
+.bl_ldgr_installed <- function(pkgs = .packages(all.available = TRUE),
                                find = function(p) system.file("ledger", package = p)) {
   out <- character()
   for (p in pkgs) {

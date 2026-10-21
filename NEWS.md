@@ -2,6 +2,8 @@
 
 ## Fixes after the CRAN resubmission
 
+* The applied-analyses vignette's search-and-rescue section adds "Your own search": each search function run on numbers of your own, with its plot, and its section headings no longer carry the book's chapter numbers (the figure numbers do).
+* The dashboard finds the ledgers installed packages ship by listing the library folders (`.packages(all.available = TRUE)`) instead of reading every package's metadata with `installed.packages()`.
 * `srchfig("4-4")` and `srchfig("4-6")` left the device split into panels, so the next plot was drawn into a fraction of the page (figure 4-7 in the applied-analyses vignette came out squashed). Every figure now restores the layout it changed, and a test draws all 36 in a row and checks it.
 * An error raised while `co2fp()` measures a computation's footprint is now named after the function that asked for the footprint (for example `cpschk: the provenance names no source to fetch`), not after `co2fp()`.
 * The vignettes run their code again wherever they are built (r-universe, pkgdown, `R CMD build`), so the articles show their plots; only `R CMD check` re-building a vignette skips the computing.

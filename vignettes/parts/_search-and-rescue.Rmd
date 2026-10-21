@@ -22,9 +22,10 @@ table(srchfig()$how)
 The functions behind the figures work on any inputs: `ltrlrng()` (lateral range curves),
 `swpwdth()` (sweep width), `srchpod()` and `pswppod()` (probability of detection),
 `srchscs()` (probability of success and the update after a search), `datumpmap()` (where
-the object may be), `opteffort()`, `optcrcsrch()` and `optsqr()` (the best use of effort).
+the object may be), `opteffort()`, `optcrcsrch()` and `optsqr()` (the best use of effort). The book's figures
+come first; [Your own search](#your-own-search) then runs each function on numbers of your own.
 
-## Chapter 3: datums and probability maps
+## Datums and probability maps
 
 **Figure 3-1.** A point datum is a circular normal distribution of possible positions. The
 probability that the object is within `R` standard deviations of the datum is
@@ -90,7 +91,7 @@ srchfig("3-13")
 srchfig("3-14")
 ```
 
-## Chapter 4: lateral range curves and sweep width
+## Lateral range curves and sweep width
 
 **Figure 4-1.** A lateral range curve `p(x)` is the probability of detecting an object that
 passes at distance `x` from the track. The sweep width is its area,
@@ -127,7 +128,7 @@ srchfig("4-7")
 swpwdth(ltrlrng(seq(-500, 500, by = 0.01), W = 1))
 ```
 
-## Chapter 5: effort, coverage and probability of detection
+## Effort, coverage and probability of detection
 
 **Figure 5-1.** Search effort is sweep width times track length, `Z = W L`, and coverage is
 effort over area, `C = Z / A`. A search whose path is random gives `POD = 1 - exp(-C)`.
@@ -176,7 +177,7 @@ text.
 srchfig("5-9")
 ```
 
-## Chapter 6: optimal search
+## Optimal search
 
 **Figures 6-1 and 6-2.** With half the probability in a 3 by 3 square inside a 5 by 5 one
 and effort for half the area, the trial squares of the whole area, half of it and a third of
@@ -211,6 +212,45 @@ one and the best use of it is the remaining central peak.
 
 ```{r search-and-rescue-f66}
 srchfig("6-6")
+```
+
+## Your own search
+
+The figures use the book's numbers; every function takes yours, and each result has a `plot()`
+method. Say a sensor's sweep width is 0.8 nautical miles and its detection falls off as the
+inverse cube of the lateral range. Its lateral range curve, and the picture of what the sweep
+width means (the objects missed inside it equal those seen outside it, Figure 4-7):
+
+```{r search-and-rescue-own-lateral}
+lr <- ltrlrng(seq(-3, 3, by = 0.05), W = 0.8)
+plot(lr)
+plot(lr, equiv = TRUE)
+```
+
+A sweep width can also come from a field trial: the share of objects detected at each lateral
+range, measured on both sides of the track. `swpwdth()` integrates the curve.
+
+```{r search-and-rescue-own-sweep}
+d <- c(-3, -2, -1.5, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 1.5, 2, 3)
+p <- c(0.01, 0.08, 0.2, 0.45, 0.75, 0.9, 0.95, 0.9, 0.75, 0.45, 0.2, 0.08, 0.01)
+swpwdth(d, p)
+```
+
+The probability of detection for the coverage a plan gives (coverage is sweep width times track
+length over the area), and for parallel sweeps at a track spacing of 1 with a navigation error
+of 0.1:
+
+```{r search-and-rescue-own-pod}
+pd <- srchpod(seq(0, 3, by = 0.1), model = "invcube")
+plot(pd)
+pswppod(W = 0.8, S = 1, navsd = 0.1)
+```
+
+After a search of three areas that found nothing, the chance the object is in each area is
+updated by what each search could have detected:
+
+```{r search-and-rescue-own-update}
+srchscs(poc = c(0.5, 0.3, 0.2), pod = c(0.8, 0.5, 0))
 ```
 
 ## On a grid of your own
