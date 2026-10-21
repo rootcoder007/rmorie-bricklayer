@@ -2,6 +2,7 @@
 
 ## Fixes after the CRAN resubmission
 
+* The search-and-rescue guide's table of figure recipes is an HTML table with each line of R in code font; as a Markdown table, a `$` in a recipe started a formula and a `|` ended the cell, so most rows ran together as mathematics.
 * The reference to Welch (1947) on `?baltab` quotes its title with `\sQuote{}`, so the PDF manual prints an opening and a closing quote around Student's instead of two closing ones.
 * `srchfig()` with no argument gains a column `yours`: for each of the 36 figures, one line of R that draws it from your own numbers (the function behind the figure, with example inputs to replace; a schematic gives the computation it pictures). The search-and-rescue guide prints the table, and a test runs every line.
 * The dashboard's method card was empty when the package ran from its source (`pkgload::load_all()`), because it read only the installed help pages; it now falls back to the source `man/` folder, as the command line already did.

@@ -234,7 +234,19 @@ method. `srchfig()` lists, for each of the 36 figures, the one line that draws i
 numbers (replace the example inputs; a schematic gives the computation it pictures):
 
 ```{r search-and-rescue-own-recipes}
-knitr::kable(srchfig()[, c("fig", "caption", "yours")])
+# an HTML table with each line in <code>: in a Markdown table a `$` starts a formula and a `|`
+# ends the cell, so both are written as entities
+tab <- srchfig()[, c("fig", "caption", "yours")]
+esc <- function(x) {
+  for (r in list(c("&", "&amp;"), c("<", "&lt;"), c(">", "&gt;"), c("$", "&#36;"), c("|", "&#124;"))) {
+    x <- gsub(r[1], r[2], x, fixed = TRUE)
+  }
+  x
+}
+tab$caption <- esc(tab$caption)
+tab$yours <- sprintf("<code>%s</code>", esc(tab$yours))
+knitr::kable(tab, format = "html", escape = FALSE, row.names = FALSE,
+             col.names = c("Figure", "Caption", "From your own numbers"))
 ```
 
 The most used of them, step by step. Say a sensor's sweep width is 0.8 nautical miles and its detection falls off as the
