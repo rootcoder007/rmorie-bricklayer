@@ -54,7 +54,7 @@ finite number per period, or all equal; \code{prd} of the wrong length
 or with repeats; \code{conflvl} outside (0, 1).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 d <- read.csv(system.file("extdata", "ocj_dispositions.csv",
                           package = "rmoriebricklayer"))
 mix <- dispmix(d[, -(1:2)], prd = d$year)

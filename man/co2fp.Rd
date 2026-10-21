@@ -156,7 +156,7 @@ inside \code{expr} propagates unchanged. Nothing is written and nothing is
 fetched.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 fp <- co2fp(sum(sqrt(seq_len(2e5))), loc = "CA-ON")
 fp$enekwh$total
 fp$co2eg

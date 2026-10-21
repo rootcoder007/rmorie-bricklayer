@@ -27,7 +27,7 @@ in a grid of panels, one per outcome, with the same style, the way papers show a
 effect on several crimes or several groups at once.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- polex()
 es <- list(
   "Crime rate" = evstudy(p, "district", "month", "crmrate", "refmonth",

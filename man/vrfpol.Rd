@@ -144,7 +144,7 @@ levels and five income groups, drawn with a fixed seed (R's own random
 stream is restored).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 r <- vrfpol("no2", demo = TRUE)
 r$status
 r$pipeline$paf

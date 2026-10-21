@@ -340,7 +340,7 @@
 #' @return The exit status (integer scalar), invisibly: 0 on success, 1 on
 #'   failure, 2 for a usage error, 130 when interrupted.
 #' @seealso \code{\link{instcli}} to put the command on your PATH.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' blcli("version")
 #' blcli("help")
 #'
@@ -1059,7 +1059,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
 #' @return The path of the first launcher written (normally
 #'   \code{rmoriebricklayer}), invisibly; the others are written beside it.
 #' @seealso \code{\link{blcli}} for the verbs.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # into a scratch folder, so nothing on your PATH changes
 #' d <- file.path(tempdir(), "bin")
 #' p <- instcli(dir = d)

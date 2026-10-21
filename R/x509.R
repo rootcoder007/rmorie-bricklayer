@@ -82,7 +82,7 @@
 #' @seealso
 #' [certchnvrf()],
 #' [tsvrf()].
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # A small test chain shipped as hexadecimal DER: a self-signed P-256 root
 #' # and a leaf it issued (a throwaway test authority; trust it for nothing).
 #' roothex <- paste0(
@@ -319,7 +319,7 @@ print.bricklayer_certificate <- .rmbl_print_via_format
 #' @seealso
 #' [certprs()],
 #' [tsvrf()].
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # A small test chain shipped as hexadecimal DER: a self-signed P-256 root
 #' # and a leaf it issued (a throwaway test authority; trust it for nothing).
 #' roothex <- paste0(

@@ -47,7 +47,7 @@ route, a provider named with no key set, or a \code{tmout} that is not
 a single positive number.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST"), unset = NA)
 Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
 

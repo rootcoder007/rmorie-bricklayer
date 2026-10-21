@@ -74,7 +74,7 @@ complete rows; and a treatment with no variation left after the
 covariates are partialled out.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 d <- data.frame(x1 = rnorm(200), x2 = rnorm(200))
 d$exposure <- 20 + 2 * d$x1 + rnorm(200)

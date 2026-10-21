@@ -103,7 +103,7 @@ path of an existing file. \code{tsinfo()} errors on a token it cannot
 parse.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Offline: bytes that are not a timestamp token are reported, not
 # thrown, so a batch check can carry on.
 bad <- tsvrf(as.raw(c(0x30, 0x03, 0x02, 0x01, 0x05)),

@@ -41,7 +41,7 @@ the first two. \code{\link{cpsrfrsh}} and \code{rmbl drift} report
 what a fetched source changed with it.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 a <- data.frame(path = c("a.csv", "b.csv"), sha256 = c("01", "02"),
                 size_bytes = c(10, 20))
 b <- data.frame(path = c("a.csv", "c.csv"), sha256 = c("09", "03"),

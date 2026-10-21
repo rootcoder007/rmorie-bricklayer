@@ -45,7 +45,7 @@ Errors when \code{path} is not a single non-empty string, and (from base
 R) when the file cannot be opened for writing.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 man <- mkmnf(list(project = "demo"), env = FALSE)
 man <- recrd(man, "rowcount", obs = 20, expd = 20)
 path <- wrmnfjs(man, tempfile(fileext = ".json"))

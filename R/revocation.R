@@ -72,7 +72,7 @@
 #' @seealso
 #' [certchnvrf()],
 #' [tsvrf()].
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Offline: a path entry that names no CRL or OCSP URL (here, bytes that
 #' # are not a certificate at all) makes no request and returns empty results.
 #' str(rvkfetch(list(list(der = as.raw(1:3)))))

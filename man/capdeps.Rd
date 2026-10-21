@@ -47,7 +47,7 @@ TRUE)}. Nothing is written. Error: \code{pkgs} that is not a character
 vector.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 deps <- capdeps(c("stats", "utils"))
 deps[, c("package", "version")]
 

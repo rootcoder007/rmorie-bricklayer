@@ -52,7 +52,7 @@ and a caller does nothing to get that.
 Errors when \code{man} is not a list.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 a <- mkmnf(list(b = 2, a = 1), env = FALSE)
 b <- mkmnf(list(a = 1, b = 2), env = FALSE)
 # the same content in a different order has the same digest

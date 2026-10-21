@@ -39,7 +39,7 @@ Errors when any argument is not numeric, is \code{NA} or \code{Inf}, is
 not positive, or has more than one value.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Lakner (p.20) runs this the other way: t = 365, an average daily
 # population of 25 and 1,750 admissions imply a stay of 5.2 days.
 alosimplied <- 25 * 365 / 1750

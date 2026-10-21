@@ -72,7 +72,7 @@ a total of zero or below; a count larger than the total;
 \code{conflvl} outside (0, 1).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 stops <- data.frame(
   division = c("North", "South", "East"),
   stops = c(412, 77, 3))

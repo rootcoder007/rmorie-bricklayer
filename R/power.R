@@ -96,7 +96,7 @@
 #'   }
 #' @seealso [cpsfals()] for the
 #' negative controls.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' set.seed(1)
 #' d <- data.frame(x = rnorm(120), y = rnorm(120))
 #' # inject a linear effect of x on y

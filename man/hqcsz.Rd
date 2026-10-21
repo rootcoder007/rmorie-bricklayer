@@ -47,7 +47,7 @@ differs: the seed is 96, 104 or 112 bytes and the shared secret 64 bytes.
 A level other than 1, 3, 5 (or 128, 192, 256) is an error.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 hqcsz(1)
 
 # code-based keys and ciphertexts are larger than ML-KEM's at the same

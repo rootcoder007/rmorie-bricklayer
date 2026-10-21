@@ -50,7 +50,7 @@ column names); \code{rules} not a rule or a list; an element that is not
 a rule.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 df <- data.frame(id = c(1, 2, 2), age = c(30, -5, 40),
                  start = c(1, 5, 3), end = c(2, 4, 9))
 

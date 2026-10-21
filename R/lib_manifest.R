@@ -66,7 +66,7 @@
 #'   [wrmnfjs()],
 #'   [wrsmrytxt()],
 #'   [mnfdgst()].
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Minimal manifest, no environment capture.
 #' man <- mkmnf(list(project = "demo-study", author = "A. Author"),
 #'   env = FALSE
@@ -148,7 +148,7 @@ mkmnf <- function(meta, env = TRUE) {
 #'   \code{NULL}).
 #' @seealso [mkmnf()],
 #'   [wrsmrytxt()].
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' man <- mkmnf(list(project = "demo"), env = FALSE)
 #'
 #' # Within tolerance -> PASS. (Every status below is INFO instead in a
@@ -268,7 +268,7 @@ recrd <- function(man, name, obs, expd,
 #' @return \code{path} (character scalar), invisibly.
 #' @seealso [mnfcanon()],
 #'   [wrsmrytxt()].
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' man <- mkmnf(list(project = "demo"), env = FALSE)
 #' man <- recrd(man, "rowcount", obs = 20, expd = 20)
 #' path <- wrmnfjs(man, tempfile(fileext = ".json"))
@@ -351,7 +351,7 @@ wrmnfjs <- function(man, path, canon = FALSE) {
 #' [mkmnf()],
 #' [wrmnfjs()],
 #' [cpsatst()].
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' a <- mkmnf(list(b = 2, a = 1), env = FALSE)
 #' b <- mkmnf(list(a = 1, b = 2), env = FALSE)
 #' # the same content in a different order has the same digest
@@ -503,7 +503,7 @@ summarise_counts <- function(manifest) {
 #' @seealso [mkmnf()],
 #'   [recrd()],
 #'   [wrmnfjs()].
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' man <- mkmnf(list(project = "demo", author = "A. Author"),
 #'   env = FALSE
 #' )

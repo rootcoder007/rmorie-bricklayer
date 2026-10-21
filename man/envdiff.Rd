@@ -43,7 +43,7 @@ not compared. Rows follow the order of \code{a}'s packages, then
 Error: \code{a} or \code{b} that is not a list.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 a <- capenv(c("stats", "utils"))
 b <- a
 

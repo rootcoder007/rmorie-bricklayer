@@ -88,7 +88,7 @@
 #'     \item{\code{missing}}{character, required checks that were never made
 #'       (\code{character(0)} when none).}
 #'   }
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' dir <- file.path(tempdir(), "capsule-example")
 #' dir.create(dir, showWarnings = FALSE)
 #' write.csv(data.frame(id = 1:3), file.path(dir, "d.csv"), row.names = FALSE)
@@ -384,7 +384,7 @@ print.bricklayer_capsule_check <- .rmbl_print_via_format
 #'       so the names survive the manifest's JSON: a named vector is written as
 #'       a bare array.}
 #'   }
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Record specific packages' versions alongside the session facts.
 #' env <- capenv(c("stats", "utils"))
 #' env$r_version
@@ -457,7 +457,7 @@ capenv <- function(pkgs = loadedNamespaces()) {
 #' @return A list with \code{text} and \code{bibtex}, each a length-1
 #'   character string (the BibTeX entry has embedded newlines), or \code{NULL}
 #'   if \code{provenance} is \code{NULL}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' prov <- list(
 #'   captured_at_utc = "2026-06-23T04:41:40Z",
 #'   dataset = list(publisher = "Ontario Ministry of the Solicitor General",

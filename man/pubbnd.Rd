@@ -80,7 +80,7 @@ suppression mark (the message lists the cells); a suppressed cell with no
 limit (neither \code{"<k"} nor \code{suplim}).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 pubbnd(c(120, 35, 0), rnd = 5)
 pubbnd(c("120", "x", "<5"), rnd = 5,
                  suplim = 5)

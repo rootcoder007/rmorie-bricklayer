@@ -627,7 +627,7 @@
 #'   \code{done(summary = NULL)} ends the bar, clears the line and, when the
 #'   bar was shown, writes \code{summary} on its own line. Each returns the
 #'   object invisibly.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' p <- blprog("squares", 50, delay = 0)
 #' for (i in 1:50) {
 #'   x <- sum(seq_len(i)^2)

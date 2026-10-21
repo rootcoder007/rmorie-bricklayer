@@ -33,7 +33,7 @@ weights the means are weighted and the test uses the weighted variances and Kish
 effective sample sizes.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 d <- data.frame(t = rep(0:1, each = 50),
                 age = c(stats::rnorm(50, 30), stats::rnorm(50, 33)))
 baltab(d, "t", "age")

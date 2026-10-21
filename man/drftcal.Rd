@@ -63,7 +63,7 @@ Errors: \code{data} not a data frame with at least four rows; \code{n}
 not a whole number of at least 1; any error from \code{cpsdrft()}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 d <- data.frame(a = rnorm(400), b = sample(letters[1:4], 400, TRUE))
 drftcal(d, n = 10)

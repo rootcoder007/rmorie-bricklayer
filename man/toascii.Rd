@@ -45,7 +45,7 @@ A missing value becomes \code{""}; non-character input is converted with
 digits).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Latin accents fold to their nearest ASCII letter.
 toascii("Prof. \u00c1ngela Zorro Medina")  # "Prof. Angela Zorro Medina"
 

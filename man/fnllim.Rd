@@ -48,7 +48,7 @@ values are dropped); a non-positive \code{target}; a level outside
 (0, 1).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # The funnel narrows as the expected count grows, which is the whole
 # point: a ratio of 2 means nothing at an expected count of 2 and a
 # great deal at an expected count of 200.

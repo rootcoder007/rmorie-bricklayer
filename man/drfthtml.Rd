@@ -101,7 +101,7 @@ path; \code{title} not one
 string; \code{warn} above \code{fail}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 set.seed(5)
 ref <- data.frame(value = stats::rnorm(400),
                   grade = sample(c("a", "b", "c"), 400, TRUE))

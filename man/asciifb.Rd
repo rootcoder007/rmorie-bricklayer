@@ -42,7 +42,7 @@ element goes through \code{\link[=toascii]{toascii()}}. A missing value is kept 
 unless \code{force = TRUE}, when it becomes \code{""}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # By default valid UTF-8 is preserved (accents kept where supported).
 asciifb("\u00c1ngela")               # "\u00c1ngela"
 

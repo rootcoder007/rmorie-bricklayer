@@ -135,7 +135,7 @@
 #' @seealso
 #' [yoyhtml()], [yoypdf()],
 #' [yoysmry()]
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' seg <- data.frame(
 #'   EndFiscalYear = rep(2019:2023, each = 2),
 #'   Gender = rep(c("Female", "Male"), 5),

@@ -348,7 +348,7 @@
 #'   server refuses the Internet Archive (\code{"cannot find"} although the page is
 #'   there); \code{rmbl wayback FILE}
 #'   runs this from the command line.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # The checks run before any request, so these need no network or keys:
 #' try(wbsave("ftp://example.org/report.pdf"))
 #' try(wbsave("https://example.org/", ak = "abc", sk = "def",
@@ -768,7 +768,7 @@ print.rmbl_wayback_save <- function(x, ...) {
 #'   \code{left_as_gone} and \code{left_for_tomorrow}.
 #' @seealso \code{\link{wbsave}}; \code{rmbl wayback
 #'   --retry FILE.jsonl} from the command line.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Offline: a results file whose only failure is a page that is gone
 #' # has nothing to send again, so no keys or network are used.
 #' f <- tempfile(fileext = ".jsonl")

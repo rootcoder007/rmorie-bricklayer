@@ -191,7 +191,7 @@ format.bricklayer_drift <- function(x, ...) {
 #' @param ... Ignored, present for S3 consistency.
 #' @return `format()` methods return a character vector;
 #' `print()` methods return `x` invisibly.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 #' # one-time index record out of your configuration directory; leave the default in use
 #' set.seed(7)
@@ -414,7 +414,7 @@ summary.bricklayer_benford <- function(object, ...) {
 #' @seealso
 #' [cpsdrft()] to compare two of these,
 #' [cmom()] for the underlying kernel.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' set.seed(9)
 #' df <- data.frame(
 #'   clean = stats::rnorm(100),

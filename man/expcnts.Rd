@@ -56,7 +56,7 @@ population of zero; \code{cnts}, \code{pop}, \code{area} or
 \code{strata} of different lengths.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 d <- data.frame(
   region = rep(c("North", "South", "East"), each = 2),
   age = rep(c("18 to 24", "25 to 49"), 3),

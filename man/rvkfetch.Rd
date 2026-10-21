@@ -63,7 +63,7 @@ with a raw \code{der} element); \code{tmout} not positive. Network failures are
 not errors; they are reported in \code{ok} and \code{notes}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Offline: a path entry that names no CRL or OCSP URL (here, bytes that
 # are not a certificate at all) makes no request and returns empty results.
 str(rvkfetch(list(list(der = as.raw(1:3)))))

@@ -79,7 +79,7 @@ See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette
 }
 
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # across regions, 2022 (table 41-10-0067-01): where First Nations people report
 # excellent or
 # very good mental health, do Metis people living in the same region too?

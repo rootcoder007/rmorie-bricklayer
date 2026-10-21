@@ -95,7 +95,7 @@ not a list. A \code{prov} that is \code{NULL} or has no
 make that an error).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 prov <- list(schema = list(
   expected_columns      = c("id", "year"),
   structural_invariants = list(min_data_rows = 1),

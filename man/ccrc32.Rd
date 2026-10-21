@@ -38,7 +38,7 @@ Character input is checked element by element, as its bytes, with
 \code{\link[=crc32file]{crc32file()}}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # The standard check value: CRC-32("123456789") is 0xCBF43926.
 ccrc32("123456789")
 ccrc32("123456789") == 0xCBF43926

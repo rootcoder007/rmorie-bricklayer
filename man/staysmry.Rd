@@ -44,7 +44,7 @@ Errors when \code{daysperper} is not numeric, is empty, or has
 is not strictly inside (0, 1).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # a skewed distribution: most stays short, a few long
 stays <- c(rep(1, 40), rep(3, 30), rep(10, 20), 60, 90, 120)
 staysmry(stays)

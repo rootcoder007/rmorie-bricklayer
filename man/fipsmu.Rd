@@ -96,7 +96,7 @@ errors only when \code{signature} is not a \code{bricklayer_signature} or \code{
 is not a list.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 key <- fipskg("ML-DSA-65")
 mu <- fipsmu(key, "a manifest digest", ctx = "release")
 length(mu)

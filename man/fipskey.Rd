@@ -48,7 +48,7 @@ an even length or not exactly the scheme's length
 (\code{"must be N bytes of key material"}).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 key <- fipskg("ML-DSA-44")
 # the round trip through raw material changes nothing
 again <- fipskey("ML-DSA-44", key$public, key$secret)

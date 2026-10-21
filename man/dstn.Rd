@@ -72,7 +72,7 @@ length \eqn{2^p}; registers that are not whole numbers from 0 to 64; two
 sketches of different sizes.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 x <- sample(1:5000, 200000, replace = TRUE)
 

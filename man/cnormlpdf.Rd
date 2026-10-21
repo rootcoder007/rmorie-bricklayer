@@ -44,7 +44,7 @@ are errors, as in \code{\link[=cnormpdf]{cnormpdf()}}; a missing
 character, factor or list \code{x} is refused (\code{"must be numeric"}).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 cnormlpdf(c(-1, 0, 1))
 
 # Identical to stats::dnorm(log = TRUE).

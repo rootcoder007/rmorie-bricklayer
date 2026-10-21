@@ -38,7 +38,7 @@ when the denominator is zero. These are administrative counts of every case, so 
 sampling interval is given.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 set.seed(2)
 reports <- rpois(36, 400)
 charges <- rpois(36, 90)

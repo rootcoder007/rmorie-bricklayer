@@ -103,7 +103,7 @@
 #' [valrules()] to evaluate them,
 #' [infsch()] for the structural checks
 #' that need no rules at all.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' df <- data.frame(
 #'   id = c(1, 2, 2),
 #'   grade = c("a", "b", "z"),
@@ -396,7 +396,7 @@ rulecolcnt <- function(n, sev = c("warning", "fatal")) {
 #' @seealso
 #' [ruledstn()],
 #' [ruleuniq()]
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' df <- data.frame(
 #'   id = c(1, 2, 2, 3, 3, 3),
 #'   value = c("a", "b", "b", "c", "d", "c"),
@@ -485,7 +485,7 @@ duprows <- function(data, cols = NULL) {
 #' [misspat()] for which
 #' columns are missing together,
 #' [profcols()] for per-column rates.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' df <- data.frame(a = c(1, NA, 3), b = c(NA, NA, 3), c = 1:3)
 #' misssmry(df)
 #'

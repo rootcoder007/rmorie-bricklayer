@@ -94,7 +94,7 @@ is used (distribution points and OCSP responders named in the
 certificates); otherwise nothing is fetched.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # A small test chain shipped as hexadecimal DER: a self-signed P-256 root
 # and a leaf it issued (a throwaway test authority; trust it for nothing).
 roothex <- paste0(

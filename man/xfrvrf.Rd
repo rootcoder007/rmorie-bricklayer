@@ -61,7 +61,7 @@ With \code{strict = TRUE} the first disagreement is an error. With
 label is an error in either mode (from the decoding step).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 x <- structure(c(1, 1, 2, 4, 1),
                labels = c(White = 1, Black = 2, Other = 3, Unknown = 4))
 xfrvrf(x, c(White = 3, Black = 1, Unknown = 1))$ok

@@ -53,7 +53,7 @@ the source cannot be fetched, or inflates past the limit;
 fail the schema the provenance pins (\code{\link{valsch}}).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 cpsrfrsh(d)            # the first pin: the data file is added
 vrfcps(d)$ok

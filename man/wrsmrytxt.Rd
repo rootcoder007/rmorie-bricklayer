@@ -58,7 +58,7 @@ Errors when \code{man} is not a list, and (from base R) when
 \code{outdir} does not exist or cannot be written.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 man <- mkmnf(list(project = "demo", author = "A. Author"),
   env = FALSE
 )

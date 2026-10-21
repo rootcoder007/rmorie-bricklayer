@@ -51,7 +51,7 @@ a forecast. Any count of commitments completed over time can be modelled the sam
 set \code{total} and \code{start}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- trcprog()
 p
 plot(p)

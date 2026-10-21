@@ -24,7 +24,7 @@ copyrighted, so their tables are not reproduced. The reports are licensed CC BY-
 Canada; the counts are facts taken from them, with the reports cited.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 trccmpl()
 \dontshow{\}) # examplesIf}
 }

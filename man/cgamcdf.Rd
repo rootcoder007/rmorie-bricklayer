@@ -37,7 +37,7 @@ a missing \code{x} gives \code{NA}, and \code{Inf} gives 1, as in
 \code{\link[stats:pgamma]{stats::pgamma()}}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 cgamcdf(3.5, c(0.5, 1, 4, 12))
 
 # Identical to the unit-rate gamma CDF.

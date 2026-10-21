@@ -46,7 +46,7 @@
 #' [valrules()],
 #' [valsch()] for the structural
 #' checks that need no rules.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # A column predicate, applied row-wise.
 #' rul("agenonnegative", function(v) v >= 0, col = "age")
 #'
@@ -137,7 +137,7 @@ rul <- function(name, expr, col = NULL, sev = c("warning", "fatal"),
 #' [rul()],
 #' [valsch()],
 #' [schval()]
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' df <- data.frame(id = c(1, 2, 2), age = c(30, -5, 40),
 #'                  start = c(1, 5, 3), end = c(2, 4, 9))
 #'

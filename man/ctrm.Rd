@@ -46,7 +46,7 @@ removed). A character, factor or list \code{x} is refused
 \eqn{O(n \log n)}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 x <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 100)
 
 mean(x)                               # dragged up by the 100

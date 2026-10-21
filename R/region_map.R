@@ -120,7 +120,7 @@
 #'   [rgnmapcmp()],
 #'   [rgnmapalt()]
 #'
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Four regions, two of which hold a facility.
 #' cov <- rgncov(
 #'   reg = c("A", "B", "C", "D"),
@@ -262,7 +262,7 @@ print.rmbl_region_coverage <- function(x, n = 10L, ...) {
 #'   [rgnmapalt()],
 #'   [rgncov()]
 #'
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' cw <- data.frame(
 #'   inst = c("North Jail", "South Jail", "East Jail"),
 #'   cd = c("3557", "3520", "3506"),
@@ -355,7 +355,7 @@ rgnmapintg <- function(map, unit, reg, regs = NULL) {
 #' @seealso [rgnmapalt()],
 #'   [rgnmapintg()]
 #'
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' pub <- data.frame(
 #'   inst = c("North Jail", "South Jail"),
 #'   cd = c("3557", "3520"), stringsAsFactors = FALSE
@@ -484,7 +484,7 @@ rgnmapcmp <- function(pub, obs, unit, cols = NULL) {
 #' @seealso [rgnmapcmp()],
 #'   [rgnmapintg()]
 #'
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' cw <- data.frame(
 #'   inst = c("North Jail", "South Jail", "Hill Jail"),
 #'   cd = c("3557", "3520", "3506"),
@@ -598,7 +598,7 @@ rgnmapalt <- function(map, unit, reg, route,
 #' @seealso [rgnmapcmp()],
 #'   [rgnmapalt()]
 #'
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Two square regions as a small GeoJSON boundary file.
 #' gj <- tempfile(fileext = ".geojson")
 #' writeLines(paste0(

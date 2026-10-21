@@ -23,7 +23,7 @@ the reform (a fall of 3 in the crime rate per 100,000), so the examples and test
 can check that each estimator recovers it.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 head(polex())
 \dontshow{\}) # examplesIf}
 }

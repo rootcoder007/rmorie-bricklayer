@@ -89,7 +89,7 @@ Nations (see the First Nations Information Governance Centre). Groups are as the
 name them, with \dQuote{Inuk (Inuit)} written \code{"Inuit"}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 h <- indiex("health")
 mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
           h$indicator == "Perceived mental health, very good or excellent", ]

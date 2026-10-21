@@ -48,7 +48,7 @@ Errors: either argument unnamed; \code{obs} not a permutation of the
 labels in \code{vlabs}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # the OHRC 2023 case: alphabetical labels assigned to codes 1-4
 vl <- c("1" = "White", "2" = "Black", "3" = "Other", "4" = "Unknown")
 obs <- c(White = "Black", Black = "Other", Other = "Unknown",

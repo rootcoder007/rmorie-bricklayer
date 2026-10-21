@@ -113,7 +113,7 @@
 #' [cpsatst()],
 #' [vrfcps()],
 #' [mnfdgst()].
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' dir <- tempfile()
 #' dir.create(dir)
 #' write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"),

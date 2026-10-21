@@ -38,7 +38,7 @@
 #' @return \code{cmn()}, \code{cvari()} and \code{ccorr()} each
 #'   return a length-1 numeric.
 #' @seealso \code{\link{cnormpdf}}, \code{\link{csha256}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' ## cmn(): sample mean (NA/NaN propagate; no na.rm)
 #' cmn(1:10)                 # 5.5
 #' cmn(c(1, 2, NA))          # NA -- call stats::na.omit() first if needed
@@ -107,7 +107,7 @@ ccorr <- function(x, y) {
 #'   must be positive for a finite result.
 #' @return A numeric vector the length of \code{x}.
 #' @seealso \code{\link{cstat}}, \code{\link[stats]{dnorm}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Standard normal density at a few quantiles.
 #' cnormpdf(c(-1, 0, 1))
 #'

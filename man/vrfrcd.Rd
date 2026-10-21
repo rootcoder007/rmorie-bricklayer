@@ -42,7 +42,7 @@ unchanged (identity).
 The first failed check is an error naming the offending categories.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 before <- c("W", "B", "W", NA)
 after <- c("White", "Black", "White", NA)
 tab <- vrfrcd(before, after, c(W = "White", B = "Black"))

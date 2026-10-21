@@ -37,7 +37,7 @@ Errors: \code{url} not a single non-empty string; a local or private
 address.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Input is validated before any network call:
 try(wbsnpnat(""))     # empty url -> error
 try(wbsnpnat("http://localhost/report.csv"))

@@ -62,7 +62,7 @@ See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette
 }
 
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # 2015/2018 to 2019/2022, adults (table 13-10-0924-01)
 h <- indiex("health")
 belong <- "Sense of belonging to local community, somewhat strong or very strong"

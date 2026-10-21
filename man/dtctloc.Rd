@@ -56,7 +56,7 @@ says which. The \code{Etc/}, \code{UTC}, fixed-offset and generic zones
 to the locale.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 dtctloc()
 dtctloc(envloc = "", codloc = "", tz = "Europe/Paris")
 dtctloc(envloc = "", codloc = "", tz = "",

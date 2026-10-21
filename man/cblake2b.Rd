@@ -48,7 +48,7 @@ outside 1 to 64; a key that is not a single string or raw vector, or is
 longer than 64 bytes.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # The RFC 7693 test vector for BLAKE2b-512 of "abc".
 cblake2b("abc", length = 64)
 

@@ -37,7 +37,7 @@ differ systematically from the days missed -- weekday-only counting
 where weekend admissions are released before Monday, for instance.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Lakner (p.21): counts on 255 days summing to 34,935 imply just over
 # fifty thousand detention days across the year.
 adpcnts(rep(34935 / 255, 255))

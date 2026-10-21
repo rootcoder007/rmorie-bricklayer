@@ -69,7 +69,7 @@ for (b in seq_len(B)) {
 \code{$done()} may be called more than once; only the first call acts.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- blprog("squares", 50, delay = 0)
 for (i in 1:50) {
   x <- sum(seq_len(i)^2)

@@ -63,7 +63,7 @@ builds it with the script \code{tps_break_enter_d14_2024.R} in its
 }
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",
                           package = "rmoriebricklayer"))
 head(f)

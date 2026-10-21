@@ -63,7 +63,7 @@ entry. The message line is a side effect; wrap the call in
 \code{suppressMessages()} to silence it.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 man <- mkmnf(list(project = "demo"), env = FALSE)
 
 # Within tolerance -> PASS. (Every status below is INFO instead in a

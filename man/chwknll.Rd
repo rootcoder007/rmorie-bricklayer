@@ -84,7 +84,7 @@ the wrong length for the kernel. The quadratic kernels poll for a
 Ctrl-C as they run, so a long evaluation can be interrupted.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 set.seed(4)
 times <- sort(stats::runif(40, 0, 10))
 

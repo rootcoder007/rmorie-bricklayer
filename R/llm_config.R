@@ -359,7 +359,7 @@
 #'   their variables, \code{\link{llmstat}} for which routes
 #'   are reachable, \code{\link{llmask}} which uses these
 #'   settings.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Work in a temporary settings directory so your own settings are
 #' # untouched.
 #' old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)

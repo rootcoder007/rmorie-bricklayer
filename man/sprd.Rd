@@ -77,7 +77,7 @@ weights from a complex design need the design itself for a standard error
 (\code{\link{svydes}}).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 x <- c(12, 15, 9, 20, 14)
 sprd(x)                                   # a sample: n - 1
 sprd(x, des = "census")                # the whole population: n

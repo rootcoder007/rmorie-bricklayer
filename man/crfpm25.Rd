@@ -86,7 +86,7 @@ The functions are pure computations: no file, network or option is
 used.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # All-cause mortality at an annual PM2.5 of 12 micrograms per cubic metre.
 r <- crfpm25(12)
 c(rr = r$rr, lower = r$rrlo, upper = r$rrup)

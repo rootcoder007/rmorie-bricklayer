@@ -48,7 +48,7 @@ a mean exposure of zero (the index divides by it). Income only needs an
 order: an amount, a quintile number or a rank all give the same index.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 d <- data.frame(exposure = c(30, 25, 20, 15, 10), income = 1:5)
 ci <- expconcidx(d, "exposure", "income")
 ci$concidx

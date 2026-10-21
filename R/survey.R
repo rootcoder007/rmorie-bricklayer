@@ -173,7 +173,7 @@
 #'   summarises it.
 #' @seealso [svyest()],
 #'   [svycmp()]
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' set.seed(1)
 #' d <- data.frame(region = rep(c("north", "south"), each = 50),
 #'                 smoker = rbinom(100, 1, rep(c(0.2, 0.35), each = 50)),
@@ -1343,7 +1343,7 @@ print.rmbl_svy_design <- function(x, ...) {
 #'   \code{denominator}.
 #' @seealso [svydes()],
 #'   [svycmp()]
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' set.seed(1)
 #' d <- data.frame(region = rep(c("north", "south"), each = 50),
 #'                 smoker = rbinom(100, 1, rep(c(0.2, 0.35), each = 50)),
@@ -1455,7 +1455,7 @@ svyest <- function(des, data, y, by = NULL, stat = c("mean", "total", "proportio
 #'   domain's), \code{reference} (the reference domain's), \code{difference},
 #'   \code{se}, \code{lower}, \code{upper} and \code{p_value}. Attributes
 #'   \code{ref}, \code{stat}, \code{y} and \code{conflvl}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' set.seed(1)
 #' d <- data.frame(region = rep(c("north", "south", "east"), length.out = 150),
 #'                 smoker = rbinom(150, 1, 0.3), w = runif(150, 50, 150))

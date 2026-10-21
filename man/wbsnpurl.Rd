@@ -46,7 +46,7 @@ usable URL. Error: \code{url} that is not a single non-empty string.
 Nothing is written.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # argument errors come before any request
 try(wbsnpurl(NA))
 try(wbsnpurl(c("https://a.org", "https://b.org")))

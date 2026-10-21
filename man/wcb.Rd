@@ -79,7 +79,7 @@ four clusters can never reject at 5\%: that is the honest answer, not a failure 
 the method).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- polex()
 # the reform was assigned to four regions: four clusters
 wcb(p, "district", "month", "crmrate", "reformed",

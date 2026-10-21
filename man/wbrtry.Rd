@@ -68,7 +68,7 @@ Errors: \code{output} not a single path to an existing file;
 any error from \code{wbsave()}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Offline: a results file whose only failure is a page that is gone
 # has nothing to send again, so no keys or network are used.
 f <- tempfile(fileext = ".jsonl")

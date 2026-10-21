@@ -34,7 +34,7 @@ wanted, a standard error \eqn{s} gives \eqn{e \pm z s}; a coefficient of variati
 \eqn{s = m / z_{moe}}. The limits are symmetric on the estimate's scale.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 limfrom(c(24.1, 31.5), cv = c(8, 12))
 limfrom(1520, moe = 210)                 # a 90\% margin of error
 \dontshow{\}) # examplesIf}

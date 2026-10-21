@@ -97,7 +97,7 @@ given, the placebo data or the noise-augmented data; \code{n} below 9;
 \code{data}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 d <- data.frame(x = rnorm(200))
 d$y <- 0.8 * d$x + rnorm(200)

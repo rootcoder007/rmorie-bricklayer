@@ -38,7 +38,7 @@ frame, a named column does not exist, or a named column's name is shared
 by two columns.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 df <- data.frame(
   id = c(1, 2, 2, 3, 3, 3),
   value = c("a", "b", "b", "c", "d", "c"),

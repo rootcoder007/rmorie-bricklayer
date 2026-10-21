@@ -48,7 +48,7 @@ See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette
 }
 
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 wb <- indiex("wellbeing")
 w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
                       well = "Always or often has a hopeful outlook",

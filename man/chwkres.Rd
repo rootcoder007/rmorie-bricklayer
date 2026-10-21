@@ -64,7 +64,7 @@ parameters for the constant baseline, 5 + kernel parameters for the
 sinusoidal one).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 set.seed(2)
 times <- sort(stats::runif(200, 0, 50))
 U <- chwkres(times, 50, "exponential", c(log(3), 0.2, 2))

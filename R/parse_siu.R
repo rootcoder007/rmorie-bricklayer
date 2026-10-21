@@ -30,7 +30,7 @@
 #'   [siuprs()]),
 #'   \code{count} (logical, \code{TRUE} for the five count fields) and
 #'   \code{description} (character, what the field records).
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' s <- siusch()
 #' s$name
 #'
@@ -74,7 +74,7 @@ siusch <- function() {
 #' sentence end nearest the cap (else at a space), and a warning says how
 #' many lines were split: a field that spans a split may be incomplete.
 #' @return A length-1 character vector of plain text.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' siutxt("<p>Number of SIU Investigators assigned: 3</p>")
 #'
 #' # the bundled synthetic report, as text
@@ -141,7 +141,7 @@ siutxt <- function(html) {
 #'   \code{as.integer()} as needed. For several inputs, a data.frame with one
 #'   row per input and one character column per field (\code{NA} where a
 #'   field is absent from a row).
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' f <- siuprs(system.file("extdata",
 #'                                       "siu_synthetic_report.html",
 #'                                       package = "rmoriebricklayer"))
@@ -210,7 +210,7 @@ siuprs <- function(html) {
 #' @return A named character vector of parsed fields, as from
 #'   [siuprs()], or \code{NULL} when the
 #'   fetch fails.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # argument errors come before any network use
 #' try(siufprs("abc"))
 #' try(siufprs(648, lang = "de"))
@@ -259,7 +259,7 @@ siufprs <- function(drid, lang = c("en", "fr")) {
 #' @return A character vector the same length as \code{x}: \code{YYYY-MM-DD}
 #'   strings, \code{""} for unparseable input and \code{NA} for \code{NA}.
 #'   Unnamed.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' siudate(c("January 5, 2023", "not a date"))
 #'
 #' # French, day-first and impossible dates
@@ -316,7 +316,7 @@ siudate <- function(x) {
 #' @return A list with two elements: \code{count} (integer, \code{NA} when
 #'   unresolved) and \code{reason} (character, the rule that fired and its
 #'   evidence, for example \code{"plural cue 'three subject officials'"}).
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' siuso(
 #'   "Subject Officials\nSO #1 Interviewed\nSO #2 Declined interview")
 #'

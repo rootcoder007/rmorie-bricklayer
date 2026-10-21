@@ -57,7 +57,7 @@ list or vector of versions, \code{r_package_versions}.
 Errors when \code{meta} is not a list. Nothing is written.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Minimal manifest, no environment capture.
 man <- mkmnf(list(project = "demo-study", author = "A. Author"),
   env = FALSE

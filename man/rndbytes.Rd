@@ -38,7 +38,7 @@ Errors: \code{n} not a single whole number from 1 to 1,048,576 (1 MiB);
 no readable operating-system source.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 rndbytes(8)
 
 # Independent between calls, unlike a seeded generator.

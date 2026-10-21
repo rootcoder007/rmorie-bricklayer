@@ -38,7 +38,7 @@ row with \code{route = "settings"} and \code{status = "unreadable"},
 with the reason and the command that moves the file aside.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST",
                     "MORIE_LLM_BASE_URL", "MORIE_LLM_MODEL"),
                   unset = NA)

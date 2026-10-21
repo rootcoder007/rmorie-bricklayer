@@ -104,7 +104,7 @@
 #'   \code{"sample"} of numbers). Its length is \code{n}, except for
 #'   \code{"id_pattern"} with a \code{year_col}.
 #' @seealso \code{\link{mksyncsv}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' set.seed(1)
 #' # "sample": categorical draw, optionally weighted.
 #' mksyncol(list(
@@ -273,7 +273,7 @@ mksyncol <- function(spec, n, ctx = list(), basep = NULL) {
 #'   \code{recipe_sha256} (the recipe's digest, \code{NA} when it could not
 #'   be computed). Its print method labels the file as synthetic.
 #' @seealso \code{\link{mksyncol}}, \code{\link{vrfcps}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' recipe <- list(
 #'   n_rows = 20, seed = 42,
 #'   columns = list(

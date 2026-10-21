@@ -95,7 +95,7 @@ manifest; a \code{token} that is not one non-empty string; a digest
 mismatch; a restricted table whose terms were not accepted.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Offline, against a cache folder holding a manifest and one table made
 # here (no key is stored and nothing is fetched).
 oldenv <- Sys.getenv(c("XDG_CONFIG_HOME", "MORIE_HOSTED_KEY"), unset = NA)

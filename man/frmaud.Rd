@@ -30,7 +30,7 @@ published. Pair each gap with a strength-framed level (\code{\link{welprof}},
 \code{\link{dualcont}}).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 wb <- indiex("wellbeing")
 w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
                       well = "Always or often has a hopeful outlook",

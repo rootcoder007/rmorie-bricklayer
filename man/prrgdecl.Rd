@@ -65,7 +65,7 @@ Errors: \code{hyps} not a non-empty character vector with non-empty,
 unique names; \code{prereg} not from \code{prrgdecl()}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 plan <- prrgdecl(c(
   ate = "use of force is higher in the exposed division",
   nrows = "the extract has the row count the source publishes"),

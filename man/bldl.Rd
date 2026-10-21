@@ -90,7 +90,7 @@ character vector; \code{tmout} below 1 or above 2147483647;
 more; a body larger than \code{maxbytes}. \code{dest} is overwritten.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # offline: a local file through the same routine
 src <- tempfile(fileext = ".txt")
 writeLines("hello", src)

@@ -73,7 +73,7 @@ A placebo date is the same analysis with \code{ftreat} moved earlier, on the
 periods before the real adoption.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- polex()
 perminf(p, "district", "month", c("crmrate", "arrrate"),
                       "refmonth",

@@ -87,7 +87,7 @@ a \code{conflvl} outside (0, 1). \code{exact = TRUE} with \eqn{n > 8} warns and
 uses the normal approximation.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Five years of placements.
 y <- c(402, 377, 190, 268, 331)
 trndtst(y)

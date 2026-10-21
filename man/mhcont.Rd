@@ -72,7 +72,7 @@ own) take the same route through \code{\link{welprof}} and
 \code{\link{holbal}}, which accept any set of domains.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # well-being, 2024 (table 41-10-0082-01): hope, and meaning and purpose (asked
 # together);
 # this table has no measure of belonging, so that direction is reported as missing

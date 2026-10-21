@@ -62,7 +62,7 @@ the step outputs of the rmbl action as a named list (print each as
 \code{name=value} to \code{$GITHUB_OUTPUT}).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 root <- tempfile("capsules-")
 d <- usecpstmpl(file.path(root, "one"), ex = TRUE)
 invisible(cpsrfrsh(d))

@@ -49,7 +49,7 @@ Errors: \code{data} not a data frame, without columns, or with missing or
 duplicated names; \code{maxpat} not one positive whole number.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Two columns missing in the SAME rows: one structural gap.
 structural <- data.frame(
   id = 1:10,

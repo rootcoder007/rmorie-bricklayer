@@ -66,7 +66,7 @@ is unnamed; a member without a permutation p-value; a missing p-value; a
 p-value outside \eqn{[0, 1]}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # four statistics, one of which is real
 set.seed(1)
 d <- data.frame(x = rnorm(150))

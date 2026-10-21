@@ -66,7 +66,7 @@
 #'   landscape US letter).
 #' @param ... Ignored.
 #' @return The path \code{file}, invisibly.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' d <- data.frame(year = rep(2019:2023, each = 2),
 #'                 region = rep(c("North", "South"), 5),
 #'                 n = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331))

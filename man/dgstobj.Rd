@@ -47,7 +47,7 @@ many fitted models) serialize their enclosing environments too, so
 their digest can change between sessions even when the code does not.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 dgstobj(list(a = 1L, b = "x"))
 
 # Stable across calls, and sensitive to any change.

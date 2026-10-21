@@ -40,7 +40,7 @@ test). A progress indicator is shown for long tables in an interactive
 session.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 seg <- data.frame(year = rep(2022:2023, each = 3),
                   site = rep(c("A", "B", "C"), 2),
                   n = c(30, 50, 80, 45, 52, 79))

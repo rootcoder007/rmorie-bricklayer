@@ -122,7 +122,7 @@ or \code{\link[=pqckg]{pqckg()}} and not a non-empty string or raw vector; an in
 verify is a failed row, not an error.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 m <- mkmnf(list(dataset = "otis", rows = 1200L),
   env = FALSE
 )

@@ -50,7 +50,7 @@ kept. The rule is not run here. Errors: an empty or \code{NA} \code{name};
 \code{sev} other than \code{"warning"} or \code{"fatal"}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # A column predicate, applied row-wise.
 rul("agenonnegative", function(v) v >= 0, col = "age")
 

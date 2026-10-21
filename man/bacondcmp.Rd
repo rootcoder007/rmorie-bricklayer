@@ -39,7 +39,7 @@ large weight on \dQuote{later vs earlier} comparisons, together with effects tha
 over time, is the warning sign that the two-way estimate is biased.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- polex()
 b <- bacondcmp(p, "district", "month", "crmrate", "reformed")
 b

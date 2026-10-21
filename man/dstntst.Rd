@@ -61,7 +61,7 @@ the test has little power and \eqn{I^2} is imprecise; a large \eqn{p} is not evi
 that the groups are the same.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # perceived mental health very good or excellent, 2019/2022, adults (table
 # 13-10-0924-01)
 h <- indiex("health")

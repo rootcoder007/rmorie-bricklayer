@@ -34,7 +34,7 @@ Re-estimates \code{\link{plndid}} leaving out one treated unit at a time, to
 show that no single unit drives the result.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- polex()
 l <- loounit(p, "district", "month", "crmrate", "reformed")
 range(l$estimate)

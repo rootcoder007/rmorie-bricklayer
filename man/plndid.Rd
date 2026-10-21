@@ -90,7 +90,7 @@ time: see \code{\link{bacondcmp}} for the weights and
 \code{\link{stgatt}} for estimators that avoid them.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- polex()
 plndid(p, "district", "month", "crmrate", "reformed")
 # clustered by region instead of district

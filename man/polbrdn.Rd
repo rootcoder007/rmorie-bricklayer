@@ -79,7 +79,7 @@ baseline rate outside the band described in
 \code{hirate} admits it.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Ambient NO2 of 25 micrograms per cubic metre over a million people.
 b <- polbrdn(25, 1, 0.008, 1e6, poll = "NO2")
 b$attrcases

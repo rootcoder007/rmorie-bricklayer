@@ -48,7 +48,7 @@ when the request fails, or when nothing matches. Errors: a
 URL that is not public \code{https}. One network request.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Missing fields return NULL rather than erroring:
 rslvckns(list())
 

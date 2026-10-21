@@ -49,7 +49,7 @@ unreviewed reports.
 Error: \code{text} that is not a single non-NA string.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 siuso(
   "Subject Officials\nSO #1 Interviewed\nSO #2 Declined interview")
 

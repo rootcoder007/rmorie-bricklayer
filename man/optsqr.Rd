@@ -52,7 +52,7 @@ its \code{poc} and \code{pos} are conditional on the earlier searches having
 failed. Frost's figures 6-3 to 6-6 are drawn from it by \code{\link{srchfig}}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Frost's example: an effort of 4 E^2 on a point datum
 optsqr(4)
 # poor search conditions: the random search curve

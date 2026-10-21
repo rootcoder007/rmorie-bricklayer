@@ -89,7 +89,7 @@ them reversed in every crime category, and advise comparing clearance
 rates only within comparable mixes.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 g <- read.csv(system.file("extdata", "ocj_offence_groups.csv",
                           package = "rmoriebricklayer"))
 g <- g[g$year \%in\% c(2014, 2022), ]

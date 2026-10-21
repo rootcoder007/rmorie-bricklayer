@@ -67,7 +67,7 @@ cap, and \code{\link{expbands}} to turn the values into one value per
 unit.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 b <- prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 bandvals(b)
 

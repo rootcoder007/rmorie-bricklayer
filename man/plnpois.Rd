@@ -76,7 +76,7 @@ fixed-effects negative binomial, which behaves well as the number of periods gro
 consistent whatever the dispersion.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- polex()
 plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop")
 

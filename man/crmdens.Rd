@@ -78,7 +78,7 @@ numbers, or longer than half the earth's circumference. Incidents with a
 missing coordinate are dropped.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
                           package = "rmoriebricklayer"))
 kd <- crmdens(b$lon, b$lat, ngrid = 120)

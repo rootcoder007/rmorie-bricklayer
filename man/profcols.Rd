@@ -62,7 +62,7 @@ wide tables when
 frame, has no columns, or has duplicate or empty column names.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 set.seed(9)
 df <- data.frame(
   clean = stats::rnorm(100),

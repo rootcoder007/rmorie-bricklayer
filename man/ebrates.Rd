@@ -54,7 +54,7 @@ Errors: lengths that differ; missing, negative or infinite counts;
 missing, infinite or non-positive expected counts; fewer than two areas.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Three areas, one of them tiny. The tiny area's raw ratio is
 # extreme; its shrunk one is not.
 ebrates(obs = c(30, 45, 2), expd = c(25, 50, 0.5),

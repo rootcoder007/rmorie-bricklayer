@@ -67,7 +67,7 @@ blue and below in red, so many series fit in little height.}
 }
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 set.seed(5)
 days <- seq(as.Date("2024-01-01"), as.Date("2024-12-31"), by = "day")
 plotcal(days, stats::rpois(length(days), 5 + 3 * (format(days, "\%u") > "5")))

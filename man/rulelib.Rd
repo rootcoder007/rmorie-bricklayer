@@ -138,7 +138,7 @@ by every other rule; set \code{napass = FALSE} to make them fail on it
 instead.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 df <- data.frame(
   id = c(1, 2, 2),
   grade = c("a", "b", "z"),

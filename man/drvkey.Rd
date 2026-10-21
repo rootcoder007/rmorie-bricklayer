@@ -57,7 +57,7 @@ non-missing string or a raw vector; \code{iter} below 1; \code{length}
 outside 1 to 1024.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # The published PBKDF2-HMAC-SHA256 vector: "password", "salt", 1 round.
 drvkey("password", "salt", iter = 1)
 

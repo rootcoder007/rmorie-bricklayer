@@ -43,7 +43,7 @@ are kept: Statistics Canada suppresses an area whose long-form rate is 50\% or m
 and a high rate means a larger error than the sample alone.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- cnsprof(indiex("censuspop"))
 head(p[p$characteristic == "Foster children" & p$geo == "Canada", ])
 \dontshow{\}) # examplesIf}

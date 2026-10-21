@@ -37,7 +37,7 @@ and defend: the index records them. A unit-period missing an offence that has a
 weight gets \code{NA}, never a partial sum.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 d <- data.frame(city = rep(c("A", "B"), each = 3), year = 2024,
                 offence = rep(c("homicide", "robbery", "burglary"), 2),
                 n = c(5, 120, 300, 2, 90, 410), pop = rep(c(250000, 180000), each

@@ -443,7 +443,7 @@
 #' @return The path `file`, invisibly.
 #' @seealso [drftapp()] for the same report as a Shiny app,
 #'   [plot()][plot-methods] for the same charts in base graphics.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' set.seed(5)
 #' ref <- data.frame(value = stats::rnorm(400),
 #'                   grade = sample(c("a", "b", "c"), 400, TRUE))
@@ -538,7 +538,7 @@ drfthtml <- function(x, file, title = "Drift report", warn = NULL, fail = NULL, 
 #'   history tab.
 #' @return A Shiny app object (class `shiny.appobj`).
 #' @seealso [drfthtml()] for a file to hand on.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' set.seed(5)
 #' ref <- data.frame(value = stats::rnorm(400),
 #'                   grade = sample(c("a", "b", "c"), 400, TRUE))

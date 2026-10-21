@@ -82,7 +82,7 @@ the
 cost is \eqn{O(n \log n)}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 x <- c(2, 4, 4, 4, 5, 5, 7, 9)
 cqnt(x, c(0.25, 0.5, 0.75))
 all.equal(cqnt(x, c(0.1, 0.9)),

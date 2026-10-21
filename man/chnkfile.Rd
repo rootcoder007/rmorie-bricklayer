@@ -40,7 +40,7 @@ Errors: \code{path} that does not name an existing file (or names a
 directory); \code{chnkbytes} that is not a positive whole number.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- tempfile()
 writeLines(rep("some capsule content", 50), p)
 

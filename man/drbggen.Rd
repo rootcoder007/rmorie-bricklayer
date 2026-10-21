@@ -43,7 +43,7 @@ number from 1 to 65536; \code{addl} longer than 48 bytes or neither raw
 nor hex.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 d <- drbgnew(as.raw(0:47))
 x <- drbggen(d, 16)
 y <- drbggen(d, 16)

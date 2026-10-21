@@ -104,7 +104,7 @@ Entirely offline: nothing is downloaded and nothing is written. Error:
 is a failed row, not an error.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 dir <- file.path(tempdir(), "capsule-example")
 dir.create(dir, showWarnings = FALSE)
 write.csv(data.frame(id = 1:3), file.path(dir, "d.csv"), row.names = FALSE)

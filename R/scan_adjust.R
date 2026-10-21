@@ -32,7 +32,7 @@
 #'   \code{p_value} column; \code{NA} where there is no comparison period or
 #'   both counts are zero.
 #' @seealso \code{\link{scanadj}}, \code{\link{yoy}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' seg <- data.frame(year = rep(2022:2023, each = 3),
 #'                   site = rep(c("A", "B", "C"), 2),
 #'                   n = c(30, 50, 80, 45, 52, 79))
@@ -135,7 +135,7 @@ yoypv <- function(y) {
 #'   \code{method}, \code{alpha} and \code{tests}.
 #' @seealso \code{\link{yoypv}}, \code{\link{falsfam}} for a
 #'   family of falsification results, \code{\link{drftcal}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' seg <- data.frame(year = rep(2022:2023, each = 3),
 #'                   site = rep(c("A", "B", "C"), 2),
 #'                   n = c(30, 50, 80, 45, 52, 79))
@@ -235,7 +235,7 @@ scanadj <- function(x, meth = "BH", alpha = 0.05) {
 #'   false-alarm rate at `alpha`). The print method lists the columns that
 #'   fired.
 #' @seealso \code{\link{cpsdrft}}, \code{\link{scanadj}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' set.seed(1)
 #' d <- data.frame(a = rnorm(400), b = sample(letters[1:4], 400, TRUE))
 #' drftcal(d, n = 10)

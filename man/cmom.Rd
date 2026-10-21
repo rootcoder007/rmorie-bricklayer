@@ -50,7 +50,7 @@ statistics. A character, factor or list \code{x} is refused
 (\code{"must be numeric"}).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 cmom(c(2, 4, 4, 4, 5, 5, 7, 9))
 
 # The first two entries agree with base R.

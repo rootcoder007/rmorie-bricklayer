@@ -35,7 +35,7 @@ in it is an error. A server that speaks the OpenAI format but is not in
 the table is used as your own endpoint (\code{MORIE_LLM_BASE_URL}).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- llmprvd()
 p[, c("id", "key_env", "key_set")]
 

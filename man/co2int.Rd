@@ -57,7 +57,7 @@ not round or cap them. Kosovo appears once, under the code \code{XK}.
 }
 
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 co2int("CA-ON")
 co2int("Canada")$year
 co2int("CA-XX")$note

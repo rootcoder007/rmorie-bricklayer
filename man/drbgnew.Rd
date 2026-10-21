@@ -72,7 +72,7 @@ check does and does not cover.
 }
 
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # NIST's rng.c, as the post-quantum known-answer files use it: vector 0's seed
 d <- drbgnew(as.raw(0:47))
 drbggen(d, 48)

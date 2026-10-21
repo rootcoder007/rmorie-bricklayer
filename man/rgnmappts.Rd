@@ -67,7 +67,7 @@ Errors (when \code{sf} and the file are present): missing or empty
 missing coordinates; a field the boundary file does not have.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Two square regions as a small GeoJSON boundary file.
 gj <- tempfile(fileext = ".geojson")
 writeLines(paste0(

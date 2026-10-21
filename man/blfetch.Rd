@@ -55,7 +55,7 @@ status, and whether the Wayback Machine had no snapshot or its copy could
 not be downloaded.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Inputs are validated before any network access:
 try(blfetch("", tempfile()))          # empty url -> error
 try(blfetch("ftp://example.org/data.csv", tempfile()))

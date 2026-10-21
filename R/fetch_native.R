@@ -42,7 +42,7 @@
 #'   (default 120).
 #' @return Invisibly, \code{"live"} or \code{"wayback"}: the source that
 #'   served the file. Throws on total failure.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Inputs are validated before any network access:
 #' try(blfetch("", tempfile()))          # empty url -> error
 #' try(blfetch("ftp://example.org/data.csv", tempfile()))
@@ -138,7 +138,7 @@ blfetch <- function(url, dest, wb = "", tmout = 120L) {
 #' @param tmout Request timeout in seconds, default 30.
 #' @return The \code{https} snapshot URL (a length-1 character string), or
 #'   \code{NULL} if none is archived or the lookup failed.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Input is validated before any network call:
 #' try(wbsnpnat(""))     # empty url -> error
 #' try(wbsnpnat("http://localhost/report.csv"))

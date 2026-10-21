@@ -44,7 +44,7 @@ is empty, has \code{NA}, \code{Inf} or a negative value, or when
 \code{t} is not a single positive number.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Lakner's own worked example (p.15): 3,000 inmates served 13,500
 # detention days in a year.
 adp(13500)

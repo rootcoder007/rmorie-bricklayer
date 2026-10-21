@@ -107,7 +107,7 @@
 #' [hqcdecap()],
 #' [hqcsz()],
 #' [kemkg()] for ML-KEM.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' key <- hqckg(1)
 #' pub <- hqcpubkey(key)
 #'
@@ -214,7 +214,7 @@ hqcpubkey <- function(key) {
 #' [hqcencap()] name their results.
 #' @seealso [hqckg()],
 #'   [kemsz()] for ML-KEM.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' hqcsz(1)
 #'
 #' # code-based keys and ciphertexts are larger than ML-KEM's at the same
@@ -280,7 +280,7 @@ hqcsz <- function(lvl, ver = c("v5", "round4")) {
 #' shared secret.
 #' @seealso [hqcdecap()],
 #'   [hqckg()].
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' key <- hqckg(1)
 #' a <- hqcencap(key)
 #' nchar(a$ciphertext) / 2 == hqcsz(1)[["ciphertext"]]
@@ -372,7 +372,7 @@ hqcencap <- function(key, m = NULL, salt = NULL) {
 #' bytes), or 128 for a round-4 key.
 #' @seealso [hqcencap()],
 #'   [hqccmpkey()].
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' key <- hqckg(1)
 #' sent <- hqcencap(hqcpubkey(key))
 #' identical(hqcdecap(key, sent$ciphertext), sent$shared)
@@ -457,7 +457,7 @@ hqcdecap <- function(key, ct) {
 #' <https://pqc-hqc.org/>
 #' @seealso [hqckg()],
 #'   [hqcdecap()]
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' key <- hqckg(1)
 #' small <- hqccmpkey(key)
 #' nchar(small$secret) / 2

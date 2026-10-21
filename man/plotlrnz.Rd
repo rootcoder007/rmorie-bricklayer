@@ -81,7 +81,7 @@ counts, an expected count of zero or less, \code{observed} and
 number. Both draw on the current device.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 plotlrnz(c(1, 1, 2, 3, 5, 8, 13))
 plotfnl(obs = c(4, 20, 50, 9), expd = c(5, 22, 40, 20),
             area = c("a", "b", "c", "d"))

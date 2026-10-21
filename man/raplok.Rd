@@ -36,7 +36,7 @@ and Windows there is no such directory and the answer is \code{FALSE}.
 Errors when \code{rapldir} is not a single non-missing string.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 raplok()
 
 # a fake powercap tree with one readable package domain (Linux names the domain

@@ -88,7 +88,7 @@ are refused); \code{discrete} or \code{approx} not \code{TRUE} or
 \code{FALSE}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # A continuous Pareto tail with exponent 2.5.
 set.seed(1)
 x <- (1 - stats::runif(5000))^(-1 / 1.5)

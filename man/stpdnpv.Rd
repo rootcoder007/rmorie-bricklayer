@@ -29,7 +29,7 @@ is the share of draws with \eqn{q_{b,j} \ge |t_{(j)}|}, made monotone:
 algorithm 2.8).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 null <- matrix(rnorm(3000), ncol = 3)
 stpdnpv(c(2.5, 0.4, -2.1), null)

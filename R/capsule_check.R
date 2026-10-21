@@ -127,7 +127,7 @@
 #'   Markdown report.
 #' @seealso \code{\link{blcli}} (the verbs), \code{\link{ghann}},
 #'   \code{\link{cpsrfrsh}}, \code{\link{explerr}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' root <- tempfile("capsules-")
 #' d <- usecpstmpl(file.path(root, "one"), ex = TRUE)
 #' invisible(cpsrfrsh(d))
@@ -741,7 +741,7 @@ print.rmbl_cpschk <- function(x, ...) {
 #'   \code{manifest-changed} (\code{"true"} or \code{"false"}) and
 #'   \code{comment}. Error: \code{x} is not a \code{cpschk()} result.
 #' @seealso \code{\link{cpschk}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' root <- tempfile("capsules-")
 #' d <- usecpstmpl(file.path(root, "one"), ex = TRUE)
 #' invisible(cpsrfrsh(d))
@@ -844,7 +844,7 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #'   key; never the secret).
 #' @seealso \code{\link{cpsbndl}}, \code{\link{cpschk}},
 #'   \code{\link{blcli}} (\code{rmbl sign}).
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' root <- tempfile("capsules-")
 #' d <- file.path(root, "one")
 #' dir.create(d, recursive = TRUE)

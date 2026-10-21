@@ -63,7 +63,7 @@
 #' @seealso
 #' [hilltlidx()],
 #' [bandsens()]
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Ten units holding one each: no concentration.
 #' ginicoef(rep(1, 10))
 #'
@@ -227,7 +227,7 @@ topshr <- function(x, fracs = c(0.01, 0.05, 0.1, 0.25),
 #' correction they give in closed form is an asymptotic approximation in
 #' `xmin`, which is why the exact likelihood is maximised here
 #' instead. (Not in the local corpus; cited from the published paper.)
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # A continuous Pareto tail with exponent 2.5.
 #' set.seed(1)
 #' x <- (1 - stats::runif(5000))^(-1 / 1.5)
@@ -405,7 +405,7 @@ hilltlidx <- function(x, xmin = NULL, discrete = TRUE,
 #' corpus; cited from the published reference. The implementation is
 #' checked against `pi^2/6`, `pi^4/90`, Apery's constant and the
 #' shift identity, which is stronger evidence than the citation.)
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # The Riemann zeta at even integers has a closed form.
 #' c(hurwzeta(2), pi^2 / 6)
 #' c(hurwzeta(4), pi^4 / 90)
@@ -701,7 +701,7 @@ hurwzeta <- function(s, q = 1) {
 #' Bergsma, W. (2013). A bias-correction for Cramer's V and Tschuprow's T.
 #' *Journal of the Korean Statistical Society* 42(3), 323-328. (Not in
 #' the local corpus; cited from the published paper.)
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' tbl <- rbind(c(120, 80), c(40, 160))
 #' cramerv(tbl)
 #'

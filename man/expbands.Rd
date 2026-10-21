@@ -45,7 +45,7 @@ unplaceable band with units (by default); any error from
 \code{\link{bandvals}}.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 x <- expbands(c("1", "2 to 5", "Greater than 5"),
                   cnts = c(10, 4, 2), openupcap = 12)
 table(x)

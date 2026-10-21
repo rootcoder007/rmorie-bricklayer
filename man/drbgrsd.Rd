@@ -34,7 +34,7 @@ belonging to the current process. Errors: \code{drbg} not made by
 than 48 bytes; either not raw or hex.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 d <- drbgnew(as.raw(0:47))
 drbgrsd(d, as.raw(48:95))
 drbggen(d, 8)

@@ -71,7 +71,7 @@ The latest period with estimates is taken. Table 41-10-0021 publishes Indigenous
 only, so it adds a gap only when given a table with \code{ref} rows.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 g <- trchlthgap()
 g[g$group == "Inuit", c("indicator", "measure", "period", "disratio",
                         "lower",

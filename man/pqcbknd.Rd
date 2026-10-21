@@ -38,7 +38,7 @@ no arguments, has no side effects and returns the same 16 names in the
 same order on every platform.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 pqcbknd()
 
 # Every scheme is present in every build.

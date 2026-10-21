@@ -56,7 +56,7 @@ and row names; \code{ref} not a row name; \code{rptd} not named
 by every non-reference row.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 tab <- matrix(c(900, 100, 700, 300, 400, 600),
   ncol = 2, byrow = TRUE,
   dimnames = list(c("A", "B", "C"), c("no", "yes"))

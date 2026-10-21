@@ -64,7 +64,7 @@
 #' [cpsfals()] for the controls
 #' themselves, [falsfam()] for the
 #' correction that additions make necessary.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' plan <- prrgdecl(c(
 #'   ate = "use of force is higher in the exposed division",
 #'   nrows = "the extract has the row count the source publishes"),
@@ -227,7 +227,7 @@ print.bricklayer_prereg_check <- .rmbl_print_via_format
 #' @seealso
 #' [cpsfals()],
 #' [prrgdecl()].
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # four statistics, one of which is real
 #' set.seed(1)
 #' d <- data.frame(x = rnorm(150))
@@ -395,7 +395,7 @@ print.bricklayer_falsify_family <- .rmbl_print_via_format
 #' @seealso
 #' [cpsfals()] for controls that use
 #' the data, where this uses none.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # a risk ratio of 2 needs a confounder associated by 3.41 with both
 #' evlrr(2)
 #'

@@ -35,7 +35,7 @@ an error (\code{dnorm()} recycles them, and gives \code{Inf} or \code{NaN} for
 factor or list input for \code{x} is an error.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Standard normal density at a few quantiles.
 cnormpdf(c(-1, 0, 1))
 

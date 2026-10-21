@@ -37,7 +37,7 @@
 #' @return Invisibly, a data frame of every panel's estimates with a column
 #'   \code{panel}.
 #' @seealso \code{\link{evstudy}}, \code{\link{plot-methods}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' p <- polex()
 #' es <- list(
 #'   "Crime rate" = evstudy(p, "district", "month", "crmrate", "refmonth",
@@ -135,7 +135,7 @@ plot.rmbl_permutation <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' @return A data frame of class \code{rmbl_loo}: \code{dropped}, \code{estimate},
 #'   \code{se}; attribute \code{full} (the estimate with every unit). \code{plot()}
 #'   draws the histogram with the full-sample estimate and a summary.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' p <- polex()
 #' l <- loounit(p, "district", "month", "crmrate", "reformed")
 #' range(l$estimate)
@@ -199,7 +199,7 @@ plot.rmbl_loo <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #' @return A data frame of class \code{rmbl_cohort_trends}: \code{cohort},
 #'   \code{evtm}, \code{value}. \code{plot()} draws one line per cohort, with
 #'   the period before adoption marked.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' p <- polex()
 #' ct <- cohtrnd(p, "district", "month", "crmrate", "refmonth",
 #'                     win = c(-10, 10))

@@ -58,7 +58,7 @@ interrupted; while it runs, an interactive session (or one with
 on, and \code{options(morie.quiet = TRUE)} silences it.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 x <- stats::rnorm(50, mean = 5)
 

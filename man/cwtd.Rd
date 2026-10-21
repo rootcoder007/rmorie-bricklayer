@@ -44,7 +44,7 @@ Refusals: \code{x} and \code{w} of different lengths
 give \code{NaN} for both entries.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 x <- c(10, 20, 30, 40)
 w <- c(1, 1, 2, 4)
 cwtd(x, w)

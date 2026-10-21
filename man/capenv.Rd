@@ -46,7 +46,7 @@ recorded seed means nothing without the kind it was fed to), and
 environment. Nothing is written and the random state is not touched.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Record specific packages' versions alongside the session facts.
 env <- capenv(c("stats", "utils"))
 env$r_version

@@ -82,7 +82,7 @@
 #' Ministry of the Solicitor General publishes in its inmate datasets (the
 #' segregation and restrictive-confinement releases), where the
 #' placement-count and age categories are banded and the top band is open.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 #'
 #' prsbands(c("18 to 24", "25 to 49", "50+", "under 18"))
@@ -263,7 +263,7 @@ prsbands <- function(x, clsup = TRUE, intsca = TRUE) {
 #'   open bands whose value rests on the cap or floor).
 #' @seealso \code{\link{prsbands}}, \code{\link{bandsens}},
 #'   \code{\link{expbands}}
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' b <- prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 #' bandvals(b)
 #'
@@ -393,7 +393,7 @@ bandvals <- function(bands, rule = c("midpoint", "lower", "upper",
 #'   "data.frame")} with numeric columns \code{cap} and \code{value}, and
 #'   attributes \code{span}, \code{relspan} and \code{base} (the lower
 #'   bound \eqn{b} of the open band).
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' b <- prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 #' counts <- c(1200, 430, 110, 38)
 #'
@@ -500,7 +500,7 @@ print.rmbl_band_sensitivity <- function(x, ...) {
 #' @return A numeric vector with one entry per unit (length
 #'   \code{sum(round(counts))} over the placed bands).
 #' @seealso \code{\link{bandvals}}, \code{\link{bandsens}}
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' x <- expbands(c("1", "2 to 5", "Greater than 5"),
 #'                   cnts = c(10, 4, 2), openupcap = 12)
 #' table(x)

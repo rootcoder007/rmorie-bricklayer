@@ -89,7 +89,7 @@
 #' preferring it on a series this short.
 #' @seealso
 #' \code{\link{stepchg}}, \code{\link{cnttrnd}}
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Five years of placements.
 #' y <- c(402, 377, 190, 268, 331)
 #' trndtst(y)
@@ -399,7 +399,7 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
 #' discusses change-point detection alongside the threshold choices that
 #' raise the same multiple-comparison issue.
 #' @seealso \code{\link{trndtst}}, \code{\link{cnttrnd}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # A step down after the third period. With six periods there are only
 #' # 720 orderings, so even a clean step has p near 0.1.
 #' stepchg(c(100, 104, 98, 60, 63, 58), x = 2018:2023)
@@ -595,7 +595,7 @@ stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
 #' alone. That is the behaviour reported here through \code{dispersion} and
 #' \code{overdispersed}.
 #' @seealso \code{\link{trndtst}}, \code{\link{ratechg}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # A count falling by about 15% a year.
 #' set.seed(3)
 #' y <- stats::rpois(8, lambda = 200 * 0.85^(0:7))

@@ -62,7 +62,7 @@ Errors: a numeric vector without names; negative, infinite or missing
 counts; a total of zero on either side.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 ref <- c(a = 50, b = 30, c = 20)
 
 # Counts matching the reference proportions: nothing to report.

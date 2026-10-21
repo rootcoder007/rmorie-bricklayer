@@ -52,7 +52,7 @@ function does not apply. Only the first element of each argument is
 used. Errors: a ratio or limit that is not finite and positive.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # a risk ratio of 2 needs a confounder associated by 3.41 with both
 evlrr(2)
 

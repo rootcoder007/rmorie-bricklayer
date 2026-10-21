@@ -32,7 +32,7 @@ compare equal to \code{1} and \code{0}. Missing values are ignored. Each
 failure is an error that names the column.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 grdbin(c(0, 1, 1, 0, NA), "treated")
 grdbin(c(TRUE, FALSE), "arrested")
 

@@ -41,7 +41,7 @@ that is not a single non-empty string is refused before anything is
 written (\code{"path must be a single non-empty string"}).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- wrtxtfb(c("line one", "line two"),
                          tempfile(fileext = ".txt"))
 readLines(p)

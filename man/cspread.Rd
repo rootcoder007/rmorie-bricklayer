@@ -60,7 +60,7 @@ as 0/1. Both run in one pass over the data and allocate nothing beyond
 the coerced input.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # Sample standard deviation, matching stats::sd().
 csdev(c(2, 4, 4, 4, 5, 5, 7, 9))
 all.equal(csdev(1:10), stats::sd(1:10))

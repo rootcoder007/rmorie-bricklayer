@@ -67,7 +67,7 @@
 #' \doi{10.25318/4110006701-eng}
 #' @seealso \code{\link{sctidy}}, \code{\link{indgap}},
 #'   \code{\link{ordcmp}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # the layout of a downloaded table: percent and number of persons, with limits for the
 #' # percent
 #' d <- data.frame(REF_DATE = "2022", GEO = "Canada",
@@ -292,7 +292,7 @@ scests <- function(x) {
 #' @param pooled Optional labels of rows that pool other groups (see
 #'   \code{\link{indgap}}).
 #' @seealso \code{\link{scests}}, \code{\link{indgap}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # Self-perceived mental health, 15 years and older, Canada, 2022 (table 41-10-0067-01)
 #' mh <- indiex("mentalhealth")
 #' mh <- mh[mh$region == "Canada", ]
@@ -428,7 +428,7 @@ ordcmp <- function(data, grp, cat, est, lower, upper, lvls, ref,
 #' no. 99-011-X2019001.
 #' @seealso \code{\link{agestd}} for counts of events,
 #'   \code{\link{cnsstd}}, \code{\link{indgap}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # seriously contemplated suicide in the past 12 months, 2017 (table 41-10-0021-01),
 #' # standardised to the Indigenous population's age structure (2021 Census)
 #' ages <- c("15 to 24 years", "25 to 34 years", "35 to 44 years", "45 to 54 years",
@@ -685,7 +685,7 @@ plot.rmbl_ordinal_compare <- function(x, ..., main = NULL, col = NULL, palette =
 #' \doi{10.3390/ijerph192013402}
 #' @seealso \code{\link{scests}}, \code{\link{indgap}},
 #'   \code{\link{ordcmp}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # well-being, 2024 (table 41-10-0082-01)
 #' wb <- indiex("wellbeing")
 #' w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
@@ -888,7 +888,7 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
 #' from Native counsellors in Canada. International Journal of Health Promotion and
 #' Education 46(2):49-56. \doi{10.1080/14635240.2008.10708129}
 #' @seealso \code{\link{welprof}}, \code{\link{dualcont}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # four domains from table 13-10-0924-01, 2019/2022, adults: which indicator stands for
 #' # each is a choice for the people whose data these are; this is one reading of it
 #' h <- indiex("health")
@@ -1045,7 +1045,7 @@ holbal <- function(data, grp, domain, est, lower, upper, w = NULL, qual = NULL,
 #'
 #' Stewart SL (2008), see \code{\link{holbal}}.
 #' @seealso \code{\link{welprof}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' wb <- indiex("wellbeing")
 #' w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
 #'                       well = "Always or often has a hopeful outlook",
@@ -1133,7 +1133,7 @@ dualcont <- function(x, well, distress, conflvl = 0.95) {
 #' @references Higgins JPT, Thompson SG (2002). Quantifying heterogeneity in a
 #'   meta-analysis. Statistics in Medicine 21(11):1539-1558. \doi{10.1002/sim.1186}
 #' @seealso \code{\link{indgap}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # perceived mental health very good or excellent, 2019/2022, adults (table
 #' # 13-10-0924-01)
 #' h <- indiex("health")
@@ -1354,7 +1354,7 @@ plot.rmbl_distinctions <- function(x, ..., main = NULL, col = NULL, palette = NU
 #'   name = c("health", "mentalhealth", "wellbeing", "suicide",
 #'            "censuspop", "censushh", "lifeexp", "infantmort")
 #' )
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' h <- indiex("health")
 #' mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
 #'           h$indicator == "Perceived mental health, very good or excellent", ]

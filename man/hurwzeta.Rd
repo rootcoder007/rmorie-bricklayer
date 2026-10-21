@@ -47,7 +47,7 @@ when \code{s} or \code{q} is logical or not numeric, and when \code{q} is
 not a single finite number.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # The Riemann zeta at even integers has a closed form.
 c(hurwzeta(2), pi^2 / 6)
 c(hurwzeta(4), pi^4 / 90)

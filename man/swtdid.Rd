@@ -61,7 +61,7 @@ come from the cluster bootstrap. Unlike the two-way estimator, \eqn{DID_M} never
 uses a unit whose treatment changed as a control in the period it changed.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- polex()
 swtdid(p, "district", "month", "crmrate", "reformed", reps = 99, seed = 1)
 \dontshow{\}) # examplesIf}

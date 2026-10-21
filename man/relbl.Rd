@@ -43,7 +43,7 @@ Errors: \code{map} without names (including a plain vector of new
 labels); a level with no mapping.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 f <- factor(c("W", "B", "O", "W"))
 relbl(f, c(W = "White", B = "Black", O = "Other"))
 

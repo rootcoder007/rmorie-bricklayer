@@ -33,7 +33,7 @@
 #' catalogue IR4-8/2015E.
 #' \url{https://publications.gc.ca/collections/collection_2015/trc/IR4-8-2015-eng.pdf}
 #' @seealso \code{\link{trchlthgap}}, \code{\link{trcprog}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' ti <- trcind()
 #' ti[ti$call == "19", c("indicator", "table", "measure", "better")]
 #' @export
@@ -133,7 +133,7 @@ trcind <- function() {
 #' @references Truth and Reconciliation Commission of Canada (2015), see
 #'   \code{\link{trcind}}.
 #' @seealso \code{\link{trcind}}, \code{\link{indgap}}.
-#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
+#' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' g <- trchlthgap()
 #' g[g$group == "Inuit", c("indicator", "measure", "period", "disratio",
 #'                         "lower",

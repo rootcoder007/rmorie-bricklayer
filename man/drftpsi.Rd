@@ -68,7 +68,7 @@ can exceed 0.25 (see \code{psiminn} in
 \code{\link[=cpsdrft]{cpsdrft()}}).
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 set.seed(2)
 ref <- stats::rnorm(500)
 

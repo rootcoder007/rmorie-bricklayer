@@ -99,7 +99,7 @@ one fit instead of one per replicate. Rows with a missing value are left out as 
 domain (their scores count as zero in every replicate), not dropped from the design.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 set.seed(2)
 n <- 800
 d <- data.frame(age = runif(n, 18, 70), income = rlnorm(n, 10, 0.5))

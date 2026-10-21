@@ -53,7 +53,7 @@ below 1e-11, is always refused. Every input must be a single finite
 number, and the population and rate non-negative.
 }
 \examples{
-\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
+\dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # A 10-unit cut, a million people, 800 deaths per 100,000 a year.
 mortdisp(10, 1e6, 0.008, 0.0039)
 
