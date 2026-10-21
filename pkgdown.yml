@@ -2,40 +2,12 @@ pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
-  air-pollution-and-health: air-pollution-and-health.html
-  attestations-bundles-chains: attestations-bundles-chains.html
-  banded-tables-and-concentration: banded-tables-and-concentration.html
-  capsules: capsules.html
-  categorical-integrity: categorical-integrity.html
-  causal-effects: causal-effects.html
-  courts-and-crime: courts-and-crime.html
-  dashboard: dashboard.html
-  describe: describe.html
-  drift: drift.html
-  falsification-and-power: falsification-and-power.html
-  first-nations-metis-inuit-health: first-nations-metis-inuit-health.html
-  getting-started: getting-started.html
-  hashing-and-integrity: hashing-and-integrity.html
-  hawkes-processes: hawkes-processes.html
-  json-and-serialisation: json-and-serialisation.html
-  key-encapsulation: key-encapsulation.html
-  language-model-routes: language-model-routes.html
-  missingness-and-outliers: missingness-and-outliers.html
-  plotting-results: plotting-results.html
-  policy-evaluation: policy-evaluation.html
-  post-quantum-signatures: post-quantum-signatures.html
-  provenance: provenance.html
-  search-and-rescue: search-and-rescue.html
-  side-channel-assurance: side-channel-assurance.html
-  siu-reports: siu-reports.html
-  small-area-rates: small-area-rates.html
-  stock-and-flow: stock-and-flow.html
-  survey-estimation: survey-estimation.html
-  tables: tables.html
-  trends-and-change: trends-and-change.html
-  validation-rules-and-synthetic-data: validation-rules-and-synthetic-data.html
-  yoy: yoy.html
-last_built: 2026-10-21T14:20Z
+  applied-analyses: applied-analyses.html
+  capsules-and-provenance: capsules-and-provenance.html
+  describing-data-and-tables: describing-data-and-tables.html
+  integrity-and-cryptography: integrity-and-cryptography.html
+  statistical-methods: statistical-methods.html
+last_built: 2026-10-21T15:00Z
 urls:
   reference: https://rootcoder007.github.io/rmorie-bricklayer/reference
   article: https://rootcoder007.github.io/rmorie-bricklayer/articles

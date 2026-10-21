@@ -152,7 +152,6 @@ unlink(cache, recursive = TRUE)
 for (v in names(oldenv)) {
   if (is.na(oldenv[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(oldenv[v]))
 }
-
 if (FALSE) { # interactive()
 # the real service: needs a key and the network
 dlogin(token = "sk-...")  # a key issued at www.rmorie.com/access/

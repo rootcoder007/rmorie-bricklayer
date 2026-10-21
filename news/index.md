@@ -79,6 +79,19 @@
   re-builds a vignette, only the setup chunk runs. R CMD build,
   r-universe and pkgdown still build every vignette in full, so the
   package carries each one’s HTML, figures and R code.
+- The 33 guides are now five vignettes, one per theme:
+  [`vignette("capsules-and-provenance")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules-and-provenance.md),
+  [`vignette("integrity-and-cryptography")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/integrity-and-cryptography.md),
+  [`vignette("describing-data-and-tables")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/describing-data-and-tables.md),
+  [`vignette("statistical-methods")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/statistical-methods.md)
+  and
+  [`vignette("applied-analyses")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/applied-analyses.md).
+  Each former guide is a section of one of them, with its text, code and
+  figures unchanged.
+- The examples that take a tenth of a second or more (67 help pages) run
+  in an interactive session (for example with
+  [`example()`](https://rdrr.io/r/utils/example.html)) and on the
+  package website; R CMD check shows them but does not run them.
 - Every vignette now draws its results: the 21 that had no figure gain
   one or more, drawn with the package’s own
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html) methods and
@@ -99,8 +112,7 @@
   call; a refusal is shown in the package’s words with
   [`explerr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/explerr.md)’s
   note. The Report tab gathers results into one HTML page (plots as
-  inline SVG), Markdown or a GitHub comment.
-  [`vignette("dashboard")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/dashboard.md).
+  inline SVG), Markdown or a GitHub comment. `vignette("dashboard")`.
 - The dashboard is built with bslib (suggested, and installed with
   shiny): menus in the navbar, a form in each tab’s sidebar, value boxes
   with the estimate, its interval, n and a verdict, a plot card that
@@ -1013,12 +1025,10 @@ New estimators, each checked against the reference implementation
   and
   [`plnpois()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plnpois.md)
   examples show what they claim.
-- [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md)
-  gains the policy-evaluation plots, one call per result;
-  [`vignette("policy-evaluation")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/policy-evaluation.md)
-  draws the synthetic difference in differences and
-  [`vignette("causal-effects")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/causal-effects.md)
-  the AIPW estimate beside its overlap.
+- `vignette("plotting-results")` gains the policy-evaluation plots, one
+  call per result; `vignette("policy-evaluation")` draws the synthetic
+  difference in differences and `vignette("causal-effects")` the AIPW
+  estimate beside its overlap.
 
 **The final pre-CRAN audit** (three reviewers and a re-run of every
 earlier finding)
@@ -2341,8 +2351,7 @@ fixes overstated corrected.
   labels that fit are not cut.
 - **Every plot is in the examples.** `?plot-methods` draws every class,
   the courts and crime plots on the shipped data included, and
-  [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md)
-  gains a courts and crime section.
+  `vignette("plotting-results")` gains a courts and crime section.
 
 ### Small bases compute
 
@@ -3149,13 +3158,12 @@ tells them apart, and for the fixes below; this is both.
   `bricklayer_palette()` with four colour-blind-safe palettes, and every
   method returns the data it drew. `plume_field()` evaluates a plume on
   a grid; `plot_lorenz()` and `plot_funnel()` serve the results that are
-  plain data frames.
-  [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md).
-  Titles fit their panel: a title too wide is drawn a step smaller, in a
-  panel set one that still does not fit becomes a letter with the key
-  printed under the panels (returned as the `panel_key` attribute), long
-  axis titles shrink or wrap, and the left margin is sized from the
-  widest tick label so an axis title never overlaps the numbers.
+  plain data frames. `vignette("plotting-results")`. Titles fit their
+  panel: a title too wide is drawn a step smaller, in a panel set one
+  that still does not fit becomes a letter with the key printed under
+  the panels (returned as the `panel_key` attribute), long axis titles
+  shrink or wrap, and the left margin is sized from the widest tick
+  label so an axis title never overlaps the numbers.
 - To carry what the plots need, `exposure_concentration_index()` records
   its concentration curve, `count_trend()` its data,
   `verify_pollution()` returns class `rmbl_pollution_report`,

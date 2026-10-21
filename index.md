@@ -51,7 +51,7 @@ them.
   rotated between two statistical programs. The package relabels only by
   a named map, never by position, and can say which rotation reproduces
   a set of published ratios
-  ([`vignette("categorical-integrity")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/categorical-integrity.md)).
+  ([`vignette("describing-data-and-tables")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/describing-data-and-tables.md)).
 
 ## How I use it
 
@@ -92,7 +92,7 @@ why the capsule keeps both.
 A capsule does this for every source of an analysis at once;
 [`usecpstmpl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/usecpstmpl.md)
 starts one and
-[`vignette("capsules")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules.md)
+[`vignette("capsules-and-provenance")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules-and-provenance.md)
 walks through it.
 
 ## What it does
@@ -109,18 +109,14 @@ walks through it.
   writes it as Markdown or one HTML file and
   [`usecpstmpl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/usecpstmpl.md)
   starts a capsule that runs as written. Start with
-  [`vignette("getting-started")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/getting-started.md).
-  Topic guides:
-  [`vignette("post-quantum-signatures")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/post-quantum-signatures.md),
-  [`vignette("key-encapsulation")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/key-encapsulation.md),
-  [`vignette("side-channel-assurance")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/side-channel-assurance.md),
-  [`vignette("hawkes-processes")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/hawkes-processes.md),
-  [`vignette("small-area-rates")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/small-area-rates.md),
-  [`vignette("trends-and-change")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/trends-and-change.md),
-  [`vignette("stock-and-flow")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/stock-and-flow.md),
-  [`vignette("air-pollution-and-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/air-pollution-and-health.md),
-  [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md)
-  and the rest, grouped by topic on the package website.
+  [`vignette("capsules-and-provenance")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules-and-provenance.md).
+  The other guides:
+  [`vignette("integrity-and-cryptography")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/integrity-and-cryptography.md),
+  [`vignette("describing-data-and-tables")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/describing-data-and-tables.md),
+  [`vignette("statistical-methods")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/statistical-methods.md)
+  and
+  [`vignette("applied-analyses")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/applied-analyses.md),
+  grouped by topic on the package website.
 
 - **A dashboard on your own machine** —
   [`rmblapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmblapp.md)
@@ -128,7 +124,7 @@ walks through it.
   CSV file, a capsule or a data.rmorie.com table, run an analysis, see
   the package’s plot and the exact R call it ran, and gather the results
   into one HTML page, Markdown or a GitHub comment. Needs shiny;
-  [`vignette("dashboard")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/dashboard.md).
+  [`vignette("capsules-and-provenance")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules-and-provenance.md).
 
 - **Distributions and plots** —
   [`dstfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dstfit.md)
@@ -416,7 +412,7 @@ walks through it.
   [`plotfnl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotlrnz.md)
   cover the results that are plain data frames. Every method returns the
   numbers it drew.
-  [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md).
+  [`vignette("describing-data-and-tables")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/describing-data-and-tables.md).
 
 - **Archiving in bulk** —
   [`wbsave()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsave.md)
@@ -453,7 +449,7 @@ walks through it.
   (near-repeat space-time clustering, exact expectations, permutation
   p-values). Each has a plot. Real Ontario Court of Justice and Toronto
   Police Service excerpts ship in `inst/extdata` (`?justice-data`);
-  [`vignette("courts-and-crime")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/courts-and-crime.md).
+  [`vignette("applied-analyses")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/applied-analyses.md).
 
 - **Search and rescue** —
   [`ltrlrng()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ltrlrng.md)
@@ -478,7 +474,7 @@ walks through it.
   Each result prints and plots, and
   [`srchfig()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/srchfig.md)
   draws every figure of Frost’s *The Theory of Search* (1996) from them;
-  [`vignette("search-and-rescue")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/search-and-rescue.md).
+  [`vignette("applied-analyses")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/applied-analyses.md).
 
 - **Evaluating a policy** —
   [`plndid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plndid.md)
@@ -502,7 +498,7 @@ walks through it.
   [`cmlrisk()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cmlrisk.md),
   [`bufasgn()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bufasgn.md)
   for justice data. Each matches the reference implementation;
-  [`vignette("policy-evaluation")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/policy-evaluation.md).
+  [`vignette("statistical-methods")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/statistical-methods.md).
 
 - **First Nations, Metis and Inuit health, mental health and wellness**
   — distinctions-based methods for Statistics Canada’s published tables:
@@ -561,7 +557,7 @@ walks through it.
   and
   [`indtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indtabs.md)
   lists the 233 mirrored tables;
-  [`vignette("first-nations-metis-inuit-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/first-nations-metis-inuit-health.md).
+  [`vignette("applied-analyses")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/applied-analyses.md).
 
 - **Complex surveys** —
   [`svydes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svydes.md)
@@ -575,7 +571,7 @@ walks through it.
   [`svycmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svycmp.md)
   (domain differences with the design covariance). Matches the `survey`
   package;
-  [`vignette("survey-estimation")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/survey-estimation.md)
+  [`vignette("statistical-methods")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/statistical-methods.md)
   reproduces Health Canada’s published CSUS intervals.
 
 - **Hot spots over time** —
@@ -624,7 +620,7 @@ walks through it.
   and
   [`polrpttxt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfpol.md).
   Every coefficient cites its paper and is asserted in the tests.
-  [`vignette("air-pollution-and-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/air-pollution-and-health.md).
+  [`vignette("applied-analyses")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/applied-analyses.md).
 
 - **The footprint of the computation** —
   [`co2fp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2fp.md)
@@ -1101,9 +1097,9 @@ See
 [`?xmssadv`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmssadv.md).
 
 See
-[`vignette("drift")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/drift.md)
+[`vignette("capsules-and-provenance")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules-and-provenance.md)
 for the distributional checks and
-[`vignette("provenance")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/provenance.md)
+[`vignette("capsules-and-provenance")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules-and-provenance.md)
 for signing, Merkle pinning and manifest chains.
 
 ## Asking a model

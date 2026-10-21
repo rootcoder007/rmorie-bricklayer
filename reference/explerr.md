@@ -130,7 +130,6 @@ explerr(rows)$explanation
 # n must be at least 1
 try(explerr(msg, n = 0))
 #> Error : `n` must be a whole number of 1 or more
-
 if (FALSE) { # interactive()
 # an error caught with try(), and the message as R prints it, with the call in front
 r <- try(llmcfg(no.such = 1), silent = TRUE)

@@ -175,7 +175,6 @@ try(llmask("What is a capsule?", route = "ollama", docs = FALSE))
 for (v in names(old)) {
   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 }
-
 if (FALSE) { # interactive()
 # needs your own key or a local model, and the network
 Sys.setenv(ANTHROPIC_API_KEY = "...")
