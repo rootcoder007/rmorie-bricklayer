@@ -2,6 +2,7 @@
 
 ## Fixes after the CRAN resubmission
 
+* `srchfig("4-4")` and `srchfig("4-6")` left the device split into panels, so the next plot was drawn into a fraction of the page (figure 4-7 in the applied-analyses vignette came out squashed). Every figure now restores the layout it changed, and a test draws all 36 in a row and checks it.
 * An error raised while `co2fp()` measures a computation's footprint is now named after the function that asked for the footprint (for example `cpschk: the provenance names no source to fetch`), not after `co2fp()`.
 * The vignettes run their code again wherever they are built (r-universe, pkgdown, `R CMD build`), so the articles show their plots; only `R CMD check` re-building a vignette skips the computing.
 * The package installs faster: the C++ sources build as one compilation unit, so the headers they share are compiled once. To make that possible, code that several files had copied is now shared: the Keccak sponge state (declared in five places), the arbitrary-precision helpers of the RSA and decimal parsers (where the RSA parser's comparison now also holds for numbers with leading zero limbs), the hex encoders and a bit rotation; the C++ sources include R's headers with `R_NO_REMAP`, and the size checks use C++ `static_assert`.

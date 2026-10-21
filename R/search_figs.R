@@ -365,7 +365,8 @@ srchfig <- function(fig = NULL, num = NULL, seed = 1, main = NULL) {
     "4-1" = {
       op <- .bl_par()
       on.exit(graphics::par(op), add = TRUE)
-      graphics::par(mfrow = c(2L, 2L), mar = c(3.4, 0.5, 1.2, 0.5), oma = c(0, 0, 2, 0))
+      lay <- graphics::par(mfrow = c(2L, 2L), mar = c(3.4, 0.5, 1.2, 0.5), oma = c(0, 0, 2, 0))
+      on.exit(graphics::par(lay), add = TRUE, after = FALSE)  # the panel layout must not outlive the figure
       xs <- seq(-2, 2, length.out = 401)
       # D: a sensor that sees poorly straight below (illustrative), scaled to sweep width 1
       dd <- function(x) {
@@ -416,7 +417,8 @@ srchfig <- function(fig = NULL, num = NULL, seed = 1, main = NULL) {
     "4-6" = {
       op <- .bl_par()
       on.exit(graphics::par(op), add = TRUE)
-      graphics::par(mfrow = c(2L, 1L), mar = c(0.5, 0.5, 1, 0.5), oma = c(0, 0, 2, 0))
+      lay <- graphics::par(mfrow = c(2L, 1L), mar = c(0.5, 0.5, 1, 0.5), oma = c(0, 0, 2, 0))
+      on.exit(graphics::par(lay), add = TRUE, after = FALSE)  # the panel layout must not outlive the figure
       h <- 4
       r <- 8
       a <- 2

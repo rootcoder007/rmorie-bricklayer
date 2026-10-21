@@ -193,3 +193,13 @@ test_that("the general plot arguments and the new datums refuse what cannot be d
   expect_output(print(ltrlrng(1, 1, navsd = 0.5)), "navigation error sd 0.5")
   expect_output(print(srchpod(1, "mbeta", m = 0.5)), "M = 0.5")
 })
+
+test_that("every figure leaves the device layout as it found it", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  before <- graphics::par(c("mfrow", "oma", "mar"))
+  for (f in srchfig()$fig) {
+    srchfig(f)
+    expect_identical(graphics::par(c("mfrow", "oma", "mar")), before, info = f)
+  }
+})
