@@ -67,7 +67,8 @@ jobs:
           unset NOT_CRAN
           tb=$(ls tb/rmoriebricklayer_*.tar.gz)
           t0=$(date +%s)
-          R CMD check --as-cran "$tb" > check.txt 2>&1 || true
+          R CMD check --as-cran "$tb" 2>&1 | while IFS= read -r l; do printf '%s %s\n' "$(date +%s)" "$l"; done > stamped.txt || true
+          cut -d' ' -f2- stamped.txt > check.txt
           t1=$(date +%s)
           {
             echo "## Windows R-${{ matrix.r }}: total $(( t1 - t0 )) s ($(( (t1 - t0) / 60 )) min $(( (t1 - t0) % 60 )) s)"
@@ -76,6 +77,10 @@ jobs:
             grep -A2 "Running .testthat" check.txt || true
             grep -E "^Status" check.txt || true
             echo '```'
+            echo "### Every step, seconds (the time ends at the step's own line)"
+            echo '```'
+            awk 'NR==1{p=$1} /^[0-9]+ \* /{d=$1-p; p=$1; $1=""; printf "%5d %s\n", d, substr($0,2)}' stamped.txt | sort -rn | head -40
+            echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
           tail -40 check.txt
           if grep -qE "^Status: .*ERROR" check.txt; then exit 1; fi
@@ -83,4 +88,7 @@ jobs:
         if: always()
         with:
           name: check-windows-${{ matrix.r }}
-          path: rmoriebricklayer.Rcheck/00check.log
+          path: |
+            rmoriebricklayer.Rcheck/00check.log
+            rmoriebricklayer.Rcheck/00install.out
+            stamped.txt
