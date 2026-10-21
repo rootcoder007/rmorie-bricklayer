@@ -315,9 +315,9 @@ raplok()
 fp <- co2fp(sum(sqrt(seq_len(3e5))), loc = "CA-ON", cpupwrw = 45,
                         memgb = 16)
 print(fp)
-#> Computation footprint (modelled): 0.005 s wall, 0.007 s CPU, utilisation 0.35 (process) on 4 cores
-#>   energy: 3.02e-08 kWh (cpu 2.19e-08, memory 8.28e-09)
-#>   CO2e:   2.74e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
+#> Computation footprint (modelled): 0.005 s wall, 0.005 s CPU, utilisation 0.25 (process) on 4 cores
+#>   energy: 2.39e-08 kWh (cpu 1.56e-08, memory 8.28e-09)
+#>   CO2e:   2.17e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
 fp$assumptions
 #> character(0)
 ```
@@ -347,9 +347,9 @@ b <- co2fp(busy(), loc = "CA-ON", cpupwrw = 45, memgb = 16,
                        usage = "machine", loadcur = "codecarbon")
 rbind(prolin = c(usage = a$usage, cpukwh = a$enekwh$cpu),
       maccod = c(usage = b$usage, cpukwh = b$enekwh$cpu))
-#>            usage       cpukwh
-#> prolin 0.2500000 9.375000e-09
-#> maccod 0.2857143 2.571064e-08
+#>         usage       cpukwh
+#> prolin 0.1875 9.375000e-09
+#> maccod 0.2500 2.851563e-08
 b$usagemode
 #> [1] "machine"
 ```
@@ -434,10 +434,10 @@ the two the Green Algorithms calculator prints:
 
 fpeqv(fp$co2eg * 1e4)   # if this ran ten thousand times
 #> $carkm
-#> [1] 0.0001567428
+#> [1] 0.0001242535
 #> 
 #> $treemon
-#> [1] 2.991274e-05
+#> [1] 2.371249e-05
 #> 
 #> $sources
 #>                                                                  car 

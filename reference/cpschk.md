@@ -249,26 +249,26 @@ x$rows[, c("check", "ok")]
 x
 #> ## rmbl capsule verify with [rmoriebricklayer 1.0.0](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/Rtmp5LSEh0/capsules-1feb54c93dd8`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/RtmpD1RivZ/capsules-20351449bf34`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/Rtmp5LSEh0/capsules-1feb54c93dd8/one` | /tmp/Rtmp5LSEh0/temp_libpath1feb4467b849/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/RtmpD1RivZ/capsules-20351449bf34/one` | /tmp/RtmpD1RivZ/temp_libpath2035e5f3eda/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/Rtmp5LSEh0/capsules-1feb54c93dd8/one</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/RtmpD1RivZ/capsules-20351449bf34/one</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/Rtmp5LSEh0/temp_libpath1feb4467b849/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/RtmpD1RivZ/temp_libpath2035e5f3eda/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/Rtmp5LSEh0/capsules-1feb54c93dd8/one/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/Rtmp5LSEh0/capsules-1feb54c93dd8/one/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/RtmpD1RivZ/capsules-20351449bf34/one/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/RtmpD1RivZ/capsules-20351449bf34/one/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/Rtmp5LSEh0/capsules-1feb54c93dd8/one/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/RtmpD1RivZ/capsules-20351449bf34/one/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>
@@ -297,14 +297,14 @@ x$capsules[[1]]$notes
 #> [1] "explained: the data file's size differs from resource$size_bytes: its bytes changed"
 #> 
 substr(format(x, fmt = "json"), 1, 120)
-#> [1] "{\n  \"status\": \"error\",\n  \"mode\": \"verify\",\n  \"path\": \"/tmp/Rtmp5LSEh0/capsules-1feb54c93dd8\",\n  \"capsules\": [\n    {\n    "
+#> [1] "{\n  \"status\": \"error\",\n  \"mode\": \"verify\",\n  \"path\": \"/tmp/RtmpD1RivZ/capsules-20351449bf34\",\n  \"capsules\": [\n    {\n    "
 
 # drift: fetch the source again (here a local file) and compare
 cpschk(root, "drift", psiwarn = 0.05, fp = FALSE)$status
 #> [1] "error"
 
 try(cpschk(tempfile()))
-#> Error : cpschk: `path` is not an existing directory: /tmp/Rtmp5LSEh0/file1feb5769862a
+#> Error : cpschk: `path` is not an existing directory: /tmp/RtmpD1RivZ/file20355f46b955
 try(cpschk(root, psiwarn = 1))
 #> Error : cpschk: `psiwarn` (1) must not exceed `psifail` (0.25)
 ```

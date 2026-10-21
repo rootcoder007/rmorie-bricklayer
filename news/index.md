@@ -10,6 +10,9 @@
   that asked for the footprint (for example
   `cpschk: the provenance names no source to fetch`), not after
   [`co2fp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2fp.md).
+- The vignettes run their code again wherever they are built
+  (r-universe, pkgdown, `R CMD build`), so the articles show their
+  plots; only `R CMD check` re-building a vignette skips the computing.
 
 ### A dashboard, distributions and proof ledgers
 

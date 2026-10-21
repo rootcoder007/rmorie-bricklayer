@@ -52,6 +52,7 @@
 <div class="section level3">
 <h3 id="fixes-after-the-cran-resubmission-1-0-0">Fixes after the CRAN resubmission<a class="anchor" aria-label="anchor" href="#fixes-after-the-cran-resubmission-1-0-0"></a></h3>
 <ul><li>An error raised while <code><a href="../reference/co2fp.html">co2fp()</a></code> measures a computation’s footprint is now named after the function that asked for the footprint (for example <code>cpschk: the provenance names no source to fetch</code>), not after <code><a href="../reference/co2fp.html">co2fp()</a></code>.</li>
+<li>The vignettes run their code again wherever they are built (r-universe, pkgdown, <code>R CMD build</code>), so the articles show their plots; only <code>R CMD check</code> re-building a vignette skips the computing.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="a-dashboard-distributions-and-proof-ledgers-1-0-0">A dashboard, distributions and proof ledgers<a class="anchor" aria-label="anchor" href="#a-dashboard-distributions-and-proof-ledgers-1-0-0"></a></h3>
