@@ -49,6 +49,7 @@ the capsule, and the refusals of \code{cpsbndl()} (a key it cannot sign
 with).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 root <- tempfile("capsules-")
 d <- file.path(root, "one")
 dir.create(d, recursive = TRUE)
@@ -63,6 +64,7 @@ cpschk(root, key = "a shared secret", fp = FALSE)$status
 # a second run needs overwrite, and a post-quantum key signs too
 try(cpsseal(root, "a shared secret"))
 cpsseal(root, fipskg("ML-DSA-44"), overwrite = TRUE)$pinned
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{cpsbndl}}, \code{\link{cpschk}},

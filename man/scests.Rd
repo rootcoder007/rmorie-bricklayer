@@ -62,6 +62,7 @@ estimate's: an \code{F} or \code{x} estimate is \code{NA} (see
 \code{\link{sctidy}}), and so are its limits.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # the layout of a downloaded table: percent and number of persons, with limits for the
 # percent
 d <- data.frame(REF_DATE = "2022", GEO = "Canada",
@@ -78,6 +79,7 @@ r <- data.frame(GEO = "Canada",
                 Characteristics = c("Rate", "Coefficient of variation for rate"),
                 VALUE = c(12.5, 8), STATUS = "")
 scests(r)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Statistics Canada (2023). Self-perceived mental health of First Nations

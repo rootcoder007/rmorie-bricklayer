@@ -78,6 +78,7 @@ numbers, or longer than half the earth's circumference. Incidents with a
 missing coordinate are dropped.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
                           package = "rmoriebricklayer"))
 kd <- crmdens(b$lon, b$lat, ngrid = 120)
@@ -95,6 +96,7 @@ crmdens(xy[, 1], xy[, 2], xy = "planar", ngrid = 40)$bandwidth
 
 # longitudes and latitudes are checked
 try(crmdens(c(-79.4, 200), c(43.7, 43.8)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Scott, D. W. (2015). \emph{Multivariate Density Estimation: Theory,

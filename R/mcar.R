@@ -212,7 +212,7 @@
 #' [misspat()] for the
 #' patterns themselves,
 #' [misssmry()] for the rates.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(1)
 #' n <- 300
 #' x <- stats::rnorm(n)

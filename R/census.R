@@ -367,7 +367,7 @@ cnsstd <- function(x, grp = "Indigenous identity", geo = "Canada",
 #'   communities, 1981 to 2016 (Community Well-Being index).\cr
 #'   \url{https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644}
 #' @seealso \code{\link{cwbscr}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- cnsprof(indiex("censuspop"))
 #' h <- cnsprof(indiex("censushh"))
 #' cnscwb(p, h)[, c("geo", "group", "income", "education", "housing", "labour",

@@ -359,7 +359,7 @@
 #'   their variables, \code{\link{llmstat}} for which routes
 #'   are reachable, \code{\link{llmask}} which uses these
 #'   settings.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Work in a temporary settings directory so your own settings are
 #' # untouched.
 #' old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)

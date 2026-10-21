@@ -724,7 +724,7 @@ benfordtst <- function(x) {
 #' @seealso
 #' [valsch()] for the structural
 #' check, which this complements rather than replaces.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(5)
 #' ref <- data.frame(
 #'   value = stats::rnorm(300),

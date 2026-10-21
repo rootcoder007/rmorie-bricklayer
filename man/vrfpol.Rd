@@ -144,6 +144,7 @@ levels and five income groups, drawn with a fixed seed (R's own random
 stream is restored).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 r <- vrfpol("no2", demo = TRUE)
 r$status
 r$pipeline$paf
@@ -167,6 +168,7 @@ bad <- vrfpol("no2", expomean = 20, expoprev = 1,
 bad$status
 # ... and an argument it cannot use is an error report, not an R error.
 vrfpol("no2")$error
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{polbrdn}} and the other stage functions

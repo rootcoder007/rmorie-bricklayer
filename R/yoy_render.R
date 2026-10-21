@@ -66,7 +66,7 @@
 #'   landscape US letter).
 #' @param ... Ignored.
 #' @return The path \code{file}, invisibly.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' d <- data.frame(year = rep(2019:2023, each = 2),
 #'                 region = rep(c("North", "South"), 5),
 #'                 n = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331))

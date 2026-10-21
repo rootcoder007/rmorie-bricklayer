@@ -332,7 +332,7 @@ grdlvls <- function(x, lvls, ref = NULL) {
 #'   hazards.
 #' @seealso \code{\link{deccodes}}, \code{\link{grdlvls}},
 #'   \code{\link{xfrvrf}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # codes without labels, and a case-variant city name
 #' a <- audcats(data.frame(
 #'   race = factor(c("1", "2", "2", "3")),

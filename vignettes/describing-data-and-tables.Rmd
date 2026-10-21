@@ -1,0 +1,44 @@
+---
+title: "Describing data and published tables"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 2
+vignette: >
+  %\VignetteIndexEntry{Describing data and published tables}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+# the vignette is built in full by R CMD build (its HTML and R code go into the package), r-universe
+# and pkgdown; when R CMD check re-builds it (R sets _R_CHECK_PACKAGE_NAME_ there) only this chunk
+# runs, unless NOT_CRAN is true
+if (!identical(Sys.getenv("NOT_CRAN"), "true") && nzchar(Sys.getenv("_R_CHECK_PACKAGE_NAME_"))) {
+  knitr::knit_exit()
+}
+```
+
+```{r child = "parts/_describe.Rmd"}
+```
+
+```{r child = "parts/_missingness-and-outliers.Rmd"}
+```
+
+```{r child = "parts/_categorical-integrity.Rmd"}
+```
+
+```{r child = "parts/_tables.Rmd"}
+```
+
+```{r child = "parts/_banded-tables-and-concentration.Rmd"}
+```
+
+```{r child = "parts/_yoy.Rmd"}
+```
+
+```{r child = "parts/_trends-and-change.Rmd"}
+```
+
+```{r child = "parts/_plotting-results.Rmd"}
+```

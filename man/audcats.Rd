@@ -57,6 +57,7 @@ The function only reports; it never changes \code{data}. It errors when
 \code{data} is not a data frame.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # codes without labels, and a case-variant city name
 a <- audcats(data.frame(
   race = factor(c("1", "2", "2", "3")),
@@ -74,6 +75,7 @@ audcats(data.frame(
 audcats(data.frame(sex = c("F", "M", "F"), age = c(31, 45, 27)))
 
 try(audcats(1:3))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{deccodes}}, \code{\link{grdlvls}},

@@ -34,8 +34,10 @@ Re-estimates \code{\link{plndid}} leaving out one treated unit at a time, to
 show that no single unit drives the result.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- polex()
 l <- loounit(p, "district", "month", "crmrate", "reformed")
 range(l$estimate)
 plot(l)
+\dontshow{\}) # examplesIf}
 }

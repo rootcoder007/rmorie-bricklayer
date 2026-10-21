@@ -129,6 +129,7 @@ Errors: either argument not a data frame; \code{alpha} not strictly between
 0 and 1; \code{psiminn} negative; \code{idelvls} below 2.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(5)
 ref <- data.frame(
   value = stats::rnorm(300),
@@ -160,6 +161,7 @@ cpsdrft(ref, same)$columns$psi
 cpsdrft(ref, same[, c("value", "grade")])$removed
 
 try(cpsdrft(ref, as.matrix(same)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=valsch]{valsch()}} for the structural

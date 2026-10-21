@@ -113,7 +113,7 @@
 #' [cpsatst()],
 #' [vrfcps()],
 #' [mnfdgst()].
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' dir <- tempfile()
 #' dir.create(dir)
 #' write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"),

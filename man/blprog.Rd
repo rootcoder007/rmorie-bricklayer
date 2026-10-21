@@ -69,6 +69,7 @@ for (b in seq_len(B)) {
 \code{$done()} may be called more than once; only the first call acts.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- blprog("squares", 50, delay = 0)
 for (i in 1:50) {
   x <- sum(seq_len(i)^2)
@@ -86,4 +87,5 @@ f <- function() {
   invisible(TRUE)
 }
 f()
+\dontshow{\}) # examplesIf}
 }

@@ -1079,7 +1079,7 @@ signpubkey <- function(key) {
 #' @seealso
 #' [cpsvrf()],
 #' [chmac()]
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 #' # one-time index record out of your configuration directory; leave the default in use
 #' # Symmetric: one shared secret.

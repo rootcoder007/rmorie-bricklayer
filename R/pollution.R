@@ -802,7 +802,7 @@ plrcf <- function(data, y, trt, covs, kfol = 5L, seed = 1L) {
 #' @seealso \code{\link{cbootmean}} for a bootstrap of a mean.
 #' @references Efron, B. and Tibshirani, R. J. (1993). An Introduction to the
 #'   Bootstrap. Chapman and Hall.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(1)
 #' d <- data.frame(x1 = rnorm(200), x2 = rnorm(200))
 #' d$exposure <- 20 + 2 * d$x1 + rnorm(200)
@@ -1274,7 +1274,7 @@ polbrdarea <- function(areatab, areacol = "fsa", expcol = "exposure",
 #'   and the message for an error report).
 #' @seealso \code{\link{polbrdn}} and the other stage functions
 #'   to run one step on its own.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' r <- vrfpol("no2", demo = TRUE)
 #' r$status
 #' r$pipeline$paf

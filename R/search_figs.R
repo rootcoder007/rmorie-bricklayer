@@ -204,7 +204,7 @@ optsqr <- function(effort, model = c("invcube", "random", "definite", "mbeta"), 
 #' @srrstats {G2.3a} `fig` is matched against the book's figure numbers, which the refusal lists.
 #' @srrstats {EA5.0} The figures use the package's plot style (.bl_par, .bl_grid, .bl_title) and palettes.
 #' @srrstats {EA6.1} test-search-figs.R draws every figure to pdf(NULL) and checks the data each returns.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' head(srchfig())
 #' srchfig("3-4")
 #' srchfig(5, 8)

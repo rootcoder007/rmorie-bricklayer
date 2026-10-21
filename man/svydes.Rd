@@ -202,6 +202,7 @@ so a single-PSU
 stratum under \code{lonely = "fail"} is reported then.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 d <- data.frame(region = rep(c("north", "south"), each = 50),
                 smoker = rbinom(100, 1, rep(c(0.2, 0.35), each = 50)),
@@ -220,6 +221,7 @@ svydes(d, w = "w", reps = jk, type = "jk1")
 
 # a weight column that does not exist
 try(svydes(d, w = "wt"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=svyest]{svyest()}},

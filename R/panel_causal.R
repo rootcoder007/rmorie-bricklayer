@@ -738,7 +738,7 @@ plot.rmbl_synthdid <- function(x, ..., main = NULL, col = NULL, palette = NULL) 
 #' Roodman D, Nielsen MO, MacKinnon JG, Webb MD (2019). Fast and wild: bootstrap
 #' inference in Stata using boottest. The Stata Journal 19(1):4-60.
 #' \doi{10.1177/1536867X19830877}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' # the reform was assigned to four regions: four clusters
 #' wcb(p, "district", "month", "crmrate", "reformed",
@@ -978,7 +978,7 @@ print.rmbl_sensitivity <- function(x, ...) {
 #' @references Burlig F, Preonas L, Woerman M (2020). Panel data and experimental
 #'   design. Journal of Development Economics 144:102458.
 #'   \doi{10.1016/j.jdeveco.2020.102458}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' pre <- p[p$month <= 12, ]
 #' pw <- plnpwr(pre, "district", "month", "crmrate", ntrt = 10, adopt = 7:10,
@@ -1211,7 +1211,7 @@ plot.rmbl_aipw <- function(x, ..., type = c("overlap", "estimate"), main = NULL,
 #' Chernozhukov V et al. (2018), see \code{\link{plndml}}.
 #' @seealso \code{\link{plrcf}}, \code{\link{plndml}},
 #'   \code{\link{baltab}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(2)
 #' n <- 800
 #' d <- data.frame(age = runif(n, 18, 70), income = rlnorm(n, 10, 0.5))

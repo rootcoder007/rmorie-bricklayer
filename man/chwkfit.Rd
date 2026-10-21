@@ -173,6 +173,7 @@ Long fits show a progress spinner (EM a bar) on stderr unless
 \code{options(morie.quiet = TRUE)}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 times <- sort(stats::runif(400, 0, 100))
 fit <- chwkfit(times, 100, "exponential")
@@ -195,6 +196,7 @@ chwkfit(jit, 100)$converged
 # too few events, or times past the horizon, are refused
 try(chwkfit(times[1:20], 100))
 try(chwkfit(times, 50))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Ozaki T (1979). Maximum likelihood estimation of Hawkes' self-exciting

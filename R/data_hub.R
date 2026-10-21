@@ -238,7 +238,7 @@
 #'   table, cut to the console width);
 #'   \code{dload()}: the table as a data frame.
 #' @seealso \code{\link{dlogin}}, \code{\link{svcs}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Offline, against a cache folder holding a manifest and one table made
 #' # here (no key is stored and nothing is fetched).
 #' oldenv <- Sys.getenv(c("XDG_CONFIG_HOME", "MORIE_HOSTED_KEY"), unset = NA)

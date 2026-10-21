@@ -1188,7 +1188,7 @@ plotopt <- function(...) {
 #'   carries the x position of each point drawn: an \code{at} column
 #'   (\code{rmbl_yoy}, \code{rmbl_rate_change}), or an \code{"at"} attribute
 #'   (\code{rmbl_stock_flow}).
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' sf <- stkflow(days = c(13500, 14600, 15100), people = c(300, 320, 310),
 #'                  prd = 2021:2023)
 #' plot(sf)

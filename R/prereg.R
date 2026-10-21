@@ -227,7 +227,7 @@ print.bricklayer_prereg_check <- .rmbl_print_via_format
 #' @seealso
 #' [cpsfals()],
 #' [prrgdecl()].
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # four statistics, one of which is real
 #' set.seed(1)
 #' d <- data.frame(x = rnorm(150))

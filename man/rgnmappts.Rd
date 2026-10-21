@@ -67,6 +67,7 @@ Errors (when \code{sf} and the file are present): missing or empty
 missing coordinates; a field the boundary file does not have.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Two square regions as a small GeoJSON boundary file.
 gj <- tempfile(fileext = ".geojson")
 writeLines(paste0(
@@ -95,6 +96,7 @@ if (requireNamespace("sf", quietly = TRUE)) {
 rgnmappts(-79.5, 43.5, "North Jail",
                        bounds = file.path(tempdir(), "missing.shp"), fields = "CDUID")
 unlink(gj)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=rgnmapcmp]{rgnmapcmp()}},

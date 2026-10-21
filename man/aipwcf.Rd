@@ -99,6 +99,7 @@ one fit instead of one per replicate. Rows with a missing value are left out as 
 domain (their scores count as zero in every replicate), not dropped from the design.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(2)
 n <- 800
 d <- data.frame(age = runif(n, 18, 70), income = rlnorm(n, 10, 0.5))
@@ -114,6 +115,7 @@ d <- cbind(d, reps)
 des <- svydes(d, w = "w", reps = colnames(reps))
 aipwcf(d, "wellbeing", "belong", c("age", "income"), lrn = "ols",
               des = des)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Robins JM, Rotnitzky A, Zhao LP (1994). Estimation of regression

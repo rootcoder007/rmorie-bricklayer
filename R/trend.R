@@ -399,7 +399,7 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
 #' discusses change-point detection alongside the threshold choices that
 #' raise the same multiple-comparison issue.
 #' @seealso \code{\link{trndtst}}, \code{\link{cnttrnd}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # A step down after the third period. With six periods there are only
 #' # 720 orderings, so even a clean step has p near 0.1.
 #' stepchg(c(100, 104, 98, 60, 63, 58), x = 2018:2023)

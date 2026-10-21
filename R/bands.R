@@ -393,7 +393,7 @@ bandvals <- function(bands, rule = c("midpoint", "lower", "upper",
 #'   "data.frame")} with numeric columns \code{cap} and \code{value}, and
 #'   attributes \code{span}, \code{relspan} and \code{base} (the lower
 #'   bound \eqn{b} of the open band).
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' b <- prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 #' counts <- c(1200, 430, 110, 38)
 #'

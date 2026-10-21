@@ -82,6 +82,7 @@ frame with the columns \code{check}, \code{ok} and \code{detail};
 installed.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 msg <- "`prompt` must be a single non-empty string"
 explerr(msg, pkgs = "rmoriebricklayer")
 
@@ -96,7 +97,7 @@ explerr(rows)$explanation
 
 # n must be at least 1
 try(explerr(msg, n = 0))
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # an error caught with try(), and the message as R prints it, with the call in front
 r <- try(llmcfg(no.such = 1), silent = TRUE)

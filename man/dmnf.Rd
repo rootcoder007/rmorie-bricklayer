@@ -95,6 +95,7 @@ manifest; a \code{token} that is not one non-empty string; a digest
 mismatch; a restricted table whose terms were not accepted.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Offline, against a cache folder holding a manifest and one table made
 # here (no key is stored and nothing is fetched).
 oldenv <- Sys.getenv(c("XDG_CONFIG_HOME", "MORIE_HOSTED_KEY"), unset = NA)
@@ -130,7 +131,7 @@ unlink(cache, recursive = TRUE)
 for (v in names(oldenv)) {
   if (is.na(oldenv[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(oldenv[v]))
 }
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # the real service: needs a key and the network
 dlogin(token = "sk-...")  # a key issued at www.rmorie.com/access/

@@ -39,6 +39,7 @@ plot and a PP plot per family; and the empirical survival function on log-log ax
 with each fitted survival curve, where a power law is a straight line.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(2)
 f <- dstfit(stats::rlnorm(200), nboot = 0)
 plot(f)
@@ -46,4 +47,5 @@ plot(f, which = "qq")
 plot(f, which = "pp", fams = "lognormal")
 plot(f, which = "tail")
 try(plot(f, fams = "beta"))
+\dontshow{\}) # examplesIf}
 }

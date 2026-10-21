@@ -94,6 +94,7 @@ is used (distribution points and OCSP responders named in the
 certificates); otherwise nothing is fetched.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # A small test chain shipped as hexadecimal DER: a self-signed P-256 root
 # and a leaf it issued (a throwaway test authority; trust it for nothing).
 roothex <- paste0(
@@ -142,7 +143,7 @@ r$checks[!r$checks$ok, ]
 
 # a chain must end at something you trust
 try(certchnvrf(leaf, trust = list()))
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # with revocation looked up on the network
 certchnvrf("tsa.crt", trust = "ca.crt", purp = "timeStamping",

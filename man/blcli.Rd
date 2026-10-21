@@ -208,6 +208,7 @@ SP 800-208 deployment.
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 blcli("version")
 blcli("help")
 
@@ -228,7 +229,7 @@ blcli("nonsense")
 d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 invisible(cpsrfrsh(d))
 blcli(c("verify", d))
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # these read every help page, which takes a few seconds
 blcli(c("functions", "json"))

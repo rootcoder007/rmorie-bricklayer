@@ -156,6 +156,7 @@ inside \code{expr} propagates unchanged. Nothing is written and nothing is
 fetched.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 fp <- co2fp(sum(sqrt(seq_len(2e5))), loc = "CA-ON")
 fp$enekwh$total
 fp$co2eg
@@ -174,6 +175,7 @@ fp2$enekwh
 fpeqv(fp2$co2eg)
 # a bad argument is refused before the expression runs
 try(co2fp(Sys.sleep(10), pue = 0.9))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Lannelongue, L., Grealey, J. and Inouye, M. (2021). Green

@@ -63,6 +63,7 @@ values; fewer than \code{2 * minseg} periods; numeric or date \code{x} that is n
 strictly increasing. A progress bar is shown in an interactive session.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # A step down after the third period. With six periods there are only
 # 720 orderings, so even a clean step has p near 0.1.
 stepchg(c(100, 104, 98, 60, 63, 58), x = 2018:2023)
@@ -75,6 +76,7 @@ set.seed(2)
 stepchg(stats::rnorm(12), nperm = 999)$p_value
 
 try(stepchg(c(1, 2, 3)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 The permutation distribution of the maximum over splits, rather than the

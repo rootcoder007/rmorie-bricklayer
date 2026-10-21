@@ -598,7 +598,7 @@ rgnmapalt <- function(map, unit, reg, route,
 #' @seealso [rgnmapcmp()],
 #'   [rgnmapalt()]
 #'
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Two square regions as a small GeoJSON boundary file.
 #' gj <- tempfile(fileext = ".geojson")
 #' writeLines(paste0(

@@ -54,6 +54,7 @@ finite number per period, or all equal; \code{prd} of the wrong length
 or with repeats; \code{conflvl} outside (0, 1).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 d <- read.csv(system.file("extdata", "ocj_dispositions.csv",
                           package = "rmoriebricklayer"))
 mix <- dispmix(d[, -(1:2)], prd = d$year)
@@ -69,6 +70,7 @@ dispmix(d[, -(1:2)], prd = d$year, scores = d$year)$trend[, 1:3]
 
 # outcome columns only: a text column is refused
 try(dispmix(data.frame(year = c("a", "b"), x = 1:2, y = 3:4)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Goodman, L. A. (1965). On simultaneous confidence intervals for

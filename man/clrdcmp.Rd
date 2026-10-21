@@ -89,6 +89,7 @@ them reversed in every crime category, and advise comparing clearance
 rates only within comparable mixes.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 g <- read.csv(system.file("extdata", "ocj_offence_groups.csv",
                           package = "rmoriebricklayer"))
 g <- g[g$year \%in\% c(2014, 2022), ]
@@ -106,6 +107,7 @@ toy
 
 # every part must appear in both comparisons
 try(clrdcmp(c(5, 6, 7), c(10, 10, 10), c("x", "y", "x"), c(1, 1, 2)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Simpson, E. H. (1951). The interpretation of interaction in contingency

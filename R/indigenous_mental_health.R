@@ -67,7 +67,7 @@
 #' \doi{10.25318/4110006701-eng}
 #' @seealso \code{\link{sctidy}}, \code{\link{indgap}},
 #'   \code{\link{ordcmp}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # the layout of a downloaded table: percent and number of persons, with limits for the
 #' # percent
 #' d <- data.frame(REF_DATE = "2022", GEO = "Canada",
@@ -428,7 +428,7 @@ ordcmp <- function(data, grp, cat, est, lower, upper, lvls, ref,
 #' no. 99-011-X2019001.
 #' @seealso \code{\link{agestd}} for counts of events,
 #'   \code{\link{cnsstd}}, \code{\link{indgap}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # seriously contemplated suicide in the past 12 months, 2017 (table 41-10-0021-01),
 #' # standardised to the Indigenous population's age structure (2021 Census)
 #' ages <- c("15 to 24 years", "25 to 34 years", "35 to 44 years", "45 to 54 years",
@@ -888,7 +888,7 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
 #' from Native counsellors in Canada. International Journal of Health Promotion and
 #' Education 46(2):49-56. \doi{10.1080/14635240.2008.10708129}
 #' @seealso \code{\link{welprof}}, \code{\link{dualcont}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # four domains from table 13-10-0924-01, 2019/2022, adults: which indicator stands for
 #' # each is a choice for the people whose data these are; this is one reading of it
 #' h <- indiex("health")

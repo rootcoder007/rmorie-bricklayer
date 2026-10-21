@@ -135,6 +135,7 @@ Reading a bundle whose signature records a stateful key's state warns (see
 \code{\link[=cpsatst]{cpsatst()}}).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 dir <- tempfile()
 dir.create(dir)
 write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"),
@@ -176,6 +177,7 @@ unlink(dir2, recursive = TRUE)
 # a directory that does not exist
 try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))
 unlink(dir, recursive = TRUE)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cpsatst]{cpsatst()}},

@@ -601,7 +601,7 @@ plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' Applied to a reform rolled out in four stages across judicial districts: Acosta,
 #' Mejia and Zorro Medina (2023), see \code{\link{plndid}}.
 #' @seealso \code{\link{bacondcmp}}, \code{\link{evstudy}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' s <- stgatt(p, "district", "month", "crmrate", "refmonth", reps = 99,
 #'                    seed = 1)
@@ -970,7 +970,7 @@ print.rmbl_bacon <- function(x, ...) {
 #' Applied as a placebo check on ward redistricting: Ternullo S, Zorro-Medina A,
 #' Vargas R (2024). How political dynasties concentrate advantage within cities.
 #' Social Forces 102(4):1310-1331. \doi{10.1093/sf/soae029}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' swtdid(p, "district", "month", "crmrate", "reformed", reps = 99, seed = 1)
 #' @export
@@ -1091,7 +1091,7 @@ swtdid <- function(data, unit, time, y, trtd, cl = NULL, reps = 499L, seed = NUL
 #' Applied with the four stages of a reform permuted across districts: Acosta, Mejia
 #' and Zorro Medina (2023), see \code{\link{plndid}}.
 #' @seealso \code{\link{stpdnpv}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' perminf(p, "district", "month", c("crmrate", "arrrate"),
 #'                       "refmonth",
@@ -1251,7 +1251,7 @@ stpdnpv <- function(obs, null) {
 #' Allison PD, Waterman RP (2002). Fixed-effects negative binomial regression models.
 #' Sociological Methodology 32:247-265.
 #' \doi{10.1111/1467-9531.00117}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop")
 #'

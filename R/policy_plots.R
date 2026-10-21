@@ -135,7 +135,7 @@ plot.rmbl_permutation <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' @return A data frame of class \code{rmbl_loo}: \code{dropped}, \code{estimate},
 #'   \code{se}; attribute \code{full} (the estimate with every unit). \code{plot()}
 #'   draws the histogram with the full-sample estimate and a summary.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' l <- loounit(p, "district", "month", "crmrate", "reformed")
 #' range(l$estimate)

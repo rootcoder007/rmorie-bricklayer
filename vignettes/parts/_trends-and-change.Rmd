@@ -1,0 +1,136 @@
+# Trends and change in short count series
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(rmoriebricklayer)
+```
+
+A published series is usually short: five to ten annual counts. Three questions recur. Is
+there a monotone trend? How fast is the count changing per period? Did something change at
+one point? Each has a method suited to short series, and each is wrong to answer with a
+least-squares line on five points.
+
+## A monotone trend: Mann–Kendall and Sen's slope
+
+The Mann–Kendall test counts, over all pairs of periods, how many later values exceed
+earlier ones minus how many fall below. It is distribution-free and exact for small *n*,
+so it is informative where a regression's standard error would be nearly meaningless.
+Sen's slope is the median of all pairwise slopes, a robust rate of change.
+
+```{r trends-and-change-mk}
+y <- c(402, 377, 190, 268, 331)        # five years of placements
+trndtst(y)
+```
+
+A monotone series is detected even at *n* = 5:
+
+```{r trends-and-change-mk-mono}
+trndtst(c(1, 2, 3, 4, 5))
+```
+
+One aberrant period does not create a trend:
+
+```{r trends-and-change-mk-outlier}
+trndtst(c(100, 100, 100, 100, 900))$p_value
+```
+
+From a data frame, with a direction when one is hypothesised in advance:
+
+```{r trends-and-change-mk-df}
+d <- data.frame(year = 2019:2023, n = y)
+trndtst(d, value = "n", prd = "year")$slope
+trndtst(d, value = "n", prd = "year", alt = "decreasing")$p_value
+```
+
+## The rate of change: a Poisson trend
+
+For counts, the natural model is a Poisson log-linear trend: `log E[y] = a + b * t`, so
+`exp(b)` is the **rate ratio per period**, the multiplicative change from one period to the
+next. `cnttrnd()` fits it with an interval:
+
+```{r trends-and-change-poisson}
+set.seed(3)
+y <- stats::rpois(8, lambda = 200 * 0.85^(0:7))   # falling ~15% a year
+fit <- cnttrnd(y)
+round(fit$rateratio, 3)
+```
+
+With a varying denominator the trend is in the *rate*, via an offset:
+
+```{r trends-and-change-offset}
+cnttrnd(c(20, 25, 30), offset = c(1000, 1500, 2500))$rateratio
+```
+
+Counts here rise while the rate per 1,000 falls, which is the finding.
+
+## A step change
+
+A trend test asks "is it drifting?"; a step-change test asks "did it jump once?". The best
+single split point is found by maximising the between-segment difference, and its
+significance is judged by permutation, which accounts for having searched over every
+possible split:
+
+```{r trends-and-change-step}
+stepchg(c(100, 104, 98, 60, 63, 58))
+```
+
+Pure noise still yields a best split, and it is not significant:
+
+```{r trends-and-change-step-noise}
+set.seed(2)
+stepchg(stats::rnorm(12))$p_value
+```
+
+## Two survey periods
+
+Survey tables often give only two periods, each with its confidence interval. The change between
+them has an interval of its own. `healchg()` gives it for every group and indicator at once.
+It lists wellness indicators first, reading change as Indigenous scholars of mental health read
+it, as a process of healing (Stewart 2008). Perceived mental health of adults, 2015/2018 and
+2019/2022, by Statistics Canada (table 13-10-0924-01):
+
+```{r trends-and-change-two-periods}
+h <- indiex("health")
+h <- h[h$age == "Total, 18 years and over" &
+         h$indicator == "Perceived mental health, very good or excellent", ]
+healchg(h, "group", "indicator", "period", "estimate", "lower", "upper",
+               from = "2015/2018", to = "2019/2022", qual = "quality")
+```
+
+## A pace, projected
+
+Some counts accumulate toward a fixed number: the 94 Calls to Action of the Truth and
+Reconciliation Commission, for instance. `trcprog()` takes the pace so far as a Poisson rate
+with its exact interval, and gives the year all would be complete at that pace. That is a
+description of the pace, not a forecast.
+
+```{r trends-and-change-trc-pace}
+trcprog()
+```
+
+## Choosing between them
+
+| Question | Tool | Reports |
+|---|---|---|
+| Is the series moving in one direction? | `trndtst()` | Mann–Kendall p-value, Sen's slope with interval |
+| By what factor per period? | `cnttrnd()` | rate ratio with interval, optional offset |
+| Did it change once, and when? | `stepchg()` | split point, segment means, permutation p-value |
+| Year over year, with publication rounding | `yoy()` (its own vignette) | exact intervals on each change |
+
+All of them work on the five to ten values a published table gives, and none of them
+assumes the counts are large.
+
+## The trend in a picture
+
+`plot()` draws the counts with the fitted trend.
+
+```{r trends-and-change-trend-plot, fig.width = 7, fig.height = 4.5}
+plot(fit)
+```
+
+
+## References
+
+Mann (1945). Nonparametric tests against trend. *Econometrica* 13(3).
+Kendall (1975). *Rank Correlation Methods*. 4th ed.
+Sen (1968). Estimates of the regression coefficient based on Kendall's tau. *JASA* 63(324).

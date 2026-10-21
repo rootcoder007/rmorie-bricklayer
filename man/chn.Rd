@@ -116,6 +116,7 @@ Error: a \code{chain} that does not come from \code{chnnew()} (for
 }
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 # one-time index record out of your configuration directory; leave the default in use
 ch <- chnnew()
@@ -159,6 +160,7 @@ chnhead(ch2)
 # only chains are accepted
 try(chnvrf(list(entries = list())))
 options(op)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cpssign]{cpssign()}} to sign the seal,

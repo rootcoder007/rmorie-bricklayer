@@ -443,7 +443,7 @@
 #' @return The path `file`, invisibly.
 #' @seealso [drftapp()] for the same report as a Shiny app,
 #'   [plot()][plot-methods] for the same charts in base graphics.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(5)
 #' ref <- data.frame(value = stats::rnorm(400),
 #'                   grade = sample(c("a", "b", "c"), 400, TRUE))

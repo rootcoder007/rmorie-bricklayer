@@ -101,6 +101,7 @@ path; \code{title} not one
 string; \code{warn} above \code{fail}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(5)
 ref <- data.frame(value = stats::rnorm(400),
                   grade = sample(c("a", "b", "c"), 400, TRUE))
@@ -115,6 +116,7 @@ file.exists(f)
 drfthtml(d, f, warn = 0.02, fail = 0.05)
 unlink(f)
 try(drfthtml(list(), f))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=drftapp]{drftapp()}} for the same report as a Shiny app,

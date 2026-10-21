@@ -72,10 +72,12 @@ index, and never as a measure of the wellness of First Nations, Metis or Inuit p
 as they define it (see \code{\link{cwbscr}}).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- cnsprof(indiex("censuspop"))
 h <- cnsprof(indiex("censushh"))
 cnscwb(p, h)[, c("geo", "group", "income", "education", "housing", "labour",
                      "cwb")]
+\dontshow{\}) # examplesIf}
 }
 \references{
 Indigenous Services Canada (2019). Report on trends in First Nations

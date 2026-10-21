@@ -53,12 +53,14 @@ general methods draw the same figures with other parameters:
 \code{plot(datumpmap(...), view = )}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 head(srchfig())
 srchfig("3-4")
 srchfig(5, 8)
 d <- srchfig("6-3")
 head(d)
 try(srchfig("9-9"))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Frost, J. R. (1996). The Theory of Search: A Simplified

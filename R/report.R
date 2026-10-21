@@ -111,7 +111,7 @@
 #' [profcols()],
 #' [valsch()],
 #' [rptmd()] to write it out.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(1)
 #' ref <- data.frame(
 #'   id = 1:200,

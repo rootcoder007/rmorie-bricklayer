@@ -602,6 +602,7 @@ pictures that show a Simpson's-paradox reversal and why it happened.}
 }
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 sf <- stkflow(days = c(13500, 14600, 15100), people = c(300, 320, 310),
                  prd = 2021:2023)
 plot(sf)
@@ -704,4 +705,5 @@ plot(lagrprt(200, 0, 0, 1, 0.5, 1, 1, 1, 20,
                           grid = c(-10, 40, -15, 25, 10, 8)))
 plot(plmfld(q = 100, u = 5, h = 50, x = seq(100, 2000, by = 100),
                  y = seq(-300, 300, by = 50)))
+\dontshow{\}) # examplesIf}
 }

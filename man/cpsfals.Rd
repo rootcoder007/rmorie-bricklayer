@@ -97,6 +97,7 @@ given, the placebo data or the noise-augmented data; \code{n} below 9;
 \code{data}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 d <- data.frame(x = rnorm(200))
 d$y <- 0.8 * d$x + rnorm(200)
@@ -116,6 +117,7 @@ fit$controls[, c("control", "passed")]
 
 # the statistic must return one finite number
 try(cpsfals(d, function(z) c(1, 2), n = 49))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cpspwr]{cpspwr()}} for the positive control

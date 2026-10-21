@@ -38,6 +38,7 @@ row with \code{route = "settings"} and \code{status = "unreadable"},
 with the reason and the command that moves the file aside.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST",
                     "MORIE_LLM_BASE_URL", "MORIE_LLM_MODEL"),
                   unset = NA)
@@ -53,6 +54,7 @@ llmstat()[1, ]
 for (v in names(old)) {
   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 }
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{llmrte}} for the one route a

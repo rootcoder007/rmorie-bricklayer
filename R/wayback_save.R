@@ -348,7 +348,7 @@
 #'   server refuses the Internet Archive (\code{"cannot find"} although the page is
 #'   there); \code{rmbl wayback FILE}
 #'   runs this from the command line.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # The checks run before any request, so these need no network or keys:
 #' try(wbsave("ftp://example.org/report.pdf"))
 #' try(wbsave("https://example.org/", ak = "abc", sk = "def",

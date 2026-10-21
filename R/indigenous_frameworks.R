@@ -303,7 +303,7 @@ cwbscr <- function(incpercap, highsch20p, uni25p, notcro, nomajrep,
 #' interconnected. Research in the Sociology of Health Care 34:85-96.
 #' \doi{10.1108/s0275-495920160000034005}
 #' @seealso \code{\link{dualcont}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # across regions, 2022 (table 41-10-0067-01): where First Nations people report
 #' # excellent or
 #' # very good mental health, do Metis people living in the same region too?

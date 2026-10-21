@@ -58,6 +58,7 @@ is not a single non-negative whole number, an estimator that is not a
 function, and the estimator's own errors on the full sample.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 d <- data.frame(x1 = rnorm(200), x2 = rnorm(200))
 d$exposure <- 20 + 2 * d$x1 + rnorm(200)
@@ -78,6 +79,7 @@ exprspplr(d, "asthma", "exposure", c("x1", "x2"),
 
 # Fewer than 10 resamples cannot give an interval.
 try(exprspplr(d, "asthma", "exposure", c("x1", "x2"), nboot = 5))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Efron, B. and Tibshirani, R. J. (1993). An Introduction to the

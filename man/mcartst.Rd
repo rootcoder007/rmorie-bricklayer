@@ -98,6 +98,7 @@ inverted. Non-numeric columns are dropped with a warning.
 }
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 n <- 300
 x <- stats::rnorm(n)
@@ -127,6 +128,7 @@ try(mcartst(dup))
 # column means and the ML (1/n) covariance.
 fit <- mcartst(data.frame(a = x, b = y))
 all.equal(fit$mu, c(mean(x), mean(y)), check.attributes = FALSE)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Little RJA (1988). A test of missing completely at random

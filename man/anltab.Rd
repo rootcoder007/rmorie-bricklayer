@@ -147,6 +147,7 @@ functions called (for example
 negative counts in \code{\link[=yoy]{yoy()}}).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 path <- system.file("extdata", "otis_a01_individuals.csv",
                     package = "rmoriebricklayer")
 otis <- read.csv(path)
@@ -170,6 +171,7 @@ r$ratechg[, c("site", "year", "rate", "rateratio", "padj")]
 
 # a column that is not in the data is an error
 try(anltab(otis, value = "count", prd = "year"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=rptanl]{rptanl()}} writes the result as a

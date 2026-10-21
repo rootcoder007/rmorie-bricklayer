@@ -1,0 +1,175 @@
+# Attestations, signed bundles and tamper-evident chains
+
+```{r, include = FALSE}
+# the one-time index record of this vignette stays out of the reader's configuration directory
+options(rmoriebricklayer.xmssidxfile = tempfile())
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(rmoriebricklayer)
+```
+
+The *Building reproducible data capsules* vignette shows how a capsule pins data and
+describes it in a manifest. This one covers the three ways of putting a signature on that
+work so a reader can check it: an **attestation** of a manifest, a **bundle** of a whole
+capsule directory, and a **chain** that makes a sequence of manifests tamper-evident.
+
+## Attesting a manifest
+
+An attestation binds a signature to a manifest *and* to what the manifest covers, with an
+optional note from the person signing:
+
+```{r attestations-bundles-chains-attest}
+m <- mkmnf(list(dataset = "otis", rows = 1200L), env = FALSE)
+key <- fipskg("ML-DSA-65")
+att <- cpsatst(m, key, note = "counts as published")
+
+res <- cpschkatst(att, m)
+res$ok
+res$checks
+```
+
+A verifier needs the attestation and the manifest, nothing else. Any change to the manifest
+breaks it, and so does presenting a different key:
+
+```{r attestations-bundles-chains-attest-break}
+m2 <- m
+m2$meta$rows <- 1201L
+cpschkatst(att, m2)$ok
+
+cpschkatst(att, m, keyexp = fipskg("ML-DSA-65")$public)$ok
+```
+
+`keyexp` is how a reader pins the signer: the attestation carries the public key that
+made it, but a reader who knows which key to expect should say so, or any key would do.
+
+## Bundling a capsule
+
+A bundle is one signed artifact covering a directory: every file is hashed (hidden files
+included), the hashes and the manifest are signed, and the bundle verifies against the
+directory later:
+
+```{r attestations-bundles-chains-bundle}
+dir <- tempfile()
+dir.create(dir)
+write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"), row.names = FALSE)
+m <- mkmnf(list(dataset = "demo"), env = FALSE)
+key <- fipskg("ML-DSA-44")
+
+b <- cpsbndl(dir, m, key, note = "as published")
+cpsbndlvrf(attr(b, "path"), dir, man = m)$ok
+```
+
+Touch a byte of the data and the bundle no longer holds; the result names the file:
+
+```{r attestations-bundles-chains-bundle-break}
+write.csv(data.frame(x = 1:4), file.path(dir, "data.csv"), row.names = FALSE)
+v <- cpsbndlvrf(attr(b, "path"), dir, man = m)
+v$ok
+```
+
+```{r attestations-bundles-chains-bundle-read}
+cpsbndlrd(attr(b, "path"))$attestation$note
+unlink(dir, recursive = TRUE)
+```
+
+## A chain of manifests
+
+A per-manifest signature proves each manifest is intact but says nothing about the
+*sequence*: a run could be deleted from the middle of a series, or two swapped, and every
+remaining signature would still verify. A hash chain links each entry to the one before it,
+so deletion, insertion and reordering all break it:
+
+```{r attestations-bundles-chains-chain}
+ch <- chnnew()
+ch <- chnapp(ch, "manifest for run 1", label = "run-1")
+ch <- chnapp(ch, "manifest for run 2", label = "run-2")
+ch <- chnapp(ch, "manifest for run 3", label = "run-3")
+chnvrf(ch)$valid
+```
+
+Editing an entry breaks the chain and names where:
+
+```{r attestations-bundles-chains-chain-edit}
+edited <- ch
+edited$entries[[2]]$digest <- csha256("something else")
+chnvrf(edited)$valid
+chnvrf(edited)$broken_at
+```
+
+Deleting one breaks it too, which a per-manifest digest would never catch:
+
+```{r attestations-bundles-chains-chain-drop}
+dropped <- ch
+dropped$entries[[2]] <- NULL
+chnvrf(dropped)$valid
+```
+
+### Sealing the chain
+
+The seal covers the links *and the length* together, so one signature over the seal fixes
+the whole history. Truncating the chain still seals, but to a different value:
+
+```{r attestations-bundles-chains-seal}
+key <- fipskg("ML-DSA-44")
+sig <- cpssign(chnseal(ch), key)
+cpsvrf(chnseal(ch), sig, fipspubkey(key))
+
+truncated <- ch
+truncated$entries[[3]] <- NULL
+cpsvrf(chnseal(truncated), sig, fipspubkey(key))
+```
+
+A chain whose links disagree has no seal to present at all:
+
+```{r attestations-bundles-chains-seal-none}
+chnseal(dropped)
+```
+
+## Which to use
+
+* One manifest, one signer: `cpsatst()`.
+* A directory of files that must travel together: `cpsbndl()`.
+* A series of runs, releases or data refreshes where order and completeness matter:
+  `chnapp()` after each, sign `chnseal()` at each release.
+
+All three accept any signing key the package knows: ML-DSA and SLH-DSA (`fipskg()`)
+or XMSS (`pqckg()`, with the key state carried forward). A shared secret from
+`drvkey()` is for keyed digests (`chmac()`), not for attestations: an
+attestation names a public key, and a shared secret has none.
+
+
+## Releases of Indigenous health tables
+
+A chain fits data a community needs to be able to trust release after release. Here each
+link pins one of the Statistics Canada tables on Indigenous health bundled with the
+package, so a later reader can tell whether any release was altered or dropped:
+
+```{r attestations-bundles-chains-indigenous-chain}
+ch <- chnnew()
+for (nm in c("health", "mentalhealth", "wellbeing")) {
+  d <- indiex(nm)
+  ch <- chnapp(ch, list(table = nm, rows = nrow(d), sha256 = dgstobj(d)),
+                     label = nm)
+}
+chnvrf(ch)$valid
+```
+
+## The table in a picture
+
+The chain and the bundle above record this table, one indicator per release. Its estimates and
+intervals, drawn here for the first indicator, are what a reader sees after verification.
+
+```{r attestations-bundles-chains-chain-table-plot, fig.width = 7, fig.height = 4.5}
+ci_plot <- function(t, lab, main) {
+  o <- order(t$estimate)
+  t <- t[o, ]
+  y <- seq_len(nrow(t))
+  op <- par(mar = c(4, 10, 3, 1))
+  on.exit(par(op))
+  plot(t$estimate, y, xlim = range(t$lower, t$upper, na.rm = TRUE), yaxt = "n", pch = 19,
+       col = blpal()[1], xlab = "estimate and 95% interval", ylab = "", main = main)
+  segments(t$lower, y, t$upper, y, col = blpal()[1])
+  axis(2, y, lab[o], las = 1, cex.axis = 0.7)
+}
+t1 <- d[d$indicator == d$indicator[1], ]
+ci_plot(t1, t1$group, t1$indicator[1])
+```

@@ -90,6 +90,7 @@ family or one the data do not allow. The bootstrap is seeded with \code{seed} fo
 this call only; the session's random stream is left as it was.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 x <- stats::rgamma(300, shape = 2, rate = 0.5)
 f <- dstfit(x, nboot = 20)
@@ -102,6 +103,7 @@ dstfit(n, nboot = 0)$table[, c("family", "aic")]
 
 # a family the data do not allow
 try(dstfit(c(-1, 2, 3, 4, 5), fams = "gamma"))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Hill BM (1975). A simple general approach to inference about the tail of

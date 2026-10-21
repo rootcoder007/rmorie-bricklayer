@@ -107,6 +107,7 @@ so small that \eqn{1/(n+1) > \alpha}, so that nothing could ever be
 detected.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 d <- data.frame(x = rnorm(120), y = rnorm(120))
 # inject a linear effect of x on y
@@ -137,6 +138,7 @@ cpspwr(d, function(z) cor(z$x, z$y), inj2, sizes = c(0.1, 0.2),
 
 # too few permutations to ever reach alpha = 0.05
 try(cpspwr(d, function(z) cor(z$x, z$y), inj, trt = "x", n = 9))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cpsfals]{cpsfals()}} for the

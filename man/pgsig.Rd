@@ -228,6 +228,7 @@ empty cells so the plume of interest stays inside the ring.
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # plume widths 1 km downwind: neutral, then very stable, rural and urban
 pgsig(1000, "D")
 pgsig(c(500, 1000, 2000), "F", set = "urban")
@@ -266,6 +267,7 @@ c(p$mean_x, p$meany)
 try(pgsig(100, "G"))
 try(briggs(100, u = 4, diam = 1, exitvel = 12,
                       stktmp = 150 + 5, ambtmp = 20))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Briggs, G. A. (1973). Diffusion estimation for small emissions.

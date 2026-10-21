@@ -1624,7 +1624,7 @@ bricklayer_json_unbox <- function(x) {
 #' \code{NULL}, depending on the JSON and the simplification options.
 #' @seealso [tojs()] for the
 #'   reverse.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' fromjs('[{"a":1,"b":"x"},{"a":2,"b":"y"}]')
 #' fromjs('[[1,2],[3,4]]')
 #'

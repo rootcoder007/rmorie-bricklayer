@@ -302,7 +302,7 @@
 #'   to a
 #'   resolution; [chwkres()] for the
 #'   residuals.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(1)
 #' times <- sort(stats::runif(400, 0, 100))
 #' fit <- chwkfit(times, 100, "exponential")

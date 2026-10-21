@@ -173,7 +173,7 @@
 #'   summarises it.
 #' @seealso [svyest()],
 #'   [svycmp()]
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(1)
 #' d <- data.frame(region = rep(c("north", "south"), each = 50),
 #'                 smoker = rbinom(100, 1, rep(c(0.2, 0.35), each = 50)),

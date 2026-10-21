@@ -187,6 +187,7 @@ yoy: pct_change -> pctchg, pp_change -> ppchg, min_base -> minbase, pct_lower ->
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # what a 0.5.x name became, and its 1.0.0 help page (the first lines)
 out <- character()
 blcli(c("describe", "admissions"), out = function(...) out <<- c(out, paste0(...)))
@@ -199,5 +200,6 @@ rate_change(data.frame(year = 2023:2024, n = c(10, 14), pop = 1000), count = "n"
 share(c(a = 3, b = 7))
 y <- yoy(data.frame(year = 2021:2024, n = c(10, 12, 9, 15)), value = "n", period = "year")
 yoy_summary(y)
+\dontshow{\}) # examplesIf}
 }
 \keyword{internal}

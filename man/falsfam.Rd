@@ -66,6 +66,7 @@ is unnamed; a member without a permutation p-value; a missing p-value; a
 p-value outside \eqn{[0, 1]}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # four statistics, one of which is real
 set.seed(1)
 d <- data.frame(x = rnorm(150))
@@ -89,6 +90,7 @@ falsfam(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5))$results
 falsfam(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5), meth = "bh")$results
 
 try(falsfam(c(a = 0.01, b = 1.2)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cpsfals]{cpsfals()}},

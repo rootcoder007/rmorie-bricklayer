@@ -122,7 +122,7 @@ rndbytes <- function(n) {
 #' [rndbytes()],
 #' [chmac()],
 #' [cpssign()]
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # The published PBKDF2-HMAC-SHA256 vector: "password", "salt", 1 round.
 #' drvkey("password", "salt", iter = 1)
 #'

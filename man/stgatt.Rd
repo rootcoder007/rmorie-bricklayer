@@ -106,12 +106,14 @@ times and everything recomputed; intervals are normal with the bootstrap standar
 error.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- polex()
 s <- stgatt(p, "district", "month", "crmrate", "refmonth", reps = 99,
                    seed = 1)
 s$overall
 head(s$dynamic)
 plot(s)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Callaway B, Sant'Anna PHC (2021). Difference-in-differences with

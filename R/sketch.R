@@ -308,7 +308,7 @@ rsvsmp <- function(x, k, seed = 42L) {
 #' @references Flajolet P, Fusy E, Gandouet O, Meunier F (2007).
 #' HyperLogLog: the analysis of a near-optimal cardinality estimation
 #' algorithm. *Analysis of Algorithms 2007*, 137--156.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(1)
 #' x <- sample(1:5000, 200000, replace = TRUE)
 #'

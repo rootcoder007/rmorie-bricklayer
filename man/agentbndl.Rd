@@ -52,6 +52,7 @@ and errors raised by \code{\link[=llmask]{llmask()}}.
 agentbndl("scaffold a bundle for analysis.R from the Toronto CKAN data")
 agentbndl("sign and verify my capsule", route = "ollama")
 \dontshow{\}) # examplesIf}
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 
 # With every route switched off (no key in the environment and no saved
 # settings: the settings folder is pointed at an empty one) the call returns
@@ -70,4 +71,5 @@ for (v in keys) {
 # argument errors come first
 try(agentbndl(""))
 try(agentbndl("plan a bundle", route = "hosted"))
+\dontshow{\}) # examplesIf}
 }

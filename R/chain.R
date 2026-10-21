@@ -102,7 +102,7 @@
 #' [cpssign()] to sign the seal,
 #' [mrkroot()] for pinning the contents of
 #' one capsule rather than a history.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 #' # one-time index record out of your configuration directory; leave the default in use
 #' ch <- chnnew()

@@ -129,6 +129,7 @@ below \code{poll}; \code{permin} outside (0, 60];
 cannot be written.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # The checks run before any request, so these need no network or keys:
 try(wbsave("ftp://example.org/report.pdf"))
 try(wbsave("https://example.org/", ak = "abc", sk = "def",
@@ -137,7 +138,7 @@ try(wbsave("https://example.org/", ak = "abc", sk = "def",
                  output = file.path(tempdir(), "no-such-folder", "runs.jsonl")))
 
 # A real run needs archive.org keys and the network.
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 Sys.setenv(IA_S3_ACCESS_KEY_FILE = "~/.config/ia/s3_access_key.txt",
            IA_S3_SECRET_KEY_FILE = "~/.config/ia/s3_secret_key.txt")

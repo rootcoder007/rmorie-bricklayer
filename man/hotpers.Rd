@@ -88,6 +88,7 @@ coordinates outside the degree ranges with \code{coords = "lonlat"}; fewer
 than two usable incidents.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
                           package = "rmoriebricklayer"))
 b <- b[!is.na(b$lon), ]
@@ -110,4 +111,5 @@ hotpers(stats::runif(200, 0, 10), stats::runif(200, 0, 10),
 
 # a share of zero hot cells is refused
 try(hotpers(b$lon, b$lat, q, top = 0))
+\dontshow{\}) # examplesIf}
 }

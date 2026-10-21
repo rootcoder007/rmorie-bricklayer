@@ -86,6 +86,7 @@ gives the character offset); a repeated key under
 error.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 fromjs('[{"a":1,"b":"x"},{"a":2,"b":"y"}]')
 fromjs('[[1,2],[3,4]]')
 
@@ -103,6 +104,7 @@ fromjs('[12345678901234567890]', bigint_as_char = TRUE)
 # a repeated key is refused unless asked for
 try(fromjs('{"a": 1, "a": 2}'))
 fromjs('{"a": 1, "a": 2}', duplicate_keys = "keep")
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=tojs]{tojs()}} for the

@@ -76,6 +76,7 @@ fixed-effects negative binomial, which behaves well as the number of periods gro
 consistent whatever the dispersion.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- polex()
 plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop")
 
@@ -83,6 +84,7 @@ plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop")
 # to the Poisson fit and says so
 plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop",
            family = "negbin")
+\dontshow{\}) # examplesIf}
 }
 \references{
 Wooldridge JM (1999). Distribution-free estimation of some nonlinear

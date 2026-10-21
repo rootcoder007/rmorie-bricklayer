@@ -35,6 +35,7 @@ in it is an error. A server that speaks the OpenAI format but is not in
 the table is used as your own endpoint (\code{MORIE_LLM_BASE_URL}).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- llmprvd()
 p[, c("id", "key_env", "key_set")]
 
@@ -43,6 +44,7 @@ p[p$api != "openai", c("id", "api", "base")]
 
 # providers with a default model
 p[!is.na(p$default_model), c("id", "default_model")]
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{llmstat}}, \code{\link{llmrte}}.

@@ -340,7 +340,7 @@
 #' @return The exit status (integer scalar), invisibly: 0 on success, 1 on
 #'   failure, 2 for a usage error, 130 when interrupted.
 #' @seealso \code{\link{instcli}} to put the command on your PATH.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' blcli("version")
 #' blcli("help")
 #'

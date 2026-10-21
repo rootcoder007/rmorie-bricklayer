@@ -62,6 +62,7 @@ the step outputs of the rmbl action as a named list (print each as
 \code{name=value} to \code{$GITHUB_OUTPUT}).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 root <- tempfile("capsules-")
 d <- usecpstmpl(file.path(root, "one"), ex = TRUE)
 invisible(cpsrfrsh(d))
@@ -77,6 +78,7 @@ o <- ghout(x)
 cat(sprintf("\%s=\%s\n", names(o), unlist(o)), sep = "")
 
 try(ghann(list()))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{cpschk}}.

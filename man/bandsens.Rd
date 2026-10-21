@@ -62,6 +62,7 @@ Errors: \code{cnts} not numeric or of a different length from the
 bands; no open top band.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 b <- prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 counts <- c(1200, 430, 110, 38)
 
@@ -75,4 +76,5 @@ bandsens(b, counts, stat = mean, caps = c(12, 20, 50))
 
 # nothing to vary without an open band
 try(bandsens(c("1", "2 to 5"), c(10, 4)))
+\dontshow{\}) # examplesIf}
 }

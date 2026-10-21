@@ -166,6 +166,7 @@ Errors: \code{path} is not a directory; a bad argument. A capsule whose
 checks stop is one failed row, not an error.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 root <- tempfile("capsules-")
 d <- usecpstmpl(file.path(root, "one"), ex = TRUE)
 invisible(cpsrfrsh(d))
@@ -187,6 +188,7 @@ cpschk(root, "drift", psiwarn = 0.05, fp = FALSE)$status
 
 try(cpschk(tempfile()))
 try(cpschk(root, psiwarn = 1))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{blcli}} (the verbs), \code{\link{ghann}},

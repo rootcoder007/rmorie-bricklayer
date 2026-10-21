@@ -68,6 +68,7 @@ negative or infinite value, or a length other than \code{recv}'s;
 outside (0, 1).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",
                           package = "rmoriebricklayer"))
 cf <- caseflow(f$received, f$disposed, pend = f$pending, prd = f$month)
@@ -80,6 +81,7 @@ head(as.data.frame(cq)[, c("period", "clearance", "rolclr", "cumnet")])
 
 # one value per period in every count
 try(caseflow(c(100, 120, 90), c(95, 130)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Ostrom, B. J. and Hanson, R. A. (1999). \emph{Efficiency, Timeliness,

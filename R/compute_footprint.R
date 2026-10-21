@@ -598,7 +598,7 @@ raplok <- function(rapldir = "/sys/class/powercap") {
 #'   \doi{10.5281/zenodo.4658424}. Lacoste, A., Luccioni, A., Schmidt, V. and
 #'   Dandres, T. (2019). Quantifying the carbon emissions of machine learning.
 #'   arXiv:1910.09700.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' fp <- co2fp(sum(sqrt(seq_len(2e5))), loc = "CA-ON")
 #' fp$enekwh$total
 #' fp$co2eg

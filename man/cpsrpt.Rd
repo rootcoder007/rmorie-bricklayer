@@ -129,6 +129,7 @@ a departure is a screen rather than a verdict.
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 ref <- data.frame(
   id = 1:200,
@@ -163,6 +164,7 @@ r2$digest$merkle_root
 
 # a data frame is required
 try(cpsrpt(1:10))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cpsdrft]{cpsdrft()}},

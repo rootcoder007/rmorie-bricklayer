@@ -226,6 +226,7 @@ sweep widths, spacings and standard deviations positive, probabilities in
 and datum types are errors.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # inverse cube detection 0.5, 1 and 2 sweep widths off the track
 ltrlrng(c(0.5, 1, 2), W = 1)
 plot(ltrlrng(seq(-3, 3, by = 0.5), W = 2))
@@ -266,6 +267,7 @@ optcrcsrch(sigma = 2, W = 1, effort = 30)$pos
 # inputs that cannot be right are refused
 try(ltrlrng(1, W = -1))
 try(srchscs(c(0.8, 0.8), c(0.5, 0.5)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Koopman, B. O. (1946). Search and Screening. OEG Report 56,

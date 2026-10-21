@@ -93,6 +93,7 @@ See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # four domains from table 13-10-0924-01, 2019/2022, adults: which indicator stands for
 # each is a choice for the people whose data these are; this is one reading of it
 h <- indiex("health")
@@ -112,6 +113,7 @@ plot(hb)
 holbal(d, "group", "domain", "estimate", "lower", "upper",
                  qual = "quality",
                  w = c(physical = 1, mental = 1, emotional = 1, community = 2))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Atkinson AB (1970). On the measurement of inequality. Journal of Economic

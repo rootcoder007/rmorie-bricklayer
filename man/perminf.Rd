@@ -73,10 +73,12 @@ A placebo date is the same analysis with \code{ftreat} moved earlier, on the
 periods before the real adoption.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- polex()
 perminf(p, "district", "month", c("crmrate", "arrrate"),
                       "refmonth",
                       cl = "region", reps = 199, seed = 3)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Fisher RA (1935). The Design of Experiments. Oliver and Boyd,

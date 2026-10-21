@@ -122,6 +122,7 @@ or \code{\link[=pqckg]{pqckg()}} and not a non-empty string or raw vector; an in
 verify is a failed row, not an error.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 m <- mkmnf(list(dataset = "otis", rows = 1200L),
   env = FALSE
 )
@@ -161,6 +162,7 @@ cpschkatst(att3, m, key = "another-secret")$checks[, c("check", "ok", "detail")]
 
 # a key that is not a signing key is refused
 try(cpsatst(m, 42))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cpssign]{cpssign()}},

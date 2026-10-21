@@ -78,7 +78,7 @@
 #'     \item{\code{ncells}, \code{hotk}}{the number of ever-active cells and
 #'       \eqn{k}.}
 #'   }
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
 #'                           package = "rmoriebricklayer"))
 #' b <- b[!is.na(b$lon), ]

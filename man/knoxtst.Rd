@@ -81,6 +81,7 @@ incidents. With \code{seed} the random number stream is set for the call
 and restored afterwards.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
                           package = "rmoriebricklayer"))
 b <- b[!is.na(b$lon), ]
@@ -99,6 +100,7 @@ kp
 
 # bands must increase
 try(knoxtst(b$lon, b$lat, as.Date(b$occ_date), c(400, 100), c(7, 14)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Knox, E. G. (1964). The detection of space-time interactions.

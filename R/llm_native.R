@@ -961,7 +961,7 @@ llmmdls <- function(route = NULL, tmout = 15) {
 #'   chosen, \code{NA} when the provider has no default) and \code{key_set}
 #'   (logical, whether a key is set here).
 #' @seealso \code{\link{llmstat}}, \code{\link{llmrte}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- llmprvd()
 #' p[, c("id", "key_env", "key_set")]
 #'
@@ -1304,7 +1304,7 @@ llmprvd <- function() {
 #' @seealso \code{\link{llmchat}} for a conversation without the
 #'   help; \code{\link{llmstat}} and
 #'   \code{\link{llmrte}} to see where a question would go.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST"), unset = NA)
 #' Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
 #'
@@ -1801,7 +1801,7 @@ dlogout <- function() {
 #'   (the address and model, or what to set up).
 #' @seealso \code{\link{llmrte}} for the one route a
 #'   question would take; \code{\link{llmprvd}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST",
 #'                     "MORIE_LLM_BASE_URL", "MORIE_LLM_MODEL"),
 #'                   unset = NA)

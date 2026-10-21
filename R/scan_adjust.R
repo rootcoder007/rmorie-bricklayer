@@ -235,7 +235,7 @@ scanadj <- function(x, meth = "BH", alpha = 0.05) {
 #'   false-alarm rate at `alpha`). The print method lists the columns that
 #'   fired.
 #' @seealso \code{\link{cpsdrft}}, \code{\link{scanadj}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(1)
 #' d <- data.frame(a = rnorm(400), b = sample(letters[1:4], 400, TRUE))
 #' drftcal(d, n = 10)

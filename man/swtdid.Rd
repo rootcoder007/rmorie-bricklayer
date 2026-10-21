@@ -61,8 +61,10 @@ come from the cluster bootstrap. Unlike the two-way estimator, \eqn{DID_M} never
 uses a unit whose treatment changed as a control in the period it changed.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- polex()
 swtdid(p, "district", "month", "crmrate", "reformed", reps = 99, seed = 1)
+\dontshow{\}) # examplesIf}
 }
 \references{
 de Chaisemartin C, D'Haultfoeuille X (2020). Two-way fixed effects

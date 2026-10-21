@@ -72,6 +72,7 @@ length \eqn{2^p}; registers that are not whole numbers from 0 to 64; two
 sketches of different sizes.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 x <- sample(1:5000, 200000, replace = TRUE)
 
@@ -100,6 +101,7 @@ dstncnt(dstnskch(x, p = 8))
 
 # sketches of different sizes cannot be merged
 try(skchmrg(dstnskch(1:10, p = 4), dstnskch(1:10, p = 5)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Flajolet P, Fusy E, Gandouet O, Meunier F (2007).

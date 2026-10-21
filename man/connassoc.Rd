@@ -79,6 +79,7 @@ See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # across regions, 2022 (table 41-10-0067-01): where First Nations people report
 # excellent or
 # very good mental health, do Metis people living in the same region too?
@@ -92,6 +93,7 @@ ca <- connassoc(d, "region", "estimatefn", "estimateme", "lowerfn",
                              "lowerme", "upperme")
 ca
 plot(ca)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Mashford-Pringle A, Stewart SL (2019). Akiikaa (it is the land): exploring

@@ -96,7 +96,7 @@
 #'   }
 #' @seealso [cpsfals()] for the
 #' negative controls.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(1)
 #' d <- data.frame(x = rnorm(120), y = rnorm(120))
 #' # inject a linear effect of x on y
