@@ -48,7 +48,7 @@ things kept going wrong in many cases, and a checksum alone catches none of them
   Black people in Toronto as 30 to 58 times as likely as White people to face police use of
   force; its 2023 correction gives 4 to 5 times, because four race codes had been rotated between
   two statistical programs. The package relabels only by a named map, never by position, and can
-  say which rotation reproduces a set of published ratios (`vignette("describing-data-and-tables")`).
+  say which rotation reproduces a set of published ratios (`vignette("categorical-integrity")`).
 
 ## How I use it
 
@@ -83,7 +83,7 @@ the numbers moved as a whole; on a table of 15 rows they will not notice a chang
 cells, which is why the capsule keeps both.
 
 A capsule does this for every source of an analysis at once; `usecpstmpl()` starts one and
-`vignette("capsules-and-provenance")` walks through it.
+`vignette("capsules")` walks through it.
 
 ## What it does
 
@@ -94,15 +94,17 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   there is an exposure, and a drift screen against the prior capsule;
   `rptanl()` writes it as Markdown or one HTML file and
   `usecpstmpl()` starts a capsule that runs as written. Start
-  with `vignette("capsules-and-provenance")`.
-  The other guides: `vignette("integrity-and-cryptography")`,
-  `vignette("describing-data-and-tables")`, `vignette("statistical-methods")` and
-  `vignette("applied-analyses")`,
+  with `vignette("getting-started")`.
+  Topic guides: `vignette("post-quantum-signatures")`, `vignette("key-encapsulation")`,
+  `vignette("side-channel-assurance")`, `vignette("hawkes-processes")`,
+  `vignette("small-area-rates")`, `vignette("trends-and-change")`,
+  `vignette("stock-and-flow")`, `vignette("air-pollution-and-health")`,
+  `vignette("plotting-results")` and the rest,
   grouped by topic on the package website.
 - **A dashboard on your own machine** — `rmblapp()` (or `rmbl app [PATH]`) opens forms over the
   analysis families: load a CSV file, a capsule or a data.rmorie.com table, run an analysis, see
   the package's plot and the exact R call it ran, and gather the results into one HTML page,
-  Markdown or a GitHub comment. Needs shiny; `vignette("capsules-and-provenance")`.
+  Markdown or a GitHub comment. Needs shiny; `vignette("dashboard")`.
 - **Distributions and plots** — `dstfit()` fits and ranks candidate distributions by maximum
   likelihood (continuous, proportions and counts with zero inflation), with bootstrap intervals,
   a Hill tail index and density, QQ, PP and tail plots; `mksyncol(list(type = "fitted"))` draws
@@ -245,7 +247,7 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   `blpal()` for colour-blind-safe colours. `plmfld()`
   evaluates a plume on a grid for the image; `plotlrnz()` and
   `plotfnl()` cover the results that are plain data frames. Every
-  method returns the numbers it drew. `vignette("describing-data-and-tables")`.
+  method returns the numbers it drew. `vignette("plotting-results")`.
 - **Archiving in bulk** — `wbsave()` (and `rmbl wayback FILE`) saves many
   URLs in the Wayback Machine with archive.org's Save Page Now 2 API and your
   S3-like keys: captures in flight at once but started no faster than
@@ -267,7 +269,7 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   and `knoxtst()` (near-repeat space-time clustering, exact expectations,
   permutation p-values). Each has a plot. Real Ontario Court of Justice and
   Toronto Police Service excerpts ship in `inst/extdata` (`?justice-data`);
-  `vignette("applied-analyses")`.
+  `vignette("courts-and-crime")`.
 - **Search and rescue** — `ltrlrng()` (lateral range curves: inverse
   cube, definite range, M-Beta), `swpwdth()` (sweep width),
   `srchpod()` and `pswppod()` (probability of detection from coverage,
@@ -277,7 +279,7 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   (Koopman's and Stone's optimal effort), `optsqr()` (the optimal search
   square for a point datum, one search or a series). Each result prints and
   plots, and `srchfig()` draws every figure of Frost's *The Theory of
-  Search* (1996) from them; `vignette("applied-analyses")`.
+  Search* (1996) from them; `vignette("search-and-rescue")`.
 - **Evaluating a policy** — `plndid()` (two-way fixed effects with
   cluster-robust errors), `evstudy()` (leads, lags and the pre-trend
   test), `stgatt()` (Callaway-Sant'Anna and Wooldridge),
@@ -286,7 +288,7 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   `plnpois()`, `synctl()`; and `sevidx()`,
   `piperate()`, `cmlrisk()`, `bufasgn()` for justice
   data. Each matches the reference implementation;
-  `vignette("statistical-methods")`.
+  `vignette("policy-evaluation")`.
 - **First Nations, Metis and Inuit health, mental health and wellness** —
   distinctions-based methods for Statistics Canada's published tables:
   - `sctidy()` and `scests()` read every layout of limit,
@@ -313,7 +315,7 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   Each has a plot. Data governance follows OCAP® and CARE. Eight published
   excerpts ship in `inst/extdata` (`?indiex`), and
   `indtabs()` lists the 233 mirrored tables;
-  `vignette("applied-analyses")`.
+  `vignette("first-nations-metis-inuit-health")`.
 - **Complex surveys** — `svydes()` (replicate weights: bootstrap,
   mean bootstrap, JK1, JKn, BRR and Fay's BRR; or strata, PSUs and a finite
   population correction for Taylor linearization), `svyest()`
@@ -321,7 +323,7 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   for every subgroup, Wilson intervals at SAS's modified effective sample size,
   and small domains flagged, not withheld) and `svycmp()` (domain
   differences with the design covariance). Matches the `survey` package;
-  `vignette("statistical-methods")` reproduces Health Canada's published CSUS
+  `vignette("survey-estimation")` reproduces Health Canada's published CSUS
   intervals.
 - **Hot spots over time** — `hotpers()`: how concentrated
   incidents are in place, which cells are hot each period (ties counted and
@@ -343,7 +345,7 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   partially linear model by cross-fitting, with a percentile bootstrap).
   All of it in one call with an assumption log: `vrfpol()` and
   `polrpttxt()`. Every coefficient cites its paper and is
-  asserted in the tests. `vignette("applied-analyses")`.
+  asserted in the tests. `vignette("air-pollution-and-health")`.
 - **The footprint of the computation** — `co2fp()` reports
   the electricity an expression used and the CO2-equivalent it implies:
   measured from the CPU packages' RAPL energy counters where the operating
@@ -742,8 +744,8 @@ refused at index 0 until `xmssregkey(key)` vouches that it has never signed; or 
 `options(rmoriebricklayer.xmssidxfile = )` at a record that persists. See
 `?xmssadv`.
 
-See `vignette("capsules-and-provenance")` for the distributional checks and
-`vignette("capsules-and-provenance")` for signing, Merkle pinning and manifest chains.
+See `vignette("drift")` for the distributional checks and
+`vignette("provenance")` for signing, Merkle pinning and manifest chains.
 
 ## Asking a model
 

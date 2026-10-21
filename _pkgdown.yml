@@ -35,11 +35,46 @@ articles:
   - title: Guides
     navbar: ~
     contents:
-      - capsules-and-provenance
-      - integrity-and-cryptography
-      - describing-data-and-tables
-      - statistical-methods
-      - applied-analyses
+      - getting-started
+      - dashboard
+      - capsules
+      - provenance
+      - describe
+      - categorical-integrity
+      - drift
+      - yoy
+      - tables
+      - plotting-results
+  - title: Cryptography and assurance
+    contents:
+      - post-quantum-signatures
+      - key-encapsulation
+      - hashing-and-integrity
+      - attestations-bundles-chains
+      - side-channel-assurance
+      - json-and-serialisation
+      - language-model-routes
+  - title: Statistics for published tables
+    contents:
+      - trends-and-change
+      - small-area-rates
+      - survey-estimation
+      - hawkes-processes
+      - banded-tables-and-concentration
+      - stock-and-flow
+      - falsification-and-power
+      - air-pollution-and-health
+      - causal-effects
+      - policy-evaluation
+      - first-nations-metis-inuit-health
+      - courts-and-crime
+      - search-and-rescue
+  - title: Data handling
+    contents:
+      - validation-rules-and-synthetic-data
+      - missingness-and-outliers
+      - siu-reports
+
 reference:
   - title: One call for a published table
     desc: >

@@ -1,0 +1,548 @@
+---
+title: "First Nations, Metis and Inuit health: published tables, distinctions and governance"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{First Nations, Metis and Inuit health: published tables, distinctions and governance}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
+# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
+# re-builds it in its check, none of these is set and only this chunk runs
+if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+  knitr::knit_exit()
+}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 4, dpi = 72)
+library(rmoriebricklayer)
+```
+
+This vignette covers the tools for First Nations, Metis and Inuit health, mental health and
+wellness data, as Statistics Canada publishes them. It also covers the rules those tools follow,
+because with these data, how you work matters as much as what you compute.
+
+Every example runs on published values. `indiex()` bundles excerpts of eight Statistics
+Canada tables, reproduced under the Statistics Canada Open Licence:
+
+| Excerpt | Table | Survey and period |
+|---|---|---|
+| `"health"` | 13-10-0924-01 | Canadian Community Health Survey, 2015/2018 and 2019/2022 |
+| `"mentalhealth"` | 41-10-0067-01 | Indigenous Peoples Survey, 2022 |
+| `"wellbeing"` | 41-10-0082-01 | 2024 |
+| `"suiide"` | 41-10-0021-01 | Aboriginal Peoples Survey, 2017 |
+| `"lifeexp"` | 17-10-0160-01 | Projected life expectancy at birth |
+| `"infmort"` | 17-10-0161-01 | Infant mortality |
+| `"censuspop"` | 98-510-X2021001 | 2021 Census Indigenous Population Profile, population |
+| `"censushh"` | 98-510-X2021016 | 2021 Census Indigenous Population Profile, households |
+
+The 13-10-0924 excerpt is the table behind The Daily of 2025-02-13. The full tables, and the other
+Indigenous-titled tables, are at the data service: see `indtabs()`.
+
+> Some of this vignette concerns suicide. If you or someone you know needs support, the Hope for
+> Wellness Help Line (1-855-242-3310, or the online chat at hopeforwellness.ca) offers counselling
+> and crisis support to Indigenous people across Canada, in English and French, and in Cree,
+> Ojibway and Inuktitut on request. You can also call or text 9-8-8.
+
+## Whose data these are
+
+Two sets of principles govern Indigenous data in Canada.
+
+- **OCAP®** comes from the First Nations Information Governance Centre. It stands for Ownership,
+  Control, Access and Possession. It says First Nations own their information and decide how it is
+  collected, used and shared.
+- **The CARE Principles** come from Carroll et al. (2020). They stand for Collective benefit,
+  Authority to control, Responsibility and Ethics, and apply to Indigenous data everywhere.
+
+Walter and Andersen (2013) set out what a quantitative methodology looks like when it starts from
+Indigenous standpoints. Walter (2016) names the pattern it pushes against: statistics about
+Indigenous peoples clustered around five Ds, namely disparity, deprivation, disadvantage,
+dysfunction and difference.
+
+The package follows these principles in six ways.
+
+- **Only open aggregate data.** The data service mirrors only aggregate tables published under the
+  Statistics Canada Open Licence. It never holds First Nations-held survey data, such as the First
+  Nations Regional Health Survey. Those are reached through the FNIGC, on its terms.
+- **Distinctions-based.** First Nations, Metis and Inuit are reported separately. A pooled
+  "Indigenous" total is marked wherever it appears. `dstntst()` shows when pooling would
+  hide a difference.
+- **Off-reserve coverage.** The First Nations figures in these surveys are for people living off
+  reserve. Reserves are outside the surveys' coverage.
+- **Suppressed cells stay suppressed.** A cell is suppressed (`x`) to protect the people in it, and
+  small communities most of all. `F` cells are too unreliable to publish. Both become `NA`, and
+  nothing in the package imputes them or works them back from totals.
+- **Strengths beside gaps.** Wellness is reported beside distress, and `frmaud()` checks
+  how deficit-framed a report is.
+- **A gap is not a deficit of the people.** A difference between groups measures the effects of
+  colonial policy, the residential schools and unequal services. Report it with that context, and
+  with the communities' own interpretation where they have given one.
+
+## Reading a table as published
+
+A Statistics Canada table puts each estimate and its limits on separate rows. `scests()`
+puts them side by side. It reads every layout the Indigenous tables use:
+
+- confidence limits named in any of their forms;
+- coefficients of variation, or standard errors, in place of limits;
+- several measures per cell;
+- tables with no limits at all.
+
+```{r first-nations-metis-inuit-health-estimates}
+d <- data.frame(REF_DATE = "2022", GEO = "Canada",
+                `Indigenous identity` = rep(c("First Nations", "Metis"), each = 4),
+                Statistics = rep(c("Number of persons", "Percent", "Low 95% confidence interval",
+                                   "High 95% confidence interval"), 2),
+                UOM = rep(c("Persons", "Percent", "Percent", "Percent"), 2),
+                VALUE = c(415000, 47.1, 45.2, 49.0, 320000, 50.3, 48.1, 52.5),
+                STATUS = "", check.names = FALSE)
+scests(d)
+```
+
+A mirrored table loads by its id. This needs the data service key, so it is not run here:
+
+```{r first-nations-metis-inuit-health-load, eval = FALSE}
+indtabs("mental health")
+e <- scests("41100067")
+```
+
+## Perceived mental health, against non-Indigenous adults
+
+The share of adults who rate their mental health very good or excellent, 2019/2022, from table
+13-10-0924-01:
+
+```{r first-nations-metis-inuit-health-gap}
+h <- indiex("health")
+mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
+          h$indicator == "Perceived mental health, very good or excellent", ]
+g <- indgap(mh, "group", "estimate", "lower", "upper", qual = "quality")
+g
+plot(g)
+```
+
+Before pooling the three groups into one "Indigenous" figure, test whether they differ:
+
+```{r first-nations-metis-inuit-health-distinctions}
+dt <- dstntst(mh[mh$group != "Non-Indigenous", ], "group", "estimate", "lower", "upper")
+dt
+plot(dt)
+```
+
+## The whole scale, not one cut of it
+
+"Very good or excellent" cuts a five-point scale at one place (the table publishes it in four
+categories, with fair and poor together). `ordcmp()` compares the
+whole distribution. It gives the probability that a person in one group rates their mental health
+higher than a person in the reference group, with ties counted half (Agresti 1980). The data are
+from the 2022 Indigenous Peoples Survey, table 41-10-0067-01:
+
+```{r first-nations-metis-inuit-health-ordinal}
+r <- indiex("mentalhealth")
+r <- r[r$region == "Canada", ]
+oc <- ordcmp(r, "group", "rating", "estimate", "lower", "upper",
+                      lvls = c("Fair or poor", "Good", "Very good", "Excellent"),
+                      ref = "M\u00e9tis", qual = "quality")
+oc
+plot(oc)
+```
+
+## Age standardisation
+
+First Nations, Metis and Inuit populations are younger than the non-Indigenous population, and many
+outcomes vary steeply with age. `stdprev()` standardises survey percentages to one
+age structure. Here it is applied to serious thoughts of suicide in the past year, from the 2017
+Aboriginal Peoples Survey (table 41-10-0021-01):
+
+```{r first-nations-metis-inuit-health-prevalence}
+si <- indiex("suicide")
+si <- si[si$measure == "Seriously contemplated suicide in the past 12 months" &
+           si$age != "Total, 15 years and over", ]
+si <- si[order(si$group, si$age), ]
+sp <- stdprev(si$estimate, si$lower, si$upper, std = c(20, 18, 17, 17, 28),
+                             grp = si$group, qual = si$quality)
+sp
+plot(sp)
+```
+
+For counts of events (deaths, hospitalisations), `agestd()` gives directly standardised
+rates with the Fay-Feuer gamma interval, and `rategap()` compares two of them.
+
+## Wellness beside distress
+
+Indigenous scholars of mental health describe it as wellness, and as a process of healing,
+grounded in community, cultural identity, a holistic view and interdependence (Stewart 2008). They
+ask that strengths be reported together with disparities (Stewart 2020).
+
+The estimators in this section and the next put that into how published tables are analysed. They
+are our translation, inspired by that work, not methods its authors state, and they say what they
+cannot show.
+
+`welprof()` puts wellness indicators first and distress after them. This example uses the
+2024 well-being table, 41-10-0082-01:
+
+```{r first-nations-metis-inuit-health-wellness}
+wb <- indiex("wellbeing")
+w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
+                      well = c("Life satisfaction rating of 8, 9 or 10",
+                                   "Sense of meaning and purpose rating of 8, 9 or 10",
+                                   "Always or often has a hopeful outlook"),
+                      distress = c("Life satisfaction rating between 0 and 5",
+                                   "Rarely or never has a hopeful outlook"),
+                      qual = "quality")
+plot(w)
+frmaud(w)
+```
+
+`dualcont()` places each group on two axes, wellness and distress. They are related but
+distinct (Keyes 2002, 2005):
+
+```{r first-nations-metis-inuit-health-dual}
+dc <- dualcont(w, "Always or often has a hopeful outlook", "Life satisfaction rating between 0 and 5")
+dc
+plot(dc)
+```
+
+## Holistic balance
+
+Wellness is a balance among the domains of a person; illness is a loss of that balance (Stewart
+2008; Gabriel, Mirza and Stewart 2022). An average of domains cannot show balance.
+`holbal()` measures it as the ratio of the geometric mean of the domain levels to their
+arithmetic mean. That ratio is 1 when every domain is level, and falls as one domain falls behind
+the others.
+
+Which indicator stands for each domain is a choice for the people whose data these are to make. The
+choice below is one reading of it:
+
+```{r first-nations-metis-inuit-health-balance}
+dom <- c("Perceived health, very good or excellent" = "physical",
+         "Perceived mental health, very good or excellent" = "mental",
+         "Life satisfaction, satisfied or very satisfied" = "emotional",
+         "Sense of belonging to local community, somewhat strong or very strong" = "community")
+d <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" & h$indicator %in% names(dom), ]
+d$domain <- dom[d$indicator]
+hb <- holbal(d, "group", "domain", "estimate", "lower", "upper", qual = "quality")
+hb
+plot(hb)
+```
+
+A community that weighs the domains differently sets `weights`. The result says which weights it
+used.
+
+## The four directions
+
+The First Nations Mental Wellness Continuum Framework (Health Canada and Assembly of First Nations
+2015) describes mental wellness in four directions: hope, belonging, meaning and purpose.
+`mhcont()` lays out the published proxies for each direction. It says which
+directions the tables do not measure, and does not fill them in:
+
+```{r first-nations-metis-inuit-health-continuum}
+mw <- mhcont(wb, "group", "indicator", "estimate", "lower", "upper",
+        hope = "Always or often has a hopeful outlook",
+        meaning = "Sense of meaning and purpose rating of 8, 9 or 10",
+        purp = "Sense of meaning and purpose rating of 8, 9 or 10", qual = "quality")
+mw[, c("group", "indicator", "domain", "estimate", "shared")]
+plot(mw)
+```
+
+## Healing as a process
+
+A process shows in change. `healchg()` gives the change between survey periods, wellness
+first. It uses the two periods of table 13-10-0924-01:
+
+```{r first-nations-metis-inuit-health-healing}
+hc <- healchg(h[h$age == "Total, 18 years and over", ], "group", "indicator", "period",
+                     "estimate", "lower", "upper", from = "2015/2018", to = "2019/2022",
+                     qual = "quality",
+                     well = c("Perceived mental health, very good or excellent",
+                                  "Sense of belonging to local community, somewhat strong or very strong"))
+hc <- hc[hc$indicator %in% c("Perceived mental health, very good or excellent",
+                             "Sense of belonging to local community, somewhat strong or very strong",
+                             "Mood disorder", "Anxiety disorder"), ]
+plot(hc)
+```
+
+Between the two periods, which span the COVID-19 pandemic, the share rating their mental health
+very good or excellent fell for First Nations, Metis and non-Indigenous adults. The Inuit interval
+includes no change. Because the reference group fell too, a group's change is read against the
+reference group's change, not on its own.
+
+## Connection across places
+
+The land is "an instrumental part of all aspects of Indigenous life including health and
+well-being" (Mashford-Pringle and Stewart 2019). Health and education are interconnected
+(Mashford-Pringle 2016). Across places, connections of this kind leave a trace: do two indicators
+rise together where people live?
+
+`connassoc()` measures this with Spearman's rho. Its p-value is exact for up to eight
+places, and a Monte Carlo estimate beyond. Its band is a sensitivity band, not a confidence
+interval: it shows how far the published sampling error alone moves rho for these places. Here, by region, it asks whether First Nations and Metis
+people's mental health rise together, using table 41-10-0067-01:
+
+```{r first-nations-metis-inuit-health-connection}
+r <- indiex("mentalhealth")
+r <- r[r$rating == "Excellent or very good" & r$region != "Canada", ]
+pair <- merge(r[r$group == "First Nations", ], r[r$group == "M\u00e9tis", ], by = "region",
+              suffixes = c("fn", "me"))
+ca <- connassoc(pair, "region", "estimatefn", "estimateme", "lowerfn", "upperfn",
+                             "lowerme", "upperme")
+ca
+plot(ca, xlab = "First Nations: excellent or very good (%)",
+     ylab = "M\u00e9tis: excellent or very good (%)")
+```
+
+This is an association across places. It cannot say that one thing makes a person well.
+
+## Community-set weights, and the Community Well-Being index
+
+`commidx()` combines protective and risk factors with weights the community sets. It follows
+the structure of Inuit Tapiriit Kanatami's National Inuit Suicide Prevention Strategy (2016). The
+function never chooses the weights. A factor the tables do not publish leaves the index `NA`; it is
+not filled in.
+
+```{r first-nations-metis-inuit-health-community}
+h2 <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over", ]
+ci <- commidx(h2, "group", "indicator", "estimate", "lower", "upper", qual = "quality",
+        w = c("Sense of belonging to local community, somewhat strong or very strong" = 2,
+                    "Has a regular healthcare provider" = 1,
+                    "Perceived life stress, most days quite a bit or extremely stressful" = -2,
+                    "Heavy drinking" = -1))
+plot(ci)
+```
+
+`cwbscr()` computes Indigenous Services Canada's Community Well-Being index from census profile
+figures: income, education, housing and labour force activity. The index measures socio-economic
+conditions only. It is not a measure of wellness as First Nations and Inuit define it.
+
+## The 2021 Census
+
+The Indigenous Population Profile of the 2021 Census gives counts for every geography, by gender, age
+group and about two thousand characteristics, with First Nations, Metis, Inuit and non-Indigenous
+people in their own columns. In the provincial table, residence on and off reserve is split out too.
+`cnsprof()` reads it with the hierarchy of the characteristics. `profshr()` takes a
+share with an interval for the 25% long-form sample and the random rounding of the counts.
+
+Foster children among children under 15, Canada, 2021:
+
+```{r first-nations-metis-inuit-health-census-foster}
+p <- cnsprof(indiex("censuspop"))
+fc <- profshr(p, "Foster children", "Total - Children in census families")
+fc <- fc[fc$geo == "Canada" & fc$age == "0 to 14 years" &
+           fc$group %in% c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"), ]
+fc[, c("residence", "group", "numerator", "denominator", "estimate", "lower", "upper")]
+plot(fc[fc$residence == "Total - Residence on or off reserve", ])
+```
+
+The overrepresentation of First Nations, Metis and Inuit children in care is the subject of the
+first five Calls to Action of the Truth and Reconciliation Commission.
+
+Knowledge of an Indigenous language (all ages):
+
+```{r first-nations-metis-inuit-health-census-language}
+know <- "Total - Knowledge of Indigenous languages for the population in private households - 25% sample data"
+la <- profshr(p, "Indigenous languages", know)
+la[la$geo == "Canada" & la$age == "Total - Age groups" & la$residence == "Total - Residence on or off reserve" &
+     la$group %in% c("First Nations", "M\u00e9tis", "Inuit"), c("group", "estimate", "lower", "upper")]
+```
+
+The census age structure of the Indigenous population is the standard to use when age-standardising
+First Nations, Metis and Inuit rates (Kumar and Tjepkema 2019):
+
+```{r first-nations-metis-inuit-health-census-standard}
+cnsstd(p)
+```
+
+A Community Well-Being score from the public profile (income, education, housing, labour force), by
+distinction. The household table splits Indigenous from non-Indigenous households only, so First
+Nations, Metis and Inuit people share the Indigenous households' housing component. `?cnscwb` explains where it departs from the Department's own index:
+
+```{r first-nations-metis-inuit-health-census-cwb}
+h <- cnsprof(indiex("censushh"))
+cw <- cnscwb(p, h)
+cw[cw$geo %in% c("Canada", "Nunavut"), c("geo", "group", "income", "education", "housing", "labour", "cwb")]
+plot(cw)
+```
+
+## Intergenerational exposure
+
+Studies of the residential schools ask whether harm passes down families. Among them are Bombay,
+Matheson and Anisman (2014), Kaspar (2014), Hackett, Feeny and Tompa (2016), and McQuaid et al.
+(2017).
+
+- `genexpo()` codes how many of the two generations before a respondent attended. An
+  unknown generation stays unknown.
+- `exptrnd()` gives the odds ratio at each level, and the Cochran-Armitage test for a trend.
+
+The counts below are made up, to show the computation:
+
+```{r first-nations-metis-inuit-health-generations}
+genexpo(parent = c(TRUE, FALSE, TRUE, NA), gparent = c(TRUE, FALSE, FALSE, TRUE))
+et <- exptrnd(cases = c(60, 95, 70), n = c(500, 520, 300))
+plot(et)
+```
+
+Individual-level data of this kind belong to the communities who collected them. These functions
+are for analyses done under their authority, or on tables they have published.
+
+## The Calls to Action
+
+Call to Action 19 asks for "measurable goals to identify and close the gaps in health outcomes
+between Aboriginal and non-Aboriginal communities", for indicators that include infant mortality,
+suicide, mental health, addictions, life expectancy and chronic diseases. `trcind()` lists
+which published table measures each of them. `trchlthgap()` measures every gap against
+non-Indigenous people on one scale, the disadvantage ratio: the ratio of the two estimates, turned
+so that above 1 means the group fares worse, with its interval. It is a ratio of published
+estimates, not a relative risk.
+
+```{r first-nations-metis-inuit-health-trc-gaps, fig.height = 9}
+g <- trchlthgap()
+g[g$measure %in% c("Life expectancy at birth", "Infant mortality rate"),
+  c("measure", "period", "group", "estimate", "refest", "disratio", "lower", "upper")]
+plot(g)
+```
+
+Life expectancy at birth in 2016/2021 was 71.4 years for First Nations people living on reserve and
+71.9 for Inuit, against 85.0 for non-Indigenous people. Infant mortality among Inuit was 13.5 per
+1,000 live births in 2014/2016, against 4.2.
+
+How fast the Calls themselves are being completed:
+
+The Truth and Reconciliation Commission made 94 Calls to Action in 2015. `trccmpl()` holds
+the number completed each year, as the Yellowhead Institute counts them (Jewell and Mosby 2021,
+2022). `trcprog()` takes that pace as a Poisson rate:
+
+```{r first-nations-metis-inuit-health-trc}
+p <- trcprog()
+p
+plot(p)
+```
+
+The projection only extends the pace so far. It is not a forecast.
+
+## Cultural continuity
+
+Chandler and Lalonde (1998) found that British Columbia First Nations communities with more markers
+of cultural continuity had far fewer youth suicides. Hallett, Chandler and Lalonde (2007) found the
+same for knowledge of an Indigenous language. Their unit was the community. Across provinces and
+territories, the published tables allow a coarser question: where more First Nations people know an
+Indigenous language, do more rate their mental health highly?
+
+```{r first-nations-metis-inuit-health-continuity}
+prof <- cnsprof(indiex("censuspop"))
+la <- profshr(prof, "Indigenous languages", know)
+la <- la[la$age == "Total - Age groups" & la$group == "First Nations" & la$geo != "Canada" &
+           la$residence == "Total - Residence on or off reserve", ]
+mh2 <- indiex("mentalhealth")
+mh2 <- mh2[mh2$rating == "Excellent or very good" & mh2$group == "First Nations", ]
+both <- merge(la[c("geo", "estimate", "lower", "upper")], mh2[c("region", "estimate", "lower", "upper")],
+              by.x = "geo", by.y = "region", suffixes = c("lang", "mh"))
+cc <- connassoc(both, "geo", "estimatelang", "estimatemh", "lowerlang", "upperlang",
+                             "lowermh", "uppermh")
+cc
+plot(cc, xlab = "First Nations who know an Indigenous language (%)",
+     ylab = "First Nations: mental health excellent or very good (%)")
+```
+
+Across these eight provinces and territories, the rank correlation is positive but far from
+settled: its exact p-value is large and its sensitivity band includes zero. That is not evidence for or
+against the communities' findings.
+Eight places are far too few, a province mixes many communities, and the two measures come from
+different surveys and years. The community-level design needs the census profile of each First
+Nations community (98-510-X2021002 at the data service), and outcomes measured for the same
+communities.
+
+## Your own data
+
+Nothing here is tied to Canada or to these tables. Each estimator takes a data frame with a group
+column, an estimate and its limits. A table from another agency needs two steps first: limits from
+whatever it publishes in their place (`limfrom()` takes a standard error, a coefficient of
+variation or a margin of error), and its quality flags mapped onto suppressed and use-with-caution
+(`qltyrcd()`). Here, made-up numbers in an Australian layout, with relative standard errors
+and that agency's flags:
+
+```{r first-nations-metis-inuit-health-own-data}
+own <- data.frame(group = c("Aboriginal", "Torres Strait Islander", "Non-Indigenous Australians"),
+                  pct = c(31.2, 27.5, 18.9), rse = c(4.1, 22.0, 1.2), flag = c("", "*", ""))
+own <- cbind(own, limfrom(own$pct, cv = own$rse)[c("lower", "upper")])
+own$quality <- qltyrcd(own$flag, suppr = "**", caution = "*")
+indgap(own, "group", "pct", "lower", "upper", ref = "Non-Indigenous Australians",
+               qual = "quality")
+```
+
+Name the groups as the peoples concerned name themselves, and give `pooled` any row that
+pools several of them, so it is never set beside its own parts.
+
+## What the package does not compute
+
+Some instruments are individual questionnaires, and aggregate tables cannot reproduce them:
+
+- the Native Wellness Assessment (Fiedeldey-Van Dijk et al. 2017);
+- the Cultural Connectedness Scale (Snowshoe et al. 2015);
+- the Historical Loss Scale (Whitbeck et al. 2004).
+
+Two-Eyed Seeing (Bartlett, Marshall and Marshall 2012) is a way of bringing knowledges together, not
+a formula. The package follows it by reporting results beside one another without merging them into
+one index (`dualcont()`, `welprof()`).
+
+## Acknowledgements
+
+The estimators for holistic balance, wellness beside distress, the four directions, healing as a
+process and connection across places put to quantitative use the frameworks of Professor Suzanne
+Stewart (Yellowknives Dene First Nation), Director of the Waakebiness-Bryce Institute for
+Indigenous Health at the University of Toronto's Dalla Lana School of Public Health, and Professor
+Angela Mashford-Pringle (Timiskaming First Nation), its Associate Director. This work stands on
+theirs. Any error in turning their qualitative work into estimators is the package's, not theirs.
+
+## References
+
+- Agresti A (1980). Generalized odds ratios for ordinal data. *Biometrics* 36(1):59-67.
+- Bartlett C, Marshall M, Marshall A (2012). Two-Eyed Seeing and other lessons learned within a
+  co-learning journey of bringing together indigenous and mainstream knowledges and ways of knowing.
+  *Journal of Environmental Studies and Sciences* 2(4):331-340.
+- Bombay A, Matheson K, Anisman H (2014). The intergenerational effects of Indian Residential
+  Schools: implications for the concept of historical trauma. *Transcultural Psychiatry*
+  51(3):320-338.
+- Chandler MJ, Lalonde C (1998). Cultural continuity as a hedge against suicide in Canada's First
+  Nations. *Transcultural Psychiatry* 35(2):191-219.
+- Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for Indigenous
+  Data Governance. *Data Science Journal* 19:43.
+- Fiedeldey-Van Dijk C, Rowan M, Dell C, et al. (2017). Honoring Indigenous culture-as-intervention:
+  development and validity of the Native Wellness Assessment. *Journal of Ethnicity in Substance
+  Abuse* 16(2):181-218.
+- Gabriel MD, Mirza S, Stewart SL (2022). Exploring mental health and holistic healing through the
+  life stories of Indigenous youth who have experienced homelessness. *International Journal of
+  Environmental Research and Public Health* 19(20):13402.
+- Hackett C, Feeny D, Tompa E (2016). Canada's residential school system: measuring the
+  intergenerational impact of familial attendance on health and mental health outcomes. *Journal of
+  Epidemiology and Community Health* 70(11):1096-1105.
+- Hallett D, Chandler MJ, Lalonde CE (2007). Aboriginal language knowledge and youth suicide.
+  *Cognitive Development* 22(3):392-399.
+- Health Canada, Assembly of First Nations (2015). *First Nations Mental Wellness Continuum
+  Framework*.
+- Inuit Tapiriit Kanatami (2016). *National Inuit Suicide Prevention Strategy*.
+- Jewell E, Mosby I (2021, 2022). *Calls to Action Accountability*. Yellowhead Institute.
+- Kaspar V (2014). The lifetime effect of residential school attendance on Indigenous health status.
+  *American Journal of Public Health* 104(11):2184-2190.
+- Keyes CLM (2002). The mental health continuum: from languishing to flourishing in life. *Journal
+  of Health and Social Behavior* 43(2):207-222.
+- Keyes CLM (2005). Mental illness and/or mental health? Investigating axioms of the complete state
+  model of health. *Journal of Consulting and Clinical Psychology* 73(3):539-548.
+- Mashford-Pringle A (2016). Aboriginal health and Aboriginal education are interconnected.
+  *Research in the Sociology of Health Care* 34:85-96.
+- Mashford-Pringle A, Stewart SL (2019). Akiikaa (it is the land): exploring land-based experiences
+  with university students in Ontario. *Global Health Promotion* 26(3 suppl):64-72.
+- McQuaid RJ, Bombay A, McInnis OA, et al. (2017). Suicide ideation and attempts among First Nations
+  peoples living on-reserve in Canada: the intergenerational and cumulative effects of Indian
+  Residential Schools. *Canadian Journal of Psychiatry* 62(6):422-430.
+- Snowshoe A, Crooks CV, Tremblay PF, Craig WM, Hinson RE (2015). Development of a Cultural
+  Connectedness Scale for First Nations youth. *Psychological Assessment* 27(1):249-259.
+- Stewart SL (2008). Promoting Indigenous mental health: cultural perspectives on healing from
+  Native counsellors in Canada. *International Journal of Health Promotion and Education*
+  46(2):49-56.
+- Stewart S (2020). Addressing strengths and disparities in Indigenous health. *International
+  Journal of Indigenous Health* 15(1):4.
+- Walter M (2016). Data politics and Indigenous representation in Australian statistics. In Kukutai
+  T, Taylor J (eds), *Indigenous Data Sovereignty: Toward an Agenda*, 79-97. ANU Press.
+- Walter M, Andersen C (2013). *Indigenous Statistics: A Quantitative Research Methodology*. Left
+  Coast Press.
+- Whitbeck LB, Adams GW, Hoyt DR, Chen X (2004). Conceptualizing and measuring historical trauma
+  among American Indian people. *American Journal of Community Psychology* 33(3-4):119-130.

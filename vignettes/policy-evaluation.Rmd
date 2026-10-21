@@ -1,0 +1,269 @@
+---
+title: "Evaluating a policy from administrative panels"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Evaluating a policy from administrative panels}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
+# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
+# re-builds it in its check, none of these is set and only this chunk runs
+if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
+  knitr::knit_exit()
+}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 4, dpi = 72)
+library(rmoriebricklayer)
+```
+
+A reform reaches some places before others: a new criminal procedure rolled out district by
+district, a policing program adopted city by city, a ward boundary redrawn. Agencies publish the
+outcomes as counts or rates by place and period. This vignette covers the designs that turn such a
+table into an estimate of the reform's effect, with honest uncertainty. Each estimator gives the
+same answer as the reference implementation (`fixest`, `did`, `bacondecomp`) to rounding error,
+and none of them needs a package outside base R.
+
+The examples use `polex()`: twenty districts in four regions over 36 months, with a
+reform that reaches the regions in three stages (months 13, 19 and 25) and never reaches the
+fourth. The numbers are made up, with a known effect: the reform lowers the crime rate by 3.
+
+```{r policy-evaluation-data}
+p <- polex()
+head(p)
+```
+
+## Difference in differences
+
+`plndid()` fits the two-way fixed-effects regression, with standard errors clustered by unit
+(or any coarser grouping), and reports the effect relative to the comparison units' mean before
+the reform:
+
+```{r policy-evaluation-did}
+plndid(p, "district", "month", "crmrate", "reformed")
+```
+
+## Before any model
+
+`cohtrnd()` shows each adoption cohort's outcome around its adoption, scaled to 1 just
+before it:
+
+```{r policy-evaluation-trends, fig.height = 3.5}
+plot(cohtrnd(p, "district", "month", "crmrate", "refmonth", win = c(-10, 10)))
+```
+
+## Leads and lags
+
+`evstudy()` estimates the effect period by period around adoption. The leads (periods before
+adoption) should be near zero; the joint test of that is printed below the table:
+
+```{r policy-evaluation-event, fig.height = 3.5}
+es <- evstudy(p, "district", "month", "crmrate", "refmonth", leads = 4, lags = 6)
+es
+plot(es)
+```
+
+## Staggered adoption
+
+When districts adopt at different times, the two-way estimate uses districts already treated as
+controls for later ones. `bacondcmp()` shows how much weight those comparisons get:
+
+```{r policy-evaluation-bacon, fig.height = 3.5}
+b <- bacondcmp(p, "district", "month", "crmrate", "reformed")
+tapply(b$weight, b$type, sum)
+plot(b)
+```
+
+`stgatt()` avoids them: each cohort is compared only with districts not yet treated
+(Callaway and Sant'Anna), or the regression has a coefficient for every cohort and period
+(Wooldridge). The bootstrap resamples whole districts:
+
+```{r policy-evaluation-cs, fig.height = 3.5}
+s <- stgatt(p, "district", "month", "crmrate", "refmonth", reps = 99, seed = 1)
+s$overall
+plot(s)
+```
+
+For a treatment that can switch off as well as on, `swtdid()` compares the units that
+switch with those that do not, in the period they switch, with a placebo one period earlier:
+
+```{r policy-evaluation-switching}
+swtdid(p, "district", "month", "crmrate", "reformed", reps = 99, seed = 1)
+```
+
+## Inference from the assignment
+
+With four regions there are only 24 ways to assign the three stages and the never-treated region.
+`perminf()` tries every one, and gives the share at least as extreme as the real
+assignment. With two outcomes it also gives Westfall and Young's stepdown p-values, which hold the
+chance of any false positive at the nominal level:
+
+```{r policy-evaluation-perm, fig.height = 3}
+r <- perminf(p, "district", "month", c("crmrate", "arrrate"), "refmonth",
+                           cl = "region")
+r
+plot(r, type = "histogram")
+```
+
+`loounit()` checks that no single district drives the estimate:
+
+```{r policy-evaluation-loo, fig.height = 3.5}
+plot(loounit(p, "district", "month", "crmrate", "reformed"))
+```
+
+Several outcomes at once, in the style of a Stata event-study figure:
+
+```{r policy-evaluation-grid, fig.height = 3.5}
+plotevgrid(list(
+  "Crime rate" = es,
+  "Arrest rate" = evstudy(p, "district", "month", "arrrate", "refmonth", leads = 4,
+                              lags = 6)), style = "stata")
+```
+
+## Counts
+
+For counts, `plnpois()` gives the effect as a rate ratio, with the population as exposure:
+
+```{r policy-evaluation-pois}
+plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop")
+```
+
+## One treated place
+
+`synctl()` builds a weighted average of untreated places that tracks the treated one
+before the reform, and runs the same method on each untreated place as a placebo:
+
+```{r policy-evaluation-synth, fig.height = 3.5}
+p13 <- p[is.na(p$refmonth) | p$district == "D13", ]
+sc <- synctl(p13, "district", "month", "crmrate", "D13", adopt = 13)
+sc
+plot(sc)
+```
+
+## Measures for justice data
+
+Three measures prepare the outcomes these designs take:
+
+- `sevidx()` combines offence rates, weighted by each offence's severity (for example its
+  mean statutory sentence);
+- `piperate()` gives the rate at which one stage of the justice process follows another,
+  with the input's window set before the outcome's, because cases take time;
+- `cmlrisk()` gives the chance of a first arrest (or conviction, or placement) by each
+  age, from first events and the population.
+
+For place-based designs, `bufasgn()` marks places near a site as treated, places near a
+comparison point and far from every site as the comparison, and excludes the rest.
+
+```{r policy-evaluation-measures}
+d <- data.frame(city = rep(c("A", "B"), each = 3), year = 2024,
+                offence = rep(c("homicide", "robbery", "burglary"), 2),
+                n = c(5, 120, 300, 2, 90, 410), pop = rep(c(250000, 180000), each = 3))
+sevidx(d, "city", "year", "offence", "n",
+               w = c(homicide = 25, robbery = 8, burglary = 4), pop = "pop")
+cmlrisk(16:20, c(900, 1400, 1700, 1600, 1400), rep(1e5, 5))
+```
+
+## Doing better than the original designs
+
+Published applications of these designs often share a few weaknesses, and each has a remedy here.
+
+**Few clusters.** A reform assigned to a handful of districts gives cluster-robust tests that
+reject too often. `wcb()` gives an honest p-value and interval; with four
+clusters it says plainly that nothing can be rejected at 5%:
+
+```{r policy-evaluation-wild}
+wcb(p, "district", "month", "crmrate", "reformed", cl = "region")
+```
+
+**Doubts about parallel trends.** `tse()` asks how large a departure from
+parallel trends, relative to the largest seen before adoption, would make the effect vanish:
+
+```{r policy-evaluation-sens}
+tse(es, seed = 1)
+```
+
+**Covariates that differ between groups.** `stgatt()` with `covariates` is doubly robust
+(use covariates fixed before treatment: one the reform moves, such as arrests, is a bad
+control). `plndml()` lets a machine learner fit the confounding with fixed effects, and
+`mtchdid()` matches units on their pre-reform paths before differencing:
+
+```{r policy-evaluation-covs}
+set.seed(4)
+p$x1 <- rnorm(20)[match(p$district, unique(p$district))]
+stgatt(p, "district", "month", "crmrate", "refmonth", covs = "x1", reps = 49,
+              seed = 1)$overall
+m <- mtchdid(p, "district", "month", "crmrate", "refmonth", ratio = 2)
+m$estimate
+```
+
+**A single treated place, or a few.** `syndid()` weights both comparison units and
+pre-periods:
+
+```{r policy-evaluation-sdid, fig.height = 3.5}
+sd <- syndid(p13, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1)
+sd
+plot(sd)
+```
+
+**Null results without a measure of power.** `plnpwr()` simulates the design on the
+untreated data and gives the minimum detectable effect:
+
+```{r policy-evaluation-power, fig.height = 3.5}
+pw <- plnpwr(p[p$month <= 12, ], "district", "month", "crmrate", ntrt = 10,
+                  adopt = 7:10, eff = c(0, 0.5, 1, 1.5), reps = 40, seed = 1)
+pw
+plot(pw)
+```
+
+## Indigenous examples
+
+The methods here need a panel: units observed over time, some treated at a known date.
+The bundled Indigenous tables are repeated cross-sections of published estimates, so the
+before-and-after comparison they support is the change in a gap, with its interval:
+
+```{r policy-evaluation-indigenous-policy}
+hi <- indiex("health")
+x <- hi[hi$age == "Total, 18 years and over" &
+          hi$indicator == "Perceived mental health, very good or excellent", ]
+gaps <- do.call(rbind, lapply(split(x, x$period), function(p) {
+  cbind(period = p$period[1],
+        indgap(p, "group", "estimate", "lower", "upper")[
+          , c("group", "difference", "diflo", "difup")])
+}))
+rownames(gaps) <- NULL
+gaps
+```
+
+Perceived mental health fell for every group between the two cycles; whether the gaps
+moved is read from the intervals, not the point estimates.
+
+## Acknowledgements
+
+These designs are those of the empirical work of Professor Angela Zorro Medina (University of
+Toronto) on criminal-procedure reform, political dynasties, police stops and the cumulative risk of
+criminal justice outcomes. The estimators themselves are the standard ones of the literature cited
+on each help page.
+
+## References
+
+- Abadie A, Diamond A, Hainmueller J (2010). Synthetic control methods for comparative case
+  studies. *Journal of the American Statistical Association* 105(490):493-505.
+- Acosta C, Mejia D, Zorro Medina A (2023). On the tension between due process protection and
+  public safety: the case of an extensive procedural reform in Colombia. SSRN
+  10.2139/ssrn.4585682.
+- Callaway B, Sant'Anna PHC (2021). Difference-in-differences with multiple time periods.
+  *Journal of Econometrics* 225(2):200-230.
+- de Chaisemartin C, D'Haultfoeuille X (2020). Two-way fixed effects estimators with heterogeneous
+  treatment effects. *American Economic Review* 110(9):2964-2996.
+- Goodman-Bacon A (2021). Difference-in-differences with variation in treatment timing. *Journal
+  of Econometrics* 225(2):254-277.
+- Hepburn P, Kohler-Hausmann I, Zorro Medina A (2019). Cumulative risks of multiple criminal
+  justice outcomes in New York City. *Demography* 56(3):1161-1171.
+- Ternullo S, Zorro-Medina A, Vargas R (2024). How political dynasties concentrate advantage
+  within cities. *Social Forces* 102(4):1310-1331.
+- Westfall PH, Young SS (1993). *Resampling-Based Multiple Testing*. Wiley.
+- Wooldridge JM (2021). Two-way fixed effects, the two-way Mundlak regression, and
+  difference-in-differences estimators. SSRN 10.2139/ssrn.3906345.
+- Zorro Medina A, Hackett D, Green D, Vargas R (2025). Evidence of donor bias in Chicago police
+  stops. arXiv:2504.15140.

@@ -24,6 +24,8 @@ s = open("DESCRIPTION", encoding="utf-8").read()
 s = re.sub(r"^Remotes:.*?(?=^[A-Z][A-Za-z/]*:|\Z)", "", s, flags=re.S | re.M)
 open("DESCRIPTION", "w", encoding="utf-8").write(s)
 PY
+# the 33 vignettes as five in the CRAN copy (dev/cran_merge_vignettes.py)
+python3 "$src/dev/cran_merge_vignettes.py"
 # every web address as plain text in the CRAN copy (dev/cran_plain_urls.py)
 python3 "$src/dev/cran_plain_urls.py"
 if [ "$pkg" = rmoriebricklayer ]; then
