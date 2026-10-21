@@ -2,6 +2,15 @@
 
 ## rmoriebricklayer 1.0.0
 
+### Fixes after the CRAN resubmission
+
+- An error raised while
+  [`co2fp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2fp.md)
+  measures a computation’s footprint is now named after the function
+  that asked for the footprint (for example
+  `cpschk: the provenance names no source to fetch`), not after
+  [`co2fp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2fp.md).
+
 ### A dashboard, distributions and proof ledgers
 
 - [`rmblapp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmblapp.md)
