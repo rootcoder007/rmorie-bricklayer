@@ -8,7 +8,10 @@ vignette: >
 ---
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set(eval = identical(Sys.getenv("NOT_CRAN"), "true")) # CRAN re-check skips the computing
+# chunks run when the vignette is built (R CMD build, r-universe, pkgdown) and are skipped when
+# R CMD check re-builds it (R sets _R_CHECK_PACKAGE_NAME_ there), unless NOT_CRAN is true
+knitr::opts_chunk$set(eval = identical(Sys.getenv("NOT_CRAN"), "true") ||
+                        !nzchar(Sys.getenv("_R_CHECK_PACKAGE_NAME_")))
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(rmoriebricklayer)
 ```

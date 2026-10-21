@@ -3,6 +3,7 @@
 ## Fixes after the CRAN resubmission
 
 * An error raised while `co2fp()` measures a computation's footprint is now named after the function that asked for the footprint (for example `cpschk: the provenance names no source to fetch`), not after `co2fp()`.
+* The vignettes run their code again wherever they are built (r-universe, pkgdown, `R CMD build`), so the articles show their plots; only `R CMD check` re-building a vignette skips the computing.
 
 ## A dashboard, distributions and proof ledgers
 
