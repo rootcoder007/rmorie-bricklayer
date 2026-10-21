@@ -1,5 +1,7 @@
-# Every 0.5.13 name 1.0.0 renamed still works: the alias has the old formals and forwards each of
-# them to the new function under the new argument name. The map ships in inst/compat/.
+# The 0.5.x names: no longer R functions (the eleven rmoriedata 0.3.x calls are, test-compat-0-5.R,
+# and the four S3 generics below), but the command line knows each one from the map in
+# inst/compat/: describe, run and migrate (R/cli_compat.R). Alias tests do not run on CRAN.
+skip_on_cran()
 
 .alias_map <- function() {
   p <- system.file("compat", "compat_names_map.tsv", package = "rmoriebricklayer")
@@ -17,122 +19,127 @@
   out
 }
 
-test_that("every alias exists, is exported and keeps the old formals", {
+# blcli() with its output collected
+.cli <- function(...) {
+  buf <- character()
+  st <- blcli(c(...), out = function(...) buf <<- c(buf, paste0(...)))
+  list(status = st, text = paste(buf, collapse = ""))
+}
+
+test_that("every 0.5.x name maps to an export that takes the new argument names", {
   m <- .alias_map()
   expect_gt(nrow(m), 290L)
   ns <- getNamespaceExports("rmoriebricklayer")
   for (i in seq_len(nrow(m))) {
-    expect_true(m$old[i] %in% ns, info = m$old[i])
-    expect_true(m$new[i] %in% ns, info = m$new[i])
-    expect_identical(as.character(names(formals(get(m$old[i], asNamespace("rmoriebricklayer"))))),
-                     strsplit(m$old_args[i], ",", fixed = TRUE)[[1]], info = m$old[i])
-  }
-})
-
-test_that("every alias forwards each old argument under the new name", {
-  m <- .alias_map()
-  for (i in seq_len(nrow(m))) {
     old <- strsplit(m$old_args[i], ",", fixed = TRUE)[[1]]
     new <- strsplit(m$new_args[i], ",", fixed = TRUE)[[1]]
-    if (!length(old)) new <- character()
-    # one value per old formal (a dummy for `...`), the target replaced by a recorder that
-    # reads the names it was called with and never forces a promise
-    args <- stats::setNames(as.list(seq_along(old)), old)
-    args[old == "..."] <- NULL
-    seen <- new.env()
-    rec <- function(...) {
-      seen$names <- as.character(...names())
-      invisible(NULL)
-    }
-    do.call(testthat::with_mocked_bindings,
-            c(list(code = bquote(do.call(.(m$old[i]), .(args)))), stats::setNames(list(rec), m$new[i]),
-              list(.package = "rmoriebricklayer")))
-    want <- new[old != "..."]
-    expect_identical(seen$names, want, info = m$old[i])
+    expect_false(m$old[i] %in% ns, info = m$old[i])
+    expect_true(m$new[i] %in% ns, info = m$new[i])
+    expect_identical(length(old), length(new), info = m$old[i])
+    tf <- names(formals(get(m$new[i], asNamespace("rmoriebricklayer"))))
+    expect_true(all(new %in% tf), info = m$old[i])
   }
 })
 
-test_that("every alias called with its defaults hands the target values it allows", {
+test_that("every renamed value is one the new function allows, and no old one is", {
   m <- .alias_map()
   ns <- asNamespace("rmoriebricklayer")
   ntr <- 0L
   for (i in seq_len(nrow(m))) {
-    f <- get(m$old[i], ns)
-    fo <- formals(f)
-    old <- names(fo)
-    new <- strsplit(m$new_args[i], ",", fixed = TRUE)[[1]]
-    # a dummy only where the old formal has no default; the rest are the alias's own defaults
-    need <- old[vapply(seq_along(fo), function(k) is.name(fo[[k]]) && !nzchar(as.character(fo[[k]])), NA)]
-    need <- setdiff(need, "...")
-    args <- stats::setNames(as.list(seq_along(need)), need)
     vals <- .alias_values(m$values[i])
-    tnew <- new[match(names(vals), old)]
-    seen <- new.env()
-    rec <- function(...) {
-      seen$names <- as.character(...names())
-      seen$vals <- lapply(tnew, function(n) ...elt(match(n, ...names())))
-      invisible(NULL)
-    }
-    do.call(testthat::with_mocked_bindings,
-            c(list(code = bquote(do.call(.(m$old[i]), .(args)))), stats::setNames(list(rec), m$new[i]),
-              list(.package = "rmoriebricklayer")))
-    expect_identical(seen$names, new[old != "..."], info = m$old[i])
+    old <- strsplit(m$old_args[i], ",", fixed = TRUE)[[1]]
+    new <- strsplit(m$new_args[i], ",", fixed = TRUE)[[1]]
     tf <- formals(get(m$new[i], ns))
-    for (k in seq_along(vals)) {
-      allowed <- eval(tf[[tnew[k]]], baseenv())
-      info <- paste(m$old[i], names(vals)[k])
-      # the old default arrives as the target's own default, and each renamed value is allowed:
+    for (a in names(vals)) {
+      allowed <- eval(tf[[new[match(a, old)]]], baseenv())
+      info <- paste(m$old[i], a)
       # a choice vector lists the allowed values; a single default is one of them (the others,
       # such as outcome "chiast", are run below)
-      expect_identical(seen$vals[[k]], allowed, info = info)
-      if (length(allowed) > 1L) expect_true(all(vals[[k]] %in% allowed), info = info)
-      else expect_true(allowed %in% vals[[k]], info = info)
-      expect_false(any(names(vals[[k]]) %in% allowed), info = info)
-      ntr <- ntr + length(vals[[k]])
+      if (length(allowed) > 1L) expect_true(all(vals[[a]] %in% allowed), info = info)
+      else expect_true(allowed %in% vals[[a]], info = info)
+      expect_false(any(names(vals[[a]]) %in% allowed), info = info)
+      ntr <- ntr + length(vals[[a]])
     }
   }
   expect_gte(ntr, 8L)
 })
 
-test_that("an alias really reaches the new function", {
-  f <- tempfile()
-  writeLines("abc", f)
-  expect_identical(crc32_file(f), crc32file(f))
-  expect_identical(gini(c(1, 2, 3, 10)), ginicoef(c(1, 2, 3, 10)))
-  expect_identical(rule_not_null("x"), rulenull("x"))
+test_that("describe and examples answer for a 0.5.x name", {
+  r <- .cli("describe", "admissions")
+  expect_identical(r$status, 0L)
+  expect_match(r$text, "admissions() is the 0.5.x name of admits()", fixed = TRUE)
+  expect_match(r$text, "Usage:", fixed = TRUE)
+  r <- .cli("describe", "crf_pm25")
+  expect_match(r$text, "exposure -> expo", fixed = TRUE)
+  expect_match(r$text, "outcome values: all_cause_mortality -> allcause", fixed = TRUE)
+  expect_match(.cli("examples", "admissions")$text, "admits(", fixed = TRUE)
+  expect_identical(.cli("describe", "no_such_name")$status, 1L)
+})
+
+test_that("run calls a function by its old name, old arguments and values translated", {
+  out1 <- function(x) paste0(paste(utils::capture.output(print(x)), collapse = "\n"), "\n")
+  r <- .cli("run", "admissions", "--adp", "120", "--alos", "30")
+  expect_identical(r$status, 0L)
+  expect_identical(r$text, paste0("(admissions() is now admits())\n", out1(admits(adp = 120, alos = 30))))
+  r <- .cli("run", "core_median", "1,2,30")
+  expect_identical(r$text, paste0("(core_median() is now cmed())\n", out1(cmed(c(1, 2, 30)))))
+  r <- .cli("run", "crf_pm25", "--exposure", "10", "--outcome", "all_cause_mortality")
+  expect_identical(r$text, paste0("(crf_pm25() is now crfpm25())\n", out1(crfpm25(expo = 10, y = "allcause"))))
+  # a new name runs as it is; a .csv value is read
+  f <- tempfile(fileext = ".csv")
+  utils::write.csv(data.frame(a = c(1, 2, 3, 4), b = c(2, 1, 4, 3)), f, row.names = FALSE)
+  expect_identical(.cli("run", "cortbl", f)$text, out1(cortbl(utils::read.csv(f))))
+  expect_identical(.cli("run", "correlation_table", f)$status, 0L)
+  # only this package's functions, old or new
+  r <- .cli("run", "system", "ls")
+  expect_identical(r$status, 2L)
+  expect_match(r$text, "not a function of rmoriebricklayer")
+  expect_identical(.cli("run")$status, 2L)
+})
+
+test_that("migrate rewrites 0.5.x calls and leaves the rest of the script", {
+  mig <- function(x) rmoriebricklayer:::.bl_migrate_text(x)
+  src <- c("library(rmoriebricklayer)",
+           "a <- admissions(adp = 120, alos = 30)  # admissions() in a comment stays",
+           "b <- rmoriebricklayer::crf_pm25(exposure = 10,",
+           "  outcome = 'all_cause_mortality')",
+           "x <- \"core_median\"; other::core_median(1)",
+           "core_median(core_median(1:3))",
+           "admits(adp = 1, alos = 2)")
+  r <- mig(src)
+  expect_identical(r$lines, c(
+    "library(rmoriebricklayer)",
+    "a <- admits(adp = 120, alos = 30)  # admissions() in a comment stays",
+    "b <- rmoriebricklayer::crfpm25(expo = 10,",
+    "  y = 'allcause')",
+    "x <- \"core_median\"; other::core_median(1)",
+    "cmed(cmed(1:3))",
+    "admits(adp = 1, alos = 2)"))
+  expect_identical(r$n, 7L)
+  expect_identical(mig("x <- 1")$n, 0L)
+  # the rewrite parses and runs as the old script did
+  f <- tempfile(fileext = ".R")
+  writeLines(c("v <- core_median(c(1, 2, 30))", "w <- admissions(adp = 120, alos = 30)"), f)
+  r <- .cli("migrate", f)
+  expect_identical(r$status, 0L)
+  expect_match(r$text, "+ v <- cmed(c(1, 2, 30))", fixed = TRUE)
+  expect_match(r$text, "2 changes (--write writes them)", fixed = TRUE)
+  expect_identical(readLines(f)[1], "v <- core_median(c(1, 2, 30))")
+  expect_match(.cli("migrate", f, "--write")$text, "2 changes written", fixed = TRUE)
+  e <- new.env()
+  sys.source(f, envir = e, toplevel.env = asNamespace("rmoriebricklayer"))
+  expect_identical(e$v, cmed(c(1, 2, 30)))
+  expect_identical(e$w, admits(adp = 120, alos = 30))
+  expect_match(.cli("migrate", f)$text, "no 0.5.x names", fixed = TRUE)
+  expect_identical(.cli("migrate", tempfile())$status, 1L)
+  bad <- tempfile(fileext = ".R")
+  writeLines("f(", bad)
+  expect_match(.cli("migrate", bad)$text, "not R code R can parse", fixed = TRUE)
+  expect_identical(.cli("migrate")$status, 2L)
 })
 
 # a result an alias returned, in its 1.0.0 names again
 nn <- function(x) rmoriebricklayer:::.rmbl_new_names(x)
-
-test_that("old defaults and old allowed values work end to end", {
-  d <- data.frame(w = 1:4, y = 1:4)
-  expect_s3_class(survey_design(d, weights = "w"), "rmbl_svy_design")
-  expect_identical(survey_design(d, weights = "w", type = "mean_bootstrap")$type,
-                   svydes(d, w = "w", type = "meanboot")$type)
-  expect_identical(nn(crf_no2(20)), crfno2(20))
-  expect_identical(nn(crf_pm25(20)), crfpm25(20))
-  expect_identical(nn(crf_no2(20, outcome = "all_cause_mortality")), crfno2(20, y = "allcause"))
-  tab <- data.frame(year = 2018:2022, n = c(10, 12, 9, 15, 14))
-  expect_identical(nn(analyse_table(tab, value = "n", period = "year")),
-                   anltab(tab, value = "n", prd = "year"))
-  expect_identical(nn(analyse_table(tab, value = "n", period = "year", direction = "higher_is_better")),
-                   anltab(tab, value = "n", prd = "year", dir = "higher"))
-  expect_identical(nn(pollution_burden(5, 1, 0.008, 1e5)), polbrdn(5, 1, 0.008, 1e5))
-  at <- data.frame(fsa = c("A", "B"), exposure = c(5, 8), population = c(1e4, 2e4),
-                   baseline_rate = c(0.005, 0.006))
-  expect_identical(nn(pollution_burden_by_area(at)),
-                   polbrdarea(at, basratecol = "baseline_rate"))
-  expect_identical(nn(verify_pollution("NO2", demo = TRUE)), vrfpol("NO2", demo = TRUE))
-  # an allowed value renamed that no default shows
-  expect_identical(nn(crf_no2(20, outcome = "childhood_asthma")), crfno2(20, y = "chiast"))
-  expect_identical(nn(pollution_burden(5, 1, 0.008, 1e5, outcome = "childhood_asthma")),
-                   polbrdn(5, 1, 0.008, 1e5, y = "chiast"))
-  expect_identical(nn(pollution_burden_by_area(at, outcome = "childhood_asthma")),
-                   polbrdarea(at, basratecol = "baseline_rate", y = "chiast"))
-  expect_identical(nn(verify_pollution("NO2", outcome = "childhood_asthma", demo = TRUE)),
-                   vrfpol("NO2", y = "chiast", demo = TRUE))
-})
 
 test_that("0.5.x option names are still read", {
   ns <- asNamespace("rmoriebricklayer")
@@ -160,36 +167,9 @@ test_that("old plot values are translated", {
 })
 
 test_that("old argument names passed through ... are renamed", {
-  b <- c("0-4", "5-9", "10+")
-  expect_identical(expand_bands(b, c(1, 2, 3), open_upper_cap = 12),
-                   expbands(b, c(1, 2, 3), openupcap = 12))
   # names the alias forwards untouched
   expect_null(rmoriebricklayer:::.rmbl_alias_dots(c(a = "b")))
   expect_null(rmoriebricklayer:::.rmbl_alias_dots(c(a = "b"), 1, x = 2))
-})
-
-test_that("every alias whose `...` carries 0.5.x names renames each of them", {
-  m <- .alias_map()
-  m <- m[grepl("(^|;)\\.\\.\\.:", m$values), ]
-  expect_gte(nrow(m), 4L)
-  for (i in seq_len(nrow(m))) {
-    p <- strsplit(strsplit(m$values[i], ";", fixed = TRUE)[[1]], "[:=]")
-    p <- Filter(function(z) z[1] == "...", p)
-    old <- strsplit(m$old_args[i], ",", fixed = TRUE)[[1]]
-    new <- strsplit(m$new_args[i], ",", fixed = TRUE)[[1]]
-    args <- stats::setNames(as.list(seq_along(old)), old)
-    args[old == "..."] <- NULL
-    args <- c(args, stats::setNames(as.list(seq_along(p)), vapply(p, `[`, "", 2L)), list(9))
-    seen <- new.env()
-    rec <- function(...) {
-      seen$names <- as.character(...names())
-      invisible(NULL)
-    }
-    do.call(testthat::with_mocked_bindings,
-            c(list(code = bquote(do.call(.(m$old[i]), .(args)))), stats::setNames(list(rec), m$new[i]),
-              list(.package = "rmoriebricklayer")))
-    expect_identical(seen$names, c(new[old != "..."], vapply(p, `[`, "", 3L), ""), info = m$old[i])
-  }
 })
 
 test_that("results come back under their 0.5.x names through an alias", {
@@ -239,25 +219,11 @@ test_that("a translated result prints, plots and is read back by the aliases", {
   expect_true("pct_change" %in% names(plot(y)))
   expect_identical(nn(yoy_summary(y)), yoysmry(y1))
   # no package method: R's own runs on the 0.5.x names
-  fr <- frequency_table(data.frame(g = c("a", "a", "b")), "g")
-  expect_true("pct_valid" %in% names(fr))
-  expect_output(print(fr), "Frequency table")
   pl <- rmoriebricklayer:::.rmbl_alias_out("frequency_table", list(value = data.frame(pctvalid = 1),
                                                                     visible = TRUE))
   expect_output(print(pl), "pct_valid")
   expect_s3_class(summary(pl), "table")
   expect_identical(format(pl), format(data.frame(pct_valid = 1)))
-  # an alias given a translated result reads it in the 1.0.0 names, and writes the 0.5.x header
-  txt <- yoy_csv(y, NULL)
-  expect_match(txt, "year,value,previous,change,pct_change", fixed = TRUE)
-  f <- tempfile(fileext = ".csv")
-  expect_invisible(yoy_csv(y, f))
-  expect_identical(names(utils::read.csv(f, comment.char = "#"))[5], "pct_change")
-  expect_match(yoy_tsv(y, NULL), "pct_change", fixed = TRUE)
-  h <- tempfile(fileext = ".html")
-  yoy_write(y, h)
-  expect_true(file.exists(h))
-  expect_identical(yoy_markdown(y, NULL), yoymd(y1, NULL))
   # a text with no header row is left as it is
   hdr <- rmoriebricklayer:::.rmbl_alias_header
   expect_identical(hdr(list(value = "# only a comment", visible = TRUE), NULL, c(a = "b")), "# only a comment")

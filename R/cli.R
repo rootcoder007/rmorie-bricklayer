@@ -438,6 +438,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
                 sign = c("--json", "--fail-on", "--scheme", "--key-file", "--public-key", "--overwrite", "--manifests",
                          "--state-file", "--sectors", "--sector", "--sector-index", "--reserve", "--warn-left",
                          "--seen-log"),
+                migrate = "--write",
                 config = if (length(rest) && identical(rest[[1L]], "reset")) "--force")
   opts <- rest[startsWith(rest, "--")]
   values <- unlist(lapply(c("--email", "--code", "--token", "--model", "--route", "--out", "--jobs", "--within",
@@ -448,6 +449,8 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
     if (!is.na(i) && i < length(rest)) rest[[i + 1L]] else NULL
   }))
   bad <- setdiff(opts, c(known[[verb]], values))
+  # run passes every --ARG on to the function, which refuses an argument it does not take
+  if (identical(verb, "run")) bad <- character()
   if (verb %in% c("help", "--help", "-h")) bad <- setdiff(opts, c("--help", "-h"))
   if (length(bad) && (verb %in% c("help", "--help", "-h") || !is.null(.bl_verb_usage(verb, prog)))) {
     out(sprintf("%s %s: unknown option %s (%s %s --help)\n", prog, verb, bad[[1L]], prog, verb))
@@ -588,7 +591,11 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
           if (!length(rest)) {
             usage_error(sprintf("usage: %s describe NAME", prog))
           }
-          if (is.null(.bl_rd_for(rest[[1L]]))) {
+          old <- if (is.null(.bl_rd_for(rest[[1L]]))) .bl_old_row(rest[[1L]])
+          if (!is.null(old)) {
+            out(.bl_old_note(old))
+            out(.bl_describe(old$new))
+          } else if (is.null(.bl_rd_for(rest[[1L]]))) {
             out(sprintf("no help page for '%s' (%s functions lists them)\n", rest[[1L]], prog))
             status <- 1L
           } else {
@@ -599,13 +606,19 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
           if (!length(rest)) {
             usage_error(sprintf("usage: %s examples NAME", prog))
           }
-          if (is.null(.bl_rd_for(rest[[1L]]))) {
+          old <- if (is.null(.bl_rd_for(rest[[1L]]))) .bl_old_row(rest[[1L]])
+          if (!is.null(old)) {
+            out(.bl_old_note(old))
+            out(.bl_examples(old$new))
+          } else if (is.null(.bl_rd_for(rest[[1L]]))) {
             out(sprintf("no help page for '%s' (%s functions lists them)\n", rest[[1L]], prog))
             status <- 1L
           } else {
             out(.bl_examples(rest[[1L]]))
           }
         },
+        migrate = status <- .bl_cli_migrate(rest, has, out, usage_error, prog),
+        run = status <- .bl_cli_run(rest, out, usage_error, prog),
         data = status <- .bl_cli_data(rest, flag, out),
         app = status <- .bl_cli_app(rest, flag, has, out, usage_error),
         `explain-error` = status <- .bl_cli_explain(c(rest, tail_args), out, prog),
@@ -848,8 +861,11 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
                    "  show or change the language-model settings (route, addresses, keys, models)"),
     bundle = "bundle REQUEST...   agentbndl() from the shell",
     functions = "functions [PATTERN]   exported functions and their titles",
-    describe = "describe NAME   help page of one function",
+    describe = "describe NAME   help page of one function (a 0.5.x name: what it became, then its page)",
     examples = "examples NAME   the examples of one function",
+    run = paste("run NAME [VALUE...] [--ARG VALUE...]   call a function by its 1.0.0 or 0.5.x name (old",
+                "arguments and values translated); a .csv or .rds VALUE is read, a,b,c is a vector"),
+    migrate = "migrate FILE.R... [--write]   rewrite the 0.5.x names in R scripts to 1.0.0 (shows the changes)",
     data = "data list | data pull db/table [--out FILE.csv]   curated tables at data.rmorie.com (your MORIE key)",
     app = "app [PATH] [--port N] [--no-browser]   the analysis dashboard (rmblapp()); PATH a CSV file or a capsule",
     wayback = paste("wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d] [--max N]   archive every URL in FILE;",

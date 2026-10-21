@@ -462,5 +462,4 @@ test_that("an error inside the footprint wrapper is named after cpschk(), not co
   expect_false(any(grepl("co2fp", msg, fixed = TRUE)))
   # co2fp()'s own argument errors keep its name
   expect_error(co2fp(1, meth = "nope"), "^co2fp: `meth` must be one of")
-  expect_error(compute_footprint(1, method = "nope"), "^co2fp: `meth` must be one of")
 })

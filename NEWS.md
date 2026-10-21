@@ -5,6 +5,7 @@
 * An error raised while `co2fp()` measures a computation's footprint is now named after the function that asked for the footprint (for example `cpschk: the provenance names no source to fetch`), not after `co2fp()`.
 * The vignettes run their code again wherever they are built (r-universe, pkgdown, `R CMD build`), so the articles show their plots; only `R CMD check` re-building a vignette skips the computing.
 * The package installs faster, which keeps its CRAN check under ten minutes: R code is no longer byte-compiled at install (R compiles each function the first time it runs), and the two SIU parser files build as one compilation unit, so `<regex>` is compiled once.
+* The 0.5.x names are no longer R functions (except the eleven rmoriedata 0.3.x calls and the four S3 generics): the `rmbl` command line translates them instead, with the new verbs `run` and `migrate`, and `describe` and `examples` now answer for an old name. Every exported function has an example.
 * Every vignette now draws its results: the 21 that had no figure gain one or more, drawn with the package's own `plot()` methods and plot helpers from the objects each vignette builds.
 
 ## A dashboard, distributions and proof ledgers
@@ -204,20 +205,21 @@ can call them.
 
 Every exported function, argument, output column, help topic and option now has a short name without
 underscores (`survey_design()` is `svydes()`, `conf_level` is `conflvl`, `trend_sensitivity()` is
-`tse()`). Each help page gives the full form of every short name. Every 0.5.13 export is still callable
-by its old name with its old argument names and defaults: `?rmbl-aliases` lists the 304 aliases, each a
-wrapper that forwards to the new function (the eleven rmoriedata 0.3.x calls among them in
-`?rmbl-compat`). Allowed values that were renamed (`"mean_bootstrap"` is `"meanboot"`,
-`"higher_is_better"` is `"higher"`, `"all_cause_mortality"` is `"allcause"`) are translated on the way,
-as are old argument names passed through `...` and the old `what` and `which` values of the plot
-methods. The nine options read their 0.5.x names too (`rmoriebricklayer.xmss_index_file` for
+`tse()`). Each help page gives the full form of every short name. The 0.5.13 names that 1.0.0 renamed are known to the command line, which translates
+them: `rmbl describe admissions` says what the name became and shows its page, `rmbl run admissions
+--adp 120 --alos 30` calls the function by its old name with its old argument names and values, and
+`rmbl migrate script.R` rewrites a 0.5.x script to the 1.0.0 names (`--write` writes it). Renamed
+allowed values (`"mean_bootstrap"` is `"meanboot"`, `"higher_is_better"` is `"higher"`,
+`"all_cause_mortality"` is `"allcause"`) and old argument names passed through `...` are
+translated too. In R, the eleven functions rmoriedata 0.3.x calls keep their old names
+(`?rmbl-compat`), and so do the four S3 generics below; `?rmbl-aliases` lists every renamed value,
+column and field. The nine options read their 0.5.x names too (`rmoriebricklayer.xmss_index_file` for
 `rmoriebricklayer.xmssidxfile`), so a record or cache an old `.Rprofile` points to is still used. `rate()`, `rate_change()`, `share()` and
 `yoy_summary()` stay S3 generics, so methods written for them still dispatch. `yoy()` kept its name and
 takes its 0.5.x argument names (`period`, `min_base`, `conf_level`, `direction`) beside the new ones.
-Code written against 0.5.x keeps running through the aliases: results come back under their 0.5.x
+Results of the four generics come back under their 0.5.x
 column and field names (`co2e_g`, `pct_valid`, nested tables and attributes too, and the header row of a
-delimited writer), `print()`, `plot()`, `format()` and `summary()` work on them, and an alias that is
-given one reads it. A 1.0.0 call returns the 1.0.0 names. The one call that cannot tell is `yoy()`,
+delimited writer), and `print()`, `plot()`, `format()` and `summary()` work on them. A 1.0.0 call returns the 1.0.0 names. The one call that cannot tell is `yoy()`,
 which kept its name: with a 0.5.x argument name it returns the 0.5.x names, without one the 1.0.0
 names (`pctchg` for `pct_change`); `?rmbl-aliases` lists every renamed column and field. `rmbl functions` and the help-aware language-model
 tools list the new names. Wire formats (capsule, manifest and service JSON fields, CSV columns from

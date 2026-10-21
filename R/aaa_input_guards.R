@@ -22,11 +22,11 @@
   for (i in rev(seq_len(n))) {
     f <- sys.function(i)
     if (!identical(environment(f), ns)) next
-    # co2fp() (and its 0.5.x alias) evaluates the caller's expression: an error raised while that
+    # co2fp() evaluates the caller's expression: an error raised while that
     # expression runs (a frame further in whose parent lies outside co2fp) belongs to the function
     # that asked for the footprint, so the search goes on past it; co2fp()'s own argument errors
     # (every frame further in descends from it) keep its name
-    if ((identical(f, get0("co2fp", ns)) || identical(f, get0("compute_footprint", ns))) &&
+    if (identical(f, get0("co2fp", ns)) &&
           i < n && any(par[(i + 1L):n] < i)) next
     h <- sys.call(i)[[1L]]
     if (is.call(h) && as.character(h[[1L]]) %in% c("::", ":::")) h <- h[[3L]]
