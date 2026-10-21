@@ -75,13 +75,10 @@
 - Spelling: US spelling throughout (“optimized”, “renormalized”,
   “victimized”), code names in code font, and the technical terms in
   `inst/WORDLIST`; `spelling::spell_check_package()` finds nothing.
-- The vignettes ship built: each vignette’s HTML (with every figure) and
-  R code sit beside its source and are made by `dev/build_vignettes.R`,
-  which stamps each HTML with the SHA-256 of its source (a test fails
-  when a source has changed since). A small vignette engine returns them
-  as they are, so R CMD check no longer reruns the analyses while the
-  source, the R code and the HTML are all still listed with each
-  vignette.
+- R CMD check no longer reruns the vignettes’ analyses: when it
+  re-builds a vignette, only the setup chunk runs. R CMD build,
+  r-universe and pkgdown still build every vignette in full, so the
+  package carries each one’s HTML, figures and R code.
 - Every vignette now draws its results: the 21 that had no figure gain
   one or more, drawn with the package’s own
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html) methods and
