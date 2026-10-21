@@ -51,7 +51,8 @@
 <h2 class="pkg-version" data-toc-text="1.0.0" id="rmoriebricklayer-100">rmoriebricklayer 1.0.0<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-100"></a></h2>
 <div class="section level3">
 <h3 id="fixes-after-the-cran-resubmission-1-0-0">Fixes after the CRAN resubmission<a class="anchor" aria-label="anchor" href="#fixes-after-the-cran-resubmission-1-0-0"></a></h3>
-<ul><li>
+<ul><li>The reference to Welch (1947) on <code><a href="../reference/baltab.html">?baltab</a></code> quotes its title with <code>\sQuote{}</code>, so the PDF manual prints an opening and a closing quote around Student’s instead of two closing ones.</li>
+<li>
 <code><a href="../reference/srchfig.html">srchfig()</a></code> with no argument gains a column <code>yours</code>: for each of the 36 figures, one line of R that draws it from your own numbers (the function behind the figure, with example inputs to replace; a schematic gives the computation it pictures). The search-and-rescue guide prints the table, and a test runs every line.</li>
 <li>The dashboard’s method card was empty when the package ran from its source (<code><a href="https://pkgload.r-lib.org/reference/load_all.html" class="external-link">pkgload::load_all()</a></code>), because it read only the installed help pages; it now falls back to the source <code>man/</code> folder, as the command line already did.</li>
 <li>The search-and-rescue guide adds “Your own search” (each search function run on numbers of your own, with its plot) and “Planning a search, start to finish” (a probability map from the last known position, the day’s effort spread over it, and the next day planned on the map updated after a search that found nothing), and its section headings no longer carry the book’s chapter numbers (the figure numbers do).</li>

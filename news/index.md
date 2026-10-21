@@ -4,6 +4,10 @@
 
 ### Fixes after the CRAN resubmission
 
+- The reference to Welch (1947) on
+  [`?baltab`](https://rootcoder007.github.io/rmorie-bricklayer/reference/baltab.md)
+  quotes its title with `\sQuote{}`, so the PDF manual prints an opening
+  and a closing quote around Student’s instead of two closing ones.
 - [`srchfig()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/srchfig.md)
   with no argument gains a column `yours`: for each of the 36 figures,
   one line of R that draws it from your own numbers (the function behind
