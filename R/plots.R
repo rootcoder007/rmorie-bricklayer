@@ -1211,10 +1211,8 @@ plotopt <- function(...) {
 #' be <- ext("tps_break_enter_d14_2024.csv")
 #' be <- be[!is.na(be$lon), ]
 #' plot(crmdens(be$lon, be$lat, ngrid = 60))
-#' \donttest{
 #' plot(knoxtst(be$lon, be$lat, as.Date(be$occ_date), c(100, 200, 400), c(7, 14, 28),
 #'                nsim = 99, seed = 1))
-#' }
 #' plot(hotpers(be$lon, be$lat, quarters(as.Date(be$occ_date)), cell = 0.3))
 #' # rates, shares and the change in a rate
 #' rt <- data.frame(division = rep(c("n", "e", "w"), 2), year = rep(2022:2023, each = 3),
