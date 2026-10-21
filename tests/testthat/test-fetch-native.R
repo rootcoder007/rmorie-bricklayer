@@ -81,8 +81,10 @@ test_that("blfetch falls back to a pinned wayback URL", {
 test_that("wbsnpnat resolves a real snapshot", {
   skip_if_no_internet()
   u <- wbsnpnat("https://www.r-project.org/", tmout = 30)
-  # NULL is legal (service hiccup) but a hit must be a web.archive.org URL.
-  if (!is.null(u)) expect_match(u, "web\\.archive\\.org")
+  # NULL is legal (archive.org throttling with 429, or down) but it is not a pass: say so; a hit
+  # must be a web.archive.org URL
+  skip_if(is.null(u), "archive.org gave no snapshot just now (rate limit or outage)")
+  expect_match(u, "web\\.archive\\.org")
 })
 
 test_that("siufetch builds the SIU report URL and forwards options", {

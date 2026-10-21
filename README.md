@@ -593,8 +593,8 @@ The shortest path, on the OTIS table that ships with the package:
 library(rmoriebricklayer)
 otis <- read.csv(system.file("extdata", "otis_a01_individuals.csv",
                              package = "rmoriebricklayer"))
-a <- anltab(otis, value = "individuals", period = "year",
-                   by = c("table", "group"), rounding = 5)
+a <- anltab(otis, value = "individuals", prd = "year",
+            by = c("table", "group"), rnd = 5)
 a                                   # what changed, how sure, what was withheld
 rptanl(a, "otis.html")     # one self-contained file
 ```
@@ -647,12 +647,11 @@ issues <- valsch(df, prov)             # names, types, value sets, rows
 
 # 4. The manifest: named cross-checks, then the two capsule artifacts.
 man <- mkmnf(list(project = "my-study", synthetic = TRUE))
-man <- recrd(man, "rows", observed = nrow(df), expected = gen$rows,
-              synthetic = TRUE)
+man <- recrd(man, "rows", obs = nrow(df), expd = gen$rows, syn = TRUE)
 wrmnfjs(man, file.path(tempdir(), "manifest.json"))
 wrsmrytxt(man, tempdir(),
                   paths = list(input = path, results = tempdir()),
-                  what_was_done = "* validated the schema and recorded the row count")
+                  whatwasdone = "* validated the schema and recorded the row count")
 ```
 
 Then ask whether the data itself moved, and sign the answer:
@@ -664,7 +663,7 @@ ref  <- data.frame(value = rnorm(300), size = runif(300, 1, 10),
                    grade = sample(c("a", "b", "c"), 300, TRUE))
 same <- data.frame(value = rnorm(300), size = runif(300, 1, 10),
                    grade = sample(c("a", "b", "c"), 300, TRUE))
-cpsdrft(ref, same)$any_drift        # a fresh draw: FALSE
+cpsdrft(ref, same)$anydrft          # a fresh draw: FALSE
 moved <- same
 moved$size <- moved$size * 3              # a silently rescaled column
 moved$grade[1:100] <- "z"                 # and a new category
