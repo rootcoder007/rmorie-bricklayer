@@ -446,20 +446,59 @@ computation it pictures):
 
 ``` r
 
-knitr::kable(srchfig()[, c("fig", "caption", "yours")])
+# an HTML table with each line in <code>: in a Markdown table a `$` starts a formula and a `|`
+# ends the cell, so both are written as entities
+tab <- srchfig()[, c("fig", "caption", "yours")]
+esc <- function(x) {
+  for (r in list(c("&", "&amp;"), c("<", "&lt;"), c(">", "&gt;"), c("$", "&#36;"), c("|", "&#124;"))) {
+    x <- gsub(r[1], r[2], x, fixed = TRUE)
+  }
+  x
+}
+tab$caption <- esc(tab$caption)
+tab$yours <- sprintf("<code>%s</code>", esc(tab$yours))
+knitr::kable(tab, format = "html", escape = FALSE, row.names = FALSE,
+             col.names = c("Figure", "Caption", "From your own numbers"))
 ```
 
-| fig | caption | yours |
+| Figure | Caption | From your own numbers |
 |:---|:---|:---|
-| 3-1 | Probability density distribution for a point datum with top view | plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), center = c(0, 0), sigma = 1.5), view = “both”) |
-| 3-2 | Circle of radius one standard deviation and its circumscribed square | sum(datumpmap(c(-1.5, 1.5), c(-1.5, 1.5), sigma = 1.5)$`poc)                                                                           |
-|3-3  |Circle of radius E and its circumscribed square                                 |sum(datumpmap(c(-1, 1) * 1.177 * 1.5, c(-1, 1) * 1.177 * 1.5, sigma = 1.5)`$poc) |
-| 3-4 | Probability map for a point datum | plot(datumpmap(c(-3, -1, 1, 3) \* 1.77, c(-3, -1, 1, 3) \* 1.77, sigma = 1.5), view = “cells”) |
-| 3-5 | Circle of radius 1.1 E and its circumscribed square | sum(datumpmap(c(-1, 1) \* 1.295 \* 1.5, c(-1, 1) \* 1.295 \* 1.5, sigma = 1.5)\$poc) \| \|3-6 \|Line datum: circles at the end points boxed in \|plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), "line", center = c(0, -2), end = c(0, 2), sigma = 1), view = "both") \| \|3-7 \|Probability density distribution for a line datum connecting two point datums \|plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), "line", center = c(0, -2), end = c(0, 2), sigma = 1), view = "both") \| \|3-8 \|Probability density distribution for a line datum with top view \|plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), "corridor", center = c(0, -2), end = c(0, 2), sigma = 1), view = "both") \| \|3-9 \|Strip of width 2 E centred on the datum line \|plot(datumpmap(c(-5, 5), c(-1.18, 1.18), "corridor", center = c(-4, 0), end = c(4, 0), sigma = 1), view = "cells") \| \|3-10 \|Example of a completed probability map for a line datum \|plot(datumpmap(0:10, c(-3, -1.8, -0.6, 0.6, 1.8, 3), "corridor", center = c(0, 0), end = c(10, 0), sigma = 1), view = "cells") \| \|3-11 \|Uniform probability density distribution with top view \|plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), "area", center = c(-2, -1.5), end = c(2, 1.5)), view = "both") \| \|3-12 \|Probability map for an area datum \|plot(datumpmap(0:5, 0:4, "area", center = c(0, 0), end = c(5, 4)), view = "cells") \| \|3-13 \|Generalized probability density distribution with top view \|plot(datumpmap(0:5, 0:4, "general", wts = matrix(c(1:10, 10:1), 4, 5)), view = "both") \| \|3-14 \|Probability map for a generalized datum \|plot(datumpmap(0:5, 0:4, "general", wts = matrix(c(1:10, 10:1), 4, 5)), view = "cells") \| \|4-1 \|Lateral range curves: definite range, M-Beta, inverse cube and another sensor \|plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = "mbeta", m = 0.5)) \| \|4-2 \|Definite range lateral range curve \|plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = "definite")) \| \|4-3 \|The area swept by a definite range sensor \|plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = "definite"), equiv = TRUE) \| \|4-4 \|M-Beta lateral range curve, M = 0.5 \|plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = "mbeta", m = 0.5), equiv = TRUE) \| \|4-5 \|M-Beta lateral range curve, M = 0.25 \|plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = "mbeta", m = 0.25), equiv = TRUE) \| \|4-6 \|The geometry of the inverse cube law \|plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = "invcube")) \| \|4-7 \|Inverse cube lateral range curve and its sweep width \|plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = "invcube"), equiv = TRUE) \| \|5-1 \|Random search \|plot(srchpod(seq(0, 3, by = 0.1), model = "random")) \| \|5-2 \|Parallel sweep search \|pswppod(W = 0.8, S = 1, model = "invcube") \| \|5-3 \|Definite range curves of two tracks 2 W apart \|plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = "definite"), spacing = 1.6) \| \|5-4 \|Definite range curves of two tracks W apart \|plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = "definite"), spacing = 0.8) \| \|5-5 \|Definite range and random search \|plot(srchpod(seq(0, 3, by = 0.1), "definite"), models = c("definite", "random")) \| \|5-6 \|M-Beta (M = 0.5) curves of two tracks 2 W apart \|plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = "mbeta", m = 0.5), spacing = 1.6) \| \|5-7 \|M-Beta (M = 0.25 and M = 0.5) \|plot(srchpod(seq(0, 3, by = 0.1), "mbeta", m = 0.5), models = c("mbeta", "definite", "random"), m = c(0.5, 0.25)) \| \|5-8 \|Inverse cube \|plot(srchpod(seq(0, 3, by = 0.1), "invcube"), models = c("invcube", "definite", "random")) \| \|5-9 \|Lateral range curves under ideal and poor search conditions \|plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = "invcube", navsd = 0.3), spacing = 1) \| \|6-1 \|A simple non-uniform distribution \|optsqr(effort = 2) \| \|6-2 \|The trial search square of half the area \|optsqr(effort = 2)\$side |
-| 6-3 | Optimal search factors for point datums (effort to 18) | with(do.call(rbind, lapply(seq(0.5, 18, by = 0.5), optsqr)), plot(factor, cumeff, type = “l”)) |
-| 6-4 | Optimal search factors for point datums (effort to 100) | with(do.call(rbind, lapply(seq(2, 100, by = 2), optsqr)), plot(factor, cumeff, type = “l”)) |
-| 6-5 | Cumulative probability of success for optimal searches | with(do.call(rbind, lapply(seq(0.5, 25, by = 0.5), optsqr)), plot(cumeff, 100 \* cumpos, type = “l”)) |
-| 6-6 | Optimal search factors for 1-5 sequential searches with random relative efforts | optsqr(c(1, 0.5, 2, 1.5)) |
+| 3-1 | Probability density distribution for a point datum with top view | `plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), center = c(0, 0), sigma = 1.5), view = “both”)` |
+| 3-2 | Circle of radius one standard deviation and its circumscribed square | `sum(datumpmap(c(-1.5, 1.5), c(-1.5, 1.5), sigma = 1.5)$poc)` |
+| 3-3 | Circle of radius E and its circumscribed square | `sum(datumpmap(c(-1, 1) * 1.177 * 1.5, c(-1, 1) * 1.177 * 1.5, sigma = 1.5)$poc)` |
+| 3-4 | Probability map for a point datum | `plot(datumpmap(c(-3, -1, 1, 3) * 1.77, c(-3, -1, 1, 3) * 1.77, sigma = 1.5), view = “cells”)` |
+| 3-5 | Circle of radius 1.1 E and its circumscribed square | `sum(datumpmap(c(-1, 1) * 1.295 * 1.5, c(-1, 1) * 1.295 * 1.5, sigma = 1.5)$poc)` |
+| 3-6 | Line datum: circles at the end points boxed in | `plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), “line”, center = c(0, -2), end = c(0, 2), sigma = 1), view = “both”)` |
+| 3-7 | Probability density distribution for a line datum connecting two point datums | `plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), “line”, center = c(0, -2), end = c(0, 2), sigma = 1), view = “both”)` |
+| 3-8 | Probability density distribution for a line datum with top view | `plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), “corridor”, center = c(0, -2), end = c(0, 2), sigma = 1), view = “both”)` |
+| 3-9 | Strip of width 2 E centred on the datum line | `plot(datumpmap(c(-5, 5), c(-1.18, 1.18), “corridor”, center = c(-4, 0), end = c(4, 0), sigma = 1), view = “cells”)` |
+| 3-10 | Example of a completed probability map for a line datum | `plot(datumpmap(0:10, c(-3, -1.8, -0.6, 0.6, 1.8, 3), “corridor”, center = c(0, 0), end = c(10, 0), sigma = 1), view = “cells”)` |
+| 3-11 | Uniform probability density distribution with top view | `plot(datumpmap(seq(-4, 4, by = 0.25), seq(-4, 4, by = 0.25), “area”, center = c(-2, -1.5), end = c(2, 1.5)), view = “both”)` |
+| 3-12 | Probability map for an area datum | `plot(datumpmap(0:5, 0:4, “area”, center = c(0, 0), end = c(5, 4)), view = “cells”)` |
+| 3-13 | Generalized probability density distribution with top view | `plot(datumpmap(0:5, 0:4, “general”, wts = matrix(c(1:10, 10:1), 4, 5)), view = “both”)` |
+| 3-14 | Probability map for a generalized datum | `plot(datumpmap(0:5, 0:4, “general”, wts = matrix(c(1:10, 10:1), 4, 5)), view = “cells”)` |
+| 4-1 | Lateral range curves: definite range, M-Beta, inverse cube and another sensor | `plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = “mbeta”, m = 0.5))` |
+| 4-2 | Definite range lateral range curve | `plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = “definite”))` |
+| 4-3 | The area swept by a definite range sensor | `plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = “definite”), equiv = TRUE)` |
+| 4-4 | M-Beta lateral range curve, M = 0.5 | `plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = “mbeta”, m = 0.5), equiv = TRUE)` |
+| 4-5 | M-Beta lateral range curve, M = 0.25 | `plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = “mbeta”, m = 0.25), equiv = TRUE)` |
+| 4-6 | The geometry of the inverse cube law | `plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = “invcube”))` |
+| 4-7 | Inverse cube lateral range curve and its sweep width | `plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = “invcube”), equiv = TRUE)` |
+| 5-1 | Random search | `plot(srchpod(seq(0, 3, by = 0.1), model = “random”))` |
+| 5-2 | Parallel sweep search | `pswppod(W = 0.8, S = 1, model = “invcube”)` |
+| 5-3 | Definite range curves of two tracks 2 W apart | `plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = “definite”), spacing = 1.6)` |
+| 5-4 | Definite range curves of two tracks W apart | `plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = “definite”), spacing = 0.8)` |
+| 5-5 | Definite range and random search | `plot(srchpod(seq(0, 3, by = 0.1), “definite”), models = c(“definite”, “random”))` |
+| 5-6 | M-Beta (M = 0.5) curves of two tracks 2 W apart | `plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = “mbeta”, m = 0.5), spacing = 1.6)` |
+| 5-7 | M-Beta (M = 0.25 and M = 0.5) | `plot(srchpod(seq(0, 3, by = 0.1), “mbeta”, m = 0.5), models = c(“mbeta”, “definite”, “random”), m = c(0.5, 0.25))` |
+| 5-8 | Inverse cube | `plot(srchpod(seq(0, 3, by = 0.1), “invcube”), models = c(“invcube”, “definite”, “random”))` |
+| 5-9 | Lateral range curves under ideal and poor search conditions | `plot(ltrlrng(seq(-3, 3, by = 0.05), W = 0.8, model = “invcube”, navsd = 0.3), spacing = 1)` |
+| 6-1 | A simple non-uniform distribution | `optsqr(effort = 2)` |
+| 6-2 | The trial search square of half the area | `optsqr(effort = 2)$side` |
+| 6-3 | Optimal search factors for point datums (effort to 18) | `with(do.call(rbind, lapply(seq(0.5, 18, by = 0.5), optsqr)), plot(factor, cumeff, type = “l”))` |
+| 6-4 | Optimal search factors for point datums (effort to 100) | `with(do.call(rbind, lapply(seq(2, 100, by = 2), optsqr)), plot(factor, cumeff, type = “l”))` |
+| 6-5 | Cumulative probability of success for optimal searches | `with(do.call(rbind, lapply(seq(0.5, 25, by = 0.5), optsqr)), plot(cumeff, 100 * cumpos, type = “l”))` |
+| 6-6 | Optimal search factors for 1-5 sequential searches with random relative efforts | `optsqr(c(1, 0.5, 2, 1.5))` |
 
 The most used of them, step by step. Say a sensor’s sweep width is 0.8
 nautical miles and its detection falls off as the inverse cube of the

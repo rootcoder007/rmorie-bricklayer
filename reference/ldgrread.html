@@ -187,7 +187,7 @@ ledger rows to such a capsule too.</p></dd>
 <span class="r-in"><span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".json"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="st">'{"name": "x"}'</span>, <span class="va">bad</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">ldgrread</span><span class="op">(</span><span class="va">bad</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : ldgrread: file1fdf7bb8c8c5.json is not a ledger: $: missing required toolchain, source, theorems</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : ldgrread: file1ff09b4c727.json is not a ledger: $: missing required toolchain, source, theorems</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">bad</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

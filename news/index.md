@@ -4,6 +4,10 @@
 
 ### Fixes after the CRAN resubmission
 
+- The search-and-rescue guide’s table of figure recipes is an HTML table
+  with each line of R in code font; as a Markdown table, a `$` in a
+  recipe started a formula and a `|` ended the cell, so most rows ran
+  together as mathematics.
 - The reference to Welch (1947) on
   [`?baltab`](https://rootcoder007.github.io/rmorie-bricklayer/reference/baltab.md)
   quotes its title with `\sQuote{}`, so the PDF manual prints an opening
