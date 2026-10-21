@@ -944,7 +944,7 @@ state$used$generation
 # the old copy is refused: the bundles show indices it does not know are used
 blcli(c("sign", root, "--scheme", "xmss-sha256", "--key-file", copy, "--overwrite"),
       out = function(s) cat(s[grepl("stale", s)]))
-#> rmoriebricklayer: stale copy of the key: index 1 of it was already signed (seen in /tmp/RtmpY8GPNz/capsules-359c75a30a96/two/capsule_bundle.json), but this state says the highest used in its range is -1. Signing would reuse an index: use the copy that made that signature, or generate a new key
+#> rmoriebricklayer: stale copy of the key: index 1 of it was already signed (seen in /tmp/Rtmp6fmjHp/capsules-3782634e7e5a/two/capsule_bundle.json), but this state says the highest used in its range is -1. Signing would reuse an index: use the copy that made that signature, or generate a new key
 xmssidxseen(root)[, c("index", "reused")]
 #>   index reused
 #> 1     0  FALSE

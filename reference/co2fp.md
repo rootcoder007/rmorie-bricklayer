@@ -219,20 +219,20 @@ fp2 <- co2fp(sum(sqrt(seq_len(2e5))), loc = 30, usage = 0.5,
                          cpupwrw = 65, memgb = 16, pue = 1.67, meth = "model")
 fp2$enekwh
 #> $cpu
-#> [1] 4.522917e-08
+#> [1] 6.030556e-08
 #> 
 #> $memory
-#> [1] 8.294333e-09
+#> [1] 1.105911e-08
 #> 
 #> $total
-#> [1] 5.35235e-08
+#> [1] 7.136467e-08
 #> 
 fpeqv(fp2$co2eg)
 #> $carkm
-#> [1] 9.175457e-09
+#> [1] 1.223394e-08
 #> 
 #> $treemon
-#> [1] 1.751041e-09
+#> [1] 2.334722e-09
 #> 
 #> $sources
 #>                                                                  car 

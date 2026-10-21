@@ -64,18 +64,18 @@ for the verbs.
 # into a scratch folder, so nothing on your PATH changes
 d <- file.path(tempdir(), "bin")
 p <- instcli(dir = d)
-#> Installed /tmp/RtmpRWwpgK/bin/rmoriebricklayer and /tmp/RtmpRWwpgK/bin/rmbl; add /tmp/RtmpRWwpgK/bin to your PATH
+#> Installed /tmp/Rtmpoc0WxE/bin/rmoriebricklayer and /tmp/Rtmpoc0WxE/bin/rmbl; add /tmp/Rtmpoc0WxE/bin to your PATH
 list.files(d)
 #> [1] "rmbl"             "rmoriebricklayer"
 readLines(p)[1:4]
 #> [1] "#!/bin/sh"                                                                                        
 #> [2] "# rmoriebricklayer: the rmoriebricklayer command line (written by rmoriebricklayer::instcli())"   
-#> [3] "# runs the package in /tmp/RtmpRWwpgK/temp_libpath1f1f63a6439f (pinned with .libPaths() inside R)"
+#> [3] "# runs the package in /tmp/Rtmpoc0WxE/temp_libpath20c34f66d11f (pinned with .libPaths() inside R)"
 #> [4] "export RMBL_PROG=rmoriebricklayer"                                                                
 
 # one name only
 instcli(dir = d, name = "rmbl")
-#> Installed /tmp/RtmpRWwpgK/bin/rmbl; add /tmp/RtmpRWwpgK/bin to your PATH
+#> Installed /tmp/Rtmpoc0WxE/bin/rmbl; add /tmp/Rtmpoc0WxE/bin to your PATH
 
 if (FALSE) { # interactive()
 instcli()   # ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
