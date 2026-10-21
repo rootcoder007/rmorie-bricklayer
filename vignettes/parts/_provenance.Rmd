@@ -118,7 +118,7 @@ signingkey <- xmssadv(signingkey, s2)
 
 An exhausted key is an error rather than a silent wrap-around:
 
-```{r provenance-error = TRUE}
+```{r error = TRUE}
 k <- pqckg(height = 1)          # signs exactly 2 messages
 k <- xmssadv(k, cpssign("one", k))
 k <- xmssadv(k, cpssign("two", k))
