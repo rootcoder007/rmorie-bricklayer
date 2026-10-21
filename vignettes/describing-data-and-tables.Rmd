@@ -11,10 +11,10 @@ vignette: >
 ---
 
 ```{r setup, include = FALSE}
-# the vignette is built in full by R CMD build (its HTML and R code go into the package), r-universe
-# and pkgdown; when R CMD check re-builds it (R sets _R_CHECK_PACKAGE_NAME_ there) only this chunk
-# runs, unless NOT_CRAN is true
-if (!identical(Sys.getenv("NOT_CRAN"), "true") && nzchar(Sys.getenv("_R_CHECK_PACKAGE_NAME_"))) {
+# the vignette runs in full in GitHub CI and for the package tarball (NOT_CRAN), on r-universe
+# (MY_UNIVERSE), on the package website (IN_PKGDOWN) and in an interactive session; when CRAN
+# re-builds it in its check, none of these is set and only this chunk runs
+if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {
   knitr::knit_exit()
 }
 ```

@@ -91,5 +91,5 @@ try(plotopt(colour = "red"))
 \references{
 Okabe, M. and Ito, K. (2008). Color Universal Design (CUD):
 how to make figures and presentations that are friendly to colorblind
-people. \url{https://jfly.uni-koeln.de/color/}
+people. https://jfly.uni-koeln.de/color/
 }

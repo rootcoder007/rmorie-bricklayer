@@ -82,7 +82,7 @@ cnscwb(p, h)[, c("geo", "group", "income", "education", "housing", "labour",
 \references{
 Indigenous Services Canada (2019). Report on trends in First Nations
 communities, 1981 to 2016 (Community Well-Being index).\cr
-\url{https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644}
+https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644
 }
 \seealso{
 \code{\link{cwbscr}}.

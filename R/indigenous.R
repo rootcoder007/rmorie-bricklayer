@@ -43,7 +43,7 @@
 #'   with levels \code{"ok"}, \code{"E"}, \code{"F"}, \code{"x"}, \code{".."},
 #'   \code{"..."}, of class \code{c("rmbl_statcan", "data.frame")}.
 #' @references Statistics Canada. Symbol legend.
-#'   \url{https://www.statcan.gc.ca/en/concepts/definitions/guide-symbol}
+#'   https://www.statcan.gc.ca/en/concepts/definitions/guide-symbol
 #' @seealso \code{\link{indgap}}, \code{\link{indtabs}}.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # the layout of a downloaded table, with one cell suppressed
@@ -344,7 +344,7 @@ limfrom <- function(est, se = NULL, cv = NULL, moe = NULL, moelev = 0.90, conflv
 #'   or ratio.
 #' @references Statistics Canada (2025). Health indicators for First Nations adults living
 #' off reserve, Metis and Inuit adults, 2015 to 2022. The Daily, 2025-02-13.\cr
-#' \url{https://www150.statcan.gc.ca/n1/daily-quotidien/250213/dq250213f-eng.htm}
+#' https://www150.statcan.gc.ca/n1/daily-quotidien/250213/dq250213f-eng.htm
 #'
 #' Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for
 #' Indigenous Data Governance. Data Science Journal 19:43.
@@ -840,8 +840,8 @@ trcprog <- function(done = trccmpl()$cumulative, yearend = trccmpl()$yearend,
 #' \code{\link{dlogin}}. Only openly licensed aggregate tables are mirrored.
 #' First Nations Information Governance Centre data (the First Nations Regional Health
 #' Survey and its companions) are governed by the OCAP(R) principles and are not; ask the
-#' Centre (\url{https://fnigc.ca}; the site answers scripts with 403, archived copy
-#' \url{https://web.archive.org/web/20261001141317/https://fnigc.ca/}).
+#' Centre (https://fnigc.ca; the site answers scripts with 403, archived copy
+#' https://web.archive.org/web/20261001141317/https://fnigc.ca/).
 #' @examplesIf interactive()
 #' indtabs("mental health")
 #' @export

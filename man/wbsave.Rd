@@ -27,7 +27,7 @@ one-label name) is refused: the archive cannot reach it, and the
 request would tell it where your intranet is.}
 
 \item{ak, sk}{Your archive.org S3-like API
-keys (\url{https://archive.org/account/s3.php}). By default
+keys (https://archive.org/account/s3.php). By default
 they are read from the environment variables
 \code{IA_S3_ACCESS_KEY} and \code{IA_S3_SECRET_KEY}, or from
 the files named by \code{IA_S3_ACCESS_KEY_FILE} and
@@ -114,7 +114,7 @@ A run of many URLs is slow by design: at the default 6 captures a
 minute, 1,000 URLs take close to three hours. URLs already finished in
 \code{output} are skipped, so a run can be stopped and restarted.
 
-Network: every request goes to \url{https://web.archive.org}; the
+Network: every request goes to https://web.archive.org; the
 keys travel in the \code{Authorization} header and are never written
 to \code{output} or printed.
 
@@ -150,7 +150,7 @@ res
 }
 \references{
 Internet Archive. Save Page Now 2 (SPN2) public API.\cr
-\url{https://archive.org/details/spn-2-public-api-page-docs}
+https://archive.org/details/spn-2-public-api-page-docs
 }
 \seealso{
 \code{\link{wbsnpnat}} to look up an existing

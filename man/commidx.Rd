@@ -67,7 +67,7 @@ plot(ci)
 }
 \references{
 Inuit Tapiriit Kanatami (2016). National Inuit Suicide Prevention Strategy.
-Ottawa. \url{https://itk.ca/national-inuit-suicide-prevention-strategy/}
+Ottawa. https://itk.ca/national-inuit-suicide-prevention-strategy/
 
 Carroll SR, et al. (2020), see \code{\link{holbal}}.
 }

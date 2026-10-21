@@ -97,7 +97,7 @@
 #' @references Gaborit, P., Aguilar-Melchor, C., Aragon, N., Bettaieb, S.,
 #' Bidoux, L., Blazy, O., Deneuville, J.-C., Persichetti, E., Zemor, G.,
 #' et al. (2025). Hamming Quasi-Cyclic (HQC), specification of 2025-08-22;
-#' reference implementation v5.0.0. <https://pqc-hqc.org/>
+#' reference implementation v5.0.0. https://pqc-hqc.org/
 #'
 #' Alagic, G. et al. (2025). Status Report on the Fourth Round of the NIST
 #' Post-Quantum Cryptography Standardization Process. NIST IR 8545.
@@ -454,7 +454,7 @@ hqcdecap <- function(key, ct) {
 #' other elements are unchanged.
 #' @references Gaborit, P. et al. (2025). Hamming Quasi-Cyclic (HQC),
 #' specification of 2025-08-22, section 3 (HQC-KEM key pair formats).
-#' <https://pqc-hqc.org/>
+#' https://pqc-hqc.org/
 #' @seealso [hqckg()],
 #'   [hqcdecap()]
 #' @examplesIf isTRUE(getOption("rmbl.examples"))

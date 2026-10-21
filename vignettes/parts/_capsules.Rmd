@@ -153,8 +153,8 @@ has moved on.
 ## Where this sits in the MORIE family
 
 `rmoriebricklayer` is the provenance/reproducibility layer under
-[rmorie](https://github.com/rootcoder007/rmorie) and
-[rmoriedata](https://github.com/rootcoder007/rmoriedata); both link against
+rmorie (github.com/rootcoder007/rmorie) and
+rmoriedata (github.com/rootcoder007/rmoriedata); both link against
 its compiled core (`LinkingTo: rmoriebricklayer`) for shared SHA-256 and
 summary-statistic kernels (`csha256()`, `cmn()`, `cvari()`,
 `ccorr()`).

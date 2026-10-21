@@ -94,7 +94,7 @@ studies with heterogeneous treatment effects. Journal of Econometrics
 
 Applied to the effect of donations on police stops, block by quarter: Zorro Medina
 A, Hackett D, Green D, Vargas R (2025). Evidence of donor bias in Chicago police
-stops. \href{https://arxiv.org/abs/2504.15140}{arXiv:2504.15140}.
+stops. arXiv:2504.15140 (https://arxiv.org/abs/2504.15140).
 }
 \seealso{
 \code{\link{plndid}}, \code{\link{stgatt}}.

@@ -95,7 +95,7 @@ Adams C, Cain P, Pinkas D, Zuccherato R (2001). Internet X.509 Public
 Key Infrastructure Time-Stamp Protocol (TSP). RFC 3161. \doi{10.17487/RFC3161}
 
 Internet Archive. ias3: the Internet Archive's S3-like API.
-\url{https://archive.org/developers/ias3.html}
+https://archive.org/developers/ias3.html
 }
 \seealso{
 \code{\link{fetchvrf}}, \code{\link{wbsave}},

@@ -332,7 +332,7 @@ mortality. *Environment International* 144.
 Lannelongue, Grealey, Inouye (2021). Green Algorithms: quantifying the carbon footprint of
 computation. *Advanced Science* 8(12), 2100707.
 Ember (2026). Yearly Electricity Data, via Our World in Data,
-<https://ourworldindata.org/grapher/carbon-intensity-electricity>.
+ourworldindata.org/grapher/carbon-intensity-electricity.
 Electricity Maps (2025). 2024 Yearly Carbon Intensity Data, via Green Algorithms data v3.1.
 Levin (1953). The occurrence of lung cancer in man. *Acta Unio Internationalis Contra
 Cancrum* 9.

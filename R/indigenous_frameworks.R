@@ -84,7 +84,7 @@
 #'   (always \code{TRUE}).
 #' @references Health Canada, Assembly of First Nations (2015). First Nations Mental
 #' Wellness Continuum Framework. Ottawa: Health Canada. Summary report:\cr
-#' \url{https://www.sac-isc.gc.ca/eng/1576093687903/1576093725971}
+#' https://www.sac-isc.gc.ca/eng/1576093687903/1576093725971
 #' @seealso \code{\link{welprof}}, \code{\link{holbal}}.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # well-being, 2024 (table 41-10-0082-01): hope, and meaning and purpose (asked
@@ -208,7 +208,7 @@ mhcont <- function(data, grp, ind, est, lower, upper, hope = NULL,
 #'
 #' Indigenous Services Canada (2019). Report on trends in First Nations communities, 1981
 #' to 2016 (Community Well-Being index).\cr
-#' \url{https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644}
+#' https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # made-up profile figures for two communities, to show the computation
 #' cwbscr(incpercap = c(18000, 31000), highsch20p = c(58, 81),
@@ -510,7 +510,7 @@ healchg <- function(data, grp, ind, prd, est, lower, upper, from, to, well = NUL
 #'   \code{lower}, \code{upper}, \code{usewithcau}; attributes \code{weights} and
 #'   \code{conflvl}. \code{plot()} draws it.
 #' @references Inuit Tapiriit Kanatami (2016). National Inuit Suicide Prevention Strategy.
-#' Ottawa. \url{https://itk.ca/national-inuit-suicide-prevention-strategy/}
+#' Ottawa. https://itk.ca/national-inuit-suicide-prevention-strategy/
 #'
 #' Carroll SR, et al. (2020), see \code{\link{holbal}}.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
