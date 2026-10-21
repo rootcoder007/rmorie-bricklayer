@@ -165,8 +165,8 @@ att
 #>   context     <none>
 #>   prehash     none
 #>   note        counts as published
-#>   signed      2026-10-21T03:52:30Z
-#>   public key  43386377b087f666e258d40119a80bae... (1952 bytes)
+#>   signed      2026-10-21T04:11:02Z
+#>   public key  9291703e01f8e122cf3f7943e87700da... (1952 bytes)
 #> ──────────────────────────────────────────────────────────────────
 
 # a verifier needs the attestation and the manifest, nothing else

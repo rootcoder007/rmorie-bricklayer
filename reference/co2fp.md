@@ -194,7 +194,7 @@ Quantifying the carbon emissions of machine learning. arXiv:1910.09700.
 ``` r
 fp <- co2fp(sum(sqrt(seq_len(2e5))), loc = "CA-ON")
 fp$enekwh$total
-#> [1] 2.684136e-08
+#> [1] 2.684137e-08
 fp$co2eg
 #> [1] 2.441759e-06
 fp$co2int$year
@@ -219,20 +219,20 @@ fp2 <- co2fp(sum(sqrt(seq_len(2e5))), loc = 30, usage = 0.5,
                          cpupwrw = 65, memgb = 16, pue = 1.67, meth = "model")
 fp2$enekwh
 #> $cpu
-#> [1] 1.507639e-08
+#> [1] 4.522917e-08
 #> 
 #> $memory
-#> [1] 2.764778e-09
+#> [1] 8.294333e-09
 #> 
 #> $total
-#> [1] 1.784117e-08
+#> [1] 5.35235e-08
 #> 
 fpeqv(fp2$co2eg)
 #> $carkm
-#> [1] 3.058486e-09
+#> [1] 9.175457e-09
 #> 
 #> $treemon
-#> [1] 5.836805e-10
+#> [1] 1.751041e-09
 #> 
 #> $sources
 #>                                                                  car 
