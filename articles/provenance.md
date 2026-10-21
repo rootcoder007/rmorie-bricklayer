@@ -85,7 +85,7 @@ signingkey <- pqckg(height = 3)
 signingkey
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       fbb1c05f60990b484e34a00772ee9fc8915c7e5d721c15c177ddf301474fbabb
+#>   root       dfe19304c02daa8a7b945783fb399857fca30bfad15fb1842c799610109bc539
 #>   height     3
 #>   used       0 of 8 signatures
 #>   remaining  8
@@ -102,7 +102,7 @@ pub <- signpubkey(signingkey)
 pub
 #> ── Public verification key ───────────────────────────────────────
 #>   scheme  xmss-sha256
-#>   root    fbb1c05f60990b484e34a00772ee9fc8915c7e5d721c15c177ddf301474fbabb
+#>   root    dfe19304c02daa8a7b945783fb399857fca30bfad15fb1842c799610109bc539
 #>   height  3
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -370,13 +370,13 @@ plan <- prrgdecl(c(
 
 # a declared outcome that was not reported
 prrgchk(plan, "n_rows")
-#> ── Against the declaration of 2026-10-21T04:30:04Z: departures below 
+#> ── Against the declaration of 2026-10-21T05:11:15Z: departures below 
 #>   declared but not reported (outcome switching): ate
 #> ──────────────────────────────────────────────────────────────────
 
 # statistics reported that were never declared
 prrgchk(plan, c("ate", "n_rows", "byyear", "byprecinct"))
-#> ── Against the declaration of 2026-10-21T04:30:04Z: departures below 
+#> ── Against the declaration of 2026-10-21T05:11:15Z: departures below 
 #>   reported but not declared (2 addition(s)): byyear, byprecinct
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -428,7 +428,7 @@ cpsbndlvrf(attr(b, "path"), dir, man = man)
 #>   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606
 #>   no_unlisted_files              ok    
 #>   attestation:attestation_comple ok    
-#>   attestation:manifest_digest    ok    c60c93b416a9270a0a83ca64a1c37c6528a4
+#>   attestation:manifest_digest    ok    bf48b6b9f75dd2e195c6b5353cc0637afd10
 #>   attestation:signature          ok    
 #>   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a
 #> ──────────────────────────────────────────────────────────────────
