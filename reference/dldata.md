@@ -86,7 +86,7 @@ read.csv(dest)
 
 # file:// is refused unless asked for, and so is an append mode
 try(dldata(paste0("file://", src), tempfile()))
-#> Error : url must be an https:// URL, not file:// ('file:///tmp/Rtmpmcz67L/file1f1a4f39a1db.csv'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror
+#> Error : url must be an https:// URL, not file:// ('file:///tmp/RtmpTiHMMf/file20228f4e147.csv'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror
 try(dldata("https://example.org/x.csv", tempfile(), mode = "a"))
 #> Error : `mode` must be "wb" (every transfer is binary)
 if (FALSE) { # interactive()

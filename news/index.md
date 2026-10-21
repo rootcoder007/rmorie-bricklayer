@@ -56,9 +56,10 @@
   [`rlang::dbl()`](https://rlang.r-lib.org/reference/vector-construction.html)
   and crashed on (so that none of its checks ran), is now `hexdbl()`.
 - The README and the DESCRIPTION now say first, in plain words, what the
-  package is for: analyzing a table someone else publishes, pinning the
-  data a result came from, and signing the record. The README says why
-  it exists and shows how it is used, with code that runs.
+  package is for: analyzing published and unpublished tables, including
+  your own data, pinning the data a result came from, and signing the
+  record. The README says why it exists and shows how it is used, with
+  code that runs.
 - README: three examples used 0.5.x argument names
   (`anltab(period =, rounding =)`,
   `recrd(observed =, expected =, synthetic =)`,
