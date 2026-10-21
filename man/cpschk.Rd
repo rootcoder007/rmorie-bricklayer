@@ -34,11 +34,11 @@ cpschk(
 \item{mode}{\code{"verify"} (the default), \code{"drift"},
 \code{"refresh"} or \code{"report"} (the verify checks).}
 
-\item{key}{Character scalar: the shared secret of hmac bundles, or
+\item{key}{Character scalar: the shared secret of HMAC bundles, or
 \code{""}.}
 
 \item{pubkey}{Character scalar: the public key (hex) every bundle must be
-signed with (for an hmac bundle, its key id), or \code{""}.}
+signed with (for an HMAC bundle, its key id), or \code{""}.}
 
 \item{psiwarn, psifail}{Non-negative numbers, \code{psiwarn} at most
 \code{psifail}: the PSI bands, by default 0.1 and 0.25, the bands
@@ -154,7 +154,7 @@ base's tolerance (\code{\link{mnfrcmp}}), and the resources of the two
 removed.
 
 Cache: a fetched source is kept in the cache folder under
-\code{source-} and the first 16 hex digits of its URL's SHA-256, one
+\code{source-} and the first 16 hex digits of the SHA-256 of its URL, one
 file per source overwritten by each fetch, and is read only when the live
 fetch fails.
 

@@ -57,29 +57,6 @@
   out
 }
 
-#' Reads the credentials file without simplifying its values.
-#'
-#' The file as written: no vector simplification, so another package's arrays, nulls and large
-#' integers come back out as they went in (the file is shared with morie and rmorie).
-#' @return A named list, empty when the file does not exist.
-#' @noRd
-.bl_credentials_raw <- function() {
-  p <- .bl_credentials_path()
-  if (!file.exists(p)) return(list())
-  out <- .bl_credentials_object(p, simplify = FALSE)
-  if (is.null(out)) {
-    stop(.rmbl_fn(), sprintf("%s is not a JSON object; fix or remove it (it is shared with morie and rmorie)", p),
-         call. = FALSE)
-  }
-  out
-}
-
-#' Writes the credentials file as private JSON.
-#' @param data The named list to write.
-#' @return The path, invisibly.
-#' @noRd
-.bl_write_credentials <- function(data) .bl_write_private_json(.bl_credentials_path(), data)
-
 #' Reads the credentials file as UTF-8 text.
 #'
 #' The file as text, bytes kept (the file is shared with morie and rmorie, whose numbers,
@@ -145,7 +122,8 @@
   scan_string <- function(i) {   # ch[i] is the opening quote; the index of the closing one
     i <- i + 1L
     while (i <= n) {
-      if (ch[[i]] == "\\") i <- i + 2L else if (ch[[i]] == "\"") return(i) else i <- i + 1L
+      if (ch[[i]] == "\"") return(i)
+      i <- i + if (ch[[i]] == "\\") 2L else 1L  # a backslash escapes the next character
     }
     NA_integer_
   }
@@ -259,20 +237,6 @@
   if (!dir.exists(d)) dir.create(d, recursive = TRUE, showWarnings = FALSE, mode = "0700")
   if (.Platform$OS.type == "unix" && dir.exists(d)) Sys.chmod(d, "0700", use_umask = FALSE)
   invisible(d)
-}
-
-#' Writes a list as pretty JSON to an owner-only file.
-#' @param p The path to write.
-#' @param data The list to write.
-#' @return The path, invisibly.
-#' @noRd
-.bl_write_private_json <- function(p, data) {
-  # through the one private writer: a fresh temporary name each time (a planted llm.json.tmp
-  # symlink had its target overwritten with the keys; review of 29a55d8, L5), created empty and
-  # made 0600 before a byte is written
-  .bl_write_private_text(p, paste0(tojs(data, auto_unbox = TRUE, pretty = TRUE, null = "null"),
-                                   "\n"))
-  invisible(p)
 }
 
 #' Stores the data key, its user and its address in the credentials file, keeping every other byte.

@@ -418,14 +418,16 @@ between the reference period and adoption; \code{0} puts it at adoption).}
 
 \item{spacing}{NULL, or the distance to a second track, drawn beside the first.}
 
-\item{models}{Model codes ("random", "definite", "invcube", "mbeta"), one curve each; NULL
+\item{models}{Model codes (\code{"random"}, \code{"definite"}, \code{"invcube"},
+\code{"mbeta"}), one curve each; NULL
 draws the fitted model.}
 
-\item{m}{M-Beta heights, one curve each when "mbeta" is among the models.}
+\item{m}{M-Beta heights, one curve each when \code{"mbeta"} is among the models.}
 
 \item{cmax}{The largest coverage drawn.}
 
-\item{view}{"map" (the top view), "persp" (the surface), "both" (side by side,
+\item{view}{\code{"map"} (the top view), \code{"persp"} (the surface),
+\code{"both"} (side by side,
 in the book's colour bands) or "cells" (the probability map as a grid of percentages).}
 
 \item{digits}{Decimal places of the percentages in the "cells" view.}

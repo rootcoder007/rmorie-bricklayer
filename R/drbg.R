@@ -237,10 +237,8 @@ format.bricklayer_drbg <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_drbg <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_drbg
+print.bricklayer_drbg <- .rmbl_print_via_format
 
 #' Checks that an object is a DRBG state made by drbgnew().
 #' @param drbg The object passed by the user.

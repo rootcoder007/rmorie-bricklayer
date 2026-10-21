@@ -524,21 +524,6 @@ wrtxtfb <- function(text, path) {
   stop(sprintf("%s is refused: %s ('%s')", what, why, url), call. = FALSE)
 }
 
-#' Tells whether a host is one the URL validator refuses.
-#'
-#' TRUE when `host` (a bare host, with or without brackets) is one the
-#' validator refuses: a loopback, private, link-local, metadata or local
-#' name in any spelling. Kept for callers that classify hosts directly.
-#' @param host A bare host, with or without brackets.
-#' @return TRUE or FALSE.
-#' @noRd
-.rmbl_private_host <- function(host) {
-  host <- as.character(host)[1L]
-  if (is.na(host) || !nzchar(host)) return(TRUE)
-  h <- if (grepl(":", host, fixed = TRUE) && !startsWith(host, "[")) paste0("[", host, "]") else host
-  nzchar(.rmbl_url_why(paste0("https://", h, "/"), FALSE, FALSE, FALSE))
-}
-
 #' Gives the reason a URL is refused.
 #'
 #' The reason a URL is refused ("" when it is accepted). In the package the C validator answers;

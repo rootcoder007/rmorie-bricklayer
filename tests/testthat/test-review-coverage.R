@@ -110,7 +110,7 @@ test_that("JSON simplifier: dates, arrays of arrays, empty frames, unequal lengt
   expect_identical(nrow(sdf(list(), columns = c("a", "b"), flatten = FALSE, simplifyMatrix = FALSE)), 0L)
   expect_identical(nrow(sdf(list(), flatten = FALSE, simplifyMatrix = FALSE)), 0L)
   expect_identical(dim(sdf(list(list(), list()), flatten = FALSE, simplifyMatrix = FALSE)), c(2L, 0L))
-  expect_identical(rmoriebricklayer:::bricklayer_json_parse_json("[1]", simplifyVector = TRUE), 1L)
+  expect_identical(fromjs("[1]", simplifyVector = TRUE), 1L)
   expect_identical(fromjs("[1,null,3]"), c(1L, NA, 3L))
 })
 

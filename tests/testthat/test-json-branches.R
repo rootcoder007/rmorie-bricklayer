@@ -149,17 +149,7 @@ test_that("simplifier edge cases: _row handling, ragged records, empty-record li
   expect_identical(fromjs('[{"a":1},{"a":[1,2]}]')$a, list(1L, 1:2))
 })
 
-test_that("prettify/minify report yajl-style errors and handle escapes", {
-  for (b in c("[1,", "{\"a\":}", "{\"a\" \"b\"}", "[1]]", "{,}", "[\"x", "\"\\u12G4\"", "{\"a\":1,}", "[1 2]", "@")) {
-    expect_error(bricklayer_json_prettify(b), "at character", label = b)
-    expect_error(bricklayer_json_minify(b), "at character", label = b)
-  }
-  expect_identical(as.character(bricklayer_json_minify('["\\u00e9\\u0001\\/<\\/x"]')), '["\u00e9\\u0001/<\\/x"]')
-  expect_identical(
-    as.character(bricklayer_json_minify("\ufeff{\"a\":true,\"b\":false,\"c\":null,\"d\":-1.5e3}")),
-    '{"a":true,"b":false,"c":null,"d":-1.5e3}'
-  )
-  expect_identical(as.character(bricklayer_json_prettify('{"a":[]}', indent = 2)), "{\n  \"a\": [\n\n  ]\n}\n")
+test_that("validate refuses a byte-order mark", {
   v <- bricklayer_json_validate("\ufeff[1]")
   expect_false(isTRUE(v))
   expect_match(attr(v, "err"), "byte-order-mark")
@@ -191,23 +181,11 @@ test_that("serializer covers every storage mode digest of an R object needs", {
   expect_error(jsunser('{"type":"weird","attributes":{},"value":[]}'), "encode.mode")
 })
 
-test_that("unbox and streaming edge cases", {
+test_that("unbox edge cases", {
   expect_null(bricklayer_json_unbox(NULL))
   expect_s3_class(bricklayer_json_unbox(data.frame(a = 1)), "scalar")
   expect_error(bricklayer_json_unbox(data.frame(a = 1:2)), "2 rows")
   expect_s3_class(bricklayer_json_unbox(as.POSIXct("2024-05-06", tz = "UTC")), "scalar")
   expect_identical(to(list(t = bricklayer_json_unbox(as.POSIXct("2024-05-06 07:08:09", tz = "UTC")))), '{"t":"2024-05-06 07:08:09"}')
   expect_identical(to(list(d = bricklayer_json_unbox(data.frame(a = 1, b = "x")))), '{"d":{"a":1,"b":"x"}}')
-  expect_error(bricklayer_json_stream_in("not a connection"), "connection")
-  expect_error(bricklayer_json_stream_out(data.frame(a = 1), "not a connection"), "connection")
-  x <- data.frame(a = 1:3)
-  nd <- tempfile()
-  expect_message(bricklayer_json_stream_out(x, file(nd), pagesize = 2, verbose = TRUE), "output connection")
-  expect_message(back <- bricklayer_json_stream_in(file(nd), pagesize = 2, verbose = TRUE), "input connection")
-  expect_identical(back$a, 1:3)
-  seen <- 0L
-  expect_message(bricklayer_json_stream_in(file(nd), handler = function(d) seen <<- seen + nrow(d), verbose = TRUE), "custom handler")
-  expect_identical(seen, 3L)
-  con <- textConnection(c('{"a":1}', '{"a":2}'))
-  expect_identical(bricklayer_json_stream_in(con, verbose = FALSE, simplifyDataFrame = FALSE), list(list(a = 1L), list(a = 2L)))
 })

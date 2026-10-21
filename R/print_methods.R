@@ -216,10 +216,8 @@ format.bricklayer_drift <- function(x, ...) {
 #' options(op)
 #' @name printmeth
 #' @export
-print.bricklayer_drift <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_drift
+print.bricklayer_drift <- .rmbl_print_via_format
 
 #' @rdname printmeth
 #' @export
@@ -290,10 +288,8 @@ format.bricklayer_benford <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_benford <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_benford
+print.bricklayer_benford <- .rmbl_print_via_format
 
 #' @export
 format.bricklayer_signing_key <- function(x, ...) {
@@ -312,10 +308,8 @@ format.bricklayer_signing_key <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_signing_key <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_signing_key
+print.bricklayer_signing_key <- .rmbl_print_via_format
 
 #' @export
 format.bricklayer_public_key <- function(x, ...) {
@@ -326,10 +320,8 @@ format.bricklayer_public_key <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_public_key <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_public_key
+print.bricklayer_public_key <- .rmbl_print_via_format
 
 #' @export
 format.bricklayer_signature <- function(x, ...) {
@@ -358,10 +350,8 @@ format.bricklayer_signature <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_signature <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_signature
+print.bricklayer_signature <- .rmbl_print_via_format
 
 #' @param object The object to summarise.
 #' @rdname printmeth

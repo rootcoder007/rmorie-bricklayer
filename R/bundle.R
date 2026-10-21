@@ -89,7 +89,7 @@
 #' @param seen For `cpsbndlvrf()`, the XMSS signatures seen elsewhere, as
 #' [xmssidxseen()] returns them,
 #' or `NULL`. For an XMSS bundle it adds an `xmss_index` row, failed
-#' ("xmss index reused") when the same key signed
+#' (\code{"xmss index reused"}) when the same key signed
 #' the bundle's index with another signature: the key's state was copied
 #' or rolled back (RFC 10033, section 4).
 #' @return `cpsbndl()`: the bundle, invisibly, a list of class
@@ -140,7 +140,7 @@
 #' writeLines("x", file.path(dir, "extra.txt"))
 #' cpsbndlvrf(b2, dir)$checks[, c("check", "ok")]
 #'
-#' # a bundle signed with a shared secret (hmac), as morie signs
+#' # a bundle signed with a shared secret (HMAC), as morie signs
 #' dir2 <- tempfile()
 #' dir.create(dir2)
 #' writeLines("x,y", file.path(dir2, "d.csv"))
@@ -156,7 +156,7 @@
 #' try(cpsbndl(file.path(tempdir(), "no-such-capsule"), m, key))
 #' unlink(dir, recursive = TRUE)
 #' @export
-#' @srrstats {G5.4b} An hmac bundle written by morie (the Python implementation, fixed fixture
+#' @srrstats {G5.4b} An HMAC bundle written by morie (the Python implementation, fixed fixture
 #'   tests/testthat/fixtures/morie-hmac) verifies here, and one written here verifies with morie's own
 #'   `capsule verify` (test-bundle.R:7, 22).
 cpsbndl <- function(dir, man, key, files = NULL,
@@ -373,7 +373,5 @@ format.bricklayer_bundle_check <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_bundle_check <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_bundle_check
+print.bricklayer_bundle_check <- .rmbl_print_via_format

@@ -54,10 +54,11 @@ Anderson-Darling statistic and percentile bootstrap intervals for its parameters
 Hill estimate of the tail index is added for positive data. Everything is base R.
 }
 \details{
-The families and their parameters: \code{normal} (mean, sd),
-\code{lognormal} (meanlog, sdlog), \code{exponential} (rate), \code{gamma}
+The families and their parameters: \code{normal} (\code{mean}, \code{sd}),
+\code{lognormal} (\code{meanlog}, \code{sdlog}), \code{exponential} (rate), \code{gamma}
 (shape, rate), \code{weibull} (shape, scale), \code{t} (location, scale, df: a
-location-scale Student t), \code{pareto} (xmin, alpha, with xmin the smallest
+location-scale Student t), \code{pareto} (\code{xmin}, \code{alpha},
+with \code{xmin} the smallest
 value, its maximum likelihood estimate), \code{beta} (shape1, shape2) for
 proportions, and for counts \code{poisson} (lambda), \code{negbin} (size, mu),
 \code{zip} (pi, lambda) and \code{zinb} (pi, size, mu), the zero-inflated

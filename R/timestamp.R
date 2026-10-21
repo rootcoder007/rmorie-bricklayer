@@ -349,10 +349,8 @@ format.bricklayer_timestamp <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_timestamp <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_timestamp
+print.bricklayer_timestamp <- .rmbl_print_via_format
 
 # ---------------------------------------------------------------- #
 # DER navigation. Everything below walks the structures RFC 3161,
@@ -738,49 +736,6 @@ print.bricklayer_timestamp <- function(x, ...) {
     v <- v %/% 256L
   }
   c(as.raw(0x80 + length(bytes)), bytes)
-}
-
-#' The RSA modulus and exponent from a certificate's SubjectPublicKeyInfo.
-#' @param cert The certificate in DER.
-#' @return A list with `modulus` and `exponent` as raw vectors, or NULL when the key is not RSA.
-#' @noRd
-.rmbl_ts_cert_rsa <- function(cert) {
-  der <- tryCatch(.Call(C_rmbl_der_parse, cert), error = function(e) NULL)
-  if (is.null(der)) {
-    return(NULL)
-  }
-  spki <- .rmbl_der_find(der, function(nd) {
-    isTRUE(nd$constructed) && identical(nd$tag, 16) &&
-      length(nd$children) == 2L &&
-      isTRUE(nd$children[[1]]$constructed) &&
-      length(nd$children[[1]]$children) >= 1L &&
-      .rmbl_der_oid_eq(
-        nd$children[[1]]$children[[1]],
-        "1.2.840.113549.1.1.1"
-      ) &&
-      identical(nd$children[[2]]$tag, 3)
-  })
-  if (is.null(spki)) {
-    return(NULL)
-  }
-  bits <- spki$children[[2]]$value
-  if (length(bits) < 2L) {
-    return(NULL)
-  }
-  # a BIT STRING's first content octet is the number of unused bits
-  inner <- bits[-1]
-  rsa <- tryCatch(.Call(C_rmbl_der_parse, inner), error = function(e) NULL)
-  if (is.null(rsa) || length(rsa$children) < 2L) {
-    return(NULL)
-  }
-  strip <- function(v) {
-    while (length(v) > 1L && v[1] == as.raw(0)) v <- v[-1]
-    v
-  }
-  list(
-    modulus = strip(rsa$children[[1]]$value),
-    exponent = strip(rsa$children[[2]]$value)
-  )
 }
 
 #' Checks an EMSA-PKCS1-v1_5 encoded block against the digest of a message.

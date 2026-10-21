@@ -146,10 +146,8 @@ format.bricklayer_prereg <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_prereg <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_prereg
+print.bricklayer_prereg <- .rmbl_print_via_format
 
 #' @export
 format.bricklayer_prereg_check <- function(x, ...) {
@@ -168,10 +166,8 @@ format.bricklayer_prereg_check <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_prereg_check <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_prereg_check
+print.bricklayer_prereg_check <- .rmbl_print_via_format
 
 #' Correct a family of falsification results for multiple testing
 #'
@@ -348,10 +344,8 @@ format.bricklayer_falsify_family <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_falsify_family <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_falsify_family
+print.bricklayer_falsify_family <- .rmbl_print_via_format
 
 #' How strong would an unmeasured confounder have to be
 #'

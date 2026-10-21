@@ -345,10 +345,8 @@ format.bricklayer_capsule_check <- function(x, ...) {
 }
 
 #' @export
-print.bricklayer_capsule_check <- function(x, ...) {
-  cat(format(x, ...), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_capsule_check
+print.bricklayer_capsule_check <- .rmbl_print_via_format
 
 #' Capture the Analysis Environment for a Manifest
 #'

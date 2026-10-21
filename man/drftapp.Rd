@@ -47,7 +47,7 @@ sentence on the verdict, as \code{\link[=drfthtml]{drfthtml()}} has, and a histo
 with \code{hist}; the warn and fail bands and alpha are sliders, with a reset to the
 object's bands. Beyond the page it has: "what would clear this", the
 PSI of the column with its \code{k} largest bins left out and the rest
-renormalised; with \code{ref} and \code{cur} (or uploaded CSV files), a rerun of
+renormalized; with \code{ref} and \code{cur} (or uploaded CSV files), a rerun of
 \code{\link[=cpsdrft]{cpsdrft()}} on chosen columns with another number of bins; with
 \code{hist},
 the PSI of each column over the runs in that directory

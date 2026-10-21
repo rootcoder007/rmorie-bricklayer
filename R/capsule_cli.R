@@ -147,10 +147,8 @@ format.rmbl_mnfdiff <- function(x, ...) {
 
 #' @rdname mnfdiff
 #' @export
-print.rmbl_mnfdiff <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print rmbl_mnfdiff
+print.rmbl_mnfdiff <- .rmbl_print_via_format
 
 #' Fetch a capsule's source again and pin the new bytes
 #'
@@ -609,8 +607,8 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 
 #' The verify rows of one capsule: every file against its schema, vrfcps(), cpsbndlvrf().
 #' @param d The capsule directory.
-#' @param key The shared secret of an hmac bundle, or "".
-#' @param pubkey The public key (or hmac key id) the bundle must be signed with, or "".
+#' @param key The shared secret of an HMAC bundle, or "".
+#' @param pubkey The public key (or HMAC key id) the bundle must be signed with, or "".
 #' @param pkgs The packages whose functions a ledger's checks may run, or NULL for all (ldgrchk()).
 #' @param seen The XMSS signatures seen (xmssidxseen()), or NULL.
 #' @return Check rows.
@@ -678,7 +676,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 
 #' Runs the capsule verbs: verify, drift, report and refresh.
 #'
-#' The hmac secret of a bundle is read from RMBL_KEY and removed from the environment at once, so
+#' The HMAC secret of a bundle is read from RMBL_KEY and removed from the environment at once, so
 #' no child process inherits it. Exit status: 0, or 1 when the worst failed row is at or above
 #' --fail-on (report never fails); a usage error is raised for blcli() to turn into 2.
 #' @param verb The verb.
@@ -750,7 +748,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' The sign verb: cpsseal() on every capsule under a path, then the verify report.
 #'
 #' The key is RMBL_KEY (already read and removed from the environment) or the contents of --key-file,
-#' never printed: for hmac the shared secret; for a standardised scheme the JSON fipskg() writes
+#' never printed: for HMAC the shared secret; for a standardised scheme the JSON fipskg() writes
 #' (scheme, public, secret) or the secret key's hex with --public-key; for xmss-sha256 the JSON of a
 #' pqckg() key, whose state is reserved in the key file (or --state-file) before anything is signed.
 #' @param root The directory searched.

@@ -13,7 +13,6 @@
 \alias{share.default}
 \alias{yoy_summary}
 \alias{yoy_summary.default}
-\alias{yoy_summary.rmbl_yoy}
 \alias{print.rmbl_old}
 \alias{format.rmbl_old}
 \alias{plot.rmbl_old}

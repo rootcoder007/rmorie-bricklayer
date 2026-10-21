@@ -756,7 +756,7 @@ plot.rmbl_ltrlrng <- function(x, ..., equiv = FALSE, spacing = NULL, main = NULL
 #' Draws POD-by-coverage curves on an open frame.
 #' @param cs Coverages.
 #' @param models Model codes.
-#' @param ms M-Beta heights, one curve each when "mbeta" is among the models.
+#' @param ms M-Beta heights, one curve each when \code{"mbeta"} is among the models.
 #' @param cols Colours, one per curve.
 #' @return A data frame of the curves: model, m, coverage, pod.
 #' @noRd
@@ -786,9 +786,10 @@ plot.rmbl_ltrlrng <- function(x, ..., equiv = FALSE, spacing = NULL, main = NULL
 }
 
 #' @rdname plot-methods
-#' @param models Model codes ("random", "definite", "invcube", "mbeta"), one curve each; NULL
+#' @param models Model codes (\code{"random"}, \code{"definite"}, \code{"invcube"},
+#'   \code{"mbeta"}), one curve each; NULL
 #'   draws the fitted model.
-#' @param m M-Beta heights, one curve each when "mbeta" is among the models.
+#' @param m M-Beta heights, one curve each when \code{"mbeta"} is among the models.
 #' @param cmax The largest coverage drawn.
 #' @usage \method{plot}{rmbl_srchpod}(x, ..., models = NULL, m = NULL, cmax = NULL,
 #'   main = NULL, col = NULL, palette = NULL)
@@ -955,7 +956,8 @@ plot.rmbl_srchpod <- function(x, ..., models = NULL, m = NULL, cmax = NULL, main
 }
 
 #' @rdname plot-methods
-#' @param view "map" (the top view), "persp" (the surface), "both" (side by side,
+#' @param view \code{"map"} (the top view), \code{"persp"} (the surface),
+#'   \code{"both"} (side by side,
 #'   in the book's colour bands) or "cells" (the probability map as a grid of percentages).
 #' @param digits Decimal places of the percentages in the "cells" view.
 #' @usage \method{plot}{rmbl_datummap}(x, ..., view = c("map", "persp", "both", "cells"),

@@ -233,7 +233,5 @@ format.bricklayer_power <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_power <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_power
+print.bricklayer_power <- .rmbl_print_via_format

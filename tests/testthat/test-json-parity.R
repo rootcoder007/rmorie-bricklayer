@@ -100,19 +100,8 @@ test_that("native parser + simplifier match jsonlite::fromJSON", {
   expect_true(bricklayer_json_validate('{"a":[1,2,{"b":null}]}'))
 })
 
-test_that("prettify / minify / base64 / serialize agree with jsonlite", {
+test_that("base64 and serialize agree with jsonlite", {
   skip_if_not_installed("jsonlite")
-  for (tx in c(
-    '{"a":[1,2,{"b":null}],"c":"x"}', "[]", "{}", "[1]", "[[]]", '{"a":{}}',
-    '[{"a":[1,[2,3]],"b":"\\u00e9\\/<\\/x"}]', '"s"', "1", "null"
-  )) {
-    expect_identical(as.character(bricklayer_json_prettify(tx)), as.character(jsonlite::prettify(tx)), label = tx)
-    expect_identical(as.character(bricklayer_json_prettify(tx, 2)), as.character(jsonlite::prettify(tx, 2)), label = tx)
-    expect_identical(as.character(bricklayer_json_minify(jsonlite::prettify(tx))),
-      as.character(jsonlite::minify(jsonlite::prettify(tx))),
-      label = tx
-    )
-  }
   b <- as.raw(0:255)
   expect_identical(jsb64enc(b), jsonlite::base64_enc(b))
   expect_identical(jsb64dec(jsonlite::base64_enc(b)), b)
@@ -142,24 +131,5 @@ test_that("prettify / minify / base64 / serialize agree with jsonlite", {
     # complex NA round-trips as NA+0i through jsonlite too; compare with its own result
     if (!is.complex(x)) expect_equal(jsunser(jsser(x)), x)
   }
-  nested <- jsonlite::fromJSON('[{"a":{"b":1,"c":{"d":2}}},{"a":{"b":3,"c":{"d":4}}}]', flatten = FALSE)
-  expect_identical(bricklayer_json_flatten(nested), jsonlite::flatten(nested))
 })
 
-test_that("read/write/stream round-trip through files and connections", {
-  x <- data.frame(id = 1:3, name = c("a", "b", NA), stringsAsFactors = FALSE)
-  p <- tempfile(fileext = ".json")
-  bricklayer_json_write_json(x, p, pretty = TRUE)
-  expect_equal(bricklayer_json_read_json(p, simplifyVector = TRUE), x)
-  expect_type(bricklayer_json_read_json(p), "list")
-  nd <- tempfile(fileext = ".ndjson")
-  bricklayer_json_stream_out(x, file(nd), verbose = FALSE)
-  expect_identical(length(readLines(nd)), 3L)
-  back <- bricklayer_json_stream_in(file(nd), verbose = FALSE)
-  expect_equal(back$id, 1:3)
-  expect_equal(back$name, c("a", "b", NA))
-  pages <- list(data.frame(a = 1:2, b = c("x", "y")), NULL, data.frame(a = 3L, c = TRUE))
-  rb <- bricklayer_json_rbind_pages(pages)
-  expect_identical(names(rb), c("a", "b", "c"))
-  expect_identical(nrow(rb), 3L)
-})

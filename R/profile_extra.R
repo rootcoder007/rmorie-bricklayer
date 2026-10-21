@@ -469,7 +469,5 @@ format.bricklayer_env_diff <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_env_diff <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_env_diff
+print.bricklayer_env_diff <- .rmbl_print_via_format

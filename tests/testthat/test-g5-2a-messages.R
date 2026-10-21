@@ -30,7 +30,7 @@ test_that("a damaged credentials file is named", {
   withr::local_envvar(XDG_CONFIG_HOME = dir)
   dir.create(file.path(dir, "morie"))
   writeLines("[1]", file.path(dir, "morie", "credentials.json"))
-  expect_error(rmoriebricklayer:::.bl_credentials_raw(), "is not a JSON object; fix or remove it")
+  expect_error(rmoriebricklayer:::.bl_read_credentials(), "is not a JSON object; fix or remove it")
 })
 
 test_that("an interval that does not contain its estimate warns, naming the function", {

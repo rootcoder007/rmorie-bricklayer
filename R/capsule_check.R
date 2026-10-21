@@ -51,7 +51,7 @@
 #' removed.
 #'
 #' Cache: a fetched source is kept in the cache folder under
-#' \code{source-} and the first 16 hex digits of its URL's SHA-256, one
+#' \code{source-} and the first 16 hex digits of the SHA-256 of its URL, one
 #' file per source overwritten by each fetch, and is read only when the live
 #' fetch fails.
 #'
@@ -66,10 +66,10 @@
 #'   (\code{.git} and \code{.rmbl-cache} folders skipped).
 #' @param mode \code{"verify"} (the default), \code{"drift"},
 #'   \code{"refresh"} or \code{"report"} (the verify checks).
-#' @param key Character scalar: the shared secret of hmac bundles, or
+#' @param key Character scalar: the shared secret of HMAC bundles, or
 #'   \code{""}.
 #' @param pubkey Character scalar: the public key (hex) every bundle must be
-#'   signed with (for an hmac bundle, its key id), or \code{""}.
+#'   signed with (for an HMAC bundle, its key id), or \code{""}.
 #' @param psiwarn,psifail Non-negative numbers, \code{psiwarn} at most
 #'   \code{psifail}: the PSI bands, by default 0.1 and 0.25, the bands
 #'   \code{\link{drftpsi}} documents.
@@ -839,7 +839,7 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #'   matches this glob (\code{*} also matches \code{/}), or \code{""}.
 #' @return A data frame, one row per capsule: \code{capsule},
 #'   \code{pinned} (whether the provenance was pinned now), \code{files}
-#'   (the number signed) and \code{public} (the hmac key id or the public
+#'   (the number signed) and \code{public} (the HMAC key id or the public
 #'   key; never the secret).
 #' @seealso \code{\link{cpsbndl}}, \code{\link{cpschk}},
 #'   \code{\link{blcli}} (\code{rmbl sign}).

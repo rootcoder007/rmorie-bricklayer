@@ -506,7 +506,7 @@ drfthtml <- function(x, file, title = "Drift report", warn = NULL, fail = NULL, 
 #' with `hist`; the warn and fail bands and alpha are sliders, with a reset to the
 #' object's bands. Beyond the page it has: "what would clear this", the
 #' PSI of the column with its `k` largest bins left out and the rest
-#' renormalised; with `ref` and `cur` (or uploaded CSV files), a rerun of
+#' renormalized; with `ref` and `cur` (or uploaded CSV files), a rerun of
 #' [cpsdrft()] on chosen columns with another number of bins; with
 #' `hist`,
 #' the PSI of each column over the runs in that directory

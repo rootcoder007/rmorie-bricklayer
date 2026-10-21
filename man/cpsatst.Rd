@@ -117,7 +117,7 @@ Errors: \code{man} not a list; \code{key} not from
 \code{\link[=fipskg]{fipskg()}}
 or \code{\link[=pqckg]{pqckg()}} and not a non-empty string or raw vector; an invalid
 \code{prehash} or
-\code{ctx} (from \code{\link[=cpssign]{cpssign()}}), or either given with an hmac key;
+\code{ctx} (from \code{\link[=cpssign]{cpssign()}}), or either given with an HMAC key;
 \code{attestation} not from \code{cpsatst()}. A signature that fails to
 verify is a failed row, not an error.
 }
@@ -153,7 +153,7 @@ cpschkatst(forged, m)$checks[, c("check", "ok")]
 att2 <- cpsatst(m, key, ctx = "release 2026-10", prehash = "sha512")
 cpschkatst(att2, m, keyexp = key)$ok
 
-# a shared secret signs with hmac; `public` is its key id, not the secret
+# a shared secret signs with HMAC; `public` is its key id, not the secret
 att3 <- cpsatst(m, "shared-secret")
 att3$public
 cpschkatst(att3, m, key = "shared-secret", keyexp = att3$public)$ok

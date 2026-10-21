@@ -249,10 +249,8 @@ format.bricklayer_falsification <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_falsification <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_falsification
+print.bricklayer_falsification <- .rmbl_print_via_format
 
 #' Calls the user statistic on one data set and checks it returns one finite number.
 #'

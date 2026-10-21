@@ -303,14 +303,6 @@ test_that(".rmbl_fips_prehash: NA means none", {
   expect_equal(.rmbl_fips_prehash(NA), "none")
 })
 
-test_that("timestamp: an RSA SubjectPublicKeyInfo with no key bits, or bits that are not an RSAPublicKey", {
-  spki1 <- der_seq(der_seq(der_oid("1.2.840.113549.1.1.1"), der_tlv(0x05, raw(0))), der_tlv(0x03, as.raw(0)))
-  expect_null(.rmbl_ts_cert_rsa(spki1))
-  spki2 <- der_seq(der_seq(der_oid("1.2.840.113549.1.1.1"), der_tlv(0x05, raw(0))),
-                   der_tlv(0x03, c(as.raw(0), der_tlv(0x02, as.raw(5)))))
-  expect_null(.rmbl_ts_cert_rsa(spki2))
-})
-
 test_that("cnttrnd refuses an infinite x", {
   expect_error(cnttrnd(c(3, 4, 5), x = c(1, Inf, 3)), "infinite|finite")
 })

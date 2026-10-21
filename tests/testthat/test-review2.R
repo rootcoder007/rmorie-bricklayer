@@ -47,9 +47,10 @@ test_that("the URL gate canonicalises instead of matching spellings", {
   expect_identical(chk("https://data.ontario.ca/x.csv"), "https://data.ontario.ca/x.csv")
   expect_identical(chk("https://DATA.ontario.ca:443/x"), "https://DATA.ontario.ca:443/x")
   expect_error(rmoriebricklayer:::.rmbl_check_public_url("https://data.ontario.ca:99999/x"), "port")
-  expect_true(rmoriebricklayer:::.rmbl_private_host("0x7f000001"))
-  expect_true(rmoriebricklayer:::.rmbl_private_host("::ffff:127.0.0.1"))
-  expect_false(rmoriebricklayer:::.rmbl_private_host("data.ontario.ca"))
+  why <- function(h) rmoriebricklayer:::.rmbl_url_why(paste0("https://", h, "/"))
+  expect_true(nzchar(why("0x7f000001")))
+  expect_true(nzchar(why("[::ffff:127.0.0.1]")))
+  expect_false(nzchar(why("data.ontario.ca")))
   # the name resolves to loopback: refused when resolving, whatever it is called
   expect_error(rmoriebricklayer:::.rmbl_check_public_url("https://localhost./x", resolve = TRUE), "local")
   # the transport is gated too, before any network
@@ -158,8 +159,8 @@ test_that("JSON strings are assembled in linear time, and the reformatter refuse
   t <- system.time(v <- fromjs(txt))[["elapsed"]]
   expect_identical(nchar(v), 65536L)
   expect_lt(t, wall_limit(5))
-  expect_error(bricklayer_json_minify('{"a":"\\ud83d"}'), "surrogate")
-  expect_error(bricklayer_json_minify('{"a":"x\\u0000y"}'), "NUL")
+  expect_error(fromjs('{"a":"\\ud83d"}'), "surrogate")
+  expect_error(fromjs('{"a":"x\\u0000y"}'), "NUL")
   expect_error(fromjs(paste0(strrep("[", 101), strrep("]", 101))), "100 levels")
   deep <- Reduce(function(acc, i) list(acc), seq_len(101), accumulate = FALSE, right = FALSE, list(1))
   expect_error(tojs(deep), "100 levels")

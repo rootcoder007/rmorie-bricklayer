@@ -313,10 +313,8 @@ format.bricklayer_chain <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_chain <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_chain
+print.bricklayer_chain <- .rmbl_print_via_format
 
 #' @export
 print.bricklayer_chain_check <- function(x, ...) {

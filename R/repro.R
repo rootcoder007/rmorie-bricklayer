@@ -187,10 +187,8 @@ format.bricklayer_recompute <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_recompute <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_recompute
+print.bricklayer_recompute <- .rmbl_print_via_format
 
 #' Reads the first element of a value as a number, NA when it is none.
 #' @param x The value.

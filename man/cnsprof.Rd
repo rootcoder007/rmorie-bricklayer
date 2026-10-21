@@ -48,7 +48,7 @@ head(p[p$characteristic == "Foster children" & p$geo == "Canada", ])
 Statistics Canada (2023). Indigenous Population Profile, 2021 Census of
 Population. Statistics Canada Catalogue no. 98-510-X2021001. Released June 21, 2023.
 Published at
-www12.statcan.gc.ca/census-recensement/2021/dp-pd/ipp-ppa/index.cfm?Lang=E
+\url{https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/ipp-ppa/index.cfm?Lang=E}
 (the site answers scripts with 403); archived copy:
 \url{https://web.archive.org/web/20260308015010/https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/ipp-ppa/index.cfm?Lang=E}
 

@@ -632,3 +632,16 @@
   attr(x, "rmbl_names") <- NULL
   .rmbl_names_swap(x, stats::setNames(names(done), unname(done)))
 }
+
+#' Prints an object by its format() method.
+#'
+#' The print method of every class whose printed form is its format() lines: one function, assigned
+#' to each print.<class> (in this file, which loads first, so that the assignments find it).
+#' @param x The object.
+#' @param ... Passed to format().
+#' @return x, invisibly.
+#' @noRd
+.rmbl_print_via_format <- function(x, ...) {
+  cat(format(x, ...), sep = "\n")
+  invisible(x)
+}

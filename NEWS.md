@@ -6,6 +6,9 @@
 * The vignettes run their code again wherever they are built (r-universe, pkgdown, `R CMD build`), so the articles show their plots; only `R CMD check` re-building a vignette skips the computing.
 * The package installs faster, which keeps its CRAN check under ten minutes: R code is no longer byte-compiled at install (R compiles each function the first time it runs), and the two SIU parser files build as one compilation unit, so `<regex>` is compiled once.
 * The 0.5.x names are no longer R functions (except the eleven rmoriedata 0.3.x calls and the four S3 generics): the `rmbl` command line translates them instead, with the new verbs `run` and `migrate`, and `describe` and `examples` now answer for an old name. Every exported function has an example.
+* Code nothing calls is gone: an unused jsonlite-style layer (minify, prettify, read and write files, stream, rbind pages, flatten; about 410 lines that no function of the package reached), the helpers of the removed 0.5.x wrappers, and three unused credentials and certificate helpers. The tests that guarded live behaviour through them now call the functions the package uses (`fromjs()` for the JSON parser's errors, the URL validator for host classification, the credentials reader). Two statements after a `return()` or `break` were rewritten so that no code is unreachable.
+* The 33 print methods that print an object's `format()` lines share one function instead of 33 copies of the same body; `yoy_summary()` has one method where two were identical.
+* Spelling: US spelling throughout ("optimized", "renormalized", "victimized"), code names in code font, and the technical terms in `inst/WORDLIST`; `spelling::spell_check_package()` finds nothing.
 * Every vignette now draws its results: the 21 that had no figure gain one or more, drawn with the package's own `plot()` methods and plot helpers from the objects each vignette builds.
 
 ## A dashboard, distributions and proof ledgers
@@ -64,7 +67,7 @@
   vertical interval bars; groups sit side by side. `gaps = "break"` (the default) breaks a line at a
   missing value, such as a "no data" year `yoy()` inserted, and `gaps = "join"` draws over it.
 * A refusal that several functions share now starts with the name of the function that refused
-  ("anltab: `data` must be a data frame"), and so do the shared argument checks.
+  (`"anltab: data must be a data frame"`), and so do the shared argument checks.
 * `stepchg()` puts `before`, `after` and `difference` back into the units of `y` when the
   series is above 1e150 (they stayed rescaled), rescales a series below 1e-150 as well (the
   squares underflowed and every split tied), and refuses an `x` that is not numbers or dates, has a
@@ -72,7 +75,7 @@
 * `yoy()` compares yearly, quarterly and monthly `Date` periods (all on one day of the month, or
   all month ends) on a grid of calendar months; on a grid of days none of them had a comparison.
 * `svydes(type = "jkn")` on a domain keeps a replicate that deletes a PSU of a stratum of 101 or
-  more PSUs: its factor, within 1% of the weight, is the 1 / rscale its `rscales` says, and it
+  more PSUs: its factor, within 1% of the weight, is the 1 / `rscale` its `rscales` says, and it
   was refused as a copy.
 * The plots over time put text periods in time order (fiscal years, years, year-months,
   quarters), not in the order they first appear. `plot(yoy(...))` says "no data in the previous
@@ -89,7 +92,7 @@
   refusal names every accepted input. `fylbl()`'s help says a fractional year is an error.
 * Every internal function has a roxygen2 block with `@noRd` (srr G1.4a).
 * Plot labels shrink to no less than 0.6 of the session `cex` (`?blpal`).
-* `cpsatst()`, `cpsbndl()` and their checks take a shared secret (hmac, the attestation recording only its key id), so bundles signed by morie verify with `cpsbndlvrf(key = )`.
+* `cpsatst()`, `cpsbndl()` and their checks take a shared secret (HMAC, the attestation recording only its key id), so bundles signed by morie verify with `cpsbndlvrf(key = )`.
 * README: who the package is for, which algorithms re-implement existing packages and are checked
   against them, the life cycle, and how to run the extended tests.
 
@@ -140,7 +143,7 @@ can call them.
 * `rmbl verify PATH` checks every capsule under PATH: each capsule file against its JSON Schema,
   then `vrfcps()` and `cpsbndlvrf()`, one row per check, with the action's Markdown report.
   `--json` prints the rows as JSON instead, and `--fail-on error|drift|warn` sets which failed
-  row makes the exit status 1. The secret of an hmac bundle is read from `RMBL_KEY`, which is
+  row makes the exit status 1. The secret of an HMAC bundle is read from `RMBL_KEY`, which is
   removed from the environment at once; `--public-key` pins the signing key.
 * `rmbl drift PATH` verifies, then fetches each source again: new bytes are a warning, and
   columns that drift (`cpsdrft()`) are drift. `rmbl refresh PATH` pins the new bytes, and
@@ -614,7 +617,7 @@ New estimators, each checked against the reference implementation (`fixest`, `di
   fixes replayed the battery and found 29 more in nine functions, refused in words too: `blcli()`'s
   `out`, `cnscwb()`'s `groups`, `dlogin()`'s `token`, `rtcalc()`'s infinite counts, `recrd()`'s
   manifest, `plotfnl()`'s `target` and `stkflow()`'s `per`. A key typed in groups with punctuation on
-  its last group ("... qrst9012uvwx?") is a key.
+  its last group (`"... qrst9012uvwx?"`) is a key.
 * The native CSV reader drops a byte-order mark before a header name when blanks follow the mark
   (`read.csv()` keeps the mark in the name, `X.s`): 37 of 24,000 fuzz inputs, documented.
 

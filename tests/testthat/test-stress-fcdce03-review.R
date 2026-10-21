@@ -522,13 +522,13 @@ test_that("the branch's refusals that codecov found untested are exercised", {
   expect_null(scan('{"a": 1'))
   expect_null(scan('{"a": {"b": "x"'))
   expect_error(rmoriebricklayer:::.bl_credentials_text_set("[1]", "k", "v"), "not a JSON object")
-  # the raw credentials reader with and without a file
+  # the credentials reader with and without a file, and the unsimplified read keeps a null
   withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir())
-  expect_identical(rmoriebricklayer:::.bl_credentials_raw(), list())
+  expect_identical(rmoriebricklayer:::.bl_read_credentials(), list())
   cred <- rmoriebricklayer:::.bl_credentials_path()
   dir.create(dirname(cred), recursive = TRUE, showWarnings = FALSE)
   writeLines('{"hosted_key": "sk-1", "n": null}', cred)
-  raw <- rmoriebricklayer:::.bl_credentials_raw()
+  raw <- rmoriebricklayer:::.bl_credentials_object(cred, simplify = FALSE)
   expect_identical(raw$hosted_key, "sk-1")
   expect_true("n" %in% names(raw))
   # the CSV reader's edges

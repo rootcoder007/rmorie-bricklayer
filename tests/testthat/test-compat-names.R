@@ -166,12 +166,6 @@ test_that("old plot values are translated", {
   expect_identical(plot(a, which = "rate_change"), plot(a, which = "ratechg"))
 })
 
-test_that("old argument names passed through ... are renamed", {
-  # names the alias forwards untouched
-  expect_null(rmoriebricklayer:::.rmbl_alias_dots(c(a = "b")))
-  expect_null(rmoriebricklayer:::.rmbl_alias_dots(c(a = "b"), 1, x = 2))
-})
-
 test_that("results come back under their 0.5.x names through an alias", {
   ns <- asNamespace("rmoriebricklayer")
   out <- function(topic, x, visible = TRUE) ns$.rmbl_alias_out(topic, list(value = x, visible = visible))
@@ -224,9 +218,6 @@ test_that("a translated result prints, plots and is read back by the aliases", {
   expect_output(print(pl), "pct_valid")
   expect_s3_class(summary(pl), "table")
   expect_identical(format(pl), format(data.frame(pct_valid = 1)))
-  # a text with no header row is left as it is
-  hdr <- rmoriebricklayer:::.rmbl_alias_header
-  expect_identical(hdr(list(value = "# only a comment", visible = TRUE), NULL, c(a = "b")), "# only a comment")
   # a 1.0.0 call is never translated
   expect_identical(class(yoysmry(y1)), "data.frame")
 })

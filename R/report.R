@@ -386,10 +386,8 @@ format.bricklayer_report <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_report <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_report
+print.bricklayer_report <- .rmbl_print_via_format
 
 #' @rdname printmeth
 #' @export

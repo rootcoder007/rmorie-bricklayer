@@ -434,7 +434,5 @@ format.bricklayer_synthetic <- function(x, ...) {
 }
 
 #' @export
-print.bricklayer_synthetic <- function(x, ...) {
-  cat(format(x, ...), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_synthetic
+print.bricklayer_synthetic <- .rmbl_print_via_format

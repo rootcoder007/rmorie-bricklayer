@@ -23,7 +23,7 @@ matches this glob (\code{*} also matches \code{/}), or \code{""}.}
 \value{
 A data frame, one row per capsule: \code{capsule},
 \code{pinned} (whether the provenance was pinned now), \code{files}
-(the number signed) and \code{public} (the hmac key id or the public
+(the number signed) and \code{public} (the HMAC key id or the public
 key; never the secret).
 }
 \description{

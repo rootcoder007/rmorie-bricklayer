@@ -419,7 +419,7 @@ test_that("the data key follows the services document address; a credentials fil
   cred <- rmoriebricklayer:::.bl_credentials_path()
   dir.create(dirname(cred), recursive = TRUE, showWarnings = FALSE)
   writeLines("[1, 2]", cred)
-  expect_error(rmoriebricklayer:::.bl_credentials_raw(), "not a JSON object")
+  expect_error(rmoriebricklayer:::.bl_read_credentials(), "not a JSON object")
 })
 
 test_that("vrfpol() turns a failure in the attributable fraction or the burden stage into an error report", {

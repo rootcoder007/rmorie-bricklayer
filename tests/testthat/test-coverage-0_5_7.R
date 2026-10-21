@@ -268,8 +268,6 @@ test_that("http entry points check their arguments before touching the network",
                    "a local or private address (::10.1.2.3)")
   expect_identical(.Call(C("C_rmbl_url_check"), "http://[::8.8.8.8]/", TRUE, FALSE, FALSE), "")
   expect_identical(.Call(C("C_rmbl_url_check"), "http://[::1]x/", TRUE, FALSE, FALSE), "malformed authority")
-  expect_true(.rmbl_private_host(NA))
-  expect_true(.rmbl_private_host(""))
   # extra headers are accepted; the refusal comes back as a status, not a crash
   r <- .Call(C("C_rmbl_http_post"), "http://127.0.0.1/", raw(0), "text/plain", 1L, c("X-A: b"), FALSE)
   expect_identical(r$status, -1L)
@@ -362,21 +360,6 @@ test_that("simplifier helpers answer FALSE/empty for the shapes they do not hand
   expect_identical(.rmbl_json_written_integer("1.25e1"), NULL)
   expect_identical(.rmbl_json_written_integer("0e0"), "0")
   expect_identical(.rmbl_json_written_integer("1.5e1"), "15")
-})
-
-test_that("the reformatter names every malformation and decodes surrogate pairs", {
-  bad <- function(s) msg(bricklayer_json_minify(s))
-  expect_identical(bad("-"), "invalid number at character 2")
-  expect_identical(bad("{[]}"), "keys must be strings at character 2")
-  expect_identical(bad("[1:2]"), "unexpected ':' at character 3")
-  expect_identical(bad("{\"a\":1 \"b\":2}"), "expected ',' between members at character 11")
-  expect_identical(bad("{1:2}"), "keys must be strings at character 2")
-  expect_identical(bad("[1"), "unexpected end of input at character 3")
-  expect_identical(as.character(bricklayer_json_minify("\"\\ud83d\\ude00\"")), "\"\U0001F600\"")
-  expect_identical(bad("\"\\ud83d\\u0041\""), "lone surrogate escape at character 1")
-  # a string with more escapes than the part buffer starts with
-  long <- paste0("\"", strrep("\\n", 300), "\"")
-  expect_identical(nchar(as.character(bricklayer_json_minify(long))), 602L)
 })
 
 # ---------------------------------------------------------------- #

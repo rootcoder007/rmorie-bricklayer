@@ -171,10 +171,11 @@
 #' Anderson-Darling statistic and percentile bootstrap intervals for its parameters. A
 #' Hill estimate of the tail index is added for positive data. Everything is base R.
 #'
-#' @details The families and their parameters: `normal` (mean, sd),
-#'   `lognormal` (meanlog, sdlog), `exponential` (rate), `gamma`
+#' @details The families and their parameters: `normal` (`mean`, `sd`),
+#'   `lognormal` (`meanlog`, `sdlog`), `exponential` (rate), `gamma`
 #'   (shape, rate), `weibull` (shape, scale), `t` (location, scale, df: a
-#'   location-scale Student t), `pareto` (xmin, alpha, with xmin the smallest
+#'   location-scale Student t), `pareto` (`xmin`, `alpha`,
+#'   with `xmin` the smallest
 #'   value, its maximum likelihood estimate), `beta` (shape1, shape2) for
 #'   proportions, and for counts `poisson` (lambda), `negbin` (size, mu),
 #'   `zip` (pi, lambda) and `zinb` (pi, size, mu), the zero-inflated

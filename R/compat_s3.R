@@ -1,24 +1,6 @@
 # Hand-written part of the 0.5.x compatibility layer: the helpers the generated aliases in
 # R/compat_names.R call, and the four 0.5.13 S3 generics with their methods.
 
-# The names of `...` with the 0.5.x argument names in `map` (old = new) renamed, or NULL when
-# none needs renaming.
-.rmbl_alias_dots <- function(map, ...) {
-  n <- ...names()
-  k <- n %in% names(map)
-  if (!any(k)) return(NULL)
-  n[k] <- unname(map[n[k]])
-  n
-}
-
-# Evaluates `cl` (the forwarding call without `...`) in the alias frame `env` with the alias's
-# `...` appended as ..1, ..2, ... under the renamed names `nm`, so promises stay lazy.
-.rmbl_alias_redot <- function(cl, nm, env) {
-  d <- lapply(seq_along(nm), function(i) as.name(paste0("..", i)))
-  names(d) <- nm
-  eval(as.call(c(as.list(cl), d)), env)
-}
-
 # The four 0.5.13 S3 generics. They stay generics, so methods written for them still dispatch;
 # each method takes the 0.5.13 arguments and calls the new generic with the new names. The call
 # is rebuilt from the argument expressions, so a bare column name still reads as one.
@@ -103,51 +85,6 @@ yoy_summary <- function(object, ...) UseMethod("yoy_summary")
 #' @export
 yoy_summary.default <- function(object, ...) {
   .rmbl_alias_out("yoy_summary", withVisible(yoysmry(.rmbl_new_names(object), ...)))
-}
-
-#' @rdname rmbl-aliases
-#' @usage NULL
-#' @export
-yoy_summary.rmbl_yoy <- function(object, ...) {
-  .rmbl_alias_out("yoy_summary", withVisible(yoysmry(.rmbl_new_names(object), ...)))
-}
-
-# Inputs: a result an alias returned (marked "rmbl_old") is turned back into its 1.0.0 names
-# before the 1.0.0 function reads it. Every argument the caller gave is checked, except those the
-# target reads unevaluated (a bare column name); `skip` names them.
-.rmbl_alias_in <- function(env, skip = character()) {
-  for (a in setdiff(names(formals(sys.function(-1L))), c("...", skip))) {
-    if (!eval(call("missing", as.name(a)), env)) {
-      v <- get(a, envir = env)
-      if (inherits(v, "rmbl_old")) assign(a, .rmbl_new_names(v), envir = env)
-    }
-  }
-  invisible(NULL)
-}
-
-# The delimited writers: the header row an alias writes is under the 0.5.x names as well, in the
-# text returned and in the file written.
-.rmbl_alias_header <- function(v, file, map) {
-  fix <- function(l) {
-    i <- which(!startsWith(l, "#"))[1L]
-    if (is.na(i)) return(l)
-    sep <- if (grepl("\t", l[i])) "\t" else ","
-    h <- strsplit(l[i], sep, fixed = TRUE)[[1L]]
-    k <- h %in% names(map)
-    h[k] <- unname(map[h[k]])
-    l[i] <- paste(h, collapse = sep)
-    l
-  }
-  x <- v$value
-  # a text file only: yoy_write() also writes PDF and HTML
-  if (is.character(file) && length(file) == 1L && grepl("[.](csv|tsv|txt)$", file, ignore.case = TRUE) &&
-      file.exists(file)) {
-    writeLines(fix(readLines(file, warn = FALSE)), file)
-  } else if (is.character(x) && length(x) == 1L) {
-    x <- paste(fix(strsplit(x, "\n", fixed = TRUE)[[1L]]), collapse = "\n")
-    if (endsWith(v$value, "\n")) x <- paste0(x, "\n")
-  }
-  if (v$visible) x else invisible(x)
 }
 
 # The generics an "rmbl_old" result is drawn, printed or summarised with: the package's own

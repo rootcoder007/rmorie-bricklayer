@@ -414,7 +414,5 @@ format.bricklayer_mcar <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_mcar <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_mcar
+print.bricklayer_mcar <- .rmbl_print_via_format

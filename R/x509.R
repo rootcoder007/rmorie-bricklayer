@@ -245,10 +245,8 @@ format.bricklayer_certificate <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_certificate <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_certificate
+print.bricklayer_certificate <- .rmbl_print_via_format
 
 #' Verify a certificate chain
 #'
@@ -630,10 +628,8 @@ format.bricklayer_certpath_check <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_certpath_check <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_certpath_check
+print.bricklayer_certpath_check <- .rmbl_print_via_format
 
 # ---------------------------------------------------------------- #
 # The pieces

@@ -199,7 +199,5 @@ format.bricklayer_schema <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_schema <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_schema
+print.bricklayer_schema <- .rmbl_print_via_format

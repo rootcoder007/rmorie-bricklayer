@@ -378,10 +378,8 @@ format.bricklayer_kem_key <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_kem_key <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_kem_key
+print.bricklayer_kem_key <- .rmbl_print_via_format
 
 #' @export
 format.bricklayer_kem_public_key <- function(x, ...) {
@@ -395,10 +393,8 @@ format.bricklayer_kem_public_key <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_kem_public_key <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_kem_public_key
+print.bricklayer_kem_public_key <- .rmbl_print_via_format
 
 #' @export
 format.bricklayer_kem_capsule <- function(x, ...) {
@@ -413,10 +409,8 @@ format.bricklayer_kem_capsule <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_kem_capsule <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_kem_capsule
+print.bricklayer_kem_capsule <- .rmbl_print_via_format
 
 #' Checks an ML-KEM security level.
 #'

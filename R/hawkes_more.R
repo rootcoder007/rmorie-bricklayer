@@ -120,7 +120,7 @@ chwksim <- function(fit, hor = NULL, seed = 1L) {
 #' @param ... Further arguments to the first `plot()` call.
 #' @param main,col,pal The title, colours, and a [blpal()] name.
 #' @return The data drawn, invisibly: `t` and `lambda` (intensity),
-#'   `uniform` and `residual` (qq), or `t`, `parent` (the
+#'   `uniform` and `residual` (a Q-Q plot), or `t`, `parent` (the
 #'   index of the parent event, 0 for the baseline), `prob` and
 #'   `generation` (tree).
 #' @examples

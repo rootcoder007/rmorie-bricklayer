@@ -298,13 +298,6 @@ test_that("the signer helpers and the digest helpers cover every algorithm they 
   )
   expect_error(.rmbl_ts_digest("sha1", raw(0)), "not available")
 
-  # the RSA key out of a certificate, and NULL for anything else
-  rk <- .rmbl_ts_cert_rsa(f$rsa_cert)
-  expect_identical(rk$modulus, certprs(f$rsa_cert)$key$modulus)
-  expect_identical(rk$exponent, as.raw(c(1, 0, 1)))
-  expect_null(.rmbl_ts_cert_rsa(f$ecdsa_cert))
-  expect_null(.rmbl_ts_cert_rsa(as.raw(c(0x30, 0x05))))
-
   # PKCS#1 v1.5: every way the recovered block can be wrong
   msg <- charToRaw("abc")
   pad <- as.raw(c(0, 1, rep(0xff, 8), 0))

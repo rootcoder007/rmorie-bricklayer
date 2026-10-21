@@ -61,7 +61,7 @@ internally consistent, which any key's holder could arrange.}
 \item{seen}{For \code{cpsbndlvrf()}, the XMSS signatures seen elsewhere, as
 \code{\link[=xmssidxseen]{xmssidxseen()}} returns them,
 or \code{NULL}. For an XMSS bundle it adds an \code{xmss_index} row, failed
-("xmss index reused") when the same key signed
+(\code{"xmss index reused"}) when the same key signed
 the bundle's index with another signature: the key's state was copied
 or rolled back (RFC 10033, section 4).}
 }
@@ -161,7 +161,7 @@ cpsbndlvrf(b2, dir, keyexp = "00ff")$ok
 writeLines("x", file.path(dir, "extra.txt"))
 cpsbndlvrf(b2, dir)$checks[, c("check", "ok")]
 
-# a bundle signed with a shared secret (hmac), as morie signs
+# a bundle signed with a shared secret (HMAC), as morie signs
 dir2 <- tempfile()
 dir.create(dir2)
 writeLines("x,y", file.path(dir2, "d.csv"))

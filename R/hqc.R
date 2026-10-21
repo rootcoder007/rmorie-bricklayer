@@ -527,10 +527,8 @@ format.bricklayer_hqc_key <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_hqc_key <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_hqc_key
+print.bricklayer_hqc_key <- .rmbl_print_via_format
 
 #' @export
 format.bricklayer_hqc_public_key <- function(x, ...) {
@@ -544,10 +542,8 @@ format.bricklayer_hqc_public_key <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_hqc_public_key <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_hqc_public_key
+print.bricklayer_hqc_public_key <- .rmbl_print_via_format
 
 #' @export
 format.bricklayer_hqc_capsule <- function(x, ...) {
@@ -562,10 +558,8 @@ format.bricklayer_hqc_capsule <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_hqc_capsule <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_hqc_capsule
+print.bricklayer_hqc_capsule <- .rmbl_print_via_format
 
 #' Maps a level to its HQC parameter set.
 #'

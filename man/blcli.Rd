@@ -65,7 +65,7 @@ every capsule under PATH as the rmbl GitHub Action does
 (\code{\link{cpschk}}): each
 file against its JSON Schema (\code{\link{schemapath}}),
 \code{\link{vrfcps}} and \code{\link{cpsbndlvrf}}. The secret of
-an hmac bundle is read from \code{RMBL_KEY}, which is then removed
+an HMAC bundle is read from \code{RMBL_KEY}, which is then removed
 from the environment. Prints the Markdown report, or JSON with
 \code{--json}; exits 1 when a failed row is at or above
 \code{--fail-on} (\code{error}, the default, \code{drift} or

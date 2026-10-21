@@ -738,10 +738,8 @@ format.bricklayer_oqs_key <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_oqs_key <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_oqs_key
+print.bricklayer_oqs_key <- .rmbl_print_via_format
 
 #' @export
 format.bricklayer_oqs_public_key <- function(x, ...) {
@@ -755,10 +753,8 @@ format.bricklayer_oqs_public_key <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_oqs_public_key <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_oqs_public_key
+print.bricklayer_oqs_public_key <- .rmbl_print_via_format
 
 #' Generate a post-quantum signing key for capsule provenance
 #'

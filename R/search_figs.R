@@ -37,7 +37,7 @@
 #' For a point datum with a circular normal distribution of position error,
 #' the square centred on the datum that a given effort, spread evenly, should
 #' cover to make the probability of success as large as possible (Frost 1996,
-#' chapter 6). With several efforts, each search is optimised in turn against
+#' chapter 6). With several efforts, each search is optimized in turn against
 #' the distribution as earlier unsuccessful searches left it.
 #'
 #' @details The search factor \code{f} is the half side of the square in units
@@ -49,7 +49,7 @@
 #' the POD curve of \code{model} (\code{\link{srchpod}}). The factor is found
 #' on a grid of 241 values from 0.02 to 10 and refined by \code{optimize()}.
 #' After a search the density inside its square is multiplied by
-#' \code{1 - POD}; every later search is optimised against what is left, and
+#' \code{1 - POD}; every later search is optimized against what is left, and
 #' its \code{poc} and \code{pos} are conditional on the earlier searches having
 #' failed. Frost's figures 6-3 to 6-6 are drawn from it by \code{\link{srchfig}}.
 #'

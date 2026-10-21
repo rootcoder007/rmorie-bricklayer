@@ -60,19 +60,4 @@ test_that("codec branches the parity grid does not reach", {
   expect_error(fromjs(42), "must be a JSON string")
   expect_identical(fromjs("[9007199254740993]", bigint_as_char = TRUE), "9007199254740993")
   expect_identical(fromjs('{"$date":1700000000000}'), structure(1700000000, class = c("POSIXct", "POSIXt")))
-  expect_identical(as.character(bricklayer_json_minify('  {"a" : [ 1 , 2 ] }  ')), '{"a":[1,2]}')
-  expect_identical(as.character(bricklayer_json_prettify("[]", indent = -1)), "[\n\n]\n")
-  x <- data.frame(a = 1:2, b = c("x", "y"))
-  con <- rawConnection(raw(0), "w")
-  bricklayer_json_stream_out(x, con, verbose = FALSE, prefix = "\x1e")
-  txt <- rawToChar(rawConnectionValue(con))
-  close(con)
-  expect_identical(strsplit(txt, "\n")[[1]], c('\x1e{"a":1,"b":"x"}', '\x1e{"a":2,"b":"y"}'))
-  seen <- list()
-  bricklayer_json_stream_in(textConnection(c('{"a":1}', '{"a":2}')),
-    handler = function(d) seen[[length(seen) + 1L]] <<- d,
-    pagesize = 1, verbose = FALSE
-  )
-  expect_length(seen, 2L)
-  expect_identical(bricklayer_json_rbind_pages(list()), data.frame())
 })

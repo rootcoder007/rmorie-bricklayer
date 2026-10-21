@@ -296,7 +296,10 @@ test_that("N4: a kernel interrupted inside the barrier raises R's interrupt and 
     .Call(C("C_rmbl_pbkdf2"), charToRaw("pw"), charToRaw("salt"), 20000000L, 32L)
     "returned"
   }, interrupt = function(e) "interrupt")
-  for (i in 1:20) if (file.exists(signal_sent)) break else Sys.sleep(0.1)
+  for (i in 1:20) {
+    if (file.exists(signal_sent)) break
+    Sys.sleep(0.1)
+  }
   skip_if(!file.exists(signal_sent) && identical(got, "returned"),
           "the SIGINT helper did not run in time on this machine (inconclusive, not a failure)")
   expect_identical(got, "interrupt")

@@ -74,7 +74,7 @@
 #' [fipskg()]
 #' or [pqckg()] and not a non-empty string or raw vector; an invalid
 #' \code{prehash} or
-#' \code{ctx} (from [cpssign()]), or either given with an hmac key;
+#' \code{ctx} (from [cpssign()]), or either given with an HMAC key;
 #' \code{attestation} not from \code{cpsatst()}. A signature that fails to
 #' verify is a failed row, not an error.
 #'
@@ -150,7 +150,7 @@
 #' att2 <- cpsatst(m, key, ctx = "release 2026-10", prehash = "sha512")
 #' cpschkatst(att2, m, keyexp = key)$ok
 #'
-#' # a shared secret signs with hmac; `public` is its key id, not the secret
+#' # a shared secret signs with HMAC; `public` is its key id, not the secret
 #' att3 <- cpsatst(m, "shared-secret")
 #' att3$public
 #' cpschkatst(att3, m, key = "shared-secret", keyexp = att3$public)$ok
@@ -159,12 +159,12 @@
 #' # a key that is not a signing key is refused
 #' try(cpsatst(m, 42))
 #' @export
-#' @srrstats {G2.0} An hmac `key` must be one string or a non-empty raw vector; a character vector of
+#' @srrstats {G2.0} An HMAC `key` must be one string or a non-empty raw vector; a character vector of
 #'   length 2 is refused (.rmbl_attest_scheme, test-attest.R:461).
 #' @srrstats {G2.1} `key` must be a key object, a string or raw: anything else (a list, NULL) is
 #'   refused naming the accepted types (a list: test-attest.R:226; NULL: test-stress-7703a04-review.R:31); a
 #'   function given to cpschkatst() is refused by .rmbl_no_fn (test-attest.R:462).
-#' @srrstats {G5.2b} Each refusal added for hmac (`ctx`, `prehash`, empty or multi-valued secret) is
+#' @srrstats {G5.2b} Each refusal added for HMAC (`ctx`, `prehash`, empty or multi-valued secret) is
 #'   triggered in test-attest.R:457-461 and its message text matched.
 #' @srrstats {G5.8a} A zero-length secret, "" or raw(0), is refused rather than used as an empty HMAC
 #'   key (test-attest.R:459-460); so is an empty `keyexp` in cpschkatst() and cpsbndlvrf(), which
@@ -371,10 +371,8 @@ format.bricklayer_attestation_check <- function(x, ...) {
 
 #' @rdname printmeth
 #' @export
-print.bricklayer_attestation_check <- function(x, ...) {
-  cat(format(x), sep = "\n")
-  invisible(x)
-}
+#' @method print bricklayer_attestation_check
+print.bricklayer_attestation_check <- .rmbl_print_via_format
 
 #' Refuses an empty expected key.
 #'
@@ -421,7 +419,7 @@ print.bricklayer_attestation_check <- function(x, ...) {
        call. = FALSE)
 }
 
-#' Names an hmac key without revealing it: HMAC-SHA-256 of "public" under the key, as morie's key_id().
+#' Names an HMAC key without revealing it: HMAC-SHA-256 of "public" under the key, as morie's key_id().
 #' @param key The shared secret, a string or raw vector.
 #' @return 64 hex characters.
 #' @noRd

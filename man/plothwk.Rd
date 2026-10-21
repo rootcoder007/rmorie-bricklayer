@@ -30,7 +30,7 @@ plothwk(
 }
 \value{
 The data drawn, invisibly: \code{t} and \code{lambda} (intensity),
-\code{uniform} and \code{residual} (qq), or \code{t}, \code{parent} (the
+\code{uniform} and \code{residual} (a Q-Q plot), or \code{t}, \code{parent} (the
 index of the parent event, 0 for the baseline), \code{prob} and
 \code{generation} (tree).
 }

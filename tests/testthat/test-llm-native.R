@@ -504,7 +504,9 @@ test_that("the device flow opens the browser, rejects a hard error and times out
 
 test_that("logout keeps unrelated entries in the shared file", {
   .sandbox()
-  .bl_write_credentials(list(hosted_key = "sk-x", other_tool = "keep"))
+  p <- .bl_credentials_path()
+  dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
+  writeLines('{"hosted_key": "sk-x", "other_tool": "keep"}', p)
   expect_message(expect_true(dlogout()), "Logged out")
   expect_equal(.bl_read_credentials(), list(other_tool = "keep"))
 })
