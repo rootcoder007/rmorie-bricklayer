@@ -279,3 +279,36 @@ test_that("the manifest keeps the package names of the environment it records", 
   expect_identical(d$packages$package, "utils")
   expect_identical(d$packages$change, "removed")
 })
+
+test_that("bldl asks a busy server again and gives up on any other answer", {
+  local_mocked_bindings(.rmbl_check_public_url = function(url, what, ...) url,
+                        .bl_sleep = function(s) invisible(NULL))
+  calls <- 0L
+  local_mocked_bindings(.bl_http_download = function(url, dest, tmout, headers, draw, maxbytes, head_only) {
+    calls <<- calls + 1L
+    if (calls < 3L) return(list(status = 503L, bytes = 0, error = "HTTP 503", retry_after = "0"))
+    writeLines("a,b", dest)
+    list(status = 200L, bytes = 4, error = "", retry_after = "")
+  })
+  dest <- tempfile()
+  out <- capture.output(bldl("https://example.org/x.csv", dest, quiet = FALSE, tty = FALSE), type = "message")
+  expect_identical(calls, 3L)
+  expect_identical(readLines(dest), "a,b")
+  expect_true(any(grepl("answered HTTP 503; trying again in 0 s", out, fixed = TRUE)))
+  # a server that stays busy: four tries, then the status in words
+  calls <- 0L
+  local_mocked_bindings(.bl_http_download = function(url, dest, tmout, headers, draw, maxbytes, head_only) {
+    calls <<- calls + 1L
+    list(status = 429L, bytes = 0, error = "HTTP 429", retry_after = "")
+  })
+  expect_error(bldl("https://example.org/x.csv", tempfile(), quiet = TRUE), "answered HTTP 429")
+  expect_identical(calls, 4L)
+  # a final answer is not asked again
+  calls <- 0L
+  local_mocked_bindings(.bl_http_download = function(url, dest, tmout, headers, draw, maxbytes, head_only) {
+    calls <<- calls + 1L
+    list(status = 404L, bytes = 0, error = "HTTP 404", retry_after = "")
+  })
+  expect_error(bldl("https://example.org/x.csv", tempfile(), quiet = TRUE), "answered HTTP 404")
+  expect_identical(calls, 1L)
+})

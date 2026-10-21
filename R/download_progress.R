@@ -93,6 +93,9 @@
 #' character vector; \code{tmout} below 1 or above 2147483647;
 #' \code{maxbytes} below 1; a network failure; an HTTP status of 400 or
 #' more; a body larger than \code{maxbytes}. \code{dest} is overwritten.
+#' A server busy for a moment (HTTP 429, 500, 502, 503 or 504) is asked again up to
+#' three times, after the wait its \code{Retry-After} header asks for (at most a
+#' minute) or else 1, 2 and 4 seconds.
 #'
 #' @param url The URL, \code{https}. The option \code{rmoriebricklayer.allowhttp}
 #'   set to \code{TRUE} also allows plain \code{http}. A loopback,
@@ -230,7 +233,21 @@ bldl <- function(url, dest, headers = NULL,
     # URL is checked again there, resolved and pinned, every redirect hop is
     # re-checked (no https -> http, credentials dropped across hosts) and the
     # body is capped; base R's url() did none of that (0.5.7 review)
-    res <- .bl_http_download(url, dest, as.integer(tmout), hdr_lines, draw, maxbytes, FALSE)
+    # a server busy for a moment (429, 500, 502, 503 or 504; data.rmorie.com answers 503 when many
+    # clients fetch one table at once) is asked again up to three times, after its Retry-After (at
+    # most a minute) or else 1, 2 and 4 seconds with jitter; any other answer is final
+    for (i in 0:3) {
+      res <- .bl_http_download(url, dest, as.integer(tmout), hdr_lines, draw, maxbytes, FALSE)
+      if (i == 3L || !(res$status %in% c(429L, 500L, 502L, 503L, 504L))) break
+      wait <- .bl_wb_retry_after(res)
+      if (is.na(wait)) wait <- 2^i * (0.5 + (as.numeric(Sys.time()) * 1000) %% 1000 / 1000)
+      wait <- min(wait, 60)
+      if (!quiet) {
+        cat(sprintf("%s: %s answered HTTP %d; trying again in %.0f s\n", label, url, res$status, wait),
+            file = stderr())
+      }
+      .bl_sleep(wait)
+    }
     if (res$status < 0) {
       stop(sprintf("bldl: %s: %s", url, res$error), call. = FALSE)
     }
@@ -264,3 +281,8 @@ bldl <- function(url, dest, headers = NULL,
 .bl_http_download <- function(url, dest, tmout, headers, draw, maxbytes, head_only) {
   .Call(C_rmbl_http_download, url, dest, tmout, headers, draw, maxbytes, head_only)
 }
+
+#' Sleeps for a number of seconds; named so a test can stand in for the wait
+#' @param s Seconds.
+#' @noRd
+.bl_sleep <- function(s) Sys.sleep(s)

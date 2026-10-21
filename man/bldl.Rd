@@ -88,6 +88,9 @@ a loopback, link-local or private address; \code{headers} not a named
 character vector; \code{tmout} below 1 or above 2147483647;
 \code{maxbytes} below 1; a network failure; an HTTP status of 400 or
 more; a body larger than \code{maxbytes}. \code{dest} is overwritten.
+A server busy for a moment (HTTP 429, 500, 502, 503 or 504) is asked again up to
+three times, after the wait its \code{Retry-After} header asks for (at most a
+minute) or else 1, 2 and 4 seconds.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

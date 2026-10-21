@@ -2,6 +2,7 @@
 
 ## Fixes after the CRAN resubmission
 
+* `bldl()` asks a server that is busy for a moment (HTTP 429, 500, 502, 503 or 504) again up to three times, after the wait its `Retry-After` header asks for (at most a minute) or else 1, 2 and 4 seconds, instead of failing at once. data.rmorie.com answers 503 when many clients fetch one table at the same time, as every CI job of a push does.
 * The search-and-rescue guide's table of figure recipes is an HTML table with each line of R in code font; as a Markdown table, a `$` in a recipe started a formula and a `|` ended the cell, so most rows ran together as mathematics.
 * The reference to Welch (1947) on `?baltab` quotes its title with `\sQuote{}`, so the PDF manual prints an opening and a closing quote around Student's instead of two closing ones.
 * `srchfig()` with no argument gains a column `yours`: for each of the 36 figures, one line of R that draws it from your own numbers (the function behind the figure, with example inputs to replace; a schematic gives the computation it pictures). The search-and-rescue guide prints the table, and a test runs every line.

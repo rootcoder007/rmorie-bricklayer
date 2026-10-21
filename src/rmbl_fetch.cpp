@@ -1108,8 +1108,9 @@ long http_get_file(const std::string &url, const std::string &path, long timeout
                    const std::vector<std::string> *headers, SEXP progress,
                    curl_off_t *written, std::string *err, bool *interrupted,
                    curl_off_t max_bytes = kMaxDownload, bool allow_loopback = false,
-                   bool *local_fail = nullptr) {
+                   bool *local_fail = nullptr, std::string *retry_after = nullptr) {
     if (written) *written = 0;
+    if (retry_after) retry_after->clear();
     if (local_fail) *local_fail = false;
     if (interrupted) *interrupted = false;
     if (max_bytes < 1 || max_bytes > kMaxDownload) max_bytes = kMaxDownload;
@@ -1151,6 +1152,10 @@ long http_get_file(const std::string &url, const std::string &path, long timeout
     curl_easy_setopt(h, CURLOPT_USERAGENT, kUA);
     curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, write_to_file);
     curl_easy_setopt(h, CURLOPT_WRITEDATA, &fs);
+    /* a busy server's Retry-After, for the caller that waits and asks again */
+    std::string ra_sink;
+    curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, note_retry_after);
+    curl_easy_setopt(h, CURLOPT_HEADERDATA, retry_after ? retry_after : &ra_sink);
     /* the per-call cap is the sink's own byte count, the same on every libcurl and for a
  * chunked body; CURLOPT_MAXFILESIZE_LARGE (set above for every handle) stays the hard
  * 2 GiB ceiling that stops a declared giant before the first byte */
@@ -1651,17 +1656,20 @@ SEXP C_rmbl_http_download_impl(SEXP url, SEXP path, SEXP timeout, SEXP headers, 
     curl_off_t written = 0;
     std::string err;
     bool interrupted = false;
+    std::string ra;
     const long code = http_get_file(u, p, tmo, &extra, progress, &written, &err, &interrupted,
-                                    cap, Rf_asLogical(allow_loopback) == TRUE);
+                                    cap, Rf_asLogical(allow_loopback) == TRUE, nullptr, &ra);
     if (interrupted) rmbl_kernel_interrupted = 1;
-    SEXP res = PROTECT(rmbl::alloc_vector(VECSXP, 3));
+    SEXP res = PROTECT(rmbl::alloc_vector(VECSXP, 4));
     SET_VECTOR_ELT(res, 0, Rf_ScalarInteger(static_cast<int>(code)));
     SET_VECTOR_ELT(res, 1, Rf_ScalarReal(static_cast<double>(written)));
     SET_VECTOR_ELT(res, 2, Rf_mkString(err.c_str()));
-    SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 3));
+    SET_VECTOR_ELT(res, 3, Rf_mkString(ra.c_str()));
+    SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 4));
     SET_STRING_ELT(nm, 0, Rf_mkChar("status"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("bytes"));
     SET_STRING_ELT(nm, 2, Rf_mkChar("error"));
+    SET_STRING_ELT(nm, 3, Rf_mkChar("retry_after"));
     Rf_setAttrib(res, R_NamesSymbol, nm);
     UNPROTECT(2);
     return res;
