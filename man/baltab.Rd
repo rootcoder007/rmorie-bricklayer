@@ -40,7 +40,7 @@ baltab(d, "t", "age")
 \dontshow{\}) # examplesIf}
 }
 \references{
-Welch BL (1947). The generalization of 'Student's' problem when several
+Welch BL (1947). The generalization of \sQuote{Student's} problem when several
 different population variances are involved. Biometrika 34(1-2):28-35.
 \doi{10.1093/biomet/34.1-2.28}
 }

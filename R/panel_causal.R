@@ -355,7 +355,7 @@ print.rmbl_dml <- function(x, ...) {
 #' @param w Optional column name of weights.
 #' @return A data frame of class \code{rmbl_balance}: \code{covariate},
 #'   \code{meantrtd}, \code{meanctl}, \code{smd}, \code{p_value}.
-#' @references Welch BL (1947). The generalization of 'Student's' problem when several
+#' @references Welch BL (1947). The generalization of \sQuote{Student's} problem when several
 #'   different population variances are involved. Biometrika 34(1-2):28-35.
 #'   \doi{10.1093/biomet/34.1-2.28}
 #' @examplesIf isTRUE(getOption("rmbl.examples"))

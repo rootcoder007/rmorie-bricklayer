@@ -2,6 +2,7 @@
 
 ## Fixes after the CRAN resubmission
 
+* The reference to Welch (1947) on `?baltab` quotes its title with `\sQuote{}`, so the PDF manual prints an opening and a closing quote around Student's instead of two closing ones.
 * `srchfig()` with no argument gains a column `yours`: for each of the 36 figures, one line of R that draws it from your own numbers (the function behind the figure, with example inputs to replace; a schematic gives the computation it pictures). The search-and-rescue guide prints the table, and a test runs every line.
 * The dashboard's method card was empty when the package ran from its source (`pkgload::load_all()`), because it read only the installed help pages; it now falls back to the source `man/` folder, as the command line already did.
 * The search-and-rescue guide adds "Your own search" (each search function run on numbers of your own, with its plot) and "Planning a search, start to finish" (a probability map from the last known position, the day's effort spread over it, and the next day planned on the map updated after a search that found nothing), and its section headings no longer carry the book's chapter numbers (the figure numbers do).
