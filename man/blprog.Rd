@@ -63,7 +63,7 @@ p <- blprog("bootstrap", B)
 on.exit(p$done(), add = TRUE)
 for (b in seq_len(B)) {
   ...
-  p$tick(info = sprintf("resample \%d/\%d", b, B))
+  p$tick(info = sprintf("resample %d/%d", b, B))
 }
 }
 \code{$done()} may be called more than once; only the first call acts.

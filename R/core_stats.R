@@ -180,8 +180,8 @@ cnormlpdf <- function(x, mean = 0, sd = 1) {
 #' The mean is base R's (an extended-precision sum followed by a
 #' corrective pass); the deviations from it are then divided by their
 #' largest magnitude before any power is taken, and the scale is restored
-#' at the end. That avoids both the cancellation of the textbook "sum of
-#' squares minus square of sum" formula and overflow of fourth powers for
+#' at the end. That avoids both the cancellation of the textbook \dQuote{sum of
+#' squares minus square of sum} formula and overflow of fourth powers for
 #' values beyond about \eqn{10^{77}}. It reads the data three times
 #' (mean, largest deviation, moments), in \eqn{O(n)} time. The variance uses
 #' the `n - 1` denominator, matching [stats::var()]. The shape
@@ -283,7 +283,7 @@ cmom <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
 #' 1.4826022185...; pass it explicitly if you want the extra digits, or
 #' `1` for the unscaled median deviation.
 #' @param k Fence width in IQRs, a single non-negative number (default
-#'   1.5, Tukey's convention; 3 is the usual "far out" cutoff).
+#'   1.5, Tukey's convention; 3 is the usual \dQuote{far out} cutoff).
 #' @return `cqnt()`: a numeric vector the length of `probs`, in
 #'   the units of `x`, named by percentage (`"25%"`, ...) as
 #'   [stats::quantile()] names them. `cmed()`,

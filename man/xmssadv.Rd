@@ -37,7 +37,8 @@ the record shows has signed is refused.}
 \item{keytofgt}{For
 \code{\link[=xmssfgt]{xmssfgt()}}:
 a signing key (the record is keyed by its secret seed) whose
-entry alone is reset to "nothing used" (it may sign from index 0 again); \code{NULL}
+entry alone is reset to \dQuote{nothing used} (it may sign from index 0 again);
+\code{NULL}
 removes the whole record (every key, and the record of the releases before 0.5.12),
 after which only keys generated afterwards, or vouched for by
 \code{\link[=xmssregkey]{xmssregkey()}}, may sign.}

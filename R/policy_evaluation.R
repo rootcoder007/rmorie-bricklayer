@@ -229,7 +229,7 @@
 #'
 #' The relative effect is \eqn{\hat\beta} over the mean outcome of the units never
 #' treated (or not yet treated) in the periods before the first treatment, the way an
-#' effect on a rate is usually reported ("a 12\% fall").
+#' effect on a rate is usually reported (\dQuote{a 12% fall}).
 #'
 #' With \code{fe = "time"} the unit effects are left out, and the model is
 #' the cross-section with period effects of a comparison between kinds of units (for
@@ -540,7 +540,7 @@ plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' \code{method = "csa"},
 #' \deqn{ATT(g, t) = \big(\bar Y_{g,t} - \bar Y_{g,b}\big) - \big(\bar Y_{C,t} - \bar
 #' Y_{C,b}\big),}{ATT(g, t) = (Y_g,t - Y_g,b) - (Y_C,t - Y_C,b),} with base period
-#' \eqn{b = g - 1} for \eqn{t \ge g}, and \eqn{b = t - 1} before (the "varying" base
+#' \eqn{b = g - 1} for \eqn{t \ge g}, and \eqn{b = t - 1} before (the \code{"varying"} base
 #' of the \code{did} package), so a pre-period ATT is a placebo of one period. It
 #' needs a balanced panel.
 #'
@@ -737,8 +737,9 @@ stgatt <- function(data, unit, time, y, ftreat, ctrl = c("notyet", "never"),
 }
 
 #' The two-period panel DiD with covariates of Sant'Anna and Zhao (2020): outcome regression on the
-#' comparison units ("reg"), normalised inverse probability weighting ("ipw"), or both, doubly robust
-#' ("dr"); comparison units with a propensity above 0.995 are trimmed, as DRDID does.
+#' comparison units (\code{"reg"}), normalised inverse probability weighting
+#' (\code{"ipw"}), or both, doubly robust
+#' (\code{"dr"}); comparison units with a propensity above 0.995 are trimmed, as DRDID does.
 #' @param dy The outcome change of each unit.
 #' @param d The treatment indicator, 1 or 0.
 #' @param x The covariate matrix, with an intercept column.
@@ -845,7 +846,7 @@ plot.rmbl_staggered_att <- function(x, ..., main = NULL, col = NULL, palette = N
 #' with weights that sum to one and grow with the groups' sizes \eqn{n} and the
 #' variance of their treatment over time \eqn{\bar D(1 - \bar D)} (Goodman-Bacon 2021,
 #' theorem 1). Units treated from the first period act as an already-treated group. A
-#' large weight on "later vs earlier" comparisons, together with effects that grow
+#' large weight on \dQuote{later vs earlier} comparisons, together with effects that grow
 #' over time, is the warning sign that the two-way estimate is biased.
 #'
 #' @inheritParams plndid

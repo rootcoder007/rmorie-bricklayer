@@ -24,15 +24,15 @@ checked.
 }
 \details{
 The standard SIU privacy paragraph and the witness-officer glossary note
-are stripped first (both mention "subject officer" without naming one).
+are stripped first (both mention \dQuote{subject officer} without naming one).
 The rules then run most-specific first and the first that applies wins:
 \enumerate{
-\item the roster under the "Subject Officials"/"Subject Officers"
+\item the roster under the \dQuote{Subject Officials}/\dQuote{Subject Officers}
 heading: the larger of the highest \code{SO #N} ordinal and the number
 of entries;
 \item the highest \code{SO #N} ordinal in the whole document, trusted
 only when \code{SO #1} is also present;
-\item a spelled-out or numeric plural ("two subject officials");
+\item a spelled-out or numeric plural (\dQuote{two subject officials});
 \item a singular subject official present (1);
 \item an explicit statement that there was no subject official, or
 witness officials listed and no subject official anywhere (0, a real
@@ -40,7 +40,7 @@ answer);
 \item otherwise unresolved (\code{NA}).
 }
 French reports use the same rules in their vocabulary (the subject
-official is tagged "AI no 1", the witness official "AT no 1").
+official is tagged \dQuote{AI no 1}, the witness official \dQuote{AT no 1}).
 
 This function is the pure rule set. For reports that already have a
 panel-reviewed count, prefer that verified value; use these rules for

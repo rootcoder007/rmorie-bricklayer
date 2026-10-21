@@ -38,7 +38,7 @@ content here; \code{\link[=valsch]{valsch()}} reads the
 
 A missing file is not an error: it returns \code{NULL}, so a project can
 run without a provenance record and every resolver treats \code{NULL} as
-"nothing pinned".
+\dQuote{nothing pinned}.
 
 Errors: \code{path} that is not a single non-empty string; \code{path}
 that is a directory; a file that is not valid JSON.

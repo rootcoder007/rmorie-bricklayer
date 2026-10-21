@@ -57,7 +57,8 @@
 
 #' Whether the SVG device works (cairo), probed once per session.
 #'
-#' capabilities("cairo") is TRUE on a build that has cairo even where its shared library
+#' capabilities(\code{"cairo"}) is TRUE on a build that has cairo even where its shared
+#' library
 #' cannot be loaded (the GitHub macOS runners, which lack the X11 libraries it links): there
 #' grDevices::svg() warns and fails, so the device is opened once to find out.
 #' @return TRUE or FALSE.
@@ -395,8 +396,8 @@
 
 #' The ledgers installed packages ship in inst/ledger.
 #' @param pkgs The packages to look in; default every installed package.
-#' @param find The ledger directory of a package, "" when it has none.
-#' @return A named character vector of paths ("pkg: file").
+#' @param find The ledger directory of a package, \code{""} when it has none.
+#' @return A named character vector of paths (\dQuote{pkg: file}).
 #' @noRd
 .bl_ldgr_installed <- function(pkgs = rownames(utils::installed.packages(fields = character())),
                                find = function(p) system.file("ledger", package = p)) {

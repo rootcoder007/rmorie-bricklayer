@@ -64,7 +64,7 @@
 #' The lateral range curve without input checks.
 #' @param x Lateral ranges.
 #' @param W Sweep width.
-#' @param model "invcube", "definite" or "mbeta".
+#' @param model \code{"invcube"}, \code{"definite"} or \code{"mbeta"}.
 #' @param m The M-Beta height.
 #' @return Detection probabilities, one per `x`.
 #' @noRd
@@ -84,7 +84,7 @@
 #' side for the inverse cube.
 #' @param x Lateral ranges.
 #' @param W Sweep width.
-#' @param model "invcube", "definite" or "mbeta".
+#' @param model \code{"invcube"}, \code{"definite"} or \code{"mbeta"}.
 #' @param m The M-Beta height.
 #' @param navsd The navigation error's standard deviation.
 #' @return Detection probabilities, one per `x`.
@@ -104,7 +104,7 @@
 
 #' Gauss-Hermite or Gauss-Legendre nodes and weights by the Golub-Welsch eigenvalue method.
 #' @param n The number of nodes.
-#' @param kind "hermite" or "legendre".
+#' @param kind \code{"hermite"} or \code{"legendre"}.
 #' @return A list with nodes `t` and weights `w`.
 #' @noRd
 .sr_gauss <- function(n, kind) {
@@ -120,7 +120,7 @@
 
 #' POD from coverage without input checks.
 #' @param cv Coverages.
-#' @param model "random", "definite", "invcube" or "mbeta".
+#' @param model \code{"random"}, \code{"definite"}, \code{"invcube"} or \code{"mbeta"}.
 #' @param m The M-Beta height.
 #' @return The PODs.
 #' @noRd
@@ -918,7 +918,7 @@ plot.rmbl_srchpod <- function(x, ..., models = NULL, m = NULL, cmax = NULL, main
 #' @param x An rmbl_datummap.
 #' @param digits Decimal places of the percentages.
 #' @param shade NULL, or the row and column of a cell to shade.
-#' @param circle NULL, or c(x, y, radius) of a dashed circle, its radius marked "E".
+#' @param circle NULL, or c(x, y, radius) of a dashed circle, its radius marked \code{"E"}.
 #' @return The text size used, invisibly.
 #' @noRd
 .sr_draw_cells <- function(x, digits, shade = NULL, circle = NULL) {
@@ -958,8 +958,9 @@ plot.rmbl_srchpod <- function(x, ..., models = NULL, m = NULL, cmax = NULL, main
 #' @rdname plot-methods
 #' @param view \code{"map"} (the top view), \code{"persp"} (the surface),
 #'   \code{"both"} (side by side,
-#'   in the book's colour bands) or "cells" (the probability map as a grid of percentages).
-#' @param digits Decimal places of the percentages in the "cells" view.
+#'   in the book's colour bands) or \code{"cells"} (the probability map as a grid of
+#'   percentages).
+#' @param digits Decimal places of the percentages in the \code{"cells"} view.
 #' @usage \method{plot}{rmbl_datummap}(x, ..., view = c("map", "persp", "both", "cells"),
 #'   contours = 8L, digits = 2, main = NULL, col = NULL, palette = NULL)
 #' @export

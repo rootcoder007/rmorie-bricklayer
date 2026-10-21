@@ -38,11 +38,11 @@ matched into two regions, a unit matched into none, a region code that
 is a typo or belongs to a neighbouring province. None of them require
 the geometry, so they run with nothing installed.
 
-The checks as computed: "units assigned more than one region" counts
+The checks as computed: \dQuote{units assigned more than one region} counts
 rows whose (non-blank) unit identifier repeats an earlier row's, whether
 or not the region differs, so an exact duplicate row also fails;
-"units assigned no region" counts rows whose region is \code{NA} or blank;
-"region codes not in the reference geography" counts non-blank region
+\dQuote{units assigned no region} counts rows whose region is \code{NA} or blank;
+\dQuote{region codes not in the reference geography} counts non-blank region
 codes not in \code{regs}, comparing the codes as text after trimming
 spaces (so \code{"3506"} and \code{3506} match, but \code{"03506"} does
 not). Errors: \code{map} not a data frame, or without the named columns.

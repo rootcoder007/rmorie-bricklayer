@@ -7,8 +7,8 @@
 explerr(msg = geterrmessage(), pkgs = NULL, n = 3L)
 }
 \arguments{
-\item{msg}{The message: the text of an error, as R printed it ("Error
-in f(x) : ..." is fine), a condition object, or a \code{try()} result.
+\item{msg}{The message: the text of an error, as R printed it (\dQuote{Error
+in f(x) : ...} is fine), a condition object, or a \code{try()} result.
 Default: the last error of this session (\code{geterrmessage()}).
 Or a data frame of check rows with the columns \code{check},
 \code{ok} and \code{detail}, as \code{rmbl verify --json} writes
@@ -66,7 +66,7 @@ The answer-cache directory is the one \code{tools::R_user_dir()} gives for
 \code{options(morie.quiet = TRUE)}, \code{MORIE_LLM_CACHE=off}, tests and
 \code{R CMD check}.
 
-The message is cleaned first: an "Error in f(x) :" or "Warning message:"
+The message is cleaned first: an \dQuote{Error in f(x) :} or \dQuote{Warning message:}
 prefix is dropped, curly quotes become straight ones and white space is
 collapsed. A template that matches the start of the message as a regular
 expression is an exact match and ranks first (longer templates before

@@ -616,7 +616,8 @@ svydes <- function(data, w, strata = NULL, psu = NULL, fpc = NULL, reps = NULL,
 #' unnamed matrix, which has no names to compare (reviews of 46de6a9).
 #' @param reps The replicates: a list of numeric columns or a matrix.
 #' @param w The full-sample weights.
-#' @param type The replicate type ("bootstrap", "meanboot", "jk1", "jkn", "brr" or "fay").
+#' @param type The replicate type (\code{"bootstrap"}, \code{"meanboot"}, \code{"jk1"},
+#' \code{"jkn"}, \code{"brr"} or \code{"fay"}).
 #' @param data The data frame the design is built on.
 #' @param id_values The PSU id values, when numeric.
 #' @param row_names The row names of `data`.
@@ -950,7 +951,8 @@ print.rmbl_svy_design <- function(x, ...) {
 
 #' Computes the design-based estimates and their covariance matrix.
 #'
-#' The estimates and their covariance. Every estimate is a total A (stat "total") or a ratio A / D of
+#' The estimates and their covariance. Every estimate is a total A (stat \code{"total"})
+#' or a ratio A / D of
 #' weighted totals; `num` and `den` are n x k matrices of the per-row values entering each, or `num`
 #' is the column spec of .svy_columns(), whose k columns are read as the rows of their domain only:
 #' n x k matrices for the numerators, the denominators and their products with the weights were
@@ -1122,7 +1124,8 @@ print.rmbl_svy_design <- function(x, ...) {
 #' @param des A design from `svydes()`.
 #' @param y The analysis variable's column name.
 #' @param by The domain columns, or NULL.
-#' @param stat The statistic: "mean", "total", "proportion" or "ratio".
+#' @param stat The statistic: \code{"mean"}, \code{"total"}, \code{"proportion"} or
+#' \code{"ratio"}.
 #' @param denominator The ratio's denominator column, or NULL.
 #' @param levels The levels of a proportion to report, or NULL for all observed.
 #' @return A list with the column spec `num`, `den` (NULL), the respondent counts `n` and the row `labels`.
@@ -1195,7 +1198,7 @@ print.rmbl_svy_design <- function(x, ...) {
 #' @param se Their standard errors.
 #' @param n_used The number of respondents behind each estimate.
 #' @param stat The statistic; proportions get bounded intervals.
-#' @param ci The interval for proportions: "wald", "wilson" or "logit".
+#' @param ci The interval for proportions: \code{"wald"}, \code{"wilson"} or \code{"logit"}.
 #' @param conf_level The confidence level.
 #' @param df The degrees of freedom for the quantile; Inf uses the normal.
 #' @param design_df The design's degrees of freedom, for the effective sample size of the Wilson interval.

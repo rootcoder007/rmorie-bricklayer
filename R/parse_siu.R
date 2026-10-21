@@ -49,8 +49,8 @@ siusch <- function() {
 #' Convert SIU report HTML to plain text
 #'
 #' Strips the markup from one SIU director's report page and returns the
-#' readable text, keeping line breaks so section headings ("Subject
-#' Officials", "Witness Officials") stay on lines of their own. Use it
+#' readable text, keeping line breaks so section headings (\dQuote{Subject
+#' Officials}, \dQuote{Witness Officials}) stay on lines of their own. Use it
 #' before [siuso()], or to
 #' read or search a saved report
 #' without a browser.
@@ -61,9 +61,9 @@ siusch <- function() {
 #' collapsed while newlines are kept. Nothing is fetched and nothing is
 #' written.
 #'
-#' Errors: \code{html} must be a single non-NA character string ("html must
-#' be a single non-NA character string"), and input over 2 MiB is refused
-#' ("html is larger than 2 MiB: not a report page").
+#' Errors: \code{html} must be a single non-NA character string (\dQuote{html must
+#' be a single non-NA character string}), and input over 2 MiB is refused
+#' (\dQuote{html is larger than 2 MiB: not a report page}).
 #'
 #' @param html A length-1 character vector holding the raw HTML of one
 #'   report page. A file path is not read here (use
@@ -122,7 +122,7 @@ siutxt <- function(html) {
 #' an error, not an empty report.
 #'
 #' Errors: \code{html} not character, empty or \code{NA}; a missing file
-#' ("no such file"); input over 2 MiB.
+#' (\dQuote{no such file}); input over 2 MiB.
 #'
 #' @param html A character vector. Each element is either the raw HTML of
 #'   one report or the path to a saved report file (for example one written
@@ -251,8 +251,8 @@ siufprs <- function(drid, lang = c("en", "fr")) {
 #' through. A date that does not exist (\code{"February 30, 2023"}) or text
 #' that is not a date gives \code{""}. \code{NA} stays \code{NA}.
 #'
-#' Error: \code{x} that is neither character nor all \code{NA} ("x must be
-#' a character vector of dates").
+#' Error: \code{x} that is neither character nor all \code{NA} (\dQuote{x must be
+#' a character vector of dates}).
 #'
 #' @param x A character vector of human-readable dates. A vector that is
 #'   all \code{NA} (of any type) is accepted.
@@ -287,15 +287,15 @@ siudate <- function(x) {
 #'
 #' @details
 #' The standard SIU privacy paragraph and the witness-officer glossary note
-#' are stripped first (both mention "subject officer" without naming one).
+#' are stripped first (both mention \dQuote{subject officer} without naming one).
 #' The rules then run most-specific first and the first that applies wins:
 #' \enumerate{
-#'   \item the roster under the "Subject Officials"/"Subject Officers"
+#'   \item the roster under the \dQuote{Subject Officials}/\dQuote{Subject Officers}
 #'     heading: the larger of the highest \code{SO #N} ordinal and the number
 #'     of entries;
 #'   \item the highest \code{SO #N} ordinal in the whole document, trusted
 #'     only when \code{SO #1} is also present;
-#'   \item a spelled-out or numeric plural ("two subject officials");
+#'   \item a spelled-out or numeric plural (\dQuote{two subject officials});
 #'   \item a singular subject official present (1);
 #'   \item an explicit statement that there was no subject official, or
 #'     witness officials listed and no subject official anywhere (0, a real
@@ -303,7 +303,7 @@ siudate <- function(x) {
 #'   \item otherwise unresolved (\code{NA}).
 #' }
 #' French reports use the same rules in their vocabulary (the subject
-#' official is tagged "AI no 1", the witness official "AT no 1").
+#' official is tagged \dQuote{AI no 1}, the witness official \dQuote{AT no 1}).
 #'
 #' This function is the pure rule set. For reports that already have a
 #' panel-reviewed count, prefer that verified value; use these rules for

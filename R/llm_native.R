@@ -228,7 +228,8 @@
 #' Creates a folder owner-only, or makes an existing one owner-only.
 #'
 #' A folder for keys, settings or saved answers: created owner-only, and made owner-only when it is
-#' already there (mode = "0700" applies only to a folder dir.create() makes, so one an earlier version
+#' already there (mode = \code{"0700"} applies only to a folder dir.create() makes, so
+#' one an earlier version
 #' left at 0777 under umask 000 stayed open; network stress test of 5e1dce5). Windows has no modes.
 #' @param d The folder.
 #' @return `d`, invisibly.
@@ -286,7 +287,8 @@
 }
 .bl_said_once <- new.env(parent = emptyenv())
 
-#' The stored hosted key and whether it may be sent: state "none", "ok" or "other_address" (a key
+#' The stored hosted key and whether it may be sent: state \code{"none"}, \code{"ok"} or
+#' \code{"other_address"} (a key
 #' saved for another address than the one in use), with no message.
 #' @return A list with `state` and `key`, and for `"other_address"` the `saved_for` and `now` addresses.
 #' @noRd
@@ -329,7 +331,8 @@
 .bl_legacy_key_addresses <- "https://llm.rmorie.com"
 
 #' The address a stored key belongs to: the model tier's while the services document has one, else
-#' the data service's (the signed document's, never MORIE_DATA_URL). "" when neither is known.
+#' the data service's (the signed document's, never MORIE_DATA_URL). \code{""} when
+#' neither is known.
 #' @return One address without a trailing slash, or `""`.
 #' @noRd
 .bl_key_address <- function() {
@@ -342,8 +345,9 @@
 #'
 #' The address a stored key was issued for under the retired language-model tier, or NULL (the
 #' signed services document now switches that tier off, and a key is bound to the data address).
-#' MORIE_HOSTED_BASE_URL overrides ("" on POSIX or "off" on any platform disables; Windows drops a
-#' variable set to "").
+#' MORIE_HOSTED_BASE_URL overrides (\code{""} on POSIX or \code{"off"} on any platform
+#' disables; Windows drops a
+#' variable set to \code{""}).
 #' @return One address, or NULL.
 #' @noRd
 .bl_hosted_base <- function() {
@@ -459,7 +463,8 @@
 #' Tells whether own-endpoint settings are present.
 #'
 #' Own-endpoint settings without an address: a model or key alone cannot be a route, and saying
-#' so is what keeps "a prompt never leaves the machine silently" true for this case too.
+#' so is what keeps \dQuote{a prompt never leaves the machine silently} true for this
+#' case too.
 #' @return `TRUE` or `FALSE`.
 #' @noRd
 .bl_own_configured <- function() {
@@ -555,7 +560,8 @@
 #' Finds the route a question takes.
 #'
 #' The route a question takes: list(name, api, base, key, model, local, ...), or NULL when nothing
-#' is set up. `route` forces one: "own", "ollama" or a provider id ("anthropic", "openai", ...).
+#' is set up. `route` forces one: \code{"own"}, \code{"ollama"} or a provider id
+#' (\code{"anthropic"}, \code{"openai"}, ...).
 #' @param route NULL or `"auto"` for the automatic order, else one route name.
 #' @param probe_timeout The timeout in seconds for asking a local server for its models.
 #' @return A route list, or NULL.
@@ -993,7 +999,8 @@ llmprvd <- function() {
 #' Checks a pasted key with the data service before it is stored.
 #'
 #' `login --token KEY`: ask the data service before the key replaces a working one in the shared
-#' file (stored as is, a mistyped key left all three packages reporting "key rejected").
+#' file (stored as is, a mistyped key left all three packages reporting \dQuote{key
+#' rejected}).
 #' @param token The key.
 #' @return `TRUE`, invisibly.
 #' @noRd
@@ -1230,7 +1237,7 @@ llmprvd <- function() {
 #' functions nearest the question and four rounds; smaller, the 40 nearest
 #' and three rounds. A package with very many pages is never listed whole:
 #' its functions nearest the question are listed and the tools reach the
-#' rest. "Nearest" is a BM25 search over the help text in R (\eqn{k_1 =
+#' rest. \code{"Nearest"} is a BM25 search over the help text in R (\eqn{k_1 =
 #' 1.2}, \eqn{b = 0.75}). A model that cannot call tools gets the best
 #' matching pages in the prompt instead. Nothing the model asks for is run:
 #' it answers with code for you to run.
@@ -1767,7 +1774,7 @@ dlogout <- function() {
 #' Shows, in one table, every way \code{\link{llmask}} could
 #' reach a language model from this machine and whether each is ready: your
 #' own endpoint, each provider whose key is set, and a local Ollama server.
-#' Use it to find out why a question fails with "no route", or which model
+#' Use it to find out why a question fails with \dQuote{no route}, or which model
 #' a route would use. The command line prints it as part of
 #' \code{rmoriebricklayer doctor}.
 #'

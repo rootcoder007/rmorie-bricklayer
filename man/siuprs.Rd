@@ -51,7 +51,7 @@ names an existing file is read as a path. A string that looks like a path
 an error, not an empty report.
 
 Errors: \code{html} not character, empty or \code{NA}; a missing file
-("no such file"); input over 2 MiB.
+(\dQuote{no such file}); input over 2 MiB.
 }
 \section{Limits}{
 

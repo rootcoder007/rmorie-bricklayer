@@ -59,7 +59,7 @@ proxies share respondents, so if they are positively correlated that standard er
 too small), marks
 every row as a proxy, and reports a direction given no proxy as missing rather than
 filling it from another. One indicator named for two directions (Statistics Canada asks
-about "meaning and purpose" together) is used for both and marked \code{shared}.
+about \dQuote{meaning and purpose} together) is used for both and marked \code{shared}.
 
 The result plots as a \code{\link{welprof}}. For the balance across the
 directions, call \code{\link{holbal}} on the rows with a proxy

@@ -28,7 +28,7 @@
 
 #' Reads the `per` argument as a positive number.
 #'
-#' `per` accepts a number or one of the shorthands, because "per 100k" is
+#' `per` accepts a number or one of the shorthands, because \dQuote{per 100k} is
 #' how the denominator is spoken and mistyping 1e5 as 1e6 is a silent
 #' factor of ten in a published number.
 #' @param per A number or a shorthand such as `"100k"`.
@@ -54,7 +54,7 @@
 
 #' Writes the label for a rate's denominator.
 #'
-#' "per 100,000", not "per 1e+05" -- the label goes into published
+#' \dQuote{per 100,000}, not \dQuote{per 1e+05} -- the label goes into published
 #' tables, and 1e+05 in a table is a defect.
 #' @param per The multiplier.
 #' @return One string such as `"per 100,000"`.
@@ -92,7 +92,7 @@
 #' vector, each element is its own row.
 #'
 #' \code{per} takes a number, or one of \code{"1k"}, \code{"10k"},
-#' \code{"100k"}, \code{"1m"} (case, spaces, commas and a leading "per" are
+#' \code{"100k"}, \code{"1m"} (case, spaces, commas and a leading \code{"per"} are
 #' ignored), because a denominator mistyped by a factor of ten is invisible
 #' once it reaches a table.
 #'
@@ -298,8 +298,8 @@ print.rmbl_rate <- function(x, ...) {
 #' division's share of all stops), with a Wilson confidence interval. A
 #' share's denominator is the total of the same events, so shares over a
 #' complete grouping sum to 100. Use \code{\link{rtcalc}} instead when the
-#' denominator is a population; "40% of stops" and "40 stops per 1,000
-#' residents" are different claims.
+#' denominator is a population; \dQuote{40% of stops} and \dQuote{40 stops per 1,000
+#' residents} are different claims.
 #'
 #' @details
 #' For count \eqn{y} out of total \eqn{n}, the share is \eqn{100\,y/n} and
@@ -416,7 +416,8 @@ shrs.data.frame <- function(x, count, by = NULL, total = NULL,
 #' Checks the `total` argument of shrs().
 #'
 #' One finite, non-negative number: a data frame or a vector in `total` (shrs(1e308, stops, by =
-#' "division")) failed in as.numeric()'s words (hostile battery, final audit of 1.0.0)
+#' \code{"division"})) failed in as.numeric()'s words (hostile battery, final audit of
+#' 1.0.0)
 #' @param total The value passed by the user.
 #' @param also Extra text for the error message naming other accepted forms.
 #' @return The total as a double.

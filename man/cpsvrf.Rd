@@ -42,7 +42,7 @@ cannot be replayed at another index or under another key.
 }
 \details{
 Returns \code{FALSE} rather than erroring on a malformed or truncated
-signature: a verifier must treat unparseable input as "not verified",
+signature: a verifier must treat unparseable input as \dQuote{not verified},
 never as an exception to be caught and ignored.
 
 \code{TRUE} means the signature is valid for \code{msg} under \code{key} (and, for

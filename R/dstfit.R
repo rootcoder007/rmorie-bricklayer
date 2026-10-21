@@ -465,7 +465,7 @@ plot.rmbl_dstfit <- function(x, ..., which = c("density", "qq", "pp", "tail"), f
 #' The QQ or PP panels of a dstfit() plot, one per family.
 #' @param x The fit.
 #' @param fams The families.
-#' @param which "qq" or "pp".
+#' @param which \code{"qq"} or \code{"pp"}.
 #' @param main The title, or NULL.
 #' @param cols The colours.
 #' @param ... Further arguments to plot().

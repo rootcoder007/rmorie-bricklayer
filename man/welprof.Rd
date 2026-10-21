@@ -25,7 +25,8 @@ welprof(
 the percentage and its published limits.}
 
 \item{well, distress}{The indicators that measure wellness or strength, and those
-that measure distress; rows for any other indicator (totals, "not specified") are
+that measure distress; rows for any other indicator (totals, \dQuote{not specified})
+are
 left out.}
 
 \item{domain}{Optional named character vector giving each indicator's holistic domain,

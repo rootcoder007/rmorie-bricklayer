@@ -43,7 +43,7 @@ and, with \eqn{s = (T - 1) / \mathrm{lag}} steps of length \code{lag},
 \deqn{100 \left( (v_T / v_1)^{1/s} - 1 \right).}
 Both are \code{NA} when \eqn{v_1 \le 0}, because a growth rate out of zero
 does not exist; \code{cagrpct} is also \code{NA} for a single period.
-"Annual" in CAGR assumes one period is a year; for monthly or quarterly
+\code{"Annual"} in CAGR assumes one period is a year; for monthly or quarterly
 data read it as the compound rate per \code{lag} periods.
 
 The \code{up}, \code{down} and \code{flat} counts are taken from the
@@ -53,7 +53,7 @@ change and is not counted in any of the three. A group with no non-missing
 value gives a row of \code{NA} with \code{periods = 0}.
 
 Anything other than a \code{yoy()} result is refused with the error
-"\code{object} must be a yoy() result".
+\dQuote{\code{object} must be a yoy() result}.
 }
 \examples{
 # one series

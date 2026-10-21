@@ -591,7 +591,8 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 
 #' The directories under a path that hold a capsule (a provenance or a bundle).
 #' @param root The directory searched.
-#' @param glob Only capsule files whose path matches this glob (its `*` also matches "/"), or "".
+#' @param glob Only capsule files whose path matches this glob (its `*` also matches
+#' \code{"/"}), or \code{""}.
 #' @return Sorted directory paths.
 #' @noRd
 .bl_capsule_dirs <- function(root, glob = "") {
@@ -607,8 +608,9 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 
 #' The verify rows of one capsule: every file against its schema, vrfcps(), cpsbndlvrf().
 #' @param d The capsule directory.
-#' @param key The shared secret of an HMAC bundle, or "".
-#' @param pubkey The public key (or HMAC key id) the bundle must be signed with, or "".
+#' @param key The shared secret of an HMAC bundle, or \code{""}.
+#' @param pubkey The public key (or HMAC key id) the bundle must be signed with, or
+#' \code{""}.
 #' @param pkgs The packages whose functions a ledger's checks may run, or NULL for all (ldgrchk()).
 #' @param seen The XMSS signatures seen (xmssidxseen()), or NULL.
 #' @return Check rows.
@@ -752,7 +754,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' (scheme, public, secret) or the secret key's hex with --public-key; for xmss-sha256 the JSON of a
 #' pqckg() key, whose state is reserved in the key file (or --state-file) before anything is signed.
 #' @param root The directory searched.
-#' @param key The value of RMBL_KEY, or "".
+#' @param key The value of RMBL_KEY, or \code{""}.
 #' @param flag,usage_error,out As for .bl_cli_capsule().
 #' @param rest The arguments after the verb.
 #' @param fmt md or json, for the verify report.

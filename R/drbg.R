@@ -271,10 +271,11 @@ print.bricklayer_drbg <- .rmbl_print_via_format
 
 #' Reports or sets the AES backend.
 #'
-#' "aesni" or "portable"; `portable = TRUE` forces the portable cipher, FALSE restores the
+#' \code{"aesni"} or \code{"portable"}; `portable = TRUE` forces the portable cipher,
+#' FALSE restores the
 #' hardware path (the tests run the vectors through both)
 #' @param portable TRUE to force the portable cipher, FALSE to restore the hardware path, NA to leave it.
-#' @return The backend in use, "aesni" or "portable".
+#' @return The backend in use, \code{"aesni"} or \code{"portable"}.
 #' @noRd
 .rmbl_aes_backend <- function(portable = NA) {
   .Call(C_rmbl_aes_backend, as.logical(portable))

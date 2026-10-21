@@ -56,7 +56,7 @@
   out
 }
 
-#' Converts raw bytes to text, "" when they are empty or cannot be converted.
+#' Converts raw bytes to text, \code{""} when they are empty or cannot be converted.
 #' @param v A raw vector.
 #' @return One string.
 #' @noRd
@@ -112,7 +112,7 @@
 
 #' Tells whether a DNS name is inside a DNS constraint.
 #'
-#' A DNS constraint of "example.org" is satisfied by "example.org" and by
+#' A DNS constraint of \code{"example.org"} is satisfied by \code{"example.org"} and by
 #' anything under it. A leading dot, which is a convention rather than
 #' the RFC's text, is read as subdomains only.
 #' @param name The DNS name.
@@ -181,8 +181,8 @@
 #' Tells whether a directory name is inside a directory name constraint.
 #'
 #' A directory name constraint matches when its RDNs are an initial
-#' sequence of the name's, compared whole: "O=Acme" does not match
-#' "O=AcmeCorp", and a partial attribute value never matches.
+#' sequence of the name's, compared whole: \dQuote{O=Acme} does not match
+#' \dQuote{O=AcmeCorp}, and a partial attribute value never matches.
 #' @param rdns The name's RDNs, as from `.rmbl_x509_rdns()`.
 #' @param base The constraint's RDNs.
 #' @return TRUE or FALSE.

@@ -30,7 +30,7 @@ construct a different input with the same value, so it must never be
 used where \code{\link[=csha256]{csha256()}} is meant. It is
 here because it is far cheaper than SHA-256 over gigabyte-scale capsule
 members, which makes it the right first pass when the question is only
-"did this file arrive intact".
+\dQuote{did this file arrive intact}.
 
 Character input is checked element by element, as its bytes, with
 \code{NA} giving \code{NA}; other atomic input is converted with

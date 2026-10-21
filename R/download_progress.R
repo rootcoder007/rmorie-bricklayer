@@ -14,7 +14,7 @@
 
 #' Formats a byte count in B, KB, MB or GB.
 #' @param n The number of bytes.
-#' @return A string; "?" for a count that is not finite.
+#' @return A string; \dQuote{?} for a count that is not finite.
 #' @noRd
 .bl_fmt_bytes <- function(n) {
   if (!is.finite(n)) return("?")
@@ -34,7 +34,7 @@
 #' @param size The total size, or a non-finite value when it is unknown (a spinner is drawn).
 #' @param t0 The elapsed time at the start, from `proc.time()`.
 #' @param spin The spinner step.
-#' @param unit The unit of `got` and `size`; "B" formats them as bytes.
+#' @param unit The unit of `got` and `size`; \code{"B"} formats them as bytes.
 #' @return A string.
 #' @noRd
 .bl_dl_line <- function(label, got, size, t0, spin, unit = "B") {

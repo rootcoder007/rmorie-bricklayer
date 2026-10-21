@@ -151,7 +151,7 @@
 }
 
 #' Reads an issue time in the document's ISO 8601 UTC form.
-#' @param s The time as "YYYY-MM-DDTHH:MM:SSZ".
+#' @param s The time as \code{"YYYY-MM-DDTHH:MM:SSZ"}.
 #' @return A POSIXct time, NA when `s` is not in that form.
 #' @noRd
 .rmbl_services_time <- function(s) {
@@ -294,7 +294,8 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20,
 #' @param max_age The seconds a cached copy is used without fetching.
 #' @param timeout The seconds allowed for each download.
 #' @param offline Whether to skip the network.
-#' @return The document, with a `source` attribute: "live", "cache", "bundled" or "off".
+#' @return The document, with a `source` attribute: \code{"live"}, \code{"cache"},
+#' \code{"bundled"} or \code{"off"}.
 #' @noRd
 .rmbl_services_resolve <- function(refresh, max_age, timeout, offline) {
   cache <- .rmbl_services_cache_path()
@@ -390,8 +391,8 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20,
 
 #' Gives the URL of a document's signature.
 #'
-#' The signature sits beside the document: "x.json" -> "x.sig"; a mirror
-#' without the suffix gets ".sig" appended (0.5.8 fetched the document as its
+#' The signature sits beside the document: \code{"x.json"} -> \code{"x.sig"}; a mirror
+#' without the suffix gets \code{".sig"} appended (0.5.8 fetched the document as its
 #' own signature and failed closed, silently).
 #' @param url The document URL.
 #' @return The signature URL.

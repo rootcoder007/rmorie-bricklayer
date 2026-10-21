@@ -30,7 +30,8 @@ and \code{openlo}, \code{openup} (logical).
 }
 \description{
 Published administrative tables often report intervals instead of
-values: "18 to 24", "2 to 5", "50+", "Greater than 15 days". This function
+values: \dQuote{18 to 24}, \dQuote{2 to 5}, \code{"50+"}, \dQuote{Greater than 15
+days}. This function
 reads such labels into a lower and an upper bound per band, and flags the
 bands that are open at the top or the bottom. It recognises the wordings
 open-data publishers actually use, and leaves a label it cannot read as

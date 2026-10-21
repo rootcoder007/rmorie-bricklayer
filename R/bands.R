@@ -16,7 +16,8 @@
 #'
 #' @description
 #' Published administrative tables often report intervals instead of
-#' values: "18 to 24", "2 to 5", "50+", "Greater than 15 days". This function
+#' values: \dQuote{18 to 24}, \dQuote{2 to 5}, \code{"50+"}, \dQuote{Greater than 15
+#' days}. This function
 #' reads such labels into a lower and an upper bound per band, and flags the
 #' bands that are open at the top or the bottom. It recognises the wordings
 #' open-data publishers actually use, and leaves a label it cannot read as
@@ -218,8 +219,8 @@ prsbands <- function(x, clsup = TRUE, intsca = TRUE) {
 #' Gives each band a single number that a calculation can use (a mean, a
 #' concentration index, a regression), under a rule you choose. For closed
 #' bands the rule places the value at the midpoint, the lower or upper
-#' bound, or the geometric mean of the bounds. An open band ("50+",
-#' "under 18") has no midpoint, so its missing bound is filled from an
+#' bound, or the geometric mean of the bounds. An open band (\code{"50+"},
+#' \dQuote{under 18}) has no midpoint, so its missing bound is filled from an
 #' explicit assumption, and the rows that rest on that assumption are
 #' flagged in the result instead of being absorbed into it.
 #'
@@ -252,9 +253,9 @@ prsbands <- function(x, clsup = TRUE, intsca = TRUE) {
 #'   assumed for every open top band, in the units of the labels.
 #' @param openupfac Number, default \code{2}. When no cap is given,
 #'   the open top band's upper bound is its lower bound times this factor
-#'   (so "Greater than 10" becomes 11 to 22).
+#'   (so \dQuote{Greater than 10} becomes 11 to 22).
 #' @param openloflr Number or \code{NULL} (the default). The lower bound
-#'   assumed for an open bottom band ("under 18"). \code{NULL} uses 0, or the
+#'   assumed for an open bottom band (\dQuote{under 18}). \code{NULL} uses 0, or the
 #'   band's own upper bound when that is below 0. A floor above a band's upper
 #'   bound is refused.
 #' @return The band table with two added columns: \code{value} (numeric, the
@@ -542,10 +543,10 @@ expbands <- function(bands, cnts, ..., drpunp = FALSE) {
 #' Returns a regular expression that matches the Unicode dashes and the minus sign.
 #'
 #' U+2010..U+2015 and U+2212 as a byte-wise alternation, built from raw bytes
-#' and marked "bytes": a string literal with those bytes is translated to the
+#' and marked \code{"bytes"}: a string literal with those bytes is translated to the
 #' native encoding when it is pasted, and in a C locale that translation is
 #' a warning per call.
-#' @return One string marked "bytes".
+#' @return One string marked \code{"bytes"}.
 #' @noRd
 .rmbl_dash_pattern <- function() {
   one <- function(...) rawToChar(as.raw(c(...)))

@@ -156,7 +156,7 @@ An XMSS key (\code{\link{pqckg}}) signs each of its \code{2^height}
 indices once; two signatures at one index let anyone forge a third. Its
 private key never changes, but its state, the indices already used, changes
 with every signature, and a copy of an old state signs used indices again
-(RFC 10033, "Hash-Based Signatures: State and Backup Management", sections
+(RFC 10033, \dQuote{Hash-Based Signatures: State and Backup Management}, sections
 2 and 4). \code{rmbl sign --scheme xmss-sha256 --key-file KEY}
 therefore treats the key file as the state:
 \itemize{

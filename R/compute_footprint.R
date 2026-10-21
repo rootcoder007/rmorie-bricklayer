@@ -286,7 +286,7 @@ dtctloc <- function(envloc = Sys.getenv("RMBL_LOCATION"),
 #' @param terr The territory's two-letter code.
 #' @param known A function that maps a country code to its location in the table, or NA.
 #' @param proxies The named vector of proxy countries.
-#' @return A location code, "WORLD" when no proxy is known.
+#' @return A location code, \code{"WORLD"} when no proxy is known.
 #' @noRd
 .rmbl_territory_location <- function(terr, known, proxies = .rmbl_territory_proxy) {
   proxy <- proxies[terr]
@@ -300,7 +300,7 @@ dtctloc <- function(envloc = Sys.getenv("RMBL_LOCATION"),
 #'
 #' The package-level RAPL domains under a powercap directory: directories named
 #' intel-rapl:N (not the :N:M subdomains, which are parts of the package and
-#' would count the same energy twice), whose `name` starts with "package".
+#' would count the same energy twice), whose `name` starts with \code{"package"}.
 #' @param rapl_dir The powercap directory.
 #' @return The domain directories, possibly none.
 #' @noRd
@@ -457,8 +457,9 @@ raplok <- function(rapldir = "/sys/class/powercap") {
 #' floor at 10% of P when tracking a process; 0.1 + 0.9 u^3 for the machine).
 #' @param p The CPU's power.
 #' @param u The utilisation, a fraction from 0 to 1.
-#' @param load_curve "linear" for Green Algorithms' scaling, anything else for codecarbon's curve.
-#' @param usage_mode "machine" or "process".
+#' @param load_curve \code{"linear"} for Green Algorithms' scaling, anything else for
+#' codecarbon's curve.
+#' @param usage_mode \code{"machine"} or \code{"process"}.
 #' @return The power drawn, in the units of `p`.
 #' @noRd
 .cpu_load_power <- function(p, u, load_curve, usage_mode) {

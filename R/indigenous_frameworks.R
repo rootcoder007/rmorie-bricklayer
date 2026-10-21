@@ -27,7 +27,8 @@
   invisible(TRUE)
 }
 
-#' Reads the quality flags of the rows, "ok" for every row when there is no quality column.
+#' Reads the quality flags of the rows, \code{"ok"} for every row when there is no
+#' quality column.
 #' @param data The data frame.
 #' @param quality The name of the quality column, or NULL.
 #' @return A character vector of flags, one per row.
@@ -56,7 +57,7 @@
 #' too small), marks
 #' every row as a proxy, and reports a direction given no proxy as missing rather than
 #' filling it from another. One indicator named for two directions (Statistics Canada asks
-#' about "meaning and purpose" together) is used for both and marked \code{shared}.
+#' about \dQuote{meaning and purpose} together) is used for both and marked \code{shared}.
 #'
 #' The result plots as a \code{\link{welprof}}. For the balance across the
 #' directions, call \code{\link{holbal}} on the rows with a proxy
@@ -254,8 +255,9 @@ cwbscr <- function(incpercap, highsch20p, uni25p, notcro, nomajrep,
 #' that carries the sampling error of the published estimates: for connection to land and
 #' wellness, community belonging and mental health, education and health.
 #'
-#' @details Mashford-Pringle and Stewart (2019) describe the land as "an instrumental part
-#' of all aspects of Indigenous life including health and well-being"; Mashford-Pringle
+#' @details Mashford-Pringle and Stewart (2019) describe the land as \dQuote{an
+#' instrumental part
+#' of all aspects of Indigenous life including health and well-being}; Mashford-Pringle
 #' (2016) describes Indigenous health and education as interconnected. Across places, that
 #' connection has a testable shadow: where more people are on the land (or belong, or
 #' finish school), do more report wellness? This function measures it by Spearman's

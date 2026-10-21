@@ -41,7 +41,7 @@
 #'
 #' A missing file is not an error: it returns \code{NULL}, so a project can
 #' run without a provenance record and every resolver treats \code{NULL} as
-#' "nothing pinned".
+#' \dQuote{nothing pinned}.
 #'
 #' Errors: \code{path} that is not a single non-empty string; \code{path}
 #' that is a directory; a file that is not valid JSON.
@@ -489,7 +489,7 @@ wbsnpurl <- function(url, ts = NULL) {
 #' advice for the usual academic and corporate network problems, and then
 #' tries a Wayback Machine copy of the same address. Use it in scripts that
 #' other people run on networks you do not control (university VPNs,
-#' corporate proxies), where a bare "cannot open the connection" is not
+#' corporate proxies), where a bare \dQuote{cannot open the connection} is not
 #' enough to act on.
 #'
 #' @details

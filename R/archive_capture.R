@@ -66,7 +66,8 @@
 
 #' Makes a file name from a URL.
 #'
-#' A file name from a URL: its last path segment (or "index"), safe characters only, and the start of
+#' A file name from a URL: its last path segment (or \code{"index"}), safe characters
+#' only, and the start of
 #' the URL's own digest when the URL has a query (tv.action?pid=... pages share one name otherwise)
 #' @param u The URL.
 #' @return One string.
@@ -93,8 +94,9 @@
 #' back to, and the timestamp shows that these were the bytes on that date.
 #'
 #' @details Some servers refuse the Internet Archive's crawler while serving everyone
-#' else: Save Page Now then reports that the target "cannot find" the page, or "blocks
-#' access" to it, although the page is there. Those URLs cannot be put in the Wayback
+#' else: Save Page Now then reports that the target \dQuote{cannot find} the page, or
+#' \dQuote{blocks
+#' access} to it, although the page is there. Those URLs cannot be put in the Wayback
 #' Machine, but they can be captured by anyone who can reach them, and the capture can
 #' be published. Pass a \code{\link{wbsave}} result as \code{urls} to capture
 #' just the URLs it failed on with such a refusal.

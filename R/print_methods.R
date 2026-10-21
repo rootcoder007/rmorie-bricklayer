@@ -33,7 +33,7 @@
   }
 }
 
-#' A titled rule, e.g. "-- Drift report ----------------".
+#' A titled rule, e.g. \dQuote{-- Drift report ----------------}.
 #' @param title The title, or NULL for a plain rule.
 #' @param width The rule's width in characters.
 #' @return One string.
@@ -91,7 +91,7 @@
   invisible(NULL)
 }
 
-#' Formats p-values for printing, "<2e-16" for the smallest.
+#' Formats p-values for printing, \dQuote{<2e-16} for the smallest.
 #' @param p A numeric vector of p-values.
 #' @return A character vector.
 #' @noRd

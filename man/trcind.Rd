@@ -11,16 +11,18 @@ A data frame with \code{call}, \code{indicator} (the Call's words), \code{table}
 \code{measure}, \code{better} (\code{"higher"} or \code{"lower"}) and \code{note}.
 }
 \description{
-Call to Action 19 asks the federal government to "establish measurable goals to
+Call to Action 19 asks the federal government to \dQuote{establish measurable goals to
 identify and close the gaps in health outcomes between Aboriginal and non-Aboriginal
-communities, and to publish annual progress reports and assess long-term trends",
-focusing on "infant mortality, maternal health, suicide, mental health, addictions,
+communities, and to publish annual progress reports and assess long-term trends},
+focusing on \dQuote{infant mortality, maternal health, suicide, mental health,
+addictions,
 life expectancy, birth rates, infant and child health issues, chronic diseases, illness
-and injury incidence, and the availability of appropriate health services". Call to
-Action 55 asks for annual data on, among others, "the number of Aboriginal
+and injury incidence, and the availability of appropriate health services}. Call to
+Action 55 asks for annual data on, among others, \dQuote{the number of Aboriginal
 children--including Metis and Inuit children--in care, compared with non-Aboriginal
-children" and "the educational and income attainments of Aboriginal peoples in Canada
-compared with non-Aboriginal people". This lists, for each indicator, the Statistics
+children} and \dQuote{the educational and income attainments of Aboriginal peoples in
+Canada
+compared with non-Aboriginal people}. This lists, for each indicator, the Statistics
 Canada tables at the data service (or the census profile) that measure it, the measure,
 and which direction is better.
 }

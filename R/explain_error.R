@@ -13,7 +13,7 @@
 
 #' A message argument as text: literal parts kept, everything computed replaced by a marker.
 #' @param e An expression from a function body: a string or a call that builds one.
-#' @return The template, with "\001" where a part is computed.
+#' @return The template, with \dQuote{\001} where a part is computed.
 #' @noRd
 .bl_ee_text <- function(e) {
   if (is.character(e) && length(e) == 1L && !is.na(e)) return(e)
@@ -163,7 +163,8 @@
 
 #' Strips the prefix R prints before an error or a warning and makes fancy quotes plain.
 #'
-#' "Error in f(x) : msg" / "Error: msg" / "Warning message:" as R prints them, fancy quotes made plain
+#' \dQuote{Error in f(x) : msg} / \dQuote{Error: msg} / \dQuote{Warning message:} as R
+#' prints them, fancy quotes made plain
 #' @param msg The message as the user pasted it.
 #' @return One string.
 #' @noRd
@@ -217,7 +218,7 @@
 #' \code{options(morie.quiet = TRUE)}, \code{MORIE_LLM_CACHE=off}, tests and
 #' \code{R CMD check}.
 #'
-#' The message is cleaned first: an "Error in f(x) :" or "Warning message:"
+#' The message is cleaned first: an \dQuote{Error in f(x) :} or \dQuote{Warning message:}
 #' prefix is dropped, curly quotes become straight ones and white space is
 #' collapsed. A template that matches the start of the message as a regular
 #' expression is an exact match and ranks first (longer templates before
@@ -232,8 +233,8 @@
 #' \code{n} not a whole number of 1 or more; \code{pkgs} that are not
 #' installed.
 #'
-#' @param msg The message: the text of an error, as R printed it ("Error
-#'   in f(x) : ..." is fine), a condition object, or a \code{try()} result.
+#' @param msg The message: the text of an error, as R printed it (\dQuote{Error
+#'   in f(x) : ...} is fine), a condition object, or a \code{try()} result.
 #'   Default: the last error of this session (\code{geterrmessage()}).
 #'   Or a data frame of check rows with the columns \code{check},
 #'   \code{ok} and \code{detail}, as \code{rmbl verify --json} writes

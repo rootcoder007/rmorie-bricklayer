@@ -34,14 +34,15 @@
 #'
 #' `digits` is decimal places (jsonlite default 4), `I(n)` means
 #' n significant digits, `NA` means 15 significant digits. Non-finite
-#' values become "NA"/"NaN"/"Inf"/"-Inf" strings, null, or NA_character_
+#' values become \code{"NA"}/\code{"NaN"}/\code{"Inf"}/\code{"-Inf"} strings, null, or
+#' NA_character_
 #' (dropped later) depending on `na_as_string`.
 #' @param x A double or integer vector.
 #' @param digits Decimal places, `I(n)` for n significant digits, NA for 15 significant digits, NULL for full precision.
 #' @param na_as_string TRUE to write non-finite values as strings, FALSE to write them as null, NA to leave them
 #'   missing.
 #' @param use_signif Whether `digits` counts significant digits.
-#' @param always_decimal Whether a whole number is written with ".0".
+#' @param always_decimal Whether a whole number is written with \code{".0"}.
 #' @return A character vector, one element per value.
 #' @noRd
 .rmbl_json_num_to_char <- function(x, digits = 4, na_as_string = NA,
@@ -572,7 +573,7 @@ jsb64udec <- function(input) {
 #' @param x The vector.
 #' @param o The options list built by `tojs()`.
 #' @param collapse Whether the values are collapsed into one array.
-#' @param na How missing values are written, or NULL for "string".
+#' @param na How missing values are written, or NULL for \code{"string"}.
 #' @param auto_unbox Whether a length-one vector is written as a scalar.
 #' @param indent The indent, NA for compact output.
 #' @param keep_vec_names Whether a named vector is written as an object.
@@ -595,7 +596,7 @@ jsb64udec <- function(input) {
 #' @param x The vector.
 #' @param o The options list built by `tojs()`.
 #' @param collapse Whether the values are collapsed into one array.
-#' @param na How missing values are written, or NULL for "null".
+#' @param na How missing values are written, or NULL for \code{"null"}.
 #' @param auto_unbox Whether a length-one vector is written as a scalar.
 #' @param indent The indent, NA for compact output.
 #' @param keep_vec_names Whether a named vector is written as an object.
@@ -619,7 +620,7 @@ jsb64udec <- function(input) {
 #' @param x The vector.
 #' @param o The options list built by `tojs()`.
 #' @param collapse Whether the values are collapsed into one array.
-#' @param na How missing values are written, or NULL for "null".
+#' @param na How missing values are written, or NULL for \code{"null"}.
 #' @param auto_unbox Whether a length-one vector is written as a scalar.
 #' @param indent The indent, NA for compact output.
 #' @param keep_vec_names Whether a named vector is written as an object.
@@ -644,7 +645,7 @@ jsb64udec <- function(input) {
 #' @param x The vector.
 #' @param o The options list built by `tojs()`.
 #' @param collapse Whether the values are collapsed into one array.
-#' @param na How missing values are written, or NULL for "string".
+#' @param na How missing values are written, or NULL for \code{"string"}.
 #' @param oldna The `na` setting passed down to nested values.
 #' @param auto_unbox Whether a length-one vector is written as a scalar.
 #' @param indent The indent, NA for compact output.
@@ -1000,7 +1001,7 @@ bricklayer_json_unbox <- function(x) {
 
 #' Writes doubles with seventeen significant digits.
 #'
-#' The writer's half of the same argument. sprintf("%.17g") delegates to
+#' The writer's half of the same argument. sprintf(\dQuote{%.17g}) delegates to
 #' the platform, and on Windows aarch64 the platform is wrong: it renders
 #' the largest double one ulp low, so the text reads back as a different
 #' number. Seventeen digits are the package's round-trip guarantee, so
@@ -1038,7 +1039,8 @@ bricklayer_json_unbox <- function(x) {
 #' @param txt The JSON text; lines are joined with newlines.
 #' @param bigint_as_char Whether an integer above 2^53 is returned as text.
 #' @param bigint_warn Whether a warning says an integer above 2^53 lost precision.
-#' @param duplicate_keys "error" refuses an object with a key twice, "keep" keeps both.
+#' @param duplicate_keys \code{"error"} refuses an object with a key twice, \code{"keep"}
+#' keeps both.
 #' @return The parsed value: lists, atomic scalars and NULL.
 #' @noRd
 .rmbl_json_parse <- function(txt, bigint_as_char = FALSE, bigint_warn = TRUE,
@@ -1318,8 +1320,9 @@ bricklayer_json_unbox <- function(x) {
 
 #' The code point of a u escape's four characters, or NA unless they are four hex digits.
 #'
-#' strtoi() alone took a space, a sign or "0x": the escape "u 041" read as "A", and "u-041" as NA,
-#' which became the key "NA" (audit of 30bed8e, #12).
+#' strtoi() alone took a space, a sign or \code{"0x"}: the escape \dQuote{u 041} read as
+#' \code{"A"}, and \code{"u-041"} as NA,
+#' which became the key \code{"NA"} (audit of 30bed8e, #12).
 #' @param h The four characters, one per element.
 #' @return An integer, or NA.
 #' @noRd
@@ -1349,7 +1352,8 @@ bricklayer_json_unbox <- function(x) {
   if (!is.list(x)) return(FALSE)
   all(vapply(x, is.null, NA) | (vapply(x, is.atomic, NA) & lengths(x) < 2L))
 }
-#' Turns NULL elements into NA, and the strings "NA", "NaN", "Inf" and "-Inf" into their values when no other string is
+#' Turns NULL elements into NA, and the strings \code{"NA"}, \code{"NaN"}, \code{"Inf"}
+#' and \code{"-Inf"} into their values when no other string is
 #' present.
 #' @param x A list.
 #' @return The list.
@@ -1365,7 +1369,8 @@ bricklayer_json_unbox <- function(x) {
   x[chr] <- list(NA, NaN, Inf, -Inf)[match(first, special)]
   x
 }
-#' Says whether a list holds date-times, NULLs and "NA" strings only, with at least one date-time.
+#' Says whether a list holds date-times, NULLs and \code{"NA"} strings only, with at
+#' least one date-time.
 #' @param x The value.
 #' @return TRUE or FALSE.
 #' @noRd
@@ -1686,8 +1691,8 @@ fromjs <- function(txt, simplifyVector = TRUE,
 #'
 #' A byte-order mark is three bytes; test and strip it on the bytes so a
 #' C locale never has to translate U+FEFF to its native encoding (that
-#' translation is what raised "unable to translate '<U+FEFF>...'" and
-#' "invalid char string in output conversion").
+#' translation is what raised \dQuote{unable to translate '<U+FEFF>...'} and
+#' \dQuote{invalid char string in output conversion}).
 #' @param s One string.
 #' @return TRUE or FALSE.
 #' @noRd

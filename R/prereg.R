@@ -309,7 +309,7 @@ falsfam <- function(x, meth = c("holm", "bh", "bonferroni",
 #' minimum from the largest downward, and swapping them silently inverts
 #' which hypotheses survive.
 #' @param p The p-values.
-#' @param method One of "holm", "BH", "bonferroni" or "none".
+#' @param method One of \code{"holm"}, \code{"BH"}, \code{"bonferroni"} or \code{"none"}.
 #' @return The adjusted p-values, in the order of `p`.
 #' @noRd
 .rmbl_p_adjust <- function(p, method) {

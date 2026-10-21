@@ -435,10 +435,11 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
   out
 }
 
-#' A capsule directory relative to the folder searched, "/" separated on every system.
+#' A capsule directory relative to the folder searched, \code{"/"} separated on every
+#' system.
 #' @param d The capsule directory (under `root`).
 #' @param root The folder searched.
-#' @return The relative path, "." for the folder itself.
+#' @return The relative path, \code{"."} for the folder itself.
 #' @noRd
 .bl_rel_dir <- function(d, root) {
   a <- normalizePath(d, winslash = "/")
@@ -515,7 +516,7 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
 #' The explerr() notes of one failed row: what the check means, and where its message is raised.
 #' @param check The check's name.
 #' @param detail The row's detail.
-#' @return Zero, one or two strings starting "explained:".
+#' @return Zero, one or two strings starting \code{"explained:"}.
 #' @noRd
 .bl_explain_note <- function(check, detail) {
   m <- .bl_check_meaning(check)
@@ -600,14 +601,14 @@ print.rmbl_cpschk <- function(x, ...) {
 #' @noRd
 .bl_md_esc <- function(x) gsub("|", "\\|", gsub("\n", " ", x, fixed = TRUE), fixed = TRUE)
 
-#' A number for the report: three significant digits, "-" for NA.
+#' A number for the report: three significant digits, \code{"-"} for NA.
 #' @param x Numbers.
 #' @param digits Significant digits.
 #' @return Text.
 #' @noRd
 .bl_md_num <- function(x, digits = 3) ifelse(is.na(x), "-", trimws(formatC(x, digits = digits, format = "g")))
 
-#' A list of names after a lead, or "" when there are none.
+#' A list of names after a lead, or \code{""} when there are none.
 #' @param lead The text before the names.
 #' @param x The names, a list or a vector.
 #' @return Text.

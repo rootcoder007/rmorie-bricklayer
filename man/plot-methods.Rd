@@ -378,7 +378,7 @@ continuous scale, so a missing period leaves its gap; any other period
 \item{gaps}{For \code{rmbl_yoy} (\code{what = "value"}) and
 \code{rmbl_event_study} (\code{style = "stata"}): how a missing value
 shows in a line. \code{"break"} (the default) breaks the
-line there, so a "no data" period that \code{yoy(complete = TRUE)}
+line there, so a \dQuote{no data} period that \code{yoy(complete = TRUE)}
 inserted is a visible gap; \code{"join"} draws the line straight over it.}
 
 \item{period}{For \code{rmbl_rate}, a \code{by} column holding the period: the rate
@@ -428,9 +428,10 @@ draws the fitted model.}
 
 \item{view}{\code{"map"} (the top view), \code{"persp"} (the surface),
 \code{"both"} (side by side,
-in the book's colour bands) or "cells" (the probability map as a grid of percentages).}
+in the book's colour bands) or \code{"cells"} (the probability map as a grid of
+percentages).}
 
-\item{digits}{Decimal places of the percentages in the "cells" view.}
+\item{digits}{Decimal places of the percentages in the \code{"cells"} view.}
 }
 \value{
 The data drawn, invisibly. For the plots over time the frame
@@ -477,7 +478,7 @@ per column, worst first, coloured by verdict, with the warn and fail
 bands as dashed lines; \code{"columns"} the reference and current
 distributions of up to six columns (\code{cols}, or the worst), each
 PSI bin's term written on it; \code{"benford"} the first digits of
-numeric columns against Benford's law with its 95\\% band, and the
+numeric columns against Benford's law with its 95\% band, and the
 test's verdict; \code{"ecdf"} both ECDFs with the area between them
 shaded; \code{"quantiles"} the current quantiles against the
 reference's on the identity line; \code{"fingerprint"} one spoke
@@ -533,8 +534,8 @@ all three on one page (\code{\link{crfpm25}}, \code{\link{polbrdn}},
 \code{\link{expconcidx}}, \code{\link{vrfpol}}).}
 \item{\code{rmbl_footprint}}{(\code{\link{co2fp}}) the
 CPU, memory and total emission in one unit chosen to fit, with the
-car-kilometre and tree-month equivalents as a caption; "Too short to
-measure" when the work took no measurable time.}
+car-kilometre and tree-month equivalents as a caption; \dQuote{Too short to
+measure} when the work took no measurable time.}
 \item{\code{rmbl_field}, \code{rmbl_particles}}{
 (\code{\link{plmfld}}, \code{\link{advdif2d}},
 \code{\link{lagrprt}}) a concentration field as an

@@ -402,7 +402,7 @@ print.bricklayer_attestation_check <- .rmbl_print_via_format
 
 #' Names the signature scheme of a signing or public key.
 #' @param key A key from fipskg() or pqckg(), private or public.
-#' @return The scheme name, such as "xmss-sha256".
+#' @return The scheme name, such as \code{"xmss-sha256"}.
 #' @noRd
 .rmbl_attest_scheme <- function(key) {
   if (inherits(key, c("bricklayer_oqs_key", "bricklayer_oqs_public_key"))) {
@@ -419,7 +419,8 @@ print.bricklayer_attestation_check <- .rmbl_print_via_format
        call. = FALSE)
 }
 
-#' Names an HMAC key without revealing it: HMAC-SHA-256 of "public" under the key, as morie's key_id().
+#' Names an HMAC key without revealing it: HMAC-SHA-256 of \code{"public"} under the key,
+#' as morie's key_id().
 #' @param key The shared secret, a string or raw vector.
 #' @return 64 hex characters.
 #' @noRd

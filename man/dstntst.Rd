@@ -53,8 +53,10 @@ Statistics Canada publishes also depends on how many people are in each group, s
 mostly a First Nations figure where First Nations people are most of the Indigenous
 population. Rows that pool groups are left out (\code{pooled}; see
 \code{\link{indgap}}); every other row is included, so drop the reference group
-(non-Indigenous people) yourself, and never test overlapping groups ("alone" beside
-"alone or in combination") together: they are not independent. With two or three groups
+(non-Indigenous people) yourself, and never test overlapping groups (\code{"alone"}
+beside
+\dQuote{alone or in combination}) together: they are not independent. With two or
+three groups
 the test has little power and \eqn{I^2} is imprecise; a large \eqn{p} is not evidence
 that the groups are the same.
 }

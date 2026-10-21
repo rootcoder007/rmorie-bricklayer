@@ -75,7 +75,7 @@ weights, which have more distinct values, are better. The interval collects the
 \eqn{\beta_0} not rejected at \eqn{1 -} \code{conflvl}, found by bisection with
 the same draws; it is unbounded when no value can be rejected (with Rademacher
 weights and \eqn{G} clusters the smallest attainable p-value is \eqn{2/2^G}, so
-four clusters can never reject at 5\\%: that is the honest answer, not a failure of
+four clusters can never reject at 5\%: that is the honest answer, not a failure of
 the method).
 }
 \examples{

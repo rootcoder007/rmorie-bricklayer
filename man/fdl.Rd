@@ -34,7 +34,7 @@ failure: it returns \code{TRUE} or \code{FALSE}, prints plain-language
 advice for the usual academic and corporate network problems, and then
 tries a Wayback Machine copy of the same address. Use it in scripts that
 other people run on networks you do not control (university VPNs,
-corporate proxies), where a bare "cannot open the connection" is not
+corporate proxies), where a bare \dQuote{cannot open the connection} is not
 enough to act on.
 }
 \details{

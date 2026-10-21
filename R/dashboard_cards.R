@@ -124,7 +124,7 @@
 
 #' The first sentence of a function's help page description.
 #' @param fn The function's name.
-#' @return One string ("" when there is no help page).
+#' @return One string (\code{""} when there is no help page).
 #' @noRd
 .bl_rd_method <- function(fn) {
   if (is.null(.bl_rd_env$db)) {
@@ -417,7 +417,7 @@
 }
 
 #' Sets the plot's ink for the page's colour mode.
-#' @param mode "light" or "dark".
+#' @param mode \code{"light"} or \code{"dark"}.
 #' @return NULL, invisibly.
 #' @noRd
 .bl_par_mode <- function(mode) {
@@ -503,7 +503,7 @@
 #' Writes a run's plot to a PNG or SVG file.
 #' @param r The run.
 #' @param file The file.
-#' @param type "png" or "svg".
+#' @param type \code{"png"} or \code{"svg"}.
 #' @return The file, invisibly.
 #' @noRd
 .bl_save_plot <- function(r, file, type) {

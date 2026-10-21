@@ -45,7 +45,7 @@ column, the fingerprint, and for the chosen column its summary, the
 distributions, the ECDFs, the quantile shift, the first digits and a
 sentence on the verdict, as \code{\link[=drfthtml]{drfthtml()}} has, and a history heatmap
 with \code{hist}; the warn and fail bands and alpha are sliders, with a reset to the
-object's bands. Beyond the page it has: "what would clear this", the
+object's bands. Beyond the page it has: \dQuote{what would clear this}, the
 PSI of the column with its \code{k} largest bins left out and the rest
 renormalized; with \code{ref} and \code{cur} (or uploaded CSV files), a rerun of
 \code{\link[=cpsdrft]{cpsdrft()}} on chosen columns with another number of bins; with

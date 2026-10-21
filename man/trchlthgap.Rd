@@ -53,8 +53,8 @@ health, a regular provider):
 \deqn{D = \hat\theta_g / \hat\theta_r \ \textrm{(lower is better)}, \qquad
 D = \hat\theta_r / \hat\theta_g \ \textrm{(higher is better)}.}{D = g / r (lower is
 better), D = r / g (higher is better).} It is a ratio of the published estimates, not a
-relative risk: for life expectancy, D = 1.1 means the reference lives 10\\% longer, not
-that the group's risk is 10\\% higher. Above 1 the group fares worse; the interval is
+relative risk: for life expectancy, D = 1.1 means the reference lives 10\% longer, not
+that the group's risk is 10\% higher. Above 1 the group fares worse; the interval is
 the published one carried through (\code{indgap}'s log-scale interval, inverted
 where needed). The difference on the indicator's own scale is kept beside it.
 

@@ -17,9 +17,9 @@ ASCII characters (bytes 32 to 126); \code{NA} elements become \code{""}.
 \description{
 Converts a character vector to plain 7-bit ASCII, transliterating
 accented or non-Latin characters to their nearest ASCII equivalent (for
-example, an accented capital A becomes a plain "A"). Falls back to
+example, an accented capital A becomes a plain \code{"A"}). Falls back to
 dropping any character that has no transliteration. This is the
-deterministic "fallback" used by
+deterministic \code{"fallback"} used by
 \code{\link[=asciifb]{asciifb()}}. Use it for destinations that accept
 only ASCII --
 a package \code{DESCRIPTION}, a file name, a legacy system -- so a name
@@ -32,7 +32,8 @@ first. Then, when the \pkg{stringi} package is installed, the ICU
 transform \code{"Any-Latin; Latin-ASCII"} romanises any script and folds
 accents (Cyrillic, Greek and Chinese become Latin letters). Without
 \pkg{stringi}, a fixed table folds the common Latin accents and
-ligatures (sharp s to "ss", the ae ligature to "ae", thorn to "th" and so on) and
+ligatures (sharp s to \code{"ss"}, the ae ligature to \code{"ae"}, thorn to
+\code{"th"} and so on) and
 every other non-ASCII character is dropped, so non-Latin scripts
 disappear rather than being romanised. Either way the result is then
 stripped of anything outside the printable ASCII range (space to

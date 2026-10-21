@@ -41,7 +41,7 @@
 #'
 #' A concentration-response function (CRF) turns an air-pollution
 #' concentration into the relative risk (RR) of a health outcome compared
-#' with a counterfactual "clean air" level: an RR of 1.05 means 5% more
+#' with a counterfactual \dQuote{clean air} level: an RR of 1.05 means 5% more
 #' deaths (or cases) than at the reference concentration. These are the
 #' first step of any burden estimate; \code{\link{polbrdn}} and
 #' \code{\link{vrfpol}} call them for you.
@@ -302,9 +302,10 @@ crfno2 <- function(expo, y = "allcause", refconc = 10,
   v
 }
 
-#' "PM2.5", "PM25", "pm2.5", "pm25" -> "PM2.5"; "NO2", "no2" -> "NO2"; anything else NA.
+#' \code{"PM2.5"}, \code{"PM25"}, \code{"pm2.5"}, \code{"pm25"} -> \code{"PM2.5"};
+#' \code{"NO2"}, \code{"no2"} -> \code{"NO2"}; anything else NA.
 #' @param pollutant The pollutant's name as given.
-#' @return "PM2.5", "NO2" or NA.
+#' @return \code{"PM2.5"}, \code{"NO2"} or NA.
 #' @noRd
 .pollution_pollutant <- function(pollutant) {
   if (!is.character(pollutant) || length(pollutant) != 1L || is.na(pollutant)) return(NA_character_)
@@ -405,8 +406,8 @@ attrfrac <- function(rr, expoprev, rrlo = NULL, rrup = NULL) {
 #' exposure would avoid in a population, from the baseline rate and a
 #' log-linear concentration-response coefficient. This is the
 #' health-impact function used in regulatory benefit assessments, for
-#' questions such as "how many deaths would a 5 microgram cut in PM2.5
-#' avoid in this city?".
+#' questions such as \dQuote{how many deaths would a 5 microgram cut in PM2.5
+#' avoid in this city?}.
 #'
 #' @details
 #' The BenMAP-CE health-impact function (US EPA 2018; Anenberg et al. 2010):
@@ -588,9 +589,9 @@ polbrdn <- function(expomean, expoprev, brate, pop,
 #' outcome after adjusting for confounders, by the double machine learning
 #' recipe: the part of the outcome and of the exposure that the confounders
 #' predict is removed with models fitted on other folds of the data, and the
-#' effect is the slope of what is left. It answers questions such as "how
+#' effect is the slope of what is left. It answers questions such as \dQuote{how
 #' much does asthma incidence rise per microgram of NO2, holding income and
-#' age structure fixed?".
+#' age structure fixed?}.
 #'
 #' @details
 #' The partially linear model \eqn{Y = \theta D + g(X) + U},
@@ -1075,7 +1076,7 @@ polbrdarea <- function(areatab, areacol = "fsa", expcol = "exposure",
 #'
 #' Synthetic exposure and income with the orders of magnitude of Toronto
 #' forward-sortation-area NO2 and CIHI asthma rates. R's own RNG, seeded locally.
-#' @param pollutant "no2", "pm25" or another name.
+#' @param pollutant \code{"no2"}, \code{"pm25"} or another name.
 #' @return A data frame with `exposure` and `income`.
 #' @noRd
 .pollution_demo_data <- function(pollutant) {
@@ -1189,7 +1190,7 @@ polbrdarea <- function(areatab, areacol = "fsa", expcol = "exposure",
 #' and non-negative, and the pollutant has a CRF. Any failure gives status
 #' \code{"assumption_failure"} and skips the stages.
 #'
-#' With data (a CSV or the demo), the "exposed" are the rows above the
+#' With data (a CSV or the demo), the \code{"exposed"} are the rows above the
 #' reference: their mean is \code{expomean} and their share
 #' \code{expoprev}. Empty cells and missing-value tokens
 #' (\code{NA}, \code{n/a}, \code{null}, \code{-} ...) are dropped with a
@@ -1552,7 +1553,7 @@ vrfpol <- function(poll, y = "allcause", reg = NULL,
 
 #' Formats the interval of an attributable fraction for printing.
 #' @param ci The interval, with `lower` and `upper`, or NULL.
-#' @return One string, "" when there is no interval.
+#' @return One string, \code{""} when there is no interval.
 #' @noRd
 .pollution_paf_ci_text <- function(ci) {
   if (is.null(ci)) return("")
@@ -1734,7 +1735,8 @@ polrpttxt <- function(report) {
 #' a truncated gzip or bzip2 file decodes to, with no error and no warning, so half a file was read
 #' as a whole one (review of 02a38be, C3). gzip goes through zlib in C (every member's CRC-32 and
 #' length checked); a bzip2 file must end with its end-of-stream marker; an xz decoder warning
-#' ("lzma decoding result 10" for a cut file) is an error. The output is capped while it is read
+#' (\dQuote{lzma decoding result 10} for a cut file) is an error. The output is capped
+#' while it is read
 #' (option rmoriebricklayer.maxcsvbytes, 1 GiB by default): a few megabytes of gzip no longer
 #' expand to gigabytes before anything is refused.
 #' @param path The file.

@@ -159,7 +159,8 @@ plotopt <- function(...) {
 #' ones across, with minor lines halfway between. A method that has already drawn its bars
 #' (.bl_barplot) drew the panel first, and the call that follows is skipped.
 #' @param grid Whether to draw grid lines; NULL takes the session option.
-#' @param side "y" or "x", the axis whose values are read against the major lines.
+#' @param side \code{"y"} or \code{"x"}, the axis whose values are read against the major
+#' lines.
 #' @return Whether grid lines were drawn, invisibly (TRUE when the call is skipped).
 #' @noRd
 .bl_grid <- function(grid = NULL, side = "y") {
@@ -249,15 +250,17 @@ plotopt <- function(...) {
 #' Draws a series as a line over a soft fill.
 #'
 #' A series drawn as a line over a soft fill down to the axis, with haloed points and its last
-#' value emphasised and labelled. gaps = "break" keeps a missing value as a break in the line and
-#' its fill (a "no data" year that yoy(complete = TRUE) inserted); "join" draws over it.
+#' value emphasised and labelled. gaps = \code{"break"} keeps a missing value as a break
+#' in the line and
+#' its fill (a \dQuote{no data} year that yoy(complete = TRUE) inserted); \code{"join"}
+#' draws over it.
 #' @param x The x values.
 #' @param y The y values.
 #' @param col The line colour.
 #' @param fill Whether to fill down to the axis.
 #' @param label Whether to label the last value.
 #' @param points Whether to draw the points.
-#' @param gaps "break" or "join": how a missing value is drawn.
+#' @param gaps \code{"break"} or \code{"join"}: how a missing value is drawn.
 #' @return The points the line passes through, NA where it breaks, invisibly.
 #' @noRd
 .bl_line <- function(x, y, col, fill = TRUE, label = TRUE, points = TRUE, gaps = "join") {
@@ -409,7 +412,7 @@ plotopt <- function(...) {
 
 #' Ends a set of panels after an error.
 #'
-#' An error inside a panel set must not leave the next single plot titled "A"
+#' An error inside a panel set must not leave the next single plot titled \code{"A"}
 #' @return NULL, invisibly.
 #' @noRd
 .bl_panels_abort <- function() {
@@ -513,7 +516,8 @@ plotopt <- function(...) {
 #' Draws the y-axis title outside the tick labels.
 #'
 #' The y-axis title, placed outside the tick labels actually drawn. plot()'s fixed line 3 sits
-#' inside a five-digit tick label ("25000"), so the two overprinted; the line is now the measured
+#' inside a five-digit tick label (\code{"25000"}), so the two overprinted; the line is
+#' now the measured
 #' label width plus a gap, kept inside the margin, and the title is fitted to the plot height.
 #' @param ylab The axis title.
 #' @return The axis title, invisibly; NULL when there is no room for it.
@@ -558,7 +562,7 @@ plotopt <- function(...) {
 }
 
 #' The key under lettered panels, wrapped to the device width
-#' @param keys The key entries, "A: title" each.
+#' @param keys The key entries, \dQuote{A: title} each.
 #' @return The key lines drawn, invisibly.
 #' @noRd
 .bl_panel_key <- function(keys) {
@@ -597,7 +601,8 @@ plotopt <- function(...) {
 #' Cuts long bar labels with an ellipsis.
 #'
 #' A bar label longer than 28 characters is cut with an ellipsis: the margin it would ask for
-#' does not fit a figure ("figure margins too large"), and a label that long is not read anyway.
+#' does not fit a figure (\dQuote{figure margins too large}), and a label that long is
+#' not read anyway.
 #' @param x The labels.
 #' @param max_chars The longest label kept whole (at least 8).
 #' @return The labels, cut ones told apart when the cut made them equal.
@@ -646,7 +651,8 @@ plotopt <- function(...) {
 #' Cuts labels to fit 45% of the figure and gives the left margin they need.
 #'
 #' Labels and the left margin they need, on the device as it is: a margin wider than the device
-#' failed with "figure margins too large" on a 2-3 inch plot, so long labels are cut to fit.
+#' failed with \dQuote{figure margins too large} on a 2-3 inch plot, so long labels are
+#' cut to fit.
 #' The longest cut (28 characters down to 8) whose measured width fits 45% of the figure at the
 #' text size in use: the margin was sized at cex 1 and floored at 4.5 lines, so cex = 2 on a
 #' 2-3 inch device failed and a 4-inch plot cut labels to 14 characters it had room for (review
@@ -672,7 +678,8 @@ plotopt <- function(...) {
 #' Breaks long row labels onto two lines, then cuts those that still do not fit.
 #'
 #' Row labels that do not fit are broken onto two lines at the space nearest their middle before
-#' .bl_label_fit() cuts them: "Crimes Against the Person" read "Crimes Against the Pe..." on a
+#' .bl_label_fit() cuts them: \dQuote{Crimes Against the Person} read \dQuote{Crimes
+#' Against the Pe...} on a
 #' 9-inch device. Returns the labels and the margin, as .bl_label_fit() does.
 #' @param labels The labels.
 #' @param cex The text size.
@@ -701,10 +708,11 @@ plotopt <- function(...) {
 
 #' Scales margins down to fit the figure.
 #'
-#' Margins (in lines, as par("mar")) scaled down so that the left and right together, and the top
+#' Margins (in lines, as par(\code{"mar"})) scaled down so that the left and right
+#' together, and the top
 #' and bottom together, take at most three quarters of the figure at the text size in use:
-#' "figure margins too large" on a small device or a panel otherwise.
-#' @param mar The margins in lines, as par("mar").
+#' \dQuote{figure margins too large} on a small device or a panel otherwise.
+#' @param mar The margins in lines, as par(\code{"mar"}).
 #' @param cex The text size.
 #' @return The margins.
 #' @noRd
@@ -746,7 +754,8 @@ plotopt <- function(...) {
 #' Row labels on the left, one per row whatever the row count: axis() leaves out labels that
 #' would overlap, so 44 rows of trchlthgap() on a 4.6-inch page showed 22 and the rest read as
 #' beside the wrong points. The text is sized to the row height (down to 0.6) and drawn with
-#' mtext(), which drops none; mtext()'s cex is absolute, so par("cex") is applied here.
+#' mtext(), which drops none; mtext()'s cex is absolute, so par(\code{"cex"}) is applied
+#' here.
 #' @param at The row positions.
 #' @param labels The labels.
 #' @param cex The text size before it is fitted to the row height.
@@ -996,7 +1005,7 @@ plotopt <- function(...) {
 #'     bands as dashed lines; \code{"columns"} the reference and current
 #'     distributions of up to six columns (\code{cols}, or the worst), each
 #'     PSI bin's term written on it; \code{"benford"} the first digits of
-#'     numeric columns against Benford's law with its 95\% band, and the
+#'     numeric columns against Benford's law with its 95% band, and the
 #'     test's verdict; \code{"ecdf"} both ECDFs with the area between them
 #'     shaded; \code{"quantiles"} the current quantiles against the
 #'     reference's on the identity line; \code{"fingerprint"} one spoke
@@ -1052,8 +1061,8 @@ plotopt <- function(...) {
 #'     \code{\link{expconcidx}}, \code{\link{vrfpol}}).}
 #'   \item{\code{rmbl_footprint}}{(\code{\link{co2fp}}) the
 #'     CPU, memory and total emission in one unit chosen to fit, with the
-#'     car-kilometre and tree-month equivalents as a caption; "Too short to
-#'     measure" when the work took no measurable time.}
+#'     car-kilometre and tree-month equivalents as a caption; \dQuote{Too short to
+#'     measure} when the work took no measurable time.}
 #'   \item{\code{rmbl_field}, \code{rmbl_particles}}{
 #'     (\code{\link{plmfld}}, \code{\link{advdif2d}},
 #'     \code{\link{lagrprt}}) a concentration field as an
@@ -1173,7 +1182,7 @@ plotopt <- function(...) {
 #' @param gaps For \code{rmbl_yoy} (\code{what = "value"}) and
 #'   \code{rmbl_event_study} (\code{style = "stata"}): how a missing value
 #'   shows in a line. \code{"break"} (the default) breaks the
-#'   line there, so a "no data" period that \code{yoy(complete = TRUE)}
+#'   line there, so a \dQuote{no data} period that \code{yoy(complete = TRUE)}
 #'   inserted is a visible gap; \code{"join"} draws the line straight over it.
 #' @return The data drawn, invisibly. For the plots over time the frame
 #'   carries the x position of each point drawn: an \code{at} column
@@ -1415,7 +1424,7 @@ plot.rmbl_yoy <- function(x, ..., what = c("pctchg", "value"), main = NULL, col 
 #' Labels each row by its grouping columns.
 #' @param d The data frame.
 #' @param by The grouping columns.
-#' @return A character vector, "all" when there are no groups.
+#' @return A character vector, \code{"all"} when there are no groups.
 #' @noRd
 .bl_group_label <- function(d, by) {
   if (!length(by)) return("all")

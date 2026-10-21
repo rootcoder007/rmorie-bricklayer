@@ -445,7 +445,8 @@ print.bricklayer_timestamp <- .rmbl_print_via_format
 
 #' Names the digest algorithm of a dotted OID.
 #' @param oid The dotted OID.
-#' @return "sha256", "sha384", "sha512" or "sha1", or NA for another OID.
+#' @return \code{"sha256"}, \code{"sha384"}, \code{"sha512"} or \code{"sha1"}, or NA for
+#' another OID.
 #' @noRd
 .rmbl_ts_digest_name <- function(oid) {
   switch(as.character(oid),
@@ -458,7 +459,7 @@ print.bricklayer_timestamp <- .rmbl_print_via_format
 }
 
 #' Computes a digest of bytes with a named algorithm.
-#' @param alg "sha256", "sha384" or "sha512".
+#' @param alg \code{"sha256"}, \code{"sha384"} or \code{"sha512"}.
 #' @param bytes A raw vector.
 #' @return The digest as a raw vector.
 #' @noRd

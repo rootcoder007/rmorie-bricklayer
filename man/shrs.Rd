@@ -43,8 +43,8 @@ Expresses each count as a percentage of a total (for example each
 division's share of all stops), with a Wilson confidence interval. A
 share's denominator is the total of the same events, so shares over a
 complete grouping sum to 100. Use \code{\link{rtcalc}} instead when the
-denominator is a population; "40\% of stops" and "40 stops per 1,000
-residents" are different claims.
+denominator is a population; \dQuote{40\% of stops} and \dQuote{40 stops per 1,000
+residents} are different claims.
 }
 \details{
 For count \eqn{y} out of total \eqn{n}, the share is \eqn{100\,y/n} and

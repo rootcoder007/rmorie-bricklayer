@@ -33,8 +33,8 @@ published confidence limits, on one scale.}
 returned (default 0.95).}
 
 \item{pooled}{Optional labels of the rows that pool other groups (for example
-\code{"Aboriginal and Torres Strait Islander"} beside its parts, or a "Total
-Indigenous" row); by default the labels described in Details.}
+\code{"Aboriginal and Torres Strait Islander"} beside its parts, or a \dQuote{Total
+Indigenous} row); by default the labels described in Details.}
 }
 \value{
 A data frame of class \code{rmbl_indigenous_gap}, one row per group but the
@@ -73,8 +73,9 @@ interval \code{NA}.
 Distinctions-based: each group is compared on its own. A row that pools groups is kept
 but marked \code{poogrp = TRUE}, since a pooled figure can hide what differs
 between the groups it pools: name such rows in \code{pooled} (by default labels
-beginning "Total", "Indigenous identity", "Aboriginal identity" or "Indigenous
-population" are taken as pooled). A row flagged \code{E} (in the group or the
+beginning \code{"Total"}, \dQuote{Indigenous identity}, \dQuote{Aboriginal identity}
+or \dQuote{Indigenous
+population} are taken as pooled). A row flagged \code{E} (in the group or the
 reference) is compared and marked; one flagged \code{F}, \code{x}, \code{..} or
 \code{...}, with no estimate, or whose published interval does not contain its own
 estimate, is not compared. Other agencies' flags: \code{\link{qltyrcd}}.

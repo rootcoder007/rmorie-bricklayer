@@ -23,7 +23,7 @@ The comparisons of this family read Statistics Canada's quality flags: \code{E} 
 with caution), and \code{F}, \code{x}, \code{..}, \code{...} (no value: too unreliable,
 suppressed, not available, not applicable). Other agencies flag otherwise: the
 Australian Bureau of Statistics \code{np} (not published) and \code{*} or \code{**}
-(relative standard error over 25\\% or 50\\%), Stats NZ \code{S} (suppressed), the US
+(relative standard error over 25\% or 50\%), Stats NZ \code{S} (suppressed), the US
 Census Bureau \code{(X)}. This maps them to the package's vocabulary, so suppressed
 cells are never compared and uncertain ones are marked.
 }

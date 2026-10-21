@@ -45,8 +45,8 @@ the days. \code{ginicoef()} gives the Gini coefficient, \code{lorenzc()} the
 points of the Lorenz curve (for plotting, for example with
 \code{\link[=plotlrnz]{plotlrnz()}}), and \code{topshr()} the share of the
 total held by
-the largest units ("the top 1\% of people account for 20\% of the
-days"). The three are computed in compiled code from the same sorted
+the largest units (\dQuote{the top 1\% of people account for 20\% of the
+days}). The three are computed in compiled code from the same sorted
 values.
 }
 \details{

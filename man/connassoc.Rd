@@ -47,8 +47,9 @@ that carries the sampling error of the published estimates: for connection to la
 wellness, community belonging and mental health, education and health.
 }
 \details{
-Mashford-Pringle and Stewart (2019) describe the land as "an instrumental part
-of all aspects of Indigenous life including health and well-being"; Mashford-Pringle
+Mashford-Pringle and Stewart (2019) describe the land as \dQuote{an
+instrumental part
+of all aspects of Indigenous life including health and well-being}; Mashford-Pringle
 (2016) describes Indigenous health and education as interconnected. Across places, that
 connection has a testable shadow: where more people are on the land (or belong, or
 finish school), do more report wellness? This function measures it by Spearman's

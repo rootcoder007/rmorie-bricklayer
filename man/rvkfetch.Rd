@@ -47,7 +47,7 @@ treated as a pass.
 A responder's answer is only believed when its signature verifies under
 a certificate in the path or one it carries that the path issued. An
 unsigned or unverifiable answer is reported as such -- treating it as
-"good" would make revocation checking worse than skipping it, since it
+\code{"good"} would make revocation checking worse than skipping it, since it
 would look like it had happened.
 
 The fetched CRLs are returned, not checked:

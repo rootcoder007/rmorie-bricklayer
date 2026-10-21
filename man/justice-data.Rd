@@ -8,7 +8,7 @@ Ontario Court of Justice, court statistics,
 \url{https://www.ontariocourts.ca/ocj/statistics/} (retrieved
 2026-10-13), editions 2012 to 2026, published by the Court for
 public use. Toronto Police Service, Public Safety Data Portal,
-dataset "Break and Enter Open Data", \url{https://data.tps.ca/}
+dataset \dQuote{Break and Enter Open Data}, \url{https://data.tps.ca/}
 (retrieved 2026-10-13); contains information licensed under the
 Open Government Licence - Toronto Police Service. See
 \code{inst/COPYRIGHTS}.
@@ -47,7 +47,7 @@ so it has no province-wide row.}
 cases received and disposed. The groups add to each year's
 province-wide total.}
 \item{\code{ocj_courts.csv}}{The same years by court, with
-\code{court_series}, which names Toronto's courthouses "Toronto"
+\code{court_series}, which names Toronto's courthouses \code{"Toronto"}
 throughout: from 2023 the Court publishes Toronto as one location (the
 new Toronto courthouse consolidated its criminal courts that year).
 Each year's courts add to the province-wide total.}

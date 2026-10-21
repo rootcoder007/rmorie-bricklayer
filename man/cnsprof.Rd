@@ -28,16 +28,18 @@ households), each in its own rows. The data service keeps these tables under
 }
 \details{
 The profile gives each characteristic in a hierarchy shown only by indentation
-("Total - Highest certificate, diploma or degree", "High (secondary) school diploma or
-equivalency certificate", ...): the level, the parent and the topic's total
+(\dQuote{Total - Highest certificate, diploma or degree}, \dQuote{High (secondary)
+school diploma or
+equivalency certificate}, ...): the level, the parent and the topic's total
 (\code{rootid}) are worked out from it, so a share can be taken of its parent. A topic
-marked "25\\% sample data" comes from the long-form sample (\code{sample = "25\%"}); the
+marked \dQuote{25\% sample data} comes from the long-form sample
+(\code{sample = "25\%"}); the
 others from the full count (\code{"100\%"}). Counts are randomly rounded to multiples
 of 5 (of 10 below 10) by Statistics Canada, and a cell suppressed to protect
 confidentiality (\code{x}), too unreliable (\code{F}), not available (\code{..}) or not
 applicable (\code{...}) has no value here; \code{E} values are kept and marked. The
 global non-response rates of the geography (\code{tnrsf}, \code{tnrlf}, in percent)
-are kept: Statistics Canada suppresses an area whose long-form rate is 50\\% or more,
+are kept: Statistics Canada suppresses an area whose long-form rate is 50\% or more,
 and a high rate means a larger error than the sample alone.
 }
 \examples{

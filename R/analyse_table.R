@@ -371,10 +371,10 @@ print.bricklayer_analysis <- function(x, ...) {
 #'
 #' @details
 #' Sections appear in this order: a header line (value, period, groups,
-#' rows, period range and the time of the analysis), "Change between
-#' periods", "Rates per ..." (when there were rates), "Trend over the
-#' series", "Drift against the prior capsule" (when a prior was given) and
-#' "What is in the table" (with "Missing values" when any are missing).
+#' rows, period range and the time of the analysis), \dQuote{Change between
+#' periods}, \dQuote{Rates per ...} (when there were rates), \dQuote{Trend over the
+#' series}, \dQuote{Drift against the prior capsule} (when a prior was given) and
+#' \dQuote{What is in the table} (with \dQuote{Missing values} when any are missing).
 #' Tables use pipe syntax; numbers are rounded to \code{digits} decimals,
 #' whole numbers of 10,000 and above get thousands separators, logicals are
 #' written yes/no and \code{NA} is blank. When the values are percentages

@@ -78,13 +78,13 @@ yoypals <- function() names(.YOY_PALETTES)
 
 #' Returns the settings that yoy() stored on its result.
 #' @param x A yoy() result.
-#' @return The list held in the "yoy" attribute, or NULL.
+#' @return The list held in the \code{"yoy"} attribute, or NULL.
 #' @noRd
 .yoy_meta <- function(x) attr(x, "yoy", exact = TRUE)
 
 #' Names the change column of a yoy() result.
 #' @param x A yoy() result.
-#' @return "ppchg" for a percentage-point change, else "pctchg".
+#' @return \code{"ppchg"} for a percentage-point change, else \code{"pctchg"}.
 #' @noRd
 .yoy_change_col <- function(x) {
   if ("ppchg" %in% names(x)) "ppchg" else "pctchg"
@@ -93,10 +93,11 @@ yoypals <- function() names(.YOY_PALETTES)
 #' Classes each verdict as good, bad or flat news.
 #'
 #' The colour class of each verdict: good or bad news only when a direction says which is which.
-#' "up" and "down" (direction = "neutral") are neither, so they are flat; they had been painted
+#' \code{"up"} and \code{"down"} (direction = \code{"neutral"}) are neither, so they are
+#' flat; they had been painted
 #' bad and good, which called every neutral rise bad news.
 #' @param v The verdicts.
-#' @return A character vector of "good", "bad" or "flat".
+#' @return A character vector of \code{"good"}, \code{"bad"} or \code{"flat"}.
 #' @noRd
 .yoy_verdict_class <- function(v) {
   out <- rep("flat", length(v))
@@ -247,7 +248,7 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
 }
 
 #' 24-bit ANSI, which every terminal that reports colour support handles.
-#' @param hex The colour as "#RRGGBB".
+#' @param hex The colour as \dQuote{#RRGGBB}.
 #' @return The escape sequence that sets that foreground colour.
 #' @noRd
 .yoy_ansi <- function(hex) {
@@ -297,7 +298,7 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
 #' \deqn{100 \left( (v_T / v_1)^{1/s} - 1 \right).}
 #' Both are \code{NA} when \eqn{v_1 \le 0}, because a growth rate out of zero
 #' does not exist; \code{cagrpct} is also \code{NA} for a single period.
-#' "Annual" in CAGR assumes one period is a year; for monthly or quarterly
+#' \code{"Annual"} in CAGR assumes one period is a year; for monthly or quarterly
 #' data read it as the compound rate per \code{lag} periods.
 #'
 #' The \code{up}, \code{down} and \code{flat} counts are taken from the
@@ -307,7 +308,7 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
 #' value gives a row of \code{NA} with \code{periods = 0}.
 #'
 #' Anything other than a \code{yoy()} result is refused with the error
-#' "\code{object} must be a yoy() result".
+#' \dQuote{\code{object} must be a yoy() result}.
 #'
 #' @param object An \code{rmbl_yoy} object returned by \code{\link{yoy}}.
 #' @param ... Ignored.

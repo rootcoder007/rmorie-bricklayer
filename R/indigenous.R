@@ -9,7 +9,8 @@
 
 #' Read a Statistics Canada table as published
 #'
-#' Tidies a Statistics Canada full-table download (the "CSV for database loading" form, as
+#' Tidies a Statistics Canada full-table download (the \dQuote{CSV for database loading}
+#' form, as
 #' the data service mirrors it under \code{statcan_indigenous/tbl_<pid>}): \code{VALUE} as
 #' a number, and the quality flags kept beside it in \code{quality}.
 #'
@@ -85,7 +86,8 @@ sctidy <- function(x) {
 #' Reshapes a wide census data table into the long layout.
 #'
 #' A census data table (98-10-xxxx) in its wide layout: one column per member of a dimension
-#' ("Indigenous identity (9):Metis\[5\]"), each followed by its "Symbol" column, and no VALUE. Made long:
+#' (\dQuote{Indigenous identity (9):Metis\[5\]}), each followed by its \code{"Symbol"}
+#' column, and no VALUE. Made long:
 #' the dimension becomes a column of member labels, the values VALUE and the symbols STATUS. NULL when
 #' the table has no such columns.
 #' @param x The table as read.
@@ -114,9 +116,11 @@ sctidy <- function(x) {
 
 #' Tells apart member labels that name two members of one dimension.
 #'
-#' One label can name two members of a dimension ("Without children" under couple families and under
+#' One label can name two members of a dimension (\dQuote{Without children} under couple
+#' families and under
 #' another parent, table 98-10-0254): the CSV drops the hierarchy, and only the member number in the
-#' coordinate tells them apart. Such labels get their member number ("Without children \[3\]"); labels that
+#' coordinate tells them apart. Such labels get their member number (\dQuote{Without
+#' children \[3\]}); labels that
 #' name one member are left as they are. The coordinate holds one number per dimension, the geography
 #' first, in the order of the columns; the geography is told apart by DGUID and is left alone.
 #' @param x The table as read.
@@ -145,8 +149,9 @@ sctidy <- function(x) {
 #' Finds the rows that pool groups.
 #'
 #' Rows that pool groups (a pan-Indigenous total, as against First Nations, Metis or Inuit): those
-#' named in `pooled`, or by default labels that begin "Total", "Indigenous identity",
-#' "Aboriginal identity" or "Indigenous population".
+#' named in `pooled`, or by default labels that begin \code{"Total"}, \dQuote{Indigenous
+#' identity},
+#' \dQuote{Aboriginal identity} or \dQuote{Indigenous population}.
 #' @param g The group labels.
 #' @param pooled_groups The labels of the pooled rows, or NULL for the default patterns.
 #' @return A logical vector, TRUE for a pooled row.
@@ -165,11 +170,13 @@ sctidy <- function(x) {
 
 #' Reads quality flags into the package vocabulary.
 #'
-#' The package's quality vocabulary: "ok", "E" (use with caution), "F", "x", "..", "..." (no value).
-#' A flag outside it is said once and treated as "ok": recode another agency's flags with
+#' The package's quality vocabulary: \code{"ok"}, \code{"E"} (use with caution),
+#' \code{"F"}, \code{"x"}, \code{".."}, \code{"..."} (no value).
+#' A flag outside it is said once and treated as \code{"ok"}: recode another agency's
+#' flags with
 #' qltyrcd() first.
 #' @param q The quality flags as given.
-#' @return A character vector of flags, blanks and unknown flags as "ok".
+#' @return A character vector of flags, blanks and unknown flags as \code{"ok"}.
 #' @noRd
 .rmbl_qflags <- function(q) {
   q <- trimws(as.character(q))
@@ -209,7 +216,7 @@ sctidy <- function(x) {
 #' with caution), and \code{F}, \code{x}, \code{..}, \code{...} (no value: too unreliable,
 #' suppressed, not available, not applicable). Other agencies flag otherwise: the
 #' Australian Bureau of Statistics \code{np} (not published) and \code{*} or \code{**}
-#' (relative standard error over 25\% or 50\%), Stats NZ \code{S} (suppressed), the US
+#' (relative standard error over 25% or 50%), Stats NZ \code{S} (suppressed), the US
 #' Census Bureau \code{(X)}. This maps them to the package's vocabulary, so suppressed
 #' cells are never compared and uncertain ones are marked.
 #'
@@ -250,7 +257,7 @@ qltyrcd <- function(x, suppr = c("F", "x", "..", "..."), caution = "E") {
 #' @details With an estimate \eqn{e} and \eqn{z = \Phi^{-1}(1 - \alpha/2)} for the level
 #' wanted, a standard error \eqn{s} gives \eqn{e \pm z s}; a coefficient of variation
 #' \eqn{c} (in percent) gives \eqn{s = e c / 100}; a margin of error \eqn{m} at level
-#' \code{moelev} (the American Community Survey publishes 90\% margins) gives
+#' \code{moelev} (the American Community Survey publishes 90% margins) gives
 #' \eqn{s = m / z_{moe}}. The limits are symmetric on the estimate's scale.
 #'
 #' @param est The estimates.
@@ -309,8 +316,9 @@ limfrom <- function(est, se = NULL, cv = NULL, moe = NULL, moelev = 0.90, conflv
 #' Distinctions-based: each group is compared on its own. A row that pools groups is kept
 #' but marked \code{poogrp = TRUE}, since a pooled figure can hide what differs
 #' between the groups it pools: name such rows in \code{pooled} (by default labels
-#' beginning "Total", "Indigenous identity", "Aboriginal identity" or "Indigenous
-#' population" are taken as pooled). A row flagged \code{E} (in the group or the
+#' beginning \code{"Total"}, \dQuote{Indigenous identity}, \dQuote{Aboriginal identity}
+#' or \dQuote{Indigenous
+#' population} are taken as pooled). A row flagged \code{E} (in the group or the
 #' reference) is compared and marked; one flagged \code{F}, \code{x}, \code{..} or
 #' \code{...}, with no estimate, or whose published interval does not contain its own
 #' estimate, is not compared. Other agencies' flags: \code{\link{qltyrcd}}.
@@ -326,8 +334,8 @@ limfrom <- function(est, se = NULL, cv = NULL, moe = NULL, moelev = 0.90, conflv
 #' @param conflvl The confidence level of the published intervals and of the ones
 #'   returned (default 0.95).
 #' @param pooled Optional labels of the rows that pool other groups (for example
-#'   \code{"Aboriginal and Torres Strait Islander"} beside its parts, or a "Total
-#'   Indigenous" row); by default the labels described in Details.
+#'   \code{"Aboriginal and Torres Strait Islander"} beside its parts, or a \dQuote{Total
+#'   Indigenous} row); by default the labels described in Details.
 #' @return A data frame of class \code{rmbl_indigenous_gap}, one row per group but the
 #'   reference. The columns are \code{group}, \code{estimate}, \code{refest}, \code{ratio},
 #'   \code{ratiolo}, \code{ratioup}, \code{difference}, \code{diflo},
@@ -742,7 +750,8 @@ trccmpl <- function() {
 #' last count: the rate is \eqn{c / T} with the exact (Garwood) interval for \eqn{c}
 #' completed calls, and the projection is the year \eqn{94 - c} more would take at that
 #' rate (at the interval's ends, its range). A constant rate is the simplest model, and
-#' the one behind the Yellowhead Institute's projection ("42 years, or until 2065", 2022);
+#' the one behind the Yellowhead Institute's projection (\dQuote{42 years, or until
+#' 2065}, 2022);
 #' with the counts to the end of 2022 and December 2015 as the start it gives 2067. The
 #' pace has not been constant, so the projection is a description of the pace so far, not
 #' a forecast. Any count of commitments completed over time can be modelled the same way:

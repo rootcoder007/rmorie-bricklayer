@@ -130,7 +130,7 @@ rul <- function(name, expr, col = NULL, sev = c("warning", "fatal"),
 #' @param rules A list of [rul()] objects, or a single rule.
 #' @return A named list of issues, one per failed rule, each a list with
 #'   \code{severity} (character) and \code{message} (character; for a row-wise
-#'   rule it ends with "(k of n rows)"), and for a row-wise rule
+#'   rule it ends with \dQuote{(k of n rows)}), and for a row-wise rule
 #'   \code{n_failed} (integer) and \code{rows} (integer, the first ten failing
 #'   row indices). Empty when everything passes.
 #' @seealso

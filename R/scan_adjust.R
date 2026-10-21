@@ -194,7 +194,7 @@ scanadj <- function(x, meth = "BH", alpha = 0.05) {
 #' capsule, and it depends on the columns, their sizes and `alpha`. This
 #' estimates it by splitting the same data at random into two halves
 #' `n` times and running the screens on the halves, which is the null of
-#' "a re-fetch of identical data". A capsule whose screens fire on 30
+#' \dQuote{a re-fetch of identical data}. A capsule whose screens fire on 30
 #' percent of identical re-fetches needs a smaller `alpha` or fewer screened
 #' columns before a drift verdict means anything.
 #'

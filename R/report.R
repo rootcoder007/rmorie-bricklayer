@@ -22,7 +22,7 @@
 #' against is a person running one check, seeing it pass, and concluding
 #' the data is fine.
 #'
-#' # What "severity" means
+#' # What `severity` means
 #'
 #' * `fatal` -- nothing downstream can run as it stands: a schema check or a
 #' rule of severity `"fatal"` failed (for example a required column is
@@ -410,7 +410,7 @@ summary.bricklayer_report <- function(object, ...) {
 #' The document has a level-one heading (`title`), the verdict in one
 #' sentence, a two-column table of rows, columns, missing cells, complete rows
 #' and the full data digest (with the Merkle root and the signature result when
-#' the report has them), a "Findings" table of severity, check, subject and
+#' the report has them), a \code{"Findings"} table of severity, check, subject and
 #' detail (left out when there is none), and a closing caveat that no finding
 #' is proof of correctness. The text of the findings is written as it is: a
 #' `|` in a column name would break the table. An existing file at `path` is

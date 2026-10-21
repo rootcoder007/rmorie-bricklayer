@@ -20,7 +20,7 @@ A numeric vector of length \code{n}, values in [0, 1).
 Returns \code{n} pseudo-random numbers on [0, 1) from a 64-bit seed with
 the splitmix64 generator, the same numbers morie's Python computes for
 the same seed. Use it where the R and Python arms must draw identical
-"random" values so that their results agree: the within-day jitter of
+\code{"random"} values so that their results agree: the within-day jitter of
 tied event dates in the TPS Hawkes fits, or a subsample.
 }
 \details{

@@ -29,7 +29,7 @@
         "application/x-www-form-urlencoded", 60L, headers, FALSE)
 }
 #' Sends a GET request to a path of the Wayback Machine.
-#' @param path The path, starting with "/".
+#' @param path The path, starting with \code{"/"}.
 #' @param headers The request headers, the account's key among them.
 #' @return The transport's reply: a list with the status, headers and body.
 #' @noRd
@@ -82,7 +82,8 @@
 }
 #' Returns a field as an SPN2 job id, or NA.
 #'
-#' SPN2 job ids are "spn2-" and hex; anything that is not a short token is not a job to poll (TRUE
+#' SPN2 job ids are \code{"spn2-"} and hex; anything that is not a short token is not a
+#' job to poll (TRUE
 #' looped forever, 123 stopped the run)
 #' @param x The field.
 #' @return One string, or `NA_character_`.
@@ -112,7 +113,7 @@
 #' An archive.org key: the variable, or the file its _FILE twin names (the convention for keys
 #' kept on disk, as Docker secrets are). Never printed. A key file other users can read is said.
 #' @param var The environment variable's name.
-#' @return The key, or "" when neither is set.
+#' @return The key, or \code{""} when neither is set.
 #' @noRd
 .bl_ia_key <- function(var) {
   v <- Sys.getenv(var)
@@ -138,7 +139,8 @@
   sprintf("https://web.archive.org/web/%s/%s", ts, url)
 }
 
-#' archive.org's own words for "this URL was captured already today" (a limit on the URL)
+#' archive.org's own words for \dQuote{this URL was captured already today} (a limit on
+#' the URL)
 #' @param j A parsed SPN2 reply.
 #' @return TRUE or FALSE.
 #' @noRd
@@ -220,7 +222,7 @@
 #' A URL that cannot be sent as it is: a control or invisible formatting character (U+202E printed
 #' the rest of a line reversed)
 #' @param u The URL.
-#' @return A description of the first such character, or "".
+#' @return A description of the first such character, or \code{""}.
 #' @noRd
 .bl_wb_hidden_char <- function(u) {
   # the bytes as given: under the C locale enc2utf8() rewrote U+202E to "<U+202E>", which passed
@@ -232,11 +234,11 @@
   if (length(bad)) sprintf("U+%04X", bad[[1L]]) else ""
 }
 
-#' The URL check with the host's addresses resolved: why a URL is refused, or "".
+#' The URL check with the host's addresses resolved: why a URL is refused, or \code{""}.
 #'
 #' A seam of its own, so the tests can stand in for the resolver.
 #' @param u The URL.
-#' @return The reason, or "".
+#' @return The reason, or \code{""}.
 #' @noRd
 .bl_wb_resolved_why <- function(u) .Call(C_rmbl_url_check, u, TRUE, TRUE, FALSE)
 
@@ -681,7 +683,7 @@ print.rmbl_wayback_save <- function(x, ...) {
 #' Reads the results of a run as they stand on disk.
 #'
 #' The results of a run as they stand on disk: the last line written for each URL wins (a retry
-#' appends, so a later "saved" replaces an earlier "failed").
+#' appends, so a later \code{"saved"} replaces an earlier \code{"failed"}).
 #' @param output The results file.
 #' @return A data frame of class `rmbl_wayback_save`.
 #' @noRd
@@ -729,9 +731,9 @@ print.rmbl_wayback_save <- function(x, ...) {
 #' \code{wbsave()}, appending to the same file. A page its
 #' source no longer has is not sent again unless
 #' \code{incgone = TRUE}: a new capture would only archive the error.
-#' "Gone" means the recorded message contains archive.org's report of the
-#' target server's reply ("target server cannot find", "returned 404",
-#' "returned 410", "error:not-found" or "error:gone"); an HTTP 404 from
+#' \code{"Gone"} means the recorded message contains archive.org's report of the
+#' target server's reply (\dQuote{target server cannot find}, \dQuote{returned 404},
+#' \dQuote{returned 410}, \code{"error:not-found"} or \code{"error:gone"}); an HTTP 404 from
 #' archive.org's own API does not count. A failure for a daily limit
 #' recorded today (UTC) is not sent again until tomorrow.
 #'

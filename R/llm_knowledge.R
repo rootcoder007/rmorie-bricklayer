@@ -41,8 +41,8 @@
 
 #' Gives the text of one section of a parsed Rd page, its white space collapsed.
 #' @param rd A parsed Rd page.
-#' @param tag The section tag, such as "\\title".
-#' @return One string, "" when the page has no such section.
+#' @param tag The section tag, such as \dQuote{\\title}.
+#' @return One string, \code{""} when the page has no such section.
 #' @noRd
 .bl_rd_section <- function(rd, tag) {
   hit <- rd[.bl_rd_tags(rd) == tag]
@@ -115,7 +115,8 @@
 #' Extracts a function's call from a usage section.
 #'
 #' The call of `fn` in a usage section, its parentheses balanced (an argument default such as
-#' c("a", "b") holds its own), spaces inside the brackets dropped: "svydes(data, weights, ...)".
+#' c(\code{"a"}, \code{"b"}) holds its own), spaces inside the brackets dropped:
+#' \dQuote{svydes(data, weights, ...)}.
 #' @param usage The usage section's text.
 #' @param fn The function name.
 #' @return The call as one string, or `fn` when the usage does not show it.
@@ -228,7 +229,7 @@
 }
 
 #' Lists the datasets the packages ship and the curated tables in the cached manifest.
-#' @param filter A word to filter by, or "" for all.
+#' @param filter A word to filter by, or \code{""} for all.
 #' @param pkgs The package names.
 #' @return The list as text.
 #' @noRd
@@ -255,14 +256,14 @@
   .bl_kn_clip(paste(utils::head(out, 200L), collapse = "\n"))
 }
 
-#' The installed doc/ folder of each package ("" when it has none).
+#' The installed doc/ folder of each package (\code{""} when it has none).
 #' @param p The package name.
-#' @return The folder's path, or "".
+#' @return The folder's path, or \code{""}.
 #' @noRd
 .bl_kn_doc_dir <- function(p) system.file("doc", package = p)
 
 #' Reads an installed vignette, or lists them when no name is given.
-#' @param name The vignette name, or "" to list them.
+#' @param name The vignette name, or \code{""} to list them.
 #' @param pkgs The package names.
 #' @return The vignette's source, or the list, as text.
 #' @noRd

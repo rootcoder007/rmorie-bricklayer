@@ -43,10 +43,10 @@
 #' \eqn{e \exp(\mp z \sqrt{\log(1 + (c/100)^2)})}, which stay positive however large
 #' \eqn{c} is; a standard error \eqn{s} the limits \eqn{e \mp z s}; the column
 #' \code{cisou} says which (\code{"published"}, \code{"cv"} or \code{"se"}). Published
-#' limits that do not contain their own estimate (it happens: a 100\% with limits 85.5 to
+#' limits that do not contain their own estimate (it happens: a 100% with limits 85.5 to
 #' 98.6 in table 41-10-0012) are kept as published and marked \code{"inconsistent"}; every
 #' comparison of the family warns and leaves such a row out. A limit is matched to a
-#' measure when it fits 95\% of the cells. Labels are read in English: use the
+#' measure when it fits 95% of the cells. Labels are read in English: use the
 #' English-language tables.
 #'
 #' Every other column but the metadata (\code{VECTOR}, \code{COORDINATE}, \code{UOM}, ...)
@@ -253,7 +253,8 @@ scests <- function(x) {
 #' totals) do not. The interval is built on the logit scale, so it stays inside 0 and 1.
 #'
 #' The categories given in \code{lvls} are taken as the whole scale: rows for totals,
-#' for combined categories ("Excellent or very good") and for "not specified" are left
+#' for combined categories (\dQuote{Excellent or very good}) and for \dQuote{not
+#' specified} are left
 #' out, and the shares are rescaled to sum to one over the levels. A group with a
 #' suppressed or missing category is not compared, since its distribution is unknown; one
 #' with an \code{E} category (in the group or the reference) is compared and marked, and
@@ -656,7 +657,8 @@ plot.rmbl_ordinal_compare <- function(x, ..., main = NULL, col = NULL, palette =
 #' @param grp,ind,est,lower,upper Column names: the group, the indicator,
 #'   the percentage and its published limits.
 #' @param well,distress The indicators that measure wellness or strength, and those
-#'   that measure distress; rows for any other indicator (totals, "not specified") are
+#'   that measure distress; rows for any other indicator (totals, \dQuote{not specified})
+#'   are
 #'   left out.
 #' @param domain Optional named character vector giving each indicator's holistic domain,
 #'   for example \code{c("Life satisfaction 8 to 10" = "mental", ...)}.
@@ -818,8 +820,8 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
 #' @details Indigenous understandings of mental health are holistic: wellness is a balance
 #' among the domains of a person, and illness a loss of that balance (Stewart 2008;
 #' Gabriel, Mirza and Stewart 2022). A single indicator, or an average of indicators,
-#' cannot show balance: a group with 80\% in two domains and 20\% in two others has the
-#' same average as one with 50\% in all four. This method, which is ours and inspired by
+#' cannot show balance: a group with 80% in two domains and 20% in two others has the
+#' same average as one with 50% in all four. This method, which is ours and inspired by
 #' that work rather than taken from it, measures balance as the ratio of the weighted
 #' geometric to the weighted arithmetic mean of the domain levels \eqn{p_k}:
 #' \deqn{B = \exp\left(\sum_k w_k \log p_k\right) / \sum_k w_k p_k,}
@@ -1110,8 +1112,10 @@ dualcont <- function(x, well, distress, conflvl = 0.95) {
 #' mostly a First Nations figure where First Nations people are most of the Indigenous
 #' population. Rows that pool groups are left out (\code{pooled}; see
 #' \code{\link{indgap}}); every other row is included, so drop the reference group
-#' (non-Indigenous people) yourself, and never test overlapping groups ("alone" beside
-#' "alone or in combination") together: they are not independent. With two or three groups
+#' (non-Indigenous people) yourself, and never test overlapping groups (\code{"alone"}
+#' beside
+#' \dQuote{alone or in combination}) together: they are not independent. With two or
+#' three groups
 #' the test has little power and \eqn{I^2} is imprecise; a large \eqn{p} is not evidence
 #' that the groups are the same.
 #'
@@ -1276,7 +1280,7 @@ plot.rmbl_distinctions <- function(x, ..., main = NULL, col = NULL, palette = NU
 #'
 #' Small excerpts of Statistics Canada tables, bundled so that the examples and vignettes
 #' run on published values without a network connection or a data service key. Values are
-#' as published, with their 95\% limits and quality flags; nothing is imputed (suppressed
+#' as published, with their 95% limits and quality flags; nothing is imputed (suppressed
 #' cells are \code{NA}).
 #'
 #' \describe{
@@ -1323,7 +1327,7 @@ plot.rmbl_distinctions <- function(x, ..., main = NULL, col = NULL, palette = NU
 #' The First Nations figures of the survey excerpts are for First Nations people living
 #' off reserve: the surveys do not cover reserves, whose data are governed by First
 #' Nations (see the First Nations Information Governance Centre). Groups are as the tables
-#' name them, with "Inuk (Inuit)" written "Inuit".
+#' name them, with \dQuote{Inuk (Inuit)} written \code{"Inuit"}.
 #'
 #' @param name Which excerpt.
 #' @return A data frame.
@@ -1337,7 +1341,7 @@ plot.rmbl_distinctions <- function(x, ..., main = NULL, col = NULL, palette = NU
 #'   \item 17-10-0161-01, \doi{10.25318/1710016101-eng}.
 #' }
 #' Indigenous Population Profile, 2021 Census of Population, catalogue 98-510-X2021001
-#' and 98-510-X2021016. Reproduced and distributed on an "as is" basis with the
+#' and 98-510-X2021016. Reproduced and distributed on an \dQuote{as is} basis with the
 #' permission of Statistics Canada, under the Statistics Canada Open Licence:
 #'
 #' \url{https://www.statcan.gc.ca/en/terms-conditions/open-licence}

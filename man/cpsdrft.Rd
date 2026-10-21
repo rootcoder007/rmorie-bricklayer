@@ -26,7 +26,7 @@ many tests).}
 
 \item{psithr}{PSI above which a numeric
 column is flagged even when its p-value is not significant (default
-0.25, the conventional "material shift" line).}
+0.25, the conventional \dQuote{material shift} line).}
 
 \item{psiminn}{Minimum size BOTH samples must reach
 before \code{psithr} is allowed to flag a column on its own

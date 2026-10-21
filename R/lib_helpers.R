@@ -124,9 +124,9 @@ sha256file <- function(path) {
 #'
 #' Converts a character vector to plain 7-bit ASCII, transliterating
 #' accented or non-Latin characters to their nearest ASCII equivalent (for
-#' example, an accented capital A becomes a plain "A"). Falls back to
+#' example, an accented capital A becomes a plain \code{"A"}). Falls back to
 #' dropping any character that has no transliteration. This is the
-#' deterministic "fallback" used by
+#' deterministic \code{"fallback"} used by
 #' [asciifb()]. Use it for destinations that accept
 #' only ASCII --
 #' a package `DESCRIPTION`, a file name, a legacy system -- so a name
@@ -139,7 +139,8 @@ sha256file <- function(path) {
 #' transform `"Any-Latin; Latin-ASCII"` romanises any script and folds
 #' accents (Cyrillic, Greek and Chinese become Latin letters). Without
 #' \pkg{stringi}, a fixed table folds the common Latin accents and
-#' ligatures (sharp s to "ss", the ae ligature to "ae", thorn to "th" and so on) and
+#' ligatures (sharp s to \code{"ss"}, the ae ligature to \code{"ae"}, thorn to
+#' \code{"th"} and so on) and
 #' every other non-ASCII character is dropped, so non-Latin scripts
 #' disappear rather than being romanised. Either way the result is then
 #' stripped of anything outside the printable ASCII range (space to
@@ -200,10 +201,10 @@ toascii <- function(x) {
 
 #' Transliterates text to ASCII without stringi.
 #'
-#' Deterministic no-stringi fallback. iconv("ASCII//TRANSLIT") is
+#' Deterministic no-stringi fallback. iconv(\code{"ASCII//TRANSLIT"}) is
 #' locale-dependent: under a C locale (glibc) accented characters come back
-#' as "?" -- ASCII, so the final strip keeps them. Transliterate the common
-#' Latin accents by table first, then let iconv DROP (not "?") the rest.
+#' as \dQuote{?} -- ASCII, so the final strip keeps them. Transliterate the common
+#' Latin accents by table first, then let iconv DROP (not \dQuote{?}) the rest.
 #' @param x A character vector.
 #' @return A character vector.
 #' @noRd
@@ -437,10 +438,10 @@ wrtxtfb <- function(text, path) {
 #' Joins a manifest's relative file name under a directory, or refuses it.
 #'
 #' A manifest-derived file name joined under a directory, or NULL when it is
-#' not a plain relative path that stays inside: "..", an absolute path, a
+#' not a plain relative path that stays inside: \code{".."}, an absolute path, a
 #' drive letter, a home prefix or a symlink out are refused. The provenance
 #' file is attacker-authored input, and bare file.path() hashed
-#' "../../etc/shadow" when asked to.
+#' \code{"../../etc/shadow"} when asked to.
 #' @param rel The relative name from the manifest.
 #' @param dir The directory it must stay inside.
 #' @return The joined path, or NULL.
@@ -526,7 +527,8 @@ wrtxtfb <- function(text, path) {
 
 #' Gives the reason a URL is refused.
 #'
-#' The reason a URL is refused ("" when it is accepted). In the package the C validator answers;
+#' The reason a URL is refused (\code{""} when it is accepted). In the package the C
+#' validator answers;
 #' a lib_*.R file sourced on its own inside a capsule bundle has no compiled code, so a base-R
 #' check stands in: https only, and no loopback, private, link-local, metadata, numeric or
 #' single-label host (it does not resolve names; the package's fetch layer does).
@@ -534,7 +536,7 @@ wrtxtfb <- function(text, path) {
 #' @param allow_http Whether plain http is accepted.
 #' @param resolve Whether the host's addresses are resolved and checked too.
 #' @param allow_loopback Whether plain http on the loopback host is accepted.
-#' @return The reason, or "" when the URL is accepted.
+#' @return The reason, or \code{""} when the URL is accepted.
 #' @noRd
 .rmbl_url_why <- function(url, allow_http = FALSE, resolve = FALSE, allow_loopback = FALSE) {
   if (exists("C_rmbl_url_check", inherits = TRUE)) {
@@ -620,7 +622,8 @@ wrtxtfb <- function(text, path) {
 #'
 #' Fetched or file-supplied text made safe to print: marked as the UTF-8 it is (in a C locale the
 #' parser returns it unmarked, and \[\[:cntrl:\]\] on unmarked text matched the bytes 0x80-0x9F inside
-#' every multi-byte character) or converted, an invalid byte becoming "?"; then ANSI escape
+#' every multi-byte character) or converted, an invalid byte becoming \dQuote{?}; then
+#' ANSI escape
 #' sequences, the C0 and C1 controls and DEL, the bidirectional controls (U+061C, U+200E-U+200F,
 #' U+202A-U+202E, U+2066-U+2069) and the default-ignorable characters that print as nothing and hide
 #' text (U+00AD, U+034F, U+115F, U+3164, U+180E, U+200B, U+2060-U+2064, U+FEFF, U+FFF9-FFFB, the

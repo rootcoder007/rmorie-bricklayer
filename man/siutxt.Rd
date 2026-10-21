@@ -16,8 +16,8 @@ A length-1 character vector of plain text.
 }
 \description{
 Strips the markup from one SIU director's report page and returns the
-readable text, keeping line breaks so section headings ("Subject
-Officials", "Witness Officials") stay on lines of their own. Use it
+readable text, keeping line breaks so section headings (\dQuote{Subject
+Officials}, \dQuote{Witness Officials}) stay on lines of their own. Use it
 before \code{\link[=siuso]{siuso()}}, or to
 read or search a saved report
 without a browser.
@@ -28,9 +28,9 @@ tags become line breaks, HTML entities are decoded and runs of spaces are
 collapsed while newlines are kept. Nothing is fetched and nothing is
 written.
 
-Errors: \code{html} must be a single non-NA character string ("html must
-be a single non-NA character string"), and input over 2 MiB is refused
-("html is larger than 2 MiB: not a report page").
+Errors: \code{html} must be a single non-NA character string (\dQuote{html must
+be a single non-NA character string}), and input over 2 MiB is refused
+(\dQuote{html is larger than 2 MiB: not a report page}).
 }
 \section{Limits}{
 

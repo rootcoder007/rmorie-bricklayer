@@ -51,9 +51,9 @@ without capturing again. What is left is captured again with
 \code{wbsave()}, appending to the same file. A page its
 source no longer has is not sent again unless
 \code{incgone = TRUE}: a new capture would only archive the error.
-"Gone" means the recorded message contains archive.org's report of the
-target server's reply ("target server cannot find", "returned 404",
-"returned 410", "error:not-found" or "error:gone"); an HTTP 404 from
+\code{"Gone"} means the recorded message contains archive.org's report of the
+target server's reply (\dQuote{target server cannot find}, \dQuote{returned 404},
+\dQuote{returned 410}, \code{"error:not-found"} or \code{"error:gone"}); an HTTP 404 from
 archive.org's own API does not count. A failure for a daily limit
 recorded today (UTC) is not sent again until tomorrow.
 

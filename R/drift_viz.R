@@ -136,7 +136,8 @@
 
 #' The payload as JSON that can sit inside a script element.
 #' @param p From .bl_drift_payload().
-#' @return One string, data frames by column; every "<" is written \\u003c, so no value can close the element.
+#' @return One string, data frames by column; every \dQuote{<} is written \\u003c, so no
+#' value can close the element.
 #' @noRd
 .bl_drift_json <- function(p) {
   j <- tojs(p, dataframe = "columns", auto_unbox = TRUE, null = "null", na = "null", digits = I(6))
@@ -392,7 +393,7 @@
 #'     (categorical), the ECDF overlay with the largest gap marked, the
 #'     quantile shift against the identity line (numeric), the PSI by bin,
 #'     drawn up where the current sample has more mass, and the first
-#'     digits against Benford's law with its 95\% band (numeric);
+#'     digits against Benford's law with its 95% band (numeric);
 #'   \item Overview: the drift fingerprint, one spoke per column at its PSI
 #'     with the warn and fail bands as rings, and a tile per column with its
 #'     two distributions in small;
@@ -504,7 +505,7 @@ drfthtml <- function(x, file, title = "Drift report", warn = NULL, fail = NULL, 
 #' distributions, the ECDFs, the quantile shift, the first digits and a
 #' sentence on the verdict, as [drfthtml()] has, and a history heatmap
 #' with `hist`; the warn and fail bands and alpha are sliders, with a reset to the
-#' object's bands. Beyond the page it has: "what would clear this", the
+#' object's bands. Beyond the page it has: \dQuote{what would clear this}, the
 #' PSI of the column with its `k` largest bins left out and the rest
 #' renormalized; with `ref` and `cur` (or uploaded CSV files), a rerun of
 #' [cpsdrft()] on chosen columns with another number of bins; with

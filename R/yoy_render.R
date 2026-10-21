@@ -34,7 +34,7 @@
 #' The PDF is drawn on R's own \code{pdf()} device with its standard fonts,
 #' which cannot draw arrows or dashes, so those are written in ASCII
 #' (\code{+}, \code{-}). Long tables are split over pages at 0.22 inch per row,
-#' with "page i of n" labels; notes go under the last page's rows when they
+#' with \dQuote{page i of n} labels; notes go under the last page's rows when they
 #' fit and on pages of their own otherwise. The interval column appears only
 #' when the table has \code{pctlo} and \code{pctup} (counts).
 #'
@@ -460,7 +460,7 @@ yoypdf <- function(x, file, title = "Year-over-year change",
 #' @param title The page title.
 #' @param subtitle The line under the title.
 #' @param pal The palette, from .yoy_pal().
-#' @param pagelab The page label, or "" for none.
+#' @param pagelab The page label, or \code{""} for none.
 #' @param notes The note lines for this page.
 #' @param height The page height in inches.
 #' @param notes_only Whether the page holds notes alone.

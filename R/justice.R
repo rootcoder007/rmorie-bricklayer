@@ -62,7 +62,8 @@
   period
 }
 
-#' X positions for periods: numbers as they are, dates as dates, "YYYY-MM" as month starts,
+#' X positions for periods: numbers as they are, dates as dates, \code{"YYYY-MM"} as
+#' month starts,
 #' anything else in the order given
 #' @param p The period labels.
 #' @return The x positions: numbers or dates.
@@ -104,7 +105,7 @@
 #'   cases received and disposed. The groups add to each year's
 #'   province-wide total.}
 #' \item{\code{ocj_courts.csv}}{The same years by court, with
-#'   \code{court_series}, which names Toronto's courthouses "Toronto"
+#'   \code{court_series}, which names Toronto's courthouses \code{"Toronto"}
 #'   throughout: from 2023 the Court publishes Toronto as one location (the
 #'   new Toronto courthouse consolidated its criminal courts that year).
 #'   Each year's courts add to the province-wide total.}
@@ -123,7 +124,7 @@
 #'   \url{https://www.ontariocourts.ca/ocj/statistics/} (retrieved
 #'   2026-10-13), editions 2012 to 2026, published by the Court for
 #'   public use. Toronto Police Service, Public Safety Data Portal,
-#'   dataset "Break and Enter Open Data", \url{https://data.tps.ca/}
+#'   dataset \dQuote{Break and Enter Open Data}, \url{https://data.tps.ca/}
 #'   (retrieved 2026-10-13); contains information licensed under the
 #'   Open Government Licence - Toronto Police Service. See
 #'   \code{inst/COPYRIGHTS}.
@@ -893,7 +894,8 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
 
 #' Marks the points at (0, 0).
 #'
-#' (0, 0) is how raw police exports write "no location": no incident is placed in the Gulf of Guinea
+#' (0, 0) is how raw police exports write \dQuote{no location}: no incident is placed in
+#' the Gulf of Guinea
 #' @param lon The longitudes.
 #' @param lat The latitudes.
 #' @return A logical vector.

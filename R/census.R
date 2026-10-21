@@ -26,16 +26,18 @@ names(.rmbl_ipp_groups) <- c("TOTAL_IND_IDENT", "IND_IDENT", "SINGLE_IND_RESP", 
 #' \code{census2021_ipp/}.
 #'
 #' @details The profile gives each characteristic in a hierarchy shown only by indentation
-#' ("Total - Highest certificate, diploma or degree", "High (secondary) school diploma or
-#' equivalency certificate", ...): the level, the parent and the topic's total
+#' (\dQuote{Total - Highest certificate, diploma or degree}, \dQuote{High (secondary)
+#' school diploma or
+#' equivalency certificate}, ...): the level, the parent and the topic's total
 #' (\code{rootid}) are worked out from it, so a share can be taken of its parent. A topic
-#' marked "25\% sample data" comes from the long-form sample (\code{sample = "25\%"}); the
+#' marked \dQuote{25% sample data} comes from the long-form sample
+#' (\code{sample = "25\%"}); the
 #' others from the full count (\code{"100\%"}). Counts are randomly rounded to multiples
 #' of 5 (of 10 below 10) by Statistics Canada, and a cell suppressed to protect
 #' confidentiality (\code{x}), too unreliable (\code{F}), not available (\code{..}) or not
 #' applicable (\code{...}) has no value here; \code{E} values are kept and marked. The
 #' global non-response rates of the geography (\code{tnrsf}, \code{tnrlf}, in percent)
-#' are kept: Statistics Canada suppresses an area whose long-form rate is 50\% or more,
+#' are kept: Statistics Canada suppresses an area whose long-form rate is 50% or more,
 #' and a high rate means a larger error than the sample alone.
 #'
 #' @param x A profile table as published (a data frame read from its CSV), or a data
@@ -148,7 +150,7 @@ cnsprof <- function(x) {
 #' and group. Statistics Canada does not publish standard errors for the profile, so the
 #' interval is an approximation built from what is known about how the counts were made:
 #' \itemize{
-#'   \item a long-form ("25\% sample") count is estimated from a sample of about one
+#'   \item a long-form (\dQuote{25% sample}) count is estimated from a sample of about one
 #'     household in four, so the share has variance \eqn{d (1 - f) p (1 - p) / (f N)} for
 #'     a sampling fraction \eqn{f} (\code{smpfrac}, 0.25) of a population of
 #'     \eqn{N} (the denominator) and a design effect \eqn{d} (\code{deff}, 1 by default:
@@ -164,7 +166,7 @@ cnsprof <- function(x) {
 #' In all,
 #' \deqn{V = \frac{d (1 - f) p (1 - p)}{f N} + \frac{c (1 + p^2)}{N^2}.}{V = d (1 - f) p
 #' (1 - p) / (f N) + c (1 + p^2) / N^2.} The interval is Wilson's at the effective sample
-#' size \eqn{n_e = \max(p(1-p), 1/N) / V} (the floor \eqn{1/N} keeps a share of 0 or 100\%
+#' size \eqn{n_e = \max(p(1-p), 1/N) / V} (the floor \eqn{1/N} keeps a share of 0 or 100%
 #' from an infinite \eqn{n_e}), so it stays inside 0 and 100. It does not carry
 #' non-response (see \code{tnrlf}) or the edit and imputation error, so it is narrower
 #' than the full error; treat it as a lower bound on the uncertainty.

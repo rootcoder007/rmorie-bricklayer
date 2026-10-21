@@ -43,7 +43,7 @@ only its public half is read.
 
 Errors: \code{key} not from \code{\link[=kemkg]{kemkg()}} or
 \code{\link[=kempubkey]{kempubkey()}}; a key
-whose public half is not valid hex ("key has no usable public key");
+whose public half is not valid hex (\dQuote{key has no usable public key});
 \code{m} that is not a raw vector of 32 bytes.
 }
 \examples{

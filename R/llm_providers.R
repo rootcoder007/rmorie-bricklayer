@@ -61,7 +61,7 @@
 }
 
 #' Looks up one provider preset.
-#' @param id The provider id, such as "openai".
+#' @param id The provider id, such as \code{"openai"}.
 #' @return A one-row data frame (all NA when `id` is unknown).
 #' @noRd
 .bl_preset <- function(id) {
@@ -358,7 +358,8 @@
 #'
 #' Where a route's chat request goes, and the body for it.
 #' `no_calls`: the tools stay declared (a history holding tool calls needs them) but the model may not
-#' call one: OpenAI's tool_choice "none", Anthropic's {type: "none"}, Gemini's function-calling mode NONE.
+#' call one: OpenAI's tool_choice \code{"none"}, Anthropic's {type: \code{"none"}},
+#' Gemini's function-calling mode NONE.
 #' @param rt The route.
 #' @param model The model name.
 #' @param messages The conversation.
@@ -406,7 +407,7 @@
 # reply comes). Nothing when nobody is watching or the session is quiet (the download bar's rule).
 .bl_wait <- new.env(parent = emptyenv())
 
-#' Gives the line shown while the model works, or "" when nobody is watching.
+#' Gives the line shown while the model works, or \code{""} when nobody is watching.
 #' @param model The model name.
 #' @return The label.
 #' @noRd
@@ -492,7 +493,8 @@
   .rmbl_printable(ids[nzchar(ids)])
 }
 
-#' A route in a sentence: "the own endpoint", "the local Ollama", but "OpenAI".
+#' A route in a sentence: \dQuote{the own endpoint}, \dQuote{the local Ollama}, but
+#' \code{"OpenAI"}.
 #' @param rt The route.
 #' @return The phrase.
 #' @noRd

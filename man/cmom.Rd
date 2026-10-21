@@ -27,8 +27,8 @@ together.
 The mean is base R's (an extended-precision sum followed by a
 corrective pass); the deviations from it are then divided by their
 largest magnitude before any power is taken, and the scale is restored
-at the end. That avoids both the cancellation of the textbook "sum of
-squares minus square of sum" formula and overflow of fourth powers for
+at the end. That avoids both the cancellation of the textbook \dQuote{sum of
+squares minus square of sum} formula and overflow of fourth powers for
 values beyond about \eqn{10^{77}}. It reads the data three times
 (mean, largest deviation, moments), in \eqn{O(n)} time. The variance uses
 the \code{n - 1} denominator, matching \code{\link[stats:var]{stats::var()}}. The shape

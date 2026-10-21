@@ -31,12 +31,13 @@
 #'
 #' A program in the usual places, found without a child process: Sys.which() runs one, and R ignores
 #' SIGINT while a child runs (as system() does), so a Ctrl-C landing there killed only the child.
-#' Sys.which("sh") came back "", the prompt fell back to a blocking read of stdin that ignores
+#' Sys.which(\code{"sh"}) came back \code{""}, the prompt fell back to a blocking read of
+#' stdin that ignores
 #' Ctrl-C, and the command waited at the prompt (a Ctrl-C 0.18 s after start, 2026-10-14).
 #' The search runs over PATH, as the shell does, then /bin and /usr/bin: /bin and /usr/bin alone missed
 #' stty on a NixOS-style layout, so the key was echoed as it was typed (network stress test of 5e1dce5).
 #' @param name The program's file name.
-#' @return The program's path, or "" when it is not found.
+#' @return The program's path, or \code{""} when it is not found.
 #' @noRd
 .bl_find_program <- function(name) {
   dirs <- c(strsplit(Sys.getenv("PATH"), .Platform$path.sep, fixed = TRUE)[[1L]], "/bin", "/usr/bin")
@@ -58,13 +59,14 @@
 #' Reads one typed line for a prompt.
 #'
 #' One typed line for a prompt (the key of `login --token`, the emailed code). The launchers run
-#' Rscript, where readline() returns "" at once, so outside an interactive session read one line of
+#' Rscript, where readline() returns \code{""} at once, so outside an interactive session
+#' read one line of
 #' stdin: typed at a terminal, or piped (`echo KEY | rmbl login --token` keeps the key out of the shell
-#' history). Closed or empty stdin gives "".
+#' history). Closed or empty stdin gives \code{""}.
 #' @param prompt The prompt text.
 #' @param con A connection to read from instead of the terminal or standard input, or NULL.
 #' @param secret Whether the line is a key, read without echo at a terminal.
-#' @return The line, trimmed; "" for closed or empty input.
+#' @return The line, trimmed; \code{""} for closed or empty input.
 #' @noRd
 .bl_readline <- function(prompt, con = NULL, secret = FALSE) {
   # a key typed at a terminal is not echoed (stty, where there is one); elsewhere it is
@@ -279,7 +281,7 @@
 #' indices once; two signatures at one index let anyone forge a third. Its
 #' private key never changes, but its state, the indices already used, changes
 #' with every signature, and a copy of an old state signs used indices again
-#' (RFC 10033, "Hash-Based Signatures: State and Backup Management", sections
+#' (RFC 10033, \dQuote{Hash-Based Signatures: State and Backup Management}, sections
 #' 2 and 4). \code{rmbl sign --scheme xmss-sha256 --key-file KEY}
 #' therefore treats the key file as the state:
 #' \itemize{
@@ -797,7 +799,8 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
   }, NA))
 }
 
-#' Every verb and spelling the command takes, for the bare-question rule and "did you mean".
+#' Every verb and spelling the command takes, for the bare-question rule and \dQuote{did
+#' you mean}.
 #' @return A character vector of verbs.
 #' @noRd
 .bl_verb_names <- function() {
@@ -807,7 +810,8 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
 #' Tells whether a word is a verb or a near miss of one.
 #'
 #' TRUE when a word is a verb or a near miss of one: one edit for a word of four or five letters, two
-#' for a longer one (shorter words, "is", "how", are too close to everything to tell)
+#' for a longer one (shorter words, \code{"is"}, \code{"how"}, are too close to
+#' everything to tell)
 #' @param word The word to test.
 #' @return TRUE or FALSE.
 #' @noRd
@@ -904,7 +908,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
 #' The Rd database of this package: the installed copy when there is one,
 #' else the man/ directory of a source tree loaded with pkgload.
 #' @param db The installed Rd database, or NULL.
-#' @param man The man directory of the installed package, or "".
+#' @param man The man directory of the installed package, or \code{""}.
 #' @return A list of Rd objects, empty when there is none.
 #' @noRd
 .bl_rd_db <- function(db = tryCatch(tools::Rd_db("rmoriebricklayer"), error = function(e) NULL),
@@ -920,7 +924,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
 
 #' Returns the Rd tag of every top-level element of an Rd object.
 #' @param rd An Rd object.
-#' @return A character vector, "" for an untagged element.
+#' @return A character vector, \code{""} for an untagged element.
 #' @noRd
 .bl_rd_tags <- function(rd) {
   vapply(rd, function(x) attr(x, "Rd_tag") %||% "", "")
@@ -950,8 +954,8 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
 
 #' Renders an Rd page as plain text.
 #'
-#' Rd2txt renders a whole page; sections come back headed "Usage:",
-#' "Arguments:", "Examples:" when underlining is off.
+#' Rd2txt renders a whole page; sections come back headed \code{"Usage:"},
+#' \code{"Arguments:"}, \code{"Examples:"} when underlining is off.
 #' @param rd An Rd object.
 #' @return A character vector of lines.
 #' @noRd
@@ -1019,9 +1023,10 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
 
 #' Returns the path of the installed launcher.
 #'
-#' The installed launcher, "" when it is missing (a function, so a test can say it is missing without
+#' The installed launcher, \code{""} when it is missing (a function, so a test can say it
+#' is missing without
 #' renaming a file in the installed library)
-#' @return A path, or "".
+#' @return A path, or \code{""}.
 #' @noRd
 .bl_launcher <- function() system.file("bin", "rmoriebricklayer", package = "rmoriebricklayer")
 

@@ -25,8 +25,8 @@ are used by \code{print()},
 \description{
 Attaches display labels to the periods of a change table from
 \code{\link[=yoy]{yoy()}},
-so a fiscal year keyed as 2023 can print as "2022/23", or a year can
-carry a note such as "(COVID)". The arithmetic already ran on the
+so a fiscal year keyed as 2023 can print as \code{"2022/23"}, or a year can
+carry a note such as \dQuote{(COVID)}. The arithmetic already ran on the
 period's value, so a label can only affect what is printed: relabelling
 cannot move a number.
 }

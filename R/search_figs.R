@@ -161,8 +161,8 @@ optsqr <- function(effort, model = c("invcube", "random", "definite", "mbeta"), 
 
 #' The figures of The Theory of Search
 #'
-#' Draws any figure of Frost (1996), "The Theory of Search: A Simplified
-#' Explanation", from the package's search theory functions with the book's
+#' Draws any figure of Frost (1996), \dQuote{The Theory of Search: A Simplified
+#' Explanation}, from the package's search theory functions with the book's
 #' parameters, and returns the numbers it drew.
 #'
 #' @details \code{srchfig()} with no argument lists the book's 36 figures

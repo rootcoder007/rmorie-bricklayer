@@ -206,7 +206,7 @@ kemsz <- function(lvl) {
 #'
 #' Errors: \code{key} not from [kemkg()] or
 #' [kempubkey()]; a key
-#' whose public half is not valid hex ("key has no usable public key");
+#' whose public half is not valid hex (\dQuote{key has no usable public key});
 #' \code{m} that is not a raw vector of 32 bytes.
 #'
 #' @param key A key or public key from
@@ -299,9 +299,9 @@ kemencap <- function(key, m = NULL) {
 #' `rmoriebricklayer.masked` sets the default for a session.
 #'
 #' Errors (checked before any decapsulation): \code{key} not from
-#' [kemkg()], or a public key only ("decapsulation needs a
+#' [kemkg()], or a public key only (\dQuote{decapsulation needs a
 #' key with its
-#' secret half"); a ciphertext that is not hex or raw of the exact length
+#' secret half}); a ciphertext that is not hex or raw of the exact length
 #' for the key's level, which is
 #' [kemsz()]\code{[["ciphertext"]]} bytes (768,
 #' 1088 or 1568); \code{masked} not \code{TRUE} or \code{FALSE}.

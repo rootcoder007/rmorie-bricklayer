@@ -30,7 +30,7 @@ limits at the level wanted.
 With an estimate \eqn{e} and \eqn{z = \Phi^{-1}(1 - \alpha/2)} for the level
 wanted, a standard error \eqn{s} gives \eqn{e \pm z s}; a coefficient of variation
 \eqn{c} (in percent) gives \eqn{s = e c / 100}; a margin of error \eqn{m} at level
-\code{moelev} (the American Community Survey publishes 90\\% margins) gives
+\code{moelev} (the American Community Survey publishes 90\% margins) gives
 \eqn{s = m / z_{moe}}. The limits are symmetric on the estimate's scale.
 }
 \examples{

@@ -35,7 +35,7 @@ if none up to 10).
 Bounds on the effects of an \code{\link{evstudy}} when the trend after adoption
 may depart from parallel by up to \eqn{\bar M} times the largest departure seen
 before it (Rambachan and Roth's relative magnitudes), with a conservative interval
-and the "breakdown" \eqn{\bar M} at which the interval first includes zero.
+and the \code{"breakdown"} \eqn{\bar M} at which the interval first includes zero.
 }
 \details{
 Let \eqn{\delta_e} be the bias of the event-time coefficient

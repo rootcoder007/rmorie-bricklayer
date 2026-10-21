@@ -19,7 +19,8 @@ with levels \code{"ok"}, \code{"E"}, \code{"F"}, \code{"x"}, \code{".."},
 \code{"..."}, of class \code{c("rmbl_statcan", "data.frame")}.
 }
 \description{
-Tidies a Statistics Canada full-table download (the "CSV for database loading" form, as
+Tidies a Statistics Canada full-table download (the \dQuote{CSV for database loading}
+form, as
 the data service mirrors it under \code{statcan_indigenous/tbl_<pid>}): \code{VALUE} as
 a number, and the quality flags kept beside it in \code{quality}.
 }

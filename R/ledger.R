@@ -119,7 +119,7 @@ ldgrchk <- function(ledger, pkgs = NULL) {
 #' The theorem rows of a ledger: proved, covered and check.
 #' @param ledger A ldgrread() result.
 #' @param pkgs The packages to check, or NULL for all.
-#' @param capsule The capsule directory, or "".
+#' @param capsule The capsule directory, or \code{""}.
 #' @param file The ledger file.
 #' @return Check rows.
 #' @noRd
@@ -248,7 +248,7 @@ ldgrchk <- function(ledger, pkgs = NULL) {
   eval(e, env)
 }
 
-#' The ledger rows of a capsule whose provenance says kind "ledger".
+#' The ledger rows of a capsule whose provenance says kind \code{"ledger"}.
 #' @param d The capsule directory.
 #' @param prov The provenance, parsed as a list.
 #' @param pkgs The packages to check, or NULL.

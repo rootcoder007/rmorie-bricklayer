@@ -49,7 +49,7 @@ measure, as a string or a bare name.}
 period (a year, a \code{Date}, a fiscal-year integer, an ordered
 factor). An ordered factor is compared by level order, one level being one
 period; an unordered factor or a character column has no order, so every row
-is flagged "no comparison period". For a numeric vector, the periods themselves.}
+is flagged \dQuote{no comparison period}. For a numeric vector, the periods themselves.}
 
 \item{by}{Optional grouping columns, as a character vector.
 The change is computed within each group.}
@@ -74,7 +74,7 @@ and withholds the percent change, which for a percentage is a different
 quantity.}
 
 \item{minbase}{Optional: previous-period values below this get a
-"small base" note. Nothing is withheld either way: every non-zero base gets
+\dQuote{small base} note. Nothing is withheld either way: every non-zero base gets
 its percent change and exact interval, which is as wide as the base is
 small. Defaults to 0 (no note); only a zero base has no percent change.}
 
@@ -113,8 +113,8 @@ An \code{rmbl_yoy} object (a data frame of class
 period column under its own name (\code{period} for a vector or a \code{ts}), the
 grouping columns, then \code{value}, \code{previous}, \code{change}, \code{pctchg}
 (or
-\code{ppchg} for percentages), \code{flag} (character: "no comparison period",
-"no data", "previous period is zero", or a small-base note when
+\code{ppchg} for percentages), \code{flag} (character: \dQuote{no comparison period},
+\dQuote{no data}, \dQuote{previous period is zero}, or a small-base note when
 \code{minbase} is set; \code{NA} otherwise), \code{pctlo} and \code{pctup}
 for counts,
 and \code{verdict}. Attribute \code{"yoy"} records \code{value}, \code{period},
@@ -128,7 +128,7 @@ the writers (\code{\link[=yoywr]{yoywr()}}) and
 Computes the change from one period to the period \code{lag} places
 before it, matched on the period's own value rather than on row order,
 and carries an exact interval for count data. Use it for the
-"up 12\% on last year" figures of an annual report or an open-data
+\dQuote{up 12\% on last year} figures of an annual report or an open-data
 release: a missing year shows as a gap instead of shifting every
 comparison, a percentage is compared in percentage points, and a change
 off a small count comes with an interval as wide as the count is small.
@@ -137,7 +137,7 @@ off a small count comes with an interval as wide as the count is small.
 Rows are first combined to one per period (and group) with \code{fun}. With
 \code{complete = TRUE} the periods missing from a regular grid (numbers, \code{Date}
 or \code{POSIXct} with a common step) are inserted with \code{NA} values and flagged
-"no data". Each period is then compared with the period \code{lag} steps
+\dQuote{no data}. Each period is then compared with the period \code{lag} steps
 earlier in that grid: \code{change} is the difference, \code{pctchg}
 \eqn{100 (v_t / v_{t-lag} - 1)} (\code{NA} off a zero base), and for percentages
 \code{ppchg} is the difference in percentage points.

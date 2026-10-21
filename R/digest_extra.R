@@ -76,7 +76,7 @@ csha512 <- function(x) {
 #' used where [csha256()] is meant. It is
 #' here because it is far cheaper than SHA-256 over gigabyte-scale capsule
 #' members, which makes it the right first pass when the question is only
-#' "did this file arrive intact".
+#' \dQuote{did this file arrive intact}.
 #'
 #' Character input is checked element by element, as its bytes, with
 #' \code{NA} giving \code{NA}; other atomic input is converted with
@@ -249,7 +249,7 @@ cdgsteq <- function(a, b) {
 #'
 #' The two prefix bytes are the leaf and node domain separation of RFC
 #' 6962: without them an interior node, given as the 64 bytes of its two
-#' child digests, verifies as a "leaf" with the shorter proof from its
+#' child digests, verifies as a \code{"leaf"} with the shorter proof from its
 #' parent. Roots and proofs made by 0.5.12 and earlier have no prefixes
 #' (\code{scheme = 1}, the weaker scheme). Pass \code{scheme = 1} to
 #' \code{mrkroot()}, \code{mrklvs()} or \code{mrkprf()} to
@@ -433,7 +433,7 @@ mrkvrf <- function(leaf, proof, root, scheme = NULL) {
 #' a character vector measured with strlen. That forbade a zero byte in a
 #' chunk and, worse, silently accepted a raw vector by coercing it -- a
 #' list of raw vectors deparses, so `mrkroot(list(charToRaw("a")))`
-#' hashed the TEXT "as.raw(0x61)" rather than the byte 0x61, and reported
+#' hashed the TEXT \dQuote{as.raw(0x61)} rather than the byte 0x61, and reported
 #' a confident digest of the wrong thing.
 #'
 #' Byte sequences for character input are unchanged, so a root recorded by

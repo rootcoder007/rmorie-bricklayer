@@ -5,16 +5,18 @@
 
 #' The indicators of Calls to Action 19 and 55, and the tables that measure them
 #'
-#' Call to Action 19 asks the federal government to "establish measurable goals to
+#' Call to Action 19 asks the federal government to \dQuote{establish measurable goals to
 #' identify and close the gaps in health outcomes between Aboriginal and non-Aboriginal
-#' communities, and to publish annual progress reports and assess long-term trends",
-#' focusing on "infant mortality, maternal health, suicide, mental health, addictions,
+#' communities, and to publish annual progress reports and assess long-term trends},
+#' focusing on \dQuote{infant mortality, maternal health, suicide, mental health,
+#' addictions,
 #' life expectancy, birth rates, infant and child health issues, chronic diseases, illness
-#' and injury incidence, and the availability of appropriate health services". Call to
-#' Action 55 asks for annual data on, among others, "the number of Aboriginal
+#' and injury incidence, and the availability of appropriate health services}. Call to
+#' Action 55 asks for annual data on, among others, \dQuote{the number of Aboriginal
 #' children--including Metis and Inuit children--in care, compared with non-Aboriginal
-#' children" and "the educational and income attainments of Aboriginal peoples in Canada
-#' compared with non-Aboriginal people". This lists, for each indicator, the Statistics
+#' children} and \dQuote{the educational and income attainments of Aboriginal peoples in
+#' Canada
+#' compared with non-Aboriginal people}. This lists, for each indicator, the Statistics
 #' Canada tables at the data service (or the census profile) that measure it, the measure,
 #' and which direction is better.
 #'
@@ -97,8 +99,8 @@ trcind <- function() {
 #' \deqn{D = \hat\theta_g / \hat\theta_r \ \textrm{(lower is better)}, \qquad
 #' D = \hat\theta_r / \hat\theta_g \ \textrm{(higher is better)}.}{D = g / r (lower is
 #' better), D = r / g (higher is better).} It is a ratio of the published estimates, not a
-#' relative risk: for life expectancy, D = 1.1 means the reference lives 10\% longer, not
-#' that the group's risk is 10\% higher. Above 1 the group fares worse; the interval is
+#' relative risk: for life expectancy, D = 1.1 means the reference lives 10% longer, not
+#' that the group's risk is 10% higher. Above 1 the group fares worse; the interval is
 #' the published one carried through (\code{indgap}'s log-scale interval, inverted
 #' where needed). The difference on the indicator's own scale is kept beside it.
 #'

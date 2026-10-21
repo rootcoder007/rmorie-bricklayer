@@ -23,8 +23,8 @@ Without \code{fig}, a data frame of \code{fig}, \code{caption} and
 list of them) of what was drawn.
 }
 \description{
-Draws any figure of Frost (1996), "The Theory of Search: A Simplified
-Explanation", from the package's search theory functions with the book's
+Draws any figure of Frost (1996), \dQuote{The Theory of Search: A Simplified
+Explanation}, from the package's search theory functions with the book's
 parameters, and returns the numbers it drew.
 }
 \details{

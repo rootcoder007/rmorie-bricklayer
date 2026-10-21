@@ -63,7 +63,8 @@
 
 #' Says where R runs inside RStudio.
 #'
-#' Where R runs inside RStudio: "console", "terminal", "build", "render", "job", "subprocess", or ""
+#' Where R runs inside RStudio: \code{"console"}, \code{"terminal"}, \code{"build"},
+#' \code{"render"}, \code{"job"}, \code{"subprocess"}, or \code{""}
 #' outside it (cli's rstudio_detect(), without its rstudioapi probe)
 #' @return One string.
 #' @noRd
@@ -173,7 +174,8 @@
 
 #' Returns the escape for a foreground colour.
 #'
-#' The escape for a foreground colour at `n` colours ("" below 8): 24-bit, the 6x6x6 cube of 256,
+#' The escape for a foreground colour at `n` colours (\code{""} below 8): 24-bit, the
+#' 6x6x6 cube of 256,
 #' or the basic colour made of the channels within a quarter of the brightest (as src/rmbl_progress.c)
 #' @param rgb The colour's red, green and blue channels, 0 to 255.
 #' @param n The number of colours the console shows.
@@ -203,7 +205,7 @@
 
 #' Wraps text in a colour escape and a reset.
 #' @param x The text.
-#' @param code The escape, or "" for none.
+#' @param code The escape, or \code{""} for none.
 #' @return The painted text.
 #' @noRd
 .bl_paint <- function(x, code) if (nzchar(code) && nzchar(x)) paste0(code, x, "\033[0m") else x
@@ -268,13 +270,13 @@
 
 #' Makes the state of an animated bar.
 #'
-#' `unit`: "" counts steps, "B" counts bytes (rates in MB/s)
+#' `unit`: \code{""} counts steps, \code{"B"} counts bytes (rates in MB/s)
 #' @param label The text before the bar.
 #' @param total The number of steps, 0 when the work has no count.
 #' @param color The name of a colour in `.bl_anim_colors`.
 #' @param quiet TRUE, FALSE or NULL to follow the session.
 #' @param tty Passed to `.bl_console()`.
-#' @param unit "" for steps, "B" for bytes.
+#' @param unit \code{""} for steps, \code{"B"} for bytes.
 #' @return An environment.
 #' @noRd
 .bl_anim_new <- function(label, total, color = "blue", quiet = NULL, tty = NULL, unit = "") {
@@ -465,7 +467,7 @@
 #' left (no erase-line escape: the RStudio console redraws on \r but has no cursor control)
 #' @param a The bar's state, from `.bl_anim_new()`.
 #' @param line The frame.
-#' @param end What follows the frame: "" to keep the line, "\n" to end it.
+#' @param end What follows the frame: \code{""} to keep the line, \dQuote{\n} to end it.
 #' @return `a`, invisibly.
 #' @noRd
 .bl_draw <- function(a, line, end = "") {
@@ -605,7 +607,7 @@
 #' on.exit(p$done(), add = TRUE)
 #' for (b in seq_len(B)) {
 #'   ...
-#'   p$tick(info = sprintf("resample \%d/\%d", b, B))
+#'   p$tick(info = sprintf("resample %d/%d", b, B))
 #' }
 #' }
 #' \code{$done()} may be called more than once; only the first call acts.
@@ -790,7 +792,7 @@ print.rmbl_progress <- function(x, ...) {
   expr
 }
 
-#' A network request: "waiting for <host>"
+#' A network request: \dQuote{waiting for <host>}
 #' @param url The request's URL.
 #' @param expr The request.
 #' @return The value of `expr`.

@@ -78,7 +78,7 @@ shorter than \eqn{\lceil \log_2 n \rceil}.
 
 The two prefix bytes are the leaf and node domain separation of RFC
 6962: without them an interior node, given as the 64 bytes of its two
-child digests, verifies as a "leaf" with the shorter proof from its
+child digests, verifies as a \code{"leaf"} with the shorter proof from its
 parent. Roots and proofs made by 0.5.12 and earlier have no prefixes
 (\code{scheme = 1}, the weaker scheme). Pass \code{scheme = 1} to
 \code{mrkroot()}, \code{mrklvs()} or \code{mrkprf()} to

@@ -82,7 +82,8 @@
 
 #' Reads the settings file as a JSON object.
 #'
-#' The settings file as a named list, or NULL when it is not a JSON object ([], "x", 5 and a
+#' The settings file as a named list, or NULL when it is not a JSON object ([],
+#' \code{"x"}, 5 and a
 #' syntax error alike).
 #' @param p The path of the settings file.
 #' @return A named list, or NULL.
@@ -164,10 +165,11 @@
   if (is.character(v) && length(v) == 1L && nzchar(trimws(v))) trimws(v) else NULL
 }
 
-#' Where a setting comes from right now: "environment", "saved", or "default".
+#' Where a setting comes from right now: \code{"environment"}, \code{"saved"}, or
+#' \code{"default"}.
 #' @param key The setting's key.
 #' @param env The setting's environment variable.
-#' @return "environment", "saved" or "default".
+#' @return \code{"environment"}, \code{"saved"} or \code{"default"}.
 #' @noRd
 .bl_config_source <- function(key, env) {
   if (nzchar(trimws(Sys.getenv(env, unset = "")))) return("environment")
@@ -176,7 +178,7 @@
 
 #' How a key is displayed: only whether one is set. No character of it is ever printed.
 #' @param v The key, or NULL.
-#' @return "set" or "(not set)".
+#' @return \code{"set"} or \dQuote{(not set)}.
 #' @noRd
 .bl_mask <- function(v) {
   if (is.null(v) || !nzchar(v)) "(not set)" else "set"

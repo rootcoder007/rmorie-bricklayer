@@ -746,7 +746,7 @@ vrfmrg <- function(x, pub, tol = 0, strict = TRUE) {
 #' \code{tol} \eqn{\times |\widehat{OR}_r|} for every non-reference
 #' group, and all values are finite. The search covers all \eqn{k!}
 #' permutations of the row labels, each with and without the outcome columns
-#' swapped (the identity without a swap is the "as labelled" check), and is
+#' swapped (the identity without a swap is the \dQuote{as labelled} check), and is
 #' only run for \eqn{k \le 7} groups. A zero cell gives an infinite or
 #' undefined odds ratio, which never matches.
 #'
@@ -1354,8 +1354,8 @@ declbld <- function(x, vlabs = NULL) {
 #'
 #' @details
 #' With labels \eqn{L_1, \dots, L_k} in code order, each mechanism produces
-#' a sequence \eqn{M_1, \dots, M_k} meaning "true group \eqn{L_i} was seen as
-#' \eqn{M_i}". It matches when \eqn{M_i =} \code{observed[L_i]} for all
+#' a sequence \eqn{M_1, \dots, M_k} meaning \dQuote{true group \eqn{L_i} was seen as
+#' \eqn{M_i}}. It matches when \eqn{M_i =} \code{observed[L_i]} for all
 #' \eqn{i}. There are five fixed mechanisms, \eqn{k - 1} rotations, and two
 #' frequency orders with \code{cnts}. When \code{obs} is the identity
 #' no mechanism is reported as matching.

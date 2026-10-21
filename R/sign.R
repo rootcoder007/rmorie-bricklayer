@@ -575,7 +575,7 @@ fipssz <- function(scheme) {
 #' @param msg The message bytes.
 #' @param ctx The context bytes.
 #' @param rnd The randomness bytes, or the fixed bytes of the deterministic variant.
-#' @param prehash The pre-hash name, "none" for a pure signature.
+#' @param prehash The pre-hash name, \code{"none"} for a pure signature.
 #' @param masked Whether ML-DSA signs with the masked implementation.
 #' @return The signature bytes.
 #' @noRd
@@ -608,7 +608,7 @@ fipssz <- function(scheme) {
 #' @param msg The message bytes.
 #' @param ctx The context bytes.
 #' @param sig The signature bytes.
-#' @param prehash The pre-hash name, "none" for a pure signature.
+#' @param prehash The pre-hash name, \code{"none"} for a pure signature.
 #' @return `TRUE` when the signature verifies.
 #' @noRd
 .rmbl_fips_verify <- function(scheme, pk, msg, ctx, sig,
@@ -622,9 +622,9 @@ fipssz <- function(scheme) {
 
 #' Checks the pre-hash name.
 #'
-#' The pre-hash name, validated here so a typo cannot be read as "none"
+#' The pre-hash name, validated here so a typo cannot be read as \code{"none"}
 #' and quietly produce a pure signature instead of the requested one.
-#' @param prehash The name passed by the user; NULL or NA is "none".
+#' @param prehash The name passed by the user; NULL or NA is \code{"none"}.
 #' @return The pre-hash name.
 #' @noRd
 .rmbl_fips_prehash <- function(prehash) {
@@ -1396,7 +1396,7 @@ xmssadv <- function(key, sig, msg = NULL) {
 #' cannot be replayed at another index or under another key.
 #'
 #' Returns `FALSE` rather than erroring on a malformed or truncated
-#' signature: a verifier must treat unparseable input as "not verified",
+#' signature: a verifier must treat unparseable input as \dQuote{not verified},
 #' never as an exception to be caught and ignored.
 #'
 #' @details
@@ -1654,7 +1654,7 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 #' An XMSS key field by its name (pubseed, skseed, skprf). Builds of 1.0.0 before the review
 #' wrote pub_seed, sk_seed and sk_prf; a key saved by one still reads.
 #' @param key The XMSS key.
-#' @param nm "pubseed", "skseed" or "skprf".
+#' @param nm \code{"pubseed"}, \code{"skseed"} or \code{"skprf"}.
 #' @return The field's value, or NULL.
 #' @noRd
 .rmbl_xkey <- function(key, nm) {
@@ -1686,8 +1686,10 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 #'
 #' The used-index record: the option, then the environment variable, else the package's own
 #' configuration directory (tools::R_user_dir, the place CRAN policy sets aside for it).
-#' FALSE or "" turns the file off (the session record stays); a value that is plainly not a
-#' path ("TRUE", "0", ...), a relative path (it would follow the working directory) and a path
+#' FALSE or \code{""} turns the file off (the session record stays); a value that is
+#' plainly not a
+#' path (\code{"TRUE"}, \code{"0"}, ...), a relative path (it would follow the working
+#' directory) and a path
 #' that is not a regular file (a device such as /dev/null, which the rename replaced when run
 #' as root, or a directory) are refused (review of 52a8883, B7).
 #' @param cli For the command line: only RMBL_XMSS_INDEX_FILE, and NULL when it is not set (the
@@ -1859,10 +1861,10 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 }
 
 #' What to check when the lock file cannot be opened: a read-only directory, or a lock file another
-#' user owns. "" when the system's reason says neither.
+#' user owns. \code{""} when the system's reason says neither.
 #' @param m The lock error's message.
 #' @param lock The lock file's path.
-#' @return A hint to add to the message, or "".
+#' @return A hint to add to the message, or \code{""}.
 #' @noRd
 .rmbl_lock_hint <- function(m, lock) {
   if (grepl("Read-only", m)) return(" (is the directory read-only?)")
@@ -1989,7 +1991,8 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   invisible(TRUE)
 }
 
-#' Add a key to the record as "registered, nothing used" (-1), never lowering an entry.
+#' Add a key to the record as \dQuote{registered, nothing used} (-1), never lowering an
+#' entry.
 #' @param key The XMSS key.
 #' @param fresh Whether the key was just generated, so a registered entry is not an error.
 #' @return `TRUE` invisibly, or `FALSE` invisibly when the record is off.
@@ -2038,7 +2041,8 @@ xmssregkey <- function(keytoreg) {
 #' @param keytofgt For
 #'   [xmssfgt()]:
 #'   a signing key (the record is keyed by its secret seed) whose
-#'   entry alone is reset to "nothing used" (it may sign from index 0 again); \code{NULL}
+#'   entry alone is reset to \dQuote{nothing used} (it may sign from index 0 again);
+#'   \code{NULL}
 #'   removes the whole record (every key, and the record of the releases before 0.5.12),
 #'   after which only keys generated afterwards, or vouched for by
 #'   [xmssregkey()], may sign.

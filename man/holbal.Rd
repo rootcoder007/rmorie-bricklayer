@@ -54,8 +54,8 @@ from the published ones.
 Indigenous understandings of mental health are holistic: wellness is a balance
 among the domains of a person, and illness a loss of that balance (Stewart 2008;
 Gabriel, Mirza and Stewart 2022). A single indicator, or an average of indicators,
-cannot show balance: a group with 80\\% in two domains and 20\\% in two others has the
-same average as one with 50\\% in all four. This method, which is ours and inspired by
+cannot show balance: a group with 80\% in two domains and 20\% in two others has the
+same average as one with 50\% in all four. This method, which is ours and inspired by
 that work rather than taken from it, measures balance as the ratio of the weighted
 geometric to the weighted arithmetic mean of the domain levels \eqn{p_k}:
 \deqn{B = \exp\left(\sum_k w_k \log p_k\right) / \sum_k w_k p_k,}

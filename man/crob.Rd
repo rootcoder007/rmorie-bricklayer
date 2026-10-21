@@ -35,7 +35,7 @@ The unrounded consistency constant is \code{1 / qnorm(3/4)} =
 \code{1} for the unscaled median deviation.}
 
 \item{k}{Fence width in IQRs, a single non-negative number (default
-1.5, Tukey's convention; 3 is the usual "far out" cutoff).}
+1.5, Tukey's convention; 3 is the usual \dQuote{far out} cutoff).}
 }
 \value{
 \code{cqnt()}: a numeric vector the length of \code{probs}, in

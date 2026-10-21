@@ -503,7 +503,7 @@ hqccmpkey <- function(key) {
 #' @param key The key.
 #' @param seed The seed it was made from.
 #' @param level The parameter set, 1, 3 or 5.
-#' @param version "v5" or "round4".
+#' @param version \code{"v5"} or \code{"round4"}.
 #' @return The full secret key as hex, or NULL.
 #' @noRd
 .rmbl_hqc_expand <- function(key, seed, level, version) {
@@ -584,7 +584,7 @@ print.bricklayer_hqc_capsule <- .rmbl_print_via_format
 
 #' A key made before the version existed is a v5 key
 #' @param key The key.
-#' @return "v5" or "round4".
+#' @return \code{"v5"} or \code{"round4"}.
 #' @noRd
 .rmbl_hqc_key_version <- function(key) {
   v <- key[["version"]]
@@ -619,11 +619,11 @@ print.bricklayer_hqc_capsule <- .rmbl_print_via_format
   .rmbl_hqc_level(key$level)
 }
 
-#' Which carry-less multiplier the HQC products use: "pclmul", "pmull" or
-#' "portable". `portable = TRUE` forces the portable one, FALSE restores the
+#' Which carry-less multiplier the HQC products use: \code{"pclmul"}, \code{"pmull"} or
+#' \code{"portable"}. `portable = TRUE` forces the portable one, FALSE restores the
 #' hardware path (the tests run the vectors through both).
 #' @param portable TRUE for the portable multiplier, FALSE for the hardware one, NA to leave it.
-#' @return "pclmul", "pmull" or "portable".
+#' @return \code{"pclmul"}, \code{"pmull"} or \code{"portable"}.
 #' @noRd
 .rmbl_hqc_backend <- function(portable = NA) {
   .Call(C_rmbl_hqc_backend, as.logical(portable))

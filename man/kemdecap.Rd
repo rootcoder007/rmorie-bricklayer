@@ -60,9 +60,9 @@ plain constant-time decapsulation, and the option
 \code{rmoriebricklayer.masked} sets the default for a session.
 
 Errors (checked before any decapsulation): \code{key} not from
-\code{\link[=kemkg]{kemkg()}}, or a public key only ("decapsulation needs a
+\code{\link[=kemkg]{kemkg()}}, or a public key only (\dQuote{decapsulation needs a
 key with its
-secret half"); a ciphertext that is not hex or raw of the exact length
+secret half}); a ciphertext that is not hex or raw of the exact length
 for the key's level, which is
 \code{\link[=kemsz]{kemsz()}}\code{[["ciphertext"]]} bytes (768,
 1088 or 1568); \code{masked} not \code{TRUE} or \code{FALSE}.

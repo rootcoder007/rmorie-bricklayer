@@ -22,7 +22,8 @@
 #' Checks a seed for R's own generator.
 #'
 #' A seed for R's own generator: one whole number from -2147483647 to 2^53 - 1. NA, Inf, text or two
-#' numbers reached set.seed() itself, whose error ("supplied seed is not a valid integer") named
+#' numbers reached set.seed() itself, whose error (\dQuote{supplied seed is not a valid
+#' integer}) named
 #' neither the function nor the argument (CRAN stress test of b617a3f). 2^53 is where doubles stop
 #' holding every whole number, the native kernels' seed range too.
 #' @param seed The value passed by the user.

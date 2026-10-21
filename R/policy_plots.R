@@ -10,7 +10,7 @@
 #' nothing
 #' @param x The points' x coordinates.
 #' @param y Their y coordinates.
-#' @return "topleft", "topright", "bottomleft" or "bottomright".
+#' @return \code{"topleft"}, \code{"topright"}, \code{"bottomleft"} or \code{"bottomright"}.
 #' @noRd
 .bl_free_corner <- function(x, y) {
   u <- graphics::par("usr")

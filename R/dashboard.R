@@ -26,7 +26,7 @@
 #'   it, and as a toast.
 #'   The resampling analyses (bootstraps, permutations, simulations and the Hawkes
 #'   fits) run in a forked background process on Unix-alikes, so the page stays live
-#'   while they work. "Share this view" in the navbar gives a link that reopens the
+#'   while they work. \dQuote{Share this view} in the navbar gives a link that reopens the
 #'   page with the same tab, data and form.
 #'
 #'   The menus and their tabs:
@@ -219,7 +219,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
   })
 }
 
-#' Where an error comes from, in explerr()'s words, or "" when it is not one of the
+#' Where an error comes from, in explerr()'s words, or \code{""} when it is not one of the
 #' package's.
 #' @param e The condition.
 #' @return One string.
@@ -599,7 +599,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 }
 
 #' The data of a tab: an example source of the spec, or the data loaded at the left.
-#' @param src The chosen source: "" or an R expression from the spec.
+#' @param src The chosen source: \code{""} or an R expression from the spec.
 #' @param dat The data loaded at the left.
 #' @return A list: data and code.
 #' @noRd
@@ -802,7 +802,7 @@ rmblapp <- function(data = NULL, capsule = NULL, ...) {
 #' @param set The settings.
 #' @param active The id of the tab on the page; the tab runs its first analysis when it
 #'   is first shown.
-#' @param mode The colour mode of the page, "light" or "dark".
+#' @param mode The colour mode of the page, \code{"light"} or \code{"dark"}.
 #' @return NULL, invisibly.
 #' @noRd
 .bl_tab_server <- function(id, s, dat, rpt, set, active = shiny::reactive(id), mode = shiny::reactive("light")) {

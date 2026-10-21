@@ -4,7 +4,7 @@
 #'
 #' @description
 #' Creates a new folder with the three files a reproducible analysis
-#' "capsule" needs, ready to be filled in: a \code{data_provenance.json}
+#' \code{"capsule"} needs, ready to be filled in: a \code{data_provenance.json}
 #' that says where the data come from, an \code{analysis.R} script that
 #' fetches, checks, analyses and records, and a \code{README.md} that says
 #' how to run it. Use it to start a new project in the package's

@@ -5,13 +5,14 @@
 # exports doing one of those; these guards make every such call an error
 # that names the argument.
 
-#' The function a refusal comes from, as "fn: ".
+#' The function a refusal comes from, as \dQuote{fn: }.
 #'
 #' A check several functions share still says which of them refused (srr G5.2a: every
-#' message unique; "`data` must be a data frame" came from 21). It is the nearest frame on the
+#' message unique; \dQuote{`data` must be a data frame} came from 21). It is the nearest
+#' frame on the
 #' stack running an exported function or an S3 method of the package, the method named by its
-#' generic; "" when there is none (an internal helper called on its own).
-#' @return A string, "fn: " or "".
+#' generic; \code{""} when there is none (an internal helper called on its own).
+#' @return A string, \dQuote{fn: } or \code{""}.
 #' @noRd
 .rmbl_fn <- function() {
   ns <- environment(.rmbl_fn)
@@ -105,7 +106,8 @@
 #' Checks a column-name argument.
 #'
 #' A column-name argument: text naming one column (or, with `several`, one or more), none missing or
-#' empty. NULL or character(0) went on to data\[, cols\] and failed there as "get1index" (statistics
+#' empty. NULL or character(0) went on to data\[, cols\] and failed there as
+#' \code{"get1index"} (statistics
 #' stress test of 5e1dce5).
 #' @param x The column name or names passed by the user.
 #' @param what The argument's name, used in the error message.
@@ -124,7 +126,8 @@
 #' Marks unmarked valid UTF-8 text as UTF-8.
 #'
 #' Text that is valid UTF-8 but carries no encoding mark is marked UTF-8, so that a group or level
-#' a user types ("Metis" with an accent) matches the same bytes read from a table with
+#' a user types (\code{"Metis"} with an accent) matches the same bytes read from a table
+#' with
 #' `encoding = "UTF-8"` in every locale: in a C locale R left the literal unmarked and
 #' `%in%` called the two different (the C-locale CI cell, 1.0.0).
 #' @param x A character vector; anything else is returned as it is.
@@ -158,7 +161,8 @@
 #' Matches an argument against its accepted values.
 #'
 #' .rmbl_arg() in the package's words: `what` must be one of the choices, and what was given is named
-#' (match.arg's "'arg' should be one of" names neither; review of 29a55d8, hostile battery). Without
+#' (match.arg's \dQuote{'arg' should be one of} names neither; review of 29a55d8, hostile
+#' battery). Without
 #' `choices` they are the argument's default in the calling function, as .rmbl_arg() finds them.
 #' @param arg The value passed by the user; NULL or the full default vector picks the first choice.
 #' @param choices The accepted values.
@@ -192,7 +196,8 @@
 #' Checks that a data frame has unique, non-empty column names.
 #'
 #' A data frame's columns must be named, every name non-empty and no name twice: a frame built by
-#' hand with NULL or "" names is refused in words, not with a subscript error later (review of
+#' hand with NULL or \code{""} names is refused in words, not with a subscript error
+#' later (review of
 #' 29a55d8, hostile battery).
 #' @param data The data frame passed by the user.
 #' @param what The argument's name, used in the error message.
@@ -248,7 +253,8 @@
 #' Checks that an argument is a number (a whole one with `integer`) and converts it.
 #'
 #' A numeric argument: text that is not a number is refused in words (as.numeric() turned it into NA
-#' with "NAs introduced by coercion" and the function failed further on); every other type converts
+#' with \dQuote{NAs introduced by coercion} and the function failed further on); every
+#' other type converts
 #' exactly as as.numeric() / as.integer() always did.
 #' @param x The value passed by the user.
 #' @param what The argument's name, used in the error message.
@@ -301,7 +307,8 @@
 #' Checks where a function writes its output.
 #'
 #' Where a function writes: a connection, or one non-empty path (a number or NA reached file() and
-#' writeLines() and failed in their words: "'con' is not a connection", "invalid 'description' argument")
+#' writeLines() and failed in their words: \dQuote{'con' is not a connection},
+#' \dQuote{invalid 'description' argument})
 #' @param file The connection or path passed by the user.
 #' @param what The argument's name, used in the error message.
 #' @param connection Whether a connection or NULL is accepted.
@@ -341,7 +348,8 @@
 #'
 #' One number (a whole one with `integer`), finite, in \[min, max\]: the checks a scalar argument needs,
 #' said in words. A list, a data frame, text that is no number, NA, a vector are each refused here, not
-#' by the base R call they reached (`if (n < mintl)`: "missing value where TRUE/FALSE needed"; CRAN
+#' by the base R call they reached (`if (n < mintl)`: \dQuote{missing value where
+#' TRUE/FALSE needed}; CRAN
 #' stress test of 0.5.14)
 #' @param x The value passed by the user.
 #' @param what The argument's name, used in the error message.
@@ -384,7 +392,8 @@
 #' Refuses a function or an environment passed where data goes.
 #'
 #' A function where data goes: said in words, before as.character(), match() or `[` refuse it in
-#' theirs ("cannot coerce type 'closure' to vector of type 'character'"; 64 such arguments in the
+#' theirs (\dQuote{cannot coerce type 'closure' to vector of type 'character'}; 64 such
+#' arguments in the
 #' re-test of the b617a3f CRAN stress fixes). Called with the arguments named: .rmbl_no_fn(x = x)
 #' @param ... The arguments to check, each named.
 #' @return `TRUE`, invisibly.
@@ -451,7 +460,8 @@
 #' Checks that a plot method was given an object of its class.
 #'
 #' A plot method called on something its class's function did not make (plot.rmbl_crf(1)): said, not a
-#' base R error from deep inside the drawing ("$ operator is invalid for atomic vectors"; 91 such
+#' base R error from deep inside the drawing (\dQuote{$ operator is invalid for atomic
+#' vectors}; 91 such
 #' calls in the CRAN stress test of b617a3f)
 #' @param x The object passed to the plot method.
 #' @param cls The class the method expects.
@@ -623,7 +633,7 @@
 
 #' A result an alias returned, back in its 1.0.0 names; anything else as it is.
 #' @param x Any object.
-#' @return `x`, renamed back and unmarked when it carries the "rmbl_old" class.
+#' @return `x`, renamed back and unmarked when it carries the \code{"rmbl_old"} class.
 #' @noRd
 .rmbl_new_names <- function(x) {
   if (!inherits(x, "rmbl_old")) return(x)

@@ -73,7 +73,8 @@ effect of the survey's weights and clusters, which the counts of persons (popula
 totals) do not. The interval is built on the logit scale, so it stays inside 0 and 1.
 
 The categories given in \code{lvls} are taken as the whole scale: rows for totals,
-for combined categories ("Excellent or very good") and for "not specified" are left
+for combined categories (\dQuote{Excellent or very good}) and for \dQuote{not
+specified} are left
 out, and the shares are rescaled to sum to one over the levels. A group with a
 suppressed or missing category is not compared, since its distribution is unknown; one
 with an \code{E} category (in the group or the reference) is compared and marked, and

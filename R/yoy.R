@@ -26,7 +26,7 @@
 #' Computes the change from one period to the period `lag` places
 #' before it, matched on the period's own value rather than on row order,
 #' and carries an exact interval for count data. Use it for the
-#' "up 12% on last year" figures of an annual report or an open-data
+#' \dQuote{up 12% on last year} figures of an annual report or an open-data
 #' release: a missing year shows as a gap instead of shifting every
 #' comparison, a percentage is compared in percentage points, and a change
 #' off a small count comes with an interval as wide as the count is small.
@@ -35,7 +35,7 @@
 #' Rows are first combined to one per period (and group) with `fun`. With
 #' `complete = TRUE` the periods missing from a regular grid (numbers, `Date`
 #' or `POSIXct` with a common step) are inserted with `NA` values and flagged
-#' "no data". Each period is then compared with the period `lag` steps
+#' \dQuote{no data}. Each period is then compared with the period `lag` steps
 #' earlier in that grid: `change` is the difference, `pctchg`
 #' \eqn{100 (v_t / v_{t-lag} - 1)} (`NA` off a zero base), and for percentages
 #' `ppchg` is the difference in percentage points.
@@ -67,7 +67,7 @@
 #' period (a year, a `Date`, a fiscal-year integer, an ordered
 #' factor). An ordered factor is compared by level order, one level being one
 #' period; an unordered factor or a character column has no order, so every row
-#' is flagged "no comparison period". For a numeric vector, the periods themselves.
+#' is flagged \dQuote{no comparison period}. For a numeric vector, the periods themselves.
 #' @param by Optional grouping columns, as a character vector.
 #' The change is computed within each group.
 #' @param lag How many periods back to compare with. `1` is
@@ -87,7 +87,7 @@
 #' and withholds the percent change, which for a percentage is a different
 #' quantity.
 #' @param minbase Optional: previous-period values below this get a
-#' "small base" note. Nothing is withheld either way: every non-zero base gets
+#' \dQuote{small base} note. Nothing is withheld either way: every non-zero base gets
 #' its percent change and exact interval, which is as wide as the base is
 #' small. Defaults to 0 (no note); only a zero base has no percent change.
 #' @param conflvl Numeric scalar in (0, 1), the confidence level for the
@@ -114,8 +114,8 @@
 #' period column under its own name (`period` for a vector or a `ts`), the
 #' grouping columns, then `value`, `previous`, `change`, `pctchg`
 #' (or
-#' `ppchg` for percentages), `flag` (character: "no comparison period",
-#' "no data", "previous period is zero", or a small-base note when
+#' `ppchg` for percentages), `flag` (character: \dQuote{no comparison period},
+#' \dQuote{no data}, \dQuote{previous period is zero}, or a small-base note when
 #' `minbase` is set; `NA` otherwise), `pctlo` and `pctup`
 #' for counts,
 #' and `verdict`. Attribute `"yoy"` records `value`, `period`,
@@ -341,7 +341,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
 #'
 #' The unevaluated argument is consulted FIRST. Testing is.character(val)
 #' before that forces the promise, so a bare column name -- the whole
-#' point of accepting one -- raised "object 'n' not found" instead of
+#' point of accepting one -- raised \dQuote{object 'n' not found} instead of
 #' naming the column.
 #' @param sub The unevaluated argument, from `substitute()`.
 #' @param val The argument itself.
@@ -537,10 +537,11 @@ yoy.ts <- function(x, lag = NULL, ...) {
 #' @param period The period column's name.
 #' @param by The group columns' names, or NULL.
 #' @param lag The comparison lag, in periods.
-#' @param units "count", "percent" or another unit.
+#' @param units \code{"count"}, \code{"percent"} or another unit.
 #' @param min_base The previous value below which a change is flagged as a small base.
 #' @param conf_level The confidence level of the count-ratio interval.
-#' @param direction "higher", "lower" or "neutral": which way is better.
+#' @param direction \code{"higher"}, \code{"lower"} or \code{"neutral"}: which way is
+#' better.
 #' @return A data frame, one row per period and group.
 #' @noRd
 .yoy_compute <- function(agg, value, period, by, lag, units, min_base,
@@ -689,7 +690,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
 #' quantity keeps what it actually carries, so a rate of 4.1 does not
 #' print as 4 and its change of 0.5 does not print as 0.
 #' @param v The values.
-#' @param units "count" or another unit.
+#' @param units \code{"count"} or another unit.
 #' @return An integer from 0 to 6.
 #' @noRd
 .yoy_value_digits <- function(v, units) {
@@ -705,7 +706,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
 
 #' Names each change: up, down or unchanged, or better or worse when a direction is set.
 #' @param chg The changes.
-#' @param direction "higher", "lower" or "neutral".
+#' @param direction \code{"higher"}, \code{"lower"} or \code{"neutral"}.
 #' @return A character vector.
 #' @noRd
 .yoy_verdict <- function(chg, direction) {

@@ -44,7 +44,7 @@
 #' A responder's answer is only believed when its signature verifies under
 #' a certificate in the path or one it carries that the path issued. An
 #' unsigned or unverifiable answer is reported as such -- treating it as
-#' "good" would make revocation checking worse than skipping it, since it
+#' \code{"good"} would make revocation checking worse than skipping it, since it
 #' would look like it had happened.
 #'
 #' The fetched CRLs are returned, not checked:
@@ -317,7 +317,7 @@ rvkfetch <- function(path, tmout = 10) {
 }
 
 #' Encodes a dotted object identifier as a DER OBJECT IDENTIFIER.
-#' @param dotted The OID, such as "1.3.14.3.2.26".
+#' @param dotted The OID, such as \code{"1.3.14.3.2.26"}.
 #' @return The encoding as raw bytes.
 #' @noRd
 .rmbl_der_oid_bytes <- function(dotted) {
@@ -454,7 +454,7 @@ rvkfetch <- function(path, tmout = 10) {
 #' @param body The answer as raw DER.
 #' @param cert The parsed certificate asked about.
 #' @param path The certificate path, whose certificates may sign the answer.
-#' @return A list with `ok` (TRUE only for a signed "good") and a `detail` sentence.
+#' @return A list with `ok` (TRUE only for a signed \code{"good"}) and a `detail` sentence.
 #' @noRd
 .rmbl_ocsp_parse <- function(body, cert, path) {
   d <- tryCatch(.Call(C_rmbl_der_parse, body), error = function(e) NULL)

@@ -77,7 +77,7 @@ not created. Without \code{by} the whole table is one group. With a
 vector, each element is its own row.
 
 \code{per} takes a number, or one of \code{"1k"}, \code{"10k"},
-\code{"100k"}, \code{"1m"} (case, spaces, commas and a leading "per" are
+\code{"100k"}, \code{"1m"} (case, spaces, commas and a leading \code{"per"} are
 ignored), because a denominator mistyped by a factor of ten is invisible
 once it reaches a table.
 

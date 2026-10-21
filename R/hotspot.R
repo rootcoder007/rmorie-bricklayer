@@ -37,7 +37,7 @@
 #' point (equirectangular, Earth radius 6371.0088 km), which is accurate for
 #' a city or region; a warning is given when the incidents span more than
 #' 2000 km. The grid starts at the smallest projected coordinate. Points at
-#' (0, 0), the raw exports' "no location", are dropped with a message, as
+#' (0, 0), the raw exports' \dQuote{no location}, are dropped with a message, as
 #' are incidents with a non-finite coordinate or a missing period; longitudes
 #' across the antimeridian are taken on one side of it. When a tie empties a
 #' period's hot set, its overlap with the neighbouring periods is \code{NA},

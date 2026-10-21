@@ -47,7 +47,7 @@ A reported value matches when \eqn{|OR_r - \widehat{OR}_r| \le}
 \code{tol} \eqn{\times |\widehat{OR}_r|} for every non-reference
 group, and all values are finite. The search covers all \eqn{k!}
 permutations of the row labels, each with and without the outcome columns
-swapped (the identity without a swap is the "as labelled" check), and is
+swapped (the identity without a swap is the \dQuote{as labelled} check), and is
 only run for \eqn{k \le 7} groups. A zero cell gives an infinite or
 undefined odds ratio, which never matches.
 

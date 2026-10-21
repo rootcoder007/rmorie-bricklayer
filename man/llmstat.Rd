@@ -20,7 +20,7 @@ shared row; \code{"disabled"}, \code{"not running"},
 Shows, in one table, every way \code{\link{llmask}} could
 reach a language model from this machine and whether each is ready: your
 own endpoint, each provider whose key is set, and a local Ollama server.
-Use it to find out why a question fails with "no route", or which model
+Use it to find out why a question fails with \dQuote{no route}, or which model
 a route would use. The command line prints it as part of
 \code{rmoriebricklayer doctor}.
 }

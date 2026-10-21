@@ -102,7 +102,7 @@ jsgzenc <- function(x, raw = FALSE, ...) {
 
 #' Wrap a deflate stream in a real gzip member (RFC 1952).
 #'
-#' memCompress(type = "gzip") does NOT produce gzip: it produces a zlib
+#' memCompress(type = \code{"gzip"}) does NOT produce gzip: it produces a zlib
 #' stream (RFC 1950), whose header is 0x78 0x9c rather than gzip's 0x1f
 #' 0x8b. R's own memDecompress reads both, so a round trip through this
 #' package looked correct while no external tool -- gzip, zcat, a browser

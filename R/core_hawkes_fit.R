@@ -9,8 +9,9 @@
 .rmbl_hk_bkind <- c(constant = 0L, sinusoidal = 1L)
 .rmbl_hk_methods <- c("auto", "exact", "soe", "truncate", "em", "inar")
 
-#' Resolves the fitting route for a kernel, turning "auto" into a concrete one.
-#' @param method The route asked for: one of "auto", "exact", "soe", "truncate", "em", "inar".
+#' Resolves the fitting route for a kernel, turning \code{"auto"} into a concrete one.
+#' @param method The route asked for: one of \code{"auto"}, \code{"exact"}, \code{"soe"},
+#' \code{"truncate"}, \code{"em"}, \code{"inar"}.
 #' @param kernel The kernel name.
 #' @return The route name.
 #' @noRd
@@ -49,10 +50,10 @@
 #' @param times The sorted event times.
 #' @param horizon The end of the observation window.
 #' @param kernel The kernel name.
-#' @param baseline "constant" or "sinusoidal".
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
 #' @param theta The parameters: the baseline terms, the branching ratio and the kernel parameters.
-#' @param method The route: "exact", "soe" or "truncate".
-#' @param eps The tolerance of the "soe" and "truncate" routes.
+#' @param method The route: \code{"exact"}, \code{"soe"} or \code{"truncate"}.
+#' @param eps The tolerance of the \code{"soe"} and \code{"truncate"} routes.
 #' @param gradient Whether the gradient is computed too.
 #' @return The negative log-likelihood, followed by the gradient when asked for.
 #' @noRd
@@ -67,7 +68,8 @@
 #' Checks event times and the horizon of a Hawkes fit.
 #' @param times The event times passed by the user.
 #' @param horizon The horizon passed by the user (the `hor` argument).
-#' @param baseline "constant" or "sinusoidal"; the sinusoidal one caps the horizon.
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}; the sinusoidal one caps the
+#' horizon.
 #' @return A list with the checked `times` and `horizon`.
 #' @noRd
 .rmbl_hk_check_times <- function(times, horizon, baseline = "constant") {
@@ -92,7 +94,7 @@
 
 #' Gives the starting parameters for the optimiser.
 #' @param kernel The kernel name.
-#' @param baseline "constant" or "sinusoidal".
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
 #' @param n The number of events.
 #' @param horizon The end of the observation window.
 #' @param mean_dt The mean gap between events.
@@ -112,7 +114,7 @@
 
 #' Gives the parameter box the optimiser stays inside.
 #' @param kernel The kernel name.
-#' @param baseline "constant" or "sinusoidal".
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
 #' @return A list with the `lower` and `upper` bounds.
 #' @noRd
 .rmbl_hk_bounds <- function(kernel, baseline) {
@@ -454,9 +456,9 @@ chwkfit <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
 #' @param times The sorted event times.
 #' @param horizon The end of the observation window.
 #' @param kernel The kernel name.
-#' @param baseline "constant" or "sinusoidal".
-#' @param method The route: "exact", "soe" or "truncate".
-#' @param eps The tolerance of the "soe" and "truncate" routes.
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
+#' @param method The route: \code{"exact"}, \code{"soe"} or \code{"truncate"}.
+#' @param eps The tolerance of the \code{"soe"} and \code{"truncate"} routes.
 #' @param b The parameter box, from .rmbl_hk_bounds().
 #' @param start The starting parameters.
 #' @return A list with the parameters `par`, the minimum `value` and the number of `iterations`.
@@ -474,7 +476,7 @@ chwkfit <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
 #' @param times The sorted event times.
 #' @param horizon The end of the observation window.
 #' @param kernel The kernel name.
-#' @param baseline "constant" or "sinusoidal".
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
 #' @param b The parameter box, from .rmbl_hk_bounds().
 #' @return Starting parameters for `kernel`, inside the box.
 #' @noRd
@@ -559,7 +561,7 @@ chwkres <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
 #' Builds the baseline design matrix at a set of times.
 #' @param x The times.
 #' @param horizon The end of the observation window.
-#' @param baseline "constant" or "sinusoidal".
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
 #' @return A matrix with one column for the constant baseline, four for the sinusoidal one.
 #' @noRd
 .rmbl_hk_feats <- function(x, horizon, baseline) {
@@ -571,7 +573,7 @@ chwkres <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
 #' @param times The sorted event times.
 #' @param horizon The end of the observation window.
 #' @param kernel The kernel name.
-#' @param baseline "constant" or "sinusoidal".
+#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
 #' @param x0 The starting parameters.
 #' @param b The parameter box, from .rmbl_hk_bounds().
 #' @param max_iter The largest number of EM iterations.
@@ -663,7 +665,7 @@ chwkres <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
 #' @param times The sorted event times.
 #' @param horizon The end of the observation window.
 #' @param kernel The kernel name.
-#' @param baseline Must be "constant".
+#' @param baseline Must be \code{"constant"}.
 #' @param b The parameter box, from .rmbl_hk_bounds().
 #' @return The parameter vector: the log baseline, the branching ratio and the kernel parameters.
 #' @noRd
@@ -719,7 +721,7 @@ chwkres <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
 #' Returns \code{n} pseudo-random numbers on [0, 1) from a 64-bit seed with
 #' the splitmix64 generator, the same numbers morie's Python computes for
 #' the same seed. Use it where the R and Python arms must draw identical
-#' "random" values so that their results agree: the within-day jitter of
+#' \code{"random"} values so that their results agree: the within-day jitter of
 #' tied event dates in the TPS Hawkes fits, or a subsample.
 #'
 #' @details

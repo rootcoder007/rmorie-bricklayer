@@ -26,10 +26,10 @@ assumed for every open top band, in the units of the labels.}
 
 \item{openupfac}{Number, default \code{2}. When no cap is given,
 the open top band's upper bound is its lower bound times this factor
-(so "Greater than 10" becomes 11 to 22).}
+(so \dQuote{Greater than 10} becomes 11 to 22).}
 
 \item{openloflr}{Number or \code{NULL} (the default). The lower bound
-assumed for an open bottom band ("under 18"). \code{NULL} uses 0, or the
+assumed for an open bottom band (\dQuote{under 18}). \code{NULL} uses 0, or the
 band's own upper bound when that is below 0. A floor above a band's upper
 bound is refused.}
 }
@@ -42,8 +42,8 @@ open bands whose value rests on the cap or floor).
 Gives each band a single number that a calculation can use (a mean, a
 concentration index, a regression), under a rule you choose. For closed
 bands the rule places the value at the midpoint, the lower or upper
-bound, or the geometric mean of the bounds. An open band ("50+",
-"under 18") has no midpoint, so its missing bound is filled from an
+bound, or the geometric mean of the bounds. An open band (\code{"50+"},
+\dQuote{under 18}) has no midpoint, so its missing bound is filled from an
 explicit assumption, and the rows that rest on that assumption are
 flagged in the result instead of being absorbed into it.
 }

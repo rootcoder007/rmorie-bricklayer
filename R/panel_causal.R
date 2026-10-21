@@ -133,7 +133,8 @@
 }
 
 #' Turns a learner name or a user function into a function(xtr, ytr, xte).
-#' @param learner "lasso", "ridge", "ols" or a function of the training and test data.
+#' @param learner \code{"lasso"}, \code{"ridge"}, \code{"ols"} or a function of the
+#' training and test data.
 #' @return The learner function.
 #' @noRd
 .rmbl_learner <- function(learner) {
@@ -715,7 +716,7 @@ plot.rmbl_synthdid <- function(x, ..., main = NULL, col = NULL, palette = NULL) 
 #' \eqn{\beta_0} not rejected at \eqn{1 -} \code{conflvl}, found by bisection with
 #' the same draws; it is unbounded when no value can be rejected (with Rademacher
 #' weights and \eqn{G} clusters the smallest attainable p-value is \eqn{2/2^G}, so
-#' four clusters can never reject at 5\%: that is the honest answer, not a failure of
+#' four clusters can never reject at 5%: that is the honest answer, not a failure of
 #' the method).
 #'
 #' @inheritParams plndid
@@ -833,7 +834,7 @@ wcb <- function(data, unit, time, y, trtd, covs = NULL, cl = NULL,
 #' Bounds on the effects of an \code{\link{evstudy}} when the trend after adoption
 #' may depart from parallel by up to \eqn{\bar M} times the largest departure seen
 #' before it (Rambachan and Roth's relative magnitudes), with a conservative interval
-#' and the "breakdown" \eqn{\bar M} at which the interval first includes zero.
+#' and the \code{"breakdown"} \eqn{\bar M} at which the interval first includes zero.
 #'
 #' @details Let \eqn{\delta_e} be the bias of the event-time coefficient
 #' \eqn{\beta_e}, with \eqn{\delta_{-1} = 0} at the reference period and the

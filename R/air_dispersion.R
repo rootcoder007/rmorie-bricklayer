@@ -337,7 +337,7 @@ briggs <- function(x, u, diam, exitvel, stktmp, ambtmp,
   cls
 }
 
-#' Checks that the setting is "rural" or "urban".
+#' Checks that the setting is \code{"rural"} or \code{"urban"}.
 #' @param setting The setting passed by the user.
 #' @return `setting`.
 #' @noRd

@@ -124,7 +124,7 @@ population is positive and at most 10 billion, the reference is finite
 and non-negative, and the pollutant has a CRF. Any failure gives status
 \code{"assumption_failure"} and skips the stages.
 
-With data (a CSV or the demo), the "exposed" are the rows above the
+With data (a CSV or the demo), the \code{"exposed"} are the rows above the
 reference: their mean is \code{expomean} and their share
 \code{expoprev}. Empty cells and missing-value tokens
 (\code{NA}, \code{n/a}, \code{null}, \code{-} ...) are dropped with a

@@ -32,9 +32,9 @@ Estimates the effect of a continuous exposure (or treatment) on an
 outcome after adjusting for confounders, by the double machine learning
 recipe: the part of the outcome and of the exposure that the confounders
 predict is removed with models fitted on other folds of the data, and the
-effect is the slope of what is left. It answers questions such as "how
+effect is the slope of what is left. It answers questions such as \dQuote{how
 much does asthma incidence rise per microgram of NO2, holding income and
-age structure fixed?".
+age structure fixed?}.
 }
 \details{
 The partially linear model \eqn{Y = \theta D + g(X) + U},

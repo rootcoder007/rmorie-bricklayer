@@ -252,10 +252,10 @@ chnvrf <- function(chain) {
 
 #' Computes the digest of one chain link.
 #'
-#' One link's digest. Scheme 2 covers the label: "0" for a missing label and
-#' "1" + the label otherwise, after the fixed-width prev and payload, so no
+#' One link's digest. Scheme 2 covers the label: \code{"0"} for a missing label and
+#' \code{"1"} + the label otherwise, after the fixed-width prev and payload, so no
 #' two (prev, payload, label) triples share a preimage. Scheme 1 (0.5.12 and
-#' earlier) is "<prev>:<payload>" and is only ever recomputed, never written.
+#' earlier) is \dQuote{<prev>:<payload>} and is only ever recomputed, never written.
 #' @param prev The previous link digest (the genesis digest for the first entry).
 #' @param payload The entry digest.
 #' @param label The entry label, or NULL or NA when it has none.

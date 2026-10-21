@@ -85,7 +85,8 @@
 #' Raises an interrupt again and turns any other error into a value.
 #'
 #' A Ctrl-C that a native call took is raised as R's interrupt condition and ends the command with 130.
-#' When that condition finds no handler the barrier says it as an error, "<entry>: interrupted", and a
+#' When that condition finds no handler the barrier says it as an error, \dQuote{<entry>:
+#' interrupted}, and a
 #' tryCatch(error = ) that swallows errors swallowed the Ctrl-C: `rmbl data pull` went on for 65 s
 #' once in ten runs (final audit of 1.0.0, #11). Such an error is raised again as the interrupt it was;
 #' any other error gives `value`.
@@ -367,7 +368,7 @@ dmnf <- function(refresh = FALSE) {
 #' Returns a table's name for the listing.
 #'
 #' The description, else the source, else the key: the first that is set and not blank (the otis
-#' tables carry "" for both, which printed as an empty name)
+#' tables carry \code{""} for both, which printed as an empty name)
 #' @param d One table's entry in the manifest.
 #' @return One string.
 #' @noRd
@@ -424,8 +425,9 @@ dtabs <- function(refresh = FALSE) {
 #' Returns a table's digest from the manifest dmnf() returns.
 #'
 #' The digest from the manifest as dmnf() returns it (re-fetched when the
-#' cached copy is over a day old). A manifest that cannot be had is an error here, never "no
-#' digest" (review of 52a8883, B1).
+#' cached copy is over a day old). A manifest that cannot be had is an error here, never
+#' \dQuote{no
+#' digest} (review of 52a8883, B1).
 #' @param key The table's key.
 #' @param refresh Whether to fetch the manifest again.
 #' @return A hex digest, or NULL.

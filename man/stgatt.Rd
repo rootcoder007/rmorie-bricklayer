@@ -72,7 +72,7 @@ treated by period \eqn{\max(t, g - 1)} (\code{"notyet"}, the default). For
 \code{method = "csa"},
 \deqn{ATT(g, t) = \big(\bar Y_{g,t} - \bar Y_{g,b}\big) - \big(\bar Y_{C,t} - \bar
 Y_{C,b}\big),}{ATT(g, t) = (Y_g,t - Y_g,b) - (Y_C,t - Y_C,b),} with base period
-\eqn{b = g - 1} for \eqn{t \ge g}, and \eqn{b = t - 1} before (the "varying" base
+\eqn{b = g - 1} for \eqn{t \ge g}, and \eqn{b = t - 1} before (the \code{"varying"} base
 of the \code{did} package), so a pre-period ATT is a placebo of one period. It
 needs a balanced panel.
 

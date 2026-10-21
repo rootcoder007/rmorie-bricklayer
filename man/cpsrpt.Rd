@@ -81,7 +81,7 @@ together and ordered by severity, because the failure mode this is built
 against is a person running one check, seeing it pass, and concluding
 the data is fine.
 }
-\section{What "severity" means}{
+\section{What \code{severity} means}{
 \itemize{
 \item \code{fatal} -- nothing downstream can run as it stands: a schema check or a
 rule of severity \code{"fatal"} failed (for example a required column is

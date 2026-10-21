@@ -350,7 +350,7 @@ drftchisq <- function(obs, expd) {
 #'
 #' The upper tail of a chi-square, computed AS the upper tail. The former
 #' 1 - cgamcdf(df / 2, stat / 2) underflowed to exactly 0 once the
-#' lower tail rounded to 1 (stat >= 74.9 at df = 2), and "p = 0" is a
+#' lower tail rounded to 1 (stat >= 74.9 at df = 2), and \dQuote{p = 0} is a
 #' number a reader quotes.
 #' @param stat The chi-square statistic.
 #' @param df Its degrees of freedom.
@@ -686,7 +686,7 @@ benfordtst <- function(x) {
 #' many tests).
 #' @param psithr PSI above which a numeric
 #' column is flagged even when its p-value is not significant (default
-#' 0.25, the conventional "material shift" line).
+#' 0.25, the conventional \dQuote{material shift} line).
 #' @param psiminn Minimum size BOTH samples must reach
 #' before `psithr` is allowed to flag a column on its own
 #' (default 1000). The PSI bands are large-sample heuristics with no
@@ -1001,7 +1001,7 @@ cpsdrft <- function(ref, cur, alpha = 0.01,
 
 #' Writes values of a numeric, date or date-time column for a reader: ISO 8601 for the last two.
 #' @param v The values as numbers (days or seconds since 1970-01-01 for dates and date-times).
-#' @param kind "number", "date" or "datetime".
+#' @param kind \code{"number"}, \code{"date"} or \code{"datetime"}.
 #' @return A character vector.
 #' @noRd
 .bl_drift_iso <- function(v, kind) {
@@ -1021,7 +1021,7 @@ cpsdrft <- function(ref, cur, alpha = 0.01,
   (a - b) * log(a / b)
 }
 
-#' Labels for quantile bins: "<= a", "(a, b]", "> b".
+#' Labels for quantile bins: \dQuote{<= a}, \dQuote{(a, b]}, \dQuote{> b}.
 #' @param edges The bin edges, from -Inf to Inf.
 #' @param fmt The function that formats an edge.
 #' @return One label per bin.

@@ -52,7 +52,7 @@ numerator's parent in the profile's hierarchy), for each geography, gender, age 
 and group. Statistics Canada does not publish standard errors for the profile, so the
 interval is an approximation built from what is known about how the counts were made:
 \itemize{
-\item a long-form ("25\\% sample") count is estimated from a sample of about one
+\item a long-form (\dQuote{25\% sample}) count is estimated from a sample of about one
 household in four, so the share has variance \eqn{d (1 - f) p (1 - p) / (f N)} for
 a sampling fraction \eqn{f} (\code{smpfrac}, 0.25) of a population of
 \eqn{N} (the denominator) and a design effect \eqn{d} (\code{deff}, 1 by default:
@@ -68,7 +68,7 @@ to the share (the only error of a full-count share).
 In all,
 \deqn{V = \frac{d (1 - f) p (1 - p)}{f N} + \frac{c (1 + p^2)}{N^2}.}{V = d (1 - f) p
 (1 - p) / (f N) + c (1 + p^2) / N^2.} The interval is Wilson's at the effective sample
-size \eqn{n_e = \max(p(1-p), 1/N) / V} (the floor \eqn{1/N} keeps a share of 0 or 100\\%
+size \eqn{n_e = \max(p(1-p), 1/N) / V} (the floor \eqn{1/N} keeps a share of 0 or 100\%
 from an infinite \eqn{n_e}), so it stays inside 0 and 100. It does not carry
 non-response (see \code{tnrlf}) or the edit and imputation error, so it is narrower
 than the full error; treat it as a lower bound on the uncertainty.
