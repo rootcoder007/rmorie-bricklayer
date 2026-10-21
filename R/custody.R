@@ -98,7 +98,7 @@
 #'   [stkflow()],
 #'   [adpcnts()]
 #'
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # Lakner's own worked example (p.15): 3,000 inmates served 13,500
 #' # detention days in a year.
 #' adp(13500)
@@ -154,7 +154,7 @@ adp <- function(days, t = 365) {
 #'
 #' @seealso [adp()], [stkflow()]
 #'
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # Lakner (p.17): 2,700 inmates admitted and released served 12,150
 #' # detention days between them.
 #' alos(12150, 2700)
@@ -206,7 +206,7 @@ alos <- function(days, n) {
 #'   [alos()],
 #'   [stkflow()]
 #'
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # Lakner (p.20) runs this the other way: t = 365, an average daily
 #' # population of 25 and 1,750 admissions imply a stay of 5.2 days.
 #' alosimplied <- 25 * 365 / 1750
@@ -258,7 +258,7 @@ admits <- function(adp, alos, t = 365) {
 #'
 #' @seealso [adp()]
 #'
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # Lakner (p.21): counts on 255 days summing to 34,935 imply just over
 #' # fifty thousand detention days across the year.
 #' adpcnts(rep(34935 / 255, 255))
@@ -348,7 +348,7 @@ adpcnts <- function(cnts, t = 365) {
 #'
 #' @seealso [adp()], [alos()]
 #'
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # Fewer people, held longer: the flow falls while the stock rises.
 #' stkflow(
 #'   days = c(115674, 126121), people = c(12647, 9608),
@@ -493,7 +493,7 @@ print.rmbl_stock_flow <- function(x, ...) {
 #'
 #' @seealso [adp()]
 #'
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' perdays("2024-01-01", "2024-12-31") # a leap year
 #' perdays("2023-01-01", "2023-12-31")
 #' perdays("2025-04-01", "2026-03-31") # a fiscal year
@@ -571,7 +571,7 @@ perdays <- function(from, to) {
 #'   [adp()],
 #'   [stkflow()]
 #'
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # a skewed distribution: most stays short, a few long
 #' stays <- c(rep(1, 40), rep(3, 30), rep(10, 20), 60, 90, 120)
 #' staysmry(stays)

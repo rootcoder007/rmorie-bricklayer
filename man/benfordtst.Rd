@@ -48,7 +48,7 @@ a long vector shows a progress bar in an interactive session
 or no finite non-zero value.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # A quantity spanning several orders of magnitude follows the law.
 set.seed(3)
 benfordtst(10^stats::runif(2000, 0, 6))

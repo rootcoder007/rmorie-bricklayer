@@ -62,7 +62,7 @@
 #' @references Okabe, M. and Ito, K. (2008). Color Universal Design (CUD):
 #'   how to make figures and presentations that are friendly to colorblind
 #'   people. \url{https://jfly.uni-koeln.de/color/}
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' blpal("okabe", 3)
 #' old <- plotopt(palette = "grey", grid = FALSE)
 #' plotopt()
@@ -1188,7 +1188,7 @@ plotopt <- function(...) {
 #'   carries the x position of each point drawn: an \code{at} column
 #'   (\code{rmbl_yoy}, \code{rmbl_rate_change}), or an \code{"at"} attribute
 #'   (\code{rmbl_stock_flow}).
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' sf <- stkflow(days = c(13500, 14600, 15100), people = c(300, 320, 310),
 #'                  prd = 2021:2023)
 #' plot(sf)
@@ -2324,7 +2324,7 @@ plot.rmbl_footprint <- function(x, ..., main = NULL, col = NULL, palette = NULL)
 #'   method).
 #' @seealso \code{\link{gplume}}; \code{plot()} draws the field as an
 #'   image with contours (see \code{\link{plot-methods}}).
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' f <- plmfld(100, 5, 50, x = seq(100, 3000, by = 100), y = seq(-500, 500, by = 50))
 #' dim(f$field)
 #' plot(f)
@@ -2511,7 +2511,7 @@ plot.bricklayer_analysis <- function(x, ..., which = NULL, main = NULL) {
 #'   \code{plotfnl()}: a data frame with \code{area}, \code{observed},
 #'   \code{expected}, \code{ratio} and \code{outside} (logical, outside the
 #'   widest limits).
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' plotlrnz(c(1, 1, 2, 3, 5, 8, 13))
 #' plotfnl(obs = c(4, 20, 50, 9), expd = c(5, 22, 40, 20),
 #'             area = c("a", "b", "c", "d"))
@@ -2670,7 +2670,7 @@ plotfnl <- function(obs, expd, area = NULL, lvls = c(0.95, 0.998), target = 1, .
 #'   and `count`, for `plotgain()` the curves (`grp`,
 #'   `population`, `value`) with the Gini coefficients as an attribute
 #'   `gini`.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(3)
 #' x <- c(stats::rnorm(200), stats::rnorm(200, 2, 0.6))
 #' g <- rep(c("before", "after"), each = 200)
@@ -2883,7 +2883,7 @@ plotgain <- function(x, grp = NULL, ..., main = NULL, col = NULL, pal = NULL) {
 #'   `year`, `week`, `wday`, `y`), for the others the
 #'   series (`grp`, `prd`, `y`, and `rank` for
 #'   `plotbump()`, `band` for `plothrz()`).
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(5)
 #' days <- seq(as.Date("2024-01-01"), as.Date("2024-12-31"), by = "day")
 #' plotcal(days, stats::rpois(length(days), 5 + 3 * (format(days, "%u") > "5")))

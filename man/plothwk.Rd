@@ -51,7 +51,7 @@ likely to have triggered it, the probabilities \eqn{\eta g(t_i - t_j)} and
 }
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 times <- sort(stats::runif(200, 0, 100))
 fit <- chwkfit(times, 100)

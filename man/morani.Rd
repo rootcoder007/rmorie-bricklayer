@@ -62,7 +62,7 @@ length; a weight matrix that is not \eqn{n \times n}, not finite, or has
 negative weights; no area with any neighbour.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # Six areas in a line, each adjacent to the next.
 nb <- list(2L, c(1L, 3L), c(2L, 4L), c(3L, 5L), c(4L, 6L), 5L)
 

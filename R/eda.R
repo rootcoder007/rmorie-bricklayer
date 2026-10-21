@@ -69,7 +69,7 @@
 #' @seealso
 #' [profcols()], which includes one
 #' per numeric column.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' # A symmetric distribution peaks in the middle.
 #' inlhist(stats::rnorm(1000))
@@ -140,7 +140,7 @@ inlhist <- function(x, bins = 10L) {
 #'   percent of non-missing rows; \code{NA} on the missing row).
 #' @seealso [profcols()] for every
 #' column at once.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' df <- data.frame(grade = c("a", "b", "b", "c", NA, "b"),
 #'                  stringsAsFactors = FALSE)
 #' freqtbl(df, "grade")
@@ -283,7 +283,7 @@ print.bricklayer_freq <- function(x, ...) {
 #' @seealso
 #' [topcors()] for just the
 #' strongest, [ccovm()] for the matrix form.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' df <- data.frame(a = stats::rnorm(100), b = stats::rnorm(100))
 #' df$c <- df$a + stats::rnorm(100, sd = 0.2)
@@ -398,7 +398,7 @@ print.bricklayer_cortable <- function(x, ...) {
 #' @seealso
 #' [profcols()], which reports
 #' \code{n_distinct} without removing anything.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' df <- data.frame(
 #'   keep = c(1, 2, NA),
 #'   allna = c(NA, NA, NA),
@@ -506,7 +506,7 @@ drpconst <- function(data, naasval = FALSE) {
 #' @return For a data frame, the data frame with new names and an
 #'   \code{"orignms"} attribute (character, the names before cleaning);
 #'   for a character vector, the cleaned character vector.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' clncolnms(c("Total  Population (2021)", "% change",
 #'                      "Ville / City", "dup", "dup"))
 #'

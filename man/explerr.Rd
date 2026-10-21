@@ -82,7 +82,7 @@ frame with the columns \code{check}, \code{ok} and \code{detail};
 installed.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 msg <- "`prompt` must be a single non-empty string"
 explerr(msg, pkgs = "rmoriebricklayer")
 

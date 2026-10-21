@@ -53,7 +53,7 @@ Errors: input that is a character vector, factor, list or data frame
 different lengths in \code{ccorr()}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 ## cmn(): sample mean (NA/NaN propagate; no na.rm)
 cmn(1:10)                 # 5.5
 cmn(c(1, 2, NA))          # NA -- call stats::na.omit() first if needed

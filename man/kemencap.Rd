@@ -47,7 +47,7 @@ whose public half is not valid hex (\dQuote{key has no usable public key});
 \code{m} that is not a raw vector of 32 bytes.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 key <- kemkg(512)
 a <- kemencap(key)
 nchar(a$ciphertext) / 2 == kemsz(512)[["ciphertext"]]

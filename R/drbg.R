@@ -56,7 +56,7 @@
 #' @seealso [drbggen()],
 #'   [drbgrsd()],
 #'   [rndbytes()].
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # NIST's rng.c, as the post-quantum known-answer files use it: vector 0's seed
 #' d <- drbgnew(as.raw(0:47))
 #' drbggen(d, 48)
@@ -135,7 +135,7 @@ drbgnew <- function(entropy = NULL, person = NULL) {
 #' @return A raw vector of \code{n} bytes.
 #' @seealso [drbgnew()],
 #'   [drbgrsd()].
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' d <- drbgnew(as.raw(0:47))
 #' x <- drbggen(d, 16)
 #' y <- drbggen(d, 16)
@@ -198,7 +198,7 @@ drbggen <- function(drbg, n, addl = NULL) {
 #' @return \code{drbg}, invisibly, reseeded in place.
 #' @seealso [drbgnew()],
 #'   [drbggen()].
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' d <- drbgnew(as.raw(0:47))
 #' drbgrsd(d, as.raw(48:95))
 #' drbggen(d, 8)

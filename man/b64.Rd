@@ -60,7 +60,7 @@ raw bytes, or text with a character outside the standard alphabet;
 alphabet.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # Round trip through the standard alphabet.
 b <- jsb64enc("hello capsule")
 b

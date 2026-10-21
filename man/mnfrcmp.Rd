@@ -68,7 +68,7 @@ not a non-empty fully named list, or with an element that is not a
 function.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 d <- data.frame(x = 1:10)
 m <- mkmnf(list(dataset = "demo"), env = FALSE)
 m <- recrd(m, "mean_x", obs = mean(d$x), expd = 5.5)

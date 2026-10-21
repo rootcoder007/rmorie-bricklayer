@@ -67,7 +67,7 @@ different lengths; missing or negative \code{pop}; missing,
 negative or fractional \code{units}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # Four regions, two of which hold a facility.
 cov <- rgncov(
   reg = c("A", "B", "C", "D"),

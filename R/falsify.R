@@ -93,7 +93,7 @@
 #' [cpsatst()] for the different
 #' question of whether the record is intact rather than whether the finding
 #' survives.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' d <- data.frame(x = rnorm(200))
 #' d$y <- 0.8 * d$x + rnorm(200)

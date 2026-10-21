@@ -19,7 +19,7 @@
 #' @return The path of the installed schema file, a character scalar.
 #'   Error: any other name.
 #' @seealso \code{\link{blcli}} (the verify verb), \code{\link{vrfcps}}.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' schemapath("capsule")
 #' s <- fromjs(paste(readLines(schemapath("bundle")), collapse = "\n"))
 #' s$required
@@ -62,7 +62,7 @@ schemapath <- function(name) {
 #'   is not a list, a data frame or a file; a data frame without
 #'   \code{path} and \code{sha256}.
 #' @seealso \code{\link{cpsrfrsh}}, \code{\link{cpsbndl}}.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' a <- data.frame(path = c("a.csv", "b.csv"), sha256 = c("01", "02"),
 #'                 size_bytes = c(10, 20))
 #' b <- data.frame(path = c("a.csv", "c.csv"), sha256 = c("09", "03"),
@@ -195,7 +195,7 @@ print.rmbl_mnfdiff <- .rmbl_print_via_format
 #'   all \code{"unchanged"} when the source still matches its pin.
 #' @seealso \code{\link{mnfdiff}}, \code{\link{vrfcps}},
 #'   \code{\link{usecpstmpl}}.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 #' cpsrfrsh(d)            # the first pin: the data file is added
 #' vrfcps(d)$ok

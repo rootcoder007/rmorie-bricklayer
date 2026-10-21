@@ -3,8 +3,8 @@ library(testthat)
 library(rmoriebricklayer)
 
 # On CRAN (NOT_CRAN unset) only the fast core runs: the test files that take 0.3 s or less each,
-# about 9 s in all, so the CRAN check stays inside its time budget. CI sets NOT_CRAN=true and runs
-# the full suite on every push.
+# about 9 s in all, so the CRAN check stays inside its time budget. CI sets NOT_CRAN=true and
+# r-universe sets MY_UNIVERSE; both run the full suite.
 core <- c(
   "agent-bundle", "archive-capture", "branches", "bundle-fallbacks", "capsule",
   "capsule-template", "census", "compat-0-5", "core", "coverage-0_5_7", "coverage-0_5_9",
@@ -27,7 +27,7 @@ core <- c(
   "ubsan-paths", "url-fallback", "vectors-0_5_10", "wayback-save", "wycheproof", "x509",
   "xmss-kat"
 )
-if (identical(Sys.getenv("NOT_CRAN"), "true")) {
+if (identical(Sys.getenv("NOT_CRAN"), "true") || nzchar(Sys.getenv("MY_UNIVERSE"))) {
   test_check("rmoriebricklayer")
 } else {
   test_check("rmoriebricklayer", filter = paste0("^(", paste(core, collapse = "|"), ")$"))

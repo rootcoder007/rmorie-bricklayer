@@ -62,7 +62,7 @@ estimate's: an \code{F} or \code{x} estimate is \code{NA} (see
 \code{\link{sctidy}}), and so are its limits.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # the layout of a downloaded table: percent and number of persons, with limits for the
 # percent
 d <- data.frame(REF_DATE = "2022", GEO = "Canada",

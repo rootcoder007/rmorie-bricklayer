@@ -46,7 +46,7 @@
 #'   [yoyhtml()],
 #'   [yoypdf()] and the delimited writers.
 #' @seealso [fylbl()]
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' seg <- data.frame(EndFiscalYear = 2019:2023,
 #'                   n = c(402, 377, 190, 268, 331))
 #' y <- yoy(seg, value = n, prd = EndFiscalYear)
@@ -131,7 +131,7 @@ yoylbl <- function(x, labels) {
 #'   \code{"2022/2023"}.
 #' @return A character vector of labels, the same length as
 #'   \code{endyear}, with \code{NA} where a value is not a year.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' fylbl(2019:2023)
 #'
 #' fylbl(2023, short = FALSE)

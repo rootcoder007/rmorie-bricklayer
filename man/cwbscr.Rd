@@ -65,7 +65,7 @@ Canadian dollars of its series: for another country, set \code{bounds} in its cu
 and read the result as a CWB-style score, not comparable with Canada's.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # made-up profile figures for two communities, to show the computation
 cwbscr(incpercap = c(18000, 31000), highsch20p = c(58, 81),
           uni25p = c(6, 19), notcro = c(71, 95),

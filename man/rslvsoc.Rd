@@ -40,7 +40,7 @@ invalid JSON) or when the metadata has no \code{id}. Errors: a
 (\code{localhost}, a private address, a single-label name).
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # Missing fields return NULL rather than erroring:
 rslvsoc(list())
 rslvsoc(list(dataset = list(socrata_domain = "data.cityofchicago.org")))

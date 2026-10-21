@@ -340,7 +340,7 @@
 #'   1, an area datum of zero width; a certain search warns that the update is undefined.
 #' @srrstats {EA4.0} Every result is double, as a vector, matrix or list of doubles with a class.
 #' @srrstats {EA6.0} test-search.R checks classes, dimensions, names and values of every result.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # inverse cube detection 0.5, 1 and 2 sweep widths off the track
 #' ltrlrng(c(0.5, 1, 2), W = 1)
 #' plot(ltrlrng(seq(-3, 3, by = 0.5), W = 2))

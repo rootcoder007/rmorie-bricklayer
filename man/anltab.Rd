@@ -147,7 +147,7 @@ functions called (for example
 negative counts in \code{\link[=yoy]{yoy()}}).
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 path <- system.file("extdata", "otis_a01_individuals.csv",
                     package = "rmoriebricklayer")
 otis <- read.csv(path)

@@ -43,7 +43,7 @@
 #'   attribute.
 #' @seealso [profcols()] for
 #' per-column rates.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # Two columns missing in the SAME rows: one structural gap.
 #' structural <- data.frame(
 #'   id = 1:10,
@@ -189,7 +189,7 @@ print.bricklayer_missingness <- function(x, ...) {
 #' [cspr()],
 #' [ccovm()],
 #' [cortbl()]
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' n <- 200
 #' df <- data.frame(
@@ -336,7 +336,7 @@ print.bricklayer_correlations <- function(x, ...) {
 #' @seealso
 #' [capenv()],
 #' [mkmnf()]
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' a <- capenv(c("stats", "utils"))
 #' b <- a
 #'

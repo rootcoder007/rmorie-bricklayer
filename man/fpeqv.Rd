@@ -33,7 +33,7 @@ the emission. Errors when \code{co2eg} is not a single finite,
 non-negative number.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 fpeqv(1200)
 
 # the footprint of a small computation, in everyday terms

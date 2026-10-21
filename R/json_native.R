@@ -233,7 +233,7 @@
 #' @seealso
 #' [jsgzenc()], which composes this
 #' with gzip.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # Round trip through the standard alphabet.
 #' b <- jsb64enc("hello capsule")
 #' b
@@ -887,7 +887,7 @@ jsb64udec <- function(input) {
 #'   reverse,
 #'   [jsser()] for an exact
 #'   round trip.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' tojs(list(a = 1:3, b = "x"), auto_unbox = TRUE)
 #' tojs(data.frame(id = 1:2, v = c(1.5, NA)), pretty = TRUE)
 #'
@@ -1624,7 +1624,7 @@ bricklayer_json_unbox <- function(x) {
 #' \code{NULL}, depending on the JSON and the simplification options.
 #' @seealso [tojs()] for the
 #'   reverse.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' fromjs('[{"a":1,"b":"x"},{"a":2,"b":"y"}]')
 #' fromjs('[[1,2],[3,4]]')
 #'
@@ -1872,7 +1872,7 @@ bricklayer_json_validate <- function(txt) {
 #' [tojs()] for
 #' plain data JSON, [csha256()] for
 #' fingerprinting the result.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # A factor survives the round trip with its levels intact.
 #' f <- factor(c("b", "a", "b"), levels = c("a", "b", "c"))
 #' back <- jsunser(jsser(f))

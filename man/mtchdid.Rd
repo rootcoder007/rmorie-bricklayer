@@ -70,7 +70,7 @@ credible but can bring in regression to the mean when the treated were chosen fo
 an unusual pre-period (Daw and Hatfield 2018).
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 p <- polex()
 m <- mtchdid(p, "district", "month", "crmrate", "refmonth", ratio = 2)
 m$estimate

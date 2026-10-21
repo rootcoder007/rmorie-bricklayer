@@ -54,7 +54,7 @@
 #' @return The sorted event times (numeric), with the attribute `generation` (0
 #'   for an immigrant, 1 for its children, ...).
 #' @seealso [plothwk()], [chwkfit()].
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' times <- sort(stats::runif(300, 0, 100))
 #' fit <- chwkfit(times, 100)
@@ -123,7 +123,7 @@ chwksim <- function(fit, hor = NULL, seed = 1L) {
 #'   `uniform` and `residual` (a Q-Q plot), or `t`, `parent` (the
 #'   index of the parent event, 0 for the baseline), `prob` and
 #'   `generation` (tree).
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' times <- sort(stats::runif(200, 0, 100))
 #' fit <- chwkfit(times, 100)

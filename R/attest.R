@@ -118,7 +118,7 @@
 #' [mnfdgst()],
 #' [cpsfals()],
 #' [chnseal()].
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' m <- mkmnf(list(dataset = "otis", rows = 1200L),
 #'   env = FALSE
 #' )

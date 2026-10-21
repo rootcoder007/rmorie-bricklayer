@@ -73,7 +73,7 @@ not a range, an empty label and \code{NA} all give \code{NA} bounds.
 Anything other than a character or factor vector is an error.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 
 prsbands(c("18 to 24", "25 to 49", "50+", "under 18"))

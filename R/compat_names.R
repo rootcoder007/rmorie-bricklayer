@@ -163,7 +163,7 @@
 #' yoy: pct_change -> pctchg, pp_change -> ppchg, min_base -> minbase, pct_lower -> pctlo,
 #'   pct_upper -> pctup, conf_level -> conflvl
 #' }
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # what a 0.5.x name became, and its 1.0.0 help page (the first lines)
 #' out <- character()
 #' blcli(c("describe", "admissions"), out = function(...) out <<- c(out, paste0(...)))

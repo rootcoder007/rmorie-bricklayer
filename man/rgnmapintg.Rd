@@ -48,7 +48,7 @@ spaces (so \code{"3506"} and \code{3506} match, but \code{"03506"} does
 not). Errors: \code{map} not a data frame, or without the named columns.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 cw <- data.frame(
   inst = c("North Jail", "South Jail", "East Jail"),
   cd = c("3557", "3520", "3506"),

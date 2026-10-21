@@ -49,7 +49,7 @@ weight for that unit only. The weights are not normalised; divide by
 their sum within each arm for stabilised (Hajek) estimates.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 treat <- c(1, 0, 1, 0)
 e <- c(0.5, 0.25, 0.02, 0.9)
 

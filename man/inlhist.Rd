@@ -37,7 +37,7 @@ Errors: \code{x} that is not numeric; \code{bins} that is not one
 positive whole number.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 # A symmetric distribution peaks in the middle.
 inlhist(stats::rnorm(1000))

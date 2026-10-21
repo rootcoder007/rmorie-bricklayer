@@ -74,7 +74,7 @@ non-response (see \code{tnrlf}) or the edit and imputation error, so it is narro
 than the full error; treat it as a lower bound on the uncertainty.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 p <- cnsprof(indiex("censuspop"))
 # children who are foster children, by province, First Nations, Metis, Inuit and
 # non-Indigenous

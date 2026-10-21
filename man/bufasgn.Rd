@@ -37,7 +37,7 @@ not degrees). The radius and the buffer are in the same unit. The buffer should 
 several times the radius: the design it follows used 330 feet and 990 feet.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(4)
 x <- runif(200, 0, 5000)
 y <- runif(200, 0, 5000)

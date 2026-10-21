@@ -51,7 +51,7 @@
 #' @return The directory path, invisibly.
 #' @seealso \code{\link{loadprov}}, \code{\link{vrfcps}},
 #'   \code{\link{anltab}}.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 #' list.files(d)
 #'

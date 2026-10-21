@@ -61,7 +61,7 @@
 #' @references Cochran WG (1977). Sampling Techniques, 3rd edition. Wiley, New York,
 #'   sections 2.4 to 2.6.
 #' @seealso \code{\link{svydes}} for weighted surveys with strata and clusters.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' x <- c(12, 15, 9, 20, 14)
 #' sprd(x)                                   # a sample: n - 1
 #' sprd(x, des = "census")                # the whole population: n

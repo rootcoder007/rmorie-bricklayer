@@ -44,7 +44,7 @@ Errors: \code{path} that is not a single non-empty string; \code{path}
 that is a directory; a file that is not valid JSON.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 provfile <- tempfile(fileext = ".json")
 writeLines('{"dataset": {"title": "demo"}, "sha256": "abc"}', provfile)
 prov <- loadprov(provfile)

@@ -72,7 +72,7 @@ attributes are lost. Compress
 object must come back exactly.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 x <- list(rows = data.frame(id = 1:50, value = stats::runif(50)))
 
 enc <- jsgzenc(x)

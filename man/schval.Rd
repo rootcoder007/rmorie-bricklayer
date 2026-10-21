@@ -45,7 +45,7 @@ message names the elements it has, so a typo such as \code{scheme}
 shows); an empty schema (\code{list(schema = list())}).
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 prov <- list(schema = list(expected_columns = "id"))
 schval(data.frame(id = 1), prov)
 # A missing required column is fatal:

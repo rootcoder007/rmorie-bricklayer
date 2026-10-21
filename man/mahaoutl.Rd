@@ -71,7 +71,7 @@ eigenvalue of \eqn{S} at most \eqn{10^{-8}} times the largest); \code{alpha}
 outside (0, 1). A progress indicator is shown in an interactive session.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 n <- 200
 df <- data.frame(height = stats::rnorm(n, 170, 10))

@@ -41,7 +41,7 @@ Errors: \code{path} that does not name a readable file;
 \code{expsha} that is not exactly one non-NA value.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 f <- tempfile()
 writeLines("hello capsule", f)
 

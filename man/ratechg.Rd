@@ -105,7 +105,7 @@ positive whole number; \code{conflvl} outside (0, 1); a population of
 zero or below.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 d <- data.frame(
   year = rep(2021:2023, each = 2),
   division = rep(c("North", "South"), 3),

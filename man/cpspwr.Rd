@@ -107,7 +107,7 @@ so small that \eqn{1/(n+1) > \alpha}, so that nothing could ever be
 detected.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 d <- data.frame(x = rnorm(120), y = rnorm(120))
 # inject a linear effect of x on y

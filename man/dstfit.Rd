@@ -90,7 +90,7 @@ family or one the data do not allow. The bootstrap is seeded with \code{seed} fo
 this call only; the session's random stream is left as it was.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 x <- stats::rgamma(300, shape = 2, rate = 0.5)
 f <- dstfit(x, nboot = 20)

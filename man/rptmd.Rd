@@ -39,7 +39,7 @@ overwritten. Errors when \code{report} does not come from
 \code{\link[=cpsrpt]{cpsrpt()}}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 df <- data.frame(v = stats::rnorm(100), g = rep("x", 100),
                  stringsAsFactors = FALSE)

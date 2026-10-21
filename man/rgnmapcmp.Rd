@@ -53,7 +53,7 @@ Errors: either input not a data frame or without \code{unit}; a column in
 \code{cols} that is not in both.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 pub <- data.frame(
   inst = c("North Jail", "South Jail"),
   cd = c("3557", "3520"), stringsAsFactors = FALSE

@@ -129,7 +129,7 @@ Errors: either argument not a data frame; \code{alpha} not strictly between
 0 and 1; \code{psiminn} negative; \code{idelvls} below 2.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(5)
 ref <- data.frame(
   value = stats::rnorm(300),

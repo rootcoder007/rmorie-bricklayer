@@ -58,7 +58,7 @@ Errors: \code{url} or \code{tpath} not a single non-empty string;
 a refused URL; \code{mode} other than \code{"wb"} or \code{"w"}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # offline: a local file through a file:// URL
 src <- tempfile(fileext = ".csv")
 writeLines(c("id,value", "1,10", "2,20"), src)

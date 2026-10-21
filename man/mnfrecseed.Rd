@@ -53,7 +53,7 @@ Errors: \code{man} that is not a list (or is a data frame); for
 an empty kind.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(42)
 m <- mnfrecseed(mkmnf(list(a = 1),
                                         env = FALSE))

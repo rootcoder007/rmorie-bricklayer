@@ -135,7 +135,7 @@ Reading a bundle whose signature records a stateful key's state warns (see
 \code{\link[=cpsatst]{cpsatst()}}).
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 dir <- tempfile()
 dir.create(dir)
 write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"),

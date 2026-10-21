@@ -61,7 +61,7 @@
 #'   \doi{10.1080/00031305.1983.10483115}
 #' @seealso [cmom()] for the single-pass
 #' batch version.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' x <- stats::rnorm(1000)
 #'
@@ -207,7 +207,7 @@ print.bricklayer_online <- function(x, ...) {
 #'   Lemire D (2019). Fast random integer generation in an interval.
 #'   *ACM Transactions on Modeling and Computer Simulation* 29(1), 3.
 #'   \doi{10.1145/3230636}
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # A reproducible sample of 5 from 1000.
 #' rsvidx(1000, 5, seed = 1)
 #' rsvsmp(letters, 4, seed = 2)
@@ -308,7 +308,7 @@ rsvsmp <- function(x, k, seed = 42L) {
 #' @references Flajolet P, Fusy E, Gandouet O, Meunier F (2007).
 #' HyperLogLog: the analysis of a near-optimal cardinality estimation
 #' algorithm. *Analysis of Algorithms 2007*, 137--156.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' x <- sample(1:5000, 200000, replace = TRUE)
 #'

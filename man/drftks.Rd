@@ -44,7 +44,7 @@ either sample. One value per sample is enough to compute the statistic,
 but the p-value is only meaningful for samples of a few dozen or more.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 ref <- stats::rnorm(200)
 

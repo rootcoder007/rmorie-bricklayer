@@ -43,7 +43,7 @@
 #' @seealso
 #' [yoyhtml()], [yoypdf()],
 #' [yoycsv()]
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
 #' y <- yoy(d, value = "n", prd = "year")
 #'
@@ -147,7 +147,7 @@ yoywr <- function(x, file, format = "auto", ...) {
 #' @param ... Ignored.
 #' @return `file`, invisibly; or, when `file` is `NULL`, the text as a
 #' character scalar.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
 #' y <- yoy(d, value = "n", prd = "year")
 #'

@@ -80,7 +80,7 @@ a Markdown cell is escaped. An existing file is overwritten. Errors when
 number.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
 y <- yoy(d, value = "n", prd = "year")
 

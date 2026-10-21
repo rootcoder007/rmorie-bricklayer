@@ -90,7 +90,7 @@ negative or fractional counts; a population of zero or below;
 non-positive \code{per}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 stops <- data.frame(
   division = c("North", "South", "East"),
   stops = c(412, 77, 3),

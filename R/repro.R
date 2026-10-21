@@ -67,7 +67,7 @@
 #' [vrfcps()],
 #' [cpsfals()],
 #' [recrd()].
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' d <- data.frame(x = 1:10)
 #' m <- mkmnf(list(dataset = "demo"), env = FALSE)
 #' m <- recrd(m, "mean_x", obs = mean(d$x), expd = 5.5)
@@ -242,7 +242,7 @@ print.bricklayer_recompute <- .rmbl_print_via_format
 #' @seealso
 #' [capenv()],
 #' [cpsfals()].
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(42)
 #' m <- mnfrecseed(mkmnf(list(a = 1),
 #'                                         env = FALSE))
@@ -345,7 +345,7 @@ mnfrstseed <- function(man) {
 #' @seealso
 #' [capenv()],
 #' [envdiff()].
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' deps <- capdeps(c("stats", "utils"))
 #' deps[, c("package", "version")]
 #'

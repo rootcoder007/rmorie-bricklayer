@@ -40,7 +40,7 @@
 #' agentbndl("scaffold a bundle for analysis.R from the Toronto CKAN data")
 #' agentbndl("sign and verify my capsule", route = "ollama")
 #'
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #'
 #' # With every route switched off (no key in the environment and no saved
 #' # settings: the settings folder is pointed at an empty one) the call returns

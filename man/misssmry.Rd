@@ -33,7 +33,7 @@ position, so duplicate or empty column names are fine. Errors when
 \code{data} is not a data frame or has no columns.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 df <- data.frame(a = c(1, NA, 3), b = c(NA, NA, 3), c = 1:3)
 misssmry(df)
 

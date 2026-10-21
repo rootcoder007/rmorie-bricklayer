@@ -54,7 +54,7 @@ in turn treated as if adopting, weights re-estimated), else the jackknife over
 units with the weights held fixed (Arkhangelsky et al. 2021, algorithms 3 and 4).
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 p <- polex()
 p1 <- p[is.na(p$refmonth) | p$refmonth == 13, ]
 syndid(p1, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1)

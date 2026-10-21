@@ -57,7 +57,7 @@ Units and regions are compared as text with spaces trimmed. Errors:
 vector without names; a \code{route} data frame without the two columns.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 cw <- data.frame(
   inst = c("North Jail", "South Jail", "Hill Jail"),
   cd = c("3557", "3520", "3506"),

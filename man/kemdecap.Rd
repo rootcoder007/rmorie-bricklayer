@@ -68,7 +68,7 @@ for the key's level, which is
 1088 or 1568); \code{masked} not \code{TRUE} or \code{FALSE}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 key <- kemkg(512)
 sent <- kemencap(kempubkey(key))
 identical(kemdecap(key, sent$ciphertext), sent$shared)

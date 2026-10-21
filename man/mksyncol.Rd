@@ -67,7 +67,7 @@ unknown \code{type}; errors from \code{sample()} or \code{rpois()} on
 invalid weights or rates.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 # "sample": categorical draw, optionally weighted.
 mksyncol(list(

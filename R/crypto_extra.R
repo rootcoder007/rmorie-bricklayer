@@ -36,7 +36,7 @@
 #' @seealso
 #' [drvkey()] to stretch a passphrase instead,
 #' [pqckg()] which uses this for its seeds.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' rndbytes(8)
 #'
 #' # Independent between calls, unlike a seeded generator.
@@ -122,7 +122,7 @@ rndbytes <- function(n) {
 #' [rndbytes()],
 #' [chmac()],
 #' [cpssign()]
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # The published PBKDF2-HMAC-SHA256 vector: "password", "salt", 1 round.
 #' drvkey("password", "salt", iter = 1)
 #'
@@ -228,7 +228,7 @@ drvkey <- function(pass, salt, iter = 100000L,
 #' [csha256()],
 #' [csha512()],
 #' [chmac()]
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # The RFC 7693 test vector for BLAKE2b-512 of "abc".
 #' cblake2b("abc", length = 64)
 #'
@@ -319,7 +319,7 @@ cblake2b <- function(x, key = NULL, length = 32L) {
 #' directly,
 #' [jsser()]
 #' for a readable form that keeps types and attributes.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' dgstobj(list(a = 1L, b = "x"))
 #'
 #' # Stable across calls, and sensitive to any change.

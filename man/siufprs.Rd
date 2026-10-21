@@ -39,7 +39,7 @@ Errors: \code{drid} that is not one positive whole number;
 \code{lang} other than \code{"en"} or \code{"fr"}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # argument errors come before any network use
 try(siufprs("abc"))
 try(siufprs(648, lang = "de"))

@@ -59,7 +59,7 @@ Errors: \code{n} or \code{k} not one non-negative whole number;
 not a whole number from 0 to below \eqn{2^{53}} (\code{NA} included).
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # A reproducible sample of 5 from 1000.
 rsvidx(1000, 5, seed = 1)
 rsvsmp(letters, 4, seed = 2)

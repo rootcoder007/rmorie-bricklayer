@@ -56,7 +56,7 @@ needed for \code{ok = TRUE}.
 \code{bricklayer_recode_manifest}; it overwrites \code{path}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 x <- c("W", "B", "W")
 y <- grdrcd(x, c(W = "White", B = "Black"))
 m <- rcdmnf(x, y, c(W = "White", B = "Black"))

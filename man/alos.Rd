@@ -39,7 +39,7 @@ Errors when \code{days} is not numeric, is empty, or has \code{NA},
 number.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # Lakner (p.17): 2,700 inmates admitted and released served 12,150
 # detention days between them.
 alos(12150, 2700)

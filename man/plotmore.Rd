@@ -67,7 +67,7 @@ Missing and non-finite values are dropped. A group of fewer than two values draw
 density.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(3)
 x <- c(stats::rnorm(200), stats::rnorm(200, 2, 0.6))
 g <- rep(c("before", "after"), each = 200)

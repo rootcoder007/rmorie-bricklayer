@@ -60,7 +60,7 @@ single non-empty string. The \code{name} and source are written as escaped
 JSON strings, so quotes and backslashes are safe.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 list.files(d)
 

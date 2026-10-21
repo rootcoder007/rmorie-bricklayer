@@ -31,7 +31,7 @@ member twice), and when the key cannot be removed without damaging the
 file; in both cases the file is left as it was.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)
 Sys.setenv(XDG_CONFIG_HOME = tempfile())   # a scratch credentials folder
 

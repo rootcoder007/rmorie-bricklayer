@@ -112,7 +112,7 @@ an object with no JSON form (a function, a symbol) unless
 \code{force = TRUE}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 tojs(list(a = 1:3, b = "x"), auto_unbox = TRUE)
 tojs(data.frame(id = 1:2, v = c(1.5, NA)), pretty = TRUE)
 

@@ -50,7 +50,7 @@
 #' @return The parsed provenance as a nested named list (JSON objects become
 #'   named lists, arrays become unnamed lists, strings, numbers and booleans
 #'   become length-1 vectors), or \code{NULL} if the file does not exist.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' provfile <- tempfile(fileext = ".json")
 #' writeLines('{"dataset": {"title": "demo"}, "sha256": "abc"}', provfile)
 #' prov <- loadprov(provfile)
@@ -120,7 +120,7 @@ loadprov <- function(path) {
 #'   }
 #' @return The matched resource URL as a length-1 character string, or
 #'   \code{NULL} as described in Details.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # Missing fields return NULL rather than erroring:
 #' rslvckan(list())
 #' rslvckan(NULL)
@@ -215,7 +215,7 @@ rslvckan <- function(prov) {
 #'   words) and \code{resource$format} (a format name such as \code{"XLSX"}).
 #' @return The matched resource URL as a length-1 character string, or
 #'   \code{NULL}.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # Missing fields return NULL rather than erroring:
 #' rslvckns(list())
 #'
@@ -333,7 +333,7 @@ rslvckns <- function(prov) {
 #'   \code{FALSE}; offline tests and examples pass \code{TRUE}). Every URL
 #'   must otherwise be \code{https} and public.
 #' @return The \code{tpath}, returned invisibly.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # offline: a local file through a file:// URL
 #' src <- tempfile(fileext = ".csv")
 #' writeLines(c("id,value", "1,10", "2,20"), src)
@@ -401,7 +401,7 @@ dldata <- function(url, tpath, mode = "wb", quiet = FALSE,
 #' @return A length-1 character string, the \code{https} snapshot URL of the
 #'   form \code{https://web.archive.org/web/} followed by \code{<timestamp>/<url>}, or
 #'   \code{NULL}.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # argument errors come before any request
 #' try(wbsnpurl(NA))
 #' try(wbsnpurl(c("https://a.org", "https://b.org")))
@@ -518,7 +518,7 @@ wbsnpurl <- function(url, ts = NULL) {
 #' @return \code{TRUE} if either the primary download or the Wayback
 #'   fallback succeeded (the file is at \code{tpath}), otherwise
 #'   \code{FALSE}.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' src <- tempfile(fileext = ".csv")
 #' writeLines(c("id,value", "1,10"), src)
 #'
@@ -674,7 +674,7 @@ fdl <- function(url, tpath, attwb = NULL,
 #'   digest, 64 lower-case hex characters), \code{expected} (character, the
 #'   normalised expected value) and \code{match} (logical, \code{TRUE} when
 #'   they are identical).
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' f <- tempfile()
 #' writeLines("hello capsule", f)
 #'
@@ -806,7 +806,7 @@ vrfsha256 <- function(path, expsha) {
 #' [cpsdrft()] for the distributional
 #' check, [schval()]
 #' to raise on the issues.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' prov <- list(schema = list(
 #'   expected_columns      = c("id", "year"),
 #'   structural_invariants = list(min_data_rows = 1),
@@ -1064,7 +1064,7 @@ valsch <- function(dfraw, prov) {
 #' @return Invisibly, \code{TRUE} if no issues were found and \code{FALSE}
 #'   if only warning-severity issues were found (each raised as a warning).
 #'   Errors if any fatal issue is present.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' prov <- list(schema = list(expected_columns = "id"))
 #' schval(data.frame(id = 1), prov)
 #' # A missing required column is fatal:
@@ -1163,7 +1163,7 @@ schval <- function(dfraw, prov) {
 #' @return The CSV export URL as a length-1 character string, or \code{NULL}
 #'   if the fields are missing, the request fails, or the metadata reports an
 #'   error.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # Missing fields return NULL rather than erroring:
 #' rslvsoc(list())
 #' rslvsoc(list(dataset = list(socrata_domain = "data.cityofchicago.org")))
@@ -1231,7 +1231,7 @@ rslvsoc <- function(prov) {
 #' @return The layer query URL as a length-1 character string, or
 #'   \code{NULL} if the field is missing, the request fails, or the layer
 #'   metadata reports an error.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # Missing fields return NULL rather than erroring:
 #' rslvarc(list())
 #'

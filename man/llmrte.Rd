@@ -55,7 +55,7 @@ route that is half set up (a model or key without an address, an Ollama
 that does not answer) a message says so.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # keep the examples away from your real settings and from the network
 old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST",
                     "MORIE_LLM_BASE_URL", "MORIE_LLM_MODEL"),

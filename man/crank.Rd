@@ -48,7 +48,7 @@ argument (\code{"must be numeric"}). Ranking sorts, so the cost is
 \eqn{O(n \log n)}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 x <- c(1, 2, 3, 4, 5)
 y <- c(2, 4, 9, 16, 25)
 

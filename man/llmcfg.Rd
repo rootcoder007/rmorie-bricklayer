@@ -84,7 +84,7 @@ change one (a key is asked for without echo when no value is given), and
 \code{rmbl config setup} walks through them.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # Work in a temporary settings directory so your own settings are
 # untouched.
 old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)

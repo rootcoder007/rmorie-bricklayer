@@ -120,7 +120,7 @@
 #'   risk function for estimating the global burden of disease attributable to
 #'   ambient fine particulate matter exposure. Environmental Health
 #'   Perspectives 122(4), 397-403. WHO (2021). Global Air Quality Guidelines.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # All-cause mortality at an annual PM2.5 of 12 micrograms per cubic metre.
 #' r <- crfpm25(12)
 #' c(rr = r$rr, lower = r$rrlo, upper = r$rrup)
@@ -368,7 +368,7 @@ crfno2 <- function(expo, y = "allcause", refconc = 10,
 #' @references Rothman, K. J., Greenland, S. and Lash, T. L. (2008). Modern
 #'   Epidemiology, 3rd ed., chapter 5. Levin, M. L. (1953). The occurrence of
 #'   lung cancer in man. Acta Unio Internationalis Contra Cancrum 9, 531-541.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' attrfrac(1.5, 0.4)
 #' attrfrac(2, 1)      # everyone exposed: 1 - 1/RR
 #'
@@ -447,7 +447,7 @@ attrfrac <- function(rr, expoprev, rrlo = NULL, rrup = NULL) {
 #'   An estimate of the global burden of anthropogenic ozone and fine
 #'   particulate matter on premature human mortality using atmospheric
 #'   modeling. Environmental Health Perspectives 118(9), 1189-1195.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # A 10-unit cut, a million people, 800 deaths per 100,000 a year.
 #' mortdisp(10, 1e6, 0.008, 0.0039)
 #'
@@ -524,7 +524,7 @@ mortdisp <- function(expdel, pop, brate, betaperunit,
 #' @references GBD 2019 Risk Factors Collaborators (2020). Global burden of 87
 #'   risk factors in 204 countries and territories, 1990-2019. The Lancet
 #'   396(10258), 1223-1249.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # Ambient NO2 of 25 micrograms per cubic metre over a million people.
 #' b <- polbrdn(25, 1, 0.008, 1e6, poll = "NO2")
 #' b$attrcases
@@ -647,7 +647,7 @@ polbrdn <- function(expomean, expoprev, brate, pop,
 #'   Hansen, C., Newey, W. and Robins, J. (2018). Double/debiased machine
 #'   learning for treatment and structural parameters. The Econometrics
 #'   Journal 21(1), C1-C68.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' d <- data.frame(x1 = rnorm(200), x2 = rnorm(200))
 #' d$exposure <- 20 + 2 * d$x1 + rnorm(200)
@@ -802,7 +802,7 @@ plrcf <- function(data, y, trt, covs, kfol = 5L, seed = 1L) {
 #' @seealso \code{\link{cbootmean}} for a bootstrap of a mean.
 #' @references Efron, B. and Tibshirani, R. J. (1993). An Introduction to the
 #'   Bootstrap. Chapman and Hall.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' d <- data.frame(x1 = rnorm(200), x2 = rnorm(200))
 #' d$exposure <- 20 + 2 * d$x1 + rnorm(200)
@@ -917,7 +917,7 @@ exprspplr <- function(data, y, expo, confs, nboot = 100L,
 #' @references Wagstaff, A., Paci, P. and van Doorslaer, E. (1991). On the
 #'   measurement of inequalities in health. Social Science and Medicine 33(5),
 #'   545-557.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' d <- data.frame(exposure = c(30, 25, 20, 15, 10), income = 1:5)
 #' ci <- expconcidx(d, "exposure", "income")
 #' ci$concidx
@@ -1014,7 +1014,7 @@ expconcidx <- function(data, expo, income) {
 #'   \code{attrcases} and \code{basecases} (per year).
 #' @seealso \code{\link{expconcidx}} for how the burden
 #'   is spread across income.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' t <- data.frame(fsa = c("M6H", "M5V"), exposure = c(28, 18),
 #'                 population = c(40000, 60000), brate = 0.008)
 #' polbrdarea(t)
@@ -1274,7 +1274,7 @@ polbrdarea <- function(areatab, areacol = "fsa", expcol = "exposure",
 #'   and the message for an error report).
 #' @seealso \code{\link{polbrdn}} and the other stage functions
 #'   to run one step on its own.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' r <- vrfpol("no2", demo = TRUE)
 #' r$status
 #' r$pipeline$paf

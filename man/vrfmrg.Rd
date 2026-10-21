@@ -56,7 +56,7 @@ failure (no permutation search). \code{pub} must be a named numeric
 vector, otherwise an error.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 x <- c("White", "White", "Black", "Indigenous", "White", "Black")
 vrfmrg(x, c(White = 3, Black = 2, Indigenous = 1))$ok
 

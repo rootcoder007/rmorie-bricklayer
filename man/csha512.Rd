@@ -35,7 +35,7 @@ For files use \code{\link[=sha512file]{sha512file()}}. Pure computation; no side
 effects.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # FIPS 180-4 test vector for "abc".
 csha512("abc")
 

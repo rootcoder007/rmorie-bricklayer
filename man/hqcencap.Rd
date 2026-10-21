@@ -52,7 +52,7 @@ of the wrong length for its level; \code{m} or \code{salt} of the wrong type or
 length.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 key <- hqckg(1)
 a <- hqcencap(key)
 nchar(a$ciphertext) / 2 == hqcsz(1)[["ciphertext"]]

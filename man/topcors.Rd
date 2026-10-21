@@ -52,7 +52,7 @@ Errors: \code{data} not a data frame; fewer than two numeric columns;
 \eqn{[0, 1]}; an invalid \code{meth}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 n <- 200
 df <- data.frame(

@@ -228,7 +228,7 @@ empty cells so the plume of interest stays inside the ring.
 }
 
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # plume widths 1 km downwind: neutral, then very stable, rural and urban
 pgsig(1000, "D")
 pgsig(c(500, 1000, 2000), "F", set = "urban")

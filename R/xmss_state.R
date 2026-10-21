@@ -255,7 +255,7 @@
 #' @seealso [cpsbndlvrf()] (its `seen` argument),
 #'   [blcli()] (`rmbl sign --seen-log`),
 #'   [pqckg()].
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 #' # one-time index record out of your configuration directory
 #' root <- tempfile("capsules-")

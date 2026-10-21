@@ -53,7 +53,7 @@ Errors: a data frame without \code{col}; a \code{col} that is not
 in \code{data}; \code{maxlvl} not one positive whole number.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 df <- data.frame(grade = c("a", "b", "b", "c", NA, "b"),
                  stringsAsFactors = FALSE)
 freqtbl(df, "grade")

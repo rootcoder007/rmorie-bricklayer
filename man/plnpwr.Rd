@@ -69,7 +69,7 @@ The minimum detectable effect is where the power curve crosses \code{power},
 by linear interpolation (Burlig, Preonas and Woerman 2020).
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 p <- polex()
 pre <- p[p$month <= 12, ]
 pw <- plnpwr(pre, "district", "month", "crmrate", ntrt = 10, adopt = 7:10,

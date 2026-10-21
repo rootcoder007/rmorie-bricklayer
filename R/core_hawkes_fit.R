@@ -302,7 +302,7 @@
 #'   to a
 #'   resolution; [chwkres()] for the
 #'   residuals.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' times <- sort(stats::runif(400, 0, 100))
 #' fit <- chwkfit(times, 100, "exponential")
@@ -529,7 +529,7 @@ chwkfit <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
 #'   theorem and its application to neural spike train data analysis.
 #'   \emph{Neural Comput.}
 #'   14, 325--346. \doi{10.1162/08997660252741149}
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(2)
 #' times <- sort(stats::runif(200, 0, 50))
 #' U <- chwkres(times, 50, "exponential", c(log(3), 0.2, 2))
@@ -742,7 +742,7 @@ chwkres <- function(times, hor, kernel = c("exponential", "weibull", "gamma", "l
 #' @return A numeric vector of length \code{n}, values in [0, 1).
 #' @references Steele GL, Lea D, Flood CH (2014). Fast splittable pseudorandom number
 #'   generators. \emph{OOPSLA 2014}, 453--472. \doi{10.1145/2660193.2660195}
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' cunif(3, 42)
 #' identical(cunif(5, 1), cunif(5, 1))
 #'
@@ -813,7 +813,7 @@ cunif <- function(n, seed) {
 #'   15(8), 1293--1314. \doi{10.1080/14697688.2015.1032544}
 #' @seealso [chwkfit()],
 #'   [cunif()]
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' days <- c(0, 0, 0, 1, 3, 3)
 #' chwkjit(days)
 #' anyDuplicated(chwkjit(days))

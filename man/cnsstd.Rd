@@ -46,7 +46,7 @@ to 54, 55 to 64, 65 to 74, 75 and over); collapse them to the age groups of the 
 being standardised.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 p <- cnsprof(indiex("censuspop"))
 cnsstd(p)
 \dontshow{\}) # examplesIf}

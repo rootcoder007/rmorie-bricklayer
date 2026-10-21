@@ -187,7 +187,7 @@ yoy: pct_change -> pctchg, pp_change -> ppchg, min_base -> minbase, pct_lower ->
 }
 
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # what a 0.5.x name became, and its 1.0.0 help page (the first lines)
 out <- character()
 blcli(c("describe", "admissions"), out = function(...) out <<- c(out, paste0(...)))

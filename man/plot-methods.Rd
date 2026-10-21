@@ -602,7 +602,7 @@ pictures that show a Simpson's-paradox reversal and why it happened.}
 }
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 sf <- stkflow(days = c(13500, 14600, 15100), people = c(300, 320, 310),
                  prd = 2021:2023)
 plot(sf)

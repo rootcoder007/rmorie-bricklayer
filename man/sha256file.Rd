@@ -44,7 +44,7 @@ regular file -- a missing path, a directory, \code{NA}, a number or a vector
 of several paths -- stops with \code{"sha256file: <path> is not a file"}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 f <- tempfile()
 writeLines("hello capsule", f)
 sha256file(f)

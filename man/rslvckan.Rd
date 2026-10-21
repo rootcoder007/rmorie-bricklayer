@@ -50,7 +50,7 @@ link-local addresses are refused), and for a matched resource URL that
 fails the same check. One network request; nothing is written.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # Missing fields return NULL rather than erroring:
 rslvckan(list())
 rslvckan(NULL)

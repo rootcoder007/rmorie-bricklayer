@@ -41,7 +41,7 @@ many lines were split: a field that spans a split may be incomplete.
 }
 
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 siutxt("<p>Number of SIU Investigators assigned: 3</p>")
 
 # the bundled synthetic report, as text

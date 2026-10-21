@@ -61,7 +61,7 @@ bound and there is no finite trend: a warning says so, the rate ratio is
 \code{plot()} method for the result.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # A count falling by about 15\% a year.
 set.seed(3)
 y <- stats::rpois(8, lambda = 200 * 0.85^(0:7))

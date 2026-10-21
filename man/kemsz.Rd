@@ -42,7 +42,7 @@ lengths in characters. Error: \code{lvl} other than one whole number
 512, 768 or 1024.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 kemsz(768)
 
 # the shared secret is 32 bytes at every level: the level buys

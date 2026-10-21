@@ -172,7 +172,7 @@ that gives both names of one argument is refused.
 }
 
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 seg <- data.frame(
   EndFiscalYear = rep(2019:2023, each = 2),
   Gender = rep(c("Female", "Male"), 5),

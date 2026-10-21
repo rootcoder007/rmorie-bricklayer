@@ -86,7 +86,7 @@ gives the character offset); a repeated key under
 error.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 fromjs('[{"a":1,"b":"x"},{"a":2,"b":"y"}]')
 fromjs('[[1,2],[3,4]]')
 

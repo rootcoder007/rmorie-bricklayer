@@ -58,7 +58,7 @@ Nations, Metis and Inuit comparisons, the Indigenous population's own
 (\code{\link{cnsstd}}; Kumar and Tjepkema 2019).
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # seriously contemplated suicide in the past 12 months, 2017 (table 41-10-0021-01),
 # standardised to the Indigenous population's age structure (2021 Census)
 ages <- c("15 to 24 years", "25 to 34 years", "35 to 44 years", "45 to 54 years",

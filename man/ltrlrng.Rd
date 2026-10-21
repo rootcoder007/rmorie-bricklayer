@@ -226,7 +226,7 @@ sweep widths, spacings and standard deviations positive, probabilities in
 and datum types are errors.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # inverse cube detection 0.5, 1 and 2 sweep widths off the track
 ltrlrng(c(0.5, 1, 2), W = 1)
 plot(ltrlrng(seq(-3, 3, by = 0.5), W = 2))

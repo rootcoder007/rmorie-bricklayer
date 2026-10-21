@@ -135,7 +135,7 @@
 #' @seealso \code{\link{caseflow}}, \code{\link{lifetbl}},
 #'   \code{\link{dispmix}}, \code{\link{clrdcmp}},
 #'   \code{\link{crmdens}}, \code{\link{knoxtst}}.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",
 #'                           package = "rmoriebricklayer"))
 #' head(f)
@@ -214,7 +214,7 @@ NULL
 #'
 #' @seealso \code{\link{lifetbl}}, \code{\link{dispmix}},
 #'   \code{\link{stkflow}} for custody populations.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",
 #'                           package = "rmoriebricklayer"))
 #' cf <- caseflow(f$received, f$disposed, pend = f$pending, prd = f$month)
@@ -481,7 +481,7 @@ plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NU
 #' Survival Data Analysis}, 3rd ed. Wiley, Hoboken, NJ. Chapter 4.
 #'
 #' @seealso \code{\link{caseflow}}, \code{\link{prsbands}}.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' d <- read.csv(system.file("extdata", "ocj_time_to_disposition.csv",
 #'                           package = "rmoriebricklayer"))
 #' f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",
@@ -692,7 +692,7 @@ plot.rmbl_life_table <- function(x, ..., main = NULL, col = NULL, palette = NULL
 #'
 #' @seealso \code{\link{shrs}} for one period's shares with Wilson
 #'   intervals.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' d <- read.csv(system.file("extdata", "ocj_dispositions.csv",
 #'                           package = "rmoriebricklayer"))
 #' mix <- dispmix(d[, -(1:2)], prd = d$year)
@@ -1009,7 +1009,7 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
 #'
 #' @seealso \code{\link{knoxtst}}, \code{\link{plmfld}} (the same
 #'   kind of surface, for an air pollutant).
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
 #'                           package = "rmoriebricklayer"))
 #' kd <- crmdens(b$lon, b$lat, ngrid = 120)
@@ -1361,7 +1361,7 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
 #' \emph{Journal of Quantitative Criminology}, 23(3), 201-219.
 #'
 #' @seealso \code{\link{crmdens}}.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
 #'                           package = "rmoriebricklayer"))
 #' b <- b[!is.na(b$lon), ]
@@ -1646,7 +1646,7 @@ plot.rmbl_knox <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #' \doi{10.3138/cjccj.2014-E29}
 #'
 #' @seealso \code{\link{caseflow}} for the clearance rate over time.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' g <- read.csv(system.file("extdata", "ocj_offence_groups.csv",
 #'                           package = "rmoriebricklayer"))
 #' g <- g[g$year %in% c(2014, 2022), ]

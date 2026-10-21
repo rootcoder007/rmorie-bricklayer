@@ -48,7 +48,7 @@
 #' [drftpsi()],
 #' [drftchisq()],
 #' [cpsdrft()]
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' ref <- stats::rnorm(200)
 #'
@@ -147,7 +147,7 @@ drftks <- function(x, y) {
 #' Lin J (1991). Divergence measures based on the Shannon entropy.
 #'   *IEEE Transactions on Information Theory* 37(1), 145--151.
 #'   \doi{10.1109/18.61115}
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(2)
 #' ref <- stats::rnorm(500)
 #'
@@ -281,7 +281,7 @@ drftpsi <- function(x, y, bins = 10L, eps = 1e-6) {
 #' @seealso [drfthomog()],
 #'   [cpsdrft()],
 #' [stats::chisq.test()] for the full test object.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' ref <- c(a = 50, b = 30, c = 20)
 #'
 #' # Counts matching the reference proportions: nothing to report.
@@ -433,7 +433,7 @@ drftchisq <- function(obs, expd) {
 #' [drftchisq()] for a known reference
 #' distribution, [stats::chisq.test()] for
 #' the full test object.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' a <- sample(c("x", "y", "z"), 300, TRUE)
 #' b <- sample(c("x", "y", "z"), 300, TRUE)
@@ -576,7 +576,7 @@ drfthomog <- function(x, y, seed = 1L) {
 #'   [cpsdrft()].
 #' @references Benford F (1938). The law of anomalous numbers.
 #'   *Proceedings of the American Philosophical Society* 78(4), 551--572.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # A quantity spanning several orders of magnitude follows the law.
 #' set.seed(3)
 #' benfordtst(10^stats::runif(2000, 0, 6))
@@ -724,7 +724,7 @@ benfordtst <- function(x) {
 #' @seealso
 #' [valsch()] for the structural
 #' check, which this complements rather than replaces.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(5)
 #' ref <- data.frame(
 #'   value = stats::rnorm(300),

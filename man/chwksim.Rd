@@ -26,7 +26,7 @@ offspring, a Poisson number with mean the branching ratio, at delays drawn from 
 fitted kernel, generation after generation, until none fall before the horizon.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 times <- sort(stats::runif(300, 0, 100))
 fit <- chwkfit(times, 100)

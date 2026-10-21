@@ -62,7 +62,7 @@ progress (it is called with \code{quiet = FALSE}). \code{tpath} is
 overwritten on success.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 src <- tempfile(fileext = ".csv")
 writeLines(c("id,value", "1,10"), src)
 

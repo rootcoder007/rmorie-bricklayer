@@ -64,7 +64,7 @@ consumes one one-time leaf per signature) or a key from
 \code{\link{fipskg}} (ML-DSA or SLH-DSA). Nothing is written to disk.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 x <- c("W", "B", "W", "I")
 map <- c(W = "White", B = "Black", I = "Indigenous")
 y <- grdrcd(x, map)

@@ -39,7 +39,7 @@ data frame or without columns, or with duplicated or empty names;
 \code{minrun} not a positive whole number.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # One long outage and two isolated gaps, with the same total count.
 df <- data.frame(
   outage = c(1, 2, NA, NA, NA, NA, 7, 8),

@@ -224,7 +224,7 @@
 #'   S. N. (2016). Atmospheric Chemistry and Physics, 3rd ed. Thomson, D. J.
 #'   (1987). Criteria for the selection of stochastic models of particle
 #'   trajectories in turbulent flows. Journal of Fluid Mechanics 180, 529-556.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # plume widths 1 km downwind: neutral, then very stable, rural and urban
 #' pgsig(1000, "D")
 #' pgsig(c(500, 1000, 2000), "F", set = "urban")

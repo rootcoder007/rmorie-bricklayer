@@ -55,7 +55,7 @@ classes and every other attribute. These two keep them, at the cost of
 JSON no other tool will understand.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # A factor survives the round trip with its levels intact.
 f <- factor(c("b", "a", "b"), levels = c("a", "b", "c"))
 back <- jsunser(jsser(f))

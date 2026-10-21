@@ -87,7 +87,7 @@ positive (the others), and when \code{base} is not one of the two
 choices.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # Fewer people, held longer: the flow falls while the stock rises.
 stkflow(
   days = c(115674, 126121), people = c(12647, 9608),

@@ -29,7 +29,7 @@
 #' @return What the forwarded function returns.
 #' @keywords internal
 #' @name rmbl-compat
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 #' # one-time index record out of your configuration directory
 #' k <- pqc_keygen(height = 2)

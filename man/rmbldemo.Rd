@@ -99,7 +99,7 @@ the package's functions, written to a temporary JSON file and read back with
 }
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 rmbldemo()
 head(rmbldemo("court"))
 identical(rmbldemo("survey"), rmbldemo("survey"))

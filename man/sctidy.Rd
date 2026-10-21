@@ -46,7 +46,7 @@ coordinate: \code{"Without children [3]"} and \code{"Without children [7]"}. Oth
 labels are left as they are.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # the layout of a downloaded table, with one cell suppressed
 d <- data.frame(REF_DATE = "2019/2022", GEO = "Canada",
                 `Indigenous identity` = c("First Nations", "Inuk (Inuit)",

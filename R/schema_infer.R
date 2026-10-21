@@ -73,7 +73,7 @@
 #' [valsch()],
 #' [cpsdrft()] for the distributional
 #' check the schema cannot make.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' df <- data.frame(
 #'   id = 1:100,

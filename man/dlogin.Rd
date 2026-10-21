@@ -114,7 +114,7 @@ prompt; a refused code; a sign-in service that answers with an error or
 returns no key; a credentials file that cannot be edited safely.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)
 Sys.setenv(XDG_CONFIG_HOME = tempfile())   # never touch your real credentials
 

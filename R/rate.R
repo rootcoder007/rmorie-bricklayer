@@ -137,7 +137,7 @@
 #'   \code{\link{stdinc}} for a rate compared against an expected count rather
 #'   than a population.
 #'
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' stops <- data.frame(
 #'   division = c("North", "South", "East"),
 #'   stops = c(412, 77, 3),
@@ -348,7 +348,7 @@ print.rmbl_rate <- function(x, ...) {
 #' @seealso \code{\link{rtcalc}} for events per population,
 #'   \code{\link{yoy}} for change between periods.
 #'
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' stops <- data.frame(
 #'   division = c("North", "South", "East"),
 #'   stops = c(412, 77, 3))
@@ -574,7 +574,7 @@ shrs.default <- function(x, total = NULL, conflvl = 0.95, ...) {
 #' @seealso \code{\link{rtcalc}}, \code{\link{yoy}} for change in a count or a
 #'   measured quantity.
 #'
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' d <- data.frame(
 #'   year = rep(2021:2023, each = 2),
 #'   division = rep(c("North", "South"), 3),

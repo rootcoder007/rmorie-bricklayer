@@ -49,7 +49,7 @@ the capsule, and the refusals of \code{cpsbndl()} (a key it cannot sign
 with).
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 root <- tempfile("capsules-")
 d <- file.path(root, "one")
 dir.create(d, recursive = TRUE)

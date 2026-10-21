@@ -53,7 +53,7 @@ observed value that is neither mapped nor kept (the message lists them).
 \code{\link{rcdmnf}} records it.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # rename three codes
 x <- c("W", "B", "O", "W", NA)
 grdrcd(x, c(W = "White", B = "Black", O = "Other"))

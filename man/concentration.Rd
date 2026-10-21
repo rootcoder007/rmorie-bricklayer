@@ -69,7 +69,7 @@ a zero total is undefined); \code{topshr()} when \code{fractions} is not
 numeric, is empty, has \code{NA} or lies outside \code{[0, 1]}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # Ten units holding one each: no concentration.
 ginicoef(rep(1, 10))
 

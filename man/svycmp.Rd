@@ -75,7 +75,7 @@ that is not a single domain label present in the data; and every error of
 \code{\link[=svyest]{svyest()}}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 d <- data.frame(region = rep(c("north", "south", "east"), length.out = 150),
                 smoker = rbinom(150, 1, 0.3), w = runif(150, 50, 150))

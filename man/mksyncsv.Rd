@@ -63,7 +63,7 @@ Errors: \code{schema} not a list; any error from
 \code{\link{mksyncol}}; an unwritable \code{outpath}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 recipe <- list(
   n_rows = 20, seed = 42,
   columns = list(

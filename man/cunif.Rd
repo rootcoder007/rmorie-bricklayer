@@ -35,7 +35,7 @@ Errors: \code{n} not one non-negative whole number; \code{seed} not one
 whole number in \eqn{[0, 2^{53})}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 cunif(3, 42)
 identical(cunif(5, 1), cunif(5, 1))
 

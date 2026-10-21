@@ -34,7 +34,7 @@
 #' [csha256()],
 #' [ccrc32()],
 #' [sha512file()]
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # FIPS 180-4 test vector for "abc".
 #' csha512("abc")
 #'
@@ -91,7 +91,7 @@ csha512 <- function(x) {
 #'   above \code{2^31 - 1} are not representable as an R integer.
 #' @seealso [csha256()] for integrity against
 #' tampering rather than accident.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # The standard check value: CRC-32("123456789") is 0xCBF43926.
 #' ccrc32("123456789")
 #' ccrc32("123456789") == 0xCBF43926
@@ -296,7 +296,7 @@ cdgsteq <- function(a, b) {
 #'   \code{side} (character, \code{"left"} or \code{"right"}: the side the
 #'   sibling is on) and \code{scheme} (integer). \code{mrkvrf()} a
 #'   length-1 logical.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' chunks <- c("row1,row2", "row3,row4", "row5,row6", "row7,row8")
 #'
 #' root <- mrkroot(chunks)
@@ -514,7 +514,7 @@ mrkvrf <- function(leaf, proof, root, scheme = NULL) {
 #' @seealso
 #' [mrkroot()],
 #' [sha512file()]
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' p <- tempfile()
 #' writeLines(rep("some capsule content", 50), p)
 #'
@@ -584,7 +584,7 @@ chnkfile <- function(path, chnkbytes = 1048576L) {
 #' @return \code{sha512file()}: a length-1 character vector, 128 lowercase hex
 #'   characters. \code{crc32file()}: a length-1 numeric (double) checksum
 #'   between 0 and \code{2^32 - 1}.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' p <- tempfile()
 #' writeLines("capsule payload", p)
 #'

@@ -53,7 +53,7 @@ zero or below; lengths that differ (a single \code{expd} is recycled).
 A \code{conflvl} outside (0, 1) is an error.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 stdinc(obs = c(30, 12, 3), expd = c(20, 14, 5),
     area = c("North", "South", "East"))
 

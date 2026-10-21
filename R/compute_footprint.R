@@ -113,7 +113,7 @@
 #'   Algorithms data v3.1. Lannelongue, L., Grealey, J. and Inouye, M. (2021).
 #'   Green Algorithms: quantifying the carbon footprint of computation.
 #'   Advanced Science 8(12), 2100707.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' co2int("CA-ON")
 #' co2int("Canada")$year
 #' co2int("CA-XX")$note
@@ -208,7 +208,7 @@ co2inttab <- function() .rmbl_ci_table()
 #'   caller or a test can supply them; the defaults read the running session.
 #' @return A list with \code{location} (a code present in
 #'   \code{co2inttab()}) and \code{method} (how it was found).
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' dtctloc()
 #' dtctloc(envloc = "", codloc = "", tz = "Europe/Paris")
 #' dtctloc(envloc = "", codloc = "", tz = "",
@@ -364,7 +364,7 @@ dtctloc <- function(envloc = Sys.getenv("RMBL_LOCATION"),
 #'   under \code{rapldir} is readable, \code{FALSE} otherwise (including
 #'   when the directory does not exist).
 #' @seealso \code{\link{co2fp}}
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' raplok()
 #'
 #' # a fake powercap tree with one readable package domain (Linux names the domain
@@ -598,7 +598,7 @@ raplok <- function(rapldir = "/sys/class/powercap") {
 #'   \doi{10.5281/zenodo.4658424}. Lacoste, A., Luccioni, A., Schmidt, V. and
 #'   Dandres, T. (2019). Quantifying the carbon emissions of machine learning.
 #'   arXiv:1910.09700.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' fp <- co2fp(sum(sqrt(seq_len(2e5))), loc = "CA-ON")
 #' fp$enekwh$total
 #' fp$co2eg
@@ -818,7 +818,7 @@ print.rmbl_footprint <- function(x, ...) {
 #'   Helmers et al. (2019) Atmospheric Environment and UK BEIS 2019 conversion
 #'   factors; tree sequestration from Bernal et al. (2018) via the same file.
 #' @seealso \code{\link{co2fp}}
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' fpeqv(1200)
 #'
 #' # the footprint of a small computation, in everyday terms

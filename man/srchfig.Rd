@@ -53,7 +53,7 @@ general methods draw the same figures with other parameters:
 \code{plot(datumpmap(...), view = )}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 head(srchfig())
 srchfig("3-4")
 srchfig(5, 8)

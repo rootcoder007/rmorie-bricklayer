@@ -60,7 +60,7 @@ non-finite count; \code{biascor} not \code{TRUE} or \code{FALSE};
 \code{minexp} not a single non-negative number.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 tbl <- rbind(c(120, 80), c(40, 160))
 cramerv(tbl)
 

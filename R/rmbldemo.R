@@ -91,7 +91,7 @@
 #'   `name = NULL`, a data frame of `name`, `rows` and `description`.
 #' @seealso [rmblapp()], whose tabs open on these datasets;
 #'   [mksyncol()].
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' rmbldemo()
 #' head(rmbldemo("court"))
 #' identical(rmbldemo("survey"), rmbldemo("survey"))

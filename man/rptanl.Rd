@@ -59,7 +59,7 @@ Errors: \code{x} not from \code{\link[=anltab]{anltab()}}; an invalid
 \code{format}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 path <- system.file("extdata", "otis_a01_individuals.csv",
                     package = "rmoriebricklayer")
 a <- anltab(read.csv(path), value = "individuals",

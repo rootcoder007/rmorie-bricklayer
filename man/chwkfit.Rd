@@ -173,7 +173,7 @@ Long fits show a progress spinner (EM a bar) on stderr unless
 \code{options(morie.quiet = TRUE)}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 times <- sort(stats::runif(400, 0, 100))
 fit <- chwkfit(times, 100, "exponential")

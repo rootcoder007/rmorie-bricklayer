@@ -259,7 +259,7 @@
 #'   columns \code{check}, \code{detail}, \code{explanation} (what the
 #'   failure means and what to do) and \code{raised_by} (\code{pkg::fn}
 #'   when the detail is a message of these packages, else \code{NA}).
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' msg <- "`prompt` must be a single non-empty string"
 #' explerr(msg, pkgs = "rmoriebricklayer")
 #'

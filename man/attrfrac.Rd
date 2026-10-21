@@ -50,7 +50,7 @@ number (logical values included), a prevalence outside \eqn{[0, 1]}, only
 one of the two limits, or limits that do not enclose \code{rr}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 attrfrac(1.5, 0.4)
 attrfrac(2, 1)      # everyone exposed: 1 - 1/RR
 

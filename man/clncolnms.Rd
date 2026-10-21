@@ -59,7 +59,7 @@ reproducibility hazard -- the returned object carries the original names
 in its \code{"orignms"} attribute for exactly that.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 clncolnms(c("Total  Population (2021)", "\% change",
                      "Ville / City", "dup", "dup"))
 

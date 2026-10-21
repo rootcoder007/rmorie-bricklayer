@@ -48,7 +48,7 @@ Errors: \code{data} not a data frame; fewer than two numeric columns;
 \code{meth}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 df <- data.frame(a = stats::rnorm(100), b = stats::rnorm(100))
 df$c <- df$a + stats::rnorm(100, sd = 0.2)

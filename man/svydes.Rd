@@ -202,7 +202,7 @@ so a single-PSU
 stratum under \code{lonely = "fail"} is reported then.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 set.seed(1)
 d <- data.frame(region = rep(c("north", "south"), each = 50),
                 smoker = rbinom(100, 1, rep(c(0.2, 0.35), each = 50)),

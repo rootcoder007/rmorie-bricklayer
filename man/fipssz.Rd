@@ -36,7 +36,7 @@ unknown
 scheme, or anything but one string, is refused.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 fipssz("ML-DSA-65")
 fipssz("SLH-DSA-SHAKE-128s")
 

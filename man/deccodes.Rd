@@ -57,7 +57,7 @@ For a haven-style labelled vector, which carries its dictionary as a
 factor with the levels in code order.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # codes from a survey file with their code book
 race <- c(1, 2, 2, 3, NA)
 book <- c("1" = "White", "2" = "Black", "3" = "Indigenous")

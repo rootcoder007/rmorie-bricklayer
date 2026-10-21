@@ -109,7 +109,7 @@
 #'     \item{\code{meta}}{list of the arguments used, \code{nrows}, the sorted
 #'       \code{periods}, \code{prior} (logical) and \code{when} (a time stamp).}
 #'   }
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' path <- system.file("extdata", "otis_a01_individuals.csv",
 #'                     package = "rmoriebricklayer")
 #' otis <- read.csv(path)
@@ -398,7 +398,7 @@ print.bricklayer_analysis <- function(x, ...) {
 #' @param digits Number of decimals for percentages and rates, default 1.
 #' @return The report text (a length-1 character string, Markdown or a full
 #'   HTML document), invisibly.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' path <- system.file("extdata", "otis_a01_individuals.csv",
 #'                     package = "rmoriebricklayer")
 #' a <- anltab(read.csv(path), value = "individuals",

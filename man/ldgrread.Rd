@@ -75,7 +75,7 @@ ledger rows to such a capsule too.}
 }
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 f <- system.file("extdata", "ledger_sample.json", package = "rmoriebricklayer")
 l <- ldgrread(f)
 l

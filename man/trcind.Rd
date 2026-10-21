@@ -34,7 +34,7 @@ through proxies. The direction is the direction of better health for the people
 measured.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 ti <- trcind()
 ti[ti$call == "19", c("indicator", "table", "measure", "better")]
 \dontshow{\}) # examplesIf}

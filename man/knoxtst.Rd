@@ -81,7 +81,7 @@ incidents. With \code{seed} the random number stream is set for the call
 and restored afterwards.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
                           package = "rmoriebricklayer"))
 b <- b[!is.na(b$lon), ]

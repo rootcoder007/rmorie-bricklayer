@@ -68,7 +68,7 @@ negative or infinite value, or a length other than \code{recv}'s;
 outside (0, 1).
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",
                           package = "rmoriebricklayer"))
 cf <- caseflow(f$received, f$disposed, pend = f$pending, prd = f$month)

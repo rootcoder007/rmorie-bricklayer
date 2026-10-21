@@ -15,7 +15,7 @@
 * Spelling: US spelling throughout ("optimized", "renormalized", "victimized"), code names in code font, and the technical terms in `inst/WORDLIST`; `spelling::spell_check_package()` finds nothing.
 * R CMD check no longer reruns the vignettes' analyses: when it re-builds a vignette, only the setup chunk runs. R CMD build, r-universe and pkgdown still build every vignette in full, so the package carries each one's HTML, figures and R code.
 * The 33 guides are now five vignettes, one per theme: `vignette("capsules-and-provenance")`, `vignette("integrity-and-cryptography")`, `vignette("describing-data-and-tables")`, `vignette("statistical-methods")` and `vignette("applied-analyses")`. Each former guide is a section of one of them, with its text, code and figures unchanged.
-* Examples run in an interactive session (for example with `example()`) and on the package website; R CMD check shows every one of them but runs only those of `csha256()` and `keyeddgst()`.
+* Every example runs in GitHub CI, on r-universe, on the package website and in an interactive session (for example with `example()`), and the full test suite runs in GitHub CI and on r-universe. On CRAN, to keep the check within its time limit, the help pages show every example but R CMD check runs only those of `csha256()` and `keyeddgst()`, and the tests run their fast core.
 * Every vignette now draws its results: the 21 that had no figure gain one or more, drawn with the package's own `plot()` methods and plot helpers from the objects each vignette builds.
 
 ## A dashboard, distributions and proof ledgers

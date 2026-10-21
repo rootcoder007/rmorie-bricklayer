@@ -111,7 +111,7 @@
 #' [profcols()],
 #' [valsch()],
 #' [rptmd()] to write it out.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' ref <- data.frame(
 #'   id = 1:200,
@@ -426,7 +426,7 @@ summary.bricklayer_report <- function(object, ...) {
 #' @return A character vector of Markdown lines; returned visibly when `path`
 #' is `NULL`, invisibly when written to a file.
 #' @seealso [cpsrpt()]
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' df <- data.frame(v = stats::rnorm(100), g = rep("x", 100),
 #'                  stringsAsFactors = FALSE)

@@ -37,7 +37,7 @@ Errors when either argument is numeric, has a length other than one, is
 date fails inside \code{as.Date()} with base R's own message.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 perdays("2024-01-01", "2024-12-31") # a leap year
 perdays("2023-01-01", "2023-12-31")
 perdays("2025-04-01", "2026-03-31") # a fiscal year

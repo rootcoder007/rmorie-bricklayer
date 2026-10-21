@@ -57,7 +57,7 @@ The function only reports; it never changes \code{data}. It errors when
 \code{data} is not a data frame.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # codes without labels, and a case-variant city name
 a <- audcats(data.frame(
   race = factor(c("1", "2", "2", "3")),

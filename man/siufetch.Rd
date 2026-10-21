@@ -55,7 +55,7 @@ Then any error from \code{blfetch()}, for example when neither
 the live page nor an archived copy can be reached.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # the report number is checked before anything is sent
 try(siufetch(1.5, tempfile(fileext = ".html")))
 try(siufetch(648, tempfile(fileext = ".html"), lang = "de"))

@@ -42,7 +42,7 @@ error. Errors: a \code{prov} that is not a list; a layer URL that is
 not public \code{https}.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 # Missing fields return NULL rather than erroring:
 rslvarc(list())
 

@@ -23,7 +23,7 @@ and \code{manifest} for a results manifest. \code{rmbl verify} checks
 each capsule file against its schema before the package's own checks.
 }
 \examples{
-\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
+\dontshow{if (interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) withAutoprint(\{ # examplesIf}
 schemapath("capsule")
 s <- fromjs(paste(readLines(schemapath("bundle")), collapse = "\n"))
 s$required

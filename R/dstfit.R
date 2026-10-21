@@ -243,7 +243,7 @@
 #'
 #' Anderson TW, Darling DA (1954). A test of goodness of fit. \emph{JASA} 49, 765--769.
 #' \doi{10.1080/01621459.1954.10501232}
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(1)
 #' x <- stats::rgamma(300, shape = 2, rate = 0.5)
 #' f <- dstfit(x, nboot = 20)
@@ -389,7 +389,7 @@ print.rmbl_dstfit <- function(x, ...) {
 #' @return The data drawn, invisibly: a data frame with `family`, `x` and
 #'   `y` (and for `qq` and `pp` the empirical value in `y`
 #'   against the fitted one in `x`).
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' set.seed(2)
 #' f <- dstfit(stats::rlnorm(200), nboot = 0)
 #' plot(f)

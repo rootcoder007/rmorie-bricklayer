@@ -77,7 +77,7 @@
 #' @srrstats {G2.0} `m` and `E` must be single numbers, `effort` a vector of at least one positive value.
 #' @srrstats {G5.4a} test-search-figs.R checks Frost's stated optima: 4 E^2 gives a factor of 1.02 and POS
 #'   0.4578, 2 E^2 gives 0.81 and 0.2875, 8 E^2 gives 1.29 and 0.6588.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' # Frost's example: an effort of 4 E^2 on a point datum
 #' optsqr(4)
 #' # poor search conditions: the random search curve
@@ -204,7 +204,7 @@ optsqr <- function(effort, model = c("invcube", "random", "definite", "mbeta"), 
 #' @srrstats {G2.3a} `fig` is matched against the book's figure numbers, which the refusal lists.
 #' @srrstats {EA5.0} The figures use the package's plot style (.bl_par, .bl_grid, .bl_title) and palettes.
 #' @srrstats {EA6.1} test-search-figs.R draws every figure to pdf(NULL) and checks the data each returns.
-#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
+#' @examplesIf interactive() || any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))
 #' head(srchfig())
 #' srchfig("3-4")
 #' srchfig(5, 8)
