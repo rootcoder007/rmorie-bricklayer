@@ -3924,9 +3924,9 @@ unnoticed.
   release; a document that does not verify is ignored.
   `MORIE_HOSTED_BASE_URL`, `MORIE_HOSTED_AUTH_URL`, `MORIE_HOSTED_MODEL`
   and `MORIE_DATA_URL` still override. The hosted tier is a last resort;
-  keys are personal and issued on request at
-  <https://www.rmorie.com/access/>, and every hint in the package says
-  so. The GitHub and emailed-code sign-ins keep working.
+  keys are personal and issued on request at `www.rmorie.com/access/`,
+  and every hint in the package says so. The GitHub and emailed-code
+  sign-ins keep working.
 
 - **Plain http on the loopback host is admitted for the local routes
   only.** The URL policy that guards every other address refuses

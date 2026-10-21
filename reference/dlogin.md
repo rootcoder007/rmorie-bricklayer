@@ -9,7 +9,7 @@ it is not used for language models, which run on your own key or a local
 model
 ([`llmask`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmask.md)).
 Keys are personal: the GitHub or emailed-code sign-in issues one, or ask
-at <https://www.rmorie.com/access/>. The sign-in addresses come from
+at `www.rmorie.com/access/`. The sign-in addresses come from
 [`svcs`](https://rootcoder007.github.io/rmorie-bricklayer/reference/svcs.md).
 Three ways in:
 
@@ -50,8 +50,8 @@ dlogin(
 - token:
 
   Character scalar or `NULL` (the default): a key you already have,
-  issued at <https://www.rmorie.com/access/>. Surrounding spaces are
-  removed. Takes precedence over `email`.
+  issued at `www.rmorie.com/access/`. Surrounding spaces are removed.
+  Takes precedence over `email`.
 
 - email:
 
@@ -79,9 +79,8 @@ dlogin(
 - accter:
 
   Logical scalar, default `FALSE`: `TRUE` accepts the data access terms
-  (read them at <https://data.rmorie.com/terms>) without the console
-  asking. A new key is issued only once they are accepted, here or at
-  the prompt.
+  (read them at `data.rmorie.com/terms`) without the console asking. A
+  new key is issued only once they are accepted, here or at the prompt.
 
 - name:
 
