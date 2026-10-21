@@ -22,7 +22,7 @@ dlogin(
 }
 \arguments{
 \item{token}{Character scalar or \code{NULL} (the default): a key you
-already have, issued at \url{https://www.rmorie.com/access/}.
+already have, issued at \code{www.rmorie.com/access/}.
 Surrounding spaces are removed. Takes precedence over \code{email}.}
 
 \item{email}{Character scalar or \code{NULL} (the default): sign in with
@@ -41,7 +41,7 @@ seconds the device flow waits for you to approve the sign-in.}
 
 \item{accter}{Logical scalar, default \code{FALSE}: \code{TRUE}
 accepts the data access terms (read them at
-\url{https://data.rmorie.com/terms}) without the console asking. A new
+\code{data.rmorie.com/terms}) without the console asking. A new
 key is issued only once they are accepted, here or at the prompt.}
 
 \item{name}{Character scalar or \code{NULL}: your name (asked for when
@@ -76,7 +76,7 @@ so one sign-in serves all of them). The key opens the curated tables
 (\code{\link{dload}}); it is not used for language models,
 which run on your own key or a local model (\code{\link{llmask}}).
 Keys are personal: the GitHub or emailed-code sign-in issues one, or ask at
-\url{https://www.rmorie.com/access/}.
+\code{www.rmorie.com/access/}.
 The sign-in addresses come from \code{\link{svcs}}. Three ways in:
 \itemize{
 \item \code{token}: a key you already have, from the website or an

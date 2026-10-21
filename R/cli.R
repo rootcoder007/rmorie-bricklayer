@@ -148,7 +148,7 @@
 #' \describe{
 #'   \item{\code{login [--token] [--email ADDRESS [--code CODE]]
 #'     [--no-browser]}}{sign in for the curated tables at data.rmorie.com
-#'     (a free MORIE data key, issued at \url{https://www.rmorie.com/access/}):
+#'     (a free MORIE data key, issued at \code{www.rmorie.com/access/}):
 #'     a key you paste with \code{--token} (read from the terminal or a pipe
 #'     when KEY is omitted), a code sent to \code{--email}, or the GitHub
 #'     device flow}

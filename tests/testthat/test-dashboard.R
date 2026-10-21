@@ -2,6 +2,8 @@
 # server (as an ExtendedTask) on its demo data and shows the call it ran, its value boxes, method,
 # diagnostics, table and plots, and the data, report, capsule and ledger panels do what their
 # buttons say. No server is started.
+# ponytail: the whole file skips on CRAN (38 s there, shiny is a Suggests); every CI leg still runs it.
+skip_on_cran()
 
 ns <- asNamespace("rmoriebricklayer")
 specs <- function() ns$.bl_app_specs()

@@ -352,10 +352,10 @@ and a digest anyone can recompute says nothing about who produced the data.
   BigQuery public datasets and the survey, court and justice data the MORIE
   ledger uses), and `dload("db/table")` opens one with your
   MORIE key (`rmoriebricklayer login` signs in with GitHub or an emailed
-  code; or ask at <https://www.rmorie.com/access/>), under the terms at
-  <https://www.rmorie.com/data-license/>, cached locally. The ICPSR, NCVS
+  code; or ask at `www.rmorie.com/access/`), under the terms at
+  `www.rmorie.com/data-license/`, cached locally. The ICPSR, NCVS
   38604 and a2aj tables open once you accept their terms at
-  <https://data.rmorie.com/terms>. `blfetch()` downloads any URL with an Internet Archive
+  `data.rmorie.com/terms`. `blfetch()` downloads any URL with an Internet Archive
   fallback (libcurl).
 
 ## Security posture

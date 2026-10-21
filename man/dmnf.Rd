@@ -41,10 +41,10 @@ The MORIE project keeps databases materialised from Google BigQuery
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 tables from the edge, under the data access terms at
-\url{https://www.rmorie.com/data-license/}. They open with the key
+\code{www.rmorie.com/data-license/}. They open with the key
 \code{\link{dlogin}} stores, the same key rmorie and morie
 use; keys are personal: sign in with GitHub or an emailed code, or ask at
-\url{https://www.rmorie.com/access/}. The service address comes from
+\code{www.rmorie.com/access/}. The service address comes from
 \code{\link{svcs}}.
 \code{dmnf()} returns the gateway's manifest
 (every table with rows, columns, size, SHA-256 and its BigQuery source),
@@ -85,7 +85,7 @@ The key is sent only to the address of the signed services document. With
 \code{MORIE_DATA_URL} set to another address the key is not sent and the
 download fails with a message saying so. Some tables (ICPSR studies, the
 NCVS 38604 extract, the A2AJ case law) open only after their terms are
-accepted on the terms page, \url{https://data.rmorie.com/terms}. Downloads draw a progress
+accepted on the terms page, \code{data.rmorie.com/terms}. Downloads draw a progress
 bar when \code{options(morie.progress)} allows it.
 
 Errors: \code{refresh} not \code{TRUE} or \code{FALSE}; no key stored (the
