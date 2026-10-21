@@ -12,7 +12,7 @@
 
 > Analyze a published table, and be able to show later exactly which data the result came from.
 
-## What it is, in plain words
+## What it is
 
 `rmoriebricklayer` is for people who work from tables that someone else publishes: a ministry's
 open-data portal, Statistics Canada, a police oversight agency. It does three things with such a
