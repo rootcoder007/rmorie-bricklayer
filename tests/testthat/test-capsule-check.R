@@ -450,3 +450,17 @@ test_that("a local source written with backslashes is read as a local file (Wind
   expect_identical(cpschk(gsub("/", "\\\\", cp$root), "drift", fp = FALSE)$status, "ok")
   expect_identical(cpsrfrsh(cp$dir)$change, "unchanged")
 })
+
+test_that("an error inside the footprint wrapper is named after cpschk(), not co2fp()", {
+  d <- withr::local_tempdir()
+  utils::write.csv(data.frame(a = 1:3), file.path(d, "data.csv"), row.names = FALSE)
+  writeLines('{"name":"x","resource":{"filename":"data.csv","direct_url":""}}', file.path(d, "data_provenance.json"))
+  r <- cpschk(d, "drift", fp = TRUE)
+  msg <- grep("names no source to fetch", unlist(r), value = TRUE)
+  expect_true(length(msg) >= 1L)
+  expect_true(any(startsWith(msg, "cpschk: ")))
+  expect_false(any(grepl("co2fp", msg, fixed = TRUE)))
+  # co2fp()'s own argument errors keep its name
+  expect_error(co2fp(1, meth = "nope"), "^co2fp: `meth` must be one of")
+  expect_error(compute_footprint(1, method = "nope"), "^co2fp: `meth` must be one of")
+})

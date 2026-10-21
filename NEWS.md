@@ -1,5 +1,9 @@
 # rmoriebricklayer 1.0.0
 
+## Fixes after the CRAN resubmission
+
+* An error raised while `co2fp()` measures a computation's footprint is now named after the function that asked for the footprint (for example `cpschk: the provenance names no source to fetch`), not after `co2fp()`.
+
 ## A dashboard, distributions and proof ledgers
 
 * `rmblapp()` opens a dashboard over the package's analyses on your own machine (`rmbl app [PATH]
