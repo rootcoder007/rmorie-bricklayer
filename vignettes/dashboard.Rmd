@@ -3,15 +3,17 @@ title: "The analysis dashboard"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{The analysis dashboard}
-  %\VignetteEngine{rmoriebricklayer::prebuilt}
+  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include = FALSE}
-# chunks run when the vignette is built (R CMD build, r-universe, pkgdown) and are skipped when
-# R CMD check re-builds it (R sets _R_CHECK_PACKAGE_NAME_ there), unless NOT_CRAN is true
-knitr::opts_chunk$set(eval = identical(Sys.getenv("NOT_CRAN"), "true") ||
-                        !nzchar(Sys.getenv("_R_CHECK_PACKAGE_NAME_")))
+# the vignette is built in full by R CMD build (its HTML and R code go into the package), r-universe
+# and pkgdown; when R CMD check re-builds it (R sets _R_CHECK_PACKAGE_NAME_ there) only this chunk
+# runs, unless NOT_CRAN is true
+if (!identical(Sys.getenv("NOT_CRAN"), "true") && nzchar(Sys.getenv("_R_CHECK_PACKAGE_NAME_"))) {
+  knitr::knit_exit()
+}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 4, dpi = 72)
 library(rmoriebricklayer)
 ```

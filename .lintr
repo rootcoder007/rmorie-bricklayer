@@ -9,7 +9,7 @@ linters: linters_with_defaults(
     # same-package calls resolve at load time; the linter cannot see them file by file
     object_usage_linter = NULL
   )
-exclusions: c(list(
+exclusions: list(
     # ports kept byte-for-byte against their reference implementations
     "R/json_native.R" = Inf,
     "R/sha256_native.R" = Inf,
@@ -26,8 +26,5 @@ exclusions: c(list(
     "src" = Inf,
     "dev" = Inf,
     "data-raw" = Inf
-  ),
-  # the R code of each vignette, extracted by knitr::purl (dev/build_vignettes.R), not written by hand
-  sapply(file.path("vignettes", list.files("vignettes", "[.]R$")), function(f) Inf, simplify = FALSE)
   )
 encoding: "UTF-8"
