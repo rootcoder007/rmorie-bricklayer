@@ -10,6 +10,7 @@ vignette: >
 ```{r setup, include = FALSE}
 # the one-time index record of this vignette stays out of the reader's configuration directory
 options(rmoriebricklayer.xmssidxfile = tempfile())
+knitr::opts_chunk$set(eval = identical(Sys.getenv("NOT_CRAN"), "true")) # CRAN re-check skips the computing
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(rmoriebricklayer)
 set.seed(1)
@@ -482,7 +483,7 @@ the bytes.
 The bundled Indigenous tables name their sources (Statistics Canada table numbers, retrieval
 dates and licence) in the package's COPYRIGHTS file:
 
-```{r indigenous-provenance, eval = TRUE}
+```{r indigenous-provenance}
 cr <- readLines(system.file("COPYRIGHTS", package = "rmoriebricklayer"))
 cat(cr[grep("indigenouslifeexpectancy", cr) + 0:4], sep = "\n")
 ```

@@ -8,6 +8,7 @@ vignette: >
 ---
 
 ```{r setup, include = FALSE}
+knitr::opts_chunk$set(eval = identical(Sys.getenv("NOT_CRAN"), "true")) # CRAN re-check skips the computing
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(rmoriebricklayer)
 ```
@@ -122,7 +123,7 @@ Two checks belong with every weighting estimate: whether the two groups overlap 
 real chance of either treatment) and whether weighting balances the covariates. On simulated data,
 where the true effect is 3:
 
-```{r overlap-balance, eval = TRUE}
+```{r overlap-balance}
 set.seed(7)
 n <- 1500
 d <- data.frame(age = runif(n, 18, 70), income = rnorm(n))
@@ -152,7 +153,7 @@ bundled with the package support the group-level questions; for those see
 `vignette("first-nations-metis-inuit-health")`. A comparison of the published
 estimates themselves:
 
-```{r indigenous-causal, eval = TRUE}
+```{r indigenous-causal}
 hi <- indiex("health")
 x <- hi[hi$period == "2019/2022" & hi$age == "Total, 18 years and over" &
           hi$indicator == "Perceived mental health, very good or excellent", ]

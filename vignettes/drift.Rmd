@@ -8,6 +8,7 @@ vignette: >
 ---
 
 ```{r setup, include = FALSE}
+knitr::opts_chunk$set(eval = identical(Sys.getenv("NOT_CRAN"), "true")) # CRAN re-check skips the computing
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(rmoriebricklayer)
 set.seed(1)
