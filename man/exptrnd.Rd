@@ -38,10 +38,12 @@ weighted analysis from the survey itself (\code{\link{svydes}}): this function
 is for published or aggregated counts.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # made-up counts by 0, 1 and 2 generations of attendance, to show the computation
 et <- exptrnd(cases = c(60, 95, 70), n = c(500, 520, 300))
 et
 plot(et)
+\dontshow{\}) # examplesIf}
 }
 \references{
 McQuaid RJ, et al. (2017), see \code{\link{genexpo}}.

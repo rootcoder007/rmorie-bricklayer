@@ -71,6 +71,7 @@ eigenvalue of \eqn{S} at most \eqn{10^{-8}} times the largest); \code{alpha}
 outside (0, 1). A progress indicator is shown in an interactive session.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 n <- 200
 df <- data.frame(height = stats::rnorm(n, 170, 10))
@@ -100,6 +101,7 @@ dclassical$distance[dclassical$row == 2] < drobust$distance[drobust$row == 2]
 dup <- df
 dup$height2 <- dup$height
 try(mahaoutl(dup))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Mahalanobis PC (1936). On the generalised distance in

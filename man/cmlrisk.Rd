@@ -47,10 +47,12 @@ agency's counts of all events overstate first events. Events of people who do no
 live in the area, counted against its population, bias the risk upward.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 age <- 16:25
 first <- c(900, 1400, 1700, 1600, 1400, 1100, 900, 700, 600, 500)
 pop <- rep(100000, 10)
 cmlrisk(age, first, pop)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Bonczar TP (2003). Prevalence of imprisonment in the U.S. population,

@@ -33,6 +33,7 @@ position, so duplicate or empty column names are fine. Errors when
 \code{data} is not a data frame or has no columns.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 df <- data.frame(a = c(1, NA, 3), b = c(NA, NA, 3), c = 1:3)
 misssmry(df)
 
@@ -45,6 +46,7 @@ ms[c("pct_missing", "n_cols_all_missing")]
 
 # a vector is not a table
 try(misssmry(c(1, NA, 3)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=misspat]{misspat()}} for which

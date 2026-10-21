@@ -69,12 +69,14 @@ only one of \code{ref} and \code{cur}, or either not a data frame; \code{hist} n
 directory or holding no drift JSON; \code{warn} above \code{fail}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(5)
 ref <- data.frame(value = stats::rnorm(400),
                   grade = sample(c("a", "b", "c"), 400, TRUE))
 cur <- data.frame(value = stats::rnorm(400, 0.4),
                   grade = sample(c("a", "b", "c"), 400, TRUE))
 d <- cpsdrft(ref, cur)
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 if (requireNamespace("shiny", quietly = TRUE)) {
   # drftapp() alone opens on two CSV files to upload

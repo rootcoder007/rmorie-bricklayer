@@ -67,6 +67,7 @@ blue and below in red, so many series fit in little height.}
 }
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(5)
 days <- seq(as.Date("2024-01-01"), as.Date("2024-12-31"), by = "day")
 plotcal(days, stats::rpois(length(days), 5 + 3 * (format(days, "\%u") > "5")))
@@ -76,4 +77,5 @@ plotsm(d$n, d$year, d$area)
 plothrz(d$n, d$year, d$area)
 plotbump(d$n, d$year, d$area)
 try(plotcal("not a date", 1))
+\dontshow{\}) # examplesIf}
 }

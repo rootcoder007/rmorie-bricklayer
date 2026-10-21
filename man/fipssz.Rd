@@ -36,6 +36,7 @@ unknown
 scheme, or anything but one string, is refused.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 fipssz("ML-DSA-65")
 fipssz("SLH-DSA-SHAKE-128s")
 
@@ -50,6 +51,7 @@ sapply(setdiff(pqcbknd(), "xmss-sha256"), fipssz)["signature", ]
 
 # XMSS has no fixed sizes here.
 try(fipssz("xmss-sha256"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=fipskg]{fipskg()}},

@@ -75,6 +75,7 @@ See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # well-being, 2024 (table 41-10-0082-01)
 wb <- indiex("wellbeing")
 w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
@@ -86,6 +87,7 @@ w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
                       qual = "quality")
 w
 plot(w)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Stewart SL (2008). Promoting Indigenous mental health: cultural

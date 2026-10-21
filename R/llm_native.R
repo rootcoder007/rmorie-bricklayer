@@ -750,7 +750,7 @@
 #'   trailing \code{/v1} for your own endpoint).
 #' @seealso \code{\link{llmstat}} for every route at once,
 #'   \code{\link{llmprvd}} for the provider ids.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # keep the examples away from your real settings and from the network
 #' old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST",
 #'                     "MORIE_LLM_BASE_URL", "MORIE_LLM_MODEL"),
@@ -816,7 +816,7 @@ llmrte <- function(route = NULL) {
 #' @return A character scalar: the text of the model's reply.
 #' @seealso \code{\link{llmask}} for one question with the
 #'   package help at hand.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST"), unset = NA)
 #' Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
 #'
@@ -900,7 +900,7 @@ llmchat <- function(msgs, model = NULL, route = NULL, tmout = 120) {
 #'   chosen), and \code{"route"}, the readable name of the route asked
 #'   (such as \code{"OpenAI"} or \code{"local Ollama"}; \code{NULL} when no
 #'   route is set up).
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST"), unset = NA)
 #' Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
 #'
@@ -1444,7 +1444,7 @@ llmask <- function(prompt, model = NULL, tmout = 120,
 #' @return The key (character scalar), invisibly. A message names the file
 #'   it was stored in.
 #' @seealso \code{\link{dlogout}} to remove the key.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)
 #' Sys.setenv(XDG_CONFIG_HOME = tempfile())   # never touch your real credentials
 #'
@@ -1722,7 +1722,7 @@ dlogin <- function(token = NULL, email = NULL, code = NULL,
 #' @return Logical scalar, invisibly: \code{TRUE} when a key was removed,
 #'   \code{FALSE} when none was stored.
 #' @seealso \code{\link{dlogin}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)
 #' Sys.setenv(XDG_CONFIG_HOME = tempfile())   # a scratch credentials folder
 #'

@@ -118,6 +118,7 @@ check does and does not cover.
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 key <- hqckg(1)
 pub <- hqcpubkey(key)
 
@@ -141,6 +142,7 @@ old <- hqckg(1, ver = "round4")
 cap <- hqcencap(hqcpubkey(old))
 nchar(cap$shared) / 2
 identical(hqcdecap(old, cap$ciphertext), cap$shared)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Gaborit, P., Aguilar-Melchor, C., Aragon, N., Bettaieb, S.,

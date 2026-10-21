@@ -44,6 +44,7 @@ regular file -- a missing path, a directory, \code{NA}, a number or a vector
 of several paths -- stops with \code{"sha256file: <path> is not a file"}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 f <- tempfile()
 writeLines("hello capsule", f)
 sha256file(f)
@@ -71,6 +72,7 @@ identical(sha256file(f), csha256(readBin(f, "raw", file.size(f))))
 
 # A directory or a missing file is refused.
 try(sha256file(tempdir()))
+\dontshow{\}) # examplesIf}
 }
 \references{
 National Institute of Standards and Technology (2015).

@@ -57,6 +57,7 @@ For a haven-style labelled vector, which carries its dictionary as a
 factor with the levels in code order.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # codes from a survey file with their code book
 race <- c(1, 2, 2, 3, NA)
 book <- c("1" = "White", "2" = "Black", "3" = "Indigenous")
@@ -70,6 +71,7 @@ try(deccodes(c(1, 2, 9), book))
 
 # missing codes can be refused too
 try(deccodes(race, book, keepna = FALSE))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{declbld}}, \code{\link{grdrcd}},

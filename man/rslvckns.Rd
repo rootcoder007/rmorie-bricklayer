@@ -48,6 +48,7 @@ when the request fails, or when nothing matches. Errors: a
 URL that is not public \code{https}. One network request.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Missing fields return NULL rather than erroring:
 rslvckns(list())
 
@@ -56,7 +57,7 @@ rslvckns(list(resource = list(name_match_pattern = "2014")))
 
 # a provenance must be a list
 try(rslvckns("data.ontario.ca"))
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network: searches data.ontario.ca
 prov <- list(

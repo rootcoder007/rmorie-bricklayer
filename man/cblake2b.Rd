@@ -48,6 +48,7 @@ outside 1 to 64; a key that is not a single string or raw vector, or is
 longer than 64 bytes.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # The RFC 7693 test vector for BLAKE2b-512 of "abc".
 cblake2b("abc", length = 64)
 
@@ -68,6 +69,7 @@ cblake2b(c("a", "b"))
 identical(cblake2b("abc"), cblake2b(charToRaw("abc")))
 
 try(cblake2b("abc", length = 65))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Saarinen MJ, Aumasson JP (2015). The BLAKE2 Cryptographic

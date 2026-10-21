@@ -86,6 +86,7 @@ The functions are pure computations: no file, network or option is
 used.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # All-cause mortality at an annual PM2.5 of 12 micrograms per cubic metre.
 r <- crfpm25(12)
 c(rr = r$rr, lower = r$rrlo, upper = r$rrup)
@@ -106,6 +107,7 @@ crfno2(30, betaper10 = log(1.04))$rr
 
 # An outcome without a published function is refused.
 try(crfpm25(12, y = "asthma"))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Chen, J. and Hoek, G. (2020). Long-term exposure to PM and

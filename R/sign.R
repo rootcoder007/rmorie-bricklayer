@@ -46,7 +46,7 @@
 #' @seealso
 #' [fipskg()] for the standardised schemes,
 #' [pqckg()] for the stateful one.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' pqcbknd()
 #'
 #' # Every scheme is present in every build.
@@ -130,7 +130,7 @@ pqcbknd <- function() .Call(C_rmbl_pqc_backends)
 #' [pqckg()] for the stateful hash-based key,
 #' [cpssign()] which accepts either,
 #' [fipssz()] for the byte lengths.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' key <- fipskg("ML-DSA-65")
 #' key$scheme
 #'
@@ -238,7 +238,7 @@ fipspubkey <- function(key) {
 #' @seealso
 #' [fipskg()],
 #' [fipssz()].
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' key <- fipskg("ML-DSA-44")
 #' # the round trip through raw material changes nothing
 #' again <- fipskey("ML-DSA-44", key$public, key$secret)
@@ -368,7 +368,7 @@ fipskey <- function(scheme, public, secret = NULL) {
 #' @seealso
 #' [cpssign()],
 #' [fipskg()].
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' key <- fipskg("ML-DSA-65")
 #' mu <- fipsmu(key, "a manifest digest", ctx = "release")
 #' length(mu)
@@ -494,7 +494,7 @@ fipsvrfmu <- function(key, mu, sig) {
 #' @seealso
 #' [fipskg()],
 #' [pqcbknd()].
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' fipssz("ML-DSA-65")
 #' fipssz("SLH-DSA-SHAKE-128s")
 #'
@@ -685,7 +685,7 @@ fipssz <- function(scheme) {
 #'   [fipspubkey()] (a
 #'   `bricklayer_fips_public_key`).
 #' @seealso [fipskg()].
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Deprecated: use fipskg().
 #' key <- suppressWarnings(oqskg("ML-DSA-65"))
 #' key$scheme
@@ -851,7 +851,7 @@ print.bricklayer_oqs_public_key <- .rmbl_print_via_format
 #' [cpssign()],
 #' [cpsvrf()],
 #' [signpubkey()]
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 #' # one-time index record out of your configuration directory; leave the default in use
 #' # A small key, to keep the example quick.
@@ -945,7 +945,7 @@ pqckg <- function(height = 10L, skseed = NULL, pubseed = NULL,
 #' @return A list of class `bricklayer_public_key`: `root` and `pubseed`
 #'   (64 hex characters each), `height` and `scheme`.
 #' @seealso [cpsvrf()], which takes it.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 #' # one-time index record out of your configuration directory; leave the default in use
 #' key <- pqckg(height = 2)
@@ -1299,7 +1299,7 @@ cpssign <- function(msg, key, scheme = NULL, ctx = NULL,
 #'   a signature made on another machine needs \code{msg}.
 #' @return The key with \code{next_index} advanced past the signature's index and past
 #'   every index the record knows this key has used.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 #' # one-time index record out of your configuration directory; leave the default in use
 #' key <- pqckg(height = 2)
@@ -1434,7 +1434,7 @@ xmssadv <- function(key, sig, msg = NULL) {
 #' @seealso [cpssign()],
 #'   [signpubkey()],
 #'   [fipspubkey()].
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 #' # one-time index record out of your configuration directory; leave the default in use
 #' key <- pqckg(height = 2)

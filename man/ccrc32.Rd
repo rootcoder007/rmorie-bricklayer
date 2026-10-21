@@ -38,6 +38,7 @@ Character input is checked element by element, as its bytes, with
 \code{\link[=crc32file]{crc32file()}}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # The standard check value: CRC-32("123456789") is 0xCBF43926.
 ccrc32("123456789")
 ccrc32("123456789") == 0xCBF43926
@@ -50,6 +51,7 @@ ccrc32(c("brick", "brack"))
 
 # Raw bytes work the same way.
 ccrc32(charToRaw("123456789"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=csha256]{csha256()}} for integrity against

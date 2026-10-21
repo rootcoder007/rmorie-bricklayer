@@ -76,6 +76,7 @@ Errors: \code{refresh} or \code{offline} not \code{TRUE} or \code{FALSE};
 single finite number of at least 1.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Nothing is fetched here: the cached copy if there is one, else the
 # document bundled with the package.
 s <- svcs(offline = TRUE)
@@ -88,7 +89,7 @@ s$issued
 
 # arguments are checked
 try(svcs(maxage = -1))
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # ask the site now (network), and keep the answer for a day
 svcs(refresh = TRUE)

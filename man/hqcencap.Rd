@@ -52,6 +52,7 @@ of the wrong length for its level; \code{m} or \code{salt} of the wrong type or
 length.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 key <- hqckg(1)
 a <- hqcencap(key)
 nchar(a$ciphertext) / 2 == hqcsz(1)[["ciphertext"]]
@@ -71,6 +72,7 @@ identical(r1$ciphertext, r2$ciphertext)
 
 # randomness of the wrong length is refused
 try(hqcencap(key, m = as.raw(1:3)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=hqcdecap]{hqcdecap()}},

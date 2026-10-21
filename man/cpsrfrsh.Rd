@@ -53,12 +53,14 @@ the source cannot be fetched, or inflates past the limit;
 fail the schema the provenance pins (\code{\link{valsch}}).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 cpsrfrsh(d)            # the first pin: the data file is added
 vrfcps(d)$ok
 cpsrfrsh(d)$change     # the source has not changed since
 
 try(cpsrfrsh(tempfile()))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{mnfdiff}}, \code{\link{vrfcps}},

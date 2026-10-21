@@ -37,10 +37,11 @@ Errors: \code{url} not a single non-empty string; a local or private
 address.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Input is validated before any network call:
 try(wbsnpnat(""))     # empty url -> error
 try(wbsnpnat("http://localhost/report.csv"))
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network; any network failure returns NULL rather than erroring.
 # Closest archived snapshot of a live page (or NULL if none archived).

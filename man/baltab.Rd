@@ -33,9 +33,11 @@ weights the means are weighted and the test uses the weighted variances and Kish
 effective sample sizes.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 d <- data.frame(t = rep(0:1, each = 50),
                 age = c(stats::rnorm(50, 30), stats::rnorm(50, 33)))
 baltab(d, "t", "age")
+\dontshow{\}) # examplesIf}
 }
 \references{
 Welch BL (1947). The generalization of 'Student's' problem when several

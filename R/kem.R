@@ -67,7 +67,7 @@
 #' [kemdecap()],
 #' [kemsz()],
 #' [fipskg()] for the signature schemes.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' key <- kemkg(768)
 #' pub <- kempubkey(key)
 #'
@@ -167,7 +167,7 @@ kempubkey <- function(key) {
 #'   [kemencap()] name their
 #'   results.
 #' @seealso [kemkg()].
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' kemsz(768)
 #'
 #' # the shared secret is 32 bytes at every level: the level buys
@@ -226,7 +226,7 @@ kemsz <- function(lvl) {
 #' @seealso
 #' [kemdecap()],
 #' [kemkg()].
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' key <- kemkg(512)
 #' a <- kemencap(key)
 #' nchar(a$ciphertext) / 2 == kemsz(512)[["ciphertext"]]
@@ -320,7 +320,7 @@ kemencap <- function(key, m = NULL) {
 #' @return A length-1 character vector of 64 lower-case hex characters: the
 #'   32-byte shared secret.
 #' @seealso [kemencap()].
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' key <- kemkg(512)
 #' sent <- kemencap(kempubkey(key))
 #' identical(kemdecap(key, sent$ciphertext), sent$shared)

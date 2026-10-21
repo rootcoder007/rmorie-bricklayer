@@ -37,6 +37,7 @@ and defend: the index records them. A unit-period missing an offence that has a
 weight gets \code{NA}, never a partial sum.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 d <- data.frame(city = rep(c("A", "B"), each = 3), year = 2024,
                 offence = rep(c("homicide", "robbery", "burglary"), 2),
                 n = c(5, 120, 300, 2, 90, 410), pop = rep(c(250000, 180000), each
@@ -44,6 +45,7 @@ d <- data.frame(city = rep(c("A", "B"), each = 3), year = 2024,
 sevidx(d, "city", "year", "offence", "n",
                w = c(homicide = 25, robbery = 8,
                            burglary = 4), pop = "pop")
+\dontshow{\}) # examplesIf}
 }
 \references{
 Sherman L, Neyroud PW, Neyroud E (2016). The Cambridge Crime Harm

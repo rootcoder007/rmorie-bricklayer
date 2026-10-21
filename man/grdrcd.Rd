@@ -53,6 +53,7 @@ observed value that is neither mapped nor kept (the message lists them).
 \code{\link{rcdmnf}} records it.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # rename three codes
 x <- c("W", "B", "O", "W", NA)
 grdrcd(x, c(W = "White", B = "Black", O = "Other"))
@@ -64,6 +65,7 @@ grdrcd(off, c(assault = "violent", robbery = "violent",
 
 # a value with no mapping is an error
 try(grdrcd(x, c(W = "White", B = "Black")))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{vrfrcd}} to prove the recode,

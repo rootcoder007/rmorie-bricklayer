@@ -85,6 +85,7 @@ from the least to the most favourable so that \code{probbet} reads as its name
 says.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Self-perceived mental health, 15 years and older, Canada, 2022 (table 41-10-0067-01)
 mh <- indiex("mentalhealth")
 mh <- mh[mh$region == "Canada", ]
@@ -93,6 +94,7 @@ oc <- ordcmp(mh, "group", "rating", "estimate", "lower", "upper",
                       ref = "M\u00e9tis", qual = "quality")
 oc
 plot(oc)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Agresti A (1980). Generalized odds ratios for ordinal data. Biometrics

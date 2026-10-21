@@ -74,6 +74,7 @@ non-response (see \code{tnrlf}) or the edit and imputation error, so it is narro
 than the full error; treat it as a lower bound on the uncertainty.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- cnsprof(indiex("censuspop"))
 # children who are foster children, by province, First Nations, Metis, Inuit and
 # non-Indigenous
@@ -82,6 +83,7 @@ fc <- fc[fc$age == "0 to 14 years" &
            fc$group \%in\% c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"), ]
 head(fc)
 plot(fc[fc$geo == "Canada", ])
+\dontshow{\}) # examplesIf}
 }
 \references{
 Statistics Canada (2022). Guide to the Census of Population, 2021, chapter

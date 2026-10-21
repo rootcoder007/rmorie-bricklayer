@@ -58,6 +58,7 @@ interrupted; while it runs, an interactive session (or one with
 on, and \code{options(morie.quiet = TRUE)} silences it.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 x <- stats::rnorm(50, mean = 5)
 
@@ -84,6 +85,7 @@ identical(cbootmean(x, 10, seed = 1),
 
 # At least one replicate is needed.
 try(cbootmean(x, B = 0))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Efron B, Tibshirani RJ (1993). \emph{An Introduction to the

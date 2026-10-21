@@ -69,6 +69,7 @@ a zero total is undefined); \code{topshr()} when \code{fractions} is not
 numeric, is empty, has \code{NA} or lies outside \code{[0, 1]}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Ten units holding one each: no concentration.
 ginicoef(rep(1, 10))
 
@@ -89,6 +90,7 @@ ginicoef(c(1, NA, 3))
 
 # a zero total has no Gini coefficient
 try(ginicoef(c(0, 0, 0)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Hedderich, J. and Sachs, L. (2020). \emph{Applied Statistics: Methods Using

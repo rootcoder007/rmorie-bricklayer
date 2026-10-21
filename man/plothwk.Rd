@@ -51,6 +51,7 @@ likely to have triggered it, the probabilities \eqn{\eta g(t_i - t_j)} and
 }
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 times <- sort(stats::runif(200, 0, 100))
 fit <- chwkfit(times, 100)
@@ -58,4 +59,5 @@ plothwk(fit, times)
 plothwk(fit, times, "qq")
 tr <- plothwk(fit, times, "tree")
 table(tr$generation)
+\dontshow{\}) # examplesIf}
 }

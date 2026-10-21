@@ -42,6 +42,7 @@ Errors: \code{path} that does not name an existing file (or names a
 directory); \code{blkbytes} that is not a positive whole number.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- tempfile()
 writeLines("capsule payload", p)
 
@@ -57,4 +58,5 @@ identical(sha512file(p), csha512(readBin(p, "raw", file.size(p))))
 # a missing file is an error
 try(crc32file(file.path(tempdir(), "no-such-file")))
 unlink(p)
+\dontshow{\}) # examplesIf}
 }

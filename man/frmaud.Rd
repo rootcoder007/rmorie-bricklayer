@@ -30,6 +30,7 @@ published. Pair each gap with a strength-framed level (\code{\link{welprof}},
 \code{\link{dualcont}}).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 wb <- indiex("wellbeing")
 w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
                       well = "Always or often has a hopeful outlook",
@@ -37,6 +38,7 @@ w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
                                    "Life satisfaction rating between 0 and 5",
                                    "Fair or poor perceived health"))
 frmaud(w)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Walter M (2016). Data politics and Indigenous representation in Australian

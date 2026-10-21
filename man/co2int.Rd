@@ -57,6 +57,7 @@ not round or cap them. Kosovo appears once, under the code \code{XK}.
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 co2int("CA-ON")
 co2int("Canada")$year
 co2int("CA-XX")$note
@@ -68,6 +69,7 @@ ca <- tab[startsWith(tab$location, "CA-"), c("location", "name", "g_per_kwh", "y
 head(ca[order(ca$g_per_kwh), ])
 # a location the table does not know is an error, not a silent world average
 try(co2int("Atlantis"))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Ember (2026). Yearly Electricity Data, via Our World in Data,

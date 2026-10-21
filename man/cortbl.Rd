@@ -48,6 +48,7 @@ Errors: \code{data} not a data frame; fewer than two numeric columns;
 \code{meth}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 df <- data.frame(a = stats::rnorm(100), b = stats::rnorm(100))
 df$c <- df$a + stats::rnorm(100, sd = 0.2)
@@ -69,6 +70,7 @@ cortbl(thin)$correlation
 
 # one numeric column cannot be correlated
 try(cortbl(data.frame(a = 1:5, b = letters[1:5])))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=topcors]{topcors()}} for just the

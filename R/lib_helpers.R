@@ -43,7 +43,7 @@
 #' @seealso [csha256()] for the digest of a string or raw
 #'   vector held
 #'   in memory.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' f <- tempfile()
 #' writeLines("hello capsule", f)
 #' sha256file(f)
@@ -160,7 +160,7 @@ sha256file <- function(path) {
 #'   [wrtxtfb()] to write text with an
 #'   ASCII retry.
 #' @export
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Latin accents fold to their nearest ASCII letter.
 #' toascii("Prof. \u00c1ngela Zorro Medina")  # "Prof. Angela Zorro Medina"
 #'
@@ -292,7 +292,7 @@ toascii <- function(x) {
 #'   ASCII transliteration.
 #' @seealso [toascii()], which does the transliteration.
 #' @export
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # By default valid UTF-8 is preserved (accents kept where supported).
 #' asciifb("\u00c1ngela")               # "\u00c1ngela"
 #'
@@ -352,7 +352,7 @@ asciifb <- function(x, force = FALSE) {
 #'   directory must exist.
 #' @return Invisibly, `path`.
 #' @seealso [toascii()] for the retry's transliteration.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- wrtxtfb(c("line one", "line two"),
 #'                          tempfile(fileext = ".txt"))
 #' readLines(p)

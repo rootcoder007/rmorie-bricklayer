@@ -47,6 +47,7 @@ differs: the seed is 96, 104 or 112 bytes and the shared secret 64 bytes.
 A level other than 1, 3, 5 (or 128, 192, 256) is an error.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 hqcsz(1)
 
 # code-based keys and ciphertexts are larger than ML-KEM's at the same
@@ -61,6 +62,7 @@ nchar(key$public) / 2 == hqcsz(1)[["public"]]
 
 # an unknown level is refused rather than mapped to a default
 try(hqcsz(2))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=hqckg]{hqckg()}},

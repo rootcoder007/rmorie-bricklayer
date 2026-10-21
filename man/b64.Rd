@@ -60,6 +60,7 @@ raw bytes, or text with a character outside the standard alphabet;
 alphabet.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Round trip through the standard alphabet.
 b <- jsb64enc("hello capsule")
 b
@@ -88,6 +89,7 @@ rawToChar(jsb64dec(long)) == strrep("x", 200)
 
 # A character outside the alphabet is refused, not skipped.
 try(jsb64dec("ab$c"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=jsgzenc]{jsgzenc()}}, which composes this

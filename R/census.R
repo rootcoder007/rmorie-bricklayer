@@ -58,7 +58,7 @@ names(.rmbl_ipp_groups) <- c("TOTAL_IND_IDENT", "IND_IDENT", "SINGLE_IND_RESP", 
 #' 98-304-X.
 #' @seealso \code{\link{profshr}}, \code{\link{cnsstd}},
 #'   \code{\link{cnscwb}}, \code{\link{indiex}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- cnsprof(indiex("censuspop"))
 #' head(p[p$characteristic == "Foster children" & p$geo == "Canada", ])
 #' @export
@@ -195,7 +195,7 @@ cnsprof <- function(x) {
 #' Journal of the American Statistical Association 22(158):209-212.
 #' \doi{10.1080/01621459.1927.10502953}
 #' @seealso \code{\link{cnsprof}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- cnsprof(indiex("censuspop"))
 #' # children who are foster children, by province, First Nations, Metis, Inuit and
 #' # non-Indigenous
@@ -284,7 +284,7 @@ profshr <- function(x, num, den = NULL, smpfrac = 0.25, deff = 1, conflvl = 0.95
 #'   Inuit (2011-2016): findings from the 2011 Canadian Census Health and Environment
 #'   Cohort (CanCHEC). Statistics Canada catalogue no. 99-011-X2019001.
 #' @seealso \code{\link{agestd}}, \code{\link{stdprev}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- cnsprof(indiex("censuspop"))
 #' cnsstd(p)
 #' @export

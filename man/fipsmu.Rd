@@ -96,6 +96,7 @@ errors only when \code{signature} is not a \code{bricklayer_signature} or \code{
 is not a list.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 key <- fipskg("ML-DSA-65")
 mu <- fipsmu(key, "a manifest digest", ctx = "release")
 length(mu)
@@ -116,6 +117,7 @@ identical(fipsmu(key, "a manifest digest", ctx = "staging"), mu)
 
 # SLH-DSA has no external-mu interface.
 try(fipsmu(fipskg("SLH-DSA-SHA2-128f"), "m"))
+\dontshow{\}) # examplesIf}
 }
 \references{
 National Institute of Standards and Technology (2024).

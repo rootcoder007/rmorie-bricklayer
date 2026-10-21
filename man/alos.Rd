@@ -39,6 +39,7 @@ Errors when \code{days} is not numeric, is empty, or has \code{NA},
 number.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Lakner (p.17): 2,700 inmates admitted and released served 12,150
 # detention days between them.
 alos(12150, 2700)
@@ -49,6 +50,7 @@ alos(stays, length(stays))
 
 # zero people cannot have an average stay
 try(alos(12150, 0))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Lakner, E. (1976) \emph{A Manual of Statistical Sampling Methods for

@@ -38,6 +38,7 @@ no arguments, has no side effects and returns the same 16 names in the
 same order on every platform.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 pqcbknd()
 
 # Every scheme is present in every build.
@@ -47,6 +48,7 @@ all(c("xmss-sha256", "ML-DSA-65", "SLH-DSA-SHAKE-128s") \%in\%
 # The SLH-DSA sets with fast signing, and their signature sizes in bytes.
 fast <- grep("^SLH-DSA-.*f$", pqcbknd(), value = TRUE)
 vapply(fast, function(s) fipssz(s)[["signature"]], integer(1))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=fipskg]{fipskg()}} for the standardised schemes,

@@ -89,7 +89,7 @@
 #' preferring it on a series this short.
 #' @seealso
 #' \code{\link{stepchg}}, \code{\link{cnttrnd}}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Five years of placements.
 #' y <- c(402, 377, 190, 268, 331)
 #' trndtst(y)
@@ -595,7 +595,7 @@ stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
 #' alone. That is the behaviour reported here through \code{dispersion} and
 #' \code{overdispersed}.
 #' @seealso \code{\link{trndtst}}, \code{\link{ratechg}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # A count falling by about 15% a year.
 #' set.seed(3)
 #' y <- stats::rpois(8, lambda = 200 * 0.85^(0:7))

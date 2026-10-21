@@ -115,6 +115,7 @@ resets one key's entry, or removes the whole record, and with it
 the protection against re-signing: use it for test keys only.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 # one-time index record out of your configuration directory; leave the default in use
 key <- pqckg(height = 2)
@@ -141,6 +142,7 @@ xmssfgt(k2)
 # A signature that is not an XMSS signature cannot advance a key.
 try(xmssadv(key, list()))
 options(op)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cpssign]{cpssign()}},

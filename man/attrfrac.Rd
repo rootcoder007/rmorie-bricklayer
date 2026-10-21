@@ -50,6 +50,7 @@ number (logical values included), a prevalence outside \eqn{[0, 1]}, only
 one of the two limits, or limits that do not enclose \code{rr}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 attrfrac(1.5, 0.4)
 attrfrac(2, 1)      # everyone exposed: 1 - 1/RR
 
@@ -62,6 +63,7 @@ attrfrac(0.8, 0.5)
 
 # A prevalence above 1 is refused.
 try(attrfrac(1.5, 40))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Rothman, K. J., Greenland, S. and Lash, T. L. (2008). Modern

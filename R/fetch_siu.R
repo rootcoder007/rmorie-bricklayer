@@ -44,7 +44,7 @@
 #'   \code{blfetch}: which source the HTML came from.
 #' @seealso \code{\link{blfetch}},
 #'   \code{\link{siufprs}}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # the report number is checked before anything is sent
 #' try(siufetch(1.5, tempfile(fileext = ".html")))
 #' try(siufetch(648, tempfile(fileext = ".html"), lang = "de"))

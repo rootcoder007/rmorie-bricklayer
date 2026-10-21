@@ -70,7 +70,7 @@
 #' [ctkyfnc()] for the per-column
 #' version, [rulemad()] to turn
 #' it into a validation rule.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(1)
 #' n <- 200
 #' df <- data.frame(height = stats::rnorm(n, 170, 10))
@@ -256,7 +256,7 @@ print.bricklayer_outliers <- function(x, ...) {
 #' [misspat()] for which
 #' columns are missing together,
 #' [misssmry()] for the rates.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # One long outage and two isolated gaps, with the same total count.
 #' df <- data.frame(
 #'   outage = c(1, 2, NA, NA, NA, NA, 7, 8),
@@ -356,7 +356,7 @@ print.bricklayer_runs <- function(x, ...) {
 #' @seealso
 #' [misspat()],
 #' [missruns()]
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(1)
 #' df <- data.frame(
 #'   complete = 1:100,

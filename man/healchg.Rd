@@ -62,6 +62,7 @@ See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # 2015/2018 to 2019/2022, adults (table 13-10-0924-01)
 h <- indiex("health")
 belong <- "Sense of belonging to local community, somewhat strong or very strong"
@@ -74,6 +75,7 @@ hc <- healchg(h, "group", "indicator", "period", "estimate", "lower", "upper",
                                   belong))
 hc
 plot(hc)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Stewart SL (2008), see \code{\link{holbal}}.

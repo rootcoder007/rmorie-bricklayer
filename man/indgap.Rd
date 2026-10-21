@@ -81,6 +81,7 @@ reference) is compared and marked; one flagged \code{F}, \code{x}, \code{..} or
 estimate, is not compared. Other agencies' flags: \code{\link{qltyrcd}}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Perceived mental health very good or excellent, adults, 2019/2022 (Statistics Canada,
 # table 13-10-0924-01; The Daily, 2025-02-13)
 h <- indiex("health")
@@ -102,6 +103,7 @@ own$q <- qltyrcd(own$flag, suppr = c("np", "**"), caution = "*")
 indgap(own, "group", "pct", "lower", "upper",
                ref = "Non-Indigenous Australians",
                qual = "q", pooled = "Aboriginal and Torres Strait Islander")
+\dontshow{\}) # examplesIf}
 }
 \references{
 Statistics Canada (2025). Health indicators for First Nations adults living

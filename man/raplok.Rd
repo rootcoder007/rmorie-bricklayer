@@ -36,6 +36,7 @@ and Windows there is no such directory and the answer is \code{FALSE}.
 Errors when \code{rapldir} is not a single non-missing string.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 raplok()
 
 # a fake powercap tree with one readable package domain (Linux names the domain
@@ -51,6 +52,7 @@ if (.Platform$OS.type != "windows") {
 # a folder that does not exist is simply FALSE; a non-path is an error
 raplok(file.path(tempdir(), "no-such-dir"))
 try(raplok(NA_character_))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{co2fp}}

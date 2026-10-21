@@ -60,6 +60,7 @@ single non-empty string. The \code{name} and source are written as escaped
 JSON strings, so quotes and backslashes are safe.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 list.files(d)
 
@@ -72,6 +73,7 @@ grep("TODO", readLines(file.path(d2, "data_provenance.json")), value = TRUE)
 
 # an existing, non-empty folder is never overwritten
 try(usecpstmpl(d))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{loadprov}}, \code{\link{vrfcps}},

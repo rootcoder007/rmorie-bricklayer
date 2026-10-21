@@ -90,10 +90,12 @@ time: see \code{\link{bacondcmp}} for the weights and
 \code{\link{stgatt}} for estimators that avoid them.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- polex()
 plndid(p, "district", "month", "crmrate", "reformed")
 # clustered by region instead of district
 plndid(p, "district", "month", "crmrate", "reformed", cl = "region")
+\dontshow{\}) # examplesIf}
 }
 \references{
 Bertrand M, Duflo E, Mullainathan S (2004). How much should we trust

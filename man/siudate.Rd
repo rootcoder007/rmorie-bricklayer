@@ -33,6 +33,7 @@ Error: \code{x} that is neither character nor all \code{NA} (\dQuote{x must be
 a character vector of dates}).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 siudate(c("January 5, 2023", "not a date"))
 
 # French, day-first and impossible dates
@@ -41,4 +42,5 @@ as.Date(siudate("April 28, 2023"))
 
 # numbers are refused
 try(siudate(20230105))
+\dontshow{\}) # examplesIf}
 }

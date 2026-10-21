@@ -55,13 +55,14 @@ status, and whether the Wayback Machine had no snapshot or its copy could
 not be downloaded.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Inputs are validated before any network access:
 try(blfetch("", tempfile()))          # empty url -> error
 try(blfetch("ftp://example.org/data.csv", tempfile()))
 try(blfetch("https://127.0.0.1/data.csv", tempfile()))
 try(blfetch("https://example.org/data.csv",
                      file.path(tempdir(), "no-such-dir", "data.csv")))
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network
 dst <- tempfile(fileext = ".xlsx")

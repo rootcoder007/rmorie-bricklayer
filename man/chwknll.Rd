@@ -84,6 +84,7 @@ the wrong length for the kernel. The quadratic kernels poll for a
 Ctrl-C as they run, so a long evaluation can be interrupted.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(4)
 times <- sort(stats::runif(40, 0, 10))
 
@@ -104,6 +105,7 @@ chwknll(times, 10, "gamma", c(-0.5, 0.3, 2, 1.5))
 
 # Unsorted times are an error, not the sentinel.
 try(chwknll(rev(times), 10, "exponential", c(-0.5, 0.3, 1.2)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Hawkes AG (1971). Spectra of some self-exciting and mutually

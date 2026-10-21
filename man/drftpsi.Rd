@@ -68,6 +68,7 @@ can exceed 0.25 (see \code{psiminn} in
 \code{\link[=cpsdrft]{cpsdrft()}}).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(2)
 ref <- stats::rnorm(500)
 
@@ -89,6 +90,7 @@ drftpsi(ref, stats::rnorm(500, mean = 1), bins = 4)
 drftpsi(ref, stats::rnorm(500, mean = 1), eps = 0.01)
 
 try(drftpsi(ref, ref, bins = 1))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Wu D, Olson DL (2010). Enterprise risk management: coping

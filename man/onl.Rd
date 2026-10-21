@@ -71,6 +71,7 @@ Errors: a block that is not numeric; an accumulator that does not come
 from \code{onlsmry()}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 x <- stats::rnorm(1000)
 
@@ -97,6 +98,7 @@ smrystat(onlsmry())
 # NA values are skipped; text that is not a number is refused
 smrystat(onlsmry(c(1, NA, 3)))[c("n", "mean")]
 try(onlsmry(c("a", "b")))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Chan TF, Golub GH, LeVeque RJ (1983). Algorithms for

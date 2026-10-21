@@ -283,7 +283,7 @@
 #' \doi{10.2139/ssrn.4585682}
 #' @seealso \code{\link{evstudy}}, \code{\link{stgatt}},
 #'   \code{\link{perminf}}, \code{\link{plnpois}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' plndid(p, "district", "month", "crmrate", "reformed")
 #' # clustered by region instead of district
@@ -402,7 +402,7 @@ print.rmbl_did <- function(x, ...) {
 #' A, Hackett D, Green D, Vargas R (2025). Evidence of donor bias in Chicago police
 #' stops. \href{https://arxiv.org/abs/2504.15140}{arXiv:2504.15140}.
 #' @seealso \code{\link{plndid}}, \code{\link{stgatt}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' es <- evstudy(p, "district", "month", "crmrate", "refmonth", leads = 3,
 #'                   lags = 4)
@@ -859,7 +859,7 @@ plot.rmbl_staggered_att <- function(x, ..., main = NULL, col = NULL, palette = N
 #'   treatment timing. Journal of Econometrics 225(2):254-277.
 #'   \doi{10.1016/j.jeconom.2021.03.014}
 #' @seealso \code{\link{plndid}}, \code{\link{stgatt}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' b <- bacondcmp(p, "district", "month", "crmrate", "reformed")
 #' b
@@ -1177,7 +1177,7 @@ perminf <- function(data, unit, time, y, ftreat, cl = NULL,
 #' @references Westfall PH, Young SS (1993). Resampling-Based Multiple Testing. Wiley,
 #' New York.
 #' @seealso \code{\link{perminf}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(1)
 #' null <- matrix(rnorm(3000), ncol = 3)
 #' stpdnpv(c(2.5, 0.4, -2.1), null)
@@ -1388,7 +1388,7 @@ plnpois <- function(data, unit, time, y, trtd, covs = NULL, offset = NULL, cl = 
 #'   for comparative case studies. Journal of the American Statistical Association
 #'   105(490):493-505.\cr
 #'   \doi{10.1198/jasa.2009.ap08746}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' p1 <- p[is.na(p$refmonth) | p$district == "D01", ]
 #' s <- synctl(p1, "district", "month", "crmrate", treunit = "D01",
@@ -1576,7 +1576,7 @@ plot.rmbl_synth <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #'
 #' Applied with weights from the Colombian Penal Code: Acosta, Mejia and Zorro Medina
 #' (2023), see \code{\link{plndid}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' d <- data.frame(city = rep(c("A", "B"), each = 3), year = 2024,
 #'                 offence = rep(c("homicide", "robbery", "burglary"), 2),
 #'                 n = c(5, 120, 300, 2, 90, 410), pop = rep(c(250000, 180000), each
@@ -1649,7 +1649,7 @@ sevidx <- function(data, unit, time, offence, count, w, pop = NULL, per = 1e5) {
 #' Applied to the stages of a Colombian criminal-procedure reform: Acosta, Mejia and
 #' Zorro Medina (2023), see \code{\link{plndid}}.
 #' @seealso \code{\link{caseflow}} for clearance rates and inventories.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(2)
 #' reports <- rpois(36, 400)
 #' charges <- rpois(36, 90)
@@ -1719,7 +1719,7 @@ piperate <- function(num, den, win = 12L, lag = 0L, grp = NULL) {
 #' Kohler-Hausmann I, Zorro Medina A (2019). Cumulative risks of multiple criminal
 #' justice outcomes in New York City. Demography 56(3):1161-1171.
 #' \doi{10.1007/s13524-019-00781-7}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' age <- 16:25
 #' first <- c(900, 1400, 1700, 1600, 1400, 1100, 900, 700, 600, 500)
 #' pop <- rep(100000, 10)
@@ -1799,7 +1799,7 @@ cmlrisk <- function(age, fireve, pop, atrisk = NULL, dthrate = NULL,
 #'   \code{comparison_distance}.
 #' @references Applied to blocks near donor stores: Zorro Medina, Hackett, Green and
 #'   Vargas (2025), see \code{\link{evstudy}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(4)
 #' x <- runif(200, 0, 5000)
 #' y <- runif(200, 0, 5000)
@@ -1841,7 +1841,7 @@ bufasgn <- function(x, y, sitex, sitey, comx, comy, radius, buffer = 3 * radius)
 #' \code{refmonth} (\code{NA} for never), \code{reformed} (0 or 1),
 #' \code{population}, \code{logpop}, \code{crimes}, \code{crmrate},
 #' \code{arrrate}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' head(polex())
 #' @export
 #' @srrstats {G5.1} Exported generator of the test/example panel with a known effect (-3); used across

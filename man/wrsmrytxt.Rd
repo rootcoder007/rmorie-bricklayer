@@ -58,6 +58,7 @@ Errors when \code{man} is not a list, and (from base R) when
 \code{outdir} does not exist or cannot be written.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 man <- mkmnf(list(project = "demo", author = "A. Author"),
   env = FALSE
 )
@@ -75,6 +76,7 @@ tail(readLines(s), 6)
 
 # the manifest has to be a list
 try(wrsmrytxt("demo", out, paths = list()))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=mkmnf]{mkmnf()}},

@@ -56,6 +56,7 @@ string or not in the table, an empty table, and a non-numeric exposure,
 population or rate column. The area labels can be of any type.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 t <- data.frame(fsa = c("M6H", "M5V"), exposure = c(28, 18),
                 population = c(40000, 60000), brate = 0.008)
 polbrdarea(t)
@@ -69,6 +70,7 @@ polbrdarea(u, areacol = "tract", expcol = "pm",
 
 # A missing column is named in the error.
 try(polbrdarea(t[, c("fsa", "exposure")]))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{expconcidx}} for how the burden

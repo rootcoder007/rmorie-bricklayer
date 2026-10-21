@@ -48,6 +48,7 @@ values are dropped); a non-positive \code{target}; a level outside
 (0, 1).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # The funnel narrows as the expected count grows, which is the whole
 # point: a ratio of 2 means nothing at an expected count of 2 and a
 # great deal at an expected count of 200.
@@ -65,6 +66,7 @@ lines(f$expected, f$lower, type = "s")
 abline(h = 1, lty = 2)
 
 try(fnllim(10, lvls = 1))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Spiegelhalter, D. J. (2005). Funnel plots for comparing institutional

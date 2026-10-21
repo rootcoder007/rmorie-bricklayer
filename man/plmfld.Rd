@@ -51,6 +51,7 @@ Errors: \code{x} or \code{y} not numeric or not strictly increasing;
 mixing height).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 f <- plmfld(100, 5, 50, x = seq(100, 3000, by = 100), y = seq(-500, 500, by = 50))
 dim(f$field)
 plot(f)
@@ -65,6 +66,7 @@ fb$x[which.max(apply(fb$field, 1, max))]
 
 # the coordinates must increase
 try(plmfld(100, 5, 50, x = c(300, 100), y = c(-50, 0, 50)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{gplume}}; \code{plot()} draws the field as an

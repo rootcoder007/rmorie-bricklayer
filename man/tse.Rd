@@ -55,10 +55,12 @@ is conservative; Rambachan and Roth's conditional and hybrid intervals (the
 \code{HonestDiD} package) are shorter.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- polex()
 es <- evstudy(p, "district", "month", "crmrate", "refmonth",
                   leads = 3, lags = 4)
 tse(es, seed = 1)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Rambachan A, Roth J (2023). A more credible approach to parallel

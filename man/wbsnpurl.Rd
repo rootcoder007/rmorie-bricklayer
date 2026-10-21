@@ -46,10 +46,11 @@ usable URL. Error: \code{url} that is not a single non-empty string.
 Nothing is written.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # argument errors come before any request
 try(wbsnpurl(NA))
 try(wbsnpurl(c("https://a.org", "https://b.org")))
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network
 wbsnpurl("https://www.r-project.org/")

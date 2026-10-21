@@ -59,6 +59,7 @@ Errors: \code{n} or \code{k} not one non-negative whole number;
 not a whole number from 0 to below \eqn{2^{53}} (\code{NA} included).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # A reproducible sample of 5 from 1000.
 rsvidx(1000, 5, seed = 1)
 rsvsmp(letters, 4, seed = 2)
@@ -81,6 +82,7 @@ df[rsvidx(nrow(df), 3, seed = 7), ]
 
 # a negative size is refused
 try(rsvidx(10, -1))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Vitter JS (1985). Random sampling with a reservoir.

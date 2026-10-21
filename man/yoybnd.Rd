@@ -60,6 +60,7 @@ Errors when \code{y} does not come from \code{\link[=yoy]{yoy()}}, and for the r
 \code{\link[=pubbnd]{pubbnd()}} gives.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 seg <- data.frame(year = 2021:2023, n = c(40, 45, 60))
 y <- yoy(seg, value = "n", prd = "year")
 yoybnd(y, rnd = 5)
@@ -71,6 +72,7 @@ as.data.frame(yb)[, c("year", "envpctlo", "envpctup",
 
 # only yoy() results are accepted
 try(yoybnd(seg, rnd = 5))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=pubbnd]{pubbnd()}},

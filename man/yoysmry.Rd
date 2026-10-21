@@ -56,6 +56,7 @@ Anything other than a \code{yoy()} result is refused with the error
 \dQuote{\code{object} must be a yoy() result}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # one series
 d <- data.frame(year = 2018:2023, n = c(120, 131, 98, 140, 155, 149))
 yoysmry(yoy(d, value = "n", prd = "year"))
@@ -67,6 +68,7 @@ yoysmry(yoy(g, value = "n", prd = "year", by = "unit"))
 
 # anything that is not a yoy() result is refused
 try(yoysmry(d))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{yoy}}, \code{\link{yoypals}}.

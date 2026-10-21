@@ -63,7 +63,7 @@
 #' [tojs()],
 #' [jsser()]
 #' for an uncompressed form that keeps types and attributes.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' x <- list(rows = data.frame(id = 1:50, value = stats::runif(50)))
 #'
 #' enc <- jsgzenc(x)

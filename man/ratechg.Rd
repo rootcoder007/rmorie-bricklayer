@@ -105,6 +105,7 @@ positive whole number; \code{conflvl} outside (0, 1); a population of
 zero or below.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 d <- data.frame(
   year = rep(2021:2023, each = 2),
   division = rep(c("North", "South"), 3),
@@ -125,6 +126,7 @@ ratechg(d, stops, residents, year, by = "division", lag = 2,
             mincnt = 65)
 
 try(ratechg(1:3))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{rtcalc}}, \code{\link{yoy}} for change in a count or a

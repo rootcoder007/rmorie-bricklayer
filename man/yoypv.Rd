@@ -40,6 +40,7 @@ test). A progress indicator is shown for long tables in an interactive
 session.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 seg <- data.frame(year = rep(2022:2023, each = 3),
                   site = rep(c("A", "B", "C"), 2),
                   n = c(30, 50, 80, 45, 52, 79))
@@ -51,6 +52,7 @@ stats::binom.test(45, 75)$p.value
 
 # anything that is not a yoy() table is refused
 try(yoypv(seg))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{scanadj}}, \code{\link{yoy}}.

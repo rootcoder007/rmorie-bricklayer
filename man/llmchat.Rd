@@ -59,6 +59,7 @@ rejects the key (HTTP 401 or 403), or answers with an error. The key is
 redacted from any error text a server echoes back.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST"), unset = NA)
 Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
 
@@ -78,7 +79,7 @@ try(llmchat(turns, route = "ollama"))
 for (v in names(old)) {
   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 }
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs a key or a local model, and the network
 Sys.setenv(ANTHROPIC_API_KEY = "...")

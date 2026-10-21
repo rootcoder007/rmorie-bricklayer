@@ -53,6 +53,7 @@ Errors: \code{man} that is not a list (or is a data frame); for
 an empty kind.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(42)
 m <- mnfrecseed(mkmnf(list(a = 1),
                                         env = FALSE))
@@ -70,6 +71,7 @@ length(m$rng$state)
 
 # a manifest without a recorded state cannot restore one
 try(mnfrstseed(mkmnf(list(a = 1), env = FALSE)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=capenv]{capenv()}},

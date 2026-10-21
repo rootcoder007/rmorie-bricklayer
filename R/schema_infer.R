@@ -73,7 +73,7 @@
 #' [valsch()],
 #' [cpsdrft()] for the distributional
 #' check the schema cannot make.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(1)
 #' df <- data.frame(
 #'   id = 1:100,

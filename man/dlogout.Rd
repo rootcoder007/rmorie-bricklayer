@@ -31,6 +31,7 @@ member twice), and when the key cannot be removed without damaging the
 file; in both cases the file is left as it was.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)
 Sys.setenv(XDG_CONFIG_HOME = tempfile())   # a scratch credentials folder
 
@@ -49,6 +50,7 @@ writeLines("not json", file.path(d, "credentials.json"))
 try(dlogout())
 
 if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{dlogin}}.

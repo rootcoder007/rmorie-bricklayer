@@ -60,6 +60,7 @@ non-finite count; \code{biascor} not \code{TRUE} or \code{FALSE};
 \code{minexp} not a single non-negative number.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 tbl <- rbind(c(120, 80), c(40, 160))
 cramerv(tbl)
 
@@ -79,6 +80,7 @@ cramerv(rbind(c(30, 10), c(0, 0), c(12, 28)))$method
 
 # negative counts are refused
 try(cramerv(rbind(c(-1, 2), c(1, 2))))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Bergsma, W. (2013). A bias-correction for Cramer's V and Tschuprow's T.

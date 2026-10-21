@@ -74,6 +74,7 @@ complete rows; and a treatment with no variation left after the
 covariates are partialled out.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 d <- data.frame(x1 = rnorm(200), x2 = rnorm(200))
 d$exposure <- 20 + 2 * d$x1 + rnorm(200)
@@ -90,6 +91,7 @@ plrcf(d, "asthma", "exposure", c("x1", "x2"), kfol = 10, seed = 2)$ate
 # A text column is refused rather than read as codes.
 d$region <- sample(c("north", "south"), 200, replace = TRUE)
 try(plrcf(d, "asthma", "exposure", c("x1", "region")))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E.,

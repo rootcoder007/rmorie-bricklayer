@@ -46,6 +46,7 @@ removed). A character, factor or list \code{x} is refused
 \eqn{O(n \log n)}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 x <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 100)
 
 mean(x)                               # dragged up by the 100
@@ -62,6 +63,7 @@ all.equal(ctrmmean(x, 0.5), cmed(x))
 # A trim past one half is not a trim.
 try(cwinsmean(x, 0.7))
 try(ctrmmean(letters))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cmed]{cmed()}} and

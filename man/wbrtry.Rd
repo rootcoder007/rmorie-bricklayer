@@ -68,6 +68,7 @@ Errors: \code{output} not a single path to an existing file;
 any error from \code{wbsave()}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Offline: a results file whose only failure is a page that is gone
 # has nothing to send again, so no keys or network are used.
 f <- tempfile(fileext = ".jsonl")
@@ -86,7 +87,7 @@ attr(res, "retry")
 try(wbrtry(tempfile(fileext = ".jsonl")))
 
 # With failures to resend, keys and the network are needed.
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 res <- wbsave(urls, output = "snapshots.jsonl")
 # later, or the next day once the daily capture limits have reset:

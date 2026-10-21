@@ -57,7 +57,7 @@
 #'   `note`) and `line`.
 #' @seealso [schemapath()], [cpschk()],
 #'   [cpsbndlvrf()].
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' f <- system.file("extdata", "ledger_sample.json", package = "rmoriebricklayer")
 #' l <- ldgrread(f)
 #' l

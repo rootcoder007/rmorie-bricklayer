@@ -90,6 +90,7 @@ negative or fractional counts; a population of zero or below;
 non-positive \code{per}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 stops <- data.frame(
   division = c("North", "South", "East"),
   stops = c(412, 77, 3),
@@ -111,6 +112,7 @@ rtcalc(c(3, 0), 9500, per = "100k")
 
 # a fractional count has no Poisson interval
 try(rtcalc(2.5, 1000))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{shrs}} for a percentage of a total,

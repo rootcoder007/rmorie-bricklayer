@@ -50,6 +50,7 @@ the number of distinct periods; a function that does not return one label
 per row.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 seg <- data.frame(EndFiscalYear = 2019:2023,
                   n = c(402, 377, 190, 268, 331))
 y <- yoy(seg, value = n, prd = EndFiscalYear)
@@ -68,6 +69,7 @@ identical(yoylbl(y, fylbl)$change, y$change)
 
 # an unnamed vector must have one label per distinct period
 try(yoylbl(y, c("a", "b")))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=fylbl]{fylbl()}}

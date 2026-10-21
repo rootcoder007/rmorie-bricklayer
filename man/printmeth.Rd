@@ -137,6 +137,7 @@ environment variable \code{RMBL_ASCII_ONLY} to force the ASCII form,
 which is what to do when capturing output into a fixed-width log.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 # one-time index record out of your configuration directory; leave the default in use
 set.seed(7)
@@ -159,4 +160,5 @@ key <- pqckg(height = 2)
 key
 cpssign("a-manifest", key)
 options(op)
+\dontshow{\}) # examplesIf}
 }

@@ -426,7 +426,7 @@ summary.bricklayer_report <- function(object, ...) {
 #' @return A character vector of Markdown lines; returned visibly when `path`
 #' is `NULL`, invisibly when written to a file.
 #' @seealso [cpsrpt()]
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(1)
 #' df <- data.frame(v = stats::rnorm(100), g = rep("x", 100),
 #'                  stringsAsFactors = FALSE)

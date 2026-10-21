@@ -49,6 +49,7 @@ weight for that unit only. The weights are not normalised; divide by
 their sum within each arm for stabilised (Hajek) estimates.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 treat <- c(1, 0, 1, 0)
 e <- c(0.5, 0.25, 0.02, 0.9)
 
@@ -67,6 +68,7 @@ cipw(c(TRUE, FALSE), c(0.4, 0.4))
 
 # A treatment coded 1/2 is refused rather than read as all-control.
 try(cipw(c(1, 2), c(0.5, 0.5)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Rosenbaum PR, Rubin DB (1983). The central role of the

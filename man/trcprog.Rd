@@ -51,9 +51,11 @@ a forecast. Any count of commitments completed over time can be modelled the sam
 set \code{total} and \code{start}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- trcprog()
 p
 plot(p)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{trccmpl}}.

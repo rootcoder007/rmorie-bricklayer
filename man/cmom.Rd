@@ -50,6 +50,7 @@ statistics. A character, factor or list \code{x} is refused
 (\code{"must be numeric"}).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 cmom(c(2, 4, 4, 4, 5, 5, 7, 9))
 
 # The first two entries agree with base R.
@@ -64,6 +65,7 @@ cmom(c(rep(0, 20), -8, 8))[["kurtosis"]] > 0
 
 # Too short to define a shape statistic: NaN rather than a guess.
 cmom(c(1, 2))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Joanes DN, Gill CA (1998). Comparing measures of sample skewness and

@@ -44,6 +44,7 @@ is empty, has \code{NA}, \code{Inf} or a negative value, or when
 \code{t} is not a single positive number.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Lakner's own worked example (p.15): 3,000 inmates served 13,500
 # detention days in a year.
 adp(13500)
@@ -56,6 +57,7 @@ adp(13500, t = perdays("2024-01-01", "2024-12-31"))
 
 # negative days are refused
 try(adp(c(10, -2)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Lakner, E. (1976) \emph{A Manual of Statistical Sampling Methods for

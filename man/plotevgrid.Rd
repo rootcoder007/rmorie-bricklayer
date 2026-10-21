@@ -27,6 +27,7 @@ in a grid of panels, one per outcome, with the same style, the way papers show a
 effect on several crimes or several groups at once.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- polex()
 es <- list(
   "Crime rate" = evstudy(p, "district", "month", "crmrate", "refmonth",
@@ -34,6 +35,7 @@ es <- list(
   "Arrest rate" = evstudy(p, "district", "month", "arrrate", "refmonth",
                               leads = 3, lags = 4))
 plotevgrid(es, style = "stata")
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{evstudy}}, \code{\link{plot-methods}}.

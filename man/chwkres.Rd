@@ -64,6 +64,7 @@ parameters for the constant baseline, 5 + kernel parameters for the
 sinusoidal one).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(2)
 times <- sort(stats::runif(200, 0, 50))
 U <- chwkres(times, 50, "exponential", c(log(3), 0.2, 2))
@@ -78,6 +79,7 @@ abline(0, 1)
 
 # par must match the kernel and baseline
 try(chwkres(times, 50, "weibull", c(log(3), 0.2, 2)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Brown EN, Barbieri R, Ventura V, Kass RE, Frank LM (2002). The

@@ -46,6 +46,7 @@ coordinate: \code{"Without children [3]"} and \code{"Without children [7]"}. Oth
 labels are left as they are.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # the layout of a downloaded table, with one cell suppressed
 d <- data.frame(REF_DATE = "2019/2022", GEO = "Canada",
                 `Indigenous identity` = c("First Nations", "Inuk (Inuit)",
@@ -53,7 +54,7 @@ d <- data.frame(REF_DATE = "2019/2022", GEO = "Canada",
                 VALUE = c("45.8", "", "61.5"), STATUS = c("", "x", ""),
                 check.names = FALSE)
 sctidy(d)
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs a data service key: sign in once with dlogin()
 t924 <- sctidy("13100924")

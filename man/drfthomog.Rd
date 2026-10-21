@@ -71,6 +71,7 @@ counts, so an appearing or vanishing level registers.
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 a <- sample(c("x", "y", "z"), 300, TRUE)
 b <- sample(c("x", "y", "z"), 300, TRUE)
@@ -96,6 +97,7 @@ drfthomog(c(a = 30, b = 20), c(a = 25, b = 25))
 attr(drfthomog(c(a = 3, b = 1, c = 2), c(a = 1, b = 4, c = 1)), "method")
 
 try(drfthomog(c(1, 2), c(a = 3)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=drftchisq]{drftchisq()}} for a known reference

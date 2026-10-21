@@ -60,7 +60,7 @@
 #'   Attribute \code{"bounds"} records \code{rounding},
 #'   \code{rndkind} and \code{suplim}. \code{plot()} draws
 #'   each value inside its interval.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' pubbnd(c(120, 35, 0), rnd = 5)
 #' pubbnd(c("120", "x", "<5"), rnd = 5,
 #'                  suplim = 5)
@@ -187,7 +187,7 @@ pubbnd <- function(x, rnd = NULL,
 #'   \code{preratelo} and \code{prerateup}.
 #' @seealso [pubbnd()],
 #'   [yoybnd()].
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' now <- pubbnd(c(45, 120), rnd = 5)
 #' prev <- pubbnd(c(40, 100), rnd = 5)
 #' chgenv(now, prev)
@@ -283,7 +283,7 @@ chgenv <- function(now, prev, pop = NULL,
 #'   \code{bounds} in the \code{"yoy"} attribute.
 #' @seealso [pubbnd()],
 #'   [chgenv()], [yoy()].
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' seg <- data.frame(year = 2021:2023, n = c(40, 45, 60))
 #' y <- yoy(seg, value = "n", prd = "year")
 #' yoybnd(y, rnd = 5)

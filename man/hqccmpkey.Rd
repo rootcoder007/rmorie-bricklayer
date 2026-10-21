@@ -49,6 +49,7 @@ secret key, so the compressed key must be protected exactly like the full
 one.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 key <- hqckg(1)
 small <- hqccmpkey(key)
 nchar(small$secret) / 2
@@ -62,6 +63,7 @@ identical(hqccmpkey(small), small)
 spliced <- small
 spliced$public <- hqckg(1)$public
 try(hqcdecap(spliced, sent$ciphertext))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Gaborit, P. et al. (2025). Hamming Quasi-Cyclic (HQC),

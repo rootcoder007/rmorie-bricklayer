@@ -57,6 +57,7 @@ Units and regions are compared as text with spaces trimmed. Errors:
 vector without names; a \code{route} data frame without the two columns.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 cw <- data.frame(
   inst = c("North Jail", "South Jail", "Hill Jail"),
   cd = c("3557", "3520", "3506"),
@@ -81,6 +82,7 @@ nrow(rgnmapalt(cw, "inst", "cd", routedf))
 
 # an unnamed vector cannot be matched to units
 try(rgnmapalt(cw, "inst", "cd", c("3557", "3520")))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=rgnmapcmp]{rgnmapcmp()}},

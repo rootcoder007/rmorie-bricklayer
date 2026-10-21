@@ -61,6 +61,7 @@ the test has little power and \eqn{I^2} is imprecise; a large \eqn{p} is not evi
 that the groups are the same.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # perceived mental health very good or excellent, 2019/2022, adults (table
 # 13-10-0924-01)
 h <- indiex("health")
@@ -75,6 +76,7 @@ own <- data.frame(group = c("Aboriginal", "Torres Strait Islander", "Both"),
                   est = c(24.0, 31.0, 24.6), lo = c(22.1, 26.2, 22.8), hi = c(25.9,
                                                                               35.8, 26.4))
 dstntst(own, "group", "est", "lo", "hi", pooled = "Both")
+\dontshow{\}) # examplesIf}
 }
 \references{
 Higgins JPT, Thompson SG (2002). Quantifying heterogeneity in a

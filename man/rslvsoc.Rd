@@ -40,6 +40,7 @@ invalid JSON) or when the metadata has no \code{id}. Errors: a
 (\code{localhost}, a private address, a single-label name).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Missing fields return NULL rather than erroring:
 rslvsoc(list())
 rslvsoc(list(dataset = list(socrata_domain = "data.cityofchicago.org")))
@@ -47,7 +48,7 @@ rslvsoc(list(dataset = list(socrata_domain = "data.cityofchicago.org")))
 # a local host is refused before any request
 try(rslvsoc(list(dataset = list(
   socrata_domain = "localhost", socrata_id = "abcd-1234"))))
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network
 prov <- list(dataset = list(

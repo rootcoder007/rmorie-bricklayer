@@ -53,6 +53,7 @@ Errors: \code{data} not a data frame (or with missing or duplicated names);
 \code{which} other than \code{"rows"} and/or \code{"cols"}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 df <- data.frame(
   keep = c(1, 2, NA),
   allna = c(NA, NA, NA),
@@ -77,6 +78,7 @@ ncol(drpconst(x, naasval = TRUE))
 
 # only data frames
 try(drpempty(c(1, NA)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=profcols]{profcols()}}, which reports

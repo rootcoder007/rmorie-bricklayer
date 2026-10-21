@@ -81,6 +81,7 @@ cases at all; \code{conflvl} outside (0, 1); an unknown
 \code{conftype}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 d <- read.csv(system.file("extdata", "ocj_time_to_disposition.csv",
                           package = "rmoriebricklayer"))
 f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",
@@ -101,6 +102,7 @@ attr(lt2, "median")
 
 # an open band can only come last
 try(lifetbl(c(0, Inf, 20), events = c(5, 5)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Cutler, S. J. and Ederer, F. (1958). Maximum utilization of the life

@@ -35,6 +35,7 @@ signature found twice (one bundle copied to two places, or a bundle and its log 
 not a reuse.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 # one-time index record out of your configuration directory
 root <- tempfile("capsules-")
@@ -55,6 +56,7 @@ xmssidxseen(root)[, c("index", "reused")]
 
 try(xmssidxseen(tempfile()))
 options(op)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cpsbndlvrf]{cpsbndlvrf()}} (its \code{seen} argument),

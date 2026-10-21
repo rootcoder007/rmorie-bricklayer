@@ -43,6 +43,7 @@ given; with other weights it ranks places otherwise, and it is never a ranking o
 Nations or communities on their culture. For Inuit regions, use Inuit data only.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # weights a community might set for adults, 2019/2022 (table 13-10-0924-01); others
 # would differ
 h <- indiex("health")
@@ -62,6 +63,7 @@ commidx(h, "group", "indicator", "estimate", "lower", "upper",
                 qual = "quality",
                 w = w2)$index
 plot(ci)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Inuit Tapiriit Kanatami (2016). National Inuit Suicide Prevention Strategy.

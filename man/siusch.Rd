@@ -32,6 +32,7 @@ subject officials. The function takes no arguments, reads no files and
 uses no network.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 s <- siusch()
 s$name
 
@@ -42,4 +43,5 @@ s[s$count, c("name", "description")]
 sheet <- as.data.frame(setNames(replicate(nrow(s), character(0), simplify = FALSE),
                                  s$name))
 ncol(sheet)
+\dontshow{\}) # examplesIf}
 }

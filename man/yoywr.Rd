@@ -46,6 +46,7 @@ existing file is overwritten. Errors when \code{x} does not come from
 whatever error the chosen writer raises.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
 y <- yoy(d, value = "n", prd = "year")
 
@@ -62,6 +63,7 @@ yoywr(y, f, format = "csv", digits = 1)
 readLines(f, n = 3)
 unlink(f)
 try(yoywr(y, file.path(tempdir(), "change.xlsx")))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=yoyhtml]{yoyhtml()}}, \code{\link[=yoypdf]{yoypdf()}},

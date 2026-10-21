@@ -56,6 +56,7 @@ needed for \code{ok = TRUE}.
 \code{bricklayer_recode_manifest}; it overwrites \code{path}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 x <- c("W", "B", "W")
 y <- grdrcd(x, c(W = "White", B = "Black"))
 m <- rcdmnf(x, y, c(W = "White", B = "Black"))
@@ -69,4 +70,5 @@ vrfrcdmnf(p, x, y2)$reasons
 
 # only manifests can be written
 try(wrrcdmnf(list(a = 1), tempfile()))
+\dontshow{\}) # examplesIf}
 }

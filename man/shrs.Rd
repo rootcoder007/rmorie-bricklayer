@@ -72,6 +72,7 @@ a total of zero or below; a count larger than the total;
 \code{conflvl} outside (0, 1).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 stops <- data.frame(
   division = c("North", "South", "East"),
   stops = c(412, 77, 3))
@@ -91,6 +92,7 @@ shrs(c(3, 7))
 
 # a count larger than its total is not a share
 try(shrs(c(5, 2), total = 4))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{rtcalc}} for events per population,

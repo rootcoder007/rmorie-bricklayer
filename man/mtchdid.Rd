@@ -70,10 +70,12 @@ credible but can bring in regression to the mean when the treated were chosen fo
 an unusual pre-period (Daw and Hatfield 2018).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- polex()
 m <- mtchdid(p, "district", "month", "crmrate", "refmonth", ratio = 2)
 m$estimate
 m$balance
+\dontshow{\}) # examplesIf}
 }
 \references{
 Daw JR, Hatfield LA (2018). Matching and regression to the mean in

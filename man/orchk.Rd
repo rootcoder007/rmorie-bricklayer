@@ -56,6 +56,7 @@ and row names; \code{ref} not a row name; \code{rptd} not named
 by every non-reference row.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 tab <- matrix(c(900, 100, 700, 300, 400, 600),
   ncol = 2, byrow = TRUE,
   dimnames = list(c("A", "B", "C"), c("no", "yes"))
@@ -70,6 +71,7 @@ chk$verdict
 
 # every non-reference group needs a reported value
 try(orchk(tab, "A", c(B = 3.857)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{vrfmrg}}, \code{\link{rlblfrns}}.

@@ -47,6 +47,7 @@ route, a provider named with no key set, or a \code{tmout} that is not
 a single positive number.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST"), unset = NA)
 Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
 
@@ -61,7 +62,7 @@ try(llmmdls(route = "anthropic"))
 for (v in names(old)) {
   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 }
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # with a key set, the provider is asked (network)
 m <- llmmdls(route = "openai", tmout = 10)

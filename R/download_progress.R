@@ -120,7 +120,7 @@
 #' @return \code{dest}, invisibly.
 #' @seealso \code{\link{blfetch}} for a download with a Wayback
 #'   Machine fallback.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # offline: a local file through the same routine
 #' src <- tempfile(fileext = ".txt")
 #' writeLines("hello", src)

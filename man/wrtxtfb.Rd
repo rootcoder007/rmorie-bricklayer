@@ -41,6 +41,7 @@ that is not a single non-empty string is refused before anything is
 written (\code{"path must be a single non-empty string"}).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- wrtxtfb(c("line one", "line two"),
                          tempfile(fileext = ".txt"))
 readLines(p)
@@ -52,6 +53,7 @@ readBin(q, "raw", 20)
 
 # The path must be one string.
 try(wrtxtfb("x", c("a.txt", "b.txt")))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=toascii]{toascii()}} for the retry's transliteration.

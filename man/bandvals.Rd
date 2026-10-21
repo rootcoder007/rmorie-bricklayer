@@ -67,6 +67,7 @@ cap, and \code{\link{expbands}} to turn the values into one value per
 unit.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 b <- prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 bandvals(b)
 
@@ -80,6 +81,7 @@ bandvals(c("under 5", "5 to 9", "10+"), openloflr = 1)
 
 # a cap inside the open band is refused
 try(bandvals(b, openupcap = 5))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{prsbands}}, \code{\link{bandsens}},

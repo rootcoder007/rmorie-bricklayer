@@ -98,12 +98,14 @@ approximates a nonlinear confounding less well; the poly2 basis, or a basis of t
 user's own as further covariates, is the remedy.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- polex()
 set.seed(9)
 p$unemployment <- 6 + sin(p$month / 6) + stats::rnorm(nrow(p), 0, 0.5)
 p$patrols <- 0.5 * p$unemployment + p$reformed + stats::rnorm(nrow(p))
 plndml(p, "district", "month", "crmrate", "patrols",
           c("unemployment", "arrrate"), lrn = "ridge")
+\dontshow{\}) # examplesIf}
 }
 \references{
 Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C, Newey W,

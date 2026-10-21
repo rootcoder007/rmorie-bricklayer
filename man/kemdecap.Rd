@@ -68,6 +68,7 @@ for the key's level, which is
 1088 or 1568); \code{masked} not \code{TRUE} or \code{FALSE}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 key <- kemkg(512)
 sent <- kemencap(kempubkey(key))
 identical(kemdecap(key, sent$ciphertext), sent$shared)
@@ -85,6 +86,7 @@ identical(kemdecap(key, bad, masked = FALSE), other)
 # a public key alone cannot decapsulate, and a short ciphertext is refused
 try(kemdecap(kempubkey(key), sent$ciphertext))
 try(kemdecap(key, "abcd"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=kemencap]{kemencap()}}.

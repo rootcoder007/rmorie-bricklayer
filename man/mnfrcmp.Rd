@@ -68,6 +68,7 @@ not a non-empty fully named list, or with an element that is not a
 function.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 d <- data.frame(x = 1:10)
 m <- mkmnf(list(dataset = "demo"), env = FALSE)
 m <- recrd(m, "mean_x", obs = mean(d$x), expd = 5.5)
@@ -96,6 +97,7 @@ mnfrcmp(m, d, list(mean_x = function(z) stop("column y is gone"),
 
 # statistics must be named
 try(mnfrcmp(m, d, list(function(z) nrow(z))))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=vrfcps]{vrfcps()}},

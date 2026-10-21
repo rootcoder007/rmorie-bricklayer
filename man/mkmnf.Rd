@@ -57,6 +57,7 @@ list or vector of versions, \code{r_package_versions}.
 Errors when \code{meta} is not a list. Nothing is written.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Minimal manifest, no environment capture.
 man <- mkmnf(list(project = "demo-study", author = "A. Author"),
   env = FALSE
@@ -75,6 +76,7 @@ syn$meta$synthetic
 
 # meta must be a list
 try(mkmnf("demo"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=recrd]{recrd()}},

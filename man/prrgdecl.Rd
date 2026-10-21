@@ -65,6 +65,7 @@ Errors: \code{hyps} not a non-empty character vector with non-empty,
 unique names; \code{prereg} not from \code{prrgdecl()}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 plan <- prrgdecl(c(
   ate = "use of force is higher in the exposed division",
   nrows = "the extract has the row count the source publishes"),
@@ -84,6 +85,7 @@ prrgchk(plan, c("ate", "nrows", "atebyyear",
 prrgchk(plan, c("ate", "atebyyear"))
 
 try(prrgdecl(c("an unnamed claim")))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cpsatst]{cpsatst()}} to seal a declaration,

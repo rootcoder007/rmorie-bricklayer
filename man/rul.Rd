@@ -50,6 +50,7 @@ kept. The rule is not run here. Errors: an empty or \code{NA} \code{name};
 \code{sev} other than \code{"warning"} or \code{"fatal"}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # A column predicate, applied row-wise.
 rul("agenonnegative", function(v) v >= 0, col = "age")
 
@@ -68,6 +69,7 @@ r$message
 
 # the predicate must be a function, not an expression
 try(rul("agenonnegative", "age >= 0", col = "age"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=valrules]{valrules()}},

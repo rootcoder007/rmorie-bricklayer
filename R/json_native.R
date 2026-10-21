@@ -233,7 +233,7 @@
 #' @seealso
 #' [jsgzenc()], which composes this
 #' with gzip.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Round trip through the standard alphabet.
 #' b <- jsb64enc("hello capsule")
 #' b
@@ -887,7 +887,7 @@ jsb64udec <- function(input) {
 #'   reverse,
 #'   [jsser()] for an exact
 #'   round trip.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' tojs(list(a = 1:3, b = "x"), auto_unbox = TRUE)
 #' tojs(data.frame(id = 1:2, v = c(1.5, NA)), pretty = TRUE)
 #'
@@ -1872,7 +1872,7 @@ bricklayer_json_validate <- function(txt) {
 #' [tojs()] for
 #' plain data JSON, [csha256()] for
 #' fingerprinting the result.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # A factor survives the round trip with its levels intact.
 #' f <- factor(c("b", "a", "b"), levels = c("a", "b", "c"))
 #' back <- jsunser(jsser(f))

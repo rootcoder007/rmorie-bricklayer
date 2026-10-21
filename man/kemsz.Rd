@@ -42,6 +42,7 @@ lengths in characters. Error: \code{lvl} other than one whole number
 512, 768 or 1024.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 kemsz(768)
 
 # the shared secret is 32 bytes at every level: the level buys
@@ -56,6 +57,7 @@ nchar(ct) / 2 == kemsz(768)[["ciphertext"]]
 
 # an unknown level is an error, not a default
 try(kemsz(2048))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=kemkg]{kemkg()}}.

@@ -79,6 +79,7 @@ baseline rate outside the band described in
 \code{hirate} admits it.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Ambient NO2 of 25 micrograms per cubic metre over a million people.
 b <- polbrdn(25, 1, 0.008, 1e6, poll = "NO2")
 b$attrcases
@@ -94,6 +95,7 @@ polbrdn(30, 1, 0.012, 5e5, y = "chiast")$extra$unit
 
 # Only PM2.5 and NO2 have concentration-response functions here.
 try(polbrdn(40, 1, 0.008, 1e6, poll = "O3"))
+\dontshow{\}) # examplesIf}
 }
 \references{
 GBD 2019 Risk Factors Collaborators (2020). Global burden of 87

@@ -71,7 +71,7 @@
 #' and direct standardisation, which does the reverse.
 #' @seealso
 #' \code{\link{stdinc}}, \code{\link{ebrates}}, \code{\link{fnllim}}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' d <- data.frame(
 #'   region = rep(c("North", "South", "East"), each = 2),
 #'   age = rep(c("18 to 24", "25 to 49"), 3),
@@ -181,7 +181,7 @@ expcnts <- function(cnts, pop, area, strata = NULL) {
 #' @seealso
 #' \code{\link{expcnts}}, \code{\link{ebrates}},
 #' \code{\link{fnllim}}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' stdinc(obs = c(30, 12, 3), expd = c(20, 14, 5),
 #'     area = c("North", "South", "East"))
 #'
@@ -285,7 +285,7 @@ stdinc <- function(obs, expd, area = NULL, conflvl = 0.95) {
 #' mapping.
 #' @seealso
 #' \code{\link{stdinc}}, \code{\link{fnllim}}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Three areas, one of them tiny. The tiny area's raw ratio is
 #' # extreme; its shrunk one is not.
 #' ebrates(obs = c(30, 45, 2), expd = c(25, 50, 0.5),
@@ -417,7 +417,7 @@ ebrates <- function(obs, expd, area = NULL) {
 #' built from.
 #' @seealso
 #' \code{\link{stdinc}}, \code{\link{ebrates}}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # The funnel narrows as the expected count grows, which is the whole
 #' # point: a ratio of 2 means nothing at an expected count of 2 and a
 #' # great deal at an expected count of 200.
@@ -515,7 +515,7 @@ fnllim <- function(expd, target = 1,
 #' \emph{Biometrika} 37(1/2), 17-23. Laniyonu (2017), on policing practices
 #' in gentrifying neighbourhoods, uses the statistic as here, to establish
 #' that areal residuals are spatially dependent.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Six areas in a line, each adjacent to the next.
 #' nb <- list(2L, c(1L, 3L), c(2L, 4L), c(3L, 5L), c(4L, 6L), 5L)
 #'

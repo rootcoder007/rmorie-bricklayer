@@ -63,6 +63,7 @@ Errors: \code{schema} not a list; any error from
 \code{\link{mksyncol}}; an unwritable \code{outpath}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 recipe <- list(
   n_rows = 20, seed = 42,
   columns = list(
@@ -93,6 +94,7 @@ recipe$row_replication <- list(values = list(1, 2, 3))
 mksyncsv(recipe, tempfile(fileext = ".csv"), nrows = 5)$rows
 
 try(mksyncsv("not a recipe", tempfile()))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{mksyncol}}, \code{\link{vrfcps}}.

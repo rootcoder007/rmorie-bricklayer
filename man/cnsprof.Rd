@@ -43,8 +43,10 @@ are kept: Statistics Canada suppresses an area whose long-form rate is 50\% or m
 and a high rate means a larger error than the sample alone.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- cnsprof(indiex("censuspop"))
 head(p[p$characteristic == "Foster children" & p$geo == "Canada", ])
+\dontshow{\}) # examplesIf}
 }
 \references{
 Statistics Canada (2023). Indigenous Population Profile, 2021 Census of

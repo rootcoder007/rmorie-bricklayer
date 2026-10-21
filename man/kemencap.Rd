@@ -47,6 +47,7 @@ whose public half is not valid hex (\dQuote{key has no usable public key});
 \code{m} that is not a raw vector of 32 bytes.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 key <- kemkg(512)
 a <- kemencap(key)
 nchar(a$ciphertext) / 2 == kemsz(512)[["ciphertext"]]
@@ -65,6 +66,7 @@ identical(kemencap(key, m = m)$shared, kemencap(key, m = m)$shared)
 
 # the randomness must be exactly 32 bytes
 try(kemencap(key, m = as.raw(1:8)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=kemdecap]{kemdecap()}},

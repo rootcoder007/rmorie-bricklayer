@@ -41,6 +41,7 @@ many lines were split: a field that spans a split may be incomplete.
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 siutxt("<p>Number of SIU Investigators assigned: 3</p>")
 
 # the bundled synthetic report, as text
@@ -50,4 +51,5 @@ cat(substr(txt, 1, 200))
 
 # more than one string is refused
 try(siutxt(c("<p>a</p>", "<p>b</p>")))
+\dontshow{\}) # examplesIf}
 }

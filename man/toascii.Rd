@@ -45,6 +45,7 @@ A missing value becomes \code{""}; non-character input is converted with
 digits).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Latin accents fold to their nearest ASCII letter.
 toascii("Prof. \u00c1ngela Zorro Medina")  # "Prof. Angela Zorro Medina"
 
@@ -60,6 +61,7 @@ all(charToRaw(toascii("caf\u00e9")) < 128)
 
 # Missing values become empty strings; line breaks are removed.
 toascii(c(NA, "two\nlines"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=asciifb]{asciifb()}} to transliterate only when

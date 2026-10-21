@@ -53,6 +53,7 @@ zero or below; lengths that differ (a single \code{expd} is recycled).
 A \code{conflvl} outside (0, 1) is an error.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 stdinc(obs = c(30, 12, 3), expd = c(20, 14, 5),
     area = c("North", "South", "East"))
 
@@ -64,6 +65,7 @@ stdinc(3, 5)
 stdinc(c(0, 40), c(2, 25), conflvl = 0.90)
 
 try(stdinc(c(3, 4), c(5, 0)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal Health

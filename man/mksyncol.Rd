@@ -67,6 +67,7 @@ unknown \code{type}; errors from \code{sample()} or \code{rpois()} on
 invalid weights or rates.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 # "sample": categorical draw, optionally weighted.
 mksyncol(list(
@@ -104,6 +105,7 @@ mksyncol(list(type = "sequence", from = 100), 4)
 
 # An unknown type errors.
 try(mksyncol(list(type = "nope"), 3))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{mksyncsv}}.

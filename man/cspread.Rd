@@ -60,6 +60,7 @@ as 0/1. Both run in one pass over the data and allocate nothing beyond
 the coerced input.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Sample standard deviation, matching stats::sd().
 csdev(c(2, 4, 4, 4, 5, 5, 7, 9))
 all.equal(csdev(1:10), stats::sd(1:10))
@@ -78,6 +79,7 @@ cdistm(1:5, 1:5)             # 0 -- a point is zero from itself
 
 # Vectors of different lengths are refused rather than recycled.
 try(cdistm(1:3, 1:2))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cmom]{cmom()}} for the mean, variance, skewness and

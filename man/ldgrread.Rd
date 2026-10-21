@@ -75,6 +75,7 @@ ledger rows to such a capsule too.}
 }
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 f <- system.file("extdata", "ledger_sample.json", package = "rmoriebricklayer")
 l <- ldgrread(f)
 l
@@ -86,6 +87,7 @@ bad <- tempfile(fileext = ".json")
 writeLines('{"name": "x"}', bad)
 try(ldgrread(bad))
 unlink(bad)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=schemapath]{schemapath()}}, \code{\link[=cpschk]{cpschk()}},

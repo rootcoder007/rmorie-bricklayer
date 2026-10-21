@@ -73,6 +73,7 @@ not a range, an empty label and \code{NA} all give \code{NA} bounds.
 Anything other than a character or factor vector is an error.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 
 prsbands(c("18 to 24", "25 to 49", "50+", "under 18"))
@@ -85,6 +86,7 @@ prsbands(c("over 15", "under 0.5"), intsca = FALSE)
 prsbands(c("3", "unknown", "24 to 18", "15 to 19 and over"))
 
 try(prsbands(1:3))
+\dontshow{\}) # examplesIf}
 }
 \references{
 The forms recognised here are taken from the categories the Ontario

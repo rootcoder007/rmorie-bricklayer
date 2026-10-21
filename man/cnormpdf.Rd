@@ -35,6 +35,7 @@ an error (\code{dnorm()} recycles them, and gives \code{Inf} or \code{NaN} for
 factor or list input for \code{x} is an error.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Standard normal density at a few quantiles.
 cnormpdf(c(-1, 0, 1))
 
@@ -50,6 +51,7 @@ all.equal(cnormpdf(-2:2, 0, 1), stats::dnorm(-2:2, 0, 1))
 # a non-positive sd and text are refused
 try(cnormpdf(0, sd = 0))
 try(cnormpdf("0"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{cstat}}, \code{\link[stats]{dnorm}}.

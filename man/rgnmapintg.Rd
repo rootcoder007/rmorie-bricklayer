@@ -48,6 +48,7 @@ spaces (so \code{"3506"} and \code{3506} match, but \code{"03506"} does
 not). Errors: \code{map} not a data frame, or without the named columns.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 cw <- data.frame(
   inst = c("North Jail", "South Jail", "East Jail"),
   cd = c("3557", "3520", "3506"),
@@ -65,6 +66,7 @@ rgnmapintg(cw2, "inst", "cd")
 
 # the columns must exist
 try(rgnmapintg(cw, "institution", "cd"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=rgnmapcmp]{rgnmapcmp()}},

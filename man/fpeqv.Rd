@@ -33,6 +33,7 @@ the emission. Errors when \code{co2eg} is not a single finite,
 non-negative number.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 fpeqv(1200)
 
 # the footprint of a small computation, in everyday terms
@@ -42,6 +43,7 @@ unlist(fpeqv(fp$co2eg)[c("carkm", "treemon")])
 
 # a vector is refused: convert one total at a time
 try(fpeqv(c(10, 20)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Green Algorithms data v3.1, context.csv: car factor from

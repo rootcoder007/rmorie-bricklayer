@@ -44,6 +44,7 @@ are errors, as in \code{\link[=cnormpdf]{cnormpdf()}}; a missing
 character, factor or list \code{x} is refused (\code{"must be numeric"}).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 cnormlpdf(c(-1, 0, 1))
 
 # Identical to stats::dnorm(log = TRUE).
@@ -63,6 +64,7 @@ sum(cnormlpdf(y, mean = mean(y), sd = stats::sd(y)))
 try(cnormlpdf(1, sd = 0))
 try(cnormlpdf(1, mean = c(0, 1)))
 try(cnormlpdf("1"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cmom]{cmom()}} for estimating \code{mean} and

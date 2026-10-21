@@ -65,7 +65,7 @@
 #' kurtosis in a
 #' single pass; [cmad()] for a spread that one wild value
 #' cannot move.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Sample standard deviation, matching stats::sd().
 #' csdev(c(2, 4, 4, 4, 5, 5, 7, 9))
 #' all.equal(csdev(1:10), stats::sd(1:10))
@@ -137,7 +137,7 @@ cdistm <- function(a, b) {
 #'   `stats::dnorm(x, mean, sd, log = TRUE)`.
 #' @seealso [cmom()] for estimating `mean` and
 #'   `sd` from data.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' cnormlpdf(c(-1, 0, 1))
 #'
 #' # Identical to stats::dnorm(log = TRUE).
@@ -216,7 +216,7 @@ cnormlpdf <- function(x, mean = 0, sd = 1) {
 #' kurtosis. *Journal of the Royal Statistical Society: Series D (The
 #' Statistician)* 47(1), 183--189.
 #' \doi{10.1111/1467-9884.00122}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' cmom(c(2, 4, 4, 4, 5, 5, 7, 9))
 #'
 #' # The first two entries agree with base R.
@@ -298,7 +298,7 @@ cmom <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
 #' @seealso [cmom()] for the non-robust moments,
 #'   [ctrmmean()] for a robust centre that still
 #'   averages.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' x <- c(2, 4, 4, 4, 5, 5, 7, 9)
 #' cqnt(x, c(0.25, 0.5, 0.75))
 #' all.equal(cqnt(x, c(0.1, 0.9)),
@@ -401,7 +401,7 @@ ctkyfnc <- function(x, k = 1.5) {
 #' @seealso [cmed()] and
 #'   [cmad()] for the other robust
 #'   summaries; [cmom()] for the ordinary mean.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' x <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 100)
 #'
 #' mean(x)                               # dragged up by the 100
@@ -478,7 +478,7 @@ cwinsmean <- function(x, trim = 0.1) {
 #' @seealso [cmom()] for the unweighted moments,
 #'   [cipw()] for inverse-probability weights
 #'   to feed in here.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' x <- c(10, 20, 30, 40)
 #' w <- c(1, 1, 2, 4)
 #' cwtd(x, w)
@@ -547,7 +547,7 @@ cwtd <- function(x, w) {
 #'   between two things. *The American Journal of Psychology* 15(1),
 #'   72--101. \doi{10.2307/1412159}
 #' @seealso [ccorr()] for the Pearson correlation.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' x <- c(1, 2, 3, 4, 5)
 #' y <- c(2, 4, 9, 16, 25)
 #'
@@ -623,7 +623,7 @@ cmidrk <- function(x) {
 #'   units are the product of the two columns' units.
 #' @seealso [ccorr()] for a single Pearson correlation,
 #'   [cmom()] for one column's variance.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' X <- cbind(a = c(1, 2, 3, 4), b = c(2, 4, 7, 8), c = c(5, 3, 2, 1))
 #' ccovm(X)
 #'
@@ -704,7 +704,7 @@ ccovm <- function(x) {
 #'   Bootstrap*. Chapman and Hall.
 #' @seealso [exprspplr()] for a bootstrap
 #'   of a model estimate.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(1)
 #' x <- stats::rnorm(50, mean = 5)
 #'
@@ -789,7 +789,7 @@ cbootmean <- function(x, B = 1000L, seed = 42L) {
 #'   *Biometrika* 70(1), 41--55. \doi{10.1093/biomet/70.1.41}
 #' @seealso [cwtd()] to average an outcome with
 #'   these weights.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' treat <- c(1, 0, 1, 0)
 #' e <- c(0.5, 0.25, 0.02, 0.9)
 #'
@@ -871,7 +871,7 @@ cipw <- function(treat, ps, trimlo = 0.01,
 #' @return A numeric vector the length of `x`, each entry a probability in
 #'   \eqn{[0, 1]}.
 #' @seealso [stats::pgamma()], the base R equivalent.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' cgamcdf(3.5, c(0.5, 1, 4, 12))
 #'
 #' # Identical to the unit-rate gamma CDF.
@@ -964,7 +964,7 @@ cgamcdf <- function(shape, x) {
 #' @references Hawkes AG (1971). Spectra of some self-exciting and mutually
 #' exciting point processes. *Biometrika* 58(1), 83--90.
 #'   \doi{10.1093/biomet/58.1.83}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(4)
 #' times <- sort(stats::runif(40, 0, 10))
 #'

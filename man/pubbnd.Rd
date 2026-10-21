@@ -80,6 +80,7 @@ suppression mark (the message lists the cells); a suppressed cell with no
 limit (neither \code{"<k"} nor \code{suplim}).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 pubbnd(c(120, 35, 0), rnd = 5)
 pubbnd(c("120", "x", "<5"), rnd = 5,
                  suplim = 5)
@@ -92,6 +93,7 @@ pubbnd(c("1,200", "--", "<10"), suplim = 10,
 
 # a suppressed cell needs a limit
 try(pubbnd(c("120", "x")))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=chgenv]{chgenv()}},

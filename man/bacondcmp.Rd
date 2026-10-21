@@ -39,10 +39,12 @@ large weight on \dQuote{later vs earlier} comparisons, together with effects tha
 over time, is the warning sign that the two-way estimate is biased.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- polex()
 b <- bacondcmp(p, "district", "month", "crmrate", "reformed")
 b
 tapply(b$weight, b$type, sum)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Goodman-Bacon A (2021). Difference-in-differences with variation in

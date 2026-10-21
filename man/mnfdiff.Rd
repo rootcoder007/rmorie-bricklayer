@@ -41,6 +41,7 @@ the first two. \code{\link{cpsrfrsh}} and \code{rmbl drift} report
 what a fetched source changed with it.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 a <- data.frame(path = c("a.csv", "b.csv"), sha256 = c("01", "02"),
                 size_bytes = c(10, 20))
 b <- data.frame(path = c("a.csv", "c.csv"), sha256 = c("09", "03"),
@@ -56,6 +57,7 @@ q$resource$sha256 <- "09"
 mnfdiff(p, q)$change
 
 try(mnfdiff(1, b))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{cpsrfrsh}}, \code{\link{cpsbndl}}.

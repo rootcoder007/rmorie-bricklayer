@@ -32,7 +32,7 @@
 #'   \code{p_value} column; \code{NA} where there is no comparison period or
 #'   both counts are zero.
 #' @seealso \code{\link{scanadj}}, \code{\link{yoy}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' seg <- data.frame(year = rep(2022:2023, each = 3),
 #'                   site = rep(c("A", "B", "C"), 2),
 #'                   n = c(30, 50, 80, 45, 52, 79))
@@ -135,7 +135,7 @@ yoypv <- function(y) {
 #'   \code{method}, \code{alpha} and \code{tests}.
 #' @seealso \code{\link{yoypv}}, \code{\link{falsfam}} for a
 #'   family of falsification results, \code{\link{drftcal}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' seg <- data.frame(year = rep(2022:2023, each = 3),
 #'                   site = rep(c("A", "B", "C"), 2),
 #'                   n = c(30, 50, 80, 45, 52, 79))

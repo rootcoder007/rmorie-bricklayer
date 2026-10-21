@@ -34,6 +34,7 @@ belonging to the current process. Errors: \code{drbg} not made by
 than 48 bytes; either not raw or hex.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 d <- drbgnew(as.raw(0:47))
 drbgrsd(d, as.raw(48:95))
 drbggen(d, 8)
@@ -49,6 +50,7 @@ drbgrsd(d, addl = charToRaw("before key generation"))
 
 # the entropy must be exactly 48 bytes
 try(drbgrsd(d, as.raw(1:10)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=drbgnew]{drbgnew()}},

@@ -42,6 +42,7 @@ element goes through \code{\link[=toascii]{toascii()}}. A missing value is kept 
 unless \code{force = TRUE}, when it becomes \code{""}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # By default valid UTF-8 is preserved (accents kept where supported).
 asciifb("\u00c1ngela")               # "\u00c1ngela"
 
@@ -59,6 +60,7 @@ asciifb(c("caf\u00e9", "resume"), force = TRUE)
 bad <- rawToChar(as.raw(c(0x63, 0x61, 0x66, 0xe9)))
 validUTF8(bad)
 asciifb(bad)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=toascii]{toascii()}}, which does the transliteration.

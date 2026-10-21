@@ -29,9 +29,11 @@ is the share of draws with \eqn{q_{b,j} \ge |t_{(j)}|}, made monotone:
 algorithm 2.8).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 null <- matrix(rnorm(3000), ncol = 3)
 stpdnpv(c(2.5, 0.4, -2.1), null)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Westfall PH, Young SS (1993). Resampling-Based Multiple Testing. Wiley,

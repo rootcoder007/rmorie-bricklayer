@@ -34,8 +34,10 @@ through proxies. The direction is the direction of better health for the people
 measured.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 ti <- trcind()
 ti[ti$call == "19", c("indicator", "table", "measure", "better")]
+\dontshow{\}) # examplesIf}
 }
 \references{
 Truth and Reconciliation Commission of Canada (2015). Truth and

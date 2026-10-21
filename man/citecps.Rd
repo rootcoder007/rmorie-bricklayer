@@ -44,6 +44,7 @@ character in the fields is escaped for LaTeX. Error: \code{prov}
 that is not a list.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 prov <- list(
   captured_at_utc = "2026-06-23T04:41:40Z",
   dataset = list(publisher = "Ontario Ministry of the Solicitor General",
@@ -69,4 +70,5 @@ citecps(NULL)
 
 # anything else that is not a list is an error
 try(citecps("data-on-inmates-in-ontario"))
+\dontshow{\}) # examplesIf}
 }

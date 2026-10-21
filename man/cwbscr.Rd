@@ -65,11 +65,13 @@ Canadian dollars of its series: for another country, set \code{bounds} in its cu
 and read the result as a CWB-style score, not comparable with Canada's.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # made-up profile figures for two communities, to show the computation
 cwbscr(incpercap = c(18000, 31000), highsch20p = c(58, 81),
           uni25p = c(6, 19), notcro = c(71, 95),
           nomajrep = c(62, 90),
           partic = c(55, 68), empl = c(78, 92))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Penney C, O'Sullivan E, Senecal S (2012). The Community Well-Being Index

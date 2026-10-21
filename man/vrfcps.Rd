@@ -104,6 +104,7 @@ Entirely offline: nothing is downloaded and nothing is written. Error:
 is a failed row, not an error.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 dir <- file.path(tempdir(), "capsule-example")
 dir.create(dir, showWarnings = FALSE)
 write.csv(data.frame(id = 1:3), file.path(dir, "d.csv"), row.names = FALSE)
@@ -128,4 +129,5 @@ vrfcps(dir, provfile = "../elsewhere.json")$ok
 # a missing directory is an error
 try(vrfcps(file.path(tempdir(), "no-such-capsule")))
 unlink(dir, recursive = TRUE)
+\dontshow{\}) # examplesIf}
 }

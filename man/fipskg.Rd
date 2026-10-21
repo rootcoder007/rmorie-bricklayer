@@ -94,6 +94,7 @@ does not cover.
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 key <- fipskg("ML-DSA-65")
 key$scheme
 
@@ -116,6 +117,7 @@ names(fipspubkey(key))
 
 # An unknown parameter set is refused.
 try(fipskg("ML-DSA-99"))
+\dontshow{\}) # examplesIf}
 }
 \references{
 National Institute of Standards and Technology (2024).

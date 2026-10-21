@@ -63,6 +63,7 @@ entry. The message line is a side effect; wrap the call in
 \code{suppressMessages()} to silence it.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 man <- mkmnf(list(project = "demo"), env = FALSE)
 
 # Within tolerance -> PASS. (Every status below is INFO instead in a
@@ -92,6 +93,7 @@ man$results$country$status # "INFO"
 
 # Calls chain: record() returns the mutated manifest.
 length(man$results) # 4
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=mkmnf]{mkmnf()}},

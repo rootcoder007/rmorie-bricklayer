@@ -52,6 +52,7 @@ not one positive finite number; \code{hor} not one number; a time
 past \code{hor}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 days <- c(0, 0, 0, 1, 3, 3)
 chwkjit(days)
 anyDuplicated(chwkjit(days))
@@ -64,6 +65,7 @@ chwkjit(c(0, 0, 0), res = 1 / 24, seed = 7)
 
 # times past the horizon are refused
 try(chwkjit(c(0, 5), hor = 3))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Filimonov V, Sornette D (2015). Apparent criticality and

@@ -77,6 +77,7 @@ one non-negative number; \code{maxlvl} not one positive whole number.
 }
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 df <- data.frame(
   id = 1:100,
@@ -106,6 +107,7 @@ infsch(df, slack = 0)$numeric_ranges$score
 
 # a negative slack is refused
 try(infsch(df, slack = -0.1))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=valsch]{valsch()}},

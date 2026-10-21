@@ -72,7 +72,7 @@
 #' @seealso
 #' [certchnvrf()],
 #' [tsvrf()].
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Offline: a path entry that names no CRL or OCSP URL (here, bytes that
 #' # are not a certificate at all) makes no request and returns empty results.
 #' str(rvkfetch(list(list(der = as.raw(1:3)))))

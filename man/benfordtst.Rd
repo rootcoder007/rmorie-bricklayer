@@ -48,6 +48,7 @@ a long vector shows a progress bar in an interactive session
 or no finite non-zero value.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # A quantity spanning several orders of magnitude follows the law.
 set.seed(3)
 benfordtst(10^stats::runif(2000, 0, 6))
@@ -63,6 +64,7 @@ all.equal(unname(b$expected) / b$n, log10(1 + 1 / (1:9)))
 benfordtst(c(0, 0, 1, 2, 3))$n
 
 try(benfordtst(c(0, NA)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Benford F (1938). The law of anomalous numbers.

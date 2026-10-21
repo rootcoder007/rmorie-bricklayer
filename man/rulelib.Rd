@@ -138,6 +138,7 @@ by every other rule; set \code{napass = FALSE} to make them fail on it
 instead.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 df <- data.frame(
   id = c(1, 2, 2),
   grade = c("a", "b", "z"),
@@ -187,6 +188,7 @@ valrules(g, ruleinset("grade", c("a", "b"), napass = FALSE))$grade_in_set$rows
 
 # bounds are checked when the rule is made
 try(rulebtw("score", 100, 0))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=rul]{rul()}} for an arbitrary predicate,

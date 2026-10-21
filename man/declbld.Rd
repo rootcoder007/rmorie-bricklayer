@@ -42,6 +42,7 @@ Errors: a \code{labels} attribute without names; no attribute and no
 \code{vlabs}; a code with no label.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 x <- structure(c(1, 2, 2, 4),
                labels = c(White = 1, Black = 2, Other = 3, Unknown = 4))
 declbld(x)
@@ -51,6 +52,7 @@ declbld(c(2, 1, 10), vlabs = c("10" = "Ten", "2" = "Two", "1" = "One"))
 
 # codes alone are not categories
 try(declbld(c(1, 2, 2)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{deccodes}}, \code{\link{relbl}},

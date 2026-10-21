@@ -48,6 +48,7 @@ See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 wb <- indiex("wellbeing")
 w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
                       well = "Always or often has a hopeful outlook",
@@ -57,6 +58,7 @@ dc <- dualcont(w, "Always or often has a hopeful outlook",
                      "Life satisfaction rating between 0 and 5")
 dc
 plot(dc)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Keyes CLM (2002). The mental health continuum: from languishing to

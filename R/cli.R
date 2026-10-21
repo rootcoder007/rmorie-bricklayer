@@ -1059,7 +1059,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
 #' @return The path of the first launcher written (normally
 #'   \code{rmoriebricklayer}), invisibly; the others are written beside it.
 #' @seealso \code{\link{blcli}} for the verbs.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # into a scratch folder, so nothing on your PATH changes
 #' d <- file.path(tempdir(), "bin")
 #' p <- instcli(dir = d)

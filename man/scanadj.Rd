@@ -58,6 +58,7 @@ without count units; a p-value outside \eqn{[0, 1]}; a method unknown to
 \code{p.adjust()}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 seg <- data.frame(year = rep(2022:2023, each = 3),
                   site = rep(c("A", "B", "C"), 2),
                   n = c(30, 50, 80, 45, 52, 79))
@@ -71,6 +72,7 @@ scanadj(y, meth = "holm")$padj
 scanadj(data.frame(test = c("a", "b", "c"), p_value = c(0.001, 0.02, 0.4)))
 
 try(scanadj(data.frame(p_value = 1.5)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{yoypv}}, \code{\link{falsfam}} for a

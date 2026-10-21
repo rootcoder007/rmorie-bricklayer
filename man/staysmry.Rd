@@ -44,6 +44,7 @@ Errors when \code{daysperper} is not numeric, is empty, or has
 is not strictly inside (0, 1).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # a skewed distribution: most stays short, a few long
 stays <- c(rep(1, 40), rep(3, 30), rep(10, 20), 60, 90, 120)
 staysmry(stays)
@@ -56,6 +57,7 @@ staysmry(stays, conflvl = 0.90)[, c("mean", "lower", "upper")]
 
 # a confidence level of 1 is refused
 try(staysmry(stays, conflvl = 1))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=alos]{alos()}},

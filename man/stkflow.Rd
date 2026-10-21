@@ -87,6 +87,7 @@ positive (the others), and when \code{base} is not one of the two
 choices.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Fewer people, held longer: the flow falls while the stock rises.
 stkflow(
   days = c(115674, 126121), people = c(12647, 9608),
@@ -103,6 +104,7 @@ as.data.frame(sf)[, c("period", "alos", "adp", "peochg", "adpchg")]
 
 # days and people must line up period by period
 try(stkflow(days = c(100, 120), people = c(10, 12, 14)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Lakner, E. (1976) \emph{A Manual of Statistical Sampling Methods for

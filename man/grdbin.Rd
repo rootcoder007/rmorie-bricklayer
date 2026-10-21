@@ -32,6 +32,7 @@ compare equal to \code{1} and \code{0}. Missing values are ignored. Each
 failure is an error that names the column.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 grdbin(c(0, 1, 1, 0, NA), "treated")
 grdbin(c(TRUE, FALSE), "arrested")
 
@@ -40,6 +41,7 @@ try(grdbin(factor(c("control", "treated")), "treated"))
 
 # so is a numeric column with other values
 try(grdbin(c(0, 1, 2), "treated"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{grdrcd}} to build an explicit indicator.

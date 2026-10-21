@@ -67,6 +67,7 @@ Missing and non-finite values are dropped. A group of fewer than two values draw
 density.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(3)
 x <- c(stats::rnorm(200), stats::rnorm(200, 2, 0.6))
 g <- rep(c("before", "after"), each = 200)
@@ -76,4 +77,5 @@ plotvln(x, g)
 plothex(x, x + stats::rnorm(400), bins = 20)
 plotgain(stats::rexp(400), g)
 try(plotrdg("a"))
+\dontshow{\}) # examplesIf}
 }

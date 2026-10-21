@@ -53,6 +53,7 @@ Errors: either input not a data frame or without \code{unit}; a column in
 \code{cols} that is not in both.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 pub <- data.frame(
   inst = c("North Jail", "South Jail"),
   cd = c("3557", "3520"), stringsAsFactors = FALSE
@@ -72,6 +73,7 @@ rgnmapcmp(pub, obs2, "inst", cols = c("cd", "lat"))
 
 # a compared column must be in both maps
 try(rgnmapcmp(pub, obs, "inst", cols = "lat"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=rgnmapalt]{rgnmapalt()}},

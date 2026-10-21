@@ -768,7 +768,7 @@ print.rmbl_wayback_save <- function(x, ...) {
 #'   \code{left_as_gone} and \code{left_for_tomorrow}.
 #' @seealso \code{\link{wbsave}}; \code{rmbl wayback
 #'   --retry FILE.jsonl} from the command line.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Offline: a results file whose only failure is a page that is gone
 #' # has nothing to send again, so no keys or network are used.
 #' f <- tempfile(fileext = ".jsonl")

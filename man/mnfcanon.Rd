@@ -52,6 +52,7 @@ and a caller does nothing to get that.
 Errors when \code{man} is not a list.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 a <- mkmnf(list(b = 2, a = 1), env = FALSE)
 b <- mkmnf(list(a = 1, b = 2), env = FALSE)
 # the same content in a different order has the same digest
@@ -67,6 +68,7 @@ mnfdgst(m) == mnfdgst(m2)
 
 # only lists can be serialised this way
 try(mnfdgst("not a manifest"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=mkmnf]{mkmnf()}},

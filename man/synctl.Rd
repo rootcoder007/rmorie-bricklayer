@@ -46,6 +46,7 @@ Diamond and Hainmueller 2010).
 This version matches on the pre-period outcomes only, not on separate predictors.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- polex()
 p1 <- p[is.na(p$refmonth) | p$district == "D01", ]
 s <- synctl(p1, "district", "month", "crmrate", treunit = "D01",
@@ -53,6 +54,7 @@ s <- synctl(p1, "district", "month", "crmrate", treunit = "D01",
 round(s$weights, 3)
 s$p_value
 plot(s)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Abadie A, Diamond A, Hainmueller J (2010). Synthetic control methods

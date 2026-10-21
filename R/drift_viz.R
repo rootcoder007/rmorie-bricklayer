@@ -538,7 +538,7 @@ drfthtml <- function(x, file, title = "Drift report", warn = NULL, fail = NULL, 
 #'   history tab.
 #' @return A Shiny app object (class `shiny.appobj`).
 #' @seealso [drfthtml()] for a file to hand on.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(5)
 #' ref <- data.frame(value = stats::rnorm(400),
 #'                   grade = sample(c("a", "b", "c"), 400, TRUE))

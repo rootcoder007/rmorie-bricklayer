@@ -52,6 +52,7 @@ Errors: \code{data} not a data frame; fewer than two numeric columns;
 \eqn{[0, 1]}; an invalid \code{meth}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 n <- 200
 df <- data.frame(
@@ -76,6 +77,7 @@ topcors(df, n = 2, minabs = 0.5)
 
 # a threshold above 1 is an error
 try(topcors(df, minabs = 2))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cspr]{cspr()}},

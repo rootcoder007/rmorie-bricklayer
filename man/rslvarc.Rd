@@ -42,6 +42,7 @@ error. Errors: a \code{prov} that is not a list; a layer URL that is
 not public \code{https}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Missing fields return NULL rather than erroring:
 rslvarc(list())
 
@@ -49,7 +50,7 @@ rslvarc(list())
 try(rslvarc(list(dataset = list(
   arcgis_layer_url = "ftp://example.org/FeatureServer/0"))))
 try(rslvarc("not a list"))
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network
 prov <- list(dataset = list(arcgis_layer_url = paste0(

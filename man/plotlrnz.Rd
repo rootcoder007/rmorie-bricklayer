@@ -81,6 +81,7 @@ counts, an expected count of zero or less, \code{observed} and
 number. Both draw on the current device.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 plotlrnz(c(1, 1, 2, 3, 5, 8, 13))
 plotfnl(obs = c(4, 20, 50, 9), expd = c(5, 22, 40, 20),
             area = c("a", "b", "c", "d"))
@@ -99,4 +100,5 @@ plotlrnz(lorenzc(c(rep(1, 50), rep(10, 5), 200)), col = "darkred",
 
 # a hand-made frame must be cumulative shares
 try(plotlrnz(data.frame(population = c(0, 0.5, 1), value = c(0, 0.8, 0.5))))
+\dontshow{\}) # examplesIf}
 }

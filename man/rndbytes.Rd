@@ -38,6 +38,7 @@ Errors: \code{n} not a single whole number from 1 to 1,048,576 (1 MiB);
 no readable operating-system source.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 rndbytes(8)
 
 # Independent between calls, unlike a seeded generator.
@@ -54,6 +55,7 @@ identical(stats::runif(1), a)
 paste(format(rndbytes(4)), collapse = "")
 
 try(rndbytes(0))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=drvkey]{drvkey()}} to stretch a passphrase instead,

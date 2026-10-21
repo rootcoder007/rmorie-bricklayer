@@ -47,6 +47,7 @@ TRUE)}. Nothing is written. Error: \code{pkgs} that is not a character
 vector.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 deps <- capdeps(c("stats", "utils"))
 deps[, c("package", "version")]
 
@@ -58,6 +59,7 @@ capdeps("notapackage123")[, c("package", "version")]
 
 # names must be character
 try(capdeps(1))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=capenv]{capenv()}},

@@ -40,6 +40,7 @@ integer matrices are converted to double. The cost is
 \eqn{O(n p^2)} for \eqn{n} rows and \eqn{p} columns.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 X <- cbind(a = c(1, 2, 3, 4), b = c(2, 4, 7, 8), c = c(5, 3, 2, 1))
 ccovm(X)
 
@@ -54,6 +55,7 @@ ccovm(data.frame(u = 1:5, v = c(2, 1, 4, 3, 6)))
 
 # A plain vector is not a matrix of variables.
 try(ccovm(1:5))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=ccorr]{ccorr()}} for a single Pearson correlation,

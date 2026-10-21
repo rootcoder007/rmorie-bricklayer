@@ -45,6 +45,7 @@ unplaceable band with units (by default); any error from
 \code{\link{bandvals}}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 x <- expbands(c("1", "2 to 5", "Greater than 5"),
                   cnts = c(10, 4, 2), openupcap = 12)
 table(x)
@@ -56,6 +57,7 @@ expbands(c("1", "2 to 5", "Greater than 5"), cnts = c(10, 4, 2),
 
 # an unparseable band with units in it stops the call
 try(expbands(c("1", "not stated"), cnts = c(3, 2)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{bandvals}}, \code{\link{bandsens}}

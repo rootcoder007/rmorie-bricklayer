@@ -43,6 +43,7 @@ number from 1 to 65536; \code{addl} longer than 48 bytes or neither raw
 nor hex.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 d <- drbgnew(as.raw(0:47))
 x <- drbggen(d, 16)
 y <- drbggen(d, 16)
@@ -58,6 +59,7 @@ head(r[r < 252] \%\% 6 + 1, 10)
 
 # one request is at most 65536 bytes
 try(drbggen(d, 70000))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=drbgnew]{drbgnew()}},

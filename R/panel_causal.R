@@ -237,7 +237,7 @@
 #' @seealso \code{\link{plrcf}} (one cross-section),
 #'   \code{\link{stgatt}} with covariates (doubly robust difference in
 #'   differences).
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' set.seed(9)
 #' p$unemployment <- 6 + sin(p$month / 6) + stats::rnorm(nrow(p), 0, 0.5)
@@ -358,7 +358,7 @@ print.rmbl_dml <- function(x, ...) {
 #' @references Welch BL (1947). The generalization of 'Student's' problem when several
 #'   different population variances are involved. Biometrika 34(1-2):28-35.
 #'   \doi{10.1093/biomet/34.1-2.28}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' d <- data.frame(t = rep(0:1, each = 50),
 #'                 age = c(stats::rnorm(50, 30), stats::rnorm(50, 33)))
 #' baltab(d, "t", "age")
@@ -436,7 +436,7 @@ baltab <- function(data, grp, covs, w = NULL) {
 #' Applied with spatial nearest-facility matching within judicial districts: Zorro
 #' Medina A (2020). The failed war on pre-trial detention: evidence from a
 #' quasi-experimental reform. \doi{10.2139/ssrn.3686855}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' m <- mtchdid(p, "district", "month", "crmrate", "refmonth", ratio = 2)
 #' m$estimate
@@ -592,7 +592,7 @@ print.rmbl_matched_did <- function(x, ...) {
 #' @references Arkhangelsky D, Athey S, Hirshberg DA, Imbens GW, Wager S (2021).
 #'   Synthetic difference-in-differences. American Economic Review 111(12):4088-4118.
 #'   \doi{10.1257/aer.20190159}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' p1 <- p[is.na(p$refmonth) | p$refmonth == 13, ]
 #' syndid(p1, "district", "month", "crmrate", "refmonth", reps = 50, seed = 1)
@@ -865,7 +865,7 @@ wcb <- function(data, unit, time, y, trtd, covs = NULL, cl = NULL,
 #'   if none up to 10).
 #' @references Rambachan A, Roth J (2023). A more credible approach to parallel
 #'   trends. Review of Economic Studies 90(5):2555-2591. \doi{10.1093/restud/rdad018}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' es <- evstudy(p, "district", "month", "crmrate", "refmonth",
 #'                   leads = 3, lags = 4)

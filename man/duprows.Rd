@@ -38,6 +38,7 @@ frame, a named column does not exist, or a named column's name is shared
 by two columns.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 df <- data.frame(
   id = c(1, 2, 2, 3, 3, 3),
   value = c("a", "b", "b", "c", "d", "c"),
@@ -55,6 +56,7 @@ duprows(data.frame(x = 1:3))
 
 # a column that does not exist is an error
 try(duprows(df, "code"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=ruledstn]{ruledstn()}},

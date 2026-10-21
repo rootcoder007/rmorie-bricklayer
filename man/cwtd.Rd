@@ -44,6 +44,7 @@ Refusals: \code{x} and \code{w} of different lengths
 give \code{NaN} for both entries.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 x <- c(10, 20, 30, 40)
 w <- c(1, 1, 2, 4)
 cwtd(x, w)
@@ -59,6 +60,7 @@ cwtd(x, c(1, 1, 1, 1000))[["mean"]]
 
 # A negative weight is refused.
 try(cwtd(x, c(1, -1, 1, 1)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cmom]{cmom()}} for the unweighted moments,

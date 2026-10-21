@@ -72,6 +72,7 @@ own) take the same route through \code{\link{welprof}} and
 \code{\link{holbal}}, which accept any set of domains.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # well-being, 2024 (table 41-10-0082-01): hope, and meaning and purpose (asked
 # together);
 # this table has no measure of belonging, so that direction is reported as missing
@@ -83,6 +84,7 @@ mw <- mhcont(wb, "group", "indicator", "estimate", "lower", "upper",
         qual = "quality")
 mw
 plot(mw)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Health Canada, Assembly of First Nations (2015). First Nations Mental

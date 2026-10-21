@@ -43,6 +43,7 @@ Errors: \code{map} without names (including a plain vector of new
 labels); a level with no mapping.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 f <- factor(c("W", "B", "O", "W"))
 relbl(f, c(W = "White", B = "Black", O = "Other"))
 
@@ -54,6 +55,7 @@ relbl(c("W", "B", "X"), c(W = "White", B = "Black"), keep = "X")
 
 # positional labels are refused
 try(relbl(f, c("Black", "Other", "White")))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{grdrcd}}, \code{\link{rlblfrns}},

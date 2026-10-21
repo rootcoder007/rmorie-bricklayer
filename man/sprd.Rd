@@ -77,12 +77,14 @@ weights from a complex design need the design itself for a standard error
 (\code{\link{svydes}}).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 x <- c(12, 15, 9, 20, 14)
 sprd(x)                                   # a sample: n - 1
 sprd(x, des = "census")                # the whole population: n
 sprd(x, N = 40)             # 5 of 40 drawn: finite-population correction
 sprd(x, N = 5)              # n = N: a census
 sprd(c(1, 2, 3), w = c(10, 5, 1))   # frequency weights
+\dontshow{\}) # examplesIf}
 }
 \references{
 Cochran WG (1977). Sampling Techniques, 3rd edition. Wiley, New York,

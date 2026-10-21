@@ -49,6 +49,7 @@ when \code{name} is not a character vector of one or more command names
 refused).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # into a scratch folder, so nothing on your PATH changes
 d <- file.path(tempdir(), "bin")
 p <- instcli(dir = d)
@@ -57,7 +58,7 @@ readLines(p)[1:4]
 
 # one name only
 instcli(dir = d, name = "rmbl")
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 instcli()   # ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
 \dontshow{\}) # examplesIf}

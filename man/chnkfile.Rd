@@ -40,6 +40,7 @@ Errors: \code{path} that does not name an existing file (or names a
 directory); \code{chnkbytes} that is not a positive whole number.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- tempfile()
 writeLines(rep("some capsule content", 50), p)
 
@@ -64,6 +65,7 @@ which(mrklvs(ch) != mrklvs(chnkfile(q, chnkbytes = 128)))
 # a chunk size must be positive
 try(chnkfile(p, chnkbytes = 0))
 unlink(c(p, q))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=mrkroot]{mrkroot()}},

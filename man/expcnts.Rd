@@ -56,6 +56,7 @@ population of zero; \code{cnts}, \code{pop}, \code{area} or
 \code{strata} of different lengths.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 d <- data.frame(
   region = rep(c("North", "South", "East"), each = 2),
   age = rep(c("18 to 24", "25 to 49"), 3),
@@ -76,6 +77,7 @@ stdinc(e$observed, e$expected, area = e$area)
 
 # a population of zero has no rate
 try(expcnts(c(1, 2), c(10, 0), c("a", "b")))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal Health

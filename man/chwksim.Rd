@@ -26,6 +26,7 @@ offspring, a Poisson number with mean the branching ratio, at delays drawn from 
 fitted kernel, generation after generation, until none fall before the horizon.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 times <- sort(stats::runif(300, 0, 100))
 fit <- chwkfit(times, 100)
@@ -33,6 +34,7 @@ sim <- chwksim(fit, seed = 2)
 length(sim)
 table(attr(sim, "generation"))
 try(chwksim(list(a = 1)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=plothwk]{plothwk()}}, \code{\link[=chwkfit]{chwkfit()}}.

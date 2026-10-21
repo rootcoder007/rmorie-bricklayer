@@ -48,6 +48,7 @@ a mean exposure of zero (the index divides by it). Income only needs an
 order: an amount, a quintile number or a rank all give the same index.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 d <- data.frame(exposure = c(30, 25, 20, 15, 10), income = 1:5)
 ci <- expconcidx(d, "exposure", "income")
 ci$concidx
@@ -60,6 +61,7 @@ expconcidx(data.frame(exposure = 20, income = c(1, 1, 2, 3)),
 # A text income cannot be ranked.
 try(expconcidx(data.frame(exposure = 1:3, income = c("a", "b", "c")),
                                  "exposure", "income"))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Wagstaff, A., Paci, P. and van Doorslaer, E. (1991). On the

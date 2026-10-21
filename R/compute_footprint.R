@@ -113,7 +113,7 @@
 #'   Algorithms data v3.1. Lannelongue, L., Grealey, J. and Inouye, M. (2021).
 #'   Green Algorithms: quantifying the carbon footprint of computation.
 #'   Advanced Science 8(12), 2100707.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' co2int("CA-ON")
 #' co2int("Canada")$year
 #' co2int("CA-XX")$note
@@ -208,7 +208,7 @@ co2inttab <- function() .rmbl_ci_table()
 #'   caller or a test can supply them; the defaults read the running session.
 #' @return A list with \code{location} (a code present in
 #'   \code{co2inttab()}) and \code{method} (how it was found).
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' dtctloc()
 #' dtctloc(envloc = "", codloc = "", tz = "Europe/Paris")
 #' dtctloc(envloc = "", codloc = "", tz = "",
@@ -364,7 +364,7 @@ dtctloc <- function(envloc = Sys.getenv("RMBL_LOCATION"),
 #'   under \code{rapldir} is readable, \code{FALSE} otherwise (including
 #'   when the directory does not exist).
 #' @seealso \code{\link{co2fp}}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' raplok()
 #'
 #' # a fake powercap tree with one readable package domain (Linux names the domain
@@ -818,7 +818,7 @@ print.rmbl_footprint <- function(x, ...) {
 #'   Helmers et al. (2019) Atmospheric Environment and UK BEIS 2019 conversion
 #'   factors; tree sequestration from Bernal et al. (2018) via the same file.
 #' @seealso \code{\link{co2fp}}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' fpeqv(1200)
 #'
 #' # the footprint of a small computation, in everyday terms

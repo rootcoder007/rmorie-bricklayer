@@ -35,6 +35,7 @@ Errors: \code{n} not one non-negative whole number; \code{seed} not one
 whole number in \eqn{[0, 2^{53})}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 cunif(3, 42)
 identical(cunif(5, 1), cunif(5, 1))
 
@@ -49,6 +50,7 @@ identical(a, b)
 # negative counts and seeds past 2^53 are refused
 try(cunif(-1, 1))
 try(cunif(2, 2^53))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Steele GL, Lea D, Flood CH (2014). Fast splittable pseudorandom number

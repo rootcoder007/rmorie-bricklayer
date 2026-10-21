@@ -35,6 +35,7 @@ For files use \code{\link[=sha512file]{sha512file()}}. Pure computation; no side
 effects.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # FIPS 180-4 test vector for "abc".
 csha512("abc")
 
@@ -50,6 +51,7 @@ c(sha256 = nchar(csha256("abc")), sha512 = nchar(csha512("abc")))
 
 # numbers are hashed as their text
 identical(csha512(1), csha512("1"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=csha256]{csha256()}},

@@ -95,6 +95,7 @@ not a list. A \code{prov} that is \code{NULL} or has no
 make that an error).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 prov <- list(schema = list(
   expected_columns      = c("id", "year"),
   structural_invariants = list(min_data_rows = 1),
@@ -127,6 +128,7 @@ names(valsch(data.frame(id = 1:2), list(schema = sch)))
 
 # the data must be a data frame
 try(valsch(list(id = 1), prov))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=infsch]{infsch()}} to derive a schema,

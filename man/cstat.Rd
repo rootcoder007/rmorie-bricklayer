@@ -53,6 +53,7 @@ Errors: input that is a character vector, factor, list or data frame
 different lengths in \code{ccorr()}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 ## cmn(): sample mean (NA/NaN propagate; no na.rm)
 cmn(1:10)                 # 5.5
 cmn(c(1, 2, NA))          # NA -- call stats::na.omit() first if needed
@@ -70,6 +71,7 @@ ccorr(1:10, 10:1)            # perfect negative: -1
 ## refusals
 try(cmn(c("1", "2")))     # character input is not coerced
 try(ccorr(1:3, 1:4))         # lengths differ
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{cnormpdf}}, \code{\link{csha256}}.

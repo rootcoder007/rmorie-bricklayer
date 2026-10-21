@@ -86,7 +86,7 @@
 #' Wellness Continuum Framework. Ottawa: Health Canada. Summary report:\cr
 #' \url{https://www.sac-isc.gc.ca/eng/1576093687903/1576093725971}
 #' @seealso \code{\link{welprof}}, \code{\link{holbal}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # well-being, 2024 (table 41-10-0082-01): hope, and meaning and purpose (asked
 #' # together);
 #' # this table has no measure of belonging, so that direction is reported as missing
@@ -209,7 +209,7 @@ mhcont <- function(data, grp, ind, est, lower, upper, hope = NULL,
 #' Indigenous Services Canada (2019). Report on trends in First Nations communities, 1981
 #' to 2016 (Community Well-Being index).\cr
 #' \url{https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # made-up profile figures for two communities, to show the computation
 #' cwbscr(incpercap = c(18000, 31000), highsch20p = c(58, 81),
 #'           uni25p = c(6, 19), notcro = c(71, 95),
@@ -420,7 +420,7 @@ print.rmbl_connection <- function(x, ...) {
 #' See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette.
 #' @references Stewart SL (2008), see \code{\link{holbal}}.
 #' @seealso \code{\link{welprof}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # 2015/2018 to 2019/2022, adults (table 13-10-0924-01)
 #' h <- indiex("health")
 #' belong <- "Sense of belonging to local community, somewhat strong or very strong"
@@ -513,7 +513,7 @@ healchg <- function(data, grp, ind, prd, est, lower, upper, from, to, well = NUL
 #' Ottawa. \url{https://itk.ca/national-inuit-suicide-prevention-strategy/}
 #'
 #' Carroll SR, et al. (2020), see \code{\link{holbal}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # weights a community might set for adults, 2019/2022 (table 13-10-0924-01); others
 #' # would differ
 #' h <- indiex("health")
@@ -604,7 +604,7 @@ commidx <- function(data, grp, ind, est, lower, upper, w, qual = NULL,
 #'
 #' Walter M, Andersen C (2013). Indigenous Statistics: A Quantitative Research
 #' Methodology. Left Coast Press. \doi{10.4324/9781315426570}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' wb <- indiex("wellbeing")
 #' w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
 #'                       well = "Always or often has a hopeful outlook",

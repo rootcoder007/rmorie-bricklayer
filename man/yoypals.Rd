@@ -39,6 +39,7 @@ arrow still shows the sign.
 A palette name not in this list is an error in every renderer.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # the palette names
 yoypals()
 
@@ -48,6 +49,7 @@ print(yoy(d, value = "n", prd = "year"), palette = "safe", color = FALSE)
 
 # a name that is not a palette is refused
 try(print(yoy(d, value = "n", prd = "year"), palette = "rainbow"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{yoy}}, \code{\link{yoysmry}},

@@ -103,6 +103,7 @@ more than one chunk; a
 different lengths.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 chunks <- c("row1,row2", "row3,row4", "row5,row6", "row7,row8")
 
 root <- mrkroot(chunks)
@@ -140,4 +141,5 @@ old$scheme <- NULL
 withCallingHandlers(
   mrkvrf(chunks[3], old, mrkroot(chunks, scheme = 1)),
   warning = function(w) invokeRestart("muffleWarning"))
+\dontshow{\}) # examplesIf}
 }

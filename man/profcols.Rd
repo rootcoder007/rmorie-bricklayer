@@ -62,6 +62,7 @@ wide tables when
 frame, has no columns, or has duplicate or empty column names.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(9)
 df <- data.frame(
   clean = stats::rnorm(100),
@@ -90,6 +91,7 @@ names(profcols(df, qnts = c(0.1, 0.9)))
 
 # a table with no columns has nothing to profile
 try(profcols(df[, 0]))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cpsdrft]{cpsdrft()}} to compare two of these,

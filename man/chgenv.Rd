@@ -54,6 +54,7 @@ Errors when \code{now} and \code{prev} have different numbers of
 rows. The populations are not checked; give one per row (or one value).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 now <- pubbnd(c(45, 120), rnd = 5)
 prev <- pubbnd(c(40, 100), rnd = 5)
 chgenv(now, prev)
@@ -67,6 +68,7 @@ chgenv(pubbnd(12), pubbnd("<5"))
 
 # the two sides must line up
 try(chgenv(now, prev[1, ]))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=pubbnd]{pubbnd()}},

@@ -56,6 +56,7 @@ failure (no permutation search). \code{pub} must be a named numeric
 vector, otherwise an error.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 x <- c("White", "White", "Black", "Indigenous", "White", "Black")
 vrfmrg(x, c(White = 3, Black = 2, Indigenous = 1))$ok
 
@@ -70,6 +71,7 @@ vrfmrg(rep(c("A", "B"), c(48, 21)), c(A = 50, B = 20),
 
 # the default is to stop
 try(vrfmrg(x, c(White = 2, Black = 3, Indigenous = 1)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{xfrvrf}}, \code{\link{rlblfrns}}.

@@ -41,6 +41,7 @@ Errors:
 }
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # reference category chosen on purpose, not by alphabet
 g <- grdlvls(c("White", "Black", "White"), c("White", "Black"), "White")
 levels(g)
@@ -51,6 +52,7 @@ table(grdlvls(c("a", "a"), c("a", "b")))
 # a stray value, or a reference that is not first, is refused
 try(grdlvls(c("White", "Blak"), c("White", "Black")))
 try(grdlvls(c("White", "Black"), c("White", "Black"), ref = "Black"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{grdrcd}}, \code{\link{audcats}}.

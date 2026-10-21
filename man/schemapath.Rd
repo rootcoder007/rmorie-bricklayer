@@ -23,12 +23,14 @@ and \code{manifest} for a results manifest. \code{rmbl verify} checks
 each capsule file against its schema before the package's own checks.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 schemapath("capsule")
 s <- fromjs(paste(readLines(schemapath("bundle")), collapse = "\n"))
 s$required
 
 # only the four schemas exist
 try(schemapath("nope"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link{blcli}} (the verify verb), \code{\link{vrfcps}}.

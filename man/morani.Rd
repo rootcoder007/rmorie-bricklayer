@@ -62,6 +62,7 @@ length; a weight matrix that is not \eqn{n \times n}, not finite, or has
 negative weights; no area with any neighbour.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Six areas in a line, each adjacent to the next.
 nb <- list(2L, c(1L, 3L), c(2L, 4L), c(3L, 5L), c(4L, 6L), 5L)
 
@@ -84,6 +85,7 @@ morani(c(1, 2, 3, 4, 5, 6), w, style = "B", nperm = 999L)$I
 
 # a constant variable has no autocorrelation to measure
 try(morani(c(2, 2, 2), list(2L, c(1L, 3L), 2L)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Moran, P. A. P. (1950). Notes on continuous stochastic phenomena.

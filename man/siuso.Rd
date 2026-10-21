@@ -49,6 +49,7 @@ unreviewed reports.
 Error: \code{text} that is not a single non-NA string.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 siuso(
   "Subject Officials\nSO #1 Interviewed\nSO #2 Declined interview")
 
@@ -61,4 +62,5 @@ siuso("No officers are named here.")
 
 # HTML or several strings are not text
 try(siuso(c("a", "b")))
+\dontshow{\}) # examplesIf}
 }

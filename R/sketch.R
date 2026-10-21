@@ -61,7 +61,7 @@
 #'   \doi{10.1080/00031305.1983.10483115}
 #' @seealso [cmom()] for the single-pass
 #' batch version.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' set.seed(1)
 #' x <- stats::rnorm(1000)
 #'
@@ -207,7 +207,7 @@ print.bricklayer_online <- function(x, ...) {
 #'   Lemire D (2019). Fast random integer generation in an interval.
 #'   *ACM Transactions on Modeling and Computer Simulation* 29(1), 3.
 #'   \doi{10.1145/3230636}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # A reproducible sample of 5 from 1000.
 #' rsvidx(1000, 5, seed = 1)
 #' rsvsmp(letters, 4, seed = 2)

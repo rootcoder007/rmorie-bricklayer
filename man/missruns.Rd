@@ -39,6 +39,7 @@ data frame or without columns, or with duplicated or empty names;
 \code{minrun} not a positive whole number.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # One long outage and two isolated gaps, with the same total count.
 df <- data.frame(
   outage = c(1, 2, NA, NA, NA, NA, 7, 8),
@@ -55,6 +56,7 @@ missruns(df, minrun = 1)
 missruns(data.frame(x = 1:5))
 
 try(missruns(df, minrun = 0))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=misspat]{misspat()}} for which

@@ -24,6 +24,7 @@ independent. Both measures are reported, as the relative gap alone hides how lar
 absolute one is (Anderson et al. 2016).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # made-up counts, to show the computation
 std <- c(30000, 25000, 20000, 15000, 10000)
 r <- agestd(events = c(4, 9, 11, 6, 3, 2, 4, 6, 5, 4),
@@ -33,6 +34,7 @@ r <- agestd(events = c(4, 9, 11, 6, 3, 2, 4, 6, 5, 4),
                                                  each = 5))
 plot(r)
 rategap(r, "Inuit", "Non-Indigenous")
+\dontshow{\}) # examplesIf}
 }
 \references{
 Anderson I, Robson B, Connolly M, et al. (2016). Indigenous and tribal

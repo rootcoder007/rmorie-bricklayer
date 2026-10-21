@@ -47,11 +47,13 @@ and Inuit mortality standardise to the Indigenous population's own age structure
 and Tjepkema 2019), which is younger than Canada's.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # made-up counts for one small community, by five age groups, to show the computation
 std <- c(30000, 25000, 20000, 15000, 10000)   # a younger standard population
 agestd(events = c(4, 9, 11, 6, 3), pop = c(9000, 8000, 6000, 4000,
                                                            2000),
                 std = std)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Fay MP, Feuer EJ (1997). Confidence intervals for directly standardized

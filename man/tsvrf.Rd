@@ -103,6 +103,7 @@ path of an existing file. \code{tsinfo()} errors on a token it cannot
 parse.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Offline: bytes that are not a timestamp token are reported, not
 # thrown, so a batch check can carry on.
 bad <- tsvrf(as.raw(c(0x30, 0x03, 0x02, 0x01, 0x05)),
@@ -115,7 +116,7 @@ try(tsinfo(as.raw(1:10)))
 
 # Real tokens come from a timestamping authority; this is the shape of
 # the call.
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 res <- tsvrf("response.tsr", data = "manifest.json")
 res$ok

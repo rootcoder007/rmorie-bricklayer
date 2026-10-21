@@ -172,6 +172,7 @@ that gives both names of one argument is refused.
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 seg <- data.frame(
   EndFiscalYear = rep(2019:2023, each = 2),
   Gender = rep(c("Female", "Male"), 5),
@@ -202,6 +203,7 @@ as.data.frame(yoy(q))[5:8, c("period", "value", "previous", "pctchg")]
 
 # counts must be whole numbers
 try(yoy(data.frame(year = 1:3, n = c(1.5, 2, 3)), "n", "year"))
+\dontshow{\}) # examplesIf}
 }
 \references{
 The exact interval for a ratio of two counts is the conditional-binomial

@@ -37,7 +37,7 @@
 #' @return Invisibly, a data frame of every panel's estimates with a column
 #'   \code{panel}.
 #' @seealso \code{\link{evstudy}}, \code{\link{plot-methods}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' es <- list(
 #'   "Crime rate" = evstudy(p, "district", "month", "crmrate", "refmonth",
@@ -199,7 +199,7 @@ plot.rmbl_loo <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #' @return A data frame of class \code{rmbl_cohort_trends}: \code{cohort},
 #'   \code{evtm}, \code{value}. \code{plot()} draws one line per cohort, with
 #'   the period before adoption marked.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- polex()
 #' ct <- cohtrnd(p, "district", "month", "crmrate", "refmonth",
 #'                     win = c(-10, 10))

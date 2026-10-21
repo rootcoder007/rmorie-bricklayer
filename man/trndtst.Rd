@@ -87,6 +87,7 @@ a \code{conflvl} outside (0, 1). \code{exact = TRUE} with \eqn{n > 8} warns and
 uses the normal approximation.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Five years of placements.
 y <- c(402, 377, 190, 268, 331)
 trndtst(y)
@@ -103,6 +104,7 @@ d <- data.frame(year = 2019:2023, n = y)
 trndtst(d, value = "n", prd = "year", alt = "decreasing")$p_value
 
 try(trndtst(c(5, 6)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Sen, P. K. (1968). Estimates of the regression coefficient based on

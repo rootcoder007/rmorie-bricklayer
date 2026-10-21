@@ -54,7 +54,7 @@
 #' \code{c("diverging", "safe", "mono")}.
 #' @seealso \code{\link{yoy}}, \code{\link{yoysmry}},
 #'   \code{\link{yoyhtml}}, \code{\link{yoypdf}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # the palette names
 #' yoypals()
 #'
@@ -320,7 +320,7 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
 #' \code{periods} (integer, observed periods); \code{up}, \code{down},
 #' \code{flat} (integer counts of period-to-period changes).
 #' @seealso \code{\link{yoy}}, \code{\link{yoypals}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # one series
 #' d <- data.frame(year = 2018:2023, n = c(120, 131, 98, 140, 155, 149))
 #' yoysmry(yoy(d, value = "n", prd = "year"))

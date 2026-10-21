@@ -31,9 +31,11 @@ a lower bound: it keeps the person but can classify them a level too low, which 
 a trend toward no effect.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 genexpo(c(TRUE, FALSE, TRUE, NA, FALSE), c(TRUE, FALSE, FALSE, TRUE, NA))
 genexpo(c(TRUE, FALSE, TRUE, NA, FALSE), c(TRUE, FALSE, FALSE, TRUE, NA),
                     partial = "lowerbnd")
+\dontshow{\}) # examplesIf}
 }
 \references{
 McQuaid RJ, Bombay A, McInnis OA, Humeny C, Matheson K, Anisman H (2017).

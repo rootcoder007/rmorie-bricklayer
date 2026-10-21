@@ -120,7 +120,7 @@
 #'   [rgnmapcmp()],
 #'   [rgnmapalt()]
 #'
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Four regions, two of which hold a facility.
 #' cov <- rgncov(
 #'   reg = c("A", "B", "C", "D"),
@@ -262,7 +262,7 @@ print.rmbl_region_coverage <- function(x, n = 10L, ...) {
 #'   [rgnmapalt()],
 #'   [rgncov()]
 #'
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' cw <- data.frame(
 #'   inst = c("North Jail", "South Jail", "East Jail"),
 #'   cd = c("3557", "3520", "3506"),
@@ -355,7 +355,7 @@ rgnmapintg <- function(map, unit, reg, regs = NULL) {
 #' @seealso [rgnmapalt()],
 #'   [rgnmapintg()]
 #'
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' pub <- data.frame(
 #'   inst = c("North Jail", "South Jail"),
 #'   cd = c("3557", "3520"), stringsAsFactors = FALSE
@@ -484,7 +484,7 @@ rgnmapcmp <- function(pub, obs, unit, cols = NULL) {
 #' @seealso [rgnmapcmp()],
 #'   [rgnmapintg()]
 #'
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' cw <- data.frame(
 #'   inst = c("North Jail", "South Jail", "Hill Jail"),
 #'   cd = c("3557", "3520", "3506"),

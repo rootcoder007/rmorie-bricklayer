@@ -112,6 +112,7 @@ an object with no JSON form (a function, a symbol) unless
 \code{force = TRUE}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 tojs(list(a = 1:3, b = "x"), auto_unbox = TRUE)
 tojs(data.frame(id = 1:2, v = c(1.5, NA)), pretty = TRUE)
 
@@ -126,6 +127,7 @@ tojs(pi, digits = I(17))
 
 # a choice that does not exist is refused
 try(tojs(df, dataframe = "table"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=fromjs]{fromjs()}} for the

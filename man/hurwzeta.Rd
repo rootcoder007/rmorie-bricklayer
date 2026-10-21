@@ -47,6 +47,7 @@ when \code{s} or \code{q} is logical or not numeric, and when \code{q} is
 not a single finite number.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # The Riemann zeta at even integers has a closed form.
 c(hurwzeta(2), pi^2 / 6)
 c(hurwzeta(4), pi^4 / 90)
@@ -66,6 +67,7 @@ hurwzeta(c(2, 0.5, -1))  # -1/12 at s = -1
 
 # one lower limit per call
 try(hurwzeta(2, q = c(1, 2)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 The Euler-Maclaurin expansion used here -- direct terms to \code{q + N},

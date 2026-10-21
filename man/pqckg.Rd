@@ -122,6 +122,7 @@ check does and does not cover.
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 # one-time index record out of your configuration directory; leave the default in use
 # A small key, to keep the example quick.
@@ -143,6 +144,7 @@ identical(pqckg(3, s1, s2)$root, pqckg(3, s1, s2)$root)
 # The height is limited to 16 (65,536 signatures).
 try(pqckg(height = 20))
 options(op)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cpssign]{cpssign()}},

@@ -45,6 +45,7 @@ message names the elements it has, so a typo such as \code{scheme}
 shows); an empty schema (\code{list(schema = list())}).
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 prov <- list(schema = list(expected_columns = "id"))
 schval(data.frame(id = 1), prov)
 # A missing required column is fatal:
@@ -67,4 +68,5 @@ try(schval(data.frame(id = c(1, -2)), rules))
 
 # a provenance without a schema is refused, not passed
 try(schval(data.frame(id = 1), list(scheme = list())))
+\dontshow{\}) # examplesIf}
 }

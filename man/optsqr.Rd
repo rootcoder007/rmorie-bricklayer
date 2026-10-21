@@ -52,6 +52,7 @@ its \code{poc} and \code{pos} are conditional on the earlier searches having
 failed. Frost's figures 6-3 to 6-6 are drawn from it by \code{\link{srchfig}}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Frost's example: an effort of 4 E^2 on a point datum
 optsqr(4)
 # poor search conditions: the random search curve
@@ -59,6 +60,7 @@ optsqr(4, model = "random")
 # three searches in a row, each optimal for what the last ones left
 optsqr(c(4, 4, 8), E = 2)
 try(optsqr(-1))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Frost, J. R. (1996). The Theory of Search: A Simplified

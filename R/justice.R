@@ -135,7 +135,7 @@
 #' @seealso \code{\link{caseflow}}, \code{\link{lifetbl}},
 #'   \code{\link{dispmix}}, \code{\link{clrdcmp}},
 #'   \code{\link{crmdens}}, \code{\link{knoxtst}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",
 #'                           package = "rmoriebricklayer"))
 #' head(f)
@@ -481,7 +481,7 @@ plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NU
 #' Survival Data Analysis}, 3rd ed. Wiley, Hoboken, NJ. Chapter 4.
 #'
 #' @seealso \code{\link{caseflow}}, \code{\link{prsbands}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' d <- read.csv(system.file("extdata", "ocj_time_to_disposition.csv",
 #'                           package = "rmoriebricklayer"))
 #' f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",

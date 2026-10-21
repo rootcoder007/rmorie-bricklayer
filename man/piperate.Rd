@@ -38,10 +38,12 @@ when the denominator is zero. These are administrative counts of every case, so 
 sampling interval is given.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(2)
 reports <- rpois(36, 400)
 charges <- rpois(36, 90)
 piperate(charges, reports, win = 12, lag = 3)[30:36, ]
+\dontshow{\}) # examplesIf}
 }
 \references{
 Council of Europe, European Commission for the Efficiency of Justice

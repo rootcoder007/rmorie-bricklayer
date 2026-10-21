@@ -37,6 +37,7 @@ differ systematically from the days missed -- weekday-only counting
 where weekend admissions are released before Monday, for instance.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Lakner (p.21): counts on 255 days summing to 34,935 imply just over
 # fifty thousand detention days across the year.
 adpcnts(rep(34935 / 255, 255))
@@ -48,6 +49,7 @@ adp(pd, t = 31)
 
 # a missing count must be dropped or filled first
 try(adpcnts(c(120, NA, 125)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=adp]{adp()}}

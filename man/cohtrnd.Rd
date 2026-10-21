@@ -32,8 +32,10 @@ moving average and scaled to 1 in the period before adoption: a check, before an
 model, that the cohorts moved together before the policy.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- polex()
 ct <- cohtrnd(p, "district", "month", "crmrate", "refmonth",
                     win = c(-10, 10))
 plot(ct)
+\dontshow{\}) # examplesIf}
 }

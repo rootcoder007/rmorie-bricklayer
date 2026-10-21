@@ -43,6 +43,7 @@ not compared. Rows follow the order of \code{a}'s packages, then
 Error: \code{a} or \code{b} that is not a list.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 a <- capenv(c("stats", "utils"))
 b <- a
 
@@ -64,6 +65,7 @@ envdiff(m, m)$identical
 
 # anything other than a record is refused
 try(envdiff("4.5.1", a))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=capenv]{capenv()}},

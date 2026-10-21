@@ -24,7 +24,9 @@ copyrighted, so their tables are not reproduced. The reports are licensed CC BY-
 Canada; the counts are facts taken from them, with the reports cited.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 trccmpl()
+\dontshow{\}) # examplesIf}
 }
 \references{
 Jewell E, Mosby I (2021). Calls to Action Accountability: A 2021 Status

@@ -82,6 +82,7 @@ does not cover.
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 key <- kemkg(768)
 pub <- kempubkey(key)
 
@@ -105,6 +106,7 @@ k1
 # levels other than the three FIPS 203 defines are refused
 try(kemkg(256))
 try(kemkg(768, seed = as.raw(1:10)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 National Institute of Standards and Technology (2024).

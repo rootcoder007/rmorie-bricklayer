@@ -53,6 +53,7 @@ below 1e-11, is always refused. Every input must be a single finite
 number, and the population and rate non-negative.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # A 10-unit cut, a million people, 800 deaths per 100,000 a year.
 mortdisp(10, 1e6, 0.008, 0.0039)
 
@@ -64,6 +65,7 @@ mortdisp(5, 1e6, 5e-6, 0.01, rare = TRUE)
 
 # A rate per 100,000 passed as a rate per person is refused.
 try(mortdisp(10, 1e6, 800, 0.0039))
+\dontshow{\}) # examplesIf}
 }
 \references{
 US EPA (2018). Environmental Benefits Mapping and Analysis

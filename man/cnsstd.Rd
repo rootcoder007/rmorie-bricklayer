@@ -46,8 +46,10 @@ to 54, 55 to 64, 65 to 74, 75 and over); collapse them to the age groups of the 
 being standardised.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- cnsprof(indiex("censuspop"))
 cnsstd(p)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Kumar MB, Tjepkema M (2019). Suicide among First Nations people, Metis and

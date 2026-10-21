@@ -72,6 +72,7 @@ attributes are lost. Compress
 object must come back exactly.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 x <- list(rows = data.frame(id = 1:50, value = stats::runif(50)))
 
 enc <- jsgzenc(x)
@@ -99,6 +100,7 @@ jsgzdec(jsgzenc(list(a = 1, b = "x"), auto_unbox = TRUE),
 
 # text that is not a gzip member is refused
 try(jsgzdec(jsb64enc("not gzip")))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=tojs]{tojs()}},

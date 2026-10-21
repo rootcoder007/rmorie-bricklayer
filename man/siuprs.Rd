@@ -62,6 +62,7 @@ many lines were split: a field that spans a split may be incomplete.
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 f <- siuprs(system.file("extdata",
                                       "siu_synthetic_report.html",
                                       package = "rmoriebricklayer"))
@@ -76,4 +77,5 @@ df[, c("_language", "police_service", "number_of_witness_officials")]
 
 # a mistyped path is an error, not an empty report
 try(siuprs("no-such-report.html"))
+\dontshow{\}) # examplesIf}
 }

@@ -69,6 +69,7 @@ number; an option name other than the six above, or an unnamed value; an
 unknown \code{palette} option.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 blpal("okabe", 3)
 old <- plotopt(palette = "grey", grid = FALSE)
 plotopt()
@@ -85,6 +86,7 @@ plot(1:8, pch = 19, cex = 3, col = blpal("okabe"))
 # names are checked
 try(blpal("viridis"))
 try(plotopt(colour = "red"))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Okabe, M. and Ito, K. (2008). Color Universal Design (CUD):

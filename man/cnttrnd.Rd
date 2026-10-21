@@ -61,6 +61,7 @@ bound and there is no finite trend: a warning says so, the rate ratio is
 \code{plot()} method for the result.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # A count falling by about 15\% a year.
 set.seed(3)
 y <- stats::rpois(8, lambda = 200 * 0.85^(0:7))
@@ -77,6 +78,7 @@ wild$dispersion
 wild$method
 
 try(cnttrnd(c(1.5, 2, 3)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Bilder, C. R. and Loughin, T. M. \emph{Analysis of Categorical Data with

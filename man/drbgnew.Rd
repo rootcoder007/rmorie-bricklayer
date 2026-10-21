@@ -72,6 +72,7 @@ check does and does not cover.
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # NIST's rng.c, as the post-quantum known-answer files use it: vector 0's seed
 d <- drbgnew(as.raw(0:47))
 drbggen(d, 48)
@@ -87,6 +88,7 @@ length(drbggen(d, 32))
 
 # the entropy must be exactly 48 bytes
 try(drbgnew(as.raw(1:16)))
+\dontshow{\}) # examplesIf}
 }
 \references{
 NIST SP 800-90A Rev. 1 (2015). Recommendation for Random Number Generation

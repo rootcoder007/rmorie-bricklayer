@@ -88,6 +88,7 @@ are refused); \code{discrete} or \code{approx} not \code{TRUE} or
 \code{FALSE}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # A continuous Pareto tail with exponent 2.5.
 set.seed(1)
 x <- (1 - stats::runif(5000))^(-1 / 1.5)
@@ -113,6 +114,7 @@ hilltlidx(c(3, 4), xmin = 3)$alpha
 
 # the threshold has to be positive
 try(hilltlidx(z, xmin = 0))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Clauset, A., Shalizi, C. R. and Newman, M. E. J. (2009). Power-law

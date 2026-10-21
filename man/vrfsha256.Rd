@@ -41,6 +41,7 @@ Errors: \code{path} that does not name a readable file;
 \code{expsha} that is not exactly one non-NA value.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 f <- tempfile()
 writeLines("hello capsule", f)
 
@@ -59,4 +60,5 @@ vrfsha256(f, list(toupper(sha256file(f))))$match
 # a missing file, or more than one expected digest, is an error
 try(vrfsha256(file.path(tempdir(), "missing.csv"), strrep("0", 64L)))
 try(vrfsha256(f, c("a", "b")))
+\dontshow{\}) # examplesIf}
 }

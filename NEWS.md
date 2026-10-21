@@ -15,7 +15,7 @@
 * Spelling: US spelling throughout ("optimized", "renormalized", "victimized"), code names in code font, and the technical terms in `inst/WORDLIST`; `spelling::spell_check_package()` finds nothing.
 * R CMD check no longer reruns the vignettes' analyses: when it re-builds a vignette, only the setup chunk runs. R CMD build, r-universe and pkgdown still build every vignette in full, so the package carries each one's HTML, figures and R code.
 * The 33 guides are now five vignettes, one per theme: `vignette("capsules-and-provenance")`, `vignette("integrity-and-cryptography")`, `vignette("describing-data-and-tables")`, `vignette("statistical-methods")` and `vignette("applied-analyses")`. Each former guide is a section of one of them, with its text, code and figures unchanged.
-* The examples that take a tenth of a second or more (67 help pages) run in an interactive session (for example with `example()`) and on the package website; R CMD check shows them but does not run them.
+* Examples run in an interactive session (for example with `example()`) and on the package website; R CMD check shows every one of them but runs only those of `csha256()` and `keyeddgst()`.
 * Every vignette now draws its results: the 21 that had no figure gain one or more, drawn with the package's own `plot()` methods and plot helpers from the objects each vignette builds.
 
 ## A dashboard, distributions and proof ledgers

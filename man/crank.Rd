@@ -48,6 +48,7 @@ argument (\code{"must be numeric"}). Ranking sorts, so the cost is
 \eqn{O(n \log n)}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 x <- c(1, 2, 3, 4, 5)
 y <- c(2, 4, 9, 16, 25)
 
@@ -70,6 +71,7 @@ all.equal(cspr(x, y), cspr(exp(x), log(y)))
 # Missing values are kept in place by cmidrk().
 cmidrk(c(3, NA, 1, 3))
 try(cspr(1:3, 1:4))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Spearman C (1904). The proof and measurement of association

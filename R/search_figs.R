@@ -77,7 +77,7 @@
 #' @srrstats {G2.0} `m` and `E` must be single numbers, `effort` a vector of at least one positive value.
 #' @srrstats {G5.4a} test-search-figs.R checks Frost's stated optima: 4 E^2 gives a factor of 1.02 and POS
 #'   0.4578, 2 E^2 gives 0.81 and 0.2875, 8 E^2 gives 1.29 and 0.6588.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Frost's example: an effort of 4 E^2 on a point datum
 #' optsqr(4)
 #' # poor search conditions: the random search curve

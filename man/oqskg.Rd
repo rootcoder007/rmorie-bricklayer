@@ -55,6 +55,7 @@ does not cover.
 }
 
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Deprecated: use fipskg().
 key <- suppressWarnings(oqskg("ML-DSA-65"))
 key$scheme
@@ -65,6 +66,7 @@ identical(pub, fipspubkey(key))
 
 # The warning names the replacement.
 tryCatch(oqskg(), warning = function(w) conditionMessage(w))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=fipskg]{fipskg()}}.

@@ -90,6 +90,7 @@ character vector; \code{tmout} below 1 or above 2147483647;
 more; a body larger than \code{maxbytes}. \code{dest} is overwritten.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # offline: a local file through the same routine
 src <- tempfile(fileext = ".txt")
 writeLines("hello", src)
@@ -104,7 +105,7 @@ try(bldl("https://127.0.0.1/table.csv", tempfile()))
 try(bldl(paste0("file://", src), tempfile()))
 
 # a real download needs the network
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 bldl("https://www.ontario.ca/some/open-data/table.csv",
                     "table.csv", maxbytes = 50e6)

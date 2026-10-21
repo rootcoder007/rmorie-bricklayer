@@ -61,6 +61,7 @@ or carry trailing bytes; a DER structure that is not a certificate or has
 no signature.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # A small test chain shipped as hexadecimal DER: a self-signed P-256 root
 # and a leaf it issued (a throwaway test authority; trust it for nothing).
 roothex <- paste0(
@@ -107,6 +108,7 @@ certprs(pem)$self_signed
 
 # bytes that are not a certificate
 try(certprs(charToRaw("not a certificate")))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=certchnvrf]{certchnvrf()}},

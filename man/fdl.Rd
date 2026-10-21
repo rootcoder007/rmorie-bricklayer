@@ -62,6 +62,7 @@ progress (it is called with \code{quiet = FALSE}). \code{tpath} is
 overwritten on success.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 src <- tempfile(fileext = ".csv")
 writeLines(c("id,value", "1,10"), src)
 
@@ -75,7 +76,7 @@ fdl(paste0("file://", src, "-missing"), tempfile(),
 
 # a refused URL is an error, not FALSE
 try(fdl("http://example.org/data.csv", tempfile()))
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network; the Wayback fallback is looked up on failure
 ok <- fdl("https://cloud.r-project.org/",

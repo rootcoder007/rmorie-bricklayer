@@ -56,6 +56,7 @@ says which. The \code{Etc/}, \code{UTC}, fixed-offset and generic zones
 to the locale.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 dtctloc()
 dtctloc(envloc = "", codloc = "", tz = "Europe/Paris")
 dtctloc(envloc = "", codloc = "", tz = "",
@@ -64,4 +65,5 @@ dtctloc(envloc = "", codloc = "", tz = "",
 dtctloc(envloc = "CA-QC", tz = "Europe/Paris")
 # nothing usable: the world average, and the method says so
 dtctloc(envloc = "", codloc = "", tz = "UTC", locale = "C")
+\dontshow{\}) # examplesIf}
 }

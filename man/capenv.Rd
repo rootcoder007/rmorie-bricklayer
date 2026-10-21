@@ -46,6 +46,7 @@ recorded seed means nothing without the kind it was fed to), and
 environment. Nothing is written and the random state is not touched.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Record specific packages' versions alongside the session facts.
 env <- capenv(c("stats", "utils"))
 env$r_version
@@ -61,4 +62,5 @@ capenv("stats")[c("rng_kind", "rng_seeded")]
 
 # a package that is not installed is recorded as NA, not an error
 capenv(c("stats", "notapackage123"))$packages
+\dontshow{\}) # examplesIf}
 }

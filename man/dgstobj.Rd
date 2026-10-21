@@ -47,6 +47,7 @@ many fitted models) serialize their enclosing environments too, so
 their digest can change between sessions even when the code does not.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 dgstobj(list(a = 1L, b = "x"))
 
 # Stable across calls, and sensitive to any change.
@@ -66,6 +67,7 @@ dgstobj(data.frame(x = 1:3))
 
 # a key with an algorithm that has no keyed form is refused
 try(dgstobj(1:3, algo = "crc32", key = "secret"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=csha256]{csha256()}} for hashing text or bytes

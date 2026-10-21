@@ -50,6 +50,7 @@ link-local addresses are refused), and for a matched resource URL that
 fails the same check. One network request; nothing is written.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Missing fields return NULL rather than erroring:
 rslvckan(list())
 rslvckan(NULL)
@@ -60,7 +61,7 @@ prov <- list(
   resource = list(name_match_pattern = "2014")
 )
 try(rslvckan(prov))
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network: asks data.ontario.ca for the current file URL
 prov <- list(

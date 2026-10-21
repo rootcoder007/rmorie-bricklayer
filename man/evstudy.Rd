@@ -77,12 +77,14 @@ coefficients can mix in effects from other periods (Sun and Abraham 2021);
 \code{\link{stgatt}} gives the event-time effects free of that.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 p <- polex()
 es <- evstudy(p, "district", "month", "crmrate", "refmonth", leads = 3,
                   lags = 4)
 es
 attr(es, "pretrend")$p_value
 plot(es)
+\dontshow{\}) # examplesIf}
 }
 \references{
 Sun L, Abraham S (2021). Estimating dynamic treatment effects in event

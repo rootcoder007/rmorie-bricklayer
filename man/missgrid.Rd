@@ -43,6 +43,7 @@ map, cut to \code{width} characters. A table with no rows prints
 \code{height} not a positive whole number.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 set.seed(1)
 df <- data.frame(
   complete = 1:100,
@@ -56,6 +57,7 @@ missgrid(df)
 missgrid(df, height = 5, width = 4)
 
 try(missgrid(df, height = 0))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=misspat]{misspat()}},

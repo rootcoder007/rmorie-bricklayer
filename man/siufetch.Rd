@@ -55,12 +55,13 @@ Then any error from \code{blfetch()}, for example when neither
 the live page nor an archived copy can be reached.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # the report number is checked before anything is sent
 try(siufetch(1.5, tempfile(fileext = ".html")))
 try(siufetch(648, tempfile(fileext = ".html"), lang = "de"))
 
 # a real fetch needs the network (the SIU site or the Wayback Machine)
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 dest <- tempfile(fileext = ".html")
 siufetch(648, dest)

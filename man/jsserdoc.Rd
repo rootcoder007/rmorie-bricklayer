@@ -55,6 +55,7 @@ classes and every other attribute. These two keep them, at the cost of
 JSON no other tool will understand.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # A factor survives the round trip with its levels intact.
 f <- factor(c("b", "a", "b"), levels = c("a", "b", "c"))
 back <- jsunser(jsser(f))
@@ -81,6 +82,7 @@ nchar(csha256(jsser(m)))
 
 # A function is refused unless the JSON is trusted.
 try(jsunser(jsser(function(x) x + 1)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=tojs]{tojs()}} for

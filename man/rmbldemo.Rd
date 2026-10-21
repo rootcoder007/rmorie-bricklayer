@@ -99,9 +99,11 @@ the package's functions, written to a temporary JSON file and read back with
 }
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 rmbldemo()
 head(rmbldemo("court"))
 identical(rmbldemo("survey"), rmbldemo("survey"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=rmblapp]{rmblapp()}}, whose tabs open on these datasets;

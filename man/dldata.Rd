@@ -58,6 +58,7 @@ Errors: \code{url} or \code{tpath} not a single non-empty string;
 a refused URL; \code{mode} other than \code{"wb"} or \code{"w"}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # offline: a local file through a file:// URL
 src <- tempfile(fileext = ".csv")
 writeLines(c("id,value", "1,10", "2,20"), src)
@@ -68,7 +69,7 @@ read.csv(dest)
 # file:// is refused unless asked for, and so is an append mode
 try(dldata(paste0("file://", src), tempfile()))
 try(dldata("https://example.org/x.csv", tempfile(), mode = "a"))
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # needs the network
 dest <- dldata("https://cloud.r-project.org/",

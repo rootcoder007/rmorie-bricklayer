@@ -292,7 +292,7 @@ scests <- function(x) {
 #' @param pooled Optional labels of rows that pool other groups (see
 #'   \code{\link{indgap}}).
 #' @seealso \code{\link{scests}}, \code{\link{indgap}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Self-perceived mental health, 15 years and older, Canada, 2022 (table 41-10-0067-01)
 #' mh <- indiex("mentalhealth")
 #' mh <- mh[mh$region == "Canada", ]
@@ -685,7 +685,7 @@ plot.rmbl_ordinal_compare <- function(x, ..., main = NULL, col = NULL, palette =
 #' \doi{10.3390/ijerph192013402}
 #' @seealso \code{\link{scests}}, \code{\link{indgap}},
 #'   \code{\link{ordcmp}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # well-being, 2024 (table 41-10-0082-01)
 #' wb <- indiex("wellbeing")
 #' w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
@@ -1045,7 +1045,7 @@ holbal <- function(data, grp, domain, est, lower, upper, w = NULL, qual = NULL,
 #'
 #' Stewart SL (2008), see \code{\link{holbal}}.
 #' @seealso \code{\link{welprof}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' wb <- indiex("wellbeing")
 #' w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
 #'                       well = "Always or often has a hopeful outlook",
@@ -1133,7 +1133,7 @@ dualcont <- function(x, well, distress, conflvl = 0.95) {
 #' @references Higgins JPT, Thompson SG (2002). Quantifying heterogeneity in a
 #'   meta-analysis. Statistics in Medicine 21(11):1539-1558. \doi{10.1002/sim.1186}
 #' @seealso \code{\link{indgap}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # perceived mental health very good or excellent, 2019/2022, adults (table
 #' # 13-10-0924-01)
 #' h <- indiex("health")
@@ -1354,7 +1354,7 @@ plot.rmbl_distinctions <- function(x, ..., main = NULL, col = NULL, palette = NU
 #'   name = c("health", "mentalhealth", "wellbeing", "suicide",
 #'            "censuspop", "censushh", "lifeexp", "infantmort")
 #' )
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' h <- indiex("health")
 #' mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
 #'           h$indicator == "Perceived mental health, very good or excellent", ]

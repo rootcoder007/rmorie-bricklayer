@@ -47,6 +47,7 @@ Errors: \code{key} not an HQC key; a public key (no secret half); a secret of
 the wrong length; a ciphertext of the wrong length or not valid hex.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 key <- hqckg(1)
 sent <- hqcencap(hqcpubkey(key))
 identical(hqcdecap(key, sent$ciphertext), sent$shared)
@@ -62,6 +63,7 @@ identical(other, sent$shared)
 # is refused
 try(hqcdecap(hqcpubkey(key), sent$ciphertext))
 try(hqcdecap(key, substring(sent$ciphertext, 1L, 100L)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=hqcencap]{hqcencap()}},

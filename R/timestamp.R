@@ -112,7 +112,7 @@
 #' [chnseal()] for the ordering a timestamp
 #' cannot give, [cpsatst()] for
 #' authorship.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Offline: bytes that are not a timestamp token are reported, not
 #' # thrown, so a batch check can carry on.
 #' bad <- tsvrf(as.raw(c(0x30, 0x03, 0x02, 0x01, 0x05)),

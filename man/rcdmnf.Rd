@@ -64,6 +64,7 @@ consumes one one-time leaf per signature) or a key from
 \code{\link{fipskg}} (ML-DSA or SLH-DSA). Nothing is written to disk.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 x <- c("W", "B", "W", "I")
 map <- c(W = "White", B = "Black", I = "Indigenous")
 y <- grdrcd(x, map)
@@ -81,4 +82,5 @@ names(ms)
 
 # a recode that does not match the published counts is refused
 try(rcdmnf(x, y, map, pub = c(White = 1, Black = 2, Indigenous = 1)))
+\dontshow{\}) # examplesIf}
 }

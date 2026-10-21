@@ -244,7 +244,7 @@
 #'   with the attribute \code{"source"} set to
 #'   \code{"live"}, \code{"cache"}, \code{"bundled"} or \code{"off"}.
 #' @seealso \code{\link{dlogin}}, \code{\link{dmnf}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Nothing is fetched here: the cached copy if there is one, else the
 #' # document bundled with the package.
 #' s <- svcs(offline = TRUE)

@@ -82,6 +82,7 @@ the
 cost is \eqn{O(n \log n)}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 x <- c(2, 4, 4, 4, 5, 5, 7, 9)
 cqnt(x, c(0.25, 0.5, 0.75))
 all.equal(cqnt(x, c(0.1, 0.9)),
@@ -110,6 +111,7 @@ cmed(c(1, NA, 3))
 
 # A probability outside [0, 1] is refused.
 try(cqnt(x, 1.5))
+\dontshow{\}) # examplesIf}
 }
 \references{
 Hyndman RJ, Fan Y (1996). Sample quantiles in statistical

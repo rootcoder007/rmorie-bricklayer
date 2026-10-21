@@ -60,6 +60,7 @@ returns \code{FALSE}. An XMSS signature object written by 0.5.9 to 0.5.12
 that it exposed the signer's private key.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
 # one-time index record out of your configuration directory; leave the default in use
 key <- pqckg(height = 2)
@@ -86,6 +87,7 @@ cpsvrf("pinned-manifest", tag, "shared-secret")
 # Something that is not a signature at all is an error, not FALSE.
 try(cpsvrf("pinned-manifest", list(signature = "00"), pub))
 options(op)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=cpssign]{cpssign()}},

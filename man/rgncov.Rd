@@ -67,6 +67,7 @@ different lengths; missing or negative \code{pop}; missing,
 negative or fractional \code{units}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 # Four regions, two of which hold a facility.
 cov <- rgncov(
   reg = c("A", "B", "C", "D"),
@@ -87,6 +88,7 @@ rgncov(regions, c(1200000, 800000, 450000, 90000), units)$hasunit
 
 # a region listed twice is refused
 try(rgncov(c("A", "A"), c(10, 20), c(1, 0)))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=rgnmapintg]{rgnmapintg()}},

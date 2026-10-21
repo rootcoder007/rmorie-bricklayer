@@ -45,6 +45,7 @@ Errors when \code{path} is not a single non-empty string, and (from base
 R) when the file cannot be opened for writing.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 man <- mkmnf(list(project = "demo"), env = FALSE)
 man <- recrd(man, "rowcount", obs = 20, expd = 20)
 path <- wrmnfjs(man, tempfile(fileext = ".json"))
@@ -60,6 +61,7 @@ identical(readLines(cpath), as.character(mnfcanon(man)))
 
 # the path must be one string
 try(wrmnfjs(man, c("a.json", "b.json")))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=mnfcanon]{mnfcanon()}},

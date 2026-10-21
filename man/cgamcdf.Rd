@@ -37,6 +37,7 @@ a missing \code{x} gives \code{NA}, and \code{Inf} gives 1, as in
 \code{\link[stats:pgamma]{stats::pgamma()}}.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 cgamcdf(3.5, c(0.5, 1, 4, 12))
 
 # Identical to the unit-rate gamma CDF.
@@ -51,6 +52,7 @@ all.equal(cgamcdf(1, c(0.5, 2)), stats::pexp(c(0.5, 2)))
 
 # The shape must be positive.
 try(cgamcdf(0, 1))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[stats:pgamma]{stats::pgamma()}}, the base R equivalent.

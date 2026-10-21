@@ -114,6 +114,7 @@ prompt; a refused code; a sign-in service that answers with an error or
 returns no key; a credentials file that cannot be edited safely.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)
 Sys.setenv(XDG_CONFIG_HOME = tempfile())   # never touch your real credentials
 
@@ -122,7 +123,7 @@ try(dlogin(token = "   "))
 try(dlogin(email = "not-an-email"))
 
 if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
-
+\dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # these contact the sign-in service
 dlogin(token = "<key issued at https://www.rmorie.com/access/>")

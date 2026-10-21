@@ -42,6 +42,7 @@ Errors: \code{endyear} that is neither numeric nor character (for
 example logical); a numeric year below 1; a numeric year that is not whole.
 }
 \examples{
+\dontshow{if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) withAutoprint(\{ # examplesIf}
 fylbl(2019:2023)
 
 fylbl(2023, short = FALSE)
@@ -53,4 +54,5 @@ fylbl(c("2023", "n/a", NA))
 
 # logical input is refused
 try(fylbl(TRUE))
+\dontshow{\}) # examplesIf}
 }

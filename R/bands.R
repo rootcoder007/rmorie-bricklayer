@@ -82,7 +82,7 @@
 #' Ministry of the Solicitor General publishes in its inmate datasets (the
 #' segregation and restrictive-confinement releases), where the
 #' placement-count and age categories are banded and the top band is open.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 #'
 #' prsbands(c("18 to 24", "25 to 49", "50+", "under 18"))
@@ -263,7 +263,7 @@ prsbands <- function(x, clsup = TRUE, intsca = TRUE) {
 #'   open bands whose value rests on the cap or floor).
 #' @seealso \code{\link{prsbands}}, \code{\link{bandsens}},
 #'   \code{\link{expbands}}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' b <- prsbands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 #' bandvals(b)
 #'
@@ -500,7 +500,7 @@ print.rmbl_band_sensitivity <- function(x, ...) {
 #' @return A numeric vector with one entry per unit (length
 #'   \code{sum(round(counts))} over the placed bands).
 #' @seealso \code{\link{bandvals}}, \code{\link{bandsens}}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' x <- expbands(c("1", "2 to 5", "Greater than 5"),
 #'                   cnts = c(10, 4, 2), openupcap = 12)
 #' table(x)

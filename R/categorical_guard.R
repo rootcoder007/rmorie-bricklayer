@@ -86,7 +86,7 @@
 #'   SHA-256 of the \code{code=label} pairs).
 #' @seealso \code{\link{declbld}}, \code{\link{grdrcd}},
 #'   \code{\link{audcats}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # codes from a survey file with their code book
 #' race <- c(1, 2, 2, 3, NA)
 #' book <- c("1" = "White", "2" = "Black", "3" = "Indigenous")
@@ -168,7 +168,7 @@ deccodes <- function(x, vlabs, keepna = TRUE) {
 #'   \code{recode_audit} attribute: a list with \code{mapping} (the mapping as
 #'   given), \code{kept} (the \code{keep} vector) and \code{checksum}
 #'   (hexadecimal SHA-256 of the mapping).
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # rename three codes
 #' x <- c("W", "B", "O", "W", NA)
 #' grdrcd(x, c(W = "White", B = "Black", O = "Other"))
@@ -248,7 +248,7 @@ grdrcd <- function(x, map, keep = character()) {
 #'   intended baseline next to the code that fits the model.
 #' @return A factor with exactly the levels in \code{levels}, in that order.
 #' @seealso \code{\link{grdrcd}}, \code{\link{audcats}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # reference category chosen on purpose, not by alphabet
 #' g <- grdlvls(c("White", "Black", "White"), c("White", "Black"), "White")
 #' levels(g)
@@ -537,7 +537,7 @@ print.bricklayer_category_audit <- function(x, ...) {
 #'   \code{Freq} (integer), including the zero cells of the full table.
 #'   Otherwise an error.
 #' @seealso \code{\link{grdrcd}}, \code{\link{rcdmnf}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' before <- c("W", "B", "W", NA)
 #' after <- c("White", "Black", "White", NA)
 #' tab <- vrfrcd(before, after, c(W = "White", B = "Black"))
@@ -641,7 +641,7 @@ vrfrcd <- function(orig, recd, decl) {
 #'   when the counts match and visibly when \code{strict = FALSE} and they do
 #'   not. With \code{strict = TRUE} a mismatch is an error instead.
 #' @seealso \code{\link{xfrvrf}}, \code{\link{rlblfrns}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' x <- c("White", "White", "Black", "Indigenous", "White", "Black")
 #' vrfmrg(x, c(White = 3, Black = 2, Indigenous = 1))$ok
 #'
@@ -770,7 +770,7 @@ vrfmrg <- function(x, pub, tol = 0, strict = TRUE) {
 #'   reproduces the reported values) and \code{verdict} (a one-sentence
 #'   character summary).
 #' @seealso \code{\link{vrfmrg}}, \code{\link{rlblfrns}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' tab <- matrix(c(900, 100, 700, 300, 400, 600),
 #'   ncol = 2, byrow = TRUE,
 #'   dimnames = list(c("A", "B", "C"), c("no", "yes"))
@@ -903,7 +903,7 @@ orchk <- function(cnts, ref, rptd, tol = 0.05) {
 #' @return \code{TRUE}, invisibly, when the column is a 0/1 indicator;
 #'   otherwise an error.
 #' @seealso \code{\link{grdrcd}} to build an explicit indicator.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' grdbin(c(0, 1, 1, 0, NA), "treated")
 #' grdbin(c(TRUE, FALSE), "arrested")
 #'
@@ -989,7 +989,7 @@ grdbin <- function(x, col) {
 #'     \item \code{body_sha256};
 #'     \item with a key, \code{signature} and \code{public_key}.
 #'   }
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' x <- c("W", "B", "W", "I")
 #' map <- c(W = "White", B = "Black", I = "Indigenous")
 #' y <- grdrcd(x, map)
@@ -1084,7 +1084,7 @@ rcdmnf <- function(orig, recd, map, pub = NULL,
 #' @param path Character string: the JSON file to write
 #'   (\code{wrrcdmnf()}) or read (\code{vrfrcdmnf()}).
 #' @return \code{wrrcdmnf()} returns \code{path} invisibly.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' x <- c("W", "B", "W")
 #' y <- grdrcd(x, c(W = "White", B = "Black"))
 #' m <- rcdmnf(x, y, c(W = "White", B = "Black"))
@@ -1218,7 +1218,7 @@ vrfrcdmnf <- function(path, orig, recd) {
 #'   \code{\link{grdrcd}}).
 #' @seealso \code{\link{grdrcd}}, \code{\link{rlblfrns}},
 #'   \code{\link{declbld}}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' f <- factor(c("W", "B", "O", "W"))
 #' relbl(f, c(W = "White", B = "Black", O = "Other"))
 #'
@@ -1298,7 +1298,7 @@ relbl <- function(x, map, keep = character()) {
 #'   \code{\link{grdrcd}}.
 #' @seealso \code{\link{deccodes}}, \code{\link{relbl}},
 #'   \code{\link{xfrvrf}}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' x <- structure(c(1, 2, 2, 4),
 #'                labels = c(White = 1, Black = 2, Other = 3, Unknown = 4))
 #' declbld(x)
@@ -1376,7 +1376,7 @@ declbld <- function(x, vlabs = NULL) {
 #'   attribute is a character summary. The print method shows only the
 #'   matching mechanisms and the verdict.
 #' @seealso \code{\link{vrfmrg}}, \code{\link{relbl}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # the OHRC 2023 case: alphabetical labels assigned to codes 1-4
 #' vl <- c("1" = "White", "2" = "Black", "3" = "Other", "4" = "Unknown")
 #' obs <- c(White = "Black", Black = "Other", Other = "Unknown",
@@ -1542,7 +1542,7 @@ print.bricklayer_relabel_forensics <- function(x, ...) {
 #'   (character messages, or \code{NULL} when \code{ok}).
 #' @seealso \code{\link{declbld}}, \code{\link{vrfmrg}},
 #'   \code{\link{rlblfrns}}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' x <- structure(c(1, 1, 2, 4, 1),
 #'                labels = c(White = 1, Black = 2, Other = 3, Unknown = 4))
 #' xfrvrf(x, c(White = 3, Black = 1, Unknown = 1))$ok

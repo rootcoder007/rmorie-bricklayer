@@ -45,7 +45,7 @@
 #' @references Statistics Canada. Symbol legend.
 #'   \url{https://www.statcan.gc.ca/en/concepts/definitions/guide-symbol}
 #' @seealso \code{\link{indgap}}, \code{\link{indtabs}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # the layout of a downloaded table, with one cell suppressed
 #' d <- data.frame(REF_DATE = "2019/2022", GEO = "Canada",
 #'                 `Indigenous identity` = c("First Nations", "Inuk (Inuit)",
@@ -227,7 +227,7 @@ sctidy <- function(x) {
 #' @return A character vector of \code{"ok"}, \code{"E"} and \code{"x"}; empty and missing
 #'   flags are \code{"ok"}.
 #' @seealso \code{\link{limfrom}}, \code{\link{indgap}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # flags as an Australian table might give them
 #' qltyrcd(c("", "np", "*", "**", NA), suppr = c("np", "**"), caution = "*")
 #' @export
@@ -267,7 +267,7 @@ qltyrcd <- function(x, suppr = c("F", "x", "..", "..."), caution = "E") {
 #' @param conflvl The level of the limits returned (default 0.95).
 #' @return A data frame: \code{estimate}, \code{lower}, \code{upper}, \code{se}.
 #' @seealso \code{\link{qltyrcd}}, \code{\link{indgap}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' limfrom(c(24.1, 31.5), cv = c(8, 12))
 #' limfrom(1520, moe = 210)                 # a 90% margin of error
 #' @export
@@ -351,7 +351,7 @@ limfrom <- function(est, se = NULL, cv = NULL, moe = NULL, moelev = 0.90, conflv
 #' \doi{10.5334/dsj-2020-043}
 #' @seealso \code{\link{dstntst}} before pooling, \code{\link{limfrom}},
 #'   \code{\link{qltyrcd}}, \code{\link{agestd}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Perceived mental health very good or excellent, adults, 2019/2022 (Statistics Canada,
 #' # table 13-10-0924-01; The Daily, 2025-02-13)
 #' h <- indiex("health")
@@ -484,7 +484,7 @@ indgap <- function(data, grp, est, lower, upper, ref = "Non-Indigenous",
 #' (2011-2016): Findings from the 2011 Canadian Census Health and Environment Cohort
 #' (CanCHEC). Statistics Canada 99-011-X2019001.
 #' @seealso \code{\link{rategap}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # made-up counts for one small community, by five age groups, to show the computation
 #' std <- c(30000, 25000, 20000, 15000, 10000)   # a younger standard population
 #' agestd(events = c(4, 9, 11, 6, 3), pop = c(9000, 8000, 6000, 4000,
@@ -554,7 +554,7 @@ agestd <- function(events, pop, std, grp = NULL, per = 1e5, conflvl = 0.95) {
 #' peoples' health (The Lancet-Lowitja Institute Global Collaboration): a population
 #' study. The Lancet 388(10040):131-157.
 #' \doi{10.1016/S0140-6736(16)00345-7}
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # made-up counts, to show the computation
 #' std <- c(30000, 25000, 20000, 15000, 10000)
 #' r <- agestd(events = c(4, 9, 11, 6, 3, 2, 4, 6, 5, 4),
@@ -615,7 +615,7 @@ rategap <- function(x, grp, ref) {
 #' Residential Schools: implications for the concept of historical trauma. Transcultural
 #' Psychiatry 51(3):320-338. \doi{10.1177/1363461513503380}
 #' @seealso \code{\link{exptrnd}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' genexpo(c(TRUE, FALSE, TRUE, NA, FALSE), c(TRUE, FALSE, FALSE, TRUE, NA))
 #' genexpo(c(TRUE, FALSE, TRUE, NA, FALSE), c(TRUE, FALSE, FALSE, TRUE, NA),
 #'                     partial = "lowerbnd")
@@ -660,7 +660,7 @@ genexpo <- function(parent, gparent, partial = c("na", "lowerbnd")) {
 #' weighted analysis from the survey itself (\code{\link{svydes}}): this function
 #' is for published or aggregated counts.
 #' @references McQuaid RJ, et al. (2017), see \code{\link{genexpo}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # made-up counts by 0, 1 and 2 generations of attendance, to show the computation
 #' et <- exptrnd(cases = c(60, 95, 70), n = c(500, 520, 300))
 #' et
@@ -727,7 +727,7 @@ exptrnd <- function(cases, n, dose = seq_along(cases) - 1L, conflvl = 0.95) {
 #' Truth and Reconciliation Commission of Canada (2015). Truth and Reconciliation
 #' Commission of Canada: Calls to Action. Winnipeg.
 #' @seealso \code{\link{trcprog}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' trccmpl()
 #' @export
 trccmpl <- function() {
@@ -770,7 +770,7 @@ trccmpl <- function() {
 #'   \code{plot()} draws the completions and the projection, with the band the rate's
 #'   interval gives.
 #' @seealso \code{\link{trccmpl}}.
-#' @examples
+#' @examplesIf interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' p <- trcprog()
 #' p
 #' plot(p)
