@@ -160,7 +160,6 @@ try(dlogin(email = "not-an-email"))
 #> Error : dlogin: 'not-an-email' is not an email address
 
 if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
-
 if (FALSE) { # interactive()
 # these contact the sign-in service
 dlogin(token = "<key issued at https://www.rmorie.com/access/>")

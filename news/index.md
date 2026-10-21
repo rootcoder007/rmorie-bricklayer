@@ -88,10 +88,16 @@
   [`vignette("applied-analyses")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/applied-analyses.md).
   Each former guide is a section of one of them, with its text, code and
   figures unchanged.
-- The examples that take a tenth of a second or more (67 help pages) run
-  in an interactive session (for example with
-  [`example()`](https://rdrr.io/r/utils/example.html)) and on the
-  package website; R CMD check shows them but does not run them.
+- Every example runs in GitHub CI, on r-universe, on the package website
+  and in an interactive session (for example with
+  [`example()`](https://rdrr.io/r/utils/example.html)), and the full
+  test suite runs in GitHub CI and on r-universe. On CRAN, to keep the
+  check within its time limit, the help pages show every example but R
+  CMD check runs only those of
+  [`csha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/csha256.md)
+  and
+  [`keyeddgst()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/keyeddgst.md),
+  and the tests run their fast core.
 - Every vignette now draws its results: the 21 that had no figure gain
   one or more, drawn with the package’s own
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html) methods and

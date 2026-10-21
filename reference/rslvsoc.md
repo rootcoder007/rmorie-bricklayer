@@ -55,7 +55,6 @@ rslvsoc(list(dataset = list(socrata_domain = "data.cityofchicago.org")))
 try(rslvsoc(list(dataset = list(
   socrata_domain = "localhost", socrata_id = "abcd-1234"))))
 #> Error : socrata_domain points at a local or private address ('https://localhost'): refused (a single-label name is not a public host (localhost))
-
 if (FALSE) { # interactive()
 # needs the network
 prov <- list(dataset = list(

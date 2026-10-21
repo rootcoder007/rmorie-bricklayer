@@ -51,7 +51,6 @@ try(wbsnpnat(""))     # empty url -> error
 #> Error : `url` must be a single non-empty string
 try(wbsnpnat("http://localhost/report.csv"))
 #> Error : url points at a local or private address ('http://localhost/report.csv'): refused (a single-label name is not a public host (localhost))
-
 if (FALSE) { # interactive()
 # needs the network; any network failure returns NULL rather than erroring.
 # Closest archived snapshot of a live page (or NULL if none archived).

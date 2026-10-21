@@ -58,7 +58,6 @@ try(wbsnpurl(NA))
 #> Error : wbsnpurl: `url` must be a single non-empty string
 try(wbsnpurl(c("https://a.org", "https://b.org")))
 #> Error : wbsnpurl: `url` must be a single non-empty string
-
 if (FALSE) { # interactive()
 # needs the network
 wbsnpurl("https://www.r-project.org/")

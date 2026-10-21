@@ -51,7 +51,6 @@ try(siufprs("abc"))
 #> Error : `drid` must be one positive report number (the drid in the SIU report URL)
 try(siufprs(648, lang = "de"))
 #> Error : siufprs: `lang` must be one of "en", "fr", not "de"
-
 if (FALSE) { # interactive()
 # needs the network: downloads report 648 from the SIU site
 f <- siufprs(648)

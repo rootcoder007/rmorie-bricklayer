@@ -75,7 +75,6 @@ try(llmmdls(route = "anthropic"))
 for (v in names(old)) {
   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 }
-
 if (FALSE) { # interactive()
 # with a key set, the provider is asked (network)
 m <- llmmdls(route = "openai", tmout = 10)

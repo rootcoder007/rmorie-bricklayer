@@ -113,7 +113,6 @@ s$issued
 # arguments are checked
 try(svcs(maxage = -1))
 #> Error : `maxage` must be a single non-negative number of seconds (Inf keeps a cached copy forever)
-
 if (FALSE) { # interactive()
 # ask the site now (network), and keep the answer for a day
 svcs(refresh = TRUE)

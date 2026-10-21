@@ -68,7 +68,6 @@ prov <- list(
 )
 try(rslvckan(prov))
 #> Error : ckan_api_endpoint must be an https:// URL, not http:// ('http://localhost/api/3/action/package_show?id=x'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror
-
 if (FALSE) { # interactive()
 # needs the network: asks data.ontario.ca for the current file URL
 prov <- list(

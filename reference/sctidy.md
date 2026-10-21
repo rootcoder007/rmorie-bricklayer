@@ -77,7 +77,6 @@ sctidy(d)
 #> 1 2019/2022 Canada       First Nations  45.8             ok
 #> 2 2019/2022 Canada        Inuk (Inuit)    NA      x       x
 #> 3 2019/2022 Canada      Non-Indigenous  61.5             ok
-
 if (FALSE) { # interactive()
 # needs a data service key: sign in once with dlogin()
 t924 <- sctidy("13100924")

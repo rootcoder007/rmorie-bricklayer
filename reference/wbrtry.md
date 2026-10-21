@@ -112,10 +112,9 @@ attr(res, "retry")
 #> 1      1               0              0            1                 0
 
 try(wbrtry(tempfile(fileext = ".jsonl")))
-#> Error : no results file at /tmp/Rtmpoc0WxE/file20c337bd64f9.jsonl
+#> Error : no results file at /tmp/RtmpgRpLyl/file1f1c6a3e3ca5.jsonl
 
 # With failures to resend, keys and the network are needed.
-
 if (FALSE) { # interactive()
 res <- wbsave(urls, output = "snapshots.jsonl")
 # later, or the next day once the daily capture limits have reset:
