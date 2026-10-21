@@ -5,9 +5,10 @@ Authors@R:
     person(c("Vansh", "Singh"), "Ruhela", email = "vsruhela@proton.me",
            role = c("aut", "cre"),
            comment = c(ORCID = "0009-0004-1750-3592"))
-Description: For analyzing tables that others publish, such as open-data
-    portals and statistical agencies, so that a result can be traced to the
-    exact data behind it and checked again afterwards. A 'capsule' records where
+Description: For analyzing published and unpublished tables, from open-data
+    portals and statistical agencies to a researcher's own data, so that a
+    result can be traced to the exact data behind it and checked again
+    afterwards. A 'capsule' records where
     each source came from, its Secure Hash Algorithm 256 ('SHA-256') hash,
     the schema it should have and an archived copy in the Internet Archive
     'Wayback Machine' (<https://web.archive.org/>); sources are found through
@@ -28,8 +29,7 @@ Description: For analyzing tables that others publish, such as open-data
     rates with the empirical Bayes shrinkage of Clayton and 'Kaldor' (1987)
     <doi:10.2307/2532003>; self-exciting event series as 'Hawkes' processes;
     custodial populations by stock-and-flow measures; and the burden of air
-    pollution from dispersion to attributable deaths. A compiled core is shared
-    with sibling packages through 'LinkingTo'.
+    pollution from dispersion to attributable deaths.
 License: AGPL-3
 Copyright: The bundled excerpts of published statistics in inst/extdata belong
     to their publishers; see inst/COPYRIGHTS.

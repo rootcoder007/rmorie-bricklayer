@@ -14,9 +14,9 @@
 
 ## What it is
 
-`rmoriebricklayer` is for people who work from tables that someone else publishes: a ministry's
-open-data portal, Statistics Canada, a police oversight agency. It does three things with such a
-table.
+`rmoriebricklayer` is for people who work from a variety of published and unpublished tables: a
+ministry's open-data portal, Statistics Canada, a police oversight agency, or your own data. It
+does three things with such a table.
 
 1. **It analyzes the table.** `anltab()` takes counts by period and group and reports what changed
    between periods, with exact intervals, trends and rates, and says how far the publisher's
@@ -34,8 +34,8 @@ cryptography written from the standards) serves one of these three.
 
 ## Why it exists
 
-I analyze Canadian justice and health statistics from published tables. Three things kept going
-wrong, and a checksum alone catches none of them.
+I analyze Canadian justice and health statistics from published tables. Noticed that three
+things kept going wrong in many cases, and a checksum alone catches none of them.
 
 - **Sources go down or move.** The federal open-data portal, `open.canada.ca`, was unreachable in
   October 2026 while analyses depended on it. A capsule keeps the address of an archived copy of
