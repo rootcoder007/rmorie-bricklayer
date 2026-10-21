@@ -3,7 +3,7 @@ title: "Attestations, signed bundles and tamper-evident chains"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Attestations, signed bundles and tamper-evident chains}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

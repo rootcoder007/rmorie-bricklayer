@@ -3,7 +3,7 @@ title: "The analysis dashboard"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{The analysis dashboard}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

@@ -3,7 +3,7 @@ title: "Validation rules, inferred schemas and synthetic stand-ins"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Validation rules, inferred schemas and synthetic stand-ins}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

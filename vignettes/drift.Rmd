@@ -3,7 +3,7 @@ title: "Has the data changed?"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Has the data changed?}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

@@ -3,7 +3,7 @@ title: "Plotting results"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Plotting results}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

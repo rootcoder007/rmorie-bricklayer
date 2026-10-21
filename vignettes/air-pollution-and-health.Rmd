@@ -3,7 +3,7 @@ title: "Air pollution: dispersion, health burden, equity, and the footprint of t
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Air pollution: dispersion, health burden, equity, and the footprint of the computation}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

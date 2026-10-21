@@ -3,7 +3,7 @@ title: "Key encapsulation: ML-KEM and HQC"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Key encapsulation: ML-KEM and HQC}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

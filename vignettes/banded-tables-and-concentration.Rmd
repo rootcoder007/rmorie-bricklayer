@@ -3,7 +3,7 @@ title: "Banded tables and concentration: from '6 to 10' to a Gini"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Banded tables and concentration: from '6 to 10' to a Gini}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

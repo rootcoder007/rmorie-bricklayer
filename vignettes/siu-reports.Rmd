@@ -3,7 +3,7 @@ title: "Parsing SIU director's reports"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Parsing SIU director's reports}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

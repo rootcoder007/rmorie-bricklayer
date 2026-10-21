@@ -1,0 +1,615 @@
+<!-- rmoriebricklayer vignette source sha256: fc44bb1f78e309eeccff81ca57d3241b19fdef9cf45b11042bd25a7df1b03526 -->
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Categorical integrity: labels that cannot be swapped quietly</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Categorical integrity: labels that cannot
+be swapped quietly</h1>
+
+
+
+<p>In August 2020 the Ontario Human Rights Commission published <em>A
+Disparate Impact</em>, whose multivariate tables said Black civilians in
+Toronto were 30 to 58 times as likely as White civilians to experience
+police use of force, and other racialized civilians 5 to 14 times. On 26
+January 2023 the Commission published a correction: the figures are 4 to
+5 times for Black civilians, and other racialized civilians were about
+40% <em>less</em> likely. Between the SPSS file and the R analysis the
+four race codes had been rotated one place (White read as Black, Black
+as other racialized, other racialized as unknown, unknown as White), so
+the largest group was being compared with the smallest. The independent
+review attributed the rotation to the transfer between the two packages.
+Nothing in either package rotates labels on its own; what was missing
+was a step that would have refused the rotation, or named it, on the
+day. This vignette is that step. Sources: OHRC, <em>Correction to A
+Disparate Impact</em> (2023-01-26); Jung, M. (2022), <em>Independent
+Expert Review of Part E of the Use of Force by the Toronto Police
+Service report</em>, submitted to the OHRC, December 2022.</p>
+<div id="the-reports-numbers-against-the-tables-labels" class="section level2">
+<h2>The report’s numbers against the table’s labels</h2>
+<p>Start with what a reader can check: a table of counts as labelled
+(the counts below are illustrative, shaped like the case: a large White
+group, a Black group with a real disparity, and a very small unknown
+group), the reference group, and the odds ratios a report states.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>tab <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">9000</span>, <span class="dv">120</span>, <span class="dv">2000</span>, <span class="dv">220</span>, <span class="dv">1500</span>, <span class="dv">60</span>, <span class="dv">4000</span>, <span class="dv">1</span>), <span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>              <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">&quot;White&quot;</span>, <span class="st">&quot;Black&quot;</span>, <span class="st">&quot;Other&quot;</span>, <span class="st">&quot;Unknown&quot;</span>), <span class="fu">c</span>(<span class="st">&quot;no&quot;</span>, <span class="st">&quot;yes&quot;</span>)))</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>tab</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co">#&gt;           no yes</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co">#&gt; White   9000 120</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co">#&gt; Black   2000 220</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt; Other   1500  60</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="co">#&gt; Unknown 4000   1</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>ref <span class="ot">&lt;-</span> <span class="dv">120</span> <span class="sc">/</span> <span class="dv">9000</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="fu">orchk</span>(tab, <span class="st">&quot;White&quot;</span>, <span class="fu">c</span>(<span class="at">Black =</span> <span class="dv">220</span> <span class="sc">/</span> <span class="dv">2000</span> <span class="sc">/</span> ref, <span class="at">Other =</span> <span class="dv">60</span> <span class="sc">/</span> <span class="dv">1500</span> <span class="sc">/</span> ref,</span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>                                 <span class="at">Unknown =</span> <span class="dv">1</span> <span class="sc">/</span> <span class="dv">4000</span> <span class="sc">/</span> ref))<span class="sc">$</span>verdict</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co">#&gt; [1] &quot;the reported odds ratios follow from the table as labelled&quot;</span></span></code></pre></div>
+<p>Now rotate the labels one place, as happened in the transfer, and
+read off the odds ratios a report would print:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>rotated <span class="ot">&lt;-</span> tab[<span class="fu">c</span>(<span class="st">&quot;Unknown&quot;</span>, <span class="st">&quot;White&quot;</span>, <span class="st">&quot;Black&quot;</span>, <span class="st">&quot;Other&quot;</span>), ]</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">rownames</span>(rotated) <span class="ot">&lt;-</span> <span class="fu">rownames</span>(tab)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>rref <span class="ot">&lt;-</span> rotated[<span class="st">&quot;White&quot;</span>, <span class="dv">2</span>] <span class="sc">/</span> rotated[<span class="st">&quot;White&quot;</span>, <span class="dv">1</span>]</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>reported <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">Black =</span> rotated[<span class="st">&quot;Black&quot;</span>, <span class="dv">2</span>] <span class="sc">/</span> rotated[<span class="st">&quot;Black&quot;</span>, <span class="dv">1</span>] <span class="sc">/</span> rref,</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>              <span class="at">Other =</span> rotated[<span class="st">&quot;Other&quot;</span>, <span class="dv">2</span>] <span class="sc">/</span> rotated[<span class="st">&quot;Other&quot;</span>, <span class="dv">1</span>] <span class="sc">/</span> rref,</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>              <span class="at">Unknown =</span> rotated[<span class="st">&quot;Unknown&quot;</span>, <span class="dv">2</span>] <span class="sc">/</span> rotated[<span class="st">&quot;Unknown&quot;</span>, <span class="dv">1</span>] <span class="sc">/</span> rref)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="fu">round</span>(reported, <span class="dv">1</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt;   Black   Other Unknown </span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt;    53.3   440.0   160.0</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>r <span class="ot">&lt;-</span> <span class="fu">orchk</span>(tab, <span class="st">&quot;White&quot;</span>, reported)</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>r<span class="sc">$</span>consistent</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>r<span class="sc">$</span>matches</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt;                                                          relabelling</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; 1 White -&gt; Black, Black -&gt; Other, Other -&gt; Unknown, Unknown -&gt; White</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt;   outcome_columns_swapped</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt; 1                   FALSE</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>r<span class="sc">$</span>verdict</span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; [1] &quot;the reported odds ratios do NOT follow from the table as labelled; they are reproduced under a relabelling (White -&gt; Black, Black -&gt; Other, Other -&gt; Unknown, Unknown -&gt; White): the groups were mislabelled, not the software&quot;</span></span></code></pre></div>
+<p>The function tries every relabelling of the rows (and the two outcome
+columns) and names the one that reproduces the reported figures: here
+the one-place rotation, with the “White” odds actually those of the tiny
+unknown group, which is exactly how a real disparity of about 4 becomes
+a reported one of about 50. Numbers that no relabelling produces are
+reported as exactly that.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">orchk</span>(tab, <span class="st">&quot;White&quot;</span>, <span class="fu">c</span>(<span class="at">Black =</span> <span class="dv">36</span>, <span class="at">Other =</span> <span class="dv">4</span>, <span class="at">Unknown =</span> <span class="dv">1</span>))<span class="sc">$</span>verdict</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; [1] &quot;the reported odds ratios follow from no relabelling of this table&quot;</span></span></code></pre></div>
+</div>
+<div id="codes-that-arrive-without-their-labels" class="section level2">
+<h2>Codes that arrive without their labels</h2>
+<p>Data exported from SPSS, Stata or SAS often lands as integer codes.
+<code>deccodes()</code> needs the code-to-label dictionary written out
+and refuses a code it does not know; <code>audcats()</code> flags the
+columns that still look like codes.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>raw <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">race =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">1</span>), <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">audcats</span>(<span class="fu">data.frame</span>(<span class="at">race =</span> <span class="fu">factor</span>(raw<span class="sc">$</span>race)))</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; Categorical audit: 1 column(s)</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt;   race             factor     3 level(s), reference ‘1’</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt;     !! HAZARD: all labels numeric-looking (1,2,3...): likely imported CODES whose value labels were lost; as.numeric() on this column returns level INDICES, not data</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>race <span class="ot">&lt;-</span> <span class="fu">deccodes</span>(raw<span class="sc">$</span>race, <span class="fu">c</span>(<span class="st">&quot;1&quot;</span> <span class="ot">=</span> <span class="st">&quot;White&quot;</span>, <span class="st">&quot;2&quot;</span> <span class="ot">=</span> <span class="st">&quot;Black&quot;</span>, <span class="st">&quot;3&quot;</span> <span class="ot">=</span> <span class="st">&quot;Indigenous&quot;</span>))</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>race</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; [1] &quot;White&quot;      &quot;Black&quot;      &quot;Black&quot;      &quot;Indigenous&quot; &quot;White&quot;     </span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;recode_audit&quot;)</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;recode_audit&quot;)$mapping</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt;            1            2            3 </span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt;      &quot;White&quot;      &quot;Black&quot; &quot;Indigenous&quot; </span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;recode_audit&quot;)$kept</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; character(0)</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;recode_audit&quot;)$checksum</span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; [1] &quot;be0b0dcd1bb12223f6d28bc031e1accfd45a3f700d18c920b54d7d766905bdd0&quot;</span></span></code></pre></div>
+</div>
+<div id="a-recode-you-can-prove" class="section level2">
+<h2>A recode you can prove</h2>
+<p><code>grdrcd()</code> maps by name only and errors on anything
+unmapped; <code>vrfrcd()</code> cross-tabulates before against after and
+errors unless each old label went to exactly one new label, the one the
+mapping declares; <code>grdlvls()</code> fixes the level order so the
+reference group is a decision, not an accident of the alphabet.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;W&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;W&quot;</span>, <span class="st">&quot;I&quot;</span>, <span class="st">&quot;B&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">grdrcd</span>(x, <span class="fu">c</span>(<span class="at">W =</span> <span class="st">&quot;White&quot;</span>, <span class="at">B =</span> <span class="st">&quot;Black&quot;</span>, <span class="at">I =</span> <span class="st">&quot;Indigenous&quot;</span>))</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">vrfrcd</span>(x, y, <span class="fu">c</span>(<span class="at">W =</span> <span class="st">&quot;White&quot;</span>, <span class="at">B =</span> <span class="st">&quot;Black&quot;</span>, <span class="at">I =</span> <span class="st">&quot;Indigenous&quot;</span>))</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="fu">grdlvls</span>(y, <span class="fu">c</span>(<span class="st">&quot;White&quot;</span>, <span class="st">&quot;Black&quot;</span>, <span class="st">&quot;Indigenous&quot;</span>), <span class="at">ref =</span> <span class="st">&quot;White&quot;</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; [1] White      Black      White      Indigenous Black     </span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; Levels: White Black Indigenous</span></span></code></pre></div>
+<p>And the swap, caught on the day:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">vrfrcd</span>(<span class="fu">c</span>(<span class="st">&quot;W&quot;</span>, <span class="st">&quot;B&quot;</span>), <span class="fu">c</span>(<span class="st">&quot;Black&quot;</span>, <span class="st">&quot;White&quot;</span>), <span class="fu">c</span>(<span class="at">W =</span> <span class="st">&quot;White&quot;</span>, <span class="at">B =</span> <span class="st">&quot;Black&quot;</span>))</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt; Error:</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; ! vrfrcd: ‘B’ was mapped to ‘White’ but the declared mapping says ‘Black’. THIS is how groups get swapped; fix the recode before any model runs.</span></span></code></pre></div>
+</div>
+<div id="counts-against-what-was-published" class="section level2">
+<h2>Counts against what was published</h2>
+<p>If the release states how many rows each label has, the recode must
+reproduce those counts. When it does not, the function tries every
+permutation of the labels and says which one would make the counts
+match: the fingerprint of labels attached to the wrong groups.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">vrfmrg</span>(y, <span class="fu">c</span>(<span class="at">White =</span> <span class="dv">2</span>, <span class="at">Black =</span> <span class="dv">2</span>, <span class="at">Indigenous =</span> <span class="dv">1</span>))</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">vrfmrg</span>(y, <span class="fu">c</span>(<span class="at">White =</span> <span class="dv">2</span>, <span class="at">Black =</span> <span class="dv">1</span>, <span class="at">Indigenous =</span> <span class="dv">2</span>))</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; Error:</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt; ! vrfmrg: recoded counts do not match the published counts. White: observed 2, published 2; Black: observed 2, published 1; Indigenous: observed 1, published 2. The observed counts match the published ones if the labels are permuted (Black -&gt; Indigenous, Indigenous -&gt; Black): the labels are attached to the wrong groups.</span></span></code></pre></div>
+</div>
+<div id="the-record" class="section level2">
+<h2>The record</h2>
+<p><code>rcdmnf()</code> writes down the mapping and its digest, the
+counts before and after, the checks that passed, and, with a key, a
+signature over the record. A later reader verifies the file against the
+data.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>key <span class="ot">&lt;-</span> <span class="fu">pqckg</span>(<span class="at">height =</span> <span class="dv">2</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">rcdmnf</span>(x, y, <span class="fu">c</span>(<span class="at">W =</span> <span class="st">&quot;White&quot;</span>, <span class="at">B =</span> <span class="st">&quot;Black&quot;</span>, <span class="at">I =</span> <span class="st">&quot;Indigenous&quot;</span>),</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>                     <span class="at">pub =</span> <span class="fu">c</span>(<span class="at">White =</span> <span class="dv">2</span>, <span class="at">Black =</span> <span class="dv">2</span>, <span class="at">Indigenous =</span> <span class="dv">1</span>),</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>                     <span class="at">key =</span> key, <span class="at">ctx =</span> <span class="st">&quot;vignette&quot;</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">wrrcdmnf</span>(m, <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.json&quot;</span>))</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="fu">vrfrcdmnf</span>(p, x, y)[<span class="fu">c</span>(<span class="st">&quot;ok&quot;</span>, <span class="st">&quot;signature_ok&quot;</span>)]</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; $ok</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; $signature_ok</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>Change the data or the file afterwards and verification says so, with
+the reason.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>yswapped <span class="ot">&lt;-</span> <span class="fu">as.character</span>(y)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>yswapped[yswapped <span class="sc">==</span> <span class="st">&quot;Black&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Indigenous&quot;</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">vrfrcdmnf</span>(p, x, yswapped)[<span class="fu">c</span>(<span class="st">&quot;ok&quot;</span>, <span class="st">&quot;reasons&quot;</span>)]</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; $ok</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; $reasons</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; [1] &quot;vrfrcd: ‘B’ was mapped to ‘Indigenous’ but the declared mapping says ‘Black’. THIS is how groups get swapped; fix the recode before any model runs.&quot;</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; [2] &quot;recoded counts differ from the manifest&quot;</span></span></code></pre></div>
+<p>Finally, the guard that stops a factor from reaching a numeric
+treatment slot, where <code>as.numeric()</code> would hand a model the
+level indices instead of the data:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">grdbin</span>(<span class="fu">c</span>(<span class="st">&quot;treated&quot;</span>, <span class="st">&quot;control&quot;</span>), <span class="st">&quot;treatment&quot;</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt; Error:</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#&gt; ! Column ‘treatment’ is categorical (‘treated’, ‘control’...). Refusing to coerce: as.numeric() on a factor returns level INDICES (1, 2, ...), not your data, and a mis-ordered level silently relabels every observation. Encode explicitly first, e.g. grdrcd() + as.integer(x == &quot;treated_label&quot;).</span></span></code></pre></div>
+</div>
+<div id="the-transfer-that-matters-spss-or-stata-sas-to-r" class="section level2">
+<h2>The transfer that matters: SPSS (or Stata, SAS) to R</h2>
+<p>The documented failure happened between two programs. The source
+stores each category as a code with a value label; the destination
+receives the codes, and the labels are re-attached in the analysis. The
+only faithful way to re-attach them is by code. Here is what arrives
+from a <code>.sav</code> file (haven keeps the labels as an attribute,
+label = code), and the two things the source program printed that make
+the import checkable: its code book and its frequency table.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>arrived <span class="ot">&lt;-</span> <span class="fu">structure</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">2</span>),</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>                     <span class="at">labels =</span> <span class="fu">c</span>(<span class="at">White =</span> <span class="dv">1</span>, <span class="at">Black =</span> <span class="dv">2</span>, <span class="at">Other =</span> <span class="dv">3</span>, <span class="at">Unknown =</span> <span class="dv">4</span>))</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>code_book <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;1&quot;</span> <span class="ot">=</span> <span class="st">&quot;White&quot;</span>, <span class="st">&quot;2&quot;</span> <span class="ot">=</span> <span class="st">&quot;Black&quot;</span>, <span class="st">&quot;3&quot;</span> <span class="ot">=</span> <span class="st">&quot;Other&quot;</span>, <span class="st">&quot;4&quot;</span> <span class="ot">=</span> <span class="st">&quot;Unknown&quot;</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>spssfre <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">White =</span> <span class="dv">4</span>, <span class="at">Black =</span> <span class="dv">2</span>, <span class="at">Other =</span> <span class="dv">1</span>, <span class="at">Unknown =</span> <span class="dv">1</span>)</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>chk <span class="ot">&lt;-</span> <span class="fu">xfrvrf</span>(arrived, spssfre, <span class="at">codebook =</span> code_book)</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>chk<span class="sc">$</span>ok</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="fu">levels</span>(chk<span class="sc">$</span>decoded)</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; [1] &quot;White&quot;   &quot;Black&quot;   &quot;Other&quot;   &quot;Unknown&quot;</span></span></code></pre></div>
+<p>The levels are in code order, not alphabetical order, because the
+code book says so. Now the idiom that produced the documented rotation:
+the labels, in the order R sorts them, assigned to the codes by
+position.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">1</span>))</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="fu">levels</span>(f) <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unname</span>(code_book))</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="fu">data.frame</span>(<span class="at">code =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">1</span>), <span class="at">became =</span> <span class="fu">as.character</span>(f))</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt;   code  became</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; 1    1   Black</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; 2    2   Other</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; 3    3 Unknown</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; 4    4   White</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; 5    1   Black</span></span></code></pre></div>
+<p>Code 1 (White) became “Black”, 2 (Black) became “Other”, 3 (Other)
+became “Unknown”, 4 (Unknown) became “White”: the four-way rotation in
+the correction notice, from one line. <code>relbl()</code> refuses that
+line:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">relbl</span>(<span class="fu">factor</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">1</span>)), <span class="fu">sort</span>(<span class="fu">unname</span>(code_book)))</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="co">#&gt; Error:</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt; ! relabel: `map` must be NAMED (old label = new label). Assigning labels by POSITION is how four race codes were rotated in a published analysis (OHRC correction, 26 January 2023): the labels were in alphabetical order, the codes were not.</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="fu">relbl</span>(<span class="fu">factor</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">1</span>)), code_book)</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt; [1] White   Black   Other   Unknown White  </span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;recode_audit&quot;)</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;recode_audit&quot;)$mapping</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt;       1       2       3       4 </span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt;   White   Black   Other Unknown </span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;recode_audit&quot;)$kept</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt; character(0)</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;recode_audit&quot;)$checksum</span></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="co">#&gt; [1] 3d394c3d6f779a313f8fbeecaf5bc4f104738096c07f03c48ab68d5eb52e8de4</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a><span class="co">#&gt; Levels: White Black Other Unknown</span></span></code></pre></div>
+<p>And <code>xfrvrf()</code> refuses the result if it somehow got past
+that, because the frequency table no longer matches by label:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">xfrvrf</span>(<span class="fu">as.character</span>(f), <span class="fu">c</span>(<span class="at">White =</span> <span class="dv">2</span>, <span class="at">Black =</span> <span class="dv">1</span>, <span class="at">Other =</span> <span class="dv">1</span>, <span class="at">Unknown =</span> <span class="dv">1</span>))</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co">#&gt; Error:</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="co">#&gt; ! vrfmrg: recoded counts do not match the published counts. White: observed 1, published 2; Black: observed 2, published 1; Other: observed 1, published 1; Unknown: observed 1, published 1. The observed counts match the published ones if the labels are permuted (White -&gt; Black, Black -&gt; White): the labels are attached to the wrong groups.</span></span></code></pre></div>
+</div>
+<div id="exonerating-the-software-or-not" class="section level2">
+<h2>Exonerating the software, or not</h2>
+<p>When a permutation is blamed on the transfer, the question to ask is
+which deterministic step, applied to the code book, yields exactly the
+permutation observed. <code>rlblfrns()</code> tries the known ones.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>observed <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">White =</span> <span class="st">&quot;Black&quot;</span>, <span class="at">Black =</span> <span class="st">&quot;Other&quot;</span>, <span class="at">Other =</span> <span class="st">&quot;Unknown&quot;</span>, <span class="at">Unknown =</span> <span class="st">&quot;White&quot;</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="fu">rlblfrns</span>(code_book, observed)</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co">#&gt; Mechanism(s) reproducing the observed permutation:</span></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co">#&gt;   * labels sorted alphabetically, assigned by code position</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="co">#&gt;       White -&gt; Black, Black -&gt; Other, Other -&gt; Unknown, Unknown -&gt; White</span></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="co">#&gt;   * labels sorted case-insensitively, assigned by code position</span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co">#&gt;       White -&gt; Black, Black -&gt; Other, Other -&gt; Unknown, Unknown -&gt; White</span></span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt;   * rotation by 1 position(s)</span></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="co">#&gt;       White -&gt; Black, Black -&gt; Other, Other -&gt; Unknown, Unknown -&gt; White</span></span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co">#&gt; The observed permutation is reproduced EXACTLY by: labels sorted alphabetically, assigned by code position; labels sorted case-insensitively, assigned by code position; rotation by 1 position(s). No import routine (haven, foreign, pandas, pyreadstat) reorders value labels; each carries them keyed by code. A transfer fault does not select the sort order of the labels. The step that did this was a positional relabel in the analysis, and it is reproducible from the code book alone.</span></span></code></pre></div>
+<p>No import routine in R or Python (haven, foreign, pandas, pyreadstat)
+sorts value labels onto codes; each keeps them keyed by code. A
+permutation that coincides with the alphabetical order of the labels was
+made by a positional relabel in the analysis, and anyone with the code
+book can reproduce it. A permutation that no mechanism reproduces points
+at a merge, a manual edit, or the file, and the function says so instead
+of guessing.</p>
+</div>
+<div id="the-rotation-in-a-picture" class="section level2">
+<h2>The rotation in a picture</h2>
+<p>Each bar is the odds of the outcome in a group relative to White, on
+a log scale. The light bars use the correct labels; the dark bars use
+the labels rotated one place, which is what the published ratios match.
+A rotation of four codes is enough to turn ratios near 1 into ratios in
+the hundreds.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>odds_vs_white <span class="ot">&lt;-</span> <span class="cf">function</span>(t) (t[, <span class="st">&quot;yes&quot;</span>] <span class="sc">/</span> t[, <span class="st">&quot;no&quot;</span>]) <span class="sc">/</span> (t[<span class="st">&quot;White&quot;</span>, <span class="st">&quot;yes&quot;</span>] <span class="sc">/</span> t[<span class="st">&quot;White&quot;</span>, <span class="st">&quot;no&quot;</span>])</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>r <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="at">correct =</span> <span class="fu">odds_vs_white</span>(tab), <span class="at">rotated =</span> <span class="fu">odds_vs_white</span>(rotated))[, <span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="fu">barplot</span>(r, <span class="at">beside =</span> <span class="cn">TRUE</span>, <span class="at">log =</span> <span class="st">&quot;y&quot;</span>, <span class="at">col =</span> <span class="fu">blpal</span>()[<span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>)], <span class="at">ylab =</span> <span class="st">&quot;odds ratio vs White (log scale)&quot;</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>        <span class="at">legend.text =</span> <span class="fu">c</span>(<span class="st">&quot;correct labels&quot;</span>, <span class="st">&quot;labels rotated one place&quot;</span>),</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>        <span class="at">args.legend =</span> <span class="fu">list</span>(<span class="at">x =</span> <span class="st">&quot;topleft&quot;</span>, <span class="at">bty =</span> <span class="st">&quot;n&quot;</span>), <span class="at">main =</span> <span class="st">&quot;Same counts, rotated labels&quot;</span>)</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="co">#&gt; Warning in yinch(0.1): y log scale: yinch() is nonsense</span></span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">1</span>, <span class="at">lty =</span> <span class="dv">2</span>)</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAqAAAAGwCAIAAAD5YECUAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAgAElEQVR4nOzdZ0ATWd828BN6lyJSpAqCIFgQETsqKAqIoCA27AWx723Fgq7ibUFXbFh2cRUUUZTFuiiCil1XRGTpICBVQJqEEvJ+mH3yckcSgyZBstfvU3IymXMlE/0zM2fO0JhMJgEAAADRItbRAQAAAID/UOABAABEEAo8AACACEKBBwAAEEEo8AAAACIIBR4AAEAEocADAACIIBR4AAAAEYQCDwAAIIJQ4AEAAEQQCjwAAIAIQoEHAAAQQSjwAAAAIggFHgAAQAShwAMAAIggFHgAAAARhAIPAAAgglDgAQAARBAKPAAAgAhCgQcAABBBKPAAAAAiCAUeAABABKHAAwAAiCAUeAAAABGEAg8AACCCUOABAABEEAo8AACACEKBBwAAEEEo8AAAACIIBR4AAEAEocADAACIIImODgDQPhkZGefPn8/Ozi4tLdXR0TEyMpo1a1b37t07OtePq7a2NjY2lhDSs2dPc3PzzpWEX+Ht7e0ZDIaNjc2ePXu+fPXChQsnT54khBw7dszMzOyra9uzZ8/t27cJIdevX5eXl/+2SO3tFKDdmACdx9q1a8XFxdl+w9LS0rt27eroaD+u1NRU6ovasGFDp0vCr/ASEhKEEEdHxzZf/e9//0v18vTpU17WNmfOHGr5T58+fXOk9nYK0F7Yg4dO4+zZs/v27SOEKCoqjh8/XkVFJT09PT4+vqGhwc/Pr3fv3q6urh2dEQDgR4ECD51GREQEIURSUjIxMbFHjx5U4927d8eOHctkMs+ePcsq8DU1NadPn05MTCwpKdHQ0LCyspo7d66SkhL16v79+2/cuEGtMDAw8N27d5qamk5OTpMmTaqqqjp27NiLFy8UFRXd3d3Z/mL4448/7t+/n5aW1r17d3d3d0dHR+6Bnz9/fu3atbdv3yopKVlZWS1atEhOTq71AllZWZcuXUpKSmpubra0tJw0aZKlpSXr1YCAgDt37hBCbt26JSMjQwih0+njx48nhDg4OGzatIkQEhwcfPHiRUJIWFjYmzdvbty4kZeX17t379WrV3fr1o0QEhcXd+HCBWqF8fHxGzdu/PnnnyUkJBoaGkJCQp49e1ZcXKyjozNo0CBvb28pKSleNkTrTrOzs48ePbp48WI7Ozvun4hTEi4bi9NbeNkWt2/fvnbtWllZ2dChQ5cuXcrL52qN+0+IhcFgBAcH379/X1FR0d7e3sPDg0ajtV6gXb+Z79koAG3o6EMIALwyNTUlhKiqqjY1NbVu37Bhw4IFCzZv3kw9LSgo0NLSYvud6+rqlpSUUAssWLCAarSwsGi9zJYtW1rXV0LIwYMHqbfU19d7enqyrdPNzY1Op3NK6+/vz3Y2QU9P7/3796wFTp8+zXb6VlJScvfu3awFZs6cSbXX1tZSLbW1tVTLzJkzqZb//Oc/VMvKlStbl5Zu3bp9/PiRyWTu3LmTLTadTq+srKS+zNaMjY1LS0t52RCsTiMjI6m/PMLDw7/6idpMwn1jtfkWXrYF9dcPy8SJE6ltweMh+q/+hFiH6CdNmtR6mWnTpjU0NPD4m2Hr9Ds3CsCXUOCh03BycqL+1xsxYkRYWFhOTk6bi02fPp1abNGiRXv27GHtM23bto1agFXgpaSkZs2aNWLECNb/p2wtmpqa1FsCAgIIITQabeXKlaGhobNmzaIW2LhxY5sZ4uLiqAVMTEy2bds2efJkMTExaqgXtUBSUhJVchQUFNasWbN+/fquXbtSb7l37x61TLsKPLVbP336dFaJ9ff3ZzKZ79+/P3v2LNUyffr0+Pj4lpaWVatWsdZz8ODBqVOnUk9nz57Ny4ZgdUplVlBQuHjx4lc/UZtJuG+sNt/y1W3x559/Ui3q6uq+vr6jR49mfUU8Fviv/oRYBZ4QMmzYsGXLlmlra1NPf/nlFx5/M2ydfudGAfgSCjx0Gq9fv1ZUVGy9f6OsrGxnZ7djx46///6btdjw4cONjY1dXV2pp6WlpdSurYeHB9XCKvD79++nWgYOHEi17Nu3j2qxsrKiWqqqqhobG6ljs1OmTGndCyFEVla2vr7+y6hUUZGSkiosLKRaFi9eTP13X15ezmQyWXt+Dx48oBZ49+4dVSAHDx5MtbSrwG/dupVquXfvHtXCSvvlOLUhQ4YQQuTk5KqqqqgWLy8vW1tbT09PXjYEq1MbGxvWMQlePtGXSb66sdjewsu2GDp0KPXlp6WlUQuwCjaPBf6rqVrvwbe0tDCZzLy8POrHqa+vz2NOtk6/c6MAfAnn4KHT6NevX3p6+qFDh+7evfv69WsGg/Hp06f4+Pj4+PgdO3bs3bt39erVVIGhiuLDhw+Tk5MvX77MZDIJIU1NTWwrnDhxIvWgb9++L168IIS4uLhQLX369Pnrr7+odxUVFVVXVxNCKioqNm7cSC3Q2NhICKmvr3/z5s2gQYPY1vzmzRvqSAPrSO+WLVuo0+eUV69eEUKsra2p//QJIebm5uPGjbt58+br16+ZTCbbqdyvmjJlCvVg+PDhUlJSjY2Nnz594rSwuro6IeTz58+6urpOTk7jx48PCgqiGttlx44denp63/OJeN9YlOzsbO7bwtra+vnz59SmNDExoRZYvXr1+fPnef9cvKdavXo19bl0dXW9vLxOnTr1/v374uLiqqqq9v5m+LVRAFhQ4KEz0dTU3L179+7du+l0enJy8rNnz6Kiou7evdvc3Lxu3bqJEycaGRkVFhYuW7bsxo0b1P+n1H4z9R80G1VVVbYW1lHl1rKzs6kH9+7dY+0fs5SWlrK1VFVVlZeXUyfdWY3du3dnXaxPnXumru1u/UYTE5ObN2/S6fT8/PzW7+UFa/iehIQEVeC5LLxjx47Xr1/n5eVVV1dfuHDhwoULNBpt1KhRv/zyC9soBO4MDQ2/8xPxvrEoX90Wubm5VBlmVXdCSHuvMuc9VevPyzqDnpWVRVV33n8zfNwoACwo8NA5NDY2vn79mhCioqJiYmIiIyNjbW1tbW3t6+vr4+MTHBzc3Nz88uXLHj16uLm5PX/+XEpKytvb28XFZdCgQb17966pqfnmrll/B6xdu5Y1DoCld+/ebC2ysrJiYmItLS10Or3NFUpLS8vKyn7+/Jl1yJ3CCsl2JoLv+vTpk5WV9eeff169ejU6OrqsrIw6tj9u3Ljs7Gxq3BwvWKMIv+0TMZnM9m6sr24L1nvr6upY7QwGg8dP1N5UNTU1rIM0rM+uoqJCDfXn/TfDfaMUFhbynh+ABQUeOgdxcXEHB4eamhojI6PU1FTWf6DUSGPqgZqaWl5eHnWE1tvb+9SpU4SQ8vLy76nuhBAjIyPqgZyc3MiRI6nHhYWFRUVF1JgytuWlpKT09PRyc3NfvnzJarx06dKBAweoAef6+vo9e/Z88+bNkydP6uvrZWVlqSIUHx9PHaVQUVEhhFDj8qjdVmofrs09v/aqr69PSUkhhAwYMMDJyamlpeXhw4crV6588+ZNUVFRWlpa375927tOGo3Gyydi8w0b66vbQkVFRVJSsqmpiZr/jkLF4FG7Ut27d491qIDqUVxc3MjIiLU8j78Z7huF9/AArWEueugcxMXFx4wZQx3/dHd3f/z4cVlZWX5+/rlz56jhyjIyMgMHDmTtNP/9999VVVV0Or31OPNv07VrV+q88unTp7Oysggh+fn5gwYNsra29vDwaP2nBgt1dj89PX3v3r0MBiMlJWXLli1Pnz7NycmhjlR7eXkRQj5+/LhkyZLa2trPnz+vXr2aWrmHhwe1El1dXepBQEBARkbGu3fvFi5c+D0fpKysjBDS3NxMhZ8xY0ZdXZ2YmNjAgQOpw8s0Gk1fX58QcvPmzbVr165du5YaiMALXj4RW5J2bSzqLV/dFuLi4sOGDSOEvHv3bv369Z8+fXrx4gVrgDov2pVq27ZtDx48qK6u3r1798OHDwkhnp6e0tLS7f3NcN8ovIcH+B8dPcoPgFeFhYWsi5G+dO7cOSaT2dzcrKOjQ7VISkpK/B9qyBu1HtYoeupK8TZbWMOkqZYnT55QK6H2z6j/cyUlJW/cuNFm1I8fP6qpqVFrkJaWZoUMCwujFqDT6awTw+Li4pKSktRjbW3tyspKapnHjx+z/edOzV3T5ij6zMxMVu/UDiLrkryqqipqPeLi4hYWFg0NDdOmTaPeJSMjo6OjwzpUMH36dOotGzZsoFpCQ0O//HRtdsrLJ2JL8vnz569urC/Df3VbREVFsf02WHPF8DKKnpefUOvL5FpTVFTMyMiglvlqTrZR9F/dKADthQIPnUl+fv7SpUupI8AUaiDS3bt3Wcs8fPiQNZzNyMjo0aNH1LR3NBrtyZMn31bgqXLbeh6SAQMGxMbGcon6/v17BwcH1n/Tmpqav//+e+sFqqqqFixYwDrhLSkp6enpyTaryYEDB1gLmJmZUYPz21vgmUzmunXrWH8rUHPFrFq1qkuXLqyPIy0t7evrW1dXRy3/DQWex0/EluSrG+vLt/CyLc6dO0cdiiCEdOnS5fbt2+2ai/6rqVg/jw0bNrCGN5qbm799+7b1arnnZOv0qxsFoL24DVgF+DG1tLQUFRUVFBSoqqrq6em13kWmNDY2pqWlKSoqGhgYUEdrP378SE1dp6amlp6eTp3XHDp0KPX//pctaWlpxcXFrVsoHz9+zMnJ0dXV1dTU5CXq58+fU1NTVVRU9PX1WcW+NQaDkZmZ2dzcbGJiwtrrba2uri49Pb1bt27du3enTs0SQjQ0NHr16kWdns/PzyeEDBo0iFVZExISGAyGiopKnz59WOspKCj48OGDlpYWazR7U1PThw8fiouLVVRU9PT0Wv/ZlJOTk5ubO2HChPPnz7u5ubFFarNT3j8RWxLuG4tTeF62RUFBQVVVlZmZmZiYGHV1vqqqapsj0vPz86nx+VZWVtR4QO6pWD+PYcOGURfrKysrs/b72XDK+WWn3DcKQHuhwANAG54/fz5o0KC3b9+yTegLAJ0FBtkBALvLly+PHj3a29sb1R2g88IePACwi4mJaWpq+vICbgDoRFDgAQAARBAO0QMAAIggFHgAAAARhAIPAAAgglDgAQAARBAKPAAAgAhCgQcAABBBKPAAAAAiCAUeAABABKHAAwAAiCAUeAAAABGEAg8AACCCUOABAABEEAo8AACACEKBBwAAEEEo8AAAACIIBR4AAEAEocADAACIIBR4AAAAEYQCDwAAIIJQ4AEAAEQQCjwAAIAIQoEHAAAQQSjwAAAAIggFHgAAQAShwAMAAIggFHgAAAARhAIPAAAggiQ6OgAA/Ojevn07f/78lpaWjg7y7SZPnrxx48aOTgEgVCjwAPAVubm5Lwo/E7v5HR3kW31I0X7ypKNDAAgbCjwA8EBanmgYd3SIb1VXQRglHR0CQNhwDh4AAEAEocADAACIIBR4AAAAEYQCDwAAIIJQ4AEAAEQQCjwAAIAIQoEHAAAQQSjwAAAAIggFHgAAQAShwAMAAIggFHgAAAARhLno21BWVhYVFcVkMrksIyMjM336dAmJzvQFJiYmNjc3W1tbs7Wrq6v7+/v7+vpyeW9WVpaxsXFiYmLfvn3b1SkvKwcAAL7rTPVJaG7cuLH7P4usNbktcyuHDB061MjISHixvltgYGBtbe3Vq1c7OggAAAjcj1LgExMTIyIiioqKBg4cOGfOHDk5OdZLZ8+eLS8vX716tdDCMJnMft2Ivy23ZZ4VEe67+HzU2NhIo9EkJSXbfAoAAPClH+IcfGho6MCBA0+dOvX48WNfX19bW9uSkv9/b8e4uLjo6OgODcgHDAZj27ZtvXr1UlVVHTdu3Lt376j2lpaWXbt29e7dW0lJydbW9vr166y3aGlpRURErF27VlNTs7CwkO0pIeT333+3traWl5e3sLAICQnh3tfgwYNDQ0OjoqJoNFpVVRWnnDU1NatWrerZs6esrKyRkdHOnTtb/x1TVlbm7u6upqZmamq6Y8eOlpYW1kucwrSWlJTk6OiooqLStWtXd3f3/Pz87/5eAQCgbR1f4BsaGlasWDFjxowPHz6kpaW9efOmuLh41qxZHZ2LzxYvXnzo0KEVK1YcOXLk8+fPtra2VHlbsWLFzp07Z82adeHCBXNzcxcXl9Z/zezbty8jI+PkyZMaGhpsTw8fPrxw4UInJ6fLly87ODjMnz//+PHjXPq6cePG5MmTHR0di4uLlZSUOOWcM2fO2bNnlyxZEhER4eLismXLlvDwcNarXl5e3bp1++2331xcXPz9/detW0e1cwnDUl9fP3bs2JqamuPHjwcEBDx79mz+/Pn8/poBAOAfHX+IPj09vbKycu/evVJSUoSQPn36REdHDx069Pz589OnT+/odPyRkZEREhISHh7u4eFBCLGzszM0NLx69aq7u/uJEycOHDiwfPlyQoiTk1Npaam/v//EiROpNzY2Nl69epVGo7E9raur2759+9atWzdv3kwIGT9+fF1dnb+/v4+PD6e+VqxYISsry2AwqL8VOKHRaLt37168eDEhxMXF5fbt24mJidOmTaNetbe3Dw4OJoS4urqKiYkdPnzYz89PSkqKU5jWa05JSSkpKQkLCxszZgwhRENDIyEhQWBfOQDAv13HF3hZWVlCCJ1OZ7XY2tr6+Pj85z//cXR0VFVV7dB0/PH06VMxMTE3Nzfqqba29sePHyUlJe/cudPc3Ozp6cla0tPTc+7cuY2NjdSfO+PHj2dV99ZP3717V15ePmbMmPLycuqlESNGnDp1Kj8/n1NfPEa9fPkyIaS2tjYzM/PVq1fZ2dmtj8OzKj0hxNvbe9++fSkpKZKSkpzC6OrqspY3MDBQVFRcvXr1mjVrxo0b5+rq6urq+k1fJwAAfF3HH6I3NjZWU1Nbt25dU1MTq3HPnj0KCgpeXl41NTUdmo4/8vLyunbt2vqaOkVFRRkZmcLCQjExsW7durHatbW1W1paiouLqadse9usp7m5uYSQIUOGdP0/1EmNT58+ceqLx6iPHj3q27evkpKSk5NTZGSkurp661c1Nf//pQU6OjqEkJKSEi5hWr9XTU0tPj7ewMDAx8dHW1vbysoK4/kBAASHpwJfVVXV0NAguBChoaFXrlzR1tZm7cvKy8tfuXIlJSVFR0fn7t27gutaODQ1NSsqKlrvCicmJqanp1PlvKysjNVeUlJCo9FYJV9M7H82EOspVXdLS0uZ/8vS0pJTX7zkrKysHDVq1LBhw4qLiz98+HDz5k09Pb3WC7D+8iCEUAP99PT0uIRhW7+VlVV0dHRFRUVMTEy3bt08PDzS0tJ4+woBAKB9OBb4x48f//TTT/369ZORkVFWVpaRkenatauzs/OhQ4dYR2L5xdHR8dWrV/Pnz2+9v2hhYfHq1avly5d369atS5cu/O1RyKytrRsbG2/cuEE9pdPp9vb2169f79evn4SExKVLl1hLRkREWFpafnWH28LCQlpa+tq1a6yWrVu32tvbc+mLl5wvX75sampas2YN9RcGnU5///596wUiIiJYj0NDQ5WVlc3MzLiEae3SpUumpqZ1dXWysrIODg7Hjx9nMBg5OTm8BAMAgPZq4xx8TEyMn59fXl6evb39/PnzDQwM1NTUGhoaysrKkpKSoqKiNm/ePHPmzJ07d6qpqfErh6Wl5X//+1+2Rg0NjZ07d+7cuZNfvfBIQkIiLp943uC2TPFnIi4uzuMK+/bt6+HhMXfu3ICAAENDwyNHjjQ3N0+dOrV79+6LFi1au3YtnU63sLCIjIyMjo6Oior66grV1dVXrVrl4+NTVFRkZWUVFxe3f//+X375hUtfhBBJScmMjIxXr17169evzfAmJiaSkpIbN25csWJFRUVFQEBAdXV1SkoK60+6CxcuqKqqjh8//sGDB/v27QsICJCXl5eXl+cUprV+/frl5uZOnTrVx8enpqYmJCSka9euNjY2PH6HAADQLuwFfv369S9evPD39x83btyX87BSh9CLiop+//334cOHh4eH9+nTh19RsrKyYmJisrOza2trFRQUtLS0TExMxo0bJ/wZXaZMmWJubs59GQkJCUNDQ97XGRoa6ufnt3fv3tLSUisrqzt37nTv3p0QEhQUpKmp+euvv+bn55ubm0dHR7u4uPCywt27d6urq585cyYgIMDAwOD48ePU0HcufXl7e8fHx48aNaqgoKDNK+X09fXPnTu3bds2R0fH3r17b9mypaKiYtWqVUFBQd7e3tQcf3v37j137pyOjs6BAwdWrlz51TAsPXv2jIyM9Pf3nzp1qqysrI2Nzd27d0VjECUAcFFdXR0REdH6vGGnY21tbWVl1dEp2o3GNh1bampq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" /><!-- --></p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

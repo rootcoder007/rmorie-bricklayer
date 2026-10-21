@@ -3,7 +3,7 @@ title: "Year-over-year change, and the three ways it goes wrong"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Year-over-year change, and the three ways it goes wrong}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

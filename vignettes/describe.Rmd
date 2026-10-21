@@ -3,7 +3,7 @@ title: "Look at the data first"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Look at the data first}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

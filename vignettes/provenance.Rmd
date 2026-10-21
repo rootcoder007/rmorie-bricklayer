@@ -3,7 +3,7 @@ title: "Provenance you can verify"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Provenance you can verify}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

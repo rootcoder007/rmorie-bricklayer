@@ -3,7 +3,7 @@ title: "Building reproducible data capsules"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Building reproducible data capsules}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

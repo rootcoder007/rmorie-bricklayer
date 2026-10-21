@@ -65,7 +65,7 @@ Suggests:
     survival,
     survey,
     testthat (>= 3.0.0)
-VignetteBuilder: knitr
+VignetteBuilder: rmoriebricklayer
 URL: https://github.com/rootcoder007/rmorie-bricklayer,
     https://rootcoder007.github.io/rmorie-bricklayer/
 BugReports: https://github.com/rootcoder007/rmorie-bricklayer/issues

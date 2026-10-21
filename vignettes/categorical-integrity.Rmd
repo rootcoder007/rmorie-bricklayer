@@ -3,7 +3,7 @@ title: "Categorical integrity: labels that cannot be swapped quietly"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Categorical integrity: labels that cannot be swapped quietly}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

@@ -3,7 +3,7 @@ title: "Falsification controls and power curves: is the statistic real?"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Falsification controls and power curves: is the statistic real?}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

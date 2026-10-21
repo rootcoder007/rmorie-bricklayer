@@ -3,7 +3,7 @@ title: "Post-quantum signatures: ML-DSA, SLH-DSA and XMSS"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Post-quantum signatures: ML-DSA, SLH-DSA and XMSS}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

@@ -3,7 +3,7 @@ title: "Missingness, duplicates, outliers and distinct counts"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Missingness, duplicates, outliers and distinct counts}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

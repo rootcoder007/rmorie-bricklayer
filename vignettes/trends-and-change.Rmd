@@ -3,7 +3,7 @@ title: "Trends and change in short count series"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Trends and change in short count series}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

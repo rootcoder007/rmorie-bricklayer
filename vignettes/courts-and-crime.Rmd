@@ -3,7 +3,7 @@ title: "Courts and crime: flow, time, outcomes, place and case mix"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Courts and crime: flow, time, outcomes, place and case mix}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

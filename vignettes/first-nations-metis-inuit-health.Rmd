@@ -3,7 +3,7 @@ title: "First Nations, Metis and Inuit health: published tables, distinctions an
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{First Nations, Metis and Inuit health: published tables, distinctions and governance}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

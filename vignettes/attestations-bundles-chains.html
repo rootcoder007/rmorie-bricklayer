@@ -1,0 +1,523 @@
+<!-- rmoriebricklayer vignette source sha256: 8b678cb11cab10a70b817b742b80545861d8542be46aa7514661e5b0928d919c -->
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Attestations, signed bundles and tamper-evident chains</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Attestations, signed bundles and
+tamper-evident chains</h1>
+
+
+
+<p>The <em>Building reproducible data capsules</em> vignette shows how a
+capsule pins data and describes it in a manifest. This one covers the
+three ways of putting a signature on that work so a reader can check it:
+an <strong>attestation</strong> of a manifest, a <strong>bundle</strong>
+of a whole capsule directory, and a <strong>chain</strong> that makes a
+sequence of manifests tamper-evident.</p>
+<div id="attesting-a-manifest" class="section level2">
+<h2>Attesting a manifest</h2>
+<p>An attestation binds a signature to a manifest <em>and</em> to what
+the manifest covers, with an optional note from the person signing:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">mkmnf</span>(<span class="fu">list</span>(<span class="at">dataset =</span> <span class="st">&quot;otis&quot;</span>, <span class="at">rows =</span> <span class="dv">1200</span><span class="dt">L</span>), <span class="at">env =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>key <span class="ot">&lt;-</span> <span class="fu">fipskg</span>(<span class="st">&quot;ML-DSA-65&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>att <span class="ot">&lt;-</span> <span class="fu">cpsatst</span>(m, key, <span class="at">note =</span> <span class="st">&quot;counts as published&quot;</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">cpschkatst</span>(att, m)</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>res<span class="sc">$</span>ok</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>res<span class="sc">$</span>checks</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co">#&gt;                  check   ok</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co">#&gt; 1 attestation_complete TRUE</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co">#&gt; 2      manifest_digest TRUE</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co">#&gt; 3            signature TRUE</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="co">#&gt;                                                             detail</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co">#&gt; 1                                                                 </span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="co">#&gt; 2 efa1b7387f225380245de0b5170999e87ad4044f3e8fd2ef6a6bfbc2bd0a9c90</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="co">#&gt; 3</span></span></code></pre></div>
+<p>A verifier needs the attestation and the manifest, nothing else. Any
+change to the manifest breaks it, and so does presenting a different
+key:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>m2 <span class="ot">&lt;-</span> m</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>m2<span class="sc">$</span>meta<span class="sc">$</span>rows <span class="ot">&lt;-</span> <span class="dv">1201</span><span class="dt">L</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">cpschkatst</span>(att, m2)<span class="sc">$</span>ok</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="fu">cpschkatst</span>(att, m, <span class="at">keyexp =</span> <span class="fu">fipskg</span>(<span class="st">&quot;ML-DSA-65&quot;</span>)<span class="sc">$</span>public)<span class="sc">$</span>ok</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+<p><code>keyexp</code> is how a reader pins the signer: the attestation
+carries the public key that made it, but a reader who knows which key to
+expect should say so, or any key would do.</p>
+</div>
+<div id="bundling-a-capsule" class="section level2">
+<h2>Bundling a capsule</h2>
+<p>A bundle is one signed artifact covering a directory: every file is
+hashed (hidden files included), the hashes and the manifest are signed,
+and the bundle verifies against the directory later:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>dir <span class="ot">&lt;-</span> <span class="fu">tempfile</span>()</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">dir.create</span>(dir)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">write.csv</span>(<span class="fu">data.frame</span>(<span class="at">x =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>), <span class="fu">file.path</span>(dir, <span class="st">&quot;data.csv&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">mkmnf</span>(<span class="fu">list</span>(<span class="at">dataset =</span> <span class="st">&quot;demo&quot;</span>), <span class="at">env =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>key <span class="ot">&lt;-</span> <span class="fu">fipskg</span>(<span class="st">&quot;ML-DSA-44&quot;</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">cpsbndl</span>(dir, m, key, <span class="at">note =</span> <span class="st">&quot;as published&quot;</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="fu">cpsbndlvrf</span>(<span class="fu">attr</span>(b, <span class="st">&quot;path&quot;</span>), dir, <span class="at">man =</span> m)<span class="sc">$</span>ok</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>Touch a byte of the data and the bundle no longer holds; the result
+names the file:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">write.csv</span>(<span class="fu">data.frame</span>(<span class="at">x =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>), <span class="fu">file.path</span>(dir, <span class="st">&quot;data.csv&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>v <span class="ot">&lt;-</span> <span class="fu">cpsbndlvrf</span>(<span class="fu">attr</span>(b, <span class="st">&quot;path&quot;</span>), dir, <span class="at">man =</span> m)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>v<span class="sc">$</span>ok</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">cpsbndlrd</span>(<span class="fu">attr</span>(b, <span class="st">&quot;path&quot;</span>))<span class="sc">$</span>attestation<span class="sc">$</span>note</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; [1] &quot;as published&quot;</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">unlink</span>(dir, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+</div>
+<div id="a-chain-of-manifests" class="section level2">
+<h2>A chain of manifests</h2>
+<p>A per-manifest signature proves each manifest is intact but says
+nothing about the <em>sequence</em>: a run could be deleted from the
+middle of a series, or two swapped, and every remaining signature would
+still verify. A hash chain links each entry to the one before it, so
+deletion, insertion and reordering all break it:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>ch <span class="ot">&lt;-</span> <span class="fu">chnnew</span>()</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>ch <span class="ot">&lt;-</span> <span class="fu">chnapp</span>(ch, <span class="st">&quot;manifest for run 1&quot;</span>, <span class="at">label =</span> <span class="st">&quot;run-1&quot;</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>ch <span class="ot">&lt;-</span> <span class="fu">chnapp</span>(ch, <span class="st">&quot;manifest for run 2&quot;</span>, <span class="at">label =</span> <span class="st">&quot;run-2&quot;</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>ch <span class="ot">&lt;-</span> <span class="fu">chnapp</span>(ch, <span class="st">&quot;manifest for run 3&quot;</span>, <span class="at">label =</span> <span class="st">&quot;run-3&quot;</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="fu">chnvrf</span>(ch)<span class="sc">$</span>valid</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>Editing an entry breaks the chain and names where:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>edited <span class="ot">&lt;-</span> ch</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>edited<span class="sc">$</span>entries[[<span class="dv">2</span>]]<span class="sc">$</span>digest <span class="ot">&lt;-</span> <span class="fu">csha256</span>(<span class="st">&quot;something else&quot;</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">chnvrf</span>(edited)<span class="sc">$</span>valid</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="fu">chnvrf</span>(edited)<span class="sc">$</span>broken_at</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span></code></pre></div>
+<p>Deleting one breaks it too, which a per-manifest digest would never
+catch:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>dropped <span class="ot">&lt;-</span> ch</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>dropped<span class="sc">$</span>entries[[<span class="dv">2</span>]] <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">chnvrf</span>(dropped)<span class="sc">$</span>valid</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+<div id="sealing-the-chain" class="section level3">
+<h3>Sealing the chain</h3>
+<p>The seal covers the links <em>and the length</em> together, so one
+signature over the seal fixes the whole history. Truncating the chain
+still seals, but to a different value:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>key <span class="ot">&lt;-</span> <span class="fu">fipskg</span>(<span class="st">&quot;ML-DSA-44&quot;</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>sig <span class="ot">&lt;-</span> <span class="fu">cpssign</span>(<span class="fu">chnseal</span>(ch), key)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="fu">chnseal</span>(ch), sig, <span class="fu">fipspubkey</span>(key))</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>truncated <span class="ot">&lt;-</span> ch</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>truncated<span class="sc">$</span>entries[[<span class="dv">3</span>]] <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="fu">chnseal</span>(truncated), sig, <span class="fu">fipspubkey</span>(key))</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+<p>A chain whose links disagree has no seal to present at all:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">chnseal</span>(dropped)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt; [1] NA</span></span></code></pre></div>
+</div>
+</div>
+<div id="which-to-use" class="section level2">
+<h2>Which to use</h2>
+<ul>
+<li>One manifest, one signer: <code>cpsatst()</code>.</li>
+<li>A directory of files that must travel together:
+<code>cpsbndl()</code>.</li>
+<li>A series of runs, releases or data refreshes where order and
+completeness matter: <code>chnapp()</code> after each, sign
+<code>chnseal()</code> at each release.</li>
+</ul>
+<p>All three accept any signing key the package knows: ML-DSA and
+SLH-DSA (<code>fipskg()</code>) or XMSS (<code>pqckg()</code>, with the
+key state carried forward). A shared secret from <code>drvkey()</code>
+is for keyed digests (<code>chmac()</code>), not for attestations: an
+attestation names a public key, and a shared secret has none.</p>
+</div>
+<div id="releases-of-indigenous-health-tables" class="section level2">
+<h2>Releases of Indigenous health tables</h2>
+<p>A chain fits data a community needs to be able to trust release after
+release. Here each link pins one of the Statistics Canada tables on
+Indigenous health bundled with the package, so a later reader can tell
+whether any release was altered or dropped:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>ch <span class="ot">&lt;-</span> <span class="fu">chnnew</span>()</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="cf">for</span> (nm <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;health&quot;</span>, <span class="st">&quot;mentalhealth&quot;</span>, <span class="st">&quot;wellbeing&quot;</span>)) {</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  d <span class="ot">&lt;-</span> <span class="fu">indiex</span>(nm)</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  ch <span class="ot">&lt;-</span> <span class="fu">chnapp</span>(ch, <span class="fu">list</span>(<span class="at">table =</span> nm, <span class="at">rows =</span> <span class="fu">nrow</span>(d), <span class="at">sha256 =</span> <span class="fu">dgstobj</span>(d)),</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>                     <span class="at">label =</span> nm)</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>}</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="fu">chnvrf</span>(ch)<span class="sc">$</span>valid</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+</div>
+<div id="the-table-in-a-picture" class="section level2">
+<h2>The table in a picture</h2>
+<p>The chain and the bundle above record this table, one indicator per
+release. Its estimates and intervals, drawn here for the first
+indicator, are what a reader sees after verification.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>ci_plot <span class="ot">&lt;-</span> <span class="cf">function</span>(t, lab, main) {</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  o <span class="ot">&lt;-</span> <span class="fu">order</span>(t<span class="sc">$</span>estimate)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  t <span class="ot">&lt;-</span> t[o, ]</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  y <span class="ot">&lt;-</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(t))</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>  op <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">10</span>, <span class="dv">3</span>, <span class="dv">1</span>))</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>  <span class="fu">on.exit</span>(<span class="fu">par</span>(op))</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>  <span class="fu">plot</span>(t<span class="sc">$</span>estimate, y, <span class="at">xlim =</span> <span class="fu">range</span>(t<span class="sc">$</span>lower, t<span class="sc">$</span>upper, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">yaxt =</span> <span class="st">&quot;n&quot;</span>, <span class="at">pch =</span> <span class="dv">19</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>       <span class="at">col =</span> <span class="fu">blpal</span>()[<span class="dv">1</span>], <span class="at">xlab =</span> <span class="st">&quot;estimate and 95% interval&quot;</span>, <span class="at">ylab =</span> <span class="st">&quot;&quot;</span>, <span class="at">main =</span> main)</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>  <span class="fu">segments</span>(t<span class="sc">$</span>lower, y, t<span class="sc">$</span>upper, y, <span class="at">col =</span> <span class="fu">blpal</span>()[<span class="dv">1</span>])</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>  <span class="fu">axis</span>(<span class="dv">2</span>, y, lab[o], <span class="at">las =</span> <span class="dv">1</span>, <span class="at">cex.axis =</span> <span class="fl">0.7</span>)</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>}</span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>t1 <span class="ot">&lt;-</span> d[d<span class="sc">$</span>indicator <span class="sc">==</span> d<span class="sc">$</span>indicator[<span class="dv">1</span>], ]</span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="fu">ci_plot</span>(t1, t1<span class="sc">$</span>group, t1<span class="sc">$</span>indicator[<span class="dv">1</span>])</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

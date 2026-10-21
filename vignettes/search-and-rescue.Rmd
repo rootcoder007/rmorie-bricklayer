@@ -3,7 +3,7 @@ title: "Search and rescue: detection, coverage and the best use of effort"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Search and rescue: detection, coverage and the best use of effort}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

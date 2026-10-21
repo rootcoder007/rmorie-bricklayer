@@ -1,0 +1,806 @@
+<!-- rmoriebricklayer vignette source sha256: 2c65dcc92a035a42bf5c4f0d45d5785607014770f81ab00bcef3e65db87097ec -->
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Air pollution: dispersion, health burden, equity, and the footprint of the computation</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Air pollution: dispersion, health burden,
+equity, and the footprint of the computation</h1>
+
+
+
+<p>Three questions about air pollution recur in administrative and
+public-health work: where does a plume go, how many deaths does a
+concentration imply, and who bears it. A fourth has become part of
+reproducible research: what did the computation itself cost in
+electricity and carbon. This vignette walks the four tools, each with
+the formula it implements and the paper it comes from, on small offline
+examples.</p>
+<div id="where-the-plume-goes" class="section level2">
+<h2>1. Where the plume goes</h2>
+<div id="dispersion-coefficients" class="section level3">
+<h3>Dispersion coefficients</h3>
+<p>The Gaussian plume model needs the horizontal and vertical spread of
+the plume as a function of downwind distance and atmospheric stability.
+Pasquill’s stability classes A (very unstable) to F (very stable) with
+Briggs’s (1973) curve fits are the standard parameterisation; rural and
+urban coefficients differ because cities are rougher and warmer.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">pgsig</span>(<span class="dv">1000</span>, <span class="st">&quot;D&quot;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="co">#&gt; $sigmay</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co">#&gt; [1] 76.27701</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co">#&gt; $sigmaz</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co">#&gt; [1] 37.94733</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="fu">pgsig</span>(<span class="dv">1000</span>, <span class="st">&quot;D&quot;</span>, <span class="at">set =</span> <span class="st">&quot;urban&quot;</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="co">#&gt; $sigmay</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co">#&gt; [1] 135.2247</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co">#&gt; $sigmaz</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co">#&gt; [1] 122.7881</span></span></code></pre></div>
+</div>
+<div id="plume-rise" class="section level3">
+<h3>Plume rise</h3>
+<p>A hot, fast stack gas rises before it levels off. Briggs’s plume-rise
+equations give the buoyancy flux, the final rise and the distance at
+which it is reached; before that distance the plume is still rising:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>r <span class="ot">&lt;-</span> <span class="fu">briggs</span>(<span class="fu">c</span>(<span class="dv">100</span>, <span class="dv">500</span>, <span class="dv">2000</span>), <span class="at">u =</span> <span class="dv">4</span>, <span class="at">diam =</span> <span class="dv">1</span>, <span class="at">exitvel =</span> <span class="dv">12</span>,</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>                       <span class="at">stktmp =</span> <span class="dv">420</span>, <span class="at">ambtmp =</span> <span class="dv">285</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>r<span class="sc">$</span>flux</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; [1] 9.45594</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>r<span class="sc">$</span>finalrise</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; [1] 28.88281</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>r<span class="sc">$</span>rise</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt; [1] 18.22335 28.88281 28.88281</span></span></code></pre></div>
+</div>
+<div id="ground-level-concentration" class="section level3">
+<h3>Ground-level concentration</h3>
+<p>With the effective height (stack height plus rise), the plume
+equation gives the concentration at any receptor; ground reflection is
+included, and a mixing lid adds image terms. Concentration first rises
+with distance as the plume reaches the ground, then falls as it
+dilutes:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">200</span>, <span class="dv">5000</span>, <span class="at">by =</span> <span class="dv">100</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>h <span class="ot">&lt;-</span> <span class="dv">30</span> <span class="sc">+</span> r<span class="sc">$</span>finalrise</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>cd <span class="ot">&lt;-</span> <span class="fu">gplume</span>(<span class="at">q =</span> <span class="dv">100</span>, <span class="at">u =</span> <span class="dv">4</span>, <span class="at">h =</span> h, <span class="at">rcpt =</span> <span class="fu">cbind</span>(x, <span class="dv">0</span>, <span class="dv">0</span>), <span class="at">stab =</span> <span class="st">&quot;D&quot;</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>cb <span class="ot">&lt;-</span> <span class="fu">gplume</span>(<span class="at">q =</span> <span class="dv">100</span>, <span class="at">u =</span> <span class="dv">4</span>, <span class="at">h =</span> h, <span class="at">rcpt =</span> <span class="fu">cbind</span>(x, <span class="dv">0</span>, <span class="dv">0</span>), <span class="at">stab =</span> <span class="st">&quot;B&quot;</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">plot</span>(x, cd, <span class="at">type =</span> <span class="st">&quot;l&quot;</span>, <span class="at">xlab =</span> <span class="st">&quot;downwind distance (m)&quot;</span>, <span class="at">ylab =</span> <span class="st">&quot;concentration (g/m^3)&quot;</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">&quot;Ground-level centreline concentration&quot;</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="fu">lines</span>(x, cb, <span class="at">col =</span> <span class="dv">2</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">&quot;topright&quot;</span>, <span class="fu">c</span>(<span class="st">&quot;class D (neutral)&quot;</span>, <span class="st">&quot;class B (unstable)&quot;</span>), <span class="at">col =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">lty =</span> <span class="dv">1</span>, <span class="at">bty =</span> <span class="st">&quot;n&quot;</span>)</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<p><code>gspuff()</code> is the instantaneous-release counterpart;
+<code>advdif2d()</code> and <code>lagrprt()</code> are grid and particle
+models for cases the Gaussian assumptions (steady wind, flat terrain) do
+not fit. The particle model is deterministic from its seed and takes any
+normal generator through <code>normals=</code>, so another package’s
+random stream can be reproduced exactly.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">lagrprt</span>(<span class="at">n =</span> <span class="dv">500</span>, <span class="at">x0 =</span> <span class="dv">0</span>, <span class="at">y0 =</span> <span class="dv">0</span>, <span class="at">u =</span> <span class="dv">1</span>, <span class="at">v =</span> <span class="dv">0</span>, <span class="at">kx =</span> <span class="fl">0.5</span>, <span class="at">ky =</span> <span class="fl">0.5</span>,</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>                          <span class="at">dt =</span> <span class="dv">1</span>, <span class="at">nsteps =</span> <span class="dv">50</span>, <span class="at">seed =</span> <span class="dv">1</span>, <span class="at">grid =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>, <span class="sc">-</span><span class="dv">30</span>, <span class="dv">30</span>, <span class="dv">20</span>, <span class="dv">12</span>))</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="fu">c</span>(<span class="at">mean_x =</span> p<span class="sc">$</span>mean_x, <span class="at">meany =</span> p<span class="sc">$</span>meany)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt;       mean_x        meany </span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; 49.981881150  0.009562424</span></span></code></pre></div>
+</div>
+</div>
+<div id="from-concentration-to-deaths" class="section level2">
+<h2>2. From concentration to deaths</h2>
+<div id="concentration-response" class="section level3">
+<h3>Concentration-response</h3>
+<p>The relative risk of death at an ambient concentration, relative to a
+counterfactual concentration below which no excess risk is assumed. The
+all-cause PM2.5 function is log-linear with the pooled cohort estimate
+of the WHO 2021 guideline review, RR 1.08 per 10 µg/m³ (Chen and Hoek
+2020); NO2 uses RR 1.02 per 10 µg/m³ (Huangfu and Atkinson 2020). The
+cause-specific PM2.5 functions are the Integrated Exposure-Response
+curves of Burnett et al. (2014), which saturate at high
+concentrations:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">crfpm25</span>(<span class="dv">12</span>)<span class="sc">$</span>rr</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; [1] 1.048873</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">exp</span>(<span class="fu">log</span>(<span class="fl">1.08</span>) <span class="sc">*</span> (<span class="dv">12</span> <span class="sc">-</span> <span class="fl">5.8</span>) <span class="sc">/</span> <span class="dv">10</span>)          <span class="co"># the same, by hand</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; [1] 1.048873</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="fu">crfpm25</span>(<span class="dv">12</span>, <span class="at">y =</span> <span class="st">&quot;ihd&quot;</span>)<span class="sc">$</span>rr</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; [1] 1.553634</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="fu">crfno2</span>(<span class="dv">25</span>)<span class="sc">$</span>rr</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; [1] 1.03015</span></span></code></pre></div>
+<p>A vector of exposures gives the mean RR and keeps the per-unit
+values:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>v <span class="ot">&lt;-</span> <span class="fu">crfpm25</span>(<span class="fu">c</span>(<span class="dv">6</span>, <span class="dv">10</span>, <span class="dv">15</span>, <span class="dv">22</span>))</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>v<span class="sc">$</span>rr</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; [1] 1.060136</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>v<span class="sc">$</span>extra<span class="sc">$</span>rrperunit</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt; [1] 1.001540 1.032852 1.073371 1.132782</span></span></code></pre></div>
+</div>
+<div id="attributable-fraction-and-avoided-deaths" class="section level3">
+<h3>Attributable fraction and avoided deaths</h3>
+<p>Levin’s population attributable fraction turns a relative risk and an
+exposure prevalence into the share of deaths the exposure accounts for;
+the BenMAP health-impact function gives the deaths avoided by a
+counterfactual reduction:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">attrfrac</span>(<span class="fu">crfno2</span>(<span class="dv">25</span>)<span class="sc">$</span>rr, <span class="at">expoprev =</span> <span class="dv">1</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt; [1] 0.02926711</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">mortdisp</span>(<span class="at">expdel =</span> <span class="dv">10</span>, <span class="at">pop =</span> <span class="fl">1e6</span>, <span class="at">brate =</span> <span class="fl">0.008</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>                    <span class="at">betaperunit =</span> <span class="fu">log</span>(<span class="fl">1.02</span>) <span class="sc">/</span> <span class="dv">10</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt; [1] 156.8627</span></span></code></pre></div>
+</div>
+<div id="the-burden-chain" class="section level3">
+<h3>The burden chain</h3>
+<p><code>polbrdn()</code> chains concentration-response, attributable
+fraction and the baseline case count, as the Global Burden of Disease
+risk-factor estimates do:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">polbrdn</span>(<span class="at">expomean =</span> <span class="dv">25</span>, <span class="at">expoprev =</span> <span class="dv">1</span>, <span class="at">brate =</span> <span class="fl">0.008</span>,</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>                      <span class="at">pop =</span> <span class="fl">1e6</span>, <span class="at">poll =</span> <span class="st">&quot;NO2&quot;</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">c</span>(<span class="at">rr =</span> b<span class="sc">$</span>extra<span class="sc">$</span>rr, <span class="at">paf =</span> b<span class="sc">$</span>paf, <span class="at">attributable =</span> b<span class="sc">$</span>attrcases)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt;           rr          paf attributable </span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt;   1.03014950   0.02926711 234.13691783</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>b<span class="sc">$</span>citation</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Huangfu &amp; Atkinson (2020) Environ Int 144:105998; WHO (2021) Global AQ Guidelines; Rothman et al. (2008) section 5&quot;</span></span></code></pre></div>
+<p>Per area, sorted worst first:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>areas <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">fsa =</span> <span class="fu">c</span>(<span class="st">&quot;M6H&quot;</span>, <span class="st">&quot;M5V&quot;</span>, <span class="st">&quot;M4W&quot;</span>, <span class="st">&quot;M1B&quot;</span>), <span class="at">exposure =</span> <span class="fu">c</span>(<span class="dv">28</span>, <span class="dv">18</span>, <span class="dv">15</span>, <span class="dv">24</span>),</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>                    <span class="at">population =</span> <span class="fu">c</span>(<span class="dv">40000</span>, <span class="dv">60000</span>, <span class="dv">25000</span>, <span class="dv">70000</span>), <span class="at">brate =</span> <span class="fl">0.008</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">polbrdarea</span>(areas)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt;   fsa exposure population brate       rr         paf attrcases basecases</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; 1 M1B       24      70000 0.008 1.028112 0.027342904 15.312026       560</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; 2 M6H       28      40000 0.008 1.036288 0.035016937 11.205420       320</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; 3 M5V       18      60000 0.008 1.015968 0.015717276  7.544292       480</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; 4 M4W       15      25000 0.008 1.009950 0.009852457  1.970491       200</span></span></code></pre></div>
+</div>
+</div>
+<div id="who-bears-it" class="section level2">
+<h2>3. Who bears it</h2>
+<p>The concentration index of Wagstaff, Paci and van Doorslaer (1991)
+measures whether exposure concentrates among lower- or higher-income
+people: it is twice the covariance of exposure with the fractional
+income rank, divided by mean exposure. Negative means the poor bear
+more.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">exposure =</span> <span class="fu">c</span>(<span class="dv">30</span>, <span class="dv">27</span>, <span class="dv">22</span>, <span class="dv">18</span>, <span class="dv">14</span>), <span class="at">income =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>e <span class="ot">&lt;-</span> <span class="fu">expconcidx</span>(d, <span class="st">&quot;exposure&quot;</span>, <span class="st">&quot;income&quot;</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>e<span class="sc">$</span>concidx</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; [1] -0.1477477</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>e<span class="sc">$</span>interpretation</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; [1] &quot;CI = -0.1477. Pro-poor exposure burden: lower-income individuals bear disproportionately higher pollution.&quot;</span></span></code></pre></div>
+</div>
+<div id="estimating-the-exposure-effect-from-your-own-data" class="section level2">
+<h2>4. Estimating the exposure effect from your own data</h2>
+<p>When individual or area data with confounders are available, the
+partially linear model of Chernozhukov et al. (2018) estimates the
+exposure effect with cross-fitted nuisance functions, so the confounder
+adjustment cannot overfit the same rows it is evaluated on.
+<code>exprspplr()</code> adds a percentile bootstrap for a sensitivity
+interval. The default estimator uses ordinary-least-squares nuisances;
+any estimator with the same interface can be passed.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">300</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>sim <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">income =</span> <span class="fu">rnorm</span>(n), <span class="at">density =</span> <span class="fu">rnorm</span>(n))</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>sim<span class="sc">$</span>no2 <span class="ot">&lt;-</span> <span class="dv">20</span> <span class="sc">-</span> <span class="dv">2</span> <span class="sc">*</span> sim<span class="sc">$</span>income <span class="sc">+</span> <span class="dv">3</span> <span class="sc">*</span> sim<span class="sc">$</span>density <span class="sc">+</span> <span class="fu">rnorm</span>(n)</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>sim<span class="sc">$</span>asthmarate <span class="ot">&lt;-</span> <span class="dv">5</span> <span class="sc">+</span> <span class="fl">0.3</span> <span class="sc">*</span> sim<span class="sc">$</span>no2 <span class="sc">-</span> <span class="fl">0.5</span> <span class="sc">*</span> sim<span class="sc">$</span>income <span class="sc">+</span> <span class="fu">rnorm</span>(n)</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">exprspplr</span>(sim, <span class="at">y =</span> <span class="st">&quot;asthmarate&quot;</span>, <span class="at">expo =</span> <span class="st">&quot;no2&quot;</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>                             <span class="at">confs =</span> <span class="fu">c</span>(<span class="st">&quot;income&quot;</span>, <span class="st">&quot;density&quot;</span>), <span class="at">nboot =</span> <span class="dv">30</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="fu">c</span>(<span class="at">ate =</span> fit<span class="sc">$</span>ate, <span class="at">lower =</span> fit<span class="sc">$</span>cilobs, <span class="at">upper =</span> fit<span class="sc">$</span>ciupbs)</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt;       ate     lower     upper </span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt; 0.2464713 0.1437978 0.3132657</span></span></code></pre></div>
+<p>The true coefficient is 0.3 and the interval covers it.</p>
+</div>
+<div id="the-whole-pipeline-with-an-assumption-log" class="section level2">
+<h2>5. The whole pipeline, with an assumption log</h2>
+<p><code>vrfpol()</code> runs the chain end to end and records every
+assumption it checked, so a report says not only the number but the
+conditions under which it holds. Synthetic demo data stand in here:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>r <span class="ot">&lt;-</span> <span class="fu">vrfpol</span>(<span class="st">&quot;no2&quot;</span>, <span class="at">demo =</span> <span class="cn">TRUE</span>, <span class="at">reg =</span> <span class="st">&quot;demo&quot;</span>, <span class="at">years =</span> <span class="st">&quot;2024&quot;</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>r<span class="sc">$</span>status</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;ok&quot;</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">polrpttxt</span>(r))</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; ==================================================================</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt;   verify-pollution -- NO2 -&gt; allcause</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt;   region: demo</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt;   years:  2024</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt;   data:   demo (synthetic)</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; ==================================================================</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt; Inputs</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt;   exposure mean:      24.261</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt;   exposure prevalence:0.981</span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co">#&gt;   baseline rate/100k: 500.00</span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co">#&gt;   population:         1,000,000</span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="co">#&gt;   reference conc:     10</span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a><span class="co">#&gt; Assumption log</span></span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a><span class="co">#&gt;   [PASS] exposure finite and non-negative -- mean 24.26113743 vs ref 10</span></span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a><span class="co">#&gt;   [PASS] exposure within the concentration-response range (at most 10,000 ug/m3) -- exposure_mean=24.26114</span></span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a><span class="co">#&gt;   [PASS] prevalence in [0,1] -- exposure_prevalence=0.981</span></span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a><span class="co">#&gt;   [PASS] brate finite: zero, or between 1 and 10,000 per 100k -- brate=500 per 100k per year</span></span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a><span class="co">#&gt;   [PASS] population finite, positive and at most 10 billion -- population=1,000,000</span></span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="co">#&gt;   [PASS] reference finite and non-negative -- reference=10</span></span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a><span class="co">#&gt;   [PASS] pollutant supported by the CRFs -- Current CRFs: NO2 (log-linear), PM2.5 (log-linear all-cause; Burnett IER for IHD and stroke). Other pollutants reject.</span></span>
+<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a><span class="co">#&gt; Concentration-response</span></span>
+<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a><span class="co">#&gt;   RR:       1.0286</span></span>
+<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a><span class="co">#&gt;   source:   Huangfu &amp; Atkinson (2020) Environ Int 144:105998; WHO (2021) Global AQ Guidelines</span></span>
+<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a><span class="co">#&gt; Attributable fraction (PAF): 0.0273  (95% CI 0.0138 to 0.0534, from the risk&#39;s limits)</span></span>
+<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a><span class="co">#&gt; Mortality displaced</span></span>
+<span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a><span class="co">#&gt;   expected avoided deaths: 136.6</span></span>
+<span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a><span class="co">#&gt; Burden of pollution</span></span>
+<span id="cb12-38"><a href="#cb12-38" tabindex="-1"></a><span class="co">#&gt;   attributable deaths:   136.7</span></span>
+<span id="cb12-39"><a href="#cb12-39" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-40"><a href="#cb12-40" tabindex="-1"></a><span class="co">#&gt; Equity analysis</span></span>
+<span id="cb12-41"><a href="#cb12-41" tabindex="-1"></a><span class="co">#&gt;   concentration index: -0.0647</span></span>
+<span id="cb12-42"><a href="#cb12-42" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-43"><a href="#cb12-43" tabindex="-1"></a><span class="co">#&gt; STATUS: ok</span></span></code></pre></div>
+<p>An input that violates an assumption stops the pipeline and says why,
+with a non-zero exit status for scripts (a negative exposure here); an
+exposure at or below the reference is a valid run with zero attributable
+cases, and a call with no exposure data at all is an error, not a clean
+zero:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>bad <span class="ot">&lt;-</span> <span class="fu">vrfpol</span>(<span class="st">&quot;pm25&quot;</span>, <span class="at">expomean =</span> <span class="sc">-</span><span class="dv">3</span>, <span class="at">expoprev =</span> <span class="fl">0.5</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>bad<span class="sc">$</span>status</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;assumption_failure&quot;</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="fu">attr</span>(bad, <span class="st">&quot;exitstat&quot;</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>none <span class="ot">&lt;-</span> <span class="fu">vrfpol</span>(<span class="st">&quot;pm25&quot;</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>none<span class="sc">$</span>status</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt; [1] &quot;error&quot;</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="fu">attr</span>(none, <span class="st">&quot;exitstat&quot;</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span></code></pre></div>
+<p>A CSV with an <code>exposure</code> column (and optionally
+<code>income</code>) replaces the demo data; a NAPS pull with
+<code>value</code> in ppb is converted to µg/m³ at 1.88 for NO2.</p>
+</div>
+<div id="what-did-this-computation-cost" class="section level2">
+<h2>6. What did this computation cost?</h2>
+<p>Computation uses electricity, and electricity has a carbon intensity.
+<code>co2fp()</code> reports both for any expression, two ways. On Linux
+with readable RAPL counters it <em>measures</em> the CPU package energy,
+as codecarbon does. Everywhere else it <em>models</em> energy with the
+Green Algorithms formula (Lannelongue, Grealey and Inouye 2021), <span class="math inline">\(E = t\,(P_{cpu} u + M \cdot
+0.3725\,\mathrm{W/GB})\,PUE\)</span>. Every default that stood in for a
+measurement is listed:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">raplok</span>()</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>fp <span class="ot">&lt;-</span> <span class="fu">co2fp</span>(<span class="fu">sum</span>(<span class="fu">sqrt</span>(<span class="fu">seq_len</span>(<span class="fl">3e5</span>))), <span class="at">loc =</span> <span class="st">&quot;CA-ON&quot;</span>, <span class="at">cpupwrw =</span> <span class="dv">45</span>,</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>                        <span class="at">memgb =</span> <span class="dv">16</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="fu">print</span>(fp)</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co">#&gt; Computation footprint (modelled): 0.004 s wall, 0.004 s CPU, utilisation 0.12 (process) on 8 cores</span></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt;   energy: 1.29e-08 kWh (cpu 6.25e-09, memory 6.62e-09)</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt;   CO2e:   1.17e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)</span></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>fp<span class="sc">$</span>assumptions</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt; character(0)</span></span></code></pre></div>
+<div id="utilisation-measured-per-process-or-per-machine" class="section level3">
+<h3>Utilisation: measured, per process or per machine</h3>
+<p>The Green Algorithms calculator asks the user for the utilisation
+<span class="math inline">\(u\)</span> and defaults to 1; codecarbon
+measures it in one of two tracking modes. <code>co2fp()</code> measures
+it too, in the same two ways. <code>usage = &quot;process&quot;</code> (the
+default) is this R process’s own CPU time, children included, over wall
+time and cores, so an idle wait is not charged as computation.
+<code>usage = &quot;machine&quot;</code> is the whole machine’s busy share over
+the run, read from <code>/proc/stat</code> on Linux, for the case where
+the computation is all the machine is doing or the question is what the
+machine drew; where there is no <code>/proc/stat</code> the process
+figure is used and the assumptions say so. A number fixes it, as the
+calculator does. <code>loadcur</code> chooses how power follows
+utilisation: linearly (Green Algorithms) or along codecarbon’s curves, a
+10% floor for a process and <span class="math inline">\(0.1 +
+0.9u^3\)</span> for a machine, so a figure can be made comparable with
+either tool:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>busy <span class="ot">&lt;-</span> <span class="cf">function</span>() <span class="fu">sum</span>(<span class="fu">sqrt</span>(<span class="fu">seq_len</span>(<span class="fl">2e5</span>)))</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>a <span class="ot">&lt;-</span> <span class="fu">co2fp</span>(<span class="fu">busy</span>(), <span class="at">loc =</span> <span class="st">&quot;CA-ON&quot;</span>, <span class="at">cpupwrw =</span> <span class="dv">45</span>, <span class="at">memgb =</span> <span class="dv">16</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">co2fp</span>(<span class="fu">busy</span>(), <span class="at">loc =</span> <span class="st">&quot;CA-ON&quot;</span>, <span class="at">cpupwrw =</span> <span class="dv">45</span>, <span class="at">memgb =</span> <span class="dv">16</span>,</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>                       <span class="at">usage =</span> <span class="st">&quot;machine&quot;</span>, <span class="at">loadcur =</span> <span class="st">&quot;codecarbon&quot;</span>)</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="fu">rbind</span>(<span class="at">prolin =</span> <span class="fu">c</span>(<span class="at">usage =</span> a<span class="sc">$</span>usage, <span class="at">cpukwh =</span> a<span class="sc">$</span>enekwh<span class="sc">$</span>cpu),</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>      <span class="at">maccod =</span> <span class="fu">c</span>(<span class="at">usage =</span> b<span class="sc">$</span>usage, <span class="at">cpukwh =</span> b<span class="sc">$</span>enekwh<span class="sc">$</span>cpu))</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co">#&gt;            usage       cpukwh</span></span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt; prolin 0.1250000 3.125000e-09</span></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="co">#&gt; maccod 0.1111111 3.796296e-09</span></span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a>b<span class="sc">$</span>usagemode</span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co">#&gt; [1] &quot;machine&quot;</span></span></code></pre></div>
+</div>
+<div id="the-grid-the-latest-year-every-country-offline" class="section level3">
+<h3>The grid: the latest year, every country, offline</h3>
+<p>The carbon intensity comes from a table bundled with the package, so
+nothing is fetched and it works in any country: every country at the
+latest year Our World in Data publishes from Ember’s yearly electricity
+data (2024 or 2025 at this release for all but a few grids whose latest
+row is older, Ukraine’s 2022 among them; every row carries its year),
+sub-national zones from Electricity Maps’ 2024 yearly data as
+redistributed by Green Algorithms (Canadian provinces, US balancing
+authorities, Australian states, Indian and Japanese regions, …), and the
+world average. Each row carries its year and source, so a report can
+cite them. A location is matched by code, alpha-3 code or name; an
+unknown zone falls back to its country and says so; a number of your own
+is accepted when you have a better figure:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">co2int</span>(<span class="st">&quot;CA-ON&quot;</span>)[<span class="fu">c</span>(<span class="st">&quot;g_per_kwh&quot;</span>, <span class="st">&quot;year&quot;</span>, <span class="st">&quot;source&quot;</span>)]</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="co">#&gt; $g_per_kwh</span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="co">#&gt; [1] 90.97</span></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="co">#&gt; $year</span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="co">#&gt; [1] 2024</span></span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a><span class="co">#&gt; $source</span></span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Electricity Maps (2025). Canada 2024 Yearly Carbon Intensity Data (Version January 27, 2025). Electricity Maps (via Green Algorithms data v3.1)&quot;</span></span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a><span class="fu">co2int</span>(<span class="st">&quot;Kenya&quot;</span>)[<span class="fu">c</span>(<span class="st">&quot;location&quot;</span>, <span class="st">&quot;g_per_kwh&quot;</span>, <span class="st">&quot;year&quot;</span>)]</span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a><span class="co">#&gt; $location</span></span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a><span class="co">#&gt; [1] &quot;KE&quot;</span></span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a><span class="co">#&gt; $g_per_kwh</span></span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a><span class="co">#&gt; [1] 95.44</span></span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a><span class="co">#&gt; $year</span></span>
+<span id="cb16-18"><a href="#cb16-18" tabindex="-1"></a><span class="co">#&gt; [1] 2025</span></span>
+<span id="cb16-19"><a href="#cb16-19" tabindex="-1"></a><span class="fu">co2int</span>(<span class="st">&quot;CA-XX&quot;</span>)<span class="sc">$</span>note</span>
+<span id="cb16-20"><a href="#cb16-20" tabindex="-1"></a><span class="co">#&gt; [1] &quot;no row for zone CA-XX; its country CA used&quot;</span></span>
+<span id="cb16-21"><a href="#cb16-21" tabindex="-1"></a>tab <span class="ot">&lt;-</span> <span class="fu">co2inttab</span>()</span>
+<span id="cb16-22"><a href="#cb16-22" tabindex="-1"></a><span class="fu">nrow</span>(tab)</span>
+<span id="cb16-23"><a href="#cb16-23" tabindex="-1"></a><span class="co">#&gt; [1] 378</span></span>
+<span id="cb16-24"><a href="#cb16-24" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">nchar</span>(tab<span class="sc">$</span>location) <span class="sc">==</span> <span class="dv">2</span>, tab<span class="sc">$</span>year)[, <span class="fu">c</span>(<span class="st">&quot;2024&quot;</span>, <span class="st">&quot;2025&quot;</span>)]</span>
+<span id="cb16-25"><a href="#cb16-25" tabindex="-1"></a><span class="co">#&gt;        </span></span>
+<span id="cb16-26"><a href="#cb16-26" tabindex="-1"></a><span class="co">#&gt;         2024 2025</span></span>
+<span id="cb16-27"><a href="#cb16-27" tabindex="-1"></a><span class="co">#&gt;   FALSE  155    3</span></span>
+<span id="cb16-28"><a href="#cb16-28" tabindex="-1"></a><span class="co">#&gt;   TRUE   125   91</span></span></code></pre></div>
+<p>With <code>location = NULL</code> (the default) the location is
+detected offline, in order, from the <code>RMBL_LOCATION</code>
+environment variable, codecarbon’s
+<code>CODECARBON_COUNTRY_ISO_CODE</code>, the system time zone
+(<code>America/Toronto</code> is Canada, <code>Asia/Kolkata</code>
+India) and the locale, and the detection is written into the
+assumptions; when nothing is found the world average is used and the
+result says so, so one country’s grid is never silently applied to
+another’s computation:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">dtctloc</span>()</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="co">#&gt; $location</span></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;US&quot;</span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="co">#&gt; $method</span></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a><span class="co">#&gt; [1] &quot;system time zone America/New_York&quot;</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="fu">dtctloc</span>(<span class="at">envloc =</span> <span class="st">&quot;&quot;</span>, <span class="at">codloc =</span> <span class="st">&quot;&quot;</span>, <span class="at">tz =</span> <span class="st">&quot;Asia/Kolkata&quot;</span>)</span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a><span class="co">#&gt; $location</span></span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a><span class="co">#&gt; [1] &quot;IN&quot;</span></span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a><span class="co">#&gt; $method</span></span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a><span class="co">#&gt; [1] &quot;system time zone Asia/Kolkata&quot;</span></span>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a><span class="fu">co2fp</span>(<span class="dv">1</span> <span class="sc">+</span> <span class="dv">1</span>, <span class="at">cpupwrw =</span> <span class="dv">45</span>, <span class="at">memgb =</span> <span class="dv">16</span>)<span class="sc">$</span>assumptions[<span class="dv">1</span>]</span>
+<span id="cb17-14"><a href="#cb17-14" tabindex="-1"></a><span class="co">#&gt; [1] &quot;location US via system time zone America/New_York&quot;</span></span></code></pre></div>
+<p>For a long analysis the figures become meaningful; the equivalents
+are the two the Green Algorithms calculator prints:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">fpeqv</span>(fp<span class="sc">$</span>co2eg <span class="sc">*</span> <span class="fl">1e4</span>)   <span class="co"># if this ran ten thousand times</span></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="co">#&gt; $carkm</span></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="co">#&gt; [1] 6.691349e-05</span></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="co">#&gt; $treemon</span></span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="co">#&gt; [1] 1.276975e-05</span></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="co">#&gt; $sources</span></span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a><span class="co">#&gt;                                                                  car </span></span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a><span class="co">#&gt; &quot;175 gCO2/km, European passenger car (Green Algorithms context.csv)&quot; </span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a><span class="co">#&gt;                                                                 tree </span></span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a><span class="co">#&gt;             &quot;917 gCO2 per tree-month (Green Algorithms context.csv)&quot;</span></span></code></pre></div>
+<p><strong>Cross-checked against codecarbon.</strong> On the same
+8-second CPU-bound workload with the same forced inputs (65 W CPU, 16 GB
+at 0.3725 W/GB), codecarbon 3.3.1 and <code>co2fp()</code> charged the
+memory identically (5.96 W) and the CPU within 8%;
+<code>loadcur = &quot;codecarbon&quot;</code> reproduces codecarbon’s
+power-from-load curves, so what remains of the difference is the load
+measurement itself (codecarbon samples it during the run, this function
+integrates the CPU time). The carbon intensity they applied to Canada
+differed (170 g/kWh from codecarbon’s 2023 Our World in Data figure;
+190.7 g/kWh from the 2025 figure bundled here), which is the point of
+carrying the year with every row: grid intensities move, and a report
+should cite the year of the one it used. CodeCarbonR on CRAN wraps the
+same Python tracker through reticulate; this function needs no Python
+and no network.</p>
+<p><strong>What this does and does not cover.</strong> The measured mode
+reads the CPU packages only; memory, storage, network and GPU are not in
+the RAPL counters (GPU power needs the vendor library; this package has
+no GPU dependency). The modelled mode inherits Green Algorithms’
+assumptions: memory draws 0.3725 W/GB regardless of how it is populated
+(codecarbon v3 moved to a per-DIMM heuristic for the same reason), and
+the grid intensity is an annual average, not the hour’s. Embodied
+emissions of the hardware are excluded, as in both reference tools. The
+place to improve a figure is the inputs: a measured <code>cpupwrw</code>
+for your CPU, the actual <code>memgb</code> your job used, the data
+centre’s <code>pue</code>, and, if you have it, the hour’s carbon
+intensity passed as a number.</p>
+</div>
+</div>
+<div id="first-nations-métis-and-inuit-populations" class="section level2">
+<h2>First Nations, Métis and Inuit populations</h2>
+<p>The 2021 Census gives the populations a burden estimate needs. The
+bundled Indigenous Population Profile excerpt has them by province and
+territory; the concentrations below are scenarios (the WHO 2021
+guideline of 5 µg/m³ against 8 and 12 µg/m³), not measurements of any
+community.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>cp <span class="ot">&lt;-</span> <span class="fu">indiex</span>(<span class="st">&quot;censuspop&quot;</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>tot <span class="ot">&lt;-</span> cp[cp<span class="sc">$</span>GEO_LEVEL <span class="sc">!=</span> <span class="st">&quot;Country&quot;</span> <span class="sc">&amp;</span> cp<span class="sc">$</span>AGE_GROUP <span class="sc">==</span> <span class="st">&quot;Total - Age groups&quot;</span> <span class="sc">&amp;</span></span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>            cp<span class="sc">$</span>RESIDENCE <span class="sc">==</span> <span class="st">&quot;Total - Residence on or off reserve&quot;</span> <span class="sc">&amp;</span></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>            <span class="fu">grepl</span>(<span class="st">&quot;^Total - Average age&quot;</span>, cp<span class="sc">$</span>CHARACTERISTIC_NAME), ]</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>pop <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">setNames</span>(tot<span class="sc">$</span>FIRST_NATIONS, tot<span class="sc">$</span>GEO_NAME)</span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a><span class="fu">head</span>(pop[<span class="fu">order</span>(<span class="sc">-</span>pop)], <span class="dv">5</span>)</span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a><span class="co">#&gt;          Ontario British Columbia          Alberta         Manitoba </span></span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a><span class="co">#&gt;           251030           180085           145640           134890 </span></span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a><span class="co">#&gt;     Saskatchewan </span></span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a><span class="co">#&gt;           121175</span></span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a><span class="co"># relative risk of all-cause mortality from PM2.5, and the share of deaths attributable to</span></span>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a><span class="co"># the excess above the guideline if the whole population breathes the scenario level</span></span>
+<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a><span class="fu">sapply</span>(<span class="fu">c</span>(<span class="dv">8</span>, <span class="dv">12</span>), <span class="cf">function</span>(conc) {</span>
+<span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a>  rr <span class="ot">&lt;-</span> <span class="fu">crfpm25</span>(conc, <span class="at">refconc =</span> <span class="dv">5</span>)<span class="sc">$</span>rr</span>
+<span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a>  <span class="fu">c</span>(<span class="at">pm25 =</span> conc, <span class="at">rr =</span> rr, <span class="at">attributable =</span> <span class="fu">attrfrac</span>(rr, <span class="dv">1</span>))</span>
+<span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a>})</span>
+<span id="cb19-17"><a href="#cb19-17" tabindex="-1"></a><span class="co">#&gt;                    [,1]       [,2]</span></span>
+<span id="cb19-18"><a href="#cb19-18" tabindex="-1"></a><span class="co">#&gt; pm25         8.00000000 12.0000000</span></span>
+<span id="cb19-19"><a href="#cb19-19" tabindex="-1"></a><span class="co">#&gt; rr           1.02335691  1.0553503</span></span>
+<span id="cb19-20"><a href="#cb19-20" tabindex="-1"></a><span class="co">#&gt; attributable 0.02282382  0.0524473</span></span></code></pre></div>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<p>Briggs (1973). Diffusion estimation for small emissions. ATDL 79.
+Briggs (1975). Plume rise predictions. AMS. Burnett et al. (2014). An
+integrated risk function for estimating the global burden of disease
+attributable to ambient fine particulate matter exposure. <em>EHP</em>
+122(4). Chen, Hoek (2020). Long-term exposure to PM and all-cause and
+cause-specific mortality. <em>Environment International</em> 143.
+Chernozhukov et al. (2018). Double/debiased machine learning.
+<em>Econometrics Journal</em> 21(1). Huangfu, Atkinson (2020). Long-term
+exposure to NO2 and O3 and all-cause and respiratory mortality.
+<em>Environment International</em> 144. Lannelongue, Grealey, Inouye
+(2021). Green Algorithms: quantifying the carbon footprint of
+computation. <em>Advanced Science</em> 8(12), 2100707. Ember (2026).
+Yearly Electricity Data, via Our World in Data, <a href="https://ourworldindata.org/grapher/carbon-intensity-electricity" class="uri">https://ourworldindata.org/grapher/carbon-intensity-electricity</a>.
+Electricity Maps (2025). 2024 Yearly Carbon Intensity Data, via Green
+Algorithms data v3.1. Levin (1953). The occurrence of lung cancer in
+man. <em>Acta Unio Internationalis Contra Cancrum</em> 9. Wagstaff,
+Paci, van Doorslaer (1991). On the measurement of inequalities in
+health. <em>Social Science and Medicine</em> 33(5). WHO (2021). Global
+Air Quality Guidelines.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

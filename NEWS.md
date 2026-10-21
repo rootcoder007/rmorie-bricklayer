@@ -13,6 +13,7 @@
 * README: three examples used 0.5.x argument names (`anltab(period =, rounding =)`, `recrd(observed =, expected =, synthetic =)`, `wrsmrytxt(what_was_done =)`) and one read a renamed field (`$any_drift`, now `$anydrft`, which printed NULL); every R block of the README now runs as written.
 * Help pages: quoted words and phrases use `\dQuote{}`, so the PDF manual prints an opening and a closing quotation mark instead of two closing ones, and quoted values are in code font (`\code{"mean"}`). A percent sign written in a help page's text no longer cuts off the rest of its line (in 11 pages, for example the 50% rule in `?cnsprof`, which read "50\" and stopped).
 * Spelling: US spelling throughout ("optimized", "renormalized", "victimized"), code names in code font, and the technical terms in `inst/WORDLIST`; `spelling::spell_check_package()` finds nothing.
+* The vignettes ship built: each vignette's HTML (with every figure) and R code sit beside its source and are made by `dev/build_vignettes.R`, which stamps each HTML with the SHA-256 of its source (a test fails when a source has changed since). A small vignette engine returns them as they are, so R CMD check no longer reruns the analyses while the source, the R code and the HTML are all still listed with each vignette.
 * Every vignette now draws its results: the 21 that had no figure gain one or more, drawn with the package's own `plot()` methods and plot helpers from the objects each vignette builds.
 
 ## A dashboard, distributions and proof ledgers

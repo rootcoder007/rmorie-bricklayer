@@ -3,7 +3,7 @@ title: "Evaluating a policy from administrative panels"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Evaluating a policy from administrative panels}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

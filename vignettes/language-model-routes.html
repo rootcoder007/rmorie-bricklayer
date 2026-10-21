@@ -1,0 +1,569 @@
+<!-- rmoriebricklayer vignette source sha256: dcdce77bcecc7f5cd3191c0623702dcd2135384285a70159faf9419f47127e51 -->
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Language models (your own key) and the signed services document</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Language models (your own key) and the
+signed services document</h1>
+
+
+
+<p><code>llmask()</code> sends a question to a language model and
+returns the answer. You bring the model: a key for a provider you
+already use, a model on your own machine, or a server of your own.
+Nothing is sent anywhere you did not set up, and the package runs no
+model service of its own. This vignette explains the routes, how the
+model is given the packages’ help, and what the package will and will
+not do on the network.</p>
+<div id="the-route-order" class="section level2">
+<h2>The route order</h2>
+<ol style="list-style-type: decimal">
+<li><strong>An endpoint of your own</strong>:
+<code>MORIE_LLM_BASE_URL</code> (with <code>MORIE_LLM_API_KEY</code> and
+<code>MORIE_LLM_MODEL</code>), any OpenAI-compatible server (LM Studio,
+vLLM, llama.cpp’s <code>llama-server</code>, a company gateway). Taken
+when configured, not probed.</li>
+<li><strong>A provider whose key is set</strong>, in the order
+<code>llmprvd()</code> lists them: OpenAI, Anthropic, Google Gemini,
+OpenRouter, Groq, Together AI, Fireworks AI, DeepSeek, Mistral, xAI,
+Cerebras, Perplexity, Hugging Face, OpenCode Zen, Cohere and NVIDIA.
+Each reads its usual variable (<code>OPENAI_API_KEY</code>,
+<code>ANTHROPIC_API_KEY</code>, <code>GEMINI_API_KEY</code>, …) or a key
+saved with <code>llmcfg(anthropic.key = ...)</code>; the model is
+<code>MORIE_&lt;PROVIDER&gt;_MODEL</code> or
+<code>&lt;provider&gt;.model</code>. Anthropic’s Messages API and
+Gemini’s <code>generateContent</code> are spoken natively; the others
+are OpenAI-compatible.</li>
+<li><strong>Ollama</strong> at <code>OLLAMA_HOST</code> (default
+<code>localhost:11434</code>), on this machine or another, once its
+server is running (<code>ollama serve</code>, the Ollama app, or the
+system service its Linux installer sets up) and has a model
+(<code>ollama pull NAME</code>), or Ollama’s own cloud API
+(<code>ollama.url = https://ollama.com</code> with your
+<code>ollama.key</code>); <code>OLLAMA_HOST=off</code> disables the
+probe. Its first listed model is the default.</li>
+</ol>
+<p><code>route = &quot;anthropic&quot;</code> (or
+<code>rmbl config set route anthropic</code>) takes one route only.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">llmprvd</span>()[, <span class="fu">c</span>(<span class="st">&quot;id&quot;</span>, <span class="st">&quot;label&quot;</span>, <span class="st">&quot;key_env&quot;</span>)]</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="co">#&gt;             id         label            key_env</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co">#&gt; 1       openai        OpenAI     OPENAI_API_KEY</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co">#&gt; 2    anthropic     Anthropic  ANTHROPIC_API_KEY</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co">#&gt; 3       gemini Google Gemini     GEMINI_API_KEY</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co">#&gt; 4   openrouter    OpenRouter OPENROUTER_API_KEY</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt; 5         groq          Groq       GROQ_API_KEY</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="co">#&gt; 6     together   Together AI   TOGETHER_API_KEY</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co">#&gt; 7    fireworks  Fireworks AI  FIREWORKS_API_KEY</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co">#&gt; 8     deepseek      DeepSeek   DEEPSEEK_API_KEY</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co">#&gt; 9      mistral       Mistral    MISTRAL_API_KEY</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co">#&gt; 10         xai           xAI        XAI_API_KEY</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="co">#&gt; 11    cerebras      Cerebras   CEREBRAS_API_KEY</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co">#&gt; 12  perplexity    Perplexity PERPLEXITY_API_KEY</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="co">#&gt; 13 huggingface  Hugging Face           HF_TOKEN</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="co">#&gt; 14    opencode  OpenCode Zen   OPENCODE_API_KEY</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a><span class="co">#&gt; 15      cohere        Cohere     COHERE_API_KEY</span></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="co">#&gt; 16      nvidia    NVIDIA NIM     NVIDIA_API_KEY</span></span></code></pre></div>
+<p><code>llmstat()</code> reports what is available from this machine.
+With the local route off the call reaches no network:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>old <span class="ot">&lt;-</span> <span class="fu">Sys.getenv</span>(<span class="st">&quot;OLLAMA_HOST&quot;</span>, <span class="at">unset =</span> <span class="cn">NA</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">OLLAMA_HOST =</span> <span class="st">&quot;off&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">llmstat</span>()</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt;             route   status</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt; 1    own endpoint  not set</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; 2 other providers   no key</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt; 3    local Ollama disabled</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt;                                                                                                                                                                                                                                                                                                                                                                                                                                              detail</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt; 1                                                                                                                                                                                                                                                                                                                                                           MORIE_LLM_BASE_URL (+ MORIE_LLM_API_KEY, MORIE_LLM_MODEL): any OpenAI-compatible server</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt; 2 openai (OPENAI_API_KEY), anthropic (ANTHROPIC_API_KEY), gemini (GEMINI_API_KEY), openrouter (OPENROUTER_API_KEY), groq (GROQ_API_KEY), together (TOGETHER_API_KEY), fireworks (FIREWORKS_API_KEY), deepseek (DEEPSEEK_API_KEY), mistral (MISTRAL_API_KEY), xai (XAI_API_KEY), cerebras (CEREBRAS_API_KEY), perplexity (PERPLEXITY_API_KEY), huggingface (HF_TOKEN), opencode (OPENCODE_API_KEY), cohere (COHERE_API_KEY), nvidia (NVIDIA_API_KEY)</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt; 3                                                                                                                                                                                                                                                                                                                                                                                                                                   OLLAMA_HOST=off</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.na</span>(old)) <span class="fu">Sys.unsetenv</span>(<span class="st">&quot;OLLAMA_HOST&quot;</span>) <span class="cf">else</span> <span class="fu">Sys.setenv</span>(<span class="at">OLLAMA_HOST =</span> old)</span></code></pre></div>
+</div>
+<div id="asking-with-the-packages-help-at-hand" class="section level2">
+<h2>Asking, with the packages’ help at hand</h2>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">llmask</span>(<span class="st">&quot;How do I estimate a weighted proportion with bootstrap replicate weights?&quot;</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">llmask</span>(<span class="fu">paste</span>(<span class="fu">c</span>(<span class="st">&quot;Summarise this table:&quot;</span>, <span class="fu">capture.output</span>(<span class="fu">print</span>(<span class="fu">head</span>(mtcars)))),</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>                         <span class="at">collapse =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>),</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>                   <span class="at">syspro =</span> <span class="st">&quot;Answer in two sentences.&quot;</span>, <span class="at">docs =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>With <code>docs = TRUE</code> (the default) the model is told every
+function of the MORIE packages installed here (rmoriebricklayer, and
+rmoriedata and rmorie when present), read from their installed help, and
+gets five tools it can call: <code>search_docs</code> (a search over
+every help page), <code>get_help</code>, <code>get_examples</code>,
+<code>list_datasets</code> and <code>get_vignette</code>. It reads the
+pages it needs before it writes code. A model that does not take tools
+gets the pages nearest the question in its prompt instead. The tools
+only read help; nothing the model says is run.</p>
+<p>How much of the help goes into the prompt follows what the model can
+take in:</p>
+<ul>
+<li>a provider’s model, a model Ollama serves from its cloud
+(<code>minimax-m3:cloud</code> reports a 512,000-token context) and a
+remote server of your own get the whole index of functions, full help
+pages and up to six rounds of lookups;</li>
+<li>a model Ollama runs on this machine works in Ollama’s context window
+(4,096 tokens unless the server was started with
+<code>OLLAMA_CONTEXT_LENGTH</code>), so it gets the functions nearest
+the question, shorter pages and fewer rounds; a server of your own on
+this machine gets a middle size;</li>
+<li><code>MORIE_LLM_CONTEXT</code> (tokens) says what your model takes,
+whatever the route.</li>
+</ul>
+<p>Every size can still reach every function: <code>search_docs</code>
+and <code>get_help</code> look up any page.</p>
+<p><code>agentbndl()</code> asks over the same routes, with the bundle
+task added, and with no route it returns the setup hint
+(<code>rmbl bundle</code> exits 1).</p>
+</div>
+<div id="the-signed-services-document" class="section level2">
+<h2>The signed services document</h2>
+<p>The data service’s addresses and its sign-in service are
+<strong>not</strong> hard-coded in the package. They come from a
+document at
+<code>https://rmorie.com/.well-known/morie-services.json</code>, signed
+with ML-DSA-44 under a key pinned in the package, so the endpoints can
+change without a release while no one but the project can change them. A
+copy ships with the package as the fallback and the floor:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fu">svcs</span>(<span class="at">offline =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>s<span class="sc">$</span>data<span class="sc">$</span>mode</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;key&quot;</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="fu">attr</span>(s, <span class="st">&quot;source&quot;</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; [1] &quot;bundled&quot;</span></span></code></pre></div>
+<p>What the verifier enforces, each with a test:</p>
+<ul>
+<li>the signature must verify under the pinned key, or the document is
+ignored;</li>
+<li>a validly signed but <strong>older</strong> document than the
+bundled copy is refused: a retired document in a cache (or served live)
+can never pin the endpoint a key would be sent to;</li>
+<li>the cache serves only when it is newer than the bundled document,
+and an older cache is deleted;</li>
+<li>a mirror without a <code>.json</code> suffix finds its
+<code>.sig</code>; <code>MORIE_SERVICES_URL</code> names a mirror.</li>
+</ul>
+</div>
+<div id="what-the-package-will-not-do-on-the-network" class="section level2">
+<h2>What the package will not do on the network</h2>
+<p>The 0.5.8 to 0.5.10 reviews closed every bypass of the transport and
+these rules now hold for every byte the package sends or receives:</p>
+<ul>
+<li>An endpoint of your own is either the loopback host, a literal
+private LAN address (<code>10/8</code>, <code>172.16/12</code>,
+<code>192.168/16</code>, <code>fc00::/7</code>, for an LM Studio or vLLM
+box on your own network) over plain http, or a public https address.
+Link-local addresses and host names over plain http are refused, and a
+redirect from a remote origin into the loopback interface is
+refused.</li>
+<li>Request headers do not follow a redirect to another origin (scheme,
+host or effective port) unless they are content negotiation;
+<code>Authorization</code>, <code>X-Api-Key</code> and the rest stay
+with the first origin.</li>
+<li><strong>Keys are redacted by value</strong>: a gateway’s error text
+has the key that was sent, any <code>Bearer</code> token and any
+<code>sk-</code> key removed before it becomes an R condition.</li>
+<li>Bytes a server sent are parsed as text, never as a second
+address.</li>
+<li>A download under 64 bytes/s for 30 s is ended. A model call is not:
+a model may think for a minute before its first byte, so a call has one
+deadline, the <code>timeout</code> (120 s), a conversation with
+help-page lookups three times that, and Ctrl-C ends the wait at once
+without sending the prompt again. An in-memory reply past 16 MiB is
+dropped; the services document and JSON fetches cap at 1 MiB and 16
+MiB.</li>
+<li>The sign-in service’s <code>verification_uri</code> is opened in a
+browser only when it is a public https address.</li>
+</ul>
+</div>
+<div id="the-data-key" class="section level2">
+<h2>The data key</h2>
+<p>Signing in is for the curated tables at <code>data.rmorie.com</code>
+only; it is never a language model.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">dlogin</span>(<span class="at">token =</span> <span class="st">&quot;&lt;key issued at https://www.rmorie.com/access/&gt;&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">dlogin</span>()          <span class="co"># or: GitHub device flow / emailed code</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">dlogout</span>()         <span class="co"># forget the key</span></span></code></pre></div>
+<p>The key is stored with mode 0600 in the user’s configuration
+directory and never written anywhere else. <code>rmbl doctor</code> says
+whether one is stored.</p>
+</div>
+<div id="from-the-command-line" class="section level2">
+<h2>From the command line</h2>
+<p>The same routes serve the CLI installed by
+<code>instcli()</code>:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config setup       <span class="co"># pick a provider, paste its key (saved privately), pick a model</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor             <span class="co"># the routes, and the one ask takes</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models <span class="at">--route</span> anthropic</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="st">&quot;what does cpsbndl() cover?&quot;</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--route</span> ollama <span class="at">--model</span> gemma3:4b <span class="st">&quot;how do I verify a capsule?&quot;</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--token</span>      <span class="co"># the data key: paste it when asked; it never sits in the shell history</span></span></code></pre></div>
+</div>
+<div id="asking-about-the-indigenous-tables" class="section level2">
+<h2>Asking about the Indigenous tables</h2>
+<p>With a route set up, a question can name the package’s Indigenous
+data; the model answers with the functions to call (this needs a model,
+so it is not run here):</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">llmask</span>(<span class="fu">paste</span>(<span class="st">&quot;How do I compare perceived mental health of First Nations,&quot;</span>,</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>                         <span class="st">&quot;Metis and Inuit adults with non-Indigenous adults, using&quot;</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>                         <span class="st">&quot;indiex(&#39;health_indicators&#39;)?&quot;</span>))</span></code></pre></div>
+</div>
+<div id="the-providers-in-a-picture" class="section level2">
+<h2>The providers in a picture</h2>
+<p>The routes above are drawn from the provider table
+<code>llmprvd()</code>. The bars count the providers by the shape of
+request each one takes; every OpenAI-compatible provider shares one
+request builder.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>pv <span class="ot">&lt;-</span> <span class="fu">llmprvd</span>()</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">barplot</span>(<span class="fu">table</span>(pv<span class="sc">$</span>api), <span class="at">col =</span> <span class="fu">blpal</span>()[<span class="dv">1</span>], <span class="at">ylab =</span> <span class="st">&quot;providers&quot;</span>, <span class="at">main =</span> <span class="st">&quot;Providers by request shape&quot;</span>)</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

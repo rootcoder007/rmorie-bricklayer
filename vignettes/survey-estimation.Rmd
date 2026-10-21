@@ -3,7 +3,7 @@ title: "Complex survey estimation"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Complex survey estimation}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

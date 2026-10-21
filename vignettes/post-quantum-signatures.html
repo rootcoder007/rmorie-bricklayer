@@ -1,0 +1,629 @@
+<!-- rmoriebricklayer vignette source sha256: b422a73e863a70fca012c1407576361b01e51d5b2b902f43928fbee597cc369e -->
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Post-quantum signatures: ML-DSA, SLH-DSA and XMSS</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Post-quantum signatures: ML-DSA, SLH-DSA
+and XMSS</h1>
+
+
+
+<p>A capsule is only as trustworthy as the signature on its manifest.
+<code>rmoriebricklayer</code> implements the three NIST post-quantum
+signature standards natively, with no system cryptography library:
+<strong>ML-DSA</strong> (FIPS 204, lattice-based),
+<strong>SLH-DSA</strong> (FIPS 205, hash-based, stateless) and
+<strong>XMSS</strong> (RFC 8391, hash-based, stateful). All three are
+used through the same two calls, <code>cpssign()</code> and
+<code>cpsvrf()</code>.</p>
+<div id="why-post-quantum-and-why-three-schemes" class="section level2">
+<h2>Why post-quantum, and why three schemes</h2>
+<p>A signature made today may need to verify in twenty years, when a
+large quantum computer could break RSA and ECDSA with Shor’s algorithm.
+The three schemes rest on different assumptions, so a break of one does
+not take the others:</p>
+<ul>
+<li><strong>ML-DSA</strong> (Module-Lattice Digital Signature Algorithm,
+formerly Dilithium) rests on the hardness of Module-LWE and Module-SIS.
+Small keys and signatures, fast. The default.</li>
+<li><strong>SLH-DSA</strong> (Stateless Hash-based, formerly SPHINCS+)
+rests only on the security of a hash function. Conservative; its
+signatures are large.</li>
+<li><strong>XMSS</strong> is also hash-based but <em>stateful</em>:
+every key signs a fixed number of times and an index must never be
+reused. The package carries the state forward for you.</li>
+</ul>
+</div>
+<div id="ml-dsa-the-default" class="section level2">
+<h2>ML-DSA: the default</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>key <span class="ot">&lt;-</span> <span class="fu">fipskg</span>(<span class="st">&quot;ML-DSA-65&quot;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>key<span class="sc">$</span>scheme</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;ML-DSA-65&quot;</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>sig <span class="ot">&lt;-</span> <span class="fu">cpssign</span>(<span class="st">&quot;a manifest digest&quot;</span>, key)</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="st">&quot;a manifest digest&quot;</span>, sig, <span class="fu">fipspubkey</span>(key))</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>The verifier needs only the public key. Any change to the message is
+caught:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="st">&quot;a manifest digest (edited)&quot;</span>, sig, <span class="fu">fipspubkey</span>(key))</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+<div id="context-strings-bind-a-signature-to-its-purpose" class="section level3">
+<h3>Context strings bind a signature to its purpose</h3>
+<p>FIPS 204 lets a signature carry a <em>context</em>: a short string
+hashed in with the message. The same message signed for one purpose does
+not verify under another, which stops a signature made for “staging”
+being replayed as a “release” approval:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>sig2 <span class="ot">&lt;-</span> <span class="fu">cpssign</span>(<span class="st">&quot;a manifest digest&quot;</span>, key, <span class="at">ctx =</span> <span class="st">&quot;release&quot;</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="st">&quot;a manifest digest&quot;</span>, sig2, key, <span class="at">ctx =</span> <span class="st">&quot;release&quot;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="st">&quot;a manifest digest&quot;</span>, sig2, key, <span class="at">ctx =</span> <span class="st">&quot;staging&quot;</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+</div>
+<div id="hedged-and-deterministic-signing" class="section level3">
+<h3>Hedged and deterministic signing</h3>
+<p>By default ML-DSA signing is <em>hedged</em>: fresh randomness enters
+every signature, so two signatures of one message differ (FIPS 204
+recommends this; it also protects against fault attacks on the nonce).
+<code>deterministic = TRUE</code> gives the variant where the signature
+depends only on the key and the message:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>s1 <span class="ot">&lt;-</span> <span class="fu">cpssign</span>(<span class="st">&quot;same message&quot;</span>, key, <span class="at">determ =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>s2 <span class="ot">&lt;-</span> <span class="fu">cpssign</span>(<span class="st">&quot;same message&quot;</span>, key, <span class="at">determ =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="fu">identical</span>(s1<span class="sc">$</span>signature, s2<span class="sc">$</span>signature)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>h1 <span class="ot">&lt;-</span> <span class="fu">cpssign</span>(<span class="st">&quot;same message&quot;</span>, key)</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>h2 <span class="ot">&lt;-</span> <span class="fu">cpssign</span>(<span class="st">&quot;same message&quot;</span>, key)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="fu">identical</span>(h1<span class="sc">$</span>signature, h2<span class="sc">$</span>signature)</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+</div>
+<div id="signing-a-digest-computed-elsewhere" class="section level3">
+<h3>Signing a digest computed elsewhere</h3>
+<p>ML-DSA signs <code>mu = H(tr || M&#39;)</code>, a digest of the message
+that depends on the public key but not on the secret.
+<code>fipsmu()</code> computes it from the <em>public</em> key, so the
+machine holding the secret never needs to see the message:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>mu <span class="ot">&lt;-</span> <span class="fu">fipsmu</span>(<span class="fu">fipspubkey</span>(key), <span class="st">&quot;a manifest digest&quot;</span>, <span class="at">ctx =</span> <span class="st">&quot;release&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>sig3 <span class="ot">&lt;-</span> <span class="fu">fipssignmu</span>(key, mu)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">fipsvrfmu</span>(key, mu, sig3)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co"># the same signature verifies the ordinary way</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="st">&quot;a manifest digest&quot;</span>, sig3, key, <span class="at">ctx =</span> <span class="st">&quot;release&quot;</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>Since 0.5.10, ML-DSA signing runs <strong>first-order masked</strong>
+by default (see the <em>Side-channel assurance</em> vignette): every
+secret-dependent value is held as two random shares. The signatures are
+byte-identical to the unmasked computation; only the cost differs.</p>
+</div>
+</div>
+<div id="slh-dsa-hash-based-stateless" class="section level2">
+<h2>SLH-DSA: hash-based, stateless</h2>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">fipssz</span>(<span class="st">&quot;ML-DSA-65&quot;</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt; public_key secret_key  signature       seed        rnd </span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt;       1952       4032       3309         32         32</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="fu">fipssz</span>(<span class="st">&quot;SLH-DSA-SHAKE-128f&quot;</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt; public_key secret_key  signature       seed        rnd </span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt;         32         64      17088         48         16</span></span></code></pre></div>
+<p>The price of dropping the lattice assumption is size: an SLH-DSA
+signature is far larger than an ML-DSA signature at the same security
+level.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">fipssz</span>(<span class="st">&quot;SLH-DSA-SHAKE-128f&quot;</span>)[[<span class="st">&quot;signature&quot;</span>]] <span class="sc">&gt;</span> <span class="fu">fipssz</span>(<span class="st">&quot;ML-DSA-44&quot;</span>)[[<span class="st">&quot;signature&quot;</span>]]</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>The calls are identical:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>hkey <span class="ot">&lt;-</span> <span class="fu">fipskg</span>(<span class="st">&quot;SLH-DSA-SHAKE-128f&quot;</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>hsig <span class="ot">&lt;-</span> <span class="fu">cpssign</span>(<span class="st">&quot;a manifest digest&quot;</span>, hkey)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="st">&quot;a manifest digest&quot;</span>, hsig, <span class="fu">fipspubkey</span>(hkey))</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<div id="pre-hash-variants" class="section level3">
+<h3>Pre-hash variants</h3>
+<p>HashML-DSA and HashSLH-DSA sign a digest of the message instead of
+the message itself, for very large inputs or when the message is hashed
+on another machine. The hash function’s OID is bound into the signature,
+so two digests of the same length never verify for each other:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">cpssign</span>(<span class="st">&quot;a large artifact&quot;</span>, key, <span class="at">prehash =</span> <span class="st">&quot;sha512&quot;</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="st">&quot;a large artifact&quot;</span>, p, key, <span class="at">prehash =</span> <span class="st">&quot;sha512&quot;</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="st">&quot;a large artifact&quot;</span>, p, key, <span class="at">prehash =</span> <span class="st">&quot;sha3_512&quot;</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+</div>
+</div>
+<div id="xmss-hash-based-stateful" class="section level2">
+<h2>XMSS: hash-based, stateful</h2>
+<p>An XMSS key of height <em>h</em> signs 2^h messages. The package
+stores the next index in the key and
+<code>xmssadv(key, signature)</code> gives the advanced key after every
+signature; reusing an index would break security, so always advance the
+key with <code>xmssadv()</code> and save that:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>xkey <span class="ot">&lt;-</span> <span class="fu">pqckg</span>(<span class="at">height =</span> <span class="dv">3</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>xkey<span class="sc">$</span>capacity</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#&gt; [1] 8</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>xkey<span class="sc">$</span>next_index</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>s1 <span class="ot">&lt;-</span> <span class="fu">cpssign</span>(<span class="st">&quot;manifest-1&quot;</span>, xkey)</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="st">&quot;manifest-1&quot;</span>, s1, <span class="fu">signpubkey</span>(xkey))</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>xkey <span class="ot">&lt;-</span> <span class="fu">xmssadv</span>(xkey, s1)</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>xkey<span class="sc">$</span>next_index</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>s2 <span class="ot">&lt;-</span> <span class="fu">cpssign</span>(<span class="st">&quot;manifest-2&quot;</span>, xkey)</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="st">&quot;manifest-2&quot;</span>, s2, <span class="fu">signpubkey</span>(xkey))</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="co"># a signature does not transfer to another message</span></span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="st">&quot;manifest-1&quot;</span>, s2, <span class="fu">signpubkey</span>(xkey))</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+<p>The key is a value, so an old copy of it still says an old
+<code>next_index</code>. The package therefore also keeps a record of
+the highest index each key has used on this machine
+(<code>?xmssadv</code> says where), and refuses a used index even from a
+stale copy. A key generated here is entered at birth; a key from another
+machine, one rebuilt from its seeds, or one used in a CI job or a
+container with a fresh home directory is unknown to the record and must
+be vouched for once with <code>xmssregkey(key)</code> before it signs
+from index 0.</p>
+<div id="the-key-file-is-the-state" class="section level3">
+<h3>The key file is the state</h3>
+<p>RFC 10033 (<em>Hash-Based Signatures: State and Backup
+Management</em>) separates the private key, which never changes, from
+the state, the indices already used, which must be updated and saved
+before a signature is released, and warns that a copied or restored
+state signs used indices again. <code>rmbl sign</code> follows it: with
+<code>--scheme xmss-sha256 --key-file key.json</code> the key file is
+the state. It is rewritten atomically, with <code>next_index</code>
+advanced and a <code>used</code> field, before any bundle is written,
+and the run signs from the indices it reserved.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>root <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="st">&quot;capsules-&quot;</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="cf">for</span> (nm <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;one&quot;</span>, <span class="st">&quot;two&quot;</span>)) {</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  d <span class="ot">&lt;-</span> <span class="fu">file.path</span>(root, nm)</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="fu">dir.create</span>(d, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  utils<span class="sc">::</span><span class="fu">write.csv</span>(<span class="fu">data.frame</span>(<span class="at">x =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>), <span class="fu">file.path</span>(d, <span class="st">&quot;data.csv&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>  <span class="fu">writeLines</span>(<span class="st">&#39;{&quot;resource&quot;: {&quot;filename&quot;: &quot;data.csv&quot;}}&#39;</span>, <span class="fu">file.path</span>(d, <span class="st">&quot;data_provenance.json&quot;</span>))</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>}</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>kf <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.json&quot;</span>)</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="fu">writeLines</span>(<span class="fu">tojs</span>(<span class="fu">unclass</span>(<span class="fu">pqckg</span>(<span class="at">height =</span> <span class="dv">4</span>)), <span class="at">auto_unbox =</span> <span class="cn">TRUE</span>), kf)</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>copy <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.json&quot;</span>)</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="fu">invisible</span>(<span class="fu">file.copy</span>(kf, copy))   <span class="co"># an old copy of the key, kept by mistake</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>status <span class="ot">&lt;-</span> <span class="fu">blcli</span>(<span class="fu">c</span>(<span class="st">&quot;sign&quot;</span>, root, <span class="st">&quot;--scheme&quot;</span>, <span class="st">&quot;xmss-sha256&quot;</span>, <span class="st">&quot;--key-file&quot;</span>, kf, <span class="st">&quot;--json&quot;</span>),</span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a>                <span class="at">out =</span> <span class="cf">function</span>(s) <span class="cn">NULL</span>)</span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a>status</span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a>state <span class="ot">&lt;-</span> <span class="fu">fromjs</span>(<span class="fu">paste</span>(<span class="fu">readLines</span>(kf), <span class="at">collapse =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>))</span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a>state<span class="sc">$</span>next_index                <span class="co"># two capsules signed, two indices used</span></span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a><span class="co">#&gt; [1] 2</span></span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a>state<span class="sc">$</span>used<span class="sc">$</span>generation</span>
+<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a></span>
+<span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a><span class="co"># the old copy is refused: the bundles show indices it does not know are used</span></span>
+<span id="cb11-24"><a href="#cb11-24" tabindex="-1"></a><span class="fu">blcli</span>(<span class="fu">c</span>(<span class="st">&quot;sign&quot;</span>, root, <span class="st">&quot;--scheme&quot;</span>, <span class="st">&quot;xmss-sha256&quot;</span>, <span class="st">&quot;--key-file&quot;</span>, copy, <span class="st">&quot;--overwrite&quot;</span>),</span>
+<span id="cb11-25"><a href="#cb11-25" tabindex="-1"></a>      <span class="at">out =</span> <span class="cf">function</span>(s) <span class="fu">cat</span>(s[<span class="fu">grepl</span>(<span class="st">&quot;stale&quot;</span>, s)]))</span>
+<span id="cb11-26"><a href="#cb11-26" tabindex="-1"></a><span class="co">#&gt; rmoriebricklayer: stale copy of the key: index 1 of it was already signed (seen in /tmp/RtmpEGQiOP/capsules-de3571bb2618e/two/capsule_bundle.json), but this state says the highest used in its range is -1. Signing would reuse an index: use the copy that made that signature, or generate a new key</span></span>
+<span id="cb11-27"><a href="#cb11-27" tabindex="-1"></a><span class="fu">xmssidxseen</span>(root)[, <span class="fu">c</span>(<span class="st">&quot;index&quot;</span>, <span class="st">&quot;reused&quot;</span>)]</span>
+<span id="cb11-28"><a href="#cb11-28" tabindex="-1"></a><span class="co">#&gt;   index reused</span></span>
+<span id="cb11-29"><a href="#cb11-29" tabindex="-1"></a><span class="co">#&gt; 1     0  FALSE</span></span>
+<span id="cb11-30"><a href="#cb11-30" tabindex="-1"></a><span class="co">#&gt; 2     1  FALSE</span></span></code></pre></div>
+<p><code>--state-file</code> keeps the state in a file of its own.
+<code>--sectors K --sector-index I</code> splits the indices into K
+disjoint ranges so that K signers can share one key, each in its own
+range (RFC 10033, section 5.3), and <code>--reserve N</code> marks N
+indices used in one write and signs from them (section 5.9; the ones a
+run does not use are lost). A key kept as a CI secret is a fixed copy
+that every job starts from, so every job would sign the same indices: in
+CI, sign with ML-DSA unless the XMSS state lives in a file that persists
+between jobs. NIST SP 800-208 approves XMSS only inside a hardware
+module that never exports the key, which a key file is not.</p>
+</div>
+</div>
+<div id="every-way-of-being-wrong-returns-false" class="section level2">
+<h2>Every way of being wrong returns FALSE</h2>
+<p>Verification returns <code>FALSE</code> for every signature of the
+right shape that does not verify: a truncated or edited signature, a
+foreign key and an edited message all fail the same way. (An object that
+is not a signature at all, a key of the wrong class or a missing message
+is an error, because that is a programming mistake rather than a
+tampered artefact.)</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>pub <span class="ot">&lt;-</span> <span class="fu">fipspubkey</span>(key)</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>bad <span class="ot">&lt;-</span> sig</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>bad<span class="sc">$</span>signature <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;ff&quot;</span>, <span class="fu">substring</span>(bad<span class="sc">$</span>signature, <span class="dv">3</span>))</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="st">&quot;a manifest digest&quot;</span>, bad, pub)</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>trunc <span class="ot">&lt;-</span> sig</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>trunc<span class="sc">$</span>signature <span class="ot">&lt;-</span> <span class="fu">substring</span>(sig<span class="sc">$</span>signature, <span class="dv">1</span>, <span class="dv">64</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="st">&quot;a manifest digest&quot;</span>, trunc, pub)</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="fu">cpsvrf</span>(<span class="st">&quot;a manifest digest&quot;</span>, sig, <span class="fu">fipspubkey</span>(<span class="fu">fipskg</span>(<span class="st">&quot;ML-DSA-65&quot;</span>)))</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+</div>
+<div id="how-these-implementations-are-checked" class="section level2">
+<h2>How these implementations are checked</h2>
+<p>ML-DSA and SLH-DSA are compared byte for byte with OpenSSL 3.5 and
+run against the NIST ACVP and C2SP Wycheproof vector sets on every
+change (6,848 checks, 0 failures at 0.5.10), and fuzzed differentially
+against OpenSSL; XMSS, which OpenSSL does not implement, is checked
+against the RFC 8391 vectors. Every signer runs under valgrind with the
+secret key marked undefined, a dynamic check that no executed branch or
+memory address depends on it. <code>SECURITY.md</code> in the package
+repository has the full table of what each check catches and what it
+does not.</p>
+</div>
+<div id="signing-a-release-of-indigenous-tables" class="section level2">
+<h2>Signing a release of Indigenous tables</h2>
+<p>A signature lets anyone check that a release came from its publisher
+and has not changed:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>key <span class="ot">&lt;-</span> <span class="fu">fipskg</span>(<span class="st">&quot;ML-DSA-65&quot;</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">indiex</span>(<span class="st">&quot;mentalhealth&quot;</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>msg <span class="ot">&lt;-</span> <span class="fu">dgstobj</span>(d)</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>sig <span class="ot">&lt;-</span> <span class="fu">cpssign</span>(msg, key)</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="fu">cpsvrf</span>(msg, sig, <span class="fu">fipspubkey</span>(key))</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+</div>
+<div id="the-sizes-in-a-picture" class="section level2">
+<h2>The sizes in a picture</h2>
+<p>What a signature costs on the wire, from <code>fipssz()</code>: the
+public key a verifier keeps and the signature attached to each release,
+in bytes, for ML-DSA and two SLH-DSA sets. The scale is logarithmic,
+because an SLH-DSA signature is several times larger.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>sch <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;ML-DSA-44&quot;</span>, <span class="st">&quot;ML-DSA-65&quot;</span>, <span class="st">&quot;ML-DSA-87&quot;</span>, <span class="st">&quot;SLH-DSA-SHA2-128f&quot;</span>, <span class="st">&quot;SLH-DSA-SHAKE-128s&quot;</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>sz <span class="ot">&lt;-</span> <span class="fu">t</span>(<span class="fu">vapply</span>(sch, <span class="cf">function</span>(s) <span class="fu">fipssz</span>(s)[<span class="fu">c</span>(<span class="st">&quot;public_key&quot;</span>, <span class="st">&quot;signature&quot;</span>)], <span class="fu">numeric</span>(<span class="dv">2</span>)))</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>op <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">9</span>, <span class="dv">5</span>, <span class="dv">3</span>, <span class="dv">1</span>))</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="fu">barplot</span>(<span class="fu">t</span>(sz), <span class="at">beside =</span> <span class="cn">TRUE</span>, <span class="at">log =</span> <span class="st">&quot;y&quot;</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">2</span> <span class="sc">*</span> <span class="fu">max</span>(sz)), <span class="at">col =</span> <span class="fu">blpal</span>()[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>],</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>        <span class="at">ylab =</span> <span class="st">&quot;bytes (log scale)&quot;</span>, <span class="at">las =</span> <span class="dv">2</span>, <span class="at">cex.names =</span> <span class="fl">0.8</span>, <span class="at">legend.text =</span> <span class="fu">c</span>(<span class="st">&quot;public key&quot;</span>, <span class="st">&quot;signature&quot;</span>),</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>        <span class="at">args.legend =</span> <span class="fu">list</span>(<span class="at">x =</span> <span class="st">&quot;topleft&quot;</span>, <span class="at">bty =</span> <span class="st">&quot;n&quot;</span>), <span class="at">main =</span> <span class="st">&quot;Key and signature sizes&quot;</span>)</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt; Warning in yinch(0.1): y log scale: yinch() is nonsense</span></span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">par</span>(op)</span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

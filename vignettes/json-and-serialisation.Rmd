@@ -3,7 +3,7 @@ title: "JSON without jsonlite: parsing, encoding and exact serialisation"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{JSON without jsonlite: parsing, encoding and exact serialisation}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

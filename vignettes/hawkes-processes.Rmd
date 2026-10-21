@@ -3,7 +3,7 @@ title: "Hawkes processes: self-exciting event series"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Hawkes processes: self-exciting event series}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

@@ -3,7 +3,7 @@ title: "Statistics for a published administrative table"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Statistics for a published administrative table}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

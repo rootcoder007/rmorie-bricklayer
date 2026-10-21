@@ -3,7 +3,7 @@ title: "Side-channel assurance: constant time, timing tests, masking and simulat
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Side-channel assurance: constant time, timing tests, masking and simulated power analysis}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

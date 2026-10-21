@@ -3,7 +3,7 @@ title: "Your first capsule: a published table, analysed and recorded"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Your first capsule: a published table, analysed and recorded}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

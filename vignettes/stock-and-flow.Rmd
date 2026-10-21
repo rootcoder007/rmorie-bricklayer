@@ -3,7 +3,7 @@ title: "Stock and flow: population, admissions and length of stay"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Stock and flow: population, admissions and length of stay}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

@@ -3,7 +3,7 @@ title: "Small-area rates: expected counts, shrinkage, funnels and spatial autoco
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Small-area rates: expected counts, shrinkage, funnels and spatial autocorrelation}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

@@ -3,7 +3,7 @@ title: "Hashing, keyed digests, key derivation and Merkle trees"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Hashing, keyed digests, key derivation and Merkle trees}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 

@@ -3,7 +3,7 @@ title: "Causal effects with cross-fitted double machine learning"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Causal effects with cross-fitted double machine learning}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{rmoriebricklayer::prebuilt}
   %\VignetteEncoding{UTF-8}
 ---
 
