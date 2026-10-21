@@ -82,7 +82,7 @@ the method).
 p <- polex()
 # the reform was assigned to four regions: four clusters
 wcb(p, "district", "month", "crmrate", "reformed",
-                       cl = "region", wtype = "webb", reps = 299,
+                       cl = "region", wtype = "webb", reps = 99,
                        seed = 1)
 }
 \references{

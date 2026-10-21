@@ -742,7 +742,7 @@ plot.rmbl_synthdid <- function(x, ..., main = NULL, col = NULL, palette = NULL) 
 #' p <- polex()
 #' # the reform was assigned to four regions: four clusters
 #' wcb(p, "district", "month", "crmrate", "reformed",
-#'                        cl = "region", wtype = "webb", reps = 299,
+#'                        cl = "region", wtype = "webb", reps = 99,
 #'                        seed = 1)
 #' @export
 wcb <- function(data, unit, time, y, trtd, covs = NULL, cl = NULL,

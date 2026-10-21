@@ -246,7 +246,7 @@
 #' @examples
 #' set.seed(1)
 #' x <- stats::rgamma(300, shape = 2, rate = 0.5)
-#' f <- dstfit(x, nboot = 50)
+#' f <- dstfit(x, nboot = 20)
 #' f
 #' f$fits$gamma
 #'
