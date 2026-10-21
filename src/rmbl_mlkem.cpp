@@ -57,17 +57,15 @@
 #undef MLKEM_DV
 
 /* The sizes FIPS 203 table 3 fixes, asserted at compile time. */
-#define RMBL_STATIC_ASSERT(cond, tag) \
-    typedef char rmbl_mlkem_static_assert_##tag[(cond) ? 1 : -1]
-RMBL_STATIC_ASSERT(rmbl_mlkem512::kEkBytes == 800, ek512);
-RMBL_STATIC_ASSERT(rmbl_mlkem512::kDkBytes == 1632, dk512);
-RMBL_STATIC_ASSERT(rmbl_mlkem512::kCtBytes == 768, ct512);
-RMBL_STATIC_ASSERT(rmbl_mlkem768::kEkBytes == 1184, ek768);
-RMBL_STATIC_ASSERT(rmbl_mlkem768::kDkBytes == 2400, dk768);
-RMBL_STATIC_ASSERT(rmbl_mlkem768::kCtBytes == 1088, ct768);
-RMBL_STATIC_ASSERT(rmbl_mlkem1024::kEkBytes == 1568, ek1024);
-RMBL_STATIC_ASSERT(rmbl_mlkem1024::kDkBytes == 3168, dk1024);
-RMBL_STATIC_ASSERT(rmbl_mlkem1024::kCtBytes == 1568, ct1024);
+static_assert(rmbl_mlkem512::kEkBytes == 800, "ek512");
+static_assert(rmbl_mlkem512::kDkBytes == 1632, "dk512");
+static_assert(rmbl_mlkem512::kCtBytes == 768, "ct512");
+static_assert(rmbl_mlkem768::kEkBytes == 1184, "ek768");
+static_assert(rmbl_mlkem768::kDkBytes == 2400, "dk768");
+static_assert(rmbl_mlkem768::kCtBytes == 1088, "ct768");
+static_assert(rmbl_mlkem1024::kEkBytes == 1568, "ek1024");
+static_assert(rmbl_mlkem1024::kDkBytes == 3168, "dk1024");
+static_assert(rmbl_mlkem1024::kCtBytes == 1568, "ct1024");
 
 extern "C" {
 

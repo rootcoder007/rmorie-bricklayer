@@ -30,18 +30,7 @@
 #include <Rinternals.h>
 #include "rmbl_ct.h"
 
-/* the FIPS 202 sponge from rmbl_keccak.cpp */
-struct RmblKeccak {
-    uint64_t s[25];
-    size_t rate;
-    unsigned char pad;
-    size_t pos;
-    bool squeezing;
-};
-extern "C" void rmbl_keccak_init(RmblKeccak *, size_t, unsigned char);
-extern "C" void rmbl_keccak_absorb(RmblKeccak *, const unsigned char *, size_t);
-extern "C" void rmbl_keccak_finalize(RmblKeccak *);
-extern "C" void rmbl_keccak_squeeze(RmblKeccak *, unsigned char *, size_t);
+#include "rmbl_keccak.h"
 extern "C" void rmbl_shake128(unsigned char *, size_t,
                               const unsigned char *, size_t);
 extern "C" void rmbl_shake256(unsigned char *, size_t,

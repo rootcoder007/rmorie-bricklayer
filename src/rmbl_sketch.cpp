@@ -28,7 +28,9 @@
  * a sketch that varied between runs would defeat it.
  */
 
+#ifndef R_NO_REMAP
 #define R_NO_REMAP
+#endif
 #include <R.h>
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>

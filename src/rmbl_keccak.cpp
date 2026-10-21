@@ -158,16 +158,7 @@ void keccak_f1600(uint64_t a[25]) {
 
 }  // namespace
 
-/* The sponge state, exposed so ML-DSA can squeeze incrementally rather
- * than asking for a fixed output length up front -- its rejection
- * sampling does not know in advance how many bytes it will need. */
-struct RmblKeccak {
-    uint64_t s[25];
-    size_t rate;        /* bytes absorbed per permutation */
-    unsigned char pad;  /* domain separation byte */
-    size_t pos;         /* bytes buffered in the current block */
-    bool squeezing;
-};
+#include "rmbl_keccak.h"
 
 extern "C" {
 

@@ -96,17 +96,15 @@ namespace rmbl_mldsa = rmbl_mldsa65;
 /* Compile-time confirmation that each parameter set produces the sizes
  * FIPS 204 tables. A wrong packed width would otherwise surface only as
  * a signature another implementation cannot read. */
-#define RMBL_STATIC_ASSERT(cond, tag) \
-    typedef char rmbl_static_assert_##tag[(cond) ? 1 : -1]
-RMBL_STATIC_ASSERT(rmbl_mldsa44::kPkBytes == 1312, pk44);
-RMBL_STATIC_ASSERT(rmbl_mldsa44::kSkBytes == 2560, sk44);
-RMBL_STATIC_ASSERT(rmbl_mldsa44::kSigBytes == 2420, sig44);
-RMBL_STATIC_ASSERT(rmbl_mldsa65::kPkBytes == 1952, pk65);
-RMBL_STATIC_ASSERT(rmbl_mldsa65::kSkBytes == 4032, sk65);
-RMBL_STATIC_ASSERT(rmbl_mldsa65::kSigBytes == 3309, sig65);
-RMBL_STATIC_ASSERT(rmbl_mldsa87::kPkBytes == 2592, pk87);
-RMBL_STATIC_ASSERT(rmbl_mldsa87::kSkBytes == 4896, sk87);
-RMBL_STATIC_ASSERT(rmbl_mldsa87::kSigBytes == 4627, sig87);
+static_assert(rmbl_mldsa44::kPkBytes == 1312, "pk44");
+static_assert(rmbl_mldsa44::kSkBytes == 2560, "sk44");
+static_assert(rmbl_mldsa44::kSigBytes == 2420, "sig44");
+static_assert(rmbl_mldsa65::kPkBytes == 1952, "pk65");
+static_assert(rmbl_mldsa65::kSkBytes == 4032, "sk65");
+static_assert(rmbl_mldsa65::kSigBytes == 3309, "sig65");
+static_assert(rmbl_mldsa87::kPkBytes == 2592, "pk87");
+static_assert(rmbl_mldsa87::kSkBytes == 4896, "sk87");
+static_assert(rmbl_mldsa87::kSigBytes == 4627, "sig87");
 
 extern "C" {
 

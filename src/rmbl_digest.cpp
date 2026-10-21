@@ -27,7 +27,9 @@
  * not.
  */
 
+#ifndef R_NO_REMAP
 #define R_NO_REMAP
+#endif
 #include <R.h>
 #include <Rinternals.h>
 #include "rmbl_entry.h"
@@ -50,11 +52,6 @@ extern "C" void rmbl_sha256_raw(const unsigned char *data, size_t len,
                                 unsigned char out[32]);
 
 namespace {
-
-inline void hexlify(const unsigned char *bytes, size_t n, char *out) {
-    rmbl_ct::hexlify(bytes, n, out);
-    out[n * 2] = '\0';
-}
 
 /* ---------------- SHA-512 (FIPS 180-4) ---------------- */
 
@@ -88,9 +85,7 @@ const uint64_t kSha512K[80] = {
     0x5fcb6fab3ad6faecULL, 0x6c44198c4a475817ULL
 };
 
-inline uint64_t rotr64(uint64_t x, unsigned k) {
-    return (x >> k) | (x << (64 - k));
-}
+using rmbl_ct::rotr64;
 
 struct sha512_ctx {
     uint8_t  buf[128];
@@ -377,7 +372,7 @@ void rmbl_sha512_hex(const unsigned char *data, size_t len, char out[129]) {
     sha512_init(&c);
     sha512_update(&c, data, len);
     sha512_final(&c, h);
-    hexlify(h, 64, out);
+    rmbl_ct::hexlify_z(h, 64, out);
 }
 
 /* The same digest as raw bytes. The SHA-2 instantiation of SLH-DSA
@@ -443,7 +438,7 @@ void rmbl_hmac_sha256_hex(const unsigned char *key, size_t keylen,
     /* the inner buffer is a std::vector sized by the message: a failed allocation is an R error,
      * not std::terminate() in a LinkingTo caller (review of 1.0.0, M12) */
     rmbl::kernel_call([&] { rmbl_hmac_sha256_raw(key, keylen, msg, msglen, oh); });
-    hexlify(oh, 32, out);
+    rmbl_ct::hexlify_z(oh, 32, out);
 }
 
 /* Constant-time digest comparison: a verifier must not leak how much of
@@ -660,7 +655,7 @@ SEXP C_rmbl_merkle_root_impl(SEXP x, SEXP scheme) {
     std::vector<unsigned char> lvl = leaves_from_chunks(x, sc);
     while (lvl.size() > 32) lvl = merkle_reduce(lvl, sc);
     char out[65];
-    hexlify(lvl.data(), 32, out);
+    rmbl_ct::hexlify_z(lvl.data(), 32, out);
     return Rf_mkString(out);
 }
 
@@ -673,7 +668,7 @@ SEXP C_rmbl_merkle_leaves_impl(SEXP x, SEXP scheme) {
     SEXP res = PROTECT(rmbl::alloc_vector(STRSXP, n));
     char out[65];
     for (R_xlen_t i = 0; i < n; ++i) {
-        hexlify(lvl.data() + static_cast<size_t>(i) * 32, 32, out);
+        rmbl_ct::hexlify_z(lvl.data() + static_cast<size_t>(i) * 32, 32, out);
         SET_STRING_ELT(res, i, Rf_mkChar(out));
     }
     UNPROTECT(1);
@@ -700,12 +695,12 @@ SEXP C_rmbl_merkle_proof_impl(SEXP x, SEXP index, SEXP scheme) {
             /* promoted: no sibling at this level */
             pos = static_cast<R_xlen_t>(p / 2);
         } else if (p % 2 == 0) {
-            hexlify(lvl.data() + (p + 1) * 32, 32, out);
+            rmbl_ct::hexlify_z(lvl.data() + (p + 1) * 32, 32, out);
             sib.push_back(out);
             side.push_back(1);
             pos = static_cast<R_xlen_t>(p / 2);
         } else {
-            hexlify(lvl.data() + (p - 1) * 32, 32, out);
+            rmbl_ct::hexlify_z(lvl.data() + (p - 1) * 32, 32, out);
             sib.push_back(out);
             side.push_back(0);
             pos = static_cast<R_xlen_t>(p / 2);

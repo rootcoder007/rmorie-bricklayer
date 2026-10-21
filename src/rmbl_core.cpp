@@ -24,7 +24,9 @@
  * allocVector, ...). R's `length` macro otherwise collides with the
  * std::locale member that <complex> (pulled in by morie_core.h) drags in.
  * We use the Rf_-prefixed names throughout, so this is a no-op otherwise. */
+#ifndef R_NO_REMAP
 #define R_NO_REMAP
+#endif
 #include <R.h>
 #include <Rinternals.h>
 #include "rmbl_entry.h"

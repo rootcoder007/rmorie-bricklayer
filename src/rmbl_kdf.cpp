@@ -36,7 +36,9 @@ extern "C" BOOLEAN NTAPI SystemFunction036(PVOID buffer, ULONG length);
 #undef length
 #endif
 
+#ifndef R_NO_REMAP
 #define R_NO_REMAP
+#endif
 #include <R.h>
 #include <Rinternals.h>
 #include "rmbl_entry.h"
@@ -72,10 +74,7 @@ extern "C" void rmbl_hmac_sha256_hex(const unsigned char *key, size_t keylen,
 
 namespace {
 
-void hexlify(const unsigned char *b, size_t n, std::string &out) {
-    out.resize(n * 2);
-    rmbl_ct::hexlify(b, n, &out[0]);
-}
+using rmbl_ct::hexlify;
 
 /* ---------------- BLAKE2b (RFC 7693) ---------------- */
 
@@ -100,9 +99,7 @@ const uint8_t kSigma[12][16] = {
     {14,10, 4, 8, 9,15,13, 6, 1,12, 0, 2,11, 7, 5, 3}
 };
 
-inline uint64_t rotr64(uint64_t x, unsigned k) {
-    return (x >> k) | (x << (64 - k));
-}
+using rmbl_ct::rotr64;
 
 struct blake2b_ctx {
     uint8_t  buf[128];

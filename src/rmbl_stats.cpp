@@ -20,7 +20,9 @@
  *   * a kernel with nothing to compute returns NaN rather than erroring.
  */
 
+#ifndef R_NO_REMAP
 #define R_NO_REMAP
+#endif
 #include <R.h>
 #include <Rinternals.h>
 #include "rmbl_entry.h"

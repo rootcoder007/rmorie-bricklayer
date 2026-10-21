@@ -62,7 +62,9 @@
  * it is for.
  */
 
+#ifndef R_NO_REMAP
 #define R_NO_REMAP
+#endif
 #include <R.h>
 #include <Rinternals.h>
 #include "rmbl_entry.h"
@@ -92,10 +94,7 @@ const int    kLen2 = 3;    /* floor(lg(len1 (w-1)) / lg w) + 1 */
 const int    kLen = kLen1 + kLen2;   /* 67 WOTS+ chains */
 
 
-void hexlify(const unsigned char *b, size_t n, std::string &out) {
-    out.resize(n * 2);
-    rmbl_ct::hexlify(b, n, &out[0]);
-}
+using rmbl_ct::hexlify;
 
 /* Returns false on any non-hex or odd-length input rather than
  * silently decoding garbage. The secret seeds arrive as hex, so the

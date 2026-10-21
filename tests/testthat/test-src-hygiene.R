@@ -373,18 +373,18 @@ test_that("every SIU entry point reads its text through the same cap", {
   expect_true(any(grepl("siu::interrupt_hook()", s, fixed = TRUE)))
 })
 
-test_that("OBJECTS in both Makevars lists every source file, SIU through siu_unity.cpp", {
+test_that("OBJECTS lists every C source, and rmbl_unity.cpp includes every C++ source once", {
   d <- src_dir()
   skip_if(is.na(d), "package sources not available from here")
-  srcs <- list.files(d, pattern = "\\.(c|cpp)$")
-  want <- sort(c(sub("\\.(c|cpp)$", ".o", setdiff(srcs, c("siu_parse.cpp", "siu_resolve.cpp", "siu_unity.cpp"))),
-                 "siu_unity.o"))
+  want <- sort(c(sub("\\.c$", ".o", list.files(d, pattern = "\\.c$")), "rmbl_unity.o"))
   for (mv in c("Makevars.in", "Makevars.win")) {
     x <- paste(readLines(file.path(d, mv), warn = FALSE), collapse = "\n")
     x <- gsub("\\\\\n", " ", x)
     o <- regmatches(x, regexpr("(?m)^OBJECTS = [^\n]*", x, perl = TRUE))
     expect_identical(sort(strsplit(trimws(sub("^OBJECTS = ", "", o)), "[[:space:]]+")[[1]]), want, info = mv)
   }
-  u <- readLines(file.path(d, "siu_unity.cpp"), warn = FALSE)
-  expect_identical(grep("^#include", u, value = TRUE), c('#include "siu_parse.cpp"', '#include "siu_resolve.cpp"'))
+  u <- readLines(file.path(d, "rmbl_unity.cpp"), warn = FALSE)
+  inc <- sub('^#include "(.*)"$', "\\1", grep("^#include", u, value = TRUE))
+  expect_identical(sort(inc), sort(setdiff(list.files(d, pattern = "\\.cpp$"), "rmbl_unity.cpp")))
+  expect_false(anyDuplicated(inc) > 0)
 })

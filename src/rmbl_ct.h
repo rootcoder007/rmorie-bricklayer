@@ -18,6 +18,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 #ifndef RMBL_CT_DECLASSIFY
 #define RMBL_CT_DECLASSIFY(ptr, len) ((void)0)
@@ -80,6 +81,21 @@ inline unsigned unhex_digit(char ch, unsigned &bad) {
 /* `len` must be even; returns 0, or -1 when any character was not hex.
  * Whether a string was well-formed is not a secret, so a caller may
  * RMBL_CT_DECLASSIFY the result before branching on it. */
+/* the same into a std::string, sized to fit */
+inline void hexlify(const unsigned char *b, size_t n, std::string &out) {
+    out.resize(n * 2);
+    hexlify(b, n, &out[0]);
+}
+
+/* the same into a buffer of 2n + 1 bytes, NUL-terminated */
+inline void hexlify_z(const unsigned char *b, size_t n, char *out) {
+    hexlify(b, n, out);
+    out[n * 2] = '\0';
+}
+
+/* rotate right; n in 1..63 */
+inline uint64_t rotr64(uint64_t x, unsigned n) { return (x >> n) | (x << (64 - n)); }
+
 inline int unhexlify(const char *s, size_t len, unsigned char *out) {
     unsigned bad = 0;
     for (size_t i = 0; i < len / 2; ++i) {

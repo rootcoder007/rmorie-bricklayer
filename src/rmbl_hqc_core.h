@@ -57,21 +57,7 @@
 #define RMBL_HQC_ARM_PMULL 1
 #endif
 
-/* the FIPS 202 sponge from rmbl_keccak.cpp */
-#ifndef RMBL_KECCAK_DECLARED
-#define RMBL_KECCAK_DECLARED
-struct RmblKeccak {
-    uint64_t s[25];
-    size_t rate;
-    unsigned char pad;
-    size_t pos;
-    bool squeezing;
-};
-extern "C" void rmbl_keccak_init(RmblKeccak *, size_t, unsigned char);
-extern "C" void rmbl_keccak_absorb(RmblKeccak *, const unsigned char *, size_t);
-extern "C" void rmbl_keccak_finalize(RmblKeccak *);
-extern "C" void rmbl_keccak_squeeze(RmblKeccak *, unsigned char *, size_t);
-#endif
+#include "rmbl_keccak.h"
 
 /* Constant-time testing hook: a test build defines this to tell a checker
  * (valgrind memcheck, ctgrind-style) that a value derived from a secret is

@@ -39,6 +39,8 @@
 #include <Rinternals.h>
 #include "rmbl_entry.h"
 
+#include "rmbl_bignum.h"
+
 namespace {
 
 /* ------------------------------------------------------------------ *
@@ -46,39 +48,16 @@ namespace {
  * Only what the conversion needs -- shift, compare, multiply by a
  * small value, and division with remainder.
  * ------------------------------------------------------------------ */
-typedef std::vector<uint32_t> Big;
-
-void trim(Big &a) {
-    while (a.size() > 1 && a.back() == 0) a.pop_back();
-}
+using rmbl_big::Big;
+using rmbl_big::trim;
+using rmbl_big::cmp;
+using rmbl_big::bit_length;
 
 bool is_zero(const Big &a) {
     for (size_t i = 0; i < a.size(); ++i) {
         if (a[i]) return false;
     }
     return true;
-}
-
-int cmp(const Big &a, const Big &b) {
-    const size_t n = (a.size() > b.size()) ? a.size() : b.size();
-    for (size_t i = n; i-- > 0;) {
-        const uint32_t x = (i < a.size()) ? a[i] : 0;
-        const uint32_t y = (i < b.size()) ? b[i] : 0;
-        if (x != y) return x < y ? -1 : 1;
-    }
-    return 0;
-}
-
-size_t bit_length(const Big &a) {
-    for (size_t i = a.size(); i-- > 0;) {
-        if (a[i]) {
-            uint32_t v = a[i];
-            size_t b = 0;
-            while (v) { ++b; v >>= 1; }
-            return i * 32 + b;
-        }
-    }
-    return 0;
 }
 
 void shl(Big &a, size_t bits) {

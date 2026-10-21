@@ -225,50 +225,48 @@
 /* Compile-time confirmation that each parameter set produces the sizes
  * FIPS 205 tables. A wrong derived constant would otherwise surface
  * only as a signature another implementation cannot read. */
-#define RMBL_STATIC_ASSERT(cond, tag) \
-    typedef char rmbl_slh_static_assert_##tag[(cond) ? 1 : -1]
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_128s::kSigBytes == 7856, sigshake128s);
+static_assert(rmbl_slhdsa_shake_128s::kSigBytes == 7856, "sigshake128s");
 /* the stack buffer in thash must hold the widest input any caller
  * passes, at every parameter set */
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_256f::kThashMax >=
-                   32 + 32 + 35 * 32, thashmax256f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_256s::kThashMax >=
-                   128 + 22 + 22 * 32, thashmax256s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_128s::kPkBytes == 32, pkshake128s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_128s::kSkBytes == 64, skshake128s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_128f::kSigBytes == 17088, sigshake128f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_128f::kPkBytes == 32, pkshake128f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_128f::kSkBytes == 64, skshake128f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_192s::kSigBytes == 16224, sigshake192s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_192s::kPkBytes == 48, pkshake192s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_192s::kSkBytes == 96, skshake192s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_192f::kSigBytes == 35664, sigshake192f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_192f::kPkBytes == 48, pkshake192f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_192f::kSkBytes == 96, skshake192f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_256s::kSigBytes == 29792, sigshake256s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_256s::kPkBytes == 64, pkshake256s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_256s::kSkBytes == 128, skshake256s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_256f::kSigBytes == 49856, sigshake256f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_256f::kPkBytes == 64, pkshake256f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_256f::kSkBytes == 128, skshake256f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_128s::kSigBytes == 7856, sigsha2128s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_128s::kPkBytes == 32, pksha2128s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_128s::kSkBytes == 64, sksha2128s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_128f::kSigBytes == 17088, sigsha2128f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_128f::kPkBytes == 32, pksha2128f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_128f::kSkBytes == 64, sksha2128f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_192s::kSigBytes == 16224, sigsha2192s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_192s::kPkBytes == 48, pksha2192s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_192s::kSkBytes == 96, sksha2192s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_192f::kSigBytes == 35664, sigsha2192f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_192f::kPkBytes == 48, pksha2192f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_192f::kSkBytes == 96, sksha2192f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_256s::kSigBytes == 29792, sigsha2256s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_256s::kPkBytes == 64, pksha2256s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_256s::kSkBytes == 128, sksha2256s);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_256f::kSigBytes == 49856, sigsha2256f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_256f::kPkBytes == 64, pksha2256f);
-RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_256f::kSkBytes == 128, sksha2256f);
+static_assert(rmbl_slhdsa_shake_256f::kThashMax >=
+                   32 + 32 + 35 * 32, "thashmax256f");
+static_assert(rmbl_slhdsa_sha2_256s::kThashMax >=
+                   128 + 22 + 22 * 32, "thashmax256s");
+static_assert(rmbl_slhdsa_shake_128s::kPkBytes == 32, "pkshake128s");
+static_assert(rmbl_slhdsa_shake_128s::kSkBytes == 64, "skshake128s");
+static_assert(rmbl_slhdsa_shake_128f::kSigBytes == 17088, "sigshake128f");
+static_assert(rmbl_slhdsa_shake_128f::kPkBytes == 32, "pkshake128f");
+static_assert(rmbl_slhdsa_shake_128f::kSkBytes == 64, "skshake128f");
+static_assert(rmbl_slhdsa_shake_192s::kSigBytes == 16224, "sigshake192s");
+static_assert(rmbl_slhdsa_shake_192s::kPkBytes == 48, "pkshake192s");
+static_assert(rmbl_slhdsa_shake_192s::kSkBytes == 96, "skshake192s");
+static_assert(rmbl_slhdsa_shake_192f::kSigBytes == 35664, "sigshake192f");
+static_assert(rmbl_slhdsa_shake_192f::kPkBytes == 48, "pkshake192f");
+static_assert(rmbl_slhdsa_shake_192f::kSkBytes == 96, "skshake192f");
+static_assert(rmbl_slhdsa_shake_256s::kSigBytes == 29792, "sigshake256s");
+static_assert(rmbl_slhdsa_shake_256s::kPkBytes == 64, "pkshake256s");
+static_assert(rmbl_slhdsa_shake_256s::kSkBytes == 128, "skshake256s");
+static_assert(rmbl_slhdsa_shake_256f::kSigBytes == 49856, "sigshake256f");
+static_assert(rmbl_slhdsa_shake_256f::kPkBytes == 64, "pkshake256f");
+static_assert(rmbl_slhdsa_shake_256f::kSkBytes == 128, "skshake256f");
+static_assert(rmbl_slhdsa_sha2_128s::kSigBytes == 7856, "sigsha2128s");
+static_assert(rmbl_slhdsa_sha2_128s::kPkBytes == 32, "pksha2128s");
+static_assert(rmbl_slhdsa_sha2_128s::kSkBytes == 64, "sksha2128s");
+static_assert(rmbl_slhdsa_sha2_128f::kSigBytes == 17088, "sigsha2128f");
+static_assert(rmbl_slhdsa_sha2_128f::kPkBytes == 32, "pksha2128f");
+static_assert(rmbl_slhdsa_sha2_128f::kSkBytes == 64, "sksha2128f");
+static_assert(rmbl_slhdsa_sha2_192s::kSigBytes == 16224, "sigsha2192s");
+static_assert(rmbl_slhdsa_sha2_192s::kPkBytes == 48, "pksha2192s");
+static_assert(rmbl_slhdsa_sha2_192s::kSkBytes == 96, "sksha2192s");
+static_assert(rmbl_slhdsa_sha2_192f::kSigBytes == 35664, "sigsha2192f");
+static_assert(rmbl_slhdsa_sha2_192f::kPkBytes == 48, "pksha2192f");
+static_assert(rmbl_slhdsa_sha2_192f::kSkBytes == 96, "sksha2192f");
+static_assert(rmbl_slhdsa_sha2_256s::kSigBytes == 29792, "sigsha2256s");
+static_assert(rmbl_slhdsa_sha2_256s::kPkBytes == 64, "pksha2256s");
+static_assert(rmbl_slhdsa_sha2_256s::kSkBytes == 128, "sksha2256s");
+static_assert(rmbl_slhdsa_sha2_256f::kSigBytes == 49856, "sigsha2256f");
+static_assert(rmbl_slhdsa_sha2_256f::kPkBytes == 64, "pksha2256f");
+static_assert(rmbl_slhdsa_sha2_256f::kSkBytes == 128, "sksha2256f");
 
 extern "C" {
 

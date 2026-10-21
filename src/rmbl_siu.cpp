@@ -5,7 +5,9 @@
  * package). Same hand-rolled zero-dependency style as rmbl_core/rmbl_fetch:
  * no Rcpp, Rf_-prefixed API only.
  */
+#ifndef R_NO_REMAP
 #define R_NO_REMAP
+#endif
 #include <R.h>
 #include <Rinternals.h>
 

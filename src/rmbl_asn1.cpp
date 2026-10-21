@@ -28,6 +28,8 @@
 #include <new>
 #include "rmbl_entry.h"
 
+#include "rmbl_bignum.h"
+
 namespace {
 
 /* ------------------------------------------------------------------ *
@@ -181,11 +183,10 @@ SEXP node_to_sexp(const Node &nd, const unsigned char *base) {
  * and remainder. Limbs are 32 bits, least significant first.
  * ------------------------------------------------------------------ */
 
-typedef std::vector<uint32_t> Big;
-
-void trim(Big &a) {
-    while (a.size() > 1 && a.back() == 0) a.pop_back();
-}
+using rmbl_big::Big;
+using rmbl_big::trim;
+using rmbl_big::cmp;
+using rmbl_big::bit_length;
 
 Big from_bytes(const unsigned char *p, size_t n) {
     Big a;
@@ -216,14 +217,6 @@ void to_bytes(const Big &a, unsigned char *out, size_t n) {
             out[n - 1 - pos] = static_cast<unsigned char>(a[i] >> (8 * b));
         }
     }
-}
-
-int cmp(const Big &a, const Big &b) {
-    if (a.size() != b.size()) return a.size() < b.size() ? -1 : 1;
-    for (size_t i = a.size(); i-- > 0;) {
-        if (a[i] != b[i]) return a[i] < b[i] ? -1 : 1;
-    }
-    return 0;
 }
 
 void sub_in_place(Big &a, const Big &b) {   /* a >= b */
@@ -276,18 +269,6 @@ bool bit(const Big &a, size_t i) {
     return ((a[limb] >> (i % 32)) & 1u) != 0;
 }
 
-size_t bit_length(const Big &a) {
-    for (size_t i = a.size(); i-- > 0;) {
-        if (a[i] != 0) {
-            uint32_t v = a[i];
-            size_t b = 0;
-            while (v) { ++b; v >>= 1; }
-            return i * 32 + b;
-        }
-    }
-    return 0;
-}
-
 /* a mod m, by shift-and-subtract. Slow by the standards of a real
  * bignum library and entirely fast enough: an RSA-2048 verification
  * with e = 65537 needs seventeen of these. */
@@ -331,6 +312,7 @@ extern "C" {
  * caller's, which is the point -- the meaning of a field is a matter of
  * which specification you are reading, and that belongs in R next to
  * the OIDs it turns on. */
+namespace {
 struct ConvCtx {
     Node *root;
     const unsigned char *base;
@@ -344,6 +326,7 @@ void conv_cleanup(void *d, Rboolean) {
     delete c->root;
     c->root = NULL;
 }
+}  // namespace
 
 SEXP C_rmbl_der_parse_impl(SEXP x) {
     /* errors without a call (Rf_errorcall(R_NilValue, ...)), like the package's R errors with
