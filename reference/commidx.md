@@ -59,8 +59,7 @@ or communities on their culture. For Inuit regions, use Inuit data only.
 ## References
 
 Inuit Tapiriit Kanatami (2016). National Inuit Suicide Prevention
-Strategy. Ottawa.
-https://itk.ca/national-inuit-suicide-prevention-strategy/
+Strategy. Ottawa. itk.ca/national-inuit-suicide-prevention-strategy
 
 Carroll SR, et al. (2020), see
 [`holbal`](https://rootcoder007.github.io/rmorie-bricklayer/reference/holbal.md).

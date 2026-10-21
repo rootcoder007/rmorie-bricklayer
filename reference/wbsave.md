@@ -45,12 +45,12 @@ wbsave(
 
 - ak, sk:
 
-  Your archive.org S3-like API keys
-  (https://archive.org/account/s3.php). By default they are read from
-  the environment variables `IA_S3_ACCESS_KEY` and `IA_S3_SECRET_KEY`,
-  or from the files named by `IA_S3_ACCESS_KEY_FILE` and
-  `IA_S3_SECRET_KEY_FILE` (a key file other users can read is warned
-  about). They are sent to web.archive.org only and never printed.
+  Your archive.org S3-like API keys (archive.org/account/s3.php). By
+  default they are read from the environment variables
+  `IA_S3_ACCESS_KEY` and `IA_S3_SECRET_KEY`, or from the files named by
+  `IA_S3_ACCESS_KEY_FILE` and `IA_S3_SECRET_KEY_FILE` (a key file other
+  users can read is warned about). They are sent to web.archive.org only
+  and never printed.
 
 - within:
 
@@ -123,9 +123,8 @@ A run of many URLs is slow by design: at the default 6 captures a
 minute, 1,000 URLs take close to three hours. URLs already finished in
 `output` are skipped, so a run can be stopped and restarted.
 
-Network: every request goes to https://web.archive.org; the keys travel
-in the `Authorization` header and are never written to `output` or
-printed.
+Network: every request goes to web.archive.org; the keys travel in the
+`Authorization` header and are never written to `output` or printed.
 
 Errors, all raised before anything is sent: no usable URL; a URL with an
 invisible or control character, or not starting with `http://` or
@@ -138,7 +137,7 @@ or that cannot be written.
 ## References
 
 Internet Archive. Save Page Now 2 (SPN2) public API.  
-https://archive.org/details/spn-2-public-api-page-docs
+archive.org/details/spn-2-public-api-page-docs
 
 ## See also
 
@@ -161,7 +160,7 @@ try(wbsave("https://example.org/", ak = "abc", sk = "def",
 #> Error : `jobs` must be a whole number from 1 to 12
 try(wbsave("https://example.org/", ak = "abc", sk = "def",
                  output = file.path(tempdir(), "no-such-folder", "runs.jsonl")))
-#> Error : the folder for `output` does not exist: /tmp/Rtmp2PZK5c/no-such-folder
+#> Error : the folder for `output` does not exist: /tmp/Rtmpq1dR9a/no-such-folder
 
 # A real run needs archive.org keys and the network.
 if (FALSE) { # interactive()

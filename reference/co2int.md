@@ -59,11 +59,11 @@ not round or cap them. Kosovo appears once, under the code `XK`.
 ## References
 
 Ember (2026). Yearly Electricity Data, via Our World in Data,
-https://ourworldindata.org/grapher/carbon-intensity-electricity.
-Electricity Maps (2025). 2024 Yearly Carbon Intensity Data, via Green
-Algorithms data v3.1. Lannelongue, L., Grealey, J. and Inouye, M.
-(2021). Green Algorithms: quantifying the carbon footprint of
-computation. Advanced Science 8(12), 2100707.
+ourworldindata.org/grapher/carbon-intensity-electricity. Electricity
+Maps (2025). 2024 Yearly Carbon Intensity Data, via Green Algorithms
+data v3.1. Lannelongue, L., Grealey, J. and Inouye, M. (2021). Green
+Algorithms: quantifying the carbon footprint of computation. Advanced
+Science 8(12), 2100707.
 
 ## Examples
 

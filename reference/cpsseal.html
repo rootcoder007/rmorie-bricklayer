@@ -138,7 +138,7 @@ with).</p>
 <span class="r-in"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu">cpsseal</span><span class="op">(</span><span class="va">root</span>, <span class="st">"a shared secret"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">s</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                     capsule pinned files</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /tmp/Rtmp2PZK5c/capsules-1f2d2b2751bd/one   TRUE     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /tmp/Rtmpq1dR9a/capsules-1fc84dfe351b/one   TRUE     2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                             public</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 2b23046c08926e30017362694e61c9f76f64815699749bede71734e74c84f65e</span>
 <span class="r-in"><span><span class="fu"><a href="cpschk.html">cpschk</a></span><span class="op">(</span><span class="va">root</span>, key <span class="op">=</span> <span class="st">"a shared secret"</span>, fp <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">$</span><span class="va">status</span></span></span>
@@ -146,7 +146,7 @@ with).</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a second run needs overwrite, and a post-quantum key signs too</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cpsseal</span><span class="op">(</span><span class="va">root</span>, <span class="st">"a shared secret"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cpsseal: capsule_bundle.json already exists in /tmp/Rtmp2PZK5c/capsules-1f2d2b2751bd/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : cpsseal: capsule_bundle.json already exists in /tmp/Rtmpq1dR9a/capsules-1fc84dfe351b/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again</span>
 <span class="r-in"><span><span class="fu">cpsseal</span><span class="op">(</span><span class="va">root</span>, <span class="fu"><a href="fipskg.html">fipskg</a></span><span class="op">(</span><span class="st">"ML-DSA-44"</span><span class="op">)</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">pinned</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 </code></pre></div>

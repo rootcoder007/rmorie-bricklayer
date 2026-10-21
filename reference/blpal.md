@@ -80,7 +80,7 @@ option name other than the six above, or an unnamed value; an unknown
 
 Okabe, M. and Ito, K. (2008). Color Universal Design (CUD): how to make
 figures and presentations that are friendly to colorblind people.
-https://jfly.uni-koeln.de/color/
+jfly.uni-koeln.de/color
 
 ## Examples
 

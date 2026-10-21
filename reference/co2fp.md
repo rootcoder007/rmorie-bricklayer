@@ -194,9 +194,9 @@ Quantifying the carbon emissions of machine learning. arXiv:1910.09700.
 ``` r
 fp <- co2fp(sum(sqrt(seq_len(2e5))), loc = "CA-ON")
 fp$enekwh$total
-#> [1] 2.684234e-08
+#> [1] 2.684137e-08
 fp$co2eg
-#> [1] 2.441847e-06
+#> [1] 2.441759e-06
 fp$co2int$year
 #> [1] 2024
 fp$assumptions

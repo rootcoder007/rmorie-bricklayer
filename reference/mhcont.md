@@ -92,7 +92,7 @@ which accept any set of domains.
 
 Health Canada, Assembly of First Nations (2015). First Nations Mental
 Wellness Continuum Framework. Ottawa: Health Canada. Summary report:  
-https://www.sac-isc.gc.ca/eng/1576093687903/1576093725971
+sac-isc.gc.ca/eng/1576093687903/1576093725971
 
 ## See also
 
