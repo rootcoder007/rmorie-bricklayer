@@ -51,12 +51,20 @@ jobs:
           use-public-rspm: true
       - uses: r-lib/actions/setup-pandoc@v2
       - uses: r-lib/actions/setup-tinytex@v2
-      # the PDF manual needs the inconsolata font, which the minimal TinyTeX lacks
-      - name: LaTeX packages for the PDF manual
-        run: tlmgr install inconsolata
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
+          extra-packages: any::tinytex
           cache: 'always'
+      # The minimal TinyTeX lacks LaTeX packages the PDF manual needs, and LaTeX does not say which.
+      # Build the manual once through tinytex, which installs every missing package, so the timed
+      # check below builds it the way CRAN does.
+      - name: LaTeX packages for the PDF manual
+        shell: bash
+        run: |
+          R CMD Rd2pdf --no-preview --batch --no-clean -o manual.pdf . || true
+          d=$(ls -d .Rd2pdf* | head -1)
+          (cd "$d" && Rscript -e "tinytex::pdflatex('Rd2.tex')")
+          rm -rf .Rd2pdf* manual.pdf
       - uses: actions/download-artifact@v4
         with:
           name: cran-tarball
