@@ -8,6 +8,20 @@ import re
 U = r"https?://[^\s<>(){}\[\]\"']+"
 
 
+
+def reflow_description(s):
+    m = re.search(r"^Description:(.*?)(?=^[A-Z][A-Za-z/@]*:|\Z)", s, flags=re.S | re.M)
+    words = m.group(1).split()
+    lines, cur = [], "Description:"
+    for w in words:
+        if len(cur) + 1 + len(w) > 76:
+            lines.append(cur)
+            cur = "    " + w
+        else:
+            cur += " " + w
+    lines.append(cur)
+    return s[:m.start()] + "\n".join(lines) + "\n" + s[m.end():]
+
 def bare(url):
     # without the scheme or a leading www. no Markdown renderer turns it back into a link
     url = re.sub(r"^https?://", "", url)
@@ -38,6 +52,7 @@ s = re.sub(r"^(URL|BugReports):.*?(?=^[A-Z][A-Za-z/@]*:|\Z)", "", s, flags=re.S 
 # a bare domain in single quotes, as DESCRIPTION writes other names, so the spell check skips it
 s = re.sub(r"<(" + U + r")>", lambda m: "'%s'" % bare(m.group(1)), s)
 s = re.sub(r"<doi:([^>]+)>", r"DOI \1", s)  # CRAN resolves each <doi:> online too
+s = reflow_description(s)  # the replacements shortened some lines
 open("DESCRIPTION", "w", encoding="utf-8").write(s)
 
 # help pages: each \doi{} as plain "DOI 10.x/y", since CRAN's incoming check resolves every one

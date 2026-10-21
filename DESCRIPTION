@@ -8,28 +8,29 @@ Authors@R:
 Description: For analyzing published and unpublished tables, from open-data
     portals and statistical agencies to a researcher's own data, so that a
     result can be traced to the exact data behind it and checked again
-    afterwards. A 'capsule' records where
-    each source came from, its Secure Hash Algorithm 256 ('SHA-256') hash,
-    the schema it should have and an archived copy in the Internet Archive
-    'Wayback Machine' (<https://web.archive.org/>); sources are found through
-    the Comprehensive Knowledge Archive Network ('CKAN', <https://ckan.org/>).
+    afterwards. A 'capsule' records where each source came from, its Secure
+    Hash Algorithm 256 ('SHA-256') hash, the schema it should have and an
+    archived copy in the Internet Archive 'Wayback Machine'
+    (<https://web.archive.org/>); sources are found through the
+    Comprehensive Knowledge Archive Network ('CKAN', <https://ckan.org/>).
     Run again, a capsule says whether each source still matches and, if it
     does not, how its distribution moved (Kolmogorov-Smirnov, chi-square,
-    population stability index and 'Benford' first-digit screens), and when a
-    source cannot be reached it runs on schema-driven synthetic data that is
-    marked as such. Capsules can be signed with keyed hashes ('HMAC-SHA-256',
-    RFC 2104) or with the post-quantum signature standards 'ML-DSA' (FIPS
-    204), 'SLH-DSA' (FIPS 205) and 'XMSS' (RFC 8391), implemented from the
-    standards with no system cryptography library and checked against
-    'OpenSSL' 3.5 and the known-answer vectors of 'NIST' (the US National
-    Institute of Standards and Technology). For the administrative tables
-    these capsules usually hold, it computes period-over-period change with
-    exact intervals, trends (Mann-Kendall with 'Theil-Sen' slopes), rates,
-    and the bounds that rounding and suppression in a release imply; small-area
-    rates with the empirical Bayes shrinkage of Clayton and 'Kaldor' (1987)
-    <doi:10.2307/2532003>; self-exciting event series as 'Hawkes' processes;
-    custodial populations by stock-and-flow measures; and the burden of air
-    pollution from dispersion to attributable deaths.
+    population stability index and 'Benford' first-digit screens), and when
+    a source cannot be reached it runs on schema-driven synthetic data that
+    is marked as such. Capsules can be signed with keyed hashes
+    ('HMAC-SHA-256', RFC 2104) or with the post-quantum signature standards
+    'ML-DSA' (FIPS 204), 'SLH-DSA' (FIPS 205) and 'XMSS' (RFC 8391),
+    implemented from the standards with no system cryptography library and
+    checked against 'OpenSSL' 3.5 and the known-answer vectors of 'NIST'
+    (the US National Institute of Standards and Technology). For the
+    administrative tables these capsules usually hold, it computes
+    period-over-period change with exact intervals, trends (Mann-Kendall
+    with 'Theil-Sen' slopes), rates, and the bounds that rounding and
+    suppression in a release imply; small-area rates with the empirical
+    Bayes shrinkage of Clayton and 'Kaldor' (1987) <doi:10.2307/2532003>;
+    self-exciting event series as 'Hawkes' processes; custodial populations
+    by stock-and-flow measures; and the burden of air pollution from
+    dispersion to attributable deaths.
 License: AGPL-3
 Copyright: The bundled excerpts of published statistics in inst/extdata belong
     to their publishers; see inst/COPYRIGHTS.
