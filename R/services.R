@@ -70,14 +70,6 @@
 # One verified document per session: the hosted helpers ask for it on every
 # call and a signature check per call is waste. Cleared by a live refresh.
 .rmbl_services_memo <- new.env(parent = emptyenv())
-#' Clears the in-session memo of the services document.
-#' @return NULL, invisibly.
-#' @noRd
-.rmbl_services_forget <- function() {
-  rm(list = ls(.rmbl_services_memo, all.names = TRUE), envir = .rmbl_services_memo)
-  invisible(NULL)
-}
-
 #' Gives the path of the cached services document.
 #' @return The path of morie-services.json in the user cache directory.
 #' @noRd

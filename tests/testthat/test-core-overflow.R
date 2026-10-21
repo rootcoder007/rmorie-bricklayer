@@ -12,7 +12,7 @@ test_that("cmn and its dependants survive where base R does", {
 })
 
 test_that("the running-mean fallback matches mean() and cannot overflow", {
-  r <- rmoriebricklayer:::.core_mean_running
+  r <- .core_mean_running
   expect_identical(r(rep(1e308, 3)), 1e308)
   expect_equal(r(c(1e308, 1e308, -1e308)), 1e308 / 3, tolerance = 1e-15)
   expect_equal(r(c(-1e308, 1e308, 1e308, -1e308)), 0)

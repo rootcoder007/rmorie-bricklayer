@@ -38,7 +38,7 @@ test_that("the named extremes get their known decimals", {
   # had. The expectations below are the exact seventeen-digit decimals,
   # computed by exact rational arithmetic, of the doubles named by these
   # byte patterns.
-  dbl <- function(hex) {
+  hexdbl <- function(hex) {
     readBin(
       as.raw(strtoi(
         substring(hex, seq(1L, 15L, 2L), seq(2L, 16L, 2L)),
@@ -49,12 +49,12 @@ test_that("the named extremes get their known decimals", {
     )
   }
 
-  expect_identical(d17(dbl("9c7500883ce4377e")), "1.0000000000000001e+300")
-  expect_identical(d17(dbl("0080e03779c34143")), "10000000000000000")
-  expect_identical(d17(dbl("00a0d88557347643")), "1e+17")
-  expect_identical(d17(dbl("2d431cebe2361a3f")), "0.0001")
-  expect_identical(d17(dbl("f168e388b5f8e43e")), "1.0000000000000001e-05")
-  expect_identical(d17(dbl("9a9999999999b93f")), "0.10000000000000001")
+  expect_identical(d17(hexdbl("9c7500883ce4377e")), "1.0000000000000001e+300")
+  expect_identical(d17(hexdbl("0080e03779c34143")), "10000000000000000")
+  expect_identical(d17(hexdbl("00a0d88557347643")), "1e+17")
+  expect_identical(d17(hexdbl("2d431cebe2361a3f")), "0.0001")
+  expect_identical(d17(hexdbl("f168e388b5f8e43e")), "1.0000000000000001e-05")
+  expect_identical(d17(hexdbl("9a9999999999b93f")), "0.10000000000000001")
 
   # These are exact in binary, or built by R rather than parsed, so no
   # reader can disagree about them.
@@ -79,7 +79,7 @@ test_that("the digits match an independent exact computation", {
   # string was computed offline from the EXACT rational value of the
   # double by Python's decimal module, then laid out by the %.17g rules.
   # No C library is consulted at any point, here or there, so it can fail.
-  dbl <- function(hex) {
+  hexdbl <- function(hex) {
     readBin(
       as.raw(strtoi(
         substring(hex, seq(1L, 15L, 2L), seq(2L, 16L, 2L)),
@@ -136,7 +136,7 @@ test_that("the digits match an independent exact computation", {
     c("6ee3a7512b3929e4", "-3.1192465903441063e+174")
   )
   for (i in seq_len(nrow(cases))) {
-    v <- dbl(cases[i, 1L])
+    v <- hexdbl(cases[i, 1L])
     expect_identical(d17(v), cases[i, 2L], info = cases[i, 1L])
   }
 })

@@ -618,13 +618,3 @@ print.bricklayer_hqc_capsule <- .rmbl_print_via_format
   }
   .rmbl_hqc_level(key$level)
 }
-
-#' Which carry-less multiplier the HQC products use: \code{"pclmul"}, \code{"pmull"} or
-#' \code{"portable"}. `portable = TRUE` forces the portable one, FALSE restores the
-#' hardware path (the tests run the vectors through both).
-#' @param portable TRUE for the portable multiplier, FALSE for the hardware one, NA to leave it.
-#' @return \code{"pclmul"}, \code{"pmull"} or \code{"portable"}.
-#' @noRd
-.rmbl_hqc_backend <- function(portable = NA) {
-  .Call(C_rmbl_hqc_backend, as.logical(portable))
-}

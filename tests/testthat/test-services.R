@@ -43,8 +43,8 @@ svc_setup <- function(env = parent.frame(), key = svc_key$public) {
     .rmbl_services_pubkey = function() key,
     .rmbl_services_cache_path = function() file.path(td, "morie-services.json"),
     .package = "rmoriebricklayer", .env = env)
-  svc_ns(".rmbl_services_forget")()
-  withr::defer(svc_ns(".rmbl_services_forget")(), envir = env)
+  .rmbl_services_forget()
+  withr::defer(.rmbl_services_forget(), envir = env)
   td
 }
 
@@ -147,7 +147,7 @@ test_that("a document that does not verify is ignored at every step", {
     testthat::local_mocked_bindings(
       .rmbl_net_download = svc_server(stats::setNames(list(doc, bad[[nm]]), c(svc_url, svc_sig_url))),
       .package = "rmoriebricklayer")
-    svc_ns(".rmbl_services_forget")()
+    .rmbl_services_forget()
     s <- svcs(refresh = TRUE)
     # the bundled copy is signed with the real key, not this test's: nothing is left but "off"
     expect_identical(attr(s, "source"), "off", info = nm)

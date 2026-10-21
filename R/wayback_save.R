@@ -181,7 +181,8 @@
 #' @param b The value used in its place.
 #' @return `a` or `b`.
 #' @noRd
-`%|NA|%` <- function(a, b) if (is.na(a)) b else a
+.bl_na_or <- function(a, b) if (is.na(a)) b else a
+`%|NA|%` <- .bl_na_or
 
 #' Reads the results file into one record per URL.
 #'

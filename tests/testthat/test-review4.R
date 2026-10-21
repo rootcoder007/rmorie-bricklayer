@@ -207,8 +207,8 @@ test_that("F5: a signed document older than the bundled one is refused, cached o
   td <- withr::local_tempdir()
   testthat::local_mocked_bindings(.rmbl_services_cache_path = function() file.path(td, "morie-services.json"),
                                   .package = "rmoriebricklayer")
-  r4(".rmbl_services_forget")()
-  withr::defer(r4(".rmbl_services_forget")())
+  .rmbl_services_forget()
+  withr::defer(.rmbl_services_forget())
   bundled <- system.file("services", "morie-services.json", package = "rmoriebricklayer")
   b <- r4(".rmbl_services_read")(bundled)
   expect_type(b$issued, "character")
@@ -241,13 +241,13 @@ test_that("F5: a signed document older than the bundled one is refused, cached o
   # the same date as the bundled copy: the bundled copy serves and the cache stays (a
   # cache earns its place only by being NEWER than what the package ships)
   r4(".rmbl_services_write")(file.path(td, "morie-services.json"), charToRaw(bund_doc), sig(bund_doc))
-  r4(".rmbl_services_forget")()
+  .rmbl_services_forget()
   s <- svcs(offline = TRUE)
   expect_identical(attr(s, "source"), "bundled")
   expect_true(file.exists(file.path(td, "morie-services.json")))
   unlink(file.path(td, c("morie-services.json", "morie-services.sig")))
   # served live, the same old document is a rollback below the floor
-  r4(".rmbl_services_forget")()
+  .rmbl_services_forget()
   testthat::local_mocked_bindings(.rmbl_net_download = function(url, tmp, timeout) {
     writeBin(charToRaw(if (grepl("[.]sig$", url)) sig(old_doc) else old_doc), tmp)
     200L

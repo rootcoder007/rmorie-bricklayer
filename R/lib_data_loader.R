@@ -287,18 +287,6 @@ rslvckns <- function(prov) {
 
 ## ----- Tiny `%||%` operator (R 4.4+ has it natively) -----
 
-#' Null-Coalescing Operator
-#'
-#' Returns `a` unless it is `NULL`, in which case it returns
-#' `b`.
-#'
-#' @param a Left-hand value.
-#' @param b Fallback used when `a` is `NULL`.
-#' @return `a` if it is not `NULL`, otherwise `b`.
-#' @keywords internal
-#' @noRd
-`%||%` <- function(a, b) if (is.null(a)) b else a
-
 ## ----- Download -----
 
 #' Download a File

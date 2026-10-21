@@ -1752,7 +1752,7 @@ polrpttxt <- function(report) {
   if (bz && !.rmbl_bzip2_complete(path))
     stop("is truncated: the bzip2 stream has no end-of-stream marker", call. = FALSE)
   con <- gzfile(path, "rb")   # bzip2 and xz
-  on.exit(close(con))
+  on.exit(close(con), add = TRUE)
   chunks <- list()
   total <- 0
   withCallingHandlers({
@@ -1794,7 +1794,7 @@ polrpttxt <- function(report) {
   n <- file.size(path)
   if (is.na(n) || n < 14) return(FALSE)
   con <- file(path, "rb")
-  on.exit(close(con))
+  on.exit(close(con), add = TRUE)
   seek(con, n - 11)
   tail <- readBin(con, "raw", 11L)
   bits <- unlist(lapply(tail, function(b) rev(as.integer(rawToBits(b)))))

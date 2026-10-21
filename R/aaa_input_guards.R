@@ -655,3 +655,10 @@
   cat(format(x, ...), sep = "\n")
   invisible(x)
 }
+
+# `%||%` (the right side when the left is NULL) is in base R from 4.4.0. It is defined here only
+# for older R, in this file because it comes first both in the package and wherever lib_*.R files
+# are sourced on their own (a capsule bundle, inst/scripts/setup_and_run.R).
+if (!exists("%||%", envir = baseenv(), inherits = FALSE)) {
+  `%||%` <- function(a, b) if (is.null(a)) b else a
+}

@@ -7,8 +7,8 @@ Authors@R:
            comment = c(ORCID = "0009-0004-1750-3592"))
 Description: For analyzing tables that others publish, such as open-data
     portals and statistical agencies, so that a result can be traced to the
-    exact data behind it and checked again later. A 'capsule' records where
-    each source came from, its Secure Hash Algorithm 256 ('SHA-256') digest,
+    exact data behind it and checked again afterwards. A 'capsule' records where
+    each source came from, its Secure Hash Algorithm 256 ('SHA-256') hash,
     the schema it should have and an archived copy in the Internet Archive
     'Wayback Machine' (<https://web.archive.org/>); sources are found through
     the Comprehensive Knowledge Archive Network ('CKAN', <https://ckan.org/>).
@@ -16,7 +16,7 @@ Description: For analyzing tables that others publish, such as open-data
     does not, how its distribution moved (Kolmogorov-Smirnov, chi-square,
     population stability index and 'Benford' first-digit screens), and when a
     source cannot be reached it runs on schema-driven synthetic data that is
-    marked as such. Capsules can be signed with keyed digests ('HMAC-SHA-256',
+    marked as such. Capsules can be signed with keyed hashes ('HMAC-SHA-256',
     RFC 2104) or with the post-quantum signature standards 'ML-DSA' (FIPS
     204), 'SLH-DSA' (FIPS 205) and 'XMSS' (RFC 8391), implemented from the
     standards with no system cryptography library and checked against

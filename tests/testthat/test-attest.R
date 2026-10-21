@@ -99,7 +99,7 @@ test_that("decimal conversion is correctly rounded, not libc's guess", {
   # together and the assertion failed against the correct answer.
   # These patterns are glibc's, which is correctly rounded, and are
   # what any conforming converter must produce on every platform.
-  dbl <- function(hex) {
+  hexdbl <- function(hex) {
     readBin(
       as.raw(strtoi(substring(
         hex, seq(1L, 15L, 2L),
@@ -111,14 +111,14 @@ test_that("decimal conversion is correctly rounded, not libc's guess", {
   }
   cases <- list(
     # the largest subnormal, one below the smallest normal
-    "2.2250738585072011e-308" = dbl("ffffffffffff0f00"),
-    "1e23" = dbl("f64ae1c7022db544"),
-    "0.1" = dbl("9a9999999999b93f"),
-    "0.3" = dbl("333333333333d33f"),
-    "1e-323" = dbl("0200000000000000"),
-    "1.7976931348623157e+308" = dbl("ffffffffffffef7f"),
+    "2.2250738585072011e-308" = hexdbl("ffffffffffff0f00"),
+    "1e23" = hexdbl("f64ae1c7022db544"),
+    "0.1" = hexdbl("9a9999999999b93f"),
+    "0.3" = hexdbl("333333333333d33f"),
+    "1e-323" = hexdbl("0200000000000000"),
+    "1.7976931348623157e+308" = hexdbl("ffffffffffffef7f"),
     # thirty significant digits: the naive answer is two ulps high
-    "123456789012345678901234567890" = dbl("3e376cff90eef845"),
+    "123456789012345678901234567890" = hexdbl("3e376cff90eef845"),
     # these need no rounding, so no platform can disagree about them
     "0" = 0,
     "-0" = 0,

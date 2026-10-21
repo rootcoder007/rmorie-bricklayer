@@ -113,7 +113,10 @@ yoy_summary.default <- function(object, ...) {
 #' @rdname rmbl-aliases
 #' @usage NULL
 #' @export
-print.rmbl_old <- function(x, ...) .rmbl_old_call("print", .rmbl_old_arg(x), ...)
+print.rmbl_old <- function(x, ...) {
+  .rmbl_old_call("print", .rmbl_old_arg(x), ...)
+  invisible(x)
+}
 
 #' @rdname rmbl-aliases
 #' @usage NULL

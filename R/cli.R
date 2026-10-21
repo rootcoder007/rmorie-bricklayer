@@ -659,13 +659,6 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
   invisible(status)
 }
 
-#' Returns `b` when `a` is NULL, else `a`.
-#' @param a A value that may be NULL.
-#' @param b The value used in its place.
-#' @return `a` or `b`.
-#' @noRd
-`%||%` <- function(a, b) if (is.null(a)) b else a
-
 #' Tells whether a command line with no verb is a question to send to a model.
 #'
 #' A question typed with no verb, asked as `ask` would be: the first argument is the question itself
