@@ -51,7 +51,9 @@
 <h2 class="pkg-version" data-toc-text="1.0.0" id="rmoriebricklayer-100">rmoriebricklayer 1.0.0<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-100"></a></h2>
 <div class="section level3">
 <h3 id="fixes-after-the-cran-resubmission-1-0-0">Fixes after the CRAN resubmission<a class="anchor" aria-label="anchor" href="#fixes-after-the-cran-resubmission-1-0-0"></a></h3>
-<ul><li>The search-and-rescue guide’s table of figure recipes is an HTML table with each line of R in code font; as a Markdown table, a <code>$</code> in a recipe started a formula and a <code>|</code> ended the cell, so most rows ran together as mathematics.</li>
+<ul><li>
+<code><a href="../reference/bldl.html">bldl()</a></code> asks a server that is busy for a moment (HTTP 429, 500, 502, 503 or 504) again up to three times, after the wait its <code>Retry-After</code> header asks for (at most a minute) or else 1, 2 and 4 seconds, instead of failing at once. data.rmorie.com answers 503 when many clients fetch one table at the same time, as every CI job of a push does.</li>
+<li>The search-and-rescue guide’s table of figure recipes is an HTML table with each line of R in code font; as a Markdown table, a <code>$</code> in a recipe started a formula and a <code>|</code> ended the cell, so most rows ran together as mathematics.</li>
 <li>The reference to Welch (1947) on <code><a href="../reference/baltab.html">?baltab</a></code> quotes its title with <code>\sQuote{}</code>, so the PDF manual prints an opening and a closing quote around Student’s instead of two closing ones.</li>
 <li>
 <code><a href="../reference/srchfig.html">srchfig()</a></code> with no argument gains a column <code>yours</code>: for each of the 36 figures, one line of R that draws it from your own numbers (the function behind the figure, with example inputs to replace; a schematic gives the computation it pictures). The search-and-rescue guide prints the table, and a test runs every line.</li>

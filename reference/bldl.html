@@ -168,7 +168,10 @@ copied locally through the same progress display, only with
 a loopback, link-local or private address; <code>headers</code> not a named
 character vector; <code>tmout</code> below 1 or above 2147483647;
 <code>maxbytes</code> below 1; a network failure; an HTTP status of 400 or
-more; a body larger than <code>maxbytes</code>. <code>dest</code> is overwritten.</p>
+more; a body larger than <code>maxbytes</code>. <code>dest</code> is overwritten.
+A server busy for a moment (HTTP 429, 500, 502, 503 or 504) is asked again up to
+three times, after the wait its <code>Retry-After</code> header asks for (at most a
+minute) or else 1, 2 and 4 seconds.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -193,7 +196,7 @@ Machine fallback.</p></div>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bldl</span><span class="op">(</span><span class="st">"https://127.0.0.1/table.csv"</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : url points at a local or private address ('https://127.0.0.1/table.csv'): refused (a local or private address (127.0.0.1))</span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bldl</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"file://"</span>, <span class="va">src</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : url must be an https:// URL, not file:// ('file:///tmp/Rtmpqj0RBF/file1ff05aead3c.txt'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : url must be an https:// URL, not file:// ('file:///tmp/RtmpSFrOhm/file22645d2e052c.txt'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a real download needs the network</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># interactive()</span></span></span>

@@ -4,6 +4,12 @@
 
 ### Fixes after the CRAN resubmission
 
+- [`bldl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bldl.md)
+  asks a server that is busy for a moment (HTTP 429, 500, 502, 503
+  or 504) again up to three times, after the wait its `Retry-After`
+  header asks for (at most a minute) or else 1, 2 and 4 seconds, instead
+  of failing at once. data.rmorie.com answers 503 when many clients
+  fetch one table at the same time, as every CI job of a push does.
 - The search-and-rescue guide’s table of figure recipes is an HTML table
   with each line of R in code font; as a Markdown table, a `$` in a
   recipe started a formula and a `|` ended the cell, so most rows ran

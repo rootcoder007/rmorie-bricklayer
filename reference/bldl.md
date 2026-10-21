@@ -108,7 +108,10 @@ Errors: a URL that is not https (or allowed http/file), or that points
 at a loopback, link-local or private address; `headers` not a named
 character vector; `tmout` below 1 or above 2147483647; `maxbytes` below
 1; a network failure; an HTTP status of 400 or more; a body larger than
-`maxbytes`. `dest` is overwritten.
+`maxbytes`. `dest` is overwritten. A server busy for a moment (HTTP 429,
+500, 502, 503 or 504) is asked again up to three times, after the wait
+its `Retry-After` header asks for (at most a minute) or else 1, 2 and 4
+seconds.
 
 ## See also
 
@@ -133,7 +136,7 @@ try(bldl("http://example.org/table.csv", tempfile()))
 try(bldl("https://127.0.0.1/table.csv", tempfile()))
 #> Error : url points at a local or private address ('https://127.0.0.1/table.csv'): refused (a local or private address (127.0.0.1))
 try(bldl(paste0("file://", src), tempfile()))
-#> Error : url must be an https:// URL, not file:// ('file:///tmp/Rtmpqj0RBF/file1ff05aead3c.txt'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror
+#> Error : url must be an https:// URL, not file:// ('file:///tmp/RtmpSFrOhm/file22645d2e052c.txt'); options(rmoriebricklayer.allowhttp = TRUE) admits a trusted plain-http mirror
 
 # a real download needs the network
 if (FALSE) { # interactive()
