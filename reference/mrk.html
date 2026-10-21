@@ -146,7 +146,7 @@ preference. A promoted node adds no step to a proof, so a proof can be
 shorter than \(\lceil \log_2 n \rceil\).</p>
 <p>The two prefix bytes are the leaf and node domain separation of RFC
 6962: without them an interior node, given as the 64 bytes of its two
-child digests, verifies as a "leaf" with the shorter proof from its
+child digests, verifies as a <code>"leaf"</code> with the shorter proof from its
 parent. Roots and proofs made by 0.5.12 and earlier have no prefixes
 (<code>scheme = 1</code>, the weaker scheme). Pass <code>scheme = 1</code> to
 <code>mrkroot()</code>, <code>mrklvs()</code> or <code>mrkprf()</code> to

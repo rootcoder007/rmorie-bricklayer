@@ -280,3 +280,22 @@ it prints back into the provenance file. Later runs refuse to proceed if
 the bytes change, and
 [`mnfrcmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mnfrcmp.md)
 compares two runs number by number.
+
+## The analysis in a picture
+
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws the
+analysis of the published table and the stock-and-flow result.
+
+``` r
+
+plot(a)
+```
+
+![](getting-started_files/figure-html/getting-started-plots-1.png)
+
+``` r
+
+plot(sf)
+```
+
+![](getting-started_files/figure-html/getting-started-plots-2.png)

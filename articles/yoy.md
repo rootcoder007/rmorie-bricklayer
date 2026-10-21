@@ -356,3 +356,15 @@ for (g in unique(m$group)) {
 #>   value previous ppchg verdict
 #> 2  61.5     70.6  -9.1    down
 ```
+
+## The change in a picture
+
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws the
+year-over-year result: each year’s change with its interval.
+
+``` r
+
+plot(y)
+```
+
+![](yoy_files/figure-html/yoy-plot-1.png)

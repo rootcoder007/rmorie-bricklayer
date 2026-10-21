@@ -45,8 +45,8 @@ the matching mechanisms and the verdict.
 ## Details
 
 With labels \\L_1, \dots, L_k\\ in code order, each mechanism produces a
-sequence \\M_1, \dots, M_k\\ meaning "true group \\L_i\\ was seen as
-\\M_i\\". It matches when \\M_i =\\ `observed[L_i]` for all \\i\\. There
+sequence \\M_1, \dots, M_k\\ meaning “true group \\L_i\\ was seen as
+\\M_i\\”. It matches when \\M_i =\\ `observed[L_i]` for all \\i\\. There
 are five fixed mechanisms, \\k - 1\\ rotations, and two frequency orders
 with `cnts`. When `obs` is the identity no mechanism is reported as
 matching.

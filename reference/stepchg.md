@@ -65,7 +65,7 @@ number stream is restored afterwards.
 
 The test assumes the periods are exchangeable under no change, so it
 ignores autocorrelation and smooth trends; a steady trend can produce a
-"step". With very few periods even a clean step cannot reach small
+`"step"`. With very few periods even a clean step cannot reach small
 p-values (six periods allow only 720 orderings). Missing values are
 dropped. A series with values beyond 1e150 is scanned in units of its
 largest absolute value, so the statistic does not overflow; `before`,

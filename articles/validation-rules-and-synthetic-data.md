@@ -214,3 +214,28 @@ valrules(d, rules)
 ```
 
 An empty list means every rule held on every row.
+
+## The synthetic stand-in in a picture
+
+The stand-in written above, column by column as the recipe generated it:
+visits drawn from a Poisson distribution with mean 3 and never below 1,
+and the share of rows with an alert in each year (the recipe asks for
+20%).
+
+``` r
+
+op <- par(mfrow = c(1, 2))
+barplot(table(df$visits), col = blpal()[1], xlab = "visits", ylab = "rows",
+        main = "Synthetic visits")
+al <- tapply(df$alert == "Yes", df$year, mean)
+barplot(100 * al, col = blpal()[2], ylim = c(0, 100), xlab = "year", ylab = "rows with an alert (%)",
+        main = "Synthetic alert flag")
+abline(h = 20, lty = 2)
+```
+
+![](validation-rules-and-synthetic-data_files/figure-html/synthetic-plot-1.png)
+
+``` r
+
+par(op)
+```

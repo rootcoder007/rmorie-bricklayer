@@ -240,7 +240,7 @@ state$used$generation
 # the old copy is refused: the bundles show indices it does not know are used
 blcli(c("sign", root, "--scheme", "xmss-sha256", "--key-file", copy, "--overwrite"),
       out = function(s) cat(s[grepl("stale", s)]))
-#> rmoriebricklayer: stale copy of the key: index 1 of it was already signed (seen in /tmp/Rtmps9yPn5/capsules-3ad1357d32af/two/capsule_bundle.json), but this state says the highest used in its range is -1. Signing would reuse an index: use the copy that made that signature, or generate a new key
+#> rmoriebricklayer: stale copy of the key: index 1 of it was already signed (seen in /tmp/RtmpteWM8U/capsules-3b6d6abcd8b/two/capsule_bundle.json), but this state says the highest used in its range is -1. Signing would reuse an index: use the copy that made that signature, or generate a new key
 xmssidxseen(root)[, c("index", "reused")]
 #>   index reused
 #> 1     0  FALSE
@@ -305,4 +305,30 @@ msg <- dgstobj(d)
 sig <- cpssign(msg, key)
 cpsvrf(msg, sig, fipspubkey(key))
 #> [1] TRUE
+```
+
+## The sizes in a picture
+
+What a signature costs on the wire, from
+[`fipssz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipssz.md):
+the public key a verifier keeps and the signature attached to each
+release, in bytes, for ML-DSA and two SLH-DSA sets. The scale is
+logarithmic, because an SLH-DSA signature is several times larger.
+
+``` r
+
+sch <- c("ML-DSA-44", "ML-DSA-65", "ML-DSA-87", "SLH-DSA-SHA2-128f", "SLH-DSA-SHAKE-128s")
+sz <- t(vapply(sch, function(s) fipssz(s)[c("public_key", "signature")], numeric(2)))
+op <- par(mar = c(9, 5, 3, 1))
+barplot(t(sz), beside = TRUE, log = "y", ylim = c(10, 2 * max(sz)), col = blpal()[1:2],
+        ylab = "bytes (log scale)", las = 2, cex.names = 0.8, legend.text = c("public key", "signature"),
+        args.legend = list(x = "topleft", bty = "n"), main = "Key and signature sizes")
+#> Warning in yinch(0.1): y log scale: yinch() is nonsense
+```
+
+![](post-quantum-signatures_files/figure-html/signature-sizes-plot-1.png)
+
+``` r
+
+par(op)
 ```

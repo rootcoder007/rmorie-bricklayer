@@ -198,3 +198,28 @@ for (nm in c("health", "mentalhealth", "wellbeing")) {
 chnvrf(ch)$valid
 #> [1] TRUE
 ```
+
+## The table in a picture
+
+The chain and the bundle above record this table, one indicator per
+release. Its estimates and intervals, drawn here for the first
+indicator, are what a reader sees after verification.
+
+``` r
+
+ci_plot <- function(t, lab, main) {
+  o <- order(t$estimate)
+  t <- t[o, ]
+  y <- seq_len(nrow(t))
+  op <- par(mar = c(4, 10, 3, 1))
+  on.exit(par(op))
+  plot(t$estimate, y, xlim = range(t$lower, t$upper, na.rm = TRUE), yaxt = "n", pch = 19,
+       col = blpal()[1], xlab = "estimate and 95% interval", ylab = "", main = main)
+  segments(t$lower, y, t$upper, y, col = blpal()[1])
+  axis(2, y, lab[o], las = 1, cex.axis = 0.7)
+}
+t1 <- d[d$indicator == d$indicator[1], ]
+ci_plot(t1, t1$group, t1$indicator[1])
+```
+
+![](attestations-bundles-chains_files/figure-html/chain-table-plot-1.png)

@@ -1,7 +1,7 @@
 # Start a capsule from a template
 
 Creates a new folder with the three files a reproducible analysis
-"capsule" needs, ready to be filled in: a `data_provenance.json` that
+`"capsule"` needs, ready to be filled in: a `data_provenance.json` that
 says where the data come from, an `analysis.R` script that fetches,
 checks, analyses and records, and a `README.md` that says how to run it.
 Use it to start a new project in the package's
@@ -91,9 +91,9 @@ list.files(d)
 # the provenance file to fill in
 cat(readLines(file.path(d, "data_provenance.json")), sep = "\n")
 #> {
-#>   "name": "capsule-203550dab869",
+#>   "name": "capsule-20d710d347dc",
 #>   "source": {
-#>     "url": "/tmp/RtmpD1RivZ/temp_libpath2035e5f3eda/rmoriebricklayer/extdata/otis_a01_individuals.csv",
+#>     "url": "/tmp/Rtmp6lvsTP/temp_libpath20d765355f37/rmoriebricklayer/extdata/otis_a01_individuals.csv",
 #>     "publisher": "TODO: who publishes the table",
 #>     "licence": "TODO: e.g. Open Government Licence - Ontario",
 #>     "retrieved": "TODO: YYYY-MM-DD",

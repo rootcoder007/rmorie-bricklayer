@@ -52,8 +52,8 @@ Errors: `key` not from
 [`kemkg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemkg.md)
 or
 [`kempubkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemkg.md);
-a key whose public half is not valid hex ("key has no usable public
-key"); `m` that is not a raw vector of 32 bytes.
+a key whose public half is not valid hex (“key has no usable public
+key”); `m` that is not a raw vector of 32 bytes.
 
 ## See also
 

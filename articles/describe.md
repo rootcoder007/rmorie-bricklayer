@@ -477,3 +477,38 @@ table(hi$quality, useNA = "ifany")
 The `quality` column carries Statistics Canada’s flags: `E` (use with
 caution), `F` (too unreliable to publish), `x` (suppressed) and `..`
 (not available).
+
+## The distributions in a picture
+
+The first figure draws each column of `messy` on its own scale: the
+clean column is symmetric, the bimodal one has two peaks, the skewed one
+a long right tail (drawn on a log scale), and the last a pile of zeros.
+The second compares the fresh scores with the reference scores as
+empirical distribution functions with
+[`plotecdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotmore.md);
+where the curves part, the data have changed.
+
+``` r
+
+op <- par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
+for (nm in names(messy)) {
+  x <- messy[[nm]]
+  if (nm == "skewed") {
+    hist(log10(x), breaks = 30, col = blpal()[2], main = "skewed (log10 scale)", xlab = "log10(value)")
+  } else {
+    hist(x, breaks = 30, col = blpal()[2], main = nm, xlab = "value")
+  }
+}
+```
+
+![](describe_files/figure-html/describe-plots-1.png)
+
+``` r
+
+par(op)
+plotecdf(c(reference$score, fresh$score),
+         rep(c("reference", "fresh"), c(nrow(reference), nrow(fresh))),
+         main = "Fresh scores against the reference")
+```
+
+![](describe_files/figure-html/describe-plots-2.png)

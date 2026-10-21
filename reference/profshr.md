@@ -71,12 +71,13 @@ gender, age group and group. Statistics Canada does not publish standard
 errors for the profile, so the interval is an approximation built from
 what is known about how the counts were made:
 
-- a long-form ("25\\ household in four, so the share has variance \\d
-  (1 - f) p (1 - p) / (f N)\\ for a sampling fraction \\f\\ (`smpfrac`,
-  0.25) of a population of \\N\\ (the denominator) and a design effect
-  \\d\\ (`deff`, 1 by default: the clustering of people in households
-  raises it, and a value of 1.5 to 2 is prudent for characteristics
-  shared within a household). On reserves (rows whose `residence` is
+- a long-form (“25% sample”) count is estimated from a sample of about
+  one household in four, so the share has variance \\d (1 - f) p (1 - p)
+  / (f N)\\ for a sampling fraction \\f\\ (`smpfrac`, 0.25) of a
+  population of \\N\\ (the denominator) and a design effect \\d\\
+  (`deff`, 1 by default: the clustering of people in households raises
+  it, and a value of 1.5 to 2 is prudent for characteristics shared
+  within a household). On reserves (rows whose `residence` is
   `"On reserve"`) every household got the long form, so \\f = 1\\ there
   and the sampling term vanishes;
 
@@ -89,7 +90,7 @@ what is known about how the counts were made:
 In all, \$\$V = \frac{d (1 - f) p (1 - p)}{f N} + \frac{c (1 +
 p^2)}{N^2}.\$\$ The interval is Wilson's at the effective sample size
 \\n_e = \max(p(1-p), 1/N) / V\\ (the floor \\1/N\\ keeps a share of 0 or
-100\\ from an infinite \\n_e\\), so it stays inside 0 and 100. It does
+100% from an infinite \\n_e\\), so it stays inside 0 and 100. It does
 not carry non-response (see `tnrlf`) or the edit and imputation error,
 so it is narrower than the full error; treat it as a lower bound on the
 uncertainty.

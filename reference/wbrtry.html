@@ -118,9 +118,9 @@ without capturing again. What is left is captured again with
 <code><a href="wbsave.html">wbsave()</a></code>, appending to the same file. A page its
 source no longer has is not sent again unless
 <code>incgone = TRUE</code>: a new capture would only archive the error.
-"Gone" means the recorded message contains archive.org's report of the
-target server's reply ("target server cannot find", "returned 404",
-"returned 410", "error:not-found" or "error:gone"); an HTTP 404 from
+<code>"Gone"</code> means the recorded message contains archive.org's report of the
+target server's reply (“target server cannot find”, “returned 404”,
+“returned 410”, <code>"error:not-found"</code> or <code>"error:gone"</code>); an HTTP 404 from
 archive.org's own API does not count. A failure for a daily limit
 recorded today (UTC) is not sent again until tomorrow.</p>
 <p>Network: the lookups use the Wayback availability API and the new
@@ -165,7 +165,7 @@ any error from <code><a href="wbsave.html">wbsave()</a></code>.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1      1               0              0            1                 0</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">wbrtry</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".jsonl"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : no results file at /tmp/RtmpD1RivZ/file2035247e3463.jsonl</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : no results file at /tmp/Rtmp6lvsTP/file20d77690a279.jsonl</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># With failures to resend, keys and the network are needed.</span></span></span>
 <span class="r-in"><span></span></span>

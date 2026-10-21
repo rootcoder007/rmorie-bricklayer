@@ -45,7 +45,7 @@ ctkyfnc(x, k = 1.5)
 - k:
 
   Fence width in IQRs, a single non-negative number (default 1.5,
-  Tukey's convention; 3 is the usual "far out" cutoff).
+  Tukey's convention; 3 is the usual “far out” cutoff).
 
 ## Value
 

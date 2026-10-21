@@ -2,8 +2,8 @@
 
 Computes the change from one period to the period `lag` places before
 it, matched on the period's own value rather than on row order, and
-carries an exact interval for count data. Use it for the "up 12% on last
-year" figures of an annual report or an open-data release: a missing
+carries an exact interval for count data. Use it for the “up 12% on last
+year” figures of an annual report or an open-data release: a missing
 year shows as a gap instead of shifting every comparison, a percentage
 is compared in percentage points, and a change off a small count comes
 with an interval as wide as the count is small.
@@ -65,8 +65,8 @@ print(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
   For a data frame, the column holding the period (a year, a `Date`, a
   fiscal-year integer, an ordered factor). An ordered factor is compared
   by level order, one level being one period; an unordered factor or a
-  character column has no order, so every row is flagged "no comparison
-  period". For a numeric vector, the periods themselves.
+  character column has no order, so every row is flagged “no comparison
+  period”. For a numeric vector, the periods themselves.
 
 - by:
 
@@ -97,7 +97,7 @@ print(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
 
 - minbase:
 
-  Optional: previous-period values below this get a "small base" note.
+  Optional: previous-period values below this get a “small base” note.
   Nothing is withheld either way: every non-zero base gets its percent
   change and exact interval, which is as wide as the base is small.
   Defaults to 0 (no note); only a zero base has no percent change.
@@ -151,8 +151,8 @@ An `rmbl_yoy` object (a data frame of class
 `c("rmbl_yoy", "data.frame")`) with one row per period (and group): the
 period column under its own name (`period` for a vector or a `ts`), the
 grouping columns, then `value`, `previous`, `change`, `pctchg` (or
-`ppchg` for percentages), `flag` (character: "no comparison period", "no
-data", "previous period is zero", or a small-base note when `minbase` is
+`ppchg` for percentages), `flag` (character: “no comparison period”, “no
+data”, “previous period is zero”, or a small-base note when `minbase` is
 set; `NA` otherwise), `pctlo` and `pctup` for counts, and `verdict`.
 Attribute `"yoy"` records `value`, `period`, `by`, `lag`, `units`,
 `minbase`, `conflvl`, `direction` and the display digits; the writers
@@ -166,7 +166,7 @@ read it.
 Rows are first combined to one per period (and group) with `fun`. With
 `complete = TRUE` the periods missing from a regular grid (numbers,
 `Date` or `POSIXct` with a common step) are inserted with `NA` values
-and flagged "no data". Each period is then compared with the period
+and flagged “no data”. Each period is then compared with the period
 `lag` steps earlier in that grid: `change` is the difference, `pctchg`
 \\100 (v_t / v\_{t-lag} - 1)\\ (`NA` off a zero base), and for
 percentages `ppchg` is the difference in percentage points.

@@ -68,7 +68,7 @@ places.
   (`w`), and 20 bootstrap replicate weights `rw01` to `rw20` (Rao-Wu:
   primary units drawn with replacement within each stratum). Variables
   `age`, `sex`, `smoker` (0/1), `drinks` per week, `victim` (0/1,
-  victimised in the past year), `trust` (1 to 5) and `income` (with 8
+  victimized in the past year), `trust` (1 to 5) and `income` (with 8
   percent missing and a few very large values).
 
 - `fnmi`:

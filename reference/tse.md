@@ -4,7 +4,7 @@ Bounds on the effects of an
 [`evstudy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/evstudy.md)
 when the trend after adoption may depart from parallel by up to \\\bar
 M\\ times the largest departure seen before it (Rambachan and Roth's
-relative magnitudes), with a conservative interval and the "breakdown"
+relative magnitudes), with a conservative interval and the `"breakdown"`
 \\\bar M\\ at which the interval first includes zero.
 
 ## Usage

@@ -3,10 +3,10 @@
 Gives each band a single number that a calculation can use (a mean, a
 concentration index, a regression), under a rule you choose. For closed
 bands the rule places the value at the midpoint, the lower or upper
-bound, or the geometric mean of the bounds. An open band ("50+", "under
-18") has no midpoint, so its missing bound is filled from an explicit
-assumption, and the rows that rest on that assumption are flagged in the
-result instead of being absorbed into it.
+bound, or the geometric mean of the bounds. An open band (`"50+"`,
+“under 18”) has no midpoint, so its missing bound is filled from an
+explicit assumption, and the rows that rest on that assumption are
+flagged in the result instead of being absorbed into it.
 
 ## Usage
 
@@ -43,13 +43,13 @@ bandvals(
 - openupfac:
 
   Number, default `2`. When no cap is given, the open top band's upper
-  bound is its lower bound times this factor (so "Greater than 10"
+  bound is its lower bound times this factor (so “Greater than 10”
   becomes 11 to 22).
 
 - openloflr:
 
   Number or `NULL` (the default). The lower bound assumed for an open
-  bottom band ("under 18"). `NULL` uses 0, or the band's own upper bound
+  bottom band (“under 18”). `NULL` uses 0, or the band's own upper bound
   when that is below 0. A floor above a band's upper bound is refused.
 
 ## Value

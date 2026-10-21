@@ -4,7 +4,7 @@ Shows, in one table, every way
 [`llmask`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmask.md)
 could reach a language model from this machine and whether each is
 ready: your own endpoint, each provider whose key is set, and a local
-Ollama server. Use it to find out why a question fails with "no route",
+Ollama server. Use it to find out why a question fails with “no route”,
 or which model a route would use. The command line prints it as part of
 `rmoriebricklayer doctor`.
 

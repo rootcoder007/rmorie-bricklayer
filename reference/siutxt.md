@@ -1,8 +1,8 @@
 # Convert SIU report HTML to plain text
 
 Strips the markup from one SIU director's report page and returns the
-readable text, keeping line breaks so section headings ("Subject
-Officials", "Witness Officials") stay on lines of their own. Use it
+readable text, keeping line breaks so section headings (“Subject
+Officials”, “Witness Officials”) stay on lines of their own. Use it
 before
 [`siuso()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siuso.md),
 or to read or search a saved report without a browser.
@@ -33,9 +33,9 @@ tags become line breaks, HTML entities are decoded and runs of spaces
 are collapsed while newlines are kept. Nothing is fetched and nothing is
 written.
 
-Errors: `html` must be a single non-NA character string ("html must be a
-single non-NA character string"), and input over 2 MiB is refused ("html
-is larger than 2 MiB: not a report page").
+Errors: `html` must be a single non-NA character string (“html must be a
+single non-NA character string”), and input over 2 MiB is refused (“html
+is larger than 2 MiB: not a report page”).
 
 ## Limits
 

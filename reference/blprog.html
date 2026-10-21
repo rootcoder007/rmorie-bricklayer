@@ -140,13 +140,14 @@ shows one bar, for the outer loop.</p>
 drawing, frames are throttled, so <code>$tick()</code> can be called on every
 iteration of a loop. Call <code>$done()</code> through <code><a href="https://rdrr.io/r/base/on.exit.html" class="external-link">on.exit()</a></code> right
 after making the bar, so the line is cleared and the bar is released even
-when the work fails or is interrupted:</p><div class="sourceCode"><pre><code><span></span>
-<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blprog.html">blprog</a></span><span class="op">(</span><span class="st">"bootstrap"</span>, <span class="va">B</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/on.exit.html" class="external-link">on.exit</a></span><span class="op">(</span><span class="va">p</span><span class="op">$</span><span class="fu">done</span><span class="op">(</span><span class="op">)</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">b</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">B</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">...</span></span>
-<span>  <span class="va">p</span><span class="op">$</span><span class="fu">tick</span><span class="op">(</span>info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"resample %d/%d"</span>, <span class="va">b</span>, <span class="va">B</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div><p><code>$done()</code> may be called more than once; only the first call acts.</p>
+when the work fails or is interrupted:</p><div class="sourceCode"><pre><code>
+p &lt;- blprog("bootstrap", B)
+on.exit(p$done(), add = TRUE)
+for (b in seq_len(B)) {
+  ...
+  p$tick(info = sprintf("resample <!-- %d/%d", b, B)) -->
+}
+</code></pre></div><p><code>$done()</code> may be called more than once; only the first call acts.</p>
     </div>
 
     <div class="section level2">

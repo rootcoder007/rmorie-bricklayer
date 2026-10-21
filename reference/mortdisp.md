@@ -4,7 +4,7 @@ The expected number of deaths (or cases) a year that a given drop in
 exposure would avoid in a population, from the baseline rate and a
 log-linear concentration-response coefficient. This is the health-impact
 function used in regulatory benefit assessments, for questions such as
-"how many deaths would a 5 microgram cut in PM2.5 avoid in this city?".
+“how many deaths would a 5 microgram cut in PM2.5 avoid in this city?”.
 
 ## Usage
 

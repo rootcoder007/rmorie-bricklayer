@@ -4,9 +4,10 @@ The comparisons of this family read Statistics Canada's quality flags:
 `E` (use with caution), and `F`, `x`, `..`, `...` (no value: too
 unreliable, suppressed, not available, not applicable). Other agencies
 flag otherwise: the Australian Bureau of Statistics `np` (not published)
-and `*` or `**` (relative standard error over 25\\ Census Bureau `(X)`.
-This maps them to the package's vocabulary, so suppressed cells are
-never compared and uncertain ones are marked.
+and `*` or `**` (relative standard error over 25% or 50%), Stats NZ `S`
+(suppressed), the US Census Bureau `(X)`. This maps them to the
+package's vocabulary, so suppressed cells are never compared and
+uncertain ones are marked.
 
 ## Usage
 

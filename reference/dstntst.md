@@ -68,8 +68,8 @@ people are most of the Indigenous population. Rows that pool groups are
 left out (`pooled`; see
 [`indgap`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indgap.md));
 every other row is included, so drop the reference group (non-Indigenous
-people) yourself, and never test overlapping groups ("alone" beside
-"alone or in combination") together: they are not independent. With two
+people) yourself, and never test overlapping groups (`"alone"` beside
+“alone or in combination”) together: they are not independent. With two
 or three groups the test has little power and \\I^2\\ is imprecise; a
 large \\p\\ is not evidence that the groups are the same.
 

@@ -30,8 +30,8 @@ A named length-4 numeric vector: `mean` (units of `x`), `variance`
 The mean is base R's (an extended-precision sum followed by a corrective
 pass); the deviations from it are then divided by their largest
 magnitude before any power is taken, and the scale is restored at the
-end. That avoids both the cancellation of the textbook "sum of squares
-minus square of sum" formula and overflow of fourth powers for values
+end. That avoids both the cancellation of the textbook “sum of squares
+minus square of sum” formula and overflow of fourth powers for values
 beyond about \\10^{77}\\. It reads the data three times (mean, largest
 deviation, moments), in \\O(n)\\ time. The variance uses the `n - 1`
 denominator, matching

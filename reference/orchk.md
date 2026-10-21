@@ -55,7 +55,7 @@ when \\\|OR_r - \widehat{OR}\_r\| \le\\ `tol` \\\times
 \|\widehat{OR}\_r\|\\ for every non-reference group, and all values are
 finite. The search covers all \\k!\\ permutations of the row labels,
 each with and without the outcome columns swapped (the identity without
-a swap is the "as labelled" check), and is only run for \\k \le 7\\
+a swap is the “as labelled” check), and is only run for \\k \le 7\\
 groups. A zero cell gives an infinite or undefined odds ratio, which
 never matches.
 

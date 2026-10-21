@@ -72,15 +72,16 @@ Indigenous understandings of mental health are holistic: wellness is a
 balance among the domains of a person, and illness a loss of that
 balance (Stewart 2008; Gabriel, Mirza and Stewart 2022). A single
 indicator, or an average of indicators, cannot show balance: a group
-with 80\\ same average as one with 50\\ that work rather than taken from
-it, measures balance as the ratio of the weighted geometric to the
-weighted arithmetic mean of the domain levels \\p_k\\: \$\$B =
-\exp\left(\sum_k w_k \log p_k\right) / \sum_k w_k p_k,\$\$ one less
-Atkinson's (1970) index with inequality aversion 1. \\B = 1\\ exactly
-when every domain with a positive weight is at the same level, and it
-falls toward 0 as one domain falls behind the others; it does not depend
-on the overall level, which is reported beside it (`level`, \\\sum_k w_k
-p_k\\) with the weakest domain.
+with 80% in two domains and 20% in two others has the same average as
+one with 50% in all four. This method, which is ours and inspired by
+that work rather than taken from it, measures balance as the ratio of
+the weighted geometric to the weighted arithmetic mean of the domain
+levels \\p_k\\: \$\$B = \exp\left(\sum_k w_k \log p_k\right) / \sum_k
+w_k p_k,\$\$ one less Atkinson's (1970) index with inequality
+aversion 1. \\B = 1\\ exactly when every domain with a positive weight
+is at the same level, and it falls toward 0 as one domain falls behind
+the others; it does not depend on the overall level, which is reported
+beside it (`level`, \\\sum_k w_k p_k\\) with the weakest domain.
 
 The weights `w` say how much each domain counts. They are equal by
 default; a community that holds its own view of the domains sets its own

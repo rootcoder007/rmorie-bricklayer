@@ -1,7 +1,7 @@
 # Read a Statistics Canada table as published
 
-Tidies a Statistics Canada full-table download (the "CSV for database
-loading" form, as the data service mirrors it under
+Tidies a Statistics Canada full-table download (the “CSV for database
+loading” form, as the data service mirrors it under
 `statcan_indigenous/tbl_<pid>`): `VALUE` as a number, and the quality
 flags kept beside it in `quality`.
 

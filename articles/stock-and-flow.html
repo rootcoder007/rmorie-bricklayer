@@ -221,6 +221,24 @@ foster children, a stock on census day:</p>
 data held by child welfare agencies.</p>
 </div>
 <div class="section level2">
+<h2 id="the-figures-in-a-picture">The figures in a picture<a class="anchor" aria-label="anchor" href="#the-figures-in-a-picture"></a>
+</h2>
+<p>The left panel puts the counts on a common footing: children in
+foster care per 1,000 children, First Nations and non-Indigenous, from
+the census tables above. The right panel shows how the lengths of stay
+are spread: most are short, a few are very long, which is why the mean
+and the median differ.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">per1000</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">fost</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">kids</span><span class="op">)</span> <span class="op">*</span> <span class="fl">1000</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span><span class="va">per1000</span>, names.arg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"First Nations"</span>, <span class="st">"non-Indigenous"</span><span class="op">)</span>, col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>,</span>
+<span>        ylab <span class="op">=</span> <span class="st">"per 1,000 children"</span>, main <span class="op">=</span> <span class="st">"Children in foster care"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">stays</span>, breaks <span class="op">=</span> <span class="fl">30</span>, col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, xlab <span class="op">=</span> <span class="st">"length of stay"</span>, main <span class="op">=</span> <span class="st">"Lengths of stay"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="stock-and-flow_files/figure-html/stock-flow-plots-1.png" class="r-plt" alt="" width="768"></p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="reference">Reference<a class="anchor" aria-label="anchor" href="#reference"></a>
 </h2>
 <p>Lakner, <em>A Manual of Correctional Statistics</em> (the ADP and

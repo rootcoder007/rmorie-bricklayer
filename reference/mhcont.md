@@ -70,7 +70,7 @@ combined as independent; the proxies share respondents, so if they are
 positively correlated that standard error is too small), marks every row
 as a proxy, and reports a direction given no proxy as missing rather
 than filling it from another. One indicator named for two directions
-(Statistics Canada asks about "meaning and purpose" together) is used
+(Statistics Canada asks about “meaning and purpose” together) is used
 for both and marked `shared`.
 
 The result plots as a

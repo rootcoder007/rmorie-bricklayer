@@ -41,8 +41,8 @@ welprof(
 - well, distress:
 
   The indicators that measure wellness or strength, and those that
-  measure distress; rows for any other indicator (totals, "not
-  specified") are left out.
+  measure distress; rows for any other indicator (totals, “not
+  specified”) are left out.
 
 - domain:
 

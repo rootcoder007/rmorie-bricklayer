@@ -62,9 +62,9 @@ A list of class `rmbl_connection`: `data` (the places used), `rho`,
 
 ## Details
 
-Mashford-Pringle and Stewart (2019) describe the land as "an
+Mashford-Pringle and Stewart (2019) describe the land as “an
 instrumental part of all aspects of Indigenous life including health and
-well-being"; Mashford-Pringle (2016) describes Indigenous health and
+well-being”; Mashford-Pringle (2016) describes Indigenous health and
 education as interconnected. Across places, that connection has a
 testable shadow: where more people are on the land (or belong, or finish
 school), do more report wellness? This function measures it by

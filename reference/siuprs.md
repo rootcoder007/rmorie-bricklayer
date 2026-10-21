@@ -53,8 +53,8 @@ existing file is read as a path. A string that looks like a path (ends
 in `.htm`/`.html` or contains a slash) but names no file is an error,
 not an empty report.
 
-Errors: `html` not character, empty or `NA`; a missing file ("no such
-file"); input over 2 MiB.
+Errors: `html` not character, empty or `NA`; a missing file (“no such
+file”); input over 2 MiB.
 
 ## Limits
 

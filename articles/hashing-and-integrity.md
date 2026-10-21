@@ -237,3 +237,28 @@ proof <- mrkprf(rows, 3)
 mrkvrf(rows[3], proof, root)
 #> [1] TRUE
 ```
+
+## The pinned table in a picture
+
+The digests above pin this table. Its estimates and intervals for the
+first measure are drawn here: a reader who verifies the digest is
+looking at exactly these numbers.
+
+``` r
+
+ci_plot <- function(t, lab, main) {
+  o <- order(t$estimate)
+  t <- t[o, ]
+  y <- seq_len(nrow(t))
+  op <- par(mar = c(4, 10, 3, 1))
+  on.exit(par(op))
+  plot(t$estimate, y, xlim = range(t$lower, t$upper, na.rm = TRUE), yaxt = "n", pch = 19,
+       col = blpal()[1], xlab = "estimate and 95% interval", ylab = "", main = main)
+  segments(t$lower, y, t$upper, y, col = blpal()[1])
+  axis(2, y, lab[o], las = 1, cex.axis = 0.7)
+}
+t1 <- d[d$measure == d$measure[1], ]
+ci_plot(t1, paste(t1$group, t1$age), t1$measure[1])
+```
+
+![](hashing-and-integrity_files/figure-html/hashed-table-plot-1.png)

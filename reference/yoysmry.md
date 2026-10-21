@@ -52,9 +52,9 @@ the last observed value, the total change is \$\$100 (v_T / v_1 - 1)\$\$
 and, with \\s = (T - 1) / \mathrm{lag}\\ steps of length `lag`, \$\$100
 \left( (v_T / v_1)^{1/s} - 1 \right).\$\$ Both are `NA` when \\v_1 \le
 0\\, because a growth rate out of zero does not exist; `cagrpct` is also
-`NA` for a single period. "Annual" in CAGR assumes one period is a year;
-for monthly or quarterly data read it as the compound rate per `lag`
-periods.
+`NA` for a single period. `"Annual"` in CAGR assumes one period is a
+year; for monthly or quarterly data read it as the compound rate per
+`lag` periods.
 
 The `up`, `down` and `flat` counts are taken from the percent-change
 column (`pctchg`, or `ppchg` for `units = "percent"`). A change out of a
@@ -64,7 +64,7 @@ A group with no non-missing value gives a row of `NA` with
 
 Anything other than a
 [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-result is refused with the error "`object` must be a yoy() result".
+result is refused with the error “`object` must be a yoy() result”.
 
 ## See also
 

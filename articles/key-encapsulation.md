@@ -177,3 +177,34 @@ tag <- chmac(msg, sent$shared)
 identical(chmac(msg, kemdecap(steward, sent$ciphertext)), tag)
 #> [1] TRUE
 ```
+
+## The sizes in a picture
+
+What each parameter set puts on the wire: the public key the steward
+publishes and the ciphertext each sender transmits, in bytes, for ML-KEM
+([`kemsz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemsz.md))
+and HQC
+([`hqcsz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqcsz.md)).
+
+``` r
+
+sz <- rbind(
+  "ML-KEM-512" = kemsz(512L)[c("public", "ciphertext")],
+  "ML-KEM-768" = kemsz(768L)[c("public", "ciphertext")],
+  "ML-KEM-1024" = kemsz(1024L)[c("public", "ciphertext")],
+  "HQC-1" = hqcsz(1L)[c("public", "ciphertext")],
+  "HQC-3" = hqcsz(3L)[c("public", "ciphertext")],
+  "HQC-5" = hqcsz(5L)[c("public", "ciphertext")]
+)
+op <- par(mar = c(7, 5, 3, 1))
+barplot(t(sz), beside = TRUE, col = blpal()[1:2], ylab = "bytes", las = 2, cex.names = 0.8,
+        legend.text = c("public key", "ciphertext"), args.legend = list(x = "topleft", bty = "n"),
+        main = "Key and ciphertext sizes")
+```
+
+![](key-encapsulation_files/figure-html/kem-sizes-plot-1.png)
+
+``` r
+
+par(op)
+```

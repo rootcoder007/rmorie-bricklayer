@@ -76,7 +76,7 @@ work fails or is interrupted:
     on.exit(p$done(), add = TRUE)
     for (b in seq_len(B)) {
       ...
-      p$tick(info = sprintf("resample %d/%d", b, B))
+      p$tick(info = sprintf("resample 
     }
 
 `$done()` may be called more than once; only the first call acts.

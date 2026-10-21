@@ -2,8 +2,8 @@
 
 Small excerpts of Statistics Canada tables, bundled so that the examples
 and vignettes run on published values without a network connection or a
-data service key. Values are as published, with their 95\\ cells are
-`NA`).
+data service key. Values are as published, with their 95% limits and
+quality flags; nothing is imputed (suppressed cells are `NA`).
 
 ## Usage
 
@@ -44,7 +44,7 @@ Statistics Canada tables, each with its DOI:
 
 Indigenous Population Profile, 2021 Census of Population, catalogue
 98-510-X2021001 and 98-510-X2021016. Reproduced and distributed on an
-"as is" basis with the permission of Statistics Canada, under the
+“as is” basis with the permission of Statistics Canada, under the
 Statistics Canada Open Licence:
 
 <https://www.statcan.gc.ca/en/terms-conditions/open-licence>
@@ -130,8 +130,8 @@ A data frame.
 The First Nations figures of the survey excerpts are for First Nations
 people living off reserve: the surveys do not cover reserves, whose data
 are governed by First Nations (see the First Nations Information
-Governance Centre). Groups are as the tables name them, with "Inuk
-(Inuit)" written "Inuit".
+Governance Centre). Groups are as the tables name them, with “Inuk
+(Inuit)” written `"Inuit"`.
 
 ## See also
 

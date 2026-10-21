@@ -5,8 +5,8 @@ outcome after adjusting for confounders, by the double machine learning
 recipe: the part of the outcome and of the exposure that the confounders
 predict is removed with models fitted on other folds of the data, and
 the effect is the slope of what is left. It answers questions such as
-"how much does asthma incidence rise per microgram of NO2, holding
-income and age structure fixed?".
+“how much does asthma incidence rise per microgram of NO2, holding
+income and age structure fixed?”.
 
 ## Usage
 

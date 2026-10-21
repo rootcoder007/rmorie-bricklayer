@@ -117,7 +117,7 @@ check a signature that arrived without that field.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Returns <code>FALSE</code> rather than erroring on a malformed or truncated
-signature: a verifier must treat unparseable input as "not verified",
+signature: a verifier must treat unparseable input as “not verified”,
 never as an exception to be caught and ignored.</p>
 <p><code>TRUE</code> means the signature is valid for <code>msg</code> under <code>key</code> (and, for
 the standardised schemes, <code>ctx</code> and the pre-hash). Verification

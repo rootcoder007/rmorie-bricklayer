@@ -193,3 +193,28 @@ back <- fromjs(js)
 all.equal(back$estimate, d$estimate[d$period == "2014/2016"])
 #> [1] TRUE
 ```
+
+## The table after the round trip in a picture
+
+These are the estimates and intervals that arrived after the trip
+through JSON, one row for each group: what the receiver plots is what
+the sender sent.
+
+``` r
+
+o <- order(back$estimate)
+t1 <- back[o, ]
+yy <- seq_len(nrow(t1))
+op <- par(mar = c(4, 16, 3, 1))
+plot(t1$estimate, yy, xlim = range(t1$lower, t1$upper), yaxt = "n", pch = 19, col = blpal()[1],
+     xlab = "estimate and 95% interval", ylab = "", main = t1$measure[1])
+segments(t1$lower, yy, t1$upper, yy, col = blpal()[1])
+axis(2, yy, t1$group, las = 1, cex.axis = 0.7)
+```
+
+![](json-and-serialisation_files/figure-html/json-roundtrip-plot-1.png)
+
+``` r
+
+par(op)
+```

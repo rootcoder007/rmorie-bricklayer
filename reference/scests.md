@@ -63,10 +63,11 @@ limits \\e \exp(\mp z \sqrt{\log(1 + (c/100)^2)})\\, which stay positive
 however large \\c\\ is; a standard error \\s\\ the limits \\e \mp z s\\;
 the column `cisou` says which (`"published"`, `"cv"` or `"se"`).
 Published limits that do not contain their own estimate (it happens: a
-100\\ 98.6 in table 41-10-0012) are kept as published and marked
-`"inconsistent"`; every comparison of the family warns and leaves such a
-row out. A limit is matched to a measure when it fits 95\\
-English-language tables.
+100% with limits 85.5 to 98.6 in table 41-10-0012) are kept as published
+and marked `"inconsistent"`; every comparison of the family warns and
+leaves such a row out. A limit is matched to a measure when it fits 95%
+of the cells. Labels are read in English: use the English-language
+tables.
 
 Every other column but the metadata (`VECTOR`, `COORDINATE`, `UOM`, ...)
 identifies the cell, `DGUID` among them (one place name can name several

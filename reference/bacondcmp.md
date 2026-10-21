@@ -44,7 +44,7 @@ l} s\_{kl}\hat\beta\_{kl}\\, with weights that sum to one and grow with
 the groups' sizes \\n\\ and the variance of their treatment over time
 \\\bar D(1 - \bar D)\\ (Goodman-Bacon 2021, theorem 1). Units treated
 from the first period act as an already-treated group. A large weight on
-"later vs earlier" comparisons, together with effects that grow over
+“later vs earlier” comparisons, together with effects that grow over
 time, is the warning sign that the two-way estimate is biased.
 
 ## References

@@ -1,8 +1,8 @@
 # Generate One Synthetic Column From a Spec
 
 Builds one column of synthetic (made-up) data from a short
-specification, such as "sample these categories with these weights" or
-"Poisson counts with mean 25". It is the building block of
+specification, such as “sample these categories with these weights” or
+“Poisson counts with mean 25”. It is the building block of
 [`mksyncsv`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mksyncsv.md),
 which assembles a whole table from a recipe. Use synthetic columns to
 develop and test an analysis pipeline before, or instead of, touching

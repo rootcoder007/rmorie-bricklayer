@@ -1,22 +1,99 @@
 # rmoriebricklayer
 
-> Brick-proof, reproducible data capsules for R.
+> Analyze a published table, and be able to show later exactly which
+> data the result came from.
 
-`rmoriebricklayer` resolves open-data sources, records and verifies
-provenance, validates downloaded data against a pinned schema, and falls
-back to schema-driven synthetic data when the real source is unreachable
-— so any analysis result can be traced back to its exact inputs. It is
-written for analysts and researchers who work from published
-administrative and survey tables (justice, corrections, health and
-Indigenous statistics, for example) and who need to show later exactly
-which data a result came from.
+## What it is, in plain words
 
-A checksum answers one question: are these the same bytes? The package
-exists because that is rarely the question that matters. A re-released
-extract can be statistically identical and differ byte-for-byte; a
-column can keep its name, type and row count while having been silently
-rescaled; and a digest anyone can recompute says nothing about who
-produced the data.
+`rmoriebricklayer` is for people who work from tables that someone else
+publishes: a ministry’s open-data portal, Statistics Canada, a police
+oversight agency. It does three things with such a table.
+
+1.  **It analyzes the table.**
+    [`anltab()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/anltab.md)
+    takes counts by period and group and reports what changed between
+    periods, with exact intervals, trends and rates, and says how far
+    the publisher’s rounding and suppressed cells could move each
+    figure.
+2.  **It pins the data the result came from.** A *capsule* records where
+    the table came from, the SHA-256 digest of the exact file, the
+    columns and values it should have, and the address of an archived
+    copy. Rerun later, `rmbl verify` says whether the source still
+    matches, and `rmbl drift` says, column by column, what moved if it
+    does not.
+3.  **It signs the record.** A capsule can be signed (with a shared key,
+    or with the post-quantum signature standards), so a reader can check
+    who produced a result and that nothing changed afterwards.
+
+The rest of the package (the statistics for administrative tables, the
+plots, the dashboard, the cryptography written from the standards)
+serves one of these three.
+
+## Why it exists
+
+I analyze Canadian justice and health statistics from published tables.
+Three things kept going wrong, and a checksum alone catches none of
+them.
+
+- **Sources go down or move.** The federal open-data portal,
+  `open.canada.ca`, was unreachable in October 2026 while analyses
+  depended on it. A capsule keeps the address of an archived copy of
+  every source in the Internet Archive, so the analysis still runs, and
+  it says that it used the archived copy.
+- **The same table comes back different.** A re-released extract can
+  hold the same numbers in a different byte layout, or keep a column’s
+  name and type while the column has been rescaled. The drift checks
+  compare distributions, not bytes.
+- **Labels end up on the wrong groups.** In 2020 the Ontario Human
+  Rights Commission reported Black people in Toronto as 30 to 58 times
+  as likely as White people to face police use of force; its 2023
+  correction gives 4 to 5 times, because four race codes had been
+  rotated between two statistical programs. The package relabels only by
+  a named map, never by position, and can say which rotation reproduces
+  a set of published ratios
+  ([`vignette("categorical-integrity")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/categorical-integrity.md)).
+
+## How I use it
+
+A table of people in Ontario’s adult correctional institutions (OTIS,
+shipped with the package), analyzed, plotted and written up:
+
+``` r
+
+library(rmoriebricklayer)
+f <- system.file("extdata", "otis_a01_individuals.csv", package = "rmoriebricklayer")
+otis <- read.csv(f)
+a <- anltab(otis, value = "individuals", prd = "year", by = c("table", "group"), rnd = 5)
+a                                              # what changed, how sure, what was withheld
+plot(a)
+rptanl(a, file.path(tempdir(), "otis.html"))   # one self-contained page
+```
+
+Next year, the question is whether the table behind those numbers is
+still the same:
+
+``` r
+
+pin <- sha256file(f)            # recorded with the result
+identical(sha256file(f), pin)   # TRUE: the same bytes, so the same table
+
+# a re-release that silently reports the counts in a different unit (tens)
+moved <- otis
+moved$individuals <- moved$individuals * 10
+cpsdrft(otis, moved)$anydrft    # TRUE: the column's distribution moved
+cpsdrft(otis, otis)$anydrft     # FALSE: an unchanged table raises no alarm
+```
+
+The digest catches any change to the file, however small. The
+distribution checks say whether the numbers moved as a whole; on a table
+of 15 rows they will not notice a change to two or three cells, which is
+why the capsule keeps both.
+
+A capsule does this for every source of an analysis at once;
+[`usecpstmpl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/usecpstmpl.md)
+starts one and
+[`vignette("capsules")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules.md)
+walks through it.
 
 ## What it does
 
@@ -923,8 +1000,8 @@ The shortest path, on the OTIS table that ships with the package:
 library(rmoriebricklayer)
 otis <- read.csv(system.file("extdata", "otis_a01_individuals.csv",
                              package = "rmoriebricklayer"))
-a <- anltab(otis, value = "individuals", period = "year",
-                   by = c("table", "group"), rounding = 5)
+a <- anltab(otis, value = "individuals", prd = "year",
+            by = c("table", "group"), rnd = 5)
 a                                   # what changed, how sure, what was withheld
 rptanl(a, "otis.html")     # one self-contained file
 ```
@@ -978,12 +1055,11 @@ issues <- valsch(df, prov)             # names, types, value sets, rows
 
 # 4. The manifest: named cross-checks, then the two capsule artifacts.
 man <- mkmnf(list(project = "my-study", synthetic = TRUE))
-man <- recrd(man, "rows", observed = nrow(df), expected = gen$rows,
-              synthetic = TRUE)
+man <- recrd(man, "rows", obs = nrow(df), expd = gen$rows, syn = TRUE)
 wrmnfjs(man, file.path(tempdir(), "manifest.json"))
 wrsmrytxt(man, tempdir(),
                   paths = list(input = path, results = tempdir()),
-                  what_was_done = "* validated the schema and recorded the row count")
+                  whatwasdone = "* validated the schema and recorded the row count")
 ```
 
 Then ask whether the data itself moved, and sign the answer:
@@ -996,7 +1072,7 @@ ref  <- data.frame(value = rnorm(300), size = runif(300, 1, 10),
                    grade = sample(c("a", "b", "c"), 300, TRUE))
 same <- data.frame(value = rnorm(300), size = runif(300, 1, 10),
                    grade = sample(c("a", "b", "c"), 300, TRUE))
-cpsdrft(ref, same)$any_drift        # a fresh draw: FALSE
+cpsdrft(ref, same)$anydrft          # a fresh draw: FALSE
 moved <- same
 moved$size <- moved$size * 3              # a silently rescaled column
 moved$grade[1:100] <- "z"                 # and a new category

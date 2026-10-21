@@ -153,7 +153,7 @@ treated by period \(\max(t, g - 1)\) (<code>"notyet"</code>, the default). For
 <code>method = "csa"</code>,
 $$ATT(g, t) = \big(\bar Y_{g,t} - \bar Y_{g,b}\big) - \big(\bar Y_{C,t} - \bar
 Y_{C,b}\big),$$ with base period
-\(b = g - 1\) for \(t \ge g\), and \(b = t - 1\) before (the "varying" base
+\(b = g - 1\) for \(t \ge g\), and \(b = t - 1\) before (the <code>"varying"</code> base
 of the <code>did</code> package), so a pre-period ATT is a placebo of one period. It
 needs a balanced panel.</p>
 <p>With <code>covs</code>, parallel trends need only hold conditionally on them, and

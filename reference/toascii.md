@@ -2,9 +2,9 @@
 
 Converts a character vector to plain 7-bit ASCII, transliterating
 accented or non-Latin characters to their nearest ASCII equivalent (for
-example, an accented capital A becomes a plain "A"). Falls back to
+example, an accented capital A becomes a plain `"A"`). Falls back to
 dropping any character that has no transliteration. This is the
-deterministic "fallback" used by
+deterministic `"fallback"` used by
 [`asciifb()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/asciifb.md).
 Use it for destinations that accept only ASCII – a package
 `DESCRIPTION`, a file name, a legacy system – so a name written with an
@@ -36,10 +36,10 @@ first. Then, when the stringi package is installed, the ICU transform
 `"Any-Latin; Latin-ASCII"` romanises any script and folds accents
 (Cyrillic, Greek and Chinese become Latin letters). Without stringi, a
 fixed table folds the common Latin accents and ligatures (sharp s to
-"ss", the ae ligature to "ae", thorn to "th" and so on) and every other
-non-ASCII character is dropped, so non-Latin scripts disappear rather
-than being romanised. Either way the result is then stripped of anything
-outside the printable ASCII range (space to tilde), so control
+`"ss"`, the ae ligature to `"ae"`, thorn to `"th"` and so on) and every
+other non-ASCII character is dropped, so non-Latin scripts disappear
+rather than being romanised. Either way the result is then stripped of
+anything outside the printable ASCII range (space to tilde), so control
 characters such as newlines and tabs are removed too. The result never
 depends on the session's locale.
 

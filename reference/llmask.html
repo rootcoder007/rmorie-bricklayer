@@ -203,7 +203,7 @@ title) and up to six rounds of lookups; 8,000 to 32,000 tokens, the 120
 functions nearest the question and four rounds; smaller, the 40 nearest
 and three rounds. A package with very many pages is never listed whole:
 its functions nearest the question are listed and the tools reach the
-rest. "Nearest" is a BM25 search over the help text in R (\(k_1 =
+rest. <code>"Nearest"</code> is a BM25 search over the help text in R (\(k_1 =
 1.2\), \(b = 0.75\)). A model that cannot call tools gets the best
 matching pages in the prompt instead. Nothing the model asks for is run:
 it answers with code for you to run.</p>

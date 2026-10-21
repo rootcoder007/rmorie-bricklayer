@@ -55,7 +55,7 @@ cpsvrf(msg, sig, key, ctx = NULL, prehash = NULL)
 ## Details
 
 Returns `FALSE` rather than erroring on a malformed or truncated
-signature: a verifier must treat unparseable input as "not verified",
+signature: a verifier must treat unparseable input as “not verified”,
 never as an exception to be caught and ignored.
 
 `TRUE` means the signature is valid for `msg` under `key` (and, for the

@@ -150,7 +150,7 @@ system dependency.</p>
 <span><span class="va">signingkey</span></span>
 <span><span class="co">#&gt; ── Signing key (post-quantum) ────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme     xmss-sha256</span></span>
-<span><span class="co">#&gt;   root       f4718950e4719d56127d96edc5e9a8b04edf486bf449a8c37014779b5ee48e87</span></span>
+<span><span class="co">#&gt;   root       b9259cae32d59df54d489f7edda372232d7cf27a79966865a9ccbd497884c019</span></span>
 <span><span class="co">#&gt;   height     3</span></span>
 <span><span class="co">#&gt;   used       0 of 8 signatures</span></span>
 <span><span class="co">#&gt;   remaining  8</span></span>
@@ -163,7 +163,7 @@ system dependency.</p>
 <span><span class="va">pub</span></span>
 <span><span class="co">#&gt; ── Public verification key ───────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme  xmss-sha256</span></span>
-<span><span class="co">#&gt;   root    f4718950e4719d56127d96edc5e9a8b04edf486bf449a8c37014779b5ee48e87</span></span>
+<span><span class="co">#&gt;   root    b9259cae32d59df54d489f7edda372232d7cf27a79966865a9ccbd497884c019</span></span>
 <span><span class="co">#&gt;   height  3</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -380,13 +380,13 @@ failures:</p>
 <span></span>
 <span><span class="co"># a declared outcome that was not reported</span></span>
 <span><span class="fu"><a href="../reference/prrgdecl.html">prrgchk</a></span><span class="op">(</span><span class="va">plan</span>, <span class="st">"n_rows"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Against the declaration of 2026-10-21T09:00:01Z: departures below </span></span>
+<span><span class="co">#&gt; ── Against the declaration of 2026-10-21T14:08:10Z: departures below </span></span>
 <span><span class="co">#&gt;   declared but not reported (outcome switching): ate</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
 <span></span>
 <span><span class="co"># statistics reported that were never declared</span></span>
 <span><span class="fu"><a href="../reference/prrgdecl.html">prrgchk</a></span><span class="op">(</span><span class="va">plan</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ate"</span>, <span class="st">"n_rows"</span>, <span class="st">"byyear"</span>, <span class="st">"byprecinct"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Against the declaration of 2026-10-21T09:00:01Z: departures below </span></span>
+<span><span class="co">#&gt; ── Against the declaration of 2026-10-21T14:08:10Z: departures below </span></span>
 <span><span class="co">#&gt;   reported but not declared (2 addition(s)): byyear, byprecinct</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>That second case is why a nominal p-value needs correcting. Run the
@@ -428,7 +428,7 @@ rewritten to match whatever the files now say.</p>
 <span><span class="co">#&gt;   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606</span></span>
 <span><span class="co">#&gt;   no_unlisted_files              ok    </span></span>
 <span><span class="co">#&gt;   attestation:attestation_comple ok    </span></span>
-<span><span class="co">#&gt;   attestation:manifest_digest    ok    92b4fff851cbc95da0e5bf1afde4d52f7d74</span></span>
+<span><span class="co">#&gt;   attestation:manifest_digest    ok    829213fc9dd086dd84b20e95779cb1d2f179</span></span>
 <span><span class="co">#&gt;   attestation:signature          ok    </span></span>
 <span><span class="co">#&gt;   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
@@ -608,6 +608,16 @@ the mirrored tables themselves:</p>
 <p><code><a href="../reference/indtabs.html">indtabs()</a></code> lists the Statistics Canada tables on
 data.rmorie.com with their source, licence and table number, so a result
 can name the exact table it used.</p>
+</div>
+<div class="section level2">
+<h2 id="the-pinned-data-in-a-picture">The pinned data in a picture<a class="anchor" aria-label="anchor" href="#the-pinned-data-in-a-picture"></a>
+</h2>
+<p>The manifest above pins these ten values. A verifier that recomputes
+the digest is checking exactly what this chart shows.</p>
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">x</span>, names.arg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span><span class="op">)</span>, col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, xlab <span class="op">=</span> <span class="st">"row"</span>, ylab <span class="op">=</span> <span class="st">"x"</span>,</span>
+<span>        main <span class="op">=</span> <span class="st">"The values the manifest pins"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="provenance_files/figure-html/provenance-plot-1.png" class="r-plt" alt="" width="576"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

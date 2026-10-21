@@ -487,7 +487,7 @@ continuous scale, so a missing period leaves its gap; any other period
 <dd><p>For <code>rmbl_yoy</code> (<code>what = "value"</code>) and
 <code>rmbl_event_study</code> (<code>style = "stata"</code>): how a missing value
 shows in a line. <code>"break"</code> (the default) breaks the
-line there, so a "no data" period that <code>yoy(complete = TRUE)</code>
+line there, so a “no data” period that <code>yoy(complete = TRUE)</code>
 inserted is a visible gap; <code>"join"</code> draws the line straight over it.</p></dd>
 
 
@@ -551,12 +551,13 @@ between the reference period and adoption; <code>0</code> puts it at adoption).<
 
 
 <dt id="arg-models">models<a class="anchor" aria-label="anchor" href="#arg-models"></a></dt>
-<dd><p>Model codes ("random", "definite", "invcube", "mbeta"), one curve each; NULL
+<dd><p>Model codes (<code>"random"</code>, <code>"definite"</code>, <code>"invcube"</code>,
+<code>"mbeta"</code>), one curve each; NULL
 draws the fitted model.</p></dd>
 
 
 <dt id="arg-m">m<a class="anchor" aria-label="anchor" href="#arg-m"></a></dt>
-<dd><p>M-Beta heights, one curve each when "mbeta" is among the models.</p></dd>
+<dd><p>M-Beta heights, one curve each when <code>"mbeta"</code> is among the models.</p></dd>
 
 
 <dt id="arg-cmax">cmax<a class="anchor" aria-label="anchor" href="#arg-cmax"></a></dt>
@@ -564,12 +565,14 @@ draws the fitted model.</p></dd>
 
 
 <dt id="arg-view">view<a class="anchor" aria-label="anchor" href="#arg-view"></a></dt>
-<dd><p>"map" (the top view), "persp" (the surface), "both" (side by side,
-in the book's colour bands) or "cells" (the probability map as a grid of percentages).</p></dd>
+<dd><p><code>"map"</code> (the top view), <code>"persp"</code> (the surface),
+<code>"both"</code> (side by side,
+in the book's colour bands) or <code>"cells"</code> (the probability map as a grid of
+percentages).</p></dd>
 
 
 <dt id="arg-digits">digits<a class="anchor" aria-label="anchor" href="#arg-digits"></a></dt>
-<dd><p>Decimal places of the percentages in the "cells" view.</p></dd>
+<dd><p>Decimal places of the percentages in the <code>"cells"</code> view.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -614,7 +617,7 @@ per column, worst first, coloured by verdict, with the warn and fail
 bands as dashed lines; <code>"columns"</code> the reference and current
 distributions of up to six columns (<code>cols</code>, or the worst), each
 PSI bin's term written on it; <code>"benford"</code> the first digits of
-numeric columns against Benford's law with its 95\<!-- % band, and the -->
+numeric columns against Benford's law with its 95% band, and the
 test's verdict; <code>"ecdf"</code> both ECDFs with the area between them
 shaded; <code>"quantiles"</code> the current quantiles against the
 reference's on the identity line; <code>"fingerprint"</code> one spoke
@@ -705,8 +708,8 @@ all three on one page (<code><a href="crfpm25.html">crfpm25</a></code>, <code><a
 <dt><code>rmbl_footprint</code></dt>
 <dd><p>(<code><a href="co2fp.html">co2fp</a></code>) the
 CPU, memory and total emission in one unit chosen to fit, with the
-car-kilometre and tree-month equivalents as a caption; "Too short to
-measure" when the work took no measurable time.</p></dd>
+car-kilometre and tree-month equivalents as a caption; “Too short to
+measure” when the work took no measurable time.</p></dd>
 
 <dt><code>rmbl_field</code>, <code>rmbl_particles</code></dt>
 <dd><p>(<code><a href="plmfld.html">plmfld</a></code>, <code><a href="pgsig.html">advdif2d</a></code>,

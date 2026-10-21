@@ -56,7 +56,7 @@ span from the start (`start`, the Commission's final report in December
 interval for \\c\\ completed calls, and the projection is the year
 \\94 - c\\ more would take at that rate (at the interval's ends, its
 range). A constant rate is the simplest model, and the one behind the
-Yellowhead Institute's projection ("42 years, or until 2065", 2022);
+Yellowhead Institute's projection (“42 years, or until 2065”, 2022);
 with the counts to the end of 2022 and December 2015 as the start it
 gives 2067. The pace has not been constant, so the projection is a
 description of the pace so far, not a forecast. Any count of commitments

@@ -5,8 +5,8 @@ division's share of all stops), with a Wilson confidence interval. A
 share's denominator is the total of the same events, so shares over a
 complete grouping sum to 100. Use
 [`rtcalc`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rtcalc.md)
-instead when the denominator is a population; "40% of stops" and "40
-stops per 1,000 residents" are different claims.
+instead when the denominator is a population; “40% of stops” and “40
+stops per 1,000 residents” are different claims.
 
 ## Usage
 

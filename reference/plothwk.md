@@ -73,8 +73,8 @@ plothwk(
 ## Value
 
 The data drawn, invisibly: `t` and `lambda` (intensity), `uniform` and
-`residual` (qq), or `t`, `parent` (the index of the parent event, 0 for
-the baseline), `prob` and `generation` (tree).
+`residual` (a Q-Q plot), or `t`, `parent` (the index of the parent
+event, 0 for the baseline), `prob` and `generation` (tree).
 
 ## Examples
 

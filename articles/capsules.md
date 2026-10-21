@@ -166,7 +166,7 @@ summarypath <- wrsmrytxt(
 cat(readLines(summarypath)[7:12], sep = "\n")
 #> Project:   demo-study
 #> Author:    A. Author
-#> When:      2026-10-21 08:58:44 UTC
+#> When:      2026-10-21 14:06:50 UTC
 #> OS:        Linux
 #> R:         R version 4.6.1 (2026-06-24)
 #> Mode:      SYNTHETIC (not real data -- pipeline check only)
@@ -214,3 +214,36 @@ vrfsha256(f, h)
 #> $match
 #> [1] TRUE
 ```
+
+## The capsule’s tables in a picture
+
+The capsule records these two tables. The first shows the published
+estimates and their intervals; the second shows the visits counted in
+each year.
+
+``` r
+
+ci_plot <- function(t, lab, main) {
+  o <- order(t$estimate)
+  t <- t[o, ]
+  y <- seq_len(nrow(t))
+  op <- par(mar = c(4, 10, 3, 1))
+  on.exit(par(op))
+  plot(t$estimate, y, xlim = range(t$lower, t$upper, na.rm = TRUE), yaxt = "n", pch = 19,
+       col = blpal()[1], xlab = "estimate and 95% interval", ylab = "", main = main)
+  segments(t$lower, y, t$upper, y, col = blpal()[1])
+  axis(2, y, lab[o], las = 1, cex.axis = 0.7)
+}
+t1 <- d[d$indicator == d$indicator[1], ]
+ci_plot(t1, t1$group, t1$indicator[1])
+```
+
+![](capsules_files/figure-html/capsule-plots-1.png)
+
+``` r
+
+v <- tapply(df$visits, df$year, sum)
+barplot(v, col = blpal()[2], main = "Visits by year", xlab = "year", ylab = "visits")
+```
+
+![](capsules_files/figure-html/capsule-plots-2.png)

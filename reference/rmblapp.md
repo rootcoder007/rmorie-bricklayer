@@ -55,7 +55,7 @@ words it, with
 explanation of where it comes from beside it, and as a toast. The
 resampling analyses (bootstraps, permutations, simulations and the
 Hawkes fits) run in a forked background process on Unix-alikes, so the
-page stays live while they work. "Share this view" in the navbar gives a
+page stays live while they work. “Share this view” in the navbar gives a
 link that reopens the page with the same tab, data and form.
 
 The menus and their tabs:

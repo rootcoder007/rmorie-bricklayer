@@ -54,7 +54,7 @@ cpsseal(path = ".", key, overwrite = FALSE, glob = "")
 
 A data frame, one row per capsule: `capsule`, `pinned` (whether the
 provenance was pinned now), `files` (the number signed) and `public`
-(the hmac key id or the public key; never the secret).
+(the HMAC key id or the public key; never the secret).
 
 ## Details
 
@@ -87,8 +87,8 @@ writeLines('{"resource": {"filename": "data.csv"}}',
            file.path(d, "data_provenance.json"))
 s <- cpsseal(root, "a shared secret")
 s
-#>                                     capsule pinned files
-#> 1 /tmp/RtmpD1RivZ/capsules-20356d87758a/one   TRUE     2
+#>                                    capsule pinned files
+#> 1 /tmp/Rtmp6lvsTP/capsules-20d7d8cfb6d/one   TRUE     2
 #>                                                             public
 #> 1 2b23046c08926e30017362694e61c9f76f64815699749bede71734e74c84f65e
 cpschk(root, key = "a shared secret", fp = FALSE)$status
@@ -96,7 +96,7 @@ cpschk(root, key = "a shared secret", fp = FALSE)$status
 
 # a second run needs overwrite, and a post-quantum key signs too
 try(cpsseal(root, "a shared secret"))
-#> Error : cpsseal: capsule_bundle.json already exists in /tmp/RtmpD1RivZ/capsules-20356d87758a/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again
+#> Error : cpsseal: capsule_bundle.json already exists in /tmp/Rtmp6lvsTP/capsules-20d7d8cfb6d/one; pass overwrite = TRUE (rmbl sign --overwrite) to sign again
 cpsseal(root, fipskg("ML-DSA-44"), overwrite = TRUE)$pinned
 #> [1] FALSE
 ```

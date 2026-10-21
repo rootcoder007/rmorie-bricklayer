@@ -421,7 +421,7 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
   For `rmbl_yoy` (`what = "value"`) and `rmbl_event_study`
   (`style = "stata"`): how a missing value shows in a line. `"break"`
-  (the default) breaks the line there, so a "no data" period that
+  (the default) breaks the line there, so a “no data” period that
   `yoy(complete = TRUE)` inserted is a visible gap; `"join"` draws the
   line straight over it.
 
@@ -482,12 +482,12 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
 - models:
 
-  Model codes ("random", "definite", "invcube", "mbeta"), one curve
-  each; NULL draws the fitted model.
+  Model codes (`"random"`, `"definite"`, `"invcube"`, `"mbeta"`), one
+  curve each; NULL draws the fitted model.
 
 - m:
 
-  M-Beta heights, one curve each when "mbeta" is among the models.
+  M-Beta heights, one curve each when `"mbeta"` is among the models.
 
 - cmax:
 
@@ -495,13 +495,13 @@ plot(x, ..., main = NULL, col = NULL, palette = NULL)
 
 - view:
 
-  "map" (the top view), "persp" (the surface), "both" (side by side, in
-  the book's colour bands) or "cells" (the probability map as a grid of
-  percentages).
+  `"map"` (the top view), `"persp"` (the surface), `"both"` (side by
+  side, in the book's colour bands) or `"cells"` (the probability map as
+  a grid of percentages).
 
 - digits:
 
-  Decimal places of the percentages in the "cells" view.
+  Decimal places of the percentages in the `"cells"` view.
 
 ## Value
 
@@ -552,11 +552,11 @@ x position of each point drawn: an `at` column (`rmbl_yoy`,
   as dashed lines; `"columns"` the reference and current distributions
   of up to six columns (`cols`, or the worst), each PSI bin's term
   written on it; `"benford"` the first digits of numeric columns against
-  Benford's law with its 95\\ test's verdict; `"ecdf"` both ECDFs with
-  the area between them shaded; `"quantiles"` the current quantiles
-  against the reference's on the identity line; `"fingerprint"` one
-  spoke per column, its PSI as the distance out, with the bands as
-  rings.
+  Benford's law with its 95% band, and the test's verdict; `"ecdf"` both
+  ECDFs with the area between them shaded; `"quantiles"` the current
+  quantiles against the reference's on the identity line;
+  `"fingerprint"` one spoke per column, its PSI as the distance out,
+  with the bands as rings.
 
 - `bricklayer_benford`:
 
@@ -675,8 +675,8 @@ x position of each point drawn: an `at` column (`rmbl_yoy`,
 
   ([`co2fp`](https://rootcoder007.github.io/rmorie-bricklayer/reference/co2fp.md))
   the CPU, memory and total emission in one unit chosen to fit, with the
-  car-kilometre and tree-month equivalents as a caption; "Too short to
-  measure" when the work took no measurable time.
+  car-kilometre and tree-month equivalents as a caption; “Too short to
+  measure” when the work took no measurable time.
 
 - `rmbl_field`, `rmbl_particles`:
 

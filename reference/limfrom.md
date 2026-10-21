@@ -40,8 +40,9 @@ A data frame: `estimate`, `lower`, `upper`, `se`.
 With an estimate \\e\\ and \\z = \Phi^{-1}(1 - \alpha/2)\\ for the level
 wanted, a standard error \\s\\ gives \\e \pm z s\\; a coefficient of
 variation \\c\\ (in percent) gives \\s = e c / 100\\; a margin of error
-\\m\\ at level `moelev` (the American Community Survey publishes 90\\
-\\s = m / z\_{moe}\\. The limits are symmetric on the estimate's scale.
+\\m\\ at level `moelev` (the American Community Survey publishes 90%
+margins) gives \\s = m / z\_{moe}\\. The limits are symmetric on the
+estimate's scale.
 
 ## See also
 

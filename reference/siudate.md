@@ -32,8 +32,8 @@ ordinals such as `"1er"` are accepted, and an ISO date is passed
 through. A date that does not exist (`"February 30, 2023"`) or text that
 is not a date gives `""`. `NA` stays `NA`.
 
-Error: `x` that is neither character nor all `NA` ("x must be a
-character vector of dates").
+Error: `x` that is neither character nor all `NA` (“x must be a
+character vector of dates”).
 
 ## Examples
 

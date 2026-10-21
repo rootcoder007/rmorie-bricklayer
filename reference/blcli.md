@@ -83,7 +83,7 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
   [`vrfcps`](https://rootcoder007.github.io/rmorie-bricklayer/reference/vrfcps.md)
   and
   [`cpsbndlvrf`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsbndl.md).
-  The secret of an hmac bundle is read from `RMBL_KEY`, which is then
+  The secret of an HMAC bundle is read from `RMBL_KEY`, which is then
   removed from the environment. Prints the Markdown report, or JSON with
   `--json`; exits 1 when a failed row is at or above `--fail-on`
   (`error`, the default, `drift` or `warn`). `--base MANIFEST|DIR`
@@ -225,8 +225,8 @@ An XMSS key
 signs each of its `2^height` indices once; two signatures at one index
 let anyone forge a third. Its private key never changes, but its state,
 the indices already used, changes with every signature, and a copy of an
-old state signs used indices again (RFC 10033, "Hash-Based Signatures:
-State and Backup Management", sections 2 and 4).
+old state signs used indices again (RFC 10033, “Hash-Based Signatures:
+State and Backup Management”, sections 2 and 4).
 `rmbl sign --scheme xmss-sha256 --key-file KEY` therefore treats the key
 file as the state:
 
@@ -349,9 +349,7 @@ close(con)
 status
 #> [1] 0
 lines
-#> [1] "  drbg_generate  The 0.5.x names, kept as aliases"
-#> [2] "  drbg_new       The 0.5.x names, kept as aliases"
-#> [3] "  drbg_reseed    The 0.5.x names, kept as aliases"
+#> [1] "no exported function matches"
 
 # an unknown verb is a usage error: status 2, nothing run
 blcli("nonsense")
@@ -363,26 +361,26 @@ invisible(cpsrfrsh(d))
 blcli(c("verify", d))
 #> ## rmbl capsule verify with [rmoriebricklayer 1.0.0](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmpD1RivZ/capsule-20353fe656e3`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/Rtmp6lvsTP/capsule-20d7a36ff05`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmpD1RivZ/capsule-20353fe656e3` | /tmp/RtmpD1RivZ/temp_libpath2035e5f3eda/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/Rtmp6lvsTP/capsule-20d7a36ff05` | /tmp/Rtmp6lvsTP/temp_libpath20d765355f37/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmpD1RivZ/capsule-20353fe656e3</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/Rtmp6lvsTP/capsule-20d7a36ff05</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/RtmpD1RivZ/temp_libpath2035e5f3eda/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/Rtmp6lvsTP/temp_libpath20d765355f37/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/RtmpD1RivZ/capsule-20353fe656e3/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/RtmpD1RivZ/capsule-20353fe656e3/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/Rtmp6lvsTP/capsule-20d7a36ff05/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/Rtmp6lvsTP/capsule-20d7a36ff05/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/RtmpD1RivZ/capsule-20353fe656e3/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/Rtmp6lvsTP/capsule-20d7a36ff05/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>

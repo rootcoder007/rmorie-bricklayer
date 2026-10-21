@@ -93,7 +93,7 @@ construct a different input with the same value, so it must never be
 used where <code><a href="csha256.html">csha256()</a></code> is meant. It is
 here because it is far cheaper than SHA-256 over gigabyte-scale capsule
 members, which makes it the right first pass when the question is only
-"did this file arrive intact".</p>
+“did this file arrive intact”.</p>
 <p>Character input is checked element by element, as its bytes, with
 <code>NA</code> giving <code>NA</code>; other atomic input is converted with
 <code><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character()</a></code>. A raw vector gives one checksum. For files use

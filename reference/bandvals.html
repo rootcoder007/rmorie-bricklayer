@@ -3,13 +3,13 @@
 concentration index, a regression), under a rule you choose. For closed
 bands the rule places the value at the midpoint, the lower or upper
 bound, or the geometric mean of the bounds. An open band ("50+",
-"under 18") has no midpoint, so its missing bound is filled from an
+&amp;#8220;under 18&amp;#8221;) has no midpoint, so its missing bound is filled from an
 explicit assumption, and the rows that rest on that assumption are
 flagged in the result instead of being absorbed into it.'><meta property="og:description" content='Gives each band a single number that a calculation can use (a mean, a
 concentration index, a regression), under a rule you choose. For closed
 bands the rule places the value at the midpoint, the lower or upper
 bound, or the geometric mean of the bounds. An open band ("50+",
-"under 18") has no midpoint, so its missing bound is filled from an
+&amp;#8220;under 18&amp;#8221;) has no midpoint, so its missing bound is filled from an
 explicit assumption, and the rows that rest on that assumption are
 flagged in the result instead of being absorbed into it.'><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -64,8 +64,8 @@ flagged in the result instead of being absorbed into it.'><meta property="og:ima
     <p>Gives each band a single number that a calculation can use (a mean, a
 concentration index, a regression), under a rule you choose. For closed
 bands the rule places the value at the midpoint, the lower or upper
-bound, or the geometric mean of the bounds. An open band ("50+",
-"under 18") has no midpoint, so its missing bound is filled from an
+bound, or the geometric mean of the bounds. An open band (<code>"50+"</code>,
+“under 18”) has no midpoint, so its missing bound is filled from an
 explicit assumption, and the rows that rest on that assumption are
 flagged in the result instead of being absorbed into it.</p>
     </div>
@@ -105,12 +105,12 @@ assumed for every open top band, in the units of the labels.</p></dd>
 <dt id="arg-openupfac">openupfac<a class="anchor" aria-label="anchor" href="#arg-openupfac"></a></dt>
 <dd><p>Number, default <code>2</code>. When no cap is given,
 the open top band's upper bound is its lower bound times this factor
-(so "Greater than 10" becomes 11 to 22).</p></dd>
+(so “Greater than 10” becomes 11 to 22).</p></dd>
 
 
 <dt id="arg-openloflr">openloflr<a class="anchor" aria-label="anchor" href="#arg-openloflr"></a></dt>
 <dd><p>Number or <code>NULL</code> (the default). The lower bound
-assumed for an open bottom band ("under 18"). <code>NULL</code> uses 0, or the
+assumed for an open bottom band (“under 18”). <code>NULL</code> uses 0, or the
 band's own upper bound when that is below 0. A floor above a band's upper
 bound is refused.</p></dd>
 

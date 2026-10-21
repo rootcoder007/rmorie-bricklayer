@@ -78,7 +78,8 @@ The page shows:
   from reference to current shares (categorical), the ECDF overlay with
   the largest gap marked, the quantile shift against the identity line
   (numeric), the PSI by bin, drawn up where the current sample has more
-  mass, and the first digits against Benford's law with its 95\\
+  mass, and the first digits against Benford's law with its 95% band
+  (numeric);
 
 - Overview: the drift fingerprint, one spoke per column at its PSI with
   the warn and fail bands as rings, and a tile per column with its two

@@ -56,7 +56,7 @@ indgap(
 
   Optional labels of the rows that pool other groups (for example
   `"Aboriginal and Torres Strait Islander"` beside its parts, or a
-  "Total Indigenous" row); by default the labels described in Details.
+  “Total Indigenous” row); by default the labels described in Details.
 
 ## Value
 
@@ -92,8 +92,8 @@ leaves the ratio's interval `NA`.
 Distinctions-based: each group is compared on its own. A row that pools
 groups is kept but marked `poogrp = TRUE`, since a pooled figure can
 hide what differs between the groups it pools: name such rows in
-`pooled` (by default labels beginning "Total", "Indigenous identity",
-"Aboriginal identity" or "Indigenous population" are taken as pooled). A
+`pooled` (by default labels beginning `"Total"`, “Indigenous identity”,
+“Aboriginal identity” or “Indigenous population” are taken as pooled). A
 row flagged `E` (in the group or the reference) is compared and marked;
 one flagged `F`, `x`, `..` or `...`, with no estimate, or whose
 published interval does not contain its own estimate, is not compared.

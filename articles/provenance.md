@@ -85,7 +85,7 @@ signingkey <- pqckg(height = 3)
 signingkey
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       f4718950e4719d56127d96edc5e9a8b04edf486bf449a8c37014779b5ee48e87
+#>   root       b9259cae32d59df54d489f7edda372232d7cf27a79966865a9ccbd497884c019
 #>   height     3
 #>   used       0 of 8 signatures
 #>   remaining  8
@@ -102,7 +102,7 @@ pub <- signpubkey(signingkey)
 pub
 #> ── Public verification key ───────────────────────────────────────
 #>   scheme  xmss-sha256
-#>   root    f4718950e4719d56127d96edc5e9a8b04edf486bf449a8c37014779b5ee48e87
+#>   root    b9259cae32d59df54d489f7edda372232d7cf27a79966865a9ccbd497884c019
 #>   height  3
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -370,13 +370,13 @@ plan <- prrgdecl(c(
 
 # a declared outcome that was not reported
 prrgchk(plan, "n_rows")
-#> ── Against the declaration of 2026-10-21T09:00:01Z: departures below 
+#> ── Against the declaration of 2026-10-21T14:08:10Z: departures below 
 #>   declared but not reported (outcome switching): ate
 #> ──────────────────────────────────────────────────────────────────
 
 # statistics reported that were never declared
 prrgchk(plan, c("ate", "n_rows", "byyear", "byprecinct"))
-#> ── Against the declaration of 2026-10-21T09:00:01Z: departures below 
+#> ── Against the declaration of 2026-10-21T14:08:10Z: departures below 
 #>   reported but not declared (2 addition(s)): byyear, byprecinct
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -428,7 +428,7 @@ cpsbndlvrf(attr(b, "path"), dir, man = man)
 #>   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606
 #>   no_unlisted_files              ok    
 #>   attestation:attestation_comple ok    
-#>   attestation:manifest_digest    ok    92b4fff851cbc95da0e5bf1afde4d52f7d74
+#>   attestation:manifest_digest    ok    829213fc9dd086dd84b20e95779cb1d2f179
 #>   attestation:signature          ok    
 #>   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a
 #> ──────────────────────────────────────────────────────────────────
@@ -653,3 +653,16 @@ head(indtabs()[, c("key", "rows")])
 [`indtabs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/indtabs.md)
 lists the Statistics Canada tables on data.rmorie.com with their source,
 licence and table number, so a result can name the exact table it used.
+
+## The pinned data in a picture
+
+The manifest above pins these ten values. A verifier that recomputes the
+digest is checking exactly what this chart shows.
+
+``` r
+
+barplot(d$x, names.arg = seq_len(nrow(d)), col = blpal()[1], xlab = "row", ylab = "x",
+        main = "The values the manifest pins")
+```
+
+![](provenance_files/figure-html/provenance-plot-1.png)

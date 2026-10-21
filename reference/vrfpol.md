@@ -143,7 +143,7 @@ and at most 10 billion, the reference is finite and non-negative, and
 the pollutant has a CRF. Any failure gives status `"assumption_failure"`
 and skips the stages.
 
-With data (a CSV or the demo), the "exposed" are the rows above the
+With data (a CSV or the demo), the `"exposed"` are the rows above the
 reference: their mean is `expomean` and their share `expoprev`. Empty
 cells and missing-value tokens (`NA`, `n/a`, `null`, `-` ...) are
 dropped with a message; text that is not a number (a detection-limit

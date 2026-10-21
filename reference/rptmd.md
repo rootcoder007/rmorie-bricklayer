@@ -40,10 +40,10 @@ A character vector of Markdown lines; returned visibly when `path` is
 The document has a level-one heading (`title`), the verdict in one
 sentence, a two-column table of rows, columns, missing cells, complete
 rows and the full data digest (with the Merkle root and the signature
-result when the report has them), a "Findings" table of severity, check,
-subject and detail (left out when there is none), and a closing caveat
-that no finding is proof of correctness. The text of the findings is
-written as it is: a `|` in a column name would break the table. An
+result when the report has them), a `"Findings"` table of severity,
+check, subject and detail (left out when there is none), and a closing
+caveat that no finding is proof of correctness. The text of the findings
+is written as it is: a `|` in a column name would break the table. An
 existing file at `path` is overwritten. Errors when `report` does not
 come from
 [`cpsrpt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrpt.md).

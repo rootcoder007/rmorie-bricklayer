@@ -1,7 +1,7 @@
 # The figures of The Theory of Search
 
-Draws any figure of Frost (1996), "The Theory of Search: A Simplified
-Explanation", from the package's search theory functions with the book's
+Draws any figure of Frost (1996), “The Theory of Search: A Simplified
+Explanation”, from the package's search theory functions with the book's
 parameters, and returns the numbers it drew.
 
 ## Usage

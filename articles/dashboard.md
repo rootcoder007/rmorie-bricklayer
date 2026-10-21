@@ -46,10 +46,11 @@ dataset. Its results are in cards:
 - **Table**, with the printed result below it, and the **Reproducible R
   call**.
 
-Some views are linked. Choose a column name in Describe’s profile to see
-its distribution. Point at the year-over-year plot to see the rows of
-that period. On the Drift tab, drag across the two densities of a column
-to see the share of each snapshot’s rows in that range.
+Some views are linked. Choose a column name in the profile on the
+Describe tab to see its distribution. Point at the year-over-year plot
+to see the rows of that period. On the Drift tab, drag across the two
+densities of a column to see the share of each snapshot’s rows in that
+range.
 
 The resampling analyses (bootstraps, permutations, simulations, the
 Hawkes fits) run in a forked background process on Linux and macOS, so

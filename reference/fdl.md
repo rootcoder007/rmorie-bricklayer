@@ -6,8 +6,8 @@ but never stops on a network failure: it returns `TRUE` or `FALSE`,
 prints plain-language advice for the usual academic and corporate
 network problems, and then tries a Wayback Machine copy of the same
 address. Use it in scripts that other people run on networks you do not
-control (university VPNs, corporate proxies), where a bare "cannot open
-the connection" is not enough to act on.
+control (university VPNs, corporate proxies), where a bare “cannot open
+the connection” is not enough to act on.
 
 ## Usage
 
@@ -83,8 +83,8 @@ fdl(paste0("file://", src), tempfile(fileext = ".csv"),
 fdl(paste0("file://", src, "-missing"), tempfile(),
   attwb = "", allowfile = TRUE)
 #>   ! Download failed.
-#>     URL:   file:///tmp/RtmpD1RivZ/file203563513b8b.csv-missing
-#>     Error: cannot open file '/tmp/RtmpD1RivZ/file203563513b8b.csv-missing': No such file or directory
+#>     URL:   file:///tmp/Rtmp6lvsTP/file20d737b666d7.csv-missing
+#>     Error: cannot open file '/tmp/Rtmp6lvsTP/file20d737b666d7.csv-missing': No such file or directory
 #> 
 #>   Common causes (in rough order of likelihood):
 #>     * The server did not serve the file (see the error above): the URL may have moved or the

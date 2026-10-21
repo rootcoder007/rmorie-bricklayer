@@ -76,8 +76,8 @@ result, or `NULL`) and `item`.
 ## Details
 
 Some servers refuse the Internet Archive's crawler while serving
-everyone else: Save Page Now then reports that the target "cannot find"
-the page, or "blocks access" to it, although the page is there. Those
+everyone else: Save Page Now then reports that the target “cannot find”
+the page, or “blocks access” to it, although the page is there. Those
 URLs cannot be put in the Wayback Machine, but they can be captured by
 anyone who can reach them, and the capture can be published. Pass a
 [`wbsave`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsave.md)

@@ -97,7 +97,7 @@ yet treated by period \\\max(t, g - 1)\\ (`"notyet"`, the default). For
 `method = "csa"`, \$\$ATT(g, t) = \big(\bar Y\_{g,t} - \bar
 Y\_{g,b}\big) - \big(\bar Y\_{C,t} - \bar Y\_{C,b}\big),\$\$ with base
 period \\b = g - 1\\ for \\t \ge g\\, and \\b = t - 1\\ before (the
-"varying" base of the `did` package), so a pre-period ATT is a placebo
+`"varying"` base of the `did` package), so a pre-period ATT is a placebo
 of one period. It needs a balanced panel.
 
 With `covs`, parallel trends need only hold conditionally on them, and

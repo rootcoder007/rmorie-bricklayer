@@ -91,7 +91,7 @@ not created. Without `by` the whole table is one group. With a vector,
 each element is its own row.
 
 `per` takes a number, or one of `"1k"`, `"10k"`, `"100k"`, `"1m"` (case,
-spaces, commas and a leading "per" are ignored), because a denominator
+spaces, commas and a leading `"per"` are ignored), because a denominator
 mistyped by a factor of ten is invisible once it reaches a table.
 
 A rate and a share are different quantities: use

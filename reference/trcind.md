@@ -1,17 +1,17 @@
 # The indicators of Calls to Action 19 and 55, and the tables that measure them
 
-Call to Action 19 asks the federal government to "establish measurable
+Call to Action 19 asks the federal government to “establish measurable
 goals to identify and close the gaps in health outcomes between
 Aboriginal and non-Aboriginal communities, and to publish annual
-progress reports and assess long-term trends", focusing on "infant
+progress reports and assess long-term trends”, focusing on “infant
 mortality, maternal health, suicide, mental health, addictions, life
 expectancy, birth rates, infant and child health issues, chronic
 diseases, illness and injury incidence, and the availability of
-appropriate health services". Call to Action 55 asks for annual data on,
-among others, "the number of Aboriginal children–including Metis and
-Inuit children–in care, compared with non-Aboriginal children" and "the
+appropriate health services”. Call to Action 55 asks for annual data on,
+among others, “the number of Aboriginal children–including Metis and
+Inuit children–in care, compared with non-Aboriginal children” and “the
 educational and income attainments of Aboriginal peoples in Canada
-compared with non-Aboriginal people". This lists, for each indicator,
+compared with non-Aboriginal people”. This lists, for each indicator,
 the Statistics Canada tables at the data service (or the census profile)
 that measure it, the measure, and which direction is better.
 

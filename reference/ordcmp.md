@@ -94,8 +94,8 @@ totals) do not. The interval is built on the logit scale, so it stays
 inside 0 and 1.
 
 The categories given in `lvls` are taken as the whole scale: rows for
-totals, for combined categories ("Excellent or very good") and for "not
-specified" are left out, and the shares are rescaled to sum to one over
+totals, for combined categories (“Excellent or very good”) and for “not
+specified” are left out, and the shares are rescaled to sum to one over
 the levels. A group with a suppressed or missing category is not
 compared, since its distribution is unknown; one with an `E` category
 (in the group or the reference) is compared and marked, and one whose

@@ -48,11 +48,11 @@ two regions, a unit matched into none, a region code that is a typo or
 belongs to a neighbouring province. None of them require the geometry,
 so they run with nothing installed.
 
-The checks as computed: "units assigned more than one region" counts
+The checks as computed: “units assigned more than one region” counts
 rows whose (non-blank) unit identifier repeats an earlier row's, whether
-or not the region differs, so an exact duplicate row also fails; "units
-assigned no region" counts rows whose region is `NA` or blank; "region
-codes not in the reference geography" counts non-blank region codes not
+or not the region differs, so an exact duplicate row also fails; “units
+assigned no region” counts rows whose region is `NA` or blank; “region
+codes not in the reference geography” counts non-blank region codes not
 in `regs`, comparing the codes as text after trimming spaces (so
 `"3506"` and `3506` match, but `"03506"` does not). Errors: `map` not a
 data frame, or without the named columns.

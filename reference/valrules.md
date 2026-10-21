@@ -31,7 +31,7 @@ valrules(data, rules)
 
 A named list of issues, one per failed rule, each a list with `severity`
 (character) and `message` (character; for a row-wise rule it ends with
-"(k of n rows)"), and for a row-wise rule `n_failed` (integer) and
+“(k of n rows)”), and for a row-wise rule `n_failed` (integer) and
 `rows` (integer, the first ten failing row indices). Empty when
 everything passes.
 

@@ -231,3 +231,34 @@ table(im$period, im$quality)
 
 The 1994/1996 rates are all `..`: not available for that period, not a
 gap in the file.
+
+## The outliers in a picture
+
+On the clean table
+[`mahaoutl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mahaoutl.md)
+flags one row, drawn first. The second figure puts the two distances
+side by side for the table with twenty planted rows: each point is a
+row, the planted rows in the accent colour (all twenty have the same
+values, so they share one point). That point sits above the diagonal:
+the robust centre is not pulled toward the planted rows, so the robust
+distance places them further out.
+
+``` r
+
+plot(out)
+```
+
+![](missingness-and-outliers_files/figure-html/outliers-plots-1.png)
+
+``` r
+
+planted <- dclassical$row %in% 2:21
+plot(dclassical$distance, drobust$distance[match(dclassical$row, drobust$row)],
+     pch = 19, col = ifelse(planted, blpal()[2], blpal()[1]),
+     xlab = "classical distance", ylab = "robust distance",
+     main = "Planted rows: classical against robust distance")
+abline(0, 1, lty = 2)
+legend("topleft", c("planted rows", "other rows"), pch = 19, col = blpal()[c(2, 1)], bty = "n")
+```
+
+![](missingness-and-outliers_files/figure-html/outliers-plots-2.png)

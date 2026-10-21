@@ -44,8 +44,8 @@ needed). Nothing is checked about the content here;
 reads the `schema` block.
 
 A missing file is not an error: it returns `NULL`, so a project can run
-without a provenance record and every resolver treats `NULL` as "nothing
-pinned".
+without a provenance record and every resolver treats `NULL` as “nothing
+pinned”.
 
 Errors: `path` that is not a single non-empty string; `path` that is a
 directory; a file that is not valid JSON.
@@ -71,5 +71,5 @@ length(valsch(data.frame(id = 1, year = 2020), p))
 
 # a directory is not a provenance file
 try(loadprov(tempdir()))
-#> Error : `path` is a directory, not a provenance file: /tmp/RtmpD1RivZ
+#> Error : `path` is a directory, not a provenance file: /tmp/Rtmp6lvsTP
 ```

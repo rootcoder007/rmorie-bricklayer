@@ -34,7 +34,7 @@ different input with the same value, so it must never be used where
 [`csha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/csha256.md)
 is meant. It is here because it is far cheaper than SHA-256 over
 gigabyte-scale capsule members, which makes it the right first pass when
-the question is only "did this file arrive intact".
+the question is only “did this file arrive intact”.
 
 Character input is checked element by element, as its bytes, with `NA`
 giving `NA`; other atomic input is converted with

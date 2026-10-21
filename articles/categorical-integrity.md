@@ -314,3 +314,24 @@ made by a positional relabel in the analysis, and anyone with the code
 book can reproduce it. A permutation that no mechanism reproduces points
 at a merge, a manual edit, or the file, and the function says so instead
 of guessing.
+
+## The rotation in a picture
+
+Each bar is the odds of the outcome in a group relative to White, on a
+log scale. The light bars use the correct labels; the dark bars use the
+labels rotated one place, which is what the published ratios match. A
+rotation of four codes is enough to turn ratios near 1 into ratios in
+the hundreds.
+
+``` r
+
+odds_vs_white <- function(t) (t[, "yes"] / t[, "no"]) / (t["White", "yes"] / t["White", "no"])
+r <- rbind(correct = odds_vs_white(tab), rotated = odds_vs_white(rotated))[, -1]
+barplot(r, beside = TRUE, log = "y", col = blpal()[c(2, 1)], ylab = "odds ratio vs White (log scale)",
+        legend.text = c("correct labels", "labels rotated one place"),
+        args.legend = list(x = "topleft", bty = "n"), main = "Same counts, rotated labels")
+#> Warning in yinch(0.1): y log scale: yinch() is nonsense
+abline(h = 1, lty = 2)
+```
+
+![](categorical-integrity_files/figure-html/rotation-plot-1.png)

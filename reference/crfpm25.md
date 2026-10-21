@@ -2,7 +2,7 @@
 
 A concentration-response function (CRF) turns an air-pollution
 concentration into the relative risk (RR) of a health outcome compared
-with a counterfactual "clean air" level: an RR of 1.05 means 5% more
+with a counterfactual “clean air” level: an RR of 1.05 means 5% more
 deaths (or cases) than at the reference concentration. These are the
 first step of any burden estimate;
 [`polbrdn`](https://rootcoder007.github.io/rmorie-bricklayer/reference/polbrdn.md)

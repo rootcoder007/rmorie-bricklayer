@@ -140,7 +140,7 @@ or
 and not a non-empty string or raw vector; an invalid `prehash` or `ctx`
 (from
 [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)),
-or either given with an hmac key; `attestation` not from `cpsatst()`. A
+or either given with an HMAC key; `attestation` not from `cpsatst()`. A
 signature that fails to verify is a failed row, not an error.
 
 ## See also
@@ -165,8 +165,8 @@ att
 #>   context     <none>
 #>   prehash     none
 #>   note        counts as published
-#>   signed      2026-10-21T08:57:09Z
-#>   public key  f71df273fd19e7b88301123a7fd3af00... (1952 bytes)
+#>   signed      2026-10-21T14:05:17Z
+#>   public key  bd382543d52fbf167ea57f52a1a2c37a... (1952 bytes)
 #> ──────────────────────────────────────────────────────────────────
 
 # a verifier needs the attestation and the manifest, nothing else
@@ -209,7 +209,7 @@ att2 <- cpsatst(m, key, ctx = "release 2026-10", prehash = "sha512")
 cpschkatst(att2, m, keyexp = key)$ok
 #> [1] TRUE
 
-# a shared secret signs with hmac; `public` is its key id, not the secret
+# a shared secret signs with HMAC; `public` is its key id, not the secret
 att3 <- cpsatst(m, "shared-secret")
 att3$public
 #> [1] "4e289ef69cbe6f4c0d7de16c0801ad1155aba1598f2f4b25cddb46880caacd60"

@@ -231,3 +231,35 @@ The masked implementation is used by default:
 getOption("rmoriebricklayer.masked", TRUE)
 #> [1] TRUE
 ```
+
+## Constant time in a picture
+
+A side-channel test asks whether the time an operation takes depends on
+secret data. This chart is a picture of the question, not the test (that
+is the dudect and TVLA harnesses above). It times ML-KEM decapsulation
+of the honest ciphertext and of the same ciphertext with one hex digit
+changed, alternating the two so that drift in the machine’s clock speed
+falls on both alike. Implicit rejection sends the changed ciphertext
+down the same path as the honest one, so the two curves should lie close
+together; the timing harnesses are what decide whether they are
+indistinguishable.
+
+``` r
+
+bad <- sent$ciphertext
+substr(bad, 1, 1) <- if (substr(bad, 1, 1) == "0") "1" else "0"  # one hex digit changed
+tm <- function(ct) {
+  s <- proc.time()[["elapsed"]]
+  for (i in 1:200) kemdecap(key, ct)
+  (proc.time()[["elapsed"]] - s) / 200 * 1e6
+}
+honest <- tampered <- numeric(60)
+for (k in 1:60) {
+  honest[k] <- tm(sent$ciphertext)
+  tampered[k] <- tm(bad)
+}
+plotecdf(c(honest, tampered), rep(c("honest ciphertext", "one digit changed"), each = 60),
+         main = "ML-KEM-512 decapsulation time (microseconds)")
+```
+
+![](side-channel-assurance_files/figure-html/decap-timing-plot-1.png)

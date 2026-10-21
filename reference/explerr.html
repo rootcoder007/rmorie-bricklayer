@@ -83,8 +83,8 @@ to do.</p>
 
 
 <dl><dt id="arg-msg">msg<a class="anchor" aria-label="anchor" href="#arg-msg"></a></dt>
-<dd><p>The message: the text of an error, as R printed it ("Error
-in f(x) : ..." is fine), a condition object, or a <code><a href="https://rdrr.io/r/base/try.html" class="external-link">try()</a></code> result.
+<dd><p>The message: the text of an error, as R printed it (“Error
+in f(x) : ...” is fine), a condition object, or a <code><a href="https://rdrr.io/r/base/try.html" class="external-link">try()</a></code> result.
 Default: the last error of this session (<code><a href="https://rdrr.io/r/base/stop.html" class="external-link">geterrmessage()</a></code>).
 Or a data frame of check rows with the columns <code>check</code>,
 <code>ok</code> and <code>detail</code>, as <code>rmbl verify --json</code> writes
@@ -137,7 +137,7 @@ an <code>.rds</code> file in the answer-cache directory.</p>
 <code>rmoriebricklayer.llmcachedir</code> option names when it is set. The cache is off under
 <code>options(morie.quiet = TRUE)</code>, <code>MORIE_LLM_CACHE=off</code>, tests and
 <code>R CMD check</code>.</p>
-<p>The message is cleaned first: an "Error in f(x) :" or "Warning message:"
+<p>The message is cleaned first: an “Error in f(x) :” or “Warning message:”
 prefix is dropped, curly quotes become straight ones and white space is
 collapsed. A template that matches the start of the message as a regular
 expression is an exact match and ranks first (longer templates before
@@ -160,24 +160,22 @@ installed.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 rmoriebricklayer     .rmbl_string1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 rmoriebricklayer .rmbl_fips_scheme</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 rmoriebricklayer        usecpstmpl</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                           exported</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1       bricklayer_llm_ask, llmask, agent_bundle, agentbndl, analyse_table, anltab</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 blcli, capsule_attest, capsule_check_attestation, capsule_sign, cpsatst, cpsbndl</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3                                        rmblapp, use_capsule_template, usecpstmpl</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    kind                                    message            match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 error    `...` must be a single non-empty string            exact</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 error `scheme` must be a single non-empty string 80% of its words</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 error   `name` must be a single non-empty string 80% of its words</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                        exported  kind</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1                llmask, agentbndl, anltab, arccap, blcli, bldl error</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 blcli, capsule_sign, cpsatst, cpsbndl, cpsbndlvrf, cpschkatst error</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3                                           rmblapp, usecpstmpl error</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                      message            match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1    `...` must be a single non-empty string            exact</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 `scheme` must be a single non-empty string 80% of its words</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3   `name` must be a single non-empty string 80% of its words</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a condition object</span></span></span>
 <span class="r-in"><span><span class="va">e</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span><span class="fu"><a href="kemsz.html">kemsz</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span>, error <span class="op">=</span> <span class="va">identity</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">explerr</span><span class="op">(</span><span class="va">e</span>, n <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            package       raised_by</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 rmoriebricklayer .rmbl_kem_level</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                      exported</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 kem_keygen, kem_sizes, kem_decapsulate, kem_encapsulate, kemdecap, kemencap</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    kind                                 message match</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 error `level` must be one of 512, 768 or 1024 exact</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>            package       raised_by                         exported  kind</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 rmoriebricklayer .rmbl_kem_level kemdecap, kemencap, kemkg, kemsz error</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                   message match</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 `level` must be one of 512, 768 or 1024 exact</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the failed rows of a capsule check</span></span></span>
 <span class="r-in"><span><span class="va">rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>check <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"data_present"</span>, <span class="st">"data_sha256"</span><span class="op">)</span>, ok <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="cn">FALSE</span><span class="op">)</span>,</span></span>

@@ -100,7 +100,7 @@ better. The interval collects the \\\beta_0\\ not rejected at \\1 -\\
 `conflvl`, found by bisection with the same draws; it is unbounded when
 no value can be rejected (with Rademacher weights and \\G\\ clusters the
 smallest attainable p-value is \\2/2^G\\, so four clusters can never
-reject at 5\\ the method).
+reject at 5%: that is the honest answer, not a failure of the method).
 
 ## References
 
@@ -124,8 +124,8 @@ bootstrap inference in Stata using boottest. The Stata Journal
 p <- polex()
 # the reform was assigned to four regions: four clusters
 wcb(p, "district", "month", "crmrate", "reformed",
-                       cl = "region", wtype = "webb", reps = 299,
+                       cl = "region", wtype = "webb", reps = 99,
                        seed = 1)
-#>   estimate         t p_value     lower     upper clusters draws enumerated
-#> 1 -3.23164 -19.51674       0 -4.071902 -1.967923        4   299      FALSE
+#>   estimate         t    p_value     lower     upper clusters draws enumerated
+#> 1 -3.23164 -19.51674 0.01010101 -3.563541 -2.910293        4    99      FALSE
 ```

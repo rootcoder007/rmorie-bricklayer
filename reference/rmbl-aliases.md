@@ -1,345 +1,44 @@
-# The 0.5.x names, kept as aliases
+# The 0.5.x names
 
-Every function rmoriebricklayer 0.5.13 exported that 1.0.0 renamed is
-still callable by its old name, with its old argument names and its old
-defaults: each alias forwards to the new function. Allowed values that
-were renamed (`"mean_bootstrap"` is now `"meanboot"`) are translated on
-the way, as are old argument names passed through `...`. `rate()`,
-`rate_change()`, `share()` and `yoy_summary()` stay S3 generics, so
-methods written for them still dispatch. An option set under its 0.5.x
-name (`rmoriebricklayer.xmss_index_file`, `rmoriebricklayer.data_cache`
-...) is read when the new name is not set. The reference documentation
-lives on the new name; this page only lists the aliases.
+1.0.0 renamed most functions rmoriebricklayer 0.5.13 exported. The old
+names are no longer R functions, except the eleven rmoriedata 0.3.x
+calls
+([rmbl-compat](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl-compat.md))
+and the S3 generics `rate()`, `rate_change()`, `share()` and
+`yoy_summary()`, which stay so methods written for them still dispatch.
+The command line knows every old name, from
+`inst/compat/compat_names_map.tsv`:
+
+
+    rmbl describe admissions      what admissions() became, then the page of admits()
+    rmbl run admissions --adp 120 --alos 30
+                                  call it by the old name, old arguments and values translated
+    rmbl migrate analysis.R       show the 1.0.0 rewrite of a 0.5.x script; --write writes it
+
+([`blcli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/blcli.md)
+runs the same verbs from R.) An option set under its 0.5.x name
+(`rmoriebricklayer.xmss_index_file`, `rmoriebricklayer.data_cache` ...)
+is read when the new name is not set.
 
 ## Details
 
-Results come back in their 0.5.x form: an alias returns its result with
-the 0.5.x column and field names (nested tables and attributes too; the
-last table lists them), and a delimited writer writes the 0.5.x header.
-Such a result carries the class `rmbl_old` in front, so
+The four generics return their result in its 0.5.x form: the 0.5.x
+column and field names (nested tables and attributes too; the last table
+lists them) and, for a delimited writer, the 0.5.x header. Such a result
+carries the class `rmbl_old` in front, so
 [`print()`](https://rdrr.io/r/base/print.html),
 [`format()`](https://rdrr.io/r/base/format.html),
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html),
-[`summary()`](https://rdrr.io/r/base/summary.html) and the aliases that
-take a result read it in the 1.0.0 names. A 1.0.0 call is never
-translated.
+[`summary()`](https://rdrr.io/r/base/summary.html) and the generics read
+it in the 1.0.0 names. A 1.0.0 call is never translated.
 [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
 kept its name: it returns the 0.5.x names when called with a 0.5.x
 argument name, and the 1.0.0 names otherwise.
 
-## The map
-
-Old name, then the new one.
-
-
-    admissions                                 admits
-    adp_from_counts                            adpcnts
-    advection_diffusion_2d                     advdif2d
-    agent_bundle                               agentbndl
-    analyse_table                              anltab
-    apply_schema_validation                    schval
-    ascii_fallback                             asciifb
-    attributable_fraction                      attrfrac
-    audit_categories                           audcats
-    band_sensitivity                           bandsens
-    band_values                                bandvals
-    benford_test                               benfordtst
-    bricklayer_cli                             blcli
-    bricklayer_data_load                       dload
-    bricklayer_data_manifest                   dmnf
-    bricklayer_data_tables                     dtabs
-    bricklayer_download                        bldl
-    bricklayer_explain_error                   explerr
-    bricklayer_fetch_parse_siu                 siufprs
-    bricklayer_fetch_siu                       siufetch
-    bricklayer_json_base64_dec                 jsb64dec
-    bricklayer_json_base64_enc                 jsb64enc
-    bricklayer_json_base64url_dec              jsb64udec
-    bricklayer_json_base64url_enc              jsb64uenc
-    bricklayer_json_serialize                  jsser
-    bricklayer_json_unserialize                jsunser
-    bricklayer_llm_ask                         llmask
-    bricklayer_llm_chat                        llmchat
-    bricklayer_llm_config                      llmcfg
-    bricklayer_llm_login                       dlogin
-    bricklayer_llm_logout                      dlogout
-    bricklayer_llm_models                      llmmdls
-    bricklayer_llm_providers                   llmprvd
-    bricklayer_llm_route_info                  llmrte
-    bricklayer_llm_status                      llmstat
-    bricklayer_palette                         blpal
-    bricklayer_parse_siu                       siuprs
-    bricklayer_plot_options                    plotopt
-    bricklayer_progress                        blprog
-    bricklayer_services                        svcs
-    bricklayer_siu_iso_date                    siudate
-    bricklayer_siu_resolve_so                  siuso
-    bricklayer_siu_schema                      siusch
-    bricklayer_siu_text                        siutxt
-    briggs_plume_rise                          briggs
-    capsule_attest                             cpsatst
-    capsule_bundle                             cpsbndl
-    capsule_bundle_read                        cpsbndlrd
-    capsule_bundle_verify                      cpsbndlvrf
-    capsule_check_attestation                  cpschkatst
-    capsule_drift                              cpsdrft
-    capsule_falsify                            cpsfals
-    capsule_power                              cpspwr
-    capsule_report                             cpsrpt
-    capture_dependencies                       capdeps
-    capture_environment                        capenv
-    carbon_intensity                           co2int
-    carbon_intensity_table                     co2inttab
-    case_flow                                  caseflow
-    cert_chain_verify                          certchnvrf
-    cert_parse                                 certprs
-    chain_append                               chnapp
-    chain_head                                 chnhead
-    chain_new                                  chnnew
-    chain_seal                                 chnseal
-    chain_verify                               chnvrf
-    change_envelope                            chgenv
-    chunk_file                                 chnkfile
-    cite_capsule                               citecps
-    clean_column_names                         clncolnms
-    clearance_decomposition                    clrdcmp
-    compute_footprint                          co2fp
-    core_blake2b                               cblake2b
-    core_bootstrap_mean                        cbootmean
-    core_cor                                   ccorr
-    core_cor_spearman                          cspr
-    core_cov                                   ccovm
-    core_crc32                                 ccrc32
-    core_digest_equal                          cdgsteq
-    core_dist                                  cdistm
-    core_gamma_cdf                             cgamcdf
-    core_hawkes_fit                            chwkfit
-    core_hawkes_jitter                         chwkjit
-    core_hawkes_nll                            chwknll
-    core_hawkes_residuals                      chwkres
-    core_hmac_sha256                           chmac
-    core_ipw_weights                           cipw
-    core_iqr                                   ciqr
-    core_mad                                   cmad
-    core_median                                cmed
-    core_midranks                              cmidrk
-    core_moments                               cmom
-    core_normal_logpdf                         cnormlpdf
-    core_normal_pdf                            cnormpdf
-    core_quantile                              cqnt
-    core_sd                                    csdev
-    core_sha512                                csha512
-    core_trimmed_mean                          ctrmmean
-    core_tukey_fences                          ctkyfnc
-    core_uniforms                              cunif
-    core_var                                   cvari
-    core_weighted                              cwtd
-    core_winsorized_mean                       cwinsmean
-    correlation_table                          cortbl
-    count_trend                                cnttrnd
-    cramers_v                                  cramerv
-    crc32_file                                 crc32file
-    crf_no2                                    crfno2
-    crf_pm25                                   crfpm25
-    crime_density                              crmdens
-    decode_codes                               deccodes
-    decode_labelled                            declbld
-    derive_key                                 drvkey
-    detect_location                            dtctloc
-    digest_object                              dgstobj
-    disposition_mix                            dispmix
-    distinct_count                             dstncnt
-    distinct_sketch                            dstnskch
-    download_data                              dldata
-    drbg_generate                              drbggen
-    drbg_new                                   drbgnew
-    drbg_reseed                                drbgrsd
-    drift_calibrate                            drftcal
-    drift_chisq                                drftchisq
-    drift_homogeneity                          drfthomog
-    drift_ks                                   drftks
-    drift_psi                                  drftpsi
-    drop_constant                              drpconst
-    drop_empty                                 drpempty
-    duplicate_rows                             duprows
-    eb_rates                                   ebrates
-    environment_diff                           envdiff
-    evalue_rr                                  evlrr
-    expand_bands                               expbands
-    expected_counts                            expcnts
-    exposure_concentration_index               expconcidx
-    exposure_response_plr                      exprspplr
-    falsify_family                             falsfam
-    fips_key                                   fipskey
-    fips_keygen                                fipskg
-    fips_mu                                    fipsmu
-    fips_public_key                            fipspubkey
-    fips_sign_mu                               fipssignmu
-    fips_sizes                                 fipssz
-    fips_verify_mu                             fipsvrfmu
-    fiscal_year_label                          fylbl
-    footprint_equivalents                      fpeqv
-    frequency_table                            freqtbl
-    friendly_download                          fdl
-    funnel_limits                              fnllim
-    gaussian_plume                             gplume
-    gaussian_puff                              gspuff
-    gini                                       ginicoef
-    guard_binary                               grdbin
-    guard_levels                               grdlvls
-    guard_recode                               grdrcd
-    hill_tail_index                            hilltlidx
-    hotspot_persistence                        hotpers
-    hqc_compress_key                           hqccmpkey
-    hqc_decapsulate                            hqcdecap
-    hqc_encapsulate                            hqcencap
-    hqc_keygen                                 hqckg
-    hqc_public_key                             hqcpubkey
-    hqc_sizes                                  hqcsz
-    hurwitz_zeta                               hurwzeta
-    infer_schema                               infsch
-    inline_hist                                inlhist
-    install_cli                                instcli
-    json_gzip_decode                           jsgzdec
-    json_gzip_encode                           jsgzenc
-    kem_decapsulate                            kemdecap
-    kem_encapsulate                            kemencap
-    kem_keygen                                 kemkg
-    kem_public_key                             kempubkey
-    kem_sizes                                  kemsz
-    knox_test                                  knoxtst
-    lagrangian_particles                       lagrprt
-    life_table                                 lifetbl
-    load_provenance                            loadprov
-    lorenz                                     lorenzc
-    mahalanobis_outliers                       mahaoutl
-    make_manifest                              mkmnf
-    make_synthetic_column                      mksyncol
-    make_synthetic_csv                         mksyncsv
-    manifest_canonical                         mnfcanon
-    manifest_digest                            mnfdgst
-    manifest_recompute                         mnfrcmp
-    manifest_record_seed                       mnfrecseed
-    manifest_restore_seed                      mnfrstseed
-    mcar_test                                  mcartst
-    merkle_leaves                              mrklvs
-    merkle_proof                               mrkprf
-    merkle_root                                mrkroot
-    merkle_verify                              mrkvrf
-    missing_runs                               missruns
-    missingness_map                            missgrid
-    missingness_pattern                        misspat
-    missingness_summary                        misssmry
-    morans_i                                   morani
-    mortality_displaced                        mortdisp
-    odds_ratio_check                           orchk
-    online_summary                             onlsmry
-    oqs_keygen                                 oqskg
-    oqs_public_key                             oqspubkey
-    parse_bands                                prsbands
-    period_days                                perdays
-    pg_sigmas                                  pgsig
-    plot_funnel                                plotfnl
-    plot_lorenz                                plotlrnz
-    plr_crossfit                               plrcf
-    plume_field                                plmfld
-    pollution_burden                           polbrdn
-    pollution_burden_by_area                   polbrdarea
-    pollution_report_text                      polrpttxt
-    pqc_backends                               pqcbknd
-    prereg_check                               prrgchk
-    prereg_declare                             prrgdecl
-    profile_columns                            profcols
-    published_bounds                           pubbnd
-    random_bytes                               rndbytes
-    rapl_available                             raplok
-    rate                                       rtcalc
-    rate_change                                ratechg
-    recode_manifest                            rcdmnf
-    record                                     recrd
-    region_coverage                            rgncov
-    region_map_compare                         rgnmapcmp
-    region_map_from_points                     rgnmappts
-    region_map_integrity                       rgnmapintg
-    region_map_second_route                    rgnmapalt
-    relabel                                    relbl
-    relabel_forensics                          rlblfrns
-    report_analysis                            rptanl
-    report_markdown                            rptmd
-    reservoir_indices                          rsvidx
-    reservoir_sample                           rsvsmp
-    resolve_via_arcgis                         rslvarc
-    resolve_via_ckan                           rslvckan
-    resolve_via_ckan_search                    rslvckns
-    resolve_via_socrata                        rslvsoc
-    revocation_fetch                           rvkfetch
-    rule                                       rul
-    rule_between                               rulebtw
-    rule_col_count                             rulecolcnt
-    rule_complete_rows                         rulecmpl
-    rule_distinct_rows                         ruledstn
-    rule_in_set                                ruleinset
-    rule_increasing                            ruleincr
-    rule_not_null                              rulenull
-    rule_regex                                 rulerx
-    rule_unique                                ruleuniq
-    rule_within_n_mads                         rulemad
-    scan_adjust                                scanadj
-    sha512_file                                sha512file
-    share                                      shrs
-    sir                                        stdinc
-    sketch_merge                               skchmrg
-    stay_summary                               staysmry
-    step_change                                stepchg
-    stock_flow                                 stkflow
-    summary_merge                              smrymrg
-    summary_stats                              smrystat
-    summary_update                             smryupd
-    survey_compare                             svycmp
-    survey_design                              svydes
-    survey_estimate                            svyest
-    timestamp_info                             tsinfo
-    timestamp_verify                           tsvrf
-    to_ascii                                   toascii
-    top_correlations                           topcors
-    top_share                                  topshr
-    transfer_verify                            xfrvrf
-    trend_test                                 trndtst
-    use_capsule_template                       usecpstmpl
-    validate_rules                             valrules
-    validate_schema                            valsch
-    verify_capsule                             vrfcps
-    verify_marginals                           vrfmrg
-    verify_pollution                           vrfpol
-    verify_recode                              vrfrcd
-    verify_recode_manifest                     vrfrcdmnf
-    verify_sha256                              vrfsha256
-    wayback_retry                              wbrtry
-    wayback_save                               wbsave
-    wayback_snapshot_url_native                wbsnpnat
-    write_manifest_json                        wrmnfjs
-    write_recode_manifest                      wrrcdmnf
-    write_summary_txt                          wrsmrytxt
-    write_text_fallback                        wrtxtfb
-    xmss_advance                               xmssadv
-    xmss_forget_used_indices                   xmssfgt
-    xmss_register_key                          xmssregkey
-    yoy_bounds                                 yoybnd
-    yoy_csv                                    yoycsv
-    yoy_html                                   yoyhtml
-    yoy_json                                   yoyjs
-    yoy_label                                  yoylbl
-    yoy_markdown                               yoymd
-    yoy_palettes                               yoypals
-    yoy_pdf                                    yoypdf
-    yoy_pvalues                                yoypv
-    yoy_summary                                yoysmry
-    yoy_tsv                                    yoytsv
-    yoy_write                                  yoywr
-
 ## Renamed allowed values
 
-Alias, argument, then each old value and the value it is translated to.
+Old name, argument, then each old value and the value it is translated
+to.
 
 
     analyse_table              direction  higher_is_better -> higher,
@@ -477,3 +176,40 @@ The 0.5.13 page, then each old name and the name the result has now.
     yoy_summary: total_pct -> totalpct, cagr_pct -> cagrpct
     yoy: pct_change -> pctchg, pp_change -> ppchg, min_base -> minbase, pct_lower -> pctlo,
       pct_upper -> pctup, conf_level -> conflvl
+
+## Examples
+
+``` r
+# what a 0.5.x name became, and its 1.0.0 help page (the first lines)
+out <- character()
+blcli(c("describe", "admissions"), out = function(...) out <<- c(out, paste0(...)))
+cat(head(strsplit(paste(out, collapse = ""), "\n")[[1]], 3), sep = "\n")
+#> admissions() is the 0.5.x name of admits() (renamed in 1.0.0)
+#> Admissions implied by a population and a length of stay
+#> 
+# the generics kept their names, and return their result under the 0.5.x names
+r <- rate(c(5, 12), population = c(1000, 4000))
+names(r)
+#> [1] "count"      "population" "rate"       "lower"      "upper"     
+#> [6] "flag"      
+rate_change(data.frame(year = 2023:2024, n = c(10, 14), pop = 1000), count = "n",
+            population = "pop", period = "year")
+#> ── Change in rate per 1,000, lag 1, 95% exact conditional interval  
+#>  year count population rate prerate precnt prepop rateratio pctchg     pctlo
+#>  2023    10       1000   10      NA     NA     NA        NA     NA        NA
+#>  2024    14       1000   14      10     10   1000       1.4     40 -42.16408
+#>     pctup                 flag
+#>        NA no comparison period
+#>  252.2904                 <NA>
+#> ────────────────────────────────────────────────────────────────── 
+share(c(a = 3, b = 7))
+#> ── Share of 10, 95% Wilson interval ────────────────────────────── 
+#>  label count total share    lower    upper
+#>      a     3    10    30 10.77913 60.32219
+#>      b     7    10    70 39.67781 89.22087
+#> ────────────────────────────────────────────────────────────────── 
+y <- yoy(data.frame(year = 2021:2024, n = c(10, 12, 9, 15)), value = "n", period = "year")
+yoy_summary(y)
+#>   from   to first last total_pct cagr_pct periods up down flat
+#> 1 2021 2024    10   15        50 14.47142       4  2    1    0
+```

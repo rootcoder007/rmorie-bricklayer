@@ -39,7 +39,7 @@ cpsdrft(
 - psithr:
 
   PSI above which a numeric column is flagged even when its p-value is
-  not significant (default 0.25, the conventional "material shift"
+  not significant (default 0.25, the conventional “material shift”
   line).
 
 - psiminn:

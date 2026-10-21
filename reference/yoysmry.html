@@ -110,7 +110,7 @@ and, with \(s = (T - 1) / \mathrm{lag}\) steps of length <code>lag</code>,
 $$100 \left( (v_T / v_1)^{1/s} - 1 \right).$$
 Both are <code>NA</code> when \(v_1 \le 0\), because a growth rate out of zero
 does not exist; <code>cagrpct</code> is also <code>NA</code> for a single period.
-"Annual" in CAGR assumes one period is a year; for monthly or quarterly
+<code>"Annual"</code> in CAGR assumes one period is a year; for monthly or quarterly
 data read it as the compound rate per <code>lag</code> periods.</p>
 <p>The <code>up</code>, <code>down</code> and <code>flat</code> counts are taken from the
 percent-change column (<code>pctchg</code>, or <code>ppchg</code> for
@@ -118,7 +118,7 @@ percent-change column (<code>pctchg</code>, or <code>ppchg</code> for
 change and is not counted in any of the three. A group with no non-missing
 value gives a row of <code>NA</code> with <code>periods = 0</code>.</p>
 <p>Anything other than a <code><a href="yoy.html">yoy()</a></code> result is refused with the error
-"<code>object</code> must be a yoy() result".</p>
+“<code>object</code> must be a yoy() result”.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

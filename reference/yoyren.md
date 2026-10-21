@@ -118,7 +118,7 @@ The PDF is drawn on R's own
 [`pdf()`](https://rdrr.io/r/grDevices/pdf.html) device with its standard
 fonts, which cannot draw arrows or dashes, so those are written in ASCII
 (`+`, `-`). Long tables are split over pages at 0.22 inch per row, with
-"page i of n" labels; notes go under the last page's rows when they fit
+“page i of n” labels; notes go under the last page's rows when they fit
 and on pages of their own otherwise. The interval column appears only
 when the table has `pctlo` and `pctup` (counts).
 

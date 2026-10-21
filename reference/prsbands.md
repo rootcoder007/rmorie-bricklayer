@@ -1,7 +1,7 @@
 # Parse banded category labels into numeric bounds
 
 Published administrative tables often report intervals instead of
-values: "18 to 24", "2 to 5", "50+", "Greater than 15 days". This
+values: “18 to 24”, “2 to 5”, `"50+"`, “Greater than 15 days”. This
 function reads such labels into a lower and an upper bound per band, and
 flags the bands that are open at the top or the bottom. It recognises
 the wordings open-data publishers actually use, and leaves a label it

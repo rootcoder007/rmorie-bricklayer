@@ -19,8 +19,8 @@ explerr(msg = geterrmessage(), pkgs = NULL, n = 3L)
 
 - msg:
 
-  The message: the text of an error, as R printed it ("Error in f(x) :
-  ..." is fine), a condition object, or a
+  The message: the text of an error, as R printed it (“Error in f(x) :
+  ...” is fine), a condition object, or a
   [`try()`](https://rdrr.io/r/base/try.html) result. Default: the last
   error of this session
   ([`geterrmessage()`](https://rdrr.io/r/base/stop.html)). Or a data
@@ -81,7 +81,7 @@ The answer-cache directory is the one
 off under `options(morie.quiet = TRUE)`, `MORIE_LLM_CACHE=off`, tests
 and `R CMD check`.
 
-The message is cleaned first: an "Error in f(x) :" or "Warning message:"
+The message is cleaned first: an “Error in f(x) :” or “Warning message:”
 prefix is dropped, curly quotes become straight ones and white space is
 collapsed. A template that matches the start of the message as a regular
 expression is an exact match and ranks first (longer templates before
@@ -104,24 +104,22 @@ explerr(msg, pkgs = "rmoriebricklayer")
 #> 1 rmoriebricklayer     .rmbl_string1
 #> 2 rmoriebricklayer .rmbl_fips_scheme
 #> 3 rmoriebricklayer        usecpstmpl
-#>                                                                           exported
-#> 1       bricklayer_llm_ask, llmask, agent_bundle, agentbndl, analyse_table, anltab
-#> 2 blcli, capsule_attest, capsule_check_attestation, capsule_sign, cpsatst, cpsbndl
-#> 3                                        rmblapp, use_capsule_template, usecpstmpl
-#>    kind                                    message            match
-#> 1 error    `...` must be a single non-empty string            exact
-#> 2 error `scheme` must be a single non-empty string 80% of its words
-#> 3 error   `name` must be a single non-empty string 80% of its words
+#>                                                        exported  kind
+#> 1                llmask, agentbndl, anltab, arccap, blcli, bldl error
+#> 2 blcli, capsule_sign, cpsatst, cpsbndl, cpsbndlvrf, cpschkatst error
+#> 3                                           rmblapp, usecpstmpl error
+#>                                      message            match
+#> 1    `...` must be a single non-empty string            exact
+#> 2 `scheme` must be a single non-empty string 80% of its words
+#> 3   `name` must be a single non-empty string 80% of its words
 
 # a condition object
 e <- tryCatch(kemsz(3), error = identity)
 explerr(e, n = 1)
-#>            package       raised_by
-#> 1 rmoriebricklayer .rmbl_kem_level
-#>                                                                      exported
-#> 1 kem_keygen, kem_sizes, kem_decapsulate, kem_encapsulate, kemdecap, kemencap
-#>    kind                                 message match
-#> 1 error `level` must be one of 512, 768 or 1024 exact
+#>            package       raised_by                         exported  kind
+#> 1 rmoriebricklayer .rmbl_kem_level kemdecap, kemencap, kemkg, kemsz error
+#>                                   message match
+#> 1 `level` must be one of 512, 768 or 1024 exact
 
 # the failed rows of a capsule check
 rows <- data.frame(check = c("data_present", "data_sha256"), ok = c(TRUE, FALSE),

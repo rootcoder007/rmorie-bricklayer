@@ -81,18 +81,18 @@ A list of class `c("rmbl_dstfit", "list")`:
 
 ## Details
 
-The families and their parameters: `normal` (mean, sd), `lognormal`
-(meanlog, sdlog), `exponential` (rate), `gamma` (shape, rate), `weibull`
-(shape, scale), `t` (location, scale, df: a location-scale Student t),
-`pareto` (xmin, alpha, with xmin the smallest value, its maximum
-likelihood estimate), `beta` (shape1, shape2) for proportions, and for
-counts `poisson` (lambda), `negbin` (size, mu), `zip` (pi, lambda) and
-`zinb` (pi, size, mu), the zero-inflated forms with `pi` the share of
-structural zeros. The normal, lognormal, exponential, Pareto and Poisson
-estimates are closed form; the negative binomial searches its size alone
-(its mu estimate is the mean); the rest are maximised by
-[`optim()`](https://rdrr.io/r/stats/optim.html) on a log or logit scale,
-Nelder-Mead then BFGS.
+The families and their parameters: `normal` (`mean`, `sd`), `lognormal`
+(`meanlog`, `sdlog`), `exponential` (rate), `gamma` (shape, rate),
+`weibull` (shape, scale), `t` (location, scale, df: a location-scale
+Student t), `pareto` (`xmin`, `alpha`, with `xmin` the smallest value,
+its maximum likelihood estimate), `beta` (shape1, shape2) for
+proportions, and for counts `poisson` (lambda), `negbin` (size, mu),
+`zip` (pi, lambda) and `zinb` (pi, size, mu), the zero-inflated forms
+with `pi` the share of structural zeros. The normal, lognormal,
+exponential, Pareto and Poisson estimates are closed form; the negative
+binomial searches its size alone (its mu estimate is the mean); the rest
+are maximised by [`optim()`](https://rdrr.io/r/stats/optim.html) on a
+log or logit scale, Nelder-Mead then BFGS.
 
 With `fams = NULL` every family the data allow is fitted: for whole
 numbers of 0 or more the count families; otherwise the positive families
@@ -140,7 +140,7 @@ with `type = "fitted"` for a synthetic sample from a fit.
 ``` r
 set.seed(1)
 x <- stats::rgamma(300, shape = 2, rate = 0.5)
-f <- dstfit(x, nboot = 50)
+f <- dstfit(x, nboot = 20)
 f
 #> Distributions fitted to 300 values, ranked by AIC
 #> 

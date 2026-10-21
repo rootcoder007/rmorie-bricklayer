@@ -62,11 +62,11 @@ again. What is left is captured again with
 [`wbsave()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsave.md),
 appending to the same file. A page its source no longer has is not sent
 again unless `incgone = TRUE`: a new capture would only archive the
-error. "Gone" means the recorded message contains archive.org's report
-of the target server's reply ("target server cannot find", "returned
-404", "returned 410", "error:not-found" or "error:gone"); an HTTP 404
-from archive.org's own API does not count. A failure for a daily limit
-recorded today (UTC) is not sent again until tomorrow.
+error. `"Gone"` means the recorded message contains archive.org's report
+of the target server's reply (“target server cannot find”, “returned
+404”, “returned 410”, `"error:not-found"` or `"error:gone"`); an HTTP
+404 from archive.org's own API does not count. A failure for a daily
+limit recorded today (UTC) is not sent again until tomorrow.
 
 Network: the lookups use the Wayback availability API and the new
 captures use
@@ -112,7 +112,7 @@ attr(res, "retry")
 #> 1      1               0              0            1                 0
 
 try(wbrtry(tempfile(fileext = ".jsonl")))
-#> Error : no results file at /tmp/RtmpD1RivZ/file2035247e3463.jsonl
+#> Error : no results file at /tmp/Rtmp6lvsTP/file20d77690a279.jsonl
 
 # With failures to resend, keys and the network are needed.
 

@@ -47,7 +47,7 @@ xmssfgt(keytofgt = NULL)
 - keytofgt:
 
   For `xmssfgt()`: a signing key (the record is keyed by its secret
-  seed) whose entry alone is reset to "nothing used" (it may sign from
+  seed) whose entry alone is reset to “nothing used” (it may sign from
   index 0 again); `NULL` removes the whole record (every key, and the
   record of the releases before 0.5.12), after which only keys generated
   afterwards, or vouched for by `xmssregkey()`, may sign.

@@ -55,10 +55,10 @@ document), invisibly.
 ## Details
 
 Sections appear in this order: a header line (value, period, groups,
-rows, period range and the time of the analysis), "Change between
-periods", "Rates per ..." (when there were rates), "Trend over the
-series", "Drift against the prior capsule" (when a prior was given) and
-"What is in the table" (with "Missing values" when any are missing).
+rows, period range and the time of the analysis), “Change between
+periods”, “Rates per ...” (when there were rates), “Trend over the
+series”, “Drift against the prior capsule” (when a prior was given) and
+“What is in the table” (with “Missing values” when any are missing).
 Tables use pipe syntax; numbers are rounded to `digits` decimals, whole
 numbers of 10,000 and above get thousands separators, logicals are
 written yes/no and `NA` is blank. When the values are percentages the
@@ -82,7 +82,7 @@ md <- rptanl(a)
 cat(substr(md, 1, 400))
 #> # Analysis of a published table
 #> 
-#> `individuals` by `year`, grouped by `table` and `group`; 15 rows; 3 period(s) from 2023 to 2025; generated 2026-10-21 08:58.
+#> `individuals` by `year`, grouped by `table` and `group`; 15 rows; 3 period(s) from 2023 to 2025; generated 2026-10-21 14:06.
 #> 
 #> ## Change between periods
 #> 

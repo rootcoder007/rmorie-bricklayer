@@ -102,7 +102,7 @@ together and ordered by severity, because the failure mode this is built
 against is a person running one check, seeing it pass, and concluding
 the data is fine.
 
-## What "severity" means
+## What `severity` means
 
 - `fatal` – nothing downstream can run as it stands: a schema check or a
   rule of severity `"fatal"` failed (for example a required column is

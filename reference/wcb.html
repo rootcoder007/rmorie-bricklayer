@@ -154,7 +154,7 @@ weights, which have more distinct values, are better. The interval collects the
 \(\beta_0\) not rejected at \(1 -\) <code>conflvl</code>, found by bisection with
 the same draws; it is unbounded when no value can be rejected (with Rademacher
 weights and \(G\) clusters the smallest attainable p-value is \(2/2^G\), so
-four clusters can never reject at 5\<!-- %: that is the honest answer, not a failure of -->
+four clusters can never reject at 5%: that is the honest answer, not a failure of
 the method).</p>
     </div>
     <div class="section level2">
@@ -174,10 +174,10 @@ inference in Stata using boottest. The Stata Journal 19(1):4-60.
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="polex.html">polex</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># the reform was assigned to four regions: four clusters</span></span></span>
 <span class="r-in"><span><span class="fu">wcb</span><span class="op">(</span><span class="va">p</span>, <span class="st">"district"</span>, <span class="st">"month"</span>, <span class="st">"crmrate"</span>, <span class="st">"reformed"</span>,</span></span>
-<span class="r-in"><span>                       cl <span class="op">=</span> <span class="st">"region"</span>, wtype <span class="op">=</span> <span class="st">"webb"</span>, reps <span class="op">=</span> <span class="fl">299</span>,</span></span>
+<span class="r-in"><span>                       cl <span class="op">=</span> <span class="st">"region"</span>, wtype <span class="op">=</span> <span class="st">"webb"</span>, reps <span class="op">=</span> <span class="fl">99</span>,</span></span>
 <span class="r-in"><span>                       seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   estimate         t p_value     lower     upper clusters draws enumerated</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 -3.23164 -19.51674       0 -4.071902 -1.967923        4   299      FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   estimate         t    p_value     lower     upper clusters draws enumerated</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 -3.23164 -19.51674 0.01010101 -3.563541 -2.910293        4    99      FALSE</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

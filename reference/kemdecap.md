@@ -68,7 +68,7 @@ option `rmoriebricklayer.masked` sets the default for a session.
 
 Errors (checked before any decapsulation): `key` not from
 [`kemkg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemkg.md),
-or a public key only ("decapsulation needs a key with its secret half");
+or a public key only (“decapsulation needs a key with its secret half”);
 a ciphertext that is not hex or raw of the exact length for the key's
 level, which is
 [`kemsz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kemsz.md)`[["ciphertext"]]`

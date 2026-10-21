@@ -218,3 +218,18 @@ llmask(paste("How do I compare perceived mental health of First Nations,",
                          "Metis and Inuit adults with non-Indigenous adults, using",
                          "indiex('health_indicators')?"))
 ```
+
+## The providers in a picture
+
+The routes above are drawn from the provider table
+[`llmprvd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/llmprvd.md).
+The bars count the providers by the shape of request each one takes;
+every OpenAI-compatible provider shares one request builder.
+
+``` r
+
+pv <- llmprvd()
+barplot(table(pv$api), col = blpal()[1], ylab = "providers", main = "Providers by request shape")
+```
+
+![](language-model-routes_files/figure-html/providers-plot-1.png)

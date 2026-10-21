@@ -155,6 +155,30 @@ round(100 * unlist(fost) / unlist(kids), 2)
 Turning that stock into admissions and lengths of stay needs the flow
 data held by child welfare agencies.
 
+## The figures in a picture
+
+The left panel puts the counts on a common footing: children in foster
+care per 1,000 children, First Nations and non-Indigenous, from the
+census tables above. The right panel shows how the lengths of stay are
+spread: most are short, a few are very long, which is why the mean and
+the median differ.
+
+``` r
+
+op <- par(mfrow = c(1, 2))
+per1000 <- unlist(fost) / unlist(kids) * 1000
+barplot(per1000, names.arg = c("First Nations", "non-Indigenous"), col = blpal()[1:2],
+        ylab = "per 1,000 children", main = "Children in foster care")
+hist(stays, breaks = 30, col = blpal()[2], xlab = "length of stay", main = "Lengths of stay")
+```
+
+![](stock-and-flow_files/figure-html/stock-flow-plots-1.png)
+
+``` r
+
+par(op)
+```
+
 ## Reference
 
 Lakner, *A Manual of Correctional Statistics* (the ADP and ALOS worked

@@ -237,3 +237,25 @@ topshr(tot$FIRST_NATIONS, fracs = c(0.25, 0.5))
 #> 1     0.25     4 0.6787850
 #> 2     0.50     7 0.9326599
 ```
+
+## The bands and the curve in a picture
+
+The left panel shows the banded counts as published. The right panel
+draws the Lorenz curve of the placements with
+[`plotlrnz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plotlrnz.md):
+the further it bows below the diagonal, the more unevenly the population
+is spread.
+
+``` r
+
+op <- par(mfrow = c(1, 2))
+barplot(counts, names.arg = b$label, col = blpal()[2], main = "Counts by band", ylab = "count")
+plotlrnz(placements, main = "Concentration of placements")
+```
+
+![](banded-tables-and-concentration_files/figure-html/bands-lorenz-plot-1.png)
+
+``` r
+
+par(op)
+```

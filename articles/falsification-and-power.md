@@ -267,6 +267,37 @@ head(res)
 #> character(0)
 ```
 
+## The tests in a picture
+
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws each
+result. For the real statistic, the observed correlation stands far
+outside the correlations the permuted tables give. The fake statistic
+returns 0.5 whatever the data, so every permuted table also gives 0.5:
+the null collapses onto the observed value, and the permutation control
+fails, as it should. The last panel is the power of the test across
+injected effect sizes.
+
+``` r
+
+plot(real)
+```
+
+![](falsification-and-power_files/figure-html/falsification-plots-1.png)
+
+``` r
+
+plot(fake)
+```
+
+![](falsification-and-power_files/figure-html/falsification-plots-2.png)
+
+``` r
+
+plot(pw)
+```
+
+![](falsification-and-power_files/figure-html/falsification-plots-3.png)
+
 ## References
 
 VanderWeele, Ding (2017). Sensitivity analysis in observational
