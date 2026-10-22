@@ -263,7 +263,12 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   lists the captures of an address and `arcget()` fetches the exact bytes;
   `fetchvrf()` falls back to the archive and to your WARC files on its own,
   and `wbsave(fallback = "rmorie")` saves what the Wayback Machine refused.
-  From a terminal: `rmbl archive save | find | get`.
+  From a terminal: `rmbl archive save | find | get`. In CI, `cpschk(archive = TRUE)`
+  (the rmbl action's `archive: true`) takes the archived copy when a source and
+  its Wayback snapshot are down. Reading a public copy needs no key; saving needs
+  one, except in a GitHub Actions job allowed `id-token: write`, where the
+  package uses the job's short-lived OIDC token and the repository is the saver,
+  so no secret is stored.
 - **Courts and police-reported crime** — `caseflow()` (clearance rate with
   exact intervals, rolling clearance, net flow and months to clear the
   pending inventory), `lifetbl()` (actuarial life table with Greenwood

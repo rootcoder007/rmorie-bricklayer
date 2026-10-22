@@ -348,6 +348,25 @@ fetchvrf("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip", "table.zip"
 From a terminal the same steps are `rmbl archive save URL --reason "..."`, `rmbl archive find URL` and
 `rmbl archive get ID -o FILE`.
 
+In continuous integration, `cpschk(path, "drift", archive = TRUE)` (the rmbl GitHub Action's `archive: true`) takes the
+archived copy with the pinned SHA-256 when a capsule's source and its Wayback snapshot are both down; reading a public
+copy needs no key. Saving needs one, except in a GitHub Actions job allowed `id-token: write`: there the package asks
+GitHub for the job's short-lived OIDC token, the archive checks GitHub's signature, and the repository is the saver, so
+no secret is stored.
+
+```yaml
+permissions:
+  contents: read
+  id-token: write
+steps:
+  - uses: rootcoder007/rmbl-action@v1
+    with:
+      path: capsules
+      mode: refresh
+      wayback: true
+      archive: true
+```
+
 ## One file to hand someone
 
 A bundle carries a digest of every file, the manifest digest, and an
