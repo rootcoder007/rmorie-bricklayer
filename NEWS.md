@@ -7,6 +7,7 @@
 * `fetchvrf()` gains `arcs`: after the source, its Wayback snapshot and the mirrors, it tries archive.rmorie.com and then folders written by `arccap()`, reading the payload back from their WARC files; every copy is still checked against the pinned SHA-256.
 * `wbsave()` gains `fallback = "rmorie"`: the addresses the Wayback Machine refused are saved from this connection to archive.rmorie.com instead (attribute `archive` of the result).
 * `cpschk()` gains `archive` (the rmbl action's `archive` input): in drift and refresh, a source that neither answers nor has its pinned Wayback snapshot is fetched from the copy kept on archive.rmorie.com with the pinned SHA-256 (public copies need no key), and with `wayback = TRUE` a changed source the Wayback Machine refuses is saved there instead.
+* In a GitHub Actions job allowed `id-token: write`, saving to archive.rmorie.com needs no stored key: without one, the package asks GitHub for the job's short-lived OIDC token for archive.rmorie.com, and the repository is the saver.
 * The command line gains `archive save URL... --reason TEXT [--private] [--also wayback]`, `archive find URL` and `archive get ID -o FILE`.
 * Another archive that speaks the same protocol is named in `MORIE_ARCHIVE_URL`, with its own key in `MORIE_ARCHIVE_KEY`; the stored rmorie key is sent only to archive.rmorie.com.
 

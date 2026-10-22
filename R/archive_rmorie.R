@@ -19,15 +19,43 @@
   v
 }
 
-#' The key to send to an archive, or NULL: the stored rmorie key for archive.rmorie.com, else
+#' The key to send to an archive, or NULL: the stored rmorie key for archive.rmorie.com (else, in a
+#' GitHub Actions job allowed `id-token: write`, the job's OIDC token for that address), else
 #' MORIE_ARCHIVE_KEY (a key belongs to one service and does not follow an address).
 #' @param base The archive's address.
 #' @return One string, or NULL.
 #' @noRd
 .bl_arc_key <- function(base) {
-  if (identical(base, "https://archive.rmorie.com")) return(.bl_hosted_key())
+  if (identical(base, "https://archive.rmorie.com")) return(.bl_hosted_key() %||% .bl_gh_oidc(base))
   k <- trimws(Sys.getenv("MORIE_ARCHIVE_KEY", unset = ""))
   if (nzchar(k)) k else NULL
+}
+
+.bl_oidc_cache <- new.env(parent = emptyenv())
+
+#' A GitHub Actions OIDC token for an audience, or NULL outside such a job. GitHub signs it; it
+#' names the repository and lives a few minutes, so a workflow saves to the archive without a
+#' stored key. Kept for four minutes.
+#' @param audience The address the token is for.
+#' @return One string, or NULL.
+#' @noRd
+.bl_gh_oidc <- function(audience) {
+  u <- Sys.getenv("ACTIONS_ID_TOKEN_REQUEST_URL", unset = "")
+  t <- Sys.getenv("ACTIONS_ID_TOKEN_REQUEST_TOKEN", unset = "")
+  if (!nzchar(u) || !nzchar(t) || !grepl("^https://", u)) return(NULL)
+  hit <- .bl_oidc_cache[[audience]]
+  if (!is.null(hit) && hit$until > Sys.time()) return(hit$token)
+  url <- paste0(u, if (grepl("?", u, fixed = TRUE)) "&" else "?",
+                "audience=", utils::URLencode(audience, reserved = TRUE))
+  res <- tryCatch(.bl_net(url, .Call(C_rmbl_http_get, url, 30L,
+                                     c("User-Agent: rmoriebricklayer", "Accept: application/json",
+                                       paste("Authorization: Bearer", t)), FALSE)),
+                  error = function(e) .bl_unless_interrupted(e, NULL))
+  if (is.null(res) || !identical(as.integer(res$status %||% -1L), 200L)) return(NULL)
+  v <- tryCatch(.rmbl_json_text(res$body, simplifyVector = FALSE)$value, error = function(e) NULL)
+  if (!is.character(v) || length(v) != 1L || !nzchar(v)) return(NULL)
+  .bl_oidc_cache[[audience]] <- list(token = v, until = Sys.time() + 240)
+  v
 }
 
 #' One request to the archive.

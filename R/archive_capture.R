@@ -301,7 +301,8 @@ arccap <- function(urls, dir, item = NULL, meta = list(), tsa = "https://freetsa
     base <- .bl_arc_base()
     key <- .bl_arc_key(base)
     if (is.null(key)) {
-      stop(sprintf("archive.rmorie.com needs your key: run dlogin() (or `%s login`) once; the files are kept in %s",
+      stop(sprintf(paste0("archive.rmorie.com needs your key: run dlogin() (or `%s login`) once, or in GitHub ",
+                          "Actions allow the job `id-token: write`; the files are kept in %s"),
                    .bl_prog(), dir), call. = FALSE)
     }
     for (i in which(ok)) {

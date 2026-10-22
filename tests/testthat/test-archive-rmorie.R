@@ -557,3 +557,49 @@ test_that("refresh with wayback hands wbsave() the archive fallback and notes wh
   expect_null(got$reason)
   expect_false(any(grepl("archive.rmorie.com", out$notes)))
 })
+
+test_that("in GitHub Actions with id-token: write, the job's OIDC token stands in for a key", {
+  rm(list = ls(.bl_oidc_cache), envir = .bl_oidc_cache)
+  withr::local_envvar(ACTIONS_ID_TOKEN_REQUEST_URL = NA, ACTIONS_ID_TOKEN_REQUEST_TOKEN = NA)
+  expect_null(.bl_gh_oidc("https://archive.rmorie.com"))
+  withr::local_envvar(ACTIONS_ID_TOKEN_REQUEST_URL = "https://run.actions.example/token?api-version=2.0",
+                      ACTIONS_ID_TOKEN_REQUEST_TOKEN = "req-token")
+  asked <- NULL
+  n <- 0L
+  local_mocked_bindings(.bl_net = function(url, expr) {
+    asked <<- url
+    n <<- n + 1L
+    list(status = 200L, body = charToRaw('{"count":1,"value":"eyJ.github.jwt"}'), error = "")
+  })
+  expect_identical(.bl_gh_oidc("https://archive.rmorie.com"), "eyJ.github.jwt")
+  expect_identical(asked, "https://run.actions.example/token?api-version=2.0&audience=https%3A%2F%2Farchive.rmorie.com")
+  # kept for a few minutes: no second request
+  expect_identical(.bl_gh_oidc("https://archive.rmorie.com"), "eyJ.github.jwt")
+  expect_identical(n, 1L)
+  # the stored key wins; without one, archive.rmorie.com gets the token, another archive never does
+  local_mocked_bindings(.bl_hosted_key = function() "sk-stored")
+  expect_identical(.bl_arc_key("https://archive.rmorie.com"), "sk-stored")
+  local_mocked_bindings(.bl_hosted_key = function() NULL)
+  expect_identical(.bl_arc_key("https://archive.rmorie.com"), "eyJ.github.jwt")
+  withr::local_envvar(MORIE_ARCHIVE_KEY = NA)
+  expect_null(.bl_arc_key("https://other.example"))
+  rm(list = ls(.bl_oidc_cache), envir = .bl_oidc_cache)
+  # a refused request, a reply without a token, a plain-http address: no token
+  local_mocked_bindings(.bl_net = function(url, expr) list(status = 403L, body = raw(0), error = ""))
+  expect_null(.bl_gh_oidc("https://archive.rmorie.com"))
+  local_mocked_bindings(.bl_net = function(url, expr) list(status = 200L, body = charToRaw("{}"), error = ""))
+  expect_null(.bl_gh_oidc("https://archive.rmorie.com"))
+  local_mocked_bindings(.bl_net = function(url, expr) stop("offline"))
+  expect_null(.bl_gh_oidc("https://archive.rmorie.com"))
+  withr::local_envvar(ACTIONS_ID_TOKEN_REQUEST_URL = "http://run.actions.example/token")
+  expect_null(.bl_gh_oidc("https://archive.rmorie.com"))
+  # a URL without a query gets "?audience="
+  withr::local_envvar(ACTIONS_ID_TOKEN_REQUEST_URL = "https://run.actions.example/token")
+  local_mocked_bindings(.bl_net = function(url, expr) {
+    asked <<- url
+    list(status = 200L, body = charToRaw('{"value":"t2"}'), error = "")
+  })
+  expect_identical(.bl_gh_oidc("https://archive.rmorie.com"), "t2")
+  expect_match(asked, "token\\?audience=")
+  rm(list = ls(.bl_oidc_cache), envir = .bl_oidc_cache)
+})
