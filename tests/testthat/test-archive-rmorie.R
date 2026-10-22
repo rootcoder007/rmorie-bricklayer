@@ -400,6 +400,8 @@ test_that("rmbl archive: save, find and get from a terminal", {
   expect_identical(run()$status, 2L)
   expect_match(run("help")$text, "archive get ID")
   expect_identical(run("help")$status, 0L)
+  # the command list of `rmbl help` names it too
+  expect_match(paste(capture.output(blcli("help")), collapse = "\n"), "archive find URL | get ID -o FILE", fixed = TRUE)
   expect_identical(run("save")$status, 2L)
   expect_match(run("save", "https://s.org/a")$text, "needs --reason")
   expect_match(run("save", "https://s.org/a", "--reason", "x", "--also", "dropbox")$text, "--also takes one value")
