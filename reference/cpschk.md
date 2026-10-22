@@ -259,35 +259,35 @@ x$rows[, c("check", "ok")]
 #> 6                data_readable TRUE
 #> 7           data_not_synthetic TRUE
 x
-#> ## rmbl capsule verify with [rmoriebricklayer 1.0.1](https://github.com/rootcoder007/rmorie-bricklayer)
+#> ## rmbl capsule verify with [rmoriebricklayer 1.0.2](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmpvMZMch/capsules-20c268f8f43`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/RtmpshpHV7/capsules-1f2515ab8ec5`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmpvMZMch/capsules-20c268f8f43/one` | /tmp/RtmpvMZMch/temp_libpath20c25f0a716e/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/RtmpshpHV7/capsules-1f2515ab8ec5/one` | /tmp/RtmpshpHV7/temp_libpath1f25191e1ec1/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmpvMZMch/capsules-20c268f8f43/one</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/RtmpshpHV7/capsules-1f2515ab8ec5/one</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/RtmpvMZMch/temp_libpath20c25f0a716e/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/RtmpshpHV7/temp_libpath1f25191e1ec1/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/RtmpvMZMch/capsules-20c268f8f43/one/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/RtmpvMZMch/capsules-20c268f8f43/one/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/RtmpshpHV7/capsules-1f2515ab8ec5/one/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/RtmpshpHV7/capsules-1f2515ab8ec5/one/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/RtmpvMZMch/capsules-20c268f8f43/one/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/RtmpshpHV7/capsules-1f2515ab8ec5/one/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>
 #> 
 #> ---
 #> 
-#> mode `verify` · rmoriebricklayer 1.0.1 · R version 4.6.1 (2026-06-24)
+#> mode `verify` · rmoriebricklayer 1.0.2 · R version 4.6.1 (2026-06-24)
 
 # the data changed: the digest row fails, and the notes say what it means
 p <- loadprov(file.path(d, "data_provenance.json"))
@@ -309,14 +309,14 @@ x$capsules[[1]]$notes
 #> [1] "explained: the data file's size differs from resource$size_bytes: its bytes changed"
 #> 
 substr(format(x, fmt = "json"), 1, 120)
-#> [1] "{\n  \"status\": \"error\",\n  \"mode\": \"verify\",\n  \"path\": \"/tmp/RtmpvMZMch/capsules-20c268f8f43\",\n  \"capsules\": [\n    {\n     "
+#> [1] "{\n  \"status\": \"error\",\n  \"mode\": \"verify\",\n  \"path\": \"/tmp/RtmpshpHV7/capsules-1f2515ab8ec5\",\n  \"capsules\": [\n    {\n    "
 
 # drift: fetch the source again (here a local file) and compare
 cpschk(root, "drift", psiwarn = 0.05, fp = FALSE)$status
 #> [1] "error"
 
 try(cpschk(tempfile()))
-#> Error : cpschk: `path` is not an existing directory: /tmp/RtmpvMZMch/file20c21a90a59
+#> Error : cpschk: `path` is not an existing directory: /tmp/RtmpshpHV7/file1f2521a75e
 try(cpschk(root, psiwarn = 1))
 #> Error : cpschk: `psiwarn` (1) must not exceed `psifail` (0.25)
 ```

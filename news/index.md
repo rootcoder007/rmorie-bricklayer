@@ -1,6 +1,6 @@
 # Changelog
 
-## rmoriebricklayer 1.0.1
+## rmoriebricklayer 1.0.2
 
 ### Keeping your own copy of a source: archive.rmorie.com and WARC files
 
@@ -49,7 +49,7 @@
   `MORIE_ARCHIVE_URL`, with its own key in `MORIE_ARCHIVE_KEY`; the
   stored rmorie key is sent only to archive.rmorie.com.
 
-### Fixes
+## rmoriebricklayer 1.0.1
 
 - DESCRIPTION gives the repository and the issue tracker again (`URL`,
   `BugReports`). The CRAN build of 1.0.0 left them out, so its CRAN page

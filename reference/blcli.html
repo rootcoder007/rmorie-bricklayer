@@ -283,7 +283,7 @@ the same as typing the command, which is how the examples below work."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -585,7 +585,7 @@ SP 800-208 deployment.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">blcli</span><span class="op">(</span><span class="st">"version"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> rmoriebricklayer 1.0.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rmoriebricklayer 1.0.2</span>
 <span class="r-in"><span><span class="fu">blcli</span><span class="op">(</span><span class="st">"help"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> usage: rmoriebricklayer &lt;verb&gt; [options]   (rmbl is the same command as rmoriebricklayer)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -655,39 +655,39 @@ SP 800-208 deployment.</p>
 <span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="usecpstmpl.html">usecpstmpl</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"capsule-"</span><span class="op">)</span>, ex <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/invisible.html" class="external-link">invisible</a></span><span class="op">(</span><span class="fu"><a href="cpsrfrsh.html">cpsrfrsh</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">blcli</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"verify"</span>, <span class="va">d</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## rmbl capsule verify with [rmoriebricklayer 1.0.1](https://github.com/rootcoder007/rmorie-bricklayer)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## rmbl capsule verify with [rmoriebricklayer 1.0.2](https://github.com/rootcoder007/rmorie-bricklayer)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> **✔ ok**: 1 capsule under `/tmp/RtmpvMZMch/capsule-20c26444f60c`: 1 ok, 0 warn, 0 drift, 0 error</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> **✔ ok**: 1 capsule under `/tmp/RtmpshpHV7/capsule-1f253d9902a6`: 1 ok, 0 warn, 0 drift, 0 error</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |---|---|---|---|---|---|---|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | `/tmp/RtmpvMZMch/capsule-20c26444f60c` | /tmp/RtmpvMZMch/temp_libpath20c25f0a716e/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | `/tmp/RtmpshpHV7/capsule-1f253d9902a6` | /tmp/RtmpshpHV7/temp_libpath1f25191e1ec1/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;details&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;summary&gt;✔ &lt;code&gt;/tmp/RtmpvMZMch/capsule-20c26444f60c&lt;/code&gt;: ok, 7 of 7 checks passed (click to open)&lt;/summary&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;summary&gt;✔ &lt;code&gt;/tmp/RtmpshpHV7/capsule-1f253d9902a6&lt;/code&gt;: ok, 7 of 7 checks passed (click to open)&lt;/summary&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> - Source: /tmp/RtmpvMZMch/temp_libpath20c25f0a716e/rmoriebricklayer/extdata/otis_a01_individuals.csv</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - Source: /tmp/RtmpshpHV7/temp_libpath1f25191e1ec1/rmoriebricklayer/extdata/otis_a01_individuals.csv</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | Status | Check | Detail |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |---|---|---|</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | provenance_readable | /tmp/RtmpvMZMch/capsule-20c26444f60c/data_provenance.json |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_present | /tmp/RtmpvMZMch/capsule-20c26444f60c/otis_a01_individuals.csv |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | provenance_readable | /tmp/RtmpshpHV7/capsule-1f253d9902a6/data_provenance.json |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_present | /tmp/RtmpshpHV7/capsule-1f253d9902a6/otis_a01_individuals.csv |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_size_bytes | 462 bytes on disk |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_readable | /tmp/RtmpvMZMch/capsule-20c26444f60c/otis_a01_individuals.csv |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_readable | /tmp/RtmpshpHV7/capsule-1f253d9902a6/otis_a01_individuals.csv |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/details&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 0.000121 Wh, 5.54e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Footprint of these checks (co2fp(), modelled, Green Algorithms): 0.0 s wall, 0.0 s CPU, 6.71e-05 Wh, 3.08e-05 gCO2e at 458.3 gCO2e/kWh (World, 2025).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mode `verify` · fail-on `error` · rmoriebricklayer 1.0.1 · R version 4.6.1 (2026-06-24)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mode `verify` · fail-on `error` · rmoriebricklayer 1.0.2 · R version 4.6.1 (2026-06-24)</span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># interactive()</span></span></span>
 <span class="r-in"><span><span class="co"># these read every help page, which takes a few seconds</span></span></span>
 <span class="r-in"><span><span class="fu">blcli</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"functions"</span>, <span class="st">"json"</span><span class="op">)</span><span class="op">)</span></span></span>
