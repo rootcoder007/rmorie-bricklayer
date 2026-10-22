@@ -318,6 +318,36 @@ and the outcome:
 evlrr(2, lo = 1.4, hi = 2.9)
 ```
 
+## Keeping your own copy of the source
+
+A capsule pins a source by its SHA-256, and `fetchvrf()` fetches it from wherever a copy with that SHA-256 still
+exists: the source, its Wayback snapshot, any mirror you name, archive.rmorie.com, and folders of captures you made
+yourself. Some servers refuse archives (Statistics Canada answers the Wayback Machine's crawler with an error), so the
+copy has to be made from a connection the server does answer: yours.
+
+`arccap()` downloads each address, writes it as a WARC/1.1 file with a CDXJ index (a collection pywb and warcio
+read), and with `upload = "rmorie"` keeps it at archive.rmorie.com under your data key, with the reason you give.
+`upload = "wayback"` asks the Wayback Machine as well.
+
+```{r eval = FALSE}
+cap <- arccap("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip", "captures",
+              upload = c("rmorie", "wayback"), reason = "Custody table cited in chapter 3")
+cap$archive                     # its page at archive.rmorie.com
+arcfind("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip")
+arcget(cap$capture_id, "table.zip", sha256 = cap$sha256)
+```
+
+When the source is gone and the Wayback Machine cannot be reached, `fetchvrf()` takes the copy from the archive, and
+failing that from the WARC files in your own folder, still checked against the pin:
+
+```{r eval = FALSE}
+fetchvrf("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip", "table.zip",
+         sha256 = cap$sha256, arcs = c("rmorie", "captures"))
+```
+
+From a terminal the same steps are `rmbl archive save URL --reason "..."`, `rmbl archive find URL` and
+`rmbl archive get ID -o FILE`.
+
 ## One file to hand someone
 
 A bundle carries a digest of every file, the manifest digest, and an

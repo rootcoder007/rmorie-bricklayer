@@ -256,6 +256,14 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   written as they land so a stopped run resumes (captures already started are
   polled, not sent again), `wbrtry()` for the failures, and a live
   animated progress bar (drawn in C, shared with `bldl()`).
+- **Your own archive copy** — `arccap()` saves files from your own
+  connection (for servers that refuse the Wayback Machine) as WARC files,
+  and with `upload = "rmorie"` keeps them at archive.rmorie.com with their
+  SHA-256 (`upload = "wayback"` asks the Wayback Machine too). `arcfind()`
+  lists the captures of an address and `arcget()` fetches the exact bytes;
+  `fetchvrf()` falls back to the archive and to your WARC files on its own,
+  and `wbsave(fallback = "rmorie")` saves what the Wayback Machine refused.
+  From a terminal: `rmbl archive save | find | get`.
 - **Courts and police-reported crime** — `caseflow()` (clearance rate with
   exact intervals, rolling clearance, net flow and months to clear the
   pending inventory), `lifetbl()` (actuarial life table with Greenwood
