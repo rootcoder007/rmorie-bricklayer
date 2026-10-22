@@ -185,8 +185,8 @@ arccap <- function(urls, dir, item = NULL, meta = list(), tsa = "https://freetsa
   if ("rmorie" %in% upload) {
     reason <- if (is.null(reason)) "" else .rmbl_string1(reason, "reason")
     if (nchar(trimws(reason)) < 20L) {
-      stop("`reason` is needed with upload = \"rmorie\": one sentence (20 characters or more) on why you keep the files",
-           call. = FALSE)
+      stop("`reason` is needed with upload = \"rmorie\": ",
+           "one sentence (20 characters or more) on why you keep the files", call. = FALSE)
     }
   }
   if (!is.logical(warc) || length(warc) != 1L || is.na(warc)) stop("`warc` must be TRUE or FALSE", call. = FALSE)
@@ -290,8 +290,9 @@ arccap <- function(urls, dir, item = NULL, meta = list(), tsa = "https://freetsa
       t <- as.POSIXct(out$fetched_utc[i], format = "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
       id <- paste0(format(t, "%Y%m%d%H%M%S", tz = "UTC"), "-", substr(out$sha256[i], 1L, 8L))
       wf <- file.path(dir, "archive", paste0(id, ".warc"))
-      lines <- c(lines, .bl_warc_write(wf, out$url[i], file.path(dir, out$file[i]), t, id, mime = .bl_arc_mime(out$file[i]),
-                                       meta = if (!is.null(reason) && nzchar(reason)) c(reason = gsub("[\r\n]", " ", reason)) else character()))
+      meta <- if (!is.null(reason) && nzchar(reason)) c(reason = gsub("[\r\n]", " ", reason)) else character()
+      lines <- c(lines, .bl_warc_write(wf, out$url[i], file.path(dir, out$file[i]), t, id,
+                                       mime = .bl_arc_mime(out$file[i]), meta = meta))
       out$warc[i] <- wf
     }
     .bl_cdxj_add(file.path(dir, "indexes", "index.cdxj"), lines)

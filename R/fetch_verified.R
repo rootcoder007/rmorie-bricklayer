@@ -92,11 +92,11 @@ fetchvrf <- function(url, dest, sha256 = NULL, mirrors = character(), tmout = 12
   for (a in arcs) {
     if (identical(a, "rmorie")) {
       got <- tryCatch(arcget(url, tmp, sha256 = sha256, tmout = tmout),
-                      error = function(e) .bl_unless_interrupted(e, structure(conditionMessage(e), class = "rmbl_fail")))
+                      error = function(e) .bl_arc_fail(e))
       where <- "archive.rmorie.com"
     } else {
       got <- tryCatch(.bl_warc_get(a, url, tmp, sha256),
-                      error = function(e) .bl_unless_interrupted(e, structure(conditionMessage(e), class = "rmbl_fail")))
+                      error = function(e) .bl_arc_fail(e))
       where <- a
     }
     if (inherits(got, "rmbl_fail")) {
@@ -113,3 +113,6 @@ fetchvrf <- function(url, dest, sha256 = NULL, mirrors = character(), tmout = 12
                if (is.null(sha256)) "" else " with the pinned SHA-256",
                paste(sprintf("  %s: %s", acc$tried$url, acc$tried$outcome), collapse = "\n")), call. = FALSE)
 }
+
+# a failed archive or WARC lookup, kept as a value so the next source is tried (interrupts still stop)
+.bl_arc_fail <- function(e) .bl_unless_interrupted(e, structure(conditionMessage(e), class = "rmbl_fail"))

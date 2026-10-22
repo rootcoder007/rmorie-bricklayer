@@ -170,13 +170,17 @@
   rec <- readBin(con, "raw", as.numeric(r$length))
   # the response record: WARC headers, a blank line, the HTTP head, a blank line, the payload, CRLF CRLF
   crlf2 <- function(x, from) {
-    for (k in seq.int(from, length(x) - 3L)) if (x[k] == 0x0d && x[k + 1L] == 0x0a && x[k + 2L] == 0x0d && x[k + 3L] == 0x0a) return(k)
+    for (k in seq.int(from, length(x) - 3L)) {
+      if (x[k] == 0x0d && x[k + 1L] == 0x0a && x[k + 2L] == 0x0d && x[k + 3L] == 0x0a) return(k)
+    }
     stop("a damaged WARC record", call. = FALSE)
   }
   a <- crlf2(rec, 1L)
   b <- crlf2(rec, a + 4L)
   body <- rec[(b + 4L):(length(rec) - 4L)]
   writeBin(body, dest)
-  if (!identical(sha256file(dest), r$sha256)) stop(sprintf("the WARC copy in %s does not match its index", dir), call. = FALSE)
+  if (!identical(sha256file(dest), r$sha256)) {
+    stop(sprintf("the WARC copy in %s does not match its index", dir), call. = FALSE)
+  }
   dest
 }

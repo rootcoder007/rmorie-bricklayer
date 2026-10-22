@@ -1,4 +1,4 @@
-# rmoriebricklayer 1.0.2
+# rmoriebricklayer 1.0.1
 
 ## Keeping your own copy of a source: archive.rmorie.com and WARC files
 
@@ -9,7 +9,7 @@
 * The command line gains `archive save URL... --reason TEXT [--private] [--also wayback]`, `archive find URL` and `archive get ID -o FILE`.
 * Another archive that speaks the same protocol is named in `MORIE_ARCHIVE_URL`, with its own key in `MORIE_ARCHIVE_KEY`; the stored rmorie key is sent only to archive.rmorie.com.
 
-# rmoriebricklayer 1.0.1
+## Fixes
 
 * DESCRIPTION gives the repository and the issue tracker again (`URL`, `BugReports`). The CRAN build of 1.0.0 left them out, so its CRAN page linked to neither and r-universe could not match the CRAN release to its repository.
 * The PDF manual's Description no longer has short lines with half-line gaps: the CRAN build re-wraps the paragraph after writing its web addresses and DOIs as plain text.
