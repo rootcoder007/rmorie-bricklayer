@@ -131,25 +131,26 @@
 #' @param ak,sk archive.org keys; default from the environment as
 #'   \code{\link{wbsave}} reads them.
 #' @param tmout Seconds allowed for each download and each upload (default 600).
-#' @param upload Where else to keep the captures: \code{"rmorie"} (archive.rmorie.com, from this
-#'   connection, with your key; see \code{\link{dlogin}}), \code{"wayback"} (ask the Wayback Machine to
-#'   save the same addresses, with archive.org keys as for \code{\link{wbsave}}), both, or \code{NULL}
-#'   (default: only the local folder and, with \code{item}, archive.org).
+#' @param upload Where else to keep the captures: \code{"rmorie"} (archive.rmorie.com, from
+#'   this connection, with your key; see \code{\link{dlogin}}), \code{"wayback"} (ask the
+#'   Wayback Machine to save the same addresses, with archive.org keys as for
+#'   \code{\link{wbsave}}), both, or \code{NULL} (default: only the local folder and, with
+#'   \code{item}, archive.org).
 #' @param reason Why the files are kept, one sentence of 20 characters or more; needed with
 #'   \code{upload = "rmorie"}, and written into each WARC file.
-#' @param visibility \code{"public"} (default: listed in the archive's search; anyone can download and
-#'   check it) or \code{"private"} (only you, with your key).
-#' @param warc Write each capture as a WARC/1.1 file with a CDXJ index (\code{dir/archive/},
-#'   \code{dir/indexes/index.cdxj}), the layout pywb and warcio read and \code{\link{fetchvrf}} falls
-#'   back to (default \code{TRUE}).
-#' @return A data frame of class \code{rmbl_archive_capture}, one row per URL:
-#'   \code{url}, \code{file}, \code{sha256}, \code{bytes}, \code{fetched_utc},
-#'   \code{status} (\code{"captured"}, \code{"uploaded"}, \code{"archived"} or \code{"failed: ..."}),
-#'   \code{mirror} (the archive.org download address, for
-#'   \code{\link{fetchvrf}}), \code{warc} (the local WARC file), \code{capture_id} and \code{archive}
-#'   (its page at archive.rmorie.com) and \code{wayback} (the Wayback Machine's answer);
-#'   attributes \code{manifest}, \code{timestamp} (a
-#'   \code{\link{tsvrf}} result, or \code{NULL}) and \code{item}.
+#' @param visibility \code{"public"} (default: listed in the archive's search; anyone can
+#'   download and check it) or \code{"private"} (only you, with your key).
+#' @param warc Write each capture as a WARC/1.1 file with a CDXJ index
+#'   (\code{dir/archive/}, \code{dir/indexes/index.cdxj}), the layout pywb and warcio read
+#'   and \code{\link{fetchvrf}} falls back to (default \code{TRUE}).
+#' @return A data frame of class \code{rmbl_archive_capture}, one row per URL: \code{url},
+#'   \code{file}, \code{sha256}, \code{bytes}, \code{fetched_utc}, \code{status}
+#'   (\code{"captured"}, \code{"uploaded"}, \code{"archived"} or \code{"failed: ..."}),
+#'   \code{mirror} (the archive.org download address, for \code{\link{fetchvrf}}),
+#'   \code{warc} (the local WARC file), \code{capture_id} and \code{archive} (its page at
+#'   archive.rmorie.com) and \code{wayback} (the Wayback Machine's answer); attributes
+#'   \code{manifest}, \code{timestamp} (a \code{\link{tsvrf}} result, or \code{NULL}) and
+#'   \code{item}.
 #' @references Adams C, Cain P, Pinkas D, Zuccherato R (2001). Internet X.509 Public
 #'   Key Infrastructure Time-Stamp Protocol (TSP). RFC 3161. \doi{10.17487/RFC3161}
 #'
@@ -161,7 +162,8 @@
 #' # save from your own connection to archive.rmorie.com and the Wayback Machine at once
 #' src <- "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"
 #' cap <- arccap(src, file.path(tempdir(), "cap"),
-#'               upload = c("rmorie", "wayback"), reason = "Custody table cited in chapter 3")
+#'               upload = c("rmorie", "wayback"),
+#'               reason = "Custody table cited in chapter 3")
 #' cap$archive
 #' w <- wbsave(urls)
 #' lic <- "https://www.statcan.gc.ca/en/terms-conditions/open-licence"

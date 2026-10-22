@@ -32,11 +32,12 @@
 #' @param tmout Seconds allowed for each download (default 120).
 #' @param arcs Archives tried after the source, its Wayback snapshot and the mirrors:
 #'   \code{"rmorie"} (archive.rmorie.com, by \code{\link{arcget}}) and folders written by
-#'   \code{\link{arccap}} (read from their WARC files), in order. \code{character()} tries none.
+#'   \code{\link{arccap}} (read from their WARC files), in order. \code{character()} tries
+#'   none.
 #' @return Invisibly, a list: \code{source} (\code{"live"}, \code{"wayback"},
-#'   \code{"mirror"}, \code{"rmorie"} or \code{"local"}), \code{url} (the URL that served the kept copy), \code{sha256},
-#'   \code{bytes}, and \code{tried} (a data frame of every attempt: \code{url},
-#'   \code{outcome}).
+#'   \code{"mirror"}, \code{"rmorie"} or \code{"local"}), \code{url} (the URL that served
+#'   the kept copy), \code{sha256}, \code{bytes}, and \code{tried} (a data frame of every
+#'   attempt: \code{url}, \code{outcome}).
 #' @seealso \code{\link{blfetch}}, \code{\link{sha256file}},
 #'   \code{\link{wbsave}}.
 #' @examplesIf interactive()

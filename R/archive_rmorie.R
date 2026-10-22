@@ -101,23 +101,25 @@
 
 #' Find saved copies of an address in archive.rmorie.com
 #'
-#' Lists the captures the archive holds of a web address, oldest first: when each was taken, its HTTP status,
-#' media type, size and SHA-256, and the addresses to open or download it. An address ending in \code{*}
-#' lists every address that starts with it. Public captures are listed for anyone; with your key (see
-#' \code{\link{dlogin}}) your private ones are listed too.
+#' Lists the captures the archive holds of a web address, oldest first: when each was
+#' taken, its HTTP status, media type, size and SHA-256, and the addresses to open or
+#' download it. An address ending in \code{*} lists every address that starts with it.
+#' Public captures are listed for anyone; with your key (see \code{\link{dlogin}}) your
+#' private ones are listed too.
 #'
 #' @details The archive answers the same CDX query as the Wayback Machine
-#' (\code{/cdx/search/cdx?url=...&output=json}), so tools written for it can read it as well. Set
-#' \code{MORIE_ARCHIVE_URL} to query another archive that speaks the same protocol, with its key in
-#' \code{MORIE_ARCHIVE_KEY}.
+#'   (\code{/cdx/search/cdx?url=...&output=json}), so tools written for it can read it as
+#'   well. Set \code{MORIE_ARCHIVE_URL} to query another archive that speaks the same
+#'   protocol, with its key in \code{MORIE_ARCHIVE_KEY}.
 #' @param url A web address, or the start of one followed by \code{*}.
-#' @param from,to Optional limits on the capture time, as \code{"YYYY"}, \code{"YYYYMM"} ... up to
-#'   \code{"YYYYMMDDhhmmss"} (UTC).
+#' @param from,to Optional limits on the capture time, as \code{"YYYY"}, \code{"YYYYMM"}
+#'   ... up to \code{"YYYYMMDDhhmmss"} (UTC).
 #' @param limit The most captures to list (default 1000).
-#' @return A data frame of class \code{rmbl_archive_find}: \code{capture_id}, \code{captured} (UTC time),
-#'   \code{url}, \code{status}, \code{mime}, \code{bytes}, \code{sha256}, \code{mode} (\code{"client"}: saved
-#'   from the capturer's connection; \code{"worker"}: saved by the archive), \code{visibility},
-#'   \code{capture} (its page) and \code{replay} (its exact bytes).
+#' @return A data frame of class \code{rmbl_archive_find}: \code{capture_id},
+#'   \code{captured} (UTC time), \code{url}, \code{status}, \code{mime}, \code{bytes},
+#'   \code{sha256}, \code{mode} (\code{"client"}: saved from the capturer's connection;
+#'   \code{"worker"}: saved by the archive), \code{visibility}, \code{capture} (its page)
+#'   and \code{replay} (its exact bytes).
 #' @seealso \code{\link{arcget}}, \code{\link{arccap}}, \code{\link{fetchvrf}}.
 #' @examplesIf interactive()
 #' caps <- arcfind("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip")
@@ -170,20 +172,25 @@ print.rmbl_archive_find <- function(x, ...) {
 
 #' Fetch the exact bytes of a saved copy from archive.rmorie.com
 #'
-#' Downloads a capture's bytes and checks their SHA-256: against the archive's record, and against
-#' \code{sha256} when you give one (the pin from your analysis). A file that does not match is deleted.
+#' Downloads a capture's bytes and checks their SHA-256: against the archive's record, and
+#' against \code{sha256} when you give one (the pin from your analysis). A file that does
+#' not match is deleted.
 #'
-#' @param x A capture id (\code{"20261021133005-1a2b3c4d"}, from \code{\link{arcfind}} or a capture
-#'   page) or a web address; for an address, the capture closest to \code{at} (default: the latest) is taken.
+#' @param x A capture id (\code{"20261021133005-1a2b3c4d"}, from \code{\link{arcfind}} or a
+#'   capture page) or a web address; for an address, the capture closest to \code{at}
+#'   (default: the latest) is taken.
 #' @param dest The file to write.
 #' @param sha256 Optional SHA-256 the bytes must have.
-#' @param at For an address, the time to be closest to, \code{"YYYY..."} up to 14 digits (UTC).
+#' @param at For an address, the time to be closest to, \code{"YYYY..."} up to 14 digits
+#'   (UTC).
 #' @param tmout Seconds allowed for the download.
-#' @return \code{dest}, invisibly, with attributes \code{capture_id}, \code{url}, \code{captured} and
-#'   \code{sha256}.
-#' @seealso \code{\link{arcfind}}, \code{\link{fetchvrf}} (which falls back to the archive on its own).
+#' @return \code{dest}, invisibly, with attributes \code{capture_id}, \code{url},
+#'   \code{captured} and \code{sha256}.
+#' @seealso \code{\link{arcfind}}, \code{\link{fetchvrf}} (which falls back to the archive
+#'   on its own).
 #' @examplesIf interactive()
-#' f <- arcget("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip", tempfile(fileext = ".zip"))
+#' src <- "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"
+#' f <- arcget(src, tempfile(fileext = ".zip"))
 #' attr(f, "sha256")
 #' @export
 arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {

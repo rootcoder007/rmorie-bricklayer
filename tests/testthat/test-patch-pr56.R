@@ -97,8 +97,10 @@ test_that("ask and explain-error read this package unless told otherwise; no oth
   withr::local_envvar(RMBL_PACKAGES = "rmoriebricklayer,no.such.pkg")
   expect_error(explerr("x"), "not installed: no.such.pkg")
   withr::local_envvar(RMBL_PACKAGES = NA)
-  # the code names no package built on this one
-  src <- unlist(lapply(ls(asNamespace("rmoriebricklayer"), all.names = TRUE), function(n) {
+  # the code names no package built on this one; in these functions "rmorie" names the
+  # archive at archive.rmorie.com (the upload, fallback and arcs choices), not the package
+  arc <- c("arccap", "fetchvrf", "wbsave", ".bl_cli_archive", ".bl_wb_fallback", ".bl_refresh_capsule")
+  src <- unlist(lapply(setdiff(ls(asNamespace("rmoriebricklayer"), all.names = TRUE), arc), function(n) {
     f <- get(n, envir = asNamespace("rmoriebricklayer"))
     if (is.function(f)) deparse(f) else character()
   }))

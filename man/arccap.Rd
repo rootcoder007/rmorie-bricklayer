@@ -42,30 +42,31 @@ default; \code{NULL} means no timestamp.}
 
 \item{tmout}{Seconds allowed for each download and each upload (default 600).}
 
-\item{upload}{Where else to keep the captures: \code{"rmorie"} (archive.rmorie.com, from this
-connection, with your key; see \code{\link{dlogin}}), \code{"wayback"} (ask the Wayback Machine to
-save the same addresses, with archive.org keys as for \code{\link{wbsave}}), both, or \code{NULL}
-(default: only the local folder and, with \code{item}, archive.org).}
+\item{upload}{Where else to keep the captures: \code{"rmorie"} (archive.rmorie.com, from
+this connection, with your key; see \code{\link{dlogin}}), \code{"wayback"} (ask the
+Wayback Machine to save the same addresses, with archive.org keys as for
+\code{\link{wbsave}}), both, or \code{NULL} (default: only the local folder and, with
+\code{item}, archive.org).}
 
 \item{reason}{Why the files are kept, one sentence of 20 characters or more; needed with
 \code{upload = "rmorie"}, and written into each WARC file.}
 
-\item{visibility}{\code{"public"} (default: listed in the archive's search; anyone can download and
-check it) or \code{"private"} (only you, with your key).}
+\item{visibility}{\code{"public"} (default: listed in the archive's search; anyone can
+download and check it) or \code{"private"} (only you, with your key).}
 
-\item{warc}{Write each capture as a WARC/1.1 file with a CDXJ index (\code{dir/archive/},
-\code{dir/indexes/index.cdxj}), the layout pywb and warcio read and \code{\link{fetchvrf}} falls
-back to (default \code{TRUE}).}
+\item{warc}{Write each capture as a WARC/1.1 file with a CDXJ index
+(\code{dir/archive/}, \code{dir/indexes/index.cdxj}), the layout pywb and warcio read
+and \code{\link{fetchvrf}} falls back to (default \code{TRUE}).}
 }
 \value{
-A data frame of class \code{rmbl_archive_capture}, one row per URL:
-\code{url}, \code{file}, \code{sha256}, \code{bytes}, \code{fetched_utc},
-\code{status} (\code{"captured"}, \code{"uploaded"}, \code{"archived"} or \code{"failed: ..."}),
-\code{mirror} (the archive.org download address, for
-\code{\link{fetchvrf}}), \code{warc} (the local WARC file), \code{capture_id} and \code{archive}
-(its page at archive.rmorie.com) and \code{wayback} (the Wayback Machine's answer);
-attributes \code{manifest}, \code{timestamp} (a
-\code{\link{tsvrf}} result, or \code{NULL}) and \code{item}.
+A data frame of class \code{rmbl_archive_capture}, one row per URL: \code{url},
+\code{file}, \code{sha256}, \code{bytes}, \code{fetched_utc}, \code{status}
+(\code{"captured"}, \code{"uploaded"}, \code{"archived"} or \code{"failed: ..."}),
+\code{mirror} (the archive.org download address, for \code{\link{fetchvrf}}),
+\code{warc} (the local WARC file), \code{capture_id} and \code{archive} (its page at
+archive.rmorie.com) and \code{wayback} (the Wayback Machine's answer); attributes
+\code{manifest}, \code{timestamp} (a \code{\link{tsvrf}} result, or \code{NULL}) and
+\code{item}.
 }
 \description{
 Downloads each URL from here, records its SHA-256, size and time in a manifest,
@@ -104,7 +105,8 @@ redistribute.
 # save from your own connection to archive.rmorie.com and the Wayback Machine at once
 src <- "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"
 cap <- arccap(src, file.path(tempdir(), "cap"),
-              upload = c("rmorie", "wayback"), reason = "Custody table cited in chapter 3")
+              upload = c("rmorie", "wayback"),
+              reason = "Custody table cited in chapter 3")
 cap$archive
 w <- wbsave(urls)
 lic <- "https://www.statcan.gc.ca/en/terms-conditions/open-licence"

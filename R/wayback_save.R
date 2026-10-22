@@ -298,10 +298,12 @@
 #' @param maxcap The most captures this run starts; default
 #'   1000. The rest are left for the next run (with the same
 #'   \code{output}, it carries on from them).
-#' @param fallback \code{"rmorie"} saves what the Wayback Machine refused (a server that refuses its
-#'   crawler, Statistics Canada among them) from this connection to archive.rmorie.com, with
-#'   \code{\link{arccap}}; the result is attribute \code{archive}. \code{NULL} (default) does not.
-#' @param reason With \code{fallback = "rmorie"}: why the files are kept (20 characters or more).
+#' @param fallback \code{"rmorie"} saves what the Wayback Machine refused (a server that
+#'   refuses its crawler, Statistics Canada among them) from this connection to
+#'   archive.rmorie.com, with \code{\link{arccap}}; the result is attribute \code{archive}.
+#'   \code{NULL} (default) does not.
+#' @param reason With \code{fallback = "rmorie"}: why the files are kept (20 characters or
+#'   more).
 #'
 #' @return A data frame of class \code{rmbl_wayback_save}, one
 #'   row per URL with a result: \code{url}, \code{status}
