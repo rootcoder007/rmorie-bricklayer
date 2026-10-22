@@ -7,10 +7,10 @@ authors:
     orcid: "https://orcid.org/0009-0004-1750-3592"
     affiliation: "Centre for Criminology and Sociolegal Studies, University of Toronto"
     name-particle: "Singh"
-version: "1.0.0"
-date-released: "2026-10-18"
+version: "1.0.1"
+date-released: "2026-10-22"
 doi: "10.32614/CRAN.package.rmoriebricklayer"
-url: "https://rootcoder007.r-universe.dev/rmoriebricklayer"
+url: "https://CRAN.R-project.org/package=rmoriebricklayer"
 repository-code: "https://github.com/rootcoder007/rmorie-bricklayer"
 identifiers:
   - type: doi
@@ -27,4 +27,4 @@ preferred-citation:
       affiliation: "Centre for Criminology and Sociolegal Studies, University of Toronto"
   year: "2026"
   doi: "10.32614/CRAN.package.rmoriebricklayer"
-  url: "https://rootcoder007.r-universe.dev/rmoriebricklayer"
+  url: "https://CRAN.R-project.org/package=rmoriebricklayer"

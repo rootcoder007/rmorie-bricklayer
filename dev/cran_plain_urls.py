@@ -6,6 +6,9 @@ import re
 from pathlib import Path
 
 U = r"https?://[^\s<>(){}\[\]\"']+"
+# the package's canonical CRAN address stays a link: CRAN asks for it in citations, and its own
+# page is the one address the incoming check fetches at once
+CANONICAL = "https://CRAN.R-project.org/package=rmoriebricklayer"
 
 
 def read(path):
@@ -31,6 +34,8 @@ def reflow_description(s):
 
 
 def bare(url):
+    if url == CANONICAL:
+        return url
     # without the scheme or a leading www. no Markdown renderer turns it back into a link
     url = re.sub(r"^https?://", "", url)
     return re.sub(r"^www\.", "", url).rstrip("/")
@@ -71,5 +76,4 @@ for path in sorted(Path("man").glob("*.Rd")):
     if rd2 != rd:
         write(path, rd2)
 
-# inst/CITATION: the DOI identifies the package; drop the url field
-write("inst/CITATION", re.sub(r",\s*\n\s*url\s*=\s*\"[^\"]*\"", "", read("inst/CITATION")))
+# inst/CITATION keeps its DOI and its url, the canonical CRAN address

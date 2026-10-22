@@ -44,7 +44,7 @@
 #'   tested with mocked title() (test-plots.R, test-plot-fit-1_0_0.R).
 #' @srrstats {G1.1} README "Algorithms" names the re-implementations and their reference checks (survey,
 #'   Mann-Kendall via cor.test, Hawkes via MORIE's Python fits) and the methods new in R (pubbnd, capsules).
-#' @srrstats {G1.2} README "Life cycle": 1.0.0 is maturing, exported names and arguments are stable, and
+#' @srrstats {G1.2} README "Life cycle": maturing since 1.0.0, exported names and arguments are stable, and
 #'   deprecations warn for one minor release.
 #' @srrstats {G5.12} README "Running the extended tests": RMBL_LIVE_TESTS=1 with NOT_CRAN=true, the hosts contacted,
 #'   temporary files only, about a minute.

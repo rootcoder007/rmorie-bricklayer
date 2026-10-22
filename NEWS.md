@@ -1,3 +1,9 @@
+# rmoriebricklayer 1.0.1
+
+* DESCRIPTION gives the repository and the issue tracker again (`URL`, `BugReports`). The CRAN build of 1.0.0 left them out, so its CRAN page linked to neither and r-universe could not match the CRAN release to its repository.
+* The PDF manual's Description no longer has short lines with half-line gaps: the CRAN build re-wraps the paragraph after writing its web addresses and DOIs as plain text.
+* `citation("rmoriebricklayer")`, `CITATION.cff` and the README cite the package at its CRAN address.
+
 # rmoriebricklayer 1.0.0
 
 ## Fixes after the CRAN resubmission

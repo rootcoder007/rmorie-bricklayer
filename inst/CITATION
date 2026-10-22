@@ -12,5 +12,5 @@ bibentry(
   year    = "2026",
   note    = paste("R package version", meta$Version),
   doi     = "10.32614/CRAN.package.rmoriebricklayer",
-  url     = "https://rootcoder007.r-universe.dev/rmoriebricklayer"
+  url     = "https://CRAN.R-project.org/package=rmoriebricklayer"
 )
