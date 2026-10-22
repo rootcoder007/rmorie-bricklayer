@@ -39,7 +39,8 @@ cpschk(
   wayback = FALSE,
   glob = "",
   fp = TRUE,
-  seenlog = ""
+  seenlog = "",
+  archive = FALSE
 )
 
 # S3 method for class 'rmbl_cpschk'
@@ -130,6 +131,17 @@ print(x, ...)
   `rmbl verify --seen-log`) read with the bundles under `path`, or `""`.
   Every XMSS bundle gets an `xmss_index` row, failed when the same key
   signed its index with another signature in what was seen.
+
+- archive:
+
+  Logical: use archive.rmorie.com when a source cannot be fetched. In
+  `"drift"` and `"refresh"`, a source that neither answers nor has its
+  pinned Wayback snapshot is fetched from a copy kept there with the
+  pinned SHA-256 (public copies need no key); with `wayback = TRUE`, a
+  changed source the Wayback Machine refuses is saved there instead
+  (`wbsave(fallback = "rmorie")`, which needs a key:
+  [`dlogin()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)
+  or `MORIE_HOSTED_KEY`).
 
 - x:
 
@@ -249,26 +261,26 @@ x$rows[, c("check", "ok")]
 x
 #> ## rmbl capsule verify with [rmoriebricklayer 1.0.1](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/RtmpkMSyl9/capsules-1f0bddf2038`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/RtmpBYOtzY/capsules-208c4701d799`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/RtmpkMSyl9/capsules-1f0bddf2038/one` | /tmp/RtmpkMSyl9/temp_libpath1f0b7f551650/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/RtmpBYOtzY/capsules-208c4701d799/one` | /tmp/RtmpBYOtzY/temp_libpath208c6ff4731a/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/RtmpkMSyl9/capsules-1f0bddf2038/one</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/RtmpBYOtzY/capsules-208c4701d799/one</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/RtmpkMSyl9/temp_libpath1f0b7f551650/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/RtmpBYOtzY/temp_libpath208c6ff4731a/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/RtmpkMSyl9/capsules-1f0bddf2038/one/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/RtmpkMSyl9/capsules-1f0bddf2038/one/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/RtmpBYOtzY/capsules-208c4701d799/one/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/RtmpBYOtzY/capsules-208c4701d799/one/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/RtmpkMSyl9/capsules-1f0bddf2038/one/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/RtmpBYOtzY/capsules-208c4701d799/one/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>
@@ -297,14 +309,14 @@ x$capsules[[1]]$notes
 #> [1] "explained: the data file's size differs from resource$size_bytes: its bytes changed"
 #> 
 substr(format(x, fmt = "json"), 1, 120)
-#> [1] "{\n  \"status\": \"error\",\n  \"mode\": \"verify\",\n  \"path\": \"/tmp/RtmpkMSyl9/capsules-1f0bddf2038\",\n  \"capsules\": [\n    {\n     "
+#> [1] "{\n  \"status\": \"error\",\n  \"mode\": \"verify\",\n  \"path\": \"/tmp/RtmpBYOtzY/capsules-208c4701d799\",\n  \"capsules\": [\n    {\n    "
 
 # drift: fetch the source again (here a local file) and compare
 cpschk(root, "drift", psiwarn = 0.05, fp = FALSE)$status
 #> [1] "error"
 
 try(cpschk(tempfile()))
-#> Error : cpschk: `path` is not an existing directory: /tmp/RtmpkMSyl9/file1f0b1c926ebb
+#> Error : cpschk: `path` is not an existing directory: /tmp/RtmpBYOtzY/file208c47d54dd0
 try(cpschk(root, psiwarn = 1))
 #> Error : cpschk: `psiwarn` (1) must not exceed `psifail` (0.25)
 ```

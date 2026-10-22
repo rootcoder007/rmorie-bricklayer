@@ -20,7 +20,11 @@ arccap(
   tsa = "https://freetsa.org/tsr",
   ak = NULL,
   sk = NULL,
-  tmout = 600L
+  tmout = 600L,
+  upload = NULL,
+  reason = NULL,
+  visibility = c("public", "private"),
+  warc = TRUE
 )
 ```
 
@@ -62,13 +66,44 @@ arccap(
 
   Seconds allowed for each download and each upload (default 600).
 
+- upload:
+
+  Where else to keep the captures: `"rmorie"` (archive.rmorie.com, from
+  this connection, with your key; see
+  [`dlogin`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dlogin.md)),
+  `"wayback"` (ask the Wayback Machine to save the same addresses, with
+  archive.org keys as for
+  [`wbsave`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wbsave.md)),
+  both, or `NULL` (default: only the local folder and, with `item`,
+  archive.org).
+
+- reason:
+
+  Why the files are kept, one sentence of 20 characters or more; needed
+  with `upload = "rmorie"`, and written into each WARC file.
+
+- visibility:
+
+  `"public"` (default: listed in the archive's search; anyone can
+  download and check it) or `"private"` (only you, with your key).
+
+- warc:
+
+  Write each capture as a WARC/1.1 file with a CDXJ index
+  (`dir/archive/`, `dir/indexes/index.cdxj`), the layout pywb and warcio
+  read and
+  [`fetchvrf`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)
+  falls back to (default `TRUE`).
+
 ## Value
 
 A data frame of class `rmbl_archive_capture`, one row per URL: `url`,
 `file`, `sha256`, `bytes`, `fetched_utc`, `status` (`"captured"`,
-`"uploaded"` or `"failed: ..."`) and `mirror` (the archive.org download
-address, for
-[`fetchvrf`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md));
+`"uploaded"`, `"archived"` or `"failed: ..."`), `mirror` (the
+archive.org download address, for
+[`fetchvrf`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)),
+`warc` (the local WARC file), `capture_id` and `archive` (its page at
+archive.rmorie.com) and `wayback` (the Wayback Machine's answer);
 attributes `manifest`, `timestamp` (a
 [`tsvrf`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsvrf.md)
 result, or `NULL`) and `item`.
@@ -122,6 +157,11 @@ archive.org/developers/ias3.html
 
 ``` r
 if (FALSE) { # interactive()
+# save from your own connection to archive.rmorie.com and the Wayback Machine at once
+src <- "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"
+cap <- arccap(src, file.path(tempdir(), "cap"),
+              upload = c("rmorie", "wayback"), reason = "Custody table cited in chapter 3")
+cap$archive
 w <- wbsave(urls)
 lic <- "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
 meta <- list(title = "Statistics Canada tables (captures)",

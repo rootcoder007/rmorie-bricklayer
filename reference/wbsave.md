@@ -30,7 +30,9 @@ wbsave(
   capall = FALSE,
   quiet = NULL,
   permin = 6,
-  maxcap = 1000
+  maxcap = 1000,
+  fallback = NULL,
+  reason = NULL
 )
 ```
 
@@ -96,6 +98,19 @@ wbsave(
   The most captures this run starts; default 1000. The rest are left for
   the next run (with the same `output`, it carries on from them).
 
+- fallback:
+
+  `"rmorie"` saves what the Wayback Machine refused (a server that
+  refuses its crawler, Statistics Canada among them) from this
+  connection to archive.rmorie.com, with
+  [`arccap`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md);
+  the result is attribute `archive`. `NULL` (default) does not.
+
+- reason:
+
+  With `fallback = "rmorie"`: why the files are kept (20 characters or
+  more).
+
 ## Value
 
 A data frame of class `rmbl_wayback_save`, one row per URL with a
@@ -160,7 +175,7 @@ try(wbsave("https://example.org/", ak = "abc", sk = "def",
 #> Error : `jobs` must be a whole number from 1 to 12
 try(wbsave("https://example.org/", ak = "abc", sk = "def",
                  output = file.path(tempdir(), "no-such-folder", "runs.jsonl")))
-#> Error : the folder for `output` does not exist: /tmp/RtmpkMSyl9/no-such-folder
+#> Error : the folder for `output` does not exist: /tmp/RtmpBYOtzY/no-such-folder
 
 # A real run needs archive.org keys and the network.
 if (FALSE) { # interactive()

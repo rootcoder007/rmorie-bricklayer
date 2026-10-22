@@ -10,7 +10,14 @@ or truncated file is a different file.
 ## Usage
 
 ``` r
-fetchvrf(url, dest, sha256 = NULL, mirrors = character(), tmout = 120L)
+fetchvrf(
+  url,
+  dest,
+  sha256 = NULL,
+  mirrors = character(),
+  tmout = 120L,
+  arcs = "rmorie"
+)
 ```
 
 ## Arguments
@@ -36,11 +43,22 @@ fetchvrf(url, dest, sha256 = NULL, mirrors = character(), tmout = 120L)
 
   Seconds allowed for each download (default 120).
 
+- arcs:
+
+  Archives tried after the source, its Wayback snapshot and the mirrors:
+  `"rmorie"` (archive.rmorie.com, by
+  [`arcget`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md))
+  and folders written by
+  [`arccap`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
+  (read from their WARC files), in order.
+  [`character()`](https://rdrr.io/r/base/character.html) tries none.
+
 ## Value
 
-Invisibly, a list: `source` (`"live"`, `"wayback"` or `"mirror"`), `url`
-(the URL that served the kept copy), `sha256`, `bytes`, and `tried` (a
-data frame of every attempt: `url`, `outcome`).
+Invisibly, a list: `source` (`"live"`, `"wayback"`, `"mirror"`,
+`"rmorie"` or `"local"`), `url` (the URL that served the kept copy),
+`sha256`, `bytes`, and `tried` (a data frame of every attempt: `url`,
+`outcome`).
 
 ## Details
 

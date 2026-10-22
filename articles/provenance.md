@@ -85,7 +85,7 @@ signingkey <- pqckg(height = 3)
 signingkey
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       b2d285f376c319402d203c28cc0ee65d33510bb7cd5822986fe792beb3f3b7e5
+#>   root       adf21909b5c77ffce464bab8155700be4998cc553f3f0fd44e1f807fa7c5d74f
 #>   height     3
 #>   used       0 of 8 signatures
 #>   remaining  8
@@ -102,7 +102,7 @@ pub <- signpubkey(signingkey)
 pub
 #> ── Public verification key ───────────────────────────────────────
 #>   scheme  xmss-sha256
-#>   root    b2d285f376c319402d203c28cc0ee65d33510bb7cd5822986fe792beb3f3b7e5
+#>   root    adf21909b5c77ffce464bab8155700be4998cc553f3f0fd44e1f807fa7c5d74f
 #>   height  3
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -370,13 +370,13 @@ plan <- prrgdecl(c(
 
 # a declared outcome that was not reported
 prrgchk(plan, "n_rows")
-#> ── Against the declaration of 2026-10-22T04:52:36Z: departures below 
+#> ── Against the declaration of 2026-10-22T09:32:09Z: departures below 
 #>   declared but not reported (outcome switching): ate
 #> ──────────────────────────────────────────────────────────────────
 
 # statistics reported that were never declared
 prrgchk(plan, c("ate", "n_rows", "byyear", "byprecinct"))
-#> ── Against the declaration of 2026-10-22T04:52:36Z: departures below 
+#> ── Against the declaration of 2026-10-22T09:32:09Z: departures below 
 #>   reported but not declared (2 addition(s)): byyear, byprecinct
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -409,6 +409,68 @@ evlrr(2, lo = 1.4, hi = 2.9)
 #> 3.414214 2.148331
 ```
 
+## Keeping your own copy of the source
+
+A capsule pins a source by its SHA-256, and
+[`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)
+fetches it from wherever a copy with that SHA-256 still exists: the
+source, its Wayback snapshot, any mirror you name, archive.rmorie.com,
+and folders of captures you made yourself. Some servers refuse archives
+(Statistics Canada answers the Wayback Machine’s crawler with an error),
+so the copy has to be made from a connection the server does answer:
+yours.
+
+[`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
+downloads each address, writes it as a WARC/1.1 file with a CDXJ index
+(a collection pywb and warcio read), and with `upload = "rmorie"` keeps
+it at archive.rmorie.com under your data key, with the reason you give.
+`upload = "wayback"` asks the Wayback Machine as well.
+
+``` r
+
+cap <- arccap("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip", "captures",
+              upload = c("rmorie", "wayback"), reason = "Custody table cited in chapter 3")
+cap$archive                     # its page at archive.rmorie.com
+arcfind("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip")
+arcget(cap$capture_id, "table.zip", sha256 = cap$sha256)
+```
+
+When the source is gone and the Wayback Machine cannot be reached,
+[`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)
+takes the copy from the archive, and failing that from the WARC files in
+your own folder, still checked against the pin:
+
+``` r
+
+fetchvrf("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip", "table.zip",
+         sha256 = cap$sha256, arcs = c("rmorie", "captures"))
+```
+
+From a terminal the same steps are
+`rmbl archive save URL --reason "..."`, `rmbl archive find URL` and
+`rmbl archive get ID -o FILE`.
+
+In continuous integration, `cpschk(path, "drift", archive = TRUE)` (the
+rmbl GitHub Action’s `archive: true`) takes the archived copy with the
+pinned SHA-256 when a capsule’s source and its Wayback snapshot are both
+down; reading a public copy needs no key. Saving needs one, except in a
+GitHub Actions job allowed `id-token: write`: there the package asks
+GitHub for the job’s short-lived OIDC token, the archive checks GitHub’s
+signature, and the repository is the saver, so no secret is stored.
+
+``` yaml
+permissions:
+  contents: read
+  id-token: write
+steps:
+  - uses: rootcoder007/rmbl-action@v1
+    with:
+      path: capsules
+      mode: refresh
+      wayback: true
+      archive: true
+```
+
 ## One file to hand someone
 
 A bundle carries a digest of every file, the manifest digest, and an
@@ -428,7 +490,7 @@ cpsbndlvrf(attr(b, "path"), dir, man = man)
 #>   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606
 #>   no_unlisted_files              ok    
 #>   attestation:attestation_comple ok    
-#>   attestation:manifest_digest    ok    0ddba4f1a3b962a2b5d76b2f7c041b498b00
+#>   attestation:manifest_digest    ok    5c5c3c3782842c6ab0802ce19d80fa18695f
 #>   attestation:signature          ok    
 #>   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a
 #> ──────────────────────────────────────────────────────────────────

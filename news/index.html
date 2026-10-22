@@ -49,11 +49,30 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.1" id="rmoriebricklayer-101">rmoriebricklayer 1.0.1<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-101"></a></h2>
+<div class="section level3">
+<h3 id="keeping-your-own-copy-of-a-source-archivermoriecom-and-warc-files-1-0-1">Keeping your own copy of a source: archive.rmorie.com and WARC files<a class="anchor" aria-label="anchor" href="#keeping-your-own-copy-of-a-source-archivermoriecom-and-warc-files-1-0-1"></a></h3>
+<ul><li>
+<code><a href="../reference/arccap.html">arccap()</a></code> gains <code>upload</code>, <code>reason</code>, <code>visibility</code> and <code>warc</code>. A capture made from your own connection (the way to keep files from servers that refuse the Wayback Machine, Statistics Canada among them) is written as a WARC/1.1 file with a CDXJ index, the layout pywb and warcio read, and with <code>upload = "rmorie"</code> is kept at archive.rmorie.com under your data key (<code><a href="../reference/dlogin.html">dlogin()</a></code>, <code>rmbl login</code>); <code>upload = "wayback"</code> asks the Wayback Machine to save the same addresses, and both may be given. Captures are public unless <code>visibility = "private"</code>.</li>
+<li>
+<code><a href="../reference/arcfind.html">arcfind()</a></code> lists the captures of an address (or of every address under a prefix ending in <code>*</code>), oldest first, with their SHA-256; <code><a href="../reference/arcget.html">arcget()</a></code> downloads one capture’s exact bytes, by its id or by address (the latest, the one closest to <code>at</code>, or the one with a given SHA-256), and deletes a file whose SHA-256 does not match.</li>
+<li>
+<code><a href="../reference/fetchvrf.html">fetchvrf()</a></code> gains <code>arcs</code>: after the source, its Wayback snapshot and the mirrors, it tries archive.rmorie.com and then folders written by <code><a href="../reference/arccap.html">arccap()</a></code>, reading the payload back from their WARC files; every copy is still checked against the pinned SHA-256.</li>
+<li>
+<code><a href="../reference/wbsave.html">wbsave()</a></code> gains <code>fallback = "rmorie"</code>: the addresses the Wayback Machine refused are saved from this connection to archive.rmorie.com instead (attribute <code>archive</code> of the result).</li>
+<li>
+<code><a href="../reference/cpschk.html">cpschk()</a></code> gains <code>archive</code> (the rmbl action’s <code>archive</code> input): in drift and refresh, a source that neither answers nor has its pinned Wayback snapshot is fetched from the copy kept on archive.rmorie.com with the pinned SHA-256 (public copies need no key), and with <code>wayback = TRUE</code> a changed source the Wayback Machine refuses is saved there instead.</li>
+<li>In a GitHub Actions job allowed <code>id-token: write</code>, saving to archive.rmorie.com needs no stored key: without one, the package asks GitHub for the job’s short-lived OIDC token for archive.rmorie.com, and the repository is the saver.</li>
+<li>The command line gains <code>archive save URL... --reason TEXT [--private] [--also wayback]</code>, <code>archive find URL</code> and <code>archive get ID -o FILE</code>.</li>
+<li>Another archive that speaks the same protocol is named in <code>MORIE_ARCHIVE_URL</code>, with its own key in <code>MORIE_ARCHIVE_KEY</code>; the stored rmorie key is sent only to archive.rmorie.com.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fixes-1-0-1">Fixes<a class="anchor" aria-label="anchor" href="#fixes-1-0-1"></a></h3>
 <ul><li>DESCRIPTION gives the repository and the issue tracker again (<code>URL</code>, <code>BugReports</code>). The CRAN build of 1.0.0 left them out, so its CRAN page linked to neither and r-universe could not match the CRAN release to its repository.</li>
 <li>The PDF manual’s Description no longer has short lines with half-line gaps: the CRAN build re-wraps the paragraph after writing its web addresses and DOIs as plain text.</li>
 <li>
 <code>citation("rmoriebricklayer")</code>, <code>CITATION.cff</code> and the README cite the package at its CRAN address.</li>
 </ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.0" id="rmoriebricklayer-100">rmoriebricklayer 1.0.0<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-100"></a></h2><p class="text-muted">CRAN release: 2026-10-21</p>
 <div class="section level3">

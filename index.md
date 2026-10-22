@@ -433,6 +433,27 @@ walks through it.
   with
   [`bldl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bldl.md)).
 
+- **Your own archive copy** —
+  [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
+  saves files from your own connection (for servers that refuse the
+  Wayback Machine) as WARC files, and with `upload = "rmorie"` keeps
+  them at archive.rmorie.com with their SHA-256 (`upload = "wayback"`
+  asks the Wayback Machine too).
+  [`arcfind()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcfind.md)
+  lists the captures of an address and
+  [`arcget()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md)
+  fetches the exact bytes;
+  [`fetchvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fetchvrf.md)
+  falls back to the archive and to your WARC files on its own, and
+  `wbsave(fallback = "rmorie")` saves what the Wayback Machine refused.
+  From a terminal: `rmbl archive save | find | get`. In CI,
+  `cpschk(archive = TRUE)` (the rmbl action’s `archive: true`) takes the
+  archived copy when a source and its Wayback snapshot are down. Reading
+  a public copy needs no key; saving needs one, except in a GitHub
+  Actions job allowed `id-token: write`, where the package uses the
+  job’s short-lived OIDC token and the repository is the saver, so no
+  secret is stored.
+
 - **Courts and police-reported crime** —
   [`caseflow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/caseflow.md)
   (clearance rate with exact intervals, rolling clearance, net flow and

@@ -39,6 +39,10 @@ datasets over flaky endpoints.
 - [`arccap()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arccap.md)
   : Capture files the Internet Archive cannot reach, and publish them as
   an archive.org item
+- [`arcfind()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcfind.md)
+  : Find saved copies of an address in archive.rmorie.com
+- [`arcget()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/arcget.md)
+  : Fetch the exact bytes of a saved copy from archive.rmorie.com
 - [`siufetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/siufetch.md)
   : Fetch an Ontario SIU director's report by drid
 - [`dldata()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/dldata.md)

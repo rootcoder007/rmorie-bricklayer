@@ -150,7 +150,7 @@ system dependency.</p>
 <span><span class="va">signingkey</span></span>
 <span><span class="co">#&gt; ── Signing key (post-quantum) ────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme     xmss-sha256</span></span>
-<span><span class="co">#&gt;   root       b2d285f376c319402d203c28cc0ee65d33510bb7cd5822986fe792beb3f3b7e5</span></span>
+<span><span class="co">#&gt;   root       adf21909b5c77ffce464bab8155700be4998cc553f3f0fd44e1f807fa7c5d74f</span></span>
 <span><span class="co">#&gt;   height     3</span></span>
 <span><span class="co">#&gt;   used       0 of 8 signatures</span></span>
 <span><span class="co">#&gt;   remaining  8</span></span>
@@ -163,7 +163,7 @@ system dependency.</p>
 <span><span class="va">pub</span></span>
 <span><span class="co">#&gt; ── Public verification key ───────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme  xmss-sha256</span></span>
-<span><span class="co">#&gt;   root    b2d285f376c319402d203c28cc0ee65d33510bb7cd5822986fe792beb3f3b7e5</span></span>
+<span><span class="co">#&gt;   root    adf21909b5c77ffce464bab8155700be4998cc553f3f0fd44e1f807fa7c5d74f</span></span>
 <span><span class="co">#&gt;   height  3</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -380,13 +380,13 @@ failures:</p>
 <span></span>
 <span><span class="co"># a declared outcome that was not reported</span></span>
 <span><span class="fu"><a href="../reference/prrgdecl.html">prrgchk</a></span><span class="op">(</span><span class="va">plan</span>, <span class="st">"n_rows"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Against the declaration of 2026-10-22T04:52:36Z: departures below </span></span>
+<span><span class="co">#&gt; ── Against the declaration of 2026-10-22T09:32:09Z: departures below </span></span>
 <span><span class="co">#&gt;   declared but not reported (outcome switching): ate</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
 <span></span>
 <span><span class="co"># statistics reported that were never declared</span></span>
 <span><span class="fu"><a href="../reference/prrgdecl.html">prrgchk</a></span><span class="op">(</span><span class="va">plan</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ate"</span>, <span class="st">"n_rows"</span>, <span class="st">"byyear"</span>, <span class="st">"byprecinct"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Against the declaration of 2026-10-22T04:52:36Z: departures below </span></span>
+<span><span class="co">#&gt; ── Against the declaration of 2026-10-22T09:32:09Z: departures below </span></span>
 <span><span class="co">#&gt;   reported but not declared (2 addition(s)): byyear, byprecinct</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>That second case is why a nominal p-value needs correcting. Run the
@@ -411,13 +411,65 @@ and the outcome:</p>
 <span><span class="co">#&gt; 3.414214 2.148331</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="keeping-your-own-copy-of-the-source">Keeping your own copy of the source<a class="anchor" aria-label="anchor" href="#keeping-your-own-copy-of-the-source"></a>
+</h2>
+<p>A capsule pins a source by its SHA-256, and <code><a href="../reference/fetchvrf.html">fetchvrf()</a></code>
+fetches it from wherever a copy with that SHA-256 still exists: the
+source, its Wayback snapshot, any mirror you name, archive.rmorie.com,
+and folders of captures you made yourself. Some servers refuse archives
+(Statistics Canada answers the Wayback Machine’s crawler with an error),
+so the copy has to be made from a connection the server does answer:
+yours.</p>
+<p><code><a href="../reference/arccap.html">arccap()</a></code> downloads each address, writes it as a WARC/1.1
+file with a CDXJ index (a collection pywb and warcio read), and with
+<code>upload = "rmorie"</code> keeps it at archive.rmorie.com under your
+data key, with the reason you give. <code>upload = "wayback"</code> asks
+the Wayback Machine as well.</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cap</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/arccap.html">arccap</a></span><span class="op">(</span><span class="st">"https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"</span>, <span class="st">"captures"</span>,</span>
+<span>              upload <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rmorie"</span>, <span class="st">"wayback"</span><span class="op">)</span>, reason <span class="op">=</span> <span class="st">"Custody table cited in chapter 3"</span><span class="op">)</span></span>
+<span><span class="va">cap</span><span class="op">$</span><span class="va">archive</span>                     <span class="co"># its page at archive.rmorie.com</span></span>
+<span><span class="fu"><a href="../reference/arcfind.html">arcfind</a></span><span class="op">(</span><span class="st">"https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/arcget.html">arcget</a></span><span class="op">(</span><span class="va">cap</span><span class="op">$</span><span class="va">capture_id</span>, <span class="st">"table.zip"</span>, sha256 <span class="op">=</span> <span class="va">cap</span><span class="op">$</span><span class="va">sha256</span><span class="op">)</span></span></code></pre></div>
+<p>When the source is gone and the Wayback Machine cannot be reached,
+<code><a href="../reference/fetchvrf.html">fetchvrf()</a></code> takes the copy from the archive, and failing
+that from the WARC files in your own folder, still checked against the
+pin:</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/fetchvrf.html">fetchvrf</a></span><span class="op">(</span><span class="st">"https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"</span>, <span class="st">"table.zip"</span>,</span>
+<span>         sha256 <span class="op">=</span> <span class="va">cap</span><span class="op">$</span><span class="va">sha256</span>, arcs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rmorie"</span>, <span class="st">"captures"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>From a terminal the same steps are
+<code>rmbl archive save URL --reason "..."</code>,
+<code>rmbl archive find URL</code> and
+<code>rmbl archive get ID -o FILE</code>.</p>
+<p>In continuous integration,
+<code>cpschk(path, "drift", archive = TRUE)</code> (the rmbl GitHub
+Action’s <code>archive: true</code>) takes the archived copy with the
+pinned SHA-256 when a capsule’s source and its Wayback snapshot are both
+down; reading a public copy needs no key. Saving needs one, except in a
+GitHub Actions job allowed <code>id-token: write</code>: there the
+package asks GitHub for the job’s short-lived OIDC token, the archive
+checks GitHub’s signature, and the repository is the saver, so no secret
+is stored.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="fu">permissions</span><span class="kw">:</span></span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a><span class="at">  </span><span class="fu">contents</span><span class="kw">:</span><span class="at"> read</span></span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a><span class="at">  </span><span class="fu">id-token</span><span class="kw">:</span><span class="at"> write</span></span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a><span class="fu">steps</span><span class="kw">:</span></span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> rootcoder007/rmbl-action@v1</span></span>
+<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a><span class="at">    </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a><span class="at">      </span><span class="fu">path</span><span class="kw">:</span><span class="at"> capsules</span></span>
+<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a><span class="at">      </span><span class="fu">mode</span><span class="kw">:</span><span class="at"> refresh</span></span>
+<span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a><span class="at">      </span><span class="fu">wayback</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a><span class="at">      </span><span class="fu">archive</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="one-file-to-hand-someone">One file to hand someone<a class="anchor" aria-label="anchor" href="#one-file-to-hand-someone"></a>
 </h2>
 <p>A bundle carries a digest of every file, the manifest digest, and an
 attestation over both. The file digests are inside the signature, which
 is the point: a list of hashes that is not itself signed can be
 rewritten to match whatever the files now say.</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">dir</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"data.csv"</span><span class="op">)</span>,</span>
@@ -428,14 +480,14 @@ rewritten to match whatever the files now say.</p>
 <span><span class="co">#&gt;   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606</span></span>
 <span><span class="co">#&gt;   no_unlisted_files              ok    </span></span>
 <span><span class="co">#&gt;   attestation:attestation_comple ok    </span></span>
-<span><span class="co">#&gt;   attestation:manifest_digest    ok    0ddba4f1a3b962a2b5d76b2f7c041b498b00</span></span>
+<span><span class="co">#&gt;   attestation:manifest_digest    ok    5c5c3c3782842c6ab0802ce19d80fa18695f</span></span>
 <span><span class="co">#&gt;   attestation:signature          ok    </span></span>
 <span><span class="co">#&gt;   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>Files sitting in the directory that the bundle does not mention are
 reported as well: a signed list of what should be there says nothing
 about what else was put beside it.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -448,7 +500,7 @@ timestamp token from a third party supplies the date, and
 <code><a href="../reference/tsvrf.html">tsvrf()</a></code> checks three separate things: that the token is
 about these bytes, what time it asserts, and that the authority’s
 signature holds.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tsvrf.html">tsvrf</a></span><span class="op">(</span><span class="st">"response.tsr"</span>, data <span class="op">=</span> <span class="st">"manifest.json"</span><span class="op">)</span></span>
 <span><span class="va">res</span><span class="op">$</span><span class="va">time</span></span>
 <span><span class="va">res</span><span class="op">$</span><span class="va">checks</span></span></code></pre></div>
@@ -465,18 +517,18 @@ decided to trust, and read a pass as “this key said so” rather than
 <p>A single digest over a file tells you it changed. A Merkle tree over
 its chunks tells you <em>which</em> chunk changed, and lets you prove
 one chunk belongs without re-reading the rest.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">chunks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id,value"</span>, <span class="st">"1,2"</span>, <span class="st">"3,4"</span>, <span class="st">"5,6"</span><span class="op">)</span></span>
 <span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mrk.html">mrkroot</a></span><span class="op">(</span><span class="va">chunks</span><span class="op">)</span></span>
 <span><span class="va">root</span></span>
 <span><span class="co">#&gt; [1] "80332968a476e13898f2d88c2632603b3fa6bcc746bf05be7ed178aced51ab16"</span></span></code></pre></div>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Editing one chunk moves exactly one leaf.</span></span>
 <span><span class="va">editedchunks</span> <span class="op">&lt;-</span> <span class="va">chunks</span></span>
 <span><span class="va">editedchunks</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"3,5"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="fu"><a href="../reference/mrk.html">mrklvs</a></span><span class="op">(</span><span class="va">chunks</span><span class="op">)</span> <span class="op">!=</span> <span class="fu"><a href="../reference/mrk.html">mrklvs</a></span><span class="op">(</span><span class="va">editedchunks</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 3</span></span></code></pre></div>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Prove chunk 3 belongs, holding only it and log2(n) sibling digests.</span></span>
 <span><span class="va">proof</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mrk.html">mrkprf</a></span><span class="op">(</span><span class="va">chunks</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="va">proof</span></span>
@@ -498,7 +550,7 @@ one chunk belongs without re-reading the rest.</p>
 hashed against a duplicate of itself. That is a correctness requirement,
 not a preference: duplicating the last leaf lets two different chunk
 lists produce the same root, which is the CVE-2012-2459 weakness.</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mrk.html">mrkroot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span><span class="op">)</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="../reference/mrk.html">mrkroot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>, <span class="st">"c"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
 </div>
@@ -510,7 +562,7 @@ whether any were <em>removed</em> – delete an inconvenient run and the
 remaining manifests are all still perfectly valid.</p>
 <p>A chain fixes that by linking each entry to the digest of the one
 before:</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">chain</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/chn.html">chnnew</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">chain</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/chn.html">chnapp</a></span><span class="op">(</span><span class="va">chain</span>, <span class="st">"manifest for run 1"</span>, label <span class="op">=</span> <span class="st">"run-1"</span><span class="op">)</span></span>
 <span><span class="va">chain</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/chn.html">chnapp</a></span><span class="op">(</span><span class="va">chain</span>, <span class="st">"manifest for run 2"</span>, label <span class="op">=</span> <span class="st">"run-2"</span><span class="op">)</span></span>
@@ -527,7 +579,7 @@ before:</p>
 <span><span class="co">#&gt;     2  run-2            03a645a531c93fbb12bb2c07</span></span>
 <span><span class="co">#&gt;     3  run-3            b9ccb96106a68f3d4d2a0cfb</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Deleting an entry from the middle breaks the links, and names where.</span></span>
 <span><span class="va">tampered</span> <span class="op">&lt;-</span> <span class="va">chain</span></span>
 <span><span class="va">tampered</span><span class="op">$</span><span class="va">entries</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
@@ -544,7 +596,7 @@ stored digest untouched, so the head is unchanged – but
 <li>Truncating from the <strong>end</strong> leaves a valid prefix that
 <code><a href="../reference/chn.html">chnvrf()</a></code> accepts – but the head changes.</li>
 </ul>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">truncated</span> <span class="op">&lt;-</span> <span class="va">chain</span></span>
 <span><span class="va">truncated</span><span class="op">$</span><span class="va">entries</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
 <span></span>
@@ -555,7 +607,7 @@ stored digest untouched, so the head is unchanged – but
 <span><span class="co">#&gt;            TRUE            TRUE</span></span></code></pre></div>
 <p><code><a href="../reference/chn.html">chnseal()</a></code> folds the entry count and every link digest
 into one value, which covers both. It is the thing to sign:</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sealsig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpssign.html">cpssign</a></span><span class="op">(</span><span class="fu"><a href="../reference/chn.html">chnseal</a></span><span class="op">(</span><span class="va">chain</span><span class="op">)</span>, <span class="va">signingkey</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/cpsvrf.html">cpsvrf</a></span><span class="op">(</span><span class="fu"><a href="../reference/chn.html">chnseal</a></span><span class="op">(</span><span class="va">chain</span><span class="op">)</span>, <span class="va">sealsig</span>, <span class="va">pub</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
@@ -598,12 +650,12 @@ about the bytes.</p>
 <p>The bundled Indigenous tables name their sources (Statistics Canada
 table numbers, retrieval dates and licence) in the package’s COPYRIGHTS
 file:</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"COPYRIGHTS"</span>, package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">cr</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"indigenouslifeexpectancy"</span>, <span class="va">cr</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span></code></pre></div>
 <p>With a data key (<code><a href="../reference/dlogin.html">dlogin()</a></code>), <code><a href="../reference/indtabs.html">indtabs()</a></code> lists
 the mirrored tables themselves:</p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/indtabs.html">indtabs</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"key"</span>, <span class="st">"rows"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <p><code><a href="../reference/indtabs.html">indtabs()</a></code> lists the Statistics Canada tables on
 data.rmorie.com with their source, licence and table number, so a result
@@ -614,7 +666,7 @@ can name the exact table it used.</p>
 </h2>
 <p>The manifest above pins these ten values. A verifier that recomputes
 the digest is checking exactly what this chart shows.</p>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">x</span>, names.arg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span><span class="op">)</span>, col <span class="op">=</span> <span class="fu"><a href="../reference/blpal.html">blpal</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, xlab <span class="op">=</span> <span class="st">"row"</span>, ylab <span class="op">=</span> <span class="st">"x"</span>,</span>
 <span>        main <span class="op">=</span> <span class="st">"The values the manifest pins"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="provenance_files/figure-html/provenance-provenance-plot-1.png" class="r-plt" alt="" width="576"></p>
