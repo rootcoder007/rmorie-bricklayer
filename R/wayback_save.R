@@ -666,18 +666,7 @@ wbsave <- function(urls, ak = NULL, sk = NULL, within = "30d", jobs = 4L,
   out <- .bl_wb_frame(w$results[intersect(urls, names(w$results))])
   attr(out, "not_sent") <- not_sent
   if (!is.null(w$stopped)) attr(out, "stopped") <- w$stopped
-  # what the Wayback Machine refused (a server that refuses its crawler) is saved from this connection to
-  # archive.rmorie.com instead
-  if (identical(fallback, "rmorie")) {
-    refused <- out$status == "failed" &
-      grepl("cannot find|blocks access|HTTP status=40[134]|not reachable", ifelse(is.na(out$message), "", out$message))
-    if (any(refused)) {
-      cap <- tryCatch(arccap(out$url[refused], file.path(tempdir(), "rmbl-wayback-fallback"), tsa = NULL,
-                             upload = "rmorie", reason = reason %||% ""),
-                      error = function(e) .bl_unless_interrupted(e, structure(conditionMessage(e), class = "rmbl_fail")))
-      attr(out, "archive") <- cap
-    }
-  }
+  if (identical(fallback, "rmorie")) out <- .bl_wb_fallback(out, reason)
   out
 }
 
@@ -850,5 +839,22 @@ wbrtry <- function(output, incgone = FALSE, lookup = TRUE, ...) {
   out <- .bl_wb_read(output)
   attr(out, "retry") <- data.frame(failed = nrow(failed), found_by_lookup = found, captured_again = length(todo),
                                    left_as_gone = sum(gone), left_for_tomorrow = sum(later))
+  out
+}
+
+#' Saves what the Wayback Machine refused (a server that refuses its crawler) from this connection to
+#' archive.rmorie.com instead, as attribute archive of the wbsave() result.
+#' @param out A wbsave() result.
+#' @param reason Why the files are kept.
+#' @return The result, with attribute archive (an arccap() result, or the reason it failed) when anything was refused.
+#' @noRd
+.bl_wb_fallback <- function(out, reason) {
+  refused <- out$status == "failed" &
+    grepl("cannot find|blocks access|HTTP status=40[134]|not reachable", ifelse(is.na(out$message), "", out$message))
+  if (!any(refused)) return(out)
+  attr(out, "archive") <- tryCatch(
+    arccap(out$url[refused], file.path(tempdir(), "rmbl-wayback-fallback"), tsa = NULL, upload = "rmorie",
+           reason = reason %||% ""),
+    error = function(e) .bl_unless_interrupted(e, structure(conditionMessage(e), class = "rmbl_fail")))
   out
 }

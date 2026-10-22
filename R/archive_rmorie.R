@@ -46,11 +46,11 @@
   url <- paste0(base, path)
   local <- .bl_loopback_url(base)
   hdr <- c("User-Agent: rmoriebricklayer (+https://archive.rmorie.com)",
-           if (!is.null(key)) paste("Authorization: Bearer", key))
+    if (!is.null(key)) paste("Authorization: Bearer", key))
   res <- switch(method,
     GET = .bl_net(url, .Call(C_rmbl_http_get, url, as.integer(timeout), hdr, local)),
     POST = .bl_net(url, .Call(C_rmbl_http_post, url, charToRaw(enc2utf8(tojs(body, auto_unbox = TRUE))),
-                              "application/json", as.integer(timeout), hdr, local)),
+      "application/json", as.integer(timeout), hdr, local)),
     PUT = .bl_net(url, .Call(C_rmbl_http_put, url, file, ctype, as.integer(timeout), hdr, local)),
     stop("unknown method", call. = FALSE))
   json <- if (length(res$body)) tryCatch(.rmbl_json_text(res$body, simplifyVector = FALSE), error = function(e) NULL)
@@ -64,10 +64,11 @@
 #' @noRd
 .bl_arc_why <- function(res, what) {
   if (res$status <= 0L) {
-    return(sprintf("%s: archive.rmorie.com did not answer (%s)", what, if (nzchar(res$error)) res$error else "no reply"))
+    why <- if (nzchar(res$error)) res$error else "no reply"
+    return(sprintf("%s: archive.rmorie.com did not answer (%s)", what, why))
   }
   sprintf("%s: the archive answered HTTP %d%s", what, res$status,
-          if (is.list(res$json) && !is.null(res$json$error)) paste0(" (", res$json$error, ")") else "")
+    if (is.list(res$json) && !is.null(res$json$error)) paste0(" (", res$json$error, ")") else "")
 }
 
 #' Find saved copies of an address in archive.rmorie.com
@@ -99,22 +100,21 @@ arcfind <- function(url, from = NULL, to = NULL, limit = 1000L) {
   url <- .rmbl_string1(url, "url")
   limit <- .rmbl_scalar(limit, "limit", 1, 10000, integer = TRUE)
   stamp <- function(x, nm) {
-    if (is.null(x)) return("")
     x <- .rmbl_string1(as.character(x), nm)
     if (!grepl("^[0-9]{4,14}$", x)) stop(sprintf("`%s` must be 4 to 14 digits of a UTC time, YYYYMMDDhhmmss", nm), call. = FALSE)
     x
   }
   base <- .bl_arc_base()
   q <- paste0("/cdx/search/cdx?output=json&limit=", limit, "&url=", utils::URLencode(url, reserved = TRUE),
-              if (!is.null(from)) paste0("&from=", stamp(from, "from")), if (!is.null(to)) paste0("&to=", stamp(to, "to")))
+    if (!is.null(from)) paste0("&from=", stamp(from, "from")), if (!is.null(to)) paste0("&to=", stamp(to, "to")))
   res <- .bl_arc_req("GET", q, key = .bl_arc_key(base), base = base, timeout = 60L)
   if (res$status != 200L || !is.list(res$json)) stop(.bl_arc_why(res, "finding captures"), call. = FALSE)
   rows <- res$json[-1L]
   col <- function(k) vapply(rows, function(r) as.character(r[[k]] %||% NA_character_), "")
   ts <- col(2L)
   out <- data.frame(capture_id = col(8L), captured = as.POSIXct(ts, format = "%Y%m%d%H%M%S", tz = "UTC"),
-                    url = col(3L), status = as.integer(col(5L)), mime = col(4L), bytes = as.numeric(col(7L)),
-                    sha256 = col(9L), mode = col(10L), visibility = col(11L), stringsAsFactors = FALSE)
+    url = col(3L), status = as.integer(col(5L)), mime = col(4L), bytes = as.numeric(col(7L)),
+    sha256 = col(9L), mode = col(10L), visibility = col(11L), stringsAsFactors = FALSE)
   out$capture <- if (nrow(out)) paste0(base, "/capture/", out$capture_id) else character()
   out$replay <- if (nrow(out)) paste0(base, "/c/", ts, "id_/", out$url) else character()
   attr(out, "archive") <- base
@@ -130,7 +130,7 @@ print.rmbl_archive_find <- function(x, ...) {
     return(invisible(x))
   }
   cat(sprintf("%d capture%s in %s, %d distinct cop%s of the bytes\n", nrow(d), if (nrow(d) == 1L) "" else "s",
-              attr(x, "archive"), length(unique(d$sha256)), if (length(unique(d$sha256)) == 1L) "y" else "ies"))
+    attr(x, "archive"), length(unique(d$sha256)), if (length(unique(d$sha256)) == 1L) "y" else "ies"))
   d$sha256 <- paste0(substr(d$sha256, 1L, 12L), "...")
   d$captured <- format(d$captured, "%Y-%m-%d %H:%M")
   print(utils::head(d[c("captured", "status", "mime", "bytes", "sha256", "capture_id")], 20L), row.names = FALSE)
@@ -175,18 +175,22 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
     if (!nrow(found)) stop(sprintf("archive.rmorie.com has no capture of %s", x), call. = FALSE)
     i <- nrow(found)
     if (!is.null(at)) {
-      want <- as.POSIXct(substr(paste0(at, "0000000000"), 1L, 14L), format = "%Y%m%d%H%M%S", tz = "UTC")
+      at <- .rmbl_string1(as.character(at), "at")
+      if (!grepl("^[0-9]{4,14}$", at)) stop("`at` must be 4 to 14 digits of a UTC time, YYYYMMDDhhmmss", call. = FALSE)
+      # a partial time is its first moment: 2025 is 2025-01-01 00:00:00
+      at <- paste0(at, substr("20000101000000", nchar(at) + 1L, 14L))
+      want <- as.POSIXct(at, format = "%Y%m%d%H%M%S", tz = "UTC")
       i <- which.min(abs(as.numeric(found$captured) - as.numeric(want)))
     }
     if (!is.null(sha256)) {
       if (!any(found$sha256 == sha256)) {
         stop(sprintf("no capture of %s has SHA-256 %s; the archive holds %s", x, sha256,
-                     paste(unique(found$sha256), collapse = ", ")), call. = FALSE)
+          paste(unique(found$sha256), collapse = ", ")), call. = FALSE)
       }
       i <- utils::tail(which(found$sha256 == sha256), 1L)
     }
     cap <- list(id = found$capture_id[i], url = found$url[i], ts = format(found$captured[i], "%Y%m%d%H%M%S"),
-                sha = found$sha256[i])
+      sha = found$sha256[i])
   }
   if (!is.null(sha256) && !identical(cap$sha, sha256)) {
     stop(sprintf("capture %s has SHA-256 %s, not the one asked for", cap$id, cap$sha), call. = FALSE)
@@ -200,11 +204,9 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
   if (!identical(got, cap$sha)) {
     stop(sprintf("the bytes received hash to %s, not to the capture's %s: nothing was written", got, cap$sha), call. = FALSE)
   }
-  if (!suppressWarnings(file.rename(tmp, dest)) && !file.copy(tmp, dest, overwrite = TRUE)) {
-    stop(sprintf("cannot write %s", dest), call. = FALSE)
-  }
+  if (!.bl_move(tmp, dest)) stop(sprintf("cannot write %s", dest), call. = FALSE)
   invisible(structure(dest, capture_id = cap$id, url = cap$url, sha256 = got,
-                      captured = as.POSIXct(cap$ts, format = "%Y%m%d%H%M%S", tz = "UTC")))
+    captured = as.POSIXct(cap$ts, format = "%Y%m%d%H%M%S", tz = "UTC")))
 }
 
 #' Uploads one captured file to the archive and records the capture.
@@ -228,10 +230,10 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
     stop(.bl_arc_why(have, "checking the archive"), call. = FALSE)
   }
   rec <- .bl_arc_req("POST", "/v1/captures", key = key, base = base,
-                     body = list(url = url, sha256 = sha, length = file.size(path), mime = mime, status = 200L,
-                                 timestamp = format(fetched, "%Y%m%d%H%M%S", tz = "UTC"), reason = reason,
-                                 visibility = visibility,
-                                 software = paste0("rmoriebricklayer/", utils::packageVersion("rmoriebricklayer"))))
+    body = list(url = url, sha256 = sha, length = file.size(path), mime = mime, status = 200L,
+      timestamp = format(fetched, "%Y%m%d%H%M%S", tz = "UTC"), reason = reason,
+      visibility = visibility,
+      software = paste0("rmoriebricklayer/", utils::packageVersion("rmoriebricklayer"))))
   if (rec$status != 201L) stop(.bl_arc_why(rec, "recording the capture"), call. = FALSE)
   rec$json
 }
@@ -243,9 +245,16 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
 .bl_arc_mime <- function(f) {
   ext <- tolower(sub("^.*\\.", "", basename(f)))
   m <- c(csv = "text/csv", tsv = "text/tab-separated-values", txt = "text/plain", json = "application/json",
-         html = "text/html", htm = "text/html", xml = "application/xml", zip = "application/zip", gz = "application/gzip",
-         pdf = "application/pdf", xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-         xls = "application/vnd.ms-excel", parquet = "application/vnd.apache.parquet", png = "image/png",
-         jpg = "image/jpeg", jpeg = "image/jpeg", svg = "image/svg+xml", css = "text/css", js = "text/javascript")
+    html = "text/html", htm = "text/html", xml = "application/xml", zip = "application/zip", gz = "application/gzip",
+    pdf = "application/pdf", xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    xls = "application/vnd.ms-excel", parquet = "application/vnd.apache.parquet", png = "image/png",
+    jpg = "image/jpeg", jpeg = "image/jpeg", svg = "image/svg+xml", css = "text/css", js = "text/javascript")
   if (ext %in% names(m)) m[[ext]] else "application/octet-stream"
 }
+
+#' Moves a finished download into place: a rename, else a copy (another file system).
+#' @param from The temporary file.
+#' @param to The destination.
+#' @return TRUE when the file is in place.
+#' @noRd
+.bl_move <- function(from, to) suppressWarnings(file.rename(from, to)) || isTRUE(file.copy(from, to, overwrite = TRUE))

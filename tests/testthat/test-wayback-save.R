@@ -646,3 +646,12 @@ test_that("H7: resubmissions past the run's cap between two captures stop the ru
   expect_match(attr(res2, "stopped"), "resubmissions with errors or slow-downs")
   expect_true("https://e.org/s" %in% attr(res2, "not_sent"))
 })
+
+test_that("wbsave(fallback = 'rmorie') with nothing refused leaves the result as it was", {
+  withr::local_envvar(keys)
+  s <- fake_spn2()
+  res <- with_fake(s, wbsave("https://example.org/fine", quiet = TRUE, fallback = "rmorie",
+                             reason = "Pages cited in a methods paper"))
+  expect_identical(res$status, "saved")
+  expect_null(attr(res, "archive"))
+})

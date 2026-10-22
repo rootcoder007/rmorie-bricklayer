@@ -104,9 +104,7 @@ fetchvrf <- function(url, dest, sha256 = NULL, mirrors = character(), tmout = 12
       next
     }
     h <- sha256file(tmp)
-    if (!suppressWarnings(file.rename(tmp, dest)) && !file.copy(tmp, dest, overwrite = TRUE)) {
-      stop(sprintf("cannot write %s", dest), call. = FALSE)
-    }
+    if (!.bl_move(tmp, dest)) stop(sprintf("cannot write %s", dest), call. = FALSE)
     note(where, "kept")
     return(invisible(list(source = if (identical(a, "rmorie")) "rmorie" else "local", url = url, sha256 = h,
                           bytes = file.size(dest), tried = acc$tried)))

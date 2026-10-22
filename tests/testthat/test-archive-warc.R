@@ -9,6 +9,8 @@ test_that("SURT keys lower-case, drop www and default ports, sort the query and 
   expect_identical(.bl_surt("https://data.ontario.ca/dataset/x.csv"), "ca,ontario,data)/dataset/x.csv")
   expect_identical(.bl_surt("http://www2.statcan.gc.ca:8080"), "ca,gc,statcan:8080)/")
   expect_identical(.bl_surt("http://user:pw@host.org:80/p"), "org,host)/p")
+  # not a URL: kept as it is, lower-cased, as a sort key
+  expect_identical(.bl_surt("Not A URL"), "not a url")
 })
 
 test_that("record ids are version 4 UUIDs", {
