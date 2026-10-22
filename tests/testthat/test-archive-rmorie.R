@@ -389,3 +389,68 @@ test_that("a finished download is moved into place, and a failed move says so", 
   expect_true(.bl_move(f1, f2))
   expect_false(.bl_move(f1, f2))
 })
+
+test_that("rmbl archive: save, find and get from a terminal", {
+  outbuf <- character()
+  run <- function(...) {
+    outbuf <<- character()
+    st <- blcli(c("archive", ...), out = function(s) outbuf <<- c(outbuf, s))
+    list(status = st, text = paste(outbuf, collapse = ""))
+  }
+  expect_identical(run()$status, 2L)
+  expect_match(run("help")$text, "archive get ID")
+  expect_identical(run("help")$status, 0L)
+  expect_identical(run("save")$status, 2L)
+  expect_match(run("save", "https://s.org/a")$text, "needs --reason")
+  expect_match(run("save", "https://s.org/a", "--reason", "x", "--also", "dropbox")$text, "--also takes one value")
+  expect_match(run("get", "https://s.org/a")$text, "needs -o FILE")
+  got <- new.env()
+  local_mocked_bindings(
+    arccap = function(urls, dir, tsa, upload, reason, visibility) {
+      got$upload <- upload
+      got$visibility <- visibility
+      got$dir <- dir
+      structure(data.frame(url = urls, status = c("archived", "failed: refused")[seq_along(urls)],
+                           archive = c("https://archive.rmorie.com/capture/1", NA)[seq_along(urls)]),
+                class = c("rmbl_archive_capture", "data.frame"))
+    },
+    arcfind = function(url, from = NULL, to = NULL) {
+      got$from <- from
+      structure(data.frame(capture_id = "20261020120000-00000001",
+                           captured = as.POSIXct("2026-10-20 12:00:00", tz = "UTC"), url = url, status = 200L,
+                           mime = "text/csv", bytes = 3, sha256 = strrep("a", 64), mode = "client",
+                           visibility = "public", capture = "c", replay = "r"),
+                archive = "https://archive.rmorie.com", class = c("rmbl_archive_find", "data.frame"))
+    },
+    arcget = function(x, dest, sha256 = NULL, at = NULL) {
+      structure(dest, capture_id = "20261020120000-00000001", sha256 = strrep("a", 64))
+    }
+  )
+  r <- run("save", "https://s.org/a", "--reason", "Tables cited in a methods paper", "--private", "--also", "wayback",
+           "--dir", "d1")
+  expect_identical(r$status, 0L)
+  expect_identical(got$upload, c("rmorie", "wayback"))
+  expect_identical(got$visibility, "private")
+  expect_identical(got$dir, "d1")
+  expect_match(r$text, "archived  https://s.org/a\n  https://archive.rmorie.com/capture/1")
+  r <- run("save", "https://s.org/a", "https://s.org/b", "--reason", "Tables cited in a methods paper")
+  expect_identical(r$status, 1L)
+  expect_identical(got$upload, "rmorie")
+  expect_identical(got$visibility, "public")
+  expect_match(r$text, "failed: refused  https://s.org/b")
+  r <- run("find", "https://s.org/a", "--from", "2025")
+  expect_identical(r$status, 0L)
+  expect_identical(got$from, "2025")
+  expect_match(r$text, "1 capture in https://archive.rmorie.com")
+  r <- run("find", "https://s.org/a", "--json")
+  expect_match(r$text, "\"captured\":\"2026-10-20T12:00:00Z\"", fixed = TRUE)
+  local_mocked_bindings(arcfind = function(url, from = NULL, to = NULL) {
+    empty <- data.frame(capture_id = character(), captured = as.POSIXct(character(), tz = "UTC"), sha256 = character())
+    structure(empty,
+              archive = "a", class = c("rmbl_archive_find", "data.frame"))
+  })
+  expect_identical(run("find", "https://s.org/none")$status, 1L)
+  r <- run("get", "20261020120000-00000001", "-o", "out.csv")
+  expect_identical(r$status, 0L)
+  expect_match(r$text, "out.csv  capture 20261020120000-00000001")
+})

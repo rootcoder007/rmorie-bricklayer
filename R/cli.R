@@ -434,6 +434,8 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
                 models = "--route",
                 data = "--out", app = c("--port", "--no-browser"),
                 wayback = c("--out", "--jobs", "--within", "--max", "--retry", "--include-gone"),
+                archive = c("--reason", "--dir", "--private", "--also", "--out", "--sha256", "--at", "--from", "--to",
+                            "--json"),
                 verify = c("--json", "--fail-on", .bl_capsule_opts),
                 drift = c("--json", "--fail-on", .bl_capsule_opts, "--html", "--app"),
                 report = c("--format", .bl_capsule_opts),
@@ -625,6 +627,7 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
         app = status <- .bl_cli_app(rest, flag, has, out, usage_error),
         `explain-error` = status <- .bl_cli_explain(c(rest, tail_args), out, prog),
         wayback = status <- .bl_cli_wayback(rest, flag, out),
+        archive = status <- .bl_cli_archive(rest, flag, out),
         sign = ,
         verify = ,
         drift = ,
@@ -868,6 +871,10 @@ blcli <- function(args = commandArgs(trailingOnly = TRUE),
     wayback = paste("wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d] [--max N]   archive every URL in FILE;",
                     "wayback --retry FILE.jsonl [--include-gone]   retry the failures of an earlier run;",
                     "(keys: IA_S3_ACCESS_KEY and IA_S3_SECRET_KEY, or their _FILE twins)"),
+    archive = paste("archive save URL... --reason TEXT [--dir D] [--private] [--also wayback]   save from this",
+                    "connection to archive.rmorie.com (your key: login), with WARC copies in D;",
+                    "archive find URL [--from YYYY] [--to YYYY] [--json]   list its captures (URL* for a prefix);",
+                    "archive get ID|URL -o FILE [--sha256 HEX] [--at YYYYMMDD]   the exact bytes, checked"),
     verify = paste("verify PATH [--json] [--fail-on error|warn|drift] [--public-key HEX] [--base MANIFEST|DIR]",
                    "[--manifests GLOB] [--snapshot] [--no-footprint] [--seen-log FILE]   check every capsule under",
                    "PATH: schemas, data digests, bundle files and signature (an hmac secret in RMBL_KEY); --base",
@@ -1294,6 +1301,8 @@ instcli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     "  app [PATH] [--port N] [--no-browser]      the analysis dashboard on this machine (needs shiny)\n",
     "  wayback FILE [--out F.jsonl] [--jobs N]   archive every URL in FILE (archive.org keys)\n",
     "  wayback --retry F.jsonl                   retry the failed URLs of an earlier wayback run\n",
+    "  archive save URL... --reason TEXT        save from this connection to archive.rmorie.com (+ WARC copies)\n",
+    "  archive find URL | get ID -o FILE        list its captures; fetch the exact bytes, checked\n",
     "  functions [PATTERN]                       exported functions and their titles\n",
     "  describe NAME                             help page of one function\n",
     "  examples NAME                             its examples\n",
@@ -1397,5 +1406,68 @@ instcli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     out(sprintf("%s: no help topic '%s' (try: %s help)\n", prog, topic, prog))
     return(2L)
   }
+  0L
+}
+
+#' The archive verb: archive.rmorie.com from a terminal (arccap(upload = "rmorie"), arcfind(), arcget()).
+#' @param rest The arguments after the verb.
+#' @param flag Looks up an option's value.
+#' @param out Writes text.
+#' @return The exit status.
+#' @noRd
+.bl_cli_archive <- function(rest, flag, out) {
+  sub <- if (length(rest)) rest[[1L]] else ""
+  args <- rest[-1L]
+  pos <- args
+  for (f in c("--reason", "--dir", "--also", "-o", "--out", "--sha256", "--at", "--from", "--to")) {
+    i <- match(f, pos)
+    if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
+  }
+  pos <- setdiff(pos, c("--private", "--json"))
+  usage <- function(code) {
+    out(.bl_verb_usage("archive", .bl_prog()))
+    code
+  }
+  if (sub %in% c("help", "--help", "-h")) return(usage(0L))
+  if (!sub %in% c("save", "find", "get") || !length(pos)) return(usage(2L))
+  if (sub == "save") {
+    also <- flag("--also")
+    if (!is.null(also) && !identical(also, "wayback")) {
+      out("--also takes one value: wayback\n")
+      return(2L)
+    }
+    reason <- flag("--reason")
+    if (is.null(reason)) {
+      out("save needs --reason \"why you keep it\" (one sentence, 20 characters or more)\n")
+      return(2L)
+    }
+    dir <- flag("--dir") %||% file.path(getwd(), "captures")
+    cap <- arccap(pos, dir, tsa = NULL, upload = c("rmorie", if (!is.null(also)) "wayback"), reason = reason,
+                  visibility = if ("--private" %in% args) "private" else "public")
+    d <- as.data.frame(unclass(cap))
+    for (i in seq_len(nrow(d))) {
+      out(sprintf("%s  %s%s\n", d$status[i], d$url[i], if (!is.na(d$archive[i])) paste0("\n  ", d$archive[i]) else ""))
+    }
+    out(sprintf("local copies and WARC files: %s\n", dir))
+    return(if (all(d$status == "archived")) 0L else 1L)
+  }
+  if (sub == "find") {
+    f <- arcfind(pos[[1L]], from = flag("--from"), to = flag("--to"))
+    if ("--json" %in% args) {
+      d <- as.data.frame(unclass(f))
+      d$captured <- format(d$captured, "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
+      out(paste0(tojs(d, dataframe = "rows", auto_unbox = TRUE), "\n"))
+    } else {
+      out(paste0(paste(utils::capture.output(print(f)), collapse = "\n"), "\n"))
+    }
+    return(if (nrow(f)) 0L else 1L)
+  }
+  dest <- flag("-o") %||% flag("--out")
+  if (is.null(dest)) {
+    out("get needs -o FILE (where to write the bytes)\n")
+    return(2L)
+  }
+  g <- arcget(pos[[1L]], dest, sha256 = flag("--sha256"), at = flag("--at"))
+  out(sprintf("%s  capture %s, SHA-256 %s\n", dest, attr(g, "capture_id"), attr(g, "sha256")))
   0L
 }

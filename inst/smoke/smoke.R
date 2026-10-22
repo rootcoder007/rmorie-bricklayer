@@ -67,6 +67,20 @@ cases <- list(
     r <- run("wayback", "no-such-urls.txt"); check(r$status == 1L && grepl("no such file", r$text, fixed = TRUE), r$text)
     r <- run("wayback", "--retry", "no-such.jsonl"); check(r$status == 1L && grepl("no such file", r$text, fixed = TRUE), r$text)
   },
+  archive = function() {
+    # usage and argument checks offline; with MORIE_SMOKE_ARCHIVE set (an archive's address), a real find
+    r <- run("archive"); check(r$status == 2L && grepl("archive save URL", r$text, fixed = TRUE), r$text)
+    r <- run("archive", "help"); check(r$status == 0L && grepl("archive get ID", r$text, fixed = TRUE), r$text)
+    r <- run("archive", "save", "https://example.org/"); check(r$status == 2L && grepl("--reason", r$text, fixed = TRUE), r$text)
+    r <- run("archive", "save", "https://example.org/", "--reason", "x", "--also", "dropbox")
+    check(r$status == 2L && grepl("--also takes one value", r$text, fixed = TRUE), r$text)
+    r <- run("archive", "get", "https://example.org/"); check(r$status == 2L && grepl("-o FILE", r$text, fixed = TRUE), r$text)
+    a <- Sys.getenv("MORIE_SMOKE_ARCHIVE")
+    if (!nzchar(a)) return(message("  archive find: SKIP (no MORIE_SMOKE_ARCHIVE)"))
+    Sys.setenv(MORIE_ARCHIVE_URL = a)
+    r <- run("archive", "find", "https://cran.r-project.org/web/packages/rmoriebricklayer/index.html", "--json")
+    check(r$status %in% c(0L, 1L) && startsWith(trimws(r$text), "["), substr(r$text, 1, 300))
+  },
   config = function() {
     r <- run("config"); check(r$status == 0 && grepl("route", r$text, fixed = TRUE), r$text)
     check(run("config", "help")$status == 0, "config help")
