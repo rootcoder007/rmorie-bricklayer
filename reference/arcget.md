@@ -51,7 +51,8 @@ arcget(x, dest, sha256 = NULL, at = NULL, tmout = 600L)
 
 ``` r
 if (FALSE) { # interactive()
-f <- arcget("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip", tempfile(fileext = ".zip"))
+src <- "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"
+f <- arcget(src, tempfile(fileext = ".zip"))
 attr(f, "sha256")
 }
 ```

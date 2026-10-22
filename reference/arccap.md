@@ -160,7 +160,8 @@ if (FALSE) { # interactive()
 # save from your own connection to archive.rmorie.com and the Wayback Machine at once
 src <- "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"
 cap <- arccap(src, file.path(tempdir(), "cap"),
-              upload = c("rmorie", "wayback"), reason = "Custody table cited in chapter 3")
+              upload = c("rmorie", "wayback"),
+              reason = "Custody table cited in chapter 3")
 cap$archive
 w <- wbsave(urls)
 lic <- "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
