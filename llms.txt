@@ -922,9 +922,9 @@ and the reproducible data capsules with signed manifests.
 
 ## Life cycle
 
-Version 1.0.0 is *maturing*: the exported function names and arguments
-are stable. A function or argument that is to change or go is first
-deprecated with a warning for one minor release, and the change is
+Since 1.0.0 the package is *maturing*: the exported function names and
+arguments are stable. A function or argument that is to change or go is
+first deprecated with a warning for one minor release, and the change is
 listed in `NEWS.md`.
 
 ## Running the extended tests
@@ -1292,9 +1292,9 @@ library as estimators. Any error in that translation is ours.
 If you use rmoriebricklayer in your research, please cite the software:
 
 > Ruhela, V. S. (2026). *rmoriebricklayer: Reproducible Data Capsules
-> with Provenance and Fallback.* R package version 1.0.0.
+> with Provenance and Fallback.* R package version 1.0.1.
 > <doi:10.32614/CRAN.package.rmoriebricklayer>.
-> <https://rootcoder007.r-universe.dev/rmoriebricklayer>
+> <https://CRAN.R-project.org/package=rmoriebricklayer>
 
 BibTeX (or run `citation("rmoriebricklayer")` after installation for the
 entry stamped with the exact installed version, sourced from

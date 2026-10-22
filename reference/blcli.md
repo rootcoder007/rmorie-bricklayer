@@ -291,7 +291,7 @@ to put the command on your PATH.
 
 ``` r
 blcli("version")
-#> rmoriebricklayer 1.0.0
+#> rmoriebricklayer 1.0.1
 blcli("help")
 #> usage: rmoriebricklayer <verb> [options]   (rmbl is the same command as rmoriebricklayer)
 #> 
@@ -359,28 +359,28 @@ blcli("nonsense")
 d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
 invisible(cpsrfrsh(d))
 blcli(c("verify", d))
-#> ## rmbl capsule verify with [rmoriebricklayer 1.0.0](https://github.com/rootcoder007/rmorie-bricklayer)
+#> ## rmbl capsule verify with [rmoriebricklayer 1.0.1](https://github.com/rootcoder007/rmorie-bricklayer)
 #> 
-#> **✔ ok**: 1 capsule under `/tmp/Rtmpzuozg5/capsule-1fd149bfdade`: 1 ok, 0 warn, 0 drift, 0 error
+#> **✔ ok**: 1 capsule under `/tmp/RtmpQEe1IQ/capsule-20cc42cc4514`: 1 ok, 0 warn, 0 drift, 0 error
 #> 
 #> | Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |
 #> |---|---|---|---|---|---|---|
-#> | `/tmp/Rtmpzuozg5/capsule-1fd149bfdade` | /tmp/Rtmpzuozg5/temp_libpath1fd15da62f80/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
+#> | `/tmp/RtmpQEe1IQ/capsule-20cc42cc4514` | /tmp/RtmpQEe1IQ/temp_libpath20cc50707fd0/rmoriebricklayer/extdata/otis_a01_individuals.csv | `6b1a0d2d11f6` | 0.5 KB | - | - | ✔ ok |
 #> 
 #> <details>
-#> <summary>✔ <code>/tmp/Rtmpzuozg5/capsule-1fd149bfdade</code>: ok, 7 of 7 checks passed (click to open)</summary>
+#> <summary>✔ <code>/tmp/RtmpQEe1IQ/capsule-20cc42cc4514</code>: ok, 7 of 7 checks passed (click to open)</summary>
 #> 
-#> - Source: /tmp/Rtmpzuozg5/temp_libpath1fd15da62f80/rmoriebricklayer/extdata/otis_a01_individuals.csv
+#> - Source: /tmp/RtmpQEe1IQ/temp_libpath20cc50707fd0/rmoriebricklayer/extdata/otis_a01_individuals.csv
 #> - Pinned SHA-256: `6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248`
 #> 
 #> | Status | Check | Detail |
 #> |---|---|---|
 #> | ✔ pass | schema: data_provenance.json | valid against capsule.schema.json |
-#> | ✔ pass | provenance_readable | /tmp/Rtmpzuozg5/capsule-1fd149bfdade/data_provenance.json |
-#> | ✔ pass | data_present | /tmp/Rtmpzuozg5/capsule-1fd149bfdade/otis_a01_individuals.csv |
+#> | ✔ pass | provenance_readable | /tmp/RtmpQEe1IQ/capsule-20cc42cc4514/data_provenance.json |
+#> | ✔ pass | data_present | /tmp/RtmpQEe1IQ/capsule-20cc42cc4514/otis_a01_individuals.csv |
 #> | ✔ pass | data_sha256 | 6b1a0d2d11f62eaffe4a95111286753aca9afc015fc4d0ea07c9953ff3030248 |
 #> | ✔ pass | data_size_bytes | 462 bytes on disk |
-#> | ✔ pass | data_readable | /tmp/Rtmpzuozg5/capsule-1fd149bfdade/otis_a01_individuals.csv |
+#> | ✔ pass | data_readable | /tmp/RtmpQEe1IQ/capsule-20cc42cc4514/otis_a01_individuals.csv |
 #> | ✔ pass | data_not_synthetic | no synthetic marker: sidecar, manifest and provenance all say real data |
 #> 
 #> </details>
@@ -391,7 +391,7 @@ blcli(c("verify", d))
 #> 
 #> ---
 #> 
-#> mode `verify` · fail-on `error` · rmoriebricklayer 1.0.0 · R version 4.6.1 (2026-06-24)
+#> mode `verify` · fail-on `error` · rmoriebricklayer 1.0.1 · R version 4.6.1 (2026-06-24)
 if (FALSE) { # interactive()
 # these read every help page, which takes a few seconds
 blcli(c("functions", "json"))
