@@ -46,9 +46,9 @@ for line in lines:
         out.append(line if code else plain(line))
 open("README.md", "w", encoding="utf-8").write("\n".join(out))
 
-# DESCRIPTION: plain addresses and DOIs in Description, and no URL or BugReports field
+# DESCRIPTION: plain addresses and DOIs in Description; URL and BugReports stay, since CRAN,
+# r-universe and the CRAN page link the package to its repository and issue tracker through them
 s = open("DESCRIPTION", encoding="utf-8").read()
-s = re.sub(r"^(URL|BugReports):.*?(?=^[A-Z][A-Za-z/@]*:|\Z)", "", s, flags=re.S | re.M)
 # a bare domain in single quotes, as DESCRIPTION writes other names, so the spell check skips it
 s = re.sub(r"<(" + U + r")>", lambda m: "'%s'" % bare(m.group(1)), s)
 s = re.sub(r"<doi:([^>]+)>", r"DOI \1", s)  # CRAN resolves each <doi:> online too
