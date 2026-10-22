@@ -159,7 +159,8 @@
 #'   \code{\link{tsvrf}}.
 #' @examplesIf interactive()
 #' # save from your own connection to archive.rmorie.com and the Wayback Machine at once
-#' cap <- arccap("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip", file.path(tempdir(), "cap"),
+#' src <- "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"
+#' cap <- arccap(src, file.path(tempdir(), "cap"),
 #'               upload = c("rmorie", "wayback"), reason = "Custody table cited in chapter 3")
 #' cap$archive
 #' w <- wbsave(urls)
