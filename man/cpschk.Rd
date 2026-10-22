@@ -20,7 +20,8 @@ cpschk(
   wayback = FALSE,
   glob = "",
   fp = TRUE,
-  seenlog = ""
+  seenlog = "",
+  archive = FALSE
 )
 
 \method{format}{rmbl_cpschk}(x, fmt = c("md", "json"), failon = NULL, ...)
@@ -80,6 +81,14 @@ matches this glob (\code{*} also matches \code{/}), or \code{""}.}
 or \code{""}. Every XMSS bundle gets an \code{xmss_index} row, failed
 when the same key signed its index with another signature in what was
 seen.}
+
+\item{archive}{Logical: use archive.rmorie.com when a source cannot be
+fetched. In \code{"drift"} and \code{"refresh"}, a source that neither
+answers nor has its pinned Wayback snapshot is fetched from a copy kept
+there with the pinned SHA-256 (public copies need no key); with
+\code{wayback = TRUE}, a changed source the Wayback Machine refuses is
+saved there instead (\code{wbsave(fallback = "rmorie")}, which needs a
+key: \code{dlogin()} or \env{MORIE_HOSTED_KEY}).}
 
 \item{x}{An \code{rmbl_cpschk} result.}
 

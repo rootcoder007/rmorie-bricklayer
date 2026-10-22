@@ -261,7 +261,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
 #' @return A list: `old` and `new` provenance, `path` (the fetched file), `src` (the source),
 #'   `cached` (whether the cached copy stood in) and `tmp` (whether `path` is a download to delete).
 #' @noRd
-.bl_fetch_pin <- function(dir, allowfile = FALSE, cache = NULL, root = dir) {
+.bl_fetch_pin <- function(dir, allowfile = FALSE, cache = NULL, root = dir, archive = FALSE) {
   prov <- loadprov(file.path(dir, "data_provenance.json"))
   if (is.null(prov)) stop(.rmbl_fn(), "no data_provenance.json in ", dir, call. = FALSE)
   s1 <- function(v) {
@@ -273,6 +273,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     stop(.rmbl_fn(), "the provenance names no source to fetch (resource$direct_url or source$url)", call. = FALSE)
   }
   cached <- FALSE
+  archived <- FALSE
   tmp <- FALSE
   if (grepl("^file://", src, ignore.case = TRUE) || !grepl("^[A-Za-z][A-Za-z0-9+.-]*://", src)) {
     got <- .bl_local_source(src, dir, allowfile, root)
@@ -287,6 +288,16 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
     # the Wayback copy the provenance pins, and no other: an unpinned source that answered 404 was
     # looked up in the archive without being asked (audit of 30bed8e, #17)
     ok <- tryCatch(fdl(src, got, attwb = s1(prov[["wayback"]][["csv_snapshot"]]) %||% ""), error = function(e) e)
+    # then the copy kept on archive.rmorie.com with the pinned bytes, before an earlier run's cache
+    pin <- s1(prov[["resource"]][["sha256"]]) %||% ""
+    if (!isTRUE(ok) && isTRUE(archive) && nzchar(pin)) {
+      unlink(got)
+      a <- tryCatch(arcget(src, got, sha256 = pin), error = function(e) .bl_unless_interrupted(e, NULL))
+      if (!is.null(a) && file.exists(got)) {
+        ok <- TRUE
+        archived <- TRUE
+      }
+    }
     keep <- if (!is.null(cache)) file.path(cache, paste0("source-", substr(csha256(charToRaw(src)), 1L, 16L)))
     if (isTRUE(ok) && !is.null(keep)) file.copy(got, keep, overwrite = TRUE)
     if (!isTRUE(ok)) {
@@ -300,7 +311,7 @@ cpsrfrsh <- function(dir, allowfile = FALSE) {
       tmp <- FALSE
     }
   }
-  f <- list(old = prov, path = got, src = src, cached = cached, tmp = tmp)
+  f <- list(old = prov, path = got, src = src, cached = cached, archived = archived, tmp = tmp)
   f$new <- tryCatch(.bl_pin(prov, got, s1(prov[["resource"]][["filename"]]) %||% basename(src)),
                     error = function(e) {
                       .bl_fetch_cleanup(f)

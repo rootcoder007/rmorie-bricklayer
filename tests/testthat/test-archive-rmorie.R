@@ -456,3 +456,104 @@ test_that("rmbl archive: save, find and get from a terminal", {
   expect_identical(r$status, 0L)
   expect_match(r$text, "out.csv  capture 20261020120000-00000001")
 })
+
+# cpschk(archive = TRUE): the archive copy with the pinned SHA-256 when the source and its Wayback
+# snapshot cannot be fetched, and wbsave(fallback = "rmorie") in refresh
+cps_capsule <- function(bytes = "a,b\n1,2\n") {
+  d <- withr::local_tempdir(.local_envir = parent.frame())
+  writeLines(bytes, file.path(d, "data.csv"), sep = "")
+  prov <- list(resource = list(direct_url = "https://example.org/data.csv", filename = "data.csv",
+                               sha256 = sha256file(file.path(d, "data.csv"))))
+  writeLines(tojs(prov, auto_unbox = TRUE), file.path(d, "data_provenance.json"))
+  d
+}
+
+test_that(".bl_fetch_pin() takes the archive copy with the pinned SHA-256 when the source fails", {
+  d <- cps_capsule()
+  pin <- sha256file(file.path(d, "data.csv"))
+  asked <- NULL
+  local_mocked_bindings(
+    fdl = function(url, dest, ...) stop("HTTP 503"),
+    arcget = function(x, dest, sha256 = NULL, ...) {
+      asked <<- list(x = x, sha256 = sha256)
+      file.copy(file.path(d, "data.csv"), dest, overwrite = TRUE)
+      invisible(dest)
+    })
+  f <- .bl_fetch_pin(d, archive = TRUE)
+  on.exit(.bl_fetch_cleanup(f), add = TRUE)
+  expect_true(f$archived)
+  expect_false(f$cached)
+  expect_identical(asked, list(x = "https://example.org/data.csv", sha256 = pin))
+  expect_identical(f$new$resource$sha256, pin)
+})
+
+test_that(".bl_fetch_pin() leaves the archive alone unless asked, and when nothing is pinned", {
+  d <- cps_capsule()
+  called <- FALSE
+  local_mocked_bindings(fdl = function(url, dest, ...) stop("HTTP 503"),
+                        arcget = function(...) {
+                          called <<- TRUE
+                          stop("no")
+                        })
+  expect_error(.bl_fetch_pin(d), "503")
+  expect_false(called)
+  # asked, but the archive has no copy: the fetch error stands
+  expect_error(.bl_fetch_pin(d, archive = TRUE), "503")
+  expect_true(called)
+  p <- loadprov(file.path(d, "data_provenance.json"))
+  p$resource$sha256 <- NULL
+  writeLines(tojs(p, auto_unbox = TRUE), file.path(d, "data_provenance.json"))
+  called <- FALSE
+  expect_error(.bl_fetch_pin(d, archive = TRUE), "503")
+  expect_false(called)
+})
+
+test_that("cpschk(archive = TRUE) notes the archive copy in drift", {
+  d <- cps_capsule()
+  local_mocked_bindings(
+    fdl = function(url, dest, ...) stop("HTTP 503"),
+    arcget = function(x, dest, ...) {
+      file.copy(file.path(d, "data.csv"), dest, overwrite = TRUE)
+      invisible(dest)
+    })
+  x <- cpschk(d, "drift", fp = FALSE, cache = FALSE, archive = TRUE)
+  expect_match(paste(unlist(x$capsules[[1L]]$notes), collapse = " "), "archive.rmorie.com with the pinned SHA-256")
+  expect_error(cpschk(d, archive = NA), "archive")
+})
+
+test_that("refresh with wayback hands wbsave() the archive fallback and notes what it did", {
+  d <- cps_capsule()
+  got <- NULL
+  wb <- function(status, arch) {
+    function(urls, ...) {
+      got <<- list(...)
+      out <- data.frame(url = urls, status = status, snapshot = NA_character_, message = "HTTP status=403",
+                        stringsAsFactors = FALSE)
+      attr(out, "archive") <- arch
+      out
+    }
+  }
+  f <- list(src = "https://example.org/data.csv", new = list(resource = list()))
+  o <- list(wayback = TRUE, archive = TRUE)
+  local_mocked_bindings(.bl_write_pin = function(d, f) stop("stop after the wayback step"))
+  local_mocked_bindings(wbsave = wb("failed", structure(data.frame(status = "archived", archive = "https://a/c/1",
+                                                                   stringsAsFactors = FALSE), class = "data.frame")))
+  out <- .bl_refresh_capsule(d, f, o, list(notes = NULL))
+  expect_identical(got$fallback, "rmorie")
+  expect_match(got$reason, "^Source of the data capsule ")
+  expect_true(nchar(got$reason) >= 20L)
+  expect_true(any(grepl("saved instead, https://a/c/1", out$notes)))
+  local_mocked_bindings(wbsave = wb("failed", structure("sign in first", class = "rmbl_fail")))
+  out <- .bl_refresh_capsule(d, f, o, list(notes = NULL))
+  expect_true(any(grepl("archive.rmorie.com: sign in first", out$notes)))
+  local_mocked_bindings(wbsave = wb("failed", data.frame(status = "failed: upload answered 401", archive = NA,
+                                                         stringsAsFactors = FALSE)))
+  out <- .bl_refresh_capsule(d, f, o, list(notes = NULL))
+  expect_true(any(grepl("archive.rmorie.com: failed: upload answered 401", out$notes)))
+  # without archive = TRUE, wbsave() is called as before
+  local_mocked_bindings(wbsave = wb("failed", NULL))
+  out <- .bl_refresh_capsule(d, f, list(wayback = TRUE, archive = FALSE), list(notes = NULL))
+  expect_null(got$fallback)
+  expect_null(got$reason)
+  expect_false(any(grepl("archive.rmorie.com", out$notes)))
+})

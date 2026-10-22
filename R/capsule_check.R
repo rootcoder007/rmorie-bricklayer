@@ -93,6 +93,13 @@
 #' @param wayback Logical: with \code{"refresh"}, capture each changed
 #'   http(s) source in the Wayback Machine first (archive.org keys, as
 #'   \code{wbsave()} reads them).
+#' @param archive Logical: use archive.rmorie.com when a source cannot be
+#'   fetched. In \code{"drift"} and \code{"refresh"}, a source that neither
+#'   answers nor has its pinned Wayback snapshot is fetched from a copy kept
+#'   there with the pinned SHA-256 (public copies need no key); with
+#'   \code{wayback = TRUE}, a changed source the Wayback Machine refuses is
+#'   saved there instead (\code{wbsave(fallback = "rmorie")}, which needs a
+#'   key: \code{dlogin()} or \env{MORIE_HOSTED_KEY}).
 #' @param glob Character scalar: check only the capsule files whose path
 #'   matches this glob (\code{*} also matches \code{/}), or \code{""}.
 #' @param fp Logical: measure the footprint of the checks
@@ -155,13 +162,14 @@
 #' @export
 cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"), key = "", pubkey = "",
                    psiwarn = 0.1, psifail = 0.25, base = NULL, cache = NULL, allowfile = FALSE,
-                   snapshot = FALSE, wayback = FALSE, glob = "", fp = TRUE, seenlog = "") {
+                   snapshot = FALSE, wayback = FALSE, glob = "", fp = TRUE, seenlog = "", archive = FALSE) {
   path <- .rmbl_string1(path, "path")
   if (!dir.exists(path)) stop(.rmbl_fn(), "`path` is not an existing directory: ", .rmbl_printable(path), call. = FALSE)
   o <- list(path = path, mode = .rmbl_arg(mode), key = .bl_str0(key, "key"), pubkey = .bl_str0(pubkey, "pubkey"),
             psiwarn = .rmbl_scalar(psiwarn, "psiwarn", 0), psifail = .rmbl_scalar(psifail, "psifail", 0),
             base = .bl_base_arg(base), allowfile = .bl_allowfile_arg(allowfile),
-            snapshot = .rmbl_flag1(snapshot, "snapshot"), wayback = .rmbl_flag1(wayback, "wayback"))
+            snapshot = .rmbl_flag1(snapshot, "snapshot"), wayback = .rmbl_flag1(wayback, "wayback"),
+            archive = .rmbl_flag1(archive, "archive"))
   if (o$psiwarn > o$psifail) {
     stop(.rmbl_fn(), sprintf("`psiwarn` (%g) must not exceed `psifail` (%g)", o$psiwarn, o$psifail), call. = FALSE)
   }
@@ -306,11 +314,16 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
 #' @noRd
 .bl_drift_capsule <- function(d, o) {
   pf <- file.path(d, "data_provenance.json")
-  f <- tryCatch(.bl_fetch_pin(d, o$allowfile, o$cache, root = o$path), error = function(e) e)
+  f <- tryCatch(.bl_fetch_pin(d, o$allowfile, o$cache, root = o$path, archive = isTRUE(o$archive)),
+                error = function(e) e)
   if (inherits(f, "error")) return(list(rows = .bl_check_row(d, "drift", pf, "source_fetched", FALSE,
                                                               conditionMessage(f))))
   on.exit(.bl_fetch_cleanup(f), add = TRUE)
-  out <- list(notes = if (f$cached) "source unreachable: used the copy cached by an earlier run",
+  out <- list(notes = if (f$cached) {
+                "source unreachable: used the copy cached by an earlier run"
+              } else if (isTRUE(f$archived)) {
+                "source unreachable: used the copy kept on archive.rmorie.com with the pinned SHA-256"
+              },
               fetched_sha256 = f$new$resource$sha256)
   diff <- mnfdiff(f$old, f$new)
   ch <- diff[diff$change != "unchanged", , drop = FALSE]
@@ -397,7 +410,10 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
 .bl_refresh_capsule <- function(d, f, o, out) {
   pf <- file.path(d, "data_provenance.json")
   if (o$wayback && grepl("^https?://", f$src)) {
-    wb <- tryCatch(wbsave(f$src, quiet = TRUE), error = function(e) e)
+    why <- sprintf("Source of the data capsule %s, refreshed by cpschk()", basename(d))
+    wb <- tryCatch(wbsave(f$src, quiet = TRUE, fallback = if (isTRUE(o$archive)) "rmorie",
+                          reason = if (isTRUE(o$archive)) why),
+                   error = function(e) e)
     if (inherits(wb, "error")) {
       out$notes <- c(out$notes, paste("wayback:", conditionMessage(wb)))
     } else if (wb$status[1L] %in% c("saved", "existing")) {
@@ -405,6 +421,17 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
       f$new$wayback$captured_at_utc <- f$new$resource$retrieved_utc
     } else {
       out$notes <- c(out$notes, paste("wayback: capture", wb$status[1L], wb$message[1L]))
+      ar <- attr(wb, "archive")
+      if (inherits(ar, "rmbl_fail")) {
+        out$notes <- c(out$notes, paste("archive.rmorie.com:", ar))
+      } else if (!is.null(ar) && nrow(as.data.frame(unclass(ar)))) {
+        a1 <- as.data.frame(unclass(ar))[1L, ]
+        out$notes <- c(out$notes, if (identical(a1$status, "archived")) {
+          paste("archive.rmorie.com: saved instead,", a1$archive)
+        } else {
+          paste("archive.rmorie.com:", a1$status)
+        })
+      }
     }
   }
   w <- tryCatch(.bl_write_pin(d, f), error = function(e) e)
