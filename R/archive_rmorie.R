@@ -101,7 +101,9 @@ arcfind <- function(url, from = NULL, to = NULL, limit = 1000L) {
   limit <- .rmbl_scalar(limit, "limit", 1, 10000, integer = TRUE)
   stamp <- function(x, nm) {
     x <- .rmbl_string1(as.character(x), nm)
-    if (!grepl("^[0-9]{4,14}$", x)) stop(sprintf("`%s` must be 4 to 14 digits of a UTC time, YYYYMMDDhhmmss", nm), call. = FALSE)
+    if (!grepl("^[0-9]{4,14}$", x)) {
+      stop(sprintf("`%s` must be 4 to 14 digits of a UTC time, YYYYMMDDhhmmss", nm), call. = FALSE)
+    }
     x
   }
   base <- .bl_arc_base()
@@ -202,7 +204,8 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
   writeBin(res$body, tmp)
   got <- sha256file(tmp)
   if (!identical(got, cap$sha)) {
-    stop(sprintf("the bytes received hash to %s, not to the capture's %s: nothing was written", got, cap$sha), call. = FALSE)
+    stop(sprintf("the bytes received hash to %s, not to the capture's %s: nothing was written", got, cap$sha),
+         call. = FALSE)
   }
   if (!.bl_move(tmp, dest)) stop(sprintf("cannot write %s", dest), call. = FALSE)
   invisible(structure(dest, capture_id = cap$id, url = cap$url, sha256 = got,
@@ -224,7 +227,8 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
   sha <- sha256file(path)
   have <- .bl_arc_req("GET", paste0("/v1/blob/", sha), key = key, base = base)
   if (have$status == 404L) {
-    put <- .bl_arc_req("PUT", paste0("/v1/blob/", sha), file = path, ctype = mime, key = key, base = base, timeout = tmout)
+    put <- .bl_arc_req("PUT", paste0("/v1/blob/", sha), file = path, ctype = mime, key = key, base = base,
+                       timeout = tmout)
     if (!put$status %in% c(200L, 201L)) stop(.bl_arc_why(put, "uploading the bytes"), call. = FALSE)
   } else if (have$status != 200L) {
     stop(.bl_arc_why(have, "checking the archive"), call. = FALSE)

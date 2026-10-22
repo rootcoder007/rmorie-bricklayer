@@ -8,8 +8,8 @@ fake_archive <- function() {
   s$calls <- list()
   s$fail <- list()
   reply <- function(status, json = NULL, body = NULL) {
-    list(status = as.integer(status), json = json,
-      body = body %||% if (!is.null(json)) charToRaw(as.character(tojs(json, auto_unbox = TRUE))) else raw(0), error = "")
+    if (is.null(body)) body <- if (is.null(json)) raw(0) else charToRaw(as.character(tojs(json, auto_unbox = TRUE)))
+    list(status = as.integer(status), json = json, body = body, error = "")
   }
   s$handle <- function(method, path, body = NULL, file = NULL, ctype = "", key = NULL, base = "", timeout = 60L) {
     s$calls[[length(s$calls) + 1L]] <- list(method = method, path = path, key = key, body = body)
@@ -17,9 +17,14 @@ fake_archive <- function() {
     if (!is.null(f)) return(f)
     if (method == "GET" && grepl("^/cdx/search/cdx", path)) {
       u <- utils::URLdecode(sub("^.*[?&]url=([^&]*).*$", "\\1", path))
-      hits <- Filter(function(c) if (endsWith(u, "*")) startsWith(c$url, sub("\\*$", "", u)) else identical(c$url, u), s$caps)
-      rows <- lapply(hits, function(c) list("k", c$ts, c$url, c$mime, "200", paste0("sha256:", c$sha), as.character(c$len),
-        c$id, c$sha, "client", c$visibility))
+      matches <- function(c) {
+        if (endsWith(u, "*")) startsWith(c$url, sub("\\*$", "", u)) else identical(c$url, u)
+      }
+      row <- function(c) {
+        list("k", c$ts, c$url, c$mime, "200", paste0("sha256:", c$sha), as.character(c$len), c$id, c$sha, "client",
+             c$visibility)
+      }
+      rows <- lapply(Filter(matches, s$caps), row)
       return(reply(200, c(list(list("urlkey", "timestamp", "original", "mimetype", "statuscode", "digest", "length",
         "capture_id", "sha256", "mode", "visibility")), rows)))
     }
@@ -54,7 +59,8 @@ fake_archive <- function() {
     sha <- csha256(bytes)
     s$blobs[[sha]] <- bytes
     id <- sprintf("%s-%08x", ts, length(s$caps) + 1L)
-    s$caps[[id]] <- list(id = id, url = url, ts = ts, sha = sha, len = length(bytes), mime = "text/csv", visibility = "public")
+    s$caps[[id]] <- list(id = id, url = url, ts = ts, sha = sha, len = length(bytes), mime = "text/csv",
+                         visibility = "public")
     id
   }
   s
@@ -63,7 +69,9 @@ fake_archive <- function() {
 with_archive <- function(s, code, key = "sk-test-key") {
   local_mocked_bindings(
     .bl_arc_req = function(method, path, body = NULL, file = NULL, ctype = "application/octet-stream", key = NULL,
-                           base = "", timeout = 60L) s$handle(method, path, body, file, ctype, key, base, timeout),
+                           base = "", timeout = 60L) {
+      s$handle(method, path, body, file, ctype, key, base, timeout)
+    },
     .bl_hosted_key = function() key,
     .package = "rmoriebricklayer", .env = environment()
   )
@@ -125,10 +133,11 @@ test_that("one request: the key goes only in the Authorization header, the reply
 })
 
 test_that("a failed reply is said in the package's words", {
-  expect_match(.bl_arc_why(list(status = -1L, json = NULL, error = "timeout"), "finding"), "did not answer \\(timeout\\)")
-  expect_match(.bl_arc_why(list(status = 0L, json = NULL, error = ""), "finding"), "no reply")
-  expect_match(.bl_arc_why(list(status = 451L, json = list(error = "refused"), error = ""), "saving"), "HTTP 451 \\(refused\\)")
-  expect_match(.bl_arc_why(list(status = 500L, json = NULL, error = ""), "saving"), "HTTP 500$")
+  why <- function(status, json = NULL, error = "") .bl_arc_why(list(status = status, json = json, error = error), "x")
+  expect_match(why(-1L, error = "timeout"), "did not answer \\(timeout\\)")
+  expect_match(why(0L), "no reply")
+  expect_match(why(451L, list(error = "refused")), "HTTP 451 \\(refused\\)")
+  expect_match(why(500L), "HTTP 500$")
 })
 
 test_that("arcfind() lists captures oldest first, with their pages and exact-bytes addresses", {
@@ -156,7 +165,9 @@ test_that("arcfind() lists captures oldest first, with their pages and exact-byt
     expect_error(arcfind("https://s.org/a.csv"), "HTTP 503 \\(busy\\)")
   })
   many <- fake_archive()
-  for (i in 1:22) many$add("https://s.org/m.csv", charToRaw(sprintf("%d\n", i)), sprintf("2026%02d01000000", (i %% 12) + 1L))
+  for (i in 1:22) {
+    many$add("https://s.org/m.csv", charToRaw(sprintf("%d\n", i)), sprintf("2026%02d01000000", (i %% 12) + 1L))
+  }
   with_archive(many, expect_output(print(arcfind("https://s.org/m.csv")), "and 2 more"))
   one <- fake_archive()
   one$add("https://s.org/o.csv", charToRaw("o\n"))
@@ -207,6 +218,10 @@ test_that("arcget() fetches exact bytes by id or address, and refuses any other 
 
 test_that("arccap(upload = 'rmorie') writes WARC files and uploads each capture once", {
   s <- fake_archive()
+  save1 <- function() {
+    arccap("https://s.org/a.csv", tempfile("cap"), tsa = NULL, upload = "rmorie",
+           reason = "Tables cited in a methods paper")
+  }
   dir <- withr::local_tempdir()
   local_mocked_bindings(blfetch = cap_stub(list("https://s.org/a.csv" = charToRaw("a,b\n1,2\n"),
     "https://s.org/b.zip" = charToRaw("PK"))))
@@ -227,19 +242,19 @@ test_that("arccap(upload = 'rmorie') writes WARC files and uploads each capture 
     expect_output(print(cap), "archive.rmorie.com: 2 saved")
     # the same bytes again: checked, not sent again
     n <- length(Filter(function(c) c$method == "PUT", s$calls))
-    arccap("https://s.org/a.csv", withr::local_tempdir(), tsa = NULL, upload = "rmorie", reason = "Tables cited in a methods paper")
+    save1()
     expect_identical(length(Filter(function(c) c$method == "PUT", s$calls)), n)
     # a failing archive keeps the local copy and says so
     s$fail[["POST v1"]] <- list(status = 451L, json = list(error = "refused"), body = raw(0), error = "")
-    cap <- arccap("https://s.org/a.csv", withr::local_tempdir(), tsa = NULL, upload = "rmorie", reason = "Tables cited in a methods paper")
+    cap <- save1()
     expect_match(cap$status, "failed: recording the capture.*451.*kept locally")
     s$fail[["GET v1"]] <- list(status = 500L, json = NULL, body = raw(0), error = "")
-    cap <- arccap("https://s.org/a.csv", withr::local_tempdir(), tsa = NULL, upload = "rmorie", reason = "Tables cited in a methods paper")
+    cap <- save1()
     expect_match(cap$status, "checking the archive")
     s$fail[["GET v1"]] <- NULL
     s$blobs <- list()
     s$fail[["PUT v1"]] <- list(status = 413L, json = list(error = "too big"), body = raw(0), error = "")
-    cap <- arccap("https://s.org/a.csv", withr::local_tempdir(), tsa = NULL, upload = "rmorie", reason = "Tables cited in a methods paper")
+    cap <- save1()
     expect_match(cap$status, "uploading the bytes.*413")
   })
   with_archive(s, key = NULL, {
@@ -261,17 +276,21 @@ test_that("arccap() checks upload, reason, visibility and warc before fetching a
 
 test_that("arccap(upload = 'wayback') asks the Wayback Machine too, and says when it cannot", {
   dir <- withr::local_tempdir()
-  local_mocked_bindings(blfetch = cap_stub(list("https://s.org/a.csv" = charToRaw("a"), "https://s.org/b.csv" = charToRaw("b"))),
-    wbsave = function(urls, ...) structure(data.frame(url = urls[1], status = "saved",
-      timestamp = "20261022000000"), class = c("rmbl_wayback_save", "data.frame")))
+  wb <- function(urls, status, timestamp) {
+    d <- data.frame(url = urls, status = status, timestamp = timestamp)
+    structure(d, class = c("rmbl_wayback_save", "data.frame"))
+  }
+  local_mocked_bindings(
+    blfetch = cap_stub(list("https://s.org/a.csv" = charToRaw("a"), "https://s.org/b.csv" = charToRaw("b"))),
+    wbsave = function(urls, ...) wb(urls[1], "saved", "20261022000000")
+  )
   cap <- arccap(c("https://s.org/a.csv", "https://s.org/b.csv"), dir, tsa = NULL, upload = "wayback", warc = FALSE)
   expect_identical(cap$wayback, c("saved 20261022000000", NA))
   expect_true(all(is.na(cap$warc)))
   local_mocked_bindings(wbsave = function(urls, ...) stop("wbsave() needs your archive.org keys"))
   cap <- arccap("https://s.org/a.csv", withr::local_tempdir(), tsa = NULL, upload = "wayback")
   expect_match(cap$wayback, "^not asked: wbsave\\(\\) needs your archive.org keys")
-  local_mocked_bindings(wbsave = function(urls, ...) structure(data.frame(url = urls, status = "failed", timestamp = NA_character_),
-    class = c("rmbl_wayback_save", "data.frame")))
+  local_mocked_bindings(wbsave = function(urls, ...) wb(urls, "failed", NA_character_))
   cap <- arccap("https://s.org/a.csv", withr::local_tempdir(), tsa = NULL, upload = "wayback")
   expect_identical(cap$wayback, "failed")
 })
