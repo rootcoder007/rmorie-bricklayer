@@ -148,3 +148,35 @@
   writeLines(all[order(keys, method = "radix")], index, useBytes = TRUE)
   invisible(index)
 }
+
+#' Reads a capture's payload back from a folder written by arccap() (its CDXJ index and WARC files).
+#' @param dir The capture folder.
+#' @param url The address.
+#' @param dest The file to write.
+#' @param sha256 The SHA-256 to match, or NULL for the latest capture.
+#' @return `dest`.
+#' @noRd
+.bl_warc_get <- function(dir, url, dest, sha256 = NULL) {
+  idx <- file.path(dir, "indexes", "index.cdxj")
+  if (!file.exists(idx)) stop(sprintf("%s has no index (indexes/index.cdxj)", dir), call. = FALSE)
+  lines <- readLines(idx, warn = FALSE)
+  recs <- lapply(sub("^\\S+ \\S+ ", "", lines), function(j) tryCatch(fromjs(j), error = function(e) NULL))
+  hit <- which(vapply(recs, function(r) identical(r$url, url) && (is.null(sha256) || identical(r$sha256, sha256)), NA))
+  if (!length(hit)) stop(sprintf("no capture of %s in %s", url, dir), call. = FALSE)
+  r <- recs[[utils::tail(hit, 1L)]]
+  con <- file(file.path(dir, "archive", r$filename), "rb")
+  on.exit(close(con), add = TRUE)
+  seek(con, as.numeric(r$offset))
+  rec <- readBin(con, "raw", as.numeric(r$length))
+  # the response record: WARC headers, a blank line, the HTTP head, a blank line, the payload, CRLF CRLF
+  crlf2 <- function(x, from) {
+    for (k in seq.int(from, length(x) - 3L)) if (x[k] == 0x0d && x[k + 1L] == 0x0a && x[k + 2L] == 0x0d && x[k + 3L] == 0x0a) return(k)
+    stop("a damaged WARC record", call. = FALSE)
+  }
+  a <- crlf2(rec, 1L)
+  b <- crlf2(rec, a + 4L)
+  body <- rec[(b + 4L):(length(rec) - 4L)]
+  writeBin(body, dest)
+  if (!identical(sha256file(dest), r$sha256)) stop(sprintf("the WARC copy in %s does not match its index", dir), call. = FALSE)
+  dest
+}

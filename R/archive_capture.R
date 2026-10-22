@@ -131,11 +131,24 @@
 #' @param ak,sk archive.org keys; default from the environment as
 #'   \code{\link{wbsave}} reads them.
 #' @param tmout Seconds allowed for each download and each upload (default 600).
+#' @param upload Where else to keep the captures: \code{"rmorie"} (archive.rmorie.com, from this
+#'   connection, with your key; see \code{\link{dlogin}}), \code{"wayback"} (ask the Wayback Machine to
+#'   save the same addresses, with archive.org keys as for \code{\link{wbsave}}), both, or \code{NULL}
+#'   (default: only the local folder and, with \code{item}, archive.org).
+#' @param reason Why the files are kept, one sentence of 20 characters or more; needed with
+#'   \code{upload = "rmorie"}, and written into each WARC file.
+#' @param visibility \code{"public"} (default: listed in the archive's search; anyone can download and
+#'   check it) or \code{"private"} (only you, with your key).
+#' @param warc Write each capture as a WARC/1.1 file with a CDXJ index (\code{dir/archive/},
+#'   \code{dir/indexes/index.cdxj}), the layout pywb and warcio read and \code{\link{fetchvrf}} falls
+#'   back to (default \code{TRUE}).
 #' @return A data frame of class \code{rmbl_archive_capture}, one row per URL:
 #'   \code{url}, \code{file}, \code{sha256}, \code{bytes}, \code{fetched_utc},
-#'   \code{status} (\code{"captured"}, \code{"uploaded"} or \code{"failed: ..."}) and
+#'   \code{status} (\code{"captured"}, \code{"uploaded"}, \code{"archived"} or \code{"failed: ..."}),
 #'   \code{mirror} (the archive.org download address, for
-#'   \code{\link{fetchvrf}}); attributes \code{manifest}, \code{timestamp} (a
+#'   \code{\link{fetchvrf}}), \code{warc} (the local WARC file), \code{capture_id} and \code{archive}
+#'   (its page at archive.rmorie.com) and \code{wayback} (the Wayback Machine's answer);
+#'   attributes \code{manifest}, \code{timestamp} (a
 #'   \code{\link{tsvrf}} result, or \code{NULL}) and \code{item}.
 #' @references Adams C, Cain P, Pinkas D, Zuccherato R (2001). Internet X.509 Public
 #'   Key Infrastructure Time-Stamp Protocol (TSP). RFC 3161. \doi{10.17487/RFC3161}
@@ -145,6 +158,10 @@
 #' @seealso \code{\link{fetchvrf}}, \code{\link{wbsave}},
 #'   \code{\link{tsvrf}}.
 #' @examplesIf interactive()
+#' # save from your own connection to archive.rmorie.com and the Wayback Machine at once
+#' cap <- arccap("https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip", file.path(tempdir(), "cap"),
+#'               upload = c("rmorie", "wayback"), reason = "Custody table cited in chapter 3")
+#' cap$archive
 #' w <- wbsave(urls)
 #' lic <- "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
 #' meta <- list(title = "Statistics Canada tables (captures)",
@@ -155,7 +172,23 @@
 #'                mirrors = cap$mirror[1])
 #' @export
 arccap <- function(urls, dir, item = NULL, meta = list(), tsa = "https://freetsa.org/tsr",
-                            ak = NULL, sk = NULL, tmout = 600L) {
+                            ak = NULL, sk = NULL, tmout = 600L, upload = NULL, reason = NULL,
+                            visibility = c("public", "private"), warc = TRUE) {
+  visibility <- match.arg(visibility)
+  if (!is.null(upload)) {
+    if (!is.character(upload) || anyNA(upload) || !length(upload) || !all(upload %in% c("rmorie", "wayback"))) {
+      stop('`upload` must be "rmorie", "wayback", both, or NULL', call. = FALSE)
+    }
+    upload <- unique(upload)
+  }
+  if ("rmorie" %in% upload) {
+    reason <- if (is.null(reason)) "" else .rmbl_string1(reason, "reason")
+    if (nchar(trimws(reason)) < 20L) {
+      stop("`reason` is needed with upload = \"rmorie\": one sentence (20 characters or more) on why you keep the files",
+           call. = FALSE)
+    }
+  }
+  if (!is.logical(warc) || length(warc) != 1L || is.na(warc)) stop("`warc` must be TRUE or FALSE", call. = FALSE)
   if (inherits(urls, "rmbl_wayback_save")) {
     refused <- urls$status == "failed" &
       grepl("cannot find|blocks access|HTTP status=40[134]", ifelse(is.na(urls$message), "", urls$message))
@@ -184,7 +217,8 @@ arccap <- function(urls, dir, item = NULL, meta = list(), tsa = "https://freetsa
   if (!dir.exists(dir) && !dir.create(dir, recursive = TRUE)) stop(sprintf("cannot create %s", dir), call. = FALSE)
   out <- data.frame(url = urls, file = NA_character_, sha256 = NA_character_, bytes = NA_real_,
                     fetched_utc = NA_character_, status = NA_character_, mirror = NA_character_,
-                    stringsAsFactors = FALSE)
+                    warc = NA_character_, capture_id = NA_character_, archive = NA_character_,
+                    wayback = NA_character_, stringsAsFactors = FALSE)
   used <- character()
   for (i in seq_along(urls)) {
     f <- .bl_capture_name(urls[[i]])
@@ -243,6 +277,55 @@ arccap <- function(urls, dir, item = NULL, meta = list(), tsa = "https://freetsa
         stop(sprintf("archive.org refused %s (HTTP %s %s): nothing more was sent", files[k], res$status, res$error),
              call. = FALSE)
       }
+    }
+  }
+  ok <- out$status %in% c("captured", "uploaded")
+  # WARC/1.1 files and a CDXJ index: a pywb collection, and fetchvrf()'s last fallback
+  if (isTRUE(warc) && any(ok)) {
+    dir.create(file.path(dir, "archive"), showWarnings = FALSE)
+    dir.create(file.path(dir, "indexes"), showWarnings = FALSE)
+    lines <- character()
+    for (i in which(ok)) {
+      t <- as.POSIXct(out$fetched_utc[i], format = "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
+      id <- paste0(format(t, "%Y%m%d%H%M%S", tz = "UTC"), "-", substr(out$sha256[i], 1L, 8L))
+      wf <- file.path(dir, "archive", paste0(id, ".warc"))
+      lines <- c(lines, .bl_warc_write(wf, out$url[i], file.path(dir, out$file[i]), t, id, mime = .bl_arc_mime(out$file[i]),
+                                       meta = if (!is.null(reason) && nzchar(reason)) c(reason = gsub("[\r\n]", " ", reason)) else character()))
+      out$warc[i] <- wf
+    }
+    .bl_cdxj_add(file.path(dir, "indexes", "index.cdxj"), lines)
+  }
+  if ("rmorie" %in% upload && any(ok)) {
+    base <- .bl_arc_base()
+    key <- .bl_arc_key(base)
+    if (is.null(key)) {
+      stop(sprintf("archive.rmorie.com needs your key: run dlogin() (or `%s login`) once; the files are kept in %s",
+                   .bl_prog(), dir), call. = FALSE)
+    }
+    for (i in which(ok)) {
+      r <- tryCatch(.bl_arc_upload(file.path(dir, out$file[i]), out$url[i],
+                                   as.POSIXct(out$fetched_utc[i], format = "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+                                   reason, visibility, .bl_arc_mime(out$file[i]), base, key, tmout),
+                    error = function(e) .bl_unless_interrupted(e, structure(conditionMessage(e), class = "rmbl_fail")))
+      if (inherits(r, "rmbl_fail")) {
+        out$status[i] <- paste("failed:", r, "(the file is kept locally)")
+      } else {
+        out$capture_id[i] <- r$capture_id
+        out$archive[i] <- r$capture
+        if (out$status[i] == "captured") out$status[i] <- "archived"
+      }
+    }
+  }
+  if ("wayback" %in% upload && any(ok)) {
+    w <- tryCatch(wbsave(out$url[ok], ak = ak, sk = sk, quiet = TRUE),
+                  error = function(e) .bl_unless_interrupted(e, structure(conditionMessage(e), class = "rmbl_fail")))
+    if (inherits(w, "rmbl_fail")) {
+      out$wayback[ok] <- paste("not asked:", w)
+    } else {
+      wd <- as.data.frame(unclass(w))
+      j <- match(out$url[ok], wd$url)
+      out$wayback[ok] <- ifelse(is.na(j), NA_character_,
+                                ifelse(is.na(wd$timestamp[j]), wd$status[j], paste(wd$status[j], wd$timestamp[j])))
     }
   }
   attr(out, "manifest") <- mpath

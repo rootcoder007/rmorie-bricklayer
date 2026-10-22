@@ -4,7 +4,14 @@
 \alias{fetchvrf}
 \title{Fetch a file from its source or a mirror, verified by its SHA-256}
 \usage{
-fetchvrf(url, dest, sha256 = NULL, mirrors = character(), tmout = 120L)
+fetchvrf(
+  url,
+  dest,
+  sha256 = NULL,
+  mirrors = character(),
+  tmout = 120L,
+  arcs = "rmorie"
+)
 }
 \arguments{
 \item{url}{The source URL (https).}
@@ -17,10 +24,14 @@ fetchvrf(url, dest, sha256 = NULL, mirrors = character(), tmout = 120L)
 source.}
 
 \item{tmout}{Seconds allowed for each download (default 120).}
+
+\item{arcs}{Archives tried after the source, its Wayback snapshot and the mirrors:
+\code{"rmorie"} (archive.rmorie.com, by \code{\link{arcget}}) and folders written by
+\code{\link{arccap}} (read from their WARC files), in order. \code{character()} tries none.}
 }
 \value{
-Invisibly, a list: \code{source} (\code{"live"}, \code{"wayback"} or
-\code{"mirror"}), \code{url} (the URL that served the kept copy), \code{sha256},
+Invisibly, a list: \code{source} (\code{"live"}, \code{"wayback"},
+\code{"mirror"}, \code{"rmorie"} or \code{"local"}), \code{url} (the URL that served the kept copy), \code{sha256},
 \code{bytes}, and \code{tried} (a data frame of every attempt: \code{url},
 \code{outcome}).
 }
