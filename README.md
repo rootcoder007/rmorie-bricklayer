@@ -917,7 +917,7 @@ estimators. Any error in that translation is ours.
 
 If you use rmoriebricklayer in your research, please cite the software:
 
-> Ruhela, V. S. (2026). *rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback.* R package version 1.0.1. doi:10.32614/CRAN.package.rmoriebricklayer. https://CRAN.R-project.org/package=rmoriebricklayer
+> Ruhela, V. S. (2026). *rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback.* R package version 1.0.2. doi:10.32614/CRAN.package.rmoriebricklayer. https://CRAN.R-project.org/package=rmoriebricklayer
 
 BibTeX (or run `citation("rmoriebricklayer")` after installation for the entry
 stamped with the exact installed version, sourced from `inst/CITATION`):
