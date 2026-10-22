@@ -178,7 +178,13 @@ arcget <- function(x, dest, sha256 = NULL, at = NULL, tmout = 600L) {
       want <- as.POSIXct(substr(paste0(at, "0000000000"), 1L, 14L), format = "%Y%m%d%H%M%S", tz = "UTC")
       i <- which.min(abs(as.numeric(found$captured) - as.numeric(want)))
     }
-    if (!is.null(sha256) && any(found$sha256 == sha256)) i <- utils::tail(which(found$sha256 == sha256), 1L)
+    if (!is.null(sha256)) {
+      if (!any(found$sha256 == sha256)) {
+        stop(sprintf("no capture of %s has SHA-256 %s; the archive holds %s", x, sha256,
+                     paste(unique(found$sha256), collapse = ", ")), call. = FALSE)
+      }
+      i <- utils::tail(which(found$sha256 == sha256), 1L)
+    }
     cap <- list(id = found$capture_id[i], url = found$url[i], ts = format(found$captured[i], "%Y%m%d%H%M%S"),
                 sha = found$sha256[i])
   }

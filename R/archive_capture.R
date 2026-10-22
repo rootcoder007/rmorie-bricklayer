@@ -339,7 +339,7 @@ arccap <- function(urls, dir, item = NULL, meta = list(), tsa = "https://freetsa
 print.rmbl_archive_capture <- function(x, ...) {
   d <- as.data.frame(x)
   n <- table(sub(":.*$", "", d$status))
-  cat(sprintf("Captured %d of %d URLs%s\n", sum(d$status %in% c("captured", "uploaded")), nrow(d),
+  cat(sprintf("Captured %d of %d URLs%s\n", sum(d$status %in% c("captured", "uploaded", "archived")), nrow(d),
               if (!is.null(attr(x, "item"))) sprintf(" (archive.org item %s: %d uploaded)", attr(x, "item"),
                                                      sum(d$status == "uploaded")) else ""))
   ts <- attr(x, "timestamp")
@@ -351,7 +351,8 @@ print.rmbl_archive_capture <- function(x, ...) {
                   "imprint and signature verified; give tsvrf() a trust anchor to check the chain"
                 else "NOT verified"))
   }
-  print(utils::head(d[c("file", "bytes", "status")], 10L), row.names = FALSE)
+  if (any(!is.na(d$archive))) cat(sprintf("archive.rmorie.com: %d saved\n", sum(!is.na(d$archive))))
+  print(utils::head(d[intersect(c("file", "bytes", "status"), names(d))], 10L), row.names = FALSE)
   if (any(names(n) == "failed")) cat(sprintf("%d failed: see the status column\n", n[["failed"]]))
   invisible(x)
 }
