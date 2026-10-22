@@ -33,8 +33,8 @@ serves one of these three.
 ## Why it exists
 
 I analyze Canadian justice and health statistics from published tables.
-Noticed that three things kept going wrong in many cases, and a checksum
-alone catches none of them.
+Noticed that three things kept on going wrong in many cases, and a
+checksum alone catches none of them.
 
 - **Sources go down or move.** The federal open-data portal,
   `open.canada.ca`, was unreachable in October 2026 while analyses
