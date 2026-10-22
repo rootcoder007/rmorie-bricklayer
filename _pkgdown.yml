@@ -101,6 +101,8 @@ reference:
       - blfetch
       - fetchvrf
       - arccap
+      - arcfind
+      - arcget
       - siufetch
       - dldata
       - fdl
