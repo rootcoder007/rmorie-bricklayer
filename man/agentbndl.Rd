@@ -53,19 +53,33 @@ agentbndl("scaffold a bundle for analysis.R from the Toronto CKAN data")
 agentbndl("sign and verify my capsule", route = "ollama")
 \dontshow{\}) # examplesIf}
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-
 # With every route switched off (no key in the environment and no saved
 # settings: the settings folder is pointed at an empty one) the call returns
 # a setup hint, not an error, and reaches no network -- safe to run anywhere:
-keys <- c("OLLAMA_HOST", "MORIE_LLM_BASE_URL", "XDG_CONFIG_HOME",
-          llmprvd()$key_env,
-          llmprvd()$alt_env[nzchar(llmprvd()$alt_env)])
+keys <- c(
+  "OLLAMA_HOST",
+  "MORIE_LLM_BASE_URL",
+  "XDG_CONFIG_HOME",
+  llmprvd()$key_env,
+  llmprvd()$alt_env[nzchar(llmprvd()$alt_env)]
+)
 old <- Sys.getenv(keys, unset = NA)
-Sys.setenv(OLLAMA_HOST = "off", MORIE_LLM_BASE_URL = "off", XDG_CONFIG_HOME = tempfile())
-Sys.unsetenv(setdiff(keys, c("OLLAMA_HOST", "MORIE_LLM_BASE_URL", "XDG_CONFIG_HOME")))
+Sys.setenv(
+  OLLAMA_HOST = "off",
+  MORIE_LLM_BASE_URL = "off",
+  XDG_CONFIG_HOME = tempfile()
+)
+Sys.unsetenv(setdiff(
+  keys,
+  c("OLLAMA_HOST", "MORIE_LLM_BASE_URL", "XDG_CONFIG_HOME")
+))
 cat(agentbndl("hello"))
 for (v in keys) {
-  if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
+  if (is.na(old[[v]])) {
+    Sys.unsetenv(v)
+  } else {
+    do.call(Sys.setenv, as.list(old[v]))
+  }
 }
 
 # argument errors come first

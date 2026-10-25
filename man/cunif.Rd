@@ -53,6 +53,7 @@ try(cunif(2, 2^53))
 \dontshow{\}) # examplesIf}
 }
 \references{
-Steele GL, Lea D, Flood CH (2014). Fast splittable pseudorandom number
-generators. \emph{OOPSLA 2014}, 453--472. \doi{10.1145/2660193.2660195}
+Steele GL, Lea D, Flood CH (2014). Fast splittable pseudorandom
+number generators. \emph{OOPSLA 2014}, 453--472.
+\doi{10.1145/2660193.2660195}
 }

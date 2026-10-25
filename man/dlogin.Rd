@@ -116,13 +116,17 @@ returns no key; a credentials file that cannot be edited safely.
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)
-Sys.setenv(XDG_CONFIG_HOME = tempfile())   # never touch your real credentials
+Sys.setenv(XDG_CONFIG_HOME = tempfile()) # never touch your real credentials
 
 # input checks that need no network
 try(dlogin(token = "   "))
 try(dlogin(email = "not-an-email"))
 
-if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
+if (is.na(old)) {
+  Sys.unsetenv("XDG_CONFIG_HOME")
+} else {
+  Sys.setenv(XDG_CONFIG_HOME = old)
+}
 \dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # these contact the sign-in service

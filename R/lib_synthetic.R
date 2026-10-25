@@ -50,43 +50,36 @@
 
 #' Generate One Synthetic Column From a Spec
 #'
-#' @description
-#' Builds one column of synthetic (made-up) data from a short specification,
-#' such as \dQuote{sample these categories with these weights} or \dQuote{Poisson counts
-#' with mean 25}. It is the building block of
-#' \code{\link{mksyncsv}}, which assembles a whole table from a
-#' recipe. Use synthetic columns to develop and test an analysis pipeline
-#' before, or instead of, touching restricted data.
+#' @description Builds one column of synthetic (made-up) data from a short
+#' specification, such as \dQuote{sample these categories with these weights} or
+#' \dQuote{Poisson counts with mean 25}. It is the building block of
+#' \code{\link{mksyncsv}}, which assembles a whole table from a recipe. Use
+#' synthetic columns to develop and test an analysis pipeline before, or instead
+#' of, touching restricted data.
 #'
-#' @details
-#' The supported \code{spec$type}s and the fields each reads (defaults in
-#' parentheses):
-#' \describe{
-#'   \item{\code{"sample"} (the default type)}{\code{values}, a vector or
-#'     list of categories; \code{weights} (default equal), their probabilities.
-#'     Drawn with replacement.}
-#'   \item{\code{"bernoulli"}}{\code{p} (default 0.1), the probability of the first
-#'     label; \code{labels} (default \code{c("Yes", "No")}); \code{p_with_baserate}
-#'     (default 0), added as \code{p_with_baserate * basep} to give row-level
-#'     variation when \code{basep} is supplied. A per-row probability above
-#'     1 behaves as 1.}
-#'   \item{\code{"poisson"}}{\code{lambda} (default 1); \code{min} (default 0), a floor:
-#'     draws below it are raised to it (so the result is not Poisson below
-#'     the floor).}
-#'   \item{\code{"id_pattern"}}{\code{pattern} (default \code{"id-\{seq:05d\}"}), in
-#'     which \code{\{seq:05d\}} becomes a five-digit zero-padded sequence
-#'     number and \code{\{year\}} the year; \code{year_col}, the name of a
-#'     column in \code{ctx} whose values supply \code{\{year\}} and restart
-#'     the sequence within each year. With \code{year_col}, that column must
-#'     have \code{n} values. No other tokens are recognised.}
-#'   \item{\code{"sequence"}}{\code{from} (default 1): \code{from, from + 1, ...}.}
-#'   \item{\code{"fitted"}}{\code{fit}, a \code{\link{dstfit}} result, and \code{family}
-#'     (default the first-ranked converged fit): draws from that fitted distribution.}
-#' }
-#' Random draws use R's random number generator, so call \code{set.seed()}
-#' first for a reproducible column. Errors: \code{spec} not a list; an
-#' unknown \code{type}; errors from \code{sample()} or \code{rpois()} on
-#' invalid weights or rates.
+#' @details The supported \code{spec$type}s and the fields each reads (defaults
+#' in parentheses): \describe{ \item{\code{"sample"} (the default
+#' type)}{\code{values}, a vector or list of categories; \code{weights} (default
+#' equal), their probabilities. Drawn with replacement.}
+#' \item{\code{"bernoulli"}}{\code{p} (default 0.1), the probability of the
+#' first label; \code{labels} (default \code{c("Yes", "No")});
+#' \code{p_with_baserate} (default 0), added as \code{p_with_baserate * basep}
+#' to give row-level variation when \code{basep} is supplied. A per-row
+#' probability above 1 behaves as 1.} \item{\code{"poisson"}}{\code{lambda}
+#' (default 1); \code{min} (default 0), a floor: draws below it are raised to it
+#' (so the result is not Poisson below the floor).}
+#' \item{\code{"id_pattern"}}{\code{pattern} (default \code{"id-\{seq:05d\}"}),
+#' in which \code{\{seq:05d\}} becomes a five-digit zero-padded sequence number
+#' and \code{\{year\}} the year; \code{year_col}, the name of a column in
+#' \code{ctx} whose values supply \code{\{year\}} and restart the sequence
+#' within each year. With \code{year_col}, that column must have \code{n}
+#' values. No other tokens are recognised.} \item{\code{"sequence"}}{\code{from}
+#' (default 1): \code{from, from + 1, ...}.} \item{\code{"fitted"}}{\code{fit},
+#' a \code{\link{dstfit}} result, and \code{family} (default the first-ranked
+#' converged fit): draws from that fitted distribution.} } Random draws use R's
+#' random number generator, so call \code{set.seed()} first for a reproducible
+#' column. Errors: \code{spec} not a list; an unknown \code{type}; errors from
+#' \code{sample()} or \code{rpois()} on invalid weights or rates.
 #'
 #' @param spec A list describing the column: \code{type} and the fields
 #'   listed in Details. Lists as parsed from JSON (for example
@@ -144,22 +137,37 @@
 #' try(mksyncol(list(type = "nope"), 3))
 #' @export
 mksyncol <- function(spec, n, ctx = list(), basep = NULL) {
-  if (!is.list(spec)) stop("mksyncol: `spec` must be a column spec list (type = ..., ...)", call. = FALSE)
+  if (!is.list(spec)) {
+    stop(
+      "mksyncol: `spec` must be a column spec list (type = ..., ...)",
+      call. = FALSE
+    )
+  }
   type <- spec$type %||% "sample"
   if (is.data.frame(spec) || (length(spec) && is.null(names(spec)))) {
-    stop("mksyncol: `spec` must be a column spec list (type = ..., ...)", call. = FALSE)
+    stop(
+      "mksyncol: `spec` must be a column spec list (type = ..., ...)",
+      call. = FALSE
+    )
   }
   n <- .rmbl_num(n, "n", integer = TRUE)
-  if (length(n) != 1L || is.na(n) || n < 0L) stop("mksyncol: `n` must be a single non-negative whole number",
-                                                  call. = FALSE)
+  if (length(n) != 1L || is.na(n) || n < 0L) {
+    stop(
+      "mksyncol: `n` must be a single non-negative whole number",
+      call. = FALSE
+    )
+  }
   if (!is.null(basep)) {
     basep <- .rmbl_num(basep, "basep")
-    if (anyNA(basep) || any(basep < 0 | basep > 1)) stop("`basep` must be probabilities between 0 and 1", call. = FALSE)
+    if (anyNA(basep) || any(basep < 0 | basep > 1)) {
+      stop("`basep` must be probabilities between 0 and 1", call. = FALSE)
+    }
   }
   if (identical(type, "sample") && !length(unlist(spec$values))) {
     stop("a \"sample\" column spec needs `values` to draw from", call. = FALSE)
   }
-  switch(type,
+  switch(
+    type,
     sample = {
       vals <- unlist(spec$values)
       w <- if (!is.null(spec$weights)) unlist(spec$weights) else NULL
@@ -185,28 +193,54 @@ mksyncol <- function(spec, n, ctx = list(), basep = NULL) {
       if (!is.null(year_col) && year_col %in% names(ctx)) {
         years <- ctx[[year_col]]
         if (length(years) != n) {
-          stop(sprintf("`ctx$%s` has %d values but n = %d", year_col, length(years), n), call. = FALSE)
+          stop(
+            sprintf(
+              "`ctx$%s` has %d values but n = %d",
+              year_col,
+              length(years),
+              n
+            ),
+            call. = FALSE
+          )
         }
         seq_per_yr <- stats::ave(seq_along(years), years, FUN = seq_along)
-        ids <- mapply(function(y, s) {
-          out <- gsub("\\{year\\}", as.character(y), pattern)
-          gsub("\\{seq:05d\\}", sprintf("%05d", s), out)
-        }, years, seq_per_yr, USE.NAMES = FALSE)
+        ids <- mapply(
+          function(y, s) {
+            out <- gsub("\\{year\\}", as.character(y), pattern)
+            gsub("\\{seq:05d\\}", sprintf("%05d", s), out)
+          },
+          years,
+          seq_per_yr,
+          USE.NAMES = FALSE
+        )
         return(ids)
       }
       # vapply: gsub vectorises over x, not replacement -- a bare gsub here
       # returned a single id regardless of n.
-      vapply(seq_len(n), function(s) {
-        gsub("\\{seq:05d\\}", sprintf("%05d", s), pattern)
-      }, character(1))
+      vapply(
+        seq_len(n),
+        function(s) {
+          gsub("\\{seq:05d\\}", sprintf("%05d", s), pattern)
+        },
+        character(1)
+      )
     },
     fitted = {
       fit <- spec$fit
       if (!inherits(fit, "rmbl_dstfit") || !length(fit$fits)) {
-        stop("mksyncol: a \"fitted\" column spec needs `fit`, a dstfit() result with a converged fit", call. = FALSE)
+        stop(
+          "mksyncol: a \"fitted\" column spec needs `fit`, a dstfit() ",
+          "result with a converged fit",
+          call. = FALSE
+        )
       }
       fam <- spec$family %||% names(fit$fits)[[1L]]
-      if (!fam %in% names(fit$fits)) stop(sprintf("mksyncol: the fit has no converged %s family", fam), call. = FALSE)
+      if (!fam %in% names(fit$fits)) {
+        stop(
+          sprintf("mksyncol: the fit has no converged %s family", fam),
+          call. = FALSE
+        )
+      }
       .dst_fams()[[fam]]$r(n, fit$fits[[fam]])
     },
     sequence = {
@@ -305,20 +339,36 @@ mksyncol <- function(spec, n, ctx = list(), basep = NULL) {
 #'
 #' try(mksyncsv("not a recipe", tempfile()))
 #' @export
-mksyncsv <- function(schema, outpath,
-                               nrows = NULL, seed = NULL) {
+mksyncsv <- function(schema, outpath, nrows = NULL, seed = NULL) {
   outpath <- .rmbl_string1(outpath, "outpath")
-  if (!is.list(schema)) stop("`schema` must be a schema list (columns = ..., ...)", call. = FALSE)
-  if (is.null(seed)) seed <- schema$seed %||% 91735246L
-  if (is.null(nrows)) nrows <- schema$n_rows %||% 50000L
-  # built in memory: a count of rows, and one a machine can hold (2^31 was a process killed for memory;
-  # CRAN stress test of 0.5.14). Base R only: a staged bundle sources this file on its own.
-  if (!is.numeric(nrows) || length(nrows) != 1L || !is.finite(nrows) || nrows < 1 ||
-      nrows != round(nrows) || inherits(nrows, c("Date", "POSIXt", "difftime"))) {
+  if (!is.list(schema)) {
+    stop("`schema` must be a schema list (columns = ..., ...)", call. = FALSE)
+  }
+  if (is.null(seed)) {
+    seed <- schema$seed %||% 91735246L
+  }
+  if (is.null(nrows)) {
+    nrows <- schema$n_rows %||% 50000L
+  }
+  # built in memory: a count of rows, and one a machine can hold (2^31 was a
+  # process killed for memory; CRAN stress test of 0.5.14). Base R only: a
+  # staged bundle sources this file on its own.
+  if (
+    !is.numeric(nrows) ||
+      length(nrows) != 1L ||
+      !is.finite(nrows) ||
+      nrows < 1 ||
+      nrows != round(nrows) ||
+      inherits(nrows, c("Date", "POSIXt", "difftime"))
+  ) {
     stop("`nrows` must be one whole number of rows, at least 1", call. = FALSE)
   }
   if (nrows > 1e8) {
-    stop("`nrows` above 100 million is refused: the synthetic table is built in memory", call. = FALSE)
+    stop(
+      "`nrows` above 100 million is refused: the synthetic table is ",
+      "built in memory",
+      call. = FALSE
+    )
   }
   # CRAN policy: restore the caller's RNG state on exit.
   if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
@@ -334,7 +384,9 @@ mksyncsv <- function(schema, outpath,
     # index-sample the values: sample(x) with a scalar integer x would
     # expand to 1:x (base R gotcha) and break single-value replication.
     rep_vals <- unlist(reps_spec$values)
-    rows_per <- rep_vals[sample.int(length(rep_vals), n_persons,
+    rows_per <- rep_vals[sample.int(
+      length(rep_vals),
+      n_persons,
       replace = TRUE,
       prob = unlist(reps_spec$weights)
     )]
@@ -356,13 +408,18 @@ mksyncsv <- function(schema, outpath,
   out <- list()
   ctx <- list() # one entry per row
   ctx_person <- list() # one entry per person, before replication
-  # base R only when sourced standalone in a bundle: the bar only when the package is there
+  # base R only when sourced standalone in a bundle: the bar only when the
+  # package is there
   pg <- if (exists("blprog", mode = "function")) {
     blprog("synthetic data", length(schema$columns) + 1L)
   }
-  if (!is.null(pg)) on.exit(pg$done(), add = TRUE)
+  if (!is.null(pg)) {
+    on.exit(pg$done(), add = TRUE)
+  }
   for (col_name in names(schema$columns)) {
-    if (!is.null(pg)) pg$tick(0, sprintf("column %s", col_name))
+    if (!is.null(pg)) {
+      pg$tick(0, sprintf("column %s", col_name))
+    }
     spec <- schema$columns[[col_name]]
     type <- spec$type %||% "sample"
     if (identical(type, "bernoulli")) {
@@ -379,7 +436,9 @@ mksyncsv <- function(schema, outpath,
     out[[col_name]] <- vals
     if (!is.null(pg)) pg$tick()
   }
-  if (!is.null(pg)) pg$tick(0, sprintf("writing %s rows", format(n_total, big.mark = ",")))
+  if (!is.null(pg)) {
+    pg$tick(0, sprintf("writing %s rows", format(n_total, big.mark = ",")))
+  }
   out_df <- as.data.frame(out, stringsAsFactors = FALSE)
   utils::write.csv(out_df, outpath, row.names = FALSE)
   # The CSV stays a plain CSV so every reader opens it; the sidecar beside
@@ -397,28 +456,48 @@ mksyncsv <- function(schema, outpath,
   .rmbl_synth_state$made <- TRUE
   sidecar <- paste0(outpath, ".synthetic")
   jstr <- function(x) paste0("\"", gsub("\"", "\\\\\"", as.character(x)), "\"")
-  writeLines(c(
-    "{",
-    "  \"synthetic\": true,",
-    sprintf("  \"rows\": %d,", nrow(out_df)),
-    sprintf("  \"seed\": %s,", format(seed)),
-    sprintf("  \"recipe_sha256\": %s,", if (is.na(recipe_sha256)) "null" else jstr(recipe_sha256)),
-    sprintf("  \"generated_utc\": %s", jstr(format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"))),
-    "}"
-  ), sidecar)
-  res <- list(path = outpath, sidecar = sidecar, rows = nrow(out_df),
-              seed = seed, recipe_sha256 = recipe_sha256)
+  writeLines(
+    c(
+      "{",
+      "  \"synthetic\": true,",
+      sprintf("  \"rows\": %d,", nrow(out_df)),
+      sprintf("  \"seed\": %s,", format(seed)),
+      sprintf(
+        "  \"recipe_sha256\": %s,",
+        if (is.na(recipe_sha256)) "null" else jstr(recipe_sha256)
+      ),
+      sprintf(
+        "  \"generated_utc\": %s",
+        jstr(format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"))
+      ),
+      "}"
+    ),
+    sidecar
+  )
+  res <- list(
+    path = outpath,
+    sidecar = sidecar,
+    rows = nrow(out_df),
+    seed = seed,
+    recipe_sha256 = recipe_sha256
+  )
   class(res) <- c("bricklayer_synthetic", "list")
   invisible(res)
 }
 
 #' @export
 format.bricklayer_synthetic <- function(x, ...) {
-  c("SYNTHETIC data (generated from a recipe, not fetched)",
+  c(
+    "SYNTHETIC data (generated from a recipe, not fetched)",
     sprintf("  file    %s", x$path),
     sprintf("  sidecar %s", x$sidecar),
-    sprintf("  rows %d, seed %s, recipe sha256 %s", x$rows, format(x$seed),
-            substr(x$recipe_sha256, 1L, 16L)))
+    sprintf(
+      "  rows %d, seed %s, recipe sha256 %s",
+      x$rows,
+      format(x$seed),
+      substr(x$recipe_sha256, 1L, 16L)
+    )
+  )
 }
 
 #' @export

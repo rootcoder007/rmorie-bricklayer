@@ -19,22 +19,18 @@
 #' column widened by \code{slack}, and the observed missingness rate per
 #' column with headroom.
 #'
-#' The rules, with \eqn{n} rows:
-#' \itemize{
-#'   \item types: the first class of each column (\code{"integer"},
-#'     \code{"numeric"}, \code{"character"}, \code{"factor"}, \code{"Date"}, ...);
-#'   \item rows: \code{min_data_rows} \eqn{= \lfloor n(1 - slack) \rfloor} (at
-#'     least 0) and \code{max_data_rows} \eqn{= \lceil n(1 + slack) \rceil};
-#'   \item numeric ranges: \eqn{[lo - pad, hi + pad]} with
-#'     \eqn{pad = slack \times (hi - lo)}, or \eqn{slack \times \max(|lo|, 1)} for a
-#'     constant column; a column with no non-missing value gets no range;
-#'   \item value sets: for character, factor and logical columns with at most
-#'     \code{maxlvl} distinct non-missing values, those values as sorted text;
-#'   \item missingness: the observed share of \code{NA} plus \code{slack}
-#'     (added, not multiplied), capped at 1.
-#' }
-#' Other column types (dates, lists) get a type and a missingness ceiling
-#' only.
+#' The rules, with \eqn{n} rows: \itemize{ \item types: the first class of each
+#' column (\code{"integer"}, \code{"numeric"}, \code{"character"},
+#' \code{"factor"}, \code{"Date"}, ...); \item rows: \code{min_data_rows} \eqn{=
+#' \lfloor n(1 - slack) \rfloor} (at least 0) and \code{max_data_rows} \eqn{=
+#' \lceil n(1 + slack) \rceil}; \item numeric ranges: \eqn{[lo - pad, hi + pad]}
+#' with \eqn{pad = slack \times (hi - lo)}, or \eqn{slack \times \max(|lo|, 1)}
+#' for a constant column; a column with no non-missing value gets no range;
+#' \item value sets: for character, factor and logical columns with at most
+#' \code{maxlvl} distinct non-missing values, those values as sorted text; \item
+#' missingness: the observed share of \code{NA} plus \code{slack} (added, not
+#' multiplied), capped at 1. } Other column types (dates, lists) get a type and
+#' a missingness ceiling only.
 #'
 #' ## This is a starting point, not an oracle
 #'
@@ -137,7 +133,9 @@ infsch <- function(data, slack = 0.1, maxlvl = 50L) {
         pad <- slack * (hi - lo)
         # A constant column has no width to pad, so pad by the magnitude
         # of the value itself rather than pinning it to a single number.
-        if (pad == 0) pad <- slack * max(abs(lo), 1)
+        if (pad == 0) {
+          pad <- slack * max(abs(lo), 1)
+        }
         ranges[[nm]] <- c(min = lo - pad, max = hi + pad)
       }
     } else if (is.factor(v) || is.character(v) || is.logical(v)) {
@@ -164,36 +162,53 @@ infsch <- function(data, slack = 0.1, maxlvl = 50L) {
 #' @export
 format.bricklayer_schema <- function(x, ...) {
   g <- .rmbl_glyphs()
-  lines <- c(.rmbl_rule("Inferred schema"),
-             .rmbl_kv(list(
-               columns = length(x$expected_columns),
-               rows = sprintf("%d to %d",
-                              x$structural_invariants$min_data_rows,
-                              x$structural_invariants$max_data_rows),
-               "value sets" = length(x$expected_value_sets),
-               "numeric ranges" = length(x$numeric_ranges))),
-             "")
-  rows <- vapply(x$expected_columns, function(nm) {
-    detail <- if (!is.null(x$numeric_ranges[[nm]])) {
-      sprintf("[%s, %s]",
-              formatC(x$numeric_ranges[[nm]][["min"]], format = "g",
-                      digits = 4),
-              formatC(x$numeric_ranges[[nm]][["max"]], format = "g",
-                      digits = 4))
-    } else if (!is.null(x$expected_value_sets[[nm]])) {
-      lv <- x$expected_value_sets[[nm]]
-      if (length(lv) > 4L) {
-        sprintf("%s, ... (%d levels)", paste(lv[1:4], collapse = ", "),
-                length(lv))
+  lines <- c(
+    .rmbl_rule("Inferred schema"),
+    .rmbl_kv(list(
+      columns = length(x$expected_columns),
+      rows = sprintf(
+        "%d to %d",
+        x$structural_invariants$min_data_rows,
+        x$structural_invariants$max_data_rows
+      ),
+      "value sets" = length(x$expected_value_sets),
+      "numeric ranges" = length(x$numeric_ranges)
+    )),
+    ""
+  )
+  rows <- vapply(
+    x$expected_columns,
+    function(nm) {
+      detail <- if (!is.null(x$numeric_ranges[[nm]])) {
+        sprintf(
+          "[%s, %s]",
+          formatC(x$numeric_ranges[[nm]][["min"]], format = "g", digits = 4),
+          formatC(x$numeric_ranges[[nm]][["max"]], format = "g", digits = 4)
+        )
+      } else if (!is.null(x$expected_value_sets[[nm]])) {
+        lv <- x$expected_value_sets[[nm]]
+        if (length(lv) > 4L) {
+          sprintf(
+            "%s, ... (%d levels)",
+            paste(lv[1:4], collapse = ", "),
+            length(lv)
+          )
+        } else {
+          paste(lv, collapse = ", ")
+        }
       } else {
-        paste(lv, collapse = ", ")
+        paste0(g$dash, " free")
       }
-    } else {
-      paste0(g$dash, " free")
-    }
-    sprintf("  %-20s %-10s max NA %5.1f%%  %s", nm, x$expected_types[[nm]],
-            100 * x$max_missing_fraction[[nm]], detail)
-  }, character(1))
+      sprintf(
+        "  %-20s %-10s max NA %5.1f%%  %s",
+        nm,
+        x$expected_types[[nm]],
+        100 * x$max_missing_fraction[[nm]],
+        detail
+      )
+    },
+    character(1)
+  )
   c(lines, rows, .rmbl_rule())
 }
 

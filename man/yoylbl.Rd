@@ -15,12 +15,11 @@ periods, or a named character vector mapping a period (as a string) to
 its label.}
 }
 \value{
-The object, still of class \code{rmbl_yoy}, with an added
-character column \code{perlbl}. Its \code{yoy} attribute gets
-\code{perlbl} set to \code{TRUE}, as \code{attr(x, "yoy")$perlbl}, so the labels
-are used by \code{print()},
-\code{\link[=yoyhtml]{yoyhtml()}},
-\code{\link[=yoypdf]{yoypdf()}} and the delimited writers.
+The object, still of class \code{rmbl_yoy}, with an added character
+column \code{perlbl}. Its \code{yoy} attribute gets \code{perlbl} set to
+\code{TRUE}, as \code{attr(x, "yoy")$perlbl}, so the labels are used by
+\code{print()}, \code{\link[=yoyhtml]{yoyhtml()}}, \code{\link[=yoypdf]{yoypdf()}} and
+the delimited writers.
 }
 \description{
 Attaches display labels to the periods of a change table from

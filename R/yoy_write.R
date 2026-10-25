@@ -61,10 +61,11 @@
 #' unlink(f)
 #' try(yoywr(y, file.path(tempdir(), "change.xlsx")))
 #' @export
-#' @srrstats {G2.3b} format is lower-cased with tolower() before dispatch, and so is the file extension when format
-#'   = "auto".
-#' @srrstats {G4.0} Output format is parsed from the file suffix (csv/tsv/json/md/html/pdf); a path with no known
-#'   suffix is refused unless format is given.
+#' @srrstats {G2.3b} format is lower-cased with tolower() before dispatch, and
+#'   so is the file extension when format = "auto".
+#' @srrstats {G4.0} Output format is parsed from the file suffix
+#'   (csv/tsv/json/md/html/pdf); a path with no known suffix is refused unless
+#'   format is given.
 yoywr <- function(x, file, format = "auto", ...) {
   .rmbl_no_fn(file = file, format = format)
   if (!inherits(x, "rmbl_yoy")) {
@@ -74,25 +75,36 @@ yoywr <- function(x, file, format = "auto", ...) {
   format <- tolower(as.character(format)[1L])
   if (identical(format, "auto")) {
     ext <- tolower(sub(".*\\.", "", basename(file)))
-    format <- switch(ext,
-      html = , htm = "html",
+    format <- switch(
+      ext,
+      html = ,
+      htm = "html",
       pdf = "pdf",
       csv = "csv",
-      tsv = , tab = "tsv",
+      tsv = ,
+      tab = "tsv",
       json = "json",
-      md = , markdown = "markdown",
-      stop(sprintf(
-        "cannot tell the format from \"%s\"; pass format = explicitly",
-        basename(file)), call. = FALSE))
+      md = ,
+      markdown = "markdown",
+      stop(
+        sprintf(
+          "cannot tell the format from \"%s\"; pass format = explicitly",
+          basename(file)
+        ),
+        call. = FALSE
+      )
+    )
   }
-  switch(format,
+  switch(
+    format,
     html = yoyhtml(x, file, ...),
     pdf = yoypdf(x, file, ...),
     csv = yoycsv(x, file, ...),
     tsv = yoytsv(x, file, ...),
     json = yoyjs(x, file, ...),
     markdown = yoymd(x, file, ...),
-    stop(sprintf("unknown format: %s", format), call. = FALSE))
+    stop(sprintf("unknown format: %s", format), call. = FALSE)
+  )
 }
 
 #' Write a change table as delimited text, JSON or Markdown
@@ -172,20 +184,48 @@ yoywr <- function(x, file, format = "auto", ...) {
 #' try(yoycsv(d, NULL))
 #' @name yoydelim
 #' @export
-#' @srrstats {EA4.1} The `digits` argument rounds exported numbers (also yoytsv, yoyjs, yoymd, print.rmbl_yoy);
-#'   test-yoy.R:369 checks round(pctchg, 1).
-yoycsv <- function(x, file, digits = NULL, na = "", meta = TRUE,
-                    comment = "#", ...) {
-  .yoy_delim(x, file, sep = ",", digits = digits, na = na,
-             metadata = meta, comment = comment)
+#' @srrstats {EA4.1} The `digits` argument rounds exported numbers (also yoytsv,
+#'   yoyjs, yoymd, print.rmbl_yoy); test-yoy.R:369 checks round(pctchg, 1).
+yoycsv <- function(
+  x,
+  file,
+  digits = NULL,
+  na = "",
+  meta = TRUE,
+  comment = "#",
+  ...
+) {
+  .yoy_delim(
+    x,
+    file,
+    sep = ",",
+    digits = digits,
+    na = na,
+    metadata = meta,
+    comment = comment
+  )
 }
 
 #' @rdname yoydelim
 #' @export
-yoytsv <- function(x, file, digits = NULL, na = "", meta = TRUE,
-                    comment = "#", ...) {
-  .yoy_delim(x, file, sep = "\t", digits = digits, na = na,
-             metadata = meta, comment = comment)
+yoytsv <- function(
+  x,
+  file,
+  digits = NULL,
+  na = "",
+  meta = TRUE,
+  comment = "#",
+  ...
+) {
+  .yoy_delim(
+    x,
+    file,
+    sep = "\t",
+    digits = digits,
+    na = na,
+    metadata = meta,
+    comment = comment
+  )
 }
 
 #' Writes a year-over-year table as delimited text, with its metadata.
@@ -225,13 +265,16 @@ yoytsv <- function(x, file, digits = NULL, na = "", meta = TRUE,
   }
   hdr <- paste(cell(names(d)), collapse = sep)
   body <- if (nrow(d)) {
-    apply(vapply(d, cell, character(nrow(d))), 1L,
-          function(r) paste(r, collapse = sep))
+    apply(vapply(d, cell, character(nrow(d))), 1L, function(r) {
+      paste(r, collapse = sep)
+    })
   } else {
     character(0)
   }
   txt <- paste0(paste(c(lines, hdr, body), collapse = "\n"), "\n")
-  if (is.null(file)) return(txt)
+  if (is.null(file)) {
+    return(txt)
+  }
   writeLines(txt, file, sep = "", useBytes = TRUE)
   invisible(file)
 }
@@ -251,18 +294,33 @@ yoyjs <- function(x, file, digits = NULL, pretty = TRUE, ...) {
   # An absent grouping is an absent key, not an empty object: a NULL
   # inside a list serialises as {}, which reads as "grouped by nothing
   # in particular" rather than "not grouped".
-  if (!is.null(m$by)) settings$by <- as.list(m$by)
-  settings <- c(settings,
-                list(lag = m$lag, units = m$units, minbase = m$minbase,
-                     conflvl = m$conflvl, direction = m$direction))
+  if (!is.null(m$by)) {
+    settings$by <- as.list(m$by)
+  }
+  settings <- c(
+    settings,
+    list(
+      lag = m$lag,
+      units = m$units,
+      minbase = m$minbase,
+      conflvl = m$conflvl,
+      direction = m$direction
+    )
+  )
   obj <- list(
     settings = settings,
     summary = yoysmry(x),
-    rows = d)
-  txt <- as.character(tojs(obj, pretty = pretty,
-                                              auto_unbox = TRUE,
-                                              na = "null"))
-  if (is.null(file)) return(txt)
+    rows = d
+  )
+  txt <- as.character(tojs(
+    obj,
+    pretty = pretty,
+    auto_unbox = TRUE,
+    na = "null"
+  ))
+  if (is.null(file)) {
+    return(txt)
+  }
   writeLines(txt, file, useBytes = TRUE)
   invisible(file)
 }
@@ -281,7 +339,9 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   vd <- if (is.null(m$valuedig)) 0L else m$valuedig
   cols <- list()
   if (!is.null(m$by)) {
-    for (b in m$by) cols[[b]] <- as.character(d[[b]])
+    for (b in m$by) {
+      cols[[b]] <- as.character(d[[b]])
+    }
   }
   cols[[m$period]] <- .yoy_period_text(d, m)
   cols[[m$value]] <- .yoy_fmt_num(d$value, vd)
@@ -291,9 +351,10 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
     .yoy_fmt_pct(d[[chgcol]], digits, pp)
   if (all(c("pctlo", "pctup") %in% names(d))) {
     cols[["interval"]] <- ifelse(
-      is.na(d$pctlo), "",
-      sprintf("[%s, %s]", .yoy_fmt_pct(d$pctlo, 0L),
-              .yoy_fmt_pct(d$pctup, 0L)))
+      is.na(d$pctlo),
+      "",
+      sprintf("[%s, %s]", .yoy_fmt_pct(d$pctlo, 0L), .yoy_fmt_pct(d$pctup, 0L))
+    )
   }
   cols[["note"]] <- ifelse(is.na(d$flag), "", d$flag)
   # a pipe inside a cell would end the cell
@@ -304,9 +365,13 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   # would misjudge it and the rule under the header would not line up
   # with the header.
   w <- if (isTRUE(align)) {
-    vapply(seq_along(cols), function(i) {
-      max(3L, nchar(c(nms[i], cols[[i]]), type = "width"), na.rm = TRUE)
-    }, 0L)
+    vapply(
+      seq_along(cols),
+      function(i) {
+        max(3L, nchar(c(nms[i], cols[[i]]), type = "width"), na.rm = TRUE)
+      },
+      0L
+    )
   } else {
     rep(0L, length(cols))
   }
@@ -314,29 +379,65 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
     gap <- max(0L, w[k] - nchar(s, type = "width"))
     if (right) paste0(strrep(" ", gap), s) else paste0(s, strrep(" ", gap))
   }
-  # every numeric column right-aligned: counting back from the end had left the value and the
-  # previous value aligned left while the change beside them was aligned right
+  # every numeric column right-aligned: counting back from the end had left the
+  # value and the previous value aligned left while the change beside them was
+  # aligned right
   right <- seq_along(cols) > length(m$by) + 1L & nms != "note"
   row <- function(vals) {
-    paste0("| ", paste(vapply(seq_along(vals), function(k) {
-      padr(vals[k], k, right[k])
-    }, ""), collapse = " | "), " |")
+    paste0(
+      "| ",
+      paste(
+        vapply(
+          seq_along(vals),
+          function(k) {
+            padr(vals[k], k, right[k])
+          },
+          ""
+        ),
+        collapse = " | "
+      ),
+      " |"
+    )
   }
   # the rule is exactly as wide as its column, with a trailing colon
   # marking a right-aligned one
-  rule <- paste0("| ", paste(vapply(seq_along(cols), function(k) {
-    # three dashes is the shortest rule Markdown accepts, and with
-    # align = FALSE the widths are zero
-    width <- max(3L, w[k])
-    if (right[k]) paste0(strrep("-", width - 1L), ":") else strrep("-", width)
-  }, ""), collapse = " | "), " |")
-  lines <- c(row(nms), rule,
-             vapply(seq_len(nrow(d)), function(r) {
-               row(vapply(cols, function(v) v[r], ""))
-             }, ""))
+  rule <- paste0(
+    "| ",
+    paste(
+      vapply(
+        seq_along(cols),
+        function(k) {
+          # three dashes is the shortest rule Markdown accepts, and with
+          # align = FALSE the widths are zero
+          width <- max(3L, w[k])
+          if (right[k]) {
+            paste0(strrep("-", width - 1L), ":")
+          } else {
+            strrep("-", width)
+          }
+        },
+        ""
+      ),
+      collapse = " | "
+    ),
+    " |"
+  )
+  lines <- c(
+    row(nms),
+    rule,
+    vapply(
+      seq_len(nrow(d)),
+      function(r) {
+        row(vapply(cols, function(v) v[r], ""))
+      },
+      ""
+    )
+  )
   meta <- paste0("_", .yoy_meta_lines(m), "_")
   txt <- paste0(paste(c(lines, "", meta), collapse = "\n"), "\n")
-  if (is.null(file)) return(txt)
+  if (is.null(file)) {
+    return(txt)
+  }
   writeLines(txt, file, useBytes = TRUE)
   invisible(file)
 }
@@ -347,17 +448,21 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
 #' @return One string.
 #' @noRd
 .yoy_meta_lines <- function(m) {
-  bits <- c(sprintf("value: %s", m$value),
-            sprintf("period: %s", m$period),
-            if (!is.null(m$by)) sprintf("by: %s",
-                                        paste(m$by, collapse = ", ")),
-            sprintf("lag: %d", m$lag),
-            sprintf("units: %s", m$units))
+  bits <- c(
+    sprintf("value: %s", m$value),
+    sprintf("period: %s", m$period),
+    if (!is.null(m$by)) sprintf("by: %s", paste(m$by, collapse = ", ")),
+    sprintf("lag: %d", m$lag),
+    sprintf("units: %s", m$units)
+  )
   if (identical(m$units, "count")) {
-    bits <- c(bits,
-              sprintf("interval: %.0f%% exact rate ratio",
-                      100 * m$conflvl))
-    if (isTRUE(m$minbase > 0)) bits <- c(bits, sprintf("bases below %g noted", m$minbase))
+    bits <- c(
+      bits,
+      sprintf("interval: %.0f%% exact rate ratio", 100 * m$conflvl)
+    )
+    if (isTRUE(m$minbase > 0)) {
+      bits <- c(bits, sprintf("bases below %g noted", m$minbase))
+    }
   }
   if (identical(m$units, "percent")) {
     bits <- c(bits, "change is in percentage points")
@@ -382,8 +487,7 @@ yoymd <- function(x, file, digits = 1L, align = TRUE, ...) {
   d <- as.data.frame(x)
   if (!is.null(digits)) {
     digits <- .rmbl_num(digits, "digits", integer = TRUE)[1L]
-    for (nm in intersect(c("pctchg", "ppchg", "pctlo",
-                           "pctup"), names(d))) {
+    for (nm in intersect(c("pctchg", "ppchg", "pctlo", "pctup"), names(d))) {
       d[[nm]] <- round(d[[nm]], digits)
     }
   }

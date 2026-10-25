@@ -20,17 +20,17 @@ A data frame of class \code{rmbl_balance}: \code{covariate},
 \code{meantrtd}, \code{meanctl}, \code{smd}, \code{p_value}.
 }
 \description{
-Means of each covariate in the treated and comparison groups, their standardised
-mean difference, and Welch's test, optionally weighted (after matching or
-weighting).
+Means of each covariate in the treated and comparison groups, their
+standardised mean difference, and Welch's test, optionally weighted (after
+matching or weighting).
 }
 \details{
-The standardised mean difference is \eqn{(\bar x_1 - \bar x_0) / s_1} with
-\eqn{s_1} the unweighted standard deviation in the treated group (the convention
-for the effect on the treated, so that it does not move when weights change the
-comparison group); \eqn{|SMD| < 0.1} is the usual threshold for balance. With
-weights the means are weighted and the test uses the weighted variances and Kish's
-effective sample sizes.
+The standardised mean difference is \eqn{(\bar x_1 - \bar x_0) /
+s_1} with \eqn{s_1} the unweighted standard deviation in the treated group
+(the convention for the effect on the treated, so that it does not move when
+weights change the comparison group); \eqn{|SMD| < 0.1} is the usual
+threshold for balance. With weights the means are weighted and the test uses
+the weighted variances and Kish's effective sample sizes.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -40,7 +40,7 @@ baltab(d, "t", "age")
 \dontshow{\}) # examplesIf}
 }
 \references{
-Welch BL (1947). The generalization of \sQuote{Student's} problem when several
-different population variances are involved. Biometrika 34(1-2):28-35.
-\doi{10.1093/biomet/34.1-2.28}
+Welch BL (1947). The generalization of \sQuote{Student's} problem
+when several different population variances are involved. Biometrika
+34(1-2):28-35. \doi{10.1093/biomet/34.1-2.28}
 }

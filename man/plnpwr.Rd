@@ -33,10 +33,10 @@ year or a month index) and the outcome.}
 deviations of the outcome).}
 
 \item{cl}{Column name of the clusters (default the unit), or two column names
-for two-way clustering (Cameron, Gelbach and Miller 2011):
-\eqn{V_a + V_b - V_{ab}}, each term with the small-sample factor of the dimension
-with fewer clusters, and t on its \eqn{G - 1} degrees of freedom. A composite
-cluster (district by month, say) is one column made with \code{interaction()}.}
+for two-way clustering (Cameron, Gelbach and Miller 2011): \eqn{V_a + V_b -
+V_{ab}}, each term with the small-sample factor of the dimension with fewer
+clusters, and t on its \eqn{G - 1} degrees of freedom. A composite cluster
+(district by month, say) is one column made with \code{interaction()}.}
 
 \item{reps}{Replications per effect size (default 200).}
 
@@ -51,22 +51,23 @@ A data frame of class \code{rmbl_power}: \code{effect}, \code{power};
 attributes \code{mde} and \code{size} (the rejection rate at effect 0).
 }
 \description{
-Simulates the design on real untreated data: assigns adoption at random to units
-(or clusters) as the study would, adds an effect of known size, estimates
-\code{\link{plndid}}, and counts rejections; so the serial correlation and the
-clustering of the real data are carried, as formula-based power calculations do
-not.
+Simulates the design on real untreated data: assigns adoption at random to
+units (or clusters) as the study would, adds an effect of known size,
+estimates \code{\link{plndid}}, and counts rejections; so the serial
+correlation and the clustering of the real data are carried, as formula-based
+power calculations do not.
 }
 \details{
-In each replication, \code{ntrt} units (or clusters, with
-\code{cl}) are drawn at random and given adoption dates drawn from
-\code{adopt}; \code{effect} is added to their outcomes from adoption on; the
-cluster-robust t test of \code{\link{plndid}} at level \code{alpha} is counted
-as a rejection. With \code{effect = 0} the rejection rate is the test's actual size
-on these data, which should be near \code{alpha}: a larger one means the errors are
-understated (too few clusters, say), and the power figures are then optimistic too.
-The minimum detectable effect is where the power curve crosses \code{power},
-by linear interpolation (Burlig, Preonas and Woerman 2020).
+In each replication, \code{ntrt} units (or clusters, with \code{cl})
+are drawn at random and given adoption dates drawn from \code{adopt};
+\code{effect} is added to their outcomes from adoption on; the cluster-robust
+t test of \code{\link{plndid}} at level \code{alpha} is counted as a
+rejection. With \code{effect = 0} the rejection rate is the test's actual
+size on these data, which should be near \code{alpha}: a larger one means the
+errors are understated (too few clusters, say), and the power figures are
+then optimistic too. The minimum detectable effect is where the power curve
+crosses \code{power}, by linear interpolation (Burlig, Preonas and Woerman
+2020).
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -79,7 +80,7 @@ plot(pw)
 \dontshow{\}) # examplesIf}
 }
 \references{
-Burlig F, Preonas L, Woerman M (2020). Panel data and experimental
-design. Journal of Development Economics 144:102458.
+Burlig F, Preonas L, Woerman M (2020). Panel data and
+experimental design. Journal of Development Economics 144:102458.
 \doi{10.1016/j.jdeveco.2020.102458}
 }

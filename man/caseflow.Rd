@@ -69,14 +69,23 @@ outside (0, 1).
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",
-                          package = "rmoriebricklayer"))
+f <- read.csv(system.file(
+  "extdata",
+  "ocj_flow_ontario.csv",
+  package = "rmoriebricklayer"
+))
 cf <- caseflow(f$received, f$disposed, pend = f$pending, prd = f$month)
 cf
 plot(cf)
 
 # without the pending count, a quarterly rolling window and 90\% intervals
-cq <- caseflow(f$received, f$disposed, prd = f$month, win = 3, conflvl = 0.90)
+cq <- caseflow(
+  f$received,
+  f$disposed,
+  prd = f$month,
+  win = 3,
+  conflvl = 0.90
+)
 head(as.data.frame(cq)[, c("period", "clearance", "rolclr", "cumnet")])
 
 # one value per period in every count

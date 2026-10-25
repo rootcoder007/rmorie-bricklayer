@@ -29,52 +29,49 @@ sprd(
 \item{narm}{Drop missing values (default \code{FALSE}: they are an error).}
 }
 \value{
-A list of class \code{rmbl_spread} with \code{n}, \code{mean}, \code{variance},
-\code{sd}, \code{semean}, \code{design} (the rule applied), \code{denominator},
-and \code{reason} (a sentence). The print method shows them.
+A list of class \code{rmbl_spread} with \code{n}, \code{mean},
+\code{variance}, \code{sd}, \code{semean}, \code{design} (the rule
+applied), \code{denominator}, and \code{reason} (a sentence). The print
+method shows them.
 }
 \description{
-The variance, standard deviation and standard error of the mean of a variable, with
-the denominator its source calls for: Bessel's \eqn{n - 1} when the values are a
-sample from a larger population, \eqn{n} when they are the whole population and it
-is being described, and the finite-population correction when they are a sample
-drawn without replacement from a known, finite population. \code{design = "auto"}
-chooses from \code{N}, and the result says which rule it applied and
-why.
+The variance, standard deviation and standard error of the mean of a
+variable, with the denominator its source calls for: Bessel's \eqn{n - 1}
+when the values are a sample from a larger population, \eqn{n} when they are
+the whole population and it is being described, and the finite-population
+correction when they are a sample drawn without replacement from a known,
+finite population. \code{design = "auto"} chooses from \code{N}, and the
+result says which rule it applied and why.
 }
 \details{
-With \eqn{n} values \eqn{x_i} and mean \eqn{\bar x}:
-\describe{
+With \eqn{n} values \eqn{x_i} and mean \eqn{\bar x}: \describe{
 \item{\code{"sample"}}{values drawn independently from a large population (or
 from a process). \eqn{s^2 = \sum (x_i - \bar x)^2 / (n - 1)} is unbiased for
 the population variance: the \eqn{n - 1} (the Bessel correction) makes up for
 measuring spread around the mean of the sample itself, which is closer to the
-values than the population mean is. The standard error of the mean is
-\eqn{s / \sqrt n}.}
-\item{\code{"census"}}{every unit of the population is observed (a full count,
-complete administrative records) and the aim is to describe that population:
-\eqn{\sigma^2 = \sum (x_i - \bar x)^2 / n}, with no correction, because
-\eqn{\bar x} is the population mean itself; the mean has no sampling error. If
-the population is instead treated as one realisation of a process (the offences
-of one year as a draw of what the conditions of the city produce), use
-\code{"sample"}.}
-\item{\code{"finite"}}{\eqn{n} units drawn without replacement from \eqn{N}:
-\eqn{s^2} (with \eqn{n - 1}) is unbiased for the population variance defined
-with \eqn{N - 1}, and the standard error of the mean is
-\eqn{\sqrt{(1 - n/N) s^2 / n}}; the factor \eqn{1 - n/N} is the
-finite-population correction, negligible below a sampling fraction of about
-5 percent.}
-}
-\code{"auto"} picks \code{"sample"} without \code{N}, \code{"census"}
-when \eqn{n = N}, and \code{"finite"} when \eqn{n < N}.
+values than the population mean is. The standard error of the mean is \eqn{s
+/ \sqrt n}.} \item{\code{"census"}}{every unit of the population is observed
+(a full count, complete administrative records) and the aim is to describe
+that population: \eqn{\sigma^2 = \sum (x_i - \bar x)^2 / n}, with no
+correction, because \eqn{\bar x} is the population mean itself; the mean has
+no sampling error. If the population is instead treated as one realisation of
+a process (the offences of one year as a draw of what the conditions of the
+city produce), use \code{"sample"}.} \item{\code{"finite"}}{\eqn{n} units
+drawn without replacement from \eqn{N}: \eqn{s^2} (with \eqn{n - 1}) is
+unbiased for the population variance defined with \eqn{N - 1}, and the
+standard error of the mean is \eqn{\sqrt{(1 - n/N) s^2 / n}}; the factor
+\eqn{1 - n/N} is the finite-population correction, negligible below a
+sampling fraction of about 5 percent.} } \code{"auto"} picks \code{"sample"}
+without \code{N}, \code{"census"} when \eqn{n = N}, and \code{"finite"} when
+\eqn{n < N}.
 
 With weights: frequency weights (each value stands for \eqn{w_i} identical
-observations) use \eqn{\sum w - 1}; reliability or sampling weights (each value
-counts \eqn{w_i} times as much) use \eqn{\sum w - \sum w^2 / \sum w}, which is
-\eqn{n - 1} when the weights are equal, and the standard error of the weighted mean
-is the sandwich \eqn{\sqrt{\sum w_i^2 (x_i - \bar x_w)^2} / \sum w_i}. Survey
-weights from a complex design need the design itself for a standard error
-(\code{\link{svydes}}).
+observations) use \eqn{\sum w - 1}; reliability or sampling weights (each
+value counts \eqn{w_i} times as much) use \eqn{\sum w - \sum w^2 / \sum w},
+which is \eqn{n - 1} when the weights are equal, and the standard error of
+the weighted mean is the sandwich \eqn{\sqrt{\sum w_i^2 (x_i - \bar x_w)^2} /
+\sum w_i}. Survey weights from a complex design need the design itself for a
+standard error (\code{\link{svydes}}).
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -87,8 +84,8 @@ sprd(c(1, 2, 3), w = c(10, 5, 1))   # frequency weights
 \dontshow{\}) # examplesIf}
 }
 \references{
-Cochran WG (1977). Sampling Techniques, 3rd edition. Wiley, New York,
-sections 2.4 to 2.6.
+Cochran WG (1977). Sampling Techniques, 3rd edition. Wiley, New
+York, sections 2.4 to 2.6.
 }
 \seealso{
 \code{\link{svydes}} for weighted surveys with strata and clusters.

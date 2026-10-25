@@ -2,26 +2,25 @@
 % Please edit documentation in R/indigenous_mental_health.R
 \name{indiex}
 \alias{indiex}
-\title{First Nations, Metis and Inuit health and mental health: bundled Statistics Canada
-excerpts}
+\title{First Nations, Metis and Inuit health and mental health: bundled Statistics
+Canada excerpts}
 \source{
-Statistics Canada tables, each with its DOI:
-\itemize{
-\item 13-10-0924-01, \doi{10.25318/1310092401-eng};
-\item 41-10-0067-01, \doi{10.25318/4110006701-eng};
-\item 41-10-0082-01, \doi{10.25318/4110008201-eng};
-\item 41-10-0021-01, \doi{10.25318/4110002101-eng};
-\item 17-10-0160-01, \doi{10.25318/1710016001-eng};
-\item 17-10-0161-01, \doi{10.25318/1710016101-eng}.
-}
-Indigenous Population Profile, 2021 Census of Population, catalogue 98-510-X2021001
-and 98-510-X2021016. Reproduced and distributed on an \dQuote{as is} basis with the
-permission of Statistics Canada, under the Statistics Canada Open Licence:
+Statistics Canada tables, each with its DOI: \itemize{ \item
+13-10-0924-01, \doi{10.25318/1310092401-eng}; \item 41-10-0067-01,
+\doi{10.25318/4110006701-eng}; \item 41-10-0082-01,
+\doi{10.25318/4110008201-eng}; \item 41-10-0021-01,
+\doi{10.25318/4110002101-eng}; \item 17-10-0160-01,
+\doi{10.25318/1710016001-eng}; \item 17-10-0161-01,
+\doi{10.25318/1710016101-eng}. } Indigenous Population Profile, 2021 Census
+of Population, catalogue 98-510-X2021001 and 98-510-X2021016. Reproduced and
+distributed on an \dQuote{as is} basis with the permission of Statistics
+Canada, under the Statistics Canada Open Licence:
 
 statcan.gc.ca/en/terms-conditions/open-licence
 
-Built by the scripts \code{indigenous_mental_health.R} and \code{indigenous_census.R}
-in the \code{data-raw} folder of the source package.
+Built by the scripts \code{indigenous_mental_health.R} and
+\code{indigenous_census.R} in the \code{data-raw} folder of the source
+package.
 }
 \usage{
 indiex(
@@ -36,57 +35,57 @@ indiex(
 A data frame.
 }
 \description{
-Small excerpts of Statistics Canada tables, bundled so that the examples and vignettes
-run on published values without a network connection or a data service key. Values are
-as published, with their 95\% limits and quality flags; nothing is imputed (suppressed
-cells are \code{NA}).
+Small excerpts of Statistics Canada tables, bundled so that the examples and
+vignettes run on published values without a network connection or a data
+service key. Values are as published, with their 95\% limits and quality
+flags; nothing is imputed (suppressed cells are \code{NA}).
 }
 \details{
-\describe{
-\item{\code{"health"}}{Table 13-10-0924-01, Health indicators for First
-Nations people living off reserve, Metis and Inuit, by age group and sex, four-year
-period estimates (Canadian Community Health Survey), 2015/2018 and 2019/2022;
-Canada, both sexes, the 27 indicators by age group, with non-Indigenous people for
-comparison: the table behind The Daily of 2025-02-13. Columns \code{period},
-\code{group}, \code{age}, \code{indicator}, \code{estimate}, \code{lower},
-\code{upper}, \code{quality}.}
-\item{\code{"mentalhealth"}}{Table 41-10-0067-01, Self-perceived mental health of
-First Nations people living off reserve, Metis and Inuit by age group and gender,
-2022 (Indigenous Peoples Survey); 15 years and older, every region. Columns
-\code{region}, \code{group}, \code{rating}, \code{estimate}, \code{lower},
-\code{upper}, \code{quality}.}
-\item{\code{"wellbeing"}}{Table 41-10-0082-01, Selected characteristics of well-being
-and impacts of rising prices by First Nations people living off reserve, Metis and
-Inuit, and gender, 2024; total of genders. Columns \code{group}, \code{indicator},
-\code{estimate}, \code{lower}, \code{upper}, \code{quality}.}
-\item{\code{"suiide"}}{Table 41-10-0021-01, Self-perceived mental health
-and suicidal thoughts by Aboriginal identity, age group and sex, 2017 (Aboriginal
-Peoples Survey); Canada, both sexes, by age. Columns \code{group}, \code{age},
-\code{measure}, \code{estimate}, \code{lower}, \code{upper}, \code{quality}.}
-\item{\code{"censuspop"}}{The Indigenous Population Profile, 2021 Census of
-Population (98-510-X2021001), Canada, the provinces and the territories, total of
-genders, on and off reserve: the population by age group, children and foster
-children, knowledge of Indigenous languages, highest certificate (25 and over),
-labour force status, income and low income, as published (read it with
-\code{\link{cnsprof}}).}
+\describe{ \item{\code{"health"}}{Table 13-10-0924-01, Health indicators for
+First Nations people living off reserve, Metis and Inuit, by age group and
+sex, four-year period estimates (Canadian Community Health Survey),
+2015/2018 and 2019/2022; Canada, both sexes, the 27 indicators by age
+group, with non-Indigenous people for comparison: the table behind The
+Daily of 2025-02-13. Columns \code{period}, \code{group}, \code{age},
+\code{indicator}, \code{estimate}, \code{lower}, \code{upper},
+\code{quality}.} \item{\code{"mentalhealth"}}{Table 41-10-0067-01,
+Self-perceived mental health of First Nations people living off reserve,
+Metis and Inuit by age group and gender, 2022 (Indigenous Peoples Survey);
+15 years and older, every region. Columns \code{region}, \code{group},
+\code{rating}, \code{estimate}, \code{lower}, \code{upper},
+\code{quality}.} \item{\code{"wellbeing"}}{Table 41-10-0082-01, Selected
+characteristics of well-being and impacts of rising prices by First Nations
+people living off reserve, Metis and Inuit, and gender, 2024; total of
+genders. Columns \code{group}, \code{indicator}, \code{estimate},
+\code{lower}, \code{upper}, \code{quality}.} \item{\code{"suiide"}}{Table
+41-10-0021-01, Self-perceived mental health and suicidal thoughts by
+Aboriginal identity, age group and sex, 2017 (Aboriginal Peoples Survey);
+Canada, both sexes, by age. Columns \code{group}, \code{age},
+\code{measure}, \code{estimate}, \code{lower}, \code{upper},
+\code{quality}.} \item{\code{"censuspop"}}{The Indigenous Population
+Profile, 2021 Census of Population (98-510-X2021001), Canada, the provinces
+and the territories, total of genders, on and off reserve: the population
+by age group, children and foster children, knowledge of Indigenous
+languages, highest certificate (25 and over), labour force status, income
+and low income, as published (read it with \code{\link{cnsprof}}).}
 \item{\code{"lifeexp"}}{Table 17-10-0160-01, Life expectancy at birth of
-Indigenous populations in Canada, 2006/2011 to 2016/2021, both sexes, Canada: First
-Nations (Registered or Treaty Indians, on and off reserve, and without registered
-status), Metis, Inuit and non-Indigenous people. Columns \code{period},
-\code{group}, \code{measure}, \code{estimate}, \code{lower}, \code{upper},
-\code{quality}.}
-\item{\code{"infmort"}}{Table 17-10-0161-01, Infant mortality rates of
-Indigenous populations in Canada (per 1,000 live births), 1994/1996 to 2014/2016,
-the same groups and columns.}
-\item{\code{"censushh"}}{The same profile's households and dwellings
-(98-510-X2021016), Indigenous and non-Indigenous households: persons per room,
-housing suitability, dwelling condition and core housing need.}
-}
+Indigenous populations in Canada, 2006/2011 to 2016/2021, both sexes,
+Canada: First Nations (Registered or Treaty Indians, on and off reserve,
+and without registered status), Metis, Inuit and non-Indigenous people.
+Columns \code{period}, \code{group}, \code{measure}, \code{estimate},
+\code{lower}, \code{upper}, \code{quality}.} \item{\code{"infmort"}}{Table
+17-10-0161-01, Infant mortality rates of Indigenous populations in Canada
+(per 1,000 live births), 1994/1996 to 2014/2016, the same groups and
+columns.} \item{\code{"censushh"}}{The same profile's households and
+dwellings (98-510-X2021016), Indigenous and non-Indigenous households:
+persons per room, housing suitability, dwelling condition and core housing
+need.} }
 
-The First Nations figures of the survey excerpts are for First Nations people living
-off reserve: the surveys do not cover reserves, whose data are governed by First
-Nations (see the First Nations Information Governance Centre). Groups are as the tables
-name them, with \dQuote{Inuk (Inuit)} written \code{"Inuit"}.
+The First Nations figures of the survey excerpts are for First Nations people
+living off reserve: the surveys do not cover reserves, whose data are
+governed by First Nations (see the First Nations Information Governance
+Centre). Groups are as the tables name them, with \dQuote{Inuk (Inuit)}
+written \code{"Inuit"}.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

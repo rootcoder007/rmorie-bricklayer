@@ -15,28 +15,29 @@ year or a month index) and the outcome.}
 \item{trtd}{Column name of the treatment indicator (0 or 1).}
 }
 \value{
-A data frame of class \code{rmbl_bacon}: \code{type}
-(\code{"treated vs never"}, \code{"earlier vs later"},
-\code{"later vs earlier"}), \code{treated}, \code{control} (the adoption periods;
-\code{Inf} for never), \code{estimate}, \code{weight}; attribute \code{twfe} (the
-weighted sum, equal to the two-way estimate).
+A data frame of class \code{rmbl_bacon}: \code{type} (\code{"treated
+  vs never"}, \code{"earlier vs later"}, \code{"later vs earlier"}),
+\code{treated}, \code{control} (the adoption periods; \code{Inf} for
+never), \code{estimate}, \code{weight}; attribute \code{twfe} (the weighted
+sum, equal to the two-way estimate).
 }
 \description{
-Splits the two-way fixed-effects difference-in-differences estimate of a staggered
-adoption into the two-group, two-period comparisons it averages, with their
-weights: treated against never treated, earlier against later treated, and later
-against earlier treated (the comparisons that use already-treated units as
-controls).
+Splits the two-way fixed-effects difference-in-differences estimate of a
+staggered adoption into the two-group, two-period comparisons it averages,
+with their weights: treated against never treated, earlier against later
+treated, and later against earlier treated (the comparisons that use
+already-treated units as controls).
 }
 \details{
-For a balanced panel with treatment that stays on and no covariates, the
-estimate of \code{\link{plndid}} is exactly
-\eqn{\hat\beta = \sum_{k} s_{kU}\hat\beta_{kU} + \sum_{k \ne l} s_{kl}\hat\beta_{kl}},
-with weights that sum to one and grow with the groups' sizes \eqn{n} and the
-variance of their treatment over time \eqn{\bar D(1 - \bar D)} (Goodman-Bacon 2021,
-theorem 1). Units treated from the first period act as an already-treated group. A
-large weight on \dQuote{later vs earlier} comparisons, together with effects that grow
-over time, is the warning sign that the two-way estimate is biased.
+For a balanced panel with treatment that stays on and no covariates,
+the estimate of \code{\link{plndid}} is exactly \eqn{\hat\beta = \sum_{k}
+s_{kU}\hat\beta_{kU} + \sum_{k \ne l} s_{kl}\hat\beta_{kl}}, with weights
+that sum to one and grow with the groups' sizes \eqn{n} and the variance of
+their treatment over time \eqn{\bar D(1 - \bar D)} (Goodman-Bacon 2021,
+theorem 1). Units treated from the first period act as an already-treated
+group. A large weight on \dQuote{later vs earlier} comparisons, together with
+effects that grow over time, is the warning sign that the two-way estimate is
+biased.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -47,8 +48,8 @@ tapply(b$weight, b$type, sum)
 \dontshow{\}) # examplesIf}
 }
 \references{
-Goodman-Bacon A (2021). Difference-in-differences with variation in
-treatment timing. Journal of Econometrics 225(2):254-277.
+Goodman-Bacon A (2021). Difference-in-differences with variation
+in treatment timing. Journal of Econometrics 225(2):254-277.
 \doi{10.1016/j.jeconom.2021.03.014}
 }
 \seealso{

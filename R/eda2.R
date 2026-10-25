@@ -101,38 +101,52 @@
 #' dup$height2 <- dup$height
 #' try(mahaoutl(dup))
 #' @export
-#' @srrstats {G2.7} Accepts a data frame or a numeric matrix (a matrix goes through as.data.frame); subclasses of
-#'   data.frame are accepted by inheritance.
-#' @srrstats {G3.1} robust = TRUE (median/MAD) or FALSE (means and sample covariance); mtchdid also has covm =
-#'   "pooled"/"full".
-#' @srrstats {G3.1a} Both options are shown in @examples and in the missingness-and-outliers.Rmd and describe.Rmd
-#'   vignettes.
-#' @srrstats {G5.8d} No more complete rows than columns and collinear columns are refused (test-eda.R:270,
-#'   test-edge-cases.R:121).
+#' @srrstats {G2.7} Accepts a data frame or a numeric matrix (a matrix goes
+#'   through as.data.frame); subclasses of data.frame are accepted by
+#'   inheritance.
+#' @srrstats {G3.1} robust = TRUE (median/MAD) or FALSE (means and sample
+#'   covariance); mtchdid also has covm = "pooled"/"full".
+#' @srrstats {G3.1a} Both options are shown in @examples and in the
+#'   missingness-and-outliers.Rmd and describe.Rmd vignettes.
+#' @srrstats {G5.8d} No more complete rows than columns and collinear columns
+#'   are refused (test-eda.R:270, test-edge-cases.R:121).
 mahaoutl <- function(data, alpha = 0.001, robust = TRUE) {
-  if (is.matrix(data)) data <- as.data.frame(data)
+  if (is.matrix(data)) {
+    data <- as.data.frame(data)
+  }
   if (!is.data.frame(data)) {
-    stop("mahaoutl: `data` must be a data frame or a numeric matrix", call. = FALSE)
+    stop(
+      "mahaoutl: `data` must be a data frame or a numeric matrix",
+      call. = FALSE
+    )
   }
   num <- vapply(data, is.numeric, logical(1))
-  if (!any(num)) stop("`data` has no numeric columns", call. = FALSE)
+  if (!any(num)) {
+    stop("`data` has no numeric columns", call. = FALSE)
+  }
   X <- as.matrix(data[, num, drop = FALSE])
   storage.mode(X) <- "double"
   p <- ncol(X)
   alpha <- .rmbl_num(alpha, "alpha")
   if (length(alpha) != 1L || is.na(alpha) || alpha <= 0 || alpha >= 1) {
-    stop("mahaoutl: `alpha` must be a single value strictly inside (0, 1)",
-         call. = FALSE)
+    stop(
+      "mahaoutl: `alpha` must be a single value strictly inside (0, 1)",
+      call. = FALSE
+    )
   }
   ok <- stats::complete.cases(X)
   if (sum(ok) < p + 1L) {
-    stop("need more complete rows than columns to estimate a covariance",
-         call. = FALSE)
+    stop(
+      "need more complete rows than columns to estimate a covariance",
+      call. = FALSE
+    )
   }
   Xc <- X[ok, , drop = FALSE]
   pg <- blprog("Mahalanobis distances", 0)
   on.exit(pg$done(), add = TRUE)
-  pg$update(info = sprintf("centring %s rows", format(nrow(Xc), big.mark = ",")))
+  pg$update(
+    info = sprintf("centring %s rows", format(nrow(Xc), big.mark = ","))
+  )
 
   if (isTRUE(robust)) {
     centre <- apply(Xc, 2L, cmed)
@@ -162,30 +176,47 @@ mahaoutl <- function(data, alpha = 0.001, robust = TRUE) {
   # than a property of the data. Collinear columns have no Mahalanobis
   # distance, and saying so beats inventing one.
   pg$update(info = "covariance")
-  ev <- tryCatch(eigen(S, symmetric = TRUE, only.values = TRUE)$values,
-                 error = function(e) NULL)
-  if (is.null(ev) ||
-      min(ev) <= 1e-8 * max(abs(ev), .Machine$double.eps)) {
-    stop("the columns are collinear, so no Mahalanobis distance is ",
-         "defined. Drop the redundant column(s) -- drpconst() and ",
-         "topcors() will find them.", call. = FALSE)
+  ev <- tryCatch(
+    eigen(S, symmetric = TRUE, only.values = TRUE)$values,
+    error = function(e) NULL
+  )
+  if (
+    is.null(ev) ||
+      min(ev) <= 1e-8 * max(abs(ev), .Machine$double.eps)
+  ) {
+    stop(
+      "the columns are collinear, so no Mahalanobis distance is ",
+      "defined. Drop the redundant column(s) -- drpconst() and ",
+      "topcors() will find them.",
+      call. = FALSE
+    )
   }
-  S <- .rmbl_make_pd(S, 1e-8)   # positive definite by construction, so invertible
+  S <- .rmbl_make_pd(S, 1e-8) # positive definite by construction, so invertible
   S_inv <- solve(S)
   pg$update(info = "distances")
   d2 <- rowSums((Z %*% S_inv) * Z)
 
-  out <- data.frame(row = which(ok), distance = sqrt(d2),
-                    p_value = stats::pchisq(d2, p, lower.tail = FALSE),
-                    logpvalue = stats::pchisq(d2, p, lower.tail = FALSE,
-                                                log.p = TRUE),
-                    stringsAsFactors = FALSE)
+  out <- data.frame(
+    row = which(ok),
+    distance = sqrt(d2),
+    p_value = stats::pchisq(d2, p, lower.tail = FALSE),
+    logpvalue = stats::pchisq(d2, p, lower.tail = FALSE, log.p = TRUE),
+    stringsAsFactors = FALSE
+  )
   out$outlier <- out$p_value < alpha
   skipped <- which(!ok)
   if (length(skipped) > 0L) {
-    out <- rbind(out, data.frame(row = skipped, distance = NA_real_,
-                                 p_value = NA_real_, logpvalue = NA_real_,
-                                 outlier = NA, stringsAsFactors = FALSE))
+    out <- rbind(
+      out,
+      data.frame(
+        row = skipped,
+        distance = NA_real_,
+        p_value = NA_real_,
+        logpvalue = NA_real_,
+        outlier = NA,
+        stringsAsFactors = FALSE
+      )
+    )
   }
   out <- out[order(-out$distance, na.last = TRUE), , drop = FALSE]
   rownames(out) <- NULL
@@ -202,12 +233,25 @@ print.bricklayer_outliers <- function(x, ...) {
   }
   g <- .rmbl_glyphs()
   n_out <- sum(x$outlier, na.rm = TRUE)
-  cat(.rmbl_rule(paste0("Mahalanobis outliers (",
-                        if (isTRUE(attr(x, "robust"))) "robust" else
-                          "classical", ")")), "\n")
-  cat(sprintf("  %s %d of %d rows beyond alpha = %s\n",
-              if (n_out > 0L) g$warn else g$ok, n_out, nrow(x),
-              format(attr(x, "alpha"))))
+  cat(
+    .rmbl_rule(paste0(
+      "Mahalanobis outliers (",
+      if (isTRUE(attr(x, "robust"))) {
+        "robust"
+      } else {
+        "classical"
+      },
+      ")"
+    )),
+    "\n"
+  )
+  cat(sprintf(
+    "  %s %d of %d rows beyond alpha = %s\n",
+    if (n_out > 0L) g$warn else g$ok,
+    n_out,
+    nrow(x),
+    format(attr(x, "alpha"))
+  ))
   cat("\n")
   df <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
   attr(df, "robust") <- NULL
@@ -275,9 +319,13 @@ print.bricklayer_outliers <- function(x, ...) {
 #' try(missruns(df, minrun = 0))
 #' @export
 missruns <- function(data, minrun = 2L) {
-  if (!is.data.frame(data)) stop("missruns: `data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) {
+    stop("missruns: `data` must be a data frame", call. = FALSE)
+  }
   .rmbl_df_names(data)
-  if (ncol(data) == 0L) stop("missruns: `data` has no columns", call. = FALSE)
+  if (ncol(data) == 0L) {
+    stop("missruns: `data` has no columns", call. = FALSE)
+  }
   minrun <- .rmbl_num(minrun, "minrun", integer = TRUE)
   if (length(minrun) != 1L || is.na(minrun) || minrun < 1L) {
     stop("`minrun` must be a single positive integer", call. = FALSE)
@@ -285,21 +333,38 @@ missruns <- function(data, minrun = 2L) {
   rows <- list()
   for (nm in names(data)) {
     na <- is.na(data[[nm]])
-    if (!any(na)) next
+    if (!any(na)) {
+      next
+    }
     r <- rle(na)
     ends <- cumsum(r$lengths)
     starts <- ends - r$lengths + 1L
     sel <- r$values & r$lengths >= minrun
-    if (!any(sel)) next
+    if (!any(sel)) {
+      next
+    }
     rows[[length(rows) + 1L]] <- data.frame(
-      column = nm, start = starts[sel], end = ends[sel],
-      length = r$lengths[sel], stringsAsFactors = FALSE)
+      column = nm,
+      start = starts[sel],
+      end = ends[sel],
+      length = r$lengths[sel],
+      stringsAsFactors = FALSE
+    )
   }
-  out <- if (length(rows)) do.call(rbind, rows) else
-    data.frame(column = character(0), start = integer(0), end = integer(0),
-               length = integer(0), stringsAsFactors = FALSE)
-  if (nrow(out) > 0L) out <- out[order(-out$length, out$column), ,
-                                 drop = FALSE]
+  out <- if (length(rows)) {
+    do.call(rbind, rows)
+  } else {
+    data.frame(
+      column = character(0),
+      start = integer(0),
+      end = integer(0),
+      length = integer(0),
+      stringsAsFactors = FALSE
+    )
+  }
+  if (nrow(out) > 0L) {
+    out <- out[order(-out$length, out$column), , drop = FALSE]
+  }
   rownames(out) <- NULL
   class(out) <- c("bricklayer_runs", "data.frame")
   out
@@ -372,9 +437,13 @@ print.bricklayer_runs <- function(x, ...) {
 #' try(missgrid(df, height = 0))
 #' @export
 missgrid <- function(data, height = 20L, width = 12L) {
-  if (!is.data.frame(data)) stop("missgrid: `data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) {
+    stop("missgrid: `data` must be a data frame", call. = FALSE)
+  }
   .rmbl_df_names(data)
-  if (ncol(data) == 0L) stop("missgrid: `data` has no columns", call. = FALSE)
+  if (ncol(data) == 0L) {
+    stop("missgrid: `data` has no columns", call. = FALSE)
+  }
   height <- .rmbl_num(height, "height", integer = TRUE)
   if (length(height) != 1L || is.na(height) || height < 1L) {
     stop("`height` must be a single positive integer", call. = FALSE)
@@ -398,23 +467,50 @@ missgrid <- function(data, height = 20L, width = 12L) {
   rows <- character(0)
   for (i in seq_len(length(edges) - 1L)) {
     idx <- (edges[i] + 1L):edges[i + 1L]
-    cells <- vapply(data, function(v) {
-      frac <- mean(is.na(v[idx]))
-      shades[1L + as.integer(round(frac * (length(shades) - 1L)))]
-    }, character(1))
-    rows <- c(rows, sprintf("  %6s %s", paste0(edges[i] + 1L, ""),
-                            paste(cells, collapse = "")))
+    cells <- vapply(
+      data,
+      function(v) {
+        frac <- mean(is.na(v[idx]))
+        shades[1L + as.integer(round(frac * (length(shades) - 1L)))]
+      },
+      character(1)
+    )
+    rows <- c(
+      rows,
+      sprintf(
+        "  %6s %s",
+        paste0(edges[i] + 1L, ""),
+        paste(cells, collapse = "")
+      )
+    )
   }
   # a vertical legend of the column names, so a wide table still reads
-  header <- vapply(seq_len(max(nchar(nm))), function(k) {
-    paste0("  ", strrep(" ", 6L), " ",
-           paste(substring(nm, k, k), collapse = ""))
-  }, character(1))
-  lines <- c(.rmbl_rule("Missingness map"), header, rows,
-             "",
-             paste0("  legend: '", shades[1L], "' none  '",
-                    shades[length(shades)], "' all missing"),
-             .rmbl_rule())
+  header <- vapply(
+    seq_len(max(nchar(nm))),
+    function(k) {
+      paste0(
+        "  ",
+        strrep(" ", 6L),
+        " ",
+        paste(substring(nm, k, k), collapse = "")
+      )
+    },
+    character(1)
+  )
+  lines <- c(
+    .rmbl_rule("Missingness map"),
+    header,
+    rows,
+    "",
+    paste0(
+      "  legend: '",
+      shades[1L],
+      "' none  '",
+      shades[length(shades)],
+      "' all missing"
+    ),
+    .rmbl_rule()
+  )
   cat(lines, sep = "\n")
   cat("\n")
   invisible(lines)

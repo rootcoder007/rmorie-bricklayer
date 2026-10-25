@@ -1,5 +1,8 @@
-otis <- read.csv(system.file("extdata", "otis_a01_individuals.csv",
-                             package = "rmoriebricklayer"))
+otis <- read.csv(system.file(
+  "extdata",
+  "otis_a01_individuals.csv",
+  package = "rmoriebricklayer"
+))
 
 test_that("pubbnd turns rounding and suppression into intervals", {
   b <- pubbnd(c(120, 35, 0), rnd = 5)
@@ -10,8 +13,7 @@ test_that("pubbnd turns rounding and suppression into intervals", {
   r <- pubbnd(15, rnd = 5, rndkind = "random")
   expect_equal(c(r$lower, r$upper), c(11, 19))
   # suppressed cells: explicit "<k" or a mark with a limit
-  s <- pubbnd(c("120", "x", "<5", "1,250"), rnd = 5,
-                        suplim = 5)
+  s <- pubbnd(c("120", "x", "<5", "1,250"), rnd = 5, suplim = 5)
   expect_equal(s$status, c("rounded", "suppressed", "suppressed", "rounded"))
   expect_equal(s$upper[2:3], c(4, 4))
   expect_equal(s$value[4], 1250)
@@ -38,8 +40,7 @@ test_that("chgenv is the exact image of the input intervals", {
 })
 
 test_that("yoybnd widens the sampling interval, never narrows it", {
-  y <- yoy(otis, value = "individuals", prd = "year",
-           by = c("table", "group"))
+  y <- yoy(otis, value = "individuals", prd = "year", by = c("table", "group"))
   yb <- yoybnd(y, rnd = 5)
   ok <- !is.na(yb$pctlo)
   expect_true(all(yb$compctlo[ok] <= yb$pctlo[ok]))
@@ -51,12 +52,13 @@ test_that("yoybnd widens the sampling interval, never narrows it", {
 })
 
 test_that("exact p-values agree with binom.test and adjust over the scan", {
-  y <- yoy(otis, value = "individuals", prd = "year",
-           by = c("table", "group"))
+  y <- yoy(otis, value = "individuals", prd = "year", by = c("table", "group"))
   yp <- yoypv(y)
   i <- which(!is.na(yp$previous))[1]
-  expect_equal(yp$p_value[i],
-               binom.test(yp$value[i], yp$value[i] + yp$previous[i])$p.value)
+  expect_equal(
+    yp$p_value[i],
+    binom.test(yp$value[i], yp$value[i] + yp$previous[i])$p.value
+  )
   s <- scanadj(y, alpha = 0.05)
   ok <- !is.na(s$p_value)
   expect_equal(s$padj[ok], p.adjust(s$p_value[ok], "BH"))
@@ -68,19 +70,28 @@ test_that("exact p-values agree with binom.test and adjust over the scan", {
   expect_equal(scanadj(d)$padj, p.adjust(d$p_value, "BH"))
   expect_error(scanadj(data.frame(a = 1)), "p_value")
   # continuous units carry no exact test
-  yc <- yoy(otis, value = "individuals", prd = "year",
-            by = c("table", "group"), units = "continuous")
+  yc <- yoy(
+    otis,
+    value = "individuals",
+    prd = "year",
+    by = c("table", "group"),
+    units = "continuous"
+  )
   expect_error(yoypv(yc), "count units")
 })
 
 test_that("ratechg carries the earlier count and exposure, and adjusts", {
-  d <- data.frame(year = rep(2022:2024, each = 2), site = rep(c("A", "B"), 3),
-                  n = c(30, 60, 45, 58, 50, 90),
-                  pop = c(1000, 2000, 1000, 2100, 1100, 2000))
-  rc <- ratechg(d, count = "n", pop = "pop", prd = "year",
-                    by = "site")
-  expect_true(all(c("precnt", "prepop") %in%
-                    names(rc)))
+  d <- data.frame(
+    year = rep(2022:2024, each = 2),
+    site = rep(c("A", "B"), 3),
+    n = c(30, 60, 45, 58, 50, 90),
+    pop = c(1000, 2000, 1000, 2100, 1100, 2000)
+  )
+  rc <- ratechg(d, count = "n", pop = "pop", prd = "year", by = "site")
+  expect_true(all(
+    c("precnt", "prepop") %in%
+      names(rc)
+  ))
   expect_equal(rc$precnt[rc$site == "A" & rc$year == 2023], 30)
   s <- scanadj(rc)
   i <- which(rc$site == "A" & rc$year == 2023)
@@ -90,8 +101,11 @@ test_that("ratechg carries the earlier count and exposure, and adjusts", {
 
 test_that("drftcal reports a false-alarm rate on identical data", {
   set.seed(2)
-  d <- data.frame(a = rnorm(300), b = sample(letters[1:3], 300, TRUE),
-                  c = rpois(300, 4))
+  d <- data.frame(
+    a = rnorm(300),
+    b = sample(letters[1:3], 300, TRUE),
+    c = rpois(300, 4)
+  )
   cal <- drftcal(d, n = 8, alpha = 0.01)
   expect_s3_class(cal, "rmbl_drift_calibration")
   expect_equal(nrow(cal$columns), 3)
@@ -104,12 +118,18 @@ test_that("drftcal reports a false-alarm rate on identical data", {
 })
 
 test_that("anltab runs the whole workflow on the shipped table", {
-  a <- anltab(otis, value = "individuals", prd = "year",
-                     by = c("table", "group"))
+  a <- anltab(
+    otis,
+    value = "individuals",
+    prd = "year",
+    by = c("table", "group")
+  )
   expect_s3_class(a, "bricklayer_analysis")
   expect_s3_class(a$change, "rmbl_yoy")
-  expect_true(all(c("p_value", "padj", "significant") %in%
-                    names(a$change)))
+  expect_true(all(
+    c("p_value", "padj", "significant") %in%
+      names(a$change)
+  ))
   expect_null(a$rates)
   expect_null(a$drift)
   expect_equal(nrow(a$trend), 5)
@@ -125,9 +145,16 @@ test_that("anltab with bounds, exposure and a prior capsule", {
   d$pop <- c(rep(25000, 9), rep(21000, 6))
   prior <- d
   prior$individuals <- round(prior$individuals * 0.9)
-  a <- anltab(d, value = "individuals", prd = "year",
-                     by = c("table", "group"), pop = "pop",
-                     prior = prior, rnd = 5, alpha = 0.05)
+  a <- anltab(
+    d,
+    value = "individuals",
+    prd = "year",
+    by = c("table", "group"),
+    pop = "pop",
+    prior = prior,
+    rnd = 5,
+    alpha = 0.05
+  )
   expect_true("compctlo" %in% names(a$change))
   expect_s3_class(a$rates, "rmbl_rate")
   expect_s3_class(a$ratechg, "rmbl_rate_change")
@@ -140,8 +167,13 @@ test_that("anltab with bounds, exposure and a prior capsule", {
 })
 
 test_that("rptanl writes Markdown and self-contained HTML", {
-  a <- anltab(otis, value = "individuals", prd = "year",
-                     by = c("table", "group"), rnd = 5)
+  a <- anltab(
+    otis,
+    value = "individuals",
+    prd = "year",
+    by = c("table", "group"),
+    rnd = 5
+  )
   md <- rptanl(a)
   expect_match(md, "^# Analysis of a published table")
   expect_match(md, "## Change between periods")
@@ -162,32 +194,51 @@ test_that("rptanl writes Markdown and self-contained HTML", {
 
 test_that("the capsule template runs as written on the shipped example", {
   d <- usecpstmpl(tempfile("capsule-"), ex = TRUE)
-  expect_setequal(list.files(d), c("analysis.R", "data_provenance.json",
-                                   "README.md"))
+  expect_setequal(
+    list.files(d),
+    c("analysis.R", "data_provenance.json", "README.md")
+  )
   prov <- loadprov(file.path(d, "data_provenance.json"))
   expect_true(file.exists(prov$source$url))
   expect_error(usecpstmpl(d), "not empty")
   skip_on_cran()
-  res <- system2(file.path(R.home("bin"), "Rscript"),
-                 c(shQuote(file.path(d, "analysis.R"))),
-                 stdout = TRUE, stderr = TRUE)
-  expect_true(file.exists(file.path(d, "results", "manifest.json")),
-              info = paste(res, collapse = "\n"))
+  res <- system2(
+    file.path(R.home("bin"), "Rscript"),
+    c(shQuote(file.path(d, "analysis.R"))),
+    stdout = TRUE,
+    stderr = TRUE
+  )
+  expect_true(
+    file.exists(file.path(d, "results", "manifest.json")),
+    info = paste(res, collapse = "\n")
+  )
   expect_true(file.exists(file.path(d, "results", "report.html")))
-  # the first run pinned the bytes into the provenance, in the form vrfcps() reads
+  # the first run pinned the bytes into the provenance, in the form vrfcps()
+  # reads
   prov2 <- loadprov(file.path(d, "data_provenance.json"))
   expect_identical(prov2$source$sha256, sha256file(prov$source$url))
   expect_identical(prov2$resource$sha256, prov2$source$sha256)
   expect_true(file.exists(file.path(d, prov2$resource$filename)))
   expect_true(vrfcps(d)$ok)
   # a second run sees the pin and goes through again
-  res2 <- system2(file.path(R.home("bin"), "Rscript"), c(shQuote(file.path(d, "analysis.R"))),
-                  stdout = TRUE, stderr = TRUE)
-  expect_true(any(grepl("results in", res2)), info = paste(res2, collapse = "\n"))
+  res2 <- system2(
+    file.path(R.home("bin"), "Rscript"),
+    c(shQuote(file.path(d, "analysis.R"))),
+    stdout = TRUE,
+    stderr = TRUE
+  )
+  expect_true(
+    any(grepl("results in", res2)),
+    info = paste(res2, collapse = "\n")
+  )
 })
 
 test_that("rptanl() renders a percent analysis", {
-  d <- data.frame(year = rep(2019:2022, each = 2), g = rep(c("a", "b"), 4), share = c(50, 52, 53, 55, 54, 57, 58, 60))
+  d <- data.frame(
+    year = rep(2019:2022, each = 2),
+    g = rep(c("a", "b"), 4),
+    share = c(50, 52, 53, 55, 54, 57, 58, 60)
+  )
   a <- anltab(d, value = "share", prd = "year", by = "g", units = "percent")
   txt <- rptanl(a)
   expect_true(is.character(txt))

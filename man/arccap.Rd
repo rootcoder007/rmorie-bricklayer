@@ -2,8 +2,8 @@
 % Please edit documentation in R/archive_capture.R
 \name{arccap}
 \alias{arccap}
-\title{Capture files the Internet Archive cannot reach, and publish them as an archive.org
-item}
+\title{Capture files the Internet Archive cannot reach, and publish them as an
+archive.org item}
 \usage{
 arccap(
   urls,
@@ -26,69 +26,74 @@ URLs are taken).}
 
 \item{dir}{A folder for the files and the manifest (created if needed).}
 
-\item{item}{Optional archive.org item identifier (5 to 100 letters, digits, dots,
-hyphens, underscores) to upload to; \code{NULL} (default) captures without
-uploading.}
+\item{item}{Optional archive.org item identifier (5 to 100 letters, digits,
+dots, hyphens, underscores) to upload to; \code{NULL} (default) captures
+without uploading.}
 
 \item{meta}{Named metadata for a new item (\code{title}, \code{creator},
-\code{licenseurl}, \code{description}, \code{subject}, ...); \code{mediatype}
-defaults to \code{"data"}.}
+\code{licenseurl}, \code{description}, \code{subject}, ...);
+\code{mediatype} defaults to \code{"data"}.}
 
-\item{tsa}{The time-stamping authority. \code{"https://freetsa.org/tsr"} is the
-default; \code{NULL} means no timestamp.}
+\item{tsa}{The time-stamping authority. \code{"https://freetsa.org/tsr"} is
+the default; \code{NULL} means no timestamp.}
 
 \item{ak, sk}{archive.org keys; default from the environment as
 \code{\link{wbsave}} reads them.}
 
 \item{tmout}{Seconds allowed for each download and each upload (default 600).}
 
-\item{upload}{Where else to keep the captures: \code{"rmorie"} (archive.rmorie.com, from
-this connection, with your key; see \code{\link{dlogin}}), \code{"wayback"} (ask the
-Wayback Machine to save the same addresses, with archive.org keys as for
-\code{\link{wbsave}}), both, or \code{NULL} (default: only the local folder and, with
-\code{item}, archive.org).}
+\item{upload}{Where else to keep the captures: \code{"rmorie"}
+(archive.rmorie.com, from this connection, with your key; see
+\code{\link{dlogin}}), \code{"wayback"} (ask the Wayback Machine to save
+the same addresses, with archive.org keys as for \code{\link{wbsave}}),
+both, or \code{NULL} (default: only the local folder and, with \code{item},
+archive.org).}
 
-\item{reason}{Why the files are kept, one sentence of 20 characters or more; needed with
-\code{upload = "rmorie"}, and written into each WARC file.}
+\item{reason}{Why the files are kept, one sentence of 20 characters or more;
+needed with \code{upload = "rmorie"}, and written into each WARC file.}
 
-\item{visibility}{\code{"public"} (default: listed in the archive's search; anyone can
-download and check it) or \code{"private"} (only you, with your key).}
+\item{visibility}{\code{"public"} (default: listed in the archive's search;
+anyone can download and check it) or \code{"private"} (only you, with your
+key).}
 
 \item{warc}{Write each capture as a WARC/1.1 file with a CDXJ index
-(\code{dir/archive/}, \code{dir/indexes/index.cdxj}), the layout pywb and warcio read
-and \code{\link{fetchvrf}} falls back to (default \code{TRUE}).}
+(\code{dir/archive/}, \code{dir/indexes/index.cdxj}), the layout pywb and
+warcio read and \code{\link{fetchvrf}} falls back to (default \code{TRUE}).}
 }
 \value{
-A data frame of class \code{rmbl_archive_capture}, one row per URL: \code{url},
-\code{file}, \code{sha256}, \code{bytes}, \code{fetched_utc}, \code{status}
-(\code{"captured"}, \code{"uploaded"}, \code{"archived"} or \code{"failed: ..."}),
-\code{mirror} (the archive.org download address, for \code{\link{fetchvrf}}),
-\code{warc} (the local WARC file), \code{capture_id} and \code{archive} (its page at
-archive.rmorie.com) and \code{wayback} (the Wayback Machine's answer); attributes
-\code{manifest}, \code{timestamp} (a \code{\link{tsvrf}} result, or \code{NULL}) and
+A data frame of class \code{rmbl_archive_capture}, one row per URL:
+\code{url}, \code{file}, \code{sha256}, \code{bytes}, \code{fetched_utc},
+\code{status} (\code{"captured"}, \code{"uploaded"}, \code{"archived"} or
+\code{"failed: ..."}), \code{mirror} (the archive.org download address, for
+\code{\link{fetchvrf}}), \code{warc} (the local WARC file),
+\code{capture_id} and \code{archive} (its page at archive.rmorie.com) and
+\code{wayback} (the Wayback Machine's answer); attributes \code{manifest},
+\code{timestamp} (a \code{\link{tsvrf}} result, or \code{NULL}) and
 \code{item}.
 }
 \description{
-Downloads each URL from here, records its SHA-256, size and time in a manifest,
-timestamps the manifest with an RFC 3161 time-stamping authority, and, with
-archive.org keys, uploads the files, the manifest and its timestamp as one public
-archive.org item. The item is the mirror that \code{\link{fetchvrf}} falls
-back to, and the timestamp shows that these were the bytes on that date.
+Downloads each URL from here, records its SHA-256, size and time in a
+manifest, timestamps the manifest with an RFC 3161 time-stamping authority,
+and, with archive.org keys, uploads the files, the manifest and its timestamp
+as one public archive.org item. The item is the mirror that
+\code{\link{fetchvrf}} falls back to, and the timestamp shows that these were
+the bytes on that date.
 }
 \details{
-Some servers refuse the Internet Archive's crawler while serving everyone
-else: Save Page Now then reports that the target \dQuote{cannot find} the page, or
-\dQuote{blocks
-access} to it, although the page is there. Those URLs cannot be put in the Wayback
-Machine, but they can be captured by anyone who can reach them, and the capture can
-be published. Pass a \code{\link{wbsave}} result as \code{urls} to capture
-just the URLs it failed on with such a refusal.
+Some servers refuse the Internet Archive's crawler while serving
+everyone else: Save Page Now then reports that the target \dQuote{cannot
+find} the page, or \dQuote{blocks access} to it, although the page is there.
+Those URLs cannot be put in the Wayback Machine, but they can be captured by
+anyone who can reach them, and the capture can be published. Pass a
+\code{\link{wbsave}} result as \code{urls} to capture just the URLs it failed
+on with such a refusal.
 
-The manifest (\code{manifest.json}) lists, for each URL, the file, its SHA-256, its
-size and the time it was fetched. The timestamp (\code{manifest.tsr}) is the
-authority's signed statement that the manifest's SHA-256 existed at its time;
-\code{\link{tsvrf}} checks it, as does \code{openssl ts -verify}. Each
-file's digest in the manifest ties the file to that time.
+The manifest (\code{manifest.json}) lists, for each URL, the file, its
+SHA-256, its size and the time it was fetched. The timestamp
+(\code{manifest.tsr}) is the authority's signed statement that the manifest's
+SHA-256 existed at its time; \code{\link{tsvrf}} checks it, as does
+\code{openssl ts -verify}. Each file's digest in the manifest ties the file
+to that time.
 
 The upload uses the Internet Archive's S3-like API: each file is sent
 with a PUT, streamed from disk, to\cr
@@ -102,25 +107,41 @@ redistribute.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
-# save from your own connection to archive.rmorie.com and the Wayback Machine at once
+# save from your own connection to archive.rmorie.com and the Wayback Machine
+# at once
 src <- "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"
-cap <- arccap(src, file.path(tempdir(), "cap"),
-              upload = c("rmorie", "wayback"),
-              reason = "Custody table cited in chapter 3")
+cap <- arccap(
+  src,
+  file.path(tempdir(), "cap"),
+  upload = c("rmorie", "wayback"),
+  reason = "Custody table cited in chapter 3"
+)
 cap$archive
 w <- wbsave(urls)
 lic <- "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
-meta <- list(title = "Statistics Canada tables (captures)",
-             creator = "Statistics Canada", licenseurl = lic)
-cap <- arccap(w, file.path(tempdir(), "capture"),
-                       item = "my-statcan-tables-2026", meta = meta)
-fetchvrf(cap$url[1], tempfile(), sha256 = cap$sha256[1],
-               mirrors = cap$mirror[1])
+meta <- list(
+  title = "Statistics Canada tables (captures)",
+  creator = "Statistics Canada",
+  licenseurl = lic
+)
+cap <- arccap(
+  w,
+  file.path(tempdir(), "capture"),
+  item = "my-statcan-tables-2026",
+  meta = meta
+)
+fetchvrf(
+  cap$url[1],
+  tempfile(),
+  sha256 = cap$sha256[1],
+  mirrors = cap$mirror[1]
+)
 \dontshow{\}) # examplesIf}
 }
 \references{
-Adams C, Cain P, Pinkas D, Zuccherato R (2001). Internet X.509 Public
-Key Infrastructure Time-Stamp Protocol (TSP). RFC 3161. \doi{10.17487/RFC3161}
+Adams C, Cain P, Pinkas D, Zuccherato R (2001). Internet X.509
+Public Key Infrastructure Time-Stamp Protocol (TSP). RFC 3161.
+\doi{10.17487/RFC3161}
 
 Internet Archive. ias3: the Internet Archive's S3-like API.
 archive.org/developers/ias3.html

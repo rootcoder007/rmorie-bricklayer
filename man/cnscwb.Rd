@@ -23,53 +23,53 @@ non-Indigenous people).}
 
 \item{bounds}{Income bounds of \code{\link{cwbscr}}.}
 
-\item{resid}{On or off reserve, in the tables that split it (default the total).}
+\item{resid}{On or off reserve, in the tables that split it (default the
+total).}
 
-\item{minpop}{The smallest population scored (default 250; the Department uses
-65).}
+\item{minpop}{The smallest population scored (default 250; the Department
+uses 65).}
 }
 \value{
-A data frame of class \code{rmbl_census_cwb}: \code{geo}, \code{dguid},
-\code{group}; the components \code{income}, \code{education}, \code{housing},
-\code{labour} and the score \code{cwb} (0 to 100, \code{NA} where not scored); and
-the inputs \code{incpercap} (dollars), \code{highsch25p},
-\code{uni25p}, \code{population}, \code{participation}, \code{employment},
-\code{nomajrep}, \code{notcro} (percentages).
+A data frame of class \code{rmbl_census_cwb}: \code{geo},
+\code{dguid}, \code{group}; the components \code{income}, \code{education},
+\code{housing}, \code{labour} and the score \code{cwb} (0 to 100, \code{NA}
+where not scored); and the inputs \code{incpercap} (dollars),
+\code{highsch25p}, \code{uni25p}, \code{population}, \code{participation},
+\code{employment}, \code{nomajrep}, \code{notcro} (percentages).
 }
 \description{
-Indigenous Services Canada's Community Well-Being (CWB) index (\code{\link{cwbscr}})
-computed from the public 2021 Census Indigenous Population Profile, for each geography
-and group.
+Indigenous Services Canada's Community Well-Being (CWB) index
+(\code{\link{cwbscr}}) computed from the public 2021 Census Indigenous
+Population Profile, for each geography and group.
 }
 \details{
-The Department computes the CWB from census microdata; the public profile
-gives close but not the same inputs, and this function says where it departs:
-\describe{
-\item{income}{per capita: the number of total income recipients aged 15 and over
-times their average total income, over the population in private households (all
-ages), as the CWB does.}
-\item{education}{the shares with at least a high school diploma (all but those with
-no certificate, diploma or degree) and with a bachelor's degree or higher, both
-among those aged 25 and over: the profile has no age group of 20 and over, which
-the CWB uses for the first.}
-\item{labour force}{the participation rate and the employment rate of participants
-(100 less the unemployment rate) of those aged 25 to 64: the CWB uses 20 to 64.}
-\item{housing}{the shares of households with one person or fewer per room and needing
-no major repairs, from the household profile (\code{dwell}), which splits
-Indigenous from non-Indigenous households only, so First Nations, Metis and Inuit
-people all get the pooled Indigenous households' housing: the CWB counts persons,
-not households. Without \code{dwell} the housing component and the score are
-\code{NA}.}
-}
-A group of fewer than \code{minpop} people in a geography gets no score. The
-Department scores communities of 65 people or more; the default here is 250, because
-the public profile's counts are rounded to multiples of 5 and its long-form counts rest
-on a few dozen households at that size. Geographies are matched by DGUID, so places
-that share a name stay apart. The inputs are those of the 2021 profile (98-510-X2021001
-to -016): other editions name their characteristics differently. Read the result as a
-CWB-style description of socio-economic conditions, close to but not the Department's
-index, and never as a measure of the wellness of First Nations, Metis or Inuit people
-as they define it (see \code{\link{cwbscr}}).
+The Department computes the CWB from census microdata; the public
+profile gives close but not the same inputs, and this function says where it
+departs: \describe{ \item{income}{per capita: the number of total income
+recipients aged 15 and over times their average total income, over the
+population in private households (all ages), as the CWB does.}
+\item{education}{the shares with at least a high school diploma (all but
+those with no certificate, diploma or degree) and with a bachelor's degree or
+higher, both among those aged 25 and over: the profile has no age group of 20
+and over, which the CWB uses for the first.} \item{labour force}{the
+participation rate and the employment rate of participants (100 less the
+unemployment rate) of those aged 25 to 64: the CWB uses 20 to 64.}
+\item{housing}{the shares of households with one person or fewer per room and
+needing no major repairs, from the household profile (\code{dwell}), which
+splits Indigenous from non-Indigenous households only, so First Nations,
+Metis and Inuit people all get the pooled Indigenous households' housing: the
+CWB counts persons, not households. Without \code{dwell} the housing
+component and the score are \code{NA}.} } A group of fewer than \code{minpop}
+people in a geography gets no score. The Department scores communities of 65
+people or more; the default here is 250, because the public profile's counts
+are rounded to multiples of 5 and its long-form counts rest on a few dozen
+households at that size. Geographies are matched by DGUID, so places that
+share a name stay apart. The inputs are those of the 2021 profile
+(98-510-X2021001 to -016): other editions name their characteristics
+differently. Read the result as a CWB-style description of socio-economic
+conditions, close to but not the Department's index, and never as a measure
+of the wellness of First Nations, Metis or Inuit people as they define it
+(see \code{\link{cwbscr}}).
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -80,8 +80,8 @@ cnscwb(p, h)[, c("geo", "group", "income", "education", "housing", "labour",
 \dontshow{\}) # examplesIf}
 }
 \references{
-Indigenous Services Canada (2019). Report on trends in First Nations
-communities, 1981 to 2016 (Community Well-Being index).\cr
+Indigenous Services Canada (2019). Report on trends in First
+Nations communities, 1981 to 2016 (Community Well-Being index).\cr
 sac-isc.gc.ca/eng/1345816651029/1557323327644
 }
 \seealso{

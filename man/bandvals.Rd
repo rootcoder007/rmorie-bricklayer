@@ -28,8 +28,8 @@ assumed for every open top band, in the units of the labels.}
 the open top band's upper bound is its lower bound times this factor
 (so \dQuote{Greater than 10} becomes 11 to 22).}
 
-\item{openloflr}{Number or \code{NULL} (the default). The lower bound
-assumed for an open bottom band (\dQuote{under 18}). \code{NULL} uses 0, or the
+\item{openloflr}{Number or \code{NULL} (the default). The lower bound assumed
+for an open bottom band (\dQuote{under 18}). \code{NULL} uses 0, or the
 band's own upper bound when that is below 0. A floor above a band's upper
 bound is refused.}
 }

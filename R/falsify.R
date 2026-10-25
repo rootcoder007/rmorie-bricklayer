@@ -114,19 +114,31 @@
 #' # the statistic must return one finite number
 #' try(cpsfals(d, function(z) c(1, 2), n = 49))
 #' @export
-cpsfals <- function(data, stat, trt = NULL, n = 199L,
-                            subfrac = 0.8, seed = NULL) {
+cpsfals <- function(
+  data,
+  stat,
+  trt = NULL,
+  n = 199L,
+  subfrac = 0.8,
+  seed = NULL
+) {
   .rmbl_no_fn(treatment = trt)
   if (!is.data.frame(data) || nrow(data) < 4L) {
-    stop("cpsfals: `data` must be a data frame with at least 4 rows", call. = FALSE)
+    stop(
+      "cpsfals: `data` must be a data frame with at least 4 rows",
+      call. = FALSE
+    )
   }
   if (!is.function(stat)) {
     stop("`stat` must be a function of one data frame", call. = FALSE)
   }
   n <- .rmbl_num(n, "n", integer = TRUE)[1L]
   if (is.na(n) || n < 9L) {
-    stop("`n` must be at least 9: fewer permutations cannot produce a ",
-         "p-value below 0.1", call. = FALSE)
+    stop(
+      "`n` must be at least 9: fewer permutations cannot produce a ",
+      "p-value below 0.1",
+      call. = FALSE
+    )
   }
   subfrac <- .rmbl_num(subfrac, "subfrac")[1L]
   if (is.na(subfrac) || subfrac <= 0 || subfrac >= 1) {
@@ -138,8 +150,12 @@ cpsfals <- function(data, stat, trt = NULL, n = 199L,
       stop("cpsfals: `trt` is not a column of `data`", call. = FALSE)
     }
   }
-  if (!is.null(seed)) seed <- .rmbl_r_seed(seed)
-  if (!is.null(seed)) .rmbl_local_seed(seed)
+  if (!is.null(seed)) {
+    seed <- .rmbl_r_seed(seed)
+  }
+  if (!is.null(seed)) {
+    .rmbl_local_seed(seed)
+  }
 
   pg <- blprog("falsification", 2 * n + 1L)
   on.exit(pg$done(), add = TRUE)
@@ -149,44 +165,67 @@ cpsfals <- function(data, stat, trt = NULL, n = 199L,
   acc$rows <- list()
   add <- function(control, passed, value, detail) {
     acc$rows[[length(acc$rows) + 1L]] <- data.frame(
-      control = control, passed = passed, value = value,
-      detail = as.character(detail), stringsAsFactors = FALSE)
+      control = control,
+      passed = passed,
+      value = value,
+      detail = as.character(detail),
+      stringsAsFactors = FALSE
+    )
   }
 
   perm <- NULL
   if (is.null(trt)) {
-    add("permutation", NA, NA_real_,
-        "skipped: no `trt` column was named")
-    add("placebo", NA, NA_real_,
-        "skipped: no `trt` column was named")
+    add("permutation", NA, NA_real_, "skipped: no `trt` column was named")
+    add("placebo", NA, NA_real_, "skipped: no `trt` column was named")
   } else {
-    perm <- vapply(seq_len(n), function(i) {
-      pg$update(i, sprintf("permutation %d/%d", i, n))
-      d <- data
-      d[[trt]] <- sample(d[[trt]])
-      tryCatch(as.numeric(stat(d))[1L], error = .rmbl_or(NA_real_))
-    }, numeric(1))
+    perm <- vapply(
+      seq_len(n),
+      function(i) {
+        pg$update(i, sprintf("permutation %d/%d", i, n))
+        d <- data
+        d[[trt]] <- sample(d[[trt]])
+        tryCatch(as.numeric(stat(d))[1L], error = .rmbl_or(NA_real_))
+      },
+      numeric(1)
+    )
     ok <- is.finite(perm)
     # The two-sided permutation p-value, with the +1 that keeps it from
     # ever being zero: the observed value is one of the arrangements.
     extreme <- sum(abs(perm[ok]) >= abs(observed))
     p <- (1 + extreme) / (1 + sum(ok))
     floor_p <- 1 / (1 + sum(ok))
-    add("permutation", p < 0.05, p,
-        sprintf(paste0("p = %.4g with %d usable permutations; the ",
-                       "smallest this design can report is %.4g"),
-                p, sum(ok), floor_p))
+    add(
+      "permutation",
+      p < 0.05,
+      p,
+      sprintf(
+        paste0(
+          "p = %.4g with %d usable permutations; the ",
+          "smallest this design can report is %.4g"
+        ),
+        p,
+        sum(ok),
+        floor_p
+      )
+    )
 
     d <- data
     d[[trt]] <- sample(d[[trt]])
     placebo <- .rmbl_falsify_eval(stat, d, "the placebo exposure")
     # A placebo effect should sit inside the permutation null, since
     # that is exactly what it is a draw from.
-    inside <- abs(placebo) <= stats::quantile(abs(perm[ok]), 0.95,
-                                              names = FALSE)
-    add("placebo", inside, placebo,
-        sprintf(paste0("a permuted exposure gives %.6g, against an ",
-                       "observed %.6g"), placebo, observed))
+    inside <- abs(placebo) <=
+      stats::quantile(abs(perm[ok]), 0.95, names = FALSE)
+    add(
+      "placebo",
+      inside,
+      placebo,
+      sprintf(
+        paste0("a permuted exposure gives %.6g, against an ", "observed %.6g"),
+        placebo,
+        observed
+      )
+    )
   }
 
   d <- data
@@ -194,57 +233,112 @@ cpsfals <- function(data, stat, trt = NULL, n = 199L,
   rcc <- .rmbl_falsify_eval(stat, d, "an added noise column")
   moved <- abs(rcc - observed)
   tol <- 1e-8 * max(1, abs(observed))
-  add("random_common_cause", moved <= tol, rcc,
-      sprintf(paste0("adding a column of noise moved the statistic by ",
-                     "%.3g; it cannot matter, so anything above %.3g is ",
-                     "the statistic reading its own inputs wrongly"),
-              moved, tol))
+  add(
+    "random_common_cause",
+    moved <= tol,
+    rcc,
+    sprintf(
+      paste0(
+        "adding a column of noise moved the statistic by ",
+        "%.3g; it cannot matter, so anything above %.3g is ",
+        "the statistic reading its own inputs wrongly"
+      ),
+      moved,
+      tol
+    )
+  )
 
   k <- max(2L, as.integer(round(subfrac * nrow(data))))
-  subs <- vapply(seq_len(n), function(i) {
-    pg$update(n + i, sprintf("subset %d/%d", i, n))
-    idx <- sample.int(nrow(data), k)
-    tryCatch(as.numeric(stat(data[idx, , drop = FALSE]))[1L],
-             error = .rmbl_or(NA_real_))
-  }, numeric(1))
+  subs <- vapply(
+    seq_len(n),
+    function(i) {
+      pg$update(n + i, sprintf("subset %d/%d", i, n))
+      idx <- sample.int(nrow(data), k)
+      tryCatch(
+        as.numeric(stat(data[idx, , drop = FALSE]))[1L],
+        error = .rmbl_or(NA_real_)
+      )
+    },
+    numeric(1)
+  )
   sok <- is.finite(subs)
   if (!any(sok)) {
-    add("subset_stability", FALSE, NA_real_,
-        "the statistic could not be computed on any subset")
+    add(
+      "subset_stability",
+      FALSE,
+      NA_real_,
+      "the statistic could not be computed on any subset"
+    )
   } else {
     q <- stats::quantile(subs[sok], c(0.025, 0.975), names = FALSE)
     spread <- diff(q)
     scale <- max(abs(observed), stats::sd(subs[sok]), .Machine$double.eps)
-    add("subset_stability", observed >= q[1] && observed <= q[2], spread,
-        sprintf(paste0("the middle 95%% of %d subsets spans [%.6g, ",
-                       "%.6g], a width of %.3g relative to %.3g"),
-                sum(sok), q[1], q[2], spread, scale))
+    add(
+      "subset_stability",
+      observed >= q[1] && observed <= q[2],
+      spread,
+      sprintf(
+        paste0(
+          "the middle 95%% of %d subsets spans [%.6g, ",
+          "%.6g], a width of %.3g relative to %.3g"
+        ),
+        sum(sok),
+        q[1],
+        q[2],
+        spread,
+        scale
+      )
+    )
   }
 
   df <- do.call(rbind, acc$rows)
   rownames(df) <- NULL
-  out <- list(observed = observed, controls = df,
-              permutation = perm,
-              n = n, treatment = trt,
-              rng_kind = paste(RNGkind(), collapse = ","),
-              # as given: as.integer() made a seed past 2^31 - 1 NA
-              seed = if (is.null(seed)) NA_integer_ else seed)
+  out <- list(
+    observed = observed,
+    controls = df,
+    permutation = perm,
+    n = n,
+    treatment = trt,
+    rng_kind = paste(RNGkind(), collapse = ","),
+    # as given: as.integer() made a seed past 2^31 - 1 NA
+    seed = if (is.null(seed)) NA_integer_ else seed
+  )
   class(out) <- c("bricklayer_falsification", "list")
   out
 }
 
 #' @export
 format.bricklayer_falsification <- function(x, ...) {
-  verdict <- function(p) if (is.na(p)) "skip" else if (p) "ok" else "FAIL"
-  c(.rmbl_rule("Falsification controls"),
+  verdict <- function(p) {
+    if (is.na(p)) {
+      "skip"
+    } else if (p) {
+      "ok"
+    } else {
+      "FAIL"
+    }
+  }
+  c(
+    .rmbl_rule("Falsification controls"),
     sprintf("  observed statistic  %.8g", x$observed),
-    sprintf("  permutations        %d%s", x$n,
-            if (is.na(x$seed)) "" else sprintf(" (seed %s)", format(x$seed, scientific = FALSE))),
+    sprintf(
+      "  permutations        %d%s",
+      x$n,
+      if (is.na(x$seed)) {
+        ""
+      } else {
+        sprintf(" (seed %s)", format(x$seed, scientific = FALSE))
+      }
+    ),
     .rmbl_rule(),
-    sprintf("  %-22s %-5s %s", x$controls$control,
-            vapply(x$controls$passed, verdict, character(1)),
-            substring(x$controls$detail, 1L, 40L)),
-    .rmbl_rule())
+    sprintf(
+      "  %-22s %-5s %s",
+      x$controls$control,
+      vapply(x$controls$passed, verdict, character(1)),
+      substring(x$controls$detail, 1L, 40L)
+    ),
+    .rmbl_rule()
+  )
 }
 
 #' @rdname printmeth
@@ -252,7 +346,8 @@ format.bricklayer_falsification <- function(x, ...) {
 #' @method print bricklayer_falsification
 print.bricklayer_falsification <- .rmbl_print_via_format
 
-#' Calls the user statistic on one data set and checks it returns one finite number.
+#' Calls the user statistic on one data set and checks it returns one finite
+#' number.
 #'
 #' A statistic has to return one finite number. Anything else is an error
 #' here rather than an NA that quietly passes every control below.
@@ -263,19 +358,30 @@ print.bricklayer_falsification <- .rmbl_print_via_format
 #' @noRd
 .rmbl_falsify_eval <- function(statistic, data, what) {
   v <- tryCatch(statistic(data), error = function(e) {
-    stop(sprintf("the statistic failed on %s: %s", what,
-                 conditionMessage(e)), call. = FALSE)
+    stop(
+      sprintf("the statistic failed on %s: %s", what, conditionMessage(e)),
+      call. = FALSE
+    )
   })
-  # a data frame or a list returned by the statistic failed in R's words in as.numeric() (final
-  # audit of 1.0.0): refused here, as any other non-number is
+  # a data frame or a list returned by the statistic failed in R's words in
+  # as.numeric() (final audit of 1.0.0): refused here, as any other non-number
+  # is
   if (!is.atomic(v)) {
-    stop(.rmbl_fn(), sprintf("the statistic must return one finite number; on %s it ", what), "returned something else",
-         call. = FALSE)
+    stop(
+      .rmbl_fn(),
+      sprintf("the statistic must return one finite number; on %s it ", what),
+      "returned something else",
+      call. = FALSE
+    )
   }
   v <- suppressWarnings(as.numeric(v))
   if (length(v) != 1L || !is.finite(v)) {
-    stop(.rmbl_fn(), sprintf("the statistic must return one finite number; on %s it ",
-                 what), "returned something else", call. = FALSE)
+    stop(
+      .rmbl_fn(),
+      sprintf("the statistic must return one finite number; on %s it ", what),
+      "returned something else",
+      call. = FALSE
+    )
   }
   v
 }

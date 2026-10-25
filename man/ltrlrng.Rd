@@ -240,9 +240,13 @@ srchpod(1)
 srchpod(c(0.5, 1, 2), model = "invcube")
 plot(srchpod(c(0.5, 1, 1.5)))
 # the book's M-Beta curves against random search and the definite range
-plot(srchpod(1, "mbeta", m = 0.5), models = c("random", "definite", "mbeta"),
-     m = c(0.5, 0.25))
-# the expected curve under a navigation error as large as half the sweep width
+plot(
+  srchpod(1, "mbeta", m = 0.5),
+  models = c("random", "definite", "mbeta"),
+  m = c(0.5, 0.25)
+)
+# the expected curve under a navigation error as large as half the sweep
+# width
 plot(ltrlrng(0, W = 1, navsd = 0.5), equiv = TRUE)
 
 # a parallel sweep at spacing 1.3 W, without and with navigation error
@@ -257,8 +261,11 @@ m <- datumpmap(seq(-5, 5), seq(-5, 5), sigma = 2)
 plot(m)
 plot(m, view = "both")
 # the book's line datum: normal across the line, uniform along it
-plot(datumpmap(0:10, seq(-3, 3, by = 1.2), "corridor", c(0, 0), end = c(10, 0)),
-     view = "cells", digits = 1)
+plot(
+  datumpmap(0:10, seq(-3, 3, by = 1.2), "corridor", c(0, 0), end = c(10, 0)),
+  view = "cells",
+  digits = 1
+)
 a <- opteffort(m, W = 1, effort = 30)
 a$pos
 plot(a)

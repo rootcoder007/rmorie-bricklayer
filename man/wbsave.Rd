@@ -68,13 +68,13 @@ shows it while a person is watching.}
 1000. The rest are left for the next run (with the same
 \code{output}, it carries on from them).}
 
-\item{fallback}{\code{"rmorie"} saves what the Wayback Machine refused (a server that
-refuses its crawler, Statistics Canada among them) from this connection to
-archive.rmorie.com, with \code{\link{arccap}}; the result is attribute \code{archive}.
-\code{NULL} (default) does not.}
+\item{fallback}{\code{"rmorie"} saves what the Wayback Machine refused (a
+server that refuses its crawler, Statistics Canada among them) from this
+connection to archive.rmorie.com, with \code{\link{arccap}}; the result is
+attribute \code{archive}. \code{NULL} (default) does not.}
 
-\item{reason}{With \code{fallback = "rmorie"}: why the files are kept (20 characters or
-more).}
+\item{reason}{With \code{fallback = "rmorie"}: why the files are kept (20
+characters or more).}
 }
 \value{
 A data frame of class \code{rmbl_wayback_save}, one
@@ -142,19 +142,28 @@ cannot be written.
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # The checks run before any request, so these need no network or keys:
 try(wbsave("ftp://example.org/report.pdf"))
-try(wbsave("https://example.org/", ak = "abc", sk = "def",
-                 jobs = 20))
-try(wbsave("https://example.org/", ak = "abc", sk = "def",
-                 output = file.path(tempdir(), "no-such-folder", "runs.jsonl")))
+try(wbsave("https://example.org/", ak = "abc", sk = "def", jobs = 20))
+try(wbsave(
+  "https://example.org/",
+  ak = "abc",
+  sk = "def",
+  output = file.path(tempdir(), "no-such-folder", "runs.jsonl")
+))
 
 # A real run needs archive.org keys and the network.
 \dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
-Sys.setenv(IA_S3_ACCESS_KEY_FILE = "~/.config/ia/s3_access_key.txt",
-           IA_S3_SECRET_KEY_FILE = "~/.config/ia/s3_secret_key.txt")
-res <- wbsave(c("https://www.ontariocourts.ca/ocj/statistics/",
-                      "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"),
-                    output = "snapshots.jsonl")
+Sys.setenv(
+  IA_S3_ACCESS_KEY_FILE = "~/.config/ia/s3_access_key.txt",
+  IA_S3_SECRET_KEY_FILE = "~/.config/ia/s3_secret_key.txt"
+)
+res <- wbsave(
+  c(
+    "https://www.ontariocourts.ca/ocj/statistics/",
+    "https://www150.statcan.gc.ca/n1/tbl/csv/35100177-eng.zip"
+  ),
+  output = "snapshots.jsonl"
+)
 res
 \dontshow{\}) # examplesIf}
 }
@@ -163,9 +172,8 @@ Internet Archive. Save Page Now 2 (SPN2) public API.\cr
 archive.org/details/spn-2-public-api-page-docs
 }
 \seealso{
-\code{\link{wbsnpnat}} to look up an existing
-capture; \code{\link{wbrtry}}; \code{\link{arccap}} for URLs whose
-server refuses the Internet Archive (\code{"cannot find"} although the page is
-there); \code{rmbl wayback FILE}
-runs this from the command line.
+\code{\link{wbsnpnat}} to look up an existing capture;
+\code{\link{wbrtry}}; \code{\link{arccap}} for URLs whose server refuses
+the Internet Archive (\code{"cannot find"} although the page is there);
+\code{rmbl wayback FILE} runs this from the command line.
 }

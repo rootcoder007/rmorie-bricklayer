@@ -39,11 +39,13 @@ implementation, and \pkg{rmorie} links to the same core) to rebuild the
 director's-report corpus yourself.
 }
 \details{
-The URL fetched is\cr
-\code{https://www.siu.on.ca/<lang>/directors_report_details.php?drid=<drid>}\cr
-through \code{\link{blfetch}}, which tries the live page first
-and falls back to a Wayback Machine snapshot (the one given in
-\code{wb}, or one it looks up).
+The URL fetched is
+\preformatted{
+https://www.siu.on.ca/<lang>/directors_report_details.php?drid=<drid>
+}
+through \code{\link{blfetch}}, which tries the live page first and falls back
+to a Wayback Machine snapshot (the one given in \code{wb}, or one it looks
+up).
 
 Network: one or more HTTPS requests to www.siu.on.ca and, on failure,
 web.archive.org. Side effect: writes \code{dest}.

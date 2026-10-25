@@ -15,12 +15,13 @@
 #' implementation, and \pkg{rmorie} links to the same core) to rebuild the
 #' director's-report corpus yourself.
 #'
-#' @details
-#' The URL fetched is\cr
-#' \code{https://www.siu.on.ca/<lang>/directors_report_details.php?drid=<drid>}\cr
-#' through \code{\link{blfetch}}, which tries the live page first
-#' and falls back to a Wayback Machine snapshot (the one given in
-#' \code{wb}, or one it looks up).
+#' @details The URL fetched is
+#' \preformatted{
+#' https://www.siu.on.ca/<lang>/directors_report_details.php?drid=<drid>
+#' }
+#' through \code{\link{blfetch}}, which tries the live page first and falls back
+#' to a Wayback Machine snapshot (the one given in \code{wb}, or one it looks
+#' up).
 #'
 #' Network: one or more HTTPS requests to www.siu.on.ca and, on failure,
 #' web.archive.org. Side effect: writes \code{dest}.
@@ -56,29 +57,46 @@
 #' siufetch(648, dest)
 #' siufetch(648, tempfile(fileext = ".html"), lang = "fr")
 #' @export
-siufetch <- function(drid, dest, lang = c("en", "fr"),
-                                 wb = "", tmout = 120L) {
+siufetch <- function(drid, dest, lang = c("en", "fr"), wb = "", tmout = 120L) {
   lang <- .rmbl_arg(lang)
   did <- .rmbl_drid(drid)
   dest <- .rmbl_string1(dest, "dest")
   url <- sprintf(
     "https://www.siu.on.ca/%s/directors_report_details.php?drid=%d",
-    lang, did)
+    lang,
+    did
+  )
   blfetch(url, dest, wb = wb, tmout = tmout)
 }
 
-#' One positive whole report number: as.integer() would read 1.5 as 1 and fetch another report.
+#' One positive whole report number: as.integer() would read 1.5 as 1 and fetch
+#' another report.
 #' @param drid The report number passed by the user.
 #' @return The report number as an integer.
 #' @noRd
 .rmbl_drid <- function(drid) {
-  v <- if (is.atomic(drid) && length(drid) == 1L && !is.logical(drid) && !is.complex(drid)) {
+  v <- if (
+    is.atomic(drid) &&
+      length(drid) == 1L &&
+      !is.logical(drid) &&
+      !is.complex(drid)
+  ) {
     suppressWarnings(as.numeric(drid))
   } else {
     NA_real_
   }
-  if (is.na(v) || !is.finite(v) || v != floor(v) || v <= 0 || v > .Machine$integer.max) {
-    stop("`drid` must be one positive report number (the drid in the SIU report URL)", call. = FALSE)
+  if (
+    is.na(v) ||
+      !is.finite(v) ||
+      v != floor(v) ||
+      v <= 0 ||
+      v > .Machine$integer.max
+  ) {
+    stop(
+      "`drid` must be one positive report number (the drid in the SIU ",
+      "report URL)",
+      call. = FALSE
+    )
   }
   as.integer(v)
 }

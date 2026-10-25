@@ -9,30 +9,31 @@ arcfind(url, from = NULL, to = NULL, limit = 1000L)
 \arguments{
 \item{url}{A web address, or the start of one followed by \code{*}.}
 
-\item{from, to}{Optional limits on the capture time, as \code{"YYYY"}, \code{"YYYYMM"}
-... up to \code{"YYYYMMDDhhmmss"} (UTC).}
+\item{from, to}{Optional limits on the capture time, as \code{"YYYY"},
+\code{"YYYYMM"} ... up to \code{"YYYYMMDDhhmmss"} (UTC).}
 
 \item{limit}{The most captures to list (default 1000).}
 }
 \value{
 A data frame of class \code{rmbl_archive_find}: \code{capture_id},
-\code{captured} (UTC time), \code{url}, \code{status}, \code{mime}, \code{bytes},
-\code{sha256}, \code{mode} (\code{"client"}: saved from the capturer's connection;
-\code{"worker"}: saved by the archive), \code{visibility}, \code{capture} (its page)
-and \code{replay} (its exact bytes).
+\code{captured} (UTC time), \code{url}, \code{status}, \code{mime},
+\code{bytes}, \code{sha256}, \code{mode} (\code{"client"}: saved from the
+capturer's connection; \code{"worker"}: saved by the archive),
+\code{visibility}, \code{capture} (its page) and \code{replay} (its exact
+bytes).
 }
 \description{
-Lists the captures the archive holds of a web address, oldest first: when each was
-taken, its HTTP status, media type, size and SHA-256, and the addresses to open or
-download it. An address ending in \code{*} lists every address that starts with it.
-Public captures are listed for anyone; with your key (see \code{\link{dlogin}}) your
-private ones are listed too.
+Lists the captures the archive holds of a web address, oldest first: when
+each was taken, its HTTP status, media type, size and SHA-256, and the
+addresses to open or download it. An address ending in \code{*} lists every
+address that starts with it. Public captures are listed for anyone; with your
+key (see \code{\link{dlogin}}) your private ones are listed too.
 }
 \details{
 The archive answers the same CDX query as the Wayback Machine
-(\code{/cdx/search/cdx?url=...&output=json}), so tools written for it can read it as
-well. Set \code{MORIE_ARCHIVE_URL} to query another archive that speaks the same
-protocol, with its key in \code{MORIE_ARCHIVE_KEY}.
+(\code{/cdx/search/cdx?url=...&output=json}), so tools written for it can
+read it as well. Set \code{MORIE_ARCHIVE_URL} to query another archive that
+speaks the same protocol, with its key in \code{MORIE_ARCHIVE_KEY}.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

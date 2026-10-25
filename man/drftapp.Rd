@@ -42,23 +42,20 @@ uploaded. It needs the shiny package, which is suggested, not required.
 \details{
 The app has the column table (verdicts under the bands), the PSI per
 column, the fingerprint, and for the chosen column its summary, the
-distributions, the ECDFs, the quantile shift, the first digits and a
-sentence on the verdict, as \code{\link[=drfthtml]{drfthtml()}} has, and a history heatmap
-with \code{hist}; the warn and fail bands and alpha are sliders, with a reset to the
+distributions, the ECDFs, the quantile shift, the first digits and a sentence
+on the verdict, as \code{\link[=drfthtml]{drfthtml()}} has, and a history heatmap with
+\code{hist}; the warn and fail bands and alpha are sliders, with a reset to the
 object's bands. Beyond the page it has: \dQuote{what would clear this}, the
 PSI of the column with its \code{k} largest bins left out and the rest
 renormalized; with \code{ref} and \code{cur} (or uploaded CSV files), a rerun of
 \code{\link[=cpsdrft]{cpsdrft()}} on chosen columns with another number of bins; with
-\code{hist},
-the PSI of each column over the runs in that directory
-(\verb{rmbl drift --json} outputs or JSON exports of the page); a manifest
-tab when
-\code{x$manifest} holds an \code{\link[=mnfdiff]{mnfdiff()}}; and downloads of the
-HTML report,
-Markdown and JSON. Uploaded files are read with the package's own CSV
-reader (the one \code{\link[=dload]{dload()}} uses). \verb{rmbl drift PATH --app}
-opens the app on
-the first capsule whose source moved.
+\code{hist}, the PSI of each column over the runs in that directory
+(\verb{rmbl drift --json} outputs or JSON exports of the page); a manifest tab
+when \code{x$manifest} holds an \code{\link[=mnfdiff]{mnfdiff()}}; and downloads of the
+HTML report, Markdown and JSON. Uploaded files are read with the package's
+own CSV reader (the one \code{\link[=dload]{dload()}} uses).
+\verb{rmbl drift PATH --app} opens the app on the first capsule whose source
+moved.
 
 The function builds the app and returns it; printing it, or
 \code{\link[shiny:runApp]{shiny::runApp()}}, runs it.

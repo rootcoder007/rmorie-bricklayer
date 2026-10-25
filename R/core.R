@@ -59,14 +59,16 @@
 #' @useDynLib rmoriebricklayer, .registration = TRUE
 #' @name cstat
 #' @export
-#' @srrstats {G2.2} .rmbl_num_input refuses data frames and lists for a vector argument; test-input-contracts.R:
-#'   cmn(data.frame(a = 1)) errors "must be numeric".
-#' @srrstats {G2.4b} .rmbl_num_input() converts with as.numeric() after refusing text, factor and list; logical is
-#'   read as 0/1 (test-input-contracts.R).
-#' @srrstats {G2.15} Never silently drops NA: NA/NaN propagate as documented ("There is no na.rm");
-#'   test-input-contracts.R is.na(cmn(c(1, NA))).
-#' @srrstats {EA2.6} .rmbl_num_input (R/aaa_input_guards.R) uses as.numeric(), which drops names, dims and extra
-#'   attributes before the C kernels; factor, character and list input is refused.
+#' @srrstats {G2.2} .rmbl_num_input refuses data frames and lists for a vector
+#'   argument; test-input-contracts.R: cmn(data.frame(a = 1)) errors "must be
+#'   numeric".
+#' @srrstats {G2.4b} .rmbl_num_input() converts with as.numeric() after refusing
+#'   text, factor and list; logical is read as 0/1 (test-input-contracts.R).
+#' @srrstats {G2.15} Never silently drops NA: NA/NaN propagate as documented
+#'   ("There is no na.rm"); test-input-contracts.R is.na(cmn(c(1, NA))).
+#' @srrstats {EA2.6} .rmbl_num_input (R/aaa_input_guards.R) uses as.numeric(),
+#'   which drops names, dims and extra attributes before the C kernels; factor,
+#'   character and list input is refused.
 cmn <- function(x) .Call(C_rmbl_mean, .rmbl_num_input(x, "x"))
 
 #' @rdname cstat
@@ -78,7 +80,9 @@ cvari <- function(x) .Call(C_rmbl_var, .rmbl_num_input(x, "x"))
 ccorr <- function(x, y) {
   x <- .rmbl_num_input(x, "x")
   y <- .rmbl_num_input(y, "y")
-  if (length(x) != length(y)) stop("ccorr: `x` and `y` must have the same length", call. = FALSE)
+  if (length(x) != length(y)) {
+    stop("ccorr: `x` and `y` must have the same length", call. = FALSE)
+  }
   .Call(C_rmbl_cor, x, y)
 }
 
@@ -91,15 +95,13 @@ ccorr <- function(x, y) {
 #' \code{LinkingTo: rmoriebricklayer}, and for a positive standard deviation
 #' it agrees with \code{\link[stats]{dnorm}}.
 #'
-#' @details
-#' \deqn{f(x) = \frac{1}{\sigma\sqrt{2\pi}}
-#'   \exp\left(-\frac{(x - \mu)^2}{2\sigma^2}\right).}
-#' The function is vectorised over \code{x} only; \code{mean} must be a single
-#' finite number and \code{sd} a single positive number, and anything else is
-#' an error (\code{dnorm()} recycles them, and gives \code{Inf} or \code{NaN} for
-#' \code{sd = 0} or below).
-#' \code{NA} in \code{x} gives \code{NA}; \code{x = Inf} gives 0. Character,
-#' factor or list input for \code{x} is an error.
+#' @details \deqn{f(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(x -
+#' \mu)^2}{2\sigma^2}\right).} The function is vectorised over \code{x} only;
+#' \code{mean} must be a single finite number and \code{sd} a single positive
+#' number, and anything else is an error (\code{dnorm()} recycles them, and
+#' gives \code{Inf} or \code{NaN} for \code{sd = 0} or below). \code{NA} in
+#' \code{x} gives \code{NA}; \code{x = Inf} gives 0. Character, factor or list
+#' input for \code{x} is an error.
 #'
 #' @param x Numeric vector of quantiles.
 #' @param mean Number, default \code{0}: the mean \eqn{\mu}.
@@ -127,9 +129,12 @@ ccorr <- function(x, y) {
 cnormpdf <- function(x, mean = 0, sd = 1) {
   mean <- .rmbl_num(mean, "mean")
   sd <- .rmbl_num(sd, "sd")
-  if (length(mean) != 1L || !is.finite(mean)) stop("cnormpdf: `mean` must be a single finite number", call. = FALSE)
-  if (length(sd) != 1L || !is.finite(sd) || sd <= 0) stop("cnormpdf: `sd` must be a single positive number",
-                                                          call. = FALSE)
+  if (length(mean) != 1L || !is.finite(mean)) {
+    stop("cnormpdf: `mean` must be a single finite number", call. = FALSE)
+  }
+  if (length(sd) != 1L || !is.finite(sd) || sd <= 0) {
+    stop("cnormpdf: `sd` must be a single positive number", call. = FALSE)
+  }
   .Call(C_rmbl_normal_pdf, .rmbl_num_input(x, "x"), mean, sd)
 }
 
@@ -187,7 +192,14 @@ cnormpdf <- function(x, mean = 0, sd = 1) {
 #' @export
 csha256 <- function(x) {
   .rmbl_no_fn(x = x)
-  if (is.raw(x)) return(.Call(C_rmbl_sha256, x))
+  if (is.raw(x)) {
+    return(.Call(C_rmbl_sha256, x))
+  }
   x <- as.character(x)
-  vapply(x, function(s) .Call(C_rmbl_sha256, s), character(1), USE.NAMES = FALSE)
+  vapply(
+    x,
+    function(s) .Call(C_rmbl_sha256, s),
+    character(1),
+    USE.NAMES = FALSE
+  )
 }

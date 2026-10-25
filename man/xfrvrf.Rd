@@ -7,8 +7,8 @@
 xfrvrf(imported, soucnts, codebook = NULL, tol = 0, strict = TRUE)
 }
 \arguments{
-\item{imported}{The vector as it arrived. It is a haven-style labelled vector,
-plain codes given with \code{codebook}, or labels already decoded.}
+\item{imported}{The vector as it arrived. It is a haven-style labelled
+vector, plain codes given with \code{codebook}, or labels already decoded.}
 
 \item{soucnts}{Named numeric vector, label = count, as printed by
 the source program (SPSS FREQUENCIES, Stata tabulate).}
@@ -62,8 +62,10 @@ label is an error in either mode (from the decoding step).
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-x <- structure(c(1, 1, 2, 4, 1),
-               labels = c(White = 1, Black = 2, Other = 3, Unknown = 4))
+x <- structure(
+  c(1, 1, 2, 4, 1),
+  labels = c(White = 1, Black = 2, Other = 3, Unknown = 4)
+)
 xfrvrf(x, c(White = 3, Black = 1, Unknown = 1))$ok
 
 # counts that only match under swapped labels, reported without stopping
@@ -72,8 +74,11 @@ r$ok
 r$marginals$permutation
 
 # value labels that disagree with the source code book
-try(xfrvrf(x, c(White = 3, Black = 1, Unknown = 1),
-  codebook = c("1" = "White", "2" = "Other", "3" = "Black", "4" = "Unknown")))
+try(xfrvrf(
+  x,
+  c(White = 3, Black = 1, Unknown = 1),
+  codebook = c("1" = "White", "2" = "Other", "3" = "Black", "4" = "Unknown")
+))
 \dontshow{\}) # examplesIf}
 }
 \seealso{

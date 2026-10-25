@@ -1,13 +1,28 @@
-testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
+# battery: runs in CI and locally; CRAN runs the correctness core
+testthat::skip_on_cran()
 # Input contracts found by the degenerate-input sweep of 2026-09-18: every
 # call here used to return a value that looked like an answer.
 
 test_that("numeric kernels refuse non-numeric input instead of coercing", {
-  for (f in list(cmn, cvari, csdev, cmed, cmad, ciqr,
-                 cmom, cqnt, ctrmmean,
-                 cwinsmean, ctkyfnc, cmidrk,
-                 cbootmean, inlhist, cnormpdf,
-                 cnormlpdf, hurwzeta)) {
+  for (f in list(
+    cmn,
+    cvari,
+    csdev,
+    cmed,
+    cmad,
+    ciqr,
+    cmom,
+    cqnt,
+    ctrmmean,
+    cwinsmean,
+    ctkyfnc,
+    cmidrk,
+    cbootmean,
+    inlhist,
+    cnormpdf,
+    cnormlpdf,
+    hurwzeta
+  )) {
     expect_error(f("abc"), "must be numeric")
     expect_error(f(list(1, 2)), "must be numeric")
     expect_error(f(data.frame(a = 1)), "must be numeric")
@@ -76,8 +91,7 @@ test_that("parsers, rules, manifests and guards refuse wrong input", {
   expect_error(bandvals(NA), "character band labels")
   expect_error(fylbl(-1), "positive")
   expect_error(fylbl(list()), "numeric or character")
-  for (f in list(rulenull, ruleuniq, ruleincr,
-                 rulemad)) {
+  for (f in list(rulenull, ruleuniq, ruleincr, rulemad)) {
     expect_error(f(NULL), "single non-empty string")
     expect_error(f(-1), "single non-empty string")
   }
@@ -100,8 +114,7 @@ test_that("I/O helpers refuse empty paths and missing capsules", {
   expect_error(wrmnfjs(list(), ""), "single non-empty string")
   expect_error(wrtxtfb("t", ""), "single non-empty string")
   expect_error(vrfcps(""), "single non-empty string")
-  expect_error(vrfcps("/no/such/dir/at/all"),
-               "not an existing directory")
+  expect_error(vrfcps("/no/such/dir/at/all"), "not an existing directory")
   expect_error(valsch(NULL, NULL), "data frame")
   expect_error(schval(NULL, NULL), "data frame")
   expect_error(rvkfetch(""), "non-empty list of parsed certificates")

@@ -50,16 +50,14 @@ detection (default 0.05).}
 session's random number state.}
 }
 \value{
-A list of class \code{c("bricklayer_power", "list")}:
-\describe{
+A list of class \code{c("bricklayer_power", "list")}: \describe{
 \item{\code{curve}}{data frame with one row per size: \code{size},
 \code{detected} (integer), \code{reps} (integer, the usable repetitions)
 and \code{rate} (\code{detected / reps}, \code{NA} when none was usable).}
-\item{\code{alpha}, \code{n}, \code{reps}, \code{treatment}}{the settings used.}
-\item{\code{smadet}}{the smallest positive size found at a rate of
+\item{\code{alpha}, \code{n}, \code{reps}, \code{treatment}}{the settings
+used.} \item{\code{smadet}}{the smallest positive size found at a rate of
 at least 0.8, or \code{NA} when no size reached it.}
-\item{\code{false_positive_rate}}{the rate at size 0.}
-}
+\item{\code{false_positive_rate}}{the rate at size 0.} }
 }
 \description{
 Adds an effect of each given size to the data, reruns the whole

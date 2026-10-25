@@ -76,13 +76,12 @@ payload the same on every R version, for any R object (a canonical JSON
 encoding would cover only the objects JSON can hold); the rest of a
 version-2 stream depends only on the object.
 
-Entries written by 0.5.12 and earlier carry no \code{scheme}. Their
-digest is the SHA-256 of the string \code{"<prev>:<payload>"} (the label not covered,
+Entries written by 0.5.12 and earlier carry no \code{scheme}. Their digest is
+the SHA-256 of the string \code{"<prev>:<payload>"} (the label not covered,
 and the payload of a non-string entry taken over serialized bytes that
-include the writer's R version). \code{chnvrf()} and
-\code{chnseal()} still accept them under those rules, with a warning
-that they were sealed with the weaker scheme. Appending to such a chain
-adds scheme-2 entries.
+include the writer's R version). \code{chnvrf()} and \code{chnseal()} still
+accept them under those rules, with a warning that they were sealed with the
+weaker scheme. Appending to such a chain adds scheme-2 entries.
 
 \code{chnvrf()} walks the chain from the start: an entry fails when
 its \code{prev} is not the previous link, its \code{scheme} is neither 2
@@ -117,8 +116,10 @@ Error: a \code{chain} that does not come from \code{chnnew()} (for
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-# one-time index record out of your configuration directory; leave the default in use
+# keep this example's
+op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+# one-time index record out of your configuration directory; leave the
+# default in use
 ch <- chnnew()
 ch <- chnapp(ch, "manifest for run 1", label = "run-1")
 ch <- chnapp(ch, "manifest for run 2", label = "run-2")

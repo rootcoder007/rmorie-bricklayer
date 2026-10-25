@@ -79,18 +79,18 @@
 #' verify is a failed row, not an error.
 #'
 #' @param man A manifest, as from [mkmnf()].
-#' @param key For \code{cpsatst()}, a signing key from
-#'   [fipskg()] (ML-DSA, SLH-DSA and the other standardised schemes) or
-#'   [pqckg()] (XMSS), or a shared secret
-#'   (a string or raw vector) for \code{"hmac"}. For \code{cpschkatst()},
-#'   the shared secret that checks an \code{"hmac"} attestation; it is not
-#'   used for the other schemes, whose public key the attestation carries.
+#' @param key For \code{cpsatst()}, a signing key from [fipskg()]
+#'   (ML-DSA, SLH-DSA and the other standardised schemes) or [pqckg()]
+#'   (XMSS), or a shared secret (a string or raw vector) for \code{"hmac"}. For
+#'   \code{cpschkatst()}, the shared secret that checks an \code{"hmac"}
+#'   attestation; it is not used for the other schemes, whose public key the
+#'   attestation carries.
 #' @param ctx Optional context string (or raw vector), bound into the
 #'   signature for the standardised schemes; see
 #'   [cpssign()].
 #'   \code{NULL} (the default) means none.
-#' @param prehash Pre-hash, as in [cpssign()]. It is \code{"none"} (the
-#'   default) or a hash name such as \code{"sha256"} or \code{"sha512"}.
+#' @param prehash Pre-hash, as in [cpssign()]. It is \code{"none"}
+#'   (the default) or a hash name such as \code{"sha256"} or \code{"sha512"}.
 #' @param note Optional free text recorded in the attestation
 #'   -- what the signature is meant to assert, in the signer's own words. It
 #'   is covered by the signature, since it is part of the digest.
@@ -102,11 +102,10 @@
 #'   which key should have
 #'   signed: without it the check confirms the attestation is internally
 #'   consistent, which any key's holder could arrange.
-#' @return \code{cpsatst()} a list of class \code{bricklayer_attestation} with the
-#'   character fields
-#'   \code{digest}, \code{scheme}, \code{public} (hex), \code{context},
-#'   \code{prehash}, \code{note} and \code{signed_utc} (ISO 8601 UTC time), and
-#'   \code{signature} (a \code{bricklayer_signature} from
+#' @return \code{cpsatst()} a list of class \code{bricklayer_attestation} with
+#'   the character fields \code{digest}, \code{scheme}, \code{public} (hex),
+#'   \code{context}, \code{prehash}, \code{note} and \code{signed_utc} (ISO 8601
+#'   UTC time), and \code{signature} (a \code{bricklayer_signature} from
 #'   [cpssign()]).
 #'
 #'   \code{cpschkatst()} a list of class \code{bricklayer_attestation_check}
@@ -119,9 +118,7 @@
 #' [cpsfals()],
 #' [chnseal()].
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' m <- mkmnf(list(dataset = "otis", rows = 1200L),
-#'   env = FALSE
-#' )
+#' m <- mkmnf(list(dataset = "otis", rows = 1200L), env = FALSE)
 #' key <- fipskg("ML-DSA-65")
 #' att <- cpsatst(m, key, note = "counts as published")
 #' att
@@ -137,9 +134,7 @@
 #' cpschkatst(att, m2)$ok
 #'
 #' # and so does presenting a different key
-#' cpschkatst(att, m,
-#'   keyexp = fipskg("ML-DSA-65")$public
-#' )$ok
+#' cpschkatst(att, m, keyexp = fipskg("ML-DSA-65")$public)$ok
 #'
 #' # the note is signed too: editing it breaks the signature row
 #' forged <- att
@@ -154,32 +149,40 @@
 #' att3 <- cpsatst(m, "shared-secret")
 #' att3$public
 #' cpschkatst(att3, m, key = "shared-secret", keyexp = att3$public)$ok
-#' cpschkatst(att3, m, key = "another-secret")$checks[, c("check", "ok", "detail")]
+#' cpschkatst(att3, m, key = "another-secret")$checks[, c(
+#'   "check",
+#'   "ok",
+#'   "detail"
+#' )]
 #'
 #' # a key that is not a signing key is refused
 #' try(cpsatst(m, 42))
 #' @export
-#' @srrstats {G2.0} An HMAC `key` must be one string or a non-empty raw vector; a character vector of
-#'   length 2 is refused (.rmbl_attest_scheme, test-attest.R:461).
-#' @srrstats {G2.1} `key` must be a key object, a string or raw: anything else (a list, NULL) is
-#'   refused naming the accepted types (a list: test-attest.R:226; NULL: test-stress-7703a04-review.R:31); a
-#'   function given to cpschkatst() is refused by .rmbl_no_fn (test-attest.R:462).
-#' @srrstats {G5.2b} Each refusal added for HMAC (`ctx`, `prehash`, empty or multi-valued secret) is
-#'   triggered in test-attest.R:457-461 and its message text matched.
-#' @srrstats {G5.8a} A zero-length secret, "" or raw(0), is refused rather than used as an empty HMAC
-#'   key (test-attest.R:459-460); so is an empty `keyexp` in cpschkatst() and cpsbndlvrf(), which
-#'   checked against no key (test-audit-sec-1_0_0.R).
-cpsatst <- function(man, key, ctx = NULL,
-                           prehash = "none", note = NULL) {
+#' @srrstats {G2.0} An HMAC `key` must be one string or a non-empty raw vector;
+#'   a character vector of length 2 is refused (.rmbl_attest_scheme,
+#'   test-attest.R:461).
+#' @srrstats {G2.1} `key` must be a key object, a string or raw: anything else
+#'   (a list, NULL) is refused naming the accepted types (a list:
+#'   test-attest.R:226; NULL: test-stress-7703a04-review.R:31); a function given
+#'   to cpschkatst() is refused by .rmbl_no_fn (test-attest.R:462).
+#' @srrstats {G5.2b} Each refusal added for HMAC (`ctx`, `prehash`, empty or
+#'   multi-valued secret) is triggered in test-attest.R:457-461 and its message
+#'   text matched.
+#' @srrstats {G5.8a} A zero-length secret, "" or raw(0), is refused rather than
+#'   used as an empty HMAC key (test-attest.R:459-460); so is an empty `keyexp`
+#'   in cpschkatst() and cpsbndlvrf(), which checked against no key
+#'   (test-audit-sec-1_0_0.R).
+cpsatst <- function(man, key, ctx = NULL, prehash = "none", note = NULL) {
   .rmbl_no_fn(note = note, context = ctx)
   if (!is.list(man)) {
-    stop("cpsatst: `man` must be a manifest from mkmnf()",
-      call. = FALSE
-    )
+    stop("cpsatst: `man` must be a manifest from mkmnf()", call. = FALSE)
   }
   scheme <- .rmbl_attest_scheme(key)
-  if (identical(scheme, "hmac") && (!is.null(ctx) || !identical(prehash, "none"))) {
-    # HMAC takes neither, so an attestation that recorded one would claim a binding it does not have
+  if (
+    identical(scheme, "hmac") && (!is.null(ctx) || !identical(prehash, "none"))
+  ) {
+    # HMAC takes neither, so an attestation that recorded one would claim a
+    # binding it does not have
     stop("an hmac attestation takes no `ctx` and no `prehash`", call. = FALSE)
   }
   pub <- .rmbl_attest_public(key)
@@ -195,7 +198,13 @@ cpsatst <- function(man, key, ctx = NULL,
     digest = mnfdgst(man),
     scheme = scheme,
     public = pub,
-    context = if (is.null(.ctx)) "" else if (is.raw(.ctx)) .rmbl_hexlify(.ctx) else .ctx,
+    context = if (is.null(.ctx)) {
+      ""
+    } else if (is.raw(.ctx)) {
+      .rmbl_hexlify(.ctx)
+    } else {
+      .ctx
+    },
     prehash = prehash,
     note = if (is.null(note)) "" else as.character(note)[1L],
     signed_utc = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
@@ -206,7 +215,12 @@ cpsatst <- function(man, key, ctx = NULL,
   } else if (identical(scheme, "hmac")) {
     cpssign(signed, key, scheme = "hmac")
   } else {
-    cpssign(signed, key, ctx = if (is.null(.ctx)) NULL else payload$context, prehash = prehash)
+    cpssign(
+      signed,
+      key,
+      ctx = if (is.null(.ctx)) NULL else payload$context,
+      prehash = prehash
+    )
   }
   out <- c(payload, list(signature = sig))
   class(out) <- c("bricklayer_attestation", "list")
@@ -215,15 +229,16 @@ cpsatst <- function(man, key, ctx = NULL,
 
 #' @rdname cpsatst
 #' @export
-cpschkatst <- function(attest, man,
-                                      keyexp = NULL, key = NULL) {
+cpschkatst <- function(attest, man, keyexp = NULL, key = NULL) {
   .rmbl_no_fn(key_expected = keyexp, key = key)
   .bl_keyexp_arg(keyexp)
   acc <- new.env(parent = emptyenv())
   acc$checks <- list()
   note_row <- function(check, ok, detail = "") {
     acc$checks[[length(acc$checks) + 1L]] <- data.frame(
-      check = check, ok = isTRUE(ok), detail = as.character(detail),
+      check = check,
+      ok = isTRUE(ok),
+      detail = as.character(detail),
       stringsAsFactors = FALSE
     )
   }
@@ -231,19 +246,27 @@ cpschkatst <- function(attest, man,
     stop("`attest` must come from cpsatst()", call. = FALSE)
   }
   needed <- c(
-    "digest", "scheme", "public", "context", "prehash", "note",
-    "signed_utc", "signature"
+    "digest",
+    "scheme",
+    "public",
+    "context",
+    "prehash",
+    "note",
+    "signed_utc",
+    "signature"
   )
   missing <- setdiff(needed, names(attest))
   note_row(
-    "attestation_complete", length(missing) == 0L,
+    "attestation_complete",
+    length(missing) == 0L,
     if (length(missing)) paste(missing, collapse = ", ") else ""
   )
 
   got <- tryCatch(mnfdgst(man), error = function(e) NA_character_)
   attested <- attest$digest %||% "(missing)"
   note_row(
-    "manifest_digest", identical(got, attest$digest),
+    "manifest_digest",
+    identical(got, attest$digest),
     if (identical(got, attest$digest)) {
       got
     } else {
@@ -252,45 +275,67 @@ cpschkatst <- function(attest, man,
   )
 
   if (!is.null(keyexp)) {
-    # a public-key object is accepted as well as the hex it carries: for XMSS the attestation's
-    # `public` is root || pubseed, and signpubkey() has both
-    expected_hex <- if (inherits(keyexp, c("bricklayer_public_key", "bricklayer_signing_key"))) {
+    # a public-key object is accepted as well as the hex it carries: for XMSS
+    # the attestation's `public` is root || pubseed, and signpubkey() has both
+    expected_hex <- if (
+      inherits(keyexp, c("bricklayer_public_key", "bricklayer_signing_key"))
+    ) {
       paste0(keyexp$root, .rmbl_xkey(keyexp, "pubseed"))
-    } else if (inherits(keyexp, c("bricklayer_oqs_key", "bricklayer_oqs_public_key"))) {
+    } else if (
+      inherits(keyexp, c("bricklayer_oqs_key", "bricklayer_oqs_public_key"))
+    ) {
       keyexp$public
     } else {
       as.character(keyexp)[1L]
     }
-    key_ok <- identical(tolower(as.character(expected_hex)), tolower(as.character(attest$public %||% "")))
+    key_ok <- identical(
+      tolower(as.character(expected_hex)),
+      tolower(as.character(attest$public %||% ""))
+    )
     note_row(
-      "key_as_expected", key_ok,
-      if (key_ok) "the attestation carries the expected key" else
+      "key_as_expected",
+      key_ok,
+      if (key_ok) {
+        "the attestation carries the expected key"
+      } else {
         "the attestation carries a different key from the one expected"
+      }
     )
   }
 
   payload <- attest[c(
-    "digest", "scheme", "public", "context",
-    "prehash", "note", "signed_utc"
+    "digest",
+    "scheme",
+    "public",
+    "context",
+    "prehash",
+    "note",
+    "signed_utc"
   )]
   signed <- .rmbl_attest_payload_digest(payload)
   ok <- FALSE
   detail <- ""
   if (length(missing) == 0L && identical(attest$scheme, "hmac")) {
-    # a shared secret cannot travel with the attestation: the verifier brings it, and the
-    # key id in `public` says whether it is the one that signed (morie's rows and wording)
-    kid <- if (is.null(key)) NULL else tryCatch(.rmbl_hmac_key_id(key), error = function(e) NULL)
+    # a shared secret cannot travel with the attestation: the verifier brings
+    # it, and the key id in `public` says whether it is the one that signed
+    # (morie's rows and wording)
+    kid <- if (is.null(key)) {
+      NULL
+    } else {
+      tryCatch(.rmbl_hmac_key_id(key), error = function(e) NULL)
+    }
     if (is.null(key)) {
       detail <- "an hmac signature needs the shared key"
     } else if (!identical(kid, tolower(as.character(attest$public)[1L]))) {
       detail <- "the key given is not the key the attestation names"
     } else {
-      ok <- tryCatch(cpsvrf(signed, attest$signature, key), error = function(e) FALSE)
+      ok <- tryCatch(
+        cpsvrf(signed, attest$signature, key),
+        error = function(e) FALSE
+      )
     }
   } else if (length(missing) == 0L) {
-    key <- tryCatch(.rmbl_attest_key_from(attest),
-      error = function(e) NULL
-    )
+    key <- tryCatch(.rmbl_attest_key_from(attest), error = function(e) NULL)
     if (is.null(key)) {
       detail <- "the attested public key is not usable for this scheme"
     } else {
@@ -298,7 +343,10 @@ cpschkatst <- function(attest, man,
         if (identical(attest$scheme, "xmss-sha256")) {
           cpsvrf(signed, attest$signature, key)
         } else {
-          cpsvrf(signed, attest$signature, key,
+          cpsvrf(
+            signed,
+            attest$signature,
+            key,
             ctx = if (nzchar(attest$context)) {
               attest$context
             } else {
@@ -312,8 +360,13 @@ cpschkatst <- function(attest, man,
     }
   }
   if (isTRUE(ok) && identical(attest$scheme, "xmss-sha256")) {
-    # the index and key a verifier needs to see an index signed twice (RFC 10033, section 4)
-    detail <- sprintf("xmss index %d, key %s", as.integer(attest$signature$index), .rmbl_xmss_fpr(attest$public))
+    # the index and key a verifier needs to see an index signed twice (RFC
+    # 10033, section 4)
+    detail <- sprintf(
+      "xmss index %d, key %s",
+      as.integer(attest$signature$index),
+      .rmbl_xmss_fpr(attest$public)
+    )
   }
   note_row("signature", ok, detail)
 
@@ -348,7 +401,9 @@ format.bricklayer_attestation <- function(x, ...) {
 #' @rdname printmeth
 #' @export
 print.bricklayer_attestation <- function(x, ...) {
-  if (is.list(x$signature) && !is.null(x$signature$key_state)) warning(.rmbl_key_state_warning(), call. = FALSE)
+  if (is.list(x$signature) && !is.null(x$signature$key_state)) {
+    warning(.rmbl_key_state_warning(), call. = FALSE)
+  }
   cat(format(x), sep = "\n")
   invisible(x)
 }
@@ -361,7 +416,8 @@ format.bricklayer_attestation_check <- function(x, ...) {
       if (x$ok) "OK" else "FAILED"
     )),
     sprintf(
-      "  %-22s %-5s %s", x$checks$check,
+      "  %-22s %-5s %s",
+      x$checks$check,
       ifelse(x$checks$ok, "ok", "FAIL"),
       substring(x$checks$detail, 1L, 44L)
     ),
@@ -376,14 +432,22 @@ print.bricklayer_attestation_check <- .rmbl_print_via_format
 
 #' Refuses an empty expected key.
 #'
-#' `keyexp = ""` (an unset variable passed along) pinned no key at all (audit of 30bed8e, #10).
-#' NULL is no pin; a key object is checked where it is used.
+#' `keyexp = ""` (an unset variable passed along) pinned no key at all (audit of
+#' 30bed8e, #10). NULL is no pin; a key object is checked where it is used.
 #' @param keyexp The value.
 #' @return NULL, invisibly.
 #' @noRd
 .bl_keyexp_arg <- function(keyexp) {
-  if (is.character(keyexp) && (length(keyexp) != 1L || is.na(keyexp) || !nzchar(trimws(keyexp)))) {
-    stop(.rmbl_fn(), "`keyexp` is empty: give the expected public key (hex), or NULL to pin none", call. = FALSE)
+  if (
+    is.character(keyexp) &&
+      (length(keyexp) != 1L || is.na(keyexp) || !nzchar(trimws(keyexp)))
+  ) {
+    stop(
+      .rmbl_fn(),
+      "`keyexp` is empty: give the expected public key (hex), or NULL ",
+      "to pin none",
+      call. = FALSE
+    )
   }
   invisible(NULL)
 }
@@ -411,16 +475,21 @@ print.bricklayer_attestation_check <- .rmbl_print_via_format
   if (inherits(key, c("bricklayer_signing_key", "bricklayer_public_key"))) {
     return("xmss-sha256")
   }
-  if ((is.raw(key) && length(key) > 0L) ||
-        (is.character(key) && length(key) == 1L && !is.na(key) && nzchar(key))) {
+  if (
+    (is.raw(key) && length(key) > 0L) ||
+      (is.character(key) && length(key) == 1L && !is.na(key) && nzchar(key))
+  ) {
     return("hmac")
   }
-  stop("`key` must come from fipskg() or pqckg(), or be a shared secret (a string or raw vector) for hmac",
-       call. = FALSE)
+  stop(
+    "`key` must come from fipskg() or pqckg(), or be a shared secret (a ",
+    "string or raw vector) for hmac",
+    call. = FALSE
+  )
 }
 
-#' Names an HMAC key without revealing it: HMAC-SHA-256 of \code{"public"} under the key,
-#' as morie's key_id().
+#' Names an HMAC key without revealing it: HMAC-SHA-256 of \code{"public"} under
+#' the key, as morie's key_id().
 #' @param key The shared secret, a string or raw vector.
 #' @return 64 hex characters.
 #' @noRd
@@ -430,7 +499,8 @@ print.bricklayer_attestation_check <- .rmbl_print_via_format
 
 #' Returns the public key text an attestation records for a key.
 #' @param key A key from fipskg() or pqckg(), private or public.
-#' @return The public key as hex text; for XMSS the root followed by the public seed.
+#' @return The public key as hex text; for XMSS the root followed by the public
+#'   seed.
 #' @noRd
 .rmbl_attest_public <- function(key) {
   if (inherits(key, c("bricklayer_oqs_key", "bricklayer_oqs_public_key"))) {
@@ -451,12 +521,15 @@ print.bricklayer_attestation_check <- .rmbl_print_via_format
 .rmbl_attest_key_from <- function(attestation) {
   if (identical(attestation$scheme, "xmss-sha256")) {
     n <- nchar(attestation$public)
-    if (n != 128L) stop("an XMSS public key is 64 bytes", call. = FALSE)
+    if (n != 128L) {
+      stop("an XMSS public key is 64 bytes", call. = FALSE)
+    }
     sig <- attestation$signature
     out <- list(
       root = substring(attestation$public, 1L, 64L),
       pubseed = substring(attestation$public, 65L, 128L),
-      height = sig$height, scheme = "xmss-sha256"
+      height = sig$height,
+      scheme = "xmss-sha256"
     )
     class(out) <- c("bricklayer_public_key", "list")
     return(out)

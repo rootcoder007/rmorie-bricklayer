@@ -7,7 +7,8 @@
 ref_frame <- function(n = 200, seed = 1) {
   set.seed(seed)
   data.frame(
-    id = seq_len(n), score = stats::runif(n, 0, 10),
+    id = seq_len(n),
+    score = stats::runif(n, 0, 10),
     grade = sample(c("a", "b", "c"), n, TRUE),
     stringsAsFactors = FALSE
   )
@@ -53,15 +54,18 @@ test_that("findings are ordered worst first and counted by severity", {
   expect_gt(nrow(r$findings), 3L)
   # fatal before warn before note, always
   rank <- c(fatal = 1L, warn = 2L, note = 3L)
-  expect_equal(rank[r$findings$severity],
+  expect_equal(
+    rank[r$findings$severity],
     sort(rank[r$findings$severity]),
     ignore_attr = TRUE
   )
   # the specific findings are present
   expect_true("drift" %in% r$findings$check)
   expect_true("schema" %in% r$findings$check)
-  expect_true(any(r$findings$check == "missing" &
-    grepl("dead", r$findings$subject)))
+  expect_true(any(
+    r$findings$check == "missing" &
+      grepl("dead", r$findings$subject)
+  ))
   # the summary counts agree with the table
   s <- summary(r)
   expect_equal(
@@ -86,8 +90,10 @@ test_that("a missing required column is fatal", {
   expect_gt(sum(r$findings$severity == "fatal"), 0L)
   # both the schema and the drift comparison notice it
   fatal <- r$findings[r$findings$severity == "fatal", ]
-  expect_true(any(grepl("grade", fatal$subject) |
-    grepl("grade", fatal$detail)))
+  expect_true(any(
+    grepl("grade", fatal$subject) |
+      grepl("grade", fatal$detail)
+  ))
   expect_match(paste(format(r), collapse = "\n"), "FATAL")
   # and fatal outranks everything else in the ordering
   expect_equal(r$findings$severity[1], "fatal")
@@ -104,8 +110,10 @@ test_that("one problem is reported once, not three times", {
   dead_rows <- r$findings[grepl("dead", r$findings$subject), ]
   # it is named as missing, and not also as constant
   expect_true(any(dead_rows$check == "missing"))
-  expect_false(any(dead_rows$check == "shape" &
-    grepl("constant", dead_rows$detail)))
+  expect_false(any(
+    dead_rows$check == "shape" &
+      grepl("constant", dead_rows$detail)
+  ))
   # nor does it produce an outlier-scan complaint, which would be this
   # check declining to run rather than a fact about the data
   expect_false(any(grepl("complete rows", r$findings$detail)))
@@ -114,8 +122,10 @@ test_that("one problem is reported once, not three times", {
   c2 <- ref
   c2$flat <- 7
   rc <- cpsrpt(c2, ref = ref)
-  expect_true(any(rc$findings$check == "shape" &
-    grepl("constant", rc$findings$detail)))
+  expect_true(any(
+    rc$findings$check == "shape" &
+      grepl("constant", rc$findings$detail)
+  ))
   expect_false(any(grepl("collinear", rc$findings$detail)))
 
   # but a GENUINELY duplicated column is reported as collinear, which
@@ -159,20 +169,14 @@ test_that("the optional inputs each switch on their own check", {
   key <- pqckg(height = 2)
   dig <- dgstobj(ref)
   sig <- cpssign(dig, key)
-  good <- cpsrpt(ref,
-    sig = sig,
-    key = signpubkey(key)
-  )
+  good <- cpsrpt(ref, sig = sig, key = signpubkey(key))
   expect_true(good$digest$signature_valid)
   expect_false(any(good$findings$check == "signature"))
   expect_match(paste(format(good), collapse = "\n"), "verified")
 
   # a signature over something else does not, and that is a warning
   wrong <- cpssign("a different digest", xmssadv(key, sig))
-  bad <- cpsrpt(ref,
-    sig = wrong,
-    key = signpubkey(key)
-  )
+  bad <- cpsrpt(ref, sig = wrong, key = signpubkey(key))
   expect_false(bad$digest$signature_valid)
   expect_true(any(bad$findings$check == "signature"))
   expect_equal(bad$verdict, "warn")
@@ -260,8 +264,7 @@ test_that("cpsrpt refuses input it cannot assess", {
   expect_s3_class(z, "bricklayer_report")
   # the outlier scan is skipped above its row cap rather than run
   big <- data.frame(a = stats::rnorm(100), b = stats::rnorm(100))
-  expect_false(any(cpsrpt(big, maxrowsoutl = 10L)$findings$check
-  == "outliers"))
+  expect_false(any(cpsrpt(big, maxrowsoutl = 10L)$findings$check == "outliers"))
 })
 
 test_that("the report notices heavy missingness and a Benford departure", {
@@ -273,8 +276,10 @@ test_that("the report notices heavy missingness and a Benford departure", {
   d <- data.frame(v = stats::rnorm(n), mostly_gone = stats::rnorm(n))
   d$mostly_gone[1:260] <- NA
   r <- cpsrpt(d)
-  expect_true(any(r$findings$check == "missing" &
-    grepl("over half", r$findings$detail)))
+  expect_true(any(
+    r$findings$check == "missing" &
+      grepl("over half", r$findings$detail)
+  ))
   expect_equal(r$verdict, "warn")
 
   # a numeric column spanning orders of magnitude whose leading digits
@@ -310,14 +315,23 @@ test_that("a note-only report renders as such", {
   r <- cpsrpt(dup, ref = ref)
   expect_equal(r$verdict, "note")
   expect_equal(sum(r$findings$severity %in% c("fatal", "warn")), 0L)
-  txt <- paste(format(r), collapse = "
-")
+  txt <- paste(
+    format(r),
+    collapse = "
+"
+  )
   expect_match(txt, "notes only")
   expect_match(txt, "nothing blocking")
   expect_output(print(r), "notes only")
   # and in Markdown
-  expect_match(paste(rptmd(r), collapse = "
-"), "Notes only")
+  expect_match(
+    paste(
+      rptmd(r),
+      collapse = "
+"
+    ),
+    "Notes only"
+  )
 })
 
 test_that("a column that cannot be compared is reported as untestable", {
@@ -334,8 +348,10 @@ test_that("a column that cannot be compared is reported as untestable", {
   expect_equal(untest$severity[1], "note")
   # and it is NOT reported as having drifted, which would be a claim the
   # data does not support
-  drifted <- r$findings[r$findings$check == "drift" &
-    r$findings$severity == "warn", ]
+  drifted <- r$findings[
+    r$findings$check == "drift" &
+      r$findings$severity == "warn",
+  ]
   expect_false("score" %in% drifted$subject)
 })
 

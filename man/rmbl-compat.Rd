@@ -80,10 +80,10 @@ wayback_snapshot_url(url, timestamp = NULL)
 What the forwarded function returns.
 }
 \description{
-rmoriedata 0.3.x on CRAN calls eleven functions by their 0.5.x names. These wrappers keep
-that release installing and checking against rmoriebricklayer 1.0.0. Each one forwards to
-the function named in its body, translating the old argument names:
-\code{\link[=cpssign]{cpssign()}}, \code{\link[=cpsvrf]{cpsvrf()}},
+rmoriedata 0.3.x on CRAN calls eleven functions by their 0.5.x names. These
+wrappers keep that release installing and checking against rmoriebricklayer
+1.0.0. Each one forwards to the function named in its body, translating the
+old argument names: \code{\link[=cpssign]{cpssign()}}, \code{\link[=cpsvrf]{cpsvrf()}},
 \code{\link[=pqckg]{pqckg()}}, \code{\link[=signpubkey]{signpubkey()}},
 \code{\link[=csha256]{csha256()}}, \code{\link[=cmn]{cmn()}},
 \code{\link[=sha256file]{sha256file()}}, \code{\link[=tojs]{tojs()}},
@@ -93,7 +93,8 @@ wrappers go when every released rmoriedata uses them.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
+# keep this example's
+op <- options(rmoriebricklayer.xmssidxfile = tempfile())
 # one-time index record out of your configuration directory
 k <- pqc_keygen(height = 2)
 s <- capsule_sign(core_sha256("manifest"), k)

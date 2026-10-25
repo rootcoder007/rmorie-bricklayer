@@ -16,11 +16,11 @@ A data frame: \code{district}, \code{region}, \code{month},
 \code{arrrate}.
 }
 \description{
-Twenty districts in four regions over 36 months; a reform adopted region by region
-in three stages (months 13, 19 and 25), with the fourth region never adopting it;
-crime and arrest rates and counts. The numbers are made up, with a known effect of
-the reform (a fall of 3 in the crime rate per 100,000), so the examples and tests
-can check that each estimator recovers it.
+Twenty districts in four regions over 36 months; a reform adopted region by
+region in three stages (months 13, 19 and 25), with the fourth region never
+adopting it; crime and arrest rates and counts. The numbers are made up, with
+a known effect of the reform (a fall of 3 in the crime rate per 100,000), so
+the examples and tests can check that each estimator recovers it.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

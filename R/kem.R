@@ -115,9 +115,11 @@ kemkg <- function(lvl = 768L, seed = NULL) {
     stop("`seed` must be a raw vector of 64 bytes", call. = FALSE)
   }
   res <- .Call(C_rmbl_mlkem_keygen, lvl, seed)
-  out <- list(public = .rmbl_hexlify(res$public),
-              secret = .rmbl_hexlify(res$secret),
-              level = lvl)
+  out <- list(
+    public = .rmbl_hexlify(res$public),
+    secret = .rmbl_hexlify(res$secret),
+    level = lvl
+  )
   class(out) <- c("bricklayer_kem_key", "list")
   out
 }
@@ -249,16 +251,20 @@ kemsz <- function(lvl) {
 kemencap <- function(key, m = NULL) {
   level <- .rmbl_kem_key_level(key)
   ek <- .rmbl_hex_or_null(key$public)
-  if (is.null(ek)) stop("kemencap: `key` has no usable public key", call. = FALSE)
+  if (is.null(ek)) {
+    stop("kemencap: `key` has no usable public key", call. = FALSE)
+  }
   if (is.null(m)) {
     m <- rndbytes(32L)
   } else if (!is.raw(m) || length(m) != 32L) {
     stop("`m` must be a raw vector of 32 bytes", call. = FALSE)
   }
   res <- .Call(C_rmbl_mlkem_encaps, level, ek, m)
-  out <- list(ciphertext = .rmbl_hexlify(res$ciphertext),
-              shared = .rmbl_hexlify(res$shared),
-              level = level)
+  out <- list(
+    ciphertext = .rmbl_hexlify(res$ciphertext),
+    shared = .rmbl_hexlify(res$shared),
+    level = level
+  )
   class(out) <- c("bricklayer_kem_capsule", "list")
   out
 }
@@ -272,17 +278,15 @@ kemencap <- function(key, m = NULL) {
 #' the same secret the sender kept, and the two can then use it as a common
 #' key.
 #'
-#' @details
-#' This is ML-KEM.Decaps of FIPS 203 (Algorithm 21). For a ciphertext of
-#' the right length there is no failure path, and that is deliberate. A ciphertext that
-#' was
-#' not produced by a correct encapsulation under this key yields a shared
-#' secret derived from a value held only inside the decapsulation key -- so
-#' it is a real secret, just not the sender's. Whoever sent it learns
-#' nothing about whether it was accepted, which is what closes off a
-#' chosen-ciphertext attack. The consequence for a caller: a mismatch
-#' between the two sides' secrets is the signal that something was wrong,
-#' not an error from this function.
+#' @details This is ML-KEM.Decaps of FIPS 203 (Algorithm 21). For a ciphertext
+#' of the right length there is no failure path, and that is deliberate. A
+#' ciphertext that was not produced by a correct encapsulation under this key
+#' yields a shared secret derived from a value held only inside the
+#' decapsulation key -- so it is a real secret, just not the sender's. Whoever
+#' sent it learns nothing about whether it was accepted, which is what closes
+#' off a chosen-ciphertext attack. The consequence for a caller: a mismatch
+#' between the two sides' secrets is the signal that something was wrong, not an
+#' error from this function.
 #'
 #' Masked by default. With `masked = TRUE` every value that depends on the
 #' secret key is held as two random shares from the moment the key is read
@@ -313,10 +317,10 @@ kemencap <- function(key, m = NULL) {
 #'   as a hex string or a raw vector, of the length for the key's level.
 #' @param masked Logical, \code{TRUE} or \code{FALSE}.
 #'
-#'   \code{rmoriebricklayer.masked}, an option, gives the default when it is set;
-#'   otherwise the default is \code{TRUE}.
-#'   \code{TRUE} runs the first-order masked decapsulation, \code{FALSE} the plain one.
-#'   Both return the same secret.
+#'   \code{rmoriebricklayer.masked}, an option, gives the default when it is
+#'   set; otherwise the default is \code{TRUE}. \code{TRUE} runs the first-order
+#'   masked decapsulation, \code{FALSE} the plain one. Both return the same
+#'   secret.
 #' @return A length-1 character vector of 64 lower-case hex characters: the
 #'   32-byte shared secret.
 #' @seealso [kemencap()].
@@ -339,15 +343,24 @@ kemencap <- function(key, m = NULL) {
 #' try(kemdecap(kempubkey(key), sent$ciphertext))
 #' try(kemdecap(key, "abcd"))
 #' @export
-kemdecap <- function(key, ct, masked = getOption("rmoriebricklayer.masked", TRUE)) {
+kemdecap <- function(
+  key,
+  ct,
+  masked = getOption("rmoriebricklayer.masked", TRUE)
+) {
   .rmbl_no_fn(ciphertext = ct)
   masked <- .rmbl_masked_flag(masked)
   level <- .rmbl_kem_key_level(key)
   if (is.null(key[["secret"]])) {
-    stop("kemdecap: decapsulation needs a key with its secret half", call. = FALSE)
+    stop(
+      "kemdecap: decapsulation needs a key with its secret half",
+      call. = FALSE
+    )
   }
   dk <- .rmbl_hex_or_null(key$secret)
-  if (is.null(dk)) stop("`key` has no usable secret key", call. = FALSE)
+  if (is.null(dk)) {
+    stop("`key` has no usable secret key", call. = FALSE)
+  }
   .ct <- if (is.raw(ct)) {
     ct
   } else {
@@ -355,25 +368,35 @@ kemdecap <- function(key, ct, masked = getOption("rmoriebricklayer.masked", TRUE
   }
   n <- kemsz(level)[["ciphertext"]]
   if (is.null(.ct) || length(.ct) != n) {
-    stop(sprintf("`ct` must be %d bytes for ML-KEM-%d", n, level),
-         call. = FALSE)
+    stop(
+      sprintf("`ct` must be %d bytes for ML-KEM-%d", n, level),
+      call. = FALSE
+    )
   }
-  .rmbl_hexlify(if (masked) {
-    .Call(C_rmbl_mlkem_decaps_masked, level, dk, .ct)
-  } else {
-    .Call(C_rmbl_mlkem_decaps, level, dk, .ct)
-  })
+  .rmbl_hexlify(
+    if (masked) {
+      .Call(C_rmbl_mlkem_decaps_masked, level, dk, .ct)
+    } else {
+      .Call(C_rmbl_mlkem_decaps, level, dk, .ct)
+    }
+  )
 }
 
 #' @export
 format.bricklayer_kem_key <- function(x, ...) {
-  c(.rmbl_rule("Key encapsulation key (ML-KEM, FIPS 203)"),
-    .rmbl_kv(list(level = sprintf("ML-KEM-%d", x$level),
-                  "public key" = sprintf("%s... (%d bytes)",
-                                         substring(x$public, 1L, 32L),
-                                         nchar(x$public) %/% 2L),
-                  secret = "<withheld>")),
-    .rmbl_rule())
+  c(
+    .rmbl_rule("Key encapsulation key (ML-KEM, FIPS 203)"),
+    .rmbl_kv(list(
+      level = sprintf("ML-KEM-%d", x$level),
+      "public key" = sprintf(
+        "%s... (%d bytes)",
+        substring(x$public, 1L, 32L),
+        nchar(x$public) %/% 2L
+      ),
+      secret = "<withheld>"
+    )),
+    .rmbl_rule()
+  )
 }
 
 #' @rdname printmeth
@@ -383,12 +406,18 @@ print.bricklayer_kem_key <- .rmbl_print_via_format
 
 #' @export
 format.bricklayer_kem_public_key <- function(x, ...) {
-  c(.rmbl_rule("Public encapsulation key (ML-KEM, FIPS 203)"),
-    .rmbl_kv(list(level = sprintf("ML-KEM-%d", x$level),
-                  "public key" = sprintf("%s... (%d bytes)",
-                                         substring(x$public, 1L, 32L),
-                                         nchar(x$public) %/% 2L))),
-    .rmbl_rule())
+  c(
+    .rmbl_rule("Public encapsulation key (ML-KEM, FIPS 203)"),
+    .rmbl_kv(list(
+      level = sprintf("ML-KEM-%d", x$level),
+      "public key" = sprintf(
+        "%s... (%d bytes)",
+        substring(x$public, 1L, 32L),
+        nchar(x$public) %/% 2L
+      )
+    )),
+    .rmbl_rule()
+  )
 }
 
 #' @rdname printmeth
@@ -398,13 +427,19 @@ print.bricklayer_kem_public_key <- .rmbl_print_via_format
 
 #' @export
 format.bricklayer_kem_capsule <- function(x, ...) {
-  c(.rmbl_rule("Encapsulated shared secret (ML-KEM, FIPS 203)"),
-    .rmbl_kv(list(level = sprintf("ML-KEM-%d", x$level),
-                  ciphertext = sprintf("%s... (%d bytes)",
-                                       substring(x$ciphertext, 1L, 32L),
-                                       nchar(x$ciphertext) %/% 2L),
-                  shared = "<withheld>")),
-    .rmbl_rule())
+  c(
+    .rmbl_rule("Encapsulated shared secret (ML-KEM, FIPS 203)"),
+    .rmbl_kv(list(
+      level = sprintf("ML-KEM-%d", x$level),
+      ciphertext = sprintf(
+        "%s... (%d bytes)",
+        substring(x$ciphertext, 1L, 32L),
+        nchar(x$ciphertext) %/% 2L
+      ),
+      shared = "<withheld>"
+    )),
+    .rmbl_rule()
+  )
 }
 
 #' @rdname printmeth
@@ -422,9 +457,14 @@ print.bricklayer_kem_capsule <- .rmbl_print_via_format
 #' @noRd
 .rmbl_kem_level <- function(level) {
   # one whole number: as.integer() read c(512, 768) as 512 and 512.5 as 512
-  ok <- is.numeric(level) && length(level) == 1L && !is.na(level) && level == round(level) &&
+  ok <- is.numeric(level) &&
+    length(level) == 1L &&
+    !is.na(level) &&
+    level == round(level) &&
     level %in% c(512, 768, 1024)
-  if (!ok) stop("`level` must be one of 512, 768 or 1024", call. = FALSE)
+  if (!ok) {
+    stop("`level` must be one of 512, 768 or 1024", call. = FALSE)
+  }
   as.integer(level)
 }
 
@@ -433,10 +473,8 @@ print.bricklayer_kem_capsule <- .rmbl_print_via_format
 #' @return The key's level as an integer.
 #' @noRd
 .rmbl_kem_key_level <- function(key) {
-  if (!inherits(key, c("bricklayer_kem_key",
-                       "bricklayer_kem_public_key"))) {
-    stop("`key` must come from kemkg() or kempubkey()",
-         call. = FALSE)
+  if (!inherits(key, c("bricklayer_kem_key", "bricklayer_kem_public_key"))) {
+    stop("`key` must come from kemkg() or kempubkey()", call. = FALSE)
   }
   .rmbl_kem_level(key$level)
 }

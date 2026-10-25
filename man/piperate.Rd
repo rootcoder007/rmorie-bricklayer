@@ -11,31 +11,33 @@ piperate(num, den, win = 12L, lag = 0L, grp = NULL)
 
 \item{win}{The number of periods summed (default 12).}
 
-\item{lag}{The number of periods the input's window precedes the outcome's (default
-0).}
+\item{lag}{The number of periods the input's window precedes the outcome's
+(default 0).}
 
-\item{grp}{Optional grouping (for example a court or municipality), the counts in
-period order within it.}
+\item{grp}{Optional grouping (for example a court or municipality), the
+counts in period order within it.}
 }
 \value{
-A data frame: \code{group}, \code{index} (the period's position within its
-group), \code{numerator}, \code{denominator} (the window sums), \code{rate}.
+A data frame: \code{group}, \code{index} (the period's position
+within its group), \code{numerator}, \code{denominator} (the window sums),
+\code{rate}.
 }
 \description{
-The rate at which one stage of the justice process follows another (charges per
-reported offence, settlements per charge, convictions per trial), summing each over
-a window and setting the outcome's window after the input's, because cases take
-time to move through.
+The rate at which one stage of the justice process follows another (charges
+per reported offence, settlements per charge, convictions per trial), summing
+each over a window and setting the outcome's window after the input's,
+because cases take time to move through.
 }
 \details{
-For period \eqn{t}, a window of \eqn{W} periods and a lag of \eqn{L},
-\deqn{R_t = \frac{\sum_{s = t - W + 1}^{t} O_s}{\sum_{s = t - L - W + 1}^{t - L}
-I_s},}{R_t = sum(O over t - W + 1 .. t) / sum(I over t - L - W + 1 .. t - L),} with
-\eqn{O} the outcome stage and \eqn{I} the input stage. With \eqn{W = 1, L = 0} it
-is the same-period ratio (cases with detention over cases charged; acquittals over
-acquittals and convictions). Rates are \code{NA} until the windows are filled, and
-when the denominator is zero. These are administrative counts of every case, so no
-sampling interval is given.
+For period \eqn{t}, a window of \eqn{W} periods and a lag of
+\eqn{L}, \deqn{R_t = \frac{\sum_{s = t - W + 1}^{t} O_s}{\sum_{s = t - L - W
++ 1}^{t - L} I_s},}{R_t = sum(O over t - W + 1 .. t) / sum(I over t - L - W +
+1 .. t - L),} with \eqn{O} the outcome stage and \eqn{I} the input stage.
+With \eqn{W = 1, L = 0} it is the same-period ratio (cases with detention
+over cases charged; acquittals over acquittals and convictions). Rates are
+\code{NA} until the windows are filled, and when the denominator is zero.
+These are administrative counts of every case, so no sampling interval is
+given.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -46,12 +48,12 @@ piperate(charges, reports, win = 12, lag = 3)[30:36, ]
 \dontshow{\}) # examplesIf}
 }
 \references{
-Council of Europe, European Commission for the Efficiency of Justice
-(CEPEJ) (2014). European judicial systems: efficiency and quality of justice.
-CEPEJ Studies 20.
+Council of Europe, European Commission for the Efficiency of
+Justice (CEPEJ) (2014). European judicial systems: efficiency and quality
+of justice. CEPEJ Studies 20.
 
-Applied to the stages of a Colombian criminal-procedure reform: Acosta, Mejia and
-Zorro Medina (2023), see \code{\link{plndid}}.
+Applied to the stages of a Colombian criminal-procedure reform: Acosta, Mejia
+and Zorro Medina (2023), see \code{\link{plndid}}.
 }
 \seealso{
 \code{\link{caseflow}} for clearance rates and inventories.

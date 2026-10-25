@@ -16,8 +16,8 @@ the nearest major intersections).}
 
 \item{radius}{The treatment radius.}
 
-\item{buffer}{The distance from every site a comparison place must keep (default
-\code{3 * radius}).}
+\item{buffer}{The distance from every site a comparison place must keep
+(default \code{3 * radius}).}
 }
 \value{
 A data frame with the columns \code{group} (\code{"treated"},
@@ -25,16 +25,17 @@ A data frame with the columns \code{group} (\code{"treated"},
 \code{comparison_distance}.
 }
 \description{
-Assigns each place (a block, an address) to the treated group when it lies within a
-radius of a site (a store that donated, a new facility), to the comparison group
-when it lies within the same radius of a comparison point and farther than a buffer
-from every site, and excludes it otherwise, so that spillover from the sites does
-not reach the comparison.
+Assigns each place (a block, an address) to the treated group when it lies
+within a radius of a site (a store that donated, a new facility), to the
+comparison group when it lies within the same radius of a comparison point
+and farther than a buffer from every site, and excludes it otherwise, so that
+spillover from the sites does not reach the comparison.
 }
 \details{
-Distances are Euclidean, so coordinates must be projected (metres or feet,
-not degrees). The radius and the buffer are in the same unit. The buffer should be
-several times the radius: the design it follows used 330 feet and 990 feet.
+Distances are Euclidean, so coordinates must be projected (metres or
+feet, not degrees). The radius and the buffer are in the same unit. The
+buffer should be several times the radius: the design it follows used 330
+feet and 990 feet.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -47,6 +48,6 @@ table(a$group)
 \dontshow{\}) # examplesIf}
 }
 \references{
-Applied to blocks near donor stores: Zorro Medina, Hackett, Green and
-Vargas (2025), see \code{\link{evstudy}}.
+Applied to blocks near donor stores: Zorro Medina, Hackett, Green
+and Vargas (2025), see \code{\link{evstudy}}.
 }

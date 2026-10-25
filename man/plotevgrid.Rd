@@ -22,8 +22,8 @@ Invisibly, a data frame of every panel's estimates with a column
 \code{panel}.
 }
 \description{
-Draws a list of \code{\link{evstudy}} (or \code{\link{stgatt}}) results
-in a grid of panels, one per outcome, with the same style, the way papers show an
+Draws a list of \code{\link{evstudy}} (or \code{\link{stgatt}}) results in a
+grid of panels, one per outcome, with the same style, the way papers show an
 effect on several crimes or several groups at once.
 }
 \examples{

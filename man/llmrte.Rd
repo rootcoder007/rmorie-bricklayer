@@ -35,8 +35,8 @@ whose key is set, or a local Ollama server) and which model it would use.
 The automatic order is: an OpenAI-compatible endpoint of your own
 (\code{MORIE_LLM_BASE_URL}, or \code{own.url} saved with
 \code{rmoriebricklayer config set}); then every provider of
-\code{\link{llmprvd}} whose key is set, in the order of
-that table; then a local Ollama server, at \code{OLLAMA_HOST} or by default at
+\code{\link{llmprvd}} whose key is set, in the order of that table; then a
+local Ollama server, at \code{OLLAMA_HOST} or by default at
 \code{http://localhost:11434}, when it answers with at least one pulled model
 or \code{OLLAMA_MODEL} is set. A saved route replaces the automatic order
 when \code{route = NULL}; it comes from \code{MORIE_LLM_ROUTE} or from the
@@ -57,16 +57,26 @@ that does not answer) a message says so.
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # keep the examples away from your real settings and from the network
-old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST",
-                    "MORIE_LLM_BASE_URL", "MORIE_LLM_MODEL"),
-                  unset = NA)
+old <- Sys.getenv(
+  c(
+    "XDG_CONFIG_HOME",
+    "OLLAMA_HOST",
+    "MORIE_LLM_BASE_URL",
+    "MORIE_LLM_MODEL"
+  ),
+  unset = NA
+)
 Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
 
 # Ollama switched off: that route is not available
 llmrte("ollama")
 
-# an OpenAI-compatible server of your own on this machine (not contacted here)
-Sys.setenv(MORIE_LLM_BASE_URL = "http://localhost:8080/v1", MORIE_LLM_MODEL = "llama3")
+# an OpenAI-compatible server of your own on this machine (not contacted
+# here)
+Sys.setenv(
+  MORIE_LLM_BASE_URL = "http://localhost:8080/v1",
+  MORIE_LLM_MODEL = "llama3"
+)
 str(llmrte())
 
 # the retired hosted tier, and a route name that does not exist
@@ -74,7 +84,11 @@ try(llmrte("hosted"))
 try(llmrte("nope"))
 
 for (v in names(old)) {
-  if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
+  if (is.na(old[[v]])) {
+    Sys.unsetenv(v)
+  } else {
+    do.call(Sys.setenv, as.list(old[v]))
+  }
 }
 \dontshow{\}) # examplesIf}
 }

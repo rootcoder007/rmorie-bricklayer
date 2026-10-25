@@ -2,7 +2,8 @@
 % Please edit documentation in R/indigenous_mental_health.R
 \name{ordcmp}
 \alias{ordcmp}
-\title{Compare rated scales (perceived mental health, life satisfaction) between groups}
+\title{Compare rated scales (perceived mental health, life satisfaction) between
+groups}
 \usage{
 ordcmp(
   data,
@@ -24,17 +25,19 @@ ordcmp(
 gender).}
 
 \item{grp, cat, est, lower, upper}{Column names: the group, the category, the
-share in it (percent or proportion: only relative shares matter) and its published
-limits on the same scale.}
+share in it (percent or proportion: only relative shares matter) and its
+published limits on the same scale.}
 
-\item{lvls}{The categories, from the lowest (least favourable) to the highest.}
+\item{lvls}{The categories, from the lowest (least favourable) to the
+highest.}
 
-\item{ref}{The label of the reference group (required: any group of \code{data}).}
+\item{ref}{The label of the reference group (required: any group of
+\code{data}).}
 
 \item{qual}{Optional column of quality flags (see \code{\link{qltyrcd}}).}
 
-\item{conflvl}{Confidence level of the published limits and of the result (default
-0.95).}
+\item{conflvl}{Confidence level of the published limits and of the result
+(default 0.95).}
 
 \item{pooled}{Optional labels of rows that pool other groups (see
 \code{\link{indgap}}).}
@@ -42,69 +45,82 @@ limits on the same scale.}
 \value{
 A data frame of class \code{rmbl_ordinal_compare}: \code{group},
 \code{reference}, \code{probbet}, \code{lower}, \code{upper}, \code{delta},
-\code{neff}, \code{neffref}, \code{usewithcau}, \code{poogrp};
-the attribute \code{shares} is the matrix of shares (groups by levels), which
+\code{neff}, \code{neffref}, \code{usewithcau}, \code{poogrp}; the
+attribute \code{shares} is the matrix of shares (groups by levels), which
 \code{plot()} draws.
 }
 \description{
-For a rated scale published as the percentage in each category with its confidence
-limits (perceived mental health from poor to excellent, life satisfaction from 0 to 10,
-agreement with a statement), the probability that a person in each group rates higher
-than a person in the reference group, with its confidence interval: a comparison of the
-whole distribution, not of one category cut from it.
+For a rated scale published as the percentage in each category with its
+confidence limits (perceived mental health from poor to excellent, life
+satisfaction from 0 to 10, agreement with a statement), the probability that
+a person in each group rates higher than a person in the reference group,
+with its confidence interval: a comparison of the whole distribution, not of
+one category cut from it.
 }
 \details{
-With shares \eqn{p_i} in the group and \eqn{q_j} in the reference over
-categories ordered from lowest to highest, the probability of a higher rating, ties
-counted half, is \eqn{A = \sum_i p_i (Q_{i-1} + q_i / 2)} with \eqn{Q_i} the
-reference's cumulative shares and \eqn{Q_0 = 0}: the Mann-Whitney probability, equal to
-\eqn{\alpha / (1 + \alpha)} for Agresti's (1980) generalized odds ratio \eqn{\alpha}
-with ties split equally, and to the mean ridit of the group with the reference as the
-standard (Bross 1958). 0.5 is no difference; \eqn{2A - 1} is Cliff's \eqn{\delta}, the
-share rating higher less the share rating lower.
+With shares \eqn{p_i} in the group and \eqn{q_j} in the reference
+over categories ordered from lowest to highest, the probability of a higher
+rating, ties counted half, is \eqn{A = \sum_i p_i (Q_{i-1} + q_i / 2)} with
+\eqn{Q_i} the reference's cumulative shares and \eqn{Q_0 = 0}: the
+Mann-Whitney probability, equal to \eqn{\alpha / (1 + \alpha)} for Agresti's
+(1980) generalized odds ratio \eqn{\alpha} with ties split equally, and to
+the mean ridit of the group with the reference as the standard (Bross 1958).
+0.5 is no difference; \eqn{2A - 1} is Cliff's \eqn{\delta}, the share rating
+higher less the share rating lower.
 
-Its variance is that of the two-sample U statistic,
-\eqn{\sigma_1^2 / n_1 + \sigma_0^2 / n_0}, with \eqn{\sigma_1^2} the variance over the
-group of each category's placement in the reference and \eqn{\sigma_0^2} the converse
-(Brunner and Munzel 2000). The sample sizes are the effective ones the published limits
-imply: for each category, \eqn{n = p(1 - p) / s^2} with \eqn{s} the standard error from
-the limits' width, taking the median over the categories. That carries the design
-effect of the survey's weights and clusters, which the counts of persons (population
-totals) do not. The interval is built on the logit scale, so it stays inside 0 and 1.
+Its variance is that of the two-sample U statistic, \eqn{\sigma_1^2 / n_1 +
+\sigma_0^2 / n_0}, with \eqn{\sigma_1^2} the variance over the group of each
+category's placement in the reference and \eqn{\sigma_0^2} the converse
+(Brunner and Munzel 2000). The sample sizes are the effective ones the
+published limits imply: for each category, \eqn{n = p(1 - p) / s^2} with
+\eqn{s} the standard error from the limits' width, taking the median over the
+categories. That carries the design effect of the survey's weights and
+clusters, which the counts of persons (population totals) do not. The
+interval is built on the logit scale, so it stays inside 0 and 1.
 
-The categories given in \code{lvls} are taken as the whole scale: rows for totals,
-for combined categories (\dQuote{Excellent or very good}) and for \dQuote{not
-specified} are left
-out, and the shares are rescaled to sum to one over the levels. A group with a
-suppressed or missing category is not compared, since its distribution is unknown; one
-with an \code{E} category (in the group or the reference) is compared and marked, and
-one whose published interval misses its own estimate is not compared.
+The categories given in \code{lvls} are taken as the whole scale: rows for
+totals, for combined categories (\dQuote{Excellent or very good}) and for
+\dQuote{not specified} are left out, and the shares are rescaled to sum to
+one over the levels. A group with a suppressed or missing category is not
+compared, since its distribution is unknown; one with an \code{E} category
+(in the group or the reference) is compared and marked, and one whose
+published interval misses its own estimate is not compared.
 
-A higher rating means better only on a scale that runs that way. Give \code{lvls}
-from the least to the most favourable so that \code{probbet} reads as its name
-says.
+A higher rating means better only on a scale that runs that way. Give
+\code{lvls} from the least to the most favourable so that \code{probbet}
+reads as its name says.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-# Self-perceived mental health, 15 years and older, Canada, 2022 (table 41-10-0067-01)
+# Self-perceived mental health, 15 years and older, Canada, 2022 (table
+# 41-10-0067-01)
 mh <- indiex("mentalhealth")
 mh <- mh[mh$region == "Canada", ]
-oc <- ordcmp(mh, "group", "rating", "estimate", "lower", "upper",
-                      lvls = c("Fair or poor", "Good", "Very good", "Excellent"),
-                      ref = "M\u00e9tis", qual = "quality")
+oc <- ordcmp(
+  mh,
+  "group",
+  "rating",
+  "estimate",
+  "lower",
+  "upper",
+  lvls = c("Fair or poor", "Good", "Very good", "Excellent"),
+  ref = "M\u00e9tis",
+  qual = "quality"
+)
 oc
 plot(oc)
 \dontshow{\}) # examplesIf}
 }
 \references{
-Agresti A (1980). Generalized odds ratios for ordinal data. Biometrics
-36(1):59-67. \doi{10.2307/2530495}
+Agresti A (1980). Generalized odds ratios for ordinal data.
+Biometrics 36(1):59-67. \doi{10.2307/2530495}
 
 Bross IDJ (1958). How to use ridit analysis. Biometrics 14(1):18-38.
 \doi{10.2307/2527727}
 
-Brunner E, Munzel U (2000). The nonparametric Behrens-Fisher problem: asymptotic theory
-and a small-sample approximation. Biometrical Journal 42(1):17-25.
+Brunner E, Munzel U (2000). The nonparametric Behrens-Fisher problem:
+asymptotic theory and a small-sample approximation. Biometrical Journal
+42(1):17-25.
 \doi{10.1002/(SICI)1521-4036(200001)42:1<17::AID-BIMJ17>3.0.CO;2-U}
 }
 \seealso{

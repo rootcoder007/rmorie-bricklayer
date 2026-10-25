@@ -11,8 +11,8 @@ dualcont(x, well, distress, conflvl = 0.95)
 
 \item{well, distress}{One wellness and one distress indicator of \code{x}.}
 
-\item{conflvl}{Confidence level of the published intervals and of the ratio (default
-0.95).}
+\item{conflvl}{Confidence level of the published intervals and of the ratio
+(default 0.95).}
 }
 \value{
 A data frame of class \code{rmbl_dual_continuum} with \code{group},
@@ -21,30 +21,33 @@ A data frame of class \code{rmbl_dual_continuum} with \code{group},
 \code{ratiolo}, \code{ratioup} and \code{usewithcau}.
 }
 \description{
-For each group, one wellness indicator against one distress indicator, each with its
-published interval, and the ratio of the two: the dual-continua view of mental health,
-in which wellness is not the absence of distress and is measured in its own right.
+For each group, one wellness indicator against one distress indicator, each
+with its published interval, and the ratio of the two: the dual-continua view
+of mental health, in which wellness is not the absence of distress and is
+measured in its own right.
 }
 \details{
-Keyes (2002, 2005) showed that flourishing and mental illness are correlated
-but distinct axes: a person, or a population, can carry distress and also wellness.
-That is how Indigenous scholars of mental health describe it too, as wellness and as a
-process of healing rather than as illness alone (Stewart 2008). Plotting the groups on
-both axes keeps a strength visible beside the burden it sits next to. The
-\code{strratio} is \eqn{R = W / D}, wellness over distress, with the log-normal
-interval \eqn{\exp\{\log R \pm z\sqrt{\sigma_W^2 + \sigma_D^2}\}} from the two
-published intervals: above 1, more people report the wellness than the distress. The
-two estimates come from the same respondents; their covariance is not published, so the
-interval treats them as independent and is too narrow when they are negatively
-correlated, as answers about wellness and distress usually are. Any two indicators on
-one scale can be set against each other.
+Keyes (2002, 2005) showed that flourishing and mental illness are
+correlated but distinct axes: a person, or a population, can carry distress
+and also wellness. That is how Indigenous scholars of mental health describe
+it too, as wellness and as a process of healing rather than as illness alone
+(Stewart 2008). Plotting the groups on both axes keeps a strength visible
+beside the burden it sits next to. The \code{strratio} is \eqn{R = W / D},
+wellness over distress, with the log-normal interval \eqn{\exp\{\log R \pm
+z\sqrt{\sigma_W^2 + \sigma_D^2}\}} from the two published intervals: above 1,
+more people report the wellness than the distress. The two estimates come
+from the same respondents; their covariance is not published, so the interval
+treats them as independent and is too narrow when they are negatively
+correlated, as answers about wellness and distress usually are. Any two
+indicators on one scale can be set against each other.
 }
 \section{Acknowledgement}{
+ This estimator puts to quantitative use the
+framework of Professor Suzanne Stewart (Yellowknives Dene First Nation,
+University of Toronto).
 
-This estimator puts to quantitative use the framework of Professor Suzanne Stewart
-(Yellowknives Dene First Nation, University of Toronto).
-
-See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette.
+See the acknowledgements of the \code{first-nations-metis-inuit-health}
+vignette.
 }
 
 \examples{
@@ -61,14 +64,13 @@ plot(dc)
 \dontshow{\}) # examplesIf}
 }
 \references{
-Keyes CLM (2002). The mental health continuum: from languishing to
-flourishing in life. Journal of Health and Social Behavior 43(2):207-222.
+Keyes CLM (2002). The mental health continuum: from languishing
+to flourishing in life. Journal of Health and Social Behavior 43(2):207-222.
 \doi{10.2307/3090197}
 
-Keyes CLM (2005). Mental illness and/or mental health? Investigating axioms of the
-complete state model of health. Journal of Consulting and Clinical Psychology
-73(3):539-548.
-\doi{10.1037/0022-006X.73.3.539}
+Keyes CLM (2005). Mental illness and/or mental health? Investigating axioms
+of the complete state model of health. Journal of Consulting and Clinical
+Psychology 73(3):539-548. \doi{10.1037/0022-006X.73.3.539}
 
 Stewart SL (2008), see \code{\link{holbal}}.
 }

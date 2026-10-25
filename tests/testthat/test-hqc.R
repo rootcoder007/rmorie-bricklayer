@@ -1,4 +1,5 @@
-testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
+# battery: runs in CI and locally; CRAN runs the correctness core
+testthat::skip_on_cran()
 # HQC-KEM (specification 2025-08-22, reference implementation v5.0.0).
 #
 # Anchored on the authors' official known-answer vectors: for each, the KAT
@@ -15,24 +16,36 @@ hqc_kat <- function() {
   lines <- readLines(test_path("hqc-kat-digests.txt"), warn = FALSE)
   lines <- lines[!startsWith(lines, "#") & nzchar(lines)][-1L]
   parts <- strsplit(lines, " ", fixed = TRUE)
-  data.frame(level = as.integer(vapply(parts, `[[`, "", 1L)),
-             count = as.integer(vapply(parts, `[[`, "", 2L)),
-             seed = vapply(parts, `[[`, "", 3L),
-             digest = vapply(parts, `[[`, "", 4L),
-             stringsAsFactors = FALSE)
+  data.frame(
+    level = as.integer(vapply(parts, `[[`, "", 1L)),
+    count = as.integer(vapply(parts, `[[`, "", 2L)),
+    seed = vapply(parts, `[[`, "", 3L),
+    digest = vapply(parts, `[[`, "", 4L),
+    stringsAsFactors = FALSE
+  )
 }
 
 hex_raw <- function(h) {
-  as.raw(strtoi(substring(h, seq(1L, nchar(h), 2L), seq(2L, nchar(h), 2L)), 16L))
+  as.raw(strtoi(
+    substring(h, seq(1L, nchar(h), 2L), seq(2L, nchar(h), 2L)),
+    16L
+  ))
 }
 
 run_kat <- function(row) {
   k <- hqcsz(row$level)[["message"]]
-  stream <- .Call(C_rmbl_shake, 256L, c(hex_raw(row$seed), as.raw(0L)),
-                  32L + k + 16L)
+  stream <- .Call(
+    C_rmbl_shake,
+    256L,
+    c(hex_raw(row$seed), as.raw(0L)),
+    32L + k + 16L
+  )
   key <- hqckg(row$level, seed = stream[1:32])
-  cap <- hqcencap(hqcpubkey(key), m = stream[33:(32 + k)],
-                         salt = stream[(33 + k):(48 + k)])
+  cap <- hqcencap(
+    hqcpubkey(key),
+    m = stream[33:(32 + k)],
+    salt = stream[(33 + k):(48 + k)]
+  )
   ss <- hqcdecap(key, cap$ciphertext)
   all <- hex_raw(paste0(key$public, key$secret, cap$ciphertext, cap$shared))
   c(digest = csha256(all), decaps = identical(ss, cap$shared))
@@ -50,9 +63,10 @@ test_that("the byte lengths are the ones the specification fixes", {
   for (lv in names(HQC_SIZES)) {
     sz <- hqcsz(as.integer(lv))
     expect_identical(unname(sz), HQC_SIZES[[lv]])
-    expect_identical(names(sz), c("public", "secret",
-                                  "ciphertext", "seed", "message", "salt",
-                                  "shared"))
+    expect_identical(
+      names(sz),
+      c("public", "secret", "ciphertext", "seed", "message", "salt", "shared")
+    )
   }
   # the security in bits names the same three sets
   expect_identical(hqcsz(128), hqcsz(1))
@@ -60,24 +74,38 @@ test_that("the byte lengths are the ones the specification fixes", {
   expect_identical(hqcsz(256), hqcsz(5))
 })
 
-test_that("the official known-answer vectors are reproduced (both multipliers)", {
-  kat <- hqc_kat()
-  expect_identical(nrow(kat), 300L)
-  # CRAN gets the first five vectors of each set; CI runs all 300
-  if (!identical(Sys.getenv("NOT_CRAN"), "true")) kat <- kat[kat$count < 5L, ]
-  on.exit(.rmbl_hqc_backend(FALSE), add = TRUE)
-  for (portable in c(FALSE, TRUE)) {
-    .rmbl_hqc_backend(portable)
-    for (i in seq_len(nrow(kat))) {
-      got <- run_kat(kat[i, ])
-      expect_identical(got[["digest"]], kat$digest[i],
-                       label = sprintf("HQC-%d vector %d (%s)", kat$level[i],
-                                       kat$count[i],
-                                       .rmbl_hqc_backend()))
-      expect_identical(got[["decaps"]], "TRUE")
+test_that(
+  paste0(
+    "the official known-answer vectors are ",
+    "reproduced (both multipliers)"
+  ),
+  {
+    kat <- hqc_kat()
+    expect_identical(nrow(kat), 300L)
+    # CRAN gets the first five vectors of each set; CI runs all 300
+    if (!identical(Sys.getenv("NOT_CRAN"), "true")) {
+      kat <- kat[kat$count < 5L, ]
+    }
+    on.exit(.rmbl_hqc_backend(FALSE), add = TRUE)
+    for (portable in c(FALSE, TRUE)) {
+      .rmbl_hqc_backend(portable)
+      for (i in seq_len(nrow(kat))) {
+        got <- run_kat(kat[i, ])
+        expect_identical(
+          got[["digest"]],
+          kat$digest[i],
+          label = sprintf(
+            "HQC-%d vector %d (%s)",
+            kat$level[i],
+            kat$count[i],
+            .rmbl_hqc_backend()
+          )
+        )
+        expect_identical(got[["decaps"]], "TRUE")
+      }
     }
   }
-})
+)
 
 test_that("the multiplier in use is reported and can be forced portable", {
   on.exit(.rmbl_hqc_backend(FALSE), add = TRUE)
@@ -89,10 +117,18 @@ test_that("the multiplier in use is reported and can be forced portable", {
 test_that("the decoder corrects up to its capacity (deterministic self-test)", {
   on.exit(.rmbl_hqc_backend(FALSE), add = TRUE)
   for (lv in c(1L, 3L, 5L)) {
-    seed <- .Call(C_rmbl_shake, 256L, charToRaw(sprintf("hqc selftest %d", lv)), 32L)
+    seed <- .Call(
+      C_rmbl_shake,
+      256L,
+      charToRaw(sprintf("hqc selftest %d", lv)),
+      32L
+    )
     expect_identical(.Call(C_rmbl_hqc_selftest, lv, 60L, seed), 0L)
   }
-  expect_error(.Call(C_rmbl_hqc_selftest, 1L, -1L, as.raw(1:32)), "non-negative")
+  expect_error(
+    .Call(C_rmbl_hqc_selftest, 1L, -1L, as.raw(1:32)),
+    "non-negative"
+  )
   expect_error(.Call(C_rmbl_hqc_selftest, 1L, 1L, as.raw(1:3)), "32 bytes")
 })
 
@@ -125,7 +161,10 @@ test_that("a tampered ciphertext yields exactly J(H(ek) || sigma || c)", {
     bad[pos] <- xor(bad[pos], as.raw(4L))
     kbar <- .Call(C_rmbl_shake, 3256L, c(hek, sigma, bad, as.raw(3L)), 32L)
     got <- hqcdecap(key, bad)
-    expect_identical(got, paste(format(as.hexmode(as.integer(kbar)), width = 2L), collapse = ""))
+    expect_identical(
+      got,
+      paste(format(as.hexmode(as.integer(kbar)), width = 2L), collapse = "")
+    )
     expect_false(identical(got, cap$shared))
   }
 })
@@ -154,13 +193,24 @@ test_that("malformed keys, sizes and levels are refused with a reason", {
   expect_error(hqcencap(short), "no usable HQC-1 public key")
   # a decapsulation key whose seeds were damaged
   cap <- hqcencap(key)
-  for (off in c(5L, sz[["public"]] + 3L, sz[["public"]] + 40L,
-                sz[["secret"]] - 1L)) {
+  for (off in c(
+    5L,
+    sz[["public"]] + 3L,
+    sz[["public"]] + 40L,
+    sz[["secret"]] - 1L
+  )) {
     bad <- key
     b <- hex_raw(bad$secret)
     b[off] <- xor(b[off], as.raw(1L))
-    bad$secret <- paste(format(as.hexmode(as.integer(b)), width = 2L), collapse = "")
-    expect_error(hqcdecap(bad, cap$ciphertext), "corrupt", label = sprintf("byte %d", off))
+    bad$secret <- paste(
+      format(as.hexmode(as.integer(b)), width = 2L),
+      collapse = ""
+    )
+    expect_error(
+      hqcdecap(bad, cap$ciphertext),
+      "corrupt",
+      label = sprintf("byte %d", off)
+    )
   }
   nosec <- key
   nosec$secret <- "abc"
@@ -168,8 +218,14 @@ test_that("malformed keys, sizes and levels are refused with a reason", {
   # the C layer refuses wrong lengths and levels on its own
   expect_error(.Call(C_rmbl_hqc_keygen, 2L, as.raw(1:32)), "1, 3 or 5")
   expect_error(.Call(C_rmbl_hqc_keygen, 1.0, as.raw(1:32)), "single integer")
-  expect_error(.Call(C_rmbl_hqc_encaps, 1L, as.raw(1:3), as.raw(1:16), as.raw(1:16)), "2241 bytes")
-  expect_error(.Call(C_rmbl_hqc_decaps, 3L, as.raw(1:3), as.raw(1:3)), "4602 bytes")
+  expect_error(
+    .Call(C_rmbl_hqc_encaps, 1L, as.raw(1:3), as.raw(1:16), as.raw(1:16)),
+    "2241 bytes"
+  )
+  expect_error(
+    .Call(C_rmbl_hqc_decaps, 3L, as.raw(1:3), as.raw(1:3)),
+    "4602 bytes"
+  )
 })
 
 test_that("keys and capsules print without revealing the secret", {
@@ -177,7 +233,11 @@ test_that("keys and capsules print without revealing the secret", {
   out <- format(key)
   expect_true(any(grepl("HQC-5", out)))
   expect_true(any(grepl("<withheld>", out)))
-  expect_false(any(grepl(substring(key$secret, 4500L, 4540L), out, fixed = TRUE)))
+  expect_false(any(grepl(
+    substring(key$secret, 4500L, 4540L),
+    out,
+    fixed = TRUE
+  )))
   expect_output(print(key), "code-based")
   expect_output(print(hqcpubkey(key)), "Public encapsulation key")
   cap <- hqcencap(key)

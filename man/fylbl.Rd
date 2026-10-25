@@ -14,8 +14,8 @@ or a string; a vector of them.}
 \code{"/"}.}
 
 \item{short}{Logical. \code{TRUE} (the default) abbreviates the second year
-to two digits, as in \code{"2022/23"}; \code{FALSE} writes it in full, as in
-\code{"2022/2023"}.}
+to two digits, as in \code{"2022/23"}; \code{FALSE} writes it in full, as
+in \code{"2022/2023"}.}
 }
 \value{
 A character vector of labels, the same length as

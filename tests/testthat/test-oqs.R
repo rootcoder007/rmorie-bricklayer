@@ -33,8 +33,7 @@ test_that("a key names its scheme and does not repeat itself", {
   for (alg in c("ML-DSA-44", "ML-DSA-87")) {
     k <- fipskg(alg)
     expect_identical(k$scheme, alg)
-    expect_identical(nchar(k$public) %/% 2L,
-                     fipssz(alg)[["public_key"]])
+    expect_identical(nchar(k$public) %/% 2L, fipssz(alg)[["public_key"]])
   }
 })
 
@@ -57,12 +56,18 @@ test_that("an ML-DSA signature verifies and resists tampering", {
   # every way of being wrong fails
   expect_false(cpsvrf("capsule manifest sha256:deadbeeg", sig, pub))
   expect_false(cpsvrf("", sig, pub))
-  expect_false(cpsvrf(msg, sig, fipspubkey(
-    fipskg("ML-DSA-65"))))
+  expect_false(cpsvrf(
+    msg,
+    sig,
+    fipspubkey(
+      fipskg("ML-DSA-65")
+    )
+  ))
   flip <- sig
   flip$signature <- paste0(
     if (substring(sig$signature, 1L, 1L) == "a") "b" else "a",
-    substring(sig$signature, 2L))
+    substring(sig$signature, 2L)
+  )
   expect_false(cpsvrf(msg, flip, pub))
   # a truncated, odd-length or non-hex signature is not verified, and
   # does not error
@@ -105,8 +110,13 @@ test_that("an SLH-DSA signature verifies and resists tampering", {
   expect_identical(nchar(sig$signature) %/% 2L, 17088L)
   expect_true(cpsvrf(msg, sig, pub))
   expect_false(cpsvrf(paste0(msg, "!"), sig, pub))
-  expect_false(cpsvrf(msg, sig, fipspubkey(
-    fipskg("SLH-DSA-SHAKE-128f"))))
+  expect_false(cpsvrf(
+    msg,
+    sig,
+    fipspubkey(
+      fipskg("SLH-DSA-SHAKE-128f")
+    )
+  ))
   # a hash-based scheme has no index either: this one is stateless
   expect_null(sig$index)
   expect_true(cpsvrf(msg, cpssign(msg, key), pub))
@@ -146,16 +156,22 @@ test_that("the standardised keys print without exposing the secret", {
   # opens with rho, the same bytes the public key opens with, so its
   # leading characters are not secret and asserting on them would pass
   # whatever the rendering did.
-  expect_false(grepl(substring(key$secret, nchar(key$secret) - 63L), txt,
-                     fixed = TRUE))
+  expect_false(grepl(
+    substring(key$secret, nchar(key$secret) - 63L),
+    txt,
+    fixed = TRUE
+  ))
   # nor is the whole public key dumped
   expect_true(nchar(txt) < 1000L)
   expect_output(print(key), "Signing key")
 
   ptxt <- paste(format(fipspubkey(key)), collapse = "\n")
   expect_match(ptxt, "Public verification key")
-  expect_false(grepl(substring(key$secret, nchar(key$secret) - 63L), ptxt,
-                     fixed = TRUE))
+  expect_false(grepl(
+    substring(key$secret, nchar(key$secret) - 63L),
+    ptxt,
+    fixed = TRUE
+  ))
   expect_output(print(fipspubkey(key)), "Public verification")
 
   # the signature prints abbreviated, with no path or index
@@ -169,7 +185,9 @@ test_that("the standardised keys print without exposing the secret", {
 
 test_that("a manifest chain seal can be signed with a standardised key", {
   ch <- chnnew()
-  for (i in 1:4) ch <- chnapp(ch, paste("manifest", i))
+  for (i in 1:4) {
+    ch <- chnapp(ch, paste("manifest", i))
+  }
   key <- fipskg("ML-DSA-65")
   pub <- fipspubkey(key)
 

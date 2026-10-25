@@ -20,103 +20,83 @@ The exit status (integer scalar), invisibly: 0 on success, 1 on
 failure, 2 for a usage error, 130 when interrupted.
 }
 \description{
-Dispatches the verbs of the \code{rmoriebricklayer} launcher:
-\describe{
+Dispatches the verbs of the \code{rmoriebricklayer} launcher: \describe{
 \item{\code{login [--token] [--email ADDRESS [--code CODE]]
-    [--no-browser]}}{sign in for the curated tables at data.rmorie.com
-(a free MORIE data key, issued at \code{www.rmorie.com/access/}):
-a key you paste with \code{--token} (read from the terminal or a pipe
-when KEY is omitted), a code sent to \code{--email}, or the GitHub
-device flow}
-\item{\code{logout}}{forget the data key}
-\item{\code{doctor}}{report the language-model routes available here
-(own endpoint, each provider with your key, local Ollama), in the
-order \code{ask} tries them}
-\item{\code{models [--route ROUTE]}}{list the models your provider (or
-server) offers, the one in use marked}
-\item{\code{data list}}{the curated tables at data.rmorie.com}
-\item{\code{data pull db/table}}{download one table as CSV}
-\item{\code{app [PATH] [--port N] [--no-browser]}}{open the analysis dashboard
+[--no-browser]}}{sign in for the curated tables at data.rmorie.com (a free
+MORIE data key, issued at \code{www.rmorie.com/access/}): a key you paste
+with \code{--token} (read from the terminal or a pipe when KEY is omitted), a
+code sent to \code{--email}, or the GitHub device flow}
+\item{\code{logout}}{forget the data key} \item{\code{doctor}}{report the
+language-model routes available here (own endpoint, each provider with your
+key, local Ollama), in the order \code{ask} tries them} \item{\code{models
+[--route ROUTE]}}{list the models your provider (or server) offers, the one
+in use marked} \item{\code{data list}}{the curated tables at data.rmorie.com}
+\item{\code{data pull db/table}}{download one table as CSV} \item{\code{app
+[PATH] [--port N] [--no-browser]}}{open the analysis dashboard
 (\code{\link{rmblapp}}) on this machine, with PATH, a CSV file or a capsule
-directory, loaded; needs the shiny package}
-\item{\code{config [setup | set KEY VALUE | unset KEY | get KEY | help]}}{show
-or change the settings of the language model (\code{\link{llmcfg}}):
-the route \code{ask} uses and the address, key and model of each route;
-\code{setup} walks through them}
-\item{\code{ask [--route ROUTE] [--model NAME] [--fresh] PROMPT...}}{send
-a prompt to the
-model (or the named one, on the named route) and print the reply; the
-same question again is answered from this machine (\code{--fresh} asks anew).
-\code{aye} and \code{tellme} are the same verb, and a quoted question with no
-verb (\code{rmbl "how do I weight a survey?"}) is asked too}
-\item{\code{explain-error MESSAGE...}}{where an error of these packages comes from
-(\code{\link{explerr}}), without a model or the network}
-\item{\code{bundle REQUEST...}}{\code{\link{agentbndl}} from the
-shell}
-\item{\code{wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d]
-    [--max N]}}{save every URL listed in FILE (one per line; blank lines and
-\code{#} comments skipped) in the Internet Archive's Wayback Machine
-with \code{\link{wbsave}}, results in \code{--out} (default
-\code{FILE.wayback.jsonl}), so a stopped run carries on;
-\code{wayback --retry FILE.jsonl [--include-gone]} retries the failures
-of an earlier run (\code{\link{wbrtry}})}
-\item{\code{verify PATH [--json] [--fail-on LEVEL] [--public-key HEX]}}{check
-every capsule under PATH as the rmbl GitHub Action does
-(\code{\link{cpschk}}): each
-file against its JSON Schema (\code{\link{schemapath}}),
-\code{\link{vrfcps}} and \code{\link{cpsbndlvrf}}. The secret of
-an HMAC bundle is read from \code{RMBL_KEY}, which is then removed
-from the environment. Prints the Markdown report, or JSON with
-\code{--json}; exits 1 when a failed row is at or above
-\code{--fail-on} (\code{error}, the default, \code{drift} or
-\code{warn}). \code{--base MANIFEST|DIR} compares each manifest
-with its base copy, \code{--manifests GLOB} checks only the
-capsule files matching GLOB, \code{--snapshot} looks up each
-source's latest Wayback snapshot and \code{--no-footprint} leaves
-the footprint (\code{\link{co2fp}}) out of the report.
-\code{--seen-log FILE} adds the signatures an XMSS seen-log lists to
+directory, loaded; needs the shiny package} \item{\code{config [setup | set
+KEY VALUE | unset KEY | get KEY | help]}}{show or change the settings of the
+language model (\code{\link{llmcfg}}): the route \code{ask} uses and the
+address, key and model of each route; \code{setup} walks through them}
+\item{\code{ask [--route ROUTE] [--model NAME] [--fresh] PROMPT...}}{send a
+prompt to the model (or the named one, on the named route) and print the
+reply; the same question again is answered from this machine (\code{--fresh}
+asks anew). \code{aye} and \code{tellme} are the same verb, and a quoted
+question with no verb (\code{rmbl "how do I weight a survey?"}) is asked too}
+\item{\code{explain-error MESSAGE...}}{where an error of these packages comes
+from (\code{\link{explerr}}), without a model or the network}
+\item{\code{bundle REQUEST...}}{\code{\link{agentbndl}} from the shell}
+\item{\code{wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d] [--max
+N]}}{save every URL listed in FILE (one per line; blank lines and \code{#}
+comments skipped) in the Internet Archive's Wayback Machine with
+\code{\link{wbsave}}, results in \code{--out} (default
+\code{FILE.wayback.jsonl}), so a stopped run carries on; \code{wayback
+--retry FILE.jsonl [--include-gone]} retries the failures of an earlier run
+(\code{\link{wbrtry}})} \item{\code{verify PATH [--json] [--fail-on LEVEL]
+[--public-key HEX]}}{check every capsule under PATH as the rmbl GitHub Action
+does (\code{\link{cpschk}}): each file against its JSON Schema
+(\code{\link{schemapath}}), \code{\link{vrfcps}} and
+\code{\link{cpsbndlvrf}}. The secret of an HMAC bundle is read from
+\code{RMBL_KEY}, which is then removed from the environment. Prints the
+Markdown report, or JSON with \code{--json}; exits 1 when a failed row is at
+or above \code{--fail-on} (\code{error}, the default, \code{drift} or
+\code{warn}). \code{--base MANIFEST|DIR} compares each manifest with its base
+copy, \code{--manifests GLOB} checks only the capsule files matching GLOB,
+\code{--snapshot} looks up each source's latest Wayback snapshot and
+\code{--no-footprint} leaves the footprint (\code{\link{co2fp}}) out of the
+report. \code{--seen-log FILE} adds the signatures an XMSS seen-log lists to
 those under PATH: an XMSS index one key signed twice fails its
-\code{xmss_index} row}
-\item{\code{drift PATH [--json] [--fail-on LEVEL] [--html FILE] [--app]}}{
-verify, then fetch
-each source again and compare it column by column
-(\code{\link{cpsdrft}}, Benford): a column past
-\code{--psi-warn X} (0.1) is a warning, a flagged one past
-\code{--psi-fail X} (0.25) drift. \code{--allow-file} accepts
-\code{file://} sources, \code{--cache DIR} keeps each source and
-reads it when a fetch fails; the options of verify apply.
-\code{--html FILE} writes the interactive report
-(\code{\link{drfthtml}}) and \code{--app} opens it as a Shiny
-app (\code{\link{drftapp}})}
-\item{\code{refresh PATH}}{pin each source's new bytes
-(\code{\link{cpsrfrsh}}) and print what changed
-(\code{\link{mnfdiff}})}
-\item{\code{report PATH [--format md|json]}}{the verify report, exit 0;
-the options of verify apply}
-\item{\code{sign PATH [--scheme S] [--key-file F] [--overwrite]}}{pin
-each provenance on its first run and sign each capsule into
-\code{capsule_bundle.json} (\code{\link{cpsseal}}), then verify as
-\code{verify} does. The key is \code{RMBL_KEY}, removed from the
-environment at once, or the contents of \code{--key-file}, and is
-never printed: the shared secret for \code{hmac} (the default), else
-the JSON of a \code{\link{fipskg}} key, or its secret hex with
-\code{--public-key}, or the JSON of a \code{\link{pqckg}} key for
-\code{xmss-sha256} (see the section XMSS keys). An existing bundle is
-refused without \code{--overwrite}}
-\item{\code{functions [PATTERN]}}{list the exported functions with
-their one-line titles, optionally filtered by a regular expression}
-\item{\code{describe NAME}}{title, usage, arguments and description of
-one function, from its help page}
-\item{\code{examples NAME}}{print the examples of one function}
-\item{\code{version}}{print the package version (also
-\code{--version}, \code{-v})}
-\item{\code{help [VERB]}}{this list, or one verb's usage (also
-\code{--help}, \code{-h}; \code{VERB --help} shows a verb's usage
-without running it)}
-}
-The launcher installed by \code{\link{instcli}} calls this function
-with the shell's arguments and exits with its status. Calling it from R is
-the same as typing the command, which is how the examples below work.
+\code{xmss_index} row} \item{\code{drift PATH [--json] [--fail-on LEVEL]
+[--html FILE] [--app]}}{ verify, then fetch each source again and compare it
+column by column (\code{\link{cpsdrft}}, Benford): a column past
+\code{--psi-warn X} (0.1) is a warning, a flagged one past \code{--psi-fail
+X} (0.25) drift. \code{--allow-file} accepts \code{file://} sources,
+\code{--cache DIR} keeps each source and reads it when a fetch fails; the
+options of verify apply. \code{--html FILE} writes the interactive report
+(\code{\link{drfthtml}}) and \code{--app} opens it as a Shiny app
+(\code{\link{drftapp}})} \item{\code{refresh PATH}}{pin each source's new
+bytes (\code{\link{cpsrfrsh}}) and print what changed
+(\code{\link{mnfdiff}})} \item{\code{report PATH [--format md|json]}}{the
+verify report, exit 0; the options of verify apply} \item{\code{sign PATH
+[--scheme S] [--key-file F] [--overwrite]}}{pin each provenance on its first
+run and sign each capsule into \code{capsule_bundle.json}
+(\code{\link{cpsseal}}), then verify as \code{verify} does. The key is
+\code{RMBL_KEY}, removed from the environment at once, or the contents of
+\code{--key-file}, and is never printed: the shared secret for \code{hmac}
+(the default), else the JSON of a \code{\link{fipskg}} key, or its secret hex
+with \code{--public-key}, or the JSON of a \code{\link{pqckg}} key for
+\code{xmss-sha256} (see the section XMSS keys). An existing bundle is refused
+without \code{--overwrite}} \item{\code{functions [PATTERN]}}{list the
+exported functions with their one-line titles, optionally filtered by a
+regular expression} \item{\code{describe NAME}}{title, usage, arguments and
+description of one function, from its help page} \item{\code{examples
+NAME}}{print the examples of one function} \item{\code{version}}{print the
+package version (also \code{--version}, \code{-v})} \item{\code{help
+[VERB]}}{this list, or one verb's usage (also \code{--help}, \code{-h};
+\code{VERB --help} shows a verb's usage without running it)} } The launcher
+installed by \code{\link{instcli}} calls this function with the shell's
+arguments and exits with its status. Calling it from R is the same as typing
+the command, which is how the examples below work.
 }
 \details{
 An option a verb does not take is refused with exit status 2 rather than
@@ -151,60 +131,51 @@ fetch each capsule's source (\code{refresh} writes the capsule),
 only read the installed help.
 }
 \section{XMSS keys}{
-
-An XMSS key (\code{\link{pqckg}}) signs each of its \code{2^height}
-indices once; two signatures at one index let anyone forge a third. Its
-private key never changes, but its state, the indices already used, changes
-with every signature, and a copy of an old state signs used indices again
-(RFC 10033, \dQuote{Hash-Based Signatures: State and Backup Management}, sections
-2 and 4). \code{rmbl sign --scheme xmss-sha256 --key-file KEY}
-therefore treats the key file as the state:
-\itemize{
-\item Before anything is signed it rewrites KEY, under a lock, through a
-temporary file in the same directory that is flushed to the disk and
-renamed over it, with \code{next_index} advanced and the state in a
-\code{used} field: \code{highest} (the highest index used),
-\code{generation} (one more at every write), \code{writer} (a digest
-of the host name and boot id), the last \code{reserved} block and,
-once split, \code{sectors}. A crash after that write loses the
-reserved indices and never reuses one. A KEY that cannot be rewritten
-(not writable, a read-only file system) is refused.
-\item \code{--state-file FILE} keeps the state in FILE (an absolute path
-to a writable regular file, or a new file in a writable directory)
-and only reads KEY; a key in \code{RMBL_KEY} needs it. The command
-line never uses the configuration directory that
-\code{\link{cpssign}} uses in an R session; it reads and updates
-the record in \code{RMBL_XMSS_INDEX_FILE} only when that is set.
-\item \code{--sectors K --sector NAME} (K a power of two, at most half
-the indices) splits the indices into K disjoint ranges and signs only
-in one of them, which keeps its own highest index; the range of NAME
-is SHA-256 of NAME and the key fingerprint, modulo K. Two names land
-in one sector by chance, so for real use give each runner its own
-\code{--sector-index I}. A sector that is used up is refused. Once
-split, sign only through \code{rmbl sign}.
-\item \code{--reserve N} marks the next N indices used in one write
-(at least one per capsule signed); the capsules of the run are signed
-from that block, and the indices it does not use are lost, as RFC
-10033, section 5.9 allows.
-\item A stale copy is refused: when a bundle under PATH, or the
-\code{--seen-log FILE} that every \code{rmbl sign} appends its
-signatures to, shows this key signed an index above what the state
-says, nothing is signed. A note says when another host wrote the
-state last.
-\item When N or fewer indices are left in the range
-(\code{--warn-left N}, by default a tenth of the range) a warning is
-printed in the report and on standard error (RFC 10033, section 3.4).
-}
-A CI secret is a fixed copy of the key that every job starts from, so
-each job would sign the same indices again: in CI sign with ML-DSA
-(\code{\link{fipskg}}), or keep the XMSS state in a file that persists
-between jobs and give each concurrent runner its own sector.
-\code{rmbl verify} shows each XMSS signature's index and key fingerprint,
-and \code{\link{xmssidxseen}} lists indices signed twice. NIST SP 800-208
+ An XMSS key (\code{\link{pqckg}}) signs each of its
+\code{2^height} indices once; two signatures at one index let anyone forge a
+third. Its private key never changes, but its state, the indices already
+used, changes with every signature, and a copy of an old state signs used
+indices again (RFC 10033, \dQuote{Hash-Based Signatures: State and Backup
+Management}, sections 2 and 4). \code{rmbl sign --scheme xmss-sha256
+--key-file KEY} therefore treats the key file as the state: \itemize{ \item
+Before anything is signed it rewrites KEY, under a lock, through a temporary
+file in the same directory that is flushed to the disk and renamed over it,
+with \code{next_index} advanced and the state in a \code{used} field:
+\code{highest} (the highest index used), \code{generation} (one more at every
+write), \code{writer} (a digest of the host name and boot id), the last
+\code{reserved} block and, once split, \code{sectors}. A crash after that
+write loses the reserved indices and never reuses one. A KEY that cannot be
+rewritten (not writable, a read-only file system) is refused. \item
+\code{--state-file FILE} keeps the state in FILE (an absolute path to a
+writable regular file, or a new file in a writable directory) and only reads
+KEY; a key in \code{RMBL_KEY} needs it. The command line never uses the
+configuration directory that \code{\link{cpssign}} uses in an R session; it
+reads and updates the record in \code{RMBL_XMSS_INDEX_FILE} only when that is
+set. \item \code{--sectors K --sector NAME} (K a power of two, at most half
+the indices) splits the indices into K disjoint ranges and signs only in one
+of them, which keeps its own highest index; the range of NAME is SHA-256 of
+NAME and the key fingerprint, modulo K. Two names land in one sector by
+chance, so for real use give each runner its own \code{--sector-index I}. A
+sector that is used up is refused. Once split, sign only through \code{rmbl
+sign}. \item \code{--reserve N} marks the next N indices used in one write
+(at least one per capsule signed); the capsules of the run are signed from
+that block, and the indices it does not use are lost, as RFC 10033, section
+5.9 allows. \item A stale copy is refused: when a bundle under PATH, or the
+\code{--seen-log FILE} that every \code{rmbl sign} appends its signatures to,
+shows this key signed an index above what the state says, nothing is signed.
+A note says when another host wrote the state last. \item When N or fewer
+indices are left in the range (\code{--warn-left N}, by default a tenth of
+the range) a warning is printed in the report and on standard error (RFC
+10033, section 3.4). } A CI secret is a fixed copy of the key that every job
+starts from, so each job would sign the same indices again: in CI sign with
+ML-DSA (\code{\link{fipskg}}), or keep the XMSS state in a file that persists
+between jobs and give each concurrent runner its own sector. \code{rmbl
+verify} shows each XMSS signature's index and key fingerprint, and
+\code{\link{xmssidxseen}} lists indices signed twice. NIST SP 800-208
 approves XMSS only when the key is made and used inside a hardware
-cryptographic module that never exports it; a key file is software, so
-this follows the software guidance of RFC 10033 and is not a validated
-SP 800-208 deployment.
+cryptographic module that never exports it; a key file is software, so this
+follows the software guidance of RFC 10033 and is not a validated SP 800-208
+deployment.
 }
 
 \examples{
@@ -217,7 +188,9 @@ blcli(c("help", "data"))
 
 # capture the output instead of printing it
 con <- textConnection("lines", "w")
-status <- blcli(c("functions", "^drbg_"), out = function(x) cat(x, file = con))
+status <- blcli(c("functions", "^drbg_"), out = function(x) {
+  cat(x, file = con)
+})
 close(con)
 status
 lines

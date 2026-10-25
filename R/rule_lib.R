@@ -127,10 +127,12 @@
 #'
 #' # Clean data passes every one of them.
 #' ok <- data.frame(
-#'   id = 1:3, grade = c("a", "b", "c"),
+#'   id = 1:3,
+#'   grade = c("a", "b", "c"),
 #'   score = c(5, 50, 7),
 #'   email = c("a@b.com", "c@d.org", "e@f.net"),
-#'   day = 1:3, stringsAsFactors = FALSE
+#'   day = 1:3,
+#'   stringsAsFactors = FALSE
 #' )
 #' length(valrules(ok, rules))
 #'
@@ -149,25 +151,31 @@
 #' # NA fails only when asked to
 #' g <- data.frame(grade = c("a", NA, "b"))
 #' length(valrules(g, ruleinset("grade", c("a", "b"))))
-#' valrules(g, ruleinset("grade", c("a", "b"), napass = FALSE))$grade_in_set$rows
+#' valrules(
+#'   g,
+#'   ruleinset("grade", c("a", "b"), napass = FALSE)
+#' )$grade_in_set$rows
 #'
 #' # bounds are checked when the rule is made
 #' try(rulebtw("score", 100, 0))
 #' @name rulelib
 #' @export
-ruleinset <- function(col, set, napass = TRUE,
-                        sev = c("warning", "fatal")) {
-  if (missing(col)) stop("ruleinset: `col` must name a column", call. = FALSE)
+ruleinset <- function(col, set, napass = TRUE, sev = c("warning", "fatal")) {
+  if (missing(col)) {
+    stop("ruleinset: `col` must name a column", call. = FALSE)
+  }
   .rmbl_no_fn(set = set)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
   set <- as.character(set)
-  rul(paste0(col, "_in_set"),
+  rul(
+    paste0(col, "_in_set"),
     function(v) {
       ok <- as.character(v) %in% set
       if (isTRUE(napass)) ok | is.na(v) else ok & !is.na(v)
     },
-    col = col, sev = sev,
+    col = col,
+    sev = sev,
     msg = sprintf(
       "Column '%s' has values outside the allowed set",
       col
@@ -177,9 +185,10 @@ ruleinset <- function(col, set, napass = TRUE,
 
 #' @rdname rulelib
 #' @export
-rulebtw <- function(col, lo, hi, napass = TRUE,
-                         sev = c("warning", "fatal")) {
-  if (missing(col)) stop("rulebtw: `col` must name a column", call. = FALSE)
+rulebtw <- function(col, lo, hi, napass = TRUE, sev = c("warning", "fatal")) {
+  if (missing(col)) {
+    stop("rulebtw: `col` must name a column", call. = FALSE)
+  }
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
   lo <- .rmbl_num(lo, "lo")[1L]
@@ -187,15 +196,19 @@ rulebtw <- function(col, lo, hi, napass = TRUE,
   if (is.na(lo) || is.na(hi) || lo > hi) {
     stop("need `lo` <= `hi`, both non-missing", call. = FALSE)
   }
-  rul(paste0(col, "_between"),
+  rul(
+    paste0(col, "_between"),
     function(v) {
       ok <- v >= lo & v <= hi
       if (isTRUE(napass)) ok | is.na(v) else ok & !is.na(v)
     },
-    col = col, sev = sev,
+    col = col,
+    sev = sev,
     msg = sprintf(
       "Column '%s' has values outside [%s, %s]",
-      col, format(lo), format(hi)
+      col,
+      format(lo),
+      format(hi)
     )
   )
 }
@@ -203,11 +216,16 @@ rulebtw <- function(col, lo, hi, napass = TRUE,
 #' @rdname rulelib
 #' @export
 rulenull <- function(col, sev = c("warning", "fatal")) {
-  if (missing(col)) stop("rulenull: `col` must name a column", call. = FALSE)
+  if (missing(col)) {
+    stop("rulenull: `col` must name a column", call. = FALSE)
+  }
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
-  rul(paste0(col, "_not_null"), function(v) !is.na(v),
-    col = col, sev = sev,
+  rul(
+    paste0(col, "_not_null"),
+    function(v) !is.na(v),
+    col = col,
+    sev = sev,
     msg = sprintf("Column '%s' has missing values", col)
   )
 }
@@ -215,48 +233,58 @@ rulenull <- function(col, sev = c("warning", "fatal")) {
 #' @rdname rulelib
 #' @export
 ruleuniq <- function(col, sev = c("warning", "fatal")) {
-  if (missing(col)) stop("ruleuniq: `col` must name a column", call. = FALSE)
+  if (missing(col)) {
+    stop("ruleuniq: `col` must name a column", call. = FALSE)
+  }
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
-  rul(paste0(col, "_unique"),
+  rul(
+    paste0(col, "_unique"),
     # duplicated() marks every occurrence after the first, so the
     # reported rows are the repeats rather than all of them
     function(v) !duplicated(v),
-    col = col, sev = sev,
+    col = col,
+    sev = sev,
     msg = sprintf("Column '%s' has duplicate values", col)
   )
 }
 
 #' @rdname rulelib
 #' @export
-rulerx <- function(col, pat, napass = TRUE,
-                       sev = c("warning", "fatal")) {
-  if (missing(col)) stop("rulerx: `col` must name a column", call. = FALSE)
+rulerx <- function(col, pat, napass = TRUE, sev = c("warning", "fatal")) {
+  if (missing(col)) {
+    stop("rulerx: `col` must name a column", call. = FALSE)
+  }
   .rmbl_no_fn(pattern = pat)
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
   pat <- as.character(pat)[1L]
-  rul(paste0(col, "_regex"),
+  rul(
+    paste0(col, "_regex"),
     function(v) {
       ok <- grepl(pat, as.character(v))
       if (isTRUE(napass)) ok | is.na(v) else ok & !is.na(v)
     },
-    col = col, sev = sev,
+    col = col,
+    sev = sev,
     msg = sprintf(
       "Column '%s' has values not matching /%s/",
-      col, pat
+      col,
+      pat
     )
   )
 }
 
 #' @rdname rulelib
 #' @export
-ruleincr <- function(col, strict = FALSE,
-                            sev = c("warning", "fatal")) {
-  if (missing(col)) stop("ruleincr: `col` must name a column", call. = FALSE)
+ruleincr <- function(col, strict = FALSE, sev = c("warning", "fatal")) {
+  if (missing(col)) {
+    stop("ruleincr: `col` must name a column", call. = FALSE)
+  }
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
-  rul(paste0(col, "_increasing"),
+  rul(
+    paste0(col, "_increasing"),
     function(v) {
       d <- diff(as.numeric(v))
       ok <- if (isTRUE(strict)) {
@@ -266,9 +294,11 @@ ruleincr <- function(col, strict = FALSE,
       }
       isTRUE(ok)
     },
-    col = col, sev = sev,
+    col = col,
+    sev = sev,
     msg = sprintf(
-      "Column '%s' is not %s", col,
+      "Column '%s' is not %s",
+      col,
       if (isTRUE(strict)) {
         "strictly increasing"
       } else {
@@ -280,14 +310,18 @@ ruleincr <- function(col, strict = FALSE,
 
 #' @rdname rulelib
 #' @export
-rulemad <- function(col, n = 3, napass = TRUE,
-                               sev = c("warning", "fatal")) {
-  if (missing(col)) stop("rulemad: `col` must name a column", call. = FALSE)
+rulemad <- function(col, n = 3, napass = TRUE, sev = c("warning", "fatal")) {
+  if (missing(col)) {
+    stop("rulemad: `col` must name a column", call. = FALSE)
+  }
   col <- .rmbl_string1(col, "col")
   sev <- .rmbl_arg(sev)
   n <- .rmbl_num(n, "n")[1L]
-  if (is.na(n) || n <= 0) stop("`n` must be positive", call. = FALSE)
-  rul(paste0(col, "_within_mads"),
+  if (is.na(n) || n <= 0) {
+    stop("`n` must be positive", call. = FALSE)
+  }
+  rul(
+    paste0(col, "_within_mads"),
     function(v) {
       v <- .rmbl_num(v, "v")
       ok_idx <- !is.na(v)
@@ -302,10 +336,12 @@ rulemad <- function(col, n = 3, napass = TRUE,
       ok <- if (mad > 0) abs(v - med) <= n * mad else v == med
       if (isTRUE(napass)) ok | is.na(v) else ok & !is.na(v)
     },
-    col = col, sev = sev,
+    col = col,
+    sev = sev,
     msg = sprintf(
       "Column '%s' has values more than %s MADs from its median",
-      col, format(n)
+      col,
+      format(n)
     )
   )
 }
@@ -314,7 +350,8 @@ rulemad <- function(col, n = 3, napass = TRUE,
 #' @export
 rulecmpl <- function(sev = c("warning", "fatal")) {
   sev <- .rmbl_arg(sev)
-  rul("complete_rows",
+  rul(
+    "complete_rows",
     function(d) stats::complete.cases(d),
     sev = sev,
     msg = "Some rows have missing values"
@@ -323,11 +360,11 @@ rulecmpl <- function(sev = c("warning", "fatal")) {
 
 #' @rdname rulelib
 #' @export
-ruledstn <- function(cols = NULL,
-                               sev = c("warning", "fatal")) {
+ruledstn <- function(cols = NULL, sev = c("warning", "fatal")) {
   sev <- .rmbl_arg(sev)
   .rmbl_no_fn(columns = cols)
-  rul("distinct_rows",
+  rul(
+    "distinct_rows",
     function(d) {
       sub <- if (is.null(cols)) {
         d
@@ -360,7 +397,8 @@ rulecolcnt <- function(n, sev = c("warning", "fatal")) {
   if (is.na(n) || n < 0L) {
     stop("`n` must be a non-negative integer", call. = FALSE)
   }
-  rul("col_count",
+  rul(
+    "col_count",
     function(d) ncol(d) == n,
     sev = sev,
     msg = sprintf("Expected %d columns", n)
@@ -416,9 +454,12 @@ rulecolcnt <- function(n, sev = c("warning", "fatal")) {
 #' try(duprows(df, "code"))
 #' @export
 duprows <- function(data, cols = NULL) {
-  if (!is.data.frame(data)) stop("duprows: `data` must be a data frame", call. = FALSE)
-  # duplicate column names are messy data, which this exists to inspect: every column by position,
-  # a column given by name only when the name is one column's (statistics stress test of 5e1dce5)
+  if (!is.data.frame(data)) {
+    stop("duprows: `data` must be a data frame", call. = FALSE)
+  }
+  # duplicate column names are messy data, which this exists to inspect: every
+  # column by position, a column given by name only when the name is one
+  # column's (statistics stress test of 5e1dce5)
   if (nrow(data) == 0L) {
     out <- cbind(data, dupe_count = integer(0))
     return(out)
@@ -430,21 +471,38 @@ duprows <- function(data, cols = NULL) {
     .cols <- as.character(cols)
     missing_cols <- setdiff(.cols, names(data))
     if (length(missing_cols) > 0L) {
-      stop(sprintf(
-        "no such column(s): %s",
-        paste(missing_cols, collapse = ", ")
-      ), call. = FALSE)
+      stop(
+        sprintf(
+          "no such column(s): %s",
+          paste(missing_cols, collapse = ", ")
+        ),
+        call. = FALSE
+      )
     }
     twice <- .cols[.cols %in% names(data)[duplicated(names(data))]]
     if (length(twice)) {
-      stop(sprintf("`data` has two columns named %s: give the columns by position, or rename one", twice[[1L]]),
-           call. = FALSE)
+      stop(
+        sprintf(
+          paste0(
+            "`data` has two columns named %s: give the columns by ",
+            "position, or rename one"
+          ),
+          twice[[1L]]
+        ),
+        call. = FALSE
+      )
     }
     pos <- match(.cols, names(data))
   }
-  key <- do.call(paste, c(lapply(pos, function(i) {
-    as.character(data[[i]])
-  }), sep = "\r"))
+  key <- do.call(
+    paste,
+    c(
+      lapply(pos, function(i) {
+        as.character(data[[i]])
+      }),
+      sep = "\r"
+    )
+  )
   counts <- table(key)
   dupe_keys <- names(counts)[counts > 1L]
   if (length(dupe_keys) == 0L) {
@@ -500,16 +558,23 @@ duprows <- function(data, cols = NULL) {
 #' try(misssmry(c(1, NA, 3)))
 #' @export
 misssmry <- function(data) {
-  if (!is.data.frame(data)) stop("misssmry: `data` must be a data frame", call. = FALSE)
-  # every column by position: duplicate or empty names are the messy data this summarises
-  if (ncol(data) == 0L) stop("misssmry: `data` has no columns", call. = FALSE)
+  if (!is.data.frame(data)) {
+    stop("misssmry: `data` must be a data frame", call. = FALSE)
+  }
+  # every column by position: duplicate or empty names are the messy data this
+  # summarises
+  if (ncol(data) == 0L) {
+    stop("misssmry: `data` has no columns", call. = FALSE)
+  }
   n <- nrow(data)
   per_col <- vapply(data, function(v) sum(is.na(v)), numeric(1))
   total <- sum(per_col)
   cells <- max(1L, n * ncol(data))
   complete <- if (n == 0L) 0L else sum(stats::complete.cases(data))
   c(
-    n_rows = n, n_cols = ncol(data), n_missing = total,
+    n_rows = n,
+    n_cols = ncol(data),
+    n_missing = total,
     pct_missing = 100 * total / cells,
     n_complete_rows = complete,
     pct_complete_rows = if (n == 0L) 0 else 100 * complete / n,

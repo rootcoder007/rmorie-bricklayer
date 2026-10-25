@@ -10,10 +10,10 @@ alos(days, n)
 \item{days}{Numeric vector of person-days served during the period,
 non-negative, no \code{NA} or \code{Inf}; the vector is summed.}
 
-\item{n}{Numeric scalar, the number of people; must be positive. A
-vector of several values is refused. For an unbiased average this should be the
-people both admitted AND released within the period, because anyone
-still held has an unfinished stay.}
+\item{n}{Numeric scalar, the number of people; must be positive. A vector of
+several values is refused. For an unbiased average this should be the
+people both admitted AND released within the period, because anyone still
+held has an unfinished stay.}
 }
 \value{
 A numeric scalar: days per person, \eqn{\sum X_i / n}.

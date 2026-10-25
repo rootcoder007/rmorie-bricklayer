@@ -8,7 +8,8 @@ test_that("mksyncol honours each documented type", {
   expect_true(all(s %in% c("a", "b")))
 
   b <- mksyncol(
-    list(type = "bernoulli", p = 1, labels = c("Yes", "No")), 20
+    list(type = "bernoulli", p = 1, labels = c("Yes", "No")),
+    20
   )
   expect_true(all(b == "Yes"))
 
@@ -16,14 +17,16 @@ test_that("mksyncol honours each documented type", {
   expect_true(all(p >= 1))
 
   ids <- mksyncol(
-    list(type = "id_pattern", pattern = "case-{seq:05d}"), 3
+    list(type = "id_pattern", pattern = "case-{seq:05d}"),
+    3
   )
   expect_identical(ids, c("case-00001", "case-00002", "case-00003"))
 
   yr_ctx <- list(fy = c(2024, 2024, 2025))
   ids_yr <- mksyncol(
     list(type = "id_pattern", pattern = "{year}-{seq:05d}", year_col = "fy"),
-    3, ctx = yr_ctx
+    3,
+    ctx = yr_ctx
   )
   expect_identical(ids_yr, c("2024-00001", "2024-00002", "2025-00001"))
 
@@ -35,10 +38,15 @@ test_that("mksyncol honours each documented type", {
 
 test_that("mksyncsv is deterministic and restores the caller RNG state", {
   schema <- list(
-    seed = 42L, n_rows = 25L,
+    seed = 42L,
+    n_rows = 25L,
     columns = list(
       fy = list(type = "sample", values = list(2024L, 2025L)),
-      id = list(type = "id_pattern", pattern = "{year}-{seq:05d}", year_col = "fy"),
+      id = list(
+        type = "id_pattern",
+        pattern = "{year}-{seq:05d}",
+        year_col = "fy"
+      ),
       alert = list(type = "bernoulli", p = 0.4, labels = list("Yes", "No"))
     )
   )
@@ -62,7 +70,8 @@ test_that("mksyncsv is deterministic and restores the caller RNG state", {
 
 test_that("mksyncsv row_replication expands person rows", {
   schema <- list(
-    seed = 7L, n_rows = 10L,
+    seed = 7L,
+    n_rows = 10L,
     row_replication = list(values = list(2L), weights = list(1)),
     columns = list(
       region = list(type = "sample", values = list("East", "West"))
@@ -76,8 +85,11 @@ test_that("mksyncsv row_replication expands person rows", {
 test_that("cnormpdf agrees with stats::dnorm", {
   x <- c(-2, -0.5, 0, 1.7)
   expect_equal(cnormpdf(x), stats::dnorm(x), tolerance = 1e-12)
-  expect_equal(cnormpdf(x, mean = 3, sd = 2),
-               stats::dnorm(x, 3, 2), tolerance = 1e-12)
+  expect_equal(
+    cnormpdf(x, mean = 3, sd = 2),
+    stats::dnorm(x, 3, 2),
+    tolerance = 1e-12
+  )
 })
 
 test_that("agentbndl validates input and degrades gracefully without a key", {

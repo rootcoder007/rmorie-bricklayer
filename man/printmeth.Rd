@@ -138,13 +138,16 @@ which is what to do when capturing output into a fixed-width log.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-# one-time index record out of your configuration directory; leave the default in use
+# keep this example's
+op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+# one-time index record out of your configuration directory; leave the
+# default in use
 set.seed(7)
-ref <- data.frame(v = stats::rnorm(200),
-                  g = sample(c("a", "b"), 200, TRUE))
-cur <- data.frame(v = stats::rnorm(200, mean = 1),
-                  g = sample(c("a", "b"), 200, TRUE))
+ref <- data.frame(v = stats::rnorm(200), g = sample(c("a", "b"), 200, TRUE))
+cur <- data.frame(
+  v = stats::rnorm(200, mean = 1),
+  g = sample(c("a", "b"), 200, TRUE)
+)
 
 # The drift report leads with its verdict.
 cpsdrft(ref, cur)

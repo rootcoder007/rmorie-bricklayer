@@ -17,17 +17,18 @@ year or a month index) and the outcome.}
 \item{covs}{Optional column names of time-varying controls.}
 
 \item{cl}{Column name of the clusters (default the unit), or two column names
-for two-way clustering (Cameron, Gelbach and Miller 2011):
-\eqn{V_a + V_b - V_{ab}}, each term with the small-sample factor of the dimension
-with fewer clusters, and t on its \eqn{G - 1} degrees of freedom. A composite
-cluster (district by month, say) is one column made with \code{interaction()}.}
+for two-way clustering (Cameron, Gelbach and Miller 2011): \eqn{V_a + V_b -
+V_{ab}}, each term with the small-sample factor of the dimension with fewer
+clusters, and t on its \eqn{G - 1} degrees of freedom. A composite cluster
+(district by month, say) is one column made with \code{interaction()}.}
 
 \item{units}{Which units to leave out (default every treated unit).}
 }
 \value{
-A data frame of class \code{rmbl_loo}: \code{dropped}, \code{estimate},
-\code{se}; attribute \code{full} (the estimate with every unit). \code{plot()}
-draws the histogram with the full-sample estimate and a summary.
+A data frame of class \code{rmbl_loo}: \code{dropped},
+\code{estimate}, \code{se}; attribute \code{full} (the estimate with every
+unit). \code{plot()} draws the histogram with the full-sample estimate and
+a summary.
 }
 \description{
 Re-estimates \code{\link{plndid}} leaving out one treated unit at a time, to

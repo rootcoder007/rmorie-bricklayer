@@ -16,8 +16,8 @@ wbsnpurl(url, ts = NULL)
 }
 \value{
 A length-1 character string, the \code{https} snapshot URL of the
-form \code{https://web.archive.org/web/} followed by \code{<timestamp>/<url>}, or
-\code{NULL}.
+form \code{https://web.archive.org/web/} followed by
+\code{<timestamp>/<url>}, or \code{NULL}.
 }
 \description{
 Asks the Internet Archive which archived copy of a web address is closest
@@ -33,12 +33,12 @@ The function sends one request to the availability API,\cr
 \code{https://archive.org/wayback/available?url=<url>[&timestamp=<ts>]},\cr
 where the timestamp part is sent only when \code{ts} is given.
 
-The answer's \code{archived_snapshots$closest} is read. When the API reports an
-available snapshot its URL is returned, with \code{http://} rewritten to
-\code{https://} and passed through the same public-URL check as every
-other URL the package fetches. The timestamp is passed to the API as
-given; the API accepts any prefix of \code{YYYYMMDDhhmmss} and returns the
-snapshot nearest to it, before or after.
+The answer's \code{archived_snapshots$closest} is read. When the API reports
+an available snapshot its URL is returned, with \code{http://} rewritten to
+\code{https://} and passed through the same public-URL check as every other
+URL the package fetches. The timestamp is passed to the API as given; the API
+accepts any prefix of \code{YYYYMMDDhhmmss} and returns the snapshot nearest
+to it, before or after.
 
 \code{NULL} is returned when the API has no snapshot, when the request
 fails (offline, an HTTP error, invalid JSON) or when the answer has no

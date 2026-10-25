@@ -1,52 +1,102 @@
-testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
-# Review of 02a38be (PR #56, 0.5.12): one test per finding, the reviewer's reproducers as the gate.
+# battery: runs in CI and locally; CRAN runs the correctness core
+testthat::skip_on_cran()
+# Review of 02a38be (PR #56, 0.5.12): one test per finding, the reviewer's
+# reproducers as the gate.
 
-# ---- C1, C2: hurwzeta below s = 1 -----------------------------------------------------------
+# ---- C1, C2: hurwzeta below s = 1 --------------------------------------------
 
-test_that("C1: hurwzeta is accurate for s <= -5 (exact Bernoulli values, exact zeros)", {
-  # -B_{n+1}/(n+1) for the Riemann zeta at negative integers
-  expect_equal(hurwzeta(-7) / (1 / 240), 1, tolerance = 1e-13)
-  expect_equal(hurwzeta(-11) / (691 / 32760), 1, tolerance = 1e-13)
-  expect_equal(hurwzeta(-15) / (3617 / 8160), 1, tolerance = 1e-13)
-  # the trivial zeros stay exact, and zeta(-200, 2) = zeta(-200) - 1 = -1
-  expect_identical(hurwzeta(-60), 0)
-  expect_identical(hurwzeta(-200, 2), -1)
-  # 20-digit references from mpmath (zeta(s, q), mp.dps = 50)
-  ref <- rbind(c(-9.5, 1, -0.0066721722964666407568), c(-5.5, 1, -0.002671458019899224599),
-               c(-6, 0.3, -0.0035246000000000000833), c(-7.25, 0.5, -0.0040118264434775960983),
-               c(-12.5, 3.7, -247390.33662012577855), c(-20, 0.1, 49.498996835970336185),
-               c(-9.5, 57.3, -250558246982887252.3), c(-30.5, 0.9, 209205876.6885998616))
-  for (i in seq_len(nrow(ref))) {
-    expect_equal(hurwzeta(ref[i, 1], ref[i, 2]) / ref[i, 3], 1, tolerance = 1e-12,
-                 info = sprintf("s = %g, q = %g", ref[i, 1], ref[i, 2]))
+test_that(
+  paste0(
+    "C1: hurwzeta is accurate for s <= -5 (exact Bernoulli values, exact ",
+    "zeros)"
+  ),
+  {
+    # -B_{n+1}/(n+1) for the Riemann zeta at negative integers
+    expect_equal(hurwzeta(-7) / (1 / 240), 1, tolerance = 1e-13)
+    expect_equal(hurwzeta(-11) / (691 / 32760), 1, tolerance = 1e-13)
+    expect_equal(hurwzeta(-15) / (3617 / 8160), 1, tolerance = 1e-13)
+    # the trivial zeros stay exact, and zeta(-200, 2) = zeta(-200) - 1 = -1
+    expect_identical(hurwzeta(-60), 0)
+    expect_identical(hurwzeta(-200, 2), -1)
+    # 20-digit references from mpmath (zeta(s, q), mp.dps = 50)
+    ref <- rbind(
+      c(-9.5, 1, -0.0066721722964666407568),
+      c(-5.5, 1, -0.002671458019899224599),
+      c(-6, 0.3, -0.0035246000000000000833),
+      c(-7.25, 0.5, -0.0040118264434775960983),
+      c(-12.5, 3.7, -247390.33662012577855),
+      c(-20, 0.1, 49.498996835970336185),
+      c(-9.5, 57.3, -250558246982887252.3),
+      c(-30.5, 0.9, 209205876.6885998616)
+    )
+    for (i in seq_len(nrow(ref))) {
+      expect_equal(
+        hurwzeta(ref[i, 1], ref[i, 2]) / ref[i, 3],
+        1,
+        tolerance = 1e-12,
+        info = sprintf("s = %g, q = %g", ref[i, 1], ref[i, 2])
+      )
+    }
   }
-})
+)
 
-test_that("C1: -5 < s < 1 is accurate too (the Euler-Maclaurin shift lost 1e-6 near s = -5)", {
-  # mpmath zeta(s, q) at mp.dps = 40
-  ref <- rbind(c(-4.9, 0.25, 0.0006823623986372121152137509), c(-4.5, 1, -0.003091669247215833844824257),
-               c(-4.5, 0.25, 0.003074170159878321454996867), c(-3.5, 1, 0.004441011335479431958534658),
-               c(-2.5, 0.25, -0.008038096082003843471484853), c(-1, 1, -1 / 12), c(0.5, 1, -1.460354508809586812889499),
-               c(0.25, 1.7, -1.536611235751201615426241))
-  for (i in seq_len(nrow(ref))) {
-    expect_equal(hurwzeta(ref[i, 1], ref[i, 2]) / ref[i, 3], 1, tolerance = 1e-12,
-                 info = sprintf("s = %g, q = %g", ref[i, 1], ref[i, 2]))
+test_that(
+  paste0(
+    "C1: -5 < s < 1 is accurate too (the Euler-Maclaurin shift lost 1e-6 ",
+    "near s = -5)"
+  ),
+  {
+    # mpmath zeta(s, q) at mp.dps = 40
+    ref <- rbind(
+      c(-4.9, 0.25, 0.0006823623986372121152137509),
+      c(-4.5, 1, -0.003091669247215833844824257),
+      c(-4.5, 0.25, 0.003074170159878321454996867),
+      c(-3.5, 1, 0.004441011335479431958534658),
+      c(-2.5, 0.25, -0.008038096082003843471484853),
+      c(-1, 1, -1 / 12),
+      c(0.5, 1, -1.460354508809586812889499),
+      c(0.25, 1.7, -1.536611235751201615426241)
+    )
+    for (i in seq_len(nrow(ref))) {
+      expect_equal(
+        hurwzeta(ref[i, 1], ref[i, 2]) / ref[i, 3],
+        1,
+        tolerance = 1e-12,
+        info = sprintf("s = %g, q = %g", ref[i, 1], ref[i, 2])
+      )
+    }
+    # zeta(-n, q) = -B_{n+1}(q) / (n + 1) exactly, small q included: zeta(-4,
+    # 1e-8) = q / 30 to first order
+    expect_equal(
+      hurwzeta(-4, 1e-8) / 3.3333333333333333e-10,
+      1,
+      tolerance = 1e-12
+    )
+    expect_identical(hurwzeta(0, 0.3), 0.5 - 0.3)
   }
-  # zeta(-n, q) = -B_{n+1}(q) / (n + 1) exactly, small q included: zeta(-4, 1e-8) = q / 30 to first order
-  expect_equal(hurwzeta(-4, 1e-8) / 3.3333333333333333e-10, 1, tolerance = 1e-12)
-  expect_identical(hurwzeta(0, 0.3), 0.5 - 0.3)
-})
+)
 
 test_that("C2: a tiny q keeps its term (q + (n - 1), not (q + n) - 1)", {
-  expect_equal(hurwzeta(0.5, 1e-20) / 9999999998.5396454912, 1, tolerance = 1e-12)
-  expect_equal(hurwzeta(0.5, 1e-12) / 999998.53964549118911, 1, tolerance = 1e-12)
+  expect_equal(
+    hurwzeta(0.5, 1e-20) / 9999999998.5396454912,
+    1,
+    tolerance = 1e-12
+  )
+  expect_equal(
+    hurwzeta(0.5, 1e-12) / 999998.53964549118911,
+    1,
+    tolerance = 1e-12
+  )
 })
 
-# ---- C3: compressed exposure files are checked to be complete -------------------------------------
+# ---- C3: compressed exposure files are checked to be complete ----------------
 
 c3_rows <- function(n = 20000) {
   set.seed(2)
-  c("exposure,income", sprintf("%.3f,%d", runif(n, 12, 60), sample(1e5, n, TRUE)))
+  c(
+    "exposure,income",
+    sprintf("%.3f,%d", runif(n, 12, 60), sample(1e5, n, TRUE))
+  )
 }
 c3_write <- function(fun, x, ext) {
   f <- tempfile(fileext = ext)
@@ -63,33 +113,65 @@ c3_cut <- function(f, frac, ext) {
 }
 c3_join <- function(..., ext = ".csv.gz") {
   t <- tempfile(fileext = ext)
-  writeBin(do.call(c, lapply(list(...), function(f) if (is.raw(f)) f else readBin(f, "raw", file.size(f)))), t)
+  writeBin(
+    do.call(
+      c,
+      lapply(list(...), function(f) {
+        if (is.raw(f)) f else readBin(f, "raw", file.size(f))
+      })
+    ),
+    t
+  )
   t
 }
 
-test_that("C3: a truncated, damaged or padded gzip is refused, a whole one (several members too) is read", {
-  rows <- c3_rows()
-  gz <- c3_write(gzfile, rows, ".csv.gz")
-  expect_identical(vrfpol("pm25", expcsv = gz)$status, "ok")
-  for (frac in c(0.1, 0.5, 0.9, 0.99)) {
-    v <- vrfpol("pm25", expcsv = c3_cut(gz, frac, ".csv.gz"))
-    expect_identical(v$status, "error")
-    expect_match(v$error, "is truncated")
+test_that(
+  paste0(
+    "C3: a truncated, damaged or padded gzip is refused, a whole one ",
+    "(several members too) is read"
+  ),
+  {
+    rows <- c3_rows()
+    gz <- c3_write(gzfile, rows, ".csv.gz")
+    expect_identical(vrfpol("pm25", expcsv = gz)$status, "ok")
+    for (frac in c(0.1, 0.5, 0.9, 0.99)) {
+      v <- vrfpol("pm25", expcsv = c3_cut(gz, frac, ".csv.gz"))
+      expect_identical(v$status, "error")
+      expect_match(v$error, "is truncated")
+    }
+    b <- readBin(gz, "raw", file.size(gz))
+    b[length(b) - 6L] <- xor(b[length(b) - 6L], as.raw(1))
+    flip <- tempfile(fileext = ".csv.gz")
+    writeBin(b, flip)
+    expect_match(vrfpol("pm25", expcsv = flip)$error, "CRC-32")
+    expect_match(
+      vrfpol("pm25", expcsv = c3_join(gz, charToRaw("tail")))$error,
+      "bytes after the end"
+    )
+    expect_identical(
+      vrfpol("pm25", expcsv = c3_join(gz, as.raw(rep(0, 512))))$status,
+      "ok"
+    )
+    # two members (gzip -c a b > c, data.table::fwrite): read whole, and refused
+    # when cut
+    two <- c3_join(
+      c3_write(gzfile, rows[1:10001], ".gz"),
+      c3_write(gzfile, rows[10002:20001], ".gz")
+    )
+    d <- rmoriebricklayer:::.pollution_read_csv(two)
+    expect_identical(nrow(d), 20000L)
+    expect_match(
+      vrfpol("pm25", expcsv = c3_cut(two, 0.97, ".csv.gz"))$error,
+      "is truncated"
+    )
+    expect_error(
+      rmoriebricklayer:::.rmbl_decompress_checked(c3_join(charToRaw(
+        "not gzip"
+      ))),
+      NA
+    )
   }
-  b <- readBin(gz, "raw", file.size(gz))
-  b[length(b) - 6L] <- xor(b[length(b) - 6L], as.raw(1))
-  flip <- tempfile(fileext = ".csv.gz")
-  writeBin(b, flip)
-  expect_match(vrfpol("pm25", expcsv = flip)$error, "CRC-32")
-  expect_match(vrfpol("pm25", expcsv = c3_join(gz, charToRaw("tail")))$error, "bytes after the end")
-  expect_identical(vrfpol("pm25", expcsv = c3_join(gz, as.raw(rep(0, 512))))$status, "ok")
-  # two members (gzip -c a b > c, data.table::fwrite): read whole, and refused when cut
-  two <- c3_join(c3_write(gzfile, rows[1:10001], ".gz"), c3_write(gzfile, rows[10002:20001], ".gz"))
-  d <- rmoriebricklayer:::.pollution_read_csv(two)
-  expect_identical(nrow(d), 20000L)
-  expect_match(vrfpol("pm25", expcsv = c3_cut(two, 0.97, ".csv.gz"))$error, "is truncated")
-  expect_error(rmoriebricklayer:::.rmbl_decompress_checked(c3_join(charToRaw("not gzip"))), NA)
-})
+)
 
 test_that("C3: a truncated bzip2 or xz file is refused, a whole one is read", {
   rows <- c3_rows()
@@ -98,8 +180,14 @@ test_that("C3: a truncated bzip2 or xz file is refused, a whole one is read", {
   expect_identical(vrfpol("pm25", expcsv = bz)$status, "ok")
   expect_identical(vrfpol("pm25", expcsv = xz)$status, "ok")
   for (frac in c(0.25, 0.99)) {
-    expect_match(vrfpol("pm25", expcsv = c3_cut(bz, frac, ".csv.bz2"))$error, "end-of-stream marker")
-    expect_match(vrfpol("pm25", expcsv = c3_cut(xz, frac, ".csv.xz"))$error, "truncated or damaged")
+    expect_match(
+      vrfpol("pm25", expcsv = c3_cut(bz, frac, ".csv.bz2"))$error,
+      "end-of-stream marker"
+    )
+    expect_match(
+      vrfpol("pm25", expcsv = c3_cut(xz, frac, ".csv.xz"))$error,
+      "truncated or damaged"
+    )
   }
   short <- tempfile()
   writeBin(charToRaw("BZh9"), short)
@@ -110,101 +198,186 @@ test_that("C3: the decompressed size is capped while it is read", {
   bomb <- tempfile(fileext = ".csv.gz")
   con <- gzfile(bomb, "wb")
   z <- charToRaw(paste(rep("1,2\n", 1e5), collapse = ""))
-  for (i in 1:20) writeBin(z, con)
+  for (i in 1:20) {
+    writeBin(z, con)
+  }
   close(con)
   for (fun in list(gzfile, bzfile)) {
     f <- tempfile()
     con <- fun(f, "wb")
-    for (i in 1:20) writeBin(z, con)
+    for (i in 1:20) {
+      writeBin(z, con)
+    }
     close(con)
     withr::with_options(list(rmoriebricklayer.maxcsvbytes = 1e5), {
-      expect_error(rmoriebricklayer:::.rmbl_decompress_checked(f), "more than the size limit")
+      expect_error(
+        rmoriebricklayer:::.rmbl_decompress_checked(f),
+        "more than the size limit"
+      )
     })
   }
-  withr::with_options(list(rmoriebricklayer.maxcsvbytes = -1),
-                      expect_error(rmoriebricklayer:::.rmbl_decompress_checked(bomb), "non-negative number"))
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_gunzip_checked, "x", 10), "raw vector")
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_gunzip_checked, as.raw(1:3), NA_real_), "non-negative number")
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_gunzip_checked, raw(0), 10), "not gzip data")
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_gunzip_checked, as.raw(c(0x1f, 0x8b, 1, 2, 3)), 10),
-               "not valid gzip|truncated")
+  withr::with_options(
+    list(rmoriebricklayer.maxcsvbytes = -1),
+    expect_error(
+      rmoriebricklayer:::.rmbl_decompress_checked(bomb),
+      "non-negative number"
+    )
+  )
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_gunzip_checked, "x", 10),
+    "raw vector"
+  )
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_gunzip_checked, as.raw(1:3), NA_real_),
+    "non-negative number"
+  )
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_gunzip_checked, raw(0), 10),
+    "not gzip data"
+  )
+  expect_error(
+    .Call(
+      rmoriebricklayer:::C_rmbl_gunzip_checked,
+      as.raw(c(0x1f, 0x8b, 1, 2, 3)),
+      10
+    ),
+    "not valid gzip|truncated"
+  )
 })
 
-# ---- C4: the rate check holds whatever unit the rate came in ----------------------------------
+# ---- C4: the rate check holds whatever unit the rate came in -----------------
 
-test_that("C4: a rate below one per 100k needs rare = TRUE, whatever basrateper is", {
-  args <- list("pm25", expomean = 25, expoprev = 1)
-  trap <- do.call(vrfpol, c(args, brate = 0.008, basrateper = 1e5))
-  expect_identical(trap$status, "assumption_failure")
-  expect_match(polrpttxt(trap), "basrateper = 1")
-  # the person-year reading gives the right burden
-  ok <- do.call(vrfpol, c(args, brate = 0.008, basrateper = 1))
-  expect_identical(ok$status, "ok")
-  expect_gt(ok$pipeline$burden$attrcases, 1000)
-  rare <- do.call(vrfpol, c(args, brate = 0.5, basrateper = 1e5, rare = TRUE))
-  expect_identical(rare$status, "ok")
-  # an absurd unit is refused even when the outcome is declared rare
-  absurd <- do.call(vrfpol, c(args, brate = 0.008, basrateper = 1e300, rare = TRUE))
-  expect_identical(absurd$status, "assumption_failure")
-  expect_match(polrpttxt(absurd), "100 billion")
-  expect_identical(do.call(vrfpol, c(args, rare = NA))$status, "error")
-})
-
-# ---- C5: the NAPS value + unit path refuses censored text too -----------------------------------
-
-test_that("C5: \"<2\" in a NAPS value column is refused, as it is in an exposure column", {
-  f <- tempfile(fileext = ".csv")
-  writeLines(c("value,unit", "20,ug/m3", "<2,ug/m3", "<2,ug/m3", "<2,ug/m3", "40,ug/m3"), f)
-  v <- vrfpol("pm25", expcsv = f)
-  expect_identical(v$status, "error")
-  expect_match(v$error, "3 exposure value\\(s\\) are text")
-  writeLines(c("value,unit", "20,ug/m3", ",ug/m3", "40,ug/m3"), f)
-  expect_identical(vrfpol("pm25", expcsv = f)$status, "ok")
-})
-
-# ---- C6 and the command-line arguments ------------------------------------------------------------
-
-test_that("C6: --force belongs to config reset only, and stray arguments are refused", {
-  withr::local_envvar(R_USER_CONFIG_DIR = tempfile("cfg-"))
-  quiet <- function(...) invisible(NULL)
-  code <- function(...) rmoriebricklayer:::blcli(c(...), out = quiet)
-  expect_identical(code("config", "set", "own.key", "--force"), 2L)
-  expect_false(file.exists(rmoriebricklayer:::.bl_config_path()))
-  for (a in list(c("config", "unset", "route", "--force"), c("config", "show", "--force"),
-                 c("config", "get", "route", "--force"), c("config", "show", "extra"), c("config", "help", "x"),
-                 c("config", "get", "route", "extra"), c("config", "unset", "route", "extra"),
-                 c("functions", "--", "a", "b"), c("help", "ask", "extra"), c("describe", "--", "x"))) {
-    expect_identical(do.call(code, as.list(a)), 2L, info = paste(a, collapse = " "))
+test_that(
+  paste0(
+    "C4: a rate below one per 100k needs rare ",
+    "= TRUE, whatever basrateper is"
+  ),
+  {
+    args <- list("pm25", expomean = 25, expoprev = 1)
+    trap <- do.call(vrfpol, c(args, brate = 0.008, basrateper = 1e5))
+    expect_identical(trap$status, "assumption_failure")
+    expect_match(polrpttxt(trap), "basrateper = 1")
+    # the person-year reading gives the right burden
+    ok <- do.call(vrfpol, c(args, brate = 0.008, basrateper = 1))
+    expect_identical(ok$status, "ok")
+    expect_gt(ok$pipeline$burden$attrcases, 1000)
+    rare <- do.call(vrfpol, c(args, brate = 0.5, basrateper = 1e5, rare = TRUE))
+    expect_identical(rare$status, "ok")
+    # an absurd unit is refused even when the outcome is declared rare
+    absurd <- do.call(
+      vrfpol,
+      c(args, brate = 0.008, basrateper = 1e300, rare = TRUE)
+    )
+    expect_identical(absurd$status, "assumption_failure")
+    expect_match(polrpttxt(absurd), "100 billion")
+    expect_identical(do.call(vrfpol, c(args, rare = NA))$status, "error")
   }
-  expect_identical(code("config", "reset", "--force"), 0L)
-  expect_identical(code("help", "ask"), 0L)
-})
+)
 
-# ---- C7: the legacy record path ---------------------------------------------------------------
+# ---- C5: the NAPS value + unit path refuses censored text too ----------------
 
-test_that("C7: a FIFO or a directory at the legacy record path is refused at once", {
-  skip_on_os("windows")
-  d <- tempfile("legacy-")
-  dir.create(d)
-  p <- file.path(d, "xmss_used_indices.txt")
-  j <- file.path(d, "xmss_index.json")
-  expect_identical(rmoriebricklayer:::.rmbl_xmss_legacy_json(p), integer(0))
-  dir.create(j)
-  expect_error(rmoriebricklayer:::.rmbl_xmss_legacy_json(p), "is a directory, not a regular file")
-  unlink(j, recursive = TRUE)
-  skip_if(!nzchar(Sys.which("mkfifo")))
-  system2("mkfifo", j)
-  t0 <- proc.time()[["elapsed"]]
-  expect_error(rmoriebricklayer:::.rmbl_xmss_legacy_json(p), "device or other special file")
-  expect_lt(proc.time()[["elapsed"]] - t0, wall_limit(2))
-})
+test_that(
+  paste0(
+    "C5: \"<2\" in a NAPS value column is refused, as it is in an exposure ",
+    "column"
+  ),
+  {
+    f <- tempfile(fileext = ".csv")
+    writeLines(
+      c(
+        "value,unit",
+        "20,ug/m3",
+        "<2,ug/m3",
+        "<2,ug/m3",
+        "<2,ug/m3",
+        "40,ug/m3"
+      ),
+      f
+    )
+    v <- vrfpol("pm25", expcsv = f)
+    expect_identical(v$status, "error")
+    expect_match(v$error, "3 exposure value\\(s\\) are text")
+    writeLines(c("value,unit", "20,ug/m3", ",ug/m3", "40,ug/m3"), f)
+    expect_identical(vrfpol("pm25", expcsv = f)$status, "ok")
+  }
+)
 
-# ---- C8, C9: the manifest cache -----------------------------------------------------------------
+# ---- C6 and the command-line arguments ---------------------------------------
+
+test_that(
+  paste0(
+    "C6: --force belongs to config reset only, and stray arguments are ",
+    "refused"
+  ),
+  {
+    withr::local_envvar(R_USER_CONFIG_DIR = tempfile("cfg-"))
+    quiet <- function(...) invisible(NULL)
+    code <- function(...) rmoriebricklayer:::blcli(c(...), out = quiet)
+    expect_identical(code("config", "set", "own.key", "--force"), 2L)
+    expect_false(file.exists(rmoriebricklayer:::.bl_config_path()))
+    for (a in list(
+      c("config", "unset", "route", "--force"),
+      c("config", "show", "--force"),
+      c("config", "get", "route", "--force"),
+      c("config", "show", "extra"),
+      c("config", "help", "x"),
+      c("config", "get", "route", "extra"),
+      c("config", "unset", "route", "extra"),
+      c("functions", "--", "a", "b"),
+      c("help", "ask", "extra"),
+      c("describe", "--", "x")
+    )) {
+      expect_identical(
+        do.call(code, as.list(a)),
+        2L,
+        info = paste(a, collapse = " ")
+      )
+    }
+    expect_identical(code("config", "reset", "--force"), 0L)
+    expect_identical(code("help", "ask"), 0L)
+  }
+)
+
+# ---- C7: the legacy record path ----------------------------------------------
+
+test_that(
+  paste0(
+    "C7: a FIFO or a directory at the legacy ",
+    "record path is refused at once"
+  ),
+  {
+    skip_on_os("windows")
+    d <- tempfile("legacy-")
+    dir.create(d)
+    p <- file.path(d, "xmss_used_indices.txt")
+    j <- file.path(d, "xmss_index.json")
+    expect_identical(rmoriebricklayer:::.rmbl_xmss_legacy_json(p), integer(0))
+    dir.create(j)
+    expect_error(
+      rmoriebricklayer:::.rmbl_xmss_legacy_json(p),
+      "is a directory, not a regular file"
+    )
+    unlink(j, recursive = TRUE)
+    skip_if(!nzchar(Sys.which("mkfifo")))
+    system2("mkfifo", j)
+    t0 <- proc.time()[["elapsed"]]
+    expect_error(
+      rmoriebricklayer:::.rmbl_xmss_legacy_json(p),
+      "device or other special file"
+    )
+    expect_lt(proc.time()[["elapsed"]] - t0, wall_limit(2))
+  }
+)
+
+# ---- C8, C9: the manifest cache ----------------------------------------------
 
 c89_cache <- function(table = NULL, manifest = NULL, age_days = 0) {
   d <- tempfile("dcache-")
   dir.create(d)
-  withr::local_options(list(rmoriebricklayer.dcache = d), .local_envir = parent.frame())
+  withr::local_options(
+    list(rmoriebricklayer.dcache = d),
+    .local_envir = parent.frame()
+  )
   if (!is.null(table)) {
     con <- gzfile(file.path(d, "db__t.csv.gz"), "wb")
     writeBin(table, con)
@@ -212,12 +385,19 @@ c89_cache <- function(table = NULL, manifest = NULL, age_days = 0) {
   }
   if (!is.null(manifest)) {
     writeLines(manifest, file.path(d, "manifest.json"))
-    Sys.setFileTime(file.path(d, "manifest.json"), Sys.time() - age_days * 86400)
+    Sys.setFileTime(
+      file.path(d, "manifest.json"),
+      Sys.time() - age_days * 86400
+    )
   }
   d
 }
 c89_manifest <- function(sha = NULL) {
-  if (is.null(sha)) '{"datasets":[{"key":"db/t"}]}' else sprintf('{"datasets":[{"key":"db/t","sha256":"%s"}]}', sha)
+  if (is.null(sha)) {
+    '{"datasets":[{"key":"db/t"}]}'
+  } else {
+    sprintf('{"datasets":[{"key":"db/t","sha256":"%s"}]}', sha)
+  }
 }
 
 test_that("C8: parallel refreshes each use their own temporary file", {
@@ -230,83 +410,167 @@ test_that("C8: parallel refreshes each use their own temporary file", {
     invisible(dest)
   })
   refresh3 <- function(i) {
-    tryCatch({
-      for (k in 1:3) dmnf(refresh = TRUE)
-      "ok"
-    }, error = function(e) conditionMessage(e))
+    tryCatch(
+      {
+        for (k in 1:3) {
+          dmnf(refresh = TRUE)
+        }
+        "ok"
+      },
+      error = function(e) conditionMessage(e)
+    )
   }
-  res <- parallel::mclapply(1:12, refresh3,
-  # R CMD check --as-cran caps child processes at 2 (_R_CHECK_LIMIT_CORES_)
-  mc.cores = if (nzchar(Sys.getenv("_R_CHECK_LIMIT_CORES_"))) 2L else 12L)
+  res <- parallel::mclapply(
+    1:12,
+    refresh3,
+    # R CMD check --as-cran caps child processes at 2 (_R_CHECK_LIMIT_CORES_)
+    mc.cores = if (nzchar(Sys.getenv("_R_CHECK_LIMIT_CORES_"))) 2L else 12L
+  )
   expect_identical(unique(unlist(res)), "ok")
   expect_length(list.files(d, pattern = "[.]part$"), 0L)
 })
 
-test_that("C9: a reply that is not a manifest leaves the cached copy, and a cached table is kept", {
-  good <- charToRaw("x,y\n1,2\n")
-  d <- c89_cache(good, c89_manifest(), age_days = 3)
-  for (reply in c("{}", '{"error":"unauthorised"}', '{"datasets":{"key":"db/t"}}', '{"datasets":[1, 2]}')) {
-    local_mocked_bindings(.bl_data_get = function(path, dest, ...) writeLines(reply, dest))
-    expect_error(dmnf(refresh = TRUE), "not a manifest", info = reply)
-    expect_identical(readLines(file.path(d, "manifest.json")), c89_manifest(), info = reply)
+test_that(
+  paste0(
+    "C9: a reply that is not a manifest leaves the cached copy, and a ",
+    "cached table is kept"
+  ),
+  {
+    good <- charToRaw("x,y\n1,2\n")
+    d <- c89_cache(good, c89_manifest(), age_days = 3)
+    for (reply in c(
+      "{}",
+      '{"error":"unauthorised"}',
+      '{"datasets":{"key":"db/t"}}',
+      '{"datasets":[1, 2]}'
+    )) {
+      local_mocked_bindings(.bl_data_get = function(path, dest, ...) {
+        writeLines(reply, dest)
+      })
+      expect_error(dmnf(refresh = TRUE), "not a manifest", info = reply)
+      expect_identical(
+        readLines(file.path(d, "manifest.json")),
+        c89_manifest(),
+        info = reply
+      )
+    }
+    # offline, the stale copy lists the table without a digest: it loads, as it
+    # does online
+    local_mocked_bindings(.bl_data_get = function(...) {
+      stop("could not resolve host")
+    })
+    expect_identical(nrow(dload("db/t")), 1L)
+    # no manifest anywhere: refused, and the cached table is kept for the next
+    # run
+    unlink(file.path(d, "manifest.json"))
+    expect_error(dload("db/t"), "kept unused")
+    expect_true(file.exists(file.path(d, "db__t.csv.gz")))
   }
-  # offline, the stale copy lists the table without a digest: it loads, as it does online
-  local_mocked_bindings(.bl_data_get = function(...) stop("could not resolve host"))
-  expect_identical(nrow(dload("db/t")), 1L)
-  # no manifest anywhere: refused, and the cached table is kept for the next run
-  unlink(file.path(d, "manifest.json"))
-  expect_error(dload("db/t"), "kept unused")
-  expect_true(file.exists(file.path(d, "db__t.csv.gz")))
-})
+)
 
-# ---- LOW ---------------------------------------------------------------------------------------
+# ---- LOW ---------------------------------------------------------------------
 
-test_that("LOW: releasing descriptor 0, 1 or 2 is refused (it would close the console)", {
-  for (fd in 0:2) expect_error(.Call(rmoriebricklayer:::C_rmbl_flock_release, fd), "not a lock")
-  expect_null(.Call(rmoriebricklayer:::C_rmbl_flock_release, -1L))
-})
+test_that(
+  paste0(
+    "LOW: releasing descriptor 0, 1 or 2 is refused (it would close the ",
+    "console)"
+  ),
+  {
+    for (fd in 0:2) {
+      expect_error(
+        .Call(rmoriebricklayer:::C_rmbl_flock_release, fd),
+        "not a lock"
+      )
+    }
+    expect_null(.Call(rmoriebricklayer:::C_rmbl_flock_release, -1L))
+  }
+)
 
-test_that("LOW: the checked writer leaves the exact bytes and no temporary file", {
-  d <- tempfile("w-")
-  dir.create(d)
-  p <- file.path(d, "rec")
-  tmp <- file.path(d, "rec.tmp")
-  expect_null(.Call(rmoriebricklayer:::C_rmbl_write_file_checked, tmp, p, charToRaw("abc\n")))
-  expect_identical(readBin(p, "raw", 100), charToRaw("abc\n"))
-  expect_false(file.exists(tmp))
-})
+test_that(
+  paste0(
+    "LOW: the checked writer leaves the ",
+    "exact bytes and no temporary file"
+  ),
+  {
+    d <- tempfile("w-")
+    dir.create(d)
+    p <- file.path(d, "rec")
+    tmp <- file.path(d, "rec.tmp")
+    expect_null(.Call(
+      rmoriebricklayer:::C_rmbl_write_file_checked,
+      tmp,
+      p,
+      charToRaw("abc\n")
+    ))
+    expect_identical(readBin(p, "raw", 100), charToRaw("abc\n"))
+    expect_false(file.exists(tmp))
+  }
+)
 
-test_that("LOW: a lock file this user cannot write is named as such, not as a read-only directory", {
-  skip_on_os("windows")
-  skip_if(identical(Sys.info()[["user"]], "root"))
-  d <- tempfile("lk-")
-  dir.create(d)
-  withr::local_options(list(rmoriebricklayer.xmssidxfile = file.path(d, "rec.txt")))
-  writeLines("", file.path(d, "rec.txt.flock"))
-  Sys.chmod(file.path(d, "rec.txt.flock"), "0400")
-  expect_error(rmoriebricklayer:::.rmbl_xmss_with_lock(file.path(d, "rec.txt"), function() NULL),
-               "owned by another user")
-})
+test_that(
+  paste0(
+    "LOW: a lock file this user cannot write is named as such, not as a ",
+    "read-only directory"
+  ),
+  {
+    skip_on_os("windows")
+    skip_if(identical(Sys.info()[["user"]], "root"))
+    d <- tempfile("lk-")
+    dir.create(d)
+    withr::local_options(list(
+      rmoriebricklayer.xmssidxfile = file.path(d, "rec.txt")
+    ))
+    writeLines("", file.path(d, "rec.txt.flock"))
+    Sys.chmod(file.path(d, "rec.txt.flock"), "0400")
+    expect_error(
+      rmoriebricklayer:::.rmbl_xmss_with_lock(
+        file.path(d, "rec.txt"),
+        function() NULL
+      ),
+      "owned by another user"
+    )
+  }
+)
 
-# ---- C10: Ctrl-C at a prompt --------------------------------------------------------------
+# ---- C10: Ctrl-C at a prompt -------------------------------------------------
 
-test_that("C10: the trap's marker is an interrupt even when the shell's exit status is lost (dash)", {
-  skip_on_os("windows")
-  skip_if_not(nzchar(Sys.which("sh")))
-  local_mocked_bindings(.bl_interactive = function() FALSE, .bl_stdin_tty = function() TRUE)
-  # what system2(stdout = TRUE) returns from dash: the trap's output, and no status attribute
-  local_mocked_bindings(system2 = function(...) "\001RMBL-INTERRUPTED\001", .package = "base")
-  got <- tryCatch(rmoriebricklayer:::.bl_readline("key: ", secret = FALSE), interrupt = function(i) "interrupt")
-  expect_identical(got, "interrupt")
-  got <- tryCatch(rmoriebricklayer:::.bl_readline("key: ", secret = TRUE), interrupt = function(i) "interrupt")
-  expect_identical(got, "interrupt")
-})
+test_that(
+  paste0(
+    "C10: the trap's marker is an interrupt even when the shell's exit ",
+    "status is lost (dash)"
+  ),
+  {
+    skip_on_os("windows")
+    skip_if_not(nzchar(Sys.which("sh")))
+    local_mocked_bindings(
+      .bl_interactive = function() FALSE,
+      .bl_stdin_tty = function() TRUE
+    )
+    # what system2(stdout = TRUE) returns from dash: the trap's output, and no
+    # status attribute
+    local_mocked_bindings(
+      system2 = function(...) "\001RMBL-INTERRUPTED\001",
+      .package = "base"
+    )
+    got <- tryCatch(
+      rmoriebricklayer:::.bl_readline("key: ", secret = FALSE),
+      interrupt = function(i) "interrupt"
+    )
+    expect_identical(got, "interrupt")
+    got <- tryCatch(
+      rmoriebricklayer:::.bl_readline("key: ", secret = TRUE),
+      interrupt = function(i) "interrupt"
+    )
+    expect_identical(got, "interrupt")
+  }
+)
 
 test_that("C10: Ctrl-C at a real terminal prompt exits 130 (not mocked)", {
   skip_on_cran()
-  # under covr the child runs the instrumented package, and the interrupt lands inside covr's
-  # line counter rather than the prompt's handler (exit 1); the handler's lines are covered by
-  # the mocked tests, and this test runs unmodified in every other CI job
+  # under covr the child runs the instrumented package, and the interrupt lands
+  # inside covr's line counter rather than the prompt's handler (exit 1); the
+  # handler's lines are covered by the mocked tests, and this test runs
+  # unmodified in every other CI job
   skip_on_covr()
   skip_on_os(c("windows", "mac"))
   skip_if_not(nzchar(Sys.which("script")) && nzchar(Sys.which("sh")))
@@ -314,157 +578,350 @@ test_that("C10: Ctrl-C at a real terminal prompt exits 130 (not mocked)", {
   skip_if_not(nzchar(launcher))
   h <- withr::local_tempdir()
   for (args in c("login --token", "config set own.key")) {
-    # the terminal's transcript is kept, so a failure shows what the child printed
+    # the terminal's transcript is kept, so a failure shows what the child
+    # printed
     ty <- withr::local_tempfile(fileext = ".typescript")
-    # ^C goes in once the prompt is on the terminal (both prompts end in key: ), not after a fixed
-    # sleep: on a loaded runner R was still starting at 5 s, and an interrupt during startup exits 1
-    # (C-locale leg, 01200ae and 2c1f5c1: the transcript was empty)
-    wait <- sprintf(paste("i=0; while [ $i -lt 240 ] && ! grep -q 'key: ' %s 2>/dev/null;",
-                          "do sleep 0.5; i=$((i+1)); done; sleep 1"), shQuote(ty))
-    cmd <- sprintf("(%s; printf '\\003') | script -qfec %s %s > /dev/null 2>&1", wait,
-                   shQuote(paste("sh", shQuote(launcher), args)), shQuote(ty))
-    # R CMD check sets R_TESTS=startup.Rs for the test run, which the launcher's Rscript inherited
-    # and failed to source; and --as-cran puts a decoy `Rscript` first on PATH that refuses to run
-    # ("should not be used without a path"), so the launcher starts this R's own (every Linux CI
-    # leg, fc5ccfc and d6f3616; the transcript showed the second)
-    st <- withr::with_envvar(c(HOME = h, R_USER_CONFIG_DIR = h, R_LIBS = paste(.libPaths(), collapse = ":"),
-                               R_TESTS = NA,
-                               PATH = paste(R.home("bin"), Sys.getenv("PATH"), sep = .Platform$path.sep)),
-                             system(cmd))
-    seen <- if (file.exists(ty)) utils::tail(gsub("\r", "", readLines(ty, warn = FALSE)), 15L) else "(no transcript)"
-    expect_identical(as.integer(st), 130L, info = paste(c(args, seen), collapse = "\n"))
+    # ^C goes in once the prompt is on the terminal (both prompts end in key: ),
+    # not after a fixed sleep: on a loaded runner R was still starting at 5 s,
+    # and an interrupt during startup exits 1 (C-locale leg, 01200ae and
+    # 2c1f5c1: the transcript was empty)
+    wait <- sprintf(
+      paste(
+        "i=0; while [ $i -lt 240 ] && ! grep -q 'key: ' %s 2>/dev/null;",
+        "do sleep 0.5; i=$((i+1)); done; sleep 1"
+      ),
+      shQuote(ty)
+    )
+    cmd <- sprintf(
+      "(%s; printf '\\003') | script -qfec %s %s > /dev/null 2>&1",
+      wait,
+      shQuote(paste("sh", shQuote(launcher), args)),
+      shQuote(ty)
+    )
+    # R CMD check sets R_TESTS=startup.Rs for the test run, which the launcher's
+    # Rscript inherited and failed to source; and --as-cran puts a decoy
+    # `Rscript` first on PATH that refuses to run ("should not be used without a
+    # path"), so the launcher starts this R's own (every Linux CI leg, fc5ccfc
+    # and d6f3616; the transcript showed the second)
+    st <- withr::with_envvar(
+      c(
+        HOME = h,
+        R_USER_CONFIG_DIR = h,
+        R_LIBS = paste(.libPaths(), collapse = ":"),
+        R_TESTS = NA,
+        PATH = paste(
+          R.home("bin"),
+          Sys.getenv("PATH"),
+          sep = .Platform$path.sep
+        )
+      ),
+      system(cmd)
+    )
+    seen <- if (file.exists(ty)) {
+      utils::tail(gsub("\r", "", readLines(ty, warn = FALSE)), 15L)
+    } else {
+      "(no transcript)"
+    }
+    expect_identical(
+      as.integer(st),
+      130L,
+      info = paste(c(args, seen), collapse = "\n")
+    )
   }
 })
 
-test_that("LOW: UTF-32 with a mark is read, and its decoding error never quotes the file", {
-  rows <- c("exposure,income", "30,10", "40,20")
-  txt <- paste0(paste(rows, collapse = "\n"), "\n")
-  for (enc in c("UTF-32LE", "UTF-32BE")) {
+test_that(
+  paste0(
+    "LOW: UTF-32 with a mark is read, and its decoding error never quotes ",
+    "the file"
+  ),
+  {
+    rows <- c("exposure,income", "30,10", "40,20")
+    txt <- paste0(paste(rows, collapse = "\n"), "\n")
+    for (enc in c("UTF-32LE", "UTF-32BE")) {
+      f <- tempfile(fileext = ".csv")
+      bom <- if (enc == "UTF-32LE") {
+        as.raw(c(0xff, 0xfe, 0, 0))
+      } else {
+        as.raw(c(0, 0, 0xfe, 0xff))
+      }
+      writeBin(c(bom, iconv(txt, "UTF-8", enc, toRaw = TRUE)[[1]]), f)
+      d <- rmoriebricklayer:::.pollution_read_csv(f)
+      expect_identical(d$exposure, c(30L, 40L), info = enc)
+    }
+    bad <- tempfile(fileext = ".csv")
+    writeBin(c(as.raw(c(0xff, 0xfe, 0, 0)), as.raw(c(0x41, 0, 0))), bad)
+    e <- tryCatch(
+      rmoriebricklayer:::.pollution_read_csv(bad),
+      error = conditionMessage
+    )
+    expect_lt(nchar(e), 200)
+  }
+)
+
+test_that(
+  paste0(
+    "LOW: a row with the wrong number of fields, or a column name twice, is ",
+    "refused"
+  ),
+  {
     f <- tempfile(fileext = ".csv")
-    bom <- if (enc == "UTF-32LE") as.raw(c(0xff, 0xfe, 0, 0)) else as.raw(c(0, 0, 0xfe, 0xff))
-    writeBin(c(bom, iconv(txt, "UTF-8", enc, toRaw = TRUE)[[1]]), f)
-    d <- rmoriebricklayer:::.pollution_read_csv(f)
-    expect_identical(d$exposure, c(30L, 40L), info = enc)
+    writeLines(c("exposure,income", "30,10", "40,20,99", "50,30"), f)
+    expect_error(
+      rmoriebricklayer:::.pollution_read_csv(f),
+      "line 3 has 3 fields where the header has 2"
+    )
+    writeLines(c("site,exposure,exposure", "a,30,99", "b,40,98"), f)
+    expect_error(
+      rmoriebricklayer:::.pollution_read_csv(f),
+      "'exposure' more than once"
+    )
+    writeLines(c("exposure,note", "30,\"a, quoted, note\"", "40,plain"), f)
+    expect_identical(nrow(rmoriebricklayer:::.pollution_read_csv(f)), 2L)
   }
-  bad <- tempfile(fileext = ".csv")
-  writeBin(c(as.raw(c(0xff, 0xfe, 0, 0)), as.raw(c(0x41, 0, 0))), bad)
-  e <- tryCatch(rmoriebricklayer:::.pollution_read_csv(bad), error = conditionMessage)
-  expect_lt(nchar(e), 200)
-})
+)
 
-test_that("LOW: a row with the wrong number of fields, or a column name twice, is refused", {
-  f <- tempfile(fileext = ".csv")
-  writeLines(c("exposure,income", "30,10", "40,20,99", "50,30"), f)
-  expect_error(rmoriebricklayer:::.pollution_read_csv(f), "line 3 has 3 fields where the header has 2")
-  writeLines(c("site,exposure,exposure", "a,30,99", "b,40,98"), f)
-  expect_error(rmoriebricklayer:::.pollution_read_csv(f), "'exposure' more than once")
-  writeLines(c("exposure,note", "30,\"a, quoted, note\"", "40,plain"), f)
-  expect_identical(nrow(rmoriebricklayer:::.pollution_read_csv(f)), 2L)
-})
-
-test_that("LOW: a next_index past 2^31 - 1 is the damaged-key error, not a raw NA", {
-  k <- pqckg(height = 2)
-  for (bad in list(1e10, 2^31)) {
-    k2 <- k
-    k2$next_index <- bad
-    expect_error(cpssign("m", k2), "not a whole number >= 0 \\(below 2\\^31\\)")
+test_that(
+  paste0(
+    "LOW: a next_index past 2^31 - 1 is the ",
+    "damaged-key error, not a raw NA"
+  ),
+  {
+    k <- pqckg(height = 2)
+    for (bad in list(1e10, 2^31)) {
+      k2 <- k
+      k2$next_index <- bad
+      expect_error(
+        cpssign("m", k2),
+        "not a whole number >= 0 \\(below 2\\^31\\)"
+      )
+    }
   }
-})
+)
 
-test_that("L3: a key saved for another hosted address is said once, and the summary says so", {
-  d <- withr::local_tempdir()
-  withr::local_envvar(XDG_CONFIG_HOME = d, MORIE_HOSTED_KEY = "", MORIE_HOSTED_BASE_URL = "https://llm.example.org/v1")
-  dir.create(file.path(d, "morie"))
-  writeLines('{"hosted_key": "sk-test", "hosted_base_url": "https://old.example.org/v1"}',
-             file.path(d, "morie", "credentials.json"))
-  rm(list = ls(rmoriebricklayer:::.bl_said_once), envir = rmoriebricklayer:::.bl_said_once)
-  expect_message(expect_null(rmoriebricklayer:::.bl_hosted_key()), "issued for https://old.example.org/v1")
-  expect_silent(expect_null(rmoriebricklayer:::.bl_hosted_key()))
-  out <- character()
-  rmoriebricklayer:::.bl_cli_doctor(function(x) out <<- c(out, x))
-  expect_true(any(grepl("data key: issued for https://old.example.org/v1, so not sent to https://llm.example.org/v1",
-                        out, fixed = TRUE)))
-})
+test_that(
+  paste0(
+    "L3: a key saved for another hosted address is said once, and the ",
+    "summary says so"
+  ),
+  {
+    d <- withr::local_tempdir()
+    withr::local_envvar(
+      XDG_CONFIG_HOME = d,
+      MORIE_HOSTED_KEY = "",
+      MORIE_HOSTED_BASE_URL = "https://llm.example.org/v1"
+    )
+    dir.create(file.path(d, "morie"))
+    writeLines(
+      paste0(
+        '{"hosted_key": "sk-test", "hosted_base_url": ',
+        '"https://old.example.org/v1"}'
+      ),
+      file.path(d, "morie", "credentials.json")
+    )
+    rm(
+      list = ls(rmoriebricklayer:::.bl_said_once),
+      envir = rmoriebricklayer:::.bl_said_once
+    )
+    expect_message(
+      expect_null(rmoriebricklayer:::.bl_hosted_key()),
+      "issued for https://old.example.org/v1"
+    )
+    expect_silent(expect_null(rmoriebricklayer:::.bl_hosted_key()))
+    out <- character()
+    rmoriebricklayer:::.bl_cli_doctor(function(x) out <<- c(out, x))
+    expect_true(any(grepl(
+      paste0(
+        "data key: issued for https://old.example.org/v1, so not sent to ",
+        "https://llm.example.org/v1"
+      ),
+      out,
+      fixed = TRUE
+    )))
+  }
+)
 
-test_that("M2: validation needs a schema, a misspelt field is fatal, and expected_dtypes is checked", {
-  df <- data.frame(a = 1:3, b = c("x", "y", "z"))
-  expect_error(schval(df, NULL), "no schema to validate against")
-  expect_error(schval(df, list()), "no schema to validate against")
-  expect_error(schval(df, list(scheme = infsch(df))), "no `schema` element \\(it has scheme\\)")
-  expect_error(schval(df, list(schema = list(expected_colums = "a"))),
-               "did you mean 'expected_columns'")
-  expect_error(schval(df, list(schema = list(structural_invariants = list(min_data_row = 1)))),
-               "did you mean 'min_data_rows'")
-  expect_warning(schval(df, list(schema = list(notes = "about this table"))),
-                 "not one valsch\\(\\) uses")
-  # a dataset's own invariant (the OTIS file's) is allowed
-  # ...with no warning (the misspelling check compared names of two lengths)
-  inv <- list(schema = list(structural_invariants = list(total_placements_sum = 5)))
-  expect_true(expect_no_warning(schval(df, inv)))
-  # expected_dtypes is read; a factor and a character column are one family
-  expect_warning(schval(df, list(schema = list(expected_dtypes = list(a = "character")))),
-                 "is integer, expected character")
-  expect_true(schval(df, list(schema = list(expected_dtypes = list(b = "factor", a = "integer")))))
-})
+test_that(
+  paste0(
+    "M2: validation needs a schema, a misspelt field is fatal, and ",
+    "expected_dtypes is checked"
+  ),
+  {
+    df <- data.frame(a = 1:3, b = c("x", "y", "z"))
+    expect_error(schval(df, NULL), "no schema to validate against")
+    expect_error(schval(df, list()), "no schema to validate against")
+    expect_error(
+      schval(df, list(scheme = infsch(df))),
+      "no `schema` element \\(it has scheme\\)"
+    )
+    expect_error(
+      schval(df, list(schema = list(expected_colums = "a"))),
+      "did you mean 'expected_columns'"
+    )
+    expect_error(
+      schval(
+        df,
+        list(schema = list(structural_invariants = list(min_data_row = 1)))
+      ),
+      "did you mean 'min_data_rows'"
+    )
+    expect_warning(
+      schval(df, list(schema = list(notes = "about this table"))),
+      "not one valsch\\(\\) uses"
+    )
+    # a dataset's own invariant (the OTIS file's) is allowed
+    # ...with no warning (the misspelling check compared names of two lengths)
+    inv <- list(
+      schema = list(structural_invariants = list(total_placements_sum = 5))
+    )
+    expect_true(expect_no_warning(schval(df, inv)))
+    # expected_dtypes is read; a factor and a character column are one family
+    expect_warning(
+      schval(df, list(schema = list(expected_dtypes = list(a = "character")))),
+      "is integer, expected character"
+    )
+    expect_true(schval(
+      df,
+      list(schema = list(expected_dtypes = list(b = "factor", a = "integer")))
+    ))
+  }
+)
 
 test_that("LOW: default-ignorable characters are removed from the data list", {
-  # written with escapes: in a C locale R reads raw non-ASCII source text as "<U+00AD>"
+  # written with escapes: in a C locale R reads raw non-ASCII source text as
+  # "<U+00AD>"
   hidden <- "a\u00adb\u034fc\u115fd\u3164e\u180ef\ufeffg\ufff9h\U000e0041i"
   tabs <- rmoriebricklayer:::.bl_data_tables_df("db/t", hidden, 1L, "src")
-  out <- paste(rmoriebricklayer:::.bl_format_data_tables(tabs, width = 200), collapse = "\n")
+  out <- paste(
+    rmoriebricklayer:::.bl_format_data_tables(tabs, width = 200),
+    collapse = "\n"
+  )
   expect_match(out, "abcdefghi", fixed = TRUE)
 })
 
-test_that("B3: a temporary record file left by a writer that died is removed at the next write", {
-  d <- withr::local_tempdir()
-  p <- file.path(d, "rec.txt")
-  stale <- file.path(d, "rec.txt.xmss-dead123.tmp")
-  writeLines("partial", stale)
-  # another record's temporary file in the same folder is not this writer's to remove (e57fed5, E11)
-  other <- file.path(d, "other.txt.xmss-live456.tmp")
-  writeLines("in flight", other)
-  rmoriebricklayer:::.rmbl_xmss_with_lock(p, function() rmoriebricklayer:::.rmbl_xmss_record_write(p, c(`k:aa` = 3L)))
-  expect_false(file.exists(stale))
-  expect_true(file.exists(other))
-  expect_true(file.exists(p))
-})
-
-test_that("B5: a credentials file with a NUL, in Latin-1, or of megabytes is refused plainly", {
-  d <- withr::local_tempdir()
-  f <- file.path(d, "c.json")
-  writeBin(c(charToRaw('{"a": "b"}'), as.raw(0), charToRaw('{"c": 1}')), f)
-  expect_error(rmoriebricklayer:::.bl_read_text(f), "NUL byte")
-  writeBin(c(charToRaw('{"name": "caf'), as.raw(0xe9), charToRaw('"}')), f)
-  expect_error(rmoriebricklayer:::.bl_read_text(f), "not UTF-8 text")
-  writeBin(charToRaw(paste0('{"x": "', strrep("y", 1100000), '"}')), f)
-  expect_error(rmoriebricklayer:::.bl_read_text(f), "too large to be a credentials file")
-  # the exact bytes: writeLines() writes CRLF on Windows
-  writeBin(charToRaw('{"hosted_key": "k"}\n'), f)
-  expect_identical(rmoriebricklayer:::.bl_read_text(f), '{"hosted_key": "k"}\n')
-})
-
-test_that("LOW: numbers must be numbers, steps and grids are capped, and plot() needs a report", {
-  expect_match(vrfpol("pm25", expomean = as.raw(25), expoprev = 1)$error,
-               "expomean must be a single number, not raw")
-  expect_match(vrfpol("pm25", expomean = 25, expoprev = 1, pop = as.raw(9))$error,
-               "pop must be a single number")
-  expect_error(lagrprt(10, 0, 0, 1, 0, 1, 1, 1, nsteps = 1e300, maxwork = Inf), "at most 2\\^31 - 1")
-  expect_error(advdif2d(matrix(0, 3, 3), 0, 0, 0.1, 0.1, 1, 1, 0.1, nsteps = 1e300, maxwork = Inf),
-               "at most 2\\^31 - 1")
-  expect_error(lagrprt(10, 0, 0, 1, 0, 1, 1, 1, nsteps = 1, grid = c(0, 1, 0, 1, 1e6, 1e6)),
-               "above maxwork")
-  pdf(NULL)
-  on.exit(grDevices::dev.off(), add = TRUE)
-  for (bad in list("x", list(), structure(list(status = "ok"), class = "rmbl_pollution_report"))) {
-    expect_error(rmoriebricklayer:::plot.rmbl_pollution_report(bad), "must be a report from vrfpol")
+test_that(
+  paste0(
+    "B3: a temporary record file left by a writer that died is removed at ",
+    "the next write"
+  ),
+  {
+    d <- withr::local_tempdir()
+    p <- file.path(d, "rec.txt")
+    stale <- file.path(d, "rec.txt.xmss-dead123.tmp")
+    writeLines("partial", stale)
+    # another record's temporary file in the same folder is not this writer's to
+    # remove (e57fed5, E11)
+    other <- file.path(d, "other.txt.xmss-live456.tmp")
+    writeLines("in flight", other)
+    rmoriebricklayer:::.rmbl_xmss_with_lock(p, function() {
+      rmoriebricklayer:::.rmbl_xmss_record_write(p, c(`k:aa` = 3L))
+    })
+    expect_false(file.exists(stale))
+    expect_true(file.exists(other))
+    expect_true(file.exists(p))
   }
-  # the NA bar's label never takes a real level's name
-  lab <- NULL
-  local_mocked_bindings(.bl_label_fit = function(labels) {
-    lab <<- labels
-    list(labels = labels, mar = 4)
-  })
-  rmoriebricklayer:::.bl_hbars(c(1, 2, 3, 4), c("(missing)", "(NA)", NA, "a"), "n", "t", rep("grey", 4))
-  expect_identical(anyDuplicated(lab), 0L)
-  expect_true("(NA 2)" %in% lab)
-})
+)
+
+test_that(
+  paste0(
+    "B5: a credentials file with a NUL, in Latin-1, or of megabytes is ",
+    "refused plainly"
+  ),
+  {
+    d <- withr::local_tempdir()
+    f <- file.path(d, "c.json")
+    writeBin(c(charToRaw('{"a": "b"}'), as.raw(0), charToRaw('{"c": 1}')), f)
+    expect_error(rmoriebricklayer:::.bl_read_text(f), "NUL byte")
+    writeBin(c(charToRaw('{"name": "caf'), as.raw(0xe9), charToRaw('"}')), f)
+    expect_error(rmoriebricklayer:::.bl_read_text(f), "not UTF-8 text")
+    writeBin(charToRaw(paste0('{"x": "', strrep("y", 1100000), '"}')), f)
+    expect_error(
+      rmoriebricklayer:::.bl_read_text(f),
+      "too large to be a credentials file"
+    )
+    # the exact bytes: writeLines() writes CRLF on Windows
+    writeBin(charToRaw('{"hosted_key": "k"}\n'), f)
+    expect_identical(
+      rmoriebricklayer:::.bl_read_text(f),
+      '{"hosted_key": "k"}\n'
+    )
+  }
+)
+
+test_that(
+  paste0(
+    "LOW: numbers must be numbers, steps and grids are capped, and plot() ",
+    "needs a report"
+  ),
+  {
+    expect_match(
+      vrfpol("pm25", expomean = as.raw(25), expoprev = 1)$error,
+      "expomean must be a single number, not raw"
+    )
+    expect_match(
+      vrfpol("pm25", expomean = 25, expoprev = 1, pop = as.raw(9))$error,
+      "pop must be a single number"
+    )
+    expect_error(
+      lagrprt(10, 0, 0, 1, 0, 1, 1, 1, nsteps = 1e300, maxwork = Inf),
+      "at most 2\\^31 - 1"
+    )
+    expect_error(
+      advdif2d(
+        matrix(0, 3, 3),
+        0,
+        0,
+        0.1,
+        0.1,
+        1,
+        1,
+        0.1,
+        nsteps = 1e300,
+        maxwork = Inf
+      ),
+      "at most 2\\^31 - 1"
+    )
+    expect_error(
+      lagrprt(
+        10,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        nsteps = 1,
+        grid = c(0, 1, 0, 1, 1e6, 1e6)
+      ),
+      "above maxwork"
+    )
+    pdf(NULL)
+    on.exit(grDevices::dev.off(), add = TRUE)
+    for (bad in list(
+      "x",
+      list(),
+      structure(list(status = "ok"), class = "rmbl_pollution_report")
+    )) {
+      expect_error(
+        rmoriebricklayer:::plot.rmbl_pollution_report(bad),
+        "must be a report from vrfpol"
+      )
+    }
+    # the NA bar's label never takes a real level's name
+    lab <- NULL
+    local_mocked_bindings(.bl_label_fit = function(labels) {
+      lab <<- labels
+      list(labels = labels, mar = 4)
+    })
+    rmoriebricklayer:::.bl_hbars(
+      c(1, 2, 3, 4),
+      c("(missing)", "(NA)", NA, "a"),
+      "n",
+      "t",
+      rep("grey", 4)
+    )
+    expect_identical(anyDuplicated(lab), 0L)
+    expect_true("(NA 2)" %in% lab)
+  }
+)

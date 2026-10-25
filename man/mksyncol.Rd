@@ -29,42 +29,37 @@ numeric or integer for \code{"poisson"} and \code{"sequence"} (and for
 \code{"id_pattern"} with a \code{year_col}.
 }
 \description{
-Builds one column of synthetic (made-up) data from a short specification,
-such as \dQuote{sample these categories with these weights} or \dQuote{Poisson counts
-with mean 25}. It is the building block of
-\code{\link{mksyncsv}}, which assembles a whole table from a
-recipe. Use synthetic columns to develop and test an analysis pipeline
-before, or instead of, touching restricted data.
+Builds one column of synthetic (made-up) data from a short
+specification, such as \dQuote{sample these categories with these weights} or
+\dQuote{Poisson counts with mean 25}. It is the building block of
+\code{\link{mksyncsv}}, which assembles a whole table from a recipe. Use
+synthetic columns to develop and test an analysis pipeline before, or instead
+of, touching restricted data.
 }
 \details{
-The supported \code{spec$type}s and the fields each reads (defaults in
-parentheses):
-\describe{
-\item{\code{"sample"} (the default type)}{\code{values}, a vector or
-list of categories; \code{weights} (default equal), their probabilities.
-Drawn with replacement.}
-\item{\code{"bernoulli"}}{\code{p} (default 0.1), the probability of the first
-label; \code{labels} (default \code{c("Yes", "No")}); \code{p_with_baserate}
-(default 0), added as \code{p_with_baserate * basep} to give row-level
-variation when \code{basep} is supplied. A per-row probability above
-1 behaves as 1.}
-\item{\code{"poisson"}}{\code{lambda} (default 1); \code{min} (default 0), a floor:
-draws below it are raised to it (so the result is not Poisson below
-the floor).}
-\item{\code{"id_pattern"}}{\code{pattern} (default \code{"id-\{seq:05d\}"}), in
-which \code{\{seq:05d\}} becomes a five-digit zero-padded sequence
-number and \code{\{year\}} the year; \code{year_col}, the name of a
-column in \code{ctx} whose values supply \code{\{year\}} and restart
-the sequence within each year. With \code{year_col}, that column must
-have \code{n} values. No other tokens are recognised.}
-\item{\code{"sequence"}}{\code{from} (default 1): \code{from, from + 1, ...}.}
-\item{\code{"fitted"}}{\code{fit}, a \code{\link{dstfit}} result, and \code{family}
-(default the first-ranked converged fit): draws from that fitted distribution.}
-}
-Random draws use R's random number generator, so call \code{set.seed()}
-first for a reproducible column. Errors: \code{spec} not a list; an
-unknown \code{type}; errors from \code{sample()} or \code{rpois()} on
-invalid weights or rates.
+The supported \code{spec$type}s and the fields each reads (defaults
+in parentheses): \describe{ \item{\code{"sample"} (the default
+type)}{\code{values}, a vector or list of categories; \code{weights} (default
+equal), their probabilities. Drawn with replacement.}
+\item{\code{"bernoulli"}}{\code{p} (default 0.1), the probability of the
+first label; \code{labels} (default \code{c("Yes", "No")});
+\code{p_with_baserate} (default 0), added as \code{p_with_baserate * basep}
+to give row-level variation when \code{basep} is supplied. A per-row
+probability above 1 behaves as 1.} \item{\code{"poisson"}}{\code{lambda}
+(default 1); \code{min} (default 0), a floor: draws below it are raised to it
+(so the result is not Poisson below the floor).}
+\item{\code{"id_pattern"}}{\code{pattern} (default \code{"id-\{seq:05d\}"}),
+in which \code{\{seq:05d\}} becomes a five-digit zero-padded sequence number
+and \code{\{year\}} the year; \code{year_col}, the name of a column in
+\code{ctx} whose values supply \code{\{year\}} and restart the sequence
+within each year. With \code{year_col}, that column must have \code{n}
+values. No other tokens are recognised.} \item{\code{"sequence"}}{\code{from}
+(default 1): \code{from, from + 1, ...}.} \item{\code{"fitted"}}{\code{fit},
+a \code{\link{dstfit}} result, and \code{family} (default the first-ranked
+converged fit): draws from that fitted distribution.} } Random draws use R's
+random number generator, so call \code{set.seed()} first for a reproducible
+column. Errors: \code{spec} not a list; an unknown \code{type}; errors from
+\code{sample()} or \code{rpois()} on invalid weights or rates.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

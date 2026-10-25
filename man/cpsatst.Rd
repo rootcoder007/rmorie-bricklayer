@@ -12,20 +12,20 @@ cpschkatst(attest, man, keyexp = NULL, key = NULL)
 \arguments{
 \item{man}{A manifest, as from \code{\link[=mkmnf]{mkmnf()}}.}
 
-\item{key}{For \code{cpsatst()}, a signing key from
-\code{\link[=fipskg]{fipskg()}} (ML-DSA, SLH-DSA and the other standardised schemes) or
-\code{\link[=pqckg]{pqckg()}} (XMSS), or a shared secret
-(a string or raw vector) for \code{"hmac"}. For \code{cpschkatst()},
-the shared secret that checks an \code{"hmac"} attestation; it is not
-used for the other schemes, whose public key the attestation carries.}
+\item{key}{For \code{cpsatst()}, a signing key from \code{\link[=fipskg]{fipskg()}}
+(ML-DSA, SLH-DSA and the other standardised schemes) or \code{\link[=pqckg]{pqckg()}}
+(XMSS), or a shared secret (a string or raw vector) for \code{"hmac"}. For
+\code{cpschkatst()}, the shared secret that checks an \code{"hmac"}
+attestation; it is not used for the other schemes, whose public key the
+attestation carries.}
 
 \item{ctx}{Optional context string (or raw vector), bound into the
 signature for the standardised schemes; see
 \code{\link[=cpssign]{cpssign()}}.
 \code{NULL} (the default) means none.}
 
-\item{prehash}{Pre-hash, as in \code{\link[=cpssign]{cpssign()}}. It is \code{"none"} (the
-default) or a hash name such as \code{"sha256"} or \code{"sha512"}.}
+\item{prehash}{Pre-hash, as in \code{\link[=cpssign]{cpssign()}}. It is \code{"none"}
+(the default) or a hash name such as \code{"sha256"} or \code{"sha512"}.}
 
 \item{note}{Optional free text recorded in the attestation
 -- what the signature is meant to assert, in the signer's own words. It
@@ -42,11 +42,10 @@ signed: without it the check confirms the attestation is internally
 consistent, which any key's holder could arrange.}
 }
 \value{
-\code{cpsatst()} a list of class \code{bricklayer_attestation} with the
-character fields
-\code{digest}, \code{scheme}, \code{public} (hex), \code{context},
-\code{prehash}, \code{note} and \code{signed_utc} (ISO 8601 UTC time), and
-\code{signature} (a \code{bricklayer_signature} from
+\code{cpsatst()} a list of class \code{bricklayer_attestation} with
+the character fields \code{digest}, \code{scheme}, \code{public} (hex),
+\code{context}, \code{prehash}, \code{note} and \code{signed_utc} (ISO 8601
+UTC time), and \code{signature} (a \code{bricklayer_signature} from
 \code{\link[=cpssign]{cpssign()}}).
 
 \code{cpschkatst()} a list of class \code{bricklayer_attestation_check}
@@ -123,9 +122,7 @@ verify is a failed row, not an error.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-m <- mkmnf(list(dataset = "otis", rows = 1200L),
-  env = FALSE
-)
+m <- mkmnf(list(dataset = "otis", rows = 1200L), env = FALSE)
 key <- fipskg("ML-DSA-65")
 att <- cpsatst(m, key, note = "counts as published")
 att
@@ -141,9 +138,7 @@ m2$meta$rows <- 1201L
 cpschkatst(att, m2)$ok
 
 # and so does presenting a different key
-cpschkatst(att, m,
-  keyexp = fipskg("ML-DSA-65")$public
-)$ok
+cpschkatst(att, m, keyexp = fipskg("ML-DSA-65")$public)$ok
 
 # the note is signed too: editing it breaks the signature row
 forged <- att
@@ -158,7 +153,11 @@ cpschkatst(att2, m, keyexp = key)$ok
 att3 <- cpsatst(m, "shared-secret")
 att3$public
 cpschkatst(att3, m, key = "shared-secret", keyexp = att3$public)$ok
-cpschkatst(att3, m, key = "another-secret")$checks[, c("check", "ok", "detail")]
+cpschkatst(att3, m, key = "another-secret")$checks[, c(
+  "check",
+  "ok",
+  "detail"
+)]
 
 # a key that is not a signing key is refused
 try(cpsatst(m, 42))

@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
-# The capsule checks of `rmbl verify`, `drift` and `report` as one R call, cpschk(): PSI bands, the
-# per-column drift table with the Benford screen, manifests against a base copy, the source cache,
-# file:// sources, Wayback snapshots, explerr() notes and the footprint. Then the report it renders
-# and the GitHub pieces (annotations, sticky comment body, outputs) the rmbl action prints.
+# The capsule checks of `rmbl verify`, `drift` and `report` as one R call,
+# cpschk(): PSI bands, the per-column drift table with the Benford screen,
+# manifests against a base copy, the source cache, file:// sources, Wayback
+# snapshots, explerr() notes and the footprint. Then the report it renders and
+# the GitHub pieces (annotations, sticky comment body, outputs) the rmbl action
+# prints.
 
 #' Check every capsule under a folder
 #'
@@ -156,60 +158,154 @@
 #'
 #' try(cpschk(tempfile()))
 #' try(cpschk(root, psiwarn = 1))
-#' @srrstats {G2.0} `path` must be one existing directory, `key`, `pubkey` and `glob` single strings, the PSI
-#'   bands single non-negative numbers in order, the flags single logicals (test-capsule-check.R).
-#' @srrstats {G2.3a} `mode` is matched against its four values with .rmbl_arg() (test-capsule-check.R).
+#' @srrstats {G2.0} `path` must be one existing directory, `key`, `pubkey`
+#'   and `glob` single strings, the PSI bands single non-negative numbers in
+#'   order, the flags single logicals (test-capsule-check.R).
+#' @srrstats {G2.3a} `mode` is matched against its four values with .rmbl_arg()
+#'   (test-capsule-check.R).
 #' @export
-cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"), key = "", pubkey = "",
-                   psiwarn = 0.1, psifail = 0.25, base = NULL, cache = NULL, allowfile = FALSE,
-                   snapshot = FALSE, wayback = FALSE, glob = "", fp = TRUE, seenlog = "", archive = FALSE) {
+cpschk <- function(
+  path = ".",
+  mode = c("verify", "drift", "refresh", "report"),
+  key = "",
+  pubkey = "",
+  psiwarn = 0.1,
+  psifail = 0.25,
+  base = NULL,
+  cache = NULL,
+  allowfile = FALSE,
+  snapshot = FALSE,
+  wayback = FALSE,
+  glob = "",
+  fp = TRUE,
+  seenlog = "",
+  archive = FALSE
+) {
   path <- .rmbl_string1(path, "path")
-  if (!dir.exists(path)) stop(.rmbl_fn(), "`path` is not an existing directory: ", .rmbl_printable(path), call. = FALSE)
-  o <- list(path = path, mode = .rmbl_arg(mode), key = .bl_str0(key, "key"), pubkey = .bl_str0(pubkey, "pubkey"),
-            psiwarn = .rmbl_scalar(psiwarn, "psiwarn", 0), psifail = .rmbl_scalar(psifail, "psifail", 0),
-            base = .bl_base_arg(base), allowfile = .bl_allowfile_arg(allowfile),
-            snapshot = .rmbl_flag1(snapshot, "snapshot"), wayback = .rmbl_flag1(wayback, "wayback"),
-            archive = .rmbl_flag1(archive, "archive"))
+  if (!dir.exists(path)) {
+    stop(
+      .rmbl_fn(),
+      "`path` is not an existing directory: ",
+      .rmbl_printable(path),
+      call. = FALSE
+    )
+  }
+  o <- list(
+    path = path,
+    mode = .rmbl_arg(mode),
+    key = .bl_str0(key, "key"),
+    pubkey = .bl_str0(pubkey, "pubkey"),
+    psiwarn = .rmbl_scalar(psiwarn, "psiwarn", 0),
+    psifail = .rmbl_scalar(psifail, "psifail", 0),
+    base = .bl_base_arg(base),
+    allowfile = .bl_allowfile_arg(allowfile),
+    snapshot = .rmbl_flag1(snapshot, "snapshot"),
+    wayback = .rmbl_flag1(wayback, "wayback"),
+    archive = .rmbl_flag1(archive, "archive")
+  )
   if (o$psiwarn > o$psifail) {
-    stop(.rmbl_fn(), sprintf("`psiwarn` (%g) must not exceed `psifail` (%g)", o$psiwarn, o$psifail), call. = FALSE)
+    stop(
+      .rmbl_fn(),
+      sprintf(
+        "`psiwarn` (%g) must not exceed `psifail` (%g)",
+        o$psiwarn,
+        o$psifail
+      ),
+      call. = FALSE
+    )
   }
   glob <- .bl_str0(glob, "glob")
   fp <- .rmbl_flag1(fp, "fp")
   o$cache <- .bl_cache_arg(cache)
   seenlog <- .bl_str0(seenlog, "seenlog")
-  # every XMSS signature under the path and in the log, for the index-reuse row of each bundle
+  # every XMSS signature under the path and in the log, for the index-reuse row
+  # of each bundle
   o$seen <- xmssidxseen(path, if (nzchar(seenlog)) seenlog)
   dirs <- .bl_capsule_dirs(path, glob)
   run <- function() {
     lapply(dirs, function(d) {
       tryCatch(.bl_cpschk_one(d, o), error = function(e) {
-        list(capsule = d, source = "", pinned_sha256 = "", fetched_sha256 = "", changed = FALSE,
-             rows = .bl_check_row(d, "capsule", d, "check_stopped", FALSE, conditionMessage(e)))
+        list(
+          capsule = d,
+          source = "",
+          pinned_sha256 = "",
+          fetched_sha256 = "",
+          changed = FALSE,
+          rows = .bl_check_row(
+            d,
+            "capsule",
+            d,
+            "check_stopped",
+            FALSE,
+            conditionMessage(e)
+          )
+        )
       })
     })
   }
   foot <- if (fp) co2fp(run())
   caps <- lapply(if (fp) foot$value else run(), .bl_cps_finish)
-  rows <- do.call(rbind, c(list(.bl_check_row(character(), character(), character(), character(), logical(),
-                                              character(), character())), lapply(caps, `[[`, "rows")))
+  rows <- do.call(
+    rbind,
+    c(
+      list(.bl_check_row(
+        character(),
+        character(),
+        character(),
+        character(),
+        logical(),
+        character(),
+        character()
+      )),
+      lapply(caps, `[[`, "rows")
+    )
+  )
   caps <- lapply(caps, function(cp) cp[names(cp) != "rows"])
-  # the cpsdrft() results go to an attribute, for drfthtml() and drftapp() (rmbl drift --html, --app)
-  drifts <- Filter(Negate(is.null), stats::setNames(lapply(caps, function(cp) cp$drift$object),
-                                                    vapply(caps, `[[`, "", "capsule")))
+  # the cpsdrft() results go to an attribute, for drfthtml() and drftapp() (rmbl
+  # drift --html, --app)
+  drifts <- Filter(
+    Negate(is.null),
+    stats::setNames(
+      lapply(caps, function(cp) cp$drift$object),
+      vapply(caps, `[[`, "", "capsule")
+    )
+  )
   caps <- lapply(caps, function(cp) {
-    if (!is.null(cp$drift)) cp$drift$object <- NULL
+    if (!is.null(cp$drift)) {
+      cp$drift$object <- NULL
+    }
     cp
   })
-  # each capsule's check rows, for the report's chain of provenance, bytes, manifest and attestation
+  # each capsule's check rows, for the report's chain of provenance, bytes,
+  # manifest and attestation
   for (d in names(drifts)) {
-    drifts[[d]]$checks <- rows[rows$capsule == d, c("part", "file", "check", "ok", "detail", "severity"), drop = FALSE]
+    drifts[[d]]$checks <- rows[
+      rows$capsule == d,
+      c("part", "file", "check", "ok", "detail", "severity"),
+      drop = FALSE
+    ]
   }
   foot <- foot[names(foot) != "value"]
-  structure(list(status = .bl_worst(vapply(caps, `[[`, "", "result")), mode = o$mode, path = path, glob = glob,
-                 rows = rows, capsules = caps,
-                 base = if (is.function(base)) attr(base, "label") %||% "the base" else base,
-                 psiwarn = o$psiwarn, psifail = o$psifail, footprint = foot),
-            class = "rmbl_cpschk", drifts = drifts)
+  structure(
+    list(
+      status = .bl_worst(vapply(caps, `[[`, "", "result")),
+      mode = o$mode,
+      path = path,
+      glob = glob,
+      rows = rows,
+      capsules = caps,
+      base = if (is.function(base)) {
+        attr(base, "label") %||% "the base"
+      } else {
+        base
+      },
+      psiwarn = o$psiwarn,
+      psifail = o$psifail,
+      footprint = foot
+    ),
+    class = "rmbl_cpschk",
+    drifts = drifts
+  )
 }
 
 #' A single string argument that may be empty.
@@ -219,7 +315,11 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
 #' @noRd
 .bl_str0 <- function(x, what) {
   if (!is.character(x) || length(x) != 1L || is.na(x)) {
-    stop(.rmbl_fn(), sprintf("`%s` must be a single string (\"\" for none)", what), call. = FALSE)
+    stop(
+      .rmbl_fn(),
+      sprintf("`%s` must be a single string (\"\" for none)", what),
+      call. = FALSE
+    )
   }
   x
 }
@@ -233,37 +333,53 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
   if (length(v) && !is.na(v[[1L]])) as.character(v[[1L]])
 }
 
-#' The `base` argument of cpschk(): NULL, a function, or an existing file or folder.
+#' The `base` argument of cpschk(): NULL, a function, or an existing file or
+#' folder.
 #' @param base The value.
 #' @return The value.
 #' @noRd
 .bl_base_arg <- function(base) {
-  if (is.null(base) || is.function(base)) return(base)
+  if (is.null(base) || is.function(base)) {
+    return(base)
+  }
   base <- .rmbl_string1(base, "base")
   if (!file.exists(base)) {
-    stop(.rmbl_fn(), "`base` is not an existing manifest file or folder: ", .rmbl_printable(base), call. = FALSE)
+    stop(
+      .rmbl_fn(),
+      "`base` is not an existing manifest file or folder: ",
+      .rmbl_printable(base),
+      call. = FALSE
+    )
   }
   base
 }
 
-#' The cache folder when no `cache` is given: the user cache in an interactive session, else none.
+#' The cache folder when no `cache` is given: the user cache in an interactive
+#' session, else none.
 #' @return A folder or FALSE.
 #' @noRd
-.bl_default_cache <- function() if (interactive()) tools::R_user_dir("rmoriebricklayer", "cache") else FALSE
+.bl_default_cache <- function() {
+  if (interactive()) tools::R_user_dir("rmoriebricklayer", "cache") else FALSE
+}
 
 #' The `cache` argument of cpschk(), the folder created.
 #' @param cache NULL, FALSE or a folder.
 #' @return The folder, or NULL for none.
 #' @noRd
 .bl_cache_arg <- function(cache) {
-  if (is.null(cache)) cache <- .bl_default_cache()
-  if (isFALSE(cache)) return(NULL)
+  if (is.null(cache)) {
+    cache <- .bl_default_cache()
+  }
+  if (isFALSE(cache)) {
+    return(NULL)
+  }
   cache <- .rmbl_string1(cache, "cache")
   dir.create(cache, showWarnings = FALSE, recursive = TRUE)
   cache
 }
 
-#' The checks of one capsule: verify rows, the snapshot, drift and refresh, the manifests.
+#' The checks of one capsule: verify rows, the snapshot, drift and refresh, the
+#' manifests.
 #' @param d The capsule directory.
 #' @param o The options of cpschk().
 #' @return A list: the capsule's fields and `rows`.
@@ -271,21 +387,36 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
 .bl_cpschk_one <- function(d, o) {
   pf <- file.path(d, "data_provenance.json")
   prov <- if (file.exists(pf)) tryCatch(loadprov(pf), error = function(e) NULL)
-  src <- .bl_s1(prov[["resource"]][["direct_url"]]) %||% .bl_s1(prov[["source"]][["url"]]) %||% ""
-  cap <- list(capsule = d, source = src, pinned_sha256 = .bl_s1(prov[["resource"]][["sha256"]]) %||% "",
-              fetched_sha256 = "", changed = FALSE, rows = .bl_verify_capsule(d, o$key, o$pubkey, seen = o$seen))
+  src <- .bl_s1(prov[["resource"]][["direct_url"]]) %||%
+    .bl_s1(prov[["source"]][["url"]]) %||%
+    ""
+  cap <- list(
+    capsule = d,
+    source = src,
+    pinned_sha256 = .bl_s1(prov[["resource"]][["sha256"]]) %||% "",
+    fetched_sha256 = "",
+    changed = FALSE,
+    rows = .bl_verify_capsule(d, o$key, o$pubkey, seen = o$seen)
+  )
   if (o$snapshot && !is.null(prov)) {
     s <- .bl_snapshot(src)
     cap$snapshot <- s$url
     cap$snapshot_utc <- s$utc
-    cap$rows <- rbind(cap$rows, .bl_check_row(d, "source", pf, "snapshot", s$ok, s$detail, "note"))
+    cap$rows <- rbind(
+      cap$rows,
+      .bl_check_row(d, "source", pf, "snapshot", s$ok, s$detail, "note")
+    )
   }
   if (o$mode %in% c("drift", "refresh") && !is.null(prov)) {
     dr <- .bl_drift_capsule(d, o)
     cap$rows <- rbind(cap$rows, dr$rows)
-    for (nm in setdiff(names(dr), "rows")) cap[[nm]] <- dr[[nm]]
+    for (nm in setdiff(names(dr), "rows")) {
+      cap[[nm]] <- dr[[nm]]
+    }
   }
-  if (!is.null(o$base)) cap$manifests <- .bl_manifests_vs_base(d, o)
+  if (!is.null(o$base)) {
+    cap$manifests <- .bl_manifests_vs_base(d, o)
+  }
   cap
 }
 
@@ -294,113 +425,268 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
 #' @return A list: ok, url, utc and detail.
 #' @noRd
 .bl_snapshot <- function(src) {
-  none <- list(ok = FALSE, url = "", utc = "", detail = "not looked up (not an http(s) source)")
-  if (!grepl("^https?://", src)) return(none)
+  none <- list(
+    ok = FALSE,
+    url = "",
+    utc = "",
+    detail = "not looked up (not an http(s) source)"
+  )
+  if (!grepl("^https?://", src)) {
+    return(none)
+  }
   s <- tryCatch(wbsnpurl(src), error = function(e) NULL)
-  if (is.null(s)) return(utils::modifyList(none, list(detail = "none found (or the archive could not be reached)")))
+  if (is.null(s)) {
+    return(utils::modifyList(
+      none,
+      list(detail = "none found (or the archive could not be reached)")
+    ))
+  }
   ts <- regmatches(s, regexpr("(?<=/web/)[0-9]{14}", s, perl = TRUE))
-  utc <- if (length(ts)) format(as.POSIXct(ts, format = "%Y%m%d%H%M%S", tz = "UTC"), "%Y-%m-%dT%H:%M:%SZ") else ""
+  utc <- if (length(ts)) {
+    format(
+      as.POSIXct(ts, format = "%Y%m%d%H%M%S", tz = "UTC"),
+      "%Y-%m-%dT%H:%M:%SZ"
+    )
+  } else {
+    ""
+  }
   list(ok = TRUE, url = s, utc = utc, detail = sprintf("%s (%s)", s, utc))
 }
 
-#' The drift rows of one capsule: the source fetched again and compared with the pin.
+#' The drift rows of one capsule: the source fetched again and compared with the
+#' pin.
 #'
-#' A changed digest is a warning when the columns cannot be compared, and a note when they are: then
-#' the columns decide (.bl_column_drift()). In refresh mode the new bytes are then pinned.
+#' A changed digest is a warning when the columns cannot be compared, and a note
+#' when they are: then the columns decide (.bl_column_drift()). In refresh mode
+#' the new bytes are then pinned.
 #' @param d The capsule directory.
 #' @param o The options of cpschk().
-#' @return A list: `rows`, and the capsule fields found (fetched_sha256, changed, drift, drift_summary,
-#'   notes).
+#' @return A list: `rows`, and the capsule fields found (fetched_sha256,
+#'   changed, drift, drift_summary, notes).
 #' @noRd
 .bl_drift_capsule <- function(d, o) {
   pf <- file.path(d, "data_provenance.json")
-  f <- tryCatch(.bl_fetch_pin(d, o$allowfile, o$cache, root = o$path, archive = isTRUE(o$archive)),
-                error = function(e) e)
-  if (inherits(f, "error")) return(list(rows = .bl_check_row(d, "drift", pf, "source_fetched", FALSE,
-                                                              conditionMessage(f))))
+  f <- tryCatch(
+    .bl_fetch_pin(
+      d,
+      o$allowfile,
+      o$cache,
+      root = o$path,
+      archive = isTRUE(o$archive)
+    ),
+    error = function(e) e
+  )
+  if (inherits(f, "error")) {
+    return(list(
+      rows = .bl_check_row(
+        d,
+        "drift",
+        pf,
+        "source_fetched",
+        FALSE,
+        conditionMessage(f)
+      )
+    ))
+  }
   on.exit(.bl_fetch_cleanup(f), add = TRUE)
-  out <- list(notes = if (f$cached) {
-                "source unreachable: used the copy cached by an earlier run"
-              } else if (isTRUE(f$archived)) {
-                "source unreachable: used the copy kept on archive.rmorie.com with the pinned SHA-256"
-              },
-              fetched_sha256 = f$new$resource$sha256)
+  out <- list(
+    notes = if (f$cached) {
+      "source unreachable: used the copy cached by an earlier run"
+    } else if (isTRUE(f$archived)) {
+      paste0(
+        "source unreachable: used the copy kept on archive.rmorie.com ",
+        "with the pinned SHA-256"
+      )
+    },
+    fetched_sha256 = f$new$resource$sha256
+  )
   diff <- mnfdiff(f$old, f$new)
   ch <- diff[diff$change != "unchanged", , drop = FALSE]
   out$changed <- nrow(ch) > 0L
-  # the pinned data file stays inside the capsule: "../../outside/outside.csv" was read and its
-  # header printed (audit of 30bed8e, #7)
+  # the pinned data file stays inside the capsule: "../../outside/outside.csv"
+  # was read and its header printed (audit of 30bed8e, #7)
   local <- .rmbl_safe_rel(.bl_s1(f$old[["resource"]][["filename"]]), d) %||% ""
-  cmp <- if (nrow(ch) && grepl("\\.csv$", local, ignore.case = TRUE) && file.exists(local)) {
+  cmp <- if (
+    nrow(ch) &&
+      grepl("\\.csv$", local, ignore.case = TRUE) &&
+      file.exists(local)
+  ) {
     tryCatch(.bl_column_drift(local, f$path, o), error = function(e) e)
   }
   if (inherits(cmp, "error")) {
-    return(c(out, list(rows = .bl_check_row(d, "drift", pf, "source_columns", FALSE, conditionMessage(cmp)))))
+    return(c(
+      out,
+      list(
+        rows = .bl_check_row(
+          d,
+          "drift",
+          pf,
+          "source_columns",
+          FALSE,
+          conditionMessage(cmp)
+        )
+      )
+    ))
   }
   if (!is.null(cmp)) {
     cmp$object$provenance <- f$old
     cmp$object$manifest <- diff
   }
-  out$rows <- .bl_check_row(d, "drift", pf, "source_digest", !nrow(ch),
-                            if (nrow(ch)) paste(trimws(format(diff)[-1L]), collapse = "; ") else
-                              "the source matches the pin",
-                            severity = if (is.null(cmp)) "warn" else "note")
+  out$rows <- .bl_check_row(
+    d,
+    "drift",
+    pf,
+    "source_digest",
+    !nrow(ch),
+    if (nrow(ch)) {
+      paste(trimws(format(diff)[-1L]), collapse = "; ")
+    } else {
+      "the source matches the pin"
+    },
+    severity = if (is.null(cmp)) "warn" else "note"
+  )
   if (!is.null(cmp)) {
-    out$rows <- rbind(out$rows, .bl_check_row(d, "drift", pf, "source_columns", cmp$verdict == "ok", cmp$summary,
-                                              severity = if (cmp$verdict == "ok") "drift" else cmp$verdict))
+    out$rows <- rbind(
+      out$rows,
+      .bl_check_row(
+        d,
+        "drift",
+        pf,
+        "source_columns",
+        cmp$verdict == "ok",
+        cmp$summary,
+        severity = if (cmp$verdict == "ok") "drift" else cmp$verdict
+      )
+    )
     out$drift <- cmp
     out$drift_summary <- cmp$summary
   } else if (nrow(ch)) {
-    out$notes <- c(out$notes, "the source's digest changed; the distributions could not be compared (no CSV copy)")
+    out$notes <- c(
+      out$notes,
+      paste0(
+        "the source's digest changed; the distributions could not be ",
+        "compared (no CSV copy)"
+      )
+    )
   }
-  if (o$mode == "refresh" && nrow(ch)) out <- .bl_refresh_capsule(d, f, o, out)
+  if (o$mode == "refresh" && nrow(ch)) {
+    out <- .bl_refresh_capsule(d, f, o, out)
+  }
   out
 }
 
-#' The per-column drift of a fetched CSV against the pinned one, in the PSI bands, with Benford.
+#' The per-column drift of a fetched CSV against the pinned one, in the PSI
+#' bands, with Benford.
 #' @param local The pinned data file.
 #' @param got The fetched file.
 #' @param o The options of cpschk().
-#' @return NULL when either file does not read as a CSV, else a list: verdict, summary, the counts and
-#'   `columns`, cpsdrft()'s table with band, verdict and the Benford p-values of both files.
+#' @return NULL when either file does not read as a CSV, else a list: verdict,
+#'   summary, the counts and `columns`, cpsdrft()'s table with band, verdict and
+#'   the Benford p-values of both files.
 #' @noRd
 .bl_column_drift <- function(local, got, o) {
   ref <- .bl_read_csv_capped(local)
   cur <- .bl_read_csv_capped(got)
-  if (is.null(ref) || is.null(cur)) return(NULL)
+  if (is.null(ref) || is.null(cur)) {
+    return(NULL)
+  }
   dr <- cpsdrft(ref, cur, psithr = o$psifail)
   dr$bands <- c(warn = o$psiwarn, fail = o$psifail)
-  # the tables themselves, for drftapp(): the fetched file is deleted when the check ends
+  # the tables themselves, for drftapp(): the fetched file is deleted when the
+  # check ends
   attr(dr, "data") <- list(ref = ref, cur = cur)
   cols <- dr$columns
-  cols$band <- ifelse(is.na(cols$psi), "-", ifelse(cols$psi > o$psifail, "fail",
-                                                   ifelse(cols$psi > o$psiwarn, "warn", "ok")))
+  cols$band <- ifelse(
+    is.na(cols$psi),
+    "-",
+    ifelse(
+      cols$psi > o$psifail,
+      "fail",
+      ifelse(cols$psi > o$psiwarn, "warn", "ok")
+    )
+  )
   flagged <- cols$drifted %in% TRUE
-  cols$verdict <- ifelse(flagged & cols$band == "fail", "drift",
-                         ifelse(flagged | cols$band %in% c("warn", "fail"), "warn", "ok"))
+  cols$verdict <- ifelse(
+    flagged & cols$band == "fail",
+    "drift",
+    ifelse(flagged | cols$band %in% c("warn", "fail"), "warn", "ok")
+  )
   # the Benford first-digit screen of each numeric column, pinned and new
   bf <- function(x) {
-    if (!is.numeric(x)) return(NA_real_)
-    tryCatch(suppressWarnings(benfordtst(x)$p_value), error = function(e) NA_real_)
+    if (!is.numeric(x)) {
+      return(NA_real_)
+    }
+    tryCatch(suppressWarnings(benfordtst(x)$p_value), error = function(e) {
+      NA_real_
+    })
   }
-  cols$benford_ref <- vapply(cols$column, function(nm) bf(ref[[nm]]), 0, USE.NAMES = FALSE)
-  cols$benford_cur <- vapply(cols$column, function(nm) bf(cur[[nm]]), 0, USE.NAMES = FALSE)
+  cols$benford_ref <- vapply(
+    cols$column,
+    function(nm) bf(ref[[nm]]),
+    0,
+    USE.NAMES = FALSE
+  )
+  cols$benford_cur <- vapply(
+    cols$column,
+    function(nm) bf(cur[[nm]]),
+    0,
+    USE.NAMES = FALSE
+  )
   hit <- cols[cols$verdict != "ok", , drop = FALSE]
   g <- function(v) formatC(v, digits = 3, format = "g")
-  summ <- paste0(sprintf("%d of %d columns past a band", nrow(hit), nrow(cols)),
-                 if (nrow(hit)) paste0(": ", paste(utils::head(sprintf("%s (stat %s, p %s, PSI %s)", hit$column,
-                   g(hit$statistic), g(hit$p_value), g(hit$psi)), 3L), collapse = "; ")),
-                 if (length(dr$added)) paste0("; added ", paste(dr$added, collapse = ", ")),
-                 if (length(dr$removed)) paste0("; removed ", paste(dr$removed, collapse = ", ")),
-                 sprintf("; rows %d -> %d", dr$nref, dr$ncur))
-  verdict <- if (any(cols$verdict == "drift") || length(dr$added) || length(dr$removed)) "drift" else
-    if (any(cols$verdict == "warn")) "warn" else "ok"
-  list(verdict = verdict, summary = summ, any = isTRUE(dr$anydrft), nref = dr$nref, ncur = dr$ncur,
-       alpha = dr$alpha, added = as.list(dr$added), removed = as.list(dr$removed), psiwarn = o$psiwarn,
-       psifail = o$psifail, columns = cols, object = dr)
+  summ <- paste0(
+    sprintf("%d of %d columns past a band", nrow(hit), nrow(cols)),
+    if (nrow(hit)) {
+      paste0(
+        ": ",
+        paste(
+          utils::head(
+            sprintf(
+              "%s (stat %s, p %s, PSI %s)",
+              hit$column,
+              g(hit$statistic),
+              g(hit$p_value),
+              g(hit$psi)
+            ),
+            3L
+          ),
+          collapse = "; "
+        )
+      )
+    },
+    if (length(dr$added)) paste0("; added ", paste(dr$added, collapse = ", ")),
+    if (length(dr$removed)) {
+      paste0("; removed ", paste(dr$removed, collapse = ", "))
+    },
+    sprintf("; rows %d -> %d", dr$nref, dr$ncur)
+  )
+  verdict <- if (
+    any(cols$verdict == "drift") || length(dr$added) || length(dr$removed)
+  ) {
+    "drift"
+  } else if (any(cols$verdict == "warn")) {
+    "warn"
+  } else {
+    "ok"
+  }
+  list(
+    verdict = verdict,
+    summary = summ,
+    any = isTRUE(dr$anydrft),
+    nref = dr$nref,
+    ncur = dr$ncur,
+    alpha = dr$alpha,
+    added = as.list(dr$added),
+    removed = as.list(dr$removed),
+    psiwarn = o$psiwarn,
+    psifail = o$psifail,
+    columns = cols,
+    object = dr
+  )
 }
 
-#' Pins the new bytes of a capsule whose source changed (refresh mode), then verifies it again.
+#' Pins the new bytes of a capsule whose source changed (refresh mode), then
+#' verifies it again.
 #' @param d The capsule directory.
 #' @param f From .bl_fetch_pin().
 #' @param o The options of cpschk().
@@ -410,40 +696,67 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
 .bl_refresh_capsule <- function(d, f, o, out) {
   pf <- file.path(d, "data_provenance.json")
   if (o$wayback && grepl("^https?://", f$src)) {
-    why <- sprintf("Source of the data capsule %s, refreshed by cpschk()", basename(d))
-    wb <- tryCatch(wbsave(f$src, quiet = TRUE, fallback = if (isTRUE(o$archive)) "rmorie",
-                          reason = if (isTRUE(o$archive)) why),
-                   error = function(e) e)
+    why <- sprintf(
+      "Source of the data capsule %s, refreshed by cpschk()",
+      basename(d)
+    )
+    wb <- tryCatch(
+      wbsave(
+        f$src,
+        quiet = TRUE,
+        fallback = if (isTRUE(o$archive)) "rmorie",
+        reason = if (isTRUE(o$archive)) why
+      ),
+      error = function(e) e
+    )
     if (inherits(wb, "error")) {
       out$notes <- c(out$notes, paste("wayback:", conditionMessage(wb)))
     } else if (wb$status[1L] %in% c("saved", "existing")) {
       f$new$wayback$csv_snapshot <- wb$snapshot[1L]
       f$new$wayback$captured_at_utc <- f$new$resource$retrieved_utc
     } else {
-      out$notes <- c(out$notes, paste("wayback: capture", wb$status[1L], wb$message[1L]))
+      out$notes <- c(
+        out$notes,
+        paste("wayback: capture", wb$status[1L], wb$message[1L])
+      )
       ar <- attr(wb, "archive")
       if (inherits(ar, "rmbl_fail")) {
         out$notes <- c(out$notes, paste("archive.rmorie.com:", ar))
       } else if (!is.null(ar) && nrow(as.data.frame(unclass(ar)))) {
         a1 <- as.data.frame(unclass(ar))[1L, ]
-        out$notes <- c(out$notes, if (identical(a1$status, "archived")) {
-          paste("archive.rmorie.com: saved instead,", a1$archive)
-        } else {
-          paste("archive.rmorie.com:", a1$status)
-        })
+        out$notes <- c(
+          out$notes,
+          if (identical(a1$status, "archived")) {
+            paste("archive.rmorie.com: saved instead,", a1$archive)
+          } else {
+            paste("archive.rmorie.com:", a1$status)
+          }
+        )
       }
     }
   }
   w <- tryCatch(.bl_write_pin(d, f), error = function(e) e)
   if (inherits(w, "error")) {
-    out$rows <- rbind(out$rows, .bl_check_row(d, "refresh", pf, "refreshed", FALSE, conditionMessage(w)))
+    out$rows <- rbind(
+      out$rows,
+      .bl_check_row(d, "refresh", pf, "refreshed", FALSE, conditionMessage(w))
+    )
     return(out)
   }
-  out$notes <- c(out$notes, "refreshed: new data and provenance written to the workspace",
-                 if (file.exists(file.path(d, "capsule_bundle.json"))) {
-                   "capsule_bundle.json no longer matches the data: sign it again with cpsbndl()"
-                 })
-  out$rows <- rbind(out$rows, .bl_result_rows(vrfcps(d), d, "after refresh", pf))
+  out$notes <- c(
+    out$notes,
+    "refreshed: new data and provenance written to the workspace",
+    if (file.exists(file.path(d, "capsule_bundle.json"))) {
+      paste0(
+        "capsule_bundle.json no longer matches the data: sign it again ",
+        "with cpsbndl()"
+      )
+    }
+  )
+  out$rows <- rbind(
+    out$rows,
+    .bl_result_rows(vrfcps(d), d, "after refresh", pf)
+  )
   out
 }
 
@@ -457,13 +770,15 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
   for (r in c("manifest.json", file.path("results", "manifest.json"))) {
     m <- file.path(d, r)
     b <- .bl_base_copy(m, file.path(.bl_rel_dir(d, o$path), r), o)
-    if (file.exists(m) || !is.null(b)) out[[length(out) + 1L]] <- .bl_manifest_vs(m, b)
+    if (file.exists(m) || !is.null(b)) {
+      out[[length(out) + 1L]] <- .bl_manifest_vs(m, b)
+    }
   }
   out
 }
 
-#' A capsule directory relative to the folder searched, \code{"/"} separated on every
-#' system.
+#' A capsule directory relative to the folder searched, \code{"/"} separated on
+#' every system.
 #' @param d The capsule directory (under `root`).
 #' @param root The folder searched.
 #' @return The relative path, \code{"."} for the folder itself.
@@ -487,38 +802,60 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
   } else if (dir.exists(b)) {
     file.path(b, rel)
   } else if (file.exists(m)) {
-    b  # one manifest file pairs with every manifest present
+    b # one manifest file pairs with every manifest present
   }
   if (!is.null(p) && file.exists(p)) p
 }
 
-#' One manifest against its base copy: results through mnfrcmp(), resources through mnfdiff().
+#' One manifest against its base copy: results through mnfrcmp(), resources
+#' through mnfdiff().
 #' @param m The manifest's path.
 #' @param b The base copy's path, or NULL.
-#' @return A list: path, state, changed, and when compared results, removed and resources.
+#' @return A list: path, state, changed, and when compared results, removed and
+#'   resources.
 #' @noRd
 .bl_manifest_vs <- function(m, b) {
-  if (is.null(b)) return(list(path = m, state = "added", changed = TRUE))
-  if (!file.exists(m)) return(list(path = m, state = "removed", changed = TRUE))
+  if (is.null(b)) {
+    return(list(path = m, state = "added", changed = TRUE))
+  }
+  if (!file.exists(m)) {
+    return(list(path = m, state = "removed", changed = TRUE))
+  }
   base <- loadprov(b)
   pr <- loadprov(m)
   res <- mnfdiff(base, pr)
   res <- res[res$change != "unchanged", , drop = FALSE]
   if (!length(pr$results)) {
-    return(list(path = m, state = "no results", changed = length(base$results) > 0L || nrow(res) > 0L,
-                resources = res))
+    return(list(
+      path = m,
+      state = "no results",
+      changed = length(base$results) > 0L || nrow(res) > 0L,
+      resources = res
+    ))
   }
-  # the base copy is the record; this copy's observed values are what is "recomputed"
+  # the base copy is the record; this copy's observed values are what is
+  # "recomputed"
   stats <- lapply(pr$results, function(r) {
     v <- r$observed
     function(z) v
   })
   cmp <- tryCatch(mnfrcmp(base, NULL, stats), error = function(e) e)
   if (inherits(cmp, "error")) {
-    return(list(path = m, state = paste("not compared:", conditionMessage(cmp)), changed = TRUE, resources = res))
+    return(list(
+      path = m,
+      state = paste("not compared:", conditionMessage(cmp)),
+      changed = TRUE,
+      resources = res
+    ))
   }
-  list(path = m, state = "compared", changed = !isTRUE(cmp$ok) || nrow(res) > 0L, results = cmp$results,
-       removed = as.list(cmp$unchecked), resources = res)
+  list(
+    path = m,
+    state = "compared",
+    changed = !isTRUE(cmp$ok) || nrow(res) > 0L,
+    results = cmp$results,
+    removed = as.list(cmp$unchecked),
+    resources = res
+  )
 }
 
 #' A capsule's result, counts and notes from its rows.
@@ -532,44 +869,85 @@ cpschk <- function(path = ".", mode = c("verify", "drift", "refresh", "report"),
   cap$result <- .bl_worst(bad$severity)
   cap$checks_passed <- sum(ck$ok & counted)
   cap$checks_total <- sum(counted)
-  lbl <- paste0(ifelse(bad$part %in% c("bundle", "after refresh"), paste0(bad$part, " "), ""), bad$check)
+  lbl <- paste0(
+    ifelse(
+      bad$part %in% c("bundle", "after refresh"),
+      paste0(bad$part, " "),
+      ""
+    ),
+    bad$check
+  )
   rn <- lapply(seq_len(nrow(bad)), function(i) {
-    c(paste0(lbl[i], ": ", bad$detail[i]), if (bad$severity[i] != "note") .bl_explain_note(bad$check[i], bad$detail[i]))
+    c(
+      paste0(lbl[i], ": ", bad$detail[i]),
+      if (bad$severity[i] != "note") {
+        .bl_explain_note(bad$check[i], bad$detail[i])
+      }
+    )
   })
   cap$notes <- as.list(c(unlist(rn), cap$notes))
   cap
 }
 
-#' The explerr() notes of one failed row: what the check means, and where its message is raised.
+#' The explerr() notes of one failed row: what the check means, and where its
+#' message is raised.
 #' @param check The check's name.
 #' @param detail The row's detail.
 #' @return Zero, one or two strings starting \code{"explained:"}.
 #' @noRd
 .bl_explain_note <- function(check, detail) {
   m <- .bl_check_meaning(check)
-  e <- if (nzchar(trimws(detail))) tryCatch(explerr(detail, n = 1L), error = function(e) NULL)
-  c(if (m != "a failed check: see the detail") paste("explained:", m),
+  e <- if (nzchar(trimws(detail))) {
+    tryCatch(explerr(detail, n = 1L), error = function(e) NULL)
+  }
+  c(
+    if (m != "a failed check: see the detail") paste("explained:", m),
     if (NROW(e)) {
-      sprintf("explained: raised by %s() (reached from %s); as written: \"%s\"", e$raised_by[1L], e$exported[1L],
-              e$message[1L])
-    })
+      sprintf(
+        "explained: raised by %s() (reached from %s); as written: \"%s\"",
+        e$raised_by[1L],
+        e$exported[1L],
+        e$message[1L]
+      )
+    }
+  )
 }
 
 #' @rdname cpschk
 #' @export
 format.rmbl_cpschk <- function(x, fmt = c("md", "json"), failon = NULL, ...) {
   fmt <- .rmbl_arg(fmt)
-  if (fmt == "md") return(.bl_cpschk_md(x, failon))
+  if (fmt == "md") {
+    return(.bl_cpschk_md(x, failon))
+  }
   caps <- lapply(x$capsules, function(cp) {
-    if (is.null(cp$manifests)) return(cp)
+    if (is.null(cp$manifests)) {
+      return(cp)
+    }
     cp$manifests <- lapply(cp$manifests, function(m) {
-      m$resources <- if (NROW(m$resources)) as.data.frame(unclass(m$resources), stringsAsFactors = FALSE)
+      m$resources <- if (NROW(m$resources)) {
+        as.data.frame(unclass(m$resources), stringsAsFactors = FALSE)
+      }
       m
     })
     cp
   })
-  paste0(tojs(list(status = x$status, mode = x$mode, path = x$path, capsules = caps, checks = x$rows),
-              auto_unbox = TRUE, pretty = TRUE, null = "null", digits = NA), "\n")
+  paste0(
+    tojs(
+      list(
+        status = x$status,
+        mode = x$mode,
+        path = x$path,
+        capsules = caps,
+        checks = x$rows
+      ),
+      auto_unbox = TRUE,
+      pretty = TRUE,
+      null = "null",
+      digits = NA
+    ),
+    "\n"
+  )
 }
 
 #' @rdname cpschk
@@ -589,36 +967,119 @@ print.rmbl_cpschk <- function(x, ...) {
   ver <- as.character(utils::packageVersion("rmoriebricklayer"))
   st <- vapply(x$capsules, `[[`, "", "result")
   n <- length(st)
-  md <- c(sprintf("## rmbl capsule %s with [rmoriebricklayer %s](https://github.com/rootcoder007/rmorie-bricklayer)",
-                  x$mode, ver), "")
+  md <- c(
+    sprintf(
+      paste0(
+        "## rmbl capsule %s with [rmoriebricklayer ",
+        "%s](https://github.com/rootcoder007/rmorie-bricklayer)"
+      ),
+      x$mode,
+      ver
+    ),
+    ""
+  )
   if (!n) {
-    md <- c(md, sprintf("%s No manifests found under `%s`%s.", mark[["ok"]], x$path,
-                        if (nzchar(x$glob)) sprintf(" matching `%s`", x$glob) else ""))
+    md <- c(
+      md,
+      sprintf(
+        "%s No manifests found under `%s`%s.",
+        mark[["ok"]],
+        x$path,
+        if (nzchar(x$glob)) sprintf(" matching `%s`", x$glob) else ""
+      )
+    )
   } else {
-    md <- c(md, sprintf("**%s %s**: %d capsule%s under `%s`: %d ok, %d warn, %d drift, %d error",
-                        mark[[x$status]], x$status, n, if (n == 1L) "" else "s", x$path, sum(st == "ok"),
-                        sum(st == "warn"), sum(st == "drift"), sum(st == "error")), "",
-            "| Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |", "|---|---|---|---|---|---|---|")
+    md <- c(
+      md,
+      sprintf(
+        paste0(
+          "**%s %s**: %d capsule%s under `%s`: %d ok, %d warn, %d drift, ",
+          "%d error"
+        ),
+        mark[[x$status]],
+        x$status,
+        n,
+        if (n == 1L) "" else "s",
+        x$path,
+        sum(st == "ok"),
+        sum(st == "warn"),
+        sum(st == "drift"),
+        sum(st == "error")
+      ),
+      "",
+      "| Capsule | Source | SHA-256 | Size | Rows | Bounds | Result |",
+      "|---|---|---|---|---|---|---|"
+    )
     for (cp in x$capsules) {
       i <- .bl_capsule_info(cp$capsule)
-      md <- c(md, sprintf("| `%s` | %s | `%s` | %s | %s | %s | %s %s |", .bl_md_esc(cp$capsule), .bl_md_esc(i$host),
-                          i$sha, i$size, i$rows, .bl_md_esc(i$bounds), mark[[cp$result]], cp$result))
+      md <- c(
+        md,
+        sprintf(
+          "| `%s` | %s | `%s` | %s | %s | %s | %s %s |",
+          .bl_md_esc(cp$capsule),
+          .bl_md_esc(i$host),
+          i$sha,
+          i$size,
+          i$rows,
+          .bl_md_esc(i$bounds),
+          mark[[cp$result]],
+          cp$result
+        )
+      )
     }
     md <- c(md, .bl_md_manifests(x))
-    for (cp in x$capsules) md <- c(md, .bl_md_capsule(cp, x$rows[x$rows$capsule == cp$capsule, , drop = FALSE], mark))
+    for (cp in x$capsules) {
+      md <- c(
+        md,
+        .bl_md_capsule(
+          cp,
+          x$rows[x$rows$capsule == cp$capsule, , drop = FALSE],
+          mark
+        )
+      )
+    }
   }
   f <- x$footprint
   if (!is.null(f)) {
     ci <- f$co2int
-    md <- c(md, "", "---", "", sprintf(paste("Footprint of these checks (co2fp(), %s): %.1f s wall, %.1f s CPU,",
-                                             "%.3g Wh, %.3g gCO2e at %.4g gCO2e/kWh (%s%s)."),
-                                       if (f$method == "rapl") "measured with RAPL" else "modelled, Green Algorithms",
-                                       f$durs, f$cputms, f$enekwh$total * 1000, f$co2eg, ci$g_per_kwh, ci$name,
-                                       if (is.na(ci$year)) "" else paste0(", ", ci$year)))
+    md <- c(
+      md,
+      "",
+      "---",
+      "",
+      sprintf(
+        paste(
+          "Footprint of these checks (co2fp(), %s): %.1f s wall, %.1f s CPU,",
+          "%.3g Wh, %.3g gCO2e at %.4g gCO2e/kWh (%s%s)."
+        ),
+        if (f$method == "rapl") {
+          "measured with RAPL"
+        } else {
+          "modelled, Green Algorithms"
+        },
+        f$durs,
+        f$cputms,
+        f$enekwh$total * 1000,
+        f$co2eg,
+        ci$g_per_kwh,
+        ci$name,
+        if (is.na(ci$year)) "" else paste0(", ", ci$year)
+      )
+    )
   }
-  md <- c(md, "", "---", "", sprintf("mode `%s`%s \u00b7 rmoriebricklayer %s \u00b7 %s", x$mode,
-                                     if (is.null(failon)) "" else sprintf(" \u00b7 fail-on `%s`", failon), ver,
-                                     R.version.string))
+  md <- c(
+    md,
+    "",
+    "---",
+    "",
+    sprintf(
+      "mode `%s`%s \u00b7 rmoriebricklayer %s \u00b7 %s",
+      x$mode,
+      if (is.null(failon)) "" else sprintf(" \u00b7 fail-on `%s`", failon),
+      ver,
+      R.version.string
+    )
+  )
   paste0(paste(md, collapse = "\n"), "\n")
 }
 
@@ -626,21 +1087,27 @@ print.rmbl_cpschk <- function(x, ...) {
 #' @param x Text.
 #' @return Text.
 #' @noRd
-.bl_md_esc <- function(x) gsub("|", "\\|", gsub("\n", " ", x, fixed = TRUE), fixed = TRUE)
+.bl_md_esc <- function(x) {
+  gsub("|", "\\|", gsub("\n", " ", x, fixed = TRUE), fixed = TRUE)
+}
 
 #' A number for the report: three significant digits, \code{"-"} for NA.
 #' @param x Numbers.
 #' @param digits Significant digits.
 #' @return Text.
 #' @noRd
-.bl_md_num <- function(x, digits = 3) ifelse(is.na(x), "-", trimws(formatC(x, digits = digits, format = "g")))
+.bl_md_num <- function(x, digits = 3) {
+  ifelse(is.na(x), "-", trimws(formatC(x, digits = digits, format = "g")))
+}
 
 #' A list of names after a lead, or \code{""} when there are none.
 #' @param lead The text before the names.
 #' @param x The names, a list or a vector.
 #' @return Text.
 #' @noRd
-.bl_md_list <- function(lead, x) if (length(x)) paste0(lead, paste(unlist(x), collapse = ", ")) else ""
+.bl_md_list <- function(lead, x) {
+  if (length(x)) paste0(lead, paste(unlist(x), collapse = ", ")) else ""
+}
 
 #' The manifests section of the report.
 #' @param x An rmbl_cpschk result.
@@ -648,33 +1115,70 @@ print.rmbl_cpschk <- function(x, ...) {
 #' @noRd
 .bl_md_manifests <- function(x) {
   ms <- unlist(lapply(x$capsules, `[[`, "manifests"), recursive = FALSE)
-  if (!length(ms)) return(character())
+  if (!length(ms)) {
+    return(character())
+  }
   chg <- any(vapply(ms, function(m) isTRUE(m$changed), NA))
-  md <- c("", sprintf("### Manifests against `%s`: %s", x$base, if (chg) "changed" else "unchanged"))
+  md <- c(
+    "",
+    sprintf(
+      "### Manifests against `%s`: %s",
+      x$base,
+      if (chg) "changed" else "unchanged"
+    )
+  )
   num <- .bl_md_num
   for (m in ms) {
     if (!identical(m$state, "compared")) {
       md <- c(md, "", sprintf("`%s`: %s", m$path, m$state))
     } else {
       rr <- m$results
-      md <- c(md, "", sprintf("`%s`: %d result%s compared%s", m$path, nrow(rr), if (nrow(rr) == 1L) "" else "s",
-                              if (length(m$removed)) paste0(", removed: ", paste(unlist(m$removed), collapse = ", "))
-                              else ""),
-              "", "| Status | Result | Base | PR | Change | Tol |", "|---|---|---|---|---|---|",
-              sprintf("| %s | %s | %s | %s | %s | %s |",
-                      ifelse(rr$status == "MATCH", "\u2714 match", ifelse(rr$status == "NOT_RECORDED", "new",
-                                                                          "\u2716 mismatch")),
-                      .bl_md_esc(rr$name), num(rr$recorded, 6), num(rr$recomputed, 6),
-                      ifelse(is.na(rr$delta), "-", paste(num(rr$delta), ifelse(rr$status == "MATCH", "(within tol)",
-                                                                               "(outside tol)"))),
-                      num(rr$tol)))
+      md <- c(
+        md,
+        "",
+        sprintf(
+          "`%s`: %d result%s compared%s",
+          m$path,
+          nrow(rr),
+          if (nrow(rr) == 1L) "" else "s",
+          if (length(m$removed)) {
+            paste0(", removed: ", paste(unlist(m$removed), collapse = ", "))
+          } else {
+            ""
+          }
+        ),
+        "",
+        "| Status | Result | Base | PR | Change | Tol |",
+        "|---|---|---|---|---|---|",
+        sprintf(
+          "| %s | %s | %s | %s | %s | %s |",
+          ifelse(
+            rr$status == "MATCH",
+            "\u2714 match",
+            ifelse(rr$status == "NOT_RECORDED", "new", "\u2716 mismatch")
+          ),
+          .bl_md_esc(rr$name),
+          num(rr$recorded, 6),
+          num(rr$recomputed, 6),
+          ifelse(
+            is.na(rr$delta),
+            "-",
+            paste(
+              num(rr$delta),
+              ifelse(rr$status == "MATCH", "(within tol)", "(outside tol)")
+            )
+          ),
+          num(rr$tol)
+        )
+      )
     }
     if (NROW(m$resources)) md <- c(md, "", "```", format(m$resources), "```")
   }
   md
 }
 
-#' The details block of one capsule: its sources, its rows, the drift table and the notes.
+#' The details block of one capsule: its sources, its rows, the drift table and
+#' the notes.
 #' @param cp One capsule of an rmbl_cpschk result.
 #' @param ck Its rows.
 #' @param mark The status symbols.
@@ -683,54 +1187,151 @@ print.rmbl_cpschk <- function(x, ...) {
 .bl_md_capsule <- function(cp, ck, mark) {
   esc <- .bl_md_esc
   num <- .bl_md_num
-  # inside <summary> the directory name is HTML: a name like "<img src=x onerror=...>" went in raw
-  # (audit of 30bed8e, #17)
-  md <- c("", "<details>", sprintf("<summary>%s <code>%s</code>: %s, %d of %d checks passed (click to open)</summary>",
-                                   mark[[cp$result]], .yoy_esc(cp$capsule), cp$result, cp$checks_passed,
-                                   cp$checks_total), "")
-  if (nzchar(cp$source)) md <- c(md, sprintf("- Source: %s", esc(cp$source)))
-  if (nzchar(cp$pinned_sha256)) md <- c(md, sprintf("- Pinned SHA-256: `%s`", cp$pinned_sha256))
-  if (nzchar(cp$fetched_sha256)) {
-    md <- c(md, sprintf("- Fetched SHA-256: `%s` (%s)", cp$fetched_sha256, if (cp$changed) "changed" else "same"))
+  # inside <summary> the directory name is HTML: a name like "<img src=x
+  # onerror=...>" went in raw (audit of 30bed8e, #17)
+  md <- c(
+    "",
+    "<details>",
+    sprintf(
+      paste0(
+        "<summary>%s <code>%s</code>: %s, %d of %d checks passed (click ",
+        "to open)</summary>"
+      ),
+      mark[[cp$result]],
+      .yoy_esc(cp$capsule),
+      cp$result,
+      cp$checks_passed,
+      cp$checks_total
+    ),
+    ""
+  )
+  if (nzchar(cp$source)) {
+    md <- c(md, sprintf("- Source: %s", esc(cp$source)))
   }
-  st <- ifelse(ck$ok, "\u2714 pass",
-               ifelse(ck$severity == "error", "\u2716 fail",
-                      ifelse(ck$severity == "note", "- note", paste(mark[ck$severity], ck$severity))))
-  md <- c(md, "", "| Status | Check | Detail |", "|---|---|---|",
-          sprintf("| %s | %s%s | %s |", st, ifelse(ck$part %in% c("provenance", "spec"), "", paste0(ck$part, ": ")),
-                  esc(ck$check), esc(ifelse(nzchar(ck$detail), ck$detail, "-"))))
+  if (nzchar(cp$pinned_sha256)) {
+    md <- c(md, sprintf("- Pinned SHA-256: `%s`", cp$pinned_sha256))
+  }
+  if (nzchar(cp$fetched_sha256)) {
+    md <- c(
+      md,
+      sprintf(
+        "- Fetched SHA-256: `%s` (%s)",
+        cp$fetched_sha256,
+        if (cp$changed) "changed" else "same"
+      )
+    )
+  }
+  st <- ifelse(
+    ck$ok,
+    "\u2714 pass",
+    ifelse(
+      ck$severity == "error",
+      "\u2716 fail",
+      ifelse(
+        ck$severity == "note",
+        "- note",
+        paste(mark[ck$severity], ck$severity)
+      )
+    )
+  )
+  md <- c(
+    md,
+    "",
+    "| Status | Check | Detail |",
+    "|---|---|---|",
+    sprintf(
+      "| %s | %s%s | %s |",
+      st,
+      ifelse(ck$part %in% c("provenance", "spec"), "", paste0(ck$part, ": ")),
+      esc(ck$check),
+      esc(ifelse(nzchar(ck$detail), ck$detail, "-"))
+    )
+  )
   dr <- cp$drift
   if (!is.null(dr)) {
     cols <- dr$columns
     flag <- cols$column[cols$drifted %in% TRUE]
-    md <- c(md, "", sprintf(paste("**Drift: %s %s.** %d of %d columns flagged by the package (%s)%s%s; PSI bands:",
-                                  "warn above %g, fail above %g; rows %s to %s, alpha %s."),
-                            mark[[dr$verdict]],
-                            c(ok = "no column crossed a band", warn = "a column crossed the warn band",
-                              drift = "drift above the fail band")[[dr$verdict]],
-                            length(flag), nrow(cols), if (length(flag)) paste(flag, collapse = ", ") else "none",
-                            .bl_md_list("; added ", dr$added), .bl_md_list("; removed ", dr$removed),
-                            dr$psiwarn, dr$psifail, format(dr$nref, big.mark = ","), format(dr$ncur, big.mark = ","),
-                            dr$alpha))
+    md <- c(
+      md,
+      "",
+      sprintf(
+        paste(
+          "**Drift: %s %s.** %d of %d columns flagged by the package",
+          "(%s)%s%s; PSI bands:",
+          "warn above %g, fail above %g; rows %s to %s, alpha %s."
+        ),
+        mark[[dr$verdict]],
+        c(
+          ok = "no column crossed a band",
+          warn = "a column crossed the warn band",
+          drift = "drift above the fail band"
+        )[[dr$verdict]],
+        length(flag),
+        nrow(cols),
+        if (length(flag)) paste(flag, collapse = ", ") else "none",
+        .bl_md_list("; added ", dr$added),
+        .bl_md_list("; removed ", dr$removed),
+        dr$psiwarn,
+        dr$psifail,
+        format(dr$nref, big.mark = ","),
+        format(dr$ncur, big.mark = ","),
+        dr$alpha
+      )
+    )
     if (nrow(cols)) {
-      md <- c(md, "", "| Verdict | Column | Type | Statistic | p | PSI (band) | JS | Benford p (pinned / new) |",
-              "|---|---|---|---|---|---|---|---|",
-              sprintf("| %s | %s | %s | %s | %s | %s | %s | %s |", paste(mark[cols$verdict], cols$verdict),
-                      esc(cols$column), cols$type,
-                      ifelse(is.na(cols$statistic), "-", paste(ifelse(cols$type %in% c("numeric", "date"), "KS D",
-                                                                      "\u03c7\u00b2"), num(cols$statistic))),
-                      num(cols$p_value),
-                      paste0(num(cols$psi), ifelse(cols$band == "-", "", paste0(" (", cols$band, ")"))),
-                      num(cols$jsdiv), ifelse(is.na(cols$benford_ref) & is.na(cols$benford_cur), "-",
-                                              paste(num(cols$benford_ref), "/", num(cols$benford_cur)))))
+      md <- c(
+        md,
+        "",
+        paste0(
+          "| Verdict | Column | Type | Statistic | p | PSI (band) | JS | ",
+          "Benford p (pinned / new) |"
+        ),
+        "|---|---|---|---|---|---|---|---|",
+        sprintf(
+          "| %s | %s | %s | %s | %s | %s | %s | %s |",
+          paste(mark[cols$verdict], cols$verdict),
+          esc(cols$column),
+          cols$type,
+          ifelse(
+            is.na(cols$statistic),
+            "-",
+            paste(
+              ifelse(
+                cols$type %in% c("numeric", "date"),
+                "KS D",
+                "\u03c7\u00b2"
+              ),
+              num(cols$statistic)
+            )
+          ),
+          num(cols$p_value),
+          paste0(
+            num(cols$psi),
+            ifelse(cols$band == "-", "", paste0(" (", cols$band, ")"))
+          ),
+          num(cols$jsdiv),
+          ifelse(
+            is.na(cols$benford_ref) & is.na(cols$benford_cur),
+            "-",
+            paste(num(cols$benford_ref), "/", num(cols$benford_cur))
+          )
+        )
+      )
     }
   }
   nt <- unlist(cp$notes)
-  if (length(nt)) md <- c(md, "", paste0(ifelse(startsWith(nt, "explained:"), "  - ", "- "), esc(nt)))
+  if (length(nt)) {
+    md <- c(
+      md,
+      "",
+      paste0(ifelse(startsWith(nt, "explained:"), "  - ", "- "), esc(nt))
+    )
+  }
   c(md, "", "</details>")
 }
 
-# ---- GitHub-flavoured output: plain text the caller prints; nothing here calls GitHub ----------------
+# ---- GitHub-flavoured output: plain text the caller prints; nothing here calls
+# GitHub ---
 
 #' GitHub workflow annotations, sticky comment and outputs of a capsule check
 #'
@@ -788,26 +1389,61 @@ print.rmbl_cpschk <- function(x, ...) {
 ghann <- function(x) {
   .bl_is_cpschk(x)
   bad <- x$rows[!x$rows$ok & x$rows$severity != "note", , drop = FALSE]
-  dat <- function(s) gsub("\n", "%0A", gsub("\r", "%0D", gsub("%", "%25", s, fixed = TRUE), fixed = TRUE), fixed = TRUE)
-  prop <- function(s) gsub(",", "%2C", gsub(":", "%3A", dat(s), fixed = TRUE), fixed = TRUE)
-  sprintf("::%s file=%s%s,title=%s::%s", ifelse(bad$severity == "error", "error", "warning"), prop(bad$file),
-          ifelse(is.na(bad$line), "", paste0(",line=", bad$line)), prop(paste("rmbl", bad$part, bad$check)),
-          dat(bad$detail))
+  dat <- function(s) {
+    gsub(
+      "\n",
+      "%0A",
+      gsub("\r", "%0D", gsub("%", "%25", s, fixed = TRUE), fixed = TRUE),
+      fixed = TRUE
+    )
+  }
+  prop <- function(s) {
+    gsub(",", "%2C", gsub(":", "%3A", dat(s), fixed = TRUE), fixed = TRUE)
+  }
+  sprintf(
+    "::%s file=%s%s,title=%s::%s",
+    ifelse(bad$severity == "error", "error", "warning"),
+    prop(bad$file),
+    ifelse(is.na(bad$line), "", paste0(",line=", bad$line)),
+    prop(paste("rmbl", bad$part, bad$check)),
+    dat(bad$detail)
+  )
 }
 
 #' @rdname ghann
 #' @export
-ghcmt <- function(x, runurl = NULL, failon = NULL, marker = "<!-- rmbl-action -->", limit = 65000L) {
+ghcmt <- function(
+  x,
+  runurl = NULL,
+  failon = NULL,
+  marker = "<!-- rmbl-action -->",
+  limit = 65000L
+) {
   .bl_is_cpschk(x)
   marker <- .rmbl_string1(marker, "marker")
   limit <- .rmbl_scalar(limit, "limit", 100, integer = TRUE)
-  if (!is.null(runurl)) runurl <- .rmbl_string1(runurl, "runurl")
-  body <- paste(c(marker, format(x, failon = failon),
-                  if (!is.null(runurl)) sprintf("[The run, with this report in its job summary](%s)", runurl)),
-                collapse = "\n")
-  if (nchar(body) <= limit) return(body)
-  paste0(substr(body, 1L, limit), "\n\n(report cut to fit a comment; the full one is in the job summary",
-         if (!is.null(runurl)) paste0(": ", runurl), ")")
+  if (!is.null(runurl)) {
+    runurl <- .rmbl_string1(runurl, "runurl")
+  }
+  body <- paste(
+    c(
+      marker,
+      format(x, failon = failon),
+      if (!is.null(runurl)) {
+        sprintf("[The run, with this report in its job summary](%s)", runurl)
+      }
+    ),
+    collapse = "\n"
+  )
+  if (nchar(body) <= limit) {
+    return(body)
+  }
+  paste0(
+    substr(body, 1L, limit),
+    "\n\n(report cut to fit a comment; the full one is in the job summary",
+    if (!is.null(runurl)) paste0(": ", runurl),
+    ")"
+  )
 }
 
 #' @rdname ghann
@@ -816,11 +1452,26 @@ ghout <- function(x, report = "", json = "", comment = "off") {
   .bl_is_cpschk(x)
   st <- vapply(x$capsules, `[[`, "", "result")
   ms <- unlist(lapply(x$capsules, `[[`, "manifests"), recursive = FALSE)
-  changed <- vapply(Filter(function(cp) isTRUE(cp$changed), x$capsules), `[[`, "", "capsule")
-  list(status = x$status, report = .bl_str0(report, "report"), json = .bl_str0(json, "json"),
-       changed = paste(changed, collapse = ","), verified = sum(st != "error"), failed = sum(st == "error"),
-       `manifest-changed` = tolower(any(vapply(ms, function(m) isTRUE(m$changed), NA))),
-       comment = .bl_str0(comment, "comment"))
+  changed <- vapply(
+    Filter(function(cp) isTRUE(cp$changed), x$capsules),
+    `[[`,
+    "",
+    "capsule"
+  )
+  list(
+    status = x$status,
+    report = .bl_str0(report, "report"),
+    json = .bl_str0(json, "json"),
+    changed = paste(changed, collapse = ","),
+    verified = sum(st != "error"),
+    failed = sum(st == "error"),
+    `manifest-changed` = tolower(any(vapply(
+      ms,
+      function(m) isTRUE(m$changed),
+      NA
+    ))),
+    comment = .bl_str0(comment, "comment")
+  )
 }
 
 #' Refuses anything but a cpschk() result.
@@ -828,7 +1479,9 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #' @return NULL, invisibly.
 #' @noRd
 .bl_is_cpschk <- function(x) {
-  if (!inherits(x, "rmbl_cpschk")) stop(.rmbl_fn(), "`x` must be a cpschk() result", call. = FALSE)
+  if (!inherits(x, "rmbl_cpschk")) {
+    stop(.rmbl_fn(), "`x` must be a cpschk() result", call. = FALSE)
+  }
   invisible(NULL)
 }
 
@@ -886,8 +1539,9 @@ ghout <- function(x, report = "", json = "", comment = "off") {
 #' # a second run needs overwrite, and a post-quantum key signs too
 #' try(cpsseal(root, "a shared secret"))
 #' cpsseal(root, fipskg("ML-DSA-44"), overwrite = TRUE)$pinned
-#' @srrstats {G2.0} `path` must be one existing directory, `overwrite` one logical and `glob` one string; the key is
-#'   checked by cpsbndl() (test-capsule-check.R).
+#' @srrstats {G2.0} `path` must be one existing directory, `overwrite` one
+#'   logical and `glob` one string; the key is checked by cpsbndl()
+#'   (test-capsule-check.R).
 #' @export
 cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
   dirs <- .bl_seal_dirs(path, overwrite, glob)
@@ -900,16 +1554,42 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
       fn <- .bl_s1(prov[["resource"]][["filename"]])
       df <- .rmbl_safe_rel(fn, d)
       if (is.null(df) || !file.exists(df) || dir.exists(df)) {
-        stop(.rmbl_fn(), pf, ": resource$filename must name the data file, relative to the capsule", call. = FALSE)
+        stop(
+          .rmbl_fn(),
+          pf,
+          ": resource$filename must name the data file, relative to the ",
+          "capsule",
+          call. = FALSE
+        )
       }
-      writeLines(tojs(.bl_pin(prov, df, fn), auto_unbox = TRUE, pretty = TRUE, null = "null", digits = NA), pf)
+      writeLines(
+        tojs(
+          .bl_pin(prov, df, fn),
+          auto_unbox = TRUE,
+          pretty = TRUE,
+          null = "null",
+          digits = NA
+        ),
+        pf
+      )
     }
     mf <- file.path(d, "manifest.json")
-    b <- cpsbndl(d, if (file.exists(mf)) loadprov(mf) else mkmnf(list(), env = FALSE), key)
+    b <- cpsbndl(
+      d,
+      if (file.exists(mf)) loadprov(mf) else mkmnf(list(), env = FALSE),
+      key
+    )
     # an XMSS key moves past the index it just signed with, for the next capsule
-    if (inherits(key, "bricklayer_signing_key")) key$next_index <- b$attestation$signature$index + 1L
-    rows[[length(rows) + 1L]] <- data.frame(capsule = d, pinned = pinned, files = length(b$files),
-                                            public = b$attestation$public, stringsAsFactors = FALSE)
+    if (inherits(key, "bricklayer_signing_key")) {
+      key$next_index <- b$attestation$signature$index + 1L
+    }
+    rows[[length(rows) + 1L]] <- data.frame(
+      capsule = d,
+      pinned = pinned,
+      files = length(b$files),
+      public = b$attestation$public,
+      stringsAsFactors = FALSE
+    )
   }
   do.call(rbind, rows)
 }
@@ -920,15 +1600,34 @@ cpsseal <- function(path = ".", key, overwrite = FALSE, glob = "") {
 #' @noRd
 .bl_seal_dirs <- function(path, overwrite, glob) {
   path <- .rmbl_string1(path, "path")
-  if (!dir.exists(path)) stop(.rmbl_fn(), "`path` is not an existing directory: ", .rmbl_printable(path), call. = FALSE)
+  if (!dir.exists(path)) {
+    stop(
+      .rmbl_fn(),
+      "`path` is not an existing directory: ",
+      .rmbl_printable(path),
+      call. = FALSE
+    )
+  }
   overwrite <- .rmbl_flag1(overwrite, "overwrite")
   dirs <- .bl_capsule_dirs(path, .bl_str0(glob, "glob"))
   dirs <- dirs[file.exists(file.path(dirs, "data_provenance.json"))]
-  if (!length(dirs)) stop(.rmbl_fn(), "no data_provenance.json under ", .rmbl_printable(path), call. = FALSE)
+  if (!length(dirs)) {
+    stop(
+      .rmbl_fn(),
+      "no data_provenance.json under ",
+      .rmbl_printable(path),
+      call. = FALSE
+    )
+  }
   have <- dirs[file.exists(file.path(dirs, "capsule_bundle.json"))]
   if (length(have) && !overwrite) {
-    stop(.rmbl_fn(), "capsule_bundle.json already exists in ", paste(have, collapse = ", "),
-         "; pass overwrite = TRUE (rmbl sign --overwrite) to sign again", call. = FALSE)
+    stop(
+      .rmbl_fn(),
+      "capsule_bundle.json already exists in ",
+      paste(have, collapse = ", "),
+      "; pass overwrite = TRUE (rmbl sign --overwrite) to sign again",
+      call. = FALSE
+    )
   }
   dirs
 }

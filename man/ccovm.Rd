@@ -23,21 +23,19 @@ components, Mahalanobis distances and multivariate drift checks.
 Column names are carried through to both dimensions of the result.
 }
 \details{
-Entry \eqn{(j, k)} is
-\eqn{\frac{1}{n - 1} \sum_i (x_{ij} - \bar x_j)(x_{ik} - \bar x_k)}, the
-\code{n - 1} denominator of \code{\link[stats:cov]{stats::cov()}}, with which it agrees to
-rounding.
-The diagonal holds the column variances.
+Entry \eqn{(j, k)} is \eqn{\frac{1}{n - 1} \sum_i (x_{ij} - \bar
+x_j)(x_{ik} - \bar x_k)}, the \code{n - 1} denominator of
+\code{\link[stats:cov]{stats::cov()}}, with which it agrees to rounding. The
+diagonal holds the column variances.
 
-Missing values are not removed: an \code{NA} in a column makes every
-covariance involving that column \code{NA} (pairwise or complete-case
-deletion is not done; use \code{\link[stats:cov]{stats::cov()}} with \verb{use =} for
-those). A
-single row gives \code{NaN} throughout. Refusals: a vector that is not a
-matrix (\code{"must be a matrix or data frame"}) and a data frame with a
-non-numeric column (\code{"every column of x must be numeric"}). Logical and
-integer matrices are converted to double. The cost is
-\eqn{O(n p^2)} for \eqn{n} rows and \eqn{p} columns.
+Missing values are not removed: an \code{NA} in a column makes every covariance
+involving that column \code{NA} (pairwise or complete-case deletion is not done;
+use \code{\link[stats:cov]{stats::cov()}} with \verb{use =} for those). A single
+row gives \code{NaN} throughout. Refusals: a vector that is not a matrix
+(\code{"must be a matrix or data frame"}) and a data frame with a non-numeric
+column (\code{"every column of x must be numeric"}). Logical and integer matrices
+are converted to double. The cost is \eqn{O(n p^2)} for \eqn{n} rows and
+\eqn{p} columns.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

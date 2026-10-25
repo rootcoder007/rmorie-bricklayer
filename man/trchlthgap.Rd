@@ -28,47 +28,50 @@ trchlthgap(
 \item{ref}{The reference group's label (default \code{"Non-Indigenous"}).}
 }
 \value{
-A data frame of class \code{rmbl_trc_gaps}: \code{indicator}, \code{measure},
-\code{period}, \code{group}, \code{estimate}, \code{refest},
-\code{difference} (group minus reference, on the indicator's scale),
-\code{disratio}, \code{lower}, \code{upper}, \code{worse} (the interval
-above 1), \code{usewithcau}. \code{plot()} draws it.
+A data frame of class \code{rmbl_trc_gaps}: \code{indicator},
+\code{measure}, \code{period}, \code{group}, \code{estimate},
+\code{refest}, \code{difference} (group minus reference, on the indicator's
+scale), \code{disratio}, \code{lower}, \code{upper}, \code{worse} (the
+interval above 1), \code{usewithcau}. \code{plot()} draws it.
 }
 \description{
-For each health indicator of Call to Action 19 that the published tables measure, each
-group's estimate against non-Indigenous people's, with its interval, turned into one
-scale, the disadvantage ratio: the factor by which the group's outcome is worse (above
+For each health indicator of Call to Action 19 that the published tables
+measure, each group's estimate against non-Indigenous people's, with its
+interval, turned into one scale, the disadvantage ratio: the factor by which
+the group's outcome is worse (above
 \enumerate{
 \item or better (below 1).
 }
 }
 \details{
 The gaps come from \code{\link{indgap}} on the latest period of each
-table, with \code{ref} (non-Indigenous people) as the reference. To put years,
-rates and percentages on one scale, each gap is given as a ratio oriented by the
-indicator's better direction (\code{\link{trcind}}): the group's estimate over
-the reference's where lower is better (infant mortality, chronic conditions), the
-reference's over the group's where higher is better (life expectancy, good mental
-health, a regular provider):
-\deqn{D = \hat\theta_g / \hat\theta_r \ \textrm{(lower is better)}, \qquad
-D = \hat\theta_r / \hat\theta_g \ \textrm{(higher is better)}.}{D = g / r (lower is
-better), D = r / g (higher is better).} It is a ratio of the published estimates, not a
-relative risk: for life expectancy, D = 1.1 means the reference lives 10\% longer, not
-that the group's risk is 10\% higher. Above 1 the group fares worse; the interval is
-the published one carried through (\code{indgap}'s log-scale interval, inverted
-where needed). The difference on the indicator's own scale is kept beside it.
+table, with \code{ref} (non-Indigenous people) as the reference. To put
+years, rates and percentages on one scale, each gap is given as a ratio
+oriented by the indicator's better direction (\code{\link{trcind}}): the
+group's estimate over the reference's where lower is better (infant
+mortality, chronic conditions), the reference's over the group's where higher
+is better (life expectancy, good mental health, a regular provider): \deqn{D
+= \hat\theta_g / \hat\theta_r \ \textrm{(lower is better)}, \qquad D =
+\hat\theta_r / \hat\theta_g \ \textrm{(higher is better)}.}{D = g / r (lower
+is better), D = r / g (higher is better).} It is a ratio of the published
+estimates, not a relative risk: for life expectancy, D = 1.1 means the
+reference lives 10\% longer, not that the group's risk is 10\% higher. Above 1
+the group fares worse; the interval is the published one carried through
+(\code{indgap}'s log-scale interval, inverted where needed). The difference
+on the indicator's own scale is kept beside it.
 
-This is a description of gaps that Call 19 asks to be closed, measured as the surveys
-measure them; it is not a ranking of peoples. Report it with the trends
-(\code{\link{healchg}}) and the strengths (\code{\link{welprof}}) that
+This is a description of gaps that Call 19 asks to be closed, measured as the
+surveys measure them; it is not a ranking of peoples. Report it with the
+trends (\code{\link{healchg}}) and the strengths (\code{\link{welprof}}) that
 sit beside it.
 
 Each table is in the long layout of \code{\link{scests}} (or
 \code{indiex()}): columns \code{group}, \code{indicator} or \code{measure},
-\code{period}, \code{estimate}, \code{lower}, \code{upper}, \code{quality}, and
-\code{age} for the health and suicidal-ideation tables (the all-ages total is used).
-The latest period with estimates is taken. Table 41-10-0021 publishes Indigenous groups
-only, so it adds a gap only when given a table with \code{ref} rows.
+\code{period}, \code{estimate}, \code{lower}, \code{upper}, \code{quality},
+and \code{age} for the health and suicidal-ideation tables (the all-ages
+total is used). The latest period with estimates is taken. Table 41-10-0021
+publishes Indigenous groups only, so it adds a gap only when given a table
+with \code{ref} rows.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

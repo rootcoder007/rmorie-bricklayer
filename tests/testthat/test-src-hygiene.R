@@ -1,4 +1,5 @@
-testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
+# battery: runs in CI and locally; CRAN runs the correctness core
+testthat::skip_on_cran()
 # Source-level invariants that only break on a platform this machine is
 # not.
 #
@@ -32,27 +33,44 @@ test_that("no R header precedes a header that pulls in libc++ locale", {
   #
   # These are the standard headers observed to reach <locale> on libc++.
   hazardous <- c(
-    "functional", "locale", "regex", "iomanip", "iostream",
-    "sstream", "iosfwd", "istream", "ostream", "fstream"
+    "functional",
+    "locale",
+    "regex",
+    "iomanip",
+    "iostream",
+    "sstream",
+    "iosfwd",
+    "istream",
+    "ostream",
+    "fstream"
   )
   offenders <- character(0)
   for (f in files) {
     lines <- readLines(f, warn = FALSE)
     inc <- grep("^\\s*#\\s*include\\s*<", lines)
-    if (!length(inc)) next
+    if (!length(inc)) {
+      next
+    }
     r_at <- inc[grepl(
       "^\\s*#\\s*include\\s*<R[./]|<Rinternals|<Rdefines",
       lines[inc]
     )]
-    if (!length(r_at)) next
+    if (!length(r_at)) {
+      next
+    }
     first_r <- min(r_at)
     for (i in inc[inc > first_r]) {
       hdr <- sub(".*<([^>]+)>.*", "\\1", lines[i])
       if (hdr %in% hazardous) {
-        offenders <- c(offenders, sprintf(
-          "%s:%d includes <%s> after an R header",
-          basename(f), i, hdr
-        ))
+        offenders <- c(
+          offenders,
+          sprintf(
+            "%s:%d includes <%s> after an R header",
+            basename(f),
+            i,
+            hdr
+          )
+        )
       }
     }
   }
@@ -73,11 +91,10 @@ test_that("no source file carries a non-ASCII byte", {
         break
       }
     }
-    if (is.null(p)) next
-    files <- list.files(p,
-      pattern = "[.](R|cpp|c|h|hpp)$",
-      full.names = TRUE
-    )
+    if (is.null(p)) {
+      next
+    }
+    files <- list.files(p, pattern = "[.](R|cpp|c|h|hpp)$", full.names = TRUE)
     bad <- character(0)
     for (f in files) {
       raw <- readBin(f, "raw", file.size(f))
@@ -112,14 +129,23 @@ test_that("no Rd line exceeds 90 characters", {
   long <- character(0)
   for (f in files) {
     lines <- readLines(f, warn = FALSE)
-    # a line that is one \url{} (an archived copy of a page that refuses scripts) cannot wrap
-    w <- which(nchar(lines) > 90L & !startsWith(lines, "\\href{https://doi.org/") &
-                 !grepl("^\\\\url\\{[^ ]+\\}[.)]*$", lines))
+    # a line that is one \url{} (an archived copy of a page that refuses
+    # scripts) cannot wrap
+    w <- which(
+      nchar(lines) > 90L &
+        !startsWith(lines, "\\href{https://doi.org/") &
+        !grepl("^\\\\url\\{[^ ]+\\}[.)]*$", lines)
+    )
     for (i in w) {
-      long <- c(long, sprintf(
-        "%s:%d is %d chars", basename(f), i,
-        nchar(lines[i])
-      ))
+      long <- c(
+        long,
+        sprintf(
+          "%s:%d is %d chars",
+          basename(f),
+          i,
+          nchar(lines[i])
+        )
+      )
     }
   }
   expect_equal(long, character(0))
@@ -141,12 +167,17 @@ test_that("every C entry point is registered and every registration resolves", {
   # the entry points the C++ actually defines
   defined <- character(0)
   for (f in list.files(d, pattern = "[.](cpp|c)$", full.names = TRUE)) {
-    if (basename(f) == "init.c") next
+    if (basename(f) == "init.c") {
+      next
+    }
     lines <- readLines(f, warn = FALSE)
-    m <- regmatches(lines, regexpr(
-      "SEXP\\s+C_rmbl_[A-Za-z0-9_]+\\s*\\(",
-      lines
-    ))
+    m <- regmatches(
+      lines,
+      regexpr(
+        "SEXP\\s+C_rmbl_[A-Za-z0-9_]+\\s*\\(",
+        lines
+      )
+    )
     m <- m[nzchar(m)]
     defined <- c(defined, gsub("^SEXP\\s+|\\s*\\($", "", m))
   }
@@ -167,9 +198,13 @@ test_that("every C entry point is registered and every registration resolves", {
     arity <- suppressWarnings(as.integer(
       sub(".*,\\s*([0-9]+)\\s*\\}.*", "\\1", row[1L])
     ))
-    if (is.na(arity)) next
+    if (is.na(arity)) {
+      next
+    }
     at <- grep(sprintf("extern SEXP %s\\(", nm), ini)
-    if (!length(at)) next
+    if (!length(at)) {
+      next
+    }
     # a long declaration is legitimately wrapped, so join lines until the
     # closing parenthesis rather than reading only the first
     decl <- ini[at[1L]]
@@ -200,14 +235,17 @@ test_that("no S3 method for one class is defined in two files", {
   # Constructing one class in two files is fine and deliberate --
   # cpssign() and fipssignmu() both return a
   # `bricklayer_signature`. Defining its METHODS twice is the mistake.
-  files <- list.files(file.path(test_path("..", ".."), "R"),
-    pattern = "[.]R$", full.names = TRUE
+  files <- list.files(
+    file.path(test_path("..", ".."), "R"),
+    pattern = "[.]R$",
+    full.names = TRUE
   )
   skip_if(length(files) == 0L, "not running from a source tree")
   seen <- list()
   for (f in files) {
     txt <- readLines(f, warn = FALSE)
-    hits <- grep("^(format|print|as\\.character)\\.bricklayer_[A-Za-z0-9_]+ *<- *function",
+    hits <- grep(
+      "^(format|print|as\\.character)\\.bricklayer_[A-Za-z0-9_]+ *<- *function",
       txt,
       value = TRUE
     )
@@ -217,7 +255,9 @@ test_that("no S3 method for one class is defined in two files", {
     }
   }
   twice <- seen[vapply(seen, length, integer(1)) > 1L]
-  expect_identical(names(twice), character(0),
+  expect_identical(
+    names(twice),
+    character(0),
     info = paste(names(twice), collapse = ", ")
   )
   # every method is also registered exactly once
@@ -293,18 +333,38 @@ test_that("the interrupt test is the throwing one everywhere but the barrier", {
   expect_identical(hits, character(0))
 })
 
-test_that("the barrier clears the interrupt flag on every path and raises for an unbarriered kernel", {
-  d <- src_dir()
-  skip_if(is.na(d), "package sources not available from here")
-  b <- readLines(file.path(d, "rmbl_barrier.cpp"), warn = FALSE)
-  expect_true(any(grepl("rmbl_kernel_interrupted = 0;   /* nothing from an earlier call may leak in */",
-                        b, fixed = TRUE)))
-  expect_true(any(grepl("if (rmbl_barrier_depth == 0) rmbl_raise_interrupt();", b, fixed = TRUE)))
-  # the flag is cleared after the try block, before any longjmp
-  i <- grep("every path leaves the flag clear", b, fixed = TRUE)
-  expect_length(i, 1L)
-  expect_true(any(grepl("rmbl_kernel_interrupted = 0;", b[i + (1:3)], fixed = TRUE)))
-})
+test_that(
+  paste0(
+    "the barrier clears the interrupt flag on every path and raises for an ",
+    "unbarriered kernel"
+  ),
+  {
+    d <- src_dir()
+    skip_if(is.na(d), "package sources not available from here")
+    b <- readLines(file.path(d, "rmbl_barrier.cpp"), warn = FALSE)
+    expect_true(any(grepl(
+      paste0(
+        "rmbl_kernel_interrupted = 0;   /* nothing from an earlier call may ",
+        "leak in */"
+      ),
+      b,
+      fixed = TRUE
+    )))
+    expect_true(any(grepl(
+      "if (rmbl_barrier_depth == 0) rmbl_raise_interrupt();",
+      b,
+      fixed = TRUE
+    )))
+    # the flag is cleared after the try block, before any longjmp
+    i <- grep("every path leaves the flag clear", b, fixed = TRUE)
+    expect_length(i, 1L)
+    expect_true(any(grepl(
+      "rmbl_kernel_interrupted = 0;",
+      b[i + (1:3)],
+      fixed = TRUE
+    )))
+  }
+)
 
 test_that("R code opens no network connection outside the compiled transport", {
   d <- r_dir()
@@ -312,20 +372,28 @@ test_that("R code opens no network connection outside the compiled transport", {
   # under covr the installed package has an R/ directory with no sources in it
   files <- list.files(d, pattern = "[.]R$", full.names = TRUE)
   skip_if(!length(files), "no R sources found")
-  pat <- paste0("(^|[^a-zA-Z_.])(base::)?url\\(|download\\.file\\(|curl::|",
-                "file\\(\"https?://|readLines\\(\"https?://|gzcon\\(url")
+  pat <- paste0(
+    "(^|[^a-zA-Z_.])(base::)?url\\(|download\\.file\\(|curl::|",
+    "file\\(\"https?://|readLines\\(\"https?://|gzcon\\(url"
+  )
   hits <- as.character(unlist(lapply(files, function(f) {
     l <- readLines(f, warn = FALSE)
-    code <- sub("#.*$", "", l)          # not the comments
-    code <- code[!grepl("^\\s*#'", l)]  # nor roxygen
+    code <- sub("#.*$", "", l) # not the comments
+    code <- code[!grepl("^\\s*#'", l)] # nor roxygen
     i <- grep(pat, code, perl = TRUE)
     if (length(i)) paste0(basename(f), ": ", trimws(code[i])) else character(0)
   })))
   # the two base-R fallbacks exist for a capsule bundle that copies one file
   # out of the package; inside the package `exists()` routes past them
   allowed <- c(
-    "lib_data_loader.R: utils::download.file(url, dest, mode = \"wb\", quiet = FALSE)",
-    "lib_helpers.R: utils::download.file(url, dest, mode = \"wb\", quiet = TRUE)"
+    paste0(
+      "lib_data_loader.R: utils::download.file(url, dest, mode = \"wb\", ",
+      "quiet = FALSE)"
+    ),
+    paste0(
+      "lib_helpers.R: utils::download.file(url, dest, mode = \"wb\", quiet ",
+      "= TRUE)"
+    )
   )
   expect_setequal(hits, allowed)
 })
@@ -336,12 +404,22 @@ test_that("every SIU entry point reads its text through the same cap", {
   s <- readLines(file.path(d, "rmbl_siu.cpp"), warn = FALSE)
   entries <- grep("^SEXP C_rmbl_siu_[a-z_]+_impl\\(SEXP [a-z]+\\)", s)
   # the enumeration, not a floor (a fifth string entry lands here by itself)
-  expect_setequal(sub("^SEXP (C_rmbl_siu_[a-z_]+)_impl.*$", "\\1", s[entries]),
-                  c("C_rmbl_siu_html_to_text", "C_rmbl_siu_parse_html", "C_rmbl_siu_to_iso_date",
-                    "C_rmbl_siu_resolve_so", "C_rmbl_siu_schema"))
+  expect_setequal(
+    sub("^SEXP (C_rmbl_siu_[a-z_]+)_impl.*$", "\\1", s[entries]),
+    c(
+      "C_rmbl_siu_html_to_text",
+      "C_rmbl_siu_parse_html",
+      "C_rmbl_siu_to_iso_date",
+      "C_rmbl_siu_resolve_so",
+      "C_rmbl_siu_schema"
+    )
+  )
   # each one-argument entry hands its argument to as_string() (the 2 MiB
   # cap), which reads it once, translated to UTF-8; nothing else reads it
-  expect_identical(sum(grepl("Rf_translateCharUTF8(STRING_ELT", s, fixed = TRUE)), 1L)
+  expect_identical(
+    sum(grepl("Rf_translateCharUTF8(STRING_ELT", s, fixed = TRUE)),
+    1L
+  )
   expect_false(any(grepl("CHAR(STRING_ELT", s, fixed = TRUE)))
   expect_true(any(grepl("(2 << 20)", s, fixed = TRUE)))
   # html_to_text() and the plain-text entry both run normalize_text()
@@ -349,42 +427,73 @@ test_that("every SIU entry point reads its text through the same cap", {
   expect_true(any(grepl("return normalize_text(t);", p, fixed = TRUE)))
   expect_true(any(grepl("siu::normalize_text(as_string(text", s, fixed = TRUE)))
   # and no whole-document pass is a regex any more
-  h <- p[grep("^std::string html_to_text", p):grep("return normalize_text(t);", p, fixed = TRUE)]
+  h <- p[
+    grep("^std::string html_to_text", p):grep(
+      "return normalize_text(t);",
+      p,
+      fixed = TRUE
+    )
+  ]
   expect_false(any(grepl("std::regex", h, fixed = TRUE)))
-  # No regex in EITHER SIU file may cross a line without a bound: a `[^...]` class that
-  # does not exclude \\n or \\s, or `[\\s\\S]`, followed by `*`, `+` or `{n,}`, recurses once
-  # per character of the whole document and the line cap cannot stop it (the SIU
-  # review found two in siu_resolve.cpp after 0.5.8 hardened siu_parse.cpp only).
+  # No regex in EITHER SIU file may cross a line without a bound: a `[^...]`
+  # class that does not exclude \\n or \\s, or `[\\s\\S]`, followed by `*`, `+`
+  # or `{n,}`, recurses once per character of the whole document and the line
+  # cap cannot stop it (the SIU review found two in siu_resolve.cpp after 0.5.8
+  # hardened siu_parse.cpp only).
   rs <- readLines(file.path(d, "siu_resolve.cpp"), warn = FALSE)
   # code only: the comments quote the regexes they replaced
   src <- gsub("/\\*.*?\\*/", "", sub("//.*$", "", c(p, rs)))
-  classes <- unlist(regmatches(src, gregexpr("\\[\\^[^]]*\\](\\*|\\+|\\{[0-9]*,\\})", src)))
+  classes <- unlist(regmatches(
+    src,
+    gregexpr("\\[\\^[^]]*\\](\\*|\\+|\\{[0-9]*,\\})", src)
+  ))
   # a class that excludes \\n or \\s is bounded by the line
-  bad <- classes[!(grepl("\\n", classes, fixed = TRUE) | grepl("\\s", classes, fixed = TRUE))]
+  bad <- classes[
+    !(grepl("\\n", classes, fixed = TRUE) | grepl("\\s", classes, fixed = TRUE))
+  ]
   expect_identical(bad, character(0))
   for (q in c("[\\s\\S]*", "[\\s\\S]+", "[\\s\\S]{")) {
     expect_false(any(grepl(q, src, fixed = TRUE)), info = q)
   }
-  # the boilerplate stripper is scans (its comments may name the regexes it replaced),
-  # and every SIU core pass polls for an interrupt
+  # the boilerplate stripper is scans (its comments may name the regexes it
+  # replaced), and every SIU core pass polls for an interrupt
   code_rs <- sub("//.*$", "", rs)
-  strip_fn <- grep("^static std::string strip_boilerplate_impl", rs):grep("^static SoResolution resolve_fr", rs)
+  strip_fn <- grep("^static std::string strip_boilerplate_impl", rs):grep(
+    "^static SoResolution resolve_fr",
+    rs
+  )
   expect_false(any(grepl("std::regex", code_rs[strip_fn], fixed = TRUE)))
   expect_true(any(grepl("siu::interrupt_hook()", s, fixed = TRUE)))
 })
 
-test_that("OBJECTS lists every C source, and rmbl_unity.cpp includes every C++ source once", {
-  d <- src_dir()
-  skip_if(is.na(d), "package sources not available from here")
-  want <- sort(c(sub("\\.c$", ".o", list.files(d, pattern = "\\.c$")), "rmbl_unity.o"))
-  for (mv in c("Makevars.in", "Makevars.win")) {
-    x <- paste(readLines(file.path(d, mv), warn = FALSE), collapse = "\n")
-    x <- gsub("\\\\\n", " ", x)
-    o <- regmatches(x, regexpr("(?m)^OBJECTS = [^\n]*", x, perl = TRUE))
-    expect_identical(sort(strsplit(trimws(sub("^OBJECTS = ", "", o)), "[[:space:]]+")[[1]]), want, info = mv)
+test_that(
+  paste0(
+    "OBJECTS lists every C source, and rmbl_unity.cpp includes every C++ ",
+    "source once"
+  ),
+  {
+    d <- src_dir()
+    skip_if(is.na(d), "package sources not available from here")
+    want <- sort(c(
+      sub("\\.c$", ".o", list.files(d, pattern = "\\.c$")),
+      "rmbl_unity.o"
+    ))
+    for (mv in c("Makevars.in", "Makevars.win")) {
+      x <- paste(readLines(file.path(d, mv), warn = FALSE), collapse = "\n")
+      x <- gsub("\\\\\n", " ", x)
+      o <- regmatches(x, regexpr("(?m)^OBJECTS = [^\n]*", x, perl = TRUE))
+      expect_identical(
+        sort(strsplit(trimws(sub("^OBJECTS = ", "", o)), "[[:space:]]+")[[1]]),
+        want,
+        info = mv
+      )
+    }
+    u <- readLines(file.path(d, "rmbl_unity.cpp"), warn = FALSE)
+    inc <- sub('^#include "(.*)"$', "\\1", grep("^#include", u, value = TRUE))
+    expect_identical(
+      sort(inc),
+      sort(setdiff(list.files(d, pattern = "\\.cpp$"), "rmbl_unity.cpp"))
+    )
+    expect_false(anyDuplicated(inc) > 0)
   }
-  u <- readLines(file.path(d, "rmbl_unity.cpp"), warn = FALSE)
-  inc <- sub('^#include "(.*)"$', "\\1", grep("^#include", u, value = TRUE))
-  expect_identical(sort(inc), sort(setdiff(list.files(d, pattern = "\\.cpp$"), "rmbl_unity.cpp")))
-  expect_false(anyDuplicated(inc) > 0)
-})
+)

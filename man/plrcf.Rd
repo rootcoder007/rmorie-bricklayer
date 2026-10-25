@@ -37,20 +37,19 @@ much does asthma incidence rise per microgram of NO2, holding income and
 age structure fixed?}.
 }
 \details{
-The partially linear model \eqn{Y = \theta D + g(X) + U},
-\eqn{D = m(X) + V} of Chernozhukov et al. (2018, section 4.2), estimated
-by the DML2 cross-fitting recipe: the sample is split into \code{kfol}
-folds; for each fold the nuisances \eqn{m} and \eqn{g} are fitted on the
-other folds and predicted on it; \eqn{\hat\theta} is the slope of the
-out-of-fold outcome residuals on the out-of-fold treatment residuals,
-\deqn{\hat\theta = \sum_i \hat V_i \hat U_i / \sum_i \hat V_i^2,}
-with the sandwich standard error
-\eqn{\sqrt{\sum_i \hat V_i^2 (\hat U_i - \hat\theta \hat V_i)^2} / \sum_i \hat V_i^2}.
-The nuisances here are ordinary least squares on the covariates, which is
-the right learner when the confounding is approximately linear and keeps
-the estimator fully deterministic given \code{seed}; rmorie's
-\code{morie_estimate_double_ml()} offers richer learners and can be passed
-to \code{\link{exprspplr}} through \code{estimator}.
+The partially linear model \eqn{Y = \theta D + g(X) + U}, \eqn{D =
+m(X) + V} of Chernozhukov et al. (2018, section 4.2), estimated by the DML2
+cross-fitting recipe: the sample is split into \code{kfol} folds; for each
+fold the nuisances \eqn{m} and \eqn{g} are fitted on the other folds and
+predicted on it; \eqn{\hat\theta} is the slope of the out-of-fold outcome
+residuals on the out-of-fold treatment residuals, \deqn{\hat\theta = \sum_i
+\hat V_i \hat U_i / \sum_i \hat V_i^2,} with the sandwich standard error
+\eqn{\sqrt{\sum_i \hat V_i^2 (\hat U_i - \hat\theta \hat V_i)^2} / \sum_i
+\hat V_i^2}. The nuisances here are ordinary least squares on the covariates,
+which is the right learner when the confounding is approximately linear and
+keeps the estimator fully deterministic given \code{seed}; rmorie's
+\code{morie_estimate_double_ml()} offers richer learners and can be passed to
+\code{\link{exprspplr}} through \code{estimator}.
 
 Each fold's two least-squares fits are computed from the normal
 equations of the covariates centred and scaled by their full-sample

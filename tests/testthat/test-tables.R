@@ -15,8 +15,7 @@ test_that("band labels parse to the bounds they state", {
   expect_equal(b$openlo, rep(FALSE, 4L))
   # "greater than 10" on integer data starts at 11, not at 10: the
   # difference is a whole unit of the quantity being measured
-  expect_equal(prsbands("Greater than 10", intsca = FALSE)$lower,
-               10)
+  expect_equal(prsbands("Greater than 10", intsca = FALSE)$lower, 10)
 
   # the age bands these datasets use
   a <- prsbands(c("18 to 24", "25 to 49", "50+"))
@@ -35,8 +34,7 @@ test_that("band labels parse to the bounds they state", {
   expect_true(all(is.na(l$lower)))
 
   # the dash family, which publishers mix freely
-  for (lab in c("18-24", "18 - 24", "18–24", "18—24",
-                "18 through 24")) {
+  for (lab in c("18-24", "18 - 24", "18–24", "18—24", "18 through 24")) {
     p <- prsbands(lab)
     expect_equal(p$lower, 18, info = lab)
     expect_equal(p$upper, 24, info = lab)
@@ -91,8 +89,11 @@ test_that("a band's representative value states its rule", {
 })
 
 test_that("expanding a banded table reproduces the counts", {
-  x <- expbands(c("1", "2 to 5", "Greater than 5"),
-                    cnts = c(10, 4, 2), openupcap = 12)
+  x <- expbands(
+    c("1", "2 to 5", "Greater than 5"),
+    cnts = c(10, 4, 2),
+    openupcap = 12
+  )
   expect_length(x, 16L)
   expect_equal(sum(x == 1), 10L)
   expect_equal(sum(x == 3.5), 4L)
@@ -101,8 +102,10 @@ test_that("expanding a banded table reproduces the counts", {
   # units in silence made every downstream statistic describe a fraction
   # of the data); with drpunp = TRUE it is left out, with a warning
   expect_error(expbands(c("1", "unknown"), cnts = c(3, 5)), "'unknown'")
-  expect_warning(y <- expbands(c("1", "unknown"), cnts = c(3, 5), drpunp = TRUE),
-                 "could not be placed")
+  expect_warning(
+    y <- expbands(c("1", "unknown"), cnts = c(3, 5), drpunp = TRUE),
+    "could not be placed"
+  )
   expect_length(y, 3L)
   expect_false(anyNA(y))
   expect_equal(length(expbands(c("1", "2 to 5"), c(0, 0))), 0L)
@@ -133,15 +136,23 @@ test_that("the open band's cap is reported as the assumption it is", {
   expect_output(print(e), "Sensitivity to the open top band")
   expect_output(print(e), "span over the caps tried")
   # a closed set of bands has nothing to be sensitive to, and says so
-  expect_error(bandsens(prsbands(c("1", "2 to 5")), c(1, 2)),
-               "nothing to be sensitive to")
+  expect_error(
+    bandsens(prsbands(c("1", "2 to 5")), c(1, 2)),
+    "nothing to be sensitive to"
+  )
   expect_error(bandsens(b, c(1, 2)), "4 bands")
 })
 
 test_that("Gini is the mean absolute difference over twice the mean", {
   # the definition, computed independently
-  for (x in list(c(1, 2, 3, 4, 5), c(1, 1, 1, 8), c(3, 7),
-                 c(0, 0, 0, 5), rep(4, 7), c(2, 2, 3, 100))) {
+  for (x in list(
+    c(1, 2, 3, 4, 5),
+    c(1, 1, 1, 8),
+    c(3, 7),
+    c(0, 0, 0, 5),
+    rep(4, 7),
+    c(2, 2, 3, 100)
+  )) {
     want <- mean(abs(outer(x, x, "-"))) / (2 * mean(x))
     expect_equal(ginicoef(x), want, tolerance = 1e-12)
   }
@@ -182,11 +193,18 @@ test_that("the Lorenz curve is Gini's own geometry", {
 
   # GINI IS TWICE THE AREA between the diagonal and the curve, which
   # ties the two functions together
-  for (x in list(c(1, 1, 2, 6), c(1, 2, 3, 4, 5), c(2, 2, 3, 100),
-                 c(rep(1, 20), 50))) {
+  for (x in list(
+    c(1, 1, 2, 6),
+    c(1, 2, 3, 4, 5),
+    c(2, 2, 3, 100),
+    c(rep(1, 20), 50)
+  )) {
     l <- lorenzc(x)
-    area <- sum(diff(l$population) *
-                  (l$value[-1] + l$value[-nrow(l)]) / 2)
+    area <- sum(
+      diff(l$population) *
+        (l$value[-1] + l$value[-nrow(l)]) /
+        2
+    )
     expect_equal(ginicoef(x), 1 - 2 * area, tolerance = 1e-12)
   }
   e <- lorenzc(rep(3, 5))
@@ -228,13 +246,11 @@ test_that("the Hurwitz zeta matches its published values", {
   # a functional identity rather than a numerical coincidence
   for (s in c(1.2, 2, 2.5, 4, 9)) {
     for (q in c(1, 2, 3.5, 10)) {
-      expect_equal(hurwzeta(s, q) - hurwzeta(s, q + 1),
-                   q^-s, tolerance = 1e-12)
+      expect_equal(hurwzeta(s, q) - hurwzeta(s, q + 1), q^-s, tolerance = 1e-12)
     }
   }
   expect_equal(hurwzeta(2, 2), pi^2 / 6 - 1, tolerance = 1e-13)
-  expect_equal(hurwzeta(c(2, 4)), c(pi^2 / 6, pi^4 / 90),
-               tolerance = 1e-13)
+  expect_equal(hurwzeta(c(2, 4)), c(pi^2 / 6, pi^4 / 90), tolerance = 1e-13)
   expect_true(all(diff(hurwzeta(seq(1.5, 10, by = 0.5))) < 0))
   expect_equal(hurwzeta(60), 1, tolerance = 1e-12)
   # outside the domain of convergence there is no value to return
@@ -303,15 +319,13 @@ test_that("the tail index recovers an exponent it was given", {
   expect_equal(short$ntl, 4L)
   # the flag turns over at the sample size the literature gives, and is
   # about the sample size rather than about the fit
-  expect_true(hilltlidx(sample(k2, 200L, TRUE, p2),
-                              xmin = 1)$reliable)
+  expect_true(hilltlidx(sample(k2, 200L, TRUE, p2), xmin = 1)$reliable)
   # below the minimum there is nothing to estimate from
   expect_true(is.na(hilltlidx(c(3, 4), xmin = 3)$alpha))
   expect_match(hilltlidx(c(3, 4), xmin = 3)$method, "too few")
   expect_error(hilltlidx(numeric(0), xmin = 1), "no positive")
   # and the minimum is settable
-  expect_true(is.finite(hilltlidx(c(3, 4), xmin = 3,
-                                        mintl = 2L)$alpha))
+  expect_true(is.finite(hilltlidx(c(3, 4), xmin = 3, mintl = 2L)$alpha))
   auto <- hilltlidx(c(rep(1, 100), 2:60))
   expect_true(is.finite(auto$xmin))
   expect_error(hilltlidx(1:10, xmin = 0), "must be positive")
@@ -344,8 +358,11 @@ test_that("Cramer's V agrees with the chi-square it is built on", {
   expect_lt(corrected, raw)
   # on plenty of data the two nearly agree
   big <- rbind(c(3000, 1000), c(1000, 3000))
-  expect_equal(cramerv(big)$v, cramerv(big, biascor = FALSE)$v,
-               tolerance = 0.01)
+  expect_equal(
+    cramerv(big)$v,
+    cramerv(big, biascor = FALSE)$v,
+    tolerance = 0.01
+  )
 
   # a small expected count makes the chi-square approximation
   # unreliable, so it is counted and the p-value permuted instead
@@ -353,14 +370,23 @@ test_that("Cramer's V agrees with the chi-square it is built on", {
   expect_match(cramerv(sparse)$method, "permutation")
   expect_match(cramerv(tbl)$method, "approximation")
   expect_equal(cramerv(tbl)$cellsbelow, 0L)
-  expect_true(cramerv(sparse)$p_value > 0 &&
-                cramerv(sparse)$p_value <= 1)
+  expect_true(
+    cramerv(sparse)$p_value > 0 &&
+      cramerv(sparse)$p_value <= 1
+  )
 
   three <- rbind(c(50, 30, 20), c(20, 50, 30), c(30, 20, 50))
   t3 <- cramerv(three, biascor = FALSE)
   expect_equal(t3$df, 4L)
-  expect_equal(t3$v, sqrt(as.numeric(
-    stats::chisq.test(three, correct = FALSE)$statistic) / (300 * 2)))
+  expect_equal(
+    t3$v,
+    sqrt(
+      as.numeric(
+        stats::chisq.test(three, correct = FALSE)$statistic
+      ) /
+        (300 * 2)
+    )
+  )
 
   # degenerate tables degrade rather than erroring
   expect_true(is.na(cramerv(matrix(1:3, nrow = 1))$v))
@@ -373,11 +399,16 @@ test_that("Cramer's V agrees with the chi-square it is built on", {
 test_that("the trend test is Kendall's tau against the period", {
   # tau from this and from cor.test must agree, since both are S over
   # the number of pairs
-  for (y in list(c(1, 2, 3, 4, 5), c(5, 4, 3, 2, 1),
-                 c(402, 377, 190, 268, 331), c(1, 3, 2, 5, 4, 6))) {
+  for (y in list(
+    c(1, 2, 3, 4, 5),
+    c(5, 4, 3, 2, 1),
+    c(402, 377, 190, 268, 331),
+    c(1, 3, 2, 5, 4, 6)
+  )) {
     got <- trndtst(y)
     ref <- suppressWarnings(
-      stats::cor.test(seq_along(y), y, method = "kendall"))
+      stats::cor.test(seq_along(y), y, method = "kendall")
+    )
     expect_equal(got$tau, as.numeric(ref$estimate), tolerance = 1e-9)
   }
   up <- trndtst(1:6)
@@ -394,15 +425,14 @@ test_that("the trend test is Kendall's tau against the period", {
   five <- trndtst(1:5)
   expect_equal(five$p_value, 2 / 120)
   expect_match(five$method, "exact over all 120")
-  expect_equal(trndtst(1:5, alt = "increasing")$p_value,
-               1 / 120)
+  expect_equal(trndtst(1:5, alt = "increasing")$p_value, 1 / 120)
   expect_equal(trndtst(1:5, alt = "decreasing")$p_value, 1)
   # and it agrees with cor.test's own exact p-values
   for (y in list(c(1, 3, 2, 4, 5), c(2, 1, 4, 3, 5), c(3, 1, 2, 5, 4))) {
     ref <- suppressWarnings(
-      stats::cor.test(seq_along(y), y, method = "kendall", exact = TRUE))
-    expect_equal(trndtst(y)$p_value, as.numeric(ref$p.value),
-                 tolerance = 1e-9)
+      stats::cor.test(seq_along(y), y, method = "kendall", exact = TRUE)
+    )
+    expect_equal(trndtst(y)$p_value, as.numeric(ref$p.value), tolerance = 1e-9)
   }
   # above the enumeration limit the approximation takes over, and says so
   long <- trndtst(c(1, 3, 2, 5, 4, 7, 6, 9, 8, 11))
@@ -430,7 +460,9 @@ test_that("the trend test is Kendall's tau against the period", {
   expect_equal(trndtst(d$n, x = d$year)$slope, t$slope)
   # unevenly spaced periods change the slope, since it is per unit of x
   expect_false(isTRUE(all.equal(
-    trndtst(c(1, 2, 3), x = c(1, 2, 10))$slope, 1)))
+    trndtst(c(1, 2, 3), x = c(1, 2, 10))$slope,
+    1
+  )))
   expect_error(trndtst(d, value = "nope"), "not found")
   expect_error(trndtst(d, value = "n", prd = "nope"), "not found")
   expect_error(trndtst(data.frame(a = 1)), "`value` is required")
@@ -451,10 +483,14 @@ test_that("the step test uses the scan's own null, not the best split's", {
   # PURE NOISE must not produce a significant break. Comparing the best
   # split against its own null would: the maximum over four splits is
   # not distributed like one split's statistic.
-  ps <- vapply(seq_len(30L), function(i) {
-    set.seed(1000L + i)
-    stepchg(stats::rnorm(10), nperm = 499L, seed = i)$p_value
-  }, 0)
+  ps <- vapply(
+    seq_len(30L),
+    function(i) {
+      set.seed(1000L + i)
+      stepchg(stats::rnorm(10), nperm = 499L, seed = i)$p_value
+    },
+    0
+  )
   expect_lt(sum(ps < 0.05), 6L)
   expect_true(all(ps >= 0 & ps <= 1))
 
@@ -487,8 +523,7 @@ test_that("the step test uses the scan's own null, not the best split's", {
   # years of data.
   floor6 <- (1 + 2 * factorial(3)^2) / (1 + 720)
   floor8 <- 2 * factorial(4)^2 / factorial(8)
-  eight <- stepchg(c(1, 2, 1, 2, 100, 101, 99, 100),
-                       nperm = 4999L, seed = 5L)
+  eight <- stepchg(c(1, 2, 1, 2, 100, 101, 99, 100), nperm = 4999L, seed = 5L)
   expect_lt(eight$p_value, floor6)
   # 4999 samples of a probability near 0.029 carry a relative standard
   # error of about 8%, so the tolerance is on that scale rather than on
@@ -497,8 +532,7 @@ test_that("the step test uses the scan's own null, not the best split's", {
   expect_gte(eight$p_value, floor8 * 0.9)
   expect_equal(eight$index, 4L)
 
-  expect_error(stepchg(c(1, 2, 3), minseg = 2L),
-               "at least 4 periods")
+  expect_error(stepchg(c(1, 2, 3), minseg = 2L), "at least 4 periods")
 
   # the periods label the break without entering the arithmetic
   lab <- stepchg(c(100, 104, 98, 60, 63, 58), x = 2018:2023)
@@ -529,14 +563,14 @@ test_that("the count trend is glm's Poisson fit", {
   ref <- stats::glm(y ~ xc, family = stats::poisson())
   # the rate ratio and its standard error must be glm's, because the
   # model is the same model
-  expect_equal(got$logslope, as.numeric(stats::coef(ref)[2L]),
-               tolerance = 1e-8)
-  expect_equal(got$rateratio, exp(as.numeric(stats::coef(ref)[2L])),
-               tolerance = 1e-8)
-  expect_equal(got$se, summary(ref)$coefficients[2L, 2L],
-               tolerance = 1e-6)
-  expect_equal(unname(got$fitted), unname(stats::fitted(ref)),
-               tolerance = 1e-7)
+  expect_equal(got$logslope, as.numeric(stats::coef(ref)[2L]), tolerance = 1e-8)
+  expect_equal(
+    got$rateratio,
+    exp(as.numeric(stats::coef(ref)[2L])),
+    tolerance = 1e-8
+  )
+  expect_equal(got$se, summary(ref)$coefficients[2L, 2L], tolerance = 1e-6)
+  expect_equal(unname(got$fitted), unname(stats::fitted(ref)), tolerance = 1e-7)
   expect_lt(got$rateratio, 1)
   expect_lt(got$upper, 1)
   expect_lt(got$p_value, 0.001)
@@ -550,10 +584,12 @@ test_that("the count trend is glm's Poisson fit", {
   off <- c(1000, 1500, 2500)
   r <- cnttrnd(up, offset = off)
   expect_lt(r$rateratio, 1)
-  ro <- stats::glm(up ~ I(seq_along(up) - mean(seq_along(up))),
-                   family = stats::poisson(), offset = log(off))
-  expect_equal(r$logslope, as.numeric(stats::coef(ro)[2L]),
-               tolerance = 1e-7)
+  ro <- stats::glm(
+    up ~ I(seq_along(up) - mean(seq_along(up))),
+    family = stats::poisson(),
+    offset = log(off)
+  )
+  expect_equal(r$logslope, as.numeric(stats::coef(ro)[2L]), tolerance = 1e-7)
   # and without it the same counts are a rising trend
   expect_gt(cnttrnd(up)$rateratio, 1)
 
@@ -565,13 +601,14 @@ test_that("the count trend is glm's Poisson fit", {
   expect_true(o$overdispersed)
   expect_gt(o$dispersion, 1.5)
   expect_match(o$method, "quasi-Poisson")
-  po <- stats::glm(od ~ I(seq_along(od) - mean(seq_along(od))),
-                   family = stats::poisson())
+  po <- stats::glm(
+    od ~ I(seq_along(od) - mean(seq_along(od))),
+    family = stats::poisson()
+  )
   expect_gt(o$se, summary(po)$coefficients[2L, 2L])
   # and the point estimate is unchanged by the dispersion, which scales
   # only the standard error
-  expect_equal(o$logslope, as.numeric(stats::coef(po)[2L]),
-               tolerance = 1e-7)
+  expect_equal(o$logslope, as.numeric(stats::coef(po)[2L]), tolerance = 1e-7)
 
   flat <- cnttrnd(rep(100L, 8L))
   expect_equal(flat$rateratio, 1, tolerance = 1e-6)

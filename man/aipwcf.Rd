@@ -49,54 +49,58 @@ replicate weights or its strata and primary sampling units.}
 \item{conflvl}{Confidence level (default 0.95).}
 }
 \value{
-A data frame of class \code{rmbl_aipw}: \code{estimand}, \code{estimate},
-\code{se}, \code{lower}, \code{upper}, \code{p_value}; attributes \code{n},
-\code{treated}, \code{psrange}, \code{trimmed} (how many propensities
-were clipped), \code{variance} (\code{"influence"}, or the design's type) and
-\code{propensity} (a data frame of each row's out-of-fold propensity before
-clipping, its treatment and its weight, which \code{plot()} draws).
+A data frame of class \code{rmbl_aipw}: \code{estimand},
+\code{estimate}, \code{se}, \code{lower}, \code{upper}, \code{p_value};
+attributes \code{n}, \code{treated}, \code{psrange}, \code{trimmed} (how
+many propensities were clipped), \code{variance} (\code{"influence"}, or
+the design's type) and \code{propensity} (a data frame of each row's
+out-of-fold propensity before clipping, its treatment and its weight, which
+\code{plot()} draws).
 }
 \description{
-The average effect of a binary treatment (on everyone, or on the treated) from one
-row per person, with the outcome and the propensity fitted by learners on other
-folds, combined in the doubly robust (Neyman-orthogonal) score of Robins, Rotnitzky
-and Zhao; with survey or sampling weights if given.
+The average effect of a binary treatment (on everyone, or on the treated)
+from one row per person, with the outcome and the propensity fitted by
+learners on other folds, combined in the doubly robust (Neyman-orthogonal)
+score of Robins, Rotnitzky and Zhao; with survey or sampling weights if
+given.
 }
 \details{
-With \eqn{\hat\mu_d(X)} the outcome fitted among those with treatment
-\eqn{d} and \eqn{\hat e(X)} the propensity, both out of fold, the score for the
-average effect is
-\deqn{\psi = \hat\mu_1 - \hat\mu_0 + \frac{D (Y - \hat\mu_1)}{\hat e} - \frac{(1 - D)(Y -
-\hat\mu_0)}{1 - \hat e} - \theta,}{psi = mu1 - mu0 + D (Y - mu1)/e - (1 - D)(Y -
-mu0)/(1 - e) - theta,} and for the effect on the treated
-\deqn{\psi = \frac{D (Y - \hat\mu_0) - \hat e (1 - D)(Y - \hat\mu_0)/(1 - \hat e)}{P(D =
-1)} - \frac{D}{P(D = 1)}\theta.}{psi = (D (Y - mu0) - e (1 - D)(Y - mu0)/(1 - e)) /
-P(D = 1) - D theta / P(D = 1).} \eqn{\hat\theta} solves the weighted mean of the
-score at zero; its variance is the weighted mean of \eqn{\psi^2} over \eqn{n}, the
-influence-function variance of Chernozhukov et al. (2018). Propensities are clipped
-to \code{[trim, 1 - trim]}. The estimator is consistent when either the outcome or
-the propensity model is right, and with cross-fitting the learners can be flexible
-(lasso or ridge on a second-order basis, or any learner function).
+With \eqn{\hat\mu_d(X)} the outcome fitted among those with
+treatment \eqn{d} and \eqn{\hat e(X)} the propensity, both out of fold, the
+score for the average effect is \deqn{\psi = \hat\mu_1 - \hat\mu_0 + \frac{D
+(Y - \hat\mu_1)}{\hat e} - \frac{(1 - D)(Y - \hat\mu_0)}{1 - \hat e} -
+\theta,}{psi = mu1 - mu0 + D (Y - mu1)/e - (1 - D)(Y - mu0)/(1 - e) - theta,}
+and for the effect on the treated \deqn{\psi = \frac{D (Y - \hat\mu_0) - \hat
+e (1 - D)(Y - \hat\mu_0)/(1 - \hat e)}{P(D = 1)} - \frac{D}{P(D =
+1)}\theta.}{psi = (D (Y - mu0) - e (1 - D)(Y - mu0)/(1 - e)) / P(D = 1) - D
+theta / P(D = 1).} \eqn{\hat\theta} solves the weighted mean of the score at
+zero; its variance is the weighted mean of \eqn{\psi^2} over \eqn{n}, the
+influence-function variance of Chernozhukov et al. (2018). Propensities are
+clipped to \code{[trim, 1 - trim]}. The estimator is consistent when either
+the outcome or the propensity model is right, and with cross-fitting the
+learners can be flexible (lasso or ridge on a second-order basis, or any
+learner function).
 
-The average effect equals \code{DoubleML}'s interactive regression model given the
-same folds and learners; for the effect on the treated, \code{DoubleML} estimates
-\eqn{P(D = 1)} within each fold and this function in the whole sample, so the two
-differ slightly.
+The average effect equals \code{DoubleML}'s interactive regression model
+given the same folds and learners; for the effect on the treated,
+\code{DoubleML} estimates \eqn{P(D = 1)} within each fold and this function
+in the whole sample, so the two differ slightly.
 
 The propensity learner is logistic regression on the covariates (with
-\code{basis = "poly2"}, on their squares and products too). With \code{w}
-the point estimate is design-weighted, but the standard error treats the weights as
-fixed and the sample as independent.
+\code{basis = "poly2"}, on their squares and products too). With \code{w} the
+point estimate is design-weighted, but the standard error treats the weights
+as fixed and the sample as independent.
 
 For a complex survey, pass the design from \code{\link{svydes}} instead: its
-weight gives the point estimate and its replicate weights (or strata and primary
-sampling units) the standard error, with the variance formula of the replicate
-type, the confidence interval on the design's degrees of freedom. The learners are
-fitted once, without the weights, which enter only the average of the scores, so
-each replicate estimate is the replicate-weighted average of the same cross-fitted
-scores: the same numbers as re-running the function on every replicate weight, from
-one fit instead of one per replicate. Rows with a missing value are left out as a
-domain (their scores count as zero in every replicate), not dropped from the design.
+weight gives the point estimate and its replicate weights (or strata and
+primary sampling units) the standard error, with the variance formula of the
+replicate type, the confidence interval on the design's degrees of freedom.
+The learners are fitted once, without the weights, which enter only the
+average of the scores, so each replicate estimate is the replicate-weighted
+average of the same cross-fitted scores: the same numbers as re-running the
+function on every replicate weight, from one fit instead of one per
+replicate. Rows with a missing value are left out as a domain (their scores
+count as zero in every replicate), not dropped from the design.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

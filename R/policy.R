@@ -29,7 +29,9 @@ kAnyPolicy <- "2.5.29.32.0"
 #' @return One integer, NA when the field is absent.
 #' @noRd
 .rmbl_na_int <- function(x) {
-  if (is.null(x) || !length(x)) return(NA_integer_)
+  if (is.null(x) || !length(x)) {
+    return(NA_integer_)
+  }
   suppressWarnings(as.integer(x)[1L])
 }
 
@@ -51,17 +53,18 @@ kAnyPolicy <- "2.5.29.32.0"
 #' decremented.
 #' @param path The certificate path, leaf first.
 #' @param initial The initial policy set the caller accepts.
-#' @return A list with the valid policy set, the authorities it is constrained to, the explicit-policy and inhibit
-#'   flags, the mappings seen, notes, and `ok`.
+#' @return A list with the valid policy set, the authorities it is constrained
+#'   to, the explicit-policy and inhibit flags, the mappings seen, notes, and
+#'   `ok`.
 #' @noRd
 .rmbl_policy_tree <- function(path, initial = kAnyPolicy) {
-  certs <- rev(path)                       # anchor first
+  certs <- rev(path) # anchor first
   n <- length(certs)
   # the anchor's own policies do not constrain; processing starts with
   # the any-policy at the top
   valid <- kAnyPolicy
   mappings_seen <- list()
-  explicit_after <- NA_integer_            # require_explicit_policy
+  explicit_after <- NA_integer_ # require_explicit_policy
   inhibit_map_after <- NA_integer_
   inhibit_any_after <- NA_integer_
   explicit_required <- FALSE
@@ -75,15 +78,21 @@ kAnyPolicy <- "2.5.29.32.0"
 
     # the counters come into force when they reach zero
     if (!is.na(explicit_after)) {
-      if (explicit_after <= 0L) explicit_required <- TRUE
+      if (explicit_after <= 0L) {
+        explicit_required <- TRUE
+      }
       explicit_after <- explicit_after - 1L
     }
     if (!is.na(inhibit_map_after)) {
-      if (inhibit_map_after <= 0L) mapping_inhibited <- TRUE
+      if (inhibit_map_after <= 0L) {
+        mapping_inhibited <- TRUE
+      }
       inhibit_map_after <- inhibit_map_after - 1L
     }
     if (!is.na(inhibit_any_after)) {
-      if (inhibit_any_after <= 0L) any_inhibited <- TRUE
+      if (inhibit_any_after <= 0L) {
+        any_inhibited <- TRUE
+      }
       inhibit_any_after <- inhibit_any_after - 1L
     }
 
@@ -95,8 +104,7 @@ kAnyPolicy <- "2.5.29.32.0"
         # entirely. That is only fatal where an explicit policy is
         # required, which is the distinction the counters exist for.
         valid <- character(0)
-        notes <- c(notes,
-                   sprintf("[%d] states no certificate policies", i))
+        notes <- c(notes, sprintf("[%d] states no certificate policies", i))
       } else if (kAnyPolicy %in% have && !any_inhibited) {
         # anyPolicy asserts everything still valid
         notes <- c(notes, sprintf("[%d] asserts anyPolicy", i))
@@ -112,20 +120,23 @@ kAnyPolicy <- "2.5.29.32.0"
 
     # policy mapping, unless inhibited: a mapped policy continues under
     # its new name
-    if (!is_last && !is.null(cert$policy_mappings) &&
-        length(cert$policy_mappings)) {
+    if (
+      !is_last && !is.null(cert$policy_mappings) && length(cert$policy_mappings)
+    ) {
       if (mapping_inhibited) {
-        notes <- c(notes,
-                   sprintf("[%d] asserts policy mappings while mapping is inhibited",
-                           i))
+        notes <- c(
+          notes,
+          sprintf("[%d] asserts policy mappings while mapping is inhibited", i)
+        )
         valid <- character(0)
       } else {
         for (m in cert$policy_mappings) {
-          if (identical(m$issuer, kAnyPolicy) ||
-              identical(m$subject, kAnyPolicy)) {
+          if (
+            identical(m$issuer, kAnyPolicy) ||
+              identical(m$subject, kAnyPolicy)
+          ) {
             # mapping to or from anyPolicy is forbidden
-            notes <- c(notes,
-                       sprintf("[%d] maps to or from anyPolicy", i))
+            notes <- c(notes, sprintf("[%d] maps to or from anyPolicy", i))
             valid <- character(0)
             next
           }
@@ -161,16 +172,19 @@ kAnyPolicy <- "2.5.29.32.0"
     intersect(valid, initial)
   }
 
-  list(valid = valid,
-       authorities_constrained_to = wanted,
-       explicit_required = explicit_required,
-       anyinh = any_inhibited,
-       mapinh = mapping_inhibited,
-       mappings = mappings_seen,
-       notes = notes,
-       # A path satisfies the policy requirement when either nothing was
-       # required of it, or something acceptable survived.
-       ok = (!explicit_required && (!length(initial) ||
-                                    kAnyPolicy %in% initial)) ||
-         length(wanted) > 0L)
+  list(
+    valid = valid,
+    authorities_constrained_to = wanted,
+    explicit_required = explicit_required,
+    anyinh = any_inhibited,
+    mapinh = mapping_inhibited,
+    mappings = mappings_seen,
+    notes = notes,
+    # A path satisfies the policy requirement when either nothing was
+    # required of it, or something acceptable survived.
+    ok = (!explicit_required &&
+      (!length(initial) ||
+        kAnyPolicy %in% initial)) ||
+      length(wanted) > 0L
+  )
 }

@@ -38,8 +38,10 @@
 #' s[s$count, c("name", "description")]
 #'
 #' # an empty hand-coding sheet with one column per field
-#' sheet <- as.data.frame(setNames(replicate(nrow(s), character(0), simplify = FALSE),
-#'                                  s$name))
+#' sheet <- as.data.frame(setNames(
+#'   replicate(nrow(s), character(0), simplify = FALSE),
+#'   s$name
+#' ))
 #' ncol(sheet)
 #' @export
 siusch <- function() {
@@ -61,8 +63,8 @@ siusch <- function() {
 #' collapsed while newlines are kept. Nothing is fetched and nothing is
 #' written.
 #'
-#' Errors: \code{html} must be a single non-NA character string (\dQuote{html must
-#' be a single non-NA character string}), and input over 2 MiB is refused
+#' Errors: \code{html} must be a single non-NA character string (\dQuote{html
+#' must be a single non-NA character string}), and input over 2 MiB is refused
 #' (\dQuote{html is larger than 2 MiB: not a report page}).
 #'
 #' @param html A length-1 character vector holding the raw HTML of one
@@ -78,7 +80,11 @@ siusch <- function() {
 #' siutxt("<p>Number of SIU Investigators assigned: 3</p>")
 #'
 #' # the bundled synthetic report, as text
-#' f <- system.file("extdata", "siu_synthetic_report.html", package = "rmoriebricklayer")
+#' f <- system.file(
+#'   "extdata",
+#'   "siu_synthetic_report.html",
+#'   package = "rmoriebricklayer"
+#' )
 #' txt <- siutxt(paste(readLines(f), collapse = "\n"))
 #' cat(substr(txt, 1, 200))
 #'
@@ -142,14 +148,24 @@ siutxt <- function(html) {
 #'   row per input and one character column per field (\code{NA} where a
 #'   field is absent from a row).
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' f <- siuprs(system.file("extdata",
-#'                                       "siu_synthetic_report.html",
-#'                                       package = "rmoriebricklayer"))
+#' f <- siuprs(system.file(
+#'   "extdata",
+#'   "siu_synthetic_report.html",
+#'   package = "rmoriebricklayer"
+#' ))
 #' f[["number_of_subject_officials"]]
-#' f[c("police_service", "date_of_incident_iso", "date_of_director_decision_iso")]
+#' f[c(
+#'   "police_service",
+#'   "date_of_incident_iso",
+#'   "date_of_director_decision_iso"
+#' )]
 #'
 #' # several reports at once give a data frame, one row each
-#' path <- system.file("extdata", "siu_synthetic_report.html", package = "rmoriebricklayer")
+#' path <- system.file(
+#'   "extdata",
+#'   "siu_synthetic_report.html",
+#'   package = "rmoriebricklayer"
+#' )
 #' html <- paste(readLines(path), collapse = "\n")
 #' df <- siuprs(c(html, "<p>not a report</p>"))
 #' df[, c("_language", "police_service", "number_of_witness_officials")]
@@ -160,22 +176,47 @@ siutxt <- function(html) {
 siuprs <- function(html) {
   .rmbl_no_fn(html = html)
   if (!is.character(html) || anyNA(html) || !length(html)) {
-    stop("`html` must be report HTML (or the path of a saved report), not ",
-         if (!length(html)) "an empty vector" else if (anyNA(html)) "NA" else class(html)[1L], call. = FALSE)
+    stop(
+      "`html` must be report HTML (or the path of a saved report), not ",
+      if (!length(html)) {
+        "an empty vector"
+      } else if (anyNA(html)) {
+        "NA"
+      } else {
+        class(html)[1L]
+      },
+      call. = FALSE
+    )
   }
   if (length(html) > 1L) {
     # several reports: one row each
     rows <- lapply(html, siuprs)
     cols <- unique(unlist(lapply(rows, names)))
-    out <- lapply(cols, function(cn) vapply(rows, function(r) if (cn %in% names(r)) r[[cn]] else NA_character_, ""))
+    out <- lapply(cols, function(cn) {
+      vapply(
+        rows,
+        function(r) if (cn %in% names(r)) r[[cn]] else NA_character_,
+        ""
+      )
+    })
     names(out) <- cols
     return(as.data.frame(out, stringsAsFactors = FALSE, check.names = FALSE))
   }
-  # a path is short: file.exists() on a 4096-byte "path" warns (0.5.8 diff review)
-  if (!grepl("<", html, fixed = TRUE) && nchar(html, type = "bytes") < 1000L && file.exists(html)) {
-    html <- paste(readLines(html, warn = FALSE, encoding = "UTF-8"),
-                  collapse = "\n")
-  } else if (!grepl("[<\n]", html) && grepl("\\.html?$|[/\\\\]", html, ignore.case = TRUE)) {
+  # a path is short: file.exists() on a 4096-byte "path" warns (0.5.8 diff
+  # review)
+  if (
+    !grepl("<", html, fixed = TRUE) &&
+      nchar(html, type = "bytes") < 1000L &&
+      file.exists(html)
+  ) {
+    html <- paste(
+      readLines(html, warn = FALSE, encoding = "UTF-8"),
+      collapse = "\n"
+    )
+  } else if (
+    !grepl("[<\n]", html) &&
+      grepl("\\.html?$|[/\\\\]", html, ignore.case = TRUE)
+  ) {
     # a mistyped path is not an empty report
     stop("`html`: no such file: ", html, call. = FALSE)
   }
@@ -222,17 +263,22 @@ siuprs <- function(html) {
 #' fr <- siufprs(648, lang = "fr")
 #' @export
 siufprs <- function(drid, lang = c("en", "fr")) {
-  lang <- .rmbl_arg(lang)  # argument errors, before any network
+  lang <- .rmbl_arg(lang) # argument errors, before any network
   drid <- .rmbl_drid(drid)
   dest <- tempfile(fileext = ".html")
   on.exit(unlink(dest), add = TRUE)
-  ok <- tryCatch(siufetch(drid, dest, lang = lang),
-                 error = function(e) {
-                   message("bricklayer: could not fetch SIU report ", drid,
-                           ": ", conditionMessage(e))
-                   NULL
-                 })
-  if (is.null(ok) || !file.exists(dest)) return(NULL)
+  ok <- tryCatch(siufetch(drid, dest, lang = lang), error = function(e) {
+    message(
+      "bricklayer: could not fetch SIU report ",
+      drid,
+      ": ",
+      conditionMessage(e)
+    )
+    NULL
+  })
+  if (is.null(ok) || !file.exists(dest)) {
+    return(NULL)
+  }
   siuprs(dest)
 }
 
@@ -251,8 +297,8 @@ siufprs <- function(drid, lang = c("en", "fr")) {
 #' through. A date that does not exist (\code{"February 30, 2023"}) or text
 #' that is not a date gives \code{""}. \code{NA} stays \code{NA}.
 #'
-#' Error: \code{x} that is neither character nor all \code{NA} (\dQuote{x must be
-#' a character vector of dates}).
+#' Error: \code{x} that is neither character nor all \code{NA} (\dQuote{x must
+#' be a character vector of dates}).
 #'
 #' @param x A character vector of human-readable dates. A vector that is
 #'   all \code{NA} (of any type) is accepted.
@@ -271,10 +317,18 @@ siufprs <- function(drid, lang = c("en", "fr")) {
 #' @export
 siudate <- function(x) {
   .rmbl_no_fn(x = x)
-  if (!is.character(x) && !all(is.na(x))) stop("`x` must be a character vector of dates", call. = FALSE)
+  if (!is.character(x) && !all(is.na(x))) {
+    stop("`x` must be a character vector of dates", call. = FALSE)
+  }
   x <- as.character(x)
-  vapply(x, function(v) if (is.na(v)) NA_character_ else .Call(C_rmbl_siu_to_iso_date, v), character(1),
-         USE.NAMES = FALSE)
+  vapply(
+    x,
+    function(v) {
+      if (is.na(v)) NA_character_ else .Call(C_rmbl_siu_to_iso_date, v)
+    },
+    character(1),
+    USE.NAMES = FALSE
+  )
 }
 
 #' Resolve the subject-official count from SIU report text
@@ -285,25 +339,20 @@ siudate <- function(x) {
 #' is unsure, so that the number is reproducible and its evidence can be
 #' checked.
 #'
-#' @details
-#' The standard SIU privacy paragraph and the witness-officer glossary note
-#' are stripped first (both mention \dQuote{subject officer} without naming one).
-#' The rules then run most-specific first and the first that applies wins:
-#' \enumerate{
-#'   \item the roster under the \dQuote{Subject Officials}/\dQuote{Subject Officers}
-#'     heading: the larger of the highest \code{SO #N} ordinal and the number
-#'     of entries;
-#'   \item the highest \code{SO #N} ordinal in the whole document, trusted
-#'     only when \code{SO #1} is also present;
-#'   \item a spelled-out or numeric plural (\dQuote{two subject officials});
-#'   \item a singular subject official present (1);
-#'   \item an explicit statement that there was no subject official, or
-#'     witness officials listed and no subject official anywhere (0, a real
-#'     answer);
-#'   \item otherwise unresolved (\code{NA}).
-#' }
-#' French reports use the same rules in their vocabulary (the subject
-#' official is tagged \dQuote{AI no 1}, the witness official \dQuote{AT no 1}).
+#' @details The standard SIU privacy paragraph and the witness-officer glossary
+#' note are stripped first (both mention \dQuote{subject officer} without naming
+#' one). The rules then run most-specific first and the first that applies wins:
+#' \enumerate{ \item the roster under the \dQuote{Subject
+#' Officials}/\dQuote{Subject Officers} heading: the larger of the highest
+#' \code{SO #N} ordinal and the number of entries; \item the highest \code{SO
+#' #N} ordinal in the whole document, trusted only when \code{SO #1} is also
+#' present; \item a spelled-out or numeric plural (\dQuote{two subject
+#' officials}); \item a singular subject official present (1); \item an explicit
+#' statement that there was no subject official, or witness officials listed and
+#' no subject official anywhere (0, a real answer); \item otherwise unresolved
+#' (\code{NA}). } French reports use the same rules in their vocabulary (the
+#' subject official is tagged \dQuote{AI no 1}, the witness official \dQuote{AT
+#' no 1}).
 #'
 #' This function is the pure rule set. For reports that already have a
 #' panel-reviewed count, prefer that verified value; use these rules for
@@ -351,9 +400,18 @@ siuso <- function(text) {
   n <- attr(x, "split_lines", exact = TRUE)
   if (!is.null(n)) {
     attr(x, "split_lines") <- NULL
-    warning(sprintf(paste("%d line%s longer than 2000 characters %s split for extraction;",
-                          "a field spanning a split may be incomplete"),
-                    n, if (n == 1L) "" else "s", if (n == 1L) "was" else "were"), call. = FALSE)
+    warning(
+      sprintf(
+        paste(
+          "%d line%s longer than 2000 characters %s split for extraction;",
+          "a field spanning a split may be incomplete"
+        ),
+        n,
+        if (n == 1L) "" else "s",
+        if (n == 1L) "was" else "were"
+      ),
+      call. = FALSE
+    )
   }
   x
 }

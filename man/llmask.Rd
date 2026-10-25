@@ -143,7 +143,11 @@ try(llmask("What is a capsule?", route = "anthropic"))
 try(llmask("What is a capsule?", route = "ollama", docs = FALSE))
 
 for (v in names(old)) {
-  if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
+  if (is.na(old[[v]])) {
+    Sys.unsetenv(v)
+  } else {
+    do.call(Sys.setenv, as.list(old[v]))
+  }
 }
 \dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

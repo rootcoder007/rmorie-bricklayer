@@ -14,11 +14,10 @@ three). There is no default.}
 \code{\link[=hqckg]{hqckg()}}.}
 }
 \value{
-A named integer vector of byte lengths: \code{public} (the encapsulation key),
-\code{secret} (the decapsulation key), \code{ciphertext}, \code{seed} (key generation),
-\code{message} and \code{salt} (encapsulation randomness) and
-\code{shared} (the shared secret),
-named as \code{\link[=hqckg]{hqckg()}} and
+A named integer vector of byte lengths: \code{public} (the encapsulation
+key), \code{secret} (the decapsulation key), \code{ciphertext}, \code{seed} (key
+generation), \code{message} and \code{salt} (encapsulation randomness) and \code{shared}
+(the shared secret), named as \code{\link[=hqckg]{hqckg()}} and
 \code{\link[=hqcencap]{hqcencap()}} name their results.
 }
 \description{

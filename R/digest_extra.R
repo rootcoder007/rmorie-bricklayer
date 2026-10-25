@@ -53,11 +53,15 @@
 #' @export
 csha512 <- function(x) {
   .rmbl_no_fn(x = x)
-  if (is.raw(x)) return(.Call(C_rmbl_sha512, x))
+  if (is.raw(x)) {
+    return(.Call(C_rmbl_sha512, x))
+  }
   x <- as.character(x)
   out <- rep(NA_character_, length(x))
   ok <- !is.na(x)
-  if (any(ok)) out[ok] <- .Call(C_rmbl_sha512, x[ok])
+  if (any(ok)) {
+    out[ok] <- .Call(C_rmbl_sha512, x[ok])
+  }
   out
 }
 
@@ -107,11 +111,15 @@ csha512 <- function(x) {
 #' @export
 ccrc32 <- function(x) {
   .rmbl_no_fn(x = x)
-  if (is.raw(x)) return(.Call(C_rmbl_crc32, x))
+  if (is.raw(x)) {
+    return(.Call(C_rmbl_crc32, x))
+  }
   x <- as.character(x)
   out <- rep(NA_real_, length(x))
   ok <- !is.na(x)
-  if (any(ok)) out[ok] <- .Call(C_rmbl_crc32, x[ok])
+  if (any(ok)) {
+    out[ok] <- .Call(C_rmbl_crc32, x[ok])
+  }
   out
 }
 
@@ -191,15 +199,19 @@ chmac <- function(key, msg) {
   if (!is.raw(key)) {
     key <- as.character(key)
     if (length(key) != 1L || is.na(key)) {
-      stop("chmac: `key` must be a length-1 character vector or a raw vector",
-           call. = FALSE)
+      stop(
+        "chmac: `key` must be a length-1 character vector or a raw vector",
+        call. = FALSE
+      )
     }
   }
   if (!is.raw(msg)) {
     msg <- as.character(msg)
     if (length(msg) != 1L || is.na(msg)) {
-      stop("chmac: `msg` must be a length-1 character vector or a raw vector",
-           call. = FALSE)
+      stop(
+        "chmac: `msg` must be a length-1 character vector or a raw vector",
+        call. = FALSE
+      )
     }
   }
   .Call(C_rmbl_hmac_sha256, key, msg)
@@ -212,8 +224,7 @@ cdgsteq <- function(a, b) {
   a <- as.character(a)
   b <- as.character(b)
   if (length(a) != 1L || length(b) != 1L || is.na(a) || is.na(b)) {
-    stop("`a` and `b` must each be a length-1 character vector",
-         call. = FALSE)
+    stop("`a` and `b` must each be a length-1 character vector", call. = FALSE)
   }
   .Call(C_rmbl_digest_equal, a, b)
 }
@@ -266,12 +277,11 @@ cdgsteq <- function(a, b) {
 #' [cdgsteq()]
 #' (constant time, case-sensitive).
 #'
-#' Errors: \code{chunks} that is not character, raw or a list of raw vectors
-#' and single strings, or that contains \code{NA}; \code{index} outside
-#' \code{1..length(chunks)}; a \code{scheme} other than 1 or 2; a \code{leaf} that is
-#' more than one chunk; a
-#' \code{proof} without \code{sibling} and \code{side}, or with the two of
-#' different lengths.
+#' Errors: \code{chunks} that is not character, raw or a list of raw vectors and
+#' single strings, or that contains \code{NA}; \code{index} outside
+#' \code{1..length(chunks)}; a \code{scheme} other than 1 or 2; a \code{leaf}
+#' that is more than one chunk; a \code{proof} without \code{sibling} and
+#' \code{side}, or with the two of different lengths.
 #'
 #' @param chunks Chunk contents, in order: a character vector (one chunk per
 #'   element), a single raw vector (one chunk), or a list of raw vectors and
@@ -339,7 +349,9 @@ cdgsteq <- function(a, b) {
 mrkroot <- function(chunks, scheme = 2L) {
   chunks <- .rmbl_chunk_bytes(chunks)
   scheme <- .rmbl_merkle_scheme(scheme)
-  if (length(chunks) == 0L) return(NA_character_)
+  if (length(chunks) == 0L) {
+    return(NA_character_)
+  }
   .Call(C_rmbl_merkle_root, chunks, scheme)
 }
 
@@ -348,7 +360,9 @@ mrkroot <- function(chunks, scheme = 2L) {
 mrklvs <- function(chunks, scheme = 2L) {
   chunks <- .rmbl_chunk_bytes(chunks)
   scheme <- .rmbl_merkle_scheme(scheme)
-  if (length(chunks) == 0L) return(character(0))
+  if (length(chunks) == 0L) {
+    return(character(0))
+  }
   .Call(C_rmbl_merkle_leaves, chunks, scheme)
 }
 
@@ -358,8 +372,9 @@ mrkprf <- function(chunks, index, scheme = 2L) {
   chunks <- .rmbl_chunk_bytes(chunks)
   scheme <- .rmbl_merkle_scheme(scheme)
   index <- .rmbl_num(index, "index", integer = TRUE)
-  if (length(index) != 1L || is.na(index) || index < 1L ||
-      index > length(chunks)) {
+  if (
+    length(index) != 1L || is.na(index) || index < 1L || index > length(chunks)
+  ) {
     stop("`index` must be between 1 and the number of chunks", call. = FALSE)
   }
   out <- .Call(C_rmbl_merkle_proof, chunks, index, scheme)
@@ -381,20 +396,35 @@ mrkvrf <- function(leaf, proof, root, scheme = NULL) {
   sib <- as.character(proof$sibling)
   side <- as.character(proof$side)
   if (length(sib) != length(side)) {
-    stop("`proof` is malformed: sibling and side differ in length",
-         call. = FALSE)
+    stop(
+      "`proof` is malformed: sibling and side differ in length",
+      call. = FALSE
+    )
   }
-  recorded <- if (is.null(proof[["scheme"]])) NULL else .rmbl_merkle_scheme(proof[["scheme"]])
+  recorded <- if (is.null(proof[["scheme"]])) {
+    NULL
+  } else {
+    .rmbl_merkle_scheme(proof[["scheme"]])
+  }
   if (!is.null(scheme)) {
     scheme <- .rmbl_merkle_scheme(scheme)
     # the caller requires a scheme: a proof built under another one, or
     # with none recorded (0.5.12 and earlier), does not meet it
-    if (is.null(recorded) && scheme == 2L) return(FALSE)
+    if (is.null(recorded) && scheme == 2L) {
+      return(FALSE)
+    }
     if (!is.null(recorded) && recorded != scheme) return(FALSE)
   } else if (is.null(recorded)) {
-    warning(paste0("this Merkle proof records no scheme: it was made by rmoriebricklayer 0.5.12 or ",
-                   "earlier and is checked under the weaker scheme 1, which also accepts an interior ",
-                   "node as a leaf; pass scheme = 2 to refuse it"), call. = FALSE)
+    warning(
+      paste0(
+        "this Merkle proof records no scheme: it was made by ",
+        "rmoriebricklayer 0.5.12 or ",
+        "earlier and is checked under the weaker scheme 1, which also ",
+        "accepts an interior ",
+        "node as a leaf; pass scheme = 2 to refuse it"
+      ),
+      call. = FALSE
+    )
     scheme <- 1L
   } else {
     scheme <- recorded
@@ -439,30 +469,45 @@ mrkvrf <- function(leaf, proof, root, scheme = NULL) {
 #' Byte sequences for character input are unchanged, so a root recorded by
 #' an earlier version still verifies: charToRaw() yields exactly the bytes
 #' CHAR() gave the C layer.
-#' @param chunks A character vector, a raw vector, or a list of raw vectors and single strings.
+#' @param chunks A character vector, a raw vector, or a list of raw vectors and
+#'   single strings.
 #' @return A list of raw vectors, one per chunk.
 #' @noRd
 .rmbl_chunk_bytes <- function(chunks) {
-  if (is.raw(chunks)) return(list(chunks))
+  if (is.raw(chunks)) {
+    return(list(chunks))
+  }
   if (is.character(chunks)) {
-    if (anyNA(chunks)) stop("`chunks` must not contain NA", call. = FALSE)
+    if (anyNA(chunks)) {
+      stop("`chunks` must not contain NA", call. = FALSE)
+    }
     return(lapply(chunks, charToRaw))
   }
   if (is.list(chunks)) {
     return(lapply(seq_along(chunks), function(i) {
       e <- chunks[[i]]
-      if (is.raw(e)) return(e)
+      if (is.raw(e)) {
+        return(e)
+      }
       if (is.character(e) && length(e) == 1L && !is.na(e)) {
         return(charToRaw(e))
       }
-      stop(sprintf(
-        "chunk %d must be a raw vector or a length-1 string", i),
-        call. = FALSE)
+      stop(
+        sprintf(
+          "chunk %d must be a raw vector or a length-1 string",
+          i
+        ),
+        call. = FALSE
+      )
     }))
   }
-  if (length(chunks) == 0L) return(list())
-  stop("`chunks` must be a character vector, a raw vector, or a list of these",
-       call. = FALSE)
+  if (length(chunks) == 0L) {
+    return(list())
+  }
+  stop(
+    "`chunks` must be a character vector, a raw vector, or a list of these",
+    call. = FALSE
+  )
 }
 
 #' Decodes a hex string to raw bytes.
@@ -476,10 +521,16 @@ mrkvrf <- function(leaf, proof, root, scheme = NULL) {
 .rmbl_hex_to_raw <- function(hex) {
   hex <- as.character(hex)[1L]
   n <- nchar(hex)
-  if (n %% 2L != 0L) stop("hex string has odd length", call. = FALSE)
-  if (n == 0L) return(raw(0))
-  as.raw(strtoi(substring(hex, seq(1L, n - 1L, by = 2L),
-                          seq(2L, n, by = 2L)), base = 16L))
+  if (n %% 2L != 0L) {
+    stop("hex string has odd length", call. = FALSE)
+  }
+  if (n == 0L) {
+    return(raw(0))
+  }
+  as.raw(strtoi(
+    substring(hex, seq(1L, n - 1L, by = 2L), seq(2L, n, by = 2L)),
+    base = 16L
+  ))
 }
 
 #' Split a file into fixed-size chunks
@@ -542,15 +593,25 @@ mrkvrf <- function(leaf, proof, root, scheme = NULL) {
 #' @export
 chnkfile <- function(path, chnkbytes = 1048576L) {
   path <- .rmbl_file1(path, "path")
-  chnkbytes <- .rmbl_scalar(chnkbytes, "chnkbytes", 1, .Machine$integer.max, integer = TRUE)
+  chnkbytes <- .rmbl_scalar(
+    chnkbytes,
+    "chnkbytes",
+    1,
+    .Machine$integer.max,
+    integer = TRUE
+  )
   size <- file.info(path)$size
-  if (is.na(size) || size == 0) return(list())
+  if (is.na(size) || size == 0) {
+    return(list())
+  }
   con <- file(path, "rb")
   on.exit(close(con), add = TRUE)
   out <- list()
   repeat {
     bytes <- readBin(con, "raw", n = chnkbytes)
-    if (length(bytes) == 0L) break
+    if (length(bytes) == 0L) {
+      break
+    }
     out[[length(out) + 1L]] <- bytes
     if (length(bytes) < chnkbytes) break
   }
@@ -619,16 +680,26 @@ crc32file <- function(path, blkbytes = 1048576L) {
 #' @noRd
 .rmbl_read_all_raw <- function(path, block_bytes = 1048576L) {
   path <- .rmbl_file1(path, "path")
-  block_bytes <- .rmbl_scalar(block_bytes, "blkbytes", 1, .Machine$integer.max, integer = TRUE)
+  block_bytes <- .rmbl_scalar(
+    block_bytes,
+    "blkbytes",
+    1,
+    .Machine$integer.max,
+    integer = TRUE
+  )
   con <- file(path, "rb")
   on.exit(close(con), add = TRUE)
   parts <- list()
   repeat {
     bytes <- readBin(con, "raw", n = block_bytes)
-    if (length(bytes) == 0L) break
+    if (length(bytes) == 0L) {
+      break
+    }
     parts[[length(parts) + 1L]] <- bytes
     if (length(bytes) < block_bytes) break
   }
-  if (length(parts) == 0L) return(raw(0))
+  if (length(parts) == 0L) {
+    return(raw(0))
+  }
   do.call(c, parts)
 }

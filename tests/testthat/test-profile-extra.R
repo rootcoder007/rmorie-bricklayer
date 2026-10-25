@@ -7,7 +7,11 @@ test_that("misspat handles a one-row frame", {
 })
 
 test_that("a negative correlation prints its bar to the left", {
-  d <- data.frame(x = 1:10, y = -(1:10) + c(0.1, 0, 0.2, 0, 0.1, 0, 0.3, 0, 0.1, 0), z = (1:10)^2)
+  d <- data.frame(
+    x = 1:10,
+    y = -(1:10) + c(0.1, 0, 0.2, 0, 0.1, 0, 0.3, 0, 0.1, 0),
+    z = (1:10)^2
+  )
   out <- capture.output(print(topcors(d, n = 3L)))
   expect_true(any(grepl("#|", out, fixed = TRUE)))
   expect_true(any(grepl("|#", out, fixed = TRUE)))

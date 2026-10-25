@@ -18,9 +18,9 @@ bldl(
 )
 }
 \arguments{
-\item{url}{The URL, \code{https}. The option \code{rmoriebricklayer.allowhttp}
-set to \code{TRUE} also allows plain \code{http}. A loopback,
-link-local or private address is refused.}
+\item{url}{The URL, \code{https}. The option
+\code{rmoriebricklayer.allowhttp} set to \code{TRUE} also allows plain
+\code{http}. A loopback, link-local or private address is refused.}
 
 \item{dest}{Character string: the path to write.}
 
@@ -64,33 +64,32 @@ fetch a source file and you want a visible, safe transfer.
 }
 \details{
 Progress is an animated bar, redrawn in place, when the console can
-redraw a line: a terminal, or the RStudio, Positron, R.app or RKWard
-console (never a knitr or Jupyter notebook; the options
+redraw a line: a terminal, or the RStudio, Positron, R.app or RKWard console
+(never a knitr or Jupyter notebook; the options
 \code{rmoriebricklayer.dynamic} or \code{cli.dynamic}, or the environment
 variable \code{R_CLI_DYNAMIC}, override the choice). In the RStudio or
-Positron console the bar is drawn on stdout, elsewhere on stderr.
-Otherwise milestone lines go to stderr (every 10 percent, or every 50 MB
-when the size is unknown), and nothing is shown when quiet. By default output is shown
-in an interactive session or when \code{options(morie.progress = TRUE)}
-is set, and suppressed by \code{options(morie.quiet = TRUE)}.
+Positron console the bar is drawn on stdout, elsewhere on stderr. Otherwise
+milestone lines go to stderr (every 10 percent, or every 50 MB when the size
+is unknown), and nothing is shown when quiet. By default output is shown in
+an interactive session or when \code{options(morie.progress = TRUE)} is set,
+and suppressed by \code{options(morie.quiet = TRUE)}.
 
-Network: the transfer runs in the package's compiled HTTP client. The
-URL is checked, its host resolved and pinned, and every redirect is
-checked again (no switch from https to http; credentials are not passed
-to another host). Plain \code{http://} is allowed only when
-\code{rmoriebricklayer.allowhttp}, an option, is \code{TRUE}. A transfer slower than
-64 bytes a second for 30 seconds is abandoned. A \code{file://} URL is
-copied locally through the same progress display, only with
-\code{allowfile = TRUE}.
+Network: the transfer runs in the package's compiled HTTP client. The URL is
+checked, its host resolved and pinned, and every redirect is checked again
+(no switch from https to http; credentials are not passed to another host).
+Plain \code{http://} is allowed only when \code{rmoriebricklayer.allowhttp},
+an option, is \code{TRUE}. A transfer slower than 64 bytes a second for 30
+seconds is abandoned. A \code{file://} URL is copied locally through the same
+progress display, only with \code{allowfile = TRUE}.
 
-Errors: a URL that is not https (or allowed http/file), or that points at
-a loopback, link-local or private address; \code{headers} not a named
-character vector; \code{tmout} below 1 or above 2147483647;
-\code{maxbytes} below 1; a network failure; an HTTP status of 400 or
-more; a body larger than \code{maxbytes}. \code{dest} is overwritten.
-A server busy for a moment (HTTP 429, 500, 502, 503 or 504) is asked again up to
-three times, after the wait its \code{Retry-After} header asks for (at most a
-minute) or else 1, 2 and 4 seconds.
+Errors: a URL that is not https (or allowed http/file), or that points at a
+loopback, link-local or private address; \code{headers} not a named character
+vector; \code{tmout} below 1 or above 2147483647; \code{maxbytes} below 1; a
+network failure; an HTTP status of 400 or more; a body larger than
+\code{maxbytes}. \code{dest} is overwritten. A server busy for a moment (HTTP
+429, 500, 502, 503 or 504) is asked again up to three times, after the wait
+its \code{Retry-After} header asks for (at most a minute) or else 1, 2 and 4
+seconds.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

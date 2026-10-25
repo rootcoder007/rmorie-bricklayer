@@ -1,7 +1,10 @@
 # The capsule fixture, shared by test-capsule.R and test-coverage-0_5_9.R.
 
 make_test_capsule <- function() {
-  dir <- file.path(tempdir(), paste0("capsule-", as.integer(stats::runif(1, 1, 1e8))))
+  dir <- file.path(
+    tempdir(),
+    paste0("capsule-", as.integer(stats::runif(1, 1, 1e8)))
+  )
   dir.create(dir, showWarnings = FALSE)
   df <- data.frame(id = 1:6, year = rep(2024:2025, 3), value = 1:6 / 2)
   utils::write.csv(df, file.path(dir, "data.csv"), row.names = FALSE)
@@ -25,8 +28,12 @@ make_test_capsule <- function() {
       structural_invariants = list(min_data_rows = 3)
     )
   )
-  jsonlite::write_json(prov, file.path(dir, "data_provenance.json"),
-                       auto_unbox = TRUE, digits = NA)
+  jsonlite::write_json(
+    prov,
+    file.path(dir, "data_provenance.json"),
+    auto_unbox = TRUE,
+    digits = NA
+  )
   m <- mkmnf(list(study = "test"), env = FALSE)
   capture.output({
     m <- recrd(m, "mean_value", obs = mean(df$value), expd = 1.75)

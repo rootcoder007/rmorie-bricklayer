@@ -7,27 +7,27 @@
 arcget(x, dest, sha256 = NULL, at = NULL, tmout = 600L)
 }
 \arguments{
-\item{x}{A capture id (\code{"20261021133005-1a2b3c4d"}, from \code{\link{arcfind}} or a
-capture page) or a web address; for an address, the capture closest to \code{at}
-(default: the latest) is taken.}
+\item{x}{A capture id (\code{"20261021133005-1a2b3c4d"}, from
+\code{\link{arcfind}} or a capture page) or a web address; for an address,
+the capture closest to \code{at} (default: the latest) is taken.}
 
 \item{dest}{The file to write.}
 
 \item{sha256}{Optional SHA-256 the bytes must have.}
 
-\item{at}{For an address, the time to be closest to, \code{"YYYY..."} up to 14 digits
-(UTC).}
+\item{at}{For an address, the time to be closest to, \code{"YYYY..."} up to
+14 digits (UTC).}
 
 \item{tmout}{Seconds allowed for the download.}
 }
 \value{
-\code{dest}, invisibly, with attributes \code{capture_id}, \code{url},
-\code{captured} and \code{sha256}.
+\code{dest}, invisibly, with attributes \code{capture_id},
+\code{url}, \code{captured} and \code{sha256}.
 }
 \description{
-Downloads a capture's bytes and checks their SHA-256: against the archive's record, and
-against \code{sha256} when you give one (the pin from your analysis). A file that does
-not match is deleted.
+Downloads a capture's bytes and checks their SHA-256: against the archive's
+record, and against \code{sha256} when you give one (the pin from your
+analysis). A file that does not match is deleted.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
@@ -37,6 +37,6 @@ attr(f, "sha256")
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link{arcfind}}, \code{\link{fetchvrf}} (which falls back to the archive
-on its own).
+\code{\link{arcfind}}, \code{\link{fetchvrf}} (which falls back to
+the archive on its own).
 }

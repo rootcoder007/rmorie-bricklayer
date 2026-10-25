@@ -41,13 +41,12 @@
 #' encoding would cover only the objects JSON can hold); the rest of a
 #' version-2 stream depends only on the object.
 #'
-#' Entries written by 0.5.12 and earlier carry no \code{scheme}. Their
-#' digest is the SHA-256 of the string \code{"<prev>:<payload>"} (the label not covered,
+#' Entries written by 0.5.12 and earlier carry no \code{scheme}. Their digest is
+#' the SHA-256 of the string \code{"<prev>:<payload>"} (the label not covered,
 #' and the payload of a non-string entry taken over serialized bytes that
-#' include the writer's R version). \code{chnvrf()} and
-#' \code{chnseal()} still accept them under those rules, with a warning
-#' that they were sealed with the weaker scheme. Appending to such a chain
-#' adds scheme-2 entries.
+#' include the writer's R version). \code{chnvrf()} and \code{chnseal()} still
+#' accept them under those rules, with a warning that they were sealed with the
+#' weaker scheme. Appending to such a chain adds scheme-2 entries.
 #'
 #' \code{chnvrf()} walks the chain from the start: an entry fails when
 #' its \code{prev} is not the previous link, its \code{scheme} is neither 2
@@ -103,8 +102,10 @@
 #' [mrkroot()] for pinning the contents of
 #' one capsule rather than a history.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-#' # one-time index record out of your configuration directory; leave the default in use
+#' # keep this example's
+#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+#' # one-time index record out of your configuration directory; leave the
+#' # default in use
 #' ch <- chnnew()
 #' ch <- chnapp(ch, "manifest for run 1", label = "run-1")
 #' ch <- chnapp(ch, "manifest for run 2", label = "run-2")
@@ -149,8 +150,7 @@
 #' @name chn
 #' @export
 chnnew <- function() {
-  out <- list(entries = list(),
-              genesis = paste(rep("0", 64L), collapse = ""))
+  out <- list(entries = list(), genesis = paste(rep("0", 64L), collapse = ""))
   class(out) <- c("bricklayer_chain", "list")
   out
 }
@@ -185,7 +185,9 @@ chnhead <- function(chain) {
     stop("chnhead: `chain` must come from chnnew()", call. = FALSE)
   }
   n <- length(chain$entries)
-  if (n == 0L) return(chain$genesis)
+  if (n == 0L) {
+    return(chain$genesis)
+  }
   chain$entries[[n]]$digest
 }
 
@@ -193,11 +195,15 @@ chnhead <- function(chain) {
 #' @export
 chnseal <- function(chain) {
   chk <- .rmbl_chain_check(chain, warn = TRUE)
-  if (!isTRUE(chk$valid)) return(NA_character_)
+  if (!isTRUE(chk$valid)) {
+    return(NA_character_)
+  }
   # Fold the LENGTH in as well as every link digest: without the count, a
   # truncated chain would seal to a prefix of the same material.
-  parts <- c(as.character(chk$n),
-             vapply(chain$entries, function(e) e$digest, character(1)))
+  parts <- c(
+    as.character(chk$n),
+    vapply(chain$entries, function(e) e$digest, character(1))
+  )
   csha256(paste(parts, collapse = "|"))
 }
 
@@ -213,7 +219,8 @@ chnvrf <- function(chain) {
 #' whether entries sealed under scheme 1 (0.5.12 and earlier) are reported.
 #' @param chain A chain made by chnnew().
 #' @param warn Whether entries sealed under scheme 1 are reported in a warning.
-#' @return A `bricklayer_chain_check` list: `valid`, `n`, `broken_at` (NA when none) and `head`.
+#' @return A `bricklayer_chain_check` list: `valid`, `n`, `broken_at`
+#'   (NA when none) and `head`.
 #' @noRd
 .rmbl_chain_check <- function(chain, warn) {
   if (!inherits(chain, "bricklayer_chain")) {
@@ -226,10 +233,19 @@ chnvrf <- function(chain) {
   for (i in seq_len(n)) {
     e <- chain$entries[[i]]
     sc <- e[["scheme"]]
-    if (is.null(sc)) legacy <- c(legacy, i)
-    ok <- is.character(e$prev) && identical(e$prev, prev) && is.character(e$payload) &&
-      length(e$payload) == 1L && (is.null(sc) || (is.numeric(sc) && length(sc) == 1L && isTRUE(sc == 2))) &&
-      cdgsteq(e$digest, .rmbl_link_digest(prev, e$payload, e$label, if (is.null(sc)) 1L else 2L))
+    if (is.null(sc)) {
+      legacy <- c(legacy, i)
+    }
+    ok <- is.character(e$prev) &&
+      identical(e$prev, prev) &&
+      is.character(e$payload) &&
+      length(e$payload) == 1L &&
+      (is.null(sc) ||
+        (is.numeric(sc) && length(sc) == 1L && isTRUE(sc == 2))) &&
+      cdgsteq(
+        e$digest,
+        .rmbl_link_digest(prev, e$payload, e$label, if (is.null(sc)) 1L else 2L)
+      )
     if (!isTRUE(ok)) {
       broken <- i
       break
@@ -237,34 +253,55 @@ chnvrf <- function(chain) {
     prev <- e$digest
   }
   if (warn && length(legacy)) {
-    warning(sprintf(paste0("chain entr%s %s %s sealed by rmoriebricklayer 0.5.12 or earlier with the ",
-                           "weaker scheme 1: %s label%s not covered by the digests"),
-                    if (length(legacy) == 1L) "y" else "ies", paste(legacy, collapse = ", "),
-                    if (length(legacy) == 1L) "was" else "were",
-                    if (length(legacy) == 1L) "its" else "their", if (length(legacy) == 1L) " is" else "s are"),
-            call. = FALSE)
+    warning(
+      sprintf(
+        paste0(
+          "chain entr%s %s %s sealed by rmoriebricklayer 0.5.12 or ",
+          "earlier with the ",
+          "weaker scheme 1: %s label%s not covered by the digests"
+        ),
+        if (length(legacy) == 1L) "y" else "ies",
+        paste(legacy, collapse = ", "),
+        if (length(legacy) == 1L) "was" else "were",
+        if (length(legacy) == 1L) "its" else "their",
+        if (length(legacy) == 1L) " is" else "s are"
+      ),
+      call. = FALSE
+    )
   }
-  out <- list(valid = is.na(broken), n = n, broken_at = broken,
-              head = chnhead(chain))
+  out <- list(
+    valid = is.na(broken),
+    n = n,
+    broken_at = broken,
+    head = chnhead(chain)
+  )
   class(out) <- c("bricklayer_chain_check", "list")
   out
 }
 
 #' Computes the digest of one chain link.
 #'
-#' One link's digest. Scheme 2 covers the label: \code{"0"} for a missing label and
-#' \code{"1"} + the label otherwise, after the fixed-width prev and payload, so no
-#' two (prev, payload, label) triples share a preimage. Scheme 1 (0.5.12 and
-#' earlier) is \dQuote{<prev>:<payload>} and is only ever recomputed, never written.
-#' @param prev The previous link digest (the genesis digest for the first entry).
+#' One link's digest. Scheme 2 covers the label: \code{"0"} for a missing label
+#' and \code{"1"} + the label otherwise, after the fixed-width prev and payload,
+#' so no two (prev, payload, label) triples share a preimage. Scheme 1 (0.5.12
+#' and earlier) is \dQuote{<prev>:<payload>} and is only ever recomputed, never
+#' written.
+#' @param prev The previous link digest (the genesis digest for the first
+#'   entry).
 #' @param payload The entry digest.
 #' @param label The entry label, or NULL or NA when it has none.
 #' @param scheme The sealing scheme, 1 or 2.
 #' @return The link digest as hex text.
 #' @noRd
 .rmbl_link_digest <- function(prev, payload, label, scheme) {
-  if (scheme == 1L) return(csha256(paste0(prev, ":", payload)))
-  lab <- if (length(label) != 1L || is.na(label)) "0" else paste0("1", enc2utf8(as.character(label)))
+  if (scheme == 1L) {
+    return(csha256(paste0(prev, ":", payload)))
+  }
+  lab <- if (length(label) != 1L || is.na(label)) {
+    "0"
+  } else {
+    paste0("1", enc2utf8(as.character(label)))
+  }
   csha256(paste0("v2|", prev, "|", payload, "|", lab))
 }
 
@@ -294,20 +331,42 @@ format.bricklayer_chain <- function(x, ...) {
   g <- .rmbl_glyphs()
   head_lines <- c(
     .rmbl_rule("Manifest chain"),
-    paste0("  ", if (chk$valid) paste0(g$ok, " chain intact") else
-      paste0(g$bad, " chain BROKEN at entry ", chk$broken_at)),
+    paste0(
+      "  ",
+      if (chk$valid) {
+        paste0(g$ok, " chain intact")
+      } else {
+        paste0(g$bad, " chain BROKEN at entry ", chk$broken_at)
+      }
+    ),
     "",
-    .rmbl_kv(list(entries = chk$n, head = chk$head,
-                  seal = if (chk$valid) suppressWarnings(chnseal(x)) else
-                    paste0(g$dash, " (chain broken)"))),
-    "")
-  if (chk$n == 0L) return(c(head_lines, "  (empty)", .rmbl_rule()))
-  rows <- vapply(seq_len(chk$n), function(i) {
-    e <- x$entries[[i]]
-    sprintf("  %3d  %-16s %s", i,
-            if (is.na(e$label)) paste0(g$dash, " ") else e$label,
-            substring(e$digest, 1L, 24L))
-  }, character(1))
+    .rmbl_kv(list(
+      entries = chk$n,
+      head = chk$head,
+      seal = if (chk$valid) {
+        suppressWarnings(chnseal(x))
+      } else {
+        paste0(g$dash, " (chain broken)")
+      }
+    )),
+    ""
+  )
+  if (chk$n == 0L) {
+    return(c(head_lines, "  (empty)", .rmbl_rule()))
+  }
+  rows <- vapply(
+    seq_len(chk$n),
+    function(i) {
+      e <- x$entries[[i]]
+      sprintf(
+        "  %3d  %-16s %s",
+        i,
+        if (is.na(e$label)) paste0(g$dash, " ") else e$label,
+        substring(e$digest, 1L, 24L)
+      )
+    },
+    character(1)
+  )
   c(head_lines, rows, .rmbl_rule())
 }
 
@@ -322,8 +381,7 @@ print.bricklayer_chain_check <- function(x, ...) {
   if (isTRUE(x$valid)) {
     cat(sprintf("%s chain intact (%d entries)\n", g$ok, x$n))
   } else {
-    cat(sprintf("%s chain broken at entry %d of %d\n", g$bad, x$broken_at,
-                x$n))
+    cat(sprintf("%s chain broken at entry %d of %d\n", g$bad, x$broken_at, x$n))
   }
   invisible(x)
 }

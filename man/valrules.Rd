@@ -36,14 +36,14 @@ the real finding. A rule that ERRORS is reported as a failure naming the
 error, never swallowed: a rule that cannot run has not passed. On a table
 of no rows a row-wise rule has no row to fail and passes.
 
-How a rule's result is read: a result that is not logical, or has length
-0, is a failure (\code{"rule returned <class>, not a logical"}); a single value
-fails unless it is \code{TRUE} (so \code{NA} fails); a longer vector is
-read row by row, and rows that are \code{FALSE} or \code{NA} fail (a rule
-that cannot decide has not been satisfied). The length of a row-wise
-result is not checked against the number of rows. The issue is named by
-the rule's \code{name}; two rules with the same name keep only the later
-failure. Rules run in the order given and only read the data.
+How a rule's result is read: a result that is not logical, or has length 0,
+is a failure (\code{"rule returned <class>, not a logical"}); a single value
+fails unless it is \code{TRUE} (so \code{NA} fails); a longer vector is read
+row by row, and rows that are \code{FALSE} or \code{NA} fail (a rule that
+cannot decide has not been satisfied). The length of a row-wise result is not
+checked against the number of rows. The issue is named by the rule's
+\code{name}; two rules with the same name keep only the later failure. Rules
+run in the order given and only read the data.
 
 Errors: \code{data} not a data frame (or with missing or duplicated
 column names); \code{rules} not a rule or a list; an element that is not

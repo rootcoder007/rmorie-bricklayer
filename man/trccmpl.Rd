@@ -11,17 +11,19 @@ A data frame with \code{period}, \code{yearend}, \code{completed},
 \code{cumulative} and \code{source}.
 }
 \description{
-The number of the Truth and Reconciliation Commission's 94 Calls to Action that the
-Yellowhead Institute's annual accountability reports judged complete, by the year they
-were completed, to the end of 2022: the only counts here are those the reports state.
+The number of the Truth and Reconciliation Commission's 94 Calls to Action
+that the Yellowhead Institute's annual accountability reports judged
+complete, by the year they were completed, to the end of 2022: the only
+counts here are those the reports state.
 }
 \details{
-2015-2019: 8 (13 in all by December 2022, less those of 2020-2022); 2020:
-none; 2021: 3, all in June; 2022: 2 (Jewell and Mosby 2021, 2022). Other trackers count
-otherwise: the federal government reports by theme rather than call by call; CBC's
-Beyond 94 and Indigenous Watchdog grade each call on their own scales and are
-copyrighted, so their tables are not reproduced. The reports are licensed CC BY-NC 2.5
-Canada; the counts are facts taken from them, with the reports cited.
+2015-2019: 8 (13 in all by December 2022, less those of 2020-2022);
+2020: none; 2021: 3, all in June; 2022: 2 (Jewell and Mosby 2021, 2022).
+Other trackers count otherwise: the federal government reports by theme
+rather than call by call; CBC's Beyond 94 and Indigenous Watchdog grade each
+call on their own scales and are copyrighted, so their tables are not
+reproduced. The reports are licensed CC BY-NC 2.5 Canada; the counts are
+facts taken from them, with the reports cited.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -29,14 +31,16 @@ trccmpl()
 \dontshow{\}) # examplesIf}
 }
 \references{
-Jewell E, Mosby I (2021). Calls to Action Accountability: A 2021 Status
-Update on Reconciliation. Yellowhead Institute, Toronto Metropolitan University.
+Jewell E, Mosby I (2021). Calls to Action Accountability: A 2021
+Status Update on Reconciliation. Yellowhead Institute, Toronto Metropolitan
+University.
 
-Jewell E, Mosby I (2022). Calls to Action Accountability: A 2022 Status Update on
-Reconciliation. Yellowhead Institute, Toronto Metropolitan University.
+Jewell E, Mosby I (2022). Calls to Action Accountability: A 2022 Status
+Update on Reconciliation. Yellowhead Institute, Toronto Metropolitan
+University.
 
-Truth and Reconciliation Commission of Canada (2015). Truth and Reconciliation
-Commission of Canada: Calls to Action. Winnipeg.
+Truth and Reconciliation Commission of Canada (2015). Truth and
+Reconciliation Commission of Canada: Calls to Action. Winnipeg.
 }
 \seealso{
 \code{\link{trcprog}}.

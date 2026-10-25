@@ -9,7 +9,8 @@
 # missingness -- and those require EM, since the likelihood has no
 # closed form once the pattern of observation varies by row.
 
-#' Estimates a multivariate normal mean and covariance from incomplete data by EM.
+#' Estimates a multivariate normal mean and covariance from incomplete data by
+#' EM.
 #'
 #' ML estimates of a multivariate normal mean and covariance from data
 #' with missing entries, by expectation-maximisation (Dempster, Laird &
@@ -39,7 +40,9 @@
   # Start from the pairwise-complete moments, which is a consistent
   # starting point even when no row is complete.
   mu <- vapply(seq_len(p), function(j) mean(X[obs[, j], j]), numeric(1))
-  if (anyNA(mu)) return(NULL)
+  if (anyNA(mu)) {
+    return(NULL)
+  }
   S <- stats::cov(X, use = "pairwise.complete.obs")
   S[!is.finite(S)] <- 0
   diag(S) <- ifelse(is.finite(diag(S)) & diag(S) > 0, diag(S), 1)
@@ -47,8 +50,10 @@
 
   solve_safe <- function(M) {
     tryCatch(solve(M), error = function(e) {
-      tryCatch(solve(M + diag(ridge * max(1, mean(diag(M))), nrow(M))),
-               error = function(e2) NULL)
+      tryCatch(
+        solve(M + diag(ridge * max(1, mean(diag(M))), nrow(M))),
+        error = function(e2) NULL
+      )
     })
   }
 
@@ -58,8 +63,8 @@
   for (it in seq_len(max_iter)) {
     iter <- it
     pg$update(info = sprintf("iteration %d", it))
-    T1 <- numeric(p)              # accumulated first moments
-    T2 <- matrix(0, p, p)         # accumulated second moments
+    T1 <- numeric(p) # accumulated first moments
+    T2 <- matrix(0, p, p) # accumulated second moments
     for (i in seq_len(n)) {
       o <- which(obs[i, ])
       m <- which(!obs[i, ])
@@ -73,7 +78,9 @@
         Ci <- S
       } else {
         Soo_inv <- solve_safe(S[o, o, drop = FALSE])
-        if (is.null(Soo_inv)) return(NULL)
+        if (is.null(Soo_inv)) {
+          return(NULL)
+        }
         B <- S[m, o, drop = FALSE] %*% Soo_inv
         xi[o] <- X[i, o]
         xi[m] <- mu[m] + as.numeric(B %*% (X[i, o] - mu[o]))
@@ -86,7 +93,7 @@
     }
     mu_new <- T1 / n
     S_new <- T2 / n - outer(mu_new, mu_new)
-    S_new <- (S_new + t(S_new)) / 2          # keep it exactly symmetric
+    S_new <- (S_new + t(S_new)) / 2 # keep it exactly symmetric
     S_new <- .rmbl_make_pd(S_new, ridge)
 
     delta <- max(max(abs(mu_new - mu)), max(abs(S_new - S)))
@@ -109,9 +116,13 @@
 .rmbl_make_pd <- function(S, ridge = 1e-8) {
   S <- (S + t(S)) / 2
   ev <- tryCatch(eigen(S, symmetric = TRUE), error = function(e) NULL)
-  if (is.null(ev)) return(S + diag(ridge, nrow(S)))
+  if (is.null(ev)) {
+    return(S + diag(ridge, nrow(S)))
+  }
   floor_val <- ridge * max(1, max(abs(ev$values)))
-  if (min(ev$values) >= floor_val) return(S)
+  if (min(ev$values) >= floor_val) {
+    return(S)
+  }
   vals <- pmax(ev$values, floor_val)
   ev$vectors %*% diag(vals, length(vals)) %*% t(ev$vectors)
 }
@@ -245,16 +256,27 @@
 #' @export
 mcartst <- function(data, maxit = 500L, tol = 1e-7) {
   maxit <- .rmbl_scalar(maxit, "maxit", 1, 1e6, integer = TRUE)
-  tol <- .rmbl_scalar(tol, "tol", 1e-12, 1)   # zero never converged (final audit of 1.0.0)
-  if (is.matrix(data)) data <- as.data.frame(data)
+  # zero never converged (final audit of 1.0.0)
+  tol <- .rmbl_scalar(tol, "tol", 1e-12, 1)
+  if (is.matrix(data)) {
+    data <- as.data.frame(data)
+  }
   if (!is.data.frame(data)) {
-    stop("mcartst: `data` must be a data frame or a numeric matrix", call. = FALSE)
+    stop(
+      "mcartst: `data` must be a data frame or a numeric matrix",
+      call. = FALSE
+    )
   }
   num <- vapply(data, is.numeric, logical(1))
   if (!all(num)) {
     dropped <- names(data)[!num]
-    warning(sprintf("dropping non-numeric column(s): %s",
-                    paste(dropped, collapse = ", ")), call. = FALSE)
+    warning(
+      sprintf(
+        "dropping non-numeric column(s): %s",
+        paste(dropped, collapse = ", ")
+      ),
+      call. = FALSE
+    )
     data <- data[, num, drop = FALSE]
   }
   if (ncol(data) < 2L) {
@@ -266,20 +288,29 @@ mcartst <- function(data, maxit = 500L, tol = 1e-7) {
   # A wholly missing column carries no information and makes every
   # pattern's submatrix singular.
   all_na_col <- apply(is.na(X), 2L, all)
-  if (any(all_na_col)) X <- X[, !all_na_col, drop = FALSE]
+  if (any(all_na_col)) {
+    X <- X[, !all_na_col, drop = FALSE]
+  }
   # A wholly missing row belongs to no pattern with observed variables.
   keep_row <- !apply(is.na(X), 1L, all)
   X <- X[keep_row, , drop = FALSE]
 
   n <- nrow(X)
   p <- ncol(X)
-  # an infinite value made the covariance non-finite and the refusal spoke of collinearity
+  # an infinite value made the covariance non-finite and the refusal spoke of
+  # collinearity
   if (any(is.infinite(X))) {
-    stop("`x` has infinite values, which Little's test cannot use; set them to NA first", call. = FALSE)
+    stop(
+      "`x` has infinite values, which Little's test cannot use; set ",
+      "them to NA first",
+      call. = FALSE
+    )
   }
   if (p < 2L || n < 2L) {
-    stop("too few complete columns or rows remain for Little's test",
-         call. = FALSE)
+    stop(
+      "too few complete columns or rows remain for Little's test",
+      call. = FALSE
+    )
   }
 
   # Refuse rank-deficient input rather than computing through it. The EM
@@ -299,22 +330,30 @@ mcartst <- function(data, maxit = 500L, tol = 1e-7) {
     stats::cov(X, use = "pairwise.complete.obs")
   }
   S0[!is.finite(S0)] <- 0
-  ev0 <- tryCatch(eigen(S0, symmetric = TRUE, only.values = TRUE)$values,
-                  error = function(e) NULL)
-  if (!is.null(ev0) &&
-      min(ev0) <= 1e-8 * max(abs(ev0), .Machine$double.eps)) {
-    stop("the columns are collinear (or one is constant), so the ",
-         "multivariate normal likelihood Little's test is built on is ",
-         "degenerate. Drop the redundant column(s) first -- ",
-         "topcors() and drpconst() will find them.",
-         call. = FALSE)
+  ev0 <- tryCatch(
+    eigen(S0, symmetric = TRUE, only.values = TRUE)$values,
+    error = function(e) NULL
+  )
+  if (
+    !is.null(ev0) &&
+      min(ev0) <= 1e-8 * max(abs(ev0), .Machine$double.eps)
+  ) {
+    stop(
+      "the columns are collinear (or one is constant), so the ",
+      "multivariate normal likelihood Little's test is built on is ",
+      "degenerate. Drop the redundant column(s) first -- ",
+      "topcors() and drpconst() will find them.",
+      call. = FALSE
+    )
   }
 
   fit <- .rmbl_em_mvn(X, max_iter = maxit, tol = tol)
   if (is.null(fit)) {
-    stop("the EM estimates did not converge to a usable covariance: the ",
-         "columns may be collinear, or a pattern may have too few rows",
-         call. = FALSE)
+    stop(
+      "the EM estimates did not converge to a usable covariance: the ",
+      "columns may be collinear, or a pattern may have too few rows",
+      call. = FALSE
+    )
   }
 
   obs <- !is.na(X)
@@ -328,7 +367,7 @@ mcartst <- function(data, maxit = 500L, tol = 1e-7) {
   for (code in patterns) {
     rows <- which(codes == code)
     o <- which(obs[rows[1L], ])
-    pj <- length(o)   # at least one: wholly missing rows were dropped above
+    pj <- length(o) # at least one: wholly missing rows were dropped above
     nj <- length(rows)
     # The pattern's observed-variable means, against the ML estimates.
     xbar <- colMeans(X[rows, o, drop = FALSE])
@@ -347,34 +386,50 @@ mcartst <- function(data, maxit = 500L, tol = 1e-7) {
   df <- df_sum - p
   note <- NA_character_
   if (df <= 0) {
-    note <- paste0("df is ", df, ": with a single missingness pattern there ",
-                   "is nothing to test. A complete table trivially ",
-                   "satisfies MCAR.")
+    note <- paste0(
+      "df is ",
+      df,
+      ": with a single missingness pattern there ",
+      "is nothing to test. A complete table trivially ",
+      "satisfies MCAR."
+    )
   }
   if (skipped > 0L) {
-    note <- paste(stats::na.omit(c(note, sprintf(
-      "%d pattern(s) were skipped: their observed variables were collinear.",
-      skipped))), collapse = " ")
+    note <- paste(
+      stats::na.omit(c(
+        note,
+        sprintf(
+          paste0(
+            "%d pattern(s) were skipped: their observed variables were ",
+            "collinear."
+          ),
+          skipped
+        )
+      )),
+      collapse = " "
+    )
   }
-  out <- list(statistic = d2,
-              df = df,
-              logpvalue = if (df > 0) {
-                stats::pchisq(d2, df, lower.tail = FALSE, log.p = TRUE)
-              } else {
-                NA_real_
-              },
-              p_value = if (df > 0) {
-                stats::pchisq(d2, df, lower.tail = FALSE)
-              } else {
-                NA_real_
-              },
-              npat = length(patterns),
-              nused = used,
-              nvars = p,
-              iterations = fit$iterations,
-              mu = stats::setNames(fit$mu, colnames(X)),
-              sigma = fit$sigma,
-              note = note)
+  out <- list(
+    statistic = d2,
+    df = df,
+    logpvalue = if (df > 0) {
+      stats::pchisq(d2, df, lower.tail = FALSE, log.p = TRUE)
+    } else {
+      NA_real_
+    },
+    p_value = if (df > 0) {
+      stats::pchisq(d2, df, lower.tail = FALSE)
+    } else {
+      NA_real_
+    },
+    npat = length(patterns),
+    nused = used,
+    nvars = p,
+    iterations = fit$iterations,
+    mu = stats::setNames(fit$mu, colnames(X)),
+    sigma = fit$sigma,
+    note = note
+  )
   class(out) <- c("bricklayer_mcar", "list")
   out
 }
@@ -389,25 +444,33 @@ format.bricklayer_mcar <- function(x, ...) {
   } else {
     paste0(g$ok, " no departure from MCAR detected")
   }
-  lines <- c(.rmbl_rule("Little's MCAR test"),
-             paste0("  ", verdict),
-             "",
-             .rmbl_kv(list(
-               statistic = formatC(x$statistic, format = "f", digits = 3),
-               df = x$df,
-               "p-value" = .rmbl_fmt_p(x$p_value),
-               patterns = x$npat,
-               variables = x$nvars,
-               "rows used" = x$nused,
-               "EM iterations" = x$iterations)))
+  lines <- c(
+    .rmbl_rule("Little's MCAR test"),
+    paste0("  ", verdict),
+    "",
+    .rmbl_kv(list(
+      statistic = formatC(x$statistic, format = "f", digits = 3),
+      df = x$df,
+      "p-value" = .rmbl_fmt_p(x$p_value),
+      patterns = x$npat,
+      variables = x$nvars,
+      "rows used" = x$nused,
+      "EM iterations" = x$iterations
+    ))
+  )
   if (!is.na(x$note)) {
     lines <- c(lines, "", paste0("  ", g$warn, " ", x$note))
   }
   if (!is.na(x$p_value) && x$p_value >= 0.05) {
-    lines <- c(lines, "",
-               paste0("  Not evidence OF MCAR: a large p-value is a failure ",
-                      "to detect a"),
-               "  departure, and this test has little power on small samples.")
+    lines <- c(
+      lines,
+      "",
+      paste0(
+        "  Not evidence OF MCAR: a large p-value is a failure ",
+        "to detect a"
+      ),
+      "  departure, and this test has little power on small samples."
+    )
   }
   c(lines, .rmbl_rule())
 }

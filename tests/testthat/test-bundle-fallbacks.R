@@ -7,8 +7,9 @@ test_that(".rmbl_column_stats base-R branch matches the compiled kernels", {
   ok <- c(rnorm(40), 5, -6, 0.5)
   a <- .rmbl_column_stats(ok, native = TRUE)
   b <- .rmbl_column_stats(ok, native = FALSE)
-  for (nm in c("mean", "sd", "skewness", "median", "mad", "lower", "upper"))
+  for (nm in c("mean", "sd", "skewness", "median", "mad", "lower", "upper")) {
     expect_equal(b[[nm]], a[[nm]], tolerance = 1e-10, label = nm)
+  }
   expect_true(is.character(a$hist))
   expect_identical(b$hist, NA_character_)
   # degenerate: one value has no sd or skewness
@@ -20,14 +21,16 @@ test_that(".rmbl_column_stats base-R branch matches the compiled kernels", {
 
 test_that(".rmbl_sha256_bytes pure-R branch matches csha256", {
   bytes <- charToRaw("{\"a\":1,\"b\":[1,2,3]}")
-  expect_identical(.rmbl_sha256_bytes(bytes, native = FALSE),
-                   .rmbl_sha256_bytes(bytes, native = TRUE))
-  expect_identical(.rmbl_sha256_bytes(bytes, native = FALSE),
-                   csha256(bytes))
+  expect_identical(
+    .rmbl_sha256_bytes(bytes, native = FALSE),
+    .rmbl_sha256_bytes(bytes, native = TRUE)
+  )
+  expect_identical(.rmbl_sha256_bytes(bytes, native = FALSE), csha256(bytes))
   m <- list(name = "x", version = "1", files = list())
-  expect_identical(mnfdgst(m),
-                   .rmbl_sha256_bytes(charToRaw(mnfcanon(m)),
-                                      native = FALSE))
+  expect_identical(
+    mnfdgst(m),
+    .rmbl_sha256_bytes(charToRaw(mnfcanon(m)), native = FALSE)
+  )
 })
 
 test_that(".rmbl_fetch_url download.file branch fetches a file URL", {

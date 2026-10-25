@@ -71,30 +71,22 @@ screens, default 0.05.}
 }
 \value{
 A list of class \code{bricklayer_analysis} (with a print method that
-summarises it in a few lines):
-\describe{
-\item{\code{profile}}{\code{\link[=profcols]{profcols()}} of
-\code{data}.}
-\item{\code{missingness}}{named numeric from
-\code{\link[=misssmry]{misssmry()}}.}
-\item{\code{change}}{the \code{\link[=yoy]{yoy()}} table; for counts with the
-added columns
-\code{p_value}, \code{padj} and \code{significant}, and with
-\code{env_*} and \code{compctlo}/\code{compctup} when
-publication bounds were requested.}
-\item{\code{rates}, \code{ratechg}}{the \code{\link[=rtcalc]{rtcalc()}} and
-\code{\link[=ratechg]{ratechg()}}
-tables when \code{population} is given, otherwise \code{NULL}.}
-\item{\code{trend}}{data frame with one row per group: the \code{by} columns,
-\code{periods}, \code{first}, \code{last}, \code{tau}, \code{trndp},
-\code{slope}, \code{rateratio}, \code{rateratiolo},
-\code{rateratioup}.}
-\item{\code{drift}}{\code{\link[=cpsdrft]{cpsdrft()}} result against
-\code{prior}, or
-\code{NULL}.}
-\item{\code{meta}}{list of the arguments used, \code{nrows}, the sorted
-\code{periods}, \code{prior} (logical) and \code{when} (a time stamp).}
-}
+summarises it in a few lines): \describe{
+\item{\code{profile}}{\code{\link[=profcols]{profcols()}} of \code{data}.}
+\item{\code{missingness}}{named numeric from \code{\link[=misssmry]{misssmry()}}.}
+\item{\code{change}}{the \code{\link[=yoy]{yoy()}} table; for counts with the added
+columns \code{p_value}, \code{padj} and \code{significant}, and with
+\code{env_*} and \code{compctlo}/\code{compctup} when publication bounds
+were requested.} \item{\code{rates}, \code{ratechg}}{the
+\code{\link[=rtcalc]{rtcalc()}} and \code{\link[=ratechg]{ratechg()}} tables when
+\code{population} is given, otherwise \code{NULL}.}
+\item{\code{trend}}{data frame with one row per group: the \code{by}
+columns, \code{periods}, \code{first}, \code{last}, \code{tau},
+\code{trndp}, \code{slope}, \code{rateratio}, \code{rateratiolo},
+\code{rateratioup}.} \item{\code{drift}}{\code{\link[=cpsdrft]{cpsdrft()}} result
+against \code{prior}, or \code{NULL}.} \item{\code{meta}}{list of the
+arguments used, \code{nrows}, the sorted \code{periods}, \code{prior}
+(logical) and \code{when} (a time stamp).} }
 }
 \description{
 The questions asked of a published table are always the same: what
@@ -108,43 +100,29 @@ groups scanned, the envelope that rounding and suppression in the
 release imply, and a drift screen against the prior capsule.
 }
 \details{
-The steps, in order:
-\enumerate{
-\item profile: \code{\link[=profcols]{profcols()}} and
-\code{\link[=misssmry]{misssmry()}} on \code{data};
-\item change: \code{\link[=yoy]{yoy()}} between consecutive periods within each
-\code{by} group.
-For \code{units = "count"} the exact p-values are then adjusted across all
-comparisons with \code{\link[=scanadj]{scanadj()}}, and, when
-\code{rnd} or
-\code{suplim} is given, \code{\link[=yoybnd]{yoybnd()}} adds
-the publication
-envelope (see \code{\link[=pubbnd]{pubbnd()}}). For
-\code{"continuous"} and
-\code{"percent"} units neither step runs: \code{rnd} and
-\code{suplim} are then ignored, with a warning;
-\item rates (only with \code{pop}): \code{\link[=rtcalc]{rtcalc()}} per group and
-period, and
+The steps, in order: \enumerate{ \item profile:
+\code{\link[=profcols]{profcols()}} and \code{\link[=misssmry]{misssmry()}} on
+\code{data}; \item change: \code{\link[=yoy]{yoy()}} between consecutive periods within
+each \code{by} group. For \code{units = "count"} the exact p-values are then
+adjusted across all comparisons with \code{\link[=scanadj]{scanadj()}}, and, when
+\code{rnd} or \code{suplim} is given, \code{\link[=yoybnd]{yoybnd()}} adds the
+publication envelope (see \code{\link[=pubbnd]{pubbnd()}}). For \code{"continuous"} and
+\code{"percent"} units neither step runs: \code{rnd} and \code{suplim} are
+then ignored, with a warning; \item rates (only with \code{pop}):
+\code{\link[=rtcalc]{rtcalc()}} per group and period, and
 \code{\link[=ratechg]{ratechg()}} between periods, adjusted with
-\code{\link[=scanadj]{scanadj()}};
-\item trend: per group, the values summed within each period, then
-\code{\link[=trndtst]{trndtst()}} (Mann-Kendall tau, p-value and Theil-Sen
-slope) and, for
-counts, \code{\link[=cnttrnd]{cnttrnd()}} (Poisson rate ratio per period).
-A group with fewer
-than three periods gets \code{NA}; a test that fails gets \code{NA} rather
-than an error;
-\item drift (only with \code{prior}): \code{\link[=cpsdrft]{cpsdrft()}}
-of \code{data} against
-\code{prior}.
-}
-Nothing is written and nothing is fetched; a progress bar for the trend
-step is drawn on stderr unless \code{options(morie.quiet = TRUE)}.
-Errors: \code{data} or \code{prior} not a data frame; a named column not
-in \code{data}; an invalid \code{units}, \code{dir} or
-\code{rndkind}; a \code{conflvl} outside (0, 1); and any error of the
-functions called (for example
-negative counts in \code{\link[=yoy]{yoy()}}).
+\code{\link[=scanadj]{scanadj()}}; \item trend: per group, the values summed within each
+period, then \code{\link[=trndtst]{trndtst()}} (Mann-Kendall tau, p-value and Theil-Sen
+slope) and, for counts, \code{\link[=cnttrnd]{cnttrnd()}} (Poisson rate ratio per
+period). A group with fewer than three periods gets \code{NA}; a test that
+fails gets \code{NA} rather than an error; \item drift (only with
+\code{prior}): \code{\link[=cpsdrft]{cpsdrft()}} of \code{data} against \code{prior}. }
+Nothing is written and nothing is fetched; a progress bar for the trend step
+is drawn on stderr unless \code{options(morie.quiet = TRUE)}. Errors:
+\code{data} or \code{prior} not a data frame; a named column not in
+\code{data}; an invalid \code{units}, \code{dir} or \code{rndkind}; a
+\code{conflvl} outside (0, 1); and any error of the functions called (for
+example negative counts in \code{\link[=yoy]{yoy()}}).
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

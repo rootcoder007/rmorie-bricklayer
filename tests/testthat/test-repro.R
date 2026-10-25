@@ -1,4 +1,5 @@
-testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
+# battery: runs in CI and locally; CRAN runs the correctness core
+testthat::skip_on_cran()
 # Recomputation, seed replay, dependency capture, pre-registration,
 # multiple testing, sensitivity, bundles and timestamps.
 #
@@ -8,10 +9,7 @@ testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the corre
 test_that("recomputation catches a manifest the data no longer supports", {
   d <- data.frame(x = 1:10)
   m <- mkmnf(list(dataset = "demo"), env = FALSE)
-  m <- suppressMessages(recrd(m, "mean_x",
-    obs = mean(d$x),
-    expd = 5.5
-  ))
+  m <- suppressMessages(recrd(m, "mean_x", obs = mean(d$x), expd = 5.5))
   m <- suppressMessages(recrd(m, "n", obs = nrow(d), expd = 10))
   stats <- list(mean_x = function(z) mean(z$x), n = function(z) nrow(z))
 
@@ -41,16 +39,15 @@ test_that("recomputation catches a manifest the data no longer supports", {
   expect_match(r5$results$detail, "boom")
 
   # the recorded tolerance is respected, and can be overridden
-  m2 <- suppressMessages(recrd(m, "loose",
-    obs = 1,
-    expd = 1, tol = 0.5
-  ))
+  m2 <- suppressMessages(recrd(m, "loose", obs = 1, expd = 1, tol = 0.5))
   st <- list(loose = function(z) 1.4)
   expect_identical(
-    mnfrcmp(m2, d, st)$results$status, "MATCH"
+    mnfrcmp(m2, d, st)$results$status,
+    "MATCH"
   )
   expect_identical(
-    mnfrcmp(m2, d, st, tol = 0.01)$results$status, "DIFFER"
+    mnfrcmp(m2, d, st, tol = 0.01)$results$status,
+    "DIFFER"
   )
   expect_error(mnfrcmp(m, d, list()), "named list")
   expect_error(mnfrcmp(m, d, list(a = 1)), "must be a function")
@@ -60,9 +57,7 @@ test_that("recomputation catches a manifest the data no longer supports", {
 
 test_that("a recorded generator state replays exactly", {
   set.seed(42)
-  m <- mnfrecseed(mkmnf(list(a = 1),
-    env = FALSE
-  ))
+  m <- mnfrecseed(mkmnf(list(a = 1), env = FALSE))
   first <- stats::runif(3)
   # set.seed() alone is not enough: a single extra draw upstream shifts
   # everything after it, which is why the STATE is recorded and not the
@@ -73,9 +68,7 @@ test_that("a recorded generator state replays exactly", {
   expect_true(is.integer(m$rng$state))
   expect_gt(length(m$rng$state), 1L)
   expect_error(
-    mnfrstseed(mkmnf(list(a = 1),
-      env = FALSE
-    )),
+    mnfrstseed(mkmnf(list(a = 1), env = FALSE)),
     "no recorded generator state"
   )
   expect_error(mnfrecseed("not a manifest"), "manifest")
@@ -84,10 +77,18 @@ test_that("a recorded generator state replays exactly", {
 test_that("dependency capture records where a package came from", {
   d <- capdeps(c("stats", "utils"))
   expect_identical(nrow(d), 2L)
-  expect_true(all(c(
-    "package", "version", "library", "repository",
-    "remote_url", "remote_sha", "built"
-  ) %in% names(d)))
+  expect_true(all(
+    c(
+      "package",
+      "version",
+      "library",
+      "repository",
+      "remote_url",
+      "remote_sha",
+      "built"
+    ) %in%
+      names(d)
+  ))
   expect_identical(d$package, c("stats", "utils"))
   expect_false(any(is.na(d$version)))
   # a field that is absent is NA rather than omitted, so a reader can
@@ -130,9 +131,12 @@ test_that("a declaration catches switching and additions differently", {
     list(meta = unclass(plan), results = list()),
     fipskg("ML-DSA-44")
   )
-  expect_true(cpschkatst(
-    att, list(meta = unclass(plan), results = list())
-  )$ok)
+  expect_true(
+    cpschkatst(
+      att,
+      list(meta = unclass(plan), results = list())
+    )$ok
+  )
 
   expect_error(prrgdecl("unnamed"), "named character vector")
   expect_error(prrgdecl(c(a = "x", a = "y")), "duplicate names")
@@ -159,21 +163,18 @@ test_that("the corrections agree with the reference implementation", {
   # 0.01 among four tests becomes 0.04 and still survives at 0.05,
   # while 0.02 among five becomes 0.10 and does not -- which is the
   # arithmetic worth having in front of you rather than assumed.
-  f <- falsfam(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5),
-    meth = "holm"
-  )
+  f <- falsfam(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5), meth = "holm")
   expect_identical(f$famsz, 4L)
   expect_equal(f$results$adjusted[f$results$name == "a"], 0.04)
   expect_true(f$results$survives[f$results$name == "a"])
   expect_false(any(f$results$survives[f$results$name != "a"]))
-  g <- falsfam(c(a = 0.02, b = 0.3, c = 0.4, d = 0.6, e = 0.7),
-    meth = "holm"
-  )
+  g <- falsfam(c(a = 0.02, b = 0.3, c = 0.4, d = 0.6, e = 0.7), meth = "holm")
   expect_equal(g$results$adjusted[g$results$name == "a"], 0.10)
   expect_false(any(g$results$survives))
   # Benjamini-Hochberg is less conservative and says something weaker
   expect_lte(
-    falsfam(c(a = 0.02, b = 0.3, c = 0.4, d = 0.6, e = 0.7),
+    falsfam(
+      c(a = 0.02, b = 0.3, c = 0.4, d = 0.6, e = 0.7),
       meth = "bh"
     )$results$adjusted[1],
     g$results$adjusted[g$results$name == "a"]
@@ -190,11 +191,19 @@ test_that("a family of falsifications reports which sit at the floor", {
   d$y <- 0.7 * d$x + stats::rnorm(120)
   d$a <- stats::rnorm(120)
   fam <- list(
-    real = cpsfals(d, function(z) stats::cor(z$x, z$y),
-      trt = "x", n = 99L, seed = 1L
+    real = cpsfals(
+      d,
+      function(z) stats::cor(z$x, z$y),
+      trt = "x",
+      n = 99L,
+      seed = 1L
     ),
-    noise = cpsfals(d, function(z) stats::cor(z$a, z$y),
-      trt = "a", n = 99L, seed = 2L
+    noise = cpsfals(
+      d,
+      function(z) stats::cor(z$a, z$y),
+      trt = "a",
+      n = 99L,
+      seed = 2L
     )
   )
   res <- falsfam(fam, meth = "holm")
@@ -217,7 +226,8 @@ test_that("the E-value is its closed form", {
   # an interval that already includes the null needs no confounding
   expect_equal(unname(evlrr(2, lo = 0.9, hi = 4.4)["evllimit"]), 1)
   # and a limit above the null needs some
-  expect_equal(unname(evlrr(3, lo = 2.1, hi = 4.3)["evllimit"]),
+  expect_equal(
+    unname(evlrr(3, lo = 2.1, hi = 4.3)["evllimit"]),
     2.1 + sqrt(2.1 * 1.1),
     tolerance = 1e-12
   )
@@ -232,7 +242,9 @@ test_that("a bundle covers the files, the manifest and itself", {
   dir <- tempfile()
   dir.create(dir)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  utils::write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"),
+  utils::write.csv(
+    data.frame(x = 1:3),
+    file.path(dir, "data.csv"),
     row.names = FALSE
   )
   writeLines("notes", file.path(dir, "README.txt"))
@@ -242,19 +254,20 @@ test_that("a bundle covers the files, the manifest and itself", {
   b <- cpsbndl(dir, m, key, note = "as published")
   p <- attr(b, "path")
   expect_true(file.exists(p))
-  res <- cpsbndlvrf(p, dir,
-    man = m,
-    keyexp = key$public
-  )
+  res <- cpsbndlvrf(p, dir, man = m, keyexp = key$public)
   expect_true(res$ok)
   expect_true(any(grepl("file:data.csv", res$checks$check)))
 
   # editing a covered file breaks it
-  utils::write.csv(data.frame(x = 1:4), file.path(dir, "data.csv"),
+  utils::write.csv(
+    data.frame(x = 1:4),
+    file.path(dir, "data.csv"),
     row.names = FALSE
   )
   expect_false(cpsbndlvrf(p, dir, man = m)$ok)
-  utils::write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"),
+  utils::write.csv(
+    data.frame(x = 1:3),
+    file.path(dir, "data.csv"),
     row.names = FALSE
   )
   expect_true(cpsbndlvrf(p, dir, man = m)$ok)
@@ -286,9 +299,7 @@ test_that("a bundle covers the files, the manifest and itself", {
   writeLines(raw2, tf2)
   expect_false(cpsbndlvrf(tf2, dir, man = m)$ok)
 
-  expect_false(cpsbndlvrf(p, dir,
-    man = mkmnf(list(d = 2), env = FALSE)
-  )$ok)
+  expect_false(cpsbndlvrf(p, dir, man = mkmnf(list(d = 2), env = FALSE))$ok)
   expect_error(cpsbndl(tempfile(), m, key), "does not exist")
   expect_error(
     cpsbndl(dir, m, key, files = "nope.csv"),
@@ -315,10 +326,7 @@ test_that("an RFC 3161 token verifies, and every tamper is caught", {
   expect_true(res$ok)
   expect_s3_class(res$time, "POSIXct")
   expect_identical(res$hash_algorithm, "sha256")
-  expect_true(tsvrf(f$rsa_token, f$payload,
-    cert = f$rsa_cert,
-    trust = f$ca
-  )$ok)
+  expect_true(tsvrf(f$rsa_token, f$payload, cert = f$rsa_cert, trust = f$ca)$ok)
 
   # the token, the data and the certificate may each arrive as raw
   # bytes, as a DER file, or -- for the certificate -- as PEM, and the
@@ -330,23 +338,17 @@ test_that("an RFC 3161 token verifies, and every tamper is caught", {
   der <- tempfile()
   writeBin(f$rsa_cert, der)
   pem <- tempfile()
-  writeLines(c(
-    "-----BEGIN CERTIFICATE-----",
-    strsplit(jsb64enc(f$rsa_cert),
-      "(?<=.{64})",
-      perl = TRUE
-    )[[1]],
-    "-----END CERTIFICATE-----"
-  ), pem)
+  writeLines(
+    c(
+      "-----BEGIN CERTIFICATE-----",
+      strsplit(jsb64enc(f$rsa_cert), "(?<=.{64})", perl = TRUE)[[1]],
+      "-----END CERTIFICATE-----"
+    ),
+    pem
+  )
   expect_true(tsvrf(tk, pl, trust = f$ca)$ok)
-  expect_true(tsvrf(tk, pl,
-    cert = der,
-    trust = f$ca
-  )$ok)
-  expect_true(tsvrf(tk, pl,
-    cert = pem,
-    trust = f$ca
-  )$ok)
+  expect_true(tsvrf(tk, pl, cert = der, trust = f$ca)$ok)
+  expect_true(tsvrf(tk, pl, cert = pem, trust = f$ca)$ok)
   unlink(c(tk, pl, der, pem))
 
   info <- tsinfo(f$rsa_token)
@@ -355,9 +357,7 @@ test_that("an RFC 3161 token verifies, and every tamper is caught", {
   expect_identical(info$imprint, csha256(f$payload))
 
   # a token is about particular bytes and nothing else
-  bad <- tsvrf(f$rsa_token, charToRaw("other bytes"),
-    trust = f$ca
-  )
+  bad <- tsvrf(f$rsa_token, charToRaw("other bytes"), trust = f$ca)
   expect_false(bad$ok)
   expect_false(bad$checks$ok[bad$checks$check == "message_imprint"])
   # and the signature was still fine, which is the point of reporting
@@ -370,7 +370,8 @@ test_that("an RFC 3161 token verifies, and every tamper is caught", {
     t2[off] <- as.raw(bitwXor(as.integer(t2[off]), 1L))
     r <- tsvrf(t2, f$payload, trust = f$ca)
     expect_false(r$ok, info = as.character(off))
-    expect_false(r$checks$ok[r$checks$check == "attribute_digest"],
+    expect_false(
+      r$checks$ok[r$checks$check == "attribute_digest"],
       info = as.character(off)
     )
   }
@@ -383,9 +384,7 @@ test_that("an RFC 3161 token verifies, and every tamper is caught", {
   expect_false(r3$checks$ok[r3$checks$check == "signature"])
 
   # a certificate that is not one
-  r4 <- tsvrf(f$rsa_token, f$payload,
-    cert = charToRaw("nonsense")
-  )
+  r4 <- tsvrf(f$rsa_token, f$payload, cert = charToRaw("nonsense"))
   expect_false(r4$ok)
 
   # malformed input is a verdict, never an error: a verifier that

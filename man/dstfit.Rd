@@ -17,8 +17,8 @@ family the data allow.}
 
 \item{nboot}{Whole number, default 200: bootstrap resamples (0 for none).}
 
-\item{conflvl}{Number in (0, 1), default 0.95: the bootstrap and Hill interval
-level.}
+\item{conflvl}{Number in (0, 1), default 0.95: the bootstrap and Hill
+interval level.}
 
 \item{seed}{Whole number, default 1: the seed of the bootstrap.}
 
@@ -48,46 +48,47 @@ used, the count dropped, whether the data are counts, and the level.}
 }
 }
 \description{
-Fits candidate distributions to one numeric variable by maximum likelihood, ranks
-them by AIC, and reports for each the BIC, a Kolmogorov-Smirnov distance, an
-Anderson-Darling statistic and percentile bootstrap intervals for its parameters. A
-Hill estimate of the tail index is added for positive data. Everything is base R.
+Fits candidate distributions to one numeric variable by maximum likelihood,
+ranks them by AIC, and reports for each the BIC, a Kolmogorov-Smirnov
+distance, an Anderson-Darling statistic and percentile bootstrap intervals
+for its parameters. A Hill estimate of the tail index is added for positive
+data. Everything is base R.
 }
 \details{
 The families and their parameters: \code{normal} (\code{mean}, \code{sd}),
-\code{lognormal} (\code{meanlog}, \code{sdlog}), \code{exponential} (rate), \code{gamma}
-(shape, rate), \code{weibull} (shape, scale), \code{t} (location, scale, df: a
-location-scale Student t), \code{pareto} (\code{xmin}, \code{alpha},
-with \code{xmin} the smallest
-value, its maximum likelihood estimate), \code{beta} (shape1, shape2) for
-proportions, and for counts \code{poisson} (lambda), \code{negbin} (size, mu),
-\code{zip} (pi, lambda) and \code{zinb} (pi, size, mu), the zero-inflated
-forms with \code{pi} the share of structural zeros. The normal, lognormal,
-exponential, Pareto and Poisson estimates are closed form; the negative binomial
-searches its size alone (its mu estimate is the mean); the rest are maximised by
-\code{optim()} on a log or logit scale, Nelder-Mead then BFGS.
+\code{lognormal} (\code{meanlog}, \code{sdlog}), \code{exponential} (rate),
+\code{gamma} (shape, rate), \code{weibull} (shape, scale), \code{t} (location, scale,
+df: a location-scale Student t), \code{pareto} (\code{xmin}, \code{alpha}, with
+\code{xmin} the smallest value, its maximum likelihood estimate), \code{beta}
+(shape1, shape2) for proportions, and for counts \code{poisson} (lambda),
+\code{negbin} (size, mu), \code{zip} (pi, lambda) and \code{zinb} (pi, size, mu), the
+zero-inflated forms with \code{pi} the share of structural zeros. The normal,
+lognormal, exponential, Pareto and Poisson estimates are closed form; the
+negative binomial searches its size alone (its mu estimate is the mean);
+the rest are maximised by \code{optim()} on a log or logit scale, Nelder-Mead
+then BFGS.
 
 With \code{fams = NULL} every family the data allow is fitted: for whole numbers
-of 0 or more the count families; otherwise the positive families for values above 0
-(\code{exponential} for values of 0 or more) and \code{beta} for values strictly
-between 0 and 1; and \code{normal} and \code{t} always. A family named in
+of 0 or more the count families; otherwise the positive families for values
+above 0 (\code{exponential} for values of 0 or more) and \code{beta} for values
+strictly between 0 and 1; and \code{normal} and \code{t} always. A family named in
 \code{fams} that the data do not allow is refused. A fit that fails (the optimiser
 stops at a non-finite likelihood) is a row with \code{converged = FALSE} and no
 statistics.
 
-AIC is \eqn{2k - 2\ell} and BIC \eqn{k \log n - 2\ell}. The Kolmogorov-Smirnov and
-Anderson-Darling statistics use the fitted parameters, so their usual null
-distributions do not apply; they rank fits, they are not tests. The bootstrap
-resamples the data \code{nboot} times and refits; the interval is the percentile
-interval at \code{conflvl}. The Hill estimator uses the \code{k} largest values
-(default \eqn{\lfloor\sqrt n\rfloor}): \eqn{\hat\alpha = k / \sum_{i \le k}
-\log(x_{(n-i+1)} / x_{(n-k)})}, with the asymptotic interval \eqn{\hat\alpha (1 \pm
-z / \sqrt k)}.
+AIC is \eqn{2k - 2\ell} and BIC \eqn{k \log n - 2\ell}. The
+Kolmogorov-Smirnov and Anderson-Darling statistics use the fitted parameters,
+so their usual null distributions do not apply; they rank fits, they are not
+tests. The bootstrap resamples the data \code{nboot} times and refits; the
+interval is the percentile interval at \code{conflvl}. The Hill estimator uses the
+\code{k} largest values (default \eqn{\lfloor\sqrt n\rfloor}): \eqn{\hat\alpha = k
+/ \sum_{i \le k} \log(x_{(n-i+1)} / x_{(n-k)})}, with the asymptotic interval
+\eqn{\hat\alpha (1 \pm z / \sqrt k)}.
 
-Missing values are dropped and counted (\code{nmiss}). Errors: \code{x} not
-numeric, an infinite value, fewer than five values, all values equal, an unknown
-family or one the data do not allow. The bootstrap is seeded with \code{seed} for
-this call only; the session's random stream is left as it was.
+Missing values are dropped and counted (\code{nmiss}). Errors: \code{x} not numeric, an
+infinite value, fewer than five values, all values equal, an unknown family
+or one the data do not allow. The bootstrap is seeded with \code{seed} for this
+call only; the session's random stream is left as it was.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -106,12 +107,12 @@ try(dstfit(c(-1, 2, 3, 4, 5), fams = "gamma"))
 \dontshow{\}) # examplesIf}
 }
 \references{
-Hill BM (1975). A simple general approach to inference about the tail of
-a distribution. \emph{Annals of Statistics} 3, 1163--1174.
+Hill BM (1975). A simple general approach to inference about the
+tail of a distribution. \emph{Annals of Statistics} 3, 1163--1174.
 \doi{10.1214/aos/1176343247}
 
-Anderson TW, Darling DA (1954). A test of goodness of fit. \emph{JASA} 49, 765--769.
-\doi{10.1080/01621459.1954.10501232}
+Anderson TW, Darling DA (1954). A test of goodness of fit. \emph{JASA} 49,
+765--769. \doi{10.1080/01621459.1954.10501232}
 }
 \seealso{
 \code{\link[=plot.rmbl_dstfit]{plot.rmbl_dstfit()}} for the density, QQ, PP

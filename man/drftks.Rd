@@ -25,11 +25,11 @@ change in shape. It is the numeric test that
 every shared numeric or date column.
 }
 \details{
-The statistic is the largest vertical gap between the two empirical distribution
-functions, with the asymptotic two-sided p-value from the Kolmogorov
-distribution. Distribution-free: it assumes nothing about the shape of
-either sample, which is what makes it the right first test on a column
-whose distribution was never specified.
+The statistic is the largest vertical gap between the two empirical
+distribution functions, with the asymptotic two-sided p-value from the
+Kolmogorov distribution. Distribution-free: it assumes nothing about the
+shape of either sample, which is what makes it the right first test on a
+column whose distribution was never specified.
 
 The p-value is the ASYMPTOTIC one, \eqn{2\sum_k (-1)^{k-1} e^{-2k^2t^2}}
 with \eqn{t = \sqrt{n_{\mathrm{eff}}}D}. It is accurate for moderate

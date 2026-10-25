@@ -26,13 +26,10 @@
 #' answer rather than base R's, for example when checking a capsule's
 #' recorded summary statistics against a fresh computation.
 #'
-#' @details
-#' `csdev()` computes
-#' \deqn{s = \sqrt{\frac{1}{n - \mathrm{ddof}} \sum_{i=1}^n (x_i - \bar x)^2},}
-#' so `ddof = 1` is the sample standard deviation of [stats::sd()]
-#' and
-#' `ddof = 0` the population figure. `cdistm()` computes
-#' \eqn{\sqrt{\sum_i (a_i - b_i)^2}}.
+#' @details `csdev()` computes \deqn{s = \sqrt{\frac{1}{n - \mathrm{ddof}}
+#' \sum_{i=1}^n (x_i - \bar x)^2},} so `ddof = 1` is the sample standard
+#' deviation of [stats::sd()] and `ddof = 0` the population
+#' figure. `cdistm()` computes \eqn{\sqrt{\sum_i (a_i - b_i)^2}}.
 #'
 #' Missing values propagate: there is no `na.rm`, and one `NA` makes the
 #' result `NA`. Remove them first (for example with
@@ -51,11 +48,9 @@
 #'   [as.numeric()].
 #'   `a` and `b` must have the same length.
 #' @param ddof Delta degrees of freedom, a single number;
-#'   [as.integer()] truncates it to an integer.
-#'   The divisor is `n - ddof`.
-#'   The default `1` gives the sample standard
-#'   deviation, matching [stats::sd()]; `0` gives the population
-#'   figure.
+#'   [as.integer()] truncates it to an integer. The divisor is
+#'   `n - ddof`. The default `1` gives the sample standard deviation, matching
+#'   [stats::sd()]; `0` gives the population figure.
 #' @return `csdev()`: a length-1 numeric, the standard deviation in the
 #'   units of `x` (`NA` when `x` holds a missing value, `NaN` when
 #'   `length(x) <= ddof`). `cdistm()`: a length-1 non-negative numeric,
@@ -86,10 +81,14 @@
 #' try(cdistm(1:3, 1:2))
 #' @name cspread
 #' @export
-#' @srrstats {G2.4a} ddof goes through .rmbl_scalar(integer = TRUE): fractional, too-large and Inf values are
-#'   refused, then as.integer() is applied.
+#' @srrstats {G2.4a} ddof goes through .rmbl_scalar(integer = TRUE): fractional,
+#'   too-large and Inf values are refused, then as.integer() is applied.
 csdev <- function(x, ddof = 1L) {
-  .Call(C_rmbl_sd, .rmbl_num_input(x, "x"), as.integer(.rmbl_scalar(ddof, "ddof", 0, integer = TRUE)))
+  .Call(
+    C_rmbl_sd,
+    .rmbl_num_input(x, "x"),
+    as.integer(.rmbl_scalar(ddof, "ddof", 0, integer = TRUE))
+  )
 }
 
 #' @rdname cspread
@@ -159,12 +158,16 @@ cdistm <- function(a, b) {
 #' try(cnormlpdf("1"))
 #' @export
 cnormlpdf <- function(x, mean = 0, sd = 1) {
-  # the core reads only the first element of each parameter, so a vector was used in part
+  # the core reads only the first element of each parameter, so a vector was
+  # used in part
   mean <- .rmbl_num(mean, "mean")
   sd <- .rmbl_num(sd, "sd")
-  if (length(mean) != 1L || !is.finite(mean)) stop("cnormlpdf: `mean` must be a single finite number", call. = FALSE)
-  if (length(sd) != 1L || !is.finite(sd) || sd <= 0) stop("cnormlpdf: `sd` must be a single positive number",
-                                                          call. = FALSE)
+  if (length(mean) != 1L || !is.finite(mean)) {
+    stop("cnormlpdf: `mean` must be a single finite number", call. = FALSE)
+  }
+  if (length(sd) != 1L || !is.finite(sd) || sd <= 0) {
+    stop("cnormlpdf: `sd` must be a single positive number", call. = FALSE)
+  }
   .Call(C_rmbl_normal_logpdf, .rmbl_num_input(x, "x"), mean, sd)
 }
 
@@ -176,23 +179,19 @@ cnormlpdf <- function(x, mean = 0, sd = 1) {
 #' four numbers a data description or a drift check usually reports
 #' together.
 #'
-#' @details
-#' The mean is base R's (an extended-precision sum followed by a
-#' corrective pass); the deviations from it are then divided by their
-#' largest magnitude before any power is taken, and the scale is restored
-#' at the end. That avoids both the cancellation of the textbook \dQuote{sum of
-#' squares minus square of sum} formula and overflow of fourth powers for
-#' values beyond about \eqn{10^{77}}. It reads the data three times
-#' (mean, largest deviation, moments), in \eqn{O(n)} time. The variance uses
-#' the `n - 1` denominator, matching [stats::var()]. The shape
-#' statistics
-#' use the *sample moment* definitions
-#' \deqn{g_1 = m_3 / m_2^{3/2}, \qquad g_2 = m_4 / m_2^2 - 3,}
-#' with \eqn{m_k = n^{-1} \sum_i (x_i - \bar x)^k}, so kurtosis is reported
-#' as EXCESS kurtosis: a normal sample sits near zero, not near three.
-#' These are the uncorrected moment ratios (type 1 in the classification
-#' of Joanes and Gill, 1998), not the bias-adjusted versions some software
-#' reports.
+#' @details The mean is base R's (an extended-precision sum followed by a
+#' corrective pass); the deviations from it are then divided by their largest
+#' magnitude before any power is taken, and the scale is restored at the end.
+#' That avoids both the cancellation of the textbook \dQuote{sum of squares
+#' minus square of sum} formula and overflow of fourth powers for values beyond
+#' about \eqn{10^{77}}. It reads the data three times (mean, largest deviation,
+#' moments), in \eqn{O(n)} time. The variance uses the `n - 1` denominator,
+#' matching [stats::var()]. The shape statistics use the
+#' *sample moment* definitions \deqn{g_1 = m_3 / m_2^{3/2}, \qquad g_2 = m_4 /
+#' m_2^2 - 3,} with \eqn{m_k = n^{-1} \sum_i (x_i - \bar x)^k}, so kurtosis is
+#' reported as EXCESS kurtosis: a normal sample sits near zero, not near three.
+#' These are the uncorrected moment ratios (type 1 in the classification of
+#' Joanes and Gill, 1998), not the bias-adjusted versions some software reports.
 #'
 #' Edge cases are `NaN`, never an error: an empty vector gives four `NaN`;
 #' one value gives its mean and `NaN` for the rest; `skewness` needs at
@@ -212,10 +211,9 @@ cnormlpdf <- function(x, mean = 0, sd = 1) {
 #'   [cqnt()] and
 #'   [cmad()] for robust
 #'   alternatives that one extreme value cannot move.
-#' @references Joanes DN, Gill CA (1998). Comparing measures of sample skewness and
-#' kurtosis. *Journal of the Royal Statistical Society: Series D (The
-#' Statistician)* 47(1), 183--189.
-#' \doi{10.1111/1467-9884.00122}
+#' @references Joanes DN, Gill CA (1998). Comparing measures of sample skewness
+#' and kurtosis. *Journal of the Royal Statistical Society: Series D (The
+#' Statistician)* 47(1), 183--189. \doi{10.1111/1467-9884.00122}
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' cmom(c(2, 4, 4, 4, 5, 5, 7, 9))
 #'
@@ -262,14 +260,12 @@ cmom <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
 #' \eqn{Q(0.75) + k \cdot \mathrm{IQR}} (Tukey, 1977).
 #'
 #' Missing values are not removed: an `NA` or `NaN` anywhere in `x` makes
-#' every result `NaN` (unlike [stats::quantile()], which
-#' stops). An empty
-#' `x` gives `NaN`. `cqnt()` refuses an empty `probs`
-#' (`"probs is empty"`) and any probability outside \eqn{[0, 1]} or missing
-#' (`"must lie in [0, 1]"`); every function refuses a character, factor or
-#' list `x` (`"must be numeric"`). The quantiles sort a copy of `x`, so
-#' the
-#' cost is \eqn{O(n \log n)}.
+#' every result `NaN` (unlike [stats::quantile()],
+#' which stops). An empty `x` gives `NaN`. `cqnt()` refuses an empty
+#' `probs` (`"probs is empty"`) and any probability outside \eqn{[0, 1]} or
+#' missing (`"must lie in [0, 1]"`); every function refuses a character, factor
+#' or list `x` (`"must be numeric"`). The quantiles sort a copy of `x`, so
+#' the cost is \eqn{O(n \log n)}.
 #'
 #' @param x Numeric (or logical) vector; coerced with
 #'   [as.numeric()].
@@ -332,7 +328,9 @@ cmom <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
 cqnt <- function(x, probs = c(0, 0.25, 0.5, 0.75, 1)) {
   x <- .rmbl_num_input(x, "x")
   probs <- .rmbl_num(probs, "probs")
-  if (length(probs) == 0L) stop("`probs` is empty", call. = FALSE)
+  if (length(probs) == 0L) {
+    stop("`probs` is empty", call. = FALSE)
+  }
   if (anyNA(probs) || any(probs < 0 | probs > 1)) {
     stop("`probs` must lie in [0, 1]", call. = FALSE)
   }
@@ -430,7 +428,8 @@ cwinsmean <- function(x, trim = 0.1) {
   .Call(C_rmbl_winsorized_mean, .rmbl_num_input(x, "x"), .rmbl_trim(trim))
 }
 
-#' One proportion in \[0, 0.5\]: outside it the core returned NaN, which reads as a result
+#' One proportion in \[0, 0.5\]: outside it the core returned NaN, which reads
+#' as a result
 #' @param trim The trimming proportion passed by the user.
 #' @return The proportion as a double.
 #' @noRd
@@ -599,22 +598,19 @@ cmidrk <- function(x) {
 #' components, Mahalanobis distances and multivariate drift checks.
 #' Column names are carried through to both dimensions of the result.
 #'
-#' @details
-#' Entry \eqn{(j, k)} is
-#' \eqn{\frac{1}{n - 1} \sum_i (x_{ij} - \bar x_j)(x_{ik} - \bar x_k)}, the
-#' `n - 1` denominator of [stats::cov()], with which it agrees to
-#' rounding.
-#' The diagonal holds the column variances.
+#' @details Entry \eqn{(j, k)} is \eqn{\frac{1}{n - 1} \sum_i (x_{ij} - \bar
+#' x_j)(x_{ik} - \bar x_k)}, the `n - 1` denominator of
+#' [stats::cov()], with which it agrees to rounding. The
+#' diagonal holds the column variances.
 #'
-#' Missing values are not removed: an `NA` in a column makes every
-#' covariance involving that column `NA` (pairwise or complete-case
-#' deletion is not done; use [stats::cov()] with `use =` for
-#' those). A
-#' single row gives `NaN` throughout. Refusals: a vector that is not a
-#' matrix (`"must be a matrix or data frame"`) and a data frame with a
-#' non-numeric column (`"every column of x must be numeric"`). Logical and
-#' integer matrices are converted to double. The cost is
-#' \eqn{O(n p^2)} for \eqn{n} rows and \eqn{p} columns.
+#' Missing values are not removed: an `NA` in a column makes every covariance
+#' involving that column `NA` (pairwise or complete-case deletion is not done;
+#' use [stats::cov()] with `use =` for those). A single
+#' row gives `NaN` throughout. Refusals: a vector that is not a matrix
+#' (`"must be a matrix or data frame"`) and a data frame with a non-numeric
+#' column (`"every column of x must be numeric"`). Logical and integer matrices
+#' are converted to double. The cost is \eqn{O(n p^2)} for \eqn{n} rows and
+#' \eqn{p} columns.
 #'
 #' @param x A numeric matrix, or a data frame whose columns are all
 #'   numeric (rows = observations, columns = variables).
@@ -646,11 +642,15 @@ ccovm <- function(x) {
     }
     x <- as.matrix(x)
   }
-  if (!is.matrix(x)) stop("`x` must be a matrix or data frame", call. = FALSE)
+  if (!is.matrix(x)) {
+    stop("`x` must be a matrix or data frame", call. = FALSE)
+  }
   storage.mode(x) <- "double"
   out <- .Call(C_rmbl_cov_matrix, x)
   cn <- colnames(x)
-  if (!is.null(cn)) dimnames(out) <- list(cn, cn)
+  if (!is.null(cn)) {
+    dimnames(out) <- list(cn, cn)
+  }
   out
 }
 
@@ -732,19 +732,28 @@ ccovm <- function(x) {
 #' # At least one replicate is needed.
 #' try(cbootmean(x, B = 0))
 #' @export
-#' @srrstats {G5.5} test-core-stats.R runs with set.seed(7) and seed = 11; the same seed reproduces the replicates
-#'   exactly.
+#' @srrstats {G5.5} test-core-stats.R runs with set.seed(7) and seed = 11; the
+#'   same seed reproduces the replicates exactly.
 cbootmean <- function(x, B = 1000L, seed = 42L) {
   x <- .rmbl_num_input(x, "x")
   B <- .rmbl_num(B, "B")
   if (length(B) != 1L || is.na(B) || !is.finite(B) || B < 1 || B != floor(B)) {
     stop("`B` must be a single whole number >= 1", call. = FALSE)
   }
-  if (B > .Machine$integer.max) stop("`B` must be at most 2147483647", call. = FALSE)
+  if (B > .Machine$integer.max) {
+    stop("`B` must be at most 2147483647", call. = FALSE)
+  }
   seed <- .rmbl_seed(seed)
-  # the kernel polls for a Ctrl-C about every million draws, and each poll turns the busy spinner
-  .bl_busy(sprintf("bootstrap: %s replicates of %s values", .bl_n(B), .bl_n(length(x))),
-           .Call(C_rmbl_bootstrap_mean, as.numeric(x), B, seed))
+  # the kernel polls for a Ctrl-C about every million draws, and each poll turns
+  # the busy spinner
+  .bl_busy(
+    sprintf(
+      "bootstrap: %s replicates of %s values",
+      .bl_n(B),
+      .bl_n(length(x))
+    ),
+    .Call(C_rmbl_bootstrap_mean, as.numeric(x), B, seed)
+  )
 }
 
 #' Trimmed inverse-probability weights (C backend)
@@ -809,8 +818,7 @@ cbootmean <- function(x, B = 1000L, seed = 42L) {
 #' # A treatment coded 1/2 is refused rather than read as all-control.
 #' try(cipw(c(1, 2), c(0.5, 0.5)))
 #' @export
-cipw <- function(treat, ps, trimlo = 0.01,
-                             trimhi = 0.99) {
+cipw <- function(treat, ps, trimlo = 0.01, trimhi = 0.99) {
   treat <- .rmbl_num_input(treat, "treat")
   ps <- .rmbl_num_input(ps, "ps")
   if (length(treat) != length(ps)) {
@@ -827,9 +835,15 @@ cipw <- function(treat, ps, trimlo = 0.01,
   # treatment or propensity gives a missing weight.
   ok_t <- !is.na(treat)
   if (any(!(treat[ok_t] %in% c(0, 1)))) {
-    stop("`treat` must be coded 0/1 (got values ",
-         paste(utils::head(unique(treat[ok_t][!(treat[ok_t] %in% c(0, 1))]), 3),
-               collapse = ", "), ")", call. = FALSE)
+    stop(
+      "`treat` must be coded 0/1 (got values ",
+      paste(
+        utils::head(unique(treat[ok_t][!(treat[ok_t] %in% c(0, 1))]), 3),
+        collapse = ", "
+      ),
+      ")",
+      call. = FALSE
+    )
   }
   ok_p <- !is.na(ps)
   if (any(ps[ok_p] < 0 | ps[ok_p] > 1)) {
@@ -838,8 +852,7 @@ cipw <- function(treat, ps, trimlo = 0.01,
   out <- rep(NA_real_, length(treat))
   keep <- ok_t & ok_p
   if (any(keep)) {
-    out[keep] <- .Call(C_rmbl_ipw, treat[keep], ps[keep], trimlo,
-                       trimhi)
+    out[keep] <- .Call(C_rmbl_ipw, treat[keep], ps[keep], trimlo, trimhi)
   }
   out
 }
@@ -955,11 +968,10 @@ cgamcdf <- function(shape, x) {
 #'   `eta` and
 #'   the kernel's two parameters) for the others. Rates are per unit of
 #'   `times`.
-#' @return A length-1 numeric: the negative log-likelihood, to be
-#'   MINIMISED. A parameter set outside the feasible region returns the
-#'   sentinel `1e12` rather than erroring, so the value can be handed
-#'   straight to [stats::optim()] without the optimiser walking off
-#'   the
+#' @return A length-1 numeric: the negative log-likelihood, to be MINIMISED. A
+#'   parameter set outside the feasible region returns the sentinel `1e12`
+#'   rather than erroring, so the value can be handed straight to
+#'   [stats::optim()] without the optimiser walking off the
 #'   domain.
 #' @references Hawkes AG (1971). Spectra of some self-exciting and mutually
 #' exciting point processes. *Biometrika* 58(1), 83--90.
@@ -986,24 +998,33 @@ cgamcdf <- function(shape, x) {
 #' # Unsorted times are an error, not the sentinel.
 #' try(chwknll(rev(times), 10, "exponential", c(-0.5, 0.3, 1.2)))
 #' @export
-#' @srrstats {TS2.3} The docs say the process is stationary only for eta < 1, and the example shows eta >= 1 returns
-#'   the infeasible sentinel; stepchg documents its exchangeability assumption.
-chwknll <- function(times, hor,
-                            kernel = c("exponential", "weibull", "lomax",
-                                       "gamma"),
-                            par) {
-  if (missing(par)) stop("`par` must be the kernel parameters", call. = FALSE)
+#' @srrstats {TS2.3} The docs say the process is stationary only for eta < 1,
+#'   and the example shows eta >= 1 returns the infeasible sentinel; stepchg
+#'   documents its exchangeability assumption.
+chwknll <- function(
+  times,
+  hor,
+  kernel = c("exponential", "weibull", "lomax", "gamma"),
+  par
+) {
+  if (missing(par)) {
+    stop("`par` must be the kernel parameters", call. = FALSE)
+  }
   kernel <- .rmbl_arg(kernel)
-  code <- switch(kernel, exponential = 0L, weibull = 1L, lomax = 2L,
-                 gamma = 3L)
+  code <- switch(kernel, exponential = 0L, weibull = 1L, lomax = 2L, gamma = 3L)
   times <- .rmbl_num(times, "times")
-  if (anyNA(times)) stop("chwknll: `times` must not contain NA", call. = FALSE)
+  if (anyNA(times)) {
+    stop("chwknll: `times` must not contain NA", call. = FALSE)
+  }
   if (length(times) > 1L && any(diff(times) < 0)) {
     stop("chwknll: `times` must be sorted in increasing order", call. = FALSE)
   }
   hor <- .rmbl_num(hor, "hor")
   if (length(hor) != 1L || !is.finite(hor) || hor <= 0) {
-    stop("chwknll: `hor` must be a single positive finite number", call. = FALSE)
+    stop(
+      "chwknll: `hor` must be a single positive finite number",
+      call. = FALSE
+    )
   }
   if (length(times) > 0L && (min(times) < 0 || max(times) > hor)) {
     stop("`times` must lie within [0, hor]", call. = FALSE)
@@ -1011,20 +1032,41 @@ chwknll <- function(times, hor,
   par <- .rmbl_num(par, "par")
   need <- if (code == 0L) 3L else 4L
   if (length(par) != need) {
-    stop(sprintf("the %s kernel needs `par` of length %d", kernel, need),
-         call. = FALSE)
+    stop(
+      sprintf("the %s kernel needs `par` of length %d", kernel, need),
+      call. = FALSE
+    )
   }
-  # outside the feasible region, the documented sentinel: a stationary branching ratio, a
-  # bounded log-baseline and the kernel parameters' ranges (those of the earlier routine;
-  # the Lomax takes chwkfit()'s)
-  lo <- switch(kernel, exponential = 0.05, weibull = c(0.05, 1e-3), gamma = c(0.05, 0.05), lomax = c(0.05, 1e-3))
-  hi <- switch(kernel, exponential = 30, weibull = c(20, 1e3), gamma = c(20, 30), lomax = c(30, 100))
+  # outside the feasible region, the documented sentinel: a stationary branching
+  # ratio, a bounded log-baseline and the kernel parameters' ranges (those of
+  # the earlier routine; the Lomax takes chwkfit()'s)
+  lo <- switch(
+    kernel,
+    exponential = 0.05,
+    weibull = c(0.05, 1e-3),
+    gamma = c(0.05, 0.05),
+    lomax = c(0.05, 1e-3)
+  )
+  hi <- switch(
+    kernel,
+    exponential = 30,
+    weibull = c(20, 1e3),
+    gamma = c(20, 30),
+    lomax = c(30, 100)
+  )
   psi <- par[-(1:2)]
-  if (anyNA(par) || !(par[[2L]] > 1e-6 && par[[2L]] < 0.999) || !(par[[1L]] > -20 && par[[1L]] < 20) ||
-      any(psi < lo) || any(psi > hi)) {
+  if (
+    anyNA(par) ||
+      !(par[[2L]] > 1e-6 && par[[2L]] < 0.999) ||
+      !(par[[1L]] > -20 && par[[1L]] < 20) ||
+      any(psi < lo) ||
+      any(psi > hi)
+  ) {
     return(1e12)
   }
-  # the likelihood chwkfit() maximises (the shared C++ core), so the
-  # two agree for every kernel; the Lomax is g(u) = alpha c^alpha / (u + c)^(alpha + 1)
-  .rmbl_hk_call(times, hor, kernel, "constant", par, "exact", 1e-12, FALSE)[[1L]]
+  # the likelihood chwkfit() maximises (the shared C++ core), so the two agree
+  # for every kernel; the Lomax is g(u) = alpha c^alpha / (u + c)^(alpha + 1)
+  .rmbl_hk_call(times, hor, kernel, "constant", par, "exact", 1e-12, FALSE)[[
+    1L
+  ]]
 }

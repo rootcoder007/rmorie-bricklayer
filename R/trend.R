@@ -46,12 +46,12 @@
 #' \eqn{n} the slopes may not reach the requested confidence; the bound is
 #' then the most extreme slope and \code{slopecicla} is \code{TRUE}.
 #'
-#' Missing periods are dropped and the series is sorted by \code{x}. Errors: fewer
-#' than three periods; infinite values; \code{x} and \code{y} of different lengths; a
-#' period given twice in \code{x}; a data frame without \code{value} or with a column
-#' not found; more than 20,000 periods (the pairwise slopes would not fit in memory);
-#' a \code{conflvl} outside (0, 1). \code{exact = TRUE} with \eqn{n > 8} warns and
-#' uses the normal approximation.
+#' Missing periods are dropped and the series is sorted by \code{x}. Errors:
+#' fewer than three periods; infinite values; \code{x} and \code{y} of different
+#' lengths; a period given twice in \code{x}; a data frame without \code{value}
+#' or with a column not found; more than 20,000 periods (the pairwise slopes
+#' would not fit in memory); a \code{conflvl} outside (0, 1). \code{exact =
+#' TRUE} with \eqn{n > 8} warns and uses the normal approximation.
 #'
 #' @param y Numeric vector, the series in period order, or a data frame.
 #' @param x Numeric vector of periods, default \code{NULL}: the position
@@ -107,22 +107,26 @@
 #'
 #' try(trndtst(c(5, 6)))
 #' @export
-#' @srrstats {G5.7} test-trend-scale.R:34 runs 3,000 periods within a wall-clock limit with finite Sen bounds, and
-#'   refuses 20,001 periods.
-trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
-                       exact = NULL,
-                       alt = c(
-                         "two.sided", "increasing",
-                         "decreasing"
-                       ),
-                       conflvl = 0.95) {
+#' @srrstats {G5.7} test-trend-scale.R:34 runs 3,000 periods within a wall-clock
+#'   limit with finite Sen bounds, and refuses 20,001 periods.
+trndtst <- function(
+  y,
+  x = NULL,
+  value = NULL,
+  prd = NULL,
+  exact = NULL,
+  alt = c(
+    "two.sided",
+    "increasing",
+    "decreasing"
+  ),
+  conflvl = 0.95
+) {
   alt <- .rmbl_arg(alt)
   conflvl <- .rmbl_conf_level(conflvl)
   if (is.data.frame(y)) {
     if (is.null(value)) {
-      stop("`value` is required for a data frame",
-        call. = FALSE
-      )
+      stop("`value` is required for a data frame", call. = FALSE)
     }
     d <- y
     if (!value %in% names(d)) {
@@ -130,16 +134,16 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
     }
     if (!is.null(prd)) {
       if (!prd %in% names(d)) {
-        stop(sprintf("`prd` column not found: %s", prd),
-          call. = FALSE
-        )
+        stop(sprintf("`prd` column not found: %s", prd), call. = FALSE)
       }
       x <- as.numeric(d[[prd]])
     }
     y <- as.numeric(d[[value]])
   }
   y <- .rmbl_num(y, "y")
-  if (is.null(x)) x <- seq_along(y)
+  if (is.null(x)) {
+    x <- seq_along(y)
+  }
   x <- .rmbl_num(x, "x")
   if (length(x) != length(y)) {
     stop("trndtst: `x` and `y` must be the same length", call. = FALSE)
@@ -152,8 +156,12 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
   x <- x[ok]
   y <- y[ok]
   if (anyDuplicated(x)) {
-    # two values for one period are not a series; Sen's slope would divide by a zero gap
-    stop("`x` has duplicated periods: combine the values of each period first", call. = FALSE)
+    # two values for one period are not a series; Sen's slope would divide by a
+    # zero gap
+    stop(
+      "`x` has duplicated periods: combine the values of each period first",
+      call. = FALSE
+    )
   }
   ord <- order(x)
   x <- x[ord]
@@ -163,14 +171,18 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
     stop("trndtst: a trend needs at least three periods", call. = FALSE)
   }
   if (n > 20000L) {
-    stop(sprintf(
-      paste0(
-        "trndtst() enumerates all n(n-1)/2 pairwise ",
-        "slopes for the Sen interval; n = %d would need ",
-        "%.1f GB. Aggregate or thin the series first."
+    stop(
+      sprintf(
+        paste0(
+          "trndtst() enumerates all n(n-1)/2 pairwise ",
+          "slopes for the Sen interval; n = %d would need ",
+          "%.1f GB. Aggregate or thin the series first."
+        ),
+        n,
+        n * (n - 1) / 2 * 8 / 1e9
       ),
-      n, n * (n - 1) / 2 * 8 / 1e9
-    ), call. = FALSE)
+      call. = FALSE
+    )
   }
   mk <- .Call(C_rmbl_mann_kendall, y)
   ts <- .Call(C_rmbl_theil_sen, x, y)
@@ -178,10 +190,20 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
   npairs <- n * (n - 1) / 2
   tau <- s / npairs
   if (isTRUE(exact) && n > 8L) {
-    warning(sprintf("exact = TRUE is available up to n = 8 (n = %d): using the normal approximation", n),
-            call. = FALSE)
+    warning(
+      sprintf(
+        paste0(
+          "exact = TRUE is available up to n = 8 (n = %d): using the ",
+          "normal approximation"
+        ),
+        n
+      ),
+      call. = FALSE
+    )
   }
-  if (is.null(exact)) exact <- n <= 8L
+  if (is.null(exact)) {
+    exact <- n <= 8L
+  }
   if (isTRUE(exact) && n <= 8L) {
     # With ties the null is over the orderings of the OBSERVED multiset,
     # not of n distinct ranks: S is computed with sign(), so tied pairs
@@ -190,14 +212,20 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
     # p is 0.0222).
     tied <- anyDuplicated(y) > 0L
     null_s <- if (tied) .rmbl_mk_exact_values(y) else .rmbl_mk_exact(n)
-    p <- switch(alt,
+    p <- switch(
+      alt,
       increasing = mean(null_s >= s),
       decreasing = mean(null_s <= s),
       two.sided = mean(abs(null_s) >= abs(s))
     )
     method <- if (tied) {
-      sprintf("Mann-Kendall, exact over all %d orderings of the observed values (ties kept)",
-              length(null_s))
+      sprintf(
+        paste0(
+          "Mann-Kendall, exact over all %d orderings of the observed ",
+          "values (ties kept)"
+        ),
+        length(null_s)
+      )
     } else {
       sprintf("Mann-Kendall, exact over all %d orderings", length(null_s))
     }
@@ -209,25 +237,35 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
     } else {
       (s - sign(s)) / sqrt(mk$var)
     }
-    p <- switch(alt,
+    p <- switch(
+      alt,
       increasing = stats::pnorm(z, lower.tail = FALSE),
       decreasing = stats::pnorm(z),
       two.sided = 2 * stats::pnorm(-abs(z))
     )
-    # every value tied: S is 0 in every ordering, so p is 1 in every direction, as the exact test
-    # says at n <= 8 (it was NA past 8; CRAN stress test of 0.5.14)
-    if (!is.na(mk$var) && mk$var <= 0) p <- 1
+    # every value tied: S is 0 in every ordering, so p is 1 in every direction,
+    # as the exact test says at n <= 8 (it was NA past 8; CRAN stress test of
+    # 0.5.14)
+    if (!is.na(mk$var) && mk$var <= 0) {
+      p <- 1
+    }
     p <- min(1, p)
     method <- "Mann-Kendall, normal approximation with tie correction"
   }
   ci <- .rmbl_sen_ci(x, y, mk$var, conflvl)
   list(
-    S = s, tau = tau, p_value = p, slope = ts$slope,
-    intercept = ts$intercept, slopelo = ci[1L],
+    S = s,
+    tau = tau,
+    p_value = p,
+    slope = ts$slope,
+    intercept = ts$intercept,
+    slopelo = ci[1L],
     slopeup = ci[2L],
     slopecicla = isTRUE(any(attr(ci, "clamped"))),
-    n = n, var_S = mk$var,
-    alternative = alt, conflvl = conflvl,
+    n = n,
+    var_S = mk$var,
+    alternative = alt,
+    conflvl = conflvl,
     method = method
   )
 }
@@ -237,7 +275,8 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
 # distribution of S over the permutations.
 .rmbl_mk_cache <- new.env(parent = emptyenv())
 
-#' Returns the exact null distribution of the Mann-Kendall S for n distinct ranks, memoised.
+#' Returns the exact null distribution of the Mann-Kendall S for n distinct
+#' ranks, memoised.
 #' @param n The series length.
 #' @return A numeric vector of S, one per permutation.
 #' @noRd
@@ -366,18 +405,20 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
 #' and the caller's random number stream is restored afterwards.
 #'
 #' The test assumes the periods are exchangeable under no change, so it ignores
-#' autocorrelation and smooth trends; a steady trend can produce a \code{"step"}. With very
-#' few periods even a clean step cannot reach small p-values (six periods allow only
-#' 720 orderings). Missing values are dropped. A series with values beyond 1e150 is
-#' scanned in units of its largest absolute value, so the statistic does not overflow;
-#' \code{before}, \code{after} and \code{difference} are given back in the units of
-#' \code{y}, and \code{statistic} stays in the rescaled units. Errors: infinite
-#' values; fewer than \code{2 * minseg} periods; numeric or date \code{x} that is not
-#' strictly increasing. A progress bar is shown in an interactive session.
+#' autocorrelation and smooth trends; a steady trend can produce a
+#' \code{"step"}. With very few periods even a clean step cannot reach small
+#' p-values (six periods allow only 720 orderings). Missing values are dropped.
+#' A series with values beyond 1e150 is scanned in units of its largest absolute
+#' value, so the statistic does not overflow; \code{before}, \code{after} and
+#' \code{difference} are given back in the units of \code{y}, and
+#' \code{statistic} stays in the rescaled units. Errors: infinite values; fewer
+#' than \code{2 * minseg} periods; numeric or date \code{x} that is not strictly
+#' increasing. A progress bar is shown in an interactive session.
 #'
 #' @param y Numeric vector, the series in period order.
-#' @param x Numeric or date periods, default \code{NULL} (the position), strictly
-#'   increasing and not missing where \code{y} has a value. Used only to label the break.
+#' @param x Numeric or date periods, default \code{NULL} (the position),
+#'   strictly increasing and not missing where \code{y} has a value. Used only
+#'   to label the break.
 #' @param minseg Whole number, default 2: the fewest periods allowed on
 #'   either side of the break.
 #' @param nperm Whole number, default 9999: the number of random
@@ -413,12 +454,13 @@ trndtst <- function(y, x = NULL, value = NULL, prd = NULL,
 #'
 #' try(stepchg(c(1, 2, 3)))
 #' @export
-#' @srrstats {TS1.6} stepchg() refuses numeric or date periods that are not strictly increasing, and trndtst()
-#'   refuses duplicated periods; test-srr.R.
-stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
-                        seed = 1L) {
+#' @srrstats {TS1.6} stepchg() refuses numeric or date periods that are not
+#'   strictly increasing, and trndtst() refuses duplicated periods; test-srr.R.
+stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L, seed = 1L) {
   y <- .rmbl_num(y, "y")
-  if (is.null(x)) x <- seq_along(y)
+  if (is.null(x)) {
+    x <- seq_along(y)
+  }
   if (!is.atomic(x) || is.matrix(x) || length(x) != length(y)) {
     stop("`x` must be one time or position per value of `y`", call. = FALSE)
   }
@@ -430,32 +472,54 @@ stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
   y <- y[ok]
   x <- x[ok]
   n <- length(y)
-  # the scan splits the series in the order given, so the periods must be numbers or dates in time
-  # order: a character or factor x has no order to check, and "40" < "5" (pre-CRAN audit of 30bed8e)
+  # the scan splits the series in the order given, so the periods must be
+  # numbers or dates in time order: a character or factor x has no order to
+  # check, and "40" < "5" (pre-CRAN audit of 30bed8e)
   if (!(is.numeric(x) || inherits(x, c("Date", "POSIXt"))) || is.factor(x)) {
-    stop(.rmbl_fn(), sprintf("`x` must be numbers or dates (the periods), not %s", class(x)[1L]),
-         call. = FALSE)
+    stop(
+      .rmbl_fn(),
+      sprintf(
+        "`x` must be numbers or dates (the periods), not %s",
+        class(x)[1L]
+      ),
+      call. = FALSE
+    )
   }
-  if (anyNA(x)) stop(.rmbl_fn(), "`x` has a missing period where `y` has a value", call. = FALSE)
+  if (anyNA(x)) {
+    stop(
+      .rmbl_fn(),
+      "`x` has a missing period where `y` has a value",
+      call. = FALSE
+    )
+  }
   if (is.unsorted(x, strictly = TRUE)) {
-    stop(.rmbl_fn(), "`x` must be strictly increasing: sort the series by period first", call. = FALSE)
+    stop(
+      .rmbl_fn(),
+      "`x` must be strictly increasing: sort the series by period first",
+      call. = FALSE
+    )
   }
-  # the statistic is a squared difference of means, so values near 1e300 overflowed it to Inf and
-  # the p-value was NaN (final audit of 1.0.0, #11); it is scale-free, as is the permutation null,
-  # so the series is read in units of its largest value when that is beyond 1e150, or below
-  # 1e-150, where the squares underflowed to 0 and every split tied (y * 1e-200 broke after period
-  # 2 with p = 1; pre-CRAN audit of 30bed8e)
-  # before, after and difference are put back in the units of y at the end
+  # the statistic is a squared difference of means, so values near 1e300
+  # overflowed it to Inf and the p-value was NaN (final audit of 1.0.0, #11); it
+  # is scale-free, as is the permutation null, so the series is read in units of
+  # its largest value when that is beyond 1e150, or below 1e-150, where the
+  # squares underflowed to 0 and every split tied (y * 1e-200 broke after period
+  # 2 with p = 1; pre-CRAN audit of 30bed8e) before, after and difference are
+  # put back in the units of y at the end
   m <- if (n) max(abs(y)) else 0
   sc <- if (m > 1e150 || (m > 0 && m < 1e-150)) m else 1
   y <- y / sc
   minseg <- .rmbl_scalar(minseg, "minseg", 1, integer = TRUE)
   nperm <- .rmbl_scalar(nperm, "nperm", 1, integer = TRUE)
   if (n < 2L * minseg) {
-    stop(sprintf(
-      "need at least %d periods for a break with %d either side",
-      2L * minseg, minseg
-    ), call. = FALSE)
+    stop(
+      sprintf(
+        "need at least %d periods for a break with %d either side",
+        2L * minseg,
+        minseg
+      ),
+      call. = FALSE
+    )
   }
   # The weighted squared mean difference,
   #   (n_a n_b / n) (mean_a - mean_b)^2,
@@ -468,11 +532,15 @@ stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
   stat <- function(v) {
     n <- length(v)
     cuts <- seq.int(minseg, n - minseg)
-    vals <- vapply(cuts, function(k) {
-      a <- v[seq_len(k)]
-      b <- v[(k + 1L):n]
-      (length(a) * length(b) / n) * (mean(a) - mean(b))^2
-    }, 0)
+    vals <- vapply(
+      cuts,
+      function(k) {
+        a <- v[seq_len(k)]
+        b <- v[(k + 1L):n]
+        (length(a) * length(b) / n) * (mean(a) - mean(b))^2
+      },
+      0
+    )
     list(cuts = cuts, vals = vals)
   }
   # `y` is already reduced to its finite values and the statistic is a
@@ -494,10 +562,14 @@ stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
   if (nfact <= nperm) {
     perms <- .rmbl_permutations(n)
     np <- nrow(perms)
-    null <- vapply(seq_len(np), function(i) {
-      pg$update(i - 1L, sprintf("ordering %d/%d", i, np))
-      max(stat(y[perms[i, ]])$vals)
-    }, 0)
+    null <- vapply(
+      seq_len(np),
+      function(i) {
+        pg$update(i - 1L, sprintf("ordering %d/%d", i, np))
+        max(stat(y[perms[i, ]])$vals)
+      },
+      0
+    )
     method <- sprintf("exact over all %d orderings", nrow(perms))
     np <- nrow(perms)
   } else {
@@ -512,7 +584,8 @@ stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
       function(i) {
         pg$update(i - 1L, sprintf("permutation %d/%d", i, nperm))
         max(stat(sample(y))$vals)
-      }, 0
+      },
+      0
     )
     if (is.null(old)) {
       suppressWarnings(rm(".Random.seed", envir = globalenv()))
@@ -523,17 +596,24 @@ stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
     np <- nperm
   }
   null <- null[is.finite(null)]
-  # an ordering that makes the same split as the observed one scores it to rounding
+  # an ordering that makes the same split as the observed one scores it to
+  # rounding
   hit <- null >= tmax - 1e-12 * abs(tmax)
-  # Drawn permutations: the observed arrangement counts in its own null -- without it a p-value of
-  # exactly zero is reportable, and no permutation test can support that. Enumerated: the observed
-  # ordering is already one of the n!, and counting it again added one (73/721 for 0.1; CRAN stress
-  # test of 0.5.14).
+  # Drawn permutations: the observed arrangement counts in its own null --
+  # without it a p-value of exactly zero is reportable, and no permutation test
+  # can support that. Enumerated: the observed ordering is already one of the
+  # n!, and counting it again added one (73/721 for 0.1; CRAN stress test of
+  # 0.5.14).
   p <- if (nfact <= nperm) mean(hit) else (1 + sum(hit)) / (1 + length(null))
   list(
-    breakafter = x[best], index = best, before = mean(a) * sc,
-    after = mean(b) * sc, difference = (mean(b) - mean(a)) * sc,
-    statistic = tmax, p_value = min(1, p), nperm = np,
+    breakafter = x[best],
+    index = best,
+    before = mean(a) * sc,
+    after = mean(b) * sc,
+    difference = (mean(b) - mean(a)) * sc,
+    statistic = tmax,
+    p_value = min(1, p),
+    nperm = np,
     method = method
   )
 }
@@ -613,25 +693,33 @@ stepchg <- function(y, x = NULL, minseg = 2L, nperm = 9999L,
 #'
 #' try(cnttrnd(c(1.5, 2, 3)))
 #' @export
-#' @srrstats {TS5.0} Each result class has a default plot method (plot.rmbl_count_trend, rmbl_yoy, rmbl_stock_flow,
-#'   rmbl_event_study); tested in test-plots.R:236.
+#' @srrstats {TS5.0} Each result class has a default plot method
+#'   (plot.rmbl_count_trend, rmbl_yoy, rmbl_stock_flow, rmbl_event_study);
+#'   tested in test-plots.R:236.
 cnttrnd <- function(y, x = NULL, offset = NULL, conflvl = 0.95) {
   conflvl <- .rmbl_conf_level(conflvl)
   y <- .rmbl_num(y, "y")
-  if (is.null(x)) x <- seq_along(y)
+  if (is.null(x)) {
+    x <- seq_along(y)
+  }
   x <- .rmbl_num(x, "x")
   if (length(x) != length(y)) {
     stop("cnttrnd: `x` and `y` must be the same length", call. = FALSE)
   }
-  if (any(y < 0, na.rm = TRUE) ||
-    any(abs(y - round(y)) > 1e-8, na.rm = TRUE)) {
+  if (
+    any(y < 0, na.rm = TRUE) ||
+      any(abs(y - round(y)) > 1e-8, na.rm = TRUE)
+  ) {
     stop("`y` must be non-negative whole numbers", call. = FALSE)
   }
   if (any(is.infinite(x))) {
     stop("`x` must not contain infinite values", call. = FALSE)
   }
   if (all(y == 0, na.rm = TRUE)) {
-    stop("every count is zero: there is no rate to fit a trend to", call. = FALSE)
+    stop(
+      "every count is zero: there is no rate to fit a trend to",
+      call. = FALSE
+    )
   }
   logoff <- if (is.null(offset)) {
     rep(0, length(y))
@@ -650,7 +738,9 @@ cnttrnd <- function(y, x = NULL, offset = NULL, conflvl = 0.95) {
   y <- y[ok]
   logoff <- logoff[ok]
   n <- length(y)
-  if (n < 3L) stop("cnttrnd: a trend needs at least three periods", call. = FALSE)
+  if (n < 3L) {
+    stop("cnttrnd: a trend needs at least three periods", call. = FALSE)
+  }
   # centre the periods so the intercept is interpretable and the normal
   # equations are better conditioned
   xc <- x - mean(x)
@@ -670,7 +760,9 @@ cnttrnd <- function(y, x = NULL, offset = NULL, conflvl = 0.95) {
     swz <- sum(w * z)
     swxz <- sum(w * xc * z)
     det <- sw * swxx - swx^2
-    if (!is.finite(det) || abs(det) < 1e-12) break
+    if (!is.finite(det) || abs(det) < 1e-12) {
+      break
+    }
     nb <- c(
       (swxx * swz - swx * swxz) / det,
       (sw * swxz - swx * swz) / det
@@ -684,14 +776,20 @@ cnttrnd <- function(y, x = NULL, offset = NULL, conflvl = 0.95) {
   }
   eta <- beta[1L] + beta[2L] * xc + logoff
   mu <- exp(eta)
-  # Zero counts at one end only (0, 0, 5): the likelihood rises without bound as the slope grows, so
-  # there is no finite estimate and the iterations stop wherever they stop (a rate ratio of 9.7e16,
-  # unwarned; CRAN stress test of 0.5.14). glm() warns "fitted rates numerically 0".
+  # Zero counts at one end only (0, 0, 5): the likelihood rises without bound as
+  # the slope grows, so there is no finite estimate and the iterations stop
+  # wherever they stop (a rate ratio of 9.7e16, unwarned; CRAN stress test of
+  # 0.5.14). glm() warns "fitted rates numerically 0".
   diverged <- !converged && any(y == 0 & mu < 1e-8 * max(mu))
   if (diverged) {
-    warning("the counts are zero at one end of the series, so the trend has no finite estimate: ",
-            "the rate ratio is reported as ", if (beta[2L] > 0) "Inf" else "0", " with no interval",
-            call. = FALSE)
+    warning(
+      "the counts are zero at one end of the series, so the trend has ",
+      "no finite estimate: ",
+      "the rate ratio is reported as ",
+      if (beta[2L] > 0) "Inf" else "0",
+      " with no interval",
+      call. = FALSE
+    )
     beta[2L] <- sign(beta[2L]) * Inf
   }
   w <- mu
@@ -714,25 +812,35 @@ cnttrnd <- function(y, x = NULL, offset = NULL, conflvl = 0.95) {
   } else {
     stats::qnorm(1 - (1 - conflvl) / 2)
   }
-  structure(list(
-    rateratio = exp(beta[2L]),
-    lower = if (is.finite(se_use)) exp(beta[2L] - z * se_use) else NA_real_,
-    upper = if (is.finite(se_use)) exp(beta[2L] + z * se_use) else NA_real_,
-    p_value = if (is.finite(se_use) && se_use > 0) {
-      if (over) 2 * stats::pt(-abs(beta[2L] / se_use), df = n - 2L)
-      else 2 * stats::pnorm(-abs(beta[2L] / se_use))
-    } else {
-      NA_real_
-    },
-    logslope = beta[2L], se = se_use, fitted = mu,
-    dispersion = disp, overdispersed = over, n = n,
-    data = list(x = x, y = y),
-    method = if (over) {
-      "quasi-Poisson (dispersion above 1.5)"
-    } else {
-      "Poisson log-linear"
-    }
-  ), class = c("rmbl_count_trend", "list"))
+  structure(
+    list(
+      rateratio = exp(beta[2L]),
+      lower = if (is.finite(se_use)) exp(beta[2L] - z * se_use) else NA_real_,
+      upper = if (is.finite(se_use)) exp(beta[2L] + z * se_use) else NA_real_,
+      p_value = if (is.finite(se_use) && se_use > 0) {
+        if (over) {
+          2 * stats::pt(-abs(beta[2L] / se_use), df = n - 2L)
+        } else {
+          2 * stats::pnorm(-abs(beta[2L] / se_use))
+        }
+      } else {
+        NA_real_
+      },
+      logslope = beta[2L],
+      se = se_use,
+      fitted = mu,
+      dispersion = disp,
+      overdispersed = over,
+      n = n,
+      data = list(x = x, y = y),
+      method = if (over) {
+        "quasi-Poisson (dispersion above 1.5)"
+      } else {
+        "Poisson log-linear"
+      }
+    ),
+    class = c("rmbl_count_trend", "list")
+  )
 }
 
 
@@ -747,7 +855,12 @@ cnttrnd <- function(y, x = NULL, offset = NULL, conflvl = 0.95) {
 #' @return `value`, invisibly.
 #' @noRd
 .rmbl_mk_remember <- function(key, value) {
-  keys <- get0("keys", envir = .rmbl_mk_order, inherits = FALSE, ifnotfound = character())
+  keys <- get0(
+    "keys",
+    envir = .rmbl_mk_order,
+    inherits = FALSE,
+    ifnotfound = character()
+  )
   keys <- keys[keys %in% ls(.rmbl_mk_cache, all.names = TRUE)]
   if (!key %in% keys) {
     while (length(keys) >= 32L) {

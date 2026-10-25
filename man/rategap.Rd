@@ -12,16 +12,16 @@ rategap(x, grp, ref)
 \item{grp, ref}{The labels of the group and of the reference group.}
 }
 \value{
-A one-row data frame: \code{group}, \code{reference}, \code{ratio} with
-\code{ratiolo}/\code{ratioup}, and \code{difference} (per \code{per} people)
-with \code{diflo}/\code{difup}.
+A one-row data frame: \code{group}, \code{reference}, \code{ratio}
+with \code{ratiolo}/\code{ratioup}, and \code{difference} (per \code{per}
+people) with \code{diflo}/\code{difup}.
 }
 \description{
 The ratio and the difference of two directly standardised rates from
 \code{\link{agestd}}, with confidence intervals: log-normal for the ratio
-(variance \eqn{v_1/y_1^2 + v_2/y_2^2}) and normal for the difference, the two rates
-independent. Both measures are reported, as the relative gap alone hides how large the
-absolute one is (Anderson et al. 2016).
+(variance \eqn{v_1/y_1^2 + v_2/y_2^2}) and normal for the difference, the two
+rates independent. Both measures are reported, as the relative gap alone
+hides how large the absolute one is (Anderson et al. 2016).
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -37,8 +37,8 @@ rategap(r, "Inuit", "Non-Indigenous")
 \dontshow{\}) # examplesIf}
 }
 \references{
-Anderson I, Robson B, Connolly M, et al. (2016). Indigenous and tribal
-peoples' health (The Lancet-Lowitja Institute Global Collaboration): a population
-study. The Lancet 388(10040):131-157.
+Anderson I, Robson B, Connolly M, et al. (2016). Indigenous and
+tribal peoples' health (The Lancet-Lowitja Institute Global Collaboration): a
+population study. The Lancet 388(10040):131-157.
 \doi{10.1016/S0140-6736(16)00345-7}
 }

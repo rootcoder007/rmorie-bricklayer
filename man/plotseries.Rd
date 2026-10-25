@@ -36,8 +36,8 @@ plotbump(y, prd, grp, desc = TRUE, ..., main = NULL, col = NULL, pal = NULL)
 \item{main, col, pal}{The title, colours overriding the palette, and a
 \code{\link[=blpal]{blpal()}} name.}
 
-\item{prd}{Vector of periods, one per value (numbers, dates or text in order of
-appearance).}
+\item{prd}{Vector of periods, one per value (numbers, dates or text in order
+of appearance).}
 
 \item{grp}{Vector of series names, one per value, or \code{NULL} for one series.}
 
@@ -53,26 +53,29 @@ series (\code{grp}, \code{prd}, \code{y}, and \code{rank} for
 \code{plotbump()}, \code{band} for \code{plothrz()}).
 }
 \description{
-Base-graphics plots in the house style for a value observed by period, for one
-series or many:
-\describe{
-\item{\code{plotcal()}}{a calendar heatmap of a daily series: one tile per day,
-weeks across and weekdays down, one block per year.}
-\item{\code{plothrz()}}{a horizon chart: each series in its own thin row, its
-deviation from its own median folded into \code{bands} shaded bands, above in
+Base-graphics plots in the house style for a value observed by period, for
+one series or many: \describe{ \item{\code{plotcal()}}{a calendar heatmap of a
+daily series: one tile per day, weeks across and weekdays down, one block per
+year.} \item{\code{plothrz()}}{a horizon chart: each series in its own thin row,
+its deviation from its own median folded into \code{bands} shaded bands, above in
 blue and below in red, so many series fit in little height.}
 \item{\code{plotsm()}}{small multiples: one panel per series on a shared scale.}
-\item{\code{plotbump()}}{a bump chart: the rank of each series in each period (1
-= largest), so changes of order stand out.}
-}
+\item{\code{plotbump()}}{a bump chart: the rank of each series in each period (1 =
+largest), so changes of order stand out.} }
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 set.seed(5)
 days <- seq(as.Date("2024-01-01"), as.Date("2024-12-31"), by = "day")
 plotcal(days, stats::rpois(length(days), 5 + 3 * (format(days, "\%u") > "5")))
-d <- expand.grid(year = 2015:2024, area = c("north", "south", "east", "west"))
-d$n <- stats::rpois(nrow(d), 50 + 10 * as.integer(d$area) + 2 * (d$year - 2015))
+d <- expand.grid(
+  year = 2015:2024,
+  area = c("north", "south", "east", "west")
+)
+d$n <- stats::rpois(
+  nrow(d),
+  50 + 10 * as.integer(d$area) + 2 * (d$year - 2015)
+)
 plotsm(d$n, d$year, d$area)
 plothrz(d$n, d$year, d$area)
 plotbump(d$n, d$year, d$area)

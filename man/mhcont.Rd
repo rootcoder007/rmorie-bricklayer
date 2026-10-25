@@ -2,8 +2,8 @@
 % Please edit documentation in R/indigenous_frameworks.R
 \name{mhcont}
 \alias{mhcont}
-\title{The four directions of the First Nations Mental Wellness Continuum, from published
-indicators}
+\title{The four directions of the First Nations Mental Wellness Continuum, from
+published indicators}
 \usage{
 mhcont(
   data,
@@ -36,60 +36,68 @@ direction, or \code{NULL} where the tables have none.}
 \value{
 A data frame with the classes \code{rmbl_wellness_continuum} and
 \code{rmbl_wellness_profile}. Its columns are \code{group},
-\code{indicator} (the direction),
-\code{side} (\code{"wellness"}), \code{domain} (the proxies), \code{estimate},
-\code{lower}, \code{upper}, \code{usewithcau}, \code{shared}, \code{proxy}
-(always \code{TRUE}).
+\code{indicator} (the direction), \code{side} (\code{"wellness"}),
+\code{domain} (the proxies), \code{estimate}, \code{lower}, \code{upper},
+\code{usewithcau}, \code{shared}, \code{proxy} (always \code{TRUE}).
 }
 \description{
-Lays out a group's published indicators under the four outcomes of the First Nations
-Mental Wellness Continuum Framework (hope, belonging, meaning, purpose), each with its
-interval, and says which directions the tables have no measure of.
+Lays out a group's published indicators under the four outcomes of the First
+Nations Mental Wellness Continuum Framework (hope, belonging, meaning,
+purpose), each with its interval, and says which directions the tables have
+no measure of.
 }
 \details{
-The Framework (Health Canada and Assembly of First Nations 2015) describes
-mental wellness as hope for the future, a sense of belonging and connectedness to
-family, community and culture, a sense of meaning and of how one's life fits into
-creation, and purpose in daily life. It has no numeric scoring, and no survey table
-measures the four directions as the Framework defines them. This function takes the
-indicators a user names as proxies for each
-(\code{hope = "Always or often has a hopeful outlook"}, ...), reports each direction's
-level (the mean of its proxies, their standard errors combined as independent; the
-proxies share respondents, so if they are positively correlated that standard error is
-too small), marks
-every row as a proxy, and reports a direction given no proxy as missing rather than
-filling it from another. One indicator named for two directions (Statistics Canada asks
-about \dQuote{meaning and purpose} together) is used for both and marked \code{shared}.
+The Framework (Health Canada and Assembly of First Nations 2015)
+describes mental wellness as hope for the future, a sense of belonging and
+connectedness to family, community and culture, a sense of meaning and of how
+one's life fits into creation, and purpose in daily life. It has no numeric
+scoring, and no survey table measures the four directions as the Framework
+defines them. This function takes the indicators a user names as proxies for
+each (\code{hope = "Always or often has a hopeful outlook"}, ...), reports
+each direction's level (the mean of its proxies, their standard errors
+combined as independent; the proxies share respondents, so if they are
+positively correlated that standard error is too small), marks every row as a
+proxy, and reports a direction given no proxy as missing rather than filling
+it from another. One indicator named for two directions (Statistics Canada
+asks about \dQuote{meaning and purpose} together) is used for both and marked
+\code{shared}.
 
 The result plots as a \code{\link{welprof}}. For the balance across the
 directions, call \code{\link{holbal}} on the rows with a proxy
-(\code{x[x$domain != "no published proxy", ]}, with \code{"domain"} as its domain
-column):
-a missing direction otherwise leaves the balance \code{NA}, and a shared proxy counts
-once per direction it serves, so give such directions half weight. Other frameworks of
-wellness (Te Whare Tapa Wha, the Social and Emotional Wellbeing domains, a Nation's
-own) take the same route through \code{\link{welprof}} and
-\code{\link{holbal}}, which accept any set of domains.
+(\code{x[x$domain != "no published proxy", ]}, with \code{"domain"} as its
+domain column): a missing direction otherwise leaves the balance \code{NA},
+and a shared proxy counts once per direction it serves, so give such
+directions half weight. Other frameworks of wellness (Te Whare Tapa Wha, the
+Social and Emotional Wellbeing domains, a Nation's own) take the same route
+through \code{\link{welprof}} and \code{\link{holbal}}, which accept any set
+of domains.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-# well-being, 2024 (table 41-10-0082-01): hope, and meaning and purpose (asked
-# together);
-# this table has no measure of belonging, so that direction is reported as missing
+# well-being, 2024 (table 41-10-0082-01): hope, and meaning and purpose
+# (asked together); this table has no measure of belonging, so that direction
+# is reported as missing
 wb <- indiex("wellbeing")
-mw <- mhcont(wb, "group", "indicator", "estimate", "lower", "upper",
-        hope = "Always or often has a hopeful outlook",
-        meaning = "Sense of meaning and purpose rating of 8, 9 or 10",
-        purp = "Sense of meaning and purpose rating of 8, 9 or 10",
-        qual = "quality")
+mw <- mhcont(
+  wb,
+  "group",
+  "indicator",
+  "estimate",
+  "lower",
+  "upper",
+  hope = "Always or often has a hopeful outlook",
+  meaning = "Sense of meaning and purpose rating of 8, 9 or 10",
+  purp = "Sense of meaning and purpose rating of 8, 9 or 10",
+  qual = "quality"
+)
 mw
 plot(mw)
 \dontshow{\}) # examplesIf}
 }
 \references{
-Health Canada, Assembly of First Nations (2015). First Nations Mental
-Wellness Continuum Framework. Ottawa: Health Canada. Summary report:\cr
-sac-isc.gc.ca/eng/1576093687903/1576093725971
+Health Canada, Assembly of First Nations (2015). First Nations
+Mental Wellness Continuum Framework. Ottawa: Health Canada. Summary
+report:\cr sac-isc.gc.ca/eng/1576093687903/1576093725971
 }
 \seealso{
 \code{\link{welprof}}, \code{\link{holbal}}.

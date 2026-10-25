@@ -11,19 +11,20 @@ chwksim(fit, hor = NULL, seed = 1L)
 
 \item{hor}{Number, the end of the window; default the fit's horizon.}
 
-\item{seed}{Whole number, default 1, for this call only (the session's stream is
-left as it was).}
+\item{seed}{Whole number, default 1, for this call only (the session's stream
+is left as it was).}
 }
 \value{
 The sorted event times (numeric), with the attribute \code{generation} (0
 for an immigrant, 1 for its children, ...).
 }
 \description{
-Draws a new event history from a \code{\link[=chwkfit]{chwkfit()}} result by its
-cluster representation: immigrant events from the baseline (a Poisson process,
+Draws a new event history from a \code{\link[=chwkfit]{chwkfit()}} result by its cluster
+representation: immigrant events from the baseline (a Poisson process,
 thinned from its upper bound for a sinusoidal baseline), then each event's
-offspring, a Poisson number with mean the branching ratio, at delays drawn from the
-fitted kernel, generation after generation, until none fall before the horizon.
+offspring, a Poisson number with mean the branching ratio, at delays drawn
+from the fitted kernel, generation after generation, until none fall before
+the horizon.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

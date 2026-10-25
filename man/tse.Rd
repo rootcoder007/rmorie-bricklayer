@@ -17,8 +17,8 @@ tse(
 
 \item{mbar}{The values of \eqn{\bar M} (default 0, 0.5, 1, 1.5, 2).}
 
-\item{target}{\code{"average"} (the mean of the post-period effects, default) or an
-event time.}
+\item{target}{\code{"average"} (the mean of the post-period effects, default)
+or an event time.}
 
 \item{draws}{Normal draws for the interval (default 5000).}
 
@@ -28,31 +28,33 @@ event time.}
 A data frame of class \code{rmbl_sensitivity}: \code{mbar},
 \code{lowerbnd}, \code{upbound} (the identified set at the estimates),
 \code{lower}, \code{upper} (the interval); attribute \code{breakdown} (the
-smallest \eqn{\bar M} whose interval includes 0, found by bisection; \code{Inf}
-if none up to 10).
+smallest \eqn{\bar M} whose interval includes 0, found by bisection;
+\code{Inf} if none up to 10).
 }
 \description{
-Bounds on the effects of an \code{\link{evstudy}} when the trend after adoption
-may depart from parallel by up to \eqn{\bar M} times the largest departure seen
-before it (Rambachan and Roth's relative magnitudes), with a conservative interval
-and the \code{"breakdown"} \eqn{\bar M} at which the interval first includes zero.
+Bounds on the effects of an \code{\link{evstudy}} when the trend after
+adoption may depart from parallel by up to \eqn{\bar M} times the largest
+departure seen before it (Rambachan and Roth's relative magnitudes), with a
+conservative interval and the \code{"breakdown"} \eqn{\bar M} at which the
+interval first includes zero.
 }
 \details{
 Let \eqn{\delta_e} be the bias of the event-time coefficient
 \eqn{\beta_e}, with \eqn{\delta_{-1} = 0} at the reference period and the
-pre-period biases identified by the leads. The relative-magnitudes restriction is
-\eqn{|\delta_{e+1} - \delta_e| \le \bar M D}, with
-\eqn{D = \max_{s < 0} |\delta_{s+1} - \delta_s|} the largest change between
-consecutive pre-periods. The bias at post-period \eqn{e \ge 0} is then at most
-\eqn{(e + 1)\bar M D} in absolute value, so the identified set for the effect
-\eqn{\tau_e} is \eqn{\beta_e \pm (e + 1)\bar M D}, and for the average post-period
-effect the average of those. The interval draws \eqn{(\beta^*)} from the normal
-distribution of the estimates (with the event study's cluster-robust covariance),
-computes the bounds for each, and takes the \eqn{\alpha/2} quantile of the lower
-bound and the \eqn{1 - \alpha/2} quantile of the upper: by Bonferroni it covers the
-identified set, and so the effect, with probability at least \code{conflvl}. It
-is conservative; Rambachan and Roth's conditional and hybrid intervals (the
-\code{HonestDiD} package) are shorter.
+pre-period biases identified by the leads. The relative-magnitudes
+restriction is \eqn{|\delta_{e+1} - \delta_e| \le \bar M D}, with \eqn{D =
+\max_{s < 0} |\delta_{s+1} - \delta_s|} the largest change between
+consecutive pre-periods. The bias at post-period \eqn{e \ge 0} is then at
+most \eqn{(e + 1)\bar M D} in absolute value, so the identified set for the
+effect \eqn{\tau_e} is \eqn{\beta_e \pm (e + 1)\bar M D}, and for the average
+post-period effect the average of those. The interval draws \eqn{(\beta^*)}
+from the normal distribution of the estimates (with the event study's
+cluster-robust covariance), computes the bounds for each, and takes the
+\eqn{\alpha/2} quantile of the lower bound and the \eqn{1 - \alpha/2}
+quantile of the upper: by Bonferroni it covers the identified set, and so the
+effect, with probability at least \code{conflvl}. It is conservative;
+Rambachan and Roth's conditional and hybrid intervals (the \code{HonestDiD}
+package) are shorter.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -64,5 +66,6 @@ tse(es, seed = 1)
 }
 \references{
 Rambachan A, Roth J (2023). A more credible approach to parallel
-trends. Review of Economic Studies 90(5):2555-2591. \doi{10.1093/restud/rdad018}
+trends. Review of Economic Studies 90(5):2555-2591.
+\doi{10.1093/restud/rdad018}
 }

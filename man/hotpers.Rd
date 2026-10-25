@@ -23,25 +23,20 @@ each period, in (0, 1]; default 0.05 (the busiest 5\%).}
 (projected coordinates, such as metres in a UTM zone).}
 }
 \value{
-An object of class \code{rmbl_hotspot}, a list:
-\describe{
+An object of class \code{rmbl_hotspot}, a list: \describe{
 \item{\code{periods}}{data frame, one row per period: \code{period}
-(character), \code{incidents}, \code{actcells}, \code{cellsforhalf}
-(fewest cells holding half the incidents), \code{shrforhalf}
-(that number over the ever-active cells), \code{hotcells},
-\code{tiedin} (the cells made hot only by a tie with the k-th busiest),
-\code{tiedout} (the tied cells left out when the tie would have made
-more than twice \code{k} cells hot, which printing says),
-\code{hotshr} (share of the incidents in hot cells) and
-\code{jacpre} (\code{NA} for the first period). Shares are
-proportions in \eqn{[0, 1]}.}
-\item{\code{cells}}{data frame, one row per ever-active cell: \code{x}, \code{y}
-(its centre in the input's units), \code{incidents} and
-\code{perhot}.}
-\item{\code{cell}, \code{top}, \code{coords}}{the settings.}
-\item{\code{ncells}, \code{hotk}}{the number of ever-active cells and
-\eqn{k}.}
-}
+(character), \code{incidents}, \code{actcells}, \code{cellsforhalf} (fewest
+cells holding half the incidents), \code{shrforhalf} (that number over the
+ever-active cells), \code{hotcells}, \code{tiedin} (the cells made hot only
+by a tie with the k-th busiest), \code{tiedout} (the tied cells left out
+when the tie would have made more than twice \code{k} cells hot, which
+printing says), \code{hotshr} (share of the incidents in hot cells) and
+\code{jacpre} (\code{NA} for the first period). Shares are proportions in
+\eqn{[0, 1]}.} \item{\code{cells}}{data frame, one row per ever-active
+cell: \code{x}, \code{y} (its centre in the input's units),
+\code{incidents} and \code{perhot}.} \item{\code{cell}, \code{top},
+\code{coords}}{the settings.} \item{\code{ncells}, \code{hotk}}{the number
+of ever-active cells and \eqn{k}.} }
 }
 \description{
 Counts incidents (break-ins, shootings, calls for service) in square

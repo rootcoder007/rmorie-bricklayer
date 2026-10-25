@@ -9,24 +9,23 @@ stpdnpv(obs, null)
 \arguments{
 \item{obs}{The observed statistics, one per hypothesis.}
 
-\item{null}{A matrix of statistics under the null: one row per draw, one column per
-hypothesis.}
+\item{null}{A matrix of statistics under the null: one row per draw, one
+column per hypothesis.}
 }
 \value{
 The adjusted p-values, in the order of \code{observed}.
 }
 \description{
 Adjusted p-values for several hypotheses tested together, from the joint null
-distribution of their statistics (permutations or bootstrap draws), holding the
-family-wise error rate while using the correlation between the tests.
+distribution of their statistics (permutations or bootstrap draws), holding
+the family-wise error rate while using the correlation between the tests.
 }
 \details{
-The statistics are ordered by size,
-\eqn{|t_{(1)}| \ge \dots \ge |t_{(K)}|}. For each null draw \eqn{b},
-\eqn{q_{b,j} = \max_{r \ge j} |t^*_{b,(r)}|}. The adjusted p-value of the \eqn{j}th
-is the share of draws with \eqn{q_{b,j} \ge |t_{(j)}|}, made monotone:
-\eqn{\tilde p_{(j)} = \max(\tilde p_{(j-1)}, p_{(j)})} (Westfall and Young 1993,
-algorithm 2.8).
+The statistics are ordered by size, \eqn{|t_{(1)}| \ge \dots \ge
+|t_{(K)}|}. For each null draw \eqn{b}, \eqn{q_{b,j} = \max_{r \ge j}
+|t^*_{b,(r)}|}. The adjusted p-value of the \eqn{j}th is the share of draws
+with \eqn{q_{b,j} \ge |t_{(j)}|}, made monotone: \eqn{\tilde p_{(j)} =
+\max(\tilde p_{(j-1)}, p_{(j)})} (Westfall and Young 1993, algorithm 2.8).
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -36,8 +35,8 @@ stpdnpv(c(2.5, 0.4, -2.1), null)
 \dontshow{\}) # examplesIf}
 }
 \references{
-Westfall PH, Young SS (1993). Resampling-Based Multiple Testing. Wiley,
-New York.
+Westfall PH, Young SS (1993). Resampling-Based Multiple Testing.
+Wiley, New York.
 }
 \seealso{
 \code{\link{perminf}}.

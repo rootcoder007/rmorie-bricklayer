@@ -24,45 +24,45 @@ cwbscr(
 
 \item{partic, empl}{Percentages for labour force activity.}
 
-\item{bounds}{The income bounds (default the 2016 and 2021 series: 2650 and 75000).}
+\item{bounds}{The income bounds (default the 2016 and 2021 series: 2650 and
+75000).}
 }
 \value{
 A data frame, one row per community: \code{income}, \code{education},
 \code{housing}, \code{labour}, \code{cwb}.
 }
 \description{
-Indigenous Services Canada's Community Well-Being (CWB) index: income, education,
-housing and labour force activity, each scored from 0 to 100, and their mean, from
-census profile figures.
+Indigenous Services Canada's Community Well-Being (CWB) index: income,
+education, housing and labour force activity, each scored from 0 to 100, and
+their mean, from census profile figures.
 }
 \details{
-The components, as the index's methodology sets them out (Penney, O'Sullivan
-and Senecal 2012; O'Sullivan and McHardy 2013; Indigenous Services Canada's reports on
-trends, 1981 to 2016 and 2021):
-\describe{
-\item{income}{\eqn{100 (\log y - \log a) / (\log b - \log a)} for income per capita
-\eqn{y} (total income over total population) between the bounds \eqn{a} and \eqn{b}
-(2,650 and 75,000 dollars in the 2016 and 2021 series; 2,000 and 40,000 in the
-earlier ones), kept between 0 and 100 here.}
-\item{education}{two thirds of the percentage aged 20 and over with at least a high
-school certificate, plus one third of the percentage aged 25 and over with a
-university degree at the bachelor's level or above.}
-\item{housing}{half the percentage of people in dwellings with no more than one
-person per room, plus half the percentage in dwellings that need no major repairs.}
-\item{labour}{half the participation rate, plus half the employment rate of those
-participating (ages 20 to 64).}
-}
-The index is the mean of the four. Indigenous Services Canada computes it from
-unrounded census microdata, scores only communities of 65 people or more and suppresses
-the components of communities under 250 people or 40 households: scores from published,
-rounded profile figures come close to the published index but need not equal it, and a
-small community's should be treated as the Department would. The full current
-methodology is available from the Department on request. The index measures
-socio-economic conditions as the census counts them; it says nothing of culture,
-language or relationship to land, and is not a measure of wellness as First Nations and
-Inuit define it. The CWB is Indigenous Services Canada's index, with bounds in the
-Canadian dollars of its series: for another country, set \code{bounds} in its currency
-and read the result as a CWB-style score, not comparable with Canada's.
+The components, as the index's methodology sets them out (Penney,
+O'Sullivan and Senecal 2012; O'Sullivan and McHardy 2013; Indigenous Services
+Canada's reports on trends, 1981 to 2016 and 2021): \describe{
+\item{income}{\eqn{100 (\log y - \log a) / (\log b - \log a)} for income per
+capita \eqn{y} (total income over total population) between the bounds
+\eqn{a} and \eqn{b} (2,650 and 75,000 dollars in the 2016 and 2021 series;
+2,000 and 40,000 in the earlier ones), kept between 0 and 100 here.}
+\item{education}{two thirds of the percentage aged 20 and over with at least
+a high school certificate, plus one third of the percentage aged 25 and over
+with a university degree at the bachelor's level or above.}
+\item{housing}{half the percentage of people in dwellings with no more than
+one person per room, plus half the percentage in dwellings that need no major
+repairs.} \item{labour}{half the participation rate, plus half the employment
+rate of those participating (ages 20 to 64).} } The index is the mean of the
+four. Indigenous Services Canada computes it from unrounded census microdata,
+scores only communities of 65 people or more and suppresses the components of
+communities under 250 people or 40 households: scores from published, rounded
+profile figures come close to the published index but need not equal it, and
+a small community's should be treated as the Department would. The full
+current methodology is available from the Department on request. The index
+measures socio-economic conditions as the census counts them; it says nothing
+of culture, language or relationship to land, and is not a measure of
+wellness as First Nations and Inuit define it. The CWB is Indigenous Services
+Canada's index, with bounds in the Canadian dollars of its series: for
+another country, set \code{bounds} in its currency and read the result as a
+CWB-style score, not comparable with Canada's.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -74,16 +74,16 @@ cwbscr(incpercap = c(18000, 31000), highsch20p = c(58, 81),
 \dontshow{\}) # examplesIf}
 }
 \references{
-Penney C, O'Sullivan E, Senecal S (2012). The Community Well-Being Index
-(CWB): Examining Well-Being in Inuit Communities, 1981-2006. Aboriginal Affairs and
-Northern Development Canada.
+Penney C, O'Sullivan E, Senecal S (2012). The Community
+Well-Being Index (CWB): Examining Well-Being in Inuit Communities, 1981-2006.
+Aboriginal Affairs and Northern Development Canada.
 
-O'Sullivan E, McHardy M (2013). The Community Well-Being (CWB) Index: Disparity in
-Well-Being Between First Nations and Other Canadian Communities Over Time. In White JP,
-Peters J, Beavon D, Spence N (eds), Aboriginal Well-Being: Canada's Continuing
-Challenge. Thompson Educational.
+O'Sullivan E, McHardy M (2013). The Community Well-Being (CWB) Index:
+Disparity in Well-Being Between First Nations and Other Canadian Communities
+Over Time. In White JP, Peters J, Beavon D, Spence N (eds), Aboriginal
+Well-Being: Canada's Continuing Challenge. Thompson Educational.
 
-Indigenous Services Canada (2019). Report on trends in First Nations communities, 1981
-to 2016 (Community Well-Being index).\cr
+Indigenous Services Canada (2019). Report on trends in First Nations
+communities, 1981 to 2016 (Community Well-Being index).\cr
 sac-isc.gc.ca/eng/1345816651029/1557323327644
 }

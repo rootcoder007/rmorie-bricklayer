@@ -13,27 +13,21 @@ file.}
 }
 \value{
 A list of class \code{bricklayer_certificate} with these elements:
-\itemize{
-\item \code{version} (integer) and \code{serial} (hex);
-\item \code{issuer} and \code{subject} (distinguished names as text);
-\item \code{not_before} and \code{not_after} (\code{POSIXct}, UTC);
-\item \code{signature_algorithm} (a name such as \code{"ECDSA-SHA256"})
-and \code{signature_oid};
-\item \code{signature} and \code{tbs} (raw; the signed part);
-\item \code{key} (a list: \code{type} \code{"RSA"} or \code{"EC"},
-\code{bits}, and the key values, with \code{curve} for EC);
-\item \code{is_ca} and \code{path_len};
-\item \code{key_usage} and \code{extended_key_usage} (character; EKU as
-OIDs);
-\item \code{subject_rdns}, \code{issuer_rdns}, \code{san} and
-\code{name_constraints};
-\item the policy fields \code{policies}, \code{policy_mappings} and
-\code{require_explicit_policy};
-\item the policy fields \code{inhibit_policy_mapping} and \code{inhibit_any_policy};
-\item \code{self_signed} (logical: issuer equals subject);
-\item \code{der} (the bytes).
-}
-\code{print()} shows a summary.
+\itemize{ \item \code{version} (integer) and \code{serial} (hex); \item
+\code{issuer} and \code{subject} (distinguished names as text); \item
+\code{not_before} and \code{not_after} (\code{POSIXct}, UTC); \item
+\code{signature_algorithm} (a name such as \code{"ECDSA-SHA256"}) and
+\code{signature_oid}; \item \code{signature} and \code{tbs} (raw; the
+signed part); \item \code{key} (a list: \code{type} \code{"RSA"} or
+\code{"EC"}, \code{bits}, and the key values, with \code{curve} for EC);
+\item \code{is_ca} and \code{path_len}; \item \code{key_usage} and
+\code{extended_key_usage} (character; EKU as OIDs); \item
+\code{subject_rdns}, \code{issuer_rdns}, \code{san} and
+\code{name_constraints}; \item the policy fields \code{policies},
+\code{policy_mappings} and \code{require_explicit_policy}; \item the policy
+fields \code{inhibit_policy_mapping} and \code{inhibit_any_policy}; \item
+\code{self_signed} (logical: issuer equals subject); \item \code{der} (the
+bytes). } \code{print()} shows a summary.
 }
 \description{
 Reads the fields a verifier needs: who issued it, who it is for, when it
@@ -65,30 +59,53 @@ no signature.
 # A small test chain shipped as hexadecimal DER: a self-signed P-256 root
 # and a leaf it issued (a throwaway test authority; trust it for nothing).
 roothex <- paste0(
-  "308201973082013ca003020102021452157dfd900c163c5027372ed4090b9d11748286300a06",
-  "082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133011060355",
-  "04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3336303932",
-  "393038343334315a302931123010060355040a0c09726d626c20746573743113301106035504",
-  "030c0a454332353620526f6f743059301306072a8648ce3d020106082a8648ce3d0301070342",
-  "0004624ad2e98f4566cd8f003a188f822875fa4760ed894507e8a4130a08fcb59280e958aa6c",
-  "e6147989d155ce20d1a6d94fe109d3d2f2bc13d1394cea3520197fdda3423040300f0603551d",
-  "130101ff040530030101ff300e0603551d0f0101ff040403020106301d0603551d0e04160414",
-  "2ef598166f5b9e6bb65d3252cf127b2c992348ae300a06082a8648ce3d040302034900304602",
-  "21009cd3d7968f65630677b3c7437cae5187021d553c756820d34b6a8a1240e7efb7022100a3",
-  "c37f0a8e1f38a5263b14414e6f916962bbd36bcbaca40b07d371352de745c0")
+  "308201973082013ca003020102021452157dfd900c163c5027372ed4090b9d11748",
+  "286300a06",
+  "082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133",
+  "011060355",
+  "04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3",
+  "336303932",
+  "393038343334315a302931123010060355040a0c09726d626c20746573743113301",
+  "106035504",
+  "030c0a454332353620526f6f743059301306072a8648ce3d020106082a8648ce3d0",
+  "301070342",
+  "0004624ad2e98f4566cd8f003a188f822875fa4760ed894507e8a4130a08fcb5928",
+  "0e958aa6c",
+  "e6147989d155ce20d1a6d94fe109d3d2f2bc13d1394cea3520197fdda3423040300",
+  "f0603551d",
+  "130101ff040530030101ff300e0603551d0f0101ff040403020106301d0603551d0",
+  "e04160414",
+  "2ef598166f5b9e6bb65d3252cf127b2c992348ae300a06082a8648ce3d040302034",
+  "900304602",
+  "21009cd3d7968f65630677b3c7437cae5187021d553c756820d34b6a8a1240e7efb",
+  "7022100a3",
+  "c37f0a8e1f38a5263b14414e6f916962bbd36bcbaca40b07d371352de745c0"
+)
 leafhex <- paste0(
-  "308201ae30820154a00302010202142fa99d48ead4c033c568837b2288f9e9bf137068300a06",
-  "082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133011060355",
-  "04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3331313030",
-  "313038343334315a302931123010060355040a0c09726d626c20746573743113301106035504",
-  "030c0a4543323536204c6561663059301306072a8648ce3d020106082a8648ce3d0301070342",
-  "00045f0ad14e657dedf3f6cc18530f9d905823b6e9f492ecc0eb1989c9ad8a11a859ebb7681a",
-  "e5b1f579974e3c6709e824245608c448da6fe248ebf67bf727d598f4a35a305830090603551d",
-  "1304023000300b0603551d0f040403020780301d0603551d0e04160414b1d22b6dd5987f0dfa",
-  "0ff3a5d0140351d752e0fb301f0603551d230418301680142ef598166f5b9e6bb65d3252cf12",
-  "7b2c992348ae300a06082a8648ce3d0403020348003045022100bc9d6ec452554adb8f33e4ac",
-  "53d5e29620fc19528074153028ce849d98c8c15202205c841de357dbad5042daba7fb4af3724",
-  "78d684f648e6ef23c68a3d764894c8fc")
+  "308201ae30820154a00302010202142fa99d48ead4c033c568837b2288f9e9bf137",
+  "068300a06",
+  "082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133",
+  "011060355",
+  "04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3",
+  "331313030",
+  "313038343334315a302931123010060355040a0c09726d626c20746573743113301",
+  "106035504",
+  "030c0a4543323536204c6561663059301306072a8648ce3d020106082a8648ce3d0",
+  "301070342",
+  "00045f0ad14e657dedf3f6cc18530f9d905823b6e9f492ecc0eb1989c9ad8a11a85",
+  "9ebb7681a",
+  "e5b1f579974e3c6709e824245608c448da6fe248ebf67bf727d598f4a35a3058300",
+  "90603551d",
+  "1304023000300b0603551d0f040403020780301d0603551d0e04160414b1d22b6dd",
+  "5987f0dfa",
+  "0ff3a5d0140351d752e0fb301f0603551d230418301680142ef598166f5b9e6bb65",
+  "d3252cf12",
+  "7b2c992348ae300a06082a8648ce3d0403020348003045022100bc9d6ec452554ad",
+  "b8f33e4ac",
+  "53d5e29620fc19528074153028ce849d98c8c15202205c841de357dbad5042daba7",
+  "fb4af3724",
+  "78d684f648e6ef23c68a3d764894c8fc"
+)
 hex2raw <- function(h) {
   as.raw(strtoi(substring(h, seq(1, nchar(h), 2), seq(2, nchar(h), 2)), 16L))
 }
@@ -101,9 +118,14 @@ c(leaf$not_before, leaf$not_after)
 
 # the same certificate from a PEM file
 pem <- tempfile(fileext = ".pem")
-writeLines(c("-----BEGIN CERTIFICATE-----",
-             strsplit(jsb64enc(hex2raw(roothex)), "\n")[[1]],
-             "-----END CERTIFICATE-----"), pem)
+writeLines(
+  c(
+    "-----BEGIN CERTIFICATE-----",
+    strsplit(jsb64enc(hex2raw(roothex)), "\n")[[1]],
+    "-----END CERTIFICATE-----"
+  ),
+  pem
+)
 certprs(pem)$self_signed
 
 # bytes that are not a certificate

@@ -74,7 +74,12 @@ stats::ks.test(U, "punif")$p.value
 fit <- chwkfit(times, 50, "weibull")
 U2 <- chwkres(times, 50, "weibull", fit$theta)
 summary(U2)
-plot(stats::ppoints(length(U2)), sort(U2), xlab = "uniform quantile", ylab = "residual")
+plot(
+  stats::ppoints(length(U2)),
+  sort(U2),
+  xlab = "uniform quantile",
+  ylab = "residual"
+)
 abline(0, 1)
 
 # par must match the kernel and baseline

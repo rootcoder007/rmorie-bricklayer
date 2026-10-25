@@ -4,13 +4,19 @@ test_that("a capsule whose provenance came through JSON verifies", {
   dir <- tempfile("capsule-json-")
   dir.create(dir)
   write.csv(data.frame(id = 1:3), file.path(dir, "d.csv"), row.names = FALSE)
-  prov <- list(resource = list(filename = "d.csv",
-                               sha256 = sha256file(file.path(dir, "d.csv"))))
+  prov <- list(
+    resource = list(
+      filename = "d.csv",
+      sha256 = sha256file(file.path(dir, "d.csv"))
+    )
+  )
   # no auto_unbox: every scalar arrives back as a length-1 list
-  writeLines(tojs(prov),
-             file.path(dir, "data_provenance.json"))
-  expect_true(is.list(loadprov(
-    file.path(dir, "data_provenance.json"))$resource$sha256))
+  writeLines(tojs(prov), file.path(dir, "data_provenance.json"))
+  expect_true(is.list(
+    loadprov(
+      file.path(dir, "data_provenance.json")
+    )$resource$sha256
+  ))
   out <- vrfcps(dir)
   expect_true(out$ok)
   ck <- out$checks

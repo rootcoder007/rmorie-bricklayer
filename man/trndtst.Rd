@@ -79,12 +79,12 @@ with the test rather than derived from a different model. At small
 \eqn{n} the slopes may not reach the requested confidence; the bound is
 then the most extreme slope and \code{slopecicla} is \code{TRUE}.
 
-Missing periods are dropped and the series is sorted by \code{x}. Errors: fewer
-than three periods; infinite values; \code{x} and \code{y} of different lengths; a
-period given twice in \code{x}; a data frame without \code{value} or with a column
-not found; more than 20,000 periods (the pairwise slopes would not fit in memory);
-a \code{conflvl} outside (0, 1). \code{exact = TRUE} with \eqn{n > 8} warns and
-uses the normal approximation.
+Missing periods are dropped and the series is sorted by \code{x}. Errors:
+fewer than three periods; infinite values; \code{x} and \code{y} of different
+lengths; a period given twice in \code{x}; a data frame without \code{value}
+or with a column not found; more than 20,000 periods (the pairwise slopes
+would not fit in memory); a \code{conflvl} outside (0, 1). \code{exact =
+TRUE} with \eqn{n > 8} warns and uses the normal approximation.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

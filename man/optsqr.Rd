@@ -41,15 +41,15 @@ the distribution as earlier unsuccessful searches left it.
 The search factor \code{f} is the half side of the square in units
 of the total probable error of position \code{E} (the radius of the circle
 holding half the distribution, \code{E = 1.1774 sigma}). For relative effort
-\code{z = Z / E^2} the coverage is \code{C = z / (2 f)^2}, the containment
-is the circular normal's mass in the square, \code{(2 Phi(f E / sigma) - 1)^2}
+\code{z = Z / E^2} the coverage is \code{C = z / (2 f)^2}, the containment is
+the circular normal's mass in the square, \code{(2 Phi(f E / sigma) - 1)^2}
 for a first search, and the probability of success \code{POC x POD(C)} with
-the POD curve of \code{model} (\code{\link{srchpod}}). The factor is found
-on a grid of 241 values from 0.02 to 10 and refined by \code{optimize()}.
-After a search the density inside its square is multiplied by
-\code{1 - POD}; every later search is optimized against what is left, and
-its \code{poc} and \code{pos} are conditional on the earlier searches having
-failed. Frost's figures 6-3 to 6-6 are drawn from it by \code{\link{srchfig}}.
+the POD curve of \code{model} (\code{\link{srchpod}}). The factor is found on
+a grid of 241 values from 0.02 to 10 and refined by \code{optimize()}. After
+a search the density inside its square is multiplied by \code{1 - POD}; every
+later search is optimized against what is left, and its \code{poc} and
+\code{pos} are conditional on the earlier searches having failed. Frost's
+figures 6-3 to 6-6 are drawn from it by \code{\link{srchfig}}.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

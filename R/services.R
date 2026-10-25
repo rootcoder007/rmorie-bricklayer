@@ -18,7 +18,8 @@
 #' Returns the public key that signs the services document.
 #'
 #' ML-DSA-44 public key of the document signer (generated 2026-10-06). Rotating
-#' it is a package release by design; rotating anything the document names is not.
+#' it is a package release by design; rotating anything the document names is
+#' not.
 #' @return The ML-DSA-44 public key as hex text.
 #' @noRd
 .rmbl_services_pubkey <- function() {
@@ -82,13 +83,28 @@
 #' @return A services document with every service off.
 #' @noRd
 .rmbl_services_off <- function() {
-  list(version = 1L, issued = "1970-01-01T00:00:00Z",
-       notice = paste0("The hosted MORIE services could not be verified from this machine. ",
-                       "Local models and your own API keys keep working."),
-       llm = list(mode = "off", base_url = "", auth_url = "", default_model = "",
-                  models = character(0), request_access = "https://www.rmorie.com/access/"),
-       data = list(mode = "off", base_url = "", license = "https://www.rmorie.com/data-license/",
-                   request_access = "https://www.rmorie.com/access/"))
+  list(
+    version = 1L,
+    issued = "1970-01-01T00:00:00Z",
+    notice = paste0(
+      "The hosted MORIE services could not be verified from this machine. ",
+      "Local models and your own API keys keep working."
+    ),
+    llm = list(
+      mode = "off",
+      base_url = "",
+      auth_url = "",
+      default_model = "",
+      models = character(0),
+      request_access = "https://www.rmorie.com/access/"
+    ),
+    data = list(
+      mode = "off",
+      base_url = "",
+      license = "https://www.rmorie.com/data-license/",
+      request_access = "https://www.rmorie.com/access/"
+    )
+  )
 }
 
 #' Checks the detached signature over a services document.
@@ -101,19 +117,36 @@
 #' @param pubkey The signer's public key as hex text.
 #' @return TRUE when the signature verifies, else FALSE.
 #' @noRd
-.rmbl_services_verify <- function(doc_bytes, sig_json, pubkey = .rmbl_services_pubkey()) {
-  sig <- tryCatch(.rmbl_json_text(sig_json, simplifyVector = FALSE), error = function(e) NULL)
-  if (is.null(sig) || !identical(sig$scheme, "ML-DSA-44") ||
+.rmbl_services_verify <- function(
+  doc_bytes,
+  sig_json,
+  pubkey = .rmbl_services_pubkey()
+) {
+  sig <- tryCatch(
+    .rmbl_json_text(sig_json, simplifyVector = FALSE),
+    error = function(e) NULL
+  )
+  if (
+    is.null(sig) ||
+      !identical(sig$scheme, "ML-DSA-44") ||
       !identical(sig$context, .rmbl_services_context) ||
-      !is.character(sig$signature) || length(sig$signature) != 1L) {
+      !is.character(sig$signature) ||
+      length(sig$signature) != 1L
+  ) {
     return(FALSE)
   }
-  obj <- structure(list(scheme = "ML-DSA-44", signature = sig$signature, prehash = "none"),
-                   class = c("bricklayer_signature", "list"))
+  obj <- structure(
+    list(scheme = "ML-DSA-44", signature = sig$signature, prehash = "none"),
+    class = c("bricklayer_signature", "list")
+  )
   key <- tryCatch(fipskey("ML-DSA-44", pubkey), error = function(e) NULL)
-  if (is.null(key)) return(FALSE)
-  isTRUE(tryCatch(cpsvrf(doc_bytes, obj, key, ctx = .rmbl_services_context),
-                  error = function(e) FALSE))
+  if (is.null(key)) {
+    return(FALSE)
+  }
+  isTRUE(tryCatch(
+    cpsvrf(doc_bytes, obj, key, ctx = .rmbl_services_context),
+    error = function(e) FALSE
+  ))
 }
 
 #' Parse and shape-check a verified document. NULL when it is not a v1 document.
@@ -121,21 +154,55 @@
 #' @return The document as a list, or NULL.
 #' @noRd
 .rmbl_services_parse <- function(doc_bytes) {
-  d <- tryCatch(.rmbl_json_text(doc_bytes, simplifyVector = FALSE), error = function(e) NULL)
-  if (!is.list(d) || !identical(as.integer(d$version), 1L)) return(NULL)
-  mode_ok <- function(m) is.character(m) && length(m) == 1L && m %in% c("off", "key")
-  url_ok <- function(u) {
-    is.character(u) && length(u) == 1L && (identical(u, "") ||
-      !inherits(tryCatch(.rmbl_check_public_url(u, "a service URL"), error = function(e) e), "error"))
+  d <- tryCatch(
+    .rmbl_json_text(doc_bytes, simplifyVector = FALSE),
+    error = function(e) NULL
+  )
+  if (!is.list(d) || !identical(as.integer(d$version), 1L)) {
+    return(NULL)
   }
-  # the llm block is optional: language models are never hosted now (a document may keep one,
-  # mode off, for older installs that read their sign-in address from it)
-  if (is.null(d$llm)) d$llm <- .rmbl_services_off()$llm
-  if (!is.list(d$llm) || !is.list(d$data) || !mode_ok(d$llm$mode) || !mode_ok(d$data$mode)) return(NULL)
-  if (!is.character(d$issued) || length(d$issued) != 1L ||
-      is.na(.rmbl_services_time(d$issued))) return(NULL)
-  for (f in c("base_url", "auth_url")) if (!url_ok(d$llm[[f]] %||% "")) return(NULL)
-  for (f in c("base_url", "auth_url")) if (!url_ok(d$data[[f]] %||% "")) return(NULL)
+  mode_ok <- function(m) {
+    is.character(m) && length(m) == 1L && m %in% c("off", "key")
+  }
+  url_ok <- function(u) {
+    is.character(u) &&
+      length(u) == 1L &&
+      (identical(u, "") ||
+        !inherits(
+          tryCatch(
+            .rmbl_check_public_url(u, "a service URL"),
+            error = function(e) e
+          ),
+          "error"
+        ))
+  }
+  # the llm block is optional: language models are never hosted now (a document
+  # may keep one, mode off, for older installs that read their sign-in address
+  # from it)
+  if (is.null(d$llm)) {
+    d$llm <- .rmbl_services_off()$llm
+  }
+  if (
+    !is.list(d$llm) ||
+      !is.list(d$data) ||
+      !mode_ok(d$llm$mode) ||
+      !mode_ok(d$data$mode)
+  ) {
+    return(NULL)
+  }
+  if (
+    !is.character(d$issued) ||
+      length(d$issued) != 1L ||
+      is.na(.rmbl_services_time(d$issued))
+  ) {
+    return(NULL)
+  }
+  for (f in c("base_url", "auth_url")) {
+    if (!url_ok(d$llm[[f]] %||% "")) return(NULL)
+  }
+  for (f in c("base_url", "auth_url")) {
+    if (!url_ok(d$data[[f]] %||% "")) return(NULL)
+  }
   d$llm$models <- as.character(unlist(d$llm$models %||% character(0)))
   d$llm$default_model <- as.character(d$llm$default_model %||% "")[1L]
   d$notice <- as.character(d$notice %||% "")[1L]
@@ -160,10 +227,17 @@
 #' @noRd
 .rmbl_services_read <- function(path, pubkey = .rmbl_services_pubkey()) {
   sig_path <- sub("[.]json$", ".sig", path)
-  if (!file.exists(path) || !file.exists(sig_path)) return(NULL)
+  if (!file.exists(path) || !file.exists(sig_path)) {
+    return(NULL)
+  }
   bytes <- readBin(path, "raw", file.size(path))
-  sig <- paste(readLines(sig_path, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
-  if (!.rmbl_services_verify(bytes, sig, pubkey)) return(NULL)
+  sig <- paste(
+    readLines(sig_path, warn = FALSE, encoding = "UTF-8"),
+    collapse = "\n"
+  )
+  if (!.rmbl_services_verify(bytes, sig, pubkey)) {
+    return(NULL)
+  }
   .rmbl_services_parse(bytes)
 }
 
@@ -262,18 +336,29 @@
 #' # ask the site now (network), and keep the answer for a day
 #' svcs(refresh = TRUE)
 #' @export
-svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20,
-                                offline = FALSE) {
+svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20, offline = FALSE) {
   .bl_check_flag(refresh, "refresh")
   .bl_check_flag(offline, "offline")
-  if (!is.numeric(maxage) || length(maxage) != 1L || is.na(maxage) || maxage < 0) {
-    stop("`maxage` must be a single non-negative number of seconds (Inf keeps a cached copy forever)",
-         call. = FALSE)
+  if (
+    !is.numeric(maxage) || length(maxage) != 1L || is.na(maxage) || maxage < 0
+  ) {
+    stop(
+      "`maxage` must be a single non-negative number of seconds (Inf ",
+      "keeps a cached copy forever)",
+      call. = FALSE
+    )
   }
-  if (!is.numeric(tmout) || length(tmout) != 1L || !is.finite(tmout) || tmout < 1) {
-    stop("`tmout` must be a single number of seconds, at least one", call. = FALSE)
+  if (
+    !is.numeric(tmout) || length(tmout) != 1L || !is.finite(tmout) || tmout < 1
+  ) {
+    stop(
+      "`tmout` must be a single number of seconds, at least one",
+      call. = FALSE
+    )
   }
-  if (isTRUE(offline) && !isTRUE(refresh) && !is.null(.rmbl_services_memo$doc)) {
+  if (
+    isTRUE(offline) && !isTRUE(refresh) && !is.null(.rmbl_services_memo$doc)
+  ) {
     return(.rmbl_services_memo$doc)
   }
   out <- .rmbl_services_resolve(refresh, maxage, tmout, offline)
@@ -281,13 +366,14 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20,
   out
 }
 
-#' Chooses the services document from the live site, the cache and the bundled copy.
+#' Chooses the services document from the live site, the cache and the bundled
+#' copy.
 #' @param refresh Whether to fetch even when the cache is fresh.
 #' @param max_age The seconds a cached copy is used without fetching.
 #' @param timeout The seconds allowed for each download.
 #' @param offline Whether to skip the network.
-#' @return The document, with a `source` attribute: \code{"live"}, \code{"cache"},
-#' \code{"bundled"} or \code{"off"}.
+#' @return The document, with a `source` attribute: \code{"live"},
+#' \code{"cache"}, \code{"bundled"} or \code{"off"}.
 #' @noRd
 .rmbl_services_resolve <- function(refresh, max_age, timeout, offline) {
   cache <- .rmbl_services_cache_path()
@@ -299,30 +385,47 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20,
   # endpoint that receives the user's key (fourth review).
   # A cache earns its place only by being NEWER than the bundled copy: the same
   # date adds nothing, and an older one is deleted.
-  if (!is.null(cached) && !is.null(bundled) &&
-      .rmbl_services_time(cached$issued) <= .rmbl_services_time(bundled$issued)) {
-    if (.rmbl_services_time(cached$issued) < .rmbl_services_time(bundled$issued)) {
+  if (
+    !is.null(cached) &&
+      !is.null(bundled) &&
+      .rmbl_services_time(cached$issued) <= .rmbl_services_time(bundled$issued)
+  ) {
+    if (
+      .rmbl_services_time(cached$issued) < .rmbl_services_time(bundled$issued)
+    ) {
       unlink(c(cache, sub("[.]json$", ".sig", cache)))
     }
     cached <- NULL
   }
-  floor <- max(c(-Inf, as.numeric(.rmbl_services_time(cached$issued)),
-                 as.numeric(.rmbl_services_time(bundled$issued))), na.rm = TRUE)
-  fresh <- !is.null(cached) && !isTRUE(refresh) &&
+  floor <- max(
+    c(
+      -Inf,
+      as.numeric(.rmbl_services_time(cached$issued)),
+      as.numeric(.rmbl_services_time(bundled$issued))
+    ),
+    na.rm = TRUE
+  )
+  fresh <- !is.null(cached) &&
+    !isTRUE(refresh) &&
     (as.numeric(Sys.time()) - as.numeric(file.mtime(cache))) < max_age
   if (!is.null(cached) && (fresh || isTRUE(offline))) {
     return(structure(cached, source = "cache"))
   }
   live <- if (isTRUE(offline)) NULL else .rmbl_services_fetch(timeout)
   if (!is.null(live)) {
-    # a document older than the one already held, or than the bundled one, is a rollback
+    # a document older than the one already held, or than the bundled one, is a
+    # rollback
     if (as.numeric(.rmbl_services_time(live$doc$issued)) >= floor) {
       .rmbl_services_write(cache, live$bytes, live$sig)
       return(structure(live$doc, source = "live"))
     }
   }
-  if (!is.null(cached)) return(structure(cached, source = "cache"))
-  if (!is.null(bundled)) return(structure(bundled, source = "bundled"))
+  if (!is.null(cached)) {
+    return(structure(cached, source = "cache"))
+  }
+  if (!is.null(bundled)) {
+    return(structure(bundled, source = "bundled"))
+  }
   structure(.rmbl_services_off(), source = "off")
 }
 
@@ -336,23 +439,50 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20,
 #' @noRd
 .rmbl_services_fetch <- function(timeout = 20) {
   url <- Sys.getenv("MORIE_SERVICES_URL", .rmbl_services_url)
-  ok <- !inherits(tryCatch(.rmbl_check_public_url(url, "MORIE_SERVICES_URL"),
-                           error = function(e) e), "error")
-  if (!ok) return(NULL)
+  ok <- !inherits(
+    tryCatch(
+      .rmbl_check_public_url(url, "MORIE_SERVICES_URL"),
+      error = function(e) e
+    ),
+    "error"
+  )
+  if (!ok) {
+    return(NULL)
+  }
   tmp_doc <- tempfile(fileext = ".json")
   tmp_sig <- tempfile(fileext = ".sig")
   on.exit(unlink(c(tmp_doc, tmp_sig)), add = TRUE)
   # no Wayback fallback here: an archived copy of this document is exactly
   # the stale endpoint list the signature and the issue date exist to refuse
-  if (!identical(.rmbl_net_download(url, tmp_doc, timeout), 200L) ||
-      !file.exists(tmp_doc) || file.size(tmp_doc) == 0) return(NULL)
-  if (!identical(.rmbl_net_download(.rmbl_services_sig_url(url), tmp_sig, timeout), 200L) ||
-      !file.exists(tmp_sig) || file.size(tmp_sig) == 0) return(NULL)
+  if (
+    !identical(.rmbl_net_download(url, tmp_doc, timeout), 200L) ||
+      !file.exists(tmp_doc) ||
+      file.size(tmp_doc) == 0
+  ) {
+    return(NULL)
+  }
+  if (
+    !identical(
+      .rmbl_net_download(.rmbl_services_sig_url(url), tmp_sig, timeout),
+      200L
+    ) ||
+      !file.exists(tmp_sig) ||
+      file.size(tmp_sig) == 0
+  ) {
+    return(NULL)
+  }
   bytes <- readBin(tmp_doc, "raw", file.size(tmp_doc))
-  sig <- paste(readLines(tmp_sig, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
-  if (!.rmbl_services_verify(bytes, sig)) return(NULL)
+  sig <- paste(
+    readLines(tmp_sig, warn = FALSE, encoding = "UTF-8"),
+    collapse = "\n"
+  )
+  if (!.rmbl_services_verify(bytes, sig)) {
+    return(NULL)
+  }
   doc <- .rmbl_services_parse(bytes)
-  if (is.null(doc)) return(NULL)
+  if (is.null(doc)) {
+    return(NULL)
+  }
   list(doc = doc, bytes = bytes, sig = sig)
 }
 
@@ -364,14 +494,27 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20,
 #' @noRd
 .rmbl_net_download <- function(url, tmp, timeout) {
   # 1 MiB is a large document
-  res <- .bl_net(url, .Call(C_rmbl_http_download, url, tmp, as.integer(timeout), NULL, NULL, 1048576, FALSE))
+  res <- .bl_net(
+    url,
+    .Call(
+      C_rmbl_http_download,
+      url,
+      tmp,
+      as.integer(timeout),
+      NULL,
+      NULL,
+      1048576,
+      FALSE
+    )
+  )
   res$status
 }
 
 # The one-line answers the rest of the package asks for. Offline inside the
 # package: a sign-in or a table fetch must not block on the site; the daily
 # refresh happens when svcs() is called for its own sake.
-#' Returns the language-model block of the services document, without going online.
+#' Returns the language-model block of the services document, without going
+#' online.
 #' @return The `llm` list of svcs().
 #' @noRd
 .rmbl_services_llm <- function() svcs(offline = TRUE)$llm
@@ -383,17 +526,22 @@ svcs <- function(refresh = FALSE, maxage = 86400, tmout = 20,
 
 #' Gives the URL of a document's signature.
 #'
-#' The signature sits beside the document: \code{"x.json"} -> \code{"x.sig"}; a mirror
-#' without the suffix gets \code{".sig"} appended (0.5.8 fetched the document as its
-#' own signature and failed closed, silently).
+#' The signature sits beside the document: \code{"x.json"} -> \code{"x.sig"}; a
+#' mirror without the suffix gets \code{".sig"} appended (0.5.8 fetched the
+#' document as its own signature and failed closed, silently).
 #' @param url The document URL.
 #' @return The signature URL.
 #' @noRd
 .rmbl_services_sig_url <- function(url) {
-  if (grepl("[.]json$", url)) sub("[.]json$", ".sig", url) else paste0(url, ".sig")
+  if (grepl("[.]json$", url)) {
+    sub("[.]json$", ".sig", url)
+  } else {
+    paste0(url, ".sig")
+  }
 }
 
-#' The copy shipped with the package (one seam, so a test can stand in a bundled document).
+#' The copy shipped with the package (one seam, so a test can stand in a bundled
+#' document).
 #' @return The path of the bundled morie-services.json.
 #' @noRd
 .rmbl_services_bundled_path <- function() {

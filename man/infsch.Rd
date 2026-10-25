@@ -48,22 +48,18 @@ low-cardinality categorical column, the observed range of every numeric
 column widened by \code{slack}, and the observed missingness rate per
 column with headroom.
 
-The rules, with \eqn{n} rows:
-\itemize{
-\item types: the first class of each column (\code{"integer"},
-\code{"numeric"}, \code{"character"}, \code{"factor"}, \code{"Date"}, ...);
-\item rows: \code{min_data_rows} \eqn{= \lfloor n(1 - slack) \rfloor} (at
-least 0) and \code{max_data_rows} \eqn{= \lceil n(1 + slack) \rceil};
-\item numeric ranges: \eqn{[lo - pad, hi + pad]} with
-\eqn{pad = slack \times (hi - lo)}, or \eqn{slack \times \max(|lo|, 1)} for a
-constant column; a column with no non-missing value gets no range;
+The rules, with \eqn{n} rows: \itemize{ \item types: the first class of each
+column (\code{"integer"}, \code{"numeric"}, \code{"character"},
+\code{"factor"}, \code{"Date"}, ...); \item rows: \code{min_data_rows} \eqn{=
+\lfloor n(1 - slack) \rfloor} (at least 0) and \code{max_data_rows} \eqn{=
+\lceil n(1 + slack) \rceil}; \item numeric ranges: \eqn{[lo - pad, hi + pad]}
+with \eqn{pad = slack \times (hi - lo)}, or \eqn{slack \times \max(|lo|, 1)}
+for a constant column; a column with no non-missing value gets no range;
 \item value sets: for character, factor and logical columns with at most
-\code{maxlvl} distinct non-missing values, those values as sorted text;
-\item missingness: the observed share of \code{NA} plus \code{slack}
-(added, not multiplied), capped at 1.
-}
-Other column types (dates, lists) get a type and a missingness ceiling
-only.
+\code{maxlvl} distinct non-missing values, those values as sorted text; \item
+missingness: the observed share of \code{NA} plus \code{slack} (added, not
+multiplied), capped at 1. } Other column types (dates, lists) get a type and
+a missingness ceiling only.
 \subsection{This is a starting point, not an oracle}{
 
 An inferred schema describes ONE extract. It cannot know that a category

@@ -86,10 +86,10 @@ decompressed CSV takes a few GB of RAM as a data frame.
 
 The key is sent only to the address of the signed services document. With
 \code{MORIE_DATA_URL} set to another address the key is not sent and the
-download fails with a message saying so. Some tables (ICPSR studies, the
-NCVS 38604 extract, the A2AJ case law) open only after their terms are
-accepted on the terms page, \code{data.rmorie.com/terms}. Downloads draw a progress
-bar when \code{options(morie.progress)} allows it.
+download fails with a message saying so. Some tables (ICPSR studies, the NCVS
+38604 extract, the A2AJ case law) open only after their terms are accepted on
+the terms page, \code{data.rmorie.com/terms}. Downloads draw a progress bar
+when \code{options(morie.progress)} allows it.
 
 Errors: \code{refresh} not \code{TRUE} or \code{FALSE}; no key stored (the
 message says how to sign in); the service unavailable, or the key rejected;
@@ -109,13 +109,22 @@ dir.create(cache)
 old <- options(rmoriebricklayer.dcache = cache)
 f <- file.path(cache, "demo__counts.csv.gz")
 con <- gzfile(f, "w")
-write.csv(data.frame(region = c("a", "b"), n = c(3L, 5L)), con, row.names = FALSE)
+write.csv(
+  data.frame(region = c("a", "b"), n = c(3L, 5L)),
+  con,
+  row.names = FALSE
+)
 close(con)
-m <- list(datasets = list(list(key = "demo/counts", rows = 2, source = "an example",
-                               meta = list(description = "Counts by region"),
-                               sha256_gz = csha256(readBin(f, "raw", file.size(f))))))
-writeLines(tojs(m, auto_unbox = TRUE),
-           file.path(cache, "manifest.json"))
+m <- list(
+  datasets = list(list(
+    key = "demo/counts",
+    rows = 2,
+    source = "an example",
+    meta = list(description = "Counts by region"),
+    sha256_gz = csha256(readBin(f, "raw", file.size(f)))
+  ))
+)
+writeLines(tojs(m, auto_unbox = TRUE), file.path(cache, "manifest.json"))
 
 dtabs()
 dload("demo/counts")
@@ -132,7 +141,11 @@ file.exists(f)
 options(old)
 unlink(cache, recursive = TRUE)
 for (v in names(oldenv)) {
-  if (is.na(oldenv[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(oldenv[v]))
+  if (is.na(oldenv[[v]])) {
+    Sys.unsetenv(v)
+  } else {
+    do.call(Sys.setenv, as.list(oldenv[v]))
+  }
 }
 \dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

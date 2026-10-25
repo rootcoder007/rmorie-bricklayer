@@ -28,10 +28,10 @@ perminf(
 0 or \code{Inf} for a unit never treated). Treatment is taken as staying on.}
 
 \item{cl}{Column name of the clusters (default the unit), or two column names
-for two-way clustering (Cameron, Gelbach and Miller 2011):
-\eqn{V_a + V_b - V_{ab}}, each term with the small-sample factor of the dimension
-with fewer clusters, and t on its \eqn{G - 1} degrees of freedom. A composite
-cluster (district by month, say) is one column made with \code{interaction()}.}
+for two-way clustering (Cameron, Gelbach and Miller 2011): \eqn{V_a + V_b -
+V_{ab}}, each term with the small-sample factor of the dimension with fewer
+clusters, and t on its \eqn{G - 1} degrees of freedom. A composite cluster
+(district by month, say) is one column made with \code{interaction()}.}
 
 \item{stat}{\code{"t"} (default) or \code{"estimate"}.}
 
@@ -39,9 +39,10 @@ cluster (district by month, say) is one column made with \code{interaction()}.}
 
 \item{seed}{Optional seed.}
 
-\item{ties}{\code{"count"} (default): an assignment whose statistic equals the
-observed one counts (the observed assignment is among those enumerated, so the
-exact p-value is at least \eqn{1/N}); \code{"strict"}: only larger ones count.}
+\item{ties}{\code{"count"} (default): an assignment whose statistic equals
+the observed one counts (the observed assignment is among those enumerated,
+so the exact p-value is at least \eqn{1/N}); \code{"strict"}: only larger
+ones count.}
 }
 \value{
 A data frame of class \code{rmbl_permutation}, one row per outcome:
@@ -50,22 +51,22 @@ A data frame of class \code{rmbl_permutation}, one row per outcome:
 matrix of permuted statistics).
 }
 \description{
-Re-assigns the adoption dates across clusters (all the distinct assignments when
-there are few, random ones otherwise), re-estimates the difference in differences
-each time, and gives the share of assignments with an effect at least as large; for
-several outcomes, also the Westfall-Young stepdown p-values that hold the
-family-wise error rate.
+Re-assigns the adoption dates across clusters (all the distinct assignments
+when there are few, random ones otherwise), re-estimates the difference in
+differences each time, and gives the share of assignments with an effect at
+least as large; for several outcomes, also the Westfall-Young stepdown
+p-values that hold the family-wise error rate.
 }
 \details{
-The adoption period of each cluster (for example a judicial district's
-stage of a reform) is shuffled among the clusters, keeping the number of clusters
-adopting at each date, and \code{\link{plndid}}'s estimate
+The adoption period of each cluster (for example a judicial
+district's stage of a reform) is shuffled among the clusters, keeping the
+number of clusters adopting at each date, and \code{\link{plndid}}'s estimate
 (\code{statistic = "estimate"}) or t statistic (\code{"t"}, the default) is
 recomputed. With \eqn{b} of \eqn{R} random assignments at least as extreme as
-observed, \eqn{p = (b + 1)/(R + 1)}; when every distinct assignment is enumerated
-(their number is at most \code{reps}), \eqn{p} is the exact share. The test is
-Fisher's: it is valid in any sample when adoption dates were assigned at random
-across clusters.
+observed, \eqn{p = (b + 1)/(R + 1)}; when every distinct assignment is
+enumerated (their number is at most \code{reps}), \eqn{p} is the exact share.
+The test is Fisher's: it is valid in any sample when adoption dates were
+assigned at random across clusters.
 
 For several outcomes, the same assignments give \code{\link{stpdnpv}}.
 
@@ -84,8 +85,8 @@ perminf(p, "district", "month", c("crmrate", "arrrate"),
 Fisher RA (1935). The Design of Experiments. Oliver and Boyd,
 Edinburgh.
 
-Applied with the four stages of a reform permuted across districts: Acosta, Mejia
-and Zorro Medina (2023), see \code{\link{plndid}}.
+Applied with the four stages of a reform permuted across districts: Acosta,
+Mejia and Zorro Medina (2023), see \code{\link{plndid}}.
 }
 \seealso{
 \code{\link{stpdnpv}}.

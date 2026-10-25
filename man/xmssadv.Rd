@@ -19,96 +19,78 @@ xmssfgt(keytofgt = NULL)
 \code{\link[=cpssign]{cpssign()}},
 or the attestation, bundle or recode manifest that carries it.}
 
-\item{msg}{The message the signature was made over; when given, the signature is
-verified against the key first, so an edited or foreign signature cannot advance it.
-Without it, the signature's index is accepted only up to the highest index the
-record
-shows this key has used here, so an edited index cannot burn the key's remaining
-leaves;
-a signature made on another machine needs \code{msg}.}
+\item{msg}{The message the signature was made over; when given, the signature
+is verified against the key first, so an edited or foreign signature cannot
+advance it. Without it, the signature's index is accepted only up to the
+highest index the record shows this key has used here, so an edited index
+cannot burn the key's remaining leaves; a signature made on another machine
+needs \code{msg}.}
 
-\item{keytoreg}{For
-\code{\link[=xmssregkey]{xmssregkey()}}: a signing key generated on
-another
-machine, regenerated from given seeds, or whose record was deleted, that has never
-signed; it is added to the record so that it may sign from \code{next_index}. A key
-the record shows has signed is refused.}
+\item{keytoreg}{For \code{\link[=xmssregkey]{xmssregkey()}}: a signing key generated on
+another machine, regenerated from given seeds, or whose record was deleted,
+that has never signed; it is added to the record so that it may sign from
+\code{next_index}. A key the record shows has signed is refused.}
 
-\item{keytofgt}{For
-\code{\link[=xmssfgt]{xmssfgt()}}:
-a signing key (the record is keyed by its secret seed) whose
-entry alone is reset to \dQuote{nothing used} (it may sign from index 0 again);
-\code{NULL}
-removes the whole record (every key, and the record of the releases before 0.5.12),
-after which only keys generated afterwards, or vouched for by
+\item{keytofgt}{For \code{\link[=xmssfgt]{xmssfgt()}}: a signing key (the record is
+keyed by its secret seed) whose entry alone is reset to \dQuote{nothing
+used} (it may sign from index 0 again); \code{NULL} removes the whole
+record (every key, and the record of the releases before 0.5.12), after
+which only keys generated afterwards, or vouched for by
 \code{\link[=xmssregkey]{xmssregkey()}}, may sign.}
 }
 \value{
-The key with \code{next_index} advanced past the signature's index and past
-every index the record knows this key has used.
+The key with \code{next_index} advanced past the signature's index
+and past every index the record knows this key has used.
 }
 \description{
-An XMSS signature consumes one leaf, so the key that made it must not sign at that
-index
-again. This returns the key with \code{next_index} set to one past the signature's
-index
-(refusing a signature that was not made by this key), which is the key to save and to
-use
-for the next signature. The signature object itself carries no key material.
+An XMSS signature consumes one leaf, so the key that made it must not sign at
+that index again. This returns the key with \code{next_index} set to one past
+the signature's index (refusing a signature that was not made by this key),
+which is the key to save and to use for the next signature. The signature
+object itself carries no key material.
 }
 \details{
-The package records the highest index each key has signed with and refuses that index
-again, within the session and across sessions on this machine. The record is the file
-\code{xmss_used_indices.txt} under
-\code{tools::R_user_dir("rmoriebricklayer", "config")},
-which is where CRAN policy lets a package keep its own configuration. A key is entered
-under a fingerprint of its secret seed (\code{skseed}), not under the \code{root} it
-carries, so editing a stale copy's \code{root} does not make it a new key, and a
-signature
-whose \code{root} does not match the seeds is withheld.
-\code{\link[=pqckg]{pqckg()}}
-registers a key it generates from fresh randomness. A key built from given
-seeds is not registered, because it may be one that has signed elsewhere: it signs
-from
-index 0 only after
-\code{\link[=xmssregkey]{xmssregkey()}}
-vouches for it, and the same holds for any key
+The package records the highest index each key has signed with and refuses
+that index again, within the session and across sessions on this machine. The
+record is the file \code{xmss_used_indices.txt} under
+\code{tools::R_user_dir("rmoriebricklayer", "config")}, which is where CRAN
+policy lets a package keep its own configuration. A key is entered under a
+fingerprint of its secret seed (\code{skseed}), not under the \code{root} it
+carries, so editing a stale copy's \code{root} does not make it a new key,
+and a signature whose \code{root} does not match the seeds is withheld.
+\code{\link[=pqckg]{pqckg()}} registers a key it generates from fresh randomness. A key
+built from given seeds is not registered, because it may be one that has
+signed elsewhere: it signs from index 0 only after
+\code{\link[=xmssregkey]{xmssregkey()}} vouches for it, and the same holds for any key
 the record does not know (from another machine, or whose record was deleted).
-Every reservation runs under an operating-system file lock (\code{flock} on Unix,
-\code{LockFileEx} on Windows) on \code{xmss_used_indices.txt.flock}, which the system
-releases when the process ends, so a crashed session leaves no lock for another
-process to
-take over. A record that cannot be read, or that cannot be written in full (a full
-disk),
-stops the signature. The record of the releases before 0.5.12 (\code{xmss_index.json}
-in
-the same directory) is read and merged, and kept as \code{xmss_index.json.migrated}
-once
-the new record has been written.
-Another path can be set with the option \code{rmoriebricklayer.xmssidxfile} or the
-environment variable \code{RMBL_XMSS_INDEX_FILE}: an absolute path to a regular file,
-or
-to one that does not exist yet (a device such as \code{/dev/null}, a directory or a
-relative path is refused). The option \code{FALSE} (or, except on Windows, where an
-empty
-environment variable is an unset one, the value \code{""}) turns the file off: then
-only
-the session remembers, every signature warns, and a stale copy of the key reloaded
-elsewhere signs a used index again. The record does not travel with the key and is
-lost if
-the file is deleted, so a key copied to another machine is protected only by the
-\code{next_index} you saved: save the advanced key after every signature. In CI or a
-container with a fresh home directory, a key that was not generated in that run is
-unknown
-to the record: register it once with
-\code{\link[=xmssregkey]{xmssregkey()}},
-or point the record at a file that persists. Examples and vignettes point the record
-at a temporary file so that checks and builds leave the configuration directory alone.
-The record keeps one line per key for good (an exhausted key's line is what stops a
-stale copy of it), and is read and rewritten whole at every signature: a whole
-signature took 0.5 s with a hundred thousand keys in the record (measured on an x86-64
-laptop; a slower machine takes longer), and longer when several processes sign at once
-(each waits its turn for the lock, up to 10 s).
+Every reservation runs under an operating-system file lock (\code{flock} on
+Unix, \code{LockFileEx} on Windows) on \code{xmss_used_indices.txt.flock},
+which the system releases when the process ends, so a crashed session leaves
+no lock for another process to take over. A record that cannot be read, or
+that cannot be written in full (a full disk), stops the signature. The record
+of the releases before 0.5.12 (\code{xmss_index.json} in the same directory)
+is read and merged, and kept as \code{xmss_index.json.migrated} once the new
+record has been written. Another path can be set with the option
+\code{rmoriebricklayer.xmssidxfile} or the environment variable
+\code{RMBL_XMSS_INDEX_FILE}: an absolute path to a regular file, or to one
+that does not exist yet (a device such as \code{/dev/null}, a directory or a
+relative path is refused). The option \code{FALSE} (or, except on Windows,
+where an empty environment variable is an unset one, the value \code{""})
+turns the file off: then only the session remembers, every signature warns,
+and a stale copy of the key reloaded elsewhere signs a used index again. The
+record does not travel with the key and is lost if the file is deleted, so a
+key copied to another machine is protected only by the \code{next_index} you
+saved: save the advanced key after every signature. In CI or a container with
+a fresh home directory, a key that was not generated in that run is unknown
+to the record: register it once with \code{\link[=xmssregkey]{xmssregkey()}}, or point
+the record at a file that persists. Examples and vignettes point the record
+at a temporary file so that checks and builds leave the configuration
+directory alone. The record keeps one line per key for good (an exhausted
+key's line is what stops a stale copy of it), and is read and rewritten whole
+at every signature: a whole signature took 0.5 s with a hundred thousand keys
+in the record (measured on an x86-64 laptop; a slower machine takes longer),
+and longer when several processes sign at once (each waits its turn for the
+lock, up to 10 s).
 
 \code{\link[=xmssfgt]{xmssfgt()}}
 resets one key's entry, or removes the whole record, and with it
@@ -116,8 +98,10 @@ the protection against re-signing: use it for test keys only.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-# one-time index record out of your configuration directory; leave the default in use
+# keep this example's
+op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+# one-time index record out of your configuration directory; leave the
+# default in use
 key <- pqckg(height = 2)
 s1 <- cpssign("manifest-1", key)
 key <- xmssadv(key, s1)

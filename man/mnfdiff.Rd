@@ -42,16 +42,24 @@ what a fetched source changed with it.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-a <- data.frame(path = c("a.csv", "b.csv"), sha256 = c("01", "02"),
-                size_bytes = c(10, 20))
-b <- data.frame(path = c("a.csv", "c.csv"), sha256 = c("09", "03"),
-                size_bytes = c(12, 30))
+a <- data.frame(
+  path = c("a.csv", "b.csv"),
+  sha256 = c("01", "02"),
+  size_bytes = c(10, 20)
+)
+b <- data.frame(
+  path = c("a.csv", "c.csv"),
+  sha256 = c("09", "03"),
+  size_bytes = c(12, 30)
+)
 d <- mnfdiff(a, b)
 d
 d$change
 
 # a provenance record and its re-pinned copy
-p <- list(resource = list(filename = "a.csv", sha256 = "01", size_bytes = 10))
+p <- list(
+  resource = list(filename = "a.csv", sha256 = "01", size_bytes = 10)
+)
 q <- p
 q$resource$sha256 <- "09"
 mnfdiff(p, q)$change

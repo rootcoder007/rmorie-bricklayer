@@ -21,9 +21,7 @@ test_that("awkward numbers are written in a form that reads back", {
   expect_match(as.character(big), "e", fixed = TRUE)
   expect_equal(as.numeric(fromjs(big)), 1e20)
   expect_equal(as.numeric(rt(-1e20)), -1e20)
-  expect_match(as.character(tojs(1e300)), "e",
-    fixed = TRUE
-  )
+  expect_match(as.character(tojs(1e300)), "e", fixed = TRUE)
   # values that fit are written in full, including past the 32-bit range
   expect_equal(as.character(tojs(3e9)), "[3000000000]")
   expect_equal(
@@ -31,25 +29,35 @@ test_that("awkward numbers are written in a form that reads back", {
     "[2147483648]"
   )
   expect_equal(as.numeric(rt(3e9)), 3e9)
-  expect_false(grepl("e", as.character(tojs(1000)),
-    fixed = TRUE
-  ))
+  expect_false(grepl("e", as.character(tojs(1000)), fixed = TRUE))
 
   # a value that rounds up at the requested precision carries correctly
-  expect_equal(as.numeric(fromjs(
-    tojs(0.99999, digits = 2)
-  )), 1)
-  expect_equal(as.numeric(fromjs(
-    tojs(9.9999, digits = 2)
-  )), 10)
-  expect_equal(as.numeric(fromjs(
-    tojs(1.005, digits = 2)
-  )), 1.0)
+  expect_equal(
+    as.numeric(fromjs(
+      tojs(0.99999, digits = 2)
+    )),
+    1
+  )
+  expect_equal(
+    as.numeric(fromjs(
+      tojs(9.9999, digits = 2)
+    )),
+    10
+  )
+  expect_equal(
+    as.numeric(fromjs(
+      tojs(1.005, digits = 2)
+    )),
+    1.0
+  )
   # very small and very large magnitudes survive a round trip
   for (v in c(1e-12, 1e12, -1e-12, .Machine$double.xmax / 1e10)) {
-    expect_equal(as.numeric(fromjs(
-      tojs(v, digits = NA)
-    )), v)
+    expect_equal(
+      as.numeric(fromjs(
+        tojs(v, digits = NA)
+      )),
+      v
+    )
   }
   # The special values map the way jsonlite maps them, which is NOT to
   # null for a double: a numeric NA, NaN and Inf become quoted tokens,
@@ -74,9 +82,12 @@ test_that("awkward numbers are written in a form that reads back", {
 
 test_that("an empty object and empty containers round trip", {
   # a named list with nothing in it is an object, not an array
-  expect_equal(as.character(tojs(
-    structure(list(), names = character(0))
-  )), "{}")
+  expect_equal(
+    as.character(tojs(
+      structure(list(), names = character(0))
+    )),
+    "{}"
+  )
   # an empty unnamed list is an array
   expect_equal(as.character(tojs(list())), "[]")
   expect_equal(as.character(tojs(character(0))), "[]")
@@ -91,9 +102,12 @@ test_that("an empty object and empty containers round trip", {
 test_that("classed objects are written by their underlying data", {
   # a classed atomic vector: the class is stripped and the data written
   f <- factor(c("b", "a", "b"), levels = c("a", "b"))
-  expect_equal(as.character(fromjs(
-    tojs(f)
-  )), c("b", "a", "b"))
+  expect_equal(
+    as.character(fromjs(
+      tojs(f)
+    )),
+    c("b", "a", "b")
+  )
   # a Date
   d <- as.Date("2026-09-12")
   expect_match(as.character(tojs(d)), "2026-09-12")
@@ -117,9 +131,7 @@ test_that("classed objects are written by their underlying data", {
   # S3 path first, so the message names the class rather than saying
   # "S4" -- either way it names what it could not write.
   methods::setClass("RmblJsonProbe", representation(v = "numeric"))
-  on.exit(try(methods::removeClass("RmblJsonProbe"), silent = TRUE),
-    add = TRUE
-  )
+  on.exit(try(methods::removeClass("RmblJsonProbe"), silent = TRUE), add = TRUE)
   s4 <- methods::new("RmblJsonProbe", v = 1)
   expect_error(tojs(s4), "No method")
   expect_error(tojs(s4), "RmblJsonProbe")
@@ -133,30 +145,25 @@ test_that("auto_unbox and the na options behave as documented", {
     "5"
   )
   expect_equal(
-    as.character(tojs("x",
-      auto_unbox = TRUE
-    )),
+    as.character(tojs("x", auto_unbox = TRUE)),
     "\"x\""
   )
   # a longer vector is unaffected by auto_unbox
   expect_equal(
-    as.character(tojs(c(1, 2),
-      auto_unbox = TRUE
-    )),
+    as.character(tojs(c(1, 2), auto_unbox = TRUE)),
     "[1,2]"
   )
   # unbox() marks one value as a scalar regardless
-  expect_equal(as.character(tojs(
-    list(a = bricklayer_json_unbox(1))
-  )), "{\"a\":1}")
+  expect_equal(
+    as.character(tojs(
+      list(a = bricklayer_json_unbox(1))
+    )),
+    "{\"a\":1}"
+  )
   # na = "string" writes the token; the default writes null
-  expect_match(as.character(tojs(c("a", NA),
-    na = "string"
-  )), "NA")
+  expect_match(as.character(tojs(c("a", NA), na = "string")), "NA")
   expect_match(as.character(tojs(c("a", NA))), "null")
-  expect_match(as.character(tojs(c(1, NA),
-    na = "null"
-  )), "null")
+  expect_match(as.character(tojs(c(1, NA), na = "null")), "null")
 })
 
 test_that("matrices, arrays and nested lists keep their shape", {
@@ -167,9 +174,12 @@ test_that("matrices, arrays and nested lists keep their shape", {
   expect_equal(as.numeric(back), as.numeric(m))
   # a named matrix keeps its values
   dimnames(m) <- list(c("r1", "r2"), c("a", "b", "c"))
-  expect_equal(as.numeric(fromjs(
-    tojs(m)
-  )), as.numeric(m))
+  expect_equal(
+    as.numeric(fromjs(
+      tojs(m)
+    )),
+    as.numeric(m)
+  )
   # a 3-d array
   a <- array(1:24, dim = c(2, 3, 4))
   ba <- fromjs(tojs(a))
@@ -181,9 +191,7 @@ test_that("matrices, arrays and nested lists keep their shape", {
   expect_equal(rt(deep)$a$b$c$d, 1:3)
   # a list of lists of unequal shape stays a list
   ragged <- list(list(x = 1), list(x = 2, y = 3))
-  rr <- fromjs(tojs(ragged),
-    simplifyVector = FALSE
-  )
+  rr <- fromjs(tojs(ragged), simplifyVector = FALSE)
   expect_length(rr, 2L)
   # a list containing NULL keeps the name: NULL becomes an empty object
   # rather than vanishing, so the key is still there to be seen
@@ -201,7 +209,8 @@ test_that("data frames with awkward columns round trip", {
   # a POSIXlt column is converted before writing, since POSIXlt is a
   # list underneath and would otherwise be written as nine fields
   df <- data.frame(id = 1:2)
-  df$when <- as.POSIXlt(c("2026-01-01 10:00:00", "2026-06-30 23:59:59"),
+  df$when <- as.POSIXlt(
+    c("2026-01-01 10:00:00", "2026-06-30 23:59:59"),
     tz = "UTC"
   )
   js <- tojs(df)
@@ -220,31 +229,29 @@ test_that("data frames with awkward columns round trip", {
 
   # the three data-frame orientations
   d3 <- data.frame(x = 1:2, y = c("a", "b"), stringsAsFactors = FALSE)
-  expect_match(as.character(tojs(d3,
-    dataframe = "rows"
-  )), "\\{")
-  expect_match(as.character(tojs(d3,
-    dataframe = "columns"
-  )), "\\{")
-  expect_match(as.character(tojs(d3,
-    dataframe = "values"
-  )), "\\[")
+  expect_match(as.character(tojs(d3, dataframe = "rows")), "\\{")
+  expect_match(as.character(tojs(d3, dataframe = "columns")), "\\{")
+  expect_match(as.character(tojs(d3, dataframe = "values")), "\\[")
   # rows orientation round trips to the same frame
-  expect_equal(fromjs(
-    tojs(d3, dataframe = "rows")
-  )$x, 1:2)
+  expect_equal(
+    fromjs(
+      tojs(d3, dataframe = "rows")
+    )$x,
+    1:2
+  )
   # a zero-row data frame is an empty array, which reads back as an
   # empty list -- there are no rows from which to infer the columns
   expect_equal(
-    as.character(tojs(d3[0, ],
-      dataframe = "rows"
-    )),
+    as.character(tojs(d3[0, ], dataframe = "rows")),
     "[]"
   )
-  expect_length(fromjs(tojs(
-    d3[0, ],
-    dataframe = "rows"
-  )), 0L)
+  expect_length(
+    fromjs(tojs(
+      d3[0, ],
+      dataframe = "rows"
+    )),
+    0L
+  )
 })
 
 test_that("a malformed base64 payload is refused", {
@@ -264,33 +271,57 @@ test_that("a malformed base64 payload is refused", {
   # every length modulo 3 exercises a different padding branch
   for (n in 1:6) {
     s <- strrep("z", n)
-    expect_equal(rawToChar(jsb64dec(
-      jsb64enc(s)
-    )), s)
-    expect_equal(rawToChar(jsb64udec(
-      jsb64uenc(s)
-    )), s)
+    expect_equal(
+      rawToChar(jsb64dec(
+        jsb64enc(s)
+      )),
+      s
+    )
+    expect_equal(
+      rawToChar(jsb64udec(
+        jsb64uenc(s)
+      )),
+      s
+    )
   }
 })
 
 test_that("the codec still agrees with jsonlite where it is installed", {
   skip_if_not_installed("jsonlite")
   cases <- list(
-    3e9, -3e9, 2147483648, 0.1, list(), structure(list(),
-      names = character(0)
-    ),
-    list(a = 1, b = list(c = 2)), matrix(1:6, nrow = 2),
-    array(1:8, c(2, 2, 2)), c(a = 1, b = 2),
+    3e9,
+    -3e9,
+    2147483648,
+    0.1,
+    list(),
+    structure(list(), names = character(0)),
+    list(a = 1, b = list(c = 2)),
+    matrix(1:6, nrow = 2),
+    array(1:8, c(2, 2, 2)),
+    c(a = 1, b = 2),
     data.frame(x = 1:2, y = c("a", "b"), stringsAsFactors = FALSE),
-    factor(c("b", "a")), as.Date("2026-09-12"), c(1, NA), TRUE,
-    NaN, Inf, NA_real_, c("a", NA), 1e20, 1e300,
-    list(a = 1, b = NULL), data.frame(x = integer(0))
+    factor(c("b", "a")),
+    as.Date("2026-09-12"),
+    c(1, NA),
+    TRUE,
+    NaN,
+    Inf,
+    NA_real_,
+    c("a", NA),
+    1e20,
+    1e300,
+    list(a = 1, b = NULL),
+    data.frame(x = integer(0))
   )
   for (x in cases) {
     mine <- as.character(tojs(x))
     theirs <- as.character(jsonlite::toJSON(x))
-    if (!identical(mine, theirs) && is.double(x) && length(x) == 1L &&
-      is.finite(x)) {
+    if (
+      !identical(mine, theirs) &&
+        is.double(x) &&
+        length(x) == 1L &&
+        is.finite(x)
+    ) {
       # jsonlite brings its own decimal converter, and on some platforms
       # it is wrong: Windows aarch64 renders the double nearest 1e300 as
       # ...0006e+300, which does NOT read back as that double, while
@@ -309,7 +340,9 @@ test_that("the codec still agrees with jsonlite where it is installed", {
       # is ...0007e+300, and both recover the same number. Agreeing on
       # the value is what compatibility means here; agreeing on the
       # bytes is a coincidence of both being correctly rounded.
-      expect_identical(.rmbl_strtod(strip(mine)), x,
+      expect_identical(
+        .rmbl_strtod(strip(mine)),
+        x,
         info = paste("ours lost", deparse(x)[1])
       )
       expect_true(
@@ -319,8 +352,6 @@ test_that("the codec still agrees with jsonlite where it is installed", {
       )
       next
     }
-    expect_equal(mine, theirs,
-      info = paste("mismatch for", deparse(x)[1])
-    )
+    expect_equal(mine, theirs, info = paste("mismatch for", deparse(x)[1]))
   }
 })

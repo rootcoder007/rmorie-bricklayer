@@ -6,90 +6,157 @@
 
 to <- function(x, ...) as.character(tojs(x, ...))
 
-test_that("encoder option paths: keep_vec_names, json_verbatim, force, digits = NULL", {
-  expect_message(out <- to(c(a = 1, b = 2), keep_vec_names = TRUE), "keep_vec_names")
-  expect_identical(out, '{"a":1,"b":2}')
-  expect_message(to(c(a = "x"), keep_vec_names = TRUE), "keep_vec_names")
-  expect_message(to(c(a = TRUE), keep_vec_names = TRUE), "keep_vec_names")
-  expect_message(out <- to(factor(c(a = "u")), keep_vec_names = TRUE), "keep_vec_names")
-  expect_identical(out, '{"a":"u"}')
-  j <- tojs(list(k = 1))
-  expect_identical(to(list(inner = j), json_verbatim = TRUE), '{"inner":{"k":[1]}}')
-  expect_identical(to(list(inner = j)), '{"inner":["{\\"k\\":[1]}"]}')
-  expect_identical(to(0.1 + 0.2, digits = NULL), "[0.30000000000000004]")
-  # digits = NULL asks sprintf for 17 significant digits; the C library picks
-  # the spelling. x86 prints 9.9999999999999995e-21, Windows arm64 prints the
-  # equally exact 1e-20 -- same double, both round trip. Assert the contract
-  # (full precision that survives a round trip), not one platform's spelling.
-  tiny <- to(1e-20, digits = NULL)
-  expect_match(tiny, "^\\[[0-9.e+-]+\\]$")
-  expect_identical(as.numeric(sub("^\\[(.*)\\]$", "\\1", tiny)), 1e-20)
-  # and that round-trip assertion has to be able to fail: three significant
-  # digits cannot carry this value back exactly.
-  coarse <- to(0.1 + 0.2, digits = I(3))
-  expect_false(identical(
-    as.numeric(sub("^\\[(.*)\\]$", "\\1", coarse)), 0.1 + 0.2
-  ))
-  odd <- structure(1:3, class = "odd")
-  expect_identical(to(odd, force = TRUE), "[1,2,3]")
-  expect_identical(to(structure(list(a = 1), class = c("odd", "list"))), '{"a":[1]}')
-  expect_error(to(function(x) x), "No method")
-  expect_identical(to(function(x) x, force = TRUE), "{}")
-  setClass("rmblTestS4", representation(a = "numeric"), where = environment())
-  obj <- new("rmblTestS4", a = 1)
-  expect_error(to(obj), "S4")
-  expect_match(to(obj, force = TRUE), '"a":\\[1\\]')
-  expect_identical(to(setNames(list(1, 2), c("", NA)), auto_unbox = TRUE), '{"1":1,"2":2}')
-  expect_identical(to(list(a.b = 1), no_dots = TRUE), '{"a_b":[1]}')
-})
+test_that(
+  paste0(
+    "encoder option paths: keep_vec_names, json_verbatim, force, digits = ",
+    "NULL"
+  ),
+  {
+    expect_message(
+      out <- to(c(a = 1, b = 2), keep_vec_names = TRUE),
+      "keep_vec_names"
+    )
+    expect_identical(out, '{"a":1,"b":2}')
+    expect_message(to(c(a = "x"), keep_vec_names = TRUE), "keep_vec_names")
+    expect_message(to(c(a = TRUE), keep_vec_names = TRUE), "keep_vec_names")
+    expect_message(
+      out <- to(factor(c(a = "u")), keep_vec_names = TRUE),
+      "keep_vec_names"
+    )
+    expect_identical(out, '{"a":"u"}')
+    j <- tojs(list(k = 1))
+    expect_identical(
+      to(list(inner = j), json_verbatim = TRUE),
+      '{"inner":{"k":[1]}}'
+    )
+    expect_identical(to(list(inner = j)), '{"inner":["{\\"k\\":[1]}"]}')
+    expect_identical(to(0.1 + 0.2, digits = NULL), "[0.30000000000000004]")
+    # digits = NULL asks sprintf for 17 significant digits; the C library picks
+    # the spelling. x86 prints 9.9999999999999995e-21, Windows arm64 prints the
+    # equally exact 1e-20 -- same double, both round trip. Assert the contract
+    # (full precision that survives a round trip), not one platform's spelling.
+    tiny <- to(1e-20, digits = NULL)
+    expect_match(tiny, "^\\[[0-9.e+-]+\\]$")
+    expect_identical(as.numeric(sub("^\\[(.*)\\]$", "\\1", tiny)), 1e-20)
+    # and that round-trip assertion has to be able to fail: three significant
+    # digits cannot carry this value back exactly.
+    coarse <- to(0.1 + 0.2, digits = I(3))
+    expect_false(identical(
+      as.numeric(sub("^\\[(.*)\\]$", "\\1", coarse)),
+      0.1 + 0.2
+    ))
+    odd <- structure(1:3, class = "odd")
+    expect_identical(to(odd, force = TRUE), "[1,2,3]")
+    expect_identical(
+      to(structure(list(a = 1), class = c("odd", "list"))),
+      '{"a":[1]}'
+    )
+    expect_error(to(function(x) x), "No method")
+    expect_identical(to(function(x) x, force = TRUE), "{}")
+    setClass("rmblTestS4", representation(a = "numeric"), where = environment())
+    obj <- new("rmblTestS4", a = 1)
+    expect_error(to(obj), "S4")
+    expect_match(to(obj, force = TRUE), '"a":\\[1\\]')
+    expect_identical(
+      to(setNames(list(1, 2), c("", NA)), auto_unbox = TRUE),
+      '{"1":1,"2":2}'
+    )
+    expect_identical(to(list(a.b = 1), no_dots = TRUE), '{"a_b":[1]}')
+  }
+)
 
-test_that("encoder class paths: POSIXlt, hms, blob, mongo dates, matrix in data.frame", {
-  lt <- as.POSIXlt("2024-05-06 07:08:09", tz = "UTC")
-  expect_identical(to(lt), '["2024-05-06 07:08:09"]')
-  expect_identical(to(lt, POSIXt = "mongo"), '[{"$date":1714979289000}]')
-  expect_identical(
-    to(as.POSIXct(c("2024-05-06 07:08:09", NA), tz = "UTC"), POSIXt = "mongo"),
-    '[{"$date":1714979289000},null]'
-  )
-  expect_identical(to(lt, POSIXt = "ISO8601", UTC = TRUE), '["2024-05-06T07:08:09Z"]')
-  expect_identical(to(lt, time_format = "%H:%M"), '["07:08"]')
-  df <- data.frame(t = as.POSIXlt(c("2024-05-06 07:08:09", "2024-05-07 00:00:00"), tz = "UTC"))
-  expect_identical(to(df), '[{"t":"2024-05-06 07:08:09"},{"t":"2024-05-07 00:00:00"}]')
-  hms <- structure(c(3661, NA), class = "hms")
-  expect_identical(to(hms, hms = "secs"), '[3661,"NA"]')
-  blob <- structure(list(charToRaw("hi"), raw(0)), class = "blob")
-  expect_identical(to(blob), '["aGk=",""]')
-  expect_identical(to(blob, raw = "int"), "[[104,105],[]]")
-  dfm <- data.frame(id = 1:2)
-  dfm$m <- matrix(1:4, 2)
-  expect_identical(to(dfm), '[{"id":1,"m":[1,3]},{"id":2,"m":[2,4]}]')
-  expect_identical(to(dfm, matrix = "columnmajor"), '[{"id":1,"m":[1,3]},{"id":2,"m":[2,4]}]')
-  dfr <- data.frame(id = 1:2)
-  dfr$r <- as.raw(c(1, 255))
-  # jsonlite writes a raw column with as.character.hexmode(): no zero padding
-  expect_identical(to(dfr), '[{"id":1,"r":"1"},{"id":2,"r":"ff"}]')
-  dfc <- data.frame(id = 1:2)
-  dfc$z <- c(1 + 2i, 3 - 1i)
-  expect_identical(to(dfc, complex = "list"), '[{"id":1,"z":{"real":1,"imaginary":2}},{"id":2,"z":{"real":3,"imaginary":-1}}]')
-  dfl <- data.frame(id = 1:2)
-  dfl$l <- list(list(a = 1), list(b = 2))
-  expect_identical(to(dfl), '[{"id":1,"l":{"a":[1]}},{"id":2,"l":{"b":[2]}}]')
-  expect_identical(to(as.pairlist(list(a = 1, b = "x"))), '{"a":[1],"b":["x"]}')
-  expect_identical(to(array(1:8, c(2, 2, 2)), matrix = "columnmajor"), "[[[1,2],[3,4]],[[5,6],[7,8]]]")
-  expect_identical(to(array(1:4, c(1, 2, 2))), "[[[1,3],[2,4]]]")
-  expect_identical(to(structure(1:3, dim = 3L)), "[1,2,3]")
-})
+test_that(
+  paste0(
+    "encoder class paths: POSIXlt, hms, blob, mongo dates, matrix in ",
+    "data.frame"
+  ),
+  {
+    lt <- as.POSIXlt("2024-05-06 07:08:09", tz = "UTC")
+    expect_identical(to(lt), '["2024-05-06 07:08:09"]')
+    expect_identical(to(lt, POSIXt = "mongo"), '[{"$date":1714979289000}]')
+    expect_identical(
+      to(
+        as.POSIXct(c("2024-05-06 07:08:09", NA), tz = "UTC"),
+        POSIXt = "mongo"
+      ),
+      '[{"$date":1714979289000},null]'
+    )
+    expect_identical(
+      to(lt, POSIXt = "ISO8601", UTC = TRUE),
+      '["2024-05-06T07:08:09Z"]'
+    )
+    expect_identical(to(lt, time_format = "%H:%M"), '["07:08"]')
+    df <- data.frame(
+      t = as.POSIXlt(
+        c("2024-05-06 07:08:09", "2024-05-07 00:00:00"),
+        tz = "UTC"
+      )
+    )
+    expect_identical(
+      to(df),
+      '[{"t":"2024-05-06 07:08:09"},{"t":"2024-05-07 00:00:00"}]'
+    )
+    hms <- structure(c(3661, NA), class = "hms")
+    expect_identical(to(hms, hms = "secs"), '[3661,"NA"]')
+    blob <- structure(list(charToRaw("hi"), raw(0)), class = "blob")
+    expect_identical(to(blob), '["aGk=",""]')
+    expect_identical(to(blob, raw = "int"), "[[104,105],[]]")
+    dfm <- data.frame(id = 1:2)
+    dfm$m <- matrix(1:4, 2)
+    expect_identical(to(dfm), '[{"id":1,"m":[1,3]},{"id":2,"m":[2,4]}]')
+    expect_identical(
+      to(dfm, matrix = "columnmajor"),
+      '[{"id":1,"m":[1,3]},{"id":2,"m":[2,4]}]'
+    )
+    dfr <- data.frame(id = 1:2)
+    dfr$r <- as.raw(c(1, 255))
+    # jsonlite writes a raw column with as.character.hexmode(): no zero padding
+    expect_identical(to(dfr), '[{"id":1,"r":"1"},{"id":2,"r":"ff"}]')
+    dfc <- data.frame(id = 1:2)
+    dfc$z <- c(1 + 2i, 3 - 1i)
+    expect_identical(
+      to(dfc, complex = "list"),
+      paste0(
+        '[{"id":1,"z":{"real":1,"imaginary":2}},{"id":2,"z":{"real":3,"imagin',
+        'ary":-1}}]'
+      )
+    )
+    dfl <- data.frame(id = 1:2)
+    dfl$l <- list(list(a = 1), list(b = 2))
+    expect_identical(to(dfl), '[{"id":1,"l":{"a":[1]}},{"id":2,"l":{"b":[2]}}]')
+    expect_identical(
+      to(as.pairlist(list(a = 1, b = "x"))),
+      '{"a":[1],"b":["x"]}'
+    )
+    expect_identical(
+      to(array(1:8, c(2, 2, 2)), matrix = "columnmajor"),
+      "[[[1,2],[3,4]],[[5,6],[7,8]]]"
+    )
+    expect_identical(to(array(1:4, c(1, 2, 2))), "[[[1,3],[2,4]]]")
+    expect_identical(to(structure(1:3, dim = 3L)), "[1,2,3]")
+  }
+)
 
-test_that("number formatting reproduces modp_dtoa2 rounding and the sprintf fallbacks", {
-  expect_identical(to(c(0.125, 0.375, 2.5, 3.5, 0.995, 0.9999, 1.5), digits = 2), "[0.12,0.38,2.5,3.5,1,1,1.5]")
-  expect_identical(to(c(0.5, 1.5, 2.5), digits = 0), "[0,2,2]")
-  expect_identical(to(c(0.9999999, 123.456789), digits = 6), "[1,123.456789]")
-  expect_identical(to(2147483648, digits = 2), "[2147483648]")
-  expect_identical(to(c(1e-6, 3e-5), digits = 4), "[1e-06,0]") # modp_dtoa2: 3e-5 has no digits at 4 decimals
-  expect_identical(to(123456.789, digits = I(4)), "[1.235e+05]")
-  expect_identical(to(c(1, 2.5), always_decimal = TRUE), "[1.0,2.5]")
-  expect_identical(to(NA_real_, na = "string"), '["NA"]')
-})
+test_that(
+  paste0(
+    "number formatting reproduces modp_dtoa2 rounding and the sprintf ",
+    "fallbacks"
+  ),
+  {
+    expect_identical(
+      to(c(0.125, 0.375, 2.5, 3.5, 0.995, 0.9999, 1.5), digits = 2),
+      "[0.12,0.38,2.5,3.5,1,1,1.5]"
+    )
+    expect_identical(to(c(0.5, 1.5, 2.5), digits = 0), "[0,2,2]")
+    expect_identical(to(c(0.9999999, 123.456789), digits = 6), "[1,123.456789]")
+    expect_identical(to(2147483648, digits = 2), "[2147483648]")
+    # modp_dtoa2: 3e-5 has no digits at 4 decimals
+    expect_identical(to(c(1e-6, 3e-5), digits = 4), "[1e-06,0]")
+    expect_identical(to(123456.789, digits = I(4)), "[1.235e+05]")
+    expect_identical(to(c(1, 2.5), always_decimal = TRUE), "[1.0,2.5]")
+    expect_identical(to(NA_real_, na = "string"), '["NA"]')
+  }
+)
 
 test_that("base64 edge cases", {
   expect_identical(jsb64enc(NULL), NA_character_)
@@ -106,10 +173,34 @@ test_that("base64 edge cases", {
 
 test_that("parser rejects what yajl rejects, with a position", {
   bad <- c(
-    "-", "1.", "1e", "01", ".5", "[1 2]", "[1,]", "{\"a\" 1}", "{\"a\":1 \"b\":2}", "{1:2}",
-    "\"abc", "\"a\\qb\"", "\"a\\u12G4\"", "\"a\\u0000\"", "\"tab\tin\"", "tru", "nul", "[1]x", "", "   "
+    "-",
+    "1.",
+    "1e",
+    "01",
+    ".5",
+    "[1 2]",
+    "[1,]",
+    "{\"a\" 1}",
+    "{\"a\":1 \"b\":2}",
+    "{1:2}",
+    "\"abc",
+    "\"a\\qb\"",
+    "\"a\\u12G4\"",
+    "\"a\\u0000\"",
+    "\"tab\tin\"",
+    "tru",
+    "nul",
+    "[1]x",
+    "",
+    "   "
   )
-  for (b in bad) expect_error(fromjs(b, simplifyVector = FALSE), "at character|end of input", label = b)
+  for (b in bad) {
+    expect_error(
+      fromjs(b, simplifyVector = FALSE),
+      "at character|end of input",
+      label = b
+    )
+  }
   # the literal lives in a variable: deparsing U+FEFF into a test label is
   # itself a translation warning in a C locale
   bom_txt <- paste0(rawToChar(as.raw(c(0xef, 0xbb, 0xbf))), "[1]")
@@ -120,34 +211,64 @@ test_that("parser rejects what yajl rejects, with a position", {
   # an unpaired surrogate is not a character: refused, not the text "NA"
   expect_error(fromjs("\"\\ud83d x\""), "lone surrogate")
   expect_identical(fromjs("[1,2]", simplify = FALSE), list(1L, 2L))
-  expect_identical(fromjs("[-9007199254740993]", bigint_as_char = TRUE), "-9007199254740993")
+  expect_identical(
+    fromjs("[-9007199254740993]", bigint_as_char = TRUE),
+    "-9007199254740993"
+  )
   expect_identical(fromjs("[123456789012]"), 123456789012)
   expect_identical(
     fromjs("[{\"$date\":\"2024-05-06T07:08:09Z\"}]"),
     as.POSIXct("2024-05-06 07:08:09", tz = "UTC")
   )
-  d2 <- fromjs('[{"$date":"2024-05-06T07:08:09"},{"$date":"2024-05-07T00:00:00"}]')
+  d2 <- fromjs(
+    '[{"$date":"2024-05-06T07:08:09"},{"$date":"2024-05-07T00:00:00"}]'
+  )
   expect_s3_class(d2, "POSIXct")
-  expect_identical(format(d2, "%Y-%m-%d %H:%M:%S"), c("2024-05-06 07:08:09", "2024-05-07 00:00:00")) # local-time strings, tz-agnostic
-  # a scalar list of dates collapses to a POSIXct vector (jsonlite's mongo-date rule)
-  expect_identical(fromjs('{"a":{"$date":1714979289000}}'), structure(1714979289, class = c("POSIXct", "POSIXt")))
-  expect_identical(fromjs('[{"$date":1714979289000},null]'), structure(c(1714979289, NA), class = c("POSIXct", "POSIXt")))
+  expect_identical(
+    format(d2, "%Y-%m-%d %H:%M:%S"),
+    c("2024-05-06 07:08:09", "2024-05-07 00:00:00")
+  ) # local-time strings, tz-agnostic
+  # a scalar list of dates collapses to a POSIXct vector (jsonlite's mongo-date
+  # rule)
+  expect_identical(
+    fromjs('{"a":{"$date":1714979289000}}'),
+    structure(1714979289, class = c("POSIXct", "POSIXt"))
+  )
+  expect_identical(
+    fromjs('[{"$date":1714979289000},null]'),
+    structure(c(1714979289, NA), class = c("POSIXct", "POSIXt"))
+  )
 })
 
-test_that("simplifier edge cases: _row handling, ragged records, empty-record lists", {
-  expect_warning(df <- fromjs('[{"_row":"a","x":1},{"_row":"a","x":2}]'), "Duplicate names")
-  expect_identical(row.names(df), c("a", "a.1"))
-  expect_warning(df2 <- fromjs('[{"_row":1,"x":1},{"_row":1,"x":2}]'), "Duplicate names")
-  expect_identical(row.names(df2), c("1", "2"))
-  df3 <- fromjs('[{"_row":2.0,"x":1},{"_row":null,"x":2}]')
-  expect_identical(row.names(df3), c("2", "NA_1"))
-  expect_identical(fromjs("[[1,2],[]]"), list(1:2, integer(0)))
-  expect_identical(fromjs("[{\"a\":1},[]]"), list(list(a = 1L), list()))
-  expect_identical(fromjs("[[1,2],[[1,2],[3,4]]]", simplifyMatrix = FALSE), list(1:2, list(1:2, 3:4)))
-  expect_identical(dim(fromjs("[[[1,2]],[[3,4]]]")), c(2L, 1L, 2L))
-  expect_identical(fromjs('[{"a":1},{"a":"NA"}]')$a, c(1L, NA))
-  expect_identical(fromjs('[{"a":1},{"a":[1,2]}]')$a, list(1L, 1:2))
-})
+test_that(
+  paste0(
+    "simplifier edge cases: _row handling, ",
+    "ragged records, empty-record lists"
+  ),
+  {
+    expect_warning(
+      df <- fromjs('[{"_row":"a","x":1},{"_row":"a","x":2}]'),
+      "Duplicate names"
+    )
+    expect_identical(row.names(df), c("a", "a.1"))
+    expect_warning(
+      df2 <- fromjs('[{"_row":1,"x":1},{"_row":1,"x":2}]'),
+      "Duplicate names"
+    )
+    expect_identical(row.names(df2), c("1", "2"))
+    df3 <- fromjs('[{"_row":2.0,"x":1},{"_row":null,"x":2}]')
+    expect_identical(row.names(df3), c("2", "NA_1"))
+    expect_identical(fromjs("[[1,2],[]]"), list(1:2, integer(0)))
+    expect_identical(fromjs("[{\"a\":1},[]]"), list(list(a = 1L), list()))
+    expect_identical(
+      fromjs("[[1,2],[[1,2],[3,4]]]", simplifyMatrix = FALSE),
+      list(1:2, list(1:2, 3:4))
+    )
+    expect_identical(dim(fromjs("[[[1,2]],[[3,4]]]")), c(2L, 1L, 2L))
+    expect_identical(fromjs('[{"a":1},{"a":"NA"}]')$a, c(1L, NA))
+    expect_identical(fromjs('[{"a":1},{"a":[1,2]}]')$a, list(1L, 1:2))
+  }
+)
 
 test_that("validate refuses a byte-order mark", {
   v <- bricklayer_json_validate("\ufeff[1]")
@@ -167,8 +288,15 @@ test_that("serializer covers every storage mode digest of an R object needs", {
   expect_identical(rt(expression(a * 2)), expression(a * 2))
   expect_identical(rt(sum), sum)
   expect_true(is.environment(rt(new.env())))
-  expect_identical(rt(structure(1:3, dim = 3L, myattr = "k")), structure(1:3, dim = 3L, myattr = "k"))
-  setClass("rmblSerS4", representation(a = "numeric", b = "character"), where = environment())
+  expect_identical(
+    rt(structure(1:3, dim = 3L, myattr = "k")),
+    structure(1:3, dim = 3L, myattr = "k")
+  )
+  setClass(
+    "rmblSerS4",
+    representation(a = "numeric", b = "character"),
+    where = environment()
+  )
   s4 <- new("rmblSerS4", a = 1, b = "x")
   s4j <- jsser(s4)
   expect_match(as.character(s4j), '"type":"S4"')
@@ -176,16 +304,38 @@ test_that("serializer covers every storage mode digest of an R object needs", {
   expect_identical(as.character(jsser(NULL)), '{"type":"NULL"}')
   expect_identical(
     as.character(jsser(list(1, "a"), pretty = TRUE)),
-    "{\n  \"type\": \"list\",\n  \"attributes\": {},\n  \"value\": [\n    {\n      \"type\": \"double\",\n      \"attributes\": {},\n      \"value\": [1]\n    },\n    {\n      \"type\": \"character\",\n      \"attributes\": {},\n      \"value\": [\"a\"]\n    }\n  ]\n}"
+    paste0(
+      "{\n  \"type\": \"list\",\n  \"attributes\": {},\n  \"value\": ",
+      "[\n    {\n      ",
+      "\"type\": \"double\",\n      \"attributes\": {},\n      ",
+      "\"value\": [1]\n    ",
+      "},\n    {\n      \"type\": \"character\",\n      \"attributes\": ",
+      "{},\n      ",
+      "\"value\": [\"a\"]\n    }\n  ]\n}"
+    )
   )
-  expect_error(jsunser('{"type":"weird","attributes":{},"value":[]}'), "encode.mode")
+  expect_error(
+    jsunser('{"type":"weird","attributes":{},"value":[]}'),
+    "encode.mode"
+  )
 })
 
 test_that("unbox edge cases", {
   expect_null(bricklayer_json_unbox(NULL))
   expect_s3_class(bricklayer_json_unbox(data.frame(a = 1)), "scalar")
   expect_error(bricklayer_json_unbox(data.frame(a = 1:2)), "2 rows")
-  expect_s3_class(bricklayer_json_unbox(as.POSIXct("2024-05-06", tz = "UTC")), "scalar")
-  expect_identical(to(list(t = bricklayer_json_unbox(as.POSIXct("2024-05-06 07:08:09", tz = "UTC")))), '{"t":"2024-05-06 07:08:09"}')
-  expect_identical(to(list(d = bricklayer_json_unbox(data.frame(a = 1, b = "x")))), '{"d":{"a":1,"b":"x"}}')
+  expect_s3_class(
+    bricklayer_json_unbox(as.POSIXct("2024-05-06", tz = "UTC")),
+    "scalar"
+  )
+  expect_identical(
+    to(list(
+      t = bricklayer_json_unbox(as.POSIXct("2024-05-06 07:08:09", tz = "UTC"))
+    )),
+    '{"t":"2024-05-06 07:08:09"}'
+  )
+  expect_identical(
+    to(list(d = bricklayer_json_unbox(data.frame(a = 1, b = "x")))),
+    '{"d":{"a":1,"b":"x"}}'
+  )
 })

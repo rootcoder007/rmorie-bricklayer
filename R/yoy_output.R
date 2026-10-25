@@ -11,13 +11,28 @@
   # red/green, the default, with the hues pulled toward orange and teal
   # so that the two are still distinguishable in the common forms of
   # colour blindness
-  diverging = list(bad = "#c2492f", good = "#1b7f6b", flat = "#6b6b6b",
-                   badbg = "#fbeae6", goodbg = "#e6f4f1"),
+  diverging = list(
+    bad = "#c2492f",
+    good = "#1b7f6b",
+    flat = "#6b6b6b",
+    badbg = "#fbeae6",
+    goodbg = "#e6f4f1"
+  ),
   # blue/orange, safe for deuteranopia and protanopia alike
-  safe      = list(bad = "#b8621b", good = "#18567d", flat = "#6b6b6b",
-                   badbg = "#fdf0e4", goodbg = "#e7eff6"),
-  mono      = list(bad = "#1a1a1a", good = "#1a1a1a", flat = "#6b6b6b",
-                   badbg = "#f0f0f0", goodbg = "#f7f7f7")
+  safe = list(
+    bad = "#b8621b",
+    good = "#18567d",
+    flat = "#6b6b6b",
+    badbg = "#fdf0e4",
+    goodbg = "#e7eff6"
+  ),
+  mono = list(
+    bad = "#1a1a1a",
+    good = "#1a1a1a",
+    flat = "#6b6b6b",
+    badbg = "#f0f0f0",
+    goodbg = "#f7f7f7"
+  )
 )
 
 #' Colour palettes for change tables
@@ -92,10 +107,10 @@ yoypals <- function() names(.YOY_PALETTES)
 
 #' Classes each verdict as good, bad or flat news.
 #'
-#' The colour class of each verdict: good or bad news only when a direction says which is which.
-#' \code{"up"} and \code{"down"} (direction = \code{"neutral"}) are neither, so they are
-#' flat; they had been painted
-#' bad and good, which called every neutral rise bad news.
+#' The colour class of each verdict: good or bad news only when a direction says
+#' which is which. \code{"up"} and \code{"down"} (direction = \code{"neutral"})
+#' are neither, so they are flat; they had been painted bad and good, which
+#' called every neutral rise bad news.
 #' @param v The verdicts.
 #' @return A character vector of \code{"good"}, \code{"bad"} or \code{"flat"}.
 #' @noRd
@@ -112,7 +127,8 @@ yoypals <- function() names(.YOY_PALETTES)
 #' good news. Keeping them separate means a monochrome or piped-to-file
 #' rendering still says which way the number moved.
 #' @param chg The changes.
-#' @return A character vector of arrows, a dash for no change and a blank for NA.
+#' @return A character vector of arrows, a dash for no change and a blank for
+#'   NA.
 #' @noRd
 .yoy_arrow <- function(chg) {
   out <- rep(" ", length(chg))
@@ -130,12 +146,12 @@ yoypals <- function() names(.YOY_PALETTES)
 #' @return A character vector, a dash for a missing value.
 #' @noRd
 .yoy_fmt_pct <- function(v, digits = 1L, pp = FALSE) {
-  # every writer's digits come through here: NA, a vector or text became the format "%+.NAf"
+  # every writer's digits come through here: NA, a vector or text became the
+  # format "%+.NAf"
   digits <- .rmbl_scalar(digits, "digits", 0, 15, integer = TRUE)
   out <- rep(.yg("\u2014"), length(v))
   ok <- !is.na(v) & is.finite(v)
-  out[ok] <- sprintf(paste0("%+.", digits, "f%s"), v[ok],
-                     if (pp) "pp" else "%")
+  out[ok] <- sprintf(paste0("%+.", digits, "f%s"), v[ok], if (pp) "pp" else "%")
   out[!is.na(v) & is.infinite(v)] <- "+Inf"
   out
 }
@@ -169,15 +185,22 @@ yoypals <- function() names(.YOY_PALETTES)
 #' @param ... Ignored.
 #' @rdname yoy
 #' @export
-print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
-                           color = NULL, n = 30, ...) {
+print.rmbl_yoy <- function(
+  x,
+  digits = 1L,
+  palette = "diverging",
+  color = NULL,
+  n = 30,
+  ...
+) {
   m <- .yoy_meta(x)
   if (!nrow(x)) {
     cat("<rmbl_yoy: no periods>\n")
     return(invisible(x))
   }
-  # a subset of the columns keeps the class but not the period record (`[` on a data frame
-  # drops attributes): print what is there as a table rather than "no periods" (1.0.0 examples)
+  # a subset of the columns keeps the class but not the period record (`[` on a
+  # data frame drops attributes): print what is there as a table rather than "no
+  # periods" (1.0.0 examples)
   if (is.null(m) || !all(c("value", "previous", "change") %in% names(x))) {
     print(as.data.frame(unclass(x), stringsAsFactors = FALSE), ...)
     return(invisible(x))
@@ -198,14 +221,18 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
     value = .yoy_fmt_num(d$value, vd),
     previous = .yoy_fmt_num(d$previous, vd),
     change = .yoy_fmt_num(d$change, vd),
-    pct = paste0(.yoy_arrow(d[[chgcol]]), " ",
-                 .yoy_fmt_pct(d[[chgcol]], digits, pp))
+    pct = paste0(
+      .yoy_arrow(d[[chgcol]]),
+      " ",
+      .yoy_fmt_pct(d[[chgcol]], digits, pp)
+    )
   )
   if (all(c("pctlo", "pctup") %in% names(d))) {
     cols$interval <- ifelse(
-      is.na(d$pctlo), .yg("\u2014"),
-      sprintf("[%s, %s]",
-              .yoy_fmt_pct(d$pctlo, 0L), .yoy_fmt_pct(d$pctup, 0L)))
+      is.na(d$pctlo),
+      .yg("\u2014"),
+      sprintf("[%s, %s]", .yoy_fmt_pct(d$pctlo, 0L), .yoy_fmt_pct(d$pctup, 0L))
+    )
   }
   if (!is.null(m$by)) {
     for (b in rev(m$by)) {
@@ -216,18 +243,35 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
   hdr[hdr == "pct"] <- if (pp) "points" else "change %"
   hdr[hdr == "period"] <- m$period
   hdr[hdr == "value"] <- m$value
-  widths <- vapply(seq_along(cols), function(i) {
-    max(nchar(c(hdr[i], cols[[i]])), na.rm = TRUE)
-  }, 0L)
+  widths <- vapply(
+    seq_along(cols),
+    function(i) {
+      max(nchar(c(hdr[i], cols[[i]])), na.rm = TRUE)
+    },
+    0L
+  )
   pad <- function(s, w) formatC(s, width = w, flag = "-")
-  cat(paste(vapply(seq_along(cols), function(i) pad(hdr[i], widths[i]), ""),
-            collapse = "  "), "\n", sep = "")
-  cat(paste(vapply(widths, function(w) strrep(.yg("\u2500"), w), ""),
-            collapse = "  "), "\n", sep = "")
+  cat(
+    paste(
+      vapply(seq_along(cols), function(i) pad(hdr[i], widths[i]), ""),
+      collapse = "  "
+    ),
+    "\n",
+    sep = ""
+  )
+  cat(
+    paste(
+      vapply(widths, function(w) strrep(.yg("\u2500"), w), ""),
+      collapse = "  "
+    ),
+    "\n",
+    sep = ""
+  )
   for (r in seq_len(nrow(d))) {
-    line <- paste(vapply(seq_along(cols),
-                         function(i) pad(cols[[i]][r], widths[i]), ""),
-                  collapse = "  ")
+    line <- paste(
+      vapply(seq_along(cols), function(i) pad(cols[[i]][r], widths[i]), ""),
+      collapse = "  "
+    )
     if (isTRUE(color)) {
       v <- d$verdict[r]
       hex <- if (is.na(v)) NULL else pal[[.yoy_verdict_class(v)]]
@@ -263,12 +307,18 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
 #' @return One string.
 #' @noRd
 .yoy_footer <- function(m) {
-  bits <- c(sprintf("lag %d period%s", m$lag, if (m$lag == 1L) "" else "s"),
-            sprintf("units: %s", m$units))
+  bits <- c(
+    sprintf("lag %d period%s", m$lag, if (m$lag == 1L) "" else "s"),
+    sprintf("units: %s", m$units)
+  )
   if (m$units == "count") {
-    bits <- c(bits, sprintf("%.0f%% exact rate-ratio interval",
-                            100 * m$conflvl))
-    if (isTRUE(m$minbase > 0)) bits <- c(bits, sprintf("bases below %g noted", m$minbase))
+    bits <- c(
+      bits,
+      sprintf("%.0f%% exact rate-ratio interval", 100 * m$conflvl)
+    )
+    if (isTRUE(m$minbase > 0)) {
+      bits <- c(bits, sprintf("bases below %g noted", m$minbase))
+    }
   }
   if (m$units == "percent") {
     bits <- c(bits, "percentage-point change, not percent of a percent")
@@ -289,17 +339,15 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
 #' period-to-period changes went up, went down or stayed flat. Use it to
 #' report the whole span of a series in one line next to the detailed table.
 #'
-#' @details
-#' Rows whose \code{value} is missing are dropped before the summary, and
-#' the remaining rows are sorted by period. With \eqn{v_1} the first and
-#' \eqn{v_T} the last observed value, the total change is
-#' \deqn{100 (v_T / v_1 - 1)}
-#' and, with \eqn{s = (T - 1) / \mathrm{lag}} steps of length \code{lag},
-#' \deqn{100 \left( (v_T / v_1)^{1/s} - 1 \right).}
-#' Both are \code{NA} when \eqn{v_1 \le 0}, because a growth rate out of zero
-#' does not exist; \code{cagrpct} is also \code{NA} for a single period.
-#' \code{"Annual"} in CAGR assumes one period is a year; for monthly or quarterly
-#' data read it as the compound rate per \code{lag} periods.
+#' @details Rows whose \code{value} is missing are dropped before the summary,
+#' and the remaining rows are sorted by period. With \eqn{v_1} the first and
+#' \eqn{v_T} the last observed value, the total change is \deqn{100 (v_T / v_1 -
+#' 1)} and, with \eqn{s = (T - 1) / \mathrm{lag}} steps of length \code{lag},
+#' \deqn{100 \left( (v_T / v_1)^{1/s} - 1 \right).} Both are \code{NA} when
+#' \eqn{v_1 \le 0}, because a growth rate out of zero does not exist;
+#' \code{cagrpct} is also \code{NA} for a single period. \code{"Annual"} in CAGR
+#' assumes one period is a year; for monthly or quarterly data read it as the
+#' compound rate per \code{lag} periods.
 #'
 #' The \code{up}, \code{down} and \code{flat} counts are taken from the
 #' percent-change column (\code{pctchg}, or \code{ppchg} for
@@ -338,7 +386,10 @@ yoysmry <- function(object, ...) UseMethod("yoysmry")
 #' @rdname yoysmry
 #' @export
 yoysmry.default <- function(object, ...) {
-  stop(sprintf("`object` must be a yoy() result, not %s", class(object)[1L]), call. = FALSE)
+  stop(
+    sprintf("`object` must be a yoy() result, not %s", class(object)[1L]),
+    call. = FALSE
+  )
 }
 
 #' @rdname yoysmry
@@ -351,11 +402,19 @@ yoysmry.rmbl_yoy <- function(object, ...) {
     g <- g[order(g[[m$period]]), , drop = FALSE]
     fin <- g[!is.na(g$value), , drop = FALSE]
     if (!nrow(fin)) {
-      return(data.frame(from = NA, to = NA, first = NA_real_,
-                        last = NA_real_, totalpct = NA_real_,
-                        cagrpct = NA_real_, periods = 0L,
-                        up = 0L, down = 0L, flat = 0L,
-                        stringsAsFactors = FALSE))
+      return(data.frame(
+        from = NA,
+        to = NA,
+        first = NA_real_,
+        last = NA_real_,
+        totalpct = NA_real_,
+        cagrpct = NA_real_,
+        periods = 0L,
+        up = 0L,
+        down = 0L,
+        flat = 0L,
+        stringsAsFactors = FALSE
+      ))
     }
     first <- fin$value[1L]
     last <- fin$value[nrow(fin)]
@@ -369,15 +428,19 @@ yoysmry.rmbl_yoy <- function(object, ...) {
       NA_real_
     }
     ch <- g[[chgcol]]
-    data.frame(from = fin[[m$period]][1L],
-               to = fin[[m$period]][nrow(fin)],
-               first = first, last = last,
-               totalpct = total, cagrpct = cagr,
-               periods = nrow(fin),
-               up = sum(ch > 0, na.rm = TRUE),
-               down = sum(ch < 0, na.rm = TRUE),
-               flat = sum(ch == 0, na.rm = TRUE),
-               stringsAsFactors = FALSE)
+    data.frame(
+      from = fin[[m$period]][1L],
+      to = fin[[m$period]][nrow(fin)],
+      first = first,
+      last = last,
+      totalpct = total,
+      cagrpct = cagr,
+      periods = nrow(fin),
+      up = sum(ch > 0, na.rm = TRUE),
+      down = sum(ch < 0, na.rm = TRUE),
+      flat = sum(ch == 0, na.rm = TRUE),
+      stringsAsFactors = FALSE
+    )
   }
   if (is.null(m$by)) {
     out <- one(d)
@@ -386,7 +449,9 @@ yoysmry.rmbl_yoy <- function(object, ...) {
     rows <- lapply(names(sp), function(k) {
       r <- one(sp[[k]])
       lab <- strsplit(k, "\r", fixed = TRUE)[[1L]]
-      for (i in seq_along(m$by)) r[[m$by[i]]] <- lab[i]
+      for (i in seq_along(m$by)) {
+        r[[m$by[i]]] <- lab[i]
+      }
       r[, c(m$by, setdiff(names(r), m$by)), drop = FALSE]
     })
     out <- do.call(rbind, rows)
@@ -395,7 +460,8 @@ yoysmry.rmbl_yoy <- function(object, ...) {
   out
 }
 
-#' A glyph, or its ASCII meaning where the console cannot render UTF-8 (LC_ALL=C, some CI logs)
+#' A glyph, or its ASCII meaning where the console cannot render UTF-8
+#' (LC_ALL=C, some CI logs)
 #' @param x The glyph.
 #' @return `x`, or its ASCII replacement.
 #' @noRd

@@ -1,9 +1,9 @@
 #' Old names kept for rmoriedata 0.3.x
 #'
-#' rmoriedata 0.3.x on CRAN calls eleven functions by their 0.5.x names. These wrappers keep
-#' that release installing and checking against rmoriebricklayer 1.0.0. Each one forwards to
-#' the function named in its body, translating the old argument names:
-#' [cpssign()], [cpsvrf()],
+#' rmoriedata 0.3.x on CRAN calls eleven functions by their 0.5.x names. These
+#' wrappers keep that release installing and checking against rmoriebricklayer
+#' 1.0.0. Each one forwards to the function named in its body, translating the
+#' old argument names: [cpssign()], [cpsvrf()],
 #' [pqckg()], [signpubkey()],
 #' [csha256()], [cmn()],
 #' [sha256file()], [tojs()],
@@ -30,7 +30,8 @@
 #' @keywords internal
 #' @name rmbl-compat
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
+#' # keep this example's
+#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())
 #' # one-time index record out of your configuration directory
 #' k <- pqc_keygen(height = 2)
 #' s <- capsule_sign(core_sha256("manifest"), k)
@@ -40,22 +41,46 @@ NULL
 
 #' @rdname rmbl-compat
 #' @export
-capsule_sign <- function(message, key, scheme = NULL, context = NULL,
-                         deterministic = FALSE, prehash = "none",
-                         masked = getOption("rmoriebricklayer.masked", TRUE)) {
-  cpssign(message, key, scheme = scheme, ctx = context, determ = deterministic,
-          prehash = prehash, masked = masked)
+capsule_sign <- function(
+  message,
+  key,
+  scheme = NULL,
+  context = NULL,
+  deterministic = FALSE,
+  prehash = "none",
+  masked = getOption("rmoriebricklayer.masked", TRUE)
+) {
+  cpssign(
+    message,
+    key,
+    scheme = scheme,
+    ctx = context,
+    determ = deterministic,
+    prehash = prehash,
+    masked = masked
+  )
 }
 
 #' @rdname rmbl-compat
 #' @export
-capsule_verify <- function(message, signature, key, context = NULL, prehash = NULL) {
+capsule_verify <- function(
+  message,
+  signature,
+  key,
+  context = NULL,
+  prehash = NULL
+) {
   cpsvrf(message, signature, key, ctx = context, prehash = prehash)
 }
 
 #' @rdname rmbl-compat
 #' @export
-pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL, sk_prf = NULL) {
+pqc_keygen <- function(
+  height = 10L,
+  sk_seed = NULL,
+  pub_seed = NULL,
+  sk_prf = NULL
+) {
   pqckg(height, skseed = sk_seed, pubseed = pub_seed, skprf = sk_prf)
 }
 
@@ -91,4 +116,6 @@ bricklayer_fetch <- function(url, dest, wayback = "", timeout = 120L) {
 
 #' @rdname rmbl-compat
 #' @export
-wayback_snapshot_url <- function(url, timestamp = NULL) wbsnpurl(url, ts = timestamp)
+wayback_snapshot_url <- function(url, timestamp = NULL) {
+  wbsnpurl(url, ts = timestamp)
+}

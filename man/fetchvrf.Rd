@@ -18,52 +18,58 @@ fetchvrf(
 
 \item{dest}{The file to write.}
 
-\item{sha256}{The expected SHA-256, 64 hexadecimal characters, or \code{NULL}.}
+\item{sha256}{The expected SHA-256, 64 hexadecimal characters, or
+\code{NULL}.}
 
-\item{mirrors}{Further URLs that serve the same file, tried in order after the
-source.}
+\item{mirrors}{Further URLs that serve the same file, tried in order after
+the source.}
 
 \item{tmout}{Seconds allowed for each download (default 120).}
 
-\item{arcs}{Archives tried after the source, its Wayback snapshot and the mirrors:
-\code{"rmorie"} (archive.rmorie.com, by \code{\link{arcget}}) and folders written by
-\code{\link{arccap}} (read from their WARC files), in order. \code{character()} tries
-none.}
+\item{arcs}{Archives tried after the source, its Wayback snapshot and the
+mirrors: \code{"rmorie"} (archive.rmorie.com, by \code{\link{arcget}}) and
+folders written by \code{\link{arccap}} (read from their WARC files), in
+order. \code{character()} tries none.}
 }
 \value{
 Invisibly, a list: \code{source} (\code{"live"}, \code{"wayback"},
-\code{"mirror"}, \code{"rmorie"} or \code{"local"}), \code{url} (the URL that served
-the kept copy), \code{sha256}, \code{bytes}, and \code{tried} (a data frame of every
-attempt: \code{url}, \code{outcome}).
+\code{"mirror"}, \code{"rmorie"} or \code{"local"}), \code{url} (the URL
+that served the kept copy), \code{sha256}, \code{bytes}, and \code{tried}
+(a data frame of every attempt: \code{url}, \code{outcome}).
 }
 \description{
-Downloads \code{url} to \code{dest}, trying the source first (with its Wayback
-Machine snapshot as the source's own fallback, as \code{\link{blfetch}}
-does) and then each mirror in turn, and keeps the first copy whose SHA-256 is
-\code{sha256}. A copy with another digest is never used: a changed or truncated
-file is a different file.
+Downloads \code{url} to \code{dest}, trying the source first (with its
+Wayback Machine snapshot as the source's own fallback, as
+\code{\link{blfetch}} does) and then each mirror in turn, and keeps the first
+copy whose SHA-256 is \code{sha256}. A copy with another digest is never
+used: a changed or truncated file is a different file.
 }
 \details{
-Some servers refuse the Internet Archive's crawler while serving everyone
-else (Statistics Canada does), so a Wayback snapshot of their files may not exist.
-The remedy is a capture made from elsewhere, published as a mirror and pinned by
-its digest. It can be an Internet Archive item, at \code{https://archive.org/download/}
-followed by \code{<item>/<file>}; the data service; or an
-institutional repository. Because the digest is checked, a mirror does not have to
-be trusted: a copy that matches is the same bytes the analysis used, wherever it
-came from.
+Some servers refuse the Internet Archive's crawler while serving
+everyone else (Statistics Canada does), so a Wayback snapshot of their files
+may not exist. The remedy is a capture made from elsewhere, published as a
+mirror and pinned by its digest. It can be an Internet Archive item, at
+\code{https://archive.org/download/} followed by \code{<item>/<file>}; the
+data service; or an institutional repository. Because the digest is checked,
+a mirror does not have to be trusted: a copy that matches is the same bytes
+the analysis used, wherever it came from.
 
 Without \code{sha256} the first copy that downloads is kept and its digest is
 returned, to be pinned for the next run.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
-# a Statistics Canada table the Wayback Machine cannot capture, with the archive.org copy
-# made from elsewhere as a mirror
-item <- "https://archive.org/download/rmorie-statcan-indigenous-tables-2026-10"
-fetchvrf("https://www150.statcan.gc.ca/n1/tbl/csv/41100063-eng.zip",
-               file.path(tempdir(), "41100063-eng.zip"),
-               mirrors = paste0(item, "/41100063-eng.zip"))
+# a Statistics Canada table the Wayback Machine cannot capture, with the
+# archive.org copy made from elsewhere as a mirror
+item <- paste0(
+  "https://archive.org/download/rmorie-statc",
+  "an-indigenous-tables-2026-10"
+)
+fetchvrf(
+  "https://www150.statcan.gc.ca/n1/tbl/csv/41100063-eng.zip",
+  file.path(tempdir(), "41100063-eng.zip"),
+  mirrors = paste0(item, "/41100063-eng.zip")
+)
 \dontshow{\}) # examplesIf}
 }
 \seealso{

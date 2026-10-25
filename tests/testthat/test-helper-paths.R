@@ -13,30 +13,40 @@ test_that("the pure-R SHA-256 agrees with the compiled core", {
   # pure-R FIPS 180-4 implementation when a capsule bundle is sourced
   # standalone. The two MUST agree, or a digest pinned by one would fail
   # to verify under the other.
-  for (s in list("", "abc", "the quick brown fox",
-                 paste(rep("x", 1000), collapse = ""),
-                 "café 中文")) {
+  for (s in list(
+    "",
+    "abc",
+    "the quick brown fox",
+    paste(rep("x", 1000), collapse = ""),
+    "café 中文"
+  )) {
     bytes <- charToRaw(s)
-    expect_equal(rmoriebricklayer:::.rmbl_sha256_hex(bytes),
-                 csha256(bytes))
+    expect_equal(rmoriebricklayer:::.rmbl_sha256_hex(bytes), csha256(bytes))
   }
   # the published NIST vector, through the pure-R path
-  expect_equal(rmoriebricklayer:::.rmbl_sha256_hex(charToRaw("abc")),
-    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+  expect_equal(
+    rmoriebricklayer:::.rmbl_sha256_hex(charToRaw("abc")),
+    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+  )
   # and over a multi-block input, which exercises the padding
   long <- charToRaw(paste(rep("abcdefghij", 30), collapse = ""))
   expect_equal(rmoriebricklayer:::.rmbl_sha256_hex(long), csha256(long))
-  expect_match(rmoriebricklayer:::.rmbl_sha256_hex(charToRaw("x")),
-               "^[0-9a-f]{64}$")
+  expect_match(
+    rmoriebricklayer:::.rmbl_sha256_hex(charToRaw("x")),
+    "^[0-9a-f]{64}$"
+  )
 
   # sha256file() routes to one of them and must match either way
   p <- tempfile()
   on.exit(unlink(p), add = TRUE)
   writeBin(charToRaw("capsule payload"), p)
   expect_equal(sha256file(p), csha256(charToRaw("capsule payload")))
-  expect_equal(sha256file(p),
-               rmoriebricklayer:::.rmbl_sha256_hex(
-                 charToRaw("capsule payload")))
+  expect_equal(
+    sha256file(p),
+    rmoriebricklayer:::.rmbl_sha256_hex(
+      charToRaw("capsule payload")
+    )
+  )
 })
 
 test_that("the ASCII transliteration works without stringi", {
@@ -61,10 +71,8 @@ test_that("the ASCII transliteration works without stringi", {
 
   # asciifb() leaves valid text alone and transliterates the rest
   expect_equal(asciifb("plain name"), "plain name")
-  expect_equal(asciifb(c("café", "resume"), force = TRUE)[2],
-               "resume")
-  expect_false(grepl("[^ -~]",
-                     asciifb("café", force = TRUE)))
+  expect_equal(asciifb(c("café", "resume"), force = TRUE)[2], "resume")
+  expect_false(grepl("[^ -~]", asciifb("café", force = TRUE)))
 
   # INVALID UTF-8: a byte sequence that is not valid text at all. This is
   # the branch that fires on a file whose encoding was mislabelled.
@@ -135,9 +143,10 @@ test_that("the run summary includes the package versions when recorded", {
 
   # WITH it: a version drift explains most numerical differences between
   # runs, so the summary names the versions it ran on
-  txt <- summary_text(list(project = "demo",
-                           r_package_versions = list(stats = "4.5.0",
-                                                     methods = "4.4.1")))
+  txt <- summary_text(list(
+    project = "demo",
+    r_package_versions = list(stats = "4.5.0", methods = "4.4.1")
+  ))
   expect_match(txt, "R PACKAGE VERSIONS USED IN THIS RUN")
   expect_match(txt, "stats")
   expect_match(txt, "methods")
@@ -146,7 +155,8 @@ test_that("the run summary includes the package versions when recorded", {
   expect_match(txt, "drift here explains")
 
   # an empty version list adds no block
-  expect_false(grepl("R PACKAGE VERSIONS",
-                     summary_text(list(project = "d",
-                                       r_package_versions = list()))))
+  expect_false(grepl(
+    "R PACKAGE VERSIONS",
+    summary_text(list(project = "d", r_package_versions = list()))
+  ))
 })

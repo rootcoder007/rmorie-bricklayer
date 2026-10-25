@@ -19,31 +19,33 @@ cnsstd(
 
 \item{grp}{The group (default \code{"Indigenous identity"}).}
 
-\item{geo}{The geography: its name (default \code{"Canada"}) or, where names repeat,
-its DGUID.}
+\item{geo}{The geography: its name (default \code{"Canada"}) or, where names
+repeat, its DGUID.}
 
 \item{ages}{The age groups, as the profile names them.}
 
-\item{resid}{On or off reserve, in the tables that split it (default the total).}
+\item{resid}{On or off reserve, in the tables that split it (default the
+total).}
 }
 \value{
-A data frame: \code{age}, \code{population}, \code{weight} (shares summing to
-1).
+A data frame: \code{age}, \code{population}, \code{weight} (shares
+summing to 1).
 }
 \description{
-The age structure of a group in a geography of the 2021 Census Indigenous Population
-Profile, as the standard of \code{\link{agestd}} or
+The age structure of a group in a geography of the 2021 Census Indigenous
+Population Profile, as the standard of \code{\link{agestd}} or
 \code{\link{stdprev}}.
 }
 \details{
-Comparisons of First Nations, Metis and Inuit health are standardised to the
-Indigenous population's own, younger, age structure (Kumar and Tjepkema 2019): a
-standard as old as Canada's gives weight to ages where few Indigenous people are. This
-takes the population in private households of each age group (the profile's first
-characteristic) for the group and geography given. Age groups that do not overlap are
-chosen by default (0 to 4, 5 to 9, 10 to 14, 15 to 19, 20 to 24, 25 to 34, 35 to 44, 45
-to 54, 55 to 64, 65 to 74, 75 and over); collapse them to the age groups of the rates
-being standardised.
+Comparisons of First Nations, Metis and Inuit health are
+standardised to the Indigenous population's own, younger, age structure
+(Kumar and Tjepkema 2019): a standard as old as Canada's gives weight to ages
+where few Indigenous people are. This takes the population in private
+households of each age group (the profile's first characteristic) for the
+group and geography given. Age groups that do not overlap are chosen by
+default (0 to 4, 5 to 9, 10 to 14, 15 to 19, 20 to 24, 25 to 34, 35 to 44, 45
+to 54, 55 to 64, 65 to 74, 75 and over); collapse them to the age groups of
+the rates being standardised.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -52,9 +54,10 @@ cnsstd(p)
 \dontshow{\}) # examplesIf}
 }
 \references{
-Kumar MB, Tjepkema M (2019). Suicide among First Nations people, Metis and
-Inuit (2011-2016): findings from the 2011 Canadian Census Health and Environment
-Cohort (CanCHEC). Statistics Canada catalogue no. 99-011-X2019001.
+Kumar MB, Tjepkema M (2019). Suicide among First Nations people,
+Metis and Inuit (2011-2016): findings from the 2011 Canadian Census Health
+and Environment Cohort (CanCHEC). Statistics Canada catalogue no.
+99-011-X2019001.
 }
 \seealso{
 \code{\link{agestd}}, \code{\link{stdprev}}.

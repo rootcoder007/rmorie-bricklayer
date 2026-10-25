@@ -29,8 +29,8 @@ ordinals such as \code{"1er"} are accepted, and an ISO date is passed
 through. A date that does not exist (\code{"February 30, 2023"}) or text
 that is not a date gives \code{""}. \code{NA} stays \code{NA}.
 
-Error: \code{x} that is neither character nor all \code{NA} (\dQuote{x must be
-a character vector of dates}).
+Error: \code{x} that is neither character nor all \code{NA} (\dQuote{x must
+be a character vector of dates}).
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

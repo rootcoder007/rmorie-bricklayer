@@ -10,8 +10,8 @@ blpal(name = c("okabe", "diverging", "sequential", "grey"), n = NULL)
 plotopt(...)
 }
 \arguments{
-\item{name}{Character scalar, the palette: \code{"okabe"} (the default), or one
-of \code{"diverging"}, \code{"sequential"} and \code{"grey"}.}
+\item{name}{Character scalar, the palette: \code{"okabe"} (the default), or
+one of \code{"diverging"}, \code{"sequential"} and \code{"grey"}.}
 
 \item{n}{Integer scalar or \code{NULL} (the default: the palette's own
 colours). The number of colours wanted; \code{"okabe"} and \code{"grey"}
@@ -44,12 +44,12 @@ changed without changing the session. Use \code{blpal()} also
 to colour your own plots so they match the package's.
 }
 \details{
-The palettes: \code{"okabe"} is the eight-colour set of Okabe and Ito
-(2008), distinguishable under the common forms of colour-vision
-deficiency. \code{"diverging"} has three anchors (blue \code{#2166AC},
-grey \code{#8C8C8C}, orange-red \code{#D6604D}) and is used for changes
-(decrease, no change, increase). The palette \code{"sequential"} has five
-blues from light to dark; \code{"grey"} five greys from dark to light. With \code{n}
+The palettes: \code{"okabe"} is the eight-colour set of Okabe and
+Ito (2008), distinguishable under the common forms of colour-vision
+deficiency. \code{"diverging"} has three anchors (blue \code{#2166AC}, grey
+\code{#8C8C8C}, orange-red \code{#D6604D}) and is used for changes (decrease,
+no change, increase). The palette \code{"sequential"} has five blues from
+light to dark; \code{"grey"} five greys from dark to light. With \code{n}
 given, \code{"okabe"} and \code{"grey"} repeat their colours
 (\code{rep_len()}) and \code{"diverging"} and \code{"sequential"} are
 interpolated with \code{grDevices::colorRampPalette()}.
@@ -59,10 +59,11 @@ the defaults are \code{palette = "okabe"}, \code{grid = TRUE},
 \code{cex = 1}, \code{las = 1}, \code{bg = "white"} and
 \code{panel = "#EEF1F6"}. Setting some options keeps the others.
 
-Text is drawn at the session \code{cex}. Titles, axis titles, row labels
-and keys are made smaller to fit a small device, but never below 0.6 of
-that size, so that they stay readable; for larger text set, for example,
-\code{plotopt(cex = 1.2)}, and for a table with many rows use a taller device.
+Text is drawn at the session \code{cex}. Titles, axis titles, row labels and
+keys are made smaller to fit a small device, but never below 0.6 of that
+size, so that they stay readable; for larger text set, for example,
+\code{plotopt(cex = 1.2)}, and for a table with many rows use a taller
+device.
 
 Errors: an unknown palette \code{name}; \code{n} not a positive whole
 number; an option name other than the six above, or an unnamed value; an
@@ -77,8 +78,15 @@ plotopt(palette = old$palette, grid = old$grid)
 
 # an interpolated sequential scale, shown as swatches
 cols <- blpal("sequential", 7)
-barplot(rep(1, 7), col = cols, border = NA, axes = FALSE, names.arg = cols, las = 2,
-        cex.names = 0.6)
+barplot(
+  rep(1, 7),
+  col = cols,
+  border = NA,
+  axes = FALSE,
+  names.arg = cols,
+  las = 2,
+  cex.names = 0.6
+)
 
 # the same palette in a base plot of your own
 plot(1:8, pch = 19, cex = 3, col = blpal("okabe"))

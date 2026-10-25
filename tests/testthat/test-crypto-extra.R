@@ -6,12 +6,20 @@
 # not consuming R's own stream.
 
 test_that("BLAKE2b matches the RFC 7693 vectors", {
-  expect_equal(cblake2b("abc", length = 64), paste0(
-    "ba80a53f981c4d0d6a2797b69f12f6e94c212f14685ac4b74b12bb6fdbffa2d1",
-    "7d87c5392aab792dc252d5de4533cc9518d38aa8dbf1925ab92386edd4009923"))
-  expect_equal(cblake2b("", length = 64), paste0(
-    "786a02f742015903c6c6fd852552d272912f4740e15847618a86e217f71f5419",
-    "d25e1031afee585313896444934eb04b903a685b1448b755d56f701afe9be2ce"))
+  expect_equal(
+    cblake2b("abc", length = 64),
+    paste0(
+      "ba80a53f981c4d0d6a2797b69f12f6e94c212f14685ac4b74b12bb6fdbffa2d1",
+      "7d87c5392aab792dc252d5de4533cc9518d38aa8dbf1925ab92386edd4009923"
+    )
+  )
+  expect_equal(
+    cblake2b("", length = 64),
+    paste0(
+      "786a02f742015903c6c6fd852552d272912f4740e15847618a86e217f71f5419",
+      "d25e1031afee585313896444934eb04b903a685b1448b755d56f701afe9be2ce"
+    )
+  )
 
   # any digest length, which SHA-2 cannot offer
   expect_equal(nchar(cblake2b("abc")), 64L)
@@ -20,13 +28,14 @@ test_that("BLAKE2b matches the RFC 7693 vectors", {
   expect_equal(nchar(cblake2b("abc", length = 20)), 40L)
   # a shorter digest is NOT a prefix of a longer one: the length enters
   # the parameter block, which is what stops a length-extension trick
-  expect_false(identical(cblake2b("abc", length = 32),
-                         substring(cblake2b("abc", length = 64), 1, 64)))
+  expect_false(identical(
+    cblake2b("abc", length = 32),
+    substring(cblake2b("abc", length = 64), 1, 64)
+  ))
 
   # keyed BLAKE2b is a MAC in its own right
   expect_false(identical(cblake2b("m", key = "k"), cblake2b("m")))
-  expect_false(identical(cblake2b("m", key = "k1"),
-                         cblake2b("m", key = "k2")))
+  expect_false(identical(cblake2b("m", key = "k1"), cblake2b("m", key = "k2")))
   expect_identical(cblake2b("m", key = "k"), cblake2b("m", key = "k"))
   # a raw key and a 64-byte key both work
   expect_match(cblake2b("m", key = as.raw(rep(1, 64))), "^[0-9a-f]{64}$")
@@ -44,48 +53,63 @@ test_that("BLAKE2b matches the RFC 7693 vectors", {
 })
 
 test_that("PBKDF2-HMAC-SHA256 matches the published vectors", {
-  expect_equal(drvkey("password", "salt", iter = 1),
-    "120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b")
-  expect_equal(drvkey("password", "salt", iter = 2),
-    "ae4d0c95af6b46d32d0adff928f06dd02a303f8ef3c251dfd6e2d85a95474c43")
-  expect_equal(drvkey("password", "salt", iter = 4096),
-    "c5e478d59288c841aa530db6845c4c8d962893a001ce4e11a4963873aa98134a")
+  expect_equal(
+    drvkey("password", "salt", iter = 1),
+    "120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b"
+  )
+  expect_equal(
+    drvkey("password", "salt", iter = 2),
+    "ae4d0c95af6b46d32d0adff928f06dd02a303f8ef3c251dfd6e2d85a95474c43"
+  )
+  expect_equal(
+    drvkey("password", "salt", iter = 4096),
+    "c5e478d59288c841aa530db6845c4c8d962893a001ce4e11a4963873aa98134a"
+  )
   # a 40-byte key spans two blocks, which exercises the block counter
-  expect_equal(drvkey("passwordPASSWORDpassword",
-                          "saltSALTsaltSALTsaltSALTsaltSALTsalt",
-                          iter = 4096, length = 40), paste0(
-    "348c89dbcbd32b2f32d814b8116e84cf2b17347ebc1800181c4e2a1fb8dd53e1",
-    "c635518c7dac47e9"))
+  expect_equal(
+    drvkey(
+      "passwordPASSWORDpassword",
+      "saltSALTsaltSALTsaltSALTsaltSALTsalt",
+      iter = 4096,
+      length = 40
+    ),
+    paste0(
+      "348c89dbcbd32b2f32d814b8116e84cf2b17347ebc1800181c4e2a1fb8dd53e1",
+      "c635518c7dac47e9"
+    )
+  )
 
   # deterministic, so a verifier can repeat it
   expect_identical(drvkey("pw", "s", 1000), drvkey("pw", "s", 1000))
   # every input changes the key
-  expect_false(identical(drvkey("pw", "s1", 100),
-                         drvkey("pw", "s2", 100)))
-  expect_false(identical(drvkey("pw1", "s", 100),
-                         drvkey("pw2", "s", 100)))
-  expect_false(identical(drvkey("pw", "s", 100),
-                         drvkey("pw", "s", 101)))
+  expect_false(identical(drvkey("pw", "s1", 100), drvkey("pw", "s2", 100)))
+  expect_false(identical(drvkey("pw1", "s", 100), drvkey("pw2", "s", 100)))
+  expect_false(identical(drvkey("pw", "s", 100), drvkey("pw", "s", 101)))
   # a longer key extends a shorter one, since the blocks are independent
-  expect_equal(substring(drvkey("pw", "s", 10, length = 64), 1, 64),
-               drvkey("pw", "s", 10, length = 32))
+  expect_equal(
+    substring(drvkey("pw", "s", 10, length = 64), 1, 64),
+    drvkey("pw", "s", 10, length = 32)
+  )
   expect_equal(nchar(drvkey("pw", "s", 10, length = 16)), 32L)
   # raw passphrases and salts are accepted
-  expect_match(drvkey(charToRaw("pw"), charToRaw("s"), 10),
-               "^[0-9a-f]{64}$")
+  expect_match(drvkey(charToRaw("pw"), charToRaw("s"), 10), "^[0-9a-f]{64}$")
 
   # it composes with HMAC signing, which is the point of it existing
-  key <- drvkey("correct horse battery staple", "unique-salt",
-                    iter = 1000)
+  key <- drvkey("correct horse battery staple", "unique-salt", iter = 1000)
   sig <- cpssign("manifest", key, scheme = "hmac")
   expect_true(cpsvrf("manifest", sig, key))
-  expect_false(cpsvrf("manifest", sig,
-                              drvkey("wrong passphrase", "unique-salt",
-                                         iter = 1000)))
+  expect_false(cpsvrf(
+    "manifest",
+    sig,
+    drvkey("wrong passphrase", "unique-salt", iter = 1000)
+  ))
   # the salt is part of the key, so the same passphrase under another
   # salt does not verify
-  expect_false(cpsvrf("manifest", sig,
-    drvkey("correct horse battery staple", "other-salt", 1000)))
+  expect_false(cpsvrf(
+    "manifest",
+    sig,
+    drvkey("correct horse battery staple", "other-salt", 1000)
+  ))
 
   expect_error(drvkey("pw", "s", iter = 0), "at least 1")
   expect_error(drvkey("pw", "s", length = 0), "between 1 and 1024")
@@ -134,15 +158,11 @@ test_that("dgstobj fingerprints arbitrary objects stably", {
   expect_identical(dgstobj(mtcars), dgstobj(mtcars))
   # sensitive to any change
   expect_false(identical(dgstobj(1:10), dgstobj(1:11)))
-  expect_false(identical(dgstobj(list(a = 1)),
-                         dgstobj(list(a = 2))))
-  expect_false(identical(dgstobj(list(a = 1)),
-                         dgstobj(list(b = 1))))
+  expect_false(identical(dgstobj(list(a = 1)), dgstobj(list(a = 2))))
+  expect_false(identical(dgstobj(list(a = 1)), dgstobj(list(b = 1))))
   # attributes are part of the object, so part of the digest
-  expect_false(identical(dgstobj(matrix(1:6, nrow = 2)),
-                         dgstobj(1:6)))
-  expect_false(identical(dgstobj(factor(c("a", "b"))),
-                         dgstobj(c("a", "b"))))
+  expect_false(identical(dgstobj(matrix(1:6, nrow = 2)), dgstobj(1:6)))
+  expect_false(identical(dgstobj(factor(c("a", "b"))), dgstobj(c("a", "b"))))
   # integer and double are different objects even when they print alike
   expect_false(identical(dgstobj(1L), dgstobj(1)))
 
@@ -152,10 +172,10 @@ test_that("dgstobj fingerprints arbitrary objects stably", {
   expect_equal(nchar(dgstobj(mtcars, algo = "blake2b")), 64L)
   expect_type(dgstobj(mtcars, algo = "crc32"), "double")
   # a keyed fingerprint only a key holder can reproduce
-  expect_false(identical(dgstobj(mtcars, algo = "blake2b",
-                                       key = "k1"),
-                         dgstobj(mtcars, algo = "blake2b",
-                                       key = "k2")))
+  expect_false(identical(
+    dgstobj(mtcars, algo = "blake2b", key = "k1"),
+    dgstobj(mtcars, algo = "blake2b", key = "k2")
+  ))
   # functions and environments-free objects work too
   expect_match(dgstobj(function(x) x + 1), "^[0-9a-f]{64}$")
   expect_match(dgstobj(NULL), "^[0-9a-f]{64}$")

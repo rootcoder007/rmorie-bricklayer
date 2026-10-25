@@ -17,86 +17,69 @@ A data frame; for \code{"ledger"} the ledger as
 \code{name = NULL}, a data frame of \code{name}, \code{rows} and \code{description}.
 }
 \description{
-Seeded synthetic datasets, made up but shaped like the data each family of the
-package reads, so that every tab of \code{\link[=rmblapp]{rmblapp()}} (and any
-example) has something
-realistic to run on without a download. Each call with the same \code{name} returns the
-same data, and the caller's random number stream is left as it was.
+Seeded synthetic datasets, made up but shaped like the data each family of
+the package reads, so that every tab of \code{\link[=rmblapp]{rmblapp()}} (and any
+example) has something realistic to run on without a download. Each call with
+the same \code{name} returns the same data, and the caller's random number stream
+is left as it was.
 }
 \details{
 Every dataset is generated in R from a fixed seed, with
-\code{\link[=mksyncol]{mksyncol()}} for the
-categorical and count columns and base R's random number generators for the rest.
-None of it describes real people, courts or places.
-\describe{
-\item{\code{court}}{576 rows: 16 courts by 36 months (2022 to 2024). Columns
-\code{court},
-\code{region}, \code{month} (1 to 36), \code{date}, \code{received}, \code{disposed},
-\code{pending} (the
-backlog carried forward), \code{clearance} (disposed per 100 received), \code{caseload}
-(cases received per judge), \code{delay} (median days to disposition), \code{reformed}
-(1 from the month a court adopted the reform) and \code{refmonth} (the month it did,
-\code{NA} for the eight that never did). Eight courts adopt a case-management reform
-in months 13, 19, 25 or 31; it lowers \code{delay} by 12 days, and the courts share
-a seasonal cycle and a common trend, so the parallel-trends assumption holds.}
-\item{\code{offences}}{1,440 rows: monthly offence counts for 10 areas, 2013 to 2024.
-Columns \code{area}, \code{year}, \code{month}, \code{date}, \code{n} (Poisson counts
-with a summer peak
-of about 15 percent) and \code{pop} (growing 1 percent a year). From April 2020 every
-area's level steps down by 28 percent and stays there.}
-\item{\code{offences_annual}}{120 rows: \code{offences} summed by area and year
-(\code{n}), with
-the mean population (\code{pop}).}
-\item{\code{survey}}{1,200 respondents of a stratified two-stage sample: 4 strata
-(\code{stratum}), 10 primary sampling units in each (\code{psu}), design weights
-(\code{w}),
-and 20 bootstrap replicate weights \code{rw01} to \code{rw20} (Rao-Wu: primary units
-drawn
-with replacement within each stratum). Variables \code{age}, \code{sex}, \code{smoker}
-(0/1),
-\code{drinks} per week, \code{victim} (0/1, victimized in the past year), \code{trust}
-(1 to 5)
-and \code{income} (with 8 percent missing and a few very large values).}
+\code{\link[=mksyncol]{mksyncol()}} for the categorical and count columns and base R's
+random number generators for the rest. None of it describes real people,
+courts or places. \describe{ \item{\code{court}}{576 rows: 16 courts by 36
+months (2022 to 2024). Columns \code{court}, \code{region}, \code{month} (1 to 36),
+\code{date}, \code{received}, \code{disposed}, \code{pending} (the backlog carried
+forward), \code{clearance} (disposed per 100 received), \code{caseload} (cases
+received per judge), \code{delay} (median days to disposition), \code{reformed} (1
+from the month a court adopted the reform) and \code{refmonth} (the month it
+did, \code{NA} for the eight that never did). Eight courts adopt a
+case-management reform in months 13, 19, 25 or 31; it lowers \code{delay} by 12
+days, and the courts share a seasonal cycle and a common trend, so the
+parallel-trends assumption holds.} \item{\code{offences}}{1,440 rows: monthly
+offence counts for 10 areas, 2013 to
+2024. Columns \code{area}, \code{year}, \code{month}, \code{date}, \code{n} (Poisson
+counts with a summer peak of about 15 percent) and \code{pop} (growing 1 percent
+a year). From April 2020 every area's level steps down by 28 percent and
+stays there.} \item{\code{offences_annual}}{120 rows: \code{offences} summed by area
+and year (\code{n}), with the mean population (\code{pop}).}
+\item{\code{survey}}{1,200 respondents of a stratified two-stage sample: 4
+strata (\code{stratum}), 10 primary sampling units in each (\code{psu}), design
+weights (\code{w}), and 20 bootstrap replicate weights \code{rw01} to \code{rw20}
+(Rao-Wu: primary units drawn with replacement within each stratum).
+Variables \code{age}, \code{sex}, \code{smoker} (0/1), \code{drinks} per week,
+\code{victim} (0/1, victimized in the past year), \code{trust} (1 to 5) and
+\code{income} (with 8 percent missing and a few very large values).}
 \item{\code{fnmi}}{128 rows in the layout of \code{\link[=indiex]{indiex()}}:
-\code{period} (2015/2018,
-2019/2022), \code{group} (First Nations, Metis, Inuit, Non-Indigenous), \code{age},
-\code{indicator} (four health indicators), \code{estimate}, \code{lower}, \code{upper}
-(95 percent)
-and \code{quality} (A to E by coefficient of variation; F, with the estimate and its
-interval suppressed, above 33.3 percent).}
-\item{\code{otis}}{144 rows: admissions to 12 institutions in 2013 to 2024, as a stock
-and flow table. Columns \code{inst}, \code{cd} (census division), \code{region},
-\code{year},
-\code{people} (admissions), \code{days} (days in custody of those admitted) and
-\code{releases}. Lengths of stay are log-normal and drift up after 2019.}
-\item{\code{air}}{2,016 rows: hourly NO2 at 6 monitors for 14 days around one stack
-(10 g/s, effective height 50 m). Columns \code{monitor}, \code{x}, \code{y}, \code{z}
-(metres from
-the stack), \code{hour}, \code{wind_from} (degrees), \code{wind_speed} (m/s),
-\code{stability}
+\code{period} (2015/2018, 2019/2022), \code{group} (First Nations, Metis, Inuit,
+Non-Indigenous), \code{age}, \code{indicator} (four health indicators),
+\code{estimate}, \code{lower}, \code{upper} (95 percent) and \code{quality} (A to E by
+coefficient of variation; F, with the estimate and its interval suppressed,
+above 33.3 percent).} \item{\code{otis}}{144 rows: admissions to 12 institutions
+in 2013 to 2024, as a stock and flow table. Columns \code{inst}, \code{cd} (census
+division), \code{region}, \code{year}, \code{people} (admissions), \code{days} (days
+in custody of those admitted) and \code{releases}. Lengths of stay are
+log-normal and drift up after 2019.} \item{\code{air}}{2,016 rows: hourly NO2 at
+6 monitors for 14 days around one stack (10 g/s, effective height 50 m).
+Columns \code{monitor}, \code{x}, \code{y}, \code{z} (metres from the stack),
+\code{hour}, \code{wind_from} (degrees), \code{wind_speed} (m/s), \code{stability}
 (Pasquill-Gifford class) and \code{no2} (micrograms per cubic metre): a diurnal
 background plus the stack's \code{\link[=gplume]{gplume()}} concentration at the
-monitor for that
-hour's wind.}
-\item{\code{hawkes}}{About 700 event times (\code{t}, in days, over 365 days) from a
-self-exciting process with a baseline of 0.9 events a day, branching ratio 0.55
-and an exponential kernel of rate 0.8 a day, simulated by thinning; \code{date} and
-\code{district} are added.}
+monitor for that hour's wind.} \item{\code{hawkes}}{About 700 event times (\code{t},
+in days, over 365 days) from a self-exciting process with a baseline of 0.9
+events a day, branching ratio 0.55 and an exponential kernel of rate 0.8 a
+day, simulated by thinning; \code{date} and \code{district} are added.}
 \item{\code{drift}}{3,000 rows: a reference and a current snapshot (\code{snapshot})
-of 1,500
-rows each, with \code{age}, \code{income}, \code{region}, \code{visits} and
-\code{satisfied}. In the
-current snapshot age is 4 years older on average, income 16 percent higher, the
-North region larger and satisfaction lower; visits do not change.}
-\item{\code{waits}}{1,000 court cases: \code{case_id}, \code{court_type}, \code{days}
-to disposition
-(a gamma body with a heavy log-normal tail) and \code{appearances} (zero-inflated
-Poisson).}
-\item{\code{ledger}}{A proof ledger of 120 theorems (proved, sorry or axiom) covering
-the package's functions, written to a temporary JSON file and read back with
+of 1,500 rows each, with \code{age}, \code{income}, \code{region}, \code{visits} and
+\code{satisfied}. In the current snapshot age is 4 years older on average,
+income 16 percent higher, the North region larger and satisfaction lower;
+visits do not change.} \item{\code{waits}}{1,000 court cases: \code{case_id},
+\code{court_type}, \code{days} to disposition (a gamma body with a heavy log-normal
+tail) and \code{appearances} (zero-inflated Poisson).} \item{\code{ledger}}{A proof
+ledger of 120 theorems (proved, sorry or axiom) covering the package's
+functions, written to a temporary JSON file and read back with
 \code{\link[=ldgrread]{ldgrread()}}; four theorems carry checks that
-\code{\link[=ldgrchk]{ldgrchk()}} runs.}
-}
+\code{\link[=ldgrchk]{ldgrchk()}} runs.} }
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

@@ -25,9 +25,14 @@ test_that("wbsnpurl upgrades snapshots to https and rejects unavailable", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(
     .rmbl_read_json = function(...) {
-      list(archived_snapshots = list(closest = list(
-        available = TRUE, url = "http://web.archive.org/web/2024/https://x.csv"
-      )))
+      list(
+        archived_snapshots = list(
+          closest = list(
+            available = TRUE,
+            url = "http://web.archive.org/web/2024/https://x.csv"
+          )
+        )
+      )
     }
   )
   out <- wbsnpurl("https://example.org/x.csv")
@@ -73,10 +78,12 @@ test_that("sha256file matches digest and vrfsha256 classifies match/mismatch", {
 })
 
 test_that("valsch flags missing columns as fatal and short rows as warning", {
-  prov <- list(schema = list(
-    expected_columns = c("id", "year", "value"),
-    structural_invariants = list(min_data_rows = 5)
-  ))
+  prov <- list(
+    schema = list(
+      expected_columns = c("id", "year", "value"),
+      structural_invariants = list(min_data_rows = 5)
+    )
+  )
   df_bad <- data.frame(id = 1:2, year = 2024:2025)
   issues <- valsch(df_bad, prov)
   expect_identical(issues$missing_columns$severity, "fatal")
@@ -89,10 +96,12 @@ test_that("valsch flags missing columns as fatal and short rows as warning", {
 })
 
 test_that("schval stops on fatal, warns on warning, TRUE when clean", {
-  prov <- list(schema = list(
-    expected_columns = c("id"),
-    structural_invariants = list(min_data_rows = 3)
-  ))
+  prov <- list(
+    schema = list(
+      expected_columns = c("id"),
+      structural_invariants = list(min_data_rows = 3)
+    )
+  )
   expect_error(
     schval(data.frame(x = 1), prov),
     "Missing required columns"
@@ -108,14 +117,24 @@ test_that("rslvckan returns the first name-matched resource URL", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(
     .rmbl_read_json = function(...) {
-      list(success = TRUE, result = list(resources = list(
-        list(name = "Readme", url = "https://example.org/readme.txt"),
-        list(name = "Data 2014", url = "https://example.org/2014.csv")
-      )))
+      list(
+        success = TRUE,
+        result = list(
+          resources = list(
+            list(name = "Readme", url = "https://example.org/readme.txt"),
+            list(name = "Data 2014", url = "https://example.org/2014.csv")
+          )
+        )
+      )
     }
   )
   prov <- list(
-    dataset  = list(ckan_api_endpoint = "https://portal.example.org/api/3/action/package_show?id=x"),
+    dataset = list(
+      ckan_api_endpoint = paste0(
+        "https://portal.example.org/api/3/ac",
+        "tion/package_show?id=x"
+      )
+    ),
     resource = list(name_match_pattern = "2014")
   )
   expect_identical(rslvckan(prov), "https://example.org/2014.csv")
@@ -130,16 +149,36 @@ test_that("rslvckns matches resources and derives the query", {
   testthat::local_mocked_bindings(
     .rmbl_read_json = function(url, ...) {
       seen_url <<- url
-      list(result = list(results = list(list(resources = list(
-        list(name = "Data 2014", format = "XLSX", url = "https://example.org/s.xlsx"),
-        list(name = "Data 2014", format = "CSV", url = "https://example.org/s.csv")
-      )))))
+      list(
+        result = list(
+          results = list(list(
+            resources = list(
+              list(
+                name = "Data 2014",
+                format = "XLSX",
+                url = "https://example.org/s.xlsx"
+              ),
+              list(
+                name = "Data 2014",
+                format = "CSV",
+                url = "https://example.org/s.csv"
+              )
+            )
+          ))
+        )
+      )
     }
   )
   prov <- list(
-    dataset = list(ckan_api_endpoint = "https://portal.example.org/api/3/action/package_show?id=x"),
+    dataset = list(
+      ckan_api_endpoint = paste0(
+        "https://portal.example.org/api/3/ac",
+        "tion/package_show?id=x"
+      )
+    ),
     resource = list(
-      name_match_pattern = "2014", search_query = "library stats",
+      name_match_pattern = "2014",
+      search_query = "library stats",
       format = "CSV"
     )
   )
@@ -161,15 +200,17 @@ test_that("wbsnpurl honours an explicit timestamp", {
   testthat::local_mocked_bindings(
     .rmbl_read_json = function(url, ...) {
       seen <<- url
-      list(archived_snapshots = list(closest = list(
-        available = TRUE,
-        url = "http://web.archive.org/web/20240101/https://x.csv"
-      )))
+      list(
+        archived_snapshots = list(
+          closest = list(
+            available = TRUE,
+            url = "http://web.archive.org/web/20240101/https://x.csv"
+          )
+        )
+      )
     }
   )
-  out <- wbsnpurl("https://example.org/x.csv",
-    ts = "20240101000000"
-  )
+  out <- wbsnpurl("https://example.org/x.csv", ts = "20240101000000")
   expect_match(seen, "&timestamp=20240101000000", fixed = TRUE)
   expect_match(out, "^https://")
 })
@@ -182,7 +223,9 @@ test_that("fdl prints diagnostics and retries from a wayback snapshot", {
   testthat::local_mocked_bindings(
     .bl_fetch_file = function(url, dest, ...) {
       calls <<- calls + 1L
-      if (calls == 1L) stop("HTTP error 429: too many requests")
+      if (calls == 1L) {
+        stop("HTTP error 429: too many requests")
+      }
       file.copy(sub("^file://", "", url), dest, overwrite = TRUE)
       invisible(dest)
     }
@@ -190,7 +233,9 @@ test_that("fdl prints diagnostics and retries from a wayback snapshot", {
   dst <- tempfile(fileext = ".csv")
   out <- capture.output(
     type = "message",
-    ok <- fdl("https://example.org/x.csv", dst,
+    ok <- fdl(
+      "https://example.org/x.csv",
+      dst,
       attwb = paste0("file://", snap),
       allowfile = TRUE
     )
@@ -231,7 +276,9 @@ test_that("fdl reports a failed wayback retry", {
   )
   out <- capture.output(
     type = "message",
-    ok <- fdl("https://example.org/x.csv", tempfile(),
+    ok <- fdl(
+      "https://example.org/x.csv",
+      tempfile(),
       attwb = "file:///nonexistent/nope.csv",
       allowfile = TRUE
     )
@@ -245,10 +292,12 @@ test_that("rslvsoc returns the canonical CSV export URL", {
   testthat::local_mocked_bindings(
     .rmbl_read_json = function(...) list(id = "ijzp-q8t2")
   )
-  prov <- list(dataset = list(
-    socrata_domain = "data.example.org",
-    socrata_id = "ijzp-q8t2"
-  ))
+  prov <- list(
+    dataset = list(
+      socrata_domain = "data.example.org",
+      socrata_id = "ijzp-q8t2"
+    )
+  )
   expect_identical(
     rslvsoc(prov),
     "https://data.example.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD"
@@ -265,12 +314,17 @@ test_that("rslvarc returns a paged GeoJSON query URL, trimming slashes", {
   testthat::local_mocked_bindings(
     .rmbl_read_json = function(...) list(name = "Layer0")
   )
-  prov <- list(dataset = list(
-    arcgis_layer_url = "https://svc.example.org/FeatureServer/0///"
-  ))
+  prov <- list(
+    dataset = list(
+      arcgis_layer_url = "https://svc.example.org/FeatureServer/0///"
+    )
+  )
   expect_identical(
     rslvarc(prov),
-    "https://svc.example.org/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson"
+    paste0(
+      "https://svc.example.org/FeatureServer/0/query?where=1%3D1&outFields=",
+      "*&f=geojson"
+    )
   )
 
   testthat::local_mocked_bindings(
@@ -279,52 +333,108 @@ test_that("rslvarc returns a paged GeoJSON query URL, trimming slashes", {
   expect_null(rslvarc(prov))
 })
 
-test_that("the CKAN resolvers return NULL for an empty endpoint, a failed call and no match", {
-  skip_if_cannot_mock()
-  prov <- list(dataset = list(ckan_api_endpoint = ""), resource = list(name_match_pattern = "x"))
-  expect_null(rslvckan(prov))
-  prov$dataset$ckan_api_endpoint <- "https://portal.example.org/api/3/action/package_show?id=x"
-  testthat::with_mocked_bindings(
-    .rmbl_read_json = function(...) list(success = FALSE),
+test_that(
+  paste0(
+    "the CKAN resolvers return NULL for an empty endpoint, a failed call ",
+    "and no match"
+  ),
+  {
+    skip_if_cannot_mock()
+    prov <- list(
+      dataset = list(ckan_api_endpoint = ""),
+      resource = list(name_match_pattern = "x")
+    )
     expect_null(rslvckan(prov))
-  )
-  expect_null(rslvckns(list(dataset = prov$dataset, resource = list(name_match_pattern = ""))))
-  testthat::with_mocked_bindings(
-    .rmbl_read_json = function(...) NULL,
-    expect_null(rslvckns(list(dataset = prov$dataset, resource = list(search_query = "libraries"))))
-  )
-  testthat::with_mocked_bindings(
-    .rmbl_read_json = function(...) {
-      list(result = list(results = list(list(resources = list(list(name = "other", format = "CSV", url = "u"))))))
-    },
+    prov$dataset$ckan_api_endpoint <- paste0(
+      "https://portal.example.org/api/3/ac",
+      "tion/package_show?id=x"
+    )
+    testthat::with_mocked_bindings(
+      .rmbl_read_json = function(...) list(success = FALSE),
+      expect_null(rslvckan(prov))
+    )
     expect_null(rslvckns(list(
-      dataset = prov$dataset, resource = list(search_query = "libraries", name_match_pattern = "stats")
+      dataset = prov$dataset,
+      resource = list(name_match_pattern = "")
     )))
-  )
-})
+    testthat::with_mocked_bindings(
+      .rmbl_read_json = function(...) NULL,
+      expect_null(rslvckns(list(
+        dataset = prov$dataset,
+        resource = list(search_query = "libraries")
+      )))
+    )
+    testthat::with_mocked_bindings(
+      .rmbl_read_json = function(...) {
+        list(
+          result = list(
+            results = list(list(
+              resources = list(list(name = "other", format = "CSV", url = "u"))
+            ))
+          )
+        )
+      },
+      expect_null(rslvckns(list(
+        dataset = prov$dataset,
+        resource = list(
+          search_query = "libraries",
+          name_match_pattern = "stats"
+        )
+      )))
+    )
+  }
+)
 
 test_that("numeric range checks skip non-numeric and all-missing columns", {
-  prov <- list(schema = list(numeric_ranges = list(a = c(min = 0, max = 1), b = c(min = 0, max = 1))))
-  df <- data.frame(a = c("x", "y"), b = c(NA_real_, NA_real_), stringsAsFactors = FALSE)
+  prov <- list(
+    schema = list(
+      numeric_ranges = list(a = c(min = 0, max = 1), b = c(min = 0, max = 1))
+    )
+  )
+  df <- data.frame(
+    a = c("x", "y"),
+    b = c(NA_real_, NA_real_),
+    stringsAsFactors = FALSE
+  )
   expect_length(valsch(df, prov), 0)
 })
 
 test_that("a snapshot lookup that returns nothing usable is no snapshot", {
-  answer <- function(url) list(archived_snapshots = list(closest = list(available = TRUE, url = url)))
-  testthat::local_mocked_bindings(.rmbl_read_json = function(api, ...) answer(list()))
+  answer <- function(url) {
+    list(archived_snapshots = list(closest = list(available = TRUE, url = url)))
+  }
+  testthat::local_mocked_bindings(.rmbl_read_json = function(api, ...) {
+    answer(list())
+  })
   expect_null(wbsnpurl("https://example.invalid/x.csv"))
-  testthat::local_mocked_bindings(.rmbl_read_json = function(api, ...) answer("http://web.archive.org/x"))
-  expect_equal(wbsnpurl("https://example.invalid/x.csv"), "https://web.archive.org/x")
+  testthat::local_mocked_bindings(.rmbl_read_json = function(api, ...) {
+    answer("http://web.archive.org/x")
+  })
+  expect_equal(
+    wbsnpurl("https://example.invalid/x.csv"),
+    "https://web.archive.org/x"
+  )
 })
 
 
 test_that("fdl names a refused connection as one, not as a DNS failure", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(
-    .bl_fetch_file = function(...) stop("URL 'https://www.r-project.org/': status was 'Could not connect to server'")
+    .bl_fetch_file = function(...) {
+      stop(
+        "URL 'https://www.r-project.org/': status was 'Could not ",
+        "connect to server'"
+      )
+    }
   )
-  out <- capture.output(type = "message",
-    ok <- suppressWarnings(fdl("https://www.r-project.org/", tempfile(), attwb = "")))
+  out <- capture.output(
+    type = "message",
+    ok <- suppressWarnings(fdl(
+      "https://www.r-project.org/",
+      tempfile(),
+      attwb = ""
+    ))
+  )
   expect_false(ok)
   expect_true(any(grepl("Could not connect to the server", out)))
   expect_false(any(grepl("DNS lookup failed", out)))
@@ -337,15 +447,20 @@ test_that("fdl with the Wayback fallback off says so, and claims no lookup", {
     wbsnpurl = function(...) stop("must not be called")
   )
   for (off in list(FALSE, "")) {
-    out <- capture.output(type = "message", ok <- fdl("https://example.org/x.csv", tempfile(),
-                                                                    attwb = off))
+    out <- capture.output(
+      type = "message",
+      ok <- fdl("https://example.org/x.csv", tempfile(), attwb = off)
+    )
     expect_false(ok)
     expect_true(any(grepl("switched off", out)))
     expect_false(any(grepl("no snapshot", out)))
   }
   # the default looks one up, and says when there is none
   testthat::local_mocked_bindings(wbsnpurl = function(...) NULL)
-  out <- capture.output(type = "message", ok <- fdl("https://example.org/x.csv", tempfile()))
+  out <- capture.output(
+    type = "message",
+    ok <- fdl("https://example.org/x.csv", tempfile())
+  )
   expect_false(ok)
   expect_true(any(grepl("no snapshot", out)))
 })

@@ -59,23 +59,19 @@ particular to a data set (an age must be non-negative, two dates must be
 ordered) belong in \code{\link[=rul]{rul()}} and
 \code{\link[=valrules]{valrules()}}.
 
-The checks, and the name of the issue each one adds:
-\itemize{
-\item a missing \code{expected_columns} entry: \code{missing_columns},
-\code{"fatal"};
-\item fewer than \code{min_data_rows} rows: \code{row_count_low};
-\item more than \code{max_data_rows} rows: \code{row_count_high};
-\item a column whose class differs from \code{expected_types}:
-\code{type_<col>}. \code{integer}, \code{numeric} and \code{double} are
-one family, and so are \code{character} and \code{factor};
+The checks, and the name of the issue each one adds: \itemize{ \item a
+missing \code{expected_columns} entry: \code{missing_columns},
+\code{"fatal"}; \item fewer than \code{min_data_rows} rows:
+\code{row_count_low}; \item more than \code{max_data_rows} rows:
+\code{row_count_high}; \item a column whose class differs from
+\code{expected_types}: \code{type_<col>}. \code{integer}, \code{numeric} and
+\code{double} are one family, and so are \code{character} and \code{factor};
 \item non-missing values outside \code{numeric_ranges} (inclusive bounds;
-non-numeric columns are skipped): \code{range_<col>};
-\item a share of \code{NA} above \code{max_missing_fraction}:
-\code{missing_<col>};
-\item values not in \code{expected_value_sets}: \code{unexpected_<col>}.
-}
-A column that a check names but the data lack is skipped by that check.
-Only the \code{expected_columns} check reports such a column. All of these are
+non-numeric columns are skipped): \code{range_<col>}; \item a share of
+\code{NA} above \code{max_missing_fraction}: \code{missing_<col>}; \item
+values not in \code{expected_value_sets}: \code{unexpected_<col>}. } A column
+that a check names but the data lack is skipped by that check. Only the
+\code{expected_columns} check reports such a column. All of these are
 \code{"warning"} except \code{missing_columns}.
 
 The schema itself is checked too. An empty schema (\code{list()}) gives

@@ -7,43 +7,45 @@
 sctidy(x)
 }
 \arguments{
-\item{x}{A data frame read from a Statistics Canada table (English-language full-table
-CSV), or a key of the data service (\code{"statcan_indigenous/tbl_13100924"}, or the
-eight-digit table id alone). A key needs a data service key: sign in once with
-\code{\link{dlogin}} (see \code{\link{dload}}); a data
-frame you read yourself needs none.}
+\item{x}{A data frame read from a Statistics Canada table (English-language
+full-table CSV), or a key of the data service
+(\code{"statcan_indigenous/tbl_13100924"}, or the eight-digit table id
+alone). A key needs a data service key: sign in once with
+\code{\link{dlogin}} (see \code{\link{dload}}); a data frame you read
+yourself needs none.}
 }
 \value{
-The data frame with \code{VALUE} numeric and a factor column \code{quality}
-with levels \code{"ok"}, \code{"E"}, \code{"F"}, \code{"x"}, \code{".."},
-\code{"..."}, of class \code{c("rmbl_statcan", "data.frame")}.
+The data frame with \code{VALUE} numeric and a factor column
+\code{quality} with levels \code{"ok"}, \code{"E"}, \code{"F"}, \code{"x"},
+\code{".."}, \code{"..."}, of class \code{c("rmbl_statcan", "data.frame")}.
 }
 \description{
-Tidies a Statistics Canada full-table download (the \dQuote{CSV for database loading}
-form, as
-the data service mirrors it under \code{statcan_indigenous/tbl_<pid>}): \code{VALUE} as
-a number, and the quality flags kept beside it in \code{quality}.
+Tidies a Statistics Canada full-table download (the \dQuote{CSV for database
+loading} form, as the data service mirrors it under
+\code{statcan_indigenous/tbl_<pid>}): \code{VALUE} as a number, and the
+quality flags kept beside it in \code{quality}.
 }
 \details{
-Statistics Canada flags every estimate: \code{E} use with caution, \code{F}
-too unreliable to be published, \code{x} suppressed to meet the confidentiality
-requirements of the Statistics Act, \code{..} not available, \code{...} not applicable.
-An \code{F}, \code{x}, \code{..} or \code{...} cell has no value here (\code{NA}),
-whatever the file holds, and nothing in the package imputes it or works it back from
-totals and margins: a suppressed cell is suppressed to protect people, and small First
-Nations, Metis and Inuit communities most of all. \code{E} values are kept and marked.
+Statistics Canada flags every estimate: \code{E} use with caution,
+\code{F} too unreliable to be published, \code{x} suppressed to meet the
+confidentiality requirements of the Statistics Act, \code{..} not available,
+\code{...} not applicable. An \code{F}, \code{x}, \code{..} or \code{...}
+cell has no value here (\code{NA}), whatever the file holds, and nothing in
+the package imputes it or works it back from totals and margins: a suppressed
+cell is suppressed to protect people, and small First Nations, Metis and
+Inuit communities most of all. \code{E} values are kept and marked.
 
-The census data tables (98-10-xxxx) come in a wide layout: one column per member of a
-dimension (\code{"Indigenous identity (9):Inuk (Inuit)[6]"}), each followed by its
-\code{Symbol} column, and no \code{VALUE}. They are made long first: the dimension
-becomes a column of member labels (\code{"Indigenous identity (9)"}), the values
-\code{VALUE} and the symbols \code{STATUS}, so every Statistics Canada table reads the
-same way.
+The census data tables (98-10-xxxx) come in a wide layout: one column per
+member of a dimension (\code{"Indigenous identity (9):Inuk (Inuit)[6]"}),
+each followed by its \code{Symbol} column, and no \code{VALUE}. They are made
+long first: the dimension becomes a column of member labels
+(\code{"Indigenous identity (9)"}), the values \code{VALUE} and the symbols
+\code{STATUS}, so every Statistics Canada table reads the same way.
 
-A label that names two members of one dimension (the census tables repeat labels under
-different parents, and the file drops the hierarchy) gets its member number from the
-coordinate: \code{"Without children [3]"} and \code{"Without children [7]"}. Other
-labels are left as they are.
+A label that names two members of one dimension (the census tables repeat
+labels under different parents, and the file drops the hierarchy) gets its
+member number from the coordinate: \code{"Without children [3]"} and
+\code{"Without children [7]"}. Other labels are left as they are.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

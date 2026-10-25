@@ -14,15 +14,13 @@
 
 #' Parse banded category labels into numeric bounds
 #'
-#' @description
-#' Published administrative tables often report intervals instead of
-#' values: \dQuote{18 to 24}, \dQuote{2 to 5}, \code{"50+"}, \dQuote{Greater than 15
-#' days}. This function
-#' reads such labels into a lower and an upper bound per band, and flags the
-#' bands that are open at the top or the bottom. It recognises the wordings
-#' open-data publishers actually use, and leaves a label it cannot read as
-#' \code{NA} rather than guessing. Use it as the first step before
-#' \code{\link{bandvals}}, \code{\link{expbands}} or
+#' @description Published administrative tables often report intervals instead
+#' of values: \dQuote{18 to 24}, \dQuote{2 to 5}, \code{"50+"}, \dQuote{Greater
+#' than 15 days}. This function reads such labels into a lower and an upper
+#' bound per band, and flags the bands that are open at the top or the bottom.
+#' It recognises the wordings open-data publishers actually use, and leaves a
+#' label it cannot read as \code{NA} rather than guessing. Use it as the first
+#' step before \code{\link{bandvals}}, \code{\link{expbands}} or
 #' \code{\link{bandsens}}.
 #'
 #' @details
@@ -111,26 +109,42 @@ prsbands <- function(x, clsup = TRUE, intsca = TRUE) {
   # thousands separators ("1,000 to 2,499", the commonest published form):
   # only a correctly grouped number loses its commas; "12,34,567" is not
   # a number and stays as it is, so the label stays NA
-  s <- vapply(s, function(z) {
-    if (is.na(z)) return(z)
-    m <- gregexpr("(?<![0-9,])[0-9]{1,3}(?:,[0-9]{3})+(?![0-9,])", z, perl = TRUE)[[1L]]
-    if (m[1L] > 0) {
-      toks <- regmatches(z, list(m))[[1L]]
-      regmatches(z, list(m)) <- list(gsub(",", "", toks, fixed = TRUE))
-    }
-    z
-  }, character(1), USE.NAMES = FALSE)
+  s <- vapply(
+    s,
+    function(z) {
+      if (is.na(z)) {
+        return(z)
+      }
+      m <- gregexpr(
+        "(?<![0-9,])[0-9]{1,3}(?:,[0-9]{3})+(?![0-9,])",
+        z,
+        perl = TRUE
+      )[[1L]]
+      if (m[1L] > 0) {
+        toks <- regmatches(z, list(m))[[1L]]
+        regmatches(z, list(m)) <- list(gsub(",", "", toks, fixed = TRUE))
+      }
+      z
+    },
+    character(1),
+    USE.NAMES = FALSE
+  )
   n <- length(s)
   lower <- rep(NA_real_, n)
   upper <- rep(NA_real_, n)
   ol <- rep(FALSE, n)
   ou <- rep(FALSE, n)
   num <- function(z) suppressWarnings(as.numeric(z))
-  cue_re <- "\\b(over|above|more|plus|under|less|below|fewer|greater|than|gt|lt)\\b"
+  cue_re <- paste0(
+    "\\b(over|above|more|plus|under|less|below|",
+    "fewer|greater|than|gt|lt)\\b"
+  )
 
   for (i in seq_len(n)) {
     z <- s[i]
-    if (!nzchar(z) || is.na(z)) next
+    if (!nzchar(z) || is.na(z)) {
+      next
+    }
     # a label written with decimals is on a decimal scale whatever
     # `intsca` says: "under 0.5" is not "at most -0.5"
     step <- if (isTRUE(intsca) && !grepl("[0-9]\\.[0-9]", z)) 1 else 0
@@ -142,13 +156,21 @@ prsbands <- function(x, clsup = TRUE, intsca = TRUE) {
     # leading word slot or the trailing unit -- is a contradiction too,
     # matched as a WORD: "overnight" is not "over". Inverted bounds
     # ("24 to 18") stay NA.
-    m <- regmatches(z, regexec(paste0(
-      "^([a-z]+ )?(-?[0-9]*\\.?[0-9]+) ?(?:to|-|through) ?",
-      "(-?[0-9]*\\.?[0-9]+)([^0-9]*)$"), z))[[1L]]
+    m <- regmatches(
+      z,
+      regexec(
+        paste0(
+          "^([a-z]+ )?(-?[0-9]*\\.?[0-9]+) ?(?:to|-|through) ?",
+          "(-?[0-9]*\\.?[0-9]+)([^0-9]*)$"
+        ),
+        z
+      )
+    )[[1L]]
     if (length(m) == 5L) {
       lo <- num(m[3L])
       up <- num(m[4L])
-      cue <- grepl(cue_re, m[2L], perl = TRUE) || grepl(cue_re, m[5L], perl = TRUE) ||
+      cue <- grepl(cue_re, m[2L], perl = TRUE) ||
+        grepl(cue_re, m[5L], perl = TRUE) ||
         grepl("\\+", m[5L])
       if (!cue && !is.na(lo) && !is.na(up) && lo <= up) {
         lower[i] <- lo
@@ -160,7 +182,9 @@ prsbands <- function(x, clsup = TRUE, intsca = TRUE) {
     # as a range above ("more than 10 - 20", "under 18 to 24") contradict
     # themselves and stay NA rather than yielding the first number.
     nums <- regmatches(z, gregexpr("-?[0-9]*\\.?[0-9]+", z))[[1L]]
-    if (length(nums) != 1L) next
+    if (length(nums) != 1L) {
+      next
+    }
     # An open UPPER band. The INCLUSIVE wordings go first: "65 and
     # over" includes 65, and the bare "over" in the exclusive pattern
     # below matches it too, which moved the bound by a whole unit of
@@ -208,9 +232,14 @@ prsbands <- function(x, clsup = TRUE, intsca = TRUE) {
       next
     }
   }
-  data.frame(label = lab, lower = lower, upper = upper,
-             openlo = ol, openup = ou,
-             stringsAsFactors = FALSE)
+  data.frame(
+    label = lab,
+    lower = lower,
+    upper = upper,
+    openlo = ol,
+    openup = ou,
+    stringsAsFactors = FALSE
+  )
 }
 
 #' Representative values for banded categories
@@ -254,8 +283,8 @@ prsbands <- function(x, clsup = TRUE, intsca = TRUE) {
 #' @param openupfac Number, default \code{2}. When no cap is given,
 #'   the open top band's upper bound is its lower bound times this factor
 #'   (so \dQuote{Greater than 10} becomes 11 to 22).
-#' @param openloflr Number or \code{NULL} (the default). The lower bound
-#'   assumed for an open bottom band (\dQuote{under 18}). \code{NULL} uses 0, or the
+#' @param openloflr Number or \code{NULL} (the default). The lower bound assumed
+#'   for an open bottom band (\dQuote{under 18}). \code{NULL} uses 0, or the
 #'   band's own upper bound when that is below 0. A floor above a band's upper
 #'   bound is refused.
 #' @return The band table with two added columns: \code{value} (numeric, the
@@ -278,16 +307,21 @@ prsbands <- function(x, clsup = TRUE, intsca = TRUE) {
 #' # a cap inside the open band is refused
 #' try(bandvals(b, openupcap = 5))
 #' @export
-bandvals <- function(bands, rule = c("midpoint", "lower", "upper",
-                                        "geometric"),
-                        openupcap = NULL, openupfac = 2,
-                        openloflr = NULL) {
+bandvals <- function(
+  bands,
+  rule = c("midpoint", "lower", "upper", "geometric"),
+  openupcap = NULL,
+  openupfac = 2,
+  openloflr = NULL
+) {
   rule <- .rmbl_arg(rule)
   openupfac <- .rmbl_num(openupfac, "openupfac")
   if (length(openupfac) != 1L || !is.finite(openupfac) || openupfac <= 0) {
     stop("`openupfac` must be one positive number", call. = FALSE)
   }
-  if (!is.data.frame(bands)) bands <- prsbands(bands)
+  if (!is.data.frame(bands)) {
+    bands <- prsbands(bands)
+  }
   need <- c("lower", "upper", "openlo", "openup")
   if (!all(need %in% names(bands))) {
     stop("`bands` must come from prsbands()", call. = FALSE)
@@ -305,12 +339,18 @@ bandvals <- function(bands, rule = c("midpoint", "lower", "upper",
     }
     hi[bands$openup] <- cap
     if (any(hi[bands$openup] < lo[bands$openup], na.rm = TRUE)) {
-      stop(sprintf(paste0("the open-band cap (%s) lies below the band's own ",
-                          "lower bound (%s); a midpoint there would be below ",
-                          "every value in the band"),
-                   format(min(hi[bands$openup], na.rm = TRUE)),
-                   format(max(lo[bands$openup], na.rm = TRUE))),
-           call. = FALSE)
+      stop(
+        sprintf(
+          paste0(
+            "the open-band cap (%s) lies below the band's own ",
+            "lower bound (%s); a midpoint there would be below ",
+            "every value in the band"
+          ),
+          format(min(hi[bands$openup], na.rm = TRUE)),
+          format(max(lo[bands$openup], na.rm = TRUE))
+        ),
+        call. = FALSE
+      )
     }
   }
   if (any(bands$openlo)) {
@@ -323,16 +363,23 @@ bandvals <- function(bands, rule = c("midpoint", "lower", "upper",
       rep(as.numeric(openloflr)[1L], sum(bands$openlo))
     }
     if (any(floor_v > hi[bands$openlo], na.rm = TRUE)) {
-      stop(sprintf(paste0("the open-band floor (%s) lies above the band's own ",
-                          "upper bound (%s); a midpoint there would be above ",
-                          "every value in the band"),
-                   format(max(floor_v, na.rm = TRUE)),
-                   format(min(hi[bands$openlo], na.rm = TRUE))),
-           call. = FALSE)
+      stop(
+        sprintf(
+          paste0(
+            "the open-band floor (%s) lies above the band's own ",
+            "upper bound (%s); a midpoint there would be above ",
+            "every value in the band"
+          ),
+          format(max(floor_v, na.rm = TRUE)),
+          format(min(hi[bands$openlo], na.rm = TRUE))
+        ),
+        call. = FALSE
+      )
     }
     lo[bands$openlo] <- floor_v
   }
-  value <- switch(rule,
+  value <- switch(
+    rule,
     lower = lo,
     upper = hi,
     midpoint = (lo + hi) / 2,
@@ -344,7 +391,8 @@ bandvals <- function(bands, rule = c("midpoint", "lower", "upper",
       bad <- !is.finite(g) | lo <= 0
       g[bad] <- ((lo + hi) / 2)[bad]
       g
-    })
+    }
+  )
   out <- bands
   out$value <- value
   out$assumed <- assumed
@@ -408,31 +456,54 @@ bandvals <- function(bands, rule = c("midpoint", "lower", "upper",
 #' # nothing to vary without an open band
 #' try(bandsens(c("1", "2 to 5"), c(10, 4)))
 #' @export
-bandsens <- function(bands, cnts, stat = ginicoef, caps = NULL,
-                             rule = "midpoint") {
-  if (!is.data.frame(bands)) bands <- prsbands(bands)
+bandsens <- function(
+  bands,
+  cnts,
+  stat = ginicoef,
+  caps = NULL,
+  rule = "midpoint"
+) {
+  if (!is.data.frame(bands)) {
+    bands <- prsbands(bands)
+  }
   cnts <- .rmbl_num(cnts, "cnts")
   if (length(cnts) != nrow(bands)) {
-    stop(sprintf("bandsens: `cnts` has %d entries for %d bands",
-                 length(cnts), nrow(bands)), call. = FALSE)
+    stop(
+      sprintf(
+        "bandsens: `cnts` has %d entries for %d bands",
+        length(cnts),
+        nrow(bands)
+      ),
+      call. = FALSE
+    )
   }
   if (!any(bands$openup)) {
-    stop(paste0("no open upper band, so there is nothing to be ",
-                "sensitive to"), call. = FALSE)
+    stop(
+      paste0("no open upper band, so there is nothing to be ", "sensitive to"),
+      call. = FALSE
+    )
   }
-  if (!is.function(stat)) stop("`stat` must be a function of the band values", call. = FALSE)
+  if (!is.function(stat)) {
+    stop("`stat` must be a function of the band values", call. = FALSE)
+  }
   base <- min(bands$lower[bands$openup], na.rm = TRUE)
   if (is.null(caps)) {
-    caps <- unique(round(base * exp(seq(log(1.05), log(20),
-                                        length.out = 12L)), 6L))
+    caps <- unique(round(
+      base * exp(seq(log(1.05), log(20), length.out = 12L)),
+      6L
+    ))
   }
   caps <- sort(unique(.rmbl_num(caps, "caps")))
-  vals <- vapply(caps, function(cp) {
-    bv <- bandvals(bands, rule = rule, openupcap = cp)
-    x <- rep(bv$value, times = cnts)
-    out <- suppressWarnings(stat(x))
-    if (length(out) != 1L) NA_real_ else as.numeric(out)
-  }, 0)
+  vals <- vapply(
+    caps,
+    function(cp) {
+      bv <- bandvals(bands, rule = rule, openupcap = cp)
+      x <- rep(bv$value, times = cnts)
+      out <- suppressWarnings(stat(x))
+      if (length(out) != 1L) NA_real_ else as.numeric(out)
+    },
+    0
+  )
   fin <- vals[is.finite(vals)]
   span <- if (length(fin)) max(fin) - min(fin) else NA_real_
   rel <- if (length(fin) && min(abs(fin)) > 0) {
@@ -440,9 +511,13 @@ bandsens <- function(bands, cnts, stat = ginicoef, caps = NULL,
   } else {
     NA_real_
   }
-  structure(data.frame(cap = caps, value = vals),
-            class = c("rmbl_band_sensitivity", "data.frame"),
-            span = span, relspan = rel, base = base)
+  structure(
+    data.frame(cap = caps, value = vals),
+    class = c("rmbl_band_sensitivity", "data.frame"),
+    span = span,
+    relspan = rel,
+    base = base
+  )
 }
 
 #' @param x An `rmbl_band_sensitivity` object.
@@ -452,17 +527,29 @@ bandsens <- function(bands, cnts, stat = ginicoef, caps = NULL,
 print.rmbl_band_sensitivity <- function(x, ...) {
   sp <- attr(x, "span", exact = TRUE)
   rel <- attr(x, "relspan", exact = TRUE)
-  footer <- paste0("span over the caps tried: ", format(sp, digits = 4L),
-                   if (!is.na(rel)) paste0(" (", format(100 * rel, digits = 3L),
-                                           "% of the typical value)") else "")
+  footer <- paste0(
+    "span over the caps tried: ",
+    format(sp, digits = 4L),
+    if (!is.na(rel)) {
+      paste0(" (", format(100 * rel, digits = 3L), "% of the typical value)")
+    } else {
+      ""
+    }
+  )
   if (!is.na(rel) && rel > 0.1) {
-    footer <- c(footer,
+    footer <- c(
+      footer,
       "The statistic moves by more than a tenth of itself across the",
       "caps tried, so it is a property of the assumption as much as",
-      "of the data. Report the range, not a single figure.")
+      "of the data. Report the range, not a single figure."
+    )
   }
-  .rmbl_print_table("Sensitivity to the open top band's assumed cap",
-                    as.data.frame(x), footer = footer, ...)
+  .rmbl_print_table(
+    "Sensitivity to the open top band's assumed cap",
+    as.data.frame(x),
+    footer = footer,
+    ...
+  )
   invisible(x)
 }
 
@@ -514,11 +601,19 @@ print.rmbl_band_sensitivity <- function(x, ...) {
 #' try(expbands(c("1", "not stated"), cnts = c(3, 2)))
 #' @export
 expbands <- function(bands, cnts, ..., drpunp = FALSE) {
-  if (!is.data.frame(bands)) bands <- prsbands(bands)
+  if (!is.data.frame(bands)) {
+    bands <- prsbands(bands)
+  }
   cnts <- .rmbl_num(cnts, "cnts")
   if (length(cnts) != nrow(bands)) {
-    stop(sprintf("expbands: `cnts` has %d entries for %d bands",
-                 length(cnts), nrow(bands)), call. = FALSE)
+    stop(
+      sprintf(
+        "expbands: `cnts` has %d entries for %d bands",
+        length(cnts),
+        nrow(bands)
+      ),
+      call. = FALSE
+    )
   }
   if (any(cnts < 0, na.rm = TRUE)) {
     stop("`cnts` must be non-negative", call. = FALSE)
@@ -526,12 +621,14 @@ expbands <- function(bands, cnts, ..., drpunp = FALSE) {
   bv <- bandvals(bands, ...)
   lost <- is.na(bv$value) & !is.na(cnts) & cnts > 0
   if (any(lost)) {
-    msg <- sprintf("%s unit(s) in %d band(s) could not be placed: %s",
-                   format(sum(cnts[lost])), sum(lost),
-                   paste(sprintf("'%s'", bands$label[lost]), collapse = ", "))
+    msg <- sprintf(
+      "%s unit(s) in %d band(s) could not be placed: %s",
+      format(sum(cnts[lost])),
+      sum(lost),
+      paste(sprintf("'%s'", bands$label[lost]), collapse = ", ")
+    )
     if (!isTRUE(drpunp)) {
-      stop(msg, " (set drpunp = TRUE to leave them out)",
-           call. = FALSE)
+      stop(msg, " (set drpunp = TRUE to leave them out)", call. = FALSE)
     }
     warning(msg, call. = FALSE)
   }
@@ -540,21 +637,35 @@ expbands <- function(bands, cnts, ..., drpunp = FALSE) {
 }
 
 
-#' Returns a regular expression that matches the Unicode dashes and the minus sign.
+#' Returns a regular expression that matches the Unicode dashes and the minus
+#' sign.
 #'
 #' U+2010..U+2015 and U+2212 as a byte-wise alternation, built from raw bytes
-#' and marked \code{"bytes"}: a string literal with those bytes is translated to the
-#' native encoding when it is pasted, and in a C locale that translation is
+#' and marked \code{"bytes"}: a string literal with those bytes is translated to
+#' the native encoding when it is pasted, and in a C locale that translation is
 #' a warning per call.
 #' @return One string marked \code{"bytes"}.
 #' @noRd
 .rmbl_dash_pattern <- function() {
   one <- function(...) rawToChar(as.raw(c(...)))
-  parts <- c(one(0xe2, 0x80, 0x90), one(0xe2, 0x80, 0x91), one(0xe2, 0x80, 0x92),
-             one(0xe2, 0x80, 0x93), one(0xe2, 0x80, 0x94), one(0xe2, 0x80, 0x95),
-             one(0xe2, 0x88, 0x92))
-  out <- rawToChar(do.call(c, c(lapply(parts[-length(parts)], function(p) c(charToRaw(p), charToRaw("|"))),
-                                 list(charToRaw(parts[length(parts)])))))
+  parts <- c(
+    one(0xe2, 0x80, 0x90),
+    one(0xe2, 0x80, 0x91),
+    one(0xe2, 0x80, 0x92),
+    one(0xe2, 0x80, 0x93),
+    one(0xe2, 0x80, 0x94),
+    one(0xe2, 0x80, 0x95),
+    one(0xe2, 0x88, 0x92)
+  )
+  out <- rawToChar(do.call(
+    c,
+    c(
+      lapply(parts[-length(parts)], function(p) {
+        c(charToRaw(p), charToRaw("|"))
+      }),
+      list(charToRaw(parts[length(parts)]))
+    )
+  ))
   Encoding(out) <- "bytes"
   out
 }

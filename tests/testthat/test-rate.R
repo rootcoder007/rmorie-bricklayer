@@ -9,12 +9,20 @@
 # which is exactly how a wrong interval survives.
 
 test_that("the rate interval is stats::poisson.test's, exactly", {
-  for (cs in list(c(412, 120000), c(77, 41000), c(3, 9500),
-                  c(0, 5000), c(1, 100))) {
+  for (cs in list(
+    c(412, 120000),
+    c(77, 41000),
+    c(3, 9500),
+    c(0, 5000),
+    c(1, 100)
+  )) {
     got <- rtcalc(cs[1], cs[2], per = "100k")
     want <- stats::poisson.test(cs[1], cs[2])$conf.int * 1e5
-    expect_equal(c(got$lower, got$upper), as.numeric(want),
-                 info = paste("count", cs[1]))
+    expect_equal(
+      c(got$lower, got$upper),
+      as.numeric(want),
+      info = paste("count", cs[1])
+    )
   }
 })
 
@@ -26,12 +34,14 @@ test_that("a zero count has a lower limit of zero, not a negative rate", {
 })
 
 test_that("the share interval is Wilson's, not the normal approximation", {
-  for (cs in list(c(412, 492), c(77, 492), c(3, 492), c(0, 100),
-                  c(100, 100))) {
+  for (cs in list(c(412, 492), c(77, 492), c(3, 492), c(0, 100), c(100, 100))) {
     got <- shrs(cs[1], total = cs[2])
     want <- stats::prop.test(cs[1], cs[2], correct = FALSE)$conf.int * 100
-    expect_equal(c(got$lower, got$upper), as.numeric(want),
-                 info = paste("count", cs[1]))
+    expect_equal(
+      c(got$lower, got$upper),
+      as.numeric(want),
+      info = paste("count", cs[1])
+    )
   }
   # the normal approximation would run below zero here; Wilson does not
   expect_gte(shrs(3, total = 492)$lower, 0)
@@ -39,20 +49,24 @@ test_that("the share interval is Wilson's, not the normal approximation", {
 })
 
 test_that("the rate-ratio interval is the two-sample poisson.test", {
-  d <- data.frame(year = c(2022, 2023), stops = c(70, 455),
-                  residents = c(41000, 125000))
+  d <- data.frame(
+    year = c(2022, 2023),
+    stops = c(70, 455),
+    residents = c(41000, 125000)
+  )
   rc <- ratechg(d, stops, residents, year, per = "100k")
   want <- stats::poisson.test(c(455, 70), c(125000, 41000))$conf.int
-  expect_equal(c(1 + rc$pctlo[2] / 100, 1 + rc$pctup[2] / 100),
-               as.numeric(want))
+  expect_equal(
+    c(1 + rc$pctlo[2] / 100, 1 + rc$pctup[2] / 100),
+    as.numeric(want)
+  )
 })
 
 test_that("equal denominators reduce to yoy()'s interval exactly", {
   # This is the property that says the exposure correction is applied
   # in the right direction: with nothing to correct for, the two
   # constructions must give the same numbers to the last digit.
-  e <- data.frame(year = c(2022, 2023), n = c(70, 90),
-                  pop = c(50000, 50000))
+  e <- data.frame(year = c(2022, 2023), n = c(70, 90), pop = c(50000, 50000))
   rc <- ratechg(e, n, pop, year, per = 1000)
   y <- yoy(e, n, year, units = "count")
   expect_equal(rc$pctchg[2], y$pctchg[2])
@@ -61,9 +75,11 @@ test_that("equal denominators reduce to yoy()'s interval exactly", {
 })
 
 test_that("a rate is not a share, and the difference shows", {
-  d <- data.frame(division = c("North", "South", "East"),
-                  stops = c(412, 77, 3),
-                  residents = c(120000, 41000, 9500))
+  d <- data.frame(
+    division = c("North", "South", "East"),
+    stops = c(412, 77, 3),
+    residents = c(120000, 41000, 9500)
+  )
   r <- rtcalc(d, stops, residents, by = "division", per = "100k")
   s <- shrs(d, stops, by = "division")
   # shares over a complete grouping sum to 100; rates do not sum to
@@ -72,8 +88,10 @@ test_that("a rate is not a share, and the difference shows", {
   expect_false(isTRUE(all.equal(sum(r$rate), 100)))
   # East has the smallest count and the largest share interval, in
   # relative terms, and the largest rate interval too
-  expect_gt((s$upper - s$lower)[s$division == "East"] / s$share[s$division == "East"],
-            (s$upper - s$lower)[s$division == "North"] / s$share[s$division == "North"])
+  expect_gt(
+    (s$upper - s$lower)[s$division == "East"] / s$share[s$division == "East"],
+    (s$upper - s$lower)[s$division == "North"] / s$share[s$division == "North"]
+  )
 })
 
 test_that("the per denominator scales the rate and its interval together", {
@@ -84,16 +102,26 @@ test_that("the per denominator scales the rate and its interval together", {
   expect_equal(per_100k$lower, per_1k$lower * 100)
   expect_equal(per_100k$upper, per_1k$upper * 100)
   # every shorthand means what it says
-  expect_identical(rtcalc(d, n, pop, per = "1k")$rate,
-                   rtcalc(d, n, pop, per = 1e3)$rate)
-  expect_identical(rtcalc(d, n, pop, per = "10k")$rate,
-                   rtcalc(d, n, pop, per = 1e4)$rate)
-  expect_identical(rtcalc(d, n, pop, per = "100k")$rate,
-                   rtcalc(d, n, pop, per = 1e5)$rate)
-  expect_identical(rtcalc(d, n, pop, per = "1m")$rate,
-                   rtcalc(d, n, pop, per = 1e6)$rate)
-  expect_identical(rtcalc(d, n, pop, per = "per 100k")$rate,
-                   rtcalc(d, n, pop, per = 1e5)$rate)
+  expect_identical(
+    rtcalc(d, n, pop, per = "1k")$rate,
+    rtcalc(d, n, pop, per = 1e3)$rate
+  )
+  expect_identical(
+    rtcalc(d, n, pop, per = "10k")$rate,
+    rtcalc(d, n, pop, per = 1e4)$rate
+  )
+  expect_identical(
+    rtcalc(d, n, pop, per = "100k")$rate,
+    rtcalc(d, n, pop, per = 1e5)$rate
+  )
+  expect_identical(
+    rtcalc(d, n, pop, per = "1m")$rate,
+    rtcalc(d, n, pop, per = 1e6)$rate
+  )
+  expect_identical(
+    rtcalc(d, n, pop, per = "per 100k")$rate,
+    rtcalc(d, n, pop, per = 1e5)$rate
+  )
 })
 
 test_that("a denominator mistyped as a word is refused, not guessed", {
@@ -130,8 +158,11 @@ test_that("grouping aggregates before dividing, not after", {
   # Two rows for one division must give one rate computed from the
   # summed count over the summed population -- the mean of two rates
   # is a different and usually wrong number.
-  d <- data.frame(division = c("North", "North"), n = c(200, 212),
-                  pop = c(60000, 60000))
+  d <- data.frame(
+    division = c("North", "North"),
+    n = c(200, 212),
+    pop = c(60000, 60000)
+  )
   r <- rtcalc(d, n, pop, by = "division", per = "100k")
   expect_identical(nrow(r), 1L)
   expect_equal(r$rate, 1e5 * 412 / 120000)
@@ -140,8 +171,11 @@ test_that("grouping aggregates before dividing, not after", {
 })
 
 test_that("mincnt flags a small count without hiding the rate", {
-  d <- data.frame(division = c("North", "East"), n = c(412, 3),
-                  pop = c(120000, 9500))
+  d <- data.frame(
+    division = c("North", "East"),
+    n = c(412, 3),
+    pop = c(120000, 9500)
+  )
   r <- rtcalc(d, n, pop, by = "division", per = "100k", mincnt = 5)
   east <- r[r$division == "East", ]
   expect_match(east$flag, "at or below 5")
@@ -158,8 +192,10 @@ test_that("mincnt flags a small count without hiding the rate", {
 
 test_that("vectors and data frames agree", {
   d <- data.frame(n = 412, pop = 120000)
-  expect_equal(rtcalc(d, n, pop, per = "100k")$rate,
-               rtcalc(412, 120000, per = "100k")$rate)
+  expect_equal(
+    rtcalc(d, n, pop, per = "100k")$rate,
+    rtcalc(412, 120000, per = "100k")$rate
+  )
   expect_equal(shrs(d, n, total = 492)$share, shrs(412, total = 492)$share)
 })
 
@@ -169,8 +205,11 @@ test_that("the printed header states the denominator in words", {
   expect_output(print(rtcalc(d, n, pop, per = 1000)), "per 1,000")
   # 1e+05 in a published table is a defect
   expect_output(print(rtcalc(d, n, pop, per = "100k")), "Poisson")
-  expect_failure(expect_output(print(rtcalc(d, n, pop, per = "100k")), "1e+05",
-                              fixed = TRUE))
+  expect_failure(expect_output(
+    print(rtcalc(d, n, pop, per = "100k")),
+    "1e+05",
+    fixed = TRUE
+  ))
   expect_output(print(shrs(412, total = 492)), "Wilson")
   g <- data.frame(year = c(2022, 2023), n = c(10, 20), pop = c(1000, 1000))
   expect_output(print(ratechg(g, n, pop, year)), "Change in rate")
@@ -178,18 +217,22 @@ test_that("the printed header states the denominator in words", {
 
 test_that("columns can be named as strings as well as symbols", {
   d <- data.frame(n = 412, pop = 120000)
-  expect_equal(rtcalc(d, "n", "pop", per = "100k")$rate,
-               rtcalc(d, n, pop, per = "100k")$rate)
+  expect_equal(
+    rtcalc(d, "n", "pop", per = "100k")$rate,
+    rtcalc(d, n, pop, per = "100k")$rate
+  )
   expect_error(rtcalc(d, n, pop, by = "nope"), "column not found")
 })
 
 test_that("periods that are not numbers step back along their own order", {
   # Quarters as labels: the grid is the sorted unique values, so the
   # comparison is the previous label, and the first one has none.
-  q <- data.frame(quarter = c("2023Q1", "2023Q2", "2023Q3"),
-                  n = c(10L, 20L, 15L),
-                  pop = c(1000, 1000, 1000),
-                  stringsAsFactors = FALSE)
+  q <- data.frame(
+    quarter = c("2023Q1", "2023Q2", "2023Q3"),
+    n = c(10L, 20L, 15L),
+    pop = c(1000, 1000, 1000),
+    stringsAsFactors = FALSE
+  )
   rc <- ratechg(q, n, pop, quarter)
   expect_identical(rc$flag[1], "no comparison period")
   expect_equal(rc$pctchg[2], 100)
@@ -208,9 +251,11 @@ test_that("a scalar population is recycled, a mismatched one is refused", {
 })
 
 test_that("shrs() takes its denominator from a column when asked", {
-  d <- data.frame(division = c("North", "South"),
-                  stops = c(30, 70),
-                  everything = c(500, 500))
+  d <- data.frame(
+    division = c("North", "South"),
+    stops = c(30, 70),
+    everything = c(500, 500)
+  )
   # the column is summed, so the denominator is 1000, not 500
   s <- shrs(d, stops, by = "division", total = "everything")
   expect_equal(unique(s$total), 1000)
@@ -232,8 +277,10 @@ test_that("a confidence level outside (0, 1) is refused everywhere", {
   expect_error(rtcalc(d, n, pop, conflvl = 1), "strictly between 0 and 1")
   expect_error(shrs(10, total = 100, conflvl = 2), "strictly between 0 and 1")
   g <- data.frame(year = c(2022, 2023), n = c(1, 2), pop = c(10, 10))
-  expect_error(ratechg(g, n, pop, year, conflvl = NA),
-               "strictly between 0 and 1")
+  expect_error(
+    ratechg(g, n, pop, year, conflvl = NA),
+    "strictly between 0 and 1"
+  )
   expect_error(ratechg(g, n, pop, year, lag = 0), "positive integer")
 })
 
@@ -255,7 +302,8 @@ test_that("grouped ratechg keeps the groups apart", {
     year = rep(2022:2023, each = 2),
     division = rep(c("North", "South"), 2),
     n = c(100, 10, 200, 5),
-    pop = c(1000, 1000, 1000, 1000))
+    pop = c(1000, 1000, 1000, 1000)
+  )
   rc <- ratechg(d, n, pop, year, by = "division")
   north <- rc[rc$division == "North" & rc$year == 2023, ]
   south <- rc[rc$division == "South" & rc$year == 2023, ]

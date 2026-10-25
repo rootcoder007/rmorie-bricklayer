@@ -30,11 +30,10 @@ the kernel's two parameters) for the others. Rates are per unit of
 \code{times}.}
 }
 \value{
-A length-1 numeric: the negative log-likelihood, to be
-MINIMISED. A parameter set outside the feasible region returns the
-sentinel \code{1e12} rather than erroring, so the value can be handed
-straight to \code{\link[stats:optim]{stats::optim()}} without the optimiser walking off
-the
+A length-1 numeric: the negative log-likelihood, to be MINIMISED. A
+parameter set outside the feasible region returns the sentinel \code{1e12}
+rather than erroring, so the value can be handed straight to
+\code{\link[stats:optim]{stats::optim()}} without the optimiser walking off the
 domain.
 }
 \description{

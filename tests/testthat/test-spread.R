@@ -1,23 +1,29 @@
 # spread(): the denominator the source of the data calls for
 
-test_that("sprd() applies Bessel's correction to a sample, none to a census, and the FPC", {
-  x <- c(12, 15, 9, 20, 14)
-  s <- sprd(x)
-  expect_identical(s$design, "sample")
-  expect_equal(s$variance, stats::var(x))
-  expect_equal(s$sd, stats::sd(x))
-  expect_equal(s$semean, stats::sd(x) / sqrt(5))
-  ce <- sprd(x, des = "census")
-  expect_equal(ce$variance, mean((x - mean(x))^2))
-  expect_identical(ce$semean, 0)
-  expect_identical(sprd(x, N = 5)$design, "census")
-  f <- sprd(x, N = 40)
-  expect_identical(f$design, "finite")
-  expect_equal(f$variance, stats::var(x))
-  expect_equal(f$semean, sqrt((1 - 5 / 40) * stats::var(x) / 5))
-  expect_output(print(f), "finite-population correction 1 - n/N = 0.875")
-  expect_output(print(sprd(x, N = 1000)), "negligible")
-})
+test_that(
+  paste0(
+    "sprd() applies Bessel's correction to a sample, none to a census, and ",
+    "the FPC"
+  ),
+  {
+    x <- c(12, 15, 9, 20, 14)
+    s <- sprd(x)
+    expect_identical(s$design, "sample")
+    expect_equal(s$variance, stats::var(x))
+    expect_equal(s$sd, stats::sd(x))
+    expect_equal(s$semean, stats::sd(x) / sqrt(5))
+    ce <- sprd(x, des = "census")
+    expect_equal(ce$variance, mean((x - mean(x))^2))
+    expect_identical(ce$semean, 0)
+    expect_identical(sprd(x, N = 5)$design, "census")
+    f <- sprd(x, N = 40)
+    expect_identical(f$design, "finite")
+    expect_equal(f$variance, stats::var(x))
+    expect_equal(f$semean, sqrt((1 - 5 / 40) * stats::var(x) / 5))
+    expect_output(print(f), "finite-population correction 1 - n/N = 0.875")
+    expect_output(print(sprd(x, N = 1000)), "negligible")
+  }
+)
 
 test_that("sprd() with frequency and reliability weights", {
   fw <- sprd(c(1, 2, 3), w = c(10, 5, 1))

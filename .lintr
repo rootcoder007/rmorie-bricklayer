@@ -1,10 +1,10 @@
 linters: linters_with_defaults(
-    line_length_linter = line_length_linter(120L),
+    line_length_linter = line_length_linter(80L),
     # <<- is deliberate in the capsule and attest state machines (as in rmorie)
     assignment_linter = assignment_linter(operator = c("<-", "<<-")),
     object_name_linter = NULL,
-    # styler is the formatter in this repo; its continuation style disagrees
-    # with indentation_linter, so the formatter wins (as in rmoriedata).
+    # air (air.toml) is the formatter in this repo; its continuation style
+    # disagrees with indentation_linter, so the formatter wins.
     indentation_linter = NULL,
     # same-package calls resolve at load time; the linter cannot see them file by file
     object_usage_linter = NULL
@@ -14,14 +14,8 @@ exclusions: list(
     "R/json_native.R" = Inf,
     "R/sha256_native.R" = Inf,
     "R/RcppExports.R" = Inf,
-    # test vectors and JSON fixtures cannot be wrapped
-    "tests/testthat/test-json-branches.R" = list(line_length_linter = Inf),
-    "tests/testthat/test-json-parity.R" = list(line_length_linter = Inf),
     # JSON documents are written in single quotes so their double quotes need no escaping
     "tests/testthat/test-cran-stress-0_5_14.R" = list(quotes_linter = Inf),
-    "tests/testthat/test-sha256-native.R" = list(line_length_linter = Inf),
-    # one archived-copy URL in a help page cannot wrap (the live page refuses scripts)
-    "R/census.R" = list(line_length_linter = 55L),
     "inst" = Inf,
     "src" = Inf,
     "dev" = Inf,

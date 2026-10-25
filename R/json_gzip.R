@@ -96,7 +96,9 @@
 jsgzenc <- function(x, raw = FALSE, ...) {
   txt <- tojs(x, ...)
   bytes <- .rmbl_gzip_member(charToRaw(as.character(txt)))
-  if (isTRUE(raw)) return(bytes)
+  if (isTRUE(raw)) {
+    return(bytes)
+  }
   jsb64enc(bytes)
 }
 
@@ -128,13 +130,26 @@ jsgzenc <- function(x, raw = FALSE, ...) {
   # inputs.
   le32 <- function(v) {
     v <- as.numeric(v) %% 4294967296
-    as.raw(c(v %% 256, (v %/% 256) %% 256,
-             (v %/% 65536) %% 256, (v %/% 16777216) %% 256))
+    as.raw(c(
+      v %% 256,
+      (v %/% 256) %% 256,
+      (v %/% 65536) %% 256,
+      (v %/% 16777216) %% 256
+    ))
   }
   # CRC-32 of the UNCOMPRESSED data, and its length modulo 2^32
-  hdr <- as.raw(c(0x1f, 0x8b, 0x08, 0x00,
-                  0x00, 0x00, 0x00, 0x00,   # MTIME = 0, for determinism
-                  0x00, 0xff))              # XFL = 0, OS = unknown
+  hdr <- as.raw(c(
+    0x1f,
+    0x8b,
+    0x08,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00, # MTIME = 0, for determinism
+    0x00,
+    0xff
+  )) # XFL = 0, OS = unknown
   c(hdr, deflate, le32(ccrc32(bytes)), le32(n))
 }
 
@@ -158,10 +173,18 @@ jsgzdec <- function(txt, raw = FALSE, ...) {
   # A gzip member is at least 18 bytes (10 of header, 8 of trailer) and
   # starts 1f 8b; R's own memDecompress() would return garbage on a short
   # zlib-framed input and, in R 4.6, dumps core on an empty one.
-  if (length(bytes) < 18L || bytes[1L] != as.raw(0x1f) ||
-      bytes[2L] != as.raw(0x8b)) {
-    stop("`txt` does not hold a gzip member: expected at least 18 bytes ",
-         "starting 1f 8b, got ", length(bytes), " byte(s).", call. = FALSE)
+  if (
+    length(bytes) < 18L ||
+      bytes[1L] != as.raw(0x1f) ||
+      bytes[2L] != as.raw(0x8b)
+  ) {
+    stop(
+      "`txt` does not hold a gzip member: expected at least 18 bytes ",
+      "starting 1f 8b, got ",
+      length(bytes),
+      " byte(s).",
+      call. = FALSE
+    )
   }
   # The trailer's ISIZE (uncompressed length mod 2^32) is a free pre-check
   # against a decompression bomb from an untrusted field (gzip reaches
@@ -169,9 +192,16 @@ jsgzdec <- function(txt, raw = FALSE, ...) {
   nb <- length(bytes)
   isize <- sum(as.numeric(as.integer(bytes[(nb - 3L):nb])) * 256^(0:3))
   if (isize > 64 * 1024^2) {
-    stop(sprintf(paste0("`txt` declares %.0f uncompressed bytes (gzip ISIZE); ",
-                        "refusing to inflate more than 64 MiB"), isize),
-         call. = FALSE)
+    stop(
+      sprintf(
+        paste0(
+          "`txt` declares %.0f uncompressed bytes (gzip ISIZE); ",
+          "refusing to inflate more than 64 MiB"
+        ),
+        isize
+      ),
+      call. = FALSE
+    )
   }
   json <- rawToChar(memDecompress(bytes, type = "gzip"))
   fromjs(json, ...)

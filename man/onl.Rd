@@ -82,7 +82,8 @@ for (i in seq(1, 1000, by = 100)) {
 }
 smrystat(acc)
 
-# The batch answer to rounding (the formulas are exact; the arithmetic is double):
+# The batch answer to rounding (the formulas are exact; the arithmetic is
+# double):
 all.equal(smrystat(acc)[["variance"]], stats::var(x))
 all.equal(smrystat(acc)[["mean"]], mean(x))
 

@@ -8,10 +8,33 @@
 d17 <- function(x) .rmbl_dtoa17(x)
 
 hard <- c(
-  .Machine$double.xmax, .Machine$double.xmin, .Machine$double.eps,
-  2^-1074, 5e-324, 1e-310, 1e300, 1e308, 1e-300, 1 / 3, pi, exp(1),
-  1234567.891011, 0, -0, 1e16, 1e17, 1e15, 1e-4, 1e-5,
-  0.1, 0.2, 0.3, 2^53, 2^53 + 2, -1e300, -0.1
+  .Machine$double.xmax,
+  .Machine$double.xmin,
+  .Machine$double.eps,
+  2^-1074,
+  5e-324,
+  1e-310,
+  1e300,
+  1e308,
+  1e-300,
+  1 / 3,
+  pi,
+  exp(1),
+  1234567.891011,
+  0,
+  -0,
+  1e16,
+  1e17,
+  1e15,
+  1e-4,
+  1e-5,
+  0.1,
+  0.2,
+  0.3,
+  2^53,
+  2^53 + 2,
+  -1e300,
+  -0.1
 )
 
 test_that("seventeen digits recover the double they came from", {
@@ -19,9 +42,13 @@ test_that("seventeen digits recover the double they came from", {
   # here consults the platform: the text this package writes reads back
   # as the same bits. A wrong digit anywhere fails this.
   set.seed(20260913)
-  bits <- vapply(seq_len(4000), function(i) {
-    readBin(as.raw(sample(0:255, 8, TRUE)), "double", 1L, 8L)
-  }, numeric(1))
+  bits <- vapply(
+    seq_len(4000),
+    function(i) {
+      readBin(as.raw(sample(0:255, 8, TRUE)), "double", 1L, 8L)
+    },
+    numeric(1)
+  )
   v <- c(hard, bits[is.finite(bits)])
   back <- .rmbl_strtod(d17(v))
   expect_identical(back, v)
@@ -43,8 +70,10 @@ test_that("the named extremes get their known decimals", {
       as.raw(strtoi(
         substring(hex, seq(1L, 15L, 2L), seq(2L, 16L, 2L)),
         16L
-      )), "double",
-      n = 1L, size = 8L,
+      )),
+      "double",
+      n = 1L,
+      size = 8L,
       endian = "little"
     )
   }
@@ -84,8 +113,10 @@ test_that("the digits match an independent exact computation", {
       as.raw(strtoi(
         substring(hex, seq(1L, 15L, 2L), seq(2L, 16L, 2L)),
         16L
-      )), "double",
-      n = 1L, size = 8L,
+      )),
+      "double",
+      n = 1L,
+      size = 8L,
       endian = "little"
     )
   }
@@ -144,7 +175,8 @@ test_that("the digits match an independent exact computation", {
 test_that("the layout follows the %.17g rules", {
   set.seed(99)
   bits <- vapply(
-    seq_len(2000), function(i) {
+    seq_len(2000),
+    function(i) {
       readBin(as.raw(sample(0:255, 8, TRUE)), "double", n = 1L, size = 8L)
     },
     numeric(1)

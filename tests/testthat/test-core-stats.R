@@ -50,8 +50,8 @@ test_that("cnormlpdf is dnorm on the log scale", {
   expect_equal(stats::dnorm(50), 0)
   expect_true(is.finite(cnormlpdf(50)))
   expect_equal(cnormlpdf(50), stats::dnorm(50, log = TRUE))
-  # a non-positive scale is not a distribution: refused since 0.5.13, as cnormpdf() does
-  # (it returned NaN)
+  # a non-positive scale is not a distribution: refused since 0.5.13, as
+  # cnormpdf() does (it returned NaN)
   expect_error(cnormlpdf(0, 0, 0), "single positive number")
   expect_error(cnormlpdf(0, 0, -1), "single positive number")
 })
@@ -185,7 +185,8 @@ test_that("trimmed and winsorized means behave as documented", {
   # successive trims can land on the same value
   tms <- vapply(
     c(0, 0.1, 0.2, 0.3, 0.4, 0.5),
-    function(t) ctrmmean(x, t), 0
+    function(t) ctrmmean(x, t),
+    0
   )
   expect_true(all(diff(tms) <= 0))
   expect_lt(tms[length(tms)], tms[1])
@@ -216,9 +217,7 @@ test_that("cwtd matches base R and reduces correctly", {
   expect_equal(cwtd(x, w * 7)[["mean"]], r[["mean"]])
   expect_equal(cwtd(x, w * 7)[["variance"]], r[["variance"]])
   # a dominant weight pulls the mean onto that observation
-  expect_equal(cwtd(x, c(1, 1, 1, 1e6))[["mean"]], 40,
-    tolerance = 1e-3
-  )
+  expect_equal(cwtd(x, c(1, 1, 1, 1e6))[["mean"]], 40, tolerance = 1e-3)
   # a zero weight is the same as dropping the observation
   expect_equal(cwtd(x, c(1, 1, 1, 0))[["mean"]], mean(x[1:3]))
 
@@ -270,7 +269,9 @@ test_that("ccovm matches stats::cov and keeps its names", {
   # data frames and integer matrices are accepted
   df <- data.frame(u = 1:5, v = c(2, 1, 4, 3, 6))
   expect_equal(ccovm(df), stats::cov(df))
-  expect_equal(ccovm(cbind(1:5, 5:1)), stats::cov(cbind(1:5, 5:1)),
+  expect_equal(
+    ccovm(cbind(1:5, 5:1)),
+    stats::cov(cbind(1:5, 5:1)),
     ignore_attr = TRUE
   )
   # a single column is a 1x1 variance
@@ -295,9 +296,7 @@ test_that("bootstrap replicate means are reproducible and unbiased", {
   # the standard error. The bootstrap SE is itself a random quantity, so
   # this is a loose agreement by nature, not an identity
   expect_equal(mean(b), mean(x), tolerance = 0.02)
-  expect_equal(stats::sd(b), stats::sd(x) / sqrt(length(x)),
-    tolerance = 0.1
-  )
+  expect_equal(stats::sd(b), stats::sd(x) / sqrt(length(x)), tolerance = 0.1)
   # every replicate is a mean of values drawn from x, so all lie inside
   # the sample range
   expect_true(all(b >= min(x) & b <= max(x)))
@@ -404,22 +403,42 @@ test_that("the Hawkes likelihood matches an independent recomputation", {
   # a branching ratio at or above one is not a stationary process, and is
   # reported as the sentinel rather than a number an optimiser would
   # happily walk toward
-  expect_equal(chwknll(
-    times, horizon, "exponential",
-    c(a0, 1.5, beta)
-  ), 1e12)
-  expect_equal(chwknll(
-    times, horizon, "exponential",
-    c(a0, 0, beta)
-  ), 1e12)
-  expect_equal(chwknll(
-    times, horizon, "exponential",
-    c(a0, eta, 100)
-  ), 1e12)
-  expect_equal(chwknll(
-    times, horizon, "exponential",
-    c(50, eta, beta)
-  ), 1e12)
+  expect_equal(
+    chwknll(
+      times,
+      horizon,
+      "exponential",
+      c(a0, 1.5, beta)
+    ),
+    1e12
+  )
+  expect_equal(
+    chwknll(
+      times,
+      horizon,
+      "exponential",
+      c(a0, 0, beta)
+    ),
+    1e12
+  )
+  expect_equal(
+    chwknll(
+      times,
+      horizon,
+      "exponential",
+      c(a0, eta, 100)
+    ),
+    1e12
+  )
+  expect_equal(
+    chwknll(
+      times,
+      horizon,
+      "exponential",
+      c(50, eta, beta)
+    ),
+    1e12
+  )
 
   # a stronger baseline raises the intensity everywhere, so an
   # implausibly low one fits worse than a fitted value
@@ -427,16 +446,23 @@ test_that("the Hawkes likelihood matches an independent recomputation", {
     c(a0, eta, beta),
     function(p) {
       chwknll(
-        times, horizon,
-        "exponential", p
+        times,
+        horizon,
+        "exponential",
+        p
       )
     }
   )
   expect_lt(fit$value, got + 1e-8)
-  expect_lt(fit$value, chwknll(
-    times, horizon, "exponential",
-    c(-3, 0.9, 5)
-  ))
+  expect_lt(
+    fit$value,
+    chwknll(
+      times,
+      horizon,
+      "exponential",
+      c(-3, 0.9, 5)
+    )
+  )
 
   expect_error(
     chwknll(times, horizon, "exponential", c(1, 2)),
@@ -446,21 +472,36 @@ test_that("the Hawkes likelihood matches an independent recomputation", {
     chwknll(times, horizon, "gamma", c(1, 2, 3)),
     "length 4"
   )
-  expect_error(chwknll(
-    c(3, 1, 2), horizon, "exponential",
-    c(a0, eta, beta)
-  ), "sorted")
+  expect_error(
+    chwknll(
+      c(3, 1, 2),
+      horizon,
+      "exponential",
+      c(a0, eta, beta)
+    ),
+    "sorted"
+  )
   expect_error(
     chwknll(times, -1, "exponential", c(a0, eta, beta)),
     "positive"
   )
-  expect_error(chwknll(
-    c(1, 20), 10, "exponential",
-    c(a0, eta, beta)
-  ), "within")
-  expect_error(chwknll(
-    c(1, NA), 10, "exponential",
-    c(a0, eta, beta)
-  ), "NA")
+  expect_error(
+    chwknll(
+      c(1, 20),
+      10,
+      "exponential",
+      c(a0, eta, beta)
+    ),
+    "within"
+  )
+  expect_error(
+    chwknll(
+      c(1, NA),
+      10,
+      "exponential",
+      c(a0, eta, beta)
+    ),
+    "NA"
+  )
   expect_error(chwknll(times, horizon, "cauchy", c(1, 2, 3)))
 })

@@ -1,4 +1,5 @@
-testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
+# battery: runs in CI and locally; CRAN runs the correctness core
+testthat::skip_on_cran()
 # Little's MCAR test and the EM estimator behind it.
 #
 # The EM estimator is anchored EXACTLY: with no missing values it must
@@ -20,8 +21,14 @@ test_that("EM reproduces the ML estimates when nothing is missing", {
   # the mean is the column mean
   expect_equal(unname(fit$mu), c(mean(x), mean(y)))
   # the covariance is the ML one, which divides by n rather than n - 1
-  expect_equal(unname(fit$sigma), unname(stats::cov(cbind(x, y)) *
-                                          (n - 1) / n))
+  expect_equal(
+    unname(fit$sigma),
+    unname(
+      stats::cov(cbind(x, y)) *
+        (n - 1) /
+        n
+    )
+  )
   # complete data is a single pattern, so there is nothing to test
   expect_equal(fit$npat, 1L)
   expect_equal(fit$df, 0)
@@ -36,9 +43,9 @@ test_that("EM recovers the parameters under missingness", {
   set.seed(82)
   n <- 2000
   x <- stats::rnorm(n)
-  y <- x + stats::rnorm(n)              # var(y) = 2, cov(x, y) = 1
+  y <- x + stats::rnorm(n) # var(y) = 2, cov(x, y) = 1
   df <- data.frame(x = x, y = y)
-  df$y[sample(n, 600)] <- NA            # MCAR
+  df$y[sample(n, 600)] <- NA # MCAR
 
   fit <- mcartst(df)
   # the estimates are close to the truth despite 30% of y missing
@@ -132,25 +139,33 @@ test_that("the statistic is the documented quadratic form", {
   expect_equal(fit$statistic, d2, tolerance = 1e-6)
   expect_equal(fit$df, dfsum - 2)
   # and the p-value is the chi-square tail
-  expect_equal(fit$p_value,
-               stats::pchisq(fit$statistic, fit$df, lower.tail = FALSE),
-               tolerance = 1e-8)
+  expect_equal(
+    fit$p_value,
+    stats::pchisq(fit$statistic, fit$df, lower.tail = FALSE),
+    tolerance = 1e-8
+  )
   expect_gte(fit$statistic, 0)
 })
 
 test_that("mcartst handles the awkward inputs", {
   set.seed(84)
-  df <- data.frame(a = stats::rnorm(100), b = stats::rnorm(100),
-                   g = sample(letters[1:3], 100, TRUE),
-                   stringsAsFactors = FALSE)
+  df <- data.frame(
+    a = stats::rnorm(100),
+    b = stats::rnorm(100),
+    g = sample(letters[1:3], 100, TRUE),
+    stringsAsFactors = FALSE
+  )
   df$b[1:20] <- NA
   # a non-numeric column cannot enter a moment, so it is dropped loudly
   expect_warning(r <- mcartst(df), "non-numeric")
   expect_equal(r$nvars, 2L)
 
   # three columns and several patterns still works
-  z <- data.frame(a = stats::rnorm(300), b = stats::rnorm(300),
-                  c = stats::rnorm(300))
+  z <- data.frame(
+    a = stats::rnorm(300),
+    b = stats::rnorm(300),
+    c = stats::rnorm(300)
+  )
   z$b[1:80] <- NA
   z$c[200:260] <- NA
   r3 <- mcartst(z)
@@ -160,8 +175,11 @@ test_that("mcartst handles the awkward inputs", {
   expect_true(is.finite(r3$p_value))
 
   # a wholly missing column carries nothing and is dropped
-  w <- data.frame(a = stats::rnorm(50), b = stats::rnorm(50),
-                  dead = rep(NA_real_, 50))
+  w <- data.frame(
+    a = stats::rnorm(50),
+    b = stats::rnorm(50),
+    dead = rep(NA_real_, 50)
+  )
   w$b[1:10] <- NA
   expect_equal(mcartst(w)$nvars, 2L)
   # a wholly missing row belongs to no pattern

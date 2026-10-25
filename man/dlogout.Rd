@@ -18,11 +18,11 @@ to switch to another key. Nothing is contacted.
 }
 \details{
 The shared credentials file is \code{credentials.json} in the folder
-\code{$XDG_CONFIG_HOME/morie}, else in \code{~/.config/morie}. It is edited as
-text. Three members are removed: \code{hosted_key}, \code{hosted_user} and
-\code{hosted_base_url}. Every other entry (written by \code{morie}, \code{rmorie} or
-\code{rmoriedata}) is kept byte for byte. When nothing else is left the
-file is deleted. A key set in the environment variable
+\code{$XDG_CONFIG_HOME/morie}, else in \code{~/.config/morie}. It is edited
+as text. Three members are removed: \code{hosted_key}, \code{hosted_user} and
+\code{hosted_base_url}. Every other entry (written by \code{morie},
+\code{rmorie} or \code{rmoriedata}) is kept byte for byte. When nothing else
+is left the file is deleted. A key set in the environment variable
 \code{MORIE_HOSTED_KEY} is not touched. A message says whether a key was
 removed.
 
@@ -33,7 +33,7 @@ file; in both cases the file is left as it was.
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)
-Sys.setenv(XDG_CONFIG_HOME = tempfile())   # a scratch credentials folder
+Sys.setenv(XDG_CONFIG_HOME = tempfile()) # a scratch credentials folder
 
 # nothing stored yet
 dlogout()
@@ -41,7 +41,10 @@ dlogout()
 # a file holding a key and another tool's entry: only the key goes
 d <- file.path(Sys.getenv("XDG_CONFIG_HOME"), "morie")
 dir.create(d, recursive = TRUE)
-writeLines('{"hosted_key": "k-123", "other_tool": 1}', file.path(d, "credentials.json"))
+writeLines(
+  '{"hosted_key": "k-123", "other_tool": 1}',
+  file.path(d, "credentials.json")
+)
 dlogout()
 readLines(file.path(d, "credentials.json"))
 
@@ -49,7 +52,11 @@ readLines(file.path(d, "credentials.json"))
 writeLines("not json", file.path(d, "credentials.json"))
 try(dlogout())
 
-if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
+if (is.na(old)) {
+  Sys.unsetenv("XDG_CONFIG_HOME")
+} else {
+  Sys.setenv(XDG_CONFIG_HOME = old)
+}
 \dontshow{\}) # examplesIf}
 }
 \seealso{

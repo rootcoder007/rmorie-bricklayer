@@ -135,22 +135,32 @@
 #' r$findings[, c("severity", "check", "subject")]
 #'
 #' # A missing column is fatal, because nothing downstream can run.
-#' cpsrpt(bad[, c("id", "score")], ref = ref,
-#'                schema = infsch(ref))$verdict
+#' cpsrpt(bad[, c("id", "score")], ref = ref, schema = infsch(ref))$verdict
 #'
-#' # validation rules join the findings, and chunks are pinned with a Merkle root
-#' r2 <- cpsrpt(bad, rules = list(ruleinset("grade", c("a", "b", "c"))),
-#'                      chunks = c("part one", "part two"))
+#' # validation rules join the findings, and chunks are pinned with a Merkle
+#' # root
+#' r2 <- cpsrpt(
+#'   bad,
+#'   rules = list(ruleinset("grade", c("a", "b", "c"))),
+#'   chunks = c("part one", "part two")
+#' )
 #' summary(r2)
 #' r2$digest$merkle_root
 #'
 #' # a data frame is required
 #' try(cpsrpt(1:10))
 #' @export
-cpsrpt <- function(data, ref = NULL, schema = NULL,
-                           rules = NULL, chunks = NULL, sig = NULL,
-                           key = NULL, alpha = 0.01,
-                           maxrowsoutl = 20000L) {
+cpsrpt <- function(
+  data,
+  ref = NULL,
+  schema = NULL,
+  rules = NULL,
+  chunks = NULL,
+  sig = NULL,
+  key = NULL,
+  alpha = 0.01,
+  maxrowsoutl = 20000L
+) {
   if (!is.data.frame(data)) {
     stop("cpsrpt: `data` must be a data frame", call. = FALSE)
   }
@@ -162,32 +172,56 @@ cpsrpt <- function(data, ref = NULL, schema = NULL,
     stop("`maxrowsoutl` must be one non-negative number of rows", call. = FALSE)
   }
   add <- function(acc, severity, check, subject, detail) {
-    rbind(acc, data.frame(severity = severity, check = check,
-                          subject = subject, detail = detail,
-                          stringsAsFactors = FALSE))
+    rbind(
+      acc,
+      data.frame(
+        severity = severity,
+        check = check,
+        subject = subject,
+        detail = detail,
+        stringsAsFactors = FALSE
+      )
+    )
   }
-  f <- data.frame(severity = character(0), check = character(0),
-                  subject = character(0), detail = character(0),
-                  stringsAsFactors = FALSE)
+  f <- data.frame(
+    severity = character(0),
+    check = character(0),
+    subject = character(0),
+    detail = character(0),
+    stringsAsFactors = FALSE
+  )
 
   prof <- profcols(data)
   miss <- misssmry(data)
 
   # --- structure -------------------------------------------------------
   if (!is.null(schema)) {
-    prov <- if (is.list(schema) && !is.null(schema$schema)) schema else
+    prov <- if (is.list(schema) && !is.null(schema$schema)) {
+      schema
+    } else {
       list(schema = schema)
+    }
     for (nm in names(issues <- valsch(data, prov))) {
       iss <- issues[[nm]]
-      f <- add(f, if (identical(iss$severity, "fatal")) "fatal" else "warn",
-               "schema", nm, iss$message)
+      f <- add(
+        f,
+        if (identical(iss$severity, "fatal")) "fatal" else "warn",
+        "schema",
+        nm,
+        iss$message
+      )
     }
   }
   if (!is.null(rules)) {
     for (nm in names(riss <- valrules(data, rules))) {
       it <- riss[[nm]]
-      f <- add(f, if (identical(it$severity, "fatal")) "fatal" else "warn",
-               "rule", nm, it$message)
+      f <- add(
+        f,
+        if (identical(it$severity, "fatal")) "fatal" else "warn",
+        "rule",
+        nm,
+        it$message
+      )
     }
   }
 
@@ -196,24 +230,47 @@ cpsrpt <- function(data, ref = NULL, schema = NULL,
   if (!is.null(ref)) {
     dr <- cpsdrft(ref, data, alpha = alpha)
     if (length(dr$removed)) {
-      f <- add(f, "fatal", "drift", paste(dr$removed, collapse = ", "),
-               "column(s) present in the reference and absent here")
+      f <- add(
+        f,
+        "fatal",
+        "drift",
+        paste(dr$removed, collapse = ", "),
+        "column(s) present in the reference and absent here"
+      )
     }
     if (length(dr$added)) {
-      f <- add(f, "note", "drift", paste(dr$added, collapse = ", "),
-               "column(s) not in the reference")
+      f <- add(
+        f,
+        "note",
+        "drift",
+        paste(dr$added, collapse = ", "),
+        "column(s) not in the reference"
+      )
     }
     if (nrow(dr$columns)) {
       moved <- dr$columns[which(dr$columns$drifted), , drop = FALSE]
       for (i in seq_len(nrow(moved))) {
-        f <- add(f, "warn", "drift", moved$column[i],
-                 sprintf("%s test, p = %s", moved$type[i],
-                         .rmbl_fmt_p(moved$p_value[i])))
+        f <- add(
+          f,
+          "warn",
+          "drift",
+          moved$column[i],
+          sprintf(
+            "%s test, p = %s",
+            moved$type[i],
+            .rmbl_fmt_p(moved$p_value[i])
+          )
+        )
       }
       untest <- dr$columns$column[is.na(dr$columns$drifted)]
       for (u in untest) {
-        f <- add(f, "note", "drift", u,
-                 "not testable: no non-missing values on one side")
+        f <- add(
+          f,
+          "note",
+          "drift",
+          u,
+          "not testable: no non-missing values on one side"
+        )
       }
     }
   }
@@ -221,21 +278,41 @@ cpsrpt <- function(data, ref = NULL, schema = NULL,
   # --- missingness -----------------------------------------------------
   if (miss[["n_cols_all_missing"]] > 0) {
     allna <- prof$column[prof$n_missing == prof$n & prof$n > 0]
-    f <- add(f, "warn", "missing", paste(allna, collapse = ", "),
-             "column(s) entirely missing")
+    f <- add(
+      f,
+      "warn",
+      "missing",
+      paste(allna, collapse = ", "),
+      "column(s) entirely missing"
+    )
   }
   gappy <- prof$column[prof$pct_missing > 50 & prof$pct_missing < 100]
   if (length(gappy)) {
-    f <- add(f, "warn", "missing", paste(gappy, collapse = ", "),
-             "over half the values missing")
+    f <- add(
+      f,
+      "warn",
+      "missing",
+      paste(gappy, collapse = ", "),
+      "over half the values missing"
+    )
   }
   runs <- missruns(data, minrun = max(2L, nrow(data) %/% 20L))
   if (nrow(runs)) {
-    f <- add(f, "note", "missing", runs$column[1],
-             sprintf(paste0("a contiguous run of %d missing values from ",
-                            "row %d -- one outage rather than scattered ",
-                            "failures"),
-                     runs$length[1], runs$start[1]))
+    f <- add(
+      f,
+      "note",
+      "missing",
+      runs$column[1],
+      sprintf(
+        paste0(
+          "a contiguous run of %d missing values from ",
+          "row %d -- one outage rather than scattered ",
+          "failures"
+        ),
+        runs$length[1],
+        runs$start[1]
+      )
+    )
   }
 
   # --- shape -----------------------------------------------------------
@@ -245,13 +322,23 @@ cpsrpt <- function(data, ref = NULL, schema = NULL,
   all_missing <- prof$column[prof$n_missing == prof$n & prof$n > 0]
   const <- setdiff(prof$column[prof$n_distinct <= 1L], all_missing)
   if (length(const)) {
-    f <- add(f, "note", "shape", paste(const, collapse = ", "),
-             "constant: no information, and it breaks anything scaled by variance")
+    f <- add(
+      f,
+      "note",
+      "shape",
+      paste(const, collapse = ", "),
+      "constant: no information, and it breaks anything scaled by variance"
+    )
   }
   num <- prof$column[!is.na(prof$n_outliers) & prof$n_outliers > 0]
   if (length(num)) {
-    f <- add(f, "note", "shape", paste(utils::head(num, 5), collapse = ", "),
-             "value(s) beyond the Tukey fences")
+    f <- add(
+      f,
+      "note",
+      "shape",
+      paste(utils::head(num, 5), collapse = ", "),
+      "value(s) beyond the Tukey fences"
+    )
   }
 
   # --- multivariate outliers -------------------------------------------
@@ -259,30 +346,48 @@ cpsrpt <- function(data, ref = NULL, schema = NULL,
   # already reported above, so it is excluded here too. What remains
   # means the collinearity note fires only for a genuinely duplicated or
   # derived column -- the case that tells the reader something new.
-  numeric_cols <- setdiff(names(data)[vapply(data, is.numeric,
-                                             logical(1))],
-                          c(all_missing, const))
+  numeric_cols <- setdiff(
+    names(data)[vapply(data, is.numeric, logical(1))],
+    c(all_missing, const)
+  )
   usable <- length(numeric_cols) >= 2L &&
     nrow(data) <= maxrowsoutl &&
     sum(stats::complete.cases(data[, numeric_cols, drop = FALSE])) >
       length(numeric_cols)
   if (usable) {
-    mo <- tryCatch(mahaoutl(data[, numeric_cols, drop = FALSE]),
-                   error = function(e) e)
+    mo <- tryCatch(
+      mahaoutl(data[, numeric_cols, drop = FALSE]),
+      error = function(e) e
+    )
     if (inherits(mo, "error")) {
       # Only collinearity is worth surfacing here, and only because it
       # means a duplicated or derived column is present. Anything else
       # is this check declining to run, which is not a finding about the
       # data.
       if (grepl("collinear", conditionMessage(mo))) {
-        f <- add(f, "note", "shape", paste(numeric_cols, collapse = ", "),
-                 "collinear: a duplicated or derived column is present")
+        f <- add(
+          f,
+          "note",
+          "shape",
+          paste(numeric_cols, collapse = ", "),
+          "collinear: a duplicated or derived column is present"
+        )
       }
     } else if (any(mo$outlier, na.rm = TRUE)) {
       k <- sum(mo$outlier, na.rm = TRUE)
-      f <- add(f, "note", "outliers", sprintf("%d row(s)", k),
-               sprintf(paste0("jointly improbable given the correlations; ",
-                              "worst is row %d"), mo$row[1]))
+      f <- add(
+        f,
+        "note",
+        "outliers",
+        sprintf("%d row(s)", k),
+        sprintf(
+          paste0(
+            "jointly improbable given the correlations; ",
+            "worst is row %d"
+          ),
+          mo$row[1]
+        )
+      )
     }
   }
 
@@ -290,14 +395,26 @@ cpsrpt <- function(data, ref = NULL, schema = NULL,
   for (nm in numeric_cols) {
     v <- data[[nm]][is.finite(data[[nm]]) & data[[nm]] != 0]
     # only meaningful on a column spanning orders of magnitude
-    if (length(v) >= 200L && diff(range(abs(v))) > 0 &&
-        max(abs(v)) / min(abs(v)) > 1000) {
+    if (
+      length(v) >= 200L &&
+        diff(range(abs(v))) > 0 &&
+        max(abs(v)) / min(abs(v)) > 1000
+    ) {
       b <- tryCatch(benfordtst(v), error = function(e) NULL)
       if (!is.null(b) && !is.na(b$p_value) && b$p_value < 0.01) {
-        f <- add(f, "note", "benford", nm,
-                 sprintf(paste0("leading digits depart from Benford's law ",
-                                "(p = %s); a screen, not a verdict"),
-                         .rmbl_fmt_p(b$p_value)))
+        f <- add(
+          f,
+          "note",
+          "benford",
+          nm,
+          sprintf(
+            paste0(
+              "leading digits depart from Benford's law ",
+              "(p = %s); a screen, not a verdict"
+            ),
+            .rmbl_fmt_p(b$p_value)
+          )
+        )
       }
     }
   }
@@ -311,15 +428,27 @@ cpsrpt <- function(data, ref = NULL, schema = NULL,
   }
   if (!is.null(sig)) {
     if (is.null(key)) {
-      f <- add(f, "warn", "signature", "-",
-               "a signature was supplied with no key to verify it against")
+      f <- add(
+        f,
+        "warn",
+        "signature",
+        "-",
+        "a signature was supplied with no key to verify it against"
+      )
     } else {
-      ok <- isTRUE(tryCatch(cpsvrf(dig$data_digest, sig, key),
-                            error = function(e) FALSE))
+      ok <- isTRUE(tryCatch(
+        cpsvrf(dig$data_digest, sig, key),
+        error = function(e) FALSE
+      ))
       dig$signature_valid <- ok
       if (!ok) {
-        f <- add(f, "warn", "signature", sig$scheme,
-                 "did NOT verify against the data's digest")
+        f <- add(
+          f,
+          "warn",
+          "signature",
+          sig$scheme,
+          "did NOT verify against the data's digest"
+        )
       }
     }
   }
@@ -329,13 +458,26 @@ cpsrpt <- function(data, ref = NULL, schema = NULL,
     f <- f[order(rank[f$severity], f$check, f$subject), , drop = FALSE]
     rownames(f) <- NULL
   }
-  verdict <- if (any(f$severity == "fatal")) "fatal" else
-    if (any(f$severity == "warn")) "warn" else
-      if (nrow(f)) "note" else "clean"
+  verdict <- if (any(f$severity == "fatal")) {
+    "fatal"
+  } else if (any(f$severity == "warn")) {
+    "warn"
+  } else if (nrow(f)) {
+    "note"
+  } else {
+    "clean"
+  }
 
-  out <- list(findings = f, verdict = verdict, profile = prof,
-              missingness = miss, drift = dr, digest = dig,
-              n_rows = nrow(data), n_cols = ncol(data))
+  out <- list(
+    findings = f,
+    verdict = verdict,
+    profile = prof,
+    missingness = miss,
+    drift = dr,
+    digest = dig,
+    n_rows = nrow(data),
+    n_cols = ncol(data)
+  )
   class(out) <- c("bricklayer_report", "list")
   out
 }
@@ -343,45 +485,71 @@ cpsrpt <- function(data, ref = NULL, schema = NULL,
 #' @export
 format.bricklayer_report <- function(x, ...) {
   g <- .rmbl_glyphs()
-  head_line <- switch(x$verdict,
+  head_line <- switch(
+    x$verdict,
     fatal = paste0(g$bad, " FATAL: the data cannot be used as it stands"),
     warn = paste0(g$bad, " WARNINGS: something moved"),
     note = paste0(g$warn, " notes only: worth a look, nothing blocking"),
-    clean = paste0(g$ok, " these checks found nothing"))
-  lines <- c(.rmbl_rule("Capsule report"),
-             paste0("  ", head_line),
-             "",
-             .rmbl_kv(list(
-               rows = format(x$n_rows, big.mark = ","),
-               columns = x$n_cols,
-               "missing cells" = sprintf("%.1f%%",
-                                         x$missingness[["pct_missing"]]),
-               "complete rows" = sprintf("%.1f%%",
-                          x$missingness[["pct_complete_rows"]]),
-               digest = substring(x$digest$data_digest, 1L, 32L))))
+    clean = paste0(g$ok, " these checks found nothing")
+  )
+  lines <- c(
+    .rmbl_rule("Capsule report"),
+    paste0("  ", head_line),
+    "",
+    .rmbl_kv(list(
+      rows = format(x$n_rows, big.mark = ","),
+      columns = x$n_cols,
+      "missing cells" = sprintf("%.1f%%", x$missingness[["pct_missing"]]),
+      "complete rows" = sprintf("%.1f%%", x$missingness[["pct_complete_rows"]]),
+      digest = substring(x$digest$data_digest, 1L, 32L)
+    ))
+  )
   if (!is.null(x$digest$merkle_root)) {
-    lines <- c(lines, .rmbl_kv(list(
-      "merkle root" = substring(x$digest$merkle_root, 1L, 32L),
-      chunks = x$digest$n_chunks)))
+    lines <- c(
+      lines,
+      .rmbl_kv(list(
+        "merkle root" = substring(x$digest$merkle_root, 1L, 32L),
+        chunks = x$digest$n_chunks
+      ))
+    )
   }
   if (!is.null(x$digest$signature_valid)) {
-    lines <- c(lines, .rmbl_kv(list(signature =
-      if (isTRUE(x$digest$signature_valid)) paste(g$ok, "verified") else
-        paste(g$bad, "NOT verified"))))
+    lines <- c(
+      lines,
+      .rmbl_kv(list(
+        signature = if (isTRUE(x$digest$signature_valid)) {
+          paste(g$ok, "verified")
+        } else {
+          paste(g$bad, "NOT verified")
+        }
+      ))
+    )
   }
   if (nrow(x$findings) == 0L) {
-    return(c(lines, "",
-             "  No finding is proof of correctness: each check has a",
-             "  stated blind spot, and a small sample has little power.",
-             .rmbl_rule()))
+    return(c(
+      lines,
+      "",
+      "  No finding is proof of correctness: each check has a",
+      "  stated blind spot, and a small sample has little power.",
+      .rmbl_rule()
+    ))
   }
   sym <- c(fatal = g$bad, warn = g$bad, note = g$warn)
-  rows <- sprintf("  %s %-9s %-10s %-22s %s", sym[x$findings$severity],
-                  x$findings$severity, x$findings$check,
-                  substring(x$findings$subject, 1L, 22L),
-                  x$findings$detail)
-  c(lines, "", .rmbl_rule(sprintf("Findings (%d)", nrow(x$findings))),
-    rows, .rmbl_rule())
+  rows <- sprintf(
+    "  %s %-9s %-10s %-22s %s",
+    sym[x$findings$severity],
+    x$findings$severity,
+    x$findings$check,
+    substring(x$findings$subject, 1L, 22L),
+    x$findings$detail
+  )
+  c(
+    lines,
+    "",
+    .rmbl_rule(sprintf("Findings (%d)", nrow(x$findings))),
+    rows,
+    .rmbl_rule()
+  )
 }
 
 #' @rdname printmeth
@@ -392,10 +560,12 @@ print.bricklayer_report <- .rmbl_print_via_format
 #' @rdname printmeth
 #' @export
 summary.bricklayer_report <- function(object, ...) {
-  c(verdict = object$verdict,
+  c(
+    verdict = object$verdict,
     fatal = sum(object$findings$severity == "fatal"),
     warn = sum(object$findings$severity == "warn"),
-    note = sum(object$findings$severity == "note"))
+    note = sum(object$findings$severity == "note")
+  )
 }
 
 #' Write a capsule report as Markdown
@@ -406,15 +576,14 @@ summary.bricklayer_report <- function(object, ...) {
 #' R Markdown and Quarto, and in any Markdown viewer, and reads well as plain
 #' text.
 #'
-#' @details
-#' The document has a level-one heading (`title`), the verdict in one
+#' @details The document has a level-one heading (`title`), the verdict in one
 #' sentence, a two-column table of rows, columns, missing cells, complete rows
 #' and the full data digest (with the Merkle root and the signature result when
-#' the report has them), a \code{"Findings"} table of severity, check, subject and
-#' detail (left out when there is none), and a closing caveat that no finding
-#' is proof of correctness. The text of the findings is written as it is: a
-#' `|` in a column name would break the table. An existing file at `path` is
-#' overwritten. Errors when `report` does not come from
+#' the report has them), a \code{"Findings"} table of severity, check, subject
+#' and detail (left out when there is none), and a closing caveat that no
+#' finding is proof of correctness. The text of the findings is written as it
+#' is: a `|` in a column name would break the table. An existing file at `path`
+#' is overwritten. Errors when `report` does not come from
 #' [cpsrpt()].
 #'
 #' @param report A `bricklayer_report` from
@@ -450,52 +619,85 @@ summary.bricklayer_report <- function(object, ...) {
 #' # only a cpsrpt() result is accepted
 #' try(rptmd(list(verdict = "clean")))
 #' @export
-rptmd <- function(report, path = NULL,
-                            title = "Capsule report") {
+rptmd <- function(report, path = NULL, title = "Capsule report") {
   if (!inherits(report, "bricklayer_report")) {
     stop("`report` must come from cpsrpt()", call. = FALSE)
   }
-  if (!is.null(path)) path <- .rmbl_out_file(path, "path")
+  if (!is.null(path)) {
+    path <- .rmbl_out_file(path, "path")
+  }
   title <- .rmbl_text1(title, "title")
-  verdict <- switch(report$verdict,
+  verdict <- switch(
+    report$verdict,
     fatal = "**FATAL** -- the data cannot be used as it stands.",
     warn = "**Warnings** -- something moved.",
     note = "Notes only -- worth a look, nothing blocking.",
-    clean = "These checks found nothing.")
-  md <- c(paste("#", title), "", verdict, "",
-          "| | |", "|---|---|",
-          sprintf("| rows | %s |", format(report$n_rows, big.mark = ",")),
-          sprintf("| columns | %d |", report$n_cols),
-          sprintf("| missing cells | %.1f%% |",
-                  report$missingness[["pct_missing"]]),
-          sprintf("| complete rows | %.1f%% |",
-                  report$missingness[["pct_complete_rows"]]),
-          sprintf("| data digest | `%s` |", report$digest$data_digest))
+    clean = "These checks found nothing."
+  )
+  md <- c(
+    paste("#", title),
+    "",
+    verdict,
+    "",
+    "| | |",
+    "|---|---|",
+    sprintf("| rows | %s |", format(report$n_rows, big.mark = ",")),
+    sprintf("| columns | %d |", report$n_cols),
+    sprintf("| missing cells | %.1f%% |", report$missingness[["pct_missing"]]),
+    sprintf(
+      "| complete rows | %.1f%% |",
+      report$missingness[["pct_complete_rows"]]
+    ),
+    sprintf("| data digest | `%s` |", report$digest$data_digest)
+  )
   if (!is.null(report$digest$merkle_root)) {
-    md <- c(md, sprintf("| merkle root | `%s` |",
-                        report$digest$merkle_root))
+    md <- c(md, sprintf("| merkle root | `%s` |", report$digest$merkle_root))
   }
   if (!is.null(report$digest$signature_valid)) {
-    md <- c(md, sprintf("| signature | %s |",
-                        if (isTRUE(report$digest$signature_valid))
-                          "verified" else "**NOT verified**"))
+    md <- c(
+      md,
+      sprintf(
+        "| signature | %s |",
+        if (isTRUE(report$digest$signature_valid)) {
+          "verified"
+        } else {
+          "**NOT verified**"
+        }
+      )
+    )
   }
   md <- c(md, "")
   if (nrow(report$findings)) {
-    md <- c(md, "## Findings", "",
-            "| severity | check | subject | detail |",
-            "|---|---|---|---|",
-            sprintf("| %s | %s | %s | %s |",
-                    report$findings$severity, report$findings$check,
-                    report$findings$subject, report$findings$detail),
-            "")
+    md <- c(
+      md,
+      "## Findings",
+      "",
+      "| severity | check | subject | detail |",
+      "|---|---|---|---|",
+      sprintf(
+        "| %s | %s | %s | %s |",
+        report$findings$severity,
+        report$findings$check,
+        report$findings$subject,
+        report$findings$detail
+      ),
+      ""
+    )
   }
-  md <- c(md, "## Caveat", "",
-          paste("No finding is proof of correctness. Each check has a",
-                "stated blind spot, a small sample has little power, and",
-                "the Benford screen in particular is a reason to look",
-                "rather than a verdict."))
-  if (is.null(path)) return(md)
+  md <- c(
+    md,
+    "## Caveat",
+    "",
+    paste(
+      "No finding is proof of correctness. Each check has a",
+      "stated blind spot, a small sample has little power, and",
+      "the Benford screen in particular is a reason to look",
+      "rather than a verdict."
+    )
+  )
+  if (is.null(path)) {
+    return(md)
+  }
   writeLines(md, path)
   invisible(md)
 }

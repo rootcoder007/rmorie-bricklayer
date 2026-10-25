@@ -17,11 +17,25 @@ test_that("inlhist draws the shape of a distribution", {
   norm_bars <- strsplit(inlhist(stats::rnorm(5000)), "")[[1]]
   exp_bars <- strsplit(inlhist(stats::rexp(5000)), "")[[1]]
   rank_of <- function(v) {
-    match(v, c(
-      " ", ".", ":", "-", "=", "#",
-      "▁", "▂", "▃", "▄",
-      "▅", "▆", "▇", "█"
-    ))
+    match(
+      v,
+      c(
+        " ",
+        ".",
+        ":",
+        "-",
+        "=",
+        "#",
+        "▁",
+        "▂",
+        "▃",
+        "▄",
+        "▅",
+        "▆",
+        "▇",
+        "█"
+      )
+    )
   }
   expect_gt(rank_of(norm_bars[5]), rank_of(norm_bars[1]))
   expect_gt(rank_of(exp_bars[1]), rank_of(exp_bars[10]))
@@ -86,8 +100,10 @@ test_that("freqtbl counts and percentages add up", {
 test_that("cortbl reports every pair with its support", {
   set.seed(73)
   df <- data.frame(
-    a = stats::rnorm(100), b = stats::rnorm(100),
-    g = "x", stringsAsFactors = FALSE
+    a = stats::rnorm(100),
+    b = stats::rnorm(100),
+    g = "x",
+    stringsAsFactors = FALSE
   )
   df$c <- df$a + stats::rnorm(100, sd = 0.2)
 
@@ -109,10 +125,13 @@ test_that("cortbl reports every pair with its support", {
   # nprs reflects the complete overlap, and too little gives NA
   gappy <- df
   gappy$a[1:80] <- NA
-  expect_equal(cortbl(gappy)$nprs[
-    cortbl(gappy)$x == "a" &
-      cortbl(gappy)$y == "b"
-  ], 20L)
+  expect_equal(
+    cortbl(gappy)$nprs[
+      cortbl(gappy)$x == "a" &
+        cortbl(gappy)$y == "b"
+    ],
+    20L
+  )
   thin <- df
   thin$a[1:99] <- NA
   ctt <- cortbl(thin)
@@ -125,8 +144,10 @@ test_that("cortbl reports every pair with its support", {
 
 test_that("drpempty and drpconst remove only what they claim", {
   df <- data.frame(
-    keep = c(1, 2, NA), all_na = c(NA, NA, NA),
-    constant = c(7, 7, 7), stringsAsFactors = FALSE
+    keep = c(1, 2, NA),
+    all_na = c(NA, NA, NA),
+    constant = c(7, 7, 7),
+    stringsAsFactors = FALSE
   )
 
   de <- drpempty(df)
@@ -141,9 +162,7 @@ test_that("drpempty and drpconst remove only what they claim", {
   expect_true(all(c("all_na", "constant") %in% attr(dc, "dropped")))
 
   # rows only
-  rows_only <- drpempty(data.frame(a = c(1, NA), b = c(2, NA)),
-    which = "rows"
-  )
+  rows_only <- drpempty(data.frame(a = c(1, NA), b = c(2, NA)), which = "rows")
   expect_equal(nrow(rows_only), 1L)
   expect_equal(ncol(rows_only), 2L)
   # cols only leaves the rows alone
@@ -164,8 +183,11 @@ test_that("drpempty and drpconst remove only what they claim", {
 
 test_that("clncolnms normalises and disambiguates", {
   got <- clncolnms(c(
-    "Total  Population (2021)", "% change",
-    "Ville / City", "dup", "dup"
+    "Total  Population (2021)",
+    "% change",
+    "Ville / City",
+    "dup",
+    "dup"
   ))
   expect_equal(got[1], "total_population_2021")
   # a percent sign carries meaning, so it becomes a word
@@ -231,11 +253,10 @@ test_that("Mahalanobis outliers find jointly impossible rows", {
   expect_lt(df$weight[1], max(df$weight[-1]) * 3)
 
   # the p-value is the chi-square tail on p degrees of freedom
-  expect_equal(out$p_value, stats::pchisq(out$distance^2,
-    df = 2,
-    lower.tail = FALSE
-  ),
-  tolerance = 1e-8
+  expect_equal(
+    out$p_value,
+    stats::pchisq(out$distance^2, df = 2, lower.tail = FALSE),
+    tolerance = 1e-8
   )
   expect_true(all(out$p_value >= 0 & out$p_value <= 1))
   # sorted by descending distance
@@ -297,8 +318,11 @@ test_that("missruns separates outages from scattered gaps", {
   # minrun = 1 exposes the isolated gaps too, and the lengths then sum
   # to the total missing count
   r1 <- missruns(df, minrun = 1L)
-  expect_equal(sum(r1$length), sum(is.na(df$outage)) +
-    sum(is.na(df$scattered)))
+  expect_equal(
+    sum(r1$length),
+    sum(is.na(df$outage)) +
+      sum(is.na(df$scattered))
+  )
   # cross-checked against rle directly
   rr <- rle(is.na(df$scattered))
   expect_equal(

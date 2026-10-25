@@ -40,8 +40,10 @@ s$name
 s[s$count, c("name", "description")]
 
 # an empty hand-coding sheet with one column per field
-sheet <- as.data.frame(setNames(replicate(nrow(s), character(0), simplify = FALSE),
-                                 s$name))
+sheet <- as.data.frame(setNames(
+  replicate(nrow(s), character(0), simplify = FALSE),
+  s$name
+))
 ncol(sheet)
 \dontshow{\}) # examplesIf}
 }

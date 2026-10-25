@@ -71,7 +71,12 @@ loadprov <- function(path) {
   if (!file.exists(path)) {
     return(NULL)
   }
-  if (dir.exists(path)) stop(sprintf("`path` is a directory, not a provenance file: %s", path), call. = FALSE)
+  if (dir.exists(path)) {
+    stop(
+      sprintf("`path` is a directory, not a provenance file: %s", path),
+      call. = FALSE
+    )
+  }
   .rmbl_read_json(path, simplify = FALSE)
 }
 
@@ -127,7 +132,9 @@ loadprov <- function(path) {
 #'
 #' # the endpoint must be public https, checked before any request
 #' prov <- list(
-#'   dataset = list(ckan_api_endpoint = "http://localhost/api/3/action/package_show?id=x"),
+#'   dataset = list(
+#'     ckan_api_endpoint = "http://localhost/api/3/action/package_show?id=x"
+#'   ),
 #'   resource = list(name_match_pattern = "2014")
 #' )
 #' try(rslvckan(prov))
@@ -147,7 +154,12 @@ rslvckan <- function(prov) {
   if (is.null(prov)) {
     return(NULL)
   }
-  if (!is.list(prov)) stop("rslvckan: `prov` must be a provenance list (loadprov())", call. = FALSE)
+  if (!is.list(prov)) {
+    stop(
+      "rslvckan: `prov` must be a provenance list (loadprov())",
+      call. = FALSE
+    )
+  }
   ds <- prov$dataset
   res <- prov$resource
   if (is.null(ds$ckan_api_endpoint) || is.null(res$name_match_pattern)) {
@@ -158,7 +170,8 @@ rslvckan <- function(prov) {
     return(NULL)
   }
   api_url <- .rmbl_check_public_url(api_url, "ckan_api_endpoint")
-  resp <- tryCatch(.rmbl_read_json(api_url, simplify = FALSE, strict = FALSE),
+  resp <- tryCatch(
+    .rmbl_read_json(api_url, simplify = FALSE, strict = FALSE),
     error = function(e) NULL
   )
   if (is.null(resp) || !isTRUE(resp$success)) {
@@ -243,7 +256,12 @@ rslvckns <- function(prov) {
   if (is.null(prov)) {
     return(NULL)
   }
-  if (!is.list(prov)) stop("rslvckns: `prov` must be a provenance list (loadprov())", call. = FALSE)
+  if (!is.list(prov)) {
+    stop(
+      "rslvckns: `prov` must be a provenance list (loadprov())",
+      call. = FALSE
+    )
+  }
   res <- prov$resource
   q <- res$search_query
   if (is.null(q) || !nzchar(q)) {
@@ -255,29 +273,47 @@ rslvckns <- function(prov) {
   }
   ## CKAN portal base URL inferred from package_show endpoint
   base <- sub(
-    "/api/3/.*$", "",
+    "/api/3/.*$",
+    "",
     prov$dataset$ckan_api_endpoint %||% ""
   )
   if (!nzchar(base)) {
     return(NULL)
   }
-  api_url <- .rmbl_check_public_url(sprintf(
-    "%s/api/3/action/package_search?q=%s",
-    base, utils::URLencode(q, reserved = TRUE)
-  ), "the CKAN package_search URL")
-  resp <- tryCatch(.rmbl_read_json(api_url, simplify = FALSE, strict = FALSE),
+  api_url <- .rmbl_check_public_url(
+    sprintf(
+      "%s/api/3/action/package_search?q=%s",
+      base,
+      utils::URLencode(q, reserved = TRUE)
+    ),
+    "the CKAN package_search URL"
+  )
+  resp <- tryCatch(
+    .rmbl_read_json(api_url, simplify = FALSE, strict = FALSE),
     error = function(e) NULL
   )
   if (is.null(resp)) {
     return(NULL)
   }
+  .rmbl_ckan_match(resp, res)
+}
+
+#' The first resource in a CKAN package_search reply whose name matches the
+#' provenance's pattern and whose format is CSV or the one it records.
+#' @param resp The reply.
+#' @param res The provenance's resource.
+#' @return The resource's checked URL, or NULL.
+#' @noRd
+.rmbl_ckan_match <- function(resp, res) {
   pat <- res$name_match_pattern
   for (pkg in resp$result$results) {
     for (r in pkg$resources) {
       name <- if (is.null(r$name)) "" else r$name
       fmt <- toupper(r$format %||% "")
-      if (grepl(pat, name, ignore.case = TRUE) &&
-        (fmt == "CSV" || is.null(res$format) || toupper(res$format) == fmt)) {
+      if (
+        grepl(pat, name, ignore.case = TRUE) &&
+          (fmt == "CSV" || is.null(res$format) || toupper(res$format) == fmt)
+      ) {
         return(.rmbl_check_public_url(r$url, "the CKAN resource URL"))
       }
     }
@@ -353,16 +389,14 @@ rslvckns <- function(prov) {
 #' )
 #' file.exists(dest)
 #' @export
-dldata <- function(url, tpath, mode = "wb", quiet = FALSE,
-                          allowfile = FALSE) {
+dldata <- function(url, tpath, mode = "wb", quiet = FALSE, allowfile = FALSE) {
   url <- .rmbl_string1(url, "url")
   url <- .rmbl_check_public_url(url, "url", allow_file = allowfile)
   tpath <- .rmbl_string1(tpath, "tpath")
   if (!identical(mode, "wb") && !identical(mode, "w")) {
     stop("`mode` must be \"wb\" (every transfer is binary)", call. = FALSE)
   }
-  bldl(url, tpath, quiet = isTRUE(quiet),
-                      allowfile = allowfile)
+  bldl(url, tpath, quiet = isTRUE(quiet), allowfile = allowfile)
   invisible(tpath)
 }
 
@@ -381,12 +415,12 @@ dldata <- function(url, tpath, mode = "wb", quiet = FALSE,
 #' \code{https://archive.org/wayback/available?url=<url>[&timestamp=<ts>]},\cr
 #' where the timestamp part is sent only when \code{ts} is given.
 #'
-#' The answer's \code{archived_snapshots$closest} is read. When the API reports an
-#' available snapshot its URL is returned, with \code{http://} rewritten to
-#' \code{https://} and passed through the same public-URL check as every
-#' other URL the package fetches. The timestamp is passed to the API as
-#' given; the API accepts any prefix of \code{YYYYMMDDhhmmss} and returns the
-#' snapshot nearest to it, before or after.
+#' The answer's \code{archived_snapshots$closest} is read. When the API reports
+#' an available snapshot its URL is returned, with \code{http://} rewritten to
+#' \code{https://} and passed through the same public-URL check as every other
+#' URL the package fetches. The timestamp is passed to the API as given; the API
+#' accepts any prefix of \code{YYYYMMDDhhmmss} and returns the snapshot nearest
+#' to it, before or after.
 #'
 #' \code{NULL} is returned when the API has no snapshot, when the request
 #' fails (offline, an HTTP error, invalid JSON) or when the answer has no
@@ -399,8 +433,8 @@ dldata <- function(url, tpath, mode = "wb", quiet = FALSE,
 #'   \code{"20230115"}); the API returns the snapshot closest to it.
 #'   \code{NULL} or \code{""} (the default) asks for the most recent.
 #' @return A length-1 character string, the \code{https} snapshot URL of the
-#'   form \code{https://web.archive.org/web/} followed by \code{<timestamp>/<url>}, or
-#'   \code{NULL}.
+#'   form \code{https://web.archive.org/web/} followed by
+#'   \code{<timestamp>/<url>}, or \code{NULL}.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # argument errors come before any request
 #' try(wbsnpurl(NA))
@@ -422,18 +456,24 @@ wbsnpurl <- function(url, ts = NULL) {
   if (!is.null(ts) && nzchar(ts)) {
     api <- paste0(api, "&timestamp=", ts)
   }
-  res <- tryCatch(.rmbl_read_json(api, strict = FALSE), error = function(e) NULL)
+  res <- tryCatch(.rmbl_read_json(api, strict = FALSE), error = function(e) {
+    NULL
+  })
   snap <- tryCatch(res$archived_snapshots$closest, error = function(e) NULL)
   if (is.null(snap) || !isTRUE(snap$available) || is.null(snap$url)) {
     return(NULL)
   }
   snap_url <- unlist(snap$url)
-  if (!is.character(snap_url) || length(snap_url) != 1L || !nzchar(snap_url)) return(NULL)
+  if (!is.character(snap_url) || length(snap_url) != 1L || !nzchar(snap_url)) {
+    return(NULL)
+  }
   ## Prefer HTTPS; the API sometimes returns http:// snapshot URLs. And
   ## whatever it returns is fetched next, so it passes the same gate as
   ## every other URL.
-  .rmbl_check_public_url(sub("^http://", "https://", snap_url),
-                         "the Wayback snapshot URL")
+  .rmbl_check_public_url(
+    sub("^http://", "https://", snap_url),
+    "the Wayback snapshot URL"
+  )
 }
 
 #' Downloads a URL to a file.
@@ -455,14 +495,25 @@ wbsnpurl <- function(url, ts = NULL) {
   }
 }
 
-#' Tells whether an error is R's time limit (setTimeLimit()), in English or translated.
+#' Tells whether an error is R's time limit (setTimeLimit()), in English or
+#' translated.
 #' @param msg The error's message.
 #' @return TRUE or FALSE.
 #' @noRd
 .rmbl_time_limit <- function(msg) {
-  k <- c("reached elapsed time limit", "reached CPU time limit", "reached session elapsed time limit",
-         "reached session CPU time limit")
-  any(vapply(unique(c(k, gettext(k, domain = "R"))), grepl, NA, msg, fixed = TRUE))
+  k <- c(
+    "reached elapsed time limit",
+    "reached CPU time limit",
+    "reached session elapsed time limit",
+    "reached session CPU time limit"
+  )
+  any(vapply(
+    unique(c(k, gettext(k, domain = "R"))),
+    grepl,
+    NA,
+    msg,
+    fixed = TRUE
+  ))
 }
 
 ## ----- fdl: wraps bldl with diagnostic
@@ -539,107 +590,155 @@ wbsnpurl <- function(url, ts = NULL) {
 #'   tempfile(fileext = ".html"))
 #' ok
 #' @export
-fdl <- function(url, tpath, attwb = NULL,
-                              allowfile = FALSE) {
+fdl <- function(url, tpath, attwb = NULL, allowfile = FALSE) {
   url <- .rmbl_string1(url, "url")
   url <- .rmbl_check_public_url(url, "url", allow_file = allowfile)
   tpath <- .rmbl_string1(tpath, "tpath")
-  # base R's url() reports the HTTP status in a warning and then errors with a bare
-  # "cannot open the connection": keep the warning's words as the cause, and do not let it leak
+  # base R's url() reports the HTTP status in a warning and then errors with a
+  # bare "cannot open the connection": keep the warning's words as the cause,
+  # and do not let it leak
   acc <- new.env(parent = emptyenv())
   acc$said <- character()
-  result <- tryCatch(
+  tryCatch(
     {
-      withCallingHandlers(.bl_fetch_file(url, tpath, allow_file = allowfile), warning = function(w) {
-        acc$said <- c(acc$said, conditionMessage(w))
-        invokeRestart("muffleWarning")
-      })
+      withCallingHandlers(
+        .bl_fetch_file(url, tpath, allow_file = allowfile),
+        warning = function(w) {
+          acc$said <- c(acc$said, conditionMessage(w))
+          invokeRestart("muffleWarning")
+        }
+      )
       TRUE
     },
-    error = function(e) {
-      msg <- conditionMessage(e)
-      # a time limit (setTimeLimit()) is the caller's, not a failed download: it was swallowed and
-      # the fallback ran on, 34 s under a 3 s limit (audit of 30bed8e, #17)
-      if (.rmbl_time_limit(msg)) stop(e)
-      if (length(acc$said) && grepl("cannot open the connection", msg, fixed = TRUE)) {
-        msg <- acc$said[[length(acc$said)]]
-      }
-      message("  ! Download failed.")
-      message("    URL:   ", url)
-      message("    Error: ", msg, "\n\n")
-      message("  Common causes (in rough order of likelihood):")
-      known <- grepl(paste0("429|too many|rate|SSL|TLS|certificate|handshake|UNEXPECTED_EOF|could not|",
-                            "unable to resolve|resolve host|name not|getaddrinfo|timeout|timed out|",
-                            "connection (refused|reset)|couldn.t connect|",
-                            "403|forbidden"),
-                     msg, ignore.case = TRUE)
-      if (grepl("429|too many|rate", msg, ignore.case = TRUE)) {
-        message("    * Rate-limited (HTTP 429). VPNs share IPs across users")
-        message("      and often trip rate limits. Try disabling your VPN.")
-      }
-      if (grepl("SSL|TLS|certificate|handshake|UNEXPECTED_EOF",
-        msg,
-        ignore.case = TRUE
-      )) {
-        message("    * SSL/TLS handshake failed.")
-        message("      VPNs with TLS inspection (Cisco AnyConnect, GlobalProtect,")
-        message("      Zscaler, NetSkope) break R's HTTPS. Try disabling.")
-      }
-      if (grepl("could not resolve|unable to resolve|resolve host|name not|getaddrinfo",
-        msg,
-        ignore.case = TRUE
-      )) {
-        message("    * DNS lookup failed; check network connectivity.")
-      }
-      if (grepl("could not connect|connection (refused|reset)|couldn.t connect",
-        msg,
-        ignore.case = TRUE
-      )) {
-        message("    * Could not connect to the server (offline, or a proxy or firewall refused the connection).")
-      }
-      if (grepl("timeout|timed out", msg, ignore.case = TRUE)) {
-        message("    * Connection timed out (firewall, often institutional).")
-      }
-      if (grepl("403|forbidden", msg, ignore.case = TRUE)) {
-        message("    * HTTP 403 Forbidden (geo-restriction; try a different VPN region).")
-      }
-      if (!known) {
-        message("    * The server did not serve the file (see the error above): the URL may have moved or the")
-        message("      portal may be down.")
-      }
-      ## Auto-resolve a Wayback snapshot if the caller did not supply one
-      ## (NULL = auto; "" = explicitly disabled).
-      if (isFALSE(attwb) || identical(attwb, "")) {
-        attwb <- ""  # switched off by the caller: no lookup was made
-        message("  The Wayback fallback is switched off; nothing more to try.")
-      } else {
-        if (is.null(attwb)) {
-          attwb <- tryCatch(wbsnpurl(url), error = function(e) NULL)
-        }
-        if (!is.character(attwb) || length(attwb) != 1L || is.na(attwb) ||
-            !nzchar(attwb)) {
-          attwb <- ""  # no usable snapshot
-          message("  The Wayback Machine has no snapshot of it (or did not answer); nothing more to try.")
-        }
-      }
-      if (!is.null(attwb) && nzchar(attwb)) {
-        message("  Trying Wayback Machine fallback snapshot...")
-        tryCatch(
-          {
-            .bl_fetch_file(attwb, tpath)
-            message("  [ok] Wayback snapshot retrieved.")
-            return(TRUE)
-          },
-          error = function(e2) {
-            message("  ! Wayback fallback also failed: ", conditionMessage(e2), "")
-            FALSE
-          }
-        )
-      }
+    error = function(e) .fdl_failed(e, url, tpath, attwb, acc$said)
+  )
+}
+
+#' What fdl() does when the download failed: says why, then tries the Wayback
+#' snapshot.
+#' @param e The error.
+#' @param url,tpath,attwb As for fdl().
+#' @param said The warnings the download gave.
+#' @return TRUE when the snapshot was retrieved, else FALSE.
+#' @noRd
+.fdl_failed <- function(e, url, tpath, attwb, said) {
+  msg <- conditionMessage(e)
+  # a time limit (setTimeLimit()) is the caller's, not a failed download: it
+  # was swallowed and the fallback ran on, 34 s under a 3 s limit (audit of
+  # 30bed8e, #17)
+  if (.rmbl_time_limit(msg)) {
+    stop(e)
+  }
+  if (length(said) && grepl("cannot open the connection", msg, fixed = TRUE)) {
+    msg <- said[[length(said)]]
+  }
+  message("  ! Download failed.")
+  message("    URL:   ", url)
+  message("    Error: ", msg, "\n\n")
+  message("  Common causes (in rough order of likelihood):")
+  .fdl_causes(msg)
+  .fdl_wayback(url, tpath, attwb)
+}
+
+#' The likely causes of a failed download, from its error message.
+#' @param msg The message.
+#' @noRd
+.fdl_causes <- function(msg) {
+  has <- function(p) grepl(p, msg, ignore.case = TRUE)
+  known <- has(paste0(
+    "429|too ",
+    "many|rate|SSL|TLS|certificate|handshake|UNEXPECTED_EOF|could ",
+    "not|",
+    "unable to resolve|resolve host|name ",
+    "not|getaddrinfo|timeout|timed out|",
+    "connection (refused|reset)|couldn.t connect|",
+    "403|forbidden"
+  ))
+  if (has("429|too many|rate")) {
+    message("    * Rate-limited (HTTP 429). VPNs share IPs across users")
+    message("      and often trip rate limits. Try disabling your VPN.")
+  }
+  if (has("SSL|TLS|certificate|handshake|UNEXPECTED_EOF")) {
+    message("    * SSL/TLS handshake failed.")
+    message(
+      "      VPNs with TLS inspection (Cisco AnyConnect, GlobalProtect,"
+    )
+    message("      Zscaler, NetSkope) break R's HTTPS. Try disabling.")
+  }
+  if (
+    has(paste0(
+      "could not resolve|unable to resolve|resolve host|name ",
+      "not|getaddrinfo"
+    ))
+  ) {
+    message("    * DNS lookup failed; check network connectivity.")
+  }
+  if (has("could not connect|connection (refused|reset)|couldn.t connect")) {
+    message(
+      "    * Could not connect to the server (offline, or a proxy ",
+      "or firewall refused the connection)."
+    )
+  }
+  if (has("timeout|timed out")) {
+    message("    * Connection timed out (firewall, often institutional).")
+  }
+  if (has("403|forbidden")) {
+    message(
+      "    * HTTP 403 Forbidden (geo-restriction; try a different ",
+      "VPN region)."
+    )
+  }
+  if (!known) {
+    message(
+      "    * The server did not serve the file (see the error ",
+      "above): the URL may have moved or the"
+    )
+    message("      portal may be down.")
+  }
+  invisible(NULL)
+}
+
+#' The Wayback fallback of fdl(): a snapshot given, or looked up (NULL = auto;
+#' "" = explicitly disabled).
+#' @param url,tpath,attwb As for fdl().
+#' @return TRUE when the snapshot was retrieved, else FALSE.
+#' @noRd
+.fdl_wayback <- function(url, tpath, attwb) {
+  if (isFALSE(attwb) || identical(attwb, "")) {
+    message("  The Wayback fallback is switched off; nothing more to try.")
+    return(FALSE)
+  }
+  if (is.null(attwb)) {
+    attwb <- tryCatch(wbsnpurl(url), error = function(e) NULL)
+  }
+  if (
+    !is.character(attwb) ||
+      length(attwb) != 1L ||
+      is.na(attwb) ||
+      !nzchar(attwb)
+  ) {
+    message(
+      "  The Wayback Machine has no snapshot of it (or did not ",
+      "answer); nothing more to try."
+    )
+    return(FALSE)
+  }
+  message("  Trying Wayback Machine fallback snapshot...")
+  tryCatch(
+    {
+      .bl_fetch_file(attwb, tpath)
+      message("  [ok] Wayback snapshot retrieved.")
+      TRUE
+    },
+    error = function(e2) {
+      message(
+        "  ! Wayback fallback also failed: ",
+        conditionMessage(e2),
+        ""
+      )
       FALSE
     }
   )
-  result
 }
 
 ## ----- SHA256 check -----
@@ -705,7 +804,8 @@ vrfsha256 <- function(path, expsha) {
     stop("`expsha` must be a single SHA-256 hex string", call. = FALSE)
   }
   list(
-    actual = actual, expected = expected,
+    actual = actual,
+    expected = expected,
     match = identical(tolower(actual), expected)
   )
 }
@@ -742,23 +842,19 @@ vrfsha256 <- function(path, expsha) {
 #' ordered) belong in [rul()] and
 #' [valrules()].
 #'
-#' The checks, and the name of the issue each one adds:
-#' \itemize{
-#'   \item a missing \code{expected_columns} entry: \code{missing_columns},
-#'     \code{"fatal"};
-#'   \item fewer than \code{min_data_rows} rows: \code{row_count_low};
-#'   \item more than \code{max_data_rows} rows: \code{row_count_high};
-#'   \item a column whose class differs from \code{expected_types}:
-#'     \code{type_<col>}. \code{integer}, \code{numeric} and \code{double} are
-#'     one family, and so are \code{character} and \code{factor};
-#'   \item non-missing values outside \code{numeric_ranges} (inclusive bounds;
-#'     non-numeric columns are skipped): \code{range_<col>};
-#'   \item a share of \code{NA} above \code{max_missing_fraction}:
-#'     \code{missing_<col>};
-#'   \item values not in \code{expected_value_sets}: \code{unexpected_<col>}.
-#' }
-#' A column that a check names but the data lack is skipped by that check.
-#' Only the \code{expected_columns} check reports such a column. All of these are
+#' The checks, and the name of the issue each one adds: \itemize{ \item a
+#' missing \code{expected_columns} entry: \code{missing_columns},
+#' \code{"fatal"}; \item fewer than \code{min_data_rows} rows:
+#' \code{row_count_low}; \item more than \code{max_data_rows} rows:
+#' \code{row_count_high}; \item a column whose class differs from
+#' \code{expected_types}: \code{type_<col>}. \code{integer}, \code{numeric} and
+#' \code{double} are one family, and so are \code{character} and \code{factor};
+#' \item non-missing values outside \code{numeric_ranges} (inclusive bounds;
+#' non-numeric columns are skipped): \code{range_<col>}; \item a share of
+#' \code{NA} above \code{max_missing_fraction}: \code{missing_<col>}; \item
+#' values not in \code{expected_value_sets}: \code{unexpected_<col>}. } A column
+#' that a check names but the data lack is skipped by that check. Only the
+#' \code{expected_columns} check reports such a column. All of these are
 #' \code{"warning"} except \code{missing_columns}.
 #'
 #' The schema itself is checked too. An empty schema (\code{list()}) gives
@@ -845,7 +941,10 @@ valsch <- function(dfraw, prov) {
     stop("valsch: `dfraw` must be a data frame", call. = FALSE)
   }
   if (!is.null(prov) && !is.list(prov)) {
-    stop("`prov` must be a provenance list (from read_provenance()), or NULL", call. = FALSE)
+    stop(
+      "`prov` must be a provenance list (from read_provenance()), or NULL",
+      call. = FALSE
+    )
   }
   issues <- list()
   if (is.null(prov) || is.null(prov$schema)) {
@@ -853,76 +952,202 @@ valsch <- function(dfraw, prov) {
   }
   sch <- prov$schema
   if (!is.list(sch)) {
-    stop(sprintf("`provenance$schema` must be a list (from infsch()), not %s", class(sch)[1L]), call. = FALSE)
+    stop(
+      sprintf(
+        "`provenance$schema` must be a list (from infsch()), not %s",
+        class(sch)[1L]
+      ),
+      call. = FALSE
+    )
   }
-  # a schema with no fields checks nothing: it passed as valid (review of e57fed5, the M2 leftover)
+  # a schema with no fields checks nothing: it passed as valid (review of
+  # e57fed5, the M2 leftover)
   if (!length(sch)) {
-    issues$schema_empty <- list(severity = "warning",
-      message = "the schema is empty (list()): it lists no columns, types or invariants, so nothing would be checked")
+    issues$schema_empty <- list(
+      severity = "warning",
+      message = paste0(
+        "the schema is empty (list()): it lists no columns, types or ",
+        "invariants, so nothing would be checked"
+      )
+    )
     return(issues)
   }
-  # a misspelt field validates nothing and says nothing: a name a few letters from a known one is
-  # fatal, any other unknown name is said (review of 02a38be, M2). expected_dtypes is what the
-  # provenance files call expected_types (the OTIS file's types were never checked).
-  known <- c("expected_columns", "expected_types", "expected_dtypes", "structural_invariants",
-             "expected_value_sets", "numeric_ranges", "max_missing_fraction", "synthetic_recipe")
-  near <- function(x, pool, k = 3) pool[which(utils::adist(x, pool) <= k & utils::adist(x, pool) > 0)[1L]]
-  for (nm in setdiff(names(sch), known)) {
-    guess <- near(nm, known)
-    if (!is.na(guess)) {
-      issues[[paste0("schema_field_", nm)]] <- list(severity = "fatal",
-        message = sprintf("unknown schema field '%s' (did you mean '%s'?): it would be ignored", nm, guess))
-    } else {
-      issues[[paste0("schema_field_", nm)]] <- list(severity = "warning",
-        message = sprintf("schema field '%s' is not one valsch() uses: it was not checked", nm))
-    }
+  issues <- .vs_merge(issues, .vs_unknown_fields(sch))
+  issues <- .vs_merge(issues, .vs_unknown_invariants(sch))
+  if (is.null(sch$expected_types) && !is.null(sch$expected_dtypes)) {
+    sch$expected_types <- sch$expected_dtypes
   }
-  inv_known <- c("min_data_rows", "max_data_rows")
-  for (nm in setdiff(names(sch$structural_invariants), inv_known)) {
-    # other invariants are a dataset's own, checked by its analysis: only a slip of one letter (one
-    # added, dropped or changed) or two neighbours swapped is taken for a misspelling; min_data_cols,
-    # two letters from min_data_rows, is a field of its own (review of e57fed5)
-    guess <- near(nm, inv_known, k = 1)
-    if (is.na(guess)) {
-      swapped <- vapply(inv_known, function(k) {
-        a <- strsplit(nm, "")[[1L]]
-        b <- strsplit(k, "")[[1L]]
-        # lengths first: a != b on two lengths warned "longer object length is not a multiple"
-        if (length(a) != length(b)) return(FALSE)
-        i <- which(a != b)
-        length(i) == 2L && i[2L] == i[1L] + 1L && a[i[1L]] == b[i[2L]] && a[i[2L]] == b[i[1L]]
-      }, logical(1))
-      if (any(swapped)) guess <- inv_known[swapped][1L]
-    }
-    if (!is.na(guess)) {
-      issues[[paste0("schema_field_", nm)]] <- list(severity = "fatal",
-        message = sprintf("unknown structural invariant '%s' (did you mean '%s'?): it would be ignored", nm, guess))
-    }
+  for (check in list(
+    .vs_columns,
+    .vs_rows,
+    .vs_types,
+    .vs_ranges,
+    .vs_missing,
+    .vs_value_sets
+  )) {
+    issues <- .vs_merge(issues, check(dfraw, sch))
   }
-  if (is.null(sch$expected_types) && !is.null(sch$expected_dtypes)) sch$expected_types <- sch$expected_dtypes
+  issues
+}
 
-  ## --- Required columns ---
-  if (!is.null(sch$expected_columns)) {
-    missing_cols <- setdiff(sch$expected_columns, colnames(dfraw))
-    if (length(missing_cols) > 0L) {
-      issues$missing_columns <- list(
+#' Adds issues by name: one with a name already there replaces it in place.
+#' @param issues The issues so far.
+#' @param new The issues to add.
+#' @return The issues.
+#' @noRd
+.vs_merge <- function(issues, new) {
+  for (nm in names(new)) issues[[nm]] <- new[[nm]]
+  issues
+}
+
+#' The name in `pool` within `k` edits of `x` (not `x` itself), or NA.
+#' @param x A name.
+#' @param pool The known names.
+#' @param k The most edits.
+#' @return A name, or NA.
+#' @noRd
+.vs_near <- function(x, pool, k = 3) {
+  pool[which(utils::adist(x, pool) <= k & utils::adist(x, pool) > 0)[1L]]
+}
+
+#' Unknown schema fields.
+#'
+#' A misspelt field validates nothing and says nothing: a name a few letters
+#' from a known one is fatal, any other unknown name is said (review of
+#' 02a38be, M2). expected_dtypes is what the provenance files call
+#' expected_types (the OTIS file's types were never checked).
+#' @param sch The schema.
+#' @return Issues.
+#' @noRd
+.vs_unknown_fields <- function(sch) {
+  known <- c(
+    "expected_columns",
+    "expected_types",
+    "expected_dtypes",
+    "structural_invariants",
+    "expected_value_sets",
+    "numeric_ranges",
+    "max_missing_fraction",
+    "synthetic_recipe"
+  )
+  issues <- list()
+  for (nm in setdiff(names(sch), known)) {
+    guess <- .vs_near(nm, known)
+    issues[[paste0("schema_field_", nm)]] <- if (!is.na(guess)) {
+      list(
         severity = "fatal",
-        message = paste0(
-          "Missing required columns: ",
-          paste(missing_cols, collapse = ", ")
+        message = sprintf(
+          "unknown schema field '%s' (did you mean '%s'?): it would be ignored",
+          nm,
+          guess
+        )
+      )
+    } else {
+      list(
+        severity = "warning",
+        message = sprintf(
+          "schema field '%s' is not one valsch() uses: it was not checked",
+          nm
         )
       )
     }
   }
+  issues
+}
 
-  ## --- Row count bounds ---
+#' Whether `nm` is `k` with two neighbouring letters swapped.
+#' @param nm,k Two names.
+#' @return TRUE or FALSE.
+#' @noRd
+.vs_swapped <- function(nm, k) {
+  a <- strsplit(nm, "")[[1L]]
+  b <- strsplit(k, "")[[1L]]
+  # lengths first: a != b on two lengths warned "longer object length is not a
+  # multiple"
+  if (length(a) != length(b)) {
+    return(FALSE)
+  }
+  i <- which(a != b)
+  length(i) == 2L &&
+    i[2L] == i[1L] + 1L &&
+    a[i[1L]] == b[i[2L]] &&
+    a[i[2L]] == b[i[1L]]
+}
+
+#' Misspelt structural invariants.
+#'
+#' Other invariants are a dataset's own, checked by its analysis: only a slip
+#' of one letter (one added, dropped or changed) or two neighbours swapped is
+#' taken for a misspelling; min_data_cols, two letters from min_data_rows, is a
+#' field of its own (review of e57fed5)
+#' @param sch The schema.
+#' @return Issues.
+#' @noRd
+.vs_unknown_invariants <- function(sch) {
+  inv_known <- c("min_data_rows", "max_data_rows")
+  issues <- list()
+  for (nm in setdiff(names(sch$structural_invariants), inv_known)) {
+    guess <- .vs_near(nm, inv_known, k = 1)
+    if (is.na(guess)) {
+      swapped <- vapply(inv_known, .vs_swapped, logical(1), nm = nm)
+      if (any(swapped)) guess <- inv_known[swapped][1L]
+    }
+    if (!is.na(guess)) {
+      issues[[paste0("schema_field_", nm)]] <- list(
+        severity = "fatal",
+        message = sprintf(
+          paste0(
+            "unknown structural invariant '%s' (did you mean '%s'?): it ",
+            "would be ignored"
+          ),
+          nm,
+          guess
+        )
+      )
+    }
+  }
+  issues
+}
+
+#' Required columns.
+#' @param dfraw The data.
+#' @param sch The schema.
+#' @return Issues.
+#' @noRd
+.vs_columns <- function(dfraw, sch) {
+  if (is.null(sch$expected_columns)) {
+    return(list())
+  }
+  missing_cols <- setdiff(sch$expected_columns, colnames(dfraw))
+  if (!length(missing_cols)) {
+    return(list())
+  }
+  list(
+    missing_columns = list(
+      severity = "fatal",
+      message = paste0(
+        "Missing required columns: ",
+        paste(missing_cols, collapse = ", ")
+      )
+    )
+  )
+}
+
+#' Row count bounds.
+#' @param dfraw The data.
+#' @param sch The schema.
+#' @return Issues.
+#' @noRd
+.vs_rows <- function(dfraw, sch) {
+  issues <- list()
   inv <- sch$structural_invariants
   if (!is.null(inv$min_data_rows) && nrow(dfraw) < inv$min_data_rows) {
     issues$row_count_low <- list(
       severity = "warning",
       message = sprintf(
         "Row count %d below expected minimum %d",
-        nrow(dfraw), inv$min_data_rows
+        nrow(dfraw),
+        inv$min_data_rows
       )
     )
   }
@@ -931,98 +1156,127 @@ valsch <- function(dfraw, prov) {
       severity = "warning",
       message = sprintf(
         "Row count %d above expected maximum %d",
-        nrow(dfraw), inv$max_data_rows
+        nrow(dfraw),
+        inv$max_data_rows
       )
     )
   }
+  issues
+}
 
-  ## --- Column types ---
-  ## A column that silently changed type (a numeric read back as
-  ## character because one row gained a footnote marker) breaks every
-  ## downstream computation while passing a name-only check.
-  if (!is.null(sch$expected_types)) {
-    for (col in names(sch$expected_types)) {
-      if (!col %in% colnames(dfraw)) next
-      want <- sch$expected_types[[col]]
-      got <- class(dfraw[[col]])[1L]
-      ## integer and double are both "numeric" for this purpose; a
-      ## re-release legitimately widens one to the other.
-      numeric_like <- c("integer", "numeric", "double")
-      ## a factor read back from a CSV is text: "factor" and "character" are one family
-      text_like <- c("character", "factor")
-      same <- identical(got, want) ||
-        (got %in% numeric_like && want %in% numeric_like) ||
-        (got %in% text_like && want %in% text_like)
-      if (!same) {
-        issues[[paste0("type_", col)]] <- list(
-          severity = "warning",
-          message = sprintf(
-            "Column '%s' is %s, expected %s",
-            col, got, want
-          )
-        )
-      }
+#' Column types. A column that silently changed type (a numeric read back as
+#' character because one row gained a footnote marker) breaks every downstream
+#' computation while passing a name-only check.
+#' @param dfraw The data.
+#' @param sch The schema.
+#' @return Issues.
+#' @noRd
+.vs_types <- function(dfraw, sch) {
+  issues <- list()
+  ## integer and double are both "numeric" for this purpose; a re-release
+  ## legitimately widens one to the other.
+  numeric_like <- c("integer", "numeric", "double")
+  ## a factor read back from a CSV is text: "factor" and "character" are one
+  ## family
+  text_like <- c("character", "factor")
+  for (col in intersect(names(sch$expected_types), colnames(dfraw))) {
+    want <- sch$expected_types[[col]]
+    got <- class(dfraw[[col]])[1L]
+    same <- identical(got, want) ||
+      (got %in% numeric_like && want %in% numeric_like) ||
+      (got %in% text_like && want %in% text_like)
+    if (!same) {
+      issues[[paste0("type_", col)]] <- list(
+        severity = "warning",
+        message = sprintf("Column '%s' is %s, expected %s", col, got, want)
+      )
     }
   }
+  issues
+}
 
-  ## --- Numeric ranges ---
-  if (!is.null(sch$numeric_ranges)) {
-    for (col in names(sch$numeric_ranges)) {
-      if (!col %in% colnames(dfraw)) next
-      v <- dfraw[[col]]
-      if (!is.numeric(v)) next
-      ok <- v[!is.na(v)]
-      if (!length(ok)) next
-      rng <- sch$numeric_ranges[[col]]
-      lo <- rng[["min"]]
-      hi <- rng[["max"]]
-      n_out <- sum(ok < lo | ok > hi)
-      if (n_out > 0L) {
-        issues[[paste0("range_", col)]] <- list(
-          severity = "warning",
-          message = sprintf(
-            "Column '%s' has %d value(s) outside [%s, %s]",
-            col, n_out, format(lo), format(hi)
-          )
+#' Numeric ranges.
+#' @param dfraw The data.
+#' @param sch The schema.
+#' @return Issues.
+#' @noRd
+.vs_ranges <- function(dfraw, sch) {
+  issues <- list()
+  for (col in intersect(names(sch$numeric_ranges), colnames(dfraw))) {
+    v <- dfraw[[col]]
+    if (!is.numeric(v)) {
+      next
+    }
+    ok <- v[!is.na(v)]
+    if (!length(ok)) {
+      next
+    }
+    rng <- sch$numeric_ranges[[col]]
+    lo <- rng[["min"]]
+    hi <- rng[["max"]]
+    n_out <- sum(ok < lo | ok > hi)
+    if (n_out > 0L) {
+      issues[[paste0("range_", col)]] <- list(
+        severity = "warning",
+        message = sprintf(
+          "Column '%s' has %d value(s) outside [%s, %s]",
+          col,
+          n_out,
+          format(lo),
+          format(hi)
         )
-      }
+      )
     }
   }
+  issues
+}
 
-  ## --- Missingness ---
-  if (!is.null(sch$max_missing_fraction)) {
-    for (col in names(sch$max_missing_fraction)) {
-      if (!col %in% colnames(dfraw)) next
-      frac <- sum(is.na(dfraw[[col]])) / max(1L, nrow(dfraw))
-      cap <- sch$max_missing_fraction[[col]]
-      if (frac > cap) {
-        issues[[paste0("missing_", col)]] <- list(
-          severity = "warning",
-          message = sprintf(
-            "Column '%s' is %.1f%% missing, above the expected %.1f%%",
-            col, 100 * frac, 100 * cap
-          )
+#' Missingness.
+#' @param dfraw The data.
+#' @param sch The schema.
+#' @return Issues.
+#' @noRd
+.vs_missing <- function(dfraw, sch) {
+  issues <- list()
+  for (col in intersect(names(sch$max_missing_fraction), colnames(dfraw))) {
+    frac <- sum(is.na(dfraw[[col]])) / max(1L, nrow(dfraw))
+    cap <- sch$max_missing_fraction[[col]]
+    if (frac > cap) {
+      issues[[paste0("missing_", col)]] <- list(
+        severity = "warning",
+        message = sprintf(
+          "Column '%s' is %.1f%% missing, above the expected %.1f%%",
+          col,
+          100 * frac,
+          100 * cap
         )
-      }
+      )
     }
   }
+  issues
+}
 
-  ## --- Categorical value sets ---
-  if (!is.null(sch$expected_value_sets)) {
-    for (col in names(sch$expected_value_sets)) {
-      if (!col %in% colnames(dfraw)) next
-      actual_vals <- unique(dfraw[[col]])
-      expected_vals <- sch$expected_value_sets[[col]]
-      unexpected <- setdiff(actual_vals, expected_vals)
-      if (length(unexpected) > 0L) {
-        issues[[paste0("unexpected_", col)]] <- list(
-          severity = "warning",
-          message = sprintf(
-            "Column '%s' has unexpected values: %s",
-            col, paste(unexpected, collapse = ", ")
-          )
+#' Categorical value sets.
+#' @param dfraw The data.
+#' @param sch The schema.
+#' @return Issues.
+#' @noRd
+.vs_value_sets <- function(dfraw, sch) {
+  issues <- list()
+  for (col in intersect(names(sch$expected_value_sets), colnames(dfraw))) {
+    unexpected <- setdiff(
+      unique(dfraw[[col]]),
+      sch$expected_value_sets[[col]]
+    )
+    if (length(unexpected) > 0L) {
+      issues[[paste0("unexpected_", col)]] <- list(
+        severity = "warning",
+        message = sprintf(
+          "Column '%s' has unexpected values: %s",
+          col,
+          paste(unexpected, collapse = ", ")
         )
-      }
+      )
     }
   }
   issues
@@ -1082,53 +1336,116 @@ valsch <- function(dfraw, prov) {
 #' ok
 #'
 #' # rules work the same way
-#' rules <- list(rul("id_positive", function(v) v > 0, col = "id", sev = "fatal"))
+#' rules <- list(rul(
+#'   "id_positive",
+#'   function(v) v > 0,
+#'   col = "id",
+#'   sev = "fatal"
+#' ))
 #' try(schval(data.frame(id = c(1, -2)), rules))
 #'
 #' # a provenance without a schema is refused, not passed
 #' try(schval(data.frame(id = 1), list(scheme = list())))
 #' @export
 schval <- function(dfraw, prov) {
-  if (!is.data.frame(dfraw)) stop("schval: `dfraw` must be a data frame", call. = FALSE)
+  if (!is.data.frame(dfraw)) {
+    stop("schval: `dfraw` must be a data frame", call. = FALSE)
+  }
   if (is.data.frame(prov)) {
-    stop("`prov` must be a provenance list or a list of rules, not a data frame", call. = FALSE)
+    stop(
+      "`prov` must be a provenance list or a list of rules, not a data frame",
+      call. = FALSE
+    )
   }
   is_rule <- vapply(prov, inherits, logical(1), "bricklayer_rule")
-  is_rule_list <- inherits(prov, "bricklayer_rule") || (is.list(prov) && length(prov) && all(is_rule))
-  if (!is_rule_list && is.list(prov) && any(is_rule)) {
-    # a list that mixes rules with anything else (a number, a nested list of rules) would fall
-    # through to valsch() and pass silently; it is neither contract, so it is refused
-    stop(sprintf(paste("`prov` mixes rules with other elements (element %d is not a rule):",
-                       "pass rules only, or a provenance list"), which(!is_rule)[[1L]]), call. = FALSE)
-  }
-  if (!is_rule_list && is.list(prov) && length(prov) && is.null(names(prov))) {
-    stop("`prov` must be a named provenance list (with `schema`) or a list of rules", call. = FALSE)
-  }
-  if (!is_rule_list && !is.null(prov) && !is.list(prov)) {
-    stop("`prov` must be a provenance list or a list of rules", call. = FALSE)
-  }
-  # asked to validate, there must be something to validate against: NULL, an empty list or a
-  # provenance without `schema` (a typo such as `scheme`) returned TRUE having checked nothing
-  # (review of 02a38be, M2)
-  if (is.null(prov) || (is.list(prov) && !length(prov))) {
-    stop("`prov` is empty: there is no schema to validate against (infsch() makes one)", call. = FALSE)
-  }
-  if (!is_rule_list && is.list(prov) && is.null(prov$schema)) {
-    stop(sprintf("`prov` has no `schema` element (it has %s): nothing would be validated",
-                 paste(names(prov), collapse = ", ")), call. = FALSE)
-  }
-  # the same for a schema with no fields: list(schema = list()) returned TRUE (review of e57fed5)
-  if (!is_rule_list && is.list(prov$schema) && !length(prov$schema)) {
-    stop("the schema is empty (list()): there is nothing to validate against (infsch() makes one)",
-         call. = FALSE)
+  is_rule_list <- inherits(prov, "bricklayer_rule") ||
+    (is.list(prov) && length(prov) && all(is_rule))
+  if (is_rule_list) {
+    .sv_check_nonempty(prov)
+  } else {
+    .sv_check_provenance(prov, is_rule)
   }
   issues <- if (is_rule_list) valrules(dfraw, prov) else valsch(dfraw, prov)
   for (nm in names(issues)) {
     iss <- issues[[nm]]
-    if (iss$severity == "fatal") stop(iss$message, call. = FALSE)
+    if (iss$severity == "fatal") {
+      stop(iss$message, call. = FALSE)
+    }
     if (iss$severity == "warning") warning(iss$message, call. = FALSE)
   }
   invisible(length(issues) == 0L)
+}
+
+#' Asked to validate, there must be something to validate against: NULL, an
+#' empty list or a provenance without `schema` (a typo such as `scheme`)
+#' returned TRUE having checked nothing (review of 02a38be, M2).
+#' @param prov As for schval().
+#' @noRd
+.sv_check_nonempty <- function(prov) {
+  if (is.null(prov) || (is.list(prov) && !length(prov))) {
+    stop(
+      "`prov` is empty: there is no schema to validate against ",
+      "(infsch() makes one)",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' schval()'s `prov` when it is not a list of rules: a named provenance list
+#' with a non-empty schema.
+#' @param prov As for schval().
+#' @param is_rule Which elements are rules.
+#' @noRd
+.sv_check_provenance <- function(prov, is_rule) {
+  if (is.list(prov) && any(is_rule)) {
+    # a list that mixes rules with anything else (a number, a nested list of
+    # rules) would fall through to valsch() and pass silently; it is neither
+    # contract, so it is refused
+    stop(
+      sprintf(
+        paste(
+          "`prov` mixes rules with other elements (element %d is not a rule):",
+          "pass rules only, or a provenance list"
+        ),
+        which(!is_rule)[[1L]]
+      ),
+      call. = FALSE
+    )
+  }
+  if (is.list(prov) && length(prov) && is.null(names(prov))) {
+    stop(
+      "`prov` must be a named provenance list (with `schema`) or a list ",
+      "of rules",
+      call. = FALSE
+    )
+  }
+  if (!is.null(prov) && !is.list(prov)) {
+    stop("`prov` must be a provenance list or a list of rules", call. = FALSE)
+  }
+  .sv_check_nonempty(prov)
+  if (is.list(prov) && is.null(prov$schema)) {
+    stop(
+      sprintf(
+        paste0(
+          "`prov` has no `schema` element (it has %s): nothing would be ",
+          "validated"
+        ),
+        paste(names(prov), collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+  # the same for a schema with no fields: list(schema = list()) returned TRUE
+  # (review of e57fed5)
+  if (is.list(prov$schema) && !length(prov$schema)) {
+    stop(
+      "the schema is empty (list()): there is nothing to validate ",
+      "against (infsch() makes one)",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
 }
 
 ## ----- Socrata + ArcGIS resolvers (same contract as rslvckan) -----
@@ -1184,7 +1501,12 @@ rslvsoc <- function(prov) {
   if (is.null(prov)) {
     return(NULL)
   }
-  if (!is.list(prov)) stop("rslvsoc: `prov` must be a provenance list (loadprov())", call. = FALSE)
+  if (!is.list(prov)) {
+    stop(
+      "rslvsoc: `prov` must be a provenance list (loadprov())",
+      call. = FALSE
+    )
+  }
   domain <- prov$dataset$socrata_domain
   id <- prov$dataset$socrata_id
   if (is.null(domain) || is.null(id)) {
@@ -1192,7 +1514,10 @@ rslvsoc <- function(prov) {
   }
   base <- .rmbl_check_public_url(paste0("https://", domain), "socrata_domain")
   meta_url <- paste0(base, "/api/views/", id, ".json")
-  meta <- tryCatch(.rmbl_read_json(meta_url, strict = FALSE), error = function(e) NULL)
+  meta <- tryCatch(
+    .rmbl_read_json(meta_url, strict = FALSE),
+    error = function(e) NULL
+  )
   if (is.null(meta) || is.null(meta$id)) {
     return(NULL)
   }
@@ -1252,13 +1577,19 @@ rslvarc <- function(prov) {
   if (is.null(prov)) {
     return(NULL)
   }
-  if (!is.list(prov)) stop("rslvarc: `prov` must be a provenance list (loadprov())", call. = FALSE)
+  if (!is.list(prov)) {
+    stop(
+      "rslvarc: `prov` must be a provenance list (loadprov())",
+      call. = FALSE
+    )
+  }
   layer <- prov$dataset$arcgis_layer_url
   if (is.null(layer)) {
     return(NULL)
   }
   layer <- .rmbl_check_public_url(sub("/+$", "", layer), "arcgis_layer_url")
-  meta <- tryCatch(.rmbl_read_json(paste0(layer, "?f=json"), strict = FALSE),
+  meta <- tryCatch(
+    .rmbl_read_json(paste0(layer, "?f=json"), strict = FALSE),
     error = function(e) NULL
   )
   if (is.null(meta) || !is.null(meta$error) || is.null(meta$name)) {

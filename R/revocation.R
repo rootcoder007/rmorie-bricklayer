@@ -89,20 +89,28 @@
 #' res$checks
 #' @export
 rvkfetch <- function(path, tmout = 10) {
-  if (!is.list(path) || !length(path) ||
-      !all(vapply(path, function(p) is.list(p) && is.raw(p$der), logical(1)))) {
-    stop("`path` must be a non-empty list of parsed certificates (certprs())",
-         call. = FALSE)
+  if (
+    !is.list(path) ||
+      !length(path) ||
+      !all(vapply(path, function(p) is.list(p) && is.raw(p$der), logical(1)))
+  ) {
+    stop(
+      "`path` must be a non-empty list of parsed certificates (certprs())",
+      call. = FALSE
+    )
   }
   tmout <- .rmbl_num(tmout, "tmout")[1L]
-  if (is.na(tmout) || tmout <= 0) stop("`tmout` must be positive", call. = FALSE)
+  if (is.na(tmout) || tmout <= 0) {
+    stop("`tmout` must be positive", call. = FALSE)
+  }
   .rmbl_revocation_fetch(path, tmout)
 }
 
 #' Fetches the CRLs and asks the OCSP responders named in a certificate path.
 #' @param path The certificate path, leaf first, as parsed by certprs().
 #' @param timeout The network timeout in seconds.
-#' @return A list with the fetched `crls`, an `ok` flag per check and the `notes`.
+#' @return A list with the fetched `crls`, an `ok` flag per check and the
+#'   `notes`.
 #' @noRd
 .rmbl_revocation_fetch <- function(path, timeout = 10) {
   crls <- list()
@@ -110,8 +118,15 @@ rvkfetch <- function(path, tmout = 10) {
   acc$notes <- list()
   acc$ok <- logical(0)
   add <- function(name, good, detail) {
-    # one certificate can carry several CRL or OCSP URLs: number repeats so none is overwritten
-    if (!is.null(acc$notes[[name]])) name <- sprintf("%s #%d", name, sum(startsWith(names(acc$notes), name)) + 1L)
+    # one certificate can carry several CRL or OCSP URLs: number repeats so none
+    # is overwritten
+    if (!is.null(acc$notes[[name]])) {
+      name <- sprintf(
+        "%s #%d",
+        name,
+        sum(startsWith(names(acc$notes), name)) + 1L
+      )
+    }
     acc$notes[[name]] <- detail
     acc$ok <- c(acc$ok, isTRUE(good))
   }
@@ -120,17 +135,25 @@ rvkfetch <- function(path, tmout = 10) {
     for (url in .rmbl_crl_urls(cert)) {
       got <- .rmbl_http_der(url, timeout)
       if (is.null(got)) {
-        add(sprintf("crl fetch [%d]", i), FALSE,
-            sprintf("could not retrieve %s", url))
+        add(
+          sprintf("crl fetch [%d]", i),
+          FALSE,
+          sprintf("could not retrieve %s", url)
+        )
       } else {
         crls[[length(crls) + 1L]] <- got
-        add(sprintf("crl fetch [%d]", i), TRUE,
-            sprintf("%d bytes from %s", length(got), url))
+        add(
+          sprintf("crl fetch [%d]", i),
+          TRUE,
+          sprintf("%d bytes from %s", length(got), url)
+        )
       }
     }
     # OCSP needs the issuer, so the last certificate in the path has
     # nobody to ask about it
-    if (i >= length(path)) next
+    if (i >= length(path)) {
+      next
+    }
     issuer <- path[[i + 1L]]
     for (url in .rmbl_ocsp_urls(cert)) {
       res <- .rmbl_ocsp_query(cert, issuer, url, path, timeout)
@@ -166,21 +189,32 @@ rvkfetch <- function(path, tmout = 10) {
 .rmbl_ext_urls <- function(cert, oid, method) {
   der <- cert$der
   top <- tryCatch(.Call(C_rmbl_der_parse, der), error = function(e) NULL)
-  if (is.null(top) || !length(top$children)) return(character(0))
+  if (is.null(top) || !length(top$children)) {
+    return(character(0))
+  }
   k <- top$children[[1]]$children
   ext <- NULL
   for (nd in k) {
     if (identical(nd$class, 2L) && identical(nd$tag, 3)) ext <- nd
   }
-  if (is.null(ext) || !length(ext$children)) return(character(0))
+  if (is.null(ext) || !length(ext$children)) {
+    return(character(0))
+  }
   urls <- character(0)
   for (e in ext$children[[1]]$children) {
-    if (length(e$children) < 2L) next
-    if (!identical(.rmbl_oid_string(e$children[[1]]$value), oid)) next
+    if (length(e$children) < 2L) {
+      next
+    }
+    if (!identical(.rmbl_oid_string(e$children[[1]]$value), oid)) {
+      next
+    }
     inner <- tryCatch(
       .Call(C_rmbl_der_parse, e$children[[length(e$children)]]$value),
-      error = function(z) NULL)
-    if (is.null(inner)) next
+      error = function(z) NULL
+    )
+    if (is.null(inner)) {
+      next
+    }
     urls <- c(urls, .rmbl_collect_uris(inner, method))
   }
   # only http; a verifier that followed ldap or file URLs from a
@@ -199,17 +233,24 @@ rvkfetch <- function(path, tmout = 10) {
 #' @noRd
 .rmbl_collect_uris <- function(nd, method = NULL) {
   out <- character(0)
-  if (!is.null(method) && isTRUE(nd$constructed) &&
+  if (
+    !is.null(method) &&
+      isTRUE(nd$constructed) &&
       length(nd$children) >= 2L &&
       identical(nd$children[[1]]$tag, 6) &&
-      identical(.rmbl_oid_string(nd$children[[1]]$value), method)) {
+      identical(.rmbl_oid_string(nd$children[[1]]$value), method)
+  ) {
     tail <- nd$children[[2]]
     if (identical(tail$class, 2L) && identical(tail$tag, 6)) {
       return(.rmbl_raw_text(tail$value))
     }
   }
-  if (identical(nd$class, 2L) && identical(nd$tag, 6) &&
-      !isTRUE(nd$constructed) && is.null(method)) {
+  if (
+    identical(nd$class, 2L) &&
+      identical(nd$tag, 6) &&
+      !isTRUE(nd$constructed) &&
+      is.null(method)
+  ) {
     return(.rmbl_raw_text(nd$value))
   }
   for (kid in nd$children) {
@@ -241,9 +282,12 @@ rvkfetch <- function(path, tmout = 10) {
   # and RFC 5280 use for OCSP and CRL distribution (the answers are
   # signed, so the transport adds nothing); the private-address and
   # local-name refusals still apply.
-  if (is.null(tryCatch(.rmbl_check_public_url(url, "the CRL/OCSP URL",
-                                              allow_http = TRUE),
-                       error = function(e) NULL))) {
+  if (
+    is.null(tryCatch(
+      .rmbl_check_public_url(url, "the CRL/OCSP URL", allow_http = TRUE),
+      error = function(e) NULL
+    ))
+  ) {
     return(NULL)
   }
   got <- .rmbl_net_get_file(url, no_fallback, tmp, timeout)
@@ -252,15 +296,16 @@ rvkfetch <- function(path, tmout = 10) {
   }
   b <- readBin(tmp, "raw", file.size(tmp))
   # a PEM CRL is as likely as a DER one
-  txt <- tryCatch(rawToChar(b[seq_len(min(64L, length(b)))]),
-                  error = function(e) "")
+  txt <- tryCatch(
+    rawToChar(b[seq_len(min(64L, length(b)))]),
+    error = function(e) ""
+  )
   if (grepl("-----BEGIN", txt, fixed = TRUE)) {
     all_txt <- rawToChar(b)
     body <- sub(".*-----BEGIN[^-]*-----", "", all_txt)
     body <- sub("-----END.*", "", body)
     body <- gsub("[\r\n[:space:]]", "", body)
-    return(tryCatch(jsb64dec(body),
-                    error = function(e) NULL))
+    return(tryCatch(jsb64dec(body), error = function(e) NULL))
   }
   b
 }
@@ -275,9 +320,13 @@ rvkfetch <- function(path, tmout = 10) {
 #' @return The fetch result, or NULL on error.
 #' @noRd
 .rmbl_net_get_file <- function(url, fallback, tmp, timeout) {
-  tryCatch(.bl_net(url, .Call(C_rmbl_fetch_fallback, url, fallback, tmp,
-                              as.integer(timeout), "")),
-           error = function(e) NULL)
+  tryCatch(
+    .bl_net(
+      url,
+      .Call(C_rmbl_fetch_fallback, url, fallback, tmp, as.integer(timeout), "")
+    ),
+    error = function(e) NULL
+  )
 }
 
 #' Posts a body to a URL.
@@ -288,9 +337,21 @@ rvkfetch <- function(path, tmout = 10) {
 #' @return The response, with its `status` and `body`, or NULL on error.
 #' @noRd
 .rmbl_net_post <- function(url, body, content_type, timeout) {
-  tryCatch(.bl_net(url, .Call(C_rmbl_http_post, url, body, content_type,
-                              as.integer(timeout), NULL, FALSE)),
-           error = function(e) NULL)
+  tryCatch(
+    .bl_net(
+      url,
+      .Call(
+        C_rmbl_http_post,
+        url,
+        body,
+        content_type,
+        as.integer(timeout),
+        NULL,
+        FALSE
+      )
+    ),
+    error = function(e) NULL
+  )
 }
 
 # ---------------------------------------------------------------- #
@@ -337,7 +398,9 @@ rvkfetch <- function(path, tmout = 10) {
     }
     for (i in seq_along(chunks)) {
       b <- chunks[i]
-      if (i < length(chunks)) b <- b + 128L
+      if (i < length(chunks)) {
+        b <- b + 128L
+      }
       rest <- c(rest, as.raw(b))
     }
   }
@@ -357,15 +420,25 @@ rvkfetch <- function(path, tmout = 10) {
 .rmbl_ocsp_certid <- function(cert, issuer) {
   top <- .Call(C_rmbl_der_parse, cert$der)
   k <- top$children[[1]]$children
-  off <- if (length(k) && identical(k[[1]]$class, 2L) &&
-             identical(k[[1]]$tag, 0)) 1L else 0L
+  off <- if (
+    length(k) && identical(k[[1]]$class, 2L) && identical(k[[1]]$tag, 0)
+  ) {
+    1L
+  } else {
+    0L
+  }
   iss <- k[[off + 3L]]
   issuer_der <- cert$der[(iss$start + 1L):(iss$offset + iss$length)]
 
   itop <- .Call(C_rmbl_der_parse, issuer$der)
   ik <- itop$children[[1]]$children
-  ioff <- if (length(ik) && identical(ik[[1]]$class, 2L) &&
-              identical(ik[[1]]$tag, 0)) 1L else 0L
+  ioff <- if (
+    length(ik) && identical(ik[[1]]$class, 2L) && identical(ik[[1]]$tag, 0)
+  ) {
+    1L
+  } else {
+    0L
+  }
   spki <- ik[[ioff + 6L]]
   bits <- spki$children[[2]]$value
   keybytes <- if (length(bits) > 1L) bits[-1] else raw(0)
@@ -377,11 +450,14 @@ rvkfetch <- function(path, tmout = 10) {
     serial_raw <- c(as.raw(0), serial_raw)
   }
   .rmbl_der_seq(
-    .rmbl_der_seq(.rmbl_der_oid_bytes("1.3.14.3.2.26"),
-                  .rmbl_der_tlv(0x05, raw(0))),
+    .rmbl_der_seq(
+      .rmbl_der_oid_bytes("1.3.14.3.2.26"),
+      .rmbl_der_tlv(0x05, raw(0))
+    ),
     .rmbl_der_tlv(0x04, .Call(C_rmbl_sha1, issuer_der)),
     .rmbl_der_tlv(0x04, .Call(C_rmbl_sha1, keybytes)),
-    .rmbl_der_tlv(0x02, serial_raw))
+    .rmbl_der_tlv(0x02, serial_raw)
+  )
 }
 
 #' Builds a DER OCSP request for one certificate.
@@ -391,7 +467,8 @@ rvkfetch <- function(path, tmout = 10) {
 #' @noRd
 .rmbl_ocsp_request <- function(cert, issuer) {
   req <- .rmbl_der_seq(.rmbl_der_seq(.rmbl_der_seq(
-    .rmbl_ocsp_certid(cert, issuer))))
+    .rmbl_ocsp_certid(cert, issuer)
+  )))
   .rmbl_der_seq(req)
 }
 
@@ -404,8 +481,7 @@ rvkfetch <- function(path, tmout = 10) {
 #' @return A list with `ok` and a `detail` sentence.
 #' @noRd
 .rmbl_ocsp_query <- function(cert, issuer, url, path, timeout = 10) {
-  req <- tryCatch(.rmbl_ocsp_request(cert, issuer),
-                  error = function(e) NULL)
+  req <- tryCatch(.rmbl_ocsp_request(cert, issuer), error = function(e) NULL)
   if (is.null(req)) {
     return(list(ok = FALSE, detail = "could not build an OCSP request"))
   }
@@ -414,8 +490,7 @@ rvkfetch <- function(path, tmout = 10) {
   # against most responders, which refuse GET.
   body <- NULL
   res <- .rmbl_net_post(url, req, "application/ocsp-request", timeout)
-  if (!is.null(res) && identical(res$status, 200L) &&
-      length(res$body) > 0L) {
+  if (!is.null(res) && identical(res$status, 200L) && length(res$body) > 0L) {
     body <- res$body
   }
   if (is.null(body)) {
@@ -424,9 +499,10 @@ rvkfetch <- function(path, tmout = 10) {
     body <- .rmbl_http_der(full, timeout)
   }
   if (is.null(body)) {
-    return(list(ok = FALSE,
-                detail = sprintf("no answer from %s over POST or GET",
-                                 url)))
+    return(list(
+      ok = FALSE,
+      detail = sprintf("no answer from %s over POST or GET", url)
+    ))
   }
   .rmbl_ocsp_parse(body, cert, path)
 }
@@ -437,10 +513,16 @@ rvkfetch <- function(path, tmout = 10) {
 #' @noRd
 .rmbl_url_encode <- function(x) {
   chars <- strsplit(x, "", fixed = TRUE)[[1]]
-  out <- vapply(chars, function(ch) {
-    if (grepl("[A-Za-z0-9._~-]", ch)) return(ch)
-    sprintf("%%%02X", as.integer(charToRaw(ch)))
-  }, character(1))
+  out <- vapply(
+    chars,
+    function(ch) {
+      if (grepl("[A-Za-z0-9._~-]", ch)) {
+        return(ch)
+      }
+      sprintf("%%%02X", as.integer(charToRaw(ch)))
+    },
+    character(1)
+  )
   paste(out, collapse = "")
 }
 
@@ -454,7 +536,8 @@ rvkfetch <- function(path, tmout = 10) {
 #' @param body The answer as raw DER.
 #' @param cert The parsed certificate asked about.
 #' @param path The certificate path, whose certificates may sign the answer.
-#' @return A list with `ok` (TRUE only for a signed \code{"good"}) and a `detail` sentence.
+#' @return A list with `ok` (TRUE only for a signed \code{"good"}) and a
+#'   `detail` sentence.
 #' @noRd
 .rmbl_ocsp_parse <- function(body, cert, path) {
   d <- tryCatch(.Call(C_rmbl_der_parse, body), error = function(e) NULL)
@@ -463,12 +546,23 @@ rvkfetch <- function(path, tmout = 10) {
   }
   status <- .rmbl_int_of(d$children[[1]]$value)
   if (!identical(status, 0L)) {
-    labels <- c("malformedRequest", "internalError", "tryLater", "",
-                "sigRequired", "unauthorized")
-    nm <- if (status >= 1L && status <= 6L) labels[status] else
+    labels <- c(
+      "malformedRequest",
+      "internalError",
+      "tryLater",
+      "",
+      "sigRequired",
+      "unauthorized"
+    )
+    nm <- if (status >= 1L && status <= 6L) {
+      labels[status]
+    } else {
       as.character(status)
-    return(list(ok = FALSE,
-                detail = sprintf("the responder answered '%s'", nm)))
+    }
+    return(list(
+      ok = FALSE,
+      detail = sprintf("the responder answered '%s'", nm)
+    ))
   }
   # responseBytes ::= [0] EXPLICIT SEQUENCE { responseType OID,
   #                                            response OCTET STRING }
@@ -477,27 +571,29 @@ rvkfetch <- function(path, tmout = 10) {
   # so it has to be parsed again. Walking the outer tree looking for it
   # finds nothing, which is exactly what happened the first time.
   oct <- .rmbl_der_find(d, function(nd) {
-    identical(nd$class, 0L) && identical(nd$tag, 4) &&
-      length(nd$value) > 8L
+    identical(nd$class, 0L) && identical(nd$tag, 4) && length(nd$value) > 8L
   })
   if (is.null(oct)) {
-    return(list(ok = FALSE,
-                detail = "the answer carries no response bytes"))
+    return(list(ok = FALSE, detail = "the answer carries no response bytes"))
   }
   inner_src <- oct$value
-  basic <- tryCatch(.Call(C_rmbl_der_parse, inner_src),
-                    error = function(e) NULL)
-  if (is.null(basic) || length(basic$children) < 3L ||
+  basic <- tryCatch(.Call(C_rmbl_der_parse, inner_src), error = function(e) {
+    NULL
+  })
+  if (
+    is.null(basic) ||
+      length(basic$children) < 3L ||
       !isTRUE(basic$children[[1]]$constructed) ||
-      !identical(basic$children[[3]]$tag, 3)) {
-    return(list(ok = FALSE,
-                detail = "no BasicOCSPResponse in the answer"))
+      !identical(basic$children[[3]]$tag, 3)
+  ) {
+    return(list(ok = FALSE, detail = "no BasicOCSPResponse in the answer"))
   }
   tbs <- basic$children[[1]]
   # find the single response's certStatus: [0] good, [1] revoked,
   # [2] unknown
   single <- .rmbl_der_find(tbs, function(nd) {
-    isTRUE(nd$constructed) && identical(nd$tag, 16) &&
+    isTRUE(nd$constructed) &&
+      identical(nd$tag, 16) &&
       length(nd$children) >= 2L &&
       isTRUE(nd$children[[1]]$constructed) &&
       length(nd$children[[1]]$children) >= 4L &&
@@ -507,24 +603,28 @@ rvkfetch <- function(path, tmout = 10) {
     return(list(ok = FALSE, detail = "no SingleResponse in the answer"))
   }
   st <- single$children[[2]]
-  state <- if (identical(st$class, 2L) && identical(st$tag, 0)) "good"
-    else if (identical(st$class, 2L) && identical(st$tag, 1)) "revoked"
-    else "unknown"
+  state <- if (identical(st$class, 2L) && identical(st$tag, 0)) {
+    "good"
+  } else if (identical(st$class, 2L) && identical(st$tag, 1)) {
+    "revoked"
+  } else {
+    "unknown"
+  }
 
   # The answer is only worth anything if it is signed by someone the
   # path vouches for. An unverified "good" is worse than no check: it
   # looks like one happened.
   sig_ok <- .rmbl_ocsp_verify_sig(basic, path, inner_src)
   if (!sig_ok$ok) {
-    return(list(ok = FALSE,
-                detail = sprintf("the responder said '%s' but %s", state,
-                                 sig_ok$detail)))
+    return(list(
+      ok = FALSE,
+      detail = sprintf("the responder said '%s' but %s", state, sig_ok$detail)
+    ))
   }
   if (identical(state, "good")) {
     return(list(ok = TRUE, detail = "the responder says good, signed"))
   }
-  list(ok = FALSE,
-       detail = sprintf("the responder says %s, signed", state))
+  list(ok = FALSE, detail = sprintf("the responder says %s, signed", state))
 }
 
 #' Verifies a BasicOCSPResponse's signature under a certificate in the path.
@@ -541,23 +641,32 @@ rvkfetch <- function(path, tmout = 10) {
     return(list(ok = FALSE, detail = "it carries no signature"))
   }
   sig <- sig_bits[-1]
-  oid <- if (length(alg$children)) .rmbl_oid_string(alg$children[[1]]$value)
-    else NA_character_
+  oid <- if (length(alg$children)) {
+    .rmbl_oid_string(alg$children[[1]]$value)
+  } else {
+    NA_character_
+  }
   name <- .rmbl_x509_sigalg_name(oid)
-  dalg <- if (grepl("SHA256", name)) "sha256" else
-    if (grepl("SHA384", name)) "sha384" else
-      if (grepl("SHA512", name)) "sha512" else NA_character_
+  dalg <- if (grepl("SHA256", name)) {
+    "sha256"
+  } else if (grepl("SHA384", name)) {
+    "sha384"
+  } else if (grepl("SHA512", name)) {
+    "sha512"
+  } else {
+    NA_character_
+  }
   if (is.na(dalg)) {
-    return(list(ok = FALSE,
-                detail = sprintf("it is signed with %s, which is not verified here",
-                                 name)))
+    return(list(
+      ok = FALSE,
+      detail = sprintf("it is signed with %s, which is not verified here", name)
+    ))
   }
   # the bytes signed are the DER of tbsResponseData, exactly as they
   # arrived
   tbs <- .rmbl_node_bytes(tbs_nd, src)
   if (is.null(tbs)) {
-    return(list(ok = FALSE,
-                detail = "the signed bytes could not be isolated"))
+    return(list(ok = FALSE, detail = "the signed bytes could not be isolated"))
   }
   # A responder may sign with a certificate the path issued, carried in
   # the answer; otherwise it must be one already in the path. The
@@ -566,16 +675,21 @@ rvkfetch <- function(path, tmout = 10) {
   # for a [0] lands on nextUpdate inside the SingleResponse first.
   candidates <- path
   embedded <- if (length(basic$children) >= 4L) basic$children[[4]] else NULL
-  if (!is.null(embedded) && !(identical(embedded$class, 2L) &&
-                              identical(embedded$tag, 0) &&
-                              isTRUE(embedded$constructed))) {
+  if (
+    !is.null(embedded) &&
+      !(identical(embedded$class, 2L) &&
+        identical(embedded$tag, 0) &&
+        isTRUE(embedded$constructed))
+  ) {
     embedded <- NULL
   }
   if (!is.null(embedded)) {
     for (c1 in embedded$children) {
       for (c2 in c1$children) {
         b <- .rmbl_node_bytes(c2, src)
-        if (is.null(b)) next
+        if (is.null(b)) {
+          next
+        }
         pc <- tryCatch(certprs(b), error = function(e) NULL)
         if (!is.null(pc)) candidates <- c(list(pc), candidates)
       }
@@ -584,23 +698,36 @@ rvkfetch <- function(path, tmout = 10) {
   for (cand in candidates) {
     key <- cand$key
     if (identical(key$type, "RSA")) {
-      em <- tryCatch(.Call(C_rmbl_rsa_recover, sig, key$modulus,
-                           key$exponent), error = function(e) NULL)
+      em <- tryCatch(
+        .Call(C_rmbl_rsa_recover, sig, key$modulus, key$exponent),
+        error = function(e) NULL
+      )
       if (!is.null(em) && isTRUE(.rmbl_pkcs1_check(em, dalg, tbs)$ok)) {
         return(list(ok = TRUE, detail = "signed"))
       }
     } else if (identical(key$type, "EC") && !is.null(key$x)) {
       rs <- .rmbl_ecdsa_rs(sig)
       if (!is.null(rs)) {
-        v <- tryCatch(.Call(C_rmbl_ecdsa_verify, key$curve, key$x, key$y,
-                            rs$r, rs$s, .rmbl_ts_digest(dalg, tbs)),
-                      error = function(e) FALSE)
+        v <- tryCatch(
+          .Call(
+            C_rmbl_ecdsa_verify,
+            key$curve,
+            key$x,
+            key$y,
+            rs$r,
+            rs$s,
+            .rmbl_ts_digest(dalg, tbs)
+          ),
+          error = function(e) FALSE
+        )
         if (isTRUE(v)) return(list(ok = TRUE, detail = "signed"))
       }
     }
   }
-  list(ok = FALSE,
-       detail = "its signature does not verify under any certificate in the path")
+  list(
+    ok = FALSE,
+    detail = "its signature does not verify under any certificate in the path"
+  )
 }
 
 #' Slices a parsed node's exact DER out of its source.
@@ -615,9 +742,13 @@ rvkfetch <- function(path, tmout = 10) {
 #' @return The node's bytes, or NULL when they are out of range.
 #' @noRd
 .rmbl_node_bytes <- function(nd, src) {
-  if (is.null(nd) || is.null(src)) return(NULL)
+  if (is.null(nd) || is.null(src)) {
+    return(NULL)
+  }
   from <- nd$start + 1L
   to <- nd$offset + nd$length
-  if (from < 1L || to > length(src) || to < from) return(NULL)
+  if (from < 1L || to > length(src) || to < from) {
+    return(NULL)
+  }
   src[from:to]
 }

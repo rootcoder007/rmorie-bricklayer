@@ -10,12 +10,25 @@
 # accident twice: that a pre-hashed signature is NOT interchangeable
 # with a pure one, and that mu is not a bare digest.
 
-PREHASHES <- c("sha224", "sha256", "sha384", "sha512", "sha512_224", "sha512_256",
-               "sha3_224", "sha3_256", "sha3_384", "sha3_512", "shake128", "shake256")
+PREHASHES <- c(
+  "sha224",
+  "sha256",
+  "sha384",
+  "sha512",
+  "sha512_224",
+  "sha512_256",
+  "sha3_224",
+  "sha3_256",
+  "sha3_384",
+  "sha3_512",
+  "shake128",
+  "shake256"
+)
 
 test_that("a pre-hashed signature round-trips for each pre-hash", {
   for (scheme in c(
-    "ML-DSA-44", "SLH-DSA-SHAKE-128f",
+    "ML-DSA-44",
+    "SLH-DSA-SHAKE-128f",
     "SLH-DSA-SHA2-128f"
   )) {
     key <- fipskg(scheme)
@@ -23,20 +36,17 @@ test_that("a pre-hashed signature round-trips for each pre-hash", {
     for (ph in PREHASHES) {
       sig <- cpssign("a manifest digest", key, prehash = ph)
       expect_identical(sig$prehash, ph, info = paste(scheme, ph))
-      expect_true(cpsvrf("a manifest digest", sig, pub),
+      expect_true(
+        cpsvrf("a manifest digest", sig, pub),
         info = paste(scheme, ph)
       )
       # the pre-hash is recorded, so verification needs no extra
       # argument -- but stating the wrong one must fail
       expect_false(
-        cpsvrf("a manifest digest", sig, pub,
-          prehash = "none"
-        ),
+        cpsvrf("a manifest digest", sig, pub, prehash = "none"),
         info = paste(scheme, ph)
       )
-      expect_false(cpsvrf("another digest", sig, pub),
-        info = paste(scheme, ph)
-      )
+      expect_false(cpsvrf("another digest", sig, pub), info = paste(scheme, ph))
     }
   }
 })
@@ -73,14 +83,8 @@ test_that("a pre-hashed signature still respects the context", {
   expect_false(cpsvrf("m", sig, key, ctx = "staging"))
   expect_false(cpsvrf("m", sig, key))
   # the deterministic variant is deterministic here too
-  d1 <- cpssign("m", key,
-    ctx = "release", prehash = "sha512",
-    determ = TRUE
-  )
-  d2 <- cpssign("m", key,
-    ctx = "release", prehash = "sha512",
-    determ = TRUE
-  )
+  d1 <- cpssign("m", key, ctx = "release", prehash = "sha512", determ = TRUE)
+  d2 <- cpssign("m", key, ctx = "release", prehash = "sha512", determ = TRUE)
   expect_identical(d1$signature, d2$signature)
 })
 
@@ -90,7 +94,8 @@ test_that("an unknown pre-hash is refused", {
   expect_error(cpssign("m", key, prehash = "sha1"), "must be one of")
   # partial matching is match.arg's, so an unambiguous prefix is fine
   expect_true(cpsvrf(
-    "m", cpssign("m", key, prehash = "shake2"),
+    "m",
+    cpssign("m", key, prehash = "shake2"),
     key
   ))
 })
@@ -114,16 +119,11 @@ test_that("external mu signs without the message and agrees with it", {
   expect_true(fipsvrfmu(key, mu, sig))
   expect_true(fipsvrfmu(pub, mu, sig))
   # the result is an ordinary signature: verifying from the message works
-  expect_true(cpsvrf("a manifest digest", sig, pub,
-    ctx = "release"
-  ))
+  expect_true(cpsvrf("a manifest digest", sig, pub, ctx = "release"))
   expect_false(cpsvrf("a manifest digest", sig, pub))
 
   # and the ordinary path produces a signature the mu path verifies
-  det <- cpssign("a manifest digest", key,
-    ctx = "release",
-    determ = TRUE
-  )
+  det <- cpssign("a manifest digest", key, ctx = "release", determ = TRUE)
   expect_true(fipsvrfmu(pub, mu, det))
   expect_identical(
     fipssignmu(key, mu, determ = TRUE)$signature,

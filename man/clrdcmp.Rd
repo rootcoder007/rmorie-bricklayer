@@ -60,16 +60,15 @@ the within-part change, and says whether the comparison is a reversal.
 }
 \details{
 With part rates \eqn{r_g} and denominator shares \eqn{w_g}, the
-aggregate is \eqn{R = \sum_g w_g r_g}. Kitagawa's symmetric
-decomposition writes the change between comparisons A and B as
-\deqn{R_B - R_A = \sum_g \bar w_g (r_{gB} - r_{gA}) + \sum_g \bar r_g (w_{gB} - w_{gA}),}
-with \eqn{\bar w_g} and \eqn{\bar r_g} the averages over A and B: the
-first sum is the rate effect (the change the aggregate would show with
-the mix held at its average), the second the mix effect. The two add to
-the observed change with no residual. Because the shares' changes add to
-zero, each part's mix term is reported as
-\eqn{(\bar r_g - \bar R)(w_{gB} - w_{gA})}, centred on the average
-aggregate rate \eqn{\bar R}: the total is the same, and a part's term
+aggregate is \eqn{R = \sum_g w_g r_g}. Kitagawa's symmetric decomposition
+writes the change between comparisons A and B as \deqn{R_B - R_A = \sum_g
+\bar w_g (r_{gB} - r_{gA}) + \sum_g \bar r_g (w_{gB} - w_{gA}),} with
+\eqn{\bar w_g} and \eqn{\bar r_g} the averages over A and B: the first sum is
+the rate effect (the change the aggregate would show with the mix held at its
+average), the second the mix effect. The two add to the observed change with
+no residual. Because the shares' changes add to zero, each part's mix term is
+reported as \eqn{(\bar r_g - \bar R)(w_{gB} - w_{gA})}, centred on the
+average aggregate rate \eqn{\bar R}: the total is the same, and a part's term
 is negative when work moved toward a part that clears below average.
 
 The within-part change is estimated by the Mantel-Haenszel rate ratio,
@@ -90,8 +89,11 @@ rates only within comparable mixes.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-g <- read.csv(system.file("extdata", "ocj_offence_groups.csv",
-                          package = "rmoriebricklayer"))
+g <- read.csv(system.file(
+  "extdata",
+  "ocj_offence_groups.csv",
+  package = "rmoriebricklayer"
+))
 g <- g[g$year \%in\% c(2014, 2022), ]
 cd <- clrdcmp(g$disposed, g$received, g$offence_group, g$year)
 cd
@@ -99,10 +101,12 @@ plot(cd)
 
 # Simpson's paradox in four numbers: each part clears better in B, yet the
 # aggregate falls, because B's workload moved to the part that clears less
-toy <- clrdcmp(num = c(90, 20, 19, 60),
-                               den = c(100, 50, 20, 140),
-                               grp = c("minor", "serious", "minor", "serious"),
-                               cmp = c("A", "A", "B", "B"))
+toy <- clrdcmp(
+  num = c(90, 20, 19, 60),
+  den = c(100, 50, 20, 140),
+  grp = c("minor", "serious", "minor", "serious"),
+  cmp = c("A", "A", "B", "B")
+)
 toy
 
 # every part must appear in both comparisons

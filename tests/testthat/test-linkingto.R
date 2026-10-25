@@ -9,8 +9,8 @@
 # half checked -- and bricklayer exists to be reached this way, so the
 # sibling packages are the ones that would find out.
 
-# The consumer the first test builds is reused by the second (the interrupt probe), which
-# removes both directories when it is done.
+# The consumer the first test builds is reused by the second (the interrupt
+# probe), which removes both directories when it is done.
 consumer_dir <- file.path(tempdir(), paste0("rmblconsume", Sys.getpid()))
 consumer_lib <- file.path(tempdir(), paste0("rmbllib", Sys.getpid()))
 
@@ -31,10 +31,11 @@ test_that("every published kernel compiles and resolves from a consumer", {
   skip_if(!nzchar(Sys.which("R")), "no R on the path")
   inc <- system.file("include", package = "rmoriebricklayer")
   skip_if(
-    !nzchar(inc) || !file.exists(file.path(
-      inc,
-      "rmoriebricklayer.h"
-    )),
+    !nzchar(inc) ||
+      !file.exists(file.path(
+        inc,
+        "rmoriebricklayer.h"
+      )),
     "package not installed with its include directory"
   )
 
@@ -42,25 +43,28 @@ test_that("every published kernel compiles and resolves from a consumer", {
   dir.create(file.path(dir, "src"), recursive = TRUE, showWarnings = FALSE)
   dir.create(file.path(dir, "R"), recursive = TRUE, showWarnings = FALSE)
 
-  writeLines(c(
-    "Package: rmblconsume",
-    "Title: Compile And Run Every LinkingTo Kernel",
-    "Version: 0.0.1",
-    "Authors@R: person('Test', 'Harness', role = c('aut', 'cre'),",
-    "    email = 'noreply@example.com')",
-    "Description: Throwaway consumer used by rmoriebricklayer's own tests.",
-    "License: AGPL-3",
-    "Encoding: UTF-8",
-    # LinkingTo alone is NOT enough. It puts the header on the include
-    # path at compile time, but the shims resolve lazily through
-    # R_GetCCallable on first call, and that requires the providing
-    # package's DLL to be LOADED. Without Imports the consumer builds
-    # and then raises "function 'rmbl_gini' not provided by package
-    # 'rmoriebricklayer'" the first time a kernel is touched. A real
-    # consumer (rmorie) imports it, so the harness must too.
-    "Imports: rmoriebricklayer",
-    "LinkingTo: rmoriebricklayer"
-  ), file.path(dir, "DESCRIPTION"))
+  writeLines(
+    c(
+      "Package: rmblconsume",
+      "Title: Compile And Run Every LinkingTo Kernel",
+      "Version: 0.0.1",
+      "Authors@R: person('Test', 'Harness', role = c('aut', 'cre'),",
+      "    email = 'noreply@example.com')",
+      "Description: Throwaway consumer used by rmoriebricklayer's own tests.",
+      "License: AGPL-3",
+      "Encoding: UTF-8",
+      # LinkingTo alone is NOT enough. It puts the header on the include
+      # path at compile time, but the shims resolve lazily through
+      # R_GetCCallable on first call, and that requires the providing
+      # package's DLL to be LOADED. Without Imports the consumer builds
+      # and then raises "function 'rmbl_gini' not provided by package
+      # 'rmoriebricklayer'" the first time a kernel is touched. A real
+      # consumer (rmorie) imports it, so the harness must too.
+      "Imports: rmoriebricklayer",
+      "LinkingTo: rmoriebricklayer"
+    ),
+    file.path(dir, "DESCRIPTION")
+  )
   writeLines(
     c(
       "useDynLib(rmblconsume, .registration = TRUE)",
@@ -72,9 +76,11 @@ test_that("every published kernel compiles and resolves from a consumer", {
     file.path(dir, "NAMESPACE")
   )
   writeLines(
-    c("consume_series <- function() .Call(C_consume_series)",
+    c(
+      "consume_series <- function() .Call(C_consume_series)",
       "consume_mk <- function(y) .Call(C_consume_mk, as.double(y))",
-      "consume_theil <- function(n) .Call(C_consume_theil, as.integer(n))"),
+      "consume_theil <- function(n) .Call(C_consume_theil, as.integer(n))"
+    ),
     file.path(dir, "R", "consume.R")
   )
 
@@ -82,186 +88,272 @@ test_that("every published kernel compiles and resolves from a consumer", {
   # plain C, which is what most consumers compile. Every one of the 45
   # shims is called (the two libcurl ones need a network, so their
   # addresses are taken, which instantiates and resolves them).
-  writeLines(c(
-    "#include <R.h>",
-    "#include <Rinternals.h>",
-    "#include <R_ext/Rdynload.h>",
-    "#include <string.h>",
-    "#include <rmoriebricklayer.h>",
-    "",
-    "SEXP C_consume_series(void) {",
-    "    const double x[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 9.0};",
-    "    const double y[6] = {2.0, 1.0, 4.0, 3.0, 6.0, 5.0};",
-    "    const double w[6] = {1.0, 1.0, 2.0, 2.0, 1.0, 1.0};",
-    "    const double treat[6] = {1, 0, 1, 0, 1, 0};",
-    "    const double prop[6] = {0.6, 0.4, 0.7, 0.3, 0.5, 0.5};",
-    "    const double probs[2] = {0.25, 0.75};",
-    "    const double pp[3] = {0.2, 0.3, 0.5}, qq[3] = {0.3, 0.3, 0.4};",
-    "    const double hpar[3] = {0.5, 0.3, 1.0};",
-    "    double out[64], tmp[64], pop[8], val[8], ma[8], mb[8], mm[8];",
-    "    double S = 0, var = 0, slope = 0, icpt = 0, d = 0;",
-    "    R_xlen_t units = 0, used = 0, npts = 0;",
-    "    unsigned char raw32[32], raw64[64];",
-    "    char hex[129];",
-    "    int k = 0;",
-    "    out[k++] = rmbl_mean(x, 6);",
-    "    out[k++] = rmbl_mean_running(x, 6);",
-    "    out[k++] = rmbl_var(x, 6);",
-    "    out[k++] = rmbl_cor_pearson(x, y, 6);",
-    "    out[k++] = rmbl_normal_pdf(0.5, 0.0, 1.0);",
-    "    rmbl_sha256_hex((const unsigned char *) \"abc\", 3, hex);",
-    "    out[k++] = (double) strlen(hex);",
-    "    out[k++] = rmbl_sd(x, 6, 1);",
-    "    out[k++] = rmbl_euclid_dist(x, y, 6);",
-    "    out[k++] = rmbl_normal_logpdf(0.5, 0.0, 1.0);",
-    "    rmbl_ipw_weights(treat, prop, 6, 0.05, 0.95, tmp);",
-    "    out[k++] = tmp[0] + tmp[5];",
-    "    rmbl_bootstrap_mean(x, 6, 10, 42ULL, tmp);",
-    "    out[k++] = tmp[0];",
-    "    out[k++] = rmbl_gamma_cdf(2.0, 1.5);",
-    "    out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 0, hpar, 3);",
-    "    rmbl_moments(x, 6, tmp);",
-    "    out[k++] = tmp[0];",
-    "    rmbl_quantile(x, 6, probs, 2, tmp);",
-    "    out[k++] = tmp[0] + tmp[1];",
-    "    out[k++] = rmbl_median(x, 6);",
-    "    out[k++] = rmbl_gini(x, 6);",
-    "    out[k++] = rmbl_top_share(x, 6, 0.4, &units) + (double) units;",
-    "    npts = rmbl_lorenz(x, 6, pop, val);",
-    "    out[k++] = (double) npts + val[npts - 1];",
-    "    rmbl_mann_kendall(x, 6, &S, &var, &used);",
-    "    out[k++] = S + var + (double) used;",
-    "    rmbl_theil_sen(x, y, 6, &slope, &icpt);",
-    "    out[k++] = slope + icpt;",
-    "    out[k++] = rmbl_hurwitz_zeta(2.0, 1.0);",
-    "    out[k++] = rmbl_mad(x, 6, 1.4826);",
-    "    out[k++] = rmbl_trimmed_mean(x, 6, 0.2);",
-    "    out[k++] = rmbl_winsorized_mean(x, 6, 0.2);",
-    "    out[k++] = rmbl_weighted_mean(x, w, 6);",
-    "    out[k++] = rmbl_weighted_var(x, w, 6);",
-    "    out[k++] = rmbl_cor_spearman(x, y, 6);",
-    "    rmbl_midranks(y, 6, tmp);",
-    "    out[k++] = tmp[0] + tmp[5];",
-    "    rmbl_cov_matrix(x, 3, 2, tmp);",
-    "    out[k++] = tmp[0];",
-    "    d = rmbl_ks_two_sample(x, 6, y, 6);",
-    "    out[k++] = d;",
-    "    out[k++] = rmbl_ks_pvalue(d, 3.0);",
-    "    out[k++] = rmbl_psi(pp, qq, 3, 1e-6);",
-    "    out[k++] = rmbl_js_divergence(pp, qq, 3);",
-    "    rmbl_sha256_raw((const unsigned char *) \"abc\", 3, raw32);",
-    "    out[k++] = (double) raw32[0];",
-    "    rmbl_sha512_hex((const unsigned char *) \"abc\", 3, hex);",
-    "    out[k++] = (double) strlen(hex);",
-    "    rmbl_hmac_sha256_hex((const unsigned char *) \"Jefe\", 4,",
-    "                         (const unsigned char *) \"what do ya want for nothing?\", 28, hex);",
-    "    out[k++] = (double) strlen(hex);",
-    "    out[k++] = (double) rmbl_digest_equal(\"abc\", \"abc\", 3) + 10.0 * rmbl_digest_equal(\"abc\", \"abd\", 3);",
-    "    rmbl_moments_acc(x, 3, ma);",
-    "    rmbl_moments_acc(x + 3, 3, mb);",
-    "    rmbl_moments_merge(ma, mb, mm);",
-    "    out[k++] = mm[0];",
-    "    out[k++] = (double) rmbl_blake2b((const unsigned char *) \"abc\", 3, NULL, 0, 32, raw32) + raw32[0];",
-    "    rmbl_pbkdf2_sha256((const unsigned char *) \"password\", 8,",
-    "                       (const unsigned char *) \"salt\", 4, 1, 20, raw64);",
-    "    out[k++] = (double) raw64[0];",
-    "    out[k++] = (double) rmbl_os_random(raw32, 32);",
-    "    {",
-    "        /* called, not merely address-taken: an unresolvable host fails fast",
-    "         * and offline, which is the path a misregistered name would break */",
-    "        char snap[64];",
-    "        /* both reach archive.org (a failed fetch falls back to its snapshot lookup): called only",
-    "         * when the run opts in, its registration checked otherwise (network stress test of 5e1dce5) */",
-    "        const char *live = getenv(\"RMBL_LIVE_TESTS\");",
-    "        int code = (live && live[0] == '1' && !live[1]) ?",
-    "            rmbl_fetch_with_fallback(\"https://invalid.invalid/x\", \"\", \"/nonexistent/dir/x\", 2) :",
-    "            (R_GetCCallable(\"rmoriebricklayer\", \"rmbl_fetch_with_fallback\") != NULL ? -1 : 0);",
-    "        int sn = (live && live[0] == '1' && !live[1]) ?",
-    "            rmbl_wayback_snapshot(\"https://invalid.invalid/x\", snap, (int) sizeof snap, 2) : 0;",
-    "        out[k++] = (code < 0) + (sn == 0);",
-    "    }",
-    "    {",
-    "        /* the Weibull, Lomax and gamma kernels take (a0, eta, p1, p2); an",
-    "         * infeasible set answers the 1e12 sentinel and too few parameters NaN */",
-    "        const double wpar[4] = {0.5, 0.3, 1.5, 2.0};",
-    "        const double lpar[4] = {0.5, 0.3, 2.5, 1.0};",
-    "        const double gpar[4] = {0.5, 0.3, 1.5, 0.8};",
-    "        const double bad[4] = {0.5, 5.0, 1.5, 2.0};",
-    "        const double xn[2] = {1.0, R_NaN};",
-    "        const double xi[2] = {1.0, R_PosInf};",
-    "        out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 1, wpar, 4);",
-    "        out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 2, lpar, 4);",
-    "        out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 3, gpar, 4);",
-    "        out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 1, bad, 4) + rmbl_hawkes_nll(x, 6, 10.0, 3, bad, 4);",
-    "        out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 1, hpar, 3);",
-    "        rmbl_quantile(xn, 2, probs, 2, tmp);",
-    "        out[k++] = ISNAN(tmp[0]) && ISNAN(tmp[1]);",
-    "        rmbl_cov_matrix(x, 1, 2, tmp);",
-    "        out[k++] = ISNAN(tmp[0]) && ISNAN(tmp[3]);",
-    "        out[k++] = ISNAN(rmbl_ks_two_sample(xn, 2, y, 6));",
-    "        out[k++] = rmbl_mean(xi, 2) == R_PosInf;",
-    "        /* PBKDF2's int channel: 0 with the key written, -1 for an invalid argument */",
-    "        out[k++] = (double) rmbl_pbkdf2_sha256((const unsigned char *) \"password\", 8,",
-    "                                               (const unsigned char *) \"salt\", 4, 1, 20, raw64)",
-    "                 + 10.0 * (rmbl_pbkdf2_sha256((const unsigned char *) \"password\", 8,",
-    "                                              (const unsigned char *) \"salt\", 4, 0, 20, raw64) == -1);",
-    "        out[k++] = ISNAN(rmbl_hawkes_nll(x, 6, 10.0, 9, hpar, 3));   /* no such kernel: NaN */",
-    "        const double hpar4[4] = {0.5, 0.3, 1.0, 1.0};",
-    "        out[k++] = ISNAN(rmbl_hawkes_nll(x, 6, 10.0, 9, hpar4, 4));  /* nor with four parameters */",
-    "    }",
-    "    SEXP res = PROTECT(Rf_allocVector(REALSXP, k));",
-    "    for (int i = 0; i < k; ++i) REAL(res)[i] = out[i];",
-    "    rmbl_sha256_hex((const unsigned char *) \"abc\", 3, hex);",
-    "    SEXP s = PROTECT(Rf_mkString(hex));",
-    "    Rf_setAttrib(res, Rf_install(\"sha256_abc\"), s);",
-    "    UNPROTECT(2);",
-    "    return res;",
-    "}",
-    "",
-    "/* the Mann-Kendall kernel on a caller-sized series, with no bricklayer barrier on",
-    " * the stack: the path the interrupt probe below exercises */",
-    "/* Theil-Sen on n points, all at x = 0 but the last (the n - 1 pairs with the last kept), with no",
-    " * bricklayer barrier on the stack: past the point limit the kernel raises R's error itself,",
-    " * and a Ctrl-C in the pair loop is raised once the kernel's vectors are gone */",
-    "SEXP C_consume_theil(SEXP n) {",
-    "    const R_xlen_t m = (R_xlen_t) INTEGER(n)[0];",
-    "    double *x = (double *) R_alloc((size_t) m, sizeof(double));",
-    "    double *y = (double *) R_alloc((size_t) m, sizeof(double));",
-    "    for (R_xlen_t i = 0; i < m; ++i) { x[i] = i == m - 1 ? 1.0 : 0.0; y[i] = (double) i; }",
-    "    double slope = 0, icpt = 0;",
-    "    rmbl_theil_sen(x, y, m, &slope, &icpt);",
-    "    return Rf_ScalarReal(slope);",
-    "}",
-    "",
-    "SEXP C_consume_mk(SEXP y) {",
-    "    double S = 0, var = 0;",
-    "    R_xlen_t used = 0;",
-    "    rmbl_mann_kendall(REAL(y), XLENGTH(y), &S, &var, &used);",
-    "    return Rf_ScalarReal(S);",
-    "}",
-    "",
-    "static const R_CallMethodDef CallEntries[] = {",
-    "    {\"C_consume_series\", (DL_FUNC) &C_consume_series, 0},",
-    "    {\"C_consume_mk\", (DL_FUNC) &C_consume_mk, 1},",
-    "    {\"C_consume_theil\", (DL_FUNC) &C_consume_theil, 1},",
-    "    {NULL, NULL, 0}",
-    "};",
-    "",
-    "void R_init_rmblconsume(DllInfo *dll) {",
-    "    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);",
-    "    R_useDynamicSymbols(dll, FALSE);",
-    "}"
-  ), file.path(dir, "src", "consume.c"))
+  writeLines(
+    c(
+      "#include <R.h>",
+      "#include <Rinternals.h>",
+      "#include <R_ext/Rdynload.h>",
+      "#include <string.h>",
+      "#include <rmoriebricklayer.h>",
+      "",
+      "SEXP C_consume_series(void) {",
+      "    const double x[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 9.0};",
+      "    const double y[6] = {2.0, 1.0, 4.0, 3.0, 6.0, 5.0};",
+      "    const double w[6] = {1.0, 1.0, 2.0, 2.0, 1.0, 1.0};",
+      "    const double treat[6] = {1, 0, 1, 0, 1, 0};",
+      "    const double prop[6] = {0.6, 0.4, 0.7, 0.3, 0.5, 0.5};",
+      "    const double probs[2] = {0.25, 0.75};",
+      "    const double pp[3] = {0.2, 0.3, 0.5}, qq[3] = {0.3, 0.3, 0.4};",
+      "    const double hpar[3] = {0.5, 0.3, 1.0};",
+      "    double out[64], tmp[64], pop[8], val[8], ma[8], mb[8], mm[8];",
+      "    double S = 0, var = 0, slope = 0, icpt = 0, d = 0;",
+      "    R_xlen_t units = 0, used = 0, npts = 0;",
+      "    unsigned char raw32[32], raw64[64];",
+      "    char hex[129];",
+      "    int k = 0;",
+      "    out[k++] = rmbl_mean(x, 6);",
+      "    out[k++] = rmbl_mean_running(x, 6);",
+      "    out[k++] = rmbl_var(x, 6);",
+      "    out[k++] = rmbl_cor_pearson(x, y, 6);",
+      "    out[k++] = rmbl_normal_pdf(0.5, 0.0, 1.0);",
+      "    rmbl_sha256_hex((const unsigned char *) \"abc\", 3, hex);",
+      "    out[k++] = (double) strlen(hex);",
+      "    out[k++] = rmbl_sd(x, 6, 1);",
+      "    out[k++] = rmbl_euclid_dist(x, y, 6);",
+      "    out[k++] = rmbl_normal_logpdf(0.5, 0.0, 1.0);",
+      "    rmbl_ipw_weights(treat, prop, 6, 0.05, 0.95, tmp);",
+      "    out[k++] = tmp[0] + tmp[5];",
+      "    rmbl_bootstrap_mean(x, 6, 10, 42ULL, tmp);",
+      "    out[k++] = tmp[0];",
+      "    out[k++] = rmbl_gamma_cdf(2.0, 1.5);",
+      "    out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 0, hpar, 3);",
+      "    rmbl_moments(x, 6, tmp);",
+      "    out[k++] = tmp[0];",
+      "    rmbl_quantile(x, 6, probs, 2, tmp);",
+      "    out[k++] = tmp[0] + tmp[1];",
+      "    out[k++] = rmbl_median(x, 6);",
+      "    out[k++] = rmbl_gini(x, 6);",
+      "    out[k++] = rmbl_top_share(x, 6, 0.4, &units) + (double) units;",
+      "    npts = rmbl_lorenz(x, 6, pop, val);",
+      "    out[k++] = (double) npts + val[npts - 1];",
+      "    rmbl_mann_kendall(x, 6, &S, &var, &used);",
+      "    out[k++] = S + var + (double) used;",
+      "    rmbl_theil_sen(x, y, 6, &slope, &icpt);",
+      "    out[k++] = slope + icpt;",
+      "    out[k++] = rmbl_hurwitz_zeta(2.0, 1.0);",
+      "    out[k++] = rmbl_mad(x, 6, 1.4826);",
+      "    out[k++] = rmbl_trimmed_mean(x, 6, 0.2);",
+      "    out[k++] = rmbl_winsorized_mean(x, 6, 0.2);",
+      "    out[k++] = rmbl_weighted_mean(x, w, 6);",
+      "    out[k++] = rmbl_weighted_var(x, w, 6);",
+      "    out[k++] = rmbl_cor_spearman(x, y, 6);",
+      "    rmbl_midranks(y, 6, tmp);",
+      "    out[k++] = tmp[0] + tmp[5];",
+      "    rmbl_cov_matrix(x, 3, 2, tmp);",
+      "    out[k++] = tmp[0];",
+      "    d = rmbl_ks_two_sample(x, 6, y, 6);",
+      "    out[k++] = d;",
+      "    out[k++] = rmbl_ks_pvalue(d, 3.0);",
+      "    out[k++] = rmbl_psi(pp, qq, 3, 1e-6);",
+      "    out[k++] = rmbl_js_divergence(pp, qq, 3);",
+      "    rmbl_sha256_raw((const unsigned char *) \"abc\", 3, raw32);",
+      "    out[k++] = (double) raw32[0];",
+      "    rmbl_sha512_hex((const unsigned char *) \"abc\", 3, hex);",
+      "    out[k++] = (double) strlen(hex);",
+      "    rmbl_hmac_sha256_hex((const unsigned char *) \"Jefe\", 4,",
+      paste0(
+        "                         (const unsigned char *) \"what do ya ",
+        "want for nothing?\", 28, hex);"
+      ),
+      "    out[k++] = (double) strlen(hex);",
+      paste0(
+        "    out[k++] = (double) rmbl_digest_equal(\"abc\", \"abc\", 3) + ",
+        "10.0 * rmbl_digest_equal(\"abc\", \"abd\", 3);"
+      ),
+      "    rmbl_moments_acc(x, 3, ma);",
+      "    rmbl_moments_acc(x + 3, 3, mb);",
+      "    rmbl_moments_merge(ma, mb, mm);",
+      "    out[k++] = mm[0];",
+      paste0(
+        "    out[k++] = (double) rmbl_blake2b((const unsigned char *) ",
+        "\"abc\", 3, NULL, 0, 32, raw32) + raw32[0];"
+      ),
+      "    rmbl_pbkdf2_sha256((const unsigned char *) \"password\", 8,",
+      paste0(
+        "                       (const unsigned char *) \"salt\", 4, 1, 20, ",
+        "raw64);"
+      ),
+      "    out[k++] = (double) raw64[0];",
+      "    out[k++] = (double) rmbl_os_random(raw32, 32);",
+      "    {",
+      paste0(
+        "        /* called, not merely address-taken: an unresolvable ",
+        "host fails fast"
+      ),
+      paste0(
+        "         * and offline, which is the path a misregistered name ",
+        "would break */"
+      ),
+      "        char snap[64];",
+      paste0(
+        "        /* both reach archive.org (a failed fetch falls back to ",
+        "its snapshot lookup): called only"
+      ),
+      paste0(
+        "         * when the run opts in, its registration checked ",
+        "otherwise (network stress test of 5e1dce5) */"
+      ),
+      "        const char *live = getenv(\"RMBL_LIVE_TESTS\");",
+      "        int code = (live && live[0] == '1' && !live[1]) ?",
+      paste0(
+        "            ",
+        "rmbl_fetch_with_fallback(\"https://invalid.invalid/x\", \"\", ",
+        "\"/nonexistent/dir/x\", 2) :"
+      ),
+      paste0(
+        "            (R_GetCCallable(\"rmoriebricklayer\", ",
+        "\"rmbl_fetch_with_fallback\") != NULL ? -1 : 0);"
+      ),
+      "        int sn = (live && live[0] == '1' && !live[1]) ?",
+      paste0(
+        "            rmbl_wayback_snapshot(\"https://invalid.invalid/x\", ",
+        "snap, (int) sizeof snap, 2) : 0;"
+      ),
+      "        out[k++] = (code < 0) + (sn == 0);",
+      "    }",
+      "    {",
+      paste0(
+        "        /* the Weibull, Lomax and gamma kernels take (a0, eta, ",
+        "p1, p2); an"
+      ),
+      paste0(
+        "         * infeasible set answers the 1e12 sentinel and too few ",
+        "parameters NaN */"
+      ),
+      "        const double wpar[4] = {0.5, 0.3, 1.5, 2.0};",
+      "        const double lpar[4] = {0.5, 0.3, 2.5, 1.0};",
+      "        const double gpar[4] = {0.5, 0.3, 1.5, 0.8};",
+      "        const double bad[4] = {0.5, 5.0, 1.5, 2.0};",
+      "        const double xn[2] = {1.0, R_NaN};",
+      "        const double xi[2] = {1.0, R_PosInf};",
+      "        out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 1, wpar, 4);",
+      "        out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 2, lpar, 4);",
+      "        out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 3, gpar, 4);",
+      paste0(
+        "        out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 1, bad, 4) + ",
+        "rmbl_hawkes_nll(x, 6, 10.0, 3, bad, 4);"
+      ),
+      "        out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 1, hpar, 3);",
+      "        rmbl_quantile(xn, 2, probs, 2, tmp);",
+      "        out[k++] = ISNAN(tmp[0]) && ISNAN(tmp[1]);",
+      "        rmbl_cov_matrix(x, 1, 2, tmp);",
+      "        out[k++] = ISNAN(tmp[0]) && ISNAN(tmp[3]);",
+      "        out[k++] = ISNAN(rmbl_ks_two_sample(xn, 2, y, 6));",
+      "        out[k++] = rmbl_mean(xi, 2) == R_PosInf;",
+      paste0(
+        "        /* PBKDF2's int channel: 0 with the key written, -1 for ",
+        "an invalid argument */"
+      ),
+      paste0(
+        "        out[k++] = (double) rmbl_pbkdf2_sha256((const unsigned ",
+        "char *) \"password\", 8,"
+      ),
+      paste0(
+        "                                               (const unsigned ",
+        "char *) \"salt\", 4, 1, 20, raw64)"
+      ),
+      paste0(
+        "                 + 10.0 * (rmbl_pbkdf2_sha256((const unsigned ",
+        "char *) \"password\", 8,"
+      ),
+      paste0(
+        "                                              (const unsigned ",
+        "char *) \"salt\", 4, 0, 20, raw64) == -1);"
+      ),
+      paste0(
+        "        out[k++] = ISNAN(rmbl_hawkes_nll(x, 6, 10.0, 9, hpar, ",
+        "3));   /* no such kernel: NaN */"
+      ),
+      "        const double hpar4[4] = {0.5, 0.3, 1.0, 1.0};",
+      paste0(
+        "        out[k++] = ISNAN(rmbl_hawkes_nll(x, 6, 10.0, 9, hpar4, ",
+        "4));  /* nor with four parameters */"
+      ),
+      "    }",
+      "    SEXP res = PROTECT(Rf_allocVector(REALSXP, k));",
+      "    for (int i = 0; i < k; ++i) REAL(res)[i] = out[i];",
+      "    rmbl_sha256_hex((const unsigned char *) \"abc\", 3, hex);",
+      "    SEXP s = PROTECT(Rf_mkString(hex));",
+      "    Rf_setAttrib(res, Rf_install(\"sha256_abc\"), s);",
+      "    UNPROTECT(2);",
+      "    return res;",
+      "}",
+      "",
+      paste0(
+        "/* the Mann-Kendall kernel on a caller-sized series, with no ",
+        "bricklayer barrier on"
+      ),
+      " * the stack: the path the interrupt probe below exercises */",
+      paste0(
+        "/* Theil-Sen on n points, all at x = 0 but the last (the n - 1 ",
+        "pairs with the last kept), with no"
+      ),
+      paste0(
+        " * bricklayer barrier on the stack: past the point limit the ",
+        "kernel raises R's error itself,"
+      ),
+      paste0(
+        " * and a Ctrl-C in the pair loop is raised once the kernel's ",
+        "vectors are gone */"
+      ),
+      "SEXP C_consume_theil(SEXP n) {",
+      "    const R_xlen_t m = (R_xlen_t) INTEGER(n)[0];",
+      "    double *x = (double *) R_alloc((size_t) m, sizeof(double));",
+      "    double *y = (double *) R_alloc((size_t) m, sizeof(double));",
+      paste0(
+        "    for (R_xlen_t i = 0; i < m; ++i) { x[i] = i == m - 1 ? 1.0 : ",
+        "0.0; y[i] = (double) i; }"
+      ),
+      "    double slope = 0, icpt = 0;",
+      "    rmbl_theil_sen(x, y, m, &slope, &icpt);",
+      "    return Rf_ScalarReal(slope);",
+      "}",
+      "",
+      "SEXP C_consume_mk(SEXP y) {",
+      "    double S = 0, var = 0;",
+      "    R_xlen_t used = 0;",
+      "    rmbl_mann_kendall(REAL(y), XLENGTH(y), &S, &var, &used);",
+      "    return Rf_ScalarReal(S);",
+      "}",
+      "",
+      "static const R_CallMethodDef CallEntries[] = {",
+      "    {\"C_consume_series\", (DL_FUNC) &C_consume_series, 0},",
+      "    {\"C_consume_mk\", (DL_FUNC) &C_consume_mk, 1},",
+      "    {\"C_consume_theil\", (DL_FUNC) &C_consume_theil, 1},",
+      "    {NULL, NULL, 0}",
+      "};",
+      "",
+      "void R_init_rmblconsume(DllInfo *dll) {",
+      "    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);",
+      "    R_useDynamicSymbols(dll, FALSE);",
+      "}"
+    ),
+    file.path(dir, "src", "consume.c")
+  )
 
   lib <- consumer_lib
   dir.create(lib, showWarnings = FALSE)
   out <- suppressWarnings(system2(
     file.path(R.home("bin"), "R"),
     c(
-      "CMD", "INSTALL", paste0("--library=", shQuote(lib)),
-      "--no-docs", shQuote(dir)
+      "CMD",
+      "INSTALL",
+      paste0("--library=", shQuote(lib)),
+      "--no-docs",
+      shQuote(dir)
     ),
-    stdout = TRUE, stderr = TRUE
+    stdout = TRUE,
+    stderr = TRUE
   ))
   status <- attr(out, "status")
   # A compile failure here IS the finding, so show it rather than
@@ -289,9 +381,11 @@ test_that("every published kernel compiles and resolves from a consumer", {
     'writeLines(attr(r, "sha256_abc"))',
     sep = "; "
   )
-  res <- suppressWarnings(system2(file.path(R.home("bin"), "Rscript"),
+  res <- suppressWarnings(system2(
+    file.path(R.home("bin"), "Rscript"),
     c("-e", shQuote(code)),
-    stdout = TRUE, stderr = TRUE
+    stdout = TRUE,
+    stderr = TRUE
   ))
   st <- attr(res, "status")
   if (!is.null(st) && st != 0L) {
@@ -353,8 +447,8 @@ test_that("every published kernel compiles and resolves from a consumer", {
   expect_equal(nums[37L], 64)
   expect_equal(nums[38L], 1)
   expect_equal(nums[39L], 6)
-  expect_equal(nums[42L], 0)   # rmbl_os_random succeeded
-  expect_equal(nums[43L], 2)   # both libcurl shims resolved
+  expect_equal(nums[42L], 0) # rmbl_os_random succeeded
+  expect_equal(nums[43L], 2) # both libcurl shims resolved
   # the Hawkes likelihood takes the kernel's own parameter layout; only
   # that it answered is asserted here, the value is pinned elsewhere
   expect_true(all(is.finite(nums[-c(13L, 48L)])))
@@ -362,81 +456,167 @@ test_that("every published kernel compiles and resolves from a consumer", {
   t6 <- x
   hk <- function(dens, comp, p) {
     nu <- exp(p[1])
-    s <- vapply(seq_along(t6), function(i) {
-      if (i == 1L) return(0)
-      sum(dens(t6[i] - t6[seq_len(i - 1L)]))
-    }, numeric(1))
+    s <- vapply(
+      seq_along(t6),
+      function(i) {
+        if (i == 1L) {
+          return(0)
+        }
+        sum(dens(t6[i] - t6[seq_len(i - 1L)]))
+      },
+      numeric(1)
+    )
     -(sum(log(nu + p[2] * s)) - nu * 10 - p[2] * sum(comp(10 - t6)))
   }
   wb <- c(0.5, 0.3, 1.5, 2.0)
-  expect_equal(nums[44L], hk(
-    function(u) (wb[3] / wb[4]) * (u / wb[4])^(wb[3] - 1) * exp(-(u / wb[4])^wb[3]),
-    function(u) 1 - exp(-(u / wb[4])^wb[3]), wb))
+  expect_equal(
+    nums[44L],
+    hk(
+      function(u) {
+        (wb[3] / wb[4]) * (u / wb[4])^(wb[3] - 1) * exp(-(u / wb[4])^wb[3])
+      },
+      function(u) 1 - exp(-(u / wb[4])^wb[3]),
+      wb
+    )
+  )
   lx <- c(0.5, 0.3, 2.5, 1.0)
-  expect_equal(nums[45L], hk(
-    function(u) (lx[3] - 1) * lx[4]^(lx[3] - 1) / (u + lx[4])^lx[3],
-    function(u) 1 - (lx[4] / (u + lx[4]))^(lx[3] - 1), lx))
-  # the C API's Lomax shape is the fitter's plus one, and its kernel codes differ: the same
-  # likelihood either way (review of 1.0.0)
-  expect_equal(nums[45L], chwknll(x, 10, "lomax", c(lx[1:2], lx[3] - 1, lx[4])), tolerance = 1e-12)
-  expect_equal(nums[46L], chwknll(x, 10, "gamma", c(0.5, 0.3, 1.5, 0.8)), tolerance = 1e-12)
+  expect_equal(
+    nums[45L],
+    hk(
+      function(u) (lx[3] - 1) * lx[4]^(lx[3] - 1) / (u + lx[4])^lx[3],
+      function(u) 1 - (lx[4] / (u + lx[4]))^(lx[3] - 1),
+      lx
+    )
+  )
+  # the C API's Lomax shape is the fitter's plus one, and its kernel codes
+  # differ: the same likelihood either way (review of 1.0.0)
+  expect_equal(
+    nums[45L],
+    chwknll(x, 10, "lomax", c(lx[1:2], lx[3] - 1, lx[4])),
+    tolerance = 1e-12
+  )
+  expect_equal(
+    nums[46L],
+    chwknll(x, 10, "gamma", c(0.5, 0.3, 1.5, 0.8)),
+    tolerance = 1e-12
+  )
   gm <- c(0.5, 0.3, 1.5, 0.8)
-  expect_equal(nums[46L], hk(
-    function(u) stats::dgamma(u, shape = gm[3], rate = gm[4]),
-    function(u) stats::pgamma(u, shape = gm[3], rate = gm[4]), gm))
-  expect_identical(nums[47L], 2e12)      # eta = 5 is infeasible for both kernels
-  expect_true(is.nan(nums[48L]))         # three parameters where four are needed
+  expect_equal(
+    nums[46L],
+    hk(
+      function(u) stats::dgamma(u, shape = gm[3], rate = gm[4]),
+      function(u) stats::pgamma(u, shape = gm[3], rate = gm[4]),
+      gm
+    )
+  )
+  expect_identical(nums[47L], 2e12) # eta = 5 is infeasible for both kernels
+  expect_true(is.nan(nums[48L])) # three parameters where four are needed
   expect_identical(nums[49:52], c(1, 1, 1, 1))
-  expect_identical(nums[53L], 10)         # pbkdf2: 0 on success, -1 on iterations = 0
-  expect_identical(nums[54L], 1)          # an unknown kernel code is NaN, not a number
-  expect_identical(nums[55L], 1)          # with the four parameters a kernel has, too
+  expect_identical(nums[53L], 10) # pbkdf2: 0 on success, -1 on iterations = 0
+  expect_identical(nums[54L], 1) # an unknown kernel code is NaN, not a number
+  expect_identical(nums[55L], 1) # with the four parameters a kernel has, too
   # and the digest kernel still matches its published vector, so a
   # regression in the older shims surfaces here too
   expect_identical(sha, csha256("abc"))
   expect_identical(
-    sha, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    sha,
+    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
   )
 })
 
-test_that("the Theil-Sen kernel called with no barrier raises its point limit and a Ctrl-C as R does", {
-  skip_on_cran()
-  skip_on_os("windows")
-  skip_if(!dir.exists(file.path(consumer_lib, "rmblconsume")), "the consumer was not built")
-  # rmbl_theil_sen()'s refusal past kMaxPairwiseN is rmbl_arg_error() with no barrier active, an R
-  # error raised at once (src/rmbl_series.cpp, src/rmbl_entry.h)
-  f <- tempfile(fileext = ".R")
-  writeLines(c(sprintf(".libPaths(c(%s, .libPaths()))", shQuote(consumer_lib)), "library(rmblconsume)",
-               "cat(tryCatch(consume_theil(20001L), error = function(e) conditionMessage(e)), '\\n')",
-               "cat('SLOPE', consume_theil(5L), '\\n')"), f)
-  res <- suppressWarnings(system2(file.path(R.home("bin"), "Rscript"), shQuote(f), stdout = TRUE, stderr = TRUE))
-  expect_true(any(grepl("n = 20001 exceeds the 20000-point limit", res)), info = paste(res, collapse = " | "))
-  expect_true("SLOPE 2.5" %in% trimws(res), info = paste(res, collapse = " | "))
-  # a Ctrl-C in the pair loop: kernel_call() catches check_interrupt()'s throw, and kernel_raise()
-  # raises R's interrupt with no barrier to do it (src/rmbl_entry.h)
-  skip_if(!nzchar(Sys.which("python3")) || !nzchar(Sys.which("timeout")), "no python3/timeout")
-  got <- interrupt_probe(paste0(
-    ".libPaths(c(", shQuote(consumer_lib), ", .libPaths())); library(rmblconsume);",
-    " for (i in 1:2000) consume_theil(20000L)"))
-  skip_if(startsWith(got, "inconclusive"), got)
-  expect_identical(got, "interrupt")
-})
+test_that(
+  paste0(
+    "the Theil-Sen kernel called with no barrier raises its point limit and ",
+    "a Ctrl-C as R does"
+  ),
+  {
+    skip_on_cran()
+    skip_on_os("windows")
+    skip_if(
+      !dir.exists(file.path(consumer_lib, "rmblconsume")),
+      "the consumer was not built"
+    )
+    # rmbl_theil_sen()'s refusal past kMaxPairwiseN is rmbl_arg_error() with no
+    # barrier active, an R error raised at once (src/rmbl_series.cpp,
+    # src/rmbl_entry.h)
+    f <- tempfile(fileext = ".R")
+    writeLines(
+      c(
+        sprintf(".libPaths(c(%s, .libPaths()))", shQuote(consumer_lib)),
+        "library(rmblconsume)",
+        paste0(
+          "cat(tryCatch(consume_theil(20001L), error = function(e) ",
+          "conditionMessage(e)), '\\n')"
+        ),
+        "cat('SLOPE', consume_theil(5L), '\\n')"
+      ),
+      f
+    )
+    res <- suppressWarnings(system2(
+      file.path(R.home("bin"), "Rscript"),
+      shQuote(f),
+      stdout = TRUE,
+      stderr = TRUE
+    ))
+    expect_true(
+      any(grepl("n = 20001 exceeds the 20000-point limit", res)),
+      info = paste(res, collapse = " | ")
+    )
+    expect_true(
+      "SLOPE 2.5" %in% trimws(res),
+      info = paste(res, collapse = " | ")
+    )
+    # a Ctrl-C in the pair loop: kernel_call() catches check_interrupt()'s
+    # throw, and kernel_raise() raises R's interrupt with no barrier to do it
+    # (src/rmbl_entry.h)
+    skip_if(
+      !nzchar(Sys.which("python3")) || !nzchar(Sys.which("timeout")),
+      "no python3/timeout"
+    )
+    got <- interrupt_probe(paste0(
+      ".libPaths(c(",
+      shQuote(consumer_lib),
+      ", .libPaths())); library(rmblconsume);",
+      " for (i in 1:2000) consume_theil(20000L)"
+    ))
+    skip_if(startsWith(got, "inconclusive"), got)
+    expect_identical(got, "interrupt")
+  }
+)
 
-test_that("a pending interrupt stops the Mann-Kendall kernel called with no barrier (D2)", {
-  skip_on_cran()
-  skip_on_os("windows")
-  on.exit(unlink(c(consumer_dir, consumer_lib), recursive = TRUE), add = TRUE)
-  skip_if(!dir.exists(file.path(consumer_lib, "rmblconsume")), "the consumer was not built")
-  skip_if(!nzchar(Sys.which("python3")) || !nzchar(Sys.which("timeout")), "no python3/timeout")
-  # Another package's .Call reaches rmbl_mann_kendall() with none of bricklayer's barriers
-  # active, so there is nothing to raise after the kernel returns: mann_kendall_inner() has
-  # to answer its sentinel on the poll, let its buffers go, and only then raise R's interrupt
-  # (0.5.8 raised from inside the poll, over live std::vectors -- the 0.5.8 diff review).
-  # 120k points keep the pair loop busy for many seconds unless the poll (every 512 rows)
-  # sees the signal; the probe child has SIGINT reset to the default, so it is conclusive
-  # where this process inherited SIGINT as ignored (a background chain, covr).
-  got <- interrupt_probe(paste0(
-    ".libPaths(c(", shQuote(consumer_lib), ", .libPaths())); library(rmblconsume);",
-    " consume_mk(as.numeric(seq_len(120000L)) + rep(c(0.5, -0.5), 60000L))"))
-  skip_if(startsWith(got, "inconclusive"), got)
-  expect_identical(got, "interrupt")
-})
+test_that(
+  paste0(
+    "a pending interrupt stops the Mann-Kendall kernel called with no ",
+    "barrier (D2)"
+  ),
+  {
+    skip_on_cran()
+    skip_on_os("windows")
+    on.exit(unlink(c(consumer_dir, consumer_lib), recursive = TRUE), add = TRUE)
+    skip_if(
+      !dir.exists(file.path(consumer_lib, "rmblconsume")),
+      "the consumer was not built"
+    )
+    skip_if(
+      !nzchar(Sys.which("python3")) || !nzchar(Sys.which("timeout")),
+      "no python3/timeout"
+    )
+    # Another package's .Call reaches rmbl_mann_kendall() with none of
+    # bricklayer's barriers active, so there is nothing to raise after the
+    # kernel returns: mann_kendall_inner() has to answer its sentinel on the
+    # poll, let its buffers go, and only then raise R's interrupt (0.5.8 raised
+    # from inside the poll, over live std::vectors -- the 0.5.8 diff review).
+    # 120k points keep the pair loop busy for many seconds unless the poll
+    # (every 512 rows) sees the signal; the probe child has SIGINT reset to the
+    # default, so it is conclusive where this process inherited SIGINT as
+    # ignored (a background chain, covr).
+    got <- interrupt_probe(paste0(
+      ".libPaths(c(",
+      shQuote(consumer_lib),
+      ", .libPaths())); library(rmblconsume);",
+      " consume_mk(as.numeric(seq_len(120000L)) + rep(c(0.5, -0.5), 60000L))"
+    ))
+    skip_if(startsWith(got, "inconclusive"), got)
+    expect_identical(got, "interrupt")
+  }
+)

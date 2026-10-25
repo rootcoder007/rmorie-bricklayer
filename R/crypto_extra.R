@@ -61,7 +61,8 @@ rndbytes <- function(n) {
   }
   out <- .rmbl_os_random(n)
   if (is.null(out)) {
-    stop("no operating-system random source could be read. Refusing to ",
+    stop(
+      "no operating-system random source could be read. Refusing to ",
       "fall back to R's generator, which is reproducible by design ",
       "and unsuitable for a key: supply key material yourself.",
       call. = FALSE
@@ -148,14 +149,14 @@ rndbytes <- function(n) {
 #' # a vector of passphrases is refused
 #' try(drvkey(c("a", "b"), "salt"))
 #' @export
-drvkey <- function(pass, salt, iter = 100000L,
-                       length = 32L) {
+drvkey <- function(pass, salt, iter = 100000L, length = 32L) {
   pass <- .rmbl_text_input(pass, "pass")
   salt <- .rmbl_text_input(salt, "salt")
   if (!is.raw(pass)) {
     pass <- as.character(pass)
     if (base::length(pass) != 1L || is.na(pass)) {
-      stop("`pass` must be a length-1 character vector or raw vector",
+      stop(
+        "`pass` must be a length-1 character vector or raw vector",
         call. = FALSE
       )
     }
@@ -163,25 +164,29 @@ drvkey <- function(pass, salt, iter = 100000L,
   if (!is.raw(salt)) {
     salt <- as.character(salt)
     if (base::length(salt) != 1L || is.na(salt)) {
-      stop("`salt` must be a length-1 character vector or raw vector",
+      stop(
+        "`salt` must be a length-1 character vector or raw vector",
         call. = FALSE
       )
     }
   }
   iter <- .rmbl_num(iter, "iter", integer = TRUE)
-  if (base::length(iter) != 1L || is.na(iter) ||
-    iter < 1L) {
+  if (base::length(iter) != 1L || is.na(iter) || iter < 1L) {
     stop("`iter` must be a single integer of at least 1", call. = FALSE)
   }
   length <- .rmbl_num(length, "length", integer = TRUE)
-  if (base::length(length) != 1L || is.na(length) || length < 1L ||
-    length > 1024L) {
-    stop("`length` must be a single integer between 1 and 1024",
-      call. = FALSE
-    )
+  if (
+    base::length(length) != 1L || is.na(length) || length < 1L || length > 1024L
+  ) {
+    stop("`length` must be a single integer between 1 and 1024", call. = FALSE)
   }
-  .bl_busy(sprintf("deriving a key (%s PBKDF2 iterations)", format(iter, big.mark = ",")),
-           .Call(C_rmbl_pbkdf2, pass, salt, iter, length))
+  .bl_busy(
+    sprintf(
+      "deriving a key (%s PBKDF2 iterations)",
+      format(iter, big.mark = ",")
+    ),
+    .Call(C_rmbl_pbkdf2, pass, salt, iter, length)
+  )
 }
 
 #' BLAKE2b digest, optionally keyed
@@ -256,18 +261,22 @@ cblake2b <- function(x, key = NULL, length = 32L) {
     x <- as.character(x)
     out <- rep(NA_character_, length(x))
     ok <- !is.na(x)
-    if (any(ok)) out[ok] <- cblake2b(x[ok], key = key, length = length)
+    if (any(ok)) {
+      out[ok] <- cblake2b(x[ok], key = key, length = length)
+    }
     return(out)
   }
   length <- .rmbl_num(length, "length", integer = TRUE)
-  if (base::length(length) != 1L || is.na(length) || length < 1L ||
-    length > 64L) {
+  if (
+    base::length(length) != 1L || is.na(length) || length < 1L || length > 64L
+  ) {
     stop("`length` must be a single integer between 1 and 64", call. = FALSE)
   }
   if (!is.null(key) && !is.raw(key)) {
     key <- as.character(key)
     if (base::length(key) != 1L || is.na(key)) {
-      stop("cblake2b: `key` must be a length-1 character vector or a raw vector",
+      stop(
+        "cblake2b: `key` must be a length-1 character vector or a raw vector",
         call. = FALSE
       )
     }
@@ -340,10 +349,16 @@ cblake2b <- function(x, key = NULL, length = 32L) {
 #' # a key with an algorithm that has no keyed form is refused
 #' try(dgstobj(1:3, algo = "crc32", key = "secret"))
 #' @export
-dgstobj <- function(x, algo = c(
-                            "sha256", "sha512", "blake2b",
-                            "crc32"
-                          ), key = NULL) {
+dgstobj <- function(
+  x,
+  algo = c(
+    "sha256",
+    "sha512",
+    "blake2b",
+    "crc32"
+  ),
+  key = NULL
+) {
   algo <- .rmbl_arg(algo)
   bytes <- serialize(x, NULL, version = 2L, xdr = TRUE)
   if (!is.null(key)) {
@@ -352,18 +367,26 @@ dgstobj <- function(x, algo = c(
     # algorithm has no keyed form would answer the stronger request with
     # the weaker guarantee, so refuse instead.
     if (!algo %in% c("sha256", "blake2b")) {
-      stop(sprintf(
-        paste0("`key` is not supported for algo = \"%s\"; keyed digests are available for ",
-               "\"sha256\" (HMAC-SHA-256) and \"blake2b\""),
-        algo
-      ), call. = FALSE)
+      stop(
+        sprintf(
+          paste0(
+            "`key` is not supported for algo = \"%s\"; keyed digests are ",
+            "available for ",
+            "\"sha256\" (HMAC-SHA-256) and \"blake2b\""
+          ),
+          algo
+        ),
+        call. = FALSE
+      )
     }
-    return(switch(algo,
+    return(switch(
+      algo,
       sha256 = chmac(key, bytes),
       blake2b = cblake2b(bytes, key = key, length = 32L)
     ))
   }
-  switch(algo,
+  switch(
+    algo,
     sha256 = csha256(bytes),
     sha512 = csha512(bytes),
     crc32 = ccrc32(bytes),
@@ -373,8 +396,8 @@ dgstobj <- function(x, algo = c(
 
 #' Reads random bytes from the operating system's source.
 #'
-#' NULL when no operating-system source could be read; rndbytes() refuses
-#' to fall back. One line so the refusal can be exercised without breaking the OS.
+#' NULL when no operating-system source could be read; rndbytes() refuses to
+#' fall back. One line so the refusal can be exercised without breaking the OS.
 #' @param n The number of bytes.
 #' @return A raw vector, or NULL when no source could be read.
 #' @noRd

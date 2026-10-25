@@ -13,13 +13,12 @@ Defaults to the namespaces currently loaded.}
 \value{
 A data frame with one row per package and character columns
 \code{package}, \code{version}, \code{library} (the library directory),
-\code{repository}, \code{remote_url}, \code{remote_sha} and \code{built}
-(R version, platform and time of the build). Unavailable fields are
-\code{NA} rather than omitted, so a reader can see that the information
-was absent rather than forgotten; for a package that is not installed,
-every field except \code{package} is \code{NA}. An empty \code{packages} gives a
-data frame with no
-rows and the same columns.
+\code{repository}, \code{remote_url}, \code{remote_sha} and \code{built} (R
+version, platform and time of the build). Unavailable fields are \code{NA}
+rather than omitted, so a reader can see that the information was absent
+rather than forgotten; for a package that is not installed, every field
+except \code{package} is \code{NA}. An empty \code{packages} gives a data
+frame with no rows and the same columns.
 }
 \description{
 Records, for every package named, its version and enough about its

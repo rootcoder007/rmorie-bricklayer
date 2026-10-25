@@ -45,11 +45,11 @@ yoy(x, ...)
 \item{value}{For a data frame, the column holding the
 measure, as a string or a bare name.}
 
-\item{prd}{For a data frame, the column holding the
-period (a year, a \code{Date}, a fiscal-year integer, an ordered
-factor). An ordered factor is compared by level order, one level being one
-period; an unordered factor or a character column has no order, so every row
-is flagged \dQuote{no comparison period}. For a numeric vector, the periods themselves.}
+\item{prd}{For a data frame, the column holding the period (a year, a \code{Date},
+a fiscal-year integer, an ordered factor). An ordered factor is compared by
+level order, one level being one period; an unordered factor or a character
+column has no order, so every row is flagged \dQuote{no comparison period}.
+For a numeric vector, the periods themselves.}
 
 \item{by}{Optional grouping columns, as a character vector.
 The change is computed within each group.}
@@ -74,8 +74,8 @@ and withholds the percent change, which for a percentage is a different
 quantity.}
 
 \item{minbase}{Optional: previous-period values below this get a
-\dQuote{small base} note. Nothing is withheld either way: every non-zero base gets
-its percent change and exact interval, which is as wide as the base is
+\dQuote{small base} note. Nothing is withheld either way: every non-zero base
+gets its percent change and exact interval, which is as wide as the base is
 small. Defaults to 0 (no note); only a zero base has no percent change.}
 
 \item{conflvl}{Numeric scalar in (0, 1), the confidence level for the
@@ -179,9 +179,12 @@ seg <- data.frame(
   NumberOfPlacements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
 )
 
-y <- yoy(seg,
-  value = "NumberOfPlacements", prd = "EndFiscalYear",
-  by = "Gender", dir = "lower"
+y <- yoy(
+  seg,
+  value = "NumberOfPlacements",
+  prd = "EndFiscalYear",
+  by = "Gender",
+  dir = "lower"
 )
 y
 
@@ -195,9 +198,14 @@ rate <- data.frame(year = 2019:2023, share = c(4.1, 4.6, 5.2, 5.0, 5.4))
 yoy(rate, value = "share", prd = "year", units = "percent")
 
 # a missing year stays a gap; a bare column name works too
-yoy(data.frame(year = c(2019, 2021, 2022), n = c(10, 12, 15)), value = n, prd = year)
+yoy(
+  data.frame(year = c(2019, 2021, 2022), n = c(10, 12, 15)),
+  value = n,
+  prd = year
+)
 
-# a quarterly series compares each quarter with the same quarter a year earlier
+# a quarterly series compares each quarter with the same quarter a year
+# earlier
 q <- ts(c(5, 6, 7, 8, 6, 7, 9, 9), frequency = 4, start = c(2020, 1))
 as.data.frame(yoy(q))[5:8, c("period", "value", "previous", "pctchg")]
 

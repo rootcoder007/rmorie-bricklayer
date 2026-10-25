@@ -29,8 +29,8 @@ tojs(
 an array of records), \code{"columns"} (an object of column arrays) or
 \code{"values"} (an array of row arrays, without names).}
 
-\item{matrix}{How a matrix is written. \code{"rowmajor"} (the default) gives an
-array of rows, and \code{"columnmajor"} an array of columns.}
+\item{matrix}{How a matrix is written. \code{"rowmajor"} (the default) gives
+an array of rows, and \code{"columnmajor"} an array of columns.}
 
 \item{Date}{How a \code{Date} is written: \code{"ISO8601"} (the default,
 \code{"2024-01-02"}) or \code{"epoch"} (days since 1970-01-01).}

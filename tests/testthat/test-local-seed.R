@@ -10,16 +10,27 @@ test_that("seeded functions leave the caller's stream as a plain seed would", {
   fns <- list(
     drftcal = function() drftcal(d, n = 4, seed = 3L),
     cpspwr = function() {
-      cpspwr(d, function(z) mean(z$a), function(z, size) {
-        z$a <- z$a + size
-        z
-      }, sizes = c(0, 0.3), trt = "a", n = 19L, reps = 2L, seed = 4L)
+      cpspwr(
+        d,
+        function(z) mean(z$a),
+        function(z, size) {
+          z$a <- z$a + size
+          z
+        },
+        sizes = c(0, 0.3),
+        trt = "a",
+        n = 19L,
+        reps = 2L,
+        seed = 4L
+      )
     }
   )
   for (nm in names(fns)) {
     f <- fns[[nm]]
     a <- tryCatch(stream_after(11, f), error = function(e) NULL)
-    if (is.null(a)) next
+    if (is.null(a)) {
+      next
+    }
     b <- stream_after(22, f)
     expect_false(isTRUE(all.equal(a, b)), info = nm)
     set.seed(11)

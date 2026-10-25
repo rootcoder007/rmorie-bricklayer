@@ -35,16 +35,15 @@ period-to-period changes went up, went down or stayed flat. Use it to
 report the whole span of a series in one line next to the detailed table.
 }
 \details{
-Rows whose \code{value} is missing are dropped before the summary, and
-the remaining rows are sorted by period. With \eqn{v_1} the first and
-\eqn{v_T} the last observed value, the total change is
-\deqn{100 (v_T / v_1 - 1)}
-and, with \eqn{s = (T - 1) / \mathrm{lag}} steps of length \code{lag},
-\deqn{100 \left( (v_T / v_1)^{1/s} - 1 \right).}
-Both are \code{NA} when \eqn{v_1 \le 0}, because a growth rate out of zero
-does not exist; \code{cagrpct} is also \code{NA} for a single period.
-\code{"Annual"} in CAGR assumes one period is a year; for monthly or quarterly
-data read it as the compound rate per \code{lag} periods.
+Rows whose \code{value} is missing are dropped before the summary,
+and the remaining rows are sorted by period. With \eqn{v_1} the first and
+\eqn{v_T} the last observed value, the total change is \deqn{100 (v_T / v_1 -
+1)} and, with \eqn{s = (T - 1) / \mathrm{lag}} steps of length \code{lag},
+\deqn{100 \left( (v_T / v_1)^{1/s} - 1 \right).} Both are \code{NA} when
+\eqn{v_1 \le 0}, because a growth rate out of zero does not exist;
+\code{cagrpct} is also \code{NA} for a single period. \code{"Annual"} in CAGR
+assumes one period is a year; for monthly or quarterly data read it as the
+compound rate per \code{lag} periods.
 
 The \code{up}, \code{down} and \code{flat} counts are taken from the
 percent-change column (\code{pctchg}, or \code{ppchg} for

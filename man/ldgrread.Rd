@@ -21,8 +21,8 @@ ldgrchk(ledger, pkgs = NULL)
 
 \item{ledger}{A \code{ldgrread()} result, or the path of a ledger file.}
 
-\item{pkgs}{Character vector: check only the covered functions and checks of these
-packages; \code{NULL} (the default) checks every package named.}
+\item{pkgs}{Character vector: check only the covered functions and checks of
+these packages; \code{NULL} (the default) checks every package named.}
 }
 \value{
 \code{ldgrread()}: the ledger, a list of class \code{rmbl_ledger},
@@ -33,50 +33,49 @@ with the normalised path as the attribute \code{path}.
 \code{note}) and \code{line}.
 }
 \description{
-A proof ledger records the theorems of a formal-proof build (Lean and Mathlib): each
-theorem's statement, file and line, its status (\code{proved}, \code{sorry} or
-\code{axiom}) and number of \code{sorry} placeholders, the package functions
-whose behaviour it states, and optionally a numeric check of one of them in R. The
-format is \code{schemapath("ledger")}, in the style of the capsule schemas;
-nothing in it is specific to this package, so any package can ship a ledger in
-\verb{inst/ledger/} and any formal-proof project can write one.
+A proof ledger records the theorems of a formal-proof build (Lean and
+Mathlib): each theorem's statement, file and line, its status (\code{proved},
+\code{sorry} or \code{axiom}) and number of \code{sorry} placeholders, the package
+functions whose behaviour it states, and optionally a numeric check of one of
+them in R. The format is \code{schemapath("ledger")}, in the style of the capsule
+schemas; nothing in it is specific to this package, so any package can ship a
+ledger in \verb{inst/ledger/} and any formal-proof project can write one.
 }
 \details{
 \code{ldgrread()} parses the file and validates it against the schema; a
-file that does not validate, or that repeats a theorem id, is refused with the
-first problems found.
+file that does not validate, or that repeats a theorem id, is refused with
+the first problems found.
 
-\code{ldgrchk()} returns check rows in the shape of \verb{rmbl verify} (the
-\code{rows} of \code{\link[=cpschk]{cpschk()}}):
-\describe{
-\item{\code{proved: ID}}{the theorem is \code{proved} with
-\code{sorry_count} 0. A \code{sorry} fails as an error; an \code{axiom}
-fails as a warning (it is assumed, not proved).}
+\code{ldgrchk()} returns check rows in the shape of \verb{rmbl verify} (the \code{rows}
+of \code{\link[=cpschk]{cpschk()}}): \describe{ \item{\code{proved: ID}}{the theorem is
+\code{proved} with \code{sorry_count} 0. A \code{sorry} fails as an error; an
+\code{axiom} fails as a warning (it is assumed, not proved).}
 \item{\verb{covered: ID PKG::FN}}{the covered function is exported by the
-installed package; a package that is not installed here is a note, not a failure
-(it cannot be checked).}
-\item{\code{check: ID}}{the theorem's \code{check$expr} evaluates within
-\code{check$tol} (default 1e-8) of \code{check$expect}. The expression is
-evaluated in a sandbox: an environment holding only the exported functions of
-the first R package the theorem covers and a short list of base arithmetic and
-constructors (\code{c}, \code{list}, \code{seq}, \code{rep},
-\code{sum}, \code{+}, \code{$}, ...). Anything else is refused before
-evaluation: a call to any other function (\code{system()}, \code{file()},
-\code{eval()}, another package), a free variable, or an expression whose outer
-call is not a call to that package (or an extraction from one). Evaluation is
-limited to 10 seconds.}
-\item{\code{ledger_commit_pinned}, \code{ledger_build_pinned}}{when the ledger
-is the data file of a capsule whose provenance says \code{kind: "ledger"}: the
-provenance's \code{source$commit} and \code{source$build_digest} equal the
+installed package; a package that is not installed here is a note, not a
+failure (it cannot be checked).} \item{\code{check: ID}}{the theorem's
+\code{check$expr} evaluates within \code{check$tol} (default 1e-8) of
+\code{check$expect}. The expression is evaluated in a sandbox: an environment
+holding only the exported functions of the first R package the theorem covers
+and a short list of base arithmetic and constructors (\code{c}, \code{list}, \code{seq},
+\code{rep}, \code{sum}, \code{+}, \code{$}, ...). Anything else is refused before
+evaluation: a call to any other function (\code{system()}, \code{file()}, \code{eval()},
+another package), a free variable, or an expression whose outer call is not a
+call to that package (or an extraction from one). Evaluation is limited to 10
+seconds.} \item{\code{ledger_commit_pinned}, \code{ledger_build_pinned}}{when the
+ledger is the data file of a capsule whose provenance says \code{kind: "ledger"}:
+the provenance's \code{source$commit} and \code{source$build_digest} equal the
 ledger's. The capsule's own rows (\code{\link[=vrfcps]{vrfcps()}}, the bundle and
-attestation through \code{\link[=cpsbndlvrf]{cpsbndlvrf()}}, the schemas) come
-with them, as \verb{rmbl verify} reports them; \verb{rmbl verify} adds the
-ledger rows to such a capsule too.}
-}
+attestation through \code{\link[=cpsbndlvrf]{cpsbndlvrf()}}, the schemas) come with
+them, as \verb{rmbl verify} reports them; \verb{rmbl verify} adds the ledger rows to
+such a capsule too.} }
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-f <- system.file("extdata", "ledger_sample.json", package = "rmoriebricklayer")
+f <- system.file(
+  "extdata",
+  "ledger_sample.json",
+  package = "rmoriebricklayer"
+)
 l <- ldgrread(f)
 l
 r <- ldgrchk(l)

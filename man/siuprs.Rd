@@ -63,14 +63,24 @@ many lines were split: a field that spans a split may be incomplete.
 
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-f <- siuprs(system.file("extdata",
-                                      "siu_synthetic_report.html",
-                                      package = "rmoriebricklayer"))
+f <- siuprs(system.file(
+  "extdata",
+  "siu_synthetic_report.html",
+  package = "rmoriebricklayer"
+))
 f[["number_of_subject_officials"]]
-f[c("police_service", "date_of_incident_iso", "date_of_director_decision_iso")]
+f[c(
+  "police_service",
+  "date_of_incident_iso",
+  "date_of_director_decision_iso"
+)]
 
 # several reports at once give a data frame, one row each
-path <- system.file("extdata", "siu_synthetic_report.html", package = "rmoriebricklayer")
+path <- system.file(
+  "extdata",
+  "siu_synthetic_report.html",
+  package = "rmoriebricklayer"
+)
 html <- paste(readLines(path), collapse = "\n")
 df <- siuprs(c(html, "<p>not a report</p>"))
 df[, c("_language", "police_service", "number_of_witness_officials")]

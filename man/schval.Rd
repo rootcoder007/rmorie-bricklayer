@@ -63,7 +63,12 @@ ok <- withCallingHandlers(
 ok
 
 # rules work the same way
-rules <- list(rul("id_positive", function(v) v > 0, col = "id", sev = "fatal"))
+rules <- list(rul(
+  "id_positive",
+  function(v) v > 0,
+  col = "id",
+  sev = "fatal"
+))
 try(schval(data.frame(id = c(1, -2)), rules))
 
 # a provenance without a schema is refused, not passed

@@ -1,4 +1,5 @@
-# The many-plot helpers: each draws to a null device and returns the data it drew.
+# The many-plot helpers: each draws to a null device and returns the data it
+# drew.
 
 test_that("the distribution plots draw and return their data", {
   grDevices::pdf(NULL)

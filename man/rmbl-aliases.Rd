@@ -19,29 +19,33 @@
 \alias{summary.rmbl_old}
 \title{The 0.5.x names}
 \description{
-1.0.0 renamed most functions rmoriebricklayer 0.5.13 exported. The old names are no
-longer R functions, except the eleven rmoriedata 0.3.x calls (\link{rmbl-compat})
-and the S3 generics \code{rate()}, \code{rate_change()}, \code{share()} and
-\code{yoy_summary()}, which stay so methods written for them still dispatch. The
-command line knows every old name, from \code{inst/compat/compat_names_map.tsv}:
+1.0.0 renamed most functions rmoriebricklayer 0.5.13 exported. The old names
+are no longer R functions, except the eleven rmoriedata 0.3.x calls
+(\link{rmbl-compat}) and the S3 generics \code{rate()}, \code{rate_change()},
+\code{share()} and \code{yoy_summary()}, which stay so methods written for
+them still dispatch. The command line knows every old name, from
+\code{inst/compat/compat_names_map.tsv}:
 \preformatted{
-rmbl describe admissions      what admissions() became, then the page of admits()
+rmbl describe admissions
+    what admissions() became, then the page of admits()
 rmbl run admissions --adp 120 --alos 30
-                              call it by the old name, old arguments and values translated
-rmbl migrate analysis.R       show the 1.0.0 rewrite of a 0.5.x script; --write writes it
+    call it by the old name, old arguments and values translated
+rmbl migrate analysis.R
+    show the 1.0.0 rewrite of a 0.5.x script; --write writes it
 }
-(\code{blcli()} runs the same verbs from R.) An option set under its 0.5.x name
-(\code{rmoriebricklayer.xmss_index_file}, \code{rmoriebricklayer.data_cache} ...) is read
-when the new name is not set.
+(\code{blcli()} runs the same verbs from R.) An option set under its 0.5.x
+name (\code{rmoriebricklayer.xmss_index_file},
+\code{rmoriebricklayer.data_cache} ...) is read when the new name is not set.
 }
 \details{
-The four generics return their result in its 0.5.x form: the 0.5.x column and field
-names (nested tables and attributes too; the last table lists them) and, for a
-delimited writer, the 0.5.x header. Such a result carries the class \code{rmbl_old}
-in front, so \code{print()}, \code{format()}, \code{plot()}, \code{summary()} and
-the generics read it in the 1.0.0 names. A 1.0.0 call is never translated.
-\code{yoy()} kept its name: it returns the 0.5.x names when called with a 0.5.x
-argument name, and the 1.0.0 names otherwise.
+The four generics return their result in its 0.5.x form: the 0.5.x column and
+field names (nested tables and attributes too; the last table lists them)
+and, for a delimited writer, the 0.5.x header. Such a result carries the
+class \code{rmbl_old} in front, so \code{print()}, \code{format()},
+\code{plot()}, \code{summary()} and the generics read it in the 1.0.0 names.
+A 1.0.0 call is never translated. \code{yoy()} kept its name: it returns the
+0.5.x names when called with a 0.5.x argument name, and the 1.0.0 names
+otherwise.
 }
 \section{Renamed allowed values}{
 
@@ -66,7 +70,8 @@ verify_pollution           outcome    all_cause_mortality -> allcause,
 
 The 0.5.13 page, then each old name and the name the result has now.
 \preformatted{
-advection_diffusion_2d: sigma_y -> sigmay, sigma_z -> sigmaz, final_rise -> finalrise,
+advection_diffusion_2d: sigma_y -> sigmay, sigma_z -> sigmaz,
+  final_rise -> finalrise,
   x_final -> xfinal, diffusion_number -> difn, stability_number -> stabn,
   mean_y -> meany
 analyse_table: p_adjusted -> padj, combined_pct_lower -> compctlo,
@@ -76,15 +81,19 @@ analyse_table: p_adjusted -> padj, combined_pct_lower -> compctlo,
 band_sensitivity: relative_span -> relspan
 benford_test: log_p_value -> logpvalue
 bricklayer_siu_schema: is_count -> count
-capsule_drift: js_divergence -> jsdiv, n_reference -> nref, n_current -> ncur,
+capsule_drift: js_divergence -> jsdiv, n_reference -> nref,
+  n_current -> ncur,
   any_drift -> anydrft
 capsule_power: smallest_detected -> smadet
 capsule_report: n_rows -> nrows
-case_flow: rolling_clearance -> rolclr, rolling_lower -> rollo, rolling_upper -> rolup,
-  pending_change -> penchg, periods_to_clear -> pertoclear, cumulative_net -> cumnet,
+case_flow: rolling_clearance -> rolclr, rolling_lower -> rollo,
+  rolling_upper -> rolup,
+  pending_change -> penchg, periods_to_clear -> pertoclear,
+  cumulative_net -> cumnet,
   case_flow -> caseflow
 cert_chain_verify: at_time -> attm
-change_envelope: change_lower -> chglo, change_upper -> chgup, pct_lower -> pctlo,
+change_envelope: change_lower -> chglo, change_upper -> chgup,
+  pct_lower -> pctlo,
   pct_upper -> pctup, rate_lower -> ratelo, rate_upper -> rateup,
   previous_population -> prepop, previous_rate_lower -> preratelo,
   previous_rate_upper -> prerateup
@@ -92,16 +101,20 @@ clean_column_names: original_names -> orignms
 clearance_decomposition: rate_effect -> rateeff, mix_effect -> mixeff,
   standardised_on_base -> staonbase, standardised_on_average -> staonave,
   rate_ratio -> rateratio
-compute_footprint: duration_s -> durs, cpu_time_s -> cputms, usage_mode -> usagemode,
-  memory_gb -> memgb, energy_kwh -> enekwh, co2e_g -> co2eg, carbon_intensity -> co2int
+compute_footprint: duration_s -> durs, cpu_time_s -> cputms,
+  usage_mode -> usagemode,
+  memory_gb -> memgb, energy_kwh -> enekwh, co2e_g -> co2eg,
+  carbon_intensity -> co2int
 core_hawkes_fit: baseline_params -> basepar, branching_ratio -> braratio,
-  kernel_params -> kerpar, k_params -> kpar, ks_stat -> ksstat, ks_pvalue -> kspva,
+  kernel_params -> kerpar, k_params -> kpar, ks_stat -> ksstat,
+  ks_pvalue -> kspva,
   at_bound -> atbound
 correlation_table: n_pairs -> nprs
 count_trend: rate_ratio -> rateratio, log_slope -> logslope
 cramers_v: min_expected -> minexp, cells_below -> cellsbelow
 crf_no2: log_rr -> logrr, rr_lower -> rrlo, rr_upper -> rrup,
-  reference_conc -> refconc, exposure_conc -> expconc, beta_per_10 -> betaper10,
+  reference_conc -> refconc, exposure_conc -> expconc,
+  beta_per_10 -> betaper10,
   beta_per_10_ci -> betaper10ci, rr_per_unit -> rrperunit
 crime_density: area_km2 -> areakm2
 download_data: target_path -> tpath
@@ -112,7 +125,8 @@ drift_homogeneity: log_p_value -> logpvalue
 drift_ks: n_eff -> neff
 drift_psi: js_divergence -> jsdiv
 evalue_rr: evalue_point -> evlpoint, evalue_limit -> evllimit
-exposure_concentration_index: concentration_index -> concidx, exposure_mean -> expomean
+exposure_concentration_index: concentration_index -> concidx,
+  exposure_mean -> expomean
 exposure_response_plr: se_analytic -> seana, se_bootstrap -> seboot,
   ci_lower_bs -> cilobs, ci_upper_bs -> ciupbs, n_bootstrap -> nboot
 falsify_family: family_size -> famsz, at_floor -> atflr
@@ -122,7 +136,8 @@ footprint_equivalents: car_km -> carkm, tree_months -> treemon
 frequency_table: pct_valid -> pctvalid
 friendly_download: target_path -> tpath
 hill_tail_index: x_min -> xmin, n_tail -> ntl
-hotspot_persistence: active_cells -> actcells, cells_for_half -> cellsforhalf,
+hotspot_persistence: active_cells -> actcells,
+  cells_for_half -> cellsforhalf,
   share_for_half -> shrforhalf, hot_cells -> hotcells, tied_in -> tiedin,
   tied_out -> tiedout, hot_share -> hotshr, jaccard_previous -> jacpre,
   periods_hot -> perhot, n_cells -> ncells, hot_k -> hotk
@@ -142,10 +157,13 @@ missingness_summary: n_rows -> nrows
 morans_i: null_mean -> nullmean, null_sd -> nullsd, n_perm -> nperm
 parse_bands: open_lower -> openlo, open_upper -> openup
 plr_crossfit: k_folds -> kfol
-pollution_burden: attributable_cases -> attrcases, baseline_cases -> basecases,
-  baseline_rate -> brate, exposure_mean -> expomean, reference_conc -> refconc,
+pollution_burden: attributable_cases -> attrcases,
+  baseline_cases -> basecases,
+  baseline_rate -> brate, exposure_mean -> expomean,
+  reference_conc -> refconc,
   log_rr -> logrr
-pollution_burden_by_area: attributable_cases -> attrcases, baseline_cases -> basecases
+pollution_burden_by_area: attributable_cases -> attrcases,
+  baseline_cases -> basecases
 pollution_report_text: exit_status -> exitstat, exposure_csv -> expcsv,
   exposure_mean -> expomean, exposure_prevalence -> expoprev, paf_ci -> pafci
 prereg_check: declared_utc -> decutc, declared_not_reported -> decnotrep,
@@ -153,14 +171,17 @@ prereg_check: declared_utc -> decutc, declared_not_reported -> decnotrep,
 profile_columns: n_zero -> nzero, n_negative -> nneg, n_infinite -> ninf
 published_bounds: rounding_kind -> rndkind, suppression_limit -> suplim
 rapl_available: rapl_dir -> rapldir
-region_coverage: has_unit -> hasunit, pop_share -> popshr, with_unit -> withunit,
-  without_unit -> witunit, total_population -> totalpop, covered_population -> covpop,
+region_coverage: has_unit -> hasunit, pop_share -> popshr,
+  with_unit -> withunit,
+  without_unit -> witunit, total_population -> totalpop,
+  covered_population -> covpop,
   uncovered_population -> uncpop, covered_share -> covshr
 region_map_from_points: n_regions -> nreg
 scan_adjust: p_adjusted -> padj, scan_adjust -> scanadj
 stay_summary: total_days -> totaldays
 step_change: break_after -> breakafter, n_perm -> nperm
-stock_flow: flow_rate -> flowrate, stock_rate -> stkrate, people_change -> peochg,
+stock_flow: flow_rate -> flowrate, stock_rate -> stkrate,
+  people_change -> peochg,
   alos_change -> aloschg, days_change -> dayschg, adp_change -> adpchg,
   flow_rate_change -> flowratechg, stock_rate_change -> stkratechg,
   stock_flow -> stkflow
@@ -172,16 +193,19 @@ trend_test: slope_lower -> slopelo, slope_upper -> slopeup,
   slope_ci_clamped -> slopecicla, conf_level -> conflvl
 wayback_save: max_captures -> maxcap
 yoy_bounds: env_change_lower -> envchglo, env_change_upper -> envchgup,
-  env_pct_lower -> envpctlo, env_pct_upper -> envpctup, combined_pct_lower -> compctlo,
+  env_pct_lower -> envpctlo, env_pct_upper -> envpctup,
+  combined_pct_lower -> compctlo,
   combined_pct_upper -> compctup
 yoy_label: period_label -> perlbl
 rate: per_label -> perlbl, conf_level -> conflvl, min_count -> mincnt
 rate_change: previous_rate -> prerate, previous_count -> precnt,
-  previous_population -> prepop, rate_ratio -> rateratio, pct_change -> pctchg,
+  previous_population -> prepop, rate_ratio -> rateratio,
+  pct_change -> pctchg,
   pct_lower -> pctlo, pct_upper -> pctup, rate_change -> ratechg
 share: conf_level -> conflvl
 yoy_summary: total_pct -> totalpct, cagr_pct -> cagrpct
-yoy: pct_change -> pctchg, pp_change -> ppchg, min_base -> minbase, pct_lower -> pctlo,
+yoy: pct_change -> pctchg, pp_change -> ppchg, min_base -> minbase,
+  pct_lower -> pctlo,
   pct_upper -> pctup, conf_level -> conflvl
 }
 }
@@ -190,15 +214,26 @@ yoy: pct_change -> pctchg, pp_change -> ppchg, min_base -> minbase, pct_lower ->
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # what a 0.5.x name became, and its 1.0.0 help page (the first lines)
 out <- character()
-blcli(c("describe", "admissions"), out = function(...) out <<- c(out, paste0(...)))
+blcli(c("describe", "admissions"), out = function(...) {
+  out <<- c(out, paste0(...))
+})
 cat(head(strsplit(paste(out, collapse = ""), "\n")[[1]], 3), sep = "\n")
-# the generics kept their names, and return their result under the 0.5.x names
+# the generics kept their names, and return their result under the 0.5.x
+# names
 r <- rate(c(5, 12), population = c(1000, 4000))
 names(r)
-rate_change(data.frame(year = 2023:2024, n = c(10, 14), pop = 1000), count = "n",
-            population = "pop", period = "year")
+rate_change(
+  data.frame(year = 2023:2024, n = c(10, 14), pop = 1000),
+  count = "n",
+  population = "pop",
+  period = "year"
+)
 share(c(a = 3, b = 7))
-y <- yoy(data.frame(year = 2021:2024, n = c(10, 12, 9, 15)), value = "n", period = "year")
+y <- yoy(
+  data.frame(year = 2021:2024, n = c(10, 12, 9, 15)),
+  value = "n",
+  period = "year"
+)
 yoy_summary(y)
 \dontshow{\}) # examplesIf}
 }

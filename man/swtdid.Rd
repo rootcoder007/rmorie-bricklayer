@@ -25,10 +25,10 @@ year or a month index) and the outcome.}
 \item{trtd}{Column name of the treatment indicator (0 or 1).}
 
 \item{cl}{Column name of the clusters (default the unit), or two column names
-for two-way clustering (Cameron, Gelbach and Miller 2011):
-\eqn{V_a + V_b - V_{ab}}, each term with the small-sample factor of the dimension
-with fewer clusters, and t on its \eqn{G - 1} degrees of freedom. A composite
-cluster (district by month, say) is one column made with \code{interaction()}.}
+for two-way clustering (Cameron, Gelbach and Miller 2011): \eqn{V_a + V_b -
+V_{ab}}, each term with the small-sample factor of the dimension with fewer
+clusters, and t on its \eqn{G - 1} degrees of freedom. A composite cluster
+(district by month, say) is one column made with \code{interaction()}.}
 
 \item{reps}{Bootstrap replications (default 499; 0 for none).}
 
@@ -37,28 +37,30 @@ cluster (district by month, say) is one column made with \code{interaction()}.}
 \item{conflvl}{Confidence level (default 0.95).}
 }
 \value{
-A data frame of class \code{rmbl_switching_did}, two rows (\code{effect},
-\code{placebo}): \code{estimate}, \code{se}, \code{lower}, \code{upper},
-\code{switchers}.
+A data frame of class \code{rmbl_switching_did}, two rows
+(\code{effect}, \code{placebo}): \code{estimate}, \code{se}, \code{lower},
+\code{upper}, \code{switchers}.
 }
 \description{
-De Chaisemartin and D'Haultfoeuille's estimator of the effect at the moment units
-switch: in every period, units that switch into treatment are compared with units
-untreated in both periods, and units that switch out with units treated in both;
-with the placebo that runs the same comparison one period earlier.
+De Chaisemartin and D'Haultfoeuille's estimator of the effect at the moment
+units switch: in every period, units that switch into treatment are compared
+with units untreated in both periods, and units that switch out with units
+treated in both; with the placebo that runs the same comparison one period
+earlier.
 }
 \details{
-For each period \eqn{t} with joiners (\eqn{D_{t-1} = 0, D_t = 1}) and
-stayers untreated in both, \eqn{DID_{+,t}} is the joiners' mean change in the
-outcome minus the stayers'; with leavers (1 to 0) and stayers treated in both,
-\eqn{DID_{-,t}} is the stayers' change minus the leavers'. The estimate is
-\deqn{DID_M = \sum_t \frac{N_{J,t}}{N_S} DID_{+,t} + \frac{N_{L,t}}{N_S}
+For each period \eqn{t} with joiners (\eqn{D_{t-1} = 0, D_t = 1})
+and stayers untreated in both, \eqn{DID_{+,t}} is the joiners' mean change in
+the outcome minus the stayers'; with leavers (1 to 0) and stayers treated in
+both, \eqn{DID_{-,t}} is the stayers' change minus the leavers'. The estimate
+is \deqn{DID_M = \sum_t \frac{N_{J,t}}{N_S} DID_{+,t} + \frac{N_{L,t}}{N_S}
 DID_{-,t},}{DID_M = sum_t (N_J,t DID_+,t + N_L,t DID_-,t) / N_S,} over the
-\eqn{N_S} switchers. The placebo compares, between \eqn{t - 2} and \eqn{t - 1}, the
-change of the units that switch at \eqn{t} with that of the units whose treatment
-did not change over \eqn{t - 2} to \eqn{t}; it should be near zero. Standard errors
-come from the cluster bootstrap. Unlike the two-way estimator, \eqn{DID_M} never
-uses a unit whose treatment changed as a control in the period it changed.
+\eqn{N_S} switchers. The placebo compares, between \eqn{t - 2} and \eqn{t -
+1}, the change of the units that switch at \eqn{t} with that of the units
+whose treatment did not change over \eqn{t - 2} to \eqn{t}; it should be near
+zero. Standard errors come from the cluster bootstrap. Unlike the two-way
+estimator, \eqn{DID_M} never uses a unit whose treatment changed as a control
+in the period it changed.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -67,9 +69,9 @@ swtdid(p, "district", "month", "crmrate", "reformed", reps = 99, seed = 1)
 \dontshow{\}) # examplesIf}
 }
 \references{
-de Chaisemartin C, D'Haultfoeuille X (2020). Two-way fixed effects
-estimators with heterogeneous treatment effects. American Economic Review
-110(9):2964-2996. \doi{10.1257/aer.20181169}
+de Chaisemartin C, D'Haultfoeuille X (2020). Two-way fixed
+effects estimators with heterogeneous treatment effects. American Economic
+Review 110(9):2964-2996. \doi{10.1257/aer.20181169}
 
 Applied as a placebo check on ward redistricting: Ternullo S, Zorro-Medina A,
 Vargas R (2024). How political dynasties concentrate advantage within cities.

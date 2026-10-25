@@ -2,16 +2,16 @@
 % Please edit documentation in R/indigenous.R
 \name{limfrom}
 \alias{limfrom}
-\title{Confidence limits from a standard error, a coefficient of variation or a margin of
-error}
+\title{Confidence limits from a standard error, a coefficient of variation or a
+margin of error}
 \usage{
 limfrom(est, se = NULL, cv = NULL, moe = NULL, moelev = 0.9, conflvl = 0.95)
 }
 \arguments{
 \item{est}{The estimates.}
 
-\item{se, cv, moe}{Give one: standard errors, coefficients of variation (relative
-standard errors, in percent), or margins of error.}
+\item{se, cv, moe}{Give one: standard errors, coefficients of variation
+(relative standard errors, in percent), or margins of error.}
 
 \item{moelev}{The confidence level of the margins of error (default 0.90).}
 
@@ -21,17 +21,18 @@ standard errors, in percent), or margins of error.}
 A data frame: \code{estimate}, \code{lower}, \code{upper}, \code{se}.
 }
 \description{
-The comparisons of this family take an estimate and its published confidence limits.
-Agencies that publish a standard error, a relative standard error (coefficient of
-variation) or a margin of error instead give the same information; this turns it into
-limits at the level wanted.
+The comparisons of this family take an estimate and its published confidence
+limits. Agencies that publish a standard error, a relative standard error
+(coefficient of variation) or a margin of error instead give the same
+information; this turns it into limits at the level wanted.
 }
 \details{
-With an estimate \eqn{e} and \eqn{z = \Phi^{-1}(1 - \alpha/2)} for the level
-wanted, a standard error \eqn{s} gives \eqn{e \pm z s}; a coefficient of variation
-\eqn{c} (in percent) gives \eqn{s = e c / 100}; a margin of error \eqn{m} at level
-\code{moelev} (the American Community Survey publishes 90\% margins) gives
-\eqn{s = m / z_{moe}}. The limits are symmetric on the estimate's scale.
+With an estimate \eqn{e} and \eqn{z = \Phi^{-1}(1 - \alpha/2)} for
+the level wanted, a standard error \eqn{s} gives \eqn{e \pm z s}; a
+coefficient of variation \eqn{c} (in percent) gives \eqn{s = e c / 100}; a
+margin of error \eqn{m} at level \code{moelev} (the American Community Survey
+publishes 90\% margins) gives \eqn{s = m / z_{moe}}. The limits are symmetric
+on the estimate's scale.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

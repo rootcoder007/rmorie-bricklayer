@@ -29,14 +29,13 @@ A data frame with one row per label and columns \code{label}
 and \code{openlo}, \code{openup} (logical).
 }
 \description{
-Published administrative tables often report intervals instead of
-values: \dQuote{18 to 24}, \dQuote{2 to 5}, \code{"50+"}, \dQuote{Greater than 15
-days}. This function
-reads such labels into a lower and an upper bound per band, and flags the
-bands that are open at the top or the bottom. It recognises the wordings
-open-data publishers actually use, and leaves a label it cannot read as
-\code{NA} rather than guessing. Use it as the first step before
-\code{\link{bandvals}}, \code{\link{expbands}} or
+Published administrative tables often report intervals instead
+of values: \dQuote{18 to 24}, \dQuote{2 to 5}, \code{"50+"}, \dQuote{Greater
+than 15 days}. This function reads such labels into a lower and an upper
+bound per band, and flags the bands that are open at the top or the bottom.
+It recognises the wordings open-data publishers actually use, and leaves a
+label it cannot read as \code{NA} rather than guessing. Use it as the first
+step before \code{\link{bandvals}}, \code{\link{expbands}} or
 \code{\link{bandsens}}.
 }
 \details{

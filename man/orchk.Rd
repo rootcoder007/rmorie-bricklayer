@@ -41,15 +41,13 @@ which shows the groups were mislabelled rather than the arithmetic wrong.
 \details{
 With row \eqn{r} holding \eqn{a_r} (outcome absent) and \eqn{b_r}
 (outcome present), the odds ratio of group \eqn{r} against the reference
-\eqn{0} is
-\deqn{OR_r = \frac{b_r / a_r}{b_0 / a_0}.}
-A reported value matches when \eqn{|OR_r - \widehat{OR}_r| \le}
-\code{tol} \eqn{\times |\widehat{OR}_r|} for every non-reference
-group, and all values are finite. The search covers all \eqn{k!}
-permutations of the row labels, each with and without the outcome columns
-swapped (the identity without a swap is the \dQuote{as labelled} check), and is
-only run for \eqn{k \le 7} groups. A zero cell gives an infinite or
-undefined odds ratio, which never matches.
+\eqn{0} is \deqn{OR_r = \frac{b_r / a_r}{b_0 / a_0}.} A reported value
+matches when \eqn{|OR_r - \widehat{OR}_r| \le} \code{tol} \eqn{\times
+|\widehat{OR}_r|} for every non-reference group, and all values are finite.
+The search covers all \eqn{k!} permutations of the row labels, each with and
+without the outcome columns swapped (the identity without a swap is the
+\dQuote{as labelled} check), and is only run for \eqn{k \le 7} groups. A zero
+cell gives an infinite or undefined odds ratio, which never matches.
 
 Errors: \code{cnts} not a matrix, data frame or table with two columns
 and row names; \code{ref} not a row name; \code{rptd} not named

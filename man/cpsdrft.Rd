@@ -54,30 +54,23 @@ left
 untouched.}
 }
 \value{
-A list of class \code{bricklayer_drift} with elements:
-\describe{
-\item{\code{columns}}{a data frame, one row per shared column, with
-\code{column}, \code{type} (\code{"numeric"}, \code{"date"}, \code{"categorical"}
-or
+A list of class \code{bricklayer_drift} with elements: \describe{
+\item{\code{columns}}{a data frame, one row per shared column, with \code{column},
+\code{type} (\code{"numeric"}, \code{"date"}, \code{"categorical"} or
 \code{"identifier"}), \code{statistic} (KS \eqn{D} or chi-square), \code{p_value},
-\code{psi}, \code{jsdiv}, \code{unseen_share} (share of current values the
-reference never had; categorical and identifier columns only),
-\code{drifted} (logical, \code{NA} when no test applies) and \code{note}
-(why a column was not tested, or \code{""});}
+\code{psi}, \code{jsdiv}, \code{unseen_share} (share of current values the reference
+never had; categorical and identifier columns only), \code{drifted} (logical, \code{NA}
+when no test applies) and \code{note} (why a column was not tested, or \code{""});}
 \item{\code{added}, \code{removed}}{character vectors of column names;}
-\item{\code{nref}, \code{ncur}}{row counts;}
-\item{\code{alpha}, \code{psithr}, \code{psiminn}}{the settings used;}
-\item{\code{bands}}{the PSI bands the plots and reports colour by:
-\code{warn} (0.1, or \code{psithr} when lower) and \code{fail} (\code{psithr});}
-\item{\code{summ}}{one binned summary per shared column, for
+\item{\code{nref}, \code{ncur}}{row counts;} \item{\code{alpha}, \code{psithr},
+\code{psiminn}}{the settings used;} \item{\code{bands}}{the PSI bands the plots and
+reports colour by: \code{warn} (0.1, or \code{psithr} when lower) and \code{fail}
+(\code{psithr});} \item{\code{summ}}{one binned summary per shared column, for
 \link[=plot-methods]{plot()}, \code{\link[=drfthtml]{drfthtml()}} and
-\code{\link[=drftapp]{drftapp()}}: missing shares,
-sizes, summary statistics or the ten largest categories, the PSI bins
-with each bin's term of the index, a histogram and first-digit counts.
-Never the rows;}
-\item{\code{anydrft}}{logical.}
-}
-The print method lists the per-column verdicts, drifted columns first.
+\code{\link[=drftapp]{drftapp()}}: missing shares, sizes, summary statistics or the ten
+largest categories, the PSI bins with each bin's term of the index, a
+histogram and first-digit counts. Never the rows;} \item{\code{anydrft}}{logical.}
+} The print method lists the per-column verdicts, drifted columns first.
 }
 \description{
 Checks whether the data in a freshly downloaded table still look like the

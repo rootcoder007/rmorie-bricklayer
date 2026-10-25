@@ -27,13 +27,16 @@ test_that("the running-mean fallback matches mean() and cannot overflow", {
 test_that("cmom survives the extremes and keeps its definitions", {
   m <- cmom(rep(1e308, 3))
   expect_identical(unname(m[c("mean", "variance")]), c(1e308, 0))
-  expect_true(all(is.nan(m[c("skewness", "kurtosis")])))  # no spread: undefined
+  expect_true(all(is.nan(m[c("skewness", "kurtosis")]))) # no spread: undefined
   x <- c(1e150, 2e150, 4e150, 8e150)
   m <- cmom(x)
   cm <- function(k) mean(((x - mean(x)) / 1e150)^k)
   expect_equal(m[["mean"]], mean(x))
-  expect_equal(m[["variance"]], stats::var(x / 1e150) * 1e300,
-               tolerance = 1e-12)
+  expect_equal(
+    m[["variance"]],
+    stats::var(x / 1e150) * 1e300,
+    tolerance = 1e-12
+  )
   expect_equal(m[["skewness"]], cm(3) / cm(2)^1.5)
   expect_equal(m[["kurtosis"]], cm(4) / cm(2)^2 - 3)
   set.seed(6)
@@ -49,8 +52,11 @@ test_that("cmom survives the extremes and keeps its definitions", {
   expect_identical(unname(st[c("mean", "variance")]), c(1e308, 0))
   st <- smrystat(smryupd(onlsmry(c(1e300, 3e300)), 5e300))
   expect_equal(st[["mean"]], 3e300)
-  expect_equal(st[["variance"]], stats::var(c(1, 3, 5)) * 1e600,
-               tolerance = 1e-12)
+  expect_equal(
+    st[["variance"]],
+    stats::var(c(1, 3, 5)) * 1e600,
+    tolerance = 1e-12
+  )
 })
 
 test_that("jsgzdec refuses input that is not a gzip member", {
@@ -68,8 +74,12 @@ test_that("ccorr is exact at tiny spread, stays in [-1, 1] (round 3)", {
   for (cv in c(1e-5, 1e-7, 1e-8, 1e-10, 1e-12, 1e-15)) {
     x <- 1e6 * (1 + cv * base)
     y <- 1e6 * (1 + cv * (0.9 * base + sqrt(1 - 0.81) * rnorm(200)))
-    expect_equal(ccorr(x, y), stats::cor(x, y), tolerance = 1e-6,
-                 label = paste("cv", cv))
+    expect_equal(
+      ccorr(x, y),
+      stats::cor(x, y),
+      tolerance = 1e-6,
+      label = paste("cv", cv)
+    )
     expect_equal(ccorr(x, x), 1, tolerance = 1e-12)
     expect_lte(abs(ccorr(x, y)), 1)
   }
@@ -78,7 +88,9 @@ test_that("ccorr is exact at tiny spread, stays in [-1, 1] (round 3)", {
     s <- m * 10^runif(1, -16, 0)
     x <- m + s * rnorm(30)
     r <- ccorr(x, x)
-    if (!is.na(r)) expect_equal(r, 1, tolerance = 1e-12)
+    if (!is.na(r)) {
+      expect_equal(r, 1, tolerance = 1e-12)
+    }
     expect_true(is.na(r) || abs(r) <= 1)
   }
 })

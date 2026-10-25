@@ -52,7 +52,13 @@ mixing height).
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-f <- plmfld(100, 5, 50, x = seq(100, 3000, by = 100), y = seq(-500, 500, by = 50))
+f <- plmfld(
+  100,
+  5,
+  50,
+  x = seq(100, 3000, by = 100),
+  y = seq(-500, 500, by = 50)
+)
 dim(f$field)
 plot(f)
 
@@ -60,8 +66,14 @@ plot(f)
 f$x[which.max(apply(f$field, 1, max))]
 
 # a more unstable atmosphere brings the plume down sooner
-fb <- plmfld(100, 5, 50, x = seq(100, 3000, by = 100), y = seq(-500, 500, by = 50),
-                  stab = "B")
+fb <- plmfld(
+  100,
+  5,
+  50,
+  x = seq(100, 3000, by = 100),
+  y = seq(-500, 500, by = 50),
+  stab = "B"
+)
 fb$x[which.max(apply(fb$field, 1, max))]
 
 # the coordinates must increase

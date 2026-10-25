@@ -33,14 +33,13 @@
 #' @param data A data frame.
 #' @param maxpat Maximum patterns to return, most
 #'   frequent first, one positive whole number (default 20).
-#' @return A data frame of class \code{bricklayer_missingness}, one row per pattern:
-#'   \code{pattern} (character, \code{.}
-#'   for present and \code{X} for missing, in column order), \code{nrows}
-#'   (integer), \code{pctrows} (numeric, percent of all rows),
-#'   \code{n_missing} (integer, columns missing in that pattern) and
-#'   \code{columns} (character, their names comma-separated, \code{""} for the
-#'   complete pattern). Carries the column order as the \code{"columns"}
-#'   attribute.
+#' @return A data frame of class \code{bricklayer_missingness}, one row per
+#'   pattern: \code{pattern} (character, \code{.} for present and \code{X} for
+#'   missing, in column order), \code{nrows} (integer), \code{pctrows} (numeric,
+#'   percent of all rows), \code{n_missing} (integer, columns missing in that
+#'   pattern) and \code{columns} (character, their names comma-separated,
+#'   \code{""} for the complete pattern). Carries the column order as the
+#'   \code{"columns"} attribute.
 #' @seealso [profcols()] for
 #' per-column rates.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
@@ -70,22 +69,26 @@
 #' try(misspat(data.frame()))
 #' @export
 misspat <- function(data, maxpat = 20L) {
-  if (!is.data.frame(data)) stop("misspat: `data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) {
+    stop("misspat: `data` must be a data frame", call. = FALSE)
+  }
   .rmbl_df_names(data)
   if (ncol(data) == 0L) {
     stop("misspat: `data` has no columns", call. = FALSE)
   }
   maxpat <- .rmbl_num(maxpat, "maxpat", integer = TRUE)
-  if (length(maxpat) != 1L || is.na(maxpat) ||
-    maxpat < 1L) {
+  if (length(maxpat) != 1L || is.na(maxpat) || maxpat < 1L) {
     stop("`maxpat` must be a single positive integer", call. = FALSE)
   }
   n <- nrow(data)
   if (n == 0L) {
     out <- data.frame(
-      pattern = character(0), n_rows = integer(0),
-      pctrows = numeric(0), n_missing = integer(0),
-      columns = character(0), stringsAsFactors = FALSE
+      pattern = character(0),
+      n_rows = integer(0),
+      pctrows = numeric(0),
+      n_missing = integer(0),
+      columns = character(0),
+      stringsAsFactors = FALSE
     )
     attr(out, "columns") <- names(data)
     class(out) <- c("bricklayer_missingness", "data.frame")
@@ -93,11 +96,11 @@ misspat <- function(data, maxpat = 20L) {
   }
 
   m <- vapply(data, is.na, logical(n))
-  if (is.null(dim(m))) m <- matrix(m, nrow = n)
+  if (is.null(dim(m))) {
+    m <- matrix(m, nrow = n)
+  }
   codes <- apply(m, 1L, function(r) {
-    paste0(ifelse(r, "X", "."),
-      collapse = ""
-    )
+    paste0(ifelse(r, "X", "."), collapse = "")
   })
   tab <- sort(table(codes), decreasing = TRUE)
   keep <- utils::head(names(tab), maxpat)
@@ -126,15 +129,25 @@ misspat <- function(data, maxpat = 20L) {
 
 #' @export
 print.bricklayer_missingness <- function(x, ...) {
-  if (.rmbl_needs_cols(x, c(
-    "pattern", "n_rows", "pctrows", "n_missing",
-    "columns"
-  ))) {
+  if (
+    .rmbl_needs_cols(
+      x,
+      c(
+        "pattern",
+        "n_rows",
+        "pctrows",
+        "n_missing",
+        "columns"
+      )
+    )
+  ) {
     return(invisible(x))
   }
   cat(.rmbl_rule("Missingness patterns"), "\n")
   cols <- attr(x, "columns")
-  cat("  columns, in pattern order: ", paste(cols, collapse = ", "),
+  cat(
+    "  columns, in pattern order: ",
+    paste(cols, collapse = ", "),
     "\n\n",
     sep = ""
   )
@@ -215,53 +228,66 @@ print.bricklayer_missingness <- function(x, ...) {
 #' # a threshold above 1 is an error
 #' try(topcors(df, minabs = 2))
 #' @export
-topcors <- function(data, n = 10L, meth = c(
-                               "spearman",
-                               "pearson"
-                             ),
-                             minabs = 0) {
+topcors <- function(
+  data,
+  n = 10L,
+  meth = c(
+    "spearman",
+    "pearson"
+  ),
+  minabs = 0
+) {
   meth <- .rmbl_arg(meth)
-  if (!is.data.frame(data)) stop("topcors: `data` must be a data frame", call. = FALSE)
+  if (!is.data.frame(data)) {
+    stop("topcors: `data` must be a data frame", call. = FALSE)
+  }
   .rmbl_df_names(data)
   num <- names(data)[vapply(data, is.numeric, logical(1))]
   if (length(num) < 2L) {
-    stop("topcors: need at least two numeric columns to correlate", call. = FALSE)
+    stop(
+      "topcors: need at least two numeric columns to correlate",
+      call. = FALSE
+    )
   }
   n <- .rmbl_num(n, "n", integer = TRUE)
   if (length(n) != 1L || is.na(n) || n < 1L) {
     stop("`n` must be a single positive integer", call. = FALSE)
   }
   minabs <- .rmbl_num(minabs, "minabs")
-  if (length(minabs) != 1L || is.na(minabs) || minabs < 0 ||
-    minabs > 1) {
+  if (length(minabs) != 1L || is.na(minabs) || minabs < 0 || minabs > 1) {
     stop("`minabs` must be a single value in [0, 1]", call. = FALSE)
   }
 
   pairs <- utils::combn(num, 2L)
   pg <- blprog("correlations", ncol(pairs))
   on.exit(pg$done(), add = TRUE)
-  vals <- vapply(seq_len(ncol(pairs)), function(j) {
-    pg$update(j - 1L, sprintf("pair %d/%d", j, ncol(pairs)))
-    a <- data[[pairs[1L, j]]]
-    b <- data[[pairs[2L, j]]]
-    ok <- !is.na(a) & !is.na(b)
-    if (sum(ok) < 3L) {
-      return(NA_real_)
-    }
-    if (identical(meth, "spearman")) {
-      cspr(a[ok], b[ok])
-    } else {
-      ccorr(a[ok], b[ok])
-    }
-  }, 0)
+  vals <- vapply(
+    seq_len(ncol(pairs)),
+    function(j) {
+      pg$update(j - 1L, sprintf("pair %d/%d", j, ncol(pairs)))
+      a <- data[[pairs[1L, j]]]
+      b <- data[[pairs[2L, j]]]
+      ok <- !is.na(a) & !is.na(b)
+      if (sum(ok) < 3L) {
+        return(NA_real_)
+      }
+      if (identical(meth, "spearman")) {
+        cspr(a[ok], b[ok])
+      } else {
+        ccorr(a[ok], b[ok])
+      }
+    },
+    0
+  )
 
   out <- data.frame(
-    x = pairs[1L, ], y = pairs[2L, ], correlation = vals,
-    abscor = abs(vals), stringsAsFactors = FALSE
+    x = pairs[1L, ],
+    y = pairs[2L, ],
+    correlation = vals,
+    abscor = abs(vals),
+    stringsAsFactors = FALSE
   )
-  out <- out[!is.na(out$correlation) & out$abscor >= minabs, ,
-    drop = FALSE
-  ]
+  out <- out[!is.na(out$correlation) & out$abscor >= minabs, , drop = FALSE]
   out <- out[order(-out$abscor), , drop = FALSE]
   out <- utils::head(out, n)
   rownames(out) <- NULL
@@ -284,15 +310,19 @@ print.bricklayer_correlations <- function(x, ...) {
   df <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
   attr(df, "method") <- NULL
   # a signed bar makes the direction and strength readable at a glance
-  df$plot <- vapply(x$correlation, function(r) {
-    k <- as.integer(round(abs(r) * 10))
-    bar <- strrep("#", k)
-    if (r < 0) {
-      paste0(formatC(bar, width = 10), "|", strrep(" ", 10))
-    } else {
-      paste0(strrep(" ", 10), "|", formatC(bar, width = -10))
-    }
-  }, character(1))
+  df$plot <- vapply(
+    x$correlation,
+    function(r) {
+      k <- as.integer(round(abs(r) * 10))
+      bar <- strrep("#", k)
+      if (r < 0) {
+        paste0(formatC(bar, width = 10), "|", strrep(" ", 10))
+      } else {
+        paste0(strrep(" ", 10), "|", formatC(bar, width = -10))
+      }
+    },
+    character(1)
+  )
   df$correlation <- formatC(df$correlation, format = "f", digits = 3)
   df$abscor <- NULL
   print(df, row.names = FALSE)
@@ -361,9 +391,12 @@ print.bricklayer_correlations <- function(x, ...) {
 #' @export
 envdiff <- function(a, b) {
   pull <- function(x, what) {
-    if (is.list(x) && !is.null(x$environment)) x <- x$environment
+    if (is.list(x) && !is.null(x$environment)) {
+      x <- x$environment
+    }
     if (!is.list(x) || is.data.frame(x) || is.null(names(x))) {
-      stop("`a` and `b` must be environment records or manifests",
+      stop(
+        "`a` and `b` must be environment records or manifests",
         call. = FALSE
       )
     }
@@ -400,7 +433,10 @@ envdiff <- function(a, b) {
       "changed"
     }
     data.frame(
-      package = nm, a = va, b = vb, change = change,
+      package = nm,
+      a = va,
+      b = vb,
+      change = change,
       stringsAsFactors = FALSE
     )
   })
@@ -409,8 +445,11 @@ envdiff <- function(a, b) {
     do.call(rbind, rows)
   } else {
     data.frame(
-      package = character(0), a = character(0), b = character(0),
-      change = character(0), stringsAsFactors = FALSE
+      package = character(0),
+      a = character(0),
+      b = character(0),
+      change = character(0),
+      stringsAsFactors = FALSE
     )
   }
   rownames(pkg_df) <- NULL
@@ -419,9 +458,10 @@ envdiff <- function(a, b) {
   p_diff <- if (!identical(pa, pb)) c(a = pa, b = pb) else NULL
 
   out <- list(
-    identical = is.null(r_diff) && is.null(p_diff) &&
-      nrow(pkg_df) == 0L,
-    r_version = r_diff, platform = p_diff, packages = pkg_df
+    identical = is.null(r_diff) && is.null(p_diff) && nrow(pkg_df) == 0L,
+    r_version = r_diff,
+    platform = p_diff,
+    packages = pkg_df
   )
   class(out) <- c("bricklayer_env_diff", "list")
   out
@@ -432,34 +472,54 @@ format.bricklayer_env_diff <- function(x, ...) {
   g <- .rmbl_glyphs()
   lines <- c(
     .rmbl_rule("Environment diff"),
-    paste0("  ", if (isTRUE(x$identical)) {
-      paste0(g$ok, " environments match")
-    } else {
-      paste0(g$bad, " environments differ")
-    }),
+    paste0(
+      "  ",
+      if (isTRUE(x$identical)) {
+        paste0(g$ok, " environments match")
+      } else {
+        paste0(g$bad, " environments differ")
+      }
+    ),
     ""
   )
   if (!is.null(x$r_version)) {
-    lines <- c(lines, .rmbl_kv(list("R version" = sprintf(
-      "%s -> %s",
-      x$r_version[["a"]], x$r_version[["b"]]
-    ))))
+    lines <- c(
+      lines,
+      .rmbl_kv(list(
+        "R version" = sprintf(
+          "%s -> %s",
+          x$r_version[["a"]],
+          x$r_version[["b"]]
+        )
+      ))
+    )
   }
   if (!is.null(x$platform)) {
-    lines <- c(lines, .rmbl_kv(list(platform = sprintf(
-      "%s -> %s",
-      x$platform[["a"]], x$platform[["b"]]
-    ))))
+    lines <- c(
+      lines,
+      .rmbl_kv(list(
+        platform = sprintf(
+          "%s -> %s",
+          x$platform[["a"]],
+          x$platform[["b"]]
+        )
+      ))
+    )
   }
   if (nrow(x$packages) == 0L) {
     return(c(lines, "  no package differences", .rmbl_rule()))
   }
-  lines <- c(lines, sprintf(
-    "  %d package difference(s):",
-    nrow(x$packages)
-  ), "")
+  lines <- c(
+    lines,
+    sprintf(
+      "  %d package difference(s):",
+      nrow(x$packages)
+    ),
+    ""
+  )
   rows <- sprintf(
-    "  %-24s %-12s %-12s %s", x$packages$package,
+    "  %-24s %-12s %-12s %s",
+    x$packages$package,
     ifelse(is.na(x$packages$a), g$dash, x$packages$a),
     ifelse(is.na(x$packages$b), g$dash, x$packages$b),
     x$packages$change

@@ -17,14 +17,17 @@ test_that("ruleinset accepts the set and rejects the rest", {
   expect_equal(iss$g_in_set$n_failed, 1L)
   # NA passes by default, so missingness is reported once and not twice
   expect_length(valrules(data.frame(g = c("a", NA)), r), 0L)
-  expect_length(valrules(data.frame(g = c("a", NA)),
-                               ruleinset("g", "a", napass = FALSE)), 1L)
+  expect_length(
+    valrules(data.frame(g = c("a", NA)), ruleinset("g", "a", napass = FALSE)),
+    1L
+  )
   # severity is carried
-  expect_equal(valrules(bad, ruleinset("g", "a",
-    sev = "fatal"))$g_in_set$severity, "fatal")
+  expect_equal(
+    valrules(bad, ruleinset("g", "a", sev = "fatal"))$g_in_set$severity,
+    "fatal"
+  )
   # numbers are compared as their rendered values
-  expect_length(valrules(data.frame(g = c(1, 2)),
-                               ruleinset("g", c(1, 2))), 0L)
+  expect_length(valrules(data.frame(g = c(1, 2)), ruleinset("g", c(1, 2))), 0L)
 })
 
 test_that("rulebtw enforces inclusive bounds", {
@@ -37,9 +40,10 @@ test_that("rulebtw enforces inclusive bounds", {
   expect_length(valrules(data.frame(v = 0), r), 0L)
   expect_length(valrules(data.frame(v = 100), r), 0L)
   expect_length(valrules(data.frame(v = c(1, NA)), r), 0L)
-  expect_length(valrules(data.frame(v = c(1, NA)),
-                               rulebtw("v", 0, 100,
-                                            napass = FALSE)), 1L)
+  expect_length(
+    valrules(data.frame(v = c(1, NA)), rulebtw("v", 0, 100, napass = FALSE)),
+    1L
+  )
   expect_error(rulebtw("v", 100, 0), "`lo` <= `hi`")
   expect_error(rulebtw("v", NA, 1), "non-missing")
 })
@@ -63,17 +67,23 @@ test_that("rulenull and ruleuniq fire on their own violations", {
 
 test_that("rulerx matches the pattern it was given", {
   r <- rulerx("email", "^[^@]+@[^@]+\\.[a-z]+$")
-  good <- data.frame(email = c("a@b.com", "c@d.org"),
-                     stringsAsFactors = FALSE)
-  bad <- data.frame(email = c("a@b.com", "nope", "@x.com"),
-                    stringsAsFactors = FALSE)
+  good <- data.frame(email = c("a@b.com", "c@d.org"), stringsAsFactors = FALSE)
+  bad <- data.frame(
+    email = c("a@b.com", "nope", "@x.com"),
+    stringsAsFactors = FALSE
+  )
   expect_length(valrules(good, r), 0L)
   iss <- valrules(bad, r)
   expect_equal(iss$email_regex$rows, c(2L, 3L))
   expect_match(iss$email_regex$message, "not matching")
   expect_length(valrules(data.frame(email = NA_character_), r), 0L)
-  expect_length(valrules(data.frame(email = NA_character_),
-                               rulerx("email", "x", napass = FALSE)), 1L)
+  expect_length(
+    valrules(
+      data.frame(email = NA_character_),
+      rulerx("email", "x", napass = FALSE)
+    ),
+    1L
+  )
 })
 
 test_that("ruleincr checks the order of the whole column", {
@@ -86,8 +96,10 @@ test_that("ruleincr checks the order of the whole column", {
   st <- ruleincr("day", strict = TRUE)
   expect_length(valrules(data.frame(day = c(1, 2, 2, 3)), st), 1L)
   expect_length(valrules(data.frame(day = 1:4), st), 0L)
-  expect_match(valrules(data.frame(day = c(1, 2, 2)), st)$day_increasing$message,
-               "strictly increasing")
+  expect_match(
+    valrules(data.frame(day = c(1, 2, 2)), st)$day_increasing$message,
+    "strictly increasing"
+  )
   # a whole-column rule reports no row indices, because the failure is
   # not attributable to one row
   expect_null(valrules(data.frame(day = c(3, 1)), r)$day_increasing$rows)
@@ -123,14 +135,20 @@ test_that("the table-level rules check the table", {
   expect_equal(valrules(df, cr)$complete_rows$rows, 2L)
   expect_length(valrules(data.frame(a = 1:2, b = 3:4), cr), 0L)
 
-  dup <- data.frame(x = c(1, 1, 2), y = c("a", "a", "b"),
-                    stringsAsFactors = FALSE)
+  dup <- data.frame(
+    x = c(1, 1, 2),
+    y = c("a", "a", "b"),
+    stringsAsFactors = FALSE
+  )
   dr <- ruledstn()
   expect_equal(valrules(dup, dr)$distinct_rows$rows, 2L)
   expect_length(valrules(data.frame(x = 1:3), dr), 0L)
   # restricted to named columns
-  partial <- data.frame(id = c(1, 1), note = c("p", "q"),
-                        stringsAsFactors = FALSE)
+  partial <- data.frame(
+    id = c(1, 1),
+    note = c("p", "q"),
+    stringsAsFactors = FALSE
+  )
   expect_length(valrules(partial, ruledstn()), 0L)
   expect_length(valrules(partial, ruledstn("id")), 1L)
   # a named column that is absent cannot constrain anything
@@ -139,8 +157,10 @@ test_that("the table-level rules check the table", {
   cc <- rulecolcnt(2)
   expect_length(valrules(df, cc), 0L)
   expect_length(valrules(data.frame(a = 1), cc), 1L)
-  expect_match(valrules(data.frame(a = 1), cc)$col_count$message,
-               "Expected 2 columns")
+  expect_match(
+    valrules(data.frame(a = 1), cc)$col_count$message,
+    "Expected 2 columns"
+  )
   expect_error(rulecolcnt(-1), "non-negative")
 })
 
@@ -156,20 +176,38 @@ test_that("the rule library composes into one gate", {
     ruledstn(),
     rulecolcnt(5)
   )
-  clean <- data.frame(id = 1:4, grade = c("a", "b", "c", "a"),
-                      score = c(10, 20, 30, 40), day = 1:4,
-                      extra = 1:4, stringsAsFactors = FALSE)
+  clean <- data.frame(
+    id = 1:4,
+    grade = c("a", "b", "c", "a"),
+    score = c(10, 20, 30, 40),
+    day = 1:4,
+    extra = 1:4,
+    stringsAsFactors = FALSE
+  )
   # every rule passes on clean data: none of them is vacuous, and none
   # of them is trigger-happy
   expect_length(valrules(clean, rules), 0L)
 
-  dirty <- data.frame(id = c(1, 1, 3, 4), grade = c("a", "z", "c", "a"),
-                      score = c(10, NA, 3000, 40), day = c(1, 3, 2, 4),
-                      extra = 1:4, stringsAsFactors = FALSE)
+  dirty <- data.frame(
+    id = c(1, 1, 3, 4),
+    grade = c("a", "z", "c", "a"),
+    score = c(10, NA, 3000, 40),
+    day = c(1, 3, 2, 4),
+    extra = 1:4,
+    stringsAsFactors = FALSE
+  )
   iss <- valrules(dirty, rules)
-  expect_true(all(c("id_unique", "grade_in_set", "score_between",
-                    "score_not_null", "day_increasing",
-                    "complete_rows") %in% names(iss)))
+  expect_true(all(
+    c(
+      "id_unique",
+      "grade_in_set",
+      "score_between",
+      "score_not_null",
+      "day_increasing",
+      "complete_rows"
+    ) %in%
+      names(iss)
+  ))
   # the fatal one is marked as such, so schval raises
   expect_equal(iss$id_unique$severity, "fatal")
   expect_error(
@@ -177,15 +215,18 @@ test_that("the rule library composes into one gate", {
       for (nm in names(iss)) {
         if (iss[[nm]]$severity == "fatal") stop(iss[[nm]]$message)
       }
-    }, "duplicate")
+    },
+    "duplicate"
+  )
 
   # and they compose with the structural schema checks
   sch <- infsch(clean)
-  both <- c(valsch(clean, list(schema = sch)),
-            valrules(clean, rules))
+  both <- c(valsch(clean, list(schema = sch)), valrules(clean, rules))
   expect_length(both, 0L)
-  expect_gt(length(c(valsch(dirty, list(schema = sch)),
-                     valrules(dirty, rules))), 3L)
+  expect_gt(
+    length(c(valsch(dirty, list(schema = sch)), valrules(dirty, rules))),
+    3L
+  )
 })
 
 test_that("rulemad lets a missing value through only when asked", {

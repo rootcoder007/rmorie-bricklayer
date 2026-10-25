@@ -39,12 +39,11 @@
 #'   column, or a character vector the same length as the number of distinct
 #'   periods, or a named character vector mapping a period (as a string) to
 #'   its label.
-#' @return The object, still of class \code{rmbl_yoy}, with an added
-#'   character column \code{perlbl}. Its \code{yoy} attribute gets
-#'   \code{perlbl} set to \code{TRUE}, as \code{attr(x, "yoy")$perlbl}, so the labels
-#'   are used by \code{print()},
-#'   [yoyhtml()],
-#'   [yoypdf()] and the delimited writers.
+#' @return The object, still of class \code{rmbl_yoy}, with an added character
+#'   column \code{perlbl}. Its \code{yoy} attribute gets \code{perlbl} set to
+#'   \code{TRUE}, as \code{attr(x, "yoy")$perlbl}, so the labels are used by
+#'   \code{print()}, [yoyhtml()], [yoypdf()] and
+#'   the delimited writers.
 #' @seealso [fylbl()]
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' seg <- data.frame(EndFiscalYear = 2019:2023,
@@ -73,7 +72,10 @@ yoylbl <- function(x, labels) {
   m <- .yoy_meta(x)
   p <- x[[m$period]]
   if (!is.function(labels) && !is.atomic(labels)) {
-    stop("`labels` must be a function of the periods or a vector of labels", call. = FALSE)
+    stop(
+      "`labels` must be a function of the periods or a vector of labels",
+      call. = FALSE
+    )
   }
   lab <- if (is.function(labels)) {
     as.character(labels(p))
@@ -87,9 +89,17 @@ yoylbl <- function(x, labels) {
   } else {
     u <- unique(p)
     if (length(labels) != length(u)) {
-      stop(sprintf(
-        "`labels` has %d entries for %d distinct periods; name them, or pass a function",
-        length(labels), length(u)), call. = FALSE)
+      stop(
+        sprintf(
+          paste0(
+            "`labels` has %d entries for %d distinct periods; name them, ",
+            "or pass a function"
+          ),
+          length(labels),
+          length(u)
+        ),
+        call. = FALSE
+      )
     }
     as.character(labels)[match(p, u)]
   }
@@ -127,8 +137,8 @@ yoylbl <- function(x, labels) {
 #' @param sep Separator between the two years, a string; default
 #'   \code{"/"}.
 #' @param short Logical. \code{TRUE} (the default) abbreviates the second year
-#'   to two digits, as in \code{"2022/23"}; \code{FALSE} writes it in full, as in
-#'   \code{"2022/2023"}.
+#'   to two digits, as in \code{"2022/23"}; \code{FALSE} writes it in full, as
+#'   in \code{"2022/2023"}.
 #' @return A character vector of labels, the same length as
 #'   \code{endyear}, with \code{NA} where a value is not a year.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
@@ -152,18 +162,24 @@ fylbl <- function(endyear, sep = "/", short = TRUE) {
   if (is.numeric(endyear) && any(endyear < 1, na.rm = TRUE)) {
     stop("`endyear` must be positive years", call. = FALSE)
   }
-  # 2024.5 labelled "2023/24" silently (final audit of 1.0.0): a year is a whole number
+  # 2024.5 labelled "2023/24" silently (final audit of 1.0.0): a year is a whole
+  # number
   if (is.numeric(endyear) && any(endyear != round(endyear), na.rm = TRUE)) {
     stop("`endyear` must be whole years", call. = FALSE)
   }
   y <- suppressWarnings(as.integer(as.character(endyear)))
   out <- rep(NA_character_, length(y))
   ok <- !is.na(y)
-  if (!any(ok)) return(out)
+  if (!any(ok)) {
+    return(out)
+  }
   # a two-digit abbreviation of the end year is only unambiguous inside
   # a century, which is the span these datasets cover
-  tail <- if (isTRUE(short)) sprintf("%02d", y[ok] %% 100L) else
+  tail <- if (isTRUE(short)) {
+    sprintf("%02d", y[ok] %% 100L)
+  } else {
     as.character(y[ok])
+  }
   out[ok] <- paste0(y[ok] - 1L, sep, tail)
   out
 }

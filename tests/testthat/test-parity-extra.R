@@ -9,12 +9,16 @@
 
 test_that("missingness patterns distinguish structural from scattered", {
   # the same per-column rates, missing together vs independently
-  structural <- data.frame(id = 1:10,
-                           a = c(rep(NA, 3), 4:10),
-                           b = c(rep(NA, 3), 4:10))
-  scattered <- data.frame(id = 1:10,
-                          a = c(rep(NA, 3), 4:10),
-                          b = c(1:7, rep(NA, 3)))
+  structural <- data.frame(
+    id = 1:10,
+    a = c(rep(NA, 3), 4:10),
+    b = c(rep(NA, 3), 4:10)
+  )
+  scattered <- data.frame(
+    id = 1:10,
+    a = c(rep(NA, 3), 4:10),
+    b = c(1:7, rep(NA, 3))
+  )
   expect_equal(sum(is.na(structural$a)), sum(is.na(scattered$a)))
   expect_equal(sum(is.na(structural$b)), sum(is.na(scattered$b)))
 
@@ -57,8 +61,10 @@ test_that("missingness patterns distinguish structural from scattered", {
   expect_equal(am$pctrows, 100)
   # maxpat truncates, most frequent kept
   set.seed(61)
-  wide <- as.data.frame(matrix(ifelse(stats::runif(300) < 0.5, NA, 1),
-                               ncol = 6))
+  wide <- as.data.frame(matrix(
+    ifelse(stats::runif(300) < 0.5, NA, 1),
+    ncol = 6
+  ))
   expect_lte(nrow(misspat(wide, maxpat = 3L)), 3L)
   # a zero-row frame is empty, not an error
   expect_equal(nrow(misspat(data.frame(x = numeric(0)))), 0L)
@@ -66,31 +72,31 @@ test_that("missingness patterns distinguish structural from scattered", {
   expect_output(print(s), "Missingness patterns")
   expect_error(misspat(1:5), "data frame")
   expect_error(misspat(data.frame()), "no columns")
-  expect_error(misspat(structural, maxpat = 0),
-               "positive integer")
+  expect_error(misspat(structural, maxpat = 0), "positive integer")
 })
 
 test_that("topcors ranks by strength and uses the right method", {
   set.seed(62)
   n <- 300
-  df <- data.frame(a = stats::rnorm(n), b = stats::rnorm(n),
-                   grade = sample(letters[1:3], n, TRUE),
-                   stringsAsFactors = FALSE)
-  df$c <- df$a * 2 + stats::rnorm(n, sd = 0.05)   # near-perfect with a
-  df$d <- exp(df$a)                               # monotone but curved
+  df <- data.frame(
+    a = stats::rnorm(n),
+    b = stats::rnorm(n),
+    grade = sample(letters[1:3], n, TRUE),
+    stringsAsFactors = FALSE
+  )
+  df$c <- df$a * 2 + stats::rnorm(n, sd = 0.05) # near-perfect with a
+  df$d <- exp(df$a) # monotone but curved
 
   tc <- topcors(df)
   expect_s3_class(tc, "bricklayer_correlations")
   # the non-numeric column is ignored
   expect_false("grade" %in% c(tc$x, tc$y))
   # strongest first
-  expect_equal(tc$abscor, sort(tc$abscor,
-                                        decreasing = TRUE))
+  expect_equal(tc$abscor, sort(tc$abscor, decreasing = TRUE))
   expect_true(all(abs(tc$correlation) <= 1))
   # the values come from the kernel, not somewhere else
   pick <- tc[1L, ]
-  expect_equal(pick$correlation,
-               cspr(df[[pick$x]], df[[pick$y]]))
+  expect_equal(pick$correlation, cspr(df[[pick$x]], df[[pick$y]]))
   # d = exp(a) is STRICTLY monotone in a, so its rank correlation is
   # exactly 1 -- stronger than the noisy near-linear pair (a, c), which
   # is the ordering Spearman should produce
@@ -104,15 +110,22 @@ test_that("topcors ranks by strength and uses the right method", {
   # it, which is the reason Spearman is the default
   sp <- topcors(df, meth = "spearman", n = 20)
   pe <- topcors(df, meth = "pearson", n = 20)
-  sp_ad <- abs(sp$correlation[(sp$x == "a" & sp$y == "d") |
-                                (sp$x == "d" & sp$y == "a")])
-  pe_ad <- abs(pe$correlation[(pe$x == "a" & pe$y == "d") |
-                                (pe$x == "d" & pe$y == "a")])
+  sp_ad <- abs(sp$correlation[
+    (sp$x == "a" & sp$y == "d") |
+      (sp$x == "d" & sp$y == "a")
+  ])
+  pe_ad <- abs(pe$correlation[
+    (pe$x == "a" & pe$y == "d") |
+      (pe$x == "d" & pe$y == "a")
+  ])
   expect_gt(sp_ad, 0.99)
   expect_lt(pe_ad, sp_ad)
   expect_equal(attr(pe, "method"), "pearson")
-  expect_equal(pe$correlation[1], ccorr(df[[pe$x[1]]], df[[pe$y[1]]]),
-               tolerance = 1e-8)
+  expect_equal(
+    pe$correlation[1],
+    ccorr(df[[pe$x[1]]], df[[pe$y[1]]]),
+    tolerance = 1e-8
+  )
 
   # n and minabs both filter
   expect_equal(nrow(topcors(df, n = 2L)), 2L)
@@ -125,8 +138,7 @@ test_that("topcors ranks by strength and uses the right method", {
   gappy$a[1:10] <- NA
   expect_true(all(is.finite(topcors(gappy)$correlation)))
   expect_output(print(tc), "Top correlations")
-  expect_output(print(topcors(df[, c("a", "b")], minabs = 0.99)),
-                "none above")
+  expect_output(print(topcors(df[, c("a", "b")], minabs = 0.99)), "none above")
 
   expect_error(topcors(data.frame(a = 1:3)), "two numeric")
   expect_error(topcors(1:5), "data frame")
@@ -181,8 +193,7 @@ test_that("envdiff reports exactly what moved", {
 
 test_that("compressed JSON round trips and is smaller", {
   set.seed(63)
-  x <- list(rows = data.frame(id = 1:200,
-                              value = round(stats::runif(200), 4)))
+  x <- list(rows = data.frame(id = 1:200, value = round(stats::runif(200), 4)))
   enc <- jsgzenc(x)
   expect_type(enc, "character")
   expect_length(enc, 1L)
@@ -209,25 +220,28 @@ test_that("compressed JSON round trips and is smaller", {
   p <- tempfile()
   on.exit(unlink(p), add = TRUE)
   writeBin(jsgzenc(x, raw = TRUE), p)
-  expect_equal(jsgzdec(readBin(p, "raw", n = 1e6),
-                                raw = TRUE)$rows$id, 1:200)
+  expect_equal(jsgzdec(readBin(p, "raw", n = 1e6), raw = TRUE)$rows$id, 1:200)
 
   expect_error(jsgzdec(charToRaw("x")), class = "error")
   expect_error(jsgzdec("abc", raw = TRUE), "raw vector")
 })
 
 test_that("declared rules fire on violations and stay silent otherwise", {
-  df <- data.frame(id = c(1, 2, 2), age = c(30, -5, 40),
-                   start = c(1, 5, 3), end = c(2, 4, 9))
+  df <- data.frame(
+    id = c(1, 2, 2),
+    age = c(30, -5, 40),
+    start = c(1, 5, 3),
+    end = c(2, 4, 9)
+  )
   rules <- list(
     rul("age_non_negative", function(v) v >= 0, col = "age"),
-    rul("id_unique", function(v) !anyDuplicated(v), col = "id",
-         sev = "fatal"),
+    rul("id_unique", function(v) !anyDuplicated(v), col = "id", sev = "fatal"),
     rul("dates_ordered", function(d) all(d$start <= d$end))
   )
   iss <- valrules(df, rules)
-  expect_true(all(c("age_non_negative", "id_unique",
-                    "dates_ordered") %in% names(iss)))
+  expect_true(all(
+    c("age_non_negative", "id_unique", "dates_ordered") %in% names(iss)
+  ))
   # a row-wise rule reports how many rows failed and which
   expect_equal(iss$age_non_negative$n_failed, 1L)
   expect_equal(iss$age_non_negative$rows, 2L)
@@ -237,8 +251,7 @@ test_that("declared rules fire on violations and stay silent otherwise", {
   expect_equal(iss$id_unique$severity, "fatal")
 
   # clean data produces nothing at all
-  clean <- data.frame(id = 1:3, age = c(30, 31, 40), start = 1:3,
-                      end = 4:6)
+  clean <- data.frame(id = 1:3, age = c(30, 31, 40), start = 1:3, end = 4:6)
   expect_length(valrules(clean, rules), 0L)
   # a single rule need not be wrapped in a list
   expect_length(valrules(clean, rules[[1]]), 0L)
@@ -265,9 +278,12 @@ test_that("declared rules fire on violations and stay silent otherwise", {
   # the issues compose with valsch and go through the same
   # raising wrapper
   sch <- infsch(clean)
-  expect_length(c(valsch(clean, list(schema = sch)),
-                  valrules(clean, rules)), 0L)
-  # an empty schema checks nothing: asked to validate against it is refused (review of e57fed5)
+  expect_length(
+    c(valsch(clean, list(schema = sch)), valrules(clean, rules)),
+    0L
+  )
+  # an empty schema checks nothing: asked to validate against it is refused
+  # (review of e57fed5)
   expect_error(schval(df, list(schema = list())), "schema is empty")
 
   expect_output(print(rules[[1]]), "age_non_negative")

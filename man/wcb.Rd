@@ -30,10 +30,10 @@ year or a month index) and the outcome.}
 \item{covs}{Optional column names of time-varying controls.}
 
 \item{cl}{Column name of the clusters (default the unit), or two column names
-for two-way clustering (Cameron, Gelbach and Miller 2011):
-\eqn{V_a + V_b - V_{ab}}, each term with the small-sample factor of the dimension
-with fewer clusters, and t on its \eqn{G - 1} degrees of freedom. A composite
-cluster (district by month, say) is one column made with \code{interaction()}.}
+for two-way clustering (Cameron, Gelbach and Miller 2011): \eqn{V_a + V_b -
+V_{ab}}, each term with the small-sample factor of the dimension with fewer
+clusters, and t on its \eqn{G - 1} degrees of freedom. A composite cluster
+(district by month, say) is one column made with \code{interaction()}.}
 
 \item{reps}{Bootstrap replications (default 9999).}
 
@@ -47,36 +47,37 @@ cluster (district by month, say) is one column made with \code{interaction()}.}
 \item{conflvl}{Confidence level (default 0.95).}
 }
 \value{
-A data frame of class \code{rmbl_wild} with the columns \code{estimate},
-\code{t}, \code{p_value}, \code{lower}, \code{upper}, \code{clusters},
-\code{draws} and \code{enumerated}.
+A data frame of class \code{rmbl_wild} with the columns
+\code{estimate}, \code{t}, \code{p_value}, \code{lower}, \code{upper},
+\code{clusters}, \code{draws} and \code{enumerated}.
 }
 \description{
 A p-value and confidence interval for the treatment effect of
 \code{\link{plndid}} that stay accurate when there are few clusters (a policy
-assigned to a handful of districts or states), where the cluster-robust t test
-over-rejects.
+assigned to a handful of districts or states), where the cluster-robust t
+test over-rejects.
 }
 \details{
-This is the restricted wild cluster bootstrap (WCR) of Cameron, Gelbach
-and Miller (2008). The model is fitted with the null \eqn{\beta = \beta_0} imposed;
-each bootstrap outcome is the restricted fit plus its residuals multiplied, cluster
-by cluster, by a random sign (Rademacher) or by one of Webb's six values; the
-cluster-robust t statistic is recomputed each time. The p-value is the share of
-bootstrap \eqn{|t^*|} at least \eqn{|t|}. With \code{ties = "count"} (the default)
-a draw that equals \eqn{|t|} counts: the sign patterns that reproduce the data are
-among the draws, as the observed assignment is in a permutation test, and the test
-is exact at its level. With \code{"strict"} only draws above \eqn{|t|} count, as
-\code{fwildclusterboot} does; under full enumeration this gives a smaller p-value
-(the two sign patterns that reproduce \eqn{|t|} are left out). With Rademacher
-weights and \eqn{2^G \le} \code{reps} every sign pattern is enumerated (as
-\code{fwildclusterboot} does); with very few clusters (under about 12) Webb's
-weights, which have more distinct values, are better. The interval collects the
-\eqn{\beta_0} not rejected at \eqn{1 -} \code{conflvl}, found by bisection with
-the same draws; it is unbounded when no value can be rejected (with Rademacher
-weights and \eqn{G} clusters the smallest attainable p-value is \eqn{2/2^G}, so
-four clusters can never reject at 5\%: that is the honest answer, not a failure of
-the method).
+This is the restricted wild cluster bootstrap (WCR) of Cameron,
+Gelbach and Miller (2008). The model is fitted with the null \eqn{\beta =
+\beta_0} imposed; each bootstrap outcome is the restricted fit plus its
+residuals multiplied, cluster by cluster, by a random sign (Rademacher) or by
+one of Webb's six values; the cluster-robust t statistic is recomputed each
+time. The p-value is the share of bootstrap \eqn{|t^*|} at least \eqn{|t|}.
+With \code{ties = "count"} (the default) a draw that equals \eqn{|t|} counts:
+the sign patterns that reproduce the data are among the draws, as the
+observed assignment is in a permutation test, and the test is exact at its
+level. With \code{"strict"} only draws above \eqn{|t|} count, as
+\code{fwildclusterboot} does; under full enumeration this gives a smaller
+p-value (the two sign patterns that reproduce \eqn{|t|} are left out). With
+Rademacher weights and \eqn{2^G \le} \code{reps} every sign pattern is
+enumerated (as \code{fwildclusterboot} does); with very few clusters (under
+about 12) Webb's weights, which have more distinct values, are better. The
+interval collects the \eqn{\beta_0} not rejected at \eqn{1 -} \code{conflvl},
+found by bisection with the same draws; it is unbounded when no value can be
+rejected (with Rademacher weights and \eqn{G} clusters the smallest
+attainable p-value is \eqn{2/2^G}, so four clusters can never reject at 5\%:
+that is the honest answer, not a failure of the method).
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -88,12 +89,12 @@ wcb(p, "district", "month", "crmrate", "reformed",
 \dontshow{\}) # examplesIf}
 }
 \references{
-Cameron AC, Gelbach JB, Miller DL (2008). Bootstrap-based improvements
-for inference with clustered errors. Review of Economics and Statistics
-90(3):414-427. \doi{10.1162/rest.90.3.414}
+Cameron AC, Gelbach JB, Miller DL (2008). Bootstrap-based
+improvements for inference with clustered errors. Review of Economics and
+Statistics 90(3):414-427. \doi{10.1162/rest.90.3.414}
 
-Webb MD (2023). Reworking wild bootstrap-based inference for clustered errors.
-Canadian Journal of Economics 56(3):839-858. \doi{10.1111/caje.12661}
+Webb MD (2023). Reworking wild bootstrap-based inference for clustered
+errors. Canadian Journal of Economics 56(3):839-858. \doi{10.1111/caje.12661}
 
 Roodman D, Nielsen MO, MacKinnon JG, Webb MD (2019). Fast and wild: bootstrap
 inference in Stata using boottest. The Stata Journal 19(1):4-60.

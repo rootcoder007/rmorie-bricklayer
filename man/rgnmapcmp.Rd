@@ -56,7 +56,8 @@ Errors: either input not a data frame or without \code{unit}; a column in
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 pub <- data.frame(
   inst = c("North Jail", "South Jail"),
-  cd = c("3557", "3520"), stringsAsFactors = FALSE
+  cd = c("3557", "3520"),
+  stringsAsFactors = FALSE
 )
 obs <- pub
 rgnmapcmp(pub, obs, "inst")
@@ -67,8 +68,11 @@ rgnmapcmp(pub, obs, "inst")
 
 # a unit on one side only, and a coordinate that only moved by rounding noise
 pub$lat <- c(44.39, 43.65)
-obs2 <- data.frame(inst = c("North Jail", "Hill Jail"), cd = c("3557", "3506"),
-                   lat = c(44.39 + 1e-12, 45.1))
+obs2 <- data.frame(
+  inst = c("North Jail", "Hill Jail"),
+  cd = c("3557", "3506"),
+  lat = c(44.39 + 1e-12, 45.1)
+)
 rgnmapcmp(pub, obs2, "inst", cols = c("cd", "lat"))
 
 # a compared column must be in both maps

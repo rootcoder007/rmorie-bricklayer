@@ -1,4 +1,5 @@
-testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
+# battery: runs in CI and locally; CRAN runs the correctness core
+testthat::skip_on_cran()
 # The lines codecov listed as unreached at 0.5.9 (2026-10-07), each reached
 # with a real input through a real branch. Where a branch could not be
 # reached from any input the guard was removed from the source instead.
@@ -8,20 +9,45 @@ der_seq <- function(...) .rmbl_der_seq(...)
 der_oid <- function(x) .rmbl_der_oid_bytes(x)
 der_parse <- function(x) .Call(C_rmbl_der_parse, x)
 
-test_that("local seed: restoring a NULL seed removes the session's .Random.seed", {
-  set.seed(1)
-  expect_true(exists(".Random.seed", envir = globalenv(), inherits = FALSE))
-  .rmbl_restore_seed(NULL)
-  expect_false(exists(".Random.seed", envir = globalenv(), inherits = FALSE))
-})
+test_that(
+  paste0(
+    "local seed: restoring a NULL seed ",
+    "removes the session's .Random.seed"
+  ),
+  {
+    set.seed(1)
+    expect_true(exists(".Random.seed", envir = globalenv(), inherits = FALSE))
+    .rmbl_restore_seed(NULL)
+    expect_false(exists(".Random.seed", envir = globalenv(), inherits = FALSE))
+  }
+)
 
 test_that("rptanl names the columns added and removed against the prior", {
-  d <- data.frame(year = rep(2019:2021, each = 2), table = "a", group = rep(c("x", "y"), 3),
-                  individuals = c(10, 20, 12, 22, 15, 25))
-  a <- anltab(d, value = "individuals", prd = "year", by = c("table", "group"), rnd = 5)
-  a$drift <- list(columns = data.frame(column = "individuals", test = "ks", statistic = 0.1, p_value = 0.9,
-                                       psi = 0.01, drifted = FALSE),
-                  added = c("new_col", "other"), removed = "old_col")
+  d <- data.frame(
+    year = rep(2019:2021, each = 2),
+    table = "a",
+    group = rep(c("x", "y"), 3),
+    individuals = c(10, 20, 12, 22, 15, 25)
+  )
+  a <- anltab(
+    d,
+    value = "individuals",
+    prd = "year",
+    by = c("table", "group"),
+    rnd = 5
+  )
+  a$drift <- list(
+    columns = data.frame(
+      column = "individuals",
+      test = "ks",
+      statistic = 0.1,
+      p_value = 0.9,
+      psi = 0.01,
+      drifted = FALSE
+    ),
+    added = c("new_col", "other"),
+    removed = "old_col"
+  )
   a$meta$alpha <- 0.05
   md <- rptanl(a)
   expect_match(md, "Columns added: new_col, other\\.")
@@ -46,79 +72,131 @@ test_that("usecpstmpl without the example leaves a TODO source", {
   d <- usecpstmpl(tempfile("capsule-"))
   on.exit(unlink(d, recursive = TRUE), add = TRUE)
   files <- list.files(d, recursive = TRUE, full.names = TRUE)
-  expect_true(any(grepl("TODO: https://example.org/open-data/table.csv",
-                        unlist(lapply(files, readLines, warn = FALSE)), fixed = TRUE)))
+  expect_true(any(grepl(
+    "TODO: https://example.org/open-data/table.csv",
+    unlist(lapply(files, readLines, warn = FALSE)),
+    fixed = TRUE
+  )))
 })
 
 test_that("vrfrcdmnf reports a signature that does not verify", {
   x <- c("W", "B", "W", "I", NA)
   y <- grdrcd(x, c(W = "White", B = "Black", I = "Indigenous"))
   key <- pqckg(height = 2)
-  m <- rcdmnf(x, y, c(W = "White", B = "Black", I = "Indigenous"), key = key, ctx = "t")
+  m <- rcdmnf(
+    x,
+    y,
+    c(W = "White", B = "Black", I = "Indigenous"),
+    key = key,
+    ctx = "t"
+  )
   p <- wrrcdmnf(m, tempfile(fileext = ".json"))
   on.exit(unlink(p), add = TRUE)
   txt <- paste(readLines(p, warn = FALSE), collapse = "\n")
   sig <- .rmbl_json_text(txt, simplifyVector = FALSE)$signature$signature
-  flipped <- paste0(if (substr(sig, 1, 1) == "0") "1" else "0", substr(sig, 2, nchar(sig)))
+  flipped <- paste0(
+    if (substr(sig, 1, 1) == "0") "1" else "0",
+    substr(sig, 2, nchar(sig))
+  )
   writeLines(sub(sig, flipped, txt, fixed = TRUE), p)
   v <- vrfrcdmnf(p, x, y)
   expect_false(v$ok)
   expect_true(any(grepl("signature does not verify", v$reasons)))
 })
 
-test_that("cli: reading a line from a non-interactive stdin, the Rd database seams, missing examples", {
-  # the stdin path runs in a child process so this session's stdin is never touched
-  f <- tempfile()
-  writeLines("  answer  ", f)
-  out <- system2(file.path(R.home("bin"), "Rscript"),
-                 c("-e", shQuote("cat(rmoriebricklayer:::.bl_readline('p> '))")),
-                 stdin = f, stdout = TRUE, stderr = FALSE)
-  expect_equal(out, "answer")
-  # and in-process, through the connection seam
-  tc <- textConnection("  typed  ")
-  on.exit(close(tc), add = TRUE)
-  local_mocked_bindings(.bl_interactive = function() FALSE)
-  expect_equal(.bl_readline("p> ", con = tc), "typed")
-  # at a terminal the prompt goes to stderr, so a piped stdout stays clean
-  tc2 <- textConnection("  at a tty  ")
-  on.exit(close(tc2), add = TRUE)
-  local_mocked_bindings(.bl_stdin_tty = function() TRUE)
-  err <- utils::capture.output(got <- .bl_readline("key> ", con = tc2), type = "message")
-  expect_equal(got, "at a tty")
-  expect_identical(err, "key> ")
-  # no installed Rd database: the man/ directory of a source tree
-  pkg <- tempfile("pkg")
-  man <- file.path(pkg, "man")
-  dir.create(man, recursive = TRUE)
-  writeLines(c("Package: zzzpkg", "Version: 0.0.1", "Title: t", "Description: d", "License: MIT",
-               "Encoding: UTF-8"), file.path(pkg, "DESCRIPTION"))
-  writeLines(c("\\name{zzz_fn}", "\\alias{zzz_fn}", "\\title{A title}", "\\description{Words.}"),
-             file.path(man, "zzz_fn.Rd"))
-  db <- .bl_rd_db(db = NULL, man = man)
-  expect_true("zzz_fn.Rd" %in% names(db))
-  expect_identical(.bl_rd_db(db = NULL, man = ""), list())
-  rd <- tools::parse_Rd(textConnection("\\name{zzz_fn}\\alias{zzz_fn}\\title{A title}\\description{Words.}"))
-  local_mocked_bindings(.bl_rd_for = function(name) rd)
-  expect_match(.bl_examples("zzz_fn"), "'zzz_fn' has no examples")
-})
+test_that(
+  paste0(
+    "cli: reading a line from a non-interactive stdin, the Rd database ",
+    "seams, missing examples"
+  ),
+  {
+    # the stdin path runs in a child process so this session's stdin is never
+    # touched
+    f <- tempfile()
+    writeLines("  answer  ", f)
+    out <- system2(
+      file.path(R.home("bin"), "Rscript"),
+      c("-e", shQuote("cat(rmoriebricklayer:::.bl_readline('p> '))")),
+      stdin = f,
+      stdout = TRUE,
+      stderr = FALSE
+    )
+    expect_equal(out, "answer")
+    # and in-process, through the connection seam
+    tc <- textConnection("  typed  ")
+    on.exit(close(tc), add = TRUE)
+    local_mocked_bindings(.bl_interactive = function() FALSE)
+    expect_equal(.bl_readline("p> ", con = tc), "typed")
+    # at a terminal the prompt goes to stderr, so a piped stdout stays clean
+    tc2 <- textConnection("  at a tty  ")
+    on.exit(close(tc2), add = TRUE)
+    local_mocked_bindings(.bl_stdin_tty = function() TRUE)
+    err <- utils::capture.output(
+      got <- .bl_readline("key> ", con = tc2),
+      type = "message"
+    )
+    expect_equal(got, "at a tty")
+    expect_identical(err, "key> ")
+    # no installed Rd database: the man/ directory of a source tree
+    pkg <- tempfile("pkg")
+    man <- file.path(pkg, "man")
+    dir.create(man, recursive = TRUE)
+    writeLines(
+      c(
+        "Package: zzzpkg",
+        "Version: 0.0.1",
+        "Title: t",
+        "Description: d",
+        "License: MIT",
+        "Encoding: UTF-8"
+      ),
+      file.path(pkg, "DESCRIPTION")
+    )
+    writeLines(
+      c(
+        "\\name{zzz_fn}",
+        "\\alias{zzz_fn}",
+        "\\title{A title}",
+        "\\description{Words.}"
+      ),
+      file.path(man, "zzz_fn.Rd")
+    )
+    db <- .bl_rd_db(db = NULL, man = man)
+    expect_true("zzz_fn.Rd" %in% names(db))
+    expect_identical(.bl_rd_db(db = NULL, man = ""), list())
+    rd <- tools::parse_Rd(textConnection(
+      "\\name{zzz_fn}\\alias{zzz_fn}\\title{A title}\\description{Words.}"
+    ))
+    local_mocked_bindings(.bl_rd_for = function(name) rd)
+    expect_match(.bl_examples("zzz_fn"), "'zzz_fn' has no examples")
+  }
+)
 
-test_that("cli: instcli refuses when the launcher is missing; data pull reports an unwritable table", {
-  # never by renaming the installed launcher: that wrote into the library on CRAN (CRAN stress test
-  # of 0.5.14)
-  local_mocked_bindings(.bl_launcher = function() "")
-  expect_error(instcli(tempfile("bin")), "launcher is missing")
-  # the destination directory is fine but the table cannot be written as CSV
-  local_mocked_bindings(dload = function(key) {
-    df <- data.frame(a = 1:2)
-    df$e <- list(new.env(), new.env())
-    df
-  })
-  out <- character(0)
-  dest <- tempfile(fileext = ".csv")
-  rc <- .bl_cli_data(c("pull", "tbl"), function(f) dest, function(s) out <<- c(out, s))
-  expect_equal(rc, 1L)
-  expect_match(paste(out, collapse = ""), "cannot write")
-})
+test_that(
+  paste0(
+    "cli: instcli refuses when the launcher is missing; data pull reports ",
+    "an unwritable table"
+  ),
+  {
+    # never by renaming the installed launcher: that wrote into the library on
+    # CRAN (CRAN stress test of 0.5.14)
+    local_mocked_bindings(.bl_launcher = function() "")
+    expect_error(instcli(tempfile("bin")), "launcher is missing")
+    # the destination directory is fine but the table cannot be written as CSV
+    local_mocked_bindings(dload = function(key) {
+      df <- data.frame(a = 1:2)
+      df$e <- list(new.env(), new.env())
+      df
+    })
+    out <- character(0)
+    dest <- tempfile(fileext = ".csv")
+    rc <- .bl_cli_data(c("pull", "tbl"), function(f) dest, function(s) {
+      out <<- c(out, s)
+    })
+    expect_equal(rc, 1L)
+    expect_match(paste(out, collapse = ""), "cannot write")
+  }
+)
 
 test_that("hilltlidx: a zeta that underflows scores as infinitely unlikely", {
   r <- hilltlidx(c(1e300, 2e300, 3e300, 4e300), xmin = 1e300)
@@ -126,13 +204,19 @@ test_that("hilltlidx: a zeta that underflows scores as infinitely unlikely", {
   expect_true(is.na(r$alpha) || is.finite(r$alpha))
 })
 
-test_that("hawkes: an EM pass with an infeasible kernel and an INAR fit whose CDF fails score 1e12", {
-  set.seed(7)
-  times <- sort(runif(60, 0, 100))
-  local_mocked_bindings(.rmbl_hk_cdf = function(...) stop("no cdf"))
-  f <- chwkfit(times, 100, kernel = "weibull", meth = "inar")
-  expect_true(is.list(f))
-})
+test_that(
+  paste0(
+    "hawkes: an EM pass with an infeasible kernel and an INAR fit whose CDF ",
+    "fails score 1e12"
+  ),
+  {
+    set.seed(7)
+    times <- sort(runif(60, 0, 100))
+    local_mocked_bindings(.rmbl_hk_cdf = function(...) stop("no cdf"))
+    f <- chwkfit(times, 100, kernel = "weibull", meth = "inar")
+    expect_true(is.list(f))
+  }
+)
 
 test_that(".rmbl_chunk_bytes: NULL is no chunks", {
   expect_identical(.rmbl_chunk_bytes(NULL), list())
@@ -145,18 +229,27 @@ test_that("drbggen reseeds when the generator comes from another process", {
   e <- drbgnew(as.raw(0:47))
   e$pid <- -1L
   y <- drbggen(e, 16)
-  expect_false(identical(x, y))      # reseeded from the OS first
+  expect_false(identical(x, y)) # reseeded from the OS first
   expect_equal(e$pid, Sys.getpid())
 })
 
 test_that("drftks and drftpsi refuse a sample that is all missing", {
-  expect_error(drftks(c(NA_real_, NA_real_), c(1, 2, 3)), "at least one non-missing")
-  expect_error(drftpsi(c(1, 2, 3), c(NA_real_, NA_real_)), "at least one non-missing")
+  expect_error(
+    drftks(c(NA_real_, NA_real_), c(1, 2, 3)),
+    "at least one non-missing"
+  )
+  expect_error(
+    drftpsi(c(1, 2, 3), c(NA_real_, NA_real_)),
+    "at least one non-missing"
+  )
 })
 
 test_that("vrfcps notes a data file that cannot be read", {
   skip_on_os("windows")
-  skip_if(identical(Sys.info()[["effective_user"]], "root"), "root reads anything")
+  skip_if(
+    identical(Sys.info()[["effective_user"]], "root"),
+    "root reads anything"
+  )
   dir <- make_test_capsule()
   Sys.chmod(file.path(dir, "data.csv"), "000")
   on.exit(Sys.chmod(file.path(dir, "data.csv"), "644"), add = TRUE)
@@ -166,58 +259,90 @@ test_that("vrfcps notes a data file that cannot be read", {
   expect_match(ck$detail[ck$check == "data_sha256"], "could not be read")
 })
 
-test_that("sha256file falls back to the pure-R digest when the compiled core is absent; toascii without stringi", {
-  f <- tempfile()
-  writeBin(as.raw(1:200), f)
-  want <- sha256file(f)
-  standalone <- sha256file
-  env <- new.env(parent = baseenv())
-  env$.rmbl_sha256_hex <- .rmbl_sha256_hex
-  environment(standalone) <- env
-  expect_equal(standalone(f), want)
-  local_mocked_bindings(.rmbl_has_stringi = function() FALSE)
-  expect_equal(toascii("Prof. Ángela"), "Prof. Angela")
-})
+test_that(
+  paste0(
+    "sha256file falls back to the pure-R digest when the compiled core is ",
+    "absent; toascii without stringi"
+  ),
+  {
+    f <- tempfile()
+    writeBin(as.raw(1:200), f)
+    want <- sha256file(f)
+    standalone <- sha256file
+    env <- new.env(parent = baseenv())
+    env$.rmbl_sha256_hex <- .rmbl_sha256_hex
+    environment(standalone) <- env
+    expect_equal(standalone(f), want)
+    local_mocked_bindings(.rmbl_has_stringi = function() FALSE)
+    expect_equal(toascii("Prof. Ángela"), "Prof. Angela")
+  }
+)
 
-test_that("the sign-in address falls back to the built-in default when the services document has none", {
-  withr::local_envvar(MORIE_HOSTED_AUTH_URL = "", MORIE_HOSTED_MODEL = "", MORIE_HOSTED_BASE_URL = "")
-  local_mocked_bindings(.rmbl_services_llm = function() list())
-  expect_match(.bl_hosted_auth(), "^https://.*/auth$")
-  expect_error(.bl_login_email(""), "email address is required")
-  expect_error(.bl_login_email("   "), "email address is required")
-})
+test_that(
+  paste0(
+    "the sign-in address falls back to the built-in default when the ",
+    "services document has none"
+  ),
+  {
+    withr::local_envvar(
+      MORIE_HOSTED_AUTH_URL = "",
+      MORIE_HOSTED_MODEL = "",
+      MORIE_HOSTED_BASE_URL = ""
+    )
+    local_mocked_bindings(.rmbl_services_llm = function() list())
+    expect_match(.bl_hosted_auth(), "^https://.*/auth$")
+    expect_error(.bl_login_email(""), "email address is required")
+    expect_error(.bl_login_email("   "), "email address is required")
+  }
+)
 
-test_that("mcar: a singular observed block in EM, a fit that does not converge, an all-missing row, skipped patterns", {
-  X <- cbind(c(1, 2, 3, 4, 5, 6), c(1, 2, 3, 4, 5, 6), c(2, NA, 1, NA, 3, 2))
-  r <- .rmbl_em_mvn(X)
-  expect_true(is.null(r) || is.list(r))
-  d <- data.frame(a = c(rnorm(30)), b = rnorm(30), c = rnorm(30))
-  d[3, ] <- NA
-  d$b[5:8] <- NA
-  m <- mcartst(d)
-  expect_true(is.finite(m$statistic))
-  local_mocked_bindings(.rmbl_em_mvn = function(...) NULL)
-  expect_error(mcartst(d), "did not converge")
-  sing <- diag(3)
-  sing[1, 2] <- sing[2, 1] <- 1
-  local_mocked_bindings(.rmbl_em_mvn = function(X, ...) {
-    list(mu = colMeans(X, na.rm = TRUE), sigma = sing, iterations = 1L)
-  })
-  m2 <- mcartst(d)
-  expect_match(m2$note, "skipped")
-})
+test_that(
+  paste0(
+    "mcar: a singular observed block in EM, a fit that does not converge, ",
+    "an all-missing row, skipped patterns"
+  ),
+  {
+    X <- cbind(c(1, 2, 3, 4, 5, 6), c(1, 2, 3, 4, 5, 6), c(2, NA, 1, NA, 3, 2))
+    r <- .rmbl_em_mvn(X)
+    expect_true(is.null(r) || is.list(r))
+    d <- data.frame(a = c(rnorm(30)), b = rnorm(30), c = rnorm(30))
+    d[3, ] <- NA
+    d$b[5:8] <- NA
+    m <- mcartst(d)
+    expect_true(is.finite(m$statistic))
+    local_mocked_bindings(.rmbl_em_mvn = function(...) NULL)
+    expect_error(mcartst(d), "did not converge")
+    sing <- diag(3)
+    sing[1, 2] <- sing[2, 1] <- 1
+    local_mocked_bindings(.rmbl_em_mvn = function(X, ...) {
+      list(mu = colMeans(X, na.rm = TRUE), sigma = sing, iterations = 1L)
+    })
+    m2 <- mcartst(d)
+    expect_match(m2$note, "skipped")
+  }
+)
 
 test_that("name constraints match URIs and IP addresses", {
-  expect_true(.rmbl_nc_match(list(type = "uri", value = "https://a.example.org/x"),
-                             list(type = "uri", value = "example.org")))
-  expect_true(.rmbl_nc_match(list(type = "ip", value = as.raw(c(10, 1, 2, 3))),
-                             list(type = "ip", value = as.raw(c(10, 1, 0, 0, 255, 255, 0, 0)))))
-  expect_false(.rmbl_nc_match(list(type = "ip", value = as.raw(c(10, 2, 2, 3))),
-                              list(type = "ip", value = as.raw(c(10, 1, 0, 0, 255, 255, 0, 0)))))
+  expect_true(.rmbl_nc_match(
+    list(type = "uri", value = "https://a.example.org/x"),
+    list(type = "uri", value = "example.org")
+  ))
+  expect_true(.rmbl_nc_match(
+    list(type = "ip", value = as.raw(c(10, 1, 2, 3))),
+    list(type = "ip", value = as.raw(c(10, 1, 0, 0, 255, 255, 0, 0)))
+  ))
+  expect_false(.rmbl_nc_match(
+    list(type = "ip", value = as.raw(c(10, 2, 2, 3))),
+    list(type = "ip", value = as.raw(c(10, 1, 0, 0, 255, 255, 0, 0)))
+  ))
 })
 
 test_that("siufprs parses the report its fetch saved", {
-  html <- system.file("extdata", "siu_synthetic_report.html", package = "rmoriebricklayer")
+  html <- system.file(
+    "extdata",
+    "siu_synthetic_report.html",
+    package = "rmoriebricklayer"
+  )
   local_mocked_bindings(siufetch = function(drid, dest, lang) {
     file.copy(html, dest)
     dest
@@ -227,77 +352,168 @@ test_that("siufprs parses the report its fetch saved", {
 })
 
 test_that(".rmbl_needs_cols strips extra attributes before the plain print", {
-  x <- structure(data.frame(a = 1:2), class = c("rmbl_zzz", "data.frame"), meta = "kept?")
+  x <- structure(
+    data.frame(a = 1:2),
+    class = c("rmbl_zzz", "data.frame"),
+    meta = "kept?"
+  )
   out <- utils::capture.output(res <- .rmbl_needs_cols(x, c("a", "b")))
   expect_true(res)
   expect_true(any(grepl("^1", trimws(out))))
 })
 
 test_that("repro: an empty recorded kind, and an empty DESCRIPTION field", {
-  expect_error(mnfrstseed(list(rng = list(state = 1:3, kind = list(NA, "")))), "kind is empty")
+  expect_error(
+    mnfrstseed(list(rng = list(state = 1:3, kind = list(NA, "")))),
+    "kind is empty"
+  )
   lib <- tempfile("lib")
   dir.create(file.path(lib, "zzzfake"), recursive = TRUE)
-  writeLines(c("Package: zzzfake", "Version: 0.0.1", "Repository: ", "Title: t", "Description: d"),
-             file.path(lib, "zzzfake", "DESCRIPTION"))
+  writeLines(
+    c(
+      "Package: zzzfake",
+      "Version: 0.0.1",
+      "Repository: ",
+      "Title: t",
+      "Description: d"
+    ),
+    file.path(lib, "zzzfake", "DESCRIPTION")
+  )
   withr::local_libpaths(lib, action = "prefix")
   deps <- capdeps("zzzfake")
   expect_true(is.na(deps$repository[deps$package == "zzzfake"]))
 })
 
-test_that("revocation: extension scans, DER OIDs with zero and multi-byte arcs, serials with the top bit set", {
-  # a certificate with no [3] extensions block
-  c1 <- list(der = der_seq(der_seq(der_tlv(0x02, as.raw(1)))))
-  expect_identical(.rmbl_ext_urls(c1, "2.5.29.31", NULL), character(0))
-  # an extension entry with a single child, then one whose value is not DER
-  c2 <- list(der = der_seq(der_seq(der_tlv(0xA3, der_seq(der_seq(der_oid("2.5.29.31")))))))
-  expect_identical(.rmbl_ext_urls(c2, "2.5.29.31", NULL), character(0))
-  c3 <- list(der = der_seq(der_seq(der_tlv(0xA3, der_seq(der_seq(der_oid("2.5.29.31"),
-                                                                   der_tlv(0x04, as.raw(c(0x30, 0x05)))))))))
-  expect_identical(.rmbl_ext_urls(c3, "2.5.29.31", NULL), character(0))
-  # OID arcs: a zero arc is one byte, 840 and 113549 take two and three
-  expect_identical(der_oid("2.5.0.1"), as.raw(c(0x06, 0x03, 0x55, 0x00, 0x01)))
-  expect_identical(der_oid("1.2.840.113549"), as.raw(c(0x06, 0x06, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d)))
-  # the network seam refuses a loopback address and answers NULL instead of erroring
-  # an unresolvable fallback: no Wayback lookup from a test (L4, H8)
-  # both addresses are loopback: refused by the seam before any name is looked up
-  got <- .rmbl_net_get_file("http://127.0.0.1:1/x", "http://127.0.0.1:2/x", tempfile(), 1)
-  expect_true(is.null(got) || (is.numeric(got) && got != 200))
-  f <- x509_fx()
-  leaf <- certprs(f$ocsp_good)
-  ca <- certprs(f$ocsp_ca)
-  leaf$serial <- paste0("ff", substr(leaf$serial, 3, nchar(leaf$serial)))
-  cid <- .rmbl_ocsp_certid(leaf, ca)
-  expect_true(is.raw(cid) && length(cid) > 40)
-  expect_true(any(cid == as.raw(0xff)))
-})
+test_that(
+  paste0(
+    "revocation: extension scans, DER OIDs with zero and multi-byte arcs, ",
+    "serials with the top bit set"
+  ),
+  {
+    # a certificate with no [3] extensions block
+    c1 <- list(der = der_seq(der_seq(der_tlv(0x02, as.raw(1)))))
+    expect_identical(.rmbl_ext_urls(c1, "2.5.29.31", NULL), character(0))
+    # an extension entry with a single child, then one whose value is not DER
+    c2 <- list(
+      der = der_seq(der_seq(der_tlv(
+        0xA3,
+        der_seq(der_seq(der_oid("2.5.29.31")))
+      )))
+    )
+    expect_identical(.rmbl_ext_urls(c2, "2.5.29.31", NULL), character(0))
+    c3 <- list(
+      der = der_seq(der_seq(der_tlv(
+        0xA3,
+        der_seq(der_seq(
+          der_oid("2.5.29.31"),
+          der_tlv(0x04, as.raw(c(0x30, 0x05)))
+        ))
+      )))
+    )
+    expect_identical(.rmbl_ext_urls(c3, "2.5.29.31", NULL), character(0))
+    # OID arcs: a zero arc is one byte, 840 and 113549 take two and three
+    expect_identical(
+      der_oid("2.5.0.1"),
+      as.raw(c(0x06, 0x03, 0x55, 0x00, 0x01))
+    )
+    expect_identical(
+      der_oid("1.2.840.113549"),
+      as.raw(c(0x06, 0x06, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d))
+    )
+    # the network seam refuses a loopback address and answers NULL instead of
+    # erroring an unresolvable fallback: no Wayback lookup from a test (L4, H8)
+    # both addresses are loopback: refused by the seam before any name is looked
+    # up
+    got <- .rmbl_net_get_file(
+      "http://127.0.0.1:1/x",
+      "http://127.0.0.1:2/x",
+      tempfile(),
+      1
+    )
+    expect_true(is.null(got) || (is.numeric(got) && got != 200))
+    f <- x509_fx()
+    leaf <- certprs(f$ocsp_good)
+    ca <- certprs(f$ocsp_ca)
+    leaf$serial <- paste0("ff", substr(leaf$serial, 3, nchar(leaf$serial)))
+    cid <- .rmbl_ocsp_certid(leaf, ca)
+    expect_true(is.raw(cid) && length(cid) > 40)
+    expect_true(any(cid == as.raw(0xff)))
+  }
+)
 
-test_that("revocation: an OCSP answer without a signature, without isolable bytes, with a stray fourth element", {
-  alg <- der_seq(der_oid("1.2.840.113549.1.1.11"))
-  b1 <- der_parse(der_seq(der_seq(der_tlv(0x02, as.raw(1))), alg, der_tlv(0x03, raw(0))))
-  expect_match(.rmbl_ocsp_verify_sig(b1, list(), NULL)$detail, "carries no signature")
-  d2 <- der_seq(der_seq(der_tlv(0x02, as.raw(1))), alg, der_tlv(0x03, as.raw(c(0, 1))))
-  expect_match(.rmbl_ocsp_verify_sig(der_parse(d2), list(), NULL)$detail, "could not be isolated")
-  d3 <- der_seq(der_seq(der_tlv(0x02, as.raw(1))), alg, der_tlv(0x03, as.raw(c(0, 1))), der_tlv(0x02, as.raw(7)))
-  r3 <- .rmbl_ocsp_verify_sig(der_parse(d3), list(), d3)
-  expect_false(r3$ok)
-  d4 <- der_seq(der_seq(der_tlv(0x02, as.raw(1))), alg, der_tlv(0x03, as.raw(c(0, 1))),
-                der_tlv(0xA0, der_seq(der_seq(der_tlv(0x02, as.raw(9))))))
-  r4 <- .rmbl_ocsp_verify_sig(der_parse(d4), list(), d4[seq_len(length(d4) - 2L)])
-  expect_false(r4$ok)
-})
+test_that(
+  paste0(
+    "revocation: an OCSP answer without a signature, without isolable ",
+    "bytes, with a stray fourth element"
+  ),
+  {
+    alg <- der_seq(der_oid("1.2.840.113549.1.1.11"))
+    b1 <- der_parse(der_seq(
+      der_seq(der_tlv(0x02, as.raw(1))),
+      alg,
+      der_tlv(0x03, raw(0))
+    ))
+    expect_match(
+      .rmbl_ocsp_verify_sig(b1, list(), NULL)$detail,
+      "carries no signature"
+    )
+    d2 <- der_seq(
+      der_seq(der_tlv(0x02, as.raw(1))),
+      alg,
+      der_tlv(0x03, as.raw(c(0, 1)))
+    )
+    expect_match(
+      .rmbl_ocsp_verify_sig(der_parse(d2), list(), NULL)$detail,
+      "could not be isolated"
+    )
+    d3 <- der_seq(
+      der_seq(der_tlv(0x02, as.raw(1))),
+      alg,
+      der_tlv(0x03, as.raw(c(0, 1))),
+      der_tlv(0x02, as.raw(7))
+    )
+    r3 <- .rmbl_ocsp_verify_sig(der_parse(d3), list(), d3)
+    expect_false(r3$ok)
+    d4 <- der_seq(
+      der_seq(der_tlv(0x02, as.raw(1))),
+      alg,
+      der_tlv(0x03, as.raw(c(0, 1))),
+      der_tlv(0xA0, der_seq(der_seq(der_tlv(0x02, as.raw(9)))))
+    )
+    r4 <- .rmbl_ocsp_verify_sig(
+      der_parse(d4),
+      list(),
+      d4[seq_len(length(d4) - 2L)]
+    )
+    expect_false(r4$ok)
+  }
+)
 
-test_that("services: a public key that is not a key, and a verified document that is not a v1 document", {
-  sig <- as.character(tojs(list(scheme = "ML-DSA-44", context = .rmbl_services_context,
-                                                   signature = "00"), auto_unbox = TRUE))
-  expect_false(.rmbl_services_verify(charToRaw("{}"), sig, pubkey = "zz"))
-  local_mocked_bindings(
-    .rmbl_net_download = function(url, dest, timeout) {
-      writeLines("{}", dest)
-      200L
-    },
-    .rmbl_services_verify = function(...) TRUE)
-  expect_null(.rmbl_services_fetch())
-})
+test_that(
+  paste0(
+    "services: a public key that is not a key, and a verified document that ",
+    "is not a v1 document"
+  ),
+  {
+    sig <- as.character(tojs(
+      list(
+        scheme = "ML-DSA-44",
+        context = .rmbl_services_context,
+        signature = "00"
+      ),
+      auto_unbox = TRUE
+    ))
+    expect_false(.rmbl_services_verify(charToRaw("{}"), sig, pubkey = "zz"))
+    local_mocked_bindings(
+      .rmbl_net_download = function(url, dest, timeout) {
+        writeLines("{}", dest)
+        200L
+      },
+      .rmbl_services_verify = function(...) TRUE
+    )
+    expect_null(.rmbl_services_fetch())
+  }
+)
 
 test_that(".rmbl_fips_prehash: NA means none", {
   expect_equal(.rmbl_fips_prehash(NA), "none")
@@ -307,60 +523,119 @@ test_that("cnttrnd refuses an infinite x", {
   expect_error(cnttrnd(c(3, 4, 5), x = c(1, Inf, 3)), "infinite|finite")
 })
 
-test_that("yoy: a label function must give one label per row; grouped print; PDF colours and page breaks", {
-  d <- data.frame(year = 2019:2022, n = c(10, 12, 9, 15))
-  y <- yoy(d, value = "n", prd = "year")
-  expect_error(yoylbl(y, function(p) "one"), "one label per row")
-  seg <- data.frame(year = rep(2019:2021, each = 2), gender = rep(c("Female", "Male"), 3),
-                    n = c(31, 402, 28, 377, 12, 190))
-  g <- yoy(seg, value = "n", prd = "year", by = "gender", minbase = 0)
-  out <- utils::capture.output(print(g))
-  expect_true(any(grepl("Female", out)))
-  f <- tempfile(fileext = ".pdf")
-  on.exit(unlink(f), add = TRUE)
-  long <- data.frame(year = 2000:2070, n = c(seq(100L, 450L, by = 10L), seq(440L, 100L, by = -10L)))
-  yl <- yoy(long, value = "n", prd = "year")
-  expect_silent(yoypdf(yl, f, title = "Up then down"))
-  expect_true(file.size(f) > 1000)
-})
+test_that(
+  paste0(
+    "yoy: a label function must give one label per row; grouped print; PDF ",
+    "colours and page breaks"
+  ),
+  {
+    d <- data.frame(year = 2019:2022, n = c(10, 12, 9, 15))
+    y <- yoy(d, value = "n", prd = "year")
+    expect_error(yoylbl(y, function(p) "one"), "one label per row")
+    seg <- data.frame(
+      year = rep(2019:2021, each = 2),
+      gender = rep(c("Female", "Male"), 3),
+      n = c(31, 402, 28, 377, 12, 190)
+    )
+    g <- yoy(seg, value = "n", prd = "year", by = "gender", minbase = 0)
+    out <- utils::capture.output(print(g))
+    expect_true(any(grepl("Female", out)))
+    f <- tempfile(fileext = ".pdf")
+    on.exit(unlink(f), add = TRUE)
+    long <- data.frame(
+      year = 2000:2070,
+      n = c(seq(100L, 450L, by = 10L), seq(440L, 100L, by = -10L))
+    )
+    yl <- yoy(long, value = "n", prd = "year")
+    expect_silent(yoypdf(yl, f, title = "Up then down"))
+    expect_true(file.size(f) > 1000)
+  }
+)
 
-test_that("json: scalar classes unwrap, classed functions, difftime via force, complex, data frame edge cases", {
-  fn2 <- structure(function() 1, class = c("foo", "bar"))
-  expect_equal(as.character(tojs(fn2, force = TRUE)), "{}")
-  expect_error(tojs(structure(function() 1, class = c("foo", "bar"))), "No method")
-  s <- structure(1, class = c("scalar", "mycls"))
-  expect_error(tojs(s), "No method")
-  d <- tojs(structure(5, class = "difftime", units = "secs"), force = TRUE)
-  expect_equal(as.character(d), "[5]")
-  z <- tojs(c(1 + 2i, NA), complex = "list")
-  expect_match(as.character(z), "real")
-  df <- data.frame(a = 1:2)
-  df$b <- list(x = 1, y = 2)
-  j <- tojs(df)
-  expect_match(as.character(j), "\"b\"")
-  cols <- tojs(data.frame(a = 1:2, b = c("x", "y")), dataframe = "columns", auto_unbox = TRUE)
-  expect_match(as.character(cols), "^\\{\"a\":\\[1,2\\]")
-  expect_warning(.rmbl_json_pack(compiler::compile(quote(1 + 1))), "No encoding has been defined")
-  expect_equal(as.character(tojs(new.env(), force = TRUE)), "{}")
-  expect_error(tojs(new.env()), "No method")
-})
+test_that(
+  paste0(
+    "json: scalar classes unwrap, classed functions, difftime via force, ",
+    "complex, data frame edge cases"
+  ),
+  {
+    fn2 <- structure(function() 1, class = c("foo", "bar"))
+    expect_equal(as.character(tojs(fn2, force = TRUE)), "{}")
+    expect_error(
+      tojs(structure(function() 1, class = c("foo", "bar"))),
+      "No method"
+    )
+    s <- structure(1, class = c("scalar", "mycls"))
+    expect_error(tojs(s), "No method")
+    d <- tojs(structure(5, class = "difftime", units = "secs"), force = TRUE)
+    expect_equal(as.character(d), "[5]")
+    z <- tojs(c(1 + 2i, NA), complex = "list")
+    expect_match(as.character(z), "real")
+    df <- data.frame(a = 1:2)
+    df$b <- list(x = 1, y = 2)
+    j <- tojs(df)
+    expect_match(as.character(j), "\"b\"")
+    cols <- tojs(
+      data.frame(a = 1:2, b = c("x", "y")),
+      dataframe = "columns",
+      auto_unbox = TRUE
+    )
+    expect_match(as.character(cols), "^\\{\"a\":\\[1,2\\]")
+    expect_warning(
+      .rmbl_json_pack(compiler::compile(quote(1 + 1))),
+      "No encoding has been defined"
+    )
+    expect_equal(as.character(tojs(new.env(), force = TRUE)), "{}")
+    expect_error(tojs(new.env()), "No method")
+  }
+)
 
 o_captured <- NULL
-test_that("json: the encoder's option object, captured for the direct-call branches below", {
-  local_mocked_bindings(.rmbl_json_as = function(x, o, ...) {
-    o_captured <<- o
-    "null"
-  })
-  tojs(1, complex = "list")
-  expect_true(is.list(o_captured))
-})
+test_that(
+  paste0(
+    "json: the encoder's option object, captured for the direct-call ",
+    "branches below"
+  ),
+  {
+    local_mocked_bindings(.rmbl_json_as = function(x, o, ...) {
+      o_captured <<- o
+      "null"
+    })
+    tojs(1, complex = "list")
+    expect_true(is.list(o_captured))
+  }
+)
 
-test_that("json: complex with na = 'NA' reverts to the outer na; a one-dimensional array; unequal record columns", {
-  o <- o_captured
-  z <- .rmbl_json_as_cplx(c(1 + 2i, NA), o, TRUE, "NA", "string", FALSE, o$indent)
-  expect_match(z, "real")
-  a <- .rmbl_json_as_array(array(1:3), o, TRUE, NULL, NULL, FALSE, o$indent, FALSE)
-  expect_equal(gsub("\\s", "", a), "[1,2,3]")
-  r <- tryCatch(fromjs('[{"a":{"x":1}},{"b":2}]'), error = function(e) conditionMessage(e))
-  expect_true(is.data.frame(r) || grepl("not of equal length", r))
-})
+test_that(
+  paste0(
+    "json: complex with na = 'NA' reverts to the outer na; a ",
+    "one-dimensional array; unequal record columns"
+  ),
+  {
+    o <- o_captured
+    z <- .rmbl_json_as_cplx(
+      c(1 + 2i, NA),
+      o,
+      TRUE,
+      "NA",
+      "string",
+      FALSE,
+      o$indent
+    )
+    expect_match(z, "real")
+    a <- .rmbl_json_as_array(
+      array(1:3),
+      o,
+      TRUE,
+      NULL,
+      NULL,
+      FALSE,
+      o$indent,
+      FALSE
+    )
+    expect_equal(gsub("\\s", "", a), "[1,2,3]")
+    r <- tryCatch(fromjs('[{"a":{"x":1}},{"b":2}]'), error = function(e) {
+      conditionMessage(e)
+    })
+    expect_true(is.data.frame(r) || grepl("not of equal length", r))
+  }
+)

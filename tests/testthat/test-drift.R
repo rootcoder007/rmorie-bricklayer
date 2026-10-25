@@ -27,20 +27,20 @@ test_that("the KS statistic matches stats::ks.test", {
   expect_equal(drftks(1:10, 101:110)[["statistic"]], 1)
   expect_lt(drftks(1:50, 101:150)[["p_value"]], 1e-6)
   # a real shift is detected and a null one is not
-  expect_lt(drftks(stats::rnorm(300), stats::rnorm(300, 1))[["p_value"]],
-            0.01)
+  expect_lt(drftks(stats::rnorm(300), stats::rnorm(300, 1))[["p_value"]], 0.01)
   expect_gt(drftks(stats::rnorm(300), stats::rnorm(300))[["p_value"]], 0.01)
   # a change in spread alone is caught, which comparing means would miss
-  expect_lt(drftks(stats::rnorm(400), stats::rnorm(400, 0, 3))[["p_value"]],
-            0.01)
+  expect_lt(
+    drftks(stats::rnorm(400), stats::rnorm(400, 0, 3))[["p_value"]],
+    0.01
+  )
   # p-values are probabilities, and the statistic is a proportion
   expect_true(k[["p_value"]] >= 0 && k[["p_value"]] <= 1)
   expect_true(k[["statistic"]] >= 0 && k[["statistic"]] <= 1)
   # ties are handled by comparing the EDFs, without a warning
   expect_silent(drftks(c(1, 1, 2, 2, 3), c(1, 2, 2, 3, 3)))
   # NA is dropped rather than poisoning the statistic
-  expect_equal(drftks(c(x, NA), x)[["statistic"]],
-               drftks(x, x)[["statistic"]])
+  expect_equal(drftks(c(x, NA), x)[["statistic"]], drftks(x, x)[["statistic"]])
 
   expect_error(drftks(numeric(0), 1:5), "at least one non-missing")
   expect_error(drftks(c(NA, NA), 1:5), "at least one non-missing")
@@ -95,8 +95,10 @@ test_that("the chi-square drift statistic matches stats::chisq.test", {
   expect_equal(drftchisq(c(a = 100, b = 60, c = 40), ref)[["statistic"]], 0)
   expect_equal(drftchisq(c(a = 100, b = 60, c = 40), ref)[["p_value"]], 1)
   # the reference may be given as proportions or as counts alike
-  expect_equal(drftchisq(obs, ref)[["statistic"]],
-               drftchisq(obs, ref / sum(ref))[["statistic"]])
+  expect_equal(
+    drftchisq(obs, ref)[["statistic"]],
+    drftchisq(obs, ref / sum(ref))[["statistic"]]
+  )
   # raw vectors are tabulated
   t1 <- drftchisq(c("a", "a", "b", "b"), c("a", "b"))
   expect_equal(t1[["statistic"]], 0)
@@ -113,12 +115,15 @@ test_that("the chi-square drift statistic matches stats::chisq.test", {
   gone <- drftchisq(c("a", "a", "a", "a"), c("a", "a", "b", "b"))
   expect_gt(gone[["statistic"]], 0)
   # a bigger reallocation gives a bigger statistic
-  expect_gt(drftchisq(c(a = 10, b = 10, c = 180), ref)[["statistic"]],
-            drftchisq(c(a = 60, b = 80, c = 60), ref)[["statistic"]])
+  expect_gt(
+    drftchisq(c(a = 10, b = 10, c = 180), ref)[["statistic"]],
+    drftchisq(c(a = 60, b = 80, c = 60), ref)[["statistic"]]
+  )
   # the p-value is the chi-square tail
-  expect_equal(got[["p_value"]],
-               stats::pchisq(got[["statistic"]], got[["df"]],
-                             lower.tail = FALSE))
+  expect_equal(
+    got[["p_value"]],
+    stats::pchisq(got[["statistic"]], got[["df"]], lower.tail = FALSE)
+  )
 
   expect_error(drftchisq(c(1, 2, 3), ref), "must be named")
   expect_error(drftchisq(c(a = 0, b = 0), c(a = 1, b = 1)), "no counts")
@@ -153,8 +158,7 @@ test_that("the Benford screen is the log10 law", {
   # non-finite values are excluded
   expect_equal(benfordtst(c(1, 2, NA, Inf, -Inf))$n, 2)
   # the p-value is the chi-square tail on 8 df
-  expect_equal(ok$p_value,
-               stats::pchisq(ok$statistic, 8, lower.tail = FALSE))
+  expect_equal(ok$p_value, stats::pchisq(ok$statistic, 8, lower.tail = FALSE))
   expect_equal(summary(ok)[["n"]], ok$n)
 
   expect_error(benfordtst(c(0, 0, 0)), "no finite non-zero")
@@ -222,33 +226,46 @@ test_that("cpsdrft tests every shared column and flags the movers", {
   # a stricter alpha flags fewer columns
   mild <- same
   mild$value <- mild$value + 0.22
-  expect_true(sum(cpsdrft(ref, mild, alpha = 0.2)$columns$drifted) >=
-                sum(cpsdrft(ref, mild, alpha = 1e-8)$columns$drifted))
+  expect_true(
+    sum(cpsdrft(ref, mild, alpha = 0.2)$columns$drifted) >=
+      sum(cpsdrft(ref, mild, alpha = 1e-8)$columns$drifted)
+  )
   # the PSI threshold can flag a column on its own, but only once both
   # samples are large enough for the band to mean anything
-  expect_true(cpsdrft(ref, moved, alpha = 1e-12, psithr = 0.05,
-                            psiminn = 10L)$anydrft)
+  expect_true(
+    cpsdrft(ref, moved, alpha = 1e-12, psithr = 0.05, psiminn = 10L)$anydrft
+  )
   # with the default minimum it is reported but does not raise the flag
-  noise <- cpsdrft(data.frame(v = stats::rnorm(80)),
-                         data.frame(v = stats::rnorm(80)))
+  noise <- cpsdrft(
+    data.frame(v = stats::rnorm(80)),
+    data.frame(v = stats::rnorm(80))
+  )
   expect_true(is.finite(noise$columns$psi))
   expect_false(noise$anydrft)
   # a binning-noise PSI on a small sample would clear 0.25 on its own,
   # which is exactly what the gate is there to stop
-  expect_false(cpsdrft(data.frame(v = stats::rnorm(80)),
-                             data.frame(v = stats::rnorm(80)),
-                             psithr = 0.01)$anydrft)
-  expect_true(cpsdrft(data.frame(v = stats::rnorm(80)),
-                            data.frame(v = stats::rnorm(80)),
-                            psithr = 0.01,
-                            psiminn = 1L)$anydrft)
-  expect_error(cpsdrft(ref, same, psiminn = -1),
-               "non-negative integer")
+  expect_false(
+    cpsdrft(
+      data.frame(v = stats::rnorm(80)),
+      data.frame(v = stats::rnorm(80)),
+      psithr = 0.01
+    )$anydrft
+  )
+  expect_true(
+    cpsdrft(
+      data.frame(v = stats::rnorm(80)),
+      data.frame(v = stats::rnorm(80)),
+      psithr = 0.01,
+      psiminn = 1L
+    )$anydrft
+  )
+  expect_error(cpsdrft(ref, same, psiminn = -1), "non-negative integer")
   # an all-missing column is reported as untestable rather than guessed
   gap <- same
   gap$size <- NA_real_
   expect_true(is.na(cpsdrft(ref, gap)$columns$drifted[
-    cpsdrft(ref, gap)$columns$column == "size"]))
+    cpsdrft(ref, gap)$columns$column == "size"
+  ]))
 
   # the summary condenses the same verdict
   s <- summary(m)

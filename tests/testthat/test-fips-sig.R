@@ -1,4 +1,5 @@
-testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
+# battery: runs in CI and locally; CRAN runs the correctness core
+testthat::skip_on_cran()
 # ML-DSA (FIPS 204) and SLH-DSA (FIPS 205), implemented in this package.
 #
 # The anchor that matters is fips-openssl-vectors.txt: public keys and
@@ -24,15 +25,15 @@ fips_vectors <- function(file) {
 # rather than read back from the package, so a change to a packed field
 # width fails here instead of being blessed.
 FIPS_SIZES <- list(
-  "ML-DSA-44"          = c(1312L, 2560L, 2420L, 32L, 32L),
-  "ML-DSA-65"          = c(1952L, 4032L, 3309L, 32L, 32L),
-  "ML-DSA-87"          = c(2592L, 4896L, 4627L, 32L, 32L),
-  "SLH-DSA-SHA2-128s"  = c(32L, 64L, 7856L, 48L, 16L),
-  "SLH-DSA-SHA2-128f"  = c(32L, 64L, 17088L, 48L, 16L),
-  "SLH-DSA-SHA2-192s"  = c(48L, 96L, 16224L, 72L, 24L),
-  "SLH-DSA-SHA2-192f"  = c(48L, 96L, 35664L, 72L, 24L),
-  "SLH-DSA-SHA2-256s"  = c(64L, 128L, 29792L, 96L, 32L),
-  "SLH-DSA-SHA2-256f"  = c(64L, 128L, 49856L, 96L, 32L),
+  "ML-DSA-44" = c(1312L, 2560L, 2420L, 32L, 32L),
+  "ML-DSA-65" = c(1952L, 4032L, 3309L, 32L, 32L),
+  "ML-DSA-87" = c(2592L, 4896L, 4627L, 32L, 32L),
+  "SLH-DSA-SHA2-128s" = c(32L, 64L, 7856L, 48L, 16L),
+  "SLH-DSA-SHA2-128f" = c(32L, 64L, 17088L, 48L, 16L),
+  "SLH-DSA-SHA2-192s" = c(48L, 96L, 16224L, 72L, 24L),
+  "SLH-DSA-SHA2-192f" = c(48L, 96L, 35664L, 72L, 24L),
+  "SLH-DSA-SHA2-256s" = c(64L, 128L, 29792L, 96L, 32L),
+  "SLH-DSA-SHA2-256f" = c(64L, 128L, 49856L, 96L, 32L),
   "SLH-DSA-SHAKE-128s" = c(32L, 64L, 7856L, 48L, 16L),
   "SLH-DSA-SHAKE-128f" = c(32L, 64L, 17088L, 48L, 16L),
   "SLH-DSA-SHAKE-192s" = c(48L, 96L, 16224L, 72L, 24L),
@@ -60,22 +61,30 @@ test_that("the byte lengths are the ones the standards fix", {
   for (s in names(FIPS_SIZES)) {
     sz <- fipssz(s)
     expect_identical(
-      unname(sz[c("public_key", "secret_key", "signature", "seed",
-                  "rnd")]),
+      unname(sz[c("public_key", "secret_key", "signature", "seed", "rnd")]),
       FIPS_SIZES[[s]],
-      info = s)
+      info = s
+    )
   }
   # an SLH-DSA key is two n-byte halves and its seed three
-  expect_identical(fipssz("SLH-DSA-SHAKE-192s")[["public_key"]],
-                   2L * fipssz("SLH-DSA-SHAKE-192s")[["rnd"]])
-  expect_identical(fipssz("SLH-DSA-SHAKE-192s")[["seed"]],
-                   3L * fipssz("SLH-DSA-SHAKE-192s")[["rnd"]])
+  expect_identical(
+    fipssz("SLH-DSA-SHAKE-192s")[["public_key"]],
+    2L * fipssz("SLH-DSA-SHAKE-192s")[["rnd"]]
+  )
+  expect_identical(
+    fipssz("SLH-DSA-SHAKE-192s")[["seed"]],
+    3L * fipssz("SLH-DSA-SHAKE-192s")[["rnd"]]
+  )
   # dropping the lattice assumption costs size: three times over at the
   # smallest setting, ten times at the largest
-  expect_gt(fipssz("SLH-DSA-SHAKE-128s")[["signature"]],
-            3 * fipssz("ML-DSA-44")[["signature"]])
-  expect_gt(fipssz("SLH-DSA-SHAKE-256f")[["signature"]],
-            10 * fipssz("ML-DSA-87")[["signature"]])
+  expect_gt(
+    fipssz("SLH-DSA-SHAKE-128s")[["signature"]],
+    3 * fipssz("ML-DSA-44")[["signature"]]
+  )
+  expect_gt(
+    fipssz("SLH-DSA-SHAKE-256f")[["signature"]],
+    10 * fipssz("ML-DSA-87")[["signature"]]
+  )
   expect_error(fipssz("ML-DSA-99"), "unknown scheme")
   expect_error(fipssz("xmss-sha256"), "unknown scheme")
   expect_error(fipssz(character(0)), "non-empty")
@@ -95,9 +104,10 @@ test_that("this package reproduces OpenSSL's signatures byte for byte", {
     expect_identical(nchar(pk_hex) %/% 2L, sz[["public_key"]], info = s)
     expect_identical(nchar(sk_hex) %/% 2L, sz[["secret_key"]], info = s)
     key <- fipskey(s, pk_hex, sk_hex)
-    if (s %in% SLOW_TO_SIGN) next
-    sig <- cpssign(msg, key, ctx = "release",
-                        determ = TRUE)
+    if (s %in% SLOW_TO_SIGN) {
+      next
+    }
+    sig <- cpssign(msg, key, ctx = "release", determ = TRUE)
     # BYTE equality with an implementation sharing no code with this
     # one. Verifying their signature would be weaker: an implementation
     # can verify what it produces and interoperate with nothing.
@@ -105,19 +115,18 @@ test_that("this package reproduces OpenSSL's signatures byte for byte", {
     # The digest is over the signature BYTES. csha256() on the hex
     # string would hash the spelling instead, which is self-consistent
     # and compares against nothing external.
-    expect_identical(csha256(.rmbl_hex_to_raw(sig$signature)), want,
-                     info = s)
+    expect_identical(csha256(.rmbl_hex_to_raw(sig$signature)), want, info = s)
     # and those same bytes verify, from the public key alone
     pub <- fipskey(s, pk_hex)
-    expect_true(cpsvrf(msg, sig, pub, ctx = "release"),
-                info = s)
+    expect_true(cpsvrf(msg, sig, pub, ctx = "release"), info = s)
     # the context is bound into the signature, so the same bytes must
     # NOT verify under a different context or none at all
-    expect_false(cpsvrf(msg, sig, pub, ctx = "staging"),
-                 info = s)
+    expect_false(cpsvrf(msg, sig, pub, ctx = "staging"), info = s)
     expect_false(cpsvrf(msg, sig, pub), info = s)
-    expect_false(cpsvrf(as.raw(c(1:32, 0)), sig, pub,
-                                ctx = "release"), info = s)
+    expect_false(
+      cpsvrf(as.raw(c(1:32, 0)), sig, pub, ctx = "release"),
+      info = s
+    )
     # one flipped bit anywhere is a rejection
     flipped <- sig
     n <- nchar(sig$signature)
@@ -125,8 +134,7 @@ test_that("this package reproduces OpenSSL's signatures byte for byte", {
     old <- strtoi(substring(sig$signature, mid, mid + 1L), 16L)
     substring(flipped$signature, mid, mid + 1L) <-
       sprintf("%02x", bitwXor(old, 1L))
-    expect_false(cpsvrf(msg, flipped, pub, ctx = "release"),
-                 info = s)
+    expect_false(cpsvrf(msg, flipped, pub, ctx = "release"), info = s)
   }
 })
 
@@ -138,9 +146,13 @@ test_that("key material round-trips through fipskey", {
   expect_s3_class(again, "bricklayer_fips_key")
   # raw and hex are the same material
   expect_identical(
-    fipskey("ML-DSA-44", .rmbl_hex_to_raw(key$public),
-             .rmbl_hex_to_raw(key$secret))$secret,
-    key$secret)
+    fipskey(
+      "ML-DSA-44",
+      .rmbl_hex_to_raw(key$public),
+      .rmbl_hex_to_raw(key$secret)
+    )$secret,
+    key$secret
+  )
   # a public-only key verifies and cannot sign
   pub <- fipskey("ML-DSA-44", key$public)
   expect_s3_class(pub, "bricklayer_fips_public_key")
@@ -148,18 +160,25 @@ test_that("key material round-trips through fipskey", {
   sig <- cpssign("m", again)
   expect_true(cpsvrf("m", sig, pub))
   # material of the wrong length, or for the wrong scheme, is refused
-  expect_error(fipskey("ML-DSA-65", key$public, key$secret),
-               "must be 1952 bytes")
-  expect_error(fipskey("ML-DSA-44", substring(key$public, 3L)),
-               "must be 1312 bytes")
-  expect_error(fipskey("ML-DSA-44", paste0("zz", substring(key$public, 3L))),
-               "must be 1312 bytes")
+  expect_error(
+    fipskey("ML-DSA-65", key$public, key$secret),
+    "must be 1952 bytes"
+  )
+  expect_error(
+    fipskey("ML-DSA-44", substring(key$public, 3L)),
+    "must be 1312 bytes"
+  )
+  expect_error(
+    fipskey("ML-DSA-44", paste0("zz", substring(key$public, 3L))),
+    "must be 1312 bytes"
+  )
   expect_error(fipskey("NO-SUCH-42", key$public), "unknown scheme")
 })
 
 test_that("a fixed seed reproduces the recorded key and signature", {
-  # about 20 s or more each: run in CI and with NOT_CRAN=true, not on CRAN's machines, where the whole
-  # check took 11 minutes (CRAN stress test of b617a3f)
+  # about 20 s or more each: run in CI and with NOT_CRAN=true, not on CRAN's
+  # machines, where the whole check took 11 minutes (CRAN stress test of
+  # b617a3f)
   skip_on_cran()
   vec <- fips_vectors("fips-self-vectors.txt")
   expect_setequal(names(vec), names(FIPS_SIZES))
@@ -171,23 +190,34 @@ test_that("a fixed seed reproduces the recorded key and signature", {
     expect_identical(key$scheme, s)
     # the same seed twice is the same key: keygen reads nothing else
     expect_identical(fipskg(s, seed = seed)$public, key$public)
-    if (s %in% SLOW_TO_SIGN) next
-    sig <- cpssign("a manifest digest", key, ctx = "release",
-                        determ = TRUE)
+    if (s %in% SLOW_TO_SIGN) {
+      next
+    }
+    sig <- cpssign("a manifest digest", key, ctx = "release", determ = TRUE)
     expect_identical(csha256(sig$signature), vec[[s]][3L], info = s)
-    expect_identical(nchar(sig$signature) %/% 2L,
-                     as.integer(vec[[s]][4L]), info = s)
+    expect_identical(
+      nchar(sig$signature) %/% 2L,
+      as.integer(vec[[s]][4L]),
+      info = s
+    )
     # and the deterministic variant is deterministic
     expect_identical(
-      cpssign("a manifest digest", key, ctx = "release",
-                   determ = TRUE)$signature,
-      sig$signature, info = s)
+      cpssign(
+        "a manifest digest",
+        key,
+        ctx = "release",
+        determ = TRUE
+      )$signature,
+      sig$signature,
+      info = s
+    )
   }
 })
 
 test_that("a fresh key round-trips, and the hedged variant varies", {
-  # about 20 s or more each: run in CI and with NOT_CRAN=true, not on CRAN's machines, where the whole
-  # check took 11 minutes (CRAN stress test of b617a3f)
+  # about 20 s or more each: run in CI and with NOT_CRAN=true, not on CRAN's
+  # machines, where the whole check took 11 minutes (CRAN stress test of
+  # b617a3f)
   skip_on_cran()
   for (s in setdiff(names(FIPS_SIZES), SLOW_TO_SIGN)) {
     key <- fipskg(s)
@@ -228,16 +258,12 @@ test_that("a key does not verify another scheme's signature", {
 
 test_that("bad input is refused rather than silently coerced", {
   key <- fipskg("ML-DSA-44")
-  expect_error(fipskg("ML-DSA-44", seed = as.raw(1:31)),
-               "32 bytes")
+  expect_error(fipskg("ML-DSA-44", seed = as.raw(1:31)), "32 bytes")
   expect_error(fipskg("ML-DSA-44", seed = 1:32), "raw vector")
-  expect_error(fipskg("SLH-DSA-SHAKE-128s", seed = as.raw(1:32)),
-               "48 bytes")
+  expect_error(fipskg("SLH-DSA-SHAKE-128s", seed = as.raw(1:32)), "48 bytes")
   expect_error(cpssign(c("a", "b"), key), "length-1")
   expect_error(cpssign("m", key, ctx = c("a", "b")), "length-1")
-  expect_error(cpssign("m", key,
-                            ctx = strrep("x", 256L)),
-               "255 bytes")
+  expect_error(cpssign("m", key, ctx = strrep("x", 256L)), "255 bytes")
   expect_error(fipspubkey(list()), "fipskg")
   # a 255-byte context is the largest the one-byte length field allows
   sig <- cpssign("m", key, ctx = strrep("x", 255L))
@@ -269,12 +295,13 @@ test_that("every parameter set signs in a time a test can afford", {
     sz <- fipssz(s)
     key <- fipskg(s, seed = as.raw(seq_len(sz[["seed"]]) %% 256L))
     t <- system.time(
-      sig <- cpssign("a manifest digest", key, ctx = "release",
-                          determ = TRUE))[["elapsed"]]
+      sig <- cpssign("a manifest digest", key, ctx = "release", determ = TRUE)
+    )[["elapsed"]]
     expect_lt(t, wall_limit(20))
-    expect_true(cpsvrf("a manifest digest", sig,
-                               fipspubkey(key), ctx = "release"),
-                info = s)
+    expect_true(
+      cpsvrf("a manifest digest", sig, fipspubkey(key), ctx = "release"),
+      info = s
+    )
   }
 })
 
@@ -290,11 +317,17 @@ test_that("the print methods say which scheme and withhold the secret", {
   # leak nothing and asserting on them tests nothing.
   tail_of_secret <- substring(key$secret, nchar(key$secret) - 31L)
   expect_false(any(grepl(tail_of_secret, out, fixed = TRUE)))
-  expect_false(any(grepl(tail_of_secret, paste(out, collapse = ""),
-                         fixed = TRUE)))
+  expect_false(any(grepl(
+    tail_of_secret,
+    paste(out, collapse = ""),
+    fixed = TRUE
+  )))
   expect_true(any(grepl("stateless", out)))
   pub <- format(fipspubkey(key))
   expect_true(any(grepl("ML-DSA-65", pub, fixed = TRUE)))
-  expect_false(any(grepl(tail_of_secret, paste(pub, collapse = ""),
-                         fixed = TRUE)))
+  expect_false(any(grepl(
+    tail_of_secret,
+    paste(pub, collapse = ""),
+    fixed = TRUE
+  )))
 })

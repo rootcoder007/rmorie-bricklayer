@@ -166,11 +166,25 @@ print(fp)
 # wherever you are, offline: the location is detected and recorded
 co2fp(1 + 1, cpupwrw = 45, memgb = 8)$assumptions
 # the whole machine's utilisation, on codecarbon's machine curve
-co2fp(1 + 1, loc = "FR", usage = "machine", loadcur = "codecarbon",
-                  cpupwrw = 45, memgb = 8)$usagemode
-# a fixed utilisation and a data-centre PUE, with a carbon intensity given as a number
-fp2 <- co2fp(sum(sqrt(seq_len(2e5))), loc = 30, usage = 0.5,
-                         cpupwrw = 65, memgb = 16, pue = 1.67, meth = "model")
+co2fp(
+  1 + 1,
+  loc = "FR",
+  usage = "machine",
+  loadcur = "codecarbon",
+  cpupwrw = 45,
+  memgb = 8
+)$usagemode
+# a fixed utilisation and a data-centre PUE, with a carbon intensity given as
+# a number
+fp2 <- co2fp(
+  sum(sqrt(seq_len(2e5))),
+  loc = 30,
+  usage = 0.5,
+  cpupwrw = 65,
+  memgb = 16,
+  pue = 1.67,
+  meth = "model"
+)
 fp2$enekwh
 fpeqv(fp2$co2eg)
 # a bad argument is refused before the expression runs

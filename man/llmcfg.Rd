@@ -42,12 +42,12 @@ first. Keys are never printed, only whether one is set.
 }
 \details{
 \strong{Where settings live.} Saved settings are kept in
-\code{llm.json} in the folder \code{$XDG_CONFIG_HOME/morie} (\code{~/.config/morie}
-when \code{XDG_CONFIG_HOME} is unset), a private file (mode 0600, in a
-private directory) next to the shared \code{credentials.json}. The file is
-written only when you pass a setting; only the settings that change are
-rewritten in place, so the rest of the file stays exactly as it was. An
-empty set of settings removes the file.
+\code{llm.json} in the folder \code{$XDG_CONFIG_HOME/morie}
+(\code{~/.config/morie} when \code{XDG_CONFIG_HOME} is unset), a private file
+(mode 0600, in a private directory) next to the shared
+\code{credentials.json}. The file is written only when you pass a setting;
+only the settings that change are rewritten in place, so the rest of the file
+stays exactly as it was. An empty set of settings removes the file.
 
 \strong{Precedence.} An environment variable that is set (the \code{env}
 column, for example \code{ANTHROPIC_API_KEY} or \code{OLLAMA_HOST}) wins
@@ -107,14 +107,17 @@ cfg <- llmcfg()
 cfg$value[cfg$key == "own.key"]
 
 # Back to the defaults: NULL removes a saved setting.
-llmcfg(route = NULL, ollama.model = NULL, own.url = NULL,
-                      own.key = NULL)
+llmcfg(route = NULL, ollama.model = NULL, own.url = NULL, own.key = NULL)
 
 # Unknown settings and retired routes are refused.
 try(llmcfg(colour = "blue"))
 try(llmcfg(route = "hosted"))
 
-if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
+if (is.na(old)) {
+  Sys.unsetenv("XDG_CONFIG_HOME")
+} else {
+  Sys.setenv(XDG_CONFIG_HOME = old)
+}
 \dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # your Anthropic key and model, and always use them

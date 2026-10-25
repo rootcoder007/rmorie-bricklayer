@@ -24,83 +24,99 @@ welprof(
 \item{grp, ind, est, lower, upper}{Column names: the group, the indicator,
 the percentage and its published limits.}
 
-\item{well, distress}{The indicators that measure wellness or strength, and those
-that measure distress; rows for any other indicator (totals, \dQuote{not specified})
-are
-left out.}
+\item{well, distress}{The indicators that measure wellness or strength, and
+those that measure distress; rows for any other indicator (totals,
+\dQuote{not specified}) are left out.}
 
-\item{domain}{Optional named character vector giving each indicator's holistic domain,
-for example \code{c("Life satisfaction 8 to 10" = "mental", ...)}.}
+\item{domain}{Optional named character vector giving each indicator's
+holistic domain, for example \code{c("Life satisfaction 8 to 10" =
+"mental", ...)}.}
 
 \item{qual}{Optional column of quality flags.}
 }
 \value{
-A data frame of class \code{rmbl_wellness_profile}, wellness rows first,
-with the columns \code{group}, \code{indicator}, \code{side} (\code{"wellness"}
-or \code{"distress"}), \code{domain}, \code{estimate}, \code{lower},
-\code{upper} and \code{usewithcau}; \code{plot()} draws it.
+A data frame of class \code{rmbl_wellness_profile}, wellness rows
+first, with the columns \code{group}, \code{indicator}, \code{side}
+(\code{"wellness"} or \code{"distress"}), \code{domain}, \code{estimate},
+\code{lower}, \code{upper} and \code{usewithcau}; \code{plot()} draws it.
 }
 \description{
-Puts a group's wellness indicators (life satisfaction, perceived mental health, a
-hopeful outlook, a sense of belonging, a strong cultural identity) first and its
-distress indicators (suicidal thoughts, mood and anxiety disorders, fair or poor mental
-health) after them, each with its published interval, for each First Nations, Metis and
-Inuit group: so that a table of mental health is never read, or plotted, as a list of
-deficits alone.
+Puts a group's wellness indicators (life satisfaction, perceived mental
+health, a hopeful outlook, a sense of belonging, a strong cultural identity)
+first and its distress indicators (suicidal thoughts, mood and anxiety
+disorders, fair or poor mental health) after them, each with its published
+interval, for each First Nations, Metis and Inuit group: so that a table of
+mental health is never read, or plotted, as a list of deficits alone.
 }
 \details{
-Indigenous scholars of mental health define it as wellness and as a process of
-healing, grounded in community, cultural identity, a holistic view and interdependence
-(Stewart 2008), and ask that strengths be reported together with disparities (Stewart
-2020). This function puts that into how published estimates are reported; it adds no
-estimate of its own. The optional \code{domain} groups indicators by the holistic
-domains of the Medicine Wheel teachings that Gabriel, Mirza and Stewart (2022) describe
-(physical, emotional, mental, spiritual). That grouping is a way to lay out the table,
-not a validated scale, and published tables have few indicators of the spiritual
-domain: the profile says what is there and does not stand one indicator in for another.
+Indigenous scholars of mental health define it as wellness and as a
+process of healing, grounded in community, cultural identity, a holistic view
+and interdependence (Stewart 2008), and ask that strengths be reported
+together with disparities (Stewart 2020). This function puts that into how
+published estimates are reported; it adds no estimate of its own. The
+optional \code{domain} groups indicators by the holistic domains of the
+Medicine Wheel teachings that Gabriel, Mirza and Stewart (2022) describe
+(physical, emotional, mental, spiritual). That grouping is a way to lay out
+the table, not a validated scale, and published tables have few indicators of
+the spiritual domain: the profile says what is there and does not stand one
+indicator in for another.
 
-Aggregate tables show how indicators vary together across groups; they cannot show that
-culture, land or belonging protects mental health within a group, which would be an
-ecological inference. The differences these tables show between groups are the effects
-of colonial policy and of structural conditions, not of the people in the groups
-(Gabriel et al. 2022); their interpretation belongs with First Nations, Metis and Inuit
-communities.
+Aggregate tables show how indicators vary together across groups; they cannot
+show that culture, land or belonging protects mental health within a group,
+which would be an ecological inference. The differences these tables show
+between groups are the effects of colonial policy and of structural
+conditions, not of the people in the groups (Gabriel et al. 2022); their
+interpretation belongs with First Nations, Metis and Inuit communities.
 }
 \section{Acknowledgement}{
+ This estimator puts to quantitative use the
+framework of Professor Suzanne Stewart (Yellowknives Dene First Nation,
+University of Toronto).
 
-This estimator puts to quantitative use the framework of Professor Suzanne Stewart
-(Yellowknives Dene First Nation, University of Toronto).
-
-See the acknowledgements of the \code{first-nations-metis-inuit-health} vignette.
+See the acknowledgements of the \code{first-nations-metis-inuit-health}
+vignette.
 }
 
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 # well-being, 2024 (table 41-10-0082-01)
 wb <- indiex("wellbeing")
-w <- welprof(wb, "group", "indicator", "estimate", "lower", "upper",
-                      well = c("Life satisfaction rating of 8, 9 or 10",
-                                   "Sense of meaning and purpose rating of 8, 9 or 10",
-                                   "Always or often has a hopeful outlook"),
-                      distress = c("Life satisfaction rating between 0 and 5",
-                                   "Rarely or never has a hopeful outlook"),
-                      qual = "quality")
+w <- welprof(
+  wb,
+  "group",
+  "indicator",
+  "estimate",
+  "lower",
+  "upper",
+  well = c(
+    "Life satisfaction rating of 8, 9 or 10",
+    "Sense of meaning and purpose rating of 8, 9 or 10",
+    "Always or often has a hopeful outlook"
+  ),
+  distress = c(
+    "Life satisfaction rating between 0 and 5",
+    "Rarely or never has a hopeful outlook"
+  ),
+  qual = "quality"
+)
 w
 plot(w)
 \dontshow{\}) # examplesIf}
 }
 \references{
 Stewart SL (2008). Promoting Indigenous mental health: cultural
-perspectives on healing from Native counsellors in Canada. International Journal of
-Health Promotion and Education 46(2):49-56. \doi{10.1080/14635240.2008.10708129}
+perspectives on healing from Native counsellors in Canada. International
+Journal of Health Promotion and Education 46(2):49-56.
+\doi{10.1080/14635240.2008.10708129}
 
 Stewart S (2020). Addressing strengths and disparities in Indigenous health.
-International Journal of Indigenous Health 15(1):4. \doi{10.32799/ijih.v15i1.34976}
+International Journal of Indigenous Health 15(1):4.
+\doi{10.32799/ijih.v15i1.34976}
 
-Gabriel MD, Mirza S, Stewart SL (2022). Exploring mental health and holistic healing
-through the life stories of Indigenous youth who have experienced homelessness.
-International Journal of Environmental Research and Public Health 19(20):13402.
-\doi{10.3390/ijerph192013402}
+Gabriel MD, Mirza S, Stewart SL (2022). Exploring mental health and holistic
+healing through the life stories of Indigenous youth who have experienced
+homelessness. International Journal of Environmental Research and Public
+Health 19(20):13402. \doi{10.3390/ijerph192013402}
 }
 \seealso{
 \code{\link{scests}}, \code{\link{indgap}},

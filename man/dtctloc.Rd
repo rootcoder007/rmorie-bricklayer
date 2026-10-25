@@ -20,20 +20,16 @@ A list with \code{location} (a code present in
 \code{co2inttab()}) and \code{method} (how it was found).
 }
 \description{
-Finds a location code for \code{\link{co2int}} without any
-network access, in this order:
-\enumerate{
-\item the \code{RMBL_LOCATION} environment variable (any code or name the
-table knows);
-\item \code{CODECARBON_COUNTRY_ISO_CODE} (alpha-3), the codecarbon variable,
-so a machine already configured for codecarbon needs nothing more;
-\item the system time zone, mapped to its country through the IANA zone
-tables (\code{America/Toronto} is Canada, \code{Europe/Berlin} Germany);
-\item the territory in the locale (\code{en_CA.UTF-8} is Canada).
-}
-When none of these yields a location in
-the table the answer is \code{"WORLD"}, and the method says so, so a report
-never silently applies one country's grid to another's computation.
+Finds a location code for \code{\link{co2int}} without any network access, in
+this order: \enumerate{ \item the \code{RMBL_LOCATION} environment variable
+(any code or name the table knows); \item \code{CODECARBON_COUNTRY_ISO_CODE}
+(alpha-3), the codecarbon variable, so a machine already configured for
+codecarbon needs nothing more; \item the system time zone, mapped to its
+country through the IANA zone tables (\code{America/Toronto} is Canada,
+\code{Europe/Berlin} Germany); \item the territory in the locale
+(\code{en_CA.UTF-8} is Canada). } When none of these yields a location in the
+table the answer is \code{"WORLD"}, and the method says so, so a report never
+silently applies one country's grid to another's computation.
 }
 \details{
 The zone table (\code{inst/extdata/timezone_countries.csv}, built by

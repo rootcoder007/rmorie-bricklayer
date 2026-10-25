@@ -16,11 +16,9 @@ cdistm(a, b)
 \code{a} and \code{b} must have the same length.}
 
 \item{ddof}{Delta degrees of freedom, a single number;
-\code{\link[=as.integer]{as.integer()}} truncates it to an integer.
-The divisor is \code{n - ddof}.
-The default \code{1} gives the sample standard
-deviation, matching \code{\link[stats:sd]{stats::sd()}}; \code{0} gives the population
-figure.}
+\code{\link[=as.integer]{as.integer()}} truncates it to an integer. The divisor is
+\code{n - ddof}. The default \code{1} gives the sample standard deviation, matching
+\code{\link[stats:sd]{stats::sd()}}; \code{0} gives the population figure.}
 }
 \value{
 \code{csdev()}: a length-1 numeric, the standard deviation in the
@@ -39,12 +37,10 @@ answer rather than base R's, for example when checking a capsule's
 recorded summary statistics against a fresh computation.
 }
 \details{
-\code{csdev()} computes
-\deqn{s = \sqrt{\frac{1}{n - \mathrm{ddof}} \sum_{i=1}^n (x_i - \bar x)^2},}
-so \code{ddof = 1} is the sample standard deviation of \code{\link[stats:sd]{stats::sd()}}
-and
-\code{ddof = 0} the population figure. \code{cdistm()} computes
-\eqn{\sqrt{\sum_i (a_i - b_i)^2}}.
+\code{csdev()} computes \deqn{s = \sqrt{\frac{1}{n - \mathrm{ddof}}
+\sum_{i=1}^n (x_i - \bar x)^2},} so \code{ddof = 1} is the sample standard
+deviation of \code{\link[stats:sd]{stats::sd()}} and \code{ddof = 0} the population
+figure. \code{cdistm()} computes \eqn{\sqrt{\sum_i (a_i - b_i)^2}}.
 
 Missing values propagate: there is no \code{na.rm}, and one \code{NA} makes the
 result \code{NA}. Remove them first (for example with

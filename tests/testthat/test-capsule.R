@@ -6,10 +6,19 @@ test_that("vrfcps passes an intact capsule end to end", {
   dir <- make_test_capsule()
   out <- vrfcps(dir, mnffile = "manifest.json")
   expect_true(out$ok)
-  expect_true(all(c("provenance_readable", "data_present", "data_sha256",
-                    "data_size_bytes", "data_readable", "data_row_count",
-                    "schema_valid", "manifest_consistent")
-                  %in% out$checks$check))
+  expect_true(all(
+    c(
+      "provenance_readable",
+      "data_present",
+      "data_sha256",
+      "data_size_bytes",
+      "data_readable",
+      "data_row_count",
+      "schema_valid",
+      "manifest_consistent"
+    ) %in%
+      out$checks$check
+  ))
   expect_true(all(out$checks$ok))
 })
 
@@ -24,11 +33,12 @@ test_that("vrfcps catches tampered data and stale manifests", {
 
   # Stale manifest: stored status contradicts its own numbers.
   testthat::skip_if_not_installed("jsonlite")
-  m2 <- jsonlite::fromJSON(file.path(dir, "manifest.json"),
-                           simplifyVector = FALSE)
+  m2 <- jsonlite::fromJSON(
+    file.path(dir, "manifest.json"),
+    simplifyVector = FALSE
+  )
   m2$results$mean_value$status <- "DIFFER"
-  jsonlite::write_json(m2, file.path(dir, "manifest.json"),
-                       auto_unbox = TRUE)
+  jsonlite::write_json(m2, file.path(dir, "manifest.json"), auto_unbox = TRUE)
   out2 <- vrfcps(dir, mnffile = "manifest.json")
   ck2 <- out2$checks
   expect_false(ck2$ok[ck2$check == "manifest_consistent"])
@@ -57,8 +67,10 @@ test_that("capenv records the running session", {
   expect_true(nzchar(env$platform))
   expect_match(env$captured_utc, "^\\d{4}-\\d{2}-\\d{2}T")
   expect_identical(names(env$packages), c("stats", "testthat"))
-  expect_identical(env$packages[["testthat"]],
-                   as.character(utils::packageVersion("testthat")))
+  expect_identical(
+    env$packages[["testthat"]],
+    as.character(utils::packageVersion("testthat"))
+  )
 })
 
 test_that("mkmnf attaches the environment by default and skips on FALSE", {
@@ -92,20 +104,29 @@ test_that("rslvsoc guards missing fields and builds the export URL", {
   testthat::local_mocked_bindings(
     .rmbl_read_json = function(...) list(id = "ijzp-q8t2")
   )
-  url <- rslvsoc(list(dataset = list(
-    socrata_domain = "data.cityofchicago.org", socrata_id = "ijzp-q8t2"
-  )))
+  url <- rslvsoc(list(
+    dataset = list(
+      socrata_domain = "data.cityofchicago.org",
+      socrata_id = "ijzp-q8t2"
+    )
+  ))
   expect_identical(
     url,
-    "https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD"
+    paste0(
+      "https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv?accessTy",
+      "pe=DOWNLOAD"
+    )
   )
 
   testthat::local_mocked_bindings(
     .rmbl_read_json = function(...) stop("404")
   )
-  expect_null(rslvsoc(list(dataset = list(
-    socrata_domain = "x.org", socrata_id = "dead-beef"
-  ))))
+  expect_null(rslvsoc(list(
+    dataset = list(
+      socrata_domain = "x.org",
+      socrata_id = "dead-beef"
+    )
+  )))
 })
 
 test_that("rslvarc guards missing fields and builds the query URL", {
@@ -115,7 +136,10 @@ test_that("rslvarc guards missing fields and builds the query URL", {
   testthat::local_mocked_bindings(
     .rmbl_read_json = function(...) list(name = "Assault_Open_Data")
   )
-  layer <- "https://services.arcgis.com/X/arcgis/rest/services/Assault_Open_Data/FeatureServer/0"
+  layer <- paste0(
+    "https://services.arcgis.com/X/arcgis/rest/services/Assault_Open_Data/F",
+    "eatureServer/0"
+  )
   expect_identical(
     rslvarc(list(dataset = list(arcgis_layer_url = paste0(layer, "/")))),
     paste0(layer, "/query?where=1%3D1&outFields=*&f=geojson")
@@ -130,12 +154,13 @@ test_that("rslvarc guards missing fields and builds the query URL", {
 test_that("vrfcps checks a pinned analysis-script hash", {
   dir <- make_test_capsule()
   writeLines("x <- 1", file.path(dir, "analysis.R"))
-  m <- jsonlite::fromJSON(file.path(dir, "manifest.json"),
-                          simplifyVector = FALSE)
+  m <- jsonlite::fromJSON(
+    file.path(dir, "manifest.json"),
+    simplifyVector = FALSE
+  )
   m$meta$script_sha256 <- sha256file(file.path(dir, "analysis.R"))
   wrmnfjs(m, file.path(dir, "manifest.json"))
-  out <- vrfcps(dir, mnffile = "manifest.json",
-                        scrfile = "analysis.R")
+  out <- vrfcps(dir, mnffile = "manifest.json", scrfile = "analysis.R")
   expect_true("script_sha256" %in% out$checks$check)
   expect_true(out$checks$ok[out$checks$check == "script_sha256"])
 })

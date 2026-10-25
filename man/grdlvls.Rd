@@ -33,12 +33,9 @@ The function checks that every non-missing value of \code{x} is in
 levels that do not occur are kept as empty levels (they still appear in
 tables with a count of zero).
 
-Errors:
-\itemize{
-\item \code{lvls} not a non-empty character vector, or containing \code{NA};
-\item a value of \code{x} not in \code{lvls} (listed in the message);
-\item \code{ref} given and not identical to \code{levels[1]}.
-}
+Errors: \itemize{ \item \code{lvls} not a non-empty character vector, or
+containing \code{NA}; \item a value of \code{x} not in \code{lvls} (listed in
+the message); \item \code{ref} given and not identical to \code{levels[1]}. }
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

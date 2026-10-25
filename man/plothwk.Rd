@@ -35,20 +35,16 @@ index of the parent event, 0 for the baseline), \code{prob} and
 \code{generation} (tree).
 }
 \description{
-Three views of a \code{\link[=chwkfit]{chwkfit()}} result against its events:
-\describe{
+Three views of a \code{\link[=chwkfit]{chwkfit()}} result against its events: \describe{
 \item{\code{"intensity"}}{the conditional intensity \eqn{\lambda(t) = \nu(t) +
-    \eta \sum_{t_j < t} g(t - t_j)} over the window, the baseline dashed and the
-events as ticks along the axis.}
-\item{\code{"qq"}}{the time-rescaling residuals of
-\code{\link[=chwkres]{chwkres()}} against the uniform quantiles: a correct model
-puts them on the diagonal (the Kolmogorov-Smirnov p-value of the fit in the
-title).}
-\item{\code{"tree"}}{the most probable branching structure: each event drawn at
-its time and generation, linked to the earlier event (or the baseline) most
-likely to have triggered it, the probabilities \eqn{\eta g(t_i - t_j)} and
-\eqn{\nu(t_i)} in proportion. At most 5,000 events.}
-}
+\eta \sum_{t_j < t} g(t - t_j)} over the window, the baseline dashed and the
+events as ticks along the axis.} \item{\code{"qq"}}{the time-rescaling residuals
+of \code{\link[=chwkres]{chwkres()}} against the uniform quantiles: a correct model puts
+them on the diagonal (the Kolmogorov-Smirnov p-value of the fit in the
+title).} \item{\code{"tree"}}{the most probable branching structure: each event
+drawn at its time and generation, linked to the earlier event (or the
+baseline) most likely to have triggered it, the probabilities \eqn{\eta g(t_i
+- t_j)} and \eqn{\nu(t_i)} in proportion. At most 5,000 events.} }
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

@@ -76,16 +76,22 @@
 #' @seealso [chgenv()],
 #'   [yoybnd()]
 #' @export
-pubbnd <- function(x, rnd = NULL,
-                             rndkind = c("nearest", "random"),
-                             suplim = NULL,
-                             supmar = c("x", "X", "s", "..",
-                                                  "F", "suppressed",
-                                                  "n/a")) {
+pubbnd <- function(
+  x,
+  rnd = NULL,
+  rndkind = c("nearest", "random"),
+  suplim = NULL,
+  supmar = c("x", "X", "s", "..", "F", "suppressed", "n/a")
+) {
   rndkind <- .rmbl_arg(rndkind)
-  if (!is.null(suplim)) suplim <- .rmbl_scalar(suplim, "suplim", 0)
+  if (!is.null(suplim)) {
+    suplim <- .rmbl_scalar(suplim, "suplim", 0)
+  }
   if (!is.character(supmar) || anyNA(supmar)) {
-    stop("`supmar` must be the text markers of a suppressed cell", call. = FALSE)
+    stop(
+      "`supmar` must be the text markers of a suppressed cell",
+      call. = FALSE
+    )
   }
   if (!is.null(rnd)) {
     rnd <- .rmbl_num(rnd, "rnd")[1L]
@@ -107,9 +113,16 @@ pubbnd <- function(x, rnd = NULL,
     value[num] <- suppressWarnings(as.numeric(gsub(",", "", s[num])))
     bad <- num & is.na(value)
     if (any(bad)) {
-      stop(sprintf(paste0("cannot read these cells as numbers or ",
-                          "suppression marks: %s"),
-                   paste(unique(s[bad]), collapse = ", ")), call. = FALSE)
+      stop(
+        sprintf(
+          paste0(
+            "cannot read these cells as numbers or ",
+            "suppression marks: %s"
+          ),
+          paste(unique(s[bad]), collapse = ", ")
+        ),
+        call. = FALSE
+      )
     }
   } else {
     value <- .rmbl_num(x, "x")
@@ -126,21 +139,31 @@ pubbnd <- function(x, rnd = NULL,
   }
   sup <- status == "suppressed"
   if (any(sup)) {
-    lim <- ifelse(is.na(limit[sup]), suplim %||% NA_real_,
-                  limit[sup])
+    lim <- ifelse(is.na(limit[sup]), suplim %||% NA_real_, limit[sup])
     if (anyNA(lim)) {
-      stop(paste0("a suppressed cell has no limit: give `suplim` ",
-                  "or write the cell as \"<k\""), call. = FALSE)
+      stop(
+        paste0(
+          "a suppressed cell has no limit: give `suplim` ",
+          "or write the cell as \"<k\""
+        ),
+        call. = FALSE
+      )
     }
     lower[sup] <- 0
     upper[sup] <- lim - 1
     value[sup] <- NA_real_
   }
-  structure(data.frame(value = value, lower = lower, upper = upper,
-                       status = status, stringsAsFactors = FALSE),
-            class = c("rmbl_bounds", "data.frame"),
-            bounds = list(rounding = rnd, rndkind = rndkind,
-                          suppression_limit = suplim))
+  structure(
+    data.frame(
+      value = value,
+      lower = lower,
+      upper = upper,
+      status = status,
+      stringsAsFactors = FALSE
+    ),
+    class = c("rmbl_bounds", "data.frame"),
+    bounds = list(rounding = rnd, rndkind = rndkind, suppression_limit = suplim)
+  )
 }
 
 #' Envelope of a difference, a percent change or a rate under
@@ -202,35 +225,43 @@ pubbnd <- function(x, rnd = NULL,
 #' # the two sides must line up
 #' try(chgenv(now, prev[1, ]))
 #' @export
-chgenv <- function(now, prev, pop = NULL,
-                            prepop = NULL, per = 1000) {
+chgenv <- function(now, prev, pop = NULL, prepop = NULL, per = 1000) {
   for (nm in c("now", "prev")) {
     v <- get(nm)
     if (!is.data.frame(v) || !all(c("lower", "upper") %in% names(v))) {
-      stop(sprintf("`%s` must be a data frame from pubbnd() (columns lower and upper)", nm),
-           call. = FALSE)
+      stop(
+        sprintf(
+          "`%s` must be a data frame from pubbnd() (columns lower and upper)",
+          nm
+        ),
+        call. = FALSE
+      )
     }
   }
   if (nrow(now) != nrow(prev)) {
-    stop("`now` and `prev` must have the same number of rows",
-         call. = FALSE)
+    stop("`now` and `prev` must have the same number of rows", call. = FALSE)
   }
   per <- .rmbl_scalar(per, "per", 1e-12)
-  out <- data.frame(chglo = now$lower - prev$upper,
-                    chgup = now$upper - prev$lower)
-  pl <- ifelse(prev$upper > 0,
-               100 * (now$lower / prev$upper - 1), NA_real_)
-  pu <- ifelse(prev$lower > 0,
-               100 * (now$upper / prev$lower - 1), NA_real_)
+  out <- data.frame(
+    chglo = now$lower - prev$upper,
+    chgup = now$upper - prev$lower
+  )
+  pl <- ifelse(prev$upper > 0, 100 * (now$lower / prev$upper - 1), NA_real_)
+  pu <- ifelse(prev$lower > 0, 100 * (now$upper / prev$lower - 1), NA_real_)
   out$pctlo <- pl
   out$pctup <- pu
   per <- .rmbl_num(per, "per")
   for (nm in c("pop", "prepop")) {
     v <- get(nm)
-    if (is.null(v)) next
+    if (is.null(v)) {
+      next
+    }
     v <- .rmbl_num(v, nm)
     if (!(length(v) %in% c(1L, nrow(now)))) {
-      stop(sprintf("`%s` must be one number or one per row (%d)", nm, nrow(now)), call. = FALSE)
+      stop(
+        sprintf("`%s` must be one number or one per row (%d)", nm, nrow(now)),
+        call. = FALSE
+      )
     }
     assign(nm, v)
   }
@@ -296,18 +327,19 @@ chgenv <- function(now, prev, pop = NULL,
 #' # only yoy() results are accepted
 #' try(yoybnd(seg, rnd = 5))
 #' @export
-yoybnd <- function(y, rnd = NULL,
-                       rndkind = c("nearest", "random"),
-                       suplim = NULL) {
+yoybnd <- function(
+  y,
+  rnd = NULL,
+  rndkind = c("nearest", "random"),
+  suplim = NULL
+) {
   if (!inherits(y, "rmbl_yoy")) {
     stop("yoybnd: `y` must come from yoy()", call. = FALSE)
   }
   rndkind <- .rmbl_arg(rndkind)
   m <- attr(y, "yoy")
-  now <- pubbnd(y$value, rnd, rndkind,
-                          suplim)
-  prev <- pubbnd(y$previous, rnd, rndkind,
-                           suplim)
+  now <- pubbnd(y$value, rnd, rndkind, suplim)
+  prev <- pubbnd(y$previous, rnd, rndkind, suplim)
   env <- chgenv(now, prev)
   y$envchglo <- env$chglo
   y$envchgup <- env$chgup

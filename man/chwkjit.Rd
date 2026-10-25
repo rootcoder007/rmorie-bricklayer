@@ -18,10 +18,9 @@ daily dates in days, \code{1/24} for hourly times in days.}
 \code{\link[=cunif]{cunif()}}; default 42.}
 
 \item{hor}{End of the observation window, when it cuts an interval short: an
-event
-recorded at \code{t} is spread over \code{[t, min(t + resolution, horizon)]},
-so a
-time dated on the horizon itself stays there (\code{Inf}, the default: no window).}
+event recorded at \code{t} is spread over \code{[t, min(t + resolution,
+horizon)]}, so a time dated on the horizon itself stays there (\code{Inf},
+the default: no window).}
 }
 \value{
 A numeric vector of the jittered times, the same length as

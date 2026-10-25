@@ -39,15 +39,14 @@ adjacency would make the answer a property of the guess.
 }
 \details{
 With weights \eqn{w_{ij}}, total \eqn{W = \sum_{ij} w_{ij}} and
-\eqn{z_i = x_i - \bar x},
-\deqn{I = \frac{n}{W}\,\frac{\sum_{i}\sum_{j} w_{ij} z_i z_j}{\sum_i z_i^2}.}
-The expectation of I under the null is \eqn{-1/(n - 1)}, not zero, so a
-small negative I is what independence looks like in a small set of
-areas. The p-value comes from permuting the values over the areas, which
-needs no distributional assumption -- and with a handful of regions no
-distributional assumption is safe. It is two-sided around
-\eqn{-1/(n - 1)}, \eqn{(1 + \mathrm{count}(|I^* - E| \ge |I - E|))/(1 + B)} over the
-\eqn{B} finite permuted values, so it is never exactly zero.
+\eqn{z_i = x_i - \bar x}, \deqn{I = \frac{n}{W}\,\frac{\sum_{i}\sum_{j}
+w_{ij} z_i z_j}{\sum_i z_i^2}.} The expectation of I under the null is
+\eqn{-1/(n - 1)}, not zero, so a small negative I is what independence looks
+like in a small set of areas. The p-value comes from permuting the values
+over the areas, which needs no distributional assumption -- and with a
+handful of regions no distributional assumption is safe. It is two-sided
+around \eqn{-1/(n - 1)}, \eqn{(1 + \mathrm{count}(|I^* - E| \ge |I - E|))/(1
++ B)} over the \eqn{B} finite permuted values, so it is never exactly zero.
 
 A neighbour list is binary; a weight matrix keeps its magnitudes (for
 example inverse distances). Self-neighbours and the diagonal are dropped.

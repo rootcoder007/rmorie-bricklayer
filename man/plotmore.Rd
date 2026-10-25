@@ -7,8 +7,8 @@
 \alias{plotvln}
 \alias{plothex}
 \alias{plotgain}
-\title{Many-plot helpers: ridgelines, ECDFs, violins, hexagonal bins and concentration
-curves}
+\title{Many-plot helpers: ridgelines, ECDFs, violins, hexagonal bins and
+concentration curves}
 \usage{
 plotrdg(x, grp = NULL, bw = "nrd0", ..., main = NULL, col = NULL, pal = NULL)
 
@@ -48,22 +48,17 @@ and \code{count}, for \code{plotgain()} the curves (\code{grp},
 \code{gini}.
 }
 \description{
-Base-graphics plots in the house style for a numeric variable split by a group, or
-two numeric variables:
-\describe{
-\item{\code{plotrdg()}}{a ridgeline: one kernel density per group, stacked with
-a small overlap.}
+Base-graphics plots in the house style for a numeric variable split by a
+group, or two numeric variables: \describe{ \item{\code{plotrdg()}}{a ridgeline:
+one kernel density per group, stacked with a small overlap.}
 \item{\code{plotecdf()}}{the empirical distribution function of each group,
-overlaid.}
-\item{\code{plotvln()}}{a violin per group: the mirrored density, the median as
-a point and the interquartile range as a bar.}
-\item{\code{plothex()}}{the two-dimensional density of \code{x} and \code{y}
-in hexagonal bins, shaded by count.}
-\item{\code{plotgain()}}{cumulative-gain (concentration) curves: the Lorenz
-curve of each group (\code{\link[=lorenzc]{lorenzc()}}) with its Gini coefficient
-in the key.}
-}
-Missing and non-finite values are dropped. A group of fewer than two values draws no
+overlaid.} \item{\code{plotvln()}}{a violin per group: the mirrored density, the
+median as a point and the interquartile range as a bar.}
+\item{\code{plothex()}}{the two-dimensional density of \code{x} and \code{y} in
+hexagonal bins, shaded by count.} \item{\code{plotgain()}}{cumulative-gain
+(concentration) curves: the Lorenz curve of each group
+(\code{\link[=lorenzc]{lorenzc()}}) with its Gini coefficient in the key.} } Missing and
+non-finite values are dropped. A group of fewer than two values draws no
 density.
 }
 \examples{

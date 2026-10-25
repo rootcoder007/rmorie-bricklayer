@@ -7,10 +7,12 @@
 xmssidxseen(path = ".", seenlog = NULL)
 }
 \arguments{
-\item{path}{A directory (every \code{capsule_bundle.json} under it) or one bundle file.}
+\item{path}{A directory (every \code{capsule_bundle.json} under it) or one bundle
+file.}
 
-\item{seenlog}{Seen-log files to read as well, or NULL. A file that does not exist yet
-is an empty log; a directory, or a log with a malformed line, is refused.}
+\item{seenlog}{Seen-log files to read as well, or NULL. A file that does not
+exist yet is an empty log; a directory, or a log with a malformed line, is
+refused.}
 }
 \value{
 A data frame, one row per signature seen: \code{key} (the key
@@ -20,23 +22,24 @@ and \code{reused} (\code{TRUE} when this key signed this index with another
 signature too).
 }
 \description{
-Lists every XMSS signature in the capsule bundles under a directory, and in seen-logs,
-and marks an index that one key signed with two different signatures. An XMSS index must
-sign once: two signatures at one index let anyone forge a third message, so a reused
-index means the key's state was copied or rolled back (RFC 10033, section 4: a verifier
-that sees all of a signer's signatures can detect reuse, since each carries its index).
+Lists every XMSS signature in the capsule bundles under a directory, and in
+seen-logs, and marks an index that one key signed with two different
+signatures. An XMSS index must sign once: two signatures at one index let
+anyone forge a third message, so a reused index means the key's state was
+copied or rolled back (RFC 10033, section 4: a verifier that sees all of a
+signer's signatures can detect reuse, since each carries its index).
 }
 \details{
-A seen-log is the text file \verb{rmbl sign --seen-log FILE} appends to: one line per
-signature it made, with the key fingerprint, the index, a digest of the signature and
-the bundle it went into, tab-separated; lines starting with \verb{#} are
-comments. The same
-signature found twice (one bundle copied to two places, or a bundle and its log line) is
-not a reuse.
+A seen-log is the text file \verb{rmbl sign --seen-log FILE} appends to: one line
+per signature it made, with the key fingerprint, the index, a digest of the
+signature and the bundle it went into, tab-separated; lines starting with \verb{#}
+are comments. The same signature found twice (one bundle copied to two
+places, or a bundle and its log line) is not a reuse.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
+# keep this example's
+op <- options(rmoriebricklayer.xmssidxfile = tempfile())
 # one-time index record out of your configuration directory
 root <- tempfile("capsules-")
 d <- file.path(root, "one")
@@ -50,7 +53,8 @@ xmssidxseen(root)
 e <- file.path(root, "two")
 dir.create(e)
 writeLines("x\n2", file.path(e, "data.csv"))
-invisible(xmssfgt(key))  # forget the record, as a copy on another machine would
+# forget the record, as a copy on another machine would
+invisible(xmssfgt(key))
 b2 <- cpsbndl(e, mkmnf(list(), env = FALSE), key)
 xmssidxseen(root)[, c("index", "reused")]
 

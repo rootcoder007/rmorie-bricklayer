@@ -1,4 +1,5 @@
-testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
+# battery: runs in CI and locally; CRAN runs the correctness core
+testthat::skip_on_cran()
 # The statistical defects of the 0.5.5 review, each pinned against an
 # independent base-R computation (the review's own reproducers).
 
@@ -8,8 +9,10 @@ test_that("chi-square p-values are the upper tail, never a hard zero", {
   expect_equal(r[["p_value"]], stats::pchisq(126, 2, lower.tail = FALSE))
   expect_gt(r[["p_value"]], 0)
   r2 <- drfthomog(c(x = 500, y = 500), c(x = 200, y = 800))
-  expect_equal(r2[["p_value"]],
-               stats::pchisq(r2[["statistic"]], 1, lower.tail = FALSE))
+  expect_equal(
+    r2[["p_value"]],
+    stats::pchisq(r2[["statistic"]], 1, lower.tail = FALSE)
+  )
   expect_gt(r2[["p_value"]], 0)
   # a one-category table has no test: df 0 and NA, not df 1 and p 1
   one <- drftchisq(c(a = 10), c(a = 7))
@@ -17,54 +20,74 @@ test_that("chi-square p-values are the upper tail, never a hard zero", {
   expect_true(is.na(one[["p_value"]]))
 })
 
-test_that("the KS p-value does not grow more significant with n on near-identical columns", {
-  for (n in c(5e4, 2e5, 1e6)) {
-    x <- as.numeric(seq_len(n))
-    y <- x
-    y[n / 2] <- n / 2 + 0.5
-    expect_equal(drftks(x, y)[["p_value"]], 1, tolerance = 1e-12)
+test_that(
+  paste0(
+    "the KS p-value does not grow more significant with n on near-identical ",
+    "columns"
+  ),
+  {
+    for (n in c(5e4, 2e5, 1e6)) {
+      x <- as.numeric(seq_len(n))
+      y <- x
+      y[n / 2] <- n / 2 + 0.5
+      expect_equal(drftks(x, y)[["p_value"]], 1, tolerance = 1e-12)
+    }
+    set.seed(3)
+    x <- stats::rnorm(200)
+    y <- stats::rnorm(200, 0.3)
+    expect_equal(
+      drftks(x, y)[["p_value"]],
+      suppressWarnings(stats::ks.test(x, y, exact = FALSE))$p.value,
+      tolerance = 1e-10
+    )
   }
-  set.seed(3)
-  x <- stats::rnorm(200)
-  y <- stats::rnorm(200, 0.3)
-  expect_equal(drftks(x, y)[["p_value"]],
-               suppressWarnings(stats::ks.test(x, y, exact = FALSE))$p.value,
-               tolerance = 1e-10)
-})
+)
 
-test_that("PSI sees a rescaled constant column and a rescaled zero-heavy tail", {
-  p1 <- drftpsi(rep(5, 500), rep(500, 500))
-  expect_gt(p1[["psi"]], 1)
-  expect_equal(p1[["jsdiv"]], log(2), tolerance = 1e-6)
-  p2 <- drftpsi(c(rep(0, 950), 1:50), c(rep(0, 950), (1:50) * 1000))
-  expect_gt(p2[["psi"]], 0.1)
-  expect_gt(p2[["jsdiv"]], 0)
-  # unchanged behaviour where the reference has spread
-  set.seed(1)
-  ref <- stats::rnorm(800)
-  expect_lt(drftpsi(ref, ref)[["psi"]], 1e-12)
-})
+test_that(
+  paste0(
+    "PSI sees a rescaled constant column ",
+    "and a rescaled zero-heavy tail"
+  ),
+  {
+    p1 <- drftpsi(rep(5, 500), rep(500, 500))
+    expect_gt(p1[["psi"]], 1)
+    expect_equal(p1[["jsdiv"]], log(2), tolerance = 1e-6)
+    p2 <- drftpsi(c(rep(0, 950), 1:50), c(rep(0, 950), (1:50) * 1000))
+    expect_gt(p2[["psi"]], 0.1)
+    expect_gt(p2[["jsdiv"]], 0)
+    # unchanged behaviour where the reference has spread
+    set.seed(1)
+    ref <- stats::rnorm(800)
+    expect_lt(drftpsi(ref, ref)[["psi"]], 1e-12)
+  }
+)
 
-test_that("a shifted date column drifts, and the homogeneity test says it does not apply", {
-  ref <- data.frame(d = as.character(as.Date("2020-01-01") + 1:400))
-  cur <- data.frame(d = as.character(as.Date("2024-06-01") + 1:400))
-  cd <- cpsdrft(ref, cur)$columns
-  # dates written as text are compared as dates
-  expect_identical(cd$type[1], "date")
-  expect_true(cd$drifted[1])
-  expect_lt(cd$p_value[1], 1e-6)
-  # the chi-square of homogeneity conditions on the margins and has no
-  # power here (every value occurs once): that is reported as
-  # "inapplicable", not as p = 1
-  h <- drfthomog(ref$d, cur$d)
-  expect_true(is.na(h[["p_value"]]))
-  expect_match(attr(h, "method"), "inapplicable")
-  # half the current rows from a later period: drift, exactly
-  half <- data.frame(d = c(ref$d[1:200], cur$d[1:200]))
-  expect_true(cpsdrft(ref, half)$columns$drifted[1])
-  # and the same period twice is not drift
-  expect_false(cpsdrft(ref, ref)$columns$drifted[1])
-})
+test_that(
+  paste0(
+    "a shifted date column drifts, and the homogeneity test says it does ",
+    "not apply"
+  ),
+  {
+    ref <- data.frame(d = as.character(as.Date("2020-01-01") + 1:400))
+    cur <- data.frame(d = as.character(as.Date("2024-06-01") + 1:400))
+    cd <- cpsdrft(ref, cur)$columns
+    # dates written as text are compared as dates
+    expect_identical(cd$type[1], "date")
+    expect_true(cd$drifted[1])
+    expect_lt(cd$p_value[1], 1e-6)
+    # the chi-square of homogeneity conditions on the margins and has no
+    # power here (every value occurs once): that is reported as
+    # "inapplicable", not as p = 1
+    h <- drfthomog(ref$d, cur$d)
+    expect_true(is.na(h[["p_value"]]))
+    expect_match(attr(h, "method"), "inapplicable")
+    # half the current rows from a later period: drift, exactly
+    half <- data.frame(d = c(ref$d[1:200], cur$d[1:200]))
+    expect_true(cpsdrft(ref, half)$columns$drifted[1])
+    # and the same period twice is not drift
+    expect_false(cpsdrft(ref, ref)$columns$drifted[1])
+  }
+)
 
 test_that("morani honours the magnitudes of a weight matrix", {
   n <- 6
@@ -78,14 +101,20 @@ test_that("morani honours the magnitudes of a weight matrix", {
   z <- x - mean(x)
   m <- morani(x, W, style = "B", nperm = 99L)
   expect_equal(m$W, sum(W))
-  expect_equal(m$I, (n / sum(W)) * sum(outer(z, z) * W) / sum(z^2),
-               tolerance = 1e-10)
+  expect_equal(
+    m$I,
+    (n / sum(W)) * sum(outer(z, z) * W) / sum(z^2),
+    tolerance = 1e-10
+  )
   # row-standardised: each row's weights sum to one
   mw <- morani(x, W, style = "W", nperm = 99L)
   expect_equal(mw$W, n)
   Ws <- W / rowSums(W)
-  expect_equal(mw$I, (n / sum(Ws)) * sum(outer(z, z) * Ws) / sum(z^2),
-               tolerance = 1e-10)
+  expect_equal(
+    mw$I,
+    (n / sum(Ws)) * sum(outer(z, z) * Ws) / sum(z^2),
+    tolerance = 1e-10
+  )
   # a binary matrix still agrees with the equivalent neighbour list
   nb <- list(2L, c(1L, 3L), c(2L, 4L), c(3L, 5L), c(4L, 6L), 5L)
   B <- (W != 0) * 1
@@ -100,13 +129,20 @@ test_that("the exact Mann-Kendall p-value keeps ties", {
   Sfun <- function(v) {
     k <- length(v)
     s <- 0
-    for (i in 1:(k - 1)) for (j in (i + 1):k) s <- s + sign(v[j] - v[i])
+    for (i in 1:(k - 1)) {
+      for (j in (i + 1):k) {
+        s <- s + sign(v[j] - v[i])
+      }
+    }
     s
   }
   for (v in list(c(1, 1, 2, 2, 3, 3), c(1, 1, 1, 2, 2, 2))) {
     idx <- as.matrix(expand.grid(rep(list(seq_along(v)), length(v))))
-    idx <- idx[apply(idx, 1, function(r) length(unique(r)) == length(v)), ,
-               drop = FALSE]
+    idx <- idx[
+      apply(idx, 1, function(r) length(unique(r)) == length(v)),
+      ,
+      drop = FALSE
+    ]
     pex <- mean(abs(apply(idx, 1, function(r) Sfun(v[r]))) >= abs(Sfun(v)))
     r <- trndtst(v)
     expect_equal(as.numeric(r["p_value"]), pex, tolerance = 1e-9)
@@ -123,30 +159,53 @@ test_that("ebrates refuses negative, missing and infinite counts", {
   expect_error(ebrates(c(5, 20), c(NA, 20)), "finite")
 })
 
-test_that("prsbands reads the common published forms and refuses the ambiguous ones", {
-  b <- prsbands(c("1,000 to 2,499", "ages 18-24", "18 to 24 years", "2 to 5",
-                     "-10 to -5", "50+", "<5"))
-  expect_equal(b$lower, c(1000, 18, 18, 2, -10, 50, NA))
-  expect_equal(b$upper, c(2499, 24, 24, 5, -5, NA, 4))
-  bad <- prsbands(c("-5", "24 to 18", "100-200-300", "15 to 19 and over"))
-  expect_true(all(is.na(bad$lower)))
-  expect_true(all(is.na(bad$upper)))
-})
+test_that(
+  paste0(
+    "prsbands reads the common published ",
+    "forms and refuses the ambiguous ones"
+  ),
+  {
+    b <- prsbands(c(
+      "1,000 to 2,499",
+      "ages 18-24",
+      "18 to 24 years",
+      "2 to 5",
+      "-10 to -5",
+      "50+",
+      "<5"
+    ))
+    expect_equal(b$lower, c(1000, 18, 18, 2, -10, 50, NA))
+    expect_equal(b$upper, c(2499, 24, 24, 5, -5, NA, 4))
+    bad <- prsbands(c("-5", "24 to 18", "100-200-300", "15 to 19 and over"))
+    expect_true(all(is.na(bad$lower)))
+    expect_true(all(is.na(bad$upper)))
+  }
+)
 
 test_that("expbands never drops units in silence", {
   expect_error(
-    expbands(c("1", "2 to 5", "unknown", "Greater than 5"),
-                 cnts = c(10, 4, 99, 2), openupcap = 12),
-    "99 unit\\(s\\) in 1 band\\(s\\).*'unknown'")
+    expbands(
+      c("1", "2 to 5", "unknown", "Greater than 5"),
+      cnts = c(10, 4, 99, 2),
+      openupcap = 12
+    ),
+    "99 unit\\(s\\) in 1 band\\(s\\).*'unknown'"
+  )
   expect_warning(
-    e <- expbands(c("1", "2 to 5", "unknown", "Greater than 5"),
-                      cnts = c(10, 4, 99, 2), openupcap = 12,
-                      drpunp = TRUE),
-    "could not be placed")
+    e <- expbands(
+      c("1", "2 to 5", "unknown", "Greater than 5"),
+      cnts = c(10, 4, 99, 2),
+      openupcap = 12,
+      drpunp = TRUE
+    ),
+    "could not be placed"
+  )
   expect_length(e, 16L)
   # a cap below the band's own lower bound is refused
-  expect_error(bandvals(prsbands("50+"), openupcap = 10),
-               "below the band's own lower bound")
+  expect_error(
+    bandvals(prsbands("50+"), openupcap = 10),
+    "below the band's own lower bound"
+  )
 })
 
 test_that("cnttrnd's quasi-Poisson interval uses t quantiles", {

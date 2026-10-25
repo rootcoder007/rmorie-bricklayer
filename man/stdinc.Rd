@@ -34,15 +34,15 @@ excess and below one a deficit. Use it after \code{\link{expcnts}}
 to say which areas differ from the overall rate by more than chance.
 }
 \details{
-With observed count \eqn{O} and expected \eqn{E}, \eqn{SIR = O / E}. The
-interval for \eqn{1 - \alpha} coverage is
-\deqn{\left[\frac{G^{-1}(\alpha/2;\, O)}{E},\ \frac{G^{-1}(1-\alpha/2;\, O+1)}{E}\right]}
-where \eqn{G^{-1}(p; k)} is the gamma quantile with shape \eqn{k}; the
-lower limit is 0 when \eqn{O = 0}. This is the exact Poisson interval,
-from the relation between the Poisson and gamma distributions, and so is
-identical to \code{stats::poisson.test()}'s. It is the interval to use
-here because the counts that matter are small: a normal approximation on
-an observed count of three is not an interval, it is a decoration.
+With observed count \eqn{O} and expected \eqn{E}, \eqn{SIR = O / E}.
+The interval for \eqn{1 - \alpha} coverage is
+\deqn{\left[\frac{G^{-1}(\alpha/2;\, O)}{E},\ \frac{G^{-1}(1-\alpha/2;\,
+O+1)}{E}\right]} where \eqn{G^{-1}(p; k)} is the gamma quantile with shape
+\eqn{k}; the lower limit is 0 when \eqn{O = 0}. This is the exact Poisson
+interval, from the relation between the Poisson and gamma distributions, and
+so is identical to \code{stats::poisson.test()}'s. It is the interval to use
+here because the counts that matter are small: a normal approximation on an
+observed count of three is not an interval, it is a decoration.
 
 Each area's interval is a separate test; with many areas some will
 exclude one by chance (see \code{\link{scanadj}}). Missing values are

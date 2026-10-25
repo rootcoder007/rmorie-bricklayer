@@ -51,18 +51,20 @@ needs only public material, except for HMAC, where the verifier holds
 the same secret as the signer and could therefore also sign. HMAC tags
 are compared in constant time.
 
-Only two inputs are errors rather than \code{FALSE}: a \code{sig} that is not
-a \code{bricklayer_signature} at all, and, for an XMSS signature, a key that
-is not a key object (a string, say) or a \code{msg} that is not one
-string or a raw vector. A key or signature whose class, scheme or fields were edited
-returns \code{FALSE}. An XMSS signature object written by 0.5.9 to 0.5.12
-(one that carries a \code{key_state} field) still verifies, with a warning
-that it exposed the signer's private key.
+Only two inputs are errors rather than \code{FALSE}: a \code{sig} that is not a
+\code{bricklayer_signature} at all, and, for an XMSS signature, a key that is not
+a key object (a string, say) or a \code{msg} that is not one string or a raw
+vector. A key or signature whose class, scheme or fields were edited returns
+\code{FALSE}. An XMSS signature object written by 0.5.9 to 0.5.12 (one that
+carries a \code{key_state} field) still verifies, with a warning that it exposed
+the signer's private key.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-# one-time index record out of your configuration directory; leave the default in use
+# keep this example's
+op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+# one-time index record out of your configuration directory; leave the
+# default in use
 key <- pqckg(height = 2)
 sig <- cpssign("pinned-manifest", key)
 pub <- signpubkey(key)
@@ -70,14 +72,15 @@ pub <- signpubkey(key)
 cpsvrf("pinned-manifest", sig, pub)
 
 # Every way of being wrong returns FALSE.
-cpsvrf("edited-manifest", sig, pub)              # message changed
-bad <- sig; bad$signature <- paste0("ff", substring(bad$signature, 3))
-cpsvrf("pinned-manifest", bad, pub)              # signature edited
-cpsvrf("pinned-manifest", sig,
-               signpubkey(pqckg(height = 2)))  # foreign key
+cpsvrf("edited-manifest", sig, pub) # message changed
+bad <- sig
+bad$signature <- paste0("ff", substring(bad$signature, 3))
+cpsvrf("pinned-manifest", bad, pub) # signature edited
+cpsvrf("pinned-manifest", sig, signpubkey(pqckg(height = 2))) # foreign key
 
 # A truncated signature is not verified, and does not error.
-trunc <- sig; trunc$signature <- substring(sig$signature, 1, 64)
+trunc <- sig
+trunc$signature <- substring(sig$signature, 1, 64)
 cpsvrf("pinned-manifest", trunc, pub)
 
 # HMAC: the verifier holds the same secret.

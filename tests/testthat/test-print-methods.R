@@ -4,12 +4,16 @@
 
 test_that("the drift report leads with its verdict and shows the tests", {
   set.seed(31)
-  ref <- data.frame(v = stats::rnorm(200),
-                    g = sample(c("a", "b"), 200, TRUE),
-                    stringsAsFactors = FALSE)
-  cur <- data.frame(v = stats::rnorm(200, mean = 1.5),
-                    g = sample(c("a", "b"), 200, TRUE),
-                    stringsAsFactors = FALSE)
+  ref <- data.frame(
+    v = stats::rnorm(200),
+    g = sample(c("a", "b"), 200, TRUE),
+    stringsAsFactors = FALSE
+  )
+  cur <- data.frame(
+    v = stats::rnorm(200, mean = 1.5),
+    g = sample(c("a", "b"), 200, TRUE),
+    stringsAsFactors = FALSE
+  )
 
   d <- cpsdrft(ref, cur)
   txt <- format(d)
@@ -25,22 +29,25 @@ test_that("the drift report leads with its verdict and shows the tests", {
   # print() emits the same lines and returns its argument invisibly
   expect_output(print(d), "DRIFT DETECTED")
   expect_identical(withVisible(print(d))$visible, FALSE)
-  expect_identical(suppressWarnings(capture.output(print(d))),
-                   capture.output(cat(format(d), sep = "\n")))
+  expect_identical(
+    suppressWarnings(capture.output(print(d))),
+    capture.output(cat(format(d), sep = "\n"))
+  )
 
   # a clean comparison says so instead
   clean <- cpsdrft(ref, ref)
   expect_match(paste(format(clean), collapse = "\n"), "no drift detected")
-  expect_false(grepl("DRIFT DETECTED",
-                     paste(format(clean), collapse = "\n")))
+  expect_false(grepl("DRIFT DETECTED", paste(format(clean), collapse = "\n")))
 
   # added and removed columns are surfaced
   gone <- cpsdrft(ref, cur[, "v", drop = FALSE])
   expect_match(paste(format(gone), collapse = "\n"), "columns removed")
   more <- cur
   more$extra <- 1
-  expect_match(paste(format(cpsdrft(ref, more)), collapse = "\n"),
-               "columns added")
+  expect_match(
+    paste(format(cpsdrft(ref, more)), collapse = "\n"),
+    "columns added"
+  )
 
   # the summary is the condensed form
   expect_output(print(summary(d)), "drift detected")
@@ -49,29 +56,45 @@ test_that("the drift report leads with its verdict and shows the tests", {
 
 test_that("the reports fall back to ASCII when told to", {
   old <- Sys.getenv("RMBL_ASCII_ONLY", unset = NA)
-  on.exit({
-    if (is.na(old)) Sys.unsetenv("RMBL_ASCII_ONLY")
-    else Sys.setenv(RMBL_ASCII_ONLY = old)
-  }, add = TRUE)
+  on.exit(
+    {
+      if (is.na(old)) {
+        Sys.unsetenv("RMBL_ASCII_ONLY")
+      } else {
+        Sys.setenv(RMBL_ASCII_ONLY = old)
+      }
+    },
+    add = TRUE
+  )
   Sys.setenv(RMBL_ASCII_ONLY = "1")
 
   set.seed(32)
-  d <- cpsdrft(data.frame(v = stats::rnorm(80)),
-                     data.frame(v = stats::rnorm(80)))
+  d <- cpsdrft(
+    data.frame(v = stats::rnorm(80)),
+    data.frame(v = stats::rnorm(80))
+  )
   txt <- paste(format(d), collapse = "\n")
   # every character is representable in ASCII
   expect_false(grepl("[^\x01-\x7f]", txt, useBytes = TRUE))
   expect_match(txt, "no drift detected")
 
   b <- benfordtst(10^stats::runif(300, 0, 5))
-  expect_false(grepl("[^\x01-\x7f]", paste(format(b), collapse = "\n"),
-                     useBytes = TRUE))
+  expect_false(grepl(
+    "[^\x01-\x7f]",
+    paste(format(b), collapse = "\n"),
+    useBytes = TRUE
+  ))
   k <- pqckg(height = 2)
-  expect_false(grepl("[^\x01-\x7f]", paste(format(k), collapse = "\n"),
-                     useBytes = TRUE))
-  expect_false(grepl("[^\x01-\x7f]",
-                     paste(format(cpssign("m", k)), collapse = "\n"),
-                     useBytes = TRUE))
+  expect_false(grepl(
+    "[^\x01-\x7f]",
+    paste(format(k), collapse = "\n"),
+    useBytes = TRUE
+  ))
+  expect_false(grepl(
+    "[^\x01-\x7f]",
+    paste(format(cpssign("m", k)), collapse = "\n"),
+    useBytes = TRUE
+  ))
 })
 
 test_that("the Benford report shows the digits and its own caveat", {
@@ -83,7 +106,9 @@ test_that("the Benford report shows the digits and its own caveat", {
   expect_match(txt, "chi-square")
   # every digit is listed with its observed and expected share
   expect_match(txt, "digit")
-  for (d in 1:9) expect_match(txt, paste0("\\b", d, "\\b"))
+  for (d in 1:9) {
+    expect_match(txt, paste0("\\b", d, "\\b"))
+  }
   expect_output(print(b), "Benford")
 
   # a failing screen says so, and says it is only a screen
@@ -98,7 +123,8 @@ test_that("keys and signatures print without ever showing the secret", {
   s1 <- paste(rep("11", 32), collapse = "")
   s2 <- paste(rep("22", 32), collapse = "")
   key <- pqckg(height = 2, skseed = s1, pubseed = s2)
-  xmssregkey(key)   # a key from given seeds is not registered at birth (review of 52a8883)
+  # a key from given seeds is not registered at birth (review of 52a8883)
+  xmssregkey(key)
 
   txt <- paste(format(key), collapse = "\n")
   expect_match(txt, "Signing key")
@@ -117,8 +143,10 @@ test_that("keys and signatures print without ever showing the secret", {
 
   # the usage counter advances in the rendering as leaves are consumed
   sig <- cpssign("m", key)
-  expect_match(paste(format(xmssadv(key, sig)), collapse = "\n"),
-               "1 of 4 signatures")
+  expect_match(
+    paste(format(xmssadv(key, sig)), collapse = "\n"),
+    "1 of 4 signatures"
+  )
 
   # a signature prints its index and an abbreviated body, not 2 KB of hex
   stxt <- paste(format(sig), collapse = "\n")
@@ -148,9 +176,20 @@ test_that("profcols describes each column by its own type", {
   expect_s3_class(p, "bricklayer_profile")
   expect_equal(nrow(p), 5L)
   expect_equal(p$column, names(df))
-  expect_true(all(c("n_missing", "pct_missing", "median", "mad", "mean",
-                    "sd", "n_distinct", "skewness", "n_outliers") %in%
-                    names(p)))
+  expect_true(all(
+    c(
+      "n_missing",
+      "pct_missing",
+      "median",
+      "mad",
+      "mean",
+      "sd",
+      "n_distinct",
+      "skewness",
+      "n_outliers"
+    ) %in%
+      names(p)
+  ))
 
   # missingness is counted and expressed as a share
   expect_equal(p$n_missing[p$column == "gappy"], 10L)
@@ -168,10 +207,20 @@ test_that("profcols describes each column by its own type", {
 
   # the outlier announces itself as a gap between mean and median, and in
   # the fence count
-  expect_gt(abs(p$mean[p$column == "skewed"] -
-                  p$median[p$column == "skewed"]), 1)
-  expect_lt(abs(p$mean[p$column == "clean"] -
-                  p$median[p$column == "clean"]), 0.5)
+  expect_gt(
+    abs(
+      p$mean[p$column == "skewed"] -
+        p$median[p$column == "skewed"]
+    ),
+    1
+  )
+  expect_lt(
+    abs(
+      p$mean[p$column == "clean"] -
+        p$median[p$column == "clean"]
+    ),
+    0.5
+  )
   expect_gte(p$n_outliers[p$column == "skewed"], 1L)
   expect_gt(p$skewness[p$column == "skewed"], 1)
 
@@ -180,8 +229,10 @@ test_that("profcols describes each column by its own type", {
   expect_true(is.na(p$mean[p$column == "grade"]))
   expect_equal(p$n_distinct[p$column == "grade"], 3L)
   expect_true(p$top[p$column == "grade"] %in% c("a", "b", "c"))
-  expect_equal(p$top[p$column == "grade"],
-               names(sort(table(df$grade), decreasing = TRUE))[1])
+  expect_equal(
+    p$top[p$column == "grade"],
+    names(sort(table(df$grade), decreasing = TRUE))[1]
+  )
   # an all-missing column reports nothing rather than guessing
   expect_true(is.na(p$mean[p$column == "allna"]))
   expect_equal(p$n_missing[p$column == "allna"], 100L)

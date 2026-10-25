@@ -7,40 +7,41 @@
 cnsprof(x)
 }
 \arguments{
-\item{x}{A profile table as published (a data frame read from its CSV), or a data
-service key (\code{"census2021_ipp/x2021001_pop"}).}
+\item{x}{A profile table as published (a data frame read from its CSV), or a
+data service key (\code{"census2021_ipp/x2021001_pop"}).}
 }
 \value{
-A data frame of class \code{rmbl_census_profile}: \code{geo}, \code{dguid},
-\code{geolvl}, \code{residence} (on or off reserve, in the tables that split it),
-\code{gender}, \code{age}, \code{chaid}, \code{characteristic},
-\code{level}, \code{parid}, \code{rootid}, \code{sample}, \code{group},
-\code{value}, \code{quality}, \code{tnrsf}, \code{tnrlf}.
+A data frame of class \code{rmbl_census_profile}: \code{geo},
+\code{dguid}, \code{geolvl}, \code{residence} (on or off reserve, in the
+tables that split it), \code{gender}, \code{age}, \code{chaid},
+\code{characteristic}, \code{level}, \code{parid}, \code{rootid},
+\code{sample}, \code{group}, \code{value}, \code{quality}, \code{tnrsf},
+\code{tnrlf}.
 }
 \description{
 Reads a table of the Indigenous Population Profile, 2021 Census of Population
-(Statistics Canada catalogue 98-510-X2021001 to 98-510-X2021016), as the data service
-mirrors it, into one row per geography, gender, age group,
-characteristic and group: First Nations, Metis, Inuit, the other identity groups and
-non-Indigenous people (or, in the household tables, Indigenous and non-Indigenous
-households), each in its own rows. The data service keeps these tables under
-\code{census2021_ipp/}.
+(Statistics Canada catalogue 98-510-X2021001 to 98-510-X2021016), as the data
+service mirrors it, into one row per geography, gender, age group,
+characteristic and group: First Nations, Metis, Inuit, the other identity
+groups and non-Indigenous people (or, in the household tables, Indigenous and
+non-Indigenous households), each in its own rows. The data service keeps
+these tables under \code{census2021_ipp/}.
 }
 \details{
-The profile gives each characteristic in a hierarchy shown only by indentation
-(\dQuote{Total - Highest certificate, diploma or degree}, \dQuote{High (secondary)
-school diploma or
-equivalency certificate}, ...): the level, the parent and the topic's total
-(\code{rootid}) are worked out from it, so a share can be taken of its parent. A topic
-marked \dQuote{25\% sample data} comes from the long-form sample
-(\code{sample = "25\%"}); the
-others from the full count (\code{"100\%"}). Counts are randomly rounded to multiples
-of 5 (of 10 below 10) by Statistics Canada, and a cell suppressed to protect
-confidentiality (\code{x}), too unreliable (\code{F}), not available (\code{..}) or not
-applicable (\code{...}) has no value here; \code{E} values are kept and marked. The
-global non-response rates of the geography (\code{tnrsf}, \code{tnrlf}, in percent)
-are kept: Statistics Canada suppresses an area whose long-form rate is 50\% or more,
-and a high rate means a larger error than the sample alone.
+The profile gives each characteristic in a hierarchy shown only by
+indentation (\dQuote{Total - Highest certificate, diploma or degree},
+\dQuote{High (secondary) school diploma or equivalency certificate}, ...):
+the level, the parent and the topic's total (\code{rootid}) are worked out
+from it, so a share can be taken of its parent. A topic marked \dQuote{25\%
+sample data} comes from the long-form sample (\code{sample = "25\%"}); the
+others from the full count (\code{"100\%"}). Counts are randomly rounded to
+multiples of 5 (of 10 below 10) by Statistics Canada, and a cell suppressed
+to protect confidentiality (\code{x}), too unreliable (\code{F}), not
+available (\code{..}) or not applicable (\code{...}) has no value here;
+\code{E} values are kept and marked. The global non-response rates of the
+geography (\code{tnrsf}, \code{tnrlf}, in percent) are kept: Statistics
+Canada suppresses an area whose long-form rate is 50\% or more, and a high
+rate means a larger error than the sample alone.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -49,15 +50,15 @@ head(p[p$characteristic == "Foster children" & p$geo == "Canada", ])
 \dontshow{\}) # examplesIf}
 }
 \references{
-Statistics Canada (2023). Indigenous Population Profile, 2021 Census of
-Population. Statistics Canada Catalogue no. 98-510-X2021001. Released June 21, 2023.
-Published at
+Statistics Canada (2023). Indigenous Population Profile, 2021
+Census of Population. Statistics Canada Catalogue no. 98-510-X2021001.
+Released June 21, 2023. Published at
 www12.statcan.gc.ca/census-recensement/2021/dp-pd/ipp-ppa/index.cfm?Lang=E
-(the site answers scripts with 403); the Wayback Machine holds a copy of that address
-captured on 8 March 2026 (web.archive.org, snapshot 20260308015010).
+(the site answers scripts with 403); the Wayback Machine holds a copy of that
+address captured on 8 March 2026 (web.archive.org, snapshot 20260308015010).
 
-Statistics Canada (2022). Guide to the Census of Population, 2021. Catalogue no.
-98-304-X.
+Statistics Canada (2022). Guide to the Census of Population, 2021. Catalogue
+no. 98-304-X.
 }
 \seealso{
 \code{\link{profshr}}, \code{\link{cnsstd}},

@@ -16,74 +16,94 @@ stdprev(
 )
 }
 \arguments{
-\item{est, lower, upper}{Numeric vectors (not column names): the estimate in each
-age group (and group) and its published limits.}
+\item{est, lower, upper}{Numeric vectors (not column names): the estimate in
+each age group (and group) and its published limits.}
 
 \item{std}{The standard population, one count (or share) per age group.}
 
-\item{grp}{Optional labels, one per row: one result per group. Rows are matched to
-\code{std} by position, so order each group's rows by age in the order of
-\code{std} (sort by an age order, not alphabetically).}
+\item{grp}{Optional labels, one per row: one result per group. Rows are
+matched to \code{std} by position, so order each group's rows by age in the
+order of \code{std} (sort by an age order, not alphabetically).}
 
 \item{qual}{Optional quality flags, one per row (a vector; see
 \code{\link{qltyrcd}}).}
 
 \item{conflvl}{Confidence level (default 0.95).}
 
-\item{scale}{The upper bound of the scale: 100 for percentages (the default), 1 for
-proportions, \code{Inf} for rates.}
+\item{scale}{The upper bound of the scale: 100 for percentages (the default),
+1 for proportions, \code{Inf} for rates.}
 }
 \value{
-A data frame of class \code{rmbl_prevalence}: \code{group}, \code{estimate},
-\code{lower}, \code{upper}, \code{se}, \code{usewithcau}; attribute
-\code{conflvl}. \code{plot()} draws it.
+A data frame of class \code{rmbl_prevalence}: \code{group},
+\code{estimate}, \code{lower}, \code{upper}, \code{se}, \code{usewithcau};
+attribute \code{conflvl}. \code{plot()} draws it.
 }
 \description{
-The percentage (or proportion, or rate) a group would have with the age structure of a
-standard population, from the estimate and published limits in each age group: for
-comparing First Nations, Metis and Inuit prevalences (suicidal thoughts, mood and
-anxiety disorders, heavy drinking) with each other and with an older population, for
-example, when the age pattern of the outcome is steep.
+The percentage (or proportion, or rate) a group would have with the age
+structure of a standard population, from the estimate and published limits in
+each age group: for comparing First Nations, Metis and Inuit prevalences
+(suicidal thoughts, mood and anxiety disorders, heavy drinking) with each
+other and with an older population, for example, when the age pattern of the
+outcome is steep.
 }
 \details{
-With estimates \eqn{p_i}, standard errors \eqn{s_i = (u_i - l_i) / (2z)} and
-standard weights \eqn{w_i} (the standard's shares), the standardised estimate is
-\eqn{\sum w_i p_i} with standard error \eqn{\sqrt{\sum w_i^2 s_i^2}}, the age groups
-being disjoint domains of the survey (treated as independent: see
-\code{\link{indgap}}). The interval is normal, cut at 0 and at \code{scale}. A
-group with a suppressed or missing age group, or one whose published interval misses
-its own estimate, has no standardised value: the age group is not imputed. The standard
-should be the age structure of the population compared, or a common one: for First
-Nations, Metis and Inuit comparisons, the Indigenous population's own
+With estimates \eqn{p_i}, standard errors \eqn{s_i = (u_i - l_i) /
+(2z)} and standard weights \eqn{w_i} (the standard's shares), the
+standardised estimate is \eqn{\sum w_i p_i} with standard error
+\eqn{\sqrt{\sum w_i^2 s_i^2}}, the age groups being disjoint domains of the
+survey (treated as independent: see \code{\link{indgap}}). The interval is
+normal, cut at 0 and at \code{scale}. A group with a suppressed or missing
+age group, or one whose published interval misses its own estimate, has no
+standardised value: the age group is not imputed. The standard should be the
+age structure of the population compared, or a common one: for First Nations,
+Metis and Inuit comparisons, the Indigenous population's own
 (\code{\link{cnsstd}}; Kumar and Tjepkema 2019).
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-# seriously contemplated suicide in the past 12 months, 2017 (table 41-10-0021-01),
-# standardised to the Indigenous population's age structure (2021 Census)
-ages <- c("15 to 24 years", "25 to 34 years", "35 to 44 years", "45 to 54 years",
-          "55 years and over")
+# seriously contemplated suicide in the past 12 months, 2017 (table
+# 41-10-0021-01), standardised to the Indigenous population's age structure
+# (2021 Census)
+ages <- c(
+  "15 to 24 years",
+  "25 to 34 years",
+  "35 to 44 years",
+  "45 to 54 years",
+  "55 years and over"
+)
 si <- indiex("suicide")
-si <- si[si$measure == "Seriously contemplated suicide in the past 12 months" &
-           si$age \%in\% ages, ]
+si <- si[
+  si$measure == "Seriously contemplated suicide in the past 12 months" &
+    si$age \%in\% ages,
+]
 si <- si[order(si$group, match(si$age, ages)), ]
 std <- cnsstd(cnsprof(indiex("censuspop")))
-w <- c(sum(std$population[4:5]), std$population[6:8], sum(std$population[9:11]))
-sp <- stdprev(si$estimate, si$lower, si$upper, std = w,
-                             grp = si$group, qual = si$quality)
+w <- c(
+  sum(std$population[4:5]),
+  std$population[6:8],
+  sum(std$population[9:11])
+)
+sp <- stdprev(
+  si$estimate,
+  si$lower,
+  si$upper,
+  std = w,
+  grp = si$group,
+  qual = si$quality
+)
 sp
 plot(sp)
 \dontshow{\}) # examplesIf}
 }
 \references{
-Klein RJ, Schoenborn CA (2001). Age adjustment using the 2000 projected
-U.S. population. Healthy People 2010 Statistical Notes 20. National Center for Health
-Statistics.
+Klein RJ, Schoenborn CA (2001). Age adjustment using the 2000
+projected U.S. population. Healthy People 2010 Statistical Notes 20. National
+Center for Health Statistics.
 
-Kumar MB, Tjepkema M (2019). Suicide among First Nations people, Metis and Inuit
-(2011-2016): findings from the 2011 Canadian Census Health and Environment Cohort
-(CanCHEC). National Household Survey: Aboriginal Peoples, Statistics Canada catalogue
-no. 99-011-X2019001.
+Kumar MB, Tjepkema M (2019). Suicide among First Nations people, Metis and
+Inuit (2011-2016): findings from the 2011 Canadian Census Health and
+Environment Cohort (CanCHEC). National Household Survey: Aboriginal Peoples,
+Statistics Canada catalogue no. 99-011-X2019001.
 }
 \seealso{
 \code{\link{agestd}} for counts of events,

@@ -45,57 +45,58 @@ function.}
 \item{seed}{Seed for the folds (default 1).}
 
 \item{cl}{Column name of the clusters (default the unit), or two column names
-for two-way clustering (Cameron, Gelbach and Miller 2011):
-\eqn{V_a + V_b - V_{ab}}, each term with the small-sample factor of the dimension
-with fewer clusters, and t on its \eqn{G - 1} degrees of freedom. A composite
-cluster (district by month, say) is one column made with \code{interaction()}.}
+for two-way clustering (Cameron, Gelbach and Miller 2011): \eqn{V_a + V_b -
+V_{ab}}, each term with the small-sample factor of the dimension with fewer
+clusters, and t on its \eqn{G - 1} degrees of freedom. A composite cluster
+(district by month, say) is one column made with \code{interaction()}.}
 
 \item{conflvl}{Confidence level (default 0.95).}
 }
 \value{
 A data frame of class \code{rmbl_dml}: \code{estimate}, \code{se},
 \code{lower}, \code{upper}, \code{t}, \code{p_value}; attributes \code{n},
-\code{clusters}, \code{learner}, \code{folds}, \code{repeats}, and \code{r2} (the
-out-of-fold R-squared of the two nuisance fits).
+\code{clusters}, \code{learner}, \code{folds}, \code{repeats}, and
+\code{r2} (the out-of-fold R-squared of the two nuisance fits).
 }
 \description{
-The effect of a treatment (continuous or binary) on an outcome in a unit-by-period
-panel, with unit and period fixed effects removed and the confounding through
-covariates fitted by a machine learner, cross-fitted by unit, with an orthogonal
-(Neyman) score and errors clustered by unit.
+The effect of a treatment (continuous or binary) on an outcome in a
+unit-by-period panel, with unit and period fixed effects removed and the
+confounding through covariates fitted by a machine learner, cross-fitted by
+unit, with an orthogonal (Neyman) score and errors clustered by unit.
 }
 \details{
-The model is the partially linear panel model
-\deqn{Y_{it} = \theta D_{it} + g(X_{it}) + \alpha_i + \gamma_t + \varepsilon_{it}.}{Y_it =
-theta D_it + g(X_it) + a_i + c_t + e_it.} Following Clarke and Polselli (2025), the
+The model is the partially linear panel model \deqn{Y_{it} = \theta
+D_{it} + g(X_{it}) + \alpha_i + \gamma_t + \varepsilon_{it}.}{Y_it = theta
+D_it + g(X_it) + a_i + c_t + e_it.} Following Clarke and Polselli (2025), the
 fixed effects are removed by the within transformation (\eqn{\tilde Y},
-\eqn{\tilde D}, \eqn{\tilde X}), and
-\eqn{\ell(\tilde X) = E(\tilde Y \mid \tilde X)} and
-\eqn{m(\tilde X) = E(\tilde D \mid \tilde X)} are fitted by the learner on \eqn{K}
-folds of units (all of a unit's periods in one fold, so a unit's own errors never
-help predict it). With the out-of-fold residuals \eqn{U = \tilde Y - \hat\ell} and
-\eqn{V = \tilde D - \hat m}, the partialling-out estimator is
-\deqn{\hat\theta = \sum V U / \sum V^2,}{theta = sum V U / sum V^2,}
-the solution of the Neyman-orthogonal score \eqn{(U - \theta V) V} of Chernozhukov
-et al. (2018). Its variance is the cluster-robust sandwich over units,
-\deqn{\hat V = \frac{G}{G - 1} \frac{\sum_g \big(\sum_{i \in g} V_i (U_i - \hat\theta
-V_i)\big)^2}{(\sum V^2)^2},}{V = G/(G-1) sum_g (sum V (U - theta V))^2 / (sum
-V^2)^2,} with t on \eqn{G - 1} degrees of freedom. Folds are drawn with
-\code{seed}; \code{nrep} repeated splits are combined by the median of the
-estimates and of the variances plus the squared deviations from it (Chernozhukov et
-al. 2018, section 3.4).
+\eqn{\tilde D}, \eqn{\tilde X}), and \eqn{\ell(\tilde X) = E(\tilde Y \mid
+\tilde X)} and \eqn{m(\tilde X) = E(\tilde D \mid \tilde X)} are fitted by
+the learner on \eqn{K} folds of units (all of a unit's periods in one fold,
+so a unit's own errors never help predict it). With the out-of-fold residuals
+\eqn{U = \tilde Y - \hat\ell} and \eqn{V = \tilde D - \hat m}, the
+partialling-out estimator is \deqn{\hat\theta = \sum V U / \sum V^2,}{theta =
+sum V U / sum V^2,} the solution of the Neyman-orthogonal score \eqn{(U -
+\theta V) V} of Chernozhukov et al. (2018). Its variance is the
+cluster-robust sandwich over units, \deqn{\hat V = \frac{G}{G - 1}
+\frac{\sum_g \big(\sum_{i \in g} V_i (U_i - \hat\theta V_i)\big)^2}{(\sum
+V^2)^2},}{V = G/(G-1) sum_g (sum V (U - theta V))^2 / (sum V^2)^2,} with t on
+\eqn{G - 1} degrees of freedom. Folds are drawn with \code{seed}; \code{nrep}
+repeated splits are combined by the median of the estimates and of the
+variances plus the squared deviations from it (Chernozhukov et al. 2018,
+section 3.4).
 
-Learners, all in base R: \code{"lasso"} (coordinate descent, penalty by 5-fold
-cross-validation), \code{"ridge"} (penalty by generalised cross-validation),
-\code{"ols"}, or a function returning predictions (for example a random forest
-from another package), called as \code{function(x_train, y_train, x_test)}.
-\code{basis = "poly2"} adds squares and pairwise products of the covariates, built
-from the covariates as observed and then demeaned, so a confounding that is a
-combination of them is removed exactly. The demeaned features are what the learners
-see: a covariate fixed within a unit is absorbed by the unit effect and carries no
-information. A learner given only the demeaned covariates (a random forest, say)
-approximates a nonlinear confounding less well; the poly2 basis, or a basis of the
-user's own as further covariates, is the remedy.
+Learners, all in base R: \code{"lasso"} (coordinate descent, penalty by
+5-fold cross-validation), \code{"ridge"} (penalty by generalised
+cross-validation), \code{"ols"}, or a function returning predictions (for
+example a random forest from another package), called as
+\code{function(x_train, y_train, x_test)}. \code{basis = "poly2"} adds
+squares and pairwise products of the covariates, built from the covariates as
+observed and then demeaned, so a confounding that is a combination of them is
+removed exactly. The demeaned features are what the learners see: a covariate
+fixed within a unit is absorbed by the unit effect and carries no
+information. A learner given only the demeaned covariates (a random forest,
+say) approximates a nonlinear confounding less well; the poly2 basis, or a
+basis of the user's own as further covariates, is the remedy.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -108,12 +109,14 @@ plndml(p, "district", "month", "crmrate", "patrols",
 \dontshow{\}) # examplesIf}
 }
 \references{
-Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C, Newey W,
-Robins J (2018). Double/debiased machine learning for treatment and structural
-parameters. The Econometrics Journal 21(1):C1-C68. \doi{10.1111/ectj.12097}
+Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C,
+Newey W, Robins J (2018). Double/debiased machine learning for treatment
+and structural parameters. The Econometrics Journal 21(1):C1-C68.
+\doi{10.1111/ectj.12097}
 
-Clarke PS, Polselli A (2025). Double machine learning for static panel models with
-fixed effects. The Econometrics Journal 29:69-86. \doi{10.1093/ectj/utaf011}
+Clarke PS, Polselli A (2025). Double machine learning for static panel models
+with fixed effects. The Econometrics Journal 29:69-86.
+\doi{10.1093/ectj/utaf011}
 }
 \seealso{
 \code{\link{plrcf}} (one cross-section),

@@ -57,10 +57,14 @@ test_that("wrsmrytxt includes what-was-done, contact and licence blocks", {
   capture.output(m <- recrd(m, "chk", obs = 1, expd = 1))
   out_dir <- file.path(tempdir(), "summary-full-blocks")
   dir.create(out_dir, showWarnings = FALSE)
-  s <- wrsmrytxt(m, out_dir, paths = list(results = out_dir),
-                         whatwasdone = "* did the thing",
-                         contact = "maintainer@example.org",
-                         lic = "AGPL-3.0-or-later")
+  s <- wrsmrytxt(
+    m,
+    out_dir,
+    paths = list(results = out_dir),
+    whatwasdone = "* did the thing",
+    contact = "maintainer@example.org",
+    lic = "AGPL-3.0-or-later"
+  )
   txt <- readLines(s)
   expect_true(any(grepl("WHAT WAS DONE", txt)))
   expect_true(any(grepl("did the thing", txt, fixed = TRUE)))

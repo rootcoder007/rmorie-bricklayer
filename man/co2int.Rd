@@ -24,17 +24,16 @@ frame with the same columns plus \code{iso3}.
 \description{
 The grams of CO2-equivalent emitted per kilowatt-hour of electricity at a
 location, with the year and source of the figure. The table is bundled with
-the package, so it works offline in any country: every country at the
-latest year published by Our World in Data from Ember's yearly electricity
-data (the latest year each grid reports: 2025 or 2024 for nearly all, older
-for a few grids, Ukraine (2022) among them, named in \code{year}), sub-national zones
-from
-Electricity
-Maps' 2024 yearly data as redistributed in the Green Algorithms data release
-v3.1 (Canadian provinces and territories, US balancing authorities,
-Australian states, Indian and Japanese regions, Brazilian and Chilean
-systems, ...), and the world average. All figures are lifecycle intensities
-(generation plus upstream), the basis both sources publish.
+the package, so it works offline in any country: every country at the latest
+year published by Our World in Data from Ember's yearly electricity data (the
+latest year each grid reports: 2025 or 2024 for nearly all, older for a few
+grids, Ukraine (2022) among them, named in \code{year}), sub-national zones
+from Electricity Maps' 2024 yearly data as redistributed in the Green
+Algorithms data release v3.1 (Canadian provinces and territories, US
+balancing authorities, Australian states, Indian and Japanese regions,
+Brazilian and Chilean systems, ...), and the world average. All figures are
+lifecycle intensities (generation plus upstream), the basis both sources
+publish.
 }
 \details{
 A location is matched by its code (\code{"CA"}, \code{"CA-ON"},
@@ -65,7 +64,10 @@ co2int(120)$source
 nrow(co2inttab())
 # the Canadian provinces in the table, lowest intensity first
 tab <- co2inttab()
-ca <- tab[startsWith(tab$location, "CA-"), c("location", "name", "g_per_kwh", "year")]
+ca <- tab[
+  startsWith(tab$location, "CA-"),
+  c("location", "name", "g_per_kwh", "year")
+]
 head(ca[order(ca$g_per_kwh), ])
 # a location the table does not know is an error, not a silent world average
 try(co2int("Atlantis"))

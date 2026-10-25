@@ -27,9 +27,9 @@ A data frame of class \code{rmbl_cohort_trends}: \code{cohort},
 the period before adoption marked.
 }
 \description{
-The mean outcome of each adoption cohort by time since adoption, smoothed by a
-moving average and scaled to 1 in the period before adoption: a check, before any
-model, that the cohorts moved together before the policy.
+The mean outcome of each adoption cohort by time since adoption, smoothed by
+a moving average and scaled to 1 in the period before adoption: a check,
+before any model, that the cohorts moved together before the policy.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

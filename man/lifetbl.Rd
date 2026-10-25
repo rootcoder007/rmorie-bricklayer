@@ -50,20 +50,18 @@ Greenwood confidence interval, the hazard within the band, and the
 median time.
 }
 \details{
-Within a band the censored cases are assumed to have been at risk for
-half of it, so the number at risk is \eqn{n'_j = n_j - c_j/2}; the
+Within a band the censored cases are assumed to have been at risk
+for half of it, so the number at risk is \eqn{n'_j = n_j - c_j/2}; the
 conditional probability of the event is \eqn{q_j = d_j / n'_j} and the
 survival at the end of band \eqn{j} is \eqn{\prod_{i \le j} (1 - q_i)}.
-Greenwood's formula gives
-\eqn{\mathrm{Var}(\hat S_j) = \hat S_j^2 \sum_{i \le j} q_i / (n'_i (1 - q_i))}.
-With no censoring the table equals the Kaplan-Meier estimate at the
-band edges, and the Greenwood variance equals the one
-\code{survival::survfit()} reports. The hazard in a closed band is
-\eqn{d_j / (w_j (n'_j - d_j / 2))} for band width \eqn{w_j}. The median
-is interpolated linearly inside the band where survival crosses one
-half, which assumes events are spread evenly across that band; when the
-crossing falls in an open band, the median is reported as greater than
-its lower edge.
+Greenwood's formula gives \eqn{\mathrm{Var}(\hat S_j) = \hat S_j^2 \sum_{i
+\le j} q_i / (n'_i (1 - q_i))}. With no censoring the table equals the
+Kaplan-Meier estimate at the band edges, and the Greenwood variance equals
+the one \code{survival::survfit()} reports. The hazard in a closed band is
+\eqn{d_j / (w_j (n'_j - d_j / 2))} for band width \eqn{w_j}. The median is
+interpolated linearly inside the band where survival crosses one half, which
+assumes events are spread evenly across that band; when the crossing falls in
+an open band, the median is reported as greater than its lower edge.
 
 Court statistics that count only disposed cases describe time to
 disposition among cases that were disposed, with no censoring; cases

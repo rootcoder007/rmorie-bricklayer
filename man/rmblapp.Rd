@@ -21,119 +21,100 @@ A shiny app object; printing it (or
 \code{\link[shiny:runApp]{shiny::runApp()}}) starts it.
 }
 \description{
-A local web app over the package's analyses: every tab opens on a demonstration
-dataset (\code{\link[=rmbldemo]{rmbldemo()}}) with its first analysis already run, and
-you can load a CSV
-file, the pinned data of a capsule, or a table from data.rmorie.com (after
-\verb{rmbl login}) instead. Everything runs on this machine in this R session; nothing
-is
-sent anywhere except the data.rmorie.com requests you make.
+A local web app over the package's analyses: every tab opens on a
+demonstration dataset (\code{\link[=rmbldemo]{rmbldemo()}}) with its first analysis
+already run, and you can load a CSV file, the pinned data of a capsule, or a
+table from data.rmorie.com (after \verb{rmbl login}) instead. Everything runs on
+this machine in this R session; nothing is sent anywhere except the
+data.rmorie.com requests you make.
 }
 \details{
-Each analysis page shows the headline numbers (estimate, interval, n and a
-verdict) in value boxes, the package's plot in a card that opens full screen and
-downloads as PNG, SVG or CSV, a diagnostics card (the checks and secondary tables
-the function returns, residual and goodness-of-fit plots where the method has
-them, effect sizes with a line on how to read them), the table, and the R call it
-ran, which runs exactly that call, so a result can be reproduced in a script by
-copying the code. The method card states the method in the words of its help page,
-its assumptions and what the numbers mean. A refusal is shown as the package words
-it, with \code{\link[=explerr]{explerr()}}'s explanation of where it comes from beside
-it, and as a toast.
-The resampling analyses (bootstraps, permutations, simulations and the Hawkes
-fits) run in a forked background process on Unix-alikes, so the page stays live
-while they work. \dQuote{Share this view} in the navbar gives a link that reopens the
-page with the same tab, data and form.
+Each analysis page shows the headline numbers (estimate, interval, n
+and a verdict) in value boxes, the package's plot in a card that opens full
+screen and downloads as PNG, SVG or CSV, a diagnostics card (the checks and
+secondary tables the function returns, residual and goodness-of-fit plots
+where the method has them, effect sizes with a line on how to read them),
+the table, and the R call it ran, which runs exactly that call, so a result
+can be reproduced in a script by copying the code. The method card states
+the method in the words of its help page, its assumptions and what the
+numbers mean. A refusal is shown as the package words it, with
+\code{\link[=explerr]{explerr()}}'s explanation of where it comes from beside it, and
+as a toast. The resampling analyses (bootstraps, permutations, simulations
+and the Hawkes fits) run in a forked background process on Unix-alikes, so
+the page stays live while they work. \dQuote{Share this view} in the navbar
+gives a link that reopens the page with the same tab, data and form.
 
-The menus and their tabs:
-\describe{
-\item{Data}{Describe: \code{\link[=profcols]{profcols()}},
-\code{\link[=freqtbl]{freqtbl()}}, \code{\link[=cortbl]{cortbl()}},
-\code{\link[=mahaoutl]{mahaoutl()}},
+The menus and their tabs: \describe{ \item{Data}{Describe:
+\code{\link[=profcols]{profcols()}}, \code{\link[=freqtbl]{freqtbl()}},
+\code{\link[=cortbl]{cortbl()}}, \code{\link[=mahaoutl]{mahaoutl()}},
 \code{\link[=missgrid]{missgrid()}} and the distribution plots
 (\code{\link[=plotrdg]{plotrdg()}}, \code{\link[=plotecdf]{plotecdf()}},
-\code{\link[=plotvln]{plotvln()}},
-\code{\link[=plothex]{plothex()}}, \code{\link[=plotgain]{plotgain()}}); click a
-column of the profile to see its
+\code{\link[=plotvln]{plotvln()}}, \code{\link[=plothex]{plothex()}},
+\code{\link[=plotgain]{plotgain()}}); click a column of the profile to see its
 distribution. Distributions: \code{\link[=dstfit]{dstfit()}} with its density, QQ, PP
-and tail plots,
-and a synthetic sample from a fit through \code{\link[=mksyncol]{mksyncol()}}.}
-\item{Over time}{Year over year: \code{\link[=yoy]{yoy()}} (hover a period of its plot
-for the
-period's rows) and the \code{\link[=yoyhtml]{yoyhtml()}} page to download. Rates:
-\code{\link[=rtcalc]{rtcalc()}},
-\code{\link[=ratechg]{ratechg()}} and \code{\link[=shrs]{shrs()}}. Trends:
-\code{\link[=trndtst]{trndtst()}} (Mann-Kendall with the Theil-Sen
-slope), \code{\link[=stepchg]{stepchg()}}, \code{\link[=cnttrnd]{cnttrnd()}}, and
-\code{\link[=plotcal]{plotcal()}}, \code{\link[=plothrz]{plothrz()}},
-\code{\link[=plotsm]{plotsm()}} and
-\code{\link[=plotbump]{plotbump()}}.}
-\item{Causal and survey}{Survey: \code{\link[=svydes]{svydes()}} with weights, strata,
-clusters or
-replicate weights, then \code{\link[=svyest]{svyest()}} or
-\code{\link[=svycmp]{svycmp()}}. Policy: \code{\link[=plndid]{plndid()}},
-\code{\link[=evstudy]{evstudy()}}, \code{\link[=stgatt]{stgatt()}},
-\code{\link[=bacondcmp]{bacondcmp()}}, \code{\link[=swtdid]{swtdid()}},
-\code{\link[=perminf]{perminf()}}, \code{\link[=syndid]{syndid()}},
-\code{\link[=mtchdid]{mtchdid()}}, \code{\link[=wcb]{wcb()}},
-\code{\link[=loounit]{loounit()}}, \code{\link[=cohtrnd]{cohtrnd()}},
-\code{\link[=plnpwr]{plnpwr()}}, \code{\link[=baltab]{baltab()}} and
-\code{\link[=tse]{tse()}}.}
-\item{Capsules}{Drift: \code{\link[=cpsdrft]{cpsdrft()}} on two snapshots, with a
-density whose brushed
-range gives each snapshot's share of rows, and the app of
-\code{\link[=drftapp]{drftapp()}} for two
-CSV files. Capsule: the provenance of a capsule (source, pinned digest,
-manifest, attestation, bundle files) and its verification rows, with buttons
-that run \code{\link[=vrfcps]{vrfcps()}} and \code{\link[=cpschk]{cpschk()}}, or
+and tail plots, and a synthetic sample from a fit through
+\code{\link[=mksyncol]{mksyncol()}}.} \item{Over time}{Year over year:
+\code{\link[=yoy]{yoy()}} (hover a period of its plot for the period's rows) and the
+\code{\link[=yoyhtml]{yoyhtml()}} page to download. Rates:
+\code{\link[=rtcalc]{rtcalc()}}, \code{\link[=ratechg]{ratechg()}} and
+\code{\link[=shrs]{shrs()}}. Trends: \code{\link[=trndtst]{trndtst()}} (Mann-Kendall
+with the Theil-Sen slope), \code{\link[=stepchg]{stepchg()}},
+\code{\link[=cnttrnd]{cnttrnd()}}, and \code{\link[=plotcal]{plotcal()}},
+\code{\link[=plothrz]{plothrz()}}, \code{\link[=plotsm]{plotsm()}} and
+\code{\link[=plotbump]{plotbump()}}.} \item{Causal and survey}{Survey:
+\code{\link[=svydes]{svydes()}} with weights, strata, clusters or replicate weights,
+then \code{\link[=svyest]{svyest()}} or \code{\link[=svycmp]{svycmp()}}. Policy:
+\code{\link[=plndid]{plndid()}}, \code{\link[=evstudy]{evstudy()}},
+\code{\link[=stgatt]{stgatt()}}, \code{\link[=bacondcmp]{bacondcmp()}},
+\code{\link[=swtdid]{swtdid()}}, \code{\link[=perminf]{perminf()}},
+\code{\link[=syndid]{syndid()}}, \code{\link[=mtchdid]{mtchdid()}},
+\code{\link[=wcb]{wcb()}}, \code{\link[=loounit]{loounit()}},
+\code{\link[=cohtrnd]{cohtrnd()}}, \code{\link[=plnpwr]{plnpwr()}},
+\code{\link[=baltab]{baltab()}} and \code{\link[=tse]{tse()}}.} \item{Capsules}{Drift:
+\code{\link[=cpsdrft]{cpsdrft()}} on two snapshots, with a density whose brushed range
+gives each snapshot's share of rows, and the app of \code{\link[=drftapp]{drftapp()}}
+for two CSV files. Capsule: the provenance of a capsule (source, pinned
+digest, manifest, attestation, bundle files) and its verification rows, with
+buttons that run \code{\link[=vrfcps]{vrfcps()}} and \code{\link[=cpschk]{cpschk()}}, or
 \code{\link[=cpsrfrsh]{cpsrfrsh()}}. Proof ledger: a ledger
 (\code{\link[=ldgrread]{ldgrread()}}) from the demo, a file, a capsule or an installed
-package, its
-theorems with their status and covered functions, and
-\code{\link[=ldgrchk]{ldgrchk()}}.}
-\item{Domains}{First Nations, Metis and Inuit: the bundled Statistics Canada
-tables (\code{\link[=indiex]{indiex()}}) or a table in the same layout:
-\code{\link[=indgap]{indgap()}}, \code{\link[=dstntst]{dstntst()}},
+package, its theorems with their status and covered functions, and
+\code{\link[=ldgrchk]{ldgrchk()}}.} \item{Domains}{First Nations, Metis and Inuit: the
+bundled Statistics Canada tables (\code{\link[=indiex]{indiex()}}) or a table in the
+same layout: \code{\link[=indgap]{indgap()}}, \code{\link[=dstntst]{dstntst()}},
 \code{\link[=ordcmp]{ordcmp()}}, \code{\link[=welprof]{welprof()}} with
 \code{\link[=dualcont]{dualcont()}}, \code{\link[=healchg]{healchg()}},
-\code{\link[=mhcont]{mhcont()}}, \code{\link[=stdprev]{stdprev()}}
-and \code{\link[=trcprog]{trcprog()}}. Each distinction is reported on its own,
-suppressed cells stay
-suppressed with their quality flags, and the page states the OCAP and CARE
-principles and the source tables. Courts and corrections:
-\code{\link[=caseflow]{caseflow()}},
-\code{\link[=stkflow]{stkflow()}}, \code{\link[=clrdcmp]{clrdcmp()}},
-\code{\link[=dispmix]{dispmix()}}, \code{\link[=lifetbl]{lifetbl()}},
-\code{\link[=crmdens]{crmdens()}}, \code{\link[=knoxtst]{knoxtst()}},
-\code{\link[=rgnmapintg]{rgnmapintg()}}, and the SIU report readers
-\code{\link[=siuprs]{siuprs()}} and \code{\link[=siuso]{siuso()}} on pasted
-text. Air pollution: \code{\link[=plmfld]{plmfld()}} and
-\code{\link[=gplume]{gplume()}} for a Gaussian plume, the
-monitors of the demo series (\code{\link[=plotsm]{plotsm()}}),
-\code{\link[=crfpm25]{crfpm25()}}, \code{\link[=crfno2]{crfno2()}},
-\code{\link[=polbrdn]{polbrdn()}}
-and \code{\link[=vrfpol]{vrfpol()}}. Hawkes: \code{\link[=chwkfit]{chwkfit()}} with
-\code{\link[=plothwk]{plothwk()}} (intensity, time-rescaling
-QQ, branching tree), \code{\link[=chwksim]{chwksim()}} and
-\code{\link[=chwkjit]{chwkjit()}}. Search and rescue: the search theory
-functions behind one form, \code{\link[=ltrlrng]{ltrlrng()}},
+\code{\link[=mhcont]{mhcont()}}, \code{\link[=stdprev]{stdprev()}} and
+\code{\link[=trcprog]{trcprog()}}. Each distinction is reported on its own, suppressed
+cells stay suppressed with their quality flags, and the page states the OCAP
+and CARE principles and the source tables. Courts and corrections:
+\code{\link[=caseflow]{caseflow()}}, \code{\link[=stkflow]{stkflow()}},
+\code{\link[=clrdcmp]{clrdcmp()}}, \code{\link[=dispmix]{dispmix()}},
+\code{\link[=lifetbl]{lifetbl()}}, \code{\link[=crmdens]{crmdens()}},
+\code{\link[=knoxtst]{knoxtst()}}, \code{\link[=rgnmapintg]{rgnmapintg()}}, and the SIU
+report readers \code{\link[=siuprs]{siuprs()}} and \code{\link[=siuso]{siuso()}} on
+pasted text. Air pollution: \code{\link[=plmfld]{plmfld()}} and
+\code{\link[=gplume]{gplume()}} for a Gaussian plume, the monitors of the demo series
+(\code{\link[=plotsm]{plotsm()}}), \code{\link[=crfpm25]{crfpm25()}},
+\code{\link[=crfno2]{crfno2()}}, \code{\link[=polbrdn]{polbrdn()}} and
+\code{\link[=vrfpol]{vrfpol()}}. Hawkes: \code{\link[=chwkfit]{chwkfit()}} with
+\code{\link[=plothwk]{plothwk()}} (intensity, time-rescaling QQ, branching tree),
+\code{\link[=chwksim]{chwksim()}} and \code{\link[=chwkjit]{chwkjit()}}. Search and
+rescue: the search theory functions behind one form, \code{\link[=ltrlrng]{ltrlrng()}},
 \code{\link[=srchpod]{srchpod()}}, \code{\link[=pswppod]{pswppod()}},
 \code{\link[=datumpmap]{datumpmap()}}, \code{\link[=opteffort]{opteffort()}} and
-\code{\link[=optcrcsrch]{optcrcsrch()}}, with the POD and POS numbers and four
-plots, and any figure of Frost's The Theory of Search
-through \code{\link[=srchfig]{srchfig()}}.}
-\item{Report}{the results added from the tabs, as one self-contained HTML page
-(plots as inline SVG, year-over-year tables as \code{\link[=yoyhtml]{yoyhtml()}} draws
-them), as
-Markdown, or as a GitHub comment to copy.}
-\item{Settings}{light, dark or the system's theme (also the switch in the navbar),
-digits, and the seed of the seeded analyses.}
-}
-The data key of data.rmorie.com is never held by the app:
-\code{\link[=dload]{dload()}} reads it from where \verb{rmbl login} stored it.
+\code{\link[=optcrcsrch]{optcrcsrch()}}, with the POD and POS numbers and four plots,
+and any figure of Frost's The Theory of Search through
+\code{\link[=srchfig]{srchfig()}}.} \item{Report}{the results added from the tabs, as
+one self-contained HTML page (plots as inline SVG, year-over-year tables as
+\code{\link[=yoyhtml]{yoyhtml()}} draws them), as Markdown, or as a GitHub comment to
+copy.} \item{Settings}{light, dark or the system's theme (also the switch in
+the navbar), digits, and the seed of the seeded analyses.} } The data key of
+data.rmorie.com is never held by the app: \code{\link[=dload]{dload()}} reads it from
+where \verb{rmbl login} stored it.
 
-The dashboard needs the shiny package (Suggests), and with it bslib, which shiny
-installs; without shiny \code{rmblapp()} refuses.
+The dashboard needs the shiny package (Suggests), and with it bslib, which
+shiny installs; without shiny \code{rmblapp()} refuses.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

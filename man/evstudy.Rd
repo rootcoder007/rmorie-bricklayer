@@ -39,36 +39,36 @@ year or a month index) and the outcome.}
 \item{covs}{Optional column names of time-varying controls.}
 
 \item{cl}{Column name of the clusters (default the unit), or two column names
-for two-way clustering (Cameron, Gelbach and Miller 2011):
-\eqn{V_a + V_b - V_{ab}}, each term with the small-sample factor of the dimension
-with fewer clusters, and t on its \eqn{G - 1} degrees of freedom. A composite
-cluster (district by month, say) is one column made with \code{interaction()}.}
+for two-way clustering (Cameron, Gelbach and Miller 2011): \eqn{V_a + V_b -
+V_{ab}}, each term with the small-sample factor of the dimension with fewer
+clusters, and t on its \eqn{G - 1} degrees of freedom. A composite cluster
+(district by month, say) is one column made with \code{interaction()}.}
 
 \item{conflvl}{Confidence level (default 0.95).}
 }
 \value{
 A data frame of class \code{rmbl_event_study}: \code{evtm},
-\code{estimate}, \code{se}, \code{lower}, \code{upper}, \code{t}, \code{p_value},
-with the reference period as a row of zeros; attributes \code{pretrend} (a list:
-\code{F}, \code{df1}, \code{df2}, \code{p_value}), \code{vcov} (of the estimated
-event times), \code{n}, \code{clusters}, \code{conflvl}. \code{plot()} draws
-it.
+\code{estimate}, \code{se}, \code{lower}, \code{upper}, \code{t},
+\code{p_value}, with the reference period as a row of zeros; attributes
+\code{pretrend} (a list: \code{F}, \code{df1}, \code{df2}, \code{p_value}),
+\code{vcov} (of the estimated event times), \code{n}, \code{clusters},
+\code{conflvl}. \code{plot()} draws it.
 }
 \description{
-Leads and lags of a policy's adoption, from a two-way fixed-effects regression on
-indicators of the time since adoption, with a joint test that the leads are zero
-(no effect before the policy, the testable part of parallel trends).
+Leads and lags of a policy's adoption, from a two-way fixed-effects
+regression on indicators of the time since adoption, with a joint test that
+the leads are zero (no effect before the policy, the testable part of
+parallel trends).
 }
 \details{
-With \eqn{G_i} the first treated period of unit \eqn{i} and
-\eqn{k = t - G_i},
-\deqn{Y_{it} = \sum_{k = -L, k \ne r}^{M} \gamma_k \mathbf 1(t - G_i = k) +
-X_{it}'\theta + \delta_i + \mu_t + \varepsilon_{it},}{Y_it = sum_k g_k 1(t - G_i =
-k) + X_it'th + d_i + m_t + e_it,} with the reference period \eqn{r} (default -1,
-the period before adoption) left out. Times beyond the window are binned into its
-end points (\code{bin = TRUE}), or dropped. Units never treated have every
-indicator 0. The variance and degrees of freedom are those of
-\code{\link{plndid}}. The pre-trend test is the Wald statistic
+With \eqn{G_i} the first treated period of unit \eqn{i} and \eqn{k =
+t - G_i}, \deqn{Y_{it} = \sum_{k = -L, k \ne r}^{M} \gamma_k \mathbf 1(t -
+G_i = k) + X_{it}'\theta + \delta_i + \mu_t + \varepsilon_{it},}{Y_it = sum_k
+g_k 1(t - G_i = k) + X_it'th + d_i + m_t + e_it,} with the reference period
+\eqn{r} (default -1, the period before adoption) left out. Times beyond the
+window are binned into its end points (\code{bin = TRUE}), or dropped. Units
+never treated have every indicator 0. The variance and degrees of freedom are
+those of \code{\link{plndid}}. The pre-trend test is the Wald statistic
 \eqn{W = \hat\gamma_{pre}'\hat V_{pre}^{-1}\hat\gamma_{pre}}, reported as
 \eqn{F = W/q} on \eqn{q} and \eqn{G - 1} degrees of freedom.
 
@@ -87,14 +87,13 @@ plot(es)
 \dontshow{\}) # examplesIf}
 }
 \references{
-Sun L, Abraham S (2021). Estimating dynamic treatment effects in event
-studies with heterogeneous treatment effects. Journal of Econometrics
-225(2):175-199.\cr
-\doi{10.1016/j.jeconom.2020.09.006}
+Sun L, Abraham S (2021). Estimating dynamic treatment effects in
+event studies with heterogeneous treatment effects. Journal of Econometrics
+225(2):175-199.\cr \doi{10.1016/j.jeconom.2020.09.006}
 
-Applied to the effect of donations on police stops, block by quarter: Zorro Medina
-A, Hackett D, Green D, Vargas R (2025). Evidence of donor bias in Chicago police
-stops. arXiv:2504.15140 (https://arxiv.org/abs/2504.15140).
+Applied to the effect of donations on police stops, block by quarter: Zorro
+Medina A, Hackett D, Green D, Vargas R (2025). Evidence of donor bias in
+Chicago police stops. arXiv:2504.15140 (https://arxiv.org/abs/2504.15140).
 }
 \seealso{
 \code{\link{plndid}}, \code{\link{stgatt}}.

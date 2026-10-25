@@ -30,29 +30,22 @@ fetch-verify-analyse-record pattern instead of writing that scaffolding
 by hand.
 }
 \details{
-The files:
-\describe{
-\item{\code{data_provenance.json}}{the fields
-\code{\link{loadprov}} and \code{\link{vrfcps}} expect:
-\code{name}, \code{source} (\code{url}, \code{publisher},
-\code{licence}, \code{retrieved}, \code{sha256}) and \code{table}
-(\code{value}, \code{period}, \code{by}, \code{rounding},
-\code{suplim}). Every field that must be filled in is
-marked \code{TODO}.}
-\item{\code{analysis.R}}{reads the provenance, downloads the source
-with \code{\link{fdl}} (a local path is read directly),
-computes its SHA-256 with \code{\link{sha256file}} and stops if it no
-longer matches the pinned value, runs \code{\link{anltab}},
-and writes \code{manifest.json}, \code{report.html} and \code{report.md}
-in \code{results/}.}
-\item{\code{README.md}}{the three steps to fill in and run the capsule.}
-}
-With \code{example = TRUE} the source is the OTIS table
-\code{otis_a01_individuals.csv} shipped in the package's \code{extdata} folder, so
-\code{Rscript analysis.R} runs as written. The table settings in the
-template (\code{value = "individuals"}, \code{period = "year"},
-\code{by = c("table", "group")}) fit that example and must be edited for
-other data.
+The files: \describe{ \item{\code{data_provenance.json}}{the fields
+\code{\link{loadprov}} and \code{\link{vrfcps}} expect: \code{name},
+\code{source} (\code{url}, \code{publisher}, \code{licence},
+\code{retrieved}, \code{sha256}) and \code{table} (\code{value},
+\code{period}, \code{by}, \code{rounding}, \code{suplim}). Every field that
+must be filled in is marked \code{TODO}.} \item{\code{analysis.R}}{reads the
+provenance, downloads the source with \code{\link{fdl}} (a local path is read
+directly), computes its SHA-256 with \code{\link{sha256file}} and stops if it
+no longer matches the pinned value, runs \code{\link{anltab}}, and writes
+\code{manifest.json}, \code{report.html} and \code{report.md} in
+\code{results/}.} \item{\code{README.md}}{the three steps to fill in and run
+the capsule.} } With \code{example = TRUE} the source is the OTIS table
+\code{otis_a01_individuals.csv} shipped in the package's \code{extdata}
+folder, so \code{Rscript analysis.R} runs as written. The table settings in
+the template (\code{value = "individuals"}, \code{period = "year"}, \code{by
+= c("table", "group")}) fit that example and must be edited for other data.
 
 Side effects: creates \code{path} (and its parents) and writes the three
 files. Errors: \code{path} exists and is not empty; \code{name} is not a

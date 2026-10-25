@@ -7,15 +7,14 @@
 hurwzeta(s, q = 1)
 }
 \arguments{
-\item{s}{Numeric vector of exponents. The series converges for \code{s > 1}; below 1
-the value is
-the analytic continuation (so \code{hurwzeta(0.5, 0.5)} is \eqn{-0.6049}), and
-\code{s = 1} is a pole (\code{NA}).}
+\item{s}{Numeric vector of exponents. The series converges for \code{s > 1};
+below 1 the value is the analytic continuation (so \code{hurwzeta(0.5,
+0.5)} is \eqn{-0.6049}), and \code{s = 1} is a pole (\code{NA}).}
 
 \item{q}{Numeric scalar, the lower limit; default \code{1} (the Riemann
-zeta). Any real number but zero or a negative integer (poles, \code{NA}).
-For a negative non-integer \code{q} the value is real only for a whole \code{s}; a
-fractional \code{s} gives \code{NA}.}
+zeta). Any real number but zero or a negative integer (poles, \code{NA}). For
+a negative non-integer \code{q} the value is real only for a whole \code{s};
+a fractional \code{s} gives \code{NA}.}
 }
 \value{
 A numeric vector the length of \code{s}.

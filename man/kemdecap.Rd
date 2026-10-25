@@ -16,10 +16,10 @@ as a hex string or a raw vector, of the length for the key's level.}
 
 \item{masked}{Logical, \code{TRUE} or \code{FALSE}.
 
-\code{rmoriebricklayer.masked}, an option, gives the default when it is set;
-otherwise the default is \code{TRUE}.
-\code{TRUE} runs the first-order masked decapsulation, \code{FALSE} the plain one.
-Both return the same secret.}
+\code{rmoriebricklayer.masked}, an option, gives the default when it is
+set; otherwise the default is \code{TRUE}. \code{TRUE} runs the first-order
+masked decapsulation, \code{FALSE} the plain one. Both return the same
+secret.}
 }
 \value{
 A length-1 character vector of 64 lower-case hex characters: the
@@ -34,16 +34,15 @@ the same secret the sender kept, and the two can then use it as a common
 key.
 }
 \details{
-This is ML-KEM.Decaps of FIPS 203 (Algorithm 21). For a ciphertext of
-the right length there is no failure path, and that is deliberate. A ciphertext that
-was
-not produced by a correct encapsulation under this key yields a shared
-secret derived from a value held only inside the decapsulation key -- so
-it is a real secret, just not the sender's. Whoever sent it learns
-nothing about whether it was accepted, which is what closes off a
-chosen-ciphertext attack. The consequence for a caller: a mismatch
-between the two sides' secrets is the signal that something was wrong,
-not an error from this function.
+This is ML-KEM.Decaps of FIPS 203 (Algorithm 21). For a ciphertext
+of the right length there is no failure path, and that is deliberate. A
+ciphertext that was not produced by a correct encapsulation under this key
+yields a shared secret derived from a value held only inside the
+decapsulation key -- so it is a real secret, just not the sender's. Whoever
+sent it learns nothing about whether it was accepted, which is what closes
+off a chosen-ciphertext attack. The consequence for a caller: a mismatch
+between the two sides' secrets is the signal that something was wrong, not an
+error from this function.
 
 Masked by default. With \code{masked = TRUE} every value that depends on the
 secret key is held as two random shares from the moment the key is read

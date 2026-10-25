@@ -153,12 +153,15 @@ r$verdict
 r$findings[, c("severity", "check", "subject")]
 
 # A missing column is fatal, because nothing downstream can run.
-cpsrpt(bad[, c("id", "score")], ref = ref,
-               schema = infsch(ref))$verdict
+cpsrpt(bad[, c("id", "score")], ref = ref, schema = infsch(ref))$verdict
 
-# validation rules join the findings, and chunks are pinned with a Merkle root
-r2 <- cpsrpt(bad, rules = list(ruleinset("grade", c("a", "b", "c"))),
-                     chunks = c("part one", "part two"))
+# validation rules join the findings, and chunks are pinned with a Merkle
+# root
+r2 <- cpsrpt(
+  bad,
+  rules = list(ruleinset("grade", c("a", "b", "c"))),
+  chunks = c("part one", "part two")
+)
 summary(r2)
 r2$digest$merkle_root
 

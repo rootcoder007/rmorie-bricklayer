@@ -30,16 +30,13 @@ software, to catch swapped groups before a model runs.
 }
 \details{
 Factors are compared through their labels. The checks, in order:
-\enumerate{
-\item \code{orig} and \code{recd} are atomic and the same length;
+\enumerate{ \item \code{orig} and \code{recd} are atomic and the same length;
 \item \code{is.na(original)} equals \code{is.na(recoded)} element by element;
-\item in the table of non-missing pairs, no original value has more than
-one recoded value (the recode is a function of the label);
-\item each original value's recoded value equals \code{declared[old]};
-an original value that is not a name of \code{decl} must be
-unchanged (identity).
-}
-The first failed check is an error naming the offending categories.
+\item in the table of non-missing pairs, no original value has more than one
+recoded value (the recode is a function of the label); \item each original
+value's recoded value equals \code{declared[old]}; an original value that is
+not a name of \code{decl} must be unchanged (identity). } The first failed
+check is an error naming the offending categories.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

@@ -56,25 +56,35 @@
 #'
 #' # Live download; auto-resolves a Wayback snapshot only if the live URL fails.
 #' blfetch(
-#'   paste0("https://www.cihi.ca/sites/default/files/document/",
-#'          "hospital-beds-2024-2025-data-tables-en.xlsx"),
-#'   dst)
+#'   paste0(
+#'     "https://www.cihi.ca/sites/default/files/document/",
+#'     "hospital-beds-2024-2025-data-tables-en.xlsx"
+#'   ),
+#'   dst
+#' )
 #'
 #' # Pin an explicit Wayback snapshot to fall back to, and a shorter timeout.
 #' blfetch(
-#'   "https://example.org/rotated-file.csv", tempfile(fileext = ".csv"),
-#'   wb = "https://web.archive.org/web/2024id_/https://example.org/rotated-file.csv",
-#'   tmout = 60)
+#'   "https://example.org/rotated-file.csv",
+#'   tempfile(fileext = ".csv"),
+#'   wb = paste0(
+#'     "https://web.archive.org/web/2024id_/https://example.org/rotated-fil",
+#'     "e.csv"
+#'   ),
+#'   tmout = 60
+#' )
 #'
 #' # The return value tells you which source served the file.
 #' status <- blfetch("https://cloud.r-project.org/", tempfile())
-#' status   # "live" or "wayback"
+#' status # "live" or "wayback"
 #' @export
 blfetch <- function(url, dest, wb = "", tmout = 120L) {
   if (!is.character(url) || length(url) != 1L || is.na(url) || !nzchar(url)) {
     stop("`url` must be one non-empty URL string", call. = FALSE)
   }
-  if (!is.character(dest) || length(dest) != 1L || is.na(dest) || !nzchar(dest)) {
+  if (
+    !is.character(dest) || length(dest) != 1L || is.na(dest) || !nzchar(dest)
+  ) {
     stop("`dest` must be one non-empty file path", call. = FALSE)
   }
   # what can be told before any download: the URL, the destination, the timeout
@@ -86,30 +96,68 @@ blfetch <- function(url, dest, wb = "", tmout = 120L) {
   .rmbl_check_public_url(url, "url")
   d <- dirname(path.expand(dest))
   if (!dir.exists(d) || file.access(d, 2L) != 0L) {
-    stop(sprintf("blfetch: cannot write %s (%s)", dest,
-                 if (!dir.exists(d)) "its directory does not exist" else "no permission"), call. = FALSE)
+    stop(
+      sprintf(
+        "blfetch: cannot write %s (%s)",
+        dest,
+        if (!dir.exists(d)) "its directory does not exist" else "no permission"
+      ),
+      call. = FALSE
+    )
   }
   tmout <- suppressWarnings(as.integer(tmout))
   if (length(tmout) != 1L || is.na(tmout) || tmout < 1L) {
     stop("`tmout` must be a positive number of seconds", call. = FALSE)
   }
-  code <- .bl_net(url, .Call(C_rmbl_fetch_fallback, url,
-                            if (is.null(wb)) "" else as.character(wb),
-                            dest, as.integer(tmout), ""))
-  if (code == 0L) return(invisible("live"))
-  if (code == 1L) return(invisible("wayback"))
-  # the destination could not be written: a local failure, and no Wayback lookup was made
+  code <- .bl_net(
+    url,
+    .Call(
+      C_rmbl_fetch_fallback,
+      url,
+      if (is.null(wb)) "" else as.character(wb),
+      dest,
+      as.integer(tmout),
+      ""
+    )
+  )
+  if (code == 0L) {
+    return(invisible("live"))
+  }
+  if (code == 1L) {
+    return(invisible("wayback"))
+  }
+  # the destination could not be written: a local failure, and no Wayback lookup
+  # was made
   if (code == -2L) {
-    stop(sprintf("blfetch: cannot write %s (the download could not be saved there)", dest),
-         call. = FALSE)
+    stop(
+      sprintf(
+        "blfetch: cannot write %s (the download could not be saved there)",
+        dest
+      ),
+      call. = FALSE
+    )
   }
   v <- -code
   live <- v %/% 10L
-  stop(sprintf("blfetch: %s; %s",
-               if (live == 1L) sprintf("could not reach %s", url) else sprintf("%s answered HTTP %d", url, live),
-               if (v %% 10L == 1L) "the Wayback fallback failed too (its copy could not be downloaded)"
-               else "the Wayback fallback failed (the Wayback Machine has no snapshot of it, or did not answer)"),
-       call. = FALSE)
+  stop(
+    sprintf(
+      "blfetch: %s; %s",
+      if (live == 1L) {
+        sprintf("could not reach %s", url)
+      } else {
+        sprintf("%s answered HTTP %d", url, live)
+      },
+      if (v %% 10L == 1L) {
+        "the Wayback fallback failed too (its copy could not be downloaded)"
+      } else {
+        paste0(
+          "the Wayback fallback failed (the Wayback Machine has no ",
+          "snapshot of it, or did not answer)"
+        )
+      }
+    ),
+    call. = FALSE
+  )
 }
 
 #' Resolve a Wayback Machine snapshot URL (C++/libcurl)
@@ -158,10 +206,13 @@ wbsnpnat <- function(url, tmout = 30L) {
   if (!is.character(url) || length(url) != 1L || is.na(url) || !nzchar(url)) {
     stop("`url` must be a single non-empty string", call. = FALSE)
   }
-  # the page is a query parameter of archive.org's lookup, never fetched: a plain-http page is looked
-  # up as it is (an http:// URL was refused and never found; review of e57fed5); a private address
-  # is still refused
+  # the page is a query parameter of archive.org's lookup, never fetched: a
+  # plain-http page is looked up as it is (an http:// URL was refused and never
+  # found; review of e57fed5); a private address is still refused
   .rmbl_check_public_url(url, "url", allow_http = TRUE)
-  snap <- .bl_net("https://archive.org/", .Call(C_rmbl_wayback, url, as.integer(tmout), ""))
+  snap <- .bl_net(
+    "https://archive.org/",
+    .Call(C_rmbl_wayback, url, as.integer(tmout), "")
+  )
   if (is.character(snap) && nzchar(snap)) snap else NULL
 }

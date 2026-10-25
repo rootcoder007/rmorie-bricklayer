@@ -1,0 +1,46 @@
+name: homebrew tap
+
+# Tells rootcoder007/homebrew-morie to update its rmoriebricklayer formula (url and sha256 of
+# the release tag's archive) when a release is published or edited, or when a release tag is
+# moved to a new commit. The tap installs and tests the new formula on macOS and commits it to
+# its main branch itself (its bump-r workflow); it also checks every hour, so a missed event
+# only delays the update.
+#
+# Needs the secret HOMEBREW_TAP_TOKEN: a fine-grained token for rootcoder007/homebrew-morie
+# with Contents read and write (what repository_dispatch requires). Without it this job says so
+# and the tap's hourly check does the update.
+
+on:
+  release:
+    types: [published, edited]
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask the tap to update the formula
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          REF: ${{ github.ref_name }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          # a tag without a release is not what the formula follows: its release event comes later
+          if [ "$EVENT" = "push" ] && ! gh release view "$REF" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "$REF has no release yet; the release event will update the tap"
+            exit 0
+          fi
+          if [ -z "$TAP_TOKEN" ]; then
+            echo "::notice::HOMEBREW_TAP_TOKEN is not set: the tap's hourly check will update the formula"
+            exit 0
+          fi
+          GH_TOKEN="$TAP_TOKEN" gh api repos/rootcoder007/homebrew-morie/dispatches \
+            -f event_type=release -F 'client_payload[formula]=rmoriebricklayer'
+          echo "asked rootcoder007/homebrew-morie to update rmoriebricklayer"

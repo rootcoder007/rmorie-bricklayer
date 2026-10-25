@@ -1,10 +1,8 @@
 test_that("grdrcd maps by name, refuses unmapped, records the mapping", {
-  r <- grdrcd(c("W", "B", "O", "W"),
-                    c(W = "White", B = "Black", O = "Other"))
+  r <- grdrcd(c("W", "B", "O", "W"), c(W = "White", B = "Black", O = "Other"))
   expect_equal(as.character(r), c("White", "Black", "Other", "White"))
   expect_equal(nchar(attr(r, "recode_audit")$checksum), 64)
-  expect_error(grdrcd(c("W", "X"), c(W = "White")),
-               "values with NO mapping")
+  expect_error(grdrcd(c("W", "X"), c(W = "White")), "values with NO mapping")
   expect_equal(
     as.character(grdrcd(c("W", "X", NA), c(W = "White"), keep = "X")),
     c("White", "X", NA)
@@ -12,8 +10,10 @@ test_that("grdrcd maps by name, refuses unmapped, records the mapping", {
 })
 
 test_that("deccodes turns codes into labels and refuses unlabelled codes", {
-  d <- deccodes(c(1, 2, 2, 3),
-                    c("1" = "White", "2" = "Black", "3" = "Indigenous"))
+  d <- deccodes(
+    c(1, 2, 2, 3),
+    c("1" = "White", "2" = "Black", "3" = "Indigenous")
+  )
   expect_equal(as.character(d), c("White", "Black", "Black", "Indigenous"))
   expect_error(deccodes(c(1, 4), c("1" = "White")), "NO mapping")
 })
@@ -21,10 +21,11 @@ test_that("deccodes turns codes into labels and refuses unlabelled codes", {
 test_that("grdlvls declares levels and the reference", {
   f <- grdlvls(c("White", "Black", "White"), c("White", "Black"), "White")
   expect_equal(as.integer(f), c(1L, 2L, 1L))
-  expect_error(grdlvls(c("White", "Other"), c("White", "Black")),
-               "outside the declared levels")
-  expect_error(grdlvls("White", c("White", "Black"), "Black"),
-               "is not levels")
+  expect_error(
+    grdlvls(c("White", "Other"), c("White", "Black")),
+    "outside the declared levels"
+  )
+  expect_error(grdlvls("White", c("White", "Black"), "Black"), "is not levels")
 })
 
 test_that("audcats flags codes, case variants and unused levels", {
@@ -41,31 +42,39 @@ test_that("audcats flags codes, case variants and unused levels", {
 })
 
 test_that("vrfrcd proves a recode and names a swap", {
-  expect_silent(vrfrcd(c("W", "B", "W"), c("White", "Black", "White"),
-                              c(W = "White", B = "Black")))
+  expect_silent(vrfrcd(
+    c("W", "B", "W"),
+    c("White", "Black", "White"),
+    c(W = "White", B = "Black")
+  ))
   expect_error(
-    vrfrcd(c("W", "B"), c("Black", "White"),
-                  c(W = "White", B = "Black")),
+    vrfrcd(c("W", "B"), c("Black", "White"), c(W = "White", B = "Black")),
     "THIS is how groups get swapped"
   )
-  expect_error(vrfrcd(c("W", "B"), "White", c(W = "White")),
-               "rows were lost")
+  expect_error(vrfrcd(c("W", "B"), "White", c(W = "White")), "rows were lost")
 })
 
 test_that("vrfmrg accepts matching counts and names a permutation", {
   x <- c("White", "White", "Black", "Indigenous", "White", "Black")
   expect_true(vrfmrg(x, c(White = 3, Black = 2, Indigenous = 1))$ok)
-  expect_error(vrfmrg(x, c(White = 2, Black = 3, Indigenous = 1)),
-               "White -> Black")
+  expect_error(
+    vrfmrg(x, c(White = 2, Black = 3, Indigenous = 1)),
+    "White -> Black"
+  )
 })
 
 test_that("orchk recovers a label swap behind an inflated OR", {
-  tab <- matrix(c(900, 100, 700, 300, 400, 600),
-    ncol = 2, byrow = TRUE,
+  tab <- matrix(
+    c(900, 100, 700, 300, 400, 600),
+    ncol = 2,
+    byrow = TRUE,
     dimnames = list(c("A", "B", "C"), c("no", "yes"))
   )
-  ok <- orchk(tab, "A", c(B = 300 / 700 / (100 / 900),
-                                     C = 600 / 400 / (100 / 900)))
+  ok <- orchk(
+    tab,
+    "A",
+    c(B = 300 / 700 / (100 / 900), C = 600 / 400 / (100 / 900))
+  )
   expect_true(ok$consistent)
   sw <- orchk(tab, "A", c(B = 13.5, C = 3.857))
   expect_false(sw$consistent)
@@ -84,9 +93,13 @@ test_that("a recode manifest records, signs, writes and verifies the chain", {
   x <- c("W", "B", "W", "I", NA)
   y <- grdrcd(x, c(W = "White", B = "Black", I = "Indigenous"))
   key <- pqckg(height = 2)
-  m <- rcdmnf(x, y, c(W = "White", B = "Black", I = "Indigenous"),
+  m <- rcdmnf(
+    x,
+    y,
+    c(W = "White", B = "Black", I = "Indigenous"),
     pub = c(White = 2, Black = 1, Indigenous = 1),
-    key = key, ctx = "unit test"
+    key = key,
+    ctx = "unit test"
   )
   expect_s3_class(m, "bricklayer_recode_manifest")
   expect_true(m$checks$matches_published)
@@ -100,16 +113,22 @@ test_that("a recode manifest records, signs, writes and verifies the chain", {
   y2[y2 == "Black"] <- "Indigenous"
   v2 <- vrfrcdmnf(p, x, y2)
   expect_false(v2$ok)
-  expect_true(any(grepl("groups get swapped|differ from the manifest",
-                        v2$reasons)))
+  expect_true(any(grepl(
+    "groups get swapped|differ from the manifest",
+    v2$reasons
+  )))
   # tamper: edit the file
   txt <- readLines(p)
   txt <- sub("unit test", "edited", txt)
   writeLines(txt, p)
   expect_false(vrfrcdmnf(p, x, y)$ok)
   expect_error(
-    rcdmnf(x, y, c(W = "White", B = "Black", I = "Indigenous"),
-                    pub = c(White = 1, Black = 2, Indigenous = 1)),
+    rcdmnf(
+      x,
+      y,
+      c(W = "White", B = "Black", I = "Indigenous"),
+      pub = c(White = 1, Black = 2, Indigenous = 1)
+    ),
     "permuted"
   )
 })
@@ -117,14 +136,22 @@ test_that("a recode manifest records, signs, writes and verifies the chain", {
 test_that("orchk names the OHRC 2023 four-way rotation", {
   # White coded as Black, Black as Other, Other as Unknown, Unknown as White
   # (OHRC, Correction to "A Disparate Impact", 26 January 2023; Jung 2022).
-  tab <- matrix(c(9000, 120, 2000, 220, 1500, 60, 4000, 1),
-    ncol = 2, byrow = TRUE,
+  tab <- matrix(
+    c(9000, 120, 2000, 220, 1500, 60, 4000, 1),
+    ncol = 2,
+    byrow = TRUE,
     dimnames = list(c("White", "Black", "Other", "Unknown"), c("no", "yes"))
   )
   ref <- 120 / 9000
-  correct <- orchk(tab, "White", c(Black = 220 / 2000 / ref,
-                                              Other = 60 / 1500 / ref,
-                                              Unknown = 1 / 4000 / ref))
+  correct <- orchk(
+    tab,
+    "White",
+    c(
+      Black = 220 / 2000 / ref,
+      Other = 60 / 1500 / ref,
+      Unknown = 1 / 4000 / ref
+    )
+  )
   expect_true(correct$consistent)
   rotated <- tab[c("Unknown", "White", "Black", "Other"), ]
   rownames(rotated) <- c("White", "Black", "Other", "Unknown")
@@ -151,8 +178,10 @@ test_that("relabel refuses positional labels and maps by name", {
 })
 
 test_that("declbld decodes by code, levels in code order", {
-  x <- structure(c(1, 2, 2, 4),
-                 labels = c(White = 1, Black = 2, Other = 3, Unknown = 4))
+  x <- structure(
+    c(1, 2, 2, 4),
+    labels = c(White = 1, Black = 2, Other = 3, Unknown = 4)
+  )
   f <- declbld(x)
   expect_equal(as.character(f), c("White", "Black", "Black", "Unknown"))
   expect_equal(levels(f), c("White", "Black", "Other", "Unknown"))
@@ -162,8 +191,12 @@ test_that("declbld decodes by code, levels in code order", {
 
 test_that("rlblfrns: OHRC rotation is an alphabetical relabel", {
   vl <- c("1" = "White", "2" = "Black", "3" = "Other", "4" = "Unknown")
-  obs <- c(White = "Black", Black = "Other", Other = "Unknown",
-           Unknown = "White")
+  obs <- c(
+    White = "Black",
+    Black = "Other",
+    Other = "Unknown",
+    Unknown = "White"
+  )
   r <- rlblfrns(vl, obs)
   alpha <- "labels sorted alphabetically, assigned by code position"
   expect_true(r$matches[r$mechanism == alpha])
@@ -172,16 +205,24 @@ test_that("rlblfrns: OHRC rotation is an alphabetical relabel", {
   # what the relabel idiom actually does to those codes
   f <- factor(c(1, 2, 3, 4, 1))
   levels(f) <- sort(unname(vl))
-  expect_equal(as.character(f),
-               c("Black", "Other", "Unknown", "White", "Black"))
-  none <- rlblfrns(vl, c(White = "Other", Black = "White",
-                                  Other = "Black", Unknown = "Unknown"))
+  expect_equal(
+    as.character(f),
+    c("Black", "Other", "Unknown", "White", "Black")
+  )
+  none <- rlblfrns(
+    vl,
+    c(White = "Other", Black = "White", Other = "Black", Unknown = "Unknown")
+  )
   expect_false(any(none$matches))
   expect_match(attr(none, "verdict"), "No positional")
   expect_error(rlblfrns(vl, c(White = "Black")), "permutation")
   # decreasing frequency: Black, Unknown, White, Other assigned to codes 1..4
-  seen <- c(White = "Black", Black = "Unknown", Other = "White",
-            Unknown = "Other")
+  seen <- c(
+    White = "Black",
+    Black = "Unknown",
+    Other = "White",
+    Unknown = "Other"
+  )
   cnt <- c(White = 100, Black = 9000, Other = 50, Unknown = 500)
   fr <- rlblfrns(vl, seen, cnts = cnt)
   dec <- "labels ordered by decreasing frequency, assigned by code position"
@@ -189,32 +230,43 @@ test_that("rlblfrns: OHRC rotation is an alphabetical relabel", {
 })
 
 test_that("audit flags code-prefixed labels", {
-  a <- audcats(data.frame(race = c("1. White", "2. Black", "1. White"),
-                                   stringsAsFactors = FALSE))
+  a <- audcats(data.frame(
+    race = c("1. White", "2. Black", "1. White"),
+    stringsAsFactors = FALSE
+  ))
   expect_match(a$hazards[1], "code prefixes")
 })
 
 test_that("xfrvrf accepts a faithful import, names a rotated one", {
-  x <- structure(c(1, 1, 2, 4, 1),
-                 labels = c(White = 1, Black = 2, Other = 3, Unknown = 4))
-  ok <- xfrvrf(x, c(White = 3, Black = 1, Unknown = 1),
+  x <- structure(
+    c(1, 1, 2, 4, 1),
+    labels = c(White = 1, Black = 2, Other = 3, Unknown = 4)
+  )
+  ok <- xfrvrf(
+    x,
+    c(White = 3, Black = 1, Unknown = 1),
     codebook = c("1" = "White", "2" = "Black", "3" = "Other", "4" = "Unknown")
   )
   expect_true(ok$ok)
   expect_true(ok$code_book_ok)
   expect_equal(levels(ok$decoded), c("White", "Black", "Other", "Unknown"))
-  rotated <- structure(c(1, 1, 2, 4, 1),
-                       labels = c(Black = 1, Other = 2, Unknown = 3, White = 4))
+  rotated <- structure(
+    c(1, 1, 2, 4, 1),
+    labels = c(Black = 1, Other = 2, Unknown = 3, White = 4)
+  )
   expect_error(
-    xfrvrf(rotated, c(White = 3, Black = 1, Unknown = 1),
-      codebook = c("1" = "White", "2" = "Black", "3" = "Other",
-                    "4" = "Unknown")
+    xfrvrf(
+      rotated,
+      c(White = 3, Black = 1, Unknown = 1),
+      codebook = c("1" = "White", "2" = "Black", "3" = "Other", "4" = "Unknown")
     ),
     "disagree with the source code book"
   )
   expect_error(
-    xfrvrf(c("Black", "Black", "Other", "White", "Black"),
-                    c(White = 3, Black = 1, Unknown = 1)),
+    xfrvrf(
+      c("Black", "Black", "Other", "White", "Black"),
+      c(White = 3, Black = 1, Unknown = 1)
+    ),
     "do not match|permuted|not in the published"
   )
 })
@@ -226,15 +278,20 @@ test_that("deccodes keeps or drops NA codes as asked", {
 })
 
 test_that("grdrcd refuses an unnamed mapping and factor input works", {
-  expect_error(grdrcd(c("W", "B"), c("White", "Black")),
-               "named character vector")
+  expect_error(
+    grdrcd(c("W", "B"), c("White", "Black")),
+    "named character vector"
+  )
   r <- grdrcd(factor(c("W", "B")), c(W = "White", B = "Black"))
   expect_equal(as.character(r), c("White", "Black"))
 })
 
 test_that("audcats covers labelled columns, empty frames and cols", {
-  lab <- structure(c(1, 2, 2), labels = c(White = 1, Black = 2),
-                   class = c("haven_labelled", "vctrs_vctr", "double"))
+  lab <- structure(
+    c(1, 2, 2),
+    labels = c(White = 1, Black = 2),
+    class = c("haven_labelled", "vctrs_vctr", "double")
+  )
   a <- audcats(data.frame(race = I(lab), n = 1:3))
   expect_match(a$hazards[a$column == "race"], "foreign value labels")
   wide <- data.frame(id = as.character(seq_len(60)), stringsAsFactors = FALSE)
@@ -243,18 +300,23 @@ test_that("audcats covers labelled columns, empty frames and cols", {
   expect_equal(nrow(e), 0L)
   expect_true(attr(e, "clean"))
   expect_output(print(e), "no hazards")
-  only <- audcats(data.frame(a = c("x", "y"), b = c("1", "2"),
-                                      stringsAsFactors = FALSE), cols = "a")
+  only <- audcats(
+    data.frame(a = c("x", "y"), b = c("1", "2"), stringsAsFactors = FALSE),
+    cols = "a"
+  )
   expect_equal(only$column, "a")
   expect_output(print(only), "a")
 })
 
 test_that("vrfrcd reports fan-out and missingness leaks", {
-  expect_error(vrfrcd(c("W", "W"), c("White", "Black"), c(W = "White")),
-               "MULTIPLE|fan")
-  expect_error(vrfrcd(c("W", "B"), c("White", NA),
-                             c(W = "White", B = "Black")),
-               "missing")
+  expect_error(
+    vrfrcd(c("W", "W"), c("White", "Black"), c(W = "White")),
+    "MULTIPLE|fan"
+  )
+  expect_error(
+    vrfrcd(c("W", "B"), c("White", NA), c(W = "White", B = "Black")),
+    "missing"
+  )
 })
 
 test_that("vrfmrg honours a tolerance, reports mismatches", {
@@ -265,15 +327,18 @@ test_that("vrfmrg honours a tolerance, reports mismatches", {
 })
 
 test_that("orchk finds swapped outcome columns, checks input", {
-  tab <- matrix(c(900, 100, 700, 300), ncol = 2, byrow = TRUE,
-                dimnames = list(c("A", "B"), c("no", "yes")))
+  tab <- matrix(
+    c(900, 100, 700, 300),
+    ncol = 2,
+    byrow = TRUE,
+    dimnames = list(c("A", "B"), c("no", "yes"))
+  )
   swapped <- orchk(tab, "A", c(B = (700 / 300) / (900 / 100)))
   expect_false(swapped$consistent)
   expect_true(any(swapped$matches$outcome_columns_swapped))
   expect_error(orchk(tab, "Z", c(B = 1)), "not a row")
   expect_error(orchk(tab, "A", c(C = 1)), "named by every")
-  expect_error(orchk(tab[, 1, drop = FALSE], "A", c(B = 1)),
-               "k-by-2")
+  expect_error(orchk(tab[, 1, drop = FALSE], "A", c(B = 1)), "k-by-2")
 })
 
 test_that("grdbin accepts NA, refuses factors and non-binary numbers", {
@@ -333,8 +398,10 @@ test_that("rlblfrns names reversed and case-insensitive mechanisms", {
   ci_name <- "labels sorted case-insensitively, assigned by code position"
   expect_true(ci$matches[ci$mechanism == ci_name])
   expect_output(print(ci), "case-insensitively")
-  none <- rlblfrns(c("1" = "x", "2" = "y", "3" = "z", "4" = "w"),
-                            c(x = "z", y = "x", z = "w", w = "y"))
+  none <- rlblfrns(
+    c("1" = "x", "2" = "y", "3" = "z", "4" = "w"),
+    c(x = "z", y = "x", z = "w", w = "y")
+  )
   expect_output(print(none), "No mechanism")
   expect_error(rlblfrns(c("x", "y"), c(x = "y", y = "x")), "named")
 })
@@ -348,13 +415,17 @@ test_that("xfrvrf decodes plain codes with a code book, tolerance", {
   lab <- structure(c(1, 1, 2), labels = c(White = 1, Black = 2))
   t2 <- xfrvrf(lab, c(White = 3, Black = 1), tol = 1)
   expect_true(t2$ok)
-  expect_error(xfrvrf(c("White", "Other"), c(White = 1, Black = 1)),
-               "not in the published")
+  expect_error(
+    xfrvrf(c("White", "Other"), c(White = 1, Black = 1)),
+    "not in the published"
+  )
 })
 
 test_that("last guard branches: NA codes, non-frame, edited mapping", {
-  expect_error(deccodes(c(1, NA), c("1" = "White"), keepna = FALSE),
-               "missing codes")
+  expect_error(
+    deccodes(c(1, NA), c("1" = "White"), keepna = FALSE),
+    "missing codes"
+  )
   expect_error(audcats(list(a = 1)), "data frame")
   x <- c("W", "B")
   y <- grdrcd(x, c(W = "White", B = "Black"))
@@ -391,36 +462,54 @@ test_that("audit flags whitespace, empty and sentinel labels (round 3)", {
 
 test_that("vrfmrg and xfrvrf return ok = FALSE when asked", {
   x <- c("White", "White", "Black", "Indigenous", "White", "Black")
-  r <- vrfmrg(x, c(White = 2, Black = 3, Indigenous = 1),
-                        strict = FALSE)
+  r <- vrfmrg(x, c(White = 2, Black = 3, Indigenous = 1), strict = FALSE)
   expect_false(r$ok)
   expect_equal(unname(r$permutation[["White"]]), "Black")
   expect_match(r$message, "permuted")
-  r2 <- vrfmrg(c(x, "Other"), c(White = 3, Black = 2, Indigenous = 1),
-                         strict = FALSE)
+  r2 <- vrfmrg(
+    c(x, "Other"),
+    c(White = 3, Black = 2, Indigenous = 1),
+    strict = FALSE
+  )
   expect_false(r2$ok)
   expect_match(r2$message, "not in the published")
   cb <- c("1" = "White", "2" = "Black", "3" = "Other", "4" = "Unknown")
-  rotated <- structure(c(1, 1, 2, 4, 1),
-                       labels = c(Black = 1, Other = 2, Unknown = 3, White = 4))
-  t <- xfrvrf(rotated, c(White = 3, Black = 1, Unknown = 1),
-                       codebook = cb, strict = FALSE)
+  rotated <- structure(
+    c(1, 1, 2, 4, 1),
+    labels = c(Black = 1, Other = 2, Unknown = 3, White = 4)
+  )
+  t <- xfrvrf(
+    rotated,
+    c(White = 3, Black = 1, Unknown = 1),
+    codebook = cb,
+    strict = FALSE
+  )
   expect_false(t$ok)
   expect_false(t$code_book_ok)
   expect_true(any(grepl("code book", t$reasons)))
   # the forensics input is reachable from the public path now
-  t2 <- xfrvrf(c("Black", "White", "White", "Black", "Black"),
-                        c(White = 3, Black = 2), strict = FALSE)
+  t2 <- xfrvrf(
+    c("Black", "White", "White", "Black", "Black"),
+    c(White = 3, Black = 2),
+    strict = FALSE
+  )
   expect_false(t2$ok)
   expect_equal(unname(t2$marginals$permutation[["White"]]), "Black")
-  expect_error(xfrvrf(c("Black", "White", "White", "Black", "Black"),
-                               c(White = 3, Black = 2)), "do not match")
+  expect_error(
+    xfrvrf(
+      c("Black", "White", "White", "Black", "Black"),
+      c(White = 3, Black = 2)
+    ),
+    "do not match"
+  )
 })
 
 test_that("rlblfrns reports identity as no permutation", {
   vl <- c("1" = "White", "2" = "Black", "3" = "Other", "4" = "Unknown")
-  r <- rlblfrns(vl, c(White = "White", Black = "Black",
-                               Other = "Other", Unknown = "Unknown"))
+  r <- rlblfrns(
+    vl,
+    c(White = "White", Black = "Black", Other = "Other", Unknown = "Unknown")
+  )
   expect_false(any(r$matches))
   expect_match(attr(r, "verdict"), "no permutation")
   expect_output(print(r), "No mechanism")

@@ -57,7 +57,9 @@ rslvckan(NULL)
 
 # the endpoint must be public https, checked before any request
 prov <- list(
-  dataset = list(ckan_api_endpoint = "http://localhost/api/3/action/package_show?id=x"),
+  dataset = list(
+    ckan_api_endpoint = "http://localhost/api/3/action/package_show?id=x"
+  ),
   resource = list(name_match_pattern = "2014")
 )
 try(rslvckan(prov))

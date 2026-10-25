@@ -19,8 +19,8 @@ year or a month index) and the outcome.}
 \item{plac}{Run the placebo test (default \code{TRUE}).}
 }
 \value{
-A list of class \code{rmbl_synth}: \code{weights} (a named vector over the
-donors), \code{path} (a data frame: \code{time}, \code{treated},
+A list of class \code{rmbl_synth}: \code{weights} (a named vector
+over the donors), \code{path} (a data frame: \code{time}, \code{treated},
 \code{synthetic}, \code{gap}), \code{rmspepre}, \code{rmsperatio},
 \code{p_value} (\code{NA} without the placebo), \code{placrat}.
 \code{plot()} draws the two paths and the gap.
@@ -31,19 +31,20 @@ policy, as its counterfactual after; with the placebo test that runs the same
 method on every untreated unit.
 }
 \details{
-The weights solve
-\deqn{\min_w \sum_{t < T_0} \Big(Y_{1t} - \sum_j w_j Y_{jt}\Big)^2 \quad
-\textrm{s.t.} \quad w_j \ge 0,\ \sum_j w_j = 1,}{min_w sum_(t < T0) (Y_1t - sum_j
-w_j Y_jt)^2, w_j >= 0, sum_j w_j = 1,} over the periods before adoption \eqn{T_0}
-(accelerated projected gradient onto the simplex; the problem is convex, so the
-solution is the global one). The effect in each period is the gap
-\eqn{Y_{1t} - \sum_j w_j Y_{jt}}. For inference, each untreated unit in turn is
-treated as if it had adopted the policy, with the other untreated units as donors;
-the ratio of root mean squared gap after to before adoption ranks the real unit
-among the placebos, and \eqn{p} is its rank over the number of units (Abadie,
-Diamond and Hainmueller 2010).
+The weights solve \deqn{\min_w \sum_{t < T_0} \Big(Y_{1t} - \sum_j
+w_j Y_{jt}\Big)^2 \quad \textrm{s.t.} \quad w_j \ge 0,\ \sum_j w_j =
+1,}{min_w sum_(t < T0) (Y_1t - sum_j w_j Y_jt)^2, w_j >= 0, sum_j w_j = 1,}
+over the periods before adoption \eqn{T_0} (accelerated projected gradient
+onto the simplex; the problem is convex, so the solution is the global one).
+The effect in each period is the gap \eqn{Y_{1t} - \sum_j w_j Y_{jt}}. For
+inference, each untreated unit in turn is treated as if it had adopted the
+policy, with the other untreated units as donors; the ratio of root mean
+squared gap after to before adoption ranks the real unit among the placebos,
+and \eqn{p} is its rank over the number of units (Abadie, Diamond and
+Hainmueller 2010).
 
-This version matches on the pre-period outcomes only, not on separate predictors.
+This version matches on the pre-period outcomes only, not on separate
+predictors.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -57,8 +58,7 @@ plot(s)
 \dontshow{\}) # examplesIf}
 }
 \references{
-Abadie A, Diamond A, Hainmueller J (2010). Synthetic control methods
-for comparative case studies. Journal of the American Statistical Association
-105(490):493-505.\cr
-\doi{10.1198/jasa.2009.ap08746}
+Abadie A, Diamond A, Hainmueller J (2010). Synthetic control
+methods for comparative case studies. Journal of the American Statistical
+Association 105(490):493-505.\cr \doi{10.1198/jasa.2009.ap08746}
 }

@@ -95,12 +95,11 @@ comparison in \code{mrkvrf()} is
 \code{\link[=cdgsteq]{cdgsteq()}}
 (constant time, case-sensitive).
 
-Errors: \code{chunks} that is not character, raw or a list of raw vectors
-and single strings, or that contains \code{NA}; \code{index} outside
-\code{1..length(chunks)}; a \code{scheme} other than 1 or 2; a \code{leaf} that is
-more than one chunk; a
-\code{proof} without \code{sibling} and \code{side}, or with the two of
-different lengths.
+Errors: \code{chunks} that is not character, raw or a list of raw vectors and
+single strings, or that contains \code{NA}; \code{index} outside
+\code{1..length(chunks)}; a \code{scheme} other than 1 or 2; a \code{leaf}
+that is more than one chunk; a \code{proof} without \code{sibling} and
+\code{side}, or with the two of different lengths.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

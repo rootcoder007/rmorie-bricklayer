@@ -48,8 +48,12 @@ test_that("the identity adp = n * alos / t holds", {
   # relied on: days = people x stay, so dividing by t either way agrees.
   days <- 126121
   people <- 9608
-  expect_equal(adp(days), admits(adp(days), alos(days, people)) *
-    alos(days, people) / 365)
+  expect_equal(
+    adp(days),
+    admits(adp(days), alos(days, people)) *
+      alos(days, people) /
+      365
+  )
   expect_equal(admits(adp(days), alos(days, people)), people)
 })
 
@@ -58,7 +62,8 @@ test_that("stock and flow can carry opposite signs", {
   # flow rate falls while the stock rate rises, and a report quoting
   # either alone states the wrong direction for the other.
   sf <- stkflow(
-    days = c(115674, 126121), people = c(12647, 9608),
+    days = c(115674, 126121),
+    people = c(12647, 9608),
     prd = c("2023", "2025"),
     expo = c(15495050, 16256538)
   )
@@ -91,7 +96,8 @@ test_that("stkflow works without an exposure", {
 
 test_that("the printed form says when the signs disagree", {
   sf <- stkflow(
-    days = c(115674, 126121), people = c(12647, 9608),
+    days = c(115674, 126121),
+    people = c(12647, 9608),
     prd = c("2023", "2025"),
     expo = c(15495050, 16256538)
   )
@@ -99,7 +105,8 @@ test_that("the printed form says when the signs disagree", {
   expect_output(print(sf), "stkrate")
   # and stays quiet when they agree
   agree <- stkflow(
-    days = c(100, 200), people = c(10, 20),
+    days = c(100, 200),
+    people = c(10, 20),
     expo = c(1000, 1000)
   )
   expect_failure(expect_output(print(agree), "opposite signs"))
@@ -116,7 +123,8 @@ test_that("the arguments are validated", {
   expect_error(stkflow(days = c(1, 2), people = 1), "same length")
   expect_error(
     stkflow(
-      days = c(1, 2), people = c(1, 2),
+      days = c(1, 2),
+      people = c(1, 2),
       expo = c(1, 2, 3)
     ),
     "length 1 or the same length"
@@ -125,8 +133,10 @@ test_that("the arguments are validated", {
 
 test_that("a single exposure is recycled across periods", {
   sf <- stkflow(
-    days = c(100, 200), people = c(10, 20),
-    expo = 1000, per = 1000
+    days = c(100, 200),
+    people = c(10, 20),
+    expo = 1000,
+    per = 1000
   )
   expect_equal(sf$exposure, c(1000, 1000))
   expect_equal(sf$flowrate, c(10, 20))
@@ -188,17 +198,24 @@ test_that("staysmry copes with a single person and refuses nonsense", {
   expect_true(is.na(one$upper))
   expect_error(staysmry(c(1, -1)), "non-negative")
   expect_error(staysmry(numeric(0)), "must not be empty")
-  expect_error(staysmry(c(1, 2), conflvl = 1), "strictly between 0 and 1")  # the shared message since 0.5.13
+  # the shared message since 0.5.13
+  expect_error(
+    staysmry(c(1, 2), conflvl = 1),
+    paste0("strictly between 0 ", "and 1")
+  )
 })
 
 test_that("stkflow measures against the previous period when asked", {
   sf1 <- stkflow(
-    days = c(100, 200, 400), people = c(10, 10, 10),
+    days = c(100, 200, 400),
+    people = c(10, 10, 10),
     prd = c("a", "b", "c")
   )
   sf2 <- stkflow(
-    days = c(100, 200, 400), people = c(10, 10, 10),
-    prd = c("a", "b", "c"), base = "previous"
+    days = c(100, 200, 400),
+    people = c(10, 10, 10),
+    prd = c("a", "b", "c"),
+    base = "previous"
   )
   # against the first: b is +100%, c is +300%
   expect_equal(sf1$dayschg, c(0, 100, 300))
@@ -217,8 +234,10 @@ test_that("the measures hold together on a period that is not a year", {
   t30 <- perdays("2025-04-01", "2025-04-30")
   expect_equal(t30, 30)
   sf <- stkflow(
-    days = c(2400, 2750), people = c(300, 250),
-    prd = c("Apr", "May"), t = t30
+    days = c(2400, 2750),
+    people = c(300, 250),
+    prd = c("Apr", "May"),
+    t = t30
   )
   expect_equal(sf$adp, c(2400, 2750) / 30)
   expect_equal(sf$alos, c(8, 11))

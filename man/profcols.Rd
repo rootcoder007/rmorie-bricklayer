@@ -47,19 +47,17 @@ How the numbers are computed. A column is numeric when \code{is.numeric()} is
 \code{TRUE}; every other column (character, factor, logical, \code{Date}, ...) is
 treated as categorical, and \code{top} is its most frequent non-missing value as
 text (ties broken by the order of \code{sort(table())}). For a numeric column,
-over its non-missing values: \code{sd} is the sample standard deviation
-(\eqn{n - 1}), \code{mad} the median absolute deviation scaled by 1.4826,
-\code{skewness} the population moment ratio \eqn{m_3 / m_2^{3/2}},
-\code{n_outliers} the count outside the Tukey fences (1.5 interquartile ranges
-beyond the quartiles), and the quantiles are type 7. Infinite values are
-counted in \code{ninf} (and in \code{nneg}, \code{n_distinct}) and left
-out
-of every other numeric statistic, which are taken over the finite values
-only: a column with an infinite value keeps a finite mean and range, and
-a column with no finite value has \code{NA} statistics. A progress bar is shown for
-wide tables when
-\code{options(morie.progress)} allows it. Errors when \code{data} is not a data
-frame, has no columns, or has duplicate or empty column names.
+over its non-missing values: \code{sd} is the sample standard deviation (\eqn{n -
+1}), \code{mad} the median absolute deviation scaled by 1.4826, \code{skewness} the
+population moment ratio \eqn{m_3 / m_2^{3/2}}, \code{n_outliers} the count outside
+the Tukey fences (1.5 interquartile ranges beyond the quartiles), and the
+quantiles are type 7. Infinite values are counted in \code{ninf} (and in \code{nneg},
+\code{n_distinct}) and left out of every other numeric statistic, which are taken
+over the finite values only: a column with an infinite value keeps a finite
+mean and range, and a column with no finite value has \code{NA} statistics. A
+progress bar is shown for wide tables when \code{options(morie.progress)} allows
+it. Errors when \code{data} is not a data frame, has no columns, or has duplicate
+or empty column names.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

@@ -69,18 +69,26 @@ dst <- tempfile(fileext = ".xlsx")
 
 # Live download; auto-resolves a Wayback snapshot only if the live URL fails.
 blfetch(
-  paste0("https://www.cihi.ca/sites/default/files/document/",
-         "hospital-beds-2024-2025-data-tables-en.xlsx"),
-  dst)
+  paste0(
+    "https://www.cihi.ca/sites/default/files/document/",
+    "hospital-beds-2024-2025-data-tables-en.xlsx"
+  ),
+  dst
+)
 
 # Pin an explicit Wayback snapshot to fall back to, and a shorter timeout.
 blfetch(
-  "https://example.org/rotated-file.csv", tempfile(fileext = ".csv"),
-  wb = "https://web.archive.org/web/2024id_/https://example.org/rotated-file.csv",
-  tmout = 60)
+  "https://example.org/rotated-file.csv",
+  tempfile(fileext = ".csv"),
+  wb = paste0(
+    "https://web.archive.org/web/2024id_/https://example.org/rotated-fil",
+    "e.csv"
+  ),
+  tmout = 60
+)
 
 # The return value tells you which source served the file.
 status <- blfetch("https://cloud.r-project.org/", tempfile())
-status   # "live" or "wayback"
+status # "live" or "wayback"
 \dontshow{\}) # examplesIf}
 }

@@ -45,41 +45,31 @@ dropped by \code{"truncate"}. Ignored by the other routes.}
 are moved onto it. \code{NULL} (the default) uses a start from the data.}
 }
 \value{
-A list:
-\describe{
-\item{\code{theta}}{numeric, all estimates in the order baseline, \code{eta},
-kernel.}
-\item{\code{basepar}}{numeric, \code{a0} (constant) or \code{a0..a3}
-(sinusoidal), on the log scale.}
+A list: \describe{ \item{\code{theta}}{numeric, all estimates in the
+order baseline, \code{eta}, kernel.} \item{\code{basepar}}{numeric,
+\code{a0} (constant) or \code{a0..a3} (sinusoidal), on the log scale.}
 \item{\code{braratio}}{numeric, \eqn{\eta}, the expected number of events
-each
-event triggers.}
-\item{\code{kerpar}}{numeric, the kernel parameters (\code{beta};
-\code{alpha, lambda}; \code{alpha, beta}; or \code{alpha, c}).}
-\item{\code{nll}, \code{aic}, \code{bic}}{numeric: the exact negative
-log-likelihood,
-\eqn{2k + 2\,nll} and \eqn{k \log n + 2\,nll}.}
-\item{\code{n}, \code{horizon}, \code{kpar}}{the number of events (integer),
-the
-window end and the number of parameters (integer).}
+each event triggers.} \item{\code{kerpar}}{numeric, the kernel parameters
+(\code{beta}; \code{alpha, lambda}; \code{alpha, beta}; or \code{alpha,
+  c}).} \item{\code{nll}, \code{aic}, \code{bic}}{numeric: the exact negative
+log-likelihood, \eqn{2k + 2\,nll} and \eqn{k \log n + 2\,nll}.}
+\item{\code{n}, \code{horizon}, \code{kpar}}{the number of events
+(integer), the window end and the number of parameters (integer).}
 \item{\code{ksstat}, \code{kspva}}{numeric, the Kolmogorov-Smirnov test of
-the
-time-rescaling residuals against the uniform.}
-\item{\code{kernel}, \code{baseline}, \code{method}}{character, the choices used
-(\code{method} after \code{"auto"} is resolved).}
-\item{\code{eps}}{numeric, \code{eps} for \code{"soe"} and \code{"truncate"},
-\code{NA} otherwise.}
-\item{\code{converged}}{logical, the optimiser stopped at a maximum within the
-parameter box (before its iteration limit, at a finite likelihood). A maximum
-on the box counts: \code{atbound} names the parameters that lie on it.}
-\item{\code{atbound}}{character, the names of parameters that lie on the box
-(\code{character(0)} for an interior maximum).}
-}
-A warning is given when \eqn{\eta} reaches its upper bound 0.99 (a near-critical,
-probably non-stationary fit).
-An estimate on the box is not an interior maximum of the likelihood:
-day-dated (tied) times drive a shape or decay to its wall, and a Lomax
-fitted to exponential data runs to its exponential limit.
+the time-rescaling residuals against the uniform.} \item{\code{kernel},
+\code{baseline}, \code{method}}{character, the choices used (\code{method}
+after \code{"auto"} is resolved).} \item{\code{eps}}{numeric, \code{eps}
+for \code{"soe"} and \code{"truncate"}, \code{NA} otherwise.}
+\item{\code{converged}}{logical, the optimiser stopped at a maximum within
+the parameter box (before its iteration limit, at a finite likelihood). A
+maximum on the box counts: \code{atbound} names the parameters that lie on
+it.} \item{\code{atbound}}{character, the names of parameters that lie on
+the box (\code{character(0)} for an interior maximum).} } A warning is
+given when \eqn{\eta} reaches its upper bound 0.99 (a near-critical,
+probably non-stationary fit). An estimate on the box is not an interior
+maximum of the likelihood: day-dated (tied) times drive a shape or decay to
+its wall, and a Lomax fitted to exponential data runs to its exponential
+limit.
 }
 \description{
 Fits a self-exciting (Hawkes) point process to a series of event times,
@@ -90,60 +80,49 @@ kernel, with AIC, BIC and a goodness-of-fit test. Use it to ask whether
 events cluster in time beyond what a steady or seasonal rate explains.
 }
 \details{
-The model is the univariate Hawkes process
-\deqn{\lambda(t) = \nu(t) + \eta \sum_{t_j < t} g(t - t_j)}
-with a constant baseline (\eqn{\nu = e^{a_0}}) or a sinusoidal one
-(\eqn{\nu(t) = \exp(a_0 + a_1 t/T + a_2 \sin(2\pi t/365.25) + a_3 \cos(2\pi t/365.25))},
-a trend plus a yearly cycle when times are in days, its integral by the
-trapezoid rule on \code{max(64, floor(T) + 1)} points), branching ratio
-\eqn{\eta \in [0.001, 0.99]} and one of four normalised kernels \eqn{g}:
-exponential (decay \code{beta}), Weibull (shape \code{alpha}, scale
-\code{lambda}), gamma (shape \code{alpha}, rate \code{beta}) or Lomax
-(shape \code{alpha}, scale \code{c}). The log-likelihood is
-\eqn{\sum_i \log \lambda(t_i) - \int_0^T \lambda(t)\,dt}. Every route uses
-the analytic gradient of the shared C++ core (the code morie's Python arm
-calls), so one likelihood evaluation per point instead of one per
-parameter. The optimiser is a projected BFGS inside a fixed parameter box
-(\eqn{a_0 \in [-15, 15]}, the other baseline terms in \eqn{[-5, 5]},
-kernel parameters bounded as listed in the source), at most 2000
-iterations.
+The model is the univariate Hawkes process \deqn{\lambda(t) = \nu(t)
++ \eta \sum_{t_j < t} g(t - t_j)} with a constant baseline (\eqn{\nu =
+e^{a_0}}) or a sinusoidal one (\eqn{\nu(t) = \exp(a_0 + a_1 t/T + a_2
+\sin(2\pi t/365.25) + a_3 \cos(2\pi t/365.25))}, a trend plus a yearly cycle
+when times are in days, its integral by the trapezoid rule on \code{max(64,
+floor(T) + 1)} points), branching ratio \eqn{\eta \in [0.001, 0.99]} and one
+of four normalised kernels \eqn{g}: exponential (decay \code{beta}), Weibull
+(shape \code{alpha}, scale \code{lambda}), gamma (shape \code{alpha}, rate
+\code{beta}) or Lomax (shape \code{alpha}, scale \code{c}). The
+log-likelihood is \eqn{\sum_i \log \lambda(t_i) - \int_0^T \lambda(t)\,dt}.
+Every route uses the analytic gradient of the shared C++ core (the code
+morie's Python arm calls), so one likelihood evaluation per point instead of
+one per parameter. The optimiser is a projected BFGS inside a fixed parameter
+box (\eqn{a_0 \in [-15, 15]}, the other baseline terms in \eqn{[-5, 5]},
+kernel parameters bounded as listed in the source), at most 2000 iterations.
 
-\describe{
-\item{\code{"exact"}}{Ozaki's O(n) recursion for the exponential kernel; for Weibull
-and
-gamma the double sum stops where the kernel underflows to exactly 0 (the same
-value as
-the full sum); Lomax the full O(n^2) sum.}
-\item{\code{"soe"}}{the completely monotone kernels (Lomax; gamma with shape < 1) as
-a
-sum of exponentials (Beylkin & Monzon 2010): relative error \code{eps} on every
-intensity, O(n K); a gamma kernel with shape >= 1 is truncated at \code{eps}.}
-\item{\code{"truncate"}}{each event excites only lags with kernel tail mass above
-\code{eps}: an approximation for light-tailed kernels, O(n w).}
-\item{\code{"em"}}{the EM algorithm (Veen & Schoenberg 2008), finished by the
-projected BFGS on the exact likelihood from EM's point (EM's steps shrink before
-it
-reaches the maximum). It is an R loop of up to 500 iterations and much slower than
-the
-other routes (tens of seconds for a few hundred events); because it starts from
-the
-same point but moves differently, it can end at a different local maximum.}
-\item{\code{"inar"}}{Kirchner's (2017) INAR(p) least-squares estimator on binned
-counts
-(constant baseline only): a different, fast, approximate estimator.}
-\item{\code{"auto"}}{\code{"exact"} for the exponential kernel, \code{"truncate"}
-for
-Weibull, \code{"soe"} for gamma and Lomax.}
-}
-For the Weibull, gamma and Lomax kernels without \code{start}, a second
-deterministic start at the exponential fit (the shape-1 member) is also
-run and the better optimum kept, because the likelihood is multimodal.
-The exponential kernel without \code{start} is also run from a second
-start (branching ratio 0.1 and a decay a quarter of the reciprocal mean
-gap), and the better optimum kept: on data with little clustering its
-likelihood can have more than one maximum, one of them with the decay on
-its bound. A parameter on its bound (see \code{atbound}) is still a
-reason to refit from another \code{start} and compare \code{nll}.
+\describe{ \item{\code{"exact"}}{Ozaki's O(n) recursion for the exponential
+kernel; for Weibull and gamma the double sum stops where the kernel
+underflows to exactly 0 (the same value as the full sum); Lomax the full
+O(n^2) sum.} \item{\code{"soe"}}{the completely monotone kernels (Lomax;
+gamma with shape < 1) as a sum of exponentials (Beylkin & Monzon 2010):
+relative error \code{eps} on every intensity, O(n K); a gamma kernel with
+shape >= 1 is truncated at \code{eps}.} \item{\code{"truncate"}}{each event
+excites only lags with kernel tail mass above \code{eps}: an approximation
+for light-tailed kernels, O(n w).} \item{\code{"em"}}{the EM algorithm
+(Veen & Schoenberg 2008), finished by the projected BFGS on the exact
+likelihood from EM's point (EM's steps shrink before it reaches the
+maximum). It is an R loop of up to 500 iterations and much slower than the
+other routes (tens of seconds for a few hundred events); because it starts
+from the same point but moves differently, it can end at a different local
+maximum.} \item{\code{"inar"}}{Kirchner's (2017) INAR(p) least-squares
+estimator on binned counts (constant baseline only): a different, fast,
+approximate estimator.} \item{\code{"auto"}}{\code{"exact"} for the
+exponential kernel, \code{"truncate"} for Weibull, \code{"soe"} for gamma
+and Lomax.} } For the Weibull, gamma and Lomax kernels without
+\code{start}, a second deterministic start at the exponential fit (the
+shape-1 member) is also run and the better optimum kept, because the
+likelihood is multimodal. The exponential kernel without \code{start} is
+also run from a second start (branching ratio 0.1 and a decay a quarter of
+the reciprocal mean gap), and the better optimum kept: on data with little
+clustering its likelihood can have more than one maximum, one of them with
+the decay on its bound. A parameter on its bound (see \code{atbound}) is
+still a reason to refit from another \code{start} and compare \code{nll}.
 
 The reported \code{nll} is the exact likelihood at the estimate whatever
 the route, so AIC is comparable across routes. An event exactly at
@@ -199,24 +178,25 @@ try(chwkfit(times, 50))
 \dontshow{\}) # examplesIf}
 }
 \references{
-Ozaki T (1979). Maximum likelihood estimation of Hawkes' self-exciting
-point
-processes. \emph{Ann. Inst. Statist. Math.} 31, 145--155. \doi{10.1007/BF02480272}
+Ozaki T (1979). Maximum likelihood estimation of Hawkes'
+self-exciting point processes. \emph{Ann. Inst. Statist. Math.} 31,
+145--155. \doi{10.1007/BF02480272}
 
 Beylkin G, Monzon L (2010). Approximation by exponential sums revisited.
-\emph{Appl. Comput. Harmon. Anal.} 28, 131--149. \doi{10.1016/j.acha.2009.08.011}
+\emph{Appl. Comput. Harmon. Anal.} 28, 131--149.
+\doi{10.1016/j.acha.2009.08.011}
 
-Veen A, Schoenberg FP (2008). Estimation of space-time branching process models in
-seismology using an EM-type algorithm. \emph{JASA} 103, 614--624.
+Veen A, Schoenberg FP (2008). Estimation of space-time branching process
+models in seismology using an EM-type algorithm. \emph{JASA} 103, 614--624.
 \doi{10.1198/016214508000000148}
 
 Kirchner M (2017). An estimation procedure for the Hawkes process.
 \emph{Quant. Finance} 17, 571--595. \doi{10.1080/14697688.2016.1211312}
 
-Filimonov V, Sornette D (2015). Apparent criticality and calibration issues in the
-Hawkes self-excited point process model: application to high-frequency financial
-data.
-\emph{Quant. Finance} 15(8), 1293--1314. \doi{10.1080/14697688.2015.1032544}
+Filimonov V, Sornette D (2015). Apparent criticality and calibration issues
+in the Hawkes self-excited point process model: application to
+high-frequency financial data. \emph{Quant. Finance} 15(8), 1293--1314.
+\doi{10.1080/14697688.2015.1032544}
 }
 \seealso{
 \code{\link[=chwkjit]{chwkjit()}}, for times recorded

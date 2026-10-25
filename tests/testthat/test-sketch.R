@@ -54,15 +54,16 @@ test_that("accumulators merge in any order and handle empty blocks", {
   expect_equal(smrystat(ab)[["mean"]], mean(x))
   expect_equal(smrystat(ab)[["variance"]], stats::var(x))
   # merging is symmetric in its arguments
-  expect_equal(smrystat(ba)[["variance"]],
-               smrystat(ab)[["variance"]])
+  expect_equal(smrystat(ba)[["variance"]], smrystat(ab)[["variance"]])
   expect_equal(smrystat(ba)[["mean"]], smrystat(ab)[["mean"]])
   # and associative across three parts
   p1 <- onlsmry(x[1:200])
   p2 <- onlsmry(x[201:400])
   p3 <- onlsmry(x[401:600])
-  expect_equal(smrystat(smrymrg(smrymrg(p1, p2), p3)),
-               smrystat(smrymrg(p1, smrymrg(p2, p3))))
+  expect_equal(
+    smrystat(smrymrg(smrymrg(p1, p2), p3)),
+    smrystat(smrymrg(p1, smrymrg(p2, p3)))
+  )
 
   # an empty accumulator is the identity for the merge
   e <- onlsmry()
@@ -74,13 +75,10 @@ test_that("accumulators merge in any order and handle empty blocks", {
   expect_true(is.nan(es[["mean"]]))
   expect_true(is.nan(es[["variance"]]))
   # an empty or all-NA block leaves the accumulator untouched
-  expect_equal(smrystat(smryupd(a, numeric(0))),
-               smrystat(a))
-  expect_equal(smrystat(smryupd(a, c(NA, NA))),
-               smrystat(a))
+  expect_equal(smrystat(smryupd(a, numeric(0))), smrystat(a))
+  expect_equal(smrystat(smryupd(a, c(NA, NA))), smrystat(a))
   # NA inside a block is dropped, not propagated
-  expect_equal(smrystat(onlsmry(c(x[1:10], NA)))[["mean"]],
-               mean(x[1:10]))
+  expect_equal(smrystat(onlsmry(c(x[1:10], NA)))[["mean"]], mean(x[1:10]))
   # too few observations for a moment gives NaN, not a fabricated number
   expect_true(is.nan(smrystat(onlsmry(c(1, 2)))[["skewness"]]))
   expect_equal(smrystat(onlsmry(5))[["n"]], 1)
@@ -133,8 +131,7 @@ test_that("the reservoir samples uniformly and reproducibly", {
   expect_true(all(abs(counts - expected) / expected < 0.25))
 
   # sampling a vector returns its elements
-  expect_equal(rsvsmp(letters, 4, seed = 2),
-               letters[rsvidx(26, 4, seed = 2)])
+  expect_equal(rsvsmp(letters, 4, seed = 2), letters[rsvidx(26, 4, seed = 2)])
   expect_length(rsvsmp(1:100, 7, seed = 3), 7L)
   expect_true(all(rsvsmp(1:100, 7, seed = 3) %in% 1:100))
 
@@ -161,15 +158,16 @@ test_that("HyperLogLog estimates cardinality within its error bound", {
   expect_lt(abs(est - length(unique(x))) / length(unique(x)), 0.05)
 
   # small cardinalities go through linear counting and are near-exact
-  expect_equal(dstncnt(dstnskch(c("a", "b", "c", "a", "b"))),
-               3, tolerance = 0.01)
-  expect_equal(dstncnt(dstnskch(as.character(1:50))), 50,
-               tolerance = 0.02)
+  expect_equal(
+    dstncnt(dstnskch(c("a", "b", "c", "a", "b"))),
+    3,
+    tolerance = 0.01
+  )
+  expect_equal(dstncnt(dstnskch(as.character(1:50))), 50, tolerance = 0.02)
   expect_equal(dstncnt(dstnskch(character(0))), 0)
   expect_equal(dstncnt(dstnskch("only")), 1, tolerance = 0.01)
   # NA carries no value to count
-  expect_equal(dstncnt(dstnskch(c("a", NA, "b"))), 2,
-               tolerance = 0.01)
+  expect_equal(dstncnt(dstnskch(c("a", NA, "b"))), 2, tolerance = 0.01)
 
   # the sketch is deterministic, which is what makes a capsule
   # reproducible
@@ -186,8 +184,10 @@ test_that("HyperLogLog estimates cardinality within its error bound", {
   folded <- dstnskch(x[1:25000], p = 12L)
   folded <- dstnskch(x[25001:50000], p = 12L, regstr = folded)
   expect_identical(folded, one)
-  merged <- skchmrg(dstnskch(x[1:25000], p = 12L),
-                         dstnskch(x[25001:50000], p = 12L))
+  merged <- skchmrg(
+    dstnskch(x[1:25000], p = 12L),
+    dstnskch(x[25001:50000], p = 12L)
+  )
   expect_identical(merged, one)
   expect_equal(dstncnt(merged), dstncnt(one))
   # merging is the element-wise maximum, so it is idempotent

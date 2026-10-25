@@ -32,17 +32,16 @@ how little information the area carries. Use the shrunk estimates for
 maps and rankings; use \code{\link{stdinc}} for each area's own evidence.
 }
 \details{
-The area relative risks \eqn{\theta_a} are taken to come from a gamma
-prior with shape \eqn{\nu} and rate \eqn{\alpha}. Its mean is the overall
-ratio \eqn{m = \sum O_a / \sum E_a}, and its variance is estimated by the
-method of moments,
-\deqn{s^2 = \frac{\sum_a E_a (\theta_a - m)^2}{\sum_a E_a} - \frac{m}{\bar E},}
-with \eqn{\theta_a = O_a / E_a} and \eqn{\bar E} the mean expected count;
-the subtracted term is the spread that Poisson sampling alone would
-produce. Then \eqn{\alpha = m / s^2}, \eqn{\nu = m^2 / s^2}, and the
-posterior mean \eqn{(O_a + \nu)/(E_a + \alpha)} is reported, with
-shrinkage \eqn{\alpha / (E_a + \alpha)}. Where the expected count is large
-the data dominate and the estimate barely moves; where it is small the
+The area relative risks \eqn{\theta_a} are taken to come from a
+gamma prior with shape \eqn{\nu} and rate \eqn{\alpha}. Its mean is the
+overall ratio \eqn{m = \sum O_a / \sum E_a}, and its variance is estimated by
+the method of moments, \deqn{s^2 = \frac{\sum_a E_a (\theta_a - m)^2}{\sum_a
+E_a} - \frac{m}{\bar E},} with \eqn{\theta_a = O_a / E_a} and \eqn{\bar E}
+the mean expected count; the subtracted term is the spread that Poisson
+sampling alone would produce. Then \eqn{\alpha = m / s^2}, \eqn{\nu = m^2 /
+s^2}, and the posterior mean \eqn{(O_a + \nu)/(E_a + \alpha)} is reported,
+with shrinkage \eqn{\alpha / (E_a + \alpha)}. Where the expected count is
+large the data dominate and the estimate barely moves; where it is small the
 prior does, which is the intended behaviour and not a defect.
 
 When the between-area variance estimate comes out at or below zero there

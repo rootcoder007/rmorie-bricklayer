@@ -38,24 +38,22 @@ checking whether the Wayback Machine already holds a copy of each. Use it
 after a run that hit archive.org's limits, typically the next day.
 }
 \details{
-Reads the results file a \code{\link{wbsave}} run wrote
-and tries again every URL whose latest result is
-\code{"failed"} (or \code{"submitted"}: a capture a stopped run
-had started, which is polled rather than submitted again), so
-nobody has to dig the failures out by hand. Each failed URL is
-first looked up in the Wayback Machine, one lookup a second: a
-capture made at any time (an earlier one of a page that has
-since gone, or one made today by another run when the daily
-limit refused this one) is recorded as \code{"existing"}
-without capturing again. What is left is captured again with
-\code{wbsave()}, appending to the same file. A page its
-source no longer has is not sent again unless
-\code{incgone = TRUE}: a new capture would only archive the error.
-\code{"Gone"} means the recorded message contains archive.org's report of the
-target server's reply (\dQuote{target server cannot find}, \dQuote{returned 404},
-\dQuote{returned 410}, \code{"error:not-found"} or \code{"error:gone"}); an HTTP 404 from
-archive.org's own API does not count. A failure for a daily limit
-recorded today (UTC) is not sent again until tomorrow.
+Reads the results file a \code{\link{wbsave}} run wrote and tries
+again every URL whose latest result is \code{"failed"} (or
+\code{"submitted"}: a capture a stopped run had started, which is polled
+rather than submitted again), so nobody has to dig the failures out by hand.
+Each failed URL is first looked up in the Wayback Machine, one lookup a
+second: a capture made at any time (an earlier one of a page that has since
+gone, or one made today by another run when the daily limit refused this one)
+is recorded as \code{"existing"} without capturing again. What is left is
+captured again with \code{wbsave()}, appending to the same file. A page its
+source no longer has is not sent again unless \code{incgone = TRUE}: a new
+capture would only archive the error. \code{"Gone"} means the recorded
+message contains archive.org's report of the target server's reply
+(\dQuote{target server cannot find}, \dQuote{returned 404}, \dQuote{returned
+410}, \code{"error:not-found"} or \code{"error:gone"}); an HTTP 404 from
+archive.org's own API does not count. A failure for a daily limit recorded
+today (UTC) is not sent again until tomorrow.
 
 Network: the lookups use the Wayback availability API and the new
 captures use \code{wbsave()}, which needs the archive.org keys.
@@ -72,14 +70,23 @@ any error from \code{wbsave()}.
 # Offline: a results file whose only failure is a page that is gone
 # has nothing to send again, so no keys or network are used.
 f <- tempfile(fileext = ".jsonl")
-writeLines(c(
-  paste0('{"url":"https://example.org/","status":"saved",',
-         '"timestamp":"20260101120000",',
-         '"snapshot":"https://web.archive.org/web/20260101120000/https://example.org/",',
-         '"message":"","at":"2026-01-01T12:00:00Z"}'),
-  paste0('{"url":"https://example.org/old","status":"failed",',
-         '"message":"target server cannot find the page","at":"2026-01-01T12:00:00Z"}')
-), f)
+writeLines(
+  c(
+    paste0(
+      '{"url":"https://example.org/","status":"saved",',
+      '"timestamp":"20260101120000",',
+      '"snapshot":"https://web.archive.org/web/20260101120000/https://',
+      'example.org/",',
+      '"message":"","at":"2026-01-01T12:00:00Z"}'
+    ),
+    paste0(
+      '{"url":"https://example.org/old","status":"failed",',
+      '"message":"target server cannot find the ',
+      'page","at":"2026-01-01T12:00:00Z"}'
+    )
+  ),
+  f
+)
 res <- wbrtry(f, lookup = FALSE)
 res
 attr(res, "retry")

@@ -31,13 +31,13 @@ year or a month index) and the outcome.}
 population).}
 
 \item{cl}{Column name of the clusters (default the unit), or two column names
-for two-way clustering (Cameron, Gelbach and Miller 2011):
-\eqn{V_a + V_b - V_{ab}}, each term with the small-sample factor of the dimension
-with fewer clusters, and t on its \eqn{G - 1} degrees of freedom. A composite
-cluster (district by month, say) is one column made with \code{interaction()}.}
+for two-way clustering (Cameron, Gelbach and Miller 2011): \eqn{V_a + V_b -
+V_{ab}}, each term with the small-sample factor of the dimension with fewer
+clusters, and t on its \eqn{G - 1} degrees of freedom. A composite cluster
+(district by month, say) is one column made with \code{interaction()}.}
 
-\item{family}{\code{"poisson"} (default) or \code{"negbin"} (NB2,
-\eqn{Var(Y) = \mu + \mu^2/\theta}, with \eqn{\theta} by maximum likelihood).}
+\item{family}{\code{"poisson"} (default) or \code{"negbin"} (NB2, \eqn{Var(Y)
+= \mu + \mu^2/\theta}, with \eqn{\theta} by maximum likelihood).}
 
 \item{conflvl}{Confidence level (default 0.95).}
 }
@@ -49,31 +49,31 @@ A data frame of class \code{rmbl_fe_poisson}, one row per term:
 (\code{Inf} for the Poisson).
 }
 \description{
-The effect of a policy on counts (stops, arrests, offences) with unit and period
-fixed effects, reported as an incidence rate ratio, with cluster-robust standard
-errors that do not need the counts to be Poisson.
+The effect of a policy on counts (stops, arrests, offences) with unit and
+period fixed effects, reported as an incidence rate ratio, with
+cluster-robust standard errors that do not need the counts to be Poisson.
 }
 \details{
-The model is
-\eqn{E(Y_{it}) = \exp(\beta T_{it} + X_{it}'\gamma + \delta_i + \mu_t)} (times the
-exposure, with \code{offset} its log), fitted by maximum likelihood. Units whose
-counts are all zero carry no information about \eqn{\beta} and are dropped first,
-as are periods with no count anywhere. The Poisson likelihood with fixed effects is
-consistent for \eqn{\beta} whatever the dispersion (Wooldridge 1999); the variance
-is the cluster-robust sandwich, with the small-sample factors of
+The model is \eqn{E(Y_{it}) = \exp(\beta T_{it} + X_{it}'\gamma +
+\delta_i + \mu_t)} (times the exposure, with \code{offset} its log), fitted
+by maximum likelihood. Units whose counts are all zero carry no information
+about \eqn{\beta} and are dropped first, as are periods with no count
+anywhere. The Poisson likelihood with fixed effects is consistent for
+\eqn{\beta} whatever the dispersion (Wooldridge 1999); the variance is the
+cluster-robust sandwich, with the small-sample factors of
 \code{\link{plndid}}. The rate ratio is \eqn{e^{\beta}}, with interval
 \eqn{e^{\hat\beta \pm z\,se}}.
 
-With \code{family = "negbin"} the variance is \eqn{\mu + \mu^2/\theta}: the fit
-alternates iteratively reweighted least squares at fixed \eqn{\theta} with the
-maximum of the profile likelihood in \eqn{\theta}, and the sandwich uses the
-negative binomial scores with \eqn{\theta} held at its estimate (as
+With \code{family = "negbin"} the variance is \eqn{\mu + \mu^2/\theta}: the
+fit alternates iteratively reweighted least squares at fixed \eqn{\theta}
+with the maximum of the profile likelihood in \eqn{\theta}, and the sandwich
+uses the negative binomial scores with \eqn{\theta} held at its estimate (as
 \code{sandwich::vcovCL()} does for \code{MASS::glm.nb()};
-\code{fixest::fenegbin()}, which treats \eqn{\theta} as a parameter of the variance
-too, gives slightly larger errors). With unit dummies this is the unconditional
-fixed-effects negative binomial, which behaves well as the number of periods grows
-(Allison and Waterman 2002); with few periods per unit prefer the Poisson, which is
-consistent whatever the dispersion.
+\code{fixest::fenegbin()}, which treats \eqn{\theta} as a parameter of the
+variance too, gives slightly larger errors). With unit dummies this is the
+unconditional fixed-effects negative binomial, which behaves well as the
+number of periods grows (Allison and Waterman 2002); with few periods per
+unit prefer the Poisson, which is consistent whatever the dispersion.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
@@ -87,14 +87,13 @@ plnpois(p, "district", "month", "crimes", "reformed", offset = "logpop",
 \dontshow{\}) # examplesIf}
 }
 \references{
-Wooldridge JM (1999). Distribution-free estimation of some nonlinear
-panel data models. Journal of Econometrics 90(1):77-97.
+Wooldridge JM (1999). Distribution-free estimation of some
+nonlinear panel data models. Journal of Econometrics 90(1):77-97.
 \doi{10.1016/S0304-4076(98)00033-5}
 
-Santos Silva JMC, Tenreyro S (2006). The log of gravity. Review of Economics and
-Statistics 88(4):641-658. \doi{10.1162/rest.88.4.641}
+Santos Silva JMC, Tenreyro S (2006). The log of gravity. Review of Economics
+and Statistics 88(4):641-658. \doi{10.1162/rest.88.4.641}
 
-Allison PD, Waterman RP (2002). Fixed-effects negative binomial regression models.
-Sociological Methodology 32:247-265.
-\doi{10.1111/1467-9531.00117}
+Allison PD, Waterman RP (2002). Fixed-effects negative binomial regression
+models. Sociological Methodology 32:247-265. \doi{10.1111/1467-9531.00117}
 }

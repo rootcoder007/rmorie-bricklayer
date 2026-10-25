@@ -17,12 +17,11 @@ shared row; \code{"disabled"}, \code{"not running"},
 (the address and model, or what to set up).
 }
 \description{
-Shows, in one table, every way \code{\link{llmask}} could
-reach a language model from this machine and whether each is ready: your
-own endpoint, each provider whose key is set, and a local Ollama server.
-Use it to find out why a question fails with \dQuote{no route}, or which model
-a route would use. The command line prints it as part of
-\code{rmoriebricklayer doctor}.
+Shows, in one table, every way \code{\link{llmask}} could reach a language
+model from this machine and whether each is ready: your own endpoint, each
+provider whose key is set, and a local Ollama server. Use it to find out why
+a question fails with \dQuote{no route}, or which model a route would use.
+The command line prints it as part of \code{rmoriebricklayer doctor}.
 }
 \details{
 Rows come in the order \code{llmask()} tries the routes. The
@@ -39,20 +38,33 @@ with the reason and the command that moves the file aside.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST",
-                    "MORIE_LLM_BASE_URL", "MORIE_LLM_MODEL"),
-                  unset = NA)
+old <- Sys.getenv(
+  c(
+    "XDG_CONFIG_HOME",
+    "OLLAMA_HOST",
+    "MORIE_LLM_BASE_URL",
+    "MORIE_LLM_MODEL"
+  ),
+  unset = NA
+)
 # a scratch settings folder and the local route off: no network at all
 Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
 st <- llmstat()
 st[, c("route", "status")]
 
 # your own OpenAI-compatible server shows as configured (it is not contacted)
-Sys.setenv(MORIE_LLM_BASE_URL = "http://localhost:8080", MORIE_LLM_MODEL = "llama3")
+Sys.setenv(
+  MORIE_LLM_BASE_URL = "http://localhost:8080",
+  MORIE_LLM_MODEL = "llama3"
+)
 llmstat()[1, ]
 
 for (v in names(old)) {
-  if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
+  if (is.na(old[[v]])) {
+    Sys.unsetenv(v)
+  } else {
+    do.call(Sys.setenv, as.list(old[v]))
+  }
 }
 \dontshow{\}) # examplesIf}
 }

@@ -24,24 +24,20 @@ capsule cites the data set in the same words, with the retrieval date and
 licence that were actually pinned.
 }
 \details{
-The fields used, with their fallbacks:
-\itemize{
-\item author: \code{dataset$publisher}, else \code{"Unknown publisher"};
-\item title: \code{resource$name}, else \code{dataset$package_slug}, else
-\code{"Untitled dataset"};
-\item year: the first four characters of \code{captured_at_utc}, else the current
-year; retrieval date: its first ten characters (omitted if absent);
-\item link: \code{https://doi.org/<dataset$doi>} if a DOI is recorded, else
-\code{resource$direct_url}, else \code{dataset$catalogue_page};
-\item licence: \code{dataset$licence_short}, else \code{dataset$licence_name}.
-}
-The text form is
-\code{Publisher (year). Title [Data set]. link Retrieved date. Licence: x.}
-The BibTeX key is the package slug with non-alphanumeric characters
-removed, followed by the year. In the BibTeX entry the licence is written
-in the \code{note} field only when a retrieval date is present. No
-character in the fields is escaped for LaTeX. Error: \code{prov}
-that is not a list.
+The fields used, with their fallbacks: \itemize{ \item author:
+\code{dataset$publisher}, else \code{"Unknown publisher"}; \item title:
+\code{resource$name}, else \code{dataset$package_slug}, else \code{"Untitled
+dataset"}; \item year: the first four characters of \code{captured_at_utc},
+else the current year; retrieval date: its first ten characters (omitted if
+absent); \item link: \code{https://doi.org/<dataset$doi>} if a DOI is
+recorded, else \code{resource$direct_url}, else
+\code{dataset$catalogue_page}; \item licence: \code{dataset$licence_short},
+else \code{dataset$licence_name}. } The text form is \code{Publisher (year).
+Title [Data set]. link Retrieved date. Licence: x.} The BibTeX key is the
+package slug with non-alphanumeric characters removed, followed by the year.
+In the BibTeX entry the licence is written in the \code{note} field only when
+a retrieval date is present. No character in the fields is escaped for LaTeX.
+Error: \code{prov} that is not a list.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

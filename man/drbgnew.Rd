@@ -73,11 +73,13 @@ check does and does not cover.
 
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-# NIST's rng.c, as the post-quantum known-answer files use it: vector 0's seed
+# NIST's rng.c, as the post-quantum known-answer files use it: vector 0's
+# seed
 d <- drbgnew(as.raw(0:47))
 drbggen(d, 48)
 
-# the same inputs give the same bytes; a personalization string separates streams
+# the same inputs give the same bytes; a personalization string separates
+# streams
 a <- drbgnew(as.raw(1:48), person = charToRaw("session 1"))
 b <- drbgnew(as.raw(1:48), person = charToRaw("session 2"))
 identical(drbggen(a, 16), drbggen(b, 16))
@@ -91,8 +93,8 @@ try(drbgnew(as.raw(1:16)))
 \dontshow{\}) # examplesIf}
 }
 \references{
-NIST SP 800-90A Rev. 1 (2015). Recommendation for Random Number Generation
-Using Deterministic Random Bit Generators, section 10.2.1.
+NIST SP 800-90A Rev. 1 (2015). Recommendation for Random Number
+Generation Using Deterministic Random Bit Generators, section 10.2.1.
 \doi{10.6028/NIST.SP.800-90Ar1}
 
 NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard (AES).\cr

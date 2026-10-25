@@ -19,8 +19,8 @@ kem_vectors <- function() {
 # The sizes FIPS 203 table 3 fixes, hard-coded so a change to a
 # compression width fails here rather than being blessed.
 KEM_SIZES <- list(
-  "512"  = c(800L, 1632L, 768L, 64L, 32L),
-  "768"  = c(1184L, 2400L, 1088L, 64L, 32L),
+  "512" = c(800L, 1632L, 768L, 64L, 32L),
+  "768" = c(1184L, 2400L, 1088L, 64L, 32L),
   "1024" = c(1568L, 3168L, 1568L, 64L, 32L)
 )
 
@@ -28,15 +28,17 @@ test_that("the byte lengths are the ones FIPS 203 fixes", {
   for (lv in names(KEM_SIZES)) {
     sz <- kemsz(as.integer(lv))
     expect_identical(
-      unname(sz[c("public", "secret", "ciphertext",
-                  "seed", "shared")]),
-      KEM_SIZES[[lv]], info = lv)
+      unname(sz[c("public", "secret", "ciphertext", "seed", "shared")]),
+      KEM_SIZES[[lv]],
+      info = lv
+    )
   }
   # the decapsulation key carries the encapsulation key, its hash and
   # the rejection secret, which is where its size comes from
   expect_identical(
     kemsz(768)[["secret"]],
-    2L * (kemsz(768)[["public"]] - 32L) + 32L + 64L)
+    2L * (kemsz(768)[["public"]] - 32L) + 32L + 64L
+  )
   # the shared secret is 32 bytes at every level
   for (lv in c(512, 768, 1024)) {
     expect_identical(kemsz(lv)[["shared"]], 32L)
@@ -56,8 +58,7 @@ test_that("keys from a fixed seed match OpenSSL byte for byte", {
     expect_identical(key$public, vec[[lv]][2L], info = lv)
     expect_identical(key$secret, vec[[lv]][3L], info = lv)
     # the same seed twice is the same key
-    expect_identical(kemkg(as.integer(lv), seed = seed)$public,
-                     key$public)
+    expect_identical(kemkg(as.integer(lv), seed = seed)$public, key$public)
     # and a different seed is a different key
     other <- kemkg(as.integer(lv), seed = as.raw(rev(1:64)))
     expect_false(identical(other$public, key$public))
@@ -71,12 +72,13 @@ test_that("OpenSSL's ciphertexts decapsulate to the secret it reports", {
     # This is the direction that catches a wrong compression width: the
     # ciphertext was produced elsewhere, so nothing about it can be
     # self-consistent with a mistake here.
-    expect_identical(kemdecap(key, vec[[lv]][4L]), vec[[lv]][5L],
-                     info = lv)
+    expect_identical(kemdecap(key, vec[[lv]][4L]), vec[[lv]][5L], info = lv)
     # raw and hex are the same ciphertext
     expect_identical(
       kemdecap(key, .rmbl_hex_to_raw(vec[[lv]][4L])),
-      vec[[lv]][5L], info = lv)
+      vec[[lv]][5L],
+      info = lv
+    )
   }
 })
 
@@ -88,11 +90,13 @@ test_that("encapsulation and decapsulation agree", {
     expect_null(pub$secret)
     # the sender needs only the public key
     sent <- kemencap(pub)
-    expect_identical(nchar(sent$ciphertext) %/% 2L,
-                     kemsz(lv)[["ciphertext"]], info = lv)
+    expect_identical(
+      nchar(sent$ciphertext) %/% 2L,
+      kemsz(lv)[["ciphertext"]],
+      info = lv
+    )
     expect_identical(nchar(sent$shared) %/% 2L, 32L)
-    expect_identical(kemdecap(key, sent$ciphertext), sent$shared,
-                     info = lv)
+    expect_identical(kemdecap(key, sent$ciphertext), sent$shared, info = lv)
     # two encapsulations to one key give different secrets
     again <- kemencap(pub)
     expect_false(identical(again$shared, sent$shared), info = lv)
@@ -125,7 +129,9 @@ test_that("a corrupted ciphertext returns the wrong secret, not an error", {
   # a ciphertext for another key likewise
   other <- kemkg(512)
   expect_false(identical(
-    kemdecap(other, sent$ciphertext), sent$shared))
+    kemdecap(other, sent$ciphertext),
+    sent$shared
+  ))
 })
 
 test_that("a key from one level does not serve another", {
@@ -135,10 +141,15 @@ test_that("a key from one level does not serve another", {
   # the level is not carried in the ciphertext, so the mismatch shows up
   # as a length error rather than a silent wrong answer
   expect_error(kemdecap(b, sa$ciphertext), "1088 bytes")
-  expect_error(kemencap(
-    structure(list(public = a$public, level = 768L),
-              class = c("bricklayer_kem_public_key", "list"))),
-    "1184 bytes")
+  expect_error(
+    kemencap(
+      structure(
+        list(public = a$public, level = 768L),
+        class = c("bricklayer_kem_public_key", "list")
+      )
+    ),
+    "1184 bytes"
+  )
 })
 
 test_that("bad input is refused rather than silently coerced", {
@@ -148,19 +159,18 @@ test_that("bad input is refused rather than silently coerced", {
   expect_error(kemencap(key, m = as.raw(1:31)), "32 bytes")
   expect_error(kemencap(list()), "kemkg")
   expect_error(kemdecap(key, "00"), "768 bytes")
-  expect_error(kemdecap(key, paste0("zz", strrep("00", 767L))),
-               "768 bytes")
-  expect_error(kemdecap(kempubkey(key), strrep("00", 768L)),
-               "secret half")
+  expect_error(kemdecap(key, paste0("zz", strrep("00", 767L))), "768 bytes")
+  expect_error(kemdecap(kempubkey(key), strrep("00", 768L)), "secret half")
   expect_error(kempubkey(list()), "kemkg")
   # an all-zero encapsulation key is not canonical and is refused, which
   # is the FIPS 203 modulus check rather than a length check
   expect_error(
-    kemencap(structure(list(public = strrep("ff", 800L),
-                                   level = 512L),
-                              class = c("bricklayer_kem_public_key",
-                                        "list"))),
-    "canonical")
+    kemencap(structure(
+      list(public = strrep("ff", 800L), level = 512L),
+      class = c("bricklayer_kem_public_key", "list")
+    )),
+    "canonical"
+  )
 })
 
 test_that("the printed forms withhold the secret", {
@@ -171,8 +181,11 @@ test_that("the printed forms withhold the secret", {
   # the decapsulation key ENDS with the rejection secret, so the tail is
   # the part that must not appear; its head is the encapsulation key,
   # which is public
-  expect_false(grepl(substring(key$secret, nchar(key$secret) - 63L), txt,
-                     fixed = TRUE))
+  expect_false(grepl(
+    substring(key$secret, nchar(key$secret) - 63L),
+    txt,
+    fixed = TRUE
+  ))
   expect_output(print(key), "Key encapsulation key")
   expect_output(print(kempubkey(key)), "Public encapsulation key")
   cap <- kemencap(key)
@@ -182,18 +195,29 @@ test_that("the printed forms withhold the secret", {
   expect_output(print(cap), "Encapsulated shared secret")
 })
 
-test_that("kemdecap(masked = FALSE) agrees with the masked default, and masked is checked", {
-  kp <- kemkg(768L)
-  cap <- kemencap(kp)
-  expect_identical(kemdecap(kp, cap$ciphertext, masked = FALSE), cap$shared)
-  expect_identical(kemdecap(kp, cap$ciphertext, masked = FALSE),
-                   kemdecap(kp, cap$ciphertext))
-  # a tampered ciphertext: implicit rejection gives the same K-bar either way
-  ct <- cap$ciphertext
-  substr(ct, 1, 1) <- if (substr(ct, 1, 1) == "0") "1" else "0"
-  expect_identical(kemdecap(kp, ct, masked = FALSE), kemdecap(kp, ct))
-  expect_false(identical(kemdecap(kp, ct), cap$shared))
-  for (bad in list(NA, "yes", c(TRUE, FALSE), 1L, NULL)) {
-    expect_error(kemdecap(kp, cap$ciphertext, masked = bad), "`masked` must be TRUE or FALSE")
+test_that(
+  paste0(
+    "kemdecap(masked = FALSE) agrees with the masked default, and masked is ",
+    "checked"
+  ),
+  {
+    kp <- kemkg(768L)
+    cap <- kemencap(kp)
+    expect_identical(kemdecap(kp, cap$ciphertext, masked = FALSE), cap$shared)
+    expect_identical(
+      kemdecap(kp, cap$ciphertext, masked = FALSE),
+      kemdecap(kp, cap$ciphertext)
+    )
+    # a tampered ciphertext: implicit rejection gives the same K-bar either way
+    ct <- cap$ciphertext
+    substr(ct, 1, 1) <- if (substr(ct, 1, 1) == "0") "1" else "0"
+    expect_identical(kemdecap(kp, ct, masked = FALSE), kemdecap(kp, ct))
+    expect_false(identical(kemdecap(kp, ct), cap$shared))
+    for (bad in list(NA, "yes", c(TRUE, FALSE), 1L, NULL)) {
+      expect_error(
+        kemdecap(kp, cap$ciphertext, masked = bad),
+        "`masked` must be TRUE or FALSE"
+      )
+    }
   }
-})
+)

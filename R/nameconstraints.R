@@ -28,40 +28,55 @@
 .rmbl_general_names <- function(nd) {
   out <- list()
   for (g in nd$children) {
-    if (!identical(g$class, 2L)) next
+    if (!identical(g$class, 2L)) {
+      next
+    }
     tag <- g$tag
     if (identical(tag, 1)) {
-      out[[length(out) + 1L]] <- list(type = "email",
-                                      value = .rmbl_raw_text(g$value))
+      out[[length(out) + 1L]] <- list(
+        type = "email",
+        value = .rmbl_raw_text(g$value)
+      )
     } else if (identical(tag, 2)) {
-      out[[length(out) + 1L]] <- list(type = "dns",
-                                      value = .rmbl_raw_text(g$value))
+      out[[length(out) + 1L]] <- list(
+        type = "dns",
+        value = .rmbl_raw_text(g$value)
+      )
     } else if (identical(tag, 6)) {
-      out[[length(out) + 1L]] <- list(type = "uri",
-                                      value = .rmbl_raw_text(g$value))
+      out[[length(out) + 1L]] <- list(
+        type = "uri",
+        value = .rmbl_raw_text(g$value)
+      )
     } else if (identical(tag, 7)) {
       out[[length(out) + 1L]] <- list(type = "ip", value = g$value)
     } else if (identical(tag, 4)) {
       # directoryName is [4] EXPLICIT, so the Name sits inside
       inner <- if (length(g$children)) g$children[[1]] else NULL
       if (!is.null(inner)) {
-        out[[length(out) + 1L]] <- list(type = "dirname",
-                                        value = .rmbl_x509_rdns(inner))
+        out[[length(out) + 1L]] <- list(
+          type = "dirname",
+          value = .rmbl_x509_rdns(inner)
+        )
       }
     } else {
-      out[[length(out) + 1L]] <- list(type = paste0("tag", tag),
-                                      value = g$value)
+      out[[length(out) + 1L]] <- list(
+        type = paste0("tag", tag),
+        value = g$value
+      )
     }
   }
   out
 }
 
-#' Converts raw bytes to text, \code{""} when they are empty or cannot be converted.
+#' Converts raw bytes to text, \code{""} when they are empty or cannot be
+#' converted.
 #' @param v A raw vector.
 #' @return One string.
 #' @noRd
 .rmbl_raw_text <- function(v) {
-  if (!length(v)) return("")
+  if (!length(v)) {
+    return("")
+  }
   tryCatch(rawToChar(v), error = function(e) "")
 }
 
@@ -77,9 +92,13 @@
 .rmbl_x509_rdns <- function(nd) {
   lapply(nd$children, function(rdn) {
     lapply(rdn$children, function(atv) {
-      if (length(atv$children) < 2L) return(NULL)
-      list(oid = .rmbl_oid_string(atv$children[[1]]$value),
-           value = .rmbl_raw_text(atv$children[[2]]$value))
+      if (length(atv$children) < 2L) {
+        return(NULL)
+      }
+      list(
+        oid = .rmbl_oid_string(atv$children[[1]]$value),
+        value = .rmbl_raw_text(atv$children[[2]]$value)
+      )
     })
   })
 }
@@ -89,31 +108,40 @@
 #' NameConstraints ::= SEQUENCE { permittedSubtrees \[0\] OPTIONAL,
 #'                                excludedSubtrees  \[1\] OPTIONAL }
 #' @param val The extension's DER bytes.
-#' @return A list with `permitted` and `excluded` subtrees, or NULL when there are none.
+#' @return A list with `permitted` and `excluded` subtrees, or NULL when there
+#'   are none.
 #' @noRd
 .rmbl_name_constraints <- function(val) {
   inner <- tryCatch(.Call(C_rmbl_der_parse, val), error = function(e) NULL)
-  if (is.null(inner)) return(NULL)
+  if (is.null(inner)) {
+    return(NULL)
+  }
   out <- list(permitted = list(), excluded = list())
   for (part in inner$children) {
-    if (!identical(part$class, 2L)) next
+    if (!identical(part$class, 2L)) {
+      next
+    }
     subs <- lapply(part$children, function(gs) {
       # GeneralSubtree ::= SEQUENCE { base GeneralName, ... }
       g <- .rmbl_general_names(gs)
       if (length(g)) g[[1]] else NULL
     })
     subs <- subs[!vapply(subs, is.null, logical(1))]
-    if (identical(part$tag, 0)) out$permitted <- subs
+    if (identical(part$tag, 0)) {
+      out$permitted <- subs
+    }
     if (identical(part$tag, 1)) out$excluded <- subs
   }
-  if (!length(out$permitted) && !length(out$excluded)) return(NULL)
+  if (!length(out$permitted) && !length(out$excluded)) {
+    return(NULL)
+  }
   out
 }
 
 #' Tells whether a DNS name is inside a DNS constraint.
 #'
-#' A DNS constraint of \code{"example.org"} is satisfied by \code{"example.org"} and by
-#' anything under it. A leading dot, which is a convention rather than
+#' A DNS constraint of \code{"example.org"} is satisfied by \code{"example.org"}
+#' and by anything under it. A leading dot, which is a convention rather than
 #' the RFC's text, is read as subdomains only.
 #' @param name The DNS name.
 #' @param base The constraint.
@@ -122,7 +150,9 @@
 .rmbl_nc_match_dns <- function(name, base) {
   name <- tolower(name)
   base <- tolower(base)
-  if (!nzchar(base)) return(TRUE)
+  if (!nzchar(base)) {
+    return(TRUE)
+  }
   if (startsWith(base, ".")) {
     return(endsWith(name, base))
   }
@@ -142,9 +172,13 @@
 .rmbl_nc_match_email <- function(name, base) {
   name <- tolower(name)
   base <- tolower(base)
-  if (grepl("@", base, fixed = TRUE)) return(identical(name, base))
+  if (grepl("@", base, fixed = TRUE)) {
+    return(identical(name, base))
+  }
   host <- sub("^[^@]*@", "", name)
-  if (startsWith(base, ".")) return(endsWith(host, base))
+  if (startsWith(base, ".")) {
+    return(endsWith(host, base))
+  }
   identical(host, base)
 }
 
@@ -171,7 +205,9 @@
 #' @noRd
 .rmbl_nc_match_ip <- function(name, base) {
   n <- length(name)
-  if (length(base) != 2L * n) return(FALSE)
+  if (length(base) != 2L * n) {
+    return(FALSE)
+  }
   addr <- as.integer(base[seq_len(n)])
   mask <- as.integer(base[n + seq_len(n)])
   ip <- as.integer(name)
@@ -188,12 +224,20 @@
 #' @return TRUE or FALSE.
 #' @noRd
 .rmbl_nc_match_dirname <- function(rdns, base) {
-  if (!length(base)) return(TRUE)
-  if (length(rdns) < length(base)) return(FALSE)
+  if (!length(base)) {
+    return(TRUE)
+  }
+  if (length(rdns) < length(base)) {
+    return(FALSE)
+  }
   norm <- function(atvs) {
-    v <- vapply(Filter(Negate(is.null), atvs), function(a) {
-      paste0(a$oid, "=", tolower(trimws(a$value)))
-    }, character(1))
+    v <- vapply(
+      Filter(Negate(is.null), atvs),
+      function(a) {
+        paste0(a$oid, "=", tolower(trimws(a$value)))
+      },
+      character(1)
+    )
     paste(sort(v), collapse = "+")
   }
   for (i in seq_along(base)) {
@@ -205,17 +249,22 @@
 #' Matches a name against a constraint of the same type.
 #' @param nm A name, a list with `type` and `value`.
 #' @param base A constraint, a list with `type` and `value`.
-#' @return TRUE or FALSE, or NA when the types differ or the type is not handled.
+#' @return TRUE or FALSE, or NA when the types differ or the type is not
+#'   handled.
 #' @noRd
 .rmbl_nc_match <- function(nm, base) {
-  if (!identical(nm$type, base$type)) return(NA)
-  switch(nm$type,
-         dns = .rmbl_nc_match_dns(nm$value, base$value),
-         email = .rmbl_nc_match_email(nm$value, base$value),
-         uri = .rmbl_nc_match_uri(nm$value, base$value),
-         ip = .rmbl_nc_match_ip(nm$value, base$value),
-         dirname = .rmbl_nc_match_dirname(nm$value, base$value),
-         NA)
+  if (!identical(nm$type, base$type)) {
+    return(NA)
+  }
+  switch(
+    nm$type,
+    dns = .rmbl_nc_match_dns(nm$value, base$value),
+    email = .rmbl_nc_match_email(nm$value, base$value),
+    uri = .rmbl_nc_match_uri(nm$value, base$value),
+    ip = .rmbl_nc_match_ip(nm$value, base$value),
+    dirname = .rmbl_nc_match_dirname(nm$value, base$value),
+    NA
+  )
 }
 
 #' Check one certificate's names against one CA's constraints.
@@ -232,18 +281,24 @@
 .rmbl_nc_check_one <- function(cert, nc) {
   names_to_check <- cert$san
   if (length(cert$subject_rdns)) {
-    names_to_check <- c(names_to_check,
-                        list(list(type = "dirname",
-                                  value = cert$subject_rdns)))
+    names_to_check <- c(
+      names_to_check,
+      list(list(type = "dirname", value = cert$subject_rdns))
+    )
   }
   problems <- character(0)
   for (ex in nc$excluded) {
     for (nm in names_to_check) {
       hit <- .rmbl_nc_match(nm, ex)
       if (isTRUE(hit)) {
-        problems <- c(problems,
-                      sprintf("%s '%s' is inside an excluded subtree",
-                              nm$type, .rmbl_nc_show(nm)))
+        problems <- c(
+          problems,
+          sprintf(
+            "%s '%s' is inside an excluded subtree",
+            nm$type,
+            .rmbl_nc_show(nm)
+          )
+        )
       }
     }
   }
@@ -251,14 +306,26 @@
     types <- unique(vapply(nc$permitted, `[[`, character(1), "type"))
     for (ty in types) {
       mine <- Filter(function(n) identical(n$type, ty), names_to_check)
-      if (!length(mine)) next
+      if (!length(mine)) {
+        next
+      }
       bases <- Filter(function(b) identical(b$type, ty), nc$permitted)
       for (nm in mine) {
-        if (!any(vapply(bases, function(b) isTRUE(.rmbl_nc_match(nm, b)),
-                        logical(1)))) {
-          problems <- c(problems,
-                        sprintf("%s '%s' is outside every permitted subtree",
-                                ty, .rmbl_nc_show(nm)))
+        if (
+          !any(vapply(
+            bases,
+            function(b) isTRUE(.rmbl_nc_match(nm, b)),
+            logical(1)
+          ))
+        ) {
+          problems <- c(
+            problems,
+            sprintf(
+              "%s '%s' is outside every permitted subtree",
+              ty,
+              .rmbl_nc_show(nm)
+            )
+          )
         }
       }
     }
@@ -273,13 +340,18 @@
 .rmbl_nc_show <- function(nm) {
   if (identical(nm$type, "dirname")) {
     parts <- unlist(lapply(nm$value, function(rdn) {
-      vapply(Filter(Negate(is.null), rdn), function(a) {
-        paste0(a$oid, "=", a$value)
-      }, character(1))
+      vapply(
+        Filter(Negate(is.null), rdn),
+        function(a) {
+          paste0(a$oid, "=", a$value)
+        },
+        character(1)
+      )
     }))
     return(paste(parts, collapse = ", "))
   }
-  if (identical(nm$type, "ip")) return(paste(as.integer(nm$value),
-                                             collapse = "."))
+  if (identical(nm$type, "ip")) {
+    return(paste(as.integer(nm$value), collapse = "."))
+  }
   as.character(nm$value)
 }

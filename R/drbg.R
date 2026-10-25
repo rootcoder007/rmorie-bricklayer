@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
-# The CTR_DRBG of NIST SP 800-90A Rev. 1 with AES-256 and no derivation function: deterministic
-# random bits from 48 bytes of entropy. It is the generator the NIST post-quantum known-answer
-# tests are written with, so a seed from one of their .rsp files reproduces their randomness.
+# The CTR_DRBG of NIST SP 800-90A Rev. 1 with AES-256 and no derivation
+# function: deterministic random bits from 48 bytes of entropy. It is the
+# generator the NIST post-quantum known-answer tests are written with, so a seed
+# from one of their .rsp files reproduces their randomness.
 
 #' A deterministic random bit generator: AES-256 CTR_DRBG (NIST SP 800-90A)
 #'
@@ -47,8 +48,8 @@
 #' @return An object of class \code{bricklayer_drbg} (an environment holding
 #'   the 32-byte Key, the 16-byte V, the request count and the process id). Its
 #'   state (Key, V) is not printed.
-#' @references NIST SP 800-90A Rev. 1 (2015). Recommendation for Random Number Generation
-#'   Using Deterministic Random Bit Generators, section 10.2.1.
+#' @references NIST SP 800-90A Rev. 1 (2015). Recommendation for Random Number
+#'   Generation Using Deterministic Random Bit Generators, section 10.2.1.
 #'   \doi{10.6028/NIST.SP.800-90Ar1}
 #'
 #'   NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard (AES).\cr
@@ -57,11 +58,13 @@
 #'   [drbgrsd()],
 #'   [rndbytes()].
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' # NIST's rng.c, as the post-quantum known-answer files use it: vector 0's seed
+#' # NIST's rng.c, as the post-quantum known-answer files use it: vector 0's
+#' # seed
 #' d <- drbgnew(as.raw(0:47))
 #' drbggen(d, 48)
 #'
-#' # the same inputs give the same bytes; a personalization string separates streams
+#' # the same inputs give the same bytes; a personalization string separates
+#' # streams
 #' a <- drbgnew(as.raw(1:48), person = charToRaw("session 1"))
 #' b <- drbgnew(as.raw(1:48), person = charToRaw("session 2"))
 #' identical(drbggen(a, 16), drbggen(b, 16))
@@ -90,7 +93,11 @@
 drbgnew <- function(entropy = NULL, person = NULL) {
   # the generator is an environment and is not meant to be serialised:
   # a copy restored in another process reseeds itself on first use
-  entropy <- if (is.null(entropy)) rndbytes(48L) else .rmbl_drbg_input(entropy, "entropy", 48L, exact = TRUE)
+  entropy <- if (is.null(entropy)) {
+    rndbytes(48L)
+  } else {
+    .rmbl_drbg_input(entropy, "entropy", 48L, exact = TRUE)
+  }
   pers <- .rmbl_drbg_input(person, "person", 48L)
   st <- .Call(C_rmbl_drbg_instantiate, entropy, pers)
   d <- new.env(parent = emptyenv())
@@ -159,15 +166,25 @@ drbggen <- function(drbg, n, addl = NULL) {
     stop("`n` must be a single integer between 1 and 65536", call. = FALSE)
   }
   if (drbg$reseed_counter > 2^48) {
-    stop("the generator has served 2^48 requests since it was seeded: reseed it (drbgrsd())",
-         call. = FALSE)
+    stop(
+      "the generator has served 2^48 requests since it was seeded: ",
+      "reseed it (drbgrsd())",
+      call. = FALSE
+    )
   }
   # a forked child (parallel::mclapply) inherits the parent's (Key, V) and
   # would replay the parent's stream; so would a generator restored from
   # saveRDS(). A process change reseeds from the operating system first.
-  if (!identical(drbg$pid, Sys.getpid())) drbgrsd(drbg)
-  st <- .Call(C_rmbl_drbg_generate, drbg$key, drbg$v, as.integer(n),
-              .rmbl_drbg_input(addl, "addl", 48L))
+  if (!identical(drbg$pid, Sys.getpid())) {
+    drbgrsd(drbg)
+  }
+  st <- .Call(
+    C_rmbl_drbg_generate,
+    drbg$key,
+    drbg$v,
+    as.integer(n),
+    .rmbl_drbg_input(addl, "addl", 48L)
+  )
   drbg$key <- st$key
   drbg$v <- st$v
   drbg$reseed_counter <- drbg$reseed_counter + 1
@@ -217,8 +234,18 @@ drbggen <- function(drbg, n, addl = NULL) {
 #' @export
 drbgrsd <- function(drbg, entropy = NULL, addl = NULL) {
   .rmbl_drbg_check(drbg)
-  entropy <- if (is.null(entropy)) rndbytes(48L) else .rmbl_drbg_input(entropy, "entropy", 48L, exact = TRUE)
-  st <- .Call(C_rmbl_drbg_reseed, drbg$key, drbg$v, entropy, .rmbl_drbg_input(addl, "addl", 48L))
+  entropy <- if (is.null(entropy)) {
+    rndbytes(48L)
+  } else {
+    .rmbl_drbg_input(entropy, "entropy", 48L, exact = TRUE)
+  }
+  st <- .Call(
+    C_rmbl_drbg_reseed,
+    drbg$key,
+    drbg$v,
+    entropy,
+    .rmbl_drbg_input(addl, "addl", 48L)
+  )
   drbg$key <- st$key
   drbg$v <- st$v
   drbg$reseed_counter <- 1
@@ -228,11 +255,18 @@ drbgrsd <- function(drbg, entropy = NULL, addl = NULL) {
 
 #' @export
 format.bricklayer_drbg <- function(x, ...) {
-  c(.rmbl_rule("Deterministic random bit generator"),
-    .rmbl_kv(list(mechanism = "CTR_DRBG, AES-256, no derivation function (SP 800-90A)",
-                  "requests since seeding" = format(x$reseed_counter - 1, scientific = FALSE),
-                  state = "<withheld>")),
-    .rmbl_rule())
+  c(
+    .rmbl_rule("Deterministic random bit generator"),
+    .rmbl_kv(list(
+      mechanism = "CTR_DRBG, AES-256, no derivation function (SP 800-90A)",
+      "requests since seeding" = format(
+        x$reseed_counter - 1,
+        scientific = FALSE
+      ),
+      state = "<withheld>"
+    )),
+    .rmbl_rule()
+  )
 }
 
 #' @rdname printmeth
@@ -244,15 +278,22 @@ print.bricklayer_drbg <- .rmbl_print_via_format
 #' @param drbg The object passed by the user.
 #' @noRd
 .rmbl_drbg_check <- function(drbg) {
-  if (!inherits(drbg, "bricklayer_drbg") || !is.environment(drbg) ||
-      !is.raw(drbg$key) || length(drbg$key) != 32L || !is.raw(drbg$v) || length(drbg$v) != 16L) {
+  if (
+    !inherits(drbg, "bricklayer_drbg") ||
+      !is.environment(drbg) ||
+      !is.raw(drbg$key) ||
+      length(drbg$key) != 32L ||
+      !is.raw(drbg$v) ||
+      length(drbg$v) != 16L
+  ) {
     stop("`drbg` must come from drbgnew()", call. = FALSE)
   }
 }
 
 #' Reads a DRBG input given as raw bytes or hex.
 #'
-#' Raw or hex; NULL is the empty string; at most `max` bytes (exactly, when `exact`)
+#' Raw or hex; NULL is the empty string; at most `max` bytes (exactly, when
+#' `exact`)
 #' @param x The input, raw, one hex string, or NULL.
 #' @param what The argument name, used in the error message.
 #' @param max The largest number of bytes accepted.
@@ -260,11 +301,26 @@ print.bricklayer_drbg <- .rmbl_print_via_format
 #' @return A raw vector.
 #' @noRd
 .rmbl_drbg_input <- function(x, what, max, exact = FALSE) {
-  if (is.null(x)) return(raw(0))
-  r <- if (is.raw(x)) x else if (is.character(x) && length(x) == 1L) .rmbl_hex_or_null(x) else NULL
+  if (is.null(x)) {
+    return(raw(0))
+  }
+  r <- if (is.raw(x)) {
+    x
+  } else if (is.character(x) && length(x) == 1L) {
+    .rmbl_hex_or_null(x)
+  } else {
+    NULL
+  }
   if (is.null(r) || (exact && length(r) != max) || length(r) > max) {
-    stop(sprintf("`%s` must be %s %d bytes, raw or hex", what, if (exact) "exactly" else "at most", max),
-         call. = FALSE)
+    stop(
+      sprintf(
+        "`%s` must be %s %d bytes, raw or hex",
+        what,
+        if (exact) "exactly" else "at most",
+        max
+      ),
+      call. = FALSE
+    )
   }
   r
 }

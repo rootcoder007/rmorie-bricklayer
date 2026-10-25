@@ -45,12 +45,11 @@ is an error. With a CSV or the demo data the exposed are the rows above
 \code{ref}: \code{expoprev} is their share and
 \code{expomean} their mean, so Levin's formula is not diluted twice.}
 
-\item{expomean, expoprev}{Scalar inputs used when neither
-\code{demo} nor \code{expcsv} is given: the mean exposure among
-the exposed and the share of the population exposed.
-A wrapper must never default one of them to zero: a prevalence of zero silently
-zeroes
-the burden, which is why the two are required together.}
+\item{expomean, expoprev}{Scalar inputs used when neither \code{demo} nor
+\code{expcsv} is given: the mean exposure among the exposed and the share
+of the population exposed. A wrapper must never default one of them to
+zero: a prevalence of zero silently zeroes the burden, which is why the two
+are required together.}
 
 \item{ref}{Counterfactual reference concentration; \code{NULL} takes
 the pollutant's default (PM2.5 5.8, NO2 10; see \code{\link{crfpm25}}).}
@@ -58,21 +57,18 @@ the pollutant's default (PM2.5 5.8, NO2 10; see \code{\link{crfpm25}}).}
 \item{brate}{Baseline outcome rate per 100,000 per year (unlike
 \code{\link{polbrdn}}, which takes a rate per person-year).}
 
-\item{basrateper}{The denominator \code{brate} is quoted per: 100,000
-(the default), or 1 for a rate per person-year such as a crude death rate of 0.012.}
+\item{basrateper}{The denominator \code{brate} is quoted per: 100,000 (the
+default), or 1 for a rate per person-year such as a crude death rate of
+0.012.}
 
 \item{pop}{Population at risk (persons).}
 
 \item{rare}{\code{TRUE} when the outcome really is rarer than one case per
-100,000
-per year. Without it a rate that converts to less than that is an assumption
-failure,
-because it is also what a rate per person-year passed as per 100,000 looks like
-(0.008
-per person-year is 800 per 100,000; as 0.008 per 100,000 the burden is 100,000 times
-too
-small). The check is on the converted rate, so it holds whatever
-\code{basrateper} is.}
+100,000 per year. Without it a rate that converts to less than that is an
+assumption failure, because it is also what a rate per person-year passed
+as per 100,000 looks like (0.008 per person-year is 800 per 100,000; as
+0.008 per 100,000 the burden is 100,000 times too small). The check is on
+the converted rate, so it holds whatever \code{basrateper} is.}
 
 \item{hirate}{\code{TRUE} when the outcome really is more common
 than 10,000 per 100,000 a year (no population's all-cause death
@@ -151,20 +147,28 @@ r$pipeline$paf
 cat(polrpttxt(r))
 
 # Scalar inputs: a city of 2.8 million at a PM2.5 mean of 9.
-s <- vrfpol("pm25", expomean = 9, expoprev = 1,
-                      brate = 750, pop = 2.8e6, reg = "Toronto")
+s <- vrfpol(
+  "pm25",
+  expomean = 9,
+  expoprev = 1,
+  brate = 750,
+  pop = 2.8e6,
+  reg = "Toronto"
+)
 s$pipeline$burden$attrcases
 attr(s, "exitstat")
 
 # A CSV of measurements with an income column.
 f <- tempfile(fileext = ".csv")
-utils::write.csv(data.frame(exposure = c(12, 18, 25, 31, 9), income = 1:5), f,
-                 row.names = FALSE)
+utils::write.csv(
+  data.frame(exposure = c(12, 18, 25, 31, 9), income = 1:5),
+  f,
+  row.names = FALSE
+)
 vrfpol("no2", expcsv = f)$pipeline$equity$concidx
 
 # A rate per person-year passed as per 100,000 fails an assumption ...
-bad <- vrfpol("no2", expomean = 20, expoprev = 1,
-                        brate = 0.008)
+bad <- vrfpol("no2", expomean = 20, expoprev = 1, brate = 0.008)
 bad$status
 # ... and an argument it cannot use is an error report, not an R error.
 vrfpol("no2")$error

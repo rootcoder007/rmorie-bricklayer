@@ -25,14 +25,13 @@ same kernel that other packages reach through
 it agrees with \code{\link[stats]{dnorm}}.
 }
 \details{
-\deqn{f(x) = \frac{1}{\sigma\sqrt{2\pi}}
-  \exp\left(-\frac{(x - \mu)^2}{2\sigma^2}\right).}
-The function is vectorised over \code{x} only; \code{mean} must be a single
-finite number and \code{sd} a single positive number, and anything else is
-an error (\code{dnorm()} recycles them, and gives \code{Inf} or \code{NaN} for
-\code{sd = 0} or below).
-\code{NA} in \code{x} gives \code{NA}; \code{x = Inf} gives 0. Character,
-factor or list input for \code{x} is an error.
+\deqn{f(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(x -
+\mu)^2}{2\sigma^2}\right).} The function is vectorised over \code{x} only;
+\code{mean} must be a single finite number and \code{sd} a single positive
+number, and anything else is an error (\code{dnorm()} recycles them, and
+gives \code{Inf} or \code{NaN} for \code{sd = 0} or below). \code{NA} in
+\code{x} gives \code{NA}; \code{x = Inf} gives 0. Character, factor or list
+input for \code{x} is an error.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

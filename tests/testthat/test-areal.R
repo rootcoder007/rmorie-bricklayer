@@ -11,7 +11,8 @@ test_that("indirect standardisation conserves the total", {
     region = rep(c("North", "South", "East"), each = 2),
     age = rep(c("18 to 24", "25 to 49"), 3),
     n = c(30, 45, 12, 60, 8, 20),
-    pop = c(1000, 6000, 900, 9000, 400, 3500))
+    pop = c(1000, 6000, 900, 9000, 400, 3500)
+  )
 
   # THE defining property: applying the overall rates back to the whole
   # population must reproduce the overall total. If it does not, the
@@ -37,31 +38,40 @@ test_that("indirect standardisation conserves the total", {
   # recomputed by hand for North, whose rows are the first two
   r_young <- sum(d$n[d$age == "18 to 24"]) / sum(d$pop[d$age == "18 to 24"])
   r_old <- sum(d$n[d$age == "25 to 49"]) / sum(d$pop[d$age == "25 to 49"])
-  expect_equal(comp$expected[comp$area == "North"],
-               1000 * r_young + 6000 * r_old)
+  expect_equal(
+    comp$expected[comp$area == "North"],
+    1000 * r_young + 6000 * r_old
+  )
 
   # a single stratum is the same as none
-  expect_equal(expcnts(d$n, d$pop, d$region,
-                               strata = rep("x", 6))$expected,
-               size$expected)
+  expect_equal(
+    expcnts(d$n, d$pop, d$region, strata = rep("x", 6))$expected,
+    size$expected
+  )
   # one area per row still works
   solo <- expcnts(c(5, 10), c(100, 400), c("a", "b"))
   expect_equal(sum(solo$expected), 15)
   expect_equal(solo$expected, c(100, 400) * (15 / 500))
 
-  expect_error(expcnts(1:3, 1:2, c("a", "b", "c")),
-               "same length")
-  expect_error(expcnts(c(-1, 2), c(1, 2), c("a", "b")),
-               "non-negative")
-  expect_error(expcnts(c(1, 2), c(0, 2), c("a", "b")),
-               "must be positive")
-  expect_error(expcnts(c(1, 2), c(1, 2), c("a", "b"),
-                               strata = "x"), "same length")
+  expect_error(expcnts(1:3, 1:2, c("a", "b", "c")), "same length")
+  expect_error(expcnts(c(-1, 2), c(1, 2), c("a", "b")), "non-negative")
+  expect_error(expcnts(c(1, 2), c(0, 2), c("a", "b")), "must be positive")
+  expect_error(
+    expcnts(c(1, 2), c(1, 2), c("a", "b"), strata = "x"),
+    "same length"
+  )
 })
 
 test_that("the SIR interval is exactly poisson.test's", {
-  for (pair in list(c(28, 32.3443), c(75, 62.28), c(3, 5), c(0, 5),
-                    c(1, 1), c(500, 400), c(2, 0.5))) {
+  for (pair in list(
+    c(28, 32.3443),
+    c(75, 62.28),
+    c(3, 5),
+    c(0, 5),
+    c(1, 1),
+    c(500, 400),
+    c(2, 0.5)
+  )) {
     o <- pair[1L]
     e <- pair[2L]
     got <- stdinc(o, e)
@@ -92,8 +102,10 @@ test_that("the SIR interval is exactly poisson.test's", {
   # interval spans one
   expect_false(stdinc(3, 5)$excess)
   # a stricter level widens it
-  expect_lt(stdinc(30, 20, conflvl = 0.99)$lower,
-            stdinc(30, 20, conflvl = 0.95)$lower)
+  expect_lt(
+    stdinc(30, 20, conflvl = 0.99)$lower,
+    stdinc(30, 20, conflvl = 0.95)$lower
+  )
   # labels and recycling
   lab <- stdinc(c(1, 2), 10, area = c("a", "b"))
   expect_identical(lab$area, c("a", "b"))
@@ -122,8 +134,12 @@ test_that("shrinkage pulls the small areas in and leaves the big alone", {
   # zero and everything collapses to the overall rate.
   big <- ebrates(c(12, 90, 1100), c(10, 100, 1000))
   expect_true(all(diff(big$shrinkage) < 0))
-  expect_equal(big$shrinkage, 1 - c(10, 100, 1000) /
-                 (c(10, 100, 1000) + big$alpha))
+  expect_equal(
+    big$shrinkage,
+    1 -
+      c(10, 100, 1000) /
+        (c(10, 100, 1000) + big$alpha)
+  )
   expect_true(all(r$shrinkage >= 0 & r$shrinkage <= 1))
 
   # the posterior mean lies between the raw ratio and the overall one
@@ -221,14 +237,18 @@ test_that("Moran's I hits its known extremes on a line of areas", {
   x <- c(1, 2, 3, 4, 5, 6)
   z <- x - mean(x)
   w <- matrix(0, 6, 6)
-  for (i in seq_len(6)) w[i, nb[[i]]] <- 1 / length(nb[[i]])
+  for (i in seq_len(6)) {
+    w[i, nb[[i]]] <- 1 / length(nb[[i]])
+  }
   want <- (6 / sum(w)) * sum(w * outer(z, z)) / sum(z^2)
   expect_equal(g$I, want, tolerance = 1e-12)
   expect_equal(g$W, sum(w), tolerance = 1e-12)
 
   # a weight matrix and a neighbour list describe the same graph
   wb <- matrix(0, 6, 6)
-  for (i in seq_len(6)) wb[i, nb[[i]]] <- 1
+  for (i in seq_len(6)) {
+    wb[i, nb[[i]]] <- 1
+  }
   set.seed(1)
   m <- morani(x, wb, nperm = 1999L)
   expect_equal(m$I, g$I)
@@ -248,9 +268,13 @@ test_that("Moran's I hits its known extremes on a line of areas", {
   # an area is not its own neighbour: including it would put the value
   # on both sides of a product
   set.seed(1)
-  self <- morani(x, lapply(seq_len(6), function(i) {
-    sort(unique(c(i, nb[[i]])))
-  }), nperm = 999L)
+  self <- morani(
+    x,
+    lapply(seq_len(6), function(i) {
+      sort(unique(c(i, nb[[i]])))
+    }),
+    nperm = 999L
+  )
   expect_equal(self$I, g$I)
 
   # a constant variable has no variation to correlate: said, not NA
@@ -261,19 +285,18 @@ test_that("Moran's I hits its known extremes on a line of areas", {
   expect_error(morani(x, nb[1:3]), "3 entries for 6 areas")
   expect_error(morani(x, matrix(0, 3, 3)), "6 by 6")
   expect_error(morani(x, "not a list"), "list of neighbour indices")
-  expect_error(morani(x, list(7L, 1L, 1L, 1L, 1L, 1L)),
-               "outside 1\\.\\.6")
-  expect_error(morani(x, rep(list(integer(0)), 6L)),
-               "no area any neighbour")
+  expect_error(morani(x, list(7L, 1L, 1L, 1L, 1L, 1L)), "outside 1\\.\\.6")
+  expect_error(morani(x, rep(list(integer(0)), 6L)), "no area any neighbour")
 })
 
 test_that("the areal functions compose on a region-coded table", {
   # the shape an OTIS extract actually has: counts by region and age
   set.seed(12)
-  d <- expand.grid(region = c("Central", "Eastern", "Northern",
-                              "Toronto", "Western"),
-                   age = c("18 to 24", "25 to 49", "50+"),
-                   stringsAsFactors = FALSE)
+  d <- expand.grid(
+    region = c("Central", "Eastern", "Northern", "Toronto", "Western"),
+    age = c("18 to 24", "25 to 49", "50+"),
+    stringsAsFactors = FALSE
+  )
   d$pop <- c(rep(c(4000, 3000, 800, 5000, 2500), 3)) *
     rep(c(0.3, 0.55, 0.15), each = 5L)
 
@@ -296,8 +319,13 @@ test_that("the areal functions compose on a region-coded table", {
   # Now a rate that genuinely DIFFERS by region, which is what the
   # shrinkage is meant to preserve.
   set.seed(13)
-  rate <- c(Central = 0.006, Eastern = 0.011, Northern = 0.010,
-            Toronto = 0.016, Western = 0.012)
+  rate <- c(
+    Central = 0.006,
+    Eastern = 0.011,
+    Northern = 0.010,
+    Toronto = 0.016,
+    Western = 0.012
+  )
   d$n <- stats::rpois(nrow(d), lambda = d$pop * rate[d$region])
   e <- expcnts(d$n, d$pop, d$region, strata = d$age)
   expect_equal(sum(e$expected), sum(d$n))
@@ -313,8 +341,7 @@ test_that("the areal functions compose on a region-coded table", {
   # the region carrying the least information is shrunk the most, which
   # is the claim -- stated against the expected counts rather than
   # against a region name
-  expect_equal(b$area[which.max(b$shrinkage)],
-               b$area[which.min(b$expected)])
+  expect_equal(b$area[which.max(b$shrinkage)], b$area[which.min(b$expected)])
   expect_equal(order(b$shrinkage), order(-b$expected))
   # and the funnel limits cover the expected counts these regions have
   f <- fnllim(e$expected)

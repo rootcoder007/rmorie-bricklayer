@@ -10,10 +10,10 @@ drfthomog(x, y, seed = 1L)
 \item{x, y}{Factor or character vectors (or named count
 vectors) -- the reference and the new sample.}
 
-\item{seed}{Integer, default 1: seed for the Monte Carlo branch (small expected
-counts). The
-draw is made under this seed and the caller's RNG stream is restored,
-so the same inputs give the same p-value and nothing downstream moves.}
+\item{seed}{Integer, default 1: seed for the Monte Carlo branch (small
+expected counts). The draw is made under this seed and the caller's RNG
+stream is restored, so the same inputs give the same p-value and nothing
+downstream moves.}
 }
 \value{
 A named length-4 numeric: \code{statistic}, \code{df},
@@ -34,23 +34,19 @@ changed between two samples; it is the categorical test that
 }
 \details{
 With pooled shares \eqn{\hat\pi_j = (x_j + y_j)/(n_x + n_y)} and
-expected counts \eqn{n_x \hat\pi_j} and \eqn{n_y \hat\pi_j},
-\deqn{X^2 = \sum_j \frac{(x_j - n_x\hat\pi_j)^2}{n_x\hat\pi_j} +
-  \frac{(y_j - n_y\hat\pi_j)^2}{n_y\hat\pi_j}}
-on \eqn{k - 1} degrees of freedom. Three branches, named in the \code{method}
-attribute:
-\itemize{
-\item \code{"chi-square approximation"}: every expected count is at least
-5; the p-value is the chi-square upper tail.
-\item \code{"Monte Carlo permutation (small expected counts)"}: some
-expected count is below 5; the p-value then comes from
-\code{\link[stats:chisq.test]{stats::chisq.test()}} with \code{simulate.p.value = TRUE}
-and
-\code{B = 10000} tables with the same margins, drawn under \code{seed}.
-\item \code{"inapplicable: ..."}: a single category, or fewer than two
-observations per category (for example two disjoint sets of dates);
-no test has power there, so \code{p_value} is \code{NA} rather than 1.
-}
+expected counts \eqn{n_x \hat\pi_j} and \eqn{n_y \hat\pi_j}, \deqn{X^2 =
+\sum_j \frac{(x_j - n_x\hat\pi_j)^2}{n_x\hat\pi_j} + \frac{(y_j -
+n_y\hat\pi_j)^2}{n_y\hat\pi_j}} on \eqn{k - 1} degrees of freedom. Three
+branches, named in the \code{method} attribute: \itemize{ \item
+\code{"chi-square approximation"}: every expected count is at least 5; the p-value
+is the chi-square upper tail. \item
+\code{"Monte Carlo permutation (small expected counts)"}: some expected count is
+below 5; the p-value then comes from
+\code{\link[stats:chisq.test]{stats::chisq.test()}} with
+\code{simulate.p.value = TRUE} and \code{B = 10000} tables with the same margins, drawn
+under \code{seed}. \item \code{"inapplicable: ..."}: a single category, or fewer than
+two observations per category (for example two disjoint sets of dates); no
+test has power there, so \code{p_value} is \code{NA} rather than 1. }
 
 Errors: a numeric vector without names; negative, infinite or missing
 counts; an empty sample.

@@ -55,10 +55,10 @@ of Briggs coefficients to use.}
 
 \item{u}{Wind speed in m/s (the x velocity for the grid models).}
 
-\item{diam, exitvel, stktmp, ambtmp}{Stack diameter (m),
-exit velocity (m/s), stack gas and ambient temperatures (K).
-Only buoyant rise is modelled: a stack at the air's temperature (within half a
-kelvin) has zero rise, and momentum rise from the exit velocity is not added.}
+\item{diam, exitvel, stktmp, ambtmp}{Stack diameter (m), exit velocity (m/s),
+stack gas and ambient temperatures (K). Only buoyant rise is modelled: a
+stack at the air's temperature (within half a kelvin) has zero rise, and
+momentum rise from the exit velocity is not added.}
 
 \item{dthdz}{Potential temperature gradient (K/m) for the stable
 classes; the defaults are 0.020 (E) and 0.035 (F).}
@@ -99,10 +99,10 @@ row per x cell and one column per y cell.}
 \item{source}{Source grid (concentration per unit time), or \code{NULL}.}
 
 \item{maxwork}{The most cell updates (cells x steps x sub-steps; for
-\code{lagrprt()}, particles x steps) a run may take, 100
-million by default (a few minutes of the explicit loop); \code{Inf} lifts it. The
-same physical run costs the same whether the caller sub-steps it or the scheme does,
-so the cap reads the same either way.}
+\code{lagrprt()}, particles x steps) a run may take, 100 million by default
+(a few minutes of the explicit loop); \code{Inf} lifts it. The same
+physical run costs the same whether the caller sub-steps it or the scheme
+does, so the cap reads the same either way.}
 
 \item{n}{Whole number of particles, at most 100 million.}
 
@@ -220,11 +220,10 @@ is reproducible from \code{seed} and does not touch R's random number
 stream. Progress bars are shown in an interactive session.
 }
 \section{Boundary}{
- the outermost ring of cells is held at zero (an open boundary):
-mass
-that reaches it leaves the domain and \code{mass} falls accordingly. Pad \code{c0}
-with
-empty cells so the plume of interest stays inside the ring.
+ the outermost ring of cells is held at zero (an open
+boundary): mass that reaches it leaves the domain and \code{mass} falls
+accordingly. Pad \code{c0} with empty cells so the plume of interest stays
+inside the ring.
 }
 
 \examples{

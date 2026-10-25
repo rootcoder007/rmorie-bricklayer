@@ -1,4 +1,5 @@
-testthat::skip_on_cran()  # battery: runs in CI and locally; CRAN runs the correctness core
+# battery: runs in CI and locally; CRAN runs the correctness core
+testthat::skip_on_cran()
 # Name constraints, certificate policies, path length, and revocation.
 #
 # Every verdict asserted here was cross-checked against `openssl
@@ -19,7 +20,8 @@ test_that("name constraints are read out of the certificate", {
   expect_setequal(types, c("dns", "email", "dirname"))
   expect_identical(vapply(nc$excluded, `[[`, character(1), "type"), "dns")
   expect_identical(
-    nc$permitted[[which(types == "dns")]]$value, "example.org"
+    nc$permitted[[which(types == "dns")]]$value,
+    "example.org"
   )
   # the leaf's own names, for the constraint to bite on
   leaf <- certprs(f$nc_leaf_good)
@@ -49,14 +51,32 @@ test_that("the matching rules differ by name type, as the RFC says", {
 
   # IP: the constraint is address then mask
   v4 <- as.raw(c(192, 168, 5, 9))
-  expect_true(.rmbl_nc_match_ip(v4, as.raw(c(
-    192, 168, 0, 0,
-    255, 255, 0, 0
-  ))))
-  expect_false(.rmbl_nc_match_ip(v4, as.raw(c(
-    10, 0, 0, 0,
-    255, 0, 0, 0
-  ))))
+  expect_true(.rmbl_nc_match_ip(
+    v4,
+    as.raw(c(
+      192,
+      168,
+      0,
+      0,
+      255,
+      255,
+      0,
+      0
+    ))
+  ))
+  expect_false(.rmbl_nc_match_ip(
+    v4,
+    as.raw(c(
+      10,
+      0,
+      0,
+      0,
+      255,
+      0,
+      0,
+      0
+    ))
+  ))
   # a mask of the wrong width is not a match rather than an error
   expect_false(.rmbl_nc_match_ip(v4, as.raw(c(192, 168, 0, 0))))
 
@@ -112,38 +132,26 @@ test_that("certificate policies are processed and can be required", {
   at <- ca$not_before + 86400
   want <- "1.2.3.4.100"
 
-  ok <- certchnvrf(f$pol_leaf_ok,
-    trust = ca, attm = at,
-    pols = want
-  )
+  ok <- certchnvrf(f$pol_leaf_ok, trust = ca, attm = at, pols = want)
   expect_true(ok$ok)
   # anyPolicy asserts whatever is still valid, so it satisfies the ask
-  any_ok <- certchnvrf(f$pol_leaf_any,
-    trust = ca, attm = at,
-    pols = want
-  )
+  any_ok <- certchnvrf(f$pol_leaf_any, trust = ca, attm = at, pols = want)
   expect_true(any_ok$ok)
   # a different policy does not, and neither does none at all
   for (nm in c("pol_leaf_other", "pol_leaf_none")) {
-    r <- certchnvrf(f[[nm]],
-      trust = ca, attm = at,
-      pols = want
-    )
+    r <- certchnvrf(f[[nm]], trust = ca, attm = at, pols = want)
     expect_false(r$ok, info = nm)
-    expect_false(r$checks$ok[r$checks$check == "certificate policies"],
+    expect_false(
+      r$checks$ok[r$checks$check == "certificate policies"],
       info = nm
     )
   }
   # with nothing required, policies are not a reason to fail
-  expect_true(certchnvrf(f$pol_leaf_other,
-    trust = ca,
-    attm = at
-  )$ok)
-  expect_false(any(certchnvrf(f$pol_leaf_other,
-    trust = ca,
-    attm = at
-  )$checks$check ==
-    "certificate policies"))
+  expect_true(certchnvrf(f$pol_leaf_other, trust = ca, attm = at)$ok)
+  expect_false(any(
+    certchnvrf(f$pol_leaf_other, trust = ca, attm = at)$checks$check ==
+      "certificate policies"
+  ))
   # the surviving set is reported
   expect_identical(ok$policies$authorities_constrained_to, want)
 })
@@ -158,16 +166,19 @@ test_that("the policy state machine honours its counters", {
   mk <- function(...) {
     utils::modifyList(
       list(
-        policies = character(0), policy_mappings = NULL,
+        policies = character(0),
+        policy_mappings = NULL,
         require_explicit_policy = NA_integer_,
         inhibit_policy_mapping = NA_integer_,
         inhibit_any_policy = NA_integer_
-      ), list(...)
+      ),
+      list(...)
     )
   }
 
   # a path that agrees on one policy keeps it
-  t1 <- .rmbl_policy_tree(list(mk(policies = "1.2.3"), anchor),
+  t1 <- .rmbl_policy_tree(
+    list(mk(policies = "1.2.3"), anchor),
     initial = "1.2.3"
   )
   expect_identical(t1$authorities_constrained_to, "1.2.3")
@@ -246,19 +257,19 @@ test_that("a revoked certificate is caught, and fetching is opt-in", {
   f <- x509_fx()
   ca <- certprs(f$nc_ca)
   at <- ca$not_before + 86400
-  r <- certchnvrf(f$nc_leaf_good,
-    trust = ca, attm = at,
-    crls = f$nc_crl
-  )
+  r <- certchnvrf(f$nc_leaf_good, trust = ca, attm = at, crls = f$nc_crl)
   expect_false(r$ok)
   rev <- r$checks[grepl("revocation", r$checks$check), ]
   expect_false(rev$ok[1])
   expect_match(rev$detail[1], "is on a CRL")
 
   # revocation = "none" skips it even with a CRL in hand
-  skipped <- certchnvrf(f$nc_leaf_good,
-    trust = ca, attm = at,
-    crls = f$nc_crl, rvk = "none"
+  skipped <- certchnvrf(
+    f$nc_leaf_good,
+    trust = ca,
+    attm = at,
+    crls = f$nc_crl,
+    rvk = "none"
   )
   expect_true(skipped$ok)
   expect_false(any(grepl("revocation", skipped$checks$check)))
@@ -267,10 +278,10 @@ test_that("a revoked certificate is caught, and fetching is opt-in", {
   # there is no revocation row at all, rather than a silent pass
   bare <- certchnvrf(f$nc_leaf_good, trust = ca, attm = at)
   expect_false(any(grepl("revocation|crl fetch|ocsp", bare$checks$check)))
-  expect_error(certchnvrf(f$nc_leaf_good,
-    trust = ca,
-    rvk = "sometimes"
-  ), "must be one of")
+  expect_error(
+    certchnvrf(f$nc_leaf_good, trust = ca, rvk = "sometimes"),
+    "must be one of"
+  )
 })
 
 test_that("SHA-1 matches its FIPS vectors", {

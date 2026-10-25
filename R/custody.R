@@ -34,19 +34,31 @@
   # a scalar argument with several values was read by its first one and the
   # rest dropped in silence
   if (scalar && length(x) > 1L) {
-    stop(sprintf("`%s` must be a single number, got %d values", arg, length(x)), call. = FALSE)
+    stop(
+      sprintf("`%s` must be a single number, got %d values", arg, length(x)),
+      call. = FALSE
+    )
   }
   if (any(!is.finite(x[!is.na(x)]))) {
-    stop(.rmbl_fn(), sprintf("`%s` must be finite (no Inf)", arg), call. = FALSE)
+    stop(
+      .rmbl_fn(),
+      sprintf("`%s` must be finite (no Inf)", arg),
+      call. = FALSE
+    )
   }
   x <- .rmbl_num(x, "x")
-  if (!length(x)) stop(.rmbl_fn(), sprintf("`%s` must not be empty", arg), call. = FALSE)
-  if (anyNA(x)) stop(sprintf("`%s` must not contain NA", arg), call. = FALSE)
+  if (!length(x)) {
+    stop(.rmbl_fn(), sprintf("`%s` must not be empty", arg), call. = FALSE)
+  }
+  if (anyNA(x)) {
+    stop(sprintf("`%s` must not contain NA", arg), call. = FALSE)
+  }
   bad <- if (allow_zero) any(x < 0) else any(x <= 0)
   if (bad) {
     stop(
       sprintf(
-        "`%s` must be %s", arg,
+        "`%s` must be %s",
+        arg,
         if (allow_zero) "non-negative" else "positive"
       ),
       call. = FALSE
@@ -129,10 +141,10 @@ adp <- function(days, t = 365) {
 #'
 #' @param days Numeric vector of person-days served during the period,
 #'   non-negative, no \code{NA} or \code{Inf}; the vector is summed.
-#' @param n Numeric scalar, the number of people; must be positive. A
-#'   vector of several values is refused. For an unbiased average this should be the
-#'   people both admitted AND released within the period, because anyone
-#'   still held has an unfinished stay.
+#' @param n Numeric scalar, the number of people; must be positive. A vector of
+#'   several values is refused. For an unbiased average this should be the
+#'   people both admitted AND released within the period, because anyone still
+#'   held has an unfinished stay.
 #'
 #' @return A numeric scalar: days per person, \eqn{\sum X_i / n}.
 #'
@@ -166,7 +178,8 @@ adp <- function(days, t = 365) {
 #' # zero people cannot have an average stay
 #' try(alos(12150, 0))
 #' @export
-#' @srrstats {G5.4c} test-custody.R uses stored values from Lakner (1976) worked examples (p.15, p.17, p.20).
+#' @srrstats {G5.4c} test-custody.R uses stored values from Lakner (1976) worked
+#'   examples (p.15, p.17, p.20).
 alos <- function(days, n) {
   days <- .rmbl_pos_num(days, "days", allow_zero = TRUE)
   n <- .rmbl_pos_num(n, "n", scalar = TRUE)
@@ -366,11 +379,17 @@ adpcnts <- function(cnts, t = 365) {
 #' # days and people must line up period by period
 #' try(stkflow(days = c(100, 120), people = c(10, 12, 14)))
 #' @export
-#' @srrstats {TS4.3} Returns alos in days per person, adp per day, and attr "stkflow"$t with each period's length in
-#'   days.
-stkflow <- function(days, people, prd = NULL, t = 365,
-                       expo = NULL, per = 100000,
-                       base = c("first", "previous")) {
+#' @srrstats {TS4.3} Returns alos in days per person, adp per day, and attr
+#'   "stkflow"$t with each period's length in days.
+stkflow <- function(
+  days,
+  people,
+  prd = NULL,
+  t = 365,
+  expo = NULL,
+  per = 100000,
+  base = c("first", "previous")
+) {
   base <- .rmbl_arg(base)
   days <- .rmbl_pos_num(days, "days", allow_zero = TRUE)
   people <- .rmbl_pos_num(people, "people")
@@ -378,30 +397,47 @@ stkflow <- function(days, people, prd = NULL, t = 365,
     stop("`days` and `people` must be the same length", call. = FALSE)
   }
   t <- .rmbl_pos_num(t, "t")
-  if (length(t) == 1L) t <- rep(t, length(days))
+  if (length(t) == 1L) {
+    t <- rep(t, length(days))
+  }
   if (length(t) != length(days)) {
     stop("`t` must be length 1 or the same length as `days`", call. = FALSE)
   }
-  if (is.null(prd)) prd <- seq_along(days)
+  if (is.null(prd)) {
+    prd <- seq_along(days)
+  }
   if (length(prd) != length(days)) {
-    stop("`prd` must have one label per period (the length of `days`)", call. = FALSE)
+    stop(
+      "`prd` must have one label per period (the length of `days`)",
+      call. = FALSE
+    )
   }
   out <- data.frame(
-    period = as.character(prd), people = people,
-    days = days, stringsAsFactors = FALSE
+    period = as.character(prd),
+    people = people,
+    days = days,
+    stringsAsFactors = FALSE
   )
   out$alos <- days / people
   out$adp <- days / t
   if (!is.null(expo)) {
     expo <- .rmbl_pos_num(expo, "expo")
-    if (length(expo) == 1L) expo <- rep(expo, length(days))
+    if (length(expo) == 1L) {
+      expo <- rep(expo, length(days))
+    }
     if (length(expo) != length(days)) {
-      stop("`expo` must be length 1 or the same length as `days`",
+      stop(
+        "`expo` must be length 1 or the same length as `days`",
         call. = FALSE
       )
     }
     per <- .rmbl_pos_num(per, "per", scalar = TRUE)
-    if (per > 1e12) stop("`per` must be at most 1e12 (a population unit, such as 100000)", call. = FALSE)
+    if (per > 1e12) {
+      stop(
+        "`per` must be at most 1e12 (a population unit, such as 100000)",
+        call. = FALSE
+      )
+    }
     out$exposure <- expo
     out$flowrate <- per * people / expo
     out$stkrate <- per * out$adp / expo
@@ -423,10 +459,12 @@ stkflow <- function(days, people, prd = NULL, t = 365,
     out$flowratechg <- chg(out$flowrate)
     out$stkratechg <- chg(out$stkrate)
   }
-  structure(out,
+  structure(
+    out,
     class = c("rmbl_stock_flow", "data.frame"),
     stkflow = list(
-      t = t, baseline = base,
+      t = t,
+      baseline = base,
       per = if (is.null(expo)) NA else per
     )
   )
@@ -436,7 +474,9 @@ stkflow <- function(days, people, prd = NULL, t = 365,
 print.rmbl_stock_flow <- function(x, ...) {
   has_rate <- "stkrate" %in% names(x)
   cols <- c("period", "people", "days", "alos", "adp")
-  if (has_rate) cols <- c(cols, "flowrate", "stkrate")
+  if (has_rate) {
+    cols <- c(cols, "flowrate", "stkrate")
+  }
   footer <- NULL
   if (nrow(x) > 1L) {
     i <- nrow(x)
@@ -444,21 +484,33 @@ print.rmbl_stock_flow <- function(x, ...) {
     from <- if (identical(base, "previous")) x$period[i - 1L] else x$period[1L]
     footer <- sprintf(
       "%s to %s: people %+.1f%%, stay %+.1f%%, days %+.1f%%",
-      from, x$period[i], x$peochg[i],
-      x$aloschg[i], x$dayschg[i]
+      from,
+      x$period[i],
+      x$peochg[i],
+      x$aloschg[i],
+      x$dayschg[i]
     )
     if (has_rate) {
-      footer <- c(footer, sprintf(
-        "flow rate %+.1f%%, stock rate %+.1f%%%s",
-        x$flowratechg[i], x$stkratechg[i],
-        if (sign(x$flowratechg[i]) != sign(x$stkratechg[i]))
-          "  <- opposite signs: quote both" else ""
-      ))
+      footer <- c(
+        footer,
+        sprintf(
+          "flow rate %+.1f%%, stock rate %+.1f%%%s",
+          x$flowratechg[i],
+          x$stkratechg[i],
+          if (sign(x$flowratechg[i]) != sign(x$stkratechg[i])) {
+            "  <- opposite signs: quote both"
+          } else {
+            ""
+          }
+        )
+      )
     }
   }
-  .rmbl_print_table(paste("Stock and flow over", nrow(x), "periods"),
+  .rmbl_print_table(
+    paste("Stock and flow over", nrow(x), "periods"),
     x[, cols, drop = FALSE],
-    footer = footer, ...
+    footer = footer,
+    ...
   )
   invisible(x)
 }
@@ -505,30 +557,42 @@ print.rmbl_stock_flow <- function(x, ...) {
 #' try(perdays(1, 31))
 #' try(perdays("2024-12-31", "2024-01-01"))
 #' @export
-#' @srrstats {TS1.8} Day counts use Gregorian Date arithmetic, so leap years give 366 (test-custody.R:140); the
-#'   Hawkes sinusoid documents a 365.25-day year.
+#' @srrstats {TS1.8} Day counts use Gregorian Date arithmetic, so leap years
+#'   give 366 (test-custody.R:140); the Hawkes sinusoid documents a 365.25-day
+#'   year.
 perdays <- function(from, to) {
   if (is.numeric(from) || is.numeric(to)) {
-    stop("`from` and `to` must be dates or date strings, not numbers",
+    stop(
+      "`from` and `to` must be dates or date strings, not numbers",
       call. = FALSE
     )
   }
-  # text that is no date, a list, a frame or a flag: said, not as.Date()'s "character string is not in
-  # a standard unambiguous format" (re-test of the b617a3f CRAN stress fixes, hostile battery)
+  # text that is no date, a list, a frame or a flag: said, not as.Date()'s
+  # "character string is not in a standard unambiguous format" (re-test of the
+  # b617a3f CRAN stress fixes, hostile battery)
   as_day <- function(v, what) {
-    if (length(v) != 1L || !(inherits(v, c("Date", "POSIXt")) || is.character(v))) {
+    if (
+      length(v) != 1L || !(inherits(v, c("Date", "POSIXt")) || is.character(v))
+    ) {
       stop("`from` and `to` must each be a single date", call. = FALSE)
     }
-    if (is.na(v)) return(as.Date(NA))   # refused below, as a missing date
+    if (is.na(v)) {
+      return(as.Date(NA))
+    } # refused below, as a missing date
     d <- tryCatch(as.Date(v), error = function(e) as.Date(NA))
-    if (is.na(d)) stop(sprintf("`%s` is not a date: %s", what, format(v)), call. = FALSE)
+    if (is.na(d)) {
+      stop(sprintf("`%s` is not a date: %s", what, format(v)), call. = FALSE)
+    }
     d
   }
   from <- as_day(from, "from")
   to <- as_day(to, "to")
-  if (is.na(from) || is.na(to))
+  if (is.na(from) || is.na(to)) {
     stop("`from` and `to` must be dates", call. = FALSE)
-  if (to < from) stop("`to` must not precede `from`", call. = FALSE)
+  }
+  if (to < from) {
+    stop("`to` must not precede `from`", call. = FALSE)
+  }
   as.numeric(to - from) + 1
 }
 
@@ -595,8 +659,14 @@ staysmry <- function(daysperper, conflvl = 0.95) {
   tq <- if (n > 1L) stats::qt(1 - (1 - conflvl) / 2, df = n - 1L) else NA_real_
   q <- stats::quantile(x, c(0.25, 0.5, 0.75), names = FALSE, type = 7)
   data.frame(
-    n = n, totaldays = sum(x), mean = m, sd = s, median = q[2],
-    iqr = q[3] - q[1], max = max(x), se = se,
+    n = n,
+    totaldays = sum(x),
+    mean = m,
+    sd = s,
+    median = q[2],
+    iqr = q[3] - q[1],
+    max = max(x),
+    se = se,
     lower = if (n > 1L) m - tq * se else NA_real_,
     upper = if (n > 1L) m + tq * se else NA_real_,
     stringsAsFactors = FALSE

@@ -294,11 +294,12 @@
 \method{plot}{rmbl_ltrlrng}(x, ..., equiv = FALSE, spacing = NULL,
   main = NULL, col = NULL, palette = NULL)
 
-\method{plot}{rmbl_srchpod}(x, ..., models = NULL, m = NULL, cmax = NULL,
-  main = NULL, col = NULL, palette = NULL)
+\method{plot}{rmbl_srchpod}(x, ..., models = NULL, m = NULL,
+  cmax = NULL, main = NULL, col = NULL, palette = NULL)
 
-\method{plot}{rmbl_datummap}(x, ..., view = c("map", "persp", "both", "cells"),
-  contours = 8L, digits = 2, main = NULL, col = NULL, palette = NULL)
+\method{plot}{rmbl_datummap}(x, ...,
+  view = c("map", "persp", "both", "cells"), contours = 8L, digits = 2,
+  main = NULL, col = NULL, palette = NULL)
 
 \method{plot}{rmbl_opteffort}(x, ..., main = NULL, col = NULL, palette = NULL)
 
@@ -315,9 +316,9 @@
 or \code{image}). They are passed on to each panel's method for a
 \code{bricklayer_analysis} object.}
 
-\item{component}{For \code{rmbl_census_cwb}: \code{"cwb"} (the index, default) or one
-of its components \code{"income"}, \code{"education"}, \code{"housing"},
-\code{"labour"}.}
+\item{component}{For \code{rmbl_census_cwb}: \code{"cwb"} (the index,
+default) or one of its components \code{"income"}, \code{"education"},
+\code{"housing"}, \code{"labour"}.}
 
 \item{main}{Title; each method has a default.}
 
@@ -326,54 +327,50 @@ of its components \code{"income"}, \code{"education"}, \code{"housing"},
 \item{palette}{A \code{\link{blpal}} name, overriding the
 session option.}
 
-\item{what}{Depends on the class:
-\itemize{
-\item \code{rmbl_indigenous_gap}: \code{"difference"} or \code{"ratio"};
-\item \code{rmbl_stock_flow}: the measures to draw (one panel each), any
-of \code{"adp"}, \code{"alos"}, \code{"people"}, \code{"days"},
-\code{"flowrate"}, \code{"stkrate"};
-\item \code{rmbl_yoy}: \code{"pctchg"} or \code{"value"};
-\item \code{bricklayer_drift}: \code{"psi"}, \code{"columns"},
-\code{"benford"}, \code{"ecdf"}, \code{"quantiles"} or
-\code{"fingerprint"};
-\item \code{rmbl_case_flow}: \code{"flow"} and/or \code{"clearance"};
-\item \code{rmbl_clearance_decomposition}: any of \code{"rates"},
-\code{"mix"} and \code{"effects"} (the default fits the device).
-}
-The 0.5.x values \code{"pct_change"}, \code{"flow_rate"} and \code{"stock_rate"} are
-still accepted, as is \code{"rate_change"} for \code{which}.}
+\item{what}{Depends on the class: \itemize{ \item \code{rmbl_indigenous_gap}:
+\code{"difference"} or \code{"ratio"}; \item \code{rmbl_stock_flow}: the
+measures to draw (one panel each), any of \code{"adp"}, \code{"alos"},
+\code{"people"}, \code{"days"}, \code{"flowrate"}, \code{"stkrate"}; \item
+\code{rmbl_yoy}: \code{"pctchg"} or \code{"value"}; \item
+\code{bricklayer_drift}: \code{"psi"}, \code{"columns"}, \code{"benford"},
+\code{"ecdf"}, \code{"quantiles"} or \code{"fingerprint"}; \item
+\code{rmbl_case_flow}: \code{"flow"} and/or \code{"clearance"}; \item
+\code{rmbl_clearance_decomposition}: any of \code{"rates"}, \code{"mix"}
+and \code{"effects"} (the default fits the device). } The 0.5.x values
+\code{"pct_change"}, \code{"flow_rate"} and \code{"stock_rate"} are still
+accepted, as is \code{"rate_change"} for \code{which}.}
 
 \item{points}{For \code{rmbl_density}, whether to draw the incidents
 over the surface.}
 
-\item{maxparts}{For \code{rmbl_clearance_decomposition}, the most parts drawn: past
-it,
-the parts that moved the aggregate most, and the rest summed into one row. The 0.5.x
-name \code{max_parts} is still accepted.}
+\item{maxparts}{For \code{rmbl_clearance_decomposition}, the most parts
+drawn: past it, the parts that moved the aggregate most, and the rest
+summed into one row. The 0.5.x name \code{max_parts} is still accepted.}
 
-\item{threshold}{For \code{rmbl_balance}: the absolute standardised difference
-drawn as the line of acceptable balance (default 0.1).}
+\item{threshold}{For \code{rmbl_balance}: the absolute standardised
+difference drawn as the line of acceptable balance (default 0.1).}
 
-\item{after}{For \code{rmbl_balance}: optionally a second \code{\link{baltab}}
-on the same covariates (after weighting or matching), drawn beside the first.}
+\item{after}{For \code{rmbl_balance}: optionally a second
+\code{\link{baltab}} on the same covariates (after weighting or matching),
+drawn beside the first.}
 
 \item{type}{For a permutation test: \code{"density"} (a kernel density of the
-permuted statistics, their 5th and 95th percentiles dashed, the observed one in
-red; the default) or \code{"histogram"}. For a cross-fitted AIPW result:
-\code{"overlap"} (the weighted distribution of the out-of-fold propensity in each
-arm with the clipping bounds; the default) or \code{"estimate"} (the effect with
-its confidence interval).}
+permuted statistics, their 5th and 95th percentiles dashed, the observed
+one in red; the default) or \code{"histogram"}. For a cross-fitted AIPW
+result: \code{"overlap"} (the weighted distribution of the out-of-fold
+propensity in each arm with the clipping bounds; the default) or
+\code{"estimate"} (the effect with its confidence interval).}
 
-\item{xlab}{For the plots over time (\code{rmbl_stock_flow},
-\code{rmbl_yoy}, \code{rmbl_rate_change}, \code{rmbl_count_trend},
-\code{rmbl_event_study}, and \code{rmbl_rate} with \code{period}),
-the title of the period axis. The default
-\code{NULL} names the unit the period implies: \code{"Date"} for dates,
-\code{"Time"} for date-times, \code{"Fiscal year"} for fiscal-year labels
-such as \code{"2022/23"}, \code{"Periods since adoption"} for an event
-study, otherwise \code{"Period"}. A number or a date is drawn on its own
-continuous scale, so a missing period leaves its gap; any other period
-(text, a factor) is drawn at evenly spaced positions labelled with its text.}
+\item{xlab}{For the plots over time (\code{rmbl_stock_flow}, \code{rmbl_yoy},
+\code{rmbl_rate_change}, \code{rmbl_count_trend}, \code{rmbl_event_study},
+and \code{rmbl_rate} with \code{period}), the title of the period axis. The
+default \code{NULL} names the unit the period implies: \code{"Date"} for
+dates, \code{"Time"} for date-times, \code{"Fiscal year"} for fiscal-year
+labels such as \code{"2022/23"}, \code{"Periods since adoption"} for an
+event study, otherwise \code{"Period"}. A number or a date is drawn on its
+own continuous scale, so a missing period leaves its gap; any other period
+(text, a factor) is drawn at evenly spaced positions labelled with its
+text.}
 
 \item{gaps}{For \code{rmbl_yoy} (\code{what = "value"}) and
 \code{rmbl_event_study} (\code{style = "stata"}): how a missing value
@@ -381,10 +378,9 @@ shows in a line. \code{"break"} (the default) breaks the
 line there, so a \dQuote{no data} period that \code{yoy(complete = TRUE)}
 inserted is a visible gap; \code{"join"} draws the line straight over it.}
 
-\item{period}{For \code{rmbl_rate}, a \code{by} column holding the period: the rate
-is
-drawn over time with its interval band, one panel per group of the other \code{by}
-columns.}
+\item{period}{For \code{rmbl_rate}, a \code{by} column holding the period:
+the rate is drawn over time with its interval band, one panel per group of
+the other \code{by} columns.}
 
 \item{cols}{For \code{bricklayer_drift}, the columns to draw with
 \code{what = "columns"} or \code{"benford"}; \code{NULL} (the default)
@@ -404,32 +400,33 @@ exposure in the object.}
 \code{"change"}, \code{"rates"}, \code{"ratechg"}; \code{NULL} draws
 every panel the analysis has.}
 
-\item{style}{For an event study: \code{"dot"} (filled points with solid capped
-bars, the default) or \code{"stata"} (hollow points joined by a line, dashed
-capped bars, dashed reference lines).}
+\item{style}{For an event study: \code{"dot"} (filled points with solid
+capped bars, the default) or \code{"stata"} (hollow points joined by a
+line, dashed capped bars, dashed reference lines).}
 
 \item{shadepost}{Shade the periods after adoption (default \code{FALSE}).}
 
 \item{refline}{Where the vertical reference line goes (default \code{-0.5},
 between the reference period and adoption; \code{0} puts it at adoption).}
 
-\item{equiv}{Whether to draw the equivalent definite-range rectangle and the A and B areas
-(figure 4-7 of the book).}
+\item{equiv}{Whether to draw the equivalent definite-range rectangle and the
+A and B areas (figure 4-7 of the book).}
 
-\item{spacing}{NULL, or the distance to a second track, drawn beside the first.}
+\item{spacing}{NULL, or the distance to a second track, drawn beside the
+first.}
 
-\item{models}{Model codes (\code{"random"}, \code{"definite"}, \code{"invcube"},
-\code{"mbeta"}), one curve each; NULL
-draws the fitted model.}
+\item{models}{Model codes (\code{"random"}, \code{"definite"},
+\code{"invcube"}, \code{"mbeta"}), one curve each; NULL draws the fitted
+model.}
 
-\item{m}{M-Beta heights, one curve each when \code{"mbeta"} is among the models.}
+\item{m}{M-Beta heights, one curve each when \code{"mbeta"} is among the
+models.}
 
 \item{cmax}{The largest coverage drawn.}
 
 \item{view}{\code{"map"} (the top view), \code{"persp"} (the surface),
-\code{"both"} (side by side,
-in the book's colour bands) or \code{"cells"} (the probability map as a grid of
-percentages).}
+\code{"both"} (side by side, in the book's colour bands) or \code{"cells"}
+(the probability map as a grid of percentages).}
 
 \item{digits}{Decimal places of the percentages in the \code{"cells"} view.}
 }
@@ -454,169 +451,171 @@ numbers. (Session defaults: see
 method returns the data it drew, invisibly, as a data frame.
 }
 \details{
-\describe{
-\item{\code{rmbl_stock_flow}}{(\code{\link{stkflow}}) the average
-daily population, length of stay, people and person-days over the
-periods, one panel per measure in \code{what}; with an exposure,
-the flow and stock rates too.}
-\item{\code{rmbl_yoy}}{(\code{\link{yoy}}) the period-over-period
-percent change with its interval over the periods, the period across and
-the change up, groups side by side, coloured by verdict;
-\code{what = "value"} draws the values instead.}
-\item{\code{rmbl_rate}, \code{rmbl_share}}{
-(\code{\link{rtcalc}}, \code{\link{shrs}}) the rate or share per group with
-its interval.}
+\describe{ \item{\code{rmbl_stock_flow}}{(\code{\link{stkflow}}) the average
+daily population, length of stay, people and person-days over the periods,
+one panel per measure in \code{what}; with an exposure, the flow and stock
+rates too.} \item{\code{rmbl_yoy}}{(\code{\link{yoy}}) the
+period-over-period percent change with its interval over the periods, the
+period across and the change up, groups side by side, coloured by verdict;
+\code{what = "value"} draws the values instead.} \item{\code{rmbl_rate},
+\code{rmbl_share}}{ (\code{\link{rtcalc}}, \code{\link{shrs}}) the rate or
+share per group with its interval.}
 \item{\code{rmbl_rate_change}}{(\code{\link{ratechg}}) the percent change
 in the rate with its interval over the periods, groups side by side.}
-\item{\code{rmbl_band_sensitivity}}{(\code{\link{bandsens}})
-the statistic against the cap applied to the open band.}
+\item{\code{rmbl_band_sensitivity}}{(\code{\link{bandsens}}) the statistic
+against the cap applied to the open band.}
 \item{\code{rmbl_drift_calibration}, \code{bricklayer_drift}}{
-(\code{\link{drftcal}}, \code{\link{cpsdrft}}) the
-false-alarm rate per column against alpha; for a drift result,
-\code{what = "psi"} (the default) the population stability index
-per column, worst first, coloured by verdict, with the warn and fail
-bands as dashed lines; \code{"columns"} the reference and current
-distributions of up to six columns (\code{cols}, or the worst), each
-PSI bin's term written on it; \code{"benford"} the first digits of
-numeric columns against Benford's law with its 95\% band, and the
-test's verdict; \code{"ecdf"} both ECDFs with the area between them
-shaded; \code{"quantiles"} the current quantiles against the
-reference's on the identity line; \code{"fingerprint"} one spoke
-per column, its PSI as the distance out, with the bands as rings.}
+(\code{\link{drftcal}}, \code{\link{cpsdrft}}) the false-alarm rate per
+column against alpha; for a drift result, \code{what = "psi"} (the default)
+the population stability index per column, worst first, coloured by
+verdict, with the warn and fail bands as dashed lines; \code{"columns"} the
+reference and current distributions of up to six columns (\code{cols}, or
+the worst), each PSI bin's term written on it; \code{"benford"} the first
+digits of numeric columns against Benford's law with its 95\% band, and the
+test's verdict; \code{"ecdf"} both ECDFs with the area between them shaded;
+\code{"quantiles"} the current quantiles against the reference's on the
+identity line; \code{"fingerprint"} one spoke per column, its PSI as the
+distance out, with the bands as rings.}
 \item{\code{bricklayer_benford}}{(\code{\link{benfordtst}}) observed
 first-digit proportions against Benford's law.}
-\item{\code{bricklayer_power}}{(\code{\link{cpspwr}}) the power
-curve: detection rate against injected effect size, with the 0.8
-line.}
+\item{\code{bricklayer_power}}{(\code{\link{cpspwr}}) the power curve:
+detection rate against injected effect size, with the 0.8 line.}
 \item{\code{bricklayer_freq}, \code{bricklayer_missingness},
-\code{rmbl_region_coverage}}{(\code{\link{freqtbl}},
-\code{\link{misspat}} and \code{\link{rgncov}}) horizontal bars.}
-\item{\code{bricklayer_outliers}}{(\code{\link{mahaoutl}})
-the distance of every row, outliers marked.}
-\item{\code{bricklayer_correlations}, \code{bricklayer_cortable}}{
-(\code{\link{topcors}}, \code{\link{cortbl}}) the
-correlation of every pair as a diverging bar.}
-\item{\code{bricklayer_falsification}}{(\code{\link{cpsfals}})
-the permutation null distribution with the observed statistic.}
-\item{\code{rmbl_bounds}}{(\code{\link{pubbnd}}) each value
-inside its published-rounding envelope.}
-\item{\code{rmbl_indigenous_gap}, \code{rmbl_dsr}, \code{rmbl_prevalence}}{
-each group's difference or ratio, rate, percentage, odds ratio or index
-with its interval, for these classes and for \code{rmbl_exposure_trend}
-and \code{rmbl_community_index} (\code{\link{indgap}}, \code{\link{agestd}},
-\code{\link{stdprev}}, \code{\link{exptrnd}}, \code{\link{commidx}});
-\code{what = "ratio"} draws the ratio of a gap.}
-\item{\code{rmbl_trc_progress}}{(\code{\link{trcprog}}) the Calls to
-Action completed, and the pace projected with the band its interval gives.}
-\item{\code{rmbl_ordinal_compare}}{(\code{\link{ordcmp}}) each
-group's ratings as one stacked bar, lowest rating on the left.}
+\code{rmbl_region_coverage}}{(\code{\link{freqtbl}}, \code{\link{misspat}}
+and \code{\link{rgncov}}) horizontal bars.}
+\item{\code{bricklayer_outliers}}{(\code{\link{mahaoutl}}) the distance of
+every row, outliers marked.} \item{\code{bricklayer_correlations},
+\code{bricklayer_cortable}}{ (\code{\link{topcors}}, \code{\link{cortbl}})
+the correlation of every pair as a diverging bar.}
+\item{\code{bricklayer_falsification}}{(\code{\link{cpsfals}}) the
+permutation null distribution with the observed statistic.}
+\item{\code{rmbl_bounds}}{(\code{\link{pubbnd}}) each value inside its
+published-rounding envelope.} \item{\code{rmbl_indigenous_gap},
+\code{rmbl_dsr}, \code{rmbl_prevalence}}{ each group's difference or ratio,
+rate, percentage, odds ratio or index with its interval, for these classes
+and for \code{rmbl_exposure_trend} and \code{rmbl_community_index}
+(\code{\link{indgap}}, \code{\link{agestd}}, \code{\link{stdprev}},
+\code{\link{exptrnd}}, \code{\link{commidx}}); \code{what = "ratio"} draws
+the ratio of a gap.}
+\item{\code{rmbl_trc_progress}}{(\code{\link{trcprog}}) the Calls to Action
+completed, and the pace projected with the band its interval gives.}
+\item{\code{rmbl_ordinal_compare}}{(\code{\link{ordcmp}}) each group's
+ratings as one stacked bar, lowest rating on the left.}
 \item{\code{rmbl_wellness_profile}, \code{rmbl_wellness_continuum}}{
 wellness indicators above, distress below, each group's estimate and
 interval (\code{\link{welprof}}, \code{\link{mhcont}}).}
-\item{\code{rmbl_dual_continuum}}{(\code{\link{dualcont}}) each group
-on the two axes, wellness up and distress across.}
-\item{\code{rmbl_holistic_balance}}{(\code{\link{holbal}}) the
-domains as spokes and each group's levels on them, with its balance.}
-\item{\code{rmbl_distinctions}}{(\code{\link{dstntst}}) each
-group's estimate and the pooled figure, with I-squared.}
-\item{\code{rmbl_connection}}{(\code{\link{connassoc}}) the
-places on the two indicators, with their intervals; \code{xlab} and
-\code{ylab} name the axes (default: the indicators' column names).}
-\item{\code{rmbl_healing_change}}{(\code{\link{healchg}}) the change
-in each indicator between the periods, wellness first.}
-\item{\code{rmbl_profile_share}}{(\code{\link{profshr}}) each group's
-share of a census characteristic with its interval.}
-\item{\code{rmbl_crf}, \code{rmbl_burden}, \code{rmbl_equity}}{and
-\code{rmbl_pollution_report}: in turn, the concentration-response curve with
-the exposure marked; baseline against attributable cases; the
-concentration curve of exposure over income rank; and, for a report,
-all three on one page (\code{\link{crfpm25}}, \code{\link{polbrdn}},
-\code{\link{expconcidx}}, \code{\link{vrfpol}}).}
-\item{\code{rmbl_footprint}}{(\code{\link{co2fp}}) the
-CPU, memory and total emission in one unit chosen to fit, with the
+\item{\code{rmbl_dual_continuum}}{(\code{\link{dualcont}}) each group on
+the two axes, wellness up and distress across.}
+\item{\code{rmbl_holistic_balance}}{(\code{\link{holbal}}) the domains as
+spokes and each group's levels on them, with its balance.}
+\item{\code{rmbl_distinctions}}{(\code{\link{dstntst}}) each group's
+estimate and the pooled figure, with I-squared.}
+\item{\code{rmbl_connection}}{(\code{\link{connassoc}}) the places on the
+two indicators, with their intervals; \code{xlab} and \code{ylab} name the
+axes (default: the indicators' column names).}
+\item{\code{rmbl_healing_change}}{(\code{\link{healchg}}) the change in
+each indicator between the periods, wellness first.}
+\item{\code{rmbl_profile_share}}{(\code{\link{profshr}}) each group's share
+of a census characteristic with its interval.} \item{\code{rmbl_crf},
+\code{rmbl_burden}, \code{rmbl_equity}}{and \code{rmbl_pollution_report}:
+in turn, the concentration-response curve with the exposure marked;
+baseline against attributable cases; the concentration curve of exposure
+over income rank; and, for a report, all three on one page
+(\code{\link{crfpm25}}, \code{\link{polbrdn}}, \code{\link{expconcidx}},
+\code{\link{vrfpol}}).} \item{\code{rmbl_footprint}}{(\code{\link{co2fp}})
+the CPU, memory and total emission in one unit chosen to fit, with the
 car-kilometre and tree-month equivalents as a caption; \dQuote{Too short to
-measure} when the work took no measurable time.}
-\item{\code{rmbl_field}, \code{rmbl_particles}}{
-(\code{\link{plmfld}}, \code{\link{advdif2d}},
-\code{\link{lagrprt}}) a concentration field as an
-image with contours; particle positions, with the counting grid
-behind them when one was given.}
-\item{\code{rmbl_count_trend}}{(\code{\link{cnttrnd}}) the counts
-with the fitted trend.}
-\item{\code{bricklayer_analysis}}{(\code{\link{anltab}}) the
+measure} when the work took no measurable time.} \item{\code{rmbl_field},
+\code{rmbl_particles}}{ (\code{\link{plmfld}}, \code{\link{advdif2d}},
+\code{\link{lagrprt}}) a concentration field as an image with contours;
+particle positions, with the counting grid behind them when one was given.}
+\item{\code{rmbl_count_trend}}{(\code{\link{cnttrnd}}) the counts with the
+fitted trend.} \item{\code{bricklayer_analysis}}{(\code{\link{anltab}}) the
 change, rates and rate change of a published table, one panel each.}
 \item{\code{rmbl_event_study}, \code{rmbl_staggered_att}}{
-(\code{\link{evstudy}}, \code{\link{stgatt}}) the effect at each
-period since adoption with its interval, the reference period at zero.}
+(\code{\link{evstudy}}, \code{\link{stgatt}}) the effect at each period
+since adoption with its interval, the reference period at zero.}
 \item{\code{rmbl_synth}, \code{rmbl_synthdid}}{(\code{\link{synctl}},
-\code{\link{syndid}}) the treated unit (or mean) and its synthetic or weighted
-comparison over time, adoption marked.}
-\item{\code{rmbl_power}}{(\code{\link{plnpwr}}) power against effect size, with
-the 0.8 line and the minimum detectable effect.}
+\code{\link{syndid}}) the treated unit (or mean) and its synthetic or
+weighted comparison over time, adoption marked.}
+\item{\code{rmbl_power}}{(\code{\link{plnpwr}}) power against effect size,
+with the 0.8 line and the minimum detectable effect.}
 \item{\code{rmbl_prevalence}}{(\code{\link{stdprev}}) each group's
 age-standardised prevalence with its interval.}
-\item{\code{rmbl_census_cwb}}{(\code{\link{cnscwb}}) the Community Well-Being
-index, or one \code{component}, by place, one colour per group.}
+\item{\code{rmbl_census_cwb}}{(\code{\link{cnscwb}}) the Community
+Well-Being index, or one \code{component}, by place, one colour per group.}
 \item{\code{rmbl_balance}}{(\code{\link{baltab}}) a love plot: each
-covariate's absolute standardised difference against the \code{threshold} line,
-with a second table (\code{after}, after weighting or matching) beside it.}
-\item{\code{rmbl_aipw}}{(\code{\link{aipwcf}}) the overlap of the two
-groups' out-of-fold propensities (\code{type = "overlap"}) or the estimate with
-its interval (\code{type = "estimate"}).}
-\item{\code{rmbl_event_study}, \code{rmbl_staggered_att}}{also take \code{style =
-    "stata"} (hollow points joined by a line, dashed bars) and \code{shadepost};
-\code{\link{plotevgrid}} puts several in one grid.}
+covariate's absolute standardised difference against the \code{threshold}
+line, with a second table (\code{after}, after weighting or matching)
+beside it.} \item{\code{rmbl_aipw}}{(\code{\link{aipwcf}}) the overlap of
+the two groups' out-of-fold propensities (\code{type = "overlap"}) or the
+estimate with its interval (\code{type = "estimate"}).}
+\item{\code{rmbl_event_study}, \code{rmbl_staggered_att}}{also take
+\code{style = "stata"} (hollow points joined by a line, dashed bars) and
+\code{shadepost}; \code{\link{plotevgrid}} puts several in one grid.}
 \item{\code{rmbl_bacon}}{(\code{\link{bacondcmp}}) each two-group
-comparison's estimate against its weight, by type, with the two-way estimate.}
-\item{\code{rmbl_permutation}}{(\code{\link{perminf}}) the permuted
-statistics as a density (5th and 95th percentiles dashed) or histogram, the observed
-one in red, one panel per outcome.}
+comparison's estimate against its weight, by type, with the two-way
+estimate.} \item{\code{rmbl_permutation}}{(\code{\link{perminf}}) the
+permuted statistics as a density (5th and 95th percentiles dashed) or
+histogram, the observed one in red, one panel per outcome.}
 \item{\code{rmbl_loo}, \code{rmbl_cohort_trends}}{(\code{\link{loounit}},
-\code{\link{cohtrnd}}) the leave-one-out estimates with the full-sample one;
-each cohort's outcome by time since adoption.}
-\item{\code{rmbl_case_flow}}{(\code{\link{caseflow}}) cases received
-and disposed, shaded where the inventory grew or fell, and the
-clearance rate with its interval and rolling value.}
-\item{\code{rmbl_life_table}}{(\code{\link{lifetbl}}) the share of
-cases still open at each band edge with its interval, and the median.}
-\item{\code{rmbl_disposition_mix}}{(\code{\link{dispmix}}) the
-shares of each outcome over the periods, stacked.}
-\item{\code{rmbl_density}}{(\code{\link{crmdens}}) the density of
-incidents as a heat map, with the highest-density regions outlined.}
+\code{\link{cohtrnd}}) the leave-one-out estimates with the full-sample
+one; each cohort's outcome by time since adoption.}
+\item{\code{rmbl_case_flow}}{(\code{\link{caseflow}}) cases received and
+disposed, shaded where the inventory grew or fell, and the clearance rate
+with its interval and rolling value.}
+\item{\code{rmbl_life_table}}{(\code{\link{lifetbl}}) the share of cases
+still open at each band edge with its interval, and the median.}
+\item{\code{rmbl_disposition_mix}}{(\code{\link{dispmix}}) the shares of
+each outcome over the periods, stacked.}
+\item{\code{rmbl_density}}{(\code{\link{crmdens}}) the density of incidents
+as a heat map, with the highest-density regions outlined.}
 \item{\code{rmbl_knox}}{(\code{\link{knoxtst}}) the Knox ratio of each
 distance-by-time cell, coloured on a log scale around 1.}
 \item{\code{rmbl_hotspot}}{(\code{\link{hotpers}}) the share of places
-holding half the incidents and the overlap of hot spots with the period before,
-over
-time, and a map of the cells coloured by how often they were hot.}
-\item{\code{rmbl_svy_estimate},
-\code{rmbl_svy_compare}}{(\code{\link{svyest}},
-\code{\link{svycmp}}) each domain's estimate with its interval, flagged
-domains
-marked; each difference from the reference domain with its interval.}
-\item{\code{rmbl_clearance_decomposition}}{(\code{\link{clrdcmp}})
-the parts' rates in both comparisons with the aggregate on top, where the
+holding half the incidents and the overlap of hot spots with the period
+before, over time, and a map of the cells coloured by how often they were
+hot.} \item{\code{rmbl_svy_estimate},
+\code{rmbl_svy_compare}}{(\code{\link{svyest}}, \code{\link{svycmp}}) each
+domain's estimate with its interval, flagged domains marked; each
+difference from the reference domain with its interval.}
+\item{\code{rmbl_clearance_decomposition}}{(\code{\link{clrdcmp}}) the
+parts' rates in both comparisons with the aggregate on top, where the
 workload moved (coloured by whether a part clears above or below the
 average), and the change as a waterfall of rate and mix effects: the
-pictures that show a Simpson's-paradox reversal and why it happened.}
-}
+pictures that show a Simpson's-paradox reversal and why it happened.} }
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-sf <- stkflow(days = c(13500, 14600, 15100), people = c(300, 320, 310),
-                 prd = 2021:2023)
+sf <- stkflow(
+  days = c(13500, 14600, 15100),
+  people = c(300, 320, 310),
+  prd = 2021:2023
+)
 plot(sf)
 plot(sf, what = "alos", col = "firebrick", main = "Length of stay")
-y <- yoy(data.frame(year = 2019:2023, n = c(400, 420, 390, 460, 450)), value = "n",
-         prd = "year")
+y <- yoy(
+  data.frame(year = 2019:2023, n = c(400, 420, 390, 460, 450)),
+  value = "n",
+  prd = "year"
+)
 plot(y)
 # small counts: each percentage carries its exact interval
-plot(yoy(data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)), value = "n",
-         prd = "year"))
+plot(yoy(
+  data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)),
+  value = "n",
+  prd = "year"
+))
 plot(benfordtst(c(1, 12, 123, 1234, 2, 23, 3, 31, 4, 45, 5, 6, 7, 8, 9)))
 plot(crfno2(25))
-plot(co2fp(for (i in 1:20) sum(sqrt(seq_len(2e5))), loc = "CA",
-                       cpupwrw = 45, memgb = 8))
+plot(co2fp(
+  for (i in 1:20) {
+    sum(sqrt(seq_len(2e5)))
+  },
+  loc = "CA",
+  cpupwrw = 45,
+  memgb = 8
+))
 # the courts and crime data shipped with the package
 ext <- function(f) {
   read.csv(system.file("extdata", f, package = "rmoriebricklayer"))
@@ -634,36 +633,77 @@ plot(clrdcmp(og$disposed, og$received, og$offence_group, og$year))
 be <- ext("tps_break_enter_d14_2024.csv")
 be <- be[!is.na(be$lon), ]
 plot(crmdens(be$lon, be$lat, ngrid = 60))
-plot(knoxtst(be$lon, be$lat, as.Date(be$occ_date), c(100, 200, 400), c(7, 14, 28),
-               nsim = 99, seed = 1))
+plot(knoxtst(
+  be$lon,
+  be$lat,
+  as.Date(be$occ_date),
+  c(100, 200, 400),
+  c(7, 14, 28),
+  nsim = 99,
+  seed = 1
+))
 plot(hotpers(be$lon, be$lat, quarters(as.Date(be$occ_date)), cell = 0.3))
 # rates, shares and the change in a rate
-rt <- data.frame(division = rep(c("n", "e", "w"), 2), year = rep(2022:2023, each = 3),
-                 stops = c(120, 90, 60, 150, 85, 70),
-                 residents = rep(c(1e4, 8e3, 5e3), 2))
+rt <- data.frame(
+  division = rep(c("n", "e", "w"), 2),
+  year = rep(2022:2023, each = 3),
+  stops = c(120, 90, 60, 150, 85, 70),
+  residents = rep(c(1e4, 8e3, 5e3), 2)
+)
 r23 <- rt[rt$year == 2023, ]
 plot(rtcalc(r23, count = "stops", pop = "residents", by = "division"))
 plot(shrs(r23, count = "stops", by = "division"))
-plot(ratechg(rt, count = "stops", pop = "residents", prd = "year",
-                 by = "division"))
+plot(ratechg(
+  rt,
+  count = "stops",
+  pop = "residents",
+  prd = "year",
+  by = "division"
+))
 # a rate over time, one panel per group
-plot(rtcalc(rt, count = "stops", pop = "residents", by = c("division", "year")),
-     period = "year")
+plot(
+  rtcalc(rt, count = "stops", pop = "residents", by = c("division", "year")),
+  period = "year"
+)
 # complex survey estimates by domain, and the differences between domains
 set.seed(3)
-sv <- data.frame(region = rep(c("north", "south", "east"), length.out = 300),
-                 smoker = rbinom(300, 1, 0.25), w = runif(300, 50, 150))
+sv <- data.frame(
+  region = rep(c("north", "south", "east"), length.out = 300),
+  smoker = rbinom(300, 1, 0.25),
+  w = runif(300, 50, 150)
+)
 sd <- svydes(sv, w = "w", strata = "region")
-plot(svyest(sd, sv, "smoker", by = "region", stat = "proportion", lvls = "1"))
-plot(svycmp(sd, sv, "smoker", by = "region", stat = "proportion", lvls = "1"))
+plot(svyest(
+  sd,
+  sv,
+  "smoker",
+  by = "region",
+  stat = "proportion",
+  lvls = "1"
+))
+plot(svycmp(
+  sd,
+  sv,
+  "smoker",
+  by = "region",
+  stat = "proportion",
+  lvls = "1"
+))
 # a published table in one call: change, rates and rate change
-tab <- data.frame(year = rep(2020:2023, each = 2), g = rep(c("a", "b"), 4),
-                  n = c(10, 20, 12, 22, 11, 25, 15, 24), pop = rep(c(1000, 2000), 4))
+tab <- data.frame(
+  year = rep(2020:2023, each = 2),
+  g = rep(c("a", "b"), 4),
+  n = c(10, 20, 12, 22, 11, 25, 15, 24),
+  pop = rep(c(1000, 2000), 4)
+)
 plot(anltab(tab, value = "n", prd = "year", by = "g", pop = "pop"))
 plot(cnttrnd(c(21000, 23000, 22000, 25000, 24000)))
 # banded tables
-plot(bandsens(prsbands(c("0-17", "18-24", "25-44", "45+")), c(10, 20, 30, 40),
-                      caps = c(60, 70, 80, 90)))
+plot(bandsens(
+  prsbands(c("0-17", "18-24", "25-44", "45+")),
+  c(10, 20, 30, 40),
+  caps = c(60, 70, 80, 90)
+))
 plot(pubbnd(c(10, 20), rnd = 5))
 plot(rgncov(c("a", "b", "c"), c(100, 200, 300), c(1L, 0L, 2L)))
 # drift between two extracts, and how often the test cries wolf
@@ -692,18 +732,43 @@ shift <- function(z, s) {
   z$y <- z$y + s * z$x
   z
 }
-plot(cpspwr(xy, function(z) cor(z$x, z$y), inject = shift, trt = "x",
-                   sizes = c(0, 0.25, 0.5), n = 19, reps = 3, seed = 1))
+plot(cpspwr(
+  xy,
+  function(z) cor(z$x, z$y),
+  inject = shift,
+  trt = "x",
+  sizes = c(0, 0.25, 0.5),
+  n = 19,
+  reps = 3,
+  seed = 1
+))
 plot(cpsfals(xy, function(z) cor(z$x, z$y), trt = "x", n = 29, seed = 1))
 # air pollution: burden, equity, and the full report
 plot(polbrdn(25, 1, 0.008, 1e6, poll = "NO2"))
-plot(expconcidx(data.frame(exposure = c(4, 1, 8, 2),
-                                             income = c(2, 1, 4, 3)),
-                                  "exposure", "income"))
+plot(expconcidx(
+  data.frame(exposure = c(4, 1, 8, 2), income = c(2, 1, 4, 3)),
+  "exposure",
+  "income"
+))
 plot(vrfpol("no2", demo = TRUE))
-plot(lagrprt(200, 0, 0, 1, 0.5, 1, 1, 1, 20,
-                          grid = c(-10, 40, -15, 25, 10, 8)))
-plot(plmfld(q = 100, u = 5, h = 50, x = seq(100, 2000, by = 100),
-                 y = seq(-300, 300, by = 50)))
+plot(lagrprt(
+  200,
+  0,
+  0,
+  1,
+  0.5,
+  1,
+  1,
+  1,
+  20,
+  grid = c(-10, 40, -15, 25, 10, 8)
+))
+plot(plmfld(
+  q = 100,
+  u = 5,
+  h = 50,
+  x = seq(100, 2000, by = 100),
+  y = seq(-300, 300, by = 50)
+))
 \dontshow{\}) # examplesIf}
 }

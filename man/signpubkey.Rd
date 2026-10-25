@@ -33,8 +33,10 @@ this function refuses any key that is not a \code{bricklayer_signing_key}
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-# one-time index record out of your configuration directory; leave the default in use
+# keep this example's
+op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+# one-time index record out of your configuration directory; leave the
+# default in use
 key <- pqckg(height = 2)
 pub <- signpubkey(key)
 

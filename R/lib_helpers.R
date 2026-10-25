@@ -73,22 +73,37 @@
 #' try(sha256file(tempdir()))
 #' @export
 sha256file <- function(path) {
-  if (!is.character(path) || length(path) != 1L || is.na(path) || !file.exists(path) || dir.exists(path)) {
-    stop(sprintf("sha256file: %s is not a file", if (is.character(path) && length(path) == 1L) path else "`path`"),
-         call. = FALSE)
+  if (
+    !is.character(path) ||
+      length(path) != 1L ||
+      is.na(path) ||
+      !file.exists(path) ||
+      dir.exists(path)
+  ) {
+    stop(
+      sprintf(
+        "sha256file: %s is not a file",
+        if (is.character(path) && length(path) == 1L) path else "`path`"
+      ),
+      call. = FALSE
+    )
   }
-  # inside the package: the compiled SHA-256 core over the file read in chunks (identical output
-  # to digest::digest(file = path, algo = "sha256")); sourced standalone in a capsule bundle: the
-  # pure-R FIPS 180-4 implementation from sha256_native.R, over the whole file at once
-  if (exists("csha256", mode = "function")) return(.rmbl_sha256_stream(path))
+  # inside the package: the compiled SHA-256 core over the file read in chunks
+  # (identical output to digest::digest(file = path, algo = "sha256")); sourced
+  # standalone in a capsule bundle: the pure-R FIPS 180-4 implementation from
+  # sha256_native.R, over the whole file at once
+  if (exists("csha256", mode = "function")) {
+    return(.rmbl_sha256_stream(path))
+  }
   .rmbl_sha256_hex(readBin(path, "raw", n = file.info(path)$size))
 }
 
 #' Hashes a file with SHA-256 one chunk at a time.
 #'
-#' The digest of a file read `chunk` bytes at a time (8 MB), so memory stays at one chunk whatever
-#' the file's size; a file larger than one chunk gets a byte-progress bar (drawn only after the
-#' usual lazy start, so a quick hash shows nothing).
+#' The digest of a file read `chunk` bytes at a time (8 MB), so memory stays at
+#' one chunk whatever the file's size; a file larger than one chunk gets a
+#' byte-progress bar (drawn only after the usual lazy start, so a quick hash
+#' shows nothing).
 #' @param path The file.
 #' @param chunk The number of bytes read at a time.
 #' @return The digest as lower-case hex.
@@ -100,15 +115,24 @@ sha256file <- function(path) {
   pg <- if (is.finite(size) && size > chunk) {
     blprog(sprintf("sha256 %s", .rmbl_printable(basename(path))), size)
   }
-  if (!is.null(pg)) on.exit(pg$done(), add = TRUE)
+  if (!is.null(pg)) {
+    on.exit(pg$done(), add = TRUE)
+  }
   state <- NULL
   done <- 0
   repeat {
     b <- readBin(con, "raw", n = chunk)
-    if (!length(b)) break
+    if (!length(b)) {
+      break
+    }
     state <- .Call(C_rmbl_sha256_chunk, state, b, FALSE)
     done <- done + length(b)
-    if (!is.null(pg)) pg$update(done, info = sprintf("%s of %s", .bl_fmt_bytes(done), .bl_fmt_bytes(size)))
+    if (!is.null(pg)) {
+      pg$update(
+        done,
+        info = sprintf("%s of %s", .bl_fmt_bytes(done), .bl_fmt_bytes(size))
+      )
+    }
   }
   .Call(C_rmbl_sha256_chunk, state, NULL, TRUE)
 }
@@ -185,7 +209,9 @@ toascii <- function(x) {
   # does, and under a C locale it re-encodes the bytes as Latin-1 instead
   # of flagging them.
   inv <- !is.na(x) & !validUTF8(x)
-  if (any(inv)) x[inv] <- iconv(x[inv], "UTF-8", "UTF-8", sub = "")
+  if (any(inv)) {
+    x[inv] <- iconv(x[inv], "UTF-8", "UTF-8", sub = "")
+  }
   if (.rmbl_has_stringi()) {
     # Best + platform-independent: romanize any script to Latin, then fold
     # Latin accents to ASCII. Handles far more than Latin accents
@@ -202,8 +228,8 @@ toascii <- function(x) {
 #' Transliterates text to ASCII without stringi.
 #'
 #' Deterministic no-stringi fallback. iconv(\code{"ASCII//TRANSLIT"}) is
-#' locale-dependent: under a C locale (glibc) accented characters come back
-#' as \dQuote{?} -- ASCII, so the final strip keeps them. Transliterate the common
+#' locale-dependent: under a C locale (glibc) accented characters come back as
+#' \dQuote{?} -- ASCII, so the final strip keeps them. Transliterate the common
 #' Latin accents by table first, then let iconv DROP (not \dQuote{?}) the rest.
 #' @param x A character vector.
 #' @return A character vector.
@@ -249,8 +275,12 @@ toascii <- function(x) {
   )
   x <- chartr(from, to, x)
   multi <- list(
-    c("\u00df", "ss"), c("\u00c6", "AE"), c("\u00e6", "ae"),
-    c("\u0152", "OE"), c("\u0153", "oe"), c("\u00de", "Th"),
+    c("\u00df", "ss"),
+    c("\u00c6", "AE"),
+    c("\u00e6", "ae"),
+    c("\u0152", "OE"),
+    c("\u0153", "oe"),
+    c("\u00de", "Th"),
     c("\u00fe", "th")
   )
   for (pair in multi) {
@@ -313,11 +343,15 @@ toascii <- function(x) {
 asciifb <- function(x, force = FALSE) {
   .rmbl_no_fn(x = x)
   x <- as.character(x)
-  if (isTRUE(force)) return(toascii(x))
+  if (isTRUE(force)) {
+    return(toascii(x))
+  }
   out <- x
   # Test the bytes, not the locale's opinion of them (see toascii()).
   bad <- !is.na(x) & !validUTF8(x)
-  if (any(bad)) out[bad] <- toascii(x[bad])
+  if (any(bad)) {
+    out[bad] <- toascii(x[bad])
+  }
   out
 }
 
@@ -368,16 +402,27 @@ asciifb <- function(x, force = FALSE) {
 wrtxtfb <- function(text, path) {
   .rmbl_no_fn(text = text)
   path <- .rmbl_string1(path, "path")
-  ok <- tryCatch({
-    # the UTF-8 bytes go to a binary connection: a text connection with
-    # encoding = "UTF-8" re-encodes from the native locale, and in a C
-    # locale that is a warning per accented string
-    con <- file(path, open = "wb")
-    on.exit(close(con), add = TRUE)
-    writeBin(charToRaw(paste0(paste(enc2utf8(as.character(text)), collapse = "\n"), "\n")), con)
-    TRUE
-  }, error = function(e) FALSE)
-  if (!ok) writeLines(toascii(text), path) # nocov -- encoding-error retry
+  ok <- tryCatch(
+    {
+      # the UTF-8 bytes go to a binary connection: a text connection with
+      # encoding = "UTF-8" re-encodes from the native locale, and in a C
+      # locale that is a warning per accented string
+      con <- file(path, open = "wb")
+      on.exit(close(con), add = TRUE)
+      writeBin(
+        charToRaw(paste0(
+          paste(enc2utf8(as.character(text)), collapse = "\n"),
+          "\n"
+        )),
+        con
+      )
+      TRUE
+    },
+    error = function(e) FALSE
+  )
+  if (!ok) {
+    writeLines(toascii(text), path)
+  } # nocov -- encoding-error retry
   invisible(path)
 }
 
@@ -401,19 +446,26 @@ wrtxtfb <- function(text, path) {
     .rmbl_fetch_url(x, dest)
     x <- dest
   }
-  txt <- if (length(x) == 1L && !grepl("^\\s*[\\[{\"]", x) && file.exists(x))
-    paste(readLines(x, warn = FALSE, encoding = "UTF-8"), collapse = "\n") else x
-  # what came back is TEXT to parse, never a second address to fetch or a path to
-  # open (fourth review: a body that was a bare URL made the package fetch it)
-  # strict = TRUE (the default, and the package's own documents: provenance,
+  txt <- if (length(x) == 1L && !grepl("^\\s*[\\[{\"]", x) && file.exists(x)) {
+    paste(readLines(x, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+  } else {
+    x
+  }
+  # what came back is TEXT to parse, never a second address to fetch or a path
+  # to open (fourth review: a body that was a bare URL made the package fetch
+  # it) strict = TRUE (the default, and the package's own documents: provenance,
   # manifests, bundles): a repeated key is an error. strict = FALSE is for a
-  # portal's metadata, read the way jsonlite reads it: a repeated key is
-  # kept and a long numeric id is not a warning.
+  # portal's metadata, read the way jsonlite reads it: a repeated key is kept
+  # and a long numeric id is not a warning.
   if (isTRUE(strict)) {
     .rmbl_json_text(txt, simplifyVector = isTRUE(simplify))
   } else {
-    .rmbl_json_text(txt, simplifyVector = isTRUE(simplify),
-                              duplicate_keys = "keep", bigint_warn = FALSE)
+    .rmbl_json_text(
+      txt,
+      simplifyVector = isTRUE(simplify),
+      duplicate_keys = "keep",
+      bigint_warn = FALSE
+    )
   }
 }
 
@@ -426,10 +478,14 @@ wrtxtfb <- function(text, path) {
 #' @param native Whether the compiled fetcher is there to use.
 #' @return `dest`, invisibly.
 #' @noRd
-.rmbl_fetch_url <- function(url, dest,
-                            native = exists("blfetch",
-                                            mode = "function")) {
-  if (native) return(blfetch(url, dest))
+.rmbl_fetch_url <- function(
+  url,
+  dest,
+  native = exists("blfetch", mode = "function")
+) {
+  if (native) {
+    return(blfetch(url, dest))
+  }
   utils::download.file(url, dest, mode = "wb", quiet = TRUE)
   invisible(dest)
 }
@@ -448,22 +504,30 @@ wrtxtfb <- function(text, path) {
 #' @noRd
 .rmbl_safe_rel <- function(rel, dir) {
   rel <- as.character(unlist(rel))[1L]
-  if (is.na(rel) || !nzchar(rel)) return(NULL)
-  if (grepl("^([/\\\\]|~|[A-Za-z]:)", rel)) return(NULL)
+  if (is.na(rel) || !nzchar(rel)) {
+    return(NULL)
+  }
+  if (grepl("^([/\\\\]|~|[A-Za-z]:)", rel)) {
+    return(NULL)
+  }
   parts <- strsplit(gsub("\\\\", "/", rel), "/", fixed = TRUE)[[1L]]
-  if (any(parts %in% c("", ".", ".."))) return(NULL)
+  if (any(parts %in% c("", ".", ".."))) {
+    return(NULL)
+  }
   full <- file.path(dir, rel)
   d <- .rmbl_realpath(dir)
   f <- .rmbl_realpath(full)
-  if (!startsWith(f, paste0(d, "/"))) return(NULL)
+  if (!startsWith(f, paste0(d, "/"))) {
+    return(NULL)
+  }
   full
 }
 
 #' Resolves a path that may not exist yet through its deepest existing ancestor.
 #'
 #' normalizePath() only resolves paths that exist, so a missing leaf under a
-#' symlinked tempdir (macOS /var -> /private/var) would never match its
-#' resolved parent. Resolve the deepest existing ancestor and re-append the rest.
+#' symlinked tempdir (macOS /var -> /private/var) would never match its resolved
+#' parent. Resolve the deepest existing ancestor and re-append the rest.
 #' @param p The path.
 #' @return The resolved path.
 #' @noRd
@@ -489,79 +553,155 @@ wrtxtfb <- function(text, path) {
 #' @param allow_file Whether a file:// URL is accepted.
 #' @param allow_http Whether plain http is accepted.
 #' @param resolve Whether the host's addresses are resolved and checked too.
-#' @param allow_loopback Whether plain http on the loopback host is accepted (a local model).
+#' @param allow_loopback Whether plain http on the loopback host is accepted (a
+#'   local model).
 #' @return `url`.
 #' @noRd
-.rmbl_check_public_url <- function(url, what = "url", allow_file = FALSE,
-                                   allow_http = .rmbl_getopt("allowhttp", FALSE),
-                                   resolve = FALSE, allow_loopback = FALSE) {
+.rmbl_check_public_url <- function(
+  url,
+  what = "url",
+  allow_file = FALSE,
+  allow_http = .rmbl_getopt("allowhttp", FALSE),
+  resolve = FALSE,
+  allow_loopback = FALSE
+) {
   url <- as.character(unlist(url))[1L]
-  if (is.na(url) || !nzchar(url)) stop(sprintf("%s is empty", what), call. = FALSE)
-  if (isTRUE(allow_file) && grepl("^file://", url, ignore.case = TRUE)) return(url)
+  if (is.na(url) || !nzchar(url)) {
+    stop(sprintf("%s is empty", what), call. = FALSE)
+  }
+  if (isTRUE(allow_file) && grepl("^file://", url, ignore.case = TRUE)) {
+    return(url)
+  }
   if (!grepl("^[a-z][a-z0-9+.-]*://", url, ignore.case = TRUE)) {
     stop(sprintf("%s has no URL scheme: '%s'", what, url), call. = FALSE)
   }
-  # One implementation, in C, shared with the transport itself: the
-  # authority is parsed as a URL parser does, IPv4 literals are read with
-  # inet_aton's grammar (127.1, 0177.0.0.1, 2130706433, 0x7f000001), IPv6
-  # with inet_pton, local names are refused by suffix, and with `resolve`
-  # every address the name resolves to is tested. The fetch layer always
-  # resolves, and pins the connection to the addresses it checked.
-  # `allow_loopback` is the local-model relaxation (plain http on the loopback host), an
-  # argument of this one call and never an option (fourth review)
+  # One implementation, in C, shared with the transport itself: the authority is
+  # parsed as a URL parser does, IPv4 literals are read with inet_aton's grammar
+  # (127.1, 0177.0.0.1, 2130706433, 0x7f000001), IPv6 with inet_pton, local
+  # names are refused by suffix, and with `resolve` every address the name
+  # resolves to is tested. The fetch layer always resolves, and pins the
+  # connection to the addresses it checked. `allow_loopback` is the local-model
+  # relaxation (plain http on the loopback host), an argument of this one call
+  # and never an option (fourth review)
   why <- .rmbl_url_why(url, allow_http, resolve, allow_loopback)
-  if (!nzchar(why)) return(url)
-  scheme <- tolower(sub("^([a-z][a-z0-9+.-]*)://.*$", "\\1", url, ignore.case = TRUE))
+  if (!nzchar(why)) {
+    return(url)
+  }
+  scheme <- tolower(sub(
+    "^([a-z][a-z0-9+.-]*)://.*$",
+    "\\1",
+    url,
+    ignore.case = TRUE
+  ))
   if (startsWith(why, "plain http") || startsWith(why, "scheme ")) {
-    stop(sprintf(paste0("%s must be an https:// URL, not %s:// ('%s'); ",
-                        "options(rmoriebricklayer.allowhttp = TRUE) admits a ",
-                        "trusted plain-http mirror"), what, scheme, url),
-         call. = FALSE)
+    stop(
+      sprintf(
+        paste0(
+          "%s must be an https:// URL, not %s:// ('%s'); ",
+          "options(rmoriebricklayer.allowhttp = TRUE) admits a ",
+          "trusted plain-http mirror"
+        ),
+        what,
+        scheme,
+        url
+      ),
+      call. = FALSE
+    )
   }
   if (grepl("local|private|resolves|single-label", why)) {
-    stop(sprintf("%s points at a local or private address ('%s'): refused (%s)",
-                 what, url, why), call. = FALSE)
+    stop(
+      sprintf(
+        "%s points at a local or private address ('%s'): refused (%s)",
+        what,
+        url,
+        why
+      ),
+      call. = FALSE
+    )
   }
   stop(sprintf("%s is refused: %s ('%s')", what, why, url), call. = FALSE)
 }
 
 #' Gives the reason a URL is refused.
 #'
-#' The reason a URL is refused (\code{""} when it is accepted). In the package the C
-#' validator answers;
-#' a lib_*.R file sourced on its own inside a capsule bundle has no compiled code, so a base-R
-#' check stands in: https only, and no loopback, private, link-local, metadata, numeric or
-#' single-label host (it does not resolve names; the package's fetch layer does).
+#' The reason a URL is refused (\code{""} when it is accepted). In the package
+#' the C validator answers; a lib_*.R file sourced on its own inside a capsule
+#' bundle has no compiled code, so a base-R check stands in: https only, and no
+#' loopback, private, link-local, metadata, numeric or single-label host (it
+#' does not resolve names; the package's fetch layer does).
 #' @param url The URL.
 #' @param allow_http Whether plain http is accepted.
 #' @param resolve Whether the host's addresses are resolved and checked too.
 #' @param allow_loopback Whether plain http on the loopback host is accepted.
 #' @return The reason, or \code{""} when the URL is accepted.
 #' @noRd
-.rmbl_url_why <- function(url, allow_http = FALSE, resolve = FALSE, allow_loopback = FALSE) {
+.rmbl_url_why <- function(
+  url,
+  allow_http = FALSE,
+  resolve = FALSE,
+  allow_loopback = FALSE
+) {
   if (exists("C_rmbl_url_check", inherits = TRUE)) {
-    return(.Call(C_rmbl_url_check, url, isTRUE(allow_http), isTRUE(resolve), isTRUE(allow_loopback)))
+    return(.Call(
+      C_rmbl_url_check,
+      url,
+      isTRUE(allow_http),
+      isTRUE(resolve),
+      isTRUE(allow_loopback)
+    ))
   }
-  scheme <- tolower(sub("^([a-z][a-z0-9+.-]*)://.*$", "\\1", url, ignore.case = TRUE))
-  if (!scheme %in% c("https", "http")) return(sprintf("scheme %s is not allowed", scheme))
-  auth <- sub("[/?#].*$", "", sub("^[a-z][a-z0-9+.-]*://", "", url, ignore.case = TRUE))
+  scheme <- tolower(sub(
+    "^([a-z][a-z0-9+.-]*)://.*$",
+    "\\1",
+    url,
+    ignore.case = TRUE
+  ))
+  if (!scheme %in% c("https", "http")) {
+    return(sprintf("scheme %s is not allowed", scheme))
+  }
+  auth <- sub(
+    "[/?#].*$",
+    "",
+    sub("^[a-z][a-z0-9+.-]*://", "", url, ignore.case = TRUE)
+  )
   host <- tolower(sub(":[0-9]*$", "", sub("^.*@", "", auth)))
-  loop <- host %in% c("localhost", "127.0.0.1", "[::1]") || startsWith(host, "127.")
-  if (scheme == "http" && !isTRUE(allow_http) && !(isTRUE(allow_loopback) && loop)) {
+  loop <- host %in%
+    c("localhost", "127.0.0.1", "[::1]") ||
+    startsWith(host, "127.")
+  if (
+    scheme == "http" && !isTRUE(allow_http) && !(isTRUE(allow_loopback) && loop)
+  ) {
     return("plain http is not allowed")
   }
-  if (loop && isTRUE(allow_loopback)) return("")
+  if (loop && isTRUE(allow_loopback)) {
+    return("")
+  }
   v4 <- suppressWarnings(as.integer(strsplit(host, ".", fixed = TRUE)[[1L]]))
   is_v4 <- grepl("^[0-9]+(\\.[0-9]+){3}$", host)
-  private4 <- is_v4 && (v4[1L] %in% c(0L, 10L, 127L) || (v4[1L] == 169L && v4[2L] == 254L) ||
-    (v4[1L] == 172L && v4[2L] >= 16L && v4[2L] <= 31L) || (v4[1L] == 192L && v4[2L] == 168L) ||
-    (v4[1L] == 100L && v4[2L] >= 64L && v4[2L] <= 127L))
-  odd <- grepl("^(0x[0-9a-f]+|[0-9]+)$", host) || (grepl("^[0-9.x]+$", host) && !is_v4)
+  private4 <- is_v4 &&
+    (v4[1L] %in%
+      c(0L, 10L, 127L) ||
+      (v4[1L] == 169L && v4[2L] == 254L) ||
+      (v4[1L] == 172L && v4[2L] >= 16L && v4[2L] <= 31L) ||
+      (v4[1L] == 192L && v4[2L] == 168L) ||
+      (v4[1L] == 100L && v4[2L] >= 64L && v4[2L] <= 127L))
+  odd <- grepl("^(0x[0-9a-f]+|[0-9]+)$", host) ||
+    (grepl("^[0-9.x]+$", host) && !is_v4)
   v6 <- startsWith(host, "[")
-  private6 <- v6 && grepl("^\\[(::1?|::ffff:.*|f[cd][0-9a-f]*:.*|fe[89ab][0-9a-f]*:.*)\\]$", host)
-  if (!nzchar(host) || private4 || odd || private6 || loop) return("a local or private address")
-  if (!v6 && !is_v4 && !grepl(".", host, fixed = TRUE)) return("a single-label host")
-  if (grepl("\\.(local|localhost|internal|lan|home|corp|intranet)$", host)) return("a local name")
+  private6 <- v6 &&
+    grepl(
+      "^\\[(::1?|::ffff:.*|f[cd][0-9a-f]*:.*|fe[89ab][0-9a-f]*:.*)\\]$",
+      host
+    )
+  if (!nzchar(host) || private4 || odd || private6 || loop) {
+    return("a local or private address")
+  }
+  if (!v6 && !is_v4 && !grepl(".", host, fixed = TRUE)) {
+    return("a single-label host")
+  }
+  if (grepl("\\.(local|localhost|internal|lan|home|corp|intranet)$", host)) {
+    return("a local name")
+  }
   ""
 }
 
@@ -571,7 +711,8 @@ wrtxtfb <- function(text, path) {
 #' @noRd
 .rmbl_synth_state <- new.env(parent = emptyenv())
 
-#' Tells whether the session's data are synthetic, by the environment or by `mksyncsv()`.
+#' Tells whether the session's data are synthetic, by the environment or by
+#' `mksyncsv()`.
 #' @return TRUE or FALSE.
 #' @noRd
 .rmbl_synthetic_flag <- function() {
@@ -593,49 +734,63 @@ wrtxtfb <- function(text, path) {
 
 #' Parses JSON text and nothing else.
 #'
-#' Parse JSON TEXT and nothing else. fromjs() also accepts a
-#' URL or a file path, which is right for a user's argument and wrong for bytes a
-#' server just sent: a body (or a signature file) that happens to be a bare URL
-#' would make the package fetch it, and one that names a local path would open
-#' it (fourth review). Every parse of network- or disk-delivered content goes
-#' through here; the hygiene test enumerates the call sites.
+#' Parse JSON TEXT and nothing else. fromjs() also accepts a URL or a file path,
+#' which is right for a user's argument and wrong for bytes a server just sent:
+#' a body (or a signature file) that happens to be a bare URL would make the
+#' package fetch it, and one that names a local path would open it (fourth
+#' review). Every parse of network- or disk-delivered content goes through here;
+#' the hygiene test enumerates the call sites.
 #' @param txt The text, as character or raw.
 #' @param ... Options passed to `fromjs()`.
 #' @return The parsed value.
 #' @noRd
 .rmbl_json_text <- function(txt, ...) {
-  if (is.raw(txt)) txt <- rawToChar(txt)
+  if (is.raw(txt)) {
+    txt <- rawToChar(txt)
+  }
   txt <- paste(as.character(txt), collapse = "\n")
-  # bytes that are not UTF-8 are refused before any regular expression sees them: grepl() on them
-  # warned "unable to translate ... to a wide string" (audit of 30bed8e, #17)
-  if (Encoding(txt) != "latin1" && !validUTF8(txt)) stop("not UTF-8 text", call. = FALSE)
-  # the shape of a JSON value, never of an address or a path: that is the whole point
-  # of this entry (fourth review: a body that was a bare URL made the package fetch it)
-  shaped <- grepl("^\\s*([\\[{\"]|-?[0-9]|true|false|null)", txt, useBytes = TRUE)
-  if (!shaped) stop("not JSON", call. = FALSE)
-  # the parser itself refuses what is not JSON, with its own reasons (a repeated key, a
-  # bad escape, 100 levels), under whatever options the caller passes
+  # bytes that are not UTF-8 are refused before any regular expression sees
+  # them: grepl() on them warned "unable to translate ... to a wide string"
+  # (audit of 30bed8e, #17)
+  if (Encoding(txt) != "latin1" && !validUTF8(txt)) {
+    stop("not UTF-8 text", call. = FALSE)
+  }
+  # the shape of a JSON value, never of an address or a path: that is the whole
+  # point of this entry (fourth review: a body that was a bare URL made the
+  # package fetch it)
+  shaped <- grepl(
+    "^\\s*([\\[{\"]|-?[0-9]|true|false|null)",
+    txt,
+    useBytes = TRUE
+  )
+  if (!shaped) {
+    stop("not JSON", call. = FALSE)
+  }
+  # the parser itself refuses what is not JSON, with its own reasons (a repeated
+  # key, a bad escape, 100 levels), under whatever options the caller passes
   fromjs(txt, ...)
 }
 
 #' Makes fetched or file-supplied text safe to print.
 #'
-#' Fetched or file-supplied text made safe to print: marked as the UTF-8 it is (in a C locale the
-#' parser returns it unmarked, and \[\[:cntrl:\]\] on unmarked text matched the bytes 0x80-0x9F inside
-#' every multi-byte character) or converted, an invalid byte becoming \dQuote{?}; then
-#' ANSI escape
-#' sequences, the C0 and C1 controls and DEL, the bidirectional controls (U+061C, U+200E-U+200F,
-#' U+202A-U+202E, U+2066-U+2069) and the default-ignorable characters that print as nothing and hide
-#' text (U+00AD, U+034F, U+115F, U+3164, U+180E, U+200B, U+2060-U+2064, U+FEFF, U+FFF9-FFFB, the
-#' tag characters) are removed (review of 02a38be). Kept, because they are part of how real text is
-#' written (review of e57fed5): the zero-width joiner and non-joiner (Hindi and Persian words,
-#' family emoji), the variation selectors (U+FE00-U+FE0F, U+180B-U+180D: the colour form of an
-#' emoji, Mongolian and CJK glyph variants) and a flag tag sequence (U+1F3F4, tag letters, U+E007F:
-#' the flags of Scotland and Wales). One helper for every printer (the data tables, the Wayback
-#' results).
-#' `lines = TRUE` keeps newlines and tabs (a model's answer, which is text to read, not a cell of a
-#' table): the screen-clearing, title-setting and clipboard-writing escapes still go, with every
-#' other control character (review of 29a55d8, L1).
+#' Fetched or file-supplied text made safe to print: marked as the UTF-8 it is
+#' (in a C locale the parser returns it unmarked, and \[\[:cntrl:\]\] on
+#' unmarked text matched the bytes 0x80-0x9F inside every multi-byte character)
+#' or converted, an invalid byte becoming \dQuote{?}; then ANSI escape
+#' sequences, the C0 and C1 controls and DEL, the bidirectional controls
+#' (U+061C, U+200E-U+200F, U+202A-U+202E, U+2066-U+2069) and the
+#' default-ignorable characters that print as nothing and hide text (U+00AD,
+#' U+034F, U+115F, U+3164, U+180E, U+200B, U+2060-U+2064, U+FEFF, U+FFF9-FFFB,
+#' the tag characters) are removed (review of 02a38be). Kept, because they are
+#' part of how real text is written (review of e57fed5): the zero-width joiner
+#' and non-joiner (Hindi and Persian words, family emoji), the variation
+#' selectors (U+FE00-U+FE0F, U+180B-U+180D: the colour form of an emoji,
+#' Mongolian and CJK glyph variants) and a flag tag sequence (U+1F3F4, tag
+#' letters, U+E007F: the flags of Scotland and Wales). One helper for every
+#' printer (the data tables, the Wayback results). `lines = TRUE` keeps newlines
+#' and tabs (a model's answer, which is text to read, not a cell of a table):
+#' the screen-clearing, title-setting and clipboard-writing escapes still go,
+#' with every other control character (review of 29a55d8, L1).
 #' @param x A character vector.
 #' @param lines Whether newlines and tabs are kept.
 #' @return A character vector.
@@ -649,12 +804,33 @@ wrtxtfb <- function(text, path) {
   o <- !is.na(x) & !u & Encoding(x) != "UTF-8"
   x[o] <- iconv(x[o], "", "UTF-8", sub = "?")
   x <- gsub("(*UTF)\033\\[[0-9;?]*[ -/]*[@-~]", "", x, perl = TRUE)
-  # an operating-system command (a title, a clipboard write) ends in BEL or ESC \
+  # an operating-system command (a title, a clipboard write) ends in BEL or ESC
+  # \
   x <- gsub("(*UTF)\033\\][^\a\033]*(\a|\033\\\\)?", "", x, perl = TRUE)
-  x <- gsub(paste0("(*UTF)[", if (lines) "\\x{00}-\\x{08}\\x{0b}-\\x{1f}" else "\\x{00}-\\x{1f}",
-                   "\\x{7f}-\\x{9f}\\x{00ad}\\x{034f}\\x{061c}\\x{115f}\\x{1160}",
-                   "\\x{17b4}\\x{17b5}\\x{180e}\\x{180f}\\x{200b}\\x{200e}\\x{200f}\\x{2028}-\\x{202e}",
-                   "\\x{2060}-\\x{206f}\\x{3164}\\x{feff}\\x{ffa0}\\x{fff0}-\\x{fffb}]"), "", x, perl = TRUE)
+  x <- gsub(
+    paste0(
+      "(*UTF)[",
+      if (lines) "\\x{00}-\\x{08}\\x{0b}-\\x{1f}" else "\\x{00}-\\x{1f}",
+      "\\x{7f}-\\x{9f}\\x{00ad}\\x{034f}\\x{061c}\\x{115f}\\x{1160}",
+      "\\x{17b4}\\x{17b5}\\x{180e}\\x{180f}\\x{200b}\\x{200e}\\x{200f}\\x",
+      "{2028}-\\",
+      "x{202e}",
+      "\\x{2060}-\\x{206f}\\x{3164}\\x{feff}\\x{ffa0}\\x{fff0}-\\x{fffb}]"
+    ),
+    "",
+    x,
+    perl = TRUE
+  )
   # tag characters: kept only as a flag sequence, dropped anywhere else
-  gsub("(*UTF)(\\x{1f3f4}[\\x{e0020}-\\x{e007e}]{1,8}\\x{e007f})|[\\x{e0000}-\\x{e0fff}]", "\\1", x, perl = TRUE)
+  gsub(
+    paste0(
+      "(*UTF)(\\x{1f3f4}[\\x{e0020}-\\x{e007e}]{1,8}\\x{e007f})|[\\x{e000",
+      "0}-\\x",
+      "{e",
+      "0fff}]"
+    ),
+    "\\1",
+    x,
+    perl = TRUE
+  )
 }

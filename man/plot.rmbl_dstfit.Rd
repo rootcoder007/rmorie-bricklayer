@@ -33,9 +33,9 @@ The data drawn, invisibly: a data frame with \code{family}, \code{x} and
 against the fitted one in \code{x}).
 }
 \description{
-Four views of a \code{\link[=dstfit]{dstfit()}} result: the histogram (or, for
-counts, the observed proportions) with each fitted density or mass over it; a QQ
-plot and a PP plot per family; and the empirical survival function on log-log axes
+Four views of a \code{\link[=dstfit]{dstfit()}} result: the histogram (or, for counts,
+the observed proportions) with each fitted density or mass over it; a QQ plot
+and a PP plot per family; and the empirical survival function on log-log axes
 with each fitted survival curve, where a power law is a straight line.
 }
 \examples{

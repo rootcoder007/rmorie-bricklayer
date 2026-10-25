@@ -9,8 +9,7 @@ test_that("a failed SIU fetch returns NULL rather than erroring", {
   testthat::local_mocked_bindings(
     siufetch = function(...) stop("network unreachable")
   )
-  expect_message(res <- siufprs(12),
-                 "could not fetch SIU report")
+  expect_message(res <- siufprs(12), "could not fetch SIU report")
   expect_null(res)
 
   # a fetch that claims success but writes nothing is also NULL, since
@@ -41,9 +40,13 @@ test_that("HyperLogLog uses its published constant at every register size", {
   # the relative error is around 26%, with 16384 it is under 1%
   true_n <- 20000L
   y <- as.character(seq_len(true_n))
-  err <- vapply(c(4L, 8L, 14L), function(p) {
-    abs(dstncnt(dstnskch(y, p = p)) - true_n) / true_n
-  }, 0)
+  err <- vapply(
+    c(4L, 8L, 14L),
+    function(p) {
+      abs(dstncnt(dstnskch(y, p = p)) - true_n) / true_n
+    },
+    0
+  )
   expect_lt(err[3], err[1])
   expect_lt(err[3], 0.05)
   # every register set merges with another of the same size
@@ -58,61 +61,96 @@ test_that("HyperLogLog uses its published constant at every register size", {
 test_that("the C-level guards reject malformed arguments", {
   # the moment accumulators must be the five-entry layout
   acc <- onlsmry(stats::rnorm(20))
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_moments_merge,
-                     acc$state, c(1, 2, 3)), "5 entries")
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_moments_merge,
-                     c(1, 2), acc$state), "5 entries")
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_moments_merge, acc$state, c(1, 2, 3)),
+    "5 entries"
+  )
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_moments_merge, c(1, 2), acc$state),
+    "5 entries"
+  )
   # a valid merge is unaffected
-  merged <- .Call(rmoriebricklayer:::C_rmbl_moments_merge,
-                  acc$state, acc$state)
+  merged <- .Call(rmoriebricklayer:::C_rmbl_moments_merge, acc$state, acc$state)
   expect_length(merged, 5L)
   expect_equal(merged[1], 40)
 
   # the weighted moments need matching lengths, checked in C as well as R
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_weighted,
-                     c(1, 2, 3), c(1, 2)), "same length")
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_cor_spearman,
-                     c(1, 2, 3), c(1, 2)), "same length")
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_psi,
-                     c(0.5, 0.5), c(1), 1e-6), "same length")
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_ipw,
-                     c(1, 0), c(0.5), 0.01, 0.99), "same length")
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_weighted, c(1, 2, 3), c(1, 2)),
+    "same length"
+  )
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_cor_spearman, c(1, 2, 3), c(1, 2)),
+    "same length"
+  )
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_psi, c(0.5, 0.5), c(1), 1e-6),
+    "same length"
+  )
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_ipw, c(1, 0), c(0.5), 0.01, 0.99),
+    "same length"
+  )
   # the covariance kernel needs an actual matrix
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_cov_matrix, 1:6),
-               "must be a matrix")
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_cov_matrix, 1:6),
+    "must be a matrix"
+  )
   # the bootstrap needs at least one replicate
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_bootstrap_mean,
-                     c(1, 2, 3), 0, 1), "whole number >= 1")  # wording since 0.5.13
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_bootstrap_mean, c(1, 2, 3), 0, 1),
+    "whole number >= 1"
+  ) # wording since 0.5.13
   # BLAKE2b's length and key bounds
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_blake2b, "x", NULL, 0L),
-               "between 1 and 64")
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_blake2b, "x", NULL, 0L),
+    "between 1 and 64"
+  )
   # PBKDF2's bounds
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_pbkdf2, "p", "s", 0L, 32L),
-               "at least 1")
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_pbkdf2, "p", "s", 1L, 0L),
-               "between 1 and 1024")
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_pbkdf2, "p", "s", 0L, 32L),
+    "at least 1"
+  )
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_pbkdf2, "p", "s", 1L, 0L),
+    "between 1 and 1024"
+  )
   # the OS random source's request size
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_os_random, 0L),
-               "between 1 and")
+  expect_error(.Call(rmoriebricklayer:::C_rmbl_os_random, 0L), "between 1 and")
   # and the reservoir's
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_reservoir, -1, 1, 1),
-               "non-negative")
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_reservoir, 10, -1, 1),
-               "non-negative")
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_reservoir, -1, 1, 1),
+    "non-negative"
+  )
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_reservoir, 10, -1, 1),
+    "non-negative"
+  )
   # the Merkle proof index
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_merkle_proof,
-                     list(charToRaw("a"), charToRaw("b")), 5L, 2L),
-               "between 1 and")
+  expect_error(
+    .Call(
+      rmoriebricklayer:::C_rmbl_merkle_proof,
+      list(charToRaw("a"), charToRaw("b")),
+      5L,
+      2L
+    ),
+    "between 1 and"
+  )
   # the C layer takes bytes, so it refuses anything that is not a list
   # of raw vectors rather than coercing it to text and hashing that
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_merkle_root, c("a", "b"), 2L),
-               "list of raw vectors")
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_merkle_root, list("a"), 2L),
-               "must be a raw vector")
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_merkle_root, c("a", "b"), 2L),
+    "list of raw vectors"
+  )
+  expect_error(
+    .Call(rmoriebricklayer:::C_rmbl_merkle_root, list("a"), 2L),
+    "must be a raw vector"
+  )
 })
 
 test_that("an empty Merkle tree and sketch degrade rather than error", {
-  expect_true(is.na(.Call(rmoriebricklayer:::C_rmbl_merkle_root, list(), 2L)))  # scheme argument since 0.5.13
+  # scheme argument since 0.5.13
+  expect_true(is.na(.Call(rmoriebricklayer:::C_rmbl_merkle_root, list(), 2L)))
   expect_true(is.na(mrkroot(character(0))))
   expect_equal(dstncnt(integer(0)), 0)
   expect_length(rsvidx(0, 0), 0L)

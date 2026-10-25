@@ -95,9 +95,9 @@ the change is
 shown in points. The page ends with the package version that wrote it.
 
 The PDF is drawn on R's own \code{pdf()} device with its standard fonts,
-which cannot draw arrows or dashes, so those are written in ASCII
-(\code{+}, \code{-}). Long tables are split over pages at 0.22 inch per row,
-with \dQuote{page i of n} labels; notes go under the last page's rows when they
+which cannot draw arrows or dashes, so those are written in ASCII (\code{+},
+\code{-}). Long tables are split over pages at 0.22 inch per row, with
+\dQuote{page i of n} labels; notes go under the last page's rows when they
 fit and on pages of their own otherwise. The interval column appears only
 when the table has \code{pctlo} and \code{pctup} (counts).
 

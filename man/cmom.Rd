@@ -25,21 +25,18 @@ together.
 }
 \details{
 The mean is base R's (an extended-precision sum followed by a
-corrective pass); the deviations from it are then divided by their
-largest magnitude before any power is taken, and the scale is restored
-at the end. That avoids both the cancellation of the textbook \dQuote{sum of
-squares minus square of sum} formula and overflow of fourth powers for
-values beyond about \eqn{10^{77}}. It reads the data three times
-(mean, largest deviation, moments), in \eqn{O(n)} time. The variance uses
-the \code{n - 1} denominator, matching \code{\link[stats:var]{stats::var()}}. The shape
-statistics
-use the \emph{sample moment} definitions
-\deqn{g_1 = m_3 / m_2^{3/2}, \qquad g_2 = m_4 / m_2^2 - 3,}
-with \eqn{m_k = n^{-1} \sum_i (x_i - \bar x)^k}, so kurtosis is reported
-as EXCESS kurtosis: a normal sample sits near zero, not near three.
-These are the uncorrected moment ratios (type 1 in the classification
-of Joanes and Gill, 1998), not the bias-adjusted versions some software
-reports.
+corrective pass); the deviations from it are then divided by their largest
+magnitude before any power is taken, and the scale is restored at the end.
+That avoids both the cancellation of the textbook \dQuote{sum of squares
+minus square of sum} formula and overflow of fourth powers for values beyond
+about \eqn{10^{77}}. It reads the data three times (mean, largest deviation,
+moments), in \eqn{O(n)} time. The variance uses the \code{n - 1} denominator,
+matching \code{\link[stats:var]{stats::var()}}. The shape statistics use the
+\emph{sample moment} definitions \deqn{g_1 = m_3 / m_2^{3/2}, \qquad g_2 = m_4 /
+m_2^2 - 3,} with \eqn{m_k = n^{-1} \sum_i (x_i - \bar x)^k}, so kurtosis is
+reported as EXCESS kurtosis: a normal sample sits near zero, not near three.
+These are the uncorrected moment ratios (type 1 in the classification of
+Joanes and Gill, 1998), not the bias-adjusted versions some software reports.
 
 Edge cases are \code{NaN}, never an error: an empty vector gives four \code{NaN};
 one value gives its mean and \code{NaN} for the rest; \code{skewness} needs at
@@ -68,10 +65,9 @@ cmom(c(1, 2))
 \dontshow{\}) # examplesIf}
 }
 \references{
-Joanes DN, Gill CA (1998). Comparing measures of sample skewness and
-kurtosis. \emph{Journal of the Royal Statistical Society: Series D (The
-Statistician)} 47(1), 183--189.
-\doi{10.1111/1467-9884.00122}
+Joanes DN, Gill CA (1998). Comparing measures of sample skewness
+and kurtosis. \emph{Journal of the Royal Statistical Society: Series D (The
+Statistician)} 47(1), 183--189. \doi{10.1111/1467-9884.00122}
 }
 \seealso{
 \code{\link[=csdev]{csdev()}},

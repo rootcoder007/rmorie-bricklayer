@@ -30,68 +30,71 @@ characteristics use 1 whatever is given.}
 
 \item{conflvl}{Confidence level (default 0.95).}
 
-\item{roubase}{The base of the random rounding (default 5, Statistics Canada's);
-1 for counts that are not rounded.}
+\item{roubase}{The base of the random rounding (default 5, Statistics
+Canada's); 1 for counts that are not rounded.}
 }
 \value{
-A data frame of class \code{rmbl_profile_share} with \code{geo}, \code{dguid},
-\code{residence}, \code{gender}, \code{age}, \code{group}, \code{numerator},
-\code{denominator}, \code{estimate} (percent), \code{lower}, \code{upper},
-\code{quality}; ready for \code{\link{indgap}} and
-\code{\link{dstntst}}. \code{plot()} draws it.
+A data frame of class \code{rmbl_profile_share} with \code{geo},
+\code{dguid}, \code{residence}, \code{gender}, \code{age}, \code{group},
+\code{numerator}, \code{denominator}, \code{estimate} (percent),
+\code{lower}, \code{upper}, \code{quality}; ready for \code{\link{indgap}}
+and \code{\link{dstntst}}. \code{plot()} draws it.
 }
 \description{
-The share of a group with a characteristic of the 2021 Census Indigenous Population
-Profile (foster children among children, speakers of an Indigenous language, households
-needing major repairs, ...), with an approximate confidence interval that carries the
-long-form sample and the random rounding of the counts.
+The share of a group with a characteristic of the 2021 Census Indigenous
+Population Profile (foster children among children, speakers of an Indigenous
+language, households needing major repairs, ...), with an approximate
+confidence interval that carries the long-form sample and the random rounding
+of the counts.
 }
 \details{
-The share is the numerator's count over the denominator's (by default the
-numerator's parent in the profile's hierarchy), for each geography, gender, age group
-and group. Statistics Canada does not publish standard errors for the profile, so the
-interval is an approximation built from what is known about how the counts were made:
-\itemize{
-\item a long-form (\dQuote{25\% sample}) count is estimated from a sample of about one
-household in four, so the share has variance \eqn{d (1 - f) p (1 - p) / (f N)} for
-a sampling fraction \eqn{f} (\code{smpfrac}, 0.25) of a population of
-\eqn{N} (the denominator) and a design effect \eqn{d} (\code{deff}, 1 by default:
-the clustering of people in households raises it, and a value of 1.5 to 2 is
-prudent for characteristics shared within a household). On reserves (rows whose
-\code{residence} is \code{"On reserve"}) every household got the long form, so
-\eqn{f = 1} there and the sampling term vanishes;
-\item every count is randomly rounded, up or down without bias, to a multiple of
-\eqn{b} (\code{roubase}, 5). Averaged over the remainders, that adds variance
-\eqn{c = (b^2 - 1)/6} to each count (4 for \eqn{b = 5}), so \eqn{c (1 + p^2) / N^2}
-to the share (the only error of a full-count share).
-}
-In all,
-\deqn{V = \frac{d (1 - f) p (1 - p)}{f N} + \frac{c (1 + p^2)}{N^2}.}{V = d (1 - f) p
-(1 - p) / (f N) + c (1 + p^2) / N^2.} The interval is Wilson's at the effective sample
-size \eqn{n_e = \max(p(1-p), 1/N) / V} (the floor \eqn{1/N} keeps a share of 0 or 100\%
-from an infinite \eqn{n_e}), so it stays inside 0 and 100. It does not carry
-non-response (see \code{tnrlf}) or the edit and imputation error, so it is narrower
-than the full error; treat it as a lower bound on the uncertainty.
+The share is the numerator's count over the denominator's (by
+default the numerator's parent in the profile's hierarchy), for each
+geography, gender, age group and group. Statistics Canada does not publish
+standard errors for the profile, so the interval is an approximation built
+from what is known about how the counts were made: \itemize{ \item a
+long-form (\dQuote{25\% sample}) count is estimated from a sample of about one
+household in four, so the share has variance \eqn{d (1 - f) p (1 - p) / (f
+N)} for a sampling fraction \eqn{f} (\code{smpfrac}, 0.25) of a population of
+\eqn{N} (the denominator) and a design effect \eqn{d} (\code{deff}, 1 by
+default: the clustering of people in households raises it, and a value of 1.5
+to 2 is prudent for characteristics shared within a household). On reserves
+(rows whose \code{residence} is \code{"On reserve"}) every household got the
+long form, so \eqn{f = 1} there and the sampling term vanishes; \item every
+count is randomly rounded, up or down without bias, to a multiple of \eqn{b}
+(\code{roubase}, 5). Averaged over the remainders, that adds variance \eqn{c
+= (b^2 - 1)/6} to each count (4 for \eqn{b = 5}), so \eqn{c (1 + p^2) / N^2}
+to the share (the only error of a full-count share). } In all, \deqn{V =
+\frac{d (1 - f) p (1 - p)}{f N} + \frac{c (1 + p^2)}{N^2}.}{V = d (1 - f) p
+(1 - p) / (f N) + c (1 + p^2) / N^2.} The interval is Wilson's at the
+effective sample size \eqn{n_e = \max(p(1-p), 1/N) / V} (the floor \eqn{1/N}
+keeps a share of 0 or 100\% from an infinite \eqn{n_e}), so it stays inside 0
+and 100. It does not carry non-response (see \code{tnrlf}) or the edit and
+imputation error, so it is narrower than the full error; treat it as a lower
+bound on the uncertainty.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
 p <- cnsprof(indiex("censuspop"))
-# children who are foster children, by province, First Nations, Metis, Inuit and
-# non-Indigenous
+# children who are foster children, by province, First Nations, Metis, Inuit
+# and non-Indigenous
 fc <- profshr(p, "Foster children", "Total - Children in census families")
-fc <- fc[fc$age == "0 to 14 years" &
-           fc$group \%in\% c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"), ]
+fc <- fc[
+  fc$age == "0 to 14 years" &
+    fc$group \%in\%
+      c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"),
+]
 head(fc)
 plot(fc[fc$geo == "Canada", ])
 \dontshow{\}) # examplesIf}
 }
 \references{
-Statistics Canada (2022). Guide to the Census of Population, 2021, chapter
-9 (data quality) and chapter 10 (confidentiality and random rounding). Catalogue no.
-98-304-X.
+Statistics Canada (2022). Guide to the Census of Population,
+2021, chapter 9 (data quality) and chapter 10 (confidentiality and random
+rounding). Catalogue no. 98-304-X.
 
-Wilson EB (1927). Probable inference, the law of succession, and statistical inference.
-Journal of the American Statistical Association 22(158):209-212.
+Wilson EB (1927). Probable inference, the law of succession, and statistical
+inference. Journal of the American Statistical Association 22(158):209-212.
 \doi{10.1080/01621459.1927.10502953}
 }
 \seealso{

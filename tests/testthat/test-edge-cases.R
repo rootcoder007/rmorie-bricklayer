@@ -8,10 +8,16 @@
 
 test_that("the ASCII fallbacks are exercised, not just declared", {
   old <- Sys.getenv("RMBL_ASCII_ONLY", unset = NA)
-  on.exit({
-    if (is.na(old)) Sys.unsetenv("RMBL_ASCII_ONLY")
-    else Sys.setenv(RMBL_ASCII_ONLY = old)
-  }, add = TRUE)
+  on.exit(
+    {
+      if (is.na(old)) {
+        Sys.unsetenv("RMBL_ASCII_ONLY")
+      } else {
+        Sys.setenv(RMBL_ASCII_ONLY = old)
+      }
+    },
+    add = TRUE
+  )
   Sys.setenv(RMBL_ASCII_ONLY = "1")
 
   set.seed(1)
@@ -20,8 +26,7 @@ test_that("the ASCII fallbacks are exercised, not just declared", {
   expect_false(grepl("[^\x01-\x7f]", h, useBytes = TRUE))
   expect_true(all(strsplit(h, "")[[1]] %in% c(" ", ".", ":", "-", "=", "#")))
   # a constant column in ASCII mode
-  expect_false(grepl("[^\x01-\x7f]", inlhist(rep(2, 10)),
-                     useBytes = TRUE))
+  expect_false(grepl("[^\x01-\x7f]", inlhist(rep(2, 10)), useBytes = TRUE))
 
   # the missingness map's ASCII shades
   df <- data.frame(a = c(rep(NA, 10), 1:40), b = 1:50)
@@ -32,18 +37,15 @@ test_that("the ASCII fallbacks are exercised, not just declared", {
 
   # every report renders in ASCII
   for (obj in list(
-      cpsdrft(data.frame(v = stats::rnorm(50)),
-                    data.frame(v = stats::rnorm(50))),
-      benfordtst(10^stats::runif(200, 0, 4)),
-      profcols(data.frame(x = stats::rnorm(20))),
-      misspat(df),
-      missruns(df),
-      mahaoutl(data.frame(a = stats::rnorm(40),
-                                      b = stats::rnorm(40))),
-      freqtbl(c("a", "b", "b")),
-      cortbl(data.frame(a = stats::rnorm(30),
-                                   b = stats::rnorm(30)))
-    )) {
+    cpsdrft(data.frame(v = stats::rnorm(50)), data.frame(v = stats::rnorm(50))),
+    benfordtst(10^stats::runif(200, 0, 4)),
+    profcols(data.frame(x = stats::rnorm(20))),
+    misspat(df),
+    missruns(df),
+    mahaoutl(data.frame(a = stats::rnorm(40), b = stats::rnorm(40))),
+    freqtbl(c("a", "b", "b")),
+    cortbl(data.frame(a = stats::rnorm(30), b = stats::rnorm(30)))
+  )) {
     out <- paste(utils::capture.output(print(obj)), collapse = "\n")
     expect_false(grepl("[^\x01-\x7f]", out, useBytes = TRUE))
   }
@@ -51,28 +53,34 @@ test_that("the ASCII fallbacks are exercised, not just declared", {
 
 test_that("every print method survives having its columns subset away", {
   set.seed(2)
-  df <- data.frame(a = stats::rnorm(40), b = letters[1:40],
-                   stringsAsFactors = FALSE)
+  df <- data.frame(
+    a = stats::rnorm(40),
+    b = letters[1:40],
+    stringsAsFactors = FALSE
+  )
   df$c <- df$a + stats::rnorm(40)
   num <- data.frame(a = df$a, c = df$c)
 
   # a classed data frame keeps its class when columns go, so each print
   # method must fall back rather than error on the caller's subset
   expect_output(print(profcols(df)[, c("column", "mean")]), "column")
-  expect_output(print(freqtbl(df, "b")[, c("pct", "pctvalid")]),
-                "pct")
-  expect_output(print(cortbl(num)[, "correlation",
-                                             drop = FALSE]), "correlation")
+  expect_output(print(freqtbl(df, "b")[, c("pct", "pctvalid")]), "pct")
+  expect_output(
+    print(cortbl(num)[, "correlation", drop = FALSE]),
+    "correlation"
+  )
   expect_output(print(topcors(num)[, c("x", "y")]), "x")
-  expect_output(print(misspat(df)[, c("pattern", "n_rows")]),
-                "pattern")
+  expect_output(print(misspat(df)[, c("pattern", "n_rows")]), "pattern")
   gap <- data.frame(v = c(1, NA, NA, 4))
   expect_output(print(missruns(gap)[, c("column", "length")]), "column")
-  expect_output(print(mahaoutl(num)[1:3, c("row", "distance")]),
-                "row")
+  expect_output(print(mahaoutl(num)[1:3, c("row", "distance")]), "row")
   # and none of them returns visibly
-  expect_identical(withVisible(print(
-    profcols(df)[, "column", drop = FALSE]))$visible, FALSE)
+  expect_identical(
+    withVisible(print(
+      profcols(df)[, "column", drop = FALSE]
+    ))$visible,
+    FALSE
+  )
 })
 
 test_that("the name cleaner handles the shapes that produce nothing", {
@@ -83,8 +91,7 @@ test_that("the name cleaner handles the shapes that produce nothing", {
   expect_equal(clncolnms(c("!!!", "@@@")), c("x", "x_2"))
   expect_equal(clncolnms("   "), "x")
   # case = "none" normalises the separators only, keeping the case
-  expect_equal(clncolnms("Total Pop Count", case = "none"),
-               "Total_Pop_Count")
+  expect_equal(clncolnms("Total Pop Count", case = "none"), "Total_Pop_Count")
   # a single word through the camel cases exercises the empty tail
   expect_equal(clncolnms("total", case = "lower_camel"), "total")
   expect_equal(clncolnms("total", case = "upper_camel"), "Total")
@@ -99,12 +106,14 @@ test_that("drpconst and drpempty handle a frame with no columns", {
   expect_length(attr(drpconst(empty), "dropped"), 0L)
   expect_equal(ncol(drpempty(empty)), 0L)
   # a frame with columns but no rows
-  norows <- data.frame(a = numeric(0), b = character(0),
-                       stringsAsFactors = FALSE)
+  norows <- data.frame(
+    a = numeric(0),
+    b = character(0),
+    stringsAsFactors = FALSE
+  )
   expect_equal(nrow(drpempty(norows)), 0L)
   # every column constant leaves nothing behind
-  allconst <- data.frame(a = c(1, 1), b = c("x", "x"),
-                         stringsAsFactors = FALSE)
+  allconst <- data.frame(a = c(1, 1), b = c("x", "x"), stringsAsFactors = FALSE)
   expect_equal(ncol(drpconst(allconst)), 0L)
   expect_equal(sort(attr(drpconst(allconst), "dropped")), c("a", "b"))
 })
@@ -123,10 +132,8 @@ test_that("Mahalanobis distances refuse what they cannot compute", {
   one <- mahaoutl(data.frame(v = c(stats::rnorm(40), 50)))
   expect_true(one$outlier[1])
   expect_equal(one$row[1], 41L)
-  expect_error(mahaoutl("not data"),
-               "data frame or a numeric matrix")
-  expect_error(mahaoutl(data.frame(a = letters[1:5])),
-               "no numeric columns")
+  expect_error(mahaoutl("not data"), "data frame or a numeric matrix")
+  expect_error(mahaoutl(data.frame(a = letters[1:5])), "no numeric columns")
 })
 
 test_that("the missingness tools handle empty and single-column frames", {
@@ -148,8 +155,7 @@ test_that("the missingness tools handle empty and single-column frames", {
   expect_equal(nrow(missruns(short, minrun = 2L)), 0L)
   expect_equal(nrow(missruns(short, minrun = 1L)), 2L)
   # a frame where one column qualifies and another does not
-  mixed <- data.frame(a = c(1, NA, 3, NA, 5),
-                      b = c(1, NA, NA, NA, 5))
+  mixed <- data.frame(a = c(1, NA, 3, NA, 5), b = c(1, NA, NA, NA, 5))
   mr <- missruns(mixed, minrun = 2L)
   expect_equal(mr$column, "b")
   expect_equal(mr$length, 3L)
@@ -162,14 +168,18 @@ test_that("Merkle helpers reject malformed input rather than guessing", {
   # verification failure to be reported as FALSE
   bad <- list(sibling = c("aa", "bb"), side = "left")
   expect_error(mrkvrf("x", bad, "root"), "differ in length")
-  # an empty proof verifies only the single-leaf tree
-  # (a hand-built proof names its scheme; one without it is checked under 0.5.12's scheme 1)
-  expect_true(mrkvrf("solo", list(sibling = character(0),
-                                         side = character(0), scheme = 2L),
-                            mrkroot("solo")))
-  expect_false(mrkvrf("other", list(sibling = character(0),
-                                           side = character(0), scheme = 2L),
-                             mrkroot("solo")))
+  # an empty proof verifies only the single-leaf tree (a hand-built proof names
+  # its scheme; one without it is checked under 0.5.12's scheme 1)
+  expect_true(mrkvrf(
+    "solo",
+    list(sibling = character(0), side = character(0), scheme = 2L),
+    mrkroot("solo")
+  ))
+  expect_false(mrkvrf(
+    "other",
+    list(sibling = character(0), side = character(0), scheme = 2L),
+    mrkroot("solo")
+  ))
 })
 
 test_that("chnkfile handles a file that is an exact multiple of the block", {
@@ -200,23 +210,28 @@ test_that("the key helpers reject malformed keys and salts", {
 })
 
 test_that("the drift tests refuse degenerate category counts", {
-  expect_error(drftchisq(c(a = 1, b = 1), c(a = 0, b = 0)),
-               "`expd` has no counts")
+  expect_error(
+    drftchisq(c(a = 1, b = 1), c(a = 0, b = 0)),
+    "`expd` has no counts"
+  )
   expect_error(drftchisq(c(a = 0), c(a = 1)), "`obs` has no counts")
   # homogeneity: an unnamed numeric cannot be aligned by category
   expect_error(drfthomog(c(1, 2), c(p = 1, q = 2)), "must be named")
   expect_error(drfthomog(c(p = 1, q = 2), c(1, 2)), "must be named")
-  expect_error(drfthomog(c(p = 0, q = 0), c(p = 1, q = 1)),
-               "at least one observation")
-  expect_error(drfthomog(c(p = 1), c(p = 0)),
-               "at least one observation")
+  expect_error(
+    drfthomog(c(p = 0, q = 0), c(p = 1, q = 1)),
+    "at least one observation"
+  )
+  expect_error(drfthomog(c(p = 1), c(p = 0)), "at least one observation")
 })
 
 test_that("cpsdrft reports untestable columns rather than guessing", {
   set.seed(4)
-  ref <- data.frame(num = stats::rnorm(60),
-                    cat = sample(c("a", "b"), 60, TRUE),
-                    stringsAsFactors = FALSE)
+  ref <- data.frame(
+    num = stats::rnorm(60),
+    cat = sample(c("a", "b"), 60, TRUE),
+    stringsAsFactors = FALSE
+  )
   # an all-missing CATEGORICAL column has nothing to compare
   cur <- ref
   cur$cat <- NA_character_
@@ -235,15 +250,14 @@ test_that("cpsdrft reports untestable columns rather than guessing", {
 })
 
 test_that("the rule constructors validate their own arguments", {
-  expect_error(rul("x", function(v) TRUE, col = ""),
-               "non-empty string or NULL")
-  expect_error(rul("x", function(v) TRUE, col = NA),
-               "non-empty string or NULL")
+  expect_error(rul("x", function(v) TRUE, col = ""), "non-empty string or NULL")
+  expect_error(rul("x", function(v) TRUE, col = NA), "non-empty string or NULL")
   # `rules` must be a rule or a list of them
-  expect_error(valrules(data.frame(a = 1), "not a rule"),
-               "must be a rul\\(\\) or a list")
-  expect_error(valrules(data.frame(a = 1), 42),
-               "must be a rul\\(\\) or a list")
+  expect_error(
+    valrules(data.frame(a = 1), "not a rule"),
+    "must be a rul\\(\\) or a list"
+  )
+  expect_error(valrules(data.frame(a = 1), 42), "must be a rul\\(\\) or a list")
 })
 
 test_that("topcors reports a pair with too little overlap as NA", {
@@ -276,9 +290,10 @@ test_that("envdiff renders the version and platform rows", {
 
 test_that("the MCAR machinery handles its degenerate cases", {
   # a matrix input, and an all-missing column dropped down to too few
-  expect_error(mcartst(data.frame(a = stats::rnorm(20),
-                                    dead = rep(NA_real_, 20))),
-               "too few complete columns")
+  expect_error(
+    mcartst(data.frame(a = stats::rnorm(20), dead = rep(NA_real_, 20))),
+    "too few complete columns"
+  )
 
   # COLLINEAR columns are refused, not worked around. The EM step floors
   # the covariance's eigenvalues to keep it invertible, so without this
@@ -286,7 +301,7 @@ test_that("the MCAR machinery handles its degenerate cases", {
   # the data -- a number that looks like an answer and is not one.
   set.seed(6)
   coll <- data.frame(a = stats::rnorm(60))
-  coll$b <- coll$a            # exactly collinear
+  coll$b <- coll$a # exactly collinear
   coll$b[1:20] <- NA
   expect_error(mcartst(coll), "collinear")
   # so is a deterministic linear combination of two other columns
@@ -306,7 +321,7 @@ test_that("the MCAR machinery handles its degenerate cases", {
   expect_true(is.finite(mcartst(ok)$statistic))
 
   # the positive-definite repair, called directly on an indefinite matrix
-  ind <- matrix(c(1, 2, 2, 1), 2, 2)      # eigenvalues 3 and -1
+  ind <- matrix(c(1, 2, 2, 1), 2, 2) # eigenvalues 3 and -1
   expect_true(min(eigen(ind, symmetric = TRUE)$values) < 0)
   fixed <- rmoriebricklayer:::.rmbl_make_pd(ind)
   expect_true(min(eigen(fixed, symmetric = TRUE)$values) > 0)
@@ -319,7 +334,7 @@ test_that("the MCAR machinery handles its degenerate cases", {
   # EM's other branch; reachable by calling the estimator directly
   set.seed(7)
   X <- cbind(stats::rnorm(40), stats::rnorm(40))
-  X[1, ] <- NA                 # a wholly missing row
+  X[1, ] <- NA # a wholly missing row
   X[5, 2] <- NA
   fit <- rmoriebricklayer:::.rmbl_em_mvn(X)
   expect_false(is.null(fit))
@@ -328,8 +343,7 @@ test_that("the MCAR machinery handles its degenerate cases", {
   expect_true(min(eigen(fit$sigma, symmetric = TRUE)$values) > 0)
 
   # the printed report on complete data, where no test is possible
-  complete <- mcartst(data.frame(a = stats::rnorm(40),
-                                   b = stats::rnorm(40)))
+  complete <- mcartst(data.frame(a = stats::rnorm(40), b = stats::rnorm(40)))
   txt <- paste(format(complete), collapse = "\n")
   expect_match(txt, "no test possible")
   expect_match(txt, "nothing to test")

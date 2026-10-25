@@ -100,8 +100,7 @@ expcnts <- function(cnts, pop, area, strata = NULL) {
   area <- as.character(area)
   n <- length(cnts)
   if (length(pop) != n || length(area) != n) {
-    stop("`cnts`, `pop` and `area` must be the same length",
-         call. = FALSE)
+    stop("`cnts`, `pop` and `area` must be the same length", call. = FALSE)
   }
   if (any(pop <= 0, na.rm = TRUE)) {
     stop("expcnts: `pop` must be positive", call. = FALSE)
@@ -125,13 +124,13 @@ expcnts <- function(cnts, pop, area, strata = NULL) {
   rate <- num / den
   expected_row <- pop * rate[match(strata, names(rate))]
   areas <- sort(unique(area))
-  data.frame(area = areas,
-             observed = as.numeric(tapply(cnts, area, sum)[areas]),
-             population = as.numeric(tapply(pop, area,
-                                            sum)[areas]),
-             expected = as.numeric(tapply(expected_row, area,
-                                          sum)[areas]),
-             stringsAsFactors = FALSE)
+  data.frame(
+    area = areas,
+    observed = as.numeric(tapply(cnts, area, sum)[areas]),
+    population = as.numeric(tapply(pop, area, sum)[areas]),
+    expected = as.numeric(tapply(expected_row, area, sum)[areas]),
+    stringsAsFactors = FALSE
+  )
 }
 
 #' Standardised incidence ratio, with an exact interval
@@ -143,16 +142,15 @@ expcnts <- function(cnts, pop, area, strata = NULL) {
 #' excess and below one a deficit. Use it after \code{\link{expcnts}}
 #' to say which areas differ from the overall rate by more than chance.
 #'
-#' @details
-#' With observed count \eqn{O} and expected \eqn{E}, \eqn{SIR = O / E}. The
-#' interval for \eqn{1 - \alpha} coverage is
-#' \deqn{\left[\frac{G^{-1}(\alpha/2;\, O)}{E},\ \frac{G^{-1}(1-\alpha/2;\, O+1)}{E}\right]}
-#' where \eqn{G^{-1}(p; k)} is the gamma quantile with shape \eqn{k}; the
-#' lower limit is 0 when \eqn{O = 0}. This is the exact Poisson interval,
-#' from the relation between the Poisson and gamma distributions, and so is
-#' identical to \code{stats::poisson.test()}'s. It is the interval to use
-#' here because the counts that matter are small: a normal approximation on
-#' an observed count of three is not an interval, it is a decoration.
+#' @details With observed count \eqn{O} and expected \eqn{E}, \eqn{SIR = O / E}.
+#' The interval for \eqn{1 - \alpha} coverage is
+#' \deqn{\left[\frac{G^{-1}(\alpha/2;\, O)}{E},\ \frac{G^{-1}(1-\alpha/2;\,
+#' O+1)}{E}\right]} where \eqn{G^{-1}(p; k)} is the gamma quantile with shape
+#' \eqn{k}; the lower limit is 0 when \eqn{O = 0}. This is the exact Poisson
+#' interval, from the relation between the Poisson and gamma distributions, and
+#' so is identical to \code{stats::poisson.test()}'s. It is the interval to use
+#' here because the counts that matter are small: a normal approximation on an
+#' observed count of three is not an interval, it is a decoration.
 #'
 #' Each area's interval is a separate test; with many areas some will
 #' exclude one by chance (see \code{\link{scanadj}}). Missing values are
@@ -194,37 +192,47 @@ expcnts <- function(cnts, pop, area, strata = NULL) {
 #'
 #' try(stdinc(c(3, 4), c(5, 0)))
 #' @export
-#' @srrstats {G2.0} .rmbl_conf_level()/.rmbl_scalar() refuse inputs of the wrong length; test-docs-bugs-0513.R:34
-#'   refuses conflvl = c(0.9, 0.95).
+#' @srrstats {G2.0} .rmbl_conf_level()/.rmbl_scalar() refuse inputs of the wrong
+#'   length; test-docs-bugs-0513.R:34 refuses conflvl = c(0.9, 0.95).
 stdinc <- function(obs, expd, area = NULL, conflvl = 0.95) {
-  obs <- .rmbl_finite_input(obs, "obs", nonneg = TRUE,
-                                 min_n = 1L)
-  expd <- .rmbl_finite_input(expd, "expd", nonneg = TRUE,
-                                 min_n = 1L)
-  if (length(expd) == 1L) expd <- rep(expd, length(obs))
+  obs <- .rmbl_finite_input(obs, "obs", nonneg = TRUE, min_n = 1L)
+  expd <- .rmbl_finite_input(expd, "expd", nonneg = TRUE, min_n = 1L)
+  if (length(expd) == 1L) {
+    expd <- rep(expd, length(obs))
+  }
   if (length(obs) != length(expd)) {
     stop("stdinc: `obs` and `expd` must be the same length", call. = FALSE)
   }
   if (any(expd <= 0, na.rm = TRUE)) {
     stop("stdinc: `expd` must be positive", call. = FALSE)
   }
-  if (!is.null(area) && (!is.atomic(area) || is.matrix(area) || length(area) != length(obs))) {
-    stop("stdinc: `area` must be NULL or one label per area (as many as `obs`)", call. = FALSE)
+  if (
+    !is.null(area) &&
+      (!is.atomic(area) || is.matrix(area) || length(area) != length(obs))
+  ) {
+    stop(
+      "stdinc: `area` must be NULL or one label per area (as many as `obs`)",
+      call. = FALSE
+    )
   }
   conflvl <- .rmbl_conf_level(conflvl)
   a <- 1 - conflvl
   # the exact Poisson interval, via the gamma relation: an observed
   # count of zero has a lower limit of exactly zero rather than a
   # negative one
-  lo <- ifelse(obs == 0, 0,
-               stats::qgamma(a / 2, shape = obs)) / expd
+  lo <- ifelse(obs == 0, 0, stats::qgamma(a / 2, shape = obs)) / expd
   hi <- stats::qgamma(1 - a / 2, shape = obs + 1) / expd
-  out <- data.frame(observed = obs, expected = expd,
-                    sir = obs / expd, lower = lo, upper = hi,
-                    excess = lo > 1,
-                    deficit = hi < 1,
-                    significant = lo > 1 | hi < 1,
-                    stringsAsFactors = FALSE)
+  out <- data.frame(
+    observed = obs,
+    expected = expd,
+    sir = obs / expd,
+    lower = lo,
+    upper = hi,
+    excess = lo > 1,
+    deficit = hi < 1,
+    significant = lo > 1 | hi < 1,
+    stringsAsFactors = FALSE
+  )
   if (!is.null(area)) {
     out <- cbind(area = as.character(area), out, stringsAsFactors = FALSE)
   }
@@ -241,18 +249,16 @@ stdinc <- function(obs, expd, area = NULL, conflvl = 0.95) {
 #' how little information the area carries. Use the shrunk estimates for
 #' maps and rankings; use \code{\link{stdinc}} for each area's own evidence.
 #'
-#' @details
-#' The area relative risks \eqn{\theta_a} are taken to come from a gamma
-#' prior with shape \eqn{\nu} and rate \eqn{\alpha}. Its mean is the overall
-#' ratio \eqn{m = \sum O_a / \sum E_a}, and its variance is estimated by the
-#' method of moments,
-#' \deqn{s^2 = \frac{\sum_a E_a (\theta_a - m)^2}{\sum_a E_a} - \frac{m}{\bar E},}
-#' with \eqn{\theta_a = O_a / E_a} and \eqn{\bar E} the mean expected count;
-#' the subtracted term is the spread that Poisson sampling alone would
-#' produce. Then \eqn{\alpha = m / s^2}, \eqn{\nu = m^2 / s^2}, and the
-#' posterior mean \eqn{(O_a + \nu)/(E_a + \alpha)} is reported, with
-#' shrinkage \eqn{\alpha / (E_a + \alpha)}. Where the expected count is large
-#' the data dominate and the estimate barely moves; where it is small the
+#' @details The area relative risks \eqn{\theta_a} are taken to come from a
+#' gamma prior with shape \eqn{\nu} and rate \eqn{\alpha}. Its mean is the
+#' overall ratio \eqn{m = \sum O_a / \sum E_a}, and its variance is estimated by
+#' the method of moments, \deqn{s^2 = \frac{\sum_a E_a (\theta_a - m)^2}{\sum_a
+#' E_a} - \frac{m}{\bar E},} with \eqn{\theta_a = O_a / E_a} and \eqn{\bar E}
+#' the mean expected count; the subtracted term is the spread that Poisson
+#' sampling alone would produce. Then \eqn{\alpha = m / s^2}, \eqn{\nu = m^2 /
+#' s^2}, and the posterior mean \eqn{(O_a + \nu)/(E_a + \alpha)} is reported,
+#' with shrinkage \eqn{\alpha / (E_a + \alpha)}. Where the expected count is
+#' large the data dominate and the estimate barely moves; where it is small the
 #' prior does, which is the intended behaviour and not a defect.
 #'
 #' When the between-area variance estimate comes out at or below zero there
@@ -303,8 +309,14 @@ ebrates <- function(obs, expd, area = NULL) {
   if (length(obs) != length(expd)) {
     stop("ebrates: `obs` and `expd` must be the same length", call. = FALSE)
   }
-  if (!is.null(area) && (!is.atomic(area) || is.matrix(area) || length(area) != length(obs))) {
-    stop("ebrates: `area` must be NULL or one label per area (as many as `obs`)", call. = FALSE)
+  if (
+    !is.null(area) &&
+      (!is.atomic(area) || is.matrix(area) || length(area) != length(obs))
+  ) {
+    stop(
+      "ebrates: `area` must be NULL or one label per area (as many as `obs`)",
+      call. = FALSE
+    )
   }
   # counts: finite and non-negative, as sir() requires of the same inputs
   if (anyNA(obs) || any(!is.finite(obs)) || any(obs < 0)) {
@@ -318,8 +330,10 @@ ebrates <- function(obs, expd, area = NULL) {
   }
   n <- length(obs)
   if (n < 2L) {
-    stop("shrinkage borrows strength across areas, so it needs at least two",
-         call. = FALSE)
+    stop(
+      "shrinkage borrows strength across areas, so it needs at least two",
+      call. = FALSE
+    )
   }
   theta <- obs / expd
   esum <- sum(expd)
@@ -333,8 +347,16 @@ ebrates <- function(obs, expd, area = NULL) {
   if (s2 <= 0) {
     # no evidence of real variation between areas: every estimate is the
     # overall rate, and the shrinkage is total
-    return(.eb_frame(area, obs, expd, theta,
-                     rep(m, n), rep(1, n), NA_real_, NA_real_))
+    return(.eb_frame(
+      area,
+      obs,
+      expd,
+      theta,
+      rep(m, n),
+      rep(1, n),
+      NA_real_,
+      NA_real_
+    ))
   }
   alpha <- m / s2
   nu <- m^2 / s2
@@ -344,7 +366,8 @@ ebrates <- function(obs, expd, area = NULL) {
   .eb_frame(area, obs, expd, theta, eb, 1 - w, nu, alpha)
 }
 
-#' Builds the data frame of empirical Bayes estimates, with an `area` column when areas are named.
+#' Builds the data frame of empirical Bayes estimates, with an `area` column
+#' when areas are named.
 #' @param area The area labels, or NULL.
 #' @param observed The observed counts.
 #' @param expected The expected counts.
@@ -355,11 +378,17 @@ ebrates <- function(obs, expd, area = NULL) {
 #' @param alpha The prior's rate.
 #' @return A data frame with one row per area.
 #' @noRd
-.eb_frame <- function(area, observed, expected, theta, eb, shrink,
-                      nu, alpha) {
-  out <- data.frame(observed = observed, expected = expected,
-                    sir = theta, eb = eb, shrinkage = shrink,
-                    nu = nu, alpha = alpha, stringsAsFactors = FALSE)
+.eb_frame <- function(area, observed, expected, theta, eb, shrink, nu, alpha) {
+  out <- data.frame(
+    observed = observed,
+    expected = expected,
+    sir = theta,
+    eb = eb,
+    shrinkage = shrink,
+    nu = nu,
+    alpha = alpha,
+    stringsAsFactors = FALSE
+  )
   if (!is.null(area)) {
     out <- cbind(area = as.character(area), out, stringsAsFactors = FALSE)
   }
@@ -436,8 +465,7 @@ ebrates <- function(obs, expd, area = NULL) {
 #'
 #' try(fnllim(10, lvls = 1))
 #' @export
-fnllim <- function(expd, target = 1,
-                          lvls = c(0.95, 0.998)) {
+fnllim <- function(expd, target = 1, lvls = c(0.95, 0.998)) {
   expd <- .rmbl_finite_input(expd, "expd", min_n = 1L)
   if (any(expd <= 0, na.rm = TRUE)) {
     stop("fnllim: `expd` must be positive", call. = FALSE)
@@ -470,17 +498,15 @@ fnllim <- function(expd, target = 1,
 #' administrative extract keyed on a region ships no geometry, and guessing
 #' adjacency would make the answer a property of the guess.
 #'
-#' @details
-#' With weights \eqn{w_{ij}}, total \eqn{W = \sum_{ij} w_{ij}} and
-#' \eqn{z_i = x_i - \bar x},
-#' \deqn{I = \frac{n}{W}\,\frac{\sum_{i}\sum_{j} w_{ij} z_i z_j}{\sum_i z_i^2}.}
-#' The expectation of I under the null is \eqn{-1/(n - 1)}, not zero, so a
-#' small negative I is what independence looks like in a small set of
-#' areas. The p-value comes from permuting the values over the areas, which
-#' needs no distributional assumption -- and with a handful of regions no
-#' distributional assumption is safe. It is two-sided around
-#' \eqn{-1/(n - 1)}, \eqn{(1 + \mathrm{count}(|I^* - E| \ge |I - E|))/(1 + B)} over the
-#' \eqn{B} finite permuted values, so it is never exactly zero.
+#' @details With weights \eqn{w_{ij}}, total \eqn{W = \sum_{ij} w_{ij}} and
+#' \eqn{z_i = x_i - \bar x}, \deqn{I = \frac{n}{W}\,\frac{\sum_{i}\sum_{j}
+#' w_{ij} z_i z_j}{\sum_i z_i^2}.} The expectation of I under the null is
+#' \eqn{-1/(n - 1)}, not zero, so a small negative I is what independence looks
+#' like in a small set of areas. The p-value comes from permuting the values
+#' over the areas, which needs no distributional assumption -- and with a
+#' handful of regions no distributional assumption is safe. It is two-sided
+#' around \eqn{-1/(n - 1)}, \eqn{(1 + \mathrm{count}(|I^* - E| \ge |I - E|))/(1
+#' + B)} over the \eqn{B} finite permuted values, so it is never exactly zero.
 #'
 #' A neighbour list is binary; a weight matrix keeps its magnitudes (for
 #' example inverse distances). Self-neighbours and the diagonal are dropped.
@@ -539,8 +565,7 @@ fnllim <- function(expd, target = 1,
 #' # a constant variable has no autocorrelation to measure
 #' try(morani(c(2, 2, 2), list(2L, c(1L, 3L), 2L)))
 #' @export
-morani <- function(x, nbrs, style = c("W", "B"),
-                     nperm = 9999L) {
+morani <- function(x, nbrs, style = c("W", "B"), nperm = 9999L) {
   style <- .rmbl_arg(style)
   x <- .rmbl_num(x, "x")
   nperm <- .rmbl_num(nperm, "nperm", integer = TRUE)
@@ -548,13 +573,17 @@ morani <- function(x, nbrs, style = c("W", "B"),
     stop("`nperm` must be a single non-negative whole number", call. = FALSE)
   }
   n <- length(x)
-  if (n < 3L) stop("Moran's I needs at least three areas", call. = FALSE)
+  if (n < 3L) {
+    stop("Moran's I needs at least three areas", call. = FALSE)
+  }
   if (anyNA(x)) {
     stop("`x` must not contain missing values", call. = FALSE)
   }
   if (length(unique(x)) < 2L) {
-    stop("`x` is constant: Moran's I is undefined (no variance to autocorrelate)",
-         call. = FALSE)
+    stop(
+      "`x` is constant: Moran's I is undefined (no variance to autocorrelate)",
+      call. = FALSE
+    )
   }
   nb <- .rmbl_neighbours(nbrs, n)
   # A weight matrix carries magnitudes (inverse distance, a
@@ -570,17 +599,27 @@ morani <- function(x, nbrs, style = c("W", "B"),
     stop("spatial weights must be non-negative", call. = FALSE)
   }
   wts <- if (!is.null(w_in)) {
-    unlist(lapply(w_in, function(w) {
-      if (!length(w)) numeric(0)
-      else if (identical(style, "W")) (if (sum(w) > 0) w / sum(w) else w * 0)
-      else w
-    }), use.names = FALSE)
+    unlist(
+      lapply(w_in, function(w) {
+        if (!length(w)) {
+          numeric(0)
+        } else if (identical(style, "W")) {
+          (if (sum(w) > 0) w / sum(w) else w * 0)
+        } else {
+          w
+        }
+      }),
+      use.names = FALSE
+    )
   } else if (identical(style, "W")) {
     # row standardisation divides each area's weights by their own total,
     # so an area with many neighbours does not count for more
-    unlist(lapply(nb, function(v) {
-      if (!length(v)) numeric(0) else rep(1 / length(v), length(v))
-    }), use.names = FALSE)
+    unlist(
+      lapply(nb, function(v) {
+        if (!length(v)) numeric(0) else rep(1 / length(v), length(v))
+      }),
+      use.names = FALSE
+    )
   } else {
     rep(1, sum(lengths(nb)))
   }
@@ -590,8 +629,16 @@ morani <- function(x, nbrs, style = c("W", "B"),
   if (!length(idx)) {
     stop("`nbrs` gives no area any neighbour", call. = FALSE)
   }
-  r <- .Call(C_rmbl_morans_i, x, idx, as.integer(start), as.integer(len),
-             as.numeric(wts), as.integer(nperm), NULL)
+  r <- .Call(
+    C_rmbl_morans_i,
+    x,
+    idx,
+    as.integer(start),
+    as.integer(len),
+    as.numeric(wts),
+    as.integer(nperm),
+    NULL
+  )
   null <- r$null
   null <- null[is.finite(null)]
   expectation <- -1 / (n - 1)
@@ -603,35 +650,41 @@ morani <- function(x, nbrs, style = c("W", "B"),
   } else {
     NA_real_
   }
-  list(I = r$I, expectation = expectation,
-       nullmean = if (length(null)) mean(null) else NA_real_,
-       nullsd = if (length(null)) stats::sd(null) else NA_real_,
-       z = if (length(null) > 1L && stats::sd(null) > 0) {
-         (r$I - mean(null)) / stats::sd(null)
-       } else {
-         NA_real_
-       },
-       p_value = p, W = r$W, n = n, nperm = length(null), style = style)
+  list(
+    I = r$I,
+    expectation = expectation,
+    nullmean = if (length(null)) mean(null) else NA_real_,
+    nullsd = if (length(null)) stats::sd(null) else NA_real_,
+    z = if (length(null) > 1L && stats::sd(null) > 0) {
+      (r$I - mean(null)) / stats::sd(null)
+    } else {
+      NA_real_
+    },
+    p_value = p,
+    W = r$W,
+    n = n,
+    nperm = length(null),
+    style = style
+  )
 }
 
 #' A neighbour list, from a list or from a weight matrix.
 #' @param neighbours A list of neighbour indices or an n by n weight matrix.
 #' @param n The number of areas.
-#' @return A list of neighbour indices, one element per area; from a matrix it carries the weights in its `weights`
-#'   attribute.
+#' @return A list of neighbour indices, one element per area; from a matrix it
+#'   carries the weights in its `weights` attribute.
 #' @noRd
 .rmbl_neighbours <- function(neighbours, n) {
   if (is.matrix(neighbours)) {
     if (nrow(neighbours) != n || ncol(neighbours) != n) {
-      stop(sprintf("a weight matrix must be %d by %d", n, n),
-           call. = FALSE)
+      stop(sprintf("a weight matrix must be %d by %d", n, n), call. = FALSE)
     }
     if (anyNA(neighbours) || any(!is.finite(neighbours))) {
       stop("a weight matrix must be finite", call. = FALSE)
     }
     nb <- lapply(seq_len(n), function(i) {
       j <- which(neighbours[i, ] != 0)
-      j[j != i]  # an area is not its own neighbour
+      j[j != i] # an area is not its own neighbour
     })
     # the magnitudes travel with the indices
     attr(nb, "weights") <- lapply(seq_len(n), function(i) {
@@ -640,19 +693,29 @@ morani <- function(x, nbrs, style = c("W", "B"),
     return(nb)
   }
   if (!is.list(neighbours)) {
-    stop("`neighbours` must be a list of neighbour indices or a weight matrix",
-         call. = FALSE)
+    stop(
+      "`neighbours` must be a list of neighbour indices or a weight matrix",
+      call. = FALSE
+    )
   }
   if (length(neighbours) != n) {
-    stop(sprintf("`neighbours` has %d entries for %d areas",
-                 length(neighbours), n), call. = FALSE)
+    stop(
+      sprintf(
+        "`neighbours` has %d entries for %d areas",
+        length(neighbours),
+        n
+      ),
+      call. = FALSE
+    )
   }
   lapply(seq_along(neighbours), function(i) {
     v <- as.integer(neighbours[[i]])
     v <- v[!is.na(v)]
     if (length(v) && (any(v < 1L) || any(v > n))) {
-      stop(sprintf("area %d names a neighbour outside 1..%d", i, n),
-           call. = FALSE)
+      stop(
+        sprintf("area %d names a neighbour outside 1..%d", i, n),
+        call. = FALSE
+      )
     }
     # an area is not its own neighbour; keeping it would put the
     # variable's own value on both sides of every product

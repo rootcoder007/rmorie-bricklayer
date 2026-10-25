@@ -17,101 +17,121 @@ indgap(
 )
 }
 \arguments{
-\item{data}{A data frame, one row per group (filtered to one period, age group, sex and
-place: a group appearing twice is refused).}
+\item{data}{A data frame, one row per group (filtered to one period, age
+group, sex and place: a group appearing twice is refused).}
 
-\item{grp, est, lower, upper}{Column names: the group label, the estimate, and its
-published confidence limits, on one scale.}
+\item{grp, est, lower, upper}{Column names: the group label, the estimate, and
+its published confidence limits, on one scale.}
 
-\item{ref}{The label of the reference group (default \code{"Non-Indigenous"}).}
+\item{ref}{The label of the reference group (default
+\code{"Non-Indigenous"}).}
 
 \item{qual}{Optional column of quality flags in the package's vocabulary
 (\code{"E"}, \code{"F"}, \code{"x"}, \code{".."}, \code{"..."}; see
 \code{\link{qltyrcd}} for other agencies' flags).}
 
-\item{conflvl}{The confidence level of the published intervals and of the ones
-returned (default 0.95).}
+\item{conflvl}{The confidence level of the published intervals and of the
+ones returned (default 0.95).}
 
 \item{pooled}{Optional labels of the rows that pool other groups (for example
-\code{"Aboriginal and Torres Strait Islander"} beside its parts, or a \dQuote{Total
-Indigenous} row); by default the labels described in Details.}
+\code{"Aboriginal and Torres Strait Islander"} beside its parts, or a
+\dQuote{Total Indigenous} row); by default the labels described in Details.}
 }
 \value{
-A data frame of class \code{rmbl_indigenous_gap}, one row per group but the
-reference. The columns are \code{group}, \code{estimate}, \code{refest}, \code{ratio},
-\code{ratiolo}, \code{ratioup}, \code{difference}, \code{diflo},
-\code{difup}, \code{usewithcau} and \code{poogrp}; attributes
-\code{reference} and \code{conflvl}. \code{plot()} draws each group's difference
-or ratio.
+A data frame of class \code{rmbl_indigenous_gap}, one row per group
+but the reference. The columns are \code{group}, \code{estimate},
+\code{refest}, \code{ratio}, \code{ratiolo}, \code{ratioup},
+\code{difference}, \code{diflo}, \code{difup}, \code{usewithcau} and
+\code{poogrp}; attributes \code{reference} and \code{conflvl}.
+\code{plot()} draws each group's difference or ratio.
 }
 \description{
-For published estimates with their confidence limits (percentages, rates, years of life
-expectancy: any scale, with the limits on the same scale), the ratio and the difference
-of each group to a reference group, with confidence intervals worked from the published
-ones: First Nations, Metis and Inuit against non-Indigenous people, Aboriginal and
-Torres Strait Islander people against non-Indigenous Australians, Maori against
-non-Maori, or any groups with published intervals.
+For published estimates with their confidence limits (percentages, rates,
+years of life expectancy: any scale, with the limits on the same scale), the
+ratio and the difference of each group to a reference group, with confidence
+intervals worked from the published ones: First Nations, Metis and Inuit
+against non-Indigenous people, Aboriginal and Torres Strait Islander people
+against non-Indigenous Australians, Maori against non-Maori, or any groups
+with published intervals.
 }
 \details{
-Each published interval gives a standard error, \eqn{s = (u - l) / (2 z)}, on
-the scale of the estimate for the difference and on the log scale,
-\eqn{\sigma = (\log u - \log l) / (2 z)}, for the ratio, with
-\eqn{z = \Phi^{-1}(1 - \alpha/2)}. This takes the interval as symmetric on that scale;
-for asymmetric (gamma, logit, Wilson) limits it averages the two sides. With a standard
-error, a coefficient of variation or a margin of error instead of limits, make limits
-with \code{\link{limfrom}} first. The groups are treated as independent samples, so
-the standard error of a difference is \eqn{\sqrt{s_g^2 + s_r^2}} and of a log ratio
-\eqn{\sqrt{\sigma_g^2 + \sigma_r^2}}. Disjoint domains of one survey are nearly
-independent but not exactly (they share the design's strata and clusters): the
-intervals are approximations, and the exact ones need the survey's replicate weights
-(for Statistics Canada's surveys, in its Research Data Centres). The reference must not
-contain the groups: compare with non-Indigenous people, not with a total, whose
-covariance with each group is large and positive (the function warns when the reference
-looks like a total). A lower limit of 0 (a limit cut at zero) leaves the ratio's
-interval \code{NA}.
+Each published interval gives a standard error, \eqn{s = (u - l) /
+(2 z)}, on the scale of the estimate for the difference and on the log scale,
+\eqn{\sigma = (\log u - \log l) / (2 z)}, for the ratio, with \eqn{z =
+\Phi^{-1}(1 - \alpha/2)}. This takes the interval as symmetric on that scale;
+for asymmetric (gamma, logit, Wilson) limits it averages the two sides. With
+a standard error, a coefficient of variation or a margin of error instead of
+limits, make limits with \code{\link{limfrom}} first. The groups are treated
+as independent samples, so the standard error of a difference is
+\eqn{\sqrt{s_g^2 + s_r^2}} and of a log ratio \eqn{\sqrt{\sigma_g^2 +
+\sigma_r^2}}. Disjoint domains of one survey are nearly independent but not
+exactly (they share the design's strata and clusters): the intervals are
+approximations, and the exact ones need the survey's replicate weights (for
+Statistics Canada's surveys, in its Research Data Centres). The reference
+must not contain the groups: compare with non-Indigenous people, not with a
+total, whose covariance with each group is large and positive (the function
+warns when the reference looks like a total). A lower limit of 0 (a limit cut
+at zero) leaves the ratio's interval \code{NA}.
 
-Distinctions-based: each group is compared on its own. A row that pools groups is kept
-but marked \code{poogrp = TRUE}, since a pooled figure can hide what differs
-between the groups it pools: name such rows in \code{pooled} (by default labels
-beginning \code{"Total"}, \dQuote{Indigenous identity}, \dQuote{Aboriginal identity}
-or \dQuote{Indigenous
-population} are taken as pooled). A row flagged \code{E} (in the group or the
-reference) is compared and marked; one flagged \code{F}, \code{x}, \code{..} or
-\code{...}, with no estimate, or whose published interval does not contain its own
+Distinctions-based: each group is compared on its own. A row that pools
+groups is kept but marked \code{poogrp = TRUE}, since a pooled figure can
+hide what differs between the groups it pools: name such rows in
+\code{pooled} (by default labels beginning \code{"Total"}, \dQuote{Indigenous
+identity}, \dQuote{Aboriginal identity} or \dQuote{Indigenous population} are
+taken as pooled). A row flagged \code{E} (in the group or the reference) is
+compared and marked; one flagged \code{F}, \code{x}, \code{..} or \code{...},
+with no estimate, or whose published interval does not contain its own
 estimate, is not compared. Other agencies' flags: \code{\link{qltyrcd}}.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-# Perceived mental health very good or excellent, adults, 2019/2022 (Statistics Canada,
-# table 13-10-0924-01; The Daily, 2025-02-13)
+# Perceived mental health very good or excellent, adults, 2019/2022
+# (Statistics Canada, table 13-10-0924-01; The Daily, 2025-02-13)
 h <- indiex("health")
-mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
-          h$indicator == "Perceived mental health, very good or excellent", ]
+mh <- h[
+  h$period == "2019/2022" &
+    h$age == "Total, 18 years and over" &
+    h$indicator == "Perceived mental health, very good or excellent",
+]
 g <- indgap(mh, "group", "estimate", "lower", "upper", qual = "quality")
 g
 plot(g)
 plot(g, what = "ratio")
-# your own table: made-up numbers in another country's layout, with relative standard
-# errors instead of limits and that agency's flags
-own <- data.frame(group = c("Aboriginal", "Torres Strait Islander",
-                            "Aboriginal and Torres Strait Islander",
-                            "Non-Indigenous Australians"),
-                  pct = c(31.2, 27.5, 30.8, 18.9), rse = c(4.1, 22.0, 3.9, 1.2),
-                  flag = c("", "*", "", ""))
+# your own table: made-up numbers in another country's layout, with relative
+# standard errors instead of limits and that agency's flags
+own <- data.frame(
+  group = c(
+    "Aboriginal",
+    "Torres Strait Islander",
+    "Aboriginal and Torres Strait Islander",
+    "Non-Indigenous Australians"
+  ),
+  pct = c(31.2, 27.5, 30.8, 18.9),
+  rse = c(4.1, 22.0, 3.9, 1.2),
+  flag = c("", "*", "", "")
+)
 own <- cbind(own, limfrom(own$pct, cv = own$rse)[c("lower", "upper")])
 own$q <- qltyrcd(own$flag, suppr = c("np", "**"), caution = "*")
-indgap(own, "group", "pct", "lower", "upper",
-               ref = "Non-Indigenous Australians",
-               qual = "q", pooled = "Aboriginal and Torres Strait Islander")
+indgap(
+  own,
+  "group",
+  "pct",
+  "lower",
+  "upper",
+  ref = "Non-Indigenous Australians",
+  qual = "q",
+  pooled = "Aboriginal and Torres Strait Islander"
+)
 \dontshow{\}) # examplesIf}
 }
 \references{
-Statistics Canada (2025). Health indicators for First Nations adults living
-off reserve, Metis and Inuit adults, 2015 to 2022. The Daily, 2025-02-13.\cr
+Statistics Canada (2025). Health indicators for First Nations
+adults living off reserve, Metis and Inuit adults, 2015 to 2022. The Daily,
+2025-02-13.\cr
 www150.statcan.gc.ca/n1/daily-quotidien/250213/dq250213f-eng.htm
 
-Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for
-Indigenous Data Governance. Data Science Journal 19:43.
+Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE
+Principles for Indigenous Data Governance. Data Science Journal 19:43.
 \doi{10.5334/dsj-2020-043}
 }
 \seealso{

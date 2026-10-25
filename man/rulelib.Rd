@@ -162,10 +162,12 @@ valrules(df, rules)$grade_in_set$rows
 
 # Clean data passes every one of them.
 ok <- data.frame(
-  id = 1:3, grade = c("a", "b", "c"),
+  id = 1:3,
+  grade = c("a", "b", "c"),
   score = c(5, 50, 7),
   email = c("a@b.com", "c@d.org", "e@f.net"),
-  day = 1:3, stringsAsFactors = FALSE
+  day = 1:3,
+  stringsAsFactors = FALSE
 )
 length(valrules(ok, rules))
 
@@ -184,7 +186,10 @@ valrules(df, rulecmpl())
 # NA fails only when asked to
 g <- data.frame(grade = c("a", NA, "b"))
 length(valrules(g, ruleinset("grade", c("a", "b"))))
-valrules(g, ruleinset("grade", c("a", "b"), napass = FALSE))$grade_in_set$rows
+valrules(
+  g,
+  ruleinset("grade", c("a", "b"), napass = FALSE)
+)$grade_in_set$rows
 
 # bounds are checked when the rule is made
 try(rulebtw("score", 100, 0))

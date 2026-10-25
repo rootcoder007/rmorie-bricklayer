@@ -11,20 +11,18 @@ capenv(pkgs = loadedNamespaces())
 every currently loaded namespace (\code{loadedNamespaces()}).}
 }
 \value{
-A list of seven elements:
-\describe{
+A list of seven elements: \describe{
 \item{\code{r_version}}{character, e.g. \code{"4.5.1"}.}
 \item{\code{platform}}{character, \code{R.version$platform}.}
 \item{\code{os}}{character, the system name and release.}
-\item{\code{captured_utc}}{character, ISO 8601 time \code{YYYY-MM-DDThh:mm:ssZ}.}
-\item{\code{rng_kind}}{character, the three \code{RNGkind()} values joined by
-commas.}
+\item{\code{captured_utc}}{character, ISO 8601 time
+\code{YYYY-MM-DDThh:mm:ssZ}.} \item{\code{rng_kind}}{character, the three
+\code{RNGkind()} values joined by commas.}
 \item{\code{rng_seeded}}{logical, whether \code{.Random.seed} exists.}
 \item{\code{packages}}{named list of version strings, sorted by name
-(\code{NA} for a package that is not installed). A list, not a vector,
-so the names survive the manifest's JSON: a named vector is written as
-a bare array.}
-}
+(\code{NA} for a package that is not installed). A list, not a vector, so
+the names survive the manifest's JSON: a named vector is written as a bare
+array.} }
 }
 \description{
 Records the facts a replicator needs to rebuild the session in which a

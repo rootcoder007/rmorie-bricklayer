@@ -77,7 +77,11 @@ try(llmchat(list("Name one type of survey weight.")))
 try(llmchat(turns, route = "ollama"))
 
 for (v in names(old)) {
-  if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
+  if (is.na(old[[v]])) {
+    Sys.unsetenv(v)
+  } else {
+    do.call(Sys.setenv, as.list(old[v]))
+  }
 }
 \dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

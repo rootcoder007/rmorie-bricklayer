@@ -33,16 +33,13 @@ the manifest, if any.}
 }
 \value{
 An object of class \code{c("bricklayer_capsule_check", "list")},
-printed as one line per check:
-\describe{
-\item{\code{ok}}{logical scalar, the overall verdict described in Details.}
-\item{\code{checks}}{data.frame with columns \code{check} (character, the check
-name), \code{ok} (logical) and \code{detail} (character: the path checked, the
-digest found, or why it failed).}
-\item{\code{required}}{character, the checks that had to be made.}
-\item{\code{missing}}{character, required checks that were never made
-(\code{character(0)} when none).}
-}
+printed as one line per check: \describe{ \item{\code{ok}}{logical scalar,
+the overall verdict described in Details.} \item{\code{checks}}{data.frame
+with columns \code{check} (character, the check name), \code{ok} (logical)
+and \code{detail} (character: the path checked, the digest found, or why it
+failed).} \item{\code{required}}{character, the checks that had to be
+made.} \item{\code{missing}}{character, required checks that were never
+made (\code{character(0)} when none).} }
 }
 \description{
 Runs the full custody chain over a capsule directory in one call and
@@ -55,49 +52,38 @@ and the data are real rather than synthetic. Use it before re-running or
 publishing an analysis, or when receiving a capsule from someone else.
 }
 \details{
-The checks, in the order they appear in \code{checks}:
-\describe{
+The checks, in the order they appear in \code{checks}: \describe{
 \item{\code{provenance_readable}}{\code{provfile} is a plain relative path
-inside
-the capsule (no \code{..}, no absolute path, no symlink out) and parses as JSON.}
-\item{\code{data_present}}{the data file (\code{dfile}, else the provenance's
-\code{resource$filename}) is inside the capsule and is a file.}
-\item{\code{data_sha256}}{\code{\link[=vrfsha256]{vrfsha256()}} finds that its
-SHA-256 equals
-\code{resource$sha256} (64 hex characters).}
-\item{\code{data_size_bytes}}{when \code{resource$size_bytes} is recorded: the size
-on disk matches.}
-\item{\code{data_readable}}{a \code{.csv} file is read with
-\code{utils::read.csv()};
-a non-CSV file fails this row when a row count or schema is recorded (they
-cannot be checked).}
-\item{\code{data_row_count}}{when \code{resource$row_count_data_rows} is recorded:
-the
-CSV has that many rows.}
-\item{\code{schema_valid}}{when a \code{schema} is recorded:
-\code{\link[=valsch]{valsch()}}
-finds no fatal issue (warnings are listed in \code{detail} but pass).}
-\item{\code{manifest_consistent}}{when \code{mnffile} is given, or the capsule
-holds \code{manifest.json}: every result with numeric \code{observed} and
-\code{expected}, a \code{tol} and a status of \code{PASS} or \code{DIFFER} still
-gets that status from \eqn{|observed - expected| \le tol}.}
-\item{\code{script_sha256}}{when a script is named (by \code{scrfile}, by
-\code{script$filename} in the provenance or by \code{meta$scrfile} in the
-manifest) or a script digest is pinned (\code{meta$script_sha256}
-or \code{script$sha256}):
-the script's SHA-256 matches the pin.}
-\item{\code{data_not_synthetic}}{no \code{<data>.synthetic} sidecar (written by
-\code{\link[=mksyncsv]{mksyncsv()}}), and neither the manifest
-nor the provenance records
-\code{synthetic = true}.}
-}
-A check that cannot be made because the provenance lacks a field is a
-FAILED row, never skipped: a provenance of \code{{}} verifies nothing.
-\code{ok} is \code{TRUE} only when every row passed and every required
-check was made. The required checks are \code{provenance_readable},
-\code{data_present}, \code{data_sha256} and \code{data_not_synthetic}, plus
-\code{manifest_consistent} and \code{script_sha256} when a manifest or a
-script is in play.
+inside the capsule (no \code{..}, no absolute path, no symlink out) and
+parses as JSON.} \item{\code{data_present}}{the data file (\code{dfile}, else
+the provenance's \code{resource$filename}) is inside the capsule and is a
+file.} \item{\code{data_sha256}}{\code{\link[=vrfsha256]{vrfsha256()}} finds that its
+SHA-256 equals \code{resource$sha256} (64 hex characters).}
+\item{\code{data_size_bytes}}{when \code{resource$size_bytes} is recorded:
+the size on disk matches.} \item{\code{data_readable}}{a \code{.csv} file is
+read with \code{utils::read.csv()}; a non-CSV file fails this row when a row
+count or schema is recorded (they cannot be checked).}
+\item{\code{data_row_count}}{when \code{resource$row_count_data_rows} is
+recorded: the CSV has that many rows.} \item{\code{schema_valid}}{when a
+\code{schema} is recorded: \code{\link[=valsch]{valsch()}} finds no fatal issue
+(warnings are listed in \code{detail} but pass).}
+\item{\code{manifest_consistent}}{when \code{mnffile} is given, or the
+capsule holds \code{manifest.json}: every result with numeric \code{observed}
+and \code{expected}, a \code{tol} and a status of \code{PASS} or
+\code{DIFFER} still gets that status from \eqn{|observed - expected| \le
+tol}.} \item{\code{script_sha256}}{when a script is named (by \code{scrfile},
+by \code{script$filename} in the provenance or by \code{meta$scrfile} in the
+manifest) or a script digest is pinned (\code{meta$script_sha256} or
+\code{script$sha256}): the script's SHA-256 matches the pin.}
+\item{\code{data_not_synthetic}}{no \code{<data>.synthetic} sidecar (written
+by \code{\link[=mksyncsv]{mksyncsv()}}), and neither the manifest nor the provenance
+records \code{synthetic = true}.} } A check that cannot be made because the
+provenance lacks a field is a FAILED row, never skipped: a provenance of
+\code{{}} verifies nothing. \code{ok} is \code{TRUE} only when every row
+passed and every required check was made. The required checks are
+\code{provenance_readable}, \code{data_present}, \code{data_sha256} and
+\code{data_not_synthetic}, plus \code{manifest_consistent} and
+\code{script_sha256} when a manifest or a script is in play.
 
 Entirely offline: nothing is downloaded and nothing is written. Error:
 \code{cpsdir} that is not one existing directory. Every other problem

@@ -72,14 +72,12 @@ fences are \eqn{Q(0.25) - k \cdot \mathrm{IQR}} and
 \eqn{Q(0.75) + k \cdot \mathrm{IQR}} (Tukey, 1977).
 
 Missing values are not removed: an \code{NA} or \code{NaN} anywhere in \code{x} makes
-every result \code{NaN} (unlike \code{\link[stats:quantile]{stats::quantile()}}, which
-stops). An empty
-\code{x} gives \code{NaN}. \code{cqnt()} refuses an empty \code{probs}
-(\code{"probs is empty"}) and any probability outside \eqn{[0, 1]} or missing
-(\code{"must lie in [0, 1]"}); every function refuses a character, factor or
-list \code{x} (\code{"must be numeric"}). The quantiles sort a copy of \code{x}, so
-the
-cost is \eqn{O(n \log n)}.
+every result \code{NaN} (unlike \code{\link[stats:quantile]{stats::quantile()}},
+which stops). An empty \code{x} gives \code{NaN}. \code{cqnt()} refuses an empty
+\code{probs} (\code{"probs is empty"}) and any probability outside \eqn{[0, 1]} or
+missing (\code{"must lie in [0, 1]"}); every function refuses a character, factor
+or list \code{x} (\code{"must be numeric"}). The quantiles sort a copy of \code{x}, so
+the cost is \eqn{O(n \log n)}.
 }
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}

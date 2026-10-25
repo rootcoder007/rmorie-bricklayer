@@ -175,13 +175,21 @@ fipskg <- function(scheme = "ML-DSA-65", seed = NULL) {
   if (is.null(seed)) {
     seed <- rndbytes(sz[["seed"]])
   } else if (!is.raw(seed) || length(seed) != sz[["seed"]]) {
-    stop(sprintf("`seed` must be a raw vector of %d bytes for %s",
-                 sz[["seed"]], scheme), call. = FALSE)
+    stop(
+      sprintf(
+        "`seed` must be a raw vector of %d bytes for %s",
+        sz[["seed"]],
+        scheme
+      ),
+      call. = FALSE
+    )
   }
   res <- .rmbl_fips_keypair(scheme, seed)
-  out <- list(public = .rmbl_hexlify(res$public),
-              secret = .rmbl_hexlify(res$secret),
-              scheme = scheme)
+  out <- list(
+    public = .rmbl_hexlify(res$public),
+    secret = .rmbl_hexlify(res$secret),
+    scheme = scheme
+  )
   class(out) <- c("bricklayer_fips_key", "bricklayer_oqs_key", "list")
   out
 }
@@ -194,8 +202,11 @@ fipspubkey <- function(key) {
     stop("`key` must come from fipskg()", call. = FALSE)
   }
   out <- list(public = key$public, scheme = key$scheme)
-  class(out) <- c("bricklayer_fips_public_key",
-                  "bricklayer_oqs_public_key", "list")
+  class(out) <- c(
+    "bricklayer_fips_public_key",
+    "bricklayer_oqs_public_key",
+    "list"
+  )
   out
 }
 
@@ -257,14 +268,18 @@ fipskey <- function(scheme, public, secret = NULL) {
   pub <- .rmbl_fips_material(public, sz[["public_key"]], "public", scheme)
   if (is.null(secret)) {
     out <- list(public = pub, scheme = scheme)
-    class(out) <- c("bricklayer_fips_public_key",
-                    "bricklayer_oqs_public_key", "list")
+    class(out) <- c(
+      "bricklayer_fips_public_key",
+      "bricklayer_oqs_public_key",
+      "list"
+    )
     return(out)
   }
-  out <- list(public = pub,
-              secret = .rmbl_fips_material(secret, sz[["secret_key"]],
-                                           "secret", scheme),
-              scheme = scheme)
+  out <- list(
+    public = pub,
+    secret = .rmbl_fips_material(secret, sz[["secret_key"]], "secret", scheme),
+    scheme = scheme
+  )
   class(out) <- c("bricklayer_fips_key", "bricklayer_oqs_key", "list")
   out
 }
@@ -284,12 +299,17 @@ fipskey <- function(scheme, public, secret = NULL) {
     h <- as.character(x)[1L]
     # not .rmbl_hex_or_null(): that decodes to bytes, and what is wanted
     # here is the validated STRING, since a key is carried as hex
-    if (is.na(h) || nchar(h) %% 2L != 0L ||
-        !grepl("^[0-9a-fA-F]*$", h)) NULL else tolower(h)
+    if (is.na(h) || nchar(h) %% 2L != 0L || !grepl("^[0-9a-fA-F]*$", h)) {
+      NULL
+    } else {
+      tolower(h)
+    }
   }
   if (is.null(hex) || nchar(hex) %/% 2L != n) {
-    stop(sprintf("`%s` must be %d bytes of key material for %s", what, n,
-                 scheme), call. = FALSE)
+    stop(
+      sprintf("`%s` must be %d bytes of key material for %s", what, n, scheme),
+      call. = FALSE
+    )
   }
   hex
 }
@@ -395,37 +415,62 @@ fipsmu <- function(key, msg, ctx = NULL, prehash = "none") {
   scheme <- .rmbl_fips_key_scheme(key)
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (is.na(mode)) {
-    stop("fipsmu: external mu is an ML-DSA interface; ", scheme,
-         " has no equivalent", call. = FALSE)
+    stop(
+      "fipsmu: external mu is an ML-DSA interface; ",
+      scheme,
+      " has no equivalent",
+      call. = FALSE
+    )
   }
   pk <- .rmbl_hex_or_null(key$public)
-  if (is.null(pk)) stop("fipsmu: `key` has no usable public key", call. = FALSE)
-  .Call(C_rmbl_mldsa_mu, mode, pk, .rmbl_sign_message(msg),
-        .rmbl_fips_context(ctx), .rmbl_fips_prehash(prehash))
+  if (is.null(pk)) {
+    stop("fipsmu: `key` has no usable public key", call. = FALSE)
+  }
+  .Call(
+    C_rmbl_mldsa_mu,
+    mode,
+    pk,
+    .rmbl_sign_message(msg),
+    .rmbl_fips_context(ctx),
+    .rmbl_fips_prehash(prehash)
+  )
 }
 
 #' @rdname fipsmu
 #' @export
-fipssignmu <- function(key, mu, determ = FALSE,
-                         masked = getOption("rmoriebricklayer.masked", TRUE)) {
+fipssignmu <- function(
+  key,
+  mu,
+  determ = FALSE,
+  masked = getOption("rmoriebricklayer.masked", TRUE)
+) {
   masked <- .rmbl_masked_flag(masked)
   scheme <- .rmbl_fips_key_scheme(key)
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (is.na(mode)) {
-    stop("fipssignmu: external mu is an ML-DSA interface; ", scheme,
-         " has no equivalent", call. = FALSE)
+    stop(
+      "fipssignmu: external mu is an ML-DSA interface; ",
+      scheme,
+      " has no equivalent",
+      call. = FALSE
+    )
   }
   if (is.null(key[["secret"]])) {
     stop("signing needs a key with its secret half", call. = FALSE)
   }
   if (!is.raw(mu) || length(mu) != 64L) {
-    stop("`mu` must be 64 raw bytes, as returned by fipsmu()",
-         call. = FALSE)
+    stop("`mu` must be 64 raw bytes, as returned by fipsmu()", call. = FALSE)
   }
   rnd <- if (isTRUE(determ)) raw(32L) else rndbytes(32L)
   # masked = TRUE: the first-order masked signer, same bytes for the same rnd
-  sg <- .Call(C_rmbl_mldsa_sign_mu, mode, .rmbl_hex_to_raw(key$secret),
-              mu, rnd, masked)
+  sg <- .Call(
+    C_rmbl_mldsa_sign_mu,
+    mode,
+    .rmbl_hex_to_raw(key$secret),
+    mu,
+    rnd,
+    masked
+  )
   out <- list(scheme = scheme, signature = .rmbl_hexlify(sg))
   class(out) <- c("bricklayer_signature", "list")
   out
@@ -434,22 +479,34 @@ fipssignmu <- function(key, mu, determ = FALSE,
 #' @rdname fipsmu
 #' @export
 fipsvrfmu <- function(key, mu, sig) {
-  if (!is.list(key)) stop("fipsvrfmu: `key` must come from fipskg() or fipskey()", call. = FALSE)
-  if (!inherits(sig, "bricklayer_signature")) {
-    stop("`sig` must come from fipssignmu() or cpssign()",
-         call. = FALSE)
+  if (!is.list(key)) {
+    stop("fipsvrfmu: `key` must come from fipskg() or fipskey()", call. = FALSE)
   }
-  # a verifier key whose class, scheme or bytes were edited is "not verified", like an edited
-  # signature (cpsvrf's rule): only a key that is plainly of another kind is an error
+  if (!inherits(sig, "bricklayer_signature")) {
+    stop("`sig` must come from fipssignmu() or cpssign()", call. = FALSE)
+  }
+  # a verifier key whose class, scheme or bytes were edited is "not verified",
+  # like an edited signature (cpsvrf's rule): only a key that is plainly of
+  # another kind is an error
   scheme <- tryCatch(.rmbl_fips_key_scheme(key), error = function(e) NULL)
-  if (is.null(scheme)) return(FALSE)
+  if (is.null(scheme)) {
+    return(FALSE)
+  }
   mode <- .rmbl_fips_mldsa_mode(scheme)
-  if (is.na(mode)) return(FALSE)
-  if (!identical(sig$scheme, scheme)) return(FALSE)
-  if (!is.raw(mu) || length(mu) != 64L) return(FALSE)
+  if (is.na(mode)) {
+    return(FALSE)
+  }
+  if (!identical(sig$scheme, scheme)) {
+    return(FALSE)
+  }
+  if (!is.raw(mu) || length(mu) != 64L) {
+    return(FALSE)
+  }
   pk <- .rmbl_hex_or_null(key$public)
   sg <- .rmbl_hex_or_null(sig$signature)
-  if (is.null(pk) || is.null(sg)) return(FALSE)
+  if (is.null(pk) || is.null(sg)) {
+    return(FALSE)
+  }
   isTRUE(.Call(C_rmbl_mldsa_verify_mu, mode, pk, mu, sg))
 }
 
@@ -460,7 +517,11 @@ fipsvrfmu <- function(key, mu, sig) {
 #' @noRd
 .rmbl_fips_key_scheme <- function(key) {
   if (!inherits(key, c("bricklayer_oqs_key", "bricklayer_oqs_public_key"))) {
-    stop(.rmbl_fn(), "`key` must come from fipskg() or fipskey()", call. = FALSE)
+    stop(
+      .rmbl_fn(),
+      "`key` must come from fipskg() or fipskey()",
+      call. = FALSE
+    )
   }
   .rmbl_fips_scheme(key$scheme)
 }
@@ -533,16 +594,26 @@ fipssz <- function(scheme) {
 #' @noRd
 .rmbl_fips_scheme <- function(scheme) {
   # one name: a vector of two was read as its first (review of 52a8883)
-  if (!is.character(scheme) || length(scheme) != 1L) stop("`scheme` must be a single non-empty string", call. = FALSE)
+  if (!is.character(scheme) || length(scheme) != 1L) {
+    stop("`scheme` must be a single non-empty string", call. = FALSE)
+  }
   if (is.na(scheme) || !nzchar(scheme)) {
     stop("`scheme` must be a non-empty string", call. = FALSE)
   }
   known <- setdiff(pqcbknd(), "xmss-sha256")
   if (!scheme %in% known) {
-    stop(sprintf(paste0("unknown scheme '%s'. The standardised schemes ",
-                        "are: %s. For the stateful hash-based scheme ",
-                        "use pqckg()."),
-                 scheme, paste(known, collapse = ", ")), call. = FALSE)
+    stop(
+      sprintf(
+        paste0(
+          "unknown scheme '%s'. The standardised schemes ",
+          "are: %s. For the stateful hash-based scheme ",
+          "use pqckg()."
+        ),
+        scheme,
+        paste(known, collapse = ", ")
+      ),
+      call. = FALSE
+    )
   }
   scheme
 }
@@ -552,7 +623,9 @@ fipssz <- function(scheme) {
 #' @return An integer mode, or NA.
 #' @noRd
 .rmbl_fips_mldsa_mode <- function(scheme) {
-  if (!grepl("^ML-DSA-", scheme)) return(NA_integer_)
+  if (!grepl("^ML-DSA-", scheme)) {
+    return(NA_integer_)
+  }
   as.integer(sub("^ML-DSA-", "", scheme))
 }
 
@@ -563,10 +636,16 @@ fipssz <- function(scheme) {
 #' @noRd
 .rmbl_fips_keypair <- function(scheme, seed) {
   mode <- .rmbl_fips_mldsa_mode(scheme)
-  if (!is.na(mode)) return(.Call(C_rmbl_mldsa_keypair, mode, seed))
-  # the small SLH-DSA sets take a fraction of a second, the 256-bit "s" sets several: the kernel
-  # polls for a Ctrl-C as it builds its trees, and each poll turns the busy spinner
-  .bl_busy(sprintf("%s key: building the top tree", scheme), .Call(C_rmbl_slhdsa_keypair, scheme, seed))
+  if (!is.na(mode)) {
+    return(.Call(C_rmbl_mldsa_keypair, mode, seed))
+  }
+  # the small SLH-DSA sets take a fraction of a second, the 256-bit "s" sets
+  # several: the kernel polls for a Ctrl-C as it builds its trees, and each poll
+  # turns the busy spinner
+  .bl_busy(
+    sprintf("%s key: building the top tree", scheme),
+    .Call(C_rmbl_slhdsa_keypair, scheme, seed)
+  )
 }
 
 #' Signs a message with an ML-DSA or SLH-DSA secret key in the native kernel.
@@ -574,17 +653,29 @@ fipssz <- function(scheme) {
 #' @param sk The secret key bytes.
 #' @param msg The message bytes.
 #' @param ctx The context bytes.
-#' @param rnd The randomness bytes, or the fixed bytes of the deterministic variant.
+#' @param rnd The randomness bytes, or the fixed bytes of the deterministic
+#'   variant.
 #' @param prehash The pre-hash name, \code{"none"} for a pure signature.
 #' @param masked Whether ML-DSA signs with the masked implementation.
 #' @return The signature bytes.
 #' @noRd
-.rmbl_fips_sign <- function(scheme, sk, msg, ctx, rnd, prehash = "none", masked = TRUE) {
+.rmbl_fips_sign <- function(
+  scheme,
+  sk,
+  msg,
+  ctx,
+  rnd,
+  prehash = "none",
+  masked = TRUE
+) {
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (!is.na(mode)) {
     return(.Call(C_rmbl_mldsa_sign, mode, sk, msg, ctx, rnd, prehash, masked))
   }
-  .bl_busy(sprintf("%s signature", scheme), .Call(C_rmbl_slhdsa_sign, scheme, sk, msg, ctx, rnd, prehash))
+  .bl_busy(
+    sprintf("%s signature", scheme),
+    .Call(C_rmbl_slhdsa_sign, scheme, sk, msg, ctx, rnd, prehash)
+  )
 }
 
 #' Checks the `masked` argument of the three masked operations.
@@ -596,8 +687,11 @@ fipssz <- function(scheme) {
 #' @noRd
 .rmbl_masked_flag <- function(masked) {
   if (!isTRUE(masked) && !isFALSE(masked)) {
-    stop("`masked` must be TRUE or FALSE (option rmoriebricklayer.masked sets the default)",
-         call. = FALSE)
+    stop(
+      "`masked` must be TRUE or FALSE (option rmoriebricklayer.masked ",
+      "sets the default)",
+      call. = FALSE
+    )
   }
   masked
 }
@@ -611,8 +705,7 @@ fipssz <- function(scheme) {
 #' @param prehash The pre-hash name, \code{"none"} for a pure signature.
 #' @return `TRUE` when the signature verifies.
 #' @noRd
-.rmbl_fips_verify <- function(scheme, pk, msg, ctx, sig,
-                              prehash = "none") {
+.rmbl_fips_verify <- function(scheme, pk, msg, ctx, sig, prehash = "none") {
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (!is.na(mode)) {
     return(.Call(C_rmbl_mldsa_verify, mode, pk, msg, ctx, sig, prehash))
@@ -628,12 +721,31 @@ fipssz <- function(scheme) {
 #' @return The pre-hash name.
 #' @noRd
 .rmbl_fips_prehash <- function(prehash) {
-  if (is.null(prehash)) return("none")
+  if (is.null(prehash)) {
+    return("none")
+  }
   prehash <- as.character(prehash)[1L]
-  if (is.na(prehash)) prehash <- "none"
-  .rmbl_arg(prehash, c("none", "sha224", "sha256", "sha384", "sha512", "sha512_224",
-                     "sha512_256", "sha3_224", "sha3_256", "sha3_384", "sha3_512",
-                     "shake128", "shake256"))
+  if (is.na(prehash)) {
+    prehash <- "none"
+  }
+  .rmbl_arg(
+    prehash,
+    c(
+      "none",
+      "sha224",
+      "sha256",
+      "sha384",
+      "sha512",
+      "sha512_224",
+      "sha512_256",
+      "sha3_224",
+      "sha3_256",
+      "sha3_384",
+      "sha3_512",
+      "shake128",
+      "shake256"
+    )
+  )
 }
 
 #' Checks a FIPS 204 or 205 context string and returns it as bytes.
@@ -644,14 +756,18 @@ fipssz <- function(scheme) {
 #' @return A raw vector of at most 255 bytes.
 #' @noRd
 .rmbl_fips_context <- function(context) {
-  if (is.null(context)) return(raw(0L))
+  if (is.null(context)) {
+    return(raw(0L))
+  }
   if (is.raw(context)) {
     ctx <- context
   } else {
     context <- as.character(context)
     if (length(context) != 1L || is.na(context)) {
-      stop("`context` must be a length-1 character vector or a raw vector",
-           call. = FALSE)
+      stop(
+        "`context` must be a length-1 character vector or a raw vector",
+        call. = FALSE
+      )
     }
     ctx <- charToRaw(context)
   }
@@ -726,14 +842,20 @@ oqspubkey <- function(key) {
 
 #' @export
 format.bricklayer_oqs_key <- function(x, ...) {
-  c(.rmbl_rule("Signing key (standardised: FIPS 204 / FIPS 205)"),
-    .rmbl_kv(list(scheme = x$scheme,
-                  "public key" = sprintf("%s... (%d bytes)",
-                                         substring(x$public, 1L, 32L),
-                                         nchar(x$public) %/% 2L),
-                  secret = "<withheld>",
-                  state = "stateless: signs any number of messages")),
-    .rmbl_rule())
+  c(
+    .rmbl_rule("Signing key (standardised: FIPS 204 / FIPS 205)"),
+    .rmbl_kv(list(
+      scheme = x$scheme,
+      "public key" = sprintf(
+        "%s... (%d bytes)",
+        substring(x$public, 1L, 32L),
+        nchar(x$public) %/% 2L
+      ),
+      secret = "<withheld>",
+      state = "stateless: signs any number of messages"
+    )),
+    .rmbl_rule()
+  )
 }
 
 #' @rdname printmeth
@@ -743,12 +865,18 @@ print.bricklayer_oqs_key <- .rmbl_print_via_format
 
 #' @export
 format.bricklayer_oqs_public_key <- function(x, ...) {
-  c(.rmbl_rule("Public verification key (standardised)"),
-    .rmbl_kv(list(scheme = x$scheme,
-                  "public key" = sprintf("%s... (%d bytes)",
-                                         substring(x$public, 1L, 32L),
-                                         nchar(x$public) %/% 2L))),
-    .rmbl_rule())
+  c(
+    .rmbl_rule("Public verification key (standardised)"),
+    .rmbl_kv(list(
+      scheme = x$scheme,
+      "public key" = sprintf(
+        "%s... (%d bytes)",
+        substring(x$public, 1L, 32L),
+        nchar(x$public) %/% 2L
+      )
+    )),
+    .rmbl_rule()
+  )
 }
 
 #' @rdname printmeth
@@ -852,20 +980,22 @@ print.bricklayer_oqs_public_key <- .rmbl_print_via_format
 #' [cpsvrf()],
 #' [signpubkey()]
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-#' # one-time index record out of your configuration directory; leave the default in use
-#' # A small key, to keep the example quick.
+#' # keep this example's
+#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+#' # one-time index record out of your configuration directory; leave the
+#' # default in use A small key, to keep the example quick.
 #' key <- pqckg(height = 3)
-#' key$capacity            # 8 signatures
-#' key$next_index          # none used yet
+#' key$capacity # 8 signatures
+#' key$next_index # none used yet
 #'
 #' # The public half is what a verifier needs; it carries no secret.
 #' pub <- signpubkey(key)
 #' names(pub)
 #'
-#' # Deterministic seeds reproduce the same key -- for tests only. A key built from given
-#' # seeds is not entered in the used-index record (it may have signed elsewhere): it signs
-#' # only after xmssregkey() vouches that it never has.
+#' # Deterministic seeds reproduce the same key -- for tests only. A key built
+#' # from given seeds is not entered in the used-index record (it may have
+#' # signed elsewhere): it signs only after xmssregkey() vouches that it never
+#' # has.
 #' s1 <- paste(rep("11", 32), collapse = "")
 #' s2 <- paste(rep("22", 32), collapse = "")
 #' identical(pqckg(3, s1, s2)$root, pqckg(3, s1, s2)$root)
@@ -888,37 +1018,59 @@ print.bricklayer_oqs_public_key <- .rmbl_print_via_format
 #' code on those compilers; the README's security section lists what each
 #' check does and does not cover.
 #' @export
-pqckg <- function(height = 10L, skseed = NULL, pubseed = NULL,
-                       skprf = NULL) {
+pqckg <- function(height = 10L, skseed = NULL, pubseed = NULL, skprf = NULL) {
   .rmbl_no_fn(skseed = skseed, pubseed = pubseed, skprf = skprf)
   height <- .rmbl_num(height, "height", integer = TRUE)
   if (length(height) != 1L || is.na(height) || height < 1L || height > 16L) {
     stop("`height` must be a single integer between 1 and 16", call. = FALSE)
   }
-  # a key built from given seeds may be one that has signed elsewhere: it is not registered
+  # a key built from given seeds may be one that has signed elsewhere: it is not
+  # registered
   seeded <- !is.null(skseed)
-  skseed <- if (is.null(skseed)) .rmbl_random_seed_hex() else
+  skseed <- if (is.null(skseed)) {
+    .rmbl_random_seed_hex()
+  } else {
     .rmbl_check_seed(skseed, "skseed")
-  pubseed <- if (is.null(pubseed)) .rmbl_random_seed_hex() else
+  }
+  pubseed <- if (is.null(pubseed)) {
+    .rmbl_random_seed_hex()
+  } else {
     .rmbl_check_seed(pubseed, "pubseed")
+  }
   # SK_PRF is the third secret RFC 8391's private key carries. It keys
   # the per-signature randomiser, and without it the message digest
   # cannot be the one the RFC specifies.
-  skprf <- if (is.null(skprf)) .rmbl_random_seed_hex() else
+  skprf <- if (is.null(skprf)) {
+    .rmbl_random_seed_hex()
+  } else {
     .rmbl_check_seed(skprf, "skprf")
-  root <- .bl_busy(sprintf("XMSS key: building the tree of %s one-time keys", format(2^height, big.mark = ",")),
-                   .Call(C_rmbl_xmss_keygen, skseed, pubseed, height))
-  out <- list(root = root, pubseed = pubseed, skseed = skseed,
-              skprf = skprf,
-              height = height, next_index = 0L,
-              capacity = bitwShiftL(1L, height),
-              scheme = "xmss-sha256")
+  }
+  root <- .bl_busy(
+    sprintf(
+      "XMSS key: building the tree of %s one-time keys",
+      format(2^height, big.mark = ",")
+    ),
+    .Call(C_rmbl_xmss_keygen, skseed, pubseed, height)
+  )
+  out <- list(
+    root = root,
+    pubseed = pubseed,
+    skseed = skseed,
+    skprf = skprf,
+    height = height,
+    next_index = 0L,
+    capacity = bitwShiftL(1L, height),
+    scheme = "xmss-sha256"
+  )
   class(out) <- c("bricklayer_signing_key", "list")
-  # the record learns a key at birth when the birth is here: fresh randomness cannot have
-  # signed anywhere. A key regenerated from given seeds may have (on another machine, or before
-  # the record was lost), so it is not entered; it signs from index 0 only after
-  # xmssregkey() vouches for it (review of 52a8883, A2)
-  if (!seeded) .rmbl_xmss_register(out, fresh = TRUE)
+  # the record learns a key at birth when the birth is here: fresh randomness
+  # cannot have signed anywhere. A key regenerated from given seeds may have (on
+  # another machine, or before the record was lost), so it is not entered; it
+  # signs from index 0 only after xmssregkey() vouches for it (review of
+  # 52a8883, A2)
+  if (!seeded) {
+    .rmbl_xmss_register(out, fresh = TRUE)
+  }
   out
 }
 
@@ -946,8 +1098,10 @@ pqckg <- function(height = 10L, skseed = NULL, pubseed = NULL,
 #'   (64 hex characters each), `height` and `scheme`.
 #' @seealso [cpsvrf()], which takes it.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-#' # one-time index record out of your configuration directory; leave the default in use
+#' # keep this example's
+#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+#' # one-time index record out of your configuration directory; leave the
+#' # default in use
 #' key <- pqckg(height = 2)
 #' pub <- signpubkey(key)
 #'
@@ -966,8 +1120,12 @@ signpubkey <- function(key) {
   if (!inherits(key, "bricklayer_signing_key")) {
     stop("`key` must come from pqckg()", call. = FALSE)
   }
-  out <- list(root = key$root, pubseed = .rmbl_xkey(key, "pubseed"),
-              height = key$height, scheme = key$scheme)
+  out <- list(
+    root = key$root,
+    pubseed = .rmbl_xkey(key, "pubseed"),
+    height = key$height,
+    scheme = key$scheme
+  )
   class(out) <- c("bricklayer_public_key", "list")
   out
 }
@@ -1056,17 +1214,16 @@ signpubkey <- function(key) {
 #' use the deterministic variant rather than drawing fresh randomness per
 #' signature. The signature then depends only on the key, message and
 #' context, which is what the standards' test vectors rely on.
-#' @param prehash For the standardised schemes, sign a
-#' digest of the message rather than the message itself -- HashML-DSA (FIPS
-#' 204 section 5.4) or HashSLH-DSA (FIPS 205 section 10.2.2). One of
-#' `"none"` (the default, the pure variants) or any hash function the two
-#' standards approve. The SHA-2 hashes are `"sha224"`, `"sha256"`, `"sha384"`,
-#' `"sha512"`, `"sha512_224"` and `"sha512_256"`; the SHA-3 hashes are
-#' `"sha3_224"`, `"sha3_256"`, `"sha3_384"` and `"sha3_512"`;
-#' the SHAKE ones are
-#' `"shake128"` (256-bit output) and `"shake256"` (512-bit output). The identifier
-#' of the pre-hash is bound into the signature, so a pre-hashed signature
-#' is never interchangeable with a pure one over the same digest.
+#' @param prehash For the standardised schemes, sign a digest of the message
+#' rather than the message itself -- HashML-DSA (FIPS 204 section 5.4) or
+#' HashSLH-DSA (FIPS 205 section 10.2.2). One of `"none"` (the default, the pure
+#' variants) or any hash function the two standards approve. The SHA-2 hashes
+#' are `"sha224"`, `"sha256"`, `"sha384"`, `"sha512"`,
+#' `"sha512_224"` and `"sha512_256"`; the SHA-3 hashes are `"sha3_224"`,
+#' `"sha3_256"`, `"sha3_384"` and `"sha3_512"`; the SHAKE ones are
+#' `"shake128"` (256-bit output) and `"shake256"` (512-bit output). The
+#' identifier of the pre-hash is bound into the signature, so a pre-hashed
+#' signature is never interchangeable with a pure one over the same digest.
 #' @return A list of class `bricklayer_signature`: `scheme`,
 #' `signature`, and for XMSS also `auth`, `index`,
 #' `root`, `height`, `randomizer` (the
@@ -1080,11 +1237,11 @@ signpubkey <- function(key) {
 #' [cpsvrf()],
 #' [chmac()]
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-#' # one-time index record out of your configuration directory; leave the default in use
-#' # Symmetric: one shared secret.
-#' sig <- cpssign("sha256:abc123", key = "shared-secret",
-#'                     scheme = "hmac")
+#' # keep this example's
+#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+#' # one-time index record out of your configuration directory; leave the
+#' # default in use Symmetric: one shared secret.
+#' sig <- cpssign("sha256:abc123", key = "shared-secret", scheme = "hmac")
 #' cpsvrf("sha256:abc123", sig, "shared-secret")
 #' cpsvrf("sha256:TAMPERED", sig, "shared-secret")
 #'
@@ -1126,9 +1283,15 @@ signpubkey <- function(key) {
 #' models; the README's security section lists what each check does and
 #' does not cover.
 #' @export
-cpssign <- function(msg, key, scheme = NULL, ctx = NULL,
-                         determ = FALSE, prehash = "none",
-                         masked = getOption("rmoriebricklayer.masked", TRUE)) {
+cpssign <- function(
+  msg,
+  key,
+  scheme = NULL,
+  ctx = NULL,
+  determ = FALSE,
+  prehash = "none",
+  masked = getOption("rmoriebricklayer.masked", TRUE)
+) {
   masked <- .rmbl_masked_flag(masked)
   msg <- .rmbl_text_input(msg, "msg")
   if (inherits(key, "bricklayer_oqs_key")) {
@@ -1145,10 +1308,21 @@ cpssign <- function(msg, key, scheme = NULL, ctx = NULL,
       rndbytes(sz[["rnd"]])
     }
     ph <- .rmbl_fips_prehash(prehash)
-    sg <- .rmbl_fips_sign(key$scheme, .rmbl_hex_to_raw(key$secret), .msg, masked = masked,
-                          .ctx, rnd, ph)
-    out <- list(scheme = key$scheme, signature = .rmbl_hexlify(sg),
-                context = .ctx, prehash = ph)
+    sg <- .rmbl_fips_sign(
+      key$scheme,
+      .rmbl_hex_to_raw(key$secret),
+      .msg,
+      masked = masked,
+      .ctx,
+      rnd,
+      ph
+    )
+    out <- list(
+      scheme = key$scheme,
+      signature = .rmbl_hexlify(sg),
+      context = .ctx,
+      prehash = ph
+    )
     class(out) <- c("bricklayer_signature", "list")
     return(out)
   }
@@ -1168,119 +1342,159 @@ cpssign <- function(msg, key, scheme = NULL, ctx = NULL,
     stop("`scheme = \"xmss\"` needs a key from pqckg()", call. = FALSE)
   }
   idx <- key$next_index
-  if (!is.numeric(idx) || length(idx) != 1L || is.na(idx) || idx < 0 || idx != floor(idx) ||
-        idx > .Machine$integer.max) {
-    stop("cpssign: this key's `next_index` is not a whole number >= 0 (below 2^31): the key state is damaged; ",
-         "do not hand-edit it", call. = FALSE)
+  if (
+    !is.numeric(idx) ||
+      length(idx) != 1L ||
+      is.na(idx) ||
+      idx < 0 ||
+      idx != floor(idx) ||
+      idx > .Machine$integer.max
+  ) {
+    stop(
+      "cpssign: this key's `next_index` is not a whole number >= 0 ",
+      "(below 2^31): the key state is damaged; ",
+      "do not hand-edit it",
+      call. = FALSE
+    )
   }
   idx <- as.integer(idx)
   if (idx >= key$capacity) {
-    stop(sprintf(paste0("this key is exhausted: a height-%d key signs %d ",
-                        "messages and all of them are used. Generate a new ",
-                        "key -- reusing an index would break the signature ",
-                        "scheme."), key$height, key$capacity), call. = FALSE)
+    stop(
+      sprintf(
+        paste0(
+          "this key is exhausted: a height-%d key signs %d ",
+          "messages and all of them are used. Generate a new ",
+          "key -- reusing an index would break the signature ",
+          "scheme."
+        ),
+        key$height,
+        key$capacity
+      ),
+      call. = FALSE
+    )
   }
   if (!is.raw(msg)) {
     msg <- as.character(msg)
     if (length(msg) != 1L || is.na(msg)) {
-      stop("cpssign: `msg` must be a length-1 character vector or a raw vector",
-           call. = FALSE)
+      stop(
+        "cpssign: `msg` must be a length-1 character vector or a raw vector",
+        call. = FALSE
+      )
     }
   }
   if (is.null(.rmbl_xkey(key, "skprf"))) {
-    stop(paste0("this signing key predates the RFC 8391 randomiser and ",
-                "cannot produce a conformant signature; generate a new ",
-                "one with pqckg()"), call. = FALSE)
+    stop(
+      paste0(
+        "this signing key predates the RFC 8391 randomiser and ",
+        "cannot produce a conformant signature; generate a new ",
+        "one with pqckg()"
+      ),
+      call. = FALSE
+    )
   }
-  # an index must never sign twice (RFC 8391; NIST SP 800-208 section 8.1): the key is a
-  # copied value, so this session remembers the highest index each key has used and refuses
-  # an older state -- signing twice with one key object, or with a stale copy
-  # the record id is a fingerprint of the secret seed the signer uses, not the `root` field the
-  # key carries: an edited root made a stale copy a "new" key (review of 52a8883, A1)
+  # an index must never sign twice (RFC 8391; NIST SP 800-208 section 8.1): the
+  # key is a copied value, so this session remembers the highest index each key
+  # has used and refuses an older state -- signing twice with one key object, or
+  # with a stale copy the record id is a fingerprint of the secret seed the
+  # signer uses, not the `root` field the key carries: an edited root made a
+  # stale copy a "new" key (review of 52a8883, A1)
   ids <- .rmbl_xmss_ids(key)
-  # retire the index before the signature exists (RFC 8391's order), under the record's lock
+  # retire the index before the signature exists (RFC 8391's order), under the
+  # record's lock
   .rmbl_xmss_reserve(ids, idx)
-  res <- .bl_busy(sprintf("XMSS signature %d: rebuilding the tree", idx),
-                  .Call(C_rmbl_xmss_sign, .rmbl_xkey(key, "skseed"), .rmbl_xkey(key, "skprf"),
-                        .rmbl_xkey(key, "pubseed"),
-                        as.integer(key$height), idx, msg))
+  res <- .bl_busy(
+    sprintf("XMSS signature %d: rebuilding the tree", idx),
+    .Call(
+      C_rmbl_xmss_sign,
+      .rmbl_xkey(key, "skseed"),
+      .rmbl_xkey(key, "skprf"),
+      .rmbl_xkey(key, "pubseed"),
+      as.integer(key$height),
+      idx,
+      msg
+    )
+  )
   if (!identical(tolower(as.character(res$root)), ids$root)) {
-    stop(sprintf(paste("this key's `root` does not match its seeds: the key object was edited. No signature",
-                       "is returned, and index %d stays retired"), idx), call. = FALSE)
+    stop(
+      sprintf(
+        paste(
+          "this key's `root` does not match its seeds: the key object",
+          "was edited. No signature",
+          "is returned, and index %d stays retired"
+        ),
+        idx
+      ),
+      call. = FALSE
+    )
   }
-  # the signature carries no key material: the object is what verifiers are handed, and the
-  # 0.5.9-0.5.12 objects carried the advanced key (skseed and skprf) inside it, so every
-  # shared XMSS signature, attestation and bundle file handed out the private key. The next
-  # key state is derived from the signature with xmssadv().
-  out <- list(scheme = "xmss-sha256", signature = res$wots, auth = res$auth,
-              index = idx, root = res$root, height = key$height,
-              randomizer = res$randomizer, wire = res$wire)
+  # the signature carries no key material: the object is what verifiers are
+  # handed, and the 0.5.9-0.5.12 objects carried the advanced key (skseed and
+  # skprf) inside it, so every shared XMSS signature, attestation and bundle
+  # file handed out the private key. The next key state is derived from the
+  # signature with xmssadv().
+  out <- list(
+    scheme = "xmss-sha256",
+    signature = res$wots,
+    auth = res$auth,
+    index = idx,
+    root = res$root,
+    height = key$height,
+    randomizer = res$randomizer,
+    wire = res$wire
+  )
   class(out) <- c("bricklayer_signature", "list")
   out
 }
 
 #' Advance an XMSS key past a signature it made
 #'
-#' An XMSS signature consumes one leaf, so the key that made it must not sign at that
-#' index
-#' again. This returns the key with \code{next_index} set to one past the signature's
-#' index
-#' (refusing a signature that was not made by this key), which is the key to save and to
-#' use
-#' for the next signature. The signature object itself carries no key material.
+#' An XMSS signature consumes one leaf, so the key that made it must not sign at
+#' that index again. This returns the key with \code{next_index} set to one past
+#' the signature's index (refusing a signature that was not made by this key),
+#' which is the key to save and to use for the next signature. The signature
+#' object itself carries no key material.
 #'
-#' The package records the highest index each key has signed with and refuses that index
-#' again, within the session and across sessions on this machine. The record is the file
-#' \code{xmss_used_indices.txt} under
-#' \code{tools::R_user_dir("rmoriebricklayer", "config")},
-#' which is where CRAN policy lets a package keep its own configuration. A key is entered
-#' under a fingerprint of its secret seed (\code{skseed}), not under the \code{root} it
-#' carries, so editing a stale copy's \code{root} does not make it a new key, and a
-#' signature
-#' whose \code{root} does not match the seeds is withheld.
-#' [pqckg()]
-#' registers a key it generates from fresh randomness. A key built from given
-#' seeds is not registered, because it may be one that has signed elsewhere: it signs
-#' from
-#' index 0 only after
-#' [xmssregkey()]
-#' vouches for it, and the same holds for any key
+#' The package records the highest index each key has signed with and refuses
+#' that index again, within the session and across sessions on this machine. The
+#' record is the file \code{xmss_used_indices.txt} under
+#' \code{tools::R_user_dir("rmoriebricklayer", "config")}, which is where CRAN
+#' policy lets a package keep its own configuration. A key is entered under a
+#' fingerprint of its secret seed (\code{skseed}), not under the \code{root} it
+#' carries, so editing a stale copy's \code{root} does not make it a new key,
+#' and a signature whose \code{root} does not match the seeds is withheld.
+#' [pqckg()] registers a key it generates from fresh randomness. A key
+#' built from given seeds is not registered, because it may be one that has
+#' signed elsewhere: it signs from index 0 only after
+#' [xmssregkey()] vouches for it, and the same holds for any key
 #' the record does not know (from another machine, or whose record was deleted).
-#' Every reservation runs under an operating-system file lock (\code{flock} on Unix,
-#' \code{LockFileEx} on Windows) on \code{xmss_used_indices.txt.flock}, which the system
-#' releases when the process ends, so a crashed session leaves no lock for another
-#' process to
-#' take over. A record that cannot be read, or that cannot be written in full (a full
-#' disk),
-#' stops the signature. The record of the releases before 0.5.12 (\code{xmss_index.json}
-#' in
-#' the same directory) is read and merged, and kept as \code{xmss_index.json.migrated}
-#' once
-#' the new record has been written.
-#' Another path can be set with the option \code{rmoriebricklayer.xmssidxfile} or the
-#' environment variable \code{RMBL_XMSS_INDEX_FILE}: an absolute path to a regular file,
-#' or
-#' to one that does not exist yet (a device such as \code{/dev/null}, a directory or a
-#' relative path is refused). The option \code{FALSE} (or, except on Windows, where an
-#' empty
-#' environment variable is an unset one, the value \code{""}) turns the file off: then
-#' only
-#' the session remembers, every signature warns, and a stale copy of the key reloaded
-#' elsewhere signs a used index again. The record does not travel with the key and is
-#' lost if
-#' the file is deleted, so a key copied to another machine is protected only by the
-#' \code{next_index} you saved: save the advanced key after every signature. In CI or a
-#' container with a fresh home directory, a key that was not generated in that run is
-#' unknown
-#' to the record: register it once with
-#' [xmssregkey()],
-#' or point the record at a file that persists. Examples and vignettes point the record
-#' at a temporary file so that checks and builds leave the configuration directory alone.
-#' The record keeps one line per key for good (an exhausted key's line is what stops a
-#' stale copy of it), and is read and rewritten whole at every signature: a whole
-#' signature took 0.5 s with a hundred thousand keys in the record (measured on an x86-64
-#' laptop; a slower machine takes longer), and longer when several processes sign at once
-#' (each waits its turn for the lock, up to 10 s).
+#' Every reservation runs under an operating-system file lock (\code{flock} on
+#' Unix, \code{LockFileEx} on Windows) on \code{xmss_used_indices.txt.flock},
+#' which the system releases when the process ends, so a crashed session leaves
+#' no lock for another process to take over. A record that cannot be read, or
+#' that cannot be written in full (a full disk), stops the signature. The record
+#' of the releases before 0.5.12 (\code{xmss_index.json} in the same directory)
+#' is read and merged, and kept as \code{xmss_index.json.migrated} once the new
+#' record has been written. Another path can be set with the option
+#' \code{rmoriebricklayer.xmssidxfile} or the environment variable
+#' \code{RMBL_XMSS_INDEX_FILE}: an absolute path to a regular file, or to one
+#' that does not exist yet (a device such as \code{/dev/null}, a directory or a
+#' relative path is refused). The option \code{FALSE} (or, except on Windows,
+#' where an empty environment variable is an unset one, the value \code{""})
+#' turns the file off: then only the session remembers, every signature warns,
+#' and a stale copy of the key reloaded elsewhere signs a used index again. The
+#' record does not travel with the key and is lost if the file is deleted, so a
+#' key copied to another machine is protected only by the \code{next_index} you
+#' saved: save the advanced key after every signature. In CI or a container with
+#' a fresh home directory, a key that was not generated in that run is unknown
+#' to the record: register it once with [xmssregkey()], or point
+#' the record at a file that persists. Examples and vignettes point the record
+#' at a temporary file so that checks and builds leave the configuration
+#' directory alone. The record keeps one line per key for good (an exhausted
+#' key's line is what stops a stale copy of it), and is read and rewritten whole
+#' at every signature: a whole signature took 0.5 s with a hundred thousand keys
+#' in the record (measured on an x86-64 laptop; a slower machine takes longer),
+#' and longer when several processes sign at once (each waits its turn for the
+#' lock, up to 10 s).
 #'
 #' [xmssfgt()]
 #' resets one key's entry, or removes the whole record, and with it
@@ -1290,18 +1504,19 @@ cpssign <- function(msg, key, scheme = NULL, ctx = NULL,
 #' @param sig The XMSS signature it made, from
 #'   [cpssign()],
 #'   or the attestation, bundle or recode manifest that carries it.
-#' @param msg The message the signature was made over; when given, the signature is
-#'   verified against the key first, so an edited or foreign signature cannot advance it.
-#'   Without it, the signature's index is accepted only up to the highest index the
-#'   record
-#'   shows this key has used here, so an edited index cannot burn the key's remaining
-#'   leaves;
-#'   a signature made on another machine needs \code{msg}.
-#' @return The key with \code{next_index} advanced past the signature's index and past
-#'   every index the record knows this key has used.
+#' @param msg The message the signature was made over; when given, the signature
+#'   is verified against the key first, so an edited or foreign signature cannot
+#'   advance it. Without it, the signature's index is accepted only up to the
+#'   highest index the record shows this key has used here, so an edited index
+#'   cannot burn the key's remaining leaves; a signature made on another machine
+#'   needs \code{msg}.
+#' @return The key with \code{next_index} advanced past the signature's index
+#'   and past every index the record knows this key has used.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-#' # one-time index record out of your configuration directory; leave the default in use
+#' # keep this example's
+#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+#' # one-time index record out of your configuration directory; leave the
+#' # default in use
 #' key <- pqckg(height = 2)
 #' s1 <- cpssign("manifest-1", key)
 #' key <- xmssadv(key, s1)
@@ -1333,54 +1548,124 @@ xmssadv <- function(key, sig, msg = NULL) {
   if (!inherits(key, "bricklayer_signing_key")) {
     stop("`key` must be a signing key from pqckg()", call. = FALSE)
   }
-  if (is.list(sig) && is.list(sig$attestation) && is.list(sig$attestation$signature)) {
-    sig <- sig$attestation$signature   # a bundle: the attestation's signature
-  } else if (inherits(sig, "bricklayer_attestation") ||
-               (is.list(sig) && !is.null(sig$signature) && is.list(sig$signature))) {
-    sig <- sig$signature   # an attestation or recode manifest: the signature inside
+  if (
+    is.list(sig) &&
+      is.list(sig$attestation) &&
+      is.list(sig$attestation$signature)
+  ) {
+    sig <- sig$attestation$signature # a bundle: the attestation's signature
+  } else if (
+    inherits(sig, "bricklayer_attestation") ||
+      (is.list(sig) && !is.null(sig$signature) && is.list(sig$signature))
+  ) {
+    # an attestation or recode manifest: the signature inside
+    sig <- sig$signature
   }
   if (!is.list(sig) || !identical(sig$scheme, "xmss-sha256")) {
-    stop("`sig` must be an XMSS signature from cpssign() (or the attestation, bundle or ",
-         "recode manifest that carries it)", call. = FALSE)
+    stop(
+      "`sig` must be an XMSS signature from cpssign() (or the ",
+      "attestation, bundle or ",
+      "recode manifest that carries it)",
+      call. = FALSE
+    )
   }
   nx <- key$next_index
-  if (!is.numeric(nx) || length(nx) != 1L || is.na(nx) || nx < 0 || nx != floor(nx) || nx > .Machine$integer.max) {
-    stop(paste("xmssadv: this key's `next_index` is not a whole number >= 0 (below 2^31):",
-               "the key state is damaged; do not hand-edit it"),
-         call. = FALSE)
+  if (
+    !is.numeric(nx) ||
+      length(nx) != 1L ||
+      is.na(nx) ||
+      nx < 0 ||
+      nx != floor(nx) ||
+      nx > .Machine$integer.max
+  ) {
+    stop(
+      paste(
+        "xmssadv: this key's `next_index` is not a whole number >= 0",
+        "(below 2^31):",
+        "the key state is damaged; do not hand-edit it"
+      ),
+      call. = FALSE
+    )
   }
-  if (!identical(tolower(as.character(sig$root)), tolower(as.character(key$root)))) {
-    stop("this signature was not made by this key (the roots differ)", call. = FALSE)
+  if (
+    !identical(tolower(as.character(sig$root)), tolower(as.character(key$root)))
+  ) {
+    stop(
+      "this signature was not made by this key (the roots differ)",
+      call. = FALSE
+    )
   }
-  if (!is.null(sig$height) && !identical(as.integer(sig$height), as.integer(key$height))) {
-    stop("this signature was not made by this key (the heights differ)", call. = FALSE)
+  if (
+    !is.null(sig$height) &&
+      !identical(as.integer(sig$height), as.integer(key$height))
+  ) {
+    stop(
+      "this signature was not made by this key (the heights differ)",
+      call. = FALSE
+    )
   }
   idx <- suppressWarnings(as.integer(sig$index))
   leaves <- 2L^as.integer(key$height)
-  if (length(idx) != 1L || is.na(idx) || idx < 0L || idx >= leaves ||
-        !isTRUE(all.equal(as.numeric(sig$index), idx))) {
-    stop(sprintf("the signature has no valid index (a whole number below %d)", leaves), call. = FALSE)
+  if (
+    length(idx) != 1L ||
+      is.na(idx) ||
+      idx < 0L ||
+      idx >= leaves ||
+      !isTRUE(all.equal(as.numeric(sig$index), idx))
+  ) {
+    stop(
+      sprintf(
+        "the signature has no valid index (a whole number below %d)",
+        leaves
+      ),
+      call. = FALSE
+    )
   }
   if (!is.null(msg) && !isTRUE(cpsvrf(msg, sig, signpubkey(key)))) {
-    stop("the signature does not verify for this key and message: an edited or foreign signature ",
-         "cannot advance the key", call. = FALSE)
+    stop(
+      "the signature does not verify for this key and message: an ",
+      "edited or foreign signature ",
+      "cannot advance the key",
+      call. = FALSE
+    )
   }
-  # the record knows what this key has used, which an edited index or a stale copy does not
+  # the record knows what this key has used, which an edited index or a stale
+  # copy does not
   ids <- .rmbl_xmss_ids(key)
   p <- .rmbl_xmss_index_file()
   rec <- if (is.null(p)) integer(0) else .rmbl_xmss_record_read(p)
   hi <- .rmbl_xmss_highest(ids, rec)
   if (is.null(msg) && idx > hi) {
-    # every index signed here was reserved first, so an index above the record's is either an
-    # edited signature (which would burn the leaves in between) or one made elsewhere
-    stop(sprintf(paste("the signature's index %d is above the highest index this key has signed with here (%d):",
-                       "an edited signature, or one made on another machine. Pass message = (what was signed)",
-                       "so the signature is verified before the key moves past it"), idx, hi), call. = FALSE)
+    # every index signed here was reserved first, so an index above the record's
+    # is either an edited signature (which would burn the leaves in between) or
+    # one made elsewhere
+    stop(
+      sprintf(
+        paste(
+          "the signature's index %d is above the highest index this key",
+          "has signed with here (%d):",
+          "an edited signature, or one made on another machine. Pass",
+          "message = (what was signed)",
+          "so the signature is verified before the key moves past it"
+        ),
+        idx,
+        hi
+      ),
+      call. = FALSE
+    )
   }
   key$next_index <- max(as.integer(nx), idx + 1L, hi + 1L)
   if (key$next_index >= leaves) {
-    warning(sprintf("this key has used all %d of its one-time indices: generate a new one with pqckg()",
-                    leaves), call. = FALSE)
+    warning(
+      sprintf(
+        paste0(
+          "this key has used all %d of its one-time indices: generate a ",
+          "new one with pqckg()"
+        ),
+        leaves
+      ),
+      call. = FALSE
+    )
   }
   key
 }
@@ -1406,13 +1691,13 @@ xmssadv <- function(key, sig, msg = NULL) {
 #' the same secret as the signer and could therefore also sign. HMAC tags
 #' are compared in constant time.
 #'
-#' Only two inputs are errors rather than `FALSE`: a `sig` that is not
-#' a `bricklayer_signature` at all, and, for an XMSS signature, a key that
-#' is not a key object (a string, say) or a `msg` that is not one
-#' string or a raw vector. A key or signature whose class, scheme or fields were edited
-#' returns `FALSE`. An XMSS signature object written by 0.5.9 to 0.5.12
-#' (one that carries a `key_state` field) still verifies, with a warning
-#' that it exposed the signer's private key.
+#' Only two inputs are errors rather than `FALSE`: a `sig` that is not a
+#' `bricklayer_signature` at all, and, for an XMSS signature, a key that is not
+#' a key object (a string, say) or a `msg` that is not one string or a raw
+#' vector. A key or signature whose class, scheme or fields were edited returns
+#' `FALSE`. An XMSS signature object written by 0.5.9 to 0.5.12 (one that
+#' carries a `key_state` field) still verifies, with a warning that it exposed
+#' the signer's private key.
 #'
 #' @param msg The message the signature is claimed to
 #' cover.
@@ -1435,8 +1720,10 @@ xmssadv <- function(key, sig, msg = NULL) {
 #'   [signpubkey()],
 #'   [fipspubkey()].
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
-#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-#' # one-time index record out of your configuration directory; leave the default in use
+#' # keep this example's
+#' op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+#' # one-time index record out of your configuration directory; leave the
+#' # default in use
 #' key <- pqckg(height = 2)
 #' sig <- cpssign("pinned-manifest", key)
 #' pub <- signpubkey(key)
@@ -1444,14 +1731,15 @@ xmssadv <- function(key, sig, msg = NULL) {
 #' cpsvrf("pinned-manifest", sig, pub)
 #'
 #' # Every way of being wrong returns FALSE.
-#' cpsvrf("edited-manifest", sig, pub)              # message changed
-#' bad <- sig; bad$signature <- paste0("ff", substring(bad$signature, 3))
-#' cpsvrf("pinned-manifest", bad, pub)              # signature edited
-#' cpsvrf("pinned-manifest", sig,
-#'                signpubkey(pqckg(height = 2)))  # foreign key
+#' cpsvrf("edited-manifest", sig, pub) # message changed
+#' bad <- sig
+#' bad$signature <- paste0("ff", substring(bad$signature, 3))
+#' cpsvrf("pinned-manifest", bad, pub) # signature edited
+#' cpsvrf("pinned-manifest", sig, signpubkey(pqckg(height = 2))) # foreign key
 #'
 #' # A truncated signature is not verified, and does not error.
-#' trunc <- sig; trunc$signature <- substring(sig$signature, 1, 64)
+#' trunc <- sig
+#' trunc$signature <- substring(sig$signature, 1, 64)
 #' cpsvrf("pinned-manifest", trunc, pub)
 #'
 #' # HMAC: the verifier holds the same secret.
@@ -1462,102 +1750,226 @@ xmssadv <- function(key, sig, msg = NULL) {
 #' try(cpsvrf("pinned-manifest", list(signature = "00"), pub))
 #' options(op)
 #' @export
-cpsvrf <- function(msg, sig, key, ctx = NULL,
-                           prehash = NULL) {
+cpsvrf <- function(msg, sig, key, ctx = NULL, prehash = NULL) {
   .rmbl_no_fn(message = msg)
   if (!inherits(sig, "bricklayer_signature")) {
     stop("`sig` must come from cpssign()", call. = FALSE)
   }
-  # a key object whose class or scheme was edited is "not verified", like an edited signature;
-  # a value that is not a key object at all (a number, a function) stays an error below
-  if (is.list(key)) {
-    key_classes <- c("bricklayer_signing_key", "bricklayer_public_key", "bricklayer_oqs_key",
-                     "bricklayer_oqs_public_key")
-    if (!inherits(key, key_classes)) return(FALSE)
-    if (!is.character(key$scheme) || length(key$scheme) != 1L || is.na(key$scheme)) return(FALSE)
+  # a key object whose class or scheme was edited is "not verified", like an
+  # edited signature; a value that is not a key object at all (a number, a
+  # function) stays an error below
+  if (is.list(key) && !.rmbl_vrf_key_ok(key)) {
+    return(FALSE)
   }
-  if (inherits(key, c("bricklayer_oqs_key",
-                      "bricklayer_oqs_public_key"))) {
-    if (!identical(sig$scheme, key$scheme)) return(FALSE)
-    .msg <- .rmbl_sign_message(msg)
-    .ctx <- .rmbl_fips_context(ctx)
-    # A key or signature that is not even hex is "not verified", never
-    # an error: a verifier treats unparseable input as failure. Decoding
-    # it loosely would turn a stray character into a zero byte and hand
-    # the C layer something it never received.
-    # a signature field that is not exactly one string is not a signature: reading its first
-    # element would verify c(valid, "anything")
-    if (!is.character(sig$signature) || length(sig$signature) != 1L) return(FALSE)
-    rec <- sig[["context"]]
-    if (!is.null(rec) && !is.raw(rec) && !(is.character(rec) && length(rec) == 1L && !is.na(rec))) return(FALSE)
-    recp <- sig[["prehash"]]
-    if (!is.null(recp) && !(is.character(recp) && length(recp) == 1L && !is.na(recp))) return(FALSE)
-    pk <- .rmbl_hex_or_null(key$public)
-    sg <- .rmbl_hex_or_null(sig$signature)
-    if (is.null(pk) || is.null(sg)) return(FALSE)
-    # A pre-hashed signature and a pure one over the same message are
-    # different signatures, so which was made has to be stated. It
-    # travels with the signature, and an explicit argument overrides it.
-    ph <- if (is.null(prehash)) {
-      if (is.null(sig[["prehash"]])) "none" else sig$prehash
-    } else {
-      prehash
-    }
-    # an unknown pre-hash name in the signature (or asked for) is "not verified", not an error
-    ph <- tryCatch(.rmbl_fips_prehash(ph), error = function(e) NULL)
-    if (is.null(ph)) return(FALSE)
-    return(.rmbl_fips_verify(key$scheme, pk, .msg, .ctx, sg, ph))
+  if (inherits(key, c("bricklayer_oqs_key", "bricklayer_oqs_public_key"))) {
+    return(.rmbl_vrf_fips(msg, sig, key, ctx, prehash))
   }
   if (identical(sig$scheme, "hmac")) {
-    # an edited field (two strings, a number, a short or non-hex digest) is "not verified"
+    # an edited field (two strings, a number, a short or non-hex digest) is "not
+    # verified"
     sg <- sig$signature
-    if (!is.character(sg) || length(sg) != 1L || is.na(sg) || !grepl("^[0-9a-fA-F]{64}$", sg)) return(FALSE)
+    if (
+      !is.character(sg) ||
+        length(sg) != 1L ||
+        is.na(sg) ||
+        !grepl("^[0-9a-fA-F]{64}$", sg)
+    ) {
+      return(FALSE)
+    }
     return(tryCatch(cdgsteq(chmac(key, msg), sg), error = function(e) FALSE))
   }
-  # an XMSS object written by 0.5.9 to 7703a04 carries the signer's private key in `key_state`:
-  # whoever holds it can sign under this root, so the reader is told, every time
-  if (!is.null(sig[["key_state"]])) warning(.rmbl_key_state_warning(), call. = FALSE)
-  one_string <- function(x) is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)
-  whole <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && is.finite(x) && x == trunc(x) && x >= 0
-  # the signature's own shape comes first: an HMAC signature whose scheme was edited to
-  # "xmss-sha256" (and the shared secret offered as its key) is "not verified", not a request
-  # for an XMSS key. every field the verifier reads is checked here, and a signature whose own
-  # root, height or wire form disagrees with the key or with its parts is "not verified": those
-  # fields travel with the signature so a reader can check them, not so an editor can change
-  # them. every signature this package has produced since 0.5.0 carries index, root, height
-  # and wire as numbers and strings; an index of 0.5 or "0", a height of 4.5, a field removed
-  # or no randomiser (a pre-RFC 8391 signature) is an edited object, and an edited object is
-  # not verified
-  if (!one_string(sig$signature) || !one_string(sig$auth) ||
-        !one_string(sig[["randomizer"]]) || !whole(sig$index) ||
-        !whole(sig$height) || !one_string(sig$root) || !one_string(sig$wire)) {
+  .rmbl_vrf_xmss(msg, sig, key)
+}
+
+#' Whether a key object's class and scheme are intact.
+#' @param key A list.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_vrf_key_ok <- function(key) {
+  key_classes <- c(
+    "bricklayer_signing_key",
+    "bricklayer_public_key",
+    "bricklayer_oqs_key",
+    "bricklayer_oqs_public_key"
+  )
+  inherits(key, key_classes) &&
+    is.character(key$scheme) &&
+    length(key$scheme) == 1L &&
+    !is.na(key$scheme)
+}
+
+#' Verifies an ML-DSA or SLH-DSA signature (FIPS 204 / 205).
+#' @param msg,sig,key,ctx,prehash As for cpsvrf().
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_vrf_fips <- function(msg, sig, key, ctx, prehash) {
+  if (!identical(sig$scheme, key$scheme)) {
+    return(FALSE)
+  }
+  .msg <- .rmbl_sign_message(msg)
+  .ctx <- .rmbl_fips_context(ctx)
+  # A key or signature that is not even hex is "not verified", never an error:
+  # a verifier treats unparseable input as failure. Decoding it loosely would
+  # turn a stray character into a zero byte and hand the C layer something it
+  # never received. a signature field that is not exactly one string is not a
+  # signature: reading its first element would verify c(valid, "anything")
+  if (!is.character(sig$signature) || length(sig$signature) != 1L) {
+    return(FALSE)
+  }
+  rec <- sig[["context"]]
+  if (
+    !is.null(rec) &&
+      !is.raw(rec) &&
+      !(is.character(rec) && length(rec) == 1L && !is.na(rec))
+  ) {
+    return(FALSE)
+  }
+  recp <- sig[["prehash"]]
+  if (
+    !is.null(recp) &&
+      !(is.character(recp) && length(recp) == 1L && !is.na(recp))
+  ) {
+    return(FALSE)
+  }
+  pk <- .rmbl_hex_or_null(key$public)
+  sg <- .rmbl_hex_or_null(sig$signature)
+  if (is.null(pk) || is.null(sg)) {
+    return(FALSE)
+  }
+  # A pre-hashed signature and a pure one over the same message are
+  # different signatures, so which was made has to be stated. It
+  # travels with the signature, and an explicit argument overrides it.
+  ph <- if (is.null(prehash)) {
+    if (is.null(sig[["prehash"]])) "none" else sig$prehash
+  } else {
+    prehash
+  }
+  # an unknown pre-hash name in the signature (or asked for) is "not
+  # verified", not an error
+  ph <- tryCatch(.rmbl_fips_prehash(ph), error = function(e) NULL)
+  if (is.null(ph)) {
+    return(FALSE)
+  }
+  .rmbl_fips_verify(key$scheme, pk, .msg, .ctx, sg, ph)
+}
+
+#' One non-empty string.
+#' @param x A value.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_vrf_one_string <- function(x) {
+  is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)
+}
+
+#' One whole non-negative number.
+#' @param x A value.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_vrf_whole <- function(x) {
+  is.numeric(x) &&
+    length(x) == 1L &&
+    !is.na(x) &&
+    is.finite(x) &&
+    x == trunc(x) &&
+    x >= 0
+}
+
+#' Two hex strings equal whatever their case.
+#' @param a,b The strings.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_vrf_same <- function(a, b) {
+  identical(tolower(as.character(a)), tolower(as.character(b)))
+}
+
+#' Whether an XMSS signature has the shape this package writes.
+#'
+#' The signature's own shape comes first: an HMAC signature whose scheme was
+#' edited to "xmss-sha256" (and the shared secret offered as its key) is "not
+#' verified", not a request for an XMSS key. every field the verifier reads is
+#' checked here, and a signature whose own root, height or wire form disagrees
+#' with the key or with its parts is "not verified": those fields travel with
+#' the signature so a reader can check them, not so an editor can change them.
+#' every signature this package has produced since 0.5.0 carries index, root,
+#' height and wire as numbers and strings; an index of 0.5 or "0", a height of
+#' 4.5, a field removed or no randomiser (a pre-RFC 8391 signature) is an
+#' edited object, and an edited object is not verified
+#' @param sig The signature.
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_vrf_xmss_shape <- function(sig) {
+  .rmbl_vrf_one_string(sig$signature) &&
+    .rmbl_vrf_one_string(sig$auth) &&
+    .rmbl_vrf_one_string(sig[["randomizer"]]) &&
+    .rmbl_vrf_whole(sig$index) &&
+    .rmbl_vrf_whole(sig$height) &&
+    .rmbl_vrf_one_string(sig$root) &&
+    .rmbl_vrf_one_string(sig$wire)
+}
+
+#' Verifies an XMSS signature.
+#' @param msg,sig,key As for cpsvrf().
+#' @return TRUE or FALSE.
+#' @noRd
+.rmbl_vrf_xmss <- function(msg, sig, key) {
+  # an XMSS object written by 0.5.9 to 7703a04 carries the signer's private key
+  # in `key_state`: whoever holds it can sign under this root, so the reader is
+  # told, every time
+  if (!is.null(sig[["key_state"]])) {
+    warning(.rmbl_key_state_warning(), call. = FALSE)
+  }
+  if (!.rmbl_vrf_xmss_shape(sig)) {
     return(FALSE)
   }
   if (!inherits(key, c("bricklayer_public_key", "bricklayer_signing_key"))) {
-    stop("verifying an XMSS signature needs a key from pqckg() or ",
-         "signpubkey()", call. = FALSE)
+    stop(
+      "verifying an XMSS signature needs a key from pqckg() or ",
+      "signpubkey()",
+      call. = FALSE
+    )
   }
   # Reject a cross-scheme presentation explicitly. Without this the
   # rejection would still happen, but only incidentally, because the
   # other scheme's signature is the wrong length -- and an incidental
   # check is one that a future change can remove without noticing.
-  if (!identical(sig$scheme, key$scheme)) return(FALSE)
+  if (!identical(sig$scheme, key$scheme)) {
+    return(FALSE)
+  }
   if (!is.raw(msg)) {
     msg <- as.character(msg)
     if (length(msg) != 1L || is.na(msg)) {
-      stop("cpsvrf: `msg` must be a length-1 character vector or a raw vector",
-           call. = FALSE)
+      stop(
+        "cpsvrf: `msg` must be a length-1 character vector or a raw vector",
+        call. = FALSE
+      )
     }
   }
-  same <- function(a, b) identical(tolower(as.character(a)), tolower(as.character(b)))
-  if (!same(sig$root, key$root)) return(FALSE)
-  if (!identical(as.integer(sig$height), as.integer(key$height))) return(FALSE)
-  expected_wire <- paste0(sprintf("%08x", as.integer(sig$index)), sig[["randomizer"]],
-                          sig$signature, sig$auth)
-  if (!same(sig$wire, expected_wire)) return(FALSE)
-  .Call(C_rmbl_xmss_verify, .rmbl_xkey(key, "pubseed"), key$root, as.integer(key$height),
-        as.integer(sig$index), msg, sig$signature,
-        sig$auth, sig[["randomizer"]])
+  if (!.rmbl_vrf_same(sig$root, key$root)) {
+    return(FALSE)
+  }
+  if (!identical(as.integer(sig$height), as.integer(key$height))) {
+    return(FALSE)
+  }
+  expected_wire <- paste0(
+    sprintf("%08x", as.integer(sig$index)),
+    sig[["randomizer"]],
+    sig$signature,
+    sig$auth
+  )
+  if (!.rmbl_vrf_same(sig$wire, expected_wire)) {
+    return(FALSE)
+  }
+  .Call(
+    C_rmbl_xmss_verify,
+    .rmbl_xkey(key, "pubseed"),
+    key$root,
+    as.integer(key$height),
+    as.integer(sig$index),
+    msg,
+    sig$signature,
+    sig$auth,
+    sig[["randomizer"]]
+  )
 }
 
 #' Hex bytes, or NULL if the string is not an even-length run of hex
@@ -1566,11 +1978,18 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 #' @return A raw vector, or NULL.
 #' @noRd
 .rmbl_hex_or_null <- function(hex) {
-  # one string, not the first of several: a length-2 `signature` field is a tampered object
-  if (is.null(hex) || length(hex) != 1L) return(NULL)
+  # one string, not the first of several: a length-2 `signature` field is a
+  # tampered object
+  if (is.null(hex) || length(hex) != 1L) {
+    return(NULL)
+  }
   hex <- as.character(hex)
-  if (is.na(hex) || nchar(hex) %% 2L != 0L) return(NULL)
-  if (!grepl("^[0-9a-fA-F]*$", hex)) return(NULL)
+  if (is.na(hex) || nchar(hex) %% 2L != 0L) {
+    return(NULL)
+  }
+  if (!grepl("^[0-9a-fA-F]*$", hex)) {
+    return(NULL)
+  }
   .rmbl_hex_to_raw(hex)
 }
 
@@ -1583,11 +2002,15 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 #' @return A raw vector.
 #' @noRd
 .rmbl_sign_message <- function(message) {
-  if (is.raw(message)) return(message)
+  if (is.raw(message)) {
+    return(message)
+  }
   message <- as.character(message)
   if (length(message) != 1L || is.na(message)) {
-    stop("`message` must be a length-1 character vector or a raw vector",
-         call. = FALSE)
+    stop(
+      "`message` must be a length-1 character vector or a raw vector",
+      call. = FALSE
+    )
   }
   charToRaw(message)
 }
@@ -1629,21 +2052,32 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 #' @noRd
 .rmbl_check_seed <- function(seed, what) {
   seed <- as.character(seed)
-  if (length(seed) != 1L || is.na(seed) || nchar(seed) != 64L ||
-      !grepl("^[0-9a-fA-F]{64}$", seed)) {
-    stop(sprintf("`%s` must be 64 hex characters (32 bytes)", what),
-         call. = FALSE)
+  if (
+    length(seed) != 1L ||
+      is.na(seed) ||
+      nchar(seed) != 64L ||
+      !grepl("^[0-9a-fA-F]{64}$", seed)
+  ) {
+    stop(
+      sprintf("`%s` must be 64 hex characters (32 bytes)", what),
+      call. = FALSE
+    )
   }
   tolower(seed)
 }
 
-#' The one sentence every path that meets an old XMSS object with `key_state` says.
+#' The one sentence every path that meets an old XMSS object with `key_state`
+#' says.
 #' @return A string.
 #' @noRd
 .rmbl_key_state_warning <- function() {
-  paste0("this XMSS signature carries the signer's private key (`key_state`, written by ",
-         "rmoriebricklayer 0.5.9 to 7703a04): treat that key as compromised, generate a new ",
-         "one with pqckg() and sign again")
+  paste0(
+    "this XMSS signature carries the signer's private key (`key_state`, ",
+    "written by ",
+    "rmoriebricklayer 0.5.9 to 7703a04): treat that key as compromised, ",
+    "generate a new ",
+    "one with pqckg() and sign again"
+  )
 }
 
 # the highest XMSS index each key has signed with in this session, by record id
@@ -1651,8 +2085,9 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 
 #' Reads an XMSS key field by its name, under its old name too.
 #'
-#' An XMSS key field by its name (pubseed, skseed, skprf). Builds of 1.0.0 before the review
-#' wrote pub_seed, sk_seed and sk_prf; a key saved by one still reads.
+#' An XMSS key field by its name (pubseed, skseed, skprf). Builds of 1.0.0
+#' before the review wrote pub_seed, sk_seed and sk_prf; a key saved by one
+#' still reads.
 #' @param key The XMSS key.
 #' @param nm \code{"pubseed"}, \code{"skseed"} or \code{"skprf"}.
 #' @return The field's value, or NULL.
@@ -1664,36 +2099,50 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 
 #' Computes a key's ids in the used-index record.
 #'
-#' A key's ids in the record: `id` a fingerprint of the secret seed the signer actually uses
-#' (so a stale copy whose `root` field was edited is still the same key), `legacy` the
-#' root:pubseed id the records of 0.5.12-pre and fcdce03 used, consulted and never written.
+#' A key's ids in the record: `id` a fingerprint of the secret seed the signer
+#' actually uses (so a stale copy whose `root` field was edited is still the
+#' same key), `legacy` the root:pubseed id the records of 0.5.12-pre and fcdce03
+#' used, consulted and never written.
 #' @param key The XMSS key.
 #' @return A list with `id`, `legacy` and `root`.
 #' @noRd
 .rmbl_xmss_ids <- function(key) {
   sk <- .rmbl_check_seed(.rmbl_xkey(key, "skseed"), "skseed")
   ps <- .rmbl_check_seed(.rmbl_xkey(key, "pubseed"), "pubseed")
-  root <- if (is.character(key$root) && length(key$root) == 1L) tolower(key$root) else NA_character_
-  if (is.na(root) || !grepl("^[0-9a-f]{64}$", root)) {
-    stop("this key's `root` is not 64 hex characters: the key object was edited; do not hand-edit it",
-         call. = FALSE)
+  root <- if (is.character(key$root) && length(key$root) == 1L) {
+    tolower(key$root)
+  } else {
+    NA_character_
   }
-  list(id = paste0("k:", tolower(csha256(charToRaw(paste0("rmoriebricklayer xmss record\n", sk))))),
-       legacy = paste0(root, ":", ps), root = root)
+  if (is.na(root) || !grepl("^[0-9a-f]{64}$", root)) {
+    stop(
+      "this key's `root` is not 64 hex characters: the key object was ",
+      "edited; do not hand-edit it",
+      call. = FALSE
+    )
+  }
+  list(
+    id = paste0(
+      "k:",
+      tolower(csha256(charToRaw(paste0("rmoriebricklayer xmss record\n", sk))))
+    ),
+    legacy = paste0(root, ":", ps),
+    root = root
+  )
 }
 
 #' Finds the XMSS used-index record's path.
 #'
-#' The used-index record: the option, then the environment variable, else the package's own
-#' configuration directory (tools::R_user_dir, the place CRAN policy sets aside for it).
-#' FALSE or \code{""} turns the file off (the session record stays); a value that is
-#' plainly not a
-#' path (\code{"TRUE"}, \code{"0"}, ...), a relative path (it would follow the working
-#' directory) and a path
-#' that is not a regular file (a device such as /dev/null, which the rename replaced when run
-#' as root, or a directory) are refused (review of 52a8883, B7).
-#' @param cli For the command line: only RMBL_XMSS_INDEX_FILE, and NULL when it is not set (the
-#'   command line writes only where it is pointed, never to the configuration directory).
+#' The used-index record: the option, then the environment variable, else the
+#' package's own configuration directory (tools::R_user_dir, the place CRAN
+#' policy sets aside for it). FALSE or \code{""} turns the file off (the session
+#' record stays); a value that is plainly not a path (\code{"TRUE"}, \code{"0"},
+#' ...), a relative path (it would follow the working directory) and a path that
+#' is not a regular file (a device such as /dev/null, which the rename replaced
+#' when run as root, or a directory) are refused (review of 52a8883, B7).
+#' @param cli For the command line: only RMBL_XMSS_INDEX_FILE, and NULL when it
+#'   is not set (the command line writes only where it is pointed, never to the
+#'   configuration directory).
 #' @return The path, or NULL when the record is turned off.
 #' @noRd
 .rmbl_xmss_index_file <- function(cli = FALSE) {
@@ -1703,30 +2152,88 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
     p <- Sys.getenv("RMBL_XMSS_INDEX_FILE", unset = NA_character_)
     from <- "RMBL_XMSS_INDEX_FILE"
   }
-  if (isFALSE(p)) return(NULL)
+  if (isFALSE(p)) {
+    return(NULL)
+  }
   if (!is.character(p) || length(p) != 1L) {
     stop(sprintf("%s must be a file path, \"\" or FALSE", from), call. = FALSE)
   }
   if (is.na(p)) {
-    if (cli) return(NULL)
-    p <- file.path(tools::R_user_dir("rmoriebricklayer", "config"), "xmss_used_indices.txt")
+    if (cli) {
+      return(NULL)
+    }
+    p <- file.path(
+      tools::R_user_dir("rmoriebricklayer", "config"),
+      "xmss_used_indices.txt"
+    )
   } else {
     p <- trimws(p)
-    if (!nzchar(p)) return(NULL)
-    if (toupper(p) %in% c("TRUE", "FALSE", "T", "F", "0", "1", "NULL", "NA", "YES", "NO", "ON", "OFF")) {
-      stop(sprintf("%s is \"%s\", which is not a file path: give a path, or \"\" / FALSE to turn the file off",
-                   from, p), call. = FALSE)
+    if (!nzchar(p)) {
+      return(NULL)
+    }
+    if (
+      toupper(p) %in%
+        c(
+          "TRUE",
+          "FALSE",
+          "T",
+          "F",
+          "0",
+          "1",
+          "NULL",
+          "NA",
+          "YES",
+          "NO",
+          "ON",
+          "OFF"
+        )
+    ) {
+      stop(
+        sprintf(
+          paste0(
+            "%s is \"%s\", which is not a file path: give a path, or \"\" / ",
+            "FALSE to turn the file off"
+          ),
+          from,
+          p
+        ),
+        call. = FALSE
+      )
     }
     p <- path.expand(p)
     if (!grepl("^(/|[A-Za-z]:[/\\\\]|[/\\\\]{2})", p)) {
-      stop(sprintf(paste("%s is \"%s\", a relative path, which would follow the working directory: give an",
-                         "absolute path, or \"\" / FALSE to turn the file off"), from, p), call. = FALSE)
+      stop(
+        sprintf(
+          paste(
+            "%s is \"%s\", a relative path, which would follow the",
+            "working directory: give an",
+            "absolute path, or \"\" / FALSE to turn the file off"
+          ),
+          from,
+          p
+        ),
+        call. = FALSE
+      )
     }
   }
   kind <- .Call(C_rmbl_path_kind, p)
   if (!kind %in% c("missing", "regular")) {
-    stop(sprintf("%s: %s is a %s, not a regular file, and the record would be written over it", from, p,
-                 if (identical(kind, "directory")) "directory" else "device or other special file"), call. = FALSE)
+    stop(
+      sprintf(
+        paste0(
+          "%s: %s is a %s, not a regular file, and the record would be ",
+          "written over it"
+        ),
+        from,
+        p,
+        if (identical(kind, "directory")) {
+          "directory"
+        } else {
+          "device or other special file"
+        }
+      ),
+      call. = FALSE
+    )
   }
   if (!.Call(C_rmbl_path_kind, dirname(p)) %in% c("missing", "directory")) {
     stop(sprintf("%s: %s is not a directory", from, dirname(p)), call. = FALSE)
@@ -1736,9 +2243,10 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 
 #' Reads the XMSS used-index record.
 #'
-#' One line per key, `k:<fingerprint><TAB>highest index used` (or a legacy `root:pubseed` line
-#' from 0.5.12-pre). A line that is not that is an error, not a line to skip: a record that
-#' cannot be read cannot be trusted. The fcdce03 record next to it is merged in.
+#' One line per key, `k:<fingerprint><TAB>highest index used` (or a legacy
+#' `root:pubseed` line from 0.5.12-pre). A line that is not that is an error,
+#' not a line to skip: a record that cannot be read cannot be trusted. The
+#' fcdce03 record next to it is merged in.
 #' @param p The record's path.
 #' @return A named integer vector: the highest index used, by key id.
 #' @noRd
@@ -1748,15 +2256,33 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   if (file.exists(p)) {
     lines <- readLines(p, warn = FALSE, encoding = "UTF-8")
     lines <- lines[grepl("[^[:space:]]", lines, perl = TRUE)]
-    ok <- grepl("^(k:[0-9a-f]{64}|[0-9a-f]{64}:[0-9a-f]{64})\t(-1|[0-9]{1,9})$", lines, perl = TRUE)
+    ok <- grepl(
+      "^(k:[0-9a-f]{64}|[0-9a-f]{64}:[0-9a-f]{64})\t(-1|[0-9]{1,9})$",
+      lines,
+      perl = TRUE
+    )
     if (!all(ok)) {
-      stop(sprintf(paste("%s (the XMSS used-index record) has %d malformed line(s), the first at line %d: a record",
-                         "that cannot be read cannot be trusted, so no XMSS signature is made until the file is",
-                         "repaired or removed (xmssfgt() removes it, and with it the protection",
-                         "against re-signing an index)"), p, sum(!ok), which(!ok)[[1L]]), call. = FALSE)
+      stop(
+        sprintf(
+          paste(
+            "%s (the XMSS used-index record) has %d malformed line(s),",
+            "the first at line %d: a record",
+            "that cannot be read cannot be trusted, so no XMSS",
+            "signature is made until the file is",
+            "repaired or removed (xmssfgt() removes it, and with it the",
+            "protection",
+            "against re-signing an index)"
+          ),
+          p,
+          sum(!ok),
+          which(!ok)[[1L]]
+        ),
+        call. = FALSE
+      )
     }
-    # split at the one tab the check above guarantees: two regular-expression passes took most of a
-    # signature's time with 100,000 keys in the record (1.4-1.8 s; review of e57fed5)
+    # split at the one tab the check above guarantees: two regular-expression
+    # passes took most of a signature's time with 100,000 keys in the record
+    # (1.4-1.8 s; review of e57fed5)
     tab <- regexpr("\t", lines, fixed = TRUE)
     ids <- substr(lines, 1L, tab - 1L)
     idx <- as.integer(substring(lines, tab + 1L))
@@ -1766,7 +2292,9 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
     ids <- c(ids, names(legacy))
     idx <- c(idx, unname(legacy))
   }
-  if (!length(ids)) return(integer(0))
+  if (!length(ids)) {
+    return(integer(0))
+  }
   # a key listed twice keeps its highest index
   o <- order(ids, idx, method = "radix")
   ids <- ids[o]
@@ -1777,38 +2305,78 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 
 #' Reads the XMSS index record of the releases before 0.5.12.
 #'
-#' The record of the releases before 0.5.12, `xmss_index.json` (key root:pubseed -> highest
-#' index used), in the same directory: read and merged, so an upgrade does not forget which
-#' indices were used (review of 52a8883, A3). Unreadable is an error, like the new record.
+#' The record of the releases before 0.5.12, `xmss_index.json` (key root:pubseed
+#' -> highest index used), in the same directory: read and merged, so an upgrade
+#' does not forget which indices were used (review of 52a8883, A3). Unreadable
+#' is an error, like the new record.
 #' @param p The current record's path; the old record is looked for beside it.
 #' @return A named integer vector: the highest index used, by legacy id.
 #' @noRd
 .rmbl_xmss_legacy_json <- function(p) {
   j <- file.path(dirname(p), "xmss_index.json")
   kind <- .Call(C_rmbl_path_kind, j)
-  if (identical(kind, "missing")) return(integer(0))
-  # the same regular-file check as the record itself: a FIFO here blocked readChar() for good
-  # while the record lock was held, so every other signer timed out (review of 02a38be, C7)
+  if (identical(kind, "missing")) {
+    return(integer(0))
+  }
+  # the same regular-file check as the record itself: a FIFO here blocked
+  # readChar() for good while the record lock was held, so every other signer
+  # timed out (review of 02a38be, C7)
   if (!identical(kind, "regular")) {
-    stop(sprintf(paste("%s (the XMSS index record written before 0.5.12) is a %s, not a regular file: no XMSS",
-                       "signature is made until it is removed"), j,
-                 if (identical(kind, "directory")) "directory" else "device or other special file"), call. = FALSE)
+    stop(
+      sprintf(
+        paste(
+          "%s (the XMSS index record written before 0.5.12) is a %s,",
+          "not a regular file: no XMSS",
+          "signature is made until it is removed"
+        ),
+        j,
+        if (identical(kind, "directory")) {
+          "directory"
+        } else {
+          "device or other special file"
+        }
+      ),
+      call. = FALSE
+    )
   }
   bad <- function() {
-    stop(sprintf(paste("%s (the XMSS index record written before 0.5.12) cannot be read: no XMSS signature is",
-                       "made until it is repaired or removed, since it may list indices that were used"), j),
-         call. = FALSE)
+    stop(
+      sprintf(
+        paste(
+          "%s (the XMSS index record written before 0.5.12) cannot be",
+          "read: no XMSS signature is",
+          "made until it is repaired or removed, since it may list",
+          "indices that were used"
+        ),
+        j
+      ),
+      call. = FALSE
+    )
   }
-  txt <- tryCatch(readChar(j, file.size(j), useBytes = TRUE), error = function(e) NULL)
-  rec <- if (is.null(txt)) NULL else tryCatch(fromjs(txt, simplifyVector = TRUE),
-                                               error = function(e) NULL)
-  if (!is.list(rec) || (length(rec) && is.null(names(rec)))) bad()
+  txt <- tryCatch(
+    readChar(j, file.size(j), useBytes = TRUE),
+    error = function(e) NULL
+  )
+  rec <- if (is.null(txt)) {
+    NULL
+  } else {
+    tryCatch(fromjs(txt, simplifyVector = TRUE), error = function(e) NULL)
+  }
+  if (!is.list(rec) || (length(rec) && is.null(names(rec)))) {
+    bad()
+  }
   out <- integer()
   for (k in names(rec)) {
     v <- rec[[k]]
     kk <- tolower(k)
-    if (!grepl("^[0-9a-f]{64}:[0-9a-f]{64}$", kk) || length(v) != 1L || !is.numeric(v) || is.na(v) ||
-          v < -1 || v != round(v)) {
+    if (
+      !grepl("^[0-9a-f]{64}:[0-9a-f]{64}$", kk) ||
+        length(v) != 1L ||
+        !is.numeric(v) ||
+        is.na(v) ||
+        v < -1 ||
+        v != round(v)
+    ) {
       bad()
     }
     out[kk] <- max(as.integer(v), if (kk %in% names(out)) out[[kk]] else -1L)
@@ -1818,68 +2386,112 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 
 #' Writes the XMSS used-index record.
 #'
-#' The whole record, written to a temporary file whose size is checked and which is flushed to the
-#' disk before it replaces the old
-#' one: a write that did not complete (a full disk) stops the signature instead of renaming an
-#' empty file over the record (review of 52a8883, B3).
+#' The whole record, written to a temporary file whose size is checked and which
+#' is flushed to the disk before it replaces the old one: a write that did not
+#' complete (a full disk) stops the signature instead of renaming an empty file
+#' over the record (review of 52a8883, B3).
 #' @param p The record's path.
 #' @param rec A named integer vector: the highest index used, by key id.
 #' @return `p`, invisibly.
 #' @noRd
 .rmbl_xmss_record_write <- function(p, rec) {
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
-  # the record is written only under its lock, so a temporary file OF THIS RECORD found now was left
-  # by a writer that died mid-write (SIGXFSZ, a kill): it is removed. Regular files only (review of
-  # 02a38be, B3). Temporary names carry the record's own name: every xmss-*.tmp in the directory
-  # was removed while holding one record's lock, deleting the in-flight files of other records
-  # beside it (117 of 900 writes failed with three records in one directory; review of e57fed5, E11).
+  # the record is written only under its lock, so a temporary file OF THIS
+  # RECORD found now was left by a writer that died mid-write (SIGXFSZ, a kill):
+  # it is removed. Regular files only (review of 02a38be, B3). Temporary names
+  # carry the record's own name: every xmss-*.tmp in the directory was removed
+  # while holding one record's lock, deleting the in-flight files of other
+  # records beside it (117 of 900 writes failed with three records in one
+  # directory; review of e57fed5, E11).
   own <- paste0(basename(p), ".xmss-")
-  # this record's own temporaries only: the prefix, then tempfile()'s letters and digits, then
-  # .tmp. A prefix alone also matched the files of a record whose name starts with this one
-  # ("pre.txt" removed "pre.txt.xmss-b.xmss-1a2b.tmp" from under "pre.txt.xmss-b"; review of
-  # 29a55d8, E11 residual). A record name may hold any character: it is escaped, not interpreted
-  own_re <- paste0("^", gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", own), "[A-Za-z0-9]+[.]tmp$")
-  for (f in list.files(dirname(p), pattern = "[.]tmp$", full.names = TRUE, all.files = TRUE)) {
-    if (!grepl(own_re, basename(f))) next
+  # this record's own temporaries only: the prefix, then tempfile()'s letters
+  # and digits, then .tmp. A prefix alone also matched the files of a record
+  # whose name starts with this one ("pre.txt" removed
+  # "pre.txt.xmss-b.xmss-1a2b.tmp" from under "pre.txt.xmss-b"; review of
+  # 29a55d8, E11 residual). A record name may hold any character: it is escaped,
+  # not interpreted
+  own_re <- paste0(
+    "^",
+    gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", own),
+    "[A-Za-z0-9]+[.]tmp$"
+  )
+  for (f in list.files(
+    dirname(p),
+    pattern = "[.]tmp$",
+    full.names = TRUE,
+    all.files = TRUE
+  )) {
+    if (!grepl(own_re, basename(f))) {
+      next
+    }
     if (identical(.Call(C_rmbl_path_kind, f), "regular")) unlink(f)
   }
   tmp <- tempfile(pattern = own, tmpdir = dirname(p), fileext = ".tmp")
   # the C writer removes only a temporary file it created itself
   fail <- function(why) {
-    stop(sprintf("could not write the XMSS used-index record %s (%s): no signature is made", p, why), call. = FALSE)
+    stop(
+      sprintf(
+        paste0(
+          "could not write the XMSS used-index record %s (%s): no ",
+          "signature is made"
+        ),
+        p,
+        why
+      ),
+      call. = FALSE
+    )
   }
-  body <- if (length(rec)) paste0(names(rec), "\t", rec, "\n", collapse = "") else ""
-  # written, flushed to the disk, size-checked and renamed in C (rmbl_flock.c): a short write or
-  # a full disk leaves the old record in place and stops the signature
+  body <- if (length(rec)) {
+    paste0(names(rec), "\t", rec, "\n", collapse = "")
+  } else {
+    ""
+  }
+  # written, flushed to the disk, size-checked and renamed in C (rmbl_flock.c):
+  # a short write or a full disk leaves the old record in place and stops the
+  # signature
   why <- .Call(C_rmbl_write_file_checked, tmp, p, charToRaw(body))
-  if (!is.null(why)) fail(why)
-  # the record of the releases before 0.5.12 is merged into what was just written: keep it,
-  # under a name that is no longer read
+  if (!is.null(why)) {
+    fail(why)
+  }
+  # the record of the releases before 0.5.12 is merged into what was just
+  # written: keep it, under a name that is no longer read
   j <- file.path(dirname(p), "xmss_index.json")
-  if (file.exists(j)) file.rename(j, paste0(j, ".migrated"))
+  if (file.exists(j)) {
+    file.rename(j, paste0(j, ".migrated"))
+  }
   invisible(p)
 }
 
-#' What to check when the lock file cannot be opened: a read-only directory, or a lock file another
-#' user owns. \code{""} when the system's reason says neither.
+#' What to check when the lock file cannot be opened: a read-only directory, or
+#' a lock file another user owns. \code{""} when the system's reason says
+#' neither.
 #' @param m The lock error's message.
 #' @param lock The lock file's path.
 #' @return A hint to add to the message, or \code{""}.
 #' @noRd
 .rmbl_lock_hint <- function(m, lock) {
-  if (grepl("Read-only", m)) return(" (is the directory read-only?)")
-  if (!grepl("Permission denied", m)) return("")
-  if (file.exists(lock) && file.access(lock, 2L) != 0L) " (is the lock file owned by another user?)" else
+  if (grepl("Read-only", m)) {
+    return(" (is the directory read-only?)")
+  }
+  if (!grepl("Permission denied", m)) {
+    return("")
+  }
+  if (file.exists(lock) && file.access(lock, 2L) != 0L) {
+    " (is the lock file owned by another user?)"
+  } else {
     " (is the directory read-only?)"
+  }
 }
 
 #' Runs a function under an exclusive lock on the used-index record.
 #'
-#' An exclusive operating-system lock around read -> check -> write (flock on Unix, LockFileEx on
-#' Windows; rmbl_flock.c). The kernel releases it when the process exits, so no lock is ever
-#' taken over: the lock directory of 0.5.12-pre was, by check-then-delete, which let two signers
-#' hold it at once and sign one index (review of 52a8883, B2), and spun for ever on a lock it
-#' could not delete (B4). The wait is bounded at 10 s and draws no random numbers.
+#' An exclusive operating-system lock around read -> check -> write (flock on
+#' Unix, LockFileEx on Windows; rmbl_flock.c). The kernel releases it when the
+#' process exits, so no lock is ever taken over: the lock directory of
+#' 0.5.12-pre was, by check-then-delete, which let two signers hold it at once
+#' and sign one index (review of 52a8883, B2), and spun for ever on a lock it
+#' could not delete (B4). The wait is bounded at 10 s and draws no random
+#' numbers.
 #' @param p The record's path.
 #' @param f The function to run, with no arguments.
 #' @param what What the file is, for the refusals.
@@ -1888,33 +2500,50 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 .rmbl_xmss_with_lock <- function(p, f, what = "the XMSS used-index record") {
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   lock <- paste0(p, ".flock")
-  # one non-blocking attempt at a time, the wait between them in R: Sys.sleep() takes Ctrl-C, and
-  # an attempt that finds the lock busy has already closed its descriptor, so an interrupt leaves
-  # nothing open (the wait used to run inside C, deaf to Ctrl-C for up to 10 s; review of 02a38be)
+  # one non-blocking attempt at a time, the wait between them in R: Sys.sleep()
+  # takes Ctrl-C, and an attempt that finds the lock busy has already closed its
+  # descriptor, so an interrupt leaves nothing open (the wait used to run inside
+  # C, deaf to Ctrl-C for up to 10 s; review of 02a38be)
   start <- proc.time()[["elapsed"]]
-  # the lock is taken and f() run in one C frame, the release being that frame's cleanup
-  # (R_ExecWithCleanup): an error or a Ctrl-C inside f() closes the descriptor on the way out, and
-  # no R code runs between taking the lock and registering the release. The on.exit() of before was
-  # R code too, which an interrupt could cut short ahead of its .Call: a lock stayed held for the
-  # rest of the session 73 to 95 times per 5,000 interrupts (review of 29a55d8, G6; e57fed5, E12)
+  # the lock is taken and f() run in one C frame, the release being that frame's
+  # cleanup (R_ExecWithCleanup): an error or a Ctrl-C inside f() closes the
+  # descriptor on the way out, and no R code runs between taking the lock and
+  # registering the release. The on.exit() of before was R code too, which an
+  # interrupt could cut short ahead of its .Call: a lock stayed held for the
+  # rest of the session 73 to 95 times per 5,000 interrupts (review of 29a55d8,
+  # G6; e57fed5, E12)
   busy <- new.env(parent = emptyenv())
   repeat {
     r <- tryCatch(.Call(C_rmbl_flock_with, lock, f, busy), error = function(e) {
       m <- conditionMessage(e)
-      if (!grepl("lock file", m, fixed = TRUE)) stop(e)
-      stop(sprintf("cannot use %s %s: %s%s", what, p, m, .rmbl_lock_hint(m, lock)), call. = FALSE)
+      if (!grepl("lock file", m, fixed = TRUE)) {
+        stop(e)
+      }
+      stop(
+        sprintf("cannot use %s %s: %s%s", what, p, m, .rmbl_lock_hint(m, lock)),
+        call. = FALSE
+      )
     })
-    if (!identical(r, busy)) return(r)
+    if (!identical(r, busy)) {
+      return(r)
+    }
     if (proc.time()[["elapsed"]] - start >= 10) {
-      stop(sprintf("could not lock %s %s within 10 s: another process holds %s", what, p, lock),
-           call. = FALSE)
+      stop(
+        sprintf(
+          "could not lock %s %s within 10 s: another process holds %s",
+          what,
+          p,
+          lock
+        ),
+        call. = FALSE
+      )
     }
     Sys.sleep(0.02)
   }
 }
 
-#' The highest index this key is known to have used: the record on disk (its id, and the legacy
-#' id of the older records) and this session.
+#' The highest index this key is known to have used: the record on disk (its id,
+#' and the legacy id of the older records) and this session.
 #' @param ids The key's ids from `.rmbl_xmss_ids()`.
 #' @param rec The record from `.rmbl_xmss_record_read()`.
 #' @return The highest index used, or -1.
@@ -1925,7 +2554,9 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
     if (length(rec) && k %in% names(rec)) cand <- max(cand, rec[[k]])
   }
   mem <- .rmbl_xmss_used[[ids$id]]
-  if (!is.null(mem)) cand <- max(cand, mem)
+  if (!is.null(mem)) {
+    cand <- max(cand, mem)
+  }
   cand
 }
 
@@ -1935,29 +2566,54 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
 #' @return `TRUE` or `FALSE`.
 #' @noRd
 .rmbl_xmss_known <- function(ids, rec) {
-  any(c(ids$id, ids$legacy) %in% names(rec)) || !is.null(.rmbl_xmss_used[[ids$id]])
+  any(c(ids$id, ids$legacy) %in% names(rec)) ||
+    !is.null(.rmbl_xmss_used[[ids$id]])
 }
 
-#' Retire `idx` for this key before the signature is made (RFC 8391's order), under the lock.
+#' Retire `idx` for this key before the signature is made (RFC 8391's order),
+#' under the lock.
 #' @param ids The key's ids from `.rmbl_xmss_ids()`.
 #' @param idx The index to retire.
-#' @return `TRUE` invisibly, or `FALSE` invisibly when the record is off and only this session remembers.
+#' @return `TRUE` invisibly, or `FALSE` invisibly when the record is off and
+#'   only this session remembers.
 #' @noRd
 .rmbl_xmss_reserve <- function(ids, idx) {
   refuse <- function(hi) {
-    stop(sprintf(paste0("index %d of this key was already used: signing it again would break the ",
-                        "scheme. Carry the key forward with xmssadv(key, signature) after every ",
-                        "signature (next index %d)."), idx, hi + 1L), call. = FALSE)
+    stop(
+      sprintf(
+        paste0(
+          "index %d of this key was already used: signing it again ",
+          "would break the ",
+          "scheme. Carry the key forward with xmssadv(key, signature) ",
+          "after every ",
+          "signature (next index %d)."
+        ),
+        idx,
+        hi + 1L
+      ),
+      call. = FALSE
+    )
   }
-  # rmbl sign reserved a block in the key's own state before signing (RFC 10033 section 5.9): an
-  # index is taken from that block, in order, and the configuration directory is not used
-  # (the block is the durable state's; the session memory is not consulted, so two sectors of one key
-  # may sign in one session)
+  # rmbl sign reserved a block in the key's own state before signing (RFC 10033
+  # section 5.9): an index is taken from that block, in order, and the
+  # configuration directory is not used (the block is the durable state's; the
+  # session memory is not consulted, so two sectors of one key may sign in one
+  # session)
   blk <- .rmbl_xmss_block[[ids$id]]
   if (!is.null(blk)) {
     if (idx < blk[[1L]] || idx > blk[[2L]]) {
-      stop(sprintf("index %d is outside the block this run reserved (%d to %d): no signature is made", idx, blk[[1L]],
-                   blk[[2L]]), call. = FALSE)
+      stop(
+        sprintf(
+          paste0(
+            "index %d is outside the block this run reserved (%d to %d): ",
+            "no signature is made"
+          ),
+          idx,
+          blk[[1L]],
+          blk[[2L]]
+        ),
+        call. = FALSE
+      )
     }
     assign(ids$id, c(idx + 1L, blk[[2L]]), envir = .rmbl_xmss_block)
     return(invisible(TRUE))
@@ -1965,24 +2621,45 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   p <- .rmbl_xmss_index_file()
   if (is.null(p)) {
     hi <- .rmbl_xmss_highest(ids, integer(0))
-    if (idx <= hi) refuse(hi)
+    if (idx <= hi) {
+      refuse(hi)
+    }
     assign(ids$id, idx, envir = .rmbl_xmss_used)
-    warning(paste("the XMSS used-index record is off (rmoriebricklayer.xmssidxfile / RMBL_XMSS_INDEX_FILE):",
-                  "only this session remembers which indices this key has used, so a stale copy of the key",
-                  "reloaded elsewhere will sign a used index again. Turn the record on unless you keep the",
-                  "advanced key yourself after every signature"), call. = FALSE)
+    warning(
+      paste(
+        "the XMSS used-index record is off",
+        "(rmoriebricklayer.xmssidxfile / RMBL_XMSS_INDEX_FILE):",
+        "only this session remembers which indices this key has used,",
+        "so a stale copy of the key",
+        "reloaded elsewhere will sign a used index again. Turn the",
+        "record on unless you keep the",
+        "advanced key yourself after every signature"
+      ),
+      call. = FALSE
+    )
     return(invisible(FALSE))
   }
   .rmbl_xmss_with_lock(p, function() {
     rec <- .rmbl_xmss_record_read(p)
     hi <- .rmbl_xmss_highest(ids, rec)
-    if (idx <= hi) refuse(hi)
+    if (idx <= hi) {
+      refuse(hi)
+    }
     if (!.rmbl_xmss_known(ids, rec) && idx == 0L) {
-      stop(paste("this XMSS key is not in the used-index record on this machine, and it claims never to have",
-                 "signed (next_index 0): it was generated elsewhere or from given seeds, or the record was",
-                 "deleted. If it has never signed, register it with xmssregkey(key); if it has, carry",
-                 "it forward with xmssadv(key, its_last_signature, message), or generate a new key with",
-                 "pqckg()"), call. = FALSE)
+      stop(
+        paste(
+          "this XMSS key is not in the used-index record on this",
+          "machine, and it claims never to have",
+          "signed (next_index 0): it was generated elsewhere or from",
+          "given seeds, or the record was",
+          "deleted. If it has never signed, register it with",
+          "xmssregkey(key); if it has, carry",
+          "it forward with xmssadv(key, its_last_signature, message),",
+          "or generate a new key with",
+          "pqckg()"
+        ),
+        call. = FALSE
+      )
     }
     rec[ids$id] <- idx
     .rmbl_xmss_record_write(p, rec)
@@ -1991,43 +2668,54 @@ cpsvrf <- function(msg, sig, key, ctx = NULL,
   invisible(TRUE)
 }
 
-#' Add a key to the record as \dQuote{registered, nothing used} (-1), never lowering an
-#' entry.
+#' Add a key to the record as \dQuote{registered, nothing used} (-1), never
+#' lowering an entry.
 #' @param key The XMSS key.
-#' @param fresh Whether the key was just generated, so a registered entry is not an error.
+#' @param fresh Whether the key was just generated, so a registered entry is not
+#'   an error.
 #' @return `TRUE` invisibly, or `FALSE` invisibly when the record is off.
 #' @noRd
 .rmbl_xmss_register <- function(key, fresh = FALSE) {
   ids <- .rmbl_xmss_ids(key)
   p <- .rmbl_xmss_index_file()
   if (is.null(p)) {
-    if (is.null(.rmbl_xmss_used[[ids$id]])) assign(ids$id, -1L, envir = .rmbl_xmss_used)
+    if (is.null(.rmbl_xmss_used[[ids$id]])) {
+      assign(ids$id, -1L, envir = .rmbl_xmss_used)
+    }
     return(invisible(FALSE))
   }
   .rmbl_xmss_with_lock(p, function() {
     rec <- .rmbl_xmss_record_read(p)
     hi <- .rmbl_xmss_highest(ids, rec)
     if (!fresh && hi >= 0L) {
-      stop(sprintf(paste("this key is already in the record with index %d used: it has signed here before,",
-                         "so carry it forward with xmssadv() instead of registering it"), hi),
-           call. = FALSE)
+      stop(
+        sprintf(
+          paste(
+            "this key is already in the record with index %d used: it",
+            "has signed here before,",
+            "so carry it forward with xmssadv() instead of registering it"
+          ),
+          hi
+        ),
+        call. = FALSE
+      )
     }
     if (!ids$id %in% names(rec)) {
       rec[ids$id] <- max(-1L, hi)
       .rmbl_xmss_record_write(p, rec)
     }
-    if (is.null(.rmbl_xmss_used[[ids$id]])) assign(ids$id, max(-1L, hi), envir = .rmbl_xmss_used)
+    if (is.null(.rmbl_xmss_used[[ids$id]])) {
+      assign(ids$id, max(-1L, hi), envir = .rmbl_xmss_used)
+    }
   })
   invisible(TRUE)
 }
 
 #' @rdname xmssadv
-#' @param keytoreg For
-#'   [xmssregkey()]: a signing key generated on
-#'   another
-#'   machine, regenerated from given seeds, or whose record was deleted, that has never
-#'   signed; it is added to the record so that it may sign from \code{next_index}. A key
-#'   the record shows has signed is refused.
+#' @param keytoreg For [xmssregkey()]: a signing key generated on
+#'   another machine, regenerated from given seeds, or whose record was deleted,
+#'   that has never signed; it is added to the record so that it may sign from
+#'   \code{next_index}. A key the record shows has signed is refused.
 #' @export
 xmssregkey <- function(keytoreg) {
   if (!inherits(keytoreg, "bricklayer_signing_key")) {
@@ -2038,13 +2726,11 @@ xmssregkey <- function(keytoreg) {
 }
 
 #' @rdname xmssadv
-#' @param keytofgt For
-#'   [xmssfgt()]:
-#'   a signing key (the record is keyed by its secret seed) whose
-#'   entry alone is reset to \dQuote{nothing used} (it may sign from index 0 again);
-#'   \code{NULL}
-#'   removes the whole record (every key, and the record of the releases before 0.5.12),
-#'   after which only keys generated afterwards, or vouched for by
+#' @param keytofgt For [xmssfgt()]: a signing key (the record is
+#'   keyed by its secret seed) whose entry alone is reset to \dQuote{nothing
+#'   used} (it may sign from index 0 again); \code{NULL} removes the whole
+#'   record (every key, and the record of the releases before 0.5.12), after
+#'   which only keys generated afterwards, or vouched for by
 #'   [xmssregkey()], may sign.
 #' @export
 xmssfgt <- function(keytofgt = NULL) {
@@ -2052,18 +2738,25 @@ xmssfgt <- function(keytofgt = NULL) {
   if (is.null(keytofgt)) {
     rm(list = ls(.rmbl_xmss_used, all.names = TRUE), envir = .rmbl_xmss_used)
     if (!is.null(p)) {
-      for (f in c(p, file.path(dirname(p), c("xmss_index.json", "xmss_index.json.migrated")))) {
+      for (f in c(
+        p,
+        file.path(dirname(p), c("xmss_index.json", "xmss_index.json.migrated"))
+      )) {
         if (file.exists(f)) unlink(f)
       }
     }
     return(invisible(NULL))
   }
   if (!inherits(keytofgt, "bricklayer_signing_key")) {
-    stop("`keytofgt` must be the signing key from pqckg() (the record is keyed by its secret seed)",
-         call. = FALSE)
+    stop(
+      "`keytofgt` must be the signing key from pqckg() (the record is ",
+      "keyed by its secret seed)",
+      call. = FALSE
+    )
   }
   ids <- .rmbl_xmss_ids(keytofgt)
-  assign(ids$id, -1L, envir = .rmbl_xmss_used)   # known, nothing used: it may sign from index 0 again
+  # known, nothing used: it may sign from index 0 again
+  assign(ids$id, -1L, envir = .rmbl_xmss_used)
   if (!is.null(p)) {
     .rmbl_xmss_with_lock(p, function() {
       rec <- .rmbl_xmss_record_read(p)

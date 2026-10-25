@@ -39,17 +39,16 @@ use the deterministic variant rather than drawing fresh randomness per
 signature. The signature then depends only on the key, message and
 context, which is what the standards' test vectors rely on.}
 
-\item{prehash}{For the standardised schemes, sign a
-digest of the message rather than the message itself -- HashML-DSA (FIPS
-204 section 5.4) or HashSLH-DSA (FIPS 205 section 10.2.2). One of
-\code{"none"} (the default, the pure variants) or any hash function the two
-standards approve. The SHA-2 hashes are \code{"sha224"}, \code{"sha256"}, \code{"sha384"},
-\code{"sha512"}, \code{"sha512_224"} and \code{"sha512_256"}; the SHA-3 hashes are
-\code{"sha3_224"}, \code{"sha3_256"}, \code{"sha3_384"} and \code{"sha3_512"};
-the SHAKE ones are
-\code{"shake128"} (256-bit output) and \code{"shake256"} (512-bit output). The identifier
-of the pre-hash is bound into the signature, so a pre-hashed signature
-is never interchangeable with a pure one over the same digest.}
+\item{prehash}{For the standardised schemes, sign a digest of the message
+rather than the message itself -- HashML-DSA (FIPS 204 section 5.4) or
+HashSLH-DSA (FIPS 205 section 10.2.2). One of \code{"none"} (the default, the pure
+variants) or any hash function the two standards approve. The SHA-2 hashes
+are \code{"sha224"}, \code{"sha256"}, \code{"sha384"}, \code{"sha512"},
+\code{"sha512_224"} and \code{"sha512_256"}; the SHA-3 hashes are \code{"sha3_224"},
+\code{"sha3_256"}, \code{"sha3_384"} and \code{"sha3_512"}; the SHAKE ones are
+\code{"shake128"} (256-bit output) and \code{"shake256"} (512-bit output). The
+identifier of the pre-hash is bound into the signature, so a pre-hashed
+signature is never interchangeable with a pure one over the same digest.}
 
 \item{masked}{\code{TRUE} (the default) for the first-order masked ML-DSA
 signer, \code{FALSE} for the plain constant-time one; both give the same
@@ -148,11 +147,11 @@ does not cover.
 
 \examples{
 \dontshow{if (isTRUE(getOption("rmbl.examples"))) withAutoprint(\{ # examplesIf}
-op <- options(rmoriebricklayer.xmssidxfile = tempfile())  # keep this example's
-# one-time index record out of your configuration directory; leave the default in use
-# Symmetric: one shared secret.
-sig <- cpssign("sha256:abc123", key = "shared-secret",
-                    scheme = "hmac")
+# keep this example's
+op <- options(rmoriebricklayer.xmssidxfile = tempfile())
+# one-time index record out of your configuration directory; leave the
+# default in use Symmetric: one shared secret.
+sig <- cpssign("sha256:abc123", key = "shared-secret", scheme = "hmac")
 cpsvrf("sha256:abc123", sig, "shared-secret")
 cpsvrf("sha256:TAMPERED", sig, "shared-secret")
 

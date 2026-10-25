@@ -25,18 +25,18 @@ this one sets for its own command line.}
 }
 \value{
 A data frame with at most \code{n} rows, best match first, and the
-character columns \code{package}, \code{raised_by}
-(the function whose code raises it), \code{exported} (the exported
-functions that reach it, separated by commas), \code{kind} (\code{"error"} or
-\code{"warning"}), \code{message} (the message as written, with
-\code{...} where a value goes) and \code{match} (\code{"exact"} or the share
-of its words found, such as \code{"80\% of its words"}). No rows when the
-message is not one of these packages' own: it came from another package
-or from R, and \code{\link{llmask}} can help with it.
-For a data frame of check rows: one row per failed check, with the
-columns \code{check}, \code{detail}, \code{explanation} (what the
-failure means and what to do) and \code{raised_by} (\code{pkg::fn}
-when the detail is a message of these packages, else \code{NA}).
+character columns \code{package}, \code{raised_by} (the function whose code
+raises it), \code{exported} (the exported functions that reach it,
+separated by commas), \code{kind} (\code{"error"} or \code{"warning"}),
+\code{message} (the message as written, with \code{...} where a value goes)
+and \code{match} (\code{"exact"} or the share of its words found, such as
+\code{"80\% of its words"}). No rows when the message is not one of these
+packages' own: it came from another package or from R, and
+\code{\link{llmask}} can help with it. For a data frame of check rows: one
+row per failed check, with the columns \code{check}, \code{detail},
+\code{explanation} (what the failure means and what to do) and
+\code{raised_by} (\code{pkg::fn} when the detail is a message of these
+packages, else \code{NA}).
 }
 \description{
 Finds where an error or warning message comes from, without a language
@@ -62,19 +62,18 @@ an \code{.rds} file in the answer-cache directory.
 
 The answer-cache directory is the one \code{tools::R_user_dir()} gives for
 \code{"rmoriebricklayer"} and \code{"cache"}, or the one the
-\code{rmoriebricklayer.llmcachedir} option names when it is set. The cache is off under
-\code{options(morie.quiet = TRUE)}, \code{MORIE_LLM_CACHE=off}, tests and
-\code{R CMD check}.
+\code{rmoriebricklayer.llmcachedir} option names when it is set. The cache is
+off under \code{options(morie.quiet = TRUE)}, \code{MORIE_LLM_CACHE=off},
+tests and \code{R CMD check}.
 
-The message is cleaned first: an \dQuote{Error in f(x) :} or \dQuote{Warning message:}
-prefix is dropped, curly quotes become straight ones and white space is
-collapsed. A template that matches the start of the message as a regular
-expression is an exact match and ranks first (longer templates before
-shorter ones). Otherwise a template scores
-\eqn{0.6 h / |m| + 0.4 h / |t|}, where \eqn{h} is the number of shared
-words (three letters or more, common words left out, at least two
-needed), \eqn{|m|} the words of the message and \eqn{|t|} those of the
-template; scores of 0.55 and above are kept.
+The message is cleaned first: an \dQuote{Error in f(x) :} or \dQuote{Warning
+message:} prefix is dropped, curly quotes become straight ones and white
+space is collapsed. A template that matches the start of the message as a
+regular expression is an exact match and ranks first (longer templates before
+shorter ones). Otherwise a template scores \eqn{0.6 h / |m| + 0.4 h / |t|},
+where \eqn{h} is the number of shared words (three letters or more, common
+words left out, at least two needed), \eqn{|m|} the words of the message and
+\eqn{|t|} those of the template; scores of 0.55 and above are kept.
 
 Errors: \code{msg} that is not character text, a condition or a data
 frame with the columns \code{check}, \code{ok} and \code{detail};
@@ -91,20 +90,28 @@ e <- tryCatch(kemsz(3), error = identity)
 explerr(e, n = 1)
 
 # the failed rows of a capsule check
-rows <- data.frame(check = c("data_present", "data_sha256"), ok = c(TRUE, FALSE),
-                   detail = c("d.csv", "expected 01..., got 9c..."))
+rows <- data.frame(
+  check = c("data_present", "data_sha256"),
+  ok = c(TRUE, FALSE),
+  detail = c("d.csv", "expected 01..., got 9c...")
+)
 explerr(rows)$explanation
 
 # n must be at least 1
 try(explerr(msg, n = 0))
 \dontshow{\}) # examplesIf}
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
-# an error caught with try(), and the message as R prints it, with the call in front
+# an error caught with try(), and the message as R prints it, with the call
+# in front
 r <- try(llmcfg(no.such = 1), silent = TRUE)
 explerr(r, pkgs = "rmoriebricklayer")
 explerr(
-  "Error in mrkprf(x, 9) : `index` must be between 1 and the number of chunks",
-  n = 1)
+  paste0(
+    "Error in mrkprf(x, 9) : `index` must be between 1 and the number ",
+    "of chunks"
+  ),
+  n = 1
+)
 
 # a message retyped from memory
 explerr("index between number chunks", n = 1)

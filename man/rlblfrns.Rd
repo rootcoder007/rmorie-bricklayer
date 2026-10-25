@@ -37,12 +37,12 @@ a match on a sort-based mechanism points to a positional relabel in the
 analysis rather than to the software.
 }
 \details{
-With labels \eqn{L_1, \dots, L_k} in code order, each mechanism produces
-a sequence \eqn{M_1, \dots, M_k} meaning \dQuote{true group \eqn{L_i} was seen as
-\eqn{M_i}}. It matches when \eqn{M_i =} \code{observed[L_i]} for all
-\eqn{i}. There are five fixed mechanisms, \eqn{k - 1} rotations, and two
-frequency orders with \code{cnts}. When \code{obs} is the identity
-no mechanism is reported as matching.
+With labels \eqn{L_1, \dots, L_k} in code order, each mechanism
+produces a sequence \eqn{M_1, \dots, M_k} meaning \dQuote{true group
+\eqn{L_i} was seen as \eqn{M_i}}. It matches when \eqn{M_i =}
+\code{observed[L_i]} for all \eqn{i}. There are five fixed mechanisms, \eqn{k
+- 1} rotations, and two frequency orders with \code{cnts}. When \code{obs} is
+the identity no mechanism is reported as matching.
 
 Errors: either argument unnamed; \code{obs} not a permutation of the
 labels in \code{vlabs}.
