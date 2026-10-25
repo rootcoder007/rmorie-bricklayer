@@ -203,8 +203,11 @@
 #' inside an unquoted field (\code{read.csv()} takes the rest of the file as one
 #' quoted run). Tables that inflate
 #' past 512 MiB are read by \code{read.csv()} itself, a piece at a time. A
-#' table that decompresses to more than the option
-#' \code{rmoriebricklayer.maxcsvbytes} (1 GiB by default) is refused.
+#' table whose SHA-256 matches the manifest is the file the service holds, so
+#' it is read whatever its size; one the manifest lists without a digest may
+#' decompress to at most the option \code{rmoriebricklayer.maxcsvbytes}
+#' (1 GiB by default). A large table needs memory for all of it: a 1 GB
+#' decompressed CSV takes a few GB of RAM as a data frame.
 #'
 #' The key is sent only to the address of the signed services document. With
 #' \code{MORIE_DATA_URL} set to another address the key is not sent and the
@@ -502,7 +505,7 @@ dtabs <- function(refresh = FALSE) {
       refuse(sprintf("%s is not listed in the manifest of data.rmorie.com, so the file cannot be verified", key),
              delete = !cached)
     }
-    return(invisible(TRUE))
+    return(invisible(structure(TRUE, verified = "listed")))
   }
   have <- tolower(csha256(readBin(dest, "raw", file.size(dest))))
   if (!identical(have, want)) {
@@ -516,7 +519,7 @@ dtabs <- function(refresh = FALSE) {
                      key, substr(have, 1L, 12L), substr(want, 1L, 12L)))
     }
   }
-  invisible(TRUE)
+  invisible(structure(TRUE, verified = "digest"))
 }
 
 #' Builds the listing of curated tables.
@@ -609,8 +612,11 @@ dload <- function(key, refresh = FALSE, token = NULL) {
     rest <- paste(parts[-1L], collapse = "/")
     .bl_data_get(sprintf("/%s/%s.csv.gz", parts[[1L]], rest), dest)
   }
-  .bl_data_check_sha(key, dest, cached = cached)
-  .bl_read_csv_gz(dest)
+  how <- .bl_data_check_sha(key, dest, cached = cached)
+  # a file whose digest matches the manifest is the service's own, not a decompression bomb, so
+  # the size cap for untrusted CSVs does not apply: tables of 95 MB gzip and more inflate past
+  # 1 GiB and were refused
+  .bl_read_csv_gz(dest, lim = if (identical(attr(how, "verified"), "digest")) Inf else .rmbl_max_csv_bytes())
 }
 
 #' Reads a gzip-compressed CSV as read.csv() reads it, faster.
@@ -630,10 +636,11 @@ dload <- function(key, refresh = FALSE, token = NULL) {
 #' for 2 GB (CRAN stress test of b617a3f, #6).
 #' @param path The file.
 #' @param in_memory The most decompressed bytes read the fast way.
+#' @param lim The most bytes the table may decompress to; `Inf` for a file verified against the
+#'   manifest.
 #' @return A data frame.
 #' @noRd
-.bl_read_csv_gz <- function(path, in_memory = 512 * 2^20) {
-  lim <- .rmbl_max_csv_bytes()
+.bl_read_csv_gz <- function(path, in_memory = 512 * 2^20, lim = .rmbl_max_csv_bytes()) {
   too_big <- function() {
     stop(sprintf(paste("%s decompresses to more than %s bytes (option rmoriebricklayer.maxcsvbytes);",
                        "raise the option to read it"),
@@ -646,12 +653,16 @@ dload <- function(key, refresh = FALSE, token = NULL) {
     if (file.size(path) > in_memory) return(.bl_read_csv_streamed(path))
     return(.bl_csv_from_bytes(readBin(path, "raw", file.size(path))))
   }
-  bytes <- tryCatch(.Call(C_rmbl_gunzip_checked, readBin(path, "raw", file.size(path)), in_memory),
-                    error = function(e) {
-                      if (grepl("more than the size limit", conditionMessage(e), fixed = TRUE)) NULL else stop(e)
-                    })
+  # the checked reader takes at most 2 GB of gzip (which inflates past in_memory anyway); a larger
+  # file goes the piece-at-a-time way
+  bytes <- if (file.size(path) > 0x7fffffff) NULL else
+    tryCatch(.Call(C_rmbl_gunzip_checked, readBin(path, "raw", file.size(path)), in_memory),
+             error = function(e) {
+               if (grepl("more than the size limit", conditionMessage(e), fixed = TRUE)) NULL else stop(e)
+             })
   if (!is.null(bytes)) return(.bl_csv_from_bytes(bytes))
   if (in_memory >= lim) too_big()
+  if (!is.finite(lim)) return(.bl_read_csv_streamed(path))
   # past what is held in memory: the decompressed size is counted a piece at a time, holding 4 MiB,
   # before read.csv() reads it
   con <- gzfile(path, "rb")

@@ -78,8 +78,11 @@ changes the data without a word: a record with more fields than the header
 inside an unquoted field (\code{read.csv()} takes the rest of the file as one
 quoted run). Tables that inflate
 past 512 MiB are read by \code{read.csv()} itself, a piece at a time. A
-table that decompresses to more than the option
-\code{rmoriebricklayer.maxcsvbytes} (1 GiB by default) is refused.
+table whose SHA-256 matches the manifest is the file the service holds, so
+it is read whatever its size; one the manifest lists without a digest may
+decompress to at most the option \code{rmoriebricklayer.maxcsvbytes}
+(1 GiB by default). A large table needs memory for all of it: a 1 GB
+decompressed CSV takes a few GB of RAM as a data frame.
 
 The key is sent only to the address of the signed services document. With
 \code{MORIE_DATA_URL} set to another address the key is not sent and the

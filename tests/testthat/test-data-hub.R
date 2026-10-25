@@ -112,3 +112,27 @@ test_that("dload(token = ) sends that key for the call only, over the stored one
   expect_error(dload("demo/t", token = ""), "dload: `token` must be a single non-empty string")
   expect_error(dload("demo/t", token = c("a", "b")), "dload: `token` must be a single non-empty string")
 })
+
+test_that("a table verified against the manifest is read past maxcsvbytes; an unverified one is not", {
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = "sk-good", MORIE_DATA_URL = NA)
+  withr::local_options(rmoriebricklayer.dcache = withr::local_tempdir(), rmoriebricklayer.maxcsvbytes = 1e4)
+  src <- withr::local_tempfile(fileext = ".csv.gz")
+  con <- gzfile(src, "w")
+  writeLines(c("a", rep("12345", 5000)), con)
+  close(con)
+  sha <- csha256(readBin(src, "raw", file.size(src)))
+  manifest <- sprintf(paste0('{"datasets":[{"key":"demo/big","rows":5000,"sha256_gz":"%s"},',
+                             '{"key":"demo/nodigest","rows":5000}]}'), sha)
+  testthat::local_mocked_bindings(.bl_data_get = function(path, dest, ...) {
+    if (path == "/manifest.json") writeLines(manifest, dest) else file.copy(src, dest, overwrite = TRUE)
+    invisible(dest)
+  })
+  expect_identical(nrow(dload("demo/big")), 5000L)
+  expect_identical(nrow(dload("demo/big")), 5000L)   # cached, verified again
+  expect_error(dload("demo/nodigest"), "decompresses to more than 10,000 bytes")
+  # the reader itself: no cap on either path once lim is Inf
+  rd <- rmoriebricklayer:::.bl_read_csv_gz
+  expect_identical(nrow(rd(src, lim = Inf)), 5000L)
+  expect_identical(nrow(rd(src, in_memory = 1e3, lim = Inf)), 5000L)
+  expect_error(rd(src), "decompresses to more than 10,000 bytes")
+})

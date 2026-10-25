@@ -1,3 +1,8 @@
+# rmoriebricklayer 1.0.3
+
+* `dload()` reads a table of any size when its SHA-256 matches the manifest: it is then the file data.rmorie.com holds, so the 1 GiB limit on what an untrusted CSV may decompress to (option `rmoriebricklayer.maxcsvbytes`) no longer applies. Tables of about 95 MB of gzip and more decompress past 1 GiB and were refused. A table the manifest lists without a digest keeps the limit, and a gzip file over 2 GB is read a piece at a time.
+* The reference index lists the categorical-integrity functions once (the section appeared twice).
+
 # rmoriebricklayer 1.0.2
 
 ## Keeping your own copy of a source: archive.rmorie.com and WARC files

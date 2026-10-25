@@ -227,24 +227,6 @@ reference:
       - grdbin
       - rcdmnf
       - wrrcdmnf
-  - title: Categorical integrity
-    desc: >
-      Labels that cannot be swapped quietly: name-based recodes that refuse
-      anything unmapped, explicit levels, an import audit, a before/after
-      cross-tabulation proof, counts checked against what was published,
-      reported odds ratios checked under every relabelling, and a signed
-      manifest of the whole chain.
-    contents:
-      - grdrcd
-      - deccodes
-      - grdlvls
-      - audcats
-      - vrfrcd
-      - vrfmrg
-      - orchk
-      - grdbin
-      - rcdmnf
-      - wrrcdmnf
   - title: Schema validation & synthetic data
     desc: >
       Validate a data frame against a declared schema, and build typed
