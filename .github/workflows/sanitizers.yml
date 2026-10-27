@@ -27,7 +27,8 @@ jobs:
   asan-ubsan:
     name: ASAN + UBSAN (rocker/r-devel-san)
     runs-on: ubuntu-24.04
-    container: rocker/r-devel-san
+    # unpinned on purpose: the job exists to test against today's R-devel
+    container: rocker/r-devel-san  # zizmor: ignore[unpinned-images]
     timeout-minutes: 120
     env:
       # R itself leaks by design at exit; a leak report would drown the signal
@@ -38,6 +39,8 @@ jobs:
       NOT_CRAN: "true"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       # libuv for fs (a testthat dependency), libssl for openssl: the sanitizer image
       # ships neither, and install.packages() warns rather than fails without them
       - name: System libraries

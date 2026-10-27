@@ -34,6 +34,8 @@ jobs:
     timeout-minutes: 180  # the two composed kernels (695k samples each, both models) take about an hour by themselves
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Toolchain
         run: |
           sudo apt-get update
@@ -42,10 +44,17 @@ jobs:
         run: bash inst/tvla/build.sh
       - name: Assess
         working-directory: inst/tvla
-        run: ./build/tvla all ${{ github.event.inputs.traces || '5000' }}
+        env:
+          TRACES: ${{ github.event.inputs.traces || '5000' }}
+        run: |
+          case "$TRACES" in '' | *[!0-9]*) exit 2 ;; esac
+          ./build/tvla all "$TRACES"
       - name: Assess, transition model
         if: always()
         working-directory: inst/tvla
         env:
           TVLA_MODEL: hd
-        run: ./build/tvla all ${{ github.event.inputs.traces || '5000' }}
+          TRACES: ${{ github.event.inputs.traces || '5000' }}
+        run: |
+          case "$TRACES" in '' | *[!0-9]*) exit 2 ;; esac
+          ./build/tvla all "$TRACES"
