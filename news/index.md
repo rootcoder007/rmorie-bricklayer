@@ -311,6 +311,26 @@
 
 ### Security process
 
+- FIPS mode:
+  [`fipsmod()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipsmod.md)
+  loads the OpenSSL FIPS provider (a FIPS 140-3 module) on its own, with
+  a configuration that cannot fall back to the default provider, and
+  reports which module and build it is and whether the package knows a
+  certificate for it;
+  [`fipsmkg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipsmkg.md)
+  makes an ML-DSA or SLH-DSA key inside that module, and
+  [`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
+  signs with it there. The signatures verify with
+  [`cpsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsvrf.md)
+  and
+  [`cpsxvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsxvrf.md)
+  as any others. The list of certificates (`inst/fips/modules.csv`)
+  names the Chainguard FIPS Provider for OpenSSL 3.6.0-r4 (CMVP
+  [\#5523](https://github.com/rootcoder007/rmorie-bricklayer/issues/5523),
+  with ML-DSA and SLH-DSA) and the OpenSSL FIPS Provider 3.1.2 (CMVP
+  [\#4985](https://github.com/rootcoder007/rmorie-bricklayer/issues/4985),
+  without them); any other module is reported as not listed, never as
+  validated.
 - `SECURITY.md` follows the OSTIF best-practices guide: private
   reporting through GitHub (now switched on) or email, scope, what a
   report should contain, the response timeline (acknowledgement in 72

@@ -35,7 +35,9 @@ cpssign(
   for `"xmss"`, or a `bricklayer_fips_key` from
   [`fipskg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipskg.md)
   for a standardised scheme (in which case `scheme` is taken from the
-  key and ignored).
+  key and ignored), or a key from
+  [`fipsmkg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipsmkg.md),
+  which signs inside the FIPS 140-3 module that made it.
 
 - scheme:
 

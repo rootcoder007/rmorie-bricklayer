@@ -90,8 +90,8 @@ signingkey <- pqckg(height = 3)
 signingkey
 #> ╭── Signing key (post-quantum) ───────────────────────────────────────────────╮
 #> │   scheme     xmss-sha256                                                    │
-#> │   root       6613a30373689e63bb71f5047c58758c5a33b8926053082be38d7ba8d35546 │
-#> │              a9                                                             │
+#> │   root       0bc75d335ac408d2c70fd3e45bc81ef7151907f21bff2ca3bc34ba7a4235b0 │
+#> │              fb                                                             │
 #> │   height     3                                                              │
 #> │   used       0 of 8 signatures                                              │
 #> │   remaining  8                                                              │
@@ -108,7 +108,7 @@ pub <- signpubkey(signingkey)
 pub
 #> ╭── Public verification key ─────────────────────────────────────────────────╮
 #> │   scheme  xmss-sha256                                                      │
-#> │   root    6613a30373689e63bb71f5047c58758c5a33b8926053082be38d7ba8d35546a9 │
+#> │   root    0bc75d335ac408d2c70fd3e45bc81ef7151907f21bff2ca3bc34ba7a4235b0fb │
 #> │   height  3                                                                │
 #> ╰────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -189,6 +189,42 @@ pqcbknd()
 #> [13] "SLH-DSA-SHAKE-192s" "SLH-DSA-SHAKE-192f" "SLH-DSA-SHAKE-256s"
 #> [16] "SLH-DSA-SHAKE-256f"
 ```
+
+### Signing inside a FIPS 140-3 module
+
+The package’s own ML-DSA and SLH-DSA are not a validated cryptographic
+module, and no amount of testing makes them one: validation is a
+certificate NIST issues for one exact build. Where a record has to be
+signed by a validated module, the package can hand the work to one.
+[`fipsmod()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipsmod.md)
+loads the OpenSSL FIPS provider on its own (a distribution’s, or an
+upstream build it installs with `openssl fipsinstall`), and says which
+module it is and whether that exact build is on the package’s list of
+certificates: today the Chainguard FIPS Provider for OpenSSL 3.6.0-r4,
+CMVP \#5523, which covers ML-DSA and SLH-DSA.
+[`fipsmkg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipsmkg.md)
+makes the key inside the module, and
+[`cpssign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpssign.md)
+signs with it there;
+[`cpsvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsvrf.md)
+and
+[`cpsxvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsxvrf.md)
+verify the result like any other signature.
+
+``` r
+
+mod <- fipsmod()
+mod                       # the module, its build and its certificate
+key <- fipsmkg("ML-DSA-65", mod)
+sig <- cpssign("a manifest digest", key)
+cpsvrf("a manifest digest", sig, key)
+```
+
+A module that is not on the list is reported as such, not as
+unvalidated: it may hold a certificate the list does not have yet, and
+NIST’s list is the authority. The claim to make is about the module
+(“signed inside the Chainguard FIPS Provider, CMVP \#5523”), never that
+this package is validated.
 
 ## Signing something a verifier can check
 
@@ -415,7 +451,7 @@ plan <- prrgdecl(c(
 
 # a declared outcome that was not reported
 prrgchk(plan, "n_rows")
-#> ╭── Against the declaration of 2026-10-27T19:05:17Z: departures below ──╮
+#> ╭── Against the declaration of 2026-10-27T20:16:26Z: departures below ──╮
 #> │ ✖ NOT VERIFIED                                                        │
 #> │                                                                       │
 #> │   Declared  2                                                         │
@@ -433,7 +469,7 @@ prrgchk(plan, "n_rows")
 
 # statistics reported that were never declared
 prrgchk(plan, c("ate", "n_rows", "byyear", "byprecinct"))
-#> ╭── Against the declaration of 2026-10-27T19:05:17Z: departures below ──╮
+#> ╭── Against the declaration of 2026-10-27T20:16:26Z: departures below ──╮
 #> │ ✖ NOT VERIFIED                                                        │
 #> │                                                                       │
 #> │   Declared  2                                                         │
@@ -666,7 +702,7 @@ cpsbndlvrf(attr(b, "path"), dir, man = man)
 #> │   ✔    no_unlisted_files                                                    │
 #> │   ✔    attestation:attestation_complete                                     │
 #> │   ✔    attestation:manifest_digest                                          │
-#> │        12b33dfef1de8c0a605ddfd2c3ed65b45a9d09668cd4538c0e62b40064ccb7c1     │
+#> │        f0792b0e4dddb6ea101b69c84d929937317cc8980f3c451c84d1b33c1906e67a     │
 #> │   ✔    attestation:signature                                                │
 #> │   ✔    manifest_digest                                                      │
 #> │        5f711161c72a5bcf5b5918d69a6a59fbe38ab9399dd140e9281cb9867d23826f     │
@@ -703,7 +739,7 @@ p <- mkbndlproj(proj, title = "My study", author = "A. Researcher",
                 contact = "a.researcher@example.org", overwrite = TRUE)
 p
 #> ╭── Bundle project ───────────────────────────────────────────────────────────╮
-#> │   Folder  /tmp/RtmpkDqZRB/my-study                                          │
+#> │   Folder  /tmp/Rtmp584clT/my-study                                          │
 #> │   Files   config.json, data_provenance.json, analysis.R                     │
 #> │                                                                             │
 #> │   Edit config.json (who and what), data_provenance.json (the data file,     │
@@ -751,12 +787,12 @@ b
 #> ╭── Reproducibility bundle ───────────────────────────────────────────────────╮
 #> │   Project    my-study                                                       │
 #> │   Zip        my-study_v1_with_data.zip                                      │
-#> │   Folder     /tmp/RtmpkDqZRB                                                │
+#> │   Folder     /tmp/Rtmp584clT                                                │
 #> │   Size       193.4 KB                                                       │
 #> │   Files      28                                                             │
 #> │   Data file  inside                                                         │
-#> │   SHA-256    8cefa633f2f0f72a13d0979b5a49ac01e283ddfd8a84ef9dfb81aa7e51ee98 │
-#> │              55                                                             │
+#> │   SHA-256    b8969383262053c4cf3fd715d19b9096b8a45945c94ecc5a86e590dbd5d5c7 │
+#> │              21                                                             │
 #> │                                                                             │
 #> │   Recipients unzip it and double-click START_HERE.command (macOS) or        │
 #> │   START_HERE.bat (Windows), or run ./start_here.sh (Linux).                 │

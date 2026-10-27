@@ -178,7 +178,7 @@ try(wbsave(
   sk = "def",
   output = file.path(tempdir(), "no-such-folder", "runs.jsonl")
 ))
-#> Error : the folder for `output` does not exist: /tmp/RtmpMNCs6G/no-such-folder
+#> Error : the folder for `output` does not exist: /tmp/RtmpZ8UFp0/no-such-folder
 
 # A real run needs archive.org keys and the network.
 if (FALSE) { # interactive()

@@ -472,6 +472,10 @@ history itself tamper-evident.
   : Verify a capsule manifest signature
 - [`cpsxvrf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsxvrf.md)
   : Verify a Signature Here and Again With OpenSSL
+- [`fipsmod()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipsmod.md)
+  : Sign Inside a FIPS 140-3 Module
+- [`fipsmkg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fipsmkg.md)
+  : Make a Signing Key Inside a FIPS 140-3 Module
 - [`pqckg()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqckg.md)
   : Generate a post-quantum signing key for capsule provenance
 - [`signpubkey()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/signpubkey.md)

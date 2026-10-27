@@ -151,7 +151,8 @@
 <li><p><strong>Asking a model</strong> — <code><a href="reference/llmask.html">llmask()</a></code> puts a question to a language model you bring: a key for any major provider (OpenAI, Anthropic, Gemini, OpenRouter, Groq, Mistral, DeepSeek, xAI, Hugging Face, OpenCode and more: <code><a href="reference/llmprvd.html">llmprvd()</a></code>), an Ollama server, or an OpenAI-compatible server of your own. The model is given every function of the installed MORIE packages and tools to read their help, as much as it can take in; <code><a href="reference/llmstat.html">llmstat()</a></code> shows which route answers, and the <code>rmoriebricklayer</code> launcher offers the same as shell verbs.</p></li>
 <li><p><strong>Schema validation</strong> — <code><a href="reference/infsch.html">infsch()</a></code> derives a pinnable schema from data you trust; <code><a href="reference/valsch.html">valsch()</a></code> checks names, types, ranges, value sets and missingness against it; <code><a href="reference/rul.html">rul()</a></code> and the <code>rule_*()</code> library express the project-specific checks a generic schema cannot.</p></li>
 <li><p><strong>Drift detection</strong> — <code><a href="reference/cpsdrft.html">cpsdrft()</a></code> asks whether the <em>data</em> moved, not just the bytes, with Kolmogorov-Smirnov, two-sample homogeneity, population stability index, Jensen-Shannon divergence and a Benford first-digit screen. <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> draws the PSI per column against its bands and each column’s distributions; <code><a href="reference/drfthtml.html">drfthtml()</a></code> writes the report as one interactive HTML file (<code>rmbl drift PATH --html FILE</code>), and <code><a href="reference/drftapp.html">drftapp()</a></code> opens it as a Shiny app.</p></li>
-<li><p><strong>Signed provenance</strong> — <code><a href="reference/cpssign.html">cpssign()</a></code> authenticates a manifest with a keyed digest or a post-quantum hash-based signature; <code><a href="reference/mrk.html">mrkroot()</a></code> pins a capsule chunk by chunk so a mismatch names which chunk moved; and <code><a href="reference/chn.html">chnapp()</a></code> links manifests so the run <em>history</em> is tamper-evident, not only each run.</p></li>
+<li><p><strong>Signed provenance</strong> — <code><a href="reference/cpssign.html">cpssign()</a></code> authenticates a manifest with a keyed digest or a post-quantum hash-based signature; <code><a href="reference/mrk.html">mrkroot()</a></code> pins a capsule chunk by chunk so a mismatch names which chunk moved; and <code><a href="reference/chn.html">chnapp()</a></code> links manifests so the run <em>history</em> is tamper-evident, not only each run. <code><a href="reference/cpsxvrf.html">cpsxvrf()</a></code> checks a signature again with OpenSSL, <code><a href="reference/tsstmp.html">tsstmp()</a></code> gets a public RFC 3161 timestamp, <code><a href="reference/idcrd.html">idcrd()</a></code> makes an identity card for a signing key, and <code><a href="reference/fipsmod.html">fipsmod()</a></code> / <code><a href="reference/fipsmkg.html">fipsmkg()</a></code> sign inside a FIPS 140-3 module.</p></li>
+<li><p><strong>Evidence the analysis is right</strong> — <code><a href="reference/cpsplant.html">cpsplant()</a></code> plants effects of known size into the real data and checks the statistic recovers them (a planted 0 catches one that finds effects that are not there); <code><a href="reference/cpsspec.html">cpsspec()</a></code> runs reasonable alternative specifications and reports whether they agree in sign; <code><a href="reference/recevid.html">recevid()</a></code> writes either check, or the falsification controls of <code><a href="reference/cpsfals.html">cpsfals()</a></code>, into the manifest.</p></li>
 <li><p><strong>Description</strong> — <code><a href="reference/profcols.html">profcols()</a></code>, <code><a href="reference/freqtbl.html">freqtbl()</a></code>, <code><a href="reference/cortbl.html">cortbl()</a></code>, <code><a href="reference/mahaoutl.html">mahaoutl()</a></code>, <code><a href="reference/missgrid.html">missgrid()</a></code> and <code><a href="reference/mcartst.html">mcartst()</a></code> (Little’s test, with the EM estimator it requires) describe a capsule before you trust it.</p></li>
 <li><p><strong>Capsules larger than memory</strong> — exact block-wise moment accumulation, reservoir sampling, and HyperLogLog distinct counts, all in one pass.</p></li>
 <li><p><strong>Synthetic fallback</strong> — <code><a href="reference/mksyncol.html">mksyncol()</a></code> / <code><a href="reference/mksyncsv.html">mksyncsv()</a></code> generate schema-driven stand-ins when the real source is down, so a pipeline still runs end-to-end.</p></li>
@@ -273,6 +274,12 @@
 </td>
 </tr>
 <tr>
+<td>Static analysis</td>
+<td>CodeQL with its security-extended queries over the C and C++ (built as R builds them) and over the workflows, on every change to either and weekly; every GitHub Action pinned to a commit hash; secret scanning with push protection</td>
+<td>workflow <code>codeql</code>
+</td>
+</tr>
+<tr>
 <td>Standards vectors</td>
 <td>The C2SP Wycheproof post-quantum sets and the NIST ACVP sets for ML-KEM, ML-DSA, SLH-DSA, SHA-3, SHAKE and HMAC: 6,848 checks, 0 failures, each not-applicable vector named with its reason (the published ACVP PBKDF set is SHA2-224 only, so none of its vectors apply to this package’s PBKDF2-HMAC-SHA256, which the test suite checks against the RFC 7914 vectors instead); the masked and the plain paths are compared on every ML-KEM decapsulation and ML-DSA signing vector</td>
 <td>
@@ -314,7 +321,7 @@
 </tr>
 </tbody>
 </table>
-<p>Outside what these checks model: electromagnetic emanation, fault injection, glitches and coupling a leakage model omits, and higher-order attacks on two-share masking. The power assessment is a simulation, not a capture from a board. <code>SECURITY.md</code> has the threat model, the reporting address and the list of what each check would and would not catch. The checks are reproducible on any Linux machine with valgrind and clang: <code>bash inst/ctcheck/build.sh &amp;&amp; bash inst/ctcheck/run.sh</code> and <code>bash inst/fuzz/build.sh &amp;&amp; bash inst/fuzz/run.sh</code>.</p>
+<p>Outside what these checks model: electromagnetic emanation, fault injection, glitches and coupling a leakage model omits, and higher-order attacks on two-share masking. The power assessment is a simulation, not a capture from a board. <code>SECURITY.md</code> has the threat model, the reporting address and the list of what each check would and would not catch. None of it makes this package a FIPS 140-3 validated module; FIPS mode (<code><a href="reference/fipsmod.html">fipsmod()</a></code>) signs inside one instead. The checks are reproducible on any Linux machine with valgrind and clang: <code>bash inst/ctcheck/build.sh &amp;&amp; bash inst/ctcheck/run.sh</code> and <code>bash inst/fuzz/build.sh &amp;&amp; bash inst/fuzz/run.sh</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="verification">Verification<a class="anchor" aria-label="anchor" href="#verification"></a>
@@ -385,12 +392,14 @@
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co"># without pak</span></span>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'repos &lt;- c("https://rootcoder007.r-universe.dev", "https://cloud.r-project.org"); install.packages("remotes", repos = repos); remotes::install_github("rootcoder007/rmorie-bricklayer", repos = repos, upgrade = "always")'</span></span></code></pre></div>
 <p>On macOS, CRAN’s R (from <a href="https://CRAN.R-project.org/bin/macosx/" class="external-link uri">https://CRAN.R-project.org/bin/macosx/</a>) installs r-universe’s prebuilt binaries in seconds. Homebrew’s R cannot use them, so there every package is compiled from source.</p>
+<p>A container with R, the package and <code>rmbl</code> on the <code>PATH</code>, built on Wolfi (Chainguard) and rebuilt weekly with that week’s security fixes; each build is scanned with Trivy and is not published if any fixable vulnerability is found:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="at">-it</span> ghcr.io/rootcoder007/rmorie-bricklayer:latest</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="quick-example">Quick example<a class="anchor" aria-label="anchor" href="#quick-example"></a>
 </h2>
 <p>The shortest path, on the OTIS table that ships with the package:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rootcoder007/rmorie-bricklayer" class="external-link">rmoriebricklayer</a></span><span class="op">)</span></span>
 <span><span class="va">otis</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"otis_a01_individuals.csv"</span>,</span>
 <span>                             package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span><span class="op">)</span></span>
@@ -399,7 +408,7 @@
 <span><span class="va">a</span>                                   <span class="co"># what changed, how sure, what was withheld</span></span>
 <span><span class="fu"><a href="reference/rptanl.html">rptanl</a></span><span class="op">(</span><span class="va">a</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"otis.html"</span><span class="op">)</span><span class="op">)</span>   <span class="co"># one self-contained file</span></span></code></pre></div>
 <p>The full capsule, step by step. It runs as written, offline: the provenance file pins the source, the schema and a recipe for a synthetic stand-in, and the stand-in is what gets validated and recorded when the portal is not reachable.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rootcoder007/rmorie-bricklayer" class="external-link">rmoriebricklayer</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># 1. The pin: portal endpoint, resource pattern, expected schema, recipe.</span></span>
@@ -448,7 +457,7 @@
 <span>                  paths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>input <span class="op">=</span> <span class="va">path</span>, results <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                  whatwasdone <span class="op">=</span> <span class="st">"* validated the schema and recorded the row count"</span><span class="op">)</span></span></code></pre></div>
 <p>Then ask whether the data itself moved, and sign the answer:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Did the distribution change, not just the bytes?</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">ref</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">300</span><span class="op">)</span>, size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">1</span>, <span class="fl">10</span><span class="op">)</span>,</span>
@@ -468,6 +477,12 @@
 <span><span class="fu"><a href="reference/cpsvrf.html">cpsvrf</a></span><span class="op">(</span><span class="va">digest</span>, <span class="va">sig</span>, <span class="fu"><a href="reference/fipskg.html">fipspubkey</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/cpsxvrf.html">cpsxvrf</a></span><span class="op">(</span><span class="va">digest</span>, <span class="va">sig</span>, <span class="fu"><a href="reference/fipskg.html">fipspubkey</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span><span class="op">)</span> <span class="co"># and again with OpenSSL 3.5</span></span></code></pre></div>
 <p><code><a href="reference/cpsxvrf.html">cpsxvrf()</a></code> asks the <code>openssl</code> program (3.5 or later), which implements FIPS 204 and 205 with no code in common with this package, for a second verdict; without it the result says the signature was checked here only.</p>
+<p>Where a record must be signed by a FIPS 140-3 validated module, hand the signing to one. <code><a href="reference/fipsmod.html">fipsmod()</a></code> loads the OpenSSL FIPS provider on its own and says which module and build it is and whether the package knows its certificate (today the Chainguard FIPS Provider for OpenSSL 3.6.0-r4, CMVP #5523, which covers ML-DSA and SLH-DSA). <code><a href="reference/fipsmkg.html">fipsmkg()</a></code> makes the key inside the module and <code><a href="reference/cpssign.html">cpssign()</a></code> signs there; verification is unchanged.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fipsmod.html">fipsmod</a></span><span class="op">(</span><span class="op">)</span>                     <span class="co"># the module and its certificate</span></span>
+<span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fipsmkg.html">fipsmkg</a></span><span class="op">(</span><span class="st">"ML-DSA-65"</span>, <span class="va">mod</span><span class="op">)</span>     <span class="co"># the private key never leaves it</span></span>
+<span><span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpssign.html">cpssign</a></span><span class="op">(</span><span class="va">digest</span>, <span class="va">key</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/cpsvrf.html">cpsvrf</a></span><span class="op">(</span><span class="va">digest</span>, <span class="va">sig</span>, <span class="va">key</span><span class="op">)</span></span></code></pre></div>
 <p>XMSS keys (<code><a href="reference/pqckg.html">pqckg()</a></code>) are opt-in. An XMSS index must never sign twice, so the package keeps a record of the highest index each key has used (<code>xmss_used_indices.txt</code> in <code>tools::R_user_dir("rmoriebricklayer", "config")</code>, locked by the operating system while a signature reserves its index). A key generated by <code><a href="reference/pqckg.html">pqckg()</a></code> is entered at birth. A key from another machine, one rebuilt from its seeds, or one used in CI or a container with a fresh home directory is unknown to the record and is refused at index 0 until <code>xmssregkey(key)</code> vouches that it has never signed; or point <code>options(rmoriebricklayer.xmssidxfile = )</code> at a record that persists. See <code><a href="reference/xmssadv.html">?xmssadv</a></code>.</p>
 <p>See <code><a href="articles/drift.html">vignette("drift")</a></code> for the distributional checks and <code><a href="articles/provenance.html">vignette("provenance")</a></code> for signing, Merkle pinning and manifest chains.</p>
 </div>
@@ -475,7 +490,7 @@
 <h2 id="finding-a-function">Finding a function<a class="anchor" aria-label="anchor" href="#finding-a-function"></a>
 </h2>
 <p>The names are short (<code><a href="reference/anltab.html">anltab()</a></code>, <code><a href="reference/mkbndl.html">mkbndl()</a></code>, <code><a href="reference/svyest.html">svyest()</a></code>), so look for a function by what it does:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rootcoder007/rmorie-bricklayer" class="external-link">rmoriebricklayer</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/help.search.html" class="external-link">help.search</a></span><span class="op">(</span><span class="st">"bundle"</span>, package <span class="op">=</span> <span class="st">"rmoriebricklayer"</span><span class="op">)</span>   <span class="co"># titles and descriptions</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/ls.html" class="external-link">ls</a></span><span class="op">(</span><span class="st">"package:rmoriebricklayer"</span>, pattern <span class="op">=</span> <span class="st">"^plot"</span><span class="op">)</span>     <span class="co"># by name</span></span></code></pre></div>
@@ -495,7 +510,7 @@
 </ol>
 <p>While it works, <code>rmbl ask</code> (or <code>rmbl aye</code>, <code>rmbl tellme</code>) shows a spinner with the seconds so far. The same question again is answered from this machine at once (<code>--fresh</code> asks the model again; <code>MORIE_LLM_CACHE=off</code> turns that off), and an error of these packages can be explained without any model: <code>rmbl explain-error "the error text"</code> (R: <code><a href="reference/explerr.html">explerr()</a></code>) names the function that raised it, the exported functions it comes from and what the message asks for.</p>
 <p>The model gets the packages’ help: the name, arguments and title of every function of rmoriebricklayer (and of rmoriedata and rmorie when installed), and tools to search the help, read a page, its examples, a vignette and the dataset list before it writes code. A large model (a provider’s, or an Ollama cloud model) gets all of it; a small model running locally gets the functions nearest the question and can still look up any other. <code>MORIE_LLM_CONTEXT</code> sets the size by hand.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rootcoder007/rmorie-bricklayer" class="external-link">rmoriebricklayer</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="reference/llmprvd.html">llmprvd</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># the providers, their addresses and key variables</span></span>
@@ -508,7 +523,7 @@
 <h3 id="choosing-the-route-and-model">Choosing the route and model<a class="anchor" aria-label="anchor" href="#choosing-the-route-and-model"></a>
 </h3>
 <p>Every setting can be saved once, from R or the shell, without touching the environment or the source. Saved settings live in <code>~/.config/morie/llm.json</code> (private to you); an environment variable that is set still wins for that session.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/llmcfg.html">llmcfg</a></span><span class="op">(</span><span class="op">)</span>                                        <span class="co"># every setting, its value and source</span></span>
 <span><span class="fu"><a href="reference/llmcfg.html">llmcfg</a></span><span class="op">(</span>route <span class="op">=</span> <span class="st">"anthropic"</span><span class="op">)</span>                     <span class="co"># always this provider</span></span>
 <span><span class="fu"><a href="reference/llmcfg.html">llmcfg</a></span><span class="op">(</span>anthropic.model <span class="op">=</span> <span class="st">"claude-opus-5-5"</span><span class="op">)</span>     <span class="co"># its model</span></span>
@@ -564,64 +579,64 @@
 <p>With <code>route = "auto"</code>, a local Ollama server that has no model pulled is passed over.</p>
 <p>Signing in (<code><a href="reference/dlogin.html">dlogin()</a></code>, <code>rmbl login</code>) is for the curated tables at data.rmorie.com only; it is never a language model.</p>
 <p>The same verbs exist on the command line once the launcher is on your <code>PATH</code>:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'rmoriebricklayer::instcli()'</span>   <span class="co"># links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl</span></span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> help                           <span class="co"># every verb; `help start`, `help llm`, `help config`, `help r`</span></span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor                         <span class="co"># which routes answer here, and the one ask will use</span></span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="st">"your question"</span>            <span class="co"># own endpoint, a provider with a key, then Ollama</span></span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--model</span> NAME <span class="st">"your question"</span></span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--route</span> anthropic <span class="st">"your question"</span>   <span class="co"># one route, this time</span></span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> aye <span class="st">"your question"</span>            <span class="co"># aye and tellme are ask under other names</span></span>
-<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> tellme <span class="st">"your question"</span></span>
-<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config                         <span class="co"># every language-model setting and where it comes from</span></span>
-<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config setup                   <span class="co"># pick a provider, paste its key, pick a model</span></span>
-<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set route anthropic     <span class="co"># always this provider</span></span>
-<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set anthropic.key       <span class="co"># asks for the key; saved privately</span></span>
-<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set ollama.url http://192.168.1.20:11434</span>
-<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set own.url http://localhost:1234/v1</span>
-<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config unset route             <span class="co"># back to the automatic order</span></span>
-<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config reset <span class="at">--force</span>           <span class="co"># move an unreadable settings file aside</span></span>
-<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> explain-error <span class="st">"the error text"</span> <span class="co"># where an error comes from, no model needed</span></span>
-<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models <span class="at">--route</span> ollama          <span class="co"># the models a route offers, the one in use marked</span></span>
-<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--token</span>                  <span class="co"># the data key: paste the key you were issued</span></span>
-<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com  <span class="co"># or: a code is emailed, type it at the prompt</span></span>
-<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com <span class="at">--code</span> 123456   <span class="co"># the same, code passed (scripts)</span></span>
-<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login                          <span class="co"># or: GitHub device flow</span></span>
-<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--no-browser</span>             <span class="co"># server / SSH: prints a link + code for any device</span></span>
-<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> logout                         <span class="co"># forget the data key</span></span>
-<span id="cb15-25"><a href="#cb15-25" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data list                      <span class="co"># the curated tables at data.rmorie.com</span></span>
-<span id="cb15-26"><a href="#cb15-26" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data pull db/table <span class="at">--out</span> t.csv <span class="co"># download one (your MORIE key)</span></span>
-<span id="cb15-27"><a href="#cb15-27" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> app <span class="pp">[</span><span class="ss">PATH</span><span class="pp">]</span>                     <span class="co"># the analysis dashboard (needs shiny)</span></span>
-<span id="cb15-28"><a href="#cb15-28" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> wayback urls.txt <span class="at">--out</span> w.jsonl <span class="co"># archive every URL in a file (archive.org keys)</span></span>
-<span id="cb15-29"><a href="#cb15-29" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> wayback <span class="at">--retry</span> w.jsonl        <span class="co"># retry the ones that failed</span></span>
-<span id="cb15-30"><a href="#cb15-30" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> archive save URL <span class="at">--reason</span> TEXT <span class="co"># save from this connection to archive.rmorie.com</span></span>
-<span id="cb15-31"><a href="#cb15-31" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> archive find URL               <span class="co"># its captures; archive get ID -o FILE fetches one</span></span>
-<span id="cb15-32"><a href="#cb15-32" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> pack <span class="at">--new</span> my-study            <span class="co"># start a reproducibility bundle project (mkbndlproj())</span></span>
-<span id="cb15-33"><a href="#cb15-33" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> pack my-study <span class="at">--data</span> data.csv  <span class="co"># its zip, data inside; a reviewer double-clicks it (mkbndl())</span></span>
-<span id="cb15-34"><a href="#cb15-34" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> bundle <span class="st">"your request"</span>          <span class="co"># agentbndl() from the shell</span></span>
-<span id="cb15-35"><a href="#cb15-35" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> verify capsules <span class="at">--fail-on</span> warn <span class="co"># every capsule under a folder, as the rmbl GitHub Action checks it</span></span>
-<span id="cb15-36"><a href="#cb15-36" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> verify capsules <span class="at">--json</span>         <span class="co"># the check rows as JSON (hmac secret: RMBL_KEY)</span></span>
-<span id="cb15-37"><a href="#cb15-37" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> drift capsules                 <span class="co"># fetch each source again and compare it with the pin</span></span>
-<span id="cb15-38"><a href="#cb15-38" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> drift capsules <span class="at">--psi-warn</span> 0.1 <span class="at">--psi-fail</span> 0.25   <span class="co"># the PSI bands of the column table</span></span>
-<span id="cb15-39"><a href="#cb15-39" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> drift capsules <span class="at">--allow-file</span> <span class="at">--cache</span> .rmbl-cache <span class="at">--snapshot</span>   <span class="co"># file:// sources, a cache, snapshots</span></span>
-<span id="cb15-40"><a href="#cb15-40" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> verify capsules <span class="at">--base</span> base-copy/   <span class="co"># each manifest against its base copy (a file or a folder)</span></span>
-<span id="cb15-41"><a href="#cb15-41" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> refresh capsules               <span class="co"># pin each source's new bytes (cpsrfrsh())</span></span>
-<span id="cb15-42"><a href="#cb15-42" tabindex="-1"></a><span class="va">RMBL_KEY</span><span class="op">=</span>... <span class="ex">rmoriebricklayer</span> sign capsules     <span class="co"># pin each plain provenance and sign each capsule (cpsseal())</span></span>
-<span id="cb15-43"><a href="#cb15-43" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> sign capsules <span class="at">--scheme</span> ML-DSA-44 <span class="at">--key-file</span> key.json <span class="at">--overwrite</span></span>
-<span id="cb15-44"><a href="#cb15-44" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> report capsules <span class="at">--format</span> md    <span class="co"># the Markdown report; never fails</span></span>
-<span id="cb15-45"><a href="#cb15-45" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> functions <span class="pp">[</span><span class="ss">PATTERN</span><span class="pp">]</span>            <span class="co"># exported functions and their titles</span></span>
-<span id="cb15-46"><a href="#cb15-46" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> describe NAME                  <span class="co"># one function's help page</span></span>
-<span id="cb15-47"><a href="#cb15-47" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> examples NAME                  <span class="co"># its examples</span></span>
-<span id="cb15-48"><a href="#cb15-48" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> version</span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'rmoriebricklayer::instcli()'</span>   <span class="co"># links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> help                           <span class="co"># every verb; `help start`, `help llm`, `help config`, `help r`</span></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor                         <span class="co"># which routes answer here, and the one ask will use</span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="st">"your question"</span>            <span class="co"># own endpoint, a provider with a key, then Ollama</span></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--model</span> NAME <span class="st">"your question"</span></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--route</span> anthropic <span class="st">"your question"</span>   <span class="co"># one route, this time</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> aye <span class="st">"your question"</span>            <span class="co"># aye and tellme are ask under other names</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> tellme <span class="st">"your question"</span></span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config                         <span class="co"># every language-model setting and where it comes from</span></span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config setup                   <span class="co"># pick a provider, paste its key, pick a model</span></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set route anthropic     <span class="co"># always this provider</span></span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set anthropic.key       <span class="co"># asks for the key; saved privately</span></span>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set ollama.url http://192.168.1.20:11434</span>
+<span id="cb17-14"><a href="#cb17-14" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set own.url http://localhost:1234/v1</span>
+<span id="cb17-15"><a href="#cb17-15" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config unset route             <span class="co"># back to the automatic order</span></span>
+<span id="cb17-16"><a href="#cb17-16" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config reset <span class="at">--force</span>           <span class="co"># move an unreadable settings file aside</span></span>
+<span id="cb17-17"><a href="#cb17-17" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> explain-error <span class="st">"the error text"</span> <span class="co"># where an error comes from, no model needed</span></span>
+<span id="cb17-18"><a href="#cb17-18" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models <span class="at">--route</span> ollama          <span class="co"># the models a route offers, the one in use marked</span></span>
+<span id="cb17-19"><a href="#cb17-19" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--token</span>                  <span class="co"># the data key: paste the key you were issued</span></span>
+<span id="cb17-20"><a href="#cb17-20" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com  <span class="co"># or: a code is emailed, type it at the prompt</span></span>
+<span id="cb17-21"><a href="#cb17-21" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com <span class="at">--code</span> 123456   <span class="co"># the same, code passed (scripts)</span></span>
+<span id="cb17-22"><a href="#cb17-22" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login                          <span class="co"># or: GitHub device flow</span></span>
+<span id="cb17-23"><a href="#cb17-23" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--no-browser</span>             <span class="co"># server / SSH: prints a link + code for any device</span></span>
+<span id="cb17-24"><a href="#cb17-24" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> logout                         <span class="co"># forget the data key</span></span>
+<span id="cb17-25"><a href="#cb17-25" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data list                      <span class="co"># the curated tables at data.rmorie.com</span></span>
+<span id="cb17-26"><a href="#cb17-26" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data pull db/table <span class="at">--out</span> t.csv <span class="co"># download one (your MORIE key)</span></span>
+<span id="cb17-27"><a href="#cb17-27" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> app <span class="pp">[</span><span class="ss">PATH</span><span class="pp">]</span>                     <span class="co"># the analysis dashboard (needs shiny)</span></span>
+<span id="cb17-28"><a href="#cb17-28" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> wayback urls.txt <span class="at">--out</span> w.jsonl <span class="co"># archive every URL in a file (archive.org keys)</span></span>
+<span id="cb17-29"><a href="#cb17-29" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> wayback <span class="at">--retry</span> w.jsonl        <span class="co"># retry the ones that failed</span></span>
+<span id="cb17-30"><a href="#cb17-30" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> archive save URL <span class="at">--reason</span> TEXT <span class="co"># save from this connection to archive.rmorie.com</span></span>
+<span id="cb17-31"><a href="#cb17-31" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> archive find URL               <span class="co"># its captures; archive get ID -o FILE fetches one</span></span>
+<span id="cb17-32"><a href="#cb17-32" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> pack <span class="at">--new</span> my-study            <span class="co"># start a reproducibility bundle project (mkbndlproj())</span></span>
+<span id="cb17-33"><a href="#cb17-33" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> pack my-study <span class="at">--data</span> data.csv  <span class="co"># its zip, data inside; a reviewer double-clicks it (mkbndl())</span></span>
+<span id="cb17-34"><a href="#cb17-34" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> bundle <span class="st">"your request"</span>          <span class="co"># agentbndl() from the shell</span></span>
+<span id="cb17-35"><a href="#cb17-35" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> verify capsules <span class="at">--fail-on</span> warn <span class="co"># every capsule under a folder, as the rmbl GitHub Action checks it</span></span>
+<span id="cb17-36"><a href="#cb17-36" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> verify capsules <span class="at">--json</span>         <span class="co"># the check rows as JSON (hmac secret: RMBL_KEY)</span></span>
+<span id="cb17-37"><a href="#cb17-37" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> drift capsules                 <span class="co"># fetch each source again and compare it with the pin</span></span>
+<span id="cb17-38"><a href="#cb17-38" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> drift capsules <span class="at">--psi-warn</span> 0.1 <span class="at">--psi-fail</span> 0.25   <span class="co"># the PSI bands of the column table</span></span>
+<span id="cb17-39"><a href="#cb17-39" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> drift capsules <span class="at">--allow-file</span> <span class="at">--cache</span> .rmbl-cache <span class="at">--snapshot</span>   <span class="co"># file:// sources, a cache, snapshots</span></span>
+<span id="cb17-40"><a href="#cb17-40" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> verify capsules <span class="at">--base</span> base-copy/   <span class="co"># each manifest against its base copy (a file or a folder)</span></span>
+<span id="cb17-41"><a href="#cb17-41" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> refresh capsules               <span class="co"># pin each source's new bytes (cpsrfrsh())</span></span>
+<span id="cb17-42"><a href="#cb17-42" tabindex="-1"></a><span class="va">RMBL_KEY</span><span class="op">=</span>... <span class="ex">rmoriebricklayer</span> sign capsules     <span class="co"># pin each plain provenance and sign each capsule (cpsseal())</span></span>
+<span id="cb17-43"><a href="#cb17-43" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> sign capsules <span class="at">--scheme</span> ML-DSA-44 <span class="at">--key-file</span> key.json <span class="at">--overwrite</span></span>
+<span id="cb17-44"><a href="#cb17-44" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> report capsules <span class="at">--format</span> md    <span class="co"># the Markdown report; never fails</span></span>
+<span id="cb17-45"><a href="#cb17-45" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> functions <span class="pp">[</span><span class="ss">PATTERN</span><span class="pp">]</span>            <span class="co"># exported functions and their titles</span></span>
+<span id="cb17-46"><a href="#cb17-46" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> describe NAME                  <span class="co"># one function's help page</span></span>
+<span id="cb17-47"><a href="#cb17-47" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> examples NAME                  <span class="co"># its examples</span></span>
+<span id="cb17-48"><a href="#cb17-48" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> version</span></code></pre></div>
 <p><code>rmbl</code> is the same command under a short name; every verb works under either:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="ex">rmbl</span> help</span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="ex">rmbl</span> doctor</span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="ex">rmbl</span> config setup</span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="ex">rmbl</span> ask <span class="st">"your question"</span></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="ex">rmbl</span> aye <span class="st">"your question"</span></span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="ex">rmbl</span> tellme <span class="st">"your question"</span></span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="ex">rmbl</span> <span class="st">"how do I weight a survey?"</span>               <span class="co"># a quoted question with no verb is asked too</span></span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a><span class="ex">rmbl</span> login <span class="at">--token</span></span>
-<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a><span class="ex">rmbl</span> models</span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="ex">rmbl</span> help</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="ex">rmbl</span> doctor</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="ex">rmbl</span> config setup</span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="ex">rmbl</span> ask <span class="st">"your question"</span></span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="ex">rmbl</span> aye <span class="st">"your question"</span></span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="ex">rmbl</span> tellme <span class="st">"your question"</span></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="ex">rmbl</span> <span class="st">"how do I weight a survey?"</span>               <span class="co"># a quoted question with no verb is asked too</span></span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="ex">rmbl</span> login <span class="at">--token</span></span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a><span class="ex">rmbl</span> models</span></code></pre></div>
 <p>The capsule verbs are <code><a href="reference/cpschk.html">cpschk()</a></code> and <code><a href="reference/cpsseal.html">cpsseal()</a></code> from R, and <code><a href="reference/ghann.html">ghann()</a></code>, <code><a href="reference/ghann.html">ghcmt()</a></code> and <code><a href="reference/ghann.html">ghout()</a></code> give the annotations, the sticky pull-request comment and the step outputs the rmbl GitHub Action prints.</p>
 </div>
 </div>
@@ -643,13 +658,13 @@
 <p>Ruhela, V. S. (2026). <em>rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback.</em> R package version 1.0.3. <a href="doi:10.32614/CRAN.package.rmoriebricklayer" class="uri">doi:10.32614/CRAN.package.rmoriebricklayer</a>. <a href="https://CRAN.R-project.org/package=rmoriebricklayer" class="external-link uri">https://CRAN.R-project.org/package=rmoriebricklayer</a></p>
 </blockquote>
 <p>BibTeX (or run <code>citation("rmoriebricklayer")</code> after installation for the entry stamped with the exact installed version, sourced from <code>inst/CITATION</code>):</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="va">@Manual</span>{<span class="ot">ruhela_rmoriebricklayer_2026</span>,</span>
-<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>  <span class="dt">title</span>  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},</span>
-<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="dt">author</span> = {Ruhela, Vansh Singh},</span>
-<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>  <span class="dt">year</span>   = {2026},</span>
-<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>  <span class="dt">doi</span>    = {10.32614/CRAN.package.rmoriebricklayer},</span>
-<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>  <span class="dt">url</span>    = {https://rootcoder007.r-universe.dev/rmoriebricklayer}</span>
-<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="va">@Manual</span>{<span class="ot">ruhela_rmoriebricklayer_2026</span>,</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>  <span class="dt">title</span>  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>  <span class="dt">author</span> = {Ruhela, Vansh Singh},</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>  <span class="dt">year</span>   = {2026},</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>  <span class="dt">doi</span>    = {10.32614/CRAN.package.rmoriebricklayer},</span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>  <span class="dt">url</span>    = {https://rootcoder007.r-universe.dev/rmoriebricklayer}</span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>}</span></code></pre></div>
 <p>See <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/CITATION.cff" class="external-link"><code>CITATION.cff</code></a> for the machine-readable metadata GitHub’s “Cite this repository” button uses.</p>
 </div>
 <div class="section level2">
