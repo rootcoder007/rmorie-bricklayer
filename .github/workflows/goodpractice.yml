@@ -24,7 +24,7 @@ concurrency:
 jobs:
   goodpractice:
     runs-on: ubuntu-24.04
-    timeout-minutes: 150
+    timeout-minutes: 200
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
