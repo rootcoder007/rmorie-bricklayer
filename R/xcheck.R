@@ -8,7 +8,9 @@
 #' Verify a Signature Here and Again With OpenSSL
 #'
 #' Checks an ML-DSA or SLH-DSA signature twice: with this package's own
-#' implementation ([cpsvrf()]) and with the `openssl` program (version 3.5
+#' implementation
+#' ([cpsvrf()])
+#' and with the `openssl` program (version 3.5
 #' or later), which implements FIPS 204 and 205 independently. The
 #' signature counts as cross-verified only when both accept it.
 #'
@@ -28,7 +30,9 @@
 #' @param msg The signed message: a string or a raw vector, as given to
 #'   [cpssign()].
 #' @param sig A signature from [cpssign()].
-#' @param key The signer's key from [fipskg()] or [fipspubkey()]; only its
+#' @param key The signer's key from
+#'   [fipskg()] or
+#'   [fipspubkey()]; only its
 #'   public half is used.
 #' @param ctx The context string the signature was made with, or `NULL`.
 #' @param openssl Path to the `openssl` program. The default looks it up
@@ -39,7 +43,9 @@
 #'   `version` (OpenSSL's, or `NA`), `reason` (why OpenSSL gave no
 #'   verdict, or `NA`) and `scheme`. It prints as a box that opens with
 #'   the verdict.
-#' @seealso [cpsvrf()] for this package's verdict alone, [fipskg()].
+#' @seealso
+#' [cpsvrf()] for this package's verdict alone,
+#' [fipskg()].
 #' @export
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' key <- fipskg("ML-DSA-44")

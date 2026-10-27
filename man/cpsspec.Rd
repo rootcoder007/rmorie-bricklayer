@@ -42,5 +42,6 @@ cpsspec(d, list(
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link[=cpsplant]{cpsplant()}}, \code{\link[=recevid]{recevid()}}.
+\code{\link[=cpsplant]{cpsplant()}},
+\code{\link[=recevid]{recevid()}}.
 }

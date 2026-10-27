@@ -12,7 +12,9 @@ cpsxvrf(msg, sig, key, ctx = NULL, openssl = Sys.which("openssl"))
 
 \item{sig}{A signature from \code{\link[=cpssign]{cpssign()}}.}
 
-\item{key}{The signer's key from \code{\link[=fipskg]{fipskg()}} or \code{\link[=fipspubkey]{fipspubkey()}}; only its
+\item{key}{The signer's key from
+\code{\link[=fipskg]{fipskg()}} or
+\code{\link[=fipspubkey]{fipspubkey()}}; only its
 public half is used.}
 
 \item{ctx}{The context string the signature was made with, or \code{NULL}.}
@@ -30,7 +32,9 @@ the verdict.
 }
 \description{
 Checks an ML-DSA or SLH-DSA signature twice: with this package's own
-implementation (\code{\link[=cpsvrf]{cpsvrf()}}) and with the \code{openssl} program (version 3.5
+implementation
+(\code{\link[=cpsvrf]{cpsvrf()}})
+and with the \code{openssl} program (version 3.5
 or later), which implements FIPS 204 and 205 independently. The
 signature counts as cross-verified only when both accept it.
 }
@@ -60,5 +64,6 @@ cpsxvrf("a manifest digest!", sig, key, ctx = "release")$ok
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link[=cpsvrf]{cpsvrf()}} for this package's verdict alone, \code{\link[=fipskg]{fipskg()}}.
+\code{\link[=cpsvrf]{cpsvrf()}} for this package's verdict alone,
+\code{\link[=fipskg]{fipskg()}}.
 }

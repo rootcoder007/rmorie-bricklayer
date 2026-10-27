@@ -39,8 +39,9 @@ random stream is left as it was.}
 \value{
 A list of class \code{rmbl_plant}: \code{ok} (every effect recovered),
 \code{table} (one row per effect: \code{effect}, \code{recovered} (the average
-estimate), \code{bias}, \code{se}, \code{passed}), \code{observed} (the statistic on the
-real data), \code{n}, \code{tol}, \code{y}, \code{trt} and \code{seed}. It prints as a box and
+estimate), \code{bias}, \code{se}, \code{passed}), \code{observed} (the statistic
+on the real data), \code{n}, \code{tol}, \code{y}, \code{trt} and \code{seed}.
+It prints as a box and
 goes into a manifest with \code{\link[=recevid]{recevid()}}.
 }
 \description{
@@ -80,6 +81,7 @@ cpsplant(d, bad, y = "y", trt = "x", n = 30, seed = 1)$ok
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link[=cpsspec]{cpsspec()}} for agreement across specifications, \code{\link[=cpsfals]{cpsfals()}}
+\code{\link[=cpsspec]{cpsspec()}} for agreement across specifications,
+\code{\link[=cpsfals]{cpsfals()}}
 for falsification controls, \code{\link[=recevid]{recevid()}} to record them all.
 }

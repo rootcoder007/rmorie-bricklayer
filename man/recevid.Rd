@@ -9,7 +9,10 @@ recevid(man, x, grp = "evidence")
 \arguments{
 \item{man}{A manifest from \code{\link[=mkmnf]{mkmnf()}}.}
 
-\item{x}{A result of \code{\link[=cpsplant]{cpsplant()}}, \code{\link[=cpsspec]{cpsspec()}} or \code{\link[=cpsfals]{cpsfals()}}.}
+\item{x}{A result of
+\code{\link[=cpsplant]{cpsplant()}},
+\code{\link[=cpsspec]{cpsspec()}} or
+\code{\link[=cpsfals]{cpsfals()}}.}
 
 \item{grp}{The records' group.}
 }
@@ -19,9 +22,13 @@ The manifest, with the new records.
 \description{
 Adds the outcome of a correctness check to a manifest, so the capsule
 carries not only the reported numbers but the checks they passed. Each
-planted effect from \code{\link[=cpsplant]{cpsplant()}} becomes a record (recovered against
-planted, within the tolerance); a \code{\link[=cpsspec]{cpsspec()}} check records the share
-of specifications agreeing in sign (which should be 1); a \code{\link[=cpsfals]{cpsfals()}}
+planted effect from
+\code{\link[=cpsplant]{cpsplant()}}
+becomes a record (recovered against planted, within the tolerance); a
+\code{\link[=cpsspec]{cpsspec()}}
+check records the share of specifications agreeing in sign (which
+should be 1); a
+\code{\link[=cpsfals]{cpsfals()}}
 result records each control that ran (1 for passed).
 }
 \examples{
@@ -36,5 +43,6 @@ man
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link[=recrd]{recrd()}}, \code{\link[=cpsbndl]{cpsbndl()}}.
+\code{\link[=recrd]{recrd()}},
+\code{\link[=cpsbndl]{cpsbndl()}}.
 }

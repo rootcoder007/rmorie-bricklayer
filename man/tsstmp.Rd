@@ -39,7 +39,8 @@ is an error.
 \description{
 Asks an RFC 3161 time-stamping authority to sign the SHA-256 of \code{data}
 together with the current time, then checks the token it returns with
-\code{\link[=tsvrf]{tsvrf()}}. Anyone holding the same bytes, the token and the authority's
+\code{\link[=tsvrf]{tsvrf()}}.
+Anyone holding the same bytes, the token and the authority's
 certificate can later prove the bytes existed at that time, without
 trusting the person who asked.
 }
@@ -54,7 +55,9 @@ generator and asks for the authority's certificate in the reply, so the
 token can be checked offline later. The default authority,
 \code{"https://freetsa.org/tsr"}, is free and needs no account; any RFC 3161
 service can be named instead, and an institution's own is better where
-there is one. Pass \code{cert} and \code{trust} to \code{\link[=tsvrf]{tsvrf()}} when re-checking a
+there is one. Pass \code{cert} and \code{trust} to
+\code{\link[=tsvrf]{tsvrf()}}
+when re-checking a
 saved token to tie it to a certificate you trust.
 }
 \examples{
@@ -74,5 +77,7 @@ Internet X.509 Public Key Infrastructure Time-Stamp Protocol (TSP).
 RFC 3161.
 }
 \seealso{
-\code{\link[=tsvrf]{tsvrf()}} to check a saved token, \code{\link[=ralloc]{ralloc()}}, \code{\link[=prrgdecl]{prrgdecl()}}.
+\code{\link[=tsvrf]{tsvrf()}} to check a saved token,
+\code{\link[=ralloc]{ralloc()}},
+\code{\link[=prrgdecl]{prrgdecl()}}.
 }

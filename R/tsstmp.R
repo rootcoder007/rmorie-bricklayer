@@ -9,7 +9,8 @@
 #'
 #' Asks an RFC 3161 time-stamping authority to sign the SHA-256 of `data`
 #' together with the current time, then checks the token it returns with
-#' [tsvrf()]. Anyone holding the same bytes, the token and the authority's
+#' [tsvrf()].
+#' Anyone holding the same bytes, the token and the authority's
 #' certificate can later prove the bytes existed at that time, without
 #' trusting the person who asked.
 #'
@@ -24,7 +25,9 @@
 #' token can be checked offline later. The default authority,
 #' `"https://freetsa.org/tsr"`, is free and needs no account; any RFC 3161
 #' service can be named instead, and an institution's own is better where
-#' there is one. Pass `cert` and `trust` to [tsvrf()] when re-checking a
+#' there is one. Pass `cert` and `trust` to
+#' [tsvrf()]
+#' when re-checking a
 #' saved token to tie it to a certificate you trust.
 #'
 #' @param data What to timestamp: a raw vector, the path of an existing
@@ -46,7 +49,10 @@
 #' @references Adams, C., Cain, P., Pinkas, D., and Zuccherato, R. (2001).
 #'   Internet X.509 Public Key Infrastructure Time-Stamp Protocol (TSP).
 #'   RFC 3161.
-#' @seealso [tsvrf()] to check a saved token, [ralloc()], [prrgdecl()].
+#' @seealso
+#' [tsvrf()] to check a saved token,
+#' [ralloc()],
+#' [prrgdecl()].
 #' @export
 #' @examplesIf interactive()
 #' # Fix a trial's allocation before enrolment, then stamp its commitment.

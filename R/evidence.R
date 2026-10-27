@@ -41,10 +41,13 @@
 #'   random stream is left as it was.
 #' @return A list of class `rmbl_plant`: `ok` (every effect recovered),
 #'   `table` (one row per effect: `effect`, `recovered` (the average
-#'   estimate), `bias`, `se`, `passed`), `observed` (the statistic on the
-#'   real data), `n`, `tol`, `y`, `trt` and `seed`. It prints as a box and
+#'   estimate), `bias`, `se`, `passed`), `observed` (the statistic
+#'   on the real data), `n`, `tol`, `y`, `trt` and `seed`.
+#'   It prints as a box and
 #'   goes into a manifest with [recevid()].
-#' @seealso [cpsspec()] for agreement across specifications, [cpsfals()]
+#' @seealso
+#' [cpsspec()] for agreement across specifications,
+#' [cpsfals()]
 #'   for falsification controls, [recevid()] to record them all.
 #' @export
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
@@ -219,7 +222,9 @@ print.rmbl_plant <- function(x, ...) {
 #'   of the reported one), `table` (`spec`, `estimate`, `same_sign`),
 #'   `reported`, `range` and `share` (the share agreeing in sign). It
 #'   prints as a box and goes into a manifest with [recevid()].
-#' @seealso [cpsplant()], [recevid()].
+#' @seealso
+#' [cpsplant()],
+#' [recevid()].
 #' @export
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' set.seed(2)
@@ -299,16 +304,25 @@ print.rmbl_spec <- function(x, ...) {
 #'
 #' Adds the outcome of a correctness check to a manifest, so the capsule
 #' carries not only the reported numbers but the checks they passed. Each
-#' planted effect from [cpsplant()] becomes a record (recovered against
-#' planted, within the tolerance); a [cpsspec()] check records the share
-#' of specifications agreeing in sign (which should be 1); a [cpsfals()]
+#' planted effect from
+#' [cpsplant()]
+#' becomes a record (recovered against planted, within the tolerance); a
+#' [cpsspec()]
+#' check records the share of specifications agreeing in sign (which
+#' should be 1); a
+#' [cpsfals()]
 #' result records each control that ran (1 for passed).
 #'
 #' @param man A manifest from [mkmnf()].
-#' @param x A result of [cpsplant()], [cpsspec()] or [cpsfals()].
+#' @param x A result of
+#'   [cpsplant()],
+#'   [cpsspec()] or
+#'   [cpsfals()].
 #' @param grp The records' group.
 #' @return The manifest, with the new records.
-#' @seealso [recrd()], [cpsbndl()].
+#' @seealso
+#' [recrd()],
+#' [cpsbndl()].
 #' @export
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' set.seed(1)
