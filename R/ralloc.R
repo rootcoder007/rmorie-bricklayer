@@ -256,6 +256,7 @@ print.rmbl_alloc_check <- function(x, ...) {
 #' @param ... Passed to the base plot.
 #' @export
 plot.rmbl_alloc <- function(x, ...) {
+  .rmbl_plot_check(x, "rmbl_alloc")
   set <- attr(x, "alloc")
   d <- as.data.frame(x)
   k <- seq_len(nrow(d))

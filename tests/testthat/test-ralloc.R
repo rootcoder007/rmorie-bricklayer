@@ -99,6 +99,7 @@ test_that("ralloc draws the allocation as participants are enrolled", {
   expect_identical(nrow(got), 30L)
   expect_identical(as.integer(round(got$drug[30L] * 2)),
                    sum(s$arm == "drug"))
+  expect_error(plot.rmbl_alloc(1), "`x` must be a rmbl_alloc object")
 })
 
 test_that("rallocvrf passes the list committed to and fails any other", {
