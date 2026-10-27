@@ -309,6 +309,7 @@ reference:
       - xmssadv
       - xmssidxseen
       - cpsvrf
+      - cpsxvrf
       - pqckg
       - signpubkey
       - fipskg

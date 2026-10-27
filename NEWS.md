@@ -38,6 +38,7 @@
 
 ## Signing keys
 
+* `cpsxvrf()` checks an ML-DSA or SLH-DSA signature twice: with this package and with the `openssl` program (3.5 or later), which implements FIPS 204 and 205 independently. It counts as cross-verified only when both accept it; without OpenSSL, or for a scheme OpenSSL cannot check, the result says the signature was verified here only, and why. OpenSSL is never required.
 * `fipskg()` makes an SLH-DSA-SHA2-128s key by default (it was ML-DSA-65): its security rests on the hash function alone, the most conservative assumption for a capsule meant to be checked decades from now. Signing takes about a second and the signature is 7,856 bytes; pass `scheme = "ML-DSA-65"` for the old default. XMSS stays opt-in through `pqckg()`.
 
 ## Fixes
