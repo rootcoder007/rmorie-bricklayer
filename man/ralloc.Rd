@@ -133,6 +133,6 @@ try(ralloc(30, block = 5))
 \code{\link[=rallocvrf]{rallocvrf()}} at unblinding;
 \code{\link[=cpssign]{cpssign()}} and
 \code{\link[=idcrd]{idcrd()}} to sign the commitment;
-\code{\link[=tsvrf]{tsvrf()}} to check its timestamp;
+\code{\link[=tsstmp]{tsstmp()}} to timestamp it and \code{\link[=tsvrf]{tsvrf()}} to check the timestamp;
 \code{\link[=prrgdecl]{prrgdecl()}} to declare the outcomes in the same signed record.
 }

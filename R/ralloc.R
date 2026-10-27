@@ -79,7 +79,7 @@
 #' @seealso [rallocvrf()] at unblinding;
 #'   [cpssign()] and
 #'   [idcrd()] to sign the commitment;
-#'   [tsvrf()] to check its timestamp;
+#'   [tsstmp()] to timestamp it and [tsvrf()] to check the timestamp;
 #'   [prrgdecl()] to declare the outcomes in the same signed record.
 #' @examplesIf isTRUE(getOption("rmbl.examples"))
 #' # 1:1 in blocks of 4 or 6, for 40 participants

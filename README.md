@@ -121,8 +121,8 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
 - **Randomisation for trials** — `ralloc()` makes a simple, permuted-block or
   stratified allocation list (any ratio, kit codes for blinded dispensing),
   reproducible from a seed and committed to by one SHA-256 to sign and
-  timestamp before enrolment; `rallocvrf()` shows at unblinding that the list
-  used is the one committed to.
+  timestamp (`tsstmp()`) before enrolment; `rallocvrf()` shows at unblinding
+  that the list used is the one committed to.
 - **Several results, one report** — `mkset()` gathers any results into one
   report: printed as a box of contents and each result's box, or written as
   one HTML page with every box and its plot (`file = "report.html"`),
