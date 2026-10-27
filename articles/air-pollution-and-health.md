@@ -375,11 +375,11 @@ fp <- co2fp(sum(sqrt(seq_len(3e5))), loc = "CA-ON", cpupwrw = 45,
                         memgb = 16)
 print(fp)
 #> ╭── Computation footprint (modelled) ─────────────────────────────────────────╮
-#> │   Time         0.003 s wall, 0.003 s CPU                                    │
-#> │   Utilisation  utilisation 0.25 (process) on 4 cores                        │
+#> │   Time         0.004 s wall, 0.005 s CPU                                    │
+#> │   Utilisation  utilisation 0.31 (process) on 4 cores                        │
 #> │   Memory       16 GB                                                        │
-#> │   Energy       1.43e-08 kWh (cpu 9.38e-09, memory 4.97e-09)                 │
-#> │   CO2e         1.3e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)         │
+#> │   Energy       2.22e-08 kWh (cpu 1.56e-08, memory 6.62e-09)                 │
+#> │   CO2e         2.02e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)        │
 #> │   Source       Electricity Maps (2025). Canada 2024 Yearly Carbon           │
 #> │                Intensity Data (Version January 27, 2025). Electricity Maps  │
 #> │                (via Green Algorithms data v3.1)                             │
@@ -416,9 +416,9 @@ b <- co2fp(busy(), loc = "CA-ON", cpupwrw = 45, memgb = 16,
                        usage = "machine", loadcur = "codecarbon")
 rbind(prolin = c(usage = a$usage, cpukwh = a$enekwh$cpu),
       maccod = c(usage = b$usage, cpukwh = b$enekwh$cpu))
-#>        usage       cpukwh
-#> prolin  0.25 6.250000e-09
-#> maccod  0.25 2.708984e-08
+#>            usage       cpukwh
+#> prolin 0.1666667 6.250000e-09
+#> maccod 0.3333333 4.166667e-08
 b$usagemode
 #> [1] "machine"
 ```
@@ -503,8 +503,8 @@ the two the Green Algorithms calculator prints:
 
 fpeqv(fp$co2eg * 1e4)   # if this ran ten thousand times
 #> ╭── Footprint in everyday terms ────────────────────────────────────────╮
-#> │   Car travel   7.455e-05 km                                           │
-#> │   Tree uptake  1.423e-05 tree-months                                  │
+#> │   Car travel   0.0001156 km                                           │
+#> │   Tree uptake  2.207e-05 tree-months                                  │
 #> │                                                                       │
 #> │   The same emissions as driving a European passenger car this far, or │
 #> │   what this many trees take up in a month.                            │

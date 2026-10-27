@@ -419,11 +419,11 @@ Every default that stood in for a measurement is listed:</p>
 <span>                        memgb <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fp</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Computation footprint (modelled)</span> ─────────────────────────────────────────╮</span></span>
-<span><span class="co">#&gt; │   Time         0.003 s wall, 0.003 s CPU                                    │</span></span>
-<span><span class="co">#&gt; │   Utilisation  utilisation 0.25 (process) on 4 cores                        │</span></span>
+<span><span class="co">#&gt; │   Time         0.004 s wall, 0.005 s CPU                                    │</span></span>
+<span><span class="co">#&gt; │   Utilisation  utilisation 0.31 (process) on 4 cores                        │</span></span>
 <span><span class="co">#&gt; │   Memory       16 GB                                                        │</span></span>
-<span><span class="co">#&gt; │   Energy       1.43e-08 kWh (cpu 9.38e-09, memory 4.97e-09)                 │</span></span>
-<span><span class="co">#&gt; │   CO2e         1.3e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)         │</span></span>
+<span><span class="co">#&gt; │   Energy       2.22e-08 kWh (cpu 1.56e-08, memory 6.62e-09)                 │</span></span>
+<span><span class="co">#&gt; │   CO2e         2.02e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)        │</span></span>
 <span><span class="co">#&gt; │   Source       Electricity Maps (2025). Canada 2024 Yearly Carbon           │</span></span>
 <span><span class="co">#&gt; │                Intensity Data (Version January 27, 2025). Electricity Maps  │</span></span>
 <span><span class="co">#&gt; │                (via Green Algorithms data v3.1)                             │</span></span>
@@ -459,9 +459,9 @@ for a machine, so a figure can be made comparable with either tool:</p>
 <span>                       usage <span class="op">=</span> <span class="st">"machine"</span>, loadcur <span class="op">=</span> <span class="st">"codecarbon"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span>prolin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>usage <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">usage</span>, cpukwh <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">enekwh</span><span class="op">$</span><span class="va">cpu</span><span class="op">)</span>,</span>
 <span>      maccod <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>usage <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">usage</span>, cpukwh <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">enekwh</span><span class="op">$</span><span class="va">cpu</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;        usage       cpukwh</span></span>
-<span><span class="co">#&gt; prolin  0.25 6.250000e-09</span></span>
-<span><span class="co">#&gt; maccod  0.25 2.708984e-08</span></span>
+<span><span class="co">#&gt;            usage       cpukwh</span></span>
+<span><span class="co">#&gt; prolin 0.1666667 6.250000e-09</span></span>
+<span><span class="co">#&gt; maccod 0.3333333 4.166667e-08</span></span>
 <span><span class="va">b</span><span class="op">$</span><span class="va">usagemode</span></span>
 <span><span class="co">#&gt; [1] "machine"</span></span></code></pre></div>
 </div>
@@ -538,8 +538,8 @@ are the two the Green Algorithms calculator prints:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/fpeqv.html">fpeqv</a></span><span class="op">(</span><span class="va">fp</span><span class="op">$</span><span class="va">co2eg</span> <span class="op">*</span> <span class="fl">1e4</span><span class="op">)</span>   <span class="co"># if this ran ten thousand times</span></span>
 <span><span class="co">#&gt; ╭── <span style="font-weight: bold;">Footprint in everyday terms</span> ────────────────────────────────────────╮</span></span>
-<span><span class="co">#&gt; │   Car travel   7.455e-05 km                                           │</span></span>
-<span><span class="co">#&gt; │   Tree uptake  1.423e-05 tree-months                                  │</span></span>
+<span><span class="co">#&gt; │   Car travel   0.0001156 km                                           │</span></span>
+<span><span class="co">#&gt; │   Tree uptake  2.207e-05 tree-months                                  │</span></span>
 <span><span class="co">#&gt; │                                                                       │</span></span>
 <span><span class="co">#&gt; │   The same emissions as driving a European passenger car this far, or │</span></span>
 <span><span class="co">#&gt; │   what this many trees take up in a month.                            │</span></span>

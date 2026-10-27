@@ -251,7 +251,7 @@ blcli(
   c("sign", root, "--scheme", "xmss-sha256", "--key-file", copy, "--overwrite"),
   out = function(s) cat(grep("stale", s, fixed = TRUE, value = TRUE))
 )
-#> rmoriebricklayer: stale copy of the key: index 1 of it was already signed (seen in /tmp/Rtmp2r13Oj/capsules-39ad668ef85d/two/capsule_bundle.json), but this state says the highest used in its range is -1. Signing would reuse an index: use the copy that made that signature, or generate a new key
+#> rmoriebricklayer: stale copy of the key: index 1 of it was already signed (seen in /tmp/RtmpwNgzXL/capsules-3bd91dedcf3e/two/capsule_bundle.json), but this state says the highest used in its range is -1. Signing would reuse an index: use the copy that made that signature, or generate a new key
 xmssidxseen(root)[, c("index", "reused")]
 #>   index reused
 #> 1     0  FALSE
