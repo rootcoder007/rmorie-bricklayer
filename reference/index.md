@@ -430,6 +430,12 @@ history itself tamper-evident.
   : Bundle a capsule into one signed artifact
 - [`cpsfals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsfals.md)
   : Run falsification controls against a statistic
+- [`cpsplant()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsplant.md)
+  : Does the Analysis Recover a Known Effect?
+- [`cpsspec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsspec.md)
+  : Do Reasonable Alternative Analyses Agree?
+- [`recevid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recevid.md)
+  : Record Correctness Evidence in a Manifest
 - [`cpspwr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpspwr.md)
   : Detect an injected effect of known size
 - [`prrgdecl()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/prrgdecl.md)

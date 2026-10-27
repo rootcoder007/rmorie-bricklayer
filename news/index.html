@@ -96,6 +96,10 @@
 <div class="section level3">
 <h3 id="signing-keys-1-0-3">Signing keys<a class="anchor" aria-label="anchor" href="#signing-keys-1-0-3"></a></h3>
 <ul><li>
+<code><a href="../reference/cpsplant.html">cpsplant()</a></code> checks that a statistic recovers effects of known size planted into the real data (the outcome shuffled to remove its real association, then <code>effect * treatment</code> added), so a capsule can show the analysis measures what it claims, not only that it re-runs. A planted 0 catches a statistic that finds effects that are not there.</li>
+<li>
+<code><a href="../reference/cpsspec.html">cpsspec()</a></code> runs reasonable alternative specifications and reports whether they agree in sign with the reported one; <code><a href="../reference/recevid.html">recevid()</a></code> writes a planted-effect check, a specification check or the falsification controls of <code><a href="../reference/cpsfals.html">cpsfals()</a></code> into a manifest, so the capsule records which correctness checks ran and whether they passed.</li>
+<li>
 <code><a href="../reference/tsstmp.html">tsstmp()</a></code> gets a public RFC 3161 timestamp for anything a study fixes before it sees its data: a <code><a href="../reference/ralloc.html">ralloc()</a></code> allocation list (its commitment is stamped), a file of declared outcomes, a manifest or a capsule. Only the SHA-256 leaves the machine. The token is checked at once with <code><a href="../reference/tsvrf.html">tsvrf()</a></code> and can be saved; with the authority’s root certificate as <code>trust</code>, anyone can later prove the commitment existed on that date. The default authority is freetsa.org, which is free and needs no account.</li>
 <li>
 <code><a href="../reference/cpsxvrf.html">cpsxvrf()</a></code> checks an ML-DSA or SLH-DSA signature twice: with this package and with the <code>openssl</code> program (3.5 or later), which implements FIPS 204 and 205 independently. It counts as cross-verified only when both accept it; without OpenSSL, or for a scheme OpenSSL cannot check, the result says the signature was verified here only, and why. OpenSSL is never required.</li>

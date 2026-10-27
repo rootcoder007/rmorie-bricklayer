@@ -174,6 +174,56 @@ evlrr(3, lo = 2.1, hi = 4.3) # a strong result with a limit well above the null
 #> 5.449490 3.619868
 ```
 
+## Does it recover a known effect?
+
+Falsification asks whether a result survives attempts to explain it
+away.
+[`cpsplant()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsplant.md)
+asks the complementary question: does the statistic measure what it is
+meant to? It shuffles the outcome, which removes its real association
+with the treatment, plants effects of known size, and checks the
+statistic gets each one back. A planted 0 catches a statistic that finds
+effects that are not there; 0.5 and 1 catch one that gets their size
+wrong.
+
+``` r
+
+set.seed(4)
+tr <- data.frame(x = rbinom(150, 1, 0.5))
+tr$y <- 1.5 * tr$x + rnorm(150)
+diffmeans <- function(z) mean(z$y[z$x == 1]) - mean(z$y[z$x == 0])
+cpsplant(tr, diffmeans, y = "y", trt = "x", n = 25, seed = 4)
+#> ╭── Planted-effect recovery: passed ──────────────────────────────────────────╮
+#> │ ✔ VERIFIED                                                                  │
+#> │                                                                             │
+#> │   Outcome                    y                                              │
+#> │   Treatment                  x                                              │
+#> │   Data sets per effect       25                                             │
+#> │   Tolerance                  0.1                                            │
+#> │   Estimate on the real data  1.358                                          │
+#> │   Seed                       4                                              │
+#> │                                                                             │
+#> │   planted  recovered      bias       se  result                             │
+#> │   -------  ---------  --------  -------  ------                             │
+#> │    0.0000     0.0593   0.05934  0.03462  ok                                 │
+#> │    0.5000     0.4677  -0.03235  0.04025  ok                                 │
+#> │    1.0000     1.0012   0.00119  0.05026  ok                                 │
+#> │                                                                             │
+#> │   The statistic recovered every planted effect on this data, so it          │
+#> │   measures the treatment's effect on the outcome as intended.               │
+#> │                                                                             │
+#> │   Each planted data set shuffles the outcome, removing its real             │
+#> │   association, then adds effect x treatment.                                │
+#> ╰─────────────────────────────────────────────────────────────────────────────╯
+```
+
+[`cpsspec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsspec.md)
+runs the reasonable alternative analyses side by side and says whether
+they agree in sign with the one reported, and
+[`recevid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recevid.md)
+writes either check, and the falsification controls, into the manifest,
+so the capsule carries the evidence with the numbers.
+
 ## Where this fits in a capsule
 
 [`cpsrpt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsrpt.md)

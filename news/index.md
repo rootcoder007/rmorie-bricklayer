@@ -311,6 +311,21 @@
 
 ### Signing keys
 
+- [`cpsplant()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsplant.md)
+  checks that a statistic recovers effects of known size planted into
+  the real data (the outcome shuffled to remove its real association,
+  then `effect * treatment` added), so a capsule can show the analysis
+  measures what it claims, not only that it re-runs. A planted 0 catches
+  a statistic that finds effects that are not there.
+- [`cpsspec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsspec.md)
+  runs reasonable alternative specifications and reports whether they
+  agree in sign with the reported one;
+  [`recevid()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recevid.md)
+  writes a planted-effect check, a specification check or the
+  falsification controls of
+  [`cpsfals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cpsfals.md)
+  into a manifest, so the capsule records which correctness checks ran
+  and whether they passed.
 - [`tsstmp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/tsstmp.md)
   gets a public RFC 3161 timestamp for anything a study fixes before it
   sees its data: a
