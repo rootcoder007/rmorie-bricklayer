@@ -76,3 +76,5 @@ else
 fi
 echo "=========================================================="
 read -r -p "Press Enter to close this window..." _
+# R's exit status, not the prompt's (read fails when there is no keyboard)
+exit ${RC}

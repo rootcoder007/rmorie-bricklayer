@@ -7,7 +7,10 @@
 # (an installed package has no R/ sources). cleanup removes them.
 rm -rf inst/bundle/lib
 mkdir -p inst/bundle/lib
+cr=$(printf '\r')
 while IFS= read -r f; do
+  # a Windows checkout gives lib.txt CRLF line ends: drop the CR
+  f=${f%"$cr"}
   case "$f" in ""|"#"*) continue ;; esac
   cp "R/$f" "inst/bundle/lib/$f" || {
     echo "configure: cannot copy R/$f for the bundle library" >&2

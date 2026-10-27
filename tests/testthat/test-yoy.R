@@ -1085,4 +1085,3 @@ test_that("the first period is said once, not once per group or on the plot", {
     1L
   )
 })
-

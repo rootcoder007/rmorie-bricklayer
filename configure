@@ -14,7 +14,10 @@
 # (an installed package has no R/ sources). cleanup removes them.
 rm -rf inst/bundle/lib
 mkdir -p inst/bundle/lib
+cr=$(printf '\r')
 while IFS= read -r f; do
+  # a Windows checkout gives lib.txt CRLF line ends: drop the CR
+  f=${f%"$cr"}
   case "$f" in ""|"#"*) continue ;; esac
   cp "R/$f" "inst/bundle/lib/$f" || {
     echo "configure: cannot copy R/$f for the bundle library" >&2
@@ -40,7 +43,8 @@ if [ -z "$R_HOME" ]; then
   R_HOME=`R RHOME 2>/dev/null`
 fi
 if [ -z "$R_HOME" ] || [ ! -x "${R_HOME}/bin/R" ]; then
-  echo "configure: R_HOME is not set and no R is on the PATH; run this through R CMD INSTALL" >&2
+  echo "configure: R_HOME is not set and no R is on the PATH;" >&2
+  echo "run this through R CMD INSTALL" >&2
   exit 1
 fi
 CC=`"${R_HOME}/bin/R" CMD config CC`
@@ -51,16 +55,19 @@ cat > conftest.c <<'EOF'
 #include <curl/curl.h>
 int main(void) { return curl_version() == 0; }
 EOF
-if ! $CC $CPPFLAGS $CFLAGS $CURL_CFLAGS conftest.c $CURL_LIBS -o conftest >/dev/null 2>&1; then
+if ! $CC $CPPFLAGS $CFLAGS $CURL_CFLAGS conftest.c $CURL_LIBS -o conftest \
+  >/dev/null 2>&1; then
   rm -rf conftest.c conftest conftest.dSYM
   echo "------------------------- ANTICONF ERROR ---------------------------"
   echo "Configuration failed: libcurl (headers and library) was not found."
   echo "Install the development package and try again:"
   echo " * deb:  libcurl4-openssl-dev (Debian, Ubuntu)"
   echo " * rpm:  libcurl-devel (Fedora, CentOS, RHEL)"
-  echo " * brew: curl (macOS; then export PKG_CONFIG_PATH for its pkgconfig dir)"
+  echo " * brew: curl (macOS; then export PKG_CONFIG_PATH for its"
+  echo "         pkgconfig dir)"
   echo "If libcurl is installed somewhere unusual, set CURL_CFLAGS and"
-  echo "CURL_LIBS, e.g.  CURL_CFLAGS=-I/opt/curl/include CURL_LIBS='-L/opt/curl/lib -lcurl'"
+  echo "CURL_LIBS, e.g.  CURL_CFLAGS=-I/opt/curl/include"
+  echo "                 CURL_LIBS='-L/opt/curl/lib -lcurl'"
   echo "--------------------------------------------------------------------"
   exit 1
 fi
