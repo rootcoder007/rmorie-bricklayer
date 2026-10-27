@@ -148,9 +148,18 @@
 #' The report as one self-contained HTML page, in yoyhtml()'s style.
 #' @param entries The entries.
 #' @param title The report's title, in `<title>` and the page heading.
+#' @param sub The line under the heading.
 #' @return One string.
 #' @noRd
-.bl_rpt_html <- function(entries, title = "Analysis report") {
+.bl_rpt_html <- function(
+  entries,
+  title = "Analysis report",
+  sub = paste0(
+    length(entries),
+    " results from the rmoriebricklayer dashboard, each with the R call ",
+    "that computed it."
+  )
+) {
   f <- tempfile(fileext = ".html")
   on.exit(unlink(f), add = TRUE)
   yoyhtml(yoy(c(1, 2)), f)
@@ -178,9 +187,8 @@
     "</style></head><body><main><h1>",
     .yoy_esc(title),
     "</h1><p class=\"sub\">",
-    length(entries),
-    " results from the rmoriebricklayer dashboard, each with the R call ",
-    "that computed it.</p>",
+    .yoy_esc(sub),
+    "</p>",
     paste(sect, collapse = "\n"),
     "</main></body></html>\n"
   )
@@ -203,10 +211,8 @@
       } else {
         c("```", e$text, "```")
       }
-      paste(
-        c(paste("##", e$title), "", "```r", e$code, "```", "", body),
-        collapse = "\n"
-      )
+      call <- if (length(e$code)) c("```r", e$code, "```", "")
+      paste(c(paste("##", e$title), "", call, body), collapse = "\n")
     },
     ""
   )
@@ -1162,9 +1168,14 @@
     "<section><h2>",
     .yoy_esc(e$title),
     "</h2>",
-    "<pre><code>",
-    .yoy_esc(paste(e$code, collapse = "\n")),
-    "</code></pre>",
+    # a result gathered by mkset() has no call to show
+    if (length(e$code)) {
+      paste0(
+        "<pre><code>",
+        .yoy_esc(paste(e$code, collapse = "\n")),
+        "</code></pre>"
+      )
+    },
     if (length(tab)) {
       tab
     } else {
