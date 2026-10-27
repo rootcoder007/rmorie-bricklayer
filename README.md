@@ -173,7 +173,16 @@ A capsule does this for every source of an analysis at once; `usecpstmpl()` star
   keyed digest or a post-quantum hash-based signature; `mrkroot()` pins
   a capsule chunk by chunk so a mismatch names which chunk moved; and
   `chnapp()` links manifests so the run *history* is tamper-evident,
-  not only each run.
+  not only each run. `cpsxvrf()` checks a signature again with OpenSSL,
+  `tsstmp()` gets a public RFC 3161 timestamp, `idcrd()` makes an
+  identity card for a signing key, and `fipsmod()` / `fipsmkg()` sign
+  inside a FIPS 140-3 module.
+- **Evidence the analysis is right** — `cpsplant()` plants effects of
+  known size into the real data and checks the statistic recovers them
+  (a planted 0 catches one that finds effects that are not there);
+  `cpsspec()` runs reasonable alternative specifications and reports
+  whether they agree in sign; `recevid()` writes either check, or the
+  falsification controls of `cpsfals()`, into the manifest.
 - **Description** — `profcols()`, `freqtbl()`,
   `cortbl()`, `mahaoutl()`, `missgrid()` and
   `mcartst()` (Little's test, with the EM estimator it requires) describe
@@ -467,6 +476,7 @@ by a check you can run yourself; none is a claim about the design.
 | Survives hostile arguments | Every one of the 125 C++ entry points runs behind a generated try/catch barrier (a C++ exception is an R error, never `std::terminate`), and the 17 written in plain C (the file lock, its release and the locked call, the path probe, the environment wipe, the CSV splitter, the checked writer, the checked gzip reader and its size count, the progress bar and spinner, the survey replicate totals, the survey row keys, their digest and set digest, the survey replicate column pass, and the interrupt check before a key prompt) report errors through R itself; argument types, lengths and sizes are checked before any allocation; quadratic loops and the RSA arithmetic are interruptible; the RSA exponent, SHAKE output, PBKDF2 iterations and SIU inputs are bounded. A C stack overflow is not an exception, so the SIU text passes over a whole document are loops, not regexes, and every line the extractors see is capped; a test runs ten hostile inputs through every one-string SIU entry point in a subprocess | `src/rmbl_barrier.cpp`, `inst/scripts/gen_barrier.R`, `tests/testthat/test-review2.R`, `tests/testthat/test-review3.R` |
 | No request to a private address | One check in the transport: the authority parsed as a URL parser does, IPv4/IPv6 literals canonicalised (`127.1`, `0x7f000001`, `::ffff:7f00:1`), local names refused by suffix, every resolved address tested and the connection pinned to it (no DNS rebinding), redirects re-checked hop by hop, `https` never downgraded | `src/rmbl_fetch.cpp`, `tests/testthat/test-review2.R` |
 | Robust against hostile input | libFuzzer with ASan + UBSan over the DER parser and RSA arithmetic, the decimal-to-double conversion (checked against the C library bit for bit on every input both accept), and the SIU report parsers; weekly long runs | `inst/fuzz/`, workflow `fuzz` |
+| Static analysis | CodeQL with its security-extended queries over the C and C++ (built as R builds them) and over the workflows, on every change to either and weekly; every GitHub Action pinned to a commit hash; secret scanning with push protection | workflow `codeql` |
 | Standards vectors | The C2SP Wycheproof post-quantum sets and the NIST ACVP sets for ML-KEM, ML-DSA, SLH-DSA, SHA-3, SHAKE and HMAC: 6,848 checks, 0 failures, each not-applicable vector named with its reason (the published ACVP PBKDF set is SHA2-224 only, so none of its vectors apply to this package's PBKDF2-HMAC-SHA256, which the test suite checks against the RFC 7914 vectors instead); the masked and the plain paths are compared on every ML-KEM decapsulation and ML-DSA signing vector | `tools/vectors/`, workflow `vectors` |
 | Agrees with OpenSSL on any input | libFuzzer differential fuzzing against OpenSSL 3.5: ML-KEM, ML-DSA, SLH-DSA-SHA2-128f, the SHA-2, SHA-3 and SHAKE digests, BLAKE2b, HMAC and PBKDF2 must agree byte for byte | `inst/fuzz/fuzz_ossl.cpp`, workflow `fuzz` |
 | Timing on hardware | dudect fixed-versus-random Welch t on x86-64 and arm64 Linux and on Apple silicon (with and without DIT): ML-KEM decapsulation plain and masked, valid against invalid with both classes varying, each phase alone, encapsulation, HQC decapsulation, the digest comparison, PBKDF2; an early-exit comparison is the control that must be flagged | `inst/dudect/`, workflow `dudect` |
@@ -478,7 +488,9 @@ Outside what these checks model: electromagnetic emanation, fault injection, gli
 coupling a leakage model omits, and higher-order attacks on two-share masking. The power
 assessment is a simulation, not a capture from a board. `SECURITY.md`
 has the threat model, the reporting address and the list of what each check would and would
-not catch. The checks are reproducible on any Linux machine
+not catch. None of it makes this package a FIPS 140-3 validated module;
+FIPS mode (`fipsmod()`) signs inside one instead. The checks are
+reproducible on any Linux machine
 with valgrind and clang: `bash inst/ctcheck/build.sh && bash inst/ctcheck/run.sh`
 and `bash inst/fuzz/build.sh && bash inst/fuzz/run.sh`.
 
@@ -704,6 +716,15 @@ On macOS, CRAN's R (from <https://CRAN.R-project.org/bin/macosx/>) installs
 r-universe's prebuilt binaries in seconds. Homebrew's R cannot use them, so
 there every package is compiled from source.
 
+A container with R, the package and `rmbl` on the `PATH`, built on Wolfi
+(Chainguard) and rebuilt weekly with that week's security fixes; each
+build is scanned with Trivy and is not published if any fixable
+vulnerability is found:
+
+```sh
+docker run --rm -it ghcr.io/rootcoder007/rmorie-bricklayer:latest
+```
+
 ## Quick example
 
 The shortest path, on the OTIS table that ships with the package:
@@ -799,6 +820,20 @@ cpsxvrf(digest, sig, fipspubkey(key)) # and again with OpenSSL 3.5
 `cpsxvrf()` asks the `openssl` program (3.5 or later), which implements
 FIPS 204 and 205 with no code in common with this package, for a second
 verdict; without it the result says the signature was checked here only.
+
+Where a record must be signed by a FIPS 140-3 validated module, hand the
+signing to one. `fipsmod()` loads the OpenSSL FIPS provider on its own and
+says which module and build it is and whether the package knows its
+certificate (today the Chainguard FIPS Provider for OpenSSL 3.6.0-r4, CMVP
+#5523, which covers ML-DSA and SLH-DSA). `fipsmkg()` makes the key inside
+the module and `cpssign()` signs there; verification is unchanged.
+
+```r
+mod <- fipsmod()                     # the module and its certificate
+key <- fipsmkg("ML-DSA-65", mod)     # the private key never leaves it
+sig <- cpssign(digest, key)
+cpsvrf(digest, sig, key)
+```
 
 XMSS keys (`pqckg()`) are opt-in.
 An XMSS index must never sign twice, so the package keeps a record of the highest index each

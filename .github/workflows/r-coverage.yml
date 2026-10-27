@@ -53,13 +53,15 @@ jobs:
       # Ubuntu 24.04 ships OpenSSL 3.0, and cpsxvrf() needs the openssl
       # program at 3.5 or later (the first with ML-DSA and SLH-DSA): without
       # it the cross-check's tests skip and its lines read as uncovered.
-      # Built once from the release tarball (checksum pinned) and cached.
+      # Built once from the release tarball (checksum pinned) and cached,
+      # with its FIPS provider, so fipsmod()'s tests run on a real module
+      # (the package installs it with openssl fipsinstall).
       - name: Cache OpenSSL 3.5
         id: ossl
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/openssl-3.5
-          key: openssl-3.5.9-${{ runner.os }}-${{ runner.arch }}
+          key: openssl-3.5.9-fips-${{ runner.os }}-${{ runner.arch }}
       - name: Build OpenSSL 3.5
         if: steps.ossl.outputs.cache-hit != 'true'
         env:
@@ -74,8 +76,9 @@ jobs:
           echo "$SHA  o.tgz" | sha256sum -c -
           tar xzf o.tgz && cd "openssl-$V"
           ./Configure --prefix="$HOME/openssl-3.5" --libdir=lib \
-            no-shared no-docs no-tests > /dev/null
-          make -j"$(nproc)" > /dev/null && make install_sw > /dev/null
+            enable-fips no-shared no-docs no-tests > /dev/null
+          make -j"$(nproc)" > /dev/null
+          make install_sw install_fips > /dev/null
       - name: Put OpenSSL 3.5 first on the PATH
         run: |
           echo "$HOME/openssl-3.5/bin" >> "$GITHUB_PATH"

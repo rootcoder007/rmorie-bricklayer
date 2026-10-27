@@ -924,7 +924,8 @@ signpubkey <- function(key) {
 #' [pqckg()] for `"xmss"`, or a
 #' `bricklayer_fips_key` from
 #' [fipskg()] for a standardised scheme (in
-#' which case `scheme` is taken from the key and ignored).
+#' which case `scheme` is taken from the key and ignored), or a key from
+#' [fipsmkg()], which signs inside the FIPS 140-3 module that made it.
 #' @param scheme `"xmss"` (post-quantum, asymmetric) or
 #' `"hmac"` (symmetric). Inferred from `key` when not given.
 #' @param ctx Optional context string (character or raw,
@@ -1028,6 +1029,9 @@ cpssign <- function(
   masked <- .rmbl_masked_flag(masked)
   determ <- .rmbl_flag1(determ, "determ")
   msg <- .rmbl_text_input(msg, "msg")
+  if (inherits(key, "rmbl_fipsmod_key")) {
+    return(.rmbl_fipsmod_sign(msg, key, ctx, determ, prehash))
+  }
   if (inherits(key, "bricklayer_oqs_key")) {
     return(.rmbl_sign_fips(msg, key, ctx, determ, prehash, masked))
   }

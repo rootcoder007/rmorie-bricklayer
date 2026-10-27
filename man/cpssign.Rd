@@ -23,7 +23,8 @@ a \code{bricklayer_signing_key} from
 \code{\link[=pqckg]{pqckg()}} for \code{"xmss"}, or a
 \code{bricklayer_fips_key} from
 \code{\link[=fipskg]{fipskg()}} for a standardised scheme (in
-which case \code{scheme} is taken from the key and ignored).}
+which case \code{scheme} is taken from the key and ignored), or a key from
+\code{\link[=fipsmkg]{fipsmkg()}}, which signs inside the FIPS 140-3 module that made it.}
 
 \item{scheme}{\code{"xmss"} (post-quantum, asymmetric) or
 \code{"hmac"} (symmetric). Inferred from \code{key} when not given.}

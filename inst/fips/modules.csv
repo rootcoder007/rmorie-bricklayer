@@ -1,0 +1,9 @@
+# FIPS 140-3 modules whose certificates the package recognises, by the
+# exact name and build each module reports (OSSL_PROV_PARAM_NAME and
+# OSSL_PROV_PARAM_BUILDINFO, as its security policy requires). pqc: the
+# certificate lists ML-DSA and SLH-DSA (KeyGen, SigGen, SigVer).
+# Sources: csrc.nist.gov/projects/cryptographic-module-validation-program
+# certificate/<cmvp> and its security policy 140sp<cmvp>.pdf.
+name,build,cmvp,pqc,validated
+Chainguard FIPS Provider for OpenSSL,3.6.0-r4,5523,TRUE,2026-09-15
+OpenSSL FIPS Provider,3.1.2,4985,FALSE,2025-03-11

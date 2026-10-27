@@ -167,6 +167,34 @@ construction where a single misplaced field changes every output.
 pqcbknd()
 ```
 
+### Signing inside a FIPS 140-3 module
+
+The package's own ML-DSA and SLH-DSA are not a validated cryptographic
+module, and no amount of testing makes them one: validation is a
+certificate NIST issues for one exact build. Where a record has to be
+signed by a validated module, the package can hand the work to one.
+`fipsmod()` loads the OpenSSL FIPS provider on its own (a distribution's,
+or an upstream build it installs with `openssl fipsinstall`), and says
+which module it is and whether that exact build is on the package's list
+of certificates: today the Chainguard FIPS Provider for OpenSSL 3.6.0-r4,
+CMVP #5523, which covers ML-DSA and SLH-DSA. `fipsmkg()` makes the key
+inside the module, and `cpssign()` signs with it there; `cpsvrf()` and
+`cpsxvrf()` verify the result like any other signature.
+
+```{r, eval = FALSE}
+mod <- fipsmod()
+mod                       # the module, its build and its certificate
+key <- fipsmkg("ML-DSA-65", mod)
+sig <- cpssign("a manifest digest", key)
+cpsvrf("a manifest digest", sig, key)
+```
+
+A module that is not on the list is reported as such, not as
+unvalidated: it may hold a certificate the list does not have yet, and
+NIST's list is the authority. The claim to make is about the module
+("signed inside the Chainguard FIPS Provider, CMVP #5523"), never that
+this package is validated.
+
 ## Signing something a verifier can check
 
 `cpssign()` signs a string, which proves the string was signed and

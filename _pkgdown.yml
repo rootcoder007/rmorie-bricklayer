@@ -314,6 +314,8 @@ reference:
       - xmssidxseen
       - cpsvrf
       - cpsxvrf
+      - fipsmod
+      - fipsmkg
       - pqckg
       - signpubkey
       - fipskg
