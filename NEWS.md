@@ -38,6 +38,7 @@
 
 ## Fixes
 
+* A bundle run on synthetic data works on Windows: the runner passed `BRICKLAYER_SYNTHETIC=1` to `analysis.R` through `system2(env = )`, which on Windows puts it in front of the command, so `analysis.R` never started and the run stopped with exit code 5. It now sets the variable for the child and restores it afterwards.
 * On a console that is not UTF-8 (R in a C locale), the result boxes fold accented text to plain ASCII, so "Métis" prints as "Metis"; before, R printed the escape `<U+00E9>`, which broke the box's alignment and its 80-column width.
 * Tests that compared a computed mean, variance, quantile or sum bit for bit with R's own allow a difference of 1e-12: platforms without extended precision (macOS on Apple silicon) round the last digit differently.
 * A gzipped table too large to decompress in memory was read a piece at a time without checking the gzip stream, so a truncated file came back as a shorter table with no error. The stream is now checked whole first (trailer, CRC and size), and a truncated or damaged file is refused, as smaller files already were.

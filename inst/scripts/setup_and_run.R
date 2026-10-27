@@ -459,10 +459,18 @@ if (isTRUE(SYNTHETIC_MODE)) {
 sh_type <- if (OS_KIND == "windows") "cmd" else "sh"
 run_args <- c(shQuote(ANALYSIS_R, type = sh_type), shQuote(input_path, type = sh_type),
               shQuote(output_dir, type = sh_type))
-env_vec <- if (isTRUE(SYNTHETIC_MODE)) "BRICKLAYER_SYNTHETIC=1" else character(0)
+## The child inherits this process's environment. system2(env = ) is not
+## used: on Windows it puts NAME=value in front of the command, which cmd
+## cannot run, so analysis.R never started there.
+old_synth <- Sys.getenv("BRICKLAYER_SYNTHETIC", unset = NA)
+if (isTRUE(SYNTHETIC_MODE)) Sys.setenv(BRICKLAYER_SYNTHETIC = "1")
 exit_code <- system2(rscript_bin, run_args,
-                     stdout = log_path, stderr = log_path,
-                     env = env_vec)
+                     stdout = log_path, stderr = log_path)
+if (is.na(old_synth)) {
+  Sys.unsetenv("BRICKLAYER_SYNTHETIC")
+} else {
+  Sys.setenv(BRICKLAYER_SYNTHETIC = old_synth)
+}
 cat(readLines(log_path, warn = FALSE), sep = "\n")
 hr()
 
