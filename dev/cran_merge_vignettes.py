@@ -29,6 +29,9 @@ GATE = ('# the vignette runs in full in GitHub CI and for the package tarball (N
         '# re-builds it in its check, none of these is set and only this chunk runs\n'
         'if (!interactive() && !any(nzchar(Sys.getenv(c("NOT_CRAN", "MY_UNIVERSE", "IN_PKGDOWN"))))) {\n'
         '  knitr::knit_exit()\n}\n')
+GATE_RE = re.compile(
+    r"# the vignette runs in full in GitHub CI[\s\S]*?"
+    r"knitr::knit_exit\(\)\s*\n\}\n")
 where = {old: new for new, _, olds in GROUPS for old in olds}
 have = sorted(f[:-4] for f in os.listdir("vignettes") if f.endswith(".Rmd"))
 assert have == sorted(where), "vignettes/ does not hold exactly the 33 guides: %s" % have
@@ -46,8 +49,10 @@ for old in where:
     assert m, old
     title = re.search(r"VignetteIndexEntry\{(.*)\}", m.group(1)).group(1)
     body = s[m.end():]
-    assert body.count(GATE) == 1, old
-    body = relink(body.replace(GATE, ""))
+    # the gate as the vignette writes it, however its lines are wrapped
+    hits = GATE_RE.findall(body)
+    assert len(hits) == 1, old
+    body = relink(GATE_RE.sub("", body, count=1))
     open("vignettes/parts/_%s.Rmd" % old, "w", encoding="utf-8").write(
         "# %s\n%s" % (title, body if body.startswith("\n") else "\n" + body))
     os.remove(src)
